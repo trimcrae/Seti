@@ -102,7 +102,8 @@ def collect_science_numbers(cfg: Config) -> dict[str, str]:
     s = json.loads(path.read_text())
     occ = s.get("occurrence_limit", {})
     counts = s.get("counts", {})
-    return {
+    mm = s.get("multimodal", {})
+    out = {
         "SciDist": f"{s.get('max_dist_pc', 0):.0f}",
         "SciNparent": f"{counts.get('parent', 0):,}".replace(",", r"\,"),
         "SciNsearchable": f"{counts.get('searchable', 0):,}".replace(",", r"\,"),
@@ -113,6 +114,20 @@ def collect_science_numbers(cfg: Config) -> dict[str, str]:
         "SciNeff": f"{occ.get('n_eff', 0):,.0f}".replace(",", r"\,"),
         "SciFupper": _fmt_sci(occ.get("f_upper", float("nan")), 1),
     }
+    if mm:
+        out.update({
+            "SciMMobjects": f"{mm.get('n_objects', 0):,}".replace(",", r"\,"),
+            "SciMMir": f"{mm.get('ir_excess', 0)}",
+            "SciMMuv": f"{mm.get('uv_deficit', 0)}",
+            "SciMMenergy": f"{mm.get('energy_balance', 0)}",
+            "SciMMoptvar": f"{mm.get('optical_variability', 0)}",
+            "SciMMirvar": f"{mm.get('ir_variability', 0)}",
+            "SciMMkin": f"{mm.get('kinematic', 0)}",
+            "SciMMtwo": f"{mm.get('n_ge_2_axes', 0)}",
+            "SciMMthree": f"{mm.get('n_ge_3_axes', 0)}",
+            "SciMMcand": f"{mm.get('n_multimodal', 0)}",
+        })
+    return out
 
 
 def write_numbers_tex(cfg: Config) -> Path:

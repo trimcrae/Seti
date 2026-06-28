@@ -31,6 +31,7 @@ def run_funnel(df: pd.DataFrame, thresholds: dict) -> pd.DataFrame:
     counts via the ``funnel_counts`` attribute on the DataFrame's ``attrs``.
     """
     out = df.copy().reset_index(drop=True)
+    out.attrs.update(df.attrs)  # .copy() can drop attrs; co-movement needs epochs
     reason = pd.Series([""] * len(out), index=out.index, dtype=object)
     alive = pd.Series(True, index=out.index)
 

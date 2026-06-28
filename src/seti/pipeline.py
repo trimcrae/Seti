@@ -64,6 +64,10 @@ def run_pipeline(
 
     # 2. Contamination funnel (only meaningful for excess sources, but we run it
     #    on all so the funnel counts describe the full parent sample).
+    #    Re-apply epochs HERE: pandas drops DataFrame.attrs through the .copy() in
+    #    compute_excess, so the co-movement cut would otherwise fall back to the
+    #    default epoch and spuriously reject every high-proper-motion white dwarf.
+    ex = _apply_epochs(ex, cfg)
     vetted = run_funnel(ex, thr)
     vetted = _apply_epochs(vetted, cfg)
     funnel_counts = vetted.attrs.get("funnel_counts", {})

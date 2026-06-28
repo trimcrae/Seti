@@ -36,8 +36,8 @@ _OPTIONAL_DEFAULTS = {
 }
 
 _REQUIRED = [
-    "source_id", "ra", "dec", "pmra", "pmdec", "parallax_over_error", "ruwe",
-    "teff", "W1mag", "e_W1mag", "W2mag", "e_W2mag", "ra_wise", "dec_wise",
+    "source_id", "ra", "dec", "pmra", "pmdec", "teff",
+    "W1mag", "e_W1mag", "W2mag", "e_W2mag", "ra_wise", "dec_wise",
     "Jmag", "Hmag", "Ksmag",
 ]
 
@@ -144,4 +144,69 @@ def acquire_run(
     return table
 
 
-__all__ = ["assemble_analysis_table", "acquire_run"]
+def science_run(
+    cfg: Config | None = None,
+    max_dist_pc: float = 100.0,
+    limit: int | None = None,
+) -> dict:
+    """Real-data run (CDS-only, runner-friendly): acquire, analyse, write results.
+
+    Writes the analysis-ready table plus small, committable result files under
+    ``results/science/`` (candidate table, summary counts, occurrence limit) so a
+    CI runner can commit them back to the repository.  Returns the summary dict.
+    """
+    import json
+
+    from .acquire.science import (
+        fetch_catwise,
+        fetch_known_disks,
+        fetch_twomass,
+        fetch_wd_parent,
+    )
+    from .pipeline import run_pipeline
+
+    cfg = cfg or load_config()
+    pwd_min = cfg.thresholds["sample"]["pwd_min"]
+
+    parent = fetch_wd_parent(max_dist_pc, pwd_min)
+    if limit is not None:
+        parent = parent.head(limit)
+    positions = parent[["source_id", "ra", "dec"]]
+
+    catwise = fetch_catwise(positions)
+    twomass = fetch_twomass(positions)
+    known_ids = fetch_known_disks(positions)
+    known = pd.DataFrame({"source_id": sorted(known_ids)}) if known_ids else None
+
+    table = assemble_analysis_table(parent, pd.DataFrame(), catwise, twomass,
+                                    neighbourhood=None, known=known)
+    print(f"[science] analysis-ready table: {len(table)} white dwarfs")
+
+    result = run_pipeline(table, cfg=cfg)
+
+    out_dir = cfg.root / "results" / "science"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    proc = cfg.path("processed_dir")
+    proc.mkdir(parents=True, exist_ok=True)
+    table.to_parquet(proc / "analysis_ready.parquet", index=False)
+
+    cand = result.candidates
+    cand_cols = [c for c in ["source_id", "ra", "dec", "teff", "t_dust_k", "tau",
+                             "anomaly_score", "chi_W1", "chi_W2"] if c in cand.columns]
+    cand[cand_cols].to_csv(out_dir / "candidates.csv", index=False)
+
+    summary = {
+        "max_dist_pc": max_dist_pc,
+        "n_parent": int(len(table)),
+        "counts": result.counts,
+        "funnel_counts": result.funnel_counts,
+        "occurrence_limit": result.occurrence_limit,
+        "n_known_disks_matched": len(known_ids),
+    }
+    (out_dir / "summary.json").write_text(json.dumps(summary, indent=2))
+    print("[science] summary:", json.dumps(summary["counts"]))
+    print("[science] occurrence limit:", json.dumps(summary["occurrence_limit"]))
+    return summary
+
+
+__all__ = ["assemble_analysis_table", "acquire_run", "science_run"]

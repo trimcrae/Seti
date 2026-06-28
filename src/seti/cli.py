@@ -84,6 +84,12 @@ def _cmd_acquire_run(args, cfg):
         print(f"wrote analysis-ready table: {len(table)} white dwarfs -> {out}")
 
 
+def _cmd_science_run(args, cfg):
+    from .acquire_run import science_run
+
+    science_run(cfg, max_dist_pc=args.max_dist_pc, limit=args.limit)
+
+
 def _cmd_contamination_budget(args, cfg):
     from .population import generate_population
     from .stats.contamination_budget import contamination_budget, efficacy_vs_pm
@@ -139,6 +145,11 @@ def main(argv=None):
     p.add_argument("--limit", type=int, default=None)
     p.add_argument("--dry-run", action="store_true")
     p.set_defaults(func=_cmd_acquire_run)
+
+    p = sub.add_parser("science-run")
+    p.add_argument("--max-dist-pc", type=float, default=100.0)
+    p.add_argument("--limit", type=int, default=None)
+    p.set_defaults(func=_cmd_science_run)
 
     p = sub.add_parser("contamination-budget")
     p.add_argument("--seed", type=int, default=11)

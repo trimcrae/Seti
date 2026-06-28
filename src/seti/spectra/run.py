@@ -33,12 +33,28 @@ def spectra_run(
     """
     cfg = cfg or load_config()
 
-    if spectra is None:
-        from .acquire import fetch_spectra
-        spectra = fetch_spectra(n=n, dataset=dataset, spectype=spectype)
+    if spectra is not None:
+        res = search_spectra(spectra, snr_min=snr_min)
+        n_searched = res["n_searched"]
+        candidates = res["candidates"]
+        rejection_counts = res["rejection_counts"]
+    else:
+        # Stream chunk-by-chunk so memory stays bounded at catalogue scale.
+        from .acquire import iter_spectra
+        n_searched = 0
+        candidates: list[dict] = []
+        rejection_counts: dict[str, int] = {}
+        for batch in iter_spectra(n=n, dataset=dataset, spectype=spectype):
+            r = search_spectra(batch, snr_min=snr_min)
+            n_searched += r["n_searched"]
+            candidates.extend(r["candidates"])
+            for k, v in r["rejection_counts"].items():
+                rejection_counts[k] = rejection_counts.get(k, 0) + v
+            print(f"[spectra] progress: {n_searched} searched, "
+                  f"{len(candidates)} candidates so far")
+        candidates.sort(key=lambda c: c.get("score", 0.0), reverse=True)
 
-    res = search_spectra(spectra, snr_min=snr_min)
-    n_searched = res["n_searched"]
+    res = {"candidates": candidates, "rejection_counts": rejection_counts}
     cand_df = pd.DataFrame(res["candidates"])
 
     # SIMBAD vetting of any surviving candidate (the list is short by construction).

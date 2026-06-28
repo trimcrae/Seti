@@ -48,31 +48,26 @@ def _rget(rec, key, default=None):
     return getattr(rec, key, default)
 
 
-def fetch_spectra(
-    n: int = 2000,
-    dataset: str = "DESI-DR1",
-    spectype: str | None = None,
-    chunk: int = 500,
-    client=None,
-) -> list[dict]:
-    """Retrieve up to ``n`` spectra from ``dataset`` as the search-ready dict schema."""
-    if client is None:
-        from sparcl.client import SparclClient  # lazy: only on the runner
-        client = SparclClient()
+_RETRIEVE_FIELDS = ["sparcl_id", "ra", "dec", "redshift", "spectype",
+                    "data_release", "wavelength", "flux", "ivar", "mask"]
 
-    # Diagnostics: surface the valid dataset labels so a wrong release is obvious.
+
+def find_ids(n: int, dataset: str, spectype: str | None = None, client=None) -> list:
+    """Discover up to ``n`` SPARCL ids for ``dataset`` (and optional ``spectype``)."""
+    if client is None:
+        from sparcl.client import SparclClient
+        client = SparclClient()
     try:
         print(f"[spectra] SPARCL datasets: {getattr(client, 'all_datasets', '?')}")
     except Exception as exc:
         print(f"[spectra] could not list datasets: {exc!r}")
-
     constraints: dict = {"data_release": [dataset]}
     if spectype:
         constraints["spectype"] = [spectype]
-    # SPARCL's spectrum identifier field is ``sparcl_id`` (not ``id``); requesting
-    # ``id`` is silently dropped.  Sort for deterministic, reproducible samples.
-    find_fields = ["sparcl_id", "ra", "dec", "redshift", "spectype", "data_release"]
-    found = client.find(outfields=find_fields, constraints=constraints,
+    # SPARCL's spectrum identifier field is ``sparcl_id`` (``id`` is silently
+    # dropped).  Sort for deterministic, reproducible samples.
+    fields = ["sparcl_id", "ra", "dec", "redshift", "spectype", "data_release"]
+    found = client.find(outfields=fields, constraints=constraints,
                         sort="sparcl_id", limit=n)
     recs = list(_records(found))
     if recs:
@@ -86,52 +81,67 @@ def fetch_spectra(
         ids = [i for i in ids if i]
     print(f"[spectra] SPARCL find: {len(ids)} ids from {dataset}"
           f"{'/' + spectype if spectype else ''}")
-    if not ids:
-        return []
+    return ids
 
-    inc = ["sparcl_id", "ra", "dec", "redshift", "spectype", "data_release",
-           "wavelength", "flux", "ivar", "mask"]
-    res_default = NOMINAL_RESOLUTION.get(dataset, 2000.0)
-    out: list[dict] = []
-    for start in range(0, len(ids), chunk):
-        sub = ids[start:start + chunk]
+
+def _retrieve_dicts(client, ids_chunk, dataset, res_default, first=False) -> list[dict]:
+    try:
+        got = client.retrieve(uuid_list=ids_chunk, include=_RETRIEVE_FIELDS)
+    except TypeError:
+        got = client.retrieve(ids_chunk, include=_RETRIEVE_FIELDS)
+    grecs = list(_records(got))
+    if first and grecs:
         try:
-            got = client.retrieve(uuid_list=sub, include=inc)
-        except TypeError:
-            got = client.retrieve(sub, include=inc)   # positional fallback
+            print(f"[spectra] retrieve record keys: {sorted(list(grecs[0].keys()))}")
+        except Exception:
+            pass
+    out: list[dict] = []
+    for r in grecs:
+        wave = np.asarray(_rget(r, "wavelength", []), dtype=float)
+        flux = np.asarray(_rget(r, "flux", []), dtype=float)
+        ivar = np.asarray(_rget(r, "ivar", []), dtype=float)
+        if wave.size < 100 or flux.size != wave.size or ivar.size != wave.size:
+            continue
+        mask = np.asarray(_rget(r, "mask", []), dtype=float)
+        if mask.size != wave.size:
+            mask = np.zeros_like(wave)
+        sid = _rget(r, "sparcl_id") or _rget(r, "id") or str(len(out))
+        out.append({
+            "spec_id": str(sid), "wave": wave, "flux": flux, "ivar": ivar,
+            "mask": mask, "redshift": float(_rget(r, "redshift", 0.0) or 0.0),
+            "resolution": res_default,
+            "meta": {"ra": float(_rget(r, "ra", np.nan) or np.nan),
+                     "dec": float(_rget(r, "dec", np.nan) or np.nan),
+                     "spectype": str(_rget(r, "spectype", "")),
+                     "data_release": str(_rget(r, "data_release", dataset))},
+        })
+    return out
+
+
+def iter_spectra(n: int = 2000, dataset: str = "DESI-DR1", spectype: str | None = None,
+                 chunk: int = 500, client=None):
+    """Yield retrieved spectra one chunk-list at a time (bounded memory for scale)."""
+    if client is None:
+        from sparcl.client import SparclClient
+        client = SparclClient()
+    ids = find_ids(n, dataset, spectype, client=client)
+    res_default = NOMINAL_RESOLUTION.get(dataset, 2000.0)
+    for start in range(0, len(ids), chunk):
+        try:
+            yield _retrieve_dicts(client, ids[start:start + chunk], dataset,
+                                  res_default, first=(start == 0))
         except Exception as exc:
             print(f"[spectra] retrieve chunk {start} failed: {exc!r}")
-            continue
-        grecs = list(_records(got))
-        if start == 0 and grecs:
-            try:
-                print(f"[spectra] retrieve record keys: {sorted(list(grecs[0].keys()))}")
-            except Exception:
-                pass
-        for r in grecs:
-            wave = np.asarray(_rget(r, "wavelength", []), dtype=float)
-            flux = np.asarray(_rget(r, "flux", []), dtype=float)
-            ivar = np.asarray(_rget(r, "ivar", []), dtype=float)
-            if wave.size < 100 or flux.size != wave.size or ivar.size != wave.size:
-                continue
-            mask = np.asarray(_rget(r, "mask", []), dtype=float)
-            if mask.size != wave.size:
-                mask = np.zeros_like(wave)
-            sid = _rget(r, "sparcl_id") or _rget(r, "id") or str(len(out))
-            out.append({
-                "spec_id": str(sid),
-                "wave": wave, "flux": flux, "ivar": ivar, "mask": mask,
-                "redshift": float(_rget(r, "redshift", 0.0) or 0.0),
-                "resolution": res_default,
-                "meta": {
-                    "ra": float(_rget(r, "ra", np.nan) or np.nan),
-                    "dec": float(_rget(r, "dec", np.nan) or np.nan),
-                    "spectype": str(_rget(r, "spectype", "")),
-                    "data_release": str(_rget(r, "data_release", dataset)),
-                },
-            })
+
+
+def fetch_spectra(n: int = 2000, dataset: str = "DESI-DR1", spectype: str | None = None,
+                  chunk: int = 500, client=None) -> list[dict]:
+    """Retrieve up to ``n`` spectra as a single list (small n / offline tests)."""
+    out: list[dict] = []
+    for batch in iter_spectra(n, dataset, spectype, chunk=chunk, client=client):
+        out.extend(batch)
     print(f"[spectra] retrieved {len(out)} usable spectra")
     return out
 
 
-__all__ = ["fetch_spectra", "NOMINAL_RESOLUTION"]
+__all__ = ["fetch_spectra", "iter_spectra", "find_ids", "NOMINAL_RESOLUTION"]

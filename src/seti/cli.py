@@ -104,6 +104,13 @@ def _cmd_contamination_budget(args, cfg):
     print(json.dumps(budget, indent=2))
 
 
+def _cmd_spectra_run(args, cfg):
+    from .spectra.run import spectra_run
+
+    spectra_run(cfg, n=args.n, dataset=args.dataset,
+                spectype=args.spectype, snr_min=args.snr_min)
+
+
 def _cmd_paper_numbers(args, cfg):
     from .report import write_numbers_tex
 
@@ -150,6 +157,13 @@ def main(argv=None):
     p.add_argument("--max-dist-pc", type=float, default=100.0)
     p.add_argument("--limit", type=int, default=None)
     p.set_defaults(func=_cmd_science_run)
+
+    p = sub.add_parser("spectra-run")
+    p.add_argument("--n", type=int, default=2000)
+    p.add_argument("--dataset", default="DESI-EDR")
+    p.add_argument("--spectype", default=None)
+    p.add_argument("--snr-min", type=float, default=8.0)
+    p.set_defaults(func=_cmd_spectra_run)
 
     p = sub.add_parser("contamination-budget")
     p.add_argument("--seed", type=int, default=11)

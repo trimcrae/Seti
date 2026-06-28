@@ -1,0 +1,74 @@
+name: spectra-run
+
+# Blind laser-line technosignature search over public survey spectra (DESI / SDSS
+# / BOSS via SPARCL). Runs on the GitHub-hosted runner, which has the unrestricted
+# outbound network SPARCL/Astro Data Lab needs (the interactive sandbox does not).
+# Results are committed back to the branch.
+
+on:
+  workflow_dispatch:
+    inputs:
+      n:
+        description: "Number of spectra to search"
+        required: false
+        default: "5000"
+      dataset:
+        description: "SPARCL data release (DESI-EDR, SDSS-DR16, BOSS-DR16)"
+        required: false
+        default: "DESI-EDR"
+      spectype:
+        description: "Optional spectral type filter (STAR, GALAXY, QSO; blank = all)"
+        required: false
+        default: ""
+      snr_min:
+        description: "Matched-filter detection threshold"
+        required: false
+        default: "8.0"
+
+permissions:
+  contents: write
+
+jobs:
+  spectra:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,spectra]"
+      - name: Run laser-line search
+        run: |
+          ARGS="--n ${{ github.event.inputs.n }} --dataset ${{ github.event.inputs.dataset }} --snr-min ${{ github.event.inputs.snr_min }}"
+          if [ -n "${{ github.event.inputs.spectype }}" ]; then ARGS="$ARGS --spectype ${{ github.event.inputs.spectype }}"; fi
+          echo "seti spectra-run $ARGS"
+          python -m seti.cli spectra-run $ARGS
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/spectra/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "spectra-run: laser-line search (${{ github.event.inputs.dataset }}, n=${{ github.event.inputs.n }})
+
+            Generated on a GitHub-hosted runner with SPARCL network access."
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spectra-outputs
+          path: results/spectra/
+          if-no-files-found: warn

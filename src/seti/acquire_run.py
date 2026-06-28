@@ -182,6 +182,29 @@ def science_run(
                                     neighbourhood=None, known=known)
     print(f"[science] analysis-ready table: {len(table)} white dwarfs")
 
+    # --- Co-movement diagnostic on the real data (find what the cut rejects) ---
+    import numpy as np
+
+    from .contamination.comovement import propagated_offset_arcsec, pm_consistency_sigma
+    epochs = cfg.catalogs.get("models", {}).get("epochs", {})
+    ge, we = epochs.get("gaia_ref_epoch", 2016.0), epochs.get("wise_mean_epoch", 2015.4)
+    diag = table[np.isfinite(table.get("ra_wise", np.nan))].copy()
+    if len(diag):
+        off = propagated_offset_arcsec(diag, ge, we)
+        pmsig = pm_consistency_sigma(diag)
+        cm = cfg.thresholds["contamination"]["comovement"]
+        print(f"[diag] n_with_wisepos={len(diag)}; "
+              f"offset_arcsec med={np.nanmedian(off):.3f} p90={np.nanpercentile(off,90):.3f}; "
+              f"pm_sig med={np.nanmedian(pmsig):.2f} p90={np.nanpercentile(pmsig,90):.2f}")
+        print(f"[diag] fail_position(off>{cm['max_position_offset_arcsec']})="
+              f"{int((off>cm['max_position_offset_arcsec']).sum())}; "
+              f"fail_pm(sig>{cm['pm_consistency_sigma_max']})="
+              f"{int((pmsig>cm['pm_consistency_sigma_max']).sum())} of {len(diag)}")
+        ex = diag.iloc[0]
+        print(f"[diag] example: pmra={ex.get('pmra'):.1f} pmra_wise={ex.get('pmra_wise')} "
+              f"e_pmra_wise={ex.get('e_pmra_wise')} pmdec={ex.get('pmdec'):.1f} "
+              f"pmdec_wise={ex.get('pmdec_wise')}")
+
     result = run_pipeline(table, cfg=cfg)
 
     out_dir = cfg.root / "results" / "science"

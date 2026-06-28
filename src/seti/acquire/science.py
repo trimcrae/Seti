@@ -37,10 +37,17 @@ def fetch_wd_parent(max_dist_pc: float, pwd_min: float, row_limit: int = -1) -> 
     print(f"[science] WD parent raw rows: {len(raw)}; columns: {list(raw.columns)[:25]}")
 
     # Defensive column mapping (VizieR names vary across mirrors/versions).
+    def req(cands):
+        col = _find_col(raw, cands)
+        if col is None:
+            raise KeyError(f"none of {cands} found in WD catalogue columns: "
+                           f"{list(raw.columns)}")
+        return raw[col]
+
     out = pd.DataFrame()
-    out["source_id"] = raw[_find_col(raw, ["GaiaEDR3", "Gaia", "Source", "DR3Name"])]
-    out["ra"] = raw[_find_col(raw, ["RA_ICRS", "RAJ2000", "_RA", "RAdeg"])]
-    out["dec"] = raw[_find_col(raw, ["DE_ICRS", "DEJ2000", "_DE", "DEdeg"])]
+    out["source_id"] = req(["GaiaEDR3", "Gaia", "Source", "DR3Name", "WD"])
+    out["ra"] = req(["RA_ICRS", "RAJ2000", "_RA", "RAdeg", "RAdeg"])
+    out["dec"] = req(["DE_ICRS", "DEJ2000", "_DE", "DEdeg"])
     plx = _find_col(raw, ["Plx", "Plx1", "parallax"])
     eplx = _find_col(raw, ["e_Plx", "e_Plx1", "parallax_error"])
     out["parallax"] = raw[plx]
@@ -53,8 +60,7 @@ def fetch_wd_parent(max_dist_pc: float, pwd_min: float, row_limit: int = -1) -> 
         out["pmra"] = raw[pmra]
     if pmdec:
         out["pmdec"] = raw[pmdec]
-    teff = _find_col(raw, ["TeffH", "Teff", "teffH", "TeffHe"])
-    out["teff"] = raw[teff]
+    out["teff"] = req(["TeffH", "Teff", "teffH", "TeffHe", "Teff_H"])
     logg = _find_col(raw, ["loggH", "logg", "loggHe"])
     if logg:
         out["logg"] = raw[logg]
@@ -71,13 +77,16 @@ def fetch_wd_parent(max_dist_pc: float, pwd_min: float, row_limit: int = -1) -> 
 
 def _xmatch(positions: pd.DataFrame, vizier_table: str, radius_arcsec: float) -> pd.DataFrame:
     from astropy import units as u
+    from astropy.table import Table
     from astroquery.xmatch import XMatch
 
     frames = []
     step = 50_000
     for start in range(0, len(positions), step):
         sub = positions.iloc[start:start + step][["source_id", "ra", "dec"]].copy()
-        res = XMatch.query(cat1=sub, cat2=vizier_table,
+        # XMatch requires an astropy Table (not a pandas DataFrame) for the upload.
+        cat1 = Table.from_pandas(sub)
+        res = XMatch.query(cat1=cat1, cat2=vizier_table,
                            max_distance=radius_arcsec * u.arcsec,
                            colRA1="ra", colDec1="dec")
         frames.append(res.to_pandas())

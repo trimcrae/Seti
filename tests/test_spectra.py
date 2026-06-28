@@ -183,3 +183,38 @@ def test_spectra_run_end_to_end(tmp_path):
     assert "occurrence_limit" in summary
     assert summary["occurrence_limit"]["f_upper"] > summary["occurrence_limit"]["f_point"]
     assert (tmp_path / "results" / "spectra" / "summary.json").exists()
+
+
+def test_fetch_spectra_parses_dict_records():
+    from seti.spectra.acquire import fetch_spectra
+
+    class _Res:
+        def __init__(self, records):
+            self.records = records
+
+    class _MockClient:
+        all_datasets = ["DESI-EDR", "SDSS-DR16"]
+
+        def find(self, outfields=None, constraints=None, limit=None):
+            return _Res([{"id": "uuid-1", "ra": 10.0, "dec": 5.0, "redshift": 0.0,
+                          "spectype": "STAR", "data_release": "DESI-EDR"},
+                         {"id": "uuid-2", "ra": 11.0, "dec": 6.0, "redshift": 0.3,
+                          "spectype": "GALAXY", "data_release": "DESI-EDR"}])
+
+        def retrieve(self, uuid_list=None, include=None):
+            wave = np.linspace(4000, 9000, 500)
+            recs = []
+            for uid in uuid_list:
+                recs.append({"id": uid, "ra": 10.0, "dec": 5.0, "redshift": 0.0,
+                             "spectype": "STAR", "data_release": "DESI-EDR",
+                             "wavelength": wave, "flux": np.ones_like(wave),
+                             "ivar": np.full_like(wave, 100.0)})
+            return _Res(recs)
+
+    specs = fetch_spectra(n=2, dataset="DESI-EDR", client=_MockClient())
+    assert len(specs) == 2
+    s = specs[0]
+    assert s["spec_id"] == "uuid-1"
+    assert s["wave"].size == 500 and s["flux"].size == 500 and s["ivar"].size == 500
+    assert s["resolution"] == 3000.0
+    assert s["meta"]["spectype"] == "STAR"

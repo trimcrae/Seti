@@ -325,7 +325,8 @@ def multimodal_table_tex(comb: pd.DataFrame, out_path: Path) -> Path:
             ("teff", r"$T_{\rm eff}$", "{:.0f}"),
             ("n_axes", r"$n_{\rm axes}$", "{:d}"),
             ("axes_flagged", "axes", "{}"),
-            ("multimodal_score", "score", "{:.2f}")]
+            ("multimodal_score", "score", "{:.2f}"),
+            ("candidate_class", "SIMBAD class", "{}")]
     avail = [(c, h, f) for c, h, f in cols if c in cand.columns]
     lines = [r"\begin{tabular}{" + "l" * len(avail) + "}", r"\toprule",
              " & ".join(h for _, h, _ in avail) + r" \\", r"\midrule"]

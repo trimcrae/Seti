@@ -324,6 +324,11 @@ def science_run(
                              "simbad_sptype", "candidate_class"]
                  if c in mm_cand.columns]
         mm_cand[mcols].to_csv(out_dir / "multimodal_candidates.csv", index=False)
+        # Carry the SIMBAD class back onto the combined frame so the candidate
+        # table/figures can show each object's natural-explanation class.
+        for col in ("candidate_class", "simbad_id"):
+            if col in mm_cand.columns and col not in comb.columns:
+                comb = comb.merge(mm_cand[["source_id", col]], on="source_id", how="left")
         comb.to_parquet(sci_tables / "multimodal.parquet", index=False)
         try:
             from .empirical_figures import render_multimodal

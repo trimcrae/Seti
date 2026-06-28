@@ -189,29 +189,35 @@ def test_fetch_spectra_parses_dict_records():
     from seti.spectra.acquire import fetch_spectra
 
     class _Res:
-        def __init__(self, records):
+        def __init__(self, records, ids=None):
             self.records = records
+            if ids is not None:
+                self.ids = ids
 
     class _MockClient:
-        all_datasets = ["DESI-EDR", "SDSS-DR16"]
+        all_datasets = ["DESI-DR1", "SDSS-DR17"]
 
         def find(self, outfields=None, constraints=None, limit=None):
-            return _Res([{"id": "uuid-1", "ra": 10.0, "dec": 5.0, "redshift": 0.0,
-                          "spectype": "STAR", "data_release": "DESI-EDR"},
-                         {"id": "uuid-2", "ra": 11.0, "dec": 6.0, "redshift": 0.3,
-                          "spectype": "GALAXY", "data_release": "DESI-EDR"}])
+            # Real SPARCL find: records carry the outfields but NOT the id; the id
+            # list is exposed on the result object's .ids attribute.
+            return _Res(
+                [{"ra": 10.0, "dec": 5.0, "redshift": 0.0, "spectype": "STAR",
+                  "data_release": "DESI-DR1"},
+                 {"ra": 11.0, "dec": 6.0, "redshift": 0.3, "spectype": "GALAXY",
+                  "data_release": "DESI-DR1"}],
+                ids=["uuid-1", "uuid-2"])
 
         def retrieve(self, uuid_list=None, include=None):
             wave = np.linspace(4000, 9000, 500)
             recs = []
             for uid in uuid_list:
                 recs.append({"id": uid, "ra": 10.0, "dec": 5.0, "redshift": 0.0,
-                             "spectype": "STAR", "data_release": "DESI-EDR",
+                             "spectype": "STAR", "data_release": "DESI-DR1",
                              "wavelength": wave, "flux": np.ones_like(wave),
                              "ivar": np.full_like(wave, 100.0)})
             return _Res(recs)
 
-    specs = fetch_spectra(n=2, dataset="DESI-EDR", client=_MockClient())
+    specs = fetch_spectra(n=2, dataset="DESI-DR1", client=_MockClient())
     assert len(specs) == 2
     s = specs[0]
     assert s["spec_id"] == "uuid-1"

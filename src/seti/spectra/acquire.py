@@ -19,7 +19,10 @@ import numpy as np
 # Nominal resolving power per data release (arm-averaged; the LSF is refined
 # per-spectrum from the dispersion at search time).
 NOMINAL_RESOLUTION = {
+    "DESI-DR1": 3000.0,
     "DESI-EDR": 3000.0,
+    "SDSS-DR17": 2000.0,
+    "BOSS-DR17": 2000.0,
     "SDSS-DR16": 2000.0,
     "BOSS-DR16": 2000.0,
 }
@@ -47,7 +50,7 @@ def _rget(rec, key, default=None):
 
 def fetch_spectra(
     n: int = 2000,
-    dataset: str = "DESI-EDR",
+    dataset: str = "DESI-DR1",
     spectype: str | None = None,
     chunk: int = 500,
     client=None,
@@ -74,8 +77,12 @@ def fetch_spectra(
             print(f"[spectra] find record keys: {sorted(list(recs[0].keys()))}")
         except Exception:
             pass
-    ids = [_rget(r, "id") for r in recs]
-    ids = [i for i in ids if i]
+    # SPARCL exposes the discovery id list on the result object (``.ids``); the
+    # per-record dicts do not carry it.  Prefer ``.ids`` and fall back per-record.
+    ids = list(getattr(found, "ids", []) or [])
+    if not ids:
+        ids = [_rget(r, "id") or _rget(r, "sparcl_id") for r in recs]
+        ids = [i for i in ids if i]
     print(f"[spectra] SPARCL find: {len(ids)} ids from {dataset}"
           f"{'/' + spectype if spectype else ''}")
     if not ids:

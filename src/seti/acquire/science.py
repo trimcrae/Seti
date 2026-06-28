@@ -181,6 +181,69 @@ def fetch_galex(positions: pd.DataFrame, radius_arcsec: float = 3.0) -> pd.DataF
     return out
 
 
+def _first_cell(df: pd.DataFrame, names: list[str]):
+    """First-row value of the first column (case-insensitive) matching ``names``."""
+    for name in names:
+        for actual in df.columns:
+            if actual.lower() == name:
+                return df[actual].iloc[0]
+    return ""
+
+
+def fetch_simbad_context(positions: pd.DataFrame, radius_arcsec: float = 5.0) -> pd.DataFrame:
+    """Annotate a (small) candidate list with SIMBAD identity and object type.
+
+    For the multi-axis candidates we want to know immediately whether each is an
+    already-classified object --- a known debris disk, a catalogued binary, a known
+    variable --- or an unexamined source.  Queries SIMBAD by position for each
+    candidate (the list is short, so per-object queries are robust) and returns the
+    nearest match's main identifier, object type, spectral type and separation.
+    Absence of a match is itself informative (an unexamined source).
+    """
+    try:
+        from astroquery.simbad import Simbad
+    except Exception as exc:
+        print(f"[science] SIMBAD unavailable: {exc!r}")
+        return pd.DataFrame()
+
+    from astropy import units as u
+    from astropy.coordinates import SkyCoord
+
+    sim = Simbad()
+    sim.TIMEOUT = 60
+    try:
+        sim.add_votable_fields("otype", "sp", "ids")
+    except Exception:
+        pass
+
+    rows = []
+    for _, r in positions.iterrows():
+        sid = int(r["source_id"])
+        try:
+            coord = SkyCoord(float(r["ra"]) * u.deg, float(r["dec"]) * u.deg)
+            res = sim.query_region(coord, radius=radius_arcsec * u.arcsec)
+            if res is None or len(res) == 0:
+                rows.append({"source_id": sid, "simbad_id": "", "simbad_otype": "",
+                             "simbad_sptype": "", "simbad_n_match": 0})
+                continue
+            df = res.to_pandas()
+            rows.append({
+                "source_id": sid,
+                "simbad_id": str(_first_cell(df, ["main_id"])).strip(),
+                "simbad_otype": str(_first_cell(df, ["otype"])).strip(),
+                "simbad_sptype": str(_first_cell(df, ["sp_type", "sptype"])).strip(),
+                "simbad_n_match": int(len(df)),
+            })
+        except Exception as exc:
+            print(f"[science] SIMBAD {sid} skipped: {exc!r}")
+            rows.append({"source_id": sid, "simbad_id": "", "simbad_otype": "",
+                         "simbad_sptype": "", "simbad_n_match": -1})
+    out = pd.DataFrame(rows)
+    n_known = int((out["simbad_n_match"] > 0).sum()) if len(out) else 0
+    print(f"[science] SIMBAD context: {n_known}/{len(out)} candidates have a known match")
+    return out
+
+
 def fetch_known_disks(positions: pd.DataFrame, radius_arcsec: float = 2.0) -> set:
     """Gaia source_ids of WDs in published debris-disk / IR-excess control samples.
 
@@ -244,4 +307,5 @@ def fetch_known_disks(positions: pd.DataFrame, radius_arcsec: float = 2.0) -> se
     return matched
 
 
-__all__ = ["fetch_wd_parent", "fetch_catwise", "fetch_twomass", "fetch_known_disks"]
+__all__ = ["fetch_wd_parent", "fetch_catwise", "fetch_twomass", "fetch_galex",
+           "fetch_known_disks", "fetch_simbad_context"]

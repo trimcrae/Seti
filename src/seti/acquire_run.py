@@ -296,12 +296,28 @@ def science_run(
         mm_summary = indicator_summary(comb)
         mm_cand = comb[comb["multimodal_candidate"]].sort_values(
             "multimodal_score", ascending=False)
+        # Deep-dive vetting: annotate every multi-axis candidate with its SIMBAD
+        # identity/object type, so an unexamined anomaly is distinguished from an
+        # already-classified disk, binary or known variable.
+        try:
+            from .acquire.science import fetch_simbad_context
+            if len(mm_cand) and {"ra", "dec"} <= set(mm_cand.columns):
+                ctx = fetch_simbad_context(mm_cand[["source_id", "ra", "dec"]].head(50))
+                if ctx is not None and len(ctx):
+                    ccols = [c for c in ctx.columns
+                             if c == "source_id" or c not in mm_cand.columns]
+                    mm_cand = mm_cand.merge(ctx[ccols], on="source_id", how="left")
+        except Exception as exc:
+            print(f"[science] SIMBAD vetting skipped: {exc!r}")
+
         mcols = [c for c in ["source_id", "ra", "dec", "teff", "n_axes", "axes_flagged",
                              "multimodal_score", "tau", "t_dust_k", "chi_W2",
                              "score_uv_deficit", "score_energy_balance",
-                             "score_optical_variability", "score_ir_variability",
-                             "ztf_frac_rms", "neowise_w1_frac_rms",
-                             "nuv_deficit_frac"] if c in mm_cand.columns]
+                             "score_periodicity", "score_optical_variability",
+                             "score_ir_variability", "ztf_frac_rms", "ztf_ls_period_d",
+                             "ztf_ls_fap", "neowise_w1_frac_rms", "nuv_deficit_frac",
+                             "simbad_id", "simbad_otype", "simbad_sptype"]
+                 if c in mm_cand.columns]
         mm_cand[mcols].to_csv(out_dir / "multimodal_candidates.csv", index=False)
         comb.to_parquet(sci_tables / "multimodal.parquet", index=False)
         try:

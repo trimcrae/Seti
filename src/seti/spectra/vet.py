@@ -105,13 +105,19 @@ def process_spectrum(
     lsf = _lsf_sigma_pix(wave, resolution)
     lines = find_emission_lines(wave, flux, err, lsf_sigma_pix=lsf, snr_min=snr_min)
     survivors, counts = reject_lines(lines, redshift=redshift)
-    cands = [
-        LaserCandidate(spec_id=spec_id, wavelength=ln.wavelength,
-                       significance=ln.significance, width_ratio=ln.width_ratio,
-                       score=score_line(ln, len(survivors)), redshift=redshift,
-                       n_survivors=len(survivors), meta=dict(meta or {}))
-        for ln in survivors
-    ]
+    cands = []
+    for ln in survivors:
+        # Capture a compact window of the spectrum around the line so the actual
+        # candidate can be inspected/plotted later (the bulk arrays are discarded).
+        lo, hi = max(0, ln.index - 40), min(wave.size, ln.index + 41)
+        m = dict(meta or {})
+        m["win_wave"] = [round(float(w), 2) for w in wave[lo:hi]]
+        m["win_flux"] = [round(float(f), 4) for f in flux[lo:hi]]
+        m["n_lines_in_spectrum"] = len(lines)  # crowding: a laser star is otherwise quiet
+        cands.append(LaserCandidate(
+            spec_id=spec_id, wavelength=ln.wavelength, significance=ln.significance,
+            width_ratio=ln.width_ratio, score=score_line(ln, len(survivors)),
+            redshift=redshift, n_survivors=len(survivors), meta=m))
     return cands, counts
 
 

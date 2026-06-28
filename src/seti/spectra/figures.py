@@ -46,10 +46,46 @@ def fig_rejection_funnel(summary: dict, fig_dir: Path) -> Path | None:
     return out
 
 
-def render_spectra(summary: dict, fig_dir: Path) -> list[Path]:
+def fig_candidate_lines(windows: list, fig_dir: Path, n: int = 12) -> Path | None:
+    """Plot the spectral windows of the top laser candidates.
+
+    Each panel shows the flux around one surviving emission line; a compelling
+    candidate is a single sharp line on an otherwise smooth, quiet continuum in a
+    source with no emission-line classification.
+    """
+    windows = [w for w in (windows or []) if w.get("win_wave") and w.get("win_flux")]
+    if not windows:
+        return None
+    windows = windows[:n]
+    ncol = 3
+    nrow = int(np.ceil(len(windows) / ncol))
+    fig, axes = plt.subplots(nrow, ncol, figsize=(3.4 * ncol, 2.4 * nrow),
+                             squeeze=False)
+    for i, w in enumerate(windows):
+        ax = axes[i // ncol][i % ncol]
+        ax.plot(w["win_wave"], w["win_flux"], "-", c="#1f77b4", lw=0.8)
+        lam = w.get("wavelength")
+        if lam is not None:
+            ax.axvline(float(lam), color="crimson", ls="--", lw=0.8)
+        otype = (w.get("candidate_class") or w.get("simbad_otype") or "?")
+        ax.set_title(f"{str(w.get('spec_id',''))[:8]}  $\\lambda$={float(lam):.1f}\n"
+                     f"S/N={float(w.get('significance',0)):.0f}, {otype}", fontsize=6)
+        ax.tick_params(labelsize=6)
+    for j in range(len(windows), nrow * ncol):
+        axes[j // ncol][j % ncol].axis("off")
+    fig.suptitle("Top laser-line candidates (spectral windows)", fontsize=9)
+    fig.tight_layout()
+    out = fig_dir / "laser_candidate_lines.pdf"
+    fig.savefig(out)
+    plt.close(fig)
+    return out
+
+
+def render_spectra(summary: dict, fig_dir: Path, windows: list | None = None) -> list[Path]:
     fig_dir.mkdir(parents=True, exist_ok=True)
     paths: list[Path] = []
-    for job in (lambda: fig_rejection_funnel(summary, fig_dir),):
+    for job in (lambda: fig_rejection_funnel(summary, fig_dir),
+                lambda: fig_candidate_lines(windows, fig_dir)):
         try:
             out = job()
             if out is not None:

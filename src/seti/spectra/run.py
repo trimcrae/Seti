@@ -104,8 +104,30 @@ def spectra_run(
 
     out_dir = cfg.root / "results" / "spectra"
     out_dir.mkdir(parents=True, exist_ok=True)
+    windows: list = []
     if len(cand_df):
-        cand_df.sort_values("score", ascending=False).to_csv(
+        # Rank by laser-likeness: high score, and prefer lines in otherwise quiet
+        # spectra (few other emission lines) and sources with no emission-line
+        # SIMBAD class -- the regime where a real beacon would stand out.
+        nlines = cand_df.get("n_lines_in_spectrum", pd.Series(1, index=cand_df.index))
+        cand_df = cand_df.assign(
+            hunt_rank=cand_df["score"] / (1.0 + 0.15 * (nlines.fillna(1) - 1)))
+        cand_df = cand_df.sort_values("hunt_rank", ascending=False)
+        # Save the top candidates' spectral windows (so the actual lines can be
+        # examined), then drop the bulky window columns from the flat CSV.
+        top = cand_df.head(40)
+        for _, row in top.iterrows():
+            windows.append({
+                "spec_id": row.get("spec_id"), "wavelength": row.get("wavelength"),
+                "significance": row.get("significance"),
+                "width_ratio": row.get("width_ratio"),
+                "n_lines_in_spectrum": row.get("n_lines_in_spectrum"),
+                "candidate_class": row.get("candidate_class"),
+                "simbad_otype": row.get("simbad_otype"),
+                "win_wave": row.get("win_wave"), "win_flux": row.get("win_flux")})
+        (out_dir / "top_candidate_spectra.json").write_text(json.dumps(windows))
+        cand_df.drop(columns=[c for c in ("win_wave", "win_flux")
+                              if c in cand_df.columns]).to_csv(
             out_dir / "laser_candidates.csv", index=False)
 
     summary = {
@@ -123,7 +145,7 @@ def spectra_run(
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     try:
         from .figures import render_spectra
-        render_spectra(summary, out_dir / "figures")
+        render_spectra(summary, out_dir / "figures", windows=windows)
     except Exception as exc:
         print(f"[spectra] figures skipped: {exc!r}")
     print("[spectra] summary:", json.dumps({k_: summary[k_] for k_ in

@@ -72,6 +72,13 @@ def _cmd_forecast(args, cfg):
                       "n_detected_real": float(fc["n_detected_real"].iloc[0])}, indent=2))
 
 
+def _cmd_paper_numbers(args, cfg):
+    from .report import write_numbers_tex
+
+    out = write_numbers_tex(cfg)
+    print(f"wrote {out}")
+
+
 def _cmd_figures(args, cfg):
     from .figures import render_all
 
@@ -100,6 +107,9 @@ def main(argv=None):
     p = sub.add_parser("forecast")
     p.add_argument("--seed", type=int, default=11)
     p.set_defaults(func=_cmd_forecast)
+
+    p = sub.add_parser("paper-numbers")
+    p.set_defaults(func=_cmd_paper_numbers)
 
     p = sub.add_parser("figures")
     p.set_defaults(func=_cmd_figures)

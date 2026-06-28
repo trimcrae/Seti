@@ -33,8 +33,16 @@ completeness: sample
 forecast:
 	$(PY) -m seti.cli forecast
 
+paper-numbers:
+	$(PY) -m seti.cli paper-numbers
+
 figures: analyze forecast
 	$(PY) -m seti.cli figures
+
+# Build the manuscript PDF (requires a LaTeX toolchain). Regenerates numbers and
+# figures first so the paper is always in sync with the code.
+paper: paper-numbers figures
+	cd paper && latexmk -pdf main.tex
 
 test:
 	$(PY) -m pytest -q

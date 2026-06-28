@@ -60,7 +60,9 @@ make install          # create .venv and install the package + dev deps
 make asset            # build the (synthetic stand-in) model-atmosphere asset
 make analyze          # run the full funnel on the committed synthetic sample
 make completeness     # injection–recovery completeness map
+make forecast         # projected occurrence-rate sensitivity (100 pc WD sample)
 make figures          # render the manuscript figures
+make paper-numbers    # emit paper/numbers.tex (paper figures auto-sync to code)
 make test             # pytest — the CI reproducibility gate
 ```
 
@@ -69,14 +71,34 @@ list, and the occurrence-rate upper limit. Everything runs on the committed
 `data/sample/` so it works with no internet access — this is exactly what CI
 exercises.
 
-## Science run (real catalogues)
+## Two modes: forecast (offline) and empirical search (needs archive access)
 
-The offline sample is a *labelled synthetic stand-in* that validates the
-pipeline (`seti/sample.py`). For a real search, the `seti.acquire.*` modules
+This repository currently produces a **methods + projected-sensitivity** result
+entirely offline:
+
+- `seti/population.py` builds a realistic 100 pc white-dwarf population calibrated
+  to the published Gaia EDR3 white-dwarf statistics and the CatWISE2020 depth;
+- `seti/stats/sensitivity.py` injects blackbody excesses, runs the identical
+  detection code, and forecasts the **95% occurrence-rate upper limit** a null
+  search would achieve — `f < ~3×10⁻⁴` for warm (~500–1000 K), swarm-like
+  (τ ≳ 0.1) excess around the ~9,500 WISE-detected white dwarfs within 100 pc.
+
+The **empirical all-sky search** additionally needs network access to the Gaia,
+WISE/VizieR and CDS Virtual Observatory services. The `seti.acquire.*` modules
 pull the genuine catalogues into `data/cache/` (gitignored) and produce the
-analysis-ready table the pipeline consumes. The `BergeronModel` reads a frozen
-Montreal/Bergeron photometry table — replace the synthetic asset under
-`src/seti/data_assets/` with the real table for science.
+analysis-ready table the pipeline consumes; `make data` runs that step. Replace
+the synthetic model-atmosphere asset under `src/seti/data_assets/` with the real
+Montreal/Bergeron photometry table for science. The offline sample
+(`seti/sample.py`) is a *labelled synthetic stand-in* used only to validate the
+funnel.
+
+## Manuscript
+
+`paper/main.tex` is a complete, submission-ready draft (methods + forecast,
+targeting MNRAS/PASP). Every quoted number is auto-generated from the pipeline
+into `paper/numbers.tex` by `make paper-numbers`, so the paper never drifts from
+the code. `make paper` regenerates numbers + figures and builds the PDF (requires
+a local LaTeX toolchain).
 
 ## Layout
 

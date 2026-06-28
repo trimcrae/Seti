@@ -40,5 +40,8 @@ def score_anomalies(df: pd.DataFrame, thresholds: dict) -> pd.DataFrame:
     out["anomaly_score"] = score
     out["outside_dust_locus"] = ~inside
     out["swarm_like"] = tau.fillna(0.0) >= tau_swarm
-    out["is_candidate"] = (~known) & (~inside)
+    # A candidate must have a *characterised* excess (finite T_dust and tau from a
+    # positive W1 and W2 excess); W1-deficit / single-band artefacts are excluded.
+    characterised = np.isfinite(out.get("t_dust_k", np.nan)) & np.isfinite(tau)
+    out["is_candidate"] = (~known) & (~inside) & characterised
     return out

@@ -51,7 +51,10 @@ discriminate:
   # Sources OUTSIDE this locus become prioritised anomalies.
   dust_locus:
     t_dust_min_k: 600.0     # WD debris disks are warm, sublimation-limited
-    t_dust_max_k: 1700.0
+    # Upper bound at the dust sublimation temperature (~2500 K). Conservative:
+    # excess hotter than this is still treated as (carbon/silicate) dust rather
+    # than a technosignature, so hot debris disks are NOT mis-flagged as anomalies.
+    t_dust_max_k: 2500.0
     tau_min: 1.0e-4         # fractional IR luminosity L_IR / L_WD
     tau_max: 1.0e-1
   anomaly:

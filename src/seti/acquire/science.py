@@ -159,14 +159,33 @@ def fetch_twomass(positions: pd.DataFrame, radius_arcsec: float = 8.0) -> pd.Dat
 
 
 def fetch_known_disks(positions: pd.DataFrame, radius_arcsec: float = 2.0) -> set:
-    """Source_ids matching the Madurga Favieres 2024 WD IR-excess control sample."""
-    try:
-        raw = _xmatch(positions, "vizier:J/A+A/688/A168", radius_arcsec)
-        if "source_id" in raw.columns and len(raw):
-            return set(raw["source_id"].dropna().astype("int64"))
-    except Exception as exc:  # control catalogue is optional; never fatal
-        print(f"[science] known-disk X-Match skipped: {exc!r}")
-    return set()
+    """Gaia source_ids of WDs in published debris-disk / IR-excess control samples.
+
+    Fetched directly from VizieR (the catalogues are small) and matched by Gaia
+    EDR3 source_id, which the Madurga Favieres et al. (2024) sample carries. This
+    is the natural-explanation population subtracted before reporting candidates.
+    """
+    from astroquery.vizier import Vizier
+
+    known: set[int] = set()
+    for vid in ("J/A+A/688/A168",):
+        try:
+            v = Vizier(columns=["**"], row_limit=-1)
+            cats = v.get_catalogs(vid)
+            for tbl in cats:
+                df = tbl.to_pandas()
+                col = _find_col(df, ["GaiaEDR3", "Gaia", "Source", "DR3Name", "EDR3Name"])
+                if col is not None:
+                    ids = pd.to_numeric(df[col], errors="coerce").dropna().astype("int64")
+                    known.update(int(x) for x in ids)
+            print(f"[science] known-disk control {vid}: {len(known)} Gaia ids so far")
+        except Exception as exc:  # controls are optional; never fatal
+            print(f"[science] known-disk fetch {vid} skipped: {exc!r}")
+    # Restrict to ids present in our sample (the rest are irrelevant).
+    sample_ids = set(positions["source_id"].astype("int64")) if "source_id" in positions else set()
+    matched = known & sample_ids if sample_ids else known
+    print(f"[science] known disks matched in sample: {len(matched)}")
+    return matched
 
 
 __all__ = ["fetch_wd_parent", "fetch_catwise", "fetch_twomass", "fetch_known_disks"]

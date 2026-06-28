@@ -185,7 +185,7 @@ def science_run(
     # --- Co-movement diagnostic on the real data (find what the cut rejects) ---
     import numpy as np
 
-    from .contamination.comovement import propagated_offset_arcsec, pm_consistency_sigma
+    from .contamination.comovement import pm_consistency_sigma, propagated_offset_arcsec
     epochs = cfg.catalogs.get("models", {}).get("epochs", {})
     ge, we = epochs.get("gaia_ref_epoch", 2016.0), epochs.get("wise_mean_epoch", 2015.4)
     diag = table[np.isfinite(table.get("ra_wise", np.nan))].copy()

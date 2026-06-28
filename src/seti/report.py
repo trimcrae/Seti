@@ -45,11 +45,15 @@ def collect_numbers(cfg: Config) -> dict[str, str]:
         sub = vetted[vetted["label"] == label]
         return float(sub["clean"].mean()) if len(sub) else float("nan")
 
-    # --- Forecast ---
-    fc = forecast_sensitivity(cfg)
+    # --- Forecast (CatWISE2020 primary, AllWISE for comparison) ---
+    fc = forecast_sensitivity(cfg, depth_set="catwise2020")
     h = headline_limit(fc)
     n_wise = float(fc["n_detected_real"].iloc[0])
     wise_frac = n_wise / cat["n_within_100pc"]
+
+    fc_aw = forecast_sensitivity(cfg, depth_set="allwise")
+    h_aw = headline_limit(fc_aw)
+    n_wise_aw = float(fc_aw["n_detected_real"].iloc[0])
 
     # --- Co-movement contamination budget ---
     from .population import generate_population
@@ -75,6 +79,9 @@ def collect_numbers(cfg: Config) -> dict[str, str]:
         "RejectAgn": f"{100 * (1 - keep('agn')):.0f}",
         "FunnelInput": str(fc_counts.get("input", 0)),
         "FunnelClean": str(fc_counts.get("extragalactic", 0)),
+        "NeffAllWISE": f"{n_wise_aw:,.0f}".replace(",", r"\,"),
+        "fUpperAllWISE": _fmt_sci(h_aw["f_upper_95"], 1),
+        "CatwiseGain": f"{n_wise / max(n_wise_aw, 1):.2f}",
         "ChanceRate": f"{100 * budget['lambda_per_wd']:.0f}",
         "ContamBefore": f"{budget['chance_aligned_before_real']:,.0f}".replace(",", r"\,"),
         "ContamAfter": f"{budget['chance_aligned_after_real']:,.0f}".replace(",", r"\,"),

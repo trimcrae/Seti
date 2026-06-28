@@ -28,13 +28,16 @@ def forecast_sensitivity(
     t_grid=None,
     tau_grid=None,
     seed: int = 11,
+    depth_set: str = "catwise2020",
 ) -> pd.DataFrame:
     """Forecast N_eff and the 95% occurrence-rate upper limit per (T_dust, tau).
 
-    Returns a tidy DataFrame with columns:
-    ``t_dust_k, tau, recovered_fraction, n_detected_real, n_eff, f_upper_95``.
+    ``depth_set`` selects the WISE catalogue depth model ("catwise2020" or
+    "allwise"), so the forecast can be run for either survey.  Returns a tidy
+    DataFrame: ``t_dust_k, tau, recovered_fraction, n_detected_real, n_eff,
+    f_upper_95``.
     """
-    pop = generate_population(cfg, seed=seed)
+    pop = generate_population(cfg, seed=seed, depth_set=depth_set)
     detected = pop[pop["detected"]].reset_index(drop=True)
 
     # Each Monte-Carlo draw represents (N_100pc / n_draw) real white dwarfs.

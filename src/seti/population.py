@@ -74,7 +74,7 @@ def _wise_sigma_mag(mag, m5, sys_floor, snr_at_limit):
     return np.sqrt(sigma**2 + sys_floor**2)
 
 
-def generate_population(cfg, seed: int = 11) -> pd.DataFrame:
+def generate_population(cfg, seed: int = 11, depth_set: str = "catwise2020") -> pd.DataFrame:
     """Generate a magnitude-limited WD population in the analysis-ready schema.
 
     The returned frame carries the same columns the pipeline expects (Gaia
@@ -101,8 +101,8 @@ def generate_population(cfg, seed: int = 11) -> pd.DataFrame:
     g_app = _photosphere_apparent_mag(teff, radius, dist_pc, "G")
     gaia_detected = g_app <= pop["gaia_g_limit"]
 
-    # WISE photospheric apparent magnitudes + depth-based errors (CatWISE2020).
-    cw = depth["catwise2020"]
+    # WISE photospheric apparent magnitudes + depth-based errors.
+    cw = depth[depth_set]
     rows = {"teff": teff, "logg": 8.0 + np.zeros(n), "mass_msun": mass,
             "radius_rsun": radius, "dist_pc": dist_pc, "parallax": 1000.0 / dist_pc,
             "Gmag": g_app}

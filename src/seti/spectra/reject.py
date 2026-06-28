@@ -52,7 +52,17 @@ REST_EMISSION_LINES = np.array([
     5890.0, 5896.0,            # Na D
     6549.86, 6564.61, 6585.27, # [N II], H-alpha, [N II]
     6718.29, 6732.67,          # [S II]
-    5877.25, 4472.7, 6679.99,  # He I
+    5877.25, 4472.7, 6679.99,  # He I (blue/optical)
+    7067.2, 7283.4,            # He I (red)
+    # O I emission triplets (active/accreting stars)
+    7774.2, 8446.4,
+    # Ca II infrared triplet (vacuum) -- strong red emission in active stars
+    8500.36, 8544.44, 8664.52,
+    # Hydrogen Paschen series (vacuum), dense 8400-9550 A, common in emission stars
+    8392.4, 8413.3, 8440.3, 8469.6, 8504.8, 8547.7, 8600.8, 8667.4, 8752.9,
+    8865.3, 9017.8, 9231.5, 9548.6,
+    # Higher Balmer (blue) sometimes in emission
+    3890.2, 3971.2, 4341.7,
 ])
 
 
@@ -74,7 +84,7 @@ def classify_line(
     line: EmissionLine,
     redshift: float = 0.0,
     sky_tol: float = 1.5,
-    astro_tol: float = 2.0,
+    astro_tol: float = 3.0,   # generous: catalogue redshift/RV for stars is imprecise
     width_lo: float = 0.6,
     width_hi: float = 1.6,
     sky_ivar_ratio_min: float = 0.5,

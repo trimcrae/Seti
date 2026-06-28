@@ -240,7 +240,7 @@ def test_classify_sky_residual_via_ivar_depression():
     from seti.spectra.detect import EmissionLine
     # A high-S/N, LSF-width line whose peak inverse-variance is depressed relative
     # to its neighbourhood is a sky-subtraction residual, not a clean line.
-    ln = EmissionLine(index=100, wavelength=8500.0, significance=30.0,
+    ln = EmissionLine(index=100, wavelength=5500.0, significance=30.0,
                       width_ratio=1.0, amplitude=1.0, ew=1.0, n_pix=3,
                       ivar_ratio=0.2)
     assert classify_line(ln, redshift=0.0) == "sky_residual"

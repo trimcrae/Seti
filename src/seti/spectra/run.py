@@ -54,6 +54,15 @@ def spectra_run(
                   f"{len(candidates)} candidates so far")
         candidates.sort(key=lambda c: c.get("score", 0.0), reverse=True)
 
+    # Final, sample-level cut: a real laser is unique to one spectrum, so reject
+    # any wavelength that recurs across many sightlines (the OH-airglow forest and
+    # fixed-pattern instrumental residuals).
+    from .vet import reject_recurrent
+    candidates, n_recurrent = reject_recurrent(candidates)
+    if n_recurrent:
+        rejection_counts["recurrent_artifact"] = n_recurrent
+        print(f"[spectra] recurrent-wavelength cut removed {n_recurrent} candidates")
+
     res = {"candidates": candidates, "rejection_counts": rejection_counts}
     cand_df = pd.DataFrame(res["candidates"])
 

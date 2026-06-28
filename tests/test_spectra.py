@@ -262,3 +262,14 @@ def test_mask_blanks_line():
     cands, _ = process_spectrum("M", wave, flux, ivar, resolution=res_match,
                                 snr_min=8.0, mask=mask)
     assert not any(abs(c.wavelength - 5000.0) <= 2.0 for c in cands)
+
+
+def test_reject_recurrent_wavelengths():
+    from seti.spectra.vet import reject_recurrent
+    # 6 spectra share a line at 8500 (a sky residual); one unique line at 5000.
+    cands = [{"wavelength": 8500.0 + 0.1 * i, "spec_id": f"s{i}"} for i in range(6)]
+    cands.append({"wavelength": 5000.0, "spec_id": "unique"})
+    survivors, n_rej = reject_recurrent(cands, bin_width=2.0, min_spectra=3)
+    assert n_rej == 6
+    assert len(survivors) == 1
+    assert survivors[0]["spec_id"] == "unique"

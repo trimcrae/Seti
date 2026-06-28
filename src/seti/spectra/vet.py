@@ -115,6 +115,31 @@ def process_spectrum(
     return cands, counts
 
 
+def reject_recurrent(candidates: list[dict], bin_width: float = 2.0,
+                     min_spectra: int = 3) -> tuple[list[dict], int]:
+    """Reject candidate lines whose wavelength recurs across many spectra.
+
+    A monochromatic laser appears in a single spectrum; a sky-airglow or
+    instrumental residual appears at the *same observed wavelength* in many
+    unrelated sightlines.  Binning candidate wavelengths and dropping any bin
+    populated by ``>= min_spectra`` distinct spectra removes the OH-airglow forest
+    and fixed-pattern artefacts without any hand-built line atlas --- the empirical
+    analogue of requiring a line to be absent from the sky.
+    """
+    from collections import defaultdict
+    by_bin: dict[int, set] = defaultdict(set)
+    for c in candidates:
+        by_bin[round(float(c["wavelength"]) / bin_width)].add(c.get("spec_id"))
+    recurrent = {b for b, s in by_bin.items() if len(s) >= min_spectra}
+    survivors, n_rej = [], 0
+    for c in candidates:
+        if round(float(c["wavelength"]) / bin_width) in recurrent:
+            n_rej += 1
+        else:
+            survivors.append(c)
+    return survivors, n_rej
+
+
 def search_spectra(spectra: list[dict], snr_min: float = 8.0) -> dict:
     """Run the laser-line funnel over a list of spectrum dicts.
 

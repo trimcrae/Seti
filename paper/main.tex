@@ -90,8 +90,8 @@ subject of a systematic infrared-excess technosignature search. Two properties
 make them exceptionally clean targets. First, a white-dwarf photosphere is
 essentially a blackbody whose absolute SED is fixed by the effective temperature
 and radius; with a Gaia parallax and a photometric or spectroscopic $T_{\rm eff}$,
-the expected \wone/\wtwo flux is predicted to a few per cent, so an excess is
-sharply defined. Second, the only astrophysically common source of white-dwarf
+the expected \wone/\wtwo flux is predicted to $\sim$5 per cent (our adopted
+systematic floor), so an excess is sharply defined. Second, the only astrophysically common source of white-dwarf
 infrared excess is a dusty debris disk produced by tidally disrupted planetesimals
 \citep[e.g.][]{Debes2011,Dennihy2020,Xu2021,MadurgaFavieres2024,MurilloOjeda2026},
 and those disks are already catalogued. Rather than a nuisance, this single,
@@ -146,12 +146,22 @@ reporting candidates.
 
 \subsection{Photospheric SED prediction}
 For each white dwarf we predict the photospheric \wone and \wtwo flux from a
-blackbody of temperature $T_{\rm eff}$, normalised by a single solid-angle factor
-fit to the 2MASS $J/H/K_s$ (and, optionally, Gaia) anchor photometry. The
-blackbody is exact in the Rayleigh--Jeans regime that WISE samples for white
-dwarfs and is fully self-contained. We cross-check against Montreal/Bergeron
-model-atmosphere photometry; agreement of the two predictions is a robustness
-test reported per source.
+blackbody of temperature $T_{\rm eff}$, normalised by a single solid-angle factor.
+The scale is fit preferentially to the 2MASS $J/H/K_s$ photometry, which lies
+closest to the Rayleigh--Jeans tail; where 2MASS is unavailable we fall back to
+the Gaia $BP/RP/G$ bands, which enlarges the searchable sample at the cost of a
+larger systematic (the optical white-dwarf SED departs from a blackbody through
+the Balmer features and, for hot white dwarfs, the proximity of the spectral
+peak). We evaluate the full Planck function rather than the Rayleigh--Jeans
+limit, since for cool white dwarfs ($T_{\rm eff}\lesssim5000$\,K) \wone/\wtwo lie
+shortward of the pure Rayleigh--Jeans regime. A constant systematic floor
+($\sigma_{\rm sys}=0.05$\,mag, i.e.\ $\sim5\%$ in flux) absorbs the model and
+zero-point uncertainty; this sets the precision to which the photospheric
+\wone/\wtwo is predicted. Interstellar reddening is small within \SI{100}{pc}
+($E(B-V)\lesssim0.02$ for the bulk of the sample) and is dominated by
+$\sigma_{\rm sys}$, but it reddens the anchor in the same sense as a genuine
+excess and so is a recognised sub-dominant systematic. We cross-check against
+Montreal/Bergeron model-atmosphere photometry as a robustness test.
 
 \subsection{Infrared-excess statistic}
 The per-band excess significance is
@@ -360,37 +370,90 @@ the plausible range of disk kinematics.
 We applied the full pipeline to the real Gaia EDR3 white dwarfs within
 \SciDist\,pc. Starting from the Gentile Fusillo et al. (2021) catalogue
 ($P_{\rm WD}>0.9$; $\SciNparent$ white dwarfs), we cross-matched to CatWISE2020
-and 2MASS through the CDS X-Match service. Of these, those with reliable
-CatWISE photometry and a 2MASS spectral-energy-distribution anchor, surviving the
-full contamination funnel, form an effective searched sample of
-$N_{\rm eff}=\SciNsearchable$ white dwarfs. The contamination funnel is
-indispensable here: the Gaia--WISE co-movement test alone removes the large
-majority of CatWISE associations as chance-aligned background sources (the funnel
-retains $\sim4100$ of $\sim5300$ photometrically clean detections), and it is
-only meaningful once the CatWISE proper motions are placed on the same
-(\si{mas\,yr^{-1}}) scale as Gaia and propagated from the correct epoch.
+and 2MASS through the CDS X-Match service. Of these, the white dwarfs with
+reliable CatWISE photometry and a near-infrared (2MASS) or, failing that, Gaia
+BP/RP spectral-energy-distribution anchor, surviving the full contamination
+funnel, form an effective searched sample of $N_{\rm eff}=\SciNsearchable$ white
+dwarfs (Fig.~\ref{fig:emp_hr}). The contamination funnel is indispensable here
+(Fig.~\ref{fig:emp_funnel}): the Gaia--WISE co-movement test alone removes the
+large majority of CatWISE associations as chance-aligned background sources, and
+it is only meaningful once the CatWISE proper motions --- reported by VizieR in
+\si{arcsec\,yr^{-1}} --- are placed on the same (\si{mas\,yr^{-1}}) scale as Gaia
+and propagated from the correct (CatWISE) epoch; both are subtle real-data
+pitfalls that silently void the cut if mishandled.
 
 Within the searched sample, $\SciNexcess$ white dwarfs show a significant
-infrared excess. After characterising each excess with a single-temperature
-blackbody and cross-referencing against the Madurga Favieres et al. (2024)
-white-dwarf debris-disk catalogue, the warm ($T_{\rm dust}\sim1000$--$2000$\,K)
-sublimation-temperature excesses --- the natural debris-disk population --- fall
-inside the empirical dust locus and are not flagged. $\SciKcand$ sources lie
-\emph{outside} the locus, exhibiting cool ($T_{\rm dust}\sim500$\,K) infrared
-excess, and constitute the prioritised candidate list. We emphasise strongly
-that these are follow-up targets, not detections: cool white-dwarf infrared
-excess is most plausibly explained by cool circumstellar dust or an unresolved
-substellar (brown-dwarf) companion, and only optical variability or a full
-multi-band SED can break that degeneracy.
+infrared excess (Fig.~\ref{fig:emp_locus}). After characterising each excess with
+a single-temperature blackbody and cross-referencing against the Madurga
+Favieres et al. (2024) white-dwarf debris-disk catalogue, the warm
+($T_{\rm dust}\sim1000$--$2000$\,K) sublimation-temperature excesses --- the
+natural debris-disk population --- fall inside the empirical dust locus and are
+not flagged. $\SciKcand$ sources lie \emph{outside} the locus, exhibiting cool
+($T_{\rm dust}\sim500$\,K) infrared excess, and constitute the prioritised
+candidate list (Table~\ref{tab:candidates}, Fig.~\ref{fig:emp_seds}). We
+emphasise strongly that these are follow-up targets, not detections: as budgeted
+in Section~\ref{sec:discussion}, the expected number of unresolved brown-dwarf
+companions in the searched sample is comparable to or larger than $\SciKcand$, so
+the candidates are most plausibly brown-dwarf companions or cool dust, and only
+optical variability or a full multi-band SED can break the degeneracy.
 
 Treating the search as a non-detection of technosignatures, we place a 95\%
 occurrence-rate upper limit of $f < \SciFupper$ on warm, swarm-like infrared
 excess among white dwarfs within \SciDist\,pc --- to our knowledge the first
-empirical constraint of its kind for the white-dwarf population. This is
-consistent with, and complementary to, the projected sensitivity of
-Section~\ref{sec:forecast}; the empirical limit is somewhat weaker than the
-idealised forecast because only the 2MASS-anchored subset is searchable, which we
-return to below.
+empirical constraint of its kind for the white-dwarf population (no prior WD
+occurrence limit exists; Hephaistos and Zackrisson et al. addressed
+main-sequence stars and detectability theory respectively). This limit is an
+order of magnitude weaker than the idealised forecast of
+Section~\ref{sec:forecast}; the difference is the searchable fraction, which we
+decompose quantitatively in Section~\ref{sec:discussion}.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.66\linewidth]{../results/science/figures/emp_hr.pdf}
+  \caption{Gaia colour--magnitude diagram of the searched \SI{100}{pc}
+  white-dwarf sample (grey), the infrared-excess sources (blue) and the
+  cool-excess candidates (red stars). Real data.}
+  \label{fig:emp_hr}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.62\linewidth]{../results/science/figures/emp_funnel.pdf}
+  \caption{Empirical contamination funnel on the real \SI{100}{pc} data: white
+  dwarfs surviving each successive cut (log scale). The WISE-quality and
+  co-movement cuts dominate the attrition.}
+  \label{fig:emp_funnel}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.66\linewidth]{../results/science/figures/emp_excess_locus.pdf}
+  \caption{Fitted $(T_{\rm dust},\tau)$ of the infrared-excess white dwarfs
+  (blue), known debris disks (grey) and candidates (red stars), with the dust
+  locus shaded. Cool ($T_{\rm dust}\lesssim600$\,K) excesses fall outside the
+  locus. Real data; $(T_{\rm dust},\tau)$ are fit from \wone/\wtwo only and
+  carry large correlated uncertainties (Section~\ref{sec:discussion}).}
+  \label{fig:emp_locus}
+\end{figure}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.95\linewidth]{../results/science/figures/emp_candidate_seds.pdf}
+  \caption{Observed (red) versus predicted-photosphere (grey) spectral energy
+  distributions of the cool-excess candidates, showing the infrared excess in
+  \wone/\wtwo. Real data.}
+  \label{fig:emp_seds}
+\end{figure*}
+
+\begin{table}[t]
+  \centering
+  \caption{Cool-excess candidates from the empirical \SI{100}{pc} search (outside
+  the dust locus, after debris-disk subtraction). $(T_{\rm dust},\tau)$ are fit
+  from \wone/\wtwo only and are indicative. Auto-generated from the pipeline.}
+  \label{tab:candidates}
+  \small
+  \input{../results/science/figures/candidate_table.tex}
+\end{table}
 
 \section{Discussion}
 \label{sec:discussion}

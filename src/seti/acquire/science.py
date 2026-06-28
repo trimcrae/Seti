@@ -193,6 +193,12 @@ def fetch_known_disks(positions: pd.DataFrame, radius_arcsec: float = 2.0) -> se
             df = tbl.to_pandas()
             rcol = _find_col(df, ["RA_ICRS", "RAJ2000", "_RA", "RAdeg"])
             dcol = _find_col(df, ["DE_ICRS", "DEJ2000", "_DE", "DEdeg"])
+            # Use only the curated IR-excess table (it carries WISE photometry),
+            # not the catalogue's larger master/parent list which would
+            # over-subtract.
+            if _find_col(df, ["W1mag", "FinalExcess"]) is None:
+                print(f"[science] known-disk table {ti}: skipped (not the excess list)")
+                continue
             if rcol is None or dcol is None or not len(df):
                 continue
             ra = pd.to_numeric(df[rcol], errors="coerce").to_numpy()

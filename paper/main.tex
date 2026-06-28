@@ -15,7 +15,7 @@
 \input{numbers}
 
 \title{A contamination-robust search for infrared-excess technosignatures
-around white dwarfs: an empirical search of the 100 pc sample and projected
+around white dwarfs: an empirical search of the \SciDist\,pc sample and projected
 sensitivity}
 \author{[Author list]}
 \date{\today}
@@ -53,14 +53,15 @@ $\NhundredPc$ white dwarfs within \SI{100}{pc} --- of which $\sim\WiseFrac\%$
 warm ($T_{\rm dust}\sim\SI{500}{}$--$\SI{1000}{K}$), substantial
 ($\tau\gtrsim0.1$) Dyson-swarm-like excess to $f<\fUpperBest$ at 95\% confidence,
 the first such limit for the white-dwarf population. Applying the pipeline to the
-real \SI{100}{pc} sample, we search $\SciNsearchable$ white dwarfs with CatWISE2020
+real \SciDist\,pc sample, we search $\SciNsearchable$ white dwarfs with CatWISE2020
 and 2MASS or Gaia photometry, recover $\SciNexcess$ with infrared excess (the
 warm-dust debris-disk population), and place an empirical 95\% occurrence-rate
 limit of $f<\SciFupper$, with the warm debris-disk population separated by
 the dust locus and $\SciKcand$
-cool-excess candidates remaining for follow-up. The empirical limit is an order
-of magnitude weaker than the forecast, set by the near-infrared/Gaia anchoring
-fraction. We emphasise that broadband $W1$/$W2$ photometry cannot uniquely
+cool-excess candidates remaining for follow-up. The empirical limit is nearly two
+orders of magnitude weaker than the forecast, set mainly by the residual
+cool-excess candidate population that two-band photometry cannot reject. We
+emphasise that broadband $W1$/$W2$ photometry cannot uniquely
 distinguish a Dyson swarm from warm dust or an unresolved brown-dwarf companion
 --- the latter the dominant astrophysical false positive at the candidate level;
 surviving sources are prioritised follow-up targets, not detections. To move
@@ -118,7 +119,11 @@ In this paper we (i) set out the design of a contamination-robust white-dwarf
 infrared-excess search, (ii) introduce and validate a Gaia--WISE co-movement cut
 that directly targets the Hephaistos failure mode, (iii) release a fully
 reproducible open-source pipeline, (iv) forecast the occurrence-rate sensitivity,
-and (v) carry out the search empirically on the \SI{100}{pc} white-dwarf sample.
+(v) carry out the search empirically on the \SciDist\,pc white-dwarf sample, and
+(vi) extend it into a multi-modal anomaly framework that combines the infrared
+excess with independent ultraviolet-deficit, energy-balance and variability axes
+so that the most interesting candidates are those anomalous on several physically
+distinct grounds at once.
 Section~\ref{sec:data} describes the input catalogues; Section~\ref{sec:methods}
 the SED prediction, excess statistic, contamination funnel and
 dust/technosignature discriminator; Section~\ref{sec:validation} the
@@ -169,11 +174,15 @@ limit, since for cool white dwarfs ($T_{\rm eff}\lesssim5000$\,K) \wone/\wtwo li
 shortward of the pure Rayleigh--Jeans regime. A constant systematic floor
 ($\sigma_{\rm sys}=0.05$\,mag, i.e.\ $\sim5\%$ in flux) absorbs the model and
 zero-point uncertainty; this sets the precision to which the photospheric
-\wone/\wtwo is predicted. Interstellar reddening is small within \SI{100}{pc}
-($E(B-V)\lesssim0.02$ for the bulk of the sample) and is dominated by
-$\sigma_{\rm sys}$, but it reddens the anchor in the same sense as a genuine
-excess and so is a recognised sub-dominant systematic. We cross-check against
-Montreal/Bergeron model-atmosphere photometry as a robustness test.
+\wone/\wtwo is predicted. Interstellar reddening is modest over the \SciDist\,pc
+search volume --- the Local Bubble keeps $E(B-V)\lesssim0.02$ within
+\SI{100}{pc}, rising to $E(B-V)\sim0.05$ for the more distant and low-latitude
+sightlines out to \SI{200}{pc} --- and for the bulk of the sample remains
+dominated by $\sigma_{\rm sys}$; nonetheless it reddens the anchor in the same
+sense as a genuine excess, so it is a recognised sub-dominant systematic that
+grows with distance and that we flag as a limitation of the wider search. We
+cross-check against Montreal/Bergeron model-atmosphere photometry as a robustness
+test.
 
 \subsection{Infrared-excess statistic}
 \label{sec:excess}
@@ -453,7 +462,7 @@ velocity-dispersion and proper-motion distribution, which sets the co-movement
 efficacy; we have verified that the qualitative conclusions are unchanged across
 the plausible range of disk kinematics.
 
-\section{Empirical search of the 100 pc sample}
+\section{Empirical search of the \texorpdfstring{\SciDist\,pc}{200 pc} sample}
 \label{sec:empirical}
 
 We applied the full pipeline to the real Gaia EDR3 white dwarfs within
@@ -492,15 +501,16 @@ occurrence-rate upper limit of $f < \SciFupper$ on warm, swarm-like infrared
 excess among white dwarfs within \SciDist\,pc --- to our knowledge the first
 empirical constraint of its kind for the white-dwarf population (no prior WD
 occurrence limit exists; Hephaistos and Zackrisson et al. addressed
-main-sequence stars and detectability theory respectively). This limit is an
-order of magnitude weaker than the idealised forecast of
-Section~\ref{sec:forecast}; the difference is the searchable fraction, which we
-decompose quantitatively in Section~\ref{sec:discussion}.
+main-sequence stars and detectability theory respectively). This limit is nearly
+two orders of magnitude weaker than the idealised forecast of
+Section~\ref{sec:forecast}; the difference is dominated by the residual cool-excess
+candidate population rather than the searchable fraction, which we decompose
+quantitatively in Section~\ref{sec:discussion}.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.66\linewidth]{../results/science/figures/emp_hr.pdf}
-  \caption{Gaia colour--magnitude diagram of the searched \SI{100}{pc}
+  \caption{Gaia colour--magnitude diagram of the searched \SciDist\,pc
   white-dwarf sample (grey), the infrared-excess sources (blue) and the
   cool-excess candidates (red stars). Real data.}
   \label{fig:emp_hr}
@@ -509,7 +519,7 @@ decompose quantitatively in Section~\ref{sec:discussion}.
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.62\linewidth]{../results/science/figures/emp_funnel.pdf}
-  \caption{Empirical contamination funnel on the real \SI{100}{pc} data: white
+  \caption{Empirical contamination funnel on the real \SciDist\,pc data: white
   dwarfs surviving each successive cut (log scale). The WISE-quality and
   co-movement cuts dominate the attrition.}
   \label{fig:emp_funnel}
@@ -537,7 +547,7 @@ decompose quantitatively in Section~\ref{sec:discussion}.
 
 \begin{table}[t]
   \centering
-  \caption{Cool-excess candidates from the empirical \SI{100}{pc} search (outside
+  \caption{Cool-excess candidates from the empirical \SciDist\,pc search (outside
   the dust locus; $\SciKcand$ in total, the 20 highest-ranked shown).
   $(T_{\rm dust},\tau)$ are fit from \wone/\wtwo only and are indicative.
   Auto-generated from the pipeline.}
@@ -563,7 +573,16 @@ optical variability, $\SciMMirvar$ on infrared variability and $\SciMMkin$ on
 kinematics. Combining them, $\SciMMtwo$ white dwarfs are flagged on $\geq 2$
 independent axes (Fig.~\ref{fig:emp_axes}) and $\SciMMthree$ on $\geq 3$; these
 multi-axis objects (Table~\ref{tab:multimodal}) are the prioritised candidates of
-the expanded search. The energy-balance plane (Fig.~\ref{fig:emp_eb}) shows the
+the expanded search. The single object flagged on three axes at once (Gaia EDR3
+\texttt{3934459045528378368}; $T_{\rm eff}\approx8200$\,K) is the most
+distinctive: it combines a strong infrared excess ($\chi_{W2}\approx50$, fitted
+covering fraction $\tau\approx0.3$) with both an energy-balance match and
+significant mid-infrared variability in the NEOWISE epochs, the last indicating a
+\emph{changing} rather than static excess. It is exactly the kind of
+multiply-anomalous target the framework is designed to surface and heads the
+follow-up list --- subject, as always, to the caveat that each axis taken alone
+has mundane explanations (here most plausibly a variable dusty disk). The
+energy-balance plane (Fig.~\ref{fig:emp_eb}) shows the
 diagnostic directly: the great majority of infrared-excess white dwarfs add
 infrared flux without any compensating ultraviolet deficit and so fall far from
 the one-to-one reprocessing line, exactly as expected for warm dust or a
@@ -584,7 +603,7 @@ than inflates the follow-up target list.
   \centering
   \includegraphics[width=0.7\linewidth]{../results/science/figures/emp_axes_hist.pdf}
   \caption{Distribution of the number of independent anomaly axes per white dwarf
-  in the clean \SI{100}{pc} sample. Objects to the right of the dashed line
+  in the clean \SciDist\,pc sample. Objects to the right of the dashed line
   ($\geq 2$ axes) are the multi-modal candidates. Real data.}
   \label{fig:emp_axes}
 \end{figure}
@@ -603,7 +622,7 @@ than inflates the follow-up target list.
 
 \begin{table}[t]
   \centering
-  \caption{Multi-axis candidates from the \SI{100}{pc} search (flagged on $\geq 2$
+  \caption{Multi-axis candidates from the \SciDist\,pc search (flagged on $\geq 2$
   independent evidence axes), ranked by the aggregate multi-modal score; up to 20
   shown. Auto-generated from the pipeline.}
   \label{tab:multimodal}
@@ -616,21 +635,36 @@ than inflates the follow-up target list.
 
 \paragraph{The empirical limit and the forecast gap.} Our empirical 95\%
 occurrence-rate limit, $f<\SciFupper$ over $N_{\rm eff}=\SciNsearchable$ searched
-white dwarfs, is an order of magnitude weaker than the idealised forecast
-($f<\fUpperBest$; Section~\ref{sec:forecast}). The gap is almost entirely the
-searchable fraction. The forecast assumes every WISE-detected white dwarf is
-searched ($\NeffWise$), whereas in practice the photospheric anchor requires a
-2MASS near-infrared detection or, failing that, a Gaia BP/RP measurement, and the
-contamination funnel --- dominated by the co-movement and extragalactic cuts ---
-further reduces the sample to $\SciNsearchable$. Gaia-band anchoring, which we
-adopt for the 2MASS-undetected majority, carries a larger systematic than the
-near-infrared anchor because the optical white-dwarf SED departs from a blackbody
-(Balmer features, and for hot white dwarfs the optical lies near the spectral
-peak rather than on the Rayleigh--Jeans tail); we accordingly flag the anchor tier
-per source. Recovering the full forecast sensitivity requires deeper
-near-infrared photometry over the \SI{100}{pc} sample (VHS, UKIDSS, or Euclid).
-We therefore regard $f\sim10^{-3}$, not the idealised $\fUpperBest$, as the
-sensitivity of a present-day search.
+white dwarfs, is nearly two orders of magnitude weaker than the idealised forecast
+($f<\fUpperBest$; Section~\ref{sec:forecast}). It is essential to be clear about
+\emph{why}, because the dominant factor is not the one a casual reading would
+suggest. The limit is set by the $\SciKcand$ cool-excess candidates that survive
+the funnel: the occurrence bound counts each as potential signal, so
+$f\approx\SciKcand/N_{\rm eff}$. Were the search a clean null over the same
+sample, the bound would be $\approx3/N_{\rm eff}\sim4\times10^{-4}$ --- comparable to
+the forecast. In other words, the gap is dominated by \emph{residual candidate
+contamination}, not by the searchable fraction: two-band infrared excess simply
+cannot reject the cool-excess population (overwhelmingly brown-dwarf companions and
+warm dust), so they remain on the books as candidates and weaken the limit.
+
+This is precisely the problem the multi-modal framework addresses. Requiring
+coincidence across independent axes collapses the $\SciKcand$ single-axis
+candidates to $\SciMMtwo$ flagged on two or more axes and a single object on
+three; an occurrence limit conditioned on the multi-axis criterion is therefore
+far tighter, at the cost of a completeness penalty (an object must be measurable
+on, and anomalous in, more than one axis) that we do not yet model fully. A
+secondary contributor to the gap is the searchable fraction itself: the forecast
+assumes every WISE-detected white dwarf is searched ($\NeffWise$), whereas the
+photospheric anchor requires a 2MASS near-infrared detection or, failing that, a
+Gaia BP/RP measurement, and Gaia-band anchoring carries a larger systematic
+because the optical white-dwarf SED departs from a blackbody (Balmer features, and
+for hot white dwarfs the optical lies near the spectral peak rather than on the
+Rayleigh--Jeans tail); we accordingly flag the anchor tier per source. Recovering
+the full idealised sensitivity therefore needs both deeper near-infrared
+photometry to restore the anchor (VHS, UKIDSS, or Euclid) and the multi-axis
+vetting to clear the candidate list. We regard $f\sim10^{-2}$, candidate-limited,
+as the sensitivity of a present-day two-band search, and the multi-modal extension
+as the route back towards $\fUpperBest$.
 
 \paragraph{Brown-dwarf companions: the dominant astrophysical false positive.}
 The candidates are cool-excess sources, and the leading natural explanation for
@@ -662,9 +696,10 @@ shortlist follow-up.
 \paragraph{Limitations.} In summary, the present empirical search is limited by
 (i) the searchable fraction, set by the near-infrared/Gaia SED anchor; (ii) the
 larger systematic of Gaia-anchored predictions; (iii) interstellar reddening,
-which, although small within \SI{100}{pc} ($E(B-V)\lesssim0.02$ for the bulk of
-the sample), reddens the anchor and is a sub-dominant contributor to the
-systematic floor; (iv) the dust/swarm/companion degeneracy of two-band
+which, although modest over the \SciDist\,pc volume ($E(B-V)\lesssim0.02$ within
+\SI{100}{pc}, $\sim0.05$ towards the more distant sightlines), reddens the anchor,
+grows with distance and is a sub-dominant contributor to the systematic floor;
+(iv) the dust/swarm/companion degeneracy of two-band
 photometry; and (v) the residual chance-alignment and brown-dwarf contamination
 budgeted above, which is comparable to the candidate count. None of these
 preclude the limit, but they set its interpretation.
@@ -697,11 +732,13 @@ candidates, and JWST/MIRI for the rest --- directly measures the excess
 temperature and breaks the dust/swarm/companion degeneracy that two-band data
 cannot. Time-domain optical photometry from ZTF, and from Rubin/LSST once
 operational, tests for the dust-transit variability that marks an active debris
-disk. And deeper or larger samples --- Gaia DR4 white dwarfs, a \SI{200}{pc}
-sample, and deep near-infrared surveys to restore the SED anchor --- would push
-$N_{\rm eff}$ toward the forecast value and the limit toward $\sim10^{-4}$. The
-released pipeline is built to ingest each of these with no change to the core
-methodology.
+disk. And deeper or larger samples --- the full Gaia DR4 white-dwarf catalogue
+beyond the \SciDist\,pc volume searched here, together with deep near-infrared
+surveys to restore the SED anchor --- would push $N_{\rm eff}$ toward the forecast
+value; combined with the multi-axis vetting that clears the candidate list, this
+is the route from the present candidate-limited $f\sim10^{-2}$ toward the idealised
+$\sim10^{-4}$. The released pipeline is built to ingest each of these with no
+change to the core methodology.
 
 \section{Conclusions}
 \label{sec:conclusions}
@@ -711,14 +748,22 @@ is contamination-robust by construction: its novel Gaia--WISE co-movement cut
 directly addresses the background-contamination failure mode of earlier broadband
 searches, removing roughly half of all chance-aligned infrared sources overall
 and essentially all of them for the fast-moving majority. Applied to the real
-\SI{100}{pc} white-dwarf sample, the search vets $\SciNsearchable$ white dwarfs,
+\SciDist\,pc white-dwarf sample, the search vets $\SciNsearchable$ white dwarfs,
 recovers $\SciNexcess$ with infrared excess (the warm debris-disk population), and
 places an empirical 95\% occurrence-rate limit of $f<\SciFupper$ on warm,
 swarm-like excess, with $\SciKcand$ cool-excess candidates --- most likely
-brown-dwarf companions or cool dust --- remaining for follow-up. A calibrated
-forecast shows that deeper near-infrared anchoring would tighten this toward
-$\fUpperBest$. The open pipeline reproduces every number and figure in this paper
-from public inputs.
+brown-dwarf companions or cool dust --- remaining for follow-up. Because two-band
+infrared excess cannot by itself separate a technosignature from these
+confounders, we extend the search into a multi-modal anomaly framework that scores
+each white dwarf on several independent and physically distinct axes --- an
+ultraviolet deficit, an energy-balance match between ultraviolet absorption and
+infrared re-emission, and optical and mid-infrared variability --- and promotes
+only the $\SciMMtwo$ objects flagged on two or more axes at once, one of which is
+flagged on three. This converts a confounder-dominated candidate list into a
+sharply ranked one and is the principal lever for tightening the candidate-limited
+occurrence bound. A calibrated forecast shows that deeper near-infrared anchoring
+would further tighten the limit toward $\fUpperBest$. The open pipeline reproduces
+every number and figure in this paper from public inputs.
 
 \section*{Data and code availability}
 The complete, reproducible pipeline is openly available (Zenodo DOI \TODO{}). All

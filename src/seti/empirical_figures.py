@@ -91,7 +91,9 @@ def fig_funnel(summary: dict, fig_dir: Path) -> Path | None:
     ax.bar(keys, [counts[k] for k in keys], color="#4060a0")
     ax.set_yscale("log")
     ax.set_ylabel("surviving WDs (log)")
-    ax.set_title("Empirical contamination funnel (100 pc)")
+    dist = summary.get("max_dist_pc")
+    dtxt = f" ({dist:.0f} pc)" if dist else ""
+    ax.set_title(f"Empirical contamination funnel{dtxt}")
     plt.xticks(rotation=30, ha="right")
     fig.tight_layout()
     out = fig_dir / "emp_funnel.pdf"

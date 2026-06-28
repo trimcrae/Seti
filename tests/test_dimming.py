@@ -67,6 +67,28 @@ def test_too_few_epochs_returns_none():
     assert detect_dips(t, m, e) is None
 
 
+def test_hr_class_separates_giants_dwarfs_main_sequence():
+    from seti.dimming.context import absolute_g, hr_class
+
+    # A nearby F/G main-sequence star: BP-RP~0.7, M_G~4.6.
+    # parallax 20 mas (50 pc) => G - 5log10(50/10)... use absolute_g to set G.
+    plx = 20.0  # mas, d=50 pc
+    g_ms = 4.6 - 5.0 * np.log10(plx / 100.0)        # apparent G giving M_G=4.6
+    assert abs(absolute_g(g_ms, plx) - 4.6) < 1e-6
+    assert hr_class(g_ms, 0.7, plx, parallax_over_error=50.0) == "main_sequence"
+
+    # A red giant at the same colour but hugely over-luminous (M_G ~ 0).
+    g_giant = 0.0 - 5.0 * np.log10(plx / 100.0)
+    assert hr_class(g_giant, 0.7, plx, parallax_over_error=50.0) == "giant"
+
+    # A white dwarf: blue and very faint (M_G ~ 12).
+    g_wd = 12.0 - 5.0 * np.log10(plx / 100.0)
+    assert hr_class(g_wd, 0.2, plx, parallax_over_error=50.0) == "white_dwarf"
+
+    # No reliable parallax => never assert a class.
+    assert hr_class(g_ms, 0.7, plx, parallax_over_error=1.0) == "unknown"
+
+
 def test_dimming_run_end_to_end(tmp_path):
     from seti.config import load_config
     from seti.dimming.run import dimming_run
@@ -84,7 +106,10 @@ def test_dimming_run_end_to_end(tmp_path):
     for tc, depth in [(220, 0.16), (540, 0.27), (910, 0.12), (1290, 0.20)]:
         m += depth * np.exp(-0.5 * ((t - tc) / 12.0) ** 2)
     lightcurves.append({"source_id": 2002, "ra": 271.0, "dec": 31.0,
-                        "mjd": t, "mag": m, "magerr": np.full(t.size, 0.01)})
+                        "mjd": t, "mag": m, "magerr": np.full(t.size, 0.01),
+                        # main-sequence F star context: blue-ish, good parallax
+                        "phot_g_mean_mag": 12.0, "bp_rp": 0.6, "parallax": 5.0,
+                        "parallax_over_error": 40.0})
 
     cfg = load_config()
     cfg.root = tmp_path
@@ -94,6 +119,10 @@ def test_dimming_run_end_to_end(tmp_path):
     assert summary["n_candidates"] >= 1
     # The injected dipper is the top candidate.
     assert summary["top_candidates"][0]["source_id"] == 2002
+    # ...and it is flagged as resisting the mundane (main-sequence, aperiodic).
+    assert summary["top_candidates"][0]["hr_class"] == "main_sequence"
+    assert summary["top_candidates"][0]["resists_mundane"] is True
+    assert summary["n_resists_mundane"] >= 1
     assert "occurrence_limit" in summary
     assert (tmp_path / "results" / "dimming" / "summary.json").exists()
     assert (tmp_path / "results" / "dimming" / "top_dippers.json").exists()

@@ -16,6 +16,7 @@ import pandas as pd
 
 from ..config import Config, load_config
 from ..stats.upper_limit import occurrence_upper_limit
+from .context import hr_class, resists_mundane
 from .dips import detect_dips
 
 
@@ -70,11 +71,24 @@ def dimming_run(
             return
         n_searched += 1
         d = stat.as_dict()
+        # HR-diagram context: reject the dominant astrophysical mimics (R CrB /
+        # Mira giants, white dwarfs, YSO dippers) by demanding the main sequence.
+        g_mag = meta.get("phot_g_mean_mag")
+        bp_rp = meta.get("bp_rp")
+        plx = meta.get("parallax")
+        plx_snr = meta.get("parallax_over_error", 0.0)
+        hr = hr_class(float(g_mag) if g_mag is not None else float("nan"),
+                      float(bp_rp) if bp_rp is not None else float("nan"),
+                      float(plx) if plx is not None else float("nan"),
+                      float(plx_snr) if plx_snr is not None else 0.0)
+        is_cand = _is_candidate(d, depth_min, n_dips_min, asym_min, period_power_max)
         d.update({"source_id": meta.get("source_id"), "ra": meta.get("ra"),
                   "dec": meta.get("dec"),
-                  "g_mag": meta.get("phot_g_mean_mag"), "bp_rp": meta.get("bp_rp"),
-                  "is_candidate": _is_candidate(d, depth_min, n_dips_min, asym_min,
-                                                period_power_max)})
+                  "g_mag": g_mag, "bp_rp": bp_rp, "parallax": plx,
+                  "hr_class": hr,
+                  "resists_mundane": bool(is_cand and resists_mundane(
+                      hr, d.get("period_power", 1.0), period_power_max)),
+                  "is_candidate": is_cand})
         # Keep the light curve only for the strongest dippers (committed JSON).
         d["_mjd"], d["_mag"] = np.asarray(mjd, float), np.asarray(mag, float)
         rows.append(d)
@@ -96,7 +110,11 @@ def dimming_run(
                 print(f"[dimming] progress: {n_searched} scored, {nc} candidates")
 
     candidates = [r for r in rows if r["is_candidate"]]
-    candidates.sort(key=lambda r: r.get("score", 0.0), reverse=True)
+    # Rank main-sequence aperiodic dippers (those that resist the mundane
+    # giant/YSO/eclipse explanations) above the rest, then by dimming score.
+    candidates.sort(key=lambda r: (r.get("resists_mundane", False),
+                                   r.get("score", 0.0)), reverse=True)
+    n_resists = sum(1 for r in candidates if r.get("resists_mundane"))
 
     out_dir = cfg.root / "results" / "dimming"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -110,6 +128,8 @@ def dimming_run(
             "n_dips": r.get("n_dips"), "asymmetry": r.get("asymmetry"),
             "best_period_d": r.get("best_period_d"),
             "period_power": r.get("period_power"),
+            "hr_class": r.get("hr_class"),
+            "resists_mundane": r.get("resists_mundane"),
             "mjd": r["_mjd"].tolist(), "mag": r["_mag"].tolist()})
     (out_dir / "top_dippers.json").write_text(json.dumps(windows))
 
@@ -133,6 +153,7 @@ def dimming_run(
         "band": band, "variable_only": variable_only,
         "n_searched": n_searched,
         "n_candidates": k,
+        "n_resists_mundane": n_resists,
         "selection": {"depth_min": depth_min, "n_dips_min": n_dips_min,
                       "asym_min": asym_min, "period_power_max": period_power_max},
         "top_candidates": [
@@ -140,7 +161,9 @@ def dimming_run(
              "score": r.get("score"), "max_depth": r.get("max_depth"),
              "n_dips": r.get("n_dips"), "asymmetry": r.get("asymmetry"),
              "best_period_d": r.get("best_period_d"),
-             "period_power": r.get("period_power")} for r in candidates[:20]],
+             "period_power": r.get("period_power"),
+             "hr_class": r.get("hr_class"),
+             "resists_mundane": r.get("resists_mundane")} for r in candidates[:20]],
         "occurrence_limit": {
             "k_candidates": lim.k, "n_eff": lim.n_eff, "confidence": lim.confidence,
             "f_upper": lim.f_upper, "f_point": lim.f_point},
@@ -170,7 +193,7 @@ def dimming_run(
         print(f"[dimming] figures skipped: {exc!r}")
 
     print("[dimming] summary:", json.dumps({k_: summary[k_] for k_ in
-          ("n_searched", "n_candidates")}))
+          ("n_searched", "n_candidates", "n_resists_mundane")}))
     print("[dimming] occurrence limit:", json.dumps(summary["occurrence_limit"]))
     return summary
 

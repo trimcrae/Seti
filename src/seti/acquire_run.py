@@ -251,6 +251,31 @@ def science_run(
             keep = [c for c in ["source_id", "tau", "t_dust_k"] if c in sc.columns]
             vetted = vetted.merge(sc[keep], on="source_id", how="left")
         only_clean = vetted[vetted.get("clean", True).astype(bool)] if "clean" in vetted else vetted
+
+        # Shortlist-only light-curve variability (ZTF optical, NEOWISE infrared):
+        # expensive per-object queries, so run them only on the infrared-excess
+        # shortlist and attach the fractional-RMS metrics for the indicator suite.
+        try:
+            from .acquire.variability import (
+                fetch_neowise_variability,
+                fetch_ztf_variability,
+            )
+            shortlist = only_clean
+            if "has_excess" in only_clean:
+                sl = only_clean[only_clean["has_excess"].fillna(False).astype(bool)]
+                shortlist = sl if len(sl) else only_clean
+            pos = shortlist[["source_id", "ra", "dec"]].drop_duplicates("source_id")
+            print(f"[science] variability shortlist: {len(pos)} objects")
+            ztf = fetch_ztf_variability(pos)
+            neo = fetch_neowise_variability(pos)
+            for extra in (ztf, neo):
+                if extra is not None and len(extra):
+                    ecols = [c for c in extra.columns
+                             if c == "source_id" or c not in only_clean.columns]
+                    only_clean = only_clean.merge(extra[ecols], on="source_id", how="left")
+        except Exception as exc:
+            print(f"[science] shortlist variability skipped: {exc!r}")
+
         min_axes = cfg.thresholds["indicators"]["multimodal_min_axes"]
         comb = run_multimodal(only_clean, cfg.thresholds, min_axes=min_axes)
         mm_summary = indicator_summary(comb)
@@ -259,7 +284,9 @@ def science_run(
         mcols = [c for c in ["source_id", "ra", "dec", "teff", "n_axes", "axes_flagged",
                              "multimodal_score", "tau", "t_dust_k", "chi_W2",
                              "score_uv_deficit", "score_energy_balance",
-                             "score_optical_variability"] if c in mm_cand.columns]
+                             "score_optical_variability", "score_ir_variability",
+                             "ztf_frac_rms", "neowise_w1_frac_rms",
+                             "nuv_deficit_frac"] if c in mm_cand.columns]
         mm_cand[mcols].to_csv(out_dir / "multimodal_candidates.csv", index=False)
         comb.to_parquet(sci_tables / "multimodal.parquet", index=False)
         try:

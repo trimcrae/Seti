@@ -24,6 +24,11 @@ def combine_indicators(
 ) -> pd.DataFrame:
     """Attach per-axis scores/flags, an aggregate score, ``n_axes`` and the
     multi-axis candidate flag to a copy of ``df``."""
+    # The indicator results are indexed by the *original* ``df`` index, which may
+    # be non-contiguous (e.g. a boolean-filtered subset).  Align every result to
+    # ``df.index`` (identity for results computed on ``df``) and read values
+    # positionally, then relabel the output to a clean RangeIndex.  Reindexing to a
+    # freshly reset 0..N-1 index here would silently misalign scores against rows.
     out = df.copy().reset_index(drop=True)
     weights = weights or {}
 
@@ -33,8 +38,9 @@ def combine_indicators(
     axes_flagged: list[list[str]] = [[] for _ in range(len(out))]
 
     for r in results:
-        score = r.score.reindex(out.index)
-        flag = r.flag.reindex(out.index).fillna(False).astype(bool)
+        score = pd.Series(r.score.reindex(df.index).to_numpy(), index=out.index)
+        flag = pd.Series(r.flag.reindex(df.index).fillna(False).astype(bool).to_numpy(),
+                         index=out.index)
         out[f"score_{r.name}"] = score.to_numpy()
         out[f"flag_{r.name}"] = flag.to_numpy()
         n_axes = n_axes + flag.astype(int)

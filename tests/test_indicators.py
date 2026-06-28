@@ -134,6 +134,31 @@ def test_summary_counts_are_consistent():
     assert summ["n_multimodal"] == int(comb["multimodal_candidate"].sum())
 
 
+def test_non_contiguous_index_stays_aligned():
+    # Regression: on real data ``only_clean = vetted[clean]`` has a non-contiguous
+    # index.  The combiner must keep per-axis scores aligned with their rows --
+    # an object flagged on an axis must itself carry that axis' positive score.
+    df = _frame(80)
+    # Mimic a boolean filter: keep a scattered subset, preserving original index.
+    df = df[df["source_id"] % 3 != 0]
+    assert not df.index.equals(pd.RangeIndex(len(df)))  # genuinely non-contiguous
+    cfg = load_config()
+    comb = run_multimodal(df, cfg.thresholds, min_axes=2)
+    # For every axis, a flagged row must have a finite, above-threshold-ish score.
+    for axis in ("ir_excess", "uv_deficit", "energy_balance", "kinematic"):
+        fcol, scol = f"flag_{axis}", f"score_{axis}"
+        if fcol not in comb or scol not in comb:
+            continue
+        flagged = comb[comb[fcol]]
+        if len(flagged):
+            assert flagged[scol].notna().all(), f"{axis}: flagged row has NaN score"
+            assert (flagged[scol] > 0.0).all(), f"{axis}: flagged row has zero score"
+    # ir_excess flag must equal the has_excess column it derives from, row-for-row.
+    aligned = comb["flag_ir_excess"].to_numpy() == comb["has_excess"].fillna(
+        False).to_numpy()
+    assert aligned.all()
+
+
 def test_combine_handles_empty_results():
     df = _frame(10)
     comb = combine_indicators(df, [], weights={}, min_axes=2)

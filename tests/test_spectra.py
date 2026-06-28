@@ -1,0 +1,106 @@
+"""Offline tests for the laser-line detection + rejection core.
+
+We build synthetic survey-like spectra (smooth continuum + photon noise), inject
+Gaussian emission features of controlled width, and verify that an unresolved
+"laser" line is detected and survives the funnel while cosmic rays, resolved
+astrophysical lines, sky lines and redshifted nebular lines are rejected.
+"""
+
+from __future__ import annotations
+
+import numpy as np
+
+from seti.spectra.detect import estimate_continuum, find_emission_lines
+from seti.spectra.reject import classify_line, reject_lines
+
+
+def _spectrum(n=2000, dlam=1.0, lam0=4000.0, lsf_sigma_pix=1.5, snr_cont=200.0,
+              seed=0):
+    rng = np.random.default_rng(seed)
+    wave = lam0 + dlam * np.arange(n)
+    # Gently sloped + curved continuum, ~unit level.
+    cont = 1.0 + 0.3 * np.sin(np.linspace(0, 3, n)) + 0.0002 * np.arange(n)
+    err = cont / snr_cont
+    flux = cont + rng.normal(0, err)
+    return wave, flux, err, cont, lsf_sigma_pix
+
+
+def _inject(wave, flux, lam_c, amp, sigma_pix, dlam=1.0):
+    x = (wave - lam_c) / (sigma_pix * dlam)
+    return flux + amp * np.exp(-0.5 * x**2)
+
+
+def test_continuum_ignores_narrow_line():
+    wave, flux, err, cont, lsf = _spectrum()
+    flux2 = _inject(wave, flux, 5000.0, amp=0.5, sigma_pix=lsf)
+    est = estimate_continuum(flux2, window=101)
+    # The median continuum should not chase the narrow spike.
+    i = int(np.argmin(np.abs(wave - 5000.0)))
+    assert est[i] < flux2[i] - 0.2
+
+
+def test_detects_unresolved_laser_line():
+    wave, flux, err, cont, lsf = _spectrum(seed=1)
+    flux = _inject(wave, flux, 5000.0, amp=0.5, sigma_pix=lsf)  # ~50 sigma line
+    lines = find_emission_lines(wave, flux, err, lsf_sigma_pix=lsf, snr_min=8.0)
+    assert lines, "should detect the injected line"
+    best = min(lines, key=lambda ln: abs(ln.wavelength - 5000.0))
+    assert abs(best.wavelength - 5000.0) <= 2.0
+    assert best.significance > 8.0
+    assert 0.6 <= best.width_ratio <= 1.6  # unresolved
+    assert classify_line(best, redshift=0.0) is None  # survives the funnel
+
+
+def test_rejects_cosmic_ray_subpixel():
+    wave, flux, err, cont, lsf = _spectrum(seed=2)
+    flux = _inject(wave, flux, 5200.0, amp=0.8, sigma_pix=0.35 * lsf)  # too sharp
+    lines = find_emission_lines(wave, flux, err, lsf_sigma_pix=lsf, snr_min=8.0)
+    near = [ln for ln in lines if abs(ln.wavelength - 5200.0) <= 2.0]
+    assert near, "CR spike is still detected by the matched filter"
+    assert all(classify_line(ln) == "cosmic_ray" for ln in near)
+
+
+def test_rejects_resolved_astrophysical_width():
+    wave, flux, err, cont, lsf = _spectrum(seed=3)
+    flux = _inject(wave, flux, 5300.0, amp=0.4, sigma_pix=3.5 * lsf)  # broad
+    lines = find_emission_lines(wave, flux, err, lsf_sigma_pix=lsf, snr_min=8.0)
+    near = [ln for ln in lines if abs(ln.wavelength - 5300.0) <= 4.0]
+    assert near
+    assert all(classify_line(ln) == "resolved_line" for ln in near)
+
+
+def test_rejects_sky_line_wavelength():
+    wave, flux, err, cont, lsf = _spectrum(seed=4)
+    flux = _inject(wave, flux, 5577.34, amp=0.5, sigma_pix=lsf)  # [O I] sky
+    lines = find_emission_lines(wave, flux, err, lsf_sigma_pix=lsf, snr_min=8.0)
+    near = [ln for ln in lines if abs(ln.wavelength - 5577.34) <= 2.0]
+    assert near
+    assert all(classify_line(ln) == "sky_line" for ln in near)
+
+
+def test_rejects_redshifted_halpha():
+    # H-alpha 6564.6 rest, redshifted to z=0.2 -> 7877 A (clear of sky/telluric);
+    # with the source redshift known, the funnel must recognise it as astrophysical.
+    z = 0.2
+    obs = 6564.61 * (1 + z)
+    wave, flux, err, cont, lsf = _spectrum(n=4000, lam0=4000.0, seed=5)
+    flux = _inject(wave, flux, obs, amp=0.5, sigma_pix=lsf)
+    lines = find_emission_lines(wave, flux, err, lsf_sigma_pix=lsf, snr_min=8.0)
+    near = [ln for ln in lines if abs(ln.wavelength - obs) <= 2.0]
+    assert near
+    assert all(classify_line(ln, redshift=z) == "astrophysical_line" for ln in near)
+    # ...but at z=0 the same wavelength is NOT a known line -> survives.
+    assert any(classify_line(ln, redshift=0.0) is None for ln in near)
+
+
+def test_reject_lines_histogram():
+    wave, flux, err, cont, lsf = _spectrum(seed=6)
+    flux = _inject(wave, flux, 5000.0, amp=0.5, sigma_pix=lsf)        # laser
+    flux = _inject(wave, flux, 5577.34, amp=0.5, sigma_pix=lsf)        # sky
+    flux = _inject(wave, flux, 5200.0, amp=0.8, sigma_pix=0.35 * lsf)  # CR
+    lines = find_emission_lines(wave, flux, err, lsf_sigma_pix=lsf, snr_min=8.0)
+    survivors, counts = reject_lines(lines, redshift=0.0)
+    assert len(survivors) >= 1
+    assert counts.get("sky_line", 0) >= 1
+    assert counts.get("cosmic_ray", 0) >= 1
+    assert all(abs(s.wavelength - 5000.0) <= 2.0 for s in survivors)

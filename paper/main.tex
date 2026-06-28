@@ -15,7 +15,8 @@
 \input{numbers}
 
 \title{A contamination-robust search for infrared-excess technosignatures
-around white dwarfs: methodology and projected sensitivity}
+around white dwarfs: an empirical search of the 100 pc sample and projected
+sensitivity}
 \author{[Author list]}
 \date{\today}
 
@@ -51,9 +52,15 @@ $\NhundredPc$ white dwarfs within \SI{100}{pc} --- of which $\sim\WiseFrac\%$
 ($\NeffWise$) are detected by CatWISE2020 --- would constrain the occurrence of
 warm ($T_{\rm dust}\sim\SI{500}{}$--$\SI{1000}{K}$), substantial
 ($\tau\gtrsim0.1$) Dyson-swarm-like excess to $f<\fUpperBest$ at 95\% confidence,
-the first such limit for the white-dwarf population. We emphasise that broadband
-$W1$/$W2$ photometry cannot uniquely distinguish a Dyson swarm from warm dust;
-surviving sources are prioritised follow-up targets, not detections.
+the first such limit for the white-dwarf population. Applying the pipeline to the
+real \SI{100}{pc} sample, we search $\SciNsearchable$ white dwarfs with CatWISE2020
+and 2MASS photometry, recover $\SciNexcess$ with infrared excess (the warm-dust
+debris-disk population), and place an empirical 95\% occurrence-rate limit of
+$f<\SciFupper$ after debris-disk subtraction, with $\SciKcand$ cool-excess
+candidates remaining for follow-up. We emphasise that broadband $W1$/$W2$
+photometry cannot uniquely distinguish a Dyson swarm from warm dust or an
+unresolved companion; surviving sources are prioritised follow-up targets, not
+detections.
 \end{abstract}
 
 \section{Introduction}
@@ -98,13 +105,14 @@ the compact, low-luminosity white dwarf admits cooler, more compact structures
 In this paper we (i) set out the design of a contamination-robust white-dwarf
 infrared-excess search, (ii) introduce and validate a Gaia--WISE co-movement cut
 that directly targets the Hephaistos failure mode, (iii) release a fully
-reproducible open-source pipeline, and (iv) forecast the occurrence-rate
-sensitivity the search will achieve. Section~\ref{sec:data} describes the input
-catalogues; Section~\ref{sec:methods} the SED prediction, excess statistic,
-contamination funnel and dust/technosignature discriminator;
-Section~\ref{sec:validation} the injection--recovery validation;
-Section~\ref{sec:forecast} the projected sensitivity; and
-Section~\ref{sec:discussion} the interpretation, limitations and outlook.
+reproducible open-source pipeline, (iv) forecast the occurrence-rate sensitivity,
+and (v) carry out the search empirically on the \SI{100}{pc} white-dwarf sample.
+Section~\ref{sec:data} describes the input catalogues; Section~\ref{sec:methods}
+the SED prediction, excess statistic, contamination funnel and
+dust/technosignature discriminator; Section~\ref{sec:validation} the
+injection--recovery validation; Section~\ref{sec:forecast} the projected
+sensitivity; Section~\ref{sec:empirical} the empirical search and its results;
+and Section~\ref{sec:discussion} the interpretation, limitations and outlook.
 
 \section{Data}
 \label{sec:data}
@@ -344,6 +352,44 @@ injected excess. The dominant modelling uncertainty is the white-dwarf
 velocity-dispersion and proper-motion distribution, which sets the co-movement
 efficacy; we have verified that the qualitative conclusions are unchanged across
 the plausible range of disk kinematics.
+
+\section{Empirical search of the 100 pc sample}
+\label{sec:empirical}
+
+We applied the full pipeline to the real Gaia EDR3 white dwarfs within
+\SciDist\,pc. Starting from the Gentile Fusillo et al. (2021) catalogue
+($P_{\rm WD}>0.9$; $\SciNparent$ white dwarfs), we cross-matched to CatWISE2020
+and 2MASS through the CDS X-Match service. Of these, those with reliable
+CatWISE photometry and a 2MASS spectral-energy-distribution anchor, surviving the
+full contamination funnel, form an effective searched sample of
+$N_{\rm eff}=\SciNsearchable$ white dwarfs. The contamination funnel is
+indispensable here: the Gaia--WISE co-movement test alone removes the large
+majority of CatWISE associations as chance-aligned background sources (the funnel
+retains $\sim4100$ of $\sim5300$ photometrically clean detections), and it is
+only meaningful once the CatWISE proper motions are placed on the same
+(\si{mas\,yr^{-1}}) scale as Gaia and propagated from the correct epoch.
+
+Within the searched sample, $\SciNexcess$ white dwarfs show a significant
+infrared excess. After characterising each excess with a single-temperature
+blackbody and cross-referencing against the Madurga Favieres et al. (2024)
+white-dwarf debris-disk catalogue, the warm ($T_{\rm dust}\sim1000$--$2000$\,K)
+sublimation-temperature excesses --- the natural debris-disk population --- fall
+inside the empirical dust locus and are not flagged. $\SciKcand$ sources lie
+\emph{outside} the locus, exhibiting cool ($T_{\rm dust}\sim500$\,K) infrared
+excess, and constitute the prioritised candidate list. We emphasise strongly
+that these are follow-up targets, not detections: cool white-dwarf infrared
+excess is most plausibly explained by cool circumstellar dust or an unresolved
+substellar (brown-dwarf) companion, and only optical variability or a full
+multi-band SED can break that degeneracy.
+
+Treating the search as a non-detection of technosignatures, we place a 95\%
+occurrence-rate upper limit of $f < \SciFupper$ on warm, swarm-like infrared
+excess among white dwarfs within \SciDist\,pc --- to our knowledge the first
+empirical constraint of its kind for the white-dwarf population. This is
+consistent with, and complementary to, the projected sensitivity of
+Section~\ref{sec:forecast}; the empirical limit is somewhat weaker than the
+idealised forecast because only the 2MASS-anchored subset is searchable, which we
+return to below.
 
 \section{Discussion}
 \label{sec:discussion}

@@ -163,6 +163,24 @@ def fetch_twomass(positions: pd.DataFrame, radius_arcsec: float = 8.0) -> pd.Dat
     return out
 
 
+def fetch_galex(positions: pd.DataFrame, radius_arcsec: float = 3.0) -> pd.DataFrame:
+    """GALEX NUV/FUV (GUVcat_AIS, VizieR II/335) by position, for the UV-deficit
+    and energy-balance axes. AB magnitudes."""
+    raw = _xmatch(positions, "vizier:II/335/galex_ais", radius_arcsec)
+    if raw.empty:
+        return raw
+    print(f"[science] GALEX X-Match columns: {list(raw.columns)[:25]}")
+    out = _map(raw, {
+        "source_id": ["source_id"],
+        "NUVmag": ["NUVmag", "NUV"], "e_NUVmag": ["e_NUVmag", "e_NUV"],
+        "FUVmag": ["FUVmag", "FUV"], "e_FUVmag": ["e_FUVmag", "e_FUV"],
+        "angDist": ["angDist"],
+    })
+    if "angDist" in out.columns:
+        out = out.sort_values("angDist").drop_duplicates("source_id").drop(columns="angDist")
+    return out
+
+
 def fetch_known_disks(positions: pd.DataFrame, radius_arcsec: float = 2.0) -> set:
     """Gaia source_ids of WDs in published debris-disk / IR-excess control samples.
 

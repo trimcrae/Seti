@@ -159,6 +159,7 @@ def science_run(
 
     from .acquire.science import (
         fetch_catwise,
+        fetch_galex,
         fetch_twomass,
         fetch_wd_parent,
     )
@@ -174,6 +175,7 @@ def science_run(
 
     catwise = fetch_catwise(positions)
     twomass = fetch_twomass(positions)
+    galex = fetch_galex(positions)   # GALEX NUV/FUV for the UV-deficit / energy-balance axes
     # Published debris-disk catalogues (e.g. Madurga Favieres 2024) lack Gaia ids
     # and a cleanly decodable excess flag, so a reliable subtraction is deferred;
     # the warm debris-disk population is instead separated by the dust locus (warm
@@ -183,6 +185,11 @@ def science_run(
 
     table = assemble_analysis_table(parent, pd.DataFrame(), catwise, twomass,
                                     neighbourhood=None, known=known)
+    if galex is not None and len(galex):
+        gcols = [c for c in galex.columns if c == "source_id" or c not in table.columns]
+        table = table.merge(galex[gcols], on="source_id", how="left")
+        print(f"[science] GALEX matched: {int(table.get('NUVmag', pd.Series()).notna().sum())} "
+              f"with NUV")
     print(f"[science] analysis-ready table: {len(table)} white dwarfs")
 
     # --- Co-movement diagnostic on the real data (find what the cut rejects) ---
@@ -231,6 +238,39 @@ def science_run(
     except Exception as exc:
         print(f"[science] empirical figures skipped: {exc!r}")
 
+    # --- Multi-modal anomaly analysis (energy balance, UV deficit, variability,
+    #     kinematics): the additional evidence beyond infrared excess ---------
+    mm_summary = {}
+    try:
+        from .indicators.run import indicator_summary, run_multimodal
+
+        vetted = pd.read_parquet(sci_tables / "vetted.parquet")
+        scored_p = sci_tables / "excess_scored.parquet"
+        if scored_p.exists():
+            sc = pd.read_parquet(scored_p)
+            keep = [c for c in ["source_id", "tau", "t_dust_k"] if c in sc.columns]
+            vetted = vetted.merge(sc[keep], on="source_id", how="left")
+        only_clean = vetted[vetted.get("clean", True).astype(bool)] if "clean" in vetted else vetted
+        min_axes = cfg.thresholds["indicators"]["multimodal_min_axes"]
+        comb = run_multimodal(only_clean, cfg.thresholds, min_axes=min_axes)
+        mm_summary = indicator_summary(comb)
+        mm_cand = comb[comb["multimodal_candidate"]].sort_values(
+            "multimodal_score", ascending=False)
+        mcols = [c for c in ["source_id", "ra", "dec", "teff", "n_axes", "axes_flagged",
+                             "multimodal_score", "tau", "t_dust_k", "chi_W2",
+                             "score_uv_deficit", "score_energy_balance",
+                             "score_optical_variability"] if c in mm_cand.columns]
+        mm_cand[mcols].to_csv(out_dir / "multimodal_candidates.csv", index=False)
+        comb.to_parquet(sci_tables / "multimodal.parquet", index=False)
+        try:
+            from .empirical_figures import render_multimodal
+            render_multimodal(cfg, comb, out_dir / "figures")
+        except Exception as exc:
+            print(f"[science] multimodal figures skipped: {exc!r}")
+        print("[science] multimodal:", json.dumps(mm_summary))
+    except Exception as exc:
+        print(f"[science] multimodal analysis skipped: {exc!r}")
+
     summary = {
         "max_dist_pc": max_dist_pc,
         "n_parent": int(len(table)),
@@ -238,6 +278,7 @@ def science_run(
         "funnel_counts": result.funnel_counts,
         "occurrence_limit": result.occurrence_limit,
         "n_known_disks_matched": len(known_ids),
+        "multimodal": mm_summary,
     }
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     print("[science] summary:", json.dumps(summary["counts"]))

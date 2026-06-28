@@ -61,6 +61,24 @@ discriminate:
     # A swarm-like excess approaches order-unity covering fraction.
     tau_swarm_flag: 0.3
 
+# Multi-modal anomaly indicators (independent evidence axes). An object is an
+# "exciting" candidate when flagged on >= multimodal_min_axes axes at once.
+indicators:
+  multimodal_min_axes: 2
+  uv_deficit:
+    sigma_min: 3.0          # GALEX UV flux below photosphere by this many sigma
+    sys_frac: 0.30          # systematic on the UV photosphere extrapolation
+  energy_balance:
+    ratio_lo: 0.3           # UV-absorbed / IR-reemitted fractional luminosity
+    ratio_hi: 3.0
+    min_tau: 5.0e-3
+  optical_variability:
+    ztf_frac_rms_min: 0.03  # fractional RMS of the ZTF light curve
+  ir_variability:
+    neowise_frac_rms_min: 0.05
+  kinematic:
+    vtan_km_s_hi: 200.0
+
 stats:
   upper_limit_confidence: 0.95   # Poisson/binomial confidence for occurrence-rate limit
   injection:

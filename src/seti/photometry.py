@@ -10,8 +10,12 @@ from __future__ import annotations
 
 import numpy as np
 
-# Effective wavelength (micron) and Vega zero-point flux density (Jy) per band.
+# Effective wavelength (micron) and zero-point flux density (Jy) per band.
+# GALEX FUV/NUV are on the AB system (zp = 3631 Jy); the rest are Vega.
 BANDS: dict[str, dict[str, float]] = {
+    # GALEX (AB system)
+    "FUV": {"lambda_um": 0.1542, "zp_jy": 3631.0},
+    "NUV": {"lambda_um": 0.2274, "zp_jy": 3631.0},
     # Gaia DR3 (AB-ish, but treated via its own zero points)
     "G":  {"lambda_um": 0.6730, "zp_jy": 3228.75},
     "BP": {"lambda_um": 0.5320, "zp_jy": 3552.01},

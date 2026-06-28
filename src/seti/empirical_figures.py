@@ -175,6 +175,129 @@ def candidate_table_tex(candidates: pd.DataFrame, out_path: Path) -> Path:
     return out_path
 
 
+def fig_energy_balance(comb: pd.DataFrame, fig_dir: Path) -> Path | None:
+    """UV-absorbed fraction vs IR-reemitted fraction (the energy-balance plane).
+
+    The diagonal is the thermodynamic Dyson signature: light removed from the UV
+    is re-radiated in the infrared, so a structure that intercepts starlight lands
+    near unity slope.  Natural confounders (warm dust, brown-dwarf companions) add
+    infrared flux without removing ultraviolet flux and so fall to the lower right.
+    """
+    if "nuv_deficit_frac" not in comb and "score_energy_balance" not in comb:
+        return None
+    tau = comb.get("tau", pd.Series(np.nan, index=comb.index)).to_numpy(dtype=float)
+    nuv = comb.get("nuv_deficit_frac", pd.Series(np.nan, index=comb.index)).to_numpy(dtype=float)
+    ok = np.isfinite(tau) & np.isfinite(nuv) & (tau > 0) & (nuv > 0)
+    if ok.sum() == 0:
+        return None
+    fig, ax = plt.subplots(figsize=(5.0, 4.4))
+    eb = comb.get("flag_energy_balance", pd.Series(False, index=comb.index)).to_numpy(dtype=bool)
+    mm = comb.get("multimodal_candidate", pd.Series(False, index=comb.index)).to_numpy(dtype=bool)
+    base = ok & ~eb & ~mm
+    ax.scatter(tau[base], nuv[base], s=14, c="#1f77b4", alpha=0.7, label="IR-excess WD")
+    ax.scatter(tau[ok & eb & ~mm], nuv[ok & eb & ~mm], s=40, c="#ff7f0e",
+               label="energy-balanced")
+    ax.scatter(tau[ok & mm], nuv[ok & mm], s=110, marker="*", c="crimson",
+               label="multi-axis candidate")
+    lim = [min(np.nanmin(tau[ok]), np.nanmin(nuv[ok])) * 0.5,
+           max(np.nanmax(tau[ok]), np.nanmax(nuv[ok])) * 2.0]
+    ax.plot(lim, lim, "k--", lw=0.8, alpha=0.6, label="1:1 (perfect balance)")
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlim(lim)
+    ax.set_ylim(lim)
+    ax.set_xlabel(r"IR re-emitted fraction $\tau_{\rm IR}$")
+    ax.set_ylabel(r"UV-absorbed fraction $f_{\rm NUV}$")
+    ax.set_title("Energy-balance plane")
+    ax.legend(fontsize=7, loc="lower right")
+    fig.tight_layout()
+    out = fig_dir / "emp_energy_balance.pdf"
+    fig.savefig(out)
+    plt.close(fig)
+    return out
+
+
+def fig_axes_histogram(comb: pd.DataFrame, fig_dir: Path) -> Path | None:
+    """Distribution of the number of independent anomaly axes per object."""
+    if "n_axes" not in comb:
+        return None
+    n_axes = comb["n_axes"].to_numpy(dtype=float)
+    n_axes = n_axes[np.isfinite(n_axes)]
+    if n_axes.size == 0:
+        return None
+    fig, ax = plt.subplots(figsize=(4.8, 3.4))
+    kmax = int(np.nanmax(n_axes))
+    bins = np.arange(-0.5, kmax + 1.5, 1.0)
+    ax.hist(n_axes, bins=bins, color="#4060a0", edgecolor="white")
+    ax.axvline(1.5, color="crimson", ls="--", lw=1.0, label=r"$\geq 2$ axes (candidate)")
+    ax.set_yscale("log")
+    ax.set_xlabel("number of independent anomaly axes")
+    ax.set_ylabel("white dwarfs (log)")
+    ax.set_title("Multi-axis anomaly coincidence")
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    out = fig_dir / "emp_axes_hist.pdf"
+    fig.savefig(out)
+    plt.close(fig)
+    return out
+
+
+def multimodal_table_tex(comb: pd.DataFrame, out_path: Path) -> Path:
+    """LaTeX tabular of the multi-axis (>=2) candidates, ranked by score."""
+    cand = comb[comb.get("multimodal_candidate", False).astype(bool)].copy()
+    if "multimodal_score" in cand.columns:
+        cand = cand.sort_values("multimodal_score", ascending=False)
+    cand = cand.head(20)
+    cols = [("source_id", "Gaia EDR3 source\\_id", "{:d}"),
+            ("teff", r"$T_{\rm eff}$", "{:.0f}"),
+            ("n_axes", r"$n_{\rm axes}$", "{:d}"),
+            ("axes_flagged", "axes", "{}"),
+            ("multimodal_score", "score", "{:.2f}")]
+    avail = [(c, h, f) for c, h, f in cols if c in cand.columns]
+    lines = [r"\begin{tabular}{" + "l" * len(avail) + "}", r"\toprule",
+             " & ".join(h for _, h, _ in avail) + r" \\", r"\midrule"]
+    for _, row in cand.iterrows():
+        cells = []
+        for c, _, f in avail:
+            v = row[c]
+            try:
+                if f == "{}":
+                    cells.append(str(v).replace("_", r"\_"))
+                elif "d}" in f:
+                    cells.append(f.format(int(v)))
+                else:
+                    cells.append(f.format(float(v)))
+            except (ValueError, TypeError):
+                cells.append("--")
+        lines.append(" & ".join(cells) + r" \\")
+    if len(cand) == 0:
+        lines.append(r"\multicolumn{" + str(len(avail)) +
+                     r"}{c}{\emph{no multi-axis candidates}} \\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    out_path.write_text("\n".join(lines) + "\n")
+    return out_path
+
+
+def render_multimodal(cfg, comb: pd.DataFrame, fig_dir: Path) -> list[Path]:
+    """Render the multi-modal figures + candidate table from the combined frame."""
+    fig_dir.mkdir(parents=True, exist_ok=True)
+    paths: list[Path] = []
+    jobs = [
+        lambda: fig_energy_balance(comb, fig_dir),
+        lambda: fig_axes_histogram(comb, fig_dir),
+        lambda: multimodal_table_tex(comb, fig_dir / "multimodal_table.tex"),
+    ]
+    for job in jobs:
+        try:
+            out = job()
+            if out is not None:
+                paths.append(out)
+                print(f"[science] wrote {out}")
+        except Exception as exc:  # never abort the run on a figure error
+            print(f"[science] multimodal figure skipped: {exc!r}")
+    return paths
+
+
 def render_empirical(cfg, tables_dir: Path, fig_dir: Path) -> list[Path]:
     """Render all empirical figures + candidate table from committed tables."""
     import json

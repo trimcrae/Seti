@@ -170,30 +170,42 @@ def fetch_known_disks(positions: pd.DataFrame, radius_arcsec: float = 2.0) -> se
     EDR3 source_id, which the Madurga Favieres et al. (2024) sample carries. This
     is the natural-explanation population subtracted before reporting candidates.
     """
+    import numpy as np
+    from astropy import units as u
+    from astropy.coordinates import SkyCoord
     from astroquery.vizier import Vizier
 
     matched: set[int] = set()
-    sample_ids = set(positions["source_id"].astype("int64")) if "source_id" in positions else set()
+    if not ({"ra", "dec", "source_id"} <= set(positions.columns)):
+        return matched
+    c_sample = SkyCoord(positions["ra"].to_numpy() * u.deg,
+                        positions["dec"].to_numpy() * u.deg)
+    sample_sid = positions["source_id"].astype("int64").to_numpy()
 
-    # Match by Gaia EDR3 source_id only (robust; avoids over-matching a control
-    # catalogue's parent table by position). Madurga Favieres (2024) carries Gaia
-    # ids; we pick the table whose id column overlaps our sample.
+    # The Madurga Favieres (2024) catalogue (J/A+A/688/A168) is a clean list of
+    # WD IR-excess sources with RA/Dec but no Gaia id, so we match by position.
+    # (We deliberately do NOT use the WIRED parent catalogue, whose table is the
+    # full SDSS WD list and would over-subtract.)
     try:
         v = Vizier(columns=["**"], row_limit=-1)
         cats = v.get_catalogs("J/A+A/688/A168")
         for ti, tbl in enumerate(cats):
             df = tbl.to_pandas()
-            col = _find_col(df, ["GaiaEDR3", "GaiaDR3", "Gaia", "Source", "DR3Name",
-                                 "EDR3Name", "DR3", "GaiaID"])
-            if col is None:
-                print(f"[science] known-disk table {ti}: no Gaia-id column in "
-                      f"{list(df.columns)[:20]}")
+            rcol = _find_col(df, ["RA_ICRS", "RAJ2000", "_RA", "RAdeg"])
+            dcol = _find_col(df, ["DE_ICRS", "DEJ2000", "_DE", "DEdeg"])
+            if rcol is None or dcol is None or not len(df):
                 continue
-            ids = set(int(x) for x in pd.to_numeric(df[col], errors="coerce").dropna().astype("int64"))
-            hit = ids & sample_ids
-            matched |= hit
-            print(f"[science] known-disk table {ti} ({col}): {len(ids)} ids, "
-                  f"{len(hit)} in sample")
+            ra = pd.to_numeric(df[rcol], errors="coerce").to_numpy()
+            de = pd.to_numeric(df[dcol], errors="coerce").to_numpy()
+            good = np.isfinite(ra) & np.isfinite(de)
+            if not good.any():
+                continue
+            c_ctrl = SkyCoord(ra[good] * u.deg, de[good] * u.deg)
+            _, sep, _ = c_sample.match_to_catalog_sky(c_ctrl)
+            hit = sep.arcsec <= radius_arcsec
+            matched.update(int(s) for s in sample_sid[hit])
+            print(f"[science] known-disk table {ti}: {int(good.sum())} control WDs, "
+                  f"{int(hit.sum())} matched in sample")
     except Exception as exc:  # controls are optional; never fatal
         print(f"[science] known-disk fetch skipped: {exc!r}")
 

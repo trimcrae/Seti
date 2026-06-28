@@ -88,6 +88,7 @@ def classify_line(
     width_lo: float = 0.6,
     width_hi: float = 1.6,
     sky_ivar_ratio_min: float = 0.5,
+    fwhm_min: float = 2.0,
 ) -> str | None:
     """Return a rejection reason, or ``None`` if the line survives as a candidate.
 
@@ -105,6 +106,14 @@ def classify_line(
     # excursion is a cosmic ray or a bad-pixel-edge artefact.
     if getattr(line, "n_pix", 2) < 2:
         return "single_pixel"
+    # Resolution test on the line *profile*: a real line (Nyquist-sampled at the
+    # LSF) has its excess spread over >= 2 pixels at half-maximum, whereas a
+    # cosmic-ray spike collapses to a single pixel and falls below half-peak on
+    # both immediate neighbours.  This catches sharp spikes whose noisy local
+    # second moment fools ``width_ratio`` into looking marginally resolved.
+    fwhm = getattr(line, "fwhm_pix", fwhm_min)
+    if np.isfinite(fwhm) and fwhm < fwhm_min:
+        return "unresolved_spike"
     iv = getattr(line, "ivar_ratio", 1.0)
     if np.isfinite(iv) and iv < sky_ivar_ratio_min:
         return "sky_residual"

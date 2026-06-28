@@ -264,6 +264,30 @@ def test_mask_blanks_line():
     assert not any(abs(c.wavelength - 5000.0) <= 2.0 for c in cands)
 
 
+def test_rejects_single_pixel_spike_by_fwhm():
+    from seti.spectra.detect import EmissionLine, _fwhm_pixels
+
+    # A line whose profile collapses to a single pixel at half-maximum is an
+    # unresolved spike, even when its noisy second-moment width_ratio looks
+    # marginally resolved (~1.0).
+    ln = EmissionLine(index=100, wavelength=5500.0, significance=30.0,
+                      width_ratio=1.0, amplitude=1.0, ew=1.0, n_pix=2,
+                      ivar_ratio=1.0, fwhm_pix=1.0)
+    assert classify_line(ln, redshift=0.0) == "unresolved_spike"
+    # A properly resolved profile (FWHM >= 2 px) survives.
+    ln.fwhm_pix = 2.0
+    assert classify_line(ln, redshift=0.0) is None
+
+    # _fwhm_pixels measures the half-max width directly: a lone spike gives 1,
+    # a 3-pixel-wide plateau gives 3.
+    resid = np.zeros(21)
+    resid[10] = 1.0
+    assert _fwhm_pixels(resid, 10) == 1.0
+    resid = np.zeros(21)
+    resid[9:12] = 1.0
+    assert _fwhm_pixels(resid, 10) == 3.0
+
+
 def test_reject_recurrent_wavelengths():
     from seti.spectra.vet import reject_recurrent
     # 6 spectra share a line at 8500 (a sky residual); one unique line at 5000.

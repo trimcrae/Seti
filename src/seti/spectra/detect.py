@@ -28,6 +28,7 @@ class EmissionLine:
     ew: float             # equivalent width (same units as wavelength)
     n_pix: int            # number of contiguous pixels above the per-pixel threshold
     ivar_ratio: float = 1.0  # peak inverse-variance / local median (sky-residual flag)
+    fwhm_pix: float = 2.0    # contiguous pixels spanning half the peak excess (FWHM)
 
     def as_dict(self) -> dict:
         return {
@@ -39,6 +40,7 @@ class EmissionLine:
             "ew": float(self.ew),
             "n_pix": int(self.n_pix),
             "ivar_ratio": float(self.ivar_ratio),
+            "fwhm_pix": float(self.fwhm_pix),
         }
 
 
@@ -101,6 +103,30 @@ def _fit_width_ratio(resid: np.ndarray, err: np.ndarray, i: int,
     return float(width_ratio), n_pix
 
 
+def _fwhm_pixels(resid: np.ndarray, i: int) -> float:
+    """Full width (in pixels) of the residual peak at half its maximum excess.
+
+    A real line at the instrumental LSF is Nyquist-sampled and spans >= 2 pixels
+    above half-peak; a cosmic-ray hit deposits charge in essentially one pixel and
+    drops below half-peak immediately on both sides, giving FWHM ~ 1.  This is a
+    robust resolution test that the noise-weighted second moment (``width_ratio``)
+    can miss when window noise inflates the moment of a single-pixel spike.
+    """
+    n = resid.size
+    peak = resid[i]
+    if not np.isfinite(peak) or peak <= 0:
+        return 0.0
+    half = 0.5 * peak
+    # Walk left and right from the peak while the residual stays above half-peak.
+    left = i
+    while left - 1 >= 0 and np.isfinite(resid[left - 1]) and resid[left - 1] >= half:
+        left -= 1
+    right = i
+    while right + 1 < n and np.isfinite(resid[right + 1]) and resid[right + 1] >= half:
+        right += 1
+    return float(right - left + 1)
+
+
 def find_emission_lines(
     wavelength: np.ndarray,
     flux: np.ndarray,
@@ -159,10 +185,11 @@ def find_emission_lines(
             finite_iv = ivar_local[np.isfinite(ivar_local)]
             med_iv = float(np.nanmedian(finite_iv)) if finite_iv.size else 0.0
             ivar_ratio = float(ivar_peak / med_iv) if med_iv > 0 else 1.0
+            fwhm = _fwhm_pixels(resid, j)
             lines.append(EmissionLine(index=j, wavelength=float(wave[j]),
                                       significance=float(mf[j]), width_ratio=wr,
                                       amplitude=amp, ew=ew, n_pix=npix,
-                                      ivar_ratio=ivar_ratio))
+                                      ivar_ratio=ivar_ratio, fwhm_pix=fwhm))
             i = hi  # skip past this peak to enforce separation
         else:
             i += 1
@@ -170,4 +197,4 @@ def find_emission_lines(
 
 
 __all__ = ["EmissionLine", "estimate_continuum", "find_emission_lines",
-           "_gaussian_kernel", "_matched_filter"]
+           "_gaussian_kernel", "_matched_filter", "_fwhm_pixels"]

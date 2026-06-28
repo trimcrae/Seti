@@ -170,50 +170,33 @@ def fetch_known_disks(positions: pd.DataFrame, radius_arcsec: float = 2.0) -> se
     EDR3 source_id, which the Madurga Favieres et al. (2024) sample carries. This
     is the natural-explanation population subtracted before reporting candidates.
     """
-    import numpy as np
-    from astropy import units as u
-    from astropy.coordinates import SkyCoord
     from astroquery.vizier import Vizier
 
-    known: set[int] = set()
-    matched_ids: set[int] = set()
+    matched: set[int] = set()
     sample_ids = set(positions["source_id"].astype("int64")) if "source_id" in positions else set()
-    have_pos = {"ra", "dec"} <= set(positions.columns)
-    if have_pos:
-        c_sample = SkyCoord(positions["ra"].to_numpy() * u.deg,
-                            positions["dec"].to_numpy() * u.deg)
-        sample_sid = positions["source_id"].astype("int64").to_numpy()
 
-    for vid in ("J/A+A/688/A168", "J/ApJS/197/38"):
-        try:
-            v = Vizier(columns=["**"], row_limit=-1)
-            cats = v.get_catalogs(vid)
-            for tbl in cats:
-                df = tbl.to_pandas()
-                # (a) Gaia source_id match.
-                col = _find_col(df, ["GaiaEDR3", "Gaia", "Source", "DR3Name", "EDR3Name"])
-                if col is not None:
-                    ids = pd.to_numeric(df[col], errors="coerce").dropna().astype("int64")
-                    known.update(int(x) for x in ids)
-                    matched_ids.update(set(int(x) for x in ids) & sample_ids)
-                # (b) Positional match (catalogues without Gaia ids, e.g. Debes).
-                rcol = _find_col(df, ["RA_ICRS", "RAJ2000", "_RA", "RAdeg", "RAJ2000"])
-                dcol = _find_col(df, ["DE_ICRS", "DEJ2000", "_DE", "DEdeg"])
-                if have_pos and rcol is not None and dcol is not None and len(df):
-                    ra = pd.to_numeric(df[rcol], errors="coerce").to_numpy()
-                    de = pd.to_numeric(df[dcol], errors="coerce").to_numpy()
-                    good = np.isfinite(ra) & np.isfinite(de)
-                    if good.any():
-                        c_ctrl = SkyCoord(ra[good] * u.deg, de[good] * u.deg)
-                        idx, sep, _ = c_sample.match_to_catalog_sky(c_ctrl)
-                        hit = sep.arcsec <= radius_arcsec
-                        matched_ids.update(int(s) for s in sample_sid[hit])
-            print(f"[science] known-disk control {vid}: {len(known)} ids fetched, "
-                  f"{len(matched_ids)} matched in sample so far")
-        except Exception as exc:  # controls are optional; never fatal
-            print(f"[science] known-disk fetch {vid} skipped: {exc!r}")
+    # Match by Gaia EDR3 source_id only (robust; avoids over-matching a control
+    # catalogue's parent table by position). Madurga Favieres (2024) carries Gaia
+    # ids; we pick the table whose id column overlaps our sample.
+    try:
+        v = Vizier(columns=["**"], row_limit=-1)
+        cats = v.get_catalogs("J/A+A/688/A168")
+        for ti, tbl in enumerate(cats):
+            df = tbl.to_pandas()
+            col = _find_col(df, ["GaiaEDR3", "GaiaDR3", "Gaia", "Source", "DR3Name",
+                                 "EDR3Name", "DR3", "GaiaID"])
+            if col is None:
+                print(f"[science] known-disk table {ti}: no Gaia-id column in "
+                      f"{list(df.columns)[:20]}")
+                continue
+            ids = set(int(x) for x in pd.to_numeric(df[col], errors="coerce").dropna().astype("int64"))
+            hit = ids & sample_ids
+            matched |= hit
+            print(f"[science] known-disk table {ti} ({col}): {len(ids)} ids, "
+                  f"{len(hit)} in sample")
+    except Exception as exc:  # controls are optional; never fatal
+        print(f"[science] known-disk fetch skipped: {exc!r}")
 
-    matched = (known & sample_ids) | matched_ids
     print(f"[science] known disks matched in sample: {len(matched)}")
     return matched
 

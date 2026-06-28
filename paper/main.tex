@@ -303,7 +303,12 @@ the full sample and a noise-corrected fractional RMS from ZTF
 day-to-month period, so a statistically significant Lomb--Scargle period in its
 ZTF light curve --- as a structure on a closed orbit would impose --- is a sharp,
 specific anomaly. We flag periods with a low false-alarm probability and a
-non-negligible amplitude, recording the period for follow-up.
+non-negligible amplitude, recording the period for follow-up. The leading natural
+mimic is an eclipsing white-dwarf--M-dwarf binary, which would show both a period
+\emph{and} an infrared excess from the companion; the SIMBAD cross-match
+(below) and, decisively, the energy-balance axis --- a cool companion adds infrared
+flux without imposing a matched ultraviolet deficit --- are what separate such a
+binary from a genuine reprocessing signature.
 \item \textbf{Infrared variability} --- changing waste heat (construction,
 eclipses, or a transiting configuration), measured as the fractional RMS of the
 per-visit NEOWISE \citep{Mainzer2014} \wone\ photometry for the shortlist.
@@ -322,6 +327,14 @@ aggregate score and the kinematic axis least, reflecting how specific each is to
 the reprocessing hypothesis. Every threshold is config-driven
 (Table~\ref{tab:thresholds}) so the entire multi-modal ranking is reproducible
 and re-tunable from a single file.
+
+Finally, each multi-axis candidate is cross-matched against SIMBAD to record its
+catalogued identity, object type and spectral type. This deep-dive vetting
+distinguishes an unexamined source from an already-classified debris disk,
+spectroscopic binary or known variable, and is the step that converts a ranked
+list into one that can be assessed object by object; the absence of any SIMBAD
+counterpart is itself recorded, as an unexamined source is the more interesting
+outcome.
 
 \section{Pipeline validation}
 \label{sec:validation}

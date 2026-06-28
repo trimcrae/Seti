@@ -77,17 +77,23 @@ def classify_line(
     astro_tol: float = 2.0,
     width_lo: float = 0.6,
     width_hi: float = 1.6,
+    sky_ivar_ratio_min: float = 0.5,
 ) -> str | None:
     """Return a rejection reason, or ``None`` if the line survives as a candidate.
 
     Width gates use the LSF-relative ``width_ratio``: below ``width_lo`` is a
     cosmic ray (sub-LSF), above ``width_hi`` is a resolved astrophysical line.
+    The ``ivar_ratio`` gate rejects sky-subtraction residuals, where the inverse
+    variance at the peak is depressed relative to its neighbourhood.
     """
     wr = line.width_ratio
     if np.isfinite(wr) and wr < width_lo:
         return "cosmic_ray"
     if np.isfinite(wr) and wr > width_hi:
         return "resolved_line"
+    iv = getattr(line, "ivar_ratio", 1.0)
+    if np.isfinite(iv) and iv < sky_ivar_ratio_min:
+        return "sky_residual"
     if is_near(line.wavelength, SKY_LINES, sky_tol):
         return "sky_line"
     if in_telluric(line.wavelength):

@@ -27,6 +27,7 @@ class EmissionLine:
     amplitude: float      # peak residual flux above the continuum
     ew: float             # equivalent width (same units as wavelength)
     n_pix: int            # number of contiguous pixels above the per-pixel threshold
+    ivar_ratio: float = 1.0  # peak inverse-variance / local median (sky-residual flag)
 
     def as_dict(self) -> dict:
         return {
@@ -37,6 +38,7 @@ class EmissionLine:
             "amplitude": float(self.amplitude),
             "ew": float(self.ew),
             "n_pix": int(self.n_pix),
+            "ivar_ratio": float(self.ivar_ratio),
         }
 
 
@@ -143,9 +145,20 @@ def find_emission_lines(
             dl = float(np.median(np.diff(wave))) if n > 1 else 1.0
             cj = cont[j] if cont[j] != 0 else np.nan
             ew = float(np.nansum(np.clip(resid[lo:hi], 0, None)) * dl / cj) if cj else np.nan
+            # Inverse-variance depression at the peak relative to its neighbourhood:
+            # bright sky lines inflate the variance, so a residual sitting on a
+            # locally-low-ivar pixel is a sky-subtraction artefact, not a clean line.
+            wlo, whi = max(0, j - 25), min(n, j + 26)
+            with np.errstate(divide="ignore"):
+                ivar_local = 1.0 / np.square(err[wlo:whi])
+            ivar_peak = 1.0 / err[j] ** 2 if np.isfinite(err[j]) and err[j] > 0 else 0.0
+            med_iv = float(np.nanmedian(ivar_local[np.isfinite(ivar_local)])) \
+                if np.any(np.isfinite(ivar_local)) else 0.0
+            ivar_ratio = float(ivar_peak / med_iv) if med_iv > 0 else 1.0
             lines.append(EmissionLine(index=j, wavelength=float(wave[j]),
                                       significance=float(mf[j]), width_ratio=wr,
-                                      amplitude=amp, ew=ew, n_pix=npix))
+                                      amplitude=amp, ew=ew, n_pix=npix,
+                                      ivar_ratio=ivar_ratio))
             i = hi  # skip past this peak to enforce separation
         else:
             i += 1

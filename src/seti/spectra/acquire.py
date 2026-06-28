@@ -90,7 +90,7 @@ def fetch_spectra(
         return []
 
     inc = ["sparcl_id", "ra", "dec", "redshift", "spectype", "data_release",
-           "wavelength", "flux", "ivar"]
+           "wavelength", "flux", "ivar", "mask"]
     res_default = NOMINAL_RESOLUTION.get(dataset, 2000.0)
     out: list[dict] = []
     for start in range(0, len(ids), chunk):
@@ -114,10 +114,13 @@ def fetch_spectra(
             ivar = np.asarray(_rget(r, "ivar", []), dtype=float)
             if wave.size < 100 or flux.size != wave.size or ivar.size != wave.size:
                 continue
+            mask = np.asarray(_rget(r, "mask", []), dtype=float)
+            if mask.size != wave.size:
+                mask = np.zeros_like(wave)
             sid = _rget(r, "sparcl_id") or _rget(r, "id") or str(len(out))
             out.append({
                 "spec_id": str(sid),
-                "wave": wave, "flux": flux, "ivar": ivar,
+                "wave": wave, "flux": flux, "ivar": ivar, "mask": mask,
                 "redshift": float(_rget(r, "redshift", 0.0) or 0.0),
                 "resolution": res_default,
                 "meta": {

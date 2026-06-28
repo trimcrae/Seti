@@ -234,3 +234,31 @@ def test_rejection_funnel_figure(tmp_path):
                                     "astrophysical_line": 310, "resolved_line": 80}}
     out = fig_rejection_funnel(summary, tmp_path)
     assert out is not None and out.exists()
+
+
+def test_classify_sky_residual_via_ivar_depression():
+    from seti.spectra.detect import EmissionLine
+    # A high-S/N, LSF-width line whose peak inverse-variance is depressed relative
+    # to its neighbourhood is a sky-subtraction residual, not a clean line.
+    ln = EmissionLine(index=100, wavelength=8500.0, significance=30.0,
+                      width_ratio=1.0, amplitude=1.0, ew=1.0, n_pix=3,
+                      ivar_ratio=0.2)
+    assert classify_line(ln, redshift=0.0) == "sky_residual"
+    # The same line with normal local ivar survives.
+    ln.ivar_ratio = 1.0
+    assert classify_line(ln, redshift=0.0) is None
+
+
+def test_mask_blanks_line():
+    from seti.spectra.vet import process_spectrum
+    lsf = 1.5
+    res_match = 5000.0 / (lsf * 1.0 * 2.3548)
+    wave, flux, err, _, _ = _spectrum(seed=21)
+    flux = _inject(wave, flux, 5000.0, amp=0.5, sigma_pix=lsf)
+    ivar = 1.0 / err**2
+    mask = np.zeros_like(wave)
+    i = int(np.argmin(np.abs(wave - 5000.0)))
+    mask[i - 3:i + 4] = 1  # flag the line's pixels as bad
+    cands, _ = process_spectrum("M", wave, flux, ivar, resolution=res_match,
+                                snr_min=8.0, mask=mask)
+    assert not any(abs(c.wavelength - 5000.0) <= 2.0 for c in cands)

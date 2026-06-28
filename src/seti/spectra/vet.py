@@ -84,17 +84,24 @@ def process_spectrum(
     resolution: float = 2000.0,
     snr_min: float = 8.0,
     meta: dict | None = None,
+    mask: np.ndarray | None = None,
 ) -> tuple[list[LaserCandidate], dict[str, int]]:
     """Detect, reject and score laser candidates in one spectrum.
 
     ``ivar`` is the inverse variance (the survey-native error representation);
-    pixels with ivar <= 0 are treated as infinite error (masked).
+    pixels with ivar <= 0 are treated as infinite error (masked).  ``mask`` is the
+    survey per-pixel data-quality mask (nonzero = bad/sky-affected); those pixels
+    are blanked so the dense red airglow forest cannot generate false lines.
     """
     wave = np.asarray(wave, dtype=float)
     flux = np.asarray(flux, dtype=float)
     ivar = np.asarray(ivar, dtype=float)
     with np.errstate(divide="ignore", invalid="ignore"):
         err = np.where(ivar > 0, 1.0 / np.sqrt(ivar), np.inf)
+    if mask is not None:
+        m = np.asarray(mask, dtype=float)
+        if m.size == err.size:
+            err = np.where(m != 0, np.inf, err)
     lsf = _lsf_sigma_pix(wave, resolution)
     lines = find_emission_lines(wave, flux, err, lsf_sigma_pix=lsf, snr_min=snr_min)
     survivors, counts = reject_lines(lines, redshift=redshift)
@@ -126,7 +133,7 @@ def search_spectra(spectra: list[dict], snr_min: float = 8.0) -> dict:
             s.get("spec_id", str(n_searched)), s["wave"], s["flux"], s["ivar"],
             redshift=float(s.get("redshift", 0.0) or 0.0),
             resolution=float(s.get("resolution", 2000.0) or 2000.0),
-            snr_min=snr_min, meta=s.get("meta"))
+            snr_min=snr_min, meta=s.get("meta"), mask=s.get("mask"))
         all_cands.extend(cands)
         for k, v in counts.items():
             total_counts[k] = total_counts.get(k, 0) + v

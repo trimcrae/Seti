@@ -1,0 +1,66 @@
+# Single source of truth for every selection / rejection threshold.
+# The whole contamination funnel is re-tunable by editing this file alone.
+
+sample:
+  # Gentile Fusillo et al. 2021 white-dwarf confidence (Pwd). Nominal cut 0.75;
+  # we tighten to 0.90 for the technosignature sample to suppress QSO/subdwarf interlopers.
+  pwd_min: 0.90
+  # Only keep WDs with a usable temperature for SED prediction.
+  teff_min_k: 4000.0
+  teff_max_k: 40000.0
+
+excess:
+  # Per-band excess significance chi = (F_obs - F_pred) / sigma.
+  chi_w1_min: 5.0          # W1 (3.4 um) is the deepest, most reliable band
+  chi_w2_min: 3.0          # W2 (4.6 um) is shallower / noisier -> looser cut
+  # Systematic floor (mag) folded into sigma to absorb model + zero-point error.
+  sys_floor_mag: 0.05
+  # Require the W1-W2 colour to be redder than the photospheric locus by this many sigma.
+  color_excess_sigma_min: 2.0
+
+contamination:
+  astrometry:
+    ruwe_max: 1.4                 # single-source astrometry; rejects unresolved blends
+    parallax_over_error_min: 10.0 # reliable distance -> reliable absolute photometry
+    astrometric_excess_noise_max_mas: 1.0
+  wise_quality:
+    allowed_cc_flags: "0000"      # no diffraction spikes / halos / ghosts / latents (W1W2)
+    allowed_ph_qual: ["A", "B"]
+    ext_flg_max: 0                # 0 = not flagged extended (galaxy)
+    w1_saturation_mag_min: 8.0    # brighter than this saturates W1
+    w2_snr_min: 5.0
+  crowding:
+    # Reject if more than one IR counterpart within the WISE PSF, or a second Gaia
+    # source within the confusion radius.
+    max_wise_neighbours: 1
+    gaia_neighbour_radius_arcsec: 6.0   # ~W1 PSF FWHM
+    # unWISE and CatWISE fluxes must agree within this fraction or the source is a blend.
+    unwise_catwise_max_frac_diff: 0.30
+  comovement:
+    # Gaia<->WISE proper-motion / epoch-propagated position consistency.
+    # A non-co-moving IR source at the WD position is background, not waste heat.
+    max_position_offset_arcsec: 1.0    # after propagating Gaia position to the WISE epoch
+    pm_consistency_sigma_max: 3.0      # |pm_gaia - pm_catwise| / sigma
+  extragalactic:
+    # WISE AGN/galaxy wedge: reject very red W1-W2 typical of AGN/QSO.
+    w1_w2_agn_min: 0.8
+    cross_match_galaxy_radius_arcsec: 2.0
+
+discriminate:
+  # Empirical WD debris-disk locus (calibrated from control catalogues at build time).
+  # Sources OUTSIDE this locus become prioritised anomalies.
+  dust_locus:
+    t_dust_min_k: 600.0     # WD debris disks are warm, sublimation-limited
+    t_dust_max_k: 1700.0
+    tau_min: 1.0e-4         # fractional IR luminosity L_IR / L_WD
+    tau_max: 1.0e-1
+  anomaly:
+    # A swarm-like excess approaches order-unity covering fraction.
+    tau_swarm_flag: 0.3
+
+stats:
+  upper_limit_confidence: 0.95   # Poisson/binomial confidence for occurrence-rate limit
+  injection:
+    t_dust_grid_k: [150, 300, 500, 800, 1200]
+    tau_grid: [0.003, 0.01, 0.03, 0.1, 0.3]
+    n_per_cell: 200

@@ -1,0 +1,141 @@
+% A contamination-robust infrared-excess technosignature search around white dwarfs.
+% Drafted in the `article` class so it compiles anywhere; the submission version
+% targets MNRAS (swap to mnras.cls / \documentclass{mnras}). Numerical results
+% marked \TODO are filled in from a science run (`make data && make all`).
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,graphicx,natbib,booktabs,hyperref,siunitx}
+\newcommand{\TODO}[1]{\textcolor{red}{[#1]}}
+\usepackage{xcolor}
+\bibliographystyle{plainnat}
+
+\title{A contamination-robust search for infrared-excess technosignatures
+around white dwarfs}
+\author{[Author list]}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Waste heat from a planetary-scale energy-collecting structure (a Dyson sphere or
+swarm) is a classic technosignature that would manifest as anomalous infrared
+excess. Systematic searches to date have targeted main-sequence stars, most
+notably Project Hephaistos, whose candidates proved vulnerable to background
+contamination. White dwarfs have been considered only theoretically despite
+being uniquely favourable targets: their photospheres are near-blackbody and
+fully specified by Gaia astrometry and effective temperature, so an infrared
+excess is cleanly defined, and the sole significant natural source of white-dwarf
+infrared excess --- a dusty debris disk --- is already catalogued and can be used
+as a labelled control. We present the first systematic catalogue search for
+infrared-excess technosignatures around white dwarfs, combining the Gaia EDR3
+white-dwarf catalogue with CatWISE2020, unWISE, AllWISE and 2MASS photometry. Our
+central methodological contribution is a contamination-robust vetting funnel
+that adds a Gaia--WISE co-movement test --- requiring the infrared source to
+share the white dwarf's large proper motion --- to reject chance-aligned
+background interlopers that defeated earlier searches. After subtracting known
+debris disks, we report \TODO{$N$} anomalous candidates / a null result, and
+place a 95\% occurrence-rate upper limit of \TODO{$f<\ldots$} on white-dwarf
+Dyson-swarm-like excess as a function of covering fraction and waste-heat
+temperature. We emphasise that broadband photometry cannot uniquely distinguish
+a Dyson swarm from warm dust; our candidates are prioritised follow-up targets,
+not detections.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+% Technosignatures and waste-heat / Dyson structures; the energy argument.
+% Project Hephaistos main-sequence search \citep{Suazo2024} and the contamination
+% critique \citep{Suazo2024contam}. The white-dwarf case is theoretical only
+% \citep{Zackrisson2022,DysonHR2026}. Gap statement: no systematic white-dwarf
+% technosignature search exists; debris-disk surveys provide a labelled control.
+
+\section{Data}
+\label{sec:data}
+% Parent sample: Gaia EDR3 white-dwarf catalogue \citep{GentileFusillo2021},
+% Pwd>0.9. Infrared photometry: CatWISE2020 \citep{Marocco2021} primary, unWISE
+% \citep{Schlafly2019} independent cross-check, AllWISE quality flags and
+% neighbourhood, 2MASS anchor. Control debris-disk catalogues
+% \citep{Debes2011,Dennihy2020,Xu2021,MadurgaFavieres2024,MurilloOjeda2026}.
+% Volumes and access (TAP/VizieR/CDS X-Match), all catalogue-scale.
+
+\section{Methods}
+\label{sec:methods}
+\subsection{Photospheric SED prediction}
+% Blackbody (self-contained) and Bergeron model-atmosphere predictions of W1/W2,
+% anchored on 2MASS J/H/Ks (and Gaia). Robustness via two independent models.
+\subsection{Infrared-excess statistic}
+The per-band excess significance is
+\begin{equation}
+  \chi_B = \frac{F_{\mathrm{obs},B} - F_{\mathrm{pred},B}}{\sigma_B},\qquad
+  \sigma_B^2 = \sigma_{\mathrm{phot},B}^2 + \sigma_{\mathrm{sys}}^2,
+\end{equation}
+with a systematic floor $\sigma_{\mathrm{sys}}$ absorbing model and zero-point
+error. Selection requires a significant red $W1-W2$ colour excess together with
+a significant flux excess in at least one band; the inclusive (OR) band logic
+retains cool, $W2$-dominated excesses characteristic of low-temperature
+structures.
+
+\subsection{Contamination rejection}
+\label{sec:contam}
+Our vetting funnel applies, in order: (i) Gaia astrometric quality
+(RUWE, parallax signal-to-noise, excess noise); (ii) WISE photometric quality
+(contamination/confusion flags, photometric quality, extended-source flag,
+saturation, signal-to-noise); (iii) crowding/blending via the AllWISE
+neighbourhood multiplicity and unWISE--CatWISE flux agreement; (iv) a
+\emph{Gaia--WISE co-movement test}; and (v) extragalactic rejection. The
+co-movement test propagates the precise Gaia position to the WISE mean epoch
+using the Gaia proper motion and requires the WISE position to follow, and the
+CatWISE2020 proper motion (where measured) to agree:
+\begin{equation}
+  \Delta\theta = \left| \vec{x}_{\rm WISE} - \left[\vec{x}_{\rm Gaia} +
+  \vec{\mu}_{\rm Gaia}\,(t_{\rm WISE}-t_{\rm Gaia})\right] \right| < \Delta\theta_{\max}.
+\end{equation}
+Because white dwarfs are nearby and fast-moving, a static or differently-moving
+infrared source at the catalogued position is revealed as a chance-aligned
+background object --- the dominant failure mode of earlier broadband searches.
+
+\subsection{Discriminating technosignatures from debris disks}
+We fit a single-temperature blackbody $(T_{\rm dust},\tau)$ to each excess,
+calibrate the empirical white-dwarf debris-disk locus from the control
+catalogues, subtract known disks, and flag locus outliers (too cool, or
+$\tau$ approaching unity) as candidates. We state explicitly that photometry
+alone is degenerate between warm dust and a partial swarm; degeneracy-breaking
+requires optical variability (ZTF) or full-SED follow-up.
+
+\section{Results}
+\label{sec:results}
+% Contamination funnel survivor counts (Fig.~\ref{fig:funnel}); recovery of the
+% published debris-disk samples as a pipeline validation; candidate table or
+% null result; occurrence-rate upper limit and completeness (Fig.~\ref{fig:cc}).
+
+\begin{figure}[t]
+  \centering
+  % \includegraphics[width=0.7\linewidth]{../results/figures/funnel.pdf}
+  \caption{Contamination funnel: white dwarfs surviving each successive cut.}
+  \label{fig:funnel}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  % \includegraphics[width=0.7\linewidth]{../results/figures/color_color_locus.pdf}
+  \caption{Excess $(T_{\rm dust},\tau)$ with the empirical debris-disk locus;
+  anomaly candidates lie outside it.}
+  \label{fig:cc}
+\end{figure}
+
+\section{Discussion}
+\label{sec:discussion}
+% Dust/swarm degeneracy and what variability/SED-shape adds; comparison to the
+% Zackrisson (2022) detectability predictions and to Hephaistos main-sequence
+% limits; prospects with JWST/Rubin.
+
+\section{Conclusions}
+\label{sec:conclusions}
+
+\section*{Data and code availability}
+All code is openly available (Zenodo DOI \TODO{}); the analysis reproduces
+end-to-end from public catalogues via the committed pipeline.
+
+\bibliography{refs}
+\end{document}

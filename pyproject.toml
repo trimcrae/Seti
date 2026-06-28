@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seti-wd"
+version = "0.1.0"
+description = "A contamination-robust search for infrared-excess technosignatures around white dwarfs"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Seti-WD project" }]
+keywords = ["SETI", "technosignatures", "white dwarfs", "infrared excess", "Dyson sphere", "Gaia", "WISE"]
+
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "pandas>=2.0",
+    "pyarrow>=12.0",
+    "matplotlib>=3.7",
+    "astropy>=5.3",
+    "astroquery>=0.4.7",
+    "pyvo>=1.4",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "ruff>=0.1"]
+extinction = ["dustmaps>=1.0"]
+
+[project.scripts]
+seti = "seti.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+seti = ["data_assets/*.csv", "data_assets/*.ecsv"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

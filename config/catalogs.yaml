@@ -1,0 +1,63 @@
+# Catalogue identifiers and service endpoints. All access is catalog-scale
+# (TAP / VizieR / CDS X-Match) returning MB-to-low-GB tables. No raw imaging.
+
+services:
+  gaia_tap: "https://gea.esac.esa.int/tap-server/tap"
+  vizier_tap: "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+  irsa_tap: "https://irsa.ipac.caltech.edu/TAP"
+  xmatch: "https://cdsxmatch.cds.unistra.fr/xmatch"
+
+catalogs:
+  # ---- White-dwarf parent sample -------------------------------------------
+  gaia_wd:
+    vizier_id: "J/MNRAS/508/3877"        # Gentile Fusillo et al. 2021, Gaia EDR3 WD catalogue
+    table: "J/MNRAS/508/3877/maincat"
+    n_total: 1280266
+    n_high_conf: 359000                  # approx, Pwd > 0.75
+
+  # ---- Infrared photometry --------------------------------------------------
+  catwise2020:
+    vizier_id: "II/365"                  # Marocco et al. 2021 (primary IR; deeper, has PMs)
+    xmatch_table: "vizier:II/365/catwise"
+  allwise:
+    vizier_id: "II/328"                  # Cutri et al. 2013 (quality flags + neighbourhood)
+    gaia_best_neighbour: "gaiadr3.allwise_best_neighbour"
+    gaia_neighbourhood: "gaiadr3.allwise_neighbourhood"
+  unwise:
+    irsa_table: "unwise_2019"            # Schlafly et al. 2019 (deblended forced photometry)
+  twomass:
+    vizier_id: "II/246"                  # 2MASS Point Source Catalogue
+    gaia_best_neighbour: "gaiadr3.tmass_psc_xsc_best_neighbour"
+    gaia_join: "gaiadr3.tmass_psc_xsc_join"
+
+  # ---- Known WD debris-disk / IR-excess control catalogues (subtract) -------
+  controls:
+    - name: "MadurgaFavieres2024"
+      vizier_id: "J/A+A/688/A168"        # 554 WD IR-excess, Gaia EDR3 x CatWISE2020
+      n: 554
+    - name: "DebesWIRED2011"
+      vizier_id: "J/ApJS/197/38"         # WIRED Survey II
+      n: 52
+    - name: "Dennihy2020_unWISE_I"
+      reference: "arXiv:2009.00193"      # resolve CDS table at build time
+    - name: "Xu2021_unWISE_II"
+      reference: "arXiv:2107.01221"
+    - name: "Wang2023_LAMOST_DR5"
+      reference: "arXiv:2301.00705"
+    - name: "MurilloOjeda2026_100pc"
+      reference: "arXiv:2602.10070"
+
+  # ---- Discriminator / follow-up (shortlist only) ---------------------------
+  ztf:
+    irsa_table: "ztf_objects_dr"         # optical variability (dust-transit discriminator)
+  galaxy_reject:
+    # Gaia-unWISE QSO / AllWISE AGN catalogues for extragalactic rejection.
+    milliquas_vizier_id: "VII/294"       # Million Quasars catalogue
+
+# WD model-atmosphere photometry (predicted W1/W2). A frozen snapshot of the
+# Bergeron/Montreal synthetic table is committed under src/seti/data_assets/.
+models:
+  bergeron_table: "bergeron_synthetic_wise.ecsv"
+  epochs:
+    gaia_ref_epoch: 2016.0               # Gaia DR3/EDR3 reference epoch
+    wise_mean_epoch: 2010.5              # AllWISE/CatWISE mean epoch (approx)

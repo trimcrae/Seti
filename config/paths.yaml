@@ -1,0 +1,16 @@
+# Filesystem layout. Everything under data/ except data/sample/ is gitignored
+# and rebuilt by `make data`.
+
+data_root: "data"
+cache_dir: "data/cache"          # memoised query results (parquet), keyed by query hash
+raw_dir: "data/raw"              # raw downloaded catalogues
+interim_dir: "data/interim"      # per-stage checkpoints
+processed_dir: "data/processed"  # final vetted tables
+sample_dir: "data/sample"        # small committed offline sample (tests + CI)
+
+results_dir: "results"
+figures_dir: "results/figures"
+tables_dir: "results/tables"
+
+# Provenance is written alongside every cached query as <name>.provenance.json
+provenance_suffix: ".provenance.json"

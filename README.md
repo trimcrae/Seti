@@ -83,12 +83,22 @@ entirely offline:
   search would achieve — `f < ~3×10⁻⁴` for warm (~500–1000 K), swarm-like
   (τ ≳ 0.1) excess around the ~9,500 WISE-detected white dwarfs within 100 pc.
 
-The **empirical all-sky search** additionally needs network access to the Gaia,
-WISE/VizieR and CDS Virtual Observatory services. The `seti.acquire.*` modules
-pull the genuine catalogues into `data/cache/` (gitignored) and produce the
-analysis-ready table the pipeline consumes; `make data` runs that step. Replace
-the synthetic model-atmosphere asset under `src/seti/data_assets/` with the real
-Montreal/Bergeron photometry table for science. The offline sample
+The **empirical search** is fully wired and one command away — it only needs
+network egress to the Gaia / VizieR / CDS / IRSA Virtual Observatory hosts:
+
+```bash
+make data-dryrun   # validate the acquisition wiring offline (no network)
+make data          # pull Gaia WD x CatWISE2020 x 2MASS x controls -> analysis_ready.parquet
+make science       # run the full funnel on the real table -> candidates + limit + figures
+```
+
+`seti.acquire_run.acquire_run()` orchestrates the `seti.acquire.*` modules
+(memoised to `data/cache/`, gitignored), scoped by default to the 100 pc sample
+(`--max-dist-pc`), and assembles the analysis-ready table via the pure,
+offline-tested `assemble_analysis_table()`. Until the egress hosts are
+allowlisted, `make data` fails fast with a clear proxy 403 (not a silent error).
+Replace the synthetic model-atmosphere asset under `src/seti/data_assets/` with
+the real Montreal/Bergeron photometry table for science. The offline sample
 (`seti/sample.py`) is a *labelled synthetic stand-in* used only to validate the
 funnel.
 

@@ -54,10 +54,20 @@ lint:
 	.venv/bin/ruff check src tests scripts
 
 # --- Online (real-catalogue) science run -----------------------------------
-# Pulls Gaia WD x CatWISE2020 x 2MASS + control catalogues into data/cache,
-# then runs the same analysis on the real analysis-ready table. Network + time.
+# Pulls Gaia WD x CatWISE2020 x 2MASS + control catalogues into data/cache and
+# writes the analysis-ready table; `science` then runs the full analysis on it.
+# Requires network egress to the Gaia/VizieR/CDS/IRSA Virtual Observatory hosts.
 data:
-	$(PY) -m seti.acquire_run   # see src/seti/acquire/* ; wire up for science runs
+	$(PY) -m seti.cli acquire-run --max-dist-pc 100
+
+science: data
+	$(PY) -m seti.cli analyze --input data/processed/analysis_ready.parquet \
+	    --out results/tables/science
+	$(PY) -m seti.cli figures
+
+# Validate the acquisition wiring without any network access.
+data-dryrun:
+	$(PY) -m seti.cli acquire-run --dry-run
 
 clean:
 	rm -rf data/cache data/interim data/processed results/tables/*.parquet \

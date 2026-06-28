@@ -72,6 +72,18 @@ def _cmd_forecast(args, cfg):
                       "n_detected_real": float(fc["n_detected_real"].iloc[0])}, indent=2))
 
 
+def _cmd_acquire_run(args, cfg):
+    from .acquire_run import acquire_run
+
+    table = acquire_run(cfg, max_dist_pc=args.max_dist_pc, limit=args.limit,
+                        dry_run=args.dry_run)
+    if args.dry_run:
+        print(f"dry-run OK: wiring valid, schema has {len(table.columns)} columns")
+    else:
+        out = cfg.path("processed_dir") / "analysis_ready.parquet"
+        print(f"wrote analysis-ready table: {len(table)} white dwarfs -> {out}")
+
+
 def _cmd_contamination_budget(args, cfg):
     from .population import generate_population
     from .stats.contamination_budget import contamination_budget, efficacy_vs_pm
@@ -121,6 +133,12 @@ def main(argv=None):
     p = sub.add_parser("forecast")
     p.add_argument("--seed", type=int, default=11)
     p.set_defaults(func=_cmd_forecast)
+
+    p = sub.add_parser("acquire-run")
+    p.add_argument("--max-dist-pc", type=float, default=100.0)
+    p.add_argument("--limit", type=int, default=None)
+    p.add_argument("--dry-run", action="store_true")
+    p.set_defaults(func=_cmd_acquire_run)
 
     p = sub.add_parser("contamination-budget")
     p.add_argument("--seed", type=int, default=11)

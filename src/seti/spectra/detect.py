@@ -147,13 +147,17 @@ def find_emission_lines(
             ew = float(np.nansum(np.clip(resid[lo:hi], 0, None)) * dl / cj) if cj else np.nan
             # Inverse-variance depression at the peak relative to its neighbourhood:
             # bright sky lines inflate the variance, so a residual sitting on a
-            # locally-low-ivar pixel is a sky-subtraction artefact, not a clean line.
-            wlo, whi = max(0, j - 25), min(n, j + 26)
+            # low-ivar pixel is a sky-subtraction artefact, not a clean line.  The
+            # baseline is a *broad* (+/-150 px) median: in the dense red OH-airglow
+            # forest a narrow window is itself depressed, but a broad median is
+            # dominated by the clean inter-line continuum, so the airglow cores
+            # stand out as depressed.
+            wlo, whi = max(0, j - 150), min(n, j + 151)
             with np.errstate(divide="ignore"):
                 ivar_local = 1.0 / np.square(err[wlo:whi])
             ivar_peak = 1.0 / err[j] ** 2 if np.isfinite(err[j]) and err[j] > 0 else 0.0
-            med_iv = float(np.nanmedian(ivar_local[np.isfinite(ivar_local)])) \
-                if np.any(np.isfinite(ivar_local)) else 0.0
+            finite_iv = ivar_local[np.isfinite(ivar_local)]
+            med_iv = float(np.nanmedian(finite_iv)) if finite_iv.size else 0.0
             ivar_ratio = float(ivar_peak / med_iv) if med_iv > 0 else 1.0
             lines.append(EmissionLine(index=j, wavelength=float(wave[j]),
                                       significance=float(mf[j]), width_ratio=wr,

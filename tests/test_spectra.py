@@ -225,3 +225,12 @@ def test_fetch_spectra_parses_dict_records():
     assert s["wave"].size == 500 and s["flux"].size == 500 and s["ivar"].size == 500
     assert s["resolution"] == 3000.0
     assert s["meta"]["spectype"] == "STAR"
+
+
+def test_rejection_funnel_figure(tmp_path):
+    from seti.spectra.figures import fig_rejection_funnel
+    summary = {"dataset": "DESI-DR1", "n_searched": 2000, "n_candidates": 0,
+               "rejection_counts": {"cosmic_ray": 120, "sky_line": 45,
+                                    "astrophysical_line": 310, "resolved_line": 80}}
+    out = fig_rejection_funnel(summary, tmp_path)
+    assert out is not None and out.exists()

@@ -83,6 +83,11 @@ def spectra_run(
             "f_point": lim.f_point},
     }
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2))
+    try:
+        from .figures import render_spectra
+        render_spectra(summary, out_dir / "figures")
+    except Exception as exc:
+        print(f"[spectra] figures skipped: {exc!r}")
     print("[spectra] summary:", json.dumps({k_: summary[k_] for k_ in
           ("dataset", "n_searched", "n_candidates", "rejection_counts")}))
     print("[spectra] occurrence limit:", json.dumps(summary["occurrence_limit"]))

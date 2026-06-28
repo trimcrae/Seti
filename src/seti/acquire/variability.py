@@ -56,20 +56,33 @@ def _robust_frac_rms(mag: np.ndarray, magerr: np.ndarray | None = None,
 
 
 def fetch_ztf_variability(positions: pd.DataFrame, radius_arcsec: float = 2.0,
-                          band: str = "r", max_objects: int = 500) -> pd.DataFrame:
+                          band: str = "r", max_objects: int = 300,
+                          timeout_s: float = 25.0,
+                          time_budget_s: float = 420.0) -> pd.DataFrame:
     """Per-object ZTF light-curve fractional RMS from the IRSA ZTF API.
 
     Queries the IRSA ZTF light-curve service (cone search) for each shortlist
     position and computes a noise-corrected fractional RMS in the requested band.
+    Bounded by ``max_objects`` and an overall ``time_budget_s`` wall-clock budget
+    so a slow service can never stall the run; whatever was measured before the
+    budget is returned and the rest are simply left unmeasured (unavailable).
     """
     import io
+    import time
 
     import requests
 
     rows = []
     sub = positions.head(max_objects)
     base = "https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves"
+    t0 = time.monotonic()
+    n_tried = 0
     for _, r in sub.iterrows():
+        if time.monotonic() - t0 > time_budget_s:
+            print(f"[science] ZTF time budget ({time_budget_s:.0f}s) reached after "
+                  f"{n_tried} objects")
+            break
+        n_tried += 1
         sid = int(r["source_id"])
         ra, dec = float(r["ra"]), float(r["dec"])
         rad_deg = radius_arcsec / 3600.0
@@ -80,7 +93,7 @@ def fetch_ztf_variability(positions: pd.DataFrame, radius_arcsec: float = 2.0,
             "BAD_CATFLAGS_MASK": "32768",
         }
         try:
-            resp = requests.get(base, params=params, timeout=60)
+            resp = requests.get(base, params=params, timeout=timeout_s)
             if resp.status_code != 200 or not resp.text.strip():
                 continue
             lc = pd.read_csv(io.StringIO(resp.text))
@@ -93,19 +106,27 @@ def fetch_ztf_variability(positions: pd.DataFrame, radius_arcsec: float = 2.0,
         except Exception as exc:  # one bad object must not abort the shortlist
             print(f"[science] ZTF {sid} skipped: {exc!r}")
     out = pd.DataFrame(rows)
-    print(f"[science] ZTF variability: {len(out)} of {len(sub)} shortlist objects measured")
+    print(f"[science] ZTF variability: {len(out)} of {n_tried} attempted "
+          f"({len(sub)} shortlist) measured")
     return out
 
 
 def fetch_neowise_variability(positions: pd.DataFrame, radius_arcsec: float = 2.0,
-                              max_objects: int = 500) -> pd.DataFrame:
+                              max_objects: int = 120, timeout_s: float = 45.0,
+                              time_budget_s: float = 420.0) -> pd.DataFrame:
     """Per-object NEOWISE W1 fractional RMS from the IRSA single-exposure table.
 
     Queries the NEOWISE-R single-exposure source table (``neowiser_p1bs_psd``)
     via the IRSA cone search, bins by visit (the ~6-month NEOWISE cadence), and
     computes a noise-corrected fractional RMS of the per-visit mean W1 magnitude.
     Changing infrared waste heat (construction, eclipses) is the signature.
+
+    Bounded by ``max_objects``, a per-query ``timeout_s`` and an overall
+    ``time_budget_s`` wall-clock budget: the per-object cone searches are slow, so
+    these guards guarantee the run completes even if IRSA is degraded.
     """
+    import time
+
     try:
         from astroquery.ipac.irsa import Irsa
     except Exception as exc:
@@ -118,13 +139,20 @@ def fetch_neowise_variability(positions: pd.DataFrame, radius_arcsec: float = 2.
     # Bound each cone search so a slow/hung IRSA response fails fast rather than
     # stalling the whole shortlist (the per-object queries dominate the runtime).
     try:
-        Irsa.TIMEOUT = 90
+        Irsa.TIMEOUT = timeout_s
     except Exception:
         pass
 
     rows = []
     sub = positions.head(max_objects)
+    t0 = time.monotonic()
+    n_tried = 0
     for _, r in sub.iterrows():
+        if time.monotonic() - t0 > time_budget_s:
+            print(f"[science] NEOWISE time budget ({time_budget_s:.0f}s) reached after "
+                  f"{n_tried} objects")
+            break
+        n_tried += 1
         sid = int(r["source_id"])
         ra, dec = float(r["ra"]), float(r["dec"])
         try:
@@ -149,7 +177,8 @@ def fetch_neowise_variability(positions: pd.DataFrame, radius_arcsec: float = 2.
         except Exception as exc:  # one bad object must not abort the shortlist
             print(f"[science] NEOWISE {sid} skipped: {exc!r}")
     out = pd.DataFrame(rows)
-    print(f"[science] NEOWISE variability: {len(out)} of {len(sub)} shortlist objects measured")
+    print(f"[science] NEOWISE variability: {len(out)} of {n_tried} attempted "
+          f"({len(sub)} shortlist) measured")
     return out
 
 

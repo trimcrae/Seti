@@ -7,14 +7,22 @@ import pandas as pd
 from .base import IndicatorResult
 from .combine import combine_indicators
 from .energy_balance import energy_balance, uv_deficit
-from .other_axes import ir_excess, ir_variability, kinematic, optical_variability
+from .other_axes import (
+    ir_excess,
+    ir_variability,
+    kinematic,
+    optical_variability,
+    periodicity,
+)
 
-# Independent anomaly axes, with combination weights (energy balance is the
-# strongest single piece of evidence, kinematics the weakest).
+# Independent anomaly axes, with combination weights (energy balance and a
+# significant optical period are the strongest single pieces of evidence,
+# kinematics the weakest).
 INDICATORS = [
     ("ir_excess", ir_excess, 1.0),
     ("uv_deficit", uv_deficit, 1.5),
     ("energy_balance", energy_balance, 3.0),
+    ("periodicity", periodicity, 2.5),
     ("optical_variability", optical_variability, 2.0),
     ("ir_variability", ir_variability, 2.0),
     ("kinematic", kinematic, 0.3),

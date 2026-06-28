@@ -120,6 +120,7 @@ def collect_science_numbers(cfg: Config) -> dict[str, str]:
             "SciMMir": f"{mm.get('ir_excess', 0)}",
             "SciMMuv": f"{mm.get('uv_deficit', 0)}",
             "SciMMenergy": f"{mm.get('energy_balance', 0)}",
+            "SciMMperiod": f"{mm.get('periodicity', 0)}",
             "SciMMoptvar": f"{mm.get('optical_variability', 0)}",
             "SciMMirvar": f"{mm.get('ir_variability', 0)}",
             "SciMMkin": f"{mm.get('kinematic', 0)}",

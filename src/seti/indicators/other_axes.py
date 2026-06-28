@@ -73,6 +73,38 @@ def ir_variability(df: pd.DataFrame, thresholds: dict) -> IndicatorResult:
     return IndicatorResult("ir_variability", score, flag, available)
 
 
+def periodicity(df: pd.DataFrame, thresholds: dict) -> IndicatorResult:
+    """Optical periodicity axis: a statistically significant Lomb--Scargle period.
+
+    A white dwarf is intrinsically stable on day-to-month timescales, so a
+    significant period in its ZTF light curve --- as from a transiting or occulting
+    structure on a closed orbit --- is strongly anomalous, and far more diagnostic
+    than raw scatter. Flags objects whose Lomb--Scargle false-alarm probability is
+    below a threshold and whose amplitude exceeds a floor (so trivially-significant
+    micro-amplitude peaks are not flagged).
+    """
+    cfg = thresholds.get("indicators", {}).get("periodicity", {})
+    fap_max = cfg.get("ls_fap_max", 1e-3)
+    amp_min = cfg.get("ls_amp_mag_min", 0.02)
+
+    fap = df.get("ztf_ls_fap", pd.Series(np.nan, index=df.index)).to_numpy(dtype=float)
+    amp = df.get("ztf_ls_amp_mag", pd.Series(np.nan, index=df.index)).to_numpy(dtype=float)
+    available = pd.Series(np.isfinite(fap), index=df.index)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        # Score on -log10(FAP), crossing 0.5 at the threshold FAP.
+        neglog = -np.log10(np.where(np.isfinite(fap) & (fap > 0), fap, np.nan))
+    score = pd.Series(np.where(np.isfinite(neglog),
+                               sigmoid_score(neglog, -np.log10(fap_max), 1.0), np.nan),
+                      index=df.index)
+    flag = pd.Series(np.isfinite(fap) & (fap <= fap_max)
+                     & np.isfinite(amp) & (amp >= amp_min),
+                     index=df.index).fillna(False)
+    return IndicatorResult("periodicity", score, flag, available,
+                           detail={"ztf_ls_period_d": df.get(
+                               "ztf_ls_period_d",
+                               pd.Series(np.nan, index=df.index)).to_numpy()})
+
+
 def kinematic(df: pd.DataFrame, thresholds: dict) -> IndicatorResult:
     """Kinematic-anomaly axis: unusually high tangential velocity.
 
@@ -95,4 +127,5 @@ def kinematic(df: pd.DataFrame, thresholds: dict) -> IndicatorResult:
     return IndicatorResult("kinematic", score, flag, available, detail={"vtan_km_s": vtan})
 
 
-__all__ = ["ir_excess", "optical_variability", "ir_variability", "kinematic"]
+__all__ = ["ir_excess", "optical_variability", "ir_variability", "periodicity",
+           "kinematic"]

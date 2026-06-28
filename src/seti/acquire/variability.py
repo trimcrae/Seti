@@ -55,14 +55,63 @@ def _robust_frac_rms(mag: np.ndarray, magerr: np.ndarray | None = None,
     return 0.4 * np.log(10.0) * rms_mag
 
 
+def _lomb_scargle(mjd: np.ndarray, mag: np.ndarray, magerr: np.ndarray | None,
+                  min_period_d: float = 0.1, max_period_d: float = 100.0,
+                  min_epochs: int = 20) -> dict:
+    """Lomb--Scargle periodicity of a light curve.
+
+    Returns the strongest period, its (normalised) power, the false-alarm
+    probability of that peak, and the semi-amplitude of the best-fit sinusoid.  A
+    statistically significant period in an otherwise photometrically stable white
+    dwarf is far more diagnostic of a transiting/occulting configuration than raw
+    scatter, so this feeds a dedicated periodicity axis.
+    """
+    out = {"ls_fap": np.nan, "ls_period_d": np.nan, "ls_power": np.nan,
+           "ls_amp_mag": np.nan}
+    m = np.asarray(mag, dtype=float)
+    t = np.asarray(mjd, dtype=float)
+    good = np.isfinite(m) & np.isfinite(t)
+    m, t = m[good], t[good]
+    if m.size < min_epochs:
+        return out
+    e = (np.asarray(magerr, dtype=float)[good] if magerr is not None
+         else np.full(m.size, np.nanstd(m) or 0.05))
+    e = np.where(np.isfinite(e) & (e > 0), e, np.nanmedian(e[e > 0]) if np.any(e > 0) else 0.05)
+    baseline = float(np.ptp(t))
+    if baseline < 2 * min_period_d:
+        return out
+    try:
+        from astropy.timeseries import LombScargle
+
+        max_p = min(max_period_d, baseline / 2.0)
+        ls = LombScargle(t, m, e)
+        freq, power = ls.autopower(minimum_frequency=1.0 / max_p,
+                                   maximum_frequency=1.0 / min_period_d,
+                                   samples_per_peak=5)
+        if power.size == 0:
+            return out
+        i = int(np.argmax(power))
+        best_f = float(freq[i])
+        out["ls_power"] = float(power[i])
+        out["ls_period_d"] = 1.0 / best_f
+        out["ls_fap"] = float(ls.false_alarm_probability(power[i], method="baluev"))
+        # Semi-amplitude from the best-frequency sinusoid fit.
+        theta = ls.model_parameters(best_f)
+        out["ls_amp_mag"] = float(np.hypot(theta[1], theta[2])) if len(theta) >= 3 else np.nan
+    except Exception as exc:
+        print(f"[science] Lomb-Scargle failed: {exc!r}")
+    return out
+
+
 def fetch_ztf_variability(positions: pd.DataFrame, radius_arcsec: float = 2.0,
                           band: str = "r", max_objects: int = 300,
                           timeout_s: float = 25.0,
                           time_budget_s: float = 420.0) -> pd.DataFrame:
-    """Per-object ZTF light-curve fractional RMS from the IRSA ZTF API.
+    """Per-object ZTF light-curve fractional RMS and periodicity from the IRSA API.
 
     Queries the IRSA ZTF light-curve service (cone search) for each shortlist
-    position and computes a noise-corrected fractional RMS in the requested band.
+    position and computes a noise-corrected fractional RMS and a Lomb--Scargle
+    periodicity (period, power, false-alarm probability) in the requested band.
     Bounded by ``max_objects`` and an overall ``time_budget_s`` wall-clock budget
     so a slow service can never stall the run; whatever was measured before the
     budget is returned and the rest are simply left unmeasured (unavailable).
@@ -99,10 +148,17 @@ def fetch_ztf_variability(positions: pd.DataFrame, radius_arcsec: float = 2.0,
             lc = pd.read_csv(io.StringIO(resp.text))
             if "mag" not in lc.columns or lc.empty:
                 continue
-            frac = _robust_frac_rms(lc["mag"].to_numpy(),
-                                    lc["magerr"].to_numpy() if "magerr" in lc else None)
+            magerr = lc["magerr"].to_numpy() if "magerr" in lc else None
+            frac = _robust_frac_rms(lc["mag"].to_numpy(), magerr)
+            tcol = next((c for c in ("mjd", "hjd", "bjd") if c in lc.columns), None)
+            ls = (_lomb_scargle(lc[tcol].to_numpy(), lc["mag"].to_numpy(), magerr)
+                  if tcol else {})
             rows.append({"source_id": sid, "ztf_frac_rms": frac,
-                         "ztf_n_epochs": int(np.isfinite(lc["mag"]).sum())})
+                         "ztf_n_epochs": int(np.isfinite(lc["mag"]).sum()),
+                         "ztf_ls_fap": ls.get("ls_fap", np.nan),
+                         "ztf_ls_period_d": ls.get("ls_period_d", np.nan),
+                         "ztf_ls_power": ls.get("ls_power", np.nan),
+                         "ztf_ls_amp_mag": ls.get("ls_amp_mag", np.nan)})
         except Exception as exc:  # one bad object must not abort the shortlist
             print(f"[science] ZTF {sid} skipped: {exc!r}")
     out = pd.DataFrame(rows)
@@ -182,4 +238,5 @@ def fetch_neowise_variability(positions: pd.DataFrame, radius_arcsec: float = 2.
     return out
 
 
-__all__ = ["fetch_ztf_variability", "fetch_neowise_variability", "_robust_frac_rms"]
+__all__ = ["fetch_ztf_variability", "fetch_neowise_variability", "_robust_frac_rms",
+           "_lomb_scargle"]

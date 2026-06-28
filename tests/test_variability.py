@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from seti.acquire.variability import _robust_frac_rms
+from seti.acquire.variability import _lomb_scargle, _robust_frac_rms
 
 
 def test_constant_lightcurve_is_not_variable():
@@ -44,3 +44,31 @@ def test_outliers_are_clipped():
     magerr = np.full(100, 0.01)
     frac = _robust_frac_rms(mag, magerr)
     assert frac < 0.05  # outliers clipped, not counted as variability
+
+
+def test_lomb_scargle_recovers_injected_period():
+    rng = np.random.default_rng(3)
+    period = 3.7
+    t = np.sort(rng.uniform(0, 300, 250))  # 300-day baseline, irregular sampling
+    mag = 18.0 + 0.15 * np.sin(2 * np.pi * t / period) + rng.normal(0, 0.02, t.size)
+    magerr = np.full(t.size, 0.02)
+    res = _lomb_scargle(t, mag, magerr)
+    assert np.isfinite(res["ls_period_d"])
+    assert abs(res["ls_period_d"] - period) / period < 0.02  # recovered to 2%
+    assert res["ls_fap"] < 1e-3  # highly significant
+    assert res["ls_amp_mag"] > 0.1
+
+
+def test_lomb_scargle_noise_is_not_significant():
+    rng = np.random.default_rng(4)
+    t = np.sort(rng.uniform(0, 300, 250))
+    mag = 18.0 + rng.normal(0, 0.02, t.size)  # pure noise, no period
+    magerr = np.full(t.size, 0.02)
+    res = _lomb_scargle(t, mag, magerr)
+    # No injected signal: the false-alarm probability should not be tiny.
+    assert not (res["ls_fap"] < 1e-3)
+
+
+def test_lomb_scargle_too_few_epochs():
+    res = _lomb_scargle(np.array([1.0, 2.0, 3.0]), np.array([18.0, 18.1, 17.9]), None)
+    assert np.isnan(res["ls_period_d"])

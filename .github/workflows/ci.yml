@@ -41,6 +41,35 @@ jobs:
           name: analysis-outputs
           path: results/
 
+  paper:
+    # Verify the manuscript compiles to PDF from the auto-generated numbers and
+    # figures. Runs on every push; GitHub runners have unrestricted apt.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Python package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Install TeX Live
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-latex-base texlive-latex-recommended texlive-latex-extra \
+            texlive-fonts-recommended texlive-science texlive-bibtex-extra latexmk
+      - name: Build figures, numbers, and PDF
+        run: |
+          python scripts/make_bergeron_asset.py
+          python -m seti.cli make-sample
+          make paper
+      - uses: actions/upload-artifact@v4
+        with:
+          name: manuscript
+          path: paper/main.pdf
+
   full-acquisition:
     # Manual-only: pulls the real catalogues (network-dependent, slower). Not on
     # the default push path so PRs stay fast and deterministic.

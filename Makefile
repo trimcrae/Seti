@@ -45,7 +45,7 @@ figures: analyze forecast contamination-budget
 # Build the manuscript PDF (requires a LaTeX toolchain). Regenerates numbers and
 # figures first so the paper is always in sync with the code.
 paper: paper-numbers figures
-	cd paper && latexmk -pdf main.tex
+	cd paper && latexmk -pdf -bibtex -interaction=nonstopmode main.tex
 
 test:
 	$(PY) -m pytest -q

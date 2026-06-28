@@ -128,6 +128,11 @@ def fetch_catwise(positions: pd.DataFrame, radius_arcsec: float = 3.0) -> pd.Dat
     })
     if "angDist" in out.columns:
         out = out.sort_values("angDist").drop_duplicates("source_id").drop(columns="angDist")
+    # CatWISE2020 (VizieR II/365) reports proper motions in arcsec/yr; the
+    # pipeline and Gaia use mas/yr. Convert so the co-movement PM test is valid.
+    for col in ("pmra_wise", "pmdec_wise", "e_pmra_wise", "e_pmdec_wise"):
+        if col in out.columns:
+            out[col] = out[col] * 1000.0
     return out
 
 

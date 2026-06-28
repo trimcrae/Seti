@@ -52,7 +52,10 @@ jobs:
             git commit -m "science-run: empirical results (dist=${{ github.event.inputs.max_dist_pc }} pc)
 
             Generated on a GitHub-hosted runner with archive network access."
-            git push origin HEAD:${{ github.ref_name }}
+            # Rebase onto any commits pushed since checkout, then push (retry once).
+            git pull --rebase origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git pull --rebase origin ${{ github.ref_name }}; git push origin HEAD:${{ github.ref_name }}; }
           fi
       - uses: actions/upload-artifact@v4
         if: always()

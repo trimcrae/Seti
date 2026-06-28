@@ -28,10 +28,11 @@ jobs:
         run: ruff check src tests scripts
       - name: Test
         run: pytest -q
-      - name: Reproduce analysis on the sample
+      - name: Reproduce analysis + forecast on the sample
         run: |
           python -m seti.cli analyze
           python -m seti.cli completeness
+          python -m seti.cli forecast
           python -m seti.cli figures
       - uses: actions/upload-artifact@v4
         with:

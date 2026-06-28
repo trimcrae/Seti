@@ -24,13 +24,15 @@ def _repo_root() -> Path:
 
 
 class Config:
-    """Lightweight holder for the three config files plus the repo root."""
+    """Lightweight holder for the config files plus the repo root."""
 
-    def __init__(self, root: Path, thresholds: dict, catalogs: dict, paths: dict):
+    def __init__(self, root: Path, thresholds: dict, catalogs: dict, paths: dict,
+                 population: dict | None = None):
         self.root = root
         self.thresholds = thresholds
         self.catalogs = catalogs
         self.paths = paths
+        self.population = population or {}
 
     def path(self, key: str) -> Path:
         """Resolve a key from ``paths.yaml`` to an absolute path."""
@@ -49,9 +51,11 @@ def load_config(root: Path | str | None = None) -> Config:
     """Load and merge ``config/{thresholds,catalogs,paths}.yaml``."""
     root = Path(root).resolve() if root is not None else _repo_root()
     cfg_dir = root / "config"
+    pop_path = cfg_dir / "population.yaml"
     return Config(
         root=root,
         thresholds=_read_yaml(cfg_dir / "thresholds.yaml"),
         catalogs=_read_yaml(cfg_dir / "catalogs.yaml"),
         paths=_read_yaml(cfg_dir / "paths.yaml"),
+        population=_read_yaml(pop_path) if pop_path.exists() else {},
     )

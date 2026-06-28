@@ -92,11 +92,62 @@ def fig_funnel(cfg: Config, fig_dir: Path) -> Path | None:
     return out
 
 
+def fig_forecast_limit(cfg: Config, fig_dir: Path) -> Path | None:
+    """Projected 95% occurrence-rate upper limit vs covering fraction tau, per T_dust."""
+    fc = _load(cfg, "forecast.parquet")
+    if fc is None or "f_upper_95" not in fc:
+        return None
+    fig, ax = plt.subplots(figsize=(5.4, 4.0))
+    for t in sorted(fc["t_dust_k"].unique()):
+        sub = fc[fc["t_dust_k"] == t].sort_values("tau")
+        finite = np.isfinite(sub["f_upper_95"])
+        if finite.sum() == 0:
+            continue
+        ax.plot(sub.loc[finite, "tau"], sub.loc[finite, "f_upper_95"],
+                marker="o", ms=3, label=f"{t:.0f} K")
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel(r"covering fraction $\tau$")
+    ax.set_ylabel(r"95% upper limit on WD swarm fraction $f$")
+    ax.set_title("Projected occurrence-rate sensitivity (100 pc WD sample)")
+    ax.legend(title=r"$T_{\rm dust}$", fontsize=8)
+    fig.tight_layout()
+    out = fig_dir / "forecast_limit.pdf"
+    fig.savefig(out)
+    plt.close(fig)
+    return out
+
+
+def fig_completeness_heatmap(cfg: Config, fig_dir: Path) -> Path | None:
+    """Recovered-fraction heatmap over the (T_dust, tau) grid."""
+    fc = _load(cfg, "forecast.parquet")
+    if fc is None or "recovered_fraction" not in fc:
+        return None
+    piv = fc.pivot(index="t_dust_k", columns="tau", values="recovered_fraction")
+    fig, ax = plt.subplots(figsize=(5.4, 4.0))
+    im = ax.imshow(piv.to_numpy(), origin="lower", aspect="auto", cmap="viridis",
+                   vmin=0, vmax=1)
+    ax.set_xticks(range(len(piv.columns)))
+    ax.set_xticklabels([f"{c:g}" for c in piv.columns], rotation=45, ha="right")
+    ax.set_yticks(range(len(piv.index)))
+    ax.set_yticklabels([f"{i:.0f}" for i in piv.index])
+    ax.set_xlabel(r"covering fraction $\tau$")
+    ax.set_ylabel(r"$T_{\rm dust}$ [K]")
+    ax.set_title("Injection-recovery completeness")
+    fig.colorbar(im, ax=ax, label="recovered fraction")
+    fig.tight_layout()
+    out = fig_dir / "completeness_heatmap.pdf"
+    fig.savefig(out)
+    plt.close(fig)
+    return out
+
+
 def render_all(cfg: Config) -> list[Path]:
     fig_dir = cfg.path("figures_dir")
     fig_dir.mkdir(parents=True, exist_ok=True)
     paths = []
-    for fn in (fig_chi_distribution, fig_color_color, fig_funnel):
+    for fn in (fig_chi_distribution, fig_color_color, fig_funnel,
+               fig_forecast_limit, fig_completeness_heatmap):
         out = fn(cfg, fig_dir)
         if out is not None:
             paths.append(out)

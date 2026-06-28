@@ -6,9 +6,9 @@
 PY ?= .venv/bin/python
 PIP ?= .venv/bin/pip
 
-.PHONY: all venv install asset sample analyze completeness figures test lint data clean
+.PHONY: all venv install asset sample analyze completeness forecast figures test lint data clean
 
-all: analyze completeness figures
+all: analyze completeness forecast figures
 
 venv:
 	python3 -m venv .venv
@@ -30,7 +30,10 @@ analyze: sample
 completeness: sample
 	$(PY) -m seti.cli completeness
 
-figures: analyze
+forecast:
+	$(PY) -m seti.cli forecast
+
+figures: analyze forecast
 	$(PY) -m seti.cli figures
 
 test:

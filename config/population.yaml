@@ -1,0 +1,46 @@
+# Parameters for the realistic white-dwarf population model and the WISE
+# sensitivity model used by the projected-sensitivity forecast.  Every value is
+# grounded in the published literature (cited inline) so the forecast is
+# defensible.  These are MODEL inputs for a forecast -- not measured data.
+
+catalog:
+  # Gentile Fusillo et al. 2021 (MNRAS 508, 3877): 1,280,266 candidates;
+  # Pwd>0.75 -> ~359,000 high-confidence; ~15,001 within 100 pc.
+  n_high_confidence: 359000
+  n_within_100pc: 15001
+  # Local WD space density (Hollands et al. 2018; ~4.9e-3 pc^-3 within 20 pc).
+  space_density_pc3: 4.9e-3
+
+population:
+  # Monte-Carlo draw size representing the magnitude-limited sample (scaled to
+  # the real catalogue size for occurrence-rate limits). Kept modest for CI.
+  # The forecast is anchored to the ~complete, well-characterised 100 pc WD
+  # sample (15,001 WDs; Gentile Fusillo et al. 2021), avoiding magnitude-limited
+  # extrapolation. d_max_pc therefore models the 100 pc volume.
+  n_draw: 10000
+  d_max_pc: 100.0           # outer radius of the modelled volume (100 pc anchor)
+  gaia_g_limit: 20.5         # effective Gaia detection limit for the WD sample
+  # Effective-temperature distribution: WD cooling produces a pile-up at cool
+  # temperatures. Modelled as a declining distribution over [Tmin, Tmax].
+  teff_min_k: 4000.0
+  teff_max_k: 40000.0
+  teff_pileup_k: 8000.0      # characteristic temperature of the cooling pile-up
+  # Mass distribution (Kilic et al. 2020; sharply peaked near 0.6 Msun).
+  mass_mean_msun: 0.60
+  mass_sigma_msun: 0.13
+  mass_min_msun: 0.40
+  mass_max_msun: 1.10
+
+wise_depth:
+  # 5-sigma point-source limits, Vega (CatWISE2020: Marocco et al. 2021;
+  # AllWISE: Cutri et al. 2013). CatWISE2020 is the primary, deeper catalogue.
+  catwise2020:
+    W1_5sigma: 17.43
+    W2_5sigma: 16.47
+  allwise:
+    W1_5sigma: 16.9
+    W2_5sigma: 16.0
+  # Bright-end systematic photometric floor (mag) and the S/N at the 5-sigma
+  # limit used to model sigma_mag(m) = 1.0857 / SNR(m).
+  sys_floor_mag: 0.02
+  snr_at_limit: 5.0

@@ -57,6 +57,21 @@ def _cmd_completeness(args, cfg):
     print(f"wrote completeness map ({len(cmap)} cells) -> {out}")
 
 
+def _cmd_forecast(args, cfg):
+    from .stats.sensitivity import forecast_sensitivity, headline_limit, minimum_detectable_tau
+
+    fc = forecast_sensitivity(cfg, seed=args.seed)
+    out_dir = cfg.path("tables_dir")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    fc.to_parquet(out_dir / "forecast.parquet", index=False)
+    minimum_detectable_tau(fc).to_parquet(out_dir / "min_detectable_tau.parquet", index=False)
+    h = headline_limit(fc)
+    (out_dir / "forecast_summary.json").write_text(json.dumps(h, indent=2))
+    print(json.dumps({"headline_limit": h,
+                      "n_cells": len(fc),
+                      "n_detected_real": float(fc["n_detected_real"].iloc[0])}, indent=2))
+
+
 def _cmd_figures(args, cfg):
     from .figures import render_all
 
@@ -81,6 +96,10 @@ def main(argv=None):
     p = sub.add_parser("completeness")
     p.add_argument("--input")
     p.set_defaults(func=_cmd_completeness)
+
+    p = sub.add_parser("forecast")
+    p.add_argument("--seed", type=int, default=11)
+    p.set_defaults(func=_cmd_forecast)
 
     p = sub.add_parser("figures")
     p.set_defaults(func=_cmd_figures)

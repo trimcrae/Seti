@@ -264,6 +264,13 @@ def science_run(
             if "has_excess" in only_clean:
                 sl = only_clean[only_clean["has_excess"].fillna(False).astype(bool)]
                 shortlist = sl if len(sl) else only_clean
+            # Rank by excess strength so that, if the per-object light-curve
+            # queries are capped at expanded volume, the strongest excesses (the
+            # most interesting follow-up targets) are the ones measured.
+            sort_key = next((c for c in ("chi_W1", "chi_W2") if c in shortlist.columns),
+                            None)
+            if sort_key is not None:
+                shortlist = shortlist.sort_values(sort_key, ascending=False)
             pos = shortlist[["source_id", "ra", "dec"]].drop_duplicates("source_id")
             print(f"[science] variability shortlist: {len(pos)} objects")
             ztf = fetch_ztf_variability(pos)

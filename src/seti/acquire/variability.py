@@ -115,6 +115,13 @@ def fetch_neowise_variability(positions: pd.DataFrame, radius_arcsec: float = 2.
     from astropy import units as u
     from astropy.coordinates import SkyCoord
 
+    # Bound each cone search so a slow/hung IRSA response fails fast rather than
+    # stalling the whole shortlist (the per-object queries dominate the runtime).
+    try:
+        Irsa.TIMEOUT = 90
+    except Exception:
+        pass
+
     rows = []
     sub = positions.head(max_objects)
     for _, r in sub.iterrows():

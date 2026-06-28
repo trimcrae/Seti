@@ -181,6 +181,33 @@ def fetch_galex(positions: pd.DataFrame, radius_arcsec: float = 3.0) -> pd.DataF
     return out
 
 
+def classify_candidate(otype: str, sptype: str) -> str:
+    """Coarse natural-explanation class for a candidate from its SIMBAD tags.
+
+    Separates the leading mundane explanations for a multi-axis white-dwarf
+    anomaly --- an interacting/cataclysmic binary, an eclipsing or cool-companion
+    binary, a metal-polluted (disk-bearing) white dwarf --- from genuinely
+    unexamined sources, which are the interesting residue.
+    """
+    o = (otype or "").strip().upper()
+    s = (sptype or "").strip().upper()
+    if not o and not s:
+        return "unexamined"
+    if any(k in o for k in ("CV", "NOVA", "AM CVN", "AMCVN", "NL")):
+        return "interacting binary (CV)"
+    if any(k in o for k in ("EB", "ECL", "ALGOL", "BETA LYR", "WUMA")):
+        return "eclipsing binary"
+    if "+M" in s or "+K" in s or s.endswith("+M") or "DA+M" in s:
+        return "WD+dwarf binary"
+    if any(k in s for k in ("DAZ", "DBZ", "DZ", "DZA")):
+        return "metal-polluted WD (disk)"
+    if "**" in o or "SB" in o or "BINARY" in o:
+        return "binary"
+    if "WD" in o or s.startswith(("DA", "DB", "DC", "DO", "DQ")):
+        return "white dwarf (other)"
+    return o.lower() or "unexamined"
+
+
 def _first_cell(df: pd.DataFrame, names: list[str]):
     """First-row value of the first column (case-insensitive) matching ``names``."""
     for name in names:
@@ -308,4 +335,4 @@ def fetch_known_disks(positions: pd.DataFrame, radius_arcsec: float = 2.0) -> se
 
 
 __all__ = ["fetch_wd_parent", "fetch_catwise", "fetch_twomass", "fetch_galex",
-           "fetch_known_disks", "fetch_simbad_context"]
+           "fetch_known_disks", "fetch_simbad_context", "classify_candidate"]

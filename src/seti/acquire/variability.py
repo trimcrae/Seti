@@ -67,7 +67,7 @@ def _lomb_scargle(mjd: np.ndarray, mag: np.ndarray, magerr: np.ndarray | None,
     scatter, so this feeds a dedicated periodicity axis.
     """
     out = {"ls_fap": np.nan, "ls_period_d": np.nan, "ls_power": np.nan,
-           "ls_amp_mag": np.nan}
+           "ls_amp_mag": np.nan, "ls_alias": False}
     m = np.asarray(mag, dtype=float)
     t = np.asarray(mjd, dtype=float)
     good = np.isfinite(m) & np.isfinite(t)
@@ -90,7 +90,22 @@ def _lomb_scargle(mjd: np.ndarray, mag: np.ndarray, magerr: np.ndarray | None,
                                    samples_per_peak=5)
         if power.size == 0:
             return out
-        i = int(np.argmax(power))
+        # Ground-based nightly sampling imprints a strong alias comb at integer
+        # cycles per (solar/sidereal) day; a peak there is an observing artefact,
+        # not a real period.  Mask those frequency bands and take the strongest
+        # surviving peak, but record whether the global maximum was itself an alias.
+        alias_tol = 0.02  # cycles/day
+        f_cpd = freq  # t is in days, so frequency is already cycles/day
+        alias = np.zeros(f_cpd.size, dtype=bool)
+        kmax = int(np.floor(f_cpd.max())) + 1
+        for k in range(1, kmax + 1):
+            alias |= np.abs(f_cpd - k) < alias_tol            # solar-day comb
+            alias |= np.abs(f_cpd - k * 1.0027379) < alias_tol  # sidereal-day comb
+        out["ls_alias"] = bool(alias[int(np.argmax(power))])
+        masked = np.where(alias, -np.inf, power)
+        if not np.any(np.isfinite(masked)):
+            return out
+        i = int(np.argmax(masked))
         best_f = float(freq[i])
         out["ls_power"] = float(power[i])
         out["ls_period_d"] = 1.0 / best_f
@@ -158,7 +173,8 @@ def fetch_ztf_variability(positions: pd.DataFrame, radius_arcsec: float = 2.0,
                          "ztf_ls_fap": ls.get("ls_fap", np.nan),
                          "ztf_ls_period_d": ls.get("ls_period_d", np.nan),
                          "ztf_ls_power": ls.get("ls_power", np.nan),
-                         "ztf_ls_amp_mag": ls.get("ls_amp_mag", np.nan)})
+                         "ztf_ls_amp_mag": ls.get("ls_amp_mag", np.nan),
+                         "ztf_ls_alias": ls.get("ls_alias", False)})
         except Exception as exc:  # one bad object must not abort the shortlist
             print(f"[science] ZTF {sid} skipped: {exc!r}")
     out = pd.DataFrame(rows)

@@ -300,13 +300,17 @@ def science_run(
         # identity/object type, so an unexamined anomaly is distinguished from an
         # already-classified disk, binary or known variable.
         try:
-            from .acquire.science import fetch_simbad_context
+            from .acquire.science import classify_candidate, fetch_simbad_context
             if len(mm_cand) and {"ra", "dec"} <= set(mm_cand.columns):
                 ctx = fetch_simbad_context(mm_cand[["source_id", "ra", "dec"]].head(50))
                 if ctx is not None and len(ctx):
                     ccols = [c for c in ctx.columns
                              if c == "source_id" or c not in mm_cand.columns]
                     mm_cand = mm_cand.merge(ctx[ccols], on="source_id", how="left")
+                    mm_cand["candidate_class"] = [
+                        classify_candidate(o, s) for o, s in
+                        zip(mm_cand.get("simbad_otype", ""),
+                            mm_cand.get("simbad_sptype", ""), strict=False)]
         except Exception as exc:
             print(f"[science] SIMBAD vetting skipped: {exc!r}")
 
@@ -315,8 +319,9 @@ def science_run(
                              "score_uv_deficit", "score_energy_balance",
                              "score_periodicity", "score_optical_variability",
                              "score_ir_variability", "ztf_frac_rms", "ztf_ls_period_d",
-                             "ztf_ls_fap", "neowise_w1_frac_rms", "nuv_deficit_frac",
-                             "simbad_id", "simbad_otype", "simbad_sptype"]
+                             "ztf_ls_fap", "ztf_ls_alias", "neowise_w1_frac_rms",
+                             "nuv_deficit_frac", "simbad_id", "simbad_otype",
+                             "simbad_sptype", "candidate_class"]
                  if c in mm_cand.columns]
         mm_cand[mcols].to_csv(out_dir / "multimodal_candidates.csv", index=False)
         comb.to_parquet(sci_tables / "multimodal.parquet", index=False)

@@ -72,3 +72,38 @@ def test_lomb_scargle_noise_is_not_significant():
 def test_lomb_scargle_too_few_epochs():
     res = _lomb_scargle(np.array([1.0, 2.0, 3.0]), np.array([18.0, 18.1, 17.9]), None)
     assert np.isnan(res["ls_period_d"])
+
+
+def test_lomb_scargle_rejects_one_day_alias():
+    # Nightly cadence (integer-day spacing + jitter) with a spurious 1-day signal:
+    # the returned period must NOT be ~1 day (the diurnal alias is masked), and the
+    # global-max alias must be recorded.
+    rng = np.random.default_rng(7)
+    nights = np.arange(0, 300)
+    t = nights + rng.uniform(-0.02, 0.02, nights.size)  # ~once per night
+    mag = 18.0 + 0.2 * np.sin(2 * np.pi * t / 1.0) + rng.normal(0, 0.02, t.size)
+    res = _lomb_scargle(t, mag, np.full(t.size, 0.02))
+    if np.isfinite(res["ls_period_d"]):
+        assert abs(res["ls_period_d"] - 1.0) > 0.05  # not the 1-day alias
+        assert abs(res["ls_period_d"] - 0.5) > 0.02   # nor the 2 c/d alias
+
+
+def test_lomb_scargle_keeps_genuine_short_period():
+    # A 0.37-day period is far from the integer-cycles/day comb and must survive.
+    rng = np.random.default_rng(8)
+    t = np.sort(rng.uniform(0, 300, 400))
+    period = 0.37
+    mag = 18.0 + 0.15 * np.sin(2 * np.pi * t / period) + rng.normal(0, 0.02, t.size)
+    res = _lomb_scargle(t, mag, np.full(t.size, 0.02))
+    assert np.isfinite(res["ls_period_d"])
+    assert abs(res["ls_period_d"] - period) / period < 0.03
+
+
+def test_classify_candidate():
+    from seti.acquire.science import classify_candidate
+    assert classify_candidate("CV*", "DAP") == "interacting binary (CV)"
+    assert classify_candidate("WD*", "DA+M") == "WD+dwarf binary"
+    assert classify_candidate("WD*", "DAZ") == "metal-polluted WD (disk)"
+    assert classify_candidate("WD*", "DA") == "white dwarf (other)"
+    assert classify_candidate("", "") == "unexamined"
+    assert classify_candidate("EB*", "") == "eclipsing binary"

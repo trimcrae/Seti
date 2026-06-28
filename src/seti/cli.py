@@ -111,6 +111,15 @@ def _cmd_spectra_run(args, cfg):
                 spectype=args.spectype, snr_min=args.snr_min)
 
 
+def _cmd_dimming_run(args, cfg):
+    from .dimming.run import dimming_run
+
+    dimming_run(cfg, ra=args.ra, dec=args.dec, radius_deg=args.radius_deg,
+                g_min=args.g_min, g_max=args.g_max,
+                variable_only=not args.all_stars, band=args.band,
+                limit=args.limit, time_budget_s=args.time_budget_s)
+
+
 def _cmd_paper_numbers(args, cfg):
     from .report import write_numbers_tex
 
@@ -171,6 +180,19 @@ def main(argv=None):
     p.add_argument("--spectype", default=None)
     p.add_argument("--snr-min", type=float, default=8.0)
     p.set_defaults(func=_cmd_spectra_run)
+
+    p = sub.add_parser("dimming-run")
+    p.add_argument("--ra", type=float, default=270.0)
+    p.add_argument("--dec", type=float, default=30.0)
+    p.add_argument("--radius-deg", type=float, default=1.5)
+    p.add_argument("--g-min", type=float, default=13.0)
+    p.add_argument("--g-max", type=float, default=18.5)
+    p.add_argument("--all-stars", action="store_true",
+                   help="search all stars, not only Gaia-flagged variables")
+    p.add_argument("--band", default="r")
+    p.add_argument("--limit", type=int, default=4000)
+    p.add_argument("--time-budget-s", type=float, default=1800.0)
+    p.set_defaults(func=_cmd_dimming_run)
 
     p = sub.add_parser("contamination-budget")
     p.add_argument("--seed", type=int, default=11)

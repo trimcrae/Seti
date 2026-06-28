@@ -1,0 +1,97 @@
+name: dimming-run
+
+# Blind search for Boyajian's-star analogues --- deep, irregular, *aperiodic*
+# optical dimming --- in public ZTF light curves of Gaia stars. Runs on the
+# GitHub-hosted runner, which has the unrestricted outbound network Gaia TAP and
+# the IRSA ZTF light-curve service need (the interactive sandbox does not). The
+# sky is tiled by repeated runs over (RA, Dec, radius) fields. Results are
+# committed back to the branch.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ra:
+        description: "Field centre RA (deg)"
+        required: false
+        default: "270.0"
+      dec:
+        description: "Field centre Dec (deg, > -28 for ZTF)"
+        required: false
+        default: "30.0"
+      radius_deg:
+        description: "Field radius (deg)"
+        required: false
+        default: "1.5"
+      g_min:
+        description: "Bright Gaia G limit"
+        required: false
+        default: "13.0"
+      g_max:
+        description: "Faint Gaia G limit"
+        required: false
+        default: "18.5"
+      all_stars:
+        description: "Search all stars, not only Gaia-flagged variables (true/false)"
+        required: false
+        default: "false"
+      limit:
+        description: "Max Gaia targets to pull for the field"
+        required: false
+        default: "4000"
+      time_budget_s:
+        description: "Wall-clock budget for ZTF light-curve fetching (s)"
+        required: false
+        default: "1800"
+
+permissions:
+  contents: write
+
+jobs:
+  dimming:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,pandas,scipy,astropy,astroquery; print('imports OK')"
+      - name: Run dimming search
+        run: |
+          ARGS="--ra ${{ github.event.inputs.ra }} --dec ${{ github.event.inputs.dec }}"
+          ARGS="$ARGS --radius-deg ${{ github.event.inputs.radius_deg }}"
+          ARGS="$ARGS --g-min ${{ github.event.inputs.g_min }} --g-max ${{ github.event.inputs.g_max }}"
+          ARGS="$ARGS --limit ${{ github.event.inputs.limit }}"
+          ARGS="$ARGS --time-budget-s ${{ github.event.inputs.time_budget_s }}"
+          if [ "${{ github.event.inputs.all_stars }}" = "true" ]; then ARGS="$ARGS --all-stars"; fi
+          echo "seti dimming-run $ARGS"
+          python -m seti.cli dimming-run $ARGS
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/dimming/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "dimming-run: Boyajian-analogue search (field ${{ github.event.inputs.ra }}, ${{ github.event.inputs.dec }})
+
+            Generated on a GitHub-hosted runner with Gaia TAP + IRSA ZTF access."
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dimming-outputs
+          path: results/dimming/
+          if-no-files-found: warn

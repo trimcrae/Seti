@@ -65,3 +65,35 @@ def test_eclipsing_binary_is_periodic():
 def test_too_few_epochs_returns_none():
     t, m, e = _flat(n=10)
     assert detect_dips(t, m, e) is None
+
+
+def test_dimming_run_end_to_end(tmp_path):
+    from seti.config import load_config
+    from seti.dimming.run import dimming_run
+
+    lightcurves = []
+    # Five flat (non-dipping) stars.
+    for i in range(5):
+        t, m, e = _flat(n=200, seed=10 + i)
+        lightcurves.append({"source_id": 1000 + i, "ra": 270.0 + 0.01 * i,
+                            "dec": 30.0, "mjd": t, "mag": m, "magerr": e})
+    # One Boyajian-like deep aperiodic dipper.
+    rng = np.random.default_rng(99)
+    t = np.sort(rng.uniform(0, 1500, 400))
+    m = 12.0 + rng.normal(0, 0.01, t.size)
+    for tc, depth in [(220, 0.16), (540, 0.27), (910, 0.12), (1290, 0.20)]:
+        m += depth * np.exp(-0.5 * ((t - tc) / 12.0) ** 2)
+    lightcurves.append({"source_id": 2002, "ra": 271.0, "dec": 31.0,
+                        "mjd": t, "mag": m, "magerr": np.full(t.size, 0.01)})
+
+    cfg = load_config()
+    cfg.root = tmp_path
+    summary = dimming_run(cfg, lightcurves=lightcurves)
+
+    assert summary["n_searched"] == 6
+    assert summary["n_candidates"] >= 1
+    # The injected dipper is the top candidate.
+    assert summary["top_candidates"][0]["source_id"] == 2002
+    assert "occurrence_limit" in summary
+    assert (tmp_path / "results" / "dimming" / "summary.json").exists()
+    assert (tmp_path / "results" / "dimming" / "top_dippers.json").exists()

@@ -10,5 +10,6 @@ pulsator nor the strictly periodic, symmetric eclipses of a binary.
 """
 
 from .dips import DipStats, detect_dips
+from .run import dimming_run
 
-__all__ = ["DipStats", "detect_dips"]
+__all__ = ["DipStats", "detect_dips", "dimming_run"]

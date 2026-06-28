@@ -38,13 +38,17 @@ def spectra_run(
         n_searched = res["n_searched"]
         candidates = res["candidates"]
         rejection_counts = res["rejection_counts"]
+        completeness = {}
     else:
         # Stream chunk-by-chunk so memory stays bounded at catalogue scale.
         from .acquire import iter_spectra
         n_searched = 0
         candidates: list[dict] = []
         rejection_counts: dict[str, int] = {}
+        first_batch: list[dict] = []
         for batch in iter_spectra(n=n, dataset=dataset, spectype=spectype):
+            if not first_batch:
+                first_batch = batch[:200]  # held aside for injection-recovery
             r = search_spectra(batch, snr_min=snr_min)
             n_searched += r["n_searched"]
             candidates.extend(r["candidates"])
@@ -53,6 +57,14 @@ def spectra_run(
             print(f"[spectra] progress: {n_searched} searched, "
                   f"{len(candidates)} candidates so far")
         candidates.sort(key=lambda c: c.get("score", 0.0), reverse=True)
+        # Completeness vs injected S/N on a real-spectrum subsample.
+        try:
+            from .injection import injection_recovery
+            completeness = injection_recovery(first_batch, snr_min=snr_min)
+            print("[spectra] completeness:", json.dumps(completeness["completeness"]))
+        except Exception as exc:
+            completeness = {}
+            print(f"[spectra] injection-recovery skipped: {exc!r}")
 
     # Final, sample-level cut: a real laser is unique to one spectrum, so reject
     # any wavelength that recurs across many sightlines (the OH-airglow forest and
@@ -102,6 +114,7 @@ def spectra_run(
         "n_searched": n_searched,
         "n_candidates": k,
         "rejection_counts": res["rejection_counts"],
+        "completeness": completeness.get("completeness", {}) if completeness else {},
         "occurrence_limit": {
             "k_candidates": lim.k, "n_eff": lim.n_eff,
             "confidence": lim.confidence, "f_upper": lim.f_upper,

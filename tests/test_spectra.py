@@ -273,3 +273,26 @@ def test_reject_recurrent_wavelengths():
     assert n_rej == 6
     assert len(survivors) == 1
     assert survivors[0]["spec_id"] == "unique"
+
+
+def test_injection_recovery_completeness():
+    from seti.spectra.injection import inject_laser_line, injection_recovery
+    lsf = 1.5
+    res_match = 5000.0 / (lsf * 1.0 * 2.3548)
+    spectra = []
+    for s in range(6):
+        wave, flux, err, _, _ = _spectrum(seed=300 + s)
+        spectra.append({"spec_id": f"s{s}", "wave": wave, "flux": flux,
+                        "ivar": 1.0 / err**2, "resolution": res_match})
+    res = injection_recovery(spectra, snr_grid=(8, 30, 60), n_per_spectrum=2,
+                             snr_min=8.0)
+    comp = res["completeness"]
+    # Completeness is monotonic-ish and high at strong S/N.
+    assert comp[60] >= comp[8]
+    assert comp[60] > 0.7
+    # The injector actually raises the flux at the target wavelength.
+    wave, flux, err, _, _ = _spectrum(seed=400)
+    f2 = inject_laser_line(wave, flux, 1.0 / err**2, 5000.0, snr=30.0,
+                           lsf_sigma_pix=lsf)
+    i = int(np.argmin(np.abs(wave - 5000.0)))
+    assert f2[i] > flux[i]

@@ -95,39 +95,60 @@ def _xmatch(positions: pd.DataFrame, vizier_table: str, radius_arcsec: float) ->
     return out
 
 
+def _map(raw: pd.DataFrame, targets: dict[str, list[str]]) -> pd.DataFrame:
+    """Build a frame mapping target column -> first matching candidate in raw."""
+    out = pd.DataFrame()
+    for target, cands in targets.items():
+        col = _find_col(raw, cands)
+        if col is not None:
+            out[target] = raw[col].to_numpy()
+    return out
+
+
 def fetch_catwise(positions: pd.DataFrame, radius_arcsec: float = 3.0) -> pd.DataFrame:
     raw = _xmatch(positions, "vizier:II/365/catwise", radius_arcsec)
     if raw.empty:
         return raw
-    ren = {
-        "RA_ICRS": "ra_wise", "DE_ICRS": "dec_wise",
-        "W1mproPM": "W1mag", "e_W1mproPM": "e_W1mag",
-        "W2mproPM": "W2mag", "e_W2mproPM": "e_W2mag",
-        "pmRA": "pmra_wise", "pmDE": "pmdec_wise",
-        "e_pmRA": "e_pmra_wise", "e_pmDE": "e_pmdec_wise",
-        "ccf": "cc_flags", "qph": "ph_qual",
-    }
-    out = raw.rename(columns={k: v for k, v in ren.items() if k in raw.columns})
-    # Keep best (closest) match per source_id.
+    print(f"[science] CatWISE X-Match columns: {list(raw.columns)}")
+    out = _map(raw, {
+        "source_id": ["source_id"],
+        "ra_wise": ["RA_ICRS", "RAPMdeg", "RAdeg", "RAJ2000", "_RAJ2000", "ra_2", "RAICRS"],
+        "dec_wise": ["DE_ICRS", "DEPMdeg", "DEdeg", "DEJ2000", "_DEJ2000", "dec_2", "DEICRS"],
+        "W1mag": ["W1mproPM", "W1mag", "W1mpro"],
+        "e_W1mag": ["e_W1mproPM", "e_W1mag", "e_W1mpro"],
+        "W2mag": ["W2mproPM", "W2mag", "W2mpro"],
+        "e_W2mag": ["e_W2mproPM", "e_W2mag", "e_W2mpro"],
+        "pmra_wise": ["pmRA", "pmRAPM"],
+        "pmdec_wise": ["pmDE", "pmDEPM"],
+        "e_pmra_wise": ["e_pmRA"],
+        "e_pmdec_wise": ["e_pmDE"],
+        "cc_flags": ["ccf", "cc_flags", "abf"],
+        "ph_qual": ["qph", "ph_qual"],
+        "angDist": ["angDist"],
+    })
     if "angDist" in out.columns:
-        out = out.sort_values("angDist").drop_duplicates("source_id")
-    keep = ["source_id", "ra_wise", "dec_wise", "W1mag", "e_W1mag", "W2mag",
-            "e_W2mag", "pmra_wise", "pmdec_wise", "e_pmra_wise", "e_pmdec_wise",
-            "cc_flags", "ph_qual"]
-    return out[[c for c in keep if c in out.columns]]
+        out = out.sort_values("angDist").drop_duplicates("source_id").drop(columns="angDist")
+    return out
+
+
+_TWOMASS_TARGETS = {
+    "source_id": ["source_id"],
+    "Jmag": ["Jmag"], "e_Jmag": ["e_Jmag"],
+    "Hmag": ["Hmag"], "e_Hmag": ["e_Hmag"],
+    "Ksmag": ["Kmag", "Ksmag"], "e_Ksmag": ["e_Kmag", "e_Ksmag"],
+    "angDist": ["angDist"],
+}
 
 
 def fetch_twomass(positions: pd.DataFrame, radius_arcsec: float = 3.0) -> pd.DataFrame:
     raw = _xmatch(positions, "vizier:II/246/out", radius_arcsec)
     if raw.empty:
         return raw
-    ren = {"Jmag": "Jmag", "e_Jmag": "e_Jmag", "Hmag": "Hmag", "e_Hmag": "e_Hmag",
-           "Kmag": "Ksmag", "e_Kmag": "e_Ksmag"}
-    out = raw.rename(columns={k: v for k, v in ren.items() if k in raw.columns})
+    print(f"[science] 2MASS X-Match columns: {list(raw.columns)}")
+    out = _map(raw, _TWOMASS_TARGETS)
     if "angDist" in out.columns:
-        out = out.sort_values("angDist").drop_duplicates("source_id")
-    keep = ["source_id", "Jmag", "e_Jmag", "Hmag", "e_Hmag", "Ksmag", "e_Ksmag"]
-    return out[[c for c in keep if c in out.columns]]
+        out = out.sort_values("angDist").drop_duplicates("source_id").drop(columns="angDist")
+    return out
 
 
 def fetch_known_disks(positions: pd.DataFrame, radius_arcsec: float = 2.0) -> set:

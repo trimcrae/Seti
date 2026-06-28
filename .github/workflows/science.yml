@@ -52,10 +52,15 @@ jobs:
             git commit -m "science-run: empirical results (dist=${{ github.event.inputs.max_dist_pc }} pc)
 
             Generated on a GitHub-hosted runner with archive network access."
+            # The run leaves other tracked files dirty (regenerated assets); discard
+            # them so the rebase onto concurrently-pushed commits is not blocked.
+            git checkout -- . 2>/dev/null || true
             # Rebase onto any commits pushed since checkout, then push (retry once).
-            git pull --rebase origin ${{ github.ref_name }} || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
             git push origin HEAD:${{ github.ref_name }} || \
-              { git pull --rebase origin ${{ github.ref_name }}; git push origin HEAD:${{ github.ref_name }}; }
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
           fi
       - uses: actions/upload-artifact@v4
         if: always()

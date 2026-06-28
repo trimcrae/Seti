@@ -140,7 +140,9 @@ _TWOMASS_TARGETS = {
 }
 
 
-def fetch_twomass(positions: pd.DataFrame, radius_arcsec: float = 3.0) -> pd.DataFrame:
+def fetch_twomass(positions: pd.DataFrame, radius_arcsec: float = 8.0) -> pd.DataFrame:
+    # Larger radius than CatWISE: 2MASS epoch (~1999) is ~17 yr before Gaia
+    # (2016), so high-proper-motion nearby white dwarfs shift by several arcsec.
     raw = _xmatch(positions, "vizier:II/246/out", radius_arcsec)
     if raw.empty:
         return raw

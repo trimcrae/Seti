@@ -28,7 +28,7 @@ from .photometry import (
 ANCHOR = ("J", "H", "Ks")
 PRED = ("W1", "W2")
 GAIA_EPOCH = 2016.0
-WISE_EPOCH = 2010.5
+WISE_EPOCH = 2015.4
 
 
 def _photosphere_mags(teff, scale, bands):

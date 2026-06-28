@@ -33,7 +33,7 @@ PC_M = 3.086e16
 ANCHOR = ("J", "H", "Ks")
 PRED = ("W1", "W2")
 GAIA_EPOCH = 2016.0
-WISE_EPOCH = 2010.5
+WISE_EPOCH = 2015.4
 
 
 def mass_radius_rsun(mass_msun: np.ndarray) -> np.ndarray:

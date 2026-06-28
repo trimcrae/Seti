@@ -9,7 +9,7 @@ from seti.contamination.comovement import comovement_pass, propagated_offset_arc
 def test_funnel_rejects_contaminants_keeps_clean(cfg, sample):
     sample = sample.copy()
     sample.attrs["gaia_ref_epoch"] = 2016.0
-    sample.attrs["wise_mean_epoch"] = 2010.5
+    sample.attrs["wise_mean_epoch"] = 2015.4
     vetted = run_funnel(sample, cfg.thresholds)
 
     # Clean and astrophysically-real (disk/anomaly) sources should survive.

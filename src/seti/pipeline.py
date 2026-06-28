@@ -19,6 +19,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from .config import Config, load_config
@@ -78,8 +79,16 @@ def run_pipeline(
         "anomaly_score", ascending=False
     )
 
-    # 4. Occurrence-rate upper limit on the effective (clean) WD sample.
-    n_eff = int(vetted["clean"].sum())
+    # 4. Occurrence-rate upper limit on the effective searched sample: clean WDs
+    #    for which we could actually detect an excess, i.e. with a valid SED
+    #    prediction (finite scale -> anchor photometry present) and finite W1/W2.
+    searchable = (
+        vetted["clean"]
+        & np.isfinite(vetted.get("sed_scale", np.nan))
+        & np.isfinite(vetted.get("W1_excess_jy", np.nan))
+        & np.isfinite(vetted.get("W2_excess_jy", np.nan))
+    )
+    n_eff = int(searchable.sum())
     k = int(len(candidates))
     lim = occurrence_upper_limit(
         k=k, n_eff=max(n_eff, 1),
@@ -95,6 +104,7 @@ def run_pipeline(
 
     counts = {
         "parent": int(len(df)),
+        "searchable": n_eff,
         "with_excess": int(ex["has_excess"].sum()),
         "clean": n_eff,
         "clean_excess": int(len(clean_excess)),

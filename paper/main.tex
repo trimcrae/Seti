@@ -68,8 +68,9 @@ surviving sources are prioritised follow-up targets, not detections. To move
 beyond the inherent degeneracy of a single infrared-excess axis, we further
 develop a multi-modal anomaly framework that scores each white dwarf on several
 independent and physically distinct axes --- an ultraviolet deficit, an
-energy-balance match between ultraviolet absorption and infrared re-emission, and
-optical and mid-infrared variability --- and promotes only objects flagged on two
+energy-balance match between ultraviolet absorption and infrared re-emission, a
+significant optical period, and optical and mid-infrared variability --- and
+promotes only objects flagged on two
 or more axes at once. The energy-balance axis, which tests the defining
 thermodynamic signature of a reprocessing structure, is the most discriminating in
 principle, and the framework converts a confounder-dominated one-dimensional
@@ -297,6 +298,12 @@ photometrically stable, so genuine optical variability (a megastructure-transit 
 dimming signature) is itself anomalous. We use the Gaia DR3 variability flag for
 the full sample and a noise-corrected fractional RMS from ZTF
 \citep{Bellm2019} light curves for the shortlist.
+\item \textbf{Optical periodicity} --- stronger still than raw variability is a
+\emph{periodic} signal: an intrinsically stable white dwarf has no natural
+day-to-month period, so a statistically significant Lomb--Scargle period in its
+ZTF light curve --- as a structure on a closed orbit would impose --- is a sharp,
+specific anomaly. We flag periods with a low false-alarm probability and a
+non-negligible amplitude, recording the period for follow-up.
 \item \textbf{Infrared variability} --- changing waste heat (construction,
 eclipses, or a transiting configuration), measured as the fractional RMS of the
 per-visit NEOWISE \citep{Mainzer2014} \wone\ photometry for the shortlist.
@@ -568,9 +575,10 @@ queried ZTF and NEOWISE light curves and computed a noise-corrected fractional
 RMS on each.
 
 The per-axis counts are $\SciMMir$ objects flagged on infrared excess, $\SciMMuv$
-on ultraviolet deficit, $\SciMMenergy$ on energy balance, $\SciMMoptvar$ on
-optical variability, $\SciMMirvar$ on infrared variability and $\SciMMkin$ on
-kinematics. Combining them, $\SciMMtwo$ white dwarfs are flagged on $\geq 2$
+on ultraviolet deficit, $\SciMMenergy$ on energy balance, $\SciMMperiod$ on optical
+periodicity, $\SciMMoptvar$ on optical variability, $\SciMMirvar$ on infrared
+variability and $\SciMMkin$ on kinematics. Combining them, $\SciMMtwo$ white dwarfs
+are flagged on $\geq 2$
 independent axes (Fig.~\ref{fig:emp_axes}) and $\SciMMthree$ on $\geq 3$; these
 multi-axis objects (Table~\ref{tab:multimodal}) are the prioritised candidates of
 the expanded search. The single object flagged on three axes at once (Gaia EDR3
@@ -712,8 +720,8 @@ positives, and that the candidate count is set by those false positives rather
 than by any genuine signal. The multi-modal framework
 (Sections~\ref{sec:multimodal}, \ref{sec:emp_multimodal}) is our response: by
 requiring coincidence across physically distinct and independently-failing axes
---- an ultraviolet deficit, an energy-balance match, optical and infrared
-variability --- it suppresses exactly the confounders that inflate a
+--- an ultraviolet deficit, an energy-balance match, a significant optical period,
+and optical and infrared variability --- it suppresses exactly the confounders that inflate a
 one-dimensional list. The energy-balance axis is the most discriminating in
 principle, because the matched-absorption/re-emission coincidence it tests is the
 defining thermodynamic property of a reprocessing structure and is not reproduced
@@ -758,7 +766,8 @@ infrared excess cannot by itself separate a technosignature from these
 confounders, we extend the search into a multi-modal anomaly framework that scores
 each white dwarf on several independent and physically distinct axes --- an
 ultraviolet deficit, an energy-balance match between ultraviolet absorption and
-infrared re-emission, and optical and mid-infrared variability --- and promotes
+infrared re-emission, a significant optical period, and optical and mid-infrared
+variability --- and promotes
 only the $\SciMMtwo$ objects flagged on two or more axes at once, one of which is
 flagged on three. This converts a confounder-dominated candidate list into a
 sharply ranked one and is the principal lever for tightening the candidate-limited

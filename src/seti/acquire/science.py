@@ -196,10 +196,17 @@ def fetch_known_disks(positions: pd.DataFrame, radius_arcsec: float = 2.0) -> se
             # Use only the curated IR-excess table (it carries WISE photometry),
             # not the catalogue's larger master/parent list which would
             # over-subtract.
-            if _find_col(df, ["W1mag", "FinalExcess"]) is None:
-                print(f"[science] known-disk table {ti}: skipped (not the excess list)")
+            exc_col = _find_col(df, ["FinalExcess", "IRExs", "Excess"])
+            if exc_col is None:
+                print(f"[science] known-disk table {ti}: skipped (no excess flag)")
                 continue
+            # Keep only rows actually flagged as IR-excess sources.
+            num = pd.to_numeric(df[exc_col], errors="coerce")
+            sval = df[exc_col].astype(str).str.strip().str.lower()
+            is_exc = (num > 0) | sval.isin(["y", "yes", "true", "1", "e"])
+            df = df[is_exc.fillna(False)]
             if rcol is None or dcol is None or not len(df):
+                print(f"[science] known-disk table {ti}: no excess rows after filter")
                 continue
             ra = pd.to_numeric(df[rcol], errors="coerce").to_numpy()
             de = pd.to_numeric(df[dcol], errors="coerce").to_numpy()

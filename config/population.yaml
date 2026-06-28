@@ -30,6 +30,23 @@ population:
   mass_sigma_msun: 0.13
   mass_min_msun: 0.40
   mass_max_msun: 1.10
+  # Tangential-velocity dispersion of the (old) white-dwarf population; sets the
+  # proper-motion distribution via mu = v_tan / (4.74 d). ~40 km/s is typical of
+  # the thin+thick disk WD mix (Sion et al. 2014; Anguiano et al. 2017).
+  vtan_dispersion_km_s: 40.0
+
+background:
+  # CatWISE2020 contains 1,890,715,640 sources over the full sky (41,253 deg^2)
+  # -> mean surface density ~4.6e4 deg^-2 (Marocco et al. 2021). High Galactic
+  # latitude is lower, the plane higher; we adopt the all-sky mean as a
+  # conservative chance-alignment rate for the contamination budget.
+  source_density_per_deg2: 46000.0
+  match_radius_arcsec: 3.0
+  # CatWISE2020 proper-motion uncertainty (mas/yr): ~10 mas/yr for bright
+  # sources, degrading toward the faint limit. Modelled as sigma_pm0 scaled with
+  # W1 brightness relative to a reference magnitude.
+  pm_sigma0_mas_yr: 12.0
+  pm_sigma_ref_w1: 14.0
 
 wise_depth:
   # 5-sigma point-source limits, Vega (CatWISE2020: Marocco et al. 2021;

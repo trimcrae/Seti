@@ -40,7 +40,11 @@ CatWISE2020, unWISE, AllWISE and 2MASS photometry. Our central methodological
 contribution is a contamination-robust vetting funnel whose decisive, novel cut
 is a Gaia--WISE \emph{co-movement} test: it requires the infrared source to share
 the white dwarf's large proper motion, rejecting the chance-aligned background
-interlopers that defeated earlier broadband searches. Using a realistic
+interlopers that defeated earlier broadband searches. At the CatWISE2020 source
+density a $\sim$\SI{3}{arcsec} match implies a $\sim\ChanceRate\%$ chance-alignment
+rate per white dwarf; the co-movement cut removes $\RemovedFrac\%$ of these (a
+factor of $\RejectionFactor$), with near-complete rejection for fast-moving white
+dwarfs. Using a realistic
 population model calibrated to the published Gaia and WISE statistics and
 end-to-end injection--recovery, we forecast that a null search of the
 $\NhundredPc$ white dwarfs within \SI{100}{pc} --- of which $\sim\WiseFrac\%$
@@ -230,6 +234,39 @@ samples, confirming it does not over-prune real excess.
   debris-disk locus shaded. Known disks populate the warm, low-$\tau$ locus;
   anomaly candidates lie outside it.}
   \label{fig:locus}
+\end{figure}
+
+\subsection{Co-movement contamination budget}
+\label{sec:budget}
+We quantify the central claim --- that the co-movement cut suppresses
+chance-aligned background contamination --- with a population-level budget. At
+the CatWISE2020 surface density ($\sim4.6\times10^{4}\,\mathrm{deg^{-2}}$) and a
+\SI{3}{arcsec} cross-match radius, each white dwarf has a probability
+$\lambda\approx\ChanceRate\%$ of a chance-aligned infrared source within the
+match radius; across the $\NeffWise$ WISE-detected white dwarfs within
+\SI{100}{pc} this implies $\sim\ContamBefore$ chance alignments, a population of
+potential false positives comparable to or exceeding any plausible
+technosignature yield. Because a background object is essentially static in
+proper motion while a nearby white dwarf moves at a median
+$\sim\MedianPM\,\mathrm{mas\,yr^{-1}}$, the co-movement cut removes $\RemovedFrac\%$
+of these chance alignments --- a factor of $\RejectionFactor$ reduction, to
+$\sim\ContamAfter$ residual --- without any cost to genuine associations. The
+efficacy is a strong function of proper motion (Fig.~\ref{fig:comovement}):
+essentially all contaminants are removed for $\mu\gtrsim\SI{200}{mas\,yr^{-1}}$,
+while the cut is weak for the low-proper-motion, faint tail where the CatWISE
+proper-motion uncertainty is large --- precisely the regime in which the
+crowding, unWISE-agreement and extragalactic cuts provide the complementary
+defence. This budget is what distinguishes the present design from fixed-epoch
+main-sequence searches.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.7\linewidth]{../results/figures/comovement_efficacy.pdf}
+  \caption{Fraction of chance-aligned background contaminants removed by the
+  Gaia--WISE co-movement cut as a function of white-dwarf proper motion. The cut
+  is near-complete for fast-moving white dwarfs and weakens for the slow,
+  faint tail.}
+  \label{fig:comovement}
 \end{figure}
 
 \section{Projected sensitivity}

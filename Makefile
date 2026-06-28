@@ -33,10 +33,13 @@ completeness: sample
 forecast:
 	$(PY) -m seti.cli forecast
 
+contamination-budget:
+	$(PY) -m seti.cli contamination-budget
+
 paper-numbers:
 	$(PY) -m seti.cli paper-numbers
 
-figures: analyze forecast
+figures: analyze forecast contamination-budget
 	$(PY) -m seti.cli figures
 
 # Build the manuscript PDF (requires a LaTeX toolchain). Regenerates numbers and

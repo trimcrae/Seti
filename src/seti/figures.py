@@ -142,12 +142,31 @@ def fig_completeness_heatmap(cfg: Config, fig_dir: Path) -> Path | None:
     return out
 
 
+def fig_comovement_efficacy(cfg: Config, fig_dir: Path) -> Path | None:
+    """Fraction of chance-aligned background contaminants removed vs WD proper motion."""
+    eff = _load(cfg, "comovement_efficacy.parquet")
+    if eff is None or "removed_fraction" not in eff:
+        return None
+    fig, ax = plt.subplots(figsize=(5.4, 3.8))
+    ax.plot(eff["pm_mid"], 100 * eff["removed_fraction"], marker="o", color="#b03060")
+    ax.set_xscale("log")
+    ax.set_xlabel(r"white-dwarf proper motion $\mu$ [mas\,yr$^{-1}$]")
+    ax.set_ylabel("chance-aligned contaminants removed [%]")
+    ax.set_title("Co-movement cut efficacy")
+    ax.set_ylim(-3, 103)
+    fig.tight_layout()
+    out = fig_dir / "comovement_efficacy.pdf"
+    fig.savefig(out)
+    plt.close(fig)
+    return out
+
+
 def render_all(cfg: Config) -> list[Path]:
     fig_dir = cfg.path("figures_dir")
     fig_dir.mkdir(parents=True, exist_ok=True)
     paths = []
     for fn in (fig_chi_distribution, fig_color_color, fig_funnel,
-               fig_forecast_limit, fig_completeness_heatmap):
+               fig_forecast_limit, fig_completeness_heatmap, fig_comovement_efficacy):
         out = fn(cfg, fig_dir)
         if out is not None:
             paths.append(out)

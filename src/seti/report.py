@@ -51,6 +51,11 @@ def collect_numbers(cfg: Config) -> dict[str, str]:
     n_wise = float(fc["n_detected_real"].iloc[0])
     wise_frac = n_wise / cat["n_within_100pc"]
 
+    # --- Co-movement contamination budget ---
+    from .population import generate_population
+    from .stats.contamination_budget import contamination_budget
+    budget = contamination_budget(cfg, generate_population(cfg))
+
     macros = {
         "NhighConf": f"{cat['n_high_confidence']:,}".replace(",", r"\,"),
         "NhundredPc": f"{cat['n_within_100pc']:,}".replace(",", r"\,"),
@@ -70,6 +75,12 @@ def collect_numbers(cfg: Config) -> dict[str, str]:
         "RejectAgn": f"{100 * (1 - keep('agn')):.0f}",
         "FunnelInput": str(fc_counts.get("input", 0)),
         "FunnelClean": str(fc_counts.get("extragalactic", 0)),
+        "ChanceRate": f"{100 * budget['lambda_per_wd']:.0f}",
+        "ContamBefore": f"{budget['chance_aligned_before_real']:,.0f}".replace(",", r"\,"),
+        "ContamAfter": f"{budget['chance_aligned_after_real']:,.0f}".replace(",", r"\,"),
+        "RejectionFactor": f"{budget['rejection_factor']:.1f}",
+        "RemovedFrac": f"{100 * budget['removed_fraction']:.0f}",
+        "MedianPM": f"{budget['median_pm_mas_yr']:.0f}",
     }
     return macros
 

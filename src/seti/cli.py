@@ -72,6 +72,20 @@ def _cmd_forecast(args, cfg):
                       "n_detected_real": float(fc["n_detected_real"].iloc[0])}, indent=2))
 
 
+def _cmd_contamination_budget(args, cfg):
+    from .population import generate_population
+    from .stats.contamination_budget import contamination_budget, efficacy_vs_pm
+
+    pop = generate_population(cfg, seed=args.seed)
+    budget = contamination_budget(cfg, pop)
+    eff = efficacy_vs_pm(cfg, pop)
+    out_dir = cfg.path("tables_dir")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    eff.to_parquet(out_dir / "comovement_efficacy.parquet", index=False)
+    (out_dir / "contamination_budget.json").write_text(json.dumps(budget, indent=2))
+    print(json.dumps(budget, indent=2))
+
+
 def _cmd_paper_numbers(args, cfg):
     from .report import write_numbers_tex
 
@@ -107,6 +121,10 @@ def main(argv=None):
     p = sub.add_parser("forecast")
     p.add_argument("--seed", type=int, default=11)
     p.set_defaults(func=_cmd_forecast)
+
+    p = sub.add_parser("contamination-budget")
+    p.add_argument("--seed", type=int, default=11)
+    p.set_defaults(func=_cmd_contamination_budget)
 
     p = sub.add_parser("paper-numbers")
     p.set_defaults(func=_cmd_paper_numbers)

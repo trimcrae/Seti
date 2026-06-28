@@ -127,8 +127,15 @@ def generate_population(cfg, seed: int = 11) -> pd.DataFrame:
     df["source_id"] = rng.integers(1_000_000_000, 9_000_000_000, n)
     df["ra"] = rng.uniform(0, 360, n)
     df["dec"] = rng.uniform(-40, 80, n)
-    df["pmra"] = rng.uniform(-200, 200, n)
-    df["pmdec"] = rng.uniform(-200, 200, n)
+    # Kinematically-motivated proper motions: tangential speed from a 2D
+    # Maxwellian (Rayleigh) with the WD-population velocity dispersion, converted
+    # via mu = v_tan / (4.74 d). Nearby WDs therefore have large proper motions.
+    sigma_v = pop.get("vtan_dispersion_km_s", 40.0)
+    v_tan = rng.rayleigh(sigma_v, n)                       # km/s
+    mu_total = v_tan / (4.74 * dist_pc) * 1000.0           # mas/yr
+    theta = rng.uniform(0, 2 * np.pi, n)
+    df["pmra"] = mu_total * np.cos(theta)
+    df["pmdec"] = mu_total * np.sin(theta)
     df["pmra_error"] = 1.0
     df["pmdec_error"] = 1.0
     df["parallax_over_error"] = df["parallax"] / 0.05

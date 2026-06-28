@@ -118,6 +118,13 @@ def _cmd_paper_numbers(args, cfg):
     print(f"wrote {out}")
 
 
+def _cmd_laser_numbers(args, cfg):
+    from .report import write_laser_numbers_tex
+
+    out = write_laser_numbers_tex(cfg)
+    print(f"wrote {out}")
+
+
 def _cmd_figures(args, cfg):
     from .figures import render_all
 
@@ -171,6 +178,9 @@ def main(argv=None):
 
     p = sub.add_parser("paper-numbers")
     p.set_defaults(func=_cmd_paper_numbers)
+
+    p = sub.add_parser("laser-numbers")
+    p.set_defaults(func=_cmd_laser_numbers)
 
     p = sub.add_parser("figures")
     p.set_defaults(func=_cmd_figures)

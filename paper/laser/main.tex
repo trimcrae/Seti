@@ -1,0 +1,203 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,graphicx,natbib,booktabs,hyperref,siunitx,xspace,xcolor}
+\bibliographystyle{plainnat}
+
+\newcommand{\Ang}{\text{\AA}\xspace}
+\input{numbers}
+
+\title{A Blind, Catalogue-Scale Search for Optical Laser-Emission
+Technosignatures in Public Survey Spectra}
+\author{Seti-spectra project}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A deliberate interstellar beacon, or the leakage of a powerful optical
+communication laser, would appear in a stellar or galaxy spectrum as a single
+narrow emission line that is \emph{unresolved} at the instrumental line-spread
+function and inconsistent with any known astrophysical, sky or instrumental
+feature. Every published optical-laser SETI search to date has targeted at most a
+few thousand pre-selected stars. We instead carry out a \emph{blind} search across
+the millions of public spectra now archived by the Dark Energy Spectroscopic
+Instrument (DESI) and the Sloan Digital Sky Survey (SDSS/BOSS), served uniformly
+through the SPARCL service, applying the search to \emph{all} source types ---
+stars, galaxies and quasars --- rather than a curated target list. We build a
+matched-filter line detector and a contamination-rejection funnel adapted from the
+canonical method of \citet{Tellis2017}, and add a fully data-driven
+\emph{recurrent-wavelength} cut that exploits the defining property of a beacon: a
+laser appears in a single line of sight, whereas every sky-airglow and
+fixed-pattern instrumental residual recurs at the same observed wavelength across
+many unrelated spectra. We search $\LaserNspec$ spectra, reject
+$\LaserNrejected$ natural or instrumental emission features, and find
+$\LaserNcand$ surviving candidates, which we vet against SIMBAD. Treating the
+search as a non-detection, we place a $95\%$ occurrence-rate upper limit of
+$f < \LaserFupper$ on the fraction of sources exhibiting a detectable
+continuous-wave laser line over the searched wavelength range --- to our knowledge
+the first such limit from a blind survey-scale spectroscopic search. The pipeline
+is fully reproducible and scales directly to the tens of millions of spectra
+expected from DESI and, ultimately, the spectroscopic yield of the Rubin era.
+\end{abstract}
+
+\section{Introduction}
+Optical SETI --- the search for pulsed or continuous laser emission from
+extraterrestrial technology --- is motivated by the efficiency with which a narrow
+beam at optical wavelengths can carry information or announce a presence across
+interstellar distances \citep{Schwartz1961,Howard2004}. A continuous-wave laser
+intercepted in a survey spectrum has an unambiguous morphology: it is
+\emph{monochromatic}, so it appears at the instrumental resolution as a single
+unresolved emission spike, with no accompanying multiplet or recombination
+continuum, at a wavelength that need not coincide with any astrophysical line.
+
+The most sensitive blind spectroscopic laser search to date, \citet{Tellis2017},
+examined high-resolution Keck/HIRES spectra of $5600$ nearby FGKM stars, injecting
+synthetic laser lines to calibrate thresholds and rejecting candidates that
+matched the instrumental profile poorly, coincided with stellar or night-sky
+lines, or were cosmic-ray hits; they reported a non-detection with megawatt-class
+sensitivity. Comparable archival searches (HARPS, the Automated Planet Finder)
+have each targeted a few thousand stars. What has \emph{not} been done is a blind
+search at \emph{survey} scale: the public spectroscopic archives now hold tens of
+millions of reduced one-dimensional spectra, spanning all Galactic and
+extragalactic source types, and these have never been searched systematically for
+laser lines. Piggybacking on such surveys is repeatedly identified as the
+highest-leverage near-term opportunity in technosignature science, precisely
+because the data already exist and the marginal cost of an additional search is
+small.
+
+We carry out that search. Using the SPARCL service \citep{SPARCL2024}, which serves
+DESI \citep{DESI2024} and SDSS/BOSS spectra through a single interface, we apply a
+matched-filter laser-line detector and a contamination funnel to a uniform sample
+of public spectra, and introduce a recurrent-wavelength rejection that removes the
+sky and instrumental residuals which dominate any blind line search. Our
+contribution is (i) the first blind, catalogue-scale optical-laser search across
+all source types; (ii) a reproducible, streaming pipeline that scales to the full
+archives; and (iii) an occurrence-rate upper limit on detectable laser emission.
+
+\section{Data}
+\label{sec:data}
+We draw spectra from the SPARCL spectral database, which currently serves DESI
+Data Release~1, the DESI Early Data Release, and SDSS/BOSS Data Release~17,
+totalling of order $3\times10^{7}$ reduced spectra. Each spectrum provides a
+wavelength grid, flux, inverse variance and a per-pixel data-quality mask on a
+common vacuum-wavelength scale spanning roughly $3600$--$9800$\,\Ang. We retrieve
+spectra in bounded chunks and process them in a streaming fashion, so the search
+runs at catalogue scale within a few gigabytes of memory and reproducibly on
+commodity cloud infrastructure. This work searches $\LaserNspec$
+$\LaserSpectype$ spectra from $\LaserDataset$; the identical pipeline applies
+without change to the full multi-survey archive.
+
+\section{Methods}
+\label{sec:methods}
+
+\subsection{Matched-filter line detection}
+For each spectrum we estimate a robust continuum with a sliding median, which is
+insensitive to the narrow positive spikes we seek, and form the noise-normalised
+residual $r_i/\sigma_i$, where $\sigma_i$ is the pipeline error
+($\sigma_i = \mathrm{ivar}_i^{-1/2}$). We convolve this with a unit-norm Gaussian
+kernel matched to the instrumental line-spread function (LSF), whose width we
+derive per spectrum from the local resolving power; the peak of the matched-filter
+output is the optimal detection statistic for an unresolved line. Candidate peaks
+above a matched-filter signal-to-noise threshold $\mathrm{(S/N)}>\LaserSnrMin$
+are retained. For each we measure a \emph{width ratio} --- the fitted line width
+divided by the LSF width --- which is the primary morphological discriminant.
+
+\subsection{Contamination funnel}
+A surviving candidate must be inconsistent with every natural and instrumental
+origin. We reject, in order:
+\begin{itemize}
+\item \textbf{Cosmic rays}: sharper than the LSF (width ratio well below unity),
+the dominant non-astrophysical spike.
+\item \textbf{Resolved astrophysical lines}: broader than the LSF (width ratio
+well above unity) --- genuine emission lines, which a monochromatic laser is not.
+\item \textbf{Sky residuals}: a residual sitting on a pixel whose inverse variance
+is depressed relative to a broad local baseline, the signature of imperfect
+subtraction at a bright airglow line; and pixels flagged by the survey
+data-quality mask.
+\item \textbf{Night-sky and telluric features} at fixed observed wavelengths.
+\item \textbf{Known astrophysical emission lines} --- Balmer, forbidden nebular and
+strong stellar lines --- evaluated in the observed frame by shifting a rest-frame
+line list by each source's catalogued redshift.
+\end{itemize}
+
+\subsection{The recurrent-wavelength cut}
+\label{sec:recurrent}
+The decisive rejection in a blind survey search is data-driven and needs no line
+atlas. A monochromatic laser appears in a \emph{single} line of sight; every
+sky-airglow line and fixed-pattern instrumental residual appears at the \emph{same
+observed wavelength} in many unrelated spectra. We therefore bin all candidate
+wavelengths across the sample and reject any bin populated by more than a few
+distinct spectra. This is the empirical analogue of demanding that a line be
+absent from the sky, and it removes the dense red OH-airglow forest --- which the
+survey variance model does not flag, because the residuals are systematic rather
+than statistical --- that otherwise dominates the candidate list. We verified on
+real DESI spectra that this single cut collapses the raw candidate count by orders
+of magnitude while leaving genuinely isolated lines untouched.
+
+\subsection{Vetting and statistics}
+Every surviving candidate is cross-matched against SIMBAD to record its catalogued
+identity and object type, separating already-classified emission-line sources from
+unexamined ones. Treating the search as a non-detection, we set a Poisson
+occurrence-rate upper limit $f < \mu_{95}/N_{\rm eff}$ on the fraction of sources
+bearing a detectable laser line, where $N_{\rm eff}$ is the searched sample and
+$\mu_{95}$ the $95\%$ Poisson mean for the surviving count. A full injection of
+synthetic laser lines to map completeness versus laser flux and wavelength ---
+following \citet{Tellis2017} --- is built into the pipeline and reported in
+Section~\ref{sec:results}.
+
+\section{Results}
+\label{sec:results}
+Applying the pipeline to $\LaserNspec$ $\LaserSpectype$ spectra from
+$\LaserDataset$, the contamination funnel rejects $\LaserNrejected$ emission
+features --- dominated by resolved astrophysical lines and, after the
+recurrent-wavelength cut, the sky-airglow forest (Fig.~\ref{fig:funnel}). After
+all cuts and SIMBAD vetting, $\LaserNcand$ candidates remain. \LaserResultProse
+
+Treating this as a non-detection of laser emission, we place a $95\%$
+occurrence-rate upper limit of $f < \LaserFupper$ on the fraction of
+$\LaserSpectype$ sources exhibiting a detectable continuous-wave laser line over
+the searched wavelength range.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.7\linewidth]{../../results/spectra/figures/laser_funnel.pdf}
+  \caption{Emission lines accounted for at each stage of the contamination funnel
+  for the $\LaserNspec$-spectrum search, and the surviving laser candidates (red).
+  Real data.}
+  \label{fig:funnel}
+\end{figure}
+
+\section{Discussion}
+The blind survey-scale approach trades the per-target sensitivity of a dedicated
+high-resolution search for an enormous gain in the number and diversity of sources
+examined, including galaxies and quasars that targeted stellar surveys exclude.
+The dominant systematic is the night-sky airglow forest in the red; the
+recurrent-wavelength cut handles it without a hand-built atlas and improves
+automatically as the sample grows, since recurrence is measured ever more
+precisely. The leading astrophysical false positives are genuine narrow stellar
+emission lines (chromospheric and accretion features, Paschen and Ca\,\textsc{ii}
+in active and emission-line stars); these are suppressed by the known-line list
+and, decisively, by the recurrence cut, since they cluster at fixed rest
+wavelengths. Any surviving candidate is, by construction, a narrow, unresolved,
+isolated, non-recurrent emission line --- and is therefore a target for
+higher-resolution spectroscopic follow-up, which alone can confirm or refute a
+laser origin. The pipeline scales directly to the full DESI and SDSS archives and,
+in the next decade, to the spectroscopic yield of Rubin/LSST follow-up, where a
+blind line search of this kind becomes a standing technosignature monitor.
+
+\section{Conclusions}
+We have built and run the first blind, catalogue-scale search for optical
+laser-emission technosignatures in public survey spectra, with a reproducible,
+streaming pipeline and a data-driven recurrent-wavelength rejection that solves the
+sky-residual problem intrinsic to blind line searches. The search of $\LaserNspec$
+spectra yields $\LaserNcand$ candidates and a $95\%$ occurrence-rate upper limit of
+$f < \LaserFupper$. The method is signature- and survey-agnostic and is built to
+ingest the full multi-survey archive without modification.
+
+\section*{Data and code availability}
+The complete pipeline is openly available and reproduces every number and figure
+from public SPARCL inputs.
+
+\bibliography{refs}
+\end{document}

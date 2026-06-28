@@ -205,18 +205,28 @@ def science_run(
               f"e_pmra_wise={ex.get('e_pmra_wise')} pmdec={ex.get('pmdec'):.1f} "
               f"pmdec_wise={ex.get('pmdec_wise')}")
 
-    result = run_pipeline(table, cfg=cfg)
-
     out_dir = cfg.root / "results" / "science"
     out_dir.mkdir(parents=True, exist_ok=True)
     proc = cfg.path("processed_dir")
     proc.mkdir(parents=True, exist_ok=True)
     table.to_parquet(proc / "analysis_ready.parquet", index=False)
 
+    # Write the (large) per-stage analysis tables to a gitignored dir; only the
+    # small summaries and the figures land under results/science/.
+    sci_tables = proc / "sci_tables"
+    result = run_pipeline(table, cfg=cfg, out_dir=sci_tables)
+
     cand = result.candidates
     cand_cols = [c for c in ["source_id", "ra", "dec", "teff", "t_dust_k", "tau",
                              "anomaly_score", "chi_W1", "chi_W2"] if c in cand.columns]
     cand[cand_cols].to_csv(out_dir / "candidates.csv", index=False)
+
+    # Empirical figures + candidate LaTeX table from the real data (best-effort).
+    try:
+        from .empirical_figures import render_empirical
+        render_empirical(cfg, sci_tables, out_dir / "figures")
+    except Exception as exc:
+        print(f"[science] empirical figures skipped: {exc!r}")
 
     summary = {
         "max_dist_pc": max_dist_pc,

@@ -57,7 +57,10 @@ def run_pipeline(
     df = _apply_epochs(df.copy(), cfg)
 
     # 1. Photospheric SED prediction + excess statistics.
-    pred = predict_photosphere(df)
+    # Anchor the photospheric fit on 2MASS J/H/Ks; fall back to Gaia RP/BP/G where
+    # 2MASS is absent so that WDs without a near-infrared detection remain
+    # searchable (enlarges the empirical sample).
+    pred = predict_photosphere(df, fallback_bands=("RP", "BP", "G"))
     pred = _apply_epochs(pred, cfg)
     ex = compute_excess(pred, thr)
     ex["has_excess"] = select_excess(ex, thr)

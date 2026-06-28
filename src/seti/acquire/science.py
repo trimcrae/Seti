@@ -66,9 +66,14 @@ def fetch_wd_parent(max_dist_pc: float, pwd_min: float, row_limit: int = -1) -> 
         out["logg"] = raw[logg]
     pwd = _find_col(raw, ["Pwd", "PWD"])
     out["pwd"] = raw[pwd]
-    for cand, name in [("RUWE", "ruwe"), ("Gmag", "Gmag")]:
-        col = _find_col(raw, [cand])
-        if col:
+    # Gaia photometry (RUWE + G/BP/RP) for astrometric vetting and as a fallback
+    # SED anchor where 2MASS is unavailable.
+    for cands, name in [(["RUWE"], "ruwe"),
+                        (["Gmag", "phot_g_mean_mag"], "Gmag"),
+                        (["BPmag", "phot_bp_mean_mag", "BP"], "BPmag"),
+                        (["RPmag", "phot_rp_mean_mag", "RP"], "RPmag")]:
+        col = _find_col(raw, cands)
+        if col is not None:
             out[name] = raw[col]
     out = out.dropna(subset=["source_id", "ra", "dec", "teff"]).reset_index(drop=True)
     print(f"[science] WD parent usable rows (<= {max_dist_pc:.0f} pc, Pwd>={pwd_min}): {len(out)}")
@@ -165,25 +170,50 @@ def fetch_known_disks(positions: pd.DataFrame, radius_arcsec: float = 2.0) -> se
     EDR3 source_id, which the Madurga Favieres et al. (2024) sample carries. This
     is the natural-explanation population subtracted before reporting candidates.
     """
+    import numpy as np
+    from astropy import units as u
+    from astropy.coordinates import SkyCoord
     from astroquery.vizier import Vizier
 
     known: set[int] = set()
-    for vid in ("J/A+A/688/A168",):
+    matched_ids: set[int] = set()
+    sample_ids = set(positions["source_id"].astype("int64")) if "source_id" in positions else set()
+    have_pos = {"ra", "dec"} <= set(positions.columns)
+    if have_pos:
+        c_sample = SkyCoord(positions["ra"].to_numpy() * u.deg,
+                            positions["dec"].to_numpy() * u.deg)
+        sample_sid = positions["source_id"].astype("int64").to_numpy()
+
+    for vid in ("J/A+A/688/A168", "J/ApJS/197/38"):
         try:
             v = Vizier(columns=["**"], row_limit=-1)
             cats = v.get_catalogs(vid)
             for tbl in cats:
                 df = tbl.to_pandas()
+                # (a) Gaia source_id match.
                 col = _find_col(df, ["GaiaEDR3", "Gaia", "Source", "DR3Name", "EDR3Name"])
                 if col is not None:
                     ids = pd.to_numeric(df[col], errors="coerce").dropna().astype("int64")
                     known.update(int(x) for x in ids)
-            print(f"[science] known-disk control {vid}: {len(known)} Gaia ids so far")
+                    matched_ids.update(set(int(x) for x in ids) & sample_ids)
+                # (b) Positional match (catalogues without Gaia ids, e.g. Debes).
+                rcol = _find_col(df, ["RA_ICRS", "RAJ2000", "_RA", "RAdeg", "RAJ2000"])
+                dcol = _find_col(df, ["DE_ICRS", "DEJ2000", "_DE", "DEdeg"])
+                if have_pos and rcol is not None and dcol is not None and len(df):
+                    ra = pd.to_numeric(df[rcol], errors="coerce").to_numpy()
+                    de = pd.to_numeric(df[dcol], errors="coerce").to_numpy()
+                    good = np.isfinite(ra) & np.isfinite(de)
+                    if good.any():
+                        c_ctrl = SkyCoord(ra[good] * u.deg, de[good] * u.deg)
+                        idx, sep, _ = c_sample.match_to_catalog_sky(c_ctrl)
+                        hit = sep.arcsec <= radius_arcsec
+                        matched_ids.update(int(s) for s in sample_sid[hit])
+            print(f"[science] known-disk control {vid}: {len(known)} ids fetched, "
+                  f"{len(matched_ids)} matched in sample so far")
         except Exception as exc:  # controls are optional; never fatal
             print(f"[science] known-disk fetch {vid} skipped: {exc!r}")
-    # Restrict to ids present in our sample (the rest are irrelevant).
-    sample_ids = set(positions["source_id"].astype("int64")) if "source_id" in positions else set()
-    matched = known & sample_ids if sample_ids else known
+
+    matched = (known & sample_ids) | matched_ids
     print(f"[science] known disks matched in sample: {len(matched)}")
     return matched
 

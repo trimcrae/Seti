@@ -19,30 +19,17 @@ from ..photometry import (
 from .models import ANCHOR_BANDS_DEFAULT, PREDICT_BANDS, BlackbodyModel
 
 
-def predict_photosphere(
-    df: pd.DataFrame,
-    anchor_bands: tuple[str, ...] = ANCHOR_BANDS_DEFAULT,
-    predict_bands: tuple[str, ...] = PREDICT_BANDS,
-    model: BlackbodyModel | None = None,
-) -> pd.DataFrame:
-    """Return a copy of ``df`` with predicted photospheric photometry columns.
+def _weighted_scale(out: pd.DataFrame, bands: tuple[str, ...], teff: np.ndarray) -> np.ndarray:
+    """Closed-form weighted solid-angle scale of a blackbody fit to ``bands``.
 
-    Adds, per predicted band ``B``: ``B_pred_jy`` and ``B_pred_mag``; plus
-    ``sed_scale`` and ``sed_anchor_chi2`` diagnostics.
+    Returns NaN per row where no band in ``bands`` has finite photometry.
     """
-    model = model or BlackbodyModel(anchor_bands=anchor_bands)
-    out = df.copy().reset_index(drop=True)
-    n = len(out)
-    teff = out["teff"].to_numpy(dtype=float) if "teff" in out else np.full(n, np.nan)
-
-    # Vectorised weighted-scale blackbody fit across all rows (closed form for a
-    # single linear parameter), identical to BlackbodyModel.predict row-by-row
-    # but ~100x faster -- essential for the injection grid in the forecast.
     from ..photometry import band_freq_hz, planck_bnu
 
+    n = len(teff)
     num = np.zeros(n)
     den = np.zeros(n)
-    for b in anchor_bands:
+    for b in bands:
         mcol, ecol = f"{b}mag", f"e_{b}mag"
         if mcol not in out:
             continue
@@ -56,9 +43,43 @@ def predict_photosphere(
         w = np.where(finite & (oerr > 0), 1.0 / np.maximum(oerr, 1e-30) ** 2, 0.0)
         num += w * obs * mod
         den += w * mod**2
-
     with np.errstate(invalid="ignore", divide="ignore"):
-        scale = np.where(den > 0, num / den, np.nan)
+        return np.where(den > 0, num / den, np.nan)
+
+
+def predict_photosphere(
+    df: pd.DataFrame,
+    anchor_bands: tuple[str, ...] = ANCHOR_BANDS_DEFAULT,
+    predict_bands: tuple[str, ...] = PREDICT_BANDS,
+    fallback_bands: tuple[str, ...] = (),
+    model: BlackbodyModel | None = None,
+) -> pd.DataFrame:
+    """Return a copy of ``df`` with predicted photospheric photometry columns.
+
+    The solid-angle scale is fit to ``anchor_bands`` (near-infrared by default,
+    closest to the Rayleigh-Jeans tail WISE samples).  Where those are absent, the
+    fit falls back to ``fallback_bands`` (e.g. Gaia BP/RP/G), which enlarges the
+    searchable sample at the cost of a larger systematic; ``sed_anchor`` records
+    which tier was used.  Adds, per predicted band ``B``: ``B_pred_jy`` and
+    ``B_pred_mag``; plus ``sed_scale``.
+    """
+    model = model or BlackbodyModel(anchor_bands=anchor_bands)
+    out = df.copy().reset_index(drop=True)
+    n = len(out)
+    teff = out["teff"].to_numpy(dtype=float) if "teff" in out else np.full(n, np.nan)
+
+    from ..photometry import band_freq_hz, planck_bnu
+
+    scale_primary = _weighted_scale(out, anchor_bands, teff)
+    if fallback_bands:
+        scale_fb = _weighted_scale(out, fallback_bands, teff)
+        used_primary = np.isfinite(scale_primary)
+        scale = np.where(used_primary, scale_primary, scale_fb)
+        out["sed_anchor"] = np.where(used_primary, "nir",
+                                     np.where(np.isfinite(scale_fb), "gaia", "none"))
+    else:
+        scale = scale_primary
+        out["sed_anchor"] = np.where(np.isfinite(scale_primary), "nir", "none")
 
     pred_jy = {}
     achi2 = np.full(n, np.nan)  # closed-form fit; per-row chi2 not needed downstream

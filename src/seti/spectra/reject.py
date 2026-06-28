@@ -101,6 +101,10 @@ def classify_line(
         return "cosmic_ray"
     if np.isfinite(wr) and wr > width_hi:
         return "resolved_line"
+    # A genuine line at the LSF spans >= 2 pixels above the noise; a single-pixel
+    # excursion is a cosmic ray or a bad-pixel-edge artefact.
+    if getattr(line, "n_pix", 2) < 2:
+        return "single_pixel"
     iv = getattr(line, "ivar_ratio", 1.0)
     if np.isfinite(iv) and iv < sky_ivar_ratio_min:
         return "sky_residual"

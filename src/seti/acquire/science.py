@@ -246,7 +246,9 @@ def fetch_simbad_context(positions: pd.DataFrame, radius_arcsec: float = 5.0) ->
 
     rows = []
     for _, r in positions.iterrows():
-        sid = int(r["source_id"])
+        # Keep the id as-is: Gaia integers AND spectral UUID strings must both work
+        # (int() on a UUID would raise and abort the whole vetting).
+        sid = r["source_id"]
         try:
             coord = SkyCoord(float(r["ra"]) * u.deg, float(r["dec"]) * u.deg)
             res = sim.query_region(coord, radius=radius_arcsec * u.arcsec)

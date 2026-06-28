@@ -98,10 +98,20 @@ def process_spectrum(
     ivar = np.asarray(ivar, dtype=float)
     with np.errstate(divide="ignore", invalid="ignore"):
         err = np.where(ivar > 0, 1.0 / np.sqrt(ivar), np.inf)
+    # Bad pixels: the survey mask, zero/non-finite flux, and zero ivar.  Their
+    # *edges* generate sharp false residuals (single-pixel spikes next to a chip
+    # gap or a zeroed cosmic ray), so dilate the bad set by +/-2 px and blank it.
+    bad = ~np.isfinite(flux) | (flux == 0.0) | ~(ivar > 0)
     if mask is not None:
         m = np.asarray(mask, dtype=float)
-        if m.size == err.size:
-            err = np.where(m != 0, np.inf, err)
+        if m.size == bad.size:
+            bad |= (m != 0)
+    if bad.any():
+        d = bad.copy()
+        for s in (1, 2):
+            d[s:] |= bad[:-s]
+            d[:-s] |= bad[s:]
+        err = np.where(d, np.inf, err)
     lsf = _lsf_sigma_pix(wave, resolution)
     lines = find_emission_lines(wave, flux, err, lsf_sigma_pix=lsf, snr_min=snr_min)
     survivors, counts = reject_lines(lines, redshift=redshift)

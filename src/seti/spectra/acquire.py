@@ -69,26 +69,27 @@ def fetch_spectra(
     constraints: dict = {"data_release": [dataset]}
     if spectype:
         constraints["spectype"] = [spectype]
-    find_fields = ["id", "ra", "dec", "redshift", "spectype", "data_release"]
-    found = client.find(outfields=find_fields, constraints=constraints, limit=n)
+    # SPARCL's spectrum identifier field is ``sparcl_id`` (not ``id``); requesting
+    # ``id`` is silently dropped.  Sort for deterministic, reproducible samples.
+    find_fields = ["sparcl_id", "ra", "dec", "redshift", "spectype", "data_release"]
+    found = client.find(outfields=find_fields, constraints=constraints,
+                        sort="sparcl_id", limit=n)
     recs = list(_records(found))
     if recs:
         try:
             print(f"[spectra] find record keys: {sorted(list(recs[0].keys()))}")
         except Exception:
             pass
-    # SPARCL exposes the discovery id list on the result object (``.ids``); the
-    # per-record dicts do not carry it.  Prefer ``.ids`` and fall back per-record.
     ids = list(getattr(found, "ids", []) or [])
     if not ids:
-        ids = [_rget(r, "id") or _rget(r, "sparcl_id") for r in recs]
+        ids = [_rget(r, "sparcl_id") or _rget(r, "id") for r in recs]
         ids = [i for i in ids if i]
     print(f"[spectra] SPARCL find: {len(ids)} ids from {dataset}"
           f"{'/' + spectype if spectype else ''}")
     if not ids:
         return []
 
-    inc = ["id", "ra", "dec", "redshift", "spectype", "data_release",
+    inc = ["sparcl_id", "ra", "dec", "redshift", "spectype", "data_release",
            "wavelength", "flux", "ivar"]
     res_default = NOMINAL_RESOLUTION.get(dataset, 2000.0)
     out: list[dict] = []
@@ -113,7 +114,7 @@ def fetch_spectra(
             ivar = np.asarray(_rget(r, "ivar", []), dtype=float)
             if wave.size < 100 or flux.size != wave.size or ivar.size != wave.size:
                 continue
-            sid = _rget(r, "id") or str(len(out))
+            sid = _rget(r, "sparcl_id") or _rget(r, "id") or str(len(out))
             out.append({
                 "spec_id": str(sid),
                 "wave": wave, "flux": flux, "ivar": ivar,

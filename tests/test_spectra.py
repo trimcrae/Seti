@@ -197,22 +197,23 @@ def test_fetch_spectra_parses_dict_records():
     class _MockClient:
         all_datasets = ["DESI-DR1", "SDSS-DR17"]
 
-        def find(self, outfields=None, constraints=None, limit=None):
-            # Real SPARCL find: records carry the outfields but NOT the id; the id
-            # list is exposed on the result object's .ids attribute.
+        def find(self, outfields=None, constraints=None, sort=None, limit=None):
+            # SPARCL find: when 'sparcl_id' is requested it appears in the records,
+            # and the id list is also exposed on the result's .ids attribute.
             return _Res(
-                [{"ra": 10.0, "dec": 5.0, "redshift": 0.0, "spectype": "STAR",
-                  "data_release": "DESI-DR1"},
-                 {"ra": 11.0, "dec": 6.0, "redshift": 0.3, "spectype": "GALAXY",
-                  "data_release": "DESI-DR1"}],
+                [{"sparcl_id": "uuid-1", "ra": 10.0, "dec": 5.0, "redshift": 0.0,
+                  "spectype": "STAR", "data_release": "DESI-DR1"},
+                 {"sparcl_id": "uuid-2", "ra": 11.0, "dec": 6.0, "redshift": 0.3,
+                  "spectype": "GALAXY", "data_release": "DESI-DR1"}],
                 ids=["uuid-1", "uuid-2"])
 
         def retrieve(self, uuid_list=None, include=None):
             wave = np.linspace(4000, 9000, 500)
             recs = []
             for uid in uuid_list:
-                recs.append({"id": uid, "ra": 10.0, "dec": 5.0, "redshift": 0.0,
-                             "spectype": "STAR", "data_release": "DESI-DR1",
+                recs.append({"sparcl_id": uid, "ra": 10.0, "dec": 5.0,
+                             "redshift": 0.0, "spectype": "STAR",
+                             "data_release": "DESI-DR1",
                              "wavelength": wave, "flux": np.ones_like(wave),
                              "ivar": np.full_like(wave, 100.0)})
             return _Res(recs)

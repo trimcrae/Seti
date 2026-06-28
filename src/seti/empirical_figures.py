@@ -219,6 +219,77 @@ def fig_energy_balance(comb: pd.DataFrame, fig_dir: Path) -> Path | None:
     return out
 
 
+def fig_multimodal_sed(comb: pd.DataFrame, fig_dir: Path) -> Path | None:
+    """Full ultraviolet-to-infrared SED of the top multi-axis candidates.
+
+    Overplots the observed flux (GALEX FUV/NUV, Gaia, 2MASS, WISE) against the
+    blackbody photosphere fitted from the Gaia solid angle and ``teff``.  For an
+    energy-balanced candidate this single panel shows the diagnostic directly: the
+    ultraviolet points fall *below* the photosphere (absorption) while the W1/W2
+    points rise *above* it (re-emission).
+    """
+    from .photometry import band_freq_hz, planck_bnu
+
+    cand = comb[comb.get("multimodal_candidate", False).astype(bool)].copy()
+    if "multimodal_score" in cand.columns:
+        cand = cand.sort_values("multimodal_score", ascending=False)
+    cand = cand.head(6)
+    if cand.empty or "sed_scale" not in cand.columns or "teff" not in cand.columns:
+        return None
+    # (band, magnitude column) in wavelength order.
+    band_cols = [("FUV", "FUVmag"), ("NUV", "NUVmag"), ("BP", "BPmag"), ("G", "Gmag"),
+                 ("RP", "RPmag"), ("J", "Jmag"), ("H", "Hmag"), ("Ks", "Ksmag"),
+                 ("W1", "W1mag"), ("W2", "W2mag")]
+    n = len(cand)
+    ncol = min(n, 3)
+    nrow = int(np.ceil(n / ncol))
+    fig, axes = plt.subplots(nrow, ncol, figsize=(3.4 * ncol, 2.8 * nrow), squeeze=False)
+    drew = False
+    for i, (_, c) in enumerate(cand.iterrows()):
+        ax = axes[i // ncol][i % ncol]
+        scale, teff = float(c.get("sed_scale", np.nan)), float(c.get("teff", np.nan))
+        if not (np.isfinite(scale) and np.isfinite(teff)):
+            ax.axis("off")
+            continue
+        xs, obs, pred = [], [], []
+        for band, mcol in band_cols:
+            if mcol not in c or not np.isfinite(c.get(mcol, np.nan)) or band not in BANDS:
+                continue
+            lam = BANDS[band]["lambda_um"]
+            xs.append(lam)
+            obs.append(float(mag_to_flux_jy(c[mcol], band)))
+            with np.errstate(over="ignore"):
+                pred.append(scale * np.pi * float(planck_bnu(teff, band_freq_hz(band))) * 1e26)
+        if len(xs) < 3:
+            ax.axis("off")
+            continue
+        drew = True
+        order = np.argsort(xs)
+        xs, obs, pred = np.array(xs)[order], np.array(obs)[order], np.array(pred)[order]
+        ax.plot(xs, pred, "s--", c="#444", ms=3, label="photosphere")
+        ax.plot(xs, obs, "o-", c="crimson", ms=4, label="observed")
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        sid = int(c["source_id"])
+        nax = int(c.get("n_axes", 0))
+        ax.set_title(f"WD {sid}\n$T={teff:.0f}$K, {nax} axes", fontsize=7)
+        ax.set_xlabel(r"$\lambda$ [$\mu$m]", fontsize=7)
+        if i % ncol == 0:
+            ax.set_ylabel("flux [Jy]", fontsize=7)
+        if i == 0:
+            ax.legend(fontsize=6)
+    for j in range(n, nrow * ncol):
+        axes[j // ncol][j % ncol].axis("off")
+    if not drew:
+        plt.close(fig)
+        return None
+    fig.tight_layout()
+    out = fig_dir / "emp_multimodal_sed.pdf"
+    fig.savefig(out)
+    plt.close(fig)
+    return out
+
+
 def fig_axes_histogram(comb: pd.DataFrame, fig_dir: Path) -> Path | None:
     """Distribution of the number of independent anomaly axes per object."""
     if "n_axes" not in comb:
@@ -287,6 +358,7 @@ def render_multimodal(cfg, comb: pd.DataFrame, fig_dir: Path) -> list[Path]:
     jobs = [
         lambda: fig_energy_balance(comb, fig_dir),
         lambda: fig_axes_histogram(comb, fig_dir),
+        lambda: fig_multimodal_sed(comb, fig_dir),
         lambda: multimodal_table_tex(comb, fig_dir / "multimodal_table.tex"),
     ]
     for job in jobs:

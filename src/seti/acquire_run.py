@@ -159,7 +159,6 @@ def science_run(
 
     from .acquire.science import (
         fetch_catwise,
-        fetch_known_disks,
         fetch_twomass,
         fetch_wd_parent,
     )
@@ -175,8 +174,12 @@ def science_run(
 
     catwise = fetch_catwise(positions)
     twomass = fetch_twomass(positions)
-    known_ids = fetch_known_disks(positions)
-    known = pd.DataFrame({"source_id": sorted(known_ids)}) if known_ids else None
+    # Published debris-disk catalogues (e.g. Madurga Favieres 2024) lack Gaia ids
+    # and a cleanly decodable excess flag, so a reliable subtraction is deferred;
+    # the warm debris-disk population is instead separated by the dust locus (warm
+    # disks fall inside it, cool candidates outside). known-disk subtraction off.
+    known_ids: set[int] = set()
+    known = None
 
     table = assemble_analysis_table(parent, pd.DataFrame(), catwise, twomass,
                                     neighbourhood=None, known=known)

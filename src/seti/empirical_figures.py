@@ -157,7 +157,11 @@ def candidate_table_tex(candidates: pd.DataFrame, out_path: Path) -> Path:
     avail = [(c, h, f) for c, h, f in cols if c in candidates.columns]
     lines = [r"\begin{tabular}{" + "l" * len(avail) + "}", r"\toprule",
              " & ".join(h for _, h, _ in avail) + r" \\", r"\midrule"]
-    for _, row in candidates.iterrows():
+    shown = candidates
+    if "anomaly_score" in candidates.columns:
+        shown = candidates.sort_values("anomaly_score", ascending=False)
+    shown = shown.head(20)
+    for _, row in shown.iterrows():
         cells = []
         for c, _, f in avail:
             v = row[c]

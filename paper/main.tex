@@ -56,7 +56,8 @@ the first such limit for the white-dwarf population. Applying the pipeline to th
 real \SI{100}{pc} sample, we search $\SciNsearchable$ white dwarfs with CatWISE2020
 and 2MASS or Gaia photometry, recover $\SciNexcess$ with infrared excess (the
 warm-dust debris-disk population), and place an empirical 95\% occurrence-rate
-limit of $f<\SciFupper$ after debris-disk subtraction, with $\SciKcand$
+limit of $f<\SciFupper$, with the warm debris-disk population separated by
+the dust locus and $\SciKcand$
 cool-excess candidates remaining for follow-up. The empirical limit is an order
 of magnitude weaker than the forecast, set by the near-infrared/Gaia anchoring
 fraction. We emphasise that broadband $W1$/$W2$ photometry cannot uniquely
@@ -189,8 +190,35 @@ quality, extended-source flag, saturation and signal-to-noise);
 (iii) crowding/blending via the AllWISE neighbourhood multiplicity and
 unWISE--CatWISE flux agreement; (iv) the Gaia--WISE co-movement test; and
 (v) extragalactic rejection (the AGN/QSO region of WISE colour space and a
-quasar-catalogue cross-match). Every source retains the identity of the first
-cut it fails, so the funnel is fully auditable.
+quasar-catalogue cross-match). The key thresholds are collected in
+Table~\ref{tab:thresholds}; all are config-driven in the released code. Every
+source retains the identity of the first cut it fails, so the funnel is fully
+auditable, and the per-cut survival on the real data is shown in
+Fig.~\ref{fig:emp_funnel}.
+
+\begin{table}[t]
+  \centering
+  \caption{Principal selection and vetting thresholds (config-driven).}
+  \label{tab:thresholds}
+  \begin{tabular}{lll}
+    \toprule
+    Stage & Quantity & Threshold \\
+    \midrule
+    Sample      & $P_{\rm WD}$                & $>0.9$ \\
+    Astrometry  & RUWE                        & $<1.4$ \\
+                & parallax S/N                & $>10$ \\
+    WISE quality& \texttt{cc\_flags} (W1,W2)  & 00 \\
+                & W1 (saturation)             & $>8$ mag \\
+    Crowding    & WISE counterparts $<6''$    & $\le1$ \\
+    Co-movement & position offset $\Delta\theta$ & $<1''$ \\
+                & $|\Delta\mu|/\sigma$        & $<3$ \\
+    Excess      & $\chi_{W1}$ or $\chi_{W2}$  & $\ge5$ / $\ge3$ \\
+                & $W1{-}W2$ colour excess     & $\ge2\sigma$ \\
+    Dust locus  & $T_{\rm dust}$              & 600--2500 K \\
+                & $\tau$                      & $10^{-4}$--$10^{-1}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 The co-movement test is the methodological core. White dwarfs are nearby and
 fast-moving, with proper motions frequently exceeding \SI{50}{mas\,yr^{-1}}. If an
@@ -386,11 +414,12 @@ pitfalls that silently void the cut if mishandled.
 
 Within the searched sample, $\SciNexcess$ white dwarfs show a significant
 infrared excess (Fig.~\ref{fig:emp_locus}). After characterising each excess with
-a single-temperature blackbody and cross-referencing against the Madurga
-Favieres et al. (2024) white-dwarf debris-disk catalogue, the warm
-($T_{\rm dust}\sim1000$--$2000$\,K) sublimation-temperature excesses --- the
-natural debris-disk population --- fall inside the empirical dust locus and are
-not flagged. $\SciKcand$ sources lie \emph{outside} the locus, exhibiting cool
+a single-temperature blackbody, the warm ($T_{\rm dust}\sim1000$--$2000$\,K)
+sublimation-temperature excesses --- the natural debris-disk population --- fall
+inside the empirical dust locus and are not flagged. (A direct cross-match to
+published debris-disk catalogues is complicated by the absence of Gaia
+identifiers and a clean excess flag in those tables, and we defer it; the dust
+locus is our operative disk/candidate separator.) $\SciKcand$ sources lie \emph{outside} the locus, exhibiting cool
 ($T_{\rm dust}\sim500$\,K) infrared excess, and constitute the prioritised
 candidate list (Table~\ref{tab:candidates}, Fig.~\ref{fig:emp_seds}). We
 emphasise strongly that these are follow-up targets, not detections: as budgeted
@@ -450,8 +479,9 @@ decompose quantitatively in Section~\ref{sec:discussion}.
 \begin{table}[t]
   \centering
   \caption{Cool-excess candidates from the empirical \SI{100}{pc} search (outside
-  the dust locus, after debris-disk subtraction). $(T_{\rm dust},\tau)$ are fit
-  from \wone/\wtwo only and are indicative. Auto-generated from the pipeline.}
+  the dust locus; $\SciKcand$ in total, the 20 highest-ranked shown).
+  $(T_{\rm dust},\tau)$ are fit from \wone/\wtwo only and are indicative.
+  Auto-generated from the pipeline.}
   \label{tab:candidates}
   \small
   \input{../results/science/figures/candidate_table.tex}

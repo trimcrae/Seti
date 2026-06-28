@@ -42,6 +42,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev,spectra]"
+          # sparclclient can pin an older numpy that breaks the prebuilt pandas
+          # ABI ("numpy.dtype size changed"); reconcile the scientific stack to a
+          # mutually-compatible numpy-2 set afterwards, and verify the imports.
+          pip install --upgrade --force-reinstall --no-cache-dir \
+            "numpy>=2.0" pandas pyarrow scipy
+          python -c "import numpy,pandas,scipy,astropy; print('numpy',numpy.__version__,'pandas',pandas.__version__)"
+          python -c "import sparcl.client; print('sparclclient import OK')"
       - name: Run laser-line search
         run: |
           ARGS="--n ${{ github.event.inputs.n }} --dataset ${{ github.event.inputs.dataset }} --snr-min ${{ github.event.inputs.snr_min }}"

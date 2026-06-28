@@ -189,9 +189,10 @@ def classify_candidate(otype: str, sptype: str) -> str:
     binary, a metal-polluted (disk-bearing) white dwarf --- from genuinely
     unexamined sources, which are the interesting residue.
     """
-    o = (otype or "").strip().upper()
-    s = (sptype or "").strip().upper()
-    if not o and not s:
+    # Coerce non-strings (NaN/float for unmatched sources) to empty strings.
+    o = (str(otype) if otype is not None else "").strip().upper()
+    s = (str(sptype) if sptype is not None else "").strip().upper()
+    if o in ("", "NAN", "NONE") and s in ("", "NAN", "NONE"):
         return "unexamined"
     if any(k in o for k in ("CV", "NOVA", "AM CVN", "AMCVN", "NL")):
         return "interacting binary (CV)"

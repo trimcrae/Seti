@@ -252,27 +252,36 @@ def science_run(
             vetted = vetted.merge(sc[keep], on="source_id", how="left")
         only_clean = vetted[vetted.get("clean", True).astype(bool)] if "clean" in vetted else vetted
 
+        min_axes = cfg.thresholds["indicators"]["multimodal_min_axes"]
+
         # Shortlist-only light-curve variability (ZTF optical, NEOWISE infrared):
-        # expensive per-object queries, so run them only on the infrared-excess
-        # shortlist and attach the fractional-RMS metrics for the indicator suite.
+        # expensive per-object queries.  We use a TWO-PASS shortlist so that any
+        # object already anomalous on a non-variability axis (UV deficit, energy
+        # balance, kinematics) -- not just infrared excess -- also gets its
+        # variability measured, giving it a chance to light up additional axes.
         try:
             from .acquire.variability import (
                 fetch_neowise_variability,
                 fetch_ztf_variability,
             )
-            shortlist = only_clean
-            if "has_excess" in only_clean:
-                sl = only_clean[only_clean["has_excess"].fillna(False).astype(bool)]
-                shortlist = sl if len(sl) else only_clean
-            # Rank by excess strength so that, if the per-object light-curve
-            # queries are capped at expanded volume, the strongest excesses (the
-            # most interesting follow-up targets) are the ones measured.
-            sort_key = next((c for c in ("chi_W1", "chi_W2") if c in shortlist.columns),
-                            None)
-            if sort_key is not None:
-                shortlist = shortlist.sort_values(sort_key, ascending=False)
-            pos = shortlist[["source_id", "ra", "dec"]].drop_duplicates("source_id")
-            print(f"[science] variability shortlist: {len(pos)} objects")
+            # Pass 1: combine the axes that need no light-curve data, to find every
+            # object already flagged on something.
+            prelim = run_multimodal(only_clean, cfg.thresholds, min_axes=min_axes)
+            flagged_any = prelim.get("n_axes", pd.Series(0, index=prelim.index)) >= 1
+            flagged_ids = set(prelim.loc[flagged_any.to_numpy(), "source_id"])
+
+            # Build the shortlist: every already-flagged object first (these can
+            # become multi-axis), then the strongest infrared excesses to fill out.
+            sl = only_clean.copy()
+            sl["_flagged"] = sl["source_id"].isin(flagged_ids)
+            if "has_excess" in sl:
+                sl = sl[sl["_flagged"] | sl["has_excess"].fillna(False).astype(bool)]
+            sort_key = next((c for c in ("chi_W1", "chi_W2") if c in sl.columns), None)
+            by = (["_flagged"] + ([sort_key] if sort_key else []))
+            sl = sl.sort_values(by, ascending=False)
+            pos = sl[["source_id", "ra", "dec"]].drop_duplicates("source_id")
+            print(f"[science] variability shortlist: {len(pos)} objects "
+                  f"({len(flagged_ids)} already flagged on a non-variability axis)")
             ztf = fetch_ztf_variability(pos)
             neo = fetch_neowise_variability(pos)
             for extra in (ztf, neo):
@@ -283,7 +292,6 @@ def science_run(
         except Exception as exc:
             print(f"[science] shortlist variability skipped: {exc!r}")
 
-        min_axes = cfg.thresholds["indicators"]["multimodal_min_axes"]
         comb = run_multimodal(only_clean, cfg.thresholds, min_axes=min_axes)
         mm_summary = indicator_summary(comb)
         mm_cand = comb[comb["multimodal_candidate"]].sort_values(

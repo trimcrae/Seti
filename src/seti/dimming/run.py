@@ -199,7 +199,8 @@ def _ensemble_detrend_secular(rows: list[dict]) -> None:
         r["secular_sigma"] = stat.slope_sigma
         r["secular_total_mag"] = stat.total_change_mag
         r["secular_score"] = stat.score
-        r["is_secular_fader"] = bool(stat.score >= 0.5 and stat.slope_sigma >= 4.0)
+        r["is_secular_fader"] = bool(stat.score >= 0.5 and stat.slope_sigma >= 4.0
+                                     and abs(stat.total_change_mag) >= 0.08)
 
 
 def dimming_run(
@@ -261,8 +262,13 @@ def dimming_run(
         mag_a = np.asarray(mag, float)
         err_a = np.asarray(magerr, float) if magerr is not None else None
         sec = detect_secular_fade(mjd_a, mag_a, err_a, min_epochs=min_epochs)
+        # Require a SUBSTANTIAL fade: >=0.08 mag (~8%) total.  A few-percent
+        # monotonic drift, even at high formal significance from many epochs, is
+        # near the slow-variable / residual-systematic noise floor and is not a
+        # noteworthy enshrouding signal (KIC 8462852-class fades are larger).
         is_fader = bool(sec is not None and sec.score >= 0.5
-                        and sec.slope_sigma >= 4.0)
+                        and sec.slope_sigma >= 4.0
+                        and abs(sec.total_change_mag) >= 0.08)
         # Stash season medians so the field common-mode (ZTF zeropoint/reference
         # drift) can be subtracted in an ensemble pass -- the decisive contamination
         # control for the secular channel.

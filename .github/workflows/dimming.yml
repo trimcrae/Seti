@@ -34,6 +34,14 @@ on:
         description: "Search all stars, not only Gaia-flagged variables (true/false)"
         required: false
         default: "false"
+      mode:
+        description: "'targets' (Gaia+per-object ZTF) or 'region' (bulk box-sweep, 10-100x more)"
+        required: false
+        default: "targets"
+      box_deg:
+        description: "Region-mode box size (deg)"
+        required: false
+        default: "0.12"
       limit:
         description: "Max Gaia targets to pull for the field"
         required: false
@@ -68,6 +76,7 @@ jobs:
           ARGS="$ARGS --g-min ${{ github.event.inputs.g_min }} --g-max ${{ github.event.inputs.g_max }}"
           ARGS="$ARGS --limit ${{ github.event.inputs.limit }}"
           ARGS="$ARGS --time-budget-s ${{ github.event.inputs.time_budget_s }}"
+          ARGS="$ARGS --mode ${{ github.event.inputs.mode }} --box-deg ${{ github.event.inputs.box_deg }}"
           if [ "${{ github.event.inputs.all_stars }}" = "true" ]; then ARGS="$ARGS --all-stars"; fi
           echo "seti dimming-run $ARGS"
           python -m seti.cli dimming-run $ARGS

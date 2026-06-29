@@ -132,6 +132,27 @@ def test_eclipsing_binary_is_periodic():
     assert s.period_power > 0.1
 
 
+def test_fetch_ztf_region_groups_by_oid(monkeypatch):
+    import requests
+
+    from seti.dimming import acquire
+
+    # Two sources in one box: a 40-epoch source and a too-short 5-epoch source.
+    rows = [f"101,{58000+k}.0,18.0,0.02,131.0,33.0" for k in range(40)]
+    rows += [f"202,{58000+k}.0,17.0,0.02,131.1,33.1" for k in range(5)]
+    csv = "oid,mjd,mag,magerr,ra,dec\n" + "\n".join(rows) + "\n"
+
+    class _Resp:
+        status_code = 200
+        text = csv
+
+    monkeypatch.setattr(requests, "get", lambda *a, **k: _Resp())
+    out = acquire.fetch_ztf_region(131.0, 33.0, box_deg=0.3, min_epochs=30)
+    assert set(out.keys()) == {"101"}          # only the 40-epoch source survives
+    assert len(out["101"]) == 40
+    assert {"mjd", "mag", "magerr", "ra", "dec"} <= set(out["101"].columns)
+
+
 def test_too_few_epochs_returns_none():
     t, m, e = _flat(n=10)
     assert detect_dips(t, m, e) is None

@@ -116,6 +116,114 @@ def fetch_ztf_lightcurve(
     return out.reset_index(drop=True) if len(out) else None
 
 
+def fetch_ztf_region(
+    ra: float,
+    dec: float,
+    box_deg: float = 0.12,
+    band: str = "r",
+    timeout_s: float = 90.0,
+    bad_catflags_mask: int = 32768,
+    min_epochs: int = 30,
+) -> dict[str, pd.DataFrame]:
+    """Bulk-fetch *every* ZTF light curve in a small sky box in one request.
+
+    The IRSA light-curve service returns all epochs of all sources inside a
+    ``BOX`` region; grouping by object id (``oid``) yields one light curve per
+    source.  A single box request replaces hundreds of per-object cone queries,
+    the throughput unlock that lets a runner search tens of thousands of stars.
+
+    Returns ``{oid: lightcurve_frame}`` for sources with at least ``min_epochs``
+    good epochs; each frame carries ``mjd``, ``mag``, ``magerr``, ``ra``, ``dec``.
+    Defensive: any error yields an empty dict.
+    """
+    import requests
+
+    params = {
+        "POS": f"BOX {float(ra):.5f} {float(dec):.5f} {box_deg:.4f} {box_deg:.4f}",
+        "BANDNAME": band,
+        "FORMAT": "CSV",
+        "BAD_CATFLAGS_MASK": str(bad_catflags_mask),
+    }
+    try:
+        resp = requests.get(ZTF_LC_URL, params=params, timeout=timeout_s)
+        if resp.status_code != 200 or not resp.text.strip():
+            return {}
+        lc = pd.read_csv(io.StringIO(resp.text))
+    except Exception as exc:
+        print(f"[dimming] ZTF region fetch failed at ({ra:.4f},{dec:.4f}): {exc!r}")
+        return {}
+    if lc.empty or "mag" not in lc.columns or "oid" not in lc.columns:
+        return {}
+    tcol = next((c for c in ("mjd", "hjd", "bjd") if c in lc.columns), None)
+    if tcol is None:
+        return {}
+    lc = lc.assign(
+        _mjd=pd.to_numeric(lc[tcol], errors="coerce"),
+        _mag=pd.to_numeric(lc["mag"], errors="coerce"),
+        _magerr=(pd.to_numeric(lc["magerr"], errors="coerce")
+                 if "magerr" in lc.columns else np.nan),
+    )
+    out: dict[str, pd.DataFrame] = {}
+    for oid, g in lc.groupby("oid"):
+        good = g[np.isfinite(g["_mjd"]) & np.isfinite(g["_mag"])]
+        if len(good) < min_epochs:
+            continue
+        out[str(oid)] = pd.DataFrame({
+            "mjd": good["_mjd"].to_numpy(), "mag": good["_mag"].to_numpy(),
+            "magerr": good["_magerr"].to_numpy(),
+            "ra": float(np.nanmedian(good["ra"])) if "ra" in good else np.nan,
+            "dec": float(np.nanmedian(good["dec"])) if "dec" in good else np.nan,
+        })
+    return out
+
+
+def iter_region_lightcurves(
+    ra: float,
+    dec: float,
+    radius_deg: float = 1.0,
+    box_deg: float = 0.12,
+    band: str = "r",
+    min_epochs: int = 30,
+    time_budget_s: float = 2400.0,
+    max_boxes: int | None = None,
+):
+    """Tile a field into boxes and yield ``(meta, lightcurve)`` for every ZTF source.
+
+    Covers a square field of half-width ``radius_deg`` with a grid of ``box_deg``
+    boxes (declination-corrected in RA), bulk-fetching each.  ``meta`` carries the
+    ZTF ``oid`` and the source position so candidates can later be matched to Gaia
+    for the HR cut.  Bounded by ``time_budget_s`` and optionally ``max_boxes``.
+    """
+    import time
+
+    cos_d = max(np.cos(np.radians(dec)), 0.05)
+    n_side = max(1, int(np.ceil(2 * radius_deg / box_deg)))
+    offs = (np.arange(n_side) - (n_side - 1) / 2.0) * box_deg
+    boxes = [(ra + dx / cos_d, dec + dy) for dy in offs for dx in offs]
+    if max_boxes is not None:
+        boxes = boxes[:max_boxes]
+    t0 = time.monotonic()
+    n_box = n_src = 0
+    seen: set[str] = set()
+    for bra, bdec in boxes:
+        if time.monotonic() - t0 > time_budget_s:
+            print(f"[dimming] region time budget reached after {n_box} boxes "
+                  f"({n_src} sources)")
+            break
+        n_box += 1
+        lcs = fetch_ztf_region(bra, bdec, box_deg=box_deg, band=band,
+                               min_epochs=min_epochs)
+        for oid, lc in lcs.items():
+            if oid in seen:        # boxes can overlap at edges; de-duplicate
+                continue
+            seen.add(oid)
+            n_src += 1
+            meta = {"source_id": oid, "ra": lc["ra"].iloc[0] if len(lc) else bra,
+                    "dec": lc["dec"].iloc[0] if len(lc) else bdec}
+            yield meta, lc
+    print(f"[dimming] region sweep: {n_src} ZTF light curves from {n_box} boxes")
+
+
 def iter_lightcurves(
     targets: pd.DataFrame,
     band: str = "r",
@@ -149,4 +257,4 @@ def iter_lightcurves(
 
 
 __all__ = ["fetch_gaia_targets", "fetch_ztf_lightcurve", "iter_lightcurves",
-           "ZTF_LC_URL"]
+           "fetch_ztf_region", "iter_region_lightcurves", "ZTF_LC_URL"]

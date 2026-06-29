@@ -117,7 +117,8 @@ def _cmd_dimming_run(args, cfg):
     dimming_run(cfg, ra=args.ra, dec=args.dec, radius_deg=args.radius_deg,
                 g_min=args.g_min, g_max=args.g_max,
                 variable_only=not args.all_stars, band=args.band,
-                limit=args.limit, time_budget_s=args.time_budget_s)
+                limit=args.limit, time_budget_s=args.time_budget_s,
+                mode=args.mode, box_deg=args.box_deg)
 
 
 def _cmd_paper_numbers(args, cfg):
@@ -192,6 +193,11 @@ def main(argv=None):
     p.add_argument("--band", default="r")
     p.add_argument("--limit", type=int, default=4000)
     p.add_argument("--time-budget-s", type=float, default=1800.0)
+    p.add_argument("--mode", choices=["targets", "region"], default="targets",
+                   help="'targets': Gaia stars + per-object ZTF; "
+                        "'region': bulk box-sweep of every ZTF source (10-100x more)")
+    p.add_argument("--box-deg", type=float, default=0.12,
+                   help="box size for region-mode bulk fetch (deg)")
     p.set_defaults(func=_cmd_dimming_run)
 
     p = sub.add_parser("contamination-budget")

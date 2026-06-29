@@ -44,6 +44,62 @@ def _is_candidate(stat: dict, depth_min: float, n_dips_min: int,
             and stat.get("period_power", 1.0) <= period_power_max)
 
 
+def _attach_gaia_hr(candidates: list[dict], period_power_max: float,
+                    match_arcsec: float = 2.0) -> None:
+    """Cross-match region-mode candidates to Gaia DR3 and apply the HR cut in place.
+
+    Region mode discovers ZTF sources with no Gaia photometry, so the HR-diagram
+    main-sequence cut is deferred to this short candidate list.  For each candidate
+    we pull the nearest Gaia source (G, BP-RP, parallax) and recompute ``hr_class``
+    and ``resists_mundane``.
+    """
+    from astroquery.gaia import Gaia
+
+    pts = ", ".join(f"({r['ra']:.6f}, {r['dec']:.6f})" for r in candidates
+                    if np.isfinite(r.get("ra", np.nan))
+                    and np.isfinite(r.get("dec", np.nan)))
+    if not pts:
+        return
+    # One ADQL cone-per-candidate union via a VALUES-like table is awkward; instead
+    # query a small bounding region and match locally (the candidate list is short).
+    ras = [r["ra"] for r in candidates if np.isfinite(r.get("ra", np.nan))]
+    decs = [r["dec"] for r in candidates if np.isfinite(r.get("dec", np.nan))]
+    ra0, ra1, dec0, dec1 = min(ras), max(ras), min(decs), max(decs)
+    pad = 0.02
+    query = f"""
+        SELECT ra, dec, phot_g_mean_mag, bp_rp, parallax, parallax_over_error
+        FROM gaiadr3.gaia_source
+        WHERE ra BETWEEN {ra0 - pad} AND {ra1 + pad}
+          AND dec BETWEEN {dec0 - pad} AND {dec1 + pad}
+          AND phot_g_mean_mag IS NOT NULL
+    """
+    gtab = Gaia.launch_job_async(query).get_results().to_pandas()
+    gtab = gtab.rename(columns={c: c.lower() for c in gtab.columns})
+    if gtab.empty:
+        return
+    tol = match_arcsec / 3600.0
+    for r in candidates:
+        ra, dec = r.get("ra"), r.get("dec")
+        if not (np.isfinite(ra) and np.isfinite(dec)):
+            continue
+        cosd = np.cos(np.radians(dec))
+        d2 = ((gtab["ra"] - ra) * cosd) ** 2 + (gtab["dec"] - dec) ** 2
+        j = int(np.argmin(d2.to_numpy()))
+        if float(d2.iloc[j]) > tol ** 2:
+            continue
+        g = gtab.iloc[j]
+        hr = hr_class(float(g.get("phot_g_mean_mag", np.nan)),
+                      float(g.get("bp_rp", np.nan)),
+                      float(g.get("parallax", np.nan)),
+                      float(g.get("parallax_over_error", 0.0) or 0.0))
+        r["g_mag"] = float(g.get("phot_g_mean_mag", np.nan))
+        r["bp_rp"] = float(g.get("bp_rp", np.nan))
+        r["parallax"] = float(g.get("parallax", np.nan))
+        r["hr_class"] = hr
+        r["resists_mundane"] = bool(resists_mundane(
+            hr, r.get("period_power", 1.0), period_power_max))
+
+
 def dimming_run(
     cfg: Config | None = None,
     ra: float = 270.0,
@@ -60,6 +116,8 @@ def dimming_run(
     asym_min: float = 1.5,
     period_power_max: float = 0.4,
     time_budget_s: float = 1800.0,
+    mode: str = "targets",
+    box_deg: float = 0.12,
     lightcurves: list[dict] | None = None,
 ) -> dict:
     """Search a field of stars for deep aperiodic dimming and write results.
@@ -107,6 +165,19 @@ def dimming_run(
     if lightcurves is not None:
         for lc in lightcurves:
             _score_one(lc, lc["mjd"], lc["mag"], lc.get("magerr"))
+    elif mode == "region":
+        # Bulk box-sweep: search EVERY ZTF source in the field (no Gaia target
+        # bottleneck), 10-100x more stars per run.  HR vetting is applied to the
+        # shortlist afterwards by matching candidate positions to Gaia.
+        from .acquire import iter_region_lightcurves
+        for meta, lc in iter_region_lightcurves(
+                ra, dec, radius_deg=radius_deg, box_deg=box_deg, band=band,
+                min_epochs=min_epochs, time_budget_s=time_budget_s):
+            _score_one(meta, lc["mjd"].to_numpy(), lc["mag"].to_numpy(),
+                       lc["magerr"].to_numpy())
+            if n_searched and n_searched % 500 == 0:
+                nc = sum(1 for r in rows if r["is_candidate"])
+                print(f"[dimming] progress: {n_searched} scored, {nc} candidates")
     else:
         from .acquire import fetch_gaia_targets, iter_lightcurves
         targets = fetch_gaia_targets(ra, dec, radius_deg=radius_deg, g_min=g_min,
@@ -121,6 +192,13 @@ def dimming_run(
                 print(f"[dimming] progress: {n_searched} scored, {nc} candidates")
 
     candidates = [r for r in rows if r["is_candidate"]]
+    # Region mode has no Gaia photometry at detection time: cross-match the (short)
+    # candidate list to Gaia DR3 now to apply the HR-diagram main-sequence cut.
+    if mode == "region" and candidates:
+        try:
+            _attach_gaia_hr(candidates, period_power_max)
+        except Exception as exc:
+            print(f"[dimming] Gaia HR cross-match skipped: {exc!r}")
     # Rank main-sequence aperiodic dippers (those that resist the mundane
     # giant/YSO/eclipse explanations) above the rest, then by dimming score.
     candidates.sort(key=lambda r: (r.get("resists_mundane", False),

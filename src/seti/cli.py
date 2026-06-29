@@ -162,25 +162,27 @@ def _cmd_dimming_vet(args, cfg):
     # candidates that survived the IR/SIMBAD cut (no point characterising dusty/
     # known ones).  frac_confirmed = fraction of reference-band dips coincident in
     # another band.
-    from .dimming.vet import multiband_coincidence
-    fracs, nbands, dpb = [], [], []
+    from .dimming.vet import multiband_coincidence, secular_achromatic
+    fracs, nbands, dpb, secconf = [], [], [], []
     for _, r in vetted.iterrows():
-        # Multi-band achromaticity is a dip test; skip it for secular faders.
-        if (r.get("cand_type", "dipper") == "dipper"
-                and r.get("ir_verdict") in ("clean", "no_ir_data")):
+        ctype = r.get("cand_type", "dipper")
+        mb, sc = {}, {}
+        if r.get("ir_verdict") in ("clean", "no_ir_data"):
             try:
-                mb = multiband_coincidence(float(r["ra"]), float(r["dec"]))
+                if ctype == "dipper":
+                    mb = multiband_coincidence(float(r["ra"]), float(r["dec"]))
+                else:   # secular fader: confirm the fade is achromatic (g and r)
+                    sc = secular_achromatic(float(r["ra"]), float(r["dec"]))
             except Exception as exc:
-                print(f"[dimming-vet] multiband failed for {r['source_id']}: {exc!r}")
-                mb = {}
-        else:
-            mb = {}
+                print(f"[dimming-vet] band check failed for {r['source_id']}: {exc!r}")
         fracs.append(mb.get("frac_confirmed", float("nan")))
         nbands.append(mb.get("n_bands", 0))
         dpb.append(str(mb.get("dips_per_band", {})))
+        secconf.append(sc.get("secular_confirmed", False))
     vetted["frac_confirmed"] = fracs
     vetted["n_bands"] = nbands
     vetted["dips_per_band"] = dpb
+    vetted["secular_confirmed"] = secconf
     # Final verdict: a clean candidate whose dips are confirmed achromatic in
     # >=2 bands is the genuinely interesting regime; clean but single-band is an
     # artefact.
@@ -188,9 +190,11 @@ def _cmd_dimming_vet(args, cfg):
         if r["ir_verdict"] != "clean":
             return r["ir_verdict"]
         # Secular faders: a monotonic multi-year fade with no IR excess is the
-        # remarkable enshrouding case (no dip-achromaticity test applies).
+        # remarkable enshrouding case ONLY if the fade is achromatic (present in
+        # both g and r); a single-band slow drift is an instrumental/blend artifact.
         if r.get("cand_type", "dipper") == "secular_fader":
-            return "clean_secular_fade"
+            return ("clean_secular_fade" if r.get("secular_confirmed")
+                    else "single_band_fade")
         f = r["frac_confirmed"]
         if r["n_bands"] < 2 or not np.isfinite(f):
             return "single_band_unconfirmed"
@@ -203,7 +207,8 @@ def _cmd_dimming_vet(args, cfg):
                         "period_power", "secular_sigma", "secular_total_mag",
                         "hr_class", "W1_W2", "K_W2",
                         "simbad_otype", "ir_verdict", "frac_confirmed", "n_bands",
-                        "dips_per_band", "verdict") if c in vetted.columns]
+                        "dips_per_band", "secular_confirmed", "verdict")
+            if c in vetted.columns]
     vetted[cols].to_csv(out_dir / "vetting.csv", index=False)
     print(vetted[cols].to_string(index=False))
     gold = vetted[vetted["verdict"].isin(("clean_achromatic", "clean_secular_fade"))]

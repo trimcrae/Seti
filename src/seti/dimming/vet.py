@@ -154,6 +154,39 @@ def multiband_coincidence(ra: float, dec: float, depth_min: float = 0.10,
             "n_epochs_per_band": n_epochs}
 
 
+def secular_achromatic(ra: float, dec: float, radius_arcsec: float = 2.0) -> dict:
+    """Confirm a secular fade is achromatic: present in both g and r ZTF bands.
+
+    A genuine enshrouding / intrinsic fade dims every band with a similar slope; a
+    single-band slow drift (a blend, a moving source, an uncorrected r-only
+    systematic) does not.  Fits the season-median trend in each band and reports
+    both slopes; ``confirmed`` requires both to be fading with consistent rate.
+    """
+    from .acquire import fetch_ztf_lightcurve
+    from .secular import detect_secular_fade
+
+    slopes = {}
+    for band in ("g", "r"):
+        lc = fetch_ztf_lightcurve(ra, dec, band=band, radius_arcsec=radius_arcsec)
+        if lc is None or len(lc) < 40:
+            continue
+        s = detect_secular_fade(lc["mjd"].to_numpy(), lc["mag"].to_numpy(),
+                                lc["magerr"].to_numpy())
+        if s is not None:
+            slopes[band] = (s.slope_mag_yr, s.slope_sigma)
+    g = slopes.get("g")
+    r = slopes.get("r")
+    confirmed = False
+    if g and r:
+        # Both bands fade (positive slope) at >2 sigma and within a factor ~3.
+        both_fade = g[0] > 0 and r[0] > 0 and g[1] > 2 and r[1] > 2
+        ratio = (max(g[0], r[0]) / max(min(g[0], r[0]), 1e-4))
+        confirmed = bool(both_fade and ratio < 3.0)
+    return {"g_slope": g[0] if g else float("nan"),
+            "r_slope": r[0] if r else float("nan"),
+            "n_bands_fade": len(slopes), "secular_confirmed": confirmed}
+
+
 def _col(df: pd.DataFrame, name: str) -> pd.Series:
     return pd.to_numeric(df[name], errors="coerce") if name in df.columns \
         else pd.Series(np.nan, index=df.index)

@@ -392,15 +392,15 @@ def dimming_run(
                               if not k.startswith("_")} for r in rows])
         flat = flat.sort_values("score", ascending=False)
         flat.to_csv(out_dir / "dimming_scored.csv", index=False)
-        if candidates:
-            flat[flat["is_candidate"]].to_csv(
-                out_dir / "dimming_candidates.csv", index=False)
-        if faders:
-            # Only the main-sequence faders (the faint hr=unknown raw faders are a
-            # ZTF magnitude-dependent systematic and must not reach the vet stage).
-            fader_ids = {r.get("source_id") for r in faders}
-            flat[flat["source_id"].isin(fader_ids)].to_csv(
-                out_dir / "secular_faders.csv", index=False)
+        # Always (over)write the candidate tables -- even when empty -- so a re-run
+        # that now finds nothing clears any stale candidates a prior run committed.
+        flat[flat["is_candidate"]].to_csv(
+            out_dir / "dimming_candidates.csv", index=False)
+        # Only the main-sequence faders (the faint hr=unknown raw faders are a ZTF
+        # magnitude-dependent systematic and must not reach the vet stage).
+        fader_ids = {r.get("source_id") for r in faders}
+        flat[flat["source_id"].isin(fader_ids)].to_csv(
+            out_dir / "secular_faders.csv", index=False)
 
     k = len(candidates)
     lim = occurrence_upper_limit(

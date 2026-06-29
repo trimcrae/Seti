@@ -193,6 +193,12 @@ def _cmd_dimming_vet(args, cfg):
         # remarkable enshrouding case ONLY if the fade is achromatic (present in
         # both g and r); a single-band slow drift is an instrumental/blend artifact.
         if r.get("cand_type", "dipper") == "secular_fader":
+            try:
+                amp = abs(float(r.get("secular_total_mag", 0) or 0))
+            except (TypeError, ValueError):
+                amp = 0.0
+            if amp < 0.08:        # a few-percent fade is marginal, not noteworthy
+                return "marginal_fade"
             return ("clean_secular_fade" if r.get("secular_confirmed")
                     else "single_band_fade")
         f = r["frac_confirmed"]

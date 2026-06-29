@@ -190,6 +190,36 @@ def test_secular_flat_and_brightening_score_zero():
     assert bright is not None and bright.score == 0.0
 
 
+def test_shared_epoch_cut_rejects_bad_night_artifacts():
+    from seti.dimming.run import _flag_shared_epoch_dips
+
+    rng = np.random.default_rng(21)
+    base_t = np.sort(rng.uniform(0, 1500, 200))
+    bad_nights = np.array([300.0, 720.0, 1100.0])   # field-wide bad epochs
+    rows = []
+    # 12 stars that "dip" only on the shared bad nights -> artifacts.
+    for i in range(12):
+        t = np.concatenate([base_t, bad_nights])
+        m = 16.0 + rng.normal(0, 0.02, t.size)
+        m[-3:] += 0.4                                # deep dip on each bad night
+        o = np.argsort(t)
+        rows.append({"_mjd": t[o], "_mag": m[o], "is_candidate": True,
+                     "resists_mundane": True})
+    # 1 star that dips on its OWN unique nights -> genuine.
+    t = np.concatenate([base_t, [555.0, 556.0]])
+    m = 16.0 + rng.normal(0, 0.02, t.size)
+    m[-2:] += 0.4
+    o = np.argsort(t)
+    genuine = {"_mjd": t[o], "_mag": m[o], "is_candidate": True,
+               "resists_mundane": True}
+    rows.append(genuine)
+
+    n = _flag_shared_epoch_dips(rows)
+    assert n >= 10                                   # the shared-night artifacts demoted
+    assert genuine["is_candidate"] is True           # the unique dipper survives
+    assert all(not r["is_candidate"] for r in rows[:12])
+
+
 def test_ensemble_detrend_removes_common_mode_fade():
     from seti.dimming.run import _ensemble_detrend_secular
     from seti.dimming.secular import season_medians

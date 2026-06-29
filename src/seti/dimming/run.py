@@ -123,7 +123,10 @@ def dimming_run(
                                    r.get("score", 0.0)), reverse=True)
     n_resists = sum(1 for r in candidates if r.get("resists_mundane"))
 
-    out_dir = cfg.root / "results" / "dimming"
+    # Namespace output by sky field so a multi-field hunt accumulates rather than
+    # clobbering: concurrent/sequential runs each write their own subdirectory.
+    field_tag = f"f{ra:+06.1f}{dec:+05.1f}".replace(".", "p").replace("+", "p").replace("-", "m")
+    out_dir = cfg.root / "results" / "dimming" / field_tag
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # Save the top dippers' light curves so the actual dimming can be examined.

@@ -165,5 +165,6 @@ def test_dimming_run_end_to_end(tmp_path):
     assert summary["top_candidates"][0]["resists_mundane"] is True
     assert summary["n_resists_mundane"] >= 1
     assert "occurrence_limit" in summary
-    assert (tmp_path / "results" / "dimming" / "summary.json").exists()
-    assert (tmp_path / "results" / "dimming" / "top_dippers.json").exists()
+    # Output is namespaced by sky field; locate it recursively.
+    assert list((tmp_path / "results" / "dimming").rglob("summary.json"))
+    assert list((tmp_path / "results" / "dimming").rglob("top_dippers.json"))

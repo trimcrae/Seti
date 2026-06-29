@@ -32,7 +32,11 @@ def _is_candidate(stat: dict, depth_min: float, n_dips_min: int,
     shows a handful of deep, discrete dips on an otherwise flat light curve.
     """
     n_events = stat.get("n_dip_events", stat.get("n_dips", 0))
-    return (stat.get("max_depth", 0.0) >= depth_min
+    # Depth must come from a *sustained* (multi-epoch) event, and there must be at
+    # least one such event --- a lone faint-end outlier no longer qualifies.
+    sustained_depth = stat.get("max_event_depth", stat.get("max_depth", 0.0))
+    return (sustained_depth >= depth_min
+            and n_events >= 1
             and stat.get("n_dips", 0) >= n_dips_min
             and n_events <= max_events
             and stat.get("out_of_dip_rms", 0.0) <= out_rms_max
@@ -170,6 +174,7 @@ def dimming_run(
             {"source_id": r.get("source_id"), "ra": r.get("ra"), "dec": r.get("dec"),
              "score": r.get("score"), "max_depth": r.get("max_depth"),
              "n_dips": r.get("n_dips"), "n_dip_events": r.get("n_dip_events"),
+             "max_event_depth": r.get("max_event_depth"),
              "out_of_dip_rms": r.get("out_of_dip_rms"),
              "asymmetry": r.get("asymmetry"),
              "best_period_d": r.get("best_period_d"),

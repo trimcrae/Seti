@@ -24,31 +24,53 @@ class DipStats:
     best_period_d: float    # strongest dip period (Lomb-Scargle on the dips)
     period_power: float     # its normalised power (high => periodic => binary-like)
     score: float            # [0,1] Boyajian-likeness
-    n_dip_events: int = 0   # discrete dip *events* (contiguous runs of faint epochs)
+    n_dip_events: int = 0   # discrete dip *events* sustained over >= 2 epochs
     out_of_dip_rms: float = 0.0  # robust scatter of the NON-dipped epochs (quiescence)
+    max_event_depth: float = 0.0  # deepest fractional dip inside a sustained event
 
     def as_dict(self) -> dict:
         return {k: (float(v) if not isinstance(v, int) else int(v))
                 for k, v in self.__dict__.items()}
 
 
-def _count_events(t: np.ndarray, is_dip: np.ndarray, merge_gap_d: float = 5.0) -> int:
-    """Number of discrete dip *events*: contiguous runs of dipped epochs.
+def _dip_events(t: np.ndarray, is_dip: np.ndarray, frac_dip: np.ndarray,
+                merge_gap_d: float = 5.0, min_run: int = 2) -> tuple[int, float]:
+    """Discrete dip *events* and the deepest *sustained* dip.
 
-    Two dipped epochs belong to the same event if no *non-dipped* epoch separates
-    them and they are within ``merge_gap_d`` days (so a dip sampled by several
-    consecutive visits counts once, but two dips months apart count separately).
+    Contiguous dipped epochs (adjacent in the time-sorted series and within
+    ``merge_gap_d`` days) form one event.  Only events spanning at least
+    ``min_run`` epochs count: a single isolated dipped epoch is, at the faint end
+    of a ground-based survey, far more likely a photometric outlier than a real
+    occultation, which lasts long enough to be caught by several visits.
+
+    Returns ``(n_events, max_event_depth)`` where ``max_event_depth`` is the
+    deepest fractional dip occurring *inside* a valid (multi-epoch) event --- so a
+    lone noisy point can never qualify a candidate by depth alone.
     """
     idx = np.flatnonzero(is_dip)
     if idx.size == 0:
-        return 0
-    events = 1
+        return 0, 0.0
+    # Split the dipped-epoch indices into runs.
+    runs: list[list[int]] = [[int(idx[0])]]
     for a, b in zip(idx[:-1], idx[1:], strict=False):
-        # New event when the dipped epochs are not adjacent in the (time-sorted)
-        # series, or the time gap between them exceeds the merge window.
         if b != a + 1 or (t[b] - t[a]) > merge_gap_d:
-            events += 1
-    return int(events)
+            runs.append([int(b)])
+        else:
+            runs[-1].append(int(b))
+    n_events = 0
+    max_event_depth = 0.0
+    for run in runs:
+        if len(run) >= min_run:
+            n_events += 1
+            max_event_depth = max(max_event_depth, float(np.max(frac_dip[run])))
+    return n_events, max_event_depth
+
+
+def _count_events(t: np.ndarray, is_dip: np.ndarray, merge_gap_d: float = 5.0,
+                  min_run: int = 2) -> int:
+    """Back-compatible event count (see :func:`_dip_events`)."""
+    frac = np.where(is_dip, 1.0, 0.0)
+    return _dip_events(t, is_dip, frac, merge_gap_d=merge_gap_d, min_run=min_run)[0]
 
 
 def _out_of_dip_rms(mag: np.ndarray, err: np.ndarray) -> float:
@@ -111,10 +133,11 @@ def detect_dips(time: np.ndarray, mag: np.ndarray, magerr: np.ndarray | None = N
     max_depth = float(np.nanmax(frac_dip)) if frac_dip.size else 0.0
     duty = n_dips / t.size
     # Discrete dip *events*: contiguous runs of dipped epochs, merged across short
-    # sampling gaps.  This is the decisive separation of the Boyajian profile (a
-    # handful of deep events) from a high-amplitude *periodic* variable (hundreds
-    # of epochs below the bright baseline but no isolated, discrete dimming).
-    n_events = _count_events(t, is_dip)
+    # sampling gaps, counting only events sustained over >= 2 epochs.  This is the
+    # decisive separation of the Boyajian profile (a handful of deep, sustained
+    # events) from both a high-amplitude *periodic* variable (hundreds of epochs)
+    # and faint-end single-epoch photometric noise (lone outliers).
+    n_events, max_event_depth = _dip_events(t, is_dip, frac_dip)
     # Quiescence: a Boyajian-like star is photometrically stable *between* dips,
     # whereas a pulsator/eclipsing binary varies continuously.  Measure the robust
     # scatter of the non-dipped epochs, de-noised by the typical photometric error.
@@ -134,7 +157,8 @@ def detect_dips(time: np.ndarray, mag: np.ndarray, magerr: np.ndarray | None = N
     # between dips + NOT strongly periodic.  The event term peaks for a handful of
     # events (~2-12) and is suppressed both for a single marginal dip and for the
     # hundreds-of-epochs signature of a continuous high-amplitude variable.
-    depth_term = np.clip((max_depth - depth_min) / 0.15, 0, 1)
+    # Depth is scored from the deepest *sustained* event, not a lone outlier.
+    depth_term = np.clip((max_event_depth - depth_min) / 0.15, 0, 1)
     event_term = float(np.clip(n_events / 6.0, 0, 1)
                        * np.clip((40 - n_events) / 28.0, 0, 1))
     asym_term = np.clip((asym - 1.0) / 3.0, 0, 1)
@@ -148,6 +172,7 @@ def detect_dips(time: np.ndarray, mag: np.ndarray, magerr: np.ndarray | None = N
                     dip_duty_cycle=float(duty), asymmetry=asym,
                     best_period_d=float(best_p), period_power=float(power),
                     n_dip_events=int(n_events), out_of_dip_rms=float(out_rms),
+                    max_event_depth=float(max_event_depth),
                     score=score)
 
 

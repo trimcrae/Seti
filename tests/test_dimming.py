@@ -56,10 +56,39 @@ def test_few_discrete_events_not_hundreds_of_epochs():
     assert s.out_of_dip_rms < 0.03            # quiescent between dips
     assert s.score > 0.5
 
-    # _count_events groups adjacent dipped epochs into one event.
+    # _count_events groups adjacent dipped epochs into one event, and a lone
+    # single-epoch outlier is NOT counted (min_run=2): {0,1,2} and {100,101}
+    # count; the isolated {200} does not.
     t2 = np.array([0., 1, 2, 3, 100, 101, 200])
-    is_dip = np.array([True, True, True, False, True, True, False])
-    assert _count_events(t2, is_dip) == 2     # {0,1,2} and {100,101}
+    is_dip = np.array([True, True, True, False, True, True, True])
+    assert _count_events(t2, is_dip) == 2
+
+
+def test_single_epoch_outliers_do_not_qualify():
+    from seti.dimming.dips import _dip_events
+    from seti.dimming.run import _is_candidate
+
+    # A faint-star light curve whose only "dips" are isolated single-epoch noise
+    # outliers must NOT be a candidate: no sustained (>=2 epoch) event.
+    rng = np.random.default_rng(5)
+    t = np.sort(rng.uniform(0, 2000, 110))
+    m = 17.2 + rng.normal(0, 0.03, t.size)
+    # three lone faint outliers at random isolated epochs
+    for j in (10, 55, 95):
+        m[j] += 0.12
+    s = detect_dips(t, m, np.full(t.size, 0.03))
+    assert s is not None
+    assert s.n_dip_events == 0            # no multi-epoch event
+    assert s.max_event_depth == 0.0
+    assert not _is_candidate(s.as_dict(), depth_min=0.10, n_dips_min=3,
+                             asym_min=1.5, period_power_max=0.4)
+
+    # Direct check: one sustained pair + one lone outlier -> a single valid event.
+    t3 = np.array([0., 1, 50, 100, 101, 102])
+    is_dip = np.array([True, False, True, True, True, True])
+    frac = np.where(is_dip, 0.2, 0.0)
+    n_ev, dep = _dip_events(t3, is_dip, frac)
+    assert n_ev == 1 and dep == 0.2       # {100,101,102}; lone {0} and {50} drop
 
 
 def test_high_amplitude_periodic_variable_rejected():

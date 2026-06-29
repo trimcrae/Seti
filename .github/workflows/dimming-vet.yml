@@ -1,0 +1,54 @@
+name: dimming-vet
+
+# Deep-vet the resists-mundane dimming shortlist (aggregated across all searched
+# fields) against the Boyajian mimics: WISE/2MASS infrared excess and SIMBAD
+# classification. Runs on the GitHub runner, which has the VizieR/CDS/SIMBAD
+# network access the sandbox lacks. Writes results/dimming/vetting.csv.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  vet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,pandas,astropy,astroquery; print('imports OK')"
+      - name: Vet candidates
+        run: python -m seti.cli dimming-vet
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/dimming/vetting.csv || true
+          if git diff --cached --quiet; then
+            echo "No vetting changes to commit."
+          else
+            git commit -m "dimming-vet: IR-excess + SIMBAD verdict on resists-mundane shortlist
+
+            Generated on a GitHub-hosted runner with VizieR/SIMBAD network access."
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dimming-vetting
+          path: results/dimming/vetting.csv
+          if-no-files-found: warn

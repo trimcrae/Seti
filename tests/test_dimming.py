@@ -153,6 +153,25 @@ def test_fetch_ztf_region_groups_by_oid(monkeypatch):
     assert {"mjd", "mag", "magerr", "ra", "dec"} <= set(out["101"].columns)
 
 
+def test_ir_excess_verdict():
+    from seti.dimming.vet import ir_excess_verdict
+
+    # Bare photosphere (W1-W2 ~ 0, small K-W2), no SIMBAD type -> clean.
+    assert ir_excess_verdict({"W1mag": 14.00, "W2mag": 13.98, "Ksmag": 14.3,
+                              "simbad_otype": ""}) == "clean"
+    # Strong W1-W2 excess -> dusty disk.
+    assert ir_excess_verdict({"W1mag": 13.0, "W2mag": 12.4, "Ksmag": 13.5,
+                              "simbad_otype": ""}) == "ir_excess_dusty"
+    # K-W2 excess alone -> dusty.
+    assert ir_excess_verdict({"W1mag": 13.0, "W2mag": 12.95, "Ksmag": 13.9,
+                              "simbad_otype": ""}) == "ir_excess_dusty"
+    # No excess but classified as a young stellar object -> known variable.
+    assert ir_excess_verdict({"W1mag": 14.0, "W2mag": 13.98, "Ksmag": 14.2,
+                              "simbad_otype": "YSO"}) == "known_variable"
+    # No WISE/2MASS at all -> cannot clear.
+    assert ir_excess_verdict({"simbad_otype": ""}) == "no_ir_data"
+
+
 def test_too_few_epochs_returns_none():
     t, m, e = _flat(n=10)
     assert detect_dips(t, m, e) is None

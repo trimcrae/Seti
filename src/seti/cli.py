@@ -121,6 +121,39 @@ def _cmd_dimming_run(args, cfg):
                 mode=args.mode, box_deg=args.box_deg)
 
 
+def _cmd_dimming_vet(args, cfg):
+    import glob
+
+    from .dimming.vet import vet_candidates
+
+    # Aggregate the resists-mundane shortlist across all searched fields.
+    frames = []
+    for fp in sorted(glob.glob(str(cfg.root / "results" / "dimming" / "*" /
+                                   "dimming_candidates.csv"))):
+        df = pd.read_csv(fp)
+        if "resists_mundane" in df.columns:
+            df = df[df["resists_mundane"].astype(str).str.lower().isin(("true", "1"))]
+        if len(df):
+            df["field_dir"] = Path(fp).parent.name
+            frames.append(df)
+    if not frames:
+        print("[dimming-vet] no resists-mundane candidates found")
+        return
+    cand = pd.concat(frames, ignore_index=True).drop_duplicates("source_id")
+    print(f"[dimming-vet] vetting {len(cand)} resists-mundane candidates")
+    vetted = vet_candidates(cand)
+    out_dir = cfg.root / "results" / "dimming"
+    cols = [c for c in ("source_id", "field_dir", "ra", "dec", "score",
+                        "max_event_depth", "n_dip_events", "asymmetry",
+                        "period_power", "hr_class", "W1_W2", "K_W2",
+                        "simbad_otype", "ir_verdict") if c in vetted.columns]
+    vetted[cols].to_csv(out_dir / "vetting.csv", index=False)
+    print(vetted[cols].to_string(index=False))
+    clean = vetted[vetted["ir_verdict"] == "clean"]
+    print(f"[dimming-vet] {len(clean)} CLEAN (main-seq, no IR excess, unclassified) "
+          f"of {len(vetted)} vetted")
+
+
 def _cmd_paper_numbers(args, cfg):
     from .report import write_numbers_tex
 
@@ -199,6 +232,9 @@ def main(argv=None):
     p.add_argument("--box-deg", type=float, default=0.12,
                    help="box size for region-mode bulk fetch (deg)")
     p.set_defaults(func=_cmd_dimming_run)
+
+    p = sub.add_parser("dimming-vet")
+    p.set_defaults(func=_cmd_dimming_vet)
 
     p = sub.add_parser("contamination-budget")
     p.add_argument("--seed", type=int, default=11)

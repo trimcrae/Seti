@@ -312,12 +312,20 @@ def dimming_run(
 
     # Secular faders: the second, artifact-robust candidate class.  Rank by the
     # significance of the monotonic multi-year fade.
-    faders = [r for r in rows if r.get("is_secular_fader")]
-    if mode == "region" and faders:
+    raw_faders = [r for r in rows if r.get("is_secular_fader")]
+    if mode == "region" and raw_faders:
         try:
-            _attach_gaia_hr(faders, period_power_max)
+            _attach_gaia_hr(raw_faders, period_power_max)
         except Exception as exc:
             print(f"[dimming] Gaia HR cross-match (faders) skipped: {exc!r}")
+    # Require a Gaia main-sequence match: the faint hr=unknown population is a
+    # magnitude-dependent ZTF systematic (no parallax, clustered per CCD) that no
+    # common-mode removes; a real enshrouding candidate must be a characterisable
+    # main-sequence star, exactly as for the dippers.
+    n_faders_raw = len(raw_faders)
+    faders = [r for r in raw_faders if r.get("hr_class") == "main_sequence"]
+    print(f"[dimming] secular faders: {n_faders_raw} raw -> {len(faders)} "
+          f"main-sequence (faint hr=unknown systematics removed)")
     faders.sort(key=lambda r: r.get("secular_sigma", 0.0), reverse=True)
     fader_windows = [{
         "source_id": r.get("source_id"), "ra": r.get("ra"), "dec": r.get("dec"),
@@ -353,6 +361,7 @@ def dimming_run(
         "n_candidates": k,
         "n_resists_mundane": n_resists,
         "n_secular_faders": len(faders),
+        "n_secular_faders_raw": n_faders_raw,
         "top_faders": [
             {"source_id": r.get("source_id"), "ra": r.get("ra"), "dec": r.get("dec"),
              "secular_slope_mag_yr": r.get("secular_slope_mag_yr"),

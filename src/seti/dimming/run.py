@@ -101,6 +101,52 @@ def _attach_gaia_hr(candidates: list[dict], period_power_max: float,
             hr, r.get("period_power", 1.0), period_power_max))
 
 
+def _flag_shared_epoch_dips(rows: list[dict], depth_min: float = 0.10,
+                            bin_days: float = 0.5, min_share: int = 5,
+                            share_frac: float = 0.02) -> int:
+    """Reject dips that fall on epochs shared by many stars in the same field.
+
+    A genuine occultation dims one star on its own dates; a bad reference image or
+    a bad-calibration night dims *many* stars in the field at the *same* epoch.
+    We bin every star's dip epochs, mark epochs hit by an anomalous number of
+    stars as bad, and demote any candidate whose dips are mostly on bad epochs ---
+    the dimming analog of the laser recurrent-wavelength cut.  Returns the number
+    of candidates demoted.
+    """
+    from collections import defaultdict
+    star_bins: list[tuple[dict, set]] = []
+    epoch_counts: dict[int, int] = defaultdict(int)
+    for r in rows:
+        mjd, mag = r.get("_mjd"), r.get("_mag")
+        if mjd is None or not len(mjd):
+            continue
+        base = float(np.percentile(mag, 20))
+        frac = 1.0 - 10.0 ** (-0.4 * (mag - base))
+        bins = set(np.round(mjd[frac >= depth_min] / bin_days).astype(int).tolist())
+        if not bins:
+            continue
+        star_bins.append((r, bins))
+        for b in bins:
+            epoch_counts[b] += 1
+    if not star_bins:
+        return 0
+    n_stars = len(star_bins)
+    thresh = max(min_share, int(np.ceil(share_frac * n_stars)))
+    bad = {b for b, c in epoch_counts.items() if c >= thresh}
+    if not bad:
+        return 0
+    demoted = 0
+    for r, bins in star_bins:
+        shared = len(bins & bad)
+        r["shared_epoch_frac"] = shared / len(bins)
+        if r.get("is_candidate") and shared / len(bins) >= 0.5:
+            r["is_candidate"] = False
+            r["resists_mundane"] = False
+            r["rejected_shared_epoch"] = True
+            demoted += 1
+    return demoted
+
+
 def _ensemble_detrend_secular(rows: list[dict]) -> None:
     """Subtract the field common-mode seasonal drift and re-fit the secular fade.
 
@@ -270,10 +316,14 @@ def dimming_run(
                 nc = sum(1 for r in rows if r["is_candidate"])
                 print(f"[dimming] progress: {n_searched} scored, {nc} candidates")
 
-    # Ensemble common-mode detrend of the secular channel: remove the field's
-    # shared ZTF zeropoint/reference drift so only intrinsic faders survive.  Needs
-    # the whole field, so it runs once after all sources are scored.
+    # Field-level contamination controls (need the whole field):
+    #  (1) shared-epoch dips: reject bad-reference/bad-night artifacts that dim many
+    #      stars on the same epoch (the dimming analog of the recurrent-line cut);
+    #  (2) ensemble common-mode detrend of the secular channel.
     if len(rows) >= 10:
+        n_shared = _flag_shared_epoch_dips(rows)
+        if n_shared:
+            print(f"[dimming] shared-epoch cut demoted {n_shared} dip candidates")
         _ensemble_detrend_secular(rows)
 
     candidates = [r for r in rows if r["is_candidate"]]

@@ -138,8 +138,12 @@ def fetch_ztf_region(
     """
     import requests
 
+    # The IRSA ZTF light-curve service reliably supports a CIRCLE cone for POS
+    # (the proven per-object primitive); a cone of radius ~box_deg/2 returns every
+    # source in the tile in one request, which is the bulk unlock we want.
+    radius_deg = box_deg / 2.0
     params = {
-        "POS": f"BOX {float(ra):.5f} {float(dec):.5f} {box_deg:.4f} {box_deg:.4f}",
+        "POS": f"CIRCLE {float(ra):.5f} {float(dec):.5f} {radius_deg:.5f}",
         "BANDNAME": band,
         "FORMAT": "CSV",
         "BAD_CATFLAGS_MASK": str(bad_catflags_mask),
@@ -147,6 +151,8 @@ def fetch_ztf_region(
     try:
         resp = requests.get(ZTF_LC_URL, params=params, timeout=timeout_s)
         if resp.status_code != 200 or not resp.text.strip():
+            print(f"[dimming] ZTF region cone ({ra:.4f},{dec:.4f}) r={radius_deg:.4f}: "
+                  f"HTTP {resp.status_code}, {len(resp.text)} bytes")
             return {}
         lc = pd.read_csv(io.StringIO(resp.text))
     except Exception as exc:

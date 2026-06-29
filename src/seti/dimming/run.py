@@ -111,9 +111,11 @@ def _ensemble_detrend_secular(rows: list[dict]) -> None:
     subtract it before re-fitting each star.  A star that still fades after the
     field's shared drift is removed is an *intrinsic* fader.
     """
-    # Accumulate (season_label -> list of per-star season offsets).
+    # Accumulate per-CCD (ZTF zeropoint/reference drift is per readout channel):
+    # offsets[ccd][season] -> list of per-star (season median - star median).
     from collections import defaultdict
-    offsets: dict[int, list[float]] = defaultdict(list)
+    offsets: dict[str, dict[int, list[float]]] = defaultdict(lambda: defaultdict(list))
+    glob: dict[int, list[float]] = defaultdict(list)
     for r in rows:
         sm = r.get("_sm")
         if sm is None:
@@ -122,20 +124,27 @@ def _ensemble_detrend_secular(rows: list[dict]) -> None:
         omed = r.get("_omed", float("nan"))
         if not np.isfinite(omed):
             continue
+        ccd = r.get("_ccd", "x")
         for lab, mm in zip(labels, s_m, strict=False):
-            offsets[int(lab)].append(float(mm) - omed)
-    if not offsets:
+            offsets[ccd][int(lab)].append(float(mm) - omed)
+            glob[int(lab)].append(float(mm) - omed)
+    if not glob:
         return
-    common = {lab: float(np.median(v)) for lab, v in offsets.items() if len(v) >= 5}
-    if not common:
-        return
+    # Per-CCD common mode where a season has >=5 stars on that CCD; otherwise fall
+    # back to the global field common mode (still better than no correction).
+    common = {ccd: {lab: float(np.median(v)) for lab, v in seasons.items()
+                    if len(v) >= 5}
+              for ccd, seasons in offsets.items()}
+    common_glob = {lab: float(np.median(v)) for lab, v in glob.items() if len(v) >= 5}
     for r in rows:
         sm = r.get("_sm")
         if sm is None:
             continue
         labels, s_t, s_m, s_w = sm
-        corr = np.array([common.get(int(lab), 0.0) for lab in labels])
-        det_m = s_m - corr                 # remove the shared field drift
+        ccd_cm = common.get(r.get("_ccd", "x"), {})
+        corr = np.array([ccd_cm.get(int(lab), common_glob.get(int(lab), 0.0))
+                         for lab in labels])
+        det_m = s_m - corr                 # remove the per-CCD shared drift
         stat = fit_secular(s_t, det_m, s_w, n_epochs=r.get("_nepoch", 0))
         if stat is None:
             r["is_secular_fader"] = False
@@ -229,6 +238,7 @@ def dimming_run(
         d["_sm"] = sm                      # (labels, s_t, s_m, s_w) or None
         d["_omed"] = float(np.median(mag_a)) if mag_a.size else float("nan")
         d["_nepoch"] = int(mjd_a.size)
+        d["_ccd"] = meta.get("ccd", "x")   # ZTF field/CCD/quadrant for detrend
         rows.append(d)
 
     if lightcurves is not None:

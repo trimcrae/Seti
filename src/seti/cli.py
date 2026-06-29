@@ -14,6 +14,7 @@ import argparse
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from .config import load_config
@@ -142,16 +143,52 @@ def _cmd_dimming_vet(args, cfg):
     cand = pd.concat(frames, ignore_index=True).drop_duplicates("source_id")
     print(f"[dimming-vet] vetting {len(cand)} resists-mundane candidates")
     vetted = vet_candidates(cand)
+
+    # Multi-band achromaticity: a real occultation dims g, r and i together; a
+    # single-band excursion is a photometric artefact or a blend.  Run it on the
+    # candidates that survived the IR/SIMBAD cut (no point characterising dusty/
+    # known ones).  frac_confirmed = fraction of reference-band dips coincident in
+    # another band.
+    from .dimming.vet import multiband_coincidence
+    fracs, nbands, dpb = [], [], []
+    for _, r in vetted.iterrows():
+        if r.get("ir_verdict") in ("clean", "no_ir_data"):
+            try:
+                mb = multiband_coincidence(float(r["ra"]), float(r["dec"]))
+            except Exception as exc:
+                print(f"[dimming-vet] multiband failed for {r['source_id']}: {exc!r}")
+                mb = {}
+        else:
+            mb = {}
+        fracs.append(mb.get("frac_confirmed", float("nan")))
+        nbands.append(mb.get("n_bands", 0))
+        dpb.append(str(mb.get("dips_per_band", {})))
+    vetted["frac_confirmed"] = fracs
+    vetted["n_bands"] = nbands
+    vetted["dips_per_band"] = dpb
+    # Final verdict: a clean candidate whose dips are confirmed achromatic in
+    # >=2 bands is the genuinely interesting regime; clean but single-band is an
+    # artefact.
+    def _final(r):
+        if r["ir_verdict"] != "clean":
+            return r["ir_verdict"]
+        f = r["frac_confirmed"]
+        if r["n_bands"] < 2 or not np.isfinite(f):
+            return "single_band_unconfirmed"
+        return "clean_achromatic" if f >= 0.5 else "single_band_artifact"
+    vetted["verdict"] = [_final(r) for _, r in vetted.iterrows()]
+
     out_dir = cfg.root / "results" / "dimming"
     cols = [c for c in ("source_id", "field_dir", "ra", "dec", "score",
                         "max_event_depth", "n_dip_events", "asymmetry",
                         "period_power", "hr_class", "W1_W2", "K_W2",
-                        "simbad_otype", "ir_verdict") if c in vetted.columns]
+                        "simbad_otype", "ir_verdict", "frac_confirmed", "n_bands",
+                        "dips_per_band", "verdict") if c in vetted.columns]
     vetted[cols].to_csv(out_dir / "vetting.csv", index=False)
     print(vetted[cols].to_string(index=False))
-    clean = vetted[vetted["ir_verdict"] == "clean"]
-    print(f"[dimming-vet] {len(clean)} CLEAN (main-seq, no IR excess, unclassified) "
-          f"of {len(vetted)} vetted")
+    gold = vetted[vetted["verdict"] == "clean_achromatic"]
+    print(f"[dimming-vet] {len(gold)} CLEAN ACHROMATIC (main-seq, no IR excess, "
+          f"unclassified, multi-band dips) of {len(vetted)} vetted")
 
 
 def _cmd_paper_numbers(args, cfg):

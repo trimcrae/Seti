@@ -98,6 +98,62 @@ def vet_candidates(cand: pd.DataFrame, radius_arcsec: float = 3.0) -> pd.DataFra
     return out
 
 
+def multiband_coincidence(ra: float, dec: float, depth_min: float = 0.10,
+                          k_sigma: float = 3.0, coincidence_days: float = 2.0,
+                          radius_arcsec: float = 2.0) -> dict:
+    """Test whether a candidate's dips appear achromatically across ZTF bands.
+
+    A genuine occultation (a body crossing the star) dims *every* band at the same
+    epoch; a photometric artefact, a blend with a one-band variable, or a bad
+    subtraction typically shows in a single band.  We find the dip epochs in each
+    of g, r, i independently (same robust baseline + significance test as the
+    search), then measure what fraction of the dips in the best-sampled band have a
+    coincident dip (within ``coincidence_days``) in at least one *other* band.
+
+    Returns counts per band and ``frac_confirmed`` --- high => achromatic, real.
+    """
+    from .acquire import fetch_ztf_lightcurve
+    from .dips import _robust_baseline
+
+    band_dips: dict[str, np.ndarray] = {}
+    n_epochs: dict[str, int] = {}
+    for band in ("g", "r", "i"):
+        lc = fetch_ztf_lightcurve(ra, dec, band=band, radius_arcsec=radius_arcsec)
+        if lc is None or len(lc) < 20:
+            continue
+        t = lc["mjd"].to_numpy()
+        m = lc["mag"].to_numpy()
+        e = lc["magerr"].to_numpy()
+        order = np.argsort(t)
+        t, m, e = t[order], m[order], e[order]
+        base = _robust_baseline(m)
+        dmag = m - base
+        frac = 1.0 - 10.0 ** (-0.4 * dmag)
+        sig = dmag / (0.4 * np.log(10.0) * np.where(np.isfinite(e) & (e > 0), e, 0.05)
+                      + 1e-9)
+        is_dip = (frac >= depth_min) & (sig >= k_sigma)
+        band_dips[band] = t[is_dip]
+        n_epochs[band] = int(t.size)
+
+    if not band_dips:
+        return {"frac_confirmed": float("nan"), "n_bands": 0, "dips_per_band": {}}
+    # Use the band with the most dips as the reference.
+    ref = max(band_dips, key=lambda b: band_dips[b].size)
+    ref_dips = band_dips[ref]
+    others = [b for b in band_dips if b != ref]
+    confirmed = 0
+    for td in ref_dips:
+        ok = any(np.any(np.abs(band_dips[b] - td) <= coincidence_days)
+                 for b in others)
+        if ok:
+            confirmed += 1
+    frac = confirmed / ref_dips.size if ref_dips.size else float("nan")
+    return {"frac_confirmed": float(frac), "n_bands": len(band_dips),
+            "ref_band": ref, "n_ref_dips": int(ref_dips.size),
+            "dips_per_band": {b: int(v.size) for b, v in band_dips.items()},
+            "n_epochs_per_band": n_epochs}
+
+
 def _col(df: pd.DataFrame, name: str) -> pd.Series:
     return pd.to_numeric(df[name], errors="coerce") if name in df.columns \
         else pd.Series(np.nan, index=df.index)

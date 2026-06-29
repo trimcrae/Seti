@@ -142,6 +142,10 @@ def _cmd_dimming_vet(args, cfg):
     for fp in sorted(glob.glob(str(cfg.root / "results" / "dimming" / "*" /
                                    "secular_faders.csv"))):
         df = pd.read_csv(fp)
+        # Only main-sequence faders: the faint hr=unknown population is a ZTF
+        # magnitude-dependent systematic (older field CSVs may still contain it).
+        if "hr_class" in df.columns:
+            df = df[df["hr_class"] == "main_sequence"]
         if len(df):
             df["field_dir"] = Path(fp).parent.name
             df["cand_type"] = "secular_fader"

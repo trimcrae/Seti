@@ -43,15 +43,14 @@ def _season_bins(t: np.ndarray, season_days: float = 180.0) -> np.ndarray:
     return np.floor((t - t.min()) / season_days).astype(int)
 
 
-def detect_secular_fade(time: np.ndarray, mag: np.ndarray,
-                        magerr: np.ndarray | None = None,
-                        min_epochs: int = 40, min_seasons: int = 3,
-                        season_days: float = 180.0) -> SecularStats | None:
-    """Fit a long-term trend to a light curve's season medians.
+def season_medians(time: np.ndarray, mag: np.ndarray, magerr: np.ndarray | None = None,
+                   min_epochs: int = 40, min_seasons: int = 3,
+                   season_days: float = 180.0):
+    """Per-season median magnitude, epoch, and inverse-variance weight.
 
-    Returns ``None`` if there are too few epochs or seasons.  ``slope_mag_yr`` is
-    positive for a *fading* star; the score rewards a significant, large,
-    monotonic fade and is zero for brightening or flat/periodic curves.
+    Returns ``(season_label, s_t, s_m, s_w)`` or ``None`` if too few epochs/seasons.
+    ``season_label`` is the integer season index of each retained season, so an
+    ensemble common-mode (one offset per season) can be matched and subtracted.
     """
     t = np.asarray(time, dtype=float)
     m = np.asarray(mag, dtype=float)
@@ -59,35 +58,34 @@ def detect_secular_fade(time: np.ndarray, mag: np.ndarray,
     t, m = t[good], m[good]
     if t.size < min_epochs:
         return None
-    e = (np.asarray(magerr, dtype=float)[good] if magerr is not None
-         else np.full(m.size, np.nanstd(m) or 0.02))
-    e = np.where(np.isfinite(e) & (e > 0), e, np.nanmedian(e[e > 0]) if np.any(e > 0)
-                 else 0.02)
-
     labels = _season_bins(t, season_days)
     uniq = np.unique(labels)
     if uniq.size < min_seasons:
         return None
-    # Season medians and their robust uncertainties (MAD / sqrt N).
-    s_t, s_m, s_w = [], [], []
+    lab_out, s_t, s_m, s_w = [], [], [], []
     for lab in uniq:
         sel = labels == lab
-        if sel.sum() < 3:                 # ignore sparsely-sampled seasons
+        if sel.sum() < 3:
             continue
         tt, mm = t[sel], m[sel]
         med = float(np.median(mm))
         mad = float(np.median(np.abs(mm - med))) * 1.4826
         n = mm.size
         err = (mad / np.sqrt(n)) if mad > 0 else (float(np.std(mm)) / np.sqrt(n) or 0.01)
+        lab_out.append(int(lab))
         s_t.append(float(np.median(tt)))
         s_m.append(med)
         s_w.append(1.0 / max(err, 1e-3) ** 2)
     if len(s_t) < min_seasons:
         return None
-    s_t = np.asarray(s_t)
-    s_m = np.asarray(s_m)
-    s_w = np.asarray(s_w)
+    return (np.asarray(lab_out), np.asarray(s_t), np.asarray(s_m), np.asarray(s_w))
 
+
+def fit_secular(s_t: np.ndarray, s_m: np.ndarray, s_w: np.ndarray,
+                n_epochs: int) -> SecularStats | None:
+    """Weighted linear trend fit to season medians (see :func:`detect_secular_fade`)."""
+    if s_t.size < 3:
+        return None
     # Weighted linear fit of season-median magnitude vs time (years).
     yr = (s_t - s_t.min()) / 365.25
     W = s_w
@@ -126,10 +124,30 @@ def detect_secular_fade(time: np.ndarray, mag: np.ndarray,
         score = float(np.clip(0.4 * sig_term + 0.35 * amp_term + 0.25 * mono_term,
                               0, 1))
     return SecularStats(
-        n_epochs=int(t.size), baseline_yr=baseline_yr, n_seasons=int(len(s_t)),
+        n_epochs=int(n_epochs), baseline_yr=baseline_yr, n_seasons=int(len(s_t)),
         slope_mag_yr=float(slope), slope_sigma=slope_sigma,
         total_change_mag=total_change, monotonic_frac=monotonic_frac,
         rms_resid_mag=rms_resid, score=score)
 
 
-__all__ = ["SecularStats", "detect_secular_fade"]
+def detect_secular_fade(time: np.ndarray, mag: np.ndarray,
+                        magerr: np.ndarray | None = None,
+                        min_epochs: int = 40, min_seasons: int = 3,
+                        season_days: float = 180.0) -> SecularStats | None:
+    """Fit a long-term trend to a light curve's season medians.
+
+    Returns ``None`` if there are too few epochs or seasons.  ``slope_mag_yr`` is
+    positive for a *fading* star; the score rewards a significant, large,
+    monotonic fade and is zero for brightening or flat/periodic curves.
+    """
+    n_good = int(np.sum(np.isfinite(np.asarray(time, float))
+                        & np.isfinite(np.asarray(mag, float))))
+    sm = season_medians(time, mag, magerr, min_epochs=min_epochs,
+                        min_seasons=min_seasons, season_days=season_days)
+    if sm is None:
+        return None
+    _labels, s_t, s_m, s_w = sm
+    return fit_secular(s_t, s_m, s_w, n_epochs=n_good)
+
+
+__all__ = ["SecularStats", "detect_secular_fade", "season_medians", "fit_secular"]

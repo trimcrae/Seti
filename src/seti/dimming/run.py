@@ -18,7 +18,7 @@ from ..config import Config, load_config
 from ..stats.upper_limit import occurrence_upper_limit
 from .context import hr_class, resists_mundane
 from .dips import detect_dips
-from .secular import detect_secular_fade
+from .secular import detect_secular_fade, fit_secular, season_medians
 
 
 def _is_candidate(stat: dict, depth_min: float, n_dips_min: int,
@@ -101,6 +101,52 @@ def _attach_gaia_hr(candidates: list[dict], period_power_max: float,
             hr, r.get("period_power", 1.0), period_power_max))
 
 
+def _ensemble_detrend_secular(rows: list[dict]) -> None:
+    """Subtract the field common-mode seasonal drift and re-fit the secular fade.
+
+    ZTF zeropoint / reference-image changes impose a shared seasonal magnitude
+    offset on *every* star in a field; uncorrected, this manufactures spurious
+    "secular fades" (the dominant false positive).  We estimate the common mode as
+    the median over all stars of (season median - star median) in each season, and
+    subtract it before re-fitting each star.  A star that still fades after the
+    field's shared drift is removed is an *intrinsic* fader.
+    """
+    # Accumulate (season_label -> list of per-star season offsets).
+    from collections import defaultdict
+    offsets: dict[int, list[float]] = defaultdict(list)
+    for r in rows:
+        sm = r.get("_sm")
+        if sm is None:
+            continue
+        labels, _s_t, s_m, _s_w = sm
+        omed = r.get("_omed", float("nan"))
+        if not np.isfinite(omed):
+            continue
+        for lab, mm in zip(labels, s_m, strict=False):
+            offsets[int(lab)].append(float(mm) - omed)
+    if not offsets:
+        return
+    common = {lab: float(np.median(v)) for lab, v in offsets.items() if len(v) >= 5}
+    if not common:
+        return
+    for r in rows:
+        sm = r.get("_sm")
+        if sm is None:
+            continue
+        labels, s_t, s_m, s_w = sm
+        corr = np.array([common.get(int(lab), 0.0) for lab in labels])
+        det_m = s_m - corr                 # remove the shared field drift
+        stat = fit_secular(s_t, det_m, s_w, n_epochs=r.get("_nepoch", 0))
+        if stat is None:
+            r["is_secular_fader"] = False
+            continue
+        r["secular_slope_mag_yr"] = stat.slope_mag_yr
+        r["secular_sigma"] = stat.slope_sigma
+        r["secular_total_mag"] = stat.total_change_mag
+        r["secular_score"] = stat.score
+        r["is_secular_fader"] = bool(stat.score >= 0.5 and stat.slope_sigma >= 4.0)
+
+
 def dimming_run(
     cfg: Config | None = None,
     ra: float = 270.0,
@@ -156,11 +202,16 @@ def dimming_run(
         # fade (the Schaefer secular dimming of KIC 8462852).  Measured from season
         # medians, so it is immune to the single-epoch artefacts that dominate the
         # dip channel.  A secular fader is its own candidate class.
-        sec = detect_secular_fade(np.asarray(mjd, float), np.asarray(mag, float),
-                                  np.asarray(magerr, float) if magerr is not None
-                                  else None, min_epochs=min_epochs)
+        mjd_a = np.asarray(mjd, float)
+        mag_a = np.asarray(mag, float)
+        err_a = np.asarray(magerr, float) if magerr is not None else None
+        sec = detect_secular_fade(mjd_a, mag_a, err_a, min_epochs=min_epochs)
         is_fader = bool(sec is not None and sec.score >= 0.5
                         and sec.slope_sigma >= 4.0)
+        # Stash season medians so the field common-mode (ZTF zeropoint/reference
+        # drift) can be subtracted in an ensemble pass -- the decisive contamination
+        # control for the secular channel.
+        sm = season_medians(mjd_a, mag_a, err_a, min_epochs=min_epochs)
         d.update({"source_id": meta.get("source_id"), "ra": meta.get("ra"),
                   "dec": meta.get("dec"),
                   "g_mag": g_mag, "bp_rp": bp_rp, "parallax": plx,
@@ -174,7 +225,10 @@ def dimming_run(
                       hr, d.get("period_power", 1.0), period_power_max)),
                   "is_candidate": is_cand})
         # Keep the light curve only for the strongest dippers (committed JSON).
-        d["_mjd"], d["_mag"] = np.asarray(mjd, float), np.asarray(mag, float)
+        d["_mjd"], d["_mag"] = mjd_a, mag_a
+        d["_sm"] = sm                      # (labels, s_t, s_m, s_w) or None
+        d["_omed"] = float(np.median(mag_a)) if mag_a.size else float("nan")
+        d["_nepoch"] = int(mjd_a.size)
         rows.append(d)
 
     if lightcurves is not None:
@@ -205,6 +259,12 @@ def dimming_run(
             if n_searched and n_searched % 200 == 0:
                 nc = sum(1 for r in rows if r["is_candidate"])
                 print(f"[dimming] progress: {n_searched} scored, {nc} candidates")
+
+    # Ensemble common-mode detrend of the secular channel: remove the field's
+    # shared ZTF zeropoint/reference drift so only intrinsic faders survive.  Needs
+    # the whole field, so it runs once after all sources are scored.
+    if len(rows) >= 10:
+        _ensemble_detrend_secular(rows)
 
     candidates = [r for r in rows if r["is_candidate"]]
     # Region mode has no Gaia photometry at detection time: cross-match the (short)

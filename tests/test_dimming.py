@@ -190,6 +190,45 @@ def test_secular_flat_and_brightening_score_zero():
     assert bright is not None and bright.score == 0.0
 
 
+def test_ensemble_detrend_removes_common_mode_fade():
+    from seti.dimming.run import _ensemble_detrend_secular
+    from seti.dimming.secular import season_medians
+
+    rng = np.random.default_rng(11)
+    # A shared per-season common-mode drift (e.g. ZTF zeropoint creep) that, alone,
+    # looks like a 0.05 mag/yr fade in every star.
+    n_seasons = 6
+    cm = 0.05 * np.arange(n_seasons)          # mag offset per season
+    rows = []
+
+    def _make(extra_slope_mag_yr, seed):
+        t, blocks = [], []
+        for s in range(n_seasons):
+            tt = rng.uniform(s * 365.25, s * 365.25 + 120, 25)
+            t.append(tt)
+            yr = (tt - 0) / 365.25
+            blocks.append(15.0 + cm[s] + extra_slope_mag_yr * yr
+                          + rng.normal(0, 0.012, tt.size))
+        t = np.concatenate(t)
+        m = np.concatenate(blocks)
+        o = np.argsort(t)
+        t, m = t[o], m[o]
+        e = np.full(t.size, 0.012)
+        sm = season_medians(t, m, e)
+        return {"_sm": sm, "_omed": float(np.median(m)), "_nepoch": t.size,
+                "is_secular_fader": True, "secular_score": 1.0, "secular_sigma": 9.0}
+
+    # 15 stars with ONLY the common-mode drift; 1 with an extra intrinsic fade.
+    for i in range(15):
+        rows.append(_make(0.0, 100 + i))
+    rows.append(_make(0.06, 999))            # intrinsic fader
+
+    _ensemble_detrend_secular(rows)
+    # The common-mode-only stars are no longer faders; the intrinsic one remains.
+    assert sum(r["is_secular_fader"] for r in rows[:15]) <= 2   # nearly all cleared
+    assert rows[-1]["is_secular_fader"] is True
+
+
 def test_secular_too_few_seasons_returns_none():
     from seti.dimming.secular import detect_secular_fade
 

@@ -153,6 +153,50 @@ def test_fetch_ztf_region_groups_by_oid(monkeypatch):
     assert {"mjd", "mag", "magerr", "ra", "dec"} <= set(out["101"].columns)
 
 
+def _seasonal(n_per_season=20, n_seasons=6, base=15.0, noise=0.02, slope_mag_yr=0.0,
+              seed=0):
+    """Synthetic multi-season light curve with an optional linear trend."""
+    rng = np.random.default_rng(seed)
+    t = []
+    for s in range(n_seasons):
+        t.append(rng.uniform(s * 365.25, s * 365.25 + 120, n_per_season))
+    t = np.sort(np.concatenate(t))
+    yr = (t - t.min()) / 365.25
+    m = base + slope_mag_yr * yr + rng.normal(0, noise, t.size)
+    return t, m, np.full(t.size, noise)
+
+
+def test_secular_fade_detects_monotonic_dimming():
+    from seti.dimming.secular import detect_secular_fade
+
+    # A star fading 0.04 mag/yr over 6 seasons (~0.2 mag total).
+    t, m, e = _seasonal(slope_mag_yr=0.04, noise=0.015, seed=1)
+    s = detect_secular_fade(t, m, e)
+    assert s is not None
+    assert s.slope_mag_yr > 0.02
+    assert s.slope_sigma > 3.0
+    assert s.total_change_mag > 0.1
+    assert s.monotonic_frac > 0.6
+    assert s.score > 0.5
+
+
+def test_secular_flat_and_brightening_score_zero():
+    from seti.dimming.secular import detect_secular_fade
+
+    flat = detect_secular_fade(*_seasonal(slope_mag_yr=0.0, seed=2))
+    assert flat is not None and flat.score < 0.3
+    # Brightening (negative slope in mag) is not a fade -> score 0.
+    bright = detect_secular_fade(*_seasonal(slope_mag_yr=-0.05, seed=3))
+    assert bright is not None and bright.score == 0.0
+
+
+def test_secular_too_few_seasons_returns_none():
+    from seti.dimming.secular import detect_secular_fade
+
+    t, m, e = _seasonal(n_seasons=2, seed=4)
+    assert detect_secular_fade(t, m, e, min_seasons=3) is None
+
+
 def test_ir_excess_verdict():
     from seti.dimming.vet import ir_excess_verdict
 

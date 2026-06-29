@@ -127,7 +127,8 @@ def _cmd_dimming_vet(args, cfg):
 
     from .dimming.vet import vet_candidates
 
-    # Aggregate the resists-mundane shortlist across all searched fields.
+    # Aggregate two candidate classes across all searched fields: the
+    # resists-mundane dippers and the secular faders (the artifact-robust class).
     frames = []
     for fp in sorted(glob.glob(str(cfg.root / "results" / "dimming" / "*" /
                                    "dimming_candidates.csv"))):
@@ -136,9 +137,17 @@ def _cmd_dimming_vet(args, cfg):
             df = df[df["resists_mundane"].astype(str).str.lower().isin(("true", "1"))]
         if len(df):
             df["field_dir"] = Path(fp).parent.name
+            df["cand_type"] = "dipper"
+            frames.append(df)
+    for fp in sorted(glob.glob(str(cfg.root / "results" / "dimming" / "*" /
+                                   "secular_faders.csv"))):
+        df = pd.read_csv(fp)
+        if len(df):
+            df["field_dir"] = Path(fp).parent.name
+            df["cand_type"] = "secular_fader"
             frames.append(df)
     if not frames:
-        print("[dimming-vet] no resists-mundane candidates found")
+        print("[dimming-vet] no candidates found")
         return
     cand = pd.concat(frames, ignore_index=True).drop_duplicates("source_id")
     print(f"[dimming-vet] vetting {len(cand)} resists-mundane candidates")
@@ -152,7 +161,9 @@ def _cmd_dimming_vet(args, cfg):
     from .dimming.vet import multiband_coincidence
     fracs, nbands, dpb = [], [], []
     for _, r in vetted.iterrows():
-        if r.get("ir_verdict") in ("clean", "no_ir_data"):
+        # Multi-band achromaticity is a dip test; skip it for secular faders.
+        if (r.get("cand_type", "dipper") == "dipper"
+                and r.get("ir_verdict") in ("clean", "no_ir_data")):
             try:
                 mb = multiband_coincidence(float(r["ra"]), float(r["dec"]))
             except Exception as exc:
@@ -172,6 +183,10 @@ def _cmd_dimming_vet(args, cfg):
     def _final(r):
         if r["ir_verdict"] != "clean":
             return r["ir_verdict"]
+        # Secular faders: a monotonic multi-year fade with no IR excess is the
+        # remarkable enshrouding case (no dip-achromaticity test applies).
+        if r.get("cand_type", "dipper") == "secular_fader":
+            return "clean_secular_fade"
         f = r["frac_confirmed"]
         if r["n_bands"] < 2 or not np.isfinite(f):
             return "single_band_unconfirmed"
@@ -179,16 +194,17 @@ def _cmd_dimming_vet(args, cfg):
     vetted["verdict"] = [_final(r) for _, r in vetted.iterrows()]
 
     out_dir = cfg.root / "results" / "dimming"
-    cols = [c for c in ("source_id", "field_dir", "ra", "dec", "score",
+    cols = [c for c in ("source_id", "field_dir", "cand_type", "ra", "dec", "score",
                         "max_event_depth", "n_dip_events", "asymmetry",
-                        "period_power", "hr_class", "W1_W2", "K_W2",
+                        "period_power", "secular_sigma", "secular_total_mag",
+                        "hr_class", "W1_W2", "K_W2",
                         "simbad_otype", "ir_verdict", "frac_confirmed", "n_bands",
                         "dips_per_band", "verdict") if c in vetted.columns]
     vetted[cols].to_csv(out_dir / "vetting.csv", index=False)
     print(vetted[cols].to_string(index=False))
-    gold = vetted[vetted["verdict"] == "clean_achromatic"]
-    print(f"[dimming-vet] {len(gold)} CLEAN ACHROMATIC (main-seq, no IR excess, "
-          f"unclassified, multi-band dips) of {len(vetted)} vetted")
+    gold = vetted[vetted["verdict"].isin(("clean_achromatic", "clean_secular_fade"))]
+    print(f"[dimming-vet] {len(gold)} GOLD (clean_achromatic dippers + "
+          f"clean_secular_fade) of {len(vetted)} vetted")
 
 
 def _cmd_paper_numbers(args, cfg):

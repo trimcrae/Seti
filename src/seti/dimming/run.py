@@ -18,6 +18,7 @@ from ..config import Config, load_config
 from ..stats.upper_limit import occurrence_upper_limit
 from .context import hr_class, resists_mundane
 from .dips import detect_dips
+from .secular import detect_secular_fade
 
 
 def _is_candidate(stat: dict, depth_min: float, n_dips_min: int,
@@ -151,10 +152,24 @@ def dimming_run(
                       float(plx) if plx is not None else float("nan"),
                       float(plx_snr) if plx_snr is not None else 0.0)
         is_cand = _is_candidate(d, depth_min, n_dips_min, asym_min, period_power_max)
+        # Second, artifact-robust signature: a significant monotonic multi-year
+        # fade (the Schaefer secular dimming of KIC 8462852).  Measured from season
+        # medians, so it is immune to the single-epoch artefacts that dominate the
+        # dip channel.  A secular fader is its own candidate class.
+        sec = detect_secular_fade(np.asarray(mjd, float), np.asarray(mag, float),
+                                  np.asarray(magerr, float) if magerr is not None
+                                  else None, min_epochs=min_epochs)
+        is_fader = bool(sec is not None and sec.score >= 0.5
+                        and sec.slope_sigma >= 4.0)
         d.update({"source_id": meta.get("source_id"), "ra": meta.get("ra"),
                   "dec": meta.get("dec"),
                   "g_mag": g_mag, "bp_rp": bp_rp, "parallax": plx,
                   "hr_class": hr,
+                  "secular_slope_mag_yr": sec.slope_mag_yr if sec else float("nan"),
+                  "secular_sigma": sec.slope_sigma if sec else float("nan"),
+                  "secular_total_mag": sec.total_change_mag if sec else float("nan"),
+                  "secular_score": sec.score if sec else 0.0,
+                  "is_secular_fader": is_fader,
                   "resists_mundane": bool(is_cand and resists_mundane(
                       hr, d.get("period_power", 1.0), period_power_max)),
                   "is_candidate": is_cand})
@@ -225,6 +240,24 @@ def dimming_run(
             "mjd": r["_mjd"].tolist(), "mag": r["_mag"].tolist()})
     (out_dir / "top_dippers.json").write_text(json.dumps(windows))
 
+    # Secular faders: the second, artifact-robust candidate class.  Rank by the
+    # significance of the monotonic multi-year fade.
+    faders = [r for r in rows if r.get("is_secular_fader")]
+    if mode == "region" and faders:
+        try:
+            _attach_gaia_hr(faders, period_power_max)
+        except Exception as exc:
+            print(f"[dimming] Gaia HR cross-match (faders) skipped: {exc!r}")
+    faders.sort(key=lambda r: r.get("secular_sigma", 0.0), reverse=True)
+    fader_windows = [{
+        "source_id": r.get("source_id"), "ra": r.get("ra"), "dec": r.get("dec"),
+        "secular_slope_mag_yr": r.get("secular_slope_mag_yr"),
+        "secular_sigma": r.get("secular_sigma"),
+        "secular_total_mag": r.get("secular_total_mag"),
+        "secular_score": r.get("secular_score"), "hr_class": r.get("hr_class"),
+        "mjd": r["_mjd"].tolist(), "mag": r["_mag"].tolist()} for r in faders[:30]]
+    (out_dir / "top_faders.json").write_text(json.dumps(fader_windows))
+
     # Flat candidate table (drop the bulky light-curve arrays).
     if rows:
         flat = pd.DataFrame([{k: v for k, v in r.items()
@@ -234,6 +267,9 @@ def dimming_run(
         if candidates:
             flat[flat["is_candidate"]].to_csv(
                 out_dir / "dimming_candidates.csv", index=False)
+        if faders:
+            flat[flat["is_secular_fader"]].to_csv(
+                out_dir / "secular_faders.csv", index=False)
 
     k = len(candidates)
     lim = occurrence_upper_limit(
@@ -246,6 +282,13 @@ def dimming_run(
         "n_searched": n_searched,
         "n_candidates": k,
         "n_resists_mundane": n_resists,
+        "n_secular_faders": len(faders),
+        "top_faders": [
+            {"source_id": r.get("source_id"), "ra": r.get("ra"), "dec": r.get("dec"),
+             "secular_slope_mag_yr": r.get("secular_slope_mag_yr"),
+             "secular_sigma": r.get("secular_sigma"),
+             "secular_total_mag": r.get("secular_total_mag"),
+             "hr_class": r.get("hr_class")} for r in faders[:20]],
         "selection": {"depth_min": depth_min, "n_dips_min": n_dips_min,
                       "asym_min": asym_min, "period_power_max": period_power_max},
         "top_candidates": [

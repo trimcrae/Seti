@@ -24,10 +24,49 @@ class DipStats:
     best_period_d: float    # strongest dip period (Lomb-Scargle on the dips)
     period_power: float     # its normalised power (high => periodic => binary-like)
     score: float            # [0,1] Boyajian-likeness
+    n_dip_events: int = 0   # discrete dip *events* (contiguous runs of faint epochs)
+    out_of_dip_rms: float = 0.0  # robust scatter of the NON-dipped epochs (quiescence)
 
     def as_dict(self) -> dict:
         return {k: (float(v) if not isinstance(v, int) else int(v))
                 for k, v in self.__dict__.items()}
+
+
+def _count_events(t: np.ndarray, is_dip: np.ndarray, merge_gap_d: float = 5.0) -> int:
+    """Number of discrete dip *events*: contiguous runs of dipped epochs.
+
+    Two dipped epochs belong to the same event if no *non-dipped* epoch separates
+    them and they are within ``merge_gap_d`` days (so a dip sampled by several
+    consecutive visits counts once, but two dips months apart count separately).
+    """
+    idx = np.flatnonzero(is_dip)
+    if idx.size == 0:
+        return 0
+    events = 1
+    for a, b in zip(idx[:-1], idx[1:], strict=False):
+        # New event when the dipped epochs are not adjacent in the (time-sorted)
+        # series, or the time gap between them exceeds the merge window.
+        if b != a + 1 or (t[b] - t[a]) > merge_gap_d:
+            events += 1
+    return int(events)
+
+
+def _out_of_dip_rms(mag: np.ndarray, err: np.ndarray) -> float:
+    """Noise-corrected fractional RMS of the non-dipped epochs (baseline quiescence).
+
+    A Boyajian-like star is stable between dips (small RMS); a pulsator or
+    eclipsing binary varies continuously (large RMS even outside the deepest dips).
+    """
+    m = np.asarray(mag, dtype=float)
+    if m.size < 5:
+        return 0.0
+    med = np.median(m)
+    mad = np.median(np.abs(m - med))
+    sigma_mag = 1.4826 * mad if mad > 0 else float(np.std(m))
+    if err is not None and np.size(err):
+        med_err = float(np.nanmedian(err))
+        sigma_mag = float(np.sqrt(max(sigma_mag**2 - med_err**2, 0.0)))
+    return 0.4 * np.log(10.0) * sigma_mag   # magnitude scatter -> fractional flux RMS
 
 
 def _robust_baseline(mag: np.ndarray) -> float:
@@ -56,6 +95,10 @@ def detect_dips(time: np.ndarray, mag: np.ndarray, magerr: np.ndarray | None = N
     e = np.where(np.isfinite(e) & (e > 0), e, np.nanmedian(e[e > 0]) if np.any(e > 0)
                  else 0.02)
 
+    # Sort by time so contiguous dip epochs can be grouped into discrete events.
+    order = np.argsort(t)
+    t, m, e = t[order], m[order], e[order]
+
     base = _robust_baseline(m)
     # Fractional flux dip relative to the bright baseline (mag fainter => positive).
     dmag = m - base
@@ -67,6 +110,15 @@ def detect_dips(time: np.ndarray, mag: np.ndarray, magerr: np.ndarray | None = N
     n_dips = int(is_dip.sum())
     max_depth = float(np.nanmax(frac_dip)) if frac_dip.size else 0.0
     duty = n_dips / t.size
+    # Discrete dip *events*: contiguous runs of dipped epochs, merged across short
+    # sampling gaps.  This is the decisive separation of the Boyajian profile (a
+    # handful of deep events) from a high-amplitude *periodic* variable (hundreds
+    # of epochs below the bright baseline but no isolated, discrete dimming).
+    n_events = _count_events(t, is_dip)
+    # Quiescence: a Boyajian-like star is photometrically stable *between* dips,
+    # whereas a pulsator/eclipsing binary varies continuously.  Measure the robust
+    # scatter of the non-dipped epochs, de-noised by the typical photometric error.
+    out_rms = _out_of_dip_rms(m[~is_dip], e[~is_dip])
     # Asymmetry about the *median* level: a Boyajian-like light curve has deep
     # excursions only to the faint side, so the faint-side absolute deviation far
     # exceeds the bright-side; a symmetric oscillation or flat noise gives ~1.
@@ -78,16 +130,24 @@ def detect_dips(time: np.ndarray, mag: np.ndarray, magerr: np.ndarray | None = N
     # Periodicity of the dips: strong, clean periodicity => eclipsing binary (mundane).
     best_p, power = _dip_periodicity(t, frac_dip, e)
 
-    # Boyajian-likeness: deep + several dips + asymmetric + NOT strongly periodic.
+    # Boyajian-likeness: deep + a *few discrete* events + asymmetric + quiescent
+    # between dips + NOT strongly periodic.  The event term peaks for a handful of
+    # events (~2-12) and is suppressed both for a single marginal dip and for the
+    # hundreds-of-epochs signature of a continuous high-amplitude variable.
     depth_term = np.clip((max_depth - depth_min) / 0.15, 0, 1)
-    count_term = np.clip(n_dips / 10.0, 0, 1)
+    event_term = float(np.clip(n_events / 6.0, 0, 1)
+                       * np.clip((40 - n_events) / 28.0, 0, 1))
     asym_term = np.clip((asym - 1.0) / 3.0, 0, 1)
     aperiodic_term = float(np.clip(1.0 - power / 0.5, 0, 1))
-    score = float(np.clip(0.4 * depth_term + 0.2 * count_term
-                          + 0.2 * asym_term + 0.2 * aperiodic_term, 0, 1))
+    # Quiescence: reward a stable out-of-dip baseline (small fractional RMS).
+    quiescence_term = float(np.clip(1.0 - out_rms / 0.05, 0, 1))
+    score = float(np.clip(0.34 * depth_term + 0.18 * event_term
+                          + 0.18 * asym_term + 0.15 * aperiodic_term
+                          + 0.15 * quiescence_term, 0, 1))
     return DipStats(n_epochs=int(t.size), max_depth=max_depth, n_dips=n_dips,
                     dip_duty_cycle=float(duty), asymmetry=asym,
                     best_period_d=float(best_p), period_power=float(power),
+                    n_dip_events=int(n_events), out_of_dip_rms=float(out_rms),
                     score=score)
 
 

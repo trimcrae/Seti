@@ -21,14 +21,21 @@ from .dips import detect_dips
 
 
 def _is_candidate(stat: dict, depth_min: float, n_dips_min: int,
-                  asym_min: float, period_power_max: float) -> bool:
-    """A dimming candidate: deep + several dips + asymmetric + NOT strongly periodic.
+                  asym_min: float, period_power_max: float,
+                  max_events: int = 20, out_rms_max: float = 0.05) -> bool:
+    """A dimming candidate: deep + a *few discrete* events on a *quiescent* baseline
+    + asymmetric + NOT strongly periodic.
 
-    The periodicity gate is the key mundane-rejection: strictly periodic, repeating
-    dips are an eclipsing binary, not the aperiodic dimming of KIC 8462852.
+    The event ceiling and the out-of-dip quiescence gate are the decisive
+    mundane-rejections: a high-amplitude pulsator or eclipsing binary produces
+    hundreds of below-baseline epochs and a large baseline RMS, whereas KIC 8462852
+    shows a handful of deep, discrete dips on an otherwise flat light curve.
     """
+    n_events = stat.get("n_dip_events", stat.get("n_dips", 0))
     return (stat.get("max_depth", 0.0) >= depth_min
             and stat.get("n_dips", 0) >= n_dips_min
+            and n_events <= max_events
+            and stat.get("out_of_dip_rms", 0.0) <= out_rms_max
             and stat.get("asymmetry", 0.0) >= asym_min
             and stat.get("period_power", 1.0) <= period_power_max)
 
@@ -159,7 +166,9 @@ def dimming_run(
         "top_candidates": [
             {"source_id": r.get("source_id"), "ra": r.get("ra"), "dec": r.get("dec"),
              "score": r.get("score"), "max_depth": r.get("max_depth"),
-             "n_dips": r.get("n_dips"), "asymmetry": r.get("asymmetry"),
+             "n_dips": r.get("n_dips"), "n_dip_events": r.get("n_dip_events"),
+             "out_of_dip_rms": r.get("out_of_dip_rms"),
+             "asymmetry": r.get("asymmetry"),
              "best_period_d": r.get("best_period_d"),
              "period_power": r.get("period_power"),
              "hr_class": r.get("hr_class"),

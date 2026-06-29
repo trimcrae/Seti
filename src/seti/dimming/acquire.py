@@ -169,17 +169,27 @@ def fetch_ztf_region(
         _magerr=(pd.to_numeric(lc["magerr"], errors="coerce")
                  if "magerr" in lc.columns else np.nan),
     )
+    # ZTF systematics (zeropoint / reference-image drift) act per readout channel,
+    # so record each source's field/CCD/quadrant for a per-CCD common-mode detrend.
+    fcol = next((c for c in ("field", "fieldid") if c in lc.columns), None)
+    ccol = next((c for c in ("ccdid", "ccd_id", "ccd") if c in lc.columns), None)
+    qcol = next((c for c in ("qid", "quadrant") if c in lc.columns), None)
     out: dict[str, pd.DataFrame] = {}
     for oid, g in lc.groupby("oid"):
         good = g[np.isfinite(g["_mjd"]) & np.isfinite(g["_mag"])]
         if len(good) < min_epochs:
             continue
-        out[str(oid)] = pd.DataFrame({
+        parts = [str(good[c].iloc[0]) if (c and c in good) else "x"
+                 for c in (fcol, ccol, qcol)]
+        ccd = "_".join(parts)
+        df = pd.DataFrame({
             "mjd": good["_mjd"].to_numpy(), "mag": good["_mag"].to_numpy(),
             "magerr": good["_magerr"].to_numpy(),
             "ra": float(np.nanmedian(good["ra"])) if "ra" in good else np.nan,
             "dec": float(np.nanmedian(good["dec"])) if "dec" in good else np.nan,
         })
+        df.attrs["ccd"] = ccd
+        out[str(oid)] = df
     return out
 
 
@@ -225,7 +235,8 @@ def iter_region_lightcurves(
             seen.add(oid)
             n_src += 1
             meta = {"source_id": oid, "ra": lc["ra"].iloc[0] if len(lc) else bra,
-                    "dec": lc["dec"].iloc[0] if len(lc) else bdec}
+                    "dec": lc["dec"].iloc[0] if len(lc) else bdec,
+                    "ccd": lc.attrs.get("ccd", "x")}
             yield meta, lc
     print(f"[dimming] region sweep: {n_src} ZTF light curves from {n_box} boxes")
 

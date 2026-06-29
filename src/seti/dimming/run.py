@@ -346,7 +346,10 @@ def dimming_run(
             flat[flat["is_candidate"]].to_csv(
                 out_dir / "dimming_candidates.csv", index=False)
         if faders:
-            flat[flat["is_secular_fader"]].to_csv(
+            # Only the main-sequence faders (the faint hr=unknown raw faders are a
+            # ZTF magnitude-dependent systematic and must not reach the vet stage).
+            fader_ids = {r.get("source_id") for r in faders}
+            flat[flat["source_id"].isin(fader_ids)].to_csv(
                 out_dir / "secular_faders.csv", index=False)
 
     k = len(candidates)

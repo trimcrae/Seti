@@ -1,0 +1,116 @@
+"""Spectral-shape anomaly detection for Gaia DR3 XP low-resolution spectra.
+
+Gaia DR3 published BP/RP ("XP") low-resolution spectrophotometry for ~220 million
+sources --- a vast, recent dataset mined for stellar parameters and quasar
+classification but, to our knowledge, never blind-searched for technosignatures.
+A partial Dyson swarm (optical light reprocessed to the infrared) or an artificial
+spectral feature would imprint a continuum *shape* no stellar atmosphere reproduces.
+
+The model is colour-conditional and robust: stars of the same Gaia colour have
+nearly identical XP continua, so we model the expected spectrum as the *median*
+spectrum of same-colour stars and score a source by its deviation from that median.
+The median is insensitive to the rare anomalies we are hunting (unlike a PCA basis,
+which a strong outlier can hijack into its own component), and the comparison is
+physically grounded: colour predicts the stellar continuum, so a sharp,
+non-stellar departure --- a band-limited deficit, or a narrow artificial feature ---
+stands out as a large residual.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import numpy as np
+
+
+@dataclass
+class XPLocus:
+    """Colour-conditional median-spectrum model of the normal-stellar XP manifold."""
+    bin_edges: np.ndarray         # (n_bins+1,) colour (BP-RP) bin edges
+    medians: np.ndarray           # (n_bins, n_wave) median normalised spectrum
+    scales: np.ndarray            # (n_bins, n_wave) robust per-sample scatter
+    global_med: float             # median global residual of the training inliers
+    global_mad: float
+
+
+def normalize_spectrum(flux: np.ndarray) -> np.ndarray:
+    """Shape-normalise a spectrum: non-negative, unit sum (brightness removed)."""
+    f = np.asarray(flux, dtype=float)
+    f = np.where(np.isfinite(f), f, 0.0)
+    s = float(np.sum(np.abs(f)))
+    if s <= 0:
+        return np.zeros_like(f)
+    return f / s
+
+
+def _bin_of(color: float, edges: np.ndarray) -> int:
+    j = int(np.searchsorted(edges, color, side="right") - 1)
+    return int(np.clip(j, 0, edges.size - 2))
+
+
+def fit_locus(spectra: np.ndarray, colors: np.ndarray, n_bins: int = 24) -> XPLocus:
+    """Build the colour-binned median-spectrum model.
+
+    ``spectra`` is (n, n_wave) shape-normalised flux, ``colors`` the BP-RP per
+    source.  Bins are colour quantiles so each is well populated; per bin we store
+    the median spectrum and a robust per-wavelength scatter (MAD).
+    """
+    X = np.asarray(spectra, dtype=float)
+    c = np.asarray(colors, dtype=float)
+    good = np.all(np.isfinite(X), axis=1) & np.isfinite(c)
+    X, c = X[good], c[good]
+    if X.shape[0] < n_bins * 4:
+        n_bins = max(1, X.shape[0] // 4)
+    qs = np.linspace(0, 1, n_bins + 1)
+    edges = np.quantile(c, qs)
+    edges[0] -= 1e-6
+    edges[-1] += 1e-6
+    edges = np.unique(edges)
+    n_bins = edges.size - 1
+    n_wave = X.shape[1]
+    medians = np.zeros((n_bins, n_wave))
+    scales = np.ones((n_bins, n_wave))
+    glob = []
+    for b in range(n_bins):
+        sel = (c >= edges[b]) & (c < edges[b + 1])
+        if sel.sum() < 3:
+            medians[b] = np.median(X, axis=0)
+            scales[b] = 1.4826 * np.median(np.abs(X - medians[b]), axis=0) + 1e-9
+            continue
+        Xb = X[sel]
+        med = np.median(Xb, axis=0)
+        sca = 1.4826 * np.median(np.abs(Xb - med), axis=0)
+        sca = np.where(sca > 0, sca, np.median(sca[sca > 0]) if np.any(sca > 0) else 1e-6)
+        medians[b] = med
+        scales[b] = sca
+        glob.extend(np.sqrt(np.mean(((Xb - med) / sca) ** 2, axis=1)).tolist())
+    glob = np.asarray(glob) if glob else np.array([1.0])
+    inlier = glob <= np.quantile(glob, 0.90)
+    gmed = float(np.median(glob[inlier]))
+    gmad = float(np.median(np.abs(glob[inlier] - gmed))) * 1.4826
+    return XPLocus(bin_edges=edges, medians=medians, scales=scales,
+                   global_med=gmed, global_mad=max(gmad, 1e-9))
+
+
+def anomaly_score(flux_norm: np.ndarray, color: float, locus: XPLocus) -> dict:
+    """Score one shape-normalised spectrum against its colour bin's median.
+
+    Returns the global standardized residual (RMS of per-sample z-scores, and its
+    significance vs the training inliers) and the strongest *localised* feature ---
+    the largest single-sample z-score, the signature of a narrow artificial line
+    rather than a smooth SED tilt.
+    """
+    x = np.asarray(flux_norm, dtype=float)
+    if not np.all(np.isfinite(x)) or not np.isfinite(color):
+        return {"global_resid": np.nan, "global_sigma": np.nan,
+                "feature_resid": np.nan, "feature_index": -1}
+    b = _bin_of(float(color), locus.bin_edges)
+    z = (x - locus.medians[b]) / locus.scales[b]
+    global_resid = float(np.sqrt(np.mean(z ** 2)))
+    global_sigma = (global_resid - locus.global_med) / locus.global_mad
+    i = int(np.argmax(np.abs(z)))
+    return {"global_resid": global_resid, "global_sigma": float(global_sigma),
+            "feature_resid": float(np.abs(z[i])), "feature_index": i}
+
+
+__all__ = ["XPLocus", "normalize_spectrum", "fit_locus", "anomaly_score"]

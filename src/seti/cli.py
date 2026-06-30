@@ -230,6 +230,15 @@ def _cmd_dimming_vet(args, cfg):
           f"clean_secular_fade) of {len(vetted)} vetted")
 
 
+def _cmd_xp_run(args, cfg):
+    from .xp.run import xp_run
+
+    xp_run(cfg, ra=args.ra, dec=args.dec, radius_deg=args.radius_deg,
+           g_max=args.g_max, limit=args.limit,
+           global_sigma_min=args.global_sigma_min,
+           feature_resid_min=args.feature_resid_min)
+
+
 def _cmd_dimming_characterize(args, cfg):
     from .dimming.characterize import characterize
 
@@ -321,6 +330,16 @@ def main(argv=None):
 
     p = sub.add_parser("dimming-vet")
     p.set_defaults(func=_cmd_dimming_vet)
+
+    p = sub.add_parser("xp-run")
+    p.add_argument("--ra", type=float, default=180.0)
+    p.add_argument("--dec", type=float, default=30.0)
+    p.add_argument("--radius-deg", type=float, default=1.0)
+    p.add_argument("--g-max", type=float, default=17.5)
+    p.add_argument("--limit", type=int, default=20000)
+    p.add_argument("--global-sigma-min", type=float, default=8.0)
+    p.add_argument("--feature-resid-min", type=float, default=6.0)
+    p.set_defaults(func=_cmd_xp_run)
 
     p = sub.add_parser("dimming-characterize")
     p.add_argument("--ra", type=float, required=True)

@@ -29,6 +29,8 @@ class EmissionLine:
     n_pix: int            # number of contiguous pixels above the per-pixel threshold
     ivar_ratio: float = 1.0  # peak inverse-variance / local median (sky-residual flag)
     fwhm_pix: float = 2.0    # contiguous pixels spanning half the peak excess (FWHM)
+    min_adjacent: float = 0.0  # most-negative neighbour / peak (over-subtraction flag)
+    asymmetry: float = 1.0   # blue-side vs red-side flux ratio (1 = symmetric)
 
     def as_dict(self) -> dict:
         return {
@@ -41,6 +43,8 @@ class EmissionLine:
             "n_pix": int(self.n_pix),
             "ivar_ratio": float(self.ivar_ratio),
             "fwhm_pix": float(self.fwhm_pix),
+            "min_adjacent": float(self.min_adjacent),
+            "asymmetry": float(self.asymmetry),
         }
 
 
@@ -101,6 +105,31 @@ def _fit_width_ratio(resid: np.ndarray, err: np.ndarray, i: int,
     # contiguous run containing the centre
     n_pix = int(np.sum(above))
     return float(width_ratio), n_pix
+
+
+def _profile_shape(resid: np.ndarray, i: int, half: int = 3) -> tuple[float, float]:
+    """Profile-quality metrics for the peak at ``i``: (min_adjacent, asymmetry).
+
+    ``min_adjacent`` is the most-negative neighbouring pixel as a fraction of the
+    peak excess: a clean emission line sits on a flat continuum (>~0), whereas a
+    sky-subtraction *over-subtraction* residual is flanked by a negative trough
+    (strongly < 0).  ``asymmetry`` is the blue-side vs red-side summed excess
+    ratio (1 = symmetric); a real LSF line is roughly symmetric, a one-sided spike
+    or a P-Cygni-like residual is not.
+    """
+    n = resid.size
+    peak = resid[i]
+    if not np.isfinite(peak) or peak <= 0:
+        return 0.0, 1.0
+    lo, hi = max(0, i - half), min(n, i + half + 1)
+    seg = resid[lo:hi] / peak
+    neighbours = np.delete(seg, i - lo)
+    min_adj = float(np.nanmin(neighbours)) if neighbours.size else 0.0
+    blue = float(np.nansum(np.clip(resid[lo:i], 0, None)))
+    red = float(np.nansum(np.clip(resid[i + 1:hi], 0, None)))
+    asym = (blue + 1e-9) / (red + 1e-9)
+    asym = max(asym, 1.0 / asym) if asym > 0 else 1.0   # fold so 1 = symmetric
+    return min_adj, float(asym)
 
 
 def _fwhm_pixels(resid: np.ndarray, i: int) -> float:
@@ -186,10 +215,12 @@ def find_emission_lines(
             med_iv = float(np.nanmedian(finite_iv)) if finite_iv.size else 0.0
             ivar_ratio = float(ivar_peak / med_iv) if med_iv > 0 else 1.0
             fwhm = _fwhm_pixels(resid, j)
+            min_adj, asym = _profile_shape(resid, j)
             lines.append(EmissionLine(index=j, wavelength=float(wave[j]),
                                       significance=float(mf[j]), width_ratio=wr,
                                       amplitude=amp, ew=ew, n_pix=npix,
-                                      ivar_ratio=ivar_ratio, fwhm_pix=fwhm))
+                                      ivar_ratio=ivar_ratio, fwhm_pix=fwhm,
+                                      min_adjacent=min_adj, asymmetry=asym))
             i = hi  # skip past this peak to enforce separation
         else:
             i += 1

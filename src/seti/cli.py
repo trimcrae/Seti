@@ -199,6 +199,14 @@ def _cmd_dimming_vet(args, cfg):
                 amp = 0.0
             if amp < 0.08:        # a few-percent fade is marginal, not noteworthy
                 return "marginal_fade"
+            # Cool active dwarfs (BP-RP > 0.9) fade via starspot/activity cycles --
+            # mundane.  A noteworthy enshrouding fade is on a hot, inactive F/G star.
+            try:
+                bp_rp = float(r.get("bp_rp", "nan"))
+            except (TypeError, ValueError):
+                bp_rp = float("nan")
+            if np.isfinite(bp_rp) and bp_rp > 0.9:
+                return "active_dwarf_fade"
             return ("clean_secular_fade" if r.get("secular_confirmed")
                     else "single_band_fade")
         f = r["frac_confirmed"]
@@ -210,7 +218,7 @@ def _cmd_dimming_vet(args, cfg):
     out_dir = cfg.root / "results" / "dimming"
     cols = [c for c in ("source_id", "field_dir", "cand_type", "ra", "dec", "score",
                         "max_event_depth", "n_dip_events", "asymmetry",
-                        "period_power", "secular_sigma", "secular_total_mag",
+                        "period_power", "secular_sigma", "secular_total_mag", "bp_rp",
                         "hr_class", "W1_W2", "K_W2",
                         "simbad_otype", "ir_verdict", "frac_confirmed", "n_bands",
                         "dips_per_band", "secular_confirmed", "verdict")

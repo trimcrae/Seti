@@ -249,6 +249,34 @@ def _cmd_dimming_characterize(args, cfg):
     print(json.dumps(res, indent=2))
 
 
+def _cmd_spectra_confirm(args, cfg):
+    from .spectra.confirm import cross_confirm
+
+    path = cfg.root / "results" / "spectra" / "laser_candidates.csv"
+    if not path.exists():
+        print(f"[confirm] no candidates at {path}")
+        return
+    df = pd.read_csv(path)
+    # Prefer the cleanest beacons: single line, unresolved, high S/N.
+    if "n_lines_in_spectrum" in df.columns:
+        df = df[df["n_lines_in_spectrum"] == 1]
+    if "hunt_rank" in df.columns:
+        df = df.sort_values("hunt_rank", ascending=False)
+    cands = df.head(args.top).to_dict("records")
+    confirmed = cross_confirm(cands, max_candidates=args.top)
+    out = pd.DataFrame(confirmed)
+    keep = [c for c in ("spec_id", "wavelength", "significance", "width_ratio",
+                        "ra", "dec", "data_release", "n_overlap", "confirm_sigma",
+                        "cross_confirmed") if c in out.columns]
+    dst = cfg.root / "results" / "spectra" / "cross_confirm.csv"
+    out[keep].to_csv(dst, index=False)
+    n_overlap = int((out["n_overlap"] > 0).sum()) if "n_overlap" in out else 0
+    n_conf = int(out["cross_confirmed"].sum()) if "cross_confirmed" in out else 0
+    print(out[keep].to_string(index=False))
+    print(f"[confirm] {n_overlap}/{len(out)} had an independent spectrum; "
+          f"{n_conf} CROSS-CONFIRMED (line present in a second instrument)")
+
+
 def _cmd_paper_numbers(args, cfg):
     from .report import write_numbers_tex
 
@@ -345,6 +373,10 @@ def main(argv=None):
     p.add_argument("--ra", type=float, required=True)
     p.add_argument("--dec", type=float, required=True)
     p.set_defaults(func=_cmd_dimming_characterize)
+
+    p = sub.add_parser("spectra-confirm")
+    p.add_argument("--top", type=int, default=40)
+    p.set_defaults(func=_cmd_spectra_confirm)
 
     p = sub.add_parser("contamination-budget")
     p.add_argument("--seed", type=int, default=11)

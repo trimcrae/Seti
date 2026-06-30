@@ -378,10 +378,18 @@ def dimming_run(
     # magnitude-dependent ZTF systematic (no parallax, clustered per CCD) that no
     # common-mode removes; a real enshrouding candidate must be a characterisable
     # main-sequence star, exactly as for the dippers.
+    # ...and require an F/G/early-K colour (BP-RP < 0.9).  Cool, active K/M dwarfs
+    # show long-term starspot/activity-cycle brightness trends that mimic a slow
+    # enshrouding fade (our top candidate, sid 630211400017185, was exactly such a
+    # Gaia-flagged-variable K dwarf, confirmed real by ASAS-SN but mundane).  A
+    # KIC 8462852-like host is a hot, inactive F star, where a slow fade is
+    # genuinely anomalous.
     n_faders_raw = len(raw_faders)
-    faders = [r for r in raw_faders if r.get("hr_class") == "main_sequence"]
+    faders = [r for r in raw_faders if r.get("hr_class") == "main_sequence"
+              and np.isfinite(r.get("bp_rp", np.nan))
+              and float(r.get("bp_rp")) < 0.9]
     print(f"[dimming] secular faders: {n_faders_raw} raw -> {len(faders)} "
-          f"main-sequence (faint hr=unknown systematics removed)")
+          f"main-sequence F/G (faint systematics + active red dwarfs removed)")
     faders.sort(key=lambda r: r.get("secular_sigma", 0.0), reverse=True)
     fader_windows = [{
         "source_id": r.get("source_id"), "ra": r.get("ra"), "dec": r.get("dec"),

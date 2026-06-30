@@ -1,0 +1,54 @@
+name: dimming-characterize
+
+# Independent follow-up of a top dimming candidate: Gaia DR3 astrometry/variability
+# (binarity, distance, HR position) + cross-survey ASAS-SN light curve. Runs on the
+# GitHub runner, which has the Gaia TAP / ASAS-SN network the sandbox lacks.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ra:
+        description: "Candidate RA (deg)"
+        required: true
+      dec:
+        description: "Candidate Dec (deg)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  characterize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install skypatrol || pip install pyasassn || echo "ASAS-SN client unavailable; Gaia-only"
+          python -c "import numpy,pandas,astropy,astroquery; print('imports OK')"
+      - name: Characterize
+        run: python -m seti.cli dimming-characterize --ra ${{ github.event.inputs.ra }} --dec ${{ github.event.inputs.dec }}
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/dimming/characterization.json || true
+          if git diff --cached --quiet; then echo "no change"; else
+            git commit -m "dimming-characterize: Gaia DR3 + ASAS-SN follow-up of top candidate"
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git pull --rebase --autostash origin ${{ github.ref_name }}; git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dimming-characterization
+          path: results/dimming/characterization.json
+          if-no-files-found: warn

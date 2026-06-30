@@ -21,11 +21,12 @@ from .acquire import _records, _rget
 
 # Survey datasets to search for an independent observation, with their nominal
 # resolution (used only for the local excess window).
-_OTHER_DATASETS = ["SDSS-DR17", "BOSS-DR17", "DESI-EDR", "SDSS-DR16", "BOSS-DR16"]
+_OTHER_DATASETS = ["DESI-DR1", "SDSS-DR17", "BOSS-DR17", "DESI-EDR",
+                   "SDSS-DR16", "BOSS-DR16"]
 
 
 def _find_overlap(client, ra: float, dec: float, exclude_release: str,
-                  tol_arcsec: float = 1.5) -> list:
+                  tol_arcsec: float = 2.0) -> list:
     """SPARCL ids of spectra within ``tol_arcsec`` of (ra, dec) in other releases."""
     d = tol_arcsec / 3600.0
     cosd = max(np.cos(np.radians(dec)), 1e-3)

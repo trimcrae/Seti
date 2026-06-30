@@ -264,6 +264,21 @@ def test_mask_blanks_line():
     assert not any(abs(c.wavelength - 5000.0) <= 2.0 for c in cands)
 
 
+def test_cross_instrument_line_excess():
+    from seti.spectra.confirm import line_excess
+
+    wave = np.linspace(4000, 9000, 5000)
+    flux = np.ones_like(wave) + np.random.default_rng(0).normal(0, 0.02, wave.size)
+    # Inject a strong emission line at 6800 A.
+    i = int(np.argmin(np.abs(wave - 6800.0)))
+    flux[i] += 1.0
+    ex = line_excess(wave, flux, np.full_like(wave, 1.0), 6800.0)
+    assert ex["present"] and ex["sigma"] > 4.0
+    # No line at a blank wavelength -> not present.
+    blank = line_excess(wave, flux, np.full_like(wave, 1.0), 5200.0)
+    assert not blank["present"]
+
+
 def test_rejects_oversubtraction_and_asymmetric_profiles():
     from seti.spectra.detect import EmissionLine, _profile_shape
 

@@ -1,0 +1,121 @@
+name: dimming-sweep
+
+# High-throughput tiling: one dispatch fans out a GRID of off-plane fields as a
+# build matrix (up to GitHub's concurrency), each running for hours instead of
+# minutes. Each shard uploads its results as an artifact; a final job collects
+# them and commits once, so 20 concurrent shards never race on git push.
+
+on:
+  workflow_dispatch:
+    inputs:
+      n_fields:
+        description: "Number of off-plane fields to tile this sweep"
+        required: false
+        default: "40"
+      ra_start:
+        description: "RA grid start (deg)"
+        required: false
+        default: "120"
+      time_budget_s:
+        description: "Per-field wall-clock budget (s); job timeout is 350 min"
+        required: false
+        default: "18000"
+      radius_deg:
+        description: "Per-field radius (deg) -- bigger field = more stars per runner"
+        required: false
+        default: "2.5"
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      fields: ${{ steps.gen.outputs.fields }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: "${{ github.ref_name }}" }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Generate off-plane field grid
+        id: gen
+        run: |
+          pip install astropy numpy >/dev/null
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, numpy as np
+          from astropy.coordinates import SkyCoord
+          import astropy.units as u
+          n = int("${{ github.event.inputs.n_fields }}")
+          ra0 = float("${{ github.event.inputs.ra_start }}")
+          # A grid over RA x Dec, keep ZTF-visible, off-plane (|b|>22), non-crowded.
+          out = []
+          ras = (ra0 + np.arange(0, 360, 7.0)) % 360
+          decs = np.arange(14, 56, 6.0)
+          for ra in ras:
+              for dec in decs:
+                  b = SkyCoord(ra*u.deg, dec*u.deg).galactic.b.deg
+                  if abs(b) > 22 and not (280 < ra < 320):   # avoid Cygnus crowding
+                      out.append({"ra": round(float(ra),1), "dec": round(float(dec),1)})
+          # Deterministic spread: stride through the list so a partial sweep still
+          # covers diverse sky rather than one RA stripe.
+          out = out[::max(1, len(out)//n)][:n]
+          print("fields=" + json.dumps(out))
+          PY
+  sweep:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        field: ${{ fromJSON(needs.prepare.outputs.fields) }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: "${{ github.ref_name }}" }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip >/dev/null
+          pip install -e ".[dev]" >/dev/null
+      - name: Run field
+        run: |
+          python -m seti.cli dimming-run --ra ${{ matrix.field.ra }} --dec ${{ matrix.field.dec }} \
+            --radius-deg ${{ github.event.inputs.radius_deg }} --mode region --box-deg 0.10 \
+            --time-budget-s ${{ github.event.inputs.time_budget_s }}
+      - name: Upload shard results
+        uses: actions/upload-artifact@v4
+        with:
+          name: shard-${{ matrix.field.ra }}-${{ matrix.field.dec }}
+          path: results/dimming/
+          if-no-files-found: warn
+  collect:
+    needs: sweep
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: "${{ github.ref_name }}" }
+      - uses: actions/download-artifact@v4
+        with: { path: _shards }
+      - name: Merge shard results into the tree
+        run: |
+          mkdir -p results/dimming
+          # Each shard dir contains a results/dimming/<field>/ subtree; copy the
+          # per-field directories in (namespaced, so no collisions).
+          find _shards -type d -path '*/results/dimming/f*' -prune -exec cp -r {} results/dimming/ \; || true
+          rm -rf _shards
+          ls results/dimming | head
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/dimming/ || true
+          if git diff --cached --quiet; then echo "no change"; else
+            git commit -m "dimming-sweep: matrix tiling of off-plane fields"
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git pull --rebase --autostash origin ${{ github.ref_name }}; git push origin HEAD:${{ github.ref_name }}; }
+          fi

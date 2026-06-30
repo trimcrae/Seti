@@ -222,6 +222,16 @@ def _cmd_dimming_vet(args, cfg):
           f"clean_secular_fade) of {len(vetted)} vetted")
 
 
+def _cmd_dimming_characterize(args, cfg):
+    from .dimming.characterize import characterize
+
+    res = characterize(args.ra, args.dec)
+    out_dir = cfg.root / "results" / "dimming"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "characterization.json").write_text(json.dumps(res, indent=2))
+    print(json.dumps(res, indent=2))
+
+
 def _cmd_paper_numbers(args, cfg):
     from .report import write_numbers_tex
 
@@ -303,6 +313,11 @@ def main(argv=None):
 
     p = sub.add_parser("dimming-vet")
     p.set_defaults(func=_cmd_dimming_vet)
+
+    p = sub.add_parser("dimming-characterize")
+    p.add_argument("--ra", type=float, required=True)
+    p.add_argument("--dec", type=float, required=True)
+    p.set_defaults(func=_cmd_dimming_characterize)
 
     p = sub.add_parser("contamination-budget")
     p.add_argument("--seed", type=int, default=11)

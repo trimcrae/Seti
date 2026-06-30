@@ -264,6 +264,36 @@ def test_mask_blanks_line():
     assert not any(abs(c.wavelength - 5000.0) <= 2.0 for c in cands)
 
 
+def test_rejects_oversubtraction_and_asymmetric_profiles():
+    from seti.spectra.detect import EmissionLine, _profile_shape
+
+    # A clean symmetric line survives the profile cut.
+    clean = EmissionLine(index=50, wavelength=5500.0, significance=30.0,
+                         width_ratio=1.0, amplitude=1.0, ew=1.0, n_pix=3,
+                         ivar_ratio=1.0, fwhm_pix=2.5, min_adjacent=0.0,
+                         asymmetry=1.1)
+    assert classify_line(clean, redshift=0.0) is None
+    # A line flanked by a deep negative trough = sky over-subtraction residual.
+    trough = EmissionLine(index=50, wavelength=5500.0, significance=30.0,
+                          width_ratio=1.0, amplitude=1.0, ew=1.0, n_pix=3,
+                          ivar_ratio=1.0, fwhm_pix=2.5, min_adjacent=-0.5,
+                          asymmetry=1.1)
+    assert classify_line(trough, redshift=0.0) == "oversubtraction_residual"
+    # A strongly one-sided profile is rejected as asymmetric.
+    onesided = EmissionLine(index=50, wavelength=5500.0, significance=30.0,
+                            width_ratio=1.0, amplitude=1.0, ew=1.0, n_pix=3,
+                            ivar_ratio=1.0, fwhm_pix=2.5, min_adjacent=0.0,
+                            asymmetry=8.0)
+    assert classify_line(onesided, redshift=0.0) == "asymmetric_profile"
+
+    # _profile_shape detects a negative-trough residual directly.
+    resid = np.zeros(21)
+    resid[10] = 1.0
+    resid[11] = -0.5     # over-subtraction trough redward of the peak
+    min_adj, _asym = _profile_shape(resid, 10)
+    assert min_adj <= -0.5
+
+
 def test_rejects_single_pixel_spike_by_fwhm():
     from seti.spectra.detect import EmissionLine, _fwhm_pixels
 

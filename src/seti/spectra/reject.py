@@ -89,6 +89,8 @@ def classify_line(
     width_hi: float = 1.6,
     sky_ivar_ratio_min: float = 0.5,
     fwhm_min: float = 2.0,
+    min_adjacent_floor: float = -0.30,
+    asymmetry_max: float = 4.0,
 ) -> str | None:
     """Return a rejection reason, or ``None`` if the line survives as a candidate.
 
@@ -117,6 +119,16 @@ def classify_line(
     iv = getattr(line, "ivar_ratio", 1.0)
     if np.isfinite(iv) and iv < sky_ivar_ratio_min:
         return "sky_residual"
+    # Profile-quality cut: a clean emission line sits on a flat continuum and is
+    # roughly symmetric.  A sky-subtraction *over-subtraction* residual is flanked
+    # by a negative trough (min_adjacent strongly < 0); a one-sided spike / P-Cygni
+    # residual is strongly asymmetric.  Both are inconsistent with a beacon line.
+    min_adj = getattr(line, "min_adjacent", 0.0)
+    if np.isfinite(min_adj) and min_adj < min_adjacent_floor:
+        return "oversubtraction_residual"
+    asym = getattr(line, "asymmetry", 1.0)
+    if np.isfinite(asym) and asym > asymmetry_max:
+        return "asymmetric_profile"
     if is_near(line.wavelength, SKY_LINES, sky_tol):
         return "sky_line"
     if in_telluric(line.wavelength):

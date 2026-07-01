@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from .absorb import find_absorption_lines, reject_absorption
 from .detect import EmissionLine, find_emission_lines
 from .reject import reject_lines
 
@@ -85,6 +86,7 @@ def process_spectrum(
     snr_min: float = 8.0,
     meta: dict | None = None,
     mask: np.ndarray | None = None,
+    mode: str = "emission",
 ) -> tuple[list[LaserCandidate], dict[str, int]]:
     """Detect, reject and score laser candidates in one spectrum.
 
@@ -113,8 +115,14 @@ def process_spectrum(
             d[:-s] |= bad[s:]
         err = np.where(d, np.inf, err)
     lsf = _lsf_sigma_pix(wave, resolution)
-    lines = find_emission_lines(wave, flux, err, lsf_sigma_pix=lsf, snr_min=snr_min)
-    survivors, counts = reject_lines(lines, redshift=redshift)
+    if mode == "absorption":
+        lines = find_absorption_lines(wave, flux, err, lsf_sigma_pix=lsf,
+                                      snr_min=snr_min)
+        survivors, counts = reject_absorption(lines, redshift=redshift)
+    else:
+        lines = find_emission_lines(wave, flux, err, lsf_sigma_pix=lsf,
+                                    snr_min=snr_min)
+        survivors, counts = reject_lines(lines, redshift=redshift)
     cands = []
     for ln in survivors:
         # Capture a compact window of the spectrum around the line so the actual
@@ -156,7 +164,8 @@ def reject_recurrent(candidates: list[dict], bin_width: float = 2.0,
     return survivors, n_rej
 
 
-def search_spectra(spectra: list[dict], snr_min: float = 8.0) -> dict:
+def search_spectra(spectra: list[dict], snr_min: float = 8.0,
+                   mode: str = "emission") -> dict:
     """Run the laser-line funnel over a list of spectrum dicts.
 
     Each dict needs ``spec_id, wave, flux, ivar`` and optionally ``redshift,
@@ -174,7 +183,7 @@ def search_spectra(spectra: list[dict], snr_min: float = 8.0) -> dict:
             s.get("spec_id", str(n_searched)), s["wave"], s["flux"], s["ivar"],
             redshift=float(s.get("redshift", 0.0) or 0.0),
             resolution=float(s.get("resolution", 2000.0) or 2000.0),
-            snr_min=snr_min, meta=s.get("meta"), mask=s.get("mask"))
+            snr_min=snr_min, meta=s.get("meta"), mask=s.get("mask"), mode=mode)
         all_cands.extend(cands)
         for k, v in counts.items():
             total_counts[k] = total_counts.get(k, 0) + v

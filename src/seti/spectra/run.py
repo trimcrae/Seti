@@ -25,6 +25,7 @@ def spectra_run(
     spectype: str | None = None,
     snr_min: float = 8.0,
     spectra: list[dict] | None = None,
+    mode: str = "emission",
 ) -> dict:
     """Acquire (or accept injected) spectra, search them, and write results.
 
@@ -34,7 +35,7 @@ def spectra_run(
     cfg = cfg or load_config()
 
     if spectra is not None:
-        res = search_spectra(spectra, snr_min=snr_min)
+        res = search_spectra(spectra, snr_min=snr_min, mode=mode)
         n_searched = res["n_searched"]
         candidates = res["candidates"]
         rejection_counts = res["rejection_counts"]
@@ -49,7 +50,7 @@ def spectra_run(
         for batch in iter_spectra(n=n, dataset=dataset, spectype=spectype):
             if not first_batch:
                 first_batch = batch[:200]  # held aside for injection-recovery
-            r = search_spectra(batch, snr_min=snr_min)
+            r = search_spectra(batch, snr_min=snr_min, mode=mode)
             n_searched += r["n_searched"]
             candidates.extend(r["candidates"])
             for k, v in r["rejection_counts"].items():
@@ -102,7 +103,7 @@ def spectra_run(
         k=k, n_eff=max(n_searched, 1),
         confidence=cfg.thresholds["stats"]["upper_limit_confidence"])
 
-    out_dir = cfg.root / "results" / "spectra"
+    out_dir = cfg.root / "results" / ("spectra_absorption" if mode == "absorption" else "spectra")
     out_dir.mkdir(parents=True, exist_ok=True)
     windows: list = []
     if len(cand_df):
@@ -132,6 +133,7 @@ def spectra_run(
 
     summary = {
         "dataset": dataset,
+        "mode": mode,
         "spectype": spectype or "all",
         "n_searched": n_searched,
         "n_candidates": k,

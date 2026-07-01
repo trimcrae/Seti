@@ -109,7 +109,8 @@ def _cmd_spectra_run(args, cfg):
     from .spectra.run import spectra_run
 
     spectra_run(cfg, n=args.n, dataset=args.dataset,
-                spectype=args.spectype, snr_min=args.snr_min)
+                spectype=args.spectype, snr_min=args.snr_min,
+                mode=args.mode)
 
 
 def _cmd_dimming_run(args, cfg):
@@ -336,6 +337,9 @@ def main(argv=None):
     p.add_argument("--dataset", default="DESI-EDR")
     p.add_argument("--spectype", default=None)
     p.add_argument("--snr-min", type=float, default=8.0)
+    p.add_argument("--mode", choices=["emission", "absorption"],
+                   default="emission",
+                   help="emission=laser lines; absorption=anomalous narrow absorbers")
     p.set_defaults(func=_cmd_spectra_run)
 
     p = sub.add_parser("dimming-run")

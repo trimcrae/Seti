@@ -24,6 +24,10 @@ on:
         description: "Matched-filter detection threshold"
         required: false
         default: "8.0"
+      mode:
+        description: "emission (laser lines) or absorption (anomalous narrow absorbers)"
+        required: false
+        default: "emission"
 
 permissions:
   contents: write
@@ -52,6 +56,7 @@ jobs:
       - name: Run laser-line search
         run: |
           ARGS="--n ${{ github.event.inputs.n }} --dataset ${{ github.event.inputs.dataset }} --snr-min ${{ github.event.inputs.snr_min }}"
+          ARGS="$ARGS --mode ${{ github.event.inputs.mode }}"
           if [ -n "${{ github.event.inputs.spectype }}" ]; then ARGS="$ARGS --spectype ${{ github.event.inputs.spectype }}"; fi
           echo "seti spectra-run $ARGS"
           python -m seti.cli spectra-run $ARGS

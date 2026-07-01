@@ -150,6 +150,12 @@ def crossmatch_candidates(candidates: pd.DataFrame,
     out["lit_matches"] = matches
     out["match_kind"] = kinds
     out["in_literature"] = [bool(m) for m in matches]
+    # Coverage guard: if NO published catalogue returned any ids (VizieR egress
+    # failed), an "absent" label is meaningless -- record it so a null fetch is
+    # never mistaken for a genuine novelty detection.
+    total_lit = sum(len(ids) for ids in lit_ids.values())
+    out.attrs["lit_ids_total"] = int(total_lit)
+    out.attrs["lit_catalogs_loaded"] = int(sum(1 for v in lit_ids.values() if v))
     return out
 
 

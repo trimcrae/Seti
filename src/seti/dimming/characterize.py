@@ -85,11 +85,90 @@ def fetch_asassn(ra: float, dec: float, radius_arcsec: float = 5.0) -> dict | No
         return None
 
 
+def fetch_neowise(ra: float, dec: float, radius_arcsec: float = 3.0) -> dict | None:
+    """NEOWISE-R multi-epoch W1/W2 photometry -> secular mid-IR trend.
+
+    The decisive test for a secular optical fader: circumstellar dust that dims
+    the star must reprocess the absorbed light and *brighten* in W1/W2 as the
+    optical fades.  ~2 visits/yr since 2013 give a >decade mid-IR baseline.
+    """
+    try:
+        from astroquery.ipac.irsa import Irsa
+    except Exception:
+        print("[characterize] astroquery IRSA not installed; skipping NEOWISE")
+        return None
+    try:
+        q = f"""
+            SELECT mjd, w1mpro, w1sigmpro, w2mpro, w2sigmpro, qual_frame, cc_flags
+            FROM neowiser_p1bs_psd
+            WHERE CONTAINS(POINT('ICRS', ra, dec),
+                           CIRCLE('ICRS', {ra}, {dec}, {radius_arcsec/3600.0})) = 1
+        """
+        df = Irsa.query_tap(q).to_table().to_pandas()
+    except Exception as exc:
+        print(f"[characterize] NEOWISE query failed: {exc!r}")
+        return None
+    if df.empty:
+        return None
+    # Keep clean frames free of known artifact contamination.
+    if "qual_frame" in df.columns:
+        df = df[df["qual_frame"] > 0]
+    if "cc_flags" in df.columns:
+        df = df[df["cc_flags"].astype(str).str.startswith("00")]
+    out: dict = {"n_epochs": int(len(df))}
+    from .secular import detect_secular_fade
+    for band in ("w1", "w2"):
+        m = df.get(f"{band}mpro")
+        e = df.get(f"{band}sigmpro")
+        if m is None:
+            continue
+        s = detect_secular_fade(df["mjd"].to_numpy(), m.to_numpy(),
+                                e.to_numpy() if e is not None else None,
+                                min_epochs=30)
+        out[f"{band}_slope_mag_yr"] = s.slope_mag_yr if s else None
+        out[f"{band}_slope_sigma"] = s.slope_sigma if s else None
+        out[f"{band}_n_seasons"] = s.n_seasons if s else 0
+    return out
+
+
+def ir_counterpart_verdict(optical_slope_mag_yr: float | None,
+                           neowise: dict | None,
+                           sig_min: float = 2.0) -> str:
+    """Pure verdict on what the mid-IR does while the optical fades.
+
+    * ``ir_brightens_dusty``      --- W1/W2 brighten as the optical fades: the
+                                      absorbed light reappears as thermal dust
+                                      emission; a mundane enshrouding event.
+    * ``ir_fades_gray_occulter``  --- the mid-IR fades *with* the optical at a
+                                      comparable rate: a gray (large-particle or
+                                      solid) occulter with no thermal signature;
+                                      resists every dust explanation.
+    * ``ir_flat_chromatic_fade``  --- optical fades, mid-IR flat: reddening-like,
+                                      small-grain dust along the line of sight.
+    * ``insufficient_ir``         --- no usable NEOWISE trend.
+    """
+    if not neowise or optical_slope_mag_yr is None or optical_slope_mag_yr <= 0:
+        return "insufficient_ir"
+    slopes = [(neowise.get(f"{b}_slope_mag_yr"), neowise.get(f"{b}_slope_sigma"))
+              for b in ("w1", "w2")]
+    slopes = [(s, sig) for s, sig in slopes if s is not None and sig is not None]
+    if not slopes:
+        return "insufficient_ir"
+    if any(s < 0 and sig >= sig_min for s, sig in slopes):
+        return "ir_brightens_dusty"
+    fading = [(s, sig) for s, sig in slopes if s > 0 and sig >= sig_min]
+    if fading and any(s >= 0.3 * optical_slope_mag_yr for s, _ in fading):
+        return "ir_fades_gray_occulter"
+    return "ir_flat_chromatic_fade"
+
+
 def characterize(ra: float, dec: float) -> dict:
     """Full independent follow-up of one candidate position."""
     gaia = fetch_gaia_dr3(ra, dec)
     asassn = fetch_asassn(ra, dec)
-    out: dict = {"ra": ra, "dec": dec, "gaia_dr3": gaia, "asassn": asassn}
+    neowise = fetch_neowise(ra, dec)
+    out: dict = {"ra": ra, "dec": dec, "gaia_dr3": gaia, "asassn": asassn,
+                 "neowise": neowise}
     # Quick interpretation flags.
     flags = []
     if gaia:
@@ -99,14 +178,21 @@ def characterize(ra: float, dec: float) -> dict:
             flags.append("gaia_non_single_star")
         if "VARIABLE" in gaia["phot_variable_flag"]:
             flags.append("gaia_flagged_variable")
+    optical_slope = None
     if asassn and asassn.get("asassn_slope_sigma"):
         if asassn["asassn_slope_mag_yr"] and asassn["asassn_slope_mag_yr"] > 0 \
            and asassn["asassn_slope_sigma"] > 2:
             flags.append("asassn_confirms_fade")
+            optical_slope = asassn["asassn_slope_mag_yr"]
         else:
             flags.append("asassn_does_not_confirm_fade")
+    verdict = ir_counterpart_verdict(optical_slope, neowise)
+    out["ir_counterpart_verdict"] = verdict
+    if verdict != "insufficient_ir":
+        flags.append(verdict)
     out["flags"] = flags
     return out
 
 
-__all__ = ["characterize", "fetch_gaia_dr3", "fetch_asassn"]
+__all__ = ["characterize", "fetch_gaia_dr3", "fetch_asassn", "fetch_neowise",
+           "ir_counterpart_verdict"]

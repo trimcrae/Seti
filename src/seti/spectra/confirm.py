@@ -26,14 +26,23 @@ _OTHER_DATASETS = ["DESI-DR1", "SDSS-DR17", "BOSS-DR17", "DESI-EDR",
 
 
 def _find_overlap(client, ra: float, dec: float, exclude_release: str,
-                  tol_arcsec: float = 2.0) -> list:
-    """SPARCL ids of spectra within ``tol_arcsec`` of (ra, dec) in other releases."""
+                  tol_arcsec: float = 2.0, exclude_id: str | None = None) -> list:
+    """SPARCL ids of *independent* spectra within ``tol_arcsec`` of (ra, dec).
+
+    Independence comes either from a different survey OR from a different
+    observation of the same star in the *same* release: SPARCL labels SDSS-legacy
+    and BOSS repeats under one release, and DESI/SDSS re-observe fields, so a
+    second sparcl_id at the same sky position is a genuine independent exposure.
+    We therefore search *all* datasets and drop only the candidate's own
+    ``exclude_id`` (never the whole release), which is what makes repeat-visit
+    confirmation possible.
+    """
     d = tol_arcsec / 3600.0
     cosd = max(np.cos(np.radians(dec)), 1e-3)
     constraints = {
         "ra": [ra - d / cosd, ra + d / cosd],
         "dec": [dec - d, dec + d],
-        "data_release": [r for r in _OTHER_DATASETS if r != exclude_release],
+        "data_release": list(_OTHER_DATASETS),
     }
     fields = ["sparcl_id", "ra", "dec", "data_release"]
     try:
@@ -44,7 +53,8 @@ def _find_overlap(client, ra: float, dec: float, exclude_release: str,
     ids = list(getattr(found, "ids", []) or [])
     if not ids:
         ids = [_rget(r, "sparcl_id") or _rget(r, "id") for r in _records(found)]
-    return [i for i in ids if i]
+    # Keep every spectrum except the candidate's own coadd.
+    return [i for i in ids if i and str(i) != str(exclude_id)]
 
 
 def line_excess(wave: np.ndarray, flux: np.ndarray, ivar: np.ndarray,
@@ -96,7 +106,8 @@ def cross_confirm(candidates: list[dict], client=None, max_candidates: int = 40)
         if not (np.isfinite(ra) and np.isfinite(dec) and np.isfinite(obs)):
             out.append(rec)
             continue
-        ids = _find_overlap(client, float(ra), float(dec), rel)
+        ids = _find_overlap(client, float(ra), float(dec), rel,
+                            exclude_id=c.get("spec_id"))
         rec["n_overlap"] = len(ids)
         if not ids:
             out.append(rec)

@@ -113,6 +113,12 @@ def _cmd_spectra_run(args, cfg):
                 mode=args.mode)
 
 
+def _cmd_accel_run(args, cfg):
+    from .accel.run import accel_run
+
+    accel_run(cfg, limit=args.limit, plx_min=args.plx_min, sig_min=args.sig_min)
+
+
 def _cmd_dimming_run(args, cfg):
     from .dimming.run import dimming_run
 
@@ -360,6 +366,12 @@ def main(argv=None):
                    default="emission",
                    help="emission=laser lines; absorption=anomalous narrow absorbers")
     p.set_defaults(func=_cmd_spectra_run)
+
+    p = sub.add_parser("accel-run")
+    p.add_argument("--limit", type=int, default=6000)
+    p.add_argument("--plx-min", type=float, default=2.0)     # within ~500 pc
+    p.add_argument("--sig-min", type=float, default=20.0)
+    p.set_defaults(func=_cmd_accel_run)
 
     p = sub.add_parser("dimming-run")
     p.add_argument("--ra", type=float, default=270.0)

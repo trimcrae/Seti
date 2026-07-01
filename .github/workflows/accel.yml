@@ -39,11 +39,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
           python -c "import numpy,pandas,astroquery; print('imports OK')"
-      - name: Run acceleration search
+      - name: Run acceleration search + literature cross-match
         run: |
           python -m seti.cli accel-run --limit ${{ github.event.inputs.limit }} \
             --plx-min ${{ github.event.inputs.plx_min }} \
             --sig-min ${{ github.event.inputs.sig_min }}
+          echo "=== literature cross-match summary ==="
+          cat results/accel/summary.json | python -c "import json,sys; d=json.load(sys.stdin); print('in_literature:', d.get('n_in_literature'), 'novel_absent:', d.get('n_novel_absent')); print('novel_source_ids:', d.get('novel_source_ids'))" || true
       - name: Commit results
         run: |
           git config user.name "github-actions[bot]"

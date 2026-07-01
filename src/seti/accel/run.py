@@ -170,6 +170,35 @@ def accel_run(cfg: Config | None = None, limit: int = 6000, plx_min: float = 2.0
             summary["n_dark_companions"] = int(len(dark))
             summary["top_dark_companions"] = (dark[ocols].head(25).to_dict("records")
                                               if len(dark) else [])
+            # --- Decisive novelty test: cross-match the compact-companion (AMRF
+            # class >=2) shortlist against the *published* Gaia catalogues.  A
+            # class-3 system absent from every list is the remarkable candidate. ---
+            if len(dark):
+                try:
+                    from .crossmatch import crossmatch_candidates
+                    from .orbit import KNOWN_GAIA_BH
+                    xm = crossmatch_candidates(dark)
+                    xm["known_gaia_bh"] = xm["source_id"].isin(KNOWN_GAIA_BH)
+                    xm["novel_candidate"] = ((~xm["in_literature"])
+                                             & (~xm["known_gaia_bh"]))
+                    xcols = ocols + [c for c in ("lit_matches", "match_kind",
+                                                 "in_literature", "known_gaia_bh",
+                                                 "novel_candidate")
+                                     if c in xm.columns]
+                    xm[xcols].to_csv(out_dir / "literature_crossmatch.csv",
+                                     index=False)
+                    novel = xm[xm["novel_candidate"]]
+                    summary["n_in_literature"] = int(xm["in_literature"].sum())
+                    summary["n_novel_absent"] = int(len(novel))
+                    summary["novel_source_ids"] = [int(s) for s in novel["source_id"]]
+                    summary["novel_candidates"] = novel[xcols].to_dict("records")
+                    print(f"[accel] literature cross-match: {len(xm)} candidates -> "
+                          f"{summary['n_in_literature']} known, {len(novel)} ABSENT")
+                    if len(novel):
+                        print("[accel] NOVEL (absent from published catalogues):")
+                        print(novel[xcols].to_string(index=False))
+                except Exception as exc:  # noqa: BLE001
+                    print(f"[accel] literature cross-match skipped: {exc!r}")
             print(f"[accel] orbits: {len(orb)} -> {len(dark)} massive dark-companion "
                   f"(>3 Msun) candidates")
             if len(dark):

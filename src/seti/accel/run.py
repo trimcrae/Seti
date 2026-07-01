@@ -178,9 +178,18 @@ def accel_run(cfg: Config | None = None, limit: int = 6000, plx_min: float = 2.0
                     from .crossmatch import crossmatch_candidates
                     from .orbit import KNOWN_GAIA_BH
                     xm = crossmatch_candidates(dark)
+                    lit_total = int(xm.attrs.get("lit_ids_total", 0))
+                    lit_loaded = int(xm.attrs.get("lit_catalogs_loaded", 0))
                     xm["known_gaia_bh"] = xm["source_id"].isin(KNOWN_GAIA_BH)
+                    # Only a real absence counts: require the literature to have
+                    # actually loaded, else an "absent" label is just a failed fetch.
+                    coverage_ok = lit_total > 0
                     xm["novel_candidate"] = ((~xm["in_literature"])
-                                             & (~xm["known_gaia_bh"]))
+                                             & (~xm["known_gaia_bh"])
+                                             & coverage_ok)
+                    summary["lit_ids_total"] = lit_total
+                    summary["lit_catalogs_loaded"] = lit_loaded
+                    summary["crossmatch_coverage_ok"] = bool(coverage_ok)
                     xcols = ocols + [c for c in ("lit_matches", "match_kind",
                                                  "in_literature", "known_gaia_bh",
                                                  "novel_candidate")
@@ -193,7 +202,11 @@ def accel_run(cfg: Config | None = None, limit: int = 6000, plx_min: float = 2.0
                     summary["novel_source_ids"] = [int(s) for s in novel["source_id"]]
                     summary["novel_candidates"] = novel[xcols].to_dict("records")
                     print(f"[accel] literature cross-match: {len(xm)} candidates -> "
-                          f"{summary['n_in_literature']} known, {len(novel)} ABSENT")
+                          f"{summary['n_in_literature']} known, {len(novel)} ABSENT "
+                          f"(lit ids loaded: {lit_total} from {lit_loaded} catalogues)")
+                    if not coverage_ok:
+                        print("[accel] WARNING: no literature ids loaded -- "
+                              "cross-match INCONCLUSIVE (VizieR fetch failed).")
                     if len(novel):
                         print("[accel] NOVEL (absent from published catalogues):")
                         print(novel[xcols].to_string(index=False))

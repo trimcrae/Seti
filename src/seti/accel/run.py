@@ -29,6 +29,7 @@ JOIN gaiadr3.gaia_source AS g USING (source_id)
 WHERE g.parallax > {plx_min}
   AND o.nss_solution_type LIKE 'Orbital%'
   AND o.a_thiele_innes IS NOT NULL
+ORDER BY g.parallax DESC
 """
 
 
@@ -147,7 +148,9 @@ def accel_run(cfg: Config | None = None, limit: int = 6000, plx_min: float = 2.0
     # mass; a massive (>3 Msun) invisible companion is a dormant compact object.
     if table is None:
         try:
-            orb = _fetch_orbits(limit=20000, plx_min=plx_min)
+            # Distance-ordered + large limit => COMPLETE for the nearby volume,
+            # not an arbitrary slice that could miss the massive-companion tail.
+            orb = _fetch_orbits(limit=120000, plx_min=plx_min)
             dark = rank_dark_companions(analyze_orbits(orb))
             ocols = [c for c in ("source_id", "ra", "dec", "dist_pc", "period_yr",
                                  "a0_au", "mass_function", "m1_msun", "m2_msun",

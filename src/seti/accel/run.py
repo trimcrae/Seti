@@ -77,6 +77,38 @@ def _known_binary(source_ids: list[int]) -> set:
         return set()
 
 
+def _characterize_dark(dark: pd.DataFrame) -> pd.DataFrame:
+    """Add SIMBAD identity/type and a luminous-companion flag to the dark list."""
+    out = dark.copy()
+    # Gaia BP-RP excess factor: strongly elevated => a resolved/blended second
+    # luminous source, i.e. the 'dark' mass function is contaminated.
+    try:
+        from astroquery.gaia import Gaia
+        ids = ",".join(str(int(s)) for s in out["source_id"].head(100))
+        q = (f"SELECT source_id, phot_bp_rp_excess_factor, non_single_star, "
+             f"radial_velocity, rv_amplitude_robust FROM gaiadr3.gaia_source "
+             f"WHERE source_id IN ({ids})")
+        gd = Gaia.launch_job_async(q).get_results().to_pandas()
+        gd = gd.rename(columns={c: c.lower() for c in gd.columns})
+        out = out.merge(gd, on="source_id", how="left")
+        out["bp_rp_excess"] = pd.to_numeric(out.get("phot_bp_rp_excess_factor"),
+                                            errors="coerce")
+        out["companion_luminous_flag"] = out["bp_rp_excess"] > 1.5
+    except Exception as exc:
+        print(f"[accel] Gaia detail fetch failed: {exc!r}")
+    try:
+        from ..acquire.science import fetch_simbad_context
+        pos = out[["source_id", "ra", "dec"]].head(50)
+        ctx = fetch_simbad_context(pos)
+        if ctx is not None and len(ctx):
+            keep = ["source_id"] + [c for c in ("simbad_id", "simbad_otype")
+                                    if c in ctx.columns]
+            out = out.merge(ctx[keep], on="source_id", how="left")
+    except Exception as exc:
+        print(f"[accel] SIMBAD characterisation failed: {exc!r}")
+    return out
+
+
 def accel_run(cfg: Config | None = None, limit: int = 6000, plx_min: float = 2.0,
               sig_min: float = 20.0, table: pd.DataFrame | None = None) -> dict:
     """Query, analyse and rank; write results.  ``table`` may be supplied for
@@ -121,6 +153,13 @@ def accel_run(cfg: Config | None = None, limit: int = 6000, plx_min: float = 2.0
                                  "a0_au", "mass_function", "m1_msun", "m2_msun",
                                  "phot_g_mean_mag", "bp_rp", "ruwe", "rank_score")
                      if c in dark.columns]
+            # Characterise the (short) dark-companion list: SIMBAD identity/type
+            # (known BH? nova? symbiotic?) and Gaia flags that reveal a *luminous*
+            # companion faking the dark mass function (BP-RP excess, RV scatter).
+            if len(dark):
+                dark = _characterize_dark(dark)
+                ocols += [c for c in ("simbad_id", "simbad_otype", "bp_rp_excess",
+                                      "companion_luminous_flag") if c in dark.columns]
             if len(dark):
                 dark[ocols].to_csv(out_dir / "dark_companion_candidates.csv",
                                    index=False)

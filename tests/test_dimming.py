@@ -198,7 +198,7 @@ def test_shared_epoch_cut_rejects_bad_night_artifacts():
     bad_nights = np.array([300.0, 720.0, 1100.0])   # field-wide bad epochs
     rows = []
     # 12 stars that "dip" only on the shared bad nights -> artifacts.
-    for i in range(12):
+    for _i in range(12):
         t = np.concatenate([base_t, bad_nights])
         m = 16.0 + rng.normal(0, 0.02, t.size)
         m[-3:] += 0.4                                # deep dip on each bad night

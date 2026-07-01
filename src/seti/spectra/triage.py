@@ -77,8 +77,9 @@ def excluded_bandwidth_frac(lines: np.ndarray, v_window_kms: float,
                             lo: float = BAND_MIN_A, hi: float = BAND_MAX_A) -> float:
     """Fraction of [lo, hi] covered by the union of +-v windows around the lines."""
     half = lines * v_window_kms / C_KMS
-    ivals = sorted((max(l - h, lo), min(l + h, hi))
-                   for l, h in zip(lines, half) if l + h > lo and l - h < hi)
+    ivals = sorted((max(c - h, lo), min(c + h, hi))
+                   for c, h in zip(lines, half, strict=True)
+                   if c + h > lo and c - h < hi)
     covered, cur_lo, cur_hi = 0.0, None, None
     for a, b in ivals:
         if cur_hi is None or a > cur_hi:
@@ -118,7 +119,7 @@ def triage_candidates(cand: pd.DataFrame, v_window_kms: float = 300.0,
     n_recur = np.zeros(len(out), dtype=int)
     lo_idx = np.searchsorted(w_sorted, wave - recur_tol, side="left")
     hi_idx = np.searchsorted(w_sorted, wave + recur_tol, side="right")
-    for i, (a, b) in enumerate(zip(lo_idx, hi_idx)):
+    for i, (a, b) in enumerate(zip(lo_idx, hi_idx, strict=True)):
         n_recur[i] = len(set(ids_sorted[a:b]))
     recurrent = n_recur >= recur_min
 

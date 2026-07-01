@@ -4,14 +4,12 @@ from __future__ import annotations
 
 import json
 
-import numpy as np
 import pandas as pd
 
 from seti.spectra.reject import air_to_vacuum
 from seti.spectra.triage import (
     excluded_bandwidth_frac,
     known_lines_vacuum,
-    nearest_line_dv_kms,
     triage_candidates,
     triage_run,
 )

@@ -119,6 +119,15 @@ def _cmd_accel_run(args, cfg):
     accel_run(cfg, limit=args.limit, plx_min=args.plx_min, sig_min=args.sig_min)
 
 
+def _cmd_accel_xmatch(args, cfg):
+    from .accel.crossmatch import run_crossmatch
+
+    cand = args.candidates or str(cfg.root / "results" / "accel"
+                                  / "class3_shortlist.csv")
+    out_dir = cfg.root / "results" / "accel"
+    run_crossmatch(cand, out_dir)
+
+
 def _cmd_dimming_run(args, cfg):
     from .dimming.run import dimming_run
 
@@ -372,6 +381,13 @@ def main(argv=None):
     p.add_argument("--plx-min", type=float, default=2.0)     # within ~500 pc
     p.add_argument("--sig-min", type=float, default=20.0)
     p.set_defaults(func=_cmd_accel_run)
+
+    p = sub.add_parser("accel-xmatch",
+                       help="cross-match the class-3 dark-companion shortlist "
+                            "against published Gaia compact-companion catalogues")
+    p.add_argument("--candidates", default=None,
+                   help="CSV of candidates (default results/accel/class3_shortlist.csv)")
+    p.set_defaults(func=_cmd_accel_xmatch)
 
     p = sub.add_parser("dimming-run")
     p.add_argument("--ra", type=float, default=270.0)

@@ -1,0 +1,67 @@
+name: accel-xmatch
+
+# Lightweight literature cross-match: take the committed class-3 dark-companion
+# shortlist (results/accel/class3_shortlist.csv) and check each source_id against
+# the published Gaia compact-companion catalogues (Shahaf+2019/2023/2024) on
+# VizieR. No heavy Gaia query -- only the small VizieR fetch -- so it runs in a
+# couple of minutes. A class-3, nearby, single-lined candidate ABSENT from every
+# published list is the genuinely new object.
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidates:
+        description: "Candidate CSV (blank = results/accel/class3_shortlist.csv)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  xmatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,pandas,astroquery; print('imports OK')"
+      - name: Cross-match against published catalogues
+        run: |
+          ARG=""
+          if [ -n "${{ github.event.inputs.candidates }}" ]; then
+            ARG="--candidates ${{ github.event.inputs.candidates }}"
+          fi
+          python -m seti.cli accel-xmatch $ARG
+          echo "=== cross-match summary ==="
+          cat results/accel/literature_crossmatch_summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/accel/literature_crossmatch.csv \
+                     results/accel/literature_crossmatch_summary.json || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "accel-xmatch: literature cross-match of class-3 dark-companion shortlist"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accel-xmatch-outputs
+          path: results/accel/literature_crossmatch*.*
+          if-no-files-found: warn

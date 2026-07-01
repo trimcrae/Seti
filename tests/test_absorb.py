@@ -59,3 +59,22 @@ def test_absorption_mode_end_to_end():
                          snr_min=8.0, mode="absorption")
     assert out["n_searched"] == 1
     assert any(abs(c["wavelength"] - 5000.0) <= 2.0 for c in out["candidates"])
+
+
+def test_line_forest_star_is_skipped():
+    from seti.spectra.vet import process_spectrum
+    # A cool-star line forest: many injected absorption lines -> skipped entirely
+    # (both intractable and a hopeless host for a conspicuous anomalous absorber).
+    rng = np.random.default_rng(3)
+    n = 3000
+    wave = 4000.0 + np.arange(n)
+    cont = np.ones(n)
+    flux = cont + rng.normal(0, 0.005, n)
+    for lam in rng.uniform(4050, 6950, 60):   # 60 absorption lines
+        flux -= 0.4 * np.exp(-0.5 * ((wave - lam) / 1.5) ** 2)
+    ivar = np.full(n, 1.0 / 0.005**2)
+    res = 5000.0 / (1.5 * 1.0 * 2.3548)
+    cands, counts = process_spectrum("forest", wave, flux, ivar, resolution=res,
+                                     snr_min=8.0, mode="absorption")
+    assert cands == []
+    assert counts.get("line_forest_skipped") == 1

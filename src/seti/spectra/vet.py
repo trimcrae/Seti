@@ -20,6 +20,10 @@ from .absorb import find_absorption_lines, reject_absorption
 from .detect import EmissionLine, find_emission_lines
 from .reject import reject_lines
 
+# Absorption mode: max detected lines before a spectrum is deemed a cool
+# line-forest star and skipped (a hot/clean continuum has only a handful).
+_MAX_ABSORPTION_LINES = 25
+
 
 def _lsf_sigma_pix(wave: np.ndarray, resolution: float) -> float:
     """Instrumental LSF sigma in pixels from a resolving power ``R``.
@@ -118,6 +122,12 @@ def process_spectrum(
     if mode == "absorption":
         lines = find_absorption_lines(wave, flux, err, lsf_sigma_pix=lsf,
                                       snr_min=snr_min)
+        # A conspicuous anomalous absorber is only detectable on a *clean*
+        # continuum (hot star / white dwarf: a few broad lines).  A cool star is a
+        # line forest of hundreds of real metal lines -- intractable and a hopeless
+        # host -- so skip any spectrum with too many detected lines entirely.
+        if len(lines) > _MAX_ABSORPTION_LINES:
+            return [], {"line_forest_skipped": 1}
         survivors, counts = reject_absorption(lines, redshift=redshift)
     else:
         lines = find_emission_lines(wave, flux, err, lsf_sigma_pix=lsf,

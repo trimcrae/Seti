@@ -14,10 +14,13 @@ next. Last updated: 2026-07-01.
    VARIABLE, `non_single_star=0`, RUWE 0.98 (no binary excuse).
    `results/dimming/characterization.json`.
    *Next decisive test:* mid-IR — a slow dust-enshrouding event must brighten
-   in NEOWISE W1/W2 as the optical fades; a fade with **no** IR counterpart
-   resists the mundane explanation. Pull the NEOWISE multi-epoch photometry at
-   this position (IRSA, runner-side) and fit the W1/W2 trend against the
-   optical slope.
+   in NEOWISE W1/W2 as the optical fades. **Implemented**
+   (`fetch_neowise` + `ir_counterpart_verdict` in
+   `seti.dimming.characterize`): dispatch `dimming-characterize.yml` with
+   `ra=225.0080427 dec=26.8728398`. Verdicts: `ir_brightens_dusty` (mundane),
+   `ir_flat_chromatic_fade` (reddening), `ir_fades_gray_occulter` (gray
+   occulter, no thermal signature — the regime that resists every dust
+   explanation).
 2. **173 triaged laser-line priority targets** —
    `results/spectra_triage/priority_targets.csv`, led by an unexamined
    SDSS-DR17 star with a 31.9σ unresolved line at 7518 Å (2900 km/s from the
@@ -37,7 +40,7 @@ next. Last updated: 2026-07-01.
 
 | Channel | Searched so far | Surviving | Blocking issue / next action |
 |---|---|---|---|
-| Dimming (dips + secular) | 250,862 ZTF stars, 116 fields | 1 (the fader above); 19 `marginal_fade`, 12 `single_band_unconfirmed` in `results/dimming/vetting.csv` | NEOWISE test on the fader; re-vet marginals with the g/r achromatic check |
+| Dimming (dips + secular) | 250,862 ZTF stars, 116 fields | 1 (the fader above); 19 `marginal_fade`, 12 `single_band_unconfirmed` in `results/dimming/vetting.csv` | dispatch `dimming-characterize.yml` on the fader (NEOWISE test is wired in); re-vet marginals with the g/r achromatic check |
 | Specular glint | code merged, **no run yet** | — | dispatch `dimming.yml` on completed fields — glint scan reuses the same ZTF pulls |
 | Laser emission (SDSS-DR17) | 10,500+ spectra (latest committed run) | 118 triaged | cross-confirmation (see above) |
 | Laser absorption (DESI-DR1) | 6,500+ spectra (latest committed run) | 55 triaged | same; hot-star continua only (line-forest stars skipped by design) |

@@ -382,3 +382,43 @@ def test_glint_flat_and_flaring_star_score_low():
     m[flare_idx] -= rng.uniform(0.4, 1.0, 40)
     flary = detect_glints(t, m, np.full(t.size, 0.02))
     assert flary is not None and flary.score < 0.3
+
+
+def test_ir_counterpart_verdicts():
+    from seti.dimming.characterize import ir_counterpart_verdict
+
+    # Optical fades at 0.07 mag/yr; W1/W2 brighten significantly -> dusty.
+    dusty = {"w1_slope_mag_yr": -0.05, "w1_slope_sigma": 4.0,
+             "w2_slope_mag_yr": -0.03, "w2_slope_sigma": 3.0}
+    assert ir_counterpart_verdict(0.07, dusty) == "ir_brightens_dusty"
+    # Mid-IR fades at a comparable rate -> gray occulter (the exciting regime).
+    gray = {"w1_slope_mag_yr": 0.05, "w1_slope_sigma": 3.5,
+            "w2_slope_mag_yr": 0.04, "w2_slope_sigma": 2.5}
+    assert ir_counterpart_verdict(0.07, gray) == "ir_fades_gray_occulter"
+    # Mid-IR flat while the optical fades -> line-of-sight reddening.
+    flat = {"w1_slope_mag_yr": 0.002, "w1_slope_sigma": 0.4,
+            "w2_slope_mag_yr": -0.001, "w2_slope_sigma": 0.2}
+    assert ir_counterpart_verdict(0.07, flat) == "ir_flat_chromatic_fade"
+    # No optical fade or no IR data -> insufficient.
+    assert ir_counterpart_verdict(None, gray) == "insufficient_ir"
+    assert ir_counterpart_verdict(0.07, None) == "insufficient_ir"
+    assert ir_counterpart_verdict(0.07, {}) == "insufficient_ir"
+
+
+def test_neowise_like_cadence_recovers_trend():
+    # NEOWISE visits: ~12 exposures over ~1 day, every ~182 days, for 10 years.
+    from seti.dimming.secular import detect_secular_fade
+
+    rng = np.random.default_rng(42)
+    t, m = [], []
+    for visit in range(20):
+        t0 = 56700.0 + 182.0 * visit
+        tt = t0 + rng.uniform(0, 1.0, size=12)
+        mm = 12.0 + 0.04 * (tt - 56700.0) / 365.25 + rng.normal(0, 0.05, size=12)
+        t.append(tt)
+        m.append(mm)
+    t, m = np.concatenate(t), np.concatenate(m)
+    s = detect_secular_fade(t, m, np.full_like(m, 0.05), min_epochs=30)
+    assert s is not None
+    assert abs(s.slope_mag_yr - 0.04) < 0.015
+    assert s.slope_sigma > 2.0

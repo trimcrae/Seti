@@ -7,25 +7,21 @@ next. Last updated: 2026-07-01.
 
 ## Current best candidates (cross-channel, ranked)
 
-1. **173 triaged laser-line priority targets** —
-   `results/spectra_triage/priority_targets.csv`, led by an unexamined
-   SDSS-DR17 star with a 31.9σ unresolved line at 7518 Å (2900 km/s from the
-   nearest known line, outside every telluric band) *plus a second surviving
-   line at 7542 Å in the same spectrum*. None cross-confirmed yet — the first
-   `spectra-confirm` pass found zero overlapping repeat spectra for the
-   pre-triage ranking; it now consumes this shortlist.
-   *Next decisive test:* the 2026-07-01 `spectra-confirm` pass on the triaged
-   shortlist found **zero** overlapping repeat spectra in SPARCL (19
-   single-line targets checked) — the repeat-visit path is exhausted. Two
-   remaining routes: (a) **per-exposure check** — fetch the coadd-input
-   individual exposures for each target from the SDSS SAS (new acquisition
-   code, runner-side); a real line persists across exposures, a cosmic ray or
-   artifact does not; (b) note the current confirm step's
-   `n_lines_in_spectrum == 1` filter *excludes* the top-ranked target
-   (spec 068839f0…, 31.9σ at 7518 Å + second surviving line at 7542 Å in the
-   same spectrum) — a two-line beacon pattern in one otherwise-quiet spectrum
-   is exactly what should be examined by hand first
-   (`results/spectra/top_candidate_spectra.json` has the cutouts).
+1. **167 triaged laser-line priority targets** —
+   `results/spectra_triage/priority_targets.csv`. The former #1 (spec 068839f0,
+   7518/7542 Å) is **DEAD** — see Resolved below; the two "beacon" lines are
+   Hα + [N II] 6584 at z = 0.145, an emission-line galaxy SDSS misclassified as
+   a STAR. A new galaxy-redshift-consistency stage now removes such objects
+   (`triage_verdict = galaxy_zmatch`; 3 spectra cut, two of them
+   SIMBAD-confirmed galaxies — KUG 1207+134, Z 521-35). None of the remaining
+   167 is cross-confirmed.
+   *Next decisive test:* the `spectra-confirm` repeat-visit path is exhausted
+   (zero overlapping SPARCL spectra for 19 single-line targets). Real remaining
+   route: **per-exposure persistence** — fetch the coadd-input exposures for each
+   target from the SDSS SAS (new acquisition code, runner-side); a real line
+   persists across exposures, a cosmic ray does not. Single-line targets cannot
+   be galaxy-tested internally — the per-exposure check is what separates a true
+   narrow emitter from a cosmic-ray hit for them.
 2. **WD IR-excess multimodal candidates** —
    `results/science/multimodal_candidates.csv` (170 anomaly-scored excesses
    from 7,716 clean 100-pc-scale white dwarfs). Not yet pushed through
@@ -33,6 +29,30 @@ next. Last updated: 2026-07-01.
 
 ## Resolved (killed) candidates
 
+* **Laser-line #1, spec 068839f0…** (SDSS-DR17, RA 25.6212, Dec −8.2417) —
+  ranked first in the whole search: a 31.9σ unresolved line at 7517.96 Å plus a
+  second surviving line at 7542.23 Å. **Killed 2026-07-01 by internal
+  redshift-consistency**: the pair is Hα 6562.8 and [N II] 6583.5 redshifted to
+  **z = 0.1452** (residual 22 km/s on [N II]) — a background emission-line galaxy
+  the SDSS pipeline classified as `STAR` (catalogue z ≈ 0, so the observed-frame
+  known-line triage placed Hα at 6563 Å and never saw it). New rejection
+  `seti.spectra.galaxy_reject.galaxy_redshift_match` (verdict `galaxy_zmatch`).
+  A locked diagnostic pair (Hα+[N II], the [O III]/[S II] doublets) or ≥3 lines
+  at one z is required, so an emission-line variable star is not mis-killed
+  (V345 Sge was correctly spared).
+* **Astrometric dark-companion class-3 shortlist** — the 8 AMRF class-3 systems
+  (BH1 + 7) were cross-matched against the published Gaia compact-companion
+  catalogue Shahaf+2023 (VizieR J/MNRAS/518/2991, 101,380 source_ids loaded;
+  `results/accel/literature_crossmatch.csv`). **7 of 8 are already in Shahaf+2023**
+  (1 is Gaia BH1, the validation object) — the channel *reproduces* the published
+  AMRF catalogue rather than extending it. One system, **Gaia DR3
+  3027759739607108992** (852 pc, M₂≈4.4 M☉, RUWE 4.9, no SIMBAD), is absent from
+  Shahaf+2023, but it is the *weakest* solution in the set (farthest, lowest
+  RUWE, mass nearest the 3 M☉ floor) — most plausibly below Shahaf's quality
+  threshold rather than a new object. Not a remarkable novel candidate; would
+  need the Shahaf+2024/2019 lists to load and an independent orbit check before
+  any claim. Per the novelty directive this channel is a reproduction — change
+  the question, do not write it up.
 * **Gaia DR3 1268299311319369984** (RA 225.0080, Dec +26.8728) — the
   ASAS-SN-confirmed secular fader (0.073 mag/yr at 8.8σ, ~0.94 mag total,
   RUWE 0.98, `non_single_star=0`). **Killed 2026-07-01 by the NEOWISE
@@ -53,7 +73,8 @@ next. Last updated: 2026-07-01.
 |---|---|---|---|
 | Dimming (dips + secular) | 250,862 ZTF stars, 116 fields | 0 (top fader killed by NEOWISE reddening-law test); 19 `marginal_fade`, 12 `single_band_unconfirmed` in `results/dimming/vetting.csv` | run the NEOWISE counterpart test (now wired into characterize) on the 19 marginal faders — one `dimming-characterize.yml` dispatch each with `--optical-slope` |
 | Specular glint | code merged, **no run yet** | — | dispatch `dimming.yml` on completed fields — glint scan reuses the same ZTF pulls |
-| Laser emission (SDSS-DR17) | 10,500+ spectra (latest committed run) | 118 triaged | cross-confirmation (see above) |
+| Laser emission (SDSS-DR17) | 10,500+ spectra (latest committed run) | 112 triaged (was 118; 3 galaxies cut, incl. former #1) | per-exposure persistence check (repeat-visit path exhausted) |
+| Astrometric dark companion (Gaia orbits) | 105,066 NSS orbits, ≤1 kpc | 0 novel (8 class-3 = BH1 + 7, but 7/8 already in Shahaf+2023; 1 borderline-absent is the weakest solution) | reproduction of the published AMRF catalogue — change the question |
 | Laser absorption (DESI-DR1) | 6,500+ spectra (latest committed run) | 55 triaged | same; hot-star continua only (line-forest stars skipped by design) |
 | WD IR excess | 7,716 clean WDs | 170 scored | variability (ZTF) + SED follow-up of top anomaly scores |
 | Gaia XP anomalies | pipeline ready, **no run yet** | — | dispatch `xp.yml` on a first cone |
@@ -68,6 +89,16 @@ next. Last updated: 2026-07-01.
   rejection window → the observed-frame ±300 km/s triage
   (`seti.spectra.triage`, costs 22.7% of the band, honestly accounted) is
   mandatory before believing any spectral candidate.
+* **Misclassified emission-line galaxies** are the worst spectral leak: a
+  background star-forming/active galaxy that SDSS/DESI labels `STAR` (or gives a
+  wrong z) drops its rest-frame nebular family into the search as
+  high-significance "unresolved" lines. The observed-frame known-line triage
+  cannot catch it (it uses the wrong catalogue z). Decisive test = *internal
+  redshift consistency*: if ≥2 surviving lines in one spectrum form a locked
+  nebular pair (Hα+[N II], [O III] 4959/5007, [S II] 6716/6731) or ≥3 lines at a
+  common z, it is a galaxy (`galaxy_reject`, verdict `galaxy_zmatch`). This killed
+  the former #1 candidate. Single-line candidates cannot be tested this way —
+  they need the per-exposure persistence check.
 * Candidate wavelengths recurring across unrelated sightlines (≥3 spectra
   within ±3 Å, across runs *and* modes) are instrumental. 31 killed.
 * Merged candidate CSVs can contain duplicate rows (runs overlap) — 89 killed.

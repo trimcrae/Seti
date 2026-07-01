@@ -126,10 +126,31 @@ def triage_candidates(cand: pd.DataFrame, v_window_kms: float = 300.0,
     verdict = np.where(dup, "duplicate",
                np.where(near_known, "known_line_window",
                np.where(recurrent, "recurrent_across_runs", "survives")))
-    return out.assign(nearest_known_line=np.round(nearest, 2),
-                      nearest_line_dv_kms=np.round(dv, 1),
-                      n_spectra_at_wavelength=n_recur,
-                      triage_verdict=verdict).drop(columns=["_w"], errors="ignore")
+    out = out.assign(nearest_known_line=np.round(nearest, 2),
+                     nearest_line_dv_kms=np.round(dv, 1),
+                     n_spectra_at_wavelength=n_recur,
+                     triage_verdict=verdict).drop(columns=["_w"], errors="ignore")
+
+    # Final stage: a candidate whose surviving lines in the *same* spectrum form a
+    # nebular emission family at one redshift is a misclassified emission-line
+    # galaxy, not a transmitter (this unmasked the former #1 target, Halpha+[N II]
+    # at z=0.145).  Test the survivors only and override their verdict.
+    from .galaxy_reject import flag_galaxy_spectra
+    out["galaxy_z"] = np.nan
+    out["galaxy_rest_lines"] = ""
+    surv_mask = out["triage_verdict"] == "survives"
+    if surv_mask.any():
+        gflag = flag_galaxy_spectra(out[surv_mask])
+        gal = gflag[gflag["is_galaxy"]]
+        if len(gal):
+            gz = gal.groupby("spec_id")[["galaxy_z", "galaxy_rest_lines"]].first()
+            is_gal = out["spec_id"].isin(gz.index) & surv_mask
+            out.loc[is_gal, "triage_verdict"] = "galaxy_zmatch"
+            out.loc[is_gal, "galaxy_z"] = out.loc[is_gal, "spec_id"].map(
+                gz["galaxy_z"])
+            out.loc[is_gal, "galaxy_rest_lines"] = out.loc[is_gal, "spec_id"].map(
+                gz["galaxy_rest_lines"])
+    return out
 
 
 def triage_run(root: Path | str, v_window_kms: float = 300.0,

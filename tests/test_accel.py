@@ -80,15 +80,15 @@ def test_accel_run_offline(tmp_path):
 
 
 def test_companion_mass_inverts_mass_function():
-    from seti.accel.orbit import companion_mass
     # f = M2^3/(M1+M2)^2; for M1=1, M2=10 -> f=1000/121=8.264
     import numpy as np
+
+    from seti.accel.orbit import companion_mass
     m2 = companion_mass(np.array([1000.0 / 121.0]), np.array([1.0]))
     assert abs(m2[0] - 10.0) < 0.2
 
 
 def test_rank_dark_companions_flags_bh_like_system():
-    import numpy as np
     import pandas as pd
 
     from seti.accel.orbit import rank_dark_companions
@@ -120,3 +120,35 @@ def test_amrf_triage_separates_compact_from_stellar():
     assert triage_class(np.array([0.5 * (_AMRF_MS1 + _AMRF_MS2)]))[0] == 2
     # Above even two MS stars -> class 3, a compact companion is required.
     assert triage_class(np.array([1.3 * _AMRF_MS2]))[0] == 3
+
+def test_crossmatch_flags_absent_candidate():
+    import pandas as pd
+
+    from seti.accel.crossmatch import crossmatch_candidates
+    # Three class-3 candidates; two are in the published catalogues, one is not.
+    cand = pd.DataFrame({
+        "source_id": [4373465352415301632, 111, 222],
+        "ra": [262.17, 10.0, 20.0],
+        "dec": [-0.58, 5.0, -5.0],
+    })
+    lit_ids = {"Shahaf+2023": {4373465352415301632, 111}}
+    lit_pos = pd.DataFrame(columns=["lit_label", "ra", "dec"])
+    xm = crossmatch_candidates(cand, lit_ids=lit_ids, lit_pos=lit_pos, verbose=False)
+    by_id = dict(zip(xm["source_id"], xm["in_literature"], strict=True))
+    assert by_id[4373465352415301632] is True
+    assert by_id[111] is True
+    assert by_id[222] is False          # ABSENT -> the novel candidate
+    assert "Shahaf+2023" in xm.loc[xm["source_id"] == 111, "lit_matches"].iloc[0]
+
+
+def test_crossmatch_positional_fallback():
+    import pandas as pd
+
+    from seti.accel.crossmatch import crossmatch_candidates
+    cand = pd.DataFrame({"source_id": [999], "ra": [150.0], "dec": [30.0]})
+    lit_ids = {"Shahaf+2024": {123}}                    # no source_id match
+    lit_pos = pd.DataFrame({"lit_label": ["Shahaf+2024"],
+                            "ra": [150.00003], "dec": [30.00003]})   # ~0.15" away
+    xm = crossmatch_candidates(cand, lit_ids=lit_ids, lit_pos=lit_pos, verbose=False)
+    assert bool(xm.iloc[0]["in_literature"]) is True
+    assert xm.iloc[0]["match_kind"] == "position"

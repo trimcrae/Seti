@@ -54,7 +54,8 @@ def test_dyson_deficit_flagged():
     # Anomaly is included in the training population (catalogue-scale reality);
     # the robust colour-median locus must still flag it.
     pop, cols = _normal_pop(seed=2)
-    f = _planck(WAVE, 6000.0); f = f / np.median(f)
+    f = _planck(WAVE, 6000.0)
+    f = f / np.median(f)
     f[(WAVE > 500e-9) & (WAVE < 600e-9)] *= 0.3      # sharp non-stellar band notch
     s = normalize_spectrum(f)
     col = _teff_to_bprp(6000.0)
@@ -67,7 +68,8 @@ def test_dyson_deficit_flagged():
 
 def test_artificial_narrow_feature_flagged():
     pop, cols = _normal_pop(seed=3)
-    f = _planck(WAVE, 5500.0); f = f / np.median(f)
+    f = _planck(WAVE, 5500.0)
+    f = f / np.median(f)
     j = 60
     f[j] *= 3.0                                      # narrow artificial emission
     s = normalize_spectrum(f)
@@ -85,7 +87,8 @@ def test_xp_run_end_to_end(tmp_path):
     from seti.xp.run import classify_xp_anomaly, xp_run
 
     pop, cols = _normal_pop(n=300, seed=5)
-    f = _planck(WAVE, 6000.0); f = f / np.median(f)
+    f = _planck(WAVE, 6000.0)
+    f = f / np.median(f)
     f[(WAVE > 500e-9) & (WAVE < 600e-9)] *= 0.3      # sharp non-stellar notch
     anom = normalize_spectrum(f)
     flux = np.vstack([pop, anom])
@@ -97,7 +100,8 @@ def test_xp_run_end_to_end(tmp_path):
         "classprob_dsc_combmod_quasar": 0.0, "classprob_dsc_combmod_galaxy": 0.0,
         "classprob_dsc_combmod_star": 1.0, "non_single_star": 0,
         "phot_variable_flag": "NOT_AVAILABLE"})
-    cfg = load_config(); cfg.root = tmp_path
+    cfg = load_config()
+    cfg.root = tmp_path
     summary = xp_run(cfg, chunk={"wave": WAVE, "flux": flux, "meta": meta},
                      global_sigma_min=8.0)
     assert summary["n_searched"] == flux.shape[0]

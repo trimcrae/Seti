@@ -23,16 +23,36 @@ import numpy as np
 
 from .detect import EmissionLine
 
-# Strong night-sky emission lines (observed/topocentric frame, air, Angstrom):
-# [OI], NaD airglow, and representative bright OH airglow doublets across the
-# optical.  A real survey pipeline carries the full OH atlas; this captures the
-# brightest residual-prone features for the offline funnel.
-SKY_LINES = np.array([
+
+def air_to_vacuum(wave_air):
+    """Convert air wavelengths (Angstrom) to vacuum, VALD3 / Morton (1991) IAU.
+
+    SDSS and DESI spectra are calibrated on the **vacuum** wavelength scale, but
+    most published line lists (airglow atlases, stellar/ISM/DIB compilations) are
+    quoted in **air**.  Comparing the two raw is a ~1.5-2.5 A systematic across
+    the optical --- enough to leak a known line straight through a +-1.5-3 A
+    rejection window and promote it to a "candidate".  Every observed-frame line
+    list in this package is therefore converted to vacuum at definition time.
+    """
+    w = np.asarray(wave_air, dtype=float)
+    s2 = (1e4 / w) ** 2
+    n = (1.0 + 0.00008336624212083
+         + 0.02408926869968 / (130.1065924522 - s2)
+         + 0.0001599740894897 / (38.92568793293 - s2))
+    return w * n
+
+
+# Strong night-sky emission lines: [OI], NaD airglow, and representative bright
+# OH airglow doublets across the optical (literature values in air, converted to
+# the vacuum scale the survey spectra are calibrated on).  A real survey pipeline
+# carries the full OH atlas; this captures the brightest residual-prone features
+# for the offline funnel.
+SKY_LINES = air_to_vacuum(np.array([
     5577.34, 5867.5, 5889.95, 5895.92, 6300.30, 6363.78, 6498.7, 6533.0,
     6863.9, 6923.2, 6948.9, 7276.4, 7340.9, 7358.7, 7392.2, 7822.0, 7841.3,
     7913.7, 7964.0, 7993.3, 8344.6, 8399.2, 8430.2, 8465.4, 8505.0, 8791.2,
     8827.1, 8885.9, 8919.6,
-])
+]))
 
 # Telluric absorption/emission band edges (observed frame, Angstrom): O2 B-band,
 # O2 A-band, and the strong H2O bands.  Lines inside these are atmospheric.
@@ -156,4 +176,5 @@ def reject_lines(
 
 
 __all__ = ["classify_line", "reject_lines", "is_astrophysical", "in_telluric",
-           "is_near", "SKY_LINES", "TELLURIC_BANDS", "REST_EMISSION_LINES"]
+           "is_near", "air_to_vacuum", "SKY_LINES", "TELLURIC_BANDS",
+           "REST_EMISSION_LINES"]

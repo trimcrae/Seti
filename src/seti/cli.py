@@ -151,6 +151,15 @@ def _cmd_dimming_vet(args, cfg):
             df["field_dir"] = Path(fp).parent.name
             df["cand_type"] = "secular_fader"
             frames.append(df)
+    for fp in sorted(glob.glob(str(cfg.root / "results" / "dimming" / "*" /
+                                   "glint_candidates.csv"))):
+        df = pd.read_csv(fp)
+        if "hr_class" in df.columns:
+            df = df[df["hr_class"] == "main_sequence"]
+        if len(df):
+            df["field_dir"] = Path(fp).parent.name
+            df["cand_type"] = "glint"
+            frames.append(df)
     if not frames:
         print("[dimming-vet] no candidates found")
         return
@@ -163,27 +172,31 @@ def _cmd_dimming_vet(args, cfg):
     # candidates that survived the IR/SIMBAD cut (no point characterising dusty/
     # known ones).  frac_confirmed = fraction of reference-band dips coincident in
     # another band.
-    from .dimming.vet import multiband_coincidence, secular_achromatic
-    fracs, nbands, dpb, secconf = [], [], [], []
+    from .dimming.vet import glint_achromatic, multiband_coincidence, secular_achromatic
+    fracs, nbands, dpb, secconf, glconf = [], [], [], [], []
     for _, r in vetted.iterrows():
         ctype = r.get("cand_type", "dipper")
-        mb, sc = {}, {}
+        mb, sc, gl = {}, {}, {}
         if r.get("ir_verdict") in ("clean", "no_ir_data"):
             try:
                 if ctype == "dipper":
                     mb = multiband_coincidence(float(r["ra"]), float(r["dec"]))
-                else:   # secular fader: confirm the fade is achromatic (g and r)
+                elif ctype == "secular_fader":
                     sc = secular_achromatic(float(r["ra"]), float(r["dec"]))
+                elif ctype == "glint":   # confirm the flash is achromatic (g==r)
+                    gl = glint_achromatic(float(r["ra"]), float(r["dec"]))
             except Exception as exc:
                 print(f"[dimming-vet] band check failed for {r['source_id']}: {exc!r}")
         fracs.append(mb.get("frac_confirmed", float("nan")))
         nbands.append(mb.get("n_bands", 0))
         dpb.append(str(mb.get("dips_per_band", {})))
         secconf.append(sc.get("secular_confirmed", False))
+        glconf.append(gl.get("glint_confirmed", False))
     vetted["frac_confirmed"] = fracs
     vetted["n_bands"] = nbands
     vetted["dips_per_band"] = dpb
     vetted["secular_confirmed"] = secconf
+    vetted["glint_confirmed"] = glconf
     # Final verdict: a clean candidate whose dips are confirmed achromatic in
     # >=2 bands is the genuinely interesting regime; clean but single-band is an
     # artefact.
@@ -210,6 +223,10 @@ def _cmd_dimming_vet(args, cfg):
                 return "active_dwarf_fade"
             return ("clean_secular_fade" if r.get("secular_confirmed")
                     else "single_band_fade")
+        # Glints: a specular flash is achromatic (g and r brighten equally); a
+        # blue/chromatic brightening is a stellar flare.
+        if r.get("cand_type", "dipper") == "glint":
+            return "clean_glint" if r.get("glint_confirmed") else "chromatic_flare"
         f = r["frac_confirmed"]
         if r["n_bands"] < 2 or not np.isfinite(f):
             return "single_band_unconfirmed"
@@ -222,13 +239,15 @@ def _cmd_dimming_vet(args, cfg):
                         "period_power", "secular_sigma", "secular_total_mag", "bp_rp",
                         "hr_class", "W1_W2", "K_W2",
                         "simbad_otype", "ir_verdict", "frac_confirmed", "n_bands",
-                        "dips_per_band", "secular_confirmed", "verdict")
+                        "dips_per_band", "secular_confirmed",
+                        "glint_max_brighten", "glint_confirmed", "verdict")
             if c in vetted.columns]
     vetted[cols].to_csv(out_dir / "vetting.csv", index=False)
     print(vetted[cols].to_string(index=False))
-    gold = vetted[vetted["verdict"].isin(("clean_achromatic", "clean_secular_fade"))]
-    print(f"[dimming-vet] {len(gold)} GOLD (clean_achromatic dippers + "
-          f"clean_secular_fade) of {len(vetted)} vetted")
+    gold_verdicts = ("clean_achromatic", "clean_secular_fade", "clean_glint")
+    gold = vetted[vetted["verdict"].isin(gold_verdicts)]
+    print(f"[dimming-vet] {len(gold)} GOLD (clean_achromatic + clean_secular_fade "
+          f"+ clean_glint) of {len(vetted)} vetted")
 
 
 def _cmd_xp_run(args, cfg):

@@ -187,9 +187,48 @@ def secular_achromatic(ra: float, dec: float, radius_arcsec: float = 2.0) -> dic
             "n_bands_fade": len(slopes), "secular_confirmed": confirmed}
 
 
+def glint_achromatic(ra: float, dec: float, radius_arcsec: float = 2.0,
+                     bright_min: float = 0.25, coincidence_days: float = 1.0) -> dict:
+    """Confirm a glint is achromatic: brightens g and r at the same epoch equally.
+
+    A specular reflection off a flat surface returns the star's own spectrum, so
+    the flux ratio jumps by the *same factor* in every band at the *same* epoch.
+    A stellar flare --- the dominant natural brightening --- is chromatic: far
+    stronger in g (blue) than r.  We locate the brightest epoch in each band and
+    require them to (a) coincide in time and (b) have comparable amplitude
+    (g/r brightening within a factor ~2).  ``confirmed`` False => flare / chromatic.
+    """
+    from .acquire import fetch_ztf_lightcurve
+
+    peak = {}
+    for band in ("g", "r"):
+        lc = fetch_ztf_lightcurve(ra, dec, band=band, radius_arcsec=radius_arcsec)
+        if lc is None or len(lc) < 20:
+            continue
+        m = lc["mag"].to_numpy()
+        t = lc["mjd"].to_numpy()
+        med = float(np.median(m))
+        i = int(np.argmin(m))                       # brightest epoch
+        frac = 10.0 ** (0.4 * max(med - m[i], 0.0)) - 1.0
+        peak[band] = (float(t[i]), float(frac))
+    g, r = peak.get("g"), peak.get("r")
+    confirmed = False
+    if g and r:
+        coincident = abs(g[0] - r[0]) <= coincidence_days
+        both_bright = g[1] >= bright_min and r[1] >= bright_min
+        amp_ratio = max(g[1], r[1]) / max(min(g[1], r[1]), 1e-4)
+        # Achromatic: comparable amplitude (a flare would be far bluer, ratio>>2).
+        confirmed = bool(coincident and both_bright and amp_ratio < 2.0)
+    return {"g_bright": g[1] if g else float("nan"),
+            "r_bright": r[1] if r else float("nan"),
+            "glint_coincident": bool(g and r and abs(g[0] - r[0]) <= coincidence_days),
+            "glint_confirmed": confirmed}
+
+
 def _col(df: pd.DataFrame, name: str) -> pd.Series:
     return pd.to_numeric(df[name], errors="coerce") if name in df.columns \
         else pd.Series(np.nan, index=df.index)
 
 
-__all__ = ["vet_candidates", "ir_excess_verdict", "W1W2_EXCESS", "KW2_EXCESS"]
+__all__ = ["vet_candidates", "ir_excess_verdict", "W1W2_EXCESS", "KW2_EXCESS",
+           "multiband_coincidence", "secular_achromatic", "glint_achromatic"]

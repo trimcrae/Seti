@@ -272,16 +272,23 @@ def _cmd_dimming_characterize(args, cfg):
 def _cmd_spectra_confirm(args, cfg):
     from .spectra.confirm import cross_confirm
 
+    # Prefer the triaged shortlist (observed-frame known-line + recurrence cuts
+    # already applied); fall back to the raw candidate list.
+    triaged = cfg.root / "results" / "spectra_triage" / "priority_targets.csv"
     path = cfg.root / "results" / "spectra" / "laser_candidates.csv"
-    if not path.exists():
+    if triaged.exists():
+        df = pd.read_csv(triaged)
+        df = df.sort_values("significance", ascending=False)
+    elif path.exists():
+        df = pd.read_csv(path)
+        if "hunt_rank" in df.columns:
+            df = df.sort_values("hunt_rank", ascending=False)
+    else:
         print(f"[confirm] no candidates at {path}")
         return
-    df = pd.read_csv(path)
-    # Prefer the cleanest beacons: single line, unresolved, high S/N.
+    # Prefer the cleanest beacons: single line in the spectrum.
     if "n_lines_in_spectrum" in df.columns:
         df = df[df["n_lines_in_spectrum"] == 1]
-    if "hunt_rank" in df.columns:
-        df = df.sort_values("hunt_rank", ascending=False)
     cands = df.head(args.top).to_dict("records")
     confirmed = cross_confirm(cands, max_candidates=args.top)
     out = pd.DataFrame(confirmed)
@@ -295,6 +302,13 @@ def _cmd_spectra_confirm(args, cfg):
     print(out[keep].to_string(index=False))
     print(f"[confirm] {n_overlap}/{len(out)} had an independent spectrum; "
           f"{n_conf} CROSS-CONFIRMED (line present in a second instrument)")
+
+
+def _cmd_spectra_triage(args, cfg):
+    from .spectra.triage import triage_run
+
+    triage_run(cfg.root, v_window_kms=args.v_window,
+               recur_tol=args.recur_tol, recur_min=args.recur_min)
 
 
 def _cmd_paper_numbers(args, cfg):
@@ -400,6 +414,12 @@ def main(argv=None):
     p = sub.add_parser("spectra-confirm")
     p.add_argument("--top", type=int, default=40)
     p.set_defaults(func=_cmd_spectra_confirm)
+
+    p = sub.add_parser("spectra-triage")
+    p.add_argument("--v-window", type=float, default=300.0)
+    p.add_argument("--recur-tol", type=float, default=3.0)
+    p.add_argument("--recur-min", type=int, default=3)
+    p.set_defaults(func=_cmd_spectra_triage)
 
     p = sub.add_parser("contamination-budget")
     p.add_argument("--seed", type=int, default=11)

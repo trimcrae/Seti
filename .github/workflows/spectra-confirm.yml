@@ -34,13 +34,15 @@ jobs:
           pip install --upgrade --force-reinstall --no-cache-dir \
             "numpy>=2.0" pandas pyarrow scipy
           python -c "import sparcl.client; print('sparclclient OK')"
+      - name: Triage (offline observed-frame re-screen of committed candidates)
+        run: python -m seti.cli spectra-triage
       - name: Cross-confirm
         run: python -m seti.cli spectra-confirm --top ${{ github.event.inputs.top }}
       - name: Commit results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f results/spectra/cross_confirm.csv || true
+          git add -f results/spectra/cross_confirm.csv results/spectra_triage || true
           if git diff --cached --quiet; then
             echo "No changes."
           else

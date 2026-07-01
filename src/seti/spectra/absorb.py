@@ -33,12 +33,13 @@ from .detect import (
     _profile_shape,
     estimate_continuum,
 )
-from .reject import SKY_LINES, in_telluric, is_near
+from .reject import SKY_LINES, air_to_vacuum, in_telluric, is_near
 
-# Comprehensive stellar photospheric absorption lines (rest-frame air, Angstrom):
-# hydrogen Balmer & Paschen, He I/II, Ca II H&K + IR triplet, Na D, Mg b, the
-# G band, K I, and the strong Fe I / Ca I / Mg I lines that dominate FGK spectra.
-REST_ABSORPTION_LINES = np.array([
+# Comprehensive stellar photospheric absorption lines: hydrogen Balmer & Paschen,
+# He I/II, Ca II H&K + IR triplet, Na D, Mg b, the G band, K I, and the strong
+# Fe I / Ca I / Mg I lines that dominate FGK spectra.  Literature (air) values,
+# converted to the vacuum scale of the survey spectra at definition time.
+REST_ABSORPTION_LINES = air_to_vacuum(np.array([
     # Balmer
     3835.4, 3889.1, 3970.1, 4101.7, 4340.5, 4861.3, 6562.8,
     # Paschen (red)
@@ -56,16 +57,18 @@ REST_ABSORPTION_LINES = np.array([
     6494.9,
     # TiO / molecular band heads (M dwarfs) --- approximate heads
     7053.0, 7589.0, 7666.0, 8432.0,
-])
+]))
 
 # Interstellar medium lines and the strongest diffuse interstellar bands (DIBs),
-# rest-frame air Angstrom.  These sit at (near) zero velocity regardless of the
-# star, so they must be rejected in the *observed* frame, not the stellar frame.
-ISM_LINES = np.array([5889.9, 5895.9, 3933.7, 3968.5, 7664.9, 7699.0, 4300.3])
-DIB_LINES = np.array([
+# literature air values converted to vacuum.  These sit at (near) zero velocity
+# regardless of the star, so they must be rejected in the *observed* frame, not
+# the stellar frame.
+ISM_LINES = air_to_vacuum(
+    np.array([5889.9, 5895.9, 3933.7, 3968.5, 7664.9, 7699.0, 4300.3]))
+DIB_LINES = air_to_vacuum(np.array([
     4428.0, 5780.5, 5797.1, 6196.0, 6203.0, 6269.8, 6283.8, 6379.3, 6613.6,
     6660.7, 6993.2, 5705.1, 5849.8, 4726.8, 4963.9,
-])
+]))
 
 
 def find_absorption_lines(

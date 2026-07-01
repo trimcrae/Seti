@@ -108,3 +108,15 @@ def test_rank_dark_companions_flags_bh_like_system():
     assert len(ranked) == 1
     assert ranked.iloc[0]["m2_msun"] > 3.0
     assert bool(ranked.iloc[0]["compact_object_candidate"]) is True
+
+
+def test_amrf_triage_separates_compact_from_stellar():
+    import numpy as np
+
+    from seti.accel.orbit import _AMRF_MS1, _AMRF_MS2, triage_class
+    # A well below the single-MS ceiling -> class 1 (ordinary star companion).
+    assert triage_class(np.array([0.5 * _AMRF_MS1]))[0] == 1
+    # Between the single- and two-MS ceilings -> class 2.
+    assert triage_class(np.array([0.5 * (_AMRF_MS1 + _AMRF_MS2)]))[0] == 2
+    # Above even two MS stars -> class 3, a compact companion is required.
+    assert triage_class(np.array([1.3 * _AMRF_MS2]))[0] == 3

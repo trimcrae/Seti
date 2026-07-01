@@ -262,7 +262,8 @@ def _cmd_xp_run(args, cfg):
 def _cmd_dimming_characterize(args, cfg):
     from .dimming.characterize import characterize
 
-    res = characterize(args.ra, args.dec)
+    res = characterize(args.ra, args.dec,
+                       optical_slope_mag_yr=args.optical_slope)
     out_dir = cfg.root / "results" / "dimming"
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "characterization.json").write_text(json.dumps(res, indent=2))
@@ -409,6 +410,8 @@ def main(argv=None):
     p = sub.add_parser("dimming-characterize")
     p.add_argument("--ra", type=float, required=True)
     p.add_argument("--dec", type=float, required=True)
+    p.add_argument("--optical-slope", type=float, default=None,
+                   help="known optical fade rate (mag/yr) if ASAS-SN is down")
     p.set_defaults(func=_cmd_dimming_characterize)
 
     p = sub.add_parser("spectra-confirm")

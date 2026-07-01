@@ -3,8 +3,10 @@
 # uses the committed sample, so CI needs no network. `make data` (network) pulls
 # the real catalogues for a science run.
 
-PY ?= .venv/bin/python
-PIP ?= .venv/bin/pip
+# Use the project venv when it exists, else whatever python is active (CI
+# installs into the system interpreter and has no .venv).
+PY ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python)
+RUFF ?= $(if $(wildcard .venv/bin/ruff),.venv/bin/ruff,ruff)
 
 .PHONY: all venv install asset sample analyze completeness forecast figures test lint data clean
 
@@ -12,10 +14,10 @@ all: analyze completeness forecast figures
 
 venv:
 	python3 -m venv .venv
-	$(PIP) install --upgrade pip
+	.venv/bin/pip install --upgrade pip
 
 install: venv
-	$(PIP) install -e ".[dev]"
+	.venv/bin/pip install -e ".[dev]"
 
 asset:
 	$(PY) scripts/make_bergeron_asset.py
@@ -51,7 +53,7 @@ test:
 	$(PY) -m pytest -q
 
 lint:
-	.venv/bin/ruff check src tests scripts
+	$(RUFF) check src tests scripts
 
 # --- Online (real-catalogue) science run -----------------------------------
 # Pulls Gaia WD x CatWISE2020 x 2MASS + control catalogues into data/cache and

@@ -350,3 +350,35 @@ def test_dimming_run_end_to_end(tmp_path):
     # Output is namespaced by sky field; locate it recursively.
     assert list((tmp_path / "results" / "dimming").rglob("summary.json"))
     assert list((tmp_path / "results" / "dimming").rglob("top_dippers.json"))
+
+
+def test_glint_detects_brief_achromatic_brightening():
+    from seti.dimming.glint import detect_glints
+    rng = np.random.default_rng(31)
+    t = np.sort(rng.uniform(0, 1500, 300))
+    m = 16.0 + rng.normal(0, 0.02, t.size)          # quiescent baseline
+    # one brief bright glint: +80% flux (-0.64 mag) at two adjacent epochs
+    i = 150
+    m[i] -= 0.64
+    m[i + 1] -= 0.40
+    s = detect_glints(t, m, np.full(t.size, 0.02))
+    assert s is not None
+    assert s.max_brighten > 0.3
+    assert s.n_glint_events >= 1
+    assert s.brighten_sigma > 5
+    assert s.score > 0.4
+
+
+def test_glint_flat_and_flaring_star_score_low():
+    from seti.dimming.glint import detect_glints
+    rng = np.random.default_rng(32)
+    t = np.sort(rng.uniform(0, 1500, 300))
+    # flat star -> no glint
+    flat = detect_glints(t, 16.0 + rng.normal(0, 0.02, t.size), np.full(t.size, 0.02))
+    assert flat is not None and flat.score < 0.3
+    # frequent flaring (many brightening epochs) -> too many events, score 0
+    m = 16.0 + rng.normal(0, 0.02, t.size)
+    flare_idx = rng.choice(t.size, 40, replace=False)
+    m[flare_idx] -= rng.uniform(0.4, 1.0, 40)
+    flary = detect_glints(t, m, np.full(t.size, 0.02))
+    assert flary is not None and flary.score < 0.3

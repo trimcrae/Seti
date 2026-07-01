@@ -11,7 +11,10 @@ from __future__ import annotations
 import numpy as np
 
 from seti.spectra.detect import estimate_continuum, find_emission_lines
-from seti.spectra.reject import classify_line, reject_lines
+from seti.spectra.reject import SKY_LINES, classify_line, reject_lines
+
+# [O I] 5577 airglow on the vacuum scale the spectra (and SKY_LINES) now use.
+SKY_OI = float(SKY_LINES[0])
 
 
 def _spectrum(n=2000, dlam=1.0, lam0=4000.0, lsf_sigma_pix=1.5, snr_cont=200.0,
@@ -71,9 +74,9 @@ def test_rejects_resolved_astrophysical_width():
 
 def test_rejects_sky_line_wavelength():
     wave, flux, err, cont, lsf = _spectrum(seed=4)
-    flux = _inject(wave, flux, 5577.34, amp=0.5, sigma_pix=lsf)  # [O I] sky
+    flux = _inject(wave, flux, SKY_OI, amp=0.5, sigma_pix=lsf)  # [O I] sky
     lines = find_emission_lines(wave, flux, err, lsf_sigma_pix=lsf, snr_min=8.0)
-    near = [ln for ln in lines if abs(ln.wavelength - 5577.34) <= 2.0]
+    near = [ln for ln in lines if abs(ln.wavelength - SKY_OI) <= 2.0]
     assert near
     assert all(classify_line(ln) == "sky_line" for ln in near)
 
@@ -96,7 +99,7 @@ def test_rejects_redshifted_halpha():
 def test_reject_lines_histogram():
     wave, flux, err, cont, lsf = _spectrum(seed=6)
     flux = _inject(wave, flux, 5000.0, amp=0.5, sigma_pix=lsf)        # laser
-    flux = _inject(wave, flux, 5577.34, amp=0.5, sigma_pix=lsf)        # sky
+    flux = _inject(wave, flux, SKY_OI, amp=0.5, sigma_pix=lsf)        # sky
     flux = _inject(wave, flux, 5200.0, amp=0.8, sigma_pix=0.35 * lsf)  # CR
     lines = find_emission_lines(wave, flux, err, lsf_sigma_pix=lsf, snr_min=8.0)
     survivors, counts = reject_lines(lines, redshift=0.0)
@@ -124,7 +127,7 @@ def test_process_and_search_spectra():
 
     # Spectrum B: only a sky line -> no surviving candidate.
     wave_b, flux_b, err_b, _, _ = _spectrum(seed=11)
-    flux_b = _inject(wave_b, flux_b, 5577.34, amp=0.6, sigma_pix=lsf)
+    flux_b = _inject(wave_b, flux_b, SKY_OI, amp=0.6, sigma_pix=lsf)
     ivar_b = 1.0 / err_b**2
 
     res = search_spectra([
@@ -262,6 +265,51 @@ def test_mask_blanks_line():
     cands, _ = process_spectrum("M", wave, flux, ivar, resolution=res_match,
                                 snr_min=8.0, mask=mask)
     assert not any(abs(c.wavelength - 5000.0) <= 2.0 for c in cands)
+
+
+def test_cross_instrument_line_excess():
+    from seti.spectra.confirm import line_excess
+
+    wave = np.linspace(4000, 9000, 5000)
+    flux = np.ones_like(wave) + np.random.default_rng(0).normal(0, 0.02, wave.size)
+    # Inject a strong emission line at 6800 A.
+    i = int(np.argmin(np.abs(wave - 6800.0)))
+    flux[i] += 1.0
+    ex = line_excess(wave, flux, np.full_like(wave, 1.0), 6800.0)
+    assert ex["present"] and ex["sigma"] > 4.0
+    # No line at a blank wavelength -> not present.
+    blank = line_excess(wave, flux, np.full_like(wave, 1.0), 5200.0)
+    assert not blank["present"]
+
+
+def test_rejects_oversubtraction_and_asymmetric_profiles():
+    from seti.spectra.detect import EmissionLine, _profile_shape
+
+    # A clean symmetric line survives the profile cut.
+    clean = EmissionLine(index=50, wavelength=5500.0, significance=30.0,
+                         width_ratio=1.0, amplitude=1.0, ew=1.0, n_pix=3,
+                         ivar_ratio=1.0, fwhm_pix=2.5, min_adjacent=0.0,
+                         asymmetry=1.1)
+    assert classify_line(clean, redshift=0.0) is None
+    # A line flanked by a deep negative trough = sky over-subtraction residual.
+    trough = EmissionLine(index=50, wavelength=5500.0, significance=30.0,
+                          width_ratio=1.0, amplitude=1.0, ew=1.0, n_pix=3,
+                          ivar_ratio=1.0, fwhm_pix=2.5, min_adjacent=-0.5,
+                          asymmetry=1.1)
+    assert classify_line(trough, redshift=0.0) == "oversubtraction_residual"
+    # A strongly one-sided profile is rejected as asymmetric.
+    onesided = EmissionLine(index=50, wavelength=5500.0, significance=30.0,
+                            width_ratio=1.0, amplitude=1.0, ew=1.0, n_pix=3,
+                            ivar_ratio=1.0, fwhm_pix=2.5, min_adjacent=0.0,
+                            asymmetry=8.0)
+    assert classify_line(onesided, redshift=0.0) == "asymmetric_profile"
+
+    # _profile_shape detects a negative-trough residual directly.
+    resid = np.zeros(21)
+    resid[10] = 1.0
+    resid[11] = -0.5     # over-subtraction trough redward of the peak
+    min_adj, _asym = _profile_shape(resid, 10)
+    assert min_adj <= -0.5
 
 
 def test_rejects_single_pixel_spike_by_fwhm():

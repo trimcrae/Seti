@@ -18,6 +18,7 @@ from ..config import Config, load_config
 from ..stats.upper_limit import occurrence_upper_limit
 from .context import hr_class, resists_mundane
 from .dips import detect_dips
+from .glint import detect_glints
 from .secular import detect_secular_fade, fit_secular, season_medians
 
 
@@ -273,6 +274,12 @@ def dimming_run(
         # drift) can be subtracted in an ensemble pass -- the decisive contamination
         # control for the secular channel.
         sm = season_medians(mjd_a, mag_a, err_a, min_epochs=min_epochs)
+        # Third, NOVEL channel: brief achromatic *brightening* (a specular glint
+        # from a flat artificial surface).  Distinct from every fainting/spectral
+        # baseline.  g/r achromaticity is confirmed on the shortlist by the vet.
+        gl = detect_glints(mjd_a, mag_a, err_a, min_epochs=min_epochs)
+        is_glint = bool(gl is not None and gl.score >= 0.5
+                        and gl.max_brighten >= 0.30 and gl.n_glint_events >= 1)
         d.update({"source_id": meta.get("source_id"), "ra": meta.get("ra"),
                   "dec": meta.get("dec"),
                   "g_mag": g_mag, "bp_rp": bp_rp, "parallax": plx,
@@ -282,6 +289,11 @@ def dimming_run(
                   "secular_total_mag": sec.total_change_mag if sec else float("nan"),
                   "secular_score": sec.score if sec else 0.0,
                   "is_secular_fader": is_fader,
+                  "glint_max_brighten": gl.max_brighten if gl else float("nan"),
+                  "glint_sigma": gl.brighten_sigma if gl else float("nan"),
+                  "glint_events": gl.n_glint_events if gl else 0,
+                  "glint_score": gl.score if gl else 0.0,
+                  "is_glint": is_glint,
                   "resists_mundane": bool(is_cand and resists_mundane(
                       hr, d.get("period_power", 1.0), period_power_max)),
                   "is_candidate": is_cand})
@@ -400,6 +412,26 @@ def dimming_run(
         "mjd": r["_mjd"].tolist(), "mag": r["_mag"].tolist()} for r in faders[:30]]
     (out_dir / "top_faders.json").write_text(json.dumps(fader_windows))
 
+    # Glint channel: brief achromatic brightening.  Require a Gaia main-sequence
+    # match (the faint hr=unknown population is systematics), then rank by
+    # amplitude; g/r achromaticity is confirmed by the vet.
+    raw_glints = [r for r in rows if r.get("is_glint")]
+    if mode == "region" and raw_glints:
+        try:
+            _attach_gaia_hr(raw_glints, period_power_max)
+        except Exception as exc:
+            print(f"[dimming] Gaia HR cross-match (glints) skipped: {exc!r}")
+    glints = [r for r in raw_glints if r.get("hr_class") == "main_sequence"]
+    glints.sort(key=lambda r: r.get("glint_max_brighten", 0.0), reverse=True)
+    print(f"[dimming] glints: {len(raw_glints)} raw -> {len(glints)} main-sequence")
+    glint_windows = [{
+        "source_id": r.get("source_id"), "ra": r.get("ra"), "dec": r.get("dec"),
+        "glint_max_brighten": r.get("glint_max_brighten"),
+        "glint_sigma": r.get("glint_sigma"), "glint_events": r.get("glint_events"),
+        "hr_class": r.get("hr_class"),
+        "mjd": r["_mjd"].tolist(), "mag": r["_mag"].tolist()} for r in glints[:30]]
+    (out_dir / "top_glints.json").write_text(json.dumps(glint_windows))
+
     # Flat candidate table (drop the bulky light-curve arrays).
     if rows:
         flat = pd.DataFrame([{k: v for k, v in r.items()
@@ -415,6 +447,9 @@ def dimming_run(
         fader_ids = {r.get("source_id") for r in faders}
         flat[flat["source_id"].isin(fader_ids)].to_csv(
             out_dir / "secular_faders.csv", index=False)
+        glint_ids = {r.get("source_id") for r in glints}
+        flat[flat["source_id"].isin(glint_ids)].to_csv(
+            out_dir / "glint_candidates.csv", index=False)
 
     k = len(candidates)
     lim = occurrence_upper_limit(
@@ -429,6 +464,12 @@ def dimming_run(
         "n_resists_mundane": n_resists,
         "n_secular_faders": len(faders),
         "n_secular_faders_raw": n_faders_raw,
+        "n_glints": len(glints),
+        "top_glints": [
+            {"source_id": r.get("source_id"), "ra": r.get("ra"), "dec": r.get("dec"),
+             "glint_max_brighten": r.get("glint_max_brighten"),
+             "glint_sigma": r.get("glint_sigma"), "glint_events": r.get("glint_events"),
+             "hr_class": r.get("hr_class")} for r in glints[:20]],
         "top_faders": [
             {"source_id": r.get("source_id"), "ra": r.get("ra"), "dec": r.get("dec"),
              "secular_slope_mag_yr": r.get("secular_slope_mag_yr"),

@@ -109,7 +109,8 @@ def _cmd_spectra_run(args, cfg):
     from .spectra.run import spectra_run
 
     spectra_run(cfg, n=args.n, dataset=args.dataset,
-                spectype=args.spectype, snr_min=args.snr_min)
+                spectype=args.spectype, snr_min=args.snr_min,
+                mode=args.mode)
 
 
 def _cmd_dimming_run(args, cfg):
@@ -150,6 +151,15 @@ def _cmd_dimming_vet(args, cfg):
             df["field_dir"] = Path(fp).parent.name
             df["cand_type"] = "secular_fader"
             frames.append(df)
+    for fp in sorted(glob.glob(str(cfg.root / "results" / "dimming" / "*" /
+                                   "glint_candidates.csv"))):
+        df = pd.read_csv(fp)
+        if "hr_class" in df.columns:
+            df = df[df["hr_class"] == "main_sequence"]
+        if len(df):
+            df["field_dir"] = Path(fp).parent.name
+            df["cand_type"] = "glint"
+            frames.append(df)
     if not frames:
         print("[dimming-vet] no candidates found")
         return
@@ -162,27 +172,31 @@ def _cmd_dimming_vet(args, cfg):
     # candidates that survived the IR/SIMBAD cut (no point characterising dusty/
     # known ones).  frac_confirmed = fraction of reference-band dips coincident in
     # another band.
-    from .dimming.vet import multiband_coincidence, secular_achromatic
-    fracs, nbands, dpb, secconf = [], [], [], []
+    from .dimming.vet import glint_achromatic, multiband_coincidence, secular_achromatic
+    fracs, nbands, dpb, secconf, glconf = [], [], [], [], []
     for _, r in vetted.iterrows():
         ctype = r.get("cand_type", "dipper")
-        mb, sc = {}, {}
+        mb, sc, gl = {}, {}, {}
         if r.get("ir_verdict") in ("clean", "no_ir_data"):
             try:
                 if ctype == "dipper":
                     mb = multiband_coincidence(float(r["ra"]), float(r["dec"]))
-                else:   # secular fader: confirm the fade is achromatic (g and r)
+                elif ctype == "secular_fader":
                     sc = secular_achromatic(float(r["ra"]), float(r["dec"]))
+                elif ctype == "glint":   # confirm the flash is achromatic (g==r)
+                    gl = glint_achromatic(float(r["ra"]), float(r["dec"]))
             except Exception as exc:
                 print(f"[dimming-vet] band check failed for {r['source_id']}: {exc!r}")
         fracs.append(mb.get("frac_confirmed", float("nan")))
         nbands.append(mb.get("n_bands", 0))
         dpb.append(str(mb.get("dips_per_band", {})))
         secconf.append(sc.get("secular_confirmed", False))
+        glconf.append(gl.get("glint_confirmed", False))
     vetted["frac_confirmed"] = fracs
     vetted["n_bands"] = nbands
     vetted["dips_per_band"] = dpb
     vetted["secular_confirmed"] = secconf
+    vetted["glint_confirmed"] = glconf
     # Final verdict: a clean candidate whose dips are confirmed achromatic in
     # >=2 bands is the genuinely interesting regime; clean but single-band is an
     # artefact.
@@ -209,6 +223,10 @@ def _cmd_dimming_vet(args, cfg):
                 return "active_dwarf_fade"
             return ("clean_secular_fade" if r.get("secular_confirmed")
                     else "single_band_fade")
+        # Glints: a specular flash is achromatic (g and r brighten equally); a
+        # blue/chromatic brightening is a stellar flare.
+        if r.get("cand_type", "dipper") == "glint":
+            return "clean_glint" if r.get("glint_confirmed") else "chromatic_flare"
         f = r["frac_confirmed"]
         if r["n_bands"] < 2 or not np.isfinite(f):
             return "single_band_unconfirmed"
@@ -221,13 +239,15 @@ def _cmd_dimming_vet(args, cfg):
                         "period_power", "secular_sigma", "secular_total_mag", "bp_rp",
                         "hr_class", "W1_W2", "K_W2",
                         "simbad_otype", "ir_verdict", "frac_confirmed", "n_bands",
-                        "dips_per_band", "secular_confirmed", "verdict")
+                        "dips_per_band", "secular_confirmed",
+                        "glint_max_brighten", "glint_confirmed", "verdict")
             if c in vetted.columns]
     vetted[cols].to_csv(out_dir / "vetting.csv", index=False)
     print(vetted[cols].to_string(index=False))
-    gold = vetted[vetted["verdict"].isin(("clean_achromatic", "clean_secular_fade"))]
-    print(f"[dimming-vet] {len(gold)} GOLD (clean_achromatic dippers + "
-          f"clean_secular_fade) of {len(vetted)} vetted")
+    gold_verdicts = ("clean_achromatic", "clean_secular_fade", "clean_glint")
+    gold = vetted[vetted["verdict"].isin(gold_verdicts)]
+    print(f"[dimming-vet] {len(gold)} GOLD (clean_achromatic + clean_secular_fade "
+          f"+ clean_glint) of {len(vetted)} vetted")
 
 
 def _cmd_xp_run(args, cfg):
@@ -247,6 +267,48 @@ def _cmd_dimming_characterize(args, cfg):
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "characterization.json").write_text(json.dumps(res, indent=2))
     print(json.dumps(res, indent=2))
+
+
+def _cmd_spectra_confirm(args, cfg):
+    from .spectra.confirm import cross_confirm
+
+    # Prefer the triaged shortlist (observed-frame known-line + recurrence cuts
+    # already applied); fall back to the raw candidate list.
+    triaged = cfg.root / "results" / "spectra_triage" / "priority_targets.csv"
+    path = cfg.root / "results" / "spectra" / "laser_candidates.csv"
+    if triaged.exists():
+        df = pd.read_csv(triaged)
+        df = df.sort_values("significance", ascending=False)
+    elif path.exists():
+        df = pd.read_csv(path)
+        if "hunt_rank" in df.columns:
+            df = df.sort_values("hunt_rank", ascending=False)
+    else:
+        print(f"[confirm] no candidates at {path}")
+        return
+    # Prefer the cleanest beacons: single line in the spectrum.
+    if "n_lines_in_spectrum" in df.columns:
+        df = df[df["n_lines_in_spectrum"] == 1]
+    cands = df.head(args.top).to_dict("records")
+    confirmed = cross_confirm(cands, max_candidates=args.top)
+    out = pd.DataFrame(confirmed)
+    keep = [c for c in ("spec_id", "wavelength", "significance", "width_ratio",
+                        "ra", "dec", "data_release", "n_overlap", "confirm_sigma",
+                        "cross_confirmed") if c in out.columns]
+    dst = cfg.root / "results" / "spectra" / "cross_confirm.csv"
+    out[keep].to_csv(dst, index=False)
+    n_overlap = int((out["n_overlap"] > 0).sum()) if "n_overlap" in out else 0
+    n_conf = int(out["cross_confirmed"].sum()) if "cross_confirmed" in out else 0
+    print(out[keep].to_string(index=False))
+    print(f"[confirm] {n_overlap}/{len(out)} had an independent spectrum; "
+          f"{n_conf} CROSS-CONFIRMED (line present in a second instrument)")
+
+
+def _cmd_spectra_triage(args, cfg):
+    from .spectra.triage import triage_run
+
+    triage_run(cfg.root, v_window_kms=args.v_window,
+               recur_tol=args.recur_tol, recur_min=args.recur_min)
 
 
 def _cmd_paper_numbers(args, cfg):
@@ -308,6 +370,9 @@ def main(argv=None):
     p.add_argument("--dataset", default="DESI-EDR")
     p.add_argument("--spectype", default=None)
     p.add_argument("--snr-min", type=float, default=8.0)
+    p.add_argument("--mode", choices=["emission", "absorption"],
+                   default="emission",
+                   help="emission=laser lines; absorption=anomalous narrow absorbers")
     p.set_defaults(func=_cmd_spectra_run)
 
     p = sub.add_parser("dimming-run")
@@ -345,6 +410,16 @@ def main(argv=None):
     p.add_argument("--ra", type=float, required=True)
     p.add_argument("--dec", type=float, required=True)
     p.set_defaults(func=_cmd_dimming_characterize)
+
+    p = sub.add_parser("spectra-confirm")
+    p.add_argument("--top", type=int, default=40)
+    p.set_defaults(func=_cmd_spectra_confirm)
+
+    p = sub.add_parser("spectra-triage")
+    p.add_argument("--v-window", type=float, default=300.0)
+    p.add_argument("--recur-tol", type=float, default=3.0)
+    p.add_argument("--recur-min", type=int, default=3)
+    p.set_defaults(func=_cmd_spectra_triage)
 
     p = sub.add_parser("contamination-budget")
     p.add_argument("--seed", type=int, default=11)

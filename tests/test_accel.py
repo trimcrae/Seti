@@ -77,3 +77,34 @@ def test_accel_run_offline(tmp_path):
     assert summary["n_searched"] == 2
     assert summary["n_candidates"] >= 1
     assert (tmp_path / "results" / "accel" / "summary.json").exists()
+
+
+def test_companion_mass_inverts_mass_function():
+    from seti.accel.orbit import companion_mass
+    # f = M2^3/(M1+M2)^2; for M1=1, M2=10 -> f=1000/121=8.264
+    import numpy as np
+    m2 = companion_mass(np.array([1000.0 / 121.0]), np.array([1.0]))
+    assert abs(m2[0] - 10.0) < 0.2
+
+
+def test_rank_dark_companions_flags_bh_like_system():
+    import numpy as np
+    import pandas as pd
+
+    from seti.accel.orbit import rank_dark_companions
+    # Construct a BH-like astrometric orbit: solar-mass G star (M_G~4.8 at 100pc,
+    # G~9.8), period 1 yr, photocentre a0 giving a massive dark companion.
+    # a0_au^3 / P_yr^2 = f; want f ~ 8 (=> M2~10 for M1~1). a0_au = f^(1/3) for P=1yr.
+    a0_au = (8.0) ** (1 / 3)                     # ~2.0 AU
+    plx = 10.0                                   # 100 pc
+    a0_mas = a0_au * plx                         # a0_au = a0_mas/plx
+    # Thiele-Innes with A=a0_mas, others 0 -> a0 recovered = a0_mas
+    df = pd.DataFrame({
+        "source_id": [42], "a_thiele_innes": [a0_mas], "b_thiele_innes": [0.0],
+        "f_thiele_innes": [0.0], "g_thiele_innes": [0.0], "period": [365.25],
+        "parallax": [plx], "phot_g_mean_mag": [9.8],
+    })
+    ranked = rank_dark_companions(df, m2_min=3.0)
+    assert len(ranked) == 1
+    assert ranked.iloc[0]["m2_msun"] > 3.0
+    assert bool(ranked.iloc[0]["compact_object_candidate"]) is True

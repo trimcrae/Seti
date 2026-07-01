@@ -422,3 +422,15 @@ def test_neowise_like_cadence_recovers_trend():
     assert s is not None
     assert abs(s.slope_mag_yr - 0.04) < 0.015
     assert s.slope_sigma > 2.0
+
+
+def test_ir_reddening_law_ratio_is_mundane():
+    from seti.dimming.characterize import ir_counterpart_verdict
+
+    # The Gaia DR3 1268299311319369984 case: optical fades 0.073 mag/yr, W1
+    # fades 0.0045 mag/yr (ratio 0.062 ~ the A_W1/A_optical extinction ratio).
+    neowise = {"w1_slope_mag_yr": 0.00453, "w1_slope_sigma": 8.36,
+               "w2_slope_mag_yr": 0.00407, "w2_slope_sigma": 3.76}
+    assert ir_counterpart_verdict(0.0726, neowise) == "ir_fades_reddening_law"
+    # Without the optical slope the verdict must stay agnostic.
+    assert ir_counterpart_verdict(None, neowise) == "insufficient_ir"

@@ -15,9 +15,38 @@ and measure the flux excess at the candidate's observed wavelength.
 
 from __future__ import annotations
 
+import time
+
 import numpy as np
 
 from .acquire import _records, _rget
+
+
+def _make_client():
+    """A SPARCL client with a sane read timeout (the default ~1.1 s times out
+    almost every `find`).  Falls back to the bare client if the kwarg is rejected."""
+    from sparcl.client import SparclClient
+    for kw in ({"connect_timeout": 30.0}, {}):
+        try:
+            return SparclClient(**kw)
+        except Exception:
+            continue
+    return SparclClient()
+
+
+def _find_with_retry(fn, *, tries: int = 4, base_delay: float = 2.0):
+    """Call a SPARCL query, retrying transient ReadTimeout / AccessNotAllowed
+    (rate-limit) errors with exponential backoff."""
+    last = None
+    for k in range(tries):
+        try:
+            return fn()
+        except Exception as exc:  # noqa: BLE001 -- SPARCL raises varied error types
+            last = exc
+            time.sleep(base_delay * (2 ** k))
+    if last is not None:
+        raise last
+    return None
 
 # Survey datasets to search for an independent observation, with their nominal
 # resolution (used only for the local excess window).
@@ -46,7 +75,8 @@ def _find_overlap(client, ra: float, dec: float, exclude_release: str,
     }
     fields = ["sparcl_id", "ra", "dec", "data_release"]
     try:
-        found = client.find(outfields=fields, constraints=constraints, limit=20)
+        found = _find_with_retry(
+            lambda: client.find(outfields=fields, constraints=constraints, limit=20))
     except Exception as exc:
         print(f"[confirm] find failed at ({ra:.4f},{dec:.4f}): {exc!r}")
         return []
@@ -93,10 +123,11 @@ def cross_confirm(candidates: list[dict], client=None, max_candidates: int = 40)
     and ``cross_confirmed``.
     """
     if client is None:
-        from sparcl.client import SparclClient
-        client = SparclClient()
+        client = _make_client()
     out: list[dict] = []
-    for c in candidates[:max_candidates]:
+    for idx, c in enumerate(candidates[:max_candidates]):
+        if idx:
+            time.sleep(0.5)   # throttle so rapid finds don't trip rate limits
         ra, dec = c.get("ra"), c.get("dec")
         obs = c.get("wavelength")
         rel = str(c.get("data_release", "DESI-DR1"))
@@ -112,13 +143,17 @@ def cross_confirm(candidates: list[dict], client=None, max_candidates: int = 40)
         if not ids:
             out.append(rec)
             continue
+        inc = ["sparcl_id", "wavelength", "flux", "ivar", "data_release"]
         try:
-            got = client.retrieve(uuid_list=ids,
-                                  include=["sparcl_id", "wavelength", "flux", "ivar",
-                                           "data_release"])
+            got = _find_with_retry(
+                lambda ids=ids, inc=inc: client.retrieve(uuid_list=ids, include=inc))
         except TypeError:
-            got = client.retrieve(ids, include=["sparcl_id", "wavelength", "flux",
-                                                "ivar", "data_release"])
+            got = _find_with_retry(
+                lambda ids=ids, inc=inc: client.retrieve(ids, include=inc))
+        except Exception as exc:
+            print(f"[confirm] retrieve failed for {str(c.get('spec_id'))[:8]}: {exc!r}")
+            out.append(rec)
+            continue
         best = float("nan")
         for r in _records(got):
             wave = np.asarray(_rget(r, "wavelength", []), float)

@@ -96,18 +96,43 @@ def analyze_orbits(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def rank_dark_companions(df: pd.DataFrame, m2_min: float = 3.0,
-                         max_dist_pc: float = 1000.0) -> pd.DataFrame:
-    """Rank systems whose invisible companion is massive (compact-object-like)."""
+# The three published Gaia astrometric black holes (source_ids) -- recovering
+# them validates the pipeline; anything else at similar mass is a fresh candidate.
+KNOWN_GAIA_BH = {
+    4373465352415301632,   # Gaia BH1
+    5870569352746779008,   # Gaia BH2
+    4318465066420528000,   # Gaia BH3
+}
+
+
+def rank_dark_companions(df: pd.DataFrame, m2_min: float = 3.0, m2_max: float = 25.0,
+                         max_dist_pc: float = 1000.0, ruwe_min: float = 3.0
+                         ) -> pd.DataFrame:
+    """Rank systems whose invisible companion is massive (compact-object-like),
+    with physical-consistency cuts.
+
+    A genuine massive dark companion produces a *large* astrometric wobble, so a
+    high implied mass paired with a *low* RUWE is a degenerate/spurious orbital
+    fit (these dominate the short-period tail where a0^3/P^2 blows up) --- require
+    ``ruwe >= ruwe_min``.  Cap the mass at ``m2_max``: a stellar-mass compact
+    object is <~ 20 Msun, so a larger value flags a bad solution, not a discovery.
+    """
     d = analyze_orbits(df) if "m2_msun" not in df.columns else df
     plx = pd.to_numeric(d.get("parallax"), errors="coerce")
+    ruwe = pd.to_numeric(d.get("ruwe"), errors="coerce")
     dist = 1000.0 / plx
-    sel = (d["m2_msun"] >= m2_min) & (dist <= max_dist_pc) & np.isfinite(d["m2_msun"])
+    sel = ((d["m2_msun"] >= m2_min) & (d["m2_msun"] <= m2_max)
+           & (dist <= max_dist_pc) & np.isfinite(d["m2_msun"])
+           & (ruwe >= ruwe_min))
     out = d[sel].copy()
     out["dist_pc"] = dist[sel]
-    out["rank_score"] = (np.clip(out["m2_msun"] / 10.0, 0, 1)
-                         * np.clip(1.0 - out["dist_pc"] / max_dist_pc, 0, 1))
-    return out.sort_values("m2_msun", ascending=False)
+    out["known_gaia_bh"] = out["source_id"].isin(KNOWN_GAIA_BH)
+    # Rank the *new* nearby massive companions highest (known BHs are validation).
+    out["rank_score"] = (np.clip(out["m2_msun"] / 15.0, 0, 1)
+                         * np.clip(1.0 - out["dist_pc"] / max_dist_pc, 0, 1)
+                         * np.where(out["known_gaia_bh"], 0.2, 1.0))
+    return out.sort_values(["known_gaia_bh", "rank_score"],
+                           ascending=[True, False])
 
 
 __all__ = ["a0_mas_from_thiele_innes", "companion_mass", "primary_mass_from_absg",

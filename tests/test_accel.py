@@ -102,7 +102,7 @@ def test_rank_dark_companions_flags_bh_like_system():
     df = pd.DataFrame({
         "source_id": [42], "a_thiele_innes": [a0_mas], "b_thiele_innes": [0.0],
         "f_thiele_innes": [0.0], "g_thiele_innes": [0.0], "period": [365.25],
-        "parallax": [plx], "phot_g_mean_mag": [9.8],
+        "parallax": [plx], "phot_g_mean_mag": [9.8], "ruwe": [8.0],
     })
     ranked = rank_dark_companions(df, m2_min=3.0)
     assert len(ranked) == 1

@@ -14,9 +14,18 @@ next. Last updated: 2026-07-01.
    line at 7542 Å in the same spectrum*. None cross-confirmed yet — the first
    `spectra-confirm` pass found zero overlapping repeat spectra for the
    pre-triage ranking; it now consumes this shortlist.
-   *Next decisive test:* re-dispatch `spectra-confirm.yml` (top ≈ 60); for
-   targets without repeat spectra, check the per-exposure (coadd-input) frames
-   — a real line persists across exposures, a cosmic/artifact does not.
+   *Next decisive test:* the 2026-07-01 `spectra-confirm` pass on the triaged
+   shortlist found **zero** overlapping repeat spectra in SPARCL (19
+   single-line targets checked) — the repeat-visit path is exhausted. Two
+   remaining routes: (a) **per-exposure check** — fetch the coadd-input
+   individual exposures for each target from the SDSS SAS (new acquisition
+   code, runner-side); a real line persists across exposures, a cosmic ray or
+   artifact does not; (b) note the current confirm step's
+   `n_lines_in_spectrum == 1` filter *excludes* the top-ranked target
+   (spec 068839f0…, 31.9σ at 7518 Å + second surviving line at 7542 Å in the
+   same spectrum) — a two-line beacon pattern in one otherwise-quiet spectrum
+   is exactly what should be examined by hand first
+   (`results/spectra/top_candidate_spectra.json` has the cutouts).
 2. **WD IR-excess multimodal candidates** —
    `results/science/multimodal_candidates.csv` (170 anomaly-scored excesses
    from 7,716 clean 100-pc-scale white dwarfs). Not yet pushed through

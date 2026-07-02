@@ -152,8 +152,16 @@ def cluster_run(cfg: Config | None = None, ra: float = 200.0, dec: float = 0.0,
     mask = mask & np.isfinite(df[["X_pc", "Y_pc", "Z_pc"]].to_numpy(float)).all(1)
     n_excess = int(mask.sum())
 
+    # Test over-clustering in three spaces.  Position alone is washed out by the
+    # Galactic density gradient; the discriminating space for a *technological*
+    # population is velocity (an expanding population shares a space velocity, like
+    # a moving group), and full phase space combines both.
     space = ["X_pc", "Y_pc", "Z_pc"]
+    vel = ["vtan_ra_kms", "vtan_dec_kms"]
+    phase = space + vel
     res = matched_null_clustering(df, mask, space, n_null=500)
+    res_vel = matched_null_clustering(df, mask, vel, n_null=500)
+    res_phase = matched_null_clustering(df, mask, phase, n_null=500)
     # Friends-of-friends in raw parsecs: link excess sources within link_pc.
     labels = (friends_of_friends(df[mask], space, linking_length=link_pc,
                                  min_size=4, standardize=False)
@@ -191,13 +199,18 @@ def cluster_run(cfg: Config | None = None, ra: float = 200.0, dec: float = 0.0,
         "clustering": {k: res.get(k) for k in
                        ("S_obs", "S_null_mean", "S_null_std", "z", "p_value",
                         "over_clustered", "n_anom")},
+        "clustering_velocity": {k: res_vel.get(k) for k in
+                                ("z", "p_value", "over_clustered", "n_anom")},
+        "clustering_phase_space": {k: res_phase.get(k) for k in
+                                   ("z", "p_value", "over_clustered", "n_anom")},
         "n_groups": len(groups),
         "top_groups": groups[:15],
     }
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
     print("[cluster]", json.dumps({"n_searched": summary["n_searched"],
-          "n_ir_excess": n_excess, "p_value": res.get("p_value"),
-          "over_clustered": res.get("over_clustered"), "n_groups": len(groups)}))
+          "n_ir_excess": n_excess, "p_pos": res.get("p_value"),
+          "p_vel": res_vel.get("p_value"), "p_phase": res_phase.get("p_value"),
+          "n_groups": len(groups)}))
     return summary
 
 

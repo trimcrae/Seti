@@ -82,8 +82,17 @@ question: does the Gaia×AllWISE **IR-excess tail over-cluster in phase space**
 (3D position + velocity) beyond a magnitude/colour/distance-matched random null,
 as an expanding waste-heat-building population would? `matched_null_clustering`
 is offline-validated (recovers an injected co-moving group at p<0.01, clean null
-on confounded sets). First Gaia×AllWISE run (≤500 pc, G<16) dispatched — the
-decisive output is the over-density p-value and any friends-of-friends group.
+on confounded sets).
+
+**First run (cone RA200/Dec0, r10°, ≤500 pc, G<16):** 21,675 Gaia×AllWISE stars →
+195 IR-excess (z≥4) sources → **position clustering p=0.64, over_clustered=False**
+— the excess tail traces the ordinary stellar density; the two friends-of-friends
+groups (n=23 @33 pc, n=9 @69 pc) are fully accounted for by the matched null (a
+nearby-star over-density), i.e. not anomalous. The method works and this cone is
+clean. *Note:* position alone is washed out by the Galactic density gradient; the
+run now also tests **velocity** and **full phase space** (a technological moving
+group shares a space velocity). Next: sweep several cones + read the velocity /
+phase-space p-values, which are the discriminating ones.
 
 ## Channel state
 

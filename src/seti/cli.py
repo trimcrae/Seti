@@ -144,6 +144,15 @@ def _cmd_panspermia_run(args, cfg):
                    d_min_max_pc=args.d_min_max_pc)
 
 
+def _cmd_cluster_aggregate(args, cfg):
+    from .cluster.aggregate import aggregate_sweep
+
+    agg = aggregate_sweep(cfg.root)
+    print(json.dumps({"n_cones": agg["n_cones"], "total_stars": agg["total_stars"],
+                      "detection": agg["detection"],
+                      "p_phase": agg.get("p_phase")}, indent=2, default=str))
+
+
 def _cmd_science_blend(args, cfg):
     from .discriminate.blend import blend_followup
 
@@ -467,6 +476,11 @@ def main(argv=None):
     p.add_argument("--d-min-max-pc", type=float, default=2.0,
                    help="closest-approach cut defining the shortlist (pc)")
     p.set_defaults(func=_cmd_panspermia_run)
+
+    p = sub.add_parser("cluster-aggregate",
+                       help="combine the multi-cone clustering sweep into one "
+                            "global/trials-corrected result")
+    p.set_defaults(func=_cmd_cluster_aggregate)
 
     p = sub.add_parser("dimming-run")
     p.add_argument("--ra", type=float, default=270.0)

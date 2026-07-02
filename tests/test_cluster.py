@@ -127,3 +127,36 @@ def test_cluster_run_offline_recovers_excess_group(tmp_path):
     assert s["n_ir_excess"] >= 20
     assert s["clustering"]["over_clustered"] is True
     assert s["n_groups"] >= 1
+
+
+def test_aggregate_sweep(tmp_path):
+    import json
+
+    from seti.cluster.aggregate import aggregate_sweep
+
+    base = tmp_path / "results" / "cluster"
+    for i, (ra, p) in enumerate([(200.0, 0.6), (150.0, 0.4), (30.0, 0.6)]):
+        d = base / f"f{i}"
+        d.mkdir(parents=True)
+        (d / "summary.json").write_text(json.dumps({
+            "field": {"ra": ra, "dec": 0.0, "radius_deg": 10.0},
+            "n_searched": 20000, "n_ir_excess": 190,
+            "clustering": {"p_value": p},
+            "clustering_velocity": {"p_value": p},
+            "clustering_phase_space": {"p_value": p}}))
+    agg = aggregate_sweep(tmp_path)
+    assert agg["n_cones"] == 3
+    assert agg["total_stars"] == 60000
+    assert agg["detection"] is False
+
+    d = base / "f_hit"
+    d.mkdir(parents=True)
+    (d / "summary.json").write_text(json.dumps({
+        "field": {"ra": 300.0, "dec": 0.0, "radius_deg": 10.0},
+        "n_searched": 20000, "n_ir_excess": 190,
+        "clustering": {"p_value": 0.5},
+        "clustering_velocity": {"p_value": 0.5},
+        "clustering_phase_space": {"p_value": 0.0001}}))
+    agg2 = aggregate_sweep(tmp_path)
+    assert agg2["p_phase"]["any_cone_significant"] is True
+    assert agg2["detection"] is True

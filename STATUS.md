@@ -77,7 +77,7 @@ next. Last updated: 2026-07-01.
 | Astrometric dark companion (Gaia orbits) | 105,066 NSS orbits, ≤1 kpc | 0 novel (8 class-3 = BH1 + 7, but 7/8 already in Shahaf+2023; 1 borderline-absent is the weakest solution) | reproduction of the published AMRF catalogue — change the question |
 | Laser absorption (DESI-DR1) | 6,500+ spectra (latest committed run) | 55 triaged | same; hot-star continua only (line-forest stars skipped by design) |
 | WD IR excess | 7,716 clean WDs | 170 scored | variability (ZTF) + SED follow-up of top anomaly scores |
-| Gaia XP anomalies | 1 cone (RA180/Dec30): 159 sources — **undersampled/unreliable** (70% flagged; colour locus needs ≫159) | — | reliability guard added (needs n≥1500, anomaly_frac≤0.15); dense-field run (RA283/Dec−3, r1.5°, ~80k) dispatched |
+| Gaia XP anomalies | RA283/Dec−3 dense field: 8,863 sources, 494 raw / 397 "clean" anomalies (5.6%) | — (re-ranking) | raw max-residual ranking was dominated by **broad molecular bands of red stars** (bp_rp 2–3, TiO/VO/H₂O); added a **feature-width** discriminator (narrow width≤3 = artificial-line-like, broad = stellar). Re-run dispatched to produce the narrow-feature shortlist; examine those, not the broad ones |
 
 ## Known systematics ledger (do not re-derive)
 

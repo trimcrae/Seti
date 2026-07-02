@@ -16,12 +16,10 @@
     "astrometric_excess_noise_sig": 13.205623626708984,
     "ipd_frac_multi_peak": 0.0,
     "non_single_star": 0.0,
-    "companion_flag": true,
-    "reasons": [
-      "astrometric_excess_noise=0.10mas (sig 13.2)"
-    ]
+    "companion_flag": false,
+    "reasons": []
   },
-  "ir": {
+  "ir_excess": {
     "w1mpro": NaN,
     "w2mpro": NaN,
     "w3mpro": NaN,
@@ -35,48 +33,103 @@
     "ir_excess_flag": false,
     "reasons": []
   },
-  "lightcurve": {
-    "lightcurve_flag": true,
-    "reasons": [
-      "aperiodic deep dips (score 0.72, max event depth 0.75)"
+  "ir_variability": {
+    "ir_variability_flag": false,
+    "reasons": [],
+    "neowise": {
+      "n_epochs": 289,
+      "w1_slope_mag_yr": 0.0006495225986687114,
+      "w1_slope_sigma": 1.8896737655217912,
+      "w1_n_seasons": 17,
+      "w2_slope_mag_yr": 0.0002748569389551493,
+      "w2_slope_sigma": 0.704567733928685,
+      "w2_n_seasons": 17
+    }
+  },
+  "lightcurve_ztf": {
+    "lightcurve_flag": false,
+    "reasons": [],
+    "needs_vetting": [
+      "dip in g only (single-band -> needs vetting)"
     ],
-    "dip": {
-      "n_epochs": 229,
-      "max_depth": 0.7495361200372419,
-      "n_dips": 7,
-      "dip_duty_cycle": 0.03056768558951965,
-      "asymmetry": 2.4594879668114347,
-      "best_period_d": 0.9974866786512578,
-      "period_power": 0.0595865092313671,
-      "score": 0.723843000819492,
-      "n_dip_events": 1,
-      "out_of_dip_rms": 0.005283441473261305,
-      "max_event_depth": 0.7495361200372419
-    },
-    "secular": {
-      "n_epochs": 229,
-      "baseline_yr": 6.98708708843257,
-      "n_seasons": 15,
-      "slope_mag_yr": -0.0027134804104886967,
-      "slope_sigma": 2.7950085891184617,
-      "total_change_mag": -0.018959323940840284,
-      "monotonic_frac": 0.6428571428571429,
-      "rms_resid_mag": 0.008554306418482528,
-      "score": 0.0
-    },
-    "glint": {
-      "n_epochs": 229,
-      "max_brighten": 0.049511785841342526,
-      "n_glint_epochs": 0,
-      "n_glint_events": 0,
-      "brighten_sigma": 3.751031417688384,
-      "out_of_glint_rms": 0.015285960666380268,
-      "score": 0.0
+    "bands": {
+      "g": {
+        "dip": {
+          "n_epochs": 229,
+          "max_depth": 0.7495361200372419,
+          "n_dips": 7,
+          "dip_duty_cycle": 0.03056768558951965,
+          "asymmetry": 2.4594879668114347,
+          "best_period_d": 0.9974866786512578,
+          "period_power": 0.0595865092313671,
+          "score": 0.723843000819492,
+          "n_dip_events": 1,
+          "out_of_dip_rms": 0.005283441473261305,
+          "max_event_depth": 0.7495361200372419
+        },
+        "secular": {
+          "n_epochs": 229,
+          "baseline_yr": 6.98708708843257,
+          "n_seasons": 15,
+          "slope_mag_yr": -0.0027134804104886967,
+          "slope_sigma": 2.7950085891184617,
+          "total_change_mag": -0.018959323940840284,
+          "monotonic_frac": 0.6428571428571429,
+          "rms_resid_mag": 0.008554306418482528,
+          "score": 0.0
+        },
+        "glint": {
+          "n_epochs": 229,
+          "max_brighten": 0.049511785841342526,
+          "n_glint_epochs": 0,
+          "n_glint_events": 0,
+          "brighten_sigma": 3.751031417688384,
+          "out_of_glint_rms": 0.015285960666380268,
+          "score": 0.0
+        }
+      }
     },
     "n_epochs": {
       "r": 0,
       "g": 229
-    }
+    },
+    "source": "ZTF"
+  },
+  "lightcurve_tess": {
+    "lightcurve_flag": false,
+    "reasons": [],
+    "needs_vetting": [],
+    "bands": {
+      "TESS": {
+        "dip": {
+          "n_epochs": 3527,
+          "max_depth": 0.005478206413330966,
+          "n_dips": 0,
+          "dip_duty_cycle": 0.0,
+          "asymmetry": 1.1326503344940468,
+          "best_period_d": 19.992535062337993,
+          "period_power": 0.44252903006812994,
+          "score": 0.17491696177810145,
+          "n_dip_events": 0,
+          "out_of_dip_rms": 9.444975703412745e-05,
+          "max_event_depth": 0.0
+        },
+        "secular": null,
+        "glint": {
+          "n_epochs": 3527,
+          "max_brighten": 0.002000093470846398,
+          "n_glint_epochs": 0,
+          "n_glint_events": 0,
+          "brighten_sigma": 3.272107507510173,
+          "out_of_glint_rms": 0.0006696921324929752,
+          "score": 0.0
+        }
+      }
+    },
+    "n_epochs": {
+      "TESS": 3527
+    },
+    "source": "TESS/K2"
   },
   "xp": {
     "xp_feature_flag": false,
@@ -84,14 +137,29 @@
       "no XP spectrum"
     ]
   },
+  "coverage": {
+    "companion": "data",
+    "ir_excess": "data",
+    "ir_variability": "data",
+    "lightcurve_ztf": "data",
+    "lightcurve_tess": "data",
+    "xp": "no_data",
+    "not_covered": [
+      "radio (SETI/VLA)",
+      "high-res RV spectra (HARPS/ESPRESSO)",
+      "X-ray"
+    ]
+  },
   "verdict": {
-    "any_signature_flag": true,
+    "any_signature_flag": false,
     "channel_flags": {
-      "companion": true,
-      "ir": false,
-      "lightcurve": true,
+      "companion": false,
+      "ir_excess": false,
+      "ir_variability": false,
+      "lightcurve_ztf": false,
+      "lightcurve_tess": false,
       "xp": false
     },
-    "verdict": "ANOMALY_FLAGGED"
+    "verdict": "clean_all_channels"
   }
 }

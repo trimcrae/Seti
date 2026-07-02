@@ -170,7 +170,27 @@ co-moving (<0.2 km/s) pass — i.e. effectively a bound companion, of which the 
 found zero. RV completeness for close-passing faint M dwarfs remains the one gap
 where such a pass could still be hiding.
 
-**Read:** every encounter is *fast* (v_rel 23–54 km/s) — the signature of random
+**Directed-travel (technological) reframing** (`panspermia-targets`,
+`reachability.py` + `exohosts.py`). The passive channels assume life is cargo to
+be *caught*; a **technological** disperser instead *chooses* a target, aims, and
+decelerates — so relative velocity is irrelevant and reachability is trivial
+(0.90 pc ≈ 3 ly ≈ 30 yr at 0.1c; every neighbour is a short hop). The filter then
+collapses to **destination quality**, and the optimal launch window is each star's
+closest approach (`t_enc`, min crossing distance `d_min`). Crucially, "habitable"
+is judged from the *traveller's* biology: a K2-18-evolved organism seeks other
+**hycean worlds** (Madhusudhan+2021) — sub-Neptunes (1.5–2.6 R⊕) with H₂/ocean
+envelopes around **cool K/M dwarfs**, over a far wider insolation range than the
+rocky HZ — not Earth-analogs. The destination prior is therefore hycean-centric
+(peaks on M-dwarf colours like K2-18 itself); `--target classical` gives the
+Earth-analog comparison. **Offline run:** 4,984 past-close neighbours, 4,742
+main-sequence; the top destinations are all cool M-dwarf hosts (the hycean-host
+class), reachable in 300–1,200 yr at 0.1c. The sharp discriminator — which of them
+*already* host a known planet, and specifically a **hycean-candidate** sub-Neptune
+— needs the NASA Exoplanet Archive cross-match: **`panspermia-targets.yml`
+dispatched** (runner-side TAP). Outputs: `results/panspermia/reachable_targets.csv`
++ `targets_summary.json`.
+
+**Read:** every *passive* encounter is *fast* (v_rel 23–54 km/s) — the signature of random
 field stars passing a normal thin-disk star, not a shared-origin group. No slow,
 close bridge exists in the RV-complete local sample, and the transfer scores are
 all ~1e-4 (dominated by the 1/v_rel² term). This is **not a null to write up** —

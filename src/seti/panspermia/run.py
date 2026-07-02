@@ -213,4 +213,76 @@ def panspermia_run(cfg: Config | None = None, source_id: int = K2_18_SOURCE_ID,
     return summary
 
 
-__all__ = ["panspermia_run", "K2_18_SOURCE_ID", "K2_18_FALLBACK"]
+def targets_run(cfg: Config | None = None, target: str = "hycean",
+                crossmatch: bool = False, max_pc: float = 80.0) -> dict:
+    """Directed-travel destination ranking over the committed encounter table.
+
+    Reframes the search for a *technological* disperser: reachability is trivial
+    at any cruise speed, so rank K2-18's (past-close) neighbours by destination
+    quality instead.  ``target`` picks the habitability prior (``"hycean"`` by
+    default -- the traveller evolved on a hycean world, so it seeks other hycean
+    sub-Neptunes around cool stars, not Earth-analogs).  With ``crossmatch`` the
+    runner layers on NASA Exoplanet Archive known-planet / hycean-candidate flags.
+    """
+    from .reachability import DEFAULT_SPEEDS_C, rank_targets
+
+    cfg = cfg or load_config()
+    out_dir = cfg.root / "results" / "panspermia"
+    src = out_dir / "encounters_all.csv"
+    if not src.exists():
+        raise SystemExit(f"no encounter table at {src}; run panspermia-run first")
+    enc = pd.read_csv(src)
+    ranked = rank_targets(enc, target=target)
+
+    xmatch_note = "not run (offline)"
+    if crossmatch:
+        try:
+            from .exohosts import crossmatch_hosts, fetch_nearby_planets
+            planets = fetch_nearby_planets(max_pc=max_pc)
+            ranked = crossmatch_hosts(ranked, planets)
+            # Boost hosts, boost hycean-candidate hosts most: the sharpest signal.
+            ranked["dest_score"] = (ranked["dest_score"]
+                                    + 0.5 * ranked["known_planet_host"].astype(float)
+                                    + 1.0 * ranked["has_hycean_candidate"].astype(float))
+            ranked = ranked.sort_values(["dest_score", "d_min_pc"],
+                                        ascending=[False, True])
+            xmatch_note = f"{len(planets)} archive planets < {max_pc} pc"
+        except Exception as exc:  # noqa: BLE001
+            xmatch_note = f"failed: {exc!r}"
+            print(f"[panspermia-targets] exoplanet cross-match {xmatch_note}")
+
+    speed_cols = [f"cross_yr_{f:g}c" for f in DEFAULT_SPEEDS_C]
+    cols = [c for c in (["source_id", "ra", "dec", "dist_pc", "phot_g_mean_mag",
+                         "bp_rp", "sep_now_pc", "v_rel_kms", "t_enc_myr", "d_min_pc",
+                         "abs_g", "lum_class", "dest_score"] + speed_cols
+                        + ["known_planet_host", "n_planets", "has_temperate_planet",
+                           "has_hycean_candidate", "host_name"])
+            if c in ranked.columns]
+    ranked[cols].to_csv(out_dir / "reachable_targets.csv", index=False)
+
+    ms = ranked[ranked["lum_class"] == "main_sequence"]
+    summary = {
+        "target_prior": target,
+        "crossmatch": xmatch_note,
+        "n_candidates": int(len(ranked)),
+        "n_main_sequence": int(len(ms)),
+        "n_known_hosts": int(ranked.get("known_planet_host", pd.Series(dtype=bool)).sum()),
+        "n_hycean_candidate_hosts":
+            int(ranked.get("has_hycean_candidate", pd.Series(dtype=bool)).sum()),
+        "top_targets": [
+            {k: (int(r[k]) if k == "source_id" else r[k])
+             for k in ("source_id", "bp_rp", "dist_pc", "d_min_pc", "t_enc_myr",
+                       "lum_class", "dest_score", "host_name", "has_hycean_candidate")
+             if k in ranked.columns and pd.notna(r.get(k))}
+            for _, r in ranked.head(20).iterrows()],
+    }
+    (out_dir / "targets_summary.json").write_text(json.dumps(summary, indent=2, default=str))
+    print("[panspermia-targets]", json.dumps({
+        "target": target, "n_candidates": summary["n_candidates"],
+        "n_main_sequence": summary["n_main_sequence"],
+        "n_known_hosts": summary["n_known_hosts"],
+        "n_hycean_candidate_hosts": summary["n_hycean_candidate_hosts"]}))
+    return summary
+
+
+__all__ = ["panspermia_run", "targets_run", "K2_18_SOURCE_ID", "K2_18_FALLBACK"]

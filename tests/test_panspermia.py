@@ -159,6 +159,67 @@ def test_regime_summary_counts_only_past():
     assert s["n_transfers"] == 0
 
 
+def test_crossing_times_and_full_connectivity():
+    from seti.panspermia.reachability import crossing_times
+    df = pd.DataFrame({"d_min_pc": [0.9033]})     # the real closest approach
+    ct = crossing_times(df, speeds_c=(0.001, 0.01, 0.1))
+    # 0.9 pc at 0.1c ~ 29 yr; at 0.001c ~ 2946 yr -- trivial on stellar timescales.
+    assert 25 < ct["cross_yr_0.1c"].iloc[0] < 35
+    assert 2500 < ct["cross_yr_0.001c"].iloc[0] < 3500
+
+
+def test_destination_quality_prefers_cool_ms_for_hycean():
+    from seti.panspermia.reachability import destination_quality
+    # At 10 pc, abs_G == apparent G. Use realistic MS absolute mags: M2.5 dwarf
+    # ~11.3, Sun-analog ~4.67; a red giant at the same M-dwarf colour is far
+    # over-luminous (abs_G ~ 1).
+    df = pd.DataFrame({
+        "phot_g_mean_mag": [11.3, 4.67, 1.0, 4.67],
+        "dist_pc":         [10.0, 10.0, 10.0, 10.0],
+        "bp_rp":           [2.6, 0.82, 2.6, 0.82],  # M dwarf, Sun, M-colour giant, Sun
+    })
+    q = destination_quality(df, target="hycean")
+    assert q["lum_class"].iloc[0] == "main_sequence"
+    assert q["lum_class"].iloc[2] == "giant"
+    # Hycean prior: the cool M dwarf outscores the Sun-like G dwarf and the giant.
+    assert q["dest_score"].iloc[0] > q["dest_score"].iloc[3]
+    assert q["dest_score"].iloc[0] > q["dest_score"].iloc[2]
+
+
+def test_hycean_vs_classical_prior_differ():
+    from seti.panspermia.reachability import destination_quality
+    df = pd.DataFrame({"phot_g_mean_mag": [11.3, 4.67], "dist_pc": [10.0, 10.0],
+                       "bp_rp": [2.6, 0.82]})       # M dwarf vs Sun-analog
+    hy = destination_quality(df, target="hycean")["dest_score"].to_numpy()
+    cl = destination_quality(df, target="classical")["dest_score"].to_numpy()
+    assert hy[0] > hy[1]        # hycean prior favours the M dwarf
+    assert cl[1] > cl[0]        # classical prior favours the Sun-analog
+
+
+def test_exohost_hycean_crossmatch():
+    from seti.panspermia.exohosts import crossmatch_hosts
+    neighbors = pd.DataFrame({"source_id": [111, 222, 333],
+                              "ra": [10.0, 20.0, 30.0], "dec": [0.0, 0.0, 0.0]})
+    planets = pd.DataFrame({
+        "hostname": ["Hy A", "Rocky B"],
+        "gaia_id": ["Gaia DR3 111", "Gaia DR3 222"],
+        "ra": [10.0, 20.0], "dec": [0.0, 0.0], "sy_dist": [12.0, 15.0],
+        "pl_name": ["Hy A b", "Rocky B b"],
+        "pl_rade": [2.4, 1.0],           # sub-Neptune (hycean) vs Earth-size
+        "pl_bmasse": [8.0, 1.0],
+        "pl_orbper": [33.0, 300.0],
+        "pl_eqt": [280.0, 255.0],
+        "pl_insol": [1.2, 1.0],
+        "st_teff": [3500.0, 5700.0],
+    })
+    out = crossmatch_hosts(neighbors, planets)
+    assert bool(out.loc[out["source_id"] == 111, "has_hycean_candidate"].iloc[0])
+    # The Earth-size, Earth-insolation planet is classical-temperate but NOT hycean.
+    assert bool(out.loc[out["source_id"] == 222, "has_temperate_planet"].iloc[0])
+    assert not bool(out.loc[out["source_id"] == 222, "has_hycean_candidate"].iloc[0])
+    assert not bool(out.loc[out["source_id"] == 333, "known_planet_host"].iloc[0])
+
+
 def test_run_recovers_injected_recipient(tmp_path):
     from seti.config import load_config
 

@@ -150,6 +150,26 @@ Headline geometry:
   27 km/s, ≈1.35 Myr ago), a bright G=5.6 star at 9.9 pc.
 - **Zero co-moving companions** (nothing within 5 pc sharing K2-18's velocity).
 
+**Fast-interaction / transfer-regime analysis** (`panspermia-regime`, offline
+post-process of `encounters_all.csv`; `results/panspermia/transfer_regime.csv`).
+Fast encounters cannot capture gravitationally, but could in principle transfer by
+*geometric interception* (sweeping through the donor's reservoir), which is
+speed-independent — so this was tested explicitly. Two necessary conditions, both
+required: the pass must cross the reservoir (`d_min < r_reservoir`) **and** be slow
+enough to bind material there (`v_rel < v_esc(d_min)`). Result across reservoir
+radii from 0.5 pc (max Oort) down to 50 AU (Kuiper): **0 of 4,984 past encounters
+permit any passive transfer.** The closest pass (0.90 pc) was **551× too fast** to
+capture even at that distance, and **nothing** came within even a 0.5 pc reservoir
+to intercept. For a 0.36 M☉ donor the escape speed at the Oort edge is ~0.12 km/s,
+while the *slowest* encounter in the whole sample is 2.97 km/s — so the local
+RV-complete neighbourhood is closed to K2-18 panspermia by 2–3 orders of magnitude
+in *both* speed and distance. (The fast tail itself is ordinary field/halo
+kinematics: median 36 km/s, one 590 km/s halo interloper — not panspermia-related.)
+The physics pins the *only* viable regime to an extremely close (<0.1 pc), nearly
+co-moving (<0.2 km/s) pass — i.e. effectively a bound companion, of which the run
+found zero. RV completeness for close-passing faint M dwarfs remains the one gap
+where such a pass could still be hiding.
+
 **Read:** every encounter is *fast* (v_rel 23–54 km/s) — the signature of random
 field stars passing a normal thin-disk star, not a shared-origin group. No slow,
 close bridge exists in the RV-complete local sample, and the transfer scores are

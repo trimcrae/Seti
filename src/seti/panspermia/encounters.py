@@ -101,6 +101,82 @@ def transfer_score(df: pd.DataFrame, t_max_myr: float = 10.0,
     return out
 
 
+_GM_SUN_KM3_S2 = 1.32712440018e11     # G * M_sun, km^3 s^-2
+_PC_KM = 3.0856775815e13              # 1 pc in km
+_AU_PER_PC = 206264.806
+
+
+def transfer_regime(df: pd.DataFrame, donor_mass_msun: float = 0.36,
+                    reservoir_pc: float = 0.2) -> pd.DataFrame:
+    """Classify each encounter by which *passive* transfer mode (if any) works.
+
+    Two physically distinct channels deliver donor material to a passing star,
+    and they scale oppositely with relative speed:
+
+    * **Capture** (the slow channel): the passer gravitationally binds loosely-held
+      donor material.  Feasible only when the relative speed is below the escape
+      speed at the reservoir edge, ``v_esc = sqrt(2 G M / r)`` -- for a low-mass
+      M-dwarf donor this threshold is *metres per second* at Oort distances, so it
+      demands an almost co-moving pass.
+    * **Interception** (the speed-independent channel): the passer physically
+      ploughs through the donor's reservoir.  Feasible only when the
+      closest-approach distance ``d_min`` is smaller than the reservoir radius --
+      independent of how fast the pass is.  This is the mode a *fast* encounter
+      could still satisfy, which is why it is worth separating out.
+
+    Also reports the gravitational-focusing enhancement of the capture
+    cross-section, ``1 + (v_esc/v_rel)^2``; for a fast pass this collapses to ~1
+    (pure geometry, no focusing help).  Requires ``v_rel_kms`` and ``d_min_pc``.
+    """
+    out = df.copy()
+    vrel = pd.to_numeric(out["v_rel_kms"], errors="coerce").to_numpy(float)
+    dmin = pd.to_numeric(out["d_min_pc"], errors="coerce").to_numpy(float)
+    # Escape speed at the ACTUAL closest-approach distance: the passer can bind
+    # donor material located where it passed only if it is slower than this.
+    with np.errstate(divide="ignore", invalid="ignore"):
+        v_esc_dmin = np.sqrt(2.0 * _GM_SUN_KM3_S2 * donor_mass_msun
+                             / (dmin * _PC_KM))                  # km/s
+        focus = 1.0 + (v_esc_dmin / vrel) ** 2
+    out["d_min_au"] = dmin * _AU_PER_PC
+    out["v_esc_at_dmin_kms"] = v_esc_dmin
+    # Two independent necessary conditions; a real passive transfer needs BOTH:
+    out["within_reservoir"] = dmin < reservoir_pc          # donor has material this far out
+    out["capturable"] = vrel < v_esc_dmin                  # slow enough to bind it there
+    out["focusing_factor"] = focus
+    out["transfers"] = out["within_reservoir"] & out["capturable"]
+    return out
+
+
+def regime_summary(df: pd.DataFrame, donor_mass_msun: float = 0.36,
+                   reservoir_pc: float = 0.2) -> dict:
+    """Aggregate :func:`transfer_regime` over past encounters into a verdict."""
+    reg = transfer_regime(df, donor_mass_msun, reservoir_pc)
+    past = reg[pd.to_numeric(reg["t_enc_myr"], errors="coerce") < 0]
+    vrel = pd.to_numeric(past["v_rel_kms"], errors="coerce")
+    dmin = pd.to_numeric(past["d_min_pc"], errors="coerce")
+    # At the closest pass in the sample, how many times too fast was it to capture?
+    if len(past):
+        closest = past.loc[dmin.idxmin()]
+        speed_excess = float(closest["v_rel_kms"] / closest["v_esc_at_dmin_kms"])
+    else:
+        speed_excess = None
+    return {
+        "donor_mass_msun": donor_mass_msun,
+        "reservoir_pc": reservoir_pc,
+        "n_past": int(len(past)),
+        "v_rel_min_kms": float(vrel.min()) if len(past) else None,
+        "v_rel_median_kms": float(vrel.median()) if len(past) else None,
+        "d_min_min_pc": float(dmin.min()) if len(past) else None,
+        "d_min_min_au": float(dmin.min() * _AU_PER_PC) if len(past) else None,
+        "n_within_reservoir": int(past["within_reservoir"].sum()),
+        "n_capturable": int(past["capturable"].sum()),
+        "n_transfers": int(past["transfers"].sum()),
+        "closest_pass_speed_excess": speed_excess,   # v_rel / v_esc(d_min) at the closest pass
+        "max_focusing_factor": float(past["focusing_factor"].replace(
+            [np.inf, -np.inf], np.nan).max()) if len(past) else None,
+    }
+
+
 def flag_comoving(df: pd.DataFrame, v_rel_max_kms: float = 3.0,
                   sep_now_max_pc: float = 5.0) -> pd.DataFrame:
     """Tag stars that are *currently* close and share the anchor's velocity.
@@ -119,4 +195,5 @@ def flag_comoving(df: pd.DataFrame, v_rel_max_kms: float = 3.0,
     return out
 
 
-__all__ = ["closest_approach", "transfer_score", "flag_comoving"]
+__all__ = ["closest_approach", "transfer_score", "flag_comoving",
+           "transfer_regime", "regime_summary"]

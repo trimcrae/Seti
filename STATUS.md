@@ -94,6 +94,42 @@ run now also tests **velocity** and **full phase space** (a technological moving
 group shares a space velocity). Next: sweep several cones + read the velocity /
 phase-space p-values, which are the discriminating ones.
 
+### New channel: K2-18 panspermia close-encounter search (`panspermia/`)
+
+**Question (user-directed, 2026-07-02):** K2-18 b is the hycean world with a JWST
+biosignature hint (DMS/DMSO; Madhusudhan+2023/2025 — contested; treated as the
+*premise*, not a result). *If* life arose there, which stars could have received
+K2-18-origin material? The transfer vector is unbound ejecta / dormant spores /
+free-flying 'Oumuamua-class bodies, so the filter is **encounter geometry (close +
+slow)**, not a continuous bridge — and because the stellar neighbourhood
+**reshuffles over time**, the search is over *closest approach in full 6D phase
+space*, not present-day proximity. This is a novel anchor + novel question (nobody
+has computed K2-18's stellar-encounter recipient list); it is not a refinement of
+any existing SETI baseline.
+
+**Method (offline-validated, `test_panspermia.py`, 7 tests):** resolve K2-18's 6D
+vector from Gaia DR3 (radial velocity essential); pull every Gaia DR3 source with
+an RV in a heliocentric distance shell bracketing the search sphere; build
+heliocentric Galactic 6D `(X,Y,Z, U,V,W)`; compute each star's **linear
+closest-approach** to K2-18 (`t_enc`, `d_min`, `v_rel`) — the standard
+straight-line treatment used for the Sun's own encounter list (García-Sánchez
+2001; Bailer-Jones 2015+), valid over the recent few-Myr window where the Galactic
+tide is negligible. Rank *past* (`t_enc<0`) close/slow encounters by a
+transfer-plausibility score `(d_ref/d_min)·(v_ref/v_rel)²` (velocity-squared
+mirrors the gravitational-capture cross-section; ordinal, not a probability), and
+separately tag **co-moving companions** (shared low velocity + present proximity),
+the strongest bridge of all. Relative velocities are frame-independent of the
+solar motion (it cancels in the difference), so no LSR constants enter.
+*Caveat:* linear motion is honest only inside `t_max` (default 10 Myr); a longer
+baseline would need epicyclic/Galactic-potential integration.
+
+**Status:** funnel + workflow (`panspermia.yml`) built and unit-tested offline;
+**awaiting the first runner dispatch** (Gaia egress is runner-only). Outputs:
+`results/panspermia/{recipient_candidates,comoving_companions,encounters_all}.csv`
++ `summary.json`. *Next decisive test after the run:* cross-match the top
+recipients against the NASA Exoplanet Archive (known planet hosts) and check
+whether the closest/slowest approach is a genuine flyby or a chance geometry.
+
 ## Channel state
 
 | Channel | Searched so far | Surviving | Blocking issue / next action |
@@ -104,6 +140,7 @@ phase-space p-values, which are the discriminating ones.
 | Astrometric dark companion (Gaia orbits) | 105,066 NSS orbits, ≤1 kpc | 0 novel (8 class-3 = BH1 + 7, but 7/8 already in Shahaf+2023; 1 borderline-absent is the weakest solution) | reproduction of the published AMRF catalogue — change the question |
 | Laser absorption (DESI-DR1) | 6,500+ spectra (latest committed run) | 55 triaged | same; hot-star continua only (line-forest stars skipped by design) |
 | WD IR excess | 7,716 clean WDs → 23 multi-axis → blend+sublimation test | 0 technosignature (3 WISE blends, 7 unresolved stellar companions, 13 ordinary τ<0.08 debris disks) | channel resolved; τ=0.6 standout is a too-hot-for-dust stellar companion. Next volume only helps if it reaches a τ→1 excess with T_dust *below* sublimation |
+| Panspermia (K2-18 close encounters) | offline-validated; no runner dispatch yet | — | **run `panspermia.yml`** to fetch K2-18's 6D + the Gaia RV shell and produce the ranked recipient list; then Exoplanet-Archive cross-match the top encounters |
 | Gaia XP anomalies | RA283/Dec−3 dense field: 8,863 sources, reliable; narrow-feature shortlist examined | 0 credible | **channel bounded — see ledger.** Broad "anomalies" = reddened-M-dwarf molecular bands (degenerate with a Dyson SED); "narrow" ones = band-edge reconstruction artifacts + sub-resolution wiggles (XP LSF ≈5+ samples can't resolve a laser line). Guards added (width/interior/bounded). A clean low-extinction field could still test the *broad*-SED Dyson signature, but it is degenerate with reddening |
 
 ## Known systematics ledger (do not re-derive)

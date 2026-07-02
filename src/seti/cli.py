@@ -136,6 +136,14 @@ def _cmd_cluster_run(args, cfg):
                 excess_z_min=args.excess_z_min, link_pc=args.link_pc)
 
 
+def _cmd_panspermia_run(args, cfg):
+    from .panspermia.run import panspermia_run
+
+    panspermia_run(cfg, source_id=args.source_id, search_pc=args.search_pc,
+                   g_max=args.g_max, limit=args.limit, t_max_myr=args.t_max_myr,
+                   d_min_max_pc=args.d_min_max_pc)
+
+
 def _cmd_science_blend(args, cfg):
     from .discriminate.blend import blend_followup
 
@@ -444,6 +452,21 @@ def main(argv=None):
     p.add_argument("--excess-z-min", type=float, default=4.0)
     p.add_argument("--link-pc", type=float, default=8.0)
     p.set_defaults(func=_cmd_cluster_run)
+
+    p = sub.add_parser("panspermia-run",
+                       help="close-encounter search: which stars passed close and "
+                            "slow to K2-18 (hycean biosignature host) in the past?")
+    p.add_argument("--source-id", type=int, default=3892950081412683520,
+                   help="Gaia DR3 source_id of the anchor (default K2-18)")
+    p.add_argument("--search-pc", type=float, default=40.0,
+                   help="3D search radius around the anchor (pc)")
+    p.add_argument("--g-max", type=float, default=16.0)
+    p.add_argument("--limit", type=int, default=400000)
+    p.add_argument("--t-max-myr", type=float, default=10.0,
+                   help="past-encounter viability window (Myr)")
+    p.add_argument("--d-min-max-pc", type=float, default=2.0,
+                   help="closest-approach cut defining the shortlist (pc)")
+    p.set_defaults(func=_cmd_panspermia_run)
 
     p = sub.add_parser("dimming-run")
     p.add_argument("--ra", type=float, default=270.0)

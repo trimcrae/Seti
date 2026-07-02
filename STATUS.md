@@ -77,10 +77,20 @@ next. Last updated: 2026-07-01.
 | Astrometric dark companion (Gaia orbits) | 105,066 NSS orbits, ≤1 kpc | 0 novel (8 class-3 = BH1 + 7, but 7/8 already in Shahaf+2023; 1 borderline-absent is the weakest solution) | reproduction of the published AMRF catalogue — change the question |
 | Laser absorption (DESI-DR1) | 6,500+ spectra (latest committed run) | 55 triaged | same; hot-star continua only (line-forest stars skipped by design) |
 | WD IR excess | 7,716 clean WDs | 170 scored | variability (ZTF) + SED follow-up of top anomaly scores |
-| Gaia XP anomalies | RA283/Dec−3 dense field: 8,863 sources, 494 raw / 397 "clean" anomalies (5.6%) | — (re-ranking) | raw max-residual ranking was dominated by **broad molecular bands of red stars** (bp_rp 2–3, TiO/VO/H₂O); added a **feature-width** discriminator (narrow width≤3 = artificial-line-like, broad = stellar). Re-run dispatched to produce the narrow-feature shortlist; examine those, not the broad ones |
+| Gaia XP anomalies | RA283/Dec−3 dense field: 8,863 sources, reliable; narrow-feature shortlist examined | 0 credible | **channel bounded — see ledger.** Broad "anomalies" = reddened-M-dwarf molecular bands (degenerate with a Dyson SED); "narrow" ones = band-edge reconstruction artifacts + sub-resolution wiggles (XP LSF ≈5+ samples can't resolve a laser line). Guards added (width/interior/bounded). A clean low-extinction field could still test the *broad*-SED Dyson signature, but it is degenerate with reddening |
 
 ## Known systematics ledger (do not re-derive)
 
+* **Gaia XP is low-resolution** (R≈30–100; LSF ≈5+ of the 2-nm samples). Two
+  consequences: (1) it *cannot resolve a narrow laser line* — a real localised
+  feature must be interior (≥8 samples from either end), bounded (falls below
+  half-peak on both sides), and 2–5 samples wide; a 1-sample spike is
+  sub-resolution noise and a monotonic ramp pinned to 336 nm / 1020 nm is a
+  basis-function reconstruction artifact (both now cut in `xp.anomaly`).
+  (2) Broad-SED "anomalies" (a Dyson reprocessing deficit/excess) are
+  **degenerate with interstellar reddening** and with cool-star molecular bands
+  (TiO/VO/H₂O) — a low-|b| field is the worst case. Fit the colour locus with
+  ≥40 sources/bin (`fit_locus`) or the per-bin MAD collapses and flags ~70%.
 * SDSS/DESI wavelengths are **vacuum**; all literature line lists (air) are
   converted via `seti.spectra.reject.air_to_vacuum` at definition time. This
   was a real leak: pre-fix "candidates" sat on He I 5876 / Ca II 8542 / O I

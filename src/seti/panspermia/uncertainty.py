@@ -162,11 +162,14 @@ def run_mc_followup(cfg=None, n: int = 3000) -> dict:
     if len(err):
         err["source_id"] = err["source_id"].astype("int64")
 
-    # Merge the error columns onto the shortlist (keep transfer_score/dist etc).
-    ecols = ["source_id", "parallax_error", "pmra_error", "pmdec_error",
-             "radial_velocity_error"]
-    ecols = [c for c in ecols if c in err.columns] or ["source_id"]
-    merged = cand.merge(err[ecols], on="source_id", how="left")
+    # The base shortlist kept dist_pc/radial_velocity but DROPPED the raw
+    # astrometry (parallax, pmra, pmdec), which the Monte-Carlo resampling needs.
+    # The error query returns both the values and the errors, so use it as the
+    # astrometric source and graft on the shortlist's photometry + transfer_score.
+    keep = [c for c in ("source_id", "phot_g_mean_mag", "bp_rp", "dist_pc",
+                        "transfer_score") if c in cand.columns]
+    merged = err.merge(cand[keep], on="source_id", how="inner",
+                       suffixes=("", "_cand"))
     mc = mc_shortlist(anchor, merged, n=n)
     mc.to_csv(out_dir / "recipient_candidates_mc.csv", index=False)
 

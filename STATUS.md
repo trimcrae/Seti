@@ -221,12 +221,26 @@ can reach* for each, running every signature detector this repo has:
   (megastructure transits, slow enshrouding, specular glints);
 - **Gaia XP** → a narrow, interior, bounded emission spike no smooth continuum
   reproduces (a laser line), with the XP-resolution guards from the spectra channel.
-Pure scorers are offline-validated (4 tests: companion, IR excess, narrow-feature,
-verdict roll-up); acquisition + the workflow (`panspermia-dossier.yml`) are
-**dispatched** — writes `results/panspermia/dossier/{LTT_3780,K2-3}.json` + a
-summary with a per-channel `clean`/`ANOMALY_FLAGGED` verdict. Honest by
-construction: it records "clean" where the data are clean. (TESS 2-min photometry
-and any radio archive are not yet wired — the natural next channels.)
+Now covers **six channels** on **three targets** (K2-18 itself + LTT 3780 + K2-3),
+adding **NEOWISE mid-IR variability** and **TESS/K2 photometry** (lightkurve).
+Contamination discipline is built in and *earned its keep*: the first run flagged
+both destinations, but both were traps — a tiny (0.1–0.2 mas) astrometric excess
+flagged on σ alone (fixed: require ≥1 mas amplitude), and a 75% single-band ZTF
+"dip" on K2-3 (fixed: two-band achromatic confirmation, else `needs_vetting`). A
+proper-motion fix (propagate the Gaia position to each survey epoch) recovered
+WISE and NEOWISE, which had silently returned no data for these high-PM stars.
+
+**Final result (run 3, all committed):** every target is **clean in every channel
+that returned data** — no IR-excess (WISE W1–W4 ≤ 0.46), no mid-IR variability
+(NEOWISE 274–289 epochs), no transit-shaped anomaly (TESS ~3.2–3.5k epochs), no
+unseen massive companion (RUWE ≤ 1.24), no XP laser line. Coverage is tracked
+honestly (verdict reads `clean_in_N_of_6_observed_channels`): K2-18 3/6 (no Gaia
+astrometry row via the cone, no ZTF, no XP), LTT 3780 & K2-3 5/6. **TESS clean on
+K2-3 corroborates that its single-band ZTF g-dip was an artefact.** Known gaps:
+ZTF is partial (LTT 3780 saturates ZTF at r≈11; ZTF/IRSA flaky for the rest) but
+TESS supersedes it; not covered = radio/SETI, high-res HARPS/ESPRESSO RV spectra,
+X-ray. 20 offline tests. Net: the two destinations and the origin world show **no
+technosignature** in any public archive reached — the honest state of the deep dive.
 
 **Read:** every *passive* encounter is *fast* (v_rel 23–54 km/s) — the signature of random
 field stars passing a normal thin-disk star, not a shared-origin group. No slow,

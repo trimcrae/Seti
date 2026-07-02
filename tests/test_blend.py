@@ -72,3 +72,23 @@ def test_blend_followup_offline():
     s = blend_followup(cands, d, fetch=fake)
     assert s["n_candidates"] == 1
     assert s["n_survivors"] == 0
+
+
+def test_too_hot_excess_flagged_stellar_companion():
+    # An isolated WD whose fitted "dust" is hotter than sublimation = an
+    # unresolved cool stellar companion, not dust/swarm -> not a survivor.
+    cands = pd.DataFrame([{"source_id": 1, "ra": 100.0, "dec": 20.0, "teff": 6000,
+                           "tau": 0.6, "t_dust_k": 2280, "multimodal_score": 0.3,
+                           "phot_g_mean_mag": 16.0, "bp_rp": 0.0,
+                           "pmra": 200.0, "pmdec": -150.0,
+                           "simbad_id": None, "simbad_otype": "WD*"}])
+
+    def fake(ra, dec, self_source_id=None, radius_arcsec=12.0):
+        return pd.DataFrame({"source_id": [1], "ra": [ra], "dec": [dec],
+                             "phot_g_mean_mag": [16.0], "bp_rp": [0.0],
+                             "pmra": [200.0], "pmdec": [-150.0]})   # only self
+    import tempfile
+    d = tempfile.mkdtemp()
+    s = blend_followup(cands, d, fetch=fake)
+    assert s["verdict_counts"].get("stellar_companion") == 1
+    assert s["n_survivors"] == 0

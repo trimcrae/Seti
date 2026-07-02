@@ -1,0 +1,63 @@
+name: science-blend
+
+# WISE-blend + Gaia co-movement follow-up on the WD IR-excess multimodal
+# shortlist. WISE confusion is the known killer of WD IR-excess searches: a WD is
+# IR-faint, so any comparably-bright red neighbour inside the ~6.5" W1 beam
+# manufactures a fake excess. For each candidate this queries Gaia DR3 for beam
+# neighbours and flags background/co-moving blends; survivors with large tau are
+# the ones worth spectroscopy. Runs on the runner (Gaia TAP).
+
+on:
+  workflow_dispatch:
+    inputs:
+      top:
+        description: "Only test the top-N by multimodal_score (0 = all)"
+        required: false
+        default: "0"
+
+permissions:
+  contents: write
+
+jobs:
+  blend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,pandas,astroquery; print('imports OK')"
+      - name: WISE-blend follow-up
+        run: |
+          python -m seti.cli science-blend --top ${{ github.event.inputs.top }}
+          echo "=== blend summary ==="
+          cat results/science/blend_followup_summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/science/blend_followup.csv \
+                     results/science/blend_followup_summary.json || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "science-blend: WISE-blend/co-movement follow-up of WD IR-excess shortlist"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: science-blend-outputs
+          path: results/science/blend_followup*.*
+          if-no-files-found: warn

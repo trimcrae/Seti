@@ -131,9 +131,22 @@ def anomaly_score(flux_norm: np.ndarray, color: float, locus: XPLocus) -> dict:
     while hi + 1 < az.size and az[hi + 1] > half:
         hi += 1
     width = hi - lo + 1
+    # Edge/shape guards.  Gaia XP has a broad line-spread function (~5+ samples)
+    # and its basis-function reconstruction rings at the band extremes, producing
+    # monotonic ramps pinned to the first/last samples that masquerade as narrow
+    # features.  A *real* localised feature is (a) interior, not within edge_margin
+    # of either end, and (b) bounded --- it falls back below half-peak on BOTH
+    # sides within the band (an edge ramp never descends on the edge side).  A
+    # feature only 1 sample wide is below the XP resolution element, i.e. noise.
+    edge_margin = 8
+    n = az.size
+    interior = edge_margin <= i < n - edge_margin
+    bounded = (lo > 0 and az[lo - 1] <= half) and (hi < n - 1 and az[hi + 1] <= half)
+    real_narrow = bool(interior and bounded and 2 <= width <= 5)
     return {"global_resid": global_resid, "global_sigma": float(global_sigma),
             "feature_resid": peak, "feature_index": i,
-            "feature_width": int(width), "narrow_feature": bool(width <= 3)}
+            "feature_width": int(width), "feature_interior": bool(interior),
+            "feature_bounded": bool(bounded), "narrow_feature": real_narrow}
 
 
 __all__ = ["XPLocus", "normalize_spectrum", "fit_locus", "anomaly_score"]

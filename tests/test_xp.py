@@ -131,16 +131,28 @@ def test_feature_width_separates_narrow_from_broad():
     colors = np.full(400, 1.0)
     locus = fit_locus(spectra, colors)
 
-    # Narrow feature: a single-sample spike.
+    # Real narrow feature: an interior, bounded bump ~3 samples wide (at/above the
+    # XP resolution element), rising AND falling.
     narrow = base.copy()
-    narrow[60] += 0.5
+    narrow[58:63] += [0.2, 0.4, 0.5, 0.4, 0.2]
     sc_n = anomaly_score(normalize_spectrum(narrow), 1.0, locus)
     # Broad feature: a wide bump over 25 samples (molecular-band-like).
     broad = base.copy()
     broad[45:70] += 0.15
     sc_b = anomaly_score(normalize_spectrum(broad), 1.0, locus)
+    # Single-sample spike: below the XP resolution -> noise, NOT a real feature.
+    spike = base.copy()
+    spike[60] += 0.5
+    sc_s = anomaly_score(normalize_spectrum(spike), 1.0, locus)
+    # Edge ramp pinned to the last sample: reconstruction artifact, NOT a feature.
+    edge = base.copy()
+    edge[-3:] += [0.2, 0.4, 0.8]
+    sc_e = anomaly_score(normalize_spectrum(edge), 1.0, locus)
 
     assert sc_n["narrow_feature"] is True
-    assert sc_n["feature_width"] <= 3
-    assert sc_b["narrow_feature"] is False
+    assert sc_n["feature_interior"] and sc_n["feature_bounded"]
+    assert sc_b["narrow_feature"] is False            # broad band
     assert sc_b["feature_width"] > sc_n["feature_width"]
+    assert sc_s["narrow_feature"] is False            # sub-resolution single spike
+    assert sc_e["narrow_feature"] is False            # edge artifact
+    assert sc_e["feature_interior"] is False

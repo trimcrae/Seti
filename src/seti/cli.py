@@ -128,6 +128,17 @@ def _cmd_accel_xmatch(args, cfg):
     run_crossmatch(cand, out_dir)
 
 
+def _cmd_science_blend(args, cfg):
+    from .discriminate.blend import blend_followup
+
+    src = args.candidates or str(cfg.root / "results" / "science"
+                                 / "multimodal_candidates.csv")
+    cand = pd.read_csv(src)
+    if args.top:
+        cand = cand.sort_values("multimodal_score", ascending=False).head(args.top)
+    blend_followup(cand, cfg.root / "results" / "science")
+
+
 def _cmd_dimming_run(args, cfg):
     from .dimming.run import dimming_run
 
@@ -403,6 +414,15 @@ def main(argv=None):
     p.add_argument("--candidates", default=None,
                    help="CSV of candidates (default results/accel/class3_shortlist.csv)")
     p.set_defaults(func=_cmd_accel_xmatch)
+
+    p = sub.add_parser("science-blend",
+                       help="WISE-blend + co-movement test on the WD IR-excess "
+                            "multimodal shortlist")
+    p.add_argument("--candidates", default=None,
+                   help="CSV (default results/science/multimodal_candidates.csv)")
+    p.add_argument("--top", type=int, default=0,
+                   help="only test the top-N by multimodal_score (0 = all)")
+    p.set_defaults(func=_cmd_science_blend)
 
     p = sub.add_parser("dimming-run")
     p.add_argument("--ra", type=float, default=270.0)

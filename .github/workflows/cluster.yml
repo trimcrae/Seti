@@ -1,0 +1,82 @@
+name: cluster-run
+
+# Population-clustering technosignature test: pull a Gaia x AllWISE volume, flag
+# the W1-W2 infrared-excess tail, and test whether it is OVER-CLUSTERED in 3D
+# position vs a magnitude/colour/distance-matched random null. A single IR excess
+# is degenerate with dust/blends (proven six times over in this repo); a spatial
+# over-density of the excess tail is not. Runs on the runner (Gaia TAP).
+
+on:
+  workflow_dispatch:
+    inputs:
+      plx_min:
+        description: "Minimum parallax mas (2 = within 500 pc)"
+        required: false
+        default: "2.0"
+      g_max:
+        description: "Faint G limit"
+        required: false
+        default: "16.0"
+      limit:
+        description: "Max Gaia x AllWISE sources"
+        required: false
+        default: "200000"
+      excess_z_min:
+        description: "IR-excess z threshold for the tail"
+        required: false
+        default: "4.0"
+      link_pc:
+        description: "Friends-of-friends linking length (pc)"
+        required: false
+        default: "8.0"
+
+permissions:
+  contents: write
+
+jobs:
+  cluster:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,pandas,scipy,astroquery; print('imports OK')"
+      - name: Run clustering search
+        run: |
+          python -m seti.cli cluster-run --plx-min ${{ github.event.inputs.plx_min }} \
+            --g-max ${{ github.event.inputs.g_max }} \
+            --limit ${{ github.event.inputs.limit }} \
+            --excess-z-min ${{ github.event.inputs.excess_z_min }} \
+            --link-pc ${{ github.event.inputs.link_pc }}
+          echo "=== clustering summary ==="
+          cat results/cluster/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/cluster/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "cluster-run: Gaia x AllWISE IR-excess phase-space clustering test"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cluster-outputs
+          path: results/cluster/
+          if-no-files-found: warn

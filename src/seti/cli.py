@@ -128,6 +128,13 @@ def _cmd_accel_xmatch(args, cfg):
     run_crossmatch(cand, out_dir)
 
 
+def _cmd_cluster_run(args, cfg):
+    from .cluster.run import cluster_run
+
+    cluster_run(cfg, plx_min=args.plx_min, g_max=args.g_max, limit=args.limit,
+                excess_z_min=args.excess_z_min, link_pc=args.link_pc)
+
+
 def _cmd_science_blend(args, cfg):
     from .discriminate.blend import blend_followup
 
@@ -423,6 +430,16 @@ def main(argv=None):
     p.add_argument("--top", type=int, default=0,
                    help="only test the top-N by multimodal_score (0 = all)")
     p.set_defaults(func=_cmd_science_blend)
+
+    p = sub.add_parser("cluster-run",
+                       help="population clustering test: is the Gaia x AllWISE "
+                            "IR-excess tail over-clustered in phase space?")
+    p.add_argument("--plx-min", type=float, default=2.0)     # within ~500 pc
+    p.add_argument("--g-max", type=float, default=16.0)
+    p.add_argument("--limit", type=int, default=200000)
+    p.add_argument("--excess-z-min", type=float, default=4.0)
+    p.add_argument("--link-pc", type=float, default=8.0)
+    p.set_defaults(func=_cmd_cluster_run)
 
     p = sub.add_parser("dimming-run")
     p.add_argument("--ra", type=float, default=270.0)

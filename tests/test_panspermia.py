@@ -226,7 +226,13 @@ def test_dossier_companion_diagnostics():
                                    "astrometric_excess_noise_sig": 0.5,
                                    "ipd_frac_multi_peak": 0.0, "non_single_star": 0})
     assert not clean["companion_flag"]
-    flagged = companion_diagnostics({"ruwe": 2.3, "astrometric_excess_noise": 0.9,
+    # A tiny (0.19 mas) excess at high sigma is NOT a companion -- must not flag
+    # (this was the LTT 3780 / K2-3 false positive).
+    tiny = companion_diagnostics({"ruwe": 1.1, "astrometric_excess_noise": 0.19,
+                                  "astrometric_excess_noise_sig": 38.7,
+                                  "ipd_frac_multi_peak": 0.0, "non_single_star": 0})
+    assert not tiny["companion_flag"]
+    flagged = companion_diagnostics({"ruwe": 2.3, "astrometric_excess_noise": 1.5,
                                      "astrometric_excess_noise_sig": 8.0,
                                      "ipd_frac_multi_peak": 15.0, "non_single_star": 1})
     assert flagged["companion_flag"] and len(flagged["reasons"]) >= 3
@@ -258,16 +264,40 @@ def test_dossier_narrow_feature_scan():
     assert res["xp_feature_flag"] and res["peak"]["sigma"] > 6
 
 
+def test_dossier_lightcurve_two_band_confirmation():
+    from seti.panspermia.dossier import lightcurve_verdict
+    deep_dip = {"n_dip_events": 2, "max_event_depth": 0.75, "score": 0.72,
+                "period_power": 0.1}
+    flat = {"n_dip_events": 0, "max_event_depth": 0.0, "score": 0.0, "period_power": 0.0}
+    # Single-band 75% dip (the K2-3 artefact) -> needs vetting, NOT a clean flag.
+    single = lightcurve_verdict({"r": {"dip": deep_dip}, "g": {"dip": flat}})
+    assert not single["lightcurve_flag"]
+    assert single["needs_vetting"] and "dip" in single["needs_vetting"][0]
+    # Same dip present (achromatic) in both bands -> confirmed anomaly.
+    both = lightcurve_verdict({"r": {"dip": deep_dip}, "g": {"dip": deep_dip}})
+    assert both["lightcurve_flag"]
+
+
+def test_dossier_ir_variability():
+    from seti.panspermia.dossier import ir_variability_verdict
+    clean = ir_variability_verdict({"W1_slope_mag_yr": 0.001, "W1_slope_sigma": 0.5,
+                                    "W2_slope_mag_yr": 0.002, "W2_slope_sigma": 0.4})
+    assert not clean["ir_variability_flag"]
+    warm = ir_variability_verdict({"W1_slope_mag_yr": -0.05, "W1_slope_sigma": 9.0,
+                                   "W2_slope_mag_yr": -0.04, "W2_slope_sigma": 6.0})
+    assert warm["ir_variability_flag"]
+    assert any("brightening" in r for r in warm["reasons"])
+
+
 def test_dossier_verdict_rollup():
     from seti.panspermia.dossier import dossier_verdict
     clean = dossier_verdict({"companion": {"companion_flag": False},
-                             "ir": {"ir_excess_flag": False},
-                             "lightcurve": {"lightcurve_flag": False},
+                             "ir_excess": {"ir_excess_flag": False},
+                             "lightcurve_ztf": {"lightcurve_flag": False},
                              "xp": {"xp_feature_flag": False}})
     assert clean["verdict"] == "clean_all_channels"
     flagged = dossier_verdict({"companion": {"companion_flag": True},
-                               "ir": {"ir_excess_flag": False},
-                               "lightcurve": {"lightcurve_flag": False},
+                               "ir_excess": {"ir_excess_flag": False},
                                "xp": {"xp_feature_flag": False}})
     assert flagged["any_signature_flag"] and flagged["channel_flags"]["companion"]
 

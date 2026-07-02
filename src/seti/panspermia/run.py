@@ -304,37 +304,81 @@ WHERE xm.source_id = {source_id}
 """
 
 
-def _dossier_lightcurve(ra: float, dec: float) -> dict:
-    """Fetch ZTF g+r light curves and run the dip/secular/glint detectors."""
+def _run_detectors(t, m, e) -> dict:
+    """Run the dip/secular/glint detectors on one light curve -> dicts."""
     from dataclasses import asdict
 
-    from ..dimming.acquire import fetch_ztf_lightcurve
     from ..dimming.dips import detect_dips
     from ..dimming.glint import detect_glints
     from ..dimming.secular import detect_secular_fade
+    d, s, gl = detect_dips(t, m, e), detect_secular_fade(t, m, e), detect_glints(t, m, e)
+    return {"dip": asdict(d) if d else None,
+            "secular": asdict(s) if s else None,
+            "glint": asdict(gl) if gl else None}
+
+
+def _dossier_lightcurve(ra: float, dec: float) -> dict:
+    """Fetch ZTF g+r light curves and run the detectors per band (achromatic vet)."""
+    from ..dimming.acquire import fetch_ztf_lightcurve
     from .dossier import lightcurve_verdict
 
-    best = {"dip": None, "secular": None, "glint": None, "n_epochs": {}}
+    bands, n_epochs = {}, {}
     for band in ("r", "g"):
         lc = fetch_ztf_lightcurve(ra, dec, band=band)
+        n_epochs[band] = 0 if lc is None else len(lc)
         if lc is None or len(lc) < 30:
-            best["n_epochs"][band] = 0 if lc is None else len(lc)
             continue
-        best["n_epochs"][band] = len(lc)
-        t, m, e = lc["mjd"].to_numpy(), lc["mag"].to_numpy(), lc["magerr"].to_numpy()
-        d = detect_dips(t, m, e)
-        s = detect_secular_fade(t, m, e)
-        gl = detect_glints(t, m, e)
-        # Keep the reference band (r) results; prefer whichever band has data.
-        if best["dip"] is None and d is not None:
-            best["dip"] = asdict(d)
-        if best["secular"] is None and s is not None:
-            best["secular"] = asdict(s)
-        if best["glint"] is None and gl is not None:
-            best["glint"] = asdict(gl)
-    verdict = lightcurve_verdict(best["dip"], best["secular"], best["glint"])
-    verdict["n_epochs"] = best["n_epochs"]
+        bands[band] = _run_detectors(lc["mjd"].to_numpy(), lc["mag"].to_numpy(),
+                                     lc["magerr"].to_numpy())
+    verdict = lightcurve_verdict(bands)
+    verdict["n_epochs"] = n_epochs
+    verdict["source"] = "ZTF"
     return verdict
+
+
+def _dossier_ir_variability(ra: float, dec: float) -> dict:
+    """NEOWISE multi-epoch W1/W2 -> secular mid-IR trend flag."""
+    from ..dimming.characterize import fetch_neowise
+    from .dossier import ir_variability_verdict
+    try:
+        nw = fetch_neowise(ra, dec)
+    except Exception as exc:  # noqa: BLE001
+        return {"ir_variability_flag": False, "reasons": [f"NEOWISE failed: {exc!r}"]}
+    return ir_variability_verdict(nw)
+
+
+def _dossier_tess(ra: float, dec: float) -> dict:
+    """TESS/K2 photometry via lightkurve -> the same detectors (best-effort).
+
+    TESS gives continuous, high-precision photometry of these transiting-planet
+    hosts -- far more sensitive to transit-shaped anomalies than ground-based ZTF.
+    Optional: if lightkurve/MAST is unavailable the channel degrades to 'not
+    available' rather than failing the run."""
+    from .dossier import lightcurve_verdict
+    try:
+        import lightkurve as lk
+        sr = lk.search_lightcurve(f"{ra} {dec}", mission=("TESS", "K2"))
+        if sr is None or len(sr) == 0:
+            return {"lightcurve_flag": False, "reasons": ["no TESS/K2 light curve"],
+                    "source": "TESS/K2"}
+        lc = sr[0].download().remove_nans().normalize()
+        t = lc.time.value
+        flux = lc.flux.value
+        # Convert relative flux to magnitudes for the shared detectors.
+        good = flux > 0
+        t, flux = t[good], flux[good]
+        mag = -2.5 * np.log10(flux / np.median(flux))
+        merr = None
+        bands = {"TESS": _run_detectors(t, mag, merr)}
+        verdict = lightcurve_verdict(bands)   # single band -> needs_vetting only
+        verdict["n_epochs"] = {"TESS": int(len(t))}
+        verdict["source"] = "TESS/K2"
+        # A confirmed dip in a single precise band is meaningful for space
+        # photometry (no colour to cross-check), so surface it as needs_vetting.
+        return verdict
+    except Exception as exc:  # noqa: BLE001
+        return {"lightcurve_flag": False, "reasons": [f"TESS unavailable: {exc!r}"],
+                "source": "TESS/K2"}
 
 
 def _dossier_xp(source_id: int) -> dict:
@@ -394,30 +438,49 @@ def dossier_run(cfg: Config | None = None, targets: list | None = None) -> dict:
             print(f"[dossier] WISE query failed: {exc!r}")
             wise = {}
         ir = ir_color_excess(wise)
-        # ZTF light curves + XP.
+        # ZTF (ground, 2-band) + TESS/K2 (space, precise) light curves; NEOWISE
+        # mid-IR variability; Gaia XP narrow-line scan.
         lc = _dossier_lightcurve(ra, dec)
+        tess = _dossier_tess(ra, dec)
+        irvar = _dossier_ir_variability(ra, dec)
         xp = _dossier_xp(sid)
 
-        parts = {"companion": companion, "ir": ir, "lightcurve": lc, "xp": xp}
+        parts = {"companion": companion, "ir_excess": ir, "ir_variability": irvar,
+                 "lightcurve_ztf": lc, "lightcurve_tess": tess, "xp": xp}
         verdict = dossier_verdict(parts)
+        coverage = {ch: ("data" if not any("failed" in r or "unavailable" in r
+                                            or "no " in r for r in
+                                            (v.get("reasons", []) if isinstance(v, dict)
+                                             else []))
+                         else "no_data")
+                    for ch, v in parts.items()}
+        coverage["not_covered"] = ["radio (SETI/VLA)", "high-res RV spectra "
+                                   "(HARPS/ESPRESSO)", "X-ray"]
         dossier = {"name": name, "source_id": sid, "ra": ra, "dec": dec,
                    "gaia": {k: row.get(k) for k in
                             ("parallax", "phot_g_mean_mag", "bp_rp",
                              "phot_variable_flag", "radial_velocity")},
-                   **parts, "verdict": verdict}
+                   **parts, "coverage": coverage, "verdict": verdict}
         (out_dir / f"{name.replace(' ', '_')}.json").write_text(
             json.dumps(dossier, indent=2, default=str))
         dossiers.append(dossier)
         print(f"[dossier] {name}: {verdict['verdict']} "
               f"flags={[k for k, v in verdict['channel_flags'].items() if v]}")
 
+    def _reasons(d):
+        r = {}
+        for ch in ("companion", "ir_excess", "ir_variability", "lightcurve_ztf",
+                   "lightcurve_tess", "xp"):
+            rs = d[ch].get("reasons", []) if isinstance(d.get(ch), dict) else []
+            vet = d[ch].get("needs_vetting", []) if isinstance(d.get(ch), dict) else []
+            if rs or vet:
+                r[ch] = {"flag": rs, "needs_vetting": vet} if vet else rs
+        return r
+
     summary = {
         "targets": [{"name": d["name"], "verdict": d["verdict"]["verdict"],
                      "flags": [k for k, v in d["verdict"]["channel_flags"].items() if v],
-                     "companion_reasons": d["companion"]["reasons"],
-                     "ir_reasons": d["ir"]["reasons"],
-                     "lightcurve_reasons": d["lightcurve"]["reasons"],
-                     "xp_reasons": d["xp"]["reasons"]}
+                     "channels": _reasons(d)}
                     for d in dossiers]}
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
     print("[dossier]", json.dumps(summary, default=str))

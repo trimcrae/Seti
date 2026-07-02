@@ -29,8 +29,12 @@ from __future__ import annotations
 
 import numpy as np
 
-# The two candidates (Gaia DR3), from the reachable-target ranking.
+# The origin hycean world (K2-18) plus the two directed-travel destinations
+# (Gaia DR3 ids).  K2-18 anchors the whole investigation, so it gets the same
+# full battery as its candidate destinations.
 TARGETS = [
+    {"name": "K2-18", "source_id": 3892950081412683520,
+     "ra": 172.560055, "dec": 7.588391},
     {"name": "LTT 3780", "source_id": 3767281845873242112,
      "ra": 154.64485, "dec": -11.71784},
     {"name": "K2-3", "source_id": 3796690380302214272,
@@ -38,12 +42,15 @@ TARGETS = [
 ]
 
 # --- Gaia hidden-companion diagnostics ------------------------------------
-# RUWE > 1.4 is the standard binarity flag; astrometric_excess_noise_sig > 2 with
-# a non-trivial amplitude indicates an unmodelled photocentre wobble; a high
-# image-parameter multi-peak fraction indicates a resolved/partially-resolved
-# companion in the Gaia window.
+# RUWE > 1.4 is THE standard binarity indicator.  astrometric_excess_noise is only
+# meaningful at a physically non-trivial *amplitude*: for a bright, well-measured
+# star the *significance* is almost always large (tens of sigma) even at ~0.1 mas,
+# which is not a companion -- so we require a real amplitude (>= 1 mas), not just
+# high sigma.  A high image-parameter multi-peak fraction means a (partially)
+# resolved companion; a Gaia NSS solution is a direct non-single-star flag.
 _RUWE_FLAG = 1.4
-_EXNOISE_SIG_FLAG = 2.0
+_EXNOISE_MIN_MAS = 1.0
+_EXNOISE_SIG_FLAG = 5.0
 _IPD_MULTIPEAK_FLAG = 0.10
 
 
@@ -64,7 +71,10 @@ def companion_diagnostics(row: dict) -> dict:
     reasons = []
     if np.isfinite(ruwe) and ruwe > _RUWE_FLAG:
         reasons.append(f"RUWE={ruwe:.2f}>{_RUWE_FLAG}")
-    if np.isfinite(exn_sig) and exn_sig > _EXNOISE_SIG_FLAG and np.isfinite(exn) and exn > 0.1:
+    # Amplitude AND significance -- a tiny (~0.1 mas) excess at high sigma is a
+    # well-measured normal star, not a companion.
+    if (np.isfinite(exn) and exn >= _EXNOISE_MIN_MAS
+            and np.isfinite(exn_sig) and exn_sig > _EXNOISE_SIG_FLAG):
         reasons.append(f"astrometric_excess_noise={exn:.2f}mas (sig {exn_sig:.1f})")
     if np.isfinite(ipd_mp) and ipd_mp / 100.0 > _IPD_MULTIPEAK_FLAG:
         reasons.append(f"ipd_frac_multi_peak={ipd_mp:.0f}%")
@@ -115,28 +125,63 @@ def ir_color_excess(phot: dict) -> dict:
 
 
 # --- Light-curve verdict (reuses the dimming detectors) --------------------
-def lightcurve_verdict(dip: dict | None, secular: dict | None,
-                       glint: dict | None) -> dict:
-    """Combine the dip/secular/glint detector outputs into anomaly flags."""
-    dip = dip or {}
-    secular = secular or {}
-    glint = glint or {}
-    reasons = []
-    # Aperiodic deep dipper (Boyajian-like): sustained event, deep, non-periodic.
-    if (dip.get("n_dip_events", 0) >= 1 and (dip.get("max_event_depth", 0) or 0) >= 0.10
-            and (dip.get("score", 0) or 0) >= 0.5
-            and (dip.get("period_power", 1.0) or 1.0) < 0.5):
-        reasons.append(f"aperiodic deep dips (score {dip.get('score', 0):.2f}, "
-                       f"max event depth {dip.get('max_event_depth', 0):.2f})")
-    sig = secular.get("slope_sigma", 0) or 0
-    amp = abs(secular.get("total_change_mag", 0) or 0)
-    if sig > 5 and amp > 0.05:
-        reasons.append(f"secular fade {amp:.2f} mag ({sig:.1f} sigma)")
-    if (glint.get("n_glint_events", 0) or 0) >= 1 and (glint.get("score", 0) or 0) >= 0.5:
-        reasons.append(f"{glint['n_glint_events']} glint event(s), "
-                       f"max brighten {glint.get('max_brighten', 0):.2f}")
+def _dip_qualifies(d: dict) -> bool:
+    return (d.get("n_dip_events", 0) >= 1 and (d.get("max_event_depth", 0) or 0) >= 0.10
+            and (d.get("score", 0) or 0) >= 0.5
+            and (d.get("period_power", 1.0) or 1.0) < 0.5)
+
+
+def _secular_qualifies(s: dict) -> bool:
+    return (s.get("slope_sigma", 0) or 0) > 5 and abs(s.get("total_change_mag", 0) or 0) > 0.05
+
+
+def _glint_qualifies(g: dict) -> bool:
+    return (g.get("n_glint_events", 0) or 0) >= 1 and (g.get("score", 0) or 0) >= 0.5
+
+
+def lightcurve_verdict(bands: dict) -> dict:
+    """Two-band (achromatic) light-curve verdict.
+
+    ``bands`` maps band name -> ``{"dip":.., "secular":.., "glint":..}`` (the
+    detector outputs as dicts).  A real astrophysical dip/fade/glint is
+    *achromatic* -- present in independent bands -- so a signature is only a
+    confirmed anomaly when it qualifies in >=2 bands.  A single-band event is
+    recorded as ``needs_vetting`` (the classic ZTF single-band artefact, e.g. a
+    75% "dip" that is one bad epoch), never as a clean anomaly.
+    """
+    checks = {"dip": _dip_qualifies, "secular": _secular_qualifies,
+              "glint": _glint_qualifies}
+    reasons, vetting = [], []
+    for kind, ok in checks.items():
+        hits = [b for b, res in bands.items() if ok((res or {}).get(kind) or {})]
+        if len(hits) >= 2:
+            reasons.append(f"{kind} confirmed in {'+'.join(sorted(hits))} (achromatic)")
+        elif len(hits) == 1:
+            vetting.append(f"{kind} in {hits[0]} only (single-band -> needs vetting)")
     return {"lightcurve_flag": bool(reasons), "reasons": reasons,
-            "dip": dip, "secular": secular, "glint": glint}
+            "needs_vetting": vetting, "bands": bands}
+
+
+# --- NEOWISE mid-infrared variability -------------------------------------
+def ir_variability_verdict(neowise: dict | None, slope_sig_min: float = 5.0,
+                           slope_min_mag_yr: float = 0.02) -> dict:
+    """Flag a significant secular mid-IR (NEOWISE W1/W2) trend.
+
+    A monotonic mid-IR brightening would be the tell-tale of warm waste heat
+    switching on/growing; a mid-IR fade tracks obscuration.  Either is worth
+    flagging.  Requires a significant AND non-trivial slope in a WISE band.
+    """
+    nw = neowise or {}
+    reasons = []
+    for b in ("W1", "W2"):
+        slope = nw.get(f"{b}_slope_mag_yr")
+        sig = nw.get(f"{b}_slope_sigma")
+        if slope is None or sig is None:
+            continue
+        if abs(sig) >= slope_sig_min and abs(slope) >= slope_min_mag_yr:
+            sense = "brightening" if slope < 0 else "fading"
+            reasons.append(f"{b} {sense} {abs(slope):.3f} mag/yr ({abs(sig):.1f} sigma)")
+    return {"ir_variability_flag": bool(reasons), "reasons": reasons, "neowise": nw}
 
 
 # --- Gaia XP narrow-feature (laser-line) scan ------------------------------
@@ -196,11 +241,16 @@ def narrow_feature_scan(wavelength: np.ndarray, flux: np.ndarray,
 
 
 def dossier_verdict(parts: dict) -> dict:
-    """Roll the per-channel flags into one verdict for a target."""
-    flags = {k: bool(v.get(f"{k}_flag") or v.get("companion_flag")
-                     or v.get("ir_excess_flag") or v.get("lightcurve_flag")
-                     or v.get("xp_feature_flag"))
-             for k, v in parts.items()}
+    """Roll the per-channel flags into one verdict for a target.
+
+    A channel is flagged if its result dict carries any ``*_flag`` key set True.
+    """
+    flags = {}
+    for k, v in parts.items():
+        if not isinstance(v, dict):
+            flags[k] = False
+            continue
+        flags[k] = any(kk.endswith("_flag") and bool(vv) for kk, vv in v.items())
     any_flag = any(flags.values())
     return {"any_signature_flag": any_flag,
             "channel_flags": flags,
@@ -208,4 +258,5 @@ def dossier_verdict(parts: dict) -> dict:
 
 
 __all__ = ["TARGETS", "companion_diagnostics", "ir_color_excess",
-           "lightcurve_verdict", "narrow_feature_scan", "dossier_verdict"]
+           "lightcurve_verdict", "ir_variability_verdict", "narrow_feature_scan",
+           "dossier_verdict"]

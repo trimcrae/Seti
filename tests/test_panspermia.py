@@ -280,11 +280,14 @@ def test_dossier_lightcurve_two_band_confirmation():
 
 def test_dossier_ir_variability():
     from seti.panspermia.dossier import ir_variability_verdict
-    clean = ir_variability_verdict({"W1_slope_mag_yr": 0.001, "W1_slope_sigma": 0.5,
-                                    "W2_slope_mag_yr": 0.002, "W2_slope_sigma": 0.4})
-    assert not clean["ir_variability_flag"]
-    warm = ir_variability_verdict({"W1_slope_mag_yr": -0.05, "W1_slope_sigma": 9.0,
-                                   "W2_slope_mag_yr": -0.04, "W2_slope_sigma": 6.0})
+    # fetch_neowise emits lowercase band keys + n_epochs.
+    clean = ir_variability_verdict({"n_epochs": 300,
+                                    "w1_slope_mag_yr": 0.001, "w1_slope_sigma": 0.5,
+                                    "w2_slope_mag_yr": 0.002, "w2_slope_sigma": 0.4})
+    assert not clean["ir_variability_flag"] and clean["has_data"]
+    warm = ir_variability_verdict({"n_epochs": 300,
+                                   "w1_slope_mag_yr": -0.05, "w1_slope_sigma": 9.0,
+                                   "w2_slope_mag_yr": -0.04, "w2_slope_sigma": 6.0})
     assert warm["ir_variability_flag"]
     assert any("brightening" in r for r in warm["reasons"])
 

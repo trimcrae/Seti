@@ -136,6 +136,15 @@ def _cmd_cluster_run(args, cfg):
                 excess_z_min=args.excess_z_min, link_pc=args.link_pc)
 
 
+def _cmd_cluster_aggregate(args, cfg):
+    from .cluster.aggregate import aggregate_sweep
+
+    agg = aggregate_sweep(cfg.root)
+    print(json.dumps({"n_cones": agg["n_cones"], "total_stars": agg["total_stars"],
+                      "detection": agg["detection"],
+                      "p_phase": agg.get("p_phase")}, indent=2, default=str))
+
+
 def _cmd_science_blend(args, cfg):
     from .discriminate.blend import blend_followup
 
@@ -444,6 +453,11 @@ def main(argv=None):
     p.add_argument("--excess-z-min", type=float, default=4.0)
     p.add_argument("--link-pc", type=float, default=8.0)
     p.set_defaults(func=_cmd_cluster_run)
+
+    p = sub.add_parser("cluster-aggregate",
+                       help="combine the multi-cone clustering sweep into one "
+                            "global/trials-corrected result")
+    p.set_defaults(func=_cmd_cluster_aggregate)
 
     p = sub.add_parser("dimming-run")
     p.add_argument("--ra", type=float, default=270.0)

@@ -17,11 +17,6 @@ import pandas as pd
 # NASA Exoplanet Archive TAP. Use the composite-parameters table (pscomppars):
 # one row per confirmed planet already, so no default_flag join is needed.
 _EXO_TAP = "https://exoplanetarchive.ipac.caltech.edu/TAP"
-_PS_QUERY = (
-    "SELECT hostname, gaia_id, ra, dec, sy_dist, pl_name, pl_rade, pl_bmasse, "
-    "pl_orbper, pl_eqt, pl_insol, st_teff "
-    "FROM pscomppars WHERE sy_dist IS NOT NULL AND sy_dist < {max_pc}"
-)
 
 # Classical (rocky, Earth-analog) habitable zone: insolation in Earth units and,
 # as a fallback, equilibrium temperature (K).
@@ -39,44 +34,54 @@ _HYCEAN_INSOL = (0.01, 10.0)       # S_earth: cold hycean ... hot hycean
 _HYCEAN_EQT = (150.0, 510.0)       # K, fallback when insolation is missing
 
 
-_SELECT_COLS = ("hostname,gaia_id,ra,dec,sy_dist,pl_name,pl_rade,pl_bmasse,"
-                "pl_orbper,pl_eqt,pl_insol,st_teff")
+# Columns we actually use downstream; a "SELECT *" is filtered to these so a
+# single mistyped column name can never 400 the whole query.
+_WANT_COLS = ("hostname", "gaia_id", "ra", "dec", "sy_dist", "pl_name",
+              "pl_rade", "pl_bmasse", "pl_orbper", "pl_eqt", "pl_insol", "st_teff")
+
+
+def _keep_cols(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.rename(columns={c: c.lower() for c in df.columns})
+    keep = [c for c in _WANT_COLS if c in df.columns]
+    return df[keep] if keep else df
 
 
 def fetch_nearby_planets(max_pc: float = 80.0) -> pd.DataFrame:
     """Confirmed planets with a host distance under ``max_pc`` (runner-side).
 
-    Primary path is astroquery's maintained NASA Exoplanet Archive client (it
-    knows this service's quirks); pyvo TAP and a raw sync GET are fallbacks.
+    Queries ``SELECT *`` from pscomppars (the documented sync form, immune to
+    bad-column errors) via a raw GET, then astroquery and pyvo as fallbacks.
+    Column selection happens client-side.  Every failure prints its full
+    traceback so the runner log is diagnostic.
     """
-    where = f"sy_dist<{float(max_pc)}"
-    # 1) astroquery (canonical).
+    import traceback
+    q = f"select * from pscomppars where sy_dist is not null and sy_dist < {float(max_pc)}"
+
+    # 1) Raw synchronous GET, the archive's documented ``query``+``format`` form.
+    try:
+        import io
+
+        import requests
+        r = requests.get(_EXO_TAP + "/sync",
+                         params={"query": q, "format": "csv"}, timeout=180)
+        r.raise_for_status()
+        return _keep_cols(pd.read_csv(io.StringIO(r.text)))
+    except Exception:  # noqa: BLE001
+        print("[exohosts] raw sync GET failed:\n" + traceback.format_exc())
+
+    # 2) astroquery's maintained client.
     try:
         from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
         tab = NasaExoplanetArchive.query_criteria(
-            table="pscomppars", select=_SELECT_COLS, where=where)
-        df = tab.to_pandas()
-        return df.rename(columns={c: c.lower() for c in df.columns})
-    except Exception as exc:  # noqa: BLE001
-        print(f"[exohosts] astroquery path failed ({exc!r}); trying pyvo TAP")
-    # 2) pyvo TAP.
-    q = _PS_QUERY.format(max_pc=float(max_pc))
-    try:
-        import pyvo
-        svc = pyvo.dal.TAPService(_EXO_TAP)
-        return svc.search(q).to_table().to_pandas().rename(
-            columns=str.lower)
-    except Exception as exc:  # noqa: BLE001
-        print(f"[exohosts] pyvo TAP failed ({exc!r}); trying raw sync GET")
-    # 3) raw synchronous GET.
-    import io
+            table="pscomppars", where=f"sy_dist<{float(max_pc)}")
+        return _keep_cols(tab.to_pandas())
+    except Exception:  # noqa: BLE001
+        print("[exohosts] astroquery path failed:\n" + traceback.format_exc())
 
-    import requests
-    r = requests.get(_EXO_TAP + "/sync",
-                     params={"request": "doQuery", "lang": "ADQL",
-                             "format": "csv", "query": q}, timeout=120)
-    r.raise_for_status()
-    return pd.read_csv(io.StringIO(r.text)).rename(columns=str.lower)
+    # 3) pyvo TAP.
+    import pyvo
+    svc = pyvo.dal.TAPService(_EXO_TAP)
+    return _keep_cols(svc.search(q).to_table().to_pandas())
 
 
 def _gaia_id_int(series: pd.Series) -> pd.Series:

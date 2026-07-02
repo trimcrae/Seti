@@ -22,10 +22,22 @@ next. Last updated: 2026-07-01.
    persists across exposures, a cosmic ray does not. Single-line targets cannot
    be galaxy-tested internally — the per-exposure check is what separates a true
    narrow emitter from a cosmic-ray hit for them.
-2. **WD IR-excess multimodal candidates** —
-   `results/science/multimodal_candidates.csv` (170 anomaly-scored excesses
-   from 7,716 clean 100-pc-scale white dwarfs). Not yet pushed through
-   variability/full-SED discrimination.
+2. **WD IR-excess multimodal candidates** — `results/science/multimodal_candidates.csv`
+   (23 multi-axis-flagged excesses from 7,716 clean 100-pc-scale white dwarfs).
+   **This is the one channel with an un-exhausted shortlist.** Assessment of the
+   top rows: #1 (`3934459045528378368`) is SIMBAD **CV\*** — accretion, killed;
+   most others are known WD\* with marginal τ≈0.02–0.04 (near the WISE noise).
+   The one standout is **`235890564653455488`** (SDSS J032245.50+390444.5, τ=0.607,
+   T_dust≈2280 K, ir_excess+periodicity) — τ=0.6 is *two orders of magnitude*
+   above any real WD debris disk, so it is either swarm-like or (far more likely)
+   a **WISE blend** (a background source in the 6″ beam).
+   *Next decisive test (not yet built):* the empirical WISE-blend + Gaia
+   co-movement + full-SED check on these 23 — for each, query Gaia DR3 for
+   neighbours inside the WISE beam and test whether the excess co-moves with the
+   WD; a non-co-moving IR source is background contamination. `contamination/`
+   has the offline logic (`comovement_pass`, `crowding`) but it is not yet wired
+   to an empirical runner follow-up on this shortlist. This is the highest-value
+   remaining build.
 
 ## Resolved (killed) candidates
 
@@ -72,11 +84,11 @@ next. Last updated: 2026-07-01.
 | Channel | Searched so far | Surviving | Blocking issue / next action |
 |---|---|---|---|
 | Dimming (dips + secular) | 250,862 ZTF stars, 116 fields | 0 — top fader killed by NEOWISE reddening test; **19 `marginal_fade` assessed and set aside** (all 1.6–7.4% total fades, 18/19 not band-confirmed → optical slope ~0.004–0.015 mag/yr, where even a gray occulter gives only ~2σ in NEOWISE; ZTF systematics floor) | channel exhausted at the systematics floor — do not re-chase the marginal faders; new volume only helps if it reaches ≳0.1 mag band-confirmed fades |
-| Specular glint | code merged, **no run yet** | — | dispatch `dimming.yml` on completed fields — glint scan reuses the same ZTF pulls |
+| Specular glint | ran on 4 fields → 15 candidates, **all vetted to 0** | 0 | every candidate is a `chromatic_flare` (M-dwarf flare, bluer in g than r → not achromatic) or dusty; `glint_confirmed=False` for all 15. Achromaticity vet kills the channel. Single huge-brightening events are asteroid/cosmic-ray artifacts; multi-event ones are red-dwarf flares |
 | Laser emission (SDSS-DR17) | 10,500+ spectra (latest committed run) | 112 triaged (was 118; 3 galaxies cut, incl. former #1) | per-exposure persistence check (repeat-visit path exhausted) |
 | Astrometric dark companion (Gaia orbits) | 105,066 NSS orbits, ≤1 kpc | 0 novel (8 class-3 = BH1 + 7, but 7/8 already in Shahaf+2023; 1 borderline-absent is the weakest solution) | reproduction of the published AMRF catalogue — change the question |
 | Laser absorption (DESI-DR1) | 6,500+ spectra (latest committed run) | 55 triaged | same; hot-star continua only (line-forest stars skipped by design) |
-| WD IR excess | 7,716 clean WDs | 170 scored | variability (ZTF) + SED follow-up of top anomaly scores |
+| WD IR excess | 7,716 clean WDs → 23 multi-axis | 23 (1 standout τ=0.6, likely WISE blend) | **the one live channel** — build the empirical WISE-blend + co-movement + full-SED follow-up on the 23 (see best-candidates §2) |
 | Gaia XP anomalies | RA283/Dec−3 dense field: 8,863 sources, reliable; narrow-feature shortlist examined | 0 credible | **channel bounded — see ledger.** Broad "anomalies" = reddened-M-dwarf molecular bands (degenerate with a Dyson SED); "narrow" ones = band-edge reconstruction artifacts + sub-resolution wiggles (XP LSF ≈5+ samples can't resolve a laser line). Guards added (width/interior/bounded). A clean low-extinction field could still test the *broad*-SED Dyson signature, but it is degenerate with reddening |
 
 ## Known systematics ledger (do not re-derive)

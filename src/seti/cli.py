@@ -153,6 +153,39 @@ def _cmd_cluster_aggregate(args, cfg):
                       "p_phase": agg.get("p_phase")}, indent=2, default=str))
 
 
+def _cmd_panspermia_regime(args, cfg):
+    from .panspermia.encounters import regime_summary, transfer_regime
+
+    src = cfg.root / "results" / "panspermia" / "encounters_all.csv"
+    if not src.exists():
+        print(f"[panspermia-regime] no encounter table at {src}; run panspermia-run first")
+        return
+    df = pd.read_csv(src)
+    # A fast encounter can only transfer material by geometric INTERCEPTION, not
+    # gravitational capture, so sweep plausible donor-reservoir radii and report
+    # which mode (if any) any past encounter satisfies.
+    reservoirs = [0.5, 0.2, 0.1, 0.03, 4.8e-3, 2.4e-4]   # pc: outer Oort ... Kuiper
+    rows = [regime_summary(df, donor_mass_msun=args.donor_mass, reservoir_pc=r)
+            for r in reservoirs]
+    out_dir = cfg.root / "results" / "panspermia"
+    pd.DataFrame(rows).to_csv(out_dir / "transfer_regime.csv", index=False)
+    # Full per-encounter classification at the headline reservoir.
+    reg = transfer_regime(df, donor_mass_msun=args.donor_mass,
+                          reservoir_pc=args.reservoir_pc)
+    reg = reg[reg["t_enc_myr"] < 0].sort_values("d_min_pc")
+    cols = [c for c in ("source_id", "dist_pc", "phot_g_mean_mag", "bp_rp",
+                        "v_rel_kms", "t_enc_myr", "d_min_pc", "d_min_au",
+                        "v_esc_at_dmin_kms", "within_reservoir", "capturable",
+                        "focusing_factor", "transfers") if c in reg.columns]
+    reg[cols].to_csv(out_dir / "regime_by_encounter.csv", index=False)
+    (out_dir / "regime_summary.json").write_text(json.dumps(rows, indent=2))
+    print(json.dumps(rows, indent=2))
+    n_ok = int(reg["transfers"].sum())
+    print(f"[panspermia-regime] {n_ok} of {len(reg)} past encounters permit ANY "
+          f"passive transfer at reservoir={args.reservoir_pc} pc, "
+          f"donor={args.donor_mass} Msun")
+
+
 def _cmd_science_blend(args, cfg):
     from .discriminate.blend import blend_followup
 
@@ -481,6 +514,15 @@ def main(argv=None):
                        help="combine the multi-cone clustering sweep into one "
                             "global/trials-corrected result")
     p.set_defaults(func=_cmd_cluster_aggregate)
+
+    p = sub.add_parser("panspermia-regime",
+                       help="offline: classify K2-18 encounters by transfer mode "
+                            "(capture vs interception) across reservoir radii")
+    p.add_argument("--donor-mass", type=float, default=0.36,
+                   help="donor stellar mass (Msun); K2-18 ~ 0.36")
+    p.add_argument("--reservoir-pc", type=float, default=0.2,
+                   help="headline donor reservoir radius (pc)")
+    p.set_defaults(func=_cmd_panspermia_regime)
 
     p = sub.add_parser("dimming-run")
     p.add_argument("--ra", type=float, default=270.0)

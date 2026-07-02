@@ -12,7 +12,13 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from seti.panspermia.encounters import closest_approach, flag_comoving, transfer_score
+from seti.panspermia.encounters import (
+    closest_approach,
+    flag_comoving,
+    regime_summary,
+    transfer_regime,
+    transfer_score,
+)
 from seti.panspermia.kinematics import _A_ICRS_TO_GAL, _K_AUYR_KMS, phase_space_6d
 from seti.panspermia.run import panspermia_run
 
@@ -110,6 +116,47 @@ def test_flag_comoving():
     df = pd.DataFrame({"v_rel_kms": [0.5, 10.0, 2.0], "sep_now_pc": [3.0, 1.0, 40.0]})
     out = flag_comoving(df, v_rel_max_kms=3.0, sep_now_max_pc=5.0)
     assert list(out["comoving"]) == [True, False, False]
+
+
+def test_transfer_regime_capture_vs_interception():
+    # Three past encounters: a slow near-graze, a fast direct hit, a fast far pass.
+    df = pd.DataFrame({
+        "v_rel_kms": [0.05, 80.0, 80.0],
+        "d_min_pc":  [1.0, 0.001, 1.0],
+        "t_enc_myr": [-1.0, -1.0, -1.0],
+    })
+    reg = transfer_regime(df, donor_mass_msun=0.36, reservoir_pc=0.2)
+    # Row 0: within the reservoir (1 pc > 0.2? no) -- 1 pc is OUTSIDE 0.2 pc, so
+    # no material there; slow but nothing to capture -> no transfer.
+    assert not reg["within_reservoir"].iloc[0] and not reg["transfers"].iloc[0]
+    # Row 1: a direct hit (0.001 pc, inside the reservoir) but 80 km/s is far too
+    # fast to bind material at that distance -> no transfer.
+    assert reg["within_reservoir"].iloc[1] and not reg["capturable"].iloc[1]
+    assert not reg["transfers"].iloc[1]
+    # Row 2: fast AND far -> neither condition.
+    assert not reg["transfers"].iloc[2]
+    # Focusing collapses to ~1 for the fast passes.
+    assert reg["focusing_factor"].iloc[1] < 1.01
+
+    # A genuinely slow, close pass DOES transfer (both conditions met).
+    good = transfer_regime(pd.DataFrame({"v_rel_kms": [0.01], "d_min_pc": [0.001],
+                                         "t_enc_myr": [-1.0]}),
+                           donor_mass_msun=0.36, reservoir_pc=0.2)
+    assert good["transfers"].iloc[0]
+
+
+def test_regime_summary_counts_only_past():
+    df = pd.DataFrame({
+        "v_rel_kms": [0.05, 80.0],
+        "d_min_pc":  [1.0, 1.0],
+        "t_enc_myr": [-1.0, +1.0],      # second is a FUTURE encounter -> excluded
+    })
+    s = regime_summary(df, donor_mass_msun=0.36, reservoir_pc=0.2)
+    assert s["n_past"] == 1
+    # The single past encounter is slow but at 1 pc (outside 0.2 pc reservoir):
+    # nothing to capture there, so no transfer.
+    assert s["n_within_reservoir"] == 0
+    assert s["n_transfers"] == 0
 
 
 def test_run_recovers_injected_recipient(tmp_path):

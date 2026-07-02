@@ -53,16 +53,38 @@ WHERE xm.source_id IN ({ids})
 """
 
 
-def _fetch_wise_for(source_ids, chunk: int = 4000) -> pd.DataFrame:
+def _run_query(query: str, retries: int = 4) -> pd.DataFrame:
+    """Run a Gaia ADQL query robustly.  The Gaia TAP server intermittently drops
+    an async job's result file ("Error 500: cannot find result") -- a server-side
+    storage glitch, not a query error -- so retry with exponential backoff, and
+    fall back to a *synchronous* job (which streams the result and never touches
+    the failing async storage) on the final attempt."""
+    import time
+
     from astroquery.gaia import Gaia
+    last = None
+    for attempt in range(retries):
+        try:
+            if attempt == retries - 1:
+                job = Gaia.launch_job(query)           # synchronous fallback
+            else:
+                job = Gaia.launch_job_async(query)
+            df = job.get_results().to_pandas()
+            return df.rename(columns={c: c.lower() for c in df.columns})
+        except Exception as exc:  # noqa: BLE001
+            last = exc
+            print(f"[cluster] query attempt {attempt + 1}/{retries} failed: {exc!r}")
+            time.sleep(2 ** attempt)
+    raise RuntimeError(f"Gaia query failed after {retries} attempts: {last!r}")
+
+
+def _fetch_wise_for(source_ids, chunk: int = 2000) -> pd.DataFrame:
     frames = []
     ids = [int(s) for s in source_ids]
     for i in range(0, len(ids), chunk):
         sub = ",".join(str(s) for s in ids[i:i + chunk])
         try:
-            r = (Gaia.launch_job_async(_WISE_QUERY.format(ids=sub))
-                 .get_results().to_pandas())
-            frames.append(r.rename(columns={c: c.lower() for c in r.columns}))
+            frames.append(_run_query(_WISE_QUERY.format(ids=sub)))
         except Exception as exc:  # noqa: BLE001
             print(f"[cluster] WISE chunk {i // chunk} failed: {exc!r}")
     if not frames:
@@ -72,11 +94,9 @@ def _fetch_wise_for(source_ids, chunk: int = 4000) -> pd.DataFrame:
 
 def _fetch(ra: float, dec: float, radius_deg: float, plx_min: float, g_max: float,
            limit: int) -> pd.DataFrame:
-    from astroquery.gaia import Gaia
     q = _STAR_QUERY.format(limit=int(limit), ra=ra, dec=dec, radius=radius_deg,
                            plx_min=plx_min, g_max=g_max)
-    stars = Gaia.launch_job_async(q).get_results().to_pandas()
-    stars = stars.rename(columns={c: c.lower() for c in stars.columns})
+    stars = _run_query(q)
     print(f"[cluster] {len(stars)} Gaia stars in cone; fetching WISE...")
     wise = _fetch_wise_for(stars["source_id"].tolist())
     print(f"[cluster] {len(wise)} of {len(stars)} have an AllWISE match")

@@ -220,6 +220,58 @@ def test_exohost_hycean_crossmatch():
     assert not bool(out.loc[out["source_id"] == 333, "known_planet_host"].iloc[0])
 
 
+def test_dossier_companion_diagnostics():
+    from seti.panspermia.dossier import companion_diagnostics
+    clean = companion_diagnostics({"ruwe": 1.05, "astrometric_excess_noise": 0.02,
+                                   "astrometric_excess_noise_sig": 0.5,
+                                   "ipd_frac_multi_peak": 0.0, "non_single_star": 0})
+    assert not clean["companion_flag"]
+    flagged = companion_diagnostics({"ruwe": 2.3, "astrometric_excess_noise": 0.9,
+                                     "astrometric_excess_noise_sig": 8.0,
+                                     "ipd_frac_multi_peak": 15.0, "non_single_star": 1})
+    assert flagged["companion_flag"] and len(flagged["reasons"]) >= 3
+
+
+def test_dossier_ir_excess():
+    from seti.panspermia.dossier import ir_color_excess
+    # Bare M-dwarf photosphere: WISE colours near zero -> no excess.
+    clean = ir_color_excess({"w1mpro": 8.0, "w2mpro": 7.95, "w3mpro": 7.9,
+                             "w4mpro": 7.85, "w1sigmpro": 0.02, "w2sigmpro": 0.02,
+                             "w3sigmpro": 0.03, "w4sigmpro": 0.05})
+    assert not clean["ir_excess_flag"]
+    # Strong warm-dust excess in W3/W4.
+    warm = ir_color_excess({"w1mpro": 8.0, "w2mpro": 7.9, "w3mpro": 6.5,
+                            "w4mpro": 5.5, "w1sigmpro": 0.02, "w2sigmpro": 0.02,
+                            "w3sigmpro": 0.03, "w4sigmpro": 0.05})
+    assert warm["ir_excess_flag"]
+    assert any("W1_W4" in r for r in warm["reasons"])
+
+
+def test_dossier_narrow_feature_scan():
+    from seti.panspermia.dossier import narrow_feature_scan
+    wave = np.linspace(400, 1000, 120)
+    smooth = 100.0 + 10.0 * np.sin(np.linspace(0, 3, 120))   # smooth continuum
+    assert not narrow_feature_scan(wave, smooth)["xp_feature_flag"]
+    spiked = smooth.copy()
+    spiked[60:62] += 60.0                                    # narrow interior spike
+    res = narrow_feature_scan(wave, spiked)
+    assert res["xp_feature_flag"] and res["peak"]["sigma"] > 6
+
+
+def test_dossier_verdict_rollup():
+    from seti.panspermia.dossier import dossier_verdict
+    clean = dossier_verdict({"companion": {"companion_flag": False},
+                             "ir": {"ir_excess_flag": False},
+                             "lightcurve": {"lightcurve_flag": False},
+                             "xp": {"xp_feature_flag": False}})
+    assert clean["verdict"] == "clean_all_channels"
+    flagged = dossier_verdict({"companion": {"companion_flag": True},
+                               "ir": {"ir_excess_flag": False},
+                               "lightcurve": {"lightcurve_flag": False},
+                               "xp": {"xp_feature_flag": False}})
+    assert flagged["any_signature_flag"] and flagged["channel_flags"]["companion"]
+
+
 def test_run_recovers_injected_recipient(tmp_path):
     from seti.config import load_config
 

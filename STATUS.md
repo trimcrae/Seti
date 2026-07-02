@@ -211,6 +211,23 @@ specific target list. *Next decisive step:* fold in encounter-time uncertainty
 sub-Neptunes truly sit in the hycean HZ (radius + insolation) vs just passing the
 size cut. The bare kinematics are a necessary, not sufficient, condition.
 
+**Per-target deep dossier** (`panspermia-dossier`, `dossier.py`). With the field
+down to two objects, stop doing statistics and interrogate *every archive a runner
+can reach* for each, running every signature detector this repo has:
+- **Gaia DR3 astrometry** → hidden-companion diagnostics (RUWE, excess-noise sig,
+  IPD multi-peak, NSS) — an unseen massive companion / anomalous acceleration;
+- **WISE** → W1-anchored IR colour excess (warm dust / Dyson-like waste heat);
+- **ZTF g+r** → the `seti.dimming` dip / secular-fade / glint detectors
+  (megastructure transits, slow enshrouding, specular glints);
+- **Gaia XP** → a narrow, interior, bounded emission spike no smooth continuum
+  reproduces (a laser line), with the XP-resolution guards from the spectra channel.
+Pure scorers are offline-validated (4 tests: companion, IR excess, narrow-feature,
+verdict roll-up); acquisition + the workflow (`panspermia-dossier.yml`) are
+**dispatched** — writes `results/panspermia/dossier/{LTT_3780,K2-3}.json` + a
+summary with a per-channel `clean`/`ANOMALY_FLAGGED` verdict. Honest by
+construction: it records "clean" where the data are clean. (TESS 2-min photometry
+and any radio archive are not yet wired — the natural next channels.)
+
 **Read:** every *passive* encounter is *fast* (v_rel 23–54 km/s) — the signature of random
 field stars passing a normal thin-disk star, not a shared-origin group. No slow,
 close bridge exists in the RV-complete local sample, and the transfer scores are

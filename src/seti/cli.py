@@ -166,6 +166,12 @@ def _cmd_panspermia_targets(args, cfg):
                 max_pc=args.max_pc)
 
 
+def _cmd_panspermia_dossier(args, cfg):
+    from .panspermia.run import dossier_run
+
+    dossier_run(cfg)
+
+
 def _cmd_panspermia_regime(args, cfg):
     from .panspermia.encounters import regime_summary, transfer_regime
 
@@ -545,6 +551,11 @@ def main(argv=None):
     p.add_argument("--max-pc", type=float, default=80.0,
                    help="host-distance limit for the Exoplanet-Archive pull (pc)")
     p.set_defaults(func=_cmd_panspermia_targets)
+
+    p = sub.add_parser("panspermia-dossier",
+                       help="runner: exhaustive per-target signature sweep of the "
+                            "two candidates (Gaia/WISE/ZTF/XP)")
+    p.set_defaults(func=_cmd_panspermia_dossier)
 
     p = sub.add_parser("panspermia-regime",
                        help="offline: classify K2-18 encounters by transfer mode "

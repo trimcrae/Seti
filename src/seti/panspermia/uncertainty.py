@@ -128,23 +128,44 @@ def run_mc_followup(cfg=None, n: int = 3000) -> dict:
     import json
 
     from ..config import load_config
-    from .run import K2_18_SOURCE_ID, _run_query
+    from .run import K2_18_SOURCE_ID, _resolve_anchor, _run_query
 
     cfg = cfg or load_config()
     out_dir = cfg.root / "results" / "panspermia"
+    # Read source_id as int64 explicitly (a 19-digit id silently cast to float64
+    # loses precision and breaks the crossmatch).
     cand = pd.read_csv(out_dir / "recipient_candidates.csv")
-    ids = [int(s) for s in cand["source_id"]] + [int(K2_18_SOURCE_ID)]
-    err = _run_query(_ERR_QUERY.format(ids=",".join(str(s) for s in ids)))
-    err = err.rename(columns={c: c.lower() for c in err.columns})
+    cand["source_id"] = cand["source_id"].astype("int64")
 
-    anchor_row = err[err["source_id"] == int(K2_18_SOURCE_ID)]
-    if not len(anchor_row):
-        raise RuntimeError("anchor not returned by error query")
-    anchor = anchor_row.iloc[0].to_dict()
+    # Resolve the anchor via the base pipeline (handles the literature-RV fallback
+    # when Gaia has no radial velocity for K2-18), then fetch its errors on its own
+    # -- do NOT rely on it appearing in the shortlist IN-list result.
+    anchor = _resolve_anchor(int(K2_18_SOURCE_ID))
+    aerr = _run_query(_ERR_QUERY.format(ids=str(int(K2_18_SOURCE_ID))))
+    aerr = aerr.rename(columns={c: c.lower() for c in aerr.columns})
+    if len(aerr):
+        ar = aerr.iloc[0].to_dict()
+        for k in ("parallax_error", "pmra_error", "pmdec_error",
+                  "radial_velocity_error"):
+            v = ar.get(k)
+            anchor[k] = float(v) if v is not None and np.isfinite(
+                pd.to_numeric(v, errors="coerce")) else np.nan
+    # If Gaia has no RV (hence no RV error) for the anchor, its RV came from the
+    # literature; assign a conservative error so its uncertainty still propagates.
+    if not np.isfinite(pd.to_numeric(anchor.get("radial_velocity_error"),
+                                     errors="coerce")):
+        anchor["radial_velocity_error"] = 0.5
+
+    err = _run_query(_ERR_QUERY.format(
+        ids=",".join(str(int(s)) for s in cand["source_id"])))
+    err = err.rename(columns={c: c.lower() for c in err.columns})
+    if len(err):
+        err["source_id"] = err["source_id"].astype("int64")
 
     # Merge the error columns onto the shortlist (keep transfer_score/dist etc).
     ecols = ["source_id", "parallax_error", "pmra_error", "pmdec_error",
              "radial_velocity_error"]
+    ecols = [c for c in ecols if c in err.columns] or ["source_id"]
     merged = cand.merge(err[ecols], on="source_id", how="left")
     mc = mc_shortlist(anchor, merged, n=n)
     mc.to_csv(out_dir / "recipient_candidates_mc.csv", index=False)

@@ -107,6 +107,62 @@ p_vel/p_phase ≪ 0.05 with an FoF group the matched null cannot reproduce.
 companion excess, UV/optical energy imbalance) where a clustered technological
 population might show even though IR excess does not.
 
+### New channel: K2-18 panspermia close-encounter search (`panspermia/`)
+
+**Question (user-directed, 2026-07-02):** K2-18 b is the hycean world with a JWST
+biosignature hint (DMS/DMSO; Madhusudhan+2023/2025 — contested; treated as the
+*premise*, not a result). *If* life arose there, which stars could have received
+K2-18-origin material? The transfer vector is unbound ejecta / dormant spores /
+free-flying 'Oumuamua-class bodies, so the filter is **encounter geometry (close +
+slow)**, not a continuous bridge — and because the stellar neighbourhood
+**reshuffles over time**, the search is over *closest approach in full 6D phase
+space*, not present-day proximity. This is a novel anchor + novel question (nobody
+has computed K2-18's stellar-encounter recipient list); it is not a refinement of
+any existing SETI baseline.
+
+**Method (offline-validated, `test_panspermia.py`, 7 tests):** resolve K2-18's 6D
+vector from Gaia DR3 (radial velocity essential); pull every Gaia DR3 source with
+an RV in a heliocentric distance shell bracketing the search sphere; build
+heliocentric Galactic 6D `(X,Y,Z, U,V,W)`; compute each star's **linear
+closest-approach** to K2-18 (`t_enc`, `d_min`, `v_rel`) — the standard
+straight-line treatment used for the Sun's own encounter list (García-Sánchez
+2001; Bailer-Jones 2015+), valid over the recent few-Myr window where the Galactic
+tide is negligible. Rank *past* (`t_enc<0`) close/slow encounters by a
+transfer-plausibility score `(d_ref/d_min)·(v_ref/v_rel)²` (velocity-squared
+mirrors the gravitational-capture cross-section; ordinal, not a probability), and
+separately tag **co-moving companions** (shared low velocity + present proximity),
+the strongest bridge of all. Relative velocities are frame-independent of the
+solar motion (it cancels in the difference), so no LSR constants enter.
+*Caveat:* linear motion is honest only inside `t_max` (default 10 Myr); a longer
+baseline would need epicyclic/Galactic-potential integration.
+
+**Status:** funnel + workflow (`panspermia.yml`) built, unit-tested offline, and
+**first runner dispatch complete** (run 28609098955, 2026-07-02).
+
+**First run (K2-18 anchor, 40 pc sphere, 10 Myr window):** Gaia DR3 resolved
+K2-18 at 38.02 pc with space velocity UVW ≈ (−8.2, −14.8, −8.2) km/s (a
+thin-disk-normal motion). **9,980** Gaia 6D stars in the surrounding distance
+shell → **4,984** had a past closest approach → **15** within `d_min ≤ 2 pc`.
+Headline geometry:
+- **Closest approach 0.90 pc** — Gaia DR3 `3913239815437281536` (M dwarf, G=13.7,
+  35.8 pc), ≈136 kyr ago — **but at v_rel 32 km/s** (a fast flyby).
+- **Top transfer score** — Gaia DR3 `4358031335898505472` (d_min 1.13 pc, v_rel
+  27 km/s, ≈1.35 Myr ago), a bright G=5.6 star at 9.9 pc.
+- **Zero co-moving companions** (nothing within 5 pc sharing K2-18's velocity).
+
+**Read:** every encounter is *fast* (v_rel 23–54 km/s) — the signature of random
+field stars passing a normal thin-disk star, not a shared-origin group. No slow,
+close bridge exists in the RV-complete local sample, and the transfer scores are
+all ~1e-4 (dominated by the 1/v_rel² term). This is **not a null to write up** —
+the *limiting factor is Gaia RV completeness*: most nearby M dwarfs lack a Gaia
+radial velocity and are excluded, so a genuinely slow/close encounter could be
+hiding among them. *Next decisive moves:* (1) supplement RVs for the RV-less
+nearby M dwarfs (LAMOST/APOGEE/SDSS) to close the completeness gap that a slow
+encounter would live in; (2) tighten the shortlist to the only regime that would
+matter — `d_min < 0.3 pc AND v_rel < 5 km/s` — and Exoplanet-Archive cross-match
+any survivor; (3) if a slow/close survivor appears, replace the linear
+approximation with a Galactic-potential orbit integration to confirm it.
+
 ## Channel state
 
 | Channel | Searched so far | Surviving | Blocking issue / next action |
@@ -117,6 +173,7 @@ population might show even though IR excess does not.
 | Astrometric dark companion (Gaia orbits) | 105,066 NSS orbits, ≤1 kpc | 0 novel (8 class-3 = BH1 + 7, but 7/8 already in Shahaf+2023; 1 borderline-absent is the weakest solution) | reproduction of the published AMRF catalogue — change the question |
 | Laser absorption (DESI-DR1) | 6,500+ spectra (latest committed run) | 55 triaged | same; hot-star continua only (line-forest stars skipped by design) |
 | WD IR excess | 7,716 clean WDs → 23 multi-axis → blend+sublimation test | 0 technosignature (3 WISE blends, 7 unresolved stellar companions, 13 ordinary τ<0.08 debris disks) | channel resolved; τ=0.6 standout is a too-hot-for-dust stellar companion. Next volume only helps if it reaches a τ→1 excess with T_dust *below* sublimation |
+| Panspermia (K2-18 close encounters) | first run: 9,980 Gaia 6D stars, 4,984 past approaches, 15 within d_min≤2 pc | 0 slow/close bridge (all v_rel 23–54 km/s; closest 0.90 pc but at 32 km/s; 0 co-movers) | **RV completeness is the gap** — supplement RVs for RV-less nearby M dwarfs, then re-cut to d_min<0.3 pc & v_rel<5 km/s; Exoplanet-Archive cross-match any survivor |
 | Gaia XP anomalies | RA283/Dec−3 dense field: 8,863 sources, reliable; narrow-feature shortlist examined | 0 credible | **channel bounded — see ledger.** Broad "anomalies" = reddened-M-dwarf molecular bands (degenerate with a Dyson SED); "narrow" ones = band-edge reconstruction artifacts + sub-resolution wiggles (XP LSF ≈5+ samples can't resolve a laser line). Guards added (width/interior/bounded). A clean low-extinction field could still test the *broad*-SED Dyson signature, but it is degenerate with reddening |
 
 ## Known systematics ledger (do not re-derive)

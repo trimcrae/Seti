@@ -1,0 +1,90 @@
+name: panspermia-run
+
+# Close-encounter search anchored on K2-18 (the hycean world with a JWST
+# biosignature hint). Resolve K2-18's full 6D phase space from Gaia DR3, pull
+# every Gaia source with a radial velocity in a distance shell around it, and rank
+# the stars that passed CLOSE and SLOW to K2-18 in the recent past -- the systems
+# most likely to have received K2-18-origin material if life there escaped the
+# planet. The neighbourhood reshuffles over time, so the ranking is on closest
+# approach in 6D, not present-day proximity. Runs on the runner (Gaia TAP).
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_id:
+        description: "Anchor Gaia DR3 source_id (default K2-18)"
+        required: false
+        default: "3892950081412683520"
+      search_pc:
+        description: "3D search radius around the anchor (pc)"
+        required: false
+        default: "40.0"
+      g_max:
+        description: "Faint G limit"
+        required: false
+        default: "16.0"
+      limit:
+        description: "Max Gaia 6D sources in the shell"
+        required: false
+        default: "400000"
+      t_max_myr:
+        description: "Past-encounter viability window (Myr)"
+        required: false
+        default: "10.0"
+      d_min_max_pc:
+        description: "Closest-approach cut defining the shortlist (pc)"
+        required: false
+        default: "2.0"
+
+permissions:
+  contents: write
+
+jobs:
+  panspermia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,pandas,scipy,astroquery; print('imports OK')"
+      - name: Run panspermia encounter search
+        run: |
+          python -m seti.cli panspermia-run \
+            --source-id ${{ github.event.inputs.source_id }} \
+            --search-pc ${{ github.event.inputs.search_pc }} \
+            --g-max ${{ github.event.inputs.g_max }} \
+            --limit ${{ github.event.inputs.limit }} \
+            --t-max-myr ${{ github.event.inputs.t_max_myr }} \
+            --d-min-max-pc ${{ github.event.inputs.d_min_max_pc }}
+          echo "=== panspermia summary ==="
+          cat results/panspermia/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/panspermia/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "panspermia-run: K2-18 close-encounter recipient search"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: panspermia-outputs
+          path: results/panspermia/
+          if-no-files-found: warn

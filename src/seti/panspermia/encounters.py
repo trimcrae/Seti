@@ -1,0 +1,122 @@
+"""Close stellar encounters with a fixed anchor star, and a transfer score.
+
+The panspermia question, made concrete: *which stars passed close to K2-18, at
+low relative speed, in the recent past?*  Those are the only systems into which
+K2-18-origin material (impact ejecta, dormant spores, free-floating bodies of the
+'Oumuamua/Borisov class) could plausibly have been delivered -- the transfer
+vector need not be a continuous bridge, only a close, slow flyby whose geometry
+lets one star's outer reservoir dump material the other can capture.
+
+Method.  Over the recent past (a few Myr) the Galactic tide is negligible on the
+scale of the local neighbourhood, so each star moves on a straight line at
+constant velocity to good approximation -- the standard treatment for the Sun's
+own encounter list (Garcia-Sanchez 2001; Bailer-Jones 2015+).  For a star with
+relative position ``dr`` (pc) and relative velocity ``dv`` (pc/Myr) with respect
+to the anchor, the separation ``|dr + dv t|`` is minimised at
+
+    t_enc = - (dr . dv) / (dv . dv)          [Myr; negative = in the past]
+    d_min = | dr + dv * t_enc |              [pc]
+
+and the relative speed at closest approach equals ``|dv|`` (constant, straight
+line).  ``t_enc < 0`` is a *past* encounter -- the only kind that could already
+have seeded a neighbour.
+
+The transfer score is deliberately a *ranking* heuristic, not a probability:
+material capture during a flyby grows as the encounter is closer (smaller
+``d_min``) and slower (capture cross-section rises steeply as the relative speed
+falls toward the reservoir escape speed).  We use
+
+    score = (d_ref / d_min) * (v_ref / v_rel)^2
+
+gated to past encounters inside a viability window ``|t_enc| <= t_max_myr``.  The
+squared velocity dependence mirrors the gravitational-capture cross-section; the
+constants ``d_ref``, ``v_ref`` only set the scale of an ordinal score.
+"""
+
+from __future__ import annotations
+
+import numpy as np
+import pandas as pd
+
+# 1 km/s expressed in pc/Myr (1 km/s = 1.0227121651 pc/Myr).
+_KMS_TO_PC_PER_MYR = 1.0227121651
+
+
+def closest_approach(anchor: dict, df: pd.DataFrame) -> pd.DataFrame:
+    """Linear closest-approach of every star in ``df`` to ``anchor``.
+
+    ``anchor`` and ``df`` must carry Galactic Cartesian position ``X_pc,Y_pc,Z_pc``
+    (pc) and velocity ``U_kms,V_kms,W_kms`` (km/s).  Adds:
+
+    * ``sep_now_pc``   present-day separation (pc);
+    * ``v_rel_kms``    relative speed (km/s), constant along the straight line;
+    * ``t_enc_myr``    time of closest approach (Myr; <0 past, >0 future);
+    * ``d_min_pc``     closest-approach separation (pc).
+    """
+    out = df.copy()
+    r0 = np.array([anchor["X_pc"], anchor["Y_pc"], anchor["Z_pc"]], float)
+    v0 = np.array([anchor["U_kms"], anchor["V_kms"], anchor["W_kms"]], float)
+
+    r = df[["X_pc", "Y_pc", "Z_pc"]].to_numpy(float)                 # (N,3) pc
+    v = df[["U_kms", "V_kms", "W_kms"]].to_numpy(float)             # (N,3) km/s
+
+    dr = r - r0                                                     # pc
+    dv = (v - v0) * _KMS_TO_PC_PER_MYR                              # pc/Myr
+
+    v_rel_kms = np.linalg.norm(v - v0, axis=1)
+    dv2 = np.einsum("ij,ij->i", dv, dv)                            # (pc/Myr)^2
+    with np.errstate(divide="ignore", invalid="ignore"):
+        t_enc = -np.einsum("ij,ij->i", dr, dv) / dv2               # Myr
+    t_enc = np.where(dv2 > 0, t_enc, np.nan)
+    closest = dr + dv * t_enc[:, None]
+    d_min = np.linalg.norm(closest, axis=1)
+
+    out["sep_now_pc"] = np.linalg.norm(dr, axis=1)
+    out["v_rel_kms"] = v_rel_kms
+    out["t_enc_myr"] = t_enc
+    out["d_min_pc"] = d_min
+    return out
+
+
+def transfer_score(df: pd.DataFrame, t_max_myr: float = 10.0,
+                   d_ref_pc: float = 1.0, v_ref_kms: float = 1.0,
+                   d_floor_pc: float = 0.01, v_floor_kms: float = 0.1) -> pd.DataFrame:
+    """Ordinal panspermia-transfer score for past close encounters.
+
+    Requires ``d_min_pc``, ``v_rel_kms``, ``t_enc_myr`` (from
+    :func:`closest_approach`).  Only *past* encounters (``t_enc_myr < 0``) within
+    ``|t_enc| <= t_max_myr`` score above zero; everything else is 0.  Floors on
+    ``d_min`` and ``v_rel`` keep a (numerically) grazing zero-velocity match from
+    producing an infinite score.
+    """
+    out = df.copy()
+    d = np.maximum(pd.to_numeric(out["d_min_pc"], errors="coerce"), d_floor_pc)
+    vrel = np.maximum(pd.to_numeric(out["v_rel_kms"], errors="coerce"), v_floor_kms)
+    t = pd.to_numeric(out["t_enc_myr"], errors="coerce")
+
+    past = np.isfinite(t) & (t < 0) & (t >= -t_max_myr)
+    score = (d_ref_pc / d) * (v_ref_kms / vrel) ** 2
+    out["transfer_score"] = np.where(past, score, 0.0)
+    out["past_encounter"] = past
+    return out
+
+
+def flag_comoving(df: pd.DataFrame, v_rel_max_kms: float = 3.0,
+                  sep_now_max_pc: float = 5.0) -> pd.DataFrame:
+    """Tag stars that are *currently* close and share the anchor's velocity.
+
+    A persistent low-relative-velocity companion (a shared kinematic stream, a
+    dissolving natal cluster, a wide co-moving pair) is the strongest panspermia
+    bridge of all: the two reservoirs stay within reach for a long time rather
+    than for one fleeting flyby.  This is the concrete form of "life need not be
+    confined to a planet" -- material shed into a shared, slowly-drifting halo has
+    a standing chance of capture, not a one-shot one.
+    """
+    out = df.copy()
+    vrel = pd.to_numeric(out.get("v_rel_kms"), errors="coerce")
+    sep = pd.to_numeric(out.get("sep_now_pc"), errors="coerce")
+    out["comoving"] = (vrel <= v_rel_max_kms) & (sep <= sep_now_max_pc)
+    return out
+
+
+__all__ = ["closest_approach", "transfer_score", "flag_comoving"]

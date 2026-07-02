@@ -73,6 +73,18 @@ next. Last updated: 2026-07-01.
   object (a decade-long monotonic obscuration event), but not a
   technosignature.
 
+
+### New question (post-null pivot)
+
+**Population-level anomaly clustering** (`cluster/`, `results/cluster/`). Every
+single-object channel above closed on contamination. New, degeneracy-immune
+question: does the Gaia×AllWISE **IR-excess tail over-cluster in phase space**
+(3D position + velocity) beyond a magnitude/colour/distance-matched random null,
+as an expanding waste-heat-building population would? `matched_null_clustering`
+is offline-validated (recovers an injected co-moving group at p<0.01, clean null
+on confounded sets). First Gaia×AllWISE run (≤500 pc, G<16) dispatched — the
+decisive output is the over-density p-value and any friends-of-friends group.
+
 ## Channel state
 
 | Channel | Searched so far | Surviving | Blocking issue / next action |

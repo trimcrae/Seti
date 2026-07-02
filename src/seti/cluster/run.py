@@ -182,7 +182,9 @@ def cluster_run(cfg: Config | None = None, ra: float = 200.0, dec: float = 0.0,
             })
         groups.sort(key=lambda d: d["n"], reverse=True)
 
-    out_dir = cfg.root / "results" / "cluster"
+    base = cfg.root / "results" / "cluster"
+    tag = f"f{ra:+06.1f}{dec:+05.1f}".replace(".", "p").replace("+", "p").replace("-", "m")
+    out_dir = base / tag
     out_dir.mkdir(parents=True, exist_ok=True)
     if n_excess:
         cols = [c for c in ("source_id", "ra", "dec", "parallax", "dist_pc",
@@ -206,7 +208,9 @@ def cluster_run(cfg: Config | None = None, ra: float = 200.0, dec: float = 0.0,
         "n_groups": len(groups),
         "top_groups": groups[:15],
     }
-    (out_dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
+    payload = json.dumps(summary, indent=2, default=str)
+    (out_dir / "summary.json").write_text(payload)
+    (base / "summary.json").write_text(payload)   # latest, for the workflow echo
     print("[cluster]", json.dumps({"n_searched": summary["n_searched"],
           "n_ir_excess": n_excess, "p_pos": res.get("p_value"),
           "p_vel": res_vel.get("p_value"), "p_phase": res_phase.get("p_value"),

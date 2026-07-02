@@ -14,12 +14,13 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-# NASA Exoplanet Archive TAP, Planetary Systems ("ps") table.
-_EXO_TAP = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync"
+# NASA Exoplanet Archive TAP. Use the composite-parameters table (pscomppars):
+# one row per confirmed planet already, so no default_flag join is needed.
+_EXO_TAP = "https://exoplanetarchive.ipac.caltech.edu/TAP"
 _PS_QUERY = (
     "SELECT hostname, gaia_id, ra, dec, sy_dist, pl_name, pl_rade, pl_bmasse, "
     "pl_orbper, pl_eqt, pl_insol, st_teff "
-    "FROM ps WHERE default_flag=1 AND sy_dist IS NOT NULL AND sy_dist < {max_pc}"
+    "FROM pscomppars WHERE sy_dist IS NOT NULL AND sy_dist < {max_pc}"
 )
 
 # Classical (rocky, Earth-analog) habitable zone: insolation in Earth units and,
@@ -39,14 +40,27 @@ _HYCEAN_EQT = (150.0, 510.0)       # K, fallback when insolation is missing
 
 
 def fetch_nearby_planets(max_pc: float = 80.0) -> pd.DataFrame:
-    """Confirmed planets with a host distance under ``max_pc`` (runner-side)."""
-    import io
+    """Confirmed planets with a host distance under ``max_pc`` (runner-side).
 
-    import requests
+    Uses pyvo's TAP client (correct protocol handshake); falls back to a raw
+    synchronous GET with the explicit ``REQUEST``/``LANG`` params if pyvo is
+    unavailable.
+    """
     q = _PS_QUERY.format(max_pc=float(max_pc))
-    r = requests.get(_EXO_TAP, params={"query": q, "format": "csv"}, timeout=120)
-    r.raise_for_status()
-    df = pd.read_csv(io.StringIO(r.text))
+    try:
+        import pyvo
+        svc = pyvo.dal.TAPService(_EXO_TAP)
+        df = svc.search(q).to_table().to_pandas()
+    except Exception as exc:  # noqa: BLE001
+        print(f"[exohosts] pyvo TAP failed ({exc!r}); trying raw sync GET")
+        import io
+
+        import requests
+        r = requests.get(_EXO_TAP + "/sync",
+                         params={"REQUEST": "doQuery", "LANG": "ADQL",
+                                 "FORMAT": "csv", "QUERY": q}, timeout=120)
+        r.raise_for_status()
+        df = pd.read_csv(io.StringIO(r.text))
     return df.rename(columns={c: c.lower() for c in df.columns})
 
 

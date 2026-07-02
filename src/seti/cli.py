@@ -153,6 +153,12 @@ def _cmd_cluster_aggregate(args, cfg):
                       "p_phase": agg.get("p_phase")}, indent=2, default=str))
 
 
+def _cmd_panspermia_mc(args, cfg):
+    from .panspermia.uncertainty import run_mc_followup
+
+    run_mc_followup(cfg, n=args.n)
+
+
 def _cmd_panspermia_regime(args, cfg):
     from .panspermia.encounters import regime_summary, transfer_regime
 
@@ -514,6 +520,13 @@ def main(argv=None):
                        help="combine the multi-cone clustering sweep into one "
                             "global/trials-corrected result")
     p.set_defaults(func=_cmd_cluster_aggregate)
+
+    p = sub.add_parser("panspermia-mc",
+                       help="Monte-Carlo uncertainty on the K2-18 encounter "
+                            "shortlist (robust d_min/t_enc confidence intervals)")
+    p.add_argument("--n", type=int, default=3000,
+                   help="Monte-Carlo samples per candidate")
+    p.set_defaults(func=_cmd_panspermia_mc)
 
     p = sub.add_parser("panspermia-regime",
                        help="offline: classify K2-18 encounters by transfer mode "

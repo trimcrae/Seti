@@ -1,0 +1,63 @@
+name: panspermia-mc
+
+# Monte-Carlo uncertainty on the K2-18 close-encounter shortlist. The base search
+# gives point estimates of each candidate's closest approach; a d_min of "0.9 pc"
+# is meaningless without its error bar. This fetches the Gaia astrometric + RV
+# errors for the committed shortlist + the anchor, resamples the 6D phase space,
+# and reports robust d_min/t_enc/v_rel confidence intervals (Bailer-Jones-style).
+# Light job (one small Gaia query + offline MC). Runs on the runner (Gaia TAP).
+
+on:
+  workflow_dispatch:
+    inputs:
+      n:
+        description: "Monte-Carlo samples per candidate"
+        required: false
+        default: "5000"
+
+permissions:
+  contents: write
+
+jobs:
+  mc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,pandas,astroquery; print('imports OK')"
+      - name: Monte-Carlo encounter uncertainty
+        run: |
+          python -m seti.cli panspermia-mc --n ${{ github.event.inputs.n }}
+          echo "=== mc summary ==="
+          cat results/panspermia/mc_summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/panspermia/recipient_candidates_mc.csv \
+                     results/panspermia/mc_summary.json || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "panspermia-mc: Monte-Carlo encounter uncertainty on K2-18 shortlist"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: panspermia-mc-outputs
+          path: results/panspermia/recipient_candidates_mc.csv
+          if-no-files-found: warn

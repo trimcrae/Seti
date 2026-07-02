@@ -39,29 +39,44 @@ _HYCEAN_INSOL = (0.01, 10.0)       # S_earth: cold hycean ... hot hycean
 _HYCEAN_EQT = (150.0, 510.0)       # K, fallback when insolation is missing
 
 
+_SELECT_COLS = ("hostname,gaia_id,ra,dec,sy_dist,pl_name,pl_rade,pl_bmasse,"
+                "pl_orbper,pl_eqt,pl_insol,st_teff")
+
+
 def fetch_nearby_planets(max_pc: float = 80.0) -> pd.DataFrame:
     """Confirmed planets with a host distance under ``max_pc`` (runner-side).
 
-    Uses pyvo's TAP client (correct protocol handshake); falls back to a raw
-    synchronous GET with the explicit ``REQUEST``/``LANG`` params if pyvo is
-    unavailable.
+    Primary path is astroquery's maintained NASA Exoplanet Archive client (it
+    knows this service's quirks); pyvo TAP and a raw sync GET are fallbacks.
     """
+    where = f"sy_dist<{float(max_pc)}"
+    # 1) astroquery (canonical).
+    try:
+        from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
+        tab = NasaExoplanetArchive.query_criteria(
+            table="pscomppars", select=_SELECT_COLS, where=where)
+        df = tab.to_pandas()
+        return df.rename(columns={c: c.lower() for c in df.columns})
+    except Exception as exc:  # noqa: BLE001
+        print(f"[exohosts] astroquery path failed ({exc!r}); trying pyvo TAP")
+    # 2) pyvo TAP.
     q = _PS_QUERY.format(max_pc=float(max_pc))
     try:
         import pyvo
         svc = pyvo.dal.TAPService(_EXO_TAP)
-        df = svc.search(q).to_table().to_pandas()
+        return svc.search(q).to_table().to_pandas().rename(
+            columns=str.lower)
     except Exception as exc:  # noqa: BLE001
         print(f"[exohosts] pyvo TAP failed ({exc!r}); trying raw sync GET")
-        import io
+    # 3) raw synchronous GET.
+    import io
 
-        import requests
-        r = requests.get(_EXO_TAP + "/sync",
-                         params={"REQUEST": "doQuery", "LANG": "ADQL",
-                                 "FORMAT": "csv", "QUERY": q}, timeout=120)
-        r.raise_for_status()
-        df = pd.read_csv(io.StringIO(r.text))
-    return df.rename(columns={c: c.lower() for c in df.columns})
+    import requests
+    r = requests.get(_EXO_TAP + "/sync",
+                     params={"request": "doQuery", "lang": "ADQL",
+                             "format": "csv", "query": q}, timeout=120)
+    r.raise_for_status()
+    return pd.read_csv(io.StringIO(r.text)).rename(columns=str.lower)
 
 
 def _gaia_id_int(series: pd.Series) -> pd.Series:

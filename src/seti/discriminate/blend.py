@@ -30,6 +30,7 @@ import numpy as np
 import pandas as pd
 
 _WISE_BEAM_ARCSEC = 6.5           # W1 PSF FWHM ~6.1"; use 6.5" inclusion radius
+_DUST_SUBLIMATION_K = 1800.0      # silicate/carbon grains sublimate ~1500-2000 K
 
 
 def _gmag_to_w1_approx(g_mag: np.ndarray, bp_rp: np.ndarray) -> np.ndarray:
@@ -161,6 +162,16 @@ def blend_followup(candidates: pd.DataFrame, out_dir,
                         cand[k] = r0.get(k)
             nb = cone[cone["source_id"] != sid].reset_index(drop=True)
         v = blend_verdict(cand, nb)
+        # Physical filter: an "excess" whose fitted dust temperature exceeds the
+        # sublimation temperature cannot be circumstellar dust (or a passive dust
+        # swarm) -- grains that hot vaporise.  A blackbody at 1800-3000 K with
+        # order-unity tau is an *unresolved cool stellar companion* (a WD+dM/dL
+        # binary, a single Gaia source, hence 'isolated'), the classic
+        # WD-IR-excess contaminant.  Override a would-be-clean verdict.
+        t_dust = float(cand.get("t_dust_k", np.nan))
+        too_hot = np.isfinite(t_dust) and t_dust > _DUST_SUBLIMATION_K
+        if too_hot and v["verdict"] in ("clean", "isolated"):
+            v = {**v, "verdict": "stellar_companion", "t_dust_k": t_dust}
         rows.append({**{k: cand.get(k) for k in
                         ("source_id", "ra", "dec", "teff", "tau", "t_dust_k",
                          "multimodal_score", "simbad_id", "simbad_otype")}, **v})

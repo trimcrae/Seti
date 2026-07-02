@@ -93,14 +93,19 @@ clean. *Note:* position alone is washed out by the Galactic density gradient; th
 run now also tests **velocity** and **full phase space** (a technological moving
 group shares a space velocity).
 
-**Two cones now, both clean nulls** in all three spaces:
-- RA200/Dec0: 21,675 stars, 195 excess — p_pos=0.64.
-- RA150/Dec30: 22,074 stars, 186 excess — p_pos=0.37, **p_vel=0.31, p_phase=0.08**
-  (none < 0.05; FoF groups are nearby-density, non-significant).
-The IR-excess tail does not over-cluster in position, velocity or phase space in
-the nearby (≤500 pc) volume sampled so far. Sweeping more cones builds toward an
-occurrence-style limit; a genuinely new signal would show as p_vel/p_phase ≪ 0.05
-with an FoF group the matched null cannot reproduce.
+**Three cones now, all clean nulls** in all three spaces (p_pos / p_vel / p_phase):
+- RA200/Dec0:   21,675 stars, 195 excess — p_pos=0.64.
+- RA150/Dec30:  22,074 stars, 186 excess — 0.37 / 0.31 / 0.08.
+- RA30/Dec−20:  22,295 stars, 183 excess — 0.61 / 0.65 / 0.59.
+Consistent across ~66k stars in three independent ≤500 pc volumes: the WISE
+IR-excess tail does **not** over-cluster in position, velocity or phase space; the
+FoF groups are all nearby-density and non-significant under the matched null. This
+is a robust null for the IR-excess indicator. A genuinely new signal would be
+p_vel/p_phase ≪ 0.05 with an FoF group the matched null cannot reproduce.
+*Next options:* (a) keep sweeping cones -> occurrence-style volume limit;
+(b) point the same clustering engine at a **different anomaly axis** (astrometric
+companion excess, UV/optical energy imbalance) where a clustered technological
+population might show even though IR excess does not.
 
 ## Channel state
 

@@ -85,6 +85,8 @@ def xp_run(cfg: Config | None = None, ra: float = 180.0, dec: float = 30.0,
             "global_sigma": float(gs), "feature_resid": float(fr),
             "feature_index": int(sc["feature_index"]),
             "feature_width": int(sc.get("feature_width", -1)),
+            "feature_interior": bool(sc.get("feature_interior", False)),
+            "feature_bounded": bool(sc.get("feature_bounded", False)),
             "narrow_feature": bool(sc.get("narrow_feature", False)),
             "class": reason, "_spec_index": i})
 

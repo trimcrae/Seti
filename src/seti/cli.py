@@ -153,6 +153,13 @@ def _cmd_cluster_aggregate(args, cfg):
                       "p_phase": agg.get("p_phase")}, indent=2, default=str))
 
 
+def _cmd_panspermia_targets(args, cfg):
+    from .panspermia.run import targets_run
+
+    targets_run(cfg, target=args.target, crossmatch=args.crossmatch,
+                max_pc=args.max_pc)
+
+
 def _cmd_panspermia_regime(args, cfg):
     from .panspermia.encounters import regime_summary, transfer_regime
 
@@ -514,6 +521,17 @@ def main(argv=None):
                        help="combine the multi-cone clustering sweep into one "
                             "global/trials-corrected result")
     p.set_defaults(func=_cmd_cluster_aggregate)
+
+    p = sub.add_parser("panspermia-targets",
+                       help="directed-travel destination ranking: which reachable "
+                            "neighbours would a K2-18 civilisation choose?")
+    p.add_argument("--target", choices=["hycean", "classical"], default="hycean",
+                   help="habitability prior: hycean (K2-18-like worlds) or classical")
+    p.add_argument("--crossmatch", action="store_true",
+                   help="runner-only: cross-match NASA Exoplanet Archive hosts")
+    p.add_argument("--max-pc", type=float, default=80.0,
+                   help="host-distance limit for the Exoplanet-Archive pull (pc)")
+    p.set_defaults(func=_cmd_panspermia_targets)
 
     p = sub.add_parser("panspermia-regime",
                        help="offline: classify K2-18 encounters by transfer mode "

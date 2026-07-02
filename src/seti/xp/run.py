@@ -84,11 +84,19 @@ def xp_run(cfg: Config | None = None, ra: float = 180.0, dec: float = 30.0,
             "classprob_dsc_combmod_galaxy", "phot_variable_flag")},
             "global_sigma": float(gs), "feature_resid": float(fr),
             "feature_index": int(sc["feature_index"]),
+            "feature_width": int(sc.get("feature_width", -1)),
+            "narrow_feature": bool(sc.get("narrow_feature", False)),
             "class": reason, "_spec_index": i})
 
     clean = [r for r in rows if r["class"] == "clean"]
-    clean.sort(key=lambda r: max(r["global_sigma"], r["feature_resid"]),
+    # A narrow (width<=3) high-significance feature is the technosignature-like
+    # anomaly; broad excursions are molecular bands / reddening.  Rank narrow
+    # features first, then by strength.
+    clean.sort(key=lambda r: (r.get("narrow_feature", False),
+                              max(r["global_sigma"], r["feature_resid"])),
                reverse=True)
+    narrow_clean = [r for r in clean if r.get("narrow_feature")
+                    and r["feature_resid"] >= feature_resid_min]
 
     out_dir = cfg.root / "results" / "xp"
     tag = f"f{ra:+06.1f}{dec:+05.1f}".replace(".", "p").replace("+", "p").replace("-", "m")
@@ -126,9 +134,13 @@ def xp_run(cfg: Config | None = None, ra: float = 180.0, dec: float = 30.0,
         "field": {"ra": ra, "dec": dec, "radius_deg": radius_deg},
         "n_searched": n_searched, "n_anomalies_raw": len(rows),
         "n_clean_anomalies": len(clean),
+        "n_narrow_feature": len(narrow_clean),
         "anomaly_fraction": round(anomaly_fraction, 4),
         "reliable": bool(reliable),
         "rejection_counts": counts,
+        "top_narrow": [{k: r[k] for k in ("source_id", "ra", "dec", "global_sigma",
+                        "feature_resid", "feature_width", "bp_rp", "teff_gspphot")}
+                       for r in narrow_clean[:20]],
         "thresholds": {"global_sigma_min": global_sigma_min,
                        "feature_resid_min": feature_resid_min},
         "top_clean": [{k: r[k] for k in ("source_id", "ra", "dec", "global_sigma",

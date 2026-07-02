@@ -103,20 +103,37 @@ def anomaly_score(flux_norm: np.ndarray, color: float, locus: XPLocus) -> dict:
 
     Returns the global standardized residual (RMS of per-sample z-scores, and its
     significance vs the training inliers) and the strongest *localised* feature ---
-    the largest single-sample z-score, the signature of a narrow artificial line
-    rather than a smooth SED tilt.
+    the largest single-sample z-score, plus its **width**: the number of
+    contiguous samples around the peak whose |z| exceeds half the peak.  A narrow
+    feature (width 1-3 samples) is the signature of an artificial emission/
+    absorption line; a broad excursion (width >~ 8) is a molecular band (TiO/VO in
+    M dwarfs, carbon bands) or a reddening/SED tilt --- ordinary stellar
+    astrophysics that dominates a raw max-residual ranking, so the width separates
+    the two.
     """
     x = np.asarray(flux_norm, dtype=float)
     if not np.all(np.isfinite(x)) or not np.isfinite(color):
         return {"global_resid": np.nan, "global_sigma": np.nan,
-                "feature_resid": np.nan, "feature_index": -1}
+                "feature_resid": np.nan, "feature_index": -1,
+                "feature_width": -1, "narrow_feature": False}
     b = _bin_of(float(color), locus.bin_edges)
     z = (x - locus.medians[b]) / locus.scales[b]
     global_resid = float(np.sqrt(np.mean(z ** 2)))
     global_sigma = (global_resid - locus.global_med) / locus.global_mad
-    i = int(np.argmax(np.abs(z)))
+    az = np.abs(z)
+    i = int(np.argmax(az))
+    peak = float(az[i])
+    half = 0.5 * peak
+    lo = i
+    while lo - 1 >= 0 and az[lo - 1] > half:
+        lo -= 1
+    hi = i
+    while hi + 1 < az.size and az[hi + 1] > half:
+        hi += 1
+    width = hi - lo + 1
     return {"global_resid": global_resid, "global_sigma": float(global_sigma),
-            "feature_resid": float(np.abs(z[i])), "feature_index": i}
+            "feature_resid": peak, "feature_index": i,
+            "feature_width": int(width), "narrow_feature": bool(width <= 3)}
 
 
 __all__ = ["XPLocus", "normalize_spectrum", "fit_locus", "anomaly_score"]

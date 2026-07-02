@@ -115,3 +115,32 @@ def test_fit_locus_shapes():
     locus = fit_locus(pop, cols, n_bins=10)
     assert locus.medians.shape[1] == WAVE.size
     assert locus.global_mad > 0
+
+
+def test_feature_width_separates_narrow_from_broad():
+    import numpy as np
+
+    from seti.xp.anomaly import anomaly_score, fit_locus, normalize_spectrum
+
+    rng = np.random.default_rng(0)
+    n_wave = 120
+    # A population of near-identical smooth stellar continua at one colour.
+    base = np.linspace(1.0, 0.5, n_wave)
+    spectra = np.vstack([normalize_spectrum(base + rng.normal(0, 0.002, n_wave))
+                         for _ in range(400)])
+    colors = np.full(400, 1.0)
+    locus = fit_locus(spectra, colors)
+
+    # Narrow feature: a single-sample spike.
+    narrow = base.copy()
+    narrow[60] += 0.5
+    sc_n = anomaly_score(normalize_spectrum(narrow), 1.0, locus)
+    # Broad feature: a wide bump over 25 samples (molecular-band-like).
+    broad = base.copy()
+    broad[45:70] += 0.15
+    sc_b = anomaly_score(normalize_spectrum(broad), 1.0, locus)
+
+    assert sc_n["narrow_feature"] is True
+    assert sc_n["feature_width"] <= 3
+    assert sc_b["narrow_feature"] is False
+    assert sc_b["feature_width"] > sc_n["feature_width"]

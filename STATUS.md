@@ -131,12 +131,32 @@ solar motion (it cancels in the difference), so no LSR constants enter.
 *Caveat:* linear motion is honest only inside `t_max` (default 10 Myr); a longer
 baseline would need epicyclic/Galactic-potential integration.
 
-**Status:** funnel + workflow (`panspermia.yml`) built and unit-tested offline;
-**awaiting the first runner dispatch** (Gaia egress is runner-only). Outputs:
-`results/panspermia/{recipient_candidates,comoving_companions,encounters_all}.csv`
-+ `summary.json`. *Next decisive test after the run:* cross-match the top
-recipients against the NASA Exoplanet Archive (known planet hosts) and check
-whether the closest/slowest approach is a genuine flyby or a chance geometry.
+**Status:** funnel + workflow (`panspermia.yml`) built, unit-tested offline, and
+**first runner dispatch complete** (run 28609098955, 2026-07-02).
+
+**First run (K2-18 anchor, 40 pc sphere, 10 Myr window):** Gaia DR3 resolved
+K2-18 at 38.02 pc with space velocity UVW ≈ (−8.2, −14.8, −8.2) km/s (a
+thin-disk-normal motion). **9,980** Gaia 6D stars in the surrounding distance
+shell → **4,984** had a past closest approach → **15** within `d_min ≤ 2 pc`.
+Headline geometry:
+- **Closest approach 0.90 pc** — Gaia DR3 `3913239815437281536` (M dwarf, G=13.7,
+  35.8 pc), ≈136 kyr ago — **but at v_rel 32 km/s** (a fast flyby).
+- **Top transfer score** — Gaia DR3 `4358031335898505472` (d_min 1.13 pc, v_rel
+  27 km/s, ≈1.35 Myr ago), a bright G=5.6 star at 9.9 pc.
+- **Zero co-moving companions** (nothing within 5 pc sharing K2-18's velocity).
+
+**Read:** every encounter is *fast* (v_rel 23–54 km/s) — the signature of random
+field stars passing a normal thin-disk star, not a shared-origin group. No slow,
+close bridge exists in the RV-complete local sample, and the transfer scores are
+all ~1e-4 (dominated by the 1/v_rel² term). This is **not a null to write up** —
+the *limiting factor is Gaia RV completeness*: most nearby M dwarfs lack a Gaia
+radial velocity and are excluded, so a genuinely slow/close encounter could be
+hiding among them. *Next decisive moves:* (1) supplement RVs for the RV-less
+nearby M dwarfs (LAMOST/APOGEE/SDSS) to close the completeness gap that a slow
+encounter would live in; (2) tighten the shortlist to the only regime that would
+matter — `d_min < 0.3 pc AND v_rel < 5 km/s` — and Exoplanet-Archive cross-match
+any survivor; (3) if a slow/close survivor appears, replace the linear
+approximation with a Galactic-potential orbit integration to confirm it.
 
 ## Channel state
 
@@ -148,7 +168,7 @@ whether the closest/slowest approach is a genuine flyby or a chance geometry.
 | Astrometric dark companion (Gaia orbits) | 105,066 NSS orbits, ≤1 kpc | 0 novel (8 class-3 = BH1 + 7, but 7/8 already in Shahaf+2023; 1 borderline-absent is the weakest solution) | reproduction of the published AMRF catalogue — change the question |
 | Laser absorption (DESI-DR1) | 6,500+ spectra (latest committed run) | 55 triaged | same; hot-star continua only (line-forest stars skipped by design) |
 | WD IR excess | 7,716 clean WDs → 23 multi-axis → blend+sublimation test | 0 technosignature (3 WISE blends, 7 unresolved stellar companions, 13 ordinary τ<0.08 debris disks) | channel resolved; τ=0.6 standout is a too-hot-for-dust stellar companion. Next volume only helps if it reaches a τ→1 excess with T_dust *below* sublimation |
-| Panspermia (K2-18 close encounters) | offline-validated; no runner dispatch yet | — | **run `panspermia.yml`** to fetch K2-18's 6D + the Gaia RV shell and produce the ranked recipient list; then Exoplanet-Archive cross-match the top encounters |
+| Panspermia (K2-18 close encounters) | first run: 9,980 Gaia 6D stars, 4,984 past approaches, 15 within d_min≤2 pc | 0 slow/close bridge (all v_rel 23–54 km/s; closest 0.90 pc but at 32 km/s; 0 co-movers) | **RV completeness is the gap** — supplement RVs for RV-less nearby M dwarfs, then re-cut to d_min<0.3 pc & v_rel<5 km/s; Exoplanet-Archive cross-match any survivor |
 | Gaia XP anomalies | RA283/Dec−3 dense field: 8,863 sources, reliable; narrow-feature shortlist examined | 0 credible | **channel bounded — see ledger.** Broad "anomalies" = reddened-M-dwarf molecular bands (degenerate with a Dyson SED); "narrow" ones = band-edge reconstruction artifacts + sub-resolution wiggles (XP LSF ≈5+ samples can't resolve a laser line). Guards added (width/interior/bounded). A clean low-extinction field could still test the *broad*-SED Dyson signature, but it is degenerate with reddening |
 
 ## Known systematics ledger (do not re-derive)

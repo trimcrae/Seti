@@ -9,6 +9,18 @@ name: cluster-run
 on:
   workflow_dispatch:
     inputs:
+      ra:
+        description: "Cone centre RA (deg)"
+        required: false
+        default: "200.0"
+      dec:
+        description: "Cone centre Dec (deg)"
+        required: false
+        default: "0.0"
+      radius_deg:
+        description: "Cone radius (deg)"
+        required: false
+        default: "12.0"
       plx_min:
         description: "Minimum parallax mas (2 = within 500 pc)"
         required: false
@@ -51,7 +63,10 @@ jobs:
           python -c "import numpy,pandas,scipy,astroquery; print('imports OK')"
       - name: Run clustering search
         run: |
-          python -m seti.cli cluster-run --plx-min ${{ github.event.inputs.plx_min }} \
+          python -m seti.cli cluster-run --ra ${{ github.event.inputs.ra }} \
+            --dec ${{ github.event.inputs.dec }} \
+            --radius-deg ${{ github.event.inputs.radius_deg }} \
+            --plx-min ${{ github.event.inputs.plx_min }} \
             --g-max ${{ github.event.inputs.g_max }} \
             --limit ${{ github.event.inputs.limit }} \
             --excess-z-min ${{ github.event.inputs.excess_z_min }} \

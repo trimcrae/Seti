@@ -131,7 +131,8 @@ def _cmd_accel_xmatch(args, cfg):
 def _cmd_cluster_run(args, cfg):
     from .cluster.run import cluster_run
 
-    cluster_run(cfg, plx_min=args.plx_min, g_max=args.g_max, limit=args.limit,
+    cluster_run(cfg, ra=args.ra, dec=args.dec, radius_deg=args.radius_deg,
+                plx_min=args.plx_min, g_max=args.g_max, limit=args.limit,
                 excess_z_min=args.excess_z_min, link_pc=args.link_pc)
 
 
@@ -434,6 +435,9 @@ def main(argv=None):
     p = sub.add_parser("cluster-run",
                        help="population clustering test: is the Gaia x AllWISE "
                             "IR-excess tail over-clustered in phase space?")
+    p.add_argument("--ra", type=float, default=200.0)
+    p.add_argument("--dec", type=float, default=0.0)
+    p.add_argument("--radius-deg", type=float, default=12.0)
     p.add_argument("--plx-min", type=float, default=2.0)     # within ~500 pc
     p.add_argument("--g-max", type=float, default=16.0)
     p.add_argument("--limit", type=int, default=200000)

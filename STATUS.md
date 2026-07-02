@@ -91,8 +91,16 @@ groups (n=23 @33 pc, n=9 @69 pc) are fully accounted for by the matched null (a
 nearby-star over-density), i.e. not anomalous. The method works and this cone is
 clean. *Note:* position alone is washed out by the Galactic density gradient; the
 run now also tests **velocity** and **full phase space** (a technological moving
-group shares a space velocity). Next: sweep several cones + read the velocity /
-phase-space p-values, which are the discriminating ones.
+group shares a space velocity).
+
+**Two cones now, both clean nulls** in all three spaces:
+- RA200/Dec0: 21,675 stars, 195 excess — p_pos=0.64.
+- RA150/Dec30: 22,074 stars, 186 excess — p_pos=0.37, **p_vel=0.31, p_phase=0.08**
+  (none < 0.05; FoF groups are nearby-density, non-significant).
+The IR-excess tail does not over-cluster in position, velocity or phase space in
+the nearby (≤500 pc) volume sampled so far. Sweeping more cones builds toward an
+occurrence-style limit; a genuinely new signal would show as p_vel/p_phase ≪ 0.05
+with an FoF group the matched null cannot reproduce.
 
 ## Channel state
 

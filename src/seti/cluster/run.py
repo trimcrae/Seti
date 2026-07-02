@@ -26,16 +26,16 @@ from ..config import Config, load_config
 from .clustering import friends_of_friends, matched_null_clustering
 from .phase_space import galactic_xyz, tangential_velocity
 
-# Gaia DR3 x AllWISE, distance-limited, with the photometry needed for a W1-W2
-# excess and the astrometry needed for phase space.  allwise_best_neighbour is the
-# official crossmatch, so this is a single catalogue-scale ADQL join, no download.
-_QUERY = """
-SELECT g.source_id, g.ra, g.dec, g.parallax, g.parallax_over_error,
-       g.pmra, g.pmdec, g.phot_g_mean_mag, g.bp_rp, g.ruwe,
-       w.w1mpro, w.w2mpro
+# Two-step, robust acquisition.  A single all-in-one 3-table join to the DR1
+# AllWISE catalogue (string-keyed) makes the Gaia TAP server drop the result
+# ("Error 500: cannot find result"), so instead: (1) a light single-table Gaia
+# cone query for the stars, then (2) the WISE photometry in small source_id chunks
+# via the official crossmatch.  Each query is cheap and reliable.
+_STAR_QUERY = """
+SELECT TOP {limit}
+       g.source_id, g.ra, g.dec, g.parallax, g.parallax_over_error,
+       g.pmra, g.pmdec, g.phot_g_mean_mag, g.bp_rp, g.ruwe
 FROM gaiadr3.gaia_source AS g
-JOIN gaiadr3.allwise_best_neighbour AS xm ON xm.source_id = g.source_id
-JOIN gaiadr1.allwise_original_valid AS w ON w.designation = xm.original_ext_source_id
 WHERE 1=CONTAINS(POINT('ICRS', g.ra, g.dec),
                  CIRCLE('ICRS', {ra}, {dec}, {radius}))
   AND g.parallax > {plx_min}
@@ -44,15 +44,43 @@ WHERE 1=CONTAINS(POINT('ICRS', g.ra, g.dec),
   AND g.ruwe < 1.4
 """
 
+_WISE_QUERY = """
+SELECT xm.source_id, w.w1mpro, w.w2mpro
+FROM gaiadr3.allwise_best_neighbour AS xm
+JOIN gaiadr1.allwise_original_valid AS w
+  ON w.designation = xm.original_ext_source_id
+WHERE xm.source_id IN ({ids})
+"""
+
+
+def _fetch_wise_for(source_ids, chunk: int = 4000) -> pd.DataFrame:
+    from astroquery.gaia import Gaia
+    frames = []
+    ids = [int(s) for s in source_ids]
+    for i in range(0, len(ids), chunk):
+        sub = ",".join(str(s) for s in ids[i:i + chunk])
+        try:
+            r = (Gaia.launch_job_async(_WISE_QUERY.format(ids=sub))
+                 .get_results().to_pandas())
+            frames.append(r.rename(columns={c: c.lower() for c in r.columns}))
+        except Exception as exc:  # noqa: BLE001
+            print(f"[cluster] WISE chunk {i // chunk} failed: {exc!r}")
+    if not frames:
+        return pd.DataFrame(columns=["source_id", "w1mpro", "w2mpro"])
+    return pd.concat(frames, ignore_index=True).drop_duplicates("source_id")
+
 
 def _fetch(ra: float, dec: float, radius_deg: float, plx_min: float, g_max: float,
            limit: int) -> pd.DataFrame:
     from astroquery.gaia import Gaia
-    body = _QUERY.format(ra=ra, dec=dec, radius=radius_deg, plx_min=plx_min,
-                         g_max=g_max).split("SELECT", 1)[1]
-    q = f"SELECT TOP {int(limit)} " + body
-    df = Gaia.launch_job_async(q).get_results().to_pandas()
-    return df.rename(columns={c: c.lower() for c in df.columns})
+    q = _STAR_QUERY.format(limit=int(limit), ra=ra, dec=dec, radius=radius_deg,
+                           plx_min=plx_min, g_max=g_max)
+    stars = Gaia.launch_job_async(q).get_results().to_pandas()
+    stars = stars.rename(columns={c: c.lower() for c in stars.columns})
+    print(f"[cluster] {len(stars)} Gaia stars in cone; fetching WISE...")
+    wise = _fetch_wise_for(stars["source_id"].tolist())
+    print(f"[cluster] {len(wise)} of {len(stars)} have an AllWISE match")
+    return stars.merge(wise, on="source_id", how="inner")
 
 
 def ir_excess_indicator(df: pd.DataFrame) -> pd.DataFrame:

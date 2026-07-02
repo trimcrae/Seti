@@ -183,6 +183,21 @@ matter — `d_min < 0.3 pc AND v_rel < 5 km/s` — and Exoplanet-Archive cross-m
 any survivor; (3) if a slow/close survivor appears, replace the linear
 approximation with a Galactic-potential orbit integration to confirm it.
 
+**Monte-Carlo encounter uncertainty** (`panspermia/uncertainty.py`,
+`panspermia-mc`, `results/panspermia/recipient_candidates_mc.csv`, 3 offline
+tests). The base shortlist gives point estimates; the rigorous treatment
+(Bailer-Jones 2015/2018) resamples both K2-18 and each candidate from their Gaia
+(parallax, pmra, pmdec, RV) covariances and reports the *distribution* of
+`d_min`/`t_enc`/`v_rel`. Result (5,000 draws each): the geometry is **robust** —
+**13 of 15** candidates are a *past* encounter in 100% of draws and stay within
+2 pc in the majority; the closest, Gaia DR3 `3913239815437281536`, is
+`d_min = 0.91 pc` with a tight 16–84% band of **0.90–0.95 pc** (136 kyr ago). So
+the close passes are real, not astrometric flukes — but every median `v_rel` is
+**23–54 km/s**, confirming with error bars that none is capturable (the flag is
+*geometric* robustness, not transfer viability; the regime analysis above owns the
+capture physics). The MC therefore hardens the null: the recipient list is a set
+of well-measured *fast* flybys, exactly what the transfer-regime cut rejects.
+
 ## Channel state
 
 | Channel | Searched so far | Surviving | Blocking issue / next action |

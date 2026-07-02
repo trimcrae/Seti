@@ -36,16 +36,21 @@ SELECT g.source_id, g.ra, g.dec, g.parallax, g.parallax_over_error,
 FROM gaiadr3.gaia_source AS g
 JOIN gaiadr3.allwise_best_neighbour AS xm ON xm.source_id = g.source_id
 JOIN gaiadr1.allwise_original_valid AS w ON w.designation = xm.original_ext_source_id
-WHERE g.parallax > {plx_min}
+WHERE 1=CONTAINS(POINT('ICRS', g.ra, g.dec),
+                 CIRCLE('ICRS', {ra}, {dec}, {radius}))
+  AND g.parallax > {plx_min}
   AND g.parallax_over_error > 10
   AND g.phot_g_mean_mag < {g_max}
   AND g.ruwe < 1.4
 """
 
 
-def _fetch(plx_min: float, g_max: float, limit: int) -> pd.DataFrame:
+def _fetch(ra: float, dec: float, radius_deg: float, plx_min: float, g_max: float,
+           limit: int) -> pd.DataFrame:
     from astroquery.gaia import Gaia
-    q = f"SELECT TOP {int(limit)} " + _QUERY.format(plx_min=plx_min, g_max=g_max).split("SELECT", 1)[1]
+    body = _QUERY.format(ra=ra, dec=dec, radius=radius_deg, plx_min=plx_min,
+                         g_max=g_max).split("SELECT", 1)[1]
+    q = f"SELECT TOP {int(limit)} " + body
     df = Gaia.launch_job_async(q).get_results().to_pandas()
     return df.rename(columns={c: c.lower() for c in df.columns})
 
@@ -81,14 +86,16 @@ def ir_excess_indicator(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def cluster_run(cfg: Config | None = None, plx_min: float = 2.0, g_max: float = 16.0,
+def cluster_run(cfg: Config | None = None, ra: float = 200.0, dec: float = 0.0,
+                radius_deg: float = 12.0, plx_min: float = 2.0, g_max: float = 16.0,
                 limit: int = 200000, excess_z_min: float = 4.0,
                 link_pc: float = 8.0, table: pd.DataFrame | None = None) -> dict:
-    """Fetch a Gaia x AllWISE volume, flag the IR-excess tail, and test whether it
-    is over-clustered in 3D position vs a matched random null.  ``table`` may be
-    supplied for offline tests instead of querying Gaia."""
+    """Fetch a Gaia x AllWISE cone volume, flag the IR-excess tail, and test
+    whether it is over-clustered in 3D position vs a matched random null.
+    ``table`` may be supplied for offline tests instead of querying Gaia."""
     cfg = cfg or load_config()
-    raw = table if table is not None else _fetch(plx_min, g_max, limit)
+    raw = table if table is not None else _fetch(ra, dec, radius_deg, plx_min,
+                                                 g_max, limit)
     df = ir_excess_indicator(raw)
     df = galactic_xyz(df)
     df = tangential_velocity(df)
@@ -130,6 +137,7 @@ def cluster_run(cfg: Config | None = None, plx_min: float = 2.0, g_max: float = 
         pd.DataFrame(groups).to_csv(out_dir / "clustered_groups.csv", index=False)
 
     summary = {
+        "field": {"ra": ra, "dec": dec, "radius_deg": radius_deg},
         "n_searched": int(len(df)), "n_ir_excess": n_excess,
         "excess_z_min": excess_z_min,
         "clustering": {k: res.get(k) for k in

@@ -190,6 +190,27 @@ class), reachable in 300–1,200 yr at 0.1c. The sharp discriminator — which o
 dispatched** (runner-side TAP). Outputs: `results/panspermia/reachable_targets.csv`
 + `targets_summary.json`.
 
+**Cross-match result (run 4, `targets_summary.json`):** 1,483 Exoplanet-Archive
+planets within 90 pc → **109 of K2-18's past-close neighbours are known planet
+hosts, and 16 host a hycean-candidate sub-Neptune** (the destination class a
+K2-18 organism would seek). Top hycean-analog destinations, by closest-approach
+distance (all reachable in <1,300 yr at 0.1c, optimal window within the last
+~1 Myr):
+| Host | d_now | d_min | t_enc | cross@0.1c | planets |
+|---|---|---|---|---|---|
+| **LTT 3780** (M, bp_rp 2.68) | 22 pc | **7.28 pc** | −0.67 Myr | 237 yr | 2 |
+| **K2-3** (M) | 44 pc | **7.47 pc** | −0.10 Myr | 244 yr | 3 |
+| GJ 667 C (M) | 7.2 pc | 14.1 pc | −0.80 Myr | 460 yr | 5 |
+| GJ 357, GJ 251, Wolf 1061, L 98-59 (5 pl)… | | | | | |
+LTT 3780 and K2-3 stand out: **M-dwarf hosts like K2-18 itself**, the two closest
+hycean-candidate approaches, both with known sub-Neptunes (K2-3 d is a
+literature hycean candidate). These are the concrete, ranked answer to "which
+nearby worlds would a K2-18 civilisation choose" — the search's first positive,
+specific target list. *Next decisive step:* fold in encounter-time uncertainty
+(the `panspermia-mc` Monte-Carlo) for LTT 3780 / K2-3 and check whether their
+sub-Neptunes truly sit in the hycean HZ (radius + insolation) vs just passing the
+size cut. The bare kinematics are a necessary, not sufficient, condition.
+
 **Read:** every *passive* encounter is *fast* (v_rel 23–54 km/s) — the signature of random
 field stars passing a normal thin-disk star, not a shared-origin group. No slow,
 close bridge exists in the RV-complete local sample, and the transfer scores are

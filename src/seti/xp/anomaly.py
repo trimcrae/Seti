@@ -48,19 +48,25 @@ def _bin_of(color: float, edges: np.ndarray) -> int:
     return int(np.clip(j, 0, edges.size - 2))
 
 
-def fit_locus(spectra: np.ndarray, colors: np.ndarray, n_bins: int = 24) -> XPLocus:
+def fit_locus(spectra: np.ndarray, colors: np.ndarray, n_bins: int = 24,
+              min_per_bin: int = 40) -> XPLocus:
     """Build the colour-binned median-spectrum model.
 
     ``spectra`` is (n, n_wave) shape-normalised flux, ``colors`` the BP-RP per
     source.  Bins are colour quantiles so each is well populated; per bin we store
     the median spectrum and a robust per-wavelength scatter (MAD).
+
+    The number of bins is capped so every bin holds at least ``min_per_bin``
+    sources: a per-bin MAD estimated from a handful of spectra is noise-dominated
+    and *underestimates* the true scatter, which inflates every z-score and makes
+    ordinary stars look anomalous (the small-sample failure that flagged 70% of a
+    159-source cone).  With too few sources the scatter cannot be trusted at all.
     """
     X = np.asarray(spectra, dtype=float)
     c = np.asarray(colors, dtype=float)
     good = np.all(np.isfinite(X), axis=1) & np.isfinite(c)
     X, c = X[good], c[good]
-    if X.shape[0] < n_bins * 4:
-        n_bins = max(1, X.shape[0] // 4)
+    n_bins = max(1, min(n_bins, X.shape[0] // max(1, min_per_bin)))
     qs = np.linspace(0, 1, n_bins + 1)
     edges = np.quantile(c, qs)
     edges[0] -= 1e-6

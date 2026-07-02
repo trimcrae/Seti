@@ -116,10 +116,18 @@ def xp_run(cfg: Config | None = None, ra: float = 180.0, dec: float = 30.0,
     counts = dict(Counter(r["class"] for r in rows))
     lim = occurrence_upper_limit(k=len(clean), n_eff=max(n_searched, 1),
                                  confidence=cfg.thresholds["stats"]["upper_limit_confidence"])
+    # Reliability guard: the colour-conditional locus needs a well-populated
+    # sample.  Too few sources, or an implausibly high anomaly fraction, means the
+    # per-bin scatter is underestimated and the "anomalies" are locus noise, not
+    # real outliers -- do not treat such a run as a candidate list.
+    anomaly_fraction = len(rows) / max(n_searched, 1)
+    reliable = (n_searched >= 1500) and (anomaly_fraction <= 0.15)
     summary = {
         "field": {"ra": ra, "dec": dec, "radius_deg": radius_deg},
         "n_searched": n_searched, "n_anomalies_raw": len(rows),
         "n_clean_anomalies": len(clean),
+        "anomaly_fraction": round(anomaly_fraction, 4),
+        "reliable": bool(reliable),
         "rejection_counts": counts,
         "thresholds": {"global_sigma_min": global_sigma_min,
                        "feature_resid_min": feature_resid_min},
@@ -132,7 +140,12 @@ def xp_run(cfg: Config | None = None, ra: float = 180.0, dec: float = 30.0,
     }
     (field_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     print("[xp] summary:", json.dumps({k: summary[k] for k in
-          ("n_searched", "n_anomalies_raw", "n_clean_anomalies", "rejection_counts")}))
+          ("n_searched", "n_anomalies_raw", "n_clean_anomalies", "anomaly_fraction",
+           "reliable", "rejection_counts")}))
+    if not reliable:
+        print(f"[xp] WARNING: run UNRELIABLE (n={n_searched}, "
+              f"anomaly_fraction={anomaly_fraction:.2f}) -- locus undersampled; "
+              f"these are not candidates. Use a denser/larger field.")
     return summary
 
 

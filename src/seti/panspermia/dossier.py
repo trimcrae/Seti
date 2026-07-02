@@ -121,6 +121,7 @@ def ir_color_excess(phot: dict) -> dict:
             flags.append(f"{key}={col:.2f} ({sig:.1f} sigma)")
     out["ir_excess_flag"] = bool(flags)
     out["reasons"] = flags
+    out["has_data"] = bool(np.isfinite(w1) and (np.isfinite(w2) or np.isfinite(w3)))
     return out
 
 
@@ -173,15 +174,18 @@ def ir_variability_verdict(neowise: dict | None, slope_sig_min: float = 5.0,
     """
     nw = neowise or {}
     reasons = []
-    for b in ("W1", "W2"):
+    for b in ("w1", "w2"):        # fetch_neowise uses lowercase band keys
         slope = nw.get(f"{b}_slope_mag_yr")
         sig = nw.get(f"{b}_slope_sigma")
         if slope is None or sig is None:
             continue
         if abs(sig) >= slope_sig_min and abs(slope) >= slope_min_mag_yr:
             sense = "brightening" if slope < 0 else "fading"
-            reasons.append(f"{b} {sense} {abs(slope):.3f} mag/yr ({abs(sig):.1f} sigma)")
-    return {"ir_variability_flag": bool(reasons), "reasons": reasons, "neowise": nw}
+            reasons.append(f"{b.upper()} {sense} {abs(slope):.3f} mag/yr "
+                           f"({abs(sig):.1f} sigma)")
+    has_data = bool(nw.get("n_epochs", 0))
+    return {"ir_variability_flag": bool(reasons), "reasons": reasons,
+            "has_data": has_data, "n_epochs": nw.get("n_epochs", 0), "neowise": nw}
 
 
 # --- Gaia XP narrow-feature (laser-line) scan ------------------------------

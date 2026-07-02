@@ -304,6 +304,55 @@ WHERE xm.source_id = {source_id}
 """
 
 
+_GAIA_EPOCH = 2016.0
+_ALLWISE_EPOCH = 2010.5
+_ZTF_EPOCH = 2019.0
+_NEOWISE_EPOCH = 2019.0
+
+
+def _propagate(ra, dec, pmra, pmdec, to_epoch):
+    """Propagate a Gaia (2016.0) position to ``to_epoch`` using proper motion.
+
+    These targets are high-proper-motion nearby stars, so their survey-epoch
+    positions are offset by several arcsec from the Gaia catalogue position -- a
+    fixed cone at the catalogue position misses them (this is why ZTF/WISE came
+    back empty).  ``pmra`` is mu_alpha* (includes cos dec)."""
+    pmra = float(pmra) if pmra is not None and np.isfinite(pmra) else 0.0
+    pmdec = float(pmdec) if pmdec is not None and np.isfinite(pmdec) else 0.0
+    dt = to_epoch - _GAIA_EPOCH
+    cosd = np.cos(np.radians(dec))
+    ra2 = ra + (pmra * dt / 3.6e6) / max(cosd, 1e-6)
+    dec2 = dec + (pmdec * dt / 3.6e6)
+    return ra2, dec2
+
+
+def _fetch_wise_irsa(ra, dec, pmra, pmdec, radius_arcsec=6.0) -> dict:
+    """AllWISE W1-W4 photometry via an IRSA cone at the AllWISE-epoch position.
+
+    Replaces the Gaia allwise_best_neighbour join (which returned nothing for
+    these high-PM stars) with a proper-motion-propagated IRSA cone search."""
+    try:
+        from astroquery.ipac.irsa import Irsa
+    except Exception:  # noqa: BLE001
+        return {}
+    rw, dw = _propagate(ra, dec, pmra, pmdec, _ALLWISE_EPOCH)
+    q = f"""
+        SELECT w1mpro, w2mpro, w3mpro, w4mpro,
+               w1sigmpro, w2sigmpro, w3sigmpro, w4sigmpro
+        FROM allwise_p3as_psd
+        WHERE CONTAINS(POINT('ICRS', ra, dec),
+                       CIRCLE('ICRS', {rw}, {dw}, {radius_arcsec/3600.0})) = 1
+    """
+    try:
+        df = Irsa.query_tap(q).to_table().to_pandas()
+    except Exception as exc:  # noqa: BLE001
+        print(f"[dossier] AllWISE IRSA query failed: {exc!r}")
+        return {}
+    if df.empty:
+        return {}
+    return df.iloc[0].to_dict()
+
+
 def _run_detectors(t, m, e) -> dict:
     """Run the dip/secular/glint detectors on one light curve -> dicts."""
     from dataclasses import asdict
@@ -317,14 +366,18 @@ def _run_detectors(t, m, e) -> dict:
             "glint": asdict(gl) if gl else None}
 
 
-def _dossier_lightcurve(ra: float, dec: float) -> dict:
-    """Fetch ZTF g+r light curves and run the detectors per band (achromatic vet)."""
+def _dossier_lightcurve(ra: float, dec: float, pmra=0.0, pmdec=0.0) -> dict:
+    """Fetch ZTF g+r light curves and run the detectors per band (achromatic vet).
+
+    Uses the proper-motion-propagated ZTF-epoch position and a wider cone so a
+    fast-moving nearby star is not missed."""
     from ..dimming.acquire import fetch_ztf_lightcurve
     from .dossier import lightcurve_verdict
 
+    rz, dz = _propagate(ra, dec, pmra, pmdec, _ZTF_EPOCH)
     bands, n_epochs = {}, {}
     for band in ("r", "g"):
-        lc = fetch_ztf_lightcurve(ra, dec, band=band)
+        lc = fetch_ztf_lightcurve(rz, dz, band=band, radius_arcsec=6.0)
         n_epochs[band] = 0 if lc is None else len(lc)
         if lc is None or len(lc) < 30:
             continue
@@ -332,18 +385,21 @@ def _dossier_lightcurve(ra: float, dec: float) -> dict:
                                      lc["magerr"].to_numpy())
     verdict = lightcurve_verdict(bands)
     verdict["n_epochs"] = n_epochs
+    verdict["has_data"] = sum(n_epochs.values()) > 0
     verdict["source"] = "ZTF"
     return verdict
 
 
-def _dossier_ir_variability(ra: float, dec: float) -> dict:
-    """NEOWISE multi-epoch W1/W2 -> secular mid-IR trend flag."""
+def _dossier_ir_variability(ra: float, dec: float, pmra=0.0, pmdec=0.0) -> dict:
+    """NEOWISE multi-epoch W1/W2 -> secular mid-IR trend flag (PM-propagated cone)."""
     from ..dimming.characterize import fetch_neowise
     from .dossier import ir_variability_verdict
+    rn, dn = _propagate(ra, dec, pmra, pmdec, _NEOWISE_EPOCH)
     try:
-        nw = fetch_neowise(ra, dec)
+        nw = fetch_neowise(rn, dn, radius_arcsec=6.0)
     except Exception as exc:  # noqa: BLE001
-        return {"ir_variability_flag": False, "reasons": [f"NEOWISE failed: {exc!r}"]}
+        return {"ir_variability_flag": False, "reasons": [f"NEOWISE failed: {exc!r}"],
+                "has_data": False}
     return ir_variability_verdict(nw)
 
 
@@ -360,7 +416,7 @@ def _dossier_tess(ra: float, dec: float) -> dict:
         sr = lk.search_lightcurve(f"{ra} {dec}", mission=("TESS", "K2"))
         if sr is None or len(sr) == 0:
             return {"lightcurve_flag": False, "reasons": ["no TESS/K2 light curve"],
-                    "source": "TESS/K2"}
+                    "source": "TESS/K2", "has_data": False}
         lc = sr[0].download().remove_nans().normalize()
         t = lc.time.value
         flux = lc.flux.value
@@ -372,13 +428,14 @@ def _dossier_tess(ra: float, dec: float) -> dict:
         bands = {"TESS": _run_detectors(t, mag, merr)}
         verdict = lightcurve_verdict(bands)   # single band -> needs_vetting only
         verdict["n_epochs"] = {"TESS": int(len(t))}
+        verdict["has_data"] = int(len(t)) > 0
         verdict["source"] = "TESS/K2"
         # A confirmed dip in a single precise band is meaningful for space
         # photometry (no colour to cross-check), so surface it as needs_vetting.
         return verdict
     except Exception as exc:  # noqa: BLE001
         return {"lightcurve_flag": False, "reasons": [f"TESS unavailable: {exc!r}"],
-                "source": "TESS/K2"}
+                "source": "TESS/K2", "has_data": False}
 
 
 def _dossier_xp(source_id: int) -> dict:
@@ -429,33 +486,46 @@ def dossier_run(cfg: Config | None = None, targets: list | None = None) -> dict:
             row = {}
         ra = float(row.get("ra", tgt["ra"]))
         dec = float(row.get("dec", tgt["dec"]))
+        pmra, pmdec = row.get("pmra", 0.0), row.get("pmdec", 0.0)
         companion = companion_diagnostics(row)
-        # WISE IR excess.
-        try:
-            wrow = _run_query(_TARGET_WISE_QUERY.format(source_id=sid))
-            wise = wrow.iloc[0].to_dict() if len(wrow) else {}
-        except Exception as exc:  # noqa: BLE001
-            print(f"[dossier] WISE query failed: {exc!r}")
-            wise = {}
+        # WISE IR excess via a proper-motion-propagated IRSA cone (the Gaia
+        # best-neighbour join missed these high-PM stars).
+        wise = _fetch_wise_irsa(ra, dec, pmra, pmdec)
         ir = ir_color_excess(wise)
         # ZTF (ground, 2-band) + TESS/K2 (space, precise) light curves; NEOWISE
         # mid-IR variability; Gaia XP narrow-line scan.
-        lc = _dossier_lightcurve(ra, dec)
+        lc = _dossier_lightcurve(ra, dec, pmra, pmdec)
         tess = _dossier_tess(ra, dec)
-        irvar = _dossier_ir_variability(ra, dec)
+        irvar = _dossier_ir_variability(ra, dec, pmra, pmdec)
         xp = _dossier_xp(sid)
 
         parts = {"companion": companion, "ir_excess": ir, "ir_variability": irvar,
                  "lightcurve_ztf": lc, "lightcurve_tess": tess, "xp": xp}
         verdict = dossier_verdict(parts)
-        coverage = {ch: ("data" if not any("failed" in r or "unavailable" in r
-                                            or "no " in r for r in
-                                            (v.get("reasons", []) if isinstance(v, dict)
-                                             else []))
-                         else "no_data")
+        # Honest coverage: a channel counts as observed only if it actually
+        # returned a usable measurement, not merely if it did not error.
+        def _has_data(ch, v):
+            if not isinstance(v, dict):
+                return False
+            if "has_data" in v:
+                return bool(v["has_data"])
+            if ch == "companion":
+                return np.isfinite(v.get("ruwe", np.nan))
+            if ch == "ir_excess":
+                return any(np.isfinite(v.get(k, np.nan)) for k in ("W1_W2", "W1_W3"))
+            if ch == "xp":
+                return not any("no XP" in r or "failed" in r for r in v.get("reasons", []))
+            return True
+        coverage = {ch: ("data" if _has_data(ch, v) else "no_data")
                     for ch, v in parts.items()}
         coverage["not_covered"] = ["radio (SETI/VLA)", "high-res RV spectra "
                                    "(HARPS/ESPRESSO)", "X-ray"]
+        n_obs = sum(1 for ch in parts if coverage.get(ch) == "data")
+        verdict["channels_with_data"] = n_obs
+        verdict["channels_total"] = len(parts)
+        verdict["verdict"] = (
+            "ANOMALY_FLAGGED" if verdict["any_signature_flag"]
+            else f"clean_in_{n_obs}_of_{len(parts)}_observed_channels")
         dossier = {"name": name, "source_id": sid, "ra": ra, "dec": dec,
                    "gaia": {k: row.get(k) for k in
                             ("parallax", "phot_g_mean_mag", "bp_rp",
@@ -480,6 +550,9 @@ def dossier_run(cfg: Config | None = None, targets: list | None = None) -> dict:
     summary = {
         "targets": [{"name": d["name"], "verdict": d["verdict"]["verdict"],
                      "flags": [k for k, v in d["verdict"]["channel_flags"].items() if v],
+                     "coverage": {ch: d["coverage"][ch] for ch in
+                                  ("companion", "ir_excess", "ir_variability",
+                                   "lightcurve_ztf", "lightcurve_tess", "xp")},
                      "channels": _reasons(d)}
                     for d in dossiers]}
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))

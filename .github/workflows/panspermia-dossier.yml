@@ -1,0 +1,58 @@
+name: panspermia-dossier
+
+# Exhaustive per-target signature sweep of the two directed-travel candidates
+# (LTT 3780, K2-3). For each, pull every archive a runner can reach -- Gaia DR3
+# astrometry (hidden-companion diagnostics), WISE photometry (IR-excess / waste
+# heat), ZTF light curves (aperiodic dips / secular fade / glints), Gaia XP
+# (narrow laser line) -- and run every signature detector. Writes one dossier per
+# target under results/panspermia/dossier/. Needs egress; runs on the runner.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  dossier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,pandas,astroquery,requests; print('imports OK')"
+      - name: Run per-target signature sweep
+        run: |
+          python -m seti.cli panspermia-dossier
+          echo "=== dossier summary ==="
+          cat results/panspermia/dossier/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/panspermia/dossier/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "panspermia-dossier: per-target signature sweep (LTT 3780, K2-3)"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: panspermia-dossier-outputs
+          path: results/panspermia/dossier/
+          if-no-files-found: warn

@@ -285,4 +285,144 @@ def targets_run(cfg: Config | None = None, target: str = "hycean",
     return summary
 
 
-__all__ = ["panspermia_run", "targets_run", "K2_18_SOURCE_ID", "K2_18_FALLBACK"]
+_TARGET_GAIA_QUERY = """
+SELECT source_id, ra, dec, parallax, pmra, pmdec, ruwe,
+       astrometric_excess_noise, astrometric_excess_noise_sig,
+       ipd_frac_multi_peak, non_single_star, phot_g_mean_mag, bp_rp,
+       phot_variable_flag, radial_velocity, radial_velocity_error,
+       phot_bp_rp_excess_factor, has_xp_sampled
+FROM gaiadr3.gaia_source WHERE source_id = {source_id}
+"""
+
+_TARGET_WISE_QUERY = """
+SELECT w.w1mpro, w.w2mpro, w.w3mpro, w.w4mpro,
+       w.w1sigmpro, w.w2sigmpro, w.w3sigmpro, w.w4sigmpro
+FROM gaiadr3.allwise_best_neighbour AS xm
+JOIN gaiadr1.allwise_original_valid AS w
+  ON w.designation = xm.original_ext_source_id
+WHERE xm.source_id = {source_id}
+"""
+
+
+def _dossier_lightcurve(ra: float, dec: float) -> dict:
+    """Fetch ZTF g+r light curves and run the dip/secular/glint detectors."""
+    from dataclasses import asdict
+
+    from ..dimming.acquire import fetch_ztf_lightcurve
+    from ..dimming.dips import detect_dips
+    from ..dimming.glint import detect_glints
+    from ..dimming.secular import detect_secular_fade
+    from .dossier import lightcurve_verdict
+
+    best = {"dip": None, "secular": None, "glint": None, "n_epochs": {}}
+    for band in ("r", "g"):
+        lc = fetch_ztf_lightcurve(ra, dec, band=band)
+        if lc is None or len(lc) < 30:
+            best["n_epochs"][band] = 0 if lc is None else len(lc)
+            continue
+        best["n_epochs"][band] = len(lc)
+        t, m, e = lc["mjd"].to_numpy(), lc["mag"].to_numpy(), lc["magerr"].to_numpy()
+        d = detect_dips(t, m, e)
+        s = detect_secular_fade(t, m, e)
+        gl = detect_glints(t, m, e)
+        # Keep the reference band (r) results; prefer whichever band has data.
+        if best["dip"] is None and d is not None:
+            best["dip"] = asdict(d)
+        if best["secular"] is None and s is not None:
+            best["secular"] = asdict(s)
+        if best["glint"] is None and gl is not None:
+            best["glint"] = asdict(gl)
+    verdict = lightcurve_verdict(best["dip"], best["secular"], best["glint"])
+    verdict["n_epochs"] = best["n_epochs"]
+    return verdict
+
+
+def _dossier_xp(source_id: int) -> dict:
+    """Fetch the Gaia XP sampled spectrum and scan for a narrow emission line."""
+    from ..xp.acquire import fetch_xp_spectra
+    from .dossier import narrow_feature_scan
+    try:
+        data = fetch_xp_spectra([int(source_id)])
+        flux = data["flux"].get(int(source_id))
+        wave = data.get("wave")
+        if flux is None:
+            return {"xp_feature_flag": False, "reasons": ["no XP spectrum"]}
+        return narrow_feature_scan(wave, flux)
+    except Exception as exc:  # noqa: BLE001
+        return {"xp_feature_flag": False, "reasons": [f"XP fetch failed: {exc!r}"]}
+
+
+def dossier_run(cfg: Config | None = None, targets: list | None = None) -> dict:
+    """Exhaustive per-target signature sweep for the directed-travel candidates.
+
+    For each target pulls Gaia astrometry, WISE photometry, ZTF light curves and
+    the Gaia XP spectrum, runs every signature detector, and writes one dossier
+    per target plus a combined summary.  Acquisition is runner-side; the scorers
+    are unit-tested offline.
+    """
+    from .dossier import (
+        TARGETS,
+        companion_diagnostics,
+        dossier_verdict,
+        ir_color_excess,
+    )
+
+    cfg = cfg or load_config()
+    targets = targets or TARGETS
+    out_dir = cfg.root / "results" / "panspermia" / "dossier"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    dossiers = []
+    for tgt in targets:
+        name, sid = tgt["name"], int(tgt["source_id"])
+        print(f"[dossier] === {name} (Gaia DR3 {sid}) ===")
+        # Gaia row.
+        try:
+            grow = _run_query(_TARGET_GAIA_QUERY.format(source_id=sid))
+            row = grow.iloc[0].to_dict() if len(grow) else {}
+        except Exception as exc:  # noqa: BLE001
+            print(f"[dossier] Gaia query failed: {exc!r}")
+            row = {}
+        ra = float(row.get("ra", tgt["ra"]))
+        dec = float(row.get("dec", tgt["dec"]))
+        companion = companion_diagnostics(row)
+        # WISE IR excess.
+        try:
+            wrow = _run_query(_TARGET_WISE_QUERY.format(source_id=sid))
+            wise = wrow.iloc[0].to_dict() if len(wrow) else {}
+        except Exception as exc:  # noqa: BLE001
+            print(f"[dossier] WISE query failed: {exc!r}")
+            wise = {}
+        ir = ir_color_excess(wise)
+        # ZTF light curves + XP.
+        lc = _dossier_lightcurve(ra, dec)
+        xp = _dossier_xp(sid)
+
+        parts = {"companion": companion, "ir": ir, "lightcurve": lc, "xp": xp}
+        verdict = dossier_verdict(parts)
+        dossier = {"name": name, "source_id": sid, "ra": ra, "dec": dec,
+                   "gaia": {k: row.get(k) for k in
+                            ("parallax", "phot_g_mean_mag", "bp_rp",
+                             "phot_variable_flag", "radial_velocity")},
+                   **parts, "verdict": verdict}
+        (out_dir / f"{name.replace(' ', '_')}.json").write_text(
+            json.dumps(dossier, indent=2, default=str))
+        dossiers.append(dossier)
+        print(f"[dossier] {name}: {verdict['verdict']} "
+              f"flags={[k for k, v in verdict['channel_flags'].items() if v]}")
+
+    summary = {
+        "targets": [{"name": d["name"], "verdict": d["verdict"]["verdict"],
+                     "flags": [k for k, v in d["verdict"]["channel_flags"].items() if v],
+                     "companion_reasons": d["companion"]["reasons"],
+                     "ir_reasons": d["ir"]["reasons"],
+                     "lightcurve_reasons": d["lightcurve"]["reasons"],
+                     "xp_reasons": d["xp"]["reasons"]}
+                    for d in dossiers]}
+    (out_dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
+    print("[dossier]", json.dumps(summary, default=str))
+    return summary
+
+
+__all__ = ["panspermia_run", "targets_run", "dossier_run",
+           "K2_18_SOURCE_ID", "K2_18_FALLBACK"]

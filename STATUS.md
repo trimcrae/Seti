@@ -22,22 +22,16 @@ next. Last updated: 2026-07-01.
    persists across exposures, a cosmic ray does not. Single-line targets cannot
    be galaxy-tested internally — the per-exposure check is what separates a true
    narrow emitter from a cosmic-ray hit for them.
-2. **WD IR-excess multimodal candidates** — `results/science/multimodal_candidates.csv`
-   (23 multi-axis-flagged excesses from 7,716 clean 100-pc-scale white dwarfs).
-   **This is the one channel with an un-exhausted shortlist.** Assessment of the
-   top rows: #1 (`3934459045528378368`) is SIMBAD **CV\*** — accretion, killed;
-   most others are known WD\* with marginal τ≈0.02–0.04 (near the WISE noise).
-   The one standout is **`235890564653455488`** (SDSS J032245.50+390444.5, τ=0.607,
-   T_dust≈2280 K, ir_excess+periodicity) — τ=0.6 is *two orders of magnitude*
-   above any real WD debris disk, so it is either swarm-like or (far more likely)
-   a **WISE blend** (a background source in the 6″ beam).
-   *Next decisive test (not yet built):* the empirical WISE-blend + Gaia
-   co-movement + full-SED check on these 23 — for each, query Gaia DR3 for
-   neighbours inside the WISE beam and test whether the excess co-moves with the
-   WD; a non-co-moving IR source is background contamination. `contamination/`
-   has the offline logic (`comovement_pass`, `crowding`) but it is not yet wired
-   to an empirical runner follow-up on this shortlist. This is the highest-value
-   remaining build.
+2. **WD IR-excess multimodal candidates — RESOLVED, no technosignature.**
+   The 23 multi-axis excesses were put through the empirical WISE-blend +
+   co-movement test (`science-blend`, `results/science/blend_followup.csv`) and a
+   dust-sublimation physical filter: **3 are background WISE blends** (a bright
+   Gaia neighbour in the 6.5″ beam), **7 are unresolved stellar companions**
+   (fitted T_dust > 1800 K = hotter than grains survive → a WD+dM/dL binary, a
+   single Gaia source, which is why it looked "isolated" and periodic), and the
+   **13 survivors all have τ < 0.081 — ordinary WD debris disks**, nothing
+   swarm-like. The τ=0.607 standout (`235890564653455488`, T_dust 2282 K) is a
+   too-hot-for-dust stellar companion, not a swarm. No candidate survives.
 
 ## Resolved (killed) candidates
 
@@ -88,7 +82,7 @@ next. Last updated: 2026-07-01.
 | Laser emission (SDSS-DR17) | 10,500+ spectra (latest committed run) | 112 triaged (was 118; 3 galaxies cut, incl. former #1) | per-exposure persistence check (repeat-visit path exhausted) |
 | Astrometric dark companion (Gaia orbits) | 105,066 NSS orbits, ≤1 kpc | 0 novel (8 class-3 = BH1 + 7, but 7/8 already in Shahaf+2023; 1 borderline-absent is the weakest solution) | reproduction of the published AMRF catalogue — change the question |
 | Laser absorption (DESI-DR1) | 6,500+ spectra (latest committed run) | 55 triaged | same; hot-star continua only (line-forest stars skipped by design) |
-| WD IR excess | 7,716 clean WDs → 23 multi-axis | 23 (1 standout τ=0.6, likely WISE blend) | **the one live channel** — build the empirical WISE-blend + co-movement + full-SED follow-up on the 23 (see best-candidates §2) |
+| WD IR excess | 7,716 clean WDs → 23 multi-axis → blend+sublimation test | 0 technosignature (3 WISE blends, 7 unresolved stellar companions, 13 ordinary τ<0.08 debris disks) | channel resolved; τ=0.6 standout is a too-hot-for-dust stellar companion. Next volume only helps if it reaches a τ→1 excess with T_dust *below* sublimation |
 | Gaia XP anomalies | RA283/Dec−3 dense field: 8,863 sources, reliable; narrow-feature shortlist examined | 0 credible | **channel bounded — see ledger.** Broad "anomalies" = reddened-M-dwarf molecular bands (degenerate with a Dyson SED); "narrow" ones = band-edge reconstruction artifacts + sub-resolution wiggles (XP LSF ≈5+ samples can't resolve a laser line). Guards added (width/interior/bounded). A clean low-extinction field could still test the *broad*-SED Dyson signature, but it is degenerate with reddening |
 
 ## Known systematics ledger (do not re-derive)
@@ -127,6 +121,15 @@ next. Last updated: 2026-07-01.
 * ZTF single-band events are artifacts until g/r-coincident
   (`multiband_coincidence`, `secular_achromatic`, `glint_achromatic`).
 * Stellar flares are chromatic (g ≫ r); a glint must be achromatic.
+* WD IR-excess contaminants, in the order they bite: (1) **WISE blend** — a
+  comparably-bright red Gaia neighbour inside the ~6.5″ W1 beam (the WD is
+  IR-faint); test with `discriminate.blend` (Gaia beam neighbours + expected W1).
+  (2) **Unresolved stellar companion** — a WD+dM/dL binary is a *single* Gaia
+  source (looks "isolated") whose fitted excess temperature is >1800 K, hotter
+  than grains survive: an "excess" above the dust sublimation temperature is a
+  companion photosphere, not dust or a swarm (kills the τ=0.6 standout). (3) **CV**
+  (accretion). Only after all three does a τ<0.08, T_dust<1800 K excess read as
+  an ordinary debris disk.
 * WD IR excess: dusty debris disks are the one natural confounder — subtract
   the labelled catalogues before scoring.
 * A secular optical fade with a NEOWISE fade at ~6% of the optical rate is

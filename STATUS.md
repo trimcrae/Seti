@@ -71,7 +71,7 @@ next. Last updated: 2026-07-01.
 
 | Channel | Searched so far | Surviving | Blocking issue / next action |
 |---|---|---|---|
-| Dimming (dips + secular) | 250,862 ZTF stars, 116 fields | 0 (top fader killed by NEOWISE reddening-law test); 19 `marginal_fade`, 12 `single_band_unconfirmed` in `results/dimming/vetting.csv` | run the NEOWISE counterpart test (now wired into characterize) on the 19 marginal faders — one `dimming-characterize.yml` dispatch each with `--optical-slope` |
+| Dimming (dips + secular) | 250,862 ZTF stars, 116 fields | 0 — top fader killed by NEOWISE reddening test; **19 `marginal_fade` assessed and set aside** (all 1.6–7.4% total fades, 18/19 not band-confirmed → optical slope ~0.004–0.015 mag/yr, where even a gray occulter gives only ~2σ in NEOWISE; ZTF systematics floor) | channel exhausted at the systematics floor — do not re-chase the marginal faders; new volume only helps if it reaches ≳0.1 mag band-confirmed fades |
 | Specular glint | code merged, **no run yet** | — | dispatch `dimming.yml` on completed fields — glint scan reuses the same ZTF pulls |
 | Laser emission (SDSS-DR17) | 10,500+ spectra (latest committed run) | 112 triaged (was 118; 3 galaxies cut, incl. former #1) | per-exposure persistence check (repeat-visit path exhausted) |
 | Astrometric dark companion (Gaia orbits) | 105,066 NSS orbits, ≤1 kpc | 0 novel (8 class-3 = BH1 + 7, but 7/8 already in Shahaf+2023; 1 borderline-absent is the weakest solution) | reproduction of the published AMRF catalogue — change the question |

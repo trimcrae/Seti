@@ -1,0 +1,81 @@
+name: lhs1140-origin
+
+# Panspermia DONOR / directed-travel analysis anchored on LHS 1140 -- the mirror of
+# the K2-18 channel. Resolves LHS 1140's 6D phase space from Gaia DR3, ranks the
+# stars it passed CLOSE and SLOW to (recipients of any ejecta), and ranks the best
+# DESTINATIONS a LHS-1140-origin traveller would choose using the CLASSICAL
+# (rocky-HZ) prior -- the contrast with K2-18's hycean prior. With --crossmatch it
+# layers the NASA Exoplanet Archive to flag temperate (classical-HZ) hosts. Needs
+# egress (Gaia + Exoplanet Archive TAP), so it runs on the runner.
+
+on:
+  workflow_dispatch:
+    inputs:
+      search_pc:
+        description: "3D search radius around LHS 1140 (pc)"
+        required: false
+        default: "40.0"
+      t_max_myr:
+        description: "Past-encounter viability window (Myr)"
+        required: false
+        default: "10.0"
+      d_min_max_pc:
+        description: "Closest-approach cut defining the recipient shortlist (pc)"
+        required: false
+        default: "2.0"
+      max_pc:
+        description: "Host-distance limit for the Exoplanet-Archive pull (pc)"
+        required: false
+        default: "90.0"
+
+permissions:
+  contents: write
+
+jobs:
+  lhs1140-origin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,pandas,scipy,astroquery,requests; print('imports OK')"
+      - name: Rank recipients + directed-travel destinations (classical prior)
+        run: |
+          python -m seti.cli lhs1140-origin \
+            --search-pc ${{ github.event.inputs.search_pc }} \
+            --t-max-myr ${{ github.event.inputs.t_max_myr }} \
+            --d-min-max-pc ${{ github.event.inputs.d_min_max_pc }} \
+            --max-pc ${{ github.event.inputs.max_pc }} \
+            --crossmatch
+          echo "=== lhs1140-origin summary ==="
+          cat results/lhs1140_origin/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/lhs1140_origin/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "lhs1140-origin: donor recipients + directed-travel destinations (classical prior)"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lhs1140-origin-outputs
+          path: results/lhs1140_origin/
+          if-no-files-found: warn

@@ -185,6 +185,40 @@ def _cmd_galactic(args, cfg):
                  d_cut_pc=args.d_cut_pc, limit=args.limit)
 
 
+def _cmd_jwst_bio(args, cfg):
+    from .jwst_bio.run import jwst_bio_run
+
+    jwst_bio_run(cfg)
+
+
+def _cmd_lhs1140_origin(args, cfg):
+    from .lhs1140_origin.run import lhs1140_origin_run
+
+    lhs1140_origin_run(cfg, search_pc=args.search_pc, t_max_myr=args.t_max_myr,
+                       d_min_max_pc=args.d_min_max_pc, crossmatch=args.crossmatch,
+                       max_pc=args.max_pc)
+
+
+def _cmd_crosscorr(args, cfg):
+    from .crosscorr.run import crosscorr_run
+
+    crosscorr_run(cfg)
+
+
+def _cmd_seti_archive(args, cfg):
+    from .seti_archive.run import seti_archive_run
+
+    seti_archive_run(cfg, snr=args.snr)
+
+
+def _cmd_iso_backtrack(args, cfg):
+    from .iso.run import iso_run
+
+    iso_run(cfg, t_max_myr=args.t_max_myr, n_mc=args.n_mc,
+            nearby_pc=args.nearby_pc, d_close_pc=args.d_close_pc,
+            scan_nearby=not args.no_scan)
+
+
 def _cmd_panspermia_regime(args, cfg):
     from .panspermia.encounters import regime_summary, transfer_regime
 
@@ -589,6 +623,55 @@ def main(argv=None):
     p.add_argument("--limit", type=int, default=150000,
                    help="max Gaia 6D stars to integrate")
     p.set_defaults(func=_cmd_galactic)
+
+    p = sub.add_parser("jwst-bio",
+                       help="runner: real JWST/HST transmission-spectrum biosignature "
+                            "analysis of LHS 1140 b (disequilibrium pair + M-dwarf "
+                            "abiotic gate + MIRI eclipse discriminant + laser scan)")
+    p.set_defaults(func=_cmd_jwst_bio)
+
+    p = sub.add_parser("lhs1140-origin",
+                       help="runner: donor/directed-travel mirror of the K2-18 channel "
+                            "for LHS 1140 (classical rocky-HZ prior)")
+    p.add_argument("--search-pc", type=float, default=40.0,
+                   help="3D search radius around LHS 1140 (pc)")
+    p.add_argument("--t-max-myr", type=float, default=10.0,
+                   help="past-encounter viability window (Myr)")
+    p.add_argument("--d-min-max-pc", type=float, default=2.0,
+                   help="closest-approach cut defining the recipient shortlist (pc)")
+    p.add_argument("--crossmatch", action="store_true",
+                   help="runner-only: cross-match NASA Exoplanet Archive hosts")
+    p.add_argument("--max-pc", type=float, default=80.0,
+                   help="host-distance limit for the Exoplanet-Archive pull (pc)")
+    p.set_defaults(func=_cmd_lhs1140_origin)
+
+    p = sub.add_parser("crosscorr",
+                       help="runner: high-resolution transmission cross-correlation "
+                            "biosignature search for LHS 1140 b (O2 A-band + H2O)")
+    p.set_defaults(func=_cmd_crosscorr)
+
+    p = sub.add_parser("seti-archive",
+                       help="runner: targeted radio+optical SETI archive coverage and "
+                            "EIRP-limit dossier for LHS 1140")
+    p.add_argument("--snr", type=float, default=5.0,
+                   help="detection threshold (sigma) for the EIRP limits")
+    p.set_defaults(func=_cmd_seti_archive)
+
+    p = sub.add_parser("iso-backtrack",
+                       help="runner: back-track known ISOs (Oumuamua/Borisov/3I) "
+                            "through the Galactic potential toward LHS 1140 "
+                            "(necessary-not-sufficient; MC over radiant+v_inf)")
+    p.add_argument("--t-max-myr", type=float, default=200.0,
+                   help="backward orbit-integration baseline (Myr)")
+    p.add_argument("--n-mc", type=int, default=2000,
+                   help="Monte-Carlo draws per ISO over velocity+radiant uncertainty")
+    p.add_argument("--nearby-pc", type=float, default=25.0,
+                   help="radius of the nearest-Gaia-star context scan (pc)")
+    p.add_argument("--d-close-pc", type=float, default=1.0,
+                   help="closest-approach distance defining the caveated flag (pc)")
+    p.add_argument("--no-scan", action="store_true",
+                   help="skip the nearby-star context scan (offline / dynamics only)")
+    p.set_defaults(func=_cmd_iso_backtrack)
 
     p = sub.add_parser("panspermia-regime",
                        help="offline: classify K2-18 encounters by transfer mode "

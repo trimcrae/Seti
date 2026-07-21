@@ -1,0 +1,83 @@
+name: iso-backtrack
+
+# Interstellar-object (ISO) back-tracking channel. For each known ISO
+# (1I/'Oumuamua, 2I/Borisov, 3I/ATLAS) build its heliocentric Galactic velocity
+# from its asymptotic incoming speed + radiant, integrate the trajectory backward
+# through the shared Galactic potential, and Monte-Carlo the (large) velocity +
+# radiant uncertainty to report the DISTRIBUTION of closest-approach distance and
+# time to LHS 1140 -- plus a nearest-Gaia-star context scan showing how crowded
+# each back-track is. Results carry the necessary-not-sufficient caveat as a
+# first-class field: a close pass never means an ISO came from LHS 1140. Needs
+# egress for the (optional) star scan; the LHS 1140 anchor + dynamics degrade to
+# committed literature values offline. Runs on the runner and commits results.
+
+on:
+  workflow_dispatch:
+    inputs:
+      t_max_myr:
+        description: "Backward orbit-integration baseline (Myr)"
+        required: false
+        default: "200"
+      n_mc:
+        description: "Monte-Carlo draws per ISO over velocity+radiant uncertainty"
+        required: false
+        default: "2000"
+      nearby_pc:
+        description: "Radius of the nearest-star context scan (pc)"
+        required: false
+        default: "25"
+      d_close_pc:
+        description: "Closest-approach distance defining the (caveated) flag (pc)"
+        required: false
+        default: "1"
+
+permissions:
+  contents: write
+
+jobs:
+  iso:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,pandas,astroquery,requests; print('imports OK')"
+      - name: Run ISO back-tracking
+        run: |
+          python -m seti.cli iso-backtrack \
+            --t-max-myr ${{ github.event.inputs.t_max_myr || '200' }} \
+            --n-mc ${{ github.event.inputs.n_mc || '2000' }} \
+            --nearby-pc ${{ github.event.inputs.nearby_pc || '25' }} \
+            --d-close-pc ${{ github.event.inputs.d_close_pc || '1' }}
+          echo "=== summary ==="
+          cat results/iso/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/iso/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "iso-backtrack: back-track known ISOs toward LHS 1140 (necessary-not-sufficient)"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iso-backtrack-outputs
+          path: results/iso/
+          if-no-files-found: warn

@@ -5,6 +5,42 @@ vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
 next. Last updated: 2026-07-21.
 
+### New channel: long-baseline Galactic-orbit encounter search (`galactic/`)
+
+**Question (user-directed, 2026-07-21):** expand the bio/techno-signature search
+to **both** nearby biosignature-anchor systems (LHS 1140 + K2-18) **and any star
+that passed near them over the past few hundred Myr**. The panspermia encounter
+code is linear-motion (valid only ~10 Myr); a hundreds-of-Myr baseline **requires
+integrating orbits in the Galactic potential** — differential rotation and the
+vertical tide bend every trajectory well inside that window.
+
+**Method (dynamics unit-tested offline, `test_galactic.py`, 5 tests):** an
+axisymmetric MW potential (Miyamoto-Nagai disk + logarithmic halo, flat rotation
+curve `V_c(R0)=232 km/s`) with a vectorised velocity-Verlet integrator; resolve
+each anchor's 6D phase space, pull the RV-complete Gaia sample in a present-day
+sphere, integrate every orbit back `t_max` (300 Myr), and track each star's
+closest approach with an **analytic per-step segment minimum** (so a ~30 km/s
+flyby is not stepped over between samples). Monte-Carlo the closest encounters and
+report a **timing-recoverability flag** — the honest horizon beyond which phase
+mixing erases the encounter *time* even where `d_min` stays robust. Cross-match the
+shortlist to the NASA Exoplanet Archive and run the signature battery: the
+astrometric hidden-companion (techno) screen on every encounter star, and the
+biosignature-detectability (bio) answer on the anchors + any planet-hosting
+encounter systems.
+
+**Bio contrast that validates the framework (computed offline, confirmed on the
+runner):** biosignature detectability is set by the atmosphere's mean molecular
+weight, and the two nearby biosignature worlds sit on opposite sides of the line —
+**K2-18 b** (expected low-μ hycean H₂ envelope, scale height **H=79 km**) is
+biosignature-**REACHABLE in <1 transit** (exactly why the contested DMS claim,
+Madhusudhan+2023, was even possible there), while **LHS 1140 b** (high-μ rocky
+secondary, **H=3.6 km**) needs **~25 transits** → not detectable. Same JWST, same
+distance; the atmosphere decides.
+
+**Status:** channel + workflow (`galactic-encounters.yml`) built, 10 offline tests
+(dynamics + bio) pass; **first runner dispatch in flight** (run 29793496625,
+300 Myr, 250 pc sphere, d_min<3 pc). Results → `results/galactic/`.
+
 ### New channel: LHS 1140 system deep-dive (`lhs1140/`)
 
 **Question (user-directed, 2026-07-21):** LHS 1140 b is a ~1.7 R⊕ temperate

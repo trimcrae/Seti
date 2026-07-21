@@ -13,12 +13,28 @@ Each degrades honestly and never fabricates data.
 1. **`jwst_bio`** — real JWST transmission-spectrum biosignature analysis (build the
    spectrum from `x1dints` in/out-of-transit; disequilibrium-*pair* logic CH₄+CO₂/
    O₂+CH₄, never a single gas; M-dwarf abiotic-O₂ gate; MIRI eclipse
-   atmosphere-vs-bare-rock; laser scan). **Run 1: `no_data`** — the MAST obs filter
-   required `dataproduct_type=="spectrum"`, but JWST transit spectroscopy is
-   `"timeseries"`, so all TSO rows (the ones holding x1dints) were dropped → 0
-   products. **Fixed** (accept `timeseries`); **re-dispatched**. The detectability
-   answer (b not detectable) already stands; this channel is the actual-spectrum
-   confirmation.
+   atmosphere-vs-bare-rock; laser scan). Took **three runs and two real
+   data-access fixes** to reach the archive: (1) the MAST obs filter required
+   `dataproduct_type=="spectrum"` but JWST TSO is `"timeseries"` → 0 products
+   (fixed → 70 x1dints found); (2) all 70 downloads hit the MAST
+   `download_products` "varchar to bigint" server bug → switched to
+   `download_file(dataURI)`. **Run 3 reached real data:** `data_reached=true`, 2
+   x1dints stacks read (NIRISS + NIRSpec). **Verdict `no_biosignature_detected`
+   — correct and robust:** NIRISS covers only 0.85–2.83 µm, so CH₄ (3.3)/CO₂
+   (4.3)/O₃ (9.6 µm) are out of range → **no redox-disequilibrium pair is even
+   possible**, and a single gas is never a biosignature. **Vetting note (do not
+   overclaim):** the pipeline's apparent "H₂O 1.4 µm, 72 ppm, 7σ" is a **reduction
+   artefact, not a real detection** — the reader saw only 3 integrations (it treats
+   each EXTRACT1D HDU as one integration, but modern x1dints pack all integrations
+   in one 2-D table), the in/out split ran with `ephemeris_used=false`, and the
+   per-band σ is inflated by counting ~46k correlated native pixels as independent.
+   A valid transmission spectrum here needs multi-integration format handling +
+   ephemeris phasing + systematics detrending + de-correlated binning — the
+   publication-grade retrieval the channel explicitly disclaims. **Bottom line
+   unchanged:** the biosignature *detectability* answer governs — LHS 1140 b's
+   compact high-μ atmosphere puts every biosignature ~25+ transits out of reach, so
+   none is detectable with current data. The infrastructure now reaches the real
+   spectra; a genuine retrieval is the honest next boundary, not a runner task.
 2. **`lhs1140_origin`** — panspermia **donor** list (classical rocky-HZ prior,
    mirror of K2-18). **Run OK:** 10,974 Gaia 6D stars → **22 recipients** within
    2 pc over 10 Myr, **0 co-movers**, closest approach 0.26 pc — but **all fast

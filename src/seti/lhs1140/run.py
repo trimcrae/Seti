@@ -304,6 +304,105 @@ def _biosignature_inventory(out_dir, ra: float | None = None,
     return summary
 
 
+# LHS 1140 b literature parameters (Cadieux+2024), a fallback if the live NASA
+# Exoplanet Archive fetch fails.  ``t_in_hours`` is the in-transit duration.
+_LHS1140B_FALLBACK = {"rp_earth": 1.730, "mp_earth": 5.60, "rs_sun": 0.2159,
+                      "teq_k": 226.0, "jmag": 9.612, "t_in_hours": 2.0,
+                      "resolution": 50.0}
+
+# Which biosignature gas band each JWST instrument actually covers -- used to turn
+# the observed instrument list into a data-grounded coverage statement.
+_INSTRUMENT_GASES = {
+    "NIRISS": ["H2O", "O2_CIA"],
+    "NIRSPEC": ["CH4", "CO2", "CH3Cl"],
+    "NIRSPEC/PRISM": ["CH4", "CO2", "CH3Cl"],
+    "MIRI": ["O3", "N2O"],
+}
+
+
+def _fetch_planet_params(name: str = "LHS 1140 b") -> dict:
+    """Live LHS 1140 b parameters from the NASA Exoplanet Archive (pscomppars)."""
+    params = dict(_LHS1140B_FALLBACK)
+    try:
+        import io
+
+        import requests
+        q = ("select pl_rade,pl_bmasse,pl_eqt,st_rad,sy_jmag,pl_trandur "
+             f"from pscomppars where pl_name='{name}'")
+        r = requests.get("https://exoplanetarchive.ipac.caltech.edu/TAP/sync",
+                         params={"query": q, "format": "csv"}, timeout=120)
+        r.raise_for_status()
+        df = pd.read_csv(io.StringIO(r.text))
+        if len(df):
+            row = df.iloc[0]
+            def val(k, default):
+                v = row.get(k)
+                return float(v) if v is not None and np.isfinite(
+                    pd.to_numeric(v, errors="coerce")) else default
+            params.update({
+                "rp_earth": val("pl_rade", params["rp_earth"]),
+                "mp_earth": val("pl_bmasse", params["mp_earth"]),
+                "rs_sun": val("st_rad", params["rs_sun"]),
+                "teq_k": val("pl_eqt", params["teq_k"]),
+                "jmag": val("sy_jmag", params["jmag"]),
+                # pl_trandur is the full (T14) transit duration in hours; the
+                # in-transit constraining window is ~that.
+                "t_in_hours": val("pl_trandur", params["t_in_hours"]),
+            })
+            print(f"[lhs1140] resolved LHS 1140 b params from NASA archive: "
+                  f"Rp={params['rp_earth']:.2f} Re Mp={params['mp_earth']:.2f} Me "
+                  f"Teq={params['teq_k']:.0f} K J={params['jmag']:.2f}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"[lhs1140] planet-param fetch failed ({exc!r}); using literature fallback")
+    return params
+
+
+def _biosignature_answer(out_dir, inventory: dict) -> dict:
+    """Compute the biosignature detectability answer for LHS 1140 b.
+
+    Grounds the physics budget in (a) live system parameters and (b) which
+    biosignature bands were actually observed (from the inventory instrument
+    list), and writes the verdict.
+    """
+    from .biosignature import biosignature_detectability, biosignature_verdict
+
+    params = _fetch_planet_params()
+    budget = biosignature_detectability(params)
+
+    # Data-grounded band coverage: map observed JWST instruments -> gases covered.
+    per_inst = inventory.get("per_instrument", {}) if inventory else {}
+    covered = {}
+    for inst, n in per_inst.items():
+        for key, gases in _INSTRUMENT_GASES.items():
+            if inst.upper().startswith(key.split("/")[0]):
+                for gcol in gases:
+                    covered.setdefault(gcol, 0)
+                    covered[gcol] += int(n)
+    # Estimate of independent transit epochs observed.  Raw MAST rows over-count
+    # (per-segment products), so this is a deliberately generous upper bound on the
+    # *epochs*, clearly labelled -- the conclusion is robust to its exact value.
+    jwst_spectro = sum(int(n) for inst, n in per_inst.items()
+                       if inst.upper().startswith(("NIRISS", "NIRSPEC", "MIRI")))
+    transits_est = max(2, min(20, jwst_spectro // 8))   # generous epoch proxy
+
+    verdict = biosignature_verdict(budget, atmospheres_observed=1,
+                                   transits_observed=transits_est)
+    result = {
+        "planet": "LHS 1140 b", "params": params,
+        "biosignature_bands_observed": covered,
+        "jwst_spectroscopic_products": jwst_spectro,
+        "transits_observed_estimate": transits_est,
+        "budget": budget, "verdict": verdict,
+    }
+    (out_dir / "biosignature.json").write_text(json.dumps(result, indent=2,
+                                                          default=str))
+    print(f"[lhs1140] biosignature answer: {verdict['answer']} "
+          f"(min {verdict['min_transits_for_any_biosignature']} transits needed "
+          f"for any biosignature under {verdict['expected_atmosphere']}; "
+          f"~{transits_est} epochs observed)")
+    return result
+
+
 def lhs1140_run(cfg: Config | None = None, sphere_pc: float = 10.0) -> dict:
     """Exhaustive LHS 1140 signature sweep: system dossier + neighbours + bio inventory."""
     cfg = cfg or load_config()
@@ -318,6 +417,8 @@ def lhs1140_run(cfg: Config | None = None, sphere_pc: float = 10.0) -> dict:
     anchor = sysd["anchor"]
     inv = _biosignature_inventory(out_dir, ra=float(anchor.get("ra", LHS1140["ra"])),
                                   dec=float(anchor.get("dec", LHS1140["dec"])))
+    print("[lhs1140] === biosignature detectability answer ===")
+    bio = _biosignature_answer(out_dir, inv)
 
     summary = {
         "target": LHS1140["name"], "planets": [p["name"] for p in PLANETS],
@@ -338,6 +439,14 @@ def lhs1140_run(cfg: Config | None = None, sphere_pc: float = 10.0) -> dict:
             "atmosphere_capable_spectroscopy": inv.get(
                 "atmosphere_capable_spectroscopy"),
             "per_instrument": inv.get("per_instrument"),
+        },
+        "biosignature_answer": {
+            "answer": bio["verdict"]["answer"],
+            "expected_atmosphere": bio["verdict"]["expected_atmosphere"],
+            "min_transits_for_any_biosignature":
+                bio["verdict"]["min_transits_for_any_biosignature"],
+            "transits_observed_estimate": bio["transits_observed_estimate"],
+            "bands_observed": list(bio["biosignature_bands_observed"].keys()),
         },
     }
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))

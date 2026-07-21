@@ -172,6 +172,12 @@ def _cmd_panspermia_dossier(args, cfg):
     dossier_run(cfg)
 
 
+def _cmd_lhs1140(args, cfg):
+    from .lhs1140.run import lhs1140_run
+
+    lhs1140_run(cfg, sphere_pc=args.sphere_pc)
+
+
 def _cmd_panspermia_regime(args, cfg):
     from .panspermia.encounters import regime_summary, transfer_regime
 
@@ -556,6 +562,13 @@ def main(argv=None):
                        help="runner: exhaustive per-target signature sweep of the "
                             "two candidates (Gaia/WISE/ZTF/XP)")
     p.set_defaults(func=_cmd_panspermia_dossier)
+
+    p = sub.add_parser("lhs1140",
+                       help="runner: exhaustive bio/techno-signature sweep of the "
+                            "LHS 1140 system, its planets, and its neighbours")
+    p.add_argument("--sphere-pc", type=float, default=10.0,
+                   help="neighbour-sweep radius around LHS 1140 (pc)")
+    p.set_defaults(func=_cmd_lhs1140)
 
     p = sub.add_parser("panspermia-regime",
                        help="offline: classify K2-18 encounters by transfer mode "

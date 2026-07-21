@@ -199,9 +199,10 @@ def test_laser_scan_flags_narrow_line_and_ignores_smooth():
     wl = np.linspace(1.0, 5.0, 800)
     smooth = 100.0 + 5.0 * (wl - 3.0) ** 2          # smooth continuum
     assert not laser_line_scan(wl, smooth)["laser_line_flag"]
-    spike = smooth.copy()
+    idx = np.arange(wl.size)
     j = 400
-    spike[j - 1:j + 2] += np.array([40.0, 80.0, 40.0])   # narrow, bounded, interior
+    # A narrow (few-sample, resolved), bounded, interior emission line.
+    spike = smooth + 80.0 * np.exp(-0.5 * ((idx - j) / 1.2) ** 2)
     out = laser_line_scan(wl, spike)
     assert out["laser_line_flag"]
     assert out["peak"]["index"] == j

@@ -305,27 +305,29 @@ def abiotic_false_positive(detections: dict, n_sigma: float = 3.0) -> dict:
 
     o2, o3, ch4, co = det("O2"), det("O3"), det("CH4"), det("CO")
     oxygen = o2 or o3
-    reasons: list[str] = []
+    # Hard triggers -- an oxygen detection these explain abiotically.
+    hard: list[str] = []
     if oxygen and not ch4:
-        reasons.append("O2/O3 present without CH4 disequilibrium -- consistent "
-                       "with H2O photolysis + H escape (abiotic O2)")
+        hard.append("O2/O3 present without CH4 disequilibrium -- consistent with "
+                    "H2O photolysis + H escape (abiotic O2)")
     if oxygen and co:
-        reasons.append("CO co-detected with O2/O3 -- CO2-photolysis abiotic-O2 "
-                       "tracer")
-    if o2:
-        # The near-IR O2 evidence in DEFAULT_BANDS is the A-band + O2-O2 CIA; a
-        # CIA-only detection is a dense-O2 / O4 pattern, not a biological marker.
-        reasons.append("O2 evidence includes the O2-O2 (O4) CIA window -- verify "
-                       "it is not a pressure-induced abiotic pattern")
+        hard.append("CO co-detected with O2/O3 -- CO2-photolysis abiotic-O2 tracer")
+    # Advisory caveat -- the near-IR O2 evidence in DEFAULT_BANDS includes the
+    # O2-O2 (O4) CIA window, a pressure-induced pattern to verify.  This does NOT
+    # by itself brand a detection abiotic (that would reject the genuine O2+CH4
+    # disequilibrium case), but it must always be checked.
+    caveats = (["O2 evidence includes the O2-O2 (O4) CIA window -- verify it is "
+                "not a pressure-induced abiotic pattern"] if o2 else [])
+    reasons = hard + caveats
     return {
         "oxygen_present": bool(oxygen),
         "o2": o2, "o3": o3, "ch4": ch4, "co": co,
-        "abiotic_flag": bool(oxygen and reasons),
+        "abiotic_flag": bool(hard),
         "reasons": reasons,
         "gates_oxygen_claim": True,
         "note": ("oxygen detection is consistent with abiotic M-dwarf pathways -- "
                  "do NOT claim a biosignature on O2/O3 alone"
-                 if oxygen and reasons else
+                 if hard else
                  "no unresolved abiotic-oxygen concern (either no oxygen, or "
                  "oxygen with CH4 disequilibrium and no CO tracer)"),
     }

@@ -1,0 +1,63 @@
+name: jwst-bio
+
+# Real JWST/HST transmission-spectrum biosignature analysis of LHS 1140 b.
+# Resolves the planet's live ephemeris + parameters from the NASA Exoplanet
+# Archive, queries MAST for the JWST time-series extracted spectra (x1dints:
+# NIRISS SOSS / NIRSpec) and MIRI products, downloads a bounded (<=~1.5 GB) set,
+# builds the in-/out-of-transit transmission spectrum, and runs the full detector
+# battery -- molecular features, redox-disequilibrium biosignature test, M-dwarf
+# abiotic false-positive gate, MIRI eclipse atmosphere-vs-rock discriminant, and a
+# JWST-resolution laser-line scan. Needs archive egress; runs on the runner and
+# commits results back to the branch. Degrades honestly to a 'no_data' verdict if
+# the MAST download is not feasible -- it never fabricates a spectrum.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  jwst-bio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,tess]"
+          python -c "import numpy,pandas,astroquery,requests; print('imports OK')"
+          python -c "from astropy.io import fits; print('astropy.io.fits OK')"
+      - name: Run JWST biosignature analysis
+        run: |
+          python -m seti.cli jwst-bio
+          echo "=== summary ==="
+          cat results/jwst_bio/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/jwst_bio/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "jwst-bio: LHS 1140 b transmission-spectrum biosignature analysis"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jwst-bio-outputs
+          path: results/jwst_bio/
+          if-no-files-found: warn

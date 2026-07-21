@@ -142,23 +142,21 @@ def _query_mast_products(ra: float, dec: float, radius_arcsec: float = 20.0):
     if obs is None or len(obs) == 0:
         return pd.DataFrame(), pd.DataFrame()
 
-    obs_df = obs.to_pandas()
-    jwst = obs_df[(obs_df.get("obs_collection", "").astype(str).str.upper() == "JWST")
-                  & (obs_df.get("dataproduct_type", "").astype(str).str.lower()
-                     == "spectrum")]
-    if not len(jwst):
-        return pd.DataFrame(), obs_df
     try:
+        obs_df = obs.to_pandas()
+        coll = obs_df.get("obs_collection", pd.Series([""] * len(obs_df))) \
+            .astype(str).str.upper()
+        ptype = obs_df.get("dataproduct_type", pd.Series([""] * len(obs_df))) \
+            .astype(str).str.lower()
+        is_jwst_spec = np.asarray((coll == "JWST") & (ptype == "spectrum"))
+        if not is_jwst_spec.any():
+            return pd.DataFrame(), obs_df
         # Expand only the JWST spectroscopic observations to their products.
-        prod = Observations.get_product_list(
-            obs[np.array((obs_df["obs_collection"].astype(str).str.upper()
-                          == "JWST")
-                         & (obs_df["dataproduct_type"].astype(str).str.lower()
-                            == "spectrum"))])
+        prod = Observations.get_product_list(obs[is_jwst_spec])
         prod_df = prod.to_pandas()
     except Exception as exc:  # noqa: BLE001
-        print(f"[jwst_bio] get_product_list failed: {exc!r}")
-        return pd.DataFrame(), obs_df
+        print(f"[jwst_bio] product expansion failed: {exc!r}")
+        return pd.DataFrame(), locals().get("obs_df", pd.DataFrame())
     return prod_df, obs_df
 
 

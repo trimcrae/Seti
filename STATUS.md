@@ -5,6 +5,55 @@ vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
 next. Last updated: 2026-07-21.
 
+### New: 5-channel fan-out searching for life originating on LHS 1140 b (2026-07-21)
+
+Five parallel-subagent-built channels (77 offline tests total), all runner-dispatched.
+Each degrades honestly and never fabricates data.
+
+1. **`jwst_bio`** — real JWST transmission-spectrum biosignature analysis (build the
+   spectrum from `x1dints` in/out-of-transit; disequilibrium-*pair* logic CH₄+CO₂/
+   O₂+CH₄, never a single gas; M-dwarf abiotic-O₂ gate; MIRI eclipse
+   atmosphere-vs-bare-rock; laser scan). **Run 1: `no_data`** — the MAST obs filter
+   required `dataproduct_type=="spectrum"`, but JWST transit spectroscopy is
+   `"timeseries"`, so all TSO rows (the ones holding x1dints) were dropped → 0
+   products. **Fixed** (accept `timeseries`); **re-dispatched**. The detectability
+   answer (b not detectable) already stands; this channel is the actual-spectrum
+   confirmation.
+2. **`lhs1140_origin`** — panspermia **donor** list (classical rocky-HZ prior,
+   mirror of K2-18). **Run OK:** 10,974 Gaia 6D stars → **22 recipients** within
+   2 pc over 10 Myr, **0 co-movers**, closest approach 0.26 pc — but **all fast
+   flybys** (top v_rel 51 km/s, transfer scores ~1e-3 = non-capturable), exactly
+   like K2-18: no slow/close passive bridge. The directed-travel (technological)
+   destination list ranks **5,490 reachable known-planet hosts**, top rocky-HZ
+   targets HD 216520, HD 210277, HD 215497… (all temperate-planet hosts, reachable
+   in 400–1,200 yr at 0.1c). Net: passive panspermia closed; directed-travel gives
+   a concrete ranked target list.
+3. **`crosscorr`** — high-res Doppler cross-correlation (O₂ A-band + H₂O, Kp–Vsys).
+   **Run: `NO_ARCHIVAL_IN_TRANSIT_HIRES_SPECTRA_AVAILABLE`** — ESO archive reachable
+   (118 ESPRESSO records) but **0 in-transit transmission sequences** (all
+   out-of-transit RV monitoring); one LHS 1140 b transit sweeps Kp by only ~0.9 km/s,
+   so a real search needs many stacked dedicated transits. Engine validated on
+   injection; honest data-gap verdict.
+4. **`seti_archive`** — targeted radio/optical SETI coverage + EIRP limits.
+   **Run: `NO_TARGETED_RADIO_SETI_ON_RECORD`** — a genuine observational gap on a
+   landmark HZ world; representative limits show a modest MeerKAT/GBT/Parkes pointing
+   would constrain narrowband beacons to ~2–12×10¹⁰ W (~10³× below the Arecibo
+   planetary radar, well sub-Kardashev-I). Deliverable is the coverage+limit map.
+5. **`iso`** — interstellar-object back-tracking ('Oumuamua/Borisov/3I) through the
+   Galactic potential. **Run: clean null** — all three ISOs stay at LHS 1140's
+   present ~15 pc under back-integration (`d_min_p50 ≈ 14.96 pc`, `t_enc ≈ 0`),
+   `any_consistent_with_origin=False`. The necessary-not-sufficient caveat ships as a
+   first-class field (degree-scale radiants smear parsecs; apex projection; disk
+   prior). None traces back to LHS 1140.
+
+**Net across the fan-out:** no bio or techno detection; the two live scientific
+outputs are the **directed-travel destination list** (a ranked answer to "which
+rocky-HZ worlds could an LHS 1140 biosphere reach") and two identified **real
+observational gaps** (no dedicated in-transit high-res spectra; no targeted radio
+SETI) on a landmark world. The one channel that would give a *positive* atmospheric
+measurement — `jwst_bio` on the actual JWST spectra — is re-running after the TSO
+filter fix.
+
 ### New channel: long-baseline Galactic-orbit encounter search (`galactic/`)
 
 **Question (user-directed, 2026-07-21):** expand the bio/techno-signature search

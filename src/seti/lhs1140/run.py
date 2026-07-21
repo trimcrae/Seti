@@ -79,14 +79,6 @@ WHERE 1=CONTAINS(POINT('ICRS', ra, dec),
   AND parallax_over_error > 8
 """
 
-_NEIGHBOR_WISE_QUERY = """
-SELECT xm.source_id, w.w1mpro, w.w2mpro, w.w3mpro, w.w4mpro,
-       w.w1sigmpro, w.w2sigmpro, w.w3sigmpro, w.w4sigmpro
-FROM gaiadr3.allwise_best_neighbour AS xm
-JOIN gaiadr1.allwise_original_valid AS w
-  ON w.designation = xm.original_ext_source_id
-WHERE xm.source_id IN ({ids})
-"""
 
 
 def _resolve_anchor(cone_arcsec: float = 90.0) -> dict:
@@ -162,18 +154,31 @@ def _system_dossier(cfg: Config, out_dir) -> dict:
     return {"anchor": row, "dossier": dossier}
 
 
-def _fetch_neighbor_wise(source_ids, chunk: int = 1500) -> dict:
-    """WISE W1-W4 for a list of source_ids via the AllWISE best-neighbour join."""
+def _fetch_neighbor_wise(local: pd.DataFrame, max_cones: int = 400) -> dict:
+    """AllWISE W1-W4 (+errors) per neighbour via proper-motion-propagated IRSA cones.
+
+    The Gaia ``allwise_best_neighbour`` join both misses these high-proper-motion
+    nearby stars *and* lacks the ``*sigmpro`` error columns, so -- exactly as for
+    the anchor -- we go straight to the IRSA ``allwise_p3as_psd`` catalogue at each
+    star's WISE-epoch position.  The local volume is small (tens of stars within a
+    few pc), so a per-source cone is affordable; ``max_cones`` guards against an
+    over-large sphere silently issuing thousands of queries.
+    """
     out = {}
-    ids = [int(s) for s in source_ids]
-    for i in range(0, len(ids), chunk):
-        sub = ",".join(str(s) for s in ids[i:i + chunk])
+    rows = local.to_dict("records")
+    if len(rows) > max_cones:
+        print(f"[lhs1140] neighbour WISE: {len(rows)} sources exceeds "
+              f"max_cones={max_cones}; fetching the nearest {max_cones}")
+        rows = sorted(rows, key=lambda r: r.get("sep_from_lhs1140_pc", 1e9))[:max_cones]
+    for r in rows:
         try:
-            df = _run_query(_NEIGHBOR_WISE_QUERY.format(ids=sub))
-            for _, r in df.iterrows():
-                out[int(r["source_id"])] = r.to_dict()
+            w = _fetch_wise_irsa(float(r["ra"]), float(r["dec"]),
+                                 r.get("pmra", 0.0), r.get("pmdec", 0.0))
         except Exception as exc:  # noqa: BLE001
-            print(f"[lhs1140] neighbour WISE chunk {i // chunk} failed: {exc!r}")
+            print(f"[lhs1140] neighbour WISE cone {r['source_id']} failed: {exc!r}")
+            w = {}
+        if w:
+            out[int(r["source_id"])] = w
     return out
 
 
@@ -223,8 +228,8 @@ def _neighbor_sweep(anchor: dict, out_dir, radius_deg: float = 8.0,
     rows = local.to_dict("records")
     # Astrometric hidden-companion screen (needs only the Gaia row).
     comp = neighbor_companion_scan(rows)
-    # IR-excess screen (needs AllWISE).
-    wise = _fetch_neighbor_wise(local["source_id"].tolist()) if len(local) else {}
+    # IR-excess screen (needs AllWISE; PM-propagated IRSA cone per neighbour).
+    wise = _fetch_neighbor_wise(local) if len(local) else {}
     for r in rows:
         r.update(wise.get(int(r["source_id"]), {}))
     ir = neighbor_ir_excess_scan(rows)
@@ -260,16 +265,33 @@ def _crossmatch_planet_hosts(local: pd.DataFrame) -> list[dict]:
         return []
 
 
-def _biosignature_inventory(out_dir, radius_arcsec: float = 30.0) -> dict:
-    """Query MAST for every observation of LHS 1140 and summarise coverage."""
+def _biosignature_inventory(out_dir, ra: float | None = None,
+                            dec: float | None = None,
+                            radius_arcsec: float = 30.0) -> dict:
+    """Query MAST for every observation of LHS 1140 and summarise coverage.
+
+    ``query_criteria(objectname=..., radius=...)`` is rejected by MAST ("at least
+    one non-positional criterion") -- the positional cone search is
+    ``query_region``/``query_object``.  We prefer a coordinate cone (robust to name
+    resolution) and fall back to the object name."""
     records = []
     try:
         from astroquery.mast import Observations
-        obs = Observations.query_criteria(objectname="LHS 1140",
-                                          radius=f"{radius_arcsec} arcsec")
+        obs = None
+        if ra is not None and dec is not None:
+            from astropy.coordinates import SkyCoord
+            import astropy.units as u
+            try:
+                obs = Observations.query_region(
+                    SkyCoord(ra, dec, unit="deg"),
+                    radius=radius_arcsec * u.arcsec)
+            except Exception as exc:  # noqa: BLE001
+                print(f"[lhs1140] MAST query_region failed: {exc!r}")
+        if obs is None or len(obs) == 0:
+            obs = Observations.query_object("LHS 1140",
+                                            radius=f"{radius_arcsec} arcsec")
         if obs is not None and len(obs):
-            df = obs.to_pandas()
-            records = df.to_dict("records")
+            records = obs.to_pandas().to_dict("records")
     except Exception as exc:  # noqa: BLE001
         print(f"[lhs1140] MAST inventory query failed: {exc!r}")
     summary = inventory_summary(records)
@@ -293,7 +315,9 @@ def lhs1140_run(cfg: Config | None = None, sphere_pc: float = 10.0) -> dict:
     print("[lhs1140] === neighbour sweep ===")
     neigh = _neighbor_sweep(sysd["anchor"], out_dir, sphere_pc=sphere_pc)
     print("[lhs1140] === biosignature-observation inventory ===")
-    inv = _biosignature_inventory(out_dir)
+    anchor = sysd["anchor"]
+    inv = _biosignature_inventory(out_dir, ra=float(anchor.get("ra", LHS1140["ra"])),
+                                  dec=float(anchor.get("dec", LHS1140["dec"])))
 
     summary = {
         "target": LHS1140["name"], "planets": [p["name"] for p in PLANETS],

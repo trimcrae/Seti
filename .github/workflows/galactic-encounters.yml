@@ -1,0 +1,78 @@
+name: galactic-encounters
+
+# Long-baseline (few hundred Myr) stellar-encounter search for the two nearby
+# biosignature-anchor systems (LHS 1140, K2-18), using Galactic-potential orbit
+# integration (the linear panspermia treatment is valid only ~10 Myr). For each
+# anchor: resolve its 6D phase space, pull the RV-complete Gaia sample around it,
+# integrate every orbit back t_max Myr, find closest approaches, Monte-Carlo the
+# top ones for timing recoverability, cross-match to the NASA Exoplanet Archive,
+# and run the signature battery (astrometric hidden-companion techno screen on
+# every encounter star; biosignature-detectability answer on the anchors and any
+# planet-hosting encounter systems). Needs egress; runs on the runner and commits
+# results back to the branch.
+
+on:
+  workflow_dispatch:
+    inputs:
+      t_max_myr:
+        description: "Orbit-integration lookback baseline (Myr)"
+        required: false
+        default: "300"
+      search_pc:
+        description: "Present-day sphere radius for the RV-complete sample (pc)"
+        required: false
+        default: "250"
+      d_cut_pc:
+        description: "Closest-approach cut for the encounter shortlist (pc)"
+        required: false
+        default: "3"
+
+permissions:
+  contents: write
+
+jobs:
+  galactic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,pandas,astroquery,requests; print('imports OK')"
+      - name: Run long-baseline encounter search
+        run: |
+          python -m seti.cli galactic-encounters \
+            --t-max-myr ${{ github.event.inputs.t_max_myr || '300' }} \
+            --search-pc ${{ github.event.inputs.search_pc || '250' }} \
+            --d-cut-pc ${{ github.event.inputs.d_cut_pc || '3' }}
+          echo "=== summary ==="
+          cat results/galactic/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/galactic/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "galactic-encounters: long-baseline (few hundred Myr) encounter search (LHS 1140 + K2-18)"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: galactic-encounters-outputs
+          path: results/galactic/
+          if-no-files-found: warn

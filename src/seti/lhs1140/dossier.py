@@ -62,27 +62,54 @@ PLANETS = [
 
 
 # --- Neighbour-sweep scorers (catalogue-scale technosignature battery) ------
+# WISE contamination guards (the AllWISE lesson, re-earned on the LHS 1140
+# neighbours).  Two systematics dominate any catalogue-scale WISE excess screen:
+#   (1) a W4-only "excess" -- W4 (22 um) is the shallowest, most confusion-limited
+#       band, so for intrinsically 22-um-faint stars its flux is background cirrus
+#       / a noise measurement, giving huge (up to 6 mag) formally-high-sigma
+#       "excesses" with a photospheric W1-W2.  A real warm-dust / waste-heat SED is
+#       bounded and lights up the shorter, star-dominated bands first, so a
+#       W4-only excess is an artefact, not a detection.
+#   (2) a negative W1-W2 -- a bare stellar photosphere has W1-W2 >= 0 (Vega); a
+#       negative value means a blend / bad photometry in W1 or W2, not a star.
+# A genuine excess must therefore appear in a star-dominated band (W1-W2, the hot
+# ~1000 K band, or W1-W3, the ~300 K warm-dust band) with a physical W1-W2 >= 0.
+_W1W2_BLEND_FLOOR = -0.05
+
+
 def neighbor_ir_excess_scan(rows: list[dict]) -> dict:
     """Run the WISE IR-colour-excess screen over a list of neighbour rows.
 
-    Each row must carry AllWISE ``w1mpro``..``w4mpro`` (+ their ``*sigmpro``); the
-    per-row logic is exactly :func:`ir_color_excess` (an M-dwarf photosphere sits
-    on the Rayleigh-Jeans tail, so a real warm-dust / waste-heat excess raises
-    W1-W3/W1-W4 well above zero at >3 sigma).  Returns the flagged sources and the
-    coverage count so a clean sweep is reported honestly rather than as silence.
+    Each row must carry AllWISE ``w1mpro``..``w4mpro`` (+ their ``*sigmpro``).  The
+    raw per-row colours come from :func:`ir_color_excess`; on top of it we apply the
+    contamination guards above so a catalogue-scale sweep does not report the WISE
+    W4 faint-source artefact (or a W1/W2 blend) as a waste-heat candidate.  A
+    W4-only or negative-W1-W2 excess is recorded under ``needs_vetting`` rather than
+    ``flagged``, keeping the coverage honest without manufacturing candidates.
     """
-    flagged, n_with_wise = [], 0
+    flagged, needs_vetting, n_with_wise = [], [], 0
     for r in rows:
         ir = ir_color_excess(r)
         if ir.get("has_data"):
             n_with_wise += 1
-        if ir.get("ir_excess_flag"):
-            flagged.append({"source_id": r.get("source_id"),
-                            "ra": r.get("ra"), "dec": r.get("dec"),
-                            "reasons": ir["reasons"],
-                            **{k: ir.get(k) for k in
-                               ("W1_W2", "W1_W3", "W1_W4")}})
+        if not ir.get("ir_excess_flag"):
+            continue
+        w1w2 = ir.get("W1_W2")
+        rec = {"source_id": r.get("source_id"), "ra": r.get("ra"),
+               "dec": r.get("dec"), "reasons": ir["reasons"],
+               **{k: ir.get(k) for k in ("W1_W2", "W1_W3", "W1_W4")}}
+        # A star-dominated (W1-W2 or W1-W3) excess with a physical W1-W2 is a real
+        # candidate; a W4-only excess or a negative W1-W2 is a known systematic.
+        star_band = any(("W1_W2" in s or "W1_W3" in s) for s in ir["reasons"])
+        blend = w1w2 is not None and np.isfinite(w1w2) and w1w2 < _W1W2_BLEND_FLOOR
+        if star_band and not blend:
+            flagged.append(rec)
+        else:
+            why = ("W1-W2<0 (blend/bad photometry)" if blend
+                   else "W4-only excess (AllWISE W4 cirrus/faint-source artefact)")
+            needs_vetting.append({**rec, "vetting": why})
     return {"n_sources": len(rows), "n_with_wise": n_with_wise,
+            "n_needs_vetting": len(needs_vetting), "needs_vetting": needs_vetting,
             "n_ir_excess": len(flagged), "flagged": flagged}
 
 
@@ -173,7 +200,8 @@ def inventory_summary(records: list[dict]) -> dict:
                 pass
     span = None
     if np.isfinite(em_lo) and np.isfinite(em_hi):
-        span = {"min_um": em_lo * 1e6, "max_um": em_hi * 1e6}
+        # MAST reports em_min/em_max in nanometres; convert to micron.
+        span = {"min_um": em_lo / 1e3, "max_um": em_hi / 1e3}
     return {
         "n_observations": len(records),
         "n_spectroscopic": n_spectro,

@@ -201,28 +201,38 @@ def _download_and_read(prod_df: pd.DataFrame, out_dir) -> list[dict]:
     total = 0.0
     dl_dir = out_dir / "x1dints"
     dl_dir.mkdir(parents=True, exist_ok=True)
-    for _, row in x1d.iterrows():
+    for i, (_, row) in enumerate(x1d.iterrows()):
         if len(stacks) >= _MAX_FILES:
             break
         size = float(row.get("size", 0) or 0)
         if size and total + size > _MAX_TOTAL_BYTES:
             print(f"[jwst_bio] size cap reached ({total/1e9:.2f} GB); stopping")
             break
+        # Download each product directly by its dataURI.  Passing a filtered
+        # product TABLE to download_products triggers a MAST server bug
+        # ("Error converting data type varchar to bigint"); download_file on the
+        # single dataURI bypasses the bad bundling query entirely.
+        uri = row.get("dataURI") or row.get("dataurl")
+        if not uri:
+            continue
+        fn = str(row.get("productFilename") or f"x1dints_{i}.fits")
+        local = str(dl_dir / fn)
         try:
-            man = Observations.download_products(
-                row.to_frame().T if hasattr(row, "to_frame") else row,
-                download_dir=str(dl_dir))
-            local = None
-            if man is not None and len(man):
-                local = man["Local Path"][0]
-            if not local:
+            status, msg, _url = Observations.download_file(uri, local_path=local)
+            if str(status).upper() != "COMPLETE":
+                print(f"[jwst_bio] download_file {fn}: {status} {msg}")
                 continue
             stack = _read_x1dints(local)
             if stack is not None:
                 stacks.append(stack)
                 total += size
+            try:
+                import os
+                os.remove(local)          # free disk after reading
+            except OSError:
+                pass
         except Exception as exc:  # noqa: BLE001
-            print(f"[jwst_bio] product download/read failed: {exc!r}")
+            print(f"[jwst_bio] product download/read failed ({fn}): {exc!r}")
             continue
     print(f"[jwst_bio] read {len(stacks)} x1dints stacks "
           f"({total/1e9:.2f} GB)")

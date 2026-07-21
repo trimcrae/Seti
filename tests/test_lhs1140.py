@@ -121,3 +121,61 @@ def test_inventory_empty():
     assert inv["n_observations"] == 0
     assert inv["atmosphere_capable_spectroscopy"] is False
     assert inv["wavelength_span"] is None
+
+
+# --- biosignature detectability -------------------------------------------
+from seti.lhs1140.biosignature import (  # noqa: E402
+    biosignature_detectability,
+    biosignature_verdict,
+    feature_amplitude_ppm,
+    scale_height,
+    surface_gravity,
+    transit_depth_ppm,
+    transits_to_detect,
+)
+
+# LHS 1140 b (Cadieux+2024).
+_LHS1140B = dict(rp_earth=1.730, mp_earth=5.60, rs_sun=0.2159, teq_k=226.0,
+                 jmag=9.612, t_in_hours=2.0, resolution=50.0)
+
+
+def test_surface_gravity_and_depth_match_lhs1140b():
+    g = surface_gravity(_LHS1140B["mp_earth"], _LHS1140B["rp_earth"])
+    assert 17 < g < 20                       # super-Earth, ~18 m/s^2
+    depth = transit_depth_ppm(_LHS1140B["rp_earth"], _LHS1140B["rs_sun"])
+    assert 5000 < depth < 5800               # ~0.5% transit
+
+
+def test_high_mu_atmosphere_has_smaller_scale_height():
+    g = surface_gravity(_LHS1140B["mp_earth"], _LHS1140B["rp_earth"])
+    h_h2 = scale_height(226.0, 2.3, g)
+    h_n2 = scale_height(226.0, 28.0, g)
+    assert h_h2 > 10 * h_n2                   # low-mu envelope ~12x puffier
+    # And the feature amplitude scales with H.
+    a_h2 = feature_amplitude_ppm(1.730, 0.2159, h_h2, 1.0)
+    a_n2 = feature_amplitude_ppm(1.730, 0.2159, h_n2, 1.0)
+    assert a_h2 > 10 * a_n2
+
+
+def test_transits_to_detect_monotonic():
+    # A larger feature needs fewer transits; a vanishing one needs infinity.
+    n_big = transits_to_detect(40.0, 25.0, 6, target_sigma=5.0)
+    n_small = transits_to_detect(4.0, 25.0, 6, target_sigma=5.0)
+    assert n_small > n_big
+    assert transits_to_detect(0.0, 25.0, 6) == float("inf")
+
+
+def test_biosignature_verdict_not_detectable_for_secondary_atmosphere():
+    budget = biosignature_detectability(_LHS1140B)
+    # Under the expected N2 secondary atmosphere, biosignatures need many transits.
+    n2 = budget["atmospheres"]["N2_secondary"]["gases"]
+    assert n2["CH4"]["transits_for_detection"] > 10
+    assert n2["O3"]["transits_for_detection"] > 20
+    # Under a cleared H2 envelope they would be trivially reachable.
+    h2 = budget["atmospheres"]["H2_rich_cleared"]["gases"]
+    assert h2["CH4"]["transits_for_detection"] < 2
+    # With only the ~2 transits actually observed, the answer is "not detectable".
+    v = biosignature_verdict(budget, atmospheres_observed=1, transits_observed=2)
+    assert v["answer"] == "BIOSIGNATURE_NOT_DETECTABLE_WITH_CURRENT_DATA"
+    assert v["min_transits_for_any_biosignature"] > 2
+    assert not v["reachable_biosignatures"]

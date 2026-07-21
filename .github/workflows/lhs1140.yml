@@ -1,0 +1,67 @@
+name: lhs1140
+
+# Exhaustive bio/techno-signature sweep of the LHS 1140 system, its planets
+# (b, c), its star, and its stellar neighbours. Pulls every archive a runner can
+# reach -- Gaia DR3 astrometry (hidden companions), WISE/NEOWISE (IR-excess /
+# waste heat, mid-IR variability), ZTF + TESS/K2 photometry (which carry the
+# transit signal of the planets), Gaia XP (narrow laser line) -- runs every
+# signature detector, sweeps the local stellar volume at catalogue scale, and
+# inventories the atmosphere-capable (JWST/HST) spectroscopy that makes a
+# molecular biosignature search possible. Needs egress; runs on the runner and
+# commits results back to the branch.
+
+on:
+  workflow_dispatch:
+    inputs:
+      sphere_pc:
+        description: "Neighbour-sweep radius around LHS 1140 (pc)"
+        required: false
+        default: "10"
+
+permissions:
+  contents: write
+
+jobs:
+  lhs1140:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,tess]"
+          python -c "import numpy,pandas,astroquery,requests; print('imports OK')"
+          python -c "import lightkurve; print('lightkurve', lightkurve.__version__)" || echo "lightkurve unavailable (TESS channel will skip)"
+      - name: Run LHS 1140 signature sweep
+        run: |
+          python -m seti.cli lhs1140 --sphere-pc ${{ github.event.inputs.sphere_pc || '10' }}
+          echo "=== summary ==="
+          cat results/lhs1140/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/lhs1140/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "lhs1140: bio/techno-signature sweep (system + neighbours + inventory)"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lhs1140-outputs
+          path: results/lhs1140/
+          if-no-files-found: warn

@@ -3,7 +3,67 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-07-01.
+next. Last updated: 2026-07-21.
+
+### New channel: LHS 1140 system deep-dive (`lhs1140/`)
+
+**Question (user-directed, 2026-07-21):** LHS 1140 b is a ~1.7 R⊕ temperate
+habitable-zone rocky/water world (M4.5V host at 14.96 pc) with a *reported
+atmosphere* (Cadieux+2024). Exhaustively search every observation ever done of
+the planet, its sibling (LHS 1140 c), the star, and the stellar neighbours for
+any bio or techno signature. Because both planets **transit**, every photometric/
+spectroscopic observation of the star is also an observation of the planets, so
+this is a full multi-archive sweep of the system plus a catalogue-scale battery
+over the local volume. Channel: `src/seti/lhs1140/`, workflow `lhs1140.yml`,
+8 offline tests.
+
+**Method (reuses the panspermia per-target detectors + two new pieces):** resolve
+LHS 1140's live Gaia DR3 row (nearest source in a PM-tolerant cone →
+`2371032916186181760`), then run the full battery — Gaia astrometric
+hidden-companion, WISE IR-colour excess, NEOWISE mid-IR variability, ZTF g+r +
+**TESS/K2** photometry (which carry the b/c transits), Gaia XP narrow laser-line
+scan — plus (1) a **neighbour sweep** applying the IR-excess and companion screens
+to every Gaia source within a distance sphere (PM-propagated IRSA WISE cones,
+NASA-Exoplanet-Archive cross-match), and (2) a **biosignature-observation
+inventory** (MAST) recording what atmosphere-capable spectroscopy exists.
+
+**Result (runs 2–3, committed under `results/lhs1140/`): the system is clean of
+technosignatures in every channel that returned data.**
+- **LHS 1140 (star + planets b, c):** clean in all 6 channels — no Gaia XP laser
+  line; no WISE IR excess (W1–W2=0.22, W1–W3=0.37, both below threshold — ordinary
+  M-dwarf colours); no NEOWISE mid-IR trend (296 epochs); no anomalous transit in
+  **TESS (3,548 epochs)** or ZTF (the real b/c transits are periodic/shallow, not
+  flagged). The lone flag is **RUWE=1.53** (just over the 1.4 line) — *not* a
+  technosignature: astrometric excess noise is only 0.28 mas (below the 1 mas
+  amplitude gate), no Gaia NSS solution; at most a faint unseen stellar companion,
+  ordinary for a nearby high-PM M dwarf.
+- **Neighbours (38 stars ≤15 pc):** the raw WISE screen flagged 15/38 IR-excess —
+  a 40% rate that traces **entirely to AllWISE systematics**, not waste heat. The
+  hardened screen (require the excess in a star-dominated band W1–W2/W1–W3 with a
+  physical W1–W2≥−0.05; W4-only and negative-W1–W2 → `needs_vetting`) drops it to
+  4 survivors, and those are all explained too: three are faint (G=18–20, WISE
+  confusion-limited) and one is **blue (bp_rp=1.16, not an M dwarf** → photosphere
+  model invalid → blend/background); the single reasonable one (G=14.4 mid-M,
+  W1–W3=0.73) is a mild W3 excess with photospheric W1–W2 = ordinary debris/cirrus.
+  **No neighbour shows the hot-band (W1–W2) waste-heat signature.** 6 neighbours
+  carry elevated RUWE (ordinary binaries); 3 planet hosts in the volume
+  (LHS 1140 + HIP 4845 + one more).
+- **Biosignature inventory:** **533 MAST observations, 209 spectroscopic**,
+  atmosphere-capable = **True** — HST (WFC3/STIS/COS 409) + JWST
+  (MIRI/NIRISS/NIRSpec 71), 0.1–16.5 µm, ~1.53 Ms total exposure. A molecular
+  biosignature search *is* possible on these data, but that is a high-res
+  transmission/emission-spectroscopy analysis (O₂/O₃, CH₄, N₂O, DMS retrieval),
+  **not** a catalogue-scale product this repo produces — the inventory records
+  honestly that the data exist and which instruments hold them.
+
+**Read:** LHS 1140, its planets, and its ≤15 pc neighbours are **clean of any
+technosignature** in every public archive reached (Gaia astrometry+XP,
+WISE/NEOWISE, ZTF, TESS/K2). Not a null to write up — it is a *characterisation*
+of an individual high-value system. The one genuinely open door is **bio, not
+techno**: the 209 archival JWST/HST spectra of LHS 1140 b are exactly where an
+atmospheric-molecule search would live, and that is a spectroscopic-retrieval
+task beyond this catalogue-scale pipeline. Known gaps: radio/SETI, high-res
+HARPS/ESPRESSO RV, X-ray.
 
 ## Current best candidates (cross-channel, ranked)
 
@@ -282,6 +342,7 @@ of well-measured *fast* flybys, exactly what the transfer-regime cut rejects.
 | WD IR excess | 7,716 clean WDs → 23 multi-axis → blend+sublimation test | 0 technosignature (3 WISE blends, 7 unresolved stellar companions, 13 ordinary τ<0.08 debris disks) | channel resolved; τ=0.6 standout is a too-hot-for-dust stellar companion. Next volume only helps if it reaches a τ→1 excess with T_dust *below* sublimation |
 | Panspermia (K2-18 close encounters) | first run: 9,980 Gaia 6D stars, 4,984 past approaches, 15 within d_min≤2 pc | 0 slow/close bridge (all v_rel 23–54 km/s; closest 0.90 pc but at 32 km/s; 0 co-movers) | **RV completeness is the gap** — supplement RVs for RV-less nearby M dwarfs, then re-cut to d_min<0.3 pc & v_rel<5 km/s; Exoplanet-Archive cross-match any survivor |
 | Gaia XP anomalies | RA283/Dec−3 dense field: 8,863 sources, reliable; narrow-feature shortlist examined | 0 credible | **channel bounded — see ledger.** Broad "anomalies" = reddened-M-dwarf molecular bands (degenerate with a Dyson SED); "narrow" ones = band-edge reconstruction artifacts + sub-resolution wiggles (XP LSF ≈5+ samples can't resolve a laser line). Guards added (width/interior/bounded). A clean low-extinction field could still test the *broad*-SED Dyson signature, but it is degenerate with reddening |
+| LHS 1140 system deep-dive | star + b/c + 38 neighbours ≤15 pc; 6 archives (Gaia astrometry+XP, WISE/NEOWISE, ZTF, TESS 3.5k epochs); 533 MAST obs inventoried | 0 technosignature | **clean.** Star: all 6 channels clean; lone RUWE=1.53 flag is marginal (0.28 mas excess noise, no NSS) = ordinary mild binarity, not techno. Neighbours: raw 15/38 IR-excess all = WISE W4/blend systematics → 4 survive hardening → all faint-source/blue-source/ordinary-debris. Open door is **bio**: 209 archival JWST/HST spectra of b need a molecular retrieval (not catalogue-scale) |
 
 ## Known systematics ledger (do not re-derive)
 
@@ -330,6 +391,17 @@ of well-measured *fast* flybys, exactly what the transfer-regime cut rejects.
   an ordinary debris disk.
 * WD IR excess: dusty debris disks are the one natural confounder — subtract
   the labelled catalogues before scoring.
+* **AllWISE W4 (22 µm) is unreliable for faint stars** — it is the shallowest,
+  most confusion-limited band, so for 22-µm-faint M dwarfs the catalogue W4 flux
+  is background cirrus / a noise measurement, producing huge (up to ~6 mag),
+  formally-high-σ "W1−W4 excesses" with a *photospheric* W1−W2. A real
+  warm-dust/waste-heat SED is bounded and lights up the star-dominated bands
+  first, so a **W4-only excess is an artefact**, not a detection. Likewise a
+  **negative W1−W2 is a W1/W2 blend** (a bare photosphere has W1−W2 ≥ 0), not a
+  star. The LHS 1140 neighbour screen requires the excess in W1−W2 or W1−W3 with
+  W1−W2 ≥ −0.05; W4-only/negative-W1−W2 go to `needs_vetting` (killed 11 of 15
+  raw neighbour flags). Faint sources (G≳18) and non-M-dwarf (blue bp_rp) matches
+  are additionally WISE-confusion/photosphere-model-invalid, not excesses.
 * A secular optical fade with a NEOWISE fade at ~6% of the optical rate is
   ordinary line-of-sight dust (extinction-law ratio) — check
   `w1_to_optical_slope_ratio` before getting excited. Gray occulters sit at

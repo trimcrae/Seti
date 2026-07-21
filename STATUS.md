@@ -50,20 +50,35 @@ technosignatures in every channel that returned data.**
   (LHS 1140 + HIP 4845 + one more).
 - **Biosignature inventory:** **533 MAST observations, 209 spectroscopic**,
   atmosphere-capable = **True** — HST (WFC3/STIS/COS 409) + JWST
-  (MIRI/NIRISS/NIRSpec 71), 0.1–16.5 µm, ~1.53 Ms total exposure. A molecular
-  biosignature search *is* possible on these data, but that is a high-res
-  transmission/emission-spectroscopy analysis (O₂/O₃, CH₄, N₂O, DMS retrieval),
-  **not** a catalogue-scale product this repo produces — the inventory records
-  honestly that the data exist and which instruments hold them.
+  (MIRI/NIRISS/NIRSpec 71), 0.1–16.5 µm, ~1.53 Ms total exposure.
+- **Biosignature ANSWER (`biosignature.py`, `results/lhs1140/biosignature.json`,
+  6 offline tests):** the detectability calculation converts "the spectra exist"
+  into the actual answer. A molecular biosignature lives in the transmission
+  spectrum, whose feature amplitude is `2 Rp H n_H / Rs²` with scale height
+  `H = kT/(μ g)`. For LHS 1140 b (g ≈ 18 m/s², a dense ~5.6 M⊕ super-Earth) the
+  **physically expected high-μ secondary (N₂) atmosphere has H ≈ 3.6 km → ~3.6 ppm
+  per scale height**, so against JWST's ~26 ppm per-bin per-transit noise **CH₄
+  (3.3 µm) needs ~25 transits, O₃ (9.6 µm) ~67, N₂O/CH₃Cl/O₂-CIA more** — versus
+  the handful (~2–4 epochs) actually observed. **Verdict:
+  `BIOSIGNATURE_NOT_DETECTABLE_WITH_CURRENT_DATA`.** The required bands *are*
+  covered (MIRI→O₃/N₂O, NIRSpec→CH₄/CO₂, NIRISS→H₂O/O₂-CIA), so this is a
+  sensitivity limit, not a coverage gap. A biosignature would be reachable only
+  under a cleared low-μ (H₂-rich) envelope (H ≈ 44 km, <1 transit) — which the
+  planet's density and the existing atmosphere data **disfavour**. This matches
+  the literature: LHS 1140 b shows a *tentative secondary atmosphere / water-world
+  hint* (Cadieux+2024), **no biosignature gas**, and reaching one needs dozens–
+  hundreds of transits.
 
 **Read:** LHS 1140, its planets, and its ≤15 pc neighbours are **clean of any
 technosignature** in every public archive reached (Gaia astrometry+XP,
-WISE/NEOWISE, ZTF, TESS/K2). Not a null to write up — it is a *characterisation*
-of an individual high-value system. The one genuinely open door is **bio, not
-techno**: the 209 archival JWST/HST spectra of LHS 1140 b are exactly where an
-atmospheric-molecule search would live, and that is a spectroscopic-retrieval
-task beyond this catalogue-scale pipeline. Known gaps: radio/SETI, high-res
-HARPS/ESPRESSO RV, X-ray.
+WISE/NEOWISE, ZTF, TESS/K2), and the **biosignature question is now answered too**:
+with current JWST data a biosignature is **not detectable** on LHS 1140 b, because
+its expected high-μ atmosphere makes every biosignature feature a few ppm — dozens
+of transits below reach, not a matter of looking harder at existing spectra. This
+is a complete *characterisation* of an individual high-value system (both bio and
+techno), not a population null. Known gaps: radio/SETI, high-res HARPS/ESPRESSO
+RV, X-ray; a true spectral *retrieval* on the raw JWST products (vs this
+signal-to-noise budget) remains a heavier, non-catalogue-scale follow-up.
 
 ## Current best candidates (cross-channel, ranked)
 
@@ -342,7 +357,7 @@ of well-measured *fast* flybys, exactly what the transfer-regime cut rejects.
 | WD IR excess | 7,716 clean WDs → 23 multi-axis → blend+sublimation test | 0 technosignature (3 WISE blends, 7 unresolved stellar companions, 13 ordinary τ<0.08 debris disks) | channel resolved; τ=0.6 standout is a too-hot-for-dust stellar companion. Next volume only helps if it reaches a τ→1 excess with T_dust *below* sublimation |
 | Panspermia (K2-18 close encounters) | first run: 9,980 Gaia 6D stars, 4,984 past approaches, 15 within d_min≤2 pc | 0 slow/close bridge (all v_rel 23–54 km/s; closest 0.90 pc but at 32 km/s; 0 co-movers) | **RV completeness is the gap** — supplement RVs for RV-less nearby M dwarfs, then re-cut to d_min<0.3 pc & v_rel<5 km/s; Exoplanet-Archive cross-match any survivor |
 | Gaia XP anomalies | RA283/Dec−3 dense field: 8,863 sources, reliable; narrow-feature shortlist examined | 0 credible | **channel bounded — see ledger.** Broad "anomalies" = reddened-M-dwarf molecular bands (degenerate with a Dyson SED); "narrow" ones = band-edge reconstruction artifacts + sub-resolution wiggles (XP LSF ≈5+ samples can't resolve a laser line). Guards added (width/interior/bounded). A clean low-extinction field could still test the *broad*-SED Dyson signature, but it is degenerate with reddening |
-| LHS 1140 system deep-dive | star + b/c + 38 neighbours ≤15 pc; 6 archives (Gaia astrometry+XP, WISE/NEOWISE, ZTF, TESS 3.5k epochs); 533 MAST obs inventoried | 0 technosignature | **clean.** Star: all 6 channels clean; lone RUWE=1.53 flag is marginal (0.28 mas excess noise, no NSS) = ordinary mild binarity, not techno. Neighbours: raw 15/38 IR-excess all = WISE W4/blend systematics → 4 survive hardening → all faint-source/blue-source/ordinary-debris. Open door is **bio**: 209 archival JWST/HST spectra of b need a molecular retrieval (not catalogue-scale) |
+| LHS 1140 system deep-dive | star + b/c + 38 neighbours ≤15 pc; 6 archives (Gaia astrometry+XP, WISE/NEOWISE, ZTF, TESS 3.5k epochs); 533 MAST obs inventoried; **biosignature detectability budget** | 0 technosignature; **0 detectable biosignature** | **clean + bio answered.** Star: all 6 channels clean; lone RUWE=1.53 is marginal binarity, not techno. Neighbours: raw 15/38 IR-excess all = WISE W4/blend systematics → 4 survive → faint/blue/ordinary-debris. **Bio:** under b's expected high-μ (N₂) atmosphere (H≈3.6 km) every biosignature feature is ~few ppm → CH₄ ~25 / O₃ ~67 transits vs ~2–4 observed → `NOT_DETECTABLE_WITH_CURRENT_DATA`; reachable only for a disfavoured cleared H₂ envelope |
 
 ## Known systematics ledger (do not re-derive)
 

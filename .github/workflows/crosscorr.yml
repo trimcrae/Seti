@@ -1,0 +1,61 @@
+name: crosscorr
+
+# High-resolution transmission cross-correlation biosignature search for
+# LHS 1140 b. Resolves the planet ephemeris + radial-velocity semi-amplitude Kp
+# from the NASA Exoplanet Archive, attempts to locate archival high-resolution
+# transit spectra (ESO/DACE: ESPRESSO/HARPS/NIRPS), and -- on any spectra actually
+# retrieved -- builds residuals (SysRem-lite), cross-correlates against O2 A-band
+# and H2O templates, and builds the Kp-Vsys detection map. Degrades honestly to a
+# cited published-dataset inventory when programmatic archive access is
+# unavailable; never fabricates spectra. Needs egress; runs on the runner and
+# commits results back to the branch.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  crosscorr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,scipy,pandas,astroquery,requests; print('imports OK')"
+      - name: Run LHS 1140 b cross-correlation search
+        run: |
+          python -m seti.cli crosscorr
+          echo "=== summary ==="
+          cat results/crosscorr/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/crosscorr/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "crosscorr: LHS 1140 b high-res cross-correlation search (O2 A-band + H2O)"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: crosscorr-outputs
+          path: results/crosscorr/
+          if-no-files-found: warn

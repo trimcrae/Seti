@@ -148,7 +148,12 @@ def _query_mast_products(ra: float, dec: float, radius_arcsec: float = 20.0):
             .astype(str).str.upper()
         ptype = obs_df.get("dataproduct_type", pd.Series([""] * len(obs_df))) \
             .astype(str).str.lower()
-        is_jwst_spec = np.asarray((coll == "JWST") & (ptype == "spectrum"))
+        # JWST transit spectroscopy is delivered as dataproduct_type "timeseries"
+        # (time-series observations), NOT "spectrum" -- the x1dints extracted
+        # spectra live under those rows.  Requiring "spectrum" alone silently
+        # dropped every TSO row (0 x1dints).  Accept both.
+        is_jwst_spec = np.asarray((coll == "JWST")
+                                  & ptype.isin(["spectrum", "timeseries"]))
         if not is_jwst_spec.any():
             return pd.DataFrame(), obs_df
         # Expand only the JWST spectroscopic observations to their products.

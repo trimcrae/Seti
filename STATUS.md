@@ -37,9 +37,32 @@ Madhusudhan+2023, was even possible there), while **LHS 1140 b** (high-μ rocky
 secondary, **H=3.6 km**) needs **~25 transits** → not detectable. Same JWST, same
 distance; the atmosphere decides.
 
-**Status:** channel + workflow (`galactic-encounters.yml`) built, 10 offline tests
-(dynamics + bio) pass; **first runner dispatch in flight** (run 29793496625,
-300 Myr, 250 pc sphere, d_min<3 pc). Results → `results/galactic/`.
+**Result (run 29793496625, committed under `results/galactic/`): both nearby
+systems and their few-hundred-Myr encounter neighbours are clean of any bio or
+techno signature.** For each anchor **149,979** RV-complete Gaia stars were
+integrated back 300 Myr:
+- **LHS 1140:** 34 stars pass within 3 pc; **0 are known planet hosts** (no bio
+  target), **0 carry an astrometric companion flag** (no techno). Closest pass:
+  Gaia DR3 `1939760926285276544` (G=7.4, now 132 pc away) at **d_min=0.086 pc**,
+  2.9 Myr ago, RUWE 0.88 = ordinary single star — an interesting closest-stellar-
+  approach, not a signature.
+- **K2-18:** 16 stars within 3 pc; **0 planet hosts, 0 companion flags.** Closest:
+  Gaia DR3 `983333660069405824` at **d_min=0.25 pc**, 1.9 Myr ago.
+- **Empirical recoverability horizon (the honest headline):** *every*
+  reconstructable close pass is **recent** — all 34 of LHS 1140's are within the
+  last 4 Myr; 15 of K2-18's 16 are within 20 Myr (one outlier at −155 Myr). The
+  300 Myr integration surfaces **no datable 100–300 Myr-ago close encounter**: over
+  that baseline phase mixing erases the timing, so the only stars still traceable to
+  a <3 pc approach are those making *recent* passes. The Monte-Carlo confirms it —
+  the closest encounters have `t_enc` spreads of ~0 Myr (tightly recoverable) and
+  all sit in the last few Myr. A "few hundred Myr" encounter search therefore
+  collapses, in practice, to a recoverable window of **~tens of Myr** — exactly the
+  regime the linear panspermia search already covered, now put on a rigorous
+  orbit-integrated footing with the horizon quantified rather than assumed.
+
+Net: no encounter neighbour of either biosignature world is a planet host or shows
+a hidden-companion technosignature; the anchors' own bio answers stand (LHS 1140 b
+not detectable, K2-18 b reachable). 15 offline tests (10 galactic/bio + 5 dynamics).
 
 ### New channel: LHS 1140 system deep-dive (`lhs1140/`)
 
@@ -393,6 +416,7 @@ of well-measured *fast* flybys, exactly what the transfer-regime cut rejects.
 | WD IR excess | 7,716 clean WDs → 23 multi-axis → blend+sublimation test | 0 technosignature (3 WISE blends, 7 unresolved stellar companions, 13 ordinary τ<0.08 debris disks) | channel resolved; τ=0.6 standout is a too-hot-for-dust stellar companion. Next volume only helps if it reaches a τ→1 excess with T_dust *below* sublimation |
 | Panspermia (K2-18 close encounters) | first run: 9,980 Gaia 6D stars, 4,984 past approaches, 15 within d_min≤2 pc | 0 slow/close bridge (all v_rel 23–54 km/s; closest 0.90 pc but at 32 km/s; 0 co-movers) | **RV completeness is the gap** — supplement RVs for RV-less nearby M dwarfs, then re-cut to d_min<0.3 pc & v_rel<5 km/s; Exoplanet-Archive cross-match any survivor |
 | Gaia XP anomalies | RA283/Dec−3 dense field: 8,863 sources, reliable; narrow-feature shortlist examined | 0 credible | **channel bounded — see ledger.** Broad "anomalies" = reddened-M-dwarf molecular bands (degenerate with a Dyson SED); "narrow" ones = band-edge reconstruction artifacts + sub-resolution wiggles (XP LSF ≈5+ samples can't resolve a laser line). Guards added (width/interior/bounded). A clean low-extinction field could still test the *broad*-SED Dyson signature, but it is degenerate with reddening |
+| Galactic long-baseline encounters | LHS 1140 + K2-18; 149,979 RV-complete Gaia stars each integrated back 300 Myr in the MW potential | 0 bio + 0 techno among encounter neighbours | **clean.** LHS 1140: 34 passes <3 pc (0 planet hosts, 0 companion flags); K2-18: 16 (same). All datable passes are recent (<~20 Myr) — phase mixing erases 100–300 Myr timing, so the honest recoverability horizon is ~tens of Myr. Closest: a G=7.4 star 0.086 pc from LHS 1140 2.9 Myr ago (single star, not a signature) |
 | LHS 1140 system deep-dive | star + b/c + 38 neighbours ≤15 pc; 6 archives (Gaia astrometry+XP, WISE/NEOWISE, ZTF, TESS 3.5k epochs); 533 MAST obs inventoried; **biosignature detectability budget** | 0 technosignature; **0 detectable biosignature** | **clean + bio answered.** Star: all 6 channels clean; lone RUWE=1.53 is marginal binarity, not techno. Neighbours: raw 15/38 IR-excess all = WISE W4/blend systematics → 4 survive → faint/blue/ordinary-debris. **Bio:** under b's expected high-μ (N₂) atmosphere (H≈3.6 km) every biosignature feature is ~few ppm → CH₄ ~25 / O₃ ~67 transits vs ~2–4 observed → `NOT_DETECTABLE_WITH_CURRENT_DATA`; reachable only for a disfavoured cleared H₂ envelope |
 
 ## Known systematics ledger (do not re-derive)

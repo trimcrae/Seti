@@ -178,6 +178,13 @@ def _cmd_lhs1140(args, cfg):
     lhs1140_run(cfg, sphere_pc=args.sphere_pc)
 
 
+def _cmd_galactic(args, cfg):
+    from .galactic.run import galactic_run
+
+    galactic_run(cfg, t_max_myr=args.t_max_myr, search_pc=args.search_pc,
+                 d_cut_pc=args.d_cut_pc, limit=args.limit)
+
+
 def _cmd_panspermia_regime(args, cfg):
     from .panspermia.encounters import regime_summary, transfer_regime
 
@@ -569,6 +576,19 @@ def main(argv=None):
     p.add_argument("--sphere-pc", type=float, default=10.0,
                    help="neighbour-sweep radius around LHS 1140 (pc)")
     p.set_defaults(func=_cmd_lhs1140)
+
+    p = sub.add_parser("galactic-encounters",
+                       help="runner: long-baseline (few hundred Myr) Galactic-orbit "
+                            "encounter search for LHS 1140 + K2-18 + signature battery")
+    p.add_argument("--t-max-myr", type=float, default=300.0,
+                   help="lookback baseline for orbit integration (Myr)")
+    p.add_argument("--search-pc", type=float, default=250.0,
+                   help="present-day sphere radius to draw the RV-complete sample")
+    p.add_argument("--d-cut-pc", type=float, default=3.0,
+                   help="closest-approach cut defining the encounter shortlist (pc)")
+    p.add_argument("--limit", type=int, default=150000,
+                   help="max Gaia 6D stars to integrate")
+    p.set_defaults(func=_cmd_galactic)
 
     p = sub.add_parser("panspermia-regime",
                        help="offline: classify K2-18 encounters by transfer mode "

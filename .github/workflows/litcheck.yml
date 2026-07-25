@@ -6,7 +6,12 @@ name: litcheck
 # acquisition pattern). Results are committed back to the branch.
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      pass:
+        description: "Which fetch pass to run (1 or 2)"
+        required: false
+        default: "1"
 
 permissions:
   contents: write
@@ -24,9 +29,13 @@ jobs:
           python-version: "3.11"
       - name: Fetch literature evidence
         run: |
-          python scripts/litcheck_fetch.py
+          if [ "${{ github.event.inputs.pass }}" = "2" ]; then
+            python scripts/litcheck_fetch2.py
+          else
+            python scripts/litcheck_fetch.py
+          fi
           echo "=== summary ==="
-          cat results/litcheck/summary.json | tail -20
+          tail -20 results/litcheck/summary*.json || true
       - name: Commit results
         run: |
           git config user.name "github-actions[bot]"

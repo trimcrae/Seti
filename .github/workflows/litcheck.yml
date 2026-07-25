@@ -19,7 +19,10 @@ permissions:
 jobs:
   litcheck:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Both 25-min runs timed out mid-fetch (politeness sleeps + retry backoff)
+    # and died before the commit step, losing everything.  Generous job budget
+    # plus a soft deadline on the fetch step so partial evidence always lands.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,12 +30,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Fetch literature evidence
+      - name: Fetch literature evidence (soft 75-min deadline, partials kept)
         run: |
           if [ "${{ github.event.inputs.pass }}" = "2" ]; then
-            python scripts/litcheck_fetch2.py
+            timeout -k 30 4500 python scripts/litcheck_fetch2.py \
+              || echo "fetcher hit soft deadline or errored; committing partials"
           else
-            python scripts/litcheck_fetch.py
+            timeout -k 30 4500 python scripts/litcheck_fetch.py \
+              || echo "fetcher hit soft deadline or errored; committing partials"
           fi
           echo "=== summary ==="
           tail -20 results/litcheck/summary*.json || true

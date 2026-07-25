@@ -1,0 +1,100 @@
+name: herdsman
+
+# HERDSMAN — kinematic technosignature search: N-star orbital convergences
+# ("herded" stars en route to an assembly point, and heterogeneous past
+# rendezvous) in the Gaia DR3 6D precision sample.  Both time directions are
+# scanned with an error-matched meeting radius and a self-computed horizon;
+# chance is calibrated by velocity-shuffled mocks and by the time-reversal
+# control.  Needs egress (Gaia TAP); runs on the runner and commits
+# results/herdsman/ back to the branch.  Design doc: docs/herdsman.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      d_max_pc:
+        description: "Sample sphere radius (pc)"
+        required: false
+        default: "300"
+      g_max:
+        description: "G magnitude cut"
+        required: false
+        default: "14.5"
+      rv_err_max:
+        description: "Max Gaia radial_velocity_error (km/s)"
+        required: false
+        default: "1.5"
+      sigv_max:
+        description: "Max scalar velocity error incl. floors (km/s)"
+        required: false
+        default: "0.8"
+      t_max_myr:
+        description: "Scan horizon per direction (Myr)"
+        required: false
+        default: "20"
+      n_min:
+        description: "Minimum stars meeting simultaneously"
+        required: false
+        default: "4"
+      n_mocks:
+        description: "Velocity-shuffled mocks per direction"
+        required: false
+        default: "24"
+      lambda_cap:
+        description: "Chance-occupancy cap that sets the horizon"
+        required: false
+        default: "0.5"
+
+permissions:
+  contents: write
+
+jobs:
+  herdsman:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,scipy,pandas,astroquery; print('imports OK')"
+      - name: Run HERDSMAN convergence search
+        run: |
+          python -m seti.cli herdsman \
+            --d-max-pc ${{ github.event.inputs.d_max_pc || '300' }} \
+            --g-max ${{ github.event.inputs.g_max || '14.5' }} \
+            --rv-err-max ${{ github.event.inputs.rv_err_max || '1.5' }} \
+            --sigv-max ${{ github.event.inputs.sigv_max || '0.8' }} \
+            --t-max-myr ${{ github.event.inputs.t_max_myr || '20' }} \
+            --n-min ${{ github.event.inputs.n_min || '4' }} \
+            --n-mocks ${{ github.event.inputs.n_mocks || '24' }} \
+            --lambda-cap ${{ github.event.inputs.lambda_cap || '0.5' }}
+          echo "=== summary ==="
+          cat results/herdsman/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/herdsman/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "herdsman: Gaia DR3 N-star convergence search results"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: herdsman-outputs
+          path: results/herdsman/
+          if-no-files-found: warn

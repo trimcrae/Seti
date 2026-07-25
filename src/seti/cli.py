@@ -191,6 +191,20 @@ def _cmd_jwst_bio(args, cfg):
     jwst_bio_run(cfg)
 
 
+def _cmd_herdsman(args, cfg):
+    from .herdsman.run import herdsman_run
+
+    herdsman_run(cfg, d_max_pc=args.d_max_pc, g_max=args.g_max,
+                 rv_err_max_kms=args.rv_err_max, sigv_max_kms=args.sigv_max,
+                 astro_floor_kms=args.astro_floor, t_max_myr=args.t_max_myr,
+                 dt_myr=args.dt_myr, rec_every=args.rec_every,
+                 r0_pc=args.r0_pc, kappa=args.kappa,
+                 lambda_cap=args.lambda_cap, n_min=args.n_min,
+                 r_now_min_pc=args.r_now_min_pc, focus_min=args.focus_min,
+                 surprise_min=args.surprise_min, n_mocks=args.n_mocks,
+                 mock_cell_pc=args.mock_cell_pc)
+
+
 def _cmd_lhs1140_origin(args, cfg):
     from .lhs1140_origin.run import lhs1140_origin_run
 
@@ -629,6 +643,48 @@ def main(argv=None):
                             "analysis of LHS 1140 b (disequilibrium pair + M-dwarf "
                             "abiotic gate + MIRI eclipse discriminant + laser scan)")
     p.set_defaults(func=_cmd_jwst_bio)
+
+    p = sub.add_parser("herdsman",
+                       help="runner: kinematic technosignature search — N-star "
+                            "orbital convergences (herded stars / heterogeneous "
+                            "rendezvous) in the Gaia DR3 6D precision sample")
+    p.add_argument("--d-max-pc", type=float, default=300.0,
+                   help="sample sphere radius (pc)")
+    p.add_argument("--g-max", type=float, default=14.5,
+                   help="G magnitude cut")
+    p.add_argument("--rv-err-max", type=float, default=1.5,
+                   help="max Gaia radial_velocity_error (km/s)")
+    p.add_argument("--sigv-max", type=float, default=0.8,
+                   help="max scalar space-velocity error incl. floors (km/s)")
+    p.add_argument("--astro-floor", type=float, default=0.3,
+                   help="astrophysical RV floor: grav. redshift + convective "
+                        "blueshift star-to-star scatter (km/s)")
+    p.add_argument("--t-max-myr", type=float, default=20.0,
+                   help="scan horizon per time direction (Myr)")
+    p.add_argument("--dt-myr", type=float, default=0.25,
+                   help="leapfrog step (Myr)")
+    p.add_argument("--rec-every", type=int, default=2,
+                   help="detect every N steps")
+    p.add_argument("--r0-pc", type=float, default=1.0,
+                   help="meeting-ball radius floor (pc)")
+    p.add_argument("--kappa", type=float, default=1.0,
+                   help="error-growth factor in R(t) = r0 + kappa*sigma_v*|t|")
+    p.add_argument("--lambda-cap", type=float, default=0.5,
+                   help="stop scanning when a typical ball holds this many "
+                        "field stars by chance")
+    p.add_argument("--n-min", type=int, default=4,
+                   help="minimum stars meeting simultaneously")
+    p.add_argument("--r-now-min-pc", type=float, default=20.0,
+                   help="median present-day pairwise separation floor (pc)")
+    p.add_argument("--focus-min", type=float, default=3.0,
+                   help="required rms contraction factor")
+    p.add_argument("--surprise-min", type=float, default=3.0,
+                   help="-log10 Poisson tail to record a candidate")
+    p.add_argument("--n-mocks", type=int, default=24,
+                   help="velocity-shuffled mock catalogues per direction")
+    p.add_argument("--mock-cell-pc", type=float, default=40.0,
+                   help="shuffle cell size (pc)")
+    p.set_defaults(func=_cmd_herdsman)
 
     p = sub.add_parser("lhs1140-origin",
                        help="runner: donor/directed-travel mirror of the K2-18 channel "

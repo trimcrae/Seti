@@ -291,9 +291,13 @@ def _cmd_ember(args, cfg):
     summary = ember_run(cfg, stage=args.stage, n_ra_chunks=args.n_ra_chunks,
                         shard=args.shard, n_shards=args.n_shards,
                         require_all_checks=args.require_all_checks == "true")
-    print(json.dumps({k: v for k, v in summary.items()
-                      if k in ("verdict", "counts", "pair_audit")}, indent=2,
+    keys = ("verdict", "counts", "pair_audit", "acquisition_failure")
+    print(json.dumps({k: v for k, v in summary.items() if k in keys}, indent=2,
                      default=str))
+    acq = summary.get("acquisition") or {}
+    if acq.get("per_archive"):
+        print("=== per-archive acquisition status ===")
+        print(json.dumps(acq["per_archive"], indent=2, default=str))
 
 
 def _cmd_midden(args, cfg):
@@ -1048,11 +1052,13 @@ def main(argv=None):
              "excess present in IRAS (1983) or AKARI (2006) and absent in WISE "
              "(2010). Signature S1, waste heat that switched off (docs/ember.md)")
     p.add_argument("--stage",
-                   choices=("audit", "acquire", "analyse", "excess", "cessation",
-                            "vet", "report", "all"),
+                   choices=("audit", "probe", "acquire", "analyse", "excess",
+                            "cessation", "vet", "report", "all"),
                    default="all",
                    help="'audit' is offline and decides which epoch pairs are "
-                        "usable; 'acquire' fetches one RA shard; 'analyse' "
+                        "usable; 'probe' issues one query per archive primitive "
+                        "and prints row counts and first rows (runner-only); "
+                        "'acquire' fetches one RA shard; 'analyse' "
                         "reduces whatever shards are on disk without network")
     p.add_argument("--n-ra-chunks", type=int, default=12,
                    help="RA slices per catalogue pull (smaller queries are safer)")

@@ -44,7 +44,11 @@ from .crossepoch import (
 )
 from .vet import vet_all
 
-STAGES = ("audit", "acquire", "analyse", "excess", "cessation", "vet",
+#: Imported by name so the analyse path can fold per-shard statuses without
+#: importing the runner-only acquisition module (which pulls in pyvo).
+acq_mod_STATUS_OK = "OK"
+
+STAGES = ("audit", "probe", "acquire", "analyse", "excess", "cessation", "vet",
           "report", "all")
 
 
@@ -141,7 +145,40 @@ def stage_acquire(out_dir: Path, table: pd.DataFrame | None = None,
     status.update(slice_status)
     if not df.empty:
         df.to_parquet(cache / f"working_{shard:03d}.parquet", index=False)
+    # The per-shard status travels INSIDE the cache directory, which is the
+    # directory the workflow uploads as an artifact and the analyse job
+    # re-downloads.  Writing it beside the summary instead is how the first run
+    # lost every record of *why* the shards were empty.
+    _write(cache / f"acquire_status_{shard:03d}.json", status)
     return df, status
+
+
+def stage_probe(out_dir: Path, sample_rows: int = 400) -> dict:
+    """Exercise every acquisition primitive once and write ``probe.json``.
+
+    Runner-only and cheap.  It answers, with numbers rather than assumptions:
+    which VizieR columns each catalogue actually has and what frame they are in;
+    the largest table the anonymous ESA Gaia archive will accept as an upload;
+    whether CDS X-Match can stand in for it; and what AllWISE returns.
+    """
+    from . import acquire as acq
+
+    report = acq.probe_archives(sample_rows=sample_rows)
+    _write(out_dir / "probe.json", report)
+    return report
+
+
+def load_acquire_status(out_dir: Path) -> dict:
+    """Collect every shard's acquisition status back out of the cache dir."""
+    cache = out_dir / "cache"
+    out: dict = {}
+    for p in sorted(cache.glob("acquire_status_*.json")) if cache.exists() else []:
+        try:
+            out[p.stem.replace("acquire_status_", "shard_")] = json.loads(
+                p.read_text())
+        except Exception as exc:  # noqa: BLE001
+            out[p.stem] = {"unreadable": repr(exc)}
+    return out
 
 
 def load_working_table(out_dir: Path) -> pd.DataFrame:
@@ -351,10 +388,44 @@ def ember_run(cfg, stage: str = "all", table: pd.DataFrame | None = None,
         _write(out_dir / "summary.json", summary)
         return summary
 
+    if stage == "probe":
+        summary["probe"] = stage_probe(out_dir)
+        summary["verdict"] = "PROBE_ONLY"
+        _write(out_dir / "summary.json", summary)
+        return summary
+
     if stage == "analyse":
         work = load_working_table(out_dir)
-        acq_status = {"source": "cache", "n_rows": int(len(work)),
-                      "archive_reachable": bool(len(work))}
+        shards = load_acquire_status(out_dir)
+        # ``archive_reachable`` used to be ``bool(len(work))``, which reported
+        # "no archive was reached" for a run in which AKARI returned 871,331
+        # rows and only the Gaia join failed.  The reachability of each archive
+        # is now read from what acquisition actually recorded, per shard.
+        fetches: dict[str, dict] = {}
+        for sh in shards.values():
+            for name, rec in (sh.get("fetches") or {}).items():
+                cur = fetches.setdefault(
+                    name, {"status": [], "n_rows": 0, "errors": [], "query": ""})
+                cur["status"].append(rec.get("status"))
+                cur["n_rows"] += int(rec.get("n_rows") or 0)
+                cur["query"] = cur["query"] or (rec.get("query") or "")
+                if rec.get("error"):
+                    cur["errors"].append(rec["error"])
+        for rec in fetches.values():
+            st = set(rec.pop("status"))
+            rec["status"] = (acq_mod_STATUS_OK if acq_mod_STATUS_OK in st
+                             else sorted(st)[0] if st else "NOT_ATTEMPTED")
+        reached = sorted(n for n, r in fetches.items() if r["n_rows"] > 0)
+        acq_status = {
+            "source": "cache",
+            "n_rows": int(len(work)),
+            "archive_reachable": bool(reached) or bool(len(work)),
+            "archives_that_returned_rows": reached,
+            "per_archive": fetches,
+            "shards_reporting": len(shards),
+            "stopped_at": sorted({sh.get("stopped_at") for sh in shards.values()
+                                  if sh.get("stopped_at")}),
+        }
     else:
         work, acq_status = stage_acquire(out_dir, table=table,
                                          n_ra_chunks=n_ra_chunks, shard=shard,
@@ -369,13 +440,40 @@ def ember_run(cfg, stage: str = "all", table: pd.DataFrame | None = None,
         return summary
 
     if work is None or work.empty:
-        summary["verdict"] = "NO_DATA_REACHED"
+        # Three different statements, three different verdicts.  Collapsing
+        # them is precisely the failure this channel already suffered: the
+        # first run said NO_DATA_REACHED when 871,331 AKARI rows had in fact
+        # been catalogued and only the Gaia join 500'd.
+        per = acq_status.get("per_archive", {}) or {}
+        failed = sorted(n for n, r in per.items()
+                        if r.get("status") == "QUERY_FAILED")
+        zero = sorted(n for n, r in per.items()
+                      if r.get("status") == "QUERY_RETURNED_ZERO_ROWS")
+        if failed:
+            summary["verdict"] = "ACQUISITION_QUERY_FAILED"
+            summary["note"] = (
+                f"Archives that returned rows: "
+                f"{acq_status.get('archives_that_returned_rows')}. "
+                f"Archives whose query FAILED: {failed}. This is a query or "
+                "service defect, not a statement about the sky. No candidate "
+                "is emitted and no occurrence limit is computed.")
+        elif zero and not acq_status.get("archives_that_returned_rows"):
+            summary["verdict"] = "ARCHIVES_RETURNED_ZERO_ROWS"
+            summary["note"] = (
+                f"Every query succeeded and returned no rows: {zero}. The "
+                "queries are in summary.acquisition.per_archive[*].query; "
+                "verify them before reading this as an astronomical result.")
+        else:
+            summary["verdict"] = "NO_DATA_REACHED"
+            summary["note"] = (
+                "No usable rows were obtained. No candidate is emitted and no "
+                "occurrence limit is computed: an unreached archive is not a "
+                "null result, it is an absence of data.")
         summary["counts"] = {"acquired": 0, "with_excess": 0, "scored": 0,
                              "shortlist": 0, "survivors": 0}
-        summary["note"] = (
-            "No usable rows were obtained. No candidate is emitted and no "
-            "occurrence limit is computed: an unreached archive is not a null "
-            "result, it is an absence of data.")
+        summary["acquisition_failure"] = {
+            "query_failed": failed, "returned_zero_rows": zero,
+            "stopped_at": acq_status.get("stopped_at", [])}
         _write(out_dir / "summary.json", summary)
         return summary
 

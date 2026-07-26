@@ -51,22 +51,37 @@ def test_vega_spectrum_reproduces_published_zero_points():
         assert q == pytest.approx(B.BANDS[key].zp_jy, rel=0.10), key
 
 
+def _spread(early: str, late: str) -> float:
+    v = [B.transfer(B.BANDS[early], B.BANDS[late], t)
+         for t in (150.0, 300.0, 1500.0)]
+    return max(v) / min(v)
+
+
 def test_transfer_is_not_a_null_transformation_for_9_to_12_micron():
-    """AKARI 9 um -> WISE W3 is strongly temperature-dependent; IRAS 12 -> W3 is not.
+    """AKARI 9 um -> WISE W3 is strongly temperature-dependent; IRAS 25 -> W4 is not.
 
     This is the single most important quantitative claim of the channel's
     design. Treating the 9-to-12 micron step as a null transformation would
     manufacture apparent fades of order unity purely from the dust temperature.
-    """
-    s9_w3 = [B.transfer(B.BANDS["S9W"], B.BANDS["W3"], t)
-             for t in (150.0, 300.0, 1500.0)]
-    i12_w3 = [B.transfer(B.BANDS["I12"], B.BANDS["W3"], t)
-              for t in (150.0, 300.0, 1500.0)]
 
-    spread_s9 = max(s9_w3) / min(s9_w3)
-    spread_i12 = max(i12_w3) / min(i12_w3)
+    The thresholds here are those of the **real SVO response curves** committed
+    in ``src/seti/data_assets/rsr/``.  With the documented trapezoid fallback
+    the numbers are different and, for I12->W3, misleadingly benign (1.20
+    against a true 1.71) -- which is why the audit records ``rsr_source`` per
+    band and why this test asserts the ordering rather than one magic number.
+    """
+    spread_s9 = _spread("S9W", "W3")
+    spread_i12 = _spread("I12", "W3")
+    spread_i25 = _spread("I25", "W4")
+
     assert spread_s9 > 3.0, f"9->12 um should swing a lot, got {spread_s9:.2f}"
-    assert spread_i12 < 1.5, f"IRAS12->W3 should be near-null, got {spread_i12:.2f}"
+    # I25 -> W4 is the genuinely near-null pair: 25 um and 22 um are close in
+    # wavelength AND both sit far enough down the Rayleigh-Jeans side that the
+    # ratio barely moves over 150-1500 K.
+    assert spread_i25 < 1.3, f"IRAS25->W4 should be near-null, got {spread_i25:.2f}"
+    # I12 -> W3 is well conditioned but NOT null; the ordering is what the
+    # channel's design rests on.
+    assert spread_i25 < spread_i12 < 2.5
     assert spread_i12 < spread_s9
 
 
@@ -764,3 +779,288 @@ def test_summary_records_which_response_model_was_used(tmp_path):
     summary = ember_run(cfg, stage="audit", table=None)
     assert summary["verdict"] == "AUDIT_ONLY"
     assert "rsr_source" in summary["pair_audit"]
+
+
+# ==========================================================================
+# 11. Acquisition: the failure modes that cost run 30203763934
+# ==========================================================================
+#
+# That run reported `acquired: 0` and `archive_reachable: false`. Both were
+# false. AKARI returned 871,331 rows and was checkpointed to parquet; IRAS was
+# lost because its RA column did not resolve and the RuntimeError was swallowed
+# by a bare `except`; Gaia was lost to HTTP 500 on a 20,000-row upload. Three
+# different causes, one indistinguishable zero. Every test below pins one of
+# them.
+from seti.ember import acquire as A  # noqa: E402
+
+
+def test_ucd_resolution_beats_an_unknown_column_name():
+    """A column nobody has aliased is still found, because its UCD says so."""
+    schema = [
+        {"column_name": "SomeUnaliasedRA", "ucd": "pos.eq.ra;meta.main",
+         "unit": "deg", "description": "Right ascension"},
+        {"column_name": "SomeUnaliasedDE", "ucd": "pos.eq.dec;meta.main",
+         "unit": "deg", "description": "Declination"},
+        {"column_name": "Fnu_12", "ucd": "phot.flux.density", "unit": "Jy",
+         "description": "12 micron flux"},
+    ]
+    res = A.resolve_positions(schema, [r["column_name"] for r in schema],
+                              A._IRAS_ALIASES)
+    assert res["ra"] == "SomeUnaliasedRA"
+    assert res["dec"] == "SomeUnaliasedDE"
+    assert res["route"] == "ucd"
+    assert res["frame"] == "icrs"
+
+
+def test_b1950_columns_resolve_and_are_flagged_for_precession():
+    """The exact IRAS regression: B1950 column names, no J2000 alias in sight."""
+    names = ["IRAS", "RA1950", "DE1950", "Fnu_12", "Fnu_25", "Fnu_100"]
+    res = A.resolve_positions(None, names, A._IRAS_ALIASES)
+    assert res["ra"] == "RA1950" and res["dec"] == "DE1950"
+    assert res["frame"] == "b1950", "a B1950 column used as J2000 is 0.5 deg wrong"
+    assert res["route"] == "alias"
+
+
+def test_unresolvable_positions_are_reported_not_silently_empty():
+    res = A.resolve_positions(None, ["col_a", "col_b"], A._IRAS_ALIASES)
+    assert res["ra"] is None and res["dec"] is None
+    assert res["route"] == "unresolved"
+
+
+def test_precession_moves_a_b1950_position_by_about_half_a_degree():
+    """B1950 -> J2000 is a real, large shift; treating it as a no-op loses matches."""
+    ra_j, dec_j = A.precess_b1950_to_j2000([0.0, 180.0], [0.0, 30.0])
+    sep = A.angular_sep_arcsec(ra_j, dec_j, [0.0, 180.0], [0.0, 30.0])
+    assert np.all(sep > 900.0), sep       # > 15 arcmin everywhere
+    assert np.all(sep < 3600.0), sep      # but of order half a degree, not degrees
+    # A known anchor: B1950 (0,0) precesses to J2000 (0.640, 0.279) deg.
+    ra0, dec0 = A.precess_b1950_to_j2000([0.0], [0.0])
+    assert ra0[0] == pytest.approx(0.6404, abs=0.01)
+    assert dec0[0] == pytest.approx(0.2784, abs=0.01)
+
+
+def test_status_separates_a_failed_query_from_an_empty_one():
+    assert A._classify(pd.DataFrame({"a": [1]}), None) == A.STATUS_OK
+    assert A._classify(pd.DataFrame(), None) == A.STATUS_ZERO_ROWS
+    assert A._classify(None, RuntimeError("boom")) == A.STATUS_QUERY_FAILED
+    assert A.STATUS_ZERO_ROWS != A.STATUS_QUERY_FAILED
+
+
+def test_build_working_table_records_which_archive_failed(tmp_path):
+    """AKARI succeeds, IRAS raises, Gaia raises -- and all three are legible."""
+    akari = pd.DataFrame({"ra": [10.0, 11.0], "dec": [1.0, 2.0],
+                          "s09": [0.5, 0.6], "s18": [0.4, 0.5]})
+
+    def _akari(st):
+        st.query = "SELECT ... FROM II/297/irc"
+        return akari
+
+    def _iras(st):
+        raise RuntimeError("could not resolve RA/Dec columns")
+
+    def _gaia(st):
+        raise RuntimeError("HTTP 500 from the ESA archive")
+
+    df, status = A.build_working_table(
+        0.0, 60.0, tmp_path,
+        fetchers={"akari": _akari, "iras_psc": _iras, "iras_fsc": _iras,
+                  "gaia": _gaia})
+
+    assert df.empty
+    # The archive that WORKED is recorded as having worked.
+    assert status["archive_reachable"] is True
+    assert status["counts"]["akari"] == 2
+    assert status["fetches"]["akari"]["status"] == A.STATUS_OK
+    # The archives that FAILED are recorded as failures, not as empty sky.
+    for name in ("iras_psc", "iras_fsc", "gaia"):
+        assert status["fetches"][name]["status"] == A.STATUS_QUERY_FAILED
+        assert status["fetches"][name]["error"]
+    assert status["stopped_at"] == "gaia"
+    # The expensive infrared table survives a downstream archive outage.
+    assert list(tmp_path.glob("ir_anchor_*.parquet")), \
+        "871k catalogued rows must not be discarded because Gaia 500'd"
+
+
+def test_build_working_table_distinguishes_a_genuinely_empty_sky(tmp_path):
+    """Queries that work and return nothing are ZERO_ROWS, never QUERY_FAILED."""
+    df, status = A.build_working_table(
+        0.0, 60.0, tmp_path,
+        fetchers={"akari": lambda st: pd.DataFrame(),
+                  "iras_psc": lambda st: pd.DataFrame(),
+                  "iras_fsc": lambda st: pd.DataFrame()})
+    assert df.empty
+    assert status["archive_reachable"] is False
+    assert status["stopped_at"] == "early_epoch_catalogues"
+    for name in ("akari", "iras_psc", "iras_fsc"):
+        assert status["fetches"][name]["status"] == A.STATUS_ZERO_ROWS
+        assert not status["fetches"][name]["error"]
+
+
+def _write_shard_status(root, shard, fetches, stopped_at=None):
+    cache = root / "results" / "ember" / "cache"
+    cache.mkdir(parents=True, exist_ok=True)
+    payload = {"source": "archives", "shard": shard, "fetches": fetches,
+               "counts": {}, "errors": []}
+    if stopped_at:
+        payload["stopped_at"] = stopped_at
+    (cache / f"acquire_status_{shard:03d}.json").write_text(json.dumps(payload))
+
+
+def test_analyse_reports_a_failed_query_as_a_query_failure(tmp_path):
+    """The headline regression: 871k AKARI rows must not read as 'no archive'."""
+    from seti.config import load_config
+
+    _write_shard_status(tmp_path, 0, {
+        "akari": {"label": "akari", "status": "OK", "n_rows": 871331,
+                  "query": "SELECT TOP 4000000 ... FROM \"II/297/irc\"",
+                  "error": None, "detail": {}, "strategy": ""},
+        "gaia": {"label": "gaia", "status": "QUERY_FAILED", "n_rows": 0,
+                 "query": "SELECT ... FROM tap_upload.targets",
+                 "error": "HTTPError('Error 500')", "detail": {}, "strategy": ""},
+    }, stopped_at="gaia")
+
+    cfg = load_config()
+    cfg.root = tmp_path
+    summary = ember_run(cfg, stage="analyse")
+
+    assert summary["verdict"] == "ACQUISITION_QUERY_FAILED"
+    acq = summary["acquisition"]
+    assert acq["archive_reachable"] is True
+    assert acq["archives_that_returned_rows"] == ["akari"]
+    assert acq["per_archive"]["akari"]["n_rows"] == 871331
+    assert summary["acquisition_failure"]["query_failed"] == ["gaia"]
+    assert summary["acquisition_failure"]["stopped_at"] == ["gaia"]
+    # The literal query text is carried so a reader can re-issue it.
+    assert "II/297/irc" in acq["per_archive"]["akari"]["query"]
+
+
+def test_analyse_reports_a_genuinely_empty_result_as_zero_rows(tmp_path):
+    from seti.config import load_config
+
+    _write_shard_status(tmp_path, 0, {
+        "akari": {"label": "akari", "status": "QUERY_RETURNED_ZERO_ROWS",
+                  "n_rows": 0, "query": "SELECT ...", "error": None,
+                  "detail": {}, "strategy": ""},
+    }, stopped_at="early_epoch_catalogues")
+
+    cfg = load_config()
+    cfg.root = tmp_path
+    summary = ember_run(cfg, stage="analyse")
+    assert summary["verdict"] == "ARCHIVES_RETURNED_ZERO_ROWS"
+    assert summary["acquisition_failure"]["returned_zero_rows"] == ["akari"]
+    assert summary["acquisition_failure"]["query_failed"] == []
+    assert "verify them" in summary["note"]
+
+
+def test_analyse_with_no_acquisition_record_at_all_says_no_data_reached(tmp_path):
+    from seti.config import load_config
+
+    cfg = load_config()
+    cfg.root = tmp_path
+    summary = ember_run(cfg, stage="analyse")
+    assert summary["verdict"] == "NO_DATA_REACHED"
+    assert "not a null result" in summary["note"]
+
+
+def test_allwise_uses_bulk_xmatch_above_the_cone_ceiling(monkeypatch):
+    """10^5 per-object cone queries is not a strategy; the ceiling is enforced."""
+    n = A.ALLWISE_CONE_MAX_ROWS + 10
+    rows = pd.DataFrame({"match_id": [f"m{i}" for i in range(n)],
+                         "ra": np.linspace(10, 20, n), "dec": np.zeros(n),
+                         "pmra": np.zeros(n), "pmdec": np.zeros(n)})
+    calls = {"xmatch": 0, "cone": 0}
+
+    def _fake_xmatch(positions, cat2, radius_arcsec=6.0, **kw):
+        calls["xmatch"] += 1
+        return pd.DataFrame({"match_id": positions["match_id"].to_numpy(),
+                             "AllWISE": ["J000" for _ in range(len(positions))],
+                             "W1mag": np.full(len(positions), 8.0),
+                             "W3mag": np.full(len(positions), 5.0),
+                             "angDist": np.full(len(positions), 0.5)})
+
+    def _fake_cone(*a, **kw):
+        calls["cone"] += 1
+        return pd.DataFrame()
+
+    monkeypatch.setattr(A, "xmatch_cds", _fake_xmatch)
+    monkeypatch.setattr(A, "fetch_allwise_cone", _fake_cone)
+
+    st = A.FetchStatus(label="allwise")
+    out = A._allwise_for_rows(rows, None, status=st)
+    assert calls["xmatch"] == 1 and calls["cone"] == 0
+    assert st.strategy == "cds_xmatch_vizier_II328"
+    assert st.status == A.STATUS_OK
+    # VizieR column names are mapped onto the canonical ones the science uses.
+    assert "w1mpro" in out.columns and "w3mpro" in out.columns
+    assert st.detail["xmatch_column_mapping"]["w1mpro"] == "W1mag"
+
+
+def test_allwise_falls_back_to_cones_when_xmatch_fails(monkeypatch):
+    n = A.ALLWISE_CONE_MAX_ROWS + 5
+    rows = pd.DataFrame({"match_id": [f"m{i}" for i in range(n)],
+                         "ra": np.linspace(10, 20, n), "dec": np.zeros(n),
+                         "pmra": np.zeros(n), "pmdec": np.zeros(n)})
+
+    def _boom(*a, **kw):
+        raise RuntimeError("xmatch down")
+
+    monkeypatch.setattr(A, "xmatch_cds", _boom)
+    monkeypatch.setattr(A, "fetch_allwise_cone", lambda *a, **kw: pd.DataFrame())
+    st = A.FetchStatus(label="allwise")
+    A._allwise_for_rows(rows, None, status=st)
+    assert st.strategy == "irsa_cone_per_object"
+    assert "xmatch_error" in st.detail
+
+
+def test_gaia_ladder_shrinks_the_upload_before_giving_up(monkeypatch):
+    """Run 30203763934 died at chunk=20000; the ladder must try smaller first."""
+    positions = pd.DataFrame({"match_id": [f"m{i}" for i in range(30)],
+                              "ra": np.linspace(0, 1, 30),
+                              "dec": np.zeros(30)})
+    tried: list[int] = []
+
+    def _upload(pos, q, chunk, out_dir, retries):
+        tried.append(chunk)
+        if chunk > 2_000:
+            raise RuntimeError("HTTP 500")
+        return pd.DataFrame({"match_id": pos["match_id"], "source_id": range(len(pos))})
+
+    monkeypatch.setattr(A, "_gaia_upload", _upload)
+    st = A.FetchStatus(label="gaia")
+    out = A.fetch_gaia_for_positions(positions, status=st)
+    assert tried == [5_000, 2_000]
+    assert st.strategy == "esa_upload_2000"
+    assert st.status == A.STATUS_OK and len(out) == 30
+
+
+def test_gaia_falls_back_to_cds_xmatch_when_every_upload_fails(monkeypatch):
+    positions = pd.DataFrame({"match_id": ["a", "b"], "ra": [1.0, 2.0],
+                              "dec": [0.0, 0.0]})
+
+    def _boom(*a, **kw):
+        raise RuntimeError("HTTP 500")
+
+    monkeypatch.setattr(A, "_gaia_upload", _boom)
+    monkeypatch.setattr(A, "xmatch_cds", lambda *a, **kw: pd.DataFrame(
+        {"match_id": ["a", "b"], "Source": [1, 2], "Plx": [5.0, 6.0],
+         "pmRA": [1.0, 2.0], "pmDE": [1.0, 2.0], "Gmag": [10.0, 11.0]}))
+    st = A.FetchStatus(label="gaia")
+    out = A.fetch_gaia_for_positions(positions, status=st)
+    assert st.strategy == "cds_xmatch_vizier_I355"
+    assert st.status == A.STATUS_OK
+    assert {"source_id", "parallax", "pmra", "pmdec"} <= set(out.columns)
+
+
+def test_gaia_total_failure_is_query_failed_not_an_empty_sky(monkeypatch):
+    positions = pd.DataFrame({"match_id": ["a"], "ra": [1.0], "dec": [0.0]})
+
+    def _boom(*a, **kw):
+        raise RuntimeError("everything is down")
+
+    monkeypatch.setattr(A, "_gaia_upload", _boom)
+    monkeypatch.setattr(A, "xmatch_cds", _boom)
+    st = A.FetchStatus(label="gaia")
+    out = A.fetch_gaia_for_positions(positions, status=st)
+    assert out.empty
+    assert st.status == A.STATUS_QUERY_FAILED
+    assert st.error and "every Gaia strategy failed" in st.error

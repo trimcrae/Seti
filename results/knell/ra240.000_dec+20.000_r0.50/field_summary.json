@@ -1,0 +1,36 @@
+{
+  "field": "ra240.000_dec+20.000_r0.50",
+  "ra": 240.0,
+  "dec": 20.0,
+  "radius_deg": 0.5,
+  "verdict": "NO_DATA_REACHED",
+  "n_sources_paired": 0,
+  "n_testable": 0,
+  "n_candidates": 0,
+  "acquisition": {
+    "stages": [
+      {
+        "stage": "irsa_ztf_service_probe",
+        "status": "QUERY_FAILED",
+        "rows": 0,
+        "query": "one 0.003 deg cone at (180, +20), r band",
+        "error": "ReadTimeout(ReadTimeoutError(\"HTTPSConnectionPool(host='irsa.ipac.caltech.edu', port=443): Read timed out. (read timeout=30.0)\"))",
+        "detail": "ReadTimeout(ReadTimeoutError(\"HTTPSConnectionPool(host='irsa.ipac.caltech.edu', port=443): Read timed out. (read timeout=30.0)\"))"
+      },
+      {
+        "stage": "ztf_region_2band",
+        "status": "QUERY_RETURNED_ZERO_ROWS",
+        "rows": 0,
+        "query": "IRSA ZTF light curves, g+r, centre=(240.00000,20.00000), {'radius_deg': 0.5, 'box_deg': 0.12, 'min_epochs': 80, 'time_budget_s': 2400.0, 'max_boxes': None}",
+        "elapsed_s": 2488.4
+      }
+    ],
+    "n_stages": 2,
+    "n_ok": 0,
+    "n_query_failed": 1,
+    "n_query_returned_zero_rows": 1,
+    "any_query_failed": true,
+    "total_rows": 0
+  },
+  "note": "no light curve had enough epoch blocks in both bands to support a per-block periodogram; this is a statement about the data reached, not about the sky"
+}

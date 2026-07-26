@@ -709,3 +709,99 @@ def test_partial_route_failure_is_not_reported_as_a_clean_absence():
     assert out["reachable"] is False
     assert out["verdict"] == "NOT_FOUND_BUT_SEARCH_INCOMPLETE"
     assert out["n_routes_failed"] == 1
+
+
+# --------------------------------------------------------------------------
+# One field query instead of four hundred cones
+# --------------------------------------------------------------------------
+def _field_rows(stars: pd.DataFrame, kind="signal"):
+    """A synthetic field-level NEOWISE table: every exposure of every star."""
+    frames = []
+    for i, (_, s) in enumerate(stars.iterrows()):
+        if kind == "signal":
+            t, bands, _ = _duty_cycle_star(seed=40 + i)
+        else:
+            t, bands, _ = _extreme_debris_disk(seed=50 + i)
+        # NEOWISE reports each exposure's own position, scattered about the star.
+        rng = np.random.default_rng(i)
+        frames.append(pd.DataFrame({
+            "ra": s["ra"] + rng.normal(0, 0.3 / 3600.0, t.size),
+            "dec": s["dec"] + rng.normal(0, 0.3 / 3600.0, t.size),
+            "mjd": t,
+            "w1mpro": bands["W1"][0], "w1sigmpro": bands["W1"][1],
+            "w2mpro": bands["W2"][0], "w2sigmpro": bands["W2"][1]}))
+    return pd.concat(frames, ignore_index=True)
+
+
+def test_field_query_groups_exposures_back_onto_their_stars():
+    from seti.vigil.run import group_neowise_by_star
+
+    stars = _fake_gaia(n=4)(20.0, 20.0).data
+    df = _field_rows(stars)
+    grouped = group_neowise_by_star(df, stars)
+    assert len(grouped) == 4
+    for sid, d in grouped.items():
+        assert len(d) == len(df) // 4
+        assert sid in set(stars["source_id"])
+
+
+def test_field_query_propagates_proper_motion_when_grouping():
+    """A high-PM star drifts well outside the match radius by mid-mission."""
+    from seti.vigil.acquire import propagate_pm
+    from seti.vigil.run import group_neowise_by_star
+
+    stars = _fake_gaia(n=1)(30.0, 30.0).data
+    stars.loc[:, "pmra"] = 1500.0
+    stars.loc[:, "pmdec"] = 1500.0
+    ra_m, dec_m = propagate_pm(stars["ra"].to_numpy(), stars["dec"].to_numpy(),
+                               1500.0, 1500.0, 2016.0, 2019.0)
+    # Exposures sit at the MOVED position, not the Gaia one.
+    df = pd.DataFrame({"ra": np.repeat(ra_m, 30), "dec": np.repeat(dec_m, 30),
+                       "mjd": np.linspace(56700, 60000, 30),
+                       "w1mpro": 11.0, "w1sigmpro": 0.02,
+                       "w2mpro": 10.9, "w2sigmpro": 0.02})
+    assert len(group_neowise_by_star(df, stars)) == 1
+    # Without propagation the same rows would be 2.1" away and lost.
+    stars_static = stars.copy()
+    stars_static.loc[:, "pmra"] = 0.0
+    stars_static.loc[:, "pmdec"] = 0.0
+    assert len(group_neowise_by_star(df, stars_static)) == 0
+
+
+def test_sweep_uses_the_field_query_and_records_it(tmp_path):
+    stars_holder = {}
+
+    def field_fetch(ra, dec, radius_deg=0.4, w1_max=14.5, **kw):
+        stars = _fake_gaia(n=3)(ra, dec).data
+        stars_holder["stars"] = stars
+        df = _field_rows(stars)
+        return QueryResult(label="neowise_field", service="irsa", status="OK",
+                           n_rows=len(df), count_star=len(df), query="SELECT ...",
+                           data=df)
+
+    def never_called(*a, **kw):
+        raise AssertionError("per-star fallback should not run when the field "
+                             "query already covered every star")
+
+    s = vigil_sweep(ra=21.0, dec=21.0, out_root=tmp_path, gaia_fetch=_fake_gaia(n=3),
+                    neowise_fetch=never_called, allwise_fetch=_fake_allwise(),
+                    neowise_field_fetch=field_fetch)
+    assert s["verdict"] == "SEARCHED"
+    assert s["neowise_query_rollup"]["n_from_field_query"] == 3
+    assert s["n_scored"] == 3
+    assert s["n_candidates"] >= 1
+
+
+def test_field_query_failure_falls_back_to_per_star_cones(tmp_path):
+    def field_fetch(ra, dec, **kw):
+        return QueryResult(label="neowise_field", service="irsa",
+                           status="QUERY_FAILED", query="SELECT ...", error="synthetic")
+
+    s = vigil_sweep(ra=22.0, dec=22.0, out_root=tmp_path, gaia_fetch=_fake_gaia(n=2),
+                    neowise_fetch=_fake_neowise("signal"),
+                    allwise_fetch=_fake_allwise(), neowise_field_fetch=field_fetch)
+    assert s["verdict"] == "SEARCHED"
+    assert s["neowise_query_rollup"]["n_from_field_query"] == 0
+    assert s["n_stars_with_neowise"] == 2
+    assert any(e.get("label") == "neowise_field" and e.get("status") == "QUERY_FAILED"
+               for e in s["archive_ledger"])

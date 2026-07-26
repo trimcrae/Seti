@@ -691,7 +691,8 @@ def _cmd_vigil_sweep(args, cfg):
                 g_max=args.g_max, max_stars=args.max_stars,
                 time_budget_s=args.time_budget_s,
                 untimely_table=args.untimely_table,
-                untimely_service=args.untimely_service)
+                untimely_service=args.untimely_service,
+                use_field_query=not args.no_field_query, w1_max=args.w1_max)
 
 
 def _cmd_vigil_vet(args, cfg):
@@ -1194,6 +1195,14 @@ def main(argv=None):
                         "and the degradation is recorded, never hidden")
     p.add_argument("--untimely-service", default="",
                    help="TAP endpoint hosting --untimely-table")
+    p.add_argument("--no-field-query", action="store_true",
+                   help="disable the single field-wide NEOWISE query and fetch "
+                        "one cone per star. The field query is ~100x faster (the "
+                        "first run measured ~90 s per single-star cone) and falls "
+                        "back to per-star cones for anything it misses")
+    p.add_argument("--w1-max", type=float, default=14.5,
+                   help="W1 ceiling on the field-wide NEOWISE query; bounds the "
+                        "row count without touching the G < 15 sample")
     p.set_defaults(func=_cmd_vigil_sweep)
 
     p = sub.add_parser("vigil-vet",

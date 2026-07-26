@@ -1543,3 +1543,104 @@ def test_fits_big_endian_columns_survive_the_parquet_checkpoint(tmp_path):
     assert back["fe_h"].tolist() == [-0.1, 0.0, 0.2]
     # An empty or already-native frame must pass through untouched.
     assert to_native_byteorder(pd.DataFrame()).empty
+
+
+def test_threshold_sweep_reports_the_rate_against_the_published_scale():
+    """The calibration curve, not the candidate count, is the channel's output.
+
+    The real run flagged 2,100 vetted sparse anomalies in 210,867 stars (1.0%)
+    against Griffith et al. 2022's 15 in 82,910 (1.8e-4) -- a 55x excess that
+    cannot be astrophysical. A raw count is meaningless without the rate it
+    implies, so ``threshold_sweep`` is computed on the same z-matrix as the
+    candidates and carries ``rate_over_griffith`` explicitly.
+    """
+    import numpy as np
+    import pandas as pd
+
+    from seti.tailings.run import GRIFFITH_RATE, threshold_sweep
+    from seti.tailings.sparse import SparseConfig
+
+    assert GRIFFITH_RATE == pytest.approx(15 / 82910)
+
+    els = ["O", "Na", "Mg", "Al", "Si", "K", "Ca", "Sc", "Ti", "V",
+           "Cr", "Mn", "Co", "Ni", "Cu", "Zn", "Y", "Ba", "Ce", "Eu"]
+    rng = np.random.default_rng(0)
+    Z = pd.DataFrame(rng.standard_normal((2000, len(els))), columns=els)
+
+    sw = threshold_sweep(Z, SparseConfig(), z_flags=(5.0, 8.0),
+                         quiet_sigmas=(2.0,), contrasts=(3.0,))
+    for col in ("z_flag", "n_stars", "n_sparse", "n_dense", "sparse_rate",
+                "sparse_over_dense", "rate_over_griffith"):
+        assert col in sw.columns
+    assert len(sw) == 2
+    assert (sw["n_stars"] == 2000).all()
+    # PURE GAUSSIAN NOISE PRODUCES NO SPARSE CANDIDATES. This is the reference
+    # point that makes the real 1,341 interpretable: they are entirely
+    # non-Gaussian tail, i.e. the survey error model, not chance.
+    assert (sw["n_sparse"] == 0).all(), (
+        "Gaussian noise is producing sparse candidates: the rules are too loose "
+        "to be a meaningful null reference"
+    )
+    # Tightening must be monotonic: more z_flag can never yield more candidates.
+    tight = sw.sort_values("z_flag")
+    assert tight["n_sparse"].is_monotonic_decreasing
+
+
+def test_narrow_telluric_window_is_vetoed_where_quantile_bins_cannot_see_it():
+    """Weinberg's low-K population, reproduced and now catchable.
+
+    The real run's APOGEE candidates carry a demonstrable telluric artefact: K
+    anomalies enhanced 4.03x over an (Fe/H, Teff)-matched control in the -110 to
+    -60 km/s window (p = 2.7e-10), 28 of 29 of them DEFICITS. The pipeline
+    vetoed none, because ``covariate_rate_veto`` bins into 12 equal-population
+    quantiles over the full +/-200 km/s range: observed rv_flag_ratio spanned
+    only 0.81-1.32 against a threshold of 5.0, so the veto was not merely
+    un-triggered but un-triggerable at that resolution.
+    """
+    import numpy as np
+    import pandas as pd
+
+    from seti.tailings.vet import covariate_window_veto
+
+    rng = np.random.default_rng(0)
+    n = 300
+    el = np.array(["K"] * 60 + ["Mg", "Ca", "Ni", "Y", "Na"] * 48)
+    rv = rng.uniform(-200, 200, n)
+    rv[np.flatnonzero(el == "K")[:40]] = rng.uniform(-80, -60, 40)
+    df = pd.DataFrame({"element_max": el, "rv": rv, "star_id": np.arange(n)})
+
+    out = covariate_window_veto(df, covariate_col="rv")
+    vetoed = ~out["pass_rv_window"]
+    k_vetoed = int((vetoed & (out["element_max"] == "K")).sum())
+    assert k_vetoed >= 35, f"only {k_vetoed} of the 40 planted K artefacts vetoed"
+    assert "telluric" in out.loc[vetoed, "rv_window_reason"].iloc[0]
+    assert not bool(out["rv_window_untested"].iloc[0])
+
+    # NULL CONTROL: no artefact, nothing vetoed. A veto that fires on clean data
+    # would delete the very candidates the channel exists to find.
+    clean = pd.DataFrame({"element_max": el, "rv": rng.uniform(-200, 200, n),
+                          "star_id": np.arange(n)})
+    assert int((~covariate_window_veto(clean, covariate_col="rv")
+                ["pass_rv_window"]).sum()) == 0
+
+    # A missing covariate must be reported as UNTESTED, never as a pass.
+    no_rv = pd.DataFrame({"element_max": el, "star_id": np.arange(n)})
+    o3 = covariate_window_veto(no_rv, covariate_col="rv")
+    assert bool(o3["rv_window_untested"].iloc[0])
+
+
+def test_yaml_and_dataclass_thresholds_do_not_drift():
+    """A dataclass default that drifts from the yaml gives library callers --
+    including the Griffith validation harness -- a different search from the one
+    the workflow actually runs. Two such drifts were found live (z_flag 6.0 vs
+    5.0, min_elements 8 vs 12); this pins every field.
+    """
+    import yaml
+
+    from seti.tailings.sparse import SparseConfig
+
+    block = yaml.safe_load(open("config/thresholds.yaml"))["tailings"]["sparse"]
+    default = SparseConfig()
+    drift = {k: (v, getattr(default, k)) for k, v in block.items()
+             if hasattr(default, k) and getattr(default, k) != v}
+    assert not drift, f"yaml/dataclass drift: {drift}"

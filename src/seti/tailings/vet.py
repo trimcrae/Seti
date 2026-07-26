@@ -332,6 +332,88 @@ def field_rate_veto(
     return out
 
 
+def covariate_window_veto(
+    cand: pd.DataFrame,
+    *,
+    covariate_col: str = "rv",
+    element_col: str = "element_max",
+    width: float = 20.0,
+    min_n: int = 5,
+    min_enhancement: float = 2.5,
+    max_p: float = 1e-3,
+    label: str | None = None,
+) -> pd.DataFrame:
+    """Veto a *narrow* over-density of one element in an instrumental covariate.
+
+    ``covariate_rate_veto`` bins the covariate into equal-population quantiles.
+    That is the right tool for a broad drift and the wrong one for a telluric,
+    which is narrow: a ~20 km/s absorption window diluted into a quantile bin
+    spanning tens of km/s of ordinary stars is not merely un-triggered, it is
+    **un-triggerable**. Measured on the first real run, APOGEE's observed
+    ``rv_flag_ratio`` spanned only 0.81-1.32 against a veto threshold of 5.0,
+    while the artefact itself was sitting there at 4.03x over an (Fe/H, Teff)
+    matched control in -110 to -60 km/s (p = 2.7e-10), 28 of its 29 K anomalies
+    being *deficits* -- a telluric eating the 7699 A line. That is Weinberg's
+    low-K population, reproduced, and the veto could not see it.
+
+    So this scans fixed-width sliding windows *per element*, comparing each
+    element's share of candidates inside the window with every other element's,
+    and vetoes the element-window combinations that stand out. Working per
+    element matters: the artefact is element-locked because the offending line
+    is, and pooling elements averages it away.
+    """
+    name = label or covariate_col
+    out = cand.copy()
+    col_out, reason_out = f"pass_{name}_window", f"{name}_window_reason"
+    out[col_out] = True
+    out[reason_out] = ""
+    if covariate_col not in out.columns or element_col not in out.columns or not len(out):
+        out[f"{name}_window_untested"] = True
+        return out
+    v = pd.to_numeric(out[covariate_col], errors="coerce").to_numpy(dtype=float)
+    if not np.isfinite(v).any():
+        out[f"{name}_window_untested"] = True
+        return out
+    out[f"{name}_window_untested"] = False
+
+    from math import comb
+
+    els = out[element_col].astype(str).to_numpy()
+    lo_edge, hi_edge = np.nanmin(v), np.nanmax(v)
+    starts = np.arange(lo_edge, hi_edge, width / 2.0)     # 50% overlap
+    for el in pd.unique(els):
+        is_el = (els == el)
+        n_el = int(is_el.sum())
+        if n_el < min_n:
+            continue
+        for s0 in starts:
+            win = np.isfinite(v) & (v >= s0) & (v < s0 + width)
+            k = int((win & is_el).sum())
+            if k < min_n:
+                continue
+            n_other = int((~is_el).sum())
+            k_other = int((win & ~is_el).sum())
+            f_el = k / n_el
+            f_other = (k_other / n_other) if n_other else 0.0
+            enh = (f_el / f_other) if f_other > 0 else float("inf")
+            if enh < min_enhancement:
+                continue
+            # One-sided binomial tail for k of n_el at the other-element rate.
+            p_null = max(f_other, 1e-9)
+            p = sum(comb(n_el, i) * p_null**i * (1 - p_null) ** (n_el - i)
+                    for i in range(k, n_el + 1))
+            if p > max_p:
+                continue
+            hit = win & is_el
+            out.loc[hit, col_out] = False
+            out.loc[hit, reason_out] = (
+                f"{el} over-dense in {name} [{s0:.0f}, {s0 + width:.0f}]: "
+                f"{enh:.1f}x other elements, p={p:.1e} — instrumental "
+                f"(telluric / bad-pixel) footprint, not a stellar anomaly"
+            )
+    return out
+
+
 def covariate_rate_veto(
     cand: pd.DataFrame,
     all_stars: pd.DataFrame,
@@ -362,9 +444,20 @@ def covariate_rate_veto(
     cfg = cfg or VetConfig()
     name = label or covariate_col
     out = cand.copy()
+    # A VETO THAT CANNOT RUN MUST NOT REPORT "PASS".  On the first real run the
+    # GALAH FITS route carried no rv and no fiber column, so rv_flag_ratio and
+    # fiber_flag_ratio were 100% null for all 1,341 candidates while
+    # pass_rv_rate and pass_fiber_rate read True -- True by default, not by
+    # test.  GALAH's dominant element is K (39.4% of its candidates), the
+    # 7699 A resonance doublet, which is precisely the Weinberg telluric failure
+    # mode; the one veto that could have explained the pile-up silently reported
+    # success.  ``<name>_rate_untested`` now records that, and the summary must
+    # treat an untested veto as unknown rather than as a pass.
     if covariate_col not in all_stars.columns or covariate_col not in out.columns:
         out[f"{name}_flag_ratio"] = np.nan
         out[f"pass_{name}_rate"] = True
+        out[f"{name}_rate_untested"] = True
+        out[f"{name}_rate_untested_reason"] = f"no {covariate_col} column in this source"
         return out
 
     v_all = pd.to_numeric(all_stars[covariate_col], errors="coerce").to_numpy(dtype=float)
@@ -372,12 +465,17 @@ def covariate_rate_veto(
     if finite.sum() < 100:
         out[f"{name}_flag_ratio"] = np.nan
         out[f"pass_{name}_rate"] = True
+        out[f"{name}_rate_untested"] = True
+        out[f"{name}_rate_untested_reason"] = (
+            f"only {int(finite.sum())} finite {covariate_col} values")
         return out
     edges = np.quantile(v_all[finite], np.linspace(0.0, 1.0, int(n_bins) + 1))
     edges = np.unique(edges)
     if edges.size < 3:
         out[f"{name}_flag_ratio"] = np.nan
         out[f"pass_{name}_rate"] = True
+        out[f"{name}_rate_untested"] = True
+        out[f"{name}_rate_untested_reason"] = f"{covariate_col} has no usable bin edges"
         return out
 
     idx = np.clip(np.digitize(v_all, edges) - 1, 0, edges.size - 2)
@@ -645,6 +743,7 @@ __all__ = [
     "curve_of_growth_regime",
     "census_z",
     "covariate_rate_veto",
+    "covariate_window_veto",
     "cross_survey_check",
     "dedupe",
     "element_caveat",

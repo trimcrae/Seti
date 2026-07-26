@@ -314,9 +314,40 @@ at all — WISE alone cannot do it.
 Measured by injection-recovery (`cascade_sensitivity`, committed to
 `results/isotherm/sensitivity.csv`):
 
-* **Cascade separability.** A 3-shell cascade beats the continuous-gradient
-  null at temperature ratio ≳ 3 even at SNR 60; at ratio 2 it needs SNR ≳ 400;
-  at ratio 1.5 it is not separable at any SNR tested.
+* **Cascade separability — THE CHANNEL'S SENSITIVITY BOUNDARY.** Re-measured
+  after fixing a bug that made this table self-congratulating (see below).
+  "Recovered" now requires the fitted temperatures to **match the true ones to
+  within 15% fractionally**, one fitted component per true component, *and*
+  ΔBIC < −10 against the gradient null:
+
+  | ratio | SNR 60 | SNR 150 | SNR 400 | SNR 1000 |
+  |---|---|---|---|---|
+  | **3.0** | ✔ | ✔ | ✔ | ✔ |
+  | **2.5** | ✘ | ✔ | ✔ | ✔ |
+  | **2.0** | ✘ | ✘ | ✘ | ✔ |
+  | **1.5** | ✘ | ✘ | ✘ | ✘ |
+
+  **A discrete cascade is separable from a continuous gradient only when
+  successive shell temperatures differ by a factor ≳ 2.5.** That number is
+  measured, not assumed, and it directly bounds which Matrioshka architectures
+  are detectable at all: a cascade with shells closer than ~2.5× in temperature
+  is invisible to this method at any SNR reachable in these data. At ratio 3.0
+  the fit is essentially exact ([66.7, 199.7, 598.9] K against a truth of
+  [66.7, 200, 600] K).
+
+  Combined with the band-limit below (three Wien peaks inside 5–38 µm force
+  ratio ≤ 2.8), the detectable window is **narrow: 2.5 ≲ ratio ≲ 2.8** for a
+  fully in-band 3-shell cascade. Widening it requires a longer wavelength
+  baseline, not more SNR.
+
+  **The bug this replaced.** `recovered` was keyed on the component *count*
+  (`best.n_components >= n_shells`) and never checked the temperatures. Run
+  30211326404 accordingly reported ratio 1.5 / SNR 1000 as **recovered** on a
+  fit of [283, 523, 3000] K against a truth of [600, 400, 267] K — three
+  components, not one of them real, including an invented 3000 K component
+  above the dust sublimation ceiling. Every row now also carries
+  `n_temps_matched`, `max_frac_temp_error` and `temp_tolerance_frac`, so the map
+  cannot be read without its tolerance.
 * **Band-limited ratio.** Three Wien peaks inside 5–38 µm force a temperature
   ratio ≤ 2.8 (`λ_peak·T = 5099 µm·K`). Ratios large enough for easy separation
   push components out of band, where their temperatures are extrapolated from
@@ -342,6 +373,30 @@ Measured by injection-recovery (`cascade_sensitivity`, committed to
   than lowering the floor to manufacture candidates.
 * **Redshift reach.** PAH 6.2/7.7 leave the 5–38 µm band above z ≈ 1.5–3.9, so
   high-z interlopers are not excluded by the spectral test alone.
+
+### An unreached archive is not a null — enforced structurally
+
+Run **30211326404** indexed 5,480 objects, returned `INSUFFICIENT_DATA` on
+**every one**, and reported `verdict: "no_shape_anomaly_in_corpus"`. It had
+pulled the IRAS LRS Calgary catalogue, which carries F12/F25/F60/F100 and an LRS
+class letter — **not the spectra**. Zero spectra were fitted, and the channel
+nonetheless emitted a string a reader would take as searched-and-clean. The
+funnel was self-contradictory on its face: `n_full_shape_analysis: 5480`
+alongside `INSUFFICIENT_DATA: 5480`.
+
+Both are now structural, not conventions:
+
+* A funnel in which no row carries a usable spectrum emits
+  **`NO_SPECTRAL_ARCHIVE_REACHED`**. It is impossible for such a run to produce
+  a "no anomaly" verdict.
+* `n_full_shape_analysis` excludes `INSUFFICIENT_DATA` rows, and the summary
+  carries **`n_with_usable_spectrum`** and **`n_insufficient_data`** explicitly.
+  The number that licenses any statement about the sky is spectra fitted, never
+  rows indexed.
+
+**Current status: no spectra have been analysed yet.** The catalogue route works
+and the corpus index builds; retrieving the per-object spectra from
+`irs_enhv211` is the outstanding acquisition step.
 
 **No-null rule (CLAUDE.md).** An empty candidate list is a statement about this
 corpus at these thresholds, never a publishable result. The sensitivity map

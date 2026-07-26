@@ -136,8 +136,14 @@ class SparseConfig:
     thing at 12 elements and at 30, instead of tightening as data improve.
     """
 
-    min_elements: int = 8
-    """Below this many measured elements, sparsity is not a meaningful claim."""
+    min_elements: int = 12
+    """Below this many measured elements, sparsity is not a meaningful claim.
+
+    Kept in step with ``config/thresholds.yaml`` (12).  The dataclass default was
+    8 -- a live drift that gave every library caller, including the validation
+    harness, a laxer search than the workflow actually runs.  Same class of bug
+    as the z_flag drift above; both are now pinned by test.
+    """
 
     min_contrast: float = 3.0
     """Required ``z_max / max(z_background_rms, 1)``."""

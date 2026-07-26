@@ -1,0 +1,1928 @@
+{
+  "channel": "dimming_secular",
+  "verdict": "OK",
+  "anomaly_definition": "percentile_cut",
+  "population_vetted": false,
+  "caveat": "the dimming secular-fade score sits at the ZTF systematics floor (STATUS.md: 19 marginal faders, 18 of 19 not band-confirmed); structure in its top percentile most plausibly traces survey footprint/cadence/depth\n",
+  "n_parent": 255469,
+  "n_anomaly": 2555,
+  "anomaly_rate": 0.010001213454470014,
+  "covariates": [
+    "g_mag",
+    "bp_rp",
+    "n_epochs"
+  ],
+  "notes": [
+    "anomaly = score >= 0.678961 (1% of the parent)",
+    "this is a bare percentile of a score distribution, not a vetted candidate list: it selects a fixed FRACTION of the parent whatever the data looks like, so any spatial structure in it is at least as likely to trace survey footprint, cadence and depth as the sky"
+  ],
+  "provenance": {
+    "spec": {
+      "parent": "results/dimming/fp*/dimming_scored.csv",
+      "score_col": "score",
+      "covariates": [
+        "g_mag",
+        "bp_rp",
+        "n_epochs",
+        "log_local_density",
+        "ebv",
+        "dist_pc"
+      ],
+      "caveat": "the dimming secular-fade score sits at the ZTF systematics floor (STATUS.md: 19 marginal faders, 18 of 19 not band-confirmed); structure in its top percentile most plausibly traces survey footprint/cadence/depth\n",
+      "caveat_tag": "AT_SYSTEMATICS_FLOOR"
+    },
+    "n_parent_rows_read": 255469,
+    "n_candidate_rows_read": 0
+  },
+  "tested": true,
+  "modes": {
+    "strict": {
+      "covariates": [
+        "g_mag",
+        "bp_rp",
+        "n_epochs",
+        "dist_pc",
+        "log_local_density"
+      ],
+      "covariate_resolution": {
+        "declared_by_channel": [
+          "g_mag",
+          "bp_rp",
+          "n_epochs"
+        ],
+        "requested": [
+          "g_mag",
+          "bp_rp",
+          "n_epochs",
+          "phot_g_mean_mag",
+          "dist_pc",
+          "ebv",
+          "log_local_density",
+          "n_obs"
+        ],
+        "used": [
+          "g_mag",
+          "bp_rp",
+          "n_epochs",
+          "dist_pc",
+          "log_local_density"
+        ],
+        "missing_from_parent": [
+          "phot_g_mean_mag",
+          "ebv",
+          "n_obs"
+        ],
+        "families_matched": {
+          "magnitude": "g_mag",
+          "distance": "dist_pc",
+          "colour": "bp_rp",
+          "extinction": null,
+          "crowding": "log_local_density",
+          "epochs": "n_epochs"
+        },
+        "warnings": [],
+        "essential_covariates_present": true
+      },
+      "null_diagnostics": {
+        "n_parent": 255469,
+        "n_anom": 2555,
+        "n_strata": 74,
+        "n_strata_with_anomaly": 47,
+        "min_pool": 25,
+        "median_pool": 7935.0,
+        "frac_anom_in_thin_strata": 0.0,
+        "max_weight": 0.14285714285714285,
+        "effective_parent_size": 60068.92050888148,
+        "collapse_levels_used": {
+          "0": 254060,
+          "1": 141,
+          "2": 510,
+          "3": 617,
+          "4": 139,
+          "5": 2
+        },
+        "balance": {
+          "g_mag": {
+            "anomaly_mean": 16.38843804911563,
+            "matched_null_mean": 16.58159891362422,
+            "std_diff": -0.07769646343166224
+          },
+          "bp_rp": {
+            "anomaly_mean": 1.267955930609452,
+            "matched_null_mean": 1.2613402766538555,
+            "std_diff": 0.010940466012573006
+          },
+          "n_epochs": {
+            "anomaly_mean": 757.7941291585128,
+            "matched_null_mean": 669.9565656680604,
+            "std_diff": 0.3259820564740188
+          },
+          "dist_pc": {
+            "anomaly_mean": 1660.0402200109725,
+            "matched_null_mean": 1703.3087660815206,
+            "std_diff": -0.01750745143157106
+          },
+          "log_local_density": {
+            "anomaly_mean": 3.379919177087786,
+            "matched_null_mean": 3.3776189730979373,
+            "std_diff": 0.00726422496444429
+          },
+          "R_gal_kpc": {
+            "anomaly_mean": 8.704531125276167,
+            "matched_null_mean": 8.444530734664609,
+            "std_diff": 0.27121984856035425
+          },
+          "abs_z_gal_kpc": {
+            "anomaly_mean": 1.4468889262860583,
+            "matched_null_mean": 1.5528853206489155,
+            "std_diff": -0.04705510779296396
+          }
+        }
+      },
+      "gradient": {
+        "R_gal_kpc": {
+          "coordinate": "R_gal_kpc",
+          "insufficient": false,
+          "n_anom": 30,
+          "n_parent": 255469,
+          "n_null": 500,
+          "periodic": false,
+          "profile": {
+            "edges": [
+              2.872598458651325,
+              8.157794161485521,
+              8.184036365048689,
+              8.201911164919096,
+              8.22462974744744,
+              8.26008753729186,
+              8.315125649976972,
+              8.446608430135225,
+              8.692158628065068,
+              9.159697367833454,
+              14.044216717062332
+            ],
+            "centres": [
+              5.515196310068423,
+              8.170915263267105,
+              8.192973764983893,
+              8.213270456183267,
+              8.242358642369648,
+              8.287606593634415,
+              8.3808670400561,
+              8.569383529100147,
+              8.92592799794926,
+              11.601957042447893
+            ],
+            "n_obs": [
+              2.0,
+              2.0,
+              3.0,
+              1.0,
+              1.0,
+              1.0,
+              5.0,
+              8.0,
+              3.0,
+              4.0
+            ],
+            "n_expected": [
+              3.277613709993565,
+              3.2053848818142665,
+              3.4164307020357128,
+              3.3040905860307093,
+              3.3120839598978074,
+              3.2654443272902767,
+              3.3119239647675855,
+              3.3132373185160238,
+              3.3227369848658914,
+              3.30675383188348
+            ],
+            "rho": [
+              0.6102000348308059,
+              0.6239500321309273,
+              0.8781094251999378,
+              0.3026551403366111,
+              0.30192471329466375,
+              0.30623703844610256,
+              1.5096964946026095,
+              2.4145568913195583,
+              0.9028701379808678,
+              1.2096455325559137
+            ],
+            "rho_err": [
+              0.4314765825091303,
+              0.4411992988413429,
+              0.5069767130171317,
+              0.3026551403366111,
+              0.30192471329466375,
+              0.30623703844610256,
+              0.6751567974649159,
+              0.8536747757063847,
+              0.5212723172065286,
+              0.6048227662779568
+            ],
+            "n_parent_per_bin": [
+              174,
+              103,
+              116,
+              131,
+              104,
+              97,
+              132,
+              186,
+              141,
+              133
+            ]
+          },
+          "mean_shift": {
+            "observed": 8.704531125276167,
+            "expected": 8.444530734664607,
+            "null_mean": 8.448301148550087,
+            "null_std": 0.14341291943597967,
+            "z": 1.786658954672931,
+            "p_value": 0.0718562874251497
+          },
+          "monotonicity": {
+            "spearman_rho_vs_x": 0.5636363636363636,
+            "p_value": 0.04790419161676647
+          },
+          "glm_converged": true,
+          "terms": {
+            "slope": {
+              "name": "slope",
+              "value": 0.1341782358742422,
+              "se_parametric": 0.12696457698628624,
+              "se_monte_carlo": 0.1226042774380471,
+              "z_monte_carlo": 1.108654464155336,
+              "p_monte_carlo": 0.25948103792415167,
+              "ci95": [
+                -0.10612614790433009,
+                0.3744826196528145
+              ]
+            }
+          },
+          "headline_p": 0.0718562874251497,
+          "slope_ln_per_unit": 0.1341782358742422,
+          "slope_dex_per_unit": 0.05827286743169634,
+          "rate_ratio_per_unit": 1.1435966314262045,
+          "direction": "increasing_outward",
+          "coordinate_balance": {
+            "coordinate": "R_gal_kpc",
+            "anomaly_mean": 8.704531125276167,
+            "matched_null_mean": 8.444530734664609,
+            "std_diff": 0.27121984856035425,
+            "quality": "poor",
+            "note": "the tested coordinate is not matched on by design; residual imbalance here bounds the credibility of this specific test"
+          },
+          "p": {
+            "p_value": 0.0718562874251497,
+            "p_floor": 0.001996007984031936,
+            "floor_limited": false,
+            "n_null": 500,
+            "p_repr": "0.07186"
+          },
+          "floor_limited": false,
+          "p_repr": "0.07186",
+          "significant": false,
+          "verdict": "OK",
+          "escalation": {
+            "n_null_final": 500,
+            "rounds": 0,
+            "capped": false
+          }
+        },
+        "abs_z_gal_kpc": {
+          "coordinate": "abs_z_gal_kpc",
+          "insufficient": false,
+          "n_anom": 30,
+          "n_parent": 255469,
+          "n_null": 500,
+          "periodic": false,
+          "profile": {
+            "edges": [
+              0.0448803443180519,
+              0.2537334681486334,
+              0.3641973264740678,
+              0.5292023160454669,
+              0.8032107940616118,
+              0.993845752931672,
+              1.2160648830801972,
+              1.469949870474963,
+              1.9459631256317285,
+              2.9349905217345595,
+              18.175804042848227
+            ],
+            "centres": [
+              0.14930690623334264,
+              0.3089653973113506,
+              0.4466998212597673,
+              0.6662065550535393,
+              0.8985282734966419,
+              1.1049553180059346,
+              1.34300737677758,
+              1.7079564980533457,
+              2.4404768236831442,
+              10.555397282291393
+            ],
+            "n_obs": [
+              2.0,
+              4.0,
+              5.0,
+              2.0,
+              3.0,
+              1.0,
+              3.0,
+              3.0,
+              3.0,
+              4.0
+            ],
+            "n_expected": [
+              3.164392634392634,
+              3.4333904928346217,
+              3.2956344564839952,
+              3.3007222440837802,
+              3.319130213082119,
+              3.279193931979096,
+              3.326810164666035,
+              3.2981831329293487,
+              3.2599072870432266,
+              3.3583357096004676
+            ],
+            "rho": [
+              0.6320328199044349,
+              1.1650291478198809,
+              1.517158552024103,
+              0.6059279915433063,
+              0.9038512524081491,
+              0.30495299172393525,
+              0.9017647089884847,
+              0.909591699153312,
+              0.9202715708890711,
+              1.191066154751953
+            ],
+            "rho_err": [
+              0.4469146928868819,
+              0.5825145739099404,
+              0.6784939309942092,
+              0.428455791731017,
+              0.5218387638852252,
+              0.30495299172393525,
+              0.5206340974802062,
+              0.5251530123588137,
+              0.5313190391803649,
+              0.5955330773759765
+            ],
+            "n_parent_per_bin": [
+              96,
+              105,
+              135,
+              254,
+              136,
+              108,
+              116,
+              118,
+              128,
+              121
+            ]
+          },
+          "mean_shift": {
+            "observed": 1.4468889262860583,
+            "expected": 1.5528853206489153,
+            "null_mean": 1.5608460053373348,
+            "null_std": 0.33414552059686314,
+            "z": -0.3410402714593394,
+            "p_value": 0.8003992015968064
+          },
+          "monotonicity": {
+            "spearman_rho_vs_x": 0.17575757575757575,
+            "p_value": 0.469061876247505
+          },
+          "glm_converged": true,
+          "terms": {
+            "slope": {
+              "name": "slope",
+              "value": 0.02850219797558725,
+              "se_parametric": 0.055920318367379235,
+              "se_monte_carlo": 0.06059313584535539,
+              "z_monte_carlo": 0.6284067474146887,
+              "p_monte_carlo": 0.5508982035928144,
+              "ci95": [
+                -0.0902603482813093,
+                0.1472647442324838
+              ]
+            }
+          },
+          "headline_p": 0.5508982035928144,
+          "slope_ln_per_unit": 0.02850219797558725,
+          "slope_dex_per_unit": 0.012378347302911577,
+          "rate_ratio_per_unit": 1.0289122723560946,
+          "direction": "increasing_outward",
+          "coordinate_balance": {
+            "coordinate": "abs_z_gal_kpc",
+            "anomaly_mean": 1.4468889262860583,
+            "matched_null_mean": 1.5528853206489155,
+            "std_diff": -0.04705510779296396,
+            "quality": "good",
+            "note": "the tested coordinate is not matched on by design; residual imbalance here bounds the credibility of this specific test"
+          },
+          "p": {
+            "p_value": 0.5508982035928144,
+            "p_floor": 0.001996007984031936,
+            "floor_limited": false,
+            "n_null": 500,
+            "p_repr": "0.5509"
+          },
+          "floor_limited": false,
+          "p_repr": "0.5509",
+          "significant": false,
+          "verdict": "OK",
+          "escalation": {
+            "n_null_final": 500,
+            "rounds": 0,
+            "capped": false
+          }
+        },
+        "l_deg": {
+          "coordinate": "l_deg",
+          "insufficient": false,
+          "n_anom": 2555,
+          "n_parent": 255469,
+          "n_null": 8000,
+          "periodic": true,
+          "profile": {
+            "edges": [
+              2.2339206244067427,
+              31.72651225452357,
+              45.64528111566536,
+              79.1273088306697,
+              135.6544344129715,
+              162.9499625224316,
+              172.91718464489128,
+              189.3403677929147,
+              201.46806164805466,
+              209.57038000841223,
+              358.8673860440974
+            ],
+            "centres": [
+              16.980216439465156,
+              38.68589668509446,
+              62.38629497316754,
+              107.39087162182061,
+              149.30219846770154,
+              167.93357358366143,
+              181.128776218903,
+              195.40421472048467,
+              205.51922082823344,
+              284.2188830262548
+            ],
+            "n_obs": [
+              272.0,
+              221.0,
+              165.0,
+              147.0,
+              175.0,
+              227.0,
+              292.0,
+              375.0,
+              334.0,
+              347.0
+            ],
+            "n_expected": [
+              255.46294022386263,
+              255.4873798198228,
+              255.5406268841995,
+              255.4792227089226,
+              255.51265864473177,
+              255.47677038070202,
+              255.49952340623628,
+              255.53752781673046,
+              255.47536552211483,
+              255.52798459261749
+            ],
+            "rho": [
+              1.064733693903491,
+              0.8650133723076877,
+              0.6456898928825561,
+              0.5753892564777481,
+              0.6848975738744997,
+              0.8885347957927173,
+              1.1428592746755504,
+              1.4674948263135232,
+              1.3073667565458,
+              1.3579725936993332
+            ],
+            "rho_err": [
+              0.06455896298703172,
+              0.05818709619943848,
+              0.050266889986483675,
+              0.047457306016606644,
+              0.05177339011495471,
+              0.05897412571353472,
+              0.06688078029588204,
+              0.07578110697277095,
+              0.07153592615533438,
+              0.07289978841219781
+            ],
+            "n_parent_per_bin": [
+              27440,
+              23597,
+              22076,
+              19732,
+              23748,
+              24225,
+              20998,
+              24912,
+              26505,
+              42236
+            ]
+          },
+          "mean_shift": {
+            "observed": 156.85412166611115,
+            "expected": 142.23842723079667,
+            "null_mean": 142.21394284298387,
+            "null_std": 1.6159260155971105,
+            "z": 9.059931384121882,
+            "p_value": 0.00012498437695288088
+          },
+          "monotonicity": {
+            "spearman_rho_vs_x": 0.696969696969697,
+            "p_value": 0.027621547306586676
+          },
+          "glm_converged": true,
+          "terms": {
+            "cos1": {
+              "name": "cos1",
+              "value": -0.013220004187049139,
+              "se_parametric": 0.02713883974257831,
+              "se_monte_carlo": 0.02702382469619948,
+              "z_monte_carlo": -0.4901550309312541,
+              "p_monte_carlo": 0.6274215723034621,
+              "ci95": [
+                -0.06618670059160012,
+                0.039746692217501836
+              ]
+            },
+            "sin1": {
+              "name": "sin1",
+              "value": -0.44509445159870736,
+              "se_parametric": 0.03319184336572021,
+              "se_monte_carlo": 0.03369195214808446,
+              "z_monte_carlo": -13.227996328189027,
+              "p_monte_carlo": 0.00012498437695288088,
+              "ci95": [
+                -0.5111306778089529,
+                -0.37905822538846184
+              ]
+            }
+          },
+          "dipole": {
+            "amplitude_ln": 0.4452907357610976,
+            "amplitude_rate_ratio": 1.5609439520958275,
+            "phase_deg": 268.2987255323924,
+            "null_mean": 0.038063377640868146,
+            "null_std": 0.020419453400394166,
+            "p_value": 0.00012498437695288088
+          },
+          "headline_p": 0.00012498437695288088,
+          "amplitude": 1.5609439520958275,
+          "coordinate_balance": {
+            "coordinate": "l_deg",
+            "anomaly_mean": 156.85412166611115,
+            "matched_null_mean": 142.23842723079667,
+            "std_diff": 0.16795078798668867,
+            "quality": "marginal",
+            "note": "the tested coordinate is not matched on by design; residual imbalance here bounds the credibility of this specific test"
+          },
+          "p": {
+            "p_value": 0.00012498437695288088,
+            "p_floor": 0.00012498437695288088,
+            "floor_limited": true,
+            "n_null": 8000,
+            "p_repr": "<0.000125"
+          },
+          "floor_limited": true,
+          "p_repr": "<0.000125",
+          "significant": false,
+          "verdict": "FLOOR_LIMITED",
+          "escalation": {
+            "n_null_final": 8000,
+            "rounds": 2,
+            "capped": true
+          }
+        }
+      },
+      "edge": {
+        "R_gal_kpc": {
+          "coordinate": "R_gal_kpc",
+          "insufficient": false,
+          "n_bins": 23,
+          "n_anom": 30,
+          "n_anom_total": 2555,
+          "smooth_model": {
+            "R_gal_kpc": {
+              "order": 3,
+              "converged": true,
+              "coefficients": [
+                -0.10362598260891694,
+                1.4468215823599675,
+                0.05444209477700589,
+                -0.23661507280006935
+              ]
+            }
+          },
+          "max_abs_score": 2.592340291741114,
+          "null_max_mean": 2.1076974682612,
+          "null_max_p95": 3.076664341929709,
+          "p_value": 0.19933554817275748,
+          "p": {
+            "p_value": 0.19933554817275748,
+            "p_floor": 0.0033222591362126247,
+            "floor_limited": false,
+            "n_null": 300,
+            "p_repr": "0.1993"
+          },
+          "coordinate_balance": {
+            "coordinate": "R_gal_kpc",
+            "anomaly_mean": 8.704531125276167,
+            "matched_null_mean": 8.444530734664609,
+            "std_diff": 0.27121984856035425,
+            "quality": "poor",
+            "note": "the tested coordinate is not matched on by design; residual imbalance here bounds the credibility of this specific test"
+          },
+          "floor_limited": false,
+          "p_repr": "0.1993",
+          "best_edge": {
+            "bin": 17,
+            "half_width_bins": 4,
+            "score": 2.592340291741114,
+            "n_inside": 13.0,
+            "n_outside": 3.0,
+            "expected_inside": 6.011489411778296,
+            "expected_outside": 6.000670973538366,
+            "rho_inside": 2.1625256420695234,
+            "rho_outside": 0.4999440917906244,
+            "position": 8.761108595935786,
+            "inner_range": [
+              8.340318314640692,
+              8.761108595935786
+            ],
+            "outer_range": [
+              8.761108595935786,
+              9.460550373552607
+            ]
+          },
+          "significant": false,
+          "verdict": "OK",
+          "escalation": {
+            "n_null_final": 300,
+            "rounds": 0,
+            "capped": false
+          }
+        },
+        "abs_z_gal_kpc": {
+          "coordinate": "abs_z_gal_kpc",
+          "insufficient": false,
+          "n_bins": 24,
+          "n_anom": 30,
+          "n_anom_total": 2555,
+          "smooth_model": {
+            "abs_z_gal_kpc": {
+              "order": 3,
+              "converged": true,
+              "coefficients": [
+                -0.2639306395538547,
+                -0.37217529329645666,
+                0.01621021633996142,
+                0.05043620483466669
+              ]
+            }
+          },
+          "max_abs_score": 3.5760500639173967,
+          "null_max_mean": 1.939876168119545,
+          "null_max_p95": 2.8829425317407704,
+          "p_value": 0.009966777408637873,
+          "p": {
+            "p_value": 0.009966777408637873,
+            "p_floor": 0.0033222591362126247,
+            "floor_limited": false,
+            "n_null": 300,
+            "p_repr": "0.009967"
+          },
+          "coordinate_balance": {
+            "coordinate": "abs_z_gal_kpc",
+            "anomaly_mean": 1.4468889262860583,
+            "matched_null_mean": 1.5528853206489155,
+            "std_diff": -0.04705510779296396,
+            "quality": "good",
+            "note": "the tested coordinate is not matched on by design; residual imbalance here bounds the credibility of this specific test"
+          },
+          "floor_limited": false,
+          "p_repr": "0.009967",
+          "best_edge": {
+            "bin": 20,
+            "half_width_bins": 4,
+            "score": 3.5760500639173967,
+            "n_inside": 7.0,
+            "n_outside": 0.0,
+            "expected_inside": 4.810532868205083,
+            "expected_outside": 7.181542054559678,
+            "rho_inside": 1.4551402499016404,
+            "rho_outside": 0.0,
+            "position": 15.436598594845078,
+            "inner_range": [
+              1.905418890394371,
+              15.436598594845078
+            ],
+            "outer_range": [
+              15.436598594845078,
+              18.175804042848227
+            ]
+          },
+          "significant": true,
+          "verdict": "OK",
+          "escalation": {
+            "n_null_final": 300,
+            "rounds": 0,
+            "capped": false
+          }
+        },
+        "shell_3d": {
+          "insufficient": false,
+          "n_centres": 67,
+          "n_radial_bins": 20,
+          "smooth_model": {
+            "R_gal_kpc": {
+              "order": 3,
+              "converged": true,
+              "coefficients": [
+                -0.10362598260891694,
+                1.4468215823599675,
+                0.05444209477700589,
+                -0.23661507280006935
+              ]
+            },
+            "abs_z_gal_kpc": {
+              "order": 3,
+              "converged": true,
+              "coefficients": [
+                -0.2639306395538547,
+                -0.37217529329645666,
+                0.01621021633996142,
+                0.05043620483466669
+              ]
+            }
+          },
+          "n_anom": 30,
+          "n_anom_total": 2555,
+          "max_abs_score": 4.563208081454949,
+          "null_max_mean": 3.2435993554224316,
+          "null_max_p95": 3.8857715848153593,
+          "p_value": 0.00024993751562109475,
+          "p": {
+            "p_value": 0.00024993751562109475,
+            "p_floor": 0.00024993751562109475,
+            "floor_limited": true,
+            "n_null": 4000,
+            "p_repr": "<0.00025"
+          },
+          "best_shell": {
+            "bin": 15,
+            "half_width_bins": 4,
+            "score": 4.563208081454949,
+            "n_inside": 10.0,
+            "n_outside": 0.0,
+            "expected_inside": 4.703287816269764,
+            "expected_outside": 8.618557586461275,
+            "rho_inside": 2.126172241768339,
+            "rho_outside": 0.0,
+            "centre": [
+              2102.250198758992,
+              -1594.9938174429763,
+              -1244.551313460292
+            ],
+            "radius": 13991.511012828687,
+            "inner_range": [
+              4374.110196586343,
+              13991.511012828687
+            ]
+          },
+          "floor_limited": true,
+          "p_repr": "<0.00025",
+          "significant": false,
+          "verdict": "FLOOR_LIMITED",
+          "escalation": {
+            "n_null_final": 4000,
+            "rounds": 2,
+            "capped": true
+          }
+        },
+        "sky_cap": {
+          "insufficient": false,
+          "n_directions": 96,
+          "n_anom": 2555,
+          "n_anom_total": 2555,
+          "max_abs_score": 11.822682526755242,
+          "null_max_mean": 3.567436295449132,
+          "null_max_p95": 4.2435884567542566,
+          "p_value": 0.00024993751562109475,
+          "p": {
+            "p_value": 0.00024993751562109475,
+            "p_floor": 0.00024993751562109475,
+            "floor_limited": true,
+            "n_null": 4000,
+            "p_repr": "<0.00025"
+          },
+          "best_cap": {
+            "bin": 15,
+            "half_width_bins": 3,
+            "score": -11.822682526755242,
+            "n_inside": 323.0,
+            "n_outside": 696.0,
+            "expected_inside": 425.859280747238,
+            "expected_outside": 425.8413180681205,
+            "rho_inside": 0.7584665043186214,
+            "rho_outside": 1.634411623459852,
+            "cap_centre_l_deg": 20.966612173618483,
+            "cap_centre_b_deg": 13.861949672048638,
+            "cap_radius_deg": 117.18982208588818,
+            "inner_range": [
+              102.03591572770276,
+              117.18982208588818
+            ]
+          },
+          "floor_limited": true,
+          "p_repr": "<0.00025",
+          "significant": false,
+          "verdict": "FLOOR_LIMITED",
+          "escalation": {
+            "n_null_final": 4000,
+            "rounds": 2,
+            "capped": true
+          }
+        }
+      }
+    },
+    "permissive": {
+      "covariates": [
+        "g_mag",
+        "bp_rp",
+        "n_epochs",
+        "log_local_density"
+      ],
+      "covariate_resolution": {
+        "declared_by_channel": [
+          "g_mag",
+          "bp_rp",
+          "n_epochs"
+        ],
+        "requested": [
+          "g_mag",
+          "bp_rp",
+          "n_epochs",
+          "phot_g_mean_mag",
+          "ebv",
+          "log_local_density"
+        ],
+        "used": [
+          "g_mag",
+          "bp_rp",
+          "n_epochs",
+          "log_local_density"
+        ],
+        "missing_from_parent": [
+          "phot_g_mean_mag",
+          "ebv"
+        ],
+        "families_matched": {
+          "magnitude": "g_mag",
+          "distance": null,
+          "colour": "bp_rp",
+          "extinction": null,
+          "crowding": "log_local_density",
+          "epochs": "n_epochs"
+        },
+        "warnings": [],
+        "essential_covariates_present": true
+      },
+      "null_diagnostics": {
+        "n_parent": 255469,
+        "n_anom": 2555,
+        "n_strata": 67,
+        "n_strata_with_anomaly": 44,
+        "min_pool": 25,
+        "median_pool": 8599.5,
+        "frac_anom_in_thin_strata": 0.0,
+        "max_weight": 0.13333333333333333,
+        "effective_parent_size": 59917.58420836768,
+        "collapse_levels_used": {
+          "0": 254394,
+          "1": 347,
+          "2": 596,
+          "3": 109,
+          "4": 23
+        },
+        "balance": {
+          "g_mag": {
+            "anomaly_mean": 16.38843804911563,
+            "matched_null_mean": 16.604256400856787,
+            "std_diff": -0.08681014509123199
+          },
+          "bp_rp": {
+            "anomaly_mean": 1.267955930609452,
+            "matched_null_mean": 1.253912597028123,
+            "std_diff": 0.023223798400123556
+          },
+          "n_epochs": {
+            "anomaly_mean": 757.7941291585128,
+            "matched_null_mean": 669.4064066103695,
+            "std_diff": 0.3280238023272425
+          },
+          "log_local_density": {
+            "anomaly_mean": 3.379919177087786,
+            "matched_null_mean": 3.3784390545499816,
+            "std_diff": 0.004674343291727979
+          },
+          "R_gal_kpc": {
+            "anomaly_mean": 8.704531125276167,
+            "matched_null_mean": 8.470819891954799,
+            "std_diff": 0.2437962695332092
+          },
+          "abs_z_gal_kpc": {
+            "anomaly_mean": 1.4468889262860583,
+            "matched_null_mean": 1.4679390456715358,
+            "std_diff": -0.009344805006739896
+          }
+        }
+      },
+      "gradient": {
+        "R_gal_kpc": {
+          "coordinate": "R_gal_kpc",
+          "insufficient": false,
+          "n_anom": 30,
+          "n_parent": 255469,
+          "n_null": 500,
+          "periodic": false,
+          "profile": {
+            "edges": [
+              2.872598458651325,
+              8.15563209233064,
+              8.18319826004596,
+              8.202109935975534,
+              8.225419836174584,
+              8.259964799041844,
+              8.321912369815328,
+              8.451235022653886,
+              8.698348185524477,
+              9.197918811292103,
+              14.044216717062332
+            ],
+            "centres": [
+              5.514115275490982,
+              8.1694151761883,
+              8.192654098010747,
+              8.213764886075058,
+              8.242692317608213,
+              8.290938584428586,
+              8.386573696234606,
+              8.574791604089182,
+              8.94813349840829,
+              11.621067764177218
+            ],
+            "n_obs": [
+              2.0,
+              2.0,
+              3.0,
+              1.0,
+              1.0,
+              2.0,
+              4.0,
+              8.0,
+              3.0,
+              4.0
+            ],
+            "n_expected": [
+              3.2589065371903785,
+              3.313973885775129,
+              3.299112334143393,
+              3.3028229393607096,
+              3.284987721849074,
+              3.2947218043571467,
+              3.2700158171195692,
+              3.31593466752453,
+              3.283586381695979,
+              3.3155048085461085
+            ],
+            "rho": [
+              0.6137027794986328,
+              0.6035050573526791,
+              0.9093355109349265,
+              0.3027713015077819,
+              0.30441514083867377,
+              0.6070315245903538,
+              1.2232356733746461,
+              2.412592768594051,
+              0.9136351693755332,
+              1.2064527819985431
+            ],
+            "rho_err": [
+              0.43395339701651586,
+              0.42674251853445566,
+              0.5250051020219656,
+              0.3027713015077819,
+              0.30441514083867377,
+              0.42923610743184765,
+              0.6116178366873231,
+              0.8529803534572403,
+              0.5274875109800734,
+              0.6032263909992716
+            ],
+            "n_parent_per_bin": [
+              166,
+              102,
+              129,
+              132,
+              98,
+              109,
+              127,
+              185,
+              143,
+              126
+            ]
+          },
+          "mean_shift": {
+            "observed": 8.704531125276167,
+            "expected": 8.470819891954795,
+            "null_mean": 8.472062470936468,
+            "null_std": 0.1402296963311441,
+            "z": 1.657770503836354,
+            "p_value": 0.08383233532934131
+          },
+          "monotonicity": {
+            "spearman_rho_vs_x": 0.6121212121212121,
+            "p_value": 0.04790419161676647
+          },
+          "glm_converged": true,
+          "terms": {
+            "slope": {
+              "name": "slope",
+              "value": 0.1311681355939775,
+              "se_parametric": 0.12637665498852885,
+              "se_monte_carlo": 0.11941027280038893,
+              "z_monte_carlo": 1.112241885236361,
+              "p_monte_carlo": 0.25948103792415167,
+              "ci95": [
+                -0.10287599909478481,
+                0.36521227028273984
+              ]
+            }
+          },
+          "headline_p": 0.08383233532934131,
+          "slope_ln_per_unit": 0.1311681355939775,
+          "slope_dex_per_unit": 0.056965597490001935,
+          "rate_ratio_per_unit": 1.1401594665861234,
+          "direction": "increasing_outward",
+          "coordinate_balance": {
+            "coordinate": "R_gal_kpc",
+            "anomaly_mean": 8.704531125276167,
+            "matched_null_mean": 8.470819891954799,
+            "std_diff": 0.2437962695332092,
+            "quality": "marginal",
+            "note": "the tested coordinate is not matched on by design; residual imbalance here bounds the credibility of this specific test"
+          },
+          "p": {
+            "p_value": 0.08383233532934131,
+            "p_floor": 0.001996007984031936,
+            "floor_limited": false,
+            "n_null": 500,
+            "p_repr": "0.08383"
+          },
+          "floor_limited": false,
+          "p_repr": "0.08383",
+          "significant": false,
+          "verdict": "OK",
+          "escalation": {
+            "n_null_final": 500,
+            "rounds": 0,
+            "capped": false
+          }
+        },
+        "abs_z_gal_kpc": {
+          "coordinate": "abs_z_gal_kpc",
+          "insufficient": false,
+          "n_anom": 30,
+          "n_parent": 255469,
+          "n_null": 500,
+          "periodic": false,
+          "profile": {
+            "edges": [
+              0.0448803443180519,
+              0.270012080084143,
+              0.38786242619595585,
+              0.5614953525760004,
+              0.7463268060760849,
+              0.9420026814399841,
+              1.137369417641403,
+              1.455824384774326,
+              1.8741491853191656,
+              2.7834725983382875,
+              18.175804042848227
+            ],
+            "centres": [
+              0.15744621220109745,
+              0.3289372531400494,
+              0.47467888938597813,
+              0.6539110793260426,
+              0.8441647437580345,
+              1.0396860495406937,
+              1.2965969012078644,
+              1.6649867850467457,
+              2.3288108918287267,
+              10.479638320593258
+            ],
+            "n_obs": [
+              3.0,
+              4.0,
+              4.0,
+              1.0,
+              4.0,
+              1.0,
+              3.0,
+              3.0,
+              3.0,
+              4.0
+            ],
+            "n_expected": [
+              3.2541914489740575,
+              3.3134212388069333,
+              3.3040104469998304,
+              3.2945103222051753,
+              3.287968629959215,
+              3.2987775373159085,
+              3.2773740228158204,
+              3.2176558041805476,
+              3.370071393852165,
+              3.3215860524523686
+            ],
+            "rho": [
+              0.9218879857071114,
+              1.20721143244687,
+              1.2106499250425056,
+              0.3035352456660848,
+              1.2165566190482837,
+              0.3031426001565606,
+              0.9153669917181106,
+              0.9323557840158796,
+              0.8901888563763766,
+              1.2042439776764928
+            ],
+            "rho_err": [
+              0.5322522767106825,
+              0.603605716223435,
+              0.6053249625212528,
+              0.3035352456660848,
+              0.6082783095241419,
+              0.3031426001565606,
+              0.528487379075749,
+              0.5382958628820727,
+              0.5139507758585061,
+              0.6021219888382464
+            ],
+            "n_parent_per_bin": [
+              107,
+              120,
+              139,
+              171,
+              154,
+              116,
+              134,
+              105,
+              136,
+              135
+            ]
+          },
+          "mean_shift": {
+            "observed": 1.4468889262860583,
+            "expected": 1.4679390456715355,
+            "null_mean": 1.470624844190453,
+            "null_std": 0.31909112765402975,
+            "z": -0.07438601655552807,
+            "p_value": 0.936127744510978
+          },
+          "monotonicity": {
+            "spearman_rho_vs_x": -0.21212121212121213,
+            "p_value": 0.6427145708582834
+          },
+          "glm_converged": true,
+          "terms": {
+            "slope": {
+              "name": "slope",
+              "value": 0.02955971299404931,
+              "se_parametric": 0.05629806543174834,
+              "se_monte_carlo": 0.0636262665406293,
+              "z_monte_carlo": 0.6753301852282148,
+              "p_monte_carlo": 0.5369261477045908,
+              "ci95": [
+                -0.09514776942558412,
+                0.15426719541368275
+              ]
+            }
+          },
+          "headline_p": 0.5369261477045908,
+          "slope_ln_per_unit": 0.02955971299404931,
+          "slope_dex_per_unit": 0.012837620239959465,
+          "rate_ratio_per_unit": 1.0300009380755073,
+          "direction": "increasing_outward",
+          "coordinate_balance": {
+            "coordinate": "abs_z_gal_kpc",
+            "anomaly_mean": 1.4468889262860583,
+            "matched_null_mean": 1.4679390456715358,
+            "std_diff": -0.009344805006739896,
+            "quality": "good",
+            "note": "the tested coordinate is not matched on by design; residual imbalance here bounds the credibility of this specific test"
+          },
+          "p": {
+            "p_value": 0.5369261477045908,
+            "p_floor": 0.001996007984031936,
+            "floor_limited": false,
+            "n_null": 500,
+            "p_repr": "0.5369"
+          },
+          "floor_limited": false,
+          "p_repr": "0.5369",
+          "significant": false,
+          "verdict": "OK",
+          "escalation": {
+            "n_null_final": 500,
+            "rounds": 0,
+            "capped": false
+          }
+        },
+        "l_deg": {
+          "coordinate": "l_deg",
+          "insufficient": false,
+          "n_anom": 2555,
+          "n_parent": 255469,
+          "n_null": 8000,
+          "periodic": true,
+          "profile": {
+            "edges": [
+              2.2339206244067427,
+              31.721857261044295,
+              45.63994725849166,
+              79.04106936542142,
+              135.82199405309052,
+              162.95717077239055,
+              172.9191770639137,
+              189.34359802774006,
+              201.46625796782916,
+              209.5598516666994,
+              358.8673860440974
+            ],
+            "centres": [
+              16.97788894272552,
+              38.680902259767976,
+              62.34050831195654,
+              107.43153170925598,
+              149.38958241274054,
+              167.93817391815213,
+              181.1313875458269,
+              195.40492799778463,
+              205.51305481726428,
+              284.2136188553984
+            ],
+            "n_obs": [
+              272.0,
+              221.0,
+              165.0,
+              147.0,
+              175.0,
+              227.0,
+              292.0,
+              375.0,
+              334.0,
+              347.0
+            ],
+            "n_expected": [
+              255.45561488381819,
+              255.53235760243615,
+              255.48872811437928,
+              255.51919749510932,
+              255.50409116382693,
+              255.45982155009332,
+              255.53953829708126,
+              255.4754224639606,
+              255.51839794908642,
+              255.50683048014747
+            ],
+            "rho": [
+              1.0647642257685597,
+              0.8648611161167993,
+              0.6458210552683618,
+              0.5752992395133583,
+              0.684920539639389,
+              0.8885937468467517,
+              1.1426803145450277,
+              1.4678515701560313,
+              1.3071465799756286,
+              1.3580850239812334
+            ],
+            "rho_err": [
+              0.06456081425327619,
+              0.05817685433970566,
+              0.050277100964370026,
+              0.04744988154251777,
+              0.051775126163599444,
+              0.05897803843241532,
+              0.06687030744639268,
+              0.0757995291455829,
+              0.07152387862943084,
+              0.07290582398596393
+            ],
+            "n_parent_per_bin": [
+              27410,
+              23612,
+              22035,
+              19855,
+              23711,
+              24215,
+              20995,
+              24866,
+              26505,
+              42265
+            ]
+          },
+          "mean_shift": {
+            "observed": 156.85412166611115,
+            "expected": 142.25713884798955,
+            "null_mean": 142.23215699103906,
+            "null_std": 1.6142880459613937,
+            "z": 9.057841140342424,
+            "p_value": 0.00012498437695288088
+          },
+          "monotonicity": {
+            "spearman_rho_vs_x": 0.696969696969697,
+            "p_value": 0.02712160979877515
+          },
+          "glm_converged": true,
+          "terms": {
+            "cos1": {
+              "name": "cos1",
+              "value": -0.013134319844181529,
+              "se_parametric": 0.02713514712645959,
+              "se_monte_carlo": 0.027005532283682313,
+              "z_monte_carlo": -0.4870945574538153,
+              "p_monte_carlo": 0.6245469316335458,
+              "ci95": [
+                -0.06606516312019886,
+                0.039796523431835804
+              ]
+            },
+            "sin1": {
+              "name": "sin1",
+              "value": -0.44520054989772234,
+              "se_parametric": 0.03320038329589613,
+              "se_monte_carlo": 0.03357307878078379,
+              "z_monte_carlo": -13.27783767684121,
+              "p_monte_carlo": 0.00012498437695288088,
+              "ci95": [
+                -0.5110037843080586,
+                -0.3793973154873861
+              ]
+            }
+          },
+          "dipole": {
+            "amplitude_ln": 0.4453942523057562,
+            "amplitude_rate_ratio": 1.561105543983727,
+            "phase_deg": 268.31014836280957,
+            "null_mean": 0.03797315608669739,
+            "null_std": 0.020367217009135734,
+            "p_value": 0.00012498437695288088
+          },
+          "headline_p": 0.00012498437695288088,
+          "amplitude": 1.561105543983727,
+          "coordinate_balance": {
+            "coordinate": "l_deg",
+            "anomaly_mean": 156.85412166611115,
+            "matched_null_mean": 142.25713884798955,
+            "std_diff": 0.1677357704337453,
+            "quality": "marginal",
+            "note": "the tested coordinate is not matched on by design; residual imbalance here bounds the credibility of this specific test"
+          },
+          "p": {
+            "p_value": 0.00012498437695288088,
+            "p_floor": 0.00012498437695288088,
+            "floor_limited": true,
+            "n_null": 8000,
+            "p_repr": "<0.000125"
+          },
+          "floor_limited": true,
+          "p_repr": "<0.000125",
+          "significant": false,
+          "verdict": "FLOOR_LIMITED",
+          "escalation": {
+            "n_null_final": 8000,
+            "rounds": 2,
+            "capped": true
+          }
+        }
+      },
+      "edge": {
+        "R_gal_kpc": {
+          "coordinate": "R_gal_kpc",
+          "insufficient": false,
+          "n_bins": 23,
+          "n_anom": 30,
+          "n_anom_total": 2555,
+          "smooth_model": {
+            "R_gal_kpc": {
+              "order": 3,
+              "converged": true,
+              "coefficients": [
+                -0.10447333186923932,
+                1.4698162092201417,
+                0.057572204924485275,
+                -0.24106428157957532
+              ]
+            }
+          },
+          "max_abs_score": 2.4111709150918283,
+          "null_max_mean": 2.0497791004625294,
+          "null_max_p95": 3.1024301462922783,
+          "p_value": 0.23255813953488372,
+          "p": {
+            "p_value": 0.23255813953488372,
+            "p_floor": 0.0033222591362126247,
+            "floor_limited": false,
+            "n_null": 300,
+            "p_repr": "0.2326"
+          },
+          "coordinate_balance": {
+            "coordinate": "R_gal_kpc",
+            "anomaly_mean": 8.704531125276167,
+            "matched_null_mean": 8.470819891954799,
+            "std_diff": 0.2437962695332092,
+            "quality": "marginal",
+            "note": "the tested coordinate is not matched on by design; residual imbalance here bounds the credibility of this specific test"
+          },
+          "floor_limited": false,
+          "p_repr": "0.2326",
+          "best_edge": {
+            "bin": 12,
+            "half_width_bins": 4,
+            "score": -2.4111709150918283,
+            "n_inside": 3.0,
+            "n_outside": 12.0,
+            "expected_inside": 5.99519208651539,
+            "expected_outside": 5.974340550072036,
+            "rho_inside": 0.5004009807705264,
+            "rho_outside": 2.0085898852644597,
+            "position": 8.311732102096133,
+            "inner_range": [
+              8.21416474096983,
+              8.311732102096133
+            ],
+            "outer_range": [
+              8.311732102096133,
+              8.660017087326707
+            ]
+          },
+          "significant": false,
+          "verdict": "OK",
+          "escalation": {
+            "n_null_final": 300,
+            "rounds": 0,
+            "capped": false
+          }
+        },
+        "abs_z_gal_kpc": {
+          "coordinate": "abs_z_gal_kpc",
+          "insufficient": false,
+          "n_bins": 24,
+          "n_anom": 30,
+          "n_anom_total": 2555,
+          "smooth_model": {
+            "abs_z_gal_kpc": {
+              "order": 3,
+              "converged": true,
+              "coefficients": [
+                -0.21770318695929347,
+                -0.21139536791929836,
+                0.046081662282510004,
+                0.02389416616708922
+              ]
+            }
+          },
+          "max_abs_score": 3.5441886073735813,
+          "null_max_mean": 2.100445123346248,
+          "null_max_p95": 3.126369396892741,
+          "p_value": 0.009966777408637873,
+          "p": {
+            "p_value": 0.009966777408637873,
+            "p_floor": 0.0033222591362126247,
+            "floor_limited": false,
+            "n_null": 300,
+            "p_repr": "0.009967"
+          },
+          "coordinate_balance": {
+            "coordinate": "abs_z_gal_kpc",
+            "anomaly_mean": 1.4468889262860583,
+            "matched_null_mean": 1.4679390456715358,
+            "std_diff": -0.009344805006739896,
+            "quality": "good",
+            "note": "the tested coordinate is not matched on by design; residual imbalance here bounds the credibility of this specific test"
+          },
+          "floor_limited": false,
+          "p_repr": "0.009967",
+          "best_edge": {
+            "bin": 20,
+            "half_width_bins": 4,
+            "score": 3.5441886073735813,
+            "n_inside": 9.0,
+            "n_outside": 0.0,
+            "expected_inside": 5.813410272999441,
+            "expected_outside": 5.868200287530261,
+            "rho_inside": 1.5481446478671514,
+            "rho_outside": 0.0,
+            "position": 12.062012017210172,
+            "inner_range": [
+              1.6147826509264673,
+              12.062012017210172
+            ],
+            "outer_range": [
+              12.062012017210172,
+              18.175804042848227
+            ]
+          },
+          "significant": true,
+          "verdict": "OK",
+          "escalation": {
+            "n_null_final": 300,
+            "rounds": 0,
+            "capped": false
+          }
+        },
+        "shell_3d": {
+          "insufficient": false,
+          "n_centres": 67,
+          "n_radial_bins": 20,
+          "smooth_model": {
+            "R_gal_kpc": {
+              "order": 3,
+              "converged": true,
+              "coefficients": [
+                -0.10447333186923932,
+                1.4698162092201417,
+                0.057572204924485275,
+                -0.24106428157957532
+              ]
+            },
+            "abs_z_gal_kpc": {
+              "order": 3,
+              "converged": true,
+              "coefficients": [
+                -0.21770318695929347,
+                -0.21139536791929836,
+                0.046081662282510004,
+                0.02389416616708922
+              ]
+            }
+          },
+          "n_anom": 30,
+          "n_anom_total": 2555,
+          "max_abs_score": 4.311344579463437,
+          "null_max_mean": 3.3577639939146424,
+          "null_max_p95": 3.9005983386615752,
+          "p_value": 0.009966777408637873,
+          "p": {
+            "p_value": 0.009966777408637873,
+            "p_floor": 0.0033222591362126247,
+            "floor_limited": false,
+            "n_null": 300,
+            "p_repr": "0.009967"
+          },
+          "best_shell": {
+            "bin": 16,
+            "half_width_bins": 4,
+            "score": 4.311344579463437,
+            "n_inside": 10.0,
+            "n_outside": 0.0,
+            "expected_inside": 5.713254541500852,
+            "expected_outside": 8.758133155166,
+            "rho_inside": 1.7503158536628116,
+            "rho_outside": 0.0,
+            "centre": [
+              2102.250198758992,
+              -1594.9938174429763,
+              -1244.551313460292
+            ],
+            "radius": 13890.06067248626,
+            "inner_range": [
+              4374.943604380068,
+              13890.06067248626
+            ]
+          },
+          "floor_limited": false,
+          "p_repr": "0.009967",
+          "significant": true,
+          "verdict": "OK",
+          "escalation": {
+            "n_null_final": 300,
+            "rounds": 0,
+            "capped": false
+          }
+        },
+        "sky_cap": {
+          "insufficient": false,
+          "n_directions": 96,
+          "n_anom": 2555,
+          "n_anom_total": 2555,
+          "max_abs_score": 11.819769909652022,
+          "null_max_mean": 3.562901022004693,
+          "null_max_p95": 4.23824577832874,
+          "p_value": 0.00024993751562109475,
+          "p": {
+            "p_value": 0.00024993751562109475,
+            "p_floor": 0.00024993751562109475,
+            "floor_limited": true,
+            "n_null": 4000,
+            "p_repr": "<0.00025"
+          },
+          "best_cap": {
+            "bin": 15,
+            "half_width_bins": 3,
+            "score": -11.819769909652022,
+            "n_inside": 323.0,
+            "n_outside": 696.0,
+            "expected_inside": 425.8195981123504,
+            "expected_outside": 425.88025913608544,
+            "rho_inside": 0.7585371867144031,
+            "rho_outside": 1.6342621783218196,
+            "cap_centre_l_deg": 20.966612173618483,
+            "cap_centre_b_deg": 13.861949672048638,
+            "cap_radius_deg": 117.19651509322456,
+            "inner_range": [
+              102.043061330438,
+              117.19651509322456
+            ]
+          },
+          "floor_limited": true,
+          "p_repr": "<0.00025",
+          "significant": false,
+          "verdict": "FLOOR_LIMITED",
+          "escalation": {
+            "n_null_final": 4000,
+            "rounds": 2,
+            "capped": true
+          }
+        }
+      }
+    }
+  },
+  "covariate_resolution": {
+    "strict": {
+      "declared_by_channel": [
+        "g_mag",
+        "bp_rp",
+        "n_epochs"
+      ],
+      "requested": [
+        "g_mag",
+        "bp_rp",
+        "n_epochs",
+        "phot_g_mean_mag",
+        "dist_pc",
+        "ebv",
+        "log_local_density",
+        "n_obs"
+      ],
+      "used": [
+        "g_mag",
+        "bp_rp",
+        "n_epochs",
+        "dist_pc",
+        "log_local_density"
+      ],
+      "missing_from_parent": [
+        "phot_g_mean_mag",
+        "ebv",
+        "n_obs"
+      ],
+      "families_matched": {
+        "magnitude": "g_mag",
+        "distance": "dist_pc",
+        "colour": "bp_rp",
+        "extinction": null,
+        "crowding": "log_local_density",
+        "epochs": "n_epochs"
+      },
+      "warnings": [],
+      "essential_covariates_present": true
+    },
+    "permissive": {
+      "declared_by_channel": [
+        "g_mag",
+        "bp_rp",
+        "n_epochs"
+      ],
+      "requested": [
+        "g_mag",
+        "bp_rp",
+        "n_epochs",
+        "phot_g_mean_mag",
+        "ebv",
+        "log_local_density"
+      ],
+      "used": [
+        "g_mag",
+        "bp_rp",
+        "n_epochs",
+        "log_local_density"
+      ],
+      "missing_from_parent": [
+        "phot_g_mean_mag",
+        "ebv"
+      ],
+      "families_matched": {
+        "magnitude": "g_mag",
+        "distance": null,
+        "colour": "bp_rp",
+        "extinction": null,
+        "crowding": "log_local_density",
+        "epochs": "n_epochs"
+      },
+      "warnings": [],
+      "essential_covariates_present": true
+    }
+  },
+  "age": {
+    "verdict": "NO_AGE_PROXY",
+    "insufficient": true,
+    "note": "the parent sample carries no usable age proxy (no age, no [alpha/Fe], no proper motion, no radial velocity)"
+  },
+  "tests": {
+    "gradient:R_gal_kpc": {
+      "p_value": 0.0718562874251497,
+      "p_repr": "0.07186",
+      "floor_limited": false,
+      "insufficient": false,
+      "verdict": "OK",
+      "reason": null,
+      "n_anom": 30,
+      "n_anom_total": 2555,
+      "coordinate_balance": 0.27121984856035425,
+      "balance_quality": "poor",
+      "n_null": 500
+    },
+    "gradient:abs_z_gal_kpc": {
+      "p_value": 0.5508982035928144,
+      "p_repr": "0.5509",
+      "floor_limited": false,
+      "insufficient": false,
+      "verdict": "OK",
+      "reason": null,
+      "n_anom": 30,
+      "n_anom_total": 2555,
+      "coordinate_balance": -0.04705510779296396,
+      "balance_quality": "good",
+      "n_null": 500
+    },
+    "gradient:l_deg": {
+      "p_value": 0.00012498437695288088,
+      "p_repr": "<0.000125",
+      "floor_limited": true,
+      "insufficient": false,
+      "verdict": "FLOOR_LIMITED",
+      "reason": null,
+      "n_anom": 2555,
+      "n_anom_total": 2555,
+      "coordinate_balance": 0.16795078798668867,
+      "balance_quality": "marginal",
+      "n_null": 8000
+    },
+    "edge:R_gal_kpc": {
+      "p_value": 0.19933554817275748,
+      "p_repr": "0.1993",
+      "floor_limited": false,
+      "insufficient": false,
+      "verdict": "OK",
+      "reason": null,
+      "n_anom": 30,
+      "n_anom_total": 2555,
+      "coordinate_balance": 0.27121984856035425,
+      "balance_quality": "poor",
+      "n_null": 300
+    },
+    "edge:abs_z_gal_kpc": {
+      "p_value": 0.009966777408637873,
+      "p_repr": "0.009967",
+      "floor_limited": false,
+      "insufficient": false,
+      "verdict": "OK",
+      "reason": null,
+      "n_anom": 30,
+      "n_anom_total": 2555,
+      "coordinate_balance": -0.04705510779296396,
+      "balance_quality": "good",
+      "n_null": 300
+    },
+    "edge:shell_3d": {
+      "p_value": 0.00024993751562109475,
+      "p_repr": "<0.00025",
+      "floor_limited": true,
+      "insufficient": false,
+      "verdict": "FLOOR_LIMITED",
+      "reason": null,
+      "n_anom": 30,
+      "n_anom_total": 2555,
+      "coordinate_balance": null,
+      "balance_quality": null,
+      "n_null": 4000
+    },
+    "edge:sky_cap": {
+      "p_value": 0.00024993751562109475,
+      "p_repr": "<0.00025",
+      "floor_limited": true,
+      "insufficient": false,
+      "verdict": "FLOOR_LIMITED",
+      "reason": null,
+      "n_anom": 2555,
+      "n_anom_total": 2555,
+      "coordinate_balance": null,
+      "balance_quality": null,
+      "n_null": 4000
+    }
+  },
+  "independence": {
+    "pairwise_jaccard": {
+      "edge:R_gal_kpc|edge:abs_z_gal_kpc": 0.1765,
+      "edge:R_gal_kpc|edge:shell_3d": 0.2105,
+      "edge:R_gal_kpc|edge:sky_cap": 0.0182,
+      "edge:abs_z_gal_kpc|edge:shell_3d": 0.7,
+      "edge:abs_z_gal_kpc|edge:sky_cap": 0.0061,
+      "edge:shell_3d|edge:sky_cap": 0.006
+    },
+    "groups": [
+      [
+        "edge:R_gal_kpc"
+      ],
+      [
+        "edge:abs_z_gal_kpc",
+        "edge:shell_3d"
+      ],
+      [
+        "edge:sky_cap"
+      ]
+    ],
+    "n_independent_groups": 3,
+    "threshold": 0.5,
+    "note": "edge geometries whose firing anomaly sets overlap above the threshold are counted once; identical p-values across 'independent' geometries usually mean one feature"
+  },
+  "n_tests_run": 7,
+  "n_tests_usable": 7,
+  "n_tests_resolved": 4,
+  "n_effective_independent_tests": 3,
+  "insufficient_tests": {},
+  "floor_limited_tests": {
+    "gradient:l_deg": "<0.000125",
+    "edge:shell_3d": "<0.00025",
+    "edge:sky_cap": "<0.00025"
+  },
+  "p_values": {
+    "gradient:R_gal_kpc": 0.0718562874251497,
+    "gradient:abs_z_gal_kpc": 0.5508982035928144,
+    "gradient:l_deg": 0.00012498437695288088,
+    "edge:R_gal_kpc": 0.19933554817275748,
+    "edge:abs_z_gal_kpc": 0.009966777408637873,
+    "edge:shell_3d": 0.00024993751562109475,
+    "edge:sky_cap": 0.00024993751562109475
+  },
+  "p_values_repr": {
+    "gradient:R_gal_kpc": "0.07186",
+    "gradient:abs_z_gal_kpc": "0.5509",
+    "gradient:l_deg": "<0.000125",
+    "edge:R_gal_kpc": "0.1993",
+    "edge:abs_z_gal_kpc": "0.009967",
+    "edge:shell_3d": "<0.00025",
+    "edge:sky_cap": "<0.00025"
+  },
+  "best_test": "edge:abs_z_gal_kpc",
+  "best_p": 0.009966777408637873,
+  "best_p_family_corrected": 0.02960331233647162,
+  "best_p_trials_corrected": 0.02960331233647162,
+  "verdict_gates": {
+    "any_resolved_test": true,
+    "family_p_below_alpha": true,
+    "not_floor_limited": true,
+    "tested_coordinate_balanced": true,
+    "essential_covariates_present": true,
+    "anomaly_population_vetted": false,
+    "sufficient_anomalies_in_winning_test": true
+  },
+  "failed_gates": [
+    "anomaly_population_vetted"
+  ],
+  "result": "STRUCTURE_UNVETTED_POPULATION [AT_SYSTEMATICS_FLOOR]",
+  "detection": false,
+  "result_explanation": "significant, but the anomaly set is a bare score percentile rather than a vetted candidate list; most likely traces the survey rather than the sky",
+  "population_caveat": "the dimming secular-fade score sits at the ZTF systematics floor (STATUS.md: 19 marginal faders, 18 of 19 not band-confirmed); structure in its top percentile most plausibly traces survey footprint/cadence/depth\n"
+}

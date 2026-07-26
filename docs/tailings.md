@@ -894,7 +894,149 @@ quietly reverted or quietly widened further.
 cut. That is a sensitivity limit, not a rule defect, and it is the correct
 behaviour: the channel says where it can and cannot see.
 
-## 8. Stated limitations
+## 8. The first real-data run, and what the rate actually says
+
+The first run to reach data (GALAH DR4 **73,820** cool dwarfs + APOGEE DR17
+**137,047** = **210,867** stars) returned **4,514 sparse and 2,100 vetted
+survivors — 1.0% of the sample.**
+
+**That number refutes itself as a discovery, and saying so is the result.**
+Griffith et al. 2022 found **15** single-element Na stars in **82,910** GALAH
+stars: a rate of **1.8 × 10⁻⁴**. TAILINGS is flagging **~55× more**. Griffith's
+own contamination budget for large residuals is ~40% physical / ~60% data
+problems. An artificial photospheric marker in one star in a hundred is not a
+detection; it is the **systematics floor of the statistic**, and the channel's
+honest primary output is therefore not a candidate list but the curve of
+*surviving rate versus threshold* (`threshold_sweep`, written per survey as
+`results/tailings/threshold_sweep_<survey>.csv`, carrying
+`rate_over_griffith` explicitly so a count can never be quoted without its rate).
+
+### The population is non-Gaussian tail, not chance
+
+Under a **pure-noise null** — independent Gaussian z per element, 20 elements
+per star — the shipped rules produce **exactly zero** sparse candidates. Not a
+small number: zero. So the 1,341 GALAH sparse candidates are **entirely
+non-Gaussian tail**. Nothing about them is explained by counting statistics;
+they are the survey's error model.
+
+### And the element identity says the same thing
+
+Of GALAH's 1,341 sparse candidates, **K carries 528 and Y carries 249 — 58% in
+two elements**, both few-line species with the largest intrinsic measurement
+scatter (Bedell: 0.03–0.06 dex for few-line species against ~0.01 dex for
+well-measured ones). A real refining signature has no reason to prefer
+potassium and yttrium; a measurement floor has every reason to.
+
+### The uncomfortable part: tightening alone does not fix it
+
+Measured on the injection harness, recovery of the Griffith 15 against the
+false-positive rate:
+
+| `z_flag` | Griffith recovery | FP rate | × Griffith rate |
+|---|---|---|---|
+| 5.0 (shipped) | **12.3/15** | 6.7 × 10⁻⁴ | 3.7 |
+| 6.0 | 10.7/15 | 3.9 × 10⁻⁴ | 2.2 |
+| 7.0 | 7.8/15 | 2.5 × 10⁻⁴ | 1.4 |
+| 8.0 | 5.0/15 | 1.4 × 10⁻⁴ | 0.8 |
+| 10.0 | 1.5/15 | 0 | 0 |
+
+**No amplitude threshold satisfies both constraints at once.** The threshold
+that reaches the published rate (≈8) recovers only a third of the positive
+control; the threshold that recovers the control sits ~4× above the published
+rate — and that is on *synthetic Gaussian* data. On the real data the rate is
+1.0 × 10⁻², another **15× worse**, because real residual tails are far heavier
+than the harness models.
+
+The conclusion follows and must not be softened: **the Griffith-scale population
+lies inside the systematics population, not above it. Amplitude cannot separate
+them.** This is the same structural problem the ISOTHERM channel has with the
+190 K debris locus, in a different observable — and the answer is the same in
+form: the discriminating power has to come from something orthogonal to
+amplitude. Here that is **element identity** (few-line species carry the floor)
+and the **instrumental covariate vetoes** (RV, fibre, field, detector position),
+not a tighter cut. Any future version of this channel should be built on those
+axes, with amplitude as a necessary but grossly insufficient condition.
+
+### Four independent lines of evidence, all pointing the same way
+
+Full numbers in `results/tailings/systematics_diagnostic.json`.
+
+**(a) Concentration.** 74.1% of all 4,514 sparse candidates (GALAH 84.8%,
+APOGEE 69.5%) are carried by few-line species: GALAH K 39.4% + Y 18.6%,
+APOGEE Na 49.8% + Cr 22.4%. The data-internal version is stronger — **not one
+element in either survey has a run-measured median residual width below 0.028
+dex**. All 17 APOGEE and 23/25 GALAH species sit at or above Bedell's *few-line*
+floor (0.03–0.06 dex); none is near the ~0.01 dex well-measured floor. APOGEE
+Na, the single largest carrier, has a residual width of **0.22 dex**. The
+denominator of every z-score is set by measurement systematics.
+
+**(b) Sign-locking.** The candidates are sign-locked **by element, not by star**:
+GALAH Y is 98.4% *excess* while Al is 97.8% *deficit*; APOGEE Na is 99.8%
+deficit, V 99.1%, Cr 98.7%, and APOGEE overall is 92.5% deficits. Ten of eleven
+GALAH elements with ≥20 candidates are ≥80/20 one-signed. **No enrichment or
+refining process has a preferred sign, and TAILINGS is sign-agnostic by
+construction** — line loss depresses an abundance, an unrecognised blend
+inflates it. This is per-element pipeline pathology.
+
+**(c) A live Weinberg artefact.** On APOGEE, K-carried candidates are enhanced
+**4.03× over an (Fe/H, Teff)-matched control in −110 to −60 km/s (p = 2.7 ×
+10⁻¹⁰)**, across five contiguous 10 km/s bins, and **28 of the 29 K anomalies in
+that window are deficits** — a telluric eating the 7699 Å line. That is
+Weinberg's low-K population, reproduced. **The pipeline vetoed none of them**
+(fixed; see below).
+
+**(d) No independent-noise model fits.** The Gaussian null predicts **0.59**
+(GALAH) and **0.41** (APOGEE) sparse stars against 1,341 and 3,173 observed —
+excesses of **2,271× and 7,718×**. Matching the rate needs Student-t with
+dof ≈ 7.3 / 4.6, but matching the `z_max` distribution directly needs dof
+*falling* from 6.2 → 4.1 as the threshold rises, so no single t fits. And no
+independent model of any dof reproduces the observed sparse/dense ratio (0.52
+and 1.30 observed, ≥ 2.4 for every model tested): the residuals are
+**element-correlated as well as heavy-tailed**.
+
+### Two veto bugs this exposed, both fixed
+
+* **A veto that could not run was reporting "pass".** The GALAH FITS route
+  carries no `rv` and no `fiber` column, so `rv_flag_ratio` and
+  `fiber_flag_ratio` were 100% null for all 1,341 candidates while
+  `pass_rv_rate` and `pass_fiber_rate` read `True` — **True by default, not by
+  test** — on the survey whose dominant carrier is K, the exact Weinberg failure
+  mode. Untested vetoes now set `<name>_rate_untested` with a reason.
+* **The covariate veto was structurally blind to tellurics.**
+  `covariate_rate_veto` uses 12 equal-population quantile bins over the full
+  ±200 km/s range, so a ~20 km/s absorption window is diluted into a bin of
+  ordinary stars: the observed `rv_flag_ratio` spanned only 0.81–1.32 against a
+  threshold of 5.0. Not un-triggered — **un-triggerable**. Added
+  `covariate_window_veto`, a per-element sliding-window scan (the artefact is
+  element-locked because the offending *line* is, and pooling elements averages
+  it away), with a clean null control.
+
+### Coverage gap: the co-natal test got nothing
+
+`twins: n_pairs: 0` — **no wide binary had both components in the spectroscopic
+sample.** S15 was not tested at all. This is a *coverage* statement, not a null:
+the differential co-natal test is the one measurement that would break the
+degeneracy above, because a pair of co-natal stars cancels the manifold
+systematics that dominate the single-star statistic. The engulfment-ceiling
+thresholds it would apply are unchanged and still stated in §3.6: **>0.3 dex in
+a G dwarf is unexplainable by engulfment at any mass, and a single-element
+excess is unexplainable at any amplitude.** Getting pairs into the sample —
+by cross-matching El-Badry's catalogue against GALAH/APOGEE *before* the
+cool-dwarf cut rather than after — is the highest-value next step.
+
+### Acquisition provenance
+
+`DEGRADED_SOURCE (GALAH->GALAH_DR4_allstar_cloud)`: the pull fell back from the
+canonical Data Central path to the `cloud.datacentral.org.au` mirror, which was
+the only GALAH host that answered (the `_dc` and `_flat` variants all 404). The
+file is the genuine `galah_dr4_allstar_240705.fits` (757,998,720 bytes), so
+"degraded" here means *route*, not content. The 73,820 stars used against DR4's
+~917,588 spectra is the intended cool-dwarf selection chain (Teff 4000–6000 K,
+log g > 4.0, SNR > 40, [Fe/H] > −1), reported stage by stage in
+`provenance.json` under `stage_counts` (`rows_in_file` → `rows_after_selection`
+→ `rows_normalised`).
+
+## 9. Stated limitations
 
 * **An iron-only anomaly is invisible by construction.** The manifold
   conditions on [Fe/H], so a star whose only anomaly is iron is absorbed into

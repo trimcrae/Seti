@@ -629,7 +629,7 @@ def test_a_corpus_with_no_usable_spectra_is_not_a_clean_null(tmp_path):
     import pandas as pd
 
     from seti.config import load_config
-    from seti.isotherm.run import score
+    from seti.isotherm.run import score_and_write
 
     cfg = load_config()
     cfg.root = tmp_path
@@ -642,8 +642,8 @@ def test_a_corpus_with_no_usable_spectra_is_not_a_clean_null(tmp_path):
     # Every row indexed, none with a spectrum.
     none_usable = pd.DataFrame({"name": [f"s{i}" for i in range(20)],
                                 "verdict": ["INSUFFICIENT_DATA"] * 20})
-    s = score(cfg, none_usable, sensitivity=None, probe=probe, corpus_n=20)
-    assert s["verdict"] == "NO_SPECTRA_REACHED"
+    s = score_and_write(cfg, none_usable, probe=probe, corpus_n=20)
+    assert s["verdict"] == "NO_SPECTRAL_ARCHIVE_REACHED"
     assert s["funnel"]["n_with_usable_spectrum"] == 0
     assert s["funnel"]["n_insufficient_data"] == 20
 
@@ -651,6 +651,26 @@ def test_a_corpus_with_no_usable_spectra_is_not_a_clean_null(tmp_path):
     usable = pd.DataFrame({"name": [f"s{i}" for i in range(20)],
                            "verdict": ["REJECTED_NATURAL"] * 18
                                       + ["INSUFFICIENT_DATA"] * 2})
-    s2 = score(cfg, usable, sensitivity=None, probe=probe, corpus_n=20)
+    s2 = score_and_write(cfg, usable, probe=probe, corpus_n=20)
     assert s2["verdict"] == "no_shape_anomaly_in_corpus"
     assert s2["funnel"]["n_with_usable_spectrum"] == 18
+    # The funnel must not claim a full shape analysis on rows that had no
+    # spectrum: n_full_shape_analysis + n_insufficient_data <= n_analysed.
+    assert s2["funnel"]["n_full_shape_analysis"] == 18
+    assert s["funnel"]["n_full_shape_analysis"] == 0
+
+
+def test_sensitivity_recovery_requires_matching_temperatures():
+    """`recovered` must not be keyed on component count alone."""
+    from seti.isotherm.run import _temps_match
+
+    true = [600.0, 400.0, 266.667]
+    # The exact false positive from run 30211326404: 3 components, none real.
+    n, _ = _temps_match(true, [282.7, 522.6, 2999.6], 0.15)
+    assert n < 3, "an invented 3000 K component must not count as recovery"
+    # A genuine recovery.
+    n_ok, err = _temps_match(true, [598.9, 399.7, 266.7], 0.15)
+    assert n_ok == 3 and err < 0.05
+    # One fitted component may not claim two true temperatures.
+    n_dup, _ = _temps_match(true, [600.0, 600.0, 600.0], 0.15)
+    assert n_dup == 1

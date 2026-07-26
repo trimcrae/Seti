@@ -109,6 +109,63 @@ def stage_acquire(cfg: Config, *, surveys: list[str], max_rows: int, out_dir: Pa
 # ---------------------------------------------------------------------------
 # Stage 2/3 -- manifold and the sparse statistic
 # ---------------------------------------------------------------------------
+#: The only published population with this channel's morphology: Griffith et
+#: al. 2022 (ApJ 931, 23) found 15 single-element Na stars in 82,910 GALAH
+#: stars. Any threshold whose surviving rate sits far above this is measuring
+#: the survey error model, not the sky.
+GRIFFITH_RATE = 15 / 82910          # 1.81e-4
+
+
+def threshold_sweep(Z: pd.DataFrame, cfg, *,
+                    z_flags=(5.0, 6.0, 7.0, 8.0, 10.0, 12.0),
+                    quiet_sigmas=(0.0, 1.0, 2.0),
+                    contrasts=(3.0, 5.0, 8.0)) -> pd.DataFrame:
+    """Surviving sparse rate as a function of threshold. THE calibration curve.
+
+    A raw candidate count means nothing without the rate it implies. The run on
+    real data flagged 2,100 vetted sparse anomalies in 210,867 stars -- **1.0%**
+    -- against Griffith et al.'s 1.8e-4 for the one published population with
+    this morphology. A 55x excess cannot be astrophysical: an artificial
+    photospheric marker in one star in a hundred is not a discovery, it is the
+    systematics floor of the statistic.
+
+    So the channel's honest primary output is not a candidate list but this
+    curve: where the sparse rate crosses the published scale, and whether a
+    threshold that gets there still recovers the positive control. It is
+    computed on the real z-matrix at reduce time, so it costs one pass and can
+    never be quoted from a different sample than the candidates were.
+    """
+    from dataclasses import replace
+
+    rows = []
+    n = int(len(Z))
+    for zf in z_flags:
+        for qs in quiet_sigmas:
+            for mc in contrasts:
+                c = replace(cfg, z_flag=float(zf), quiet_excess_sigma=float(qs),
+                            min_contrast=float(mc))
+                st = S.sparse_statistics(Z, cfg=c)
+                lab = st["classification"].to_numpy()
+                n_sp = int((lab == S.SPARSE).sum())
+                n_dn = int((lab == S.DENSE).sum())
+                rate = n_sp / n if n else float("nan")
+                rows.append({
+                    "z_flag": float(zf),
+                    "quiet_excess_sigma": float(qs),
+                    "min_contrast": float(mc),
+                    "family_max_mean_z": float(c.family_max_mean_z),
+                    "n_stars": n,
+                    "n_sparse": n_sp,
+                    "n_dense": n_dn,
+                    "sparse_rate": rate,
+                    "sparse_over_dense": (n_sp / n_dn) if n_dn else float("nan"),
+                    # How far the surviving rate sits from the only published
+                    # rate for this morphology. ~1 is the defensible regime.
+                    "rate_over_griffith": rate / GRIFFITH_RATE if n else float("nan"),
+                })
+    return pd.DataFrame(rows)
+
+
 def reduce_survey(
     stars: pd.DataFrame,
     *,
@@ -172,6 +229,8 @@ def reduce_survey(
     stats = S.sparse_statistics(Z, cfg=scfg)
     rates = S.element_flag_rates(stats, Z, cfg=scfg)
     contrast = S.contrast_table(stats)
+    sweep = threshold_sweep(Z, scfg)
+    sweep.to_csv(out_dir / f"threshold_sweep_{survey.lower()}.csv", index=False)
 
     pd.DataFrame(mani.to_summary()).to_csv(out_dir / f"manifold_{survey.lower()}.csv", index=False)
     rates.to_csv(out_dir / f"element_flag_rates_{survey.lower()}.csv", index=False)
@@ -196,6 +255,11 @@ def reduce_survey(
         # Instrumental covariates: a real anomaly has no reason to correlate
         # with the star's radial velocity or its fibre; a telluric or bad-pixel
         # artifact does, sharply.
+        # Quantile bins catch a broad drift; a telluric is NARROW and needs a
+        # sliding-window scan per element, or it is diluted to invisibility.
+        for cov in ("rv", "fiber"):
+            if cov in cand.columns:
+                cand = V.covariate_window_veto(cand, covariate_col=cov)
         for cov, lab in (("rv", "rv"), ("fiber", "fiber"), ("rv_scatter", "rvscatter")):
             cand = V.covariate_rate_veto(cand, joined, flagged_mask,
                                          covariate_col=cov, label=lab, cfg=vcfg)

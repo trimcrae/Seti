@@ -50,7 +50,18 @@ Two vetoes beyond the counting rule
    if its nucleosynthetic siblings are all leaning the same way at 2-3 sigma,
    that is a family event caught early, not a sparse one. The mean |z| over the
    *other* members of the flagged element's family is required to be small.
-2. **Naturally sparse elements are excluded.** Lithium varies by orders of
+2. **The quiet elements are the evidence, not the loud one.** Huang, Tao &
+   Zhang (2026) showed quantitatively, for polluted white dwarfs, that a
+   record with only one or two *measured* elements can produce a large Bayes
+   factor while being information-starved -- their high-evidence one- and
+   two-element records are the ones they then disqualify. That criticism is
+   real and it is the reason ``n_quiet`` (elements measured and inside
+   ``z_quiet``) is carried as a first-class statistic. Their low-N_det records
+   are cases where the other elements were **never measured**; here the other
+   ~20-30 elements are measured *and quiet*, and it is exactly that
+   information which their archival compilation lacks. A candidate is only as
+   strong as its ``n_quiet``.
+3. **Naturally sparse elements are excluded.** Lithium varies by orders of
    magnitude among otherwise identical cool dwarfs through convective
    depletion; C and N are pipeline-fragile and evolutionarily mixed. A known
    single-element variable cannot be evidence for an unknown one. They are
@@ -223,6 +234,7 @@ def sparse_statistics(
                 "element_second": el_second,
                 "n_discrepant": n_disc,
                 "n_active": n_active,
+                "n_quiet": m - n_active,
                 "z_rest_rms": z_rest_rms,
                 "z_background_rms": z_background_rms,
                 "contrast": contrast,
@@ -252,6 +264,7 @@ def _empty_row(cfg: SparseConfig) -> dict:
         "element_second": None,
         "n_discrepant": 0,
         "n_active": 0,
+        "n_quiet": 0,
         "z_rest_rms": float("nan"),
         "z_background_rms": float("nan"),
         "contrast": float("nan"),

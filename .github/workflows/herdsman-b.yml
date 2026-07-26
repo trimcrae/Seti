@@ -1,0 +1,67 @@
+name: herdsman-b
+
+# HERDSMAN-B — completed-assembly audit ("impossible clusters"):
+# census-wide chemical-coherence test of Hunt & Reffert cluster membership
+# against Gaia DR3 GSP-Phot metallicities (docs/herdsman.md section 5).
+# Single job, but every stage checkpoints to disk (membership parquet,
+# per-chunk chemistry parquets, field parquet), so a re-run resumes at the
+# chunk where a kill happened; scores/report are committed back, bulk
+# parquets travel only as artifacts.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Stage to run (catalog|chem|field|score|all)"
+        required: false
+        default: "all"
+
+permissions:
+  contents: write
+
+jobs:
+  herdsman-b:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import pyvo, astroquery, pyarrow; print('imports OK')"
+      - name: Run census audit
+        run: |
+          python -m seti.cli herdsman-b --stage ${{ github.event.inputs.stage || 'all' }}
+          echo "=== summary ==="
+          cat results/herdsman_b/summary.json || true
+      - name: Commit results (scores + report only; parquets stay artifacts)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/herdsman_b/cluster_scores.csv \
+                        results/herdsman_b/candidates.json \
+                        results/herdsman_b/summary.json \
+                        results/herdsman_b/REPORT.md 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "herdsman-b: completed-assembly census audit results"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: herdsman-b-outputs
+          path: results/herdsman_b/
+          if-no-files-found: warn

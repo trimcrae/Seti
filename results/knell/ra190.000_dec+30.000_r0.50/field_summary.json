@@ -1,0 +1,84 @@
+{
+  "field": "ra190.000_dec+30.000_r0.50",
+  "ra": 190.0,
+  "dec": 30.0,
+  "radius_deg": 0.5,
+  "verdict": "SEARCHED",
+  "n_sources_paired": 329,
+  "n_testable": 295,
+  "n_triaged_out_never_periodic": 257,
+  "n_fully_analysed": 38,
+  "n_one_band_cessation": 0,
+  "n_candidates": 0,
+  "band_status_counts": {
+    "g": {
+      "no_clean_transition": 20,
+      "never_periodic": 11,
+      "faded_or_brightened": 4,
+      "low_efficiency": 3
+    },
+    "r": {
+      "no_clean_transition": 25,
+      "faded_or_brightened": 7,
+      "low_efficiency": 6
+    }
+  },
+  "acquisition": {
+    "stages": [
+      {
+        "stage": "irsa_ztf_service_probe",
+        "status": "QUERY_FAILED",
+        "rows": 0,
+        "query": "one 0.003 deg cone at (180, +20), r band",
+        "error": "ReadTimeout(ReadTimeoutError(\"HTTPSConnectionPool(host='irsa.ipac.caltech.edu', port=443): Read timed out. (read timeout=30.0)\"))",
+        "detail": "ReadTimeout(ReadTimeoutError(\"HTTPSConnectionPool(host='irsa.ipac.caltech.edu', port=443): Read timed out. (read timeout=30.0)\"))"
+      },
+      {
+        "stage": "ztf_region_2band",
+        "status": "OK",
+        "rows": 329,
+        "query": "IRSA ZTF light curves, g+r, centre=(190.00000,30.00000), {'radius_deg': 0.5, 'box_deg': 0.12, 'min_epochs': 80, 'time_budget_s': 2400.0, 'max_boxes': None}",
+        "elapsed_s": 2517.4
+      }
+    ],
+    "n_stages": 2,
+    "n_ok": 1,
+    "n_query_failed": 1,
+    "n_query_returned_zero_rows": 0,
+    "any_query_failed": true,
+    "total_rows": 329
+  },
+  "config": {
+    "season": {
+      "season_days": 365.25,
+      "min_epochs_block": 15,
+      "min_blocks": 4,
+      "block_mode": "fixed"
+    },
+    "period": {
+      "min_period": 0.05,
+      "max_period": 100.0,
+      "oversample": 5.0
+    },
+    "detect": {
+      "fap": 0.01,
+      "n_null": 200,
+      "n_trials": 200,
+      "eta_min": 0.9,
+      "p_persist_max": 0.01,
+      "min_pre_blocks": 2,
+      "min_post_blocks": 2,
+      "min_post_span_days": 500.0,
+      "mean_shift_max_mag": 0.05,
+      "post_amp_sigma_max": 3.0,
+      "drop_sigma_min": 5.0,
+      "pdm_p_pre_max": 0.01,
+      "pdm_p_post_min": 0.05,
+      "pdm_null": 100,
+      "var_drop_frac": 0.35,
+      "fap_triage": 0.05,
+      "n_null_triage": 60
+    }
+  },
+  "methodology_note": "cessation is established INTRA-SURVEY (ZTF's own early seasons against its own late seasons, in both g and r), and every claimed non-detection is scored against the injection-measured detection efficiency for that star's own period and amplitude in that block's own sampling and noise.  Without that normalisation the statistic measures survey cadence, not astrophysics."
+}

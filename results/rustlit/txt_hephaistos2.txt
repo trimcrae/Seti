@@ -1,0 +1,2078 @@
+arXiv:2405.08657v1 [eess.IV] 14 May 2024
+
+Self-supervised learning improves robustness of deep
+learning lung tumor segmentation to CT imaging
+differences
+Jue Jiang, Aneesh Rangnekar, Harini Veeraraghavan ∗
+May 15, 2024
+
+Abstract
+Background: Self-supervised learning (SSL) is an approach to extract useful feature representations from unlabeled data, and enable fine-tuning on downstream tasks
+with limited labeled examples. Self-pretraining is a SSL approach that uses the curated
+task dataset for both pretraining the networks and fine-tuning them. Availability of
+large, diverse, and uncurated public medical image sets provides the opportunity to
+apply SSL in the ”wild” and potentially extract features robust to imaging variations.
+However, the benefit of wild- vs self-pretraining has not been studied for medical image
+analysis.
+Purpose: Compare robustness of wild versus self-pretrained transformer (vision transformer [ViT] and hierarchical shifted window [Swin]) models to computed tomography
+(CT) imaging differences for non-small cell lung cancer (NSCLC) segmentation.
+Methods: Transformer models (ViT and Swin) were pretrained with SSL wild- approach with 10,000 unlabeled and uncurated CTs sourced from The Cancer Imaging
+Archive and internal datasets. Self-pretraining was applied to same architectures using
+a curated public task dataset (n = 377) of patients with NSCLC. Both pretraining approaches were performed using pretext tasks introduced in self-distilled masked image
+transformer approach. All models were fine-tuned to segment NSCLC (n = 377 training dataset) and tested on two separate datasets containing early (public N = 156) and
+late stage (internal N = 196) NSCLC. Models were evaluated in terms of: (a) accuracy,
+(b) robustness to image differences from contrast, slice thickness, and reconstruction
+kernels, and (c) impact of pretext tasks for pretraining. Feature reuse was evaluated
+using centered kernel alignment.
+Results: Wild-pretrained Swin models outperformed self-pretrained Swin for the various imaging acquisitions. ViT resulted in similar accuracy for both wild- and selfpretrained models. Masked image prediction pretext task that forces networks to learn
+∗
+
+The manuscript has been submitted on XXX, 2024 for review. This work was partially supported by
+the NCI R01CA258821 and the MSK Cancer Center core grant P30 CA008748. Jue Jiang and Harini
+Veeraraghavan contributed equally. All authors are with the Department of Medical Physics, Memorial
+Sloan Kettering Cancer Center, NY, New York, USA.(e-mail: jiangj1@mskcc.org and veerarah@mskcc.org)
+
+1
+
+the local structure resulted in higher accuracy compared to contrastive task that models global image information. Wild-pretrained models resulted in higher feature reuse
+at the lower level layers and feature differentiation close to output layer after finetuning.
+Conclusion: Wild-pretrained networks were more robust to analyzed CT imaging differences for lung tumor segmentation than self-pretrained methods. Swin architecture
+benefited from such pretraining more than ViT.
+
+I.
+
+Introduction
+
+Self-supervised learning (SSL) has emerged as a promising approach to train large deep
+learning (DL) models in both computer vision and medical image analysis applications,
+especially when labeled data for various tasks are limited. This is because, SSL can be used
+to pretrain the model with unlabeled instances, following which it can be fine-tuned with
+relatively few labeled examples from downstream task datasets. Pretraining with unlabeled
+instances with SSL is made possible by the use of pretext tasks, whereby supervised tasks
+are created to make use of the unlabeled data as ‘ground truth’. Examples of such pretext
+tasks include prediction of masked image portions 1,2 , masked image reconstruction 3 , jigsaw
+puzzles 4,5 , as well as combination of contrastive and image reconstruction losses 6,7 .
+Self-pretraining is a commonly used SSL approach for medical images, wherein the taskspecific curated dataset is used to pretrain the model without exposing the labels, and then
+subsequently used with the labels to fine-tune the model using supervised training 4,8,9 . SSL
+pretraining in the ‘wild’ is a different approach, wherein large and diverse datasets that
+are uncurated and unrelated to task are used to pretrain the model without labels. Wildpretraining with massive unlabeled datasets forms the basis of training high-capacity foundation models 10,11 , and has demonstrated effectiveness for natural image analysis 12 . Opensource datasets from the Cancer Imaging Archive (TCIA) 13 have been used to successfully
+pretrain medical image models and then successfully applied to multi-organ segmentation
+following fine-tuning with relatively few examples 2,3,14–16 . A key difference between selfand wild-pretraining is that the former approach uses curated task-specific datasets to learn
+feature representations as opposed to the latter that seeks to extract feature representations
+from uncurated and large datasets.
+The premise for using wild-pretraining is that models trained with images with substantial imaging variations would extract universally applicable feature representations that
+lead to robustly accurate models for clinical and multi-institutional research studies. However, these relative merits of wild-pretraining over self-pretraining in terms of robustness to
+imaging acquisition differences has not been studied, particularly for tumor segmentation.
+Tumor segmentation is interesting in this context because uncurated datasets may not contain sufficient or even any representation of the studied tumor in the pretraining dataset
+as opposed to task-specific datasets used for self-pretraining that contain the specific tumor
+types.
+In addition to the training strategy, the choice of network architectures can also influence
+2
+
+accuracy due to the differences in the inductive bias contained in the network. For instance,
+vision transformer (ViT), which uses a sequence of image tokens obtained by tokenization of
+non-overlapping input image patches, has the lowest inductive bias as it eliminates all relative
+spatial and local relationships. Hierarchical shifted window transformer (Swin) adds back
+some of the inductive bias by employing cross-window attention and hierarchical scaling.
+Convolutional neural network (CNN) has the highest inductive bias as it maintains the
+spatial locality of the images along the different feature layers. Hence, we analyzed ViT,
+Swin, and a CNN-based non-skip U-Net to assess the potential benefits of the two pretraining
+strategies for these architectures.
+Finally, we studied why accuracy differences occur by performing feature reuse analysis
+using centered kernel alignment (CKA). CKA provides insights into what extent the features
+in the different layers were modified as result of fine-tuning. Higher feature reuse in the
+lower level layers has shown to impart improved accuracy on downstream tasks on computer
+vision 17 and medical image analysis tasks 12 .
+Our contributions are: (a) Comparative analysis of different SSL-based wild-pretraining
+and self-pretraining applied to three common architectures, a ViT, Swin, and a U-Net-based
+CNN for lung tumor segmentation, (b) analysis of robustness to CT acquisition differences
+due to the two SSL pretraining for the individual architectures; we evaluated the performance
+of the various models on an open-source CT lung tumor phantom dataset to assess their
+capability to segment images that are different from real patient scans. And (c) we studied
+how feature reuse was influenced by SSL pretext tasks as well as the choice of network and
+its impact on downstream accuracy.
+To our best knowledge, this is the first study to evaluate the relative benefits of wild
+vs. self-pretraining and further our understanding of how and why segmentation robustness
+to CT imaging variations occurs from such methods. Understanding the relative merits of
+the pretraining methods could inform the development of pretrained models in clinical and
+research use as well as understand the implications of such models when deployed in clinical
+practice.
+
+II.
+
+Methods
+
+II.A.
+
+Background terminology
+
+• Self-supervised learning (SSL): An unsupervised machine learning approach that
+creates pretext tasks that use the unlabeled data as the ”ground truth” to extract
+useful features that are then applicable to downstream tasks.
+• Self-pretraining: A SSL approach that applies unsupervised pretraining on the same
+curated task-specific dataset that is to be used for supervised fine-tuning.
+• Wild-pretraining: An unsupervised pretraining approach applied with large and relatively uncurated datasets that do not share the same characteristics (disease, disease
+3
+
+Table 1: Summary of wild- pretraining, self-pretraining, fine-turning, and testing datasets. †:
+used in self-pretraining and subset of 316 CTs was included in standard pretraining. Recon
+1 kernels: GE ”standard” and ”bone”, Siemens with < B40; Recon 2: GE ”Bone Plus”,
+Siemens with ≥ B40 and < B50; Recon 3: GE ”Lung”, Siemens ≥ B50.
+Data
+
+Location
+
+Number Manufacturer
+
+Thickness
+
+Kernels
+
+Contrast Information
+
+MELA 2022 18
+
+Chest
+
+880
+
+NA
+
+1 mm
+
+NA
+
+contrast, non-contrast
+
+AMOS 2022 19
+
+Chest-Abd-pelvis 360
+
+NA
+
+5 mm to 7.5 mm NA
+
+contrast, non-contrast
+
+COVID-19 20
+
+Chest
+
+NA
+
+5 mm
+
+Wild-pretraining
+
+609
+
+KITS 21
+
+Abdomen-pelvis
+
+411
+
+Pancreas CT 22
+
+Chest-Abdomen
+
+80
+
+Internal 1 Radiotherapy Chest
+Internal 2 Radiotherapy Head and neck
+
+Siemens,
+
+NA
+
+contrast, non-contrast
+arterial, late,
+
+3 mm
+
+smooth
+
+NA
+
+1 mm to 5mm
+
+NA
+
+contrast, non-contrast
+
+5,124
+
+GE
+
+3 mm to 5 mm
+
+smooth, sharp
+
+contrast, non-contrast
+
+2,632
+
+GE
+
+2.5 mm to 3 mm smooth
+
+Toshiba
+
+non-contrast
+
+contrast, non-contrast
+
+†
+
+Fine-tuning
+
+TCIA NSCLC 23
+
+Chest-abdomen
+
+350
+
+Siemens, CMS 3 mm
+
+Smooth
+
+contrast, non-contrast
+
+TCIA NSCLC 23
+
+Chest-abdomen
+
+279
+
+Siemens
+
+Smooth
+
+non-contrast
+
+Chest
+
+156
+
+Chest-abdomen
+
+196
+
+GE
+
+1.25 mm to 5mm smooth, sharp
+
+contrast, non-contrast
+
+Chest
+
+1
+
+GE
+
+1.25 mm
+
+contrast
+
+3 mm
+
+Testing
+LRad 24
+LC
+Lung Phantom
+
+25
+
+Siemens,
+Toshiba, GE
+
+0.9 mm to 5 mm
+
+smooth, medium,
+sharp
+smooth
+
+contrast, non-contrast
+
+site, imaging characteristics) as the curated task-specific downstream dataset.
+• Upstream versus downstream dataset: Pretraining dataset is used to pretrain
+network with pretext tasks. A downstream dataset is a labeled dataset used for finetuning the network for performing specific tasks.
+• Pretext task: Tasks created for optimizing the network using supervised losses using
+the unlabeled data as ground truth, e.g. predicting masked image portions, predicting
+rotation of rotated input images, reconstructing input image corrupted by maksing,
+etc.
+
+II.B.
+
+Datasets
+
+Analyzed datasets with imaging acquisitions, and disease details are in Table 1. Retrospective analysis of institutional datasets were approved with local institutional review board,
+with a waiver for written informed consent, and was compliant with the Health and Insurance Portability and Accountability Act. Due to the wide variation in the convolution
+kernels used in the testing datasets, we categorized them as Recon 1 kernels: GE ”standard”
+and ”bone”, Siemens with < B40; Recon 2: GE ”Bone Plus”, Siemens with ≥ B40 and <
+B50; Recon 3: GE ”Lung”, Siemens ≥ B50.
+4
+
+× 1/8
+Stage 4 (× 3)
+× 1/8
+Stage 3 (× 3)
+
+Convolutional
+Block
+
+× 1/32
+Stage 4 (× 2)
+Upsampling
+
+× 1/16
+
+Convolutional
+Block
+
+Stage 3 (× 8)
+Convolutional Block
+Upsampling
+
+× 1/8
+Stage 2 (× 3)
+
+Patch
+Merging
+
+Convolutional
+Block
+
+× 1/8
+
+Stage 1 (× 2)
+
+Patch Token Embedding
+
+⋯
+
+Patch Token Embedding
+
+⋯
+Patch Token Partition
+
+⋯
+Convolutional
+Block
+
+Convolutional
+Block
+Convolutional Block
+
+Upsampling
+
+Convolutional
+Block
+
+× 1/4
+
+Convolutional
+Block
+
+× 1/2
+
+Convolutional
+Block
+
+128 × 128 × 128
+
+Segmentation
+Head
+128 × 128 × 128
+
+Upsampling
+Convolutional
+Block
+Upsampling
+
+Convolutional
+Block
+Upsampling
+
+⋯
+Patch Token Partition
+Convolutional
+Block
+
+128 × 128 × 128
+
+Upsampling
+
+Convolutional
+Block
+Convolutional Block
+Upsampling
+
+× 1/8
+
+Stage 2
+
+Convolutional Block
+Stage 1 (× 3)
+
+Swin
+Block × 2
+
+Convolutional
+Block
+
+Convolutional
+Block
+Segmentation
+Head
+128 × 128 × 128
+
+(a) ViT (Vision Transformer)
+
+(b) Swin (Hierarchical Transformer)
+
+Figure 1: Transformers architectures combined with the convolutional decoders for 3D tumor
+segmentation.
+Wild-pretraining: A total of 10,412 3D CT scans encompassing diseases from head
+and neck to the pelvis sourced from datasets provided publicly for variety of tasks including
+lesion detection 18 , classification 20 , and multi-organ and abdominal tumor segmentations were
+used without additional curation for pretraining. Anonymized institutional datasets were
+used as is without any curation and consisted of CT scans from patients treated for lung,
+esophageal (Internal 1) and head and neck (Internal 2) cancers treated with radiotherapy
+(RT).
+Fine-tuning and self-pretraining: The public domain fine-tuning dataset consisted
+of patients diagnosed with locally advanced non-small cell lung cancer (LA-NSCLC) who
+underwent RT in a single institution 23 . Tumor contours are provided with the dataset.
+Patients had contrast or non-contrast CTs and typically reconstructed with convolution
+kernels (≤ B30). Tumor sizes ranged with a median of 33.68 cc, and interquartile range
+(IQR) of 8.29 cc to 90.31 cc. A random set of 316 cases were included in unsupervised
+pretraining and self-pretraining.
+Testing: Two held-out testing datasets were analyzed: (1) a public dataset (LRad)
+containing early stage (stage I-II) lung cancer, all of whom underwent surgery 24 , (2) a dataset
+with primary and metastatic stage III-IV lung lesions (LC). Tumors in LRad ranged in size
+with a median of 7.91cc, IQR of 3.60 cc to 28.23 cc, whereas the tumors in LC ranged in
+size with a median of 19.54 cc, IQR of 6.64 cc to 66.97 cc. A subset of 20 cases in LC had
+patients reconstructed with 2.5mm, 5mm slice thickness as well as with GE’s lung kernel and
+GE’s standard kernel and were evaluated to assess pairwise accuracy differences. Finally, a
+single lung CT phantom dataset with 8 different lesions of varying shapes and sizes provided
+through the TCIA repository 25 was also evaluated. The lung phantom image scan consisted
+of 8 lesions of different shape and sizes, scanned at Columbia University Medical Center with
+GE scanner at 120 kVp. The images were reconstructed using a lung kernel with 1.25 mm
+slice thickness.
+
+5
+
+II.C.
+
+Network architectures
+
+We selected two commonly used 3D transformer encoder architectures in medical image
+segmentation tasks 3,8,26,27 , namely the Vision transformer 28 (ViT) and hierarchical Swin
+Transformer 29 (Swin). Figure 1a and Figure 1b show the corresponding schematics of the
+3D ViT and 3D Swin networks that use transformer blocks in the encoder and convolutional
+blocks with skip connections in the decoder path. The ViT encoder comprised of 12 transformer blocks, 8 multi-head self attention at each stage, and a feature embedding size of
+768. The ViT network operated on a patch size of 8 × 8 × 8. The 3D Swin network used
+the Swin encoder backbone, with a depth of [2,2,8,2] and corresponding [4,4,8,16] multi-head
+attention for the four stages of hierarchical transformer blocks. It operated on a patch size of
+2 × 2 × 2, a window size of 4 × 4 × 4, and the feature embedding size of 384. An additional
+convolutional block was added to the decoder to process the extracted encoder feature in
+both ViT and Swin architectures. The total number of parameters for ViT and Swin-based
+segmentation models were 46,405,874 and 64,698,114, respectively.
+In addition, a non-skip U-Net as used in a prior work 7 was used as a baseline to assess the
+relative merits of self- and wild-pretraining on a network using only convolutional layers,
+which has 17,111,499 parameters. All networks used an image size of 128 × 128 × 128.
+
+III.
+
+SSL-pretext tasks for unsupervised pretraining
+
+Pretext tasks in SSL are used to train models to ‘learn’ the underlying feature representations within the images by providing supervisory signals without relying on external userannotated labels. Hence, pretext tasks are designed to use the images themselves as labeled
+instances to perform supervised network optimization. We used masked image prediction
+(MIP), wherein random 3D patches of the input image are masked out and the network
+must predict the missing image patches by using the context of visible patches. We also
+used masked patch token distillation (MPD) and image token distillation (ITD) tasks that
+were introduced in a prior work using a self-distillation approach to perform SSL 2 . Additionally, we also investigated a contrastive learning 6 SSL task for both wild and self pretraining.
+Self-distillation learning was performed by creating a ‘teacher’ network with identical
+architecture as the student by using exponential moving average of the ‘student’ model.
+The student model is subjected to supervised optimization objectives and is presented with
+masked images. The teacher on the other hand is presented with a clean and different 3D
+cropped view of the original image.
+MIP involves a dense pixel regression of the pixel intensities within the masked image
+patches and is optimized by minimizing the L1 norm between the predicted image patches
+and the corresponding unmasked patches. The loss for optimizing MPD task was implemented using cross-entropy loss with temperature scaling to adjust the sharpness of the
+token distribution produced by the student and teacher network. Finally, ITD matched
+the global class embedding computed by student and teacher networks by minimizing the
+cross-entropy loss.
+6
+
+Furthermore, the pretext task, which combines contrastive and multi-scale image reconstruction tasks and is referred to as PCRLv2 7 , was also analyzed using a CNN backbone.
+
+III.A.
+
+Fine-tuning details
+
+All six networks (3 self- and 3 wild-pretrained) for ViT, Swin and CNN as well as networks
+pretrained with different pretext tasks as part of ablation analysis were fine-tuned on an
+identical downstream dataset to generate volumetric segmentation of lung tumors. The
+segmentation model was optimized using a combination of cross-entropy and Dice overlap
+losses.
+
+III.B.
+
+Implementation details
+
+Pretraining (self and wild) was performed by generating two augmented views, one masked
+view provided to student using a default masking ratio of 0.75 and the second unmasked
+view provided to the teacher, respectively. All images were clipped in the HU value of [500,500], normalized to [0,1] and resampled to a uniform voxel spacing of 2mm × 2mm ×
+2mm and then randomly cropped to 128 × 128 × 128 voxels to generate the 3D views. The
+networks were optimized using ADAMw 30 with a cosine learning rate scheduler 31 trained
+for 500 epochs with an initial learning rate of 8e−4 and warmup for 50 epochs. In order to
+account for fewer unlabeled examples available for self-pretraining, the self-pretraining was
+performed for 2,000 epochs with a warmup for 200 epochs. Online data augmentations were
+performed to increase data variations. A path drop rate of 0.1 was applied to the student
+model, and all experiments were conducted on 4 NVIDIA A100 GPUs (4 × 80GB memory)
+using an effective batch size of 8 for ViT and 32 for Swin transformers.
+Fine-tuning used only the student network and was performed on 4 NVIDIA A100 GPUs.
+All analyzed network configurations were trained with a learning rate of 2e−4 for 1,000
+epochs. The Swin models were fine-tuned with a batch size of 24 while the ViT models used
+a batch size of 4 due to memory limitations. Fine-tuning and testing was performed after
+resampling all the images to a uniform voxel spacing of 1.5 mm × 1.5 mm × 2.0 mm voxels.
+Early stopping selected the model with the best validation accuracy to prevent over-fitting.
+
+III.C.
+
+Metrics and statistical analysis
+
+Tumor detection rate (DR) was computed for all of the analyzed methods and subjected to
+self- or wild-pretraining using the various pretext tasks. DR is defined as the overlap between the segmentation and ground truth was at least τ = 0.5 32 . Tumor segmentations were
+compared against manual delineations using Dice similarity coefficient (DSC) and Hausdroff
+distance at 95th percentile (HD95). Segmentation differences between self-pretraining and
+wild-pretrained models were measured using paired, two-sided, Wilcoxon signed rank tests
+at 95% significance level.
+7
+
+Centered kernel alignment (CKA) was used to measure feature reuse between the wildpretrained and self-pretrained models before and after fine-tuning. CKA computes a normalized similarity of two feature representations M and N in terms of the Hilbert-Schmidt
+Independence Criterion (HSIC):
+
+HSIC0 (X, Y )
+CKA(X, Y ) = p
+HSIC0 (X, X)HSIC0 (Y , Y )
+
+(1)
+
+where X=M M T and Y =N N T are the Gram matrices of feature M and N respectively.
+CKA computation requires the feature activations of entire dataset to be stored in the memory, which is difficult to implement for transformers that have a large number of parameters.
+Minibatch CKA was computed by averaging HSIC scores over k minibatches 33 as:
+Pk
+1
+T
+T
+i=1 HSIC1 (Mi Mi , Ni Ni )
+k
+q P
+(2)
+CKAminibatch = q P
+k
+k
+1
+1
+T
+T
+T
+T
+i=1 HSIC1 (Mi Mi , Mi Mi )
+i=1 HSIC1 (Ni Ni , Ni Ni )
+k
+k
+where Mi and Ni are matrices containing activations of the ith minibatch. An unbiased
+estimator of HSIC 34 was computed to mitigate dependency of CKA values on the batch size:
+1
+1T X̃11T Ỹ 1
+2
+HSIC1 (X, Y ) =
+(tr(X̃ Ỹ ) +
+−
+1T X̃ Ỹ 1)
+(3)
+n(n − 3)
+(n − 1)(n − 2) (n − 1)
+where X̃ and Ỹ were obtained by setting the diagonal entries of the similarity matrices X
+and Y to zero.
+
+IV.
+
+Experiments configuration
+
+In all experiments, the performance comparisons were done between self- and wild-pretrained
+model instances of the same architectures. Robustness to CT acquisition differences was measured by comparing the segmentation accuracies for Recon 1 versus Recon 2 versus Recon
+3 kernels, contrast and non-contrast CTs, and different slice reconstruction thicknesses. In
+addition, the impact of pretext losses on downstream accuracy as well as feature reuse was
+evaluated for both self- and wild-pretraining configurations for the Swin network. We evaluated whether sequencing wild- and self-pretraining improves tumor segmentation accuracy.
+Finally, we also studied the impact of fine-tuning the two transformer networks with only
+non-contrast CTs from a single scanner manufacturer, namely Siemens, on the downstream
+accuracy.
+8
+
+Table 2: Tumor detection and segmentation accuracy with pretraining methods and transformer architectures. DR: Detection rate.
+Model Training Strategy
+
+Pretext
+
+LRad
+
+Task
+
+DSC
+0.42±0.34
+
+LC
+HD95
+
+DR
+
+DSC
+
+HD95
+
+DR
+
+11.99±8.34
+
+0.48
+
+10.07±8.32 0.52
+
+0.54±0.27
+
+12.36±10.37
+
+0.60
+
+0.56±0.23
+
+12.50±10.93 0.67
+12.81±10.97
+
+0.62
+0.74
+
+CNN
+
+Scratch
+
+N/A
+
+CNN
+
+Self-pretraining
+
+PCRLv2 0.45±0.33
+
+CNN
+
+Wild-pretraining
+
+PCRLv2 0.46±0.33 11.99±8.34
+
+0.54
+
+0.54±0.24
+
+ViT
+
+Scratch
+
+N/A
+
+0.55±0.31
+
+8.71±7.51
+
+0.60
+
+0.68±0.27
+
+12.76±20.51
+
+ViT
+
+Self-pretraining
+
+SMIT
+
+0.64±0.25
+
+8.59±7.53
+
+0.65
+
+0.71±0.22
+
+10.97±10.62 0.80
+
+ViT
+
+Wild-pretraining
+
+SMIT
+
+0.66±0.22 8.52±7.39
+
+0.69
+
+0.72±0.21
+
+11.33±12.78
+
+0.80
+
+Swin
+
+Scratch
+
+N/A
+
+0.54±0.31
+
+11.73±11.46 0.58
+
+0.70 ± 0.22
+
+10.79±10.82
+
+0.79
+
+Swin
+
+Self-pretraining
+
+SMIT
+
+0.63±0.23
+
+8.95±8.57
+
+0.74 ± 0.18
+
+10.71±11.96
+
+0.80
+
+Swin
+
+Wild-pretraining
+
+SMIT
+
+0.69±0.18 7.58±7.12
+
+0.76 0.75 ± 0.15 9.69±8.97
+
+0.85
+
+V.
+
+Results
+
+V.A.
+
+Tumor detection accuracy
+
+0.67
+
+Both Swin and ViT models produced a higher tumor DR when using wild-pretraining compared to self-pretraining as well as scratch training. Swin showed the largest benefit with
+wild-pretraining (see Table 2). Wild-pretrained ViT showed larger improvement with respect
+to self-pretraining for the LRad than the LC dataset. The wild-pretrained CNN resulted
+in a slightly higher accuracy for LRad but lower DR for the LC dataset compared with
+its self-pretrained instance. The tumors detected by at least one model are used to report
+accuracy, yielding 139 for LRad dataset and 179 tumors for the LC dataset.
+
+V.B.
+
+Segmentation accuracy
+
+Tumor segmentation accuracies for all three analyzed networks are shown in Table 2. As
+shown, both ViT and Swin models showed a higher accuracy with either pretraining approach
+compared to their scratch trained counterparts. Wild-pretrained Swin produced a significant
+accuracy improvement over self-pretrained model using both segmentation accuracy metrics
+(DSC p < 0.0001, HD95 p < 0.0001) on the LRad dataset but not significant on the LC data
+(DSC p = 0.32, HD95 p = 0.063). Wild-pretrained ViT resulted in slightly a higher DSC
+but similar HD95 as the self-pretrained model, indicating that either pretraining approach
+was similarly beneficial for ViT. Finally, the CNN model did not indicate any benefit from
+either pretraining approach compared to scratch trained CNN, indicating neither pretraining
+strategy was helpful in increasing tumor segmentation accuracy for the CNN model.
+
+9
+
+DSC
+
+CNN
+
+R2 = 0.39
+
+R2 = 0.36
+
+R2 = 0.34
+
+R2 = 0.42
+
+R2 = 0.33
+
+R2 = 0.39
+
+R2 = 0.22
+
+R2 = 0.13
+
+R2 = 0.10
+
+R2 = 0.11
+
+R2 = 0.07
+
+R2 = 0.13
+
+DSC
+
+ViT
+
+DSC
+
+Swin
+
+R2 = 0.15
+
+R2 = 0.18
+Volume(cc)
+
+Training from scratch
+
+Volume(cc)
+
+Self-pretraining
+
+R2 = 0.03
+
+R2 = 0.09
+Volume(cc)
+
+Volume(cc)
+
+Training from scratch
+
+Wild-pretraining
+
+LRad Data
+
+R2 = 0.10
+
+R2 = 0.10
+Volume(cc)
+
+Self-pretraining
+
+Volume(cc)
+
+Wild-pretraining
+
+LC Data
+
+Figure 2: The scatter plot of DSC versus tumor volume (cc) to assess dependency of accuracy on
+the tumor volume for the analyzed architectures subjected to scratch, wild-pretraining and selfpretraining followed by fine-tuning for the two testing datasets.
+
+V.C.
+
+Dependence of segmentation accuracy on tumor volumes
+
+Figure 2 shows the relationship between the DSC segmentation accuracy and tumor volumes
+for the LRad and LC datasets. In both datasets, ViT and Swin models showed a smaller
+dependence of segmentation accuracy to the tumor volume compare to the CNN model.
+Furthermore, wild-pretraining reduced the dependence of accuracy with respect to volume
+for the transformer models, indicating that wild-pretraining enabled the models to produce
+volume robust segmentations.
+
+V.D.
+
+Robustness to CT imaging variations
+
+Table 3 shows the accuracy differences due to the presence and absence of CT contrast.
+All three models were significantly more accurate than their scratch-trained instances for
+contrast enhanced CTs. Only wild-pretrained ViT and Swin models showed a significant
+accuracy gain over scratch-trained models for non-contrast CT cases. On the other hand,
+wild-pretrained Swin was significantly more accurate than it’s self-pretrained instance for
+both contrast and non-contrast CT cases. There was no statistical difference between wildand self-pretrained CNN and ViT models for the non-contrast CT cases.
+Figure 3 shows the impact of CT reconstruction convolution kernels on tumor segmentation accuracy using the public LRad dataset (n=139 CTs). The wild-pretrained Swin was
+significantly more accurate than self-pretrained Swin (p < 0.001) with Recon 1 kernel and
+scratch trained Swin with Recon 1 (p < 0.001) and Recon 3 kernels (p = 0.006). On the
+other hand, accuracies were similar for wild-pretrained, self-pretrained, and scratch trained
+ViT and CNN models for the different reconstruction kernels. Both wild-pretrained ViT (p
+10
+
+Table 3: Tumor segmentation accuracy differences due to CT contrast evaluated on LRad
+dataset. Significance testing measured DSC differences between scratch, self- and wildpretrained instances of the same architecture.
+Model Training Strategy Contrast (N=85) p-value Non-Contrast (N=54) p-value
+CNN
+
+Scratch
+
+0.47±0.33
+
+0.014
+
+0.35±0.33
+
+0.28
+
+CNN
+
+Self-pretraining
+
+0.51±0.32
+
+0.72
+
+0.36±0.32
+
+0.43
+
+CNN
+
+Wild-pretraining
+
+0.52±0.32
+
+-
+
+0.38±0.33
+
+-
+
+ViT
+
+Scratch
+
+0.60±0.30
+
+0.00004 0.47±0.31
+
+9.13e-6
+
+ViT
+
+Self-pretraining
+
+0.65±0.27
+
+0.064
+
+0.65±0.19
+
+0.61
+
+ViT
+
+Wild-pretraining
+
+0.67±0.23
+
+-
+
+0.64±0.20
+
+-
+
+Swin
+
+Scratch
+
+0.58±0.30
+
+3.26e-6
+
+0.48±0.31
+
+5.21e-7
+
+Swin
+
+Self-pretraining
+
+0.66±0.23
+
+0.0041
+
+0.60±0.23
+
+6e-4
+
+Swin
+
+Wild-pretraining
+
+0.70±0.19
+
+-
+
+0.68±0.16
+
+-
+
+CNN.Scratch
+
+Recon 1
+
+CNN.Self
+
+Recon 2
+
+CNN.Pre
+
+Recon 3
+
+ViT.Scratch
+
+Recon 1
+
+Convolutional Kernels
+
+(A)
+
+ViT.Self
+
+Recon 2
+Convolutional Kernels
+
+(B)
+
+ViT.Pre
+
+Recon 3
+
+Swin.Scratch
+
+Recon 1
+
+Swin.Self
+
+Recon 2
+
+Swin.Pre
+
+Recon 3
+
+Convolutional Kernels
+
+(C)
+
+Figure 3: Influence of CT reconstruction kernel on segmentation accuracy with (A) CNN backbone
+and (B) ViT backbone, (c) Swin backbone.
+
+= 0.008) and self-pretrained ViT were more accurate than scratch trained ViT (p = 0.02)
+for Recon 3 kernels.
+Next, we compared accuracy differences for the same model across the convolution kernels. Whereas, wild-pretraining resulted in similar accuracies across reconstruction kernels
+for Swin, the same architecture using self-pretraining produced less accurate segmentations
+with Recon 3 kernel compared to other two kernels. ViT showed similar mean accuracy for
+the three reconstruction kernels with self- and wild-pretraining. Scratch training showed a
+larger variation in the accuracy across the kernel reconstructions for both Swin and ViT
+architectures. The CNN network showed a wide variation in accuracy for all three kernels
+and training strategies.
+Subset analysis of an additional set of 20 patients with paired reconstructions showed
+that wild-pretrained Swin produced significantly different accuracies between the two kernels
+when using 5 mm slices (p = 0.036) but not with 2.5 mm slices (Table 4). On the other hand,
+self-pretrained Swin model showed similar but lower accuracy than the wild-pretrained Swin
+11
+
+Table 4: Robustness of tumor segmentation to different scan reconstructions. Significance
+tests compared wild-pretrained to self-and scratch trained instances of the same architecture.
+Model Training Strategy
+
+Slice 2.5 mm
+
+Slice 5 mm
+
+Recon 3
+
+Recon 1
+
+p-value Recon 3
+
+Recon 1
+
+p-value
+
+CNN
+
+Scratch
+
+0.20±0.20
+
+0.22±0.21 0.61
+
+0.27±0.24
+
+0.28±0.26 0.26
+
+CNN
+
+Self-pretraining
+
+0.21±0.20
+
+0.22±0.20 0.57
+
+0.27±0.19
+
+0.31±0.27 0.16
+
+CNN
+
+Wild-pretraining
+
+0.23±0.21
+
+0.24±0.23 0.68
+
+0.30 ± 0.25 0.34±0.31 0.13
+
+ViT
+
+Scratch
+
+0.47±0.34
+
+0.54±0.32 0.08
+
+0.49±0.34
+
+0.50±0.30 0.64
+
+ViT
+
+Self-pretraining
+
+0.64±0.18
+
+0.56±0.25 0.019
+
+0.58±0.26
+
+0.51±0.23 0.14
+
+ViT
+
+Wild-pretraining
+
+0.67±0.16
+
+0.58±0.26 0.077
+
+0.62±0.24
+
+0.56±0.22 0.11
+
+Swin
+
+Scratch
+
+0.52±0.32
+
+0.36±0.36 0.37
+
+0.57±0.48
+
+0.47±0.34 0.12
+
+Swin
+
+Self-pretraining
+
+0.58±0.27
+
+0.54±0.31 0.13
+
+0.52±0.28
+
+0.49±0.30 0.058
+
+Swin
+
+Wild-pretraining
+
+0.70±0.18
+
+0.66±0.21 0.058
+
+0.62±0.28
+
+0.58±0.26 0.036
+
+model for both kernel reconstructions and slice thicknesses. Wild-pretrained ViT and CNN
+models were robust to convolutional kernel differences with both slice thicknesses, as was the
+self-pretrained CNN model. However, both model architectures were less accurate than wildpretrained Swin. The self-pretrained ViT showed significant accuracy difference between the
+convolutional kernels for the 2.5 mm slices but not the 5mm slices. These results indicate
+that slice thickness may impact the accuracy and robustness of the transformer models with
+respect to the convolutional kernels.
+Figure 4 shows the segmentations produced by the three networks when subjected to selfand wild-pretraining on two representative patients with contrast CT scan using (A) Lung
+reconstruction kernel, (B) Standard reconstruction kernel and (C) non-contrast CT scan.
+In the case of both ViT and Swin models, wild-pretrained instances better approximate the
+manual delineations irrespective of image contrast compared to the self-pretrained instances.
+The results are similar for both self- and wild-pretrained instances when applied to the CNN
+model.
+Table 5: Model performance on the phantom image with 8 lesions.
+Model
+
+Training Strategy
+
+DSC
+
+HD95
+
+DR
+
+CNN
+
+Self-pretraining
+
+0.71 ± 0.04
+
+4.00 ± 1.13
+
+0.25
+
+CNN
+
+Wild-pretraining
+
+0.00 ± 0.00 N A
+
+0.00
+
+ViT
+
+Self-pretraining
+
+0.81 ± 0.06
+
+2.60 ± 0.49
+
+0.625
+
+ViT
+
+Wild-pretraining
+
+0.81 ± 0.05
+
+3.24 ± 2.01
+
+0.75
+
+Swin
+
+Self-pretraining
+
+0.86 ± 0.01
+
+1.46 ± 0.06
+
+0.5
+
+Swin
+
+Wild-pretraining
+
+0.86 ± 0.06
+
+1.75 ± 0.74
+
+0.875
+
+Table 5 shows the detection rate (DR) and the segmentation accuracy for the detected
+tumors on the lung phantom dataset. The wild-pretrained Swin transformer achieved the
+highest DR across all models. The self-pretrained Swin produced a similar DSC accuracy
+12
+
+(A)
+
+CNN
+
+(A)
+
+ViT
+
+(B)
+
+(A)
+
+Swin
+
+Self-pretrained
+
+Self-Pretrained
+
+Wild-Pretrained
+
+(A)
+
+Wild-Pretrained
+
+Self-Pretrained
+
+(B)
+
+Manual Delineation
+
+Wild-Pretrained
+
+Self-Pretrained
+
+(C)
+
+Wild-Pretrained
+
+Algorithm Segmentation
+
+Figure 4: Segmentation (yellow contour) produced using CNN, ViT and Swin-based SMIT model
+using wild-pretaining and self-pretraining. (A) Contrast CT scan using GE lung reconstruction
+(B)Contrast CT scan using GE standard reconstruction (C) Non-contrast CT scan using GE lung
+reconstruction. Manual delineation is shown in red and algorithm delineation is shown in yellow.
+
+as the wild-pretrained Swin, and a relatively better HD95 metric, but a lower detection
+rate indicating difficulty in detecting all lesions. Similar scores were observed for ViTs,
+where the detection rate was higher and the HD95 lower, suggesting a potential trade-off in
+finer detection abilities with the self-pretrained models. The CNN model on the other hand
+showed very low tumor detection capability compared to the transformer models. Figure
+5 shows the segmentation performance of self-pretrained and wild-pretrained models using
+CNN, ViT and Swin on the phantom dataset.
+
+V.E.
+
+Ablation analysis
+
+Ablation analysis was performed using only the Swin backbone as this network emerged as
+the most accurate compared to the other two networks.
+V.E.1.
+
+Impact of different pretext tasks
+
+Table 6 shows the detection rate and segmentation accuracy for the detected tumors for
+the network subjected to wild- and self-pretraining using multiple pretext tasks. As shown,
+wild-pretraining with the SMIT pretext tasks that combined MIP, ITD, and MPD losses
+resulted in the highest tumor segmentation accuracy. Also, wild-pretraining with SMIT
+task was more accurate than self-pretraining using the same pretext task. MIP pretext task
+resulted in higher accuracy compared to other individual pretext tasks including contrastive
+loss, indicating that the generative image prediction task, which forces the network to learn
+the local and global structure was really important for learning good feature representation.
+In particular, self-pretraining with MIP resulted in the highest detection rate. All other
+13
+
+CNN
+Self-pretrained
+
+CNN
+Wild-pretrained
+
+ViT
+Self-pretrained
+
+ViT
+Wild-pretrained
+
+Swin
+Self-pretrained
+
+Swin
+Wild-pretrained
+
+Algorithm Segmentation
+
+Manual Delineation
+
+Figure 5: Results on the phantom image scan (dataset). Yellow contour indicates the model
+segmentation and red contour indicates the phantom ground truth.
+pretext tasks resulted in similar accuracies for the self- and wild-pretrained versions using
+those same tasks. Contrastive pretext task resulted in among the worse accuracy, indicating
+that contrastive loss that encourages the network to learn features to distinguish images as
+a whole is less beneficial for segmenting individual structures such as tumors.
+
+V.E.2.
+
+Impact of two stage pretraining
+
+As shown in Table 6, two-stage pretraining improved tumor detection rate compared to selfpretraining but was less accurate than the model that only used wild-pretraining. The trend
+was also reflected in tumor segmentation accuracy, indicating that the two-step pretraining
+strategy is not beneficial for accuracy.
+
+V.E.3.
+
+Impact of fine-tuning with homogeneous dataset
+
+We evaluated the impact of pretraining strategies when the network was subjected to finetuning with a homogeneous dataset, wherein fine-tuning was performed with a subset of 279
+non-contrast CT scans acquired at 3mm slice thickness using the Siemens scanner. Testing
+was performed on the LRad dataset that is different from the fine-tuning dataset. As shown
+in Table 7, for both ViT and Swin networks, wild-pretrained models resulted in higher
+accuracy for both contrast and non-contrast CTs compared to the self-pretrained models,
+indicating improved generalization capability with wild-pretrained models.
+14
+
+Table 6: Impact of pretext tasks on down-stream accuracy applied to Swin model.
+Pretext
+Task
+
+LRad
+
+Training Strategy
+
+DSC
+
+LC
+HD95
+
+DR
+
+DSC
+
+HD95
+
+DR
+
+MIP
+
+Self-pretraining
+
+0.67 ± 0.19 8.71±8.26
+
+0.78
+
+0.72±0.18
+
+11.81±15.52
+
+0.85
+
+MIP
+
+Wild-pretraining
+
+0.64±0.25
+
+8.58±8.77
+
+0.72
+
+0.73±0.17
+
+11.01±11.92
+
+0.84
+
+ITD
+
+Self-pretraining
+
+0.64±0.24
+
+8.62 ± 8.35
+
+0.72
+
+0.71 ± 0.21
+
+11.11±12.14
+
+0.81
+
+ITD
+
+Wild-pretraining
+
+0.64±0.24
+
+8.33±7.93
+
+0.69
+
+0.72±0.20
+
+10.61±12.33
+
+0.82
+
+ITD & MPD
+
+Self-pretraining
+
+0.66 ± 0.22 8.62±8.36
+
+0.72
+
+0.71±0.21
+
+11.56± 14.24
+
+0.83
+
+ITD & MPD
+
+Wild-pretraining
+
+0.66±0.21
+
+8.62±7.22
+
+0.72
+
+0.72±0.20
+
+10.46±9.68
+
+0.82
+
+Contrastive
+
+Self-pretraining
+
+0.63±0.24
+
+9.29 ± 9.23
+
+0.69
+
+0.71 ± 0.23
+
+11.44± 12.93
+
+0.79
+
+Contrastive
+
+Wild-pretraining
+
+0.64±0.24
+
+9.08±9.68
+
+0.73
+
+0.71±0.21
+
+11.34±12.05
+
+0.79
+
+SMIT
+
+Self-pretraining
+
+0.63±0.23
+
+8.95±8.57
+
+0.67
+
+0.74 ± 0.18
+
+10.71±11.96
+
+0.80
+
+SMIT
+
+Wild-pretraining
+
+0.69±0.18
+
+7.58±7.12
+
+0.76
+
+0.75 ± 0.15
+
+9.69±8.97
+
+0.85
+
+SMIT
+
+Wild- + Self-pretraining
+
+0.65±0.21
+
+8.52±7.72
+
+0.72
+
+0.73±0.17
+
+10.65±11.41
+
+0.82
+
+Table 7: Testing accuracy of models fine-tuned with with homogenous task data (contrast
+enchanced CT, Siemens, Recon 1).
+Model Training Strategy Contrast (N=85) p-value Non-Contrast (N=54) p-value
+ViT
+
+Self-pretraining
+
+0.61±0.27
+
+ViT
+
+Wild-pretraining
+
+0.63±0.25
+
+Swin
+
+Self-pretraining
+
+0.65±0.24
+
+Swin
+
+Wild-pretraining
+
+0.69±0.20
+
+0.0869
+
+0.59±0.24
+
+0.440
+
+0.56±0.25
+0.019
+
+0.63±0.20
+
+0.412
+
+0.65±0.19
+
+V.F.
+
+Feature reuse analysis
+
+V.F.1.
+
+Feature reuse for different CT acquisitions
+
+Figure 6 shows the feature reuse using CKA analysis between different pretrained and finetuned models for two different CT reconstruction convolution kernels using contrast and
+non-contrast as well as Recon 1 and Recon 3 from the public LRad dataset. These two
+reconstructions were evaluated due to larger and similar prevalence of the cases between
+these reconstructions.
+There was high feature reuse for the self-pretrained model for both contrast and noncontrast CTs (Figure 6(A, B)). On the other hand, wild-pretrained model resulted in resulted
+in larger deviations of features close to the later encoder layer (13 and 14) for contrast
+compared to non-contrast CTs (Figure 6 A and B). Analysis of Recon 1 and Recon 3 showed
+higher feature reuse with wild-pretrained models for the lower levels compared to later layer
+(13 and 14) as shown in Figure 6 C and D.
+15
+
+Fine-tuned
+
+Fine-tuned
+
+Fine-tuned
+
+Fine-tuned
+
+(A)
+
+(C)
+
+1.0
+0.9
+0.8
+0.7
+
+Self-Pretrained
+
+Fine-tuned
+
+Fine-tuned
+
+Fine-tuned
+
+Fine-tuned
+
+0.6
+(B)
+
+(D)
+
+Self-Pretrained
+
+Wild-Pretrained
+
+0.5
+
+Wild-Pretrained
+
+Figure 6: CKA analysis to measure feature reuse for (A) contrast and (B) non-contrast CT as well
+as CT images reconstructed using (C) Recon 1 and (D) Recon 3.
+
+V.F.2.
+
+Impact of pretext tasks on feature reuse
+
+Figure 7 shows the feature reuse for the Swin network using CKA when the network was subjected to self- and wild-pretraining with the different pretext tasks. Analysis was performed
+on the LRad testing data.
+There was a considerable variation in the reuse of the features for the same network
+architecture (Swin) when wild-pretrained with different pretext tasks as shown in Figure 7
+(A) to (E). Concretely, contrastive task resulted in the highest feature reuse even across
+different feature layers (off-diagnoal entries in the CKA matrix). ITD, a global image feature
+matching loss, resulted in the lowest feature reuse, followed by ITD+MPD, MIP, and SMIT
+(Figure 7). SMIT, which uses a combination of ITD, MIP and MPD, the latter two are
+spatial locality context losses, resulted in higher feature reuse in the lower (1 to 4) and
+middle level features (5 to 9) compared to higher level (10 to 14) layer features. In addition,
+the features across different layers (off-diagonal entries of the CKA matrix) were different
+between wild-pretrained and fine-tuned features for SMIT, MPD, and ITD tasks but not
+for the contrastive learning task. Self-pretraining (Figure 7 E) with SMIT resulted in more
+differentiation of off-diagonal features (layers 5 to 14 compared to lower level features 1 to
+4) but such differentiation was to a lesser degree than wild-pretrained SMIT. In general,
+wild-pretraining resulted in feature changes especially close to the later stage encoder layers
+(13 and 14) for all the pretext tasks when compared to self-pretraining.
+For both self-pretrained and wild-pretrained models, a high similarity in the lower level
+(layer 1-4) is present regardless of the pretext tasks, except for the ITD task for the selfpretrained model. On the other hand, across all tasks, feature dissimilarity increases close
+to output layer as the task varies between wild-pretraining and fine-tuning. This separation
+also leads to improved accuracy of the wild-pretrained Swin network.
+
+16
+
+1.0
+
+Fine-tuned
+
+Fine-tuned
+
+Fine-tuned
+
+Fine-tuned
+
+Fine-tuned
+
+0.9
+
+0.8
+0.7
+0.6
+0.5
+
+Wild-pretrained
+
+Wild-pretrained
+
+Wild-pretrained
+
+Wild-pretrained
+
+Wild-pretrained
+1.0
+
+Fine-tuned
+
+Fine-tuned
+
+Fine-tuned
+
+Fine-tuned
+
+Fine-tuned
+
+0.9
+
+0.8
+0.7
+0.6
+0.5
+
+Self-pretrained
+
+Self-pretrained
+
+Self-pretrained
+
+Self-pretrained
+
+Self-pretrained
+
+(A) Contrastive
+
+(B) ITD
+
+(C) MIP
+
+(D) ITD+MPD
+
+(E) SMIT
+
+Figure 7: CKA analysis performed on the Swin backbone using different pretext tasks including
+(A) Contrastive, (B)ITD, (C)MIP, (D)ITD+MPD and (E) SMIT with wild- and self-pretraining.
+
+VI.
+
+Discussion
+
+This study performed a comprehensive analysis of robustness to CT imaging variations
+due to scratch versus self- versus wild- pretraining of two transformer and one convolutional
+neural network architectures. All three network architectures showed improved accuracy and
+robustness when using any pretraining strategy compared to scratch training, indicating that
+pretraining provides useful features for downstream tasks. Importantly, Swin network showed
+a significant accuracy improvement with wild-pretraining compared to self-pretraining for
+contrast and non-contrast CTs as well as for Recon 1 and Recon 3 convolution kernels.
+On the other hand, wild-pretrained ViT showed a trend towards higher accuracy but not
+a significant accuracy improvement over self-pretrained model. The CNN-based network
+showed similar accuracies for both pretraining strategies, indicating that self-pretraining is
+sufficient for the CNN network. Of the three architectures, wild-pretrained Swin network
+was the most accurate for all analyzed scenarios including the lung CT phantom case.
+Our results are consistent with findings from natural images that demonstrated improvements in accuracy and fine-tuning efficiency with pretraining 17 . We also found that
+Swin models benefit more from wild-pretraining compared to ViT. Relatedly, analysis with
+pretext tasks indicated that combination of masked image prediction with global and patch
+token distillation that combines global and local contextual similarities improves testing accuracy more than the individual losses and also leads to higher feature reuse in the lower
+layers. In particular, the use of masked image prediction, forces the networks to learn the
+spatial inductive bias during pretraining, which in turn increases feature reuse in the lower
+level layers. On the other hand, contrastive pretext task, which only requires the model
+to learn the embedding for the image as a whole was not effective in increasing detection
+or segmentation accuracy with either pretraining methods. These results also suggest that
+17
+
+fine-tuning of pretrained models can be optimized close to higher level features to further
+increase fine-tuning efficiency.
+Feature reuse analysis performed to understand why the networks differ in accuracy
+showed a diverse feature reuse pattern between the self- and wild-pretrained Swin model,
+which also varied with the choice of pretext task used for pretraining. In particular, wildpretraining resulted in more feature reuse at the lower level features across all pretext tasks
+but showed a specialization of features with fine tuning close to the output layer, which is
+important for higher accuracy on the task. Self-pretraining, on the other hand, resulted in
+similar patterns of feature reuse at both low and high level layers, thus resulting in a lower
+accuracy in the analyzed task.
+Finally, analysis of contrast, non-contrast, and different kernel reconstructions showed a
+consistent pattern, wherein wild-pretraining resulted in a higher feature differentiation close
+to the output layer compared to the self-pretrained models, which ultimately resulted in
+higher accuracy with wild-pretraining.
+
+VII.
+
+Conclusions
+
+Both wild-pretrained and self-pretrained models enhance lung tumor segmentation across
+various architectures, including CNN, ViT and Swin. Wild-pretrained networks were more
+robust to analyzed CT imaging differences for lung tumor segmentation than self-pretrained
+methods. Swin architecture benefited from such pretraining more than ViT and CNN-based
+architecture.
+
+VIII.
+
+Acknowledgement
+
+This research was partially supported by the NCI R01CA258821 and the Memorial Sloan
+Kettering Cancer Center Support Grant/Core Grant NCI P30CA008748.
+
+References
+
+1
+
+K. He, X. Chen, S. Xie, Y. Li, P. Doll’ar, and R. B. Girshick, “Masked autoencoders
+are scalable vision learners. 2022 ieee,” in CVF Conference on Computer Vision and
+Pattern Recognition (CVPR), 2021, pp. 15 979–15 988.
+
+2
+
+J. Jiang, N. Tyagi, K. Tringale, C. Crane, and H. Veeraraghavan, “Self-supervised 3d
+anatomy segmentation using self-distilled masked image transformer (smit),” in Medical
+18
+
+Image Computing and Computer Assisted Intervention–MICCAI 2022: 25th International Conference, Singapore, September 18–22, 2022, Proceedings, Part IV. Springer,
+2022, pp. 556–566.
+3
+
+Y. Tang, D. Yang, W. Li, H. R. Roth, B. Landman, D. Xu, V. Nath, and A. Hatamizadeh,
+“Self-supervised pre-training of swin transformers for 3d medical image analysis,” in
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition,
+2022, pp. 20 730–20 740.
+
+4
+
+Z. Zhou, V. Sodha, J. Pang, M. B. Gotway, and J. Liang, “Models genesis,” Medical
+Image Analysis, vol. 67, p. 101840, 2021.
+
+5
+
+J. Zhu, Y. Li, Y. Hu, K. Ma, S. K. Zhou, and Y. Zheng, “Rubik’s cube+: A selfsupervised feature learning framework for 3D medical image analysis,” Medical Image
+Analysis, vol. 64, p. 101746, 2020.
+
+6
+
+A. Taleb, W. Loetzsch, N. Danz, J. Severin, T. Gaertner, B. Bergner, and C. Lippert,
+“3D self-supervised methods for medical imaging,” Advances in Neural Information Processing Systems, vol. 33, pp. 18 158–18 172, 2020.
+
+7
+
+H.-Y. Zhou, C. Lu, C. Chen, S. Yang, and Y. Yu, “A unified visual information preservation framework for self-supervised pre-training in medical image analysis,” IEEE Transactions on Pattern Analysis and Machine Intelligence, vol. 45, no. 7, pp. 8020–8035,
+2023.
+
+8
+
+J. Chen, Y. Lu, Q. Yu, X. Luo, E. Adeli, Y. Wang, L. Lu, A. L. Yuille, and Y. Zhou,
+“Transunet: Transformers make strong encoders for medical image segmentation,” arXiv
+preprint arXiv:2102.04306, 2021.
+
+9
+
+L. Umapathy, T. Brown, R. Mushtaq, M. Greenhill, J. Lu, D. Martin, M. Altbach, and
+A. Bilgin, “Reducing annotation burden in MR: A novel MR-contrast guided contrastive
+learning approach for image segmentation,” Med Phys, 2023.
+
+10
+
+J. Cheng, J. Ye, Z. Deng, J. Chen, T. Li, H. Wang, Y. Su, Z. Huang, J. Chen, L. Jiang
+et al., “Sam-med2d,” arXiv preprint arXiv:2308.16184, 2023.
+
+11
+
+J. Liu, Y. Zhang, J.-N. Chen, J. Xiao, Y. Lu, B. A Landman, Y. Yuan, A. Yuille, Y. Tang,
+and Z. Zhou, “Clip-driven universal model for organ segmentation and tumor detection,”
+in Proceedings of the IEEE/CVF International Conference on Computer Vision, 2023,
+pp. 21 152–21 164.
+
+12
+
+C. Matsoukas, J. F. Haslum, M. Sorkhei, M. Söderberg, and K. Smith, “What makes
+transfer learning work for medical images: Feature reuse & other factors,” in 2022
+IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR), 2022,
+pp. 9215–9224.
+19
+
+13
+
+K. Clark, B. Vendt, K. Smith, J. Freymann, J. Kirby, P. Koppel, S. Moore, S. Phillips,
+D. Maffitt, M. Pringle et al., “The cancer imaging archive (tcia): maintaining and operating a public information repository,” Journal of digital imaging, vol. 26, pp. 1045–1057,
+2013.
+
+14
+
+A. Qayyum, I. Razzak, M. Mazher, T. Khan, W. Ding, and S. Niederer, “Two-stage
+self-supervised contrastive learning aided transformer for real-time medical image segmentation,” IEEE Journal of Biomedical and Health Informatics, pp. 1–10, 2023.
+
+15
+
+D. M. H. Nguyen, H. Nguyen, T. T. N. Mai, T. Cao, B. T. Nguyen, N. Ho, P. Swoboda,
+S. Albarqouni, P. Xie, and D. Sonntag, “Joint self-supervised image-volume representation learning with intra-inter contrastive clustering,” in Proc. 37th AAAI. AAAI Press,
+2023.
+
+16
+
+X. Yan, J. Naushad, S. Sun, K. Han, H. Tang, D. Kong, H. Ma, C. You, and X. Xie,
+“Representation recovering for self-supervised pre-training on medical images,” in 2023
+IEEE/CVF Winter Conference on Applications of Computer Vision (WACV), 2023, pp.
+2684–2694.
+
+17
+
+P. Goyal, M. Caron, B. Lefaudeux, M. Xu, P. Wang, V. Pai, M. Singh,
+V. Liptchinsky, I. Misra, A. Joulin, and P. Bojanowski, “Self-supervised pretraining
+of visual features in the wild,” CoRR, vol. abs/2103.01988, 2021. [Online]. Available:
+https://arxiv.org/abs/2103.01988
+
+18
+
+Y. Xiao, G. Yang, and S. Song, Lesion Segmentation in Surgical and Diagnostic Applications: MICCAI 2022 Challenges, CuRIOUS 2022, KiPA 2022 and MELA 2022, Held
+in Conjunction with MICCAI 2022, Singapore, September 18–22, 2022, Proceedings.
+Springer Nature, 2023, vol. 13648.
+
+19
+
+Y. Ji, H. Bai, J. Yang, C. Ge, Y. Zhu, R. Zhang, Z. Li, L. Zhang, W. Ma, X. Wan
+et al., “Amos: A large-scale abdominal multi-organ benchmark for versatile medical
+image segmentation,” arXiv preprint arXiv:2206.08023, 2022.
+
+20
+
+S. A. Harmon, T. H. Sanford, S. Xu, E. B. Turkbey, H. Roth, Z. Xu, D. Yang, A. Myronenko, V. Anderson, A. Amalou et al., “Artificial intelligence for the detection of
+covid-19 pneumonia on chest ct using multinational datasets,” Nature communications,
+vol. 11, no. 1, p. 4080, 2020.
+
+21
+
+N. Heller, N. Sathianathen, A. Kalapara, E. Walczak, K. Moore, H. Kaluzniak, J. Rosenberg, P. Blake, Z. Rengel, M. Oestreich, J. Dean, M. Tradewell, A. Shah, R. Tejpaul,
+Z. Edgerton, M. Peterson, S. Raza, S. Regmi, N. Papanikolopoulos, and C. Weight,
+“C4kc-kits,” The Cancer Imaging Archive., 2019.
+
+22
+
+H. R. Roth, L. Lu, A. Farag, H.-C. Shin, J. Liu, E. B. Turkbey, and R. M. Summers,
+“Deeporgan: Multi-level deep convolutional networks for automated pancreas segmentation,” in Medical Image Computing and Computer-Assisted Intervention–MICCAI 2015:
+18th International Conference, Munich, Germany, October 5-9, 2015, Proceedings, Part
+I 18. Springer, 2015, pp. 556–564.
+20
+
+23
+
+H. Aerts, R. V. E., R. T. Leijenaar, C. Parmar, P. Grossmann, S. Carvalho, and P. Lambin, “Data from NSCLC-radiomics. The Cancer Imaging Archive,” 2015.
+
+24
+
+S. Bakr, O. Gevaert, S. Echegaray, K. Ayers, M. Zhou, M. Shafiq, H. Zheng, J. A.
+Benson, W. Zhang, A. N. Leung et al., “A radiogenomic dataset of non-small cell lung
+cancer,” Scientific data, vol. 5, no. 1, pp. 1–9, 2018.
+
+25
+
+B. Zhao, “Lung phantom (version 2) [data set],” 2015.
+
+26
+
+A. Hatamizadeh, Y. Tang, V. Nath, D. Yang, A. Myronenko, B. Landman, H. R. Roth,
+and D. Xu, “Unetr: Transformers for 3d medical image segmentation,” in Proceedings
+of the IEEE/CVF Winter Conference on Applications of Computer Vision, 2022, pp.
+574–584.
+
+27
+
+Z. Chen, D. Agarwal, K. Aggarwal, W. Safta, M. M. Balan, and K. Brown, “Masked
+image modeling advances 3d medical image analysis,” in Proceedings of the IEEE/CVF
+Winter Conference on Applications of Computer Vision, 2023, pp. 1970–1980.
+
+28
+
+A. Dosovitskiy, L. Beyer, A. Kolesnikov, D. Weissenborn, X. Zhai, T. Unterthiner, M. Dehghani, M. Minderer, G. Heigold, S. Gelly, J. Uszkoreit, and N. Houlsby, “An image is
+worth 16x16 words: Transformers for image recognition at scale,” in International Conference on Learning Representations (ICLR), 2021.
+
+29
+
+Z. Liu, Y. Lin, Y. Cao, H. Hu, Y. Wei, Z. Zhang, S. Lin, and B. Guo, “Swin transformer:
+Hierarchical vision transformer using shifted windows,” in Proceedings of the IEEE/CVF
+international conference on computer vision, 2021, pp. 10 012–10 022.
+
+30
+
+I. Loshchilov and F. Hutter, “Decoupled weight decay regularization,” in
+International Conference on Learning Representations, 2017. [Online]. Available:
+https://api.semanticscholar.org/CorpusID:53592270
+
+31
+
+L. Ilya and H. Frank, “Sgdr: Stochastic gradient descent with warm restarts,” arXiv
+preprint arXiv:1608.03983, 2016.
+
+32
+
+J. Jiang, Y. C. Hu, C. J. Liu, D. Halpenny, M. D. Hellmann, J. O. Deasy, G. Mageras,
+and H. Veeraraghavan, “Multiple resolution residually connected feature streams for
+automatic lung tumor segmentation from ct images,” IEEE Transactions on Medical
+Imaging, vol. 38, no. 1, pp. 134–144, 2019.
+
+33
+
+T. Nguyen, M. Raghu, and S. Kornblith, “Do wide and deep networks learn the same
+things? uncovering how neural network representations vary with width and depth,”
+arXiv preprint arXiv:2010.15327, 2020.
+
+34
+
+L. Song, A. Smola, A. Gretton, J. Bedo, and K. Borgwardt, “Feature selection via
+dependence maximization.” Journal of Machine Learning Research, vol. 13, no. 5, 2012.
+
+21
+
+

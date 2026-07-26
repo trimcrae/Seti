@@ -6,11 +6,24 @@ so a degraded run reports its degradation as a first-class field:
 1. **The Solano+2022 VO archive.**  MNRAS 515, 1380 states that the 5 399
    unidentified transients and the **172 163 sources not detected in the optical
    but identified in the infrared** "are available from a Virtual Observatory
-   compliant archive".  The archive is an SVO ``vocats`` service.  Rather than
-   trust a guessed URL, :func:`discover_vo_archive` *finds* it: it scrapes the
-   SVO vocats index, and independently regex-mines the paper's own full text
-   for any ``svo``/``vocats``/``cab.inta-csic.es`` URL.  Every candidate root is
-   then probed for a live cone-search response.
+   compliant archive".  It is in fact **two** SVO ``svocats`` catalogues:
+
+   =================  ================================================  =======
+   catalogue          endpoint                                          rows
+   =================  ================================================  =======
+   ``vanish_neowise`` ``http://svocats.cab.inta-csic.es/vanish-neowise/`` 171 753
+   ``vanish_possi``   ``http://svocats.cab.inta-csic.es/vanish-possi/``     5 399
+   =================  ================================================  =======
+
+   Both URLs are quoted verbatim in the Table 1 footnotes of Watters et al. 2026
+   ("Retrieved on 2025-12-08 from …") and in the ``jannefi/vasco`` README.  The
+   channel needs *both*: the first is the sample, the second is its control.
+   :func:`discover_vo_archive` additionally scrapes the SVO archive index and
+   the text of Solano+2022 for any ``vanish``/``vocat`` URL, so a relocated
+   service is still found rather than silently missed.
+
+   Expect **171 753** rows, not the abstract's 172 163 — Watters et al.
+   downloaded the live archive and state the smaller number four times.
 
 2. **VizieR.**  ``J/AJ/159/8`` (Villarroel+2020) is present and holds ``table2``
    (99 rows, the surviving candidates) and ``table3`` (28 rows, the most

@@ -29,6 +29,9 @@ still binds: effort is unlimited, but rigor, contamination-rejection, and honest
 reporting (no overclaiming) govern *how* the work is done and written up.
 
 ## Working practices
+- **Always report times to the user in US Eastern time** (EDT/EST as in effect;
+  EDT = UTC−4, EST = UTC−5). Internal logs/workflows may use UTC, but every
+  time quoted in chat gets converted to Eastern.
 - **ALWAYS MERGE TO MAIN AS YOU GO — without asking.** After every commit to the
   dev branch, push it and merge it into `main`, then push `main`. Never let work
   sit only on the branch. A parallel agent also commits here, so if `main` has

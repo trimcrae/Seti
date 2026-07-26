@@ -1,0 +1,856 @@
+                                              Astronomy & Astrophysics manuscript no. mega-zvezdo4ka                                                                             c ESO 2018
+                                              October 30, 2018
+
+
+
+
+                                                           Realistic model atmosphere and revised abundances
+                                                                     of the coolest Ap star HD 101065⋆
+                                                                         D. Shulyak1,3 , T. Ryabchikova2,3 , R. Kildiyarova4 , and O. Kochukhov5
+
+                                                  1
+                                                    Institute of Astrophysics, Georg-August-University, Friedrich-Hund-Platz 1, D-37077 Göttingen, Germany
+                                                  2
+                                                    Institute of Astronomy, Russian Academy of Science, Pyatnitskaya 48, 119017 Moscow, Russia
+                                                  3
+                                                    Institute of Astronomy, Vienna University, Türkenschanzstrasse 17, A-1180, Vienna
+                                                  4
+                                                    Institute of Spectroscopy, Russian Academy of Science, Physicheskaya 5, 142190 Troitsk, Russia
+                                                  5
+                                                    Department of Physics and Astronomy, Uppsala University, Box 515, 751 20, Uppsala, Sweden
+arXiv:1004.0246v1 [astro-ph.SR] 1 Apr 2010
+
+
+
+
+                                                  Received / Accepted
+
+                                                                                                               ABSTRACT
+
+                                                  Aims. Among the known Ap stars, HD 101065 is probably one of the most interesting objects, demonstrating very rich spectra of
+                                                  rare-earth elements (REE). Strongly peculiar photometric parameters of this star that can not be fully reproduced by any modern
+                                                  theoretical calculations, even those accounting for realistic chemistry of its atmosphere. In this study we investigate a role of missing
+                                                  REE line opacity and construct a self-consistent atmospheric model based on accurate abundance and chemical stratification analysis.
+                                                  Methods. We employed the LLmodels stellar model atmosphere code together with DDAFit and Synthmag software packages to
+                                                  derive homogeneous and stratified abundances for 52 chemical elements and to construct a self-consistent model of HD 101065
+                                                  atmosphere. The opacity in REE lines is accounted for in details, by using up-to-date extensive theoretical calculations.
+                                                  Results. We show that REE elements play a key role in the radiative energy balance in the atmosphere of HD 101065, leading to
+                                                  the strong suppression of the Balmer jump and energy redistribution very different from that of normal stars. Introducing new line
+                                                  lists of REEs allowed us to reproduce, for the first time, spectral energy distribution of HD 101065 and achieve a better agreement
+                                                  between the unusually small observed Strömgren c1 index and the model predictions. Using combined photometric and spectroscopic
+                                                  approaches and based on the iterative procedure of abundance and stratification analysis we find effective temperature of HD 101065
+                                                  to be T eff = 6400 K.
+                                                  Key words. stars: chemically peculiar – stars: atmospheres – stars: individual: HD 101065
+
+
+
+                                             1. Introduction                                                            the latter study Cowley et al. (2000) reported an overabundance
+                                                                                                                        by up to 4 dex (compared to the Sun) for elements heavier than
+                                             Since its discovery by A. Przybylski in 1961 (Przybylski 1961)             Ni and enormously strong lines of the second ions of REEs com-
+                                             and named later after him, the Przybylski’s star (HD 101065,               pared to those of the first ions. This effect which is now com-
+                                             hereafter PS) remains one of the most intriguing objects among             monly known as REE anomaly (Ryabchikova et al. 2001, 2004).
+                                             Chemically Peculiar (CP) stars. These objects are usually char-
+                                             acterized by abundance anomalies in their atmospheres and by                   As new data for REE transitions becomes available via labo-
+                                             non-uniform horizontal and vertical distributions of chemical el-          ratory measurements, more lines of REEs are identified and mea-
+                                             ements and/or surface magnetic fields of different intensities.            sured in spectra of cool CP stars, thus improving abundance re-
+                                                 From many observed characteristics PS is a typical rep-                sults. Later on it it was discovered that PS is not even a champion
+                                             resentative of the coolest part of rapidly oscillating A-type              in REE overabundances. At least a couple of hotter Ap stars:
+                                             (roAp) stars. It pulsates with the typical roAp period, ≈12 min            HD 170973 – Kato (2003); HD 144897 – Ryabchikova et al.
+                                             (Kurtz & Wegner 1979), and it was the first roAp star discov-              (2006), with accurately derived REE abundances from numerous
+                                             ered. It possesses a 2.3 kG surface magnetic field (Cowley et al.          lines of the first and second ions have similar or even higher REE
+                                             2000) and its low Fe abundance (an order of magnitude be-                  atmospheric overabundances. But a combination off a low tem-
+                                             low the solar value) follows the trend of Fe abundance ver-                perature, low iron-peak abundances and large REE overabun-
+                                             sus effective temperature for Ap stars in 6300–14 000 K range              dances result in the extremely unusual observed spectrum of PS:
+                                             (Kochukhov 2003; Ryabchikova et al. 2004). A. Przybylski was               weak lines of the iron-peak elements are lost in a forest of strong
+                                             the first to note a low Fe abundance and a strong overabundance            and numerous REE lines. For example, the typical density of
+                                             of some rare-earth (REE) elements (Przybylski 1966). These                 only classified spectral features contributing to the theoretical
+                                             features were confirmed in many subsequent spectroscopic stud-             spectra at 5375 Å is 6–10 lines per Å, and still not enough for
+                                             ies of this star (Wegner & Petford 1974; Cowley et al. 1977;               proper description of the PS spectrum since every second feature
+                                             Cowley & Mathys 1998; Cowley et al. 2000). For instance, in                can not be accounted for in the modern spectrum synthesis.
+                                             Send offprint requests to: D. Shulyak,                                         Accurate spectroscopic analysis of PS requires dedicated
+                                             e-mail: denis.shulyak@gmail.com                                            model atmospheres. Indeed, abnormally strong REE absorption
+                                               ⋆
+                                                 Based on observations collected at the European Southern               indicates that the atmospheric structure of the star may deviate
+                                             Observatory (Paranal, La Silla) and on data retrieved from the ESO         significantly from that of normal, solar abundance stars. This is
+                                             Science Archive.                                                           clearly seen, for instance, for the Strömgren c1 photometric in-
+
+                                                                                                                                                                                              1
+                   D. Shulyak et al.: Realistic model atmosphere and revised abundances of the coolest Ap star HD 101065
+
+dex that is close to zero, which is very different than for normal     3. Methods
+stars.
+                                                                       3.1. Abundance analysis
+    Previous attempt by Piskunov & Kupka (2001) to account
+for peculiar absorption in the spectrum of PS and to fit color-        The main goal of the present paper is to calculate a model at-
+indices based on the model atmosphere techniques faced a dif-          mosphere of PS accounting for its anomalous chemical compo-
+ficulty of the absence of complete line lists of REE and the im-       sition. In magnetic chemically peculiar star an accurate abun-
+possibility to fit simultaneously photometric and spectroscopic        dance analysis may be carried out by fitting the magnetic syn-
+features (like hydrogen lines) with the same model atmosphere.         thetic spectrum to the observed line profiles. This procedure is
+Piskunov & Kupka (2001) used ATLAS9 (Kurucz 1992, 1993)                very time consuming. Therefore, to simplify calculations, we
+atmospheres with opacity distribution functions (ODF) recal-           analysed the equivalent widths replacing magnetic effects by
+culated for individual abundances and artificially enhanced line       a pseudo-microturbulence. It is sufficient for line opacity cal-
+(but not continuum) opacity of iron to simulate the missing REE        culations, although the abundances derived using the common
+opacity. They finally adopted T eff = 6600 K, log g = 4.2 model        value of microturbulent velocity may be slightly inaccurate (see
+as a preferable choice for spectroscopic analysis. However, this       discussion in Cowley et al. 2000). In present analysis we used
+model failed to explain peculiar photometric parameters of the         the Kurucz (1993) WIDTH9 code modified by V. Tsymbal (see
+star. Enhanced metallicity model by Piskunov & Kupka (2001)            Ryabchikova et al. 1997).
+lead to the decrease of c1 index but its theoretical magnitude              The VALD database (Piskunov et al. 1995; Kupka et al.
+is still too high compared with the observed value. This model         1999) and the DREAM REE line database (Biémont et al. 1999,
+was used in extensive abundance study of PS by Cowley et al.           and references therein), which is made accessible via the VALD
+(2000).                                                                extraction procedures, are our main sources for atomic param-
+    Another striking evidence of the abnormality of the atmo-          eters. For the REE, which provide the majority of lines in the
+spheric structure of PS is the presence of the so-called core-wing     PS spectrum, accurate laboratory transition probabilities mea-
+anomaly in the hydrogen Balmer lines (Cowley et al. 2001).             sured by Wisconsin group are used: Lawler et al. (2001a) –
+This abrupt transition between the Doppler core of the hydro-          La ii; Lawler et al. (2001a) – La ii; Lawler et al. (2009) – Ce ii;
+gen lines and their Stark wings has been modeled empirically by        Den Hartog et al. (2003) – Nd ii; Lawler et al. (2006) – Sm ii;
+Kochukhov et al. (2002) in terms of a temperature increase by          Lawler et al. (2001b) – Eu ii; Den Hartog et al. (2006) – Gd ii;
+500–1000 K at intermediate atmospheric heights but so far has          Lawler et al. (2001c) – Tb ii; Wickliffe et al. (2000) – Dy i/Dy ii;
+not been explained theoretically.                                      Lawler et al. (2008) – Er ii; Wickliffe & Lawler (1997) – Tm ii;
+                                                                       Lawler et al. (2007) – Hf ii. Among heavier elements Th and
+    Thus, HD 101065 remains an extremely challenging and
+                                                                       U are particularly interesting. For these species we used lab-
+very intriguing target for the application of advanced model
+                                                                       oratory and calculated transition probabilities from the follow-
+atmosphere analysis and high-resolution spectroscopy. In this
+                                                                       ing papers: Nilsson et al. (2002a) – Th ii; Biémont et al. (2002)
+paper we present a new attempt to combine both of these ap-
+                                                                       – Th iii; Nilsson et al. (2002b) – U ii. Transition probabilities
+proaches and to construct a self-consistent model atmosphere of
+                                                                       for REEs in the second ionization stage were taken from the
+PS taking into account realistic chemistry of its atmosphere and
+                                                                       DREAM database except Pr iii Mashonkina et al. (2009), Nd iii
+employing up-to-date theoretical calculations of the spectra of
+                                                                       Ryabchikova et al. (2006), Eu iii Wyart et al. (2008), Tb iii and
+selected REEs.
+                                                                       Dy iii (Ryabtsev, private communication).
+    Starting with a brief description of observations in Sect. 2,           Extended measurements and theoretical calculations for the
+we then present methods of analysis in Sect. 3 and describe the        REEs, Th and U justify revision of some of the partition func-
+new lists of REE lines employed in the model atmosphere calcu-         tions (PF), which until now mainly came from Kurucz (1993)
+lations. Results of our analysis are presented in Sect. 4 and are      ATLAS9 code. Our recalculated PFs are made available online1 .
+followed by general conclusions in Sect. 5. Our paper concludes             We did not take into account the hyperfine structure (hfs) in
+with a brief discussion in Sect. 6.                                    our abundance analysis because the hfs constants are available
+                                                                       only for a small subset of spectral lines.
+
+2. Observations                                                        3.2. Stratification analysis
+
+In our study we employed several existing spectra of PS: NTT           In the majority of cool Ap stars the atmospheres are not chem-
+spectrum with the resolving power R ≈ 80 000 in the 3950 −             ically homogeneous. Element stratification built up by atomic
+6630 Å wavelength region, (Cowley et al. 2000), UVES spec-             diffusion influences the atmospheric structure (Shulyak et al.
+trum in the 3100–10 000 Å region with the resolving power R ≈          2009; Kochukhov et al. 2009; Leblanc et al. 2009). As it follows
+80 000 (Kochukhov et al. 2002; Ryabchikova et al. 2008), and           from Khan & Shulyak (2007), Fe, Si, and Cr are the elements
+an averaged UVES spectrum from the time-series observations            that have the major effect on the atmospheric T − P structure in
+                                                                       the case of homogenous abundances. The cumulative effect of el-
+obtained in the 4960–6990 Å spectral region with the resolving
+                                                                       ement stratification on the model structure was demostrated by
+power R ≈ 115 000 (Kochukhov et al. 2007; Ryabchikova et al.
+                                                                       Wade et al. (2003) and later by Monin & LeBlanc (2007) who
+2007).
+                                                                       used diffusion calculations for 39 chemical elements simultane-
+    Details of the spectroscopic observations and full descrip-        ously. Thus, the stratification analysis of PS was performed for
+tion of the data reduction are given in the corresponding papers.      four elements: Fe, Ba, Ca, and Si. It was not possible to carry
+Direct comparison of the normalized spectra reveals a remark-          out stratification analysis for Cr and other iron-peak elements
+able agreement between all observations. This allows us to use         due to weakness of their absorption features and heavy blend-
+the equivalent width measurements from Cowley et al. (2000),           ing by REE lines. The lower energy levels of practically all Cr
+supplementing them with the measurements in the spectral re-
+                                                                         1
+gion λ > 6600 Å using the other two spectra.                                 http://www.astro.uu.se/∼ oleg/pf.html
+
+
+2
+                   D. Shulyak et al.: Realistic model atmosphere and revised abundances of the coolest Ap star HD 101065
+
+lines used in the abundance determination belong to a narrow           sitions. Most of them come from the latest theoretical calcula-
+energy range, which makes the Cr lines insensitive to abundance        tions performed by R. Kurucz2 .
+gradients. Hence, we restricted stratification analysis to the four         Since a 2.3 kG surface magnetic field of PS is too weak
+elements since they are represented in HD 101065 by a sufficient       to affect noticeably the atmospheric structure and energy distri-
+number of atomic lines, probing different atmospheric layers and       bution (see Kochukhov et al. 2005; Khan & Shulyak 2006, for
+enabling line profile fitting.                                         more details) we adopted a 1 km s−1 microturbulent velocity to
+    We applied a step-function approximation of chemical strat-        roughly account for the magnetic broadening and to avoid time-
+ification as implemented in DDAFit – an automatic procedure            consuming model calculations with detailed polarized radiative
+for determination of vertical abundance gradients (Kochukhov           transfer.
+2007). In this routine, the vertical abundance distribution of an
+element is described by four parameters: chemical abundance in         3.4. REE line lists for model atmosphere calculation
+the upper atmosphere, abundance in deep layers, the position of
+the abundance jump and its width. All four parameters can be op-       The main sources for the REEs transition probabilities data
+timized simultaneously with the least-squares fitting procedure.       between experimentally known energy levels are VALD and
+                                                                       DREAM databases, hereafter referred to “VALD data”. These
+    Most unblended lines in the PS spectrum are located in the         data were supplemented by the transition probabilities for the
+red spectral region, where line profiles are also substantially dis-   observed and predicted lines of Pr ii-Pr iii (Mashonkina et al.
+torted by the Zeeman splitting due to wavelength dependence            2009), Nd ii-Nd iii (Mashonkina et al. 2005; Ryabchikova et al.
+of the Zeeman effect. DDAFit enables an accurate stratification        2006), Eu iii (Wyart et al. 2008), Tb iii and Dy iii (Ryabtsev, pri-
+analysis of such magnetically-splitted lines. In the search for op-    vate communication), hereafter referred to as “ISAN data”. For
+timal vertical distribution of chemical elements we use magnetic       the latter two ions transition probability calculations were based
+spectrum synthesis with the Synthmag code (Kochukhov 2007).            on the extended term analysis.
+This software represents an improved version of the program de-             Table 2 demonstrates a dramatic difference between the num-
+veloped by Piskunov (1999).                                            ber of observed (VALD) and predicted (ISAN) transitions for Pr
+    A list of the lines used in stratification analysis is given in    and Nd, in particular for the lines of the first ions. We are miss-
+Table 3 (Online material). To get a better sensitivity of the fit-     ing more than 90% of the potential line absorbers. The same
+ted Ca distribution to the upper atmospheric layers, we used the       situation is expected for lines of the other REEs. Taking this
+IR-triplet Ca ii line at λ 8498 Å. As shown by Ryabchikova et al.      situation into account, we performed calculations for Sm ii –
+(2008) and Cowley et al. (2009), its core is represented entirely      the second-abundant element after Nd in PS. The energy lev-
+by the absorption of the heavy isotope 48 Ca. Therefore wave-          els of Sm ii were calculated by the Hartree-Fock method imple-
+length of the line of this isotope is given in Table 3.                mented in the Cowan (1981) code. The ground state of Sm ii
+                                                                       is the 4f6 6s configuration. In addition, our calculations include
+                                                                       even configurations 4f6 nd (n=5,6), 4f6 7s, 4f5 5d6p, 4f5 6s6p, and
+3.3. Calculation of model atmospheres                                  odd configurations 4f6 np (n=6-8), 4f4 5d2 6p, 4f4 6s2 6p, 4f5 5d2 ,
+                                                                       4f5 5d6s. Calculations are based on the wave functions obtained
+To perform the model atmosphere calculations we used the re-           by the fittings the energy levels. As in the case of Pr ii and Nd ii,
+cent version of the LLmodels (Shulyak et al. 2004) stellar model       all Hartree-Fock transition integrals are scaled by a factor 0.85.
+atmosphere code. The code accounts for the effects of individ-         In total, transition probabilities for more than one million lines
+ual and stratified abundances. The stratification of chemical ele-     were calculated and added to the ISAN list of the REE lines.
+ments is an input parameter and thus does not change during the             The recent studies by Mashonkina et al. (2005, 2009)
+model atmosphere calculation process. This allows us to explore        demonstrated that the line formation of Pr and Nd can strongly
+the changes in the model structure due to stratification that was      deviate from the local thermodynamic equilibrium. For instance,
+inferred directly from observations, without modeling poorly un-       the doubly ionized lines of these elements are unusually strong
+derstood processes that could be responsible for the observed          due to combined effects of stratification of these elements and
+inhomogeneities.                                                       departures from LTE. However, a precise NLTE analysis is be-
+                                                                       yond the scope of this paper and currently could not be coupled
+    Note that such an empirical analysis of chemical element
+                                                                       to a model calculation. Therefore, we followed the approach out-
+stratification is based on the model atmosphere technique and
+                                                                       lined in Shulyak et al. (2009) where authors used a simplified
+thus the temperature-pressure structure of the model atmosphere
+                                                                       treatment of the REE NLTE opacity.
+itself depends upon the stratification which we want to deter-
+mine. Therefore, the calculation of the model atmosphere and                Taking into account a systematic difference in abundances
+the stratification (abundances) analysis are linked together and       derived for the first and second REE ions, it is essential to re-
+an iterative procedure should be used in this case. It consists        duce the oscillator strengths for the singly ionized REE lines
+of repeated steps of stratification and abundance analysis that        by this difference in the model line list while using the abun-
+provide an input for the calculations of model atmosphere until        dances derived from second ions as an input for model atmo-
+atmospheric parameters (T eff , log g, etc.) converge and theoreti-    sphere calculations (or vice versa). Obviously, the adopted re-
+cal observables (photometric colors, profiles of hydrogen lines,       duction factors depend upon the assumed abundances of the first
+etc.) fit observations. We refer the reader to the recent papers       and second ions and thus change slightly if the model param-
+(Shulyak et al. 2009; Kochukhov et al. 2009) for a more detailed       eters (T eff , log g, etc.) are modified in the course of the itera-
+description of this technique.                                         tive procedure of abundance analysis. The logarithmic scaling
+                                                                       factors, log(NII /NIII ), adopted for our final model are (in dex):
+   The VALD database (Piskunov et al. 1995; Kupka et al.               −1.6 (Ce), −2.4 (Pr), −1 (Nd), −2.66 (Tb), −2.5 (Dy), and −1.64
+1999) was used as a main source of the atomic line data for            (Eu). These factors were applied to all lines of the respective
+computation of the line absorption coefficient. The recent VALD
+compilation contains information on about 66 × 106 atomic tran-          2
+                                                                             http://kurucz.harvard.edu
+
+
+                                                                                                                                          3
+                    D. Shulyak et al.: Realistic model atmosphere and revised abundances of the coolest Ap star HD 101065
+
+ions in the master line list. Then this line list was processed by
+the line pre-selection procedure in the LLmodels code to select
+only those lines that contribute non-negligibly to the total line
+opacity coefficient for a given temperature-pressure distribution.
+Applying this line scaling procedure allowed us to mimic the line
+strengths correspond to the NLTE ionization equilibrium abun-
+dance for each REE (see Shulyak et al. 2009, for more details).
+
+
+4. Results
+4.1. Adopted atmospheric parameters
+We started analysis with a homogeneous abundance model cal-
+culated with T eff = 6600 K, log g = 4.2, and individual abun-
+dances taken from Cowley et al. (2000). Once the stratification
+was introduced in the model atmosphere, the fit to the hydro-
+gen Hα line and the observed photometric parameters required
+decreasing of T eff of the star down to approximately 6400 K. In
+total, four iterations of the abundance analysis and the model
+atmosphere calculation were performed to achieve a converged
+solution. The abundances from the third iteration did not intro-
+duce noticeable changes in the atmospheric structure.
+    The effective temperature obtained in our study is identi-
+cal to the T eff obtained by Kochukhov et al. (2002), who fitted           Fig. 1. Comparison between the observed and predicted Hα line
+the Hα and Hβ lines using the same UVES spectra. However,                  profiles.
+Kochukhov et al. relied on less advanced ATLAS9 model atmo-
+spheres calculated using ODFs with artificially increased Fe line
+                                                                                        6
+absorption (Piskunov & Kupka 2001) and also attempted to em-
+                                                                                                  I
+pirically adjust the T -τ structure of their model.                                     5         II
+    Figure 1 illustrates the observed and predicted Hα                                            III
+                                                                                                  stratified
+line profiles calculated with different atmospheric models.                             4
+Unfortunately, it is impossible to infer an accurate value of log g
+from the Hα profile due to low temperature of the star and re-                          3
+                                                                           [Nel/Ntot]
+
+
+
+
+sulting poor sensitivity of the hydrogen lines to the pressure
+stratification. For this reason we kept this parameter fixed dur-                       2
+ing the iterative procedure of abundance analysis (however, see
+Discussion).                                                                            1
+
+                                                                                        0
+4.2. Abundance pattern
+                                                                                        -1
+Table 4 (Online material) summarizes individual abundances of
+chemical elements in the atmosphere of PS derived with the final                        -2
+                                                                                             C Na Al S Sc V Mn Co Cu Y Nb Ru Pd Sn La Pr Sm Gd Dy Er Yb Hf W Ir Au Th
+model atmosphere. Note the strong enrichment of REE elements                                  O Mg Si Ca Ti Cr Fe Ni Sr Zr Mo Rh Cd Ba Ce Nd Eu Tb Ho Tm Lu Ta Re Pt Hg U
+                                                                                                                              Element
+compared to the solar composition. These elements dominate the
+spectrum of PS, playing a key role in the radiative energy bal-            Fig. 2. Chemical composition of the atmosphere of HD 101065.
+ance (see below).                                                          Different symbols correspond to ions from I to III. Bars show
+    In Fig. 2 we illustrate abundance pattern of PS relative to            abundance ranges for stratified elements.
+the recent compilation of the solar abundances (Grevesse et al.
+2007). The elements heavier than Ba exhibit an overabundance
+by 3 dex and larger. Several REEs show clear ionization anomaly
+related to stratification of these elements and departures from
+LTE.                                                                            The effect of introducing stratification on the fit to Hα line
+    Vertical distribution of Si, Fe, Ba, and Ca is presented in            appears to be not very strong. The maximum difference between
+Fig. 3. This figure illustrates the difference between the initial         the stratified and non-stratified model predictions is at the level
+and final stratification as derived at the first and the last iterations   of 1% as seen from Fig. 1. However, the two profiles are still
+respectively. Ba seems to be the only element whose stratifica-            clearly distinguishable. Thus, chemical stratification should be
+tion did not change appreciably during iterations. Only the posi-          taken into account in accurate modeling of the hydrogen line
+tion of the abundance jump changed slightly. Fe shows a change             formation.
+in the abundance in the upper atmosphere by about ∼ 1 dex. The                  The Fe and Ba abundance distributions agree with those de-
+position of the abundance jump for Si changed significantly. In            rived previously by either trial-and-error method (Ryabchikova
+contrast, the Ca abundance in the upper atmosphere changes dra-            2003) or based on the equivalent widths (Yushchenko et al.
+matically. These results illustrate the importance of taking into          2007). Figures 3-6 (Online material) illustrate the resulting fit
+account a feedback of stratification on the model structure.               to line profiles.
+
+4
+                  D. Shulyak et al.: Realistic model atmosphere and revised abundances of the coolest Ap star HD 101065
+
+
+
+
+Fig. 7. Observed and theoretical energy distribution of HD 101065 calculated using line lists from two datasets: VALD and ISAN.
+For comparison purpose the theoretical energy distribution of a normal F-type star HD 49933 is also shown. All theoretical calcula-
+tions are smoothed with 20Å Gaussian.
+
+                                                                      pose. To keep the figure representative, here we show only mod-
+                                                                      els with final T eff = 6400 K, log g = 4.2 and different assump-
+                                                                      tions about REE opacity. Energy distributions of models with
+                                                                      T eff = 6500 K and T eff = 6600 K are displayed in Fig. 8 (Online
+                                                                      Material).
+                                                                           The observed energy distribution of PS is constructed com-
+                                                                      bining the large-aperture IUE observations extracted from the
+                                                                      INES database3 and photometric data in the U BV (Wegner
+                                                                      1976), Geneva4 , JHK (Catalano et al. 1998) and 2MAS S
+                                                                      (Skrutskie et al. 2006) systems converted to absolute fluxes. The
+                                                                      model fluxes are scaled to account for the distance to PS, which
+                                                                      is 112 ± 11 pc according to the revised Hipparcos parallax of
+                                                                      π = 8.93 ± 0.87 mas (van Leeuwen 2007). Theoretical fluxes
+                                                                      are further scaled to match the observed Paschen continuum de-
+                                                                      fined by the U BV and Geneva photometry. This scaling fac-
+                                                                      tor corresponds to the radius of the star, for which we found
+                                                                      R = 1.98 ± 0.03R⊙. The same scaling is applied to all theoretical
+Fig. 3. Stratification of four elements in the atmosphere of          fluxes presented in Fig. 7. For models with T eff = 6500 K and
+HD 101065 derived at the first and last iteration of the abun-        T eff = 6600 K we find R = 1.90R⊙ and R = 1.82R⊙ respectively
+dance analysis.                                                       (see Fig. 8, Online Material).
+                                                                           It is evident that the enormous REE absorption leads to
+                                                                      smoothing of the Balmer jump. This is clearly visible for both
+4.3. Energy distribution and photometric colors                       models computed with the new ISAN REE line list and with the
+                                                                      original VALD REE line list. The only difference is that the for-
+Unusual photometric parameters of PS clearly indicate that its        mer one predicts less flux redward of 4100Å and more flux in the
+energy distribution should differ much from that of normal stars      region 3000Å and 3800Å (note that the model computed with
+with similar T eff . Indeed, a dense forest of REE lines obtained     mean REE abundances should be used with big caution due to
+from theoretical computations should have a strong impact on          ignoring REE anomaly, and we present it in Fig. 7 for illustrative
+the atmospheric energy balance.                                       purpose only). Taking into account difficulties in predicting ac-
+    Figure 7 illustrates theoretical energy distributions of          curately the spectra of REEs, one can conclude that our models
+HD 101065 and a normal F-type star HD 49933. Both stars               computed with the recent improvements of the line REE opac-
+have close effective temperatures but very different atmospheric      ity provide a reasonably good fit to the observed fluxes. They
+chemistry: HD 49933 has a slight underabundance of iron-peak          are able to reproduce not only the shape of the observed energy
+elements and a nearly solar abundance of REEs as derived by           distribution but also the amplitude of the Balmer jump reason-
+Ryabchikova et al. (2009). Model fluxes were computed with            ably well, much better than in the previous attempt by ODF-
+the stratified distribution of Si, Ca, Fe, and Ba as well as with     based modeling (Piskunov & Kupka 2001). However, there are
+the scaled REE abundances as described above. In addition,            still some discrepancies with observations, i.e. too high fluxes in
+ATLAS9 ODF model from Piskunov & Kupka (2001) calculated
+                                                                        3
+with T eff = 6600 K, log g = 4.2 and Fe opacity scaled to simu-             http://sdc.laeff.inta.es/ines/index2.html
+                                                                        4
+late an enhanced REE absorption is shown for comparison pur-                http://obswww.unige.ch/gcpd/ph13.html
+
+
+                                                                                                                                       5
+                   D. Shulyak et al.: Realistic model atmosphere and revised abundances of the coolest Ap star HD 101065
+
+the 2000–2500 Å region and around 4500 Å. The description of           Table 1. Observed and predicted colors of HD 101065.
+the energy distribution of PS can be probably improved in the
+future once more complete line lists of REEs will become avail-
+able. A new well-calibrated observed spectrophotometry in the                                 b−y      m1         c1       B−V     U−B
+3300–10 000 Å region would also be extremely useful for further           Observations        0.442   0.427    −0.013      0.760   0.200
+modeling.                                                                 t6600g4.2, ODF      0.387   0.582     0.298      0.767   0.571
+                                                                          t6400g4.2
+     The impact of the peculiar energy distribution on the pho-           VALD                0.440   0.439     0.029      0.745   0.268
+tometric parameters of HD 101065 is illustrated in Table 1.               REE mean abun.
+Observations in the Strömgren system were taken from                     t6400g4.2
+Hauck & Mermilliod (1998). Predictions of Piskunov & Kupka                ISAN                0.456   0.587    −0.202      0.829   0.379
+(2001) model calculated with the ODF line opacity representa-             REE mean abun.
+tion using abundances from (Cowley et al. 2000) are also given            t6400g4.2
+for comparison. We also show theoretical photometric parame-              VALD                0.394   0.420     0.312      0.681   0.368
+ters for the models calculated with the mean REE abundances               REE scaled abun.
+corresponding to the first and second ions, as well as for the            t6400g4.2
+models with the scaled REE opacity, and for different T eff . All         ISAN                0.384   0.413     0.158      0.663   0.274
+                                                                          REE scaled abun.
+models except the ODF-based one were computed with the
+                                                                          t6500g4.2
+chemical stratification illustrated in Fig. 3.                            ISAN                0.367   0.397     0.200      0.634   0.255
+     There are few things to note from Table 1. First of all, a           REE scaled abun.
+strong impact of the REE opacity is clearly seen for the c1 photo-        t6600g4.2
+metric index which reaches an even more negative value than the           ISAN                0.350   0.391     0.229      0.607   0.240
+observed one for the models with the ISAN data and the mean               REE scaled abun.
+REE abundances. Similarly, the recent version of VALD already             t6400g4.2
+provides REE opacity that is enough to bring down c1 index sig-           ISAN, hom.          0.383   0.396     0.188      0.656   0.271
+nificantly compared to previous calculations and provides a re-           REE scaled abun.
+sult very close to the observed one. However, mean abundances             t6200g4.5
+                                                                          ISAN                0.417   0.444     0.024      0.719   0.261
+can not be used for accurate modeling due to significant REE              REE scaled abun.
+ionization anomaly. Accounting for this via the scaling of REE
+line opacity decreases the flux redistribution effect and thus the     All models were computed with stratification of Fe, Si, Ca, and Ba,
+impact on the c1 index. The implementation of the new ISAN             except those marked as “ODF” and “hom.”
+data gives a much better fit to observations than using the data
+from VALD alone, yet this fit is far from being fully satisfactory.
+     Second, it remains difficult to obtain a good fit simultane-
+ously for all photometric indices. For instance, all models fail
+to reproduce the U − B value, while b − y is not reproduced by
+models with the scaled REE opacity unless one decreases T eff
+to ≈ 6200 K. However, lowering T eff is not consistent with the              The strong suppression of the Balmer jump and energy re-
+observed Hα line. Similar, worse fit is obtained for models with       distribution to the infrared is a direct result of the unusually high
+T eff > 6400 K, which show reduced b − y and increased c1 indi-        REE abundances in the stellar atmosphere. Table 2 summarizes
+cies.                                                                  some statistics illustrating importance of the REE opacity in the
+     Third, stratification of Fe, Si, Ca, and Ba considered in our     atmosphere of PS. It shows the number of lines of a given ion
+study does not play a significant role for the overall energy re-      before and after line preselection procedure performed by the
+distribution and thus photometric colors as seen from the sixth        LLmodels code. This procedure selects from the master line list
+raw of Table 1. Most of the photometric indicators are negligibly      only those lines that noticeably contribute to the line opacity
+affected by the presence of stratification. The c1 index is again      for a given T -P structure. Usually the preselection criterion is
+an exception since it decreases by ≈ 0.03 mag if stratification is     κline /κcont > 1%, where κline and κcont are the line center and
+introduced. However, this change is still fairly small compared        continuum opacity coefficients, respectively. It is seen that, for
+to typical precision of the observed Strömgren photometry.            instance, all lines of Pr ii and Nd ii present in the current version
+                                                                       of VALD contribute to the opacity in the atmosphere of PS. A
+     Finally, a high sensitivity of the photometric parameters to      larger number of lines is selected from the more complete ISAN
+the new ISAN calculations indicates that the general disagree-         line lists.
+ment between models and observations is the subject of future
+more precise and complete calculations of REE spectra. Using                As expected from the low magnitude of the c1 index and the
+the data for more REE elements than those presented in this in-        energy distribution shown in Fig. 7, a great majority of strong
+vestigation can potentially improve the fit to the highly peculiar     REE lines are concentrated around the Balmer jump. Figure 9
+observed photometric properties of PS. Implementation of the           illustrates the line distribution for selected REE ions depending
+ISAN line lists for only a few REE ions already allowed us to          upon their wavelength position and central intensity. We show
+achieve significantly better results compared to previous model-       the number of lines per 50 Å wavelength bin for which the cen-
+ing attempts and clearly showed that the “enigmatic” character-        tral intensities are greater or equal to a given normalized inten-
+istics of PS likely result from the REE line opacity which was         sity. The latter ranges from 0 (fully saturated strong line) to 1
+ignored in previous calculations. We can thus suggest that fur-        (continuum level, weak line). One can seen that ions like Ce ii,
+ther step in the modeling of the observed properties of PS should      Pr ii, Nd ii/iii, Sm ii have a large number of strong lines located
+be made in the direction of improved theoretical calculations of       exactly in the region of Balmer jump and blueward, dramatically
+REE transitions.                                                       contributing to the opacity and radiation field.
+
+6
+                                D. Shulyak et al.: Realistic model atmosphere and revised abundances of the coolest Ap star HD 101065
+
+Table 2. Summary of REE lines in VALD and combined ISAN line lists before and after line preselection procedure.
+
+
+                                                      Pr ii      Pr iii          Nd iii   Nd ii
+                                                                                             Sm ii    Eu iii   Dy iii   Ce ii   Ce iii
+                                                                                   Original
+                                    VALD          510 19104           1285          71       1346      893     1313 16046       2966
+                                    ISAN      103428      − − − 1172579 6858 1047088 23827 31121 − − − − − −
+                                      After preselection with 1% limit for T eff = 6400 K, log g = 4.2 model, REE scaled abundances
+                                    VALD          510      6539       1285          71       1121       58     1134 15908       1270
+                                    ISAN        83167     −−−       74413 3810              58637       74 21715 − − − − − −
+
+
+     200                            Nd II                       200         30                                  Nd III                         30        500                               Pr II                     500
+     180                                                        180                                                                                      450                                                         450
+     160                                                        160         25                                                                 25        400                                                         400
+     140                                                        140         20                                                                 20        350                                                         350
+     120                                                        120                                                                                      300                                                         300
+     100                                                        100 N       15                                                                 15        250                                                         250
+N     80                                                                                                                                            N    200
+                                                                80          10                                                                                                                                       200
+      60                                                        60                                                                             10        150                                                         150
+      40                                                        40              5                                                                        100                                                         100
+      20                                                                                                                                       5          50
+                                                                20                                                                                                                                                   50
+       0                                                        0               0                                                              0           0                                                         0
+       0.8                                                                      0.8                                                                        0.8
+          0.6                                                                        0.6                                                                        0.6
+     Rc                                                                    Rc                                                                            Rc
+             0.4                                                                          0.4                                                                       0.4
+                0.2                                      900 1000                           0.2                                       900 1000                         0.2                             700 800 900
+                                                                                                                                                                                                                   1000
+                                    400 500  600 700 800                                                        400 500   600 700 800                                                      400 500 600
+                      100 200 300                                                                 100 200 300                                                                100 200 300
+                                      Wavelength, (nm)                                                            Wavelength, (nm)                                                           Wavelength, (nm)
+
+
+     140                            Pr III                      140       250                                  Ce II                       250          800                               Sm II                     800
+     120                                                        120                                                                                     700                                                         700
+                                                                          200                                                              200          600
+     100                                                        100                                                                                                                                                 600
+                                                                          150                                                              150          500                                                         500
+      80                                                        80                                                                                      400                                                         400
+N     60                                                        60 N      100                                                                       N
+                                                                                                                                           100          300                                                         300
+      40                                                        40                                                                                      200
+                                                                           50                                                                                                                                       200
+      20                                                                                                                                   50           100
+                                                                20                                                                                                                                                  100
+       0                                                        0          0                                                               0              0                                                         0
+       0.8                                                                 0.8                                                                            0.8
+          0.6                                                                       0.6                                                                       0.6
+     Rc                                                                   Rc                                                                            Rc
+             0.4                                                                      0.4                                                                        0.4
+                0.2
+                                            600 700   800 900 1000                         0.2
+                                                                                                                       600 700   800 900 1000                         0.2                             700 800 900
+                                                                                                                                                                                                                  1000
+                                300 400 500                                                                300 400 500                                                                    400 500 600
+                      100 200                                                                    100 200                                                                    100 200 300
+                                      Wavelength, (nm)                                                           Wavelength, (nm)                                                           Wavelength, (nm)
+
+
+Fig. 9. Distribution of lines for several REE ions depending on their position and central depth in the ISAN line lists for the model
+atmosphere with T eff = 6400 K, log g = 4.2.
+
+
+5. Conclusions                                                                                                           suppression of the Balmer jump and energy redistribution
+                                                                                                                         from UV and visual to IR.
+HD 101065 is known to be one of the most peculiar stars ever                                                           – The abnormal photometric color-indices of HD 101065 arise
+found. Its unusual photometric colors and extremely rich spectra                                                         due to a strong absorption in REE lines. We showed that
+of REE elements represent a major challenge for modern stellar                                                           the introduction of the new extensive line lists of REEs al-
+atmosphere theory. With the increasing number of the accurately                                                          low one to achieve a better agreement between the unusually
+measured and calculated REE transitions and the progress in the                                                          low magnitude of the Strömgren c1 index observed for this
+model atmosphere techniques it became possible to carry out this                                                         star and the model predictions. We also demonstrated, for the
+quantitatively new analysis of the spectrum of HD 101065 and                                                             first time, a satisfactory agreement between the observed and
+to re-determine atmospheric parameters of this star.                                                                     computed spectral energy distribution of HD 101065.
+    In this study we investigated the impact of the new theo-                                                          – The remaining discrepancy between the observed and cal-
+retically computed spectra of some REE elements on the atmo-                                                             culated photometric parameters indicates that some impor-
+spheric properties of HD 101065 and carried out a detailed spec-                                                         tant opacity sources are still missing in the modeling process.
+troscopic analysis of the stratification of Si, Fe, Ba, and Ca in                                                        For this reason the future extension of the REE line lists is
+the stellar atmosphere. Theoretical computations of REE transi-                                                          needed for complete understanding of the observed proper-
+tions have extended already existing line lists of REE lines by a                                                        ties of HD 101065.
+factor of one thousand. Implementing an iterative procedure of                                                         – Using theoretical spectrum synthesis we derived stratifica-
+the abundance analysis, we re-derived atmospheric parameters                                                             tion profiles for Si, Ca, Fe, and Ba. We found a strong de-
+of the star in a self-consistent way, accounting for the ionization                                                      pletion of all these elements in the upper atmosphere of
+disequilibrium between the first and second ions of the REEs                                                             HD 101065. The effect of stratification on the Hα line profile
+caused by significant NLTE effects.                                                                                      appears to be at the level of 1%, which is however important
+    The main results of our investigation can be summarized in                                                           for accurate calculation of the hydrogen line profiles.
+the following:                                                                                                         – There is not much influence of the stratification on the con-
+                                                                                                                         sidered photometric parameters of HD 101065, except for
+    – REEs appear to play a key role in the radiative energy bal-                                                        the Strömregn c1 index, which is modified by stratification
+      ance in the atmosphere of HD 101065, leading to the strong                                                         by 0.03 mag.
+
+
+                                                                                                                                                                                                                         7
+                    D. Shulyak et al.: Realistic model atmosphere and revised abundances of the coolest Ap star HD 101065
+
+    – Using combined photometric and spectroscopic analysis and
+      based on our novel iterative procedure of the abundance and
+      stratification analysis we find effective temperature of the
+      HD 101065 to be T eff = 6400 K.
+
+    Taking into account the current progress in the atmospheric
+modeling, understanding of the REE opacity, and detailed spec-
+troscopic analysis we conclude that there is nothing special in
+HD 101065 compared to other known cool Ap and roAp stars
+except its relatively low T eff and a high abundance of REEs.
+Consequently, for this moment HD 101065 appears to be the
+coolest Ap and roAp star known but otherwise is a typical mem-
+ber of these groups.
+
+
+6. Discussion
+We can compare the global parameters of HD 101065 derived
+in the present study with the values obtained by an independent
+pulsation modeling (Mkrtichian et al. 2008). The best model ex-
+plaining the observed frequency pattern of HD 101065 is char-
+acterized by T eff = 6622±100 K, log g = 4.06±0.04, R = 1.90 ±
+0.08 R⊙ . These parameters agree with ours within 2σ. However,
+to fit the observed frequencies in the framework of current as-
+terosismic models one needs dipolar magnetic field strength             Fig. 10. Comparison in atmospheric temperature structure
+Bp = 8.7 kG, which is incompatible with the observed field mod-         of theoretical models. Thick line – ODF model from
+ulus of hBi = 2.3 kG. One of the reasons for this significant dis-      Piskunov & Kupka (2001), dotted line – homogeneos solar
+crepancy between the observed and inferred magnetic field is            abundances model, dashed line – stratified abundances final
+the use of normal T -τ relation in the pulsation modeling. This         model adopted in the present study, dash-dotted line – same as
+relation differs significantly from a more realistic one derived in     before but assuming homogeneos abundances.
+the present paper, as illustrated in Fig. 10 (Note that comput-
+ing model with solar abundances we did not apply scaling of the
+REE opacity due to the low abundance of REE elements in solar           ply because it would affect only the optically thin atmospheric
+atmosphere and thus its negligible impact on model structure).          layers.
+As expected from the fit to Hα line and photometric parameters               As mentioned above, due to the low T eff of PS, it is impossi-
+presented above, the effect of stratification on model T − P struc-     ble to infer the log g value from the hydrogen lines. Furthermore,
+ture is negligible and hardly distinguishable from the homoge-          such log g indicator as the c1 photometric index is strongly af-
+neous abundance model (dash-dotted line in Fig. 10). Note that it       fected by the REE opacity, which is still far from being com-
+is still considereably different from the solar abundance model,        pletely understood. The ISAN calculations gave us information
+and is in good agreement with the result of Monin & LeBlanc             on several REE ions but the role of other REE species is not
+(2007).                                                                 known at this moment. On the other hand, as seen from the high
+     In spite of our new results, illustrating an improved under-       resolution spectra of HD 101065, most of the line absorption is
+standing of the physics of the atmosphere of HD 101065, it is           due to such ions as Pr ii/iii, Nd ii/iii, and Ce ii/iii that are repre-
+still impossible to describe all observed properties of this star       sented in our calculations by a large number of lines. This sug-
+with the current state-of-the-art modeling. In this section we          gests that the magnitude of the energy redistribution is well mod-
+would like to discuss physical effects that we ignored in our anal-     eled. However, extending our calculations using new line lists for
+ysis.                                                                   other REE ions will allow to improve the accuracy of theoretical
+                                                                        c1 index and constrain the log g of the star. In principle, increas-
+     Taking into account a jungle of the REE lines seen in the
+                                                                        ing log g up to 4.5 and decreasing T eff down to 6200 K provides
+spectrum of HD 101065 and their importance as an opacity
+                                                                        a better fit to the observed photometric parameters as demon-
+source for the model atmosphere calculation it would be rea-
+                                                                        strated in the last row of Table 1. Also the fit to the Hα line
+sonable to search for the possible stratification of rare-earth el-
+                                                                        remains reasonable with these parameters. However, the ioniza-
+ements. Considering the case of a hotter roAp star HD 24712,
+                                                                        tion equilibrium for different elements is not as good as with the
+for which the accumulation of REEs in the upper atmosphere
+                                                                        T eff = 6400 K, log g = 4.2 model. This is why, and taking into
+plays a critical role, producing a characteristic inverse temper-
+                                                                        account various uncertainties related to the REE opacity, we did
+ature gradient (see Shulyak et al. 2009, for more details), one
+                                                                        not attempt to derive surface gravity in our study. This limitation
+would expect the same mechanism to operate in the atmosphere
+                                                                        does not affect any of the results presented in this paper.
+of HD 101065 as well. However, the stratification analysis of
+REEs is highly complicated due to blending of REE lines with            Acknowledgements. This work was supported by the following grants: FWF
+accurately known atomic parameters (that ideally should be used         Lise Meitner grant Nr. M998-N16 and Deutsche Forschungsgemeinschaft (DFG)
+for such an analysis) by other REE lines for that no laboratory         Research Grant RE1664/7-1 to DS, by RFBG grants (08-02-00469a, 09-02-
+measurements exist and thus can not be included in the spectrum         00002a), Presidium RAS Programme “Origin and evolution of stars and galax-
+                                                                        ies” and Russian Federal Agency on Science and Innovation Programme
+synthesis. At the same time, assuming that REEs are distributed         (02.740.11.0247) to TR. OK is a Royal Swedish Academy of Sciences Research
+similarly in both stars, we do not expect a strong impact of the        Fellow supported by grants from the Knut and Alice Wallenberg Foundation
+REE stratification on the energy distribution of HD 101065 sim-         and the Swedish Research Council. This publication makes use of data prod-
+
+
+8
+                       D. Shulyak et al.: Realistic model atmosphere and revised abundances of the coolest Ap star HD 101065
+
+ucts from the Two Micron All Sky Survey, which is a joint project of                 Piskunov, N. E. 1999, in 2nd International Workshop on Solar Polarization, eds.
+the University of Massachusetts and the Infrared Processing and Analysis                K. Nagendra and J. Stenflo, Kluwer Acad. Publ. ASSL, 243, 515
+Center/California Institute of Technology, funded by the National Aeronautics        Piskunov, N., Kupka, F. 2001, ApJ, 547, 1040
+and Space Administration and the National Science Foundation. Based on INES          Piskunov, N. E., Kupka, F., Ryabchikova, T. A., Weiss, W. W., & Jeffery, C. S.
+data from the IUE satellite. We also acknowledge the use of electronic databases        1995, A&AS, 112, 525
+(VALD, SIMBAD, NIST, NASA’s ADS)                                                     Przybylski, A. 1966, Nature, 210, 20
+                                                                                     Przybylski, A. 1961, Nature, 189, 739
+                                                                                     Ralchenko, Yu., Kramida, A.E., Reader, J., & NIST ASD Team.
+                                                                                        2009, NIST Atomic Spectra Database (version 3.1.5), available:
+References                                                                              http://physics.nist.gov/asd3, NIST, Gaithersburg, MD.
+Bard, A., Kock, A. & Kock, M. 1991, A&A, 248, 315                                    Ryabchikova, T. 2003, in Magnetic Fields in O, B and A Stars: Origin and
+Bard, A. & Kock, M. 1994, A&A, 282, 1014                                                Connection to Pulsation, Rotation and Mass Loss, eds. Luis A. Balona, Huib
+Berry, H.G., Bromander, J., Curtis, L.J. & Buchta, R. 1971, Phys. Scr., 3, 125          F. Henrichs, and Rodney Medupe, ASPC, 305, 181
+Biémont, E., Palmeri, Quinet, P., Zhang, Z.G., & S. Svanberg, S. 2002, ApJ, 567,    Ryabchikova, T., Fossati, L., & Shulyak, D. 2009, A&A, 506, 203
+   1276                                                                              Ryabchikova, T., Kochukhov, O., & Bagnulo, S. 2008, A&A, 480. 811
+Biémont, E., Palmeri, P., & Quinet, P. 1999, Ap&SS, 635, 269                        Ryabchikova, T., Sachkov, M., Kochukhov, O., & Lyashko, D. 2007, A&A, 473,
+Byrne, P. B. 1983, IrAj, 16, 58                                                         907
+Catalano, F.A., Leone, F., & Kroll, R. 1998, A&AS, 129, 463                          Ryabchikova, T., Ryabtsev, A., Kochukhov, O., & Bagnulo, S. 2006, A&A, 456,
+Cowan, R.D. 1981, The Theory of Atomic Structure and Spectra, Univ.of                   329
+   California Press. Berkeley. California. USA                                       Ryabchikova, T., Nesvacil, N., Weiss, W. W., Kochukhov, O., & Stütz, Ch. 2004,
+Cowley, C. R., Hubrig, S., & González, J.F. 2009, MNRAS, 396, 485                      A&A, 423, 705
+Cowley, C. R., Hubrig, S., Ryabchikova, T. A., et al. 2001, A&A, 367, 939            Ryabchikova, T. A., Savanov, I. S., Malanushenko, V. P., & Kudryavtsev, D. O.
+Cowley, C. R., Ryabchikova, T., Kupka, F., et al. 2000, MNRAS, 317, 299                 2001, Astronomy Reports, 45, 382
+Cowley, C.R. & Mathys, G. 1998, A&A, 339, 165                                        Ryabchikova T., Landstreet J. D., Gelbmann M. J., Bolgova G. T., Tsymbal V.
+Cowley, C. R., Cowley, A. P., Aikman, G. C. L., & Crosswhite, H. M. 1977, ApJ,          V., & Weiss W. W. 1997, A&A, 317, 1137
+   216, 37                                                                           Shulyak, D., Tsymbal, V., Ryabchikova, T., Stütz Ch., & Weiss, W. W. 2004,
+Den Hartog, E. A., Lawler, J. E., Sneden, C., Cowan, J. J. 2003, ApJS, 148, 543         A&A, 428, 993
+Den Hartog, E. A., Lawler, J .E., Sneden, C., Cowan, J. J. 2006, ApJS, 167, 292      Shulyak, D., Ryabchikova, T., Mashonkina, L., & Kochukhov, O. 2009, A&A,
+Grevesse, N., Asplund, M., & Sauval, A. J. 2007, Space Sci. Rev., 130, 105              499, 879
+Hannaford, P., Lowe, R.M., Grevesse, N., & Noels, A. 1992, A&A, 259, 301             Skrutskie, M.F., Cutri, R.M., Stiening, R., et al. 2006, AJ, 131, 1163
+Hauck, B., & Mermilliod, M. 1998, A&AS, 129, 431                                     Smith, G. 1988, J. Phys. B., 21, 2827
+Kato, K. 2003, PASJ, 55, 1133                                                        Smith, G., & Raggett, D.St.J. 1981, J. Phys. B, 14, 4015
+Khan, S., & Shulyak, D. 2006, A&A, 448, 1153                                         Theodosiou, E. 1989, Phys. Rev. A, 39, 4880
+Khan, S., & Shulyak, D. 2007, A&A, 469, 1083                                         van Leeuwen, F. 2007, A&A, 474, 653
+Kochukhov, O., Shulyak, D., & Ryabchikova, T. 2009, A&A, 499, 851                    Wade, G. A., Leblanc, F., Ryabchikova, T. A., Kudryavtsev, D., 2003, in IAU
+Kochukhov, O. 2007, in Physics of Magnetic Stars, eds.D.O. Kudryavtsev and              Symp. 210, Modelling of stellar atmospheres, ed. N. Piskunov, W. W. Weiss
+   I.I Romanyuk, Nizhnij Arkhyz., p.109                                                 & D. F. Gray, p.D7
+Kochukhov, O., Ryabchikova, T., Weiss, W. W., Landstreet, J. D., & Lyashko,          Wegner, G. 1976, MNRAS, 177, 99
+   D. 2007, MNRAS, 376, 651                                                          Wegner, G., & Petford, A. D. 1974, MNRAS, 168, 557
+Kochukhov, O., Khan, S., & Shulyak, D. 2005, A&A, 433, 671                           Wickliffe, M. E., & Lawler, J. E., 1997, JOSA, B14, 737
+Kochukhov, O. 2003, A&A, 404, 669                                                    Wickliffe, M. E., Lawler, J. E., & Nave, G. 2000, JQSRT, 66, 363
+Kochukhov, O., Bagnulo, S., & Barklem, P. S. 2002, ApJ, 578, L75                     Wyart, J.-F., Tchang-Brillet, W.-Ü. L., Churilov, S. S., & Ryabtsev, A. N. 2008,
+Kupka, F., Piskunov, N., Ryabchikova, T. A., Stempels, H. C., & Weiss, W. W.            A&A, 483, 339
+   1999, A&AS, 138, 119                                                              Yushchenko, A., Gopka, V., Goriely, S., Lambert, D., Shavrina, A., Kang, Y.W.,
+Kurtz, D.W., & Wegner, G. 1979, ApJ, 232, 510                                           Rostopchin, S., Valyavin, G., Lee, B.-C. & Kim, C. 2007, ASPC, 362, 46
+Kurucz, R.L. 2007, http://cfaku5.cfa.harvard.edu/atoms.html
+Kurucz, R. L. 1992, in IAU Symp. 149, The Stellar Populations of Galaxies, ed.
+   B. Barbuy & A. Renzini (Dordrecht : Kluwer), 225
+Kurucz, R. L. 1993, Kurucz CD-ROM 13, Cambridge, SAO
+Lawler, J. E., Bonvallet, G., Sneden, C. 2001a, ApJ, 556, 452-460
+Lawler, J. E., Wickliffe, M. E., Den Hartog, E. A., Sneden, C. 2001b, ApJ, 563,
+   1075-1088
+Lawler, J. E., Wickliffe, M. E., Cowley, C. R., Sneden, C. 2001c, ApJS, 137,
+   341-349
+Lawler, J. E., Den Hartog, E. A., Sneden, C., Cowan, J. J. 2006, ApJS162, 227
+Lawler, J. E., Den Hartog, E. A., Labby, Z. E., Sneden, C., Cowan, J. J., Ivans I.
+   I. 2007, ApJS, 169, 120
+Lawler, J. E., Sneden, C., Cowan, J. J., Wyart, J.-F., Ivans, I.I., Sobeck, J.S.,
+   Stockett, M.H., Den Hartog, E.A. 2008, ApJS, 178, 71
+Lawler, J. E., Sneden, C., Cowan, J. J., Ivans, I.I., Den Hartog, E.A. 2009, ApJS,
+   182, 51
+Leblanc, F., Monin, D., Hui-Bon-Hoa, A., Hauschildt, P. H. 2009, A&A, 495,
+   937
+Martin, G.A., Fuhr, J.R., & Wiese, W.L. 1988, J. Phys. Chem. Ref. Data, 17,
+   Suppl.3
+Mashonkina, L., Ryabchikova, T., & Ryabtsev, A. 2005, A&A, 441, 309
+Mashonkina, L., Ryabchikova, T., Ryabtsev, A., & Kildiyarova, R. 2009, A&A,
+   495, 297
+Miles, B.M. & Wiese, W.L. 1969, WSG Technical Note 474
+Mkrtichian, D. E., Hatzes, A. P., Saio, H., & Shobbrook, R. R. 2008, A&A, 490,
+   1109
+Monin, D., & LeBlanc, F. 2007, in Physics of Magnetic Stars, eds.
+   D.O. Kudryavtsev and I.I Romanyuk, Nizhnij Arkhyz., p.360
+Nilsson H., Zhang Z.G., Lundberg H., Johansson S., & Nordström B. 2002a,
+   A&A, 382, 368
+Nilsson H., Ivarsson S., Johansson S., & Lundberg H. 2002b, A&A, 381, 1090
+O’Brian, T.R., Wickliffe, M.E., Lawler, J.E., Whaling, W. & Brault, J.W. 1991,
+   JOSA, B8, 1185
+
+
+                                                                                                                                                                    9
+        D. Shulyak et al.: Realistic model atmosphere and revised abundances of the coolest Ap star HD 101065, Online Material p 1
+
+
+
+
+                                                                      Fig. 5. Same as in Fig 3 but for Si.
+Fig. 3. Comparison between the observed and theoretical profiles
+for the Ba lines. Observations are shown with symbols, thick
+full line corresponds to the synthetic spectrum calculated with
+the best-fitting stratified abundance distribution and dashed line
+shows prediction of the spectrum synthesis with a homogeneous
+abundance.
+
+
+
+
+Fig. 4. Same as in Fig 3 but for Ca.
+
+
+
+
+                                                                      Fig. 6. Same as in Fig 3 but for Fe.
+         D. Shulyak et al.: Realistic model atmosphere and revised abundances of the coolest Ap star HD 101065, Online Material p 2
+
+Table 3. List of Si, Ca, Fe, and Ba spectral lines used for reconstruction of chemical stratification.
+
+                                            Ion       λ (Å)       Ei (eV)    log(g f )   log γSt   Ref.
+                                            Si i    5517.533       5.082       -2.49       -4.46   solar
+                                            Si i    5690.425       4.930       -1.76       -4.57   NIST
+                                            Si i    5797.688       5.614       -2.67       -3.86   K07
+                                            Si i    5797.856       4.954       -2.05       -4.32   NIST
+                                            Si i    6087.697       5.871       -2.38     approx    K07
+                                            Si i    6087.805       5.871       -1.71     approx    solar
+                                            Si i    6155.134       5.619       -0.80       -3.70   solar
+                                            Si ii   6347.109       8.121       0.297       -5.04   BBCB
+                                            Si ii   6371.371       8.121      -0.003       -5.04   BBCB
+                                            Si i    8742.446       5.871      -0.510       -4.52   solar
+                                            Si i    8892.720       5.984      -0.830       -4.37   solar
+
+                                            Ca i    6717.681       2.709      -0.524      -4.90    SR
+                                            Ca i    7148.150       2.709       0.137      -6.01    SR
+                                            Ca i    7326.145       2.933      -0.208      -5.16    S
+                                            Ca ii   8254.721       7.515      -0.398      -4.60    T
+                                            Ca ii   8498.223       1.692      -1.416      -5.70    T
+                                            Ca ii   8912.068       7.047       0.637      -5.10    T
+
+                                            Fe i    4404.750       1.557      -0.142      -6.20    MFW
+                                            Fe ii   5169.033       2.891       -1.14      -6.59    M
+                                            Fe i    5405.775       0.990      -1.844      -6.30    MFW
+                                            Fe i    5415.199       4.386       0.642      -4.76    BWL
+                                            Fe i    5615.644       3.332       0.050      -5.50    BKK
+                                            Fe i    6219.281       2.198      -2.433      -6.20    MFW
+                                            Fe ii   7222.394       3.889       -3.36      -6.67    HLGH
+                                            Fe i    8248.129       4.371      -0.887      -5.36    K07
+                                            Fe i    8365.634       3.251      -2.047      -6.10    BK
+                                            Fe i    8945.189       5.033      -0.235      -5.17    K07
+
+                                            Ba i    5777.618       1.676        0.72     approx    MW
+                                            Ba ii   5853.668       0.604       -1.00       -6.35   MW
+                                            Ba i    6019.465       1.120       -0.10     approx    MW
+                                            Ba i    6063.109       1.143        0.21     approx    MW
+                                            Ba ii   6141.713       0.704      -0.076       -6.35   MW
+                                            Ba ii   6496.897       0.604      -0.377       -6.35   MW
+                                            Ba i    7059.938       1.190        0.68     approx    MW
+                                            Ba i    7280.297       1.143        0.47     approx    MW
+
+Columns give the ion identification, central wavelength, excitation potential, oscillator strength (log(g f )) and the Stark damping constant (log γSt )
+for T = 10 000 K. The last column gives reference for the adopted oscillator strength:
+NIST – Ralchenko et al. (2009); K07 – Kurucz (2007); BBCB – Berry et al. (1971); SR – Smith & Raggett (1981); S – Smith (1988); T –
+Theodosiou (1989); MFW – Martin et al. (1988); BWL – O’Brian et al. (1991); BKK – Bard et al. (1991); HLGH – Hannaford et al. (1982);
+BK – Bard & Kock (1994); MW – Miles & Wiese (1969).
+        D. Shulyak et al.: Realistic model atmosphere and revised abundances of the coolest Ap star HD 101065, Online Material p 3
+
+Table 4. Abundances of individual elements.
+                                              Ion      Nlines   log(Nel /Ntotal )   Error   log(Nel /Ntotal )J
+                                              Ci         4          −3.91           ±0.20        −3.65
+                                              Oi         2          −3.42           ±0.36        −3.38
+                                              Na i       4          −6.03           ±0.22        −5.87
+                                              Mg ii      1          −4.41                        −4.51
+                                              Al i       1          −6.69                        −5.67
+                                              Si         1          −4.76                        −4.90
+                                              Sc ii      6          −8.97           ±0.59        −8.87
+                                              Ti i       6          −7.38           ±0.31        −7.14
+                                              Ti ii     12          −7.32           ±0.30        −7.14
+                                              Vi         8          −7.15           ±0.41        −8.04
+                                              V ii       6          −7.28           ±0.32        −8.04
+                                              Cr i      12          −6.45           ±0.34        −6.40
+                                              Cr ii     16          −5.91           ±0.30        −6.40
+                                              Mn i       8          −6.26           ±0.29        −6.65
+                                              Mn ii      3          −5.68           ±0.20        −6.65
+                                              Co i      40          −6.00           ±0.22        −7.12
+                                              Co ii      2          −5.09           ±0.47        −7.12
+                                              Ni i       8          −7.01           ±0.47        −5.81
+                                              Cu i       2          −7.97           ±0.05        −7.83
+                                              Sr i       1          −7.60                        −9.12
+                                              Sr ii      2          −7.91           ±0.07        −9.12
+                                              Yi         1          −7.97                        −9.83
+                                              Y ii       8          −9.17           ±0.24        −9.83
+                                              Zr i       5          −7.90           ±0.46        −9.45
+                                              Zr ii     11          −7.53           ±0.21        −9.45
+                                              Nb i       4          −7.48           ±0.25       −10.62
+                                              Mo i       5          −7.56           ±0.29       −10.12
+                                              Ru i       4          −7.57           ±0.34       −10.20
+                                              Rh i       2          −7.16           ±0.61       −10.92
+                                              Pd i       6          −6.98           ±0.23       −10.38
+                                              Cd i       1          −7.94                       −10.27
+                                              Sn ii      1          −7.48                       −10.04
+                                              La ii     31          −7.91           ±0.36       −10.91
+                                              Ce ii    118          −7.53           ±0.32       −10.34
+                                              Ce iii     4          −5.70           ±0.24       −10.34
+                                              Pr ii     37          −8.54           ±0.31       −11.46
+                                              Pr iii    26          −6.58           ±0.38       −11.46
+                                              Nd i       4          −6.88           ±0.12       −10.59
+                                              Nd ii    109          −7.11           ±0.34       −10.59
+                                              Nd iii     8          −5.97           ±0.60       −10.59
+                                              Sm i       1          −7.11                       −11.04
+                                              Sm ii     63          −7.25           ±0.39       −11.04
+                                              Eu ii      7          −8.08           ±0.45       −11.52
+                                              Gd ii     59          −7.34           ±0.33       −10.92
+                                              Tb ii      3          −8.84           ±0.22       −11.76
+                                              Tb iii    10          −6.07           ±0.43       −11.76
+                                              Dy i       1          −7.88                       −10.90
+                                              Dy ii     29          −7.45           ±0.33       −10.90
+                                              Dy iii     9          −5.78           ±0.33       −10.90
+                                              Ho i       1          −6.79                       −11.53
+                                              Ho iii     4          −6.34           ±0.11       −11.53
+                                              Er i       1          −8.16                       −11.11
+                                              Er ii     23          −7.81           ±0.30       −11.11
+                                              Er iii     4          −6.18           ±0.29       −11.11
+                                              Tm ii     18          −8.16           ±0.32       −12.04
+                                              Yb i       1          −7.44                       −10.96
+                                              Yb ii      9          −8.98           ±0.37       −10.96
+                                              Lu ii      7          −8.44           ±0.30       −11.98
+                                              Hf i       1          −7.89                       −11.16
+                                              Hf ii      3          −8.39           ±0.30       −11.16
+                                              Ta i       3          −8.59           ±0.49       −12.21
+                                              Ta ii      1          −8.32                       −12.21
+                                              Wi         4          −7.83           ±0.61       −10.93
+                                              W ii       3          −7.79           ±0.35       −10.93
+                                              Re i       2          −7.60           ±0.04       −11.81
+                                              Ir i       2          −7.17           ±0.11       −10.66
+                                              Pt i       2          −7.43           ±0.12       −10.40
+                                              Au i       1          −8.33           ±0.00       −11.03
+                                              Hg i       2          −7.76           ±0.15       −10.91
+                                              Th ii      9          −9.18           ±0.35       −11.98
+                                              Th iii     5          −8.09           ±0.18       −11.98
+                                              U ii      17          −8.44           ±0.15       −12.56
+
+
+The solar abundances are taken from Grevesse et al. (2007).
+       D. Shulyak et al.: Realistic model atmosphere and revised abundances of the coolest Ap star HD 101065, Online Material p 4
+
+
+
+
+Fig. 8. Observed and theoretical energy distribution of HD 101065 calculated with scaled REE opacity from ISAN line list (see
+text). For comparison purpose the theoretical energy distribution of a normal F-type star HD 49933 is also shown. All theoretical
+calculations are smoothed with 20Å Gaussian. Theoretical fluxes were scaled assuming radiuses: R = 1.98R⊙ for HD 49933 and
+T eff = 6400 K models; R = 1.90R⊙ for T eff = 6500 K; R = 1.82R⊙ for T eff = 6600 K.
+

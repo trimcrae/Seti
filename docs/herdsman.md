@@ -40,6 +40,21 @@ sweeps, Semantic Scholar / OpenAlex citation trees). Verified findings:
   "moved star", "phase space technosignature", "astrometric SETI", ...)
   surface no N-star convergence work under any framing.
 
+Pass-2 verification (Zenodo records + full secondary texts) closed the two
+remaining low-confidence items:
+
+* Vidal's stellivore tests (Zenodo 6757507, 8052918 — verbatim abstracts in
+  `results/litcheck/`) are the only *performed* "goal-directed stellar motion"
+  analyses in Gaia DR3: preliminary, non-peer-reviewed, restricted to his
+  accreting-binary/spider-pulsar candidates, single-object directedness toward
+  a nearest star — no N-star statistic, no field sample, no chance calibration.
+* Kezerashvili, Matloff & Long (JBIS 2021) is the Parenago-discontinuity /
+  "volitional stars" thread: a population-level velocity-vs-colour anomaly
+  with exotic interpretations entertained (including stellar engines).
+  Adjacent must-cite for "anomalous kinematics as possibly artificial"
+  framing; standard age–velocity-dispersion dynamics explains the
+  discontinuity, and there is no convergence statistic or search pipeline.
+
 Original sweep summary (agent-level, pre-verification):
 
 * **Unclaimed (no proposal, no search found):** N≥3 forward-time orbital

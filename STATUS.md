@@ -483,9 +483,47 @@ of well-measured *fast* flybys, exactly what the transfer-regime cut rejects.
 | Gaia XP anomalies | RA283/Dec−3 dense field: 8,863 sources, reliable; narrow-feature shortlist examined | 0 credible | **channel bounded — see ledger.** Broad "anomalies" = reddened-M-dwarf molecular bands (degenerate with a Dyson SED); "narrow" ones = band-edge reconstruction artifacts + sub-resolution wiggles (XP LSF ≈5+ samples can't resolve a laser line). Guards added (width/interior/bounded). A clean low-extinction field could still test the *broad*-SED Dyson signature, but it is degenerate with reddening |
 | Galactic long-baseline encounters | LHS 1140 + K2-18; 149,979 RV-complete Gaia stars each integrated back 300 Myr in the MW potential | 0 bio + 0 techno among encounter neighbours | **clean.** LHS 1140: 34 passes <3 pc (0 planet hosts, 0 companion flags); K2-18: 16 (same). All datable passes are recent (<~20 Myr) — phase mixing erases 100–300 Myr timing, so the honest recoverability horizon is ~tens of Myr. Closest: a G=7.4 star 0.086 pc from LHS 1140 2.9 Myr ago (single star, not a signature) |
 | LHS 1140 system deep-dive | star + b/c + 38 neighbours ≤15 pc; 6 archives (Gaia astrometry+XP, WISE/NEOWISE, ZTF, TESS 3.5k epochs); 533 MAST obs inventoried; **biosignature detectability budget** | 0 technosignature; **0 detectable biosignature** | **clean + bio answered.** Star: all 6 channels clean; lone RUWE=1.53 is marginal binarity, not techno. Neighbours: raw 15/38 IR-excess all = WISE W4/blend systematics → 4 survive → faint/blue/ordinary-debris. **Bio:** under b's expected high-μ (N₂) atmosphere (H≈3.6 km) every biosignature feature is ~few ppm → CH₄ ~25 / O₃ ~67 transits vs ~2–4 observed → `NOT_DETECTABLE_WITH_CURRENT_DATA`; reachable only for a disfavoured cleared H₂ envelope |
+| **OSSUARY** (warm dust where none can form) | built; first run dispatched (run 30203264572). Gaia DR3 GSP-Spec/GSP-Phot [Fe/H] < −1 **plus** a pure halo-kinematic track, × the Gaia archive's AllWISE + 2MASS mirrors via the official PM-aware cross-match; expected ~10⁵–10⁶ stars | pending first run | **Novelty confirmed:** two independent full-corpus arXiv queries for halo-star IR excess return **0**; `"metal-poor" AND "debris disk"` returns 3 papers, one of them a 7-star study at [Fe/H] ≲ −5 with inverted motivation (Venn+2014). Hephaistos I hard-codes Z = 0.012–0.018 = thin disc. Lacki 2025 (arXiv:2504.21151) *predicts* halo + low-metallicity hosts and ran no search. Competitor forming: Kenyon, Bromley & Najita 2026 have the catalogue and *plan* the analysis |
 | **CENOTAPH** (cold Dyson, T<100 K) | built + dispatched (run 30203250183); target Gaia DR3 GSP-Spec dwarfs, ~5.6e6 with Teff/logg/[M/H]/[α/Fe] from one pipeline | pending first archive run | **new channel.** Three-leg energy-conservation test: grey attenuation (A_V fitted jointly, not assumed) + NO mid-IR excess + far-IR recovery of the intercepted f·L in AKARI/FIS + IRAS. Closure ratio ρ=f_IR/f_dim separates an isotropic occulter (ρ≈1) from an edge-on disk (ρ≪1). Measured floor f≳0.15–0.29 vs Zackrisson+2018's f_cov>0.75. Next: read `results/cenotaph/summary.json`, check the ±3σ tail asymmetry before believing any count |
 
 ## Known systematics ledger (do not re-derive)
+
+* **AllWISE infrared excesses are ~92% false positives.** Silverberg et al. 2018:
+  at most **7.9 % ± 0.2 %** of AllWISE-selected excesses are good disk candidates;
+  the McDonald et al. and Marton et al. searches exceed **70 %** false positives;
+  **all 13** Theissen & West candidates with W4 S/N > 3 are spurious. Any new
+  excess funnel must report *per-stage removals*, not just a final count.
+* **Use 5σ, not 3σ, for an infrared excess.** Huang, Liu, Wyatt & Kennedy 2025
+  (arXiv:2505.07602) searched the 10 pc sample (339 stars) for W3 excess at 3σ,
+  got 5 candidates, and found **all five spurious**; detection rate 0/339.
+* **W3/W4 depth is frozen at the 2010 cryogenic mission.** NEOWISE-R, CatWISE2020
+  and the deep unWISE coadds are **W1/W2 only**. Wien peaks: W1 → 852 K, W2 →
+  630 K, W3 → 241 K, W4 → 132 K. So below ~200 K the *only* route is W4, the
+  shallowest and most confusion-limited band — there is no deeper 12/22 µm
+  measurement to be had, and a warm-dust claim must lean on **W3 + W1−W2**.
+* **λ Bootis stars are the metal-poor IR-excess trap.** A/early-F stars whose
+  *surface* is metal-depleted by accreting gas-depleted ISM; Murphy et al. 2020
+  find **21 of 34 have infrared excesses**, and some were previously catalogued
+  as blue horizontal branch stars. A T_eff ceiling (~6500 K) removes them.
+* **Globular-cluster sightlines must be vetoed, not vetted.** Boyer et al. 2010
+  (arXiv:1002.1348) showed a *published* RGB-wide infrared excess across 47 Tuc —
+  a metal-poor, old population — was entirely stellar blending and imaging
+  artefacts, from the same archival imagery as the original claim.
+* **Metal-poor circumstellar dust is featureless** (metallic iron, not silicate;
+  McDonald et al. 2011, ω Cen). No mineralogy argument can discriminate it.
+* **The natural warm-dust background vs age is measured:** Kennedy & Wyatt 2013,
+  12 µm over 24,174 Hipparcos MS stars within 150 pc — old (>Gyr) dusty systems
+  occur at **1 in 10⁴**, young (<120 Myr) at **~1 %**. Fractional luminosity
+  decays as ~1/age² (Pawellek+2021 observed; Wyatt+2011 theoretical).
+* **The natural background vs metallicity:** Gáspár, Rieke & Ballering 2016 —
+  *"disk-bearing stars seldom have metallicities less than [Fe/H] = −0.2"* over
+  662 disks. Planet occurrence ∝ 10^(2[Fe/H]) (Wyatt, Clarke & Greaves 2007).
+* **Background galaxies killed the entire warm-Dyson candidate list.** JWST/MIRI
+  resolved Hephaistos D and E into a z≈0.9 Hot DOG and a z≈0.4 dusty starburst,
+  both within ~1″ (arXiv:2607.09460); Hot DOGs at ~9×10⁻⁶ arcsec⁻² can account
+  for all seven. High |b| helps against **cirrus and stellar blends only** — it
+  does *not* reduce extragalactic confusion. Only sub-arcsecond astrometric
+  registration at the *propagated* epoch plus a chance-superposition prior does.
 
 * **Deeper WISE data is *anti-correlated* with colder sensitivity.** Wien-peak
   temperatures: W1 3.35 µm → 865 K, W2 4.60 µm → 630 K, W3 11.56 µm → 251 K,

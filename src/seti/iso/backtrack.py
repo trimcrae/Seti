@@ -38,7 +38,6 @@ import numpy as np
 
 from ..galactic.encounters import closest_approach_integrated
 from ..galactic.orbits import (
-    KMS_TO_KPCMYR,
     heliocentric_to_galactocentric,
 )
 from ..panspermia.kinematics import _A_ICRS_TO_GAL

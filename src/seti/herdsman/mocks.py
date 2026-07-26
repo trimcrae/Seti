@@ -38,7 +38,7 @@ def shuffle_velocities(pos_pc: np.ndarray, vel: np.ndarray, sigv: np.ndarray,
     cid_sorted = cid[order]
     starts = np.flatnonzero(np.r_[True, cid_sorted[1:] != cid_sorted[:-1]])
     ends = np.r_[starts[1:], len(cid_sorted)]
-    for s, e in zip(starts, ends):
+    for s, e in zip(starts, ends, strict=True):
         idx = order[s:e]
         if len(idx) < 2:
             continue

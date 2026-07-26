@@ -279,8 +279,8 @@ def _biosignature_inventory(out_dir, ra: float | None = None,
         from astroquery.mast import Observations
         obs = None
         if ra is not None and dec is not None:
-            from astropy.coordinates import SkyCoord
             import astropy.units as u
+            from astropy.coordinates import SkyCoord
             try:
                 obs = Observations.query_region(
                     SkyCoord(ra, dec, unit="deg"),

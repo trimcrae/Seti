@@ -20,7 +20,6 @@ from seti.galactic.orbits import (
     VSUN_GC_KMS,
     Z_SUN_KPC,
     acceleration,
-    heliocentric_to_galactocentric,
 )
 from seti.herdsman.acquire import apply_rv_zero_point, scalar_velocity_error
 from seti.herdsman.convergence import (
@@ -28,7 +27,6 @@ from seti.herdsman.convergence import (
     _components_from_pairs,
     _dedupe,
     _effective_units,
-    detect_convergences,
     propagate,
 )
 from seti.herdsman.mocks import shuffle_velocities
@@ -281,7 +279,6 @@ def test_staged_pipeline_recovers_herd(tmp_path):
 
     from seti.config import load_config
     from seti.herdsman import stages
-    from seti.herdsman.convergence import ConvergenceParams
 
     table, herd_ids, t_meet = _synthetic_catalog()
     cfg = load_config()

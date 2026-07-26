@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from seti.lhs1140_origin.run import lhs1140_origin_run
-from seti.panspermia.kinematics import _A_ICRS_TO_GAL, _K_AUYR_KMS, phase_space_6d
+from seti.panspermia.kinematics import _A_ICRS_TO_GAL, _K_AUYR_KMS
 
 _KMS_TO_PC_PER_MYR = 1.0227121651
 

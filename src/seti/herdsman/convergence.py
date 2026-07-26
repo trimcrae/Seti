@@ -37,7 +37,7 @@ control, on the time-reversed direction of the real data.
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 
 import numpy as np
 from scipy.sparse import coo_matrix

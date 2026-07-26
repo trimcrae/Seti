@@ -74,7 +74,7 @@ def fetch_sample(d_max_pc: float = 300.0, rv_err_max_kms: float = 1.5,
     edges = [e for e in _SHELL_EDGES_PC if e < d_max_pc] + [0.0]
     edges = sorted(set([d_max_pc] + edges), reverse=True)
     frames = []
-    for d_hi, d_lo in zip(edges[:-1], edges[1:]):
+    for d_hi, d_lo in zip(edges[:-1], edges[1:], strict=False):
         plx_min = 1000.0 / d_hi
         plx_max = 1000.0 / d_lo if d_lo > 0 else 1e9
         q = _QUERY.format(limit=int(limit_per_shell), plx_min=plx_min,

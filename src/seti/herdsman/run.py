@@ -64,7 +64,7 @@ def _collapse_comoving_pairs(df: pd.DataFrame, sep_pc: float = 0.5,
     g = pd.to_numeric(df.get("phot_g_mean_mag"), errors="coerce")\
         .fillna(99.0).to_numpy(float)
     drop = set()
-    for (i, j), d in zip(pairs, dv):
+    for (i, j), d in zip(pairs, dv, strict=True):
         if d < dv_kms:
             drop.add(int(i) if g[i] > g[j] else int(j))
     if drop:
@@ -240,7 +240,7 @@ def _write_report(out_dir, summary, results, mock_stats) -> None:
             f"| {tag} | {d['t_horizon_myr']:.1f} | {d['epochs_scanned']} | "
             f"{d['n_raw_detections']} | {d['n_candidates']} | "
             f"{d['best_surprise']:.2f} | "
-            f"{('%.3f' % pg) if pg is not None else 'n/a'} |")
+            f"{(f'{pg:.3f}' if pg is not None else 'n/a')} |")
     lines += ["", "## Candidates", ""]
     any_c = False
     for tag in results:

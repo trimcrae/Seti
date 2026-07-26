@@ -417,3 +417,68 @@ intermediate quantity that produced them.
 
 Run: `python -m seti.cli cenotaph --synthetic` offline, or dispatch
 `.github/workflows/cenotaph.yml` for the archive run.
+
+## 9. Acquisition — what the Gaia archive actually does, measured
+
+The first archive run (30203250183) reported `NO_DATA_REACHED, n_sample: 0,
+"the parent-sample query returned nothing"`. **That was false.** The ADQL, the
+TAP endpoint, the column names, the join and the cuts were all correct, and the
+run returned 703,555 rows before dying. The failure was entirely in transport
+and reporting. The probe (`--stage probe`,
+`.github/workflows/cenotaph-probe.yml`, run 30209664654) measured what is
+really going on; `results/cenotaph/probe.json` is the record.
+
+**1. ESA's anonymous async result store is full.** astroquery reports only
+`HTTP 500 Cannot find result 'result' for job <id>. Path does not exists:
+/gaia_netapp/tap-server/storage/O/anonymous/…`, which reads like a server bug.
+The same query through pyvo returns the actual message:
+
+> `Filesystem quota exceeded for user anonymous (Currently using 200 GB,
+> increasing it with 128 KB exceeds allowed quota)`
+
+The job executes; the server then cannot write its result file, so retrieval
+500s. Retrying cannot help — the old ladder spent ~75 of its 110 minutes doing
+exactly that. But it is **not** permanent: the quota read 200 GB and 199 GB in
+two attempts seconds apart as other users' jobs expired, and a small `COUNT(*)`
+result *did* get through on async. Hence a cooldown rather than a ban, and a
+preference for small results, which are the ones that can still fit.
+
+**2. The "row cap" on the sync endpoint is a time cut.** The failing run got
+*exactly 8193* rows for the [2, 2.5) mas shell; the probe re-ran the identical
+query and got *16385*, against a `COUNT(*)` of **199,572**. Same query, same
+columns, two different powers of two plus one — so this is not a fixed `MAXREC`
+but the response being cut mid-stream, the parser recovering whole buffered
+blocks. pyvo's sync endpoint states the limit outright: `Maximum execution time
+(60 s) reached. Job aborted.`
+
+The consequence for design is that the fix is **smaller queries, not a bigger
+`TOP`**. Each parallax shell is counted once with `SELECT COUNT(*)` built from
+the *same* `WHERE` text as the `SELECT`, then pre-split on the indexed,
+uniformly distributed `random_index` into slices of ~15,000 rows (well inside
+the server's window, and small enough that an async result may still fit the
+free quota). `random_index` rather than `MOD(source_id, k)` because the former
+is indexed and the latter would force a full scan. The last slice is always
+left open-ended so a wrong upper bound cannot drop the catalogue tail. A slice
+that still comes back short of its expectation is re-counted exactly and split
+again — suspicion first, then proof, so a Poisson fluctuation is never called a
+truncation nor a truncation a fluctuation.
+
+**3. Failure is contained per slice, and every count is reported.** A shell or
+slice that cannot be fetched is a named hole in the sample, not a reason to
+discard the ones that worked. `summary.json` carries the full acquisition
+ledger — query text, transport, rows returned and `COUNT(*)` expected at every
+stage, plus a per-shell reconciliation — on success as well as failure.
+
+**The four verdicts are never merged**, because they call for opposite actions:
+
+| Verdict | Meaning | What it implies |
+|---|---|---|
+| `NO_DATA_REACHED` | no query executed anywhere | the archive is unreachable; nothing is known |
+| `QUERY_RETURNED_ZERO_ROWS` | the archive answered, and the cuts matched nothing | a statement about the **selection** — check signs, units, bounds |
+| `QUERY_TRUNCATED` | the server capped the result below its own `COUNT(*)` | sub-split and refetch; the sample is **not** whole |
+| `PARTIAL_SAMPLE` | some chunks arrived, some did not | usable, with the hole and the completeness fraction stated |
+
+Reserving `NO_DATA_REACHED` for its literal meaning is the point. Reporting a
+valid-but-empty query as an unreached archive hides a selection bug; reporting
+an unreached archive as an empty result invents a null. Neither is allowed, and
+the offline suite has a test for each.

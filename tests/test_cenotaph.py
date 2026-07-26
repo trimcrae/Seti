@@ -495,12 +495,13 @@ def test_one_dead_shell_does_not_discard_the_shells_that_worked(monkeypatch):
     acquire.reset_transport_state()
     state = {"n": 0}
 
-    def _chunk(plx_lo, plx_hi, w, top, rlo, rhi, depth, max_depth, ledger):
+    def _chunk(plx_lo, plx_hi, w, top, rlo, rhi, depth, max_depth, ledger, **kw):
         state["n"] += 1
         if state["n"] == 3:
             raise RuntimeError("Error 408: Job timeout/aborted.")
         ledger.append({"chunk": f"shell[{plx_lo:g},{plx_hi:g})",
                        "status": acquire.QUERY_OK, "n_rows": 100,
+                       "kind": "shell_total",
                        "expected_rows": 100, "depth": 0})
         return _fake_rows(100, start=state["n"] * 1000)
 
@@ -513,6 +514,52 @@ def test_one_dead_shell_does_not_discard_the_shells_that_worked(monkeypatch):
     assert acq["acquisition_verdict"] == "PARTIAL_SAMPLE"
     assert acq["n_chunks_failed"] == 1
     assert any("408" in (f.get("error") or "") for f in acq["failures"])
+
+
+def test_shell_is_presplit_from_its_count_not_halved_from_a_doomed_query():
+    """Pre-splitting is a time fix as well as a correctness one.
+
+    The probe measured COUNT(*) = 199,572 for the [2, 2.5) mas shell while the
+    sync endpoint cut the response at 16,385 rows on a 60 s execution limit.
+    Recursively halving from 200k would spend a doomed attempt at every level;
+    planning the split from the count issues only queries that can finish.
+    """
+    from seti.cenotaph.acquire import (
+        _GAIA_RANDOM_INDEX_MAX,
+        TARGET_CHUNK_ROWS,
+        plan_random_index_slices,
+    )
+
+    sl = plan_random_index_slices(199_572, target=15_000)
+    assert len(sl) == 14, "199572/15000 rounds up to 14 slices"
+    assert sl[0][0] == 0
+    # The last slice must stay open-ended: random_index's upper bound is an
+    # assumption, and an assumption must not be able to drop the catalogue tail.
+    assert sl[-1][1] is None
+    # Contiguous, no gaps — a gap is silently lost stars.
+    for (_a1, b1), (a2, _) in zip(sl, sl[1:], strict=False):
+        assert b1 == a2
+    assert sl[-1][0] < _GAIA_RANDOM_INDEX_MAX
+
+    # A shell that already fits is issued as one unsliced query.
+    assert plan_random_index_slices(500, target=TARGET_CHUNK_ROWS) == [(None, None)]
+
+
+def test_shell_totals_are_not_double_counted_by_the_slice_entries():
+    """Completeness is the number that says whether the sample is whole."""
+    from seti.cenotaph.acquire import QUERY_OK, summarise_acquisition
+
+    ledger = [
+        {"kind": "slice", "status": QUERY_OK, "n_rows": 15000,
+         "expected_rows": 15000},
+        {"kind": "slice", "status": QUERY_OK, "n_rows": 5000,
+         "expected_rows": 5000},
+        {"kind": "shell_total", "status": QUERY_OK, "n_rows": 20000,
+         "expected_rows": 20000},
+    ]
+    acq = summarise_acquisition(ledger)
+    assert acq["n_rows_returned"] == 20000, "slices must not be added to the total"
+    assert acq["completeness"] == 1.0
 
 
 def test_acquisition_verdicts_are_distinct_not_merged():

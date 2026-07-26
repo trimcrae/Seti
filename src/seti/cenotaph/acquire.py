@@ -224,25 +224,37 @@ def _retry(fn, retries: int = 4, label: str = "query", base_sleep: float = 4.0):
 # reported ``NO_DATA_REACHED`` with ``n_sample: 0``.  Three separate faults,
 # each of which is guarded against here:
 #
-#  1. **ESA's async job-result endpoint fails deterministically.** The very
-#     first ``launch_job_async`` of the job succeeded; *every* subsequent one
-#     returned ``HTTP 500 "Cannot find result 'result' for job <id>. Path does
-#     not exists: /gaia_netapp/tap-server/storage/O/anonymous/..."``.  The
-#     submitted job runs fine — the server simply cannot serve its result file
-#     back to an anonymous user.  The old ladder burned three async attempts
-#     (~6 min) per shell before falling back to sync, so 10 shells cost 110
-#     minutes of which ~75 were pure retry.  Async is now *sticky-disabled* the
-#     first time that signature appears, and a second, independent async
-#     transport (pyvo straight at the TAP endpoint) is tried before dropping to
-#     sync.
+#  1. **ESA's async job-result endpoint fails, and the probe found out why.**
+#     astroquery reported only ``HTTP 500 "Cannot find result 'result' for job
+#     <id>. Path does not exists: /gaia_netapp/tap-server/storage/O/anonymous/
+#     ..."``, which reads like a server bug.  Running the same query through
+#     pyvo (probe run 30209664654) surfaced the real message ESA sends:
 #
-#  2. **The sync fallback silently truncates.** Shells [2, 2.5) and [1.6, 2.0)
-#     mas each returned *exactly* 8193 rows, immediately after [2.5, 3) mas
-#     returned 155,649.  That is a server row cap, not astrophysics.  It was
-#     accepted silently because the only guard compared against the 2,000,000
-#     ``TOP``.  Every query now carries an independently measured
-#     ``SELECT COUNT(*)`` and any shortfall is flagged ``QUERY_TRUNCATED`` and
-#     recursively sub-chunked on ``random_index`` until it fits.
+#         Filesystem quota exceeded for user anonymous
+#         (Currently using 200 GB, increasing it with 128 KB exceeds allowed quota)
+#
+#     The *anonymous* async result store on the ESA Gaia archive is full.  The
+#     job executes correctly; the server then cannot write its result file, so
+#     the result path never exists and retrieval 500s.  No amount of retrying
+#     fixes it, which is why the old ladder burned ~75 of its 110 minutes on
+#     retries.  It is also **not permanent** — the quota fluctuated between
+#     200 GB and 199 GB across two attempts seconds apart as other users' jobs
+#     expired, and the small ``COUNT(*)`` result *did* get through on async.
+#     So async is put on a cooldown rather than disabled forever, and small
+#     results are preferred because a small result is one that can still fit.
+#
+#  2. **The "row cap" is a time cut, and the probe pinned it down.** Shells
+#     [2, 2.5) and [1.6, 2.0) mas each returned *exactly* 8193 rows in the
+#     failing run; the probe re-ran the identical [2, 2.5) query and got
+#     *16385*, against a ``COUNT(*)`` of **199,572**.  Same query, same columns,
+#     two different powers of two plus one — so this is not a fixed MAXREC, it
+#     is the sync endpoint cutting the response mid-stream and the parser
+#     recovering whole buffered blocks.  pyvo's sync endpoint states the
+#     underlying limit outright: ``Maximum execution time (60 s) reached. Job
+#     aborted.``  The fix is therefore not a bigger ``TOP`` but *smaller
+#     queries*: the row count is measured against ``SELECT COUNT(*)`` and the
+#     work is pre-split on the indexed ``random_index`` so each chunk finishes
+#     well inside the server's execution window.
 #
 #  3. **One failed shell destroyed ten good ones.** The last shell exhausted its
 #     retries (three 500s then ``HTTP 408 Job timeout/aborted``) and the
@@ -270,17 +282,32 @@ QUERY_TRUNCATED = "QUERY_TRUNCATED"
 # left open-ended so nothing can fall off the end if the bound is wrong.
 _GAIA_RANDOM_INDEX_MAX = 1_811_709_771
 
-# Substrings that identify ESA's "the job ran but I cannot serve its result"
-# 500. Matching one disables that transport for the rest of the process.
-_ASYNC_DEAD_SIGNATURES = ("cannot find result", "path does not exists",
-                          "path does not exist")
+# Target rows per query. Chosen from the probe: the sync endpoint cut a
+# 199,572-row query at 16,385 rows on a 60 s execution limit, so a chunk an
+# order of magnitude below that finishes comfortably inside the window. It is
+# also small enough that an async result can still fit whatever slice of the
+# anonymous quota happens to be free.
+TARGET_CHUNK_ROWS = 15_000
 
-_TRANSPORT_DISABLED: set[str] = set()
+# Substrings that identify a transport that cannot serve this result right now:
+# ESA's "the job ran but I cannot serve its result" 500, and the anonymous
+# filesystem-quota error underneath it. Matching one puts the transport on a
+# cooldown — not a permanent ban, because the quota is shared and drains.
+_ASYNC_DEAD_SIGNATURES = ("cannot find result", "path does not exists",
+                          "path does not exist", "quota exceeded",
+                          "exceeds allowed quota")
+
+# Queries to skip a transport for after it reports the quota error. Long enough
+# that a full shell is not spent re-testing a full disk, short enough that the
+# uncapped async path is picked back up when the quota drains.
+_TRANSPORT_COOLDOWN_QUERIES = 25
+
+_TRANSPORT_COOLDOWN: dict[str, int] = {}
 
 
 def reset_transport_state() -> None:
     """Re-enable every transport (tests, and a fresh process boundary)."""
-    _TRANSPORT_DISABLED.clear()
+    _TRANSPORT_COOLDOWN.clear()
 
 
 def _lower(df: pd.DataFrame) -> pd.DataFrame:
@@ -364,10 +391,12 @@ def run_gaia_query(query: str, *, label: str = "gaia",
     best: pd.DataFrame | None = None
     best_transport: str | None = None
 
-    for name, fn, is_sync in GAIA_TRANSPORTS:
-        if name in _TRANSPORT_DISABLED:
-            record["attempts"].append({"transport": name, "ok": False,
-                                       "error": "disabled earlier in this process"})
+    for name, fn, _is_sync in GAIA_TRANSPORTS:
+        if _TRANSPORT_COOLDOWN.get(name, 0) > 0:
+            _TRANSPORT_COOLDOWN[name] -= 1
+            record["attempts"].append({
+                "transport": name, "ok": False,
+                "error": f"on cooldown ({_TRANSPORT_COOLDOWN[name]} queries left)"})
             continue
         for attempt in range(retries_per_transport):
             try:
@@ -380,14 +409,14 @@ def run_gaia_query(query: str, *, label: str = "gaia",
                 print(f"[cenotaph] {label}: {name} attempt "
                       f"{attempt + 1}/{retries_per_transport} failed: {err}",
                       flush=True)
-                if not is_sync and _is_dead_async(exc):
-                    # ESA served a 500 for the result file. Retrying this
-                    # transport costs two minutes a shot and never works;
-                    # every later query in this process skips it.
-                    _TRANSPORT_DISABLED.add(name)
-                    print(f"[cenotaph] {label}: disabling transport {name} for the "
-                          "rest of the run (ESA cannot serve async job results)",
-                          flush=True)
+                if _is_dead_async(exc):
+                    # The anonymous result store is full. Retrying costs two
+                    # minutes a shot and cannot succeed until the quota drains,
+                    # so back off — but come back, because it does drain.
+                    _TRANSPORT_COOLDOWN[name] = _TRANSPORT_COOLDOWN_QUERIES
+                    print(f"[cenotaph] {label}: {name} on cooldown for "
+                          f"{_TRANSPORT_COOLDOWN_QUERIES} queries (ESA anonymous "
+                          "result-store quota exceeded)", flush=True)
                     break
                 time.sleep(base_sleep * (2**attempt))
                 continue
@@ -469,39 +498,77 @@ def _pick(candidates, available: set[str]) -> str | None:
 # --------------------------------------------------------------------------
 # 1. Parent sample
 # --------------------------------------------------------------------------
-def _fetch_shell_chunk(plx_lo: float, plx_hi: float, w: dict, top: int,
-                       ridx_lo: int | None, ridx_hi: int | None,
-                       depth: int, max_depth: int,
-                       ledger: list) -> pd.DataFrame:
-    """One (shell × random_index) chunk, sub-split if the server truncates it.
+def plan_random_index_slices(n_expected: int,
+                             target: int = TARGET_CHUNK_ROWS,
+                             ridx_lo: int = 0,
+                             ridx_hi: int | None = None) -> list:
+    """Split a shell into ``random_index`` ranges of about ``target`` rows each.
 
-    The recursion is what makes the sync fallback safe. A sync endpoint with a
-    row cap answers a 200,000-row query with a silent 8,193-row prefix; the
-    COUNT(*) ruler catches the shortfall and this splits the chunk until each
-    piece is under whatever the cap happens to be.
+    ``random_index`` is a uniform permutation index over the whole catalogue,
+    so an equal split of the index range is an equal split of *any* subsample
+    of it — including this one. It is also indexed, so the slice predicate is
+    cheap rather than a full scan (which ``MOD(source_id, k)`` would be).
+
+    Pre-splitting from the measured ``COUNT(*)`` matters for time, not just
+    correctness: recursively halving from a 200,000-row query would spend a
+    doomed, server-timing-out attempt at every level on the way down.
+
+    The last slice is returned open-ended (``None``) so that a wrong upper
+    bound on ``random_index`` can never silently drop the tail of the catalogue.
+    """
+    hi = _GAIA_RANDOM_INDEX_MAX if ridx_hi is None else int(ridx_hi)
+    lo = int(ridx_lo)
+    k = max(1, math.ceil(int(n_expected) / max(1, int(target))))
+    if k == 1:
+        return [(None, None)] if (lo == 0 and ridx_hi is None) else [(lo, ridx_hi)]
+    step = max(1, (hi - lo) // k)
+    slices = []
+    for i in range(k):
+        a = lo + i * step
+        b = None if i == k - 1 else lo + (i + 1) * step
+        if i == k - 1 and ridx_hi is not None:
+            b = hi
+        slices.append((a, b))
+    return slices
+
+
+def _fetch_one_query(plx_lo: float, plx_hi: float, w: dict, top: int,
+                     ridx_lo: int | None, ridx_hi: int | None,
+                     n_expected: int | None, depth: int, max_depth: int,
+                     ledger: list) -> pd.DataFrame:
+    """Fetch one slice, and split it if the server truncated the response.
+
+    ``n_expected`` is the exact ``COUNT(*)`` when the caller has one, or the
+    uniform expectation derived from the shell count. A shortfall triggers an
+    exact re-count for *this slice only* before anything is concluded — the
+    guard must never call a Poisson fluctuation a truncation, nor a truncation
+    a fluctuation.
     """
     tag = f"shell[{plx_lo:g},{plx_hi:g})"
-    if ridx_lo is not None:
+    if ridx_lo is not None or ridx_hi is not None:
         tag += f" ridx[{ridx_lo},{ridx_hi})"
     where = _shell_where(plx_lo, plx_hi, w, ridx_lo, ridx_hi)
-    n_expected, count_rec = gaia_count(_GSPSPEC_FROM + where, label=f"{tag} count")
-    if n_expected == 0:
-        # The archive answered, correctly, that nothing matches these cuts.
-        # That is a fact about the selection and is recorded as such.
-        ledger.append({"chunk": tag, "status": QUERY_ZERO, "n_rows": 0,
-                       "expected_rows": 0, "transport": count_rec.get("transport"),
-                       "depth": depth, "query": count_rec["query"],
-                       "note": "COUNT(*) = 0: valid query, empty selection"})
-        print(f"[cenotaph] {tag}: COUNT(*) = 0 — valid query, no stars match",
-              flush=True)
-        return pd.DataFrame()
-
     q = f"SELECT TOP {int(top)}{_GSPSPEC_SELECT}{_GSPSPEC_FROM}{where}"
-    df, rec = run_gaia_query(q, label=tag, expect_rows=n_expected)
+    df, rec = run_gaia_query(q, label=tag, expect_rows=None)
+
     entry = {"chunk": tag, "status": rec["status"], "n_rows": rec["n_rows"],
              "expected_rows": n_expected, "transport": rec["transport"],
-             "depth": depth, "attempts": rec["attempts"],
+             "depth": depth, "attempts": rec["attempts"], "kind": "slice",
              "query": rec["query"], "error": rec["error"]}
+
+    # Suspicion test, then proof. Only a slice that comes back materially short
+    # of its expectation pays for an exact COUNT(*).
+    suspect = (rec["status"] in (QUERY_OK, QUERY_ZERO) and n_expected
+               and rec["n_rows"] < 0.9 * n_expected)
+    if suspect:
+        exact, _ = gaia_count(_GSPSPEC_FROM + where, label=f"{tag} recount")
+        if exact is not None:
+            entry["expected_rows"] = exact
+            n_expected = exact
+            if rec["n_rows"] < exact:
+                entry["status"] = rec["status"] = QUERY_TRUNCATED
+                print(f"[cenotaph] {tag}: TRUNCATED — {rec['n_rows']} rows "
+                      f"returned, COUNT(*) says {exact}", flush=True)
 
     if rec["status"] == QUERY_TRUNCATED and depth < max_depth:
         lo_i = 0 if ridx_lo is None else int(ridx_lo)
@@ -511,23 +578,106 @@ def _fetch_shell_chunk(plx_lo: float, plx_hi: float, w: dict, top: int,
             entry["note"] = (f"truncated at {rec['n_rows']}/{n_expected}; "
                              f"split on random_index at {mid}")
             ledger.append(entry)
-            print(f"[cenotaph] {tag}: truncated {rec['n_rows']}/{n_expected} — "
-                  f"splitting on random_index at {mid}", flush=True)
-            left = _fetch_shell_chunk(plx_lo, plx_hi, w, top, lo_i, mid,
-                                      depth + 1, max_depth, ledger)
-            # Only the final chunk is left open-ended, so a wrong upper bound
-            # on random_index can never drop rows off the end.
-            right_hi = None if ridx_hi is None else hi_i
-            right = _fetch_shell_chunk(plx_lo, plx_hi, w, top, mid, right_hi,
-                                       depth + 1, max_depth, ledger)
+            half = (n_expected // 2) if n_expected else None
+            left = _fetch_one_query(plx_lo, plx_hi, w, top, lo_i, mid, half,
+                                    depth + 1, max_depth, ledger)
+            right = _fetch_one_query(plx_lo, plx_hi, w, top, mid,
+                                     None if ridx_hi is None else hi_i, half,
+                                     depth + 1, max_depth, ledger)
             parts = [p for p in (left, right) if len(p)]
             return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
 
     ledger.append(entry)
     print(f"[cenotaph] {tag}: {rec['n_rows']} stars "
-          f"(expected {n_expected}, {rec['status']}, via {rec['transport']})",
+          f"(expected ~{n_expected}, {rec['status']}, via {rec['transport']})",
           flush=True)
     return df
+
+
+def _fetch_shell_chunk(plx_lo: float, plx_hi: float, w: dict, top: int,
+                       ridx_lo: int | None, ridx_hi: int | None,
+                       depth: int, max_depth: int, ledger: list,
+                       target: int = TARGET_CHUNK_ROWS,
+                       checkpoint_dir: Path | None = None) -> pd.DataFrame:
+    """One parallax shell: count it, pre-split it, fetch and reconcile.
+
+    Exactly one ``COUNT(*)`` per shell (they are not free), then as many small
+    slices as that count implies. Each slice is checkpointed on its own, so a
+    runner that dies mid-shell loses one slice rather than the shell.
+    """
+    tag = f"shell[{plx_lo:g},{plx_hi:g})"
+    where = _shell_where(plx_lo, plx_hi, w, ridx_lo, ridx_hi)
+    n_shell, count_rec = gaia_count(_GSPSPEC_FROM + where, label=f"{tag} count")
+
+    if n_shell is None:
+        # We could not even count. That is a failure of the archive, not an
+        # empty selection, and it must not be recorded as one.
+        ledger.append({"chunk": f"{tag} count", "status": QUERY_FAILED,
+                       "kind": "shell_total",
+                       "n_rows": 0, "expected_rows": None, "depth": depth,
+                       "query": count_rec["query"], "error": count_rec["error"],
+                       "note": "COUNT(*) failed: the archive was not reached"})
+        print(f"[cenotaph] {tag}: COUNT(*) failed — archive not reached", flush=True)
+        return pd.DataFrame()
+
+    if n_shell == 0:
+        # The archive answered, correctly, that nothing matches these cuts.
+        ledger.append({"chunk": tag, "status": QUERY_ZERO, "n_rows": 0,
+                       "kind": "shell_total",
+                       "expected_rows": 0, "transport": count_rec["transport"],
+                       "depth": depth, "query": count_rec["query"],
+                       "note": "COUNT(*) = 0: valid query, empty selection"})
+        print(f"[cenotaph] {tag}: COUNT(*) = 0 — valid query, no stars match",
+              flush=True)
+        return pd.DataFrame()
+
+    slices = plan_random_index_slices(n_shell, target, ridx_lo or 0, ridx_hi)
+    per = max(1, n_shell // len(slices))
+    print(f"[cenotaph] {tag}: COUNT(*) = {n_shell} — {len(slices)} slice(s) of "
+          f"~{per} rows", flush=True)
+
+    frames = []
+    for i, (a, b) in enumerate(slices):
+        ck = None
+        if checkpoint_dir is not None:
+            checkpoint_dir.mkdir(parents=True, exist_ok=True)
+            ck = checkpoint_dir / f"slice_{plx_lo:g}_{plx_hi:g}_{i:04d}.parquet"
+            if ck.exists():
+                d = pd.read_parquet(ck)
+                ledger.append({"chunk": f"{tag} slice {i}", "status": QUERY_OK,
+                               "kind": "slice",
+                               "n_rows": int(len(d)), "expected_rows": per,
+                               "transport": "checkpoint", "depth": depth})
+                frames.append(d)
+                continue
+        try:
+            d = _fetch_one_query(plx_lo, plx_hi, w, top, a, b, per,
+                                 depth, max_depth, ledger)
+        except Exception as exc:  # noqa: BLE001
+            ledger.append({"chunk": f"{tag} slice {i}", "status": QUERY_FAILED,
+                           "kind": "slice",
+                           "n_rows": 0, "expected_rows": per, "depth": depth,
+                           "error": repr(exc)})
+            print(f"[cenotaph] {tag} slice {i}: QUERY_FAILED, continuing: {exc!r}",
+                  flush=True)
+            continue
+        if ck is not None and len(d):
+            d.to_parquet(ck, index=False)
+        if len(d):
+            frames.append(d)
+
+    out = (pd.concat(frames, ignore_index=True).drop_duplicates("source_id")
+           if frames else pd.DataFrame())
+    # Reconciliation against the one number no row cap can touch.
+    got = int(len(out))
+    ledger.append({"chunk": f"{tag} RECONCILE", "kind": "shell_total",
+                   "status": QUERY_OK if got >= n_shell else QUERY_TRUNCATED,
+                   "n_rows": got, "expected_rows": n_shell, "depth": depth,
+                   "note": (f"shell completeness {got}/{n_shell} = "
+                            f"{got / n_shell:.4f}")})
+    print(f"[cenotaph] {tag}: shell complete {got}/{n_shell} "
+          f"({got / n_shell:.1%})", flush=True)
+    return out
 
 
 def fetch_gspspec_sample(poe_min: float = 20.0, ruwe_max: float = 1.4,
@@ -560,18 +710,21 @@ def fetch_gspspec_sample(poe_min: float = 20.0, ruwe_max: float = 1.4,
                 df = pd.read_parquet(ck)
                 print(f"[cenotaph] {tag} mas: {len(df)} (cached)")
                 ledger.append({"chunk": tag, "status": QUERY_OK,
-                               "n_rows": int(len(df)), "transport": "checkpoint",
-                               "depth": 0})
+                               "kind": "shell_total",
+                               "n_rows": int(len(df)),
+                               "expected_rows": int(len(df)),
+                               "transport": "checkpoint", "depth": 0})
                 frames.append(df)
                 continue
         try:
             df = _fetch_shell_chunk(lo, hi, w, top_per_shell, None, None,
-                                    0, max_split_depth, ledger)
+                                    0, max_split_depth, ledger,
+                                    checkpoint_dir=checkpoint_dir)
         except Exception as exc:  # noqa: BLE001
             # Containment. A shell that dies is a hole in the sample, named as
             # such — not a reason to throw away the shells that worked.
             ledger.append({"chunk": tag, "status": QUERY_FAILED, "n_rows": 0,
-                           "depth": 0, "error": repr(exc)})
+                           "kind": "shell_total", "depth": 0, "error": repr(exc)})
             print(f"[cenotaph] {tag}: QUERY_FAILED, continuing: {exc!r}", flush=True)
             continue
         if ck is not None and len(df):
@@ -599,12 +752,19 @@ def summarise_acquisition(ledger: list) -> dict:
     n_rows = 0
     n_expected = 0
     failed = []
-    for e in ledger:
-        by[e.get("status", QUERY_FAILED)] = by.get(e.get("status"), 0) + 1
+    # Row totals come only from shell-level entries. Summing the slices too
+    # would double-count every star, which would make the completeness figure
+    # — the one number that says whether the sample is whole — a fiction.
+    totals = [e for e in ledger if e.get("kind") == "shell_total"]
+    if not totals:
+        totals = ledger
+    for e in totals:
         n_rows += int(e.get("n_rows", 0) or 0)
         exp = e.get("expected_rows")
         if exp is not None:
             n_expected += int(exp)
+    for e in ledger:
+        by[e.get("status", QUERY_FAILED)] = by.get(e.get("status"), 0) + 1
         if e.get("status") in (QUERY_FAILED, QUERY_TRUNCATED):
             failed.append({"chunk": e.get("chunk"), "status": e.get("status"),
                            "n_rows": e.get("n_rows"),
@@ -613,9 +773,10 @@ def summarise_acquisition(ledger: list) -> dict:
                            "query": (e.get("query") or "")[:2000]})
 
     n_chunks = len(ledger)
+    n_failed_totals = sum(1 for e in totals if e.get("status") == QUERY_FAILED)
     if n_chunks == 0:
         verdict = "NO_QUERY_ATTEMPTED"
-    elif by[QUERY_FAILED] == n_chunks:
+    elif by[QUERY_FAILED] == n_chunks or (totals and n_failed_totals == len(totals)):
         verdict = "NO_DATA_REACHED"
     elif n_rows == 0 and by[QUERY_FAILED] == 0:
         verdict = "QUERY_RETURNED_ZERO_ROWS"
@@ -848,28 +1009,33 @@ _ALLWISE_WANT = {
 }
 
 
-def _fetch_photometry_chunk(kind: str, plx_lo: float, plx_hi: float, where: dict,
+def _fetch_photometry_slice(kind: str, plx_lo: float, plx_hi: float, where: dict,
                             sel: dict, top: int, ridx_lo: int | None,
-                            ridx_hi: int | None, depth: int, max_depth: int,
+                            ridx_hi: int | None, n_expected: int | None,
+                            depth: int, max_depth: int,
                             ledger: list) -> pd.DataFrame:
     tag = f"{kind}[{plx_lo:g},{plx_hi:g})"
-    if ridx_lo is not None:
+    if ridx_lo is not None or ridx_hi is not None:
         tag += f" ridx[{ridx_lo},{ridx_hi})"
-    n_expected, _ = gaia_count(
-        _photometry_from(kind) + _shell_where(plx_lo, plx_hi, where, ridx_lo, ridx_hi),
-        label=f"{tag} count")
-    if n_expected == 0:
-        ledger.append({"chunk": tag, "status": QUERY_ZERO, "n_rows": 0,
-                       "expected_rows": 0, "depth": depth,
-                       "note": "COUNT(*) = 0 over the crossmatch join"})
-        return pd.DataFrame()
-
     q = _external_photometry_query(kind, plx_lo, plx_hi, top, sel, where,
                                    ridx_lo, ridx_hi)
-    df, rec = run_gaia_query(q, label=tag, expect_rows=n_expected)
+    df, rec = run_gaia_query(q, label=tag, expect_rows=None)
     entry = {"chunk": tag, "status": rec["status"], "n_rows": rec["n_rows"],
              "expected_rows": n_expected, "transport": rec["transport"],
-             "depth": depth, "query": rec["query"], "error": rec["error"]}
+             "kind": "slice", "depth": depth,
+             "query": rec["query"], "error": rec["error"]}
+
+    if (rec["status"] in (QUERY_OK, QUERY_ZERO) and n_expected
+            and rec["n_rows"] < 0.9 * n_expected):
+        exact, _ = gaia_count(
+            _photometry_from(kind)
+            + _shell_where(plx_lo, plx_hi, where, ridx_lo, ridx_hi),
+            label=f"{tag} recount")
+        if exact is not None:
+            entry["expected_rows"] = n_expected = exact
+            if rec["n_rows"] < exact:
+                entry["status"] = rec["status"] = QUERY_TRUNCATED
+
     if rec["status"] == QUERY_TRUNCATED and depth < max_depth:
         lo_i = 0 if ridx_lo is None else int(ridx_lo)
         hi_i = _GAIA_RANDOM_INDEX_MAX if ridx_hi is None else int(ridx_hi)
@@ -877,17 +1043,65 @@ def _fetch_photometry_chunk(kind: str, plx_lo: float, plx_hi: float, where: dict
         if mid > lo_i:
             entry["note"] = f"truncated {rec['n_rows']}/{n_expected}; split at {mid}"
             ledger.append(entry)
-            left = _fetch_photometry_chunk(kind, plx_lo, plx_hi, where, sel, top,
-                                           lo_i, mid, depth + 1, max_depth, ledger)
-            right = _fetch_photometry_chunk(kind, plx_lo, plx_hi, where, sel, top,
+            half = (n_expected // 2) if n_expected else None
+            left = _fetch_photometry_slice(kind, plx_lo, plx_hi, where, sel, top,
+                                           lo_i, mid, half, depth + 1, max_depth,
+                                           ledger)
+            right = _fetch_photometry_slice(kind, plx_lo, plx_hi, where, sel, top,
                                             mid, None if ridx_hi is None else hi_i,
-                                            depth + 1, max_depth, ledger)
+                                            half, depth + 1, max_depth, ledger)
             parts = [p for p in (left, right) if len(p)]
             return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
     ledger.append(entry)
-    print(f"[cenotaph] {tag}: {rec['n_rows']} rows (expected {n_expected}, "
+    print(f"[cenotaph] {tag}: {rec['n_rows']} rows (expected ~{n_expected}, "
           f"{rec['status']})", flush=True)
     return df
+
+
+def _fetch_photometry_chunk(kind: str, plx_lo: float, plx_hi: float, where: dict,
+                            sel: dict, top: int, ridx_lo: int | None,
+                            ridx_hi: int | None, depth: int, max_depth: int,
+                            ledger: list,
+                            target: int = TARGET_CHUNK_ROWS) -> pd.DataFrame:
+    """One photometry shell: count over the join, pre-split, fetch, reconcile."""
+    tag = f"{kind}[{plx_lo:g},{plx_hi:g})"
+    n_shell, count_rec = gaia_count(
+        _photometry_from(kind) + _shell_where(plx_lo, plx_hi, where, ridx_lo, ridx_hi),
+        label=f"{tag} count")
+    if n_shell is None:
+        ledger.append({"chunk": f"{tag} count", "status": QUERY_FAILED,
+                       "kind": "shell_total", "n_rows": 0, "expected_rows": None,
+                       "depth": depth, "query": count_rec["query"],
+                       "error": count_rec["error"]})
+        return pd.DataFrame()
+    if n_shell == 0:
+        # A COUNT(*) of zero over the crossmatch join is the signature of a
+        # broken join, and it now says so with the query attached instead of
+        # producing an inexplicably empty photometry table.
+        ledger.append({"chunk": tag, "status": QUERY_ZERO, "n_rows": 0,
+                       "kind": "shell_total", "expected_rows": 0, "depth": depth,
+                       "query": count_rec["query"],
+                       "note": "COUNT(*) = 0 over the crossmatch join"})
+        return pd.DataFrame()
+
+    slices = plan_random_index_slices(n_shell, target, ridx_lo or 0, ridx_hi)
+    per = max(1, n_shell // len(slices))
+    print(f"[cenotaph] {tag}: COUNT(*) = {n_shell} — {len(slices)} slice(s)",
+          flush=True)
+    frames = []
+    for a, b in slices:
+        d = _fetch_photometry_slice(kind, plx_lo, plx_hi, where, sel, top,
+                                    a, b, per, depth, max_depth, ledger)
+        if len(d):
+            frames.append(d)
+    out = (pd.concat(frames, ignore_index=True).drop_duplicates("source_id")
+           if frames else pd.DataFrame())
+    got = int(len(out))
+    ledger.append({"chunk": f"{tag} RECONCILE", "kind": "shell_total",
+                   "status": QUERY_OK if got >= n_shell else QUERY_TRUNCATED,
+                   "n_rows": got, "expected_rows": n_shell, "depth": depth,
+                   "note": f"photometry completeness {got}/{n_shell}"})
+    return out
 
 
 def fetch_external_photometry(kind: str, where: dict,
@@ -929,8 +1143,9 @@ def fetch_external_photometry(kind: str, where: dict,
             if ck.exists():
                 df = pd.read_parquet(ck)
                 ledger.append({"chunk": f"{kind}[{lo:g},{hi:g})", "status": QUERY_OK,
-                               "n_rows": int(len(df)), "transport": "checkpoint",
-                               "depth": 0})
+                               "kind": "shell_total",
+                               "n_rows": int(len(df)), "expected_rows": int(len(df)),
+                               "transport": "checkpoint", "depth": 0})
                 frames.append(df)
                 continue
         try:
@@ -938,6 +1153,7 @@ def fetch_external_photometry(kind: str, where: dict,
                                          None, None, 0, max_split_depth, ledger)
         except Exception as exc:  # noqa: BLE001
             ledger.append({"chunk": f"{kind}[{lo:g},{hi:g})", "status": QUERY_FAILED,
+                           "kind": "shell_total",
                            "n_rows": 0, "depth": 0, "error": repr(exc)})
             print(f"[cenotaph] {kind} shell [{lo:g},{hi:g}): QUERY_FAILED, "
                   f"continuing: {exc!r}", flush=True)

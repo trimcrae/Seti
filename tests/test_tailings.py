@@ -1498,3 +1498,48 @@ def test_an_xh_only_catalogue_is_rejected_but_diagnosed():
     assert acq.verdict == A.VERDICT_QUERY_FAILED
     assert "[X/H] columns" in acq.degradation
     assert "schema-convention mismatch" in acq.degradation
+
+
+def test_fits_big_endian_columns_survive_the_parquet_checkpoint(tmp_path):
+    """FITS is big-endian and pyarrow refuses byte-swapped arrays.
+
+    Run 30211322736 downloaded 758 MB of GALAH DR4, parsed 73,820 rows and 30
+    elements, and then died on the FIRST ``to_parquet`` with::
+
+        pyarrow.lib.ArrowNotImplementedError: ('Byte-swapped arrays not
+        supported', 'Conversion failed for column star_id with type >i8')
+
+    i.e. it failed *after* all the expensive work, which is the worst possible
+    place to fail. Normalisation is centralised in ``to_native_byteorder`` and
+    applied both at FITS-read time and again at checkpoint time.
+    """
+    import numpy as np
+    import pandas as pd
+
+    from seti.tailings.acquire import to_native_byteorder, write_checkpoint
+
+    df = pd.DataFrame(
+        {
+            "star_id": np.array([1, 2, 3], dtype=">i8"),
+            "teff": np.array([5000.0, 5500.0, 6000.0], dtype=">f8"),
+            "fe_h": np.array([-0.1, 0.0, 0.2], dtype="<f8"),   # already native
+            "name": ["a", "b", "c"],
+        }
+    )
+    # Guard the premise: the raw frame really is unwritable.
+    with pytest.raises(Exception, match="[Bb]yte-swapped"):
+        df.to_parquet(tmp_path / "raw.parquet", index=False)
+
+    native = to_native_byteorder(df)
+    for col in ("star_id", "teff", "fe_h"):
+        assert native[col].dtype.byteorder in ("=", "|"), col
+    assert native["star_id"].tolist() == [1, 2, 3]
+    assert native["teff"].tolist() == [5000.0, 5500.0, 6000.0]
+
+    path = write_checkpoint(df, tmp_path / "stars.parquet")
+    back = pd.read_parquet(path)
+    assert back["star_id"].tolist() == [1, 2, 3]
+    assert back["teff"].tolist() == [5000.0, 5500.0, 6000.0]
+    assert back["fe_h"].tolist() == [-0.1, 0.0, 0.2]
+    # An empty or already-native frame must pass through untouched.
+    assert to_native_byteorder(pd.DataFrame()).empty

@@ -134,7 +134,9 @@ def _matches_known_artificial(row: pd.Series) -> tuple[str, str] | None:
 def _earthlike_orbit(row: pd.Series, p: VetParams) -> bool:
     """Near-Earth heliocentric orbit typical of an escaped upper stage."""
     try:
-        a = float(row.get("a")); e = float(row.get("e")); i = float(row.get("i"))
+        a = float(row.get("a"))
+        e = float(row.get("e"))
+        i = float(row.get("i"))
     except (TypeError, ValueError):
         return False
     if not all(map(math.isfinite, (a, e, i))):
@@ -294,10 +296,17 @@ def vet_table(df: pd.DataFrame, details: dict[str, dict] | None, p: VetParams
 
 
 def dedupe(df: pd.DataFrame) -> pd.DataFrame:
-    """Drop duplicate objects (overlapping pulls inflate candidate counts)."""
+    """Drop duplicate objects (overlapping pulls inflate candidate counts).
+
+    Uses the **composite** of every identifier column present, not the first
+    one found: two rows are the same object only if all their identifiers
+    agree.  Keying on a single column silently merges distinct objects whenever
+    that column is degenerate or absent, which is the wrong direction to fail --
+    it would delete real rows.
+    """
     if df is None or len(df) == 0:
         return df
-    for key in ("spkid", "pdes", "full_name"):
-        if key in df.columns:
-            return df.drop_duplicates(subset=[key]).reset_index(drop=True)
-    return df.drop_duplicates().reset_index(drop=True)
+    keys = [k for k in ("spkid", "pdes", "full_name") if k in df.columns]
+    if not keys:
+        return df.drop_duplicates().reset_index(drop=True)
+    return df.drop_duplicates(subset=keys).reset_index(drop=True)

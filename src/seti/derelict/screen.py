@@ -244,6 +244,11 @@ def add_r_statistic(df: pd.DataFrame, p: ScreenParams) -> pd.DataFrame:
         )
         recs.append(stat.to_dict())
     rdf = pd.DataFrame(recs, index=df.index)
+    # ``annotate`` already emits a size-independent ``amr_implied_m2_kg`` (it is
+    # defined even for rows where R cannot be formed, so it is the more complete
+    # column).  Drop the R-statistic's copy so the concat cannot produce a
+    # duplicate column name -- which silently turns row lookups into Series.
+    rdf = rdf.drop(columns=[c for c in rdf.columns if c in df.columns])
     rdf["screen_r_flag"] = rdf["R_valid"] & (rdf["R"] >= p.r_flag)
     rdf["screen_r_strong"] = rdf["R_valid"] & (rdf["R"] >= p.r_strong)
     rdf["screen_r_extreme"] = rdf["R_valid"] & (rdf["R"] >= p.r_extreme)

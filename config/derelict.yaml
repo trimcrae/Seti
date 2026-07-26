@@ -21,9 +21,11 @@ physics:
   # NEO working value.  Sensitivity to this is reported per object: D scales as
   # p^(-1/2), so R scales as p^(-1/2) too.
   albedo_assumed: 0.15
-  # Bracketing albedos for the R-statistic sensitivity interval.
-  albedo_lo: 0.05     # dark carbonaceous -> larger D -> larger AMR_natural -> smaller R
-  albedo_hi: 0.60     # very bright -> smaller D -> smaller AMR_natural -> larger R
+  # Bracketing albedos for the R-statistic sensitivity interval.  R is LINEAR
+  # in D, so a darker assumed albedo (larger body, more mass behind the same
+  # cross-section) makes the same measured acceleration MORE anomalous.
+  albedo_lo: 0.05     # dark carbonaceous -> larger D -> R_hi
+  albedo_hi: 0.60     # very bright      -> smaller D -> R_lo (the conservative end)
 
 screen_a1_only:
   # Screen 1: the dark-comet COMPLEMENT.  Significant radial acceleration with

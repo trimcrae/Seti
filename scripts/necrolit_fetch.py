@@ -110,7 +110,14 @@ FULLTEXT: dict[str, str] = {
     # AI-as-great-filter: derives a lifetime bound but NO astronomical observable.
     "garrett_ai_filter": "2405.00042",
     # DERELICT (S19). Dark comets: nongrav acceleration without a coma.
-    "dark_comets": "2306.16966",
+    # CORRECTED 2026-07-26: this was "2306.16966", which is a hep-ph paper
+    # ("Self-interacting dark matter implied by nano-Hertz gravitational
+    # waves") -- a dark-matter/dark-comet mixup.  The fetch SUCCEEDED against
+    # the wrong id, so nothing flagged it and results/necrolit/*dark_comets*
+    # are the wrong paper.  See scripts/derelict_lit.py, which re-fetches these
+    # with an id+title verification step and supersedes the necrolit copies.
+    "dark_comets": "2212.08115",          # Seligman et al. 2023, PSJ 4, 35
+    "dark_comets_pnas": "2412.02384",     # Seligman et al. 2024, PNAS 121, e2406424121
     # KNELL/SHROUD (S31/S33). VASCO: optical disappearance.
     "vasco": "1606.08992",
 }

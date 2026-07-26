@@ -244,10 +244,32 @@ class SEDFit:
     model: np.ndarray | None = None
     success: bool = True
     message: str = ""
+    # How many discrete components the caller ASKED for.  Not the same as
+    # ``n_components``: NNLS can drive a redundant amplitude to exactly zero, in
+    # which case the component carries no flux, is dropped, and the fit comes
+    # back shorter than requested.  That is real information -- the data do not
+    # support N -- but it has to be *reported*, never silent.  The whole S6
+    # "discrete Matrioshka steps" test is a statement about component
+    # multiplicity, so a fit that quietly returns 2 where 3 were asked for
+    # corrupts precisely the statistic the channel rests on.  0 = not
+    # applicable (gradient fits).
+    n_requested: int = 0
 
     @property
     def n_components(self) -> int:
         return len(self.temps_k)
+
+    @property
+    def components_dropped(self) -> int:
+        """How many requested components NNLS zeroed out.  0 for a clean fit."""
+        if self.n_requested <= 0:
+            return 0
+        return max(0, int(self.n_requested) - self.n_components)
+
+    @property
+    def is_degenerate(self) -> bool:
+        """True when the fit returned fewer components than were requested."""
+        return self.components_dropped > 0
 
     @property
     def dof(self) -> int:
@@ -275,6 +297,9 @@ class SEDFit:
             "bic": float(self.bic), "aicc": float(self.aicc),
             "beta": float(self.beta),
             "n_components": int(self.n_components),
+            "n_requested": int(self.n_requested),
+            "components_dropped": int(self.components_dropped),
+            "is_degenerate": bool(self.is_degenerate),
             "temps_k": [float(t) for t in self.temps_k],
             "lum_frac": [float(x) for x in self.lum_frac],
             "t_in_k": float(self.t_in_k), "t_out_k": float(self.t_out_k),
@@ -337,13 +362,22 @@ def _discrete_chi2(logts: np.ndarray, beta: float, lam, flux, err,
 
 
 def _package_discrete(logts, beta, lam, flux, err, lam0_um, n_data,
-                      success=True, message="") -> SEDFit:
+                      success=True, message="", n_requested=None) -> SEDFit:
     temps = np.sort(10.0 ** np.asarray(logts, float))
+    n_req = int(len(temps) if n_requested is None else n_requested)
     des = _design(lam, temps, beta, lam0_um)
     amps, chi2 = _solve_amps(des, flux, err)
     keep = amps > 0
     temps, amps = temps[keep], amps[keep]
     des = des[:, keep] if des.shape[1] else des
+    # NNLS zeroed one or more amplitudes: the data do not support the requested
+    # multiplicity.  Report it in the message rather than handing back a short
+    # fit that is indistinguishable from a clean lower-N result.  n_params stays
+    # tied to the components that actually carry flux, so BIC is not charged for
+    # a parameter the fit never used.
+    if max(0, n_req - int(temps.size)):
+        tag = f"degenerate_components:{int(temps.size)}_of_{n_req}"
+        message = f"{message};{tag}" if message else tag
     # Amplitudes are per unit-max column; undo that for the bolometric weight.
     lums = []
     for t, a in zip(temps, amps, strict=True):
@@ -359,7 +393,7 @@ def _package_discrete(logts, beta, lam, flux, err, lam0_um, n_data,
                   temps_k=[float(t) for t in temps],
                   amps=[float(a) for a in amps], lum_frac=frac,
                   model=(des @ amps if des.shape[1] else np.zeros_like(lam)),
-                  success=success, message=message)
+                  success=success, message=message, n_requested=n_req)
 
 
 def chi2_one_component(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
@@ -413,7 +447,8 @@ def fit_discrete(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
     if n_data < 2 * n_components + 2:
         return SEDFit(kind="discrete", chi2=float("inf"), n_data=n_data,
                       n_params=2 * n_components + 1, beta=float("nan"),
-                      success=False, message="insufficient_points")
+                      success=False, n_requested=n_components,
+                      message="insufficient_points")
 
     beta_free = beta is None
     grid = np.log10(np.geomspace(T_MIN_K, T_MAX_K, n_grid))
@@ -430,30 +465,46 @@ def fit_discrete(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
         if not prev.success or not prev.temps_k:
             return SEDFit(kind="discrete", chi2=float("inf"), n_data=n_data,
                           n_params=2 * n_components + 1, beta=float("nan"),
-                          success=False, message="seed_failed")
+                          success=False, n_requested=n_components,
+                          message="seed_failed")
         base = np.log10(np.asarray(prev.temps_k, float))
         # The previous rung can return FEWER components than requested, because
         # NNLS drives redundant amplitudes to exactly zero and _package_discrete
-        # drops them.  Pad the seed back up from the grid rather than emitting a
-        # short parameter vector, which used to index past the end of theta.
-        if base.size < n_components - 1:
-            pad = [g for g in grid
-                   if base.size == 0 or np.min(np.abs(base - g)) >= np.log10(min_t_ratio)]
-            base = np.concatenate([base, np.asarray(pad[: n_components - 1 - base.size])])
-        base = np.sort(base)[: n_components - 1]
-        if base.size < n_components - 1:
+        # drops them.  Left unpadded, ``np.append(base, g)`` builds a parameter
+        # vector shorter than ``n_components``: ``obj`` then reads ``theta[
+        # n_components]`` as beta and either walks off the end of the array or
+        # -- worse, silently -- picks up a *temperature* as the emissivity
+        # index.  Pad the seed back up to n_components-1 from the grid, adding
+        # one at a time and re-checking separation against the growing set (a
+        # single pass against the original ``base`` can place two pads within
+        # min_t_ratio of each other, which the chi2 penalty then rejects as
+        # infeasible and the whole rung fails).
+        gap = np.log10(min_t_ratio)
+        need = (n_components - 1) - base.size
+        if need > 0:
+            for g in grid:
+                if need <= 0:
+                    break
+                if base.size and np.min(np.abs(base - g)) < gap:
+                    continue
+                base = np.append(base, g)
+                need -= 1
+        base = np.sort(base)
+        if base.size != n_components - 1:
             return SEDFit(kind="discrete", chi2=float("inf"), n_data=n_data,
                           n_params=2 * n_components + 1, beta=float("nan"),
-                          success=False, message="cannot_seed_enough_components")
+                          success=False, n_requested=n_components,
+                          message="cannot_seed_enough_components")
         starts = []
         for g in grid:
-            if np.min(np.abs(base - g)) < np.log10(min_t_ratio):
+            if np.min(np.abs(base - g)) < gap:
                 continue
             starts.append((np.append(base, g), prev.beta))
         if not starts:
             return SEDFit(kind="discrete", chi2=float("inf"), n_data=n_data,
                           n_params=2 * n_components + 1, beta=float("nan"),
-                          success=False, message="no_separable_seed")
+                          success=False, n_requested=n_components,
+                          message="no_separable_seed")
 
     def obj(theta):
         lt = theta[:n_components]
@@ -470,12 +521,14 @@ def fit_discrete(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
     if not scored:
         return SEDFit(kind="discrete", chi2=float("inf"), n_data=n_data,
                       n_params=2 * n_components + 1, beta=float("nan"),
-                      success=False, message="no_valid_start")
+                      success=False, n_requested=n_components,
+                      message="no_valid_start")
     scored.sort(key=lambda x: x[0])
     if not np.isfinite(scored[0][0]) or scored[0][0] >= 1e12:
         return SEDFit(kind="discrete", chi2=float("inf"), n_data=n_data,
                       n_params=2 * n_components + 1, beta=float("nan"),
-                      success=False, message="no_feasible_start")
+                      success=False, n_requested=n_components,
+                      message="no_feasible_start")
 
     best_val, best_th = scored[0]
     for _, th0 in scored[: min(6, len(scored))]:
@@ -486,7 +539,8 @@ def fit_discrete(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
 
     lt = best_th[:n_components]
     b = float(best_th[n_components]) if beta_free else float(beta)
-    return _package_discrete(lt, b, lam, flux, err, lam0_um, n_data)
+    return _package_discrete(lt, b, lam, flux, err, lam0_um, n_data,
+                             n_requested=n_components)
 
 
 def fit_gradient(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
@@ -661,17 +715,47 @@ def select_n_components(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
     usable = [f for f in ladder if f.success and np.isfinite(f.chi2)]
     if not usable:
         return ladder[0], ladder
-    best = usable[0]
-    for f in usable[1:]:
+    # A rung may be *degenerate*: NNLS zeroed an amplitude, so a request for N
+    # came back with fewer.  Such a fit is still a perfectly valid fit of the
+    # multiplicity it actually carries (n_params is tied to the surviving
+    # components, so BIC is fair), and it competes at that lower count.  What it
+    # must NOT do is stand in for the count that was requested — otherwise the
+    # S6 multiplicity claim would rest on components that carry no flux.  Rank
+    # strictly on the *realised* n_components.
+    best = min(usable, key=lambda f: (f.n_components, f.bic))
+    for f in usable:
         if f.n_components > best.n_components and f.bic < best.bic - delta_bic:
             best = f
+        elif f.n_components == best.n_components and f.bic < best.bic:
+            best = f
     return best, ladder
+
+
+def ladder_degeneracy_report(ladder) -> dict:
+    """Which rungs of a ``select_n_components`` ladder came back short.
+
+    Surfaced in ``summary.json`` so that "no 3-component fit" is distinguishable
+    from "a 3-component fit was requested and silently collapsed to 2".  The
+    difference matters: the first is a statement about the source, the second
+    was, until this was fixed, an unreported hole in the S6 statistic.
+    """
+    rungs = []
+    for f in ladder:
+        rungs.append({"requested": int(f.n_requested), "returned": int(f.n_components),
+                      "dropped": int(f.components_dropped),
+                      "success": bool(f.success), "message": f.message})
+    return {
+        "rungs": rungs,
+        "n_degenerate": int(sum(1 for f in ladder if f.is_degenerate)),
+        "max_clean_n": int(max((f.n_components for f in ladder
+                                if f.success and not f.is_degenerate), default=0)),
+    }
 
 
 __all__ = [
     "LAM0_UM", "MIN_T_RATIO", "SEDFit", "T_MAX_K", "T_MIN_K",
     "apply_systematic_floor", "bin_to_resolution", "bolometric",
     "component_bolometric", "emissivity", "fit_discrete", "fit_gradient",
-    "fit_multi_gradient", "gradient_sed", "mbb", "multi_gradient_sed",
-    "planck_nu", "select_n_components",
+    "fit_multi_gradient", "gradient_sed", "ladder_degeneracy_report", "mbb",
+    "multi_gradient_sed", "planck_nu", "select_n_components",
 ]

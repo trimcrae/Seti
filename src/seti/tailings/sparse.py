@@ -101,8 +101,15 @@ from .manifold import NATURALLY_SPARSE_ELEMENTS, element_family
 class SparseConfig:
     """Thresholds for the sparse/dense classification."""
 
-    z_flag: float = 6.0
-    """Hard threshold: |z| at or above this counts as discrepant."""
+    z_flag: float = 5.0
+    """Hard threshold: |z| at or above this counts as discrepant.
+
+    Kept in step with ``config/thresholds.yaml``; a dataclass default that drifts
+    from the yaml silently gives library callers a different search from the one
+    the workflow runs.  Was 6.0, which at the ~0.058 dex Na residual width of a
+    GALAH-DR3-like sample is 0.35 dex -- above the bottom third of the 0.3-0.6
+    dex Griffith Na population this channel names as its validation target.
+    """
 
     z_quiet: float = 2.0
     """'Everything else is normal' means |z| below this."""
@@ -111,7 +118,23 @@ class SparseConfig:
     """At most this many elements may be discrepant (the 'one or two' rule)."""
 
     max_quiet_excess: int = 1
-    """How many elements beyond the discrepant set may exceed ``z_quiet``."""
+    """FLOOR on how many background elements may exceed ``z_quiet``.
+
+    Not the rule on its own -- see ``quiet_excess_sigma`` and
+    ``quiet_excess_allowance``.  As a bare absolute count this was a design
+    error: the expected number of *chance* exceedances grows with the number of
+    elements measured, so a fixed budget of 1 made the test strictly harder the
+    more elements a survey delivered.
+    """
+
+    quiet_excess_sigma: float = 2.0
+    """Poisson tolerance on the chance exceedances, in sigma.
+
+    The allowance is ``expected + sigma * sqrt(expected)`` where ``expected`` is
+    the number of background elements times the two-sided Gaussian tail beyond
+    ``z_quiet``.  This keeps "the rest of the vector is quiet" meaning the same
+    thing at 12 elements and at 30, instead of tightening as data improve.
+    """
 
     min_elements: int = 8
     """Below this many measured elements, sparsity is not a meaningful claim."""
@@ -119,8 +142,13 @@ class SparseConfig:
     min_contrast: float = 3.0
     """Required ``z_max / max(z_background_rms, 1)``."""
 
-    family_max_mean_z: float = 2.0
-    """Mean |z| over the flagged element's other family members must stay below this."""
+    family_max_mean_z: float = 1.5
+    """Mean |z| over the flagged element's other family members must stay below this.
+
+    Tightened from 2.0 alongside the z_flag/quiet-excess recalibration: a wider
+    quiet budget necessarily weakens the DENSE rule for a star whose coherent
+    enrichment is only marginally resolved, and this veto is what pays it back.
+    """
 
     dense_min_discrepant: int = 3
     """At or above this many discrepant elements the star is labelled DENSE."""
@@ -133,6 +161,57 @@ SPARSE = "SPARSE"
 DENSE = "DENSE"
 NORMAL = "NORMAL"
 INSUFFICIENT = "INSUFFICIENT"
+
+
+def quiet_excess_allowance(n_elements: int, n_discrepant: int,
+                           cfg: SparseConfig | None = None) -> int:
+    """How many background elements may exceed ``z_quiet`` purely by chance.
+
+    "The rest of the abundance vector is quiet" has to mean the same thing at 12
+    elements and at 30.  A fixed budget does not: the expected number of chance
+    exceedances is ``n_background * P(|z| > z_quiet)``, which for z_quiet = 2 is
+    ~0.045 per element, so ~0.9 of 20 background elements land above it with no
+    anomaly present at all.  Under a fixed budget of 1 that relabels roughly one
+    in five genuine single-element anomalies as DENSE -- and does so *more*
+    often the more elements a survey measures, penalising better data.
+
+    The allowance is the Poisson mean plus ``quiet_excess_sigma`` of its own
+    standard deviation, floored at ``max_quiet_excess`` so the rule can never
+    become laxer than the original constant.
+    """
+    return _allowance(n_elements, n_discrepant, cfg, one_sided=False)
+
+
+def coherent_excess_allowance(n_elements: int, n_discrepant: int,
+                              cfg: SparseConfig | None = None) -> int:
+    """Chance allowance for background excesses of ONE sign.
+
+    The Poisson budget above is derived for noise, and noise is sign-symmetric:
+    a chance exceedance is equally likely to be high or low.  A coherent
+    enrichment is not -- every raised element moves the *same* way.  So the
+    budget must be spent separately on each sign, at half the tail probability.
+
+    Without this, widening the two-sided budget quietly weakens the DENSE rule
+    for precisely the case it exists to catch: a star with all of O-through-Ni
+    lifted together, where only one or two elements clear ``z_flag`` and the
+    rest pile up just under it.  Measured: that leak let 1 of 15 such control
+    stars through as SPARSE.
+    """
+    return _allowance(n_elements, n_discrepant, cfg, one_sided=True)
+
+
+def _allowance(n_elements: int, n_discrepant: int, cfg, one_sided: bool) -> int:
+    from math import ceil, erfc, sqrt
+
+    cfg = cfg or SparseConfig()
+    n_bg = max(int(n_elements) - int(n_discrepant), 0)
+    # Two-sided Gaussian tail beyond z_quiet; halved for a single sign.
+    p_tail = float(erfc(float(cfg.z_quiet) / sqrt(2.0)))
+    if one_sided:
+        p_tail *= 0.5
+    expected = n_bg * p_tail
+    budget = expected + float(cfg.quiet_excess_sigma) * sqrt(expected)
+    return int(max(int(cfg.max_quiet_excess), ceil(budget)))
 
 
 def _order_desc(absz: np.ndarray) -> np.ndarray:
@@ -182,6 +261,14 @@ def sparse_statistics(
 
         n_disc = int((a[finite] >= cfg.z_flag).sum())
         n_active = int((a[finite] >= cfg.z_quiet).sum())
+        # How many of the *background* excesses lean the same way as the flagged
+        # element.  Chance exceedances are sign-symmetric; a coherent enrichment
+        # is not, so this is what separates "one loud element plus noise" from
+        # "the whole vector lifted and only the loudest cleared z_flag".
+        bg_excess = finite & (a >= cfg.z_quiet) & (a < cfg.z_flag)
+        n_active_same_sign = int(
+            (bg_excess & (np.sign(Zv[k]) == np.sign(signed_max))).sum()
+        )
 
         # Two background statistics, for two different jobs.
         #
@@ -218,6 +305,7 @@ def sparse_statistics(
             n_elements=m,
             n_discrepant=n_disc,
             n_active=n_active,
+            n_active_same_sign=n_active_same_sign,
             contrast=contrast,
             family_mean_z=fam_mean_z,
             cfg=cfg,
@@ -234,6 +322,7 @@ def sparse_statistics(
                 "element_second": el_second,
                 "n_discrepant": n_disc,
                 "n_active": n_active,
+                "n_active_same_sign": n_active_same_sign,
                 "n_quiet": m - n_active,
                 "z_rest_rms": z_rest_rms,
                 "z_background_rms": z_background_rms,
@@ -264,6 +353,7 @@ def _empty_row(cfg: SparseConfig) -> dict:
         "element_second": None,
         "n_discrepant": 0,
         "n_active": 0,
+        "n_active_same_sign": 0,
         "n_quiet": 0,
         "z_rest_rms": float("nan"),
         "z_background_rms": float("nan"),
@@ -283,6 +373,7 @@ def classify(
     n_active: int,
     contrast: float,
     family_mean_z: float,
+    n_active_same_sign: int = 0,
     cfg: SparseConfig | None = None,
 ) -> tuple[str, str]:
     """Apply the sparse/dense rules in order, returning ``(label, reason)``.
@@ -302,10 +393,19 @@ def classify(
         return DENSE, f"{n_discrepant} elements discrepant: a family/global event, not sparse"
     if n_discrepant > cfg.max_discrepant:
         return DENSE, f"{n_discrepant} elements discrepant (> {cfg.max_discrepant})"
-    if n_active > n_discrepant + cfg.max_quiet_excess:
+    allowance = quiet_excess_allowance(n_elements, n_discrepant, cfg)
+    if n_active > n_discrepant + allowance:
         return DENSE, (
-            f"{n_active - n_discrepant} background elements above |z| = {cfg.z_quiet}: "
-            "the rest of the abundance vector is not quiet"
+            f"{n_active - n_discrepant} background elements above |z| = {cfg.z_quiet} "
+            f"(chance allowance {allowance} on {n_elements - n_discrepant} background "
+            "elements): the rest of the abundance vector is not quiet"
+        )
+    coherent = coherent_excess_allowance(n_elements, n_discrepant, cfg)
+    if n_active_same_sign > coherent:
+        return DENSE, (
+            f"{n_active_same_sign} background elements above |z| = {cfg.z_quiet} share "
+            f"the sign of the flagged element (chance allowance {coherent}): a coherent "
+            "enrichment, not a sparse excursion with noisy neighbours"
         )
     if np.isfinite(family_mean_z) and family_mean_z >= cfg.family_max_mean_z:
         return DENSE, (

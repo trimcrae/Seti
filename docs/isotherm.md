@@ -10,7 +10,11 @@
 ## 1. Why this is necessary, not merely novel
 
 The natural warm-debris-disk temperature locus sits at **~190 K** (Morales et
-al. 2011, ApJL 730, L29: characteristic dust ~190 K inner, ~60 K outer) —
+al. 2011, *"Common Warm Dust Temperatures Around Main-Sequence Stars"*, ApJL
+730, L29: "nearly the same characteristic dust temperatures (∼190 K and ∼60 K
+for the inner and outer dust components, respectively)", from Spitzer IRS/MIPS
+across B8–A7 and F5–K0 hosts — **cite by journal reference; this paper has no
+locatable arXiv preprint, so any eprint number attached to it is fabricated**) —
 **directly on top of the Dyson-sphere temperature range every waste-heat search
 targets.** Any positive-excess search at 130–250 K is competing against an
 astrophysical population that looks identical in two broadband colours.
@@ -98,9 +102,14 @@ ideal opaque nested shell shows only its outermost layer and is
 observationally a single cold blackbody. Multiple components are visible only
 if each stage leaks.
 
-**Curtis et al. 2026** (PASP 138, 046001; arXiv:2604.21886, the Dyson Minds
-workshop) explicitly recommends applying anomaly detection to archival
-WISE/JWST/EHT data — a published invitation with no published response.
+**Curtis et al. 2026** (arXiv:2604.21886, *"The Dyson Minds 2025 Workshop: SETI
+around Black Holes"*, PASP 138, 046001, doi 10.1088/1538-3873/ae5a02) explicitly
+recommends "apply[ing] anomaly-detection methods to archival datasets,
+including those from WISE, JWST, and the Event Horizon Telescope, to identify
+unusual sources potentially overlooked by standard reduction pipelines" — a
+published invitation with no published response. **Its subject is Dyson Minds
+around supermassive black holes, not around stars**, so it is cited here for the
+archival-anomaly recommendation only, not as stellar-technosignature motivation.
 
 **Carrigan 2009 is this channel's methodological ancestor**, and his failure
 mode is fixable. He reached a colder floor (100 K) than any WISE search because
@@ -142,8 +151,12 @@ non-negative.
 
 **Discrete-N versus continuous-gradient — not "does a single blackbody fit
 well".** Debris-disk practice already quotes a single `T_dust` for hundreds of
-disks, and **two-temperature disks (warm belt + cold belt) are common and
-natural** (Kennedy & Wyatt 2014). Neither a good single-blackbody fit nor a
+disks, and **two-temperature disks (warm belt + cold belt) are a well-populated
+and entirely natural class** (Kennedy & Wyatt 2014, *"Do two-temperature debris
+discs have multiple belts?"*, arXiv:1408.4116, MNRAS 444, 3164 — which compiles
+such a sample and finds the warm/cool temperature ratio clustered at 2–4. Note
+the title is a question: commonness is a property of the sample it assembles,
+not the paper's headline result). Neither a good single-blackbody fit nor a
 two-component decomposition is anomalous. What has no natural counterpart is:
 
 1. a temperature width narrower than any physical radial extent allows, **at
@@ -235,12 +248,60 @@ Inherited rules plus channel-specific ones:
 
 ## 6. Corpus
 
-**Primary: CASSIS**, the Cornell Atlas of Spitzer/IRS Sources — ~13,000 public
-low-resolution 5–38 µm spectra, never used for a technosignature search.
-Access routes are probed independently and the run reports which worked:
-CASSIS direct HTTP; IRSA TAP Spitzer/IRS Enhanced Products (table names are
-*discovered* from `TAP_SCHEMA`, not hard-coded); VizieR (the CASSIS catalogue,
-and the IRAS LRS Calgary atlas that was Carrigan's corpus).
+**Intended primary: CASSIS**, the Cornell Atlas of Spitzer/IRS Sources —
+~13,000 public low-resolution 5–38 µm spectra, never used for a technosignature
+search. Access routes are probed independently and the run reports which
+worked: CASSIS direct HTTP; IRSA TAP Spitzer/IRS Enhanced Products (table names
+are *discovered* from `TAP_SCHEMA`, not hard-coded); VizieR (the CASSIS
+catalogue, and the IRAS LRS Calgary atlas that was Carrigan's corpus).
+
+### CASSIS is NOT reachable from the runner — measured, not assumed
+
+Probe run **30208087571** (2026-07-26, 11:24 EDT) settled this. Stated plainly,
+because the channel brief forbids confusing an unreachable archive with an
+empty one:
+
+| Route | Result |
+|---|---|
+| `cassis.sirtf.com/atlas/` (home, `radec.py`, `ascii.py`) | **HTTP 402**, 4383 bytes of `<title>Making sure you're not a bot!</title>` with a `/.within.website/x/xess/` stylesheet — i.e. **Anubis**, a proof-of-work anti-scraper gate. All three endpoints, identically. |
+| `cassis.astro.cornell.edu/atlas/` | `SSLCertVerificationError` — **hostname mismatch**; the certificate is not valid for that name. |
+| VizieR `J/ApJS/196/8` (the CASSIS catalogue) | not present — `reachable: false, table: null`. |
+
+So CASSIS is *up but gated*, not down. It cannot be reached non-interactively,
+and no amount of retrying changes that. `cassis_reachable: false` is a
+first-class field in `archive_probe.json`.
+
+### What the corpus actually is
+
+The probe's verdict was **`SPECTRAL_ARCHIVE_REACHED`**, not `NO_DATA_REACHED`,
+because the fallback is *also spectra* rather than the photometric backstop:
+
+* **IRSA TAP — reachable**, 154 Spitzer/IRS-matching tables, including
+  **`irs_enhv211`, the Spitzer/IRS Enhanced Products v2.1.1 atlas**. This is the
+  natural CASSIS stand-in: the same low-resolution IRS spectra, pipeline-reduced,
+  served over a working TAP endpoint. It is the corpus this channel now runs on.
+* **VizieR TAP — reachable**, and **`III/197/lrs`**, the IRAS LRS Calgary atlas
+  (**Carrigan 2009's actual corpus**), resolves with its full column set. This
+  gives a direct, like-for-like comparison against the methodological ancestor.
+* **Gaia TAP — reachable**, which the mandatory parallax anchoring requires.
+
+**Table selection is ranked, not first-past-the-post** (`rank_irs_tables`). The
+discovery query matches on `irs`/`spitzer`/`cassis`, which also catches IRSA's
+own TAP bookkeeping tables (`irsa_groups`, `irsa_directory`,
+`irsa_serv_descriptors`), the unrelated **IRTS** near-IR spectrometer catalogue
+(`irts_nirspsc`), and ~90 image mosaics. Every one of them answers a `SELECT`
+successfully, so taking the first responder silently adopted a bookkeeping table
+as "the Spitzer/IRS corpus" — a wrong-corpus failure that is indistinguishable
+from a successful run. Non-spectral tables are now dropped outright and the
+known low-resolution products ranked explicitly.
+
+**What this costs.** The novelty claim in §2 was "CASSIS as the input corpus has
+no precedent anywhere". That is unchanged in substance — the IRS Enhanced
+Products are the same Spitzer/IRS spectra and have equally never been used for a
+technosignature search — but the claim must be **written as IRS Enhanced
+Products, not CASSIS**, and the source-count is the Enhanced Products' coverage,
+not CASSIS's ~13,000. Do not quote a CASSIS sample size for a run that never
+touched CASSIS.
 
 **Backstop:** Gaia + 2MASS + WISE + AKARI IRC/FIS + IRAS SED assembly at
 catalogue scale. Far-IR bands are what give the photometric path any β leverage

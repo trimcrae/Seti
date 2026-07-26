@@ -323,6 +323,28 @@ def _cmd_tailings(args, cfg):
                  max_rows=args.max_rows)
 
 
+def _cmd_tailings_validate(args, cfg):
+    """Offline injection-recovery against the channel's published validation target."""
+    from .tailings.validate import validate_griffith
+
+    report = validate_griffith(seed=args.seed, n_field=args.n_field,
+                               run_vet=not args.no_vet)
+    out_dir = cfg.root / "results" / "tailings"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / "validation.json"
+    path.write_text(json.dumps(report, indent=2, default=str))
+    print(f"[tailings-validate] wrote {path}")
+    print("[tailings-validate] " + report["verdict"])
+    rec = report["recovery"]
+    print(f"[tailings-validate] recovered {rec['n_recovered']}/{rec['n_injected']}; "
+          f"misses: {json.dumps(rec['miss_breakdown'])}")
+    for alt in report.get("alternative_thresholds", []):
+        print(f"[tailings-validate] z_flag={alt['z_flag']} "
+              f"max_quiet_excess={alt['max_quiet_excess']}: "
+              f"{alt['n_recovered']}/{alt['n_injected']} recovered, "
+              f"{alt['n_false_positive']} false positives")
+
+
 def _cmd_isotherm(args, cfg):
     from .isotherm.run import isotherm_run
 
@@ -979,6 +1001,20 @@ def main(argv=None):
                    help="per-survey row cap for the catalogue pull")
     p.set_defaults(func=_cmd_tailings)
 
+    p = sub.add_parser("tailings-validate",
+                       help="offline: inject Griffith et al. 2021's 15 Na-enhanced "
+                            "stars (0.3-0.6 dex Na, normal O-through-Ni; "
+                            "arXiv:2110.06240) into a GALAH-DR3-like population and "
+                            "measure what the sparse statistic recovers. No network. "
+                            "Writes results/tailings/validation.json")
+    p.add_argument("--seed", type=int, default=20260726,
+                   help="RNG seed for the synthetic population and the injection")
+    p.add_argument("--n-field", type=int, default=6000,
+                   help="number of un-injected field stars to synthesise")
+    p.add_argument("--no-vet", action="store_true",
+                   help="skip the catalogue-level contamination funnel")
+    p.set_defaults(func=_cmd_tailings_validate)
+
     p = sub.add_parser("rust-sweep",
                        help="runner: RUST stage 1 — one sky field's worth of "
                             "paired ZTF g+r light curves scored for a SECULAR "
@@ -1212,8 +1248,17 @@ def main(argv=None):
                        help="runner: thin-film / high area-to-mass debris via the "
                             "radial non-gravitational acceleration JPL already "
                             "fits (A1 -> beta -> area-to-mass -> R statistic)")
-    p.add_argument("--stage", default="all", choices=["all", "probe"],
-                   help="'probe' only discovers the SBDB schema and exits")
+    p.add_argument("--stage", default="all",
+                   choices=["all", "probe", "search", "completeness",
+                            "dark_comets", "high_albedo"],
+                   help="'probe' discovers the SBDB schema only; 'completeness' "
+                        "proves the A1|DF constraint returned the whole A1 "
+                        "population by pulling the catalogue unconstrained; "
+                        "'dark_comets' runs the Seligman named-target census; "
+                        "'high_albedo' runs the catalogue-wide p_V > 0.7 screen "
+                        "independently of A1; 'search' is the funnel plus the "
+                        "light census stages but WITHOUT the ~1.4M-row "
+                        "completeness pull")
     p.add_argument("--limit", type=int, default=None,
                    help="cap rows per SBDB query (debugging)")
     p.add_argument("--offline-input", default=None,

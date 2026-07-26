@@ -1070,3 +1070,431 @@ def test_report_surfaces_the_evidence_a_reader_needs(tmp_path):
     assert "Ba II lines" in txt
     assert "cross-survey: not_covered" in txt
     assert "information-starved" in txt          # the Huang caveat is carried
+
+
+# ---------------------------------------------------------------------------
+# The acquisition route: bulk survey files primary, VizieR TAP fallback.
+#
+# Three dispatches (30203627605, 30204487245, 30204793446) completed with
+# workflow-level success and zero rows at every stage. The analysis was fine;
+# acquisition never returned anything. Two things had to change and both are
+# pinned here: the *route* (survey-native FITS, which is also the only place
+# the fibre/RV columns correction #5 needs actually exist), and the *verdict*
+# vocabulary, because "NO_DATA_REACHED" was being emitted for a dead URL, a
+# broken query and an empty selection alike -- three different problems with
+# three different fixes wearing one label.
+# ---------------------------------------------------------------------------
+def _fake_route_probe(status=200, length=500_000_000):
+    """A stand-in for the HEAD/ranged-GET prober; no socket is ever opened."""
+    def probe(url):
+        return {"status": status, "content_length": length,
+                "content_type": "application/fits", "probe_method": "HEAD"}
+    return probe
+
+
+def _survey_frame(n=4, teff=5000.0, covariates=True):
+    """A minimal survey-native table: cool dwarfs, two elements, instrument columns."""
+    cols = {
+        "sobject_id": [f"1712{i:04d}" for i in range(n)],
+        "teff": np.full(n, float(teff)),
+        "logg": np.full(n, 4.4),
+        "fe_h": np.zeros(n),
+        "snr_c3_iraf": np.full(n, 90.0),
+        "Mg_fe": np.zeros(n), "e_Mg_fe": np.full(n, 0.02),
+        "Ni_fe": np.zeros(n), "e_Ni_fe": np.full(n, 0.02),
+    }
+    if covariates:
+        cols["rv_galah"] = np.full(n, 12.0)
+        cols["pivot"] = np.arange(n, dtype=float) + 1.0
+    return pd.DataFrame(cols)
+
+
+def test_bulk_file_route_is_primary_and_vizier_is_only_the_fallback():
+    """The decisive change: the survey's own file is tried first, TAP second."""
+    tap_calls = {"n": 0}
+
+    def query(adql):
+        tap_calls["n"] += 1
+        return pd.DataFrame()
+
+    acq = A.fetch_survey("GALAH", max_rows=10, n_chunks=1,
+                         route_probe_fn=_fake_route_probe(),
+                         read_fn=lambda url, sel: _survey_frame(),
+                         probe_fn=lambda t: None, query_fn=query)
+    assert acq.route == "file"
+    assert acq.verdict == A.VERDICT_OK
+    assert acq.n_rows == 4
+    assert set(acq.elements) == {"Mg", "Ni"}
+    assert tap_calls["n"] == 0, "VizieR must not be touched when the file route works"
+    # and the instrumental covariates correction #5 needs actually arrived
+    assert "rv" in acq.param_columns and "fiber" in acq.param_columns
+
+
+def test_a_download_that_dies_is_query_failed_not_no_data_reached():
+    """A dead download and an unreachable archive are different problems."""
+    def boom(url, sel):
+        raise RuntimeError("connection reset after 300 MB")
+
+    acq = A.fetch_survey_file("GALAH", route_probe_fn=_fake_route_probe(), read_fn=boom)
+    assert acq.verdict == A.VERDICT_QUERY_FAILED
+    assert acq.verdict != A.VERDICT_NO_DATA
+    assert acq.n_rows == 0 and acq.degraded
+    assert "connection reset" in acq.degradation
+    assert acq.degradation.startswith("QUERY_FAILED")
+
+
+def test_a_clean_download_with_no_surviving_rows_is_zero_rows_not_failure():
+    """The file parsed perfectly and the *cuts* emptied it. Say which."""
+    empty = _survey_frame(0)
+    acq = A.fetch_survey_file("GALAH", route_probe_fn=_fake_route_probe(),
+                              read_fn=lambda u, s: empty)
+    assert acq.verdict == A.VERDICT_ZERO_ROWS
+    assert acq.verdict not in (A.VERDICT_NO_DATA, A.VERDICT_QUERY_FAILED)
+    assert acq.degradation.startswith("QUERY_RETURNED_ZERO_ROWS")
+    assert "about the cuts, not" in acq.degradation
+
+
+def test_the_cool_dwarf_cut_is_what_empties_a_hot_star_file():
+    """The same verdict, reached through the selection rather than an empty file."""
+    hot = _survey_frame(6, teff=7200.0)
+    acq = A.fetch_survey_file("GALAH", selection=A.Selection(max_rows=10),
+                              route_probe_fn=_fake_route_probe(),
+                              read_fn=lambda u, s: hot)
+    assert acq.verdict == A.VERDICT_ZERO_ROWS
+    assert acq.stage_counts["rows_in_file"] == 6
+    assert acq.stage_counts["rows_after_selection"] == 0
+
+
+def test_every_candidate_url_is_probed_and_its_status_recorded():
+    """The sandbox cannot check a URL, so the runner checks all of them and reports."""
+    acq = A.fetch_survey_file("APOGEE",
+                              route_probe_fn=_fake_route_probe(status=404, length=None))
+    assert acq.verdict == A.VERDICT_NO_DATA
+    urls = [r["url"] for r in acq.download_routes]
+    assert len(urls) == len(A.FILE_ROUTES["APOGEE"])
+    assert any("data.sdss.org/sas/dr17/apogee" in u for u in urls)
+    assert all(r["status"] == 404 and not r["eligible"] for r in acq.download_routes)
+    assert acq.stage_counts["routes_probed"] == len(A.FILE_ROUTES["APOGEE"])
+    assert acq.stage_counts["routes_eligible"] == 0
+    # the point of the report: the next dispatch is told exactly what to fix
+    assert "provenance.json" in acq.degradation
+
+
+def test_a_200_too_small_to_be_a_catalogue_is_not_selected():
+    """A 4 kB reply to a catalogue request is an error page, not a catalogue."""
+    report = A.probe_download_routes(
+        A.FILE_ROUTES["GALAH"], probe_fn=lambda u: {"status": 200, "content_length": 4096})
+    assert not any(r["eligible"] for r in report)
+    assert all("too small" in r["why"] for r in report if r["expects_abundances"])
+
+
+def test_a_value_added_file_is_probed_to_prove_the_host_but_never_used():
+    report = A.probe_download_routes(A.FILE_ROUTES["GALAH"], probe_fn=_fake_route_probe())
+    vac = [r for r in report if not r["expects_abundances"]]
+    assert vac, "VAC routes are registered so a 200 proves the host and path prefix are live"
+    assert all(not r["eligible"] and not r["selected"] for r in vac)
+    assert sum(1 for r in report if r["selected"]) == 1, "exactly one route is selected"
+    assert report[0]["selected"], "and it is the first eligible one, in the stated order"
+
+
+def test_dead_urls_fall_back_to_vizier_and_the_report_names_both_routes():
+    head = pd.DataFrame({"sobject_id": [1], "Teff": [5000.0], "logg": [4.4],
+                         "fe_h": [0.0], "snr": [100.0], "Mg_fe": [0.0],
+                         "e_Mg_fe": [0.02], "Ni_fe": [0.0], "e_Ni_fe": [0.02]})
+    rows = pd.concat([head, head], ignore_index=True)
+
+    acq = A.fetch_survey("GALAH", max_rows=8, n_chunks=1, discover=False, use_files=True,
+                         route_probe_fn=_fake_route_probe(status=403, length=None),
+                         probe_fn=lambda t: head, query_fn=lambda q: rows)
+    assert acq.route == "tap" and acq.n_rows == 2
+    assert acq.verdict == A.VERDICT_OK
+    assert "bulk-file route" in acq.degradation
+    assert acq.download_routes and all(r["status"] == 403 for r in acq.download_routes)
+
+
+def test_tap_chunks_that_all_raise_are_query_failed():
+    head = pd.DataFrame({"sobject_id": [1], "Teff": [5000.0], "logg": [4.4],
+                         "fe_h": [0.0], "snr": [100.0], "Mg_fe": [0.0],
+                         "e_Mg_fe": [0.02], "Ni_fe": [0.0], "e_Ni_fe": [0.02]})
+
+    def query(adql):
+        raise RuntimeError("HTTP 503 from the TAP service")
+
+    acq = A.fetch_survey("GALAH", n_chunks=3, discover=False,
+                         probe_fn=lambda t: head, query_fn=query)
+    assert acq.verdict == A.VERDICT_QUERY_FAILED
+    assert acq.n_rows == 0
+    assert acq.stage_counts["chunks_failed"] == 3
+    assert "not an empty sky" in acq.degradation
+
+
+def test_tap_chunks_that_answer_with_nothing_are_zero_rows():
+    head = pd.DataFrame({"sobject_id": [1], "Teff": [5000.0], "logg": [4.4],
+                         "fe_h": [0.0], "snr": [100.0], "Mg_fe": [0.0],
+                         "e_Mg_fe": [0.02], "Ni_fe": [0.0], "e_Ni_fe": [0.02]})
+
+    acq = A.fetch_survey("GALAH", n_chunks=3, discover=False,
+                         probe_fn=lambda t: head, query_fn=lambda q: pd.DataFrame())
+    assert acq.verdict == A.VERDICT_ZERO_ROWS
+    assert acq.stage_counts["chunks_failed"] == 0
+    assert acq.stage_counts["rows_returned"] == 0
+    assert "about the cuts, not" in acq.degradation
+
+
+def test_a_table_without_fibre_or_rv_says_the_covariate_veto_cannot_run():
+    """Correction #5 needs RV, fibre and detector position; absence is degradation."""
+    acq = A.fetch_survey_file("GALAH", route_probe_fn=_fake_route_probe(),
+                              read_fn=lambda u, s: _survey_frame(4, covariates=False))
+    assert acq.n_rows == 4
+    assert "veto on rv cannot run" in acq.degradation
+    assert "veto on fiber cannot run" in acq.degradation
+
+
+# ---------------------------------------------------------------------------
+# VizieR fallback: discovery has to look at COLUMNS, not descriptions
+# ---------------------------------------------------------------------------
+def test_discovery_by_abundance_columns_finds_what_the_description_search_misses():
+    """34 tables answered with a GALAH description and zero elements last time.
+
+    The description says what a catalogue is *about*; the column list says what
+    it *contains*, and only the second is the thing this channel needs.
+    """
+    schema = {
+        "III/999/stub": ["Teff", "logg", "__Fe_H_", "Nobs"],
+        "III/777/abund": ["sobject_id", "Teff", "logg", "__Fe_H_", "SNR", "RV", "Pivot",
+                          "__Mg_Fe_", "e__Mg_Fe_", "__Ni_Fe_", "e__Ni_Fe_", "__Ba_Fe_"],
+    }
+
+    def query(adql):
+        if "TAP_SCHEMA.tables" in adql:
+            # keyword search finds only the useless stub
+            return pd.DataFrame({"table_name": ['"III/999/stub"'],
+                                 "description": ["GALAH DR3 per-field summary"]})
+        if "TAP_SCHEMA.columns" in adql and "column_name LIKE" in adql:
+            return pd.DataFrame({"table_name": ['"III/777/abund"'] * 3,
+                                 "column_name": ["__Mg_Fe_", "__Ni_Fe_", "__Ba_Fe_"]})
+        if "TAP_SCHEMA.columns" in adql:
+            rows = [(t, c) for t, cs in schema.items() if t in adql for c in cs]
+            return pd.DataFrame({"table_name": [f'"{t}"' for t, _ in rows],
+                                 "column_name": [c for _, c in rows]})
+        assert "III/777/abund" in adql, "the pull must run against the abundance table"
+        return pd.DataFrame({c: [1.0] for c in schema["III/777/abund"]})
+
+    acq = A.fetch_survey("GALAH", max_rows=1, n_chunks=1, use_files=False,
+                         probe_fn=lambda t: None, query_fn=query)
+    assert acq.locator == "III/777/abund"
+    assert set(acq.elements) == {"Mg", "Ni", "Ba"}
+    # and the fibre/RV columns the covariate veto needs were carried through
+    assert "rv" in acq.param_columns and "fiber" in acq.param_columns
+    board = {r["table"]: r for r in acq.scoreboard}
+    assert board["III/999/stub"]["score"] == 0
+    assert "no [X/Fe] columns" in board["III/999/stub"]["why"]
+    assert board["III/777/abund"]["schema_from"] == "TAP_SCHEMA.columns"
+    assert board["III/777/abund"]["n_elements"] == 3
+
+
+def test_a_rejected_table_says_what_it_was_missing():
+    """'missing parameters or elements' was printed 34 times and taught nobody anything."""
+    why = A.schema_reason({"teff": "T", "logg": "g"}, {})
+    assert "fe_h" in why and "[X/Fe]" in why and why.startswith("rejected")
+    assert A.schema_reason({"teff": "T", "logg": "g", "fe_h": "f", "snr": "s",
+                            "star_id": "i", "rv": "v", "fiber": "p"}, {"Mg": {}}) == "usable"
+    assert "without snr" in A.schema_reason(
+        {"teff": "T", "logg": "g", "fe_h": "f"}, {"Mg": {}})
+
+
+def test_column_index_matches_quoted_and_unquoted_table_names():
+    """VizieR stores the name quoted in some places and bare in others."""
+    seen = []
+
+    def query(adql):
+        seen.append(adql)
+        return pd.DataFrame({"table_name": ['"III/283/allstar"'], "column_name": ["Teff"]})
+
+    idx = A.fetch_table_columns(["III/283/allstar"], query_fn=query)
+    assert idx == {"III/283/allstar": ["Teff"]}
+    assert "LIKE" in seen[0], "equality on the stored name silently misses half of them"
+
+
+# ---------------------------------------------------------------------------
+# The FITS reader: only the needed columns, only the needed rows
+# ---------------------------------------------------------------------------
+def test_the_fits_reader_takes_only_the_columns_and_rows_it_needs(tmp_path):
+    from astropy.io import fits
+
+    n = 400
+    rng = np.random.default_rng(11)
+    teff = rng.uniform(3500.0, 7500.0, n)
+    hdu = fits.BinTableHDU.from_columns([
+        fits.Column(name="APOGEE_ID", format="20A",
+                    array=np.array([f"2M{i:06d}" for i in range(n)])),
+        fits.Column(name="TEFF", format="E", array=teff.astype(np.float32)),
+        fits.Column(name="LOGG", format="E", array=np.full(n, 4.5, dtype=np.float32)),
+        fits.Column(name="FE_H", format="E", array=np.zeros(n, dtype=np.float32)),
+        fits.Column(name="SNR", format="E", array=np.full(n, 120.0, dtype=np.float32)),
+        fits.Column(name="VHELIO_AVG", format="E",
+                    array=rng.normal(0.0, 30.0, n).astype(np.float32)),
+        fits.Column(name="MEANFIB", format="E",
+                    array=rng.uniform(1.0, 300.0, n).astype(np.float32)),
+        fits.Column(name="VSCATTER", format="E", array=np.full(n, 0.1, dtype=np.float32)),
+        fits.Column(name="MG_FE", format="E", array=np.zeros(n, dtype=np.float32)),
+        fits.Column(name="MG_FE_ERR", format="E", array=np.full(n, 0.02, dtype=np.float32)),
+        fits.Column(name="MG_FE_FLAG", format="J", array=np.zeros(n, dtype=np.int32)),
+        # the APOGEE element panel is a 2-D column and must be skipped, not crashed on
+        fits.Column(name="X_H", format="20E", dim="(20)",
+                    array=rng.normal(0.0, 1.0, (n, 20)).astype(np.float32)),
+    ])
+    path = tmp_path / "allStar-dr17-synspec_rev1.fits"
+    hdu.writeto(path)
+
+    df = A.read_fits_table(path, selection=A.Selection(teff_min=3000.0, teff_max=6000.0,
+                                                      logg_min=4.0, snr_min=40.0,
+                                                      feh_min=-1.0))
+    assert "X_H" not in df.columns, "multi-dimensional columns are skipped, not exploded"
+    assert df.attrs["n_rows_file"] == n
+    assert 0 < len(df) < n, "the Teff cut must actually bite"
+    assert df["TEFF"].max() < 6000.0 and df["TEFF"].min() > 3000.0
+    # the instrumental covariates correction #5 requires, present in the survey
+    # file and generally absent from the abbreviated VizieR copy
+    for c in ("VHELIO_AVG", "MEANFIB", "VSCATTER", "MG_FE", "MG_FE_ERR", "MG_FE_FLAG"):
+        assert c in df.columns
+    params = A.resolve_param_columns(df.columns)
+    assert params["rv"] == "VHELIO_AVG" and params["fiber"] == "MEANFIB"
+    assert A.resolve_abundance_columns(df.columns)["Mg"]["flag"] == "MG_FE_FLAG"
+
+    # and with no selection the reader returns the whole file
+    full = A.read_fits_table(path, selection=None)
+    assert len(full) == n
+
+
+def test_a_file_without_an_snr_column_reports_the_cut_it_could_not_apply(tmp_path):
+    from astropy.io import fits
+
+    n = 50
+    hdu = fits.BinTableHDU.from_columns([
+        fits.Column(name="TEFF", format="E", array=np.full(n, 5000.0, dtype=np.float32)),
+        fits.Column(name="LOGG", format="E", array=np.full(n, 4.5, dtype=np.float32)),
+        fits.Column(name="FE_H", format="E", array=np.zeros(n, dtype=np.float32)),
+        fits.Column(name="MG_FE", format="E", array=np.zeros(n, dtype=np.float32)),
+    ])
+    path = tmp_path / "nosnr.fits"
+    hdu.writeto(path)
+    df = A.read_fits_table(path, selection=A.Selection())
+    assert len(df) == n
+    assert "snr" in df.attrs["cuts_not_applied"]
+
+    acq = A.fetch_survey_file("GALAH", route_probe_fn=_fake_route_probe(),
+                              read_fn=lambda u, s: A.read_fits_table(path, selection=s))
+    assert acq.n_rows == n
+    assert "so that cut was NOT applied" in acq.degradation
+
+
+# ---------------------------------------------------------------------------
+# Per-stage row counts and the verdict vocabulary must reach summary.json
+# ---------------------------------------------------------------------------
+def test_per_stage_row_counts_and_verdicts_reach_the_summary(tmp_path, monkeypatch):
+    """The brief's hard requirement: the summary says where the rows went."""
+    import json
+
+    from seti.tailings import acquire as AQ
+    from seti.tailings.run import tailings_run
+
+    stars = A.normalize(_survey_frame(12), survey="GALAH")
+
+    def fake_fetch(survey, **kw):
+        return AQ.Acquisition(
+            survey=survey, table=stars, source_used="GALAH_DR3_allstar_v2_cloud",
+            locator="https://cloud.datacentral.org.au/.../GALAH_DR3_main_allstar_v2.fits",
+            n_rows=len(stars), elements=["Mg", "Ni"], verdict=AQ.VERDICT_OK, route="file",
+            stage_counts={"routes_probed": 10, "routes_eligible": 8,
+                          "rows_in_file": 588571, "rows_after_selection": len(stars),
+                          "rows_normalised": len(stars), "n_elements": 2},
+            download_routes=[{"name": "GALAH_DR3_allstar_v2_cloud", "url": "https://x/f.fits",
+                              "status": 200, "content_length": 512_000_000,
+                              "eligible": True, "selected": True, "used": True}],
+        )
+
+    def fake_wb(**kw):
+        return AQ.Acquisition(
+            survey="WIDEBINARY", table=pd.DataFrame(), source_used="ELBADRY2021_zenodo_records",
+            locator=None, n_rows=0, elements=[], degraded=True,
+            verdict=AQ.VERDICT_ZERO_ROWS, route="file",
+            degradation="QUERY_RETURNED_ZERO_ROWS: no pair passed the purity cut",
+            stage_counts={"pairs_in_file": 1_256_400, "pairs_after_purity_cut": 0},
+        )
+
+    monkeypatch.setattr(AQ, "fetch_survey", fake_fetch)
+    monkeypatch.setattr(AQ, "fetch_wide_binaries", fake_wb)
+
+    real = load_config()
+    cfg = Config(root=tmp_path, thresholds=real.thresholds,
+                 catalogs=real.catalogs, paths=real.paths)
+    tailings_run(cfg, stage="all", surveys="GALAH")
+    summary = json.loads((tmp_path / "results" / "tailings" / "summary.json").read_text())
+
+    prov = summary["provenance"]["surveys"][0]
+    assert prov["verdict"] == "OK"
+    assert prov["route"] == "file"
+    counts = prov["stage_counts"]
+    for key in ("routes_probed", "routes_eligible", "rows_in_file",
+                "rows_after_selection", "rows_normalised"):
+        assert key in counts, f"{key} is a per-stage count and must reach summary.json"
+    assert counts["rows_in_file"] == 588571
+    assert counts["rows_after_selection"] == len(stars)
+    route = prov["download_routes"][0]
+    assert route["status"] == 200 and route["selected"] and route["used"]
+
+    wb = summary["provenance"]["wide_binaries"]
+    assert wb["verdict"] == "QUERY_RETURNED_ZERO_ROWS"
+    assert wb["verdict"] != "NO_DATA_REACHED", "an empty purity cut is not an unreachable archive"
+    assert wb["stage_counts"]["pairs_in_file"] == 1_256_400
+
+
+def test_the_three_failure_verdicts_are_distinct_strings():
+    """They are compared as strings across the funnel; collapsing any two hides a bug."""
+    assert len({A.VERDICT_NO_DATA, A.VERDICT_QUERY_FAILED,
+                A.VERDICT_ZERO_ROWS, A.VERDICT_OK}) == 4
+    assert A.Acquisition(survey="X", table=pd.DataFrame(), source_used=None, locator=None,
+                         n_rows=0, elements=[]).provenance()["verdict"] == A.VERDICT_OK
+
+
+# ---------------------------------------------------------------------------
+# Wide binaries by file, with the same verdict vocabulary
+# ---------------------------------------------------------------------------
+def test_wide_binaries_come_from_the_published_file_first():
+    pairs = pd.DataFrame({"source_id1": [1, 3, 5], "source_id2": [2, 4, 6],
+                          "R_chance_align": [0.01, 0.02, 0.9]})
+    acq = A.fetch_wide_binaries(route_probe_fn=_fake_route_probe(length=200_000_000),
+                                read_fn=lambda u, s: pairs)
+    assert acq.route == "file" and acq.verdict == A.VERDICT_OK
+    assert acq.n_rows == 2, "the R_chance_align < 0.1 purity cut must be applied"
+    assert set(acq.table.columns) >= {"source_id_a", "source_id_b", "r_chance_align"}
+    assert acq.stage_counts["pairs_in_file"] == 3
+
+
+def test_wide_binary_purity_cut_emptying_the_table_is_zero_rows():
+    pairs = pd.DataFrame({"source_id1": [1], "source_id2": [2], "R_chance_align": [0.95]})
+    acq = A.fetch_wide_binaries_file(route_probe_fn=_fake_route_probe(length=200_000_000),
+                                     read_fn=lambda u, s: pairs)
+    assert acq.verdict == A.VERDICT_ZERO_ROWS
+    assert acq.stage_counts["pairs_after_purity_cut"] == 0
+
+
+def test_an_xh_only_catalogue_is_rejected_but_diagnosed():
+    """[X/H] must never be read as [X/Fe] -- it would double-subtract the metallicity.
+
+    But the rejection has to name the reason, because a schema-convention
+    mismatch has a one-line fix and a dead archive does not.
+    """
+    xh = pd.DataFrame({"sobject_id": ["1"], "teff": [5000.0], "logg": [4.4],
+                       "fe_h": [0.0], "snr": [90.0],
+                       "Mg_h": [0.1], "Ni_h": [0.05], "Ba_h": [0.0]})
+    assert A.resolve_abundance_columns(xh.columns) == {}
+    assert set(A.resolve_xh_columns(xh.columns)) == {"Mg", "Ni", "Ba"}
+
+    acq = A.fetch_survey_file("GALAH", route_probe_fn=_fake_route_probe(),
+                              read_fn=lambda u, s: xh)
+    assert acq.n_rows == 0
+    assert acq.verdict == A.VERDICT_QUERY_FAILED
+    assert "[X/H] columns" in acq.degradation
+    assert "schema-convention mismatch" in acq.degradation

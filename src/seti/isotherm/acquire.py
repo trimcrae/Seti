@@ -225,6 +225,64 @@ def fetch_cassis_spectrum(aorkey: int, ext: int = 0,
     return _retry(_go, retries=3, label=f"cassis aorkey {aorkey}")
 
 
+# Discovery matches on the substrings 'irs', 'spitzer' and 'cassis', which is
+# deliberately wide -- but 'irs' also matches IRSA's own TAP bookkeeping tables
+# (irsa_groups, irsa_directory, irsa_serv_descriptors ...) and the unrelated
+# IRTS near-IR spectrometer catalogue, and 'spitzer' matches ~90 IMAGE mosaics.
+# Every one of those answers a SELECT perfectly happily.  Taking the first table
+# that responds therefore silently adopts `irts_nirspsc` or `irsa_groups` as
+# "the Spitzer/IRS corpus" -- a wrong-corpus failure that looks exactly like a
+# successful run.  Rank instead of first-past-the-post.
+
+# Known-good low-resolution IRS spectral products, best first.  `irs_enhv211` is
+# the IRS Enhanced Products (v2.1.1) atlas -- the natural stand-in for CASSIS,
+# and confirmed present on IRSA TAP by the run-1 probe.
+_IRS_PREFERRED: tuple[str, ...] = (
+    "irs_enhv211", "spitzer.irs_std_spectra", "spitzer.ssgss_irs_lores",
+    "spitzer.sings_irs_spec", "spitzer.c2d_irs_spec", "spitzer.goals_irs_spec",
+    "spitzer.s5_lores", "spitzer.feps_spectra_v5", "spitzer.sgoods_irs_spitzer",
+    "spitzer.fivemuses_spectra", "cosmos.cosmos_irs",
+)
+
+# Substrings that mark a table as definitely NOT a spectral source catalogue.
+_IRS_EXCLUDE: tuple[str, ...] = (
+    "tap_schema", "irsa_group", "irsa_serv", "irsa_annotator", "irsa_directory",
+    "_images", "_image", "_mosaic", "_epoch", "_tiles", "_mos", "irts",
+    "_ancillary", "_cubes", "glimpse", "_halpha", "_galex", "_sdss", "_vla",
+    "_gbt_hi", "_kpno", "_details", "_science", "_atlas",
+)
+
+
+def rank_irs_tables(names) -> list[str]:
+    """Order candidate IRSA tables by how likely they are to BE IRS spectra.
+
+    Returns only plausible tables; the obvious non-spectral ones are dropped
+    entirely rather than demoted, because a table that responds is otherwise
+    indistinguishable from the right table.
+    """
+    def score(name: str) -> int:
+        n = str(name).strip().lower()
+        if any(bad in n for bad in _IRS_EXCLUDE):
+            return -1
+        if n in _IRS_PREFERRED:
+            return 1000 - _IRS_PREFERRED.index(n)
+        s = 0
+        if "irs" in n:
+            s += 20
+        if "spec" in n or "spectra" in n:
+            s += 30
+        if "lores" in n or "lowres" in n or "enh" in n:
+            s += 25
+        if "cassis" in n:
+            s += 50
+        if "hires" in n:            # high-res misses the 5-38 um continuum shape
+            s -= 15
+        return s
+
+    scored = [(score(n), str(n)) for n in names]
+    return [n for s, n in sorted(scored, key=lambda x: (-x[0], x[1])) if s > 0]
+
+
 def fetch_irs_catalog(out_path: Path, table: str | None = None,
                       max_rows: int = 40000) -> pd.DataFrame:
     """Positional catalogue of Spitzer/IRS spectra from IRSA TAP (checkpointed)."""
@@ -236,7 +294,12 @@ def fetch_irs_catalog(out_path: Path, table: str | None = None,
     import pyvo
 
     tap = pyvo.dal.TAPService(_IRSA_TAP)
-    tables = [table] if table else discover_irs_tables().get("tables", [])
+    if table:
+        tables = [table]
+    else:
+        tables = rank_irs_tables(discover_irs_tables().get("tables", []))
+        print(f"[isotherm] {len(tables)} plausible IRS tables, best first: "
+              f"{tables[:6]}")
     last = None
     for t in tables:
         try:
@@ -373,5 +436,5 @@ __all__ = [
     "PHOTOMETRIC_BANDS", "WISE_BAND_WIEN_K", "discover_irs_tables",
     "fetch_cassis_spectrum", "fetch_irs_catalog", "fetch_vizier_table",
     "gaia_anchor", "parse_cassis_ascii", "photometry_to_spectrum",
-    "probe_archives",
+    "probe_archives", "rank_irs_tables",
 ]

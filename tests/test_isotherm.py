@@ -29,6 +29,7 @@ from seti.isotherm.sed_model import (
     fit_discrete,
     fit_gradient,
     gradient_sed,
+    ladder_degeneracy_report,
     mbb,
     planck_nu,
     select_n_components,
@@ -229,6 +230,138 @@ def test_component_count_must_earn_its_bic():
     best, ladder = select_n_components(IRS_LAM, f, e, n_max=4)
     assert best.n_components == 1
     assert len(ladder) == 4
+
+
+# --- regression: a short fit must never be silent ---------------------------
+#
+# The bug: ``_package_discrete`` drops any component whose NNLS amplitude came
+# back exactly zero, so ``fit_discrete(..., n_components=N)`` could return M < N
+# components with ``message == ""`` and ``success is True`` -- indistinguishable
+# from a clean M-component fit.  Two consequences, both fatal to S6:
+#
+#   1. The component-count statistic the whole "discrete Matrioshka steps" test
+#      rests on was silently wrong about what had been tried.
+#   2. The greedy seed chain fed the short temperature list into the next rung,
+#      building a parameter vector shorter than ``n_components``.  ``obj`` then
+#      read ``theta[n_components]`` as beta -- off the end of the array, or
+#      worse, silently picking up a *temperature* (a log10 T of ~2.4) as the
+#      emissivity index.
+#
+# The contract is now: the returned count equals the request, OR the shortfall
+# is reported explicitly via ``components_dropped`` / the message.
+
+def test_discrete_fit_reports_its_component_shortfall():
+    """A requested N-component fit returns N, or says how many it dropped."""
+    f, e = _noisy(mbb(IRS_LAM, 250.0, 0.0), 120, 7)
+    for n in (1, 2, 3, 4):
+        fit = fit_discrete(IRS_LAM, f, e, n, beta=0.0)
+        assert fit.n_requested == n
+        if not fit.success:
+            continue
+        # Either the request was met exactly ...
+        if fit.n_components == n:
+            assert fit.components_dropped == 0
+            assert not fit.is_degenerate
+            assert "degenerate_components" not in fit.message
+        # ... or the shortfall is explicit, never silent.
+        else:
+            assert fit.n_components < n
+            assert fit.is_degenerate
+            assert fit.components_dropped == n - fit.n_components
+            assert f"degenerate_components:{fit.n_components}_of_{n}" in fit.message
+        # The invariant that actually protects S6.
+        assert fit.n_components + fit.components_dropped == n
+
+
+def test_single_blackbody_forces_a_reported_dropout():
+    """The bug's concrete case: a pure Planck cannot support 4 components."""
+    f, e = _noisy(mbb(IRS_LAM, 250.0, 0.0), 120, 7)
+    fit = fit_discrete(IRS_LAM, f, e, 4, beta=0.0)
+    assert fit.is_degenerate, "a 1-temperature source must not sustain 4 components"
+    assert fit.components_dropped >= 1
+    assert "degenerate_components" in fit.message
+    d = fit.to_dict()
+    assert d["n_requested"] == 4
+    assert d["components_dropped"] == fit.components_dropped
+    assert d["is_degenerate"] is True
+
+
+def test_beta_is_never_read_off_a_temperature_slot():
+    """The seed chain must not alias a log10(T) into the emissivity index.
+
+    Pre-fix, a short seed made ``theta[n_components]`` land on a temperature, so
+    a genuine beta=0 Planck source reported beta ~ 2.4 (i.e. log10 of a few
+    hundred K) at the rungs whose seed had collapsed.
+    """
+    f, e = _noisy(mbb(IRS_LAM, 300.0, 0.0), 150, 3)
+    for n in (1, 2, 3, 4):
+        fit = fit_discrete(IRS_LAM, f, e, n, beta=None)   # beta FREE
+        if not fit.success:
+            continue
+        assert np.isfinite(fit.beta)
+        # beta is bounded to [-1, 4] by construction; a log10(T) alias for any
+        # temperature above 100 K lands at >= 2 and is what this guards.
+        assert -1.0 <= fit.beta <= 4.0
+        assert fit.n_components + fit.components_dropped == fit.n_requested
+
+
+def test_genuine_cascade_still_delivers_every_requested_component():
+    """The dropout guard must not cost a real 3-shell cascade its third shell."""
+    model = sum(
+        a * mbb(IRS_LAM, t, 0.0) / mbb(IRS_LAM, t, 0.0).max()
+        for t, a in ((900.0, 1.0), (360.0, 1.2), (144.0, 1.5))
+    )
+    f, e = _noisy(model, 340, 11)
+    fit = fit_discrete(IRS_LAM, f, e, 3, beta=0.0)
+    assert fit.success and fit.n_components == 3 and fit.components_dropped == 0
+    best, ladder = select_n_components(IRS_LAM, f, e, n_max=4, beta=0.0)
+    assert best.n_components == 3
+    rep = ladder_degeneracy_report(ladder)
+    assert rep["max_clean_n"] >= 3
+    assert [r["requested"] for r in rep["rungs"]] == [1, 2, 3, 4]
+
+
+def test_ladder_degeneracy_report_distinguishes_absent_from_collapsed():
+    """"No 3-component fit" must be distinguishable from "3 collapsed to 2"."""
+    f, e = _noisy(mbb(IRS_LAM, 250.0, 0.0), 120, 7)
+    _, ladder = select_n_components(IRS_LAM, f, e, n_max=4, beta=0.0)
+    rep = ladder_degeneracy_report(ladder)
+    assert rep["n_degenerate"] >= 1, "a 1-temperature source must collapse a rung"
+    assert rep["max_clean_n"] < 4
+    collapsed = [r for r in rep["rungs"] if r["dropped"] > 0]
+    assert collapsed and all("degenerate_components" in r["message"] for r in collapsed)
+
+
+def test_irs_table_ranking_rejects_the_metadata_tables():
+    """The corpus must not silently become an IRSA bookkeeping table.
+
+    Real table list from the run-1 probe (run 30208087571): discovery matches
+    'irs'/'spitzer' and so returns IRSA's own TAP metadata tables, the unrelated
+    IRTS near-IR spectrometer catalogue, and ~90 image mosaics -- all of which
+    answer a SELECT happily.  First-past-the-post would have adopted
+    ``irts_nirspsc`` as the Spitzer/IRS corpus.
+    """
+    from seti.isotherm.acquire import rank_irs_tables
+
+    names = ["irts_nirspsc", "irsa_groups", "irsa_group_columns",
+             "irsa_serv_descriptors", "irsa_directory", "spitzer.seip_images",
+             "spitzer.c2d_irs_cubes", "spitzer.c2d_irs_spec", "irs_enhv211",
+             "spitzer.goals_irs_spec", "irts.irts_mirspsc",
+             "spitzer.sings_irs_spec", "spitzer.irs_std_spectra",
+             "spitzer.glimpsei_0_6", "spitzer.taurus_mips_24"]
+    ranked = rank_irs_tables(names)
+    # The IRS Enhanced Products atlas is the CASSIS stand-in and must win.
+    assert ranked[0] == "irs_enhv211"
+    for bad in ("irts_nirspsc", "irsa_groups", "irsa_group_columns",
+                "irsa_serv_descriptors", "irsa_directory",
+                "spitzer.seip_images", "spitzer.c2d_irs_cubes",
+                "irts.irts_mirspsc", "spitzer.glimpsei_0_6",
+                "spitzer.taurus_mips_24"):
+        assert bad not in ranked, f"{bad} must not be treated as an IRS corpus"
+    for good in ("spitzer.c2d_irs_spec", "spitzer.sings_irs_spec",
+                 "spitzer.irs_std_spectra"):
+        assert good in ranked
+    assert rank_irs_tables([]) == []
 
 
 # ---------------------------------------------------------------------------

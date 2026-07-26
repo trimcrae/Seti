@@ -52,6 +52,18 @@ on:
         description: "Mocks per shard (total mocks = shards x this, per direction-pair)"
         required: false
         default: "4"
+      rec_every:
+        description: "Detect every N integrator steps (2=0.5 Myr, 4=1.0 Myr)"
+        required: false
+        default: "2"
+      sigv_int_max:
+        description: "v2 cut: max internal dispersion at meeting (km/s; empty disables)"
+        required: false
+        default: "5"
+      min_epochs:
+        description: "v2 cut: minimum epochs of meeting persistence"
+        required: false
+        default: "2"
       reduce_only_run_id:
         description: "Skip fetch/scan; reduce from this prior run's artifacts"
         required: false
@@ -107,7 +119,7 @@ jobs:
     needs: sample
     if: ${{ github.event.inputs.reduce_only_run_id == '' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
         with:
@@ -125,10 +137,16 @@ jobs:
           path: results/herdsman/
       - name: Scan real catalogue (both time directions)
         run: |
+          EXTRA=""
+          if [ -n "${{ github.event.inputs.sigv_int_max }}" ]; then
+            EXTRA="--sigv-int-max ${{ github.event.inputs.sigv_int_max }}"
+          fi
           python -m seti.cli herdsman-scan --mode real \
             --t-max-myr ${{ github.event.inputs.t_max_myr || '20' }} \
             --n-min ${{ github.event.inputs.n_min || '4' }} \
-            --lambda-cap ${{ github.event.inputs.lambda_cap || '0.5' }}
+            --lambda-cap ${{ github.event.inputs.lambda_cap || '0.5' }} \
+            --min-epochs ${{ github.event.inputs.min_epochs || '2' }} \
+            --rec-every ${{ github.event.inputs.rec_every || '2' }} $EXTRA
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -139,7 +157,7 @@ jobs:
   scan-mock:
     needs: [sample, plan]
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 300
     strategy:
       fail-fast: false
       matrix:
@@ -161,12 +179,18 @@ jobs:
           path: results/herdsman/
       - name: Scan mock shard ${{ matrix.shard }}
         run: |
+          EXTRA=""
+          if [ -n "${{ github.event.inputs.sigv_int_max }}" ]; then
+            EXTRA="--sigv-int-max ${{ github.event.inputs.sigv_int_max }}"
+          fi
           python -m seti.cli herdsman-scan --mode mock \
             --shard ${{ matrix.shard }} \
             --mocks-per-shard ${{ github.event.inputs.mocks_per_shard || '4' }} \
             --t-max-myr ${{ github.event.inputs.t_max_myr || '20' }} \
             --n-min ${{ github.event.inputs.n_min || '4' }} \
-            --lambda-cap ${{ github.event.inputs.lambda_cap || '0.5' }}
+            --lambda-cap ${{ github.event.inputs.lambda_cap || '0.5' }} \
+            --min-epochs ${{ github.event.inputs.min_epochs || '2' }} \
+            --rec-every ${{ github.event.inputs.rec_every || '2' }} $EXTRA
       - uses: actions/upload-artifact@v4
         if: always()
         with:

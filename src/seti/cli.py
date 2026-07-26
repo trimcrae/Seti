@@ -198,7 +198,8 @@ def _herdsman_params(args):
         t_max_myr=args.t_max_myr, dt_myr=args.dt_myr, rec_every=args.rec_every,
         r0_pc=args.r0_pc, kappa=args.kappa, lambda_cap=args.lambda_cap,
         n_min=args.n_min, r_now_min_pc=args.r_now_min_pc,
-        focus_min=args.focus_min, surprise_min=args.surprise_min)
+        focus_min=args.focus_min, surprise_min=args.surprise_min,
+        sigv_int_max_kms=args.sigv_int_max, min_epochs=args.min_epochs)
 
 
 def _cmd_herdsman_fetch(args, cfg):
@@ -718,6 +719,11 @@ def main(argv=None):
                        help="required rms contraction factor")
         p.add_argument("--surprise-min", type=float, default=3.0,
                        help="-log10 Poisson tail to record a candidate")
+        p.add_argument("--sigv-int-max", type=float, default=None,
+                       help="v2 herd cut: max internal velocity dispersion at "
+                            "the meeting (km/s); omit to disable")
+        p.add_argument("--min-epochs", type=int, default=1,
+                       help="v2 herd cut: minimum epochs a meeting must persist")
 
     p = sub.add_parser("herdsman",
                        help="runner: kinematic technosignature search — N-star "

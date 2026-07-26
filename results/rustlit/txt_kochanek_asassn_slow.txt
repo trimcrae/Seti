@@ -1,0 +1,3869 @@
+Astronomy & Astrophysics manuscript no. article_GEHAN_AA_2020_39285_final
+November 23, 2020
+
+©ESO 2020
+
+Automated approach to measure stellar inclinations: validation
+through large-scale measurements on the red giant branch
+C. Gehan1 , B. Mosser2 , E. Michel2 , M. S. Cunha1, 3
+1
+
+arXiv:2011.02502v2 [astro-ph.SR] 20 Nov 2020
+
+Instituto de Astrofísica e Ciências do Espaço, Universidade do Porto, CAUP, Rua das Estrelas, PT4150-762 Porto, Portugal ;
+charlotte.gehan@astro.up.pt
+2
+LESIA, Observatoire de Paris, Université PSL, CNRS, Sorbonne Université, Université de Paris, 5 place Jules Janssen, 92195
+Meudon, France
+3
+School of Physics and Astronomy, University of Birmingham, Birmingham, B15 2TT, United Kingdom
+November 23, 2020
+ABSTRACT
+Context. Measuring stellar inclinations is fundamental to understanding planetary formation and dynamics as well as the physical
+
+conditions during star formation. Oscillation spectra of red giant stars exhibit mixed modes that have both a gravity component from
+the radiative interior and a pressure component from the convective envelope. Gravity-dominated (g-m) mixed modes split by rotation
+are well separated inside frequency spectra, allowing accurate measurement of stellar inclinations.
+Aims. We aim to develop an automated and general approach to measuring stellar inclinations that can be applied to any solar-type
+pulsator for which oscillation modes are identified. We also aim to validate this approach using red giant branch stars observed by
+Kepler.
+Methods. Stellar inclination impacts the visibility of oscillation modes with azimuthal orders m = {−1, 0, +1}. We used the mean
+height-to-background ratio of dipole mixed modes with different azimuthal orders to measure stellar inclinations. We recovered the
+underlying statistical distribution of inclinations in an unbiased way using a probability density function for the stellar inclination
+angle.
+Results. We derive stellar inclination measurements for 1139 stars on the red giant branch for which Gehan et al. (2018) identified
+the azimuthal order of dipole g-m mixed modes. Raw measured inclinations exhibit strong deviation with respect to isotropy which is
+expected for random inclinations over the sky. When taking uncertainties into account, the reconstructed distribution of inclinations
+actually follows the expected isotropic distribution of the rotational axis.
+Conclusions. This work highlights the biases that affect inclination measurements and provides a way to infer their underlying statistical distribution. When a star is seen either pole on or equator on, measurements are challenging and result in a biased distribution.
+Correcting biases that appear in low- and high-inclination regimes allows us to recover the underlying inclination distribution.
+Key words. Asteroseismology - Methods: data analysis - Techniques: photometric - Stars: interiors - Stars: low-mass - Stars: solar-
+
+type
+
+1. Introduction
+The ultra-high-precision photometry space mission Kepler has
+recorded very long observation runs, providing us with seismic
+data of unprecedented quality (Gilliland et al. 2010). Red giants
+represent an ideal laboratory to study the physical mechanisms
+governing deep stellar interiors because their oscillation spectra exhibit mixed modes. These modes result from a coupling
+between pressure (p) waves in the convective envelope and gravity (g) waves in the radiative interior and allow us to probe the
+highly condensed core of red giants (Scuflaire 1974).
+Dipole mixed modes present the strongest coupling between
+p and g waves, as the evanescent region that separates p-mode
+and g-mode cavities is thinner compared to mixed modes with
+higher angular degrees. Dipole mixed modes are therefore the
+most suitable mixed modes with which to probe the core of red
+giants (Deheuvels et al. 2017), and have already been used to
+derive large-scale measurements of several parameters characterising the red giant interior:
+– The period spacing between consecutive pure g modes, ∆Π1 ,
+provides information on the size of the radiative core (Montalbán et al. 2013) and was measured for almost 5000 stars
+
+both on the red giant branch (RGB) and in the red clump
+(Vrard et al. 2016).
+– The mean core rotational splitting, δνrot,core , is a proxy of the
+mean core rotation rate and was measured for almost 900
+stars on the RGB (Gehan et al. 2018) and 200 stars in the red
+clump (Mosser et al. 2012b).
+– The coupling factor, q, characterises the strength of the coupling in the evanescent region between p and g waves and
+was measured for about 5000 RGB and red clump stars
+(Mosser et al. 2017a; Pinçon et al. 2020).
+– The gravity offset, εg , provides information on the stratification occurring in the radiative region and was measured
+for almost 400 stars both on the RGB and in the red clump
+(Mosser et al. 2018; Pinçon et al. 2019).
+Additionally, dipole mixed modes can also be used to derive
+high-precision measurements of the stellar inclination angle i,
+which is the angle between the stellar rotation axis and the line of
+sight that take values between 0◦ and 90◦ . Characterising stellar
+inclinations is important when studying both planetary dynamics
+and star formation.
+On the one hand, in the case of planet host stars, measurements of i are required to constrain the angle between the stellar
+Article number, page 1 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+spin axis and the planetary orbit axis, namely the obliquity ψ
+(e.g. Winn & Fabrycky 2015; Chaplin et al. 2013; Huber et al.
+2013b; Campante et al. 2016), through (Fabrycky & Winn 2009)
+cos ψ = sin i sin ip cos λ + cos i cos ip ,
+
+(1)
+
+where ip is the inclination angle of the planetary orbit and
+λ is the sky-projected spin–orbit angle. The angle ip can be
+constrained from the transit light curve (see Huber 2018). The
+angle λ can be measured through high-resolution spectroscopic
+observations of transiting planetary systems, using the so-called
+Rossiter-McLaughlin effect (Holt 1893; McLaughlin 1924;
+Rossiter 1924; Queloz et al. 2000; Ohta et al. 2005). The
+measurement of i is thus a prerequisite to the measurement of
+the real spin-orbit angle ψ, (Kamiaka et al. 2018), which can
+lead to a better understanding of the formation and evolution
+of exoplanetary systems. Measuring obliquities helps in particular to constrain the mechanism driving the post-formation
+migration of hot Jupiters closer to their host star, which is
+still raising questions (Lin et al. 1996; Chatterjee et al. 2008;
+Fabrycky & Tremaine 2007). Indeed, observations indicate that
+many hot Jupiters show a wide range of obliquities (Johnson
+et al. 2009; Winn et al. 2010) that can result from planet-star
+tidal interactions: the stronger the tidal interaction between
+the star and the planet, the lower the obliquity (Albrecht et al.
+2012). However, other scenarios may also result in such high
+obliquities, which may in this case be observed for different
+types of planetary systems and not only for hot Jupiters. In this
+context, measuring stellar obliquities in multiplanet systems
+is key to testing whether or not spin-orbit misalignment is
+common (Albrecht et al. 2013). If these systems mostly present
+low obliquities, then the high obliquities measured for hot
+Jupiters might be due to planet migration mechanisms. On the
+contrary, a distribution of obliquities that appears to be similar
+to that of hot Jupiters would indicate that high obliquities result
+from formation processes that are common to planetary systems
+in general, and thus not specific to hot Jupiter migration. Asteroseismology is highly valuable in this context. Indeed, seismic
+inclinations do not depend on planet size and can therefore be
+measured for multiplanet systems with small planets, where
+Rossiter-McLaughlin measurements are usually not possible
+(see Huber 2018). Asteroseismology has already provided an
+example of spin-orbit misalignment in a multiplanet system
+(Huber et al. 2013a).
+On the other hand, the statistical distribution of stellar
+inclinations provides clues as to the physical conditions during
+star formation (e.g. McKee & Ostriker 2007). Theoretical
+models suggest that the angular momentum of forming stars
+is dominated by small-scale turbulence (e.g. Rey-Raposo &
+Read 2018). If some stellar-spin alignment occurs during star
+formation, one might expect it to be erased by turbulence in
+the absence of important interactions between forming stars.
+For a given set of stars with randomly oriented rotation axes,
+inclination angles follow a distribution in sin(i), which we refer
+to as an isotropic inclination distribution in this study. For a
+given stellar population, an isotropic inclination distribution
+indicates that turbulence during star formation was strong
+enough to prevent any stellar spin alignment. On the contrary,
+a non-isotropic distribution highlights that stellar spins show
+preferential orientations, and that strong interactions with the
+progenitor cloud(s) occurred during star formation. (Corsaro et
+al. 2017; C17 hereafter) reported stellar spin alignment towards
+low inclinations inside two open clusters, however the findings
+Article number, page 2 of 35
+
+of Mosser et al. (2018) contradict this result. This point is
+therefore under debate, and inclination measurements can help
+to discriminate among star formation mechanisms inside open
+clusters.
+The majority of transiting exoplanets are detected around F,
+G, and K solar-type stars on the main sequence, but measuring
+i is difficult in this evolutionary stage because oscillations have
+low amplitudes and modes are sometimes blended (see Appourchaux et al. 2008). In this context, Kamiaka et al. (2018) carried
+out a systematic verification of the accuracy of the seismic measurement of the stellar inclination angle for main sequence stars
+using 3000 simulated power spectra and found that reliable seismic inclination measurements are possible for 20◦ . i . 80◦ .
+However, accurate measurements of i are much easier to obtain for evolved stars presenting mixed modes: g-dominated (gm) mixed modes have lifetimes of the order of years and probe
+regions that rotate faster than the envelope (Beck et al. 2012; Deheuvels et al. 2012; Benomar et al. 2013; Deheuvels et al. 2014,
+2015; Mosser et al. 2017a). Therefore, rotational splittings are
+much larger than mode line widths and dipole modes split by
+rotation are well separated. (Kuszlewicz et al. 2019a; K19 hereafter) recently developed a Bayesian hierarchical method to extract inclination angles from red giants and successfully applied
+it to artificial oscillation spectra. They also derived inclination
+measurements for about 100 red giant stars. As Kamiaka et al.
+(2018) did not address red giants and K19 measured inclinations
+for only a limited number of red giants, it is worthwhile obtaining large-scale measurements of the stellar inclination angle for
+evolved stars.
+Nevertheless, it is difficult to detect exoplanetary transits
+around evolved stars because the associated depth in the light
+curve varies as the squared ratio between planet and star radii,
+
+2
+Rp /R? (Heller 2019). The Kepler mission is optimised to detect Earth-size planets in the habitable zone of solar-like stars,
+and can therefore detect a depth of 0.01 % in relative stellar brightness fluctuations, which corresponds to an Earth-sized
+planet transiting a Sun-like star with Rp ∼ R? /100. Red giants
+have a mean radius on the order of R? ∼ 10 R , and therefore
+the transit of an Earth-sized planet leads to a depth of only 10−6
+in relative brightness. If we consider a Jupiter-like planet with
+a radius Rp ∼ 10 R⊕ , where R⊕ is the Earth’s radius, the transit in front of a red giant corresponds to a depth of 0.01 % in
+relative brightness, which is the same order of magnitude as an
+Earth-sized planet transiting a Sun-like star. The detection of hot
+Jupiters transiting red giant stars is therefore possible, in contrast
+to transiting Earth-size planets.
+About 100 exoplanets are already known to orbit red giants
+and subgiants (Johnson et al. 2010, 2011; Hirano et al. 2015;
+Lillo-Box et al. 2014; Jones et al. 2015; Lee et al. 2015; Quinn
+et al. 2015; Lillo-Box et al. 2016; Hrudková et al. 2017). The
+detection of a much larger number of planets around evolved
+stars is crucial to constrain theoretical models of planet engulfment by the expanding host star (Lillo-Box et al. 2016), and to
+understand the effect of stellar evolution on the orbital and physical properties of planetary systems (Jones et al. 2015). In this
+context, measuring stellar inclination angles on a large scale for
+evolved stars is a major stepping stone in understanding planetary formation, evolution, and death.
+The method presented in Gehan et al. (2018) identifies rotational splittings of g-m modes for stars on the RGB. It is therefore possible to measure the stellar inclination angle using the ratio of the power spectral densities (PSDs) of dipole mixed modes
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+with the same mixed-mode order but different azimuthal orders
+(Gizon & Solanki 2003). In this work we present a general and
+automated method to derive seismic measurements of the stellar
+inclination angle that can be applied to any solar-type pulsator
+for which oscillation modes are identified. We check the consistency of our approach on a large sample of red giant stars, from
+which we should recover an isotropic inclination distribution. In
+Sect. 2 we provide details of the way in which we derive stellar
+inclinations and their associated uncertainties. In Sect. 3 we apply the method to the RGB stars of the Kepler public catalogue
+studied by Gehan et al. (2018) and infer the underlying statistical distribution of the measured inclinations. In Sects. 4 and
+5 we check the consistency of our results with those obtained
+by K19 and C17. Section 6 focuses on a discussion of the inclinations measured for RGB stars with a planet candidate(s) or a
+confirmed planet(s). We present our conclusions in Sect. 7.
+
+2. Deriving stellar inclinations
+Measuring stellar inclinations using frequency oscillation spectra is not straightforward and requires several steps.
+2.1. Disentangling mixed modes with different azimuthal
+orders
+
+The identification of dipole mixed modes with different azimuthal orders relies on oscillation spectra in stretched period,
+where radial and quadrupole modes have been removed using the
+red giant universal oscillation pattern which characterises pressure modes. (Mosser et al. 2011). This stretching is done using
+the function
+
+−1
+
+
+2
+ν ∆Π1
+1
+
+
+
+
+  ,
+
+ζ = 1 +
+(2)
+
+q ∆νp 1 sin2 π ν−νp + cos2 π ν−νp 
+∆νp
+∆νp
+q2
+which characterises the contribution of the core and envelope
+to the inertia of dipole modes (Goupil et al. 2013; Mosser
+et al. 2015; Hekker & Christensen-Dalsgaard 2017; Cunha et al.
+2019). The ζ function as expressed in Eq. (2) is continuous with
+frequency ν and depends on:
+– the coupling parameter q between g and p modes (Mosser
+et al. 2017b);
+– the asymptotic large separation,
+
+
+∆νp = ∆ν 1 + α(np − nmax ) ,
+(3)
+where nmax = νmax /∆ν − εp is the non-integer order at the
+frequency νmax of maximum oscillation signal, with εp the
+phase shift of pure pressure modes, and where ∆νp increases
+with the pressure radial order np (Mosser et al. 2013);
+– and the pure dipole pressure mode frequencies, νp , computed using the universal pattern (Mosser et al. 2011).
+Stretched-period spectra are then obtained using the differential
+equation (Mosser et al. 2015)
+dτ =
+
+1 dν
+.
+ζ ν2
+
+(4)
+
+Dipole mixed modes are expected to be evenly spaced in
+stretched period with a spacing equal to ∆Π1 , as in pure dipole
+g modes. However, p-dominated (p-m) dipole mixed modes
+present large line widths and consequently appear as several
+
+modes scattered close to the expected unique p-m mode. This
+spread is exacerbated when stretching frequency spectra, as the
+correction induced by ζ is most important for p modes (Gehan
+et al. 2018). As p-m dipole mixed modes scramble the expected regular pattern in stretched period, we remove them from
+stretched-period spectra using once again the red giant universal pattern (Mosser et al. 2011). We are now left with g-m
+dipole modes only, which should in theory present an equal
+∆Π1 spacing in stretched period. However, rotation associated
+to the g-mode cavity disturbs this regular pattern, meaning that
+the stretched period spacing between modes with the same azimuthal order is (Mosser et al. 2015)
+!
+δνrot,core
+∆τm ≃ ∆Π1 1 + 2 m ζ
+.
+(5)
+ν
+In this equation, ζ can be estimated for g-m mixed modes as
+N/(N + 1), where N is the mixed-mode density representing the
+number of g modes per ∆ν-wide frequency range and is defined
+as
+N=
+
+∆ν
+.
+2
+∆Π1 νmax
+
+(6)
+
+Mixed modes with different azimuthal orders can now be easily disentangled using stretched period échelle diagrams (Mosser
+et al. 2015; Gehan et al. 2018; Mosser et al. 2018), where mixed
+modes with the same azimuthal order draw ridges called rotational components (Fig. 1). Peaks associated to the g-m modes
+that have a maximum PSD significantly above the background
+are kept (see Sect.2.2 of Gehan et al. (2018)), and their maximum PSD is used in the following. The number of visible ridges
+depends on the stellar inclination angle, which modifies the visibility of the different rotational components: when the inclination is low, only the central rotational component associated to
+m = 0 is visible, for intermediate i values all the three ridges with
+m = {−1, 0, +1} are visible, and in the case of high i values, only
+the m = ± 1 components are visible. Each ridge with a given azimuthal order is identified through a correlation of the observed
+spectrum with a synthetic one built upon asymptotic seismic parameters using Eqs. (5) and (6), as described by Gehan et al.
+(2018). The azimuthal order of each g-m mode is thus identified,
+making it possible to measure the stellar inclination angle.
+2.2. Measurement of the stellar inclination angle
+
+We now detail how we measure the stellar inclination angle i
+. We write p−1 (ν), p0 (ν), and p1 (ν), the PSD of individual gm modes with azimuthal orders m = {−1, 0, +1}, respectively.
+The PSD is related to the stellar inclination by (Gizon & Solanki
+2003)
+p0 (ν) ∝ cos2 (i)
+1
+p± 1 (ν) ∝ sin2 (i).
+2
+
+(7)
+
+The background signal close to νmax can be approximated by
+!γ
+ν
+B(ν) = β
+,
+(8)
+νmax
+where β and γ are parameters that take real values (Mosser et al.
+2012a). This expression is valid in the frequency range where
+oscillations are detected, because it provides the precise measurement of νmax (Fig. 8 of Pinsonneault et al. 2018).
+Article number, page 3 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+KIC 10866415
+
+115
+
+KIC 9882316
+
+200
+
+110
+190
+
+100
+
+ν (µHz)
+
+ν (µHz)
+
+105
+
+95
+
+180
+170
+
+90
+160
+85
+80
+45
+
+50
+
+55
+
+60
+
+τ mod ∆Π1
+
+65
+
+70
+
+75
+
+Fig. 1. Stretched-period échelle diagram for the RGB star KIC
+10866415 with a high inclination angle. Colours indicate the azimuthal
+order: the m = {−1, 0, +1} rotational components are represented in
+green, light blue, and red, respectively. Observed modes are represented
+by dots and the symbol size varies as a function of the measured power
+spectral density. Rotational components with m = ± 1 are identified in
+an automatic way through a correlation of the observed spectrum with
+a synthetic one constructed using Eqs. (5) and (6), represented here by
+crosses (Gehan et al. 2018). The location of the m = 0 rotational component is identified considering that the m = 0 ridge is median with respect
+to m = ± 1 ridges. As there are six modes identified in the m = +1 ridge
+and eight modes in the m = −1 ridge, this gives a mean number of visible modes N± 1 = 7. We thus consider the first seven modes with the
+highest height-to-background ratio belonging to the m = 0 ridge.
+
+We then subtract the background from the PSD of each
+mode and normalise the result by B(ν). We thus consider the
+background-free and normalised PSD for each mode of azimuthal order m, which we denote
+Pm (ν) =
+
+pm (ν)
+− 1.
+B(ν)
+
+(9)
+
+As the height-to-background ratio (HBR) of modes is supposed to follow a Gaussian envelope centred on νmax , we then
+weight the contribution of modes with same azimuthal order by
+a Gaussian function denoted fG (ν). This step maximises the contribution of modes in the close vicinity of νmax , which are expected to have the highest HBR, and minimises the contribution
+of modes in the tails of the Gaussian envelope, which are expected to have the lowest HBR. The standard deviation of the
+Gaussian function can be written (Mosser et al. 2012a)
+δνenv
+,
+(10)
+√
+2 2 ln 2
+where δνenv is a frequency interval chosen to be slightly larger
+than the frequency range of observed dipole modes. We write
+the weighting of Pm (ν) (Eq. (9)) by the Gaussian function fG (ν)
+as
+σ=
+
+Pm (ν) = Pm (ν) fG (ν).
+
+(11)
+
+We then consider the mean value of Pm (ν) in Eq. (11) over all n
+modes with a given azimuthal order such as
+Pn
+Pm,i (ν)
+.
+(12)
+hPm i = Pi=1
+n
+i=1 fG,i (ν)
+Article number, page 4 of 35
+
+150
+
+40
+
+50
+
+60
+
+τ mod ∆Π1
+
+70
+
+80
+
+Fig. 2. Same as Fig. 1 but for the RGB star KIC 9882316 with a low
+inclination angle.
+
+We can finally measure i from Eq. (7) through
+s
+hP1 i + hP−1 i
+tan(i) =
+.
+hP0 i
+
+(13)
+
+2.2.1. Intermediate inclinations
+
+When all the three rotational components associated to m =
+{−1, 0, +1} are visible, we can directly derive a measurement of
+the inclination angle using Eq. (13).
+2.2.2. Low inclinations
+
+Measuring low inclinations is particularly tricky, and we can
+only derive a rough estimate of i. Indeed, when the stellar inclination is low, the PSD of mixed modes associated to m = ± 1
+is so low that these modes are lost in the background and are no
+longer visible (Fig. 2). We do not know where we can find the
+missing m = ± 1 components in the signal; we can only make the
+assumption that non-visible modes have a HBR below a given
+threshold x, corresponding to P± 1 (ν) = x − 1 in Eq. (9). In the
+absence of direct information on the HBR of the m = ± 1 components, we suppose that they are symmetric and have similar x
+values. Using Eq. (12), we thus have an upper limit imax for low
+stellar inclinations, such as
+s
+2 hP± 1 i
+tan(i) <
+= tan(imax ).
+(14)
+hP0 i
+
+Estimating the PSD of the missing m = ± 1 modes We have to
+provide an estimate of the maximum possible PSD of the missing m = ± 1 modes in order to derive an upper limit on i. As
+in the case of stars presenting two and three rotational components, we consider that the threshold x follows a Gaussian with
+a standard deviation computed as in Eq. (10), in order to follow
+the Gaussian shape of the power spectrum around νmax (Fig. 3).
+In order to chose the maximum value taken by x around νmax ,
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+KIC 9882316
+
+8
+
+m = ± 1 modes
+m = 0 modes
+
+7
+
+250
+
+HBR of m = 0 modes
+
+150
+
+4
+
+100
+
+3
+
+2
+
+50
+
+1
+150
+
+160
+
+170
+
+180
+
+ν (µHz)
+
+190
+
+200
+
+210
+
+0
+220
+
+Fig. 3. HBR of g-m modes for KIC 9882316, for which only the central
+m = 0 rotational component is visible. Observed modes with m = 0 are
+in light blue (characterised by the right ordinate axis). Missing modes
+with m = ± 1 are in red (characterised by the left ordinate axis), and
+their HBR follows a Gaussian envelope (in black) referred to as x in the
+core text, which is normalised to the value of 8. Vertical dashed lines
+identify frequencies of observed m = 0 modes. The number of missing
+m = ± 1 modes has been chosen to be the same as visible m = 0 modes.
+
+we considered the threshold HBR above which g-m modes were
+considered as significant and were kept to initiate the fit of rotational components in the study of Gehan et al. (2018). Among
+the 1139 RGB stars for which Gehan et al. (2018) have identified rotational components, we note that the distribution of the
+threshold HBR peaks around 8, and that the number of stars
+in our sample sharply decreases below a threshold HBR of 8
+(Fig. 4). This indicates that rotational components can only be
+poorly identified through the method developed by Gehan et al.
+(2018) when the threshold HBR drops below 8. We also notice
+that only three stars in our sample have a threshold HBR that is
+below 4 (Fig. 4), which is compatible with the minimum HBR
+of 4 that is found by K19 to reliably extract the inclination angle
+from their artificial spectra.
+According to the distribution of the HBR shown in Fig. 4,
+we chose a maximum value of xmax = 8 for the Gaussian that
+models the HBR of the missing m = ± 1 components (Fig. 3).
+For cases where the mean HBR is below 8 for modes belonging
+to the m = 0 component, we took this mean HBR value as a
+maximum value for xmax . In order to compute hP± 1 i in Eq. (14),
+we estimated the maximum PSD of the missing m = ± 1 modes
+by interpolating the Gaussian threshold x to the frequencies of
+observed m = 0 modes so that we have the same number of
+m = 0 and m = ± 1 modes (Fig. 3). We then computed hP± 1 i
+using Eq. (12).
+The threshold xmax is linked to the total observation duration
+T obs such as (Mosser et al. 2018)
+!
+T obs ∆ν
+xmax ≃ ln
+,
+(15)
+p
+where ∆ν is the width of the frequency range where a mode is
+expected and p is the rejection probability of the null hypothesis,
+that is, the hypothesis that background noise alone is enough to
+explain the presence of the observed peaks. Red giants observed
+by Kepler have T obs = 4 years, and we have ∆ν = 0.1 µHz in the
+case of g-m modes. The maximum value xmax = 8 considered
+
+250
+
+Number of stars
+
+HBR of m = ± 1 modes
+
+5
+
+0
+140
+
+300
+
+200
+
+6
+
+200
+150
+100
+50
+0
+
+5
+
+10
+
+15
+
+20
+
+Threshold HBR
+
+25
+
+30
+
+35
+
+Fig. 4. Histogram of the threshold HBR above which g-m modes were
+considered as significant and were kept to initiate the fit of rotational
+components in the study of Gehan et al. (2018), for our sample of 1139
+RGB stars. The vertical dot-dashed line indicates a threshold HBR of 8.
+
+Fig. 5. Probability density function in sin(i) between 0◦ and imax for
+KIC 9882316 (in blue). Black dashed lines indicate the upper limit on
+the inclination derived from Eq. (14), here imax = 24.9◦ . Red dashed
+lines indicate the estimated inclination corresponding to a PDF value of
+0.5, here imedium = 17.5◦ .
+
+in this work corresponds to a rejection probability of the nullhypothesis at the 0.4 % level.
+Inclination estimate When only the m = 0 rotational compo-
+
+nent is visible, we can only have an estimate of the inclination
+angle, which can take any value between 0◦ and imax given by
+Eq. (14). In order to provide an estimate of i, rather than just the
+upper limit imax , we assume for a given star that the possible inclination values are isotropically distributed between 0◦ and imax .
+Under this hypothesis, the probability of having an inclination
+between i and i + di, where di is an infinitesimal inclination angle, is proportional to the spherical area covered by di, and thereArticle number, page 5 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+300
+
+Number of stars
+
+250
+200
+150
+
+Limit for reliable measurements
+in the general case
+Limit for reliable measurements
+for Kepler stars
+Stars with 3 components
+Stars with 2 components
+Stars with 2 components
+and mean HBR ≥ 8
+Stars with 1 component
+
+sin(i)
+
+100
+50
+0
+0
+
+10
+
+20
+
+30
+
+40
+
+i( )
+◦
+
+50
+
+60
+
+70
+
+80
+
+90
+
+Fig. 6. Distribution of raw stellar inclinations for 1139 RGB stars analysed by Gehan et al. (2018) (in blue). The red line represents an isotropic
+distribution in sin(i) derived from a fit to the histogram in blue. Inclinations measured for stars presenting three rotational components are in light
+blue, while inclination estimates for stars presenting one (two) rotational components are in green (orange). Inclination measurements derived for
+stars presenting two rotational components and a mean HBR equal to or above 8 for the m = 0 component are in violet. Vertical dashed lines
+represent the limits of 20◦ and 80◦ between which Kamiaka et al. (2018) consider seismic inclination measurements to be reliable in the general
+case. Vertical dot-dashed lines represent the limits of 8◦ and 86◦ between which Kamiaka et al. (2018) show that seismic inclination measurements
+can be reliable for Kepler stars.
+
+fore to the corresponding specific solid angle dΩ = 2π sin(i) di.
+We therefore consider that the inclination follows a probability
+density function (PDF) in sin(i) between 0◦ and imax (Fig. 5). We
+then derive an estimate of the mean inclination by selecting the i
+value corresponding to a PDF value of 0.5 (imedium in Fig. 5).
+2.2.3. High inclinations
+
+When the inclination is high and only the m = ± 1 components
+are visible, we can rely on the existing signal to find the missing m = 0 component. The location of the m = 0 component
+is derived considering that the m = 0 ridge is median with respect to m = ± 1 ridges. We consider, as in the fitting procedure
+of the rotational components used in Gehan et al. (2018), that
+peaks belong to the m = 0 rotational component if they are at
+a distance of no more than ∆Π1 /80 from the mid-point between
+the m = −1 and m = +1 components in the stretched-period
+spectrum. We then compute N± 1 , the mean number of identified modes with azimuthal orders m = ± 1, and we keep the
+N± 1 modes belonging to the m = 0 ridge that have the highest
+HBR estimated using Eq. (9); see Fig. 1. This step allows us to
+compute hP0 i in Eq. (12). We then distinguish between two different configurations, depending on the mean HBR hP0 i of the
+retrieved m = 0 component. If hP0 i is sufficiently high, then we
+have clear oscillation modes and we can derive a measurement of
+the inclination through Eq. (13). On the contrary, if hP0 i is below
+a given threshold, we cannot know if the visible signal is due to
+oscillation modes or to stochastic variations of the background
+Article number, page 6 of 35
+
+noise and we can only derive an estimate of the inclination instead of a firm measurement. We consider the threshold value
+hP0 i = 8 to separate stars with two components for which we
+obtain an inclination measurement from stars with a m = 0 component hidden in the background noise, for which we can only
+derive an estimate of i.
+2.3. Estimate of the uncertainties
+
+Uncertainties on the measured stellar inclinations mainly arise
+from the stochastic nature of oscillations that is a source of
+spread in the PSD of observed modes, and therefore in their
+HBR, impacting the precision of the inclination measurement.
+Uncertainties are derived from Eq. (13). We can write
+dP+1
+dP−1
+dP0
+d tan2 (i)
+=
++
++
+,
+2
+hP+1 i hP−1 i hP0 i
+tan (i)
+
+(16)
+
+where Pm (ν) is defined by Eq. (11) and hPm i is defined by
+Eq. (12). Moreover, we have
+!
+d tan2 (i)
+d tan(i)
+1 + tan2 (i)
+4
+=2
+=2
+di =
+di.
+2
+tan(i)
+tan(i)
+sin(2i)
+tan (i)
+The equality of Eqs. (16) and (17) gives
+!
+1
+dP+1
+dP−1
+dP0
+di = sin(2i)
++
++
+.
+4
+hP+1 i hP−1 i hP0 i
+
+(17)
+
+(18)
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+Height contrast between
+m = 0 and m = ± 1 components
+
+6
+
+i = 45
+
+i = 64
+
+5
+4
+
+it is in practice impossible to measure i = 90◦ , as this would require an infinite HBR corresponding to a strict absence of background noise from granulation. Therefore, we cannot access the
+inclination regime close to 90◦ . Hence, stars that are in this configuration in our sample should have upper error bars allowing
+the value i = 90◦ to be encompassed as a possible extreme value
+for the inclination. The upper error bar σi,+ for these stars is
+thus computed assuming that the highest possible inclination is
+i = 90◦ . The lower error bar σi,− corresponds to a 1-σ uncertainty and is computed using Eq. (19).
+
+3
+
+Height contrast
+of 2
+
+2
+1
+
+3. Results
+
+< P0 > / < P±1 >
+< P±1 > / < P0 >
+30
+
+40
+
+50
+
+i( )
+
+60
+
+70
+
+Fig. 7. Evolution with inclination of the height contrast between rotational components with azimuthal orders 0 and ± 1. The blue line represents the contrast hP0 i / hP± 1 i computed from Eq. (12), while the red
+line represents the contrast hP± 1 i / hP0 i. Vertical dashed lines indicate
+inclinations of 45 and 64◦ , while the horizontal dot-dashed line indicates
+a height contrast of 2.
+
+We finally obtain the uncertainty σi on the measured inclination
+through
+v
+u
+tm=+1
+X ∆Pm !2
+1
+,
+(19)
+σi = |sin(2i)|
+4
+hPm i
+m=−1
+where ∆Pm is the standard deviation of Pm (ν) used in Eq. (11).
+Equation (19) provides 1-σ uncertainties. Error bars are
+therefore symmetric around the measured inclination value, and
+we have σi = σi,− = σi,+ . However error bars should not be
+symmetric when the inclination is low or high and we should
+have different lower and upper error bars σi,− and σi,+ , respectively. For these two extreme cases, uncertainties differ from 1-σ
+uncertainties.
+2.3.1. Low inclinations
+
+When the m = ± 1 rotational components are missing, the lower
+error bar σi,− is computed assuming that the lowest possible inclination is 0◦ . The upper error bar σi,+ on the imax value derived
+from Eq. (14) corresponds to a 1-σ uncertainty and is computed
+using Eq. (19). The upper error bar on imedium is computed assuming that the highest possible inclination is imax + σi,+ .
+2.3.2. High inclinations
+
+When only the two rotational components with azimuthal orders
+m = ± 1 are visible, there are two possible configurations (Sect.
+2.2.3) impacting the way uncertainties are derived.
+For stars with a mean HBR of the m=0 rotational component
+hP0 i ≥ 8, we have a firm measurement of the inclination (Sect.
+2.2.3) and we have symmetric error bars corresponding to 1-σ
+uncertainties computed using Eq. (19).
+The other configuration corresponds to stars with a mean
+HBR hP0 i < 8, for which the inclination can in principle be
+as high as 90◦ . However, as stressed by Kamiaka et al. (2018),
+
+We analysed 1139 stars on the RGB1 for which Gehan et al.
+(2018) identified rotational components; we refer to this paper
+for the details of the data analysis. The oscillation spectra and
+the stretched-period échelle diagrams of some of these stars are
+shown in Appendix B, with the azimuthal order of mixed modes
+identified. We analyse the distribution of inclinations and test its
+compatibility with isotropy.
+3.1. Raw stellar inclinations
+
+When looking at stars randomly selected over a large fraction
+of the sky, we expect stellar inclinations to be randomly distributed following a sin(i) distribution. Stars analysed here have
+been considered following increasing KIC numbers. This is not
+supposed to induce any selection bias and inclinations derived in
+this study should be isotropically distributed.
+The raw distribution of stellar inclinations of our sample
+appears to deviate significantly from an isotropic distribution
+(Fig. 6). This is expected because measuring i = 0 or 90◦ is impossible in practice as explained in Sect. 2.3.2, resulting in a dramatic deficit of values in these extreme inclination regimes. We
+obtain firm inclination measurements between 27◦ and 78◦ for
+stars presenting three rotational components and stars presenting two rotational components for which the mean HBR of the
+retrieved m = 0 component is equal to or above 8 (Fig. 6). This is
+consistent with the conclusion of Kamiaka et al. (2018), namely
+that reliable seismic inclination measurements are possible in the
+general case for 20◦ . i . 80◦ . For i < 27◦ , we can only derive
+an overestimated value of the inclination. The same phenomenon
+occurs at high inclination, where we can only derive an underestimated value of the inclination for i > 77◦ . We have no inclination estimate below 12◦ and above 85◦ . This is consistent with
+Fig. 3 of Kamiaka et al. (2018), which shows that reliable inclination measurements are possible between 8◦ . i . 86◦ for stars
+with a high HBR of 30 and an observation duration of 4 years.
+Our results for Kepler red giants confirm that we cannot derive
+inclination estimates outside of these limit values.
+We note that the inclination distribution for stars presenting
+three rotational components (light blue in Fig. 6) peaks around
+55◦ and decreases below 45◦ and above 64◦ . This is expected because heights of rotational components with different azimuthal
+orders are equal at 55◦ , giving a minimal height contrast between
+components (Fig. 7). We checked that the values i = 45◦ and 64◦
+correspond to a height ratio between components with different m values that reaches values above approximately 2 (Fig. 7).
+This highlights the fact that the efficiency of the detection of all
+the m components decreases when the height contrast between
+ridges with different azimuthal orders surpasses a certain threshold. For i values above 64◦ , the non-detected m = 0 component
+1
+
+Results are publicly available on ADS
+Article number, page 7 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+Reconstructed distribution
+
+200
+175
+
+Number of stars
+
+150
+
+sin(i)
+
+125
+100
+75
+50
+25
+0
+
+0
+
+10
+
+20
+
+30
+
+40
+
+i( )
+
+50
+
+60
+
+70
+
+80
+
+90
+
+Fig. 8. Reconstructed distribution of stellar inclinations for our sample of 1139 RGB stars. We assumed an isotropic PDF in sin(i) for all stars
+presenting one rotational component as well as for stars presenting two rotational components and a m = 0 component lost in the background. We
+used a Gaussian PDF for stars presenting three rotational components as well as for stars with two rotational components and a mean HBR equal
+to or above 8 for the retrieved m = 0 component. The red line represents an isotropic distribution in sin(i) derived from a fit to the histogram. Mean
+error bars are represented in black for each inclination bin.
+
+1.0
+0.8
+
+Distribution functions
+Reconstructed distribution of
+inclinations for 1139 stars
+Isotropic distribution in sin(i)
+D-statistic
+
+of stars showing only one rotational component, leading to the
+dip observed in Fig. 6 between 40◦ and 50◦ .
+3.2. Unbiased inclination distribution
+
+F(i)
+
+We cannot obtain a firm measurement of the inclination for stars
+presenting one rotational component or for stars with two components and a low mean HBR for the retrieved m = 0 component,
+0.6
+but only a range of possible values. We take individual uncertainties into account to test the inclination distribution in a statistical
+sense.
+0.4
+In the particular cases where only one (m = 0) or only two
+(m = ± 1) rotational components are hidden in the background
+noise, we assume that the inclination is isotropically distributed
+0.2
+between the minimum possible value imin and the maximum possible value imax for each star. We thus assumed a PDF in sin(i) for
+these stars (Fig. 5). Additionally, we assumed a Gaussian PDF
+0.0
+0
+10
+20
+30
+40
+50
+60
+70
+80
+90 for stars presenting three rotational components as well as for
+i( )
+stars with two rotational components and a mean HBR equal to
+Fig. 9. Cumulative distribution functions of our sample of 1139 stars or above 8 for the retrieved m = 0 component. The Gaussian
+(in blue) computed from the inclination distribution in Fig. 8, and of a PDF is centred on the measured√inclination value and has a stanpurely isotropic distribution in sin(i) (in red). The D-statistic is high- dard deviation equal to σi /(2 2 ln 2) (Eq. 10). By integrating
+the PDF of all these stars, we retrieve a global distribution of
+lighted in black.
+inclinations for which the statistic is free from the observational
+limitations hampering the measurement of low and high i values.
+can be retrieved at the mid-point between m = −1 and m = +1
+We obtain a reconstructed global distribution that is roughly
+components (Sect. 2.3.2 and Fig. 1), allowing us to avoid a drop isotropic (Fig. 8). This is expected for the large sample of stars
+in measured inclinations in this regime (violet in Fig. 6). How- analysed in this study and emphasises that our method is not
+ever, we miss the m = ± 1 components for stars with i values affected by bias coming from sample selection effects. The
+below 45◦ . These stars are therefore lost among the population inclination estimates obtained between 12 and 40◦ in Fig. 6 have
+Article number, page 8 of 35
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+Sample of 72 RGB stars
+Stars from Gehan+ (2018)
+Stars from Kuszlewicz+ (2019)
+Stars from Corsaro+ (2017)
+Stars with planet candidates
+Stars with confirmed planets
+
+18
+
+( Hz)
+
+16
+14
+12
+10
+8
+
+80
+
+i ( ◦ ) Kuszlewicz + (2019)
+
+20
+
+1:1 comparison
+60
+
+40
+
+20
+
+6
+5
+
+10
+
+15
+
+20
+
+25
+
+Fig. 10. Large separation as a function of the mixed-mode density. Stars
+analysed in Sect. 3 are in blue, stars in common with Kuszlewicz et al.
+(2019a) are in green, stars in common with Corsaro et al. (2017) are in
+black, stars with planet candidate(s) are in red, and stars with confirmed
+planet(s) are in yellow.
+
+been redistributed towards lower inclinations, and the estimates
+derived between 62 and 85◦ have been redistributed towards
+higher inclinations.
+K19 highlighted that it is easier to identify modes when the
+star presents one or two rotational components compared to three
+components, as the power distribution between modes with different azimuthal orders leads to higher mode visibilities in these
+two configurations. This can lead to an observational bias when
+checking the inclination distribution, with a possible excess of
+stars with low and high inclinations compared to stars with intermediate i values. Figure 8 demonstrates that our method allows
+us to identify triplets as efficiently as singlets and doublets, as the
+recovered inclination distribution is compatible with isotropy.
+Hence, modes are still easily identified in the case of stars presenting three rotational components, even if they have lower relative heights compared to stars with one or two components.
+Our results confirm the necessity to take uncertainties on
+the estimated angle into account through PDFs in order to recover the underlying inclination distribution, correcting the biased distribution obtained in Fig. 6 and obtaining the reconstructed isotropic one in Fig. 8. The fact that we recover an inclination distribution compatible with an isotropic trend when
+randomly analysing a large number of stars validates the approach developed in this work, which can be directly applied
+to any solar-type pulsator for which the azimuthal order of oscillation modes is identified.
+3.3. Statistical analysis
+
+In order to quantify the extent to which the reconstructed distribution of inclinations in Fig. 8 is compatible with isotropy,
+we performed a Kolmogorov-Smirnov (K-S) test (Kolmogorov
+1933; Smirnov 1939) as used by K19. The K-S test consists in
+comparing the cumulative distribution functions (CDFs) F1 (x)
+and F2 (x) of two samples of size n1 and n2 by computing the
+maximum deviation between them at fixed inclination angle. In
+
+0
+
+0
+
+20
+
+40
+
+i ( ◦ ) This work
+
+60
+
+80
+
+Fig. 11. Star-by-star comparison between Kuszlewicz et al. (2019a)
+measurements and ours. The red line represents the 1:1 comparison.
+
+this work, we use a one-sample K-S test because we compare the
+CDF of our observational sample of size n = 1139 with a theoretical isotropic one (Kolmogorov 1933). We computed the maximum deviation (D-statistic) between the CDF of our sample and
+the CDF of a purely isotropic distribution and found D = 2.72 %
+(Fig. 9).
+The H0 hypothesis we considered is that our observational
+sample comes from a purely isotropic distribution of inclinations
+(Santos et al. 2015). For samples of size n > 35, the H0 hypothesis is rejected if (Smirnov 1939)
+c(α)
+D > √ = DH 0 ,
+n
+
+(20)
+
+where c(α) is a constant coming from the one-sample K-S table
+(Smirnov 1939) corresponding to a probability α of incorrectly
+rejecting the H0 hypothesis. We consider values of α from 1 to
+10 % to check what evidence there may be to reject H0 . We note
+that α = 10 % provides only weak evidence for the rejection
+of the null hypothesis, and therefore there is no justification to
+consider values larger than that. For α = 10 %, the K-S table
+gives c(α) = 1.22, from which we obtain DH0 = 4.83 %. This
+value is above D = 2.72 % computed for our sample, which indicates that the H0 hypothesis is not rejected at the 10 % level,
+and that no significant deviation from isotropy is detected. We
+emphasise that the non-rejection of the H0 hypothesis does not
+allow us to consider that the H0 hypothesis is verified. However,
+the non-rejection of the H0 hypothesis indicates that the distribution of inclinations derived in this study is fully compatible with
+isotropy, as expected.
+K19 and C17 determined the inclination of some Kepler
+RGB and red clump stars through a Bayesian analysis of oscillation spectra. Below we explore the compatibility of these results
+with ours.
+
+4. Comparison with Kuszlewicz et al. (2019a) results
+K19 derived inclination measurements for 89 RGB stars. These
+latter authors selected stars with high νmax values, which are
+therefore mostly above the confusion limit between rotational
+splittings and mixed-mode frequency spacings (Mosser et al.
+Article number, page 9 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+Number of stars
+
+25
+
+Kuszlewicz + (2019) stars
+
+Reconstructed distribution for Kuszlewicz + (2019) stars
+20
+
+sin(i) fit
+Kuszlewicz + (2019) 89 measurements
+Our 72 measurements
+
+Number of stars
+
+30
+
+20
+15
+10
+
+15
+
+10
+
+5
+5
+0
+0
+
+10
+
+20
+
+30
+
+40
+
+i( )
+◦
+
+50
+
+60
+
+70
+
+80
+
+0
+0
+
+90
+
+Fig. 12. Distribution of measured inclinations for the sample studied by
+Kuszlewicz et al. (2019a). The distribution resulting from Kuszlewicz
+et al. (2019a) measurements for 89 stars is in blue, and the distribution
+resulting from our measurements for 72 stars is in orange. The red line
+represents an isotropic distribution in sin(i) deriving from a fit to the
+histogram in blue.
+
+4.1. Raw stellar inclinations
+
+Our results globally agree with those of K19 for the 72 stars
+analysed (Fig. 11). The oscillation spectra and the stretchedperiod échelle diagrams of some of these stars are shown in Appendix B, with the azimuthal order of mixed modes identified.
+The small differences we find for some stars can be explained
+by the fact that K19 included p-m modes to derive an estimate
+of the inclination, and not only g-m modes as in our study. We
+note that K19 used a Bayesian hierarchical method that provides
+inclination measurements derived from the combination of local estimates of i instead of coming from a global analysis using
+all modes with the same azimuthal order together, as we did in
+this study. While Kamiaka et al. (2018) highlighted the fact that
+fitting oscillation modes individually can lead to biases in the
+inclination measurement, K19 used synthetic oscillation spectra
+to verify that using hierarchical inference makes it possible to
+reliably extract i, even when using a local analysis.
+We also note that we have much larger uncertainties than
+those derived by K19 (Fig. 11). K19 determined uncertainties as
+the 68.3 % highest posterior density interval, which corresponds
+Article number, page 10 of 35
+
+20
+
+30
+
+40
+
+i (◦ )
+
+50
+
+60
+
+70
+
+80
+
+90
+
+Fig. 13. Reconstructed distribution of stellar inclinations such as Fig. 8
+for the 72 stars we have in common with Kuszlewicz et al. (2019a). The
+red line represents an isotropic distribution in sin(i) derived from a fit to
+the histogram.
+
+1.0
+0.8
+
+Distribution functions
+Reconstructed distribution of inclinations
+for Kuszlewicz + (2019) stars
+Isotropic distribution in sin(i)
+D-statistic
+
+0.6
+
+F(i)
+
+2012b), for which the identification of mixed modes is straightforward without using stretched oscillation spectra (Mosser et al.
+2015) as in Gehan et al. (2018). Using the mixed-mode density
+defined in Eq. (6) as a proxy of stellar evolution on the RGB
+(Gehan et al. 2018), we note that these stars lie on the lower
+RGB, with N values below 5 (in green in Fig. 10). The 1139
+stars analysed in this study have higher N values on average,
+namely as high as 28 (blue in Fig. 10). Indeed, using stretched
+periods allows us to identify rotational multiplets even when they
+overlap, and therefore we can work at much lower νmax than K19
+and we are not limited to the lower RGB only. We were able to
+derive inclination measurements for 72 stars analysed by K19
+(Table B.1). We were not able to draw conclusions for 17 stars
+for which g-m modes have low HBR.
+
+10
+
+0.4
+0.2
+0.0
+0
+
+10
+
+20
+
+30
+
+40
+
+i (◦ )
+
+50
+
+60
+
+70
+
+80
+
+90
+
+Fig. 14. Cumulative distribution functions of the sample of 72 stars from
+Kuszlewicz et al. (2019a) (blue) computed from the inclination distribution in Fig. 13, and of a purely isotropic distribution in sin(i) (red).
+The D-statistic is highlighted in black.
+
+to formal 1-σ uncertainties when the posterior distribution follows a normal law. Our uncertainties are also 1-σ, except with
+lower error bars for stars presenting only one rotational component and upper error bars for some stars presenting two rotational components. K19 used a Bayesian approach based on
+an isotropic prior for the inclination. They assumed that individual angles are all drawn from an isotropic underlying distribution, allowing the inclination angle of individual modes to differ
+slightly under the assumption that these differences are small.
+By contrast, we adopt a frequentist approach with no prior on
+the possible values of individual inclinations. We derive our uncertainties considering the spread in PSD for all modes with the
+same azimuthal order. These variations in PSD for a given az-
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+Sample of 21 RGB stars
+
+Reconstructed distribution for Corsaro + (2017) stars
+3.0
+
+1:1 comparison
+Field stars
+Stars in NGC 6791
+Stars in NGC 6819
+
+80
+
+2.5
+
+Number of stars
+
+i ( ) Corsaro + (2017)
+
+100
+
+60
+40
+20
+
+2.0
+1.5
+1.0
+0.5
+
+0
+0
+
+20
+
+40
+
+i ( ) This work
+
+60
+
+0.0
+
+80
+
+Fig. 15. Star-by-star comparison between Corsaro et al. (2017) measurements and ours for RGB stars. Field stars are in blue, stars from
+NGC 6791 are in green, and stars from NGC 6819 are in orange. The
+red line represents the 1:1 comparison.
+
+0
+
+10
+
+20
+
+30
+
+40
+
+i( )
+
+50
+
+60
+
+70
+
+80
+
+90
+
+Fig. 16. Reconstructed distribution of stellar inclinations such as Fig. 8
+for the 16 RGB stars we have in common with Corsaro et al. (2017).
+The red line represents an isotropic distribution in sin(i) derived from a
+fit to the histogram.
+
+imuthal order can be significant along the spectrum due to the
+stochastic nature of oscillations. Therefore, it is not surprising
+that we end up with larger uncertainties compared to K19.
+We obtain a very similar distribution of inclinations to that
+found by K19, the main difference being that our distribution
+is squeezed with no extreme low and high inclination values
+(Fig. 12).
+
+Distribution functions
+
+1.0
+
+Reconstructed distribution of inclinations
+for Corsaro + (2017) stars
+Isotropic distribution in sin(i)
+D-statistic
+
+0.8
+
+4.2. Unbiased inclination distribution
+
+The reconstructed histogram of inclinations using PDFs for each
+of the 72 stars from the K19 sample (Fig. 13) is not isotropic, in
+contrast to the reconstructed distribution we obtain for 1139 stars
+(Fig. 8). It is not too surprising that we do not recover a clean
+isotropic distribution because the sample analysed is limited. We
+can however note that there is a bump in the distribution around
+55◦ as well as a clear overestimate of high inclinations above
+80◦ . K19 stated that the mode visibilities are higher for modes
+in singlets or doublets than for modes in triplets, making it easier to identify oscillation modes for these configurations. Under
+this assumption, the K19 sample is expected to have a deficit of
+intermediate inclinations. The isotropic distribution of inclinations results in a low probability of observing a star with i close
+to 0◦ . An overestimate of stars with i close to 90◦ is therefore
+expected if the observational bias induced by the relative heights
+of oscillation modes is not corrected. Figure 13 may suggest that
+K19 could not overcome this bias, which could potentially result in a non-isotropic sample of stars for which they derive the
+inclination angle.
+4.3. Statistical analysis
+
+In order to quantify the extent to which the reconstructed distribution of inclinations in Fig. 13 is representative of a sample of
+72 stars selected among an isotropic inclination distribution, we
+performed a K-S test in the same way as in Sect. 3.3.
+We computed the D-statistic for the CDF of our sample of 72
+stars with respect to the CDF of a purely isotropic distribution
+
+F(i)
+
+0.6
+0.4
+0.2
+0.0
+
+0
+
+10
+
+20
+
+30
+
+40
+
+i( )
+
+50
+
+60
+
+70
+
+80
+
+90
+
+Fig. 17. Cumulative distribution functions of the sample of 16 RGB
+field stars from Corsaro et al. (2017) (blue) computed from the inclination distribution in Fig. 16, and of a purely isotropic distribution in
+sin(i) (red). The D-statistic is highlighted in black.
+
+and found D = 16.33 % (Fig. 14). For the rejection level α = 5
+%, we have c(α) = 1.36 from the K-S table and we obtain DH0 =
+16.03 % for our sample of size n = 72 (Eq. (20)). This value
+is below D = 16.33 % computed for our sample. This indicates
+that the H0 hypothesis is rejected at the 5 % level, and we can
+state that the inclination distribution we have is not isotropic.
+These results from the K-S test are consistent with the analysis of K19, who found D ≃ 17 % for the 89 stars they analysed
+(Fig. 8 of K19). The corresponding D-statistic necessary to reject the H0 hypothesis at the 2 % level is DH0 = 16.11 % for a
+sample of size n = 89 (Eq. (20)). The H0 hypothesis is therefore
+also rejected at the 2 % level for the total sample analysed by
+K19.
+Article number, page 11 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+5. Comparison with Corsaro et al. (2017) results
+C17 derived inclination measurements for 84 RGB and clump
+stars. Of these, 36 are field stars, 25 belong to the open cluster NGC 6791, and 23 to the open cluster NGC 6819. These
+latter authors find that low inclinations are favoured in the two
+open clusters NGC 6791 and NGC 6819, and therefore that inclinations do not follow the expected isotropic distribution. They
+concluded that stellar spins seem to be preferentially aligned towards the line of sight for those two open clusters. This is a relatively unexpected result that was contradicted by Mosser et al.
+(2018), who reanalysed C17 stars belonging to NGC 6819 and
+found that the distribution of inclinations follows an isotropic
+trend.
+The method of Gehan et al. (2018) is not suitable for
+analysing clump stars. Indeed, oscillation modes present larger
+mode line widths combined with lower rotational splitting values compared to RGB stars, making rotational components very
+hard to disentangle because they are very close to each other in
+stretched-period échelle diagrams (extension of the upper part
+of Fig. 3 of Gehan et al. (2018)). We therefore focus here on the
+comparison between our results and those of C17 for RGB stars
+only. C17 have 36 RGB stars in their sample, including 19 field
+stars, 13 stars belonging to NGC 6791, and 4 stars belonging to
+NGC 6819. We were able to derive inclination measurements for
+21 RGB stars analysed by C17, including 16 field stars, 3 stars
+from NGC 6819, and 2 stars from NGC 6791 (Table B.2 and
+Figs in Sect. B). We were not able to form conclusions for all
+stars analysed by C17 because some of them have a low HBR
+for g-m modes, in particular for the open cluster NGC 6791.
+
+NGC 6819
+
+100
+
+i ( ) Corsaro + (2017)
+
+This statistical analysis emphasises the fact that K19 could
+only derive inclinations for a biased sample, which is intrinsically non-isotropic. This is not surprising because they were able
+to fit 89 stars out of their sample of 123 stars. This bias comes
+from the relative mode visibilities that lead to an easier identification of mixed modes when the inclination is close to 55◦ or
+close to 90◦ . This evidence does not diminish the interest of their
+work.
+
+1:1 comparison
+Clump stars
+RGB stars
+
+80
+60
+40
+20
+0
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+i ( ) Mosser + (2018)
+
+70
+
+80
+
+90
+
+Fig. 18. Star-by-star comparison between Corsaro et al. (2017) and
+Mosser et al. (2018) measurements for stars belonging to NGC 6819.
+Clump stars are in blue, and RGB stars are in orange. The red line represents the 1:1 comparison.
+
+tative of a sample of 16 stars selected among an isotropic inclination distribution, we performed a K-S test in the same way as
+in Sect. 3.3 and Sect. 4.3.
+We computed the D-statistic for the CDF of our sample of
+16 field stars with respect to the CDF of a purely isotropic distribution and found D = 20.42 % (Fig. 17). For our sample
+of size n = 16, the K-S table directly gives (Smirnov 1939)
+DH0 = 29.47 % for the low rejection level α = 10 %, which
+is above D = 20.42 % computed for our sample. This indicates
+that the H0 hypothesis is not rejected to the 10 % level. The inclination distribution for C17 stars therefore does not exhibit significant deviation from isotropy. Therefore, there is no obvious
+observational bias in the sample selection, as stated by C17.
+5.3. Inclinations for open clusters
+
+5.1. Raw stellar inclinations
+
+The measurements we derived for RGB stars are in global agreement with those obtained by C17, not only for field stars but
+also for cluster stars (Fig. 15). As we already noted for K19 results, uncertainties derived by C17 are much smaller than ours,
+while corresponding to a 1-σ confidence interval. These differences are likely due to the different approaches used: C17 used
+a Bayesian approach including a prior on the inclination, while
+we used a frequentist approach with no prior to derive our measurements. Additionally, C17 were able to measure inclinations
+as low as 0◦ for two RGB stars that we analysed and as high as
+90◦ for five stars (Fig. 15), which is not possible as explained in
+in Sect. 2.3.2.
+5.2. Statistical analysis
+
+C17 claimed that the distribution of inclinations they derive for
+their sample of 36 RGB and clump field stars is in agreement
+with an isotropic distribution. We obtained the reconstructed histogram of inclinations using PDFs for each of the 16 field stars
+from the C17 sample (Fig. 16). In order to assess the extent to
+which the reconstructed distribution of inclinations is represenArticle number, page 12 of 35
+
+For the RGB stars analysed here, we obtain inclination measurements in agreement with those derived by C17 (Fig. 15).
+However, Mosser et al. (2018) obtained inclination measurements for red giants of the open cluster NGC 6819 that contradict the results of C17 (Fig. 18). Part of the explanation might
+come from the fact that the great majority of these NGC 6819
+stars are clump stars, for which C17 overestimate low inclinations (Fig. 18). For three RGB stars out of four, results obtained
+by C17 and Mosser et al. (2018) are in agreement. Figure 18
+therefore suggests that mixed modes are not always correctly
+identified by C17 in the case of clump stars. This is highlighted
+by Supplementary Figure 1 of C17 where only m = 0 modes
+◦
+are identified, resulting in an inclination of 20+8
+−6 , while Fig. 16
+of Mosser et al. (2018) reveals that the three components with
+m = {−1, 0, 1} are visible and the corresponding inclination is
+47 ± 18◦ . This mode misidentification is not surprising as clump
+stars present larger line widths together with smaller rotational
+splittings compared to RGB stars. In these conditions, it is more
+probable to identify only one rotational component while two
+or three are actually visible, resulting in an underestimated inclination. The conclusion of C17 regarding aligned stellar spins
+in clusters must therefore be considered with caution. As our
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+Table 1. Properties of RGB stars with a planet candidate(s).
+
+KIC
+4953262
+5110453
+5115688
+6425377
+7198587
+7458743
+8016650
+9145861
+9475697
+10790401
+11097752
+11911929
+
+i (◦ )
+39.9
+42.0
+30.4
+44.0
+68.8
+76.7
+33.0
+74.7
+20.2
+67.2
+63.6
+47.33
+
+σi,+ (◦ )
+25.0
+16.8
+13.2
+13.0
+21.2
+13.3
+14.4
+6.7
+8.5
+22.8
+13.3
+10.7
+
+σi,− (◦ )
+25.0
+16.8
+30.4
+13.0
+8.0
+6.9
+33.0
+6.7
+20.2
+8.0
+13.3
+10.7
+
+Table 2. Properties of RGB stars with a confirmed planet(s).
+
+Name
+Kepler-56
+Kepler-91
+Kepler-432
+
+KIC
+6448890
+8219268
+10864656
+
+Number of planets
+3
+1
+2
+
+method is not suitable for clump stars, we cannot directly check
+this hypothesis by deriving i measurements for clump stars in
+the open clusters NGC 6819 and 6791. This merits a dedicated
+study with another method to analyse clump stars.
+
+As mentioned in Sect. 1, inclination measurements for planethosting stars provide information on the obliquity of planetary
+systems (Eq. 1). For stars with transiting planet(s), we expect
+that, on average, the lower the inclination, the larger the obliquity, and therefore the higher the degree of spin-orbit misalignment between the host star and the planet(s). In this context, we
+used the NASA Exoplanet Archive cumulative table listing Kepler Objects of Interest (KOI)2 to lead a systematic search for
+RGB stars in our sample with a confirmed planet(s) and for stars
+with a planet candidate(s) that have not yet been confirmed or
+dismissed.
+6.1. Inclination and evolutionary stage
+
+Among all the stars analysed in this study, we found 12 RGB
+stars in our sample with a planet candidate(s). These stars have
+inclinations distributed in the [0, 90◦ ] range, with five stars presenting intermediate inclinations and three stars presenting low
+inclinations, being possibly pole-on (Fig. 19 and Table 1). We
+suggest that these 12 RGB stars should be analysed in priority to
+assess whether or not they have a confirmed transiting planet(s).
+If these stars turn out to host a planet(s), it will be possible to put
+constraints on the obliquity of the planetary orbit because we
+have measured their inclination angle. The eight aforementioned
+stars with low and intermediate inclinations should in particular present large obliquities should a transiting planet(s) be confirmed. It is interesting to note that these stars present diverse
+evolutionary stages on the RGB, with mixed-mode density values between N = 3.8 and 10.7 (Fig. 10). Any planet detection
+2
+https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nphtblView?app=ExoTbls&config=cumulative
+
+i (◦ )
+51.7
+73.5
+84.1
+
+σi,+ (◦ )
+12.5
+16.5
+5.9
+
+σi,− (◦ )
+12.5
+6.9
+2.6
+
+Stars with planet candidates or confirmed planets
+Stars with planet candidates
+Kepler-432
+Stars with confirmed planets
+Huber+ (2013) measurement
+for Kepler-56
+Quinn+ (2015) measurement Kepler-91
+for Kepler-432
+
+2.0
+1.5
+
+Arbitrary unit
+
+6. Red giants with a planet candidate(s) or a
+confirmed planet(s)
+
+N
+3.7
+10.4
+3.1
+
+Kepler-56
+
+1.0
+0.5
+0.0
+0
+
+20
+
+40
+
+i( )
+
+60
+
+80
+
+Fig. 19. Measured inclinations for stars with a planet candidate(s), in
+blue, and with a confirmed planet(s), in red. The y-axis is arbitrary. The
+Huber et al. (2013a) measurement for Kepler-56 with misaligned planets is shown in black, with the Quinn et al. (2015) measurement for
+Kepler-432 in green.
+
+around these stars would provide constraints on planetary evolution and survival around evolved stars, until relatively far up on
+the RGB where stars already started to expand significantly. We
+also find one RGB star in our sample belonging to an eclipsing
+binary system, KIC 8564976, which was also known as KOI3890 before its binary nature was confirmed by Kuszlewicz et al.
+◦
+(2019b). We find an inclination of i = 74.6+15.4
+for this star,
+−7.7
++2.7 ◦
+consistent with the value of i = 87.3−1.1 found by Kuszlewicz
+et al. (2019b).
+Additionally, we find no stars with confirmed planet(s)
+among stars analysed in this study. We therefore considered the
+seven Kepler evolved stars hosting exoplanet(s) presented by
+Lillo-Box et al. (2016) and were able to measure the inclination
+Article number, page 13 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+Confirmed planets transiting red giants
+from Lillo-Box+ (2016)
+
+25
+
+Kepler-56
+Kepler-432
+Kepler-91
+
+20
+15
+
+()
+
+of three of these stars (Fig. 19 and Table 2). Two stars have large
+inclination values consistent with a star seen almost equator-on,
+and therefore the planetary orbit axis is likely to be approximately aligned with the star’s rotation axis. Our measurement
+◦
+of i = 84.1+5.9
+−2.6 for Kepler-432 is compatible with Quinn et al.
+◦
+(2015), who measured i = 90+0
+−8 (Fig. 19). We measured an incli◦
+nation of i = 51.7 ± 12.5 for Kepler-56, which is consistent with
+Huber et al. (2013a) who measured i = 47 ± 7◦ (Fig. 19), from
+which they deduced a lower limit for the obliquity of ψ > 37◦ .
+Unsurprisingly, two of these three host stars are on the very low
+RGB, with mixed-mode density values of N = 3.1 and 3.7 respectively (Fig. 10 and Table 2). However, the third star (Kepler91) is more evolved, with N = 10.4 (Fig. 10 and Table 2). Seismic scaling relations give R ∼ 7.33 R for this star, which is
+compatible with R = 6.30 ± 0.16 R indicated in Lillo-Box et al.
+(2016). This confirms that planets can survive far up on the RGB
+and not only on the early RGB phase.
+
+10
+5
+
+value for a close-in
+planet like a Hot Jupiter
+transiting a Sun-like star
+
+0
+0.0
+
+6.2. Planetary orbit angle for a transiting planet
+
+One might be tempted to consider that ip ≃ 90◦ for transiting
+planets, and therefore that Eq. (1), which defines the obliquity,
+can be simplified to (Kamiaka et al. 2018)
+cos ψ ≃ sin i cos λ.
+
+(21)
+
+However, a transit can occur if the inclination of the planetary
+orbit follows
+(90◦ − θ) ≤ ip ≤ (90◦ + θ) ,
+
+(22)
+
+with, assuming that the planet radius is much smaller than the
+stellar radius,
+R 
+?
+θ = arcsin
+,
+(23)
+a
+where R? is the stellar radius and a is the semi-major axis of the
+planet (Beatty & Seager 2010).
+When considering transiting planets around Sun-like stars,
+Eq. (21) is mostly valid, with θ taking maximum values around
+5.7◦ for hot Jupiters that have typically R? /a = 1/10 (Beatty &
+Seager 2010). We nevertheless note that, although we can still
+safely consider that sin ip ≃ 1 in the left-hand term of Eq. (1)
+for θ values as high as 5.7◦ , we have cos ip ≃ 0.1 for θ = 5.7◦ .
+We therefore advocate caution when considering that cos ip ≃ 0
+in the right-hand term of Eq. (1) for close-in planets transiting
+Sun-like stars, such as hot Jupiters.
+Nevertheless, Eq. (21) can be inappropriate in many cases
+for transiting planets around evolved stars with larger radii. We
+considered planets around red giants listed by Lillo-Box et al.
+(2016) and used the Extrasolar Planet Encyclopedia3 to keep
+those that were detected by the transit method. All Kepler planets
+in Lillo-Box et al. (2016) are transiting planets, except Kepler56d and Kepler-432c. Of the 12 transiting planets from LilloBox et al. (2016), 4 have θ values above the maximum value of
+θ = 5.7◦ for Sun-like stars, including 3 planets that are transiting
+RGB stars analysed in this study (Fig. 20). The planet around the
+most evolved RGB star (Kepler-91), which also has the largest
+radius, has the most important θ value with θ = 24.1◦ . As a
+consequence, while one can safely apply Eq. (21) to all planets around Sun-like stars up to close-in planets like hot Jupiters,
+this is no longer systematically true for more evolved stars with
+larger radii, and one has to consider Eq. (1) as a whole in many
+cases.
+3
+
+http://exoplanet.eu/catalog/all_fields/
+
+Article number, page 14 of 35
+
+0.1
+
+0.2
+
+R /a
+
+0.3
+
+0.4
+
+Fig. 20. Deviation angle θ (Eq. 23) as a function of the ratio between
+the stellar radius and the planetary semi-major axis for Kepler RGB
+stars with confirmed transiting planets listed in Lillo-Box et al. (2016).
+Planets around RGB stars analysed in this study are coloured according
+to their host star. The black dashed line indicates the maximum θ value
+for planets transiting Sun-like stars computed for close-in planets like
+hot Jupiters, θ ≃ 5.7◦ .
+
+7. Conclusion
+This work highlights the biases that affect stellar inclination
+measurements and provides a way to infer the underlying statistical distribution of inclinations for a given population of stars.
+We developed a general and automated approach to derive
+seismic measurements of the stellar inclination that can be applied to any solar-type pulsator for which oscillation modes are
+identified. We analysed RGB stars observed by Kepler, including mainly field stars. Raw inclinations that are measured are not
+isotropically distributed, in contrast to what is expected for random inclinations. In particular, values of i . 10◦ and i & 85◦
+cannot be directly measured, and this observational limitation
+results in a biased distribution. The expected isotropic distribution is actually recovered when taking into account individual
+uncertainties on the inclination measurement for each star using
+PDFs, validating the method setup in this study. Our results emphasise the fact that unveiling the statistical significance of the
+inclination distribution of a given sample of stars is difficult, and
+that considering uncertainties in an accurate way is fundamental
+to retrieving the true underlying distribution.
+Additionally, we were able to confirm that the distribution
+of inclinations derived by Kuszlewicz et al. (2019a) for stars on
+the lower RGB is not isotropic and results from a bias in sample
+selection. We also checked the results obtained by Corsaro et al.
+(2017) and derived inclination measurements that are in agreement for field stars on the RGB. For the open clusters NGC 6791
+and NGC 6819, we were only able to analyse a handful of RGB
+stars. Results obtained by Mosser et al. (2018) for red giants in
+NGC 6819 suggest that mixed-mode misidentification is more
+common for clump stars analysed by Corsaro et al. (2017) than
+for RGB stars, calling into question the stellar spin alignment
+inferred by Corsaro et al. (2017) for the two open clusters NGC
+6791 and NGC 6819. The analysis of clump stars is beyond the
+scope of this paper and merits a dedicated study to check this
+assumption in detail.
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+Moreover, we measured the inclination angle of 12 RGB
+stars with a planet candidate or candidates. These should be
+analysed in priority to assess whether or not they host planets as it would be possible to put constraints on the obliquity
+of the planetary orbit, with eight systems that should present
+large obliquities. We also derived the inclination of three RGB
+stars with a confirmed planet or planets, and our results are in
+agreement with previous measurements. Kepler-91 and Kepler432 have large inclination values consistent with a low obliquity, and we confirm that the multiplanetary system Kepler-56
+has an intermediate inclination angle, for which Huber et al.
+(2013b) inferred a high obliquity corresponding to misaligned
+planets. We find that Kepler-56 and Kepler-432 unsurprisingly
+lie on the lower RGB. However, Kepler-91 is more evolved and
+has a larger radius, confirming that planets can survive relatively
+far up on the RGB.
+Finally, we show that considering that the inclination angle
+of the planetary orbit can be safely approximated to 90◦ in the
+case of transiting planets is not always valid when the host star
+is a red giant with a larger radius than that of main sequence
+stars, which greatly impacts the determination of the obliquity.
+This assumption should therefore be systematically verified before deriving an estimate of the obliquity for planets transiting
+red giants.
+This work revisits the problem of inferring the distribution of
+inclinations in large stellar samples. Such studies applied to open
+clusters can provide valuable insight into the physical conditions
+driving star formation. Kepler observed only four open clusters
+with large distance moduli (Bossini et al. 2019). The undergoing
+TESS space mission (Aguirre et al. 2020) has a near full-sky coverage, including a lower limit of about 600 open clusters (Bouma
+et al. 2019). We can therefore expect to have a significant number
+of open clusters observed by TESS with smaller distance moduli, potentially presenting higher signal-to-noise ratios compared
+to Kepler clusters. As TESS has now two years of observations
+and the extended mission is now approved, we can expect a sufficiently high resolution to disentangle individual mixed modes
+in the oscillation spectra of red giants belonging to open clusters.
+This would allow us to unveil the physical conditions during star
+formation for tens and potentially hundreds of open clusters.
+Acknowledgements. C. G. thanks Tiago Campante for helpful discussions as
+well as D. Stello, J. S. Kuszlewicz and K. J. Bell for constructive comments.
+This work was supported by FCT - Fundação para a Ciência e a Tecnologia through national funds (PTDC/FIS-AST/30389/2017), by FEDER - Fundo
+Europeu de Desenvolvimento Regional through COMPETE2020 - Programa
+Operacional Competitividade e Internacionalização (POCI-01-0145-FEDER030389), and by FCT/MCTES through national funds (PIDDAC) by these grants
+UIDB/04434/2020 and UIDP/04434/2020. M. S. C. is supported by FCT through
+a contract (CEECIND/02619/2017).
+
+References
+Aguirre, V. S., Stello, D., Stokholm, A., et al. 2020, ApJL, 889, L34
+Albrecht, S., Winn, J. N., Johnson, J. A., et al. 2012, ApJ, 757, 18
+Albrecht, S., Winn, J. N., Marcy, G. W., et al. 2013, ApJ, 771, 11
+Appourchaux, T., Michel, E., Auvergne, M., et al. 2008, A&A, 488, 705
+Beatty, T. G. & Seager, S. 2010, ApJ, 712, 1433
+Beck, P. G., Montalban, J., Kallinger, T., et al. 2012, Nature, 481, 55
+Benomar, O., Bedding, T. R., Mosser, B., et al. 2013, ApJ, 767, 158
+Bossini, D., Vallenari, A., Bragaglia, A., et al. 2019, A&A, 623, A108
+Bouma, L. G., Hartman, J. D., Bhatti, W., Winn, J. N., & Bakos, G. Á. 2019,
+ApJS, 245, 13
+Campante, T. L., Lund, M. N., Kuszlewicz, J. S., et al. 2016, ApJ, 819, 85
+Chaplin, W. J., Sanchis-Ojeda, R., Campante, T. L., et al. 2013, ApJ, 766, 101
+Chatterjee, S., Ford, E. B., Matsumura, S., & Rasio, F. A. 2008, ApJ, 686, 580
+Corsaro, E., Lee, Y.-N., García, R. A., et al. 2017, Nature Astronomy, 1, 0064
+
+Cunha, M. S., Avelino, P. P., Christensen-Dalsgaard, J., et al. 2019, MNRAS,
+490, 909
+Deheuvels, S., Ballot, J., Beck, P. G., et al. 2015, A&A, 580, A96
+Deheuvels, S., Doğan, G., Goupil, M. J., et al. 2014, A&A, 564, A27
+Deheuvels, S., García, R. A., Chaplin, W. J., et al. 2012, ApJ, 756, 19
+Deheuvels, S., Ouazzani, R. M., & Basu, S. 2017, A&A, 605, A75
+Fabrycky, D. & Tremaine, S. 2007, ApJ, 669, 1298
+Fabrycky, D. C. & Winn, J. N. 2009, ApJ, 696, 1230
+Gehan, C., Mosser, B., Michel, E., Samadi, R., & Kallinger, T. 2018, A&A, 616,
+A24
+Gilliland, R. L., Brown, T. M., Christensen-Dalsgaard, J., et al. 2010, PASP, 122,
+131
+Gizon, L. & Solanki, S. K. 2003, ApJ, 589, 1009
+Goupil, M. J., Mosser, B., Marques, J. P., et al. 2013, A&A, 549, A75
+Hekker, S. & Christensen-Dalsgaard, J. 2017, A&A Rev., 25, 1
+Heller, R. 2019, A&A, 623, A137
+Hirano, T., Masuda, K., Sato, B., et al. 2015, ApJ, 799, 9
+Holt, J. R. 1893, Astronomy and Astro-Physics (formerly The Sidereal Messenger), 12, 646
+Hrudková, M., Hatzes, A., Karjalainen, R., et al. 2017, MNRAS, 464, 1018
+Huber, D. 2018, in Asteroseismology and Exoplanets: Listening to the Stars and
+Searching for New Worlds, ed. T. L. Campante, N. C. Santos, & M. J. P. F. G.
+Monteiro, Vol. 49, 119
+Huber, D., Carter, J. A., Barbieri, M., et al. 2013a, Science, 342, 331
+Huber, D., Chaplin, W. J., Christensen-Dalsgaard, J., et al. 2013b, ApJ, 767, 127
+Johnson, J. A., Bowler, B. P., Howard, A. W., et al. 2010, ApJ, 721, L153
+Johnson, J. A., Clanton, C., Howard, A. W., et al. 2011, ApJS, 197, 26
+Johnson, J. A., Winn, J. N., Albrecht, S., et al. 2009, PASP, 121, 1104
+Jones, M. I., Jenkins, J. S., Rojo, P., Melo, C. H. F., & Bluhm, P. 2015, A&A,
+573, A3
+Kamiaka, S., Benomar, O., & Suto, Y. 2018, MNRAS, 479, 391
+Kolmogorov, A. N. 1933, Giornale dell’Instituto Italiano degli Attuari, 4, 89
+Kuszlewicz, J. S., Chaplin, W. J., North, T. S. H., et al. 2019a, MNRAS, 488,
+572
+Kuszlewicz, J. S., North, T. S. H., Chaplin, W. J., et al. 2019b, MNRAS, 487, 14
+Lee, B. C., Park, M. G., Lee, S. M., et al. 2015, A&A, 584, A79
+Lillo-Box, J., Barrado, D., & Correia, A. C. M. 2016, A&A, 589, A124
+Lillo-Box, J., Barrado, D., Moya, A., et al. 2014, A&A, 562, A109
+Lin, D. N. C., Bodenheimer, P., & Richardson, D. C. 1996, Nature, 380, 606
+McKee, C. F. & Ostriker, E. C. 2007, ARA&A, 45, 565
+McLaughlin, D. B. 1924, ApJ, 60
+Montalbán, J., Miglio, A., Noels, A., et al. 2013, ApJ, 766, 118
+Mosser, B., Belkacem, K., Goupil, M. J., et al. 2011, A&A, 525, L9
+Mosser, B., Belkacem, K., Pinçon, C., et al. 2017a, A&A, 598, A62
+Mosser, B., Elsworth, Y., Hekker, S., et al. 2012a, A&A, 537, A30
+Mosser, B., Gehan, C., Belkacem, K., et al. 2018, A&A, 618, A109
+Mosser, B., Goupil, M. J., Belkacem, K., et al. 2012b, A&A, 548, A10
+Mosser, B., Michel, E., Belkacem, K., et al. 2013, A&A, 550, A126
+Mosser, B., Pinçon, C., Belkacem, K., Takata, M., & Vrard, M. 2017b, A&A,
+600, A1
+Mosser, B., Vrard, M., Belkacem, K., et al. 2015, A&A, 584, A50
+Ohta, Y., Taruya, A., & Suto, Y. 2005, ApJ, 622, 1118
+Pinçon, C., Goupil, M. J., & Belkacem, K. 2020, A&A, 634, A68
+Pinçon, C., Takata, M., & Mosser, B. 2019, A&A, 626, A125
+Pinsonneault, M. H., Elsworth, Y. P., Tayar, J., et al. 2018, ApJS, 239, 32
+Queloz, D., Eggenberger, A., Mayor, M., et al. 2000, A&A, 359, L13
+Quinn, S. N., White, T. R., Latham, D. W., et al. 2015, ApJ, 803, 49
+Rey-Raposo, R. & Read, J. I. 2018, MNRAS, 481, L16
+Rossiter, R. A. 1924, ApJ, 60
+Santos, A. R. G., Cunha, M. S., Avelino, P. P., & Campante, T. L. 2015, A&A,
+580, A62
+Scuflaire, R. 1974, A&A, 36, 107
+Smirnov, N. V. 1939, Bulletin Moscow University, 2, 3
+Vrard, M., Mosser, B., Samadi, R., et al. 2016, A&A, 588, A87
+Winn, J. N., Fabrycky, D., Albrecht, S., & Johnson, J. A. 2010, ApJ, 718, L145
+Winn, J. N. & Fabrycky, D. C. 2015, ARA&A, 53, 409
+
+Article number, page 15 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+Appendix A: Inclination angles derived for
+Kuszlewicz et al. (2019a) and Corsaro et al.
+(2017) stars
+We provide the inclination angle, the associated uncertainties,
+and the number of detected rotational components we derived
+for the 72 Kuszlewicz et al. (2019a) stars in Table B.1 and for
+the 21 Corsaro et al. (2017) RGB stars in Table B.2.
+
+Appendix B: Examples of oscillation spectra and
+stretched period échelle diagrams
+The oscillation spectra with the azimuthal order of dipole
+gravity-dominated mixed modes identified, as well as the corresponding échelle diagrams are presented for:
+– KIC 1569842 with the three m = {−1, 0, 1} rotational components observed (Fig. B.1);
+– KIC 3098179 with the three m = {−1, 0, 1} rotational components observed(Fig. B.2);
+– KIC 1723843 with only the two m = ± 1 rotational components observed (Fig. B.3);
+– KIC 2141255 with only the two m = ± 1 rotational components observed (Fig. B.4);
+– KIC 2303101 with only the m = 0 rotational component observed (Fig. B.5);
+– KIC 3645589 with only the m = 0 rotational component observed (Fig. B.6);
+– the Kuszlewicz et al. (2019a) star KIC 3531478 with the
+three m = {−1, 0, 1} rotational components observed for
+which we are in agreement (Fig. B.7);
+– the Kuszlewicz et al. (2019a) star KIC 7504619 with the
+three m = {−1, 0, 1} rotational components observed for
+which we are in agreement (Fig. B.8);
+– the Kuszlewicz et al. (2019a) star KIC 4731138 with only
+the two m = ± 1 rotational components observed for which
+we are in agreement (Fig. B.9);
+– the Kuszlewicz et al. (2019a) star KIC 3634488 with only
+the two m = ± 1 rotational components observed for which
+we are in marginal agreement (Fig. B.10);
+– the Kuszlewicz et al. (2019a) star KIC 4996676 with only
+the m = 0 rotational component observed for which we are
+in agreement (Fig. B.11);
+– the Kuszlewicz et al. (2019a) star KIC 3446775 with only
+the m = 0 rotational component observed for which we are
+in agreement (Fig. B.12);
+– the Corsaro et al. (2017) NGC 6791 star KIC 2437325 with
+only the m = 0 rotational component observed for which we
+are in agreement (Fig. B.13);
+– the Corsaro et al. (2017) NGC 6819 star KIC 5111718 with
+only the two m = ± 1 rotational components observed for
+which we are in agreement (Fig. B.14);
+– the Corsaro et al. (2017) field star KIC 6117517 with only
+the m = 0 rotational component observed for which we are
+in agreement (Fig. B.15);
+– the Corsaro et al. (2017) field star KIC 7060732 with the
+three m = {−1, 0, 1} rotational component observed for
+which we are in marginal agreement (Fig. B.16);
+– the Corsaro et al. (2017) field star KIC 8475025 with only
+the two m = ± 1 rotational components observed for which
+we are in agreement (Fig. B.17).
+All these stars lie on the red giant branch.
+
+Article number, page 16 of 35
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+KIC 1569842
+25000
+20000
+15000
+10000
+5000
+0
+
+110
+
+120
+
+130
+
+140
+
+150
+
+160
+
+KIC 1569842
+170
+160
+
+( Hz)
+
+150
+140
+130
+120
+110
+100
+
+0
+
+10
+
+20
+
+30
+
+40
+
+mod
+
+50
+1
+
+60
+
+70
+
+80
+
+Fig. B.1. KIC 1569842 with three observed rotational components. We found an inclination of i = 32.5 ± 13.8◦ . Upper panel: oscillation spectrum
+where frequency intervals around radial and quadrupole modes have been removed. The horizontal blue dashed-line indicates the level above
+which oscillation modes are considered as significant. Pressure-dominated mixed-modes are in grey, gravity-dominated mixed-modes are in black.
+Modes with azimuthal orders m = {−1, 0, 1} are indicated by vertical dashed lines in green, light blue and red, respectively. Lower panel: échelle
+diagram in stretched period with same color code. Observed modes are represented by dots and the symbol size varies as the measured power
+spectral density. The fit of rotational components are represented by crosses with the color coding the azimuthal order.
+
+Article number, page 17 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+KIC 3098179
+
+25000
+
+m=0
+m = -1
+m = +1
+
+PSD (ppm2/ Hz)
+
+20000
+15000
+10000
+5000
+0
+
+110
+
+120
+
+130
+
+140
+
+150
+
+( Hz)
+
+160
+
+KIC 3098179
+170
+
+( Hz)
+
+160
+150
+140
+130
+120
+110
+
+0
+
+10
+
+20
+
+30
+
+mod
+
+40
+
+50
+
+60
+
+70
+
+1
+
+Fig. B.2. KIC 3098179 with three observed rotational components. We found an inclination of i = 39.9 ± 17.3◦ .
+
+Article number, page 18 of 35
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+KIC 1723843
+m=0
+m = -1
+m = +1
+
+PSD (ppm2/ Hz)
+
+25000
+20000
+15000
+10000
+5000
+0
+
+90
+
+100
+
+110
+
+120
+
+( Hz)
+
+130
+
+KIC 1723843
+140
+130
+120
+110
+100
+90
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+Fig. B.3. KIC 1723843 with two observed rotational components. Modes with m = 0 have been identified a posteriori considering that the m = 0
+ridge is median with respect to m = ± 1 ridges in the échelle diagram. We thus represented them by dotted lines in the spectrum to distinguish
+◦
+them from m = ± 1 that are directly visible. We found an inclination of i = 74.3±15.7
+7.2 .
+
+Article number, page 19 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+KIC 2141255
+m=0
+m = -1
+m = +1
+
+20000
+
+PSD (ppm2/ Hz)
+
+17500
+15000
+12500
+10000
+7500
+5000
+2500
+0
+
+120
+
+130
+
+140
+
+150
+
+160
+
+( Hz)
+
+170
+
+KIC 2141255
+
+180
+170
+
+( Hz)
+
+160
+150
+140
+130
+120
+110
+20
+
+30
+
+40
+
+50
+
+60
+
+mod
+
+70
+
+80
+
+90
+
+1
+
+◦
+Fig. B.4. KIC 2141255 with two observed rotational components. We found an inclination of i = 76.4±13.6
+8.2 .
+
+Article number, page 20 of 35
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+KIC 2303101
+m=0
+
+30000
+
+PSD (ppm2/ Hz)
+
+25000
+20000
+15000
+10000
+5000
+0
+
+140
+
+150
+
+160
+
+170
+
+( Hz)
+
+180
+
+190
+
+200
+
+KIC 2303101
+
+( Hz)
+
+200
+180
+160
+140
+
+40
+
+50
+
+60
+
+mod
+
+70
+1
+
+80
+
+90
+
+◦
+Fig. B.5. KIC 2303101 with one observed rotational component. We found an inclination of i = 19.8±8.4
+19.8 .
+
+Article number, page 21 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+KIC 3645589
+m=0
+
+16000
+
+PSD (ppm2/ Hz)
+
+14000
+12000
+10000
+8000
+6000
+4000
+2000
+0
+
+130
+
+140
+
+150
+
+160
+
+170
+
+( Hz)
+
+180
+
+190
+
+22.5
+
+25.0
+
+KIC 3645589
+180
+
+( Hz)
+
+170
+160
+150
+140
+130
+120
+5.0
+
+7.5
+
+10.0
+
+12.5
+
+15.0
+
+mod
+
+17.5
+1
+
+20.0
+
+◦
+Fig. B.6. KIC 3645589 with one observed rotational component. We found an inclination of i = 18.9±8.0
+18.9 .
+
+Article number, page 22 of 35
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+KIC 3531478
+m=0
+m = -1
+m = +1
+
+PSD (ppm2/ Hz)
+
+1200
+1000
+800
+600
+400
+200
+0
+
+200
+
+210
+
+220
+
+230
+
+( Hz)
+
+240
+
+250
+
+260
+
+KIC 3531478
+270
+260
+
+( Hz)
+
+250
+240
+230
+220
+210
+15
+
+20
+
+25
+
+30
+
+mod
+
+35
+1
+
+40
+
+45
+
+50
+
+Fig. B.7. Same as Fig. B.1 for KIC 3531478 with three observed rotational components. We found an inclination of i = 41.2 ± 9.3◦ consistent with
+◦
+Kuszlewicz et al. (2019a) measurement of i = 46.8±3.2
+3.1 .
+
+Article number, page 23 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+KIC 7504619
+m=0
+m = -1
+m = +1
+
+PSD (ppm2 /µHz)
+
+5000
+4000
+3000
+2000
+1000
+0
+
+190
+
+200
+
+210
+
+220
+
+230
+
+ν (µHz)
+
+240
+
+250
+
+60
+
+80
+
+260
+
+KIC 7504619
+
+270
+260
+250
+
+ν (µHz)
+
+240
+230
+220
+210
+200
+190
+180
+
+20
+
+0
+
+20
+
+40
+
+τ mod ∆Π1
+
+100
+
+Fig. B.8. Same as Fig. B.1 for KIC 7504619 with three observed rotational components. We found an inclination of i = 56.8 ± 16.6◦ in agreement
+◦
+with Kuszlewicz et al. (2019a) measurement of i = 59.3±2.4
+2.5 .
+
+Article number, page 24 of 35
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+7000
+
+PSD (ppm2/ Hz)
+
+6000
+
+KIC 4731138
+m=0
+m = -1
+m = +1
+
+5000
+4000
+3000
+2000
+1000
+0
+
+190
+
+200
+
+210
+
+220
+
+( Hz)
+
+230
+
+240
+
+250
+
+KIC 4731138
+
+260
+250
+
+( Hz)
+
+240
+230
+220
+210
+200
+190
+0
+
+20
+
+40
+
+mod
+
+60
+
+80
+
+100
+
+1
+
+◦
+Fig. B.9. Same as Fig. B.1 for KIC 4731138 with two observed rotational components. We found an inclination of i = 79.8±10.2
+consistent with
+3.1
+◦
+Kuszlewicz et al. (2019a) measurement of i = 84.5±3.3
+.
+3.0
+
+Article number, page 25 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+KIC 3634488
+m=0
+m = -1
+m = +1
+
+8000
+
+PSD (ppm2 /µHz)
+
+7000
+6000
+5000
+4000
+3000
+2000
+1000
+0
+
+180
+
+200
+
+220
+
+ν (µHz)
+
+240
+
+260
+
+280
+
+KIC 3634488
+260
+250
+
+ν (µHz)
+
+240
+230
+220
+210
+200
+190
+180
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+τ mod ∆Π1
+
+90
+
+100
+
+110
+
+120
+
+◦
+Fig. B.10. Same as Fig. B.1 for KIC 3634488 with two observed rotational components. We found an inclination of i = 86.2±3.8
+9.7 in marginal
+2.3 ◦
+agreement with Kuszlewicz et al. (2019a) measurement of i = 70.7±2.4 .
+
+Article number, page 26 of 35
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+KIC 4996676
+
+16000
+
+m=0
+
+14000
+
+PSD (ppm2/ Hz)
+
+12000
+10000
+8000
+6000
+4000
+2000
+0
+
+190
+
+200
+
+210
+
+220
+
+230
+
+( Hz)
+
+240
+
+250
+
+260
+
+90
+
+95
+
+100
+
+KIC 4996676
+270
+260
+
+( Hz)
+
+250
+240
+230
+220
+210
+200
+190
+
+60
+
+65
+
+70
+
+75
+
+80
+
+mod
+
+85
+
+1
+
+◦
+Fig. B.11. Same as Fig. B.1 for KIC 4996676 with one observed rotational component. We found an inclination of i = 30.1±13.0
+30.1 consistent with
+2.6 ◦
+Kuszlewicz et al. (2019a) measurement of i = 5.7±4.0 .
+
+Article number, page 27 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+KIC 3446775
+m=0
+
+PSD (ppm2 /µHz)
+
+5000
+4000
+3000
+2000
+1000
+0
+
+200
+
+210
+
+220
+
+230
+
+240
+
+ν (µHz)
+
+250
+
+260
+
+270
+
+KIC 3446775
+280
+
+ν (µHz)
+
+260
+240
+220
+200
+10
+
+5
+
+0
+
+5
+
+τ mod ∆Π1
+
+10
+
+15
+
+◦
+Fig. B.12. Same as Fig. B.1 for KIC 3446775 with one observed rotational component. We found an inclination of i = 31.8±13.8
+31.8 in agreement
+with Kuszlewicz et al. (2019a) measurement of i = 10.3 ± 4.3◦ .
+
+Article number, page 28 of 35
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+KIC 2437325
+
+140000
+
+m=0
+
+PSD (ppm2/ Hz)
+
+120000
+100000
+80000
+60000
+40000
+20000
+0
+
+75
+
+80
+
+85
+
+90
+
+95
+
+( Hz)
+
+100
+
+105
+
+110
+
+115
+
+KIC 2437325
+110
+105
+
+( Hz)
+
+100
+95
+90
+85
+80
+75
+30
+
+40
+
+50
+
+60
+
+mod
+
+70
+1
+
+80
+
+90
+
+100
+
+◦
+Fig. B.13. Same as Fig. B.1 for the NGC 6791 star KIC 2437325 with one observed rotational component. We found an inclination of i = 39.1±17.4
+39.1
+◦
+consistent with Corsaro et al. (2017) measurement of i = 11 ± 5 .
+
+Article number, page 29 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+KIC 5111718
+
+3500
+
+m=0
+m = -1
+m = +1
+
+PSD (ppm2/ Hz)
+
+3000
+2500
+2000
+1500
+1000
+500
+0
+
+115
+
+120
+
+125
+
+130
+
+135
+
+140
+
+145
+
+( Hz)
+
+150
+
+155
+
+KIC 5111718
+
+170
+160
+
+ν (µHz)
+
+150
+140
+130
+120
+110
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+τ mod ∆Π1
+
+60
+
+70
+
+80
+
+90
+
+Fig. B.14. Same as Fig. B.1 for the NGC 6819 star KIC 5111718 with two observed rotational components. We found an inclination of i =
+◦
+68.1±21.9
+consistent with Corsaro et al. (2017) measurement of i = 64 ± 4◦ .
+8.4
+
+Article number, page 30 of 35
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+KIC 6117517
+m=0
+
+50000
+
+PSD (ppm2/ Hz)
+
+40000
+30000
+20000
+10000
+0
+
+100
+
+110
+
+120
+
+130
+
+( Hz)
+
+140
+
+KIC 6117517
+
+150
+140
+
+( Hz)
+
+130
+120
+110
+100
+65.0
+
+67.5
+
+70.0
+
+72.5
+
+75.0
+
+mod
+
+77.5
+1
+
+80.0
+
+82.5
+
+85.0
+
+◦
+Fig. B.15. Same as Fig. B.1 for the field star KIC 6117517 with one observed rotational component. We found an inclination of i = 13.0±5.4
+13.0
+◦
+consistent with Corsaro et al. (2017) measurement of i = 18 ± 3 .
+
+Article number, page 31 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+
+7000
+
+m=0
+m = -1
+m = +1
+
+PSD (ppm2/ Hz)
+
+6000
+5000
+4000
+3000
+2000
+1000
+0
+
+110
+
+120
+
+130
+
+140
+
+( Hz)
+
+150
+
+KIC 7060732
+
+170
+160
+
+( Hz)
+
+150
+140
+130
+120
+110
+100
+10
+
+20
+
+30
+
+40
+
+mod
+
+50
+1
+
+60
+
+70
+
+Fig. B.16. Same as Fig. B.1 for the field star KIC 7060732 with three observed rotational components. We found an inclination of i = 65.7 ± 11.1◦
+marginally consistent with Corsaro et al. (2017) measurement of i = 79 ± 2◦ .
+
+Article number, page 32 of 35
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+
+KIC 8475025
+
+35000
+
+m=0
+m = -1
+m = +1
+
+PSD (ppm2/ Hz)
+
+30000
+25000
+20000
+15000
+10000
+5000
+0
+
+90
+
+100
+
+110
+
+120
+
+( Hz)
+
+130
+
+KIC 8475025
+140
+
+( Hz)
+
+130
+120
+110
+100
+90
+20
+
+30
+
+40
+
+50
+
+mod
+
+60
+
+70
+
+80
+
+1
+
+◦
+Fig. B.17. Same as Fig. B.1 for the field star KIC 8475025 with two observed rotational components. We found an inclination of i = 80.2±9.8
+5.1
+◦
+consistent with Corsaro et al. (2017) measurement of i = 90 ± 3 .
+
+Article number, page 33 of 35
+
+A&A proofs: manuscript no. article_GEHAN_AA_2020_39285_final
+Table B.1. Properties of the 72 RGB stars from Kuszlewicz et al. (2019a) sample.
+
+KIC
+2166709
+3111383
+3446775
+3531478
+3634488
+4042882
+4139632
+4445966
+4459359
+4638467
+4646477
+4731138
+4738693
+4996676
+5033397
+5115688
+5119742
+5198982
+5305291
+5428405
+5553307
+5623097
+5649129
+5731852
+5773365
+5879486
+5961985
+6208018
+6222530
+6307132
+6352407
+6776494
+6783217
+6924074
+6952783
+7046554
+7468195
+7504619
+7584122
+7595722
+7693845
+7769544
+7898594
+8098454
+8107355
+8145017
+8192753
+8645227
+8827367
+8893299
+9145781
+9157260
+9219983
+9335457
+9418101
+9814077
+9893437
+9896174
+
+Article number, page 34 of 35
+
+Number of
+rotational
+components
+3
+1
+1
+3
+2
+3
+2
+2
+2
+3
+1
+2
+2
+1
+2
+1
+3
+3
+2
+2
+2
+3
+2
+2
+2
+2
+2
+2
+2
+3
+3
+3
+2
+3
+2
+2
+3
+3
+3
+2
+2
+3
+2
+3
+1
+3
+3
+1
+3
+2
+2
+3
+1
+3
+2
+2
+2
+2
+
+i (◦ )
+
+σi,+ (◦ )
+
+σi,− (◦ )
+
+58.0
+31.7
+31.8
+41.2
+86.2
+48.6
+79.2
+81.1
+76.0
+55.1
+26.1
+79.8
+76.8
+30.1
+78.8
+30.4
+48.9
+56.4
+74.9
+78.1
+81.9
+48.4
+78.8
+74.5
+77.4
+75.3
+75.7
+71.2
+64.6
+50.5
+59.5
+55.4
+81.5
+58.3
+76.6
+79.3
+60.2
+56.8
+55.8
+77.9
+76.5
+52.7
+75.5
+67.5
+28.2
+46.9
+48.3
+18.2
+54.6
+69.1
+83.6
+67.0
+42.9
+59.2
+74.2
+80.0
+76.9
+74.1
+
+10.7
+13.8
+13.8
+9.3
+3.8
+10.0
+10.8
+8.9
+14.0
+11.1
+11.2
+10.2
+13.2
+13.0
+11.2
+13.2
+9.23
+7.7
+15.1
+11.9
+8.1
+10.4
+11.2
+15.5
+12.6
+14.7
+14.3
+18.9
+12.8
+10.3
+19.1
+10.9
+8.5
+7.4
+13.4
+10.7
+8.3
+16.6
+8.4
+12.1
+13.5
+16.0
+14.5
+8.6
+12.1
+10.6
+10.2
+7.7
+9.0
+20.9
+6.4
+7.9
+9.5
+7.8
+15.8
+10.0
+13.1
+15.9
+
+10.7
+31.7
+31.8
+9.3
+9.7
+10.0
+2.8
+3.2
+5.6
+11.1
+26.1
+3.1
+3.8
+30.1
+3.9
+30.4
+9.23
+7.7
+5.6
+4.0
+3.1
+10.4
+4.0
+5.0
+3.6
+4.3
+5.8
+5.9
+12.8
+10.3
+19.1
+10.9
+2.8
+7.4
+4.4
+3.9
+8.3
+16.6
+8.4
+4.2
+3.5
+16.0
+3.8
+8.6
+28.2
+10.6
+10.2
+18.2
+9.0
+9.9
+2.6
+7.9
+42.9
+7.8
+7.6
+2.7
+4.3
+4.6
+
+C. Gehan et al.: Automated approach to measure stellar inclinations: validation on the red giant branch
+Table B.1. continued.
+
+KIC
+9956184
+10198496
+10199289
+10353556
+10482211
+10581491
+10675916
+10734124
+11015392
+11038809
+11043770
+11852899
+12115374
+12203197
+
+Number of
+rotational
+components
+2
+3
+2
+3
+2
+2
+3
+3
+2
+3
+2
+3
+2
+3
+
+i (◦ )
+
+σi,+ (◦ )
+
+σi,− (◦ )
+
+71.3
+65.3
+80.3
+43.1
+77.9
+69.3
+54.5
+52.1
+82.5
+45.3
+80.0
+55.8
+80.8
+57.4
+
+18.8
+8.9
+9.7
+10.0
+12.1
+20.7
+8.1
+11.3
+7.6
+16.8
+10.0
+7.9
+9.3
+8.3
+
+6.4
+8.9
+4.0
+10.0
+5.3
+11.7
+8.1
+11.3
+2.4
+16.8
+3.3
+7.9
+4.7
+8.3
+
+Table B.2. Properties of the 21 RGB stars from Corsaro et al. (2017) sample.
+
+KIC
+2437325
+2570244
+3744043
+5111718
+5112072
+5113441
+6117517
+6144777
+7060732
+7619745
+8366239
+8475025
+8718745
+9267654
+9475697
+9882316
+10123207
+11353313
+11913545
+11968334
+12008916
+
+Number of
+rotational
+components
+1
+1
+3
+2
+3
+1
+1
+3
+3
+2
+2
+2
+1
+2
+1
+1
+1
+2
+2
+3
+2
+
+i (◦ )
+
+σi,+ (◦ )
+
+σi,− (◦ )
+
+Field or
+cluster star
+
+39.1
+36.3
+47.1
+68.1
+63.3
+37.7
+13.0
+63.6
+65.7
+78.1
+73.1
+80.2
+14.7
+72.4
+20.2
+17.6
+13.5
+71.0
+75.4
+54.0
+70.6
+
+17.4
+16.0
+16.4
+21.9
+13.0
+16.7
+5.4
+12.5
+11.1
+11.9
+8.4
+9.8
+6.2
+17.6
+8.5
+7.4
+5.6
+9.7
+14.6
+14.3
+19.4
+
+39.1
+36.3
+16.4
+8.4
+13.0
+37.7
+13.0
+12.5
+11.1
+4.8
+8.4
+5.1
+14.7
+6.0
+20.2
+17.6
+13.5
+9.7
+3.7
+14.3
+6.5
+
+NGC 6791
+NGC 6791
+Field
+NGC 6819
+NGC 6819
+NGC 6819
+Field
+Field
+Field
+Field
+Field
+Field
+Field
+Field
+Field
+Field
+Field
+Field
+Field
+Field
+Field
+
+Article number, page 35 of 35
+
+

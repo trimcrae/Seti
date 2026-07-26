@@ -209,12 +209,9 @@ def test_chemistry_vet_flags():
 
 
 # -------------------------------------------------- end-to-end injection --
-@pytest.fixture(scope="module")
-def synthetic_run(tmp_path_factory):
-    from seti.config import load_config
-    from seti.herdsman.run import herdsman_run
-
-    rng = np.random.default_rng(42)
+def _synthetic_catalog(seed=42):
+    """Background field + injected 8-star herd, as a noisy Gaia-like table."""
+    rng = np.random.default_rng(seed)
     t_meet = 8.0
     bg_pos, bg_vel = _background(2500, 120.0, rng)
     herd_pos_kpc, herd_vel_kpcmyr = _make_herd(8, t_meet, rng)
@@ -230,7 +227,15 @@ def synthetic_run(tmp_path_factory):
     # Give the herd a wide, field-like metallicity spread (gathered stars).
     table.loc[list(herd_ids), "mh_gspphot"] = \
         [-0.45, -0.25, -0.1, 0.0, 0.1, 0.2, 0.3, -0.35]
+    return table, herd_ids, t_meet
 
+
+@pytest.fixture(scope="module")
+def synthetic_run(tmp_path_factory):
+    from seti.config import load_config
+    from seti.herdsman.run import herdsman_run
+
+    table, herd_ids, t_meet = _synthetic_catalog()
     cfg = load_config()
     cfg.root = tmp_path_factory.mktemp("herdsman_out")
     summary = herdsman_run(
@@ -264,3 +269,41 @@ def test_background_produces_no_comparable_forward_candidate(synthetic_run):
     # The time-reversal control must not out-score the injection.
     assert summary["directions"]["backward"]["best_surprise"] \
         < summary["directions"]["forward"]["best_surprise"]
+
+
+def test_staged_pipeline_recovers_herd(tmp_path):
+    """fetch -> scan(real) -> scan(mock shard) -> reduce on the synthetic sky.
+
+    Exercises the checkpointed CI path: parquet round-trip, per-scan shard
+    files, tolerant aggregation, and identical herd recovery to the monolith.
+    """
+    import json
+
+    from seti.config import load_config
+    from seti.herdsman import stages
+    from seti.herdsman.convergence import ConvergenceParams
+
+    table, herd_ids, t_meet = _synthetic_catalog()
+    cfg = load_config()
+    cfg.root = tmp_path
+    stages.fetch_stage(cfg, table=table, sigv_max_kms=0.8, astro_floor_kms=0.2)
+    assert (tmp_path / "results" / "herdsman" / "sample.parquet").exists()
+
+    params = ConvergenceParams(t_max_myr=12.0, n_min=4, focus_min=3.0,
+                               surprise_min=3.0)
+    stages.scan_stage(cfg, mode="real", params=params)
+    stages.scan_stage(cfg, mode="mock", shard=0, mocks_per_shard=2,
+                      params=params)
+    shards = tmp_path / "results" / "herdsman" / "shards"
+    assert (shards / "real_forward.json").exists()
+    assert len(list(shards.glob("mock_*_forward.json"))) == 2
+
+    summary = stages.reduce_stage(cfg, n_mocks_expected=2,
+                                  astro_floor_kms=0.2)
+    fwd = summary["directions"]["forward"]
+    assert fwd["n_candidates"] >= 1 and fwd["p_global"] is not None
+    cands = json.loads((tmp_path / "results" / "herdsman"
+                        / "candidates_forward.json").read_text())
+    top = cands["candidates"][0]
+    assert len(set(top["member_source_ids"]) & herd_ids) >= 4
+    assert abs(top["t_myr"] - t_meet) < 2.5

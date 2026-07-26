@@ -97,6 +97,37 @@ def _candidates_csv(cands: list[dict], path) -> None:
     pd.DataFrame(rows).to_csv(path, index=False)
 
 
+def build_detection_table(d_max_pc: float = 300.0, g_max: float = 14.5,
+                          rv_err_max_kms: float = 1.5, sigv_max_kms: float = 0.8,
+                          astro_floor_kms: float = 0.3,
+                          table: pd.DataFrame | None = None
+                          ) -> tuple[pd.DataFrame, dict]:
+    """Fetch (unless ``table`` given) and preprocess to the detection table.
+
+    Shared by the monolithic runner below and the staged pipeline
+    (``stages.py``) so the two paths can never drift apart.
+    """
+    raw = table if table is not None else fetch_sample(
+        d_max_pc=d_max_pc, rv_err_max_kms=rv_err_max_kms, g_max=g_max)
+    n_raw = len(raw)
+    raw = apply_rv_zero_point(raw)
+    df = phase_space_6d(raw)
+    good = np.isfinite(df[["U_kms", "V_kms", "W_kms", "X_pc"]].to_numpy(float))\
+        .all(axis=1)
+    df = df[good].reset_index(drop=True)
+    df["sigv_kms"] = scalar_velocity_error(df, astro_floor_kms=astro_floor_kms)
+    n_6d = len(df)
+    df = df[df["sigv_kms"] <= sigv_max_kms].reset_index(drop=True)
+    n_precise = len(df)
+    df = _collapse_comoving_pairs(df)
+    meta = {"fetched": n_raw, "with_6d": n_6d, "precise": n_precise,
+            "final": int(len(df)), "d_max_pc": d_max_pc, "g_max": g_max,
+            "rv_err_max_kms": rv_err_max_kms, "sigv_max_kms": sigv_max_kms,
+            "astro_floor_kms": astro_floor_kms,
+            "sigv_median_kms": float(df["sigv_kms"].median()) if len(df) else None}
+    return df, meta
+
+
 def herdsman_run(cfg: Config | None = None, d_max_pc: float = 300.0,
                  g_max: float = 14.5, rv_err_max_kms: float = 1.5,
                  sigv_max_kms: float = 0.8, astro_floor_kms: float = 0.3,
@@ -113,19 +144,10 @@ def herdsman_run(cfg: Config | None = None, d_max_pc: float = 300.0,
     out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
 
-    raw = table if table is not None else fetch_sample(
-        d_max_pc=d_max_pc, rv_err_max_kms=rv_err_max_kms, g_max=g_max)
-    n_raw = len(raw)
-    raw = apply_rv_zero_point(raw)
-    df = phase_space_6d(raw)
-    good = np.isfinite(df[["U_kms", "V_kms", "W_kms", "X_pc"]].to_numpy(float))\
-        .all(axis=1)
-    df = df[good].reset_index(drop=True)
-    df["sigv_kms"] = scalar_velocity_error(df, astro_floor_kms=astro_floor_kms)
-    n_6d = len(df)
-    df = df[df["sigv_kms"] <= sigv_max_kms].reset_index(drop=True)
-    n_precise = len(df)
-    df = _collapse_comoving_pairs(df)
+    df, meta = build_detection_table(
+        d_max_pc=d_max_pc, g_max=g_max, rv_err_max_kms=rv_err_max_kms,
+        sigv_max_kms=sigv_max_kms, astro_floor_kms=astro_floor_kms, table=table)
+    n_raw, n_6d, n_precise = meta["fetched"], meta["with_6d"], meta["precise"]
     print(f"[herdsman] sample: {n_raw} fetched -> {n_6d} with 6D -> "
           f"{n_precise} with sigma_v <= {sigv_max_kms} km/s -> "
           f"{len(df)} after pair collapse ({time.time() - t0:.0f}s)")

@@ -190,6 +190,16 @@ ossuary:
       # 7" Project Hephaistos candidates (arXiv:2405.14921); JWST/MIRI later resolved
       # two of them into a z~0.9 Hot DOG and a z~0.4 dusty starburst (arXiv:2607.09460).
       hot_dog_density_per_arcsec2: 9.0e-6
+      # Colour of the interloper population that matters: dusty galaxies, Hot DOGs
+      # and AGN are red. Used to convert an excess measured in W2/W3/W4 into the
+      # equivalent W1 magnitude at which AllWISE actually catalogues such a source.
+      interloper_w1_minus_w2: 0.8
+      interloper_w1_minus_w3: 3.0
+      interloper_w1_minus_w4: 4.5
+      # Only bands carrying a real detection may drive the interloper prior; a
+      # sub-sigma positive fluctuation implies an absurdly faint (hence common)
+      # equivalent source and would veto genuine cool-dust detections.
+      min_chi_for_prior: 3.0
       max_chance_superposition_p: 1.0e-3 # per-candidate a-priori interloper probability
     globular_cluster:
       # Boyer et al. 2010 (arXiv:1002.1348) showed a *published* red-giant-branch-wide
@@ -204,3 +214,74 @@ ossuary:
       min_gal_lat_deg: 15.0    # |b| below this the cirrus + stellar confusion is fatal
       # Population-level test: the flag rate must not correlate with E(B-V).
       cirrus_corr_p_min: 0.01
+
+# ---------------------------------------------------------------------------
+# TAILINGS — the sparse chemical anomaly (docs/tailings.md).
+# The claim: natural abundance space is low-dimensional and every natural
+# process moves an element FAMILY (alpha, Fe-peak, s-process, r-process);
+# industrial refining moves ONE element. So the artificial signature is a
+# SPARSE anomaly and a DENSE one is a rejection. Restricted to cool dwarfs,
+# where the convective envelope suppresses the atomic diffusion and radiative
+# levitation that make natural single-element peculiarity in Ap/Am/HgMn stars.
+# ---------------------------------------------------------------------------
+tailings:
+  sample:
+    # Convective-envelope regime. Above ~6000 K the envelope thins and
+    # diffusion/levitation start producing genuine single-element anomalies —
+    # that is exactly the Am/Fm domain and it is excluded by construction.
+    teff_max: 6000.0
+    teff_min: 3000.0
+    logg_min: 4.0            # dwarfs only; giants mix C/N and dilute everything
+    snr_min: 40.0            # below this the residual tails go non-Gaussian
+  manifold:
+    degree: 2                # quadratic in ([Fe/H], Teff/1000, logg, alpha_LOO)
+    clip_sigma: 4.0          # so a real 6-8 sigma anomaly cannot fit its own surface
+    clip_iterations: 4
+    min_rows: 200            # below this an element gets no manifold at all
+    scatter_min_count: 40    # stars needed in a (SNR, Teff) cell to trust its sigma
+    scatter_floor_dex: 0.005 # no denominator smaller than any survey achieves
+  sparse:
+    # 6 sigma on an empirical 0.03-0.05 dex width is a 0.2-0.3 dex single-element
+    # excursion — an order of magnitude above the 0.01-0.03 dex intrinsic scatter
+    # of co-natal stars (Bovy 2016; Cheng 2020; Patil 2022; Casamiquela 2021).
+    # NOT a p-value: the residual tails are not Gaussian, so the false-positive
+    # control is empirical (flag rates, fields, cross-survey, re-measurement).
+    z_flag: 6.0
+    z_quiet: 2.0             # "everything else is normal"
+    max_discrepant: 2        # the "one or two elements" rule
+    max_quiet_excess: 1
+    min_elements: 8          # sparsity is meaningless with a short abundance vector
+    min_contrast: 3.0        # z_max / max(z_rest_rms, 1)
+    family_max_mean_z: 2.0   # LEDGER RULE: a co-moving family is a natural event
+    dense_min_discrepant: 3
+  vet:
+    snr_min: 40.0
+    chi2_max: 4.0
+    ruwe_max: 1.4            # LEDGER RULE: unresolved binaries masquerade as anomalies
+    rv_scatter_max_kms: 1.0  # spectroscopic binary
+    vbroad_max_kms: 15.0     # fast rotators blend the lines the abundance rests on
+    min_good_elements: 8
+    # LEDGER RULE: an element flagged in >2% of the sample is a line-list
+    # systematic, not a population of anomalies.
+    max_element_flag_rate: 0.02
+    # LEDGER RULE (abundance-space form of "a feature recurring across unrelated
+    # sightlines is instrumental"): a field flagging one element far above the
+    # global rate has a calibration problem, not a discovery.
+    max_field_flag_rate_ratio: 5.0
+    require_cross_survey: false
+  twins:
+    # Budget ceiling. The largest engulfed mass ever inferred is ~28 Earth masses
+    # (Kronos/Krios, HD 240430/240429, ~0.20-0.23 dex differential); 100 Me is
+    # ~3.5x that and above the runaway-gas-accretion core mass, so more rock than
+    # this is outside every formation model as well as every observation.
+    max_engulfed_earth_masses: 100.0
+    # Scales the convective envelope DOWN, which shrinks the implied engulfed
+    # mass and makes the "unexplainable" verdict strictly harder to reach.
+    mcz_safety_factor: 0.5
+    z_flag: 4.0              # differential analysis cancels most systematics
+    z_quiet: 2.0
+    max_discrepant: 2
+    min_elements: 6
+    min_refractories: 4
+    tcond_slope_sigma: 3.0   # a real engulfment is a condensation-temperature TREND
+    max_r_chance_align: 0.1  # El-Badry+2021 purity cut; a chance pair shares no birth

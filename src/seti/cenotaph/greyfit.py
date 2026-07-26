@@ -231,7 +231,9 @@ def fit_grey_reddening(
         notes.append(f"|rho(g, A_V)| = {abs(rho):.4f} > {MAX_ABS_RHO}")
 
     av_pinned = False
-    if enforce_av_nonneg and av < 0.0:
+    # Tolerance so an exact-zero fit is not treated as a boundary case; a
+    # genuinely negative A_V is unphysical, a -1e-17 one is floating point.
+    if enforce_av_nonneg and av < -1e-9:
         floor = 0.0
         if av_prior is not None:
             floor = max(0.0, float(av_prior[0]) - 3.0 * float(av_prior[1]))

@@ -257,23 +257,32 @@ def fit_excess_blackbody(fluxes_jy: dict, errors_jy: dict, *,
         return np.nan, np.nan, np.nan
     f = np.array([fluxes_jy[b] for b in bands], float)
     s = np.array([errors_jy[b] for b in bands], float)
-    if t_grid is None:
-        t_grid = np.geomspace(50.0, 3000.0, 400)
+    coarse = np.geomspace(50.0, 3000.0, 300) if t_grid is None else np.asarray(t_grid)
+    w = 1.0 / s ** 2
 
-    best = (np.nan, np.nan, np.inf)
-    for t in t_grid:
-        model = np.array([_bb_flux_jy(t, b, 1.0) for b in bands], float)
-        w = 1.0 / s ** 2
-        denom = float((model ** 2 * w).sum())
-        if denom <= 0:
-            continue
-        omega = float((model * f * w).sum() / denom)
-        if omega <= 0:
-            continue
-        chi2 = float((((f - omega * model) / s) ** 2).sum())
-        if chi2 < best[2]:
-            best = (float(t), omega, chi2)
-    return best
+    def _scan(grid):
+        best = (np.nan, np.nan, np.inf)
+        for t in grid:
+            model = np.array([_bb_flux_jy(t, b, 1.0) for b in bands], float)
+            denom = float((model ** 2 * w).sum())
+            if denom <= 0:
+                continue
+            omega = float((model * f * w).sum() / denom)
+            if omega <= 0:
+                continue
+            chi2 = float((((f - omega * model) / s) ** 2).sum())
+            if chi2 < best[2]:
+                best = (float(t), omega, chi2)
+        return best
+
+    best = _scan(coarse)
+    if not np.isfinite(best[0]) or t_grid is not None:
+        return best
+    # Refine around the coarse minimum: the grid spacing, not the data, would
+    # otherwise dominate the residual chi2 and make a good fit look bad.
+    lo, hi = best[0] / 1.05, best[0] * 1.05
+    fine = _scan(np.linspace(lo, hi, 60))
+    return fine if fine[2] < best[2] else best
 
 
 def _star_solid_angle(anchor_mag: float, anchor_band: str, teff_k: float) -> float:
@@ -364,6 +373,21 @@ def characterise(df: pd.DataFrame, cfg: dict, *, anchor: str = "Ks",
     return out
 
 
+def wien_peak_k(band: str) -> float:
+    """Dust temperature whose Wien peak falls in ``band``.
+
+    W1 -> 852 K, W2 -> 630 K, W3 -> 241 K, W4 -> 132 K.  This sets the channel's
+    honest reach: W3 is the workhorse for warm dust, and everything below ~200 K
+    is accessible only through W4 -- the shallowest, most confusion-limited band,
+    whose depth has been frozen since the 2010 cryogenic mission ended (NEOWISE-R,
+    CatWISE2020 and the deep unWISE coadds are W1/W2 only).  There is no route to
+    a deeper 12/22 um measurement, so the sensitivity floor is instrumental, not
+    a choice.
+    """
+    b = 2.897771955e3  # Wien displacement constant, um K
+    return float(b / BANDS[band]["lambda_um"])
+
+
 def cascade_timescale_yr(period_yr: float, covering_fraction: float) -> float:
     """Lacki (2025) collisional-cascade timescale: t ~ P / f.
 
@@ -407,4 +431,4 @@ def select_excess(df: pd.DataFrame, cfg: dict) -> pd.Series:
 
 __all__ = ["ColourLocus", "fit_colour_locus", "fit_loci", "compute_excess",
            "fit_excess_blackbody", "characterise", "select_excess",
-           "cascade_timescale_yr", "BANDS"]
+           "cascade_timescale_yr", "wien_peak_k", "BANDS"]

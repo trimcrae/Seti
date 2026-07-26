@@ -30,13 +30,13 @@ jobs:
           timeout -k 30 1800 python scripts/chemlit_fetch2.py \
             || echo "fetcher hit soft deadline or errored; committing partials"
           echo "=== summary ==="
-          python -c "import json,pathlib; p=pathlib.Path('results/chemlit22/summary.json'); d=json.loads(p.read_text()) if p.exists() else []; print(sum(1 for x in d if x.get('ok')), '/', len(d), 'ok')" || true
+          python -c "import json,pathlib; p=pathlib.Path('results/chemlit2/summary.json'); d=json.loads(p.read_text()) if p.exists() else []; print(sum(1 for x in d if x.get('ok')), '/', len(d), 'ok')" || true
           ls -la results/chemlit2 | head -40 || true
       - name: Commit results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f results/chemlit22/ || true
+          git add -f results/chemlit2/ || true
           if git diff --cached --quiet; then
             echo "No result changes to commit."
           else
@@ -52,5 +52,5 @@ jobs:
         if: always()
         with:
           name: chemlit2-outputs
-          path: results/chemlit22/
+          path: results/chemlit2/
           if-no-files-found: warn

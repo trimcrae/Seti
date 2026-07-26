@@ -65,7 +65,7 @@ _SMOOTH_FROM = 30
 # SD(sigma_MAD)/sigma -> 1.1664/sqrt(N)  (ARE 36.7% relative to the sample SD).
 _U_ASYMPTOTIC = 1.1664
 
-_TABLE: tuple[np.ndarray, np.ndarray] | None = None
+_TABLES: dict[bool, tuple[np.ndarray, np.ndarray]] = {}
 
 
 def mad_scale(x: np.ndarray) -> float:
@@ -76,8 +76,33 @@ def mad_scale(x: np.ndarray) -> float:
     return float(MAD_TO_SIGMA * np.median(np.abs(x - np.median(x))))
 
 
+def detrend_line(t: np.ndarray, y: np.ndarray) -> np.ndarray:
+    """Residuals of ``y`` about an ordinary least-squares line in ``t``.
+
+    Removing a *line* per season rather than merely the season mean is what
+    makes this channel's statistic genuinely **aperiodic**.  Without it, any
+    smooth within-season drift inflates the season's scatter, and the most
+    important such drift is the one the sibling `dimming` channel selects on:
+    a star with an *accelerating* secular fade drifts more within each season
+    than the last, which is a rising second moment produced entirely by a
+    first-moment phenomenon.  A megaswarm cascade is short-timescale and
+    irregular; a fade is smooth.  Subtracting the line separates them.
+    """
+    t = np.asarray(t, dtype=float)
+    y = np.asarray(y, dtype=float)
+    if t.size < 3 or np.ptp(t) <= 0:
+        return y - np.median(y)
+    x = (t - t.mean()) / max(np.ptp(t), 1e-9)
+    sxx = float((x * x).sum())
+    if sxx <= 0:
+        return y - np.median(y)
+    slope = float((x * (y - y.mean())).sum()) / sxx
+    return y - (y.mean() + slope * x)
+
+
 def mad_null_table(n_max: int = _TABLE_N_MAX, n_trials: int = _TABLE_TRIALS,
-                   seed: int = _TABLE_SEED) -> tuple[np.ndarray, np.ndarray]:
+                   seed: int = _TABLE_SEED,
+                   detrended: bool = False) -> tuple[np.ndarray, np.ndarray]:
     """Monte-Carlo finite-N behaviour of ``1.4826 x MAD`` on Gaussian data.
 
     Returns ``(b, u)``, arrays indexed by N (0..n_max, entries below N=2 are
@@ -89,16 +114,31 @@ def mad_null_table(n_max: int = _TABLE_N_MAX, n_trials: int = _TABLE_TRIALS,
     * ``u[N] = SD[1.4826 MAD_N] / E[1.4826 MAD_N]`` --- the relative sampling
       scatter, which becomes the season's measurement error.
 
-    Computed once and cached at module level.
+    ``detrended=True`` returns the table for residuals about a fitted **line**
+    rather than about the mean --- a different and *stronger* suppression,
+    because a line fit removes two degrees of freedom and, at irregular sampling,
+    an N-dependent amount of the noise.  Using the un-detrended table on
+    detrended data would leave exactly the kind of N-dependent (hence
+    calendar-time-dependent) offset this module exists to remove.  Simulated at
+    uniformly random epoch positions, to match ZTF's irregular cadence.
+
+    Computed once per variant and cached at module level.
     """
-    global _TABLE
-    if _TABLE is not None and _TABLE[0].size >= n_max + 1:
-        return _TABLE
-    rng = np.random.default_rng(seed)
+    cached = _TABLES.get(bool(detrended))
+    if cached is not None and cached[0].size >= n_max + 1:
+        return cached
+    rng = np.random.default_rng(seed + (1 if detrended else 0))
     b = np.full(n_max + 1, np.nan)
     u = np.full(n_max + 1, np.nan)
     for n in range(2, n_max + 1):
         draws = rng.standard_normal((n_trials, n))
+        if detrended and n >= 3:
+            x = np.sort(rng.random((n_trials, n)), axis=1)
+            x = x - x.mean(axis=1, keepdims=True)
+            sxx = (x * x).sum(axis=1, keepdims=True)
+            slope = (x * (draws - draws.mean(axis=1, keepdims=True))
+                     ).sum(axis=1, keepdims=True) / np.maximum(sxx, 1e-12)
+            draws = draws - (draws.mean(axis=1, keepdims=True) + slope * x)
         med = np.median(draws, axis=1, keepdims=True)
         s = MAD_TO_SIGMA * np.median(np.abs(draws - med), axis=1)
         mean_s = float(np.mean(s))
@@ -119,13 +159,13 @@ def mad_null_table(n_max: int = _TABLE_N_MAX, n_trials: int = _TABLE_TRIALS,
     cu, *_ = np.linalg.lstsq(du, u[_SMOOTH_FROM:], rcond=None)
     u[_SMOOTH_FROM:] = du @ cu
 
-    _TABLE = (b, u)
-    return _TABLE
+    _TABLES[bool(detrended)] = (b, u)
+    return b, u
 
 
-def bias_factor(n: int | np.ndarray) -> np.ndarray:
+def bias_factor(n: int | np.ndarray, detrended: bool = False) -> np.ndarray:
     """``E[1.4826 MAD_N]/sigma`` for Gaussian data, from the cached MC table."""
-    b, _ = mad_null_table()
+    b, _ = mad_null_table(detrended=detrended)
     n_arr = np.atleast_1d(np.asarray(n, dtype=int))
     out = np.ones(n_arr.shape, dtype=float)
     inside = (n_arr >= 2) & (n_arr < b.size)
@@ -134,9 +174,9 @@ def bias_factor(n: int | np.ndarray) -> np.ndarray:
     return out
 
 
-def rel_scatter(n: int | np.ndarray) -> np.ndarray:
+def rel_scatter(n: int | np.ndarray, detrended: bool = False) -> np.ndarray:
     """``SD/mean`` of ``1.4826 MAD_N``; asymptotic ``1.1664/sqrt(N)`` past the table."""
-    _, u = mad_null_table()
+    _, u = mad_null_table(detrended=detrended)
     n_arr = np.atleast_1d(np.asarray(n, dtype=int))
     out = np.where(n_arr >= 2, _U_ASYMPTOTIC / np.sqrt(np.maximum(n_arr, 1)), np.nan)
     inside = (n_arr >= 2) & (n_arr < u.size)
@@ -240,6 +280,7 @@ def season_scatter(
     min_epochs_season: int = 8,
     min_seasons: int = 4,
     clip_sigma: float = 6.0,
+    detrend_season: bool = True,
     equalize_n: bool = False,
     equalize_draws: int = 32,
     rng: np.random.Generator | None = None,
@@ -248,6 +289,15 @@ def season_scatter(
 
     Parameters
     ----------
+    detrend_season
+        Remove a fitted **line** from each season rather than only its median
+        (default, and the scientifically correct choice).  This is what makes
+        the statistic *aperiodic*: a star with an accelerating secular fade
+        drifts further within each successive season, which would otherwise read
+        as a rising second moment produced entirely by a first-moment
+        phenomenon --- i.e. the sibling ``dimming`` channel's population leaking
+        straight into this one.  The null table is switched to its
+        line-detrended variant to match, so the correction stays exact.
     equalize_n
         If True, every season is randomly subsampled to the smallest season's
         epoch count (averaged over ``equalize_draws`` draws) *before* the
@@ -301,16 +351,18 @@ def season_scatter(
             # size (squares, because the variance is what gets differenced below).
             sig2, null2 = [], []
             for _ in range(equalize_draws):
-                idx = rng.choice(len(tt), size=n_target, replace=False)
-                sig2.append(mad_scale(mm[idx]) ** 2)
-                null2.append(_null_sigma(ee[idx], n_target) ** 2)
+                idx = np.sort(rng.choice(len(tt), size=n_target, replace=False))
+                res = detrend_line(tt[idx], mm[idx]) if detrend_season else mm[idx]
+                sig2.append(mad_scale(res) ** 2)
+                null2.append(_null_sigma(ee[idx], n_target, detrend_season) ** 2)
             sigma_obs = float(np.sqrt(np.mean(sig2)))
             sigma_null = float(np.sqrt(np.mean(null2)))
             n_eff = int(n_target)
         else:
-            sigma_obs = mad_scale(mm)
+            res = detrend_line(tt, mm) if detrend_season else mm
+            sigma_obs = mad_scale(res)
             n_eff = int(len(mm))
-            sigma_null = _null_sigma(ee, n_eff)
+            sigma_null = _null_sigma(ee, n_eff, detrend_season)
 
         # Second-order bias.  The estimator's *square* is not the square of its
         # expectation: E[s^2] = (E[s])^2 + Var(s) = (b sigma)^2 (1 + u^2).  Since
@@ -318,7 +370,7 @@ def season_scatter(
         # term leaves a residual N-dependent -- hence calendar-time-dependent --
         # offset in the excess variance.  It is small, it is systematic, and it
         # is exactly the class of error this channel exists to avoid.
-        u = float(rel_scatter(n_eff)[0])
+        u = float(rel_scatter(n_eff, detrend_season)[0])
         v_null = (sigma_null ** 2 * (1.0 + u ** 2)) if np.isfinite(sigma_null) else 0.0
         v_exc = sigma_obs ** 2 - v_null
         # Delta-method error on the variance: d(sigma^2) = 2 sigma d(sigma), with
@@ -341,19 +393,20 @@ def season_scatter(
     )
 
 
-def _null_sigma(errs: np.ndarray, n: int) -> float:
+def _null_sigma(errs: np.ndarray, n: int, detrended: bool = False) -> float:
     """Expected ``1.4826 x MAD`` of ``n`` pure-noise epochs with errors ``errs``.
 
     ``mixture_mad_sigma`` supplies the asymptotic (large-N) value for the actual
-    heteroscedastic error vector; ``bias_factor(n)`` supplies the finite-N
-    correction.  Their product is the season's null expectation *at that
-    season's own epoch count* --- which is the whole point.
+    heteroscedastic error vector; ``bias_factor(n, detrended)`` supplies the
+    finite-N correction *for the same estimator that was applied to the data*.
+    Their product is the season's null expectation **at that season's own epoch
+    count** --- which is the whole point.
     """
     e = np.asarray(errs, dtype=float)
     e = e[np.isfinite(e) & (e > 0)]
     if e.size == 0:
         return float("nan")
-    return float(mixture_mad_sigma(e) * bias_factor(n)[0])
+    return float(mixture_mad_sigma(e) * bias_factor(n, detrended)[0])
 
 
 def season_scatter_mc(
@@ -366,6 +419,7 @@ def season_scatter_mc(
     min_seasons: int = 4,
     n_trials: int = 400,
     seed: int = _TABLE_SEED,
+    detrend_season: bool = True,
 ) -> SeasonScatter | None:
     """Exact per-season null by direct Monte Carlo --- the survivor-grade version.
 
@@ -395,11 +449,21 @@ def season_scatter_mc(
             continue
         tt, mm, ee = t[sel], m[sel], e[sel]
         sim = rng.standard_normal((n_trials, n)) * ee[None, :]
+        if detrend_season and n >= 3:
+            # Apply to the simulated noise the *identical* estimator applied to
+            # the data, including the line removal, at this season's own epoch
+            # positions.  Nothing about the null is approximated here.
+            x = tt - tt.mean()
+            sxx = float((x * x).sum())
+            if sxx > 0:
+                slope = ((sim - sim.mean(axis=1, keepdims=True)) * x[None, :]
+                         ).sum(axis=1, keepdims=True) / sxx
+                sim = sim - (sim.mean(axis=1, keepdims=True) + slope * x[None, :])
         sim -= np.median(sim, axis=1, keepdims=True)
         s_null = MAD_TO_SIGMA * np.median(np.abs(sim), axis=1)
         mu_null = float(np.mean(s_null))
         sd_null = float(np.std(s_null))
-        sigma_obs = mad_scale(mm)
+        sigma_obs = mad_scale(detrend_line(tt, mm) if detrend_season else mm)
         # E[s^2] straight from the simulation -- no delta-method approximation,
         # so the second-order N-dependent bias is removed exactly here.
         v_exc = sigma_obs ** 2 - float(np.mean(s_null ** 2))

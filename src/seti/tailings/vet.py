@@ -107,7 +107,23 @@ class VetConfig:
     rv_scatter_max_kms: float = 1.0
     vbroad_max_kms: float = 15.0
     teff_max: float = 6000.0
-    teff_min: float = 3000.0
+    teff_min: float = 4000.0
+    """GALAH's own release notes state that cool stars carry systematic trends
+    'that can reach values of 0.5 dex for some elements' and that 'dwarf stars
+    are most affected at Teff < 4600 K'. The M-dwarf tail is therefore the least
+    trustworthy part of any abundance sample and is bounded out by default
+    rather than silently included; anything between 4000 and 4600 K that does
+    survive is flagged with a cool-star caveat."""
+    teff_caveat_below: float = 4600.0
+    feh_min: float = -1.0
+    """Convective protection depends on METALLICITY as well as Teff and log g.
+    A metal-poor turnoff star of ~0.85 Msun can have an envelope below 1e-7 Msun
+    -- four orders of magnitude thinner than a solar-metallicity dwarf -- and
+    would pass a Teff/log g cut while retaining exactly the thin envelope that
+    makes diffusive peculiarity possible (Matrozis et al.). Measured diffusion
+    amplitudes run 0.3 dex at [Fe/H] = -2.3 falling to 0.1 dex at -1.1, so a
+    floor at -1.0 caps the natural effect an order of magnitude below the
+    signal. (Cross-channel note: OSSUARY *selects* the stars this excludes.)"""
     logg_min: float = 4.0
     min_good_elements: int = 8
     max_element_flag_rate: float = 0.02
@@ -186,8 +202,18 @@ def vet_candidates(
     check("vbroad", vbroad_col, None if vb is None else (vb.astype(float) <= cfg.vbroad_max_kms),
           f"line broadening > {cfg.vbroad_max_kms} km/s")
 
+    feh = _col(out, "fe_h")
+    check("metallicity", "fe_h",
+          None if feh is None else (feh.astype(float) >= cfg.feh_min),
+          f"[Fe/H] < {cfg.feh_min}: metal-poor envelopes are thin enough for "
+          "diffusion to act, so the convective-suppression argument does not hold")
+
     teff = _col(out, teff_col)
     logg = _col(out, logg_col)
+    if teff is not None:
+        out["cool_star_caveat"] = teff.astype(float) < cfg.teff_caveat_below
+    else:
+        out["cool_star_caveat"] = False
     if teff is None or logg is None:
         check("population", f"{teff_col}/{logg_col}", None, "")
     else:
@@ -298,6 +324,80 @@ def field_rate_veto(
     bad = np.isfinite(r) & (r > cfg.max_field_flag_rate_ratio)
     out["pass_field_rate"] = ~bad
     out["vet_pass"] = out.get("vet_pass", True) & out["pass_field_rate"]
+    return out
+
+
+def covariate_rate_veto(
+    cand: pd.DataFrame,
+    all_stars: pd.DataFrame,
+    flagged_mask: np.ndarray,
+    *,
+    covariate_col: str,
+    n_bins: int = 12,
+    cfg: VetConfig | None = None,
+    label: str | None = None,
+) -> pd.DataFrame:
+    """Veto candidates sitting in an over-flagging bin of an *instrumental* covariate.
+
+    This closes the failure mode that dominates real single-element outliers.
+    Weinberg et al. traced two high-Ca APOGEE stars to bad pixels hit by one
+    particular radial-velocity + fibre combination, and a whole *population* of
+    low-K stars to a heliocentric velocity near -70 km/s that slid the K lines
+    onto a telluric band. Their own conclusion is that a rare outlier and a rare
+    reduction problem "are not always easy to tell one from the other".
+
+    The discriminator is that an instrument leaves a footprint in instrument
+    coordinates. A real anomaly has no reason to correlate with the star's
+    radial velocity, its fibre number, or its position on the detector; a
+    telluric or bad-pixel artifact does, sharply. Binning the flag rate in each
+    such covariate and vetoing the outlying bins is the abundance-space form of
+    the ledger rule that a feature recurring across unrelated sightlines is
+    instrumental.
+    """
+    cfg = cfg or VetConfig()
+    name = label or covariate_col
+    out = cand.copy()
+    if covariate_col not in all_stars.columns or covariate_col not in out.columns:
+        out[f"{name}_flag_ratio"] = np.nan
+        out[f"pass_{name}_rate"] = True
+        return out
+
+    v_all = pd.to_numeric(all_stars[covariate_col], errors="coerce").to_numpy(dtype=float)
+    finite = np.isfinite(v_all)
+    if finite.sum() < 100:
+        out[f"{name}_flag_ratio"] = np.nan
+        out[f"pass_{name}_rate"] = True
+        return out
+    edges = np.quantile(v_all[finite], np.linspace(0.0, 1.0, int(n_bins) + 1))
+    edges = np.unique(edges)
+    if edges.size < 3:
+        out[f"{name}_flag_ratio"] = np.nan
+        out[f"pass_{name}_rate"] = True
+        return out
+
+    idx = np.clip(np.digitize(v_all, edges) - 1, 0, edges.size - 2)
+    global_rate = float(np.sum(flagged_mask)) / len(all_stars)
+    ratios = np.full(edges.size - 1, np.nan)
+    for b in range(edges.size - 1):
+        sel = finite & (idx == b)
+        if sel.sum() >= 20 and global_rate > 0:
+            ratios[b] = (float(np.sum(flagged_mask[sel])) / sel.sum()) / global_rate
+
+    v_c = pd.to_numeric(out[covariate_col], errors="coerce").to_numpy(dtype=float)
+    b_c = np.clip(np.digitize(v_c, edges) - 1, 0, edges.size - 2)
+    r = np.where(np.isfinite(v_c), ratios[b_c], np.nan)
+    out[f"{name}_flag_ratio"] = r
+    bad = np.isfinite(r) & (r > cfg.max_field_flag_rate_ratio)
+    out[f"pass_{name}_rate"] = ~bad
+    reasons = out["vet_reasons"] if "vet_reasons" in out.columns else pd.Series([""] * len(out))
+    out["vet_reasons"] = [
+        (rs + ("; " if rs else "")
+         + f"{name} bin flags {rr:.1f}x the global rate: an instrumental footprint, "
+           "not a chemical one")
+        if b else rs
+        for rs, rr, b in zip(reasons, r, bad, strict=False)
+    ]
+    out["vet_pass"] = (out["vet_pass"] if "vet_pass" in out.columns else True) & out[f"pass_{name}_rate"]
     return out
 
 
@@ -453,6 +553,7 @@ __all__ = [
     "ELEMENT_CAVEATS",
     "VetConfig",
     "census_z",
+    "covariate_rate_veto",
     "cross_survey_check",
     "dedupe",
     "element_caveat",

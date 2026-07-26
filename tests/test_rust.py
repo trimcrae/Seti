@@ -301,6 +301,71 @@ def test_exact_monte_carlo_null_agrees_with_the_fast_path():
     assert np.sign(a.slope_var_yr) == np.sign(b.slope_var_yr)
 
 
+def test_an_accelerating_secular_fade_does_not_flag():
+    """The `dimming` channel's own population must not leak into this one.
+
+    A star whose brightness is fading at an *accelerating* rate drifts further
+    within each successive season than the last.  Season-median subtraction
+    leaves that drift in, so it reads as a rising second moment produced
+    entirely by a first-moment phenomenon.  Removing a fitted *line* per season
+    rather than a constant is the fix, and this test is what makes that choice
+    load-bearing rather than cosmetic: with the line removed the confounder is
+    rejected outright, and without it a 0.7 mag accelerating fade flags the
+    majority of the time.
+    """
+    def fading(accel, seed):
+        rng = np.random.default_rng(seed)
+        t, m, e = [], [], []
+        for i in range(7):
+            tt = np.sort(rng.uniform(0, 200, 80)) + i * SEASON
+            t.append(tt)
+            m.append(15.0 + rng.normal(0, 0.02, 80) + accel * (tt / SEASON) ** 2)
+            e.append(np.full(80, 0.02))
+        return np.concatenate(t), np.concatenate(m), np.concatenate(e)
+
+    # With the per-season line removed (the default): rejected every time.
+    with_detrend = sum(
+        _is_candidate(fit_scatter_trend(season_scatter(*fading(0.02, s))))
+        for s in range(40))
+    assert with_detrend == 0
+
+    # Without it, the same stars flag often — so the guard is doing real work.
+    without = sum(
+        _is_candidate(fit_scatter_trend(
+            season_scatter(*fading(0.02, s), detrend_season=False)))
+        for s in range(40))
+    assert without >= 10, "confounder not reproduced; the guard proves nothing"
+
+
+def test_detrended_null_table_is_used_when_detrending():
+    """Detrended data must be compared against the detrended null, not the plain one.
+
+    A line fit removes two degrees of freedom, so it suppresses the estimator by
+    an N-dependent amount — ~10% at N=8 and ~0.6% at N=80.  Scoring detrended
+    residuals against the un-detrended table would reintroduce precisely the
+    cadence-tracking offset the module exists to remove.
+    """
+    b_plain, _ = mad_null_table()
+    b_detr, _ = mad_null_table(detrended=True)
+    assert b_detr[8] < b_plain[8] - 0.05         # a large low-N difference
+    assert abs(b_detr[80] - b_plain[80]) < 0.02  # converging at high N
+    assert bias_factor(8, detrended=True)[0] == pytest.approx(b_detr[8])
+    # And the difference is N-dependent, which is why it cannot be ignored.
+    assert (b_plain[8] - b_detr[8]) > 5 * (b_plain[80] - b_detr[80])
+
+
+def test_detrend_line_removes_a_slope_but_keeps_scatter():
+    from seti.rust.scatter import detrend_line
+
+    rng = np.random.default_rng(0)
+    t = np.sort(rng.uniform(0, 200, 200))
+    noise = rng.normal(0, 0.03, t.size)
+    res = detrend_line(t, 15.0 + 0.004 * t + noise)
+    assert abs(float(np.polyfit(t, res, 1)[0])) < 1e-9      # slope gone
+    assert mad_scale(res) == pytest.approx(0.03, rel=0.15)  # scatter preserved
+    assert detrend_line(np.array([1.0, 1.0]), np.array([2.0, 4.0])).shape == (2,)
+
+
 def test_heteroscedastic_noise_floor_does_not_manufacture_a_trend():
     """Growing per-epoch *errors* are not growing astrophysical variability.
 

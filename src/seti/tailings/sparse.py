@@ -317,6 +317,46 @@ def classify(
     return SPARSE, "single-element excursion with a quiet background"
 
 
+def global_statistics(Z: pd.DataFrame, *, cfg: SparseConfig | None = None) -> pd.DataFrame:
+    """The statistics the *rest of the field* uses, for direct comparison.
+
+    Every executed abundance-outlier method reduces the residual vector to a
+    single global distance: a reduced chi-squared, a Mahalanobis distance, an
+    autoencoder reconstruction error, a random-forest proximity. Those are all
+    monotone in how *many* elements deviate, so a dense anomaly beats a sparse
+    one of the same per-element amplitude, and a sparse anomaly is diluted by
+    the quiet elements it is defined by.
+
+    ``chi2_leave_one_out`` reproduces the convention Weinberg et al. adopted
+    when they searched residuals star by star: omit the element making the
+    largest contribution, on the reasoning that a lone deviant element is
+    usually an artifact. That choice is defensible and it is also an explicit
+    exclusion of the TAILINGS signal -- it *requires* at least two anomalous
+    abundances. Computing it here alongside the sparse statistic makes the
+    contrast measurable rather than asserted, and the injection-recovery
+    comparison in the test suite is the demonstration.
+    """
+    cfg = cfg or SparseConfig()
+    elements = [c for c in Z.columns if c not in cfg.exclude_elements]
+    A = np.abs(Z[elements].to_numpy(dtype=float))
+    rows = []
+    for k in range(A.shape[0]):
+        a = A[k][np.isfinite(A[k])]
+        if a.size == 0:
+            rows.append({"n_used": 0, "chi2_reduced": np.nan,
+                         "chi2_leave_one_out": np.nan, "z_sum_abs": np.nan})
+            continue
+        order = np.argsort(-a)
+        drop = a[order[1:]] if a.size > 1 else np.array([])
+        rows.append({
+            "n_used": int(a.size),
+            "chi2_reduced": float(np.mean(a**2)),
+            "chi2_leave_one_out": float(np.mean(drop**2)) if drop.size else 0.0,
+            "z_sum_abs": float(np.sum(a)),
+        })
+    return pd.DataFrame(rows, index=Z.index)
+
+
 def contrast_table(stats: pd.DataFrame, *, z_bins: tuple[float, ...] = (2, 3, 4, 6, 8, 12)) -> pd.DataFrame:
     """The sparse/dense contrast, binned in ``z_max`` — the headline diagnostic.
 
@@ -392,5 +432,6 @@ __all__ = [
     "classify",
     "contrast_table",
     "element_flag_rates",
+    "global_statistics",
     "sparse_statistics",
 ]

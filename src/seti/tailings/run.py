@@ -77,9 +77,10 @@ def stage_acquire(cfg: Config, *, surveys: list[str], max_rows: int, out_dir: Pa
         acq = fetch_survey(
             sv,
             teff_max=float(sample.get("teff_max", 6000.0)),
-            teff_min=float(sample.get("teff_min", 3000.0)),
+            teff_min=float(sample.get("teff_min", 4000.0)),
             logg_min=float(sample.get("logg_min", 4.0)),
             snr_min=float(sample.get("snr_min", 40.0)),
+            feh_min=float(sample.get("feh_min", -1.0)),
             max_rows=max_rows,
             n_chunks=n_chunks,
         )
@@ -117,6 +118,14 @@ def reduce_survey(
     mblock = block.get("manifold", {})
 
     stars = V.dedupe(stars, id_col="star_id", snr_col="snr")
+    # Metallicity floor: convective protection depends on [Fe/H] too, and a
+    # metal-poor turnoff star passes a Teff/logg cut with a thin envelope.
+    if "fe_h" in stars.columns:
+        n0 = len(stars)
+        stars = stars[stars["fe_h"].to_numpy(dtype=float) >= vcfg.feh_min].reset_index(drop=True)
+        if len(stars) < n0:
+            print(f"[tailings] {survey}: {n0 - len(stars)} stars cut by the "
+                  f"[Fe/H] >= {vcfg.feh_min} floor (thin metal-poor envelopes)")
     elements = [e for e in stars.columns
                 if e in M.NUCLEO_FAMILIES["alpha"] + M.NUCLEO_FAMILIES["odd_z"]
                 + M.NUCLEO_FAMILIES["fe_peak"] + M.NUCLEO_FAMILIES["s_light"]
@@ -136,8 +145,12 @@ def reduce_survey(
             "n_vetted": 0,
         }
 
+    # Work in [X/H], never [X/Fe]: an error in the star's own [Fe/H] otherwise
+    # propagates into every element at once and smears a sparse anomaly into a
+    # weak dense one (Weinberg's measurement aberration).
+    stars_xh = M.to_xh(stars, elements, feh_col="fe_h")
     mani = M.fit_manifold(
-        stars,
+        stars_xh,
         elements,
         teff_col="teff",
         logg_col="logg",
@@ -150,7 +163,8 @@ def reduce_survey(
         min_count=int(mblock.get("scatter_min_count", 40)),
         floor=float(mblock.get("scatter_floor_dex", 0.005)),
     )
-    Z, sig = M.zscores(stars, mani, err_prefix="e_")
+    Z, sig = M.zscores(stars_xh, mani, err_prefix="e_")
+    glob = S.global_statistics(Z, cfg=scfg)
     stats = S.sparse_statistics(Z, cfg=scfg)
     rates = S.element_flag_rates(stats, Z, cfg=scfg)
     contrast = S.contrast_table(stats)
@@ -160,9 +174,10 @@ def reduce_survey(
     contrast.to_csv(out_dir / f"contrast_{survey.lower()}.csv", index=False)
 
     keep = ["star_id", "ra", "dec", "teff", "logg", "fe_h", "snr", "chi2", "ruwe",
-            "vbroad", "rv_scatter", "field_id", "survey"]
+            "vbroad", "rv_scatter", "rv", "fiber", "field_id", "survey"]
     keep = [c for c in keep if c in stars.columns]
-    joined = pd.concat([stars[keep].reset_index(drop=True), stats.reset_index(drop=True)], axis=1)
+    joined = pd.concat([stars[keep].reset_index(drop=True), stats.reset_index(drop=True),
+                        glob.reset_index(drop=True)], axis=1)
     for el in Z.columns:
         joined[f"z_{el}"] = Z[el].to_numpy()
 
@@ -174,6 +189,12 @@ def reduce_survey(
         cand = V.element_rate_veto(cand, rates, cfg=vcfg)
         flagged_mask = (stats["n_discrepant"].to_numpy() > 0)
         cand = V.field_rate_veto(cand, joined, flagged_mask, cfg=vcfg)
+        # Instrumental covariates: a real anomaly has no reason to correlate
+        # with the star's radial velocity or its fibre; a telluric or bad-pixel
+        # artifact does, sharply.
+        for cov, lab in (("rv", "rv"), ("fiber", "fiber"), ("rv_scatter", "rvscatter")):
+            cand = V.covariate_rate_veto(cand, joined, flagged_mask,
+                                         covariate_col=cov, label=lab, cfg=vcfg)
         cand = cand.sort_values("z_max", ascending=False, ignore_index=True)
         cand.to_csv(out_dir / f"candidates_{survey.lower()}.csv", index=False)
     n_vetted = int(cand["vet_pass"].sum()) if n_sparse else 0

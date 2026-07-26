@@ -318,9 +318,9 @@ What went wrong, and what now prevents it:
 
 | Failure | Fix |
 |---|---|
-| p-value equal to `1/(n_null+1)` reported as a point estimate and fed to a trials correction | every p ships with `p_floor`, `floor_limited` and `p_repr`; a floor-limited statistic is **re-run with 8× the draws** (up to `max_n_null`), and if it survives the cap it is reported as `p < x` and **cannot** be called significant |
+| p-value equal to `1/(n_null+1)` reported as a point estimate and fed to a trials correction | every p ships with `p_floor`, `floor_limited` and `p_repr`; a floor-limited statistic is **re-run with 8× the draws** (up to `max_n_null`) and, if it survives, is reported as `p < x` throughout. A bound is *not* discarded — the floor is the conservative end of it, so it enters the family at that value — but it is admitted only once escalation has actually run (`bound_was_escalated`), because an unescalated floor is an artefact of `n_null`, and the verdict carries `best_p_is_bound` |
 | three "independent" edge geometries returning the *identical* p | each edge test reports which anomalies produced its step; geometries whose firing sets overlap by Jaccard ≥ 0.5 are **one feature** and the correction counts them once (`n_effective_independent_tests`) |
-| 2555 anomalies in the catalogue, 30 with a parallax, and a 3D scan run on the 30 while guarded by the 2555 | every statistic counts the anomalies carrying **its own** coordinate and returns `INSUFFICIENT_ANOMALIES` below 30, with `p_value: null` and an explicit reason the aggregator surfaces in `insufficient_tests` |
+| 2555 anomalies in the catalogue, 30 with a parallax, and a 3D scan run on the 30 while guarded by the 2555 | every statistic counts the anomalies carrying **its own** coordinate and returns `INSUFFICIENT_ANOMALIES` with `p_value: null` and a reason the aggregator surfaces in `insufficient_tests`. Scans additionally require **5 anomalies per bin** (`min_anomalies_for_scan`): a 24-bin scan needs 120, because the maximum over hundreds of near-empty windows is not a statistic |
 | `p = None` silently skipped by the aggregator | insufficient tests are a first-class entry; they never appear in `p_values` and never contribute to a verdict |
 | the tested coordinate was the *worst*-balanced covariate (SMD 0.197) and this was buried in diagnostics | `coordinate_balance` travels next to every p-value, graded good/marginal/poor on the Rubin (2001) convention, and `|SMD| ≥ 0.10` blocks `DETECTION` |
 | the channel declared `[g_mag, bp_rp, n_epochs]` but the code used the global list whose magnitude column is `phot_g_mean_mag`, so **apparent magnitude was never matched on at all** | `_resolve_covariates` unions the channel's declared columns with the global defaults, resolves them into physical *families* through an alias table, and **refuses `DETECTION` if no magnitude covariate exists** |
@@ -340,7 +340,7 @@ into its result string, so the caveat cannot be lost between the doc and the JSO
 | Result | Means |
 |---|---|
 | `DETECTION` | resolved, family-corrected, covariate-balanced structure in a **vetted** population, with every gate passed |
-| `STRUCTURE_UNRESOLVED` | the statistic never exceeded any null realisation even after escalation — a bound, not a measurement |
+| `STRUCTURE_UNRESOLVED` | the winning statistic is a bound that was never escalated — its p-value is an artefact of the draw count, not a measurement |
 | `STRUCTURE_UNCORRECTED` | significant, but the parent lacks a covariate the null needs (typically magnitude): may be a depth map |
 | `STRUCTURE_UNVETTED_POPULATION` | significant, but the anomaly set is a bare score percentile |
 | `STRUCTURE_CONFOUNDED` | significant, but the tested coordinate is itself poorly balanced |

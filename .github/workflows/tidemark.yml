@@ -48,7 +48,7 @@ on:
       n_shards:
         description: "acquisition shards (matrix width)"
         required: false
-        default: "4"
+        default: "2"
       skip_acquire:
         description: "true = channel sweep only, no archive access"
         required: false
@@ -65,8 +65,12 @@ jobs:
     timeout-minutes: 330
     strategy:
       fail-fast: false
+      # Two shards, not four: the Gaia TAP async endpoint returns transient
+      # 500s under concurrent load, and four shards were rate-limiting us into
+      # our own retry budget. Two halves the wall clock without the self-DoS.
+      max-parallel: 2
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: [0, 1]
     steps:
       - uses: actions/checkout@v4
         with:

@@ -100,22 +100,46 @@ def cone_grid(grid: str = "sparse") -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _run_query(query: str, retries: int = 4) -> pd.DataFrame:
+def _run_query(query: str, retries: int = 6) -> pd.DataFrame:
     """Reuses the ``cluster`` channel's hardened Gaia TAP wrapper (async with
-    exponential backoff, synchronous fallback on the last attempt)."""
+    exponential backoff, synchronous fallback on the last attempt).
+
+    Six attempts rather than four: with several shards querying concurrently the
+    Gaia async endpoint returns transient 500s often enough that four attempts
+    can be exhausted on a query that would have succeeded on the fifth.
+    """
     from ..cluster.run import _run_query as _q
     return _q(query, retries=retries)
 
 
-def _fetch_wise(source_ids, chunk: int = 2000) -> pd.DataFrame:
+#: AllWISE crossmatch chunk size, in Gaia source_ids per query.
+#:
+#: 2026-07-26: at 2000 the first run lost every cone.  The Gaia TAP async
+#: endpoint returned ``Error 500: null`` under four parallel shards (the known
+#: transient documented in ``cluster/run.py``), and the synchronous fallback then
+#: returned ``Error 400: Cannot parse query`` --- because ``launch_job`` submits
+#: over **GET**, and 2000 19-digit ids is a ~40 kB URL that the server truncates
+#: mid-list.  The parse error is the symptom; the URL length is the cause.  400
+#: ids keeps the query near 8 kB, comfortably inside the limit, so the sync
+#: fallback actually works when the async endpoint is flaky.
+_WISE_CHUNK = 400
+
+
+def _fetch_wise(source_ids, chunk: int = _WISE_CHUNK) -> pd.DataFrame:
     frames = []
     ids = [int(s) for s in source_ids]
+    n_fail = 0
     for i in range(0, len(ids), chunk):
         sub = ",".join(str(s) for s in ids[i:i + chunk])
         try:
             frames.append(_run_query(_WISE_QUERY.format(ids=sub)))
         except Exception as exc:                                # noqa: BLE001
+            n_fail += 1
             print(f"[tidemark] WISE chunk {i // chunk} failed: {exc!r}")
+    if n_fail:
+        print(f"[tidemark] {n_fail} WISE chunk(s) failed; the affected stars drop "
+              "out of the parent sample uniformly in sky position, so this costs "
+              "sample size rather than footprint")
     if not frames:
         return pd.DataFrame(columns=["source_id", "w1mpro", "w1sigmpro",
                                      "w2mpro", "w2sigmpro"])

@@ -209,11 +209,72 @@ def _colour_from_visits(w1_visits, w2_visits, pred: dict, s1: float, s2: float):
     return colour_stability(tt, np.array(r1), np.array(e1), np.array(r2), np.array(e2))
 
 
+def preselect_from_untimely(stars: pd.DataFrame, table: str, service: str,
+                            ra: float, dec: float, radius_deg: float,
+                            tol_arcsec: float = 2.0, fetch=None
+                            ) -> tuple[pd.DataFrame, dict]:
+    """Restrict a Gaia field sample to sources the unTimely catalogue calls variable.
+
+    This is what makes the catalogue *load-bearing* rather than merely probed: it
+    supplies scale (which of the >8M mid-IR variables to characterise), while the
+    per-epoch NEOWISE photometry supplies the modulation index, morphology and
+    colour statistics that no variability catalogue contains.
+
+    Degrades explicitly.  If the catalogue is unreachable or returns nothing, the
+    **full** sample is returned with ``applied: False`` and the transport status
+    recorded, because silently searching fewer stars and calling it a
+    pre-selection is how a channel misreports its own coverage.
+    """
+    ledger = {"label": "untimely_preselect", "table": table, "service": service,
+              "applied": False, "n_in": int(len(stars)), "n_out": int(len(stars)),
+              "n_untimely_rows": 0, "status": "NOT_ATTEMPTED"}
+    if not table or not service:
+        ledger["status"] = "NO_TABLE_DISCOVERED"
+        return stars, ledger
+    if fetch is None:
+        from .acquire import fetch_untimely_variables as fetch
+    try:
+        r = fetch(table, service, ra, dec, radius_deg)
+    except Exception as exc:                           # noqa: BLE001
+        ledger.update({"status": "QUERY_FAILED", "error": repr(exc)})
+        return stars, ledger
+    ledger.update({"status": r.status, "n_untimely_rows": int(r.n_rows),
+                   "count_star": r.count_star, "truncated": r.truncated,
+                   "query": r.query[:1000]})
+    if r.status != "OK" or r.data is None or not len(r.data):
+        return stars, ledger
+
+    d = r.data.copy()
+    d.columns = [c.lower() for c in d.columns]
+    racol = next((c for c in ("ra", "raj2000", "ra_deg", "ramean") if c in d), None)
+    deccol = next((c for c in ("dec", "dej2000", "dec_deg", "decmean") if c in d), None)
+    if racol is None or deccol is None:
+        ledger["status"] = "NO_POSITION_COLUMNS"
+        return stars, ledger
+
+    from scipy.spatial import cKDTree
+    cosd = max(np.cos(np.radians(float(dec))), 1e-3)
+    tree = cKDTree(np.column_stack([
+        pd.to_numeric(d[racol], errors="coerce").to_numpy() * cosd,
+        pd.to_numeric(d[deccol], errors="coerce").to_numpy()]))
+    q = np.column_stack([stars["ra"].to_numpy() * cosd, stars["dec"].to_numpy()])
+    dist, _idx = tree.query(q, k=1, distance_upper_bound=tol_arcsec / 3600.0)
+    keep = np.isfinite(dist)
+    out = stars[keep].copy()
+    ledger.update({"applied": True, "n_out": int(len(out)),
+                   "tol_arcsec": tol_arcsec})
+    print(f"[vigil] unTimely pre-select: {len(stars)} -> {len(out)} "
+          f"(matched against {len(d)} catalogue rows)")
+    return out, ledger
+
+
 def vigil_sweep(cfg=None, ra: float = 266.0, dec: float = 65.0,
                 radius_deg: float = 0.4, g_max: float = 15.0,
                 max_stars: int = 400, time_budget_s: float = 3000.0,
-                out_root: Path | None = None,
-                gaia_fetch=None, neowise_fetch=None, allwise_fetch=None) -> dict:
+                out_root: Path | None = None, untimely_table: str = "",
+                untimely_service: str = "",
+                gaia_fetch=None, neowise_fetch=None, allwise_fetch=None,
+                untimely_fetch=None) -> dict:
     """Sweep one sky field for mid-IR variables at low fractional excess.
 
     ``gaia_fetch`` / ``neowise_fetch`` / ``allwise_fetch`` are injectable so the
@@ -246,7 +307,15 @@ def vigil_sweep(cfg=None, ra: float = 266.0, dec: float = 65.0,
             "n_stars_in_field": 0, "n_stars_with_neowise": 0, "n_scored": 0,
             "n_candidates": 0})
 
-    stars = gres.data.head(max_stars).copy()
+    stars = gres.data.copy()
+    # If the unTimely mid-IR variable catalogue was discovered by the probe, use
+    # it as a pre-selector: it is what turns this from a blind field sweep into a
+    # search over the >8M known mid-IR variables.
+    stars, ut_ledger = preselect_from_untimely(
+        stars, untimely_table, untimely_service, ra, dec, radius_deg,
+        fetch=untimely_fetch)
+    ledger.append(ut_ledger)
+    stars = stars.head(max_stars).copy()
     aw = pd.DataFrame()
     try:
         aw = allwise_fetch(stars[["source_id", "ra", "dec", "pmra", "pmdec"]])
@@ -334,6 +403,7 @@ def vigil_sweep(cfg=None, ra: float = 266.0, dec: float = 65.0,
         "field": tag, "ra": ra, "dec": dec, "radius_deg": radius_deg,
         "verdict": "SEARCHED",
         "n_stars_in_field": int(len(stars)),
+        "untimely_preselect": ut_ledger,
         "n_stars_with_neowise": int(len(meta)),
         "n_scored": int(len(df)),
         "n_candidates": int(len(cand)),
@@ -469,4 +539,5 @@ def vigil_vet(cfg=None, out_root: Path | None = None, max_candidates: int = 200,
     return summary
 
 
-__all__ = ["load_vigil_config", "vigil_probe", "vigil_sweep", "vigil_vet"]
+__all__ = ["load_vigil_config", "preselect_from_untimely", "vigil_probe",
+           "vigil_sweep", "vigil_vet"]

@@ -56,6 +56,19 @@ on:
         description: "Per-field IRSA wall-clock budget (s)"
         required: false
         default: "3000"
+      untimely_table:
+        description: >-
+          Table name for the unTimely mid-IR variable catalogue, as reported by
+          the probe job (results/vigil/probe.json -> tables_found).  When set,
+          each field's Gaia sample is pre-selected to catalogued mid-IR variables
+          instead of being swept blind.  Left empty on a first run, because the
+          probe is what discovers it.
+        required: false
+        default: ""
+      untimely_service:
+        description: "TAP endpoint hosting untimely_table"
+        required: false
+        default: ""
       max_candidates:
         description: "Cap on candidates carried into the vetting gauntlet"
         required: false
@@ -224,7 +237,9 @@ jobs:
             --radius-deg ${{ github.event.inputs.radius_deg || '0.4' }} \
             --g-max ${{ github.event.inputs.g_max || '15.0' }} \
             --max-stars ${{ github.event.inputs.max_stars || '400' }} \
-            --time-budget-s ${{ github.event.inputs.time_budget_s || '3000' }}
+            --time-budget-s ${{ github.event.inputs.time_budget_s || '3000' }} \
+            --untimely-table "${{ github.event.inputs.untimely_table }}" \
+            --untimely-service "${{ github.event.inputs.untimely_service }}"
           echo "=== field summary ==="
           cat results/vigil/*/field_summary.json
       - name: Shard name

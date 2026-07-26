@@ -224,6 +224,12 @@ def _cmd_herdsman_reduce(args, cfg):
                  astro_floor_kms=args.astro_floor)
 
 
+def _cmd_herdsman_b(args, cfg):
+    from .herdsman_b.run import herdsman_b_run
+
+    herdsman_b_run(cfg, stage=args.stage)
+
+
 def _cmd_herdsman(args, cfg):
     from .herdsman.run import herdsman_run
 
@@ -748,6 +754,16 @@ def main(argv=None):
     p.add_argument("--mock-cell-pc", type=float, default=40.0,
                    help="shuffle cell size (pc)")
     p.set_defaults(func=_cmd_herdsman_scan)
+
+    p = sub.add_parser("herdsman-b",
+                       help="runner: completed-assembly audit — census-wide "
+                            "chemical-coherence test of cluster membership vs "
+                            "Gaia GSP-Phot metallicities (impossible clusters; "
+                            "docs/herdsman.md section 5)")
+    p.add_argument("--stage", choices=("catalog", "chem", "field", "score",
+                                       "all"), default="all",
+                   help="stage to run (each checkpoints; 'all' resumes)")
+    p.set_defaults(func=_cmd_herdsman_b)
 
     p = sub.add_parser("herdsman-reduce",
                        help="staged runner 3/3: aggregate all scan shards "

@@ -413,17 +413,17 @@ def temperature_width(lam_um, flux, err, beta: float | None = None,
     # Profile the log width, re-optimising T_out, p and (optionally) beta.
     tmid = float(np.sqrt(grad.t_in_k * grad.t_out_k))
 
-    # beta is held at the gradient fit's value while the width is profiled:
-    # beta and width both flatten the Rayleigh-Jeans tail, so letting both float
-    # lets a wide component masquerade as a narrow one with low beta.
-    beta_fix = float(grad.beta) if np.isfinite(grad.beta) else 0.0
-
-    def chi2_at(log_tmid, dl, p):
+    # beta is a NUISANCE PARAMETER here and must be minimised over at every
+    # width, not frozen at the gradient fit's value.  Freezing it meant that
+    # whenever fit_gradient itself landed on the broad/high-beta local minimum,
+    # the profile inherited a bad beta, chi2 at zero width was then terrible,
+    # and a genuinely isothermal source reported a decade-wide upper limit.
+    def chi2_at(log_tmid, dl, p, beta_val):
         tm = 10.0 ** float(log_tmid)
-        t_out = np.clip(tm / 10 ** (dl / 2), T_MIN_K, T_MAX_K)
-        t_in = np.clip(t_out * 10**dl, T_MIN_K, T_MAX_K)
+        t_out = float(np.clip(tm / 10 ** (dl / 2), T_MIN_K, T_MAX_K))
+        t_in = float(np.clip(t_out * 10**dl, T_MIN_K, T_MAX_K))
         return fit_discrete_gradient_fixed(lam_um, flux, err, t_in, t_out,
-                                           p, beta_fix, lam0_um)
+                                           p, beta_val, lam0_um)
 
     def obj(width_dex):
         """chi2 at fixed EFFECTIVE width, minimised over T_centre and p.
@@ -438,15 +438,16 @@ def temperature_width(lam_um, flux, err, beta: float | None = None,
         """
         w = float(abs(width_dex))
         best = np.inf
-        scales = np.log10(tmid) + np.linspace(-0.4, 0.4, 11)
-        for p in (0.0, 1.0, 2.0, 2.5):
+        scales = np.log10(tmid) + np.linspace(-0.5, 0.5, 9)
+        betas = np.arange(-0.4, 2.61, 0.4)
+        for p in (0.0, 1.0, 2.5):
             dl = solve_log_range_for_width(w, 2.0 * p - 5.0)
-            vals = [chi2_at(s, dl, p) for s in scales]
-            i = int(np.argmin(vals))
-            best = min(best, float(vals[i]))
-            res = minimize(lambda z, pp=p, dd=dl: chi2_at(z[0], dd, pp),
-                           [scales[i]], method="Nelder-Mead",
-                           options={"maxiter": 80, "xatol": 1e-4, "fatol": 1e-7})
+            grid = [(chi2_at(s, dl, p, b), s, b) for s in scales for b in betas]
+            v0, s0, b0 = min(grid, key=lambda x: x[0])
+            best = min(best, float(v0))
+            res = minimize(lambda z, pp=p, dd=dl: chi2_at(z[0], dd, pp, z[1]),
+                           [s0, b0], method="Nelder-Mead",
+                           options={"maxiter": 200, "xatol": 1e-4, "fatol": 1e-7})
             best = min(best, float(res.fun))
         return best
 

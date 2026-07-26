@@ -117,7 +117,9 @@ FULLTEXT: dict[str, str] = {
     # are the wrong paper.  See scripts/derelict_lit.py, which re-fetches these
     # with an id+title verification step and supersedes the necrolit copies.
     "dark_comets": "2212.08115",          # Seligman et al. 2023, PSJ 4, 35
-    "dark_comets_pnas": "2412.02384",     # Seligman et al. 2024, PNAS 121, e2406424121
+    # (The PNAS 2024 companion is deliberately NOT listed here: the id
+    # "2412.02384" was guessed and turned out to be an unrelated software-
+    # engineering paper.  scripts/derelict_lit.py resolves it BY TITLE instead.)
     # KNELL/SHROUD (S31/S33). VASCO: optical disappearance.
     "vasco": "1606.08992",
 }

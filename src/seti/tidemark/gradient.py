@@ -129,7 +129,8 @@ def _spearman(a: np.ndarray, b: np.ndarray) -> float:
         return float("nan")
     ra = np.argsort(np.argsort(a[ok])).astype(float)
     rb = np.argsort(np.argsort(b[ok])).astype(float)
-    ra -= ra.mean(); rb -= rb.mean()
+    ra -= ra.mean()
+    rb -= rb.mean()
     den = np.sqrt((ra ** 2).sum() * (rb ** 2).sum())
     return float((ra * rb).sum() / den) if den > 0 else float("nan")
 

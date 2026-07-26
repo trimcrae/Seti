@@ -7,6 +7,10 @@ Writes ``results/derelict/``:
                      at build time, so this file is the record of what is real.
 ``nongrav.csv``      every object with a fitted A1 that survived the screens,
                      with beta / area-to-mass / R attached.
+``screened.csv``     EVERY object pulled, with every screen column and the
+                     implied beta / area-to-mass / R attached.  This is the
+                     parent sample: without it a zero at any gate is
+                     unauditable and there is no denominator for a rate.
 ``negative_a1.csv``  screen 3: the sunward-acceleration census -- the empirical
                      false-positive floor for screen 1.
 ``control_comets.csv`` the comet sample, run through the identical machinery.
@@ -76,6 +80,7 @@ def derelict_run(cfg: Config | None = None,
                  offline_input: str | None = None,
                  max_vet: int = 60,
                  max_enrich: int = 1500,
+                 max_control_enrich: int = 400,
                  skip_control: bool = False,
                  transport=None) -> dict:
     """Run the channel.  Returns the summary dict (also written to disk)."""
@@ -218,15 +223,39 @@ def derelict_run(cfg: Config | None = None,
         return summary
 
     scr = sr.table
+    # The FULL annotated table, not just survivors.  Without it a zero at any
+    # gate is unauditable, and a channel that publishes only its survivors has
+    # no denominator (see the TIDEMARK note in STATUS.md).
+    _safe_csv(scr, out / "screened.csv")
     survivors = scr[scr["screen_a1_only"]].copy()
     survivors = survivors.sort_values("R", ascending=False, na_position="last")
     negative = scr[scr["screen_negative_a1"]].copy()
     high_albedo = scr[scr["screen_albedo"]].copy()
 
     # --- control sample -------------------------------------------------------
+    # Comets run through the IDENTICAL machinery.  They should light up: their
+    # radial acceleration is real and is outgassing.  `a1_fitted` here is also
+    # the standing proof that the field names and the response parsing work --
+    # it needs no sigmas, so it is diagnostic even when enrichment is skipped.
     control_funnel = {}
     if control is not None and len(control):
-        cr = run_screens(dedupe(control), sp)
+        control = dedupe(control)
+        if offline_input is None and max_control_enrich > 0:
+            csub = control.head(max_control_enrich)
+            cdetails = {}
+            for _, row in csub.iterrows():
+                key = str(row.get("full_name") or row.get("pdes") or "")
+                sstr = str(row.get("spkid") or row.get("pdes") or key)
+                cdetails[key] = fetch_object_detail(sstr, transport=transport)
+            control = enrich_from_details(control, cdetails)
+            summary["control_enriched"] = int(
+                sum(1 for d in cdetails.values() if d.get("ok")))
+            if len(control) > max_control_enrich:
+                summary["degradation"].append(
+                    f"control enrichment capped at {max_control_enrich} of "
+                    f"{len(control)} comets; unenriched rows lack sigmas and so "
+                    "cannot register on any SNR screen")
+        cr = run_screens(control, sp)
         control_funnel = cr.funnel
         _safe_csv(cr.table, out / "control_comets.csv")
         summary["control_funnel"] = control_funnel

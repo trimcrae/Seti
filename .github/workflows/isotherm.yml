@@ -1,0 +1,212 @@
+name: isotherm
+
+# ISOTHERM — search on the SHAPE of infrared excess in temperature space
+# (docs/isotherm.md).  Every executed waste-heat search thresholds on how MUCH
+# infrared there is; this one thresholds on the emissivity index beta, the width
+# of the dust temperature distribution, silicate-feature equivalent width, and
+# component multiplicity in geometric progression.  Corpus: CASSIS (~13,000
+# public Spitzer/IRS 5-38 micron spectra), never used for a technosignature
+# search.
+#
+# The FIRST job probes archive reachability and publishes whether CASSIS was
+# actually reached.  It never fabricates: an unreachable archive yields an
+# explicit NO_DATA_REACHED verdict.  The shape stage is sharded (fail-fast
+# false), every 25 spectra checkpoint to a per-shard parquet, and uploads use
+# `if: always()` so a killed shard loses minutes rather than hours.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "probe|corpus|shape|calibrate|score|all"
+        required: false
+        default: "all"
+      max_spectra:
+        description: "Cap on spectra analysed per shard"
+        required: false
+        default: "2000"
+      n_shards:
+        description: "Number of parallel shape shards"
+        required: false
+        default: "6"
+      resolution:
+        description: "Rebin to this R before fitting (BIC counts resolution elements, not pixels)"
+        required: false
+        default: "100"
+      resume_run_id:
+        description: "Prior run id whose artifacts seed this run (skips completed spectra)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      verdict: ${{ steps.probe.outputs.verdict }}
+      cassis: ${{ steps.probe.outputs.cassis }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import pyvo, astroquery, scipy, pyarrow; print('imports OK')"
+      - name: Probe archives (CASSIS / IRSA / VizieR / Gaia)
+        id: probe
+        run: |
+          python -m seti.cli isotherm --stage probe
+          echo "=== archive probe ==="
+          cat results/isotherm/archive_probe.json
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          p = json.load(open("results/isotherm/archive_probe.json"))
+          print(f"verdict={p.get('verdict')}")
+          print(f"cassis={p.get('cassis_reachable')}")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: isotherm-probe
+          path: results/isotherm/
+          if-no-files-found: warn
+
+  calibrate:
+    # Offline injection-recovery: at what (SNR, temperature ratio) is a cascade
+    # separable from a continuous gradient?  This is the completeness map that
+    # makes any non-detection interpretable, so it runs regardless of archives.
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Sensitivity map
+        run: |
+          python -m seti.cli isotherm --stage calibrate
+          cat results/isotherm/sensitivity.csv
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: isotherm-sensitivity
+          path: results/isotherm/sensitivity.csv
+          if-no-files-found: warn
+
+  shape:
+    needs: probe
+    if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'calibrate' && needs.probe.outputs.verdict != 'NO_DATA_REACHED' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Seed from the probe job
+        uses: actions/download-artifact@v4
+        with:
+          name: isotherm-probe
+          path: results/isotherm/
+      - name: Seed checkpoints from a prior run
+        if: ${{ github.event.inputs.resume_run_id != '' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: isotherm-shard-${{ matrix.shard }}
+          run-id: ${{ github.event.inputs.resume_run_id }}
+          github-token: ${{ github.token }}
+          path: results/isotherm/
+      - name: Shape analysis (shard ${{ matrix.shard }})
+        run: |
+          python -m seti.cli isotherm --stage shape \
+            --shard ${{ matrix.shard }} \
+            --n-shards ${{ github.event.inputs.n_shards || '6' }} \
+            --max-spectra ${{ github.event.inputs.max_spectra || '2000' }} \
+            --resolution ${{ github.event.inputs.resolution || '100' }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: isotherm-shard-${{ matrix.shard }}
+          path: results/isotherm/shape_shard_*.parquet
+          if-no-files-found: warn
+
+  score:
+    needs: [probe, calibrate, shape]
+    if: ${{ always() && github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'calibrate' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Collect artifacts
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: isotherm-*
+          merge-multiple: true
+          path: results/isotherm/
+      - name: Score
+        run: |
+          ls -la results/isotherm/ || true
+          python -m seti.cli isotherm --stage score
+          echo "=== summary ==="
+          cat results/isotherm/summary.json || true
+      - name: Commit results (small files only; parquets stay artifacts)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/isotherm/archive_probe.json \
+                        results/isotherm/summary.json \
+                        results/isotherm/sensitivity.csv \
+                        results/isotherm/candidates.csv \
+                        results/isotherm/REPORT.md 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "isotherm: SED-shape technosignature search results"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: isotherm-outputs
+          path: results/isotherm/
+          if-no-files-found: warn

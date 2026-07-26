@@ -131,7 +131,7 @@ the funnel must handle rather than assume away:
 
 | Leak | Is it sparse? | How it is handled |
 |---|---|---|
-| AGB-companion mass transfer (barium/CH dwarfs) | **No** — raises the whole s-process, Sr/Y/Zr *and* Ba/La/Ce, usually with C | family-coherence veto; the s-process is two families and both move |
+| AGB-companion mass transfer (barium/CH dwarfs) | **No** — raises the whole s-process, Sr/Y/Zr *and* Ba/La/Ce, usually with C | family-coherence veto; the s-process is two families and both move. Rekhi et al. 2025 (arXiv:2509.13413) map this population — s-process-polluted **cool dwarfs**, i.e. squarely inside the target box — so it is a live contaminant, not a hypothetical one |
 | Planet engulfment / rocky accretion | **No** — raises every refractory along a condensation-temperature trend | family veto; and stage 4 tests it quantitatively |
 | lambda Boo depletion | **No** — depletes all refractories at once; and it is a hot-star class | population cut plus family veto |
 | Li depletion / Li enhancement | **Yes**, genuinely single-element | Li is **excluded by construction** from carrying a candidacy |
@@ -376,12 +376,32 @@ al. 2017 (arXiv:1608.05012), pointwise directional outlyingness on spectra. The
 statistical machinery of per-coordinate outlyingness exists; it has never been
 pointed at survey abundances.
 
-**A ready-made input.** Sit et al. 2024 (arXiv:2403.08067) published
-element-by-element residuals for **288,789 APOGEE stars × 17 elements** recast
-into two-process amplitudes — a manifold of the same construction. It covers
-*evolved* stars, so it is not the dwarf sample this channel needs, but it is a
-free cross-check and its published use was population medians (14 open
-clusters, 9 globulars, 4 dwarf galaxies), not per-star sparse scanning.
+### 2.3a The residual machinery already exists — reuse it, do not claim it
+
+The honest position is that **S12 is partially done**, and the channel is
+stronger for saying so.
+
+**Griffith, Weinberg, Buder et al. 2021 (arXiv:2110.06240)** already built most
+of this method: GALAH DR3, 82,910 disk stars, 16 elements, two-process
+residuals with RMS Δ[X/H] ≲ 0.07 dex. It is also the source of the 15 Na-rich
+stars above. **Sit et al. 2024 (arXiv:2403.08067)** did the same for 288,789
+APOGEE stars × 17 elements — but it is restricted to **evolved** stars by an
+explicit log g cut, so it is a methodological reference and a published proof
+that the machinery works, **not an input catalogue for a dwarf search**.
+
+So the residual manifold is not this channel's contribution and must not be
+presented as one. What is genuinely open is exactly two things:
+
+1. **The population cut.** Neither Griffith nor Sit restricted to
+   convective-envelope dwarfs, which is where the natural single-element
+   mechanism cannot operate and therefore where the statistic means something.
+2. **Sparsity as a designed test statistic**, with a stated null and a
+   sparse-versus-dense hypothesis, rather than ad-hoc inspection of the
+   largest residuals. Griffith's 15 Na-rich stars were found *incidentally*;
+   nobody has scanned for them on purpose.
+
+Neither has been applied to LAMOST, and there is no technosignature framing
+anywhere in that lineage.
 
 ### 2.4 What the tagging literature supplies: the thresholds
 
@@ -652,6 +672,41 @@ Verdicts: `NO_DIFFERENCE`, `ENGULFMENT_CONSISTENT`, `ENGULFMENT_EXCESSIVE`
 positive Tcond trend — check co-natality and the pipeline before anything
 else), `INSUFFICIENT`.
 
+**The dilution ceiling — it sets the bar and the sensitivity at once.** The
+convective-zone metal reservoir governs both halves of the trade:
+
+| Host | M_cz (M☉) | CZ metal reservoir | Δ[M/H] per M⊕ | M⊕ for +1.0 dex |
+|---|---|---|---|---|
+| F5 / 1.4 M☉ | 5×10⁻⁴ | 2.2 M⊕ | **0.161 dex** | 20 |
+| G2 / Sun | 0.020 | 89 M⊕ | 0.0048 dex | ~800 |
+| K2 / 0.8 M☉ | 0.090 | 402 M⊕ | 0.0011 dex | ~3,600 |
+| M3 / 0.3 M☉ | fully convective | 1,339 M⊕ | 0.0003 dex | ~12,000 |
+
+*The favourable half.* The Solar System's total heavy-element inventory is
+≈77 M⊕, so engulfing **the entire planetary system** into a solar-type star
+gives **Δ[M/H] = 0.27 dex — the absolute ceiling**. The observed record, Kronos
+(HD 240430) at ~0.23 dex, already sits at ~85% of it. So a coherent refractory
+excess above **~0.3 dex in a G dwarf**, or **~0.05–0.10 dex in a K dwarf**, is
+outside the engulfment hypothesis by the mass budget of a whole planetary
+system rather than by a threshold choice. `engulfment_ceiling_dex` computes it
+per star, because the bar is spectral-type dependent and quoting one number for
+the survey would be wrong. And a **single-element** excess is unexplainable by
+engulfment at *any* amplitude, because rock is a mixture and must move all
+refractories together along a condensation-temperature trend. That sentence is
+the cleanest statement of the discriminant.
+
+*The unfavourable half, stated plainly.* The same deep convection that makes
+the natural null airtight **also destroys the signal**. An M3 dwarf needs
+~12,000 M⊕ of rock for +1 dex and a K2 dwarf ~3,600 — more material than any
+planetary system contains. The cool end of the sample is therefore where the
+null is strongest *and* where a real signature is most diluted, and the two
+cannot be optimised together. `minimum_rock_mass_for` reports the required mass
+per star so the run states which side of that trade each sub-sample sits on. A
+detection in an M dwarf would require an implausible amount of material — which
+is itself worth saying, and is a reason to weight G and early-K dwarfs, where
+the envelope is thin enough for a plausible mass to register and still thick
+enough to forbid diffusion.
+
 **Honest limits.** The `M_cz(Teff)` tabulation is coarse — good to a factor of
 ~2 in F–G, worse for M dwarfs; the safety factor exists because of that. Rock
 composition is taken as bulk Earth; a differentiated core-rich fragment is more
@@ -698,7 +753,37 @@ occurrence limit will be written up. The escalation path is:
 * **lower thresholds with a matched null**, if and only if the contrast table
   shows the SPARSE fraction rising with `z_max` rather than flat.
 
-## 6. Stated limitations
+## 6. The structural tension with MIDDEN — stated, not buried
+
+**TAILINGS and MIDDEN cannot share a population, and each one's argument
+undercuts the other's.** This must be confronted because a referee will find it
+immediately.
+
+Whitmire & Wright's proposal *requires* a shallow convective envelope to keep
+injected waste visible in the photosphere — which is precisely why they specify
+**A5–F2**, and MIDDEN correctly follows them there. TAILINGS argues the
+opposite: restrict to **cool dwarfs precisely because deep convection suppresses
+the natural single-element mechanism**. Both arguments are correct, and they are
+incompatible.
+
+The resolution is not to pretend the tension away but to name what each channel
+buys and pays:
+
+| | MIDDEN (A5–F2) | TAILINGS (G/K/M dwarfs) |
+|---|---|---|
+| **Buys** | signal survives: a thin envelope keeps injected material at the surface, so a given injected mass gives a large photospheric excursion | a clean null: the mechanism that manufactures natural single-element anomalies does not operate |
+| **Pays** | a filthy null: A5–F2 is the Am/Fm domain, where diffusion and levitation make single-element anomalies *routinely*, which is why the one long-running claim in this space (Przybylski's star) has been contested for sixty years | signal is diluted: the ceiling table above — a K dwarf needs thousands of Earth masses for a large excursion, an M dwarf more than exists |
+| **Discriminator that makes it work anyway** | multi-line laboratory-wavelength coincidence plus dummy-line controls (the Andrievsky standard) | sparsity itself: dense is a rejection, so the diffusion signature — which is always generalized — cannot mimic it |
+
+TAILINGS' bet is that **a clean null is worth more than a large signal**, because
+the null is what a detection has to survive. A 0.2 dex single-element excursion
+in a K dwarf is unexplainable in a way the same excursion in an Ap star simply
+is not. But the price is real and is quantified in §3.6: the amount of material
+required is large, and for the coolest stars it is implausible. The two channels
+are complementary bets on opposite sides of the same trade, and neither
+subsumes the other.
+
+## 7. Stated limitations
 
 * **An iron-only anomaly is invisible by construction.** The manifold
   conditions on [Fe/H], so a star whose only anomaly is iron is absorbed into

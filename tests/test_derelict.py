@@ -321,6 +321,38 @@ def test_negative_a1_case():
     assert res.funnel["screen1_a1_only"] == 0
 
 
+def test_toutatis_measures_the_empirical_false_positive_floor():
+    """MEASURED, run 30204137011: the real negative-A1 census returned exactly
+    one object, 4179 Toutatis, at A1/sigma = -3.39 SUNWARD.
+
+    Radiation pressure cannot push sunward, so this is a clean measurement of
+    the systematic floor of JPL's non-grav fits -- on one of the best-observed
+    asteroids in the sky (92-year arc, 7141 observations, condition code 0).
+    It converts to |R| ~ 5, and the channel's flag threshold is R = 10, so the
+    thresholds sit a factor of ~2 ABOVE the measured noise rather than inside
+    it.  If that margin ever closes, this test fails and the thresholds must be
+    revisited.
+    """
+    a1, sig, d_km = -3.148561365334624e-13, 9.279e-14, 5.4
+    df = pd.DataFrame([_row(full_name="  4179 Toutatis (1989 AC)", pdes="4179",
+                            **{"class": "APO"}, H=15.29, diameter=d_km,
+                            n_obs_used=7141, data_arc=33698, condition_code=0.0,
+                            A1=a1, sigma_A1=sig)])
+    p = _params()
+    res = run_screens(df, p)
+    r = res.table.iloc[0]
+
+    assert r["screen_negative_a1"], "a 3.4-sigma sunward A1 must be caught"
+    assert not r["screen_a1_only"], "and must never reach the science screen"
+    assert r["a1_snr"] == pytest.approx(-3.39, abs=0.01)
+
+    floor_r = abs(amr_from_a1(a1)) / amr_natural(d_km * 1000.0, p.rho_natural_kg_m3)
+    assert floor_r == pytest.approx(5.0, rel=0.02)
+    assert p.r_flag > floor_r, (
+        f"flag threshold R={p.r_flag} must sit above the measured systematic "
+        f"floor |R|={floor_r:.2f}")
+
+
 def test_short_arc_garbage_is_killed_by_the_quality_gate():
     df = pd.DataFrame([_row(A1=5e-7, sigma_A1=1e-8, data_arc=3.0,
                             condition_code=9, n_obs_used=12)])

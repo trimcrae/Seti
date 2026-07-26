@@ -432,6 +432,19 @@ def fit_discrete(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
                           n_params=2 * n_components + 1, beta=float("nan"),
                           success=False, message="seed_failed")
         base = np.log10(np.asarray(prev.temps_k, float))
+        # The previous rung can return FEWER components than requested, because
+        # NNLS drives redundant amplitudes to exactly zero and _package_discrete
+        # drops them.  Pad the seed back up from the grid rather than emitting a
+        # short parameter vector, which used to index past the end of theta.
+        if base.size < n_components - 1:
+            pad = [g for g in grid
+                   if base.size == 0 or np.min(np.abs(base - g)) >= np.log10(min_t_ratio)]
+            base = np.concatenate([base, np.asarray(pad[: n_components - 1 - base.size])])
+        base = np.sort(base)[: n_components - 1]
+        if base.size < n_components - 1:
+            return SEDFit(kind="discrete", chi2=float("inf"), n_data=n_data,
+                          n_params=2 * n_components + 1, beta=float("nan"),
+                          success=False, message="cannot_seed_enough_components")
         starts = []
         for g in grid:
             if np.min(np.abs(base - g)) < np.log10(min_t_ratio):
@@ -449,8 +462,15 @@ def fit_discrete(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
 
     scored = []
     for lt, b in starts:
-        th = np.append(lt, b) if beta_free else np.asarray(lt, float)
+        lt = np.asarray(lt, float)
+        if lt.size != n_components:      # never emit a short parameter vector
+            continue
+        th = np.append(lt, b) if beta_free else lt
         scored.append((obj(th), th))
+    if not scored:
+        return SEDFit(kind="discrete", chi2=float("inf"), n_data=n_data,
+                      n_params=2 * n_components + 1, beta=float("nan"),
+                      success=False, message="no_valid_start")
     scored.sort(key=lambda x: x[0])
     if not np.isfinite(scored[0][0]) or scored[0][0] >= 1e12:
         return SEDFit(kind="discrete", chi2=float("inf"), n_data=n_data,

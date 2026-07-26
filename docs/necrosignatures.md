@@ -274,6 +274,39 @@ object undetectable:
    explicitly "rejects potential Dyson swarms with very large absorbing
    elements."
 
+### The two facts that make this program necessary rather than merely novel
+
+**(i) Deeper infrared data is anti-correlated with colder sensitivity — a hard
+instrumental ceiling.** Wien peaks: W1 3.4 µm → **852 K**; W2 4.6 µm → **630 K**;
+W3 12 µm → **241 K**; W4 22 µm → **132 K**. NEOWISE-R, CatWISE2020 and the deep
+unWISE coadds are **W1/W2 only**. **W3/W4 depth is frozen at the 2010 cryogenic
+mission and cannot improve until a new mid-IR all-sky survey flies.** So the two
+largest searches ever run — Contardo & Hogg's 4,898,812 stars (arXiv:2403.18941)
+and anything built on CatWISE — are *structurally incapable* of detecting a
+100–300 K Dyson sphere, and everyone who can reach cold temperatures is stuck at
+AllWISE W4 depth, the shallowest and most confusion-limited band. **The infrared
+route into the cold regime is closed by instrumentation, not by effort.** That is
+the argument for attenuation (CENOTAPH) and far-IR recovery.
+
+**(ii) The natural confounder sits exactly on top of the signal.** The
+characteristic warm-debris-disk temperature locus is **~190 K** (Morales et al.
+2011, ApJL 730, L29), directly inside the Dyson-sphere range every search
+targets. Any positive-excess search at 130–250 K competes against an
+astrophysical population that is *identical in two broadband colours*. And the
+empirical false-positive rate confirms the consequence: **at most 7.9% ± 0.2% of
+AllWISE-selected infrared excesses are good disk candidates** (Silverberg et al.
+2018) — a ~92% false-positive rate, with the McDonald and Marton searches above
+70% and *all* Theissen & West candidates at W4 S/N > 3 spurious. Amplitude and
+colour cannot separate the populations because they overlap in exactly those
+observables. **Shape can** (ISOTHERM), and **attenuation sidesteps the issue
+entirely** (CENOTAPH).
+
+Two population gaps follow, both unoccupied: **no Dyson search has targeted solar
+analogues or K dwarfs as a defined population** (Hephaistos II was M dwarfs;
+Contardo & Hogg is FGK but W1/W2-limited), and **no LAMOST stellar sample has
+ever been used for a technosignature search** — despite Chinese groups having
+already built the LAMOST+WISE IR-excess machinery.
+
 ## 3B. Honest novelty positions
 
 * **CENOTAPH.** Zackrisson et al. 2018 (arXiv:1804.08351) is the one published

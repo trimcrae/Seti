@@ -1,0 +1,76 @@
+# DERELICT — thin-film / high area-to-mass debris search thresholds.
+#
+# Every selection number the channel uses lives here; code never hard-codes a
+# threshold.  See docs/derelict.md for the physics and the novelty argument.
+
+physics:
+  # Radiation-pressure efficiency assumed when converting beta -> area-to-mass.
+  # Q_pr = 1 is pure absorption (a black regolith body, and the convention
+  # Bialy & Loeb 2018 used for 'Oumuamua).  Q_pr = 2 is perfect specular
+  # reflection (an aluminised sail) and HALVES the implied area-to-mass for a
+  # given beta.  We report the Q_pr = 1 value as the headline because it is the
+  # CONSERVATIVE one: it maximises the implied area-to-mass and therefore makes
+  # the "this must be a film" claim harder, not easier.
+  q_pr: 1.0
+  # Bulk density (kg/m^3) assumed for the natural-body comparison AMR_natural
+  # = 3 / (2 D rho).  1000 is deliberately LOW (a rubble pile / cometary
+  # density), which maximises AMR_natural and therefore SHRINKS R.  Again the
+  # conservative direction.
+  rho_natural_kg_m3: 1000.0
+  # Albedo assumed when a diameter must be derived from H.  0.15 is the usual
+  # NEO working value.  Sensitivity to this is reported per object: D scales as
+  # p^(-1/2), so R scales as p^(-1/2) too.
+  albedo_assumed: 0.15
+  # Bracketing albedos for the R-statistic sensitivity interval.
+  albedo_lo: 0.05     # dark carbonaceous -> larger D -> larger AMR_natural -> smaller R
+  albedo_hi: 0.60     # very bright -> smaller D -> smaller AMR_natural -> larger R
+
+screen_a1_only:
+  # Screen 1: the dark-comet COMPLEMENT.  Significant radial acceleration with
+  # the non-radial components consistent with zero -- exactly the population the
+  # dark-comet papers selected AGAINST.
+  a1_snr_min: 3.0        # A1 / sigma_A1 (signed: must be POSITIVE and > this)
+  a2_snr_max: 1.0        # |A2| / sigma_A2 must be below this
+  a3_snr_max: 1.0        # |A3| / sigma_A3 must be below this
+  # Orbit-quality gates that kill short-arc garbage.  MPC condition code U runs
+  # 0 (best) to 9 (worst); a spurious A1 is overwhelmingly a short-arc artefact.
+  condition_code_max: 4
+  data_arc_days_min: 30.0
+  n_obs_min: 30
+  # Objects with a fitted cometary delay parameter DT, or a reported coma, are
+  # outgassing and leave the channel.
+  require_no_coma: true
+
+screen_r:
+  # Screen 2: the normalised outlier statistic R = AMR_implied / AMR_natural.
+  # R ~ 1 is an ordinary body of the observed size; R >> 1 cannot be one.
+  r_flag: 10.0        # worth a look
+  r_strong: 100.0     # cannot be a monolith of the observed cross-section
+  r_extreme: 1000.0   # film territory ('Oumuamua sits at ~1e5 for D = 100 m)
+
+screen_negative_a1:
+  # Screen 3: radiation pressure cannot push sunward.  A significant A1 < 0 is
+  # a systematic or something very strange.  Cheap, and never published.
+  a1_snr_min: 3.0     # |A1| / sigma_A1 with A1 < 0
+
+screen_albedo:
+  # Screen 4: geometric albedo impossible for natural regolith, trivial for
+  # aluminised film.  Fresh ice and E-type enstatite reach ~0.6; a bare metal
+  # film is >0.8.
+  albedo_min: 0.70
+  albedo_snr_min: 2.0   # require the albedo to exceed the cut significantly
+
+vet:
+  # Human hardware is the DOMINANT contaminant: JPL/MPC already use exactly this
+  # area-to-mass test to unmask rocket bodies.  Anything with a high implied AMR
+  # on a near-Earth, low-eccentricity, low-inclination orbit is a spent upper
+  # stage until proven otherwise.
+  earthlike_a_au_lo: 0.90
+  earthlike_a_au_hi: 1.15
+  earthlike_e_max: 0.20
+  earthlike_i_deg_max: 10.0
+  # An object discovered before the space age cannot be human hardware.
+  space_age_year: 1957
+  # Below this diameter a *natural* body genuinely has a measurable SRP signal;
+  # the R statistic handles it, but we label it so nothing is over-read.
+  small_body_diameter_m: 10.0

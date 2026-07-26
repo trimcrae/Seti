@@ -82,9 +82,13 @@ FULLTEXT: dict[str, str] = {
     # main-sequence stars, or at SPARSITY of the anomaly? 697 records / >=397
     # objects / 8 with BF>10 -- verify those numbers verbatim.
     "huang2026_refined_material": "2605.29811",
-    # The 2026 flagship technosignature review: its "Stellar Pollution" section
-    # is claimed to be one paragraph of proposals with no executed search.
-    "technosig_review_2026": "2601.07297",
+    # The 2026 flagship technosignature review (Vidal et al., 118 pp, PSETI
+    # 2023): its section V.4 "Stellar Pollution" is one paragraph of proposals
+    # with no executed search. Full text is already on disk at
+    # results/litcheck/html_2605.21093.html; re-fetched here for provenance.
+    # (NB: 2601.07297 is Huang et al.'s CatWISE waste-heat paper, a different
+    # work by an overlapping author list -- do not confuse the two.)
+    "technosig_review_2026": "2605.21093",
     # --- Chemical-tagging dimensionality: sets sigma_X and the "families" claim.
     # Ting, Freeman, Kobayashi, De Silva, Bland-Hawthorn 2012: PCA on abundances,
     # how many independent dimensions does chemical space actually have?

@@ -4,26 +4,84 @@
 
 ## 1. The claim
 
-Every executed Dyson/waste-heat search lives between roughly **100 K and
-1000 K**, and is instrumentally capped by WISE W4 at 22 µm:
+Every Dyson/waste-heat search executed **at stellar scale and survey scale**
+lives between roughly **100 K and 1000 K**, and is instrumentally capped by
+WISE W4 at 22 µm:
 
-| Search | Stated temperature range |
-|---|---|
-| Carrigan 2009 (arXiv:0811.2376), IRAS LRS | ~100–600 K |
-| Project Hephaistos I (arXiv:2201.11123) | verbatim: "emit thermal waste-heat in the **100 – 1000 K** range" |
-| Huang, Tao & Zhang 2026 (arXiv:2601.07297) | "blackbody waste heat temperatures **T = 150–600 K**" |
+| Search | Bands | Stated temperature range | Scale |
+|---|---|---|---|
+| Carrigan 2009 (arXiv:0811.2376) | IRAS LRS 8–22 µm | "blackbody temperature region **100 < T < 600 K**" | 1,527 sources |
+| Ĝ / G-HAT II (arXiv:1408.1134) | WISE | fiducial **T_waste ≈ 285 K** | — |
+| Hephaistos I (arXiv:2201.11123) | WISE | "emit thermal waste-heat in the **100 – 1000 K** range" | G ≤ 21 |
+| Hephaistos II (arXiv:2405.02927) | Gaia+2MASS+WISE | "**100 to 700 K** to align with WISE's infrared detection capabilities" | 5 × 10⁶ → 7 candidates |
+| Huang, Tao & Zhang 2026 (arXiv:2601.07297) | WISE W3/W4 | "**T = 150–600 K**" | 2MRS galaxies |
+| Contardo & Hogg 2024 (arXiv:2403.18941) | W1/W2 only | (ML residual, no explicit T) | 4,898,812 → 53 |
 
-Meanwhile **Ćirković & Bradbury 2006** (New Astronomy 11, 628;
-doi 10.1016/j.newast.2006.04.003; astro-ph/0506110) argued on
-Landauer/Brillouin grounds that postbiological computation prefers a **cold
-reservoir**, and noted the "considerable difference in practical observational
-terms whether one expects a Dyson shell to be close to a blackbody at **50 K**,
-as contrasted to a blackbody at **300 K**."
+**Two honest exceptions, both tiny, and one near-miss.** A flat claim that
+nothing beyond 22 µm has ever been used would be wrong:
+
+* **Slysh 1985** (in Papagiannis ed., Reidel, p. 315) fitted four IRAS filters
+  *including 60/100 µm*, considering 50 K < T < 400 K, and reported six sources
+  at 85–350 K. Carrigan notes "it is not clear how large a fraction of the IRAS
+  data set was searched." **This is the one genuinely unresolved case** — the
+  paper is not online and could not be verified directly; it warrants a
+  library-grade check before any publication.
+* **Timofeev, Kardashev & Promyslov 2000** (Acta Astronautica 46, 655) fitted
+  all four IRAS filters, finding ~100 sources near **115 K** and 285 K — but
+  drawn only from the **3,000 brightest** IRAS sources.
+* **Lacki 2016** (arXiv:1604.07844) reached ~2.7–6 K using Planck PCCS2 at
+  353/545/857 GHz — but for *extragalactic* "blackboxes", galaxy-filling
+  artificial dust, explicitly not stellar Dyson spheres.
+
+So the corrected claim is narrower and still decisive: **at stellar scale, the
+temperature floor of the entire field is ~100 K, and no far-IR search has ever
+been run at survey scale.** Six sources and the 3,000 brightest IRAS objects do
+not constitute a census.
+
+### 1.1 The gap was identified and then not filled
+
+**Lacki 2016 named this exact resource, in the conditional, and nobody took
+it up:** *"That leaves a rather large window around FIR-emitting temperatures of
+tens of K… the best extant survey is that of AKARI's Far-Infrared Surveyor
+(Kawada et al., 2007), which **could** rule out 30 K Chilly Ways… out to about
+200 Mpc."* Proposed 2016; never executed. A purpose-built arXiv full-text query
+for `AKARI + technosignature` returns **zero entries**
+(`results/necrolit/arxiv_q_akari_fis_technosignature.atom`).
+
+**Worse — the standard pipelines would actively *reject* a cold Dyson sphere.**
+Carrigan argued explicitly *against* using the far-IR: *"relying on information
+from the 60 to 100 micron region may obscure an evaluation of a source in the
+Dyson Sphere regime covered by the F[12] and F[25] micron filters."* And
+Wright's thermal-IR white paper (arXiv:1907.07829) states that technosignatures
+are *"distinguished from dust by their **lack** of far-infrared emission."*
+A cold, far-IR-bright, mid-IR-faint object is not merely missed by the existing
+corpus; it is the thing the existing corpus is built to throw away.
+
+### 1.2 The theoretical motivation, stated accurately
+
+**Ćirković & Bradbury 2006** (New Astronomy 11, 628;
+doi 10.1016/j.newast.2006.04.003; astro-ph/0506110) is the motivating argument,
+and it must be quoted for what it actually says. It cites **Landauer (1961)**
+and **Brillouin (1962)** explicitly, giving the Brillouin inequality
+`I_max = ΔE/(k_B T ln 2) = 1.05 × 10¹⁶ · ΔE/T`, and states that
+*"computation becomes more efficient as the temperature of the heat reservoir
+in contact with the computer is lower."* From this it advances the **migration
+hypothesis**: *"ATCs will tend to move their computing facilities toward the
+colder regions of the Milky Way"*, anchored on molecular-cloud interiors at
+**T ~ 10 K**.
+
+*It does not contain the strings "50 K" or "300 K".* An earlier draft of this
+document attributed a "50 K versus 300 K" contrast to it; that quotation is not
+in the paper and has been removed. The physical argument — colder reservoir,
+more computation per joule, therefore a preference for low temperatures —
+stands on the Landauer/Brillouin material that *is* there, and the specific
+temperatures searched here (30–100 K) are ours, chosen by what the far-IR
+all-sky catalogues can actually reach, not by a quotation.
 
 **The predicted regime and the searched regime do not overlap.** Wien peaks:
 100 K → 29 µm, already past WISE's longest band; 50 K → 58 µm; 30 K → 97 µm.
 
-### 1.1 The mid-infrared route to the cold regime is closed by instrumentation
+### 1.3 The mid-infrared route to the cold regime is closed by instrumentation
 
 This is the structural argument, and it is the reason the channel exists rather
 than being a refinement of an existing one. The blackbody temperature whose
@@ -194,10 +252,10 @@ as an avenue and then never taken; Planck is never mentioned.
    that executed a Dyson search at all, Hephaistos I and II, both pure
    IR-excess; neither implements their eq. (5).
 2. **The achromaticity veto** (§2 above), which they do not impose.
-3. **The far-IR closure leg**, which no Dysonian search has ever run. Carrigan
-   *deliberately discarded* IRAS 60/100 µm for cirrus and zodiacal light while
-   noting an ideal instrument "would need to cover wavelengths from 3 to
-   100 µm"; Ĝ II used IRAS 60/100 and Planck 857 GHz only as a dust-
+3. **The far-IR closure leg**, which no Dysonian search has ever run at survey
+   scale (see §1 for the two small IRAS exceptions and the Lacki 2016
+   near-miss). Carrigan *deliberately discarded* IRAS 60/100 µm for cirrus and
+   zodiacal light; Ĝ II used IRAS 60/100 and Planck 857 GHz only as a dust-
    discrimination lever arm. The only published far-IR excess census of normal
    stars is **Liu, Wang & Jiang 2014** (arXiv:1308.5593, AJ 148, 3): Hipparcos
    main-sequence stars × AKARI/FIS → 136 detections → 83 debris-disk candidates.
@@ -218,14 +276,22 @@ as an avenue and then never taken; Planck is never mentioned.
    TYC 6111-1162-1 would be screened before follow-up here.
 
 **Other prior art engaged.** *Zackrisson et al. 2015* (arXiv:1508.02406, ApJ
-810, 23), the extragalactic ancestor: galaxies underluminous at fixed rotation
-velocity in the Tully-Fisher relation, ≤0.3 % Type III — a population-scale
-*attenuation* argument, but for whole galaxies and with no per-object energy
-budget. *Annis 1999* (JBIS 52, 33) placed the original limit on star-fed
-Kardashev III civilisations from the same underluminosity logic.
+810, 23), the extragalactic ancestor: 1,359 disk galaxies underluminous at fixed
+rotation velocity in the Tully-Fisher relation, giving a conservative ≲3 % and a
+tentative **≲0.3 %** on Kardashev-III disk galaxies, "10–20 times stronger than
+that of Annis 1999" — a population-scale *attenuation* argument, but for whole
+galaxies and with no per-object energy budget. *Annis 1999* (JBIS 52, 33)
+placed the original limit from the same underluminosity logic on 57 disk
+galaxies and 106 ellipticals.
 *Wright 2023* (arXiv:2309.06564) finds "for 'complete' Dyson spheres we expect
-**optical depths of several**" — an optically thick, grey occulter, which is the
-physical justification for leg 1. *Blain 2024* (arXiv:2409.11447) names this
+**optical depths of several**" — an optically thick, grey occulter — and, more
+directly useful still, concludes that "we should not expect Dyson spheres to be
+'complete', but to provide **a few magnitudes of gray extinction**". A few
+magnitudes of grey extinction is precisely leg 1's observable. His paper also
+cuts the other way and the tension should be stated: he argues "the optimal use
+of mass is generally to make very small and hot Dyson spheres", which is an
+argument *against* the cold regime on mass-efficiency grounds. CENOTAPH tests
+the cold branch because it is unobserved, not because it is favoured. *Blain 2024* (arXiv:2409.11447) names this
 blind spot outright — "a DSM might extinguish its star at optical/near-IR
 wavelengths, and thus either not appear or appear anomalously faint in a stellar
 catalogue" — but implements no search. *Torlakcik 2026* (arXiv:2607.07781,

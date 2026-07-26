@@ -1,0 +1,110 @@
+name: tailings
+
+# TAILINGS — the sparse chemical anomaly (docs/tailings.md).
+#
+# Natural abundance space is low-dimensional and every natural process moves an
+# element FAMILY (alpha, Fe-peak, s-process, r-process). Industrial refining
+# moves ONE element. So the statistic is sparsity, not amplitude: one or two
+# elements extreme with the rest inside 2 sigma. A dense (family-wide) anomaly
+# is a REJECTION here, which inverts every existing abundance-outlier search.
+#
+# Restricted to G/K/M dwarfs (Teff < 6000 K, logg > 4.0), where the deep
+# convective envelope suppresses the atomic diffusion and radiative levitation
+# that produce natural single-element peculiarity in Ap/Am/HgMn stars.
+#
+# Single job; every stage checkpoints to parquet under results/tailings/, so a
+# re-reduction never costs an archive pull and a killed run resumes. Small
+# outputs (manifold, contrast table, flag rates, candidates, summary, report)
+# are committed back; the bulk star tables travel only as artifacts.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Stage (acquire|manifold|sparse|vet|twins|all)"
+        required: false
+        default: "all"
+      surveys:
+        description: "Comma-separated surveys (GALAH,APOGEE,LAMOST)"
+        required: false
+        default: "GALAH,APOGEE"
+      max_rows:
+        description: "Per-survey row cap for the catalogue pull"
+        required: false
+        default: "400000"
+      resume_run_id:
+        description: "Prior run id whose checkpoint artifact should seed this run"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  tailings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import pyvo, astroquery, pyarrow; print('imports OK')"
+      - name: Offline gate (the detector must pass its own tests first)
+        run: python -m pytest -q tests/test_tailings.py
+      - name: Seed checkpoints from a prior run's artifact
+        if: ${{ github.event.inputs.resume_run_id != '' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: tailings-outputs
+          run-id: ${{ github.event.inputs.resume_run_id }}
+          github-token: ${{ github.token }}
+          path: results/tailings/
+      - name: Run the sparse chemical-anomaly search
+        run: |
+          ls -la results/tailings/ 2>/dev/null || true
+          python -m seti.cli tailings \
+            --stage ${{ github.event.inputs.stage || 'all' }} \
+            --surveys "${{ github.event.inputs.surveys || 'GALAH,APOGEE' }}" \
+            --max-rows ${{ github.event.inputs.max_rows || '400000' }}
+          echo "=== summary ==="
+          cat results/tailings/summary.json || true
+          echo "=== report ==="
+          cat results/tailings/REPORT.md || true
+      - name: Commit results (small files only; star tables stay artifacts)
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/tailings/provenance.json \
+                        results/tailings/summary.json \
+                        results/tailings/REPORT.md \
+                        results/tailings/manifold_*.csv \
+                        results/tailings/contrast_*.csv \
+                        results/tailings/element_flag_rates_*.csv \
+                        results/tailings/candidates_*.csv \
+                        results/tailings/twin_pairs.csv 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "tailings: sparse chemical-anomaly search results"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tailings-outputs
+          path: results/tailings/
+          if-no-files-found: warn

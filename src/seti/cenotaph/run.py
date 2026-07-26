@@ -597,9 +597,14 @@ def stage_reduce(df: pd.DataFrame, fits: pd.DataFrame, farir: pd.DataFrame,
             "t_k": [30.0, 50.0, 80.0, 100.0],
             "radius_au_solar": [radius_for_temperature(1.0, t)
                                 for t in (30.0, 50.0, 80.0, 100.0)],
-            "note": ("the searched regime (100-1000 K, capped by WISE W4 at "
-                     "22 um) and the regime Cirkovic & Bradbury (2006) argue "
-                     "postbiological computation prefers (~50 K) do not overlap"),
+            "note": ("at stellar scale the searched regime is 100-1000 K, "
+                     "capped by WISE W4 at 22 um. Cirkovic & Bradbury (2006) "
+                     "argue on Landauer/Brillouin grounds that computation is "
+                     "more efficient at a colder reservoir and that ATCs migrate "
+                     "to cold regions (they anchor on molecular clouds, ~10 K); "
+                     "they quote no specific shell temperature. The 30-100 K "
+                     "window searched here is set by what the far-IR all-sky "
+                     "catalogues can reach, not by a quotation"),
         },
         "far_ir_horizons": coverage_table(),
     }

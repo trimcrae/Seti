@@ -483,6 +483,52 @@ def test_fetch_falls_back_when_the_constraint_syntax_is_rejected():
     assert any("client-side A1 filter" in e for e in res.errors)
 
 
+def test_unconstrained_fallback_requests_only_the_minimal_field_set():
+    """A full-column pull over ~1.4M rows would OOM the runner, so the last
+    resort must ask for the identity + A1 columns only."""
+    seen: list[str] = []
+    payload = json.dumps({"fields": ["full_name", "A1"], "data": [["(a)", "1e-8"]]}).encode()
+
+    def _t(url: str, timeout: float = 0.0) -> bytes:
+        seen.append(url)
+        if "cdata" in url:
+            raise OSError("400 Bad Request")
+        return payload
+
+    res = acquire.fetch_nongrav_table(transport=_t, tries=1)
+    assert res.strategy == "unconstrained_full_pull"
+    final = seen[-1]
+    assert "diameter" not in final and "condition_code" not in final
+    assert "A1" in final and "full_name" in final
+    assert any("must be enriched per object" in e for e in res.errors)
+
+
+def test_enrich_from_details_fills_missing_columns_without_overwriting():
+    df = pd.DataFrame([{"full_name": "(a)", "A1": 1e-8, "H": np.nan, "a": np.nan,
+                        "condition_code": np.nan, "data_arc": np.nan,
+                        "n_obs_used": np.nan, "diameter": 0.5}])
+    details = {"(a)": {"ok": True,
+                       "orbit": {"data_arc": "4000", "condition_code": "1",
+                                 "n_obs_used": "812",
+                                 "elements": [{"name": "a", "value": "2.4"},
+                                              {"name": "e", "value": "0.3"}]},
+                       "phys_par": [{"name": "H", "value": "19.5"},
+                                    {"name": "diameter", "value": "9.9"}]}}
+    out = acquire.enrich_from_details(df, details)
+    assert out.loc[0, "data_arc"] == 4000
+    assert out.loc[0, "condition_code"] == 1
+    assert out.loc[0, "n_obs_used"] == 812
+    assert out.loc[0, "H"] == 19.5
+    assert out.loc[0, "a"] == 2.4
+    assert out.loc[0, "diameter"] == 0.5, "an existing bulk value is never overwritten"
+
+
+def test_enrich_from_details_ignores_failed_records():
+    df = pd.DataFrame([{"full_name": "(a)", "A1": 1e-8, "data_arc": np.nan}])
+    out = acquire.enrich_from_details(df, {"(a)": {"ok": False, "error": "blocked"}})
+    assert pd.isna(out.loc[0, "data_arc"])
+
+
 def test_fetch_reports_an_unexpected_schema_rather_than_inventing_rows():
     bad = json.dumps({"message": "invalid field: A1"}).encode()
     res = acquire.fetch_nongrav_table(transport=_fake_transport({"": bad}), tries=1)

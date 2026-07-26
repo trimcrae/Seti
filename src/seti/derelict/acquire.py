@@ -189,6 +189,17 @@ def _prune_fields(fields: tuple[str, ...], available: set[str] | None
 
 
 # --- the bulk pull ------------------------------------------------------------
+#: Field set used by the LAST-RESORT unconstrained pull.  The full catalogue is
+#: ~1.4M asteroid rows; requesting all 34 default columns would be several
+#: hundred MB of JSON held in memory at once, which risks OOM on a runner for a
+#: strategy that only needs to answer "which objects have an A1 at all?".  The
+#: survivors (expected: tens) are then enriched per object from ``sbdb.api``
+#: via :func:`enrich_from_details`, which we call for vetting anyway.
+MINIMAL_FIELDS: tuple[str, ...] = (
+    "spkid", "full_name", "pdes", "kind", "class",
+    "A1", "A2", "A3", "sigma_A1", "sigma_A2", "sigma_A3",
+)
+
 #: Constraint syntaxes to try, in decreasing confidence.  ``None`` = no
 #: constraint at all (pull everything and filter client-side).
 CDATA_STRATEGIES: tuple[tuple[str, str | None], ...] = (
@@ -197,6 +208,24 @@ CDATA_STRATEGIES: tuple[tuple[str, str | None], ...] = (
     ("cdata_A1_defined_bare", '{"AND":["A1|DF"]}'.replace('"', "")),
     ("unconstrained_full_pull", None),
 )
+
+#: Mapping from an SBDB per-object record to the flat column names the screens
+#: expect.  ``(section, key)`` where section is "orbit", "phys" or "object".
+_DETAIL_FIELD_MAP: tuple[tuple[str, str, str], ...] = (
+    ("orbit", "data_arc", "data_arc"),
+    ("orbit", "condition_code", "condition_code"),
+    ("orbit", "n_obs_used", "n_obs_used"),
+    ("orbit", "first_obs", "first_obs"),
+    ("orbit", "last_obs", "last_obs"),
+    ("orbit", "rms", "rms"),
+    ("phys", "H", "H"),
+    ("phys", "diameter", "diameter"),
+    ("phys", "albedo", "albedo"),
+    ("phys", "rot_per", "rot_per"),
+)
+
+#: Orbital elements to lift out of ``orbit.elements``.
+_ELEMENT_KEYS: tuple[str, ...] = ("a", "e", "i", "q", "om", "w", "ma", "moid")
 
 
 def fetch_nongrav_table(kind: str = "a",
@@ -224,7 +253,14 @@ def fetch_nongrav_table(kind: str = "a",
     res = FetchResult(fields_requested=fields, fields_dropped=dropped)
 
     for name, cdata in strategies:
-        params = {"fields": ",".join(kept), "sb-kind": kind, "full-prec": "1"}
+        # The unconstrained last resort asks for a MINIMAL column set: it only
+        # needs to answer "which objects have an A1?" over ~1.4M rows, and the
+        # survivors get enriched per object afterwards.  Requesting all columns
+        # here is what would OOM the runner.
+        use_fields = kept
+        if cdata is None:
+            use_fields = tuple(f for f in kept if f in set(MINIMAL_FIELDS)) or MINIMAL_FIELDS
+        params = {"fields": ",".join(use_fields), "sb-kind": kind, "full-prec": "1"}
         if cdata:
             params["sb-cdata"] = cdata
         if limit:
@@ -248,10 +284,62 @@ def fetch_nongrav_table(kind: str = "a",
         res.fields_returned = tuple(df.columns)
         res.n_rows = len(res.table)
         res.signature = sig
+        if cdata is None:
+            res.errors.append(
+                "[minimal-field fallback] orbit-quality and physical columns were "
+                "NOT requested in bulk; they must be enriched per object via "
+                "enrich_from_details() or the quality gate will fail closed")
         return res
 
     res.status = "NO_DATA_REACHED"
     return res
+
+
+def enrich_from_details(df: pd.DataFrame, details: dict[str, dict]) -> pd.DataFrame:
+    """Fill columns missing from a bulk pull using per-object ``sbdb.api`` records.
+
+    The minimal-field fallback deliberately does not request orbit-quality or
+    physical parameters, and screen 1 **fails closed** when they are absent
+    (missing metadata is not a pass).  This lifts them out of the per-object
+    records that vetting fetches anyway, so the fallback path reaches the same
+    screening fidelity as the constrained path.
+
+    Only fills values that are currently missing -- a bulk value is never
+    overwritten by a detail value.
+    """
+    if df is None or len(df) == 0 or not details:
+        return df
+    out = df.copy()
+
+    def _get(rec: dict, section: str, key: str):
+        if section == "phys":
+            for p in (rec.get("phys_par") or []):
+                if isinstance(p, dict) and str(p.get("name")) == key:
+                    return p.get("value")
+            return None
+        if section == "orbit":
+            return (rec.get("orbit") or {}).get(key)
+        return (rec.get("object") or {}).get(key)
+
+    for idx, row in out.iterrows():
+        key = str(row.get("full_name") or row.get("pdes") or "")
+        rec = details.get(key)
+        if not rec or not rec.get("ok"):
+            continue
+        for section, src, dest in _DETAIL_FIELD_MAP:
+            if dest in out.columns and pd.notna(row.get(dest)):
+                continue
+            val = _get(rec, section, src)
+            if val is not None:
+                out.loc[idx, dest] = pd.to_numeric(val, errors="coerce") \
+                    if dest not in ("first_obs", "last_obs") else val
+        els = {str(e.get("name")): e.get("value")
+               for e in ((rec.get("orbit") or {}).get("elements") or [])
+               if isinstance(e, dict)}
+        for k in _ELEMENT_KEYS:
+            if k in els and (k not in out.columns or pd.isna(row.get(k))):
+                out.loc[idx, k] = pd.to_numeric(els[k], errors="coerce")
+    return out
 
 
 # --- per-object detail --------------------------------------------------------

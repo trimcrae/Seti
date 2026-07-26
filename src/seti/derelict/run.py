@@ -30,6 +30,7 @@ from .acquire import (
     DEFAULT_FIELDS,
     FetchResult,
     discover_fields,
+    enrich_from_details,
     fetch_nongrav_table,
     fetch_object_detail,
 )
@@ -148,6 +149,28 @@ def derelict_run(cfg: Config | None = None,
 
     table = dedupe(table)
 
+    # --- enrich the minimal-field fallback ------------------------------------
+    # The unconstrained fallback deliberately pulls only the identity + A1
+    # columns (a full-column pull over ~1.4M rows would OOM the runner).  Screen
+    # 1 fails CLOSED without orbit-quality metadata, so on that path every row
+    # would be rejected for a reason that is about our query, not the sky.  Fill
+    # the gap per object BEFORE screening -- the A1 population is small enough
+    # that this is cheap, and vetting would fetch these records anyway.
+    prefetched: dict[str, dict] = {}
+    needs_enrich = (offline_input is None
+                    and fetch.strategy == "unconstrained_full_pull")
+    if needs_enrich:
+        summary["degradation"].append(
+            f"minimal-field fallback used; enriching {len(table)} objects "
+            "per-object from sbdb.api before screening")
+        for _, row in table.iterrows():
+            key = str(row.get("full_name") or row.get("pdes") or "")
+            sstr = str(row.get("spkid") or row.get("pdes") or key)
+            prefetched[key] = fetch_object_detail(sstr, transport=transport)
+        table = enrich_from_details(table, prefetched)
+        summary["enriched_from_detail"] = int(
+            sum(1 for d in prefetched.values() if d.get("ok")))
+
     # --- screening ------------------------------------------------------------
     sr = run_screens(table, sp)
     summary["funnel"] = sr.funnel
@@ -172,11 +195,13 @@ def derelict_run(cfg: Config | None = None,
         summary["control_funnel"] = control_funnel
 
     # --- vetting --------------------------------------------------------------
-    details: dict[str, dict] = {}
+    details: dict[str, dict] = dict(prefetched)   # reuse, never refetch
     to_vet = survivors.head(max_vet).copy()
     if offline_input is None and len(to_vet):
         for _, row in to_vet.iterrows():
             key = str(row.get("full_name") or row.get("pdes") or "")
+            if key in details and details[key].get("ok"):
+                continue
             sstr = str(row.get("spkid") or row.get("pdes") or key)
             details[key] = fetch_object_detail(sstr, transport=transport)
     vet_df = vet_table(to_vet, details, vp)

@@ -6,6 +6,11 @@ name: litcheck-dyson
 
 on:
   workflow_dispatch:
+    inputs:
+      pass:
+        description: "Which fetch pass to run (1 = metadata/abstracts, 2 = full-text cut mining)"
+        required: false
+        default: "1"
 
 permissions:
   contents: write
@@ -23,8 +28,13 @@ jobs:
           python-version: "3.11"
       - name: Fetch literature evidence (soft 45-min deadline, partials kept)
         run: |
-          timeout -k 30 2700 python scripts/litcheck_dyson.py \
-            || echo "fetcher hit soft deadline or errored; committing partials"
+          if [ "${{ github.event.inputs.pass }}" = "2" ]; then
+            timeout -k 30 2700 python scripts/litcheck_dyson2.py \
+              || echo "fetcher hit soft deadline or errored; committing partials"
+          else
+            timeout -k 30 2700 python scripts/litcheck_dyson.py \
+              || echo "fetcher hit soft deadline or errored; committing partials"
+          fi
           echo "=== summary ==="
           python -c "import json,pathlib; p=pathlib.Path('results/litcheck_dyson/summary.json'); d=json.loads(p.read_text()) if p.exists() else []; print(sum(1 for x in d if x.get('ok')), '/', len(d), 'ok')" || true
       - name: Commit results

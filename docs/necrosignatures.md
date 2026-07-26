@@ -67,8 +67,12 @@ Organised by *what the residue physically is*, not by wavelength.
   → **OSSUARY**
 * **S8 Refined-material dust.** Metallic/graphitic/anomalously crystalline
   mineralogy rather than amorphous silicate.
-* **S9 Unmaintained decay.** Photometric irregularity secularly increasing.
-  *(covered and exhausted by the existing `dimming` channel)*
+* **S9 Unmaintained decay.** Photometric irregularity secularly *increasing*.
+  → **RUST**. *(Corrected 2026-07-26: this was wrongly marked as covered by the
+  existing `dimming` channel. It is not — `dimming/secular.py` fits a weighted
+  linear trend to season medians, i.e. a trend in **brightness**. A secular rise
+  in aperiodic variability **amplitude** is a different statistic and has been
+  run neither here nor, as far as the sweeps could establish, anywhere.)*
 * **S10 Tumbling ruin.** Deep, grey, non-repeating, non-Keplerian occultations.
   *(covered by `dimming`)*
 * **S11 Orphaned occulters** around white dwarfs and neutron stars — hosts that
@@ -87,8 +91,22 @@ Organised by *what the residue physically is*, not by wavelength.
   → TAILINGS stage 4
 * **S16 Orphaned industrial gases + decay clock.** CF₄ (τ≈50 kyr) : SF₆ (≈3 kyr)
   : NF₃ (≈500 yr) : CFC-12 (≈100 yr) decay at known, different rates — their
-  **ratios date the death**. Diagnostic pairing: industrial gases present,
-  biosignature disequilibrium absent. → **EXHAUST**
+  **ratios date the death**. The ratio set is a genuine chronometer with 10²–10⁴
+  yr dynamic range, self-calibrating (ratios cancel the unknown emission scale),
+  and it resolves an ambiguity the literature explicitly poses and leaves open:
+  the 2026 review calls PFCs an "extinct technosignature… persisting long after a
+  civilization might have **vanished or transitioned to cleaner technology**" —
+  the clock separates those two cases.
+  **NOT SEARCHED — killed on feasibility, honestly.** At Earth's actual
+  industrial abundances every one of these gases fails to reach slant optical
+  depth 1 on a TRAPPIST-1-class planet: the signal is not weak, it is absent.
+  Detection needs a >15 m space-based mid-IR spectrograph (LIFE/HWO class), not
+  JWST. Compounding it, NF₃ and CFC-12 both absorb near 10.8 µm and are not
+  separable by band centre at all. The nearest non-hopeless variant is a
+  transiting planet around a **white dwarf** (~1,170 ppm per scale height vs
+  15.7 for TRAPPIST-1e, and a WD habitable zone is *by construction* a
+  post-catastrophe environment) — but no such system with adequate archival
+  spectra exists. Documented, not built.
 * **S17 Nuclear-war atmospheric scars** — NOx-driven ozone destruction, soot.
 * **S18 Artificial molecules in the ISM.**
 
@@ -204,6 +222,80 @@ regimes barely overlap: CENOTAPH owns cold and dark occulters, Hephaistos owns
 warm ones. That complementarity, not a sensitivity claim, is the argument.
 
 ---
+
+## 3A. The seven structural seams (literature sweep, 2026-07-26)
+
+Eight parallel sweeps plus three runner-side fetch harnesses (884 arXiv records,
+verbatim abstracts and full text under `results/necrolit/`, `results/seamlit/`,
+`results/hephlit/`, `results/dysonlit/`, `results/disaplit*/`) established what
+every executed waste-heat search shares. Each assumption leaves a class of
+object undetectable:
+
+1. **A positive infrared excess is required.** Hephaistos II demands a W3 *and*
+   W4 detection at stage 2 — anything without both is gone before modelling.
+   The sole published exception is Zackrisson et al. 2018 (see §3B).
+2. **The temperature window is 100–1000 K**, set by W4/IRAS-LRS at 22–23 µm.
+   Hephaistos I states it verbatim: *"Temperatures that are lower than 100 K
+   would place this excess in the far-IR, whereas temperatures above 1000 K
+   would shift it into the near-IR."* **Nothing stellar-scale exists below
+   100 K.** The only sub-100 K constraint anywhere is Lacki 2016 via Planck
+   100 GHz, at galaxy/cluster scale. **30–60 K at stellar scale is untouched,
+   and no far-IR Dysonian search has ever been published** — Carrigan
+   *deliberately discarded* IRAS 60/100 µm for cirrus and zodiacal light while
+   noting an ideal instrument "would need to cover wavelengths from 3 to 100 µm."
+3. **Single-epoch SEDs.** Every catalogue search treats the SED as static. There
+   is no blind time-domain excess search at 12–25 µm, and NEOWISE structurally
+   cannot supply one: **it carries only W1/W2; W3/W4 exist for the single 2010
+   cryogenic epoch.** The only route to a decades-long baseline at the relevant
+   wavelengths is IRAS 12/25 (1983) → AKARI IRC 9/18 (2006) → WISE W3/W4 (2010),
+   and IRAS 12/25 vs WISE W3/W4 are near-identical bandpasses 27 years apart.
+4. **Main-sequence, thin-disk, near-solar-metallicity hosts.** No search selects
+   on kinematics, age, or metallicity. White dwarfs are explicitly pruned from
+   both Hephaistos papers. *"No halo (Pop II) star has a confirmed warm IR
+   excess."*
+5. **Amplitude and colour, not shape.** Only Carrigan 2009 used SED shape
+   (Planck fits to 92-point IRAS LRS spectra over 11,224 sources, 100 K floor),
+   and his candidates all collapsed on a distance/luminosity degeneracy that
+   Gaia now breaks. Hephaistos II's discriminant is an *unweighted* RMSE over
+   the photometric vector — deliberately error-blind, and with **no shape
+   feature that distinguishes a circumstellar blackbody from a redshifted dusty
+   galaxy SED**, which is exactly why Hot DOGs sailed through.
+6. **Background-galaxy confusion is the universal killer.** Of the seven
+   Hephaistos candidates, **none survives cleanly**: D and E resolved by
+   JWST/MIRI into a Hot DOG at z≈0.9 and a dusty starburst at z≈0.4, both
+   within ~1″ (Zackrisson et al. 2026); A, B and G killed or badly damaged by
+   radio counterparts; C by a near-IR companion; F marginal. WISE PSF FWHM is
+   ≈6″ (W3) and ≈12″ (W4). **Any new infrared channel must build high-latitude
+   selection and sub-arcsecond astrometric registration in as funnel stages,
+   not as follow-up.** Note the series contains **no co-movement or
+   astrometric-epoch test** — the gap `seti.contamination.comovement` already
+   fills, now independently validated as the fix.
+7. **Variability is rejected, not used.** Hephaistos II's `G_var > 2` cut
+   explicitly "rejects potential Dyson swarms with very large absorbing
+   elements."
+
+## 3B. Honest novelty positions
+
+* **CENOTAPH.** Zackrisson et al. 2018 (arXiv:1804.08351) is the one published
+  attenuation-based search, and it **was executed** — on Gaia DR1 × RAVE DR5,
+  by spectrophotometric-distance-vs-parallax discrepancy, explicitly with no IR
+  excess required. Its one followed-up candidate, TYC 6111-1162-1, had "no
+  detectable infrared excess" and resolved to an **unseen binary**. The method
+  is theirs. This channel's contribution is (a) population scale, (b) the
+  achromaticity veto they did not impose, (c) the far-IR recovery leg, and
+  (d) sensitivity to partial covering fractions — their method needs f≈1. Their
+  failure mode (unresolved binaries) is a mandatory funnel stage here.
+  Ĝ II *rejected* the attenuation channel on the grounds that the starlight
+  deficit is linear in α and "only observationally distinguishable for values of
+  α near 1"; the achromaticity veto plus far-IR recovery is the answer to that.
+  Blain 2024 (arXiv:2409.11447) names the blind spot outright but implements no
+  search.
+* **EMBER, ISOTHERM, OSSUARY, TIDEMARK, RUST, DERELICT.** Unoccupied as searches
+  (see per-channel docs for the adjudication and citations).
+* **Not built:** EXHAUST (S16) — killed on feasibility, see §2. S20 (ISO v∞
+  anomaly) — Mamajek 2017 already found and explained 1I's low LSR-relative
+  velocity, gravitational focusing makes low-v∞ objects *over*-represented so
+  the anomaly is the expected outcome, and N=3 cannot support a claim.
 
 ## 4. Contamination discipline
 

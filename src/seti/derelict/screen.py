@@ -378,6 +378,15 @@ def run_screens(df: pd.DataFrame, p: ScreenParams) -> ScreenResult:
         "screen2_r_extreme": int((out["screen_a1_only"] & out["screen_r_extreme"]).sum()),
         "screen3_negative_a1": int(out["screen_negative_a1"].sum()),
         "screen4_albedo": int(out["screen_albedo"].sum()),
+        # Per-gate failure counts, so a zero at screen 1 explains ITSELF rather
+        # than requiring the reader to go digging.  These overlap (an object can
+        # fail several gates), so they do not sum to the input.
+        "gate_fail_a1_not_significant": int((~out["s1_a1_significant"]).sum()),
+        "gate_fail_a2_nonzero": int((~out["s1_a2_zero"]).sum()),
+        "gate_fail_a3_nonzero": int((~out["s1_a3_zero"]).sum()),
+        "gate_fail_orbit_quality": int((~out["s1_quality"]).sum()),
+        "gate_fail_coma": int((~out["s1_no_coma"]).sum()),
+        "gate_fail_outgassing": int((~out["s1_no_outgassing_evidence"]).sum()),
         "outgassing_evidence_excluded": int(out["outgassing_evidence"].sum()),
         "law_marsden_g": int((out["nongrav_law"] == "marsden_g").sum()),
         "law_inverse_square": int((out["nongrav_law"] == "inverse_square").sum()),

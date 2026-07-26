@@ -966,3 +966,40 @@ def test_saturated_lines_cannot_carry_an_abundance_claim():
     assert V.curve_of_growth_regime(0.90)[0] == V.SATURATED
     assert "no longer a measure of abundance" in V.curve_of_growth_regime(0.90)[1]
     assert V.curve_of_growth_regime(0.005)[0] == V.UNDETECTED
+
+
+# ---------------------------------------------------------------------------
+# The dilution ceiling: it sets the S15 bar AND the sensitivity limit
+# ---------------------------------------------------------------------------
+def test_convective_zone_metal_reservoir_matches_the_published_ladder():
+    """Reservoir and dex-per-Earth-mass across spectral type."""
+    sun = float(T.cz_metal_reservoir_earth_masses(5772.0))
+    assert 60.0 < sun < 120.0                       # ~89 Me of metals
+    per_me = float(T.delta_metals_from_rock(1.0, teff=5772.0))
+    assert per_me == pytest.approx(0.0048, abs=0.002)
+    # Cooler stars dilute harder, monotonically.
+    res = T.cz_metal_reservoir_earth_masses(np.array([5772.0, 5000.0, 4200.0]))
+    assert res[0] < res[1] < res[2]
+
+
+def test_engulfment_ceiling_is_the_whole_planetary_system():
+    """Eating the entire Solar System gives 0.27 dex; Kronos is already 85% of it."""
+    ceiling = float(T.engulfment_ceiling_dex(5772.0))
+    assert ceiling == pytest.approx(0.27, abs=0.05)
+    assert 0.23 / ceiling > 0.75                    # the observed record
+    # A 0.3 dex coherent refractory excess in a G dwarf is beyond ANY budget.
+    assert 0.30 > ceiling
+    # And the bar is spectral-type dependent, not one number: a K dwarf's
+    # ceiling is far lower, so a much smaller excess is already unexplainable.
+    assert float(T.engulfment_ceiling_dex(4500.0)) < 0.10
+
+
+def test_sensitivity_and_null_strength_trade_against_each_other():
+    """The cool end has the strongest null AND the most diluted signal."""
+    need = {t: float(T.minimum_rock_mass_for(1.0, t))
+            for t in (6200.0, 5772.0, 5000.0, 4200.0)}
+    assert need[6200.0] < need[5772.0] < need[5000.0] < need[4200.0]
+    assert need[5772.0] > 500.0        # ~800 Me for +1 dex in a solar analogue
+    assert need[4200.0] > 3000.0       # a K dwarf needs more rock than exists
+    # Which is the honest limitation: an M/K-dwarf detection would require an
+    # implausible amount of material, and that must be said rather than implied.

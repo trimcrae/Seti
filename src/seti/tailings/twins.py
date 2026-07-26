@@ -289,6 +289,85 @@ def implied_engulfed_mass(
     return np.where(d > 0, need, np.nan)
 
 
+#: Mass fraction of metals in solar-composition material (Asplund et al. 2009).
+Z_SOLAR = 0.0134
+
+#: Total heavy-element inventory of the Solar System's planets, in Earth masses.
+#: Engulfing *everything* is the absolute ceiling on the engulfment hypothesis.
+SOLAR_SYSTEM_ROCK_MASS_EARTH = 77.0
+
+
+def cz_metal_reservoir_earth_masses(
+    teff: np.ndarray | float,
+    *,
+    feh: np.ndarray | float = 0.0,
+    safety_factor: float = 1.0,
+) -> np.ndarray:
+    """Mass of metals already in the convective envelope, in Earth masses.
+
+    This single number governs both halves of the channel's central trade.
+    Injected rock is diluted into it, so a large reservoir means a strong
+    natural null *and* a weak signal.
+    """
+    mcz = convective_envelope_mass(teff, safety_factor=safety_factor)
+    z = Z_SOLAR * 10.0 ** np.asarray(feh, dtype=float)
+    return mcz * z / M_EARTH_IN_MSUN
+
+
+def delta_metals_from_rock(
+    mass_earth: np.ndarray | float,
+    *,
+    teff: np.ndarray | float,
+    feh: np.ndarray | float = 0.0,
+    safety_factor: float = 1.0,
+) -> np.ndarray:
+    """Bulk d[M/H] from dissolving ``mass_earth`` of rock (rock is ~all metals)."""
+    res = cz_metal_reservoir_earth_masses(teff, feh=feh, safety_factor=safety_factor)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.log10(1.0 + np.asarray(mass_earth, dtype=float) / res)
+
+
+def engulfment_ceiling_dex(
+    teff: np.ndarray | float,
+    *,
+    feh: np.ndarray | float = 0.0,
+    total_rock_earth: float = SOLAR_SYSTEM_ROCK_MASS_EARTH,
+    safety_factor: float = 1.0,
+) -> np.ndarray:
+    """The largest d[M/H] engulfment can produce, eating the WHOLE system.
+
+    For a solar-type star this is **0.27 dex** -- and the observed record,
+    Kronos (HD 240430) at ~0.23 dex, already sits at ~85% of it. So a coherent
+    refractory excess above ~0.3 dex in a G dwarf is outside the engulfment
+    hypothesis not by a threshold choice but by the mass budget of an entire
+    planetary system. For a K dwarf the ceiling falls to a few hundredths of a
+    dex, which is why the bar is spectral-type dependent and must be computed
+    per star rather than adopted as one number.
+    """
+    return delta_metals_from_rock(total_rock_earth, teff=teff, feh=feh,
+                                  safety_factor=safety_factor)
+
+
+def minimum_rock_mass_for(
+    delta_dex: float,
+    teff: np.ndarray | float,
+    *,
+    feh: np.ndarray | float = 0.0,
+    safety_factor: float = 1.0,
+) -> np.ndarray:
+    """Earth masses of rock needed to produce ``delta_dex`` -- the sensitivity side.
+
+    The same deep convection that makes the natural null airtight also destroys
+    the signal. An M dwarf needs of order 10^4 Earth masses of rock for a 1 dex
+    excursion, which no planetary system contains. The cool end of the sample is
+    therefore where the null is strongest *and* where any real signature is most
+    diluted, and the report states which side of that trade each sub-sample sits
+    on instead of quoting one sensitivity for the whole survey.
+    """
+    res = cz_metal_reservoir_earth_masses(teff, feh=feh, safety_factor=safety_factor)
+    return (10.0 ** float(delta_dex) - 1.0) * res
+
+
 # ---------------------------------------------------------------------------
 # Pair statistics
 # ---------------------------------------------------------------------------
@@ -524,8 +603,14 @@ __all__ = [
     "NO_DIFFERENCE",
     "REFRACTORY_TCOND_K",
     "SOLAR_MASS_FRACTION",
+    "SOLAR_SYSTEM_ROCK_MASS_EARTH",
     "SPARSE_UNEXPLAINABLE",
     "T_COND",
+    "Z_SOLAR",
+    "cz_metal_reservoir_earth_masses",
+    "delta_metals_from_rock",
+    "engulfment_ceiling_dex",
+    "minimum_rock_mass_for",
     "TwinConfig",
     "convective_envelope_mass",
     "delta_from_rock",

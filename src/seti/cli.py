@@ -373,6 +373,7 @@ def _cmd_derelict(args, cfg):
     summary = derelict_run(cfg, stage=args.stage, limit=args.limit,
                            offline_input=args.offline_input, max_vet=args.max_vet,
                            max_enrich=args.max_enrich,
+                           max_control_enrich=args.max_control_enrich,
                            skip_control=args.skip_control)
     print(json.dumps({"verdict": summary.get("verdict"),
                       "funnel": summary.get("funnel"),
@@ -1168,6 +1169,8 @@ def main(argv=None):
                    help="CSV of pre-fetched SBDB rows; skips all network access")
     p.add_argument("--max-vet", type=int, default=60,
                    help="how many survivors get a per-object sbdb.api detail fetch")
+    p.add_argument("--max-control-enrich", type=int, default=400,
+                   help="cap on per-object enrichment of the comet control sample")
     p.add_argument("--max-enrich", type=int, default=1500,
                    help="cap on per-object sbdb.api enrichment (the bulk query "
                         "rejects sigma_A1, so sigmas come from orbit.model_pars)")

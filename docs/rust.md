@@ -46,8 +46,23 @@ lost**, and the sensitivity statement has to say so.
 | Many-element swarm, randomised orbits, `f ≳ 10⁻³` | collisional cascade on `P/f` (Lacki 2025) | **Yes** — this is the target |
 | Swarm with `t_coll ≫ decade` (low `f`, wide orbits) | cascade eventually, not now | No — outside the window |
 | Ring-supported stellar engine / dense-cloud Dyson bubble | **passively stable**, needs no active control (McInnes 2026, arXiv:2603.00203) | **No** — nothing decays, so nothing to see |
-| Rigid monolithic Dyson *sphere* | dynamically and mechanically unstable (Wright 2020, arXiv:2006.16734, SerAJ 200, 1) | Marginal — the failure is catastrophic, not a decade-long ramp |
+| Rigid monolithic Dyson *sphere* | dynamically and mechanically unstable (Wright 2020, arXiv:2006.16734, SerAJ 200, 1–18) | Marginal — the failure is catastrophic, not a decade-long ramp |
 | Cascade already complete | warm debris dust, no residual structure | No — that is **OSSUARY** |
+
+The two counterweight abstracts, fetched on the runner and quoted rather than
+paraphrased:
+
+> **McInnes 2026** — "ultra-large reflectors in static equilibrium levitating
+> above a central star (so-called stellar engines) are *always unstable* if the
+> reflector comprises a uniform disc. However, if the reflector has a
+> non-uniform mass distribution, specifically a ring supporting a reflector, a
+> stellar engine can in principle be **passively stable**. Moreover, while …
+> Dyson bubbles are unstable, in principle they can become **passively
+> self-stabilizing** if arranged about the star as a dense cloud."
+
+> **Wright 2020** — "I explicate the ways in which the popular imagining of them
+> as monolithic objects would make them **dynamically unstable** under gravity
+> and radiation pressure, and **mechanically unstable to buckling**."
 
 A null here therefore constrains *decaying many-element swarms in the
 decade-cascade window*, and nothing else. It says nothing about passively stable
@@ -58,7 +73,9 @@ architectures, which is the whole point of stating it.
 ## 3. Novelty
 
 **Verdict: the statistic is unoccupied.** Three separate things have to hold,
-and they are different claims.
+and they are different claims. Runner-fetched evidence for all of them is under
+`results/rustlit/` (run 30203976309, **47/47 fetches succeeded**); one leg of the
+check failed and is marked as failed below rather than quietly dropped.
 
 1. **The mechanism has no published observable.** Lacki 2025 is a dynamics
    paper. Full text at `results/necrolit/txt_lacki_ground_to_dust.txt`; the
@@ -78,15 +95,32 @@ and they are different claims.
    | YSOs in W51 (arXiv:2510.12212) | increasing with **evolutionary stage** — a population statement |
    | NLSy1 galaxies (arXiv:2602.09171) | increasing toward **shorter wavelength** — a colour statement |
 
-   `scripts/rustlit_fetch.py` re-runs this on the runner with the decoy classes
-   encoded as explicit regexes (`results/rustlit/concept_scan.json`), so the
-   null is auditable rather than asserted.
+   `scripts/rustlit_fetch.py` re-ran this independently on the runner with the
+   decoy classes encoded as explicit regexes. Over **215 abstracts** returned by
+   24 targeted arXiv queries — written to catch the target concept *and* each
+   decoy class — the scan found **1 regex hit, which was decoy-tagged
+   `with_timescale` (red noise), and 0 decoy-free hits**
+   (`results/rustlit/concept_scan.json`). The null is auditable rather than
+   asserted, and it reproduces the earlier sweep on an independent query set.
 
 3. **The nearest existing machinery is a first-moment search.** Petz & Kochanek
    2025, *"Life in the Slow Lane"* (arXiv:2501.14058), ran **9,361,613** isolated
    ASAS-SN sources at 13 < g < 14.5, selecting brightness changes > 0.03 mag/yr
    over 10 yr, and found 782 slow variables (433 new). That is a **mean-flux
-   slope**. The second moment is untouched.
+   slope** — the abstract is explicit that the selection is on "brightness
+   changes larger than ~0.03 mag/year". The second moment is untouched.
+
+**The leg that failed, stated as failed.** The plan included a citation-tree
+test — *do any works citing Lacki 2025 or Petz & Kochanek 2025 run a
+second-moment search?* — and it returned nothing usable. The OpenAlex lookup by
+arXiv DOI (`10.48550/arXiv.<id>`) resolves to the **preprint stub**, which
+reported `cited_by_count = 0` for all four target papers *including Wright 2020*,
+a review that certainly has many citations. An empty citation tree fetched that
+way is not evidence of anything, so **no novelty weight is placed on it**.
+`scripts/rustlit_fetch.py` now also searches OpenAlex by title and keeps
+whichever record has the larger citation count, recording both routes in
+`oa_pick_<name>.json`; a re-dispatch will make this leg informative. Until then
+the novelty claim rests on legs 1–3 above, which do not depend on it.
 
 **Bonus seam.** Hephaistos II's `G_var > 2` cut explicitly *"rejects potential
 Dyson swarms with very large absorbing elements since these in principle could

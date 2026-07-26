@@ -79,12 +79,21 @@ def get(url: str, dest: pathlib.Path, tries: int = 3, pause: float = PAUSE) -> b
 # 1. Named papers: the mechanism, the counterweight, the nearest machinery
 # --------------------------------------------------------------------------
 PAPERS = {
-    "lacki_ground_to_dust": "2504.21151",     # the mechanism (no observable)
-    "mcinnes2026_stable": "2603.00203",       # passively stable architectures
-    "wright2020_spheres": "2006.16734",       # monolithic spheres are unstable
-    "petz_kochanek_slow_lane": "2501.14058",  # mean-flux slope, 9.36M sources
-    "kochanek_asassn_slow": "2011.02502",     # earlier ASAS-SN slow-variable work
-    "hephaistos2": "2405.08657",              # the G_var > 2 rejection of variables
+    # name: (arXiv id, title used for the OpenAlex title-search fallback)
+    "lacki_ground_to_dust": ("2504.21151",
+                             "Ground to Dust: Collisional Cascades and the Fate "
+                             "of Kardashev II Megaswarms"),
+    "mcinnes2026_stable": ("2603.00203",
+                           "Stellar engines and Dyson bubbles can be stable"),
+    "wright2020_spheres": ("2006.16734", "Dyson Spheres"),
+    "petz_kochanek_slow_lane": ("2501.14058",
+                                "Life in the Slow Lane: A Search for Long Term "
+                                "Variability in ASAS-SN"),
+    "kochanek_asassn_slow": ("2011.02502",
+                             "The ASAS-SN catalog of variable stars"),
+    "hephaistos2": ("2405.08657",
+                    "Project Hephaistos II: Dyson sphere candidates from Gaia "
+                    "DR3, 2MASS, and WISE"),
 }
 
 # --------------------------------------------------------------------------
@@ -148,19 +157,50 @@ def fulltext(name: str, aid: str) -> None:
             print(f"  pdftotext failed for {name}: {exc!r}")
 
 
-def openalex(name: str, aid: str) -> None:
-    """Work record plus the list of works citing it --- the 'did anyone run it' test."""
-    url = f"{OA_API}/https://doi.org/10.48550/arXiv.{aid}"
-    ok = get(url, OUT / f"oa_{name}.json")
-    if not ok:
-        get(f"{OA_API}?filter=title.search:{urllib.parse.quote(name)}&per-page=25",
-            OUT / f"oa_{name}.json")
-    try:
-        rec = json.loads((OUT / f"oa_{name}.json").read_text())
-        wid = rec.get("id", "").rsplit("/", 1)[-1]
-    except Exception:  # noqa: BLE001
+def openalex(name: str, title: str, aid: str) -> None:
+    """Work record plus the list of works citing it --- the 'did anyone run it' test.
+
+    **The arXiv DOI is not enough.**  ``10.48550/arXiv.<id>`` resolves to the
+    *preprint stub*, which OpenAlex frequently reports with
+    ``cited_by_count = 0`` even for heavily-cited papers (the 2026-07-26 run
+    returned 0 for Wright 2020, which is certainly wrong).  A citation tree
+    fetched that way is not evidence of anything.  So we additionally search by
+    title and keep whichever record has the **larger** citation count, recording
+    in ``oa_pick_<name>.json`` which route won and what each returned --- an
+    uninformative leg must be visibly uninformative, not silently empty.
+    """
+    cands: list[dict] = []
+    if get(f"{OA_API}/https://doi.org/10.48550/arXiv.{aid}", OUT / f"oa_doi_{name}.json"):
+        try:
+            cands.append(json.loads((OUT / f"oa_doi_{name}.json").read_text()))
+        except Exception:  # noqa: BLE001
+            pass
+    q = urllib.parse.quote(title)
+    if get(f"{OA_API}?filter=title.search:{q}&per-page=10&sort=cited_by_count:desc",
+           OUT / f"oa_search_{name}.json"):
+        try:
+            res = json.loads((OUT / f"oa_search_{name}.json").read_text()).get("results", [])
+            cands.extend(res[:5])
+        except Exception:  # noqa: BLE001
+            pass
+    cands = [c for c in cands if isinstance(c, dict) and c.get("id")]
+    if not cands:
+        (OUT / f"oa_pick_{name}.json").write_text(json.dumps(
+            {"resolved": False, "note": "no OpenAlex record found"}, indent=2))
         return
-    if wid:
+    best = max(cands, key=lambda c: int(c.get("cited_by_count") or 0))
+    (OUT / f"oa_{name}.json").write_text(json.dumps(best, indent=2))
+    (OUT / f"oa_pick_{name}.json").write_text(json.dumps({
+        "resolved": True, "chosen_id": best.get("id"),
+        "chosen_cited_by_count": int(best.get("cited_by_count") or 0),
+        "candidates": [{"id": c.get("id"), "title": c.get("display_name"),
+                        "cited_by_count": int(c.get("cited_by_count") or 0),
+                        "type": c.get("type")} for c in cands],
+        "warning": ("cited_by_count == 0 here means the citation-tree leg is "
+                    "UNINFORMATIVE for this paper, not that nobody cited it"),
+    }, indent=2))
+    wid = str(best.get("id", "")).rsplit("/", 1)[-1]
+    if wid and int(best.get("cited_by_count") or 0) > 0:
         get(f"{OA_API}?filter=cites:{wid}&per-page=200",
             OUT / f"citedby_{name}.json")
 
@@ -224,11 +264,11 @@ def scan() -> dict:
 
 def main() -> None:
     print("== named papers ==")
-    for name, aid in PAPERS.items():
+    for name, (aid, title) in PAPERS.items():
         print(f"-- {name} ({aid})")
         arxiv_id(name, aid)
         fulltext(name, aid)
-        openalex(name, aid)
+        openalex(name, title, aid)
 
     print("== keyword sweeps ==")
     for name, q in QUERIES.items():

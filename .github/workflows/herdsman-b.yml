@@ -15,6 +15,10 @@ on:
         description: "Stage to run (catalog|chem|field|score|all)"
         required: false
         default: "all"
+      resume_run_id:
+        description: "Prior run id whose checkpoint artifact should seed this run (skips completed stages)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -35,8 +39,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
           python -c "import pyvo, astroquery, pyarrow; print('imports OK')"
+      - name: Seed checkpoints from a prior run's artifact
+        if: ${{ github.event.inputs.resume_run_id != '' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: herdsman-b-outputs
+          run-id: ${{ github.event.inputs.resume_run_id }}
+          github-token: ${{ github.token }}
+          path: results/herdsman_b/
       - name: Run census audit
         run: |
+          ls -la results/herdsman_b/ 2>/dev/null || true
           python -m seti.cli herdsman-b --stage ${{ github.event.inputs.stage || 'all' }}
           echo "=== summary ==="
           cat results/herdsman_b/summary.json || true

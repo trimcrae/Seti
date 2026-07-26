@@ -380,6 +380,159 @@ def cirrus_correlation_test(df: pd.DataFrame, flag_col: str = "excess_flag",
 
 
 # --------------------------------------------------------------------------
+# 6b. Astrophysical impostors specific to metal-poor / halo samples
+# --------------------------------------------------------------------------
+
+# The largest globular clusters by angular size, as an offline fallback for the
+# cluster veto when the VizieR Harris catalogue cannot be reached.  (name, RA,
+# Dec, half-light radius in arcmin.)
+_BRIGHT_GLOBULARS = [
+    ("NGC 5139 (omega Cen)", 201.697, -47.480, 5.00),
+    ("NGC 104 (47 Tuc)", 6.024, -72.081, 3.17),
+    ("NGC 6121 (M4)", 245.897, -26.526, 4.33),
+    ("NGC 6397", 265.175, -53.674, 2.90),
+    ("NGC 6656 (M22)", 279.100, -23.905, 3.36),
+    ("NGC 6752", 287.717, -59.985, 1.91),
+    ("NGC 5272 (M3)", 205.548, +28.377, 2.31),
+    ("NGC 6205 (M13)", 250.422, +36.460, 1.69),
+    ("NGC 7078 (M15)", 322.493, +12.167, 1.00),
+    ("NGC 7089 (M2)", 323.363, -0.823, 1.06),
+    ("NGC 5904 (M5)", 229.638, +2.081, 1.77),
+    ("NGC 362", 15.809, -70.849, 0.82),
+    ("NGC 3201", 154.403, -46.412, 3.10),
+    ("NGC 6218 (M12)", 251.809, -1.949, 1.77),
+    ("NGC 6254 (M10)", 254.288, -4.100, 1.95),
+    ("NGC 288", 13.189, -26.583, 2.23),
+    ("NGC 6809 (M55)", 294.999, -30.965, 2.83),
+    ("NGC 6541", 272.010, -43.715, 1.06),
+    ("NGC 1851", 78.528, -40.047, 0.51),
+    ("NGC 2808", 138.013, -64.863, 0.80),
+]
+
+
+def globular_cluster_veto(df: pd.DataFrame, cfg: dict,
+                          clusters: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Veto sightlines toward globular clusters.
+
+    Boyer et al. 2010 (arXiv:1002.1348) demonstrated that a *published*
+    red-giant-branch-wide infrared excess across 47 Tuc was entirely stellar
+    blending and imaging artefacts, using the same archival Spitzer imagery as
+    the original claim.  Metal-poor stars concentrate toward globular clusters,
+    which are the most crowded fields on the sky, so this channel does not try to
+    vet cluster sightlines -- it removes them.
+    """
+    g = cfg["globular_cluster"]
+    if clusters is None or not len(clusters):
+        clusters = pd.DataFrame(_BRIGHT_GLOBULARS,
+                                columns=["name", "ra", "dec", "rh_arcmin"])
+    out = pd.DataFrame(index=df.index)
+    ra = pd.to_numeric(df.get("ra"), errors="coerce").to_numpy(float)
+    dec = pd.to_numeric(df.get("dec"), errors="coerce").to_numpy(float)
+
+    nearest = np.full(len(df), np.inf)
+    which = np.full(len(df), "", dtype=object)
+    for _, c in clusters.iterrows():
+        rh = float(c.get("rh_arcmin", np.nan))
+        veto_arcmin = max(float(g["veto_radius_arcmin"]),
+                          g["veto_radius_multiplier"] * rh if np.isfinite(rh) else 0.0)
+        dra = (ra - float(c["ra"])) * np.cos(np.radians(dec))
+        dde = dec - float(c["dec"])
+        sep_arcmin = np.hypot(dra, dde) * 60.0
+        closer = sep_arcmin < nearest
+        nearest = np.where(closer, sep_arcmin, nearest)
+        which = np.where(closer & (sep_arcmin < veto_arcmin), str(c["name"]), which)
+    out["nearest_globular_arcmin"] = nearest
+    out["globular_cluster"] = which
+    out["globular_ok"] = which == ""
+    return out
+
+
+def impostor_gate(df: pd.DataFrame, sample_cfg: dict) -> pd.DataFrame:
+    """The three impostors this sample selects for, from the literature sweep.
+
+    * **lambda Bootis stars** -- A/early-F stars with a metal-depleted *surface*
+      from accreting gas-depleted ISM, 21 of 34 of which carry infrared excesses
+      (Murphy et al. 2020).  Some were previously catalogued as blue horizontal
+      branch stars, so they arrive wearing exactly this channel's badge.  They are
+      hot; a T_eff ceiling removes them.
+    * **Blue stragglers / merger products** -- Yong et al. 2016 found two to three
+      alpha-rich metal-poor "young" giants with debris-disk-like excesses that are
+      evolved blue stragglers.  Flagged where a star sits blueward and brighter
+      than the metal-poor turnoff.
+    * **sdA halo binaries** -- Brown et al. 2017 showed the majority of sdA stars
+      are metal-poor halo A-F stars with ~0.8 Msun companions, several with
+      infrared excess.  The T_eff ceiling and the RUWE cut both bear on these.
+    """
+    out = pd.DataFrame(index=df.index)
+    teff = pd.to_numeric(df.get("teff"), errors="coerce")
+    if teff.isna().all():
+        for alt in ("teff_gspspec", "teff_gspphot"):
+            if alt in df.columns:
+                teff = pd.to_numeric(df[alt], errors="coerce")
+                if teff.notna().any():
+                    break
+    out["teff"] = teff
+    hot = (teff > sample_cfg["teff_max_k"]).fillna(False)
+    cold = (teff < sample_cfg["teff_min_k"]).fillna(False)
+    out["lambda_boo_risk"] = hot
+    out["teff_in_range"] = ~(hot | cold)
+
+    # Blue straggler locus: brighter than M_G ~ 4.5 while bluer than BP-RP ~ 0.65
+    # is above and blueward of the metal-poor main-sequence turnoff.
+    mg = pd.to_numeric(df.get("M_G"), errors="coerce")
+    bprp = pd.to_numeric(df.get("bp_rp"), errors="coerce")
+    out["blue_straggler_risk"] = ((mg < 4.5) & (bprp < 0.65)).fillna(False)
+
+    otype = df.get("simbad_otype", pd.Series("", index=df.index)).astype(str).str.lower()
+    out["simbad_impostor"] = otype.str.contains(
+        "lam boo|lambda boo|rr lyr|bs\\*|blue strag|agb|post-agb|c\\*|carbon|"
+        "yso|t tau|herbig|em\\*|agn|qso|seyfert|galaxy|glob", regex=True)
+
+    out["impostor_ok"] = (out["teff_in_range"] & ~out["blue_straggler_risk"]
+                          & ~out["simbad_impostor"])
+    return out
+
+
+def expected_chance_alignments(n_stars: int, cfg: dict,
+                               w1_excess_mag: float = 12.0) -> dict:
+    """Expected number of chance extragalactic alignments for the whole sample.
+
+    Two independent estimates, because the Hephaistos post-mortem gives a
+    directly measured density for the specific population that killed it:
+
+    * **Hot DOGs** at 9e-6 arcsec^-2 -- the density that "can probably account for
+      the contamination of all 7" Hephaistos candidates (arXiv:2405.14921), two of
+      which JWST/MIRI later resolved into a z~0.9 Hot DOG and a z~0.4 dusty
+      starburst within ~1 arcsec (arXiv:2607.09460).
+    * **All AllWISE sources** bright enough to supply the excess, from the counts
+      law in :func:`allwise_source_density_per_arcsec2`.
+
+    If the expectation is much less than 1 the sample is in a genuinely strong
+    position; if it is much greater than 1, nothing survives without the
+    astrometric-registration stage.
+    """
+    r = float(cfg["astrometry"]["max_registration_arcsec"])
+    area = np.pi * r ** 2
+    hot_dog_density = float(cfg["extragalactic"].get(
+        "hot_dog_density_per_arcsec2", 9.0e-6))
+    n_hd = n_stars * hot_dog_density * area
+    dens = float(allwise_source_density_per_arcsec2(np.array([w1_excess_mag]), cfg)[0])
+    n_all = n_stars * dens * area
+    # For contrast: what the same sample would suffer without the registration cut.
+    beam = float(cfg["beam"]["wise_beam_arcsec"])
+    n_all_beam = n_stars * dens * np.pi * beam ** 2
+    return {
+        "n_stars": int(n_stars),
+        "registration_radius_arcsec": r,
+        "expected_hot_dogs": float(n_hd),
+        "expected_allwise_interlopers": float(n_all),
+        "expected_allwise_interlopers_in_full_beam": float(n_all_beam),
+        "assumed_excess_equivalent_w1_mag": float(w1_excess_mag),
+        "leverage_of_registration_cut": float(n_all_beam / n_all) if n_all > 0 else np.nan,
+    }
+
+
+# --------------------------------------------------------------------------
 # 7. Beam blending
 # --------------------------------------------------------------------------
 
@@ -446,6 +599,8 @@ _ORDER = [
     ("astrometry_ok", "astrometric_registration"),
     ("extragalactic_ok", "background_source"),
     ("cirrus_ok", "galactic_cirrus"),
+    ("globular_ok", "globular_cluster_sightline"),
+    ("impostor_ok", "lambda_boo_or_blue_straggler"),
     ("luminosity_ok", "giant_or_unclassified"),
     ("kinematics_ok", "not_a_null_reservoir_host"),
 ]
@@ -465,7 +620,9 @@ def vet(df: pd.DataFrame, cfg: dict, sample_cfg: dict,
                   companion_gate(df, excess_cfg),
                   astrometry_gate(df, cfg["astrometry"]),
                   extragalactic_gate(df, cfg),
-                  cirrus_gate(df, cfg)):
+                  cirrus_gate(df, cfg),
+                  globular_cluster_veto(df, cfg),
+                  impostor_gate(df, sample_cfg)):
         for c in frame.columns:
             out[c] = frame[c]
 
@@ -494,16 +651,28 @@ def vet(df: pd.DataFrame, cfg: dict, sample_cfg: dict,
 
 
 def funnel_counts(df: pd.DataFrame) -> dict:
-    """Survivors remaining after each gate, applied cumulatively in order."""
+    """Survivors after each gate, and how many each gate removed.
+
+    Silverberg et al. 2018 measured that at most 7.9 +/- 0.2 % of AllWISE-selected
+    infrared excesses are good disk candidates -- a ~92% false-positive rate, with
+    the McDonald and Marton searches above 70% and *all thirteen* Theissen & West
+    candidates with W4 S/N > 3 spurious.  So roughly nine in ten raw flags here are
+    expected to be junk, and the funnel is only credible if it can say which stage
+    removed them.  Hence the per-stage removals, not just the running total.
+    """
     counts = {"input": int(len(df))}
+    removed = {}
     alive = pd.Series(True, index=df.index)
     for col, name in _ORDER:
-        if col not in df.columns:
-            counts[f"after_{name}"] = int(alive.sum())
-            continue
-        alive = alive & df[col].fillna(False).astype(bool)
+        before = int(alive.sum())
+        if col in df.columns:
+            alive = alive & df[col].fillna(False).astype(bool)
         counts[f"after_{name}"] = int(alive.sum())
+        removed[name] = before - int(alive.sum())
     counts["surviving"] = int(alive.sum())
+    counts["removed_by_stage"] = removed
+    n_in = counts["input"]
+    counts["fraction_removed"] = float(1.0 - counts["surviving"] / n_in) if n_in else 0.0
     return counts
 
 
@@ -511,4 +680,5 @@ __all__ = ["wise_quality_gate", "ledger_gate", "companion_gate",
            "registration_offset_arcsec", "astrometry_gate",
            "allwise_source_density_per_arcsec2", "chance_superposition_p",
            "extragalactic_gate", "cirrus_gate", "cirrus_correlation_test",
+           "globular_cluster_veto", "impostor_gate", "expected_chance_alignments",
            "beam_blend_verdict", "vet", "funnel_counts"]

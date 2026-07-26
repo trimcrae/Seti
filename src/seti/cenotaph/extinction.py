@@ -52,7 +52,23 @@ BANDS: tuple[Band, ...] = (
     Band("w2", 0.026, 4.603, 171.8),
 )
 
-BAND_INDEX: dict[str, Band] = {b.name: b for b in BANDS}
+# W3/W4 exist for the *excess veto* (leg 2) but are deliberately kept out of
+# BANDS, i.e. out of the grey/reddening fit, for two reasons:
+#   1. they are where an occulter's re-radiation would first appear, so
+#      including them would let a genuine excess bleed into the fitted grey
+#      term and cancel the very signal we are measuring;
+#   2. their extinction coefficients are the least secure in the table — the
+#      9.7 um silicate feature sits inside W3, so A_W3/A_Ks is larger than the
+#      smooth continuum trend and varies with sightline.
+EXCESS_BANDS: tuple[Band, ...] = (
+    Band("w3", 0.030, 11.561, 31.67),     # A_W3/A_Ks ~ 0.38 (Wang & Chen 2019)
+    Band("w4", 0.010, 22.088, 8.363),     # poorly constrained; ~0.13 A_Ks
+)
+
+BAND_INDEX: dict[str, Band] = {b.name: b for b in BANDS + EXCESS_BANDS}
+
+FIT_BANDS: tuple[str, ...] = tuple(b.name for b in BANDS)
+"""The bands the grey/reddening fit may use. Excludes W3/W4 by construction."""
 
 # GALEX magnitudes are AB; Gaia are Vega-ish (G) but the fit is differential
 # against twins measured in the same system, so system offsets cancel exactly

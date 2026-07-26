@@ -104,6 +104,15 @@ ossuary:
     g_max: 18.0                # fainter than this, WISE is confusion-limited
     bp_rp_min: 0.35            # bluer than this the empirical photosphere locus is unanchored
     bp_rp_max: 3.0
+    # LAMBDA BOOTIS VETO. lambda Boo stars are A/early-F stars whose *surface* is
+    # metal-depleted by accretion of gas-depleted ISM -- not primordially metal-poor
+    # -- and Murphy et al. 2020 (arXiv:2008.02392) find 21 of 34 have infrared
+    # excesses, with some previously misclassified as blue horizontal branch stars.
+    # They are the single largest false-positive risk for this channel. They live at
+    # 6500-9000 K, so a T_eff ceiling removes essentially all of them while keeping
+    # the metal-poor FGK dwarfs and subdwarfs the claim is actually about.
+    teff_max_k: 6500.0
+    teff_min_k: 3800.0
     # Dwarf/giant split. Metal-poor giants have winds and dusty envelopes and are
     # analysed separately; they never enter the clean-candidate table.
     mg_dwarf_min: 4.0          # absolute G fainter than this => dwarf
@@ -131,13 +140,23 @@ ossuary:
     locus_min_per_bin: 25      # below this a bin is unusable -> NaN prediction
     locus_scatter_floor_mag: 0.02
     sys_floor_mag: 0.03        # zero-point + model systematic folded into sigma
-    chi_min: 4.0               # per-band excess significance to flag
+    # 5 sigma, not 3. Huang, Liu, Wyatt & Kennedy 2025 (arXiv:2505.07602) searched
+    # the 10 pc sample (339 stars) for W3 excess at 3 sigma, got 5 candidates, and
+    # found ALL FIVE spurious (photosphere-model failures, silicate clouds); their
+    # explicit recommendation is 5 sigma. Detection rate 0/339.
+    chi_min: 5.0               # per-band excess significance to flag
     # LEDGER RULE: the excess must appear in a star-dominated band. W4-only is cirrus.
+    # W3 (Wien peak 241 K) is the workhorse for warm dust; W4 (132 K) is the only
+    # route below ~200 K and is unusable, so the claim leans on W3 + W1-W2 support.
     require_bands: ["W1", "W2", "W3"]
     color_excess_sigma_min: 3.0
     w1_w2_min: -0.05           # LEDGER RULE: negative W1-W2 is a blend, not a photosphere
     w1_w2_agn_max: 0.8         # redder than this is the WISE AGN/QSO wedge
-    t_dust_min_k: 150.0        # "warm" dust floor for the headline claim
+    # Warm floor set by W3, not by ambition: W3's Wien peak is 241 K and W3/W4
+    # depth is frozen at the 2010 cryogenic mission (NEOWISE-R, CatWISE2020 and
+    # unWISE are W1/W2 only). Below ~200 K only W4 reaches, and W4 cannot be
+    # believed. This is the channel's honest sensitivity floor.
+    t_dust_min_k: 200.0        # "warm" dust floor for the headline claim
     t_dust_max_k: 1800.0       # hotter than grains survive => unresolved companion
     nir_excess_sigma_max: 3.0  # a J/H/Ks excess means a companion photosphere, not dust
     mc_draws: 400              # Monte-Carlo draws for (T_dust, tau) uncertainties
@@ -167,7 +186,19 @@ ossuary:
       counts_log10_norm_per_deg2: 4.26
       counts_slope_per_mag: 0.50
       counts_ref_w1_mag: 16.9
+      # Hot DOG sky density that "can probably account for the contamination of all
+      # 7" Project Hephaistos candidates (arXiv:2405.14921); JWST/MIRI later resolved
+      # two of them into a z~0.9 Hot DOG and a z~0.4 dusty starburst (arXiv:2607.09460).
+      hot_dog_density_per_arcsec2: 9.0e-6
       max_chance_superposition_p: 1.0e-3 # per-candidate a-priori interloper probability
+    globular_cluster:
+      # Boyer et al. 2010 (arXiv:1002.1348) showed a *published* red-giant-branch-wide
+      # infrared excess in 47 Tuc was entirely stellar blending plus imaging
+      # artefacts. Metal-poor stars concentrate toward globular clusters, which are
+      # the most crowded fields on the sky, so cluster sightlines are vetoed outright
+      # rather than vetted.
+      veto_radius_arcmin: 15.0
+      veto_radius_multiplier: 3.0   # x the catalogued half-light radius, if known
     cirrus:
       max_ebv_sfd: 0.10        # SFD E(B-V) above this the 12/22 um background is cirrus
       min_gal_lat_deg: 15.0    # |b| below this the cirrus + stellar confusion is fatal

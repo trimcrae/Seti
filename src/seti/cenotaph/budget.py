@@ -92,11 +92,36 @@ FAR_IR_BANDS: tuple[FarIRBand, ...] = (
 )
 
 MID_IR_BANDS: tuple[FarIRBand, ...] = (
+    FarIRBand("w1", 3.35, 8.0e-5, 6.1, "AllWISE"),
+    FarIRBand("w2", 4.60, 1.1e-4, 6.4, "AllWISE"),
     FarIRBand("w3", 11.56, 0.0018, 6.5, "AllWISE"),   # ~1.8 mJy 5-sigma
     FarIRBand("w4", 22.09, 0.0120, 12.0, "AllWISE"),  # ~12 mJy 5-sigma
 )
 
 BAND_BY_NAME = {b.name: b for b in FAR_IR_BANDS + MID_IR_BANDS}
+
+
+def wise_temperature_ceilings() -> dict[str, float]:
+    """Blackbody temperature whose Wien peak falls in each WISE band.
+
+    This is the structural reason the mid-infrared route to the cold regime is
+    closed, and it is worth stating as a computed fact rather than an opinion:
+
+        W1 3.35 µm → 865 K     W2 4.60 µm → 630 K
+        W3 11.56 µm → 251 K    W4 22.09 µm → 131 K
+
+    A survey is only efficiently sensitive to re-radiation near its own Wien
+    ceiling. The catalogues that have got *deeper* since 2010 — NEOWISE-R,
+    CatWISE2020 (1.9 × 10⁹ sources, 1.7 mag deeper), the unWISE coadds — are
+    **W1/W2 only**. W3 and W4 depth is frozen at the 2010 cryogenic phase of
+    WISE and cannot improve until a new mid-IR all-sky survey flies. So the
+    largest waste-heat searches ever run are the ones *least* able to reach
+    cold temperatures, and improving them makes that worse, not better: deeper
+    W1/W2 buys sensitivity at 630–865 K. Below ~130 K the mid-infrared route is
+    closed by instrumentation, not by effort — which is the argument for
+    attenuation plus far-IR recovery as the only way in.
+    """
+    return {b.name: WIEN_UM_K / b.lambda_um for b in MID_IR_BANDS}
 
 
 # --- blackbody ---------------------------------------------------------------

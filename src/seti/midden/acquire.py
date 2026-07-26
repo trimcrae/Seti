@@ -62,17 +62,16 @@ WHERE teff_gspphot BETWEEN {teff_lo} AND {teff_hi}
 ORDER BY phot_g_mean_mag
 """
 
-_OBSCORE_QUERY = """
-SELECT t.tid AS tid, o.dp_id AS dp_id, o.access_url AS access_url,
-       o.instrument_name AS instrument_name, o.obs_collection AS obs_collection,
-       o.s_ra AS s_ra, o.s_dec AS s_dec, o.snr AS snr, o.t_min AS t_min,
-       o.em_min AS em_min, o.em_max AS em_max, o.target_name AS target_name
-FROM ivoa.ObsCore AS o
-JOIN TAP_UPLOAD.targets AS t
-  ON CONTAINS(POINT('ICRS', o.s_ra, o.s_dec),
-              CIRCLE('ICRS', t.ra, t.dec, t.rad)) = 1
-WHERE o.dataproduct_type = 'spectrum'
-  AND (o.instrument_name = 'HARPS' OR o.instrument_name = 'FEROS')
+# ESO's tap_obs rejects TAP_UPLOAD entirely (verified live: "Unknown table
+# TAP_UPLOAD.targets"), so discovery is a bulk metadata pull in declination
+# bands with the target crossmatch done locally.
+_OBSCORE_BAND_QUERY = """
+SELECT dp_id, access_url, instrument_name, obs_collection,
+       s_ra, s_dec, snr, t_min, em_min, em_max, target_name
+FROM ivoa.ObsCore
+WHERE dataproduct_type = 'spectrum'
+  AND (instrument_name = 'HARPS' OR instrument_name = 'FEROS')
+  AND s_dec >= {dec_lo} AND s_dec < {dec_hi}
 """
 
 
@@ -289,43 +288,77 @@ def build_targets(out_dir: Path, max_gaia: int = 15000) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 def query_obscore(targets: pd.DataFrame, out_dir: Path,
-                  chunk: int = 1000) -> pd.DataFrame:
-    """Position-match the target list against ivoa.ObsCore (checkpointed)."""
+                  dec_band_deg: float = 10.0) -> pd.DataFrame:
+    """Discover HARPS/FEROS spectra for the targets (checkpointed).
+
+    Bulk-pulls ObsCore spectrum metadata in declination bands (ESO's TAP has
+    no upload support), then position-matches against the target list locally
+    with a unit-vector KD-tree at each target's own match radius.
+    """
     out_path = out_dir / "obscore.parquet"
     if out_path.exists():
         print(f"[midden] obscore checkpoint exists: {out_path}")
         return pd.read_parquet(out_path)
     import pyvo
-    from astropy.table import Table
+    from scipy.spatial import cKDTree
 
     chunk_dir = out_dir / "obscore_chunks"
     chunk_dir.mkdir(parents=True, exist_ok=True)
     tap = pyvo.dal.TAPService(_ESO_TAP)
+
+    def _unit(ra_deg, dec_deg):
+        ra = np.radians(np.asarray(ra_deg, float))
+        dec = np.radians(np.asarray(dec_deg, float))
+        return np.stack([np.cos(dec) * np.cos(ra), np.cos(dec) * np.sin(ra),
+                         np.sin(dec)], axis=1)
+
+    t_xyz = _unit(targets["ra"], targets["dec"])
+    t_tree = cKDTree(t_xyz)
+    rad_max = float(np.nanmax(targets["rad"].to_numpy(float)))
+    chord_max = 2.0 * np.sin(np.radians(rad_max) / 2.0)
+
     frames = []
-    n_chunks = int(np.ceil(len(targets) / chunk))
-    for i in range(n_chunks):
-        part = chunk_dir / f"obscore_chunk_{i:03d}.parquet"
+    edges = np.arange(-90.0, 90.0 + dec_band_deg, dec_band_deg)
+    for i, (lo, hi) in enumerate(zip(edges[:-1], edges[1:], strict=False)):
+        part = chunk_dir / f"obscore_band_{i:03d}.parquet"
         if part.exists():
-            frames.append(pd.read_parquet(part))
+            band = pd.read_parquet(part)
+        else:
+            q = _OBSCORE_BAND_QUERY.format(dec_lo=lo, dec_hi=hi)
+
+            def _go(q=q):
+                res = tap.run_async(q)
+                df = res.to_table().to_pandas()
+                return df.rename(columns={c: c.lower() for c in df.columns})
+
+            band = _retry(_go, retries=3, label=f"obscore band {i}")
+            band.to_parquet(part, index=False)          # checkpoint
+            print(f"[midden] obscore band {i + 1}/{len(edges) - 1} "
+                  f"[{lo:+.0f},{hi:+.0f}): {len(band)} spectra")
+        if not len(band):
             continue
-        sub = targets.iloc[i * chunk:(i + 1) * chunk]
-        tbl = Table({"tid": sub["tid"].to_numpy(np.int64),
-                     "ra": sub["ra"].to_numpy(float),
-                     "dec": sub["dec"].to_numpy(float),
-                     "rad": sub["rad"].to_numpy(float)})
-
-        def _go(tbl=tbl):
-            res = tap.run_async(_OBSCORE_QUERY, uploads={"targets": tbl})
-            df = res.to_table().to_pandas()
-            return df.rename(columns={c: c.lower() for c in df.columns})
-
-        df = _retry(_go, retries=3, label=f"obscore chunk {i}")
-        df.to_parquet(part, index=False)
-        frames.append(df)
-        print(f"[midden] obscore chunk {i + 1}/{n_chunks}: {len(df)} spectra")
+        # Local crossmatch: nearest target within the generous radius, then
+        # exact per-target radius check.
+        b_xyz = _unit(band["s_ra"], band["s_dec"])
+        dist, idx = t_tree.query(b_xyz, k=1,
+                                 distance_upper_bound=chord_max)
+        ok = np.isfinite(dist)
+        if not ok.any():
+            continue
+        sub = band[ok].reset_index(drop=True)
+        tid_idx = idx[ok]
+        sep_deg = np.degrees(2.0 * np.arcsin(np.clip(dist[ok] / 2.0, 0, 1)))
+        per_rad = targets["rad"].to_numpy(float)[tid_idx]
+        keep = sep_deg <= per_rad
+        if not keep.any():
+            continue
+        sub = sub[keep].reset_index(drop=True)
+        sub["tid"] = targets["tid"].to_numpy(np.int64)[tid_idx[keep]]
+        frames.append(sub)
     obs = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
     obs.to_parquet(out_path, index=False)
-    print(f"[midden] ObsCore discovery: {len(obs)} spectrum rows -> {out_path}")
+    print(f"[midden] ObsCore discovery: {len(obs)} matched spectrum rows "
+          f"-> {out_path}")
     return obs
 
 

@@ -1050,48 +1050,130 @@ PROBE_POSITIONS: tuple[tuple[str, float, float], ...] = (
 )
 
 
-def probe_archives(sample_rows: int = 400, url: str = VIZIER_TAP) -> dict:
+def _say(msg: str) -> None:
+    """Print immediately.  A buffered probe is a probe you cannot watch.
+
+    The first probe attempt (run 30208679328) was killed after 45 minutes with
+    *no output at all*, because stdout only flushes at process exit and the run
+    never got there.  Every step now announces itself before it starts and
+    reports its wall time when it finishes.
+    """
+    print(msg, flush=True)
+
+
+def _timed(label: str, fn, budget_s: float = 180.0) -> tuple:
+    """Run ``fn`` with an announced label, a wall-clock budget and no raising.
+
+    Returns ``(value, record)``; ``record`` always carries ``seconds`` and a
+    status, so a step that overruns is visible as an overrun rather than as a
+    silent hang.  ``budget_s`` is advisory for the caller (VO libraries do not
+    all honour a timeout), but it is *recorded*, so a step that blew through it
+    can be identified from the report alone.
+    """
+    _say(f"[probe] -> {label} (budget {budget_s:.0f}s)")
+    t0 = time.time()
+    try:
+        val = fn()
+        dt = time.time() - t0
+        rec = {"status": STATUS_OK, "seconds": round(dt, 1),
+               "over_budget": dt > budget_s}
+        _say(f"[probe] <- {label}: ok in {dt:.1f}s")
+        return val, rec
+    except Exception as exc:  # noqa: BLE001
+        dt = time.time() - t0
+        _say(f"[probe] <- {label}: FAILED in {dt:.1f}s -- {exc!r}")
+        return None, {"status": STATUS_QUERY_FAILED, "seconds": round(dt, 1),
+                      "error": repr(exc), "over_budget": dt > budget_s}
+
+
+def _sync_query(q: str, url: str, timeout_s: float = 180.0) -> pd.DataFrame:
+    """One synchronous TAP query with an explicit socket timeout."""
+    tap = _tap_service(url)
+    try:                                    # pyvo exposes this inconsistently
+        tap._session.timeout = timeout_s    # noqa: SLF001
+    except Exception:                       # noqa: BLE001
+        pass
+    return tap.run_sync(q, maxrec=100000).to_table().to_pandas()
+
+
+def probe_archives(sample_rows: int = 400, url: str = VIZIER_TAP,
+                   gaia_chunk_tests: tuple[int, ...] = (200, 2_000, 5_000),
+                   step_budget_s: float = 180.0) -> dict:
     """Exercise every acquisition primitive once and report concrete numbers.
 
     This is deliberately cheap and deliberately verbose.  The sandbox has no
     egress, so *nothing* about the archive contracts can be checked before a
     run; the alternative to a probe is to dispatch the full pipeline and read
     the wreckage, which is how this channel lost its first run.  Every entry
-    records the query text, the row count and the first rows.
+    records the query text, the row count, the first rows and how long it took.
+
+    Two things it deliberately does **not** do, both learned from the probe's
+    own first attempt timing out at 45 minutes:
+
+    * no unbounded ``SELECT COUNT(*)``.  AllWISE is ~7.5x10^8 rows and VizieR
+      will not count it inside a job timeout.  Row counts come from a bounded
+      RA slice instead, which answers the question that actually matters -- is
+      this table queryable and does it return rows there?
+    * no 20,000-row Gaia upload.  Run 30203763934 already measured that as
+      ``HTTP 500``; re-measuring it costs many minutes and tells us nothing.
+      The probe measures the sizes the ladder will actually use.
 
     Returns a JSON-safe dict; raises nothing.
     """
     report: dict = {"vizier_tap": url, "catalogues": {}, "gaia": {},
-                    "xmatch": {}, "irsa": {}, "notes": []}
+                    "xmatch": {}, "irsa": {}, "notes": [], "timing": {}}
+    t_start = time.time()
 
     aliases = {"iras_psc": _IRAS_ALIASES, "iras_fsc": _IRAS_ALIASES,
                "akari_irc": _AKARI_ALIASES, "allwise": _ALLWISE_VIZIER_ALIASES}
     for key, table in CATALOGUES.items():
-        entry = describe_catalogue(table, aliases[key], url)
+        entry, rec = _timed(f"schema {key} {table}",
+                            lambda t=table, k=key: describe_catalogue(
+                                t, aliases[k], url), step_budget_s)
+        if entry is None:
+            report["catalogues"][key] = {"table": table, "resolvable": False,
+                                         "errors": [rec.get("error")],
+                                         "sample_status": STATUS_QUERY_FAILED}
+            report["timing"][f"schema_{key}"] = rec
+            continue
+        report["timing"][f"schema_{key}"] = rec
         # Trim the schema to what a human needs to read in a log.
         entry["schema"] = [
             {k: r.get(k) for k in ("column_name", "ucd", "unit")}
             for r in (entry.get("schema") or [])]
-        # A real, tiny data pull: does a constrained query return rows?
         res = entry["resolved"]
+        _say(f"[probe]    {key}: resolvable={entry['resolvable']} "
+             f"ra={res['ra']} dec={res['dec']} frame={res['frame']} "
+             f"route={res['route']}")
         if res["ra"] and res["dec"]:
+            # A real, bounded data pull.  This replaces COUNT(*), which VizieR
+            # cannot do inside a job timeout on a 7.5x10^8-row table, and it
+            # answers the question that matters: is this table queryable here?
             q = (f"SELECT TOP 5 {res['ra']} AS ra, {res['dec']} AS dec "
                  f"FROM {table} WHERE {res['ra']} >= 100 AND {res['ra']} < 101")
             entry["sample_query"] = q
-            try:
-                tbl = _tap_service(url).run_sync(q).to_table().to_pandas()
+            tbl, rec = _timed(f"sample {key}",
+                              lambda q=q: _sync_query(q, url, step_budget_s),
+                              step_budget_s)
+            report["timing"][f"sample_{key}"] = rec
+            if tbl is None:
+                entry["sample_status"] = STATUS_QUERY_FAILED
+                entry["sample_error"] = rec.get("error")
+            else:
                 entry["sample_n_rows"] = int(len(tbl))
                 entry["sample_rows"] = tbl.head(5).to_dict("records")
                 entry["sample_status"] = _classify(tbl, None)
-            except Exception as exc:  # noqa: BLE001
-                entry["sample_status"] = STATUS_QUERY_FAILED
-                entry["sample_error"] = repr(exc)
-            cq = f"SELECT COUNT(*) AS n FROM {table}"
-            try:
-                entry["total_rows"] = int(
-                    _tap_service(url).run_sync(cq).to_table().to_pandas().iloc[0, 0])
-            except Exception as exc:  # noqa: BLE001
-                entry["total_rows_error"] = repr(exc)
+                _say(f"[probe]    {key}: sample rows={len(tbl)} "
+                     f"first={tbl.head(2).to_dict('records')}")
+            cq = (f"SELECT COUNT(*) AS n FROM {table} "
+                  f"WHERE {res['ra']} >= 100 AND {res['ra']} < 101")
+            entry["slice_count_query"] = cq
+            n, rec = _timed(f"count-slice {key}",
+                            lambda q=cq: _sync_query(q, url, step_budget_s),
+                            step_budget_s)
+            report["timing"][f"count_{key}"] = rec
+            if n is not None and len(n):
+                entry["rows_in_1deg_ra_slice"] = int(n.iloc[0, 0])
         else:
             entry["sample_status"] = STATUS_QUERY_FAILED
             entry["sample_error"] = "RA/Dec unresolved; see resolved.columns"
@@ -1108,16 +1190,20 @@ def probe_archives(sample_rows: int = 400, url: str = VIZIER_TAP) -> dict:
         q = (f"SELECT TOP {sample_rows} {res['ra']} AS ra, {res['dec']} AS dec "
              f"FROM {CATALOGUES['akari_irc']} "
              f"WHERE {res['ra']} >= 100 AND {res['ra']} < 105")
-        try:
-            real = _tap_service(url).run_sync(q).to_table().to_pandas()
+        real, rec = _timed("draw real AKARI probe positions",
+                           lambda: _sync_query(q, url, step_budget_s),
+                           step_budget_s)
+        report["timing"]["probe_positions"] = rec
+        if real is not None and len(real):
             real["match_id"] = [f"probe{i:05d}" for i in range(len(real))]
             pos = pd.concat([pos, real[["match_id", "ra", "dec"]]],
                             ignore_index=True)
             report["notes"].append(
                 f"probe positions: {len(real)} real AKARI rows + "
                 f"{len(PROBE_POSITIONS)} bright anchors")
-        except Exception as exc:  # noqa: BLE001
-            report["notes"].append(f"could not draw real AKARI probe positions: {exc!r}")
+        else:
+            report["notes"].append(
+                f"could not draw real AKARI probe positions: {rec.get('error')}")
     report["n_probe_positions"] = int(len(pos))
 
     # Gaia: find the largest upload chunk the anonymous ESA archive accepts.
@@ -1126,28 +1212,31 @@ def probe_archives(sample_rows: int = 400, url: str = VIZIER_TAP) -> dict:
     q = _GAIA_QUERY.format(radius_deg=6.0 / 3600.0)
     report["gaia"]["query"] = q
     report["gaia"]["upload_chunk_tests"] = {}
-    for size in (200, 2_000, 5_000, 20_000):
-        sub = pos if len(pos) >= size else _tile(pos, size)
-        sub = sub.head(size)
-        rec: dict = {"n_uploaded": int(len(sub))}
-        t0 = time.time()
-        try:
-            df = _gaia_upload(sub, q, int(size), None, retries=1)
+    for size in gaia_chunk_tests:
+        sub = (pos if len(pos) >= size else _tile(pos, size)).head(size)
+        df, rec = _timed(f"gaia upload chunk={size} n={len(sub)}",
+                         lambda s=sub, z=size: _gaia_upload(s, q, int(z), None,
+                                                            retries=1),
+                         step_budget_s)
+        rec["n_uploaded"] = int(len(sub))
+        if df is not None:
             rec.update({"status": _classify(df, None), "n_rows": int(len(df)),
                         "columns": list(df.columns)[:24]})
-        except Exception as exc:  # noqa: BLE001
-            rec.update({"status": STATUS_QUERY_FAILED, "error": repr(exc)})
-        rec["seconds"] = round(time.time() - t0, 1)
         report["gaia"]["upload_chunk_tests"][str(size)] = rec
         if rec.get("status") == STATUS_QUERY_FAILED:
+            _say(f"[probe]    gaia upload ceiling is BELOW {size} rows")
             break
 
     # CDS X-Match, the fallback for Gaia and the primary route for AllWISE.
     for label, cat in (("gaia_dr3", XMATCH_CATALOGUES["gaia_dr3"]),
                        ("allwise", XMATCH_CATALOGUES["allwise"])):
-        rec = {"cat2": cat, "n_uploaded": int(min(len(pos), 200))}
-        try:
-            raw = xmatch_cds(pos.head(200), cat, radius_arcsec=6.0)
+        raw, rec = _timed(f"xmatch {label} ({cat})",
+                          lambda c=cat: xmatch_cds(pos.head(200), c,
+                                                   radius_arcsec=6.0),
+                          step_budget_s)
+        rec["cat2"] = cat
+        rec["n_uploaded"] = int(min(len(pos), 200))
+        if raw is not None:
             alias = (_GAIA_VIZIER_ALIASES if label == "gaia_dr3"
                      else _ALLWISE_VIZIER_ALIASES)
             _, mapping = _rename_by_alias(raw, alias)
@@ -1156,27 +1245,29 @@ def probe_archives(sample_rows: int = 400, url: str = VIZIER_TAP) -> dict:
                         "alias_mapping": mapping,
                         "unmapped_canonical": sorted(set(alias) - set(mapping)),
                         "first_rows": raw.head(3).to_dict("records")})
-        except Exception as exc:  # noqa: BLE001
-            rec.update({"status": STATUS_QUERY_FAILED, "error": repr(exc)})
+            _say(f"[probe]    {label}: {len(raw)} matches, "
+                 f"unmapped={sorted(set(alias) - set(mapping))}")
         report["xmatch"][label] = rec
 
     # IRSA: the per-object AllWISE cone and one NEOWISE light curve.
     ra, dec = PROBE_POSITIONS[3][1], PROBE_POSITIONS[3][2]   # HD 172555
-    try:
-        df = fetch_allwise_cone(ra, dec, 6.0)
-        report["irsa"]["allwise_cone"] = {
-            "status": _classify(df, None), "n_rows": int(len(df)),
-            "columns": list(df.columns), "first_rows": df.head(2).to_dict("records")}
-    except Exception as exc:  # noqa: BLE001
-        report["irsa"]["allwise_cone"] = {"status": STATUS_QUERY_FAILED,
-                                          "error": repr(exc)}
-    try:
-        df = fetch_neowise_lightcurve(ra, dec, 3.0)
-        report["irsa"]["neowise"] = {"status": _classify(df, None),
-                                     "n_rows": int(len(df))}
-    except Exception as exc:  # noqa: BLE001
-        report["irsa"]["neowise"] = {"status": STATUS_QUERY_FAILED, "error": repr(exc)}
+    df, rec = _timed("irsa allwise cone (HD 172555)",
+                     lambda: fetch_allwise_cone(ra, dec, 6.0), step_budget_s)
+    if df is not None:
+        rec.update({"status": _classify(df, None), "n_rows": int(len(df)),
+                    "columns": list(df.columns),
+                    "first_rows": df.head(2).to_dict("records")})
+    report["irsa"]["allwise_cone"] = rec
 
+    df, rec = _timed("irsa neowise lightcurve (HD 172555)",
+                     lambda: fetch_neowise_lightcurve(ra, dec, 3.0),
+                     step_budget_s)
+    if df is not None:
+        rec.update({"status": _classify(df, None), "n_rows": int(len(df))})
+    report["irsa"]["neowise"] = rec
+
+    report["timing"]["total_seconds"] = round(time.time() - t_start, 1)
+    _say(f"[probe] total {report['timing']['total_seconds']:.0f}s")
     return report
 
 

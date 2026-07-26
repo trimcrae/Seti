@@ -28,7 +28,10 @@ jobs:
           python-version: "3.11"
       - name: Fetch literature evidence (soft 45-min deadline, partials kept)
         run: |
-          if [ "${{ github.event.inputs.pass }}" = "2" ]; then
+          if [ "${{ github.event.inputs.pass }}" = "3" ]; then
+            timeout -k 30 2700 python scripts/litcheck_dyson3.py \
+              || echo "fetcher hit soft deadline or errored; committing partials"
+          elif [ "${{ github.event.inputs.pass }}" = "2" ]; then
             timeout -k 30 2700 python scripts/litcheck_dyson2.py \
               || echo "fetcher hit soft deadline or errored; committing partials"
           else

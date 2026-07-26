@@ -50,6 +50,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+from functools import lru_cache
 
 import numpy as np
 
@@ -149,6 +150,43 @@ def _planck_fnu_arr(t_k: float, lam_um: np.ndarray) -> np.ndarray:
     return np.array([planck_fnu(t_k, float(x)) for x in np.atleast_1d(lam_um)])
 
 
+# --- cached band shapes -----------------------------------------------------
+# The model grid is the same for every object, so the per-(band-set,
+# temperature, A_V) shape vectors are computed once and reused.  Without this
+# the 14 x 11 x 10 grid costs ~100 ms per object, i.e. ~5 hours for the full
+# 1.7x10^5-source catalogue; with it the fit is dominated by the (vectorised)
+# linear algebra instead.  Arrays are handed out read-only so a caller cannot
+# corrupt the cache.
+@lru_cache(maxsize=1 << 15)
+def _bb_shape(bands: tuple, t_k: float) -> np.ndarray:
+    arr = np.array([planck_fnu(t_k, BANDS[b][0]) for b in bands])
+    arr.setflags(write=False)
+    return arr
+
+
+@lru_cache(maxsize=1 << 15)
+def _ext_shape(bands: tuple, a_v: float) -> np.ndarray:
+    arr = np.array([extinction_factor(b, a_v) for b in bands])
+    arr.setflags(write=False)
+    return arr
+
+
+@lru_cache(maxsize=1 << 17)
+def _photosphere_shape(bands: tuple, t_k: float, a_v: float) -> np.ndarray:
+    arr = np.asarray(_bb_shape(bands, t_k)) * np.asarray(_ext_shape(bands, a_v))
+    arr.setflags(write=False)
+    return arr
+
+
+@lru_cache(maxsize=4096)
+def _shape_matrix(bands: tuple, temps: tuple, avs: tuple) -> np.ndarray:
+    """Stacked photosphere shapes for every (T, A_V) pair; rows are T-major."""
+    m = np.array([_photosphere_shape(bands, float(t), float(a))
+                  for t in temps for a in avs])
+    m.setflags(write=False)
+    return m
+
+
 def blackbody_bolometric_from_band(t_k: float, band: str, fnu_obs: float) -> float:
     """Bolometric flux of a blackbody normalised to reproduce ``fnu_obs``.
 
@@ -233,10 +271,8 @@ class SED:
 # --- model evaluation -------------------------------------------------------
 def photosphere_fnu(bands, teff: float, scale: float, a_v: float) -> np.ndarray:
     """Reddened single-temperature photosphere, F_nu per band."""
-    lam = np.array([BANDS[b][0] for b in bands])
-    b = _planck_fnu_arr(teff, lam)
-    ext = np.array([extinction_factor(b_, a_v) for b_ in bands])
-    return scale * b * ext
+    return scale * np.asarray(_photosphere_shape(tuple(bands), float(teff),
+                                                 float(a_v)))
 
 
 def obscured_plus_dust_fnu(bands, teff: float, scale_star: float, a_v: float,
@@ -350,27 +386,32 @@ def fit_photosphere(sed: SED, teff_grid, av_grid,
                          note="fewer than 2 detected bands")
     obs = np.array([sed.fnu(b) for b in bands])
     sig = np.array([sed.sigma_fnu(b, floor_phot, floor_modern) for b in bands])
+    w = 1.0 / sig ** 2
     lim_bands = [b for b in sed.limits if b in BANDS and b not in bands]
 
-    best = None
-    for teff in teff_grid:
-        for a_v in av_grid:
-            shape = photosphere_fnu(bands, float(teff), 1.0, float(a_v))
-            if not np.any(shape > 0):
-                continue
-            s = _linear_scale(shape, obs, sig)
-            c = _chi2(s * shape, obs, sig)
-            c += _limit_penalty(
-                sed, lim_bands,
-                lambda bb, t=teff, a=a_v, s_=s: photosphere_fnu(bb, float(t), s_, float(a)))
-            if best is None or c < best[0]:
-                best = (c, float(teff), float(a_v), s)
-    if best is None:
+    temps, avs = tuple(float(t) for t in teff_grid), tuple(float(a) for a in av_grid)
+    mat = np.asarray(_shape_matrix(tuple(bands), temps, avs))     # (ng, nb)
+    aa = (mat ** 2 * w).sum(axis=1)
+    ay = (mat * w * obs).sum(axis=1)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        scale = np.where(aa > 0, np.maximum(ay / aa, 0.0), 0.0)
+    chi = (w * obs ** 2).sum() - 2.0 * scale * ay + scale ** 2 * aa
+    chi = np.where(aa > 0, chi, np.inf)
+
+    if lim_bands:
+        lm = np.asarray(_shape_matrix(tuple(lim_bands), temps, avs))
+        lim_f = np.array([mag_to_fnu(b, sed.limits[b]) for b in lim_bands])
+        over = np.clip((scale[:, None] * lm - lim_f) / np.maximum(lim_f, 1e-300),
+                       0.0, None)
+        chi = chi + np.minimum(over ** 2, 1e3).sum(axis=1)
+
+    if not np.any(np.isfinite(chi)):
         return FitResult("photosphere", float("nan"), float("nan"), float("nan"),
                          0.0, 0.0, float("inf"), len(bands), 1, ok=False,
                          note="no viable grid point")
-    c, teff, a_v, s = best
-    return FitResult("photosphere", teff, a_v, float("nan"), s, 0.0, c,
+    k = int(np.argmin(chi))
+    return FitResult("photosphere", temps[k // len(avs)], avs[k % len(avs)],
+                     float("nan"), float(scale[k]), 0.0, float(chi[k]),
                      len(bands), max(len(bands) - 3, 1))
 
 
@@ -390,33 +431,70 @@ def fit_obscured_dust(sed: SED, teff_grid, av_grid, tdust_grid,
                          note="fewer than 3 detected bands")
     obs = np.array([sed.fnu(b) for b in bands])
     sig = np.array([sed.sigma_fnu(b, floor_phot, floor_modern) for b in bands])
+    w = 1.0 / sig ** 2
     lim_bands = [b for b in sed.limits if b in BANDS and b not in bands]
 
-    best = None
-    for teff in teff_grid:
-        for a_v in av_grid:
-            shape_s = photosphere_fnu(bands, float(teff), 1.0, float(a_v))
-            for t_d in tdust_grid:
-                if float(t_d) >= float(teff):
-                    continue          # dust cannot outshine-in-temperature the star
-                shape_d = photosphere_fnu(bands, float(t_d), 1.0, float(a_v_ism))
-                if not (np.any(shape_s > 0) or np.any(shape_d > 0)):
-                    continue
-                ss, sd = _linear_scales_two(shape_s, shape_d, obs, sig)
-                c = _chi2(ss * shape_s + sd * shape_d, obs, sig)
-                c += _limit_penalty(
-                    sed, lim_bands,
-                    lambda bb, t=teff, a=a_v, td=t_d, s1=ss, s2=sd:
-                    obscured_plus_dust_fnu(bb, float(t), s1, float(a), float(td),
-                                           s2, a_v_ism))
-                if best is None or c < best[0]:
-                    best = (c, float(teff), float(a_v), float(t_d), ss, sd)
-    if best is None:
+    temps = tuple(float(t) for t in teff_grid)
+    avs = tuple(float(a) for a in av_grid)
+    tds = tuple(float(t) for t in tdust_grid)
+    bt = tuple(bands)
+    Sm = np.asarray(_shape_matrix(bt, temps, avs))                # (ns, nb)
+    Dm = np.asarray(_shape_matrix(bt, tds, (float(a_v_ism),)))    # (nd, nb)
+
+    # Two-component non-negative least squares, solved in closed form for the
+    # whole (star grid) x (dust grid) product at once.
+    Sw = Sm * w
+    aa = (Sw * Sm).sum(axis=1)[:, None]          # (ns, 1)
+    bb = (Dm ** 2 * w).sum(axis=1)[None, :]      # (1, nd)
+    ab = Sw @ Dm.T                               # (ns, nd)
+    ay = (Sw * obs).sum(axis=1)[:, None]
+    by = (Dm * w * obs).sum(axis=1)[None, :]
+    yy = float((w * obs ** 2).sum())
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        det = aa * bb - ab ** 2
+        sa = np.where(det > 0, (bb * ay - ab * by) / det, np.nan)
+        sd = np.where(det > 0, (aa * by - ab * ay) / det, np.nan)
+        interior = np.isfinite(sa) & np.isfinite(sd) & (sa >= 0) & (sd >= 0)
+        # Boundary solutions: switch one component off.
+        sa_only = np.where(aa > 0, np.maximum(ay / aa, 0.0), 0.0) * np.ones_like(ab)
+        sd_only = np.where(bb > 0, np.maximum(by / bb, 0.0), 0.0) * np.ones_like(ab)
+
+    def _chi(s1, s2):
+        return (yy - 2.0 * s1 * ay - 2.0 * s2 * by + s1 ** 2 * aa
+                + 2.0 * s1 * s2 * ab + s2 ** 2 * bb)
+
+    zero = np.zeros_like(ab)
+    c_a, c_d = _chi(sa_only, zero), _chi(zero, sd_only)
+    use_a = c_a <= c_d
+    s1 = np.where(use_a, sa_only, zero)
+    s2 = np.where(use_a, zero, sd_only)
+    chi = np.where(use_a, c_a, c_d)
+    s1 = np.where(interior, sa, s1)
+    s2 = np.where(interior, sd, s2)
+    chi = np.where(interior, _chi(np.nan_to_num(sa), np.nan_to_num(sd)), chi)
+
+    # Dust cannot be hotter than the star it is reprocessing.
+    t_star = np.repeat(np.array(temps), len(avs))[:, None]
+    chi = np.where(np.array(tds)[None, :] < t_star, chi, np.inf)
+
+    if lim_bands:
+        lt = tuple(lim_bands)
+        Sl = np.asarray(_shape_matrix(lt, temps, avs))
+        Dl = np.asarray(_shape_matrix(lt, tds, (float(a_v_ism),)))
+        lim_f = np.array([mag_to_fnu(b, sed.limits[b]) for b in lim_bands])
+        model = s1[:, :, None] * Sl[:, None, :] + s2[:, :, None] * Dl[None, :, :]
+        over = np.clip((model - lim_f) / np.maximum(lim_f, 1e-300), 0.0, None)
+        chi = chi + np.minimum(over ** 2, 1e3).sum(axis=2)
+
+    if not np.any(np.isfinite(chi)):
         return FitResult("obscured_dust", float("nan"), float("nan"), float("nan"),
                          0.0, 0.0, float("inf"), len(bands), 1, ok=False,
                          note="no viable grid point")
-    c, teff, a_v, t_d, ss, sd = best
-    return FitResult("obscured_dust", teff, a_v, t_d, ss, sd, c,
+    i, j = np.unravel_index(int(np.nanargmin(np.where(np.isnan(chi), np.inf, chi))),
+                            chi.shape)
+    return FitResult("obscured_dust", temps[i // len(avs)], avs[i % len(avs)],
+                     tds[j], float(s1[i, j]), float(s2[i, j]), float(chi[i, j]),
                      len(bands), max(len(bands) - 5, 1))
 
 

@@ -251,6 +251,11 @@ def vet_candidates(
         out["element_caveat"] = None
         out["caveated_element"] = False
 
+    trusted, note = resolution_verdict(survey)
+    out["resolution_trusted"] = trusted
+    out["resolution_note"] = note
+    out["needs_high_resolution_confirmation"] = not trusted
+
     pass_cols = [c for c in out.columns if c.startswith("pass_")]
     out["vet_pass"] = out[pass_cols].all(axis=1) if pass_cols else True
     out["vet_reasons"] = ["; ".join(r) for r in reasons]
@@ -460,6 +465,86 @@ def dedupe(df: pd.DataFrame, *, id_col: str, snr_col: str = "snr") -> pd.DataFra
 # ---------------------------------------------------------------------------
 # The decisive step: re-measure the line from the raw spectrum.
 # ---------------------------------------------------------------------------
+#: Nominal resolving power per survey. A "single-element" anomaly measured
+#: below ~R = 20,000 is not a measurement of one element, it is a measurement
+#: of a blend -- see :func:`resolution_verdict`.
+SURVEY_RESOLUTION: dict[str, int] = {
+    "GALAH": 28_000,
+    "APOGEE": 22_500,
+    "LAMOST_MRS": 7_500,
+    "LAMOST": 1_800,
+    "RAVE": 7_500,
+    "GAIA_RVS": 11_500,
+}
+
+#: Below this resolving power a sparse anomaly cannot be believed without
+#: high-resolution confirmation. See the Karinkuzhi precedent in
+#: :func:`resolution_verdict`.
+MIN_TRUSTED_RESOLUTION = 20_000
+
+
+def resolution_verdict(survey: str, *, resolution: int | None = None) -> tuple[bool, str]:
+    """Does this survey's resolving power support a single-element claim?
+
+    There is a published precedent that says no, and it is the sharpest
+    contamination result in this whole area. Karinkuzhi et al. re-observed at
+    R ~ 86,000 the 15 brightest of 895 s-process candidates that a machine
+    -learning pipeline had selected from LAMOST at R ~ 1,800 -- 13 classified
+    "Sr-only" and 2 "Ba-only", i.e. exactly the sparse morphology this channel
+    hunts. **Every one dissolved.** Four of the thirteen had no s-process
+    overabundance at all, eight were mild barium stars, one was a strong barium
+    star, and both "Ba-only" stars turned out to be strong (dwarf) barium
+    stars -- a dense s-process family in every surviving case. Their conclusion
+    is the rule adopted here: "blending effects and saturated lines have to be
+    considered very carefully when using machine-learning techniques,
+    especially on low-resolution spectra."
+
+    So low-resolution sparsity is presumed to be unresolved blending until a
+    high-resolution spectrum says otherwise. Returns ``(trusted, note)``.
+    """
+    r = resolution if resolution is not None else SURVEY_RESOLUTION.get(survey.upper(), 0)
+    if r >= MIN_TRUSTED_RESOLUTION:
+        return True, f"R~{r:,}: adequate to separate the line from its neighbours"
+    return False, (
+        f"R~{r:,} is below the R={MIN_TRUSTED_RESOLUTION:,} floor: apparent "
+        "single-element anomalies at low resolution are unresolved blends until "
+        "a high-resolution spectrum says otherwise (13/13 'Sr-only' and 2/2 "
+        "'Ba-only' LAMOST candidates dissolved into dense barium stars at R~86,000)"
+    )
+
+
+WEAK = "linear"
+SATURATED = "saturated"
+UNDETECTED = "undetected"
+
+
+def curve_of_growth_regime(
+    central_depth: float,
+    *,
+    depth_saturated: float = 0.75,
+    depth_min: float = 0.02,
+) -> tuple[str, str]:
+    """Which part of the curve of growth is this line on?
+
+    An abundance is only recoverable from a line on the **linear** part of the
+    curve of growth. A saturated core is insensitive to abundance -- its depth
+    is set by the source function, not by how much of the element is present --
+    so a saturated line can carry an enormous apparent abundance error in
+    either direction, and a pipeline that fits it will happily report one. This
+    is the second half of the Karinkuzhi warning and it is checked explicitly
+    rather than assumed away.
+    """
+    d = float(central_depth)
+    if not np.isfinite(d) or d < depth_min:
+        return UNDETECTED, f"central depth {d:.3f} below the {depth_min} detection floor"
+    if d >= depth_saturated:
+        return SATURATED, (
+            f"central depth {d:.2f} >= {depth_saturated}: the line core is saturated and "
+            "its strength is no longer a measure of abundance"
+        )
+    return WEAK, f"central depth {d:.2f}: on the linear part of the curve of growth"
+
+
 def measure_ew(
     wave: np.ndarray,
     flux: np.ndarray,
@@ -551,7 +636,13 @@ def remeasure_verdict(
 
 __all__ = [
     "ELEMENT_CAVEATS",
+    "MIN_TRUSTED_RESOLUTION",
+    "SATURATED",
+    "SURVEY_RESOLUTION",
+    "UNDETECTED",
+    "WEAK",
     "VetConfig",
+    "curve_of_growth_regime",
     "census_z",
     "covariate_rate_veto",
     "cross_survey_check",
@@ -561,5 +652,6 @@ __all__ = [
     "field_rate_veto",
     "measure_ew",
     "remeasure_verdict",
+    "resolution_verdict",
     "vet_candidates",
 ]

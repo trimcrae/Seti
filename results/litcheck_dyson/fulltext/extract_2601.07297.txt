@@ -1,0 +1,161 @@
+# 2601.07297  
+# why: must-have: Huang, Tao & Zhang 2026 - WISE/CatWISE Dysonian waste heat, nearby galaxies (AJ)
+
+Starting from the 2MASS Redshift Survey (2MRS), we cross-match to CatWISE2020 and AllWISE , apply standard MIR AGN/starburst vetoes (Stern, Assef R90, Jarrett), and treat W1 and W2 as stellar baselines and W3 and W4 as constraining bands.
+For each galaxy and for blackbody waste heat temperatures T = 150 T=150 – 600 600 K, we convert W3/W4 photometry into conservative 3 ​ σ 3\sigma per-galaxy upper limits on the bolometric waste heat luminosity using the WISE bandpass (RSR) color correction.
+The resulting distributions have median caps of ∼ ( 5 \sim(5 – 9 ) × 10 8 L ⊙ 9)\times 10^{8}\,L_{\odot} across T = 150 T=150 – 600 600 K.
+Aggregated at the population level, the one-sided 95% upper bound on the fraction of nearby galaxies that could host waste heat above a given threshold monotonically decreases with threshold and asymptotes to ≃ 1 / 6500 \simeq 1/6500 at high thresholds (set by the sample size).
+Sensitivity transitions from W4 at T ≲ 200 T\!\lesssim\!200 K to W3 at T ≳ 300 T\!\gtrsim\!300 K.
+Interpreted with the AGENT formalism, a fiducial Milky Way like stellar luminosity L ⋆ = 3 × 10 10 ​ L ⊙ L_{\star}\!=\!3\times 10^{10}\,L_{\odot} implies typical per galaxy caps of α ≡ L wh / L ⋆ ≲ 1.7 \alpha\!\equiv\!L_{\rm wh}/L_{\star}\!\lesssim\!1.7 – 2.9 % 2.9\% over T = 150 T=150 – 600 600 K (e.g., α ≲ 1.8 % \alpha\!\lesssim\!1.8\% at T = 300 T{=}300 K).
+At T ≃ 300 T\simeq 300 K, no more than f 95 ≃ 1.61 × 10 − 4 f_{95}\simeq 1.61\times 10^{-4} ( ≃ 0.0161 % \simeq 0.0161\% ) of nearby galaxies can host KIII-scale systems reprocessing ≳ 21 % \gtrsim 21\% of a Milky Way–like stellar luminosity into ∼ 300 \sim 300 K waste heat.
+Lacki ( 2016 ) show that extremely cold ( ≪ 100 \ll 100 K) galaxy scale “blackboxes” would violate microwave constraints and are therefore strongly disfavored.
+, 2021 ) , built on WISE and the extended NEOWISE time baseline, delivers improved W1/W2 astrometry and photometry across the entire sky, enabling cleaner baselines for modeling stellar continua in galaxies.
+Second, lessons from the WISE / AllWISE (Cutri et al.
+Cutri and AllWISE Team, 2014 ) artifact taxonomy and the maturation of MIR AGN/starburst diagnostics (e.g., Stern et al.
+In this paper we leverage CatWISE2020 (for W1/W2) together with AllWISE (for W1,W2,W3,W4) to place population constraints on galaxy–scale waste heat for a nearby, well–characterized parent sample.
+defines two quality policies, Strict and Lenient , differing only in the treatment of W4 artifacts, and applies three independent AGN/starburst masks (Stern, Assef R90, and a Jarrett–style wedge) singly and in combination;
+converts MIR magnitudes to fluxes (Vega zeropoints) and, for each galaxy and assumed radiator temperature T ∈ { 150 , 200 , 300 , 400 , 600 } T\in\{150,200,300,400,600\} K, derives a conservative per–object upper limit L wh max ​ ( T ) L_{\rm wh}^{\max}(T) using a “flux–cap” approach that takes the most constraining of W3 or W4;
+Our analysis yields (i) distributions of L wh max L_{\rm wh}^{\max} across T T for the full sample, (ii) f 95 f_{95} curves versus threshold that quantify survey sensitivity at the population level, and (iii) empirical diagnostics showing which MIR band (W3 or W4) actually sets the tightest constraint as a function of T T .
+For each source we retain the equatorial coordinates, redshift z z , and luminosity distance D L D_{L} as published by 2MRS.
+Four bands are available: W1, W2, W3, and W4 (3.4, 4.6, 12, and 22 μ \mu m).
+Cutri and AllWISE Team, 2014 ) (dataset DOI: 10.26131/IRSA1 ), which supplies W1, W2, W3, W4 photometry, band–specific artifact flags ( cc_flags ), photometric quality flags ( ph_qual ), and extended–source information ( ext_flg ).
+, 2017 ) , which provides improved W1/W2 astrometry and photometry and an unWISE artifact bitmask ( ab_flags ).
+We adopt the AllWISE zero–magnitude flux densities F ν , 0 = { 309.540 , 171.787 , 31.674 , 8.363 } F_{\nu,0}=\{309.540,\,171.787,\,31.674,\,8.363\} Jy for W1, W2, W3, W4, respectively (AllWISE Explanatory Supplement).
+2 2 2 https://wise2.ipac.caltech.edu/docs/release/allwise/expsup/ For diagnostic purposes we also record per–band signal–to–noise (S/N) and reduced χ 2 \chi^{2} where available.
+Because a given 2MRS position may return multiple WISE candidates (e.g., blended or nearby sources), we select a single “best” counterpart in each catalog per 2MRS target by ranking candidates with the following tie–breakers, in order: (1) fewer artifacts (CatWISE: ab_flags ==0 preferred;
+both catalogs: per–band cc_flags clean), (2) smaller angular separation from the input position, and (3) stronger W1 profile–fit quality (higher S/N or smaller σ m \sigma_{\rm m} ).
+Final sample construction is handled in Section III .
+All configuration choices (artifact policy, AGN/starburst masks, temperature grid, and significance level) are fixed before inspecting the population results.
+We treat W1/W2 as the stellar baseline and W3/W4 as the constraining bands for waste heat.
+W1/W2 (baseline): prefer CatWISE magnitudes when ab_flags =0 and the per–band character of cc_flags is “0” (clean).
+If CatWISE fails these criteria, we fall back to AllWISE provided its cc_flags is clean in that band.
+W3/W4 (constraints): use AllWISE.
+We define two artifact policies that differ only in the treatment of W4;
+in all cases W1, W2, and W3 must be clean in their respective bands:
+W1, W2, and W3 require cc_flags character “0” (clean);
+W4 must also have cc_flags “0”.
+Identical to STRICT for W1, W2 and W3;
+W4 is retained even if its cc_flags character is non‑zero (retained with a flag).
+Stern cut: ( W ​ 1 − W ​ 2 ) ≥ 0.8 (W1{-}W2)\geq 0.8 for bright W ​ 2 W2 ;
+we adopt W ​ 2 < 15.05 W2<15.05 as in Stern et al.
+Assef R90: ( W ​ 1 − W ​ 2 ) ≥ ℛ 90 ​ ( W ​ 2 ) (W1{-}W2)\geq\mathcal{R}_{90}(W2) , where ℛ 90 ​ ( W ​ 2 ) \mathcal{R}_{90}(W2) is the magnitude–dependent reliability–optimized color cut given by Assef et al.
+Jarrett wedge: ( W ​ 2 − W ​ 3 ) ≥ 1.3 (W2{-}W3)\geq 1.3 , ( W ​ 1 − W ​ 2 ) ≤ 1.7 (W1{-}W2)\leq 1.7 , and ( W ​ 1 − W ​ 2 ) ≥ 0.10 ​ ( W ​ 2 − W ​ 3 ) + 0.38 (W1{-}W2)\geq 0.10\,(W2{-}W3)+0.38 and ≥ 0.315 ​ ( W ​ 2 − W ​ 3 ) − 0.222 \geq 0.315\,(W2{-}W3)-0.222 .
+A KIII-like MIR excess moves sources toward large W ​ 2 − W ​ 3 W2{-}W3 and moderately large W ​ 1 − W ​ 2 W1{-}W2 , overlapping the starburst/AGN locus.
+If such systems exist, they would be removed by our union mask when we require an astrophysically clean retained sample .
+However, our population limits are set by the number of galaxies for which our data would have been sensitive at a given threshold ( N eff N_{\rm eff} ).
+Figure 3 shows that using no mask , Stern only , Stern+Assef , or the full union yields statistically indistinguishable f 95 f_{95} curves: the asymptotic plateaus and mid‑threshold behavior are unchanged within our precision.
+We assume that any waste–heat component from technological activity radiates approximately as a blackbody of temperature T T , and we use W3/W4 to set a conservative “flux–cap” on its allowed normalization.
+For each band b ∈ { W3 , W4 } b\in\{\mathrm{W3},\mathrm{W4}\} we define a cap that treats detections and non–detections at a common k ​ σ k\sigma significance,
+where k = 3 k=3 , F ν , b ( U ) F^{(U)}_{\nu,b} is the catalog upper limit, and α U ≡ k / k U \alpha_{U}\equiv k/k_{U} rescales it to the same significance as detections (we adopt k U ≃ 2 k_{U}\simeq 2 ;
+The term F ν , b RJ F_{\nu,b}^{\rm RJ} represents a possible Rayleigh–Jeans extrapolation of the stellar continuum from W1/W2;
+in the analysis we set F ν , b RJ = 0 F_{\nu,b}^{\rm RJ}=0 (i.e., we do not subtract any stellar contribution in W3/W4), and we assess the impact of enabling the RJ term as a robustness check in § V.4 .
+We also quote the WISE pivot wavelengths ( λ W3 = 11.56 ​ μ \lambda_{\rm W3}=11.56\,\mu m, λ W4 = 22.09 ​ μ \lambda_{\rm W4}=22.09\,\mu m), defined by λ piv 2 = ∫ R ​ ( λ ) ​ λ ​ 𝑑 λ ∫ R ​ ( λ ) ​ 𝑑 λ / λ \lambda_{\rm piv}^{2}=\frac{\int R(\lambda)\lambda\,d\lambda}{\int R(\lambda)\,d\lambda/\lambda} , for monochromatic comparisons.
+L wh ( b ) ​ ( T ) = 4 ​ π ​ D L 2 ​ F bol ( b ) ​ ( T ) , L wh max ​ ( T ) = min ⁡ [ L wh ( W3 ) ​ ( T ) , L wh ( W4 ) ​ ( T ) ] , L_{\rm wh}^{(b)}(T)\;=\;4\pi D_{L}^{2}\,F_{\rm bol}^{(b)}(T),\qquad L_{\rm wh}^{\max}(T)\;=\;\min\!\Bigl[L_{\rm wh}^{(\mathrm{W3})}(T),\,L_{\rm wh}^{(\mathrm{W4})}(T)\Bigr],
+We find that the RSR treatment increases L wh max L_{\rm wh}^{\max} by ∼ \sim 0–1% at T = 150 T=150 –200 K, ∼ \sim 9% at T = 400 T=400 K, and ∼ \sim 16% at T = 300 T=300 K, while leaving the high–threshold population plateau unchanged.
+For a fixed T T and threshold L wh , thr L_{\rm wh,thr} , we define the effective sample size
+Figure 2: 95% upper bounds on the fraction of galaxies, f 95 f_{95} , as a function of the waste heat luminosity threshold L wh , thr L_{\rm wh,thr} , for radiator temperatures T = { 150 , 200 , 300 , 400 , 600 } T=\{150,200,300,400,600\} K.
+Upper limits are per object “flux caps” (W3/W4) with k = 3 k=3 (i.e., 3 ​ σ 3\sigma ), and no stellar RJ subtraction unless otherwise noted.
+Figure 3: Robustness of f 95 ​ ( L wh , thr ) f_{95}(L_{\rm wh,thr}) at T = 300 T=300 K to methodological choices.
+Lenient (W4 relaxed) artifact policies and different masking strategies (none, Stern only, Stern+Assef, and the full Stern+Assef+Jarrett union).
+Curves are nearly indistinguishable across the threshold range, demonstrating that our main conclusions are insensitive to reasonable variations in artifact cuts and AGN/starburst masks.
+At T ≲ 200 T\lesssim 200 K, W4 (22 μ \mu m) overwhelmingly limits;
+at T ≳ 300 T\gtrsim 300 K, W3 (12 μ \mu m) dominates, consistent with Wien’s law and band sensitivities.
+Left: W ​ 1 − W ​ 2 W1{-}W2 versus W ​ 2 − W ​ 3 W2{-}W3 with points colored by retained (blue) vs masked (orange) under the two masks.
+We overlay the Stern threshold W ​ 1 − W ​ 2 = 0.8 W1{-}W2=0.8 (horizontal dashed) and the Jarrett wedge boundaries (solid), shading only the domain where the wedge applies ( W ​ 2 − W ​ 3 ≥ 1.3 W2{-}W3\geq 1.3 and W ​ 1 − W ​ 2 ≤ 1.7 W1{-}W2\leq 1.7 ).
+Right: W ​ 1 − W ​ 2 W1{-}W2 versus W ​ 2 W2 with the Assef R90 reliability cut, ( W ​ 1 − W ​ 2 ) ≥ ℛ 90 ​ ( W ​ 2 ) (W1{-}W2)\geq\mathcal{R}_{90}(W2) , which is not representable on the left-hand plane.
+The union mask is the logical OR of these three criteria.
+The Strict sample requires clean per–band artifact flags for all four bands, whereas the Lenient variant retains W4 even if flagged (§ III.1 ).
+For each galaxy and each assumed radiator temperature T ∈ { 150 , 200 , 300 , 400 , 600 } ​ K T\in\{150,200,300,400,600\}\,\mathrm{K} , we compute a conservative upper limit L wh max ​ ( T ) L_{\rm wh}^{\max}(T) using the W3/W4 “flux-cap” method of § III.4 , which includes bandpass integrated (RSR) color corrections and a σ \sigma –consistent handling of non detections.
+The distributions are tight and smooth across T T , with the warmest case ( T = 600 T=600 K) yielding the least constraining per object limits (as W3/W4 sample the Rayleigh Jeans tail), whereas T = 200 T=200 – 400 400 K form a narrow, more constraining family.
+We aggregate per–galaxy limits into population constraints as a function of threshold, defining N eff ​ ( T , L wh , thr ) N_{\rm eff}(T,L_{\rm wh,thr}) and f 95 ​ ( T , L wh , thr ) ≃ 3 / N eff f_{95}(T,L_{\rm wh,thr})\simeq 3/N_{\rm eff} (§ III.5 ).
+the high–threshold plateau corresponds to
+At lower thresholds the curves separate in the expected sense: T = 600 T=600 K provides the weakest constraints, T = 150 T=150 – 200 200 K are limited by W4 depth, and T = 200 T=200 – 400 400 K give the strongest bounds.
+2 and 4 provide a complete summary of the population–level sensitivity of this search as a function of both temperature and threshold.
+Because L wh max ​ ( T ) L_{\rm wh}^{\max}(T) is the minimum of the W3– and W4–based caps (§ III.4 ), it is informative to record which band is limiting.
+Figure 5 shows the counts of objects limited by W3 or by W4 as a function of T T .
+At the coolest temperatures (150–200 K), W4 (22 μ \mu m) dominates the constraints, reflecting its proximity to the thermal peak and its leverage on cool dust–like SEDs.
+For T ≥ 300 T\geq 300 K the balance flips: W3 (12 μ \mu m) overwhelmingly sets the limit (the fraction W3–limited exceeds ∼ \sim 90%), consistent with W3 moving onto the spectral peak while W4 samples the Rayleigh–Jeans tail.
+This diagnostic explains the shapes of the f 95 f_{95} curves and guides future observing strategies (e.g., deeper W4 for cool radiators;
+improved W3 calibration/depth for warm radiators).
+Figure 3 overlays f 95 ​ ( L wh , thr ) f_{95}(L_{\rm wh,thr}) at T = 300 T=300 K for a policy/mask combinations.
+The Lenient policy (W4 relaxed) produces curves that are visually indistinguishable from Strict , as expected because (i) for T ≥ 300 T\!\geq\!300 K the limiting band is overwhelmingly W3 (Fig.
+5 ), and (ii) relaxing W4 only affects a minority of otherwise clean sources.
+As an extreme bound, if all galaxies flagged by the AGN/starburst cuts were in fact KIII systems, our population constraints would revert to the “no‑mask” curves in Fig.
+10 shows the resulting f 95 f_{95} overlay at T = 300 T=300 K (Strict+Union mask).
+For the Strict +full–mask sample the median ratio L wh , RSR max / L wh , MONO max L_{\rm wh,RSR}^{\max}/L_{\rm wh,MONO}^{\max} is ≃ \simeq +0.8% at 150 150 K, +0.8% at 200 200 K (with a long high‑side tail to ∼ \sim +17% among W3‑limited faint objects), +16.6% at 300 300 K, +9.1% at 400 400 K, and − 1.7 % -1.7\% at 600 600 K.
+These shifts reflect the ratio ⟨ B ν ⟩ / B ν ​ ( ν piv ) \langle B_{\nu}\rangle/B_{\nu}(\nu_{\rm piv}) for a blackbody at the W3/W4 transition and move the mid‑threshold portions of the f 95 f_{95} curves accordingly.
+The high‑threshold plateau, set by N eff N_{\rm eff} , is unchanged.
+Catalog non–detections ( ph_qual =U) are mapped to the same significance as detections via Eq.
+the f 95 f_{95} curves at bright thresholds and their convergence are insensitive because f 95 ∝ 1 / N eff f_{95}\!\propto\!1/N_{\rm eff} and N eff N_{\rm eff} is dominated by objects with firm detections or strong limits.
+3 , i.e., we do not subtract any extrapolated stellar continuum at W3/W4.
+As a robustness check we repeat the full analysis with a Rayleigh–Jeans extrapolation from W1/W2, parameterized as:
+F ν , b RJ ≡ A ​ ν b 2 , A ≡ 1 2 ​ ( F ν , W1 ν W1 2 + F ν , W2 ν W2 2 ) , F^{\rm RJ}_{\nu,b}\equiv A\,\nu_{b}^{2},\qquad A\equiv\tfrac{1}{2}\!\left(\frac{F_{\nu,{\rm W1}}}{\nu_{\rm W1}^{2}}+\frac{F_{\nu,{\rm W2}}}{\nu_{\rm W2}^{2}}\right),
+At T = 300 T{=}300 K the resulting f 95 ​ ( L wh , thr ) f_{95}(L_{\rm wh,thr}) curve shifts downward by ≲ 2.2 % \lesssim 2.2\% at mid thresholds and is unchanged at the high–threshold plateau;
+at T = 200 T{=}200 and 400 400 K the shifts are ≲ 2.5 % \lesssim 2.5\% and ∼ 0.6 % \sim 0.6\% , respectively.
+AllWISE profile‑fit photometry can underestimate W3/W4 fluxes for large nearby galaxies.
+and (ii) for T ≥ 300 T\!\geq\!300 K, W3 sets the limit for the vast majority of objects (Fig.
+A stress test perturbing W3/W4 by + 10 % +10\% for “extended‑like” objects (large w ​ 1 ​ r ​ c ​ h ​ i ​ 2 w1rchi2 , w ​ 2 ​ r ​ c ​ h ​ i ​ 2 w2rchi2 , w ​ 3 ​ r ​ c ​ h ​ i ​ 2 w3rchi2 , or w ​ 4 ​ r ​ c ​ h ​ i ​ 2 w4rchi2 , or ext_flg > > 0) shifts the T = 300 T=300 K f 95 f_{95} curve by ≤ 3 % \leq 3\% at mid thresholds and leaves the high‑threshold plateau unchanged (Fig.
+Figure 7: Injection recovery at T = 300 T=300 K.
+Each point is a synthetic galaxy: host MIR continuum (E/Sbc/SB family) plus an injected T = 300 T=300 K blackbody of bolometric luminosity L wh L_{\rm wh} , integrated through the W3/W4 RSRs, with Gaussian noise and detection vs.
+non detection logic (cap at k k , with threshold at k U k_{U} ).
+The recovered value is obtained by mapping the per band caps to bolometric and taking the tighter of W3/W4.
+We validate the end–to–end measurement model, including RSR bandpasses, noise, treatment of non–detections, and the min ⁡ ( W3 , W4 ) \min(\mathrm{W3},\mathrm{W4}) limiting–band rule, with a Monte Carlo injection recovery test.
+The host continua (labeled E/Sbc/SB) are parametric toy SEDs defined in flux density F ν F_{\nu} at the WISE pivot frequencies to bracket dust poor through dust rich MIR host levels relevant for a W3/W4 based cap estimator.
+F ν , host ​ ( ν b ) = A ​ [ ( ν b ν W1 ) 2 + f dust ] , F_{\nu,\rm host}(\nu_{b})=A\left[\left(\frac{\nu_{b}}{\nu_{\rm W1}}\right)^{2}+f_{\rm dust}\right],
+The normalization A A is chosen so that the resulting host W3/W4 fluxes lie in a realistic regime for the catalog uncertainties, ensuring that the detection/non–detection logic and the k ​ σ k\sigma cap floor are exercised under conditions comparable to the data.
+For each synthetic galaxy we integrate the combined host+blackbody spectrum through the W3 and W4 relative system responses (RSRs), add Gaussian noise comparable to the catalog errors, apply the same detection threshold at k U k_{U} and the same k ​ σ k\sigma cap construction as in the main analysis, and convert each band cap to a bolometric waste–heat limit.
+The recovered upper limit is then taken as L wh max = min ⁡ ( W3 , W4 ) L_{\rm wh}^{\max}=\min(\mathrm{W3},\mathrm{W4}) , exactly matching the real–data workflow.
+Our primary result is a set of temperature–dependent population bounds, f 95 ​ ( T , L wh , thr ) f_{95}(T,L_{\rm wh,thr}) , that quantify what fraction of nearby galaxies could host waste–heat luminosity above a threshold L wh , thr L_{\rm wh,thr} while remaining consistent with the observed WISE W3/W4 photometry under our k ​ σ k\sigma flux–cap model.
+Because f 95 ∝ 1 / N eff f_{95}\!\propto\!1/N_{\rm eff} at bright thresholds, the high–threshold plateaus reflect only the effective sample size: with N valid = 19 , 617 N_{\rm valid}=19{,}617 (Table 1 ), all five curves converge to f 95 ≃ 3 / N valid ≃ 1.53 × 10 − 4 f_{95}\simeq 3/N_{\rm valid}\simeq 1.53\times 10^{-4} .
+At lower thresholds the curves separate in the physically expected order (Fig.
+2 ), encapsulating the different leverage of W3 and W4 on cool vs.
+For context, however, the single–object medians in Table 1 span p 50 ≃ ( 5.0 p50\simeq(5.0 – 8.6 ) × 10 8 L ⊙ 8.6)\times 10^{8}\,L_{\odot} from T = 150 T=150 – 600 600 K.
+Table 2: Top-50 galaxies with the loosest per object caps at T = 300 T=300 K (policy= Strict ;
+W ​ 1 − W ​ 2 W1{-}W2 [mag]
+W ​ 2 − W ​ 3 W2{-}W3 [mag]
+— Per object caps are computed at T = 300 T=300 K using the bandpass–averaged WISE RSR mapping and a k = 3 k{=}3 cap convention (Eqs.
+band” column records whether W3 or W4 sets the bound.
+An ellipsis indicates a missing color (e.g., no W3 magnitude available).
+6 ), but the retained set still contains red systems with enhanced W ​ 2 − W ​ 3 W2{-}W3 that are astrophysically mundane (e.g., dusty starbursts outside the strict wedge).
+The T = 300 T=300 K “outliers” ( top-50 loosest caps) are provided as a machine-readable ancillary table with this submission, outliers_T300_top50.csv .
+Dust-rich, star-forming galaxies can exhibit strong W3/W4 continua that are spectrally similar to a few × 10 2 \times 10^{2} K thermal component, inflating the flux caps and therefore yielding systematically looser L wh max L_{\rm wh}^{\max} at T ∼ 200 T\sim 200 – 400 400 K even in the absence of any technosignature.
+First, the bandpass treatment is material in the mid–threshold regime: using the WISE RSR color correction increases individual L wh max L_{\rm wh}^{\max} by ∼ 0 \sim 0 –1% (150–200 K), ∼ 16 % \sim 16\% (300 K), ∼ 9 % \sim 9\% (400 K), and − 1.7 % -1.7\% (600 K) relative to a monochromatic mapping, as predicted by ⟨ B ν ⟩ / B ν ​ ( ν piv ) \langle B_{\nu}\rangle/B_{\nu}(\nu_{\rm piv}) and verified.
+Residual effects are subdominant because (i) the artifact policy removes poor photometry and (ii) W3 sets most limits for T ≥ 300 T\!\geq\!300 K (Fig.
+For cool radiators ( T ≤ 200 T\!\leq\!200 K), W4 (22 μ \mu m) controls sensitivity;
+deeper W4 imaging, improved large–scale background modeling, or better artifact rejection would directly tighten the cool– T T curves.
+For warm radiators ( T ≥ 300 T\!\geq\!300 K), W3 (12 μ \mu m) dominates;
+improved W3 calibration and depth would yield the greatest leverage.
+We split the Strict +union sample by MIR color as a proxy for morphology (“elliptical‑like” with W ​ 2 − W ​ 3 < 1.0 W2{-}W3<1.0 and “spiral‑like” with W ​ 2 − W ​ 3 ≥ 1.0 W2{-}W3\geq 1.0 ), excluding the Jarrett wedge, and recompute f 95 f_{95} at T = 300 T=300 K.
+All elliptical‑like galaxies ( N = 5 , 827 N=5{,}827 ) have L wh max ≤ 10 9 ​ L ⊙ L_{\rm wh}^{\max}\!\leq 10^{9}\,L_{\odot} , so the curve sits on its plateau 3 / N = 5.15 × 10 − 4 3/N=5.15\times 10^{-4} across the plotted range, whereas spiral‑like galaxies ( N = 13 , 790 N=13{,}790 ) behave like the full sample, approaching 3 / N = 2.18 × 10 − 4 3/N=2.18\times 10^{-4} at large thresholds (Supplementary Fig.
+Because we did not model L ⋆ L_{\star} per galaxy in this work, we present a fiducial translation using L ⋆ = 3 × 10 10 ​ ℒ ⊙ L_{\star}=3\times 10^{10}\,\mathcal{L}_{\odot} (Milky Way-like): the median caps in Table 1 correspond to α median max ≈ 1.7 % \alpha^{\max}_{\rm median}\approx 1.7\% (150–300 K), 1.9 % 1.9\% (400 K), and 2.9 % 2.9\% (600 K).
+The analysis (i) implements bandpass integrated relative spectral response (RSR) color corrections for W3/W4, (ii) treats non detections with a σ \sigma –consistent flux cap, and (iii) prefers profile–fit photometry, with extended source photometry assessed as a systematic.
+The population bounds f 95 ​ ( T , L wh , thr ) f_{95}(T,L_{\rm wh,thr}) are monotonic in threshold and converge at large L wh , thr L_{\rm wh,thr} to the binomial plateau f 95 ≈ 3 / N valid ≃ 1.53 × 10 − 4 f_{95}\!\approx\!3/N_{\rm valid}\simeq 1.53\times 10^{-4} (Figs.
+The limiting band transitions from W4 at T ≤ 200 T\!\leq\!200 K to W3 at T ≥ 300 T\!\geq\!300 K (Fig.
+Proper W3/W4 bandpass treatment matters at mid thresholds: relative to a monochromatic mapping, the RSR correction raises individual caps by ∼ \sim 16% at 300 K (and ∼ \sim 9% at 400 K), while leaving the high–threshold plateau fixed by N eff N_{\rm eff} .
+At the population level, the one-sided 95% upper limit reaches ≃ 1 / 6500 \simeq 1/6500 (i.e., f 95 ≈ 1.53 × 10 − 4 f_{95}\!\approx\!1.53\times 10^{-4} ) at high thresholds, set purely by sample size.
+Interpreted via AGENT, typical per-galaxy caps are α ≲ ( 1.7 \alpha\lesssim(1.7 – 2.9 ) % 2.9)\% for T = 150 T{=}150 – 600 600 K when scaled to a Milky Way-like L ⋆ L_{\star} .
+Figure 8: Empirical “null” test at T = 300 T=300 K (Strict + union masks).
+We split the sample by MIR color as a proxy for morphology (“elliptical-like” with W ​ 2 − W ​ 3 < 1.0 W2{-}W3<1.0 and “spiral-like” with W ​ 2 − W ​ 3 ≥ 1.0 W2{-}W3\geq 1.0 ), excluding the Jarrett wedge.
+The elliptical-like subsample ( N = 5 , 827 N=5{,}827 ) sits on its binomial plateau across the plotted range with f 95 = 3 / N = 5.15 × 10 − 4 f_{95}=3/N=5.15\times 10^{-4} , implying that all such galaxies have L wh max ≤ 10 9 ​ L ⊙ L_{\rm wh}^{\max}\!\leq 10^{9}\,L_{\odot} at T = 300 T=300 K.
+The spiral-like subsample ( N = 13 , 790 N=13{,}790 ) behaves like the full sample, approaching the expected plateau f 95 = 3 / N = 2.18 × 10 − 4 f_{95}=3/N=2.18\times 10^{-4} at large thresholds.
+Figure 9: Extended‑source stress test at T = 300 T=300 K.
+We perturb the per–object L wh max L_{\rm wh}^{\max} for “extended‑like” sources (large w ​ 1 ​ r ​ c ​ h ​ i ​ 2 w1rchi2 , w ​ 2 ​ r ​ c ​ h ​ i ​ 2 w2rchi2 , w ​ 3 ​ r ​ c ​ h ​ i ​ 2 w3rchi2 , or w ​ 4 ​ r ​ c ​ h ​ i ​ 2 w4rchi2 by +10% on the limiting band and recompute f 95 f_{95} .
+The curve shifts by ≤ 3 % \leq 3\% at mid thresholds and leaves the high‑threshold plateau unchanged, confirming that any residual extended‑source bias is subdominant to the RSR bandpass effect and mask choices.
+Figure 10: f 95 ​ ( L wh , thr ) f_{95}(L_{\rm wh,thr}) at T = 300 T=300 K under RSR (bandpass–averaged) vs.
+Curves differ at mid thresholds in the sense predicted by ⟨ B ν ⟩ / B ν ​ ( ν piv ) \langle B_{\nu}\rangle/B_{\nu}(\nu_{\rm piv}) and coincide at the high–threshold plateau set by N eff N_{\rm eff} .
+Median bias versus injected L wh L_{\rm wh} at T = 300 T=300 K, split by host SED family.
+Figure 12: WISE W ​ 1 − W ​ 2 W1{-}W2 versus W ​ 2 − W ​ 3 W2{-}W3 (Vega) color–color diagram for the 2MRS cross matched galaxy sample, shown to visualize how our MIR AGN/starburst rejection interacts with plausible galaxy scale waste heat (KIII) spectral energy distributions.
+Blue circles are galaxies retained for the analysis, while orange crosses are galaxies masked by the adopted MIR AGN/starburst criteria (union of the Stern, Assef R90, and Jarrett diagnostics;
+The black guide lines show the commonly used MIR selection boundaries: the Stern threshold W ​ 1 − W ​ 2 = 0.8 W1{-}W2=0.8 (horizontal dashed), and the Jarrett “wedge” boundaries (solid oblique lines) together with its additional limits W ​ 2 − W ​ 3 ≥ 1.3 W2{-}W3\geq 1.3 and W ​ 1 − W ​ 2 ≤ 1.7 W1{-}W2\leq 1.7 (vertical and horizontal dotted lines, respectively).
+The tracks are curved (rather than straight vectors) because increasing α \alpha does not only raise the long wavelength emission (driving redder W ​ 2 − W ​ 3 W2{-}W3 ), but at sufficiently large α \alpha it also alters the short wavelength bands: the stellar contribution to W ​ 1 W1 and W ​ 2 W2 is diluted/attenuated while the waste heat component can contribute non–negligibly in W ​ 2 W2 for warmer radiators, changing W ​ 1 − W ​ 2 W1{-}W2 and producing a non–linear trajectory in color space.
+A single machine-readable ancillary file, outliers_T300_top50.csv (top-50 loosest caps at T = 300 T=300 K), accompanies this article.
+(3) W1 profile-fit quality
+- Adopt W1/W2 (baseline): prefer CatWISE if clean, else AllWISE if clean
+- Adopt W3/W4 (constraints): AllWISE (retain W4 based on policy)
+STRICT: W1 TO W4 ALL clean
+LENIENT: W1 TO W3 clean AND W4 kept even if flagged (marked)
+- Stern: (W1-W2) >= 0.8 if W2 < 15.05
+- Assef R90: (W1-W2) >= R90(W2)
+FOR each constraining band b in {W3,W4}:
+- L_wh^max(T) = min[L_wh^(W3)(T), L_wh^(W4)(T)]
+Cutri and AllWISE Team (2014)

@@ -40,11 +40,9 @@ JOIN gaiadr3.gaia_source AS g ON g.source_id = u.source_id
 """
 
 _FIELD_QUERY = """
-SELECT TOP {top} source_id, ra, dec, parallax, parallax_over_error,
-       phot_g_mean_mag, mh_gspphot, mh_gspphot_lower, mh_gspphot_upper,
-       teff_gspphot
+SELECT TOP {top} ra, dec, parallax, mh_gspphot
 FROM gaiadr3.gaia_source
-WHERE random_index < {rand_max}
+WHERE random_index >= {r_lo} AND random_index < {r_hi}
   AND mh_gspphot IS NOT NULL
   AND parallax > 0.2 AND parallax_over_error > 5
   AND teff_gspphot BETWEEN {teff_lo} AND {teff_hi}
@@ -140,37 +138,57 @@ def fetch_chemistry(members: pd.DataFrame, out_dir: Path,
     return chem
 
 
-def fetch_field(out_path: Path, top: int = 2_000_000,
-                rand_max: int = 80_000_000, teff_lo: float = 4000.0,
-                teff_hi: float = 7500.0, retries: int = 4) -> pd.DataFrame:
-    """Random Gaia field sample with metallicities (checkpointed, retried).
+def fetch_field(out_path: Path, top_per_chunk: int = 150_000,
+                n_chunks: int = 4, rand_width: int = 10_000_000,
+                teff_lo: float = 4000.0, teff_hi: float = 7500.0,
+                retries: int = 4) -> pd.DataFrame:
+    """Random Gaia field sample with metallicities (chunked + checkpointed).
 
-    The Gaia TAP server intermittently drops async results (HTTP 500 "cannot
-    find result") — the failure that killed the first census run four hours
-    in.  Same backoff discipline as the chemistry chunks.
+    The single 2M-row query failed five consecutive times with the archive's
+    "cannot find result" 500 — the server finishes the job but never
+    materializes a large anonymous async result.  The 120k-row chemistry
+    chunks succeeded 11/11, so the field pull now mimics them: small
+    random_index slices, four output columns, one parquet checkpoint each.
     """
     if out_path.exists():
         print(f"[herdsman-b] field checkpoint exists: {out_path}")
         return pd.read_parquet(out_path)
     from astroquery.gaia import Gaia
 
-    q = _FIELD_QUERY.format(top=top, rand_max=rand_max, teff_lo=teff_lo,
-                            teff_hi=teff_hi)
-    last = None
-    for attempt in range(retries):
-        try:
-            job = Gaia.launch_job_async(q)
-            df = job.get_results().to_pandas()
-            df = df.rename(columns={c: c.lower() for c in df.columns})
-            df.to_parquet(out_path, index=False)
-            print(f"[herdsman-b] field sample: {len(df)} stars -> {out_path}")
-            return df
-        except Exception as exc:  # noqa: BLE001
-            last = exc
-            print(f"[herdsman-b] field attempt {attempt + 1}/{retries} "
-                  f"failed: {exc!r}")
-            time.sleep(5 * (attempt + 1))
-    raise RuntimeError(f"field fetch failed after {retries} attempts: {last!r}")
+    chunk_dir = out_path.parent / "field_chunks"
+    chunk_dir.mkdir(parents=True, exist_ok=True)
+    frames = []
+    for k in range(n_chunks):
+        part = chunk_dir / f"field_chunk_{k}.parquet"
+        if part.exists():
+            frames.append(pd.read_parquet(part))
+            continue
+        q = _FIELD_QUERY.format(top=top_per_chunk, r_lo=k * rand_width,
+                                r_hi=(k + 1) * rand_width,
+                                teff_lo=teff_lo, teff_hi=teff_hi)
+        last = None
+        for attempt in range(retries):
+            try:
+                job = Gaia.launch_job_async(q)
+                df = job.get_results().to_pandas()
+                df = df.rename(columns={c: c.lower() for c in df.columns})
+                df.to_parquet(part, index=False)           # checkpoint
+                frames.append(df)
+                print(f"[herdsman-b] field chunk {k + 1}/{n_chunks}: "
+                      f"{len(df)} stars")
+                last = None
+                break
+            except Exception as exc:  # noqa: BLE001
+                last = exc
+                print(f"[herdsman-b] field chunk {k} attempt "
+                      f"{attempt + 1}/{retries} failed: {exc!r}")
+                time.sleep(5 * (attempt + 1))
+        if last is not None:
+            raise RuntimeError(f"field chunk {k} failed: {last!r}")
+    field = pd.concat(frames, ignore_index=True)
+    field.to_parquet(out_path, index=False)
+    print(f"[herdsman-b] field sample: {len(field)} stars -> {out_path}")
+    return field
 
 
 __all__ = ["fetch_membership", "fetch_chemistry", "fetch_field"]

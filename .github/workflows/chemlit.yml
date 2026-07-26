@@ -1,0 +1,56 @@
+name: chemlit
+
+# Chemical-technosignature literature + atomic-data survey.
+# Domain: Whitmire & Wright (1980) nuclear-waste spectra, Przybylski's Star,
+# Tc/Pm in unevolved stars, cool-dwarf chemical peculiarity, abundance-space
+# dimensionality, sparse abundance anomalies, planet-engulfment in binaries.
+# The sandbox blocks arxiv.org / ADS / Semantic Scholar / OpenAlex / Crossref /
+# NIST; the runner has egress (CLAUDE.md acquisition pattern). Results are
+# committed back to the branch.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  chemlit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Fetch literature + atomic data (soft 70-min deadline, partials kept)
+        run: |
+          timeout -k 30 4200 python scripts/chemlit_fetch.py \
+            || echo "fetcher hit soft deadline or errored; committing partials"
+          echo "=== summary ==="
+          python -c "import json,pathlib; p=pathlib.Path('results/chemlit/summary.json'); d=json.loads(p.read_text()) if p.exists() else []; print(sum(1 for x in d if x.get('ok')), '/', len(d), 'ok')" || true
+          ls -la results/chemlit | head -40 || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/chemlit/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "chemlit: chemical-technosignature literature + NIST atomic-data evidence"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: chemlit-outputs
+          path: results/chemlit/
+          if-no-files-found: warn

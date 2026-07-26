@@ -1,0 +1,80 @@
+name: watchdog
+
+# Hourly failure sweep that survives any Claude session dying: runs on
+# GitHub's scheduler from the default branch, needs no external state.
+#  * finds workflow runs from the last 24 h that ended failure /
+#    cancelled / timed_out (cancelled is how job-timeout kills present);
+#  * auto-retries their failed jobs (<=2 retries for failures/timeouts,
+#    <=1 for cancels, so a deliberate human cancel is not fought forever);
+#  * when anything was found, commits a ledger to results/watchdog/ on main
+#    so humans and future Claude sessions see unresolved breakage at a glance.
+# Green sweeps commit nothing (no hourly noise).
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sweep recent runs and auto-retry failures
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          cutoff=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+          gh api "repos/${{ github.repository }}/actions/runs?per_page=50" --jq '
+            [.workflow_runs[]
+             | select(.name != "watchdog")
+             | select(.created_at > "'"$cutoff"'")
+             | select(.conclusion == "failure" or .conclusion == "cancelled"
+                      or .conclusion == "timed_out")
+             | {id, name, head_branch, conclusion, run_attempt,
+                html_url, created_at}]' > /tmp/failures.json
+          n=$(jq length /tmp/failures.json)
+          echo "failed/cancelled/timed-out runs in last 24h: $n"
+          retried=0
+          if [ "$n" -gt 0 ]; then
+            mapfile -t rows < <(jq -c '.[]' /tmp/failures.json)
+            for row in "${rows[@]}"; do
+              id=$(jq -r .id <<<"$row")
+              att=$(jq -r .run_attempt <<<"$row")
+              conc=$(jq -r .conclusion <<<"$row")
+              max=3; [ "$conc" = "cancelled" ] && max=2
+              if [ "$att" -lt "$max" ]; then
+                echo "re-running failed jobs of run $id ($conc, attempt $att)"
+                gh api -X POST \
+                  "repos/${{ github.repository }}/actions/runs/$id/rerun-failed-jobs" \
+                  && retried=$((retried+1)) \
+                  || echo "rerun request failed for $id (may be running already)"
+              else
+                echo "run $id ($conc) exhausted retries (attempt $att) — ledger only"
+              fi
+            done
+            mkdir -p results/watchdog
+            jq -n --slurpfile f /tmp/failures.json \
+              --arg t "$(date -u +%FT%TZ)" --argjson r "$retried" \
+              '{checked_at_utc: $t, retried: $r, failures: $f[0]}' \
+              > results/watchdog/status.json
+          fi
+      - name: Commit ledger (only when failures were found)
+        run: |
+          [ -f results/watchdog/status.json ] || { echo "green sweep"; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/watchdog/status.json
+          if git diff --cached --quiet; then
+            echo "ledger unchanged"
+          else
+            git commit -m "watchdog: failure sweep ledger ($(date -u +%FT%TZ))"
+            git pull --rebase --autostash || true
+            git push || echo "ledger push failed (non-fatal)"
+          fi

@@ -62,8 +62,10 @@ def _xlogy(n: np.ndarray, r: np.ndarray) -> np.ndarray:
 
 def step_score(n_in, e_in, n_out, e_out, *, min_expected: float = 1.0) -> np.ndarray:
     """Signed sqrt of the Poisson likelihood-ratio for a rate step (~sigma)."""
-    n_in = np.asarray(n_in, float); e_in = np.asarray(e_in, float)
-    n_out = np.asarray(n_out, float); e_out = np.asarray(e_out, float)
+    n_in = np.asarray(n_in, float)
+    e_in = np.asarray(e_in, float)
+    n_out = np.asarray(n_out, float)
+    e_out = np.asarray(e_out, float)
     tot_n, tot_e = n_in + n_out, e_in + e_out
     with np.errstate(divide="ignore", invalid="ignore"):
         rho0 = np.where(tot_e > 0, tot_n / tot_e, np.nan)
@@ -327,9 +329,10 @@ def edge_scan_shell3d(xyz: np.ndarray, null: MatchedNull, *, centres=None,
 
 # --- sky cap ----------------------------------------------------------------
 def _unit_vectors(l_deg, b_deg) -> np.ndarray:
-    l = np.radians(np.asarray(l_deg, float))
-    b = np.radians(np.asarray(b_deg, float))
-    return np.stack([np.cos(b) * np.cos(l), np.cos(b) * np.sin(l), np.sin(b)], axis=1)
+    lon = np.radians(np.asarray(l_deg, float))
+    lat = np.radians(np.asarray(b_deg, float))
+    return np.stack([np.cos(lat) * np.cos(lon), np.cos(lat) * np.sin(lon),
+                     np.sin(lat)], axis=1)
 
 
 def _fibonacci_directions(n: int) -> np.ndarray:

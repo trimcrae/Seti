@@ -66,9 +66,10 @@ _GAL_TO_ICRS = np.array([
 
 
 def galactic_to_icrs(l_deg, b_deg) -> tuple[np.ndarray, np.ndarray]:
-    l = np.radians(np.asarray(l_deg, float))
-    b = np.radians(np.asarray(b_deg, float))
-    u = np.stack([np.cos(b) * np.cos(l), np.cos(b) * np.sin(l), np.sin(b)], axis=0)
+    lon = np.radians(np.asarray(l_deg, float))
+    lat = np.radians(np.asarray(b_deg, float))
+    u = np.stack([np.cos(lat) * np.cos(lon), np.cos(lat) * np.sin(lon),
+                  np.sin(lat)], axis=0)
     v = _GAL_TO_ICRS @ u
     ra = np.degrees(np.arctan2(v[1], v[0])) % 360.0
     dec = np.degrees(np.arcsin(np.clip(v[2], -1, 1)))
@@ -90,11 +91,11 @@ def cone_grid(grid: str = "sparse") -> pd.DataFrame:
         "pilot": [(15.0, 6), (-15.0, 6)],
     }[grid]
     rows = []
-    for b, n in rings:
+    for lat, n in rings:
         for k in range(n):
-            l = 360.0 * k / n
-            ra, dec = galactic_to_icrs(l, b)
-            rows.append({"cone": len(rows), "l_centre": l, "b_centre": b,
+            lon = 360.0 * k / n
+            ra, dec = galactic_to_icrs(lon, lat)
+            rows.append({"cone": len(rows), "l_centre": lon, "b_centre": lat,
                          "ra_centre": float(ra), "dec_centre": float(dec)})
     return pd.DataFrame(rows)
 

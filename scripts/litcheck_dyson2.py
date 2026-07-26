@@ -137,6 +137,21 @@ MUST = {
     "2602.23270": "Amiri 2026 - Dyson spheres on HR diagram",
     "2607.03619": "Ren+ 2026 - archival diagnostics of Hephaistos contaminants",
     "2605.21093": "Vidal+ 2026 - Search for Technosignatures review",
+    # --- discovered in pass 3 (OpenAlex/Crossref); the core of the long tail ---
+    "2403.18941": "Contardo & Hogg 2024 - data-driven mid-IR excess, 5M FGK stars (AJ)",
+    "2601.07297": "Huang, Tao & Zhang 2026 - WISE/CatWISE Dysonian waste heat, nearby galaxies (AJ)",
+    "2409.11447": "Blain 2024 - Did WISE detect Dyson Spheres/Structures?",
+    "2405.14921": "Ren, Garrett & Siemion 2024 - background contamination (RNAAS)",
+    "2501.05152": "Ren+ 2025 - high-res radio imaging of Hephaistos candidate G (MNRASL)",
+    "1503.04376": "Semiz & Ogur 2015 - Dyson spheres around white dwarfs",
+    "2412.02671": "Baghram 2024 - Dyson-sphere-like structures around PBHs (ApJ)",
+    "2512.07924": "Baghram 2025 - microlensing signatures of Dyson-sphere-like structures",
+    "2604.21886": "Curtis+ 2026 - Dyson Minds 2025 workshop, SETI around black holes",
+    "1610.05293": "Silverberg+ 2016 - M dwarf debris disk candidate, Disk Detective (ApJL)",
+    "2007.15735": "Schutte+ 2020 - nearby young brown dwarf disk (Disk Detective)",
+    "2109.11443": "Smith 2021 - viability of a Dyson swarm",
+    "1503.01509": "Lacki 2015 - SETI at Planck energy",
+    "2504.21157": "Lacki 2025 - flickers, bursts and dips (g2 autocorrelation)",
 }
 
 cands = harvest()

@@ -323,6 +323,37 @@ def write_report(cfg: Config, out_dir: Path, summary: dict) -> Path:
                     f"| {r['z_max_lo']:g}-{hi} | {r['n']:,} | {r['n_sparse']:,} | "
                     f"{r['n_dense']:,} | - | - |"
                 )
+        cands = s.get("candidates") or []
+        if cands:
+            lines.append("\n### Surviving sparse candidates\n")
+            lines.append(
+                "`n_quiet` is the evidence, not `z_max`: it counts the elements that were "
+                "**measured and found ordinary**. A one-element anomaly with 25 quiet "
+                "elements is a strong claim; the same anomaly with 3 quiet elements is an "
+                "information-starved one, which is the failure mode Huang et al. 2026 "
+                "documented in polluted white dwarfs.\n")
+            lines.append("| star | element | z | n_quiet | contrast | Teff | [Fe/H] | caveats |")
+            lines.append("|---|---|---|---|---|---|---|---|")
+            for c in cands[:25]:
+                notes = []
+                if c.get("element_caveat"):
+                    notes.append(str(c["element_caveat"])[:60])
+                if c.get("needs_high_resolution_confirmation"):
+                    notes.append("NEEDS HIGH-RESOLUTION CONFIRMATION")
+                if c.get("cool_star_caveat"):
+                    notes.append("Teff < 4600 K: cool-dwarf systematics up to 0.5 dex")
+                if c.get("cross_survey"):
+                    notes.append(f"cross-survey: {c['cross_survey']}")
+                lines.append(
+                    f"| {c.get('star_id')} | **{c.get('element_max')}** | "
+                    f"{float(c.get('z_max_signed', float('nan'))):+.1f} | "
+                    f"{int(c.get('n_quiet', 0))} | "
+                    f"{float(c.get('contrast', float('nan'))):.1f} | "
+                    f"{float(c.get('teff', float('nan'))):.0f} | "
+                    f"{float(c.get('fe_h', float('nan'))):+.2f} | "
+                    f"{'; '.join(notes) or '-'} |")
+            lines.append("")
+
         tf = s.get("top_flag_rate_elements") or []
         if tf:
             lines.append("\n### Highest per-element flag rates (systematics check)\n")

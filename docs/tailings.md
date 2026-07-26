@@ -442,11 +442,24 @@ refutation.
 Cool dwarfs with abundances and clean flags: `Teff < 6000 K`, `Teff > 3000 K`,
 `log g > 4.0`, `SNR > 40`.
 
-Catalogue **table names are discovered at runtime**, not encoded. The first
-dispatch (run `30203627605`) failed exactly here: every encoded VizieR locator
+Catalogue **table names are discovered at runtime**, not encoded. Two dispatches
+failed exactly here, in two different ways, and both are worth recording because
+the honest verdict made each look like an archive problem when neither was.
+
+Run `30204487245` reached discovery, probed the right tables and still returned
+`NO_DATA_REACHED` — because `TAP_SCHEMA.tables.table_name` comes back
+**already double-quoted** (`"III/283/allstar"`, quote characters included).
+Interpolating that into a quoted `FROM` clause produced `FROM ""III/283/allstar""`,
+which every table rejects. A quoting bug wearing the costume of an
+archive-access statement. `unquote_table` now strips it at every entry point and
+a test asserts no double-quoted name can reach the service; the general lesson,
+which belongs in the ledger, is that **a channel whose null verdict is
+indistinguishable from its bug verdict will mislead its own author**.
+
+The first dispatch (run `30203627605`) failed differently: every encoded VizieR locator
 — `III/298/galahdr4`, `III/283/allstar`, `J/MNRAS/506/2269/table1` — came back
 "table not found", and `III/286/catalog` resolved with no `[Fe/H]` and zero
-elements. VizieR catalogue *numbers* drift between releases, so hard-coding one
+elements. VizieR catalogue numbers drift between releases. VizieR catalogue *numbers* drift between releases, so hard-coding one
 means the channel dies the day CDS renumbers. The fix asks the service what it
 actually holds: `TAP_SCHEMA.tables` is queried by keyword, every candidate is
 probed for one row, and each is **scored** by how much of what the channel needs

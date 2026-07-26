@@ -124,8 +124,17 @@ flagged it. Verbatim check on that file: `comet` 0 hits, `Seligman` 0,
 That id is now corrected in `scripts/necrolit_fetch.py`, and
 `scripts/derelict_lit.py` re-fetches all four decisive sources **with an
 id-and-title verification step** that records a `id_mismatch` rather than
-writing the wrong paper to disk. Until that runs, the components of the verdict
-stand as:
+writing the wrong paper to disk.
+
+**That verification immediately caught a second instance.** In run 30203392288
+the id guessed for the Seligman PNAS 2024 companion, `2412.02384`, resolved to
+*"Theory building for empirical software engineering in qualitative research:
+Operationalization"*. Two wrong-paper incidents from two guessed ids, both of
+which *fetched successfully*, is the pattern: **an arXiv id recalled from memory
+is not evidence.** That paper is therefore now resolved **by title search** at
+fetch time, with the id read off the match, and no id for it is stored anywhere.
+
+Until the corrected fetch has been read, the components of the verdict stand as:
 
 | Component | Status |
 |---|---|
@@ -277,6 +286,45 @@ egress-blocked). The acquisition therefore walks a ladder of constraint
 syntaxes and falls back to an unconstrained pull filtered client-side;
 `results/derelict/schema.json` records which strategy actually worked and which
 fields the server accepted.
+
+### 5.1 What the API actually does — measured, run 30203392288
+
+The first run returned **zero rows**, and the cause was neither the sky nor the
+`sb-cdata` grammar:
+
+```
+{"message":"invalid field specified: 'sigma_A1'","code":"400"}
+```
+
+`sigma_A1` is **not a valid SBDB Query field**. Because every strategy in the
+ladder sent the same field list, a *single* bad column name 400'd all four, and
+"our query has a typo" presented as "the entire database contains no object
+with a fitted A1". Three fixes followed, and they are the real lesson of the
+run:
+
+1. **Self-healing field pruning.** The server names the offending field in its
+   error body, so the fetch parses it out, drops that column and retries.
+   Required fields (`A1`, `full_name`) are never dropped — if the server rejects
+   `A1` there is genuinely nothing to search for.
+2. **The sigmas move to the per-object records.** `A1`/`A2`/`A3`/`DT` *are*
+   accepted in bulk; only their uncertainties are not. They are available from
+   `sbdb.api`'s `orbit.model_pars[].sigma`, which is the authoritative source
+   anyway — and the same record carries the parameter *names* that reveal a
+   cometary `g(r)`, plus the covariance. So the bulk query's job is reduced to
+   *finding* the A1 population; every precision number comes from the
+   per-object record.
+3. **Zero is never reported as a result.** The verdict now distinguishes
+   `A1_FIELD_NOT_IN_SCHEMA` (the server has no such column — our query is
+   wrong), `A1_COLUMN_PRESENT_BUT_ALL_NULL` (our constraint is wrong),
+   `QUERY_RETURNED_NO_ROWS`, and `NO_DATA_REACHED`, and the funnel carries
+   `rows_returned_by_server` alongside `input` so a reader can always tell a
+   query failure from an empty screen. **SBDB certainly contains objects with a
+   fitted A1 — every non-gravitational comet solution has one — so a zero here
+   is a query defect until proven otherwise, never an occurrence limit.**
+
+Also measured: the documented `?info=field` schema probe returns HTTP 400, so
+field discovery cannot be relied on and the error-driven pruning above is the
+mechanism that actually works.
 
 ---
 

@@ -219,11 +219,24 @@ refutation.
 ### 3.1 Sample (`acquire.py`)
 
 Cool dwarfs with abundances and clean flags: `Teff < 6000 K`, `Teff > 3000 K`,
-`log g > 4.0`, `SNR > 40`. Sources are an **ordered registry** per survey with
-recorded provenance — GALAH DR4 preferred, GALAH DR3 as the certain fallback;
-APOGEE DR17 via VizieR with the SDSS SAS file behind it; LAMOST MRS third.
-Whichever answered is stated in `provenance.json` and in the report, so the
-numbers are never attributed to the release that was merely intended.
+`log g > 4.0`, `SNR > 40`.
+
+Catalogue **table names are discovered at runtime**, not encoded. The first
+dispatch (run `30203627605`) failed exactly here: every encoded VizieR locator
+— `III/298/galahdr4`, `III/283/allstar`, `J/MNRAS/506/2269/table1` — came back
+"table not found", and `III/286/catalog` resolved with no `[Fe/H]` and zero
+elements. VizieR catalogue *numbers* drift between releases, so hard-coding one
+means the channel dies the day CDS renumbers. The fix asks the service what it
+actually holds: `TAP_SCHEMA.tables` is queried by keyword, every candidate is
+probed for one row, and each is **scored** by how much of what the channel needs
+it has — stellar parameters, SNR, an identifier, and above all how many
+elements. The highest scorer is used, not the first that answers, because
+discovery returns per-field subsets, value-added catalogues and README stubs
+alongside the one main abundance table. The full scoreboard travels in
+`provenance.json`, so the choice is auditable rather than incidental, and the
+report always states which release the numbers actually came from instead of
+the one that was merely intended. This is the same reasoning that made the
+*column* names dynamic, applied one level up.
 
 Pulls are **chunked in Teff** (async TAP first, sync fallback), because a
 monolithic query above ~10⁵ rows times out or truncates silently. Two failure

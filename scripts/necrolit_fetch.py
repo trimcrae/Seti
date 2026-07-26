@@ -117,7 +117,9 @@ FULLTEXT: dict[str, str] = {
     # are the wrong paper.  See scripts/derelict_lit.py, which re-fetches these
     # with an id+title verification step and supersedes the necrolit copies.
     "dark_comets": "2212.08115",          # Seligman et al. 2023, PSJ 4, 35
-    "dark_comets_pnas": "2412.02384",     # Seligman et al. 2024, PNAS 121, e2406424121
+    # (The PNAS 2024 companion is deliberately NOT listed here: the id
+    # "2412.02384" was guessed and turned out to be an unrelated software-
+    # engineering paper.  scripts/derelict_lit.py resolves it BY TITLE instead.)
     # KNELL/SHROUD (S31/S33). VASCO: optical disappearance.
     "vasco": "1606.08992",
 }
@@ -182,6 +184,18 @@ CITED_BY: dict[str, str] = {
     "ghat3": "10.1088/0067-0049/217/2/25",
     "cirkovic_bradbury_gradient": "10.1016/j.newast.2006.04.003",
     "aestivation": "10.1016/j.jbis.2017.09.005",
+    # TIDEMARK: the spatial-structure predictions. The novelty claim is that
+    # each of these has been *cited* but never *tested*, so the citing sets are
+    # the decisive evidence -- and they were unreadable until the cites: filter
+    # bug above was fixed.
+    "tidemark_wright2021_rnaas": "10.3847/2515-5172/ac0910",     # -> Galactic centre
+    "tidemark_hanson2021_grabby": "10.3847/1538-4357/ac2369",    # "for which astronomers might search"
+    "tidemark_carroll_nellenback2019": "10.3847/1538-3881/ab31a3",
+    "tidemark_ghat1_shearmixing": "10.1088/0004-637X/792/1/26",  # predicts NO structure
+    "tidemark_vukotic_cirkovic2012": "10.1007/s11084-012-9273-6",
+    "tidemark_hair_hedman2013": "10.1017/S1473550412000420",
+    "tidemark_lingam_percolation2016": "10.1089/ast.2015.1411",
+    "tidemark_carrigan2009_iras": "10.1088/0004-637X/698/2/2075",
 }
 
 ARXIV_API = "http://export.arxiv.org/api/query?"
@@ -216,13 +230,33 @@ def fetch_queries() -> None:
 
 
 def fetch_citation_trees() -> None:
+    """Enumerate everything citing each anchor paper.
+
+    NOTE (2026-07-26): the previous implementation used
+    ``?filter=cites:doi:<doi>``, which OpenAlex accepts but silently answers with
+    ``meta.count = 0`` for **every** DOI --- so all earlier citation-tree fetches
+    in this repo (``citedby_zackrisson2018.json``, ``cited_by_heph1_p*.json``)
+    are empty for a syntax reason, not because the papers are uncited.  The
+    ``cites:`` filter takes a **work ID**, so resolve the DOI first and pass
+    ``cites:W...``.  Verified by the ``meta.count`` in the fetched JSON.
+    """
     print("\n=== OpenAlex citation trees ===")
     for name, doi in CITED_BY.items():
         print(f"[cite:{name}] {doi}")
-        get(f"{OPENALEX}/https://doi.org/{doi}", OUT / f"oa_{name}.json")
+        meta = OUT / f"oa_{name}.json"
+        get(f"{OPENALEX}/https://doi.org/{doi}", meta)
+        work_id = None
+        try:
+            wid = json.loads(meta.read_text()).get("id") or ""
+            work_id = wid.rsplit("/", 1)[-1] if wid.startswith("http") else wid
+        except Exception as exc:  # noqa: BLE001
+            print(f"  could not resolve a work id for {doi}: {exc!r}")
+        if not work_id:
+            print(f"  SKIP citation tree for {name}: no work id")
+            continue
         # Everything citing it, newest first; 200 is well above any of these counts.
-        get(f"{OPENALEX}?filter=cites:doi:{doi}&per-page=200&sort=publication_date:desc",
-            OUT / f"citedby_{name}.json")
+        get(f"{OPENALEX}?filter=cites:{work_id}&per-page=200"
+            "&sort=publication_date:desc", OUT / f"citedby_{name}.json")
 
 
 def main() -> None:

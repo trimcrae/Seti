@@ -277,6 +277,7 @@ def main() -> None:
         "n_id_mismatch": len(mismatches),
         "id_mismatches": mismatches,
         "targets": {k: v for k, v in FULLTEXT.items()},
+        "title_resolved_targets": TITLE_RESOLVED,
         "queries": QUERIES,
         "status": STATUS,
         "note": "results/necrolit/*dark_comets* is arXiv:2306.16966, a hep-ph "

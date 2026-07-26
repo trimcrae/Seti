@@ -483,8 +483,36 @@ of well-measured *fast* flybys, exactly what the transfer-regime cut rejects.
 | Gaia XP anomalies | RA283/Dec−3 dense field: 8,863 sources, reliable; narrow-feature shortlist examined | 0 credible | **channel bounded — see ledger.** Broad "anomalies" = reddened-M-dwarf molecular bands (degenerate with a Dyson SED); "narrow" ones = band-edge reconstruction artifacts + sub-resolution wiggles (XP LSF ≈5+ samples can't resolve a laser line). Guards added (width/interior/bounded). A clean low-extinction field could still test the *broad*-SED Dyson signature, but it is degenerate with reddening |
 | Galactic long-baseline encounters | LHS 1140 + K2-18; 149,979 RV-complete Gaia stars each integrated back 300 Myr in the MW potential | 0 bio + 0 techno among encounter neighbours | **clean.** LHS 1140: 34 passes <3 pc (0 planet hosts, 0 companion flags); K2-18: 16 (same). All datable passes are recent (<~20 Myr) — phase mixing erases 100–300 Myr timing, so the honest recoverability horizon is ~tens of Myr. Closest: a G=7.4 star 0.086 pc from LHS 1140 2.9 Myr ago (single star, not a signature) |
 | LHS 1140 system deep-dive | star + b/c + 38 neighbours ≤15 pc; 6 archives (Gaia astrometry+XP, WISE/NEOWISE, ZTF, TESS 3.5k epochs); 533 MAST obs inventoried; **biosignature detectability budget** | 0 technosignature; **0 detectable biosignature** | **clean + bio answered.** Star: all 6 channels clean; lone RUWE=1.53 is marginal binarity, not techno. Neighbours: raw 15/38 IR-excess all = WISE W4/blend systematics → 4 survive → faint/blue/ordinary-debris. **Bio:** under b's expected high-μ (N₂) atmosphere (H≈3.6 km) every biosignature feature is ~few ppm → CH₄ ~25 / O₃ ~67 transits vs ~2–4 observed → `NOT_DETECTABLE_WITH_CURRENT_DATA`; reachable only for a disfavoured cleared H₂ envelope |
+| **CENOTAPH** (cold Dyson, T<100 K) | built + dispatched (run 30203250183); target Gaia DR3 GSP-Spec dwarfs, ~5.6e6 with Teff/logg/[M/H]/[α/Fe] from one pipeline | pending first archive run | **new channel.** Three-leg energy-conservation test: grey attenuation (A_V fitted jointly, not assumed) + NO mid-IR excess + far-IR recovery of the intercepted f·L in AKARI/FIS + IRAS. Closure ratio ρ=f_IR/f_dim separates an isotropic occulter (ρ≈1) from an edge-on disk (ρ≪1). Measured floor f≳0.15–0.29 vs Zackrisson+2018's f_cov>0.75. Next: read `results/cenotaph/summary.json`, check the ±3σ tail asymmetry before believing any count |
 
 ## Known systematics ledger (do not re-derive)
+
+* **Deeper WISE data is *anti-correlated* with colder sensitivity.** Wien-peak
+  temperatures: W1 3.35 µm → 865 K, W2 4.60 µm → 630 K, W3 11.56 µm → 251 K,
+  W4 22.09 µm → 131 K. Every WISE catalogue that got deeper after 2010
+  (NEOWISE-R, CatWISE2020, unWISE) is **W1/W2 only**; W3/W4 depth is frozen at
+  the 2010 cryogenic mission. So the largest waste-heat searches ever run are
+  structurally incapable of reaching 100–300 K, and improving them makes them
+  *warmer*. Below ~130 K the mid-IR route is closed by instrumentation, not by
+  effort. Do not propose "go deeper in WISE" as a route to cold Dyson spheres.
+* **A parallax error is exactly a grey offset**, and any twin/reference-star
+  scatter is common-mode across bands. Both must enter a multi-band fit as a
+  **rank-1 fully correlated** covariance term, never on the diagonal — treating
+  them as independent per band inflates every significance by ~√N_bands.
+* **Scatter about a reference-star median is not the error bar.** It also
+  contains the parameter gradient across the matching box (measured: 0.14 mag
+  instead of 0.05 for a Teff box of ±150 K). Take the scatter about a *local
+  linear fit* in parameter space instead.
+* **A published IR-excess catalogue is ~92% false positive** (Silverberg et al.
+  2018: at most 7.9%±0.2% of AllWISE-selected excesses are good disk
+  candidates; all 13 Theissen & West W4 S/N>3 candidates are false). Measure an
+  excess from the photometry; never inherit one.
+* **Far-IR beams make background-galaxy confusion far worse than in WISE.**
+  IRAS/AKARI beams are 25–180″ vs WISE's 6–12″, so the coincidence area is
+  10²–10⁴× larger; with 10⁶ targets the chance-match expectation runs to
+  thousands. Measured Gaia source density (results/farir_stats): 101,853/deg² at
+  |b|<5° vs 3,119/deg² at |b|>60°. A far-IR positional association is never
+  evidence on its own.
 
 * **Gaia XP is low-resolution** (R≈30–100; LSF ≈5+ of the 2-nm samples). Two
   consequences: (1) it *cannot resolve a narrow laser line* — a real localised

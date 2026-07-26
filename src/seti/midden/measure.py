@@ -391,6 +391,10 @@ def score_corpus(meas: pd.DataFrame, teff_window: float = 250.0) -> tuple[pd.Dat
 
 def line_flag_rates(meas: pd.DataFrame) -> pd.DataFrame:
     """Fraction of spectra with z >= Z_LINE per line — the report's honesty table."""
+    cols = ["species", "wavelength", "role", "n_measured", "n_flagged",
+            "flag_rate"]
+    if not len(meas) or "wavelength" not in meas.columns:
+        return pd.DataFrame(columns=cols)
     rows = []
     for (species, lam, role), g in meas.groupby(["species", "wavelength", "role"]):
         z = g["z"].to_numpy(float)
@@ -399,6 +403,8 @@ def line_flag_rates(meas: pd.DataFrame) -> pd.DataFrame:
                      "n_measured": int(fin.sum()),
                      "n_flagged": int((z[fin] >= Z_LINE).sum()),
                      "flag_rate": float((z[fin] >= Z_LINE).mean()) if fin.any() else np.nan})
+    if not rows:
+        return pd.DataFrame(columns=cols)
     return pd.DataFrame(rows).sort_values("wavelength").reset_index(drop=True)
 
 

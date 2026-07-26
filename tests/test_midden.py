@@ -222,3 +222,46 @@ def test_batch_checkpoint_resume(tmp_path):
         g = got[got["dp_id"] == f"dp_{i}"]
         assert len(g) == len(L.LINES)
         assert abs(float(g["rv_kms"].iloc[0]) - 5.0 * i) < 2.0
+
+
+def test_line_flag_rates_empty_and_all_error():
+    """An all-failure corpus must yield an empty honesty table, not a KeyError.
+
+    Run 30200517861 crashed in line_flag_rates because every spectrum failed
+    to download and the filtered measurement table had no columns at all.
+    """
+    empty = M.line_flag_rates(pd.DataFrame())
+    assert len(empty) == 0 and "wavelength" in empty.columns
+
+    errs = pd.DataFrame([{"star": "s", "role": "error", "error": "boom"}])
+    out = M.line_flag_rates(errs)
+    assert len(out) == 0 and "flag_rate" in out.columns
+
+
+def test_process_corpus_reruns_all_error_batches(tmp_path):
+    """A checkpoint of pure error rows is re-run, not fossilized.
+
+    The poisoned run left meas_batch parquets containing only role='error'
+    rows; artifact-seeded resumes must retry those batches with the fixed
+    fetcher rather than silently reusing the failures.
+    """
+    corpus = pd.DataFrame([
+        {"dp_id": f"dp_{i}", "star": f"s{i}", "tid": i, "teff": 6000.0,
+         "priority": 1, "source": "test", "instrument_name": "HARPS",
+         "t_min": 50000.0 + i, "snr": 10.0, "access_url": "http://x"}
+        for i in range(2)])
+    out = tmp_path / "meas"
+    out.mkdir()
+    poisoned = pd.DataFrame([{"star": "s0", "role": "error", "error": "old"}])
+    poisoned.to_parquet(out / "meas_batch_0000.parquet", index=False)
+
+    calls = {"n": 0}
+
+    def fetch_fn(row, dest):
+        calls["n"] += 1
+        raise OSError("still failing")     # failure path is fine; must RE-TRY
+
+    meas = process_corpus(corpus, out, tmp_path / "scratch", batch_size=2,
+                          fetch_fn=fetch_fn)
+    assert calls["n"] == 2                 # batch was re-run, not reused
+    assert (meas["role"] == "error").all() and list(meas["error"]) != ["old", "old"]

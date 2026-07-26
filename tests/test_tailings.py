@@ -1037,3 +1037,36 @@ def test_vizier_table_names_come_back_quoted_and_must_be_stripped():
                          query_fn=query)
     assert acq.locator == "III/999/main"
     assert all('""' not in q for q in seen), "no double-quoted table name may reach the service"
+
+
+def test_report_surfaces_the_evidence_a_reader_needs(tmp_path):
+    """n_quiet, the caveats and the resolution requirement must reach REPORT.md."""
+    from seti.tailings.run import write_report
+
+    real = load_config()
+    cfg = Config(root=tmp_path, thresholds=real.thresholds,
+                 catalogs=real.catalogs, paths=real.paths)
+    d = tmp_path / "results" / "tailings"
+    d.mkdir(parents=True)
+    summary = {
+        "verdict": "SPARSE_CANDIDATES_PENDING_REMEASUREMENT: 1 survivor",
+        "per_survey": [{
+            "survey": "GALAH", "n_stars": 100000, "n_elements": 24,
+            "n_sparse": 1, "n_vetted": 1,
+            "class_counts": {"NORMAL": 99000, "DENSE": 999, "SPARSE": 1},
+            "candidates": [{
+                "star_id": "S1", "element_max": "Ba", "z_max_signed": 7.3,
+                "n_quiet": 22, "contrast": 7.1, "teff": 5100.0, "fe_h": -0.2,
+                "element_caveat": "Ba II lines are strong, saturated and NLTE",
+                "needs_high_resolution_confirmation": False,
+                "cool_star_caveat": False, "cross_survey": "not_covered",
+            }],
+        }],
+        "twins": {"n_pairs": 0},
+    }
+    txt = write_report(cfg, d, summary).read_text()
+    assert "n_quiet" in txt and "measured and found ordinary" in txt
+    assert "| S1 | **Ba** | +7.3 | 22 |" in txt
+    assert "Ba II lines" in txt
+    assert "cross-survey: not_covered" in txt
+    assert "information-starved" in txt          # the Huang caveat is carried

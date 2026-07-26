@@ -66,7 +66,12 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     if: github.event.inputs.reduce_only_run_id == ''
-    timeout-minutes: 60
+    timeout-minutes: 45
+    env:
+      # Unbuffered, or the probe's progress lines only appear at process exit —
+      # which is exactly why the first probe attempt (run 30208679328) had to be
+      # killed after 45 minutes having printed nothing at all.
+      PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -81,8 +86,9 @@ jobs:
           python -c "import pyvo, astroquery, pyarrow; print('imports OK')"
       - name: Probe every acquisition primitive
         continue-on-error: true
+        timeout-minutes: 25
         run: |
-          python -m seti.cli ember --stage probe
+          python -u -m seti.cli ember --stage probe
           echo "=== catalogue resolution ==="
           python - <<'PY'
           import json

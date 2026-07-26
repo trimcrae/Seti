@@ -44,3 +44,29 @@ statement about THIS corpus (HARPS+FEROS Phase-3, these line windows,
 these thresholds), never a publishable result. Next moves are the
 UVES/ESPRESSO collections, the Pm II line set, and epoch-resolved
 decay-curve tests on any near-threshold star.
+
+## Session verdict (full-corpus run, 2026-07-26)
+
+- Corpus: 178 unique-epoch HARPS/FEROS spectra of 99 stars (all that the ESO
+  Phase-3 archive holds for the 16,363-target list after per-epoch dedup; the
+  earlier 92-spectrum result came from discovery truncated at the TAP output
+  cap and is superseded).
+- Population level: the DUMMY control wavelengths flag at 11/178 and 13/178 —
+  higher than every true Tc line (7, 6, 5 per 178). The Tc lines fire at the
+  rate expected of arbitrary wavelengths in a blend-heavy CP-star corpus:
+  no population-level Tc excess exists in this sample.
+- Positive control: Przybylski's star (HD 101065) reaches z(Tc I 4262) = 9.5
+  and is correctly control-vetoed — the rare-earth-forest confuser is caught
+  by design, not by luck.
+- Two of the three interim flags from the truncated corpus (HD 154708,
+  gaia_6540158877300621696) did not survive the deeper census baseline.
+- Sole surviving flag: HD 217522 (roAp), single epoch, coherent Tc triplet
+  z = 4.0 / 2.7 / 2.8, no control veto, z(U II) = -2.5. Assessment: consistent
+  with rare-earth line blending in a roAp atmosphere (the historical false-Tc
+  class); the negative actinide z is a blend symptom, not a waste signature.
+  NOT claimed as a detection.
+- Queued follow-up (next work item): HD 217522 deep-dive — pull every ESO
+  spectrum of the star across instruments (UVES/X-shooter/HARPS regardless of
+  the band-limited discovery), measure the triplet per epoch (Tc at 4.2 Myr
+  half-life must be static; roAp blends modulate), and score against a
+  Teff/logg-matched roAp comparison sample.

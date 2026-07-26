@@ -231,17 +231,6 @@ def _cmd_herdsman_b(args, cfg):
     herdsman_b_run(cfg, stage=args.stage)
 
 
-def _cmd_ember(args, cfg):
-    from .ember.run import ember_run
-
-    summary = ember_run(cfg, stage=args.stage, n_ra_chunks=args.n_ra_chunks,
-                        shard=args.shard, n_shards=args.n_shards,
-                        require_all_checks=args.require_all_checks == "true")
-    print(json.dumps({k: v for k, v in summary.items()
-                      if k in ("verdict", "counts", "pair_audit")}, indent=2,
-                     default=str))
-
-
 def _cmd_midden(args, cfg):
     from .midden.run import midden_run
 
@@ -254,14 +243,6 @@ def _cmd_tailings(args, cfg):
 
     tailings_run(cfg, stage=args.stage, surveys=args.surveys,
                  max_rows=args.max_rows)
-
-
-def _cmd_isotherm(args, cfg):
-    from .isotherm.run import isotherm_run
-
-    isotherm_run(cfg, stage=args.stage, max_spectra=args.max_spectra,
-                 resolution=args.resolution, shard=args.shard,
-                 n_shards=args.n_shards)
 
 
 def _cmd_herdsman(args, cfg):
@@ -886,52 +867,6 @@ def main(argv=None):
     p.add_argument("--input", default=None,
                    help="analyse this parquet instead of acquiring")
     p.set_defaults(func=_cmd_shroud)
-
-    p = sub.add_parser(
-        "ember",
-        help="runner: cross-epoch mid-infrared excess CESSATION search -- an "
-             "excess present in IRAS (1983) or AKARI (2006) and absent in WISE "
-             "(2010). Signature S1, waste heat that switched off (docs/ember.md)")
-    p.add_argument("--stage",
-                   choices=("audit", "acquire", "analyse", "excess", "cessation",
-                            "vet", "report", "all"),
-                   default="all",
-                   help="'audit' is offline and decides which epoch pairs are "
-                        "usable; 'acquire' fetches one RA shard; 'analyse' "
-                        "reduces whatever shards are on disk without network")
-    p.add_argument("--n-ra-chunks", type=int, default=12,
-                   help="RA slices per catalogue pull (smaller queries are safer)")
-    p.add_argument("--shard", type=int, default=0,
-                   help="which RA shard this process handles")
-    p.add_argument("--n-shards", type=int, default=1,
-                   help="total number of RA shards")
-    p.add_argument("--require-all-checks", choices=("true", "false"),
-                   default="true",
-                   help="reject candidates that could not be tested on every "
-                        "contamination rule")
-    p.set_defaults(func=_cmd_ember)
-
-    p = sub.add_parser("isotherm",
-                       help="runner: search on the SHAPE of infrared excess in "
-                            "temperature space — emissivity index beta, "
-                            "temperature-distribution width, silicate-feature "
-                            "equivalent width, and >=3 discrete components in "
-                            "geometric progression, over CASSIS Spitzer/IRS "
-                            "spectra (docs/isotherm.md)")
-    p.add_argument("--stage",
-                   choices=("probe", "corpus", "screen", "shape", "calibrate",
-                            "score", "all"),
-                   default="all",
-                   help="stage to run (each checkpoints; 'probe' only reports "
-                        "archive reachability; 'calibrate' is offline)")
-    p.add_argument("--max-spectra", type=int, default=2000,
-                   help="cap on spectra analysed per shard")
-    p.add_argument("--resolution", type=float, default=100.0,
-                   help="rebin to this R before fitting, so BIC counts "
-                        "independent resolution elements and not raw pixels")
-    p.add_argument("--shard", type=int, default=0)
-    p.add_argument("--n-shards", type=int, default=1)
-    p.set_defaults(func=_cmd_isotherm)
 
     p = sub.add_parser("midden",
                        help="runner: survey-scale short-lived-radionuclide "

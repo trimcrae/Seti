@@ -8,7 +8,6 @@ column names that pass 1 recovered from SELECT * headers.
 """
 import json
 import os
-import time
 import urllib.parse
 
 import requests

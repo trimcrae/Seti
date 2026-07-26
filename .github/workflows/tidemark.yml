@@ -155,8 +155,12 @@ jobs:
           import json, sys
           d = json.load(open(sys.argv[1]))
           print(json.dumps({k: d.get(k) for k in
-                ("channel", "verdict", "n_parent", "n_anomaly", "tested",
-                 "best_test", "best_p", "best_p_trials_corrected", "detection",
+                ("channel", "verdict", "result", "result_explanation",
+                 "anomaly_definition", "population_vetted", "population_caveat",
+                 "n_parent", "n_anomaly", "tested", "best_test", "best_p",
+                 "best_p_family_corrected", "n_effective_independent_tests",
+                 "failed_gates", "p_values_repr", "floor_limited_tests",
+                 "insufficient_tests", "detection",
                  "R_gal_slope_deabsorbed_ln_per_kpc")}, indent=2, default=str))
           PY
           done

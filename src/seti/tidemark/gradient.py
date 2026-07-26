@@ -41,8 +41,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from .nulls import (MIN_ANOMALIES_PER_TEST, MatchedNull, empirical_p,
-                    insufficient, p_report)
+from .nulls import MIN_ANOMALIES_PER_TEST, MatchedNull, empirical_p, insufficient, p_report
 
 
 # --- binning ----------------------------------------------------------------

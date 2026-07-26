@@ -33,6 +33,9 @@ from seti.tidemark.inject import (
 from seti.tidemark.nulls import MatchedNull, empirical_p
 
 STRICT = ["phot_g_mean_mag", "dist_pc", "bp_rp", "ebv", "log_local_density", "n_obs"]
+_DEF = {"covariates": {"strict": STRICT,
+                       "permissive": ["phot_g_mean_mag", "bp_rp", "ebv",
+                                      "log_local_density"]}}
 PERMISSIVE = ["phot_g_mean_mag", "bp_rp", "ebv", "log_local_density"]
 
 
@@ -202,8 +205,14 @@ def test_recovers_an_injected_sharp_edged_bubble(parent):
     xyz = parent[["X_pc", "Y_pc", "Z_pc"]].to_numpy(float)
     sh = edge_scan_shell3d(xyz, null, n_per_axis=4, n_bins=20, n_null=300,
                            smooth_coords={"R_gal_kpc": parent["R_gal_kpc"].to_numpy(float)})
-    assert sh["significant"], f"missed an injected bubble: {sh['p_value']}"
+    # Evidence, not the "significant" flag: a bubble this strong exceeds every
+    # null draw, so its p-value sits on the Monte Carlo floor -- which the
+    # reporting logic deliberately refuses to call "significant" until the draw
+    # count is escalated (see test_floor_limited_result_is_not_significant).
+    assert sh["p_value"] <= 0.05, f"missed an injected bubble: {sh['p_value']}"
     assert sh["max_abs_score"] > 4.0
+    assert sh["max_abs_score"] > sh["null_max_p95"]
+    assert sh["n_anom"] >= MIN_ANOMALIES_PER_TEST
     best = sh["best_shell"]
     assert best["rho_inside"] > best["rho_outside"], "step recovered with the wrong sign"
     off = float(np.linalg.norm(np.array(best["centre"]) - true_centre))
@@ -529,3 +538,274 @@ def test_excess_axis_fits_one_global_locus_not_one_per_cone():
     d0 = float(np.nanmedian(per_cone.loc[per_cone["cone"] == 0, "ir_excess_z"]))
     d1 = float(np.nanmedian(per_cone.loc[per_cone["cone"] == 1, "ir_excess_z"]))
     assert abs(d1 - d0) < 0.2, "the per-cone counterfactual should be flat"
+
+
+# ===========================================================================
+# Reporting-logic regressions.
+#
+# The first committed TIDEMARK run emitted verdict=DETECTION off a p-value that
+# was sitting on the Monte Carlo floor, computed by three "independent"
+# geometries that were seeing one feature, on a catalogue where 98.8% of the
+# anomalies had no distance, matched on a covariate list that had silently
+# dropped apparent magnitude. Each of those is pinned below.
+# ===========================================================================
+
+from seti.tidemark.nulls import MIN_ANOMALIES_PER_TEST, p_report  # noqa: E402
+from seti.tidemark.run import (  # noqa: E402
+    _escalate,
+    _independence,
+    _resolve_covariates,
+    analyse_catalogue,
+)
+
+
+def test_floor_limited_p_is_reported_as_an_inequality():
+    """p == 1/(n_null+1) means 'no null draw was this extreme'. It is a bound."""
+    r = p_report(1.0 / 301, 300)
+    assert r["floor_limited"]
+    assert r["p_repr"].startswith("<")
+    assert r["p_floor"] == pytest.approx(1 / 301)
+    r2 = p_report(0.02, 300)
+    assert not r2["floor_limited"]
+    assert not r2["p_repr"].startswith("<")
+
+
+def test_floor_limited_result_is_not_significant(parent):
+    """A statistic whose p sits on the floor must not be called significant --
+    that is exactly how the bad DETECTION was manufactured."""
+    m = inject_bubble(parent, centre_pc=(600.0, -400.0, 0.0), radius_pc=900.0,
+                      contrast=6.0, base_rate=0.02, seed=12)
+    null = MatchedNull(parent, m, STRICT, seed=1)
+    xyz = parent[["X_pc", "Y_pc", "Z_pc"]].to_numpy(float)
+    sh = edge_scan_shell3d(xyz, null, n_per_axis=3, n_bins=18, n_null=20)
+    assert sh["floor_limited"] is True
+    assert sh["significant"] is False, "a floor-limited p was reported as significant"
+    assert sh["verdict"] == "FLOOR_LIMITED"
+    assert sh["p_repr"].startswith("<")
+
+
+def test_escalation_increases_draws_only_while_floor_limited():
+    calls = []
+
+    def fake(n):
+        calls.append(n)
+        # Resolves once it has enough draws.
+        return {"floor_limited": n < 500, "p_value": 1.0 / (n + 1)}
+
+    out = _escalate(fake, 20, 4000)
+    assert calls[0] == 20 and len(calls) > 1
+    assert out["escalation"]["n_null_final"] >= 500
+    assert out["escalation"]["capped"] is False
+
+    calls.clear()
+    out2 = _escalate(lambda n: (calls.append(n), {"floor_limited": True})[1], 20, 100)
+    assert out2["escalation"]["capped"] is True, "cap must be reported honestly"
+    assert len(calls) <= 3
+
+
+# --- the 2555 -> 30 collapse -----------------------------------------------
+def _mostly_distanceless(parent, n_with_distance=12, n_anom=400, seed=5):
+    """A catalogue shaped like the real dimming one: many anomalies, almost none
+    with a parallax."""
+    p = parent.head(20000).copy().reset_index(drop=True)
+    rng = np.random.default_rng(seed)
+    keep = rng.choice(len(p), size=n_with_distance * 40, replace=False)
+    for c in ("parallax", "dist_pc", "X_pc", "Y_pc", "Z_pc", "R_gal_kpc",
+              "z_gal_kpc", "abs_z_gal_kpc"):
+        if c in p.columns:
+            v = p[c].to_numpy(float).copy()
+            bad = np.ones(len(p), bool)
+            bad[keep] = False
+            v[bad] = np.nan
+            p[c] = v
+    mask = np.zeros(len(p), bool)
+    mask[rng.choice(len(p), size=n_anom, replace=False)] = True
+    return p, mask
+
+
+def test_statistics_refuse_when_few_anomalies_carry_their_own_coordinate(parent):
+    """A catalogue may hold thousands of anomalies and a dozen with a parallax.
+    Guarding on the catalogue total let a 3D scan run on the dozen and return a
+    tiny p-value. Every statistic now counts the anomalies carrying ITS OWN
+    coordinate."""
+    p, mask = _mostly_distanceless(parent)
+    n_total = int(mask.sum())
+    n_with_r = int((mask & np.isfinite(p["R_gal_kpc"].to_numpy(float))).sum())
+    assert n_total > 100 and n_with_r < MIN_ANOMALIES_PER_TEST, "fixture is wrong"
+    null = MatchedNull(p, mask, ["phot_g_mean_mag", "bp_rp"], seed=1)
+
+    g = gradient_test(p["R_gal_kpc"].to_numpy(float), null, name="R_gal_kpc",
+                      n_bins=8, n_null=50)
+    assert g["insufficient"] and g["verdict"] == "INSUFFICIENT_ANOMALIES"
+    assert g["p_value"] is None
+
+    e = edge_scan_1d(p["R_gal_kpc"].to_numpy(float), null, name="R_gal_kpc",
+                     n_bins=12, n_null=50)
+    assert e["insufficient"] and e["p_value"] is None
+
+    xyz = p[["X_pc", "Y_pc", "Z_pc"]].to_numpy(float)
+    sh = edge_scan_shell3d(xyz, null, n_per_axis=3, n_bins=12, n_null=50)
+    assert sh["insufficient"], "3D scan ran on a handful of anomalies"
+    assert sh["p_value"] is None
+    assert "finite 3D positions" in sh["reason"]
+
+
+def test_insufficient_tests_reach_the_summary_and_never_become_a_verdict(parent):
+    """p=None must be an explicit INSUFFICIENT entry the aggregator can see,
+    not a silent skip."""
+    p, mask = _mostly_distanceless(parent)
+    cat = ingest.from_frames("distanceless", p, mask=mask)
+    res = analyse_catalogue(cat, quick=True)
+    assert res["tested"]
+    assert res["insufficient_tests"], "insufficient tests were silently dropped"
+    for _name, reason in res["insufficient_tests"].items():
+        assert reason and "anomalies" in reason
+    for name in res["insufficient_tests"]:
+        assert name not in res["p_values"], f"{name} leaked a p-value"
+
+
+# --- covariate wiring -------------------------------------------------------
+def test_channel_declared_covariates_are_actually_used(parent):
+    """The real bug: config declared [g_mag, ...] but the code used the global
+    list whose magnitude column is 'phot_g_mean_mag', so the dominant
+    detectability variable was never matched on at all."""
+    p = parent.head(5000).rename(columns={"phot_g_mean_mag": "g_mag",
+                                          "n_obs": "n_epochs"}).copy()
+    cat = ingest.from_frames("renamed", p, mask=inject_none(p, base_rate=0.03, seed=1),
+                             covariates=("g_mag", "bp_rp", "n_epochs"))
+    used, report = _resolve_covariates(cat, cat.parent, _DEF, "strict")
+    assert "g_mag" in used, "the channel's own magnitude column was dropped"
+    assert report["families_matched"]["magnitude"] == "g_mag"
+    assert report["essential_covariates_present"]
+    assert report["warnings"] == []
+
+
+def test_missing_magnitude_covariate_is_flagged_not_ignored(parent):
+    p = parent.head(5000).drop(columns=["phot_g_mean_mag"]).copy()
+    cat = ingest.from_frames("nomag", p, mask=inject_none(p, base_rate=0.03, seed=1),
+                             covariates=("bp_rp",))
+    used, report = _resolve_covariates(cat, cat.parent, _DEF, "strict")
+    assert report["families_matched"]["magnitude"] is None
+    assert not report["essential_covariates_present"]
+    assert any("magnitude" in w for w in report["warnings"])
+
+
+def test_permissive_mode_still_drops_distance(parent):
+    cat = ingest.from_frames("d", parent.head(4000),
+                             mask=inject_none(parent.head(4000), base_rate=0.03, seed=1),
+                             covariates=("phot_g_mean_mag", "dist_pc", "bp_rp"))
+    used, _ = _resolve_covariates(cat, cat.parent, _DEF, "permissive")
+    assert "dist_pc" not in used and "parallax" not in used
+    used_s, _ = _resolve_covariates(cat, cat.parent, _DEF, "strict")
+    assert "dist_pc" in used_s
+
+
+# --- independence -----------------------------------------------------------
+def test_geometries_firing_on_the_same_anomalies_count_once():
+    """Three 'independent' geometries returning the identical p-value are one
+    feature seen three ways; the trials correction must not treat them as three."""
+    n = 1000
+    shared = np.zeros(n, bool)
+    shared[:120] = True
+    nearly = shared.copy()
+    nearly[120:130] = True                       # ~92% overlap
+    other = np.zeros(n, bool)
+    other[500:620] = True                        # disjoint
+    ind = _independence({"edge:abs_z": {"_inside_mask": shared},
+                         "edge:shell_3d": {"_inside_mask": nearly},
+                         "edge:sky_cap": {"_inside_mask": shared},
+                         "edge:R_gal": {"_inside_mask": other}})
+    assert ind["n_independent_groups"] == 2, ind["groups"]
+    groups = sorted(sorted(g) for g in ind["groups"])
+    assert ["edge:abs_z", "edge:shell_3d", "edge:sky_cap"] in groups
+
+
+def test_edge_tests_expose_which_anomalies_fired(parent):
+    m = inject_bubble(parent, centre_pc=(600.0, -400.0, 0.0), radius_pc=900.0,
+                      contrast=5.0, base_rate=0.02, seed=12)
+    null = MatchedNull(parent, m, STRICT, seed=1)
+    e = edge_scan_1d(parent["R_gal_kpc"].to_numpy(float), null, name="R_gal_kpc",
+                     n_bins=20, n_null=100)
+    assert isinstance(e["_inside_mask"], np.ndarray)
+    assert e["_inside_mask"].sum() > 0
+    assert not (e["_inside_mask"] & ~m).any(), "fired set must be anomalies only"
+
+
+# --- population provenance --------------------------------------------------
+def test_percentile_cut_is_recorded_as_unvetted(parent):
+    p = parent.head(5000).copy()
+    rng = np.random.default_rng(3)
+    p["score"] = rng.normal(0, 1, len(p))
+    cat = ingest.from_frames("pct", p, score_col="score")
+    assert cat.anomaly_definition == "percentile_cut"
+    assert cat.vetted is False
+    assert any("bare percentile" in n for n in cat.notes)
+
+
+def test_vetted_candidate_list_is_recorded_as_vetted(parent):
+    p = parent.head(5000).copy()
+    cands = p.head(200)[["source_id"]]
+    cat = ingest.from_frames("vet", p, anomalies=cands, id_col="source_id")
+    assert cat.anomaly_definition == "vetted_candidate_list"
+    assert cat.vetted is True
+
+
+def test_unvetted_population_cannot_yield_a_detection(parent):
+    """Even a real injected bubble reports STRUCTURE_UNVETTED_POPULATION when
+    the anomaly set is a bare score percentile."""
+    p = parent.copy()
+    m = inject_bubble(p, centre_pc=(600.0, -400.0, 0.0), radius_pc=900.0,
+                      contrast=6.0, base_rate=0.02, seed=12)
+    p["score"] = np.where(m, 10.0, np.random.default_rng(1).normal(0, 1, len(p)))
+    cat = ingest.from_frames("unvetted", p, score_col="score",
+                             score_min=None)
+    res = analyse_catalogue(cat, quick=True)
+    assert res["result"] != "DETECTION"
+    assert "anomaly_population_vetted" in res["failed_gates"]
+
+
+def test_channel_caveat_is_carried_into_the_result_string(parent):
+    p = parent.head(6000).copy()
+    cands = p.head(300)[["source_id"]]
+    cat = ingest.from_frames("caveated", p, anomalies=cands, id_col="source_id",
+                             caveat="sits at the survey systematics floor",
+                             caveat_tag="AT_SYSTEMATICS_FLOOR")
+    assert cat.caveat_tag == "AT_SYSTEMATICS_FLOOR"
+    res = analyse_catalogue(cat, quick=True)
+    if res["result"] != "CLEAN_NULL":
+        assert "AT_SYSTEMATICS_FLOOR" in res["result"]
+    assert res["population_caveat"]
+
+
+# --- balance travels with the p-value ---------------------------------------
+def test_every_p_value_carries_its_coordinate_balance(parent):
+    m = inject_none(parent, base_rate=0.02, seed=11)
+    cat = ingest.from_frames("bal", parent, mask=m)
+    res = analyse_catalogue(cat, quick=True)
+    for name, entry in res["tests"].items():
+        if entry["insufficient"] or name.startswith("age:"):
+            continue
+        assert "coordinate_balance" in entry
+        assert entry["balance_quality"] in ("good", "marginal", "poor", "undefined", None)
+
+
+def test_coordinate_balance_flags_a_poorly_matched_coordinate(parent):
+    m = inject_gradient(parent, coord="R_gal_kpc", slope_ln_per_unit=1.2,
+                        base_rate=0.02, seed=13)
+    null = MatchedNull(parent, m, STRICT, seed=1)
+    bal = null.coordinate_balance(parent["R_gal_kpc"].to_numpy(float), "R_gal_kpc")
+    assert abs(bal["std_diff"]) > 0.1
+    assert bal["quality"] in ("marginal", "poor")
+
+
+def test_verdict_gates_are_all_reported(parent):
+    m = inject_none(parent, base_rate=0.02, seed=11)
+    cat = ingest.from_frames("gates", parent, mask=m)
+    res = analyse_catalogue(cat, quick=True)
+    for g in ("any_resolved_test", "family_p_below_alpha", "not_floor_limited",
+              "tested_coordinate_balanced", "essential_covariates_present",
+              "anomaly_population_vetted",
+              "sufficient_anomalies_in_winning_test"):
+        assert g in res["verdict_gates"], g
+    assert res["result"] in ("CLEAN_NULL", "STRUCTURE_UNRESOLVED", "NOT_TESTABLE")
+    assert res["detection"] is False

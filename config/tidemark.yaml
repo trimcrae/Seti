@@ -56,10 +56,20 @@ channels:
 
   # DIMMING: dimming_scored.csv is one row per object that got a light curve,
   # with is_candidate as the survivor flag --- a real tier-B parent sample.
+  # BUT: STATUS.md records that this population sits AT the ZTF systematics
+  # floor (19 marginal faders assessed and set aside, 18 of 19 not confirmed in
+  # a second band). Spatial structure in the top percentile of this score is far
+  # more likely to trace ZTF's footprint, cadence and depth than the sky, so the
+  # caveat is carried into the result string, not left in the docs.
   dimming_secular:
     parent: results/dimming/fp*/dimming_scored.csv
     score_col: score
-    covariates: [g_mag, bp_rp, n_epochs, log_local_density]
+    covariates: [g_mag, bp_rp, n_epochs, log_local_density, ebv, dist_pc]
+    caveat: >
+      the dimming secular-fade score sits at the ZTF systematics floor
+      (STATUS.md: 19 marginal faders, 18 of 19 not band-confirmed); structure in
+      its top percentile most plausibly traces survey footprint/cadence/depth
+    caveat_tag: AT_SYSTEMATICS_FLOOR
 
   # EMBER (IR-excess cessation), ISOTHERM (SED shape) and TAILINGS (sparse
   # chemical anomaly) are under construction.  Their blocks are declared here so

@@ -778,3 +778,49 @@ contamination that ended the previous six. Full design and honest limits in
   this repo are empty for that reason, not because the papers are uncited.
   Resolve the DOI to a work ID and use `cites:W...`. Fixed in
   `scripts/necrolit_fetch.py`.
+
+### TIDEMARK reporting-logic failure and fix — 2026-07-26
+
+The first committed TIDEMARK run emitted `verdict: DETECTION`. It was wrong, and
+every reason generalises to any population-level statistic this repo builds.
+Recorded here so it is not re-derived.
+
+* **A Monte Carlo p-value equal to `1/(n_null+1)` is a BOUND, not a
+  measurement.** It means "no null realisation was this extreme". Three
+  "independent" edge geometries all returned exactly `0.0033222591 = 1/301` —
+  that is the floor, not agreement. Report floor-limited p as `p < x`, escalate
+  the draw count before believing it, and never feed a floor value to a trials
+  correction as though it were measured.
+* **Identical p-values across "independent" tests mean they are not
+  independent.** Each edge geometry now reports which anomalies produced its
+  step; sets overlapping by Jaccard ≥ 0.5 are one feature and count once.
+* **Guard every statistic on the anomalies carrying ITS OWN coordinate, never on
+  the catalogue total.** The dimming catalogue had 2555 anomalies of which **30
+  had a parallax**. The 3D shell scan and the |z| edge scan guarded on 2555 and
+  ran on 30. A scan on 30 objects across 24 bins will find a step. Threshold is
+  now 30 *usable* anomalies per test, returning `INSUFFICIENT_ANOMALIES` with
+  `p_value: null` — which the aggregator surfaces rather than silently skips.
+* **`p = None` must be a verdict, not a gap.** The original aggregator filtered
+  non-finite p-values out of the family and then declared a detection on what
+  remained.
+* **Channels spell the same covariate differently, and a covariate list matched
+  by literal name silently drops the ones it does not recognise.** `dimming`
+  calls its magnitude `g_mag`; the global list says `phot_g_mean_mag`. Result:
+  a 255,469-star catalogue matched on three columns, **no magnitude at all**, in
+  44 strata. Covariates are now resolved into physical *families* through an
+  alias table, and a missing magnitude family blocks a detection outright.
+* **The tested coordinate is the one covariate the null makes no promise about,
+  so its residual imbalance bounds that test's credibility and belongs next to
+  the p-value.** `R_gal_kpc` had SMD 0.197 — the worst of any covariate — while
+  the p-value it produced was being read as a detection. Rubin (2001)
+  convention: |SMD| < 0.10 good, < 0.25 marginal. ≥ 0.10 now blocks a detection.
+* **A top-N% score cut is not a candidate population.** It returns exactly the
+  fraction you asked for whatever the data looks like, so structure in it traces
+  the survey at least as readily as the sky. Only a vetted candidate list sets
+  `vetted=True`, and only a vetted population can earn `DETECTION`.
+* **A channel at a known systematics floor must carry that caveat in the result
+  string, not only in its docs.** `dimming_secular` now carries
+  `caveat_tag: AT_SYSTEMATICS_FLOOR`.
+* **General rule: a committed `DETECTION` is the artifact that gets mistaken for
+  a result later.** Verdicts are now gated, every gate is written out, and a
+  non-detection names the gate that stopped it.

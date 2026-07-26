@@ -31,7 +31,7 @@ from .agerate import age_proxies, age_rate_test
 from .edge import edge_scan_1d, edge_scan_cap, edge_scan_shell3d
 from .gradient import gradient_test
 from .inject import inject_bubble
-from .nulls import MatchedNull
+from .nulls import MIN_ANOMALIES_PER_TEST, MatchedNull
 
 CHANNEL = "tidemark"
 
@@ -75,6 +75,18 @@ def _out_dir(cfg: Config) -> Path:
         return Path(cfg.root) / "results" / CHANNEL
 
 
+def _strip_private(obj):
+    """Remove the ``_inside_mask`` side channel (numpy arrays used for the
+    independence check) before anything is serialised."""
+    if isinstance(obj, dict):
+        # Keys are not always strings (stratum-collapse levels are ints).
+        return {k: _strip_private(v) for k, v in obj.items()
+                if not (isinstance(k, str) and k.startswith("_"))}
+    if isinstance(obj, list):
+        return [_strip_private(v) for v in obj]
+    return obj
+
+
 def _jsonable(o):
     if isinstance(o, (np.integer,)):
         return int(o)
@@ -85,6 +97,123 @@ def _jsonable(o):
     if isinstance(o, np.ndarray):
         return [_jsonable(x) for x in o.tolist()]
     return str(o)
+
+
+# --- covariates, escalation, independence ------------------------------------
+#: Column names different channels use for the same physical covariate.  A
+#: channel that calls its magnitude ``g_mag`` must not silently go unmatched
+#: because the global default list says ``phot_g_mean_mag``.
+_COVARIATE_ALIASES = {
+    "magnitude": ("phot_g_mean_mag", "g_mag", "gmag", "phot_g_mean_mag_corr",
+                  "mag", "vmag", "kmag"),
+    "distance": ("dist_pc", "distance_pc", "parallax"),
+    "colour": ("bp_rp", "g_rp", "bp_g", "j_k"),
+    "extinction": ("ebv", "a_g", "ag_gspphot", "ebpminrp_gspphot"),
+    "crowding": ("log_local_density",),
+    "epochs": ("n_obs", "n_epochs", "nepochs", "astrometric_n_good_obs_al"),
+}
+#: Matching without a depth proxy is barely matching at all -- apparent
+#: magnitude is the dominant detectability variable in every photometric survey.
+_ESSENTIAL_COVARIATE_FAMILIES = ("magnitude",)
+
+
+def _resolve_covariates(cat, parent, blocks: dict, mode: str):
+    """Union the channel's declared covariates with the global defaults.
+
+    The channel knows its own column names; the global list knows which
+    *physical* covariates matter.  Using only the global list silently drops any
+    covariate the channel spells differently --- which is how a 255k-star
+    catalogue got matched on three columns and no magnitude at all.
+    """
+    declared = [c for c in (cat.covariates or ())]
+    defaults = list(blocks["covariates"][mode])
+    requested = declared + [c for c in defaults if c not in declared]
+    if mode == "permissive":
+        requested = [c for c in requested if c not in _COVARIATE_ALIASES["distance"]]
+    used = [c for c in requested if c in parent.columns]
+    missing = [c for c in requested if c not in parent.columns]
+
+    families, warnings = {}, []
+    for fam, names in _COVARIATE_ALIASES.items():
+        hit = next((c for c in used if c in names), None)
+        families[fam] = hit
+        if hit is None and fam in _ESSENTIAL_COVARIATE_FAMILIES:
+            warnings.append(
+                f"no {fam} covariate is available in this parent sample "
+                f"(looked for {list(names)}); the matched null cannot correct for "
+                "the dominant detectability variable and any structure it finds "
+                "may simply be a depth map")
+    return used, {"declared_by_channel": declared, "requested": requested,
+                  "used": used, "missing_from_parent": missing,
+                  "families_matched": families, "warnings": warnings,
+                  "essential_covariates_present": not warnings}
+
+
+def _escalate(fn, n_start: int, n_max: int, max_rounds: int = 2) -> dict:
+    """Re-run a statistic with more null draws while its p-value sits on the
+    Monte Carlo floor.
+
+    ``p == 1/(n_null+1)`` says only "no null realisation was this extreme".  It
+    is a bound.  Escalating turns it into a measurement, or --- if it survives
+    the cap --- into an honest inequality that the verdict logic must not treat
+    as a resolved detection.
+    """
+    n = int(n_start)
+    res = fn(n)
+    rounds = 0
+    while (isinstance(res, dict) and res.get("floor_limited")
+           and n < n_max and rounds < max_rounds):
+        n = min(n * 8, int(n_max))
+        res = fn(n)
+        rounds += 1
+    if isinstance(res, dict):
+        res["escalation"] = {"n_null_final": n, "rounds": rounds,
+                             "capped": bool(res.get("floor_limited"))}
+    return res
+
+
+def _jaccard(a: np.ndarray, b: np.ndarray) -> float:
+    inter = float(np.sum(a & b))
+    union = float(np.sum(a | b))
+    return inter / union if union > 0 else 0.0
+
+
+def _independence(tests: dict, threshold: float = 0.5) -> dict:
+    """Group tests that fired on substantially the same anomalies.
+
+    Three "independent geometries" returning the same p-value are not three
+    pieces of evidence.  Each edge geometry reports which anomalies produced its
+    step; tests whose firing sets overlap by more than ``threshold`` (Jaccard)
+    are one feature seen three ways, and the trials correction must count them
+    once.
+    """
+    names = [k for k, v in tests.items() if isinstance(v.get("_inside_mask"), np.ndarray)]
+    overlaps, groups = {}, []
+    assigned: dict[str, int] = {}
+    for i, a in enumerate(names):
+        for bname in names[i + 1:]:
+            j = _jaccard(tests[a]["_inside_mask"], tests[bname]["_inside_mask"])
+            overlaps[f"{a}|{bname}"] = round(float(j), 4)
+    for a in names:
+        placed = False
+        for gi, grp in enumerate(groups):
+            if any(overlaps.get(f"{m}|{a}", overlaps.get(f"{a}|{m}", 0.0)) >= threshold
+                   for m in grp):
+                grp.append(a)
+                assigned[a] = gi
+                placed = True
+                break
+        if not placed:
+            assigned[a] = len(groups)
+            groups.append([a])
+    n_without_mask = len([k for k in tests if k not in names])
+    return {"pairwise_jaccard": overlaps,
+            "groups": [sorted(g) for g in groups],
+            "n_independent_groups": len(groups) + n_without_mask,
+            "threshold": threshold,
+            "note": ("edge geometries whose firing anomaly sets overlap above the "
+                     "threshold are counted once; identical p-values across "
+                     "'independent' geometries usually mean one feature")}
 
 
 # --- the per-channel analysis ----------------------------------------------
@@ -106,13 +235,18 @@ def analyse_catalogue(cat: ingest.AnomalyCatalogue, *, blocks: dict | None = Non
     mask = cat.anomaly_mask
     n_null = int(b["matched_null"]["n_null"]) if not quick else 60
     n_scan = int(b["edge"]["n_null_scan"]) if not quick else 40
+    max_null = int(b["matched_null"].get("max_n_null", 8000)) if not quick else 240
+    max_scan = int(b["edge"].get("max_n_null_scan", 4000)) if not quick else 160
 
     out["tested"] = True
     out["modes"] = {}
+    out["covariate_resolution"] = {}
     for mode in ("strict", "permissive"):
-        covs = [c for c in b["covariates"][mode] if c in parent.columns]
+        covs, cov_report = _resolve_covariates(cat, parent, b, mode)
+        out["covariate_resolution"][mode] = cov_report
         if not covs:
-            out["modes"][mode] = {"error": "no detectability covariate available"}
+            out["modes"][mode] = {"error": "no detectability covariate available",
+                                  "covariate_resolution": cov_report}
             continue
         try:
             null = MatchedNull(parent, mask, covs,
@@ -122,7 +256,7 @@ def analyse_catalogue(cat: ingest.AnomalyCatalogue, *, blocks: dict | None = Non
             out["modes"][mode] = {"error": str(exc)}
             continue
 
-        res = {"covariates": covs,
+        res = {"covariates": covs, "covariate_resolution": cov_report,
                "null_diagnostics": null.diagnostics(
                    extra_balance_cols=("R_gal_kpc", "abs_z_gal_kpc")).as_dict(),
                "gradient": {}, "edge": {}}
@@ -134,38 +268,45 @@ def analyse_catalogue(cat: ingest.AnomalyCatalogue, *, blocks: dict | None = Non
             x = parent[coord].to_numpy(float)
             if not np.isfinite(x).any():
                 continue
-            res["gradient"][coord] = gradient_test(
-                x, null, name=coord, n_bins=int(b["gradient"]["n_bins"]),
-                n_null=n_null, periodic=coord.startswith("l_"),
-                seed=seed + 1)
+            res["gradient"][coord] = _escalate(
+                lambda nn, _x=x, _c=coord, null=null: gradient_test(
+                    _x, null, name=_c, n_bins=int(b["gradient"]["n_bins"]),
+                    n_null=nn, periodic=_c.startswith("l_"), seed=seed + 1),
+                n_null, max_null)
 
         # --- edge, three geometries ----------------------------------------
         smooth = {c: parent[c].to_numpy(float)
                   for c in ("R_gal_kpc", "abs_z_gal_kpc") if c in parent.columns}
         for coord in ("R_gal_kpc", "abs_z_gal_kpc"):
             if coord in parent.columns and np.isfinite(parent[coord]).any():
-                res["edge"][coord] = edge_scan_1d(
-                    parent[coord].to_numpy(float), null, name=coord,
-                    n_bins=int(b["edge"]["n_bins_1d"]),
-                    widths=tuple(b["edge"]["widths"]), n_null=n_scan,
-                    smooth_order=int(b["edge"]["smooth_order"]),
-                    min_expected=float(b["edge"]["min_expected"]), seed=seed + 2)
+                res["edge"][coord] = _escalate(
+                    lambda nn, _c=coord, null=null, parent=parent: edge_scan_1d(
+                        parent[_c].to_numpy(float), null, name=_c,
+                        n_bins=int(b["edge"]["n_bins_1d"]),
+                        widths=tuple(b["edge"]["widths"]), n_null=nn,
+                        smooth_order=int(b["edge"]["smooth_order"]),
+                        min_expected=float(b["edge"]["min_expected"]), seed=seed + 2),
+                    n_scan, max_scan)
         if {"X_pc", "Y_pc", "Z_pc"} <= set(parent.columns):
             xyz = parent[["X_pc", "Y_pc", "Z_pc"]].to_numpy(float)
             if np.isfinite(xyz).all(axis=1).sum() > 100:
-                res["edge"]["shell_3d"] = edge_scan_shell3d(
-                    xyz, null, n_per_axis=int(b["edge"]["shell_centres_per_axis"]),
-                    n_bins=int(b["edge"]["shell_n_bins"]),
-                    widths=tuple(b["edge"]["widths"][:4]), n_null=n_scan,
-                    min_expected=float(b["edge"]["min_expected"]),
-                    smooth_coords=smooth,
-                    smooth_order=int(b["edge"]["smooth_order"]), seed=seed + 3)
+                res["edge"]["shell_3d"] = _escalate(
+                    lambda nn, null=null, smooth=smooth, xyz=xyz: edge_scan_shell3d(
+                        xyz, null, n_per_axis=int(b["edge"]["shell_centres_per_axis"]),
+                        n_bins=int(b["edge"]["shell_n_bins"]),
+                        widths=tuple(b["edge"]["widths"][:4]), n_null=nn,
+                        min_expected=float(b["edge"]["min_expected"]),
+                        smooth_coords=smooth,
+                        smooth_order=int(b["edge"]["smooth_order"]), seed=seed + 3),
+                    n_scan, max_scan)
         if {"l_deg", "b_deg"} <= set(parent.columns):
-            res["edge"]["sky_cap"] = edge_scan_cap(
-                parent["l_deg"].to_numpy(float), parent["b_deg"].to_numpy(float),
-                null, n_directions=int(b["edge"]["cap_directions"]),
-                widths=tuple(b["edge"]["widths"][:4]), n_null=n_scan,
-                min_expected=float(b["edge"]["min_expected"]), seed=seed + 4)
+            res["edge"]["sky_cap"] = _escalate(
+                lambda nn, null=null, parent=parent: edge_scan_cap(
+                    parent["l_deg"].to_numpy(float), parent["b_deg"].to_numpy(float),
+                    null, n_directions=int(b["edge"]["cap_directions"]),
+                    widths=tuple(b["edge"]["widths"][:4]), n_null=nn,
+                    min_expected=float(b["edge"]["min_expected"]), seed=seed + 4),
+                n_scan, max_scan)
         out["modes"][mode] = res
 
     # --- age (the filter clock) --------------------------------------------
@@ -175,39 +316,142 @@ def analyse_catalogue(cat: ingest.AnomalyCatalogue, *, blocks: dict | None = Non
         n_bins=int(b["age"]["n_bins"]),
         n_null=int(b["age"]["n_null"]) if not quick else 60, seed=seed + 5)
 
-    # --- headline ----------------------------------------------------------
+    # --- headline ------------------------------------------------------------
+    # Every p-value is accompanied by (a) whether it is resolved or sitting on
+    # the Monte Carlo floor, (b) how many anomalies actually entered it, and
+    # (c) the residual imbalance of the coordinate it tested.  A number without
+    # those three is not interpretable, and a verdict built on such a number is
+    # how a floor artefact becomes a "detection".
     strict = out["modes"].get("strict", {})
-    grad_p = {k: v.get("headline_p") for k, v in (strict.get("gradient") or {}).items()
-              if isinstance(v, dict)}
-    edge_p = {k: v.get("p_value") for k, v in (strict.get("edge") or {}).items()
-              if isinstance(v, dict)}
-    all_p = {f"gradient:{k}": v for k, v in grad_p.items() if v is not None}
-    all_p.update({f"edge:{k}": v for k, v in edge_p.items() if v is not None})
-    age_p = (out["age"] or {}).get("shape_p_value")
-    if age_p is not None:
-        all_p["age:shape"] = age_p
-    finite = {k: v for k, v in all_p.items() if v is not None and np.isfinite(v)}
-    n_tests = max(len(finite), 1)
-    best = min(finite, key=finite.get) if finite else None
-    out["p_values"] = finite
+    entries: dict = {}
+    for fam, block in (("gradient", strict.get("gradient") or {}),
+                       ("edge", strict.get("edge") or {})):
+        for k, v in block.items():
+            if not isinstance(v, dict):
+                continue
+            key = f"{fam}:{k}"
+            pv = v.get("headline_p") if fam == "gradient" else v.get("p_value")
+            entries[key] = {
+                "p_value": pv,
+                "p_repr": v.get("p_repr"),
+                "floor_limited": bool(v.get("floor_limited")),
+                "insufficient": bool(v.get("insufficient")),
+                "verdict": v.get("verdict"),
+                "reason": v.get("reason"),
+                "n_anom": v.get("n_anom"),
+                "n_anom_total": v.get("n_anom_total", cat.n_anomaly),
+                "coordinate_balance": (v.get("coordinate_balance") or {}).get("std_diff"),
+                "balance_quality": (v.get("coordinate_balance") or {}).get("quality"),
+                "n_null": (v.get("escalation") or {}).get("n_null_final"),
+                "_inside_mask": v.get("_inside_mask"),
+            }
+    age = out.get("age") or {}
+    if age.get("shape_p_value") is not None:
+        entries["age:shape"] = {"p_value": age.get("shape_p_value"),
+                                "p_repr": f"{age.get('shape_p_value'):.4g}",
+                                "floor_limited": False, "insufficient": False,
+                                "verdict": "OK", "n_anom": cat.n_anomaly,
+                                "n_anom_total": cat.n_anomaly,
+                                "coordinate_balance": None, "_inside_mask": None}
+
+    indep = _independence({k: v for k, v in entries.items()
+                           if v.get("_inside_mask") is not None})
+    for v in entries.values():
+        v.pop("_inside_mask", None)
+
+    # Only *resolved, sufficiently-powered* tests can support a claim.
+    usable = {k: v for k, v in entries.items()
+              if v["p_value"] is not None and np.isfinite(v["p_value"])
+              and not v["insufficient"]}
+    resolved = {k: v for k, v in usable.items() if not v["floor_limited"]}
+    n_eff = max(indep["n_independent_groups"], 1)
+
+    best = min(resolved, key=lambda k: resolved[k]["p_value"]) if resolved else None
+    best_p = resolved[best]["p_value"] if best else None
+    fam_p = (1.0 - (1.0 - best_p) ** n_eff) if best_p is not None else None
+
+    out["tests"] = entries
+    out["independence"] = indep
+    out["n_tests_run"] = len(entries)
+    out["n_tests_usable"] = len(usable)
+    out["n_tests_resolved"] = len(resolved)
+    out["n_effective_independent_tests"] = n_eff
+    out["insufficient_tests"] = {k: v.get("reason") for k, v in entries.items()
+                                 if v["insufficient"]}
+    out["floor_limited_tests"] = {k: v["p_repr"] for k, v in usable.items()
+                                  if v["floor_limited"]}
+    out["p_values"] = {k: v["p_value"] for k, v in usable.items()}
+    out["p_values_repr"] = {k: v["p_repr"] for k, v in entries.items()}
     out["best_test"] = best
-    out["best_p"] = finite.get(best) if best else None
-    # Sidak correction over the family of tests actually run.  Deliberately
-    # conservative: these tests are *correlated* (a bubble offset from the Sun
-    # produces a radial gradient, a longitude dipole and a shell edge at once),
-    # so treating them as independent over-corrects rather than under-corrects.
-    out["best_p_trials_corrected"] = (1.0 - (1.0 - finite[best]) ** n_tests) if best else None
-    out["n_tests_in_family"] = n_tests
-    # Monte Carlo resolution floor: a p-value at the floor means "as extreme as
-    # any draw produced", not "exactly this small".
-    out["p_resolution_floor"] = {"gradient": 1.0 / (n_null + 1),
-                                 "edge_scan": 1.0 / (n_scan + 1)}
-    out["trials_correction_note"] = (
-        "Sidak over correlated tests; conservative. Compare best_p against the "
-        "Monte Carlo floor before reading it as a bound.")
-    out["detection"] = bool(out["best_p_trials_corrected"] is not None
-                            and out["best_p_trials_corrected"] < 0.05)
+    out["best_p"] = best_p
+    out["best_p_family_corrected"] = fam_p
+    # Retained under the old name so downstream readers do not silently get None.
+    out["best_p_trials_corrected"] = fam_p
+
+    # --- verdict gates -------------------------------------------------------
+    cov = (out.get("covariate_resolution") or {}).get("strict") or {}
+    bal = resolved[best]["coordinate_balance"] if best else None
+    gates = {
+        "any_resolved_test": bool(resolved),
+        "family_p_below_alpha": bool(fam_p is not None and fam_p < 0.05),
+        "not_floor_limited": bool(best is not None),
+        "tested_coordinate_balanced": bool(
+            bal is None or abs(bal) < 0.10),
+        "essential_covariates_present": bool(cov.get("essential_covariates_present", False)),
+        "anomaly_population_vetted": bool(getattr(cat, "vetted", False)),
+        "sufficient_anomalies_in_winning_test": bool(
+            best is not None
+            and (resolved[best]["n_anom"] or 0) >= MIN_ANOMALIES_PER_TEST),
+    }
+    failed = [k for k, v in gates.items() if not v]
+    out["verdict_gates"] = gates
+    out["failed_gates"] = failed
+
+    if not usable:
+        out["result"] = "NOT_TESTABLE"
+    elif not gates["any_resolved_test"] and out["floor_limited_tests"]:
+        out["result"] = "STRUCTURE_UNRESOLVED"
+    elif not gates["family_p_below_alpha"]:
+        out["result"] = "CLEAN_NULL"
+    elif not gates["essential_covariates_present"]:
+        out["result"] = "STRUCTURE_UNCORRECTED"
+    elif not gates["anomaly_population_vetted"]:
+        out["result"] = "STRUCTURE_UNVETTED_POPULATION"
+    elif not gates["tested_coordinate_balanced"]:
+        out["result"] = "STRUCTURE_CONFOUNDED"
+    else:
+        out["result"] = "DETECTION"
+    out["detection"] = bool(out["result"] == "DETECTION")
+    out["result_explanation"] = _RESULT_MEANING.get(out["result"], "")
+    if getattr(cat, "caveat", None):
+        out["population_caveat"] = cat.caveat
+        out["result"] = out["result"] + " [" + cat.caveat_tag + "]" \
+            if out["result"] != "CLEAN_NULL" else out["result"]
     return out
+
+
+#: What each result string commits to.  Kept next to the logic so a reader of
+#: the JSON never has to guess how strong a claim is being made.
+_RESULT_MEANING = {
+    "DETECTION": "resolved, family-corrected, covariate-balanced structure in a "
+                 "vetted anomaly population",
+    "STRUCTURE_UNRESOLVED": "the most extreme statistic never exceeded any null "
+                            "realisation even after escalating the draw count; "
+                            "the p-value is a bound, not a measurement",
+    "STRUCTURE_UNCORRECTED": "significant, but the parent sample lacks a covariate "
+                             "the matched null needs (typically apparent "
+                             "magnitude); the structure may be a depth map",
+    "STRUCTURE_UNVETTED_POPULATION": "significant, but the anomaly set is a bare "
+                                     "score percentile rather than a vetted "
+                                     "candidate list; most likely traces the "
+                                     "survey rather than the sky",
+    "STRUCTURE_CONFOUNDED": "significant, but the tested coordinate is itself "
+                            "poorly balanced between anomalies and the matched "
+                            "null (|SMD| >= 0.10), which is the leading route to "
+                            "a spurious gradient or edge",
+    "CLEAN_NULL": "no structure beyond the parent-matched null",
+    "NOT_TESTABLE": "no statistic could be computed on this catalogue",
+}
 
 
 # --- injection calibration on the real parent -------------------------------
@@ -370,7 +614,8 @@ def tidemark_run(cfg: Config | None = None, *, channels=None, catalogues=None,
         per_channel[cat.name] = res
         cdir = base / cat.name
         cdir.mkdir(parents=True, exist_ok=True)
-        (cdir / "summary.json").write_text(json.dumps(res, indent=2, default=_jsonable))
+        (cdir / "summary.json").write_text(
+            json.dumps(_strip_private(res), indent=2, default=_jsonable))
         # The selection function itself, per star: the auditable deliverable.
         if cat.usable:
             try:
@@ -392,21 +637,50 @@ def tidemark_run(cfg: Config | None = None, *, channels=None, catalogues=None,
     verdicts = {c.name: c.verdict for c in cats}
     tested = [r for r in results if r.get("tested")]
     detections = [r["channel"] for r in tested if r.get("detection")]
+    # Rank results by how strong a claim they represent; the run's verdict is
+    # the strongest claim any channel actually earned, never an aggregate of
+    # unresolved or ungated ones.
+    order = ["DETECTION", "STRUCTURE_CONFOUNDED", "STRUCTURE_UNVETTED_POPULATION",
+             "STRUCTURE_UNCORRECTED", "STRUCTURE_UNRESOLVED", "CLEAN_NULL",
+             "NOT_TESTABLE"]
+    seen = [str(r.get("result", "NOT_TESTABLE")).split(" [")[0] for r in tested]
+    verdict = next((s for s in order if s in seen), "NO_TESTABLE_CATALOGUE")
+    if not tested:
+        verdict = "NO_TESTABLE_CATALOGUE"
     summary = {
         "channel": CHANNEL,
-        "verdict": ("DETECTION" if detections else
-                    ("CLEAN_NULL" if tested else "NO_TESTABLE_CATALOGUE")),
+        "verdict": verdict,
+        "verdict_meaning": _RESULT_MEANING.get(verdict,
+                                               "no catalogue supplied a parent sample"),
         "n_catalogues": len(cats), "n_tested": len(tested),
+        "n_untested": len(cats) - len(tested),
         "catalogue_verdicts": verdicts,
+        "results_by_channel": {r["channel"]: r.get("result") for r in tested},
         "detections": detections,
-        "best_p_by_channel": {r["channel"]: r.get("best_p_trials_corrected")
+        "failed_gates_by_channel": {r["channel"]: r.get("failed_gates")
+                                    for r in tested},
+        "best_p_by_channel": {r["channel"]: r.get("best_p_family_corrected")
                               for r in tested},
+        "p_repr_by_channel": {r["channel"]: r.get("p_values_repr") for r in tested},
+        "insufficient_tests_by_channel": {r["channel"]: r.get("insufficient_tests")
+                                          for r in tested},
         "channels": per_channel,
         "predictions_discriminated": _PREDICTIONS,
+        "reporting_rules": {
+            "floor_limited_p": "reported as an inequality (p_repr), never as a "
+                               "point estimate; escalated before being believed",
+            "trials_correction": "Sidak over n_effective_independent_tests, where "
+                                 "edge geometries firing on overlapping anomaly "
+                                 "sets are counted once",
+            "insufficient": "a statistic with fewer than "
+                            f"{MIN_ANOMALIES_PER_TEST} anomalies carrying its own "
+                            "coordinate returns INSUFFICIENT_ANOMALIES, not a p-value",
+        },
     }
-    (base / "summary.json").write_text(json.dumps(summary, indent=2, default=_jsonable))
-    print("[tidemark]", json.dumps({"verdict": summary["verdict"],
-                                    "n_tested": len(tested),
+    (base / "summary.json").write_text(
+        json.dumps(_strip_private(summary), indent=2, default=_jsonable))
+    print("[tidemark]", json.dumps({"verdict": verdict, "n_tested": len(tested),
+                                    "results": summary["results_by_channel"],
                                     "verdicts": verdicts}, default=_jsonable))
     return summary
 

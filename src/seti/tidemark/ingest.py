@@ -143,6 +143,18 @@ class AnomalyCatalogue:
     verdict: str = OK
     notes: list = field(default_factory=list)
     provenance: dict = field(default_factory=dict)
+    #: How the anomaly subset was defined.  A bare percentile of a score
+    #: distribution is NOT a candidate population: it contains, by construction,
+    #: exactly as many objects as you asked for, whatever the data looks like.
+    #: Spatial structure in such a set most often traces the survey's footprint,
+    #: cadence and depth.  Only ``vetted_candidate_list`` earns ``vetted=True``,
+    #: and only a vetted population can support a DETECTION verdict.
+    anomaly_definition: str = "unspecified"
+    vetted: bool = False
+    #: Free-text warning carried into the result string (e.g. a channel whose
+    #: own ledger records it sits at a systematics floor).
+    caveat: str = ""
+    caveat_tag: str = ""
 
     # -- construction helpers -------------------------------------------
     def __post_init__(self):
@@ -209,6 +221,9 @@ class AnomalyCatalogue:
 
     def summary(self) -> dict:
         return {"channel": self.name, "verdict": self.verdict,
+                "anomaly_definition": self.anomaly_definition,
+                "population_vetted": self.vetted,
+                "caveat": self.caveat or None,
                 "n_parent": self.n_parent, "n_anomaly": self.n_anomaly,
                 "anomaly_rate": (self.n_anomaly / self.n_parent) if self.n_parent else None,
                 "covariates": list(self.covariates), "notes": list(self.notes),
@@ -219,18 +234,34 @@ class AnomalyCatalogue:
 def from_frames(name: str, parent: pd.DataFrame, anomalies=None, *,
                 id_col: str = "source_id", mask=None, score_col: str | None = None,
                 score_min: float | None = None, covariates=DEFAULT_COVARIATES,
-                provenance: dict | None = None) -> AnomalyCatalogue:
+                provenance: dict | None = None, caveat: str = "",
+                caveat_tag: str = "") -> AnomalyCatalogue:
     """Build a catalogue from a parent frame plus either an explicit mask, an
     anomaly frame/id list to join on ``id_col``, or a score column + threshold."""
     parent = parent.reset_index(drop=True)
     notes: list[str] = []
+    definition, vetted = "unspecified", False
     if mask is not None:
         m = np.asarray(mask, bool)
+        definition, vetted = "explicit_mask", False
     elif score_col is not None and score_col in parent.columns:
         v = pd.to_numeric(parent[score_col], errors="coerce").to_numpy(float)
-        thr = float(score_min) if score_min is not None else float(np.nanpercentile(v, 99.0))
+        if score_min is not None:
+            thr = float(score_min)
+            definition = "score_threshold"
+        else:
+            thr = float(np.nanpercentile(v, 99.0))
+            definition = "percentile_cut"
         m = np.isfinite(v) & (v >= thr)
-        notes.append(f"anomaly = {score_col} >= {thr:g}")
+        frac = float(m.mean()) if len(m) else 0.0
+        notes.append(f"anomaly = {score_col} >= {thr:g} ({100 * frac:.3g}% of the parent)")
+        if definition == "percentile_cut" or abs(frac - 0.01) < 2e-3:
+            definition = "percentile_cut"
+            notes.append(
+                "this is a bare percentile of a score distribution, not a vetted "
+                "candidate list: it selects a fixed FRACTION of the parent whatever "
+                "the data looks like, so any spatial structure in it is at least as "
+                "likely to trace survey footprint, cadence and depth as the sky")
     elif anomalies is not None:
         if isinstance(anomalies, pd.DataFrame):
             if id_col not in anomalies.columns or id_col not in parent.columns:
@@ -251,6 +282,7 @@ def from_frames(name: str, parent: pd.DataFrame, anomalies=None, *,
             return cat
         m = parent[id_col].astype(str).isin(ids).to_numpy()
         notes.append(f"anomaly = membership in the candidate list by {id_col}")
+        definition, vetted = "vetted_candidate_list", True
     else:
         m = np.zeros(len(parent), bool)
         notes.append("no anomaly definition supplied")
@@ -260,7 +292,9 @@ def from_frames(name: str, parent: pd.DataFrame, anomalies=None, *,
         score = pd.to_numeric(parent[score_col], errors="coerce").to_numpy(float)
     cat = AnomalyCatalogue(name=name, parent=parent, anomaly_mask=m, id_col=id_col,
                            score=score, covariates=covariates,
-                           provenance=provenance or {})
+                           provenance=provenance or {},
+                           anomaly_definition=definition, vetted=vetted,
+                           caveat=str(caveat or ""), caveat_tag=str(caveat_tag or ""))
     cat.notes.extend(notes)
     return cat.with_frame()
 
@@ -324,7 +358,8 @@ def load_channel(root, name: str, spec: dict) -> AnomalyCatalogue:
         name, parent, anomalies=cands, id_col=id_col,
         score_col=spec.get("score_col"), score_min=spec.get("score_min"),
         covariates=tuple(spec.get("covariates") or DEFAULT_COVARIATES),
-        provenance=prov)
+        provenance=prov, caveat=spec.get("caveat", ""),
+        caveat_tag=spec.get("caveat_tag", ""))
 
 
 def load_all(root, specs: dict) -> dict:

@@ -236,10 +236,14 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f -- results/cenotaph \
-            ':(exclude)results/cenotaph/sample.parquet' \
-            ':(exclude)results/cenotaph/twins.parquet' \
-            ':(exclude)results/cenotaph/checkpoints'
+          # Add ONLY the small outputs by name. A glob-with-excludes would
+          # sweep in the shell parquets and the 427k-row AKARI/IRAS catalogue
+          # caches that arrive flattened from the artifact merge.
+          git add -f -- \
+            results/cenotaph/summary.json \
+            results/cenotaph/sample_meta.json \
+            results/cenotaph/farir_meta.json \
+            results/cenotaph/candidates.csv 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No result changes to commit."
           else
@@ -293,10 +297,14 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f -- results/cenotaph \
-            ':(exclude)results/cenotaph/sample.parquet' \
-            ':(exclude)results/cenotaph/twins.parquet' \
-            ':(exclude)results/cenotaph/checkpoints'
+          # Add ONLY the small outputs by name. A glob-with-excludes would
+          # sweep in the shell parquets and the 427k-row AKARI/IRAS catalogue
+          # caches that arrive flattened from the artifact merge.
+          git add -f -- \
+            results/cenotaph/summary.json \
+            results/cenotaph/sample_meta.json \
+            results/cenotaph/farir_meta.json \
+            results/cenotaph/candidates.csv 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No result changes to commit."
           else

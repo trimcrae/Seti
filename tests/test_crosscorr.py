@@ -16,7 +16,6 @@ from seti.crosscorr.xcorr import (
     air_to_vacuum,
     cross_correlation,
     kp_vsys_map,
-    molecular_template,
     o2_a_band_template,
     planet_rv_track,
     vacuum_to_air,
@@ -68,7 +67,7 @@ def _simulate(kp_true, vsys_true, phases, wl, template_wl, template_depth,
     for e, v in enumerate(vtrack):
         shifted = template_wl * (1.0 + v / C_KMS)
         prof = np.zeros_like(wl)
-        for lam, d in zip(shifted, template_depth):
+        for lam, d in zip(shifted, template_depth, strict=True):
             prof += d * np.exp(-0.5 * ((wl - lam) / line_sigma) ** 2)
         # Absorption imprints a negative dip; scale so lines are ~2% deep.
         resid[e] = -0.02 * prof + rng.normal(0.0, noise, wl.size)

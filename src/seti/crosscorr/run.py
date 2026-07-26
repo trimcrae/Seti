@@ -31,7 +31,6 @@ import numpy as np
 
 from ..config import Config, load_config
 from .xcorr import (
-    C_KMS,
     cross_correlation,
     h2o_template,
     kp_vsys_map,

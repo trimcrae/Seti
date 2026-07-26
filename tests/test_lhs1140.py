@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import numpy as np
-
 from seti.lhs1140.dossier import (
     LHS1140,
     PLANETS,

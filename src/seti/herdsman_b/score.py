@@ -83,7 +83,7 @@ def build_field_spread(field: pd.DataFrame, r_lo: float = 3.0,
     spreads, counts = [], []
     r = field["r_gal"].to_numpy(float)
     mh = field["mh"].to_numpy(float)
-    for lo, hi in zip(edges[:-1], edges[1:]):
+    for lo, hi in zip(edges[:-1], edges[1:], strict=False):
         sel = (r >= lo) & (r < hi) & np.isfinite(mh)
         spreads.append(_mad_std(mh[sel]) if sel.sum() >= 200 else np.nan)
         counts.append(int(sel.sum()))

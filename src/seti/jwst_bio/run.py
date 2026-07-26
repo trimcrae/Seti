@@ -34,7 +34,6 @@ from .spectrum import (
     abiotic_false_positive,
     build_transmission_spectrum,
     disequilibrium_biosignature,
-    eclipse_brightness_temperature,
     laser_line_scan,
     molecular_feature_detect,
     transit_mask_from_ephemeris,
@@ -121,9 +120,9 @@ def _query_mast_products(ra: float, dec: float, radius_arcsec: float = 20.0):
     can degrade honestly.
     """
     try:
-        from astroquery.mast import Observations
-        from astropy.coordinates import SkyCoord
         import astropy.units as u
+        from astropy.coordinates import SkyCoord
+        from astroquery.mast import Observations
     except Exception as exc:  # noqa: BLE001
         print(f"[jwst_bio] astroquery/astropy unavailable: {exc!r}")
         return pd.DataFrame(), pd.DataFrame()

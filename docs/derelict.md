@@ -219,6 +219,37 @@ the channel's own **empirical false-positive floor**: the rate at which orbit
 fits manufacture a spurious A1 of the wrong sign bounds the rate at which they
 manufacture one of the right sign.
 
+**It worked on the first real run.** Run 30204137011 returned exactly one
+significant negative-A1 object, and it is about as informative as it could be:
+
+| | 4179 Toutatis (1989 AC) |
+|---|---|
+| class | APO |
+| A1 | −3.149×10⁻¹³ au/day² |
+| σ(A1) | 9.279×10⁻¹⁴ |
+| A1/σ | **−3.39 (sunward)** |
+| data arc | 33,698 d (92 yr) |
+| n_obs | 7,141 |
+| condition code | 0 (best) |
+| diameter | 5.4 km |
+
+Toutatis is one of the best-observed asteroids in the sky, and it shows a 3.4σ
+*sunward* radial acceleration — which radiation pressure cannot produce. So this
+is a clean measurement of the systematic floor of JPL's non-gravitational fits,
+and it converts directly into the units this channel cares about:
+
+```
+|β|  = 1.06×10⁻⁹
+|AMR| = 1.39×10⁻⁶ m²/kg
+AMR_natural(5.4 km, ρ=1000) = 2.78×10⁻⁷ m²/kg
+⇒ |R| = 5.0
+```
+
+**The floor sits at |R| ≈ 5, and the flag threshold is R = 10.** The thresholds
+are therefore set a factor of ~2 above the measured noise, not inside it — and
+that statement now rests on data rather than on assertion. Any future candidate
+with R of order 10 must be treated as marginal against this floor.
+
 ### Screen 4 — impossible albedo
 
 Geometric albedo > 0.7 is impossible for natural regolith and trivial for

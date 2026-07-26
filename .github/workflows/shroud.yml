@@ -197,10 +197,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # Keep the small, reviewable outputs; the bulk tables stay artifacts.
-          git add -f -- results/shroud/summary.json results/shroud/REPORT.md \
-            results/shroud/population.csv results/shroud/survivors.csv \
-            results/shroud/null_stats.json results/shroud/acquire_verdict.json \
-            results/shroud/photometry_provenance.json || true
+          # One path at a time: `git add` with several pathspecs is ATOMIC, so a
+          # single missing file makes it stage NOTHING, the `|| true` swallows
+          # the error, and the whole run's results are silently lost.
+          for p in results/shroud/summary.json results/shroud/REPORT.md \
+                   results/shroud/population.csv results/shroud/survivors.csv \
+                   results/shroud/null_stats.json \
+                   results/shroud/acquire_verdict.json \
+                   results/shroud/photometry_provenance.json; do
+            git add -f -- "$p" 2>/dev/null && echo "staged: $p" || echo "absent: $p"
+          done
           if git diff --cached --quiet; then
             echo "No result changes to commit."
           else

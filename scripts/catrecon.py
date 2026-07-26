@@ -5,10 +5,8 @@ Pure metadata: fetches VizieR ReadMe files, TAP_SCHEMA table/column listings,
 and exact row counts for the AKARI and IRAS all-sky catalogues, then writes
 everything under results/catrecon/. No science, no big downloads.
 """
-import io
 import json
 import os
-import sys
 import time
 import urllib.parse
 

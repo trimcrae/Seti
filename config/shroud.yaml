@@ -11,20 +11,48 @@
 # nuclear-test analyses.
 
 acquire:
-  # SVO "vocats" VO archive published with Solano, Villarroel & Rodrigo 2022,
-  # MNRAS 515, 1380.  Endpoints are probed in order; the first that returns a
-  # parseable table wins and its URL is recorded in the provenance block.
-  # NOTE: none of these can be reached from the sandbox (egress 403) - they are
-  # probed on the GitHub Actions runner.
-  svo_vocats_roots:
-    - "http://svo2.cab.inta-csic.es/vocats/v2/vasco"
-    - "http://svo2.cab.inta-csic.es/vocats/vasco"
-    - "https://svo2.cab.inta-csic.es/vocats/v2/vasco"
-    - "http://svocats.cab.inta-csic.es/vasco"
+  # The VO archive published with Solano, Villarroel & Rodrigo 2022, MNRAS 515,
+  # 1380.  It is TWO SVO "svocats" catalogues, not one:
+  #   vanish-neowise  the 172 163 optically-absent / IR-present sources  <- SHROUD
+  #   vanish-possi    the 5 399 unidentified transients (no IR)          <- control
+  # Both URLs are quoted verbatim in Watters et al. 2026 (arXiv:2601.21946)
+  # Table 1 footnotes, "Retrieved on 2025-12-08 from ...", and independently in
+  # the jannefi/vasco reimplementation README.  Roots are probed in order; the
+  # first that returns a parseable table wins and its URL is recorded in the
+  # provenance block.  None is reachable from the sandbox (egress 403) - they
+  # are probed on the GitHub Actions runner.
+  svo_catalogs:
+    vanish_neowise:
+      - "http://svocats.cab.inta-csic.es/vanish-neowise"
+      - "https://svocats.cab.inta-csic.es/vanish-neowise"
+      - "http://svo2.cab.inta-csic.es/vocats/v2/vanish-neowise"
+      - "http://svo2.cab.inta-csic.es/vocats/vanish-neowise"
+    vanish_possi:
+      - "http://svocats.cab.inta-csic.es/vanish-possi"
+      - "https://svocats.cab.inta-csic.es/vanish-possi"
+      - "http://svo2.cab.inta-csic.es/vocats/v2/vanish-possi"
+      - "http://svo2.cab.inta-csic.es/vocats/vanish-possi"
+  # Whole-sky dump in one request: SR=180 about (RA,DEC)=(180,0).  Parameter set
+  # taken from working production code against another svocats catalogue
+  # (jeroenbouwman/CASCADe scripts/check_phase_error.py).
+  svo_allsky_query: "RA=180.000000&DEC=0.000000&SR=180.000000&VERB=1&nocoor=1&format=ascii"
+  svo_paths: ["cs.php", "", "cs"]
+  # Published row counts.  The abstract says 172 163 for the IR set; the LIVE
+  # archive served 171 753 on 2025-12-08 (Watters et al. 2026, stated four
+  # times).  A fetch landing near 171 753 is CORRECT, not a bug.
+  expected_rows:
+    vanish_neowise: 171753
+    vanish_possi: 5399
+  expected_rows_tolerance_frac: 0.05
   svo_index_urls:
+    - "https://svo.cab.inta-csic.es/docs/index.php?pagename=Archives"
+    - "http://svocats.cab.inta-csic.es/"
     - "http://svo2.cab.inta-csic.es/vocats/"
-    - "http://svo2.cab.inta-csic.es/vocats/v2/"
-    - "https://svo.cab.inta-csic.es/"
+  # Minnesota APS (MAPS) scan of POSS-I E+O: an INDEPENDENT digitization of the
+  # same plates, ~90M objects.  Watters et al. used it as the null-distribution
+  # reference; it is the natural artifact control here too (a real object is on
+  # both the E and O plate, a defect on one).
+  maps_catalog_url: "https://aps.umn.edu/catalog/download/"
   # VizieR fallback: Villarroel+2020 (AJ 159, 8) surviving candidates.
   # Solano+2022 (J/MNRAS/515/1380) is NOT in VizieR - verified 2026-07-26 on the
   # runner, the server returns "Table or Catalog not found".
@@ -60,14 +88,22 @@ epochs:
 crossmatch:
   # Solano+2022 used 5".  Kept as the nominal radius so the sample is the
   # published one, but the chance-match rate at this radius is a first-class
-  # output, not an afterthought (see docs/shroud.md).
+  # output, not an afterthought (see docs/shroud.md).  Watters et al. 2026 note
+  # that dataset W "comprises an undetermined number of NeoWISE objects along
+  # with an undetermined number of incidentally object-proximate SPFs" -
+  # determining that number is a deliverable of this channel.
   radius_arcsec: 5.0
   # A tighter radius used for the "clean" subsample.
   tight_radius_arcsec: 2.0
-  # Local IR source density above which a 5" match is chance-dominated.
   # pi*(5/3600)^2 deg^2 = 6.06e-6 deg^2; density 1.65e5/deg^2 -> P_chance = 1.
   chance_match_warn_prob: 0.05
   chance_match_reject_prob: 0.30
+  # The chance rate is MEASURED, not assumed: the same positions are offset by a
+  # random angle at this separation and re-matched.  An offset-position null
+  # absorbs the real local source density, which is exactly the assumption
+  # (spatial uniformity) that Watters et al. 2026 showed to be false.
+  offset_null_arcsec: 45.0
+  offset_null_realisations: 4
 
 proper_motion:
   # Largest proper motion searched for when testing "did it just move?".

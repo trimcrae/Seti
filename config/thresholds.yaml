@@ -285,3 +285,28 @@ tailings:
     min_refractories: 4
     tcond_slope_sigma: 3.0   # a real engulfment is a condensation-temperature TREND
     max_r_chance_align: 0.1  # El-Badry+2021 purity cut; a chance pair shares no birth
+
+# ISOTHERM — shape of the infrared excess in temperature space (docs/isotherm.md).
+# These gate the shape statistics, not the excess amplitude.
+isotherm:
+  min_points: 25                  # resolution elements after rebinning
+  min_median_snr: 5.0
+  max_reduced_chi2: 8.0
+  # Feature veto needs BOTH significance AND a physically meaningful width.
+  # A significance-only cut flagged a pure blackbody at every redshift offered.
+  feature_veto_sigma: 4.0
+  feature_veto_abs_ew_um: 0.15
+  # beta upper 1-sigma bound below which the emitter is called a true Planck
+  # function. Real grains sit at beta ~ 1-2.
+  beta_planck_max: 0.35
+  # A component must EARN its place: 10 is "very strong" on Kass & Raftery.
+  delta_bic_component: 10.0
+  delta_bic_vs_gradient: 10.0
+  # RMS scatter of log10 of successive temperature ratios for a cascade.
+  geometric_tol_dex: 0.06
+  # Spitzer/IRS SL-vs-LL stitching step: above this the two halves of the
+  # spectrum are not the same object's flux.
+  max_order_step_frac: 0.25
+  n_components_max: 4
+  # Hotter than grains survive -> unresolved companion photosphere.
+  t_companion_k: 1800.0

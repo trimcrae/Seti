@@ -1,0 +1,101 @@
+# EMBER — mid-infrared waste heat that switched off (signature S1).
+#
+# Single source of truth for every selection and rejection threshold in the
+# channel. Every value carries the reason it has that value; where a number
+# comes from the literature the paper is named, because several of these are
+# not adjustable taste but published measurements.
+
+epochs:
+  # The ONLY three surveys carrying 12–25 micron all-sky photometry. NEOWISE is
+  # absent by physics, not oversight: it flies W1/W2 (3.4/4.6 micron) only, so
+  # it cannot measure 100–300 K waste heat at any epoch. W3/W4 exist for the
+  # 2010 cryogenic phase alone.
+  iras_mean_epoch: 1983.5
+  akari_mean_epoch: 2006.7
+  wise_mean_epoch: 2010.4
+  twomass_mean_epoch: 1999.5
+  gaia_ref_epoch: 2016.0
+  # NEOWISE enters only as the post-drop flatness test.
+  neowise_span: [2013.5, 2025.0]
+
+catalogues:
+  iras_psc: "II/125/main"       # 245k sources, 12/25/60/100 um
+  iras_fsc: "II/156A/main"      # 173k sources, ~0.2 Jy at 12/25 um
+  akari_irc: "II/297/irc"       # ~870k sources, 9/18 um, ~2" positions
+  allwise: "II/328/allwise"
+  vizier_tap: "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+
+excess:
+  # Fractional systematic floor on the predicted photosphere, in quadrature
+  # with the measurement error. Covers unresolved companions, metallicity and
+  # activity scatter about the fitted colour locus.
+  phot_sys_frac: 0.05
+  # Excess colour-temperature prior, used only when two same-epoch bands are
+  # not available to fit it. 150 K is set by the longest usable wavelength
+  # (25 um); 1500 K by silicate sublimation.
+  t_dust_prior_k: [150.0, 1500.0]
+  t_dust_default_k: 400.0
+  # Response-curve edge perturbation used to bound the bandpass systematic when
+  # real SVO transmission curves are not cached.
+  edge_jitter: 0.05
+
+cessation:
+  # Minimum significance of the EARLY excess before a fade means anything.
+  min_early_snr: 5.0
+  # A "cessation" (as opposed to a "fade") must lose at least half the excess.
+  f_cess_min: 0.5
+  # Published empirical floor of the IRAS(1983)→WISE(2010) comparison:
+  # HD 172555 was stable to within 4% over those 27 years (arXiv:1210.6258).
+  # Nothing within a few times this is believable however significant it looks.
+  cross_epoch_floor_frac: 0.04
+  # Threshold is normally set from the sample's own rising tail; this is the
+  # fallback when the sample is too small for an empirical null.
+  fallback_threshold_sigma: 5.0
+  null_quantile: 0.999
+
+contamination:
+  # THE most valuable single cut available to this channel. Kennedy & Wyatt
+  # (2012, arXiv:1207.0521): ~8,000 of 180,000 stars show an apparent IRAS
+  # excess whose sky position correlates with the 100-micron background; below
+  # 5 MJy/sr only 271 remain. A factor of ~30 on the dominant contaminant.
+  iras_100um_bkg_max_mjysr: 5.0
+  # IRAS CIRR2/CIRR3 cirrus indices.
+  cirr_max: 3
+  # Early-epoch S/N floor. Below this, flux-limited Eddington bias alone
+  # manufactures a fade with no astrophysical change whatsoever.
+  iras_snr_min: 7.0
+  # IRAS flux quality: 3 = high, 2 = moderate, 1 = upper limit.
+  iras_qual_min: 3
+  # IRAS VAR index (percent probability of variability). Carrigan used the same
+  # flag as a filter in the original IRAS Dyson-sphere search.
+  iras_var_max: 50
+  # The background-galaxy veto. Hot DOGs and dusty starbursts accounted for
+  # every Project Hephaistos candidate followed up with JWST/MIRI; none of them
+  # has a parallax or a proper motion.
+  parallax_snr_min: 8.0
+  pm_snr_min: 5.0
+  match_radius_arcsec: 2.0
+  # Optical constancy: mid-IR change without optical change is the signature;
+  # with optical change it is a pulsating dusty star.
+  gaia_var_amp_max: 0.05
+  # Post-drop flatness. Every persistently variable natural class exceeds this;
+  # TYC 8241 2652 1, the one known step-and-stay object, does not.
+  neowise_rms_max: 0.08
+  neowise_slope_sig_max: 3.0
+  neowise_min_epochs: 20
+  # Blend guard inherited from the repository ledger.
+  w1w2_blend_floor: -0.05
+  # Youth cuts. Every known natural analogue of a vanishing mid-IR excess sits
+  # around a young star with a collisional dust reservoir: TYC 8241 2652 1 is
+  # ~10 Myr, and the extreme debris disks (14 of 17 variable at 3–5 um between
+  # 2010 and 2019) are 10–200 Myr. An old host has no such reservoir.
+  tangential_v_min_kms: 30.0
+  young_nir_excess_max: 0.15
+  abs_g_giant_max: 3.5
+
+pairs:
+  # Verdicts are recomputed at run time by `seti ember --stage audit`; these are
+  # the values that decide which pairs the science stages may use.
+  primary: ["I12->W3", "I25->W4"]
+  secondary: ["I12->S9W", "I25->L18W"]
+  short_baseline: ["S9W->W3", "L18W->W4"]

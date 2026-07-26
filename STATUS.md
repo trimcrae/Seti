@@ -485,6 +485,8 @@ of well-measured *fast* flybys, exactly what the transfer-regime cut rejects.
 | LHS 1140 system deep-dive | star + b/c + 38 neighbours ≤15 pc; 6 archives (Gaia astrometry+XP, WISE/NEOWISE, ZTF, TESS 3.5k epochs); 533 MAST obs inventoried; **biosignature detectability budget** | 0 technosignature; **0 detectable biosignature** | **clean + bio answered.** Star: all 6 channels clean; lone RUWE=1.53 is marginal binarity, not techno. Neighbours: raw 15/38 IR-excess all = WISE W4/blend systematics → 4 survive → faint/blue/ordinary-debris. **Bio:** under b's expected high-μ (N₂) atmosphere (H≈3.6 km) every biosignature feature is ~few ppm → CH₄ ~25 / O₃ ~67 transits vs ~2–4 observed → `NOT_DETECTABLE_WITH_CURRENT_DATA`; reachable only for a disfavoured cleared H₂ envelope |
 | **OSSUARY** (warm dust where none can form) | built; first run dispatched (run 30203264572). Gaia DR3 GSP-Spec/GSP-Phot [Fe/H] < −1 **plus** a pure halo-kinematic track, × the Gaia archive's AllWISE + 2MASS mirrors via the official PM-aware cross-match; expected ~10⁵–10⁶ stars | pending first run | **Novelty confirmed:** two independent full-corpus arXiv queries for halo-star IR excess return **0**; `"metal-poor" AND "debris disk"` returns 3 papers, one of them a 7-star study at [Fe/H] ≲ −5 with inverted motivation (Venn+2014). Hephaistos I hard-codes Z = 0.012–0.018 = thin disc. Lacki 2025 (arXiv:2504.21151) *predicts* halo + low-metallicity hosts and ran no search. Competitor forming: Kenyon, Bromley & Najita 2026 have the catalogue and *plan* the analysis |
 | **CENOTAPH** (cold Dyson, T<100 K) | built + dispatched (run 30203250183); target Gaia DR3 GSP-Spec dwarfs, ~5.6e6 with Teff/logg/[M/H]/[α/Fe] from one pipeline | pending first archive run | **new channel.** Three-leg energy-conservation test: grey attenuation (A_V fitted jointly, not assumed) + NO mid-IR excess + far-IR recovery of the intercepted f·L in AKARI/FIS + IRAS. Closure ratio ρ=f_IR/f_dim separates an isotropic occulter (ρ≈1) from an edge-on disk (ρ≪1). Measured floor f≳0.15–0.29 vs Zackrisson+2018's f_cov>0.75. Next: read `results/cenotaph/summary.json`, check the ±3σ tail asymmetry before believing any count |
+| **SHROUD** (enshrouded, not destroyed; S33) | built; first run dispatched. The **never-analysed catalogue by-product** of Solano, Villarroel & Rodrigo 2022 (MNRAS 515, 1380): `vanish-neowise` = **171 753** POSS-I sources absent in the modern optical but detected in the infrared, plus `vanish-possi` = **5 399** with no counterpart at all, as the control | pending first run | **New channel.** Endpoints verified: `http://svocats.cab.inta-csic.es/vanish-{neowise,possi}/` (quoted in Watters+2026 Table 1 and the jannefi/vasco README). Solano+2022 is **not** in VizieR (runner fetch returns "Table or Catalog not found") — SVO is the only machine-readable route. Measurement: eta = F_IR(now)/[F_bol(POSS-I) − F_bol(modern)], a **pure flux ratio so distance cancels** — no parallax needed. Forés-Toribio & Kochanek 2026's progenitor/remnant ratio *is* eta, applied at ≥10 (merger remnant) and ≤0.3 (genuine disappearance). Scoped **strictly to the archival crossmatch** — no VASCO transient/Earth-shadow/nuclear-test analysis (docs/shroud.md §1) |
+| **EMBER** (waste heat that switched off; S1) | built; first run dispatched. The only three all-sky surveys carrying 12–25 µm photometry — IRAS (1983), AKARI/IRC (2006–07), WISE cryogenic (2010) — cross-matched via Gaia DR3 with PM propagated to each survey epoch. Working sample of order 10⁵ (bright, large-excess regime set by the shallow early epoch) | pending first run | **New channel.** *Novelty:* the entire Dyson/waste-heat lineage is single-epoch by word count — "epoch" in a photometric sense = **0** in Carrigan 2009, Ĝ I/II/III and Hephaistos I; the 2026 flagship review (2605.21093) has `turn off`/`switched off`/`cessation`/`multi-epoch`/`AKARI`/`NEOWISE` all = 0; Suazo+2024 *explicitly cut* variable stars, discarding a changed megastructure by construction. **Antecedents that must be cited, not ignored:** Kim+2015 (1501.05721) ran the identical IRAS+AKARI+WISE comparison **upward** (4 sources all-sky); Sedgwick & Serjeant 2022 (2207.09985) built the IRAS×AKARI 23.4-yr cross-match for *proper motion*; Melis+2023 ran it downward but targeted at R CrB. **Audit reversed the brief:** AKARI 9 µm→W3 has a transfer spread of **5.18×** over 150–1500 K (worst-conditioned pair, demoted); **IRAS 12 µm→W3 is spread 1.20 — near-null — and I25→W4 is 1.24 with an 8× wider unsaturated window**. NEOWISE **rejected as an epoch** (W1/W2 only; cannot see 100–300 K dust) and reused as the post-drop flatness test. Next: read `results/ember/pair_audit.json` and the rising-tail asymmetry in `null_calibration.json` before believing any count |
 
 ## Known systematics ledger (do not re-derive)
 
@@ -616,9 +618,73 @@ of well-measured *fast* flybys, exactly what the transfer-regime cut rejects.
   `dimming-characterize` so the mid-IR verdict never returns
   `insufficient_ir` for want of a known number.
 
+* **SHROUD / VASCO sample (2026-07-26).** (1) A **plate defect has no infrared
+  counterpart** — requiring a real IR detection is itself a strong artifact
+  filter, applied at selection time. The residual worry is the opposite: a
+  defect landing by chance within 5" of an unrelated IR source. (2) At the
+  published **5" radius the chance-match probability is ~0.9% at high galactic
+  latitude, ~10% against AllWISE all-sky, ~24% against CatWISE2020, and →1 in
+  the plane** — of order 10^4–10^5 of the 172,163 "counterparts" may be
+  coincidences. Watters+2026 leave this "undetermined"; **measure it with an
+  offset-position null**, never with a uniform-random background (assuming
+  uniformity is the exact error that broke the VASCO Earth-shadow analysis).
+  (3) **A naive Stern+2012 `W1−W2 ≥ 0.8` AGN cut deletes the shroud population**
+  — a 350 K shroud has W1−W2 = 3.2. Colour cannot separate them; **SED shape**
+  can (AGN = power law, shroud = curved blackbody), and with <3 IR bands the two
+  are formally undecidable. (4) `vanish-neowise` was matched to **NeoWISE, which
+  carries W1/W2 only** — a 2-band IR integral badly *under*-estimates a thermal
+  SED and would manufacture a spurious "IR too faint" result. Join AllWISE
+  W3/W4 + 2MASS before issuing any deficit verdict. (5) Sample "S" was built by
+  removing everything within 5" of **Gaia DR3 / Pan-STARRS DR2**, so modern
+  optical non-detection is guaranteed by construction, not measured.
+  (6) Expect **171,753** rows from the live archive, not the abstract's 172,163.
+
 ## Rules of engagement (from CLAUDE.md)
 
 Novelty first, scale second, never write up a null. Merge every commit to
 `main` as you go (non-fast-forward merge if diverged; never force-push).
 Data-touching runs go through `workflow_dispatch`; the sandbox has no archive
 egress.
+
+### EMBER (cross-epoch mid-IR, IRAS/AKARI → WISE) — established 2026-07-26
+
+* **NEOWISE cannot see waste heat.** It flies W1/W2 (3.4/4.6 µm) only; W3/W4
+  exist for the 2010 cryogenic phase alone. W1/W2 reach only T ≳ 500–700 K, so
+  *any* decade-baseline mid-IR excess-change search at 100–300 K is impossible
+  with it. Do not propose one. NEOWISE's real value is as a **flatness** test.
+* **IRAS 12 µm and WISE W3 are near-identical bandpasses**: the early→late flux
+  transfer moves by only 1.20× across dust temperatures of 150–1500 K. **AKARI
+  S9W → W3 moves by 5.18×** — the 9-to-12 µm step is emphatically *not* a null
+  transformation and must never be treated as one.
+* **The IRAS 100 µm background cut is worth a factor of ~30.** Kennedy & Wyatt
+  2012 (arXiv:1207.0521): ~8,000 of 180,000 stars show an apparent IRAS excess
+  correlated with the 100 µm background; below 5 MJy/sr, 271 remain. Mandatory
+  for any IRAS-based excess work in this repository.
+* **IRAS beam vs WISE beam is 286× in solid angle.** An IRAS flux is the sum
+  over its footprint, so the only defensible comparison sums *all* late-epoch
+  sources in the early beam. Comparing against the nearest counterpart alone
+  fabricates fades wherever the field is crowded.
+* **W3 saturates at ≈0.96 Jy, barely above the IRAS PSC completeness limit of
+  0.4 Jy.** Bright IRAS sources are exactly the ones WISE cannot measure, and a
+  saturated late band under-reports flux and mimics a cessation. Use I25→W4
+  (saturates at 12 Jy) or let AKARI arbitrate.
+* **Eddington/Malmquist bias is one-directional and fades only.** A flux-limited
+  early epoch plus a deeper late epoch manufactures cessations with no
+  astrophysical change. A two-sided null cannot calibrate it; deboost explicitly
+  and impose an early-epoch S/N floor.
+* **A blackbody at T_eff is not a stellar atmosphere.** Extrapolating 2MASS Ks to
+  12 µm with a Planck function over-predicts by ~0.3 mag at 5000 K. Use an
+  *empirical* per-band colour locus — it also absorbs each survey's calibration
+  scale, which is what Liu 2020 attributed IRAS–WISE discrepancies to.
+* **Fit the photospheric locus on low quantiles, not the median.** In an
+  IR-selected catalogue the excess population can exceed 50%, which is exactly
+  the median's breakdown point.
+* **The published cross-epoch stability floor is 4%** (HD 172555, IRAS 1983 →
+  WISE 2010, arXiv:1210.6258). Nothing within a few times that is believable,
+  however significant.
+* **Every natural mid-IR variable class varies *persistently*** — 14 of 17
+  extreme debris disks changed at 3–5 µm between 2010 and 2019. A single
+  monotonic step followed by a flat decade is the discriminant. TYC 8241 2652 1
+  is the sole known step-and-stay object and is still unexplained.
+* **Smooth disc dispersal cannot make this signal**: τ = 2–3 Myr at 3.4–12 µm is
+  a ~10⁻⁵ change over 27 years. Only discrete events can.

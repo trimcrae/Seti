@@ -429,6 +429,104 @@ def fetch_rsr_curves(dest_dir: Path, band_keys: list[str] | None = None) -> dict
 # --------------------------------------------------------------------------
 # Cross-matching
 # --------------------------------------------------------------------------
+def build_working_table(ra_lo: float, ra_hi: float, cache: Path,
+                        n_ra_chunks: int = 2,
+                        fetchers: dict | None = None) -> tuple[pd.DataFrame, dict]:
+    """Assemble the analysis-ready table for one RA slice, end to end.
+
+    The chain is: AKARI + IRAS (early epochs) -> Gaia DR3 (the stellar identity
+    and the proper motion) -> AllWISE (the late epoch and the 2MASS anchor).
+    Gaia is queried at the *infrared* positions and the association is then
+    re-tested after propagating Gaia astrometry back to each survey's epoch, so
+    high-proper-motion stars survive rather than silently vanishing.
+
+    ``fetchers`` overrides any of ``akari``, ``iras_psc``, ``iras_fsc``,
+    ``gaia``, ``allwise`` so the whole chain is exercisable offline.
+
+    Returns the table and a status dict recording which archives were reached.
+    """
+    fx = fetchers or {}
+    status: dict = {"ra_lo": ra_lo, "ra_hi": ra_hi, "errors": [], "counts": {}}
+
+    def _pull(name, fn):
+        try:
+            df = fn()
+            status["counts"][name] = int(len(df))
+            return df
+        except Exception as exc:  # noqa: BLE001
+            status["errors"].append(f"{name}: {exc!r}")
+            status["counts"][name] = 0
+            return pd.DataFrame()
+
+    akari = _pull("akari", fx.get("akari") or
+                  (lambda: fetch_akari(cache, n_ra_chunks=n_ra_chunks)))
+    iras_psc = _pull("iras_psc", fx.get("iras_psc") or
+                     (lambda: fetch_iras("psc", cache, n_ra_chunks=n_ra_chunks)))
+    iras_fsc = _pull("iras_fsc", fx.get("iras_fsc") or
+                     (lambda: fetch_iras("fsc", cache, n_ra_chunks=n_ra_chunks)))
+
+    def _slice(df):
+        if df.empty or "ra" not in df.columns:
+            return df
+        return df[(df["ra"] >= ra_lo) & (df["ra"] < ra_hi)].copy()
+
+    akari, iras_psc, iras_fsc = _slice(akari), _slice(iras_psc), _slice(iras_fsc)
+    iras = pd.concat([d for d in (iras_psc, iras_fsc) if not d.empty],
+                     ignore_index=True) if (not iras_psc.empty or not iras_fsc.empty) \
+        else pd.DataFrame()
+
+    if akari.empty and iras.empty:
+        status["archive_reachable"] = False
+        return pd.DataFrame(), status
+    status["archive_reachable"] = True
+
+    # Early-epoch anchor positions: AKARI where available (2 arcsec), else IRAS.
+    anchor = akari if not akari.empty else iras
+    anchor = anchor.reset_index(drop=True)
+    anchor["match_id"] = [f"em{ra_lo:05.1f}_{i:07d}" for i in range(len(anchor))]
+    positions = anchor[["match_id", "ra", "dec"]].copy()
+
+    gaia = _pull("gaia", fx.get("gaia") or
+                 (lambda: fetch_gaia_for_positions(positions, radius_arcsec=6.0,
+                                                   out_dir=cache)))
+    if gaia.empty:
+        status["errors"].append("gaia: no counterparts; the channel cannot "
+                                "distinguish stars from background galaxies")
+        return pd.DataFrame(), status
+
+    merged = gaia.merge(anchor.add_prefix("ir_"), left_on="match_id",
+                        right_on="ir_match_id", how="inner")
+    merged = attach_epoch_separation(merged, ir_epoch=AKARI_EPOCH if not akari.empty
+                                     else IRAS_EPOCH)
+    # Keep the single best Gaia counterpart per infrared source.
+    merged = merged.sort_values("sep_arcsec").drop_duplicates("match_id")
+
+    allwise = _pull("allwise", fx.get("allwise") or
+                    (lambda: _allwise_for_rows(merged, cache)))
+    if not allwise.empty:
+        merged = merged.merge(allwise, on="match_id", how="left")
+
+    status["counts"]["working"] = int(len(merged))
+    return merged, status
+
+
+def _allwise_for_rows(rows: pd.DataFrame, cache: Path | None = None,
+                      radius_arcsec: float = 3.0) -> pd.DataFrame:
+    """AllWISE photometry at each row's Gaia position propagated to 2010.5."""
+    out = []
+    for _, r in rows.iterrows():
+        ra_p, dec_p = propagate(r["ra"], r["dec"], r.get("pmra"), r.get("pmdec"),
+                                GAIA_EPOCH, ALLWISE_EPOCH)
+        df = fetch_allwise_cone(float(ra_p), float(dec_p), radius_arcsec)
+        if df.empty:
+            continue
+        rec = df.iloc[0].to_dict()
+        rec["match_id"] = r["match_id"]
+        rec["n_allwise_in_cone"] = int(len(df))
+        out.append(rec)
+    return pd.DataFrame(out)
+
+
 def crossmatch_epochs(early: pd.DataFrame, late: pd.DataFrame,
                       early_epoch: float, late_epoch: float,
                       radius_arcsec: float,

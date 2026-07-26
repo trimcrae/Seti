@@ -1,0 +1,318 @@
+name: ember
+
+# EMBER — mid-infrared waste heat that switched off (docs/ember.md).
+#
+#   audit ──────────────────────────────────────────────▶ analyse ──▶ commit
+#   novelty ─┘                                             ▲
+#   acquire (N parallel RA shards) ────────────────────────┘
+#
+# Signature S1 of docs/necrosignatures.md: an infrared excess present in IRAS
+# (1983) or AKARI (2006-07) and absent in WISE (2010). NEOWISE is deliberately
+# NOT an epoch here — it flies W1/W2 only and cannot measure 100-300 K dust at
+# all; it enters solely as the post-drop flatness requirement.
+#
+# Design goals, inherited from herdsman.yml and from what this channel's own
+# offline development turned up:
+#  * `audit` runs first and needs no network. It fetches the real filter
+#    response curves and then decides which epoch pairs are usable at all. A
+#    pair rejected there is not searched, and the reason is committed.
+#  * acquisition is sharded by RA with per-shard parquet checkpoints — a killed
+#    shard loses minutes, and re-running one shard is enough.
+#  * every upload is `if: always()`, so a timeout still yields partial evidence.
+#  * `reduce_only_run_id` re-reduces a previous run's artifacts without
+#    refetching a single catalogue row.
+
+on:
+  workflow_dispatch:
+    inputs:
+      n_ra_chunks:
+        description: "RA slices per catalogue pull (higher = smaller, safer queries)"
+        required: false
+        default: "12"
+      n_shards:
+        description: "Parallel acquisition shards"
+        required: false
+        default: "6"
+      require_all_checks:
+        description: "Reject candidates that could not be tested on every rule"
+        required: false
+        default: "true"
+      run_novelty:
+        description: "Run the runner-side novelty/prior-art fetch"
+        required: false
+        default: "true"
+      reduce_only_run_id:
+        description: "Re-reduce a previous run's artifacts without refetching"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  # ------------------------------------------------------------------
+  # 1. Systematics audit + real response curves. Needs no archive access,
+  #    so it always runs and always produces a committable verdict.
+  # ------------------------------------------------------------------
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import pyvo, astroquery, pyarrow; print('imports OK')"
+      - name: Fetch real filter response curves (SVO)
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from seti.ember.acquire import fetch_rsr_curves
+          dest = Path("src/seti/data_assets/rsr")
+          status = fetch_rsr_curves(dest)
+          for k, v in status.items():
+              print(f"  {k:>5}: {v}")
+          PY
+        continue-on-error: true
+      - name: Epoch-pair systematics audit
+        run: |
+          python -m seti.cli ember --stage audit
+          echo "=== pair audit ==="
+          cat results/ember/pair_audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ember-audit
+          path: |
+            results/ember/
+            src/seti/data_assets/rsr/
+          if-no-files-found: warn
+
+  # ------------------------------------------------------------------
+  # 2. Runner-side novelty verification. Independent of the science path.
+  # ------------------------------------------------------------------
+  novelty:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_novelty != 'false' && github.event.inputs.reduce_only_run_id == ''
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pdftotext
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Fetch prior art (soft deadline, partials kept)
+        run: |
+          timeout -k 30 4200 python scripts/ember_novelty.py \
+            || echo "fetcher hit the soft deadline; committing partials"
+          echo "=== discovery-query hit counts ==="
+          cat results/emberlit/query_counts.json || true
+      - name: Commit novelty evidence
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/emberlit || true
+          if git diff --cached --quiet; then
+            echo "No novelty evidence to commit."
+          else
+            git commit -m "emberlit: runner-side prior-art evidence for the S1 cessation search"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ember-novelty
+          path: results/emberlit/
+          if-no-files-found: warn
+
+  # ------------------------------------------------------------------
+  # 3. Plan the acquisition shards.
+  # ------------------------------------------------------------------
+  plan:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.reduce_only_run_id == ''
+    timeout-minutes: 5
+    outputs:
+      shards: ${{ steps.mk.outputs.shards }}
+    steps:
+      - id: mk
+        run: |
+          python3 -c "import json; print('shards=' + json.dumps(list(range(int('${{ github.event.inputs.n_shards || '6' }}')))))" >> "$GITHUB_OUTPUT"
+
+  # ------------------------------------------------------------------
+  # 4. Catalogue acquisition, sharded by RA with per-slice checkpoints.
+  # ------------------------------------------------------------------
+  acquire:
+    needs: [audit, plan]
+    runs-on: ubuntu-latest
+    if: github.event.inputs.reduce_only_run_id == ''
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import pyvo, astroquery, pyarrow; print('imports OK')"
+      - uses: actions/download-artifact@v4
+        with:
+          name: ember-audit
+          path: ./
+        continue-on-error: true
+      - name: Acquire catalogue slice
+        run: |
+          python -m seti.cli ember --stage acquire \
+            --n-ra-chunks ${{ github.event.inputs.n_ra_chunks || '12' }} \
+            --shard ${{ matrix.shard }} \
+            --n-shards ${{ github.event.inputs.n_shards || '6' }}
+          echo "=== acquired ==="
+          ls -la results/ember/cache/ || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ember-cache-${{ matrix.shard }}
+          path: results/ember/cache/
+          if-no-files-found: warn
+
+  # ------------------------------------------------------------------
+  # 5. Excess, cessation, vetting, report.
+  # ------------------------------------------------------------------
+  analyse:
+    needs: [acquire]
+    if: always() && github.event.inputs.reduce_only_run_id == ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - uses: actions/download-artifact@v4
+        with:
+          name: ember-audit
+          path: ./
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ember-cache-*
+          merge-multiple: true
+          path: results/ember/cache/
+        continue-on-error: true
+      - name: Analyse
+        run: |
+          ls -la results/ember/cache/ | head -40 || true
+          python -m seti.cli ember --stage analyse \
+            --require-all-checks ${{ github.event.inputs.require_all_checks || 'true' }}
+          echo "=== summary ==="
+          cat results/ember/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/ember ':(exclude)results/ember/cache'
+          git add -f -- src/seti/data_assets/rsr || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "ember: cross-epoch mid-IR excess cessation search (IRAS/AKARI -> WISE)"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ember-final
+          path: |
+            results/ember/
+            !results/ember/cache
+          if-no-files-found: warn
+
+  # ------------------------------------------------------------------
+  # 6. Re-reduce a previous run without refetching.
+  # ------------------------------------------------------------------
+  reduce-only:
+    if: github.event.inputs.reduce_only_run_id != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ember-cache-*
+          merge-multiple: true
+          path: results/ember/cache/
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+      - name: Re-analyse
+        run: |
+          ls results/ember/cache/ | head -80
+          python -m seti.cli ember --stage analyse \
+            --require-all-checks ${{ github.event.inputs.require_all_checks || 'true' }}
+          echo "=== summary ==="
+          cat results/ember/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/ember ':(exclude)results/ember/cache'
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "ember: re-reduction of run ${{ github.event.inputs.reduce_only_run_id }}"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ember-final
+          path: |
+            results/ember/
+            !results/ember/cache
+          if-no-files-found: warn

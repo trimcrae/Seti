@@ -1,6 +1,6 @@
 # TAILINGS — sparse chemical anomaly search
 
-**Verdict.** DEGRADED_SOURCE (GALAH->GALAH_DR4_allstar_cloud); SPARSE_CANDIDATES_PENDING_REMEASUREMENT: 2100 catalogue-level sparse survivors and 0 co-natal pairs beyond the engulfment budget. None is a detection until the specific line is re-measured from the raw spectrum against Teff-matched peers.
+**Verdict.** DEGRADED_SOURCE (GALAH->GALAH_DR4_allstar_cloud, APOGEE->APOGEE_DR17_allStar_rev1); SPARSE_CANDIDATES_PENDING_REMEASUREMENT: 1809 catalogue-level sparse survivors and 0 co-natal pairs beyond the engulfment budget. None is a detection until the specific line is re-measured from the raw spectrum against Teff-matched peers.
 
 ## The discriminant
 
@@ -70,7 +70,7 @@ Natural abundance space is low-dimensional: ~8-10 independent chemical dimension
 - stars after quality cuts: **137,047**
 - elements on the manifold: **17**
 - classification: NORMAL 77,025, INSUFFICIENT 54,413, SPARSE 3,173, DENSE 2,436
-- sparse candidates: **3173**, surviving vetting: **1209**
+- sparse candidates: **3173**, surviving vetting: **918**
 
 ### Sparse/dense contrast (the headline diagnostic)
 
@@ -97,23 +97,23 @@ Natural abundance space is low-dimensional: ~8-10 independent chemical dimension
 | 2M07162452+2903580 | **Cr** | -17.7 | 11 | 17.3 | 4966 | +0.06 | nan |
 | 2M06464143-6704372 | **K** | -17.2 | 8 | 11.7 | 5089 | +0.14 | two weak lines with significant blending |
 | 2M23432248+2924547 | **Cr** | -17.0 | 10 | 11.0 | 5849 | -0.21 | nan |
-| 2M16023724-1905588 | **K** | -16.8 | 11 | 16.5 | 5462 | -0.08 | two weak lines with significant blending |
 | 2M15092672+3621198 | **Cr** | -15.5 | 9 | 9.7 | 5075 | -0.19 | nan |
-| 2M09321708+4834179 | **K** | -15.4 | 10 | 15.4 | 5390 | -0.39 | two weak lines with significant blending |
 | 2M10074949+0457070 | **K** | -14.9 | 10 | 11.3 | 5742 | -0.56 | two weak lines with significant blending |
-| 2M23441791-1058101 | **Cr** | -14.9 | 9 | 9.2 | 5497 | -0.23 | nan |
 | 2M08175682+5132510 | **Mn** | -14.8 | 11 | 14.8 | 5940 | -0.73 | nan |
 | 2M00295900-1420258 | **Cr** | -14.8 | 9 | 10.6 | 5440 | -0.44 | nan |
 | 2M08195707+5553424 | **K** | -14.4 | 10 | 11.8 | 5869 | -0.11 | two weak lines with significant blending |
-| 2M19315664+6637071 | **K** | -14.3 | 11 | 14.3 | 5680 | -0.18 | two weak lines with significant blending |
-| 2M17164401-2105128 | **K** | -14.2 | 10 | 9.6 | 5302 | -0.46 | two weak lines with significant blending |
-| 2M10361779+3854294 | **Cr** | -13.9 | 11 | 13.9 | 5968 | -0.11 | nan |
 | 2M13011084+2728012 | **K** | -13.8 | 11 | 13.8 | 5763 | -0.22 | two weak lines with significant blending |
-| 2M05323045-7441260 | **Cr** | -13.6 | 10 | 13.6 | 5989 | -0.27 | nan |
-| 2M12525223+5652132 | **Cr** | -13.3 | 10 | 9.0 | 5354 | -0.44 | nan |
-| 2M00380701+1439145 | **V** | -13.3 | 8 | 10.0 | 5477 | -0.10 | weak, blended V I lines; unreliable below solar metallicity |
 | 2M15325168+2851229 | **Mn** | -13.1 | 9 | 7.0 | 5468 | -0.96 | nan |
 | 2M09472510+3240429 | **K** | -13.0 | 10 | 11.3 | 5943 | -0.16 | two weak lines with significant blending |
+| 2M11181900+5337323 | **Cr** | -12.9 | 11 | 12.9 | 5286 | -0.39 | nan |
+| 2M17095026+3248572 | **K** | -12.6 | 9 | 9.9 | 5624 | -0.34 | two weak lines with significant blending |
+| 2M01445741-1715306 | **Cr** | -12.4 | 10 | 10.7 | 5871 | -0.05 | nan |
+| 2M22585311-2340255 | **Cr** | -12.4 | 11 | 12.4 | 5773 | -0.00 | nan |
+| 2M10265040+3644245 | **Cr** | -12.2 | 9 | 7.7 | 5690 | -0.42 | nan |
+| 2M14234688+5754555 | **Cr** | -12.0 | 11 | 10.7 | 5460 | -0.24 | nan |
+| 2M16351877+2424566 | **Mn** | -11.8 | 10 | 9.3 | 5826 | -0.63 | nan |
+| 2M10561866+0648201 | **Cr** | -11.7 | 9 | 7.5 | 5486 | -0.27 | nan |
+| 2M19354196+4628595 | **Cr** | -11.6 | 10 | 9.8 | 5139 | -0.52 | nan |
 
 
 ### Highest per-element flag rates (systematics check)

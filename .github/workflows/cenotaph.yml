@@ -239,11 +239,15 @@ jobs:
           # Add ONLY the small outputs by name. A glob-with-excludes would
           # sweep in the shell parquets and the 427k-row AKARI/IRAS catalogue
           # caches that arrive flattened from the artifact merge.
-          git add -f -- \
-            results/cenotaph/summary.json \
-            results/cenotaph/sample_meta.json \
-            results/cenotaph/farir_meta.json \
-            results/cenotaph/candidates.csv 2>/dev/null || true
+          # One path at a time: `git add` with several pathspecs is ATOMIC, so a
+          # single missing file makes it stage NOTHING, the `|| true` swallows
+          # the error, and the whole run's results are silently lost.
+          for p in results/cenotaph/summary.json \
+                   results/cenotaph/sample_meta.json \
+                   results/cenotaph/farir_meta.json \
+                   results/cenotaph/candidates.csv; do
+            git add -f -- "$p" 2>/dev/null && echo "staged: $p" || echo "absent: $p"
+          done
           if git diff --cached --quiet; then
             echo "No result changes to commit."
           else
@@ -300,11 +304,15 @@ jobs:
           # Add ONLY the small outputs by name. A glob-with-excludes would
           # sweep in the shell parquets and the 427k-row AKARI/IRAS catalogue
           # caches that arrive flattened from the artifact merge.
-          git add -f -- \
-            results/cenotaph/summary.json \
-            results/cenotaph/sample_meta.json \
-            results/cenotaph/farir_meta.json \
-            results/cenotaph/candidates.csv 2>/dev/null || true
+          # One path at a time: `git add` with several pathspecs is ATOMIC, so a
+          # single missing file makes it stage NOTHING, the `|| true` swallows
+          # the error, and the whole run's results are silently lost.
+          for p in results/cenotaph/summary.json \
+                   results/cenotaph/sample_meta.json \
+                   results/cenotaph/farir_meta.json \
+                   results/cenotaph/candidates.csv; do
+            git add -f -- "$p" 2>/dev/null && echo "staged: $p" || echo "absent: $p"
+          done
           if git diff --cached --quiet; then
             echo "No result changes to commit."
           else

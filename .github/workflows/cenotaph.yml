@@ -52,6 +52,10 @@ on:
         description: "Skip fetch; reduce from this prior run's artifacts"
         required: false
         default: ""
+      resume_shells_run_id:
+        description: "Restore that run's slice checkpoints before fetching (resume a timed-out pull)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -104,6 +108,19 @@ jobs:
           # at 1 mas is 0.065 mag of distance modulus -- exactly a grey offset.
           pip install gaiadr3-zeropoint || \
             echo "zero-point package unavailable; channel will use the fallback"
+      # Slice checkpoints are only useful if a later run can pick them up. The
+      # pull is chunked into ~15,000-row slices against a server whose sync
+      # endpoint aborts at 60 s, so it is long; if a run times out, dispatch
+      # again with resume_shells_run_id set to it and only the unfetched slices
+      # are queried.
+      - name: Restore slice checkpoints from a previous run
+        if: ${{ github.event.inputs.resume_shells_run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: cenotaph-shells
+          path: results/cenotaph/checkpoints/
+          run-id: ${{ github.event.inputs.resume_shells_run_id }}
+          github-token: ${{ github.token }}
       - name: Fetch Gaia DR3 GSP-Spec sample + 2MASS + AllWISE
         run: |
           python -m seti.cli cenotaph --stage sample \

@@ -250,8 +250,13 @@ tailings:
     z_quiet: 2.0             # "everything else is normal"
     max_discrepant: 2        # the "one or two elements" rule
     max_quiet_excess: 1
-    min_elements: 8          # sparsity is meaningless with a short abundance vector
-    min_contrast: 3.0        # z_max / max(z_rest_rms, 1)
+    # Huang, Tao & Zhang 2026 (arXiv:2605.29811) showed quantitatively that a
+    # 1-2-element anomaly can carry a large Bayes factor while being
+    # information-starved. Their cases are records where the OTHER elements were
+    # never MEASURED. The answer here is to require many elements measured AND
+    # quiet: n_quiet is reported per candidate and is the actual evidence.
+    min_elements: 12         # a floor, not a target
+    min_contrast: 3.0        # z_max / max(z_background_rms, 1)
     family_max_mean_z: 2.0   # LEDGER RULE: a co-moving family is a natural event
     dense_min_discrepant: 3
   vet:
@@ -310,3 +315,43 @@ isotherm:
   n_components_max: 4
   # Hotter than grains survive -> unresolved companion photosphere.
   t_companion_k: 1800.0
+
+# ---------------------------------------------------------------------------
+# TIDEMARK --- population-level spatial-structure test on anomaly catalogues.
+# Channel adapters live in config/tidemark.yaml; these are the statistics knobs.
+tidemark:
+  matched_null:
+    n_feature_bins: 5        # quantile bins per detectability covariate
+    min_pool: 25             # min parent rows per stratum before collapsing
+    n_null: 500              # matched draws for the gradient/age statistics
+  covariates:
+    # strict: heliocentric distance IS matched out, so a radial gradient must be
+    # a difference between DIRECTIONS at matched distance. Immune to every
+    # distance-dependent selection effect; the primary claim.
+    strict: [phot_g_mean_mag, dist_pc, bp_rp, ebv, log_local_density, n_obs]
+    # permissive: distance free. More sensitive, but distance-dependent
+    # detectability leaks into the radial gradient. Cross-check only.
+    permissive: [phot_g_mean_mag, bp_rp, ebv, log_local_density]
+  gradient:
+    n_bins: 10
+    coordinates: [R_gal_kpc, abs_z_gal_kpc, l_deg]   # l_deg is fitted as a dipole
+  edge:
+    n_bins_1d: 24
+    widths: [1, 2, 3, 4, 6]      # step half-widths, in bins
+    n_null_scan: 300
+    shell_centres_per_axis: 4    # 3D bubble-centre grid (+ Sun + anomaly centroid)
+    shell_n_bins: 20
+    cap_directions: 96
+    # Order of the smooth log-rate trend absorbed into the edge null. Measured
+    # on injections: a pure 0.8/kpc gradient fires the edge detector 15% of the
+    # time at order 2 and 5% (nominal) at order 3, with no loss of bubble power.
+    smooth_order: 3
+    min_expected: 3.0            # windows below this expectation carry no information
+  age:
+    n_bins: 8
+    n_null: 400
+  calibration:
+    contrasts: [2.0, 4.0]
+    radii_pc: [400.0, 900.0]
+    n_null: 200
+    n_trials: 2

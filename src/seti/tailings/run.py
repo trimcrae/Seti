@@ -65,7 +65,8 @@ def _twin_config(block: dict) -> T.TwinConfig:
 # ---------------------------------------------------------------------------
 # Stage 1 -- acquisition
 # ---------------------------------------------------------------------------
-def stage_acquire(cfg: Config, *, surveys: list[str], max_rows: int, out_dir: Path) -> dict:
+def stage_acquire(cfg: Config, *, surveys: list[str], max_rows: int, out_dir: Path,
+                  n_chunks: int = 8) -> dict:
     from .acquire import apply_element_flags, fetch_survey, fetch_wide_binaries, write_checkpoint
 
     block = _cfg_block(cfg)
@@ -80,6 +81,7 @@ def stage_acquire(cfg: Config, *, surveys: list[str], max_rows: int, out_dir: Pa
             logg_min=float(sample.get("logg_min", 4.0)),
             snr_min=float(sample.get("snr_min", 40.0)),
             max_rows=max_rows,
+            n_chunks=n_chunks,
         )
         prov["surveys"].append(acq.provenance())
         if acq.n_rows:

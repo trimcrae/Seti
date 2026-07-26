@@ -44,7 +44,8 @@ WHERE parallax >= {plx_min} AND parallax < {plx_max}
 """
 
 # Distance-shell edges (pc) used to chunk the pull; trimmed to d_max at runtime.
-_SHELL_EDGES_PC = [400.0, 320.0, 260.0, 210.0, 160.0, 110.0, 60.0, 0.0]
+_SHELL_EDGES_PC = [2000.0, 1600.0, 1300.0, 1050.0, 850.0, 700.0, 560.0, 480.0,
+                   400.0, 320.0, 260.0, 210.0, 160.0, 110.0, 60.0, 0.0]
 
 
 def _run_query(query: str, retries: int = 4, tag: str = "herdsman") -> pd.DataFrame:

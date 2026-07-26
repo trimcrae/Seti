@@ -70,6 +70,12 @@ class ConvergenceParams:
     density_r_pc: float = 25.0   # radius of the local-density estimate
     density_sample: int = 2000   # stars sampled for the typical-density estimate
     jaccard_dedupe: float = 0.5  # member overlap that merges epoch duplicates
+    # v2 herd-physics cuts (None/1 = off, preserving v1 behaviour).  The v1
+    # full run showed the chance background is 100% dynamically hot transient
+    # crossings (internal dispersion >= 10 km/s, single-epoch): an assembling
+    # herd must arrive slow relative to itself and dwell at the meeting.
+    sigv_int_max_kms: float | None = None  # max internal dispersion at meeting
+    min_epochs: int = 1                    # min consecutive-epoch persistence
 
 
 class _UnionFind:
@@ -225,6 +231,8 @@ def detect_convergences(pos0_kpc: np.ndarray, vel0_kpcmyr: np.ndarray,
             # Internal velocity spread at the meeting (arrival coherence).
             v = vel0_kpcmyr[members] / KMS_TO_KPCMYR   # km/s, conserved shape
             sig_int = float(np.sqrt(((v - v.mean(0)) ** 2).sum(-1).mean()))
+            if p.sigv_int_max_kms is not None and sig_int > p.sigv_int_max_kms:
+                continue
             raw.append({
                 "t_myr": float(t), "members": members, "m": int(len(members)),
                 "m_eff": int(m_eff), "r_ball_pc": float(r_t_pc),
@@ -238,6 +246,9 @@ def detect_convergences(pos0_kpc: np.ndarray, vel0_kpcmyr: np.ndarray,
     if t_horizon is None:
         t_horizon = p.t_max_myr
     candidates = _dedupe(raw, p.jaccard_dedupe)
+    if p.min_epochs > 1:
+        candidates = [c for c in candidates
+                      if c["n_epochs_seen"] >= p.min_epochs]
     return {
         "direction": int(direction),
         "n_stars": int(n),

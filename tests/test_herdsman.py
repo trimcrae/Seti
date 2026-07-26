@@ -269,6 +269,49 @@ def test_background_produces_no_comparable_forward_candidate(synthetic_run):
         < summary["directions"]["forward"]["best_surprise"]
 
 
+def test_v2_cuts_recover_cold_herd_and_kill_hot_background():
+    """v2 herd-physics cuts: a dynamically cold, dwelling herd survives;
+    field-dispersion transient crossings (the entire v1 background) cannot."""
+    from seti.galactic.orbits import heliocentric_to_galactocentric
+    from seti.herdsman.acquire import apply_rv_zero_point, scalar_velocity_error
+    from seti.herdsman.convergence import ConvergenceParams, detect_convergences
+    from seti.panspermia.kinematics import phase_space_6d
+
+    rng = np.random.default_rng(7)
+    t_meet = 8.0
+    bg_pos, bg_vel = _background(2500, 120.0, rng)
+    herd_pos_kpc, herd_vel_kpcmyr = _make_herd(8, t_meet, rng,
+                                               sig_arrive_kms=1.5)
+    hX, hY, hZ, hU, hV, hW = _gc_to_helio(herd_pos_kpc, herd_vel_kpcmyr)
+    table = _helio_to_gaia_obs(
+        np.concatenate([bg_pos[:, 0], hX]), np.concatenate([bg_pos[:, 1], hY]),
+        np.concatenate([bg_pos[:, 2], hZ]), np.concatenate([bg_vel[:, 0], hU]),
+        np.concatenate([bg_vel[:, 1], hV]), np.concatenate([bg_vel[:, 2], hW]),
+        rng)
+    df = phase_space_6d(apply_rv_zero_point(table))
+    df["sigv_kms"] = scalar_velocity_error(df, astro_floor_kms=0.2)
+    pos_kpc, vel = heliocentric_to_galactocentric(
+        df["X_pc"].to_numpy(float), df["Y_pc"].to_numpy(float),
+        df["Z_pc"].to_numpy(float), df["U_kms"].to_numpy(float),
+        df["V_kms"].to_numpy(float), df["W_kms"].to_numpy(float))
+    params = ConvergenceParams(t_max_myr=12.0, n_min=4, focus_min=3.0,
+                               surprise_min=3.0, sigv_int_max_kms=5.0,
+                               min_epochs=2)
+    res = detect_convergences(pos_kpc, vel, df["sigv_kms"].to_numpy(float),
+                              +1, params)
+    herd_ids = set(range(2500, 2508))
+    hits = [c for c in res["candidates"]
+            if len(set(c["members"]) & herd_ids) >= 4]
+    assert hits, "cold herd not recovered under v2 cuts"
+    assert hits[0]["sig_v_internal_kms"] < 5.0
+    assert hits[0]["n_epochs_seen"] >= 2
+    # Every surviving candidate must be the herd — the hot chance background
+    # (internal dispersion ~ field, single-epoch) is fully removed.
+    for c in res["candidates"]:
+        assert set(c["members"]) & herd_ids, \
+            f"hot-background candidate survived v2 cuts: {c['surprise']:.1f}"
+
+
 def test_staged_pipeline_recovers_herd(tmp_path):
     """fetch -> scan(real) -> scan(mock shard) -> reduce on the synthetic sky.
 

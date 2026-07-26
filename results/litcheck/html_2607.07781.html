@@ -1,0 +1,1427 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field</title>
+<!--Generated on Wed Jul  8 17:53:54 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<!--Document created on Preprint, July 2026.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+    // Pre-apply spinout-banner dismissal here, before the banner paints, so it
+    // never flashes in only to be hidden later by the deferred arxiv-header.js.
+    // Key matches arxiv-header.js: "arxiv-banner-dismissed:" + data-banner-name.
+    if (localStorage.getItem('arxiv-banner-dismissed:spinout-nonprofit')) {
+      document.documentElement.setAttribute("data-banner-dismissed", "");
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css"><link rel="stylesheet" type="text/css" media="screen"
+  href="/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626"><style>
+  /* Banner pre-dismissal (set above before paint -> no flash-then-hide) and
+     reading-mode chrome hiding. */
+  html[data-banner-dismissed] .ds-announcement { display: none; }
+  html[data-reading-mode="enabled"] .ds-announcement,
+  html[data-reading-mode="enabled"] .ds-site-footer { display: none; }
+  /* Keep the announcement text dark on the Open-Blue band in both colour themes
+     (otherwise it inherits the paper's warm-wash text in dark mode and washes out). */
+  .ds-announcement-text { color: var(--arxiv-ink, #1c1a17); }
+</style>
+<script defer src="/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog><div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement"
+    data-banner-name="spinout-nonprofit">
+    <img class="ds-announcement-glyph" src="/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+    <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+    <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+    <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/"><img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/base/1.0.1/images/arxiv-logo-primary-light.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2607.07781v1">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2607.07781v1"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_abstract"><a href="#abstract1" title="In Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title">Abstract</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S1" title="In Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">1 </span>Introduction</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S2" title="In Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2 </span>The SJH concept</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS1" title="In 2 The SJH concept ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.1 </span>How much energy, and what does it look like?</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS2" title="In 2 The SJH concept ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.2 </span>Why harvest J instead of L?</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS3" title="In 2 The SJH concept ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.3 </span>Engineering methods</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S3" title="In Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3 </span>Detection method</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS1" title="In 3 Detection method ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.1 </span>A population-relative test that does not need stellar ages</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS2" title="In 3 Detection method ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.2 </span>Eight false-positive filters</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS3" title="In 3 Detection method ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.3 </span>Data</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S4" title="In Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4 </span>Results</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S4.SS1" title="In 4 Results ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.1 </span>Outlier statistics</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S4.SS2" title="In 4 Results ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.2 </span>Two <math class="ltx_Math" alttext="&gt;4\sigma" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&gt;</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">&gt;4\sigma</annotation></semantics></math> candidates</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S4.SS3" title="In 4 Results ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.3 </span>WISE and Aladin images: ambiguous but informative</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S4.SS4" title="In 4 Results ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.4 </span>Occurrence rate upper limit</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S5" title="In Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5 </span>Discussion</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S5.SS1" title="In 5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5.1 </span>Six natural explanations</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S5.SS2" title="In 5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5.2 </span>Where does the waste heat go?</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S5.SS3" title="In 5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5.3 </span>Limitations</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S6" title="In Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">6 </span>Conclusions</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_bibliography"><a href="#bib" title="In Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: CC BY 4.0
+  </a>
+  <div id="watermark-tr">
+arXiv:2607.07781v1 [astro-ph.SR] 08 Jul 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line ltx_fleqn">
+<h1 class="ltx_title ltx_title_document">Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Sahin Torlakcik<sup id="3.3.1" class="ltx_sup"><span id="3.3.1.1" class="ltx_text ltx_font_italic">1</span></sup>
+
+<br class="ltx_break"><sup id="4.4.2" class="ltx_sup"><span id="4.4.2.1" class="ltx_text ltx_font_italic">1</span></sup>Ankara Atatürk High School, Ankara, Türkiye
+</span><span class="ltx_author_notes">E-mail: torlakciksahin@gmail.com</span></span>
+</div>
+<div class="ltx_dates">(Preprint, July 2026)</div>
+
+<div id="abstract1" class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">We introduce <em class="ltx_emph ltx_font_italic">Stellar J-Harvesting</em> (SJH), a technosignature in
+which an engineered system extracts rotational angular momentum from a
+star. Unlike a classical Dyson sphere, such a system need not produce a
+detectable mid-infrared excess; its clearest signature would be a star
+rotating more slowly than comparable peers. We derive the energy–period
+relation for this effect, outline several possible coupling channels, and
+apply a population-relative slow-rotator search to Kepler stars using
+colour–gravity bins. After eight false-positive filters, the clean sample
+contains 6,725 FGK main-sequence stars. We find two <math class="ltx_Math" alttext="&gt;4\sigma" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&gt;</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">&gt;4\sigma</annotation></semantics></math> slow
+rotators, but Gaia DR3 indicators and WISE imaging point to more ordinary
+explanations, including unresolved binaries and low metallicity. We
+therefore make no detection claim and place a conservative pilot upper
+limit on the occurrence of strong SJH-like signals,
+<math class="ltx_Math" alttext="f_{\rm SJH}&lt;4.5\times 10^{-4}" display="inline" intent=":literal"><semantics><mrow><msub><mi>f</mi><mi>SJH</mi></msub><mo>&lt;</mo><mrow><mn>4.5</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>4</mn></mrow></msup></mrow></mrow><annotation encoding="application/x-tex">f_{\rm SJH}&lt;4.5\times 10^{-4}</annotation></semantics></math>. The main result is a search framework: angular-momentum technosignatures
+are testable with existing stellar-rotation catalogues, and the strongest
+outliers define concrete targets for spectroscopic, imaging, and radio
+follow-up.</p>
+</div>
+<div class="ltx_classification">
+<h6 class="ltx_title ltx_title_classification">keywords: </h6>
+technosignatures – extraterrestrial intelligence –
+stars: rotation – stars: solar-type – astrobiology
+
+</div>
+<span id="5" class="ltx_note ltx_note_frontmatter ltx_role_pubyear"><sup class="ltx_note_mark">†</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">†</sup><span class="ltx_note_type">pubyear: </span>2026</span></span></span><span id="6" class="ltx_note ltx_note_frontmatter ltx_role_pagerange"><sup class="ltx_note_mark">†</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">†</sup><span class="ltx_note_type">pagerange: </span><span class="ltx_ref ltx_ref_self"><span class="ltx_text ltx_ref_title">Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field</span></span>–<a href="#bib" title="References ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></span></span></span>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.1" class="ltx_p">Among technosignature concepts, the Dyson sphere <cite class="ltx_cite ltx_citemacro_citep">(Dyson, <a href="#bib.bib4" title="Search for Artificial Stellar Sources of Infrared Radiation" class="ltx_ref">1960</a>)</cite> has
+been the most thoroughly explored in the infrared: a civilization that
+captures a significant fraction of its star’s luminosity (<math id="S1.p1.1.m1" class="ltx_Math" alttext="L_{\star}" display="inline" intent=":literal"><semantics><msub><mi>L</mi><mo>⋆</mo></msub><annotation encoding="application/x-tex">L_{\star}</annotation></semantics></math>)
+inevitably re-radiates the waste heat as mid-infrared excess, producing
+a signature that surveys from IRAS <cite class="ltx_cite ltx_citemacro_citep">(Carrigan, <a href="#bib.bib2" title="IRAS-Based Whole-Sky Upper Limit on Dyson Spheres" class="ltx_ref">2009</a>)</cite> to WISE
+<cite class="ltx_cite ltx_citemacro_citep">(Wright<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib19" title="The Ĝ Infrared Search for Extraterrestrial Civilizations with Large Energy Supplies. II. Framework, Strategy, and First Result" class="ltx_ref">2014</a>)</cite> and Gaia <cite class="ltx_cite ltx_citemacro_citep">(Suazo<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib16" title="Project Hephaistos - II. Dyson sphere candidates from Gaia DR3, 2MASS, and WISE" class="ltx_ref">2024</a>)</cite> have pursued with
+increasing sensitivity. Yet no confirmed Dyson sphere candidate has
+emerged, and the resulting silence echoes Hart’s <cite class="ltx_cite ltx_citemacro_citep">(Hart, <a href="#bib.bib7" title="Explanation for the Absence of Extraterrestrials on Earth" class="ltx_ref">1975</a>)</cite>
+formulation of the Fermi paradox.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.1" class="ltx_p">But luminosity is not the only energy reservoir a star offers. Its
+rotational angular momentum (<math id="S1.p2.1.m1" class="ltx_Math" alttext="J_{\star}" display="inline" intent=":literal"><semantics><msub><mi>J</mi><mo>⋆</mo></msub><annotation encoding="application/x-tex">J_{\star}</annotation></semantics></math>) represents a substantial, yet
+entirely unexplored, technosignature target. The Sun’s rotational
+kinetic energy,</p>
+<table id="S1.E1" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_left_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_left"><math id="S1.E1.m1" class="ltx_Math" alttext="E_{\rm rot,\odot}=\tfrac{1}{2}kM_{\odot}R_{\odot}^{2}\Omega_{\odot}^{2}\approx 2.3\times 10^{35}\,\mathrm{J}," display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>E</mi><mrow><mi>rot</mi><mo rspace="0em">,</mo><mo lspace="0em">⊙</mo></mrow></msub><mo>=</mo><mrow><mstyle displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mo lspace="0em" rspace="0em">​</mo><mi>k</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>M</mi><mo>⊙</mo></msub><mo lspace="0em" rspace="0em">​</mo><msubsup><mi>R</mi><mo>⊙</mo><mn>2</mn></msubsup><mo lspace="0em" rspace="0em">​</mo><msubsup><mi mathvariant="normal">Ω</mi><mo>⊙</mo><mn>2</mn></msubsup></mrow><mo>≈</mo><mrow><mrow><mn>2.3</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mn>35</mn></msup></mrow><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">J</mi></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">E_{\rm rot,\odot}=\tfrac{1}{2}kM_{\odot}R_{\odot}^{2}\Omega_{\odot}^{2}\approx 2.3\times 10^{35}\,\mathrm{J},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_left_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(1)</span></td>
+</tr></tbody>
+</table>
+<p id="S1.p2.2" class="ltx_p">where <math id="S1.p2.2.m1" class="ltx_Math" alttext="k\approx 0.059" display="inline" intent=":literal"><semantics><mrow><mi>k</mi><mo>≈</mo><mn>0.059</mn></mrow><annotation encoding="application/x-tex">k\approx 0.059</annotation></semantics></math> is the dimensionless moment of inertia
+coefficient, is modest by astrophysical standards. Yet it comes with a
+remarkable engineering advantage: accessing it requires far less
+material than blocking a star’s light, and the waste heat it produces is
+so faint that it would be invisible to every existing infrared survey.</p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p id="S1.p3.5" class="ltx_p">We define Stellar J-Harvesting (SJH) as the deliberate extraction
+of stellar angular momentum by an engineered structure. The observable
+is one-sided: the star rotates slower than its stellar population,</p>
+<table id="S1.Ex1" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_left_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_left"><math id="S1.Ex1.m1" class="ltx_Math" alttext="\Delta\log P\equiv\log_{10}\left(\frac{P_{\rm obs}}{P_{\rm pop}}\right)&gt;0." display="block" intent=":literal"><semantics><mrow><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>P</mi></mrow></mrow><mo>≡</mo><mrow><msub><mi>log</mi><mn>10</mn></msub><mo>⁡</mo><mrow><mo>(</mo><mfrac><msub><mi>P</mi><mi>obs</mi></msub><msub><mi>P</mi><mi>pop</mi></msub></mfrac><mo>)</mo></mrow></mrow><mo>&gt;</mo><mn>0</mn></mrow><mo lspace="0em">.</mo></mrow><annotation encoding="application/x-tex">\Delta\log P\equiv\log_{10}\left(\frac{P_{\rm obs}}{P_{\rm pop}}\right)&gt;0.</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_left_padright"></td>
+</tr></tbody>
+</table>
+<p id="S1.p3.4" class="ltx_p">This is not a standalone detection criterion, because slow rotation has
+natural false-positive channels, but it defines a measurable target class
+for follow-up.
+Fast rotation can often be explained by youth. Slow rotation, once colour
+and evolutionary state are controlled for, is a useful outlier signal to
+test.
+This concept is distinct from starlifting, which primarily targets
+stellar <em id="S1.p3.4.1" class="ltx_emph ltx_font_italic">mass</em> (<math id="S1.p3.1.m1" class="ltx_Math" alttext="M_{\star}" display="inline" intent=":literal"><semantics><msub><mi>M</mi><mo>⋆</mo></msub><annotation encoding="application/x-tex">M_{\star}</annotation></semantics></math>) extraction with angular momentum loss
+as a byproduct. SJH, Dyson spheres, and starlifting thus define three
+orthogonal axes of a technosignature space: <math id="S1.p3.2.m2" class="ltx_Math" alttext="L" display="inline" intent=":literal"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math>-harvesting,
+<math id="S1.p3.3.m3" class="ltx_Math" alttext="J" display="inline" intent=":literal"><semantics><mi>J</mi><annotation encoding="application/x-tex">J</annotation></semantics></math>-harvesting, and <math id="S1.p3.4.m4" class="ltx_Math" alttext="M" display="inline" intent=":literal"><semantics><mi>M</mi><annotation encoding="application/x-tex">M</annotation></semantics></math>-harvesting.</p>
+</div>
+<div id="S1.p4" class="ltx_para">
+<p id="S1.p4.1" class="ltx_p">Section <a href="#S2" title="2 The SJH concept ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> develops the SJH concept and its physical
+basis. Section <a href="#S3" title="3 Detection method ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a> describes the detection method.
+Section <a href="#S4" title="4 Results ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a> presents the search results.
+Section <a href="#S5" title="5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a> discusses natural alternatives and
+limitations.</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>The SJH concept</h2>
+
+<section id="S2.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.1 </span>How much energy, and what does it look like?</h3>
+
+<div id="S2.SS1.p1" class="ltx_para">
+<p id="S2.SS1.p1.2" class="ltx_p">Because <math id="S2.SS1.p1.1.m1" class="ltx_Math" alttext="E_{\rm rot}\propto\Omega^{2}\propto P_{\rm rot}^{-2}" display="inline" intent=":literal"><semantics><mrow><msub><mi>E</mi><mi>rot</mi></msub><mo>∝</mo><msup><mi mathvariant="normal">Ω</mi><mn>2</mn></msup><mo>∝</mo><msubsup><mi>P</mi><mi>rot</mi><mrow><mo>−</mo><mn>2</mn></mrow></msubsup></mrow><annotation encoding="application/x-tex">E_{\rm rot}\propto\Omega^{2}\propto P_{\rm rot}^{-2}</annotation></semantics></math>,
+extracting a fraction <math id="S2.SS1.p1.2.m2" class="ltx_Math" alttext="f" display="inline" intent=":literal"><semantics><mi>f</mi><annotation encoding="application/x-tex">f</annotation></semantics></math> of the rotational kinetic energy yields a
+clean, predictable period change:</p>
+<table id="S2.E2" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_left_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_left"><math id="S2.E2.m1" class="ltx_Math" alttext="\frac{P_{\rm new}}{P_{\rm old}}=(1-f)^{-1/2},\quad\Delta\log P=-\tfrac{1}{2}\log_{10}(1-f)." display="block" intent=":literal"><semantics><mrow><mrow><mrow><mfrac><msub><mi>P</mi><mi>new</mi></msub><msub><mi>P</mi><mi>old</mi></msub></mfrac><mo>=</mo><msup><mrow><mo stretchy="false">(</mo><mrow><mn>1</mn><mo>−</mo><mi>f</mi></mrow><mo stretchy="false">)</mo></mrow><mrow><mo>−</mo><mrow><mn>1</mn><mo>/</mo><mn>2</mn></mrow></mrow></msup></mrow><mo rspace="1.167em">,</mo><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>P</mi></mrow></mrow><mo>=</mo><mrow><mo>−</mo><mrow><mstyle displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mo lspace="0.167em" rspace="0em">​</mo><mrow><msub><mi>log</mi><mn>10</mn></msub><mo>⁡</mo><mrow><mo stretchy="false">(</mo><mrow><mn>1</mn><mo>−</mo><mi>f</mi></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow></mrow></mrow><mo lspace="0em">.</mo></mrow><annotation encoding="application/x-tex">\frac{P_{\rm new}}{P_{\rm old}}=(1-f)^{-1/2},\quad\Delta\log P=-\tfrac{1}{2}\log_{10}(1-f).</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_left_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(2)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS1.p1.11" class="ltx_p">Table <a href="#S2.T1" title="Table 1 ‣ 2.1 How much energy, and what does it look like? ‣ 2 The SJH concept ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a> translates this relation into observable
+quantities. The median cell-to-cell scatter in our 2D bins is
+<math id="S2.SS1.p1.3.m1" class="ltx_Math" alttext="\sigma_{\log P}\approx 0.20" display="inline" intent=":literal"><semantics><mrow><msub><mi>σ</mi><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>P</mi></mrow></msub><mo>≈</mo><mn>0.20</mn></mrow><annotation encoding="application/x-tex">\sigma_{\log P}\approx 0.20</annotation></semantics></math> dex across 24 valid cells (each with
+<math id="S2.SS1.p1.4.m2" class="ltx_Math" alttext="N\geq 10" display="inline" intent=":literal"><semantics><mrow><mi>N</mi><mo>≥</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">N\geq 10</annotation></semantics></math> stars) in the 6,725-star clean sample. This sets a
+<math id="S2.SS1.p1.5.m3" class="ltx_Math" alttext="1\sigma" display="inline" intent=":literal"><semantics><mrow><mn>1</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">1\sigma</annotation></semantics></math> detection floor at <math id="S2.SS1.p1.6.m4" class="ltx_Math" alttext="\Delta\log P\gtrsim 0.20" display="inline" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>P</mi></mrow></mrow><mo>≳</mo><mn>0.20</mn></mrow><annotation encoding="application/x-tex">\Delta\log P\gtrsim 0.20</annotation></semantics></math> (<math id="S2.SS1.p1.7.m5" class="ltx_Math" alttext="\gtrsim 60\%" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>≳</mo><mrow><mn>60</mn><mo>%</mo></mrow></mrow><annotation encoding="application/x-tex">\gtrsim 60\%</annotation></semantics></math>
+energy extraction); a <math id="S2.SS1.p1.8.m6" class="ltx_Math" alttext="3\sigma" display="inline" intent=":literal"><semantics><mrow><mn>3</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">3\sigma</annotation></semantics></math> detection requires <math id="S2.SS1.p1.9.m7" class="ltx_Math" alttext="\gtrsim 94\%" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>≳</mo><mrow><mn>94</mn><mo>%</mo></mrow></mrow><annotation encoding="application/x-tex">\gtrsim 94\%</annotation></semantics></math>
+extraction. SJH is therefore detectable only for aggressive, sustained
+operations over Gyr timescales at <math id="S2.SS1.p1.10.m8" class="ltx_Math" alttext="\dot{E}\gtrsim 10^{18}" display="inline" intent=":literal"><semantics><mrow><mover accent="true"><mi>E</mi><mo>˙</mo></mover><mo>≳</mo><msup><mn>10</mn><mn>18</mn></msup></mrow><annotation encoding="application/x-tex">\dot{E}\gtrsim 10^{18}</annotation></semantics></math> W.
+Outlier significances in Section <a href="#S4" title="4 Results ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a> use each star’s own
+cell scatter, <math id="S2.SS1.p1.11.m9" class="ltx_Math" alttext="\sigma_{\log P,\rm cell}" display="inline" intent=":literal"><semantics><msub><mi>σ</mi><mrow><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>P</mi></mrow><mo>,</mo><mi>cell</mi></mrow></msub><annotation encoding="application/x-tex">\sigma_{\log P,\rm cell}</annotation></semantics></math>, which ranges from 0.16 to
+0.35 dex; the global median serves only as a representative floor.</p>
+</div>
+<figure id="S2.T1" class="ltx_table">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 1: </span>Energy extraction fraction <math id="S2.T1.2.m1" class="ltx_Math" alttext="f" display="inline" intent=":literal"><semantics><mi>f</mi><annotation encoding="application/x-tex">f</annotation></semantics></math> versus period anomaly.</figcaption>
+<table id="S2.T1.5" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S2.T1.5.3" class="ltx_tr">
+<th id="S2.T1.3.1.1" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_th_row ltx_border_tt">
+<math id="S2.T1.3.1.1.m1" class="ltx_Math" alttext="f" display="inline" intent=":literal"><semantics><mi>f</mi><annotation encoding="application/x-tex">f</annotation></semantics></math> (%)</th>
+<th id="S2.T1.4.2.2" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><math id="S2.T1.4.2.2.m1" class="ltx_Math" alttext="P_{\rm new}/P_{\rm old}" display="inline" intent=":literal"><semantics><mrow><msub><mi>P</mi><mi>new</mi></msub><mo>/</mo><msub><mi>P</mi><mi>old</mi></msub></mrow><annotation encoding="application/x-tex">P_{\rm new}/P_{\rm old}</annotation></semantics></math></th>
+<th id="S2.T1.5.3.3" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><math id="S2.T1.5.3.3.m1" class="ltx_Math" alttext="\Delta\log P" display="inline" intent=":literal"><semantics><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>P</mi></mrow></mrow><annotation encoding="application/x-tex">\Delta\log P</annotation></semantics></math></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S2.T1.5.4.1" class="ltx_tr">
+<th id="S2.T1.5.4.1.1" class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_t">50</th>
+<td id="S2.T1.5.4.1.2" class="ltx_td ltx_align_right ltx_border_t">1.41</td>
+<td id="S2.T1.5.4.1.3" class="ltx_td ltx_align_right ltx_border_t">0.15</td>
+</tr>
+<tr id="S2.T1.5.5.2" class="ltx_tr">
+<th id="S2.T1.5.5.2.1" class="ltx_td ltx_align_right ltx_th ltx_th_row">75</th>
+<td id="S2.T1.5.5.2.2" class="ltx_td ltx_align_right">2.00</td>
+<td id="S2.T1.5.5.2.3" class="ltx_td ltx_align_right">0.30</td>
+</tr>
+<tr id="S2.T1.5.6.3" class="ltx_tr">
+<th id="S2.T1.5.6.3.1" class="ltx_td ltx_align_right ltx_th ltx_th_row">90</th>
+<td id="S2.T1.5.6.3.2" class="ltx_td ltx_align_right">3.16</td>
+<td id="S2.T1.5.6.3.3" class="ltx_td ltx_align_right">0.50</td>
+</tr>
+<tr id="S2.T1.5.7.4" class="ltx_tr">
+<th id="S2.T1.5.7.4.1" class="ltx_td ltx_align_right ltx_th ltx_th_row">95</th>
+<td id="S2.T1.5.7.4.2" class="ltx_td ltx_align_right">4.47</td>
+<td id="S2.T1.5.7.4.3" class="ltx_td ltx_align_right">0.65</td>
+</tr>
+<tr id="S2.T1.5.8.5" class="ltx_tr">
+<th id="S2.T1.5.8.5.1" class="ltx_td ltx_align_right ltx_th ltx_th_row">98</th>
+<td id="S2.T1.5.8.5.2" class="ltx_td ltx_align_right">7.07</td>
+<td id="S2.T1.5.8.5.3" class="ltx_td ltx_align_right">0.85</td>
+</tr>
+<tr id="S2.T1.5.9.6" class="ltx_tr">
+<th id="S2.T1.5.9.6.1" class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_bb">99</th>
+<td id="S2.T1.5.9.6.2" class="ltx_td ltx_align_right ltx_border_bb">10.00</td>
+<td id="S2.T1.5.9.6.3" class="ltx_td ltx_align_right ltx_border_bb">1.00</td>
+</tr>
+</tbody>
+</table>
+</figure>
+</section>
+<section id="S2.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.2 </span>Why harvest J instead of L?</h3>
+
+<div id="S2.SS2.p1" class="ltx_para">
+<p id="S2.SS2.p1.1" class="ltx_p">Why consider angular momentum when stellar luminosity is <math id="S2.SS2.p1.1.m1" class="ltx_Math" alttext="\sim 10^{8}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><msup><mn>10</mn><mn>8</mn></msup></mrow><annotation encoding="application/x-tex">\sim 10^{8}</annotation></semantics></math> times
+larger as an energy reservoir? The motivation is not total energy yield, but
+detectability and architecture.</p>
+</div>
+<div id="S2.SS2.p2" class="ltx_para">
+<p id="S2.SS2.p2.10" class="ltx_p">First, <em id="S2.SS2.p2.10.1" class="ltx_emph ltx_font_italic">material scale</em>. The Sun’s rotational angular momentum is</p>
+<table id="S2.Ex2" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_left_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_left"><math id="S2.Ex2.m1" class="ltx_Math" alttext="J_{\odot}=kM_{\odot}R_{\odot}^{2}\Omega_{\odot}\approx 1.6\times 10^{41}\,{\rm kg\,m^{2}\,s^{-1}}." display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>J</mi><mo>⊙</mo></msub><mo>=</mo><mrow><mi>k</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>M</mi><mo>⊙</mo></msub><mo lspace="0em" rspace="0em">​</mo><msubsup><mi>R</mi><mo>⊙</mo><mn>2</mn></msubsup><mo lspace="0em" rspace="0em">​</mo><msub><mi mathvariant="normal">Ω</mi><mo>⊙</mo></msub></mrow><mo>≈</mo><mrow><mrow><mn>1.6</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mn>41</mn></msup></mrow><mo lspace="0em" rspace="0em">​</mo><mi>kg</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">m</mi><mn>2</mn></msup><mo lspace="0em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow></mrow><mo lspace="0em">.</mo></mrow><annotation encoding="application/x-tex">J_{\odot}=kM_{\odot}R_{\odot}^{2}\Omega_{\odot}\approx 1.6\times 10^{41}\,{\rm kg\,m^{2}\,s^{-1}}.</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_left_padright"></td>
+</tr></tbody>
+</table>
+<p id="S2.SS2.p2.11" class="ltx_p">Spinning it down over 1 Gyr requires a mean torque</p>
+<table id="S2.Ex3" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_left_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_left"><math id="S2.Ex3.m1" class="ltx_Math" alttext="\tau\sim J_{\odot}/T\approx 5\times 10^{24}\,{\rm N\,m}." display="block" intent=":literal"><semantics><mrow><mrow><mi>τ</mi><mo>∼</mo><mrow><msub><mi>J</mi><mo>⊙</mo></msub><mo>/</mo><mi>T</mi></mrow><mo>≈</mo><mrow><mrow><mn>5</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mn>24</mn></msup></mrow><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">N</mi><mo lspace="0.170em" rspace="0em">​</mo><mi mathvariant="normal">m</mi></mrow></mrow><mo lspace="0em">.</mo></mrow><annotation encoding="application/x-tex">\tau\sim J_{\odot}/T\approx 5\times 10^{24}\,{\rm N\,m}.</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_left_padright"></td>
+</tr></tbody>
+</table>
+<p id="S2.SS2.p2.9" class="ltx_p">As an illustrative estimate, a superconducting loop of radius 1 AU carrying
+current <math id="S2.SS2.p2.1.m1" class="ltx_Math" alttext="I" display="inline" intent=":literal"><semantics><mi>I</mi><annotation encoding="application/x-tex">I</annotation></semantics></math> in the solar-wind magnetic field
+(<math id="S2.SS2.p2.2.m2" class="ltx_Math" alttext="B\sim 10^{-9}" display="inline" intent=":literal"><semantics><mrow><mi>B</mi><mo>∼</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>9</mn></mrow></msup></mrow><annotation encoding="application/x-tex">B\sim 10^{-9}</annotation></semantics></math> T at 1 AU) has magnetic moment
+<math id="S2.SS2.p2.3.m3" class="ltx_Math" alttext="m=I\pi R^{2}" display="inline" intent=":literal"><semantics><mrow><mi>m</mi><mo>=</mo><mrow><mi>I</mi><mo lspace="0em" rspace="0em">​</mo><mi>π</mi><mo lspace="0em" rspace="0em">​</mo><msup><mi>R</mi><mn>2</mn></msup></mrow></mrow><annotation encoding="application/x-tex">m=I\pi R^{2}</annotation></semantics></math> and torque <math id="S2.SS2.p2.4.m4" class="ltx_Math" alttext="\tau\sim mB" display="inline" intent=":literal"><semantics><mrow><mi>τ</mi><mo>∼</mo><mrow><mi>m</mi><mo lspace="0em" rspace="0em">​</mo><mi>B</mi></mrow></mrow><annotation encoding="application/x-tex">\tau\sim mB</annotation></semantics></math>, giving
+<math id="S2.SS2.p2.5.m5" class="ltx_Math" alttext="I\sim 7\times 10^{10}" display="inline" intent=":literal"><semantics><mrow><mi>I</mi><mo>∼</mo><mrow><mn>7</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mn>10</mn></msup></mrow></mrow><annotation encoding="application/x-tex">I\sim 7\times 10^{10}</annotation></semantics></math> A. For critical current densities of order
+<math id="S2.SS2.p2.6.m6" class="ltx_Math" alttext="10^{10}" display="inline" intent=":literal"><semantics><msup><mn>10</mn><mn>10</mn></msup><annotation encoding="application/x-tex">10^{10}</annotation></semantics></math> A m<sup id="S2.SS2.p2.9.1" class="ltx_sup"><span id="S2.SS2.p2.9.1.1" class="ltx_text ltx_font_italic">-2</span></sup>, this corresponds to a conductor cross-section of
+order a few m<sup id="S2.SS2.p2.9.2" class="ltx_sup">2</sup>, before allowing for structural support, thermal control,
+stability, and deployment losses. The resulting mass scale is therefore at
+least plausibly below that of a full luminosity-intercepting Dyson swarm,
+which must cover a large fraction of <math id="S2.SS2.p2.9.m9" class="ltx_Math" alttext="4\pi R^{2}" display="inline" intent=":literal"><semantics><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>π</mi><mo lspace="0em" rspace="0em">​</mo><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">4\pi R^{2}</annotation></semantics></math> at AU scales. This comparison
+should be read as an order-of-magnitude plausibility argument, not as an
+engineering design.</p>
+</div>
+<div id="S2.SS2.p3" class="ltx_para">
+<p id="S2.SS2.p3.6" class="ltx_p">Second, <em id="S2.SS2.p3.6.1" class="ltx_emph ltx_font_italic">observational stealth</em>. Extracting 50% of
+<math id="S2.SS2.p3.1.m1" class="ltx_Math" alttext="E_{\rm rot,\odot}" display="inline" intent=":literal"><semantics><msub><mi>E</mi><mrow><mi>rot</mi><mo rspace="0em">,</mo><mo lspace="0em">⊙</mo></mrow></msub><annotation encoding="application/x-tex">E_{\rm rot,\odot}</annotation></semantics></math> over 1 Gyr gives a mean power
+<math id="S2.SS2.p3.2.m2" class="ltx_Math" alttext="\dot{E}\sim 10^{18}" display="inline" intent=":literal"><semantics><mrow><mover accent="true"><mi>E</mi><mo>˙</mo></mover><mo>∼</mo><msup><mn>10</mn><mn>18</mn></msup></mrow><annotation encoding="application/x-tex">\dot{E}\sim 10^{18}</annotation></semantics></math> W, about <math id="S2.SS2.p3.3.m3" class="ltx_Math" alttext="10^{8}" display="inline" intent=":literal"><semantics><msup><mn>10</mn><mn>8</mn></msup><annotation encoding="application/x-tex">10^{8}</annotation></semantics></math> times fainter than the solar
+luminosity. At a typical Kepler distance of 1 kpc, the corresponding flux is
+<math id="S2.SS2.p3.4.m4" class="ltx_Math" alttext="\sim 10^{-22}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>22</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\sim 10^{-22}</annotation></semantics></math> W m<sup id="S2.SS2.p3.6.2" class="ltx_sup"><span id="S2.SS2.p3.6.2.1" class="ltx_text ltx_font_italic">-2</span></sup>, well below the WISE W4 5<math id="S2.SS2.p3.6.m6" class="ltx_Math" alttext="\sigma" display="inline" intent=":literal"><semantics><mi>σ</mi><annotation encoding="application/x-tex">\sigma</annotation></semantics></math> sensitivity
+to mid-infrared excess. SJH would therefore not necessarily resemble a
+classical Dyson-sphere technosignature: its primary observable would be a
+rotational anomaly, not waste heat.</p>
+</div>
+</section>
+<section id="S2.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.3 </span>Engineering methods</h3>
+
+<div id="S2.SS3.p1" class="ltx_para">
+<p id="S2.SS3.p1.1" class="ltx_p">The following mechanisms are not proposed as detailed engineering designs.
+They are schematic routes showing how angular momentum extraction could, in
+principle, couple to a star. In all cases, thermodynamics requires waste heat,
+but the relevant power scale can remain far below the luminosity intercepted
+by a Dyson swarm.</p>
+</div>
+<figure id="S2.F1" class="ltx_figure"><img src="2607.07781v1/figure1_mechanisms.png" id="S2.F1.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="452" height="153" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>Three schematic routes for Stellar J-Harvesting:
+(a) magnetic tether, (b) orbital flywheel, and (c) synchrotron spindown
+array. These examples illustrate possible coupling channels and associated
+waste-heat signatures rather than complete engineering designs.</figcaption>
+</figure>
+<div id="S2.SS3.p2" class="ltx_para">
+<ol id="S2.I1" class="ltx_enumerate">
+<li id="S2.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="S2.I1.i1.p1" class="ltx_para">
+<p id="S2.I1.i1.p1.1" class="ltx_p">Magnetic tether. A conducting structure embedded in the stellar
+wind could extract angular momentum through Alfvén-wave coupling, analogous
+to an artificial enhancement of magnetic braking. The torque would scale with
+the stellar magnetic field, radius, and rotation rate, schematically
+<math id="S2.I1.i1.p1.1.m1" class="ltx_Math" alttext="\tau\propto B_{\star}^{2}R_{\star}^{3}\Omega_{\star}" display="inline" intent=":literal"><semantics><mrow><mi>τ</mi><mo>∝</mo><mrow><msubsup><mi>B</mi><mo>⋆</mo><mn>2</mn></msubsup><mo lspace="0em" rspace="0em">​</mo><msubsup><mi>R</mi><mo>⋆</mo><mn>3</mn></msubsup><mo lspace="0em" rspace="0em">​</mo><msub><mi mathvariant="normal">Ω</mi><mo>⋆</mo></msub></mrow></mrow><annotation encoding="application/x-tex">\tau\propto B_{\star}^{2}R_{\star}^{3}\Omega_{\star}</annotation></semantics></math>. Waste heat would be expected
+mainly as ohmic dissipation and possibly chromospheric UV/X-ray emission.</p>
+</div>
+</li>
+<li id="S2.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="S2.I1.i2.p1" class="ltx_para">
+<p id="S2.I1.i2.p1.4" class="ltx_p">Orbital flywheel. A massive ring or flywheel could exchange
+angular momentum with the stellar magnetosphere through Lorentz-force
+coupling. For an illustrative scale, a ring of order
+<math id="S2.I1.i2.p1.1.m1" class="ltx_Math" alttext="M_{\rm ring}\sim 10^{22}" display="inline" intent=":literal"><semantics><mrow><msub><mi>M</mi><mi>ring</mi></msub><mo>∼</mo><msup><mn>10</mn><mn>22</mn></msup></mrow><annotation encoding="application/x-tex">M_{\rm ring}\sim 10^{22}</annotation></semantics></math> kg at <math id="S2.I1.i2.p1.2.m2" class="ltx_Math" alttext="r=1" display="inline" intent=":literal"><semantics><mrow><mi>r</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">r=1</annotation></semantics></math> AU
+<cite class="ltx_cite ltx_citemacro_citep">(roughly the habitable-zone distance for FGK hosts; Kasting<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib9" title="Habitable Zones around Main Sequence Stars" class="ltx_ref">1993</a>)</cite>
+could produce percent-level spin-down over Gyr timescales in optimistic
+coupling regimes. The dominant waste heat would be ohmic, potentially at
+<math id="S2.I1.i2.p1.3.m3" class="ltx_Math" alttext="T\sim 200" display="inline" intent=":literal"><semantics><mrow><mi>T</mi><mo>∼</mo><mn>200</mn></mrow><annotation encoding="application/x-tex">T\sim 200</annotation></semantics></math>–<math id="S2.I1.i2.p1.4.m4" class="ltx_Math" alttext="400" display="inline" intent=":literal"><semantics><mn>400</mn><annotation encoding="application/x-tex">400</annotation></semantics></math> K.</p>
+</div>
+</li>
+<li id="S2.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span> 
+<div id="S2.I1.i3.p1" class="ltx_para">
+<p id="S2.I1.i3.p1.1" class="ltx_p">Synchrotron spindown array (SSA). A distributed conducting array
+in the stellar wind could accelerate charged particles and emit anisotropic
+synchrotron radiation. If the radiation field carries angular momentum away
+from the star, the back-reaction torque would oppose stellar rotation. Unlike
+the other examples, this route predicts a possible radio excess as a secondary
+technosignature, testable with VLA or LOFAR follow-up.</p>
+</div>
+</li>
+</ol>
+</div>
+</section>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Detection method</h2>
+
+<section id="S3.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.1 </span>A population-relative test that does not need stellar ages</h3>
+
+<div id="S3.SS1.p1" class="ltx_para">
+<p id="S3.SS1.p1.1" class="ltx_p">The traditional approach to identifying anomalous rotators is
+gyrochronology: estimate a star’s age, predict its expected period, and
+flag large deviations. But when the age itself is derived from the
+rotation period, the method becomes circular. Rather than untangle this
+loop, we sidestep it entirely.</p>
+</div>
+<div id="S3.SS1.p2" class="ltx_para">
+<p id="S3.SS1.p2.1" class="ltx_p">We instead use a local comparison: does a star rotate unusually slowly
+relative to stars with similar colour and surface gravity? A strong outlier
+in the same <math id="S3.SS1.p2.1.m1" class="ltx_Math" alttext="(bp\text{-}rp,\log g)" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">(</mo><mrow><mi>b</mi><mo lspace="0em" rspace="0em">​</mo><mi>p</mi><mo lspace="0em" rspace="0em">​</mo><mtext>-</mtext><mo lspace="0em" rspace="0em">​</mo><mi>r</mi><mo lspace="0em" rspace="0em">​</mo><mi>p</mi></mrow><mo>,</mo><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>g</mi></mrow><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(bp\text{-}rp,\log g)</annotation></semantics></math> cell is then flagged for follow-up
+vetting, without first assigning it a gyrochronological age.</p>
+</div>
+<div id="S3.SS1.p3" class="ltx_para">
+<p id="S3.SS1.p3.1" class="ltx_p">The procedure is straightforward:</p>
+<ol id="S3.I1" class="ltx_enumerate">
+<li id="S3.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="S3.I1.i1.p1" class="ltx_para">
+<p id="S3.I1.i1.p1.2" class="ltx_p">Bin all stars by <math id="S3.I1.i1.p1.1.m1" class="ltx_Math" alttext="(bp\text{-}rp,\log g)" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">(</mo><mrow><mi>b</mi><mo lspace="0em" rspace="0em">​</mo><mi>p</mi><mo lspace="0em" rspace="0em">​</mo><mtext>-</mtext><mo lspace="0em" rspace="0em">​</mo><mi>r</mi><mo lspace="0em" rspace="0em">​</mo><mi>p</mi></mrow><mo>,</mo><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>g</mi></mrow><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(bp\text{-}rp,\log g)</annotation></semantics></math> in 0.1 dex cells,
+where <math id="S3.I1.i1.p1.2.m2" class="ltx_Math" alttext="\log g" display="inline" intent=":literal"><semantics><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>g</mi></mrow><annotation encoding="application/x-tex">\log g</annotation></semantics></math> comes from Berger et al. (2020) isochrone fits.</p>
+</div>
+</li>
+<li id="S3.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="S3.I1.i2.p1" class="ltx_para">
+<p id="S3.I1.i2.p1.2" class="ltx_p">In each cell, compute the median <math id="S3.I1.i2.p1.1.m1" class="ltx_Math" alttext="\log_{10}P_{\rm obs}" display="inline" intent=":literal"><semantics><mrow><msub><mi>log</mi><mn>10</mn></msub><mo lspace="0.167em">⁡</mo><msub><mi>P</mi><mi>obs</mi></msub></mrow><annotation encoding="application/x-tex">\log_{10}P_{\rm obs}</annotation></semantics></math> and
+standard deviation <math id="S3.I1.i2.p1.2.m2" class="ltx_Math" alttext="\sigma_{\log P}" display="inline" intent=":literal"><semantics><msub><mi>σ</mi><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>P</mi></mrow></msub><annotation encoding="application/x-tex">\sigma_{\log P}</annotation></semantics></math>.</p>
+</div>
+</li>
+<li id="S3.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span> 
+<div id="S3.I1.i3.p1" class="ltx_para">
+<p id="S3.I1.i3.p1.2" class="ltx_p">For each star, compute
+<math id="S3.I1.i3.p1.1.m1" class="ltx_Math" alttext="\Delta\log P_{\rm pop}=\log_{10}P_{\rm obs}-\langle\log_{10}P_{\rm obs}\rangle_{\rm cell}" display="inline" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><msub><mi>P</mi><mi>pop</mi></msub></mrow></mrow><mo>=</mo><mrow><mrow><msub><mi>log</mi><mn>10</mn></msub><mo lspace="0.167em">⁡</mo><msub><mi>P</mi><mi>obs</mi></msub></mrow><mo>−</mo><msub><mrow><mo stretchy="false">⟨</mo><mrow><msub><mi>log</mi><mn>10</mn></msub><mo lspace="0.167em">⁡</mo><msub><mi>P</mi><mi>obs</mi></msub></mrow><mo stretchy="false">⟩</mo></mrow><mi>cell</mi></msub></mrow></mrow><annotation encoding="application/x-tex">\Delta\log P_{\rm pop}=\log_{10}P_{\rm obs}-\langle\log_{10}P_{\rm obs}\rangle_{\rm cell}</annotation></semantics></math> and
+<math id="S3.I1.i3.p1.2.m2" class="ltx_Math" alttext="z_{\rm pop}=\Delta\log P_{\rm pop}/\sigma_{\log P}" display="inline" intent=":literal"><semantics><mrow><msub><mi>z</mi><mi>pop</mi></msub><mo>=</mo><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mrow><msub><mi>P</mi><mi>pop</mi></msub><mo>/</mo><msub><mi>σ</mi><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>P</mi></mrow></msub></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex">z_{\rm pop}=\Delta\log P_{\rm pop}/\sigma_{\log P}</annotation></semantics></math>.</p>
+</div>
+</li>
+</ol>
+</div>
+</section>
+<section id="S3.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.2 </span>Eight false-positive filters</h3>
+
+<div id="S3.SS2.p1" class="ltx_para">
+<p id="S3.SS2.p1.1" class="ltx_p">Slow rotation has many natural causes. We therefore apply eight filters
+to remove obvious astrophysical false positives:</p>
+</div>
+<div id="S3.SS2.p2" class="ltx_para">
+<ol id="S3.I2" class="ltx_enumerate">
+<li id="S3.I2.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="S3.I2.i1.p1" class="ltx_para">
+<p id="S3.I2.i1.p1.1" class="ltx_p"><em id="S3.I2.i1.p1.1.1" class="ltx_emph ltx_font_italic">FGK only:</em> <math id="S3.I2.i1.p1.1.m1" class="ltx_Math" alttext="4000\leq T_{\rm eff}\leq 7000" display="inline" intent=":literal"><semantics><mrow><mn>4000</mn><mo>≤</mo><msub><mi>T</mi><mi>eff</mi></msub><mo>≤</mo><mn>7000</mn></mrow><annotation encoding="application/x-tex">4000\leq T_{\rm eff}\leq 7000</annotation></semantics></math> K. M dwarfs
+have different dynamo physics; A/F stars lack deep convection zones.</p>
+</div>
+</li>
+<li id="S3.I2.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="S3.I2.i2.p1" class="ltx_para">
+<p id="S3.I2.i2.p1.1" class="ltx_p"><em id="S3.I2.i2.p1.1.1" class="ltx_emph ltx_font_italic">Main sequence:</em> <math id="S3.I2.i2.p1.1.m1" class="ltx_Math" alttext="\log g\geq 4.2" display="inline" intent=":literal"><semantics><mrow><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>g</mi></mrow><mo>≥</mo><mn>4.2</mn></mrow><annotation encoding="application/x-tex">\log g\geq 4.2</annotation></semantics></math> (Berger isochrone). Subgiants
+expand and slow down naturally via angular momentum conservation.</p>
+</div>
+</li>
+<li id="S3.I2.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span> 
+<div id="S3.I2.i3.p1" class="ltx_para">
+<p id="S3.I2.i3.p1.1" class="ltx_p"><em id="S3.I2.i3.p1.1.1" class="ltx_emph ltx_font_italic">Pre-TAMS:</em> isochrone age <math id="S3.I2.i3.p1.1.m1" class="ltx_Math" alttext="&lt;" display="inline" intent=":literal"><semantics><mo>&lt;</mo><annotation encoding="application/x-tex">&lt;</annotation></semantics></math> terminal-age main sequence.
+Post-MS stars are excluded.</p>
+</div>
+</li>
+<li id="S3.I2.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">4.</span> 
+<div id="S3.I2.i4.p1" class="ltx_para">
+<p id="S3.I2.i4.p1.1" class="ltx_p"><em id="S3.I2.i4.p1.1.1" class="ltx_emph ltx_font_italic">Metallicity:</em> <math id="S3.I2.i4.p1.1.m1" class="ltx_Math" alttext="[\mathrm{Fe/H}]\geq-0.5" display="inline" intent=":literal"><semantics><mrow><mrow><mo stretchy="false">[</mo><mrow><mi>Fe</mi><mo>/</mo><mi mathvariant="normal">H</mi></mrow><mo stretchy="false">]</mo></mrow><mo>≥</mo><mrow><mo>−</mo><mn>0.5</mn></mrow></mrow><annotation encoding="application/x-tex">[\mathrm{Fe/H}]\geq-0.5</annotation></semantics></math>. Metal-poor stars
+experience weakened magnetic braking and rotate slowly by nature.</p>
+</div>
+</li>
+<li id="S3.I2.i5" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">5.</span> 
+<div id="S3.I2.i5.p1" class="ltx_para">
+<p id="S3.I2.i5.p1.2" class="ltx_p"><em id="S3.I2.i5.p1.2.1" class="ltx_emph ltx_font_italic">No Gaia companion:</em> <math id="S3.I2.i5.p1.1.m1" class="ltx_Math" alttext="N_{\rm comp}=0" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>comp</mi></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">N_{\rm comp}=0</annotation></semantics></math>. No Gaia-detected
+companion within <math id="S3.I2.i5.p1.2.m2" class="ltx_Math" alttext="4^{\prime\prime}" display="inline" intent=":literal"><semantics><msup><mn>4</mn><mo>′′</mo></msup><annotation encoding="application/x-tex">4^{\prime\prime}</annotation></semantics></math>.</p>
+</div>
+</li>
+<li id="S3.I2.i6" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">6.</span> 
+<div id="S3.I2.i6.p1" class="ltx_para">
+<p id="S3.I2.i6.p1.1" class="ltx_p"><em id="S3.I2.i6.p1.1.1" class="ltx_emph ltx_font_italic">No binary correction:</em> <math id="S3.I2.i6.p1.1.m1" class="ltx_Math" alttext="{\rm KsCorr}={\rm NaN}" display="inline" intent=":literal"><semantics><mrow><mi>KsCorr</mi><mo>=</mo><mi>NaN</mi></mrow><annotation encoding="application/x-tex">{\rm KsCorr}={\rm NaN}</annotation></semantics></math>. Stars
+flagged for binary correction in Berger (2020) are excluded.</p>
+</div>
+</li>
+<li id="S3.I2.i7" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">7.</span> 
+<div id="S3.I2.i7.p1" class="ltx_para">
+<p id="S3.I2.i7.p1.1" class="ltx_p"><em id="S3.I2.i7.p1.1.1" class="ltx_emph ltx_font_italic">Astrometric:</em> <math id="S3.I2.i7.p1.1.m1" class="ltx_Math" alttext="{\rm RUWE}&lt;1.2" display="inline" intent=":literal"><semantics><mrow><mi>RUWE</mi><mo>&lt;</mo><mn>1.2</mn></mrow><annotation encoding="application/x-tex">{\rm RUWE}&lt;1.2</annotation></semantics></math>. Strict threshold for
+astrometric binaries.</p>
+</div>
+</li>
+<li id="S3.I2.i8" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">8.</span> 
+<div id="S3.I2.i8.p1" class="ltx_para">
+<p id="S3.I2.i8.p1.1" class="ltx_p"><em id="S3.I2.i8.p1.1.1" class="ltx_emph ltx_font_italic">Photometric variability:</em> <math id="S3.I2.i8.p1.1.m1" class="ltx_Math" alttext="R_{\rm per}&lt;5000" display="inline" intent=":literal"><semantics><mrow><msub><mi>R</mi><mi>per</mi></msub><mo>&lt;</mo><mn>5000</mn></mrow><annotation encoding="application/x-tex">R_{\rm per}&lt;5000</annotation></semantics></math> ppm. High
+variability may indicate eclipsing, ellipsoidal, or heartbeat binaries
+<cite class="ltx_cite ltx_citemacro_citep">(Jayasinghe<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib8" title="The loudest stellar heartbeat: characterizing the most extreme amplitude heartbeat star system" class="ltx_ref">2021</a>)</cite>.</p>
+</div>
+</li>
+</ol>
+</div>
+</section>
+<section id="S3.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.3 </span>Data</h3>
+
+<div id="S3.SS3.p1" class="ltx_para">
+<p id="S3.SS3.p1.9" class="ltx_p">We draw rotation periods from the catalogue of
+34,030 Kepler stars <cite class="ltx_cite ltx_citemacro_citep">(McQuillan<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib11" title="Rotation Periods of 34,030 Kepler Main-sequence Stars: The Full Autocorrelation Sample" class="ltx_ref">2014</a>)</cite>, which also provides
+<math id="S3.SS3.p1.1.m1" class="ltx_Math" alttext="T_{\rm eff}" display="inline" intent=":literal"><semantics><msub><mi>T</mi><mi>eff</mi></msub><annotation encoding="application/x-tex">T_{\rm eff}</annotation></semantics></math>, <math id="S3.SS3.p1.2.m2" class="ltx_Math" alttext="\log g" display="inline" intent=":literal"><semantics><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>g</mi></mrow><annotation encoding="application/x-tex">\log g</annotation></semantics></math>, <math id="S3.SS3.p1.3.m3" class="ltx_Math" alttext="P_{\rm rot}" display="inline" intent=":literal"><semantics><msub><mi>P</mi><mi>rot</mi></msub><annotation encoding="application/x-tex">P_{\rm rot}</annotation></semantics></math>, and <math id="S3.SS3.p1.4.m4" class="ltx_Math" alttext="R_{\rm per}" display="inline" intent=":literal"><semantics><msub><mi>R</mi><mi>per</mi></msub><annotation encoding="application/x-tex">R_{\rm per}</annotation></semantics></math>. Stellar
+parameters come from the Berger et al. (2020) Gaia–Kepler
+catalogue <cite class="ltx_cite ltx_citemacro_citep">(Berger<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib1" title="The Gaia-Kepler Stellar Properties Catalog. I. Homogeneous Fundamental Properties for 186,301 Kepler Stars" class="ltx_ref">2020</a>)</cite>, which provides isochrone-derived <math id="S3.SS3.p1.5.m5" class="ltx_Math" alttext="\log g" display="inline" intent=":literal"><semantics><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>g</mi></mrow><annotation encoding="application/x-tex">\log g</annotation></semantics></math>,
+<math id="S3.SS3.p1.6.m6" class="ltx_Math" alttext="T_{\rm eff}" display="inline" intent=":literal"><semantics><msub><mi>T</mi><mi>eff</mi></msub><annotation encoding="application/x-tex">T_{\rm eff}</annotation></semantics></math>, age, and TAMS for 186,301 stars (Table 2), plus RUWE,
+<math id="S3.SS3.p1.7.m7" class="ltx_Math" alttext="N_{\rm comp}" display="inline" intent=":literal"><semantics><msub><mi>N</mi><mi>comp</mi></msub><annotation encoding="application/x-tex">N_{\rm comp}</annotation></semantics></math>, <math id="S3.SS3.p1.8.m8" class="ltx_Math" alttext="{\rm KsCorr}" display="inline" intent=":literal"><semantics><mi>KsCorr</mi><annotation encoding="application/x-tex">{\rm KsCorr}</annotation></semantics></math>, and <math id="S3.SS3.p1.9.m9" class="ltx_Math" alttext="[\mathrm{Fe/H}]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mi>Fe</mi><mo>/</mo><mi mathvariant="normal">H</mi></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[\mathrm{Fe/H}]</annotation></semantics></math> (Table 1).</p>
+</div>
+<div id="S3.SS3.p2" class="ltx_para">
+<p id="S3.SS3.p2.1" class="ltx_p">The three-way cross-match yields 32,039 stars. After all eight
+filters, 6,725 clean stars remain (Fig. <a href="#S3.F2" title="Figure 2 ‣ 3.3 Data ‣ 3 Detection method ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>).</p>
+</div>
+<figure id="S3.F2" class="ltx_figure"><img src="2607.07781v1/figure3_hr_diagram.png" id="S3.F2.g1" class="ltx_graphics ltx_centering ltx_img_square" width="598" height="663" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>The 6,725 clean sample stars (grey) in Berger et al. (2020)
+isochrone <math id="S3.F2.5.m1" class="ltx_Math" alttext="T_{\rm eff}" display="inline" intent=":literal"><semantics><msub><mi>T</mi><mi>eff</mi></msub><annotation encoding="application/x-tex">T_{\rm eff}</annotation></semantics></math> versus <math id="S3.F2.6.m2" class="ltx_Math" alttext="\log g" display="inline" intent=":literal"><semantics><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>g</mi></mrow><annotation encoding="application/x-tex">\log g</annotation></semantics></math> space. The two <math id="S3.F2.7.m3" class="ltx_Math" alttext="&gt;4\sigma" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&gt;</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">&gt;4\sigma</annotation></semantics></math> SJH
+candidates (navy stars) sit firmly on the main sequence, well above the
+subgiant exclusion threshold (<math id="S3.F2.8.m4" class="ltx_Math" alttext="\log g=4.2" display="inline" intent=":literal"><semantics><mrow><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>g</mi></mrow><mo>=</mo><mn>4.2</mn></mrow><annotation encoding="application/x-tex">\log g=4.2</annotation></semantics></math>, dotted line).</figcaption>
+</figure>
+</section>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Results</h2>
+
+<section id="S4.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.1 </span>Outlier statistics</h3>
+
+<div id="S4.SS1.p1" class="ltx_para">
+<p id="S4.SS1.p1.2" class="ltx_p">Table <a href="#S4.T2" title="Table 2 ‣ 4.1 Outlier statistics ‣ 4 Results ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> summarizes the slow-rotator tail after all eight
+filters. No star exceeds <math id="S4.SS1.p1.1.m1" class="ltx_Math" alttext="5\sigma" display="inline" intent=":literal"><semantics><mrow><mn>5</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">5\sigma</annotation></semantics></math>; two stars remain above <math id="S4.SS1.p1.2.m2" class="ltx_Math" alttext="4\sigma" display="inline" intent=":literal"><semantics><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">4\sigma</annotation></semantics></math> and
+are examined individually below.</p>
+</div>
+<figure id="S4.T2" class="ltx_table">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 2: </span>SJH outlier statistics after 8 filters
+(<math id="S4.T2.2.m1" class="ltx_Math" alttext="N_{\rm clean}=6{,}725" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>clean</mi></msub><mo>=</mo><mrow><mn>6</mn><mo>,</mo><mn>725</mn></mrow></mrow><annotation encoding="application/x-tex">N_{\rm clean}=6{,}725</annotation></semantics></math>).</figcaption>
+<table id="S4.T2.15" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S4.T2.4.2" class="ltx_tr">
+<th id="S4.T2.4.2.3" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_th_row ltx_border_tt">Threshold</th>
+<th id="S4.T2.3.1.1" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><math id="S4.T2.3.1.1.m1" class="ltx_Math" alttext="N" display="inline" intent=":literal"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math></th>
+<th id="S4.T2.4.2.2" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt">
+<math id="S4.T2.4.2.2.m1" class="ltx_Math" alttext="\Delta\log P_{\rm pop}" display="inline" intent=":literal"><semantics><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><msub><mi>P</mi><mi>pop</mi></msub></mrow></mrow><annotation encoding="application/x-tex">\Delta\log P_{\rm pop}</annotation></semantics></math> range</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S4.T2.6.4" class="ltx_tr">
+<th id="S4.T2.5.3.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_t"><math id="S4.T2.5.3.1.m1" class="ltx_Math" alttext="z&gt;5\sigma" display="inline" intent=":literal"><semantics><mrow><mi>z</mi><mo>&gt;</mo><mrow><mn>5</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">z&gt;5\sigma</annotation></semantics></math></th>
+<td id="S4.T2.6.4.3" class="ltx_td ltx_align_right ltx_border_t">0</td>
+<td id="S4.T2.6.4.2" class="ltx_td ltx_align_right ltx_border_t"><math id="S4.T2.6.4.2.m1" class="ltx_Math" alttext="\cdots" display="inline" intent=":literal"><semantics><mi mathvariant="normal">⋯</mi><annotation encoding="application/x-tex">\cdots</annotation></semantics></math></td>
+</tr>
+<tr id="S4.T2.9.7" class="ltx_tr">
+<th id="S4.T2.7.5.1" class="ltx_td ltx_align_left ltx_th ltx_th_row"><math id="S4.T2.7.5.1.m1" class="ltx_Math" alttext="z&gt;4\sigma" display="inline" intent=":literal"><semantics><mrow><mi>z</mi><mo>&gt;</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">z&gt;4\sigma</annotation></semantics></math></th>
+<td id="S4.T2.9.7.4" class="ltx_td ltx_align_right">2</td>
+<td id="S4.T2.9.7.3" class="ltx_td ltx_align_right">
+<math id="S4.T2.8.6.2.m1" class="ltx_Math" alttext="0.65" display="inline" intent=":literal"><semantics><mn>0.65</mn><annotation encoding="application/x-tex">0.65</annotation></semantics></math> to <math id="S4.T2.9.7.3.m2" class="ltx_Math" alttext="1.14" display="inline" intent=":literal"><semantics><mn>1.14</mn><annotation encoding="application/x-tex">1.14</annotation></semantics></math>
+</td>
+</tr>
+<tr id="S4.T2.12.10" class="ltx_tr">
+<th id="S4.T2.10.8.1" class="ltx_td ltx_align_left ltx_th ltx_th_row"><math id="S4.T2.10.8.1.m1" class="ltx_Math" alttext="z&gt;3\sigma" display="inline" intent=":literal"><semantics><mrow><mi>z</mi><mo>&gt;</mo><mrow><mn>3</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">z&gt;3\sigma</annotation></semantics></math></th>
+<td id="S4.T2.12.10.4" class="ltx_td ltx_align_right">6</td>
+<td id="S4.T2.12.10.3" class="ltx_td ltx_align_right">
+<math id="S4.T2.11.9.2.m1" class="ltx_Math" alttext="0.55" display="inline" intent=":literal"><semantics><mn>0.55</mn><annotation encoding="application/x-tex">0.55</annotation></semantics></math> to <math id="S4.T2.12.10.3.m2" class="ltx_Math" alttext="1.14" display="inline" intent=":literal"><semantics><mn>1.14</mn><annotation encoding="application/x-tex">1.14</annotation></semantics></math>
+</td>
+</tr>
+<tr id="S4.T2.15.13" class="ltx_tr">
+<th id="S4.T2.13.11.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_bb"><math id="S4.T2.13.11.1.m1" class="ltx_Math" alttext="z&gt;2\sigma" display="inline" intent=":literal"><semantics><mrow><mi>z</mi><mo>&gt;</mo><mrow><mn>2</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">z&gt;2\sigma</annotation></semantics></math></th>
+<td id="S4.T2.15.13.4" class="ltx_td ltx_align_right ltx_border_bb">23</td>
+<td id="S4.T2.15.13.3" class="ltx_td ltx_align_right ltx_border_bb">
+<math id="S4.T2.14.12.2.m1" class="ltx_Math" alttext="0.33" display="inline" intent=":literal"><semantics><mn>0.33</mn><annotation encoding="application/x-tex">0.33</annotation></semantics></math> to <math id="S4.T2.15.13.3.m2" class="ltx_Math" alttext="1.14" display="inline" intent=":literal"><semantics><mn>1.14</mn><annotation encoding="application/x-tex">1.14</annotation></semantics></math>
+</td>
+</tr>
+</tbody>
+</table>
+</figure>
+</section>
+<section id="S4.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.2 </span>Two <math id="S4.SS2.1.m1" class="ltx_Math" alttext="&gt;4\sigma" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&gt;</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">&gt;4\sigma</annotation></semantics></math> candidates</h3>
+
+<div id="S4.SS2.p1" class="ltx_para">
+<p id="S4.SS2.p1.1" class="ltx_p">Table <a href="#S4.T3" title="Table 3 ‣ 4.2 Two &gt;4⁢𝜎 candidates ‣ 4 Results ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a> presents the two highest-significance
+candidates. Both are G-type main-sequence stars with isochrone ages of
+1.0 and 2.0 Gyr, well below their TAMS of 4.2 and 8.3 Gyr. Their
+rotation periods of 61 and 65 d stand in stark contrast to the
+5 to 10 d expected for F/G stars of that age. The implied energy extraction fraction <math id="S4.SS2.p1.1.m1" class="ltx_Math" alttext="f_{E}=1-10^{-2\Delta\log P}" display="inline" intent=":literal"><semantics><mrow><msub><mi>f</mi><mi>E</mi></msub><mo>=</mo><mrow><mn>1</mn><mo>−</mo><msup><mn>10</mn><mrow><mo>−</mo><mrow><mn>2</mn><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">Δ</mi><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>P</mi></mrow></mrow></mrow></msup></mrow></mrow><annotation encoding="application/x-tex">f_{E}=1-10^{-2\Delta\log P}</annotation></semantics></math> exceeds 95%, so an SJH interpretation
+would require very strong angular-momentum extraction. We emphasize that
+these are candidates requiring spectroscopic and high-resolution imaging
+follow-up, not detections.</p>
+</div>
+<figure id="S4.T3" class="ltx_table">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 3: </span>Two <math id="S4.T3.4.m1" class="ltx_Math" alttext="&gt;4\sigma" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&gt;</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">&gt;4\sigma</annotation></semantics></math> SJH candidates. Stellar parameters from
+Berger et al. (2020) isochrone fits; <math id="S4.T3.5.m2" class="ltx_Math" alttext="[M/H]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mi>M</mi><mo>/</mo><mi>H</mi></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[M/H]</annotation></semantics></math> and astrometric excess noise
+significance from Gaia DR3 <cite class="ltx_cite ltx_citemacro_citep">(Gaia Collaboration<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib6" title="Gaia Data Release 3. Summary of the content and survey properties" class="ltx_ref">2023</a>)</cite>. Both candidates have NaN
+<math id="S4.T3.6.m3" class="ltx_Math" alttext="[\mathrm{Fe/H}]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mi>Fe</mi><mo>/</mo><mi mathvariant="normal">H</mi></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[\mathrm{Fe/H}]</annotation></semantics></math> entries in Berger et al. (2020) that bypassed our nominal
+metallicity filter.</figcaption>
+<table id="S4.T3.16" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S4.T3.14.8" class="ltx_tr">
+<th id="S4.T3.14.8.9" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">KIC</th>
+<th id="S4.T3.7.1.1" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><math id="S4.T3.7.1.1.m1" class="ltx_Math" alttext="P_{\rm obs}" display="inline" intent=":literal"><semantics><msub><mi>P</mi><mi>obs</mi></msub><annotation encoding="application/x-tex">P_{\rm obs}</annotation></semantics></math></th>
+<th id="S4.T3.8.2.2" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><math id="S4.T3.8.2.2.m1" class="ltx_Math" alttext="T_{\rm eff}" display="inline" intent=":literal"><semantics><msub><mi>T</mi><mi>eff</mi></msub><annotation encoding="application/x-tex">T_{\rm eff}</annotation></semantics></math></th>
+<th id="S4.T3.9.3.3" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><math id="S4.T3.9.3.3.m1" class="ltx_Math" alttext="\log g" display="inline" intent=":literal"><semantics><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>g</mi></mrow><annotation encoding="application/x-tex">\log g</annotation></semantics></math></th>
+<th id="S4.T3.14.8.10" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt">Age</th>
+<th id="S4.T3.14.8.11" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt">TAMS</th>
+<th id="S4.T3.14.8.12" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt">RUWE</th>
+<th id="S4.T3.10.4.4" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><math id="S4.T3.10.4.4.m1" class="ltx_Math" alttext="N_{\rm comp}" display="inline" intent=":literal"><semantics><msub><mi>N</mi><mi>comp</mi></msub><annotation encoding="application/x-tex">N_{\rm comp}</annotation></semantics></math></th>
+<th id="S4.T3.11.5.5" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><math id="S4.T3.11.5.5.m1" class="ltx_Math" alttext="[M/H]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mi>M</mi><mo>/</mo><mi>H</mi></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[M/H]</annotation></semantics></math></th>
+<th id="S4.T3.12.6.6" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><math id="S4.T3.12.6.6.m1" class="ltx_Math" alttext="{\rm sig}_{\rm EN}" display="inline" intent=":literal"><semantics><msub><mi>sig</mi><mi>EN</mi></msub><annotation encoding="application/x-tex">{\rm sig}_{\rm EN}</annotation></semantics></math></th>
+<th id="S4.T3.13.7.7" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><math id="S4.T3.13.7.7.m1" class="ltx_Math" alttext="\Delta\log P" display="inline" intent=":literal"><semantics><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>P</mi></mrow></mrow><annotation encoding="application/x-tex">\Delta\log P</annotation></semantics></math></th>
+<th id="S4.T3.14.8.8" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><math id="S4.T3.14.8.8.m1" class="ltx_Math" alttext="z" display="inline" intent=":literal"><semantics><mi>z</mi><annotation encoding="application/x-tex">z</annotation></semantics></math></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S4.T3.16.11.1" class="ltx_tr">
+<td id="S4.T3.16.11.1.1" class="ltx_td"></td>
+<th id="S4.T3.16.11.1.2" class="ltx_td ltx_align_right ltx_th ltx_th_column">(d)</th>
+<th id="S4.T3.16.11.1.3" class="ltx_td ltx_align_right ltx_th ltx_th_column">(K)</th>
+<th id="S4.T3.16.11.1.4" class="ltx_td ltx_th ltx_th_column"></th>
+<th id="S4.T3.16.11.1.5" class="ltx_td ltx_align_right ltx_th ltx_th_column">(Gyr)</th>
+<th id="S4.T3.16.11.1.6" class="ltx_td ltx_align_right ltx_th ltx_th_column">(Gyr)</th>
+<th id="S4.T3.16.11.1.7" class="ltx_td ltx_th ltx_th_column"></th>
+<th id="S4.T3.16.11.1.8" class="ltx_td ltx_th ltx_th_column"></th>
+<th id="S4.T3.16.11.1.9" class="ltx_td ltx_th ltx_th_column"></th>
+<th id="S4.T3.16.11.1.10" class="ltx_td ltx_th ltx_th_column"></th>
+<th id="S4.T3.16.11.1.11" class="ltx_td ltx_th ltx_th_column"></th>
+<td id="S4.T3.16.11.1.12" class="ltx_td"></td>
+</tr>
+<tr id="S4.T3.15.9" class="ltx_tr">
+<td id="S4.T3.15.9.2" class="ltx_td ltx_align_left ltx_border_t">6606183</td>
+<td id="S4.T3.15.9.3" class="ltx_td ltx_align_right ltx_border_t">60.97</td>
+<td id="S4.T3.15.9.4" class="ltx_td ltx_align_right ltx_border_t">6504</td>
+<td id="S4.T3.15.9.5" class="ltx_td ltx_align_right ltx_border_t">4.31</td>
+<td id="S4.T3.15.9.6" class="ltx_td ltx_align_right ltx_border_t">1.04</td>
+<td id="S4.T3.15.9.7" class="ltx_td ltx_align_right ltx_border_t">4.17</td>
+<td id="S4.T3.15.9.8" class="ltx_td ltx_align_right ltx_border_t">0.99</td>
+<td id="S4.T3.15.9.9" class="ltx_td ltx_align_right ltx_border_t">0</td>
+<td id="S4.T3.15.9.1" class="ltx_td ltx_align_right ltx_border_t"><math id="S4.T3.15.9.1.m1" class="ltx_Math" alttext="-0.60" display="inline" intent=":literal"><semantics><mrow><mo>−</mo><mn>0.60</mn></mrow><annotation encoding="application/x-tex">-0.60</annotation></semantics></math></td>
+<td id="S4.T3.15.9.10" class="ltx_td ltx_align_right ltx_border_t">9.4</td>
+<td id="S4.T3.15.9.11" class="ltx_td ltx_align_right ltx_border_t">1.14</td>
+<td id="S4.T3.15.9.12" class="ltx_td ltx_align_right ltx_border_t">4.12</td>
+</tr>
+<tr id="S4.T3.16.10" class="ltx_tr">
+<td id="S4.T3.16.10.2" class="ltx_td ltx_align_left ltx_border_bb">9834255</td>
+<td id="S4.T3.16.10.3" class="ltx_td ltx_align_right ltx_border_bb">65.16</td>
+<td id="S4.T3.16.10.4" class="ltx_td ltx_align_right ltx_border_bb">5992</td>
+<td id="S4.T3.16.10.5" class="ltx_td ltx_align_right ltx_border_bb">4.44</td>
+<td id="S4.T3.16.10.6" class="ltx_td ltx_align_right ltx_border_bb">1.97</td>
+<td id="S4.T3.16.10.7" class="ltx_td ltx_align_right ltx_border_bb">8.27</td>
+<td id="S4.T3.16.10.8" class="ltx_td ltx_align_right ltx_border_bb">1.09</td>
+<td id="S4.T3.16.10.9" class="ltx_td ltx_align_right ltx_border_bb">0</td>
+<td id="S4.T3.16.10.1" class="ltx_td ltx_align_right ltx_border_bb"><math id="S4.T3.16.10.1.m1" class="ltx_Math" alttext="-0.18" display="inline" intent=":literal"><semantics><mrow><mo>−</mo><mn>0.18</mn></mrow><annotation encoding="application/x-tex">-0.18</annotation></semantics></math></td>
+<td id="S4.T3.16.10.10" class="ltx_td ltx_align_right ltx_border_bb">0.0</td>
+<td id="S4.T3.16.10.11" class="ltx_td ltx_align_right ltx_border_bb">0.65</td>
+<td id="S4.T3.16.10.12" class="ltx_td ltx_align_right ltx_border_bb">4.12</td>
+</tr>
+</tbody>
+</table>
+</figure>
+<div id="S4.SS2.p2" class="ltx_para">
+<p id="S4.SS2.p2.7" class="ltx_p">Both candidates formally survive all eight false-positive filters, but
+this survival is partly an artifact of missing data: Berger et al. (2020)
+report NaN <math id="S4.SS2.p2.1.m1" class="ltx_Math" alttext="[\mathrm{Fe/H}]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mi>Fe</mi><mo>/</mo><mi mathvariant="normal">H</mi></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[\mathrm{Fe/H}]</annotation></semantics></math> for both stars, so the metallicity filter does not
+actually apply to them. Gaia DR3 <cite class="ltx_cite ltx_citemacro_citep">(Gaia Collaboration<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib6" title="Gaia Data Release 3. Summary of the content and survey properties" class="ltx_ref">2023</a>)</cite> fills the gap with
+photometric <math id="S4.SS2.p2.2.m2" class="ltx_Math" alttext="[M/H]=-0.60" display="inline" intent=":literal"><semantics><mrow><mrow><mo stretchy="false">[</mo><mrow><mi>M</mi><mo>/</mo><mi>H</mi></mrow><mo stretchy="false">]</mo></mrow><mo>=</mo><mrow><mo>−</mo><mn>0.60</mn></mrow></mrow><annotation encoding="application/x-tex">[M/H]=-0.60</annotation></semantics></math> for KIC 6606183 and <math id="S4.SS2.p2.3.m3" class="ltx_Math" alttext="-0.18" display="inline" intent=":literal"><semantics><mrow><mo>−</mo><mn>0.18</mn></mrow><annotation encoding="application/x-tex">-0.18</annotation></semantics></math> for
+KIC 9834255. The Gaia astrometric excess noise significance, <math id="S4.SS2.p2.4.m4" class="ltx_Math" alttext="{\rm sig}_{\rm EN}" display="inline" intent=":literal"><semantics><msub><mi>sig</mi><mi>EN</mi></msub><annotation encoding="application/x-tex">{\rm sig}_{\rm EN}</annotation></semantics></math>,
+also flags KIC 6606183 with a 9.4<math id="S4.SS2.p2.5.m5" class="ltx_Math" alttext="\sigma" display="inline" intent=":literal"><semantics><mi>σ</mi><annotation encoding="application/x-tex">\sigma</annotation></semantics></math> astrometric anomaly that
+points to an unseen companion despite its RUWE <math id="S4.SS2.p2.6.m6" class="ltx_Math" alttext="=0.99" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><mn>0.99</mn></mrow><annotation encoding="application/x-tex">=0.99</annotation></semantics></math>. Their
+photometric variability (<math id="S4.SS2.p2.7.m7" class="ltx_Math" alttext="R_{\rm per}&lt;800" display="inline" intent=":literal"><semantics><mrow><msub><mi>R</mi><mi>per</mi></msub><mo>&lt;</mo><mn>800</mn></mrow><annotation encoding="application/x-tex">R_{\rm per}&lt;800</annotation></semantics></math> ppm) shows no eclipse-like
+signal. Fig. <a href="#S4.F3" title="Figure 3 ‣ 4.2 Two &gt;4⁢𝜎 candidates ‣ 4 Results ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a> places them in the context of the full
+sample.</p>
+</div>
+<figure id="S4.F3" class="ltx_figure"><img src="2607.07781v1/figure2_pobs_vs_ppop.png" id="S4.F3.g1" class="ltx_graphics ltx_centering ltx_img_square" width="598" height="540" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>Rotation period versus effective temperature for the clean
+sample (grey points). The solid line shows the population median in
+each <math id="S4.F3.3.m1" class="ltx_Math" alttext="T_{\rm eff}" display="inline" intent=":literal"><semantics><msub><mi>T</mi><mi>eff</mi></msub><annotation encoding="application/x-tex">T_{\rm eff}</annotation></semantics></math> bin. The two <math id="S4.F3.4.m2" class="ltx_Math" alttext="&gt;4\sigma" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&gt;</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">&gt;4\sigma</annotation></semantics></math> SJH candidates (navy stars)
+sit far above the median, with periods of 61 and 65 d where 5 to
+10 d would be expected.</figcaption>
+</figure>
+</section>
+<section id="S4.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.3 </span>WISE and Aladin images: ambiguous but informative</h3>
+
+<div id="S4.SS3.p1" class="ltx_para">
+<p id="S4.SS3.p1.5" class="ltx_p">Visual inspection of WISE images (all four bands: W1, W2, W3, W4) and
+Aladin optical/infrared overlays reveals infrared sources near both
+candidates (Fig. <a href="#S4.F4" title="Figure 4 ‣ 4.3 WISE and Aladin images: ambiguous but informative ‣ 4 Results ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>). The WISE beam (<math id="S4.SS3.p1.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>6<sup id="S4.SS3.p1.5.1" class="ltx_sup"><span id="S4.SS3.p1.5.1.1" class="ltx_text ltx_font_italic">′′</span></sup> at W3,
+<math id="S4.SS3.p1.3.m3" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>12<sup id="S4.SS3.p1.5.2" class="ltx_sup"><span id="S4.SS3.p1.5.2.1" class="ltx_text ltx_font_italic">′′</span></sup> at W4) is too coarse to determine whether these are
+physical companions or unrelated background objects. Gaia DR3 <cite class="ltx_cite ltx_citemacro_citep">(Gaia Collaboration<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib6" title="Gaia Data Release 3. Summary of the content and survey properties" class="ltx_ref">2023</a>)</cite> reports <math id="S4.SS3.p1.5.m5" class="ltx_Math" alttext="N_{\rm comp}=0" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>comp</mi></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">N_{\rm comp}=0</annotation></semantics></math> for both, but the WISE
+beam is too broad to distinguish unrelated background sources from
+unresolved companions. High-resolution imaging is required.</p>
+</div>
+<div id="S4.SS3.p2" class="ltx_para">
+<p id="S4.SS3.p2.1" class="ltx_p">No mid-infrared excess attributable to circumstellar dust is detected.
+This is consistent with either binary contamination (no SJH signal
+expected) or SJH mechanisms whose waste-heat output falls below WISE
+sensitivity.</p>
+</div>
+<figure id="S4.F4" class="ltx_figure"><img src="2607.07781v1/figure4_wise_grid.png" id="S4.F4.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="429" height="153" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 4: </span>Multiwavelength images of the two <math id="S4.F4.2.m1" class="ltx_Math" alttext="&gt;4\sigma" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&gt;</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">&gt;4\sigma</annotation></semantics></math> SJH candidates.
+Top: KIC 6606183. Bottom: KIC 9834255. Columns: WISE W1–W4 and
+Aladin DSS colour composite. Nearby sources are visible but their
+physical association requires high-resolution imaging.</figcaption>
+</figure>
+</section>
+<section id="S4.SS4" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.4 </span>Occurrence rate upper limit</h3>
+
+<div id="S4.SS4.p1" class="ltx_para">
+<p id="S4.SS4.p1.3" class="ltx_p">Because both <math id="S4.SS4.p1.1.m1" class="ltx_Math" alttext="&gt;4\sigma" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&gt;</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">&gt;4\sigma</annotation></semantics></math> candidates carry compelling binary or
+metallicity alternatives (Section <a href="#S5" title="5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>), we treat them
+as non-detections for the purpose of an occurrence rate upper limit.
+With zero candidates at <math id="S4.SS4.p1.2.m2" class="ltx_Math" alttext="z&gt;5\sigma" display="inline" intent=":literal"><semantics><mrow><mi>z</mi><mo>&gt;</mo><mrow><mn>5</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">z&gt;5\sigma</annotation></semantics></math> in 6,725 clean stars, the
+Poisson 95% upper limit <cite class="ltx_cite ltx_citemacro_citep">(<math id="S4.SS4.p1.3.1.m1" class="ltx_Math" alttext="k=0" display="inline" intent=":literal"><semantics><mrow><mi>k</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">k=0</annotation></semantics></math>; Gehrels, <a href="#bib.bib5" title="Confidence limits for small numbers of events in Poisson and binomial distributions" class="ltx_ref">1986</a>)</cite> is</p>
+<table id="S4.E3" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_left_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_left"><math id="S4.E3.m1" class="ltx_Math" alttext="f_{\rm SJH}&lt;\frac{3.0}{6{,}725}\approx 4.5\times 10^{-4}." display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>f</mi><mi>SJH</mi></msub><mo>&lt;</mo><mfrac><mn>3.0</mn><mrow><mn>6</mn><mo>,</mo><mn>725</mn></mrow></mfrac><mo>≈</mo><mrow><mn>4.5</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>4</mn></mrow></msup></mrow></mrow><mo lspace="0em">.</mo></mrow><annotation encoding="application/x-tex">f_{\rm SJH}&lt;\frac{3.0}{6{,}725}\approx 4.5\times 10^{-4}.</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_left_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(3)</span></td>
+</tr></tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">5 </span>Discussion</h2>
+
+<section id="S5.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.1 </span>Six natural explanations</h3>
+
+<div id="S5.SS1.p1" class="ltx_para">
+<ul id="S5.I1" class="ltx_itemize">
+<li id="S5.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i1.p1" class="ltx_para">
+<p id="S5.I1.i1.p1.4" class="ltx_p"><em id="S5.I1.i1.p1.4.1" class="ltx_emph ltx_font_italic">Subgiant contamination.</em> Subgiants rotate slowly because
+they expand. An earlier version of this search, using McQuillan
+photometric <math id="S5.I1.i1.p1.1.m1" class="ltx_Math" alttext="\log g" display="inline" intent=":literal"><semantics><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>g</mi></mrow><annotation encoding="application/x-tex">\log g</annotation></semantics></math>, produced 7 candidates at <math id="S5.I1.i1.p1.2.m2" class="ltx_Math" alttext="z&gt;3\sigma" display="inline" intent=":literal"><semantics><mrow><mi>z</mi><mo>&gt;</mo><mrow><mn>3</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">z&gt;3\sigma</annotation></semantics></math>. Switching
+to Berger isochrone <math id="S5.I1.i1.p1.3.m3" class="ltx_Math" alttext="\log g" display="inline" intent=":literal"><semantics><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>g</mi></mrow><annotation encoding="application/x-tex">\log g</annotation></semantics></math> immediately identified one as a subgiant
+(<math id="S5.I1.i1.p1.4.m4" class="ltx_Math" alttext="\log g=4.03" display="inline" intent=":literal"><semantics><mrow><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>g</mi></mrow><mo>=</mo><mn>4.03</mn></mrow><annotation encoding="application/x-tex">\log g=4.03</annotation></semantics></math>) and excluded it.</p>
+</div>
+</li>
+<li id="S5.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i2.p1" class="ltx_para">
+<p id="S5.I1.i2.p1.1" class="ltx_p"><em id="S5.I1.i2.p1.1.1" class="ltx_emph ltx_font_italic">Old-age spin-down.</em> Old stars rotate slowly; this is the
+core of the Skumanich <cite class="ltx_cite ltx_citemacro_citep">(Skumanich, <a href="#bib.bib14" title="Time Scales for Ca II Emission Decay, Rotational Braking, and Lithium Depletion" class="ltx_ref">1972</a>)</cite> relation. But the Berger
+isochrone ages for our two <math id="S5.I1.i2.p1.1.m1" class="ltx_Math" alttext="&gt;4\sigma" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&gt;</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">&gt;4\sigma</annotation></semantics></math> candidates are 1.0 and 2.0 Gyr,
+well below their TAMS. A 1 Gyr F/G star should rotate at 5 to 10 d,
+not 61 to 65 d. The old-age explanation does not survive the age
+data.</p>
+</div>
+</li>
+<li id="S5.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i3.p1" class="ltx_para">
+<p id="S5.I1.i3.p1.6" class="ltx_p"><em id="S5.I1.i3.p1.6.1" class="ltx_emph ltx_font_italic">Binary tidal braking.</em> This is the most stubborn
+false-positive channel and the most likely explanation for both
+surviving candidates. Of the original 7 candidates at <math id="S5.I1.i3.p1.1.m1" class="ltx_Math" alttext="z&gt;3\sigma" display="inline" intent=":literal"><semantics><mrow><mi>z</mi><mo>&gt;</mo><mrow><mn>3</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">z&gt;3\sigma</annotation></semantics></math>
+(before binary filters), 3 were excluded: two by <math id="S5.I1.i3.p1.2.m2" class="ltx_Math" alttext="N_{\rm comp}&gt;0" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>comp</mi></msub><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">N_{\rm comp}&gt;0</annotation></semantics></math> and
+KsCorr binary flags, one by <math id="S5.I1.i3.p1.3.m3" class="ltx_Math" alttext="{\rm RUWE}=1.55" display="inline" intent=":literal"><semantics><mrow><mi>RUWE</mi><mo>=</mo><mn>1.55</mn></mrow><annotation encoding="application/x-tex">{\rm RUWE}=1.55</annotation></semantics></math>. The survivors have
+<math id="S5.I1.i3.p1.4.m4" class="ltx_Math" alttext="{\rm RUWE}&lt;1.1" display="inline" intent=":literal"><semantics><mrow><mi>RUWE</mi><mo>&lt;</mo><mn>1.1</mn></mrow><annotation encoding="application/x-tex">{\rm RUWE}&lt;1.1</annotation></semantics></math> and <math id="S5.I1.i3.p1.5.m5" class="ltx_Math" alttext="N_{\rm comp}=0" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>comp</mi></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">N_{\rm comp}=0</annotation></semantics></math>, but close spectroscopic
+binaries (SB1) or sub-arcsecond binaries can escape both Gaia
+astrometric detection and the KsCorr flag. Stellar multiplicity is
+common among solar-type stars <cite class="ltx_cite ltx_citemacro_citep">(Kraus and Hillenbrand, <a href="#bib.bib10" title="The Stellar Populations of Praesepe and Coma Berenices" class="ltx_ref">2007</a>)</cite>. The Gaia DR3
+<cite class="ltx_cite ltx_citemacro_citep">(Gaia Collaboration<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib6" title="Gaia Data Release 3. Summary of the content and survey properties" class="ltx_ref">2023</a>)</cite> astrometric excess noise significance for KIC 6606183
+is 9.4<math id="S5.I1.i3.p1.6.m6" class="ltx_Math" alttext="\sigma" display="inline" intent=":literal"><semantics><mi>σ</mi><annotation encoding="application/x-tex">\sigma</annotation></semantics></math>, a strong astrometric binary indicator that the RUWE
+threshold misses. KIC 9834255 has 6 blended BP transits in Gaia DR3,
+suggesting a nearby source within the BP aperture. Both stars therefore
+carry independent binary indicators that survived our filters, and we
+cannot exclude this channel without radial-velocity monitoring and
+high-resolution imaging.</p>
+</div>
+</li>
+<li id="S5.I1.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i4.p1" class="ltx_para">
+<p id="S5.I1.i4.p1.2" class="ltx_p"><em id="S5.I1.i4.p1.2.1" class="ltx_emph ltx_font_italic">Weakened magnetic braking.</em> The classical rotation–activity
+relation <cite class="ltx_cite ltx_citemacro_citep">(Noyes<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib12" title="Rotation, convection, and magnetic activity in lower main-sequence stars." class="ltx_ref">1984</a>)</cite> underpins the Rossby-number framework, and
+<cite class="ltx_cite ltx_citemacro_citet">van Saders<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib18" title="Weakened magnetic braking as the origin of anomalously rapid rotation in old field stars" class="ltx_ref">2016</a>)</cite> showed that braking weakens at <math id="S5.I1.i4.p1.1.m1" class="ltx_Math" alttext="R_{o}\gtrsim 2" display="inline" intent=":literal"><semantics><mrow><msub><mi>R</mi><mi>o</mi></msub><mo>≳</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">R_{o}\gtrsim 2</annotation></semantics></math>.
+Both candidates have <math id="S5.I1.i4.p1.2.m2" class="ltx_Math" alttext="R_{o}&lt;1.1" display="inline" intent=":literal"><semantics><mrow><msub><mi>R</mi><mi>o</mi></msub><mo>&lt;</mo><mn>1.1</mn></mrow><annotation encoding="application/x-tex">R_{o}&lt;1.1</annotation></semantics></math> (computed via <cite class="ltx_cite ltx_citemacro_citet">Cranmer and Saar <a href="#bib.bib3" title="Testing a Predictive Theoretical Model for the Mass Loss Rates of Cool Stars" class="ltx_ref">2011</a></cite>
+convective turnover times), ruling out this channel.</p>
+</div>
+</li>
+<li id="S5.I1.i5" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i5.p1" class="ltx_para">
+<p id="S5.I1.i5.p1.7" class="ltx_p"><em id="S5.I1.i5.p1.7.1" class="ltx_emph ltx_font_italic">Metallicity.</em> Low metallicity weakens magnetic braking and
+produces naturally slow rotation. Both candidates have NaN <math id="S5.I1.i5.p1.1.m1" class="ltx_Math" alttext="[\mathrm{Fe/H}]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mi>Fe</mi><mo>/</mo><mi mathvariant="normal">H</mi></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[\mathrm{Fe/H}]</annotation></semantics></math>
+entries in Berger et al. (2020), so our nominal <math id="S5.I1.i5.p1.2.m2" class="ltx_Math" alttext="[\mathrm{Fe/H}]\geq-0.5" display="inline" intent=":literal"><semantics><mrow><mrow><mo stretchy="false">[</mo><mrow><mi>Fe</mi><mo>/</mo><mi mathvariant="normal">H</mi></mrow><mo stretchy="false">]</mo></mrow><mo>≥</mo><mrow><mo>−</mo><mn>0.5</mn></mrow></mrow><annotation encoding="application/x-tex">[\mathrm{Fe/H}]\geq-0.5</annotation></semantics></math>
+filter did not apply to them. Gaia DR3 <cite class="ltx_cite ltx_citemacro_citep">(Gaia Collaboration<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib6" title="Gaia Data Release 3. Summary of the content and survey properties" class="ltx_ref">2023</a>)</cite> photometric
+metallicities fill this gap: <math id="S5.I1.i5.p1.3.m3" class="ltx_Math" alttext="[M/H]=-0.60" display="inline" intent=":literal"><semantics><mrow><mrow><mo stretchy="false">[</mo><mrow><mi>M</mi><mo>/</mo><mi>H</mi></mrow><mo stretchy="false">]</mo></mrow><mo>=</mo><mrow><mo>−</mo><mn>0.60</mn></mrow></mrow><annotation encoding="application/x-tex">[M/H]=-0.60</annotation></semantics></math> for KIC 6606183 and
+<math id="S5.I1.i5.p1.4.m4" class="ltx_Math" alttext="[M/H]=-0.18" display="inline" intent=":literal"><semantics><mrow><mrow><mo stretchy="false">[</mo><mrow><mi>M</mi><mo>/</mo><mi>H</mi></mrow><mo stretchy="false">]</mo></mrow><mo>=</mo><mrow><mo>−</mo><mn>0.18</mn></mrow></mrow><annotation encoding="application/x-tex">[M/H]=-0.18</annotation></semantics></math> for KIC 9834255. The first value sits below our nominal
+<math id="S5.I1.i5.p1.5.m5" class="ltx_Math" alttext="-0.5" display="inline" intent=":literal"><semantics><mrow><mo>−</mo><mn>0.5</mn></mrow><annotation encoding="application/x-tex">-0.5</annotation></semantics></math> cutoff, meaning KIC 6606183 would have been excluded had the
+metallicity been available, and its slow rotation is at least partially
+explained by weakened magnetic braking at low <math id="S5.I1.i5.p1.6.m6" class="ltx_Math" alttext="[M/H]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mi>M</mi><mo>/</mo><mi>H</mi></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[M/H]</annotation></semantics></math> without invoking
+SJH. KIC 9834255 is near solar, so the metallicity channel is less
+convincing for it, but binary contamination remains. Spectroscopic
+<math id="S5.I1.i5.p1.7.m7" class="ltx_Math" alttext="[\mathrm{Fe/H}]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mi>Fe</mi><mo>/</mo><mi mathvariant="normal">H</mi></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[\mathrm{Fe/H}]</annotation></semantics></math> from LAMOST or APOGEE is essential for both candidates.</p>
+</div>
+</li>
+<li id="S5.I1.i6" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i6.p1" class="ltx_para">
+<p id="S5.I1.i6.p1.4" class="ltx_p"><em id="S5.I1.i6.p1.4.1" class="ltx_emph ltx_font_italic">Kraft break.</em> KIC 6606183 (<math id="S5.I1.i6.p1.1.m1" class="ltx_Math" alttext="T_{\rm eff}=6504" display="inline" intent=":literal"><semantics><mrow><msub><mi>T</mi><mi>eff</mi></msub><mo>=</mo><mn>6504</mn></mrow><annotation encoding="application/x-tex">T_{\rm eff}=6504</annotation></semantics></math> K) sits
+near the Kraft break (<math id="S5.I1.i6.p1.2.m2" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>6250 K) where the convective envelope
+thins and magnetic braking becomes less efficient; we flag this as a
+systematic that could inflate its <math id="S5.I1.i6.p1.3.m3" class="ltx_Math" alttext="z" display="inline" intent=":literal"><semantics><mi>z</mi><annotation encoding="application/x-tex">z</annotation></semantics></math>-score. KIC 9834255
+(<math id="S5.I1.i6.p1.4.m4" class="ltx_Math" alttext="T_{\rm eff}=5992" display="inline" intent=":literal"><semantics><mrow><msub><mi>T</mi><mi>eff</mi></msub><mo>=</mo><mn>5992</mn></mrow><annotation encoding="application/x-tex">T_{\rm eff}=5992</annotation></semantics></math> K) lies well below the break with a deep
+convective envelope, so this concern does not apply to it.</p>
+</div>
+</li>
+</ul>
+</div>
+</section>
+<section id="S5.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.2 </span>Where does the waste heat go?</h3>
+
+<div id="S5.SS2.p1" class="ltx_para">
+<p id="S5.SS2.p1.4" class="ltx_p">Thermodynamics demands that SJH produce waste heat. But the total power
+(<math id="S5.SS2.p1.1.m1" class="ltx_Math" alttext="\dot{E}\sim 10^{18}" display="inline" intent=":literal"><semantics><mrow><mover accent="true"><mi>E</mi><mo>˙</mo></mover><mo>∼</mo><msup><mn>10</mn><mn>18</mn></msup></mrow><annotation encoding="application/x-tex">\dot{E}\sim 10^{18}</annotation></semantics></math> W for 50% extraction over 1 Gyr) is
+<math id="S5.SS2.p1.2.m2" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math><math id="S5.SS2.p1.3.m3" class="ltx_Math" alttext="10^{8}" display="inline" intent=":literal"><semantics><msup><mn>10</mn><mn>8</mn></msup><annotation encoding="application/x-tex">10^{8}</annotation></semantics></math> times fainter than a Dyson sphere intercepting the full
+stellar luminosity. At typical Kepler distances (<math id="S5.SS2.p1.4.m4" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>1 kpc), the
+resulting flux falls below the WISE detection threshold by several
+orders of magnitude. SJH is, by design, a stealth technosignature:
+invisible to infrared surveys, detectable only through its rotational
+signature.</p>
+</div>
+<div id="S5.SS2.p2" class="ltx_para">
+<p id="S5.SS2.p2.1" class="ltx_p">The SSA method (Section <a href="#S2" title="2 The SJH concept ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>) offers a unique exception. Its synchrotron
+waste heat is emitted in the radio band, making it detectable with
+VLA or LOFAR observations. This gives us an independent search channel
+that no previous technosignature survey has explored.</p>
+</div>
+</section>
+<section id="S5.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.3 </span>Limitations</h3>
+
+<div id="S5.SS3.p1" class="ltx_para">
+<ol id="S5.I2" class="ltx_enumerate">
+<li id="S5.I2.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="S5.I2.i1.p1" class="ltx_para">
+<p id="S5.I2.i1.p1.1" class="ltx_p"><em id="S5.I2.i1.p1.1.1" class="ltx_emph ltx_font_italic">Coverage:</em> 6,725 stars is a very small fraction of the Gaia DR3 <cite class="ltx_cite ltx_citemacro_citep">(Gaia Collaboration<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib6" title="Gaia Data Release 3. Summary of the content and survey properties" class="ltx_ref">2023</a>)</cite>
+FGK sample. Gaia DR4 will provide an extensive data set that will improve data coverage.</p>
+</div>
+</li>
+<li id="S5.I2.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="S5.I2.i2.p1" class="ltx_para">
+<p id="S5.I2.i2.p1.1" class="ltx_p"><em id="S5.I2.i2.p1.1.1" class="ltx_emph ltx_font_italic">Single catalogue:</em> All periods come from McQuillan (2014),
+and the sample inherits Kepler’s geometric selection effects
+<cite class="ltx_cite ltx_citemacro_citep">(Stevens and Gaudi, <a href="#bib.bib15" title="A Posteriori Transit Probabilities" class="ltx_ref">2013</a>)</cite>. Independent verification from TESS
+<cite class="ltx_cite ltx_citemacro_citep">(Reinhold and Hekker, <a href="#bib.bib13" title="A new rotation period catalog for 32,387 TESS stars" class="ltx_ref">2020</a>)</cite> or ZTF is needed.</p>
+</div>
+</li>
+<li id="S5.I2.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span> 
+<div id="S5.I2.i3.p1" class="ltx_para">
+<p id="S5.I2.i3.p1.2" class="ltx_p"><em id="S5.I2.i3.p1.2.1" class="ltx_emph ltx_font_italic">No spectroscopic follow-up:</em> <math id="S5.I2.i3.p1.1.m1" class="ltx_Math" alttext="v\sin i" display="inline" intent=":literal"><semantics><mrow><mi>v</mi><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>sin</mi><mo lspace="0.167em">⁡</mo><mi>i</mi></mrow></mrow><annotation encoding="application/x-tex">v\sin i</annotation></semantics></math>, radial velocity,
+and chromospheric activity (<math id="S5.I2.i3.p1.2.m2" class="ltx_Math" alttext="\log R^{\prime}_{\rm HK}" display="inline" intent=":literal"><semantics><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><msubsup><mi>R</mi><mi>HK</mi><mo>′</mo></msubsup></mrow><annotation encoding="application/x-tex">\log R^{\prime}_{\rm HK}</annotation></semantics></math>) are required to
+validate candidates and test the rotation–activity decoupling predicted
+for SJH-braked stars.</p>
+</div>
+</li>
+<li id="S5.I2.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">4.</span> 
+<div id="S5.I2.i4.p1" class="ltx_para">
+<p id="S5.I2.i4.p1.1" class="ltx_p"><em id="S5.I2.i4.p1.1.1" class="ltx_emph ltx_font_italic">WISE resolution:</em> The <math id="S5.I2.i4.p1.1.m1" class="ltx_Math" alttext="6^{\prime\prime}" display="inline" intent=":literal"><semantics><msup><mn>6</mn><mo>′′</mo></msup><annotation encoding="application/x-tex">6^{\prime\prime}</annotation></semantics></math> beam cannot resolve
+sub-arcsecond companions. High-resolution imaging is essential.</p>
+</div>
+</li>
+<li id="S5.I2.i5" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">5.</span> 
+<div id="S5.I2.i5.p1" class="ltx_para">
+<p id="S5.I2.i5.p1.1" class="ltx_p"><em id="S5.I2.i5.p1.1.1" class="ltx_emph ltx_font_italic">Age scatter:</em> The population-relative test does not fully
+control for age variation within a <math id="S5.I2.i5.p1.1.m1" class="ltx_Math" alttext="(bp\text{-}rp,\log g)" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">(</mo><mrow><mi>b</mi><mo lspace="0em" rspace="0em">​</mo><mi>p</mi><mo lspace="0em" rspace="0em">​</mo><mtext>-</mtext><mo lspace="0em" rspace="0em">​</mo><mi>r</mi><mo lspace="0em" rspace="0em">​</mo><mi>p</mi></mrow><mo>,</mo><mrow><mi>log</mi><mo lspace="0.167em">⁡</mo><mi>g</mi></mrow><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(bp\text{-}rp,\log g)</annotation></semantics></math> cell.
+Berger isochrone ages help (candidates are young), but residual scatter
+remains.</p>
+</div>
+</li>
+</ol>
+<p id="S5.SS3.p1.1" class="ltx_p">Beyond the present Kepler pilot sample, future SJH searches could combine
+slow-rotator outlier ranking with habitability-driven SETI target-selection
+filters, such as the rule-based Gaia DR3 avoidance framework of
+<cite class="ltx_cite ltx_citemacro_citet">Torlakcik (<a href="#bib.bib17" title="Where Not to Look: A Parametric Avoidance Model for SETI Target Selection" class="ltx_ref">2026</a>)</cite>. This would separate two questions: whether a
+star is rotationally anomalous, and whether it is a high-priority SETI
+target for follow-up.</p>
+</div>
+</section>
+</section>
+<section id="S6" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">6 </span>Conclusions</h2>
+
+<div id="S6.p1" class="ltx_para">
+<p id="S6.p1.1" class="ltx_p">We have introduced Stellar J-Harvesting as a new
+angular-momentum-based technosignature, complementary to the canonical
+Dyson search. The energy–period relation gives a direct link between
+angular-momentum extraction and anomalously slow stellar rotation. The
+engineering mechanisms discussed here are illustrative rather than complete
+designs, but they show plausible coupling channels. The main challenge is
+not defining the observable, but separating rare artificial spin-down from
+the natural slow-rotation channels already present in stellar catalogues.</p>
+</div>
+<div id="S6.p2" class="ltx_para">
+<p id="S6.p2.6" class="ltx_p">Using 6,725 clean FGK main-sequence stars from McQuillan et al. (2014) and Berger et al. (2020), filtered through eight
+false-positive channels, we identify 2 candidates at <math id="S6.p2.1.m1" class="ltx_Math" alttext="z&gt;4\sigma" display="inline" intent=":literal"><semantics><mrow><mi>z</mi><mo>&gt;</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">z&gt;4\sigma</annotation></semantics></math>:
+KIC 6606183 (<math id="S6.p2.2.m2" class="ltx_Math" alttext="P=61" display="inline" intent=":literal"><semantics><mrow><mi>P</mi><mo>=</mo><mn>61</mn></mrow><annotation encoding="application/x-tex">P=61</annotation></semantics></math> d, age <math id="S6.p2.3.m3" class="ltx_Math" alttext="=1.0" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><mn>1.0</mn></mrow><annotation encoding="application/x-tex">=1.0</annotation></semantics></math> Gyr) and KIC 9834255
+(<math id="S6.p2.4.m4" class="ltx_Math" alttext="P=65" display="inline" intent=":literal"><semantics><mrow><mi>P</mi><mo>=</mo><mn>65</mn></mrow><annotation encoding="application/x-tex">P=65</annotation></semantics></math> d, age <math id="S6.p2.5.m5" class="ltx_Math" alttext="=2.0" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><mn>2.0</mn></mrow><annotation encoding="application/x-tex">=2.0</annotation></semantics></math> Gyr). If interpreted as SJH signals, their periods would imply <math id="S6.p2.6.m6" class="ltx_Math" alttext="&gt;95\%" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&gt;</mo><mrow><mn>95</mn><mo>%</mo></mrow></mrow><annotation encoding="application/x-tex">&gt;95\%</annotation></semantics></math> energy extraction. WISE imaging
+reveals nearby sources whose nature remains ambiguous.</p>
+</div>
+<div id="S6.p3" class="ltx_para">
+<p id="S6.p3.3" class="ltx_p">We do not claim a detection. We report these as candidates requiring
+spectroscopic and high-resolution imaging follow-up, and we place a
+conservative upper limit <math id="S6.p3.1.m1" class="ltx_Math" alttext="f_{\rm SJH}&lt;4.5\times 10^{-4}" display="inline" intent=":literal"><semantics><mrow><msub><mi>f</mi><mi>SJH</mi></msub><mo>&lt;</mo><mrow><mn>4.5</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>4</mn></mrow></msup></mrow></mrow><annotation encoding="application/x-tex">f_{\rm SJH}&lt;4.5\times 10^{-4}</annotation></semantics></math>. Both
+candidates have compelling astrophysical alternatives: KIC 6606183 has
+Gaia DR3 <math id="S6.p3.2.m2" class="ltx_Math" alttext="[M/H]=-0.60" display="inline" intent=":literal"><semantics><mrow><mrow><mo stretchy="false">[</mo><mrow><mi>M</mi><mo>/</mo><mi>H</mi></mrow><mo stretchy="false">]</mo></mrow><mo>=</mo><mrow><mo>−</mo><mn>0.60</mn></mrow></mrow><annotation encoding="application/x-tex">[M/H]=-0.60</annotation></semantics></math> (below our nominal metallicity cutoff) and a
+9.4<math id="S6.p3.3.m3" class="ltx_Math" alttext="\sigma" display="inline" intent=":literal"><semantics><mi>σ</mi><annotation encoding="application/x-tex">\sigma</annotation></semantics></math> astrometric excess noise significance, while KIC 9834255
+has 6 blended BP transits indicative of a nearby source. Binary
+contamination is the dominant false-positive channel, and future
+searches must incorporate radial-velocity monitoring and
+high-resolution imaging to progress beyond this preliminary
+characterization.</p>
+</div>
+<div id="S6.p4" class="ltx_para">
+<p id="S6.p4.1" class="ltx_p">The broader implication is that technosignature space is not limited to
+infrared waste heat. A civilization harvesting angular momentum could leave
+its clearest trace not in luminosity, but in stellar rotation.</p>
+</div>
+</section>
+<section id="Sx1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">Acknowledgements</h2>
+
+<div id="Sx1.p1" class="ltx_para">
+<p id="Sx1.p1.1" class="ltx_p">This work was carried out independently and received no external funding. This work has made use of Kepler, McQuillan et al. (2014)
+rotation period data, and Berger et al. (2020) Gaia–Kepler stellar
+properties catalogue. Software: <span id="Sx1.p1.1.1" class="ltx_text ltx_font_typewriter">numpy</span>, <span id="Sx1.p1.1.2" class="ltx_text ltx_font_typewriter">pandas</span>,
+<span id="Sx1.p1.1.3" class="ltx_text ltx_font_typewriter">astropy</span>, <span id="Sx1.p1.1.4" class="ltx_text ltx_font_typewriter">scipy</span>. The author used Gemini for language editing and readability improvements. The scientific analysis, interpretation, and conclusions are entirely the author’s own.</p>
+</div>
+</section>
+<section id="Sx2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">Data Availability</h2>
+
+<div id="Sx2.p1" class="ltx_para">
+<p id="Sx2.p1.1" class="ltx_p">The McQuillan et al. (2014) rotation period catalogue and the
+Berger et al. (2020) Gaia–Kepler stellar properties catalogue are
+publicly available via VizieR. Gaia DR3 data are available through the
+Gaia Archive. The candidate list and pipeline underlying
+this article are available from the author upon reasonable request.</p>
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul id="bib.L1" class="ltx_biblist">
+<li id="bib.bib1" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">T. A. Berger, D. Huber, J. L. van Saders, E. Gaidos, J. Tayar, and A. L. Kraus (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Gaia-Kepler Stellar Properties Catalog. I. Homogeneous Fundamental Properties for 186,301 Kepler Stars</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">159</span> (<span class="ltx_text ltx_bib_number">6</span>), <span class="ltx_text ltx_bib_pages"> pp. 280</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/159/6/280" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS3.p1.9" title="3.3 Data ‣ 3 Detection method ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3.3</span></a>.
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">R. A. Carrigan (2009)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">IRAS-Based Whole-Sky Upper Limit on Dyson Spheres</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">698</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 2075–2086</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1088/0004-637X/698/2/2075" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="1 Introduction ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">S. R. Cranmer and S. H. Saar (2011)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Testing a Predictive Theoretical Model for the Mass Loss Rates of Cool Stars</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">741</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 54</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1088/0004-637X/741/1/54" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S5.I1.i4.p1.2" title="In 5.1 Six natural explanations ‣ 5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4th item</span></a>.
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">F. J. Dyson (1960)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Search for Artificial Stellar Sources of Infrared Radiation</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Science</span> <span class="ltx_text ltx_bib_volume">131</span> (<span class="ltx_text ltx_bib_number">3414</span>), <span class="ltx_text ltx_bib_pages"> pp. 1667–1668</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1126/science.131.3414.1667" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="1 Introduction ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Gaia Collaboration, A. Vallenari, A. G. A. Brown, T. Prusti, J. H. J. de Bruijne, F. Arenou, C. Babusiaux, M. Biermann, O. L. Creevey, C. Ducourant, D. W. Evans, L. Eyer, R. Guerra, A. Hutton, C. Jordi, S. A. Klioner, U. L. Lammers, L. Lindegren, X. Luri, F. Mignard, C. Panem, D. Pourbaix, S. Randich, P. Sartoretti, C. Soubiran, P. Tanga, N. A. Walton, C. A. L. Bailer-Jones, U. Bastian, R. Drimmel, F. Jansen, D. Katz, M. G. Lattanzi, and F. van Leeuwen (2023)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Gaia Data Release 3. Summary of the content and survey properties</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">A&amp;A</span> <span class="ltx_text ltx_bib_volume">674</span>, <span class="ltx_text ltx_bib_pages"> pp. A1</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1051/0004-6361/202243940" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS2.p2.7" title="4.2 Two &gt;4⁢𝜎 candidates ‣ 4 Results ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.2</span></a>,
+<a href="#S4.SS3.p1.5" title="4.3 WISE and Aladin images: ambiguous but informative ‣ 4 Results ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>,
+<a href="#S4.T3" title="In 4.2 Two &gt;4⁢𝜎 candidates ‣ 4 Results ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 3</span></a>,
+<a href="#S5.I1.i3.p1.6" title="In 5.1 Six natural explanations ‣ 5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3rd item</span></a>,
+<a href="#S5.I1.i5.p1.7" title="In 5.1 Six natural explanations ‣ 5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5th item</span></a>,
+<a href="#S5.I2.i1.p1.1" title="In 5.3 Limitations ‣ 5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">item 1</span></a>.
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">N. Gehrels (1986)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Confidence limits for small numbers of events in Poisson and binomial distributions</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">303</span>, <span class="ltx_text ltx_bib_pages"> pp. 336–346</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1086/164079" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.SS4.p1.3" title="4.4 Occurrence rate upper limit ‣ 4 Results ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.4</span></a>.
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. H. Hart (1975)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Explanation for the Absence of Extraterrestrials on Earth</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">QJRAS</span> <span class="ltx_text ltx_bib_volume">16</span>, <span class="ltx_text ltx_bib_pages"> pp. 128</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="1 Introduction ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">T. Jayasinghe, C. S. Kochanek, J. Strader, K. Z. Stanek, P. J. Vallely, T. A. Thompson, J. T. Hinkle, B. J. Shappee, A. K. Dupree, K. Auchettl, L. Chomiuk, E. Aydi, K. Dage, A. Hughes, L. Shishkovsky, K. V. Sokolovsky, S. Swihart, K. T. Voggel, and I. B. Thompson (2021)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The loudest stellar heartbeat: characterizing the most extreme amplitude heartbeat star system</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">MNRAS</span> <span class="ltx_text ltx_bib_volume">506</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. 4083–4100</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1093/mnras/stab1920" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.I2.i8.p1.1" title="In 3.2 Eight false-positive filters ‣ 3 Detection method ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">item 8</span></a>.
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. F. Kasting, D. P. Whitmire, and R. T. Reynolds (1993)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Habitable Zones around Main Sequence Stars</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Icarus</span> <span class="ltx_text ltx_bib_volume">101</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 108–128</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1006/icar.1993.1010" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.I1.i2.p1.4" title="In 2.3 Engineering methods ‣ 2 The SJH concept ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">item 2</span></a>.
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. L. Kraus and L. A. Hillenbrand (2007)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Stellar Populations of Praesepe and Coma Berenices</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">134</span> (<span class="ltx_text ltx_bib_number">6</span>), <span class="ltx_text ltx_bib_pages"> pp. 2340–2352</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1086/522831" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S5.I1.i3.p1.6" title="In 5.1 Six natural explanations ‣ 5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3rd item</span></a>.
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. McQuillan, T. Mazeh, and S. Aigrain (2014)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Rotation Periods of 34,030 Kepler Main-sequence Stars: The Full Autocorrelation Sample</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJS</span> <span class="ltx_text ltx_bib_volume">211</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 24</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1088/0067-0049/211/2/24" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS3.p1.9" title="3.3 Data ‣ 3 Detection method ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3.3</span></a>.
+</span>
+</li>
+<li id="bib.bib12" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">R. W. Noyes, L. W. Hartmann, S. L. Baliunas, D. K. Duncan, and A. H. Vaughan (1984)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Rotation, convection, and magnetic activity in lower main-sequence stars.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">279</span>, <span class="ltx_text ltx_bib_pages"> pp. 763–777</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1086/161945" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S5.I1.i4.p1.2" title="In 5.1 Six natural explanations ‣ 5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4th item</span></a>.
+</span>
+</li>
+<li id="bib.bib13" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">T. Reinhold and S. Hekker (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A new rotation period catalog for 32,387 TESS stars</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">A&amp;A</span> <span class="ltx_text ltx_bib_volume">635</span>, <span class="ltx_text ltx_bib_pages"> pp. A43</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1051/0004-6361/201936966" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S5.I2.i2.p1.1" title="In 5.3 Limitations ‣ 5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">item 2</span></a>.
+</span>
+</li>
+<li id="bib.bib14" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Skumanich (1972)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Time Scales for Ca II Emission Decay, Rotational Braking, and Lithium Depletion</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">171</span>, <span class="ltx_text ltx_bib_pages"> pp. 565</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1086/151310" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S5.I1.i2.p1.1" title="In 5.1 Six natural explanations ‣ 5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2nd item</span></a>.
+</span>
+</li>
+<li id="bib.bib15" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">D. J. Stevens and B. S. Gaudi (2013)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A Posteriori Transit Probabilities</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">PASP</span> <span class="ltx_text ltx_bib_volume">125</span> (<span class="ltx_text ltx_bib_number">930</span>), <span class="ltx_text ltx_bib_pages"> pp. 933</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1086/672572" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S5.I2.i2.p1.1" title="In 5.3 Limitations ‣ 5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">item 2</span></a>.
+</span>
+</li>
+<li id="bib.bib16" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Suazo, E. Zackrisson, P. K. Mahto, F. Lundell, C. Nettelblad, A. J. Korn, J. T. Wright, and S. Majumdar (2024)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Project Hephaistos - II. Dyson sphere candidates from Gaia DR3, 2MASS, and WISE</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">MNRAS</span> <span class="ltx_text ltx_bib_volume">531</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 695–707</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1093/mnras/stae1186" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="1 Introduction ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib17" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">S. Torlakcik (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Where Not to Look: A Parametric Avoidance Model for SETI Target Selection</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">PASP</span> <span class="ltx_text ltx_bib_volume">138</span> (<span class="ltx_text ltx_bib_number">6</span>), <span class="ltx_text ltx_bib_pages"> pp. 064505</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1088/1538-3873/ae75f3" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2606.06692</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S5.SS3.p1.1" title="5.3 Limitations ‣ 5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§5.3</span></a>.
+</span>
+</li>
+<li id="bib.bib18" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. L. van Saders, T. Ceillier, T. S. Metcalfe, V. Silva Aguirre, M. H. Pinsonneault, R. A. García, S. Mathur, and G. R. Davies (2016)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Weakened magnetic braking as the origin of anomalously rapid rotation in old field stars</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Nature</span> <span class="ltx_text ltx_bib_volume">529</span> (<span class="ltx_text ltx_bib_number">7585</span>), <span class="ltx_text ltx_bib_pages"> pp. 181–184</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1038/nature16168" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S5.I1.i4.p1.2" title="In 5.1 Six natural explanations ‣ 5 Discussion ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4th item</span></a>.
+</span>
+</li>
+<li id="bib.bib19" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. T. Wright, R. L. Griffith, S. Sigurdsson, M. S. Povich, and B. Mullan (2014)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Ĝ Infrared Search for Extraterrestrial Civilizations with Large Energy Supplies. II. Framework, Strategy, and First Result</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">792</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 27</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1088/0004-637X/792/1/27" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="1 Introduction ‣ Stellar J-Harvesting: a novel angular momentum technosignature and first search in the Kepler field" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2607.07781v1/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer><footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation">
+        </a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International">
+        </a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences">
+        </a>
+      </div>
+    </div>
+  </div>
+</footer><div id="fixed-buttons-container">
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>

@@ -136,6 +136,60 @@ def _cmd_cluster_run(args, cfg):
                 excess_z_min=args.excess_z_min, link_pc=args.link_pc)
 
 
+def _cmd_tidemark_run(args, cfg):
+    from .tidemark.run import tidemark_run
+
+    tidemark_run(cfg, channels=args.channels, quick=args.quick, seed=args.seed,
+                 do_calibrate=not args.no_calibrate)
+
+
+def _cmd_tidemark_search(args, cfg):
+    from .tidemark.run import tidemark_selfsearch
+
+    tidemark_selfsearch(cfg, grid=args.grid, radius_deg=args.radius_deg,
+                        plx_min=args.plx_min, g_max=args.g_max,
+                        excess_z_min=args.excess_z_min, limit=args.limit,
+                        parent_glob=args.from_parent,
+                        quick=args.quick, seed=args.seed)
+
+
+def _cmd_tidemark_acquire(args, cfg):
+    """Fetch the wide-area parent sample only, and checkpoint it to disk."""
+    from pathlib import Path
+
+    from .tidemark.acquire import excess_axis, parent_sample
+
+    out = Path(cfg.root) / "results" / "tidemark" / "parent"
+    out.mkdir(parents=True, exist_ok=True)
+    tag = "" if args.n_shards <= 1 else f"_shard{args.shard:02d}"
+    tbl = parent_sample(grid=args.grid, radius_deg=args.radius_deg,
+                        plx_min=args.plx_min, g_max=args.g_max,
+                        stride=args.stride, limit=args.limit,
+                        shard=args.shard, n_shards=args.n_shards)
+    if tbl is None or not len(tbl):
+        (out / f"acquire_status{tag}.json").write_text(
+            '{"verdict": "NO_DATA_REACHED", "n_rows": 0}')
+        print("[tidemark] NO_DATA_REACHED: archive returned nothing")
+        return
+    # NOTE: the excess axis is deliberately NOT computed here when sharding ---
+    # the W1-W2 locus must be fitted once across the whole sky (see
+    # tidemark.acquire), so a shard writes raw photometry and the reduce stage
+    # fits the locus globally.
+    if args.n_shards <= 1:
+        tbl = excess_axis(tbl)
+    tbl.to_parquet(out / f"parent_sample{tag}.parquet", index=False)
+    import json
+    (out / f"acquire_status{tag}.json").write_text(json.dumps({
+        "verdict": "OK", "n_rows": int(len(tbl)),
+        "n_cones": int(tbl["cone"].nunique()) if "cone" in tbl.columns else None,
+        "grid": args.grid, "radius_deg": args.radius_deg, "stride": args.stride,
+        "g_max": args.g_max, "plx_min": args.plx_min,
+        "shard": args.shard, "n_shards": args.n_shards,
+        "excess_axis_fitted": bool(args.n_shards <= 1),
+    }, indent=2))
+    print(f"[tidemark] parent sample shard {args.shard}: {len(tbl)} stars written")
+
+
 def _cmd_panspermia_run(args, cfg):
     from .panspermia.run import panspermia_run
 
@@ -318,9 +372,11 @@ def _cmd_derelict(args, cfg):
 
     summary = derelict_run(cfg, stage=args.stage, limit=args.limit,
                            offline_input=args.offline_input, max_vet=args.max_vet,
+                           max_enrich=args.max_enrich,
                            skip_control=args.skip_control)
     print(json.dumps({"verdict": summary.get("verdict"),
                       "funnel": summary.get("funnel"),
+                      "fetch": summary.get("fetch"),
                       "degradation": summary.get("degradation")}, indent=2))
 
 
@@ -525,6 +581,22 @@ def _cmd_dimming_characterize(args, cfg):
     print(json.dumps(res, indent=2))
 
 
+def _cmd_rust_sweep(args, cfg):
+    from .rust.run import rust_sweep
+
+    rust_sweep(cfg, ra=args.ra, dec=args.dec, radius_deg=args.radius_deg,
+               box_deg=args.box_deg, min_epochs=args.min_epochs,
+               min_epochs_season=args.min_epochs_season,
+               min_seasons=args.min_seasons, season_days=args.season_days,
+               time_budget_s=args.time_budget_s, max_boxes=args.max_boxes)
+
+
+def _cmd_rust_vet(args, cfg):
+    from .rust.run import rust_vet
+
+    rust_vet(cfg, max_candidates=args.max_candidates, offline=args.offline)
+
+
 def _cmd_spectra_confirm(args, cfg):
     from .spectra.confirm import cross_confirm
 
@@ -708,6 +780,52 @@ def main(argv=None):
                             "global/trials-corrected result")
     p.set_defaults(func=_cmd_cluster_aggregate)
 
+    p = sub.add_parser("tidemark-acquire",
+                       help="fetch the wide-area Gaia x AllWISE parent sample "
+                            "(every star searched) for the spatial rate test")
+    p.add_argument("--grid", default="sparse",
+                   choices=["sparse", "dense", "plane", "pilot"])
+    p.add_argument("--radius-deg", type=float, default=6.0)
+    p.add_argument("--plx-min", type=float, default=1.0)
+    p.add_argument("--g-max", type=float, default=17.0)
+    p.add_argument("--stride", type=int, default=20,
+                   help="uniform random_index subsampling stride (position-independent)")
+    p.add_argument("--limit", type=int, default=None)
+    p.add_argument("--shard", type=int, default=0)
+    p.add_argument("--n-shards", type=int, default=1,
+                   help="interleaved cone sharding for the workflow matrix")
+    p.set_defaults(func=_cmd_tidemark_acquire)
+
+    p = sub.add_parser("tidemark-run",
+                       help="TIDEMARK: is any anomaly population's rate per star "
+                            "spatially structured? gradient + edge + age vs a "
+                            "parent-matched null")
+    p.add_argument("--channels", nargs="*", default=None,
+                   help="channel names from config/tidemark.yaml (default: all)")
+    p.add_argument("--seed", type=int, default=20260726)
+    p.add_argument("--quick", action="store_true",
+                   help="fewer Monte Carlo draws; for smoke tests, not science")
+    p.add_argument("--no-calibrate", action="store_true",
+                   help="skip the injection-sensitivity and gradient-transfer stages")
+    p.set_defaults(func=_cmd_tidemark_run)
+
+    p = sub.add_parser("tidemark-search",
+                       help="self-sufficient TIDEMARK: acquire a wide-area parent "
+                            "sample with an IR-excess axis and test it")
+    p.add_argument("--grid", default="sparse",
+                   choices=["sparse", "dense", "plane", "pilot"])
+    p.add_argument("--radius-deg", type=float, default=6.0)
+    p.add_argument("--plx-min", type=float, default=1.0)
+    p.add_argument("--g-max", type=float, default=17.0)
+    p.add_argument("--excess-z-min", type=float, default=4.0)
+    p.add_argument("--limit", type=int, default=400000)
+    p.add_argument("--from-parent", default=None,
+                   help="glob of already-fetched parent shards to reduce instead "
+                        "of refetching, e.g. 'results/tidemark/parent/*.parquet'")
+    p.add_argument("--seed", type=int, default=20260726)
+    p.add_argument("--quick", action="store_true")
+    p.set_defaults(func=_cmd_tidemark_search)
+
     p = sub.add_parser("panspermia-mc",
                        help="Monte-Carlo uncertainty on the K2-18 encounter "
                             "shortlist (robust d_min/t_enc confidence intervals)")
@@ -829,6 +947,42 @@ def main(argv=None):
     p.add_argument("--max-rows", type=int, default=400_000,
                    help="per-survey row cap for the catalogue pull")
     p.set_defaults(func=_cmd_tailings)
+
+    p = sub.add_parser("rust-sweep",
+                       help="runner: RUST stage 1 — one sky field's worth of "
+                            "paired ZTF g+r light curves scored for a SECULAR "
+                            "RISE in aperiodic variability amplitude (an "
+                            "un-station-kept swarm entering a collisional "
+                            "cascade; Lacki 2025). Distinct from `dimming`, "
+                            "which trends the first moment (docs/rust.md)")
+    p.add_argument("--ra", type=float, default=270.0)
+    p.add_argument("--dec", type=float, default=30.0)
+    p.add_argument("--radius-deg", type=float, default=0.5,
+                   help="half-width of the square field to tile")
+    p.add_argument("--box-deg", type=float, default=0.12,
+                   help="IRSA bulk-fetch tile size")
+    p.add_argument("--min-epochs", type=int, default=60,
+                   help="minimum epochs per band; a second moment needs far "
+                        "more than a median does")
+    p.add_argument("--min-epochs-season", type=int, default=8)
+    p.add_argument("--min-seasons", type=int, default=4)
+    p.add_argument("--season-days", type=float, default=365.25)
+    p.add_argument("--time-budget-s", type=float, default=2400.0)
+    p.add_argument("--max-boxes", type=int, default=None)
+    p.set_defaults(func=_cmd_rust_sweep)
+
+    p = sub.add_parser("rust-vet",
+                       help="RUST stage 2: aggregate every field's candidates "
+                            "and run the contamination gauntlet — mandatory "
+                            "g/r coincidence, achromaticity against the "
+                            "extinction law, crowding, saturation, known "
+                            "variable classes, Gaia RUWE/NSS, NEOWISE dust "
+                            "production")
+    p.add_argument("--max-candidates", type=int, default=200)
+    p.add_argument("--offline", action="store_true",
+                   help="skip every network follow-up; verdicts degrade "
+                        "explicitly rather than silently")
+    p.set_defaults(func=_cmd_rust_vet)
 
     p = sub.add_parser("herdsman-fetch",
                        help="staged runner 1/3: acquire + preprocess the Gaia "
@@ -1014,6 +1168,9 @@ def main(argv=None):
                    help="CSV of pre-fetched SBDB rows; skips all network access")
     p.add_argument("--max-vet", type=int, default=60,
                    help="how many survivors get a per-object sbdb.api detail fetch")
+    p.add_argument("--max-enrich", type=int, default=1500,
+                   help="cap on per-object sbdb.api enrichment (the bulk query "
+                        "rejects sigma_A1, so sigmas come from orbit.model_pars)")
     p.add_argument("--skip-control", action="store_true",
                    help="skip the comet control sample")
     p.set_defaults(func=_cmd_derelict)

@@ -247,11 +247,46 @@ Known cases are on a documented watchlist and are used as **positive controls**:
 a pipeline that fails to flag 2020 SO is broken.
 
 **2. Outgassing.** A comet with an undetected coma produces a genuine radial
-acceleration. Cometary designation, a fitted `DT`, a cometary `g(r)` (signalled
-by ALN/NM/NN/NK/R0 in `orbit.model_pars`), or a reported coma all remove the
-object. **A cometary `g(r)` also invalidates the `A1 → β` conversion itself** —
-under that law `A1` is not a radiation-pressure coefficient — so `r_statistic`
-refuses to convert rather than returning a wrong number.
+acceleration. A cometary designation/classification, a reported coma, or a
+**fitted time-delay `DT`** all remove the object — a lagged response is
+something radiation pressure cannot produce.
+
+**What is *not* outgassing evidence — and why this nearly killed the channel.**
+JPL fits `A1`/`A2`/`A3` using the Marsden, Sekanina & Yeomans (1973) `g(r)` as
+its **default parameterisation for every object it fits non-gravs to, including
+every dark comet**. An earlier version of this channel treated the mere presence
+of the Marsden shape parameters (`ALN`/`NM`/`NN`/`NK`/`R0` in
+`orbit.model_pars`) as "this object outgasses" and refused to convert. Run
+30204137011 showed what that costs: **20 of 22 objects discarded** — 91% of the
+sample, and precisely the population the channel was built to examine.
+
+It is wrong, for a reason worth stating exactly:
+
+```
+Marsden g(1 au) = 1.0000000024
+```
+
+The standard parameters are **normalised so that `g(1 au) = 1`** to within
+2×10⁻⁷ — exactly like the inverse-square law. So `A1` *is* the radial
+acceleration at 1 au under **both** laws, and the `A1 → β → AMR` conversion is
+valid either way. `g_at_1au()` applies that normalisation rather than assuming
+it, so a genuinely non-standard fitted shape would still be handled correctly.
+
+What the two laws *do* disagree about is the radial **dependence**:
+
+| r (au) | Marsden `g(r)` | inverse-square `1/r²` |
+|---|---|---|
+| 0.5 | 4.54 | 4.00 |
+| 1.0 | 1.000 | 1.000 |
+| 2.0 | 0.109 | 0.250 |
+| 5.0 | ~10⁻⁶ | 0.040 |
+
+That divergence is large and it is the genuinely decisive test — but **no
+catalogue column can settle it.** Separating the two requires refitting the
+archival astrometry under each law and comparing the evidence (the "step 5"
+below). It is therefore the mandatory **follow-up for a survivor**, not a
+selection cut, and the channel records `nongrav_law` and `g_1au` per object as
+descriptive metadata instead.
 
 **3. Short-arc fit artefacts.** Survivors face a tighter gate than the screen
 (`condition_code ≤ 2`, `data_arc ≥ 180 d`).
@@ -344,8 +379,32 @@ tests/test_derelict.py           offline CI gate
 CLI: `python -m seti.cli derelict [--stage probe] [--limit N] [--max-vet N]
 [--offline-input FILE] [--skip-control]`.
 
-Outputs: `schema.json`, `nongrav.csv`, `negative_a1.csv`, `high_albedo.csv`,
-`control_comets.csv`, `candidates.json`, `summary.json`, `REPORT.md`.
+Outputs: `schema.json`, `screened.csv` (**the parent sample** — every object
+pulled, with every screen column; without it a zero at any gate is unauditable
+and there is no denominator for a rate), `nongrav.csv` (survivors),
+`negative_a1.csv`, `high_albedo.csv`, `control_comets.csv`, `candidates.json`,
+`summary.json`, `REPORT.md`.
+
+The funnel also carries per-gate failure counts
+(`gate_fail_a1_not_significant`, `_a2_nonzero`, `_a3_nonzero`,
+`_orbit_quality`, `_coma`, `_outgassing`) so that a zero at screen 1 explains
+itself. They overlap — an object can fail several gates — so they do not sum to
+the input.
+
+### 6.1 The decisive follow-up (step 5), and why it is not a screen
+
+The one test that genuinely separates radiation pressure from outgassing is a
+**model-selection refit of the archival MPC astrometry** under a pure-SRP `1/r²`
+law versus the Marsden `g(r)`, comparing the evidence per object. The table in
+§4 shows why it has real power: the two laws differ by ~4 orders of magnitude in
+predicted acceleration at 5 au, so an object observed over a range of
+heliocentric distances discriminates them strongly.
+
+It is **not built here.** MPC publishes no `A1`/`A2`/`A3` — MPCORB carries only
+the six osculating elements, `H`, `G` and `U` — so it is the *astrometry* source
+for such a refit, not a non-grav catalogue, and the refit needs an orbit
+determination code this repository does not have. It is recorded as the correct
+next action for any survivor rather than attempted badly.
 
 ---
 

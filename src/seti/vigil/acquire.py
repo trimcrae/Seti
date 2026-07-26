@@ -58,7 +58,18 @@ VIZIER_TAP = "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
 IRSA_TAP = "https://irsa.ipac.caltech.edu/TAP"
 DATALAB_TAP = "https://datalab.noirlab.edu/tap"
 
-UNTIMELY_HINTS = ("untimely", "un-timely", "unwise variab", "mid-infrared variable")
+UNTIMELY_HINTS = ("untimely", "unwise", "neowise", "mid-infrared variab",
+                  "mid-IR variab", "wise variab")
+
+# VizieR's TAP parser rejects ``LOWER(col)`` inside a WHERE clause --- the first
+# probe run got back a bare ADQL syntax error from it while IRSA and NOIRLab
+# accepted the same query.  So the case-insensitive match is done by spelling the
+# variants out rather than by a function call, which every ADQL 2.0 parser takes.
+def _case_variants(h: str) -> list[str]:
+    out = {h.lower(), h.upper(), h.title(), h.capitalize()}
+    if h.lower() == "untimely":
+        out.add("unTimely")            # the catalogue's own capitalisation
+    return sorted(out)
 
 
 # --------------------------------------------------------------------------
@@ -75,6 +86,8 @@ class QueryResult:
     query: str = ""
     error: str = ""
     elapsed_s: float = float("nan")
+    n_rows_raw: int | None = None        # before any post-query quality cleaning
+    n_rows_cleaned_out: int | None = None
     data: pd.DataFrame | None = field(default=None, repr=False)
 
     def to_ledger(self) -> dict:
@@ -149,12 +162,15 @@ def probe_untimely(hints=UNTIMELY_HINTS) -> dict:
     scientific statement.
     """
     out: dict = {"routes": [], "tables_found": [], "reachable": False}
-    like = " OR ".join(
-        [f"LOWER(description) LIKE '%{h}%'" for h in hints]
-        + [f"LOWER(table_name) LIKE '%{h.replace(' ', '')}%'" for h in hints[:2]])
+    clauses: list[str] = []
+    for h in hints:
+        for v in _case_variants(h):
+            clauses.append(f"description LIKE '%{v}%'")
+            if " " not in h:
+                clauses.append(f"table_name LIKE '%{v}%'")
+    like = " OR ".join(clauses)
     for url in (VIZIER_TAP, IRSA_TAP, DATALAB_TAP):
-        q = ("SELECT table_name, description FROM TAP_SCHEMA.tables "
-             f"WHERE {like}")
+        q = f"SELECT table_name, description FROM TAP_SCHEMA.tables WHERE {like}"
         r = run_tap(url, q, label=f"untimely_schema@{url}", retries=2,
                     async_first=False)
         out["routes"].append(r.to_ledger())
@@ -164,13 +180,19 @@ def probe_untimely(hints=UNTIMELY_HINTS) -> dict:
                 out["tables_found"].append({"service": url, "table": name,
                                             "description": str(row.get("description", ""))[:300]})
     out["reachable"] = bool(out["tables_found"])
-    if not out["reachable"]:
-        failed = [r for r in out["routes"] if r["status"] == "QUERY_FAILED"]
-        out["verdict"] = ("CATALOGUE_NOT_FOUND_ON_ANY_TAP_ROUTE"
-                          if len(failed) < len(out["routes"])
-                          else "ALL_TAP_ROUTES_FAILED")
-    else:
+    n_failed = sum(1 for r in out["routes"] if r["status"] == "QUERY_FAILED")
+    out["n_routes"] = len(out["routes"])
+    out["n_routes_failed"] = n_failed
+    if out["reachable"]:
         out["verdict"] = "CATALOGUE_TABLE_DISCOVERED"
+    elif n_failed == len(out["routes"]):
+        out["verdict"] = "ALL_TAP_ROUTES_FAILED"
+    elif n_failed:
+        # Some routes answered and some errored: a partial search cannot support
+        # "the catalogue is not there".  Say which it is.
+        out["verdict"] = "NOT_FOUND_BUT_SEARCH_INCOMPLETE"
+    else:
+        out["verdict"] = "CATALOGUE_NOT_FOUND_ON_ANY_TAP_ROUTE"
     return out
 
 
@@ -250,10 +272,15 @@ def fetch_neowise_epochs(ra: float, dec: float, pmra: float = 0.0, pmdec: float 
     res = run_tap(IRSA_TAP, q, label=f"neowise_epochs_pm{sweep:.2f}as",
                   count_query=cq, retries=retries, async_first=False)
     if res.data is not None and len(res.data):
+        # Keep the RAW count next to the cleaned one.  Without this the ledger
+        # reads like a truncation ("27 rows against COUNT(*) = 32") when what
+        # actually happened is that frame-quality cleaning removed five rows.
+        res.n_rows_raw = int(len(res.data))
         res.data = clean_neowise(res.data)
         res.n_rows = int(len(res.data))
+        res.n_rows_cleaned_out = res.n_rows_raw - res.n_rows
         if res.n_rows == 0:
-            res.status = "QUERY_RETURNED_ZERO_ROWS"
+            res.status = "QUERY_RETURNED_ZERO_ROWS_AFTER_QUALITY_CUTS"
     return res
 
 

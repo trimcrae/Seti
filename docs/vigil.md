@@ -273,6 +273,38 @@ from the bug this guards against. That bug cost a previous channel an entire run
   `seti.vigil.acquire.probe_untimely` searches `TAP_SCHEMA` on VizieR, IRSA and
   NOIRLab Astro Data Lab (which already serves the parent unTimely Catalog), and
   `scripts/vigillit_fetch.py` mines the paper for Zenodo/VizieR/DOI routes.
+  When a table *is* found, `preselect_from_untimely` restricts each field's Gaia
+  sample to catalogued mid-IR variables; when it is not, the full sample is
+  swept and `untimely_preselect.applied = False` is written into the field
+  summary, because silently searching fewer stars and calling it a
+  pre-selection would misreport the channel's own coverage.
+
+  **Run 1 (30215516935) result, stated exactly:** VizieR returned an ADQL syntax
+  error (its parser rejects `LOWER(col)` in a `WHERE` clause, which IRSA and
+  NOIRLab both accept), while IRSA and NOIRLab each ran the query and returned
+  **zero rows**. That is *one transport failure and two genuine absences*, which
+  is **not** grounds for "the catalogue is unreachable" — so the verdict was
+  recorded as `CATALOGUE_NOT_FOUND_ON_ANY_TAP_ROUTE` and the query was rewritten
+  to spell out the case variants instead of calling `LOWER`. The verdict
+  vocabulary now separates `ALL_TAP_ROUTES_FAILED`,
+  `NOT_FOUND_BUT_SEARCH_INCOMPLETE` (some route errored — a partial search cannot
+  support an absence claim) and `CATALOGUE_NOT_FOUND_ON_ANY_TAP_ROUTE`.
+  The channel does not depend on the outcome: NEOWISE per-epoch photometry was
+  reached in the same probe (`status: OK`, 32 rows against a `COUNT(*)` of 32,
+  27 surviving frame-quality cleaning), so run 1 proceeded on the
+  `neowise_field_sweep` architecture.
+
+  **A second run-1 lesson, kept because it is a real sensitivity statement:** the
+  probe's NEOWISE call was made at a bare coordinate and binned to **zero
+  usable visits** — 32 sporadic single-exposure detections of a marginal source,
+  never 3 or more inside any one visit, so the within-visit noise calibration had
+  nothing to work with. The code was right to return `None` rather than
+  manufacture a light curve, but a probe that measures an empty patch of sky is
+  testing nothing. The probe now resolves a *real* star from Gaia in the field
+  first and fetches NEOWISE at its PM-propagated position, so a zero there means
+  the transport is broken, which is what a probe is for. It also reports the
+  median exposures-per-visit, since that number is the channel's per-star
+  sensitivity and it varies across the sky with the NEOWISE scan pattern.
 * **Characteriser:** NEOWISE `neowiser_p1bs_psd` per-epoch W1/W2. This is
   required regardless: a variability *catalogue* contains detection flags, not the
   per-epoch photometry the modulation index, morphology and colour statistics need.

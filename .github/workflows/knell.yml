@@ -1,0 +1,334 @@
+name: knell
+
+# KNELL — the clock that stopped (docs/knell.md).
+#
+#   plan ──▶ sweep (N parallel field shards) ──▶ vet ──▶ (commit-back)
+#        └─▶ cross (SECONDARY: VSX -> ZTF, injection-demonstrated) ──┘
+#
+# Signature S32: periodicity that CEASED.  Eclipsing binaries do not stop;
+# pulsators do not stop.  Unlike a fade, a cessation cannot be produced by
+# intervening dust — obscuration changes a signal's amplitude, not the existence
+# of a period.
+#
+# THE GOVERNING METHODOLOGY (docs/knell.md §3).  The dominant false positive is
+# not astrophysics, it is survey-dependent detectability: a variable "ceases"
+# whenever the later data have worse cadence, a shorter window, larger errors or
+# a different alias comb.  So the primary search is INTRA-SURVEY (ZTF's own early
+# seasons against its own late seasons, in g AND r) and every claimed
+# non-detection is normalised by the INJECTION-MEASURED detection efficiency for
+# that star's own period and amplitude in that block's own sampling and noise.
+# The sibling RUST channel learned the analogous lesson the hard way: an
+# uncorrected version of its statistic flagged 46/60 injected confounders.
+#
+# Operational design inherited from rust.yml / herdsman.yml:
+#  * checkpointing — every field writes its own field_summary.json and
+#    knell_candidates.csv immediately, uploads use `if: always()`, so a killed
+#    shard loses minutes rather than the run;
+#  * sharding — fields run as a fail-fast:false matrix; wall clock is one shard;
+#  * artifact passthrough — candidate tables travel to the vet job;
+#  * reduce_only_run_id — re-vet a prior run's shards without refetching ZTF;
+#  * COMMIT-BACK STAGES ONE PATHSPEC AT A TIME.  `git add` with several
+#    pathspecs is ATOMIC: one unmatched glob stages NOTHING, `|| true` swallows
+#    the failure, and the run's results are silently discarded.  This has cost
+#    this repository whole runs.
+
+on:
+  workflow_dispatch:
+    inputs:
+      fields:
+        description: >-
+          Semicolon-separated ra,dec field centres.  Default is a
+          high-galactic-latitude set: low crowding suppresses the blending
+          confounder at selection rather than at vetting.
+        required: false
+        default: "225.0,10.0;240.0,20.0;255.0,25.0;190.0,30.0;205.0,35.0;170.0,25.0;150.0,30.0;135.0,35.0"
+      radius_deg:
+        description: "Half-width of each square field (deg)"
+        required: false
+        default: "0.5"
+      box_deg:
+        description: "IRSA bulk-fetch tile size (deg)"
+        required: false
+        default: "0.12"
+      min_epochs:
+        description: "Minimum ZTF epochs per band (a per-block periodogram needs many)"
+        required: false
+        default: "80"
+      time_budget_s:
+        description: "Per-field IRSA wall-clock budget (s)"
+        required: false
+        default: "2400"
+      max_sources:
+        description: "Cap on stars analysed per field (0 = no cap)"
+        required: false
+        default: "0"
+      max_candidates:
+        description: "Cap on candidates carried into the vetting gauntlet"
+        required: false
+        default: "200"
+      run_cross:
+        description: "Run the SECONDARY cross-survey (VSX -> ZTF) layer (true/false)"
+        required: false
+        default: "true"
+      reduce_only_run_id:
+        description: "Skip the sweep; vet from this prior run's artifacts"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  plan:
+    if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      fields: ${{ steps.mk.outputs.fields }}
+    steps:
+      - id: mk
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          raw = """${{ github.event.inputs.fields }}""".strip()
+          fields = [f.strip() for f in raw.split(";") if f.strip()]
+          print("fields=" + json.dumps(fields))
+          PY
+
+  sweep:
+    needs: plan
+    if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      max-parallel: 4          # be a good citizen toward the IRSA light-curve API
+      matrix:
+        field: ${{ fromJSON(needs.plan.outputs.fields) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Offline gate — the degrading-cadence null must hold on this runner
+        run: python -m pytest tests/test_knell.py -q -k "degrading or efficiency"
+      - name: Sweep field ${{ matrix.field }}
+        run: |
+          RA="$(echo '${{ matrix.field }}' | cut -d, -f1)"
+          DEC="$(echo '${{ matrix.field }}' | cut -d, -f2)"
+          MS=""
+          if [ "${{ github.event.inputs.max_sources || '0' }}" != "0" ]; then
+            MS="--max-sources ${{ github.event.inputs.max_sources }}"
+          fi
+          python -m seti.cli knell-sweep \
+            --ra "$RA" --dec "$DEC" \
+            --radius-deg ${{ github.event.inputs.radius_deg || '0.5' }} \
+            --box-deg ${{ github.event.inputs.box_deg || '0.12' }} \
+            --min-epochs ${{ github.event.inputs.min_epochs || '80' }} \
+            --time-budget-s ${{ github.event.inputs.time_budget_s || '2400' }} \
+            $MS
+          echo "=== field summary ==="
+          cat results/knell/*/field_summary.json
+      - name: Shard name
+        id: nm
+        run: echo "tag=$(echo '${{ matrix.field }}' | tr ',.-' '___')" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: knell-field-${{ steps.nm.outputs.tag }}
+          path: results/knell/
+          if-no-files-found: warn
+
+  # ------------------------------------------------------------------
+  # SECONDARY layer.  Independent of the primary sweep so a VizieR outage
+  # cannot cost the intra-survey search, and vice versa.
+  # ------------------------------------------------------------------
+  cross:
+    needs: plan
+    if: ${{ github.event.inputs.reduce_only_run_id == '' && github.event.inputs.run_cross != 'false' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        field: ${{ fromJSON(needs.plan.outputs.fields) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Cross-survey layer for ${{ matrix.field }}
+        run: |
+          RA="$(echo '${{ matrix.field }}' | cut -d, -f1)"
+          DEC="$(echo '${{ matrix.field }}' | cut -d, -f2)"
+          python -m seti.cli knell-cross \
+            --ra "$RA" --dec "$DEC" \
+            --radius-deg ${{ github.event.inputs.radius_deg || '0.5' }} \
+            --max-targets 200
+          echo "=== cross summary ==="
+          cat results/knell/cross_*/cross_summary.json || true
+      - name: Shard name
+        id: nm
+        run: echo "tag=$(echo '${{ matrix.field }}' | tr ',.-' '___')" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: knell-cross-${{ steps.nm.outputs.tag }}
+          path: results/knell/
+          if-no-files-found: warn
+
+  vet:
+    needs: [sweep, cross]
+    if: ${{ always() && github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: knell-*
+          merge-multiple: true
+          path: results/knell/
+      - name: Vetting gauntlet
+        run: |
+          ls results/knell/ | head -40
+          python -m seti.cli knell-vet \
+            --max-candidates ${{ github.event.inputs.max_candidates || '200' }}
+          echo "=== summary ==="
+          cat results/knell/summary.json || true
+      # A verdict must never read as a science null when no data was tested.
+      - name: Assert the verdict is not a disguised no-data run
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path("results/knell/summary.json")
+          if not p.exists():
+              print("::warning::no summary.json — the vet stage produced nothing")
+              sys.exit(0)
+          s = json.loads(p.read_text())
+          v, n = s.get("verdict"), s.get("n_stars_testable", 0)
+          print(json.dumps({k: s[k] for k in s if k != "acquisition"}, indent=2))
+          if n == 0 and v not in ("NO_DATA_REACHED", "NO_TESTABLE_LIGHT_CURVES"):
+              print(f"::error::verdict {v!r} with 0 testable stars is a disguised no-data run")
+              sys.exit(1)
+          if v == "NO_CANDIDATES":
+              print(f"::notice::{n} stars tested, no two-band cessation at demonstrated "
+                    "sensitivity. A COUNT, NOT AN OCCURRENCE LIMIT — see docs/knell.md.")
+          PY
+      # `git add` with several pathspecs is ATOMIC: one unmatched glob stages
+      # NOTHING and the whole run's results are silently discarded.  One path per
+      # invocation, each allowed to fail on its own.
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/knell/summary.json || echo "no summary.json"
+          git add -f -- results/knell/knell_vetted.csv || echo "no vetted table"
+          git add -f -- results/knell/knell_survivors.csv || echo "no survivors table"
+          for f in results/knell/*/field_summary.json; do
+            [ -e "$f" ] && { git add -f -- "$f" || echo "skip $f"; }
+          done
+          for f in results/knell/*/knell_candidates.csv; do
+            [ -e "$f" ] && { git add -f -- "$f" || echo "skip $f"; }
+          done
+          for f in results/knell/*/acquisition_log.json; do
+            [ -e "$f" ] && { git add -f -- "$f" || echo "skip $f"; }
+          done
+          for f in results/knell/cross_*/cross_summary.json; do
+            [ -e "$f" ] && { git add -f -- "$f" || echo "skip $f"; }
+          done
+          for f in results/knell/cross_*/cross_candidates.csv; do
+            [ -e "$f" ] && { git add -f -- "$f" || echo "skip $f"; }
+          done
+          echo "=== staged ==="
+          git diff --cached --name-only
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "knell: periodicity cessation at fixed sensitivity — ZTF g+r sweep"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: knell-final
+          path: results/knell/
+          if-no-files-found: warn
+
+  vet-only:
+    if: ${{ github.event.inputs.reduce_only_run_id != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Fetch field artifacts from a prior run
+        uses: actions/download-artifact@v4
+        with:
+          pattern: knell-*
+          merge-multiple: true
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/knell/
+      - name: Vetting gauntlet
+        run: |
+          ls results/knell/ | head -40
+          python -m seti.cli knell-vet \
+            --max-candidates ${{ github.event.inputs.max_candidates || '200' }}
+          cat results/knell/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/knell/summary.json || echo "no summary.json"
+          git add -f -- results/knell/knell_vetted.csv || echo "no vetted table"
+          git add -f -- results/knell/knell_survivors.csv || echo "no survivors table"
+          git diff --cached --name-only
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "knell: re-vet of a prior sweep's field artifacts"
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }}
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: knell-final
+          path: results/knell/
+          if-no-files-found: warn

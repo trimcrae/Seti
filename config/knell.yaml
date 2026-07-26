@@ -1,0 +1,138 @@
+# KNELL channel — every selection / rejection threshold in one place.
+#
+# Signature S32 (docs/necrosignatures.md): "Clocks that stopped — periodicity
+# that ceased."  A periodic signal that stops is the cleanest "the mechanism
+# ended" observable in the optical time domain, and unlike a fade it cannot be
+# produced by intervening dust: obscuration changes a signal's amplitude, not
+# the existence of a period.
+#
+# THE GOVERNING METHODOLOGY (docs/knell.md §3): cessation is established at
+# FIXED SENSITIVITY.  The primary search is INTRA-SURVEY — ZTF's own early
+# seasons against its own late seasons, in both g and r — and every claimed
+# non-detection is normalised by the injection-measured detection efficiency for
+# that star's own period and amplitude in that block's own sampling and noise.
+# Without that normalisation the statistic ranks stars by how much the cadence
+# degraded, not by astrophysics.
+
+season:
+  # Epoch blocks are observing seasons.  Full-year blocks, fixed origin, so the
+  # two bands of one star share a block indexing — the two-band coincidence rule
+  # compares block indices and would be meaningless otherwise.
+  season_days: 365.25
+  # A per-block periodogram needs enough epochs that its permutation null is
+  # itself meaningful; below ~15 the max-power distribution is dominated by the
+  # window function and the threshold becomes unstable.
+  min_epochs_block: 15
+  # Four blocks is the floor: >=2 detected before and >=2 not-detected after.
+  min_blocks: 4
+  # "fixed" = floor((t - t0)/season_days); "gap" = split at sampling gaps.
+  block_mode: fixed
+
+acquire:
+  # Higher than the RUST floor: a *per-block* periodogram needs ~15+ epochs in
+  # each of >=4 blocks in EACH band.
+  min_epochs_total: 80
+  box_deg: 0.12
+  time_budget_s: 2400
+
+period:
+  # 0.05 d cuts below the contact-binary / delta Scuti floor; the long end is
+  # additionally capped at the block baseline inside frequency_grid(), because a
+  # "period" longer than the block is a trend, not a clock, and admitting one
+  # lets a slow fade masquerade as periodicity.
+  min_period: 0.05
+  max_period: 100.0
+  oversample: 5.0
+
+detect:
+  # Per-block false-alarm probability of the PERMUTATION null.  The threshold is
+  # computed from each block's own shuffled magnitudes, so it carries that
+  # block's own spectral window (alias structure) and its own magnitude
+  # distribution (non-Gaussian tails).  One analytic FAP formula applied to
+  # every block would carry neither, and the difference between blocks is
+  # exactly the systematic this channel exists to control.
+  fap: 0.01
+  n_null: 200
+  # THE LOAD-BEARING NUMBER.  Injection trials per post-transition block.  The
+  # smallest resolvable per-block miss rate is the Clopper-Pearson bound
+  # 1 - 0.05^(1/n_trials) — 1.5% at n=200, 0.75% at n=400 — so the persistence
+  # p-value must be quoted as an inequality whenever every trial was recovered.
+  n_trials: 200
+  # A post-transition block whose injection-measured efficiency is below this
+  # COULD NOT have detected the signal even if it persisted, so it carries no
+  # information about cessation.  This single gate is what makes a degrading
+  # cadence unable to produce a candidate.
+  eta_min: 0.90
+  # Upper bound on P(all post blocks miss | the signal is still there).
+  p_persist_max: 0.01
+  # >=2 detected blocks before: one detection is a fluctuation.
+  min_pre_blocks: 2
+  # >=2 non-detected blocks after: this is the Blazhko / mode-switch guard, and
+  # it is why the statistic requires a RUN of non-detections, not an endpoint.
+  min_post_blocks: 2
+  # ...and the post-transition baseline must exceed essentially every catalogued
+  # Blazhko modulation cycle.
+  min_post_span_days: 500.0
+  # MEAN FLUX MUST BE UNCHANGED.  A star that faded until its signal sank into
+  # the noise is a fade — a different and mundane phenomenon.  (The efficiency
+  # gate catches this too, since injecting into fainter, noisier data lowers
+  # eta; the two guards are independent and both are kept.)
+  mean_shift_max_mag: 0.05
+  # Residual amplitude at the fixed reference frequency must be consistent with
+  # zero, and the drop must itself be significant.
+  post_amp_sigma_max: 3.0
+  drop_sigma_min: 5.0
+  # Phase-dispersion-minimisation cross-check at the reference period.  PDM is
+  # not a sinusoid fit, so it responds to eclipse-shaped signals a Fourier
+  # method under-weights, and its systematics (bin occupancy) are unrelated to
+  # the periodogram's (spectral window).  A cessation asserted by one method and
+  # denied by the other is an artefact of the method.
+  # ...and the PDM verdict is PERMUTATION-CALIBRATED, not an absolute Theta cut:
+  # Theta's null distribution depends on epoch count, bin occupancy and phase
+  # coverage, all of which differ between blocks — exactly the dependence that
+  # must not leak into the statistic.
+  pdm_p_pre_max: 0.01
+  pdm_p_post_min: 0.05
+  pdm_null: 100
+  # FREQUENCY-AGNOSTIC VARIABILITY BUDGET.  A clock that stopped loses its
+  # excess variance; a pulsator that switched modes KEEPS it and merely moves it
+  # in frequency.  Requiring the excess variance to drop closes mode switching
+  # even when the new mode lands somewhere the periodogram handles badly —
+  # the literature is explicit that in mode switching the total power is
+  # conserved, so the test must be on integrated variability, not on one line.
+  var_drop_frac: 0.35
+  # CHEAP TRIAGE, deliberately MORE PERMISSIVE than the real test.  A star not
+  # periodic in its FIRST usable block can never satisfy the prefix pattern, so
+  # testing that one block first with a looser threshold removes no candidate
+  # the full test would have kept — and removes the overwhelming majority of a
+  # ZTF field, which is constant stars.  Without it the sweep spends its whole
+  # IRSA time budget running permutation nulls on stars that were never clocks.
+  fap_triage: 0.05
+  n_null_triage: 60
+
+vet:
+  # ZTF's photometric walls.  Both manufacture this channel's signature: a
+  # saturating star's amplitude is compressed non-linearly, and a star near the
+  # faint limit loses its peak whenever survey depth dips — a cadence effect in
+  # a photometric costume.
+  ztf_bright_limit: 13.5
+  ztf_faint_limit_g: 20.3
+  ztf_faint_limit_r: 20.1
+  # A Gaia neighbour this close and this comparable leaks its own variability
+  # and its own reference-image history into the ZTF aperture.
+  crowd_radius_arcsec: 5.0
+  crowd_delta_g: 2.5
+  # NOT a generic quality cut: RUWE and non_single_star are the direct
+  # astrometric test for the THIRD BODY that precesses an eclipsing binary out
+  # of the line of sight — the SS Lacertae mechanism, the one published
+  # explanation for eclipse cessation.
+  ruwe_max: 1.4
+  astrometric_excess_noise_max: 1.0
+
+cross:
+  # The SECONDARY cross-survey layer (VSX/GCVS -> ZTF).  Held to a STRICTER
+  # efficiency floor than the intra-survey primary, because here the passband,
+  # cadence, aperture and depth all change at the same time as the epoch.
+  tol_arcsec: 2.0
+  n_trials: 400
+  eta_min: 0.95

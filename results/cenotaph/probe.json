@@ -24,25 +24,25 @@
       "ok": true,
       "n_rows": 5,
       "sync": false,
-      "seconds": 4.8
+      "seconds": 4.4
     },
     "pyvo_async": {
       "ok": true,
       "n_rows": 5,
       "sync": false,
-      "seconds": 3.9
+      "seconds": 2.6
     },
     "astroquery_sync": {
       "ok": true,
       "n_rows": 5,
       "sync": true,
-      "seconds": 1.2
+      "seconds": 0.8
     },
     "pyvo_sync": {
       "ok": true,
       "n_rows": 5,
       "sync": true,
-      "seconds": 1.5
+      "seconds": 0.9
     }
   },
   "count_star": {
@@ -51,21 +51,25 @@
     "transport": "astroquery_async",
     "query": "SELECT COUNT(*) AS n \nFROM gaiadr3.gaia_source AS g\nJOIN gaiadr3.astrophysical_parameters AS ap ON g.source_id = ap.source_id\nWHERE g.parallax >= 2.0 AND g.parallax < 2.5\n  AND g.parallax_over_error > 20.0\n  AND g.ruwe < 1.4\n  AND ap.logg_gspspec > 3.8\n  AND ap.teff_gspspec BETWEEN 4000.0 AND 7000.0\n  AND ap.mh_gspspec IS NOT NULL\n  AND ap.alphafe_gspspec IS NOT NULL"
   },
+  "slice_plan": {
+    "n_slices": 14,
+    "target_rows_per_slice": 15000,
+    "first_slice_random_index": [
+      0,
+      129407840
+    ]
+  },
   "sample_query": {
-    "status": "QUERY_TRUNCATED",
-    "n_rows": 16385,
-    "expected_rows": 199572,
+    "status": "QUERY_OK",
+    "n_rows": 14335,
+    "expected_rows": 14335,
+    "shell_total_rows": 199572,
     "transport": "astroquery_sync",
     "attempts": [
       {
         "transport": "astroquery_async",
         "ok": false,
-        "error": "HTTPError(\"Error 500:\\nCannot find result 'result' for job '9cad8cae-890e-11f1-98cc-bc97e148b76b-O'. Path does not exists: /gaia_netapp/tap-server/storage/O/anonymous/2026/07/26/9cad8cae-890e-11f1-98cc-bc97e148b76b-O/result\")"
-      },
-      {
-        "transport": "pyvo_async",
-        "ok": false,
-        "error": "DALQueryError: Query Error: Code: -1, msg: Filesystem quota exceeded for user anonymous (Currently using  200 GB, increasing it with 128 KB exceeds allowed value). Registered users have an increased quota, please log in."
+        "error": "HTTPError(\"Error 500:\\nCannot find result 'result' for job '1eac78a9-8917-11f1-98cc-bc97e148b76b-O'. Path does not exists: /gaia_netapp/tap-server/storage/O/anonymous/2026/07/26/1eac78a9-8917-11f1-98cc-bc97e148b76b-O/result\")"
       },
       {
         "transport": "pyvo_async",
@@ -75,22 +79,12 @@
       {
         "transport": "astroquery_sync",
         "ok": true,
-        "n_rows": 16385
-      },
-      {
-        "transport": "pyvo_sync",
-        "ok": false,
-        "error": "DALQueryError: Maximum execution time (60 s) reached. Job aborted."
-      },
-      {
-        "transport": "pyvo_sync",
-        "ok": false,
-        "error": "DALQueryError: Maximum execution time (60 s) reached. Job aborted."
+        "n_rows": 14335
       }
     ],
-    "query": "SELECT TOP 200000\n       g.source_id, g.ra, g.dec, g.l, g.b, g.parallax, g.parallax_error,\n       g.parallax_over_error, g.pmra, g.pmdec, g.ruwe,\n       g.phot_g_mean_mag, g.phot_bp_mean_mag, g.phot_rp_mean_mag, g.bp_rp,\n       g.phot_g_mean_flux_over_error, g.phot_bp_mean_flux_over_error,\n       g.phot_rp_mean_flux_over_error, g.phot_g_n_obs,\n       g.phot_bp_rp_excess_factor, g.phot_variable_flag,\n       g.ipd_frac_multi_peak, g.astrometric_excess_noise_sig,\n       g.non_single_star, g.nu_eff_used_in_astrometry, g.pseudocolour,\n       g.ecl_lat, g.astrometric_params_solved,\n       g.ag_gspphot, g.azero_gspphot, g.teff_gspphot, g.logg_gspphot,\n       ap.teff_gspspec, ap.logg_gspspec, ap.mh_gspspec, ap.alphafe_gspspec,\n       ap.teff_gspspec_upper, ap.teff_gspspec_lower,\n       ap.logg_gspspec_upper, ap.logg_gspspec_lower,\n       ap.mh_gspspec_upper, ap.mh_gspspec_lower,\n       ap.flags_gspspec\n\nFROM gaiadr3.gaia_source AS g\nJOIN gaiadr3.astrophysical_parameters AS ap ON g.source_id = ap.source_id\nWHERE g.parallax >= 2.0 AND g.parallax < 2.5\n  AND g.parallax_over_error > 20.0\n  AND g.ruwe < 1.4\n  AND ap.logg_gspspec > 3.8\n  AND ap.teff_gspspec BETWEEN 4000.0 AND 7000.0\n  AND ap.mh_gspspec IS NOT NULL\n  AND ap.alphafe_gspspec IS NOT NULL"
+    "query": "SELECT TOP 200000\n       g.source_id, g.ra, g.dec, g.l, g.b, g.parallax, g.parallax_error,\n       g.parallax_over_error, g.pmra, g.pmdec, g.ruwe,\n       g.phot_g_mean_mag, g.phot_bp_mean_mag, g.phot_rp_mean_mag, g.bp_rp,\n       g.phot_g_mean_flux_over_error, g.phot_bp_mean_flux_over_error,\n       g.phot_rp_mean_flux_over_error, g.phot_g_n_obs,\n       g.phot_bp_rp_excess_factor, g.phot_variable_flag,\n       g.ipd_frac_multi_peak, g.astrometric_excess_noise_sig,\n       g.non_single_star, g.nu_eff_used_in_astrometry, g.pseudocolour,\n       g.ecl_lat, g.astrometric_params_solved,\n       g.ag_gspphot, g.azero_gspphot, g.teff_gspphot, g.logg_gspphot,\n       ap.teff_gspspec, ap.logg_gspspec, ap.mh_gspspec, ap.alphafe_gspspec,\n       ap.teff_gspspec_upper, ap.teff_gspspec_lower,\n       ap.logg_gspspec_upper, ap.logg_gspspec_lower,\n       ap.mh_gspspec_upper, ap.mh_gspspec_lower,\n       ap.flags_gspspec\n\nFROM gaiadr3.gaia_source AS g\nJOIN gaiadr3.astrophysical_parameters AS ap ON g.source_id = ap.source_id\nWHERE g.parallax >= 2.0 AND g.parallax < 2.5\n  AND g.parallax_over_error > 20.0\n  AND g.ruwe < 1.4\n  AND ap.logg_gspspec > 3.8\n  AND ap.teff_gspspec BETWEEN 4000.0 AND 7000.0\n  AND ap.mh_gspspec IS NOT NULL\n  AND ap.alphafe_gspspec IS NOT NULL\n  AND g.random_index >= 0\n  AND g.random_index < 129407840"
   },
-  "truncation_detected": true,
+  "truncation_detected": false,
   "columns": [
     "ag_gspphot",
     "alphafe_gspspec",
@@ -138,70 +132,70 @@
   ],
   "first_rows": [
     {
-      "source_id": 16870631694208,
-      "ra": 45.11277842681158,
-      "dec": 0.3808400749444696,
-      "parallax": 2.101317240027476,
-      "parallax_over_error": 121.61138153076172,
-      "ruwe": 1.0904268026351929,
-      "phot_g_mean_mag": 10.629924774169922,
-      "teff_gspspec": 6009.0,
-      "logg_gspspec": 4.0,
-      "mh_gspspec": -0.019999999552965164,
-      "alphafe_gspspec": 0.23000000417232513
+      "source_id": 238153329524197248,
+      "ra": 53.314023308279374,
+      "dec": 42.31069689676854,
+      "parallax": 2.0853362740121524,
+      "parallax_over_error": 143.47706604003906,
+      "ruwe": 0.9146108627319336,
+      "phot_g_mean_mag": 12.70514965057373,
+      "teff_gspspec": 6749.0,
+      "logg_gspspec": 4.610000133514404,
+      "mh_gspspec": -0.1599999964237213,
+      "alphafe_gspspec": 0.0
     },
     {
-      "source_id": 2966825969408640,
-      "ra": 50.15795823060871,
-      "dec": 4.440514654268618,
-      "parallax": 2.148073440857332,
-      "parallax_over_error": 127.34764862060547,
-      "ruwe": 1.0260405540466309,
-      "phot_g_mean_mag": 12.126531600952148,
-      "teff_gspspec": 6981.0,
-      "logg_gspspec": 4.449999809265137,
-      "mh_gspspec": 0.07000000029802322,
-      "alphafe_gspspec": 0.18000000715255737
+      "source_id": 243574643401822720,
+      "ra": 55.53212379301141,
+      "dec": 43.56687061780839,
+      "parallax": 2.3366704457650407,
+      "parallax_over_error": 160.3070068359375,
+      "ruwe": 0.9235103130340576,
+      "phot_g_mean_mag": 12.103283882141113,
+      "teff_gspspec": 6713.0,
+      "logg_gspspec": 4.429999828338623,
+      "mh_gspspec": -0.27000001072883606,
+      "alphafe_gspspec": 0.3400000035762787
     },
     {
-      "source_id": 5031266424991360,
-      "ra": 41.846672206317876,
-      "dec": 4.462763617262204,
-      "parallax": 2.0993959732617857,
-      "parallax_over_error": 122.66259765625,
-      "ruwe": 0.8923931121826172,
-      "phot_g_mean_mag": 11.3589506149292,
-      "teff_gspspec": 6079.0,
-      "logg_gspspec": 3.880000114440918,
-      "mh_gspspec": 0.0,
-      "alphafe_gspspec": 0.18000000715255737
+      "source_id": 246472676876059520,
+      "ra": 63.24307882523086,
+      "dec": 48.77409166845742,
+      "parallax": 2.021810098511857,
+      "parallax_over_error": 157.80262756347656,
+      "ruwe": 0.8509507179260254,
+      "phot_g_mean_mag": 12.214044570922852,
+      "teff_gspspec": 6145.0,
+      "logg_gspspec": 3.890000104904175,
+      "mh_gspspec": -0.17000000178813934,
+      "alphafe_gspspec": 0.1599999964237213
     },
     {
-      "source_id": 6212412495925120,
-      "ra": 42.12556458916601,
-      "dec": 5.041175111675555,
-      "parallax": 2.474100681354026,
-      "parallax_over_error": 153.54466247558594,
-      "ruwe": 1.0863395929336548,
-      "phot_g_mean_mag": 12.12059497833252,
-      "teff_gspspec": 6787.0,
-      "logg_gspspec": 4.340000152587891,
-      "mh_gspspec": -0.23999999463558197,
-      "alphafe_gspspec": -0.05000000074505806
+      "source_id": 253777286676007936,
+      "ra": 67.68922693192206,
+      "dec": 45.477156089905186,
+      "parallax": 2.110155390865217,
+      "parallax_over_error": 145.1446075439453,
+      "ruwe": 0.9902405142784119,
+      "phot_g_mean_mag": 12.745768547058105,
+      "teff_gspspec": 6761.0,
+      "logg_gspspec": 4.579999923706055,
+      "mh_gspspec": 0.33000001311302185,
+      "alphafe_gspspec": 0.1599999964237213
     },
     {
-      "source_id": 7753519776476032,
-      "ra": 46.66195870224641,
-      "dec": 7.51247594350326,
-      "parallax": 2.372787266062775,
-      "parallax_over_error": 144.8583984375,
-      "ruwe": 1.0581138134002686,
-      "phot_g_mean_mag": 11.713053703308105,
-      "teff_gspspec": 6814.0,
-      "logg_gspspec": 4.179999828338623,
-      "mh_gspspec": -0.25,
-      "alphafe_gspspec": 0.3799999952316284
+      "source_id": 255264646730556288,
+      "ra": 76.41930696292499,
+      "dec": 48.2914068916596,
+      "parallax": 2.347270452976353,
+      "parallax_over_error": 107.2611083984375,
+      "ruwe": 1.261817216873169,
+      "phot_g_mean_mag": 11.738268852233887,
+      "teff_gspspec": 6610.0,
+      "logg_gspspec": 4.360000133514404,
+      "mh_gspspec": 0.09000000357627869,
+      "alphafe_gspspec": 0.20000000298023224
     }
   ],
-  "verdict": "PROBE_TRUNCATED"
+  "verdict": "PROBE_OK"
 }

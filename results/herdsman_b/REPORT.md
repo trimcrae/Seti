@@ -24,3 +24,22 @@ Top of census (by z):
 Two-population flags (stripped-nucleus/merger channel): 38.
 
 No-null rule: an empty candidate list at these thresholds is a domain statement (this census, these quality cuts), not a result — next moves are deeper chemistry (GALAH/APOGEE crossmatch), co-moving groups beyond the cluster census, and per-candidate spectroscopic follow-up.
+## Post-run vetting verdict (2026-07-26, session analysis)
+
+Hogg_4 — the single formal candidate — FAILS member-level vetting:
+corr(mh, G) = -0.68 (fainter members read metal-poorer), corr(mh, Teff) =
++0.49 residual, s_trim = 0.83 dex with members spanning [-4.1, +0.75] —
+a GSP-Phot extinction-metallicity systematic at 4.2 kpc in the plane, not
+chemistry. It passed field-likeness only because the field baseline at that
+distance is inflated by the same systematic. The top-10 is dominated by
+globular clusters and distant reddened open clusters — the two populations
+where XP metallicities degrade most.
+
+v1 conclusion: no credible completed-assembly candidate in the census at
+GSP-Phot sensitivity; the selection machinery (1/5106 formal, killed on
+vetting for an identifiable instrumental cause; 0 false positives in the
+synthetic control) behaves as designed. v2 upgrades queued: |corr(mh,G)|
+kill switch in the scorer, distance/extinction gating, distance-matched
+field baseline, globular-cluster flagging, and the decisive step —
+GALAH/APOGEE spectroscopic chemistry crossmatch, where a real gathered
+population would still stand out and systematics of this kind cannot hide.

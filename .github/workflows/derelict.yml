@@ -26,7 +26,7 @@ on:
   workflow_dispatch:
     inputs:
       stage:
-        description: "Stage to run (probe|search|lit|all)"
+        description: "probe|search|completeness|dark_comets|high_albedo|lit|all"
         required: false
         default: "all"
       limit:
@@ -41,6 +41,22 @@ on:
         description: "Skip the comet control sample (true/false)"
         required: false
         default: "false"
+      skip_completeness:
+        description: "Skip the ~1.4M-row unconstrained completeness pull (true/false)"
+        required: false
+        default: "false"
+      skip_dark_comets:
+        description: "Skip the Seligman dark-comet named-target census (true/false)"
+        required: false
+        default: "false"
+      skip_high_albedo:
+        description: "Skip the catalogue-wide p_V > 0.7 screen (true/false)"
+        required: false
+        default: "false"
+      completeness_limit:
+        description: "Cap rows in the unconstrained pull (debug only; a capped pull cannot prove completeness)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -86,15 +102,32 @@ jobs:
           python -m seti.cli derelict --stage probe
           cat results/derelict/schema.json || true
 
+      # Everything below runs a single dispatchable stage.  `all` runs the whole
+      # channel including the census stages; the named stages exist so a heavy
+      # pull (the ~1.4M-row completeness probe in particular) can be re-run on
+      # its own without re-running the funnel.  A named stage writes
+      # summary_<stage>.json and never clobbers summary.json.
       - name: Run the search
         if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'lit' }}
         run: |
           python -m seti.cli derelict \
+            --stage "${{ github.event.inputs.stage || 'all' }}" \
             ${{ github.event.inputs.limit != '' && format('--limit {0}', github.event.inputs.limit) || '' }} \
+            ${{ github.event.inputs.completeness_limit != '' && format('--completeness-limit {0}', github.event.inputs.completeness_limit) || '' }} \
             --max-vet ${{ github.event.inputs.max_vet || '60' }} \
-            ${{ github.event.inputs.skip_control == 'true' && '--skip-control' || '' }}
+            ${{ github.event.inputs.skip_control == 'true' && '--skip-control' || '' }} \
+            ${{ github.event.inputs.skip_completeness == 'true' && '--skip-completeness' || '' }} \
+            ${{ github.event.inputs.skip_dark_comets == 'true' && '--skip-dark-comets' || '' }} \
+            ${{ github.event.inputs.skip_high_albedo == 'true' && '--skip-high-albedo' || '' }}
           echo "=== summary ==="
           cat results/derelict/summary.json || true
+          echo "=== completeness (is the A1 census the WHOLE A1 population?) ==="
+          cat results/derelict/completeness.json || true
+          echo "=== dark-comet named-target census ==="
+          head -c 4000 results/derelict/dark_comets.csv || true
+          echo
+          echo "=== query log: QUERY_FAILED must never look like ZERO_ROWS ==="
+          python -c "import json,collections;q=json.load(open('results/derelict/queries.json'));print(json.dumps(collections.Counter(r['status'] for r in q),indent=2));print('--- failures ---');[print(r['status'],r['http_status'],r['url'][:220],r['error'][:200]) for r in q if r['status']=='QUERY_FAILED'][:40]" || true
           echo "=== report ==="
           cat results/derelict/REPORT.md || true
 
@@ -104,7 +137,7 @@ jobs:
         run: |
           python scripts/derelict_lit.py
           echo "=== id mismatches (must be zero) ==="
-          python -c "import json;d=json.load(open('results/derelictlit/summary.json'));print(json.dumps({'n_ok':d['n_ok'],'n_failed':d['n_failed'],'n_id_mismatch':d['n_id_mismatch'],'mismatches':d['id_mismatches']},indent=2))" || true
+          python -c "import json;d=json.load(open('results/derelictlit/summary.json'));print(json.dumps({'n_ok':d['n_ok'],'n_failed':d['n_failed'],'n_id_mismatch':d['n_id_mismatch'],'mismatches':d['id_mismatches'],'n_title_unverified':d.get('n_title_unverified'),'title_unverified':d.get('title_unverified')},indent=2))" || true
 
       - name: Commit results
         if: always()

@@ -62,6 +62,83 @@ screen_albedo:
   albedo_min: 0.70
   albedo_snr_min: 2.0   # require the albedo to exceed the cut significantly
 
+dark_comets:
+  # The named-target census (docs/derelict.md section 3).  Seligman et al.
+  # selected on large NON-RADIAL acceleration -- the complement of what this
+  # channel wants -- so the question these objects answer is: which of them have
+  # a JPL-fitted A1 at all, and where does it put them in R?
+  #
+  # PROVENANCE IS MANDATORY.  This repository has been bitten TWICE by
+  # identifiers recalled from memory (docs/derelict.md section 2.1: two wrong
+  # arXiv papers fetched successfully).  Every designation below was read
+  # VERBATIM from the fetched full text committed in results/derelictlit/, not
+  # recalled:
+  #
+  #   seligman2023_psj  -> results/derelictlit/txt_seligman2023_dark_comets.txt
+  #                        "Dark Comets? Unexpectedly Large Nongravitational
+  #                        Accelerations on a Sample of Small Asteroids",
+  #                        arXiv:2212.08115v2, Table 1 (7 objects).
+  #   seligman2024_pnas -> results/derelictlit/txt_seligman2024_two_populations.txt
+  #                        "Two Distinct Populations of Dark Comets Delineated by
+  #                        Orbits and Sizes", PNAS 121(51), doi
+  #                        10.1073/pnas.2406424121, Tables 1-2 (14 total; the 7
+  #                        below are the ones NOT already in the 2023 table).
+  #
+  # Note: the 2023 ABSTRACT prints "2016 RH120", which is a typo -- its own
+  # Table 1, figure captions and notes all print 2006 RH120, and that is the
+  # designation used here.  Designations are resolved through sbdb.api at run
+  # time and an unresolvable one is REPORTED, never silently dropped.
+  targets:
+    seligman2023_psj:
+      - "1998 KY26"
+      - "2005 VL1"
+      - "2016 NJ33"
+      - "2010 VL65"
+      - "2010 RF12"
+      - "2006 RH120"
+      - "2003 RM"
+    seligman2024_pnas:
+      - "2001 ME1"
+      - "2005 UY6"
+      - "1998 FR11"
+      - "2012 UR158"
+      - "2013 BA74"
+      - "2016 GW221"
+      - "2013 XY20"
+  # Outer/inner population labels from Seligman et al. 2024 Fig. 1 panels and the
+  # printed Tisserand parameter (the bold/italic font coding that Table 1's
+  # caption uses does not survive PDF text extraction, so this is INFERRED from
+  # T_J and the figure labels, not read as a literal string).
+  populations:
+    outer: ["2001 ME1", "2005 UY6", "1998 FR11", "2012 UR158", "2003 RM"]
+    inner: ["2005 VL1", "2010 RF12", "1998 KY26", "2016 NJ33", "2010 VL65",
+            "2013 BA74", "2006 RH120", "2016 GW221", "2013 XY20"]
+
+census:
+  # Completeness cross-check of the sb-cdata={"AND":["A1|DF"]} constraint.
+  # 22 rows is small enough that "the constraint is subtly wrong" and "the
+  # population really is that small" are indistinguishable without pulling the
+  # catalogue unconstrained and comparing designation SETS (not just counts:
+  # two different sets can have the same size).
+  completeness_fields:
+    [spkid, full_name, pdes, kind, class, A1, A2, A3]
+  completeness_max_listed: 500       # cap on designations listed in the report
+  # Fallback chunking axis, used ONLY if the single unconstrained pull fails.
+  # NOT asserted to be exhaustive -- the union's row count is compared against
+  # the server's own reported count and a shortfall is reported.
+  asteroid_class_chunks:
+    [IEO, ATE, APO, AMO, MCA, IMB, MBA, OMB, TJN, CEN, TNO, AST, PAA, HYA]
+  comet_class_chunks: [COM, CTc, ETc, HTC, JFc, JFC, PAR, HYP]
+  # Independent, catalogue-wide albedo screen: how many survivors get an IRSA
+  # (NEOWISE) cross-check.  A single-source albedo above the cut is a fit
+  # artefact until a second measurement agrees.
+  high_albedo_crosscheck: true
+  high_albedo_max_crosscheck: 500
+  # Cap on how many query records are inlined into summary.json.  The COMPLETE
+  # log always goes to results/derelict/queries.json; truncation of the inline
+  # copy is recorded explicitly and never silent.
+  max_queries_in_summary: 4000
+
 vet:
   # Human hardware is the DOMINANT contaminant: JPL/MPC already use exactly this
   # area-to-mass test to unmask rocket bodies.  Anything with a high implied AMR

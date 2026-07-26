@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from seti.derelict import acquire, radiation, screen, vet
+from seti.derelict import acquire, census, radiation, screen, vet
 from seti.derelict.radiation import (
     AMR_PER_A1,
     AMR_PER_BETA,
@@ -800,7 +800,7 @@ def test_derelict_run_emits_no_data_reached_when_the_archive_is_blocked(tmp_path
     cfg.root = tmp_path              # write results into a scratch tree
     (tmp_path / "config").mkdir(parents=True, exist_ok=True)
     summary = derelict_run(cfg, transport=_fake_transport({}, OSError("blocked")),
-                           skip_control=True)
+                           skip_control=True, tries=1)
     assert summary["verdict"] == "NO_DATA_REACHED"
     assert summary["funnel"]["input"] == 0
     # The funnel must let a reader tell a query failure from an empty sky.
@@ -869,6 +869,609 @@ def test_derelict_run_offline_input_end_to_end(tmp_path):
     assert top["verdict"] == vet.UNEXPLAINED
     assert (tmp_path / "results" / "derelict" / "REPORT.md").read_text().startswith(
         "# DERELICT")
+
+
+# =============================================================================
+# 6. The query log — QUERY_FAILED must never look like QUERY_RETURNED_ZERO_ROWS
+# =============================================================================
+def _payload(fields: list[str], data: list[list], count: int | None = None) -> bytes:
+    body: dict = {"signature": {"version": "1.0"}, "fields": fields, "data": data}
+    if count is not None:
+        body["count"] = count
+    return json.dumps(body).encode()
+
+
+def test_a_failed_query_is_recorded_as_QUERY_FAILED_with_its_http_status():
+    """THE guard. A 400 on a mistyped field and an empty database produced the
+    same visible outcome in run 30203392288. They must now be distinguishable
+    from the log alone, without reading any prose."""
+    log = acquire.QueryLog()
+
+    def _t(url: str, timeout: float = 0.0) -> bytes:
+        raise OSError('HTTP 400 Bad Request: {"message":"invalid field '
+                      "specified: 'A1'\",\"code\":\"400\"}")
+
+    res = acquire.fetch_nongrav_table(transport=_t, tries=1, log=log)
+    assert res.status == acquire.STATUS_UNREACHABLE
+    assert log.records, "every query must be recorded"
+    assert all(r.status == acquire.STATUS_QUERY_FAILED for r in log.records)
+    assert all(r.http_status == 400 for r in log.records), (
+        "the HTTP code must survive into the log even from a non-HTTPError "
+        "transport, or 'the server said no' is indistinguishable from 'the "
+        "network never got there'")
+    # The literal URL is recorded, unredacted, so the query can be reproduced.
+    assert all("ssd-api.jpl.nasa.gov" in r.url and "fields=" in r.url
+               for r in log.records)
+    assert res.queries and res.queries[0]["status"] == acquire.STATUS_QUERY_FAILED
+
+
+def test_a_successful_but_empty_query_is_QUERY_RETURNED_ZERO_ROWS():
+    """The other half of the distinction: the server answered, and the answer
+    was 'no rows'. That is a real measurement, not a failure."""
+    log = acquire.QueryLog()
+    empty = _payload(["full_name", "A1"], [], count=0)
+    res = acquire.fetch_nongrav_table(
+        transport=_fake_transport({"": empty}), tries=1, log=log)
+
+    assert [r.status for r in log.records] == [
+        acquire.STATUS_ZERO_ROWS] * len(log.records)
+    assert all(r.http_status == 200 and r.n_rows == 0 for r in log.records)
+    assert acquire.STATUS_QUERY_FAILED not in log.counts()
+    # ...and the fetch as a whole still refuses to call an empty sky a success.
+    assert not res.ok
+
+
+def test_transport_failure_records_no_http_status_rather_than_inventing_one():
+    log = acquire.QueryLog()
+    acquire.fetch_nongrav_table(
+        transport=_fake_transport({}, ConnectionError("CONNECT tunnel failed")),
+        tries=1, log=log)
+    assert all(r.http_status is None for r in log.records)
+    assert all(r.status == acquire.STATUS_QUERY_FAILED for r in log.records)
+
+
+def test_object_detail_records_an_unresolvable_designation_as_zero_rows():
+    """'No such object' is an answer; 'the archive is down' is not."""
+    log = acquire.QueryLog()
+    missing = json.dumps({"message": "specified object was not found"}).encode()
+    d = acquire.fetch_object_detail("(9999 XX)", transport=_fake_transport({"": missing}),
+                                    tries=1, log=log)
+    assert d["ok"] is False
+    assert log.records[-1].status == acquire.STATUS_ZERO_ROWS
+    assert log.records[-1].http_status == 200
+
+    log2 = acquire.QueryLog()
+    acquire.fetch_object_detail("433", transport=_fake_transport({}, OSError("blocked")),
+                                tries=1, log=log2)
+    assert log2.records[-1].status == acquire.STATUS_QUERY_FAILED
+
+
+def test_summary_carries_the_full_query_log(tmp_path):
+    from seti.config import load_config
+
+    cfg = load_config()
+    cfg.root = tmp_path
+    summary = derelict_run(cfg, transport=_fake_transport({}, OSError("blocked")),
+                           skip_control=True, tries=1)
+    assert summary["queries"], "summary.json must carry the queries list"
+    first = summary["queries"][0]
+    assert set(first) >= {"label", "url", "http_status", "status", "n_rows"}
+    assert summary["query_status_counts"][acquire.STATUS_QUERY_FAILED] > 0
+    # The complete, untruncated log is on disk as well.
+    full = json.loads((tmp_path / "results" / "derelict" / "queries.json").read_text())
+    assert len(full) >= len(summary["queries"])
+
+
+# =============================================================================
+# 7. Completeness of the A1|DF constraint
+# =============================================================================
+def test_completeness_probe_confirms_a_complete_constraint():
+    """The decisive check: 22 rows is only a census if the unconstrained pull
+    finds exactly the same 22 objects with a non-null A1."""
+    constrained = pd.DataFrame([
+        {"spkid": "2000433", "pdes": "433", "full_name": "433 Eros", "A1": 1e-10},
+        {"spkid": "3000001", "pdes": "2005 VL1", "full_name": "(2005 VL1)",
+         "A1": -8.3e-10},
+    ])
+    everything = _payload(
+        ["spkid", "full_name", "pdes", "A1"],
+        [["2000433", "433 Eros", "433", "1e-10"],
+         ["3000001", "(2005 VL1)", "2005 VL1", "-8.3e-10"],
+         ["2000001", "1 Ceres", "1", None],          # no A1 -> not in the census
+         ["2000004", "4 Vesta", "4", None]],
+        count=4)
+    res = census.completeness_probe(
+        "a", constrained, transport=_fake_transport({"": everything}), tries=1)
+
+    assert res.verdict == census.CONSTRAINT_COMPLETE
+    assert res.n_constrained == 2
+    assert res.n_unconstrained_rows == 4
+    assert res.n_unconstrained_nonnull_A1 == 2
+    assert res.missing_from_constrained == []
+    assert res.extra_in_constrained == []
+
+
+def test_completeness_probe_catches_an_incomplete_constraint():
+    """If the unconstrained pull finds an A1 the constraint missed, the census
+    is NOT complete and the primary path has to change."""
+    constrained = pd.DataFrame([
+        {"spkid": "2000433", "pdes": "433", "full_name": "433 Eros", "A1": 1e-10}])
+    everything = _payload(
+        ["spkid", "full_name", "pdes", "A1"],
+        [["2000433", "433 Eros", "433", "1e-10"],
+         ["2000999", "(2099 ZZ)", "2099 ZZ", "5e-9"]],   # missed by the constraint
+        count=2)
+    res = census.completeness_probe(
+        "a", constrained, transport=_fake_transport({"": everything}), tries=1)
+
+    assert res.verdict == census.CONSTRAINT_INCOMPLETE
+    assert res.missing_from_constrained == ["2000999"]
+    assert any("must switch to the" in n for n in res.notes)
+
+
+def test_completeness_probe_does_not_confuse_identifier_FORMATS_with_absences():
+    """SBDB prints the same object as '(2005 VL1)' and '2005 VL1'. A formatting
+    difference must never be reported as a missing object."""
+    constrained = pd.DataFrame([{"full_name": "(2005 VL1)", "A1": 1e-10}])
+    everything = _payload(["pdes", "A1"], [["2005 VL1", "1e-10"]], count=1)
+    res = census.completeness_probe(
+        "a", constrained, transport=_fake_transport({"": everything}), tries=1)
+    assert res.verdict == census.CONSTRAINT_COMPLETE
+
+
+def test_completeness_probe_matches_on_ANY_identifier_not_just_the_primary():
+    """REGRESSION. The two pulls need not lead with the same identifier column:
+    the constrained one may carry only `pdes` while the unconstrained one leads
+    with `spkid`. Comparing raw key sets would then report a perfectly matched
+    object as BOTH missing and extra, manufacturing a false
+    CONSTRAINT_INCOMPLETE out of a schema difference."""
+    constrained = pd.DataFrame([{"pdes": "433", "full_name": "433 Eros",
+                                 "A1": 1e-10}])
+    everything = _payload(
+        ["spkid", "full_name", "pdes", "A1"],
+        [["2000433", "433 Eros", "433", "1e-10"]], count=1)
+    res = census.completeness_probe(
+        "a", constrained, transport=_fake_transport({"": everything}), tries=1)
+    assert res.missing_from_constrained == []
+    assert res.extra_in_constrained == []
+    assert res.verdict == census.CONSTRAINT_COMPLETE
+
+
+def test_completeness_probe_reports_PROBE_FAILED_rather_than_agreement():
+    """An unreachable probe is UNTESTED. It must never be reported as 'the sets
+    agree' just because no disagreement was observed."""
+    res = census.completeness_probe(
+        "a", pd.DataFrame([{"pdes": "433", "A1": 1e-10}]),
+        transport=_fake_transport({}, OSError("blocked")), tries=1,
+        class_chunks=("APO", "AMO"))
+    assert res.verdict == census.PROBE_FAILED
+    assert any("UNTESTED" in n for n in res.notes)
+
+
+def test_completeness_probe_flags_a_truncated_pull():
+    """A server count that disagrees with the parsed row count means the pull
+    may be truncated -- and a 'complete' verdict would then be unsafe."""
+    constrained = pd.DataFrame([{"pdes": "433", "A1": 1e-10}])
+    everything = _payload(["pdes", "A1"], [["433", "1e-10"]], count=1400000)
+    res = census.completeness_probe(
+        "a", constrained, transport=_fake_transport({"": everything}), tries=1)
+    assert any("truncated" in n for n in res.notes)
+    assert res.server_count == 1400000
+
+
+def test_completeness_probe_falls_back_to_class_chunks():
+    calls: list[str] = []
+
+    def _t(url: str, timeout: float = 0.0) -> bytes:
+        calls.append(url)
+        if "sb-class" not in url:
+            raise OSError("504 Gateway Timeout")
+        cls = url.split("sb-class=")[1].split("&")[0]
+        if cls == "APO":
+            return _payload(["pdes", "A1"], [["433", "1e-10"]], count=1)
+        return _payload(["pdes", "A1"], [], count=0)
+
+    res = census.completeness_probe(
+        "a", pd.DataFrame([{"pdes": "433", "A1": 1e-10}]), transport=_t, tries=1,
+        class_chunks=("APO", "AMO", "MBA"))
+    assert res.strategy == "unconstrained_by_class"
+    assert res.verdict == census.CONSTRAINT_COMPLETE
+    assert res.n_unconstrained_nonnull_A1 == 1
+
+
+# =============================================================================
+# 8. The dark-comet named-target census
+# =============================================================================
+def _detail(**model_pars) -> dict:
+    """An sbdb.api record carrying the fitted non-grav parameters."""
+    pars = [{"name": n, "value": str(v), "sigma": str(s)}
+            for n, (v, s) in model_pars.items()]
+    return {"ok": True,
+            "object": {"fullname": "(2016 NJ33)", "des": "2016 NJ33",
+                       "spkid": "3752158", "kind": "au",
+                       "orbit_class": {"code": "AMO"}},
+            "orbit": {"data_arc": "2261", "condition_code": "3",
+                      "n_obs_used": "90", "model_pars": pars,
+                      "elements": [{"name": "a", "value": "1.31"},
+                                   {"name": "e", "value": "0.21"},
+                                   {"name": "i", "value": "6.64"}]},
+            "phys_par": [{"name": "H", "value": "25.53"}]}
+
+
+def test_dark_comet_R_reproduces_the_published_numbers_for_2016_NJ33():
+    """A KNOWN dark comet, end to end, against numbers read verbatim from
+    Seligman et al. 2024 Table 2 (A1 = 9.48e-10 +/- 2.93e-10 au/d^2, sigma =
+    3.24) and JPL's own H = 25.53.
+
+    Two things are asserted at once. (1) The A1 -> beta -> AMR -> R chain lands
+    on R ~ 75 for this object. (2) It still FAILS screen 1 -- its A3 is a 5-sigma
+    non-radial acceleration, which is exactly the signature that excludes
+    radiation pressure. That is the channel's whole complement-set argument,
+    executed on a real member of the published dark-comet sample.
+    """
+    detail = _detail(A1=(9.475402e-10, 2.928e-10),
+                     A2=(-5.486101e-13, 1.909e-13),
+                     A3=(8.49e-11, 1.63e-11))
+
+    def _fetcher(desig, **kw):
+        return detail
+
+    table, summ = census.dark_comet_census(
+        [("2016 NJ33", "seligman2023_psj")], params=_params(),
+        detail_fetcher=_fetcher)
+    r = table.iloc[0]
+
+    assert bool(r["resolved"])
+    assert r["A1"] == pytest.approx(9.475402e-10)
+    assert r["sigma_A1"] == pytest.approx(2.928e-10)
+    assert r["a1_snr"] == pytest.approx(3.24, abs=0.01), (
+        "must reproduce the significance the paper itself prints")
+    assert r["R"] == pytest.approx(74.95, rel=0.01)
+    assert r["amr_implied_m2_kg"] == pytest.approx(
+        4.4137e6 * 9.475402e-10, rel=1e-3)
+
+    assert r["a3_state"] == screen.SIGNIFICANT
+    assert not r["screen_a1_only"], (
+        "a 5-sigma NON-RADIAL acceleration is the dark-comet signature and "
+        "excludes radiation pressure -- this object is the complement, not the "
+        "target")
+    assert summ["n_with_A1_and_sigma"] == 1
+    assert summ["n_a1_only"] == 0
+    assert summ["n_unresolved"] == 0
+
+
+def test_dark_comet_with_no_fitted_A1_is_reported_not_dropped():
+    """Several of the 14 may have no JPL A1 at all. That is a finding about
+    JPL's solutions, and it has to be visible."""
+    def _fetcher(desig, **kw):
+        return {"ok": True, "object": {"fullname": "(2001 ME1)", "des": "2001 ME1"},
+                "orbit": {"data_arc": "8000", "condition_code": "0",
+                          "n_obs_used": "500", "model_pars": []}}
+
+    table, summ = census.dark_comet_census(
+        [("2001 ME1", "seligman2024_pnas")], params=_params(),
+        detail_fetcher=_fetcher)
+    assert summ["n_resolved"] == 1
+    assert summ["n_with_A1_and_sigma"] == 0
+    assert summ["no_A1_fitted"] == ["2001 ME1"]
+    assert len(table) == 1, "the target stays in the census table"
+
+
+def test_unresolvable_dark_comet_designation_is_reported_not_silently_dropped():
+    """A designation that SBDB cannot resolve is a defect in our list -- exactly
+    the class of error that put two wrong papers in this repository."""
+    def _fetcher(desig, **kw):
+        return {"ok": False, "error": "specified object was not found"}
+
+    table, summ = census.dark_comet_census(
+        [("2016 RH120", "typo_in_the_2023_abstract")], params=_params(),
+        detail_fetcher=_fetcher)
+    assert summ["n_unresolved"] == 1
+    assert summ["unresolved"] == ["2016 RH120"]
+    assert len(table) == 1
+    assert not bool(table.iloc[0]["resolved"])
+    assert "not found" in str(table.iloc[0]["detail_error"])
+
+
+def test_row_from_detail_lifts_the_sigmas_that_only_sbdb_api_has():
+    row = census.row_from_detail("2016 NJ33", _detail(A1=(9.5e-10, 2.9e-10)))
+    assert row["resolved"] is True
+    assert row["sigma_A1"] == pytest.approx(2.9e-10)
+    assert row["condition_code"] == 3
+    assert row["n_obs_used"] == 90
+    assert row["H"] == pytest.approx(25.53)
+    assert row["class"] == "AMO"
+    assert row["a"] == pytest.approx(1.31)
+
+
+def test_configured_dark_comet_list_matches_the_fetched_literature():
+    """The list is CONFIG, with provenance, because two identifiers recalled
+    from memory have already cost this repository two wrong papers."""
+    import yaml as _yaml
+
+    from seti.config import load_config
+    cfg = load_config()
+    d = _yaml.safe_load((cfg.root / "config" / "derelict.yaml").read_text())
+    cp = census.CensusParams.from_config(d)
+    names = {n for n, _ in cp.dark_comets}
+
+    assert len(cp.dark_comets) == 14, "Seligman et al. 2024 report 14 dark comets"
+    # The seven of Seligman et al. 2023 Table 1, read verbatim from the fetched
+    # text in results/derelictlit/txt_seligman2023_dark_comets.txt.
+    assert {"1998 KY26", "2005 VL1", "2016 NJ33", "2010 VL65", "2010 RF12",
+            "2006 RH120", "2003 RM"} <= names
+    # ...and the seven added by the 2024 PNAS paper.
+    assert {"2001 ME1", "2005 UY6", "1998 FR11", "2012 UR158", "2013 BA74",
+            "2016 GW221", "2013 XY20"} <= names
+    assert "2016 RH120" not in names, (
+        "the 2023 ABSTRACT prints 2016 RH120; its own Table 1 prints 2006 RH120, "
+        "and the typo must not propagate into the census")
+    assert all(src in {"seligman2023_psj", "seligman2024_pnas"}
+               for _, src in cp.dark_comets), "every target carries its source"
+
+
+# =============================================================================
+# 9. The negative-A1 census as a rate with its denominator
+# =============================================================================
+def test_negative_a1_census_reports_a_rate_with_its_denominator():
+    """A count is uninterpretable: 1 in 22 and 1 in 272 are different
+    measurements of the systematic floor."""
+    ast = pd.DataFrame([
+        _row(full_name="4179 Toutatis (1989 AC)", diameter=5.4,
+             A1=-3.148561e-13, sigma_A1=9.279e-14),
+        _row(full_name="(ordinary)", A1=2e-8, sigma_A1=2e-9),
+    ])
+    com = pd.DataFrame([
+        _row(full_name="1P/Halley", kind="cn", A1=-4e-9, sigma_A1=5e-10),
+        _row(full_name="2P/Encke", kind="cn", A1=3e-9, sigma_A1=5e-10),
+        _row(full_name="9P/Tempel", kind="cn", A1=-1e-9, sigma_A1=1e-9),  # 1 sigma
+    ])
+    p = _params()
+    ast_s = run_screens(ast, p).table
+    com_s = run_screens(com, p).table
+
+    table, summ = census.negative_a1_census(
+        {"asteroid": ast_s, "comet": com_s}, p)
+
+    assert set(table["population"]) == {"asteroid", "comet"}
+    a = summ["populations"]["asteroid"]
+    c = summ["populations"]["comet"]
+    assert a["n_negative"] == 1 and a["n_a1_fitted"] == 2
+    assert a["rate"] == pytest.approx(0.5)
+    assert c["n_negative"] == 1 and c["n_a1_fitted"] == 3
+    assert c["rate"] == pytest.approx(1 / 3)
+    # Toutatis is the measured floor and it must come out at |R| ~ 5.
+    tou = table[table["full_name"].str.contains("Toutatis")].iloc[0]
+    assert tou["abs_R"] == pytest.approx(5.0, rel=0.02)
+    assert summ["floor_abs_R_max"] >= 5.0
+    assert summ["flag_threshold_above_floor"] is True or p.r_flag > 5.0
+
+
+def test_negative_a1_census_records_an_empty_population_as_such():
+    summ = census.negative_a1_census({"comet": pd.DataFrame()}, _params())[1]
+    assert summ["populations"]["comet"]["n_negative"] == 0
+    assert summ["populations"]["comet"]["rate"] is None
+
+
+# =============================================================================
+# 10. The independent, catalogue-wide albedo screen
+# =============================================================================
+def test_high_albedo_census_is_independent_of_A1_and_filters_client_side():
+    """Screen 4 asks a question that has nothing to do with whether an orbit fit
+    included a non-gravitational term -- so it must not be restricted to the A1
+    sample, and it must not trust the server's comparison operator either."""
+    payload = _payload(
+        ["spkid", "full_name", "pdes", "albedo", "condition_code", "data_arc",
+         "n_obs_used", "H"],
+        [["1", "(bright)", "2020 AA", "0.85", "0", "3000", "500", "20.0"],
+         ["2", "(brighter)", "2020 BB", "0.95", "7", "12", "18", "27.0"],
+         # The server returned this despite the constraint: filter it out here.
+         ["3", "(ordinary)", "2020 CC", "0.20", "0", "3000", "500", "18.0"]])
+    res = census.high_albedo_census(
+        params=_params(), transport=_fake_transport({"": payload}), tries=1,
+        crosscheck=False)
+
+    assert res.status == acquire.STATUS_OK
+    assert res.n_rows_returned == 3
+    assert res.n_above_cut == 2, "the 0.20 row must be dropped client-side"
+    assert list(res.table["albedo"]) == [0.95, 0.85]
+    # Orbit quality travels with every row: short-arc albedo fits are the
+    # expected dominant contaminant and must be visible, not assumed away.
+    assert {"condition_code", "data_arc", "n_obs_used"} <= set(res.table.columns)
+    assert res.albedo_sigma_available is False
+    assert any("UNTESTED" in n for n in res.notes)
+
+
+def test_high_albedo_census_requires_a_significant_excess_when_sigma_exists():
+    payload = _payload(
+        ["full_name", "pdes", "albedo", "albedo_sigma"],
+        [["(marginal)", "2020 AA", "0.72", "0.20"],     # 0.1 sigma above the cut
+         ["(solid)", "2020 BB", "0.90", "0.02"]])       # 10 sigma above
+    res = census.high_albedo_census(
+        params=_params(), transport=_fake_transport({"": payload}), tries=1,
+        crosscheck=False)
+    assert res.albedo_sigma_available is True
+    assert res.n_above_cut == 2 and res.n_significant == 1
+    sig = res.table.set_index("pdes")["albedo_excess_significant"]
+    assert bool(sig["2020 BB"]) and not bool(sig["2020 AA"])
+
+
+def test_high_albedo_census_degrades_honestly_when_every_strategy_fails():
+    res = census.high_albedo_census(
+        params=_params(), transport=_fake_transport({}, OSError("blocked")),
+        tries=1, crosscheck=False)
+    assert res.status == acquire.STATUS_QUERY_FAILED
+    assert res.n_above_cut == 0
+    assert any("UNTESTED" in n for n in res.notes)
+
+
+def test_high_albedo_zero_rows_is_a_measurement_not_a_failure():
+    """REGRESSION. If every strategy answers with zero rows, the screen must NOT
+    be relabelled QUERY_FAILED -- that is the exact conflation this channel
+    exists to avoid."""
+    res = census.high_albedo_census(
+        params=_params(),
+        transport=_fake_transport({"": _payload(["full_name", "albedo"], [])}),
+        tries=1, crosscheck=False)
+    assert res.status == acquire.STATUS_ZERO_ROWS
+    assert not any("failed" in n for n in res.notes)
+    assert any("measurement, not a failure" in n for n in res.notes)
+
+
+def test_high_albedo_query_that_works_but_finds_nothing_bright_stays_OK():
+    """The query succeeded; the sky is what is empty. `n_above_cut` carries the
+    screen result, and the query status must not be dragged down with it."""
+    payload = _payload(["full_name", "pdes", "albedo"],
+                       [["(dull)", "2020 CC", "0.20"]])
+    res = census.high_albedo_census(
+        params=_params(), transport=_fake_transport({"": payload}), tries=1,
+        crosscheck=False)
+    assert res.status == acquire.STATUS_OK
+    assert res.n_rows_returned == 1 and res.n_above_cut == 0
+    assert any("the sky is what is empty" in n for n in res.notes)
+
+
+def test_irsa_crosscheck_confirms_a_second_independent_albedo():
+    """A single-source albedo above 0.7 is a fit artefact until something else
+    agrees. The table and column names are DISCOVERED, because a renamed table
+    looks exactly like an unreachable archive."""
+    def _searcher(query: str) -> pd.DataFrame:
+        if "TAP_SCHEMA.tables" in query:
+            return pd.DataFrame({"table_name": ["neowise_diam_alb"]})
+        if "TAP_SCHEMA.columns" in query:
+            return pd.DataFrame({"column_name": ["pdes", "albedo", "albedo_err"]})
+        return pd.DataFrame({"pdes": ["2020 AA"], "albedo": [0.88],
+                             "albedo_err": [0.03]})
+
+    payload = _payload(["full_name", "pdes", "albedo"],
+                       [["(a)", "2020 AA", "0.85"], ["(b)", "2020 BB", "0.92"]])
+    res = census.high_albedo_census(
+        params=_params(), transport=_fake_transport({"": payload}), tries=1,
+        searcher=_searcher)
+
+    assert res.crosscheck["status"] == census.XCHECK_OK
+    assert res.crosscheck["table"] == "neowise_diam_alb"
+    t = res.table.set_index("pdes")
+    assert t.loc["2020 AA", "neowise_albedo"] == pytest.approx(0.88)
+    assert bool(t.loc["2020 AA", "albedo_confirmed_two_sources"])
+    assert not bool(t.loc["2020 BB", "albedo_confirmed_two_sources"]), (
+        "no independent measurement means UNCONFIRMED, not confirmed")
+    assert res.crosscheck["n_confirmed_above_cut"] == 1
+
+
+def test_irsa_crosscheck_matches_across_designation_renderings():
+    """IRSA renders '2005 VL1' as '2005VL1'. An unmatched row is
+    indistinguishable from a body with no independent albedo, so a whitespace
+    convention must not be able to turn a real confirmation into a silent
+    'nothing agreed'."""
+    def _searcher(query: str) -> pd.DataFrame:
+        if "TAP_SCHEMA.tables" in query:
+            return pd.DataFrame({"table_name": ["neowise_diam_alb"]})
+        if "TAP_SCHEMA.columns" in query:
+            return pd.DataFrame({"column_name": ["designation", "pv"]})
+        return pd.DataFrame({"designation": ["2005VL1"], "pv": [0.91]})
+
+    payload = _payload(["full_name", "pdes", "albedo"],
+                       [["(2005 VL1)", "2005 VL1", "0.85"]])
+    res = census.high_albedo_census(
+        params=_params(), transport=_fake_transport({"": payload}), tries=1,
+        searcher=_searcher)
+    assert res.crosscheck["status"] == census.XCHECK_OK
+    assert res.table.iloc[0]["neowise_albedo"] == pytest.approx(0.91)
+    assert bool(res.table.iloc[0]["albedo_confirmed_two_sources"])
+
+
+def test_irsa_crosscheck_unreachable_is_untested_never_confirmed():
+    def _searcher(query: str) -> pd.DataFrame:
+        raise OSError("CONNECT tunnel failed, response 403")
+
+    payload = _payload(["full_name", "pdes", "albedo"], [["(a)", "2020 AA", "0.85"]])
+    res = census.high_albedo_census(
+        params=_params(), transport=_fake_transport({"": payload}), tries=1,
+        searcher=_searcher)
+    assert res.crosscheck["status"] == census.XCHECK_UNREACHED
+    assert not bool(res.table.iloc[0]["albedo_confirmed_two_sources"])
+    assert res.table.iloc[0]["albedo_crosscheck"] == census.XCHECK_UNREACHED
+
+
+def test_full_run_wires_every_census_stage_together(tmp_path):
+    """End to end through derelict_run with a synthetic SBDB: the completeness
+    probe, the catalogue-wide albedo screen, the negative-A1 rate and the query
+    log must all land on disk from one invocation."""
+    from seti.config import load_config
+
+    constrained = [["3752158", "(2016 NJ33)", "2016 NJ33", "au", "AMO",
+                    "9.475402e-10", "-5.486101e-13", "8.49e-11"]]
+    detail = json.dumps({
+        "object": {"fullname": "(2016 NJ33)", "des": "2016 NJ33",
+                   "spkid": "3752158", "kind": "au",
+                   "orbit_class": {"code": "AMO"}},
+        "orbit": {"data_arc": "2261", "condition_code": "3", "n_obs_used": "90",
+                  "model_pars": [
+                      {"name": "A1", "value": "9.475402e-10", "sigma": "2.928e-10"},
+                      {"name": "A2", "value": "-5.486101e-13", "sigma": "1.909e-13"},
+                      {"name": "A3", "value": "8.49e-11", "sigma": "1.63e-11"}]},
+        "phys_par": [{"name": "H", "value": "25.53"}]}).encode()
+
+    def _t(url: str, timeout: float = 0.0) -> bytes:
+        if "sbdb.api" in url:
+            return detail
+        if "albedo" in url:
+            return _payload(["spkid", "full_name", "pdes", "albedo",
+                             "condition_code", "data_arc", "n_obs_used"],
+                            [["9", "(shiny)", "2020 AA", "0.88", "0", "3000", "500"]])
+        cols = ["spkid", "full_name", "pdes", "kind", "class", "A1", "A2", "A3"]
+        if "sb-cdata" in url:
+            return _payload(cols, constrained, count=1)
+        return _payload(cols, constrained
+                        + [["2000001", "1 Ceres", "1", "au", "MBA", None, None, None]],
+                        count=2)
+
+    cfg = load_config()
+    cfg.root = tmp_path
+    summary = derelict_run(cfg, transport=_t, tries=1, skip_control=True,
+                           searcher=lambda q: (_ for _ in ()).throw(OSError("no irsa")))
+
+    out = tmp_path / "results" / "derelict"
+    for name in ("completeness.json", "queries.json", "high_albedo.csv",
+                 "negative_a1.csv", "screened.csv", "summary.json"):
+        assert (out / name).exists(), name
+
+    # The constraint returned every object that has an A1: complete.
+    comp = json.loads((out / "completeness.json").read_text())
+    assert comp["verdict"] == census.CONSTRAINT_COMPLETE
+    assert comp["asteroid"]["n_unconstrained_nonnull_A1"] == 1
+    assert comp["asteroid"]["queries"], "completeness.json is self-contained"
+
+    # Screen 4 ran catalogue-wide and found the bright object, unconfirmed.
+    assert summary["funnel"]["screen4_albedo_catalogue_wide"] == 1
+    assert summary["funnel"]["screen4_albedo_confirmed_two_sources"] == 0
+
+    # Screen 3 is reported with its denominator even when the count is zero.
+    assert summary["funnel"]["screen3_denominator_asteroid"] == 1
+    assert summary["negative_a1_census"]["populations"]["asteroid"]["rate"] == 0.0
+
+    assert summary["query_status_counts"], "the query log reached the summary"
+    assert acquire.STATUS_QUERY_FAILED not in summary["query_status_counts"]
+
+
+def test_a_standalone_stage_never_clobbers_the_main_summary(tmp_path):
+    """A partial run must not be able to replace a full one and make the
+    channel look like it regressed."""
+    from seti.config import load_config
+
+    cfg = load_config()
+    cfg.root = tmp_path
+    out = tmp_path / "results" / "derelict"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "summary.json").write_text('{"verdict": "A_PREVIOUS_FULL_RUN"}')
+
+    summary = derelict_run(cfg, stage="dark_comets", tries=1,
+                           transport=_fake_transport({}, OSError("blocked")))
+    assert summary["verdict"] == "DARK_COMET_CENSUS_ONLY"
+    assert (out / "summary_dark_comets.json").exists()
+    assert json.loads((out / "summary.json").read_text())["verdict"] == \
+        "A_PREVIOUS_FULL_RUN"
 
 
 def test_screen_params_from_config_reads_the_yaml():

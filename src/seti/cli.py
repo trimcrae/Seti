@@ -767,8 +767,11 @@ def main(argv=None):
                             "Gaia GSP-Phot metallicities (impossible clusters; "
                             "docs/herdsman.md section 5)")
     p.add_argument("--stage", choices=("catalog", "chem", "field", "score",
-                                       "all"), default="all",
-                   help="stage to run (each checkpoints; 'all' resumes)")
+                                       "spectro", "all"), default="all",
+                   help="stage to run (each checkpoints; 'all' resumes; "
+                        "'spectro' is the GALAH/APOGEE crossmatch and needs "
+                        "the members.parquet checkpoint from 'catalog', not "
+                        "the GSP-Phot chem/field stages)")
     p.set_defaults(func=_cmd_herdsman_b)
 
     p = sub.add_parser("herdsman-reduce",

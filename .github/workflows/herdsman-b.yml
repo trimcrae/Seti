@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       stage:
-        description: "Stage to run (catalog|chem|field|score|all)"
+        description: "Stage to run (catalog|chem|field|score|spectro|all); spectro = GALAH/APOGEE crossmatch, needs the members.parquet checkpoint (seed via resume_run_id or run catalog first)"
         required: false
         default: "all"
       resume_run_id:
@@ -58,10 +58,14 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f -- results/herdsman_b/cluster_scores.csv \
-                        results/herdsman_b/candidates.json \
-                        results/herdsman_b/summary.json \
-                        results/herdsman_b/REPORT.md 2>/dev/null || true
+          for f in results/herdsman_b/cluster_scores.csv \
+                   results/herdsman_b/candidates.json \
+                   results/herdsman_b/summary.json \
+                   results/herdsman_b/spectro_scores.csv \
+                   results/herdsman_b/spectro_candidates.json \
+                   results/herdsman_b/REPORT.md; do
+            [ -f "$f" ] && git add -f -- "$f" || true
+          done
           if git diff --cached --quiet; then
             echo "No result changes to commit."
           else

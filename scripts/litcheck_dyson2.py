@@ -73,7 +73,7 @@ def harvest() -> dict[str, dict]:
     for f in sorted(glob.glob(str(BASE / "*.atom"))):
         d = open(f, encoding="utf-8", errors="replace").read()
         for e in re.findall(r"<entry>(.*?)</entry>", d, re.S):
-            def g(tag):
+            def g(tag, e=e):
                 m = re.search(rf"<{tag}>(.*?)</{tag}>", e, re.S)
                 return clean(m.group(1)) if m else ""
             idu = g("id")

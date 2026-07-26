@@ -1,0 +1,148 @@
+# SHROUD channel — every selection / rejection threshold in one place.
+#
+# Signature S33 (docs/necrosignatures.md): sources present in POSS-I (1949-1958)
+# and absent in the modern optical, but WITH an infrared counterpart =
+# "enshrouded, not destroyed".  The control sample is the same selection with
+# NO counterpart at any wavelength.
+#
+# Scoping (docs/shroud.md): this channel uses the Solano+2022 catalogue
+# BY-PRODUCT (the optical-absent / IR-present crossmatch) only.  It does not
+# use, replicate, or depend on the contested VASCO transient / Earth-shadow /
+# nuclear-test analyses.
+
+acquire:
+  # SVO "vocats" VO archive published with Solano, Villarroel & Rodrigo 2022,
+  # MNRAS 515, 1380.  Endpoints are probed in order; the first that returns a
+  # parseable table wins and its URL is recorded in the provenance block.
+  # NOTE: none of these can be reached from the sandbox (egress 403) - they are
+  # probed on the GitHub Actions runner.
+  svo_vocats_roots:
+    - "http://svo2.cab.inta-csic.es/vocats/v2/vasco"
+    - "http://svo2.cab.inta-csic.es/vocats/vasco"
+    - "https://svo2.cab.inta-csic.es/vocats/v2/vasco"
+    - "http://svocats.cab.inta-csic.es/vasco"
+  svo_index_urls:
+    - "http://svo2.cab.inta-csic.es/vocats/"
+    - "http://svo2.cab.inta-csic.es/vocats/v2/"
+    - "https://svo.cab.inta-csic.es/"
+  # VizieR fallback: Villarroel+2020 (AJ 159, 8) surviving candidates.
+  # Solano+2022 (J/MNRAS/515/1380) is NOT in VizieR - verified 2026-07-26 on the
+  # runner, the server returns "Table or Catalog not found".
+  vizier_votable: "https://vizier.cds.unistra.fr/viz-bin/votable?-source={cat}&-out.max={maxrows}"
+  vizier_vasco2020_cat: "J/AJ/159/8"
+  # CDS X-Match: the only sane way to crossmatch 10^5 uploaded positions.
+  xmatch_url: "http://cdsxmatch.u-strasbg.fr/xmatch/api/v1/sync"
+  xmatch_chunk_rows: 25000
+  # VizieR table identifiers used through X-Match / TAP.
+  catalogs:
+    allwise: "vizier:II/328/allwise"
+    catwise: "vizier:II/365/catwise"
+    twomass: "vizier:II/246/out"
+    gaia_dr3: "vizier:I/355/gaiadr3"
+    usnob1: "vizier:I/284/out"
+    ps1_dr1: "vizier:II/349/ps1"
+  http_timeout_s: 300
+  retries: 4
+  retry_backoff_s: 8.0
+
+epochs:
+  # POSS-I plates: 1949-1958.  Mid-survey default when a plate date is absent.
+  poss1_default: 1953.0
+  poss1_min: 1949.0
+  poss1_max: 1958.0
+  # Survey reference epochs used for proper-motion propagation.
+  gaia_dr3: 2016.0
+  ps1_dr1: 2012.0
+  allwise: 2010.5
+  catwise: 2015.4
+  twomass: 1999.3
+
+crossmatch:
+  # Solano+2022 used 5".  Kept as the nominal radius so the sample is the
+  # published one, but the chance-match rate at this radius is a first-class
+  # output, not an afterthought (see docs/shroud.md).
+  radius_arcsec: 5.0
+  # A tighter radius used for the "clean" subsample.
+  tight_radius_arcsec: 2.0
+  # Local IR source density above which a 5" match is chance-dominated.
+  # pi*(5/3600)^2 deg^2 = 6.06e-6 deg^2; density 1.65e5/deg^2 -> P_chance = 1.
+  chance_match_warn_prob: 0.05
+  chance_match_reject_prob: 0.30
+
+proper_motion:
+  # Largest proper motion searched for when testing "did it just move?".
+  # 3000 mas/yr covers everything but Barnard's Star (10.36"/yr).
+  mu_max_mas_yr: 3000.0
+  # A modern source that propagates back to within this of the POSS-I position
+  # is the same star -> HIGH_PM_STAR, rejected.
+  match_radius_arcsec: 3.0
+  # Below this the star had not moved far enough for PM to explain anything.
+  min_displacement_arcsec: 2.0
+
+plate:
+  # POSS-I E (103a-E, red) plate limit.  Sources this close to the limit are
+  # emulsion-noise-dominated (Hambly & Blair 2024) and are flagged.
+  poss1_e_limit_mag: 20.0
+  poss1_o_limit_mag: 21.0
+  limit_proximity_mag: 0.7
+  # Below this magnitude a POSS-I "detection" is brighter than the plate can
+  # linearly record; saturation makes the photometry unusable for a budget.
+  saturation_mag: 12.0
+
+sed:
+  # Blackbody temperature grids for the two competing models.
+  teff_star_grid_k: [2500, 2800, 3200, 3600, 4000, 4500, 5000, 5800, 6500, 7500, 9000, 11000, 15000, 20000]
+  tdust_grid_k: [80, 120, 180, 250, 350, 500, 700, 1000, 1400, 1800]
+  av_grid_mag: [0.0, 0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 8.0, 12.0, 20.0, 30.0]
+  # Systematic floor folded into every sigma (mag).  Photographic photometry is
+  # good to ~0.3 mag at best; modern catalogue bands get 0.05.
+  sys_floor_mag_photographic: 0.30
+  sys_floor_mag_modern: 0.05
+  # Fitted dust hotter than this is a companion photosphere, not grains
+  # (repository contamination ledger).
+  tdust_max_physical_k: 1800.0
+  # Minimum number of detected bands for a meaningful two-component fit.
+  min_bands_for_fit: 4
+  min_ir_bands: 2
+
+energy_budget:
+  # eta = F_IR(now) / [F_bol(POSS-I) - F_bol(modern optical)].
+  # Distance cancels: eta is a pure flux ratio.
+  eta_conserving_lo: 0.30
+  eta_conserving_hi: 3.0
+  # eta far below 1 for EVERY allowed progenitor temperature = the infrared
+  # cannot be the missing optical light.
+  eta_too_faint: 0.10
+  # Fores-Toribio & Kochanek 2026: merger remnants are 10-100x MORE luminous
+  # than their progenitors at late phases; genuine disappearance remnants are
+  # ~10x DIMMER.  Asymmetric dust cannot manufacture a factor ~100.
+  ftk_merger_ratio_min: 10.0
+  ftk_disappearance_ratio_max: 0.30
+
+classify:
+  # WISE colour diagnostics (Wright+2010 Fig. 12; Stern+2012 AGN wedge).
+  agn_w1w2_min: 0.80
+  # A bare photosphere has W1-W2 >= 0 (ledger).  Negative = blend.
+  blend_w1w2_max: -0.10
+  # Dusty AGB / evolved giants: very red and IR-bright.
+  agb_w1w2_min: 0.30
+  agb_w3w4_min: 1.20
+  agb_ks_max: 8.0
+  # YSOs concentrate at low galactic latitude with a rising mid-IR SED.
+  yso_abs_glat_max: 5.0
+  yso_w2w3_min: 1.0
+  # Asteroids concentrate near the ecliptic and are single-epoch.
+  asteroid_abs_ecl_lat_max: 20.0
+  # Extragalactic-safe latitude band for the clean subsample.
+  clean_abs_glat_min: 20.0
+  # A modern optical counterpart this much fainter than the plate magnitude
+  # means the star was simply caught bright -> variable, not vanished.
+  variable_delta_mag_min: 1.0
+
+vet:
+  # Inherited contamination ledger (docs/channel-brief.md sec. 4).
+  require_two_ir_bands: true
+  reject_w4_only: true
+  reject_negative_w1w2: true
+  max_ir_neighbours_in_psf: 1
+  wise_psf_arcsec: 6.0

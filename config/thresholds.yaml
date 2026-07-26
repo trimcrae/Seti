@@ -88,3 +88,88 @@ stats:
     t_dust_grid_k: [150, 300, 500, 800, 1200]
     tau_grid: [0.003, 0.01, 0.03, 0.1, 0.3]
     n_per_cell: 200
+
+# ---------------------------------------------------------------------------
+# OSSUARY — warm dust around stars that cannot make it (docs/ossuary.md).
+# The claim: an unmaintained megastructure grinds itself to dust (Lacki 2025,
+# arXiv:2504.21151). The natural null is strongest for metal-poor / halo-
+# kinematic / old stars, which have no planetesimal reservoir to grind.
+# ---------------------------------------------------------------------------
+ossuary:
+  sample:
+    feh_max: -1.0              # metal-poor definition [Fe/H] < -1
+    feh_max_strict: -1.5       # "very metal-poor" tier
+    parallax_over_error_min: 5.0
+    ruwe_max: 1.4
+    g_max: 18.0                # fainter than this, WISE is confusion-limited
+    bp_rp_min: 0.35            # bluer than this the empirical photosphere locus is unanchored
+    bp_rp_max: 3.0
+    # Dwarf/giant split. Metal-poor giants have winds and dusty envelopes and are
+    # analysed separately; they never enter the clean-candidate table.
+    mg_dwarf_min: 4.0          # absolute G fainter than this => dwarf
+    mg_giant_max: 3.0          # absolute G brighter than this => giant
+    logg_dwarf_min: 3.8
+    logg_giant_max: 3.5
+
+  kinematics:
+    # Solar peculiar motion w.r.t. the LSR (Schoenrich, Binney & Dehnen 2010).
+    solar_u_kms: 11.1
+    solar_v_kms: 12.24
+    solar_w_kms: 7.25
+    v_lsr_kms: 238.0           # circular speed at R0 (GRAVITY/Gaia-consistent)
+    halo_v_tot_kms: 200.0      # |v - v_LSR| above this => halo kinematics
+    thick_disk_v_tot_kms: 70.0
+    thin_disk_v_tot_kms: 50.0
+    # A tangential velocity is a strict LOWER BOUND on the space velocity, so a
+    # large v_tan is *sufficient* for halo membership even with no radial velocity.
+    halo_v_tan_kms: 200.0
+    max_v_tot_err_kms: 40.0    # reject stars whose velocity error makes the class meaningless
+
+  excess:
+    # Empirical photosphere locus, fitted from the sample itself in colour bins.
+    locus_color_bin: 0.10      # bp_rp bin width for the running robust locus
+    locus_min_per_bin: 25      # below this a bin is unusable -> NaN prediction
+    locus_scatter_floor_mag: 0.02
+    sys_floor_mag: 0.03        # zero-point + model systematic folded into sigma
+    chi_min: 4.0               # per-band excess significance to flag
+    # LEDGER RULE: the excess must appear in a star-dominated band. W4-only is cirrus.
+    require_bands: ["W1", "W2", "W3"]
+    color_excess_sigma_min: 3.0
+    w1_w2_min: -0.05           # LEDGER RULE: negative W1-W2 is a blend, not a photosphere
+    w1_w2_agn_max: 0.8         # redder than this is the WISE AGN/QSO wedge
+    t_dust_min_k: 150.0        # "warm" dust floor for the headline claim
+    t_dust_max_k: 1800.0       # hotter than grains survive => unresolved companion
+    nir_excess_sigma_max: 3.0  # a J/H/Ks excess means a companion photosphere, not dust
+    mc_draws: 400              # Monte-Carlo draws for (T_dust, tau) uncertainties
+
+  contamination:
+    wise_quality:
+      allowed_ph_qual: ["A", "B"]
+      forbidden_cc: "DPHO"     # diffraction spike / persistence / halo / optical ghost
+      w1_bright_limit_mag: 8.0 # brighter saturates W1
+      max_number_of_mates: 0   # AllWISE xmatch mates: >0 means an ambiguous match
+      max_number_of_neighbours: 1
+    astrometry:
+      # The decisive extragalactic test: the WISE centroid must sit at the Gaia
+      # position PROPAGATED to the WISE epoch. Halo stars have large proper
+      # motions, so this has real leverage -- and a background galaxy fails it.
+      gaia_ref_epoch: 2016.0
+      wise_mean_epoch: 2010.5
+      max_registration_arcsec: 1.0
+      pm_consistency_sigma_max: 3.0
+      min_pm_for_leverage_mas_yr: 30.0   # below this the epoch test has no power
+    beam:
+      wise_beam_arcsec: 6.5
+      max_neighbour_flux_frac: 0.10      # a neighbour supplying >10% of W1 ruins it
+    extragalactic:
+      # AllWISE cumulative source counts, anchored on 747e6 sources over 41253 deg^2
+      # at the W1 5-sigma depth 16.9: log10 N(<W1)[deg^-2] = norm + slope*(W1 - 16.9).
+      counts_log10_norm_per_deg2: 4.26
+      counts_slope_per_mag: 0.50
+      counts_ref_w1_mag: 16.9
+      max_chance_superposition_p: 1.0e-3 # per-candidate a-priori interloper probability
+    cirrus:
+      max_ebv_sfd: 0.10        # SFD E(B-V) above this the 12/22 um background is cirrus
+      min_gal_lat_deg: 15.0    # |b| below this the cirrus + stellar confusion is fatal
+      # Population-level test: the flag rate must not correlate with E(B-V).
+      cirrus_corr_p_min: 0.01

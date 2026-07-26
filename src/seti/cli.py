@@ -307,6 +307,15 @@ def _cmd_midden(args, cfg):
                batch_size=args.batch_size)
 
 
+def _cmd_midden_deep(args, cfg):
+    from .midden.deepdive import deepdive_run
+
+    deepdive_run(cfg, stage=args.stage, epochs_per_star=args.epochs_per_star,
+                 target_epochs=args.target_epochs,
+                 radius_arcsec=args.radius_arcsec,
+                 batch_size=args.batch_size)
+
+
 def _cmd_tailings(args, cfg):
     from .tailings.run import tailings_run
 
@@ -1109,6 +1118,25 @@ def main(argv=None):
     p.add_argument("--batch-size", type=int, default=50,
                    help="FITS per download/measure/discard batch")
     p.set_defaults(func=_cmd_midden)
+
+    p = sub.add_parser("midden-deep",
+                       help="runner: HD 217522 deep-dive — every triplet-"
+                            "covering high-resolution ESO spectrum of the "
+                            "target and a roAp comparison panel; epoch "
+                            "stability + panel-standing scoring")
+    p.add_argument("--stage",
+                   choices=("discover", "measure", "score", "all"),
+                   default="all",
+                   help="stage to run (each checkpoints; 'all' resumes)")
+    p.add_argument("--epochs-per-star", type=int, default=30,
+                   help="epoch cap per comparison star (best SNR first)")
+    p.add_argument("--target-epochs", type=int, default=80,
+                   help="epoch cap for the target itself")
+    p.add_argument("--radius-arcsec", type=float, default=20.0,
+                   help="ObsCore position-match box half-width")
+    p.add_argument("--batch-size", type=int, default=25,
+                   help="FITS per download/measure/discard batch")
+    p.set_defaults(func=_cmd_midden_deep)
 
     p = sub.add_parser("herdsman-reduce",
                        help="staged runner 3/3: aggregate all scan shards "

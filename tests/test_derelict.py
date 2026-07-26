@@ -33,7 +33,6 @@ from seti.derelict.radiation import (
     beta_from_a1,
     beta_from_amr,
     diameter_from_h,
-    nongrav_law_is_inverse_square,
     r_statistic,
 )
 from seti.derelict.run import derelict_run
@@ -179,16 +178,44 @@ def test_r_statistic_refuses_negative_a1():
     assert st.beta < 0
 
 
-def test_r_statistic_refuses_a_cometary_law():
-    st = r_statistic(1e-7, diameter_m=100.0, nongrav_law_is_inverse_square=False)
-    assert not st.valid and "cometary" in st.reason
+def test_r_statistic_refuses_only_on_real_outgassing_evidence():
+    st = r_statistic(1e-7, diameter_m=100.0, outgassing_evidence=True)
+    assert not st.valid and "outgassing" in st.reason
 
 
-def test_nongrav_law_detection():
-    assert nongrav_law_is_inverse_square(["A1", "A2"])
-    assert nongrav_law_is_inverse_square(None)
-    assert not nongrav_law_is_inverse_square(["A1", "DT"])
-    assert not nongrav_law_is_inverse_square(["A1", "aln", "nm", "nn"])
+def test_has_outgassing_model_evidence():
+    """Only DT is evidence; the Marsden shape parameters are not."""
+    assert not radiation.has_outgassing_model_evidence(["A1", "A2"])
+    assert not radiation.has_outgassing_model_evidence(None)
+    assert not radiation.has_outgassing_model_evidence(["A1", "aln", "nm", "nn"])
+    assert radiation.has_outgassing_model_evidence(["A1", "DT"])
+
+
+def test_marsden_g_is_normalised_to_one_at_1au():
+    """THE fact that makes this channel work on JPL's cometary-parameterised
+    fits: the standard Marsden g(r) equals 1 at 1 au, exactly like 1/r^2, so A1
+    is the radial acceleration at 1 au under BOTH laws."""
+    assert radiation.marsden_g(1.0) == pytest.approx(1.0, abs=1e-6)
+    # ...but the laws diverge sharply further out, which is what an astrometric
+    # refit could exploit to separate them.
+    assert radiation.marsden_g(5.0) < 1e-4 < 1.0 / 5.0**2
+
+
+def test_g_at_1au_is_one_for_both_laws():
+    assert radiation.g_at_1au(None) == pytest.approx(1.0)
+    assert radiation.g_at_1au({"A1": None, "A2": None}) == pytest.approx(1.0)
+    # The Marsden shape parameters, at their standard values, still give 1.
+    assert radiation.g_at_1au({"ALN": None, "NM": None, "NN": None,
+                               "NK": None, "R0": None}) == pytest.approx(1.0, abs=1e-6)
+
+
+def test_marsden_parameterisation_does_not_change_the_implied_beta():
+    """A Marsden-parameterised fit must yield the SAME beta as an
+    inverse-square one for the same A1 -- that is the whole point."""
+    a = r_statistic(1e-7, diameter_m=100.0, g_1au=1.0)
+    b = r_statistic(1e-7, diameter_m=100.0, g_1au=radiation.g_at_1au({"ALN": None}))
+    assert a.valid and b.valid
+    assert b.beta == pytest.approx(a.beta, rel=1e-6)
 
 
 # =============================================================================
@@ -348,15 +375,38 @@ def test_genuinely_cometary_interstellar_object_is_still_excluded():
     assert not run_screens(df, _params()).table.iloc[0]["screen_a1_only"]
 
 
-def test_cometary_nongrav_law_blocks_the_conversion():
-    df = pd.DataFrame([_row(A1=2e-8, sigma_A1=2e-9)])
-    df["model_pars"] = [["A1", "A2", "ALN", "NM"]]
+def test_marsden_parameterisation_is_recorded_but_does_NOT_reject():
+    """REGRESSION for run 30204137011, which discarded 20 of 22 objects.
+
+    JPL's DEFAULT parameterisation for any object it fits A1 to -- including
+    every dark comet -- is the Marsden g(r).  Treating its mere presence as
+    "this object outgasses" removes the entire target population by
+    construction.  g(1 au) = 1 for both laws, so the conversion is valid.
+    """
+    df = pd.DataFrame([_row(A1=2e-8, sigma_A1=2e-9, diameter=0.050,
+                            A2=0.0, sigma_A2=1e-14, A3=0.0, sigma_A3=1e-14)])
+    df["model_pars"] = [["A1", "A2", "ALN", "NM", "NN", "NK"]]
     res = run_screens(df, _params())
     r = res.table.iloc[0]
-    assert not r["nongrav_inverse_square"]
+    assert r["nongrav_law"] == "marsden_g"
+    assert r["g_1au"] == pytest.approx(1.0, abs=1e-6)
+    assert not r["outgassing_evidence"], "a parameterisation is not an observation"
+    assert r["screen_a1_only"], "it must still be screened, not discarded"
+    assert r["R_valid"]
+    assert res.funnel["law_marsden_g"] == 1
+    assert res.funnel["outgassing_evidence_excluded"] == 0
+
+
+def test_fitted_time_delay_DT_does_reject():
+    """A lagged response cannot be radiation pressure -- this one IS evidence."""
+    df = pd.DataFrame([_row(A1=2e-8, sigma_A1=2e-9)])
+    df["model_pars"] = [["A1", "A2", "ALN", "DT"]]
+    res = run_screens(df, _params())
+    r = res.table.iloc[0]
+    assert r["outgassing_evidence"]
     assert not r["screen_a1_only"]
     assert not r["R_valid"]
-    assert res.funnel["cometary_law_excluded"] == 1
+    assert res.funnel["outgassing_evidence_excluded"] == 1
 
 
 def test_albedo_screen():
@@ -416,12 +466,25 @@ def test_short_arc_survivor_is_vetted_out():
     assert vet_object(row, None, VetParams()).verdict == vet.SHORT_ARC
 
 
-def test_cometary_model_pars_in_detail_gives_outgassing():
+def test_fitted_DT_in_detail_gives_outgassing():
     detail = {"ok": True, "orbit": {"model_pars": [
-        {"name": "A1", "value": "1e-8"}, {"name": "ALN", "value": "0.1"}]}}
+        {"name": "A1", "value": "1e-8"}, {"name": "DT", "value": "12.0"}]}}
     row = pd.Series(_row(full_name="(y)", A1=1e-6, sigma_A1=1e-8, a=3.0, e=0.5, i=20.0,
                          R=1e5))
     assert vet_object(row, detail, VetParams()).verdict == vet.OUTGASSING
+
+
+def test_marsden_pars_in_detail_are_flagged_but_do_not_reject():
+    detail = {"ok": True, "orbit": {
+        "model_pars": [{"name": "A1", "value": "1e-8", "sigma": "1e-10"},
+                       {"name": "ALN", "value": "0.111"},
+                       {"name": "A2", "value": "1e-13", "sigma": "1e-12"}],
+        "covariance": {"labels": ["A1", "A2"], "data": [[1.0, 0.05], [0.05, 1.0]]}}}
+    row = pd.Series(_row(full_name="(y2)", A1=1e-6, sigma_A1=1e-8, a=3.0, e=0.5,
+                         i=20.0, R=1e5, diameter_m=200.0))
+    v = vet_object(row, detail, VetParams())
+    assert v.verdict != vet.OUTGASSING
+    assert "marsden_g_parameterisation" in v.flags
 
 
 def test_a1_a2_degeneracy_is_caught_from_the_covariance():
@@ -762,6 +825,7 @@ def test_derelict_run_offline_input_end_to_end(tmp_path):
     assert f["a1_fitted"] == 4
     assert f["screen1_a1_only"] == 2          # natural100 and film
     assert f["screen2_r_extreme"] == 1        # only film
+    assert f["outgassing_evidence_excluded"] == 0
     assert f["screen3_negative_a1"] == 1      # only sunward
     assert summary["verdict"] in {"CANDIDATES_UNEXPLAINED", "ALL_SURVIVORS_EXPLAINED"}
 

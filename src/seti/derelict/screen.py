@@ -34,7 +34,14 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from .radiation import COMETARY_MODEL_PARS, amr_from_a1, beta_from_a1, r_statistic
+from .radiation import (
+    MARSDEN_SHAPE_PARS,
+    OUTGASSING_MODEL_PARS,
+    amr_from_a1,
+    beta_from_a1,
+    g_at_1au,
+    r_statistic,
+)
 
 #: State of a fitted non-gravitational component.
 NOT_FITTED = "not_fitted"
@@ -141,22 +148,47 @@ def annotate(df: pd.DataFrame, p: ScreenParams) -> pd.DataFrame:
     out["nonradial_constrained"] = (
         out["a2_state"].ne(NOT_FITTED) & out["a3_state"].ne(NOT_FITTED))
 
-    # A cometary g(r) invalidates the A1 -> beta conversion entirely.
+    # --- which g(r) did JPL fit, and does that matter? ------------------------
+    # It is DESCRIPTIVE, not a veto.  JPL uses the Marsden cometary
+    # parameterisation as its DEFAULT for any object it fits A1 to -- including
+    # every dark comet -- and the standard Marsden parameters are normalised so
+    # that g(1 au) = 1 to within 2e-7, exactly like the inverse-square law.  So
+    # A1 is the radial acceleration at 1 au under BOTH laws and the A1 -> beta
+    # conversion is valid either way.
+    #
+    # Treating the mere presence of ALN/NM/NN/NK/R0 as "this is a comet" would
+    # discard, by construction, the entire population this channel exists to
+    # examine.  (It did: 20 of 22 objects in run 30204137011.)
     if "model_pars" in out.columns:
-        out["nongrav_inverse_square"] = out["model_pars"].apply(
-            lambda v: not ({str(x).strip().upper() for x in v} & COMETARY_MODEL_PARS)
-            if isinstance(v, (list, tuple, set)) else True)
+        out["nongrav_law"] = out["model_pars"].apply(
+            lambda v: "marsden_g"
+            if isinstance(v, (list, tuple, set))
+            and ({str(x).strip().upper() for x in v} & MARSDEN_SHAPE_PARS)
+            else "inverse_square")
+        out["g_1au"] = out["model_pars"].apply(
+            lambda v: g_at_1au({str(x).strip().upper(): None for x in v})
+            if isinstance(v, (list, tuple, set)) else 1.0)
     else:
-        out["nongrav_inverse_square"] = True
-    # A fitted DT is the cometary delay parameter; it means outgassing.
-    dt = _num(out, "DT")
-    out.loc[dt.notna() & (dt != 0), "nongrav_inverse_square"] = False
+        out["nongrav_law"] = "inverse_square"
+        out["g_1au"] = 1.0
 
-    out["beta_implied"] = np.where(out["nongrav_inverse_square"],
-                                   beta_from_a1(a1.to_numpy()), np.nan)
+    # The ACTUAL outgassing veto: a fitted, non-zero Marsden time delay DT means
+    # the fit needed a lagged response, which radiation pressure cannot produce.
+    dt = _num(out, "DT")
+    out["outgassing_evidence"] = (dt.notna() & (dt != 0)).fillna(False)
+    if "model_pars" in out.columns:
+        out["outgassing_evidence"] |= out["model_pars"].apply(
+            lambda v: bool({str(x).strip().upper() for x in v} & OUTGASSING_MODEL_PARS)
+            if isinstance(v, (list, tuple, set)) else False)
+    # A reported coma / cometary classification is outgassing evidence too.
+    out["outgassing_evidence"] |= _coma_reported(out)
+
+    a1_eff = a1 * out["g_1au"]
+    out["beta_implied"] = np.where(~out["outgassing_evidence"],
+                                   beta_from_a1(a1_eff.to_numpy()), np.nan)
     out["amr_implied_m2_kg"] = np.where(
-        out["nongrav_inverse_square"] & (a1 > 0),
-        amr_from_a1(a1.to_numpy(), q_pr=p.q_pr), np.nan)
+        (~out["outgassing_evidence"]) & (a1_eff > 0),
+        amr_from_a1(a1_eff.to_numpy(), q_pr=p.q_pr), np.nan)
     return out
 
 
@@ -191,7 +223,7 @@ def screen_a1_only(df: pd.DataFrame, p: ScreenParams,
     if p.require_no_coma:
         coma_ok = ~_coma_reported(d)
 
-    law_ok = d["nongrav_inverse_square"].astype(bool)
+    law_ok = ~d["outgassing_evidence"].astype(bool)
 
     res = pd.DataFrame(index=d.index)
     res["s1_a1_significant"] = a1_ok.fillna(False)
@@ -199,10 +231,10 @@ def screen_a1_only(df: pd.DataFrame, p: ScreenParams,
     res["s1_a3_zero"] = a3_ok.fillna(False)
     res["s1_quality"] = quality_ok.fillna(False)
     res["s1_no_coma"] = coma_ok.fillna(False)
-    res["s1_inverse_square_law"] = law_ok.fillna(False)
+    res["s1_no_outgassing_evidence"] = law_ok.fillna(False)
     res["screen_a1_only"] = (res["s1_a1_significant"] & res["s1_a2_zero"]
                              & res["s1_a3_zero"] & res["s1_quality"]
-                             & res["s1_no_coma"] & res["s1_inverse_square_law"])
+                             & res["s1_no_coma"] & res["s1_no_outgassing_evidence"])
     res["screen_a1_only_strict"] = res["screen_a1_only"] & d["nonradial_constrained"]
     return res
 
@@ -249,7 +281,8 @@ def add_r_statistic(df: pd.DataFrame, p: ScreenParams) -> pd.DataFrame:
                     if "albedo" in row.index and pd.notna(row.get("albedo")) else None),
             albedo_assumed=p.albedo_assumed, albedo_lo=p.albedo_lo, albedo_hi=p.albedo_hi,
             rho_kg_m3=p.rho_natural_kg_m3, q_pr=p.q_pr,
-            nongrav_law_is_inverse_square=bool(row.get("nongrav_inverse_square", True)),
+            g_1au=float(row.get("g_1au", 1.0) or 1.0),
+            outgassing_evidence=bool(row.get("outgassing_evidence", False)),
         )
         recs.append(stat.to_dict())
     rdf = pd.DataFrame(recs, index=df.index)
@@ -345,6 +378,8 @@ def run_screens(df: pd.DataFrame, p: ScreenParams) -> ScreenResult:
         "screen2_r_extreme": int((out["screen_a1_only"] & out["screen_r_extreme"]).sum()),
         "screen3_negative_a1": int(out["screen_negative_a1"].sum()),
         "screen4_albedo": int(out["screen_albedo"].sum()),
-        "cometary_law_excluded": int((~out["nongrav_inverse_square"]).sum()),
+        "outgassing_evidence_excluded": int(out["outgassing_evidence"].sum()),
+        "law_marsden_g": int((out["nongrav_law"] == "marsden_g").sum()),
+        "law_inverse_square": int((out["nongrav_law"] == "inverse_square").sum()),
     }
     return ScreenResult(out, funnel, notes)

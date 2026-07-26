@@ -58,12 +58,18 @@ That asymmetry is screen 3.
 
 Caveats that travel with every number
 -------------------------------------
-* ``AMR`` assumes the fitted ``A1`` really is radiation pressure with a
-  :math:`1/r^2` law.  If JPL fitted a *cometary* g(r) (the Marsden
-  :math:`\\alpha (r/r_0)^{-m}[1+(r/r_0)^n]^{-k}` form, signalled by the presence
-  of ALN/NM/NN/NK/R0 model parameters or a non-zero DT), the coefficient means
-  something else and the conversion is invalid.  ``nongrav_law_is_inverse_square``
-  exists to gate on that and the run refuses to convert when it is False.
+* ``AMR`` assumes the fitted ``A1`` really is radiation pressure.  It does NOT
+  assume an inverse-square law was fitted: JPL's default for any object it fits
+  ``A1`` to -- including every dark comet -- is the Marsden
+  :math:`\\alpha (r/r_0)^{-m}[1+(r/r_0)^n]^{-k}` form, and **its standard
+  parameters are normalised so that** :math:`g(1\\,\\mathrm{au}) = 1` to within
+  2e-7, exactly like :math:`1/r^2`.  So ``A1`` is the radial acceleration at
+  1 au either way and the conversion is valid either way; :func:`g_at_1au`
+  applies the (tiny) normalisation rather than assuming it.  What the two laws
+  genuinely disagree about is the radial *dependence*, which only an
+  astrometric refit can separate -- that is the decisive follow-up, not a
+  selection cut.  The real outgassing veto is a fitted time-delay ``DT``, a
+  reported coma, or a cometary classification.
 * ``Q_pr = 1`` (pure absorption) is the conservative choice: a *reflective*
   sail has ``Q_pr = 2`` and needs only **half** the area-to-mass for the same
   beta.  Reporting the Q_pr = 1 value makes the anomaly claim harder.
@@ -108,10 +114,86 @@ AU_DAY2_IN_M_S2 = AU_M / DAY_S**2
 #: Standard IAU/Harris H-to-diameter relation constant, km.
 H_DIAMETER_CONST_KM = 1329.0
 
-#: Model-parameter names that signal JPL fitted a *cometary* g(r) rather than
-#: the plain inverse-square law.  Presence of any of these (or a fitted DT)
-#: invalidates the A1 -> beta conversion.
-COMETARY_MODEL_PARS = frozenset({"ALN", "NM", "NN", "NK", "R0", "DT"})
+#: Model-parameter names that describe the SHAPE of the Marsden g(r).  Their
+#: presence says JPL used the cometary parameterisation -- it does NOT say the
+#: object outgasses, and it does NOT invalidate the A1 -> beta conversion.  See
+#: :func:`marsden_g`: the standard parameters are normalised so g(1 au) = 1 to
+#: within 2e-7, exactly like the inverse-square law, so ``A1`` is the radial
+#: acceleration at 1 au under BOTH laws.
+MARSDEN_SHAPE_PARS = frozenset({"ALN", "NM", "NN", "NK", "R0"})
+
+#: The one non-grav parameter that IS evidence of outgassing: the Marsden time
+#: delay.  A fitted, non-zero DT means the fit needed a lagged response, which
+#: radiation pressure cannot produce.
+OUTGASSING_MODEL_PARS = frozenset({"DT"})
+
+#: Retained for backwards compatibility with callers that imported it.
+COMETARY_MODEL_PARS = MARSDEN_SHAPE_PARS | OUTGASSING_MODEL_PARS
+
+# --- Marsden g(r) -------------------------------------------------------------
+#: Standard Marsden, Sekanina & Yeomans (1973) g(r) parameters -- JPL's default
+#: for any object it fits A1/A2/A3 to, INCLUDING the dark comets.
+MARSDEN_ALPHA = 0.1112620426
+MARSDEN_R0_AU = 2.808
+MARSDEN_M = 2.15
+MARSDEN_N = 5.093
+MARSDEN_K = 4.6142
+
+
+def marsden_g(r_au: float | np.ndarray,
+              alpha: float = MARSDEN_ALPHA, r0_au: float = MARSDEN_R0_AU,
+              m: float = MARSDEN_M, n: float = MARSDEN_N,
+              k: float = MARSDEN_K) -> float | np.ndarray:
+    """The Marsden water-sublimation scaling ``g(r)``.
+
+    ``g(r) = alpha (r/r0)^-m [1 + (r/r0)^n]^-k``.
+
+    **The standard parameters are normalised so that g(1 au) = 1** (to 2e-7),
+    exactly like the inverse-square law.  That is the fact that makes this
+    channel work on JPL's cometary-parameterised fits: whichever law was used,
+    ``A1`` *is* the radial acceleration at 1 au, so the A1 -> beta conversion is
+    valid either way.
+
+    What the two laws disagree about is the radial *dependence* -- Marsden falls
+    off far faster beyond r0 (g(5 au) ~ 1e-6 vs 0.04 for 1/r^2).  Distinguishing
+    them therefore requires refitting the astrometry over a range of heliocentric
+    distances, which is the decisive follow-up for any survivor.
+    """
+    x = np.asarray(r_au, dtype=float) / r0_au if isinstance(r_au, np.ndarray) \
+        else float(r_au) / r0_au
+    return alpha * x ** (-m) * (1.0 + x ** n) ** (-k)
+
+
+def g_at_1au(model_pars: dict | None) -> float:
+    """``g(1 au)`` for the non-grav law JPL actually fitted.
+
+    ``model_pars`` maps parameter name -> value (from ``sbdb.api``'s
+    ``orbit.model_pars``).  Returns 1.0 for the inverse-square law and for the
+    standard Marsden parameters alike; only a *non-standard* fitted shape moves
+    it away from 1, and then only slightly.  This is a normalisation, not a veto.
+    """
+    if not model_pars:
+        return 1.0
+    got = {str(k).strip().upper(): v for k, v in model_pars.items()}
+    if not (set(got) & MARSDEN_SHAPE_PARS):
+        return 1.0
+
+    def _f(key: str, default: float) -> float:
+        v = got.get(key)
+        if isinstance(v, dict):
+            v = v.get("value")
+        try:
+            fv = float(v)
+            return fv if np.isfinite(fv) and fv != 0 else default
+        except (TypeError, ValueError):
+            return default
+
+    return float(marsden_g(1.0,
+                           alpha=_f("ALN", MARSDEN_ALPHA),
+                           r0_au=_f("R0", MARSDEN_R0_AU),
+                           m=_f("NM", MARSDEN_M),
+                           n=_f("NN", MARSDEN_N),
+                           k=_f("NK", MARSDEN_K)))
 
 
 # --- The conversions ----------------------------------------------------------
@@ -286,7 +368,8 @@ def r_statistic(a1_au_day2: float | None,
                 albedo_hi: float = 0.60,
                 rho_kg_m3: float = 1000.0,
                 q_pr: float = 1.0,
-                nongrav_law_is_inverse_square: bool = True) -> RStatistic:
+                g_1au: float = 1.0,
+                outgassing_evidence: bool = False) -> RStatistic:
     """The normalised outlier statistic ``R = AMR_implied / AMR_natural(D, rho)``.
 
     Size precedence: a published ``diameter_m`` wins; else a measured ``albedo``
@@ -298,9 +381,12 @@ def r_statistic(a1_au_day2: float | None,
     fabricated number whenever an input is missing or the non-grav law is not
     the inverse-square one the conversion assumes.
     """
-    if not nongrav_law_is_inverse_square:
+    if outgassing_evidence:
+        # Real evidence of activity (a coma, a cometary classification, or a
+        # fitted time-delay DT).  The acceleration has a known non-radiative
+        # cause, so an SRP-implied area-to-mass would be meaningless.
         return RStatistic(valid=False,
-                          reason="cometary g(r) fitted; A1 is not an SRP coefficient")
+                          reason="outgassing evidence; A1 is not an SRP coefficient")
     if a1_au_day2 is None or not np.isfinite(a1_au_day2):
         return RStatistic(valid=False, reason="no fitted A1")
     if a1_au_day2 <= 0:
@@ -309,7 +395,11 @@ def r_statistic(a1_au_day2: float | None,
         return RStatistic(beta=float(beta_from_a1(a1_au_day2)), valid=False,
                           reason="A1 <= 0; not attributable to radiation pressure")
 
-    beta = float(beta_from_a1(a1_au_day2))
+    # g(1 au) = 1 for BOTH the inverse-square law and the standard Marsden
+    # parameters, so this is a ~1e-7 normalisation in the usual case -- but it
+    # is applied rather than assumed, because a non-standard fitted shape would
+    # move it.
+    beta = float(beta_from_a1(a1_au_day2 * g_1au))
     amr_imp = float(amr_from_beta(beta, q_pr=q_pr))
 
     # --- size ---
@@ -349,19 +439,20 @@ def r_statistic(a1_au_day2: float | None,
 
 
 # --- Non-grav model interrogation --------------------------------------------
-def nongrav_law_is_inverse_square(model_par_names) -> bool:
-    """True when JPL's fitted non-grav model is the plain inverse-square law.
+def has_outgassing_model_evidence(model_par_names) -> bool:
+    """True when the fitted non-grav model itself is evidence of outgassing.
 
-    ``model_par_names`` is the collection of parameter names JPL reports for the
-    object (from ``sbdb.api``'s ``orbit.model_pars``).  Any of A1/A2/A3 alone
-    means the default ``g(r) = (1 au / r)^2``.  The presence of ALN, NM, NN, NK,
-    R0 or DT means a *cometary* g(r) was fitted, under which A1 is not a
-    radiation-pressure coefficient and the conversion in this module is invalid.
+    That means a fitted Marsden time delay (``DT``): radiation pressure cannot
+    produce a lagged response.  The Marsden *shape* parameters
+    (ALN/NM/NN/NK/R0) are explicitly NOT evidence -- they are JPL's default
+    parameterisation for every object it fits ``A1`` to, dark comets included,
+    and they leave ``g(1 au) = 1`` unchanged.  Treating them as evidence
+    discards the entire population this channel exists to examine.
     """
     if model_par_names is None:
-        return True  # nothing reported -> assume JPL's asteroid default
+        return False
     names = {str(n).strip().upper() for n in model_par_names}
-    return not (names & COMETARY_MODEL_PARS)
+    return bool(names & OUTGASSING_MODEL_PARS)
 
 
 # --- Reference table (the unit-test anchors) ---------------------------------

@@ -36,7 +36,7 @@ import numpy as np
 import pandas as pd
 
 from .acquire import model_par_names, model_par_values
-from .radiation import COMETARY_MODEL_PARS
+from .radiation import MARSDEN_SHAPE_PARS, OUTGASSING_MODEL_PARS
 
 # --- Verdicts -----------------------------------------------------------------
 ARTIFICIAL_HUMAN = "ARTIFICIAL_HUMAN"
@@ -202,11 +202,28 @@ def vet_object(row: pd.Series, detail: dict | None, p: VetParams) -> Vetting:
     # --- 2. outgassing ---
     names = model_par_names(detail) if detail else []
     pars = model_par_values(detail) if detail else {}
-    cometary = {n.strip().upper() for n in names} & COMETARY_MODEL_PARS
-    if cometary:
-        v.flags.append("cometary_nongrav_model")
-        v.notes.append(f"fitted cometary g(r) parameters {sorted(cometary)}: "
-                       "A1 is not a radiation-pressure coefficient")
+    upper = {n.strip().upper() for n in names}
+
+    # The Marsden SHAPE parameters are JPL's default parameterisation for any
+    # object it fits A1 to -- including every dark comet -- and they are
+    # normalised so g(1 au) = 1 exactly like the inverse-square law.  Their
+    # presence is therefore recorded, NOT treated as evidence of activity;
+    # doing the latter discards the whole target population by construction.
+    if upper & MARSDEN_SHAPE_PARS:
+        v.flags.append("marsden_g_parameterisation")
+        v.notes.append(
+            f"JPL fitted the Marsden g(r) parameterisation {sorted(upper & MARSDEN_SHAPE_PARS)}. "
+            "This is a parameterisation choice, not an activity detection: g(1 au) = 1 "
+            "for both laws, so A1 is still the radial acceleration at 1 au. The laws "
+            "differ in RADIAL DEPENDENCE, which only an astrometric refit can separate.")
+
+    # A fitted, non-zero time delay DT IS evidence: radiation pressure cannot
+    # produce a lagged response.
+    outgassing = upper & OUTGASSING_MODEL_PARS
+    if outgassing:
+        v.flags.append("fitted_time_delay_DT")
+        v.notes.append(f"fitted Marsden time-delay parameter {sorted(outgassing)}: "
+                       "a lagged response cannot be radiation pressure")
         v.verdict = OUTGASSING
         return v
     dt = row.get("DT")

@@ -441,6 +441,27 @@ def test_ensemble_detrend_removes_a_shared_error_scale_drift():
     assert s0.amp_last_mmag > 5 * max(r["_stat"].amp_last_mmag for r in rows[1:])
 
 
+def test_thin_field_reports_that_it_was_not_ensemble_corrected():
+    """A field too thin to measure a common mode must SAY it was not corrected.
+
+    Emitting NaN κ values would let a reader mistake "could not measure" for
+    "measured, and it was zero" — and every candidate such a field produced is
+    uncorrected for the drifting-magerr systematic.
+    """
+    rows = []
+    for star in range(3):                      # far below the 8-star minimum
+        t, m, e = make_lc([80] * 7, [0.0] * 7, seed=star)
+        rows.append({"source_id": str(star), "_ss": season_scatter(t, m, e),
+                     "_ccd": "1_1_1", "_nepoch": 560})
+    diag = ensemble_detrend_scatter(rows)
+    assert diag["ensemble_correction_applied"] is False
+    assert diag["ensemble_verdict"] == "NOT_APPLIED_TOO_FEW_STARS"
+    assert diag["n_stars"] == 3
+    assert not np.isfinite(diag["kappa_median"])
+    # ...and it still produces usable per-star statistics rather than crashing.
+    assert all(r["_stat"] is not None for r in rows)
+
+
 def test_ensemble_detrend_is_a_no_op_on_a_clean_field():
     rng = np.random.default_rng(2)
     rows = []

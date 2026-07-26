@@ -68,11 +68,23 @@ Organised by *what the residue physically is*, not by wavelength.
 * **S8 Refined-material dust.** Metallic/graphitic/anomalously crystalline
   mineralogy rather than amorphous silicate.
 * **S9 Unmaintained decay.** Photometric irregularity secularly *increasing*.
-  → **RUST**. *(Corrected 2026-07-26: this was wrongly marked as covered by the
-  existing `dimming` channel. It is not — `dimming/secular.py` fits a weighted
-  linear trend to season medians, i.e. a trend in **brightness**. A secular rise
-  in aperiodic variability **amplitude** is a different statistic and has been
-  run neither here nor, as far as the sweeps could establish, anywhere.)*
+  → **RUST** — *built and dispatched 2026-07-26 (`docs/rust.md`).*
+  *(Corrected 2026-07-26: this was wrongly marked as covered by the existing
+  `dimming` channel. It is not — `dimming/secular.py` fits a weighted linear
+  trend to season medians, i.e. a trend in **brightness**. A secular rise in
+  aperiodic variability **amplitude** is a different statistic and has been run
+  neither here nor, as far as the sweeps could establish, anywhere.)*
+  The channel's whole difficulty is one systematic: robust scatter estimators
+  are biased low at small N, epochs-per-season is set by survey cadence, and
+  cadence trends with calendar time — so an uncorrected version of this search
+  measures ZTF's operations calendar rather than astrophysics. See
+  `docs/rust.md` §5 for the five-layer correction and its measured false-positive
+  rate. Sensitivity is bounded honestly: RUST sees **many-element swarms whose
+  collisional time `P/f` falls inside the survey decade**, and is blind to the
+  passively stable architectures of McInnes 2026 (arXiv:2603.00203) — which need
+  no upkeep and therefore never decay — and largely blind to Wright 2020's
+  (arXiv:2006.16734) monolithic spheres, whose instability is catastrophic
+  rather than a decade-long ramp.
 * **S10 Tumbling ruin.** Deep, grey, non-repeating, non-Keplerian occultations.
   *(covered by `dimming`)*
 * **S11 Orphaned occulters** around white dwarfs and neutron stars — hosts that

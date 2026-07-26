@@ -1,0 +1,910 @@
+<html> 
+<head> 
+<title>WISE All-Sky Release Explanatory Supplement: Data Processing</title> 
+</head> 
+<body bgcolor="white"> 
+<a href="sec4_4g.html"> <img src="Prev1.gif" alt="previous page"></a> &nbsp; <a href="index.html"> <img src="Home.png" alt="back to table of contents"></a> &nbsp; <a href="sec4_5.html"> <img src="Next1.gif" alt="next page"></a> <br>
+<hr>
+
+<h1>IV. WISE Data Processing</h1>
+ 
+<h2> 4. Pipeline Science Modules</h2> 
+
+<a name="PhotometricC"></a>
+<h3>h. Photometric Calibration</h3> 
+<hr> 
+<h3>Contents</h3>
+
+<a href="#Summary">i. Summary and Useful Formulas</a>
+<ol>
+<li type="1"><a href="#conv2flux">Vega Magnitudes to Flux Density</a></li>
+<li type="1"><a href="#red">Additional W4 Correction for "Red" Sources</a></li>
+<li type="1"><a href="#conv2ab">Vega to AB Magnitudes</a></li>
+<li type="1"><a href="#example">Examples for converting WISE magnitudes to flux densities</a></li>
+</ol>
+<a href="#WISEPS">ii. WISE Calibration Source Network</a>
+<br>
+<a href="#CalibratedM">iii. Calibrated Magnitudes</a>
+<br>
+<a href="#PhotometricZP">iv. Photometric Zero Point Evaluation</a>
+<br>
+<a href="#WISEZMA">v. WISE Filter Bandpasses and Zero Magnitude Attributes</a>
+<br>
+<a href="#FluxCC">vi. Flux Corrections and Colors for Power Laws and Blackbodies</a>
+<br>
+<a href="#CalibrationU">vii. Calibration Uncertainties</a>
+<br>
+<hr>
+ 
+<a name="Summary"></a>
+<h4>i. Summary and Useful Formulas</h4> 
+ 
+<p>
+All magnitudes listed in the WISE Source Catalog and Single-Exposure Source 
+Database have been photometrically calibrated using
+observations of a network of standard stars that are located near 
+the ecliptic polar caps, as described in <a href="#WISEPS"> IV.4.h.ii</a>.
+For WISE Atlas and Single-exposure Images,
+<a href="#CalibratedM">photometric zero points</a> that allow direct 
+conversion of pixel intensity values to calibrated magnitudes, are derived 
+for calibrators throughout the WISE mission.  The photometric zero point 
+values are provided in the <a href="sec2_3f.html#coadphot">
+MAGZP keyword</a> values in the FITS image headers.
+
+
+<p>This section on Photometric Calibration describes in more detail the 
+process by which instrumental source magnitudes were converted to calibrated 
+magnitudes, and how the photometric zero point levels
+were derived for WISE.  A brief introduction to the WISE photometric system
+is given below. Additional information can be found in
+<a href="https://ui.adsabs.harvard.edu/abs/2010AJ....140.1868W" target="_blank">Wright et al. (2010
+AJ, 140, 1868)</a>
+and <a href="https://ui.adsabs.harvard.edu/abs/2011ApJ...735..112J" target="_blank">Jarrett et al. (2011 ApJ, 735, 112</a>).
+
+
+<p>All reported magnitudes are in the Vega System.   Formulae for converting
+WISE Vega magnitudes to flux density units (in Janskys) and AB magnitudes 
+are given below along with two practical examples.
+<p>
+
+
+<h4><a name="conv2flux"></a>1. Vega Magnitudes to Flux Density</h4>
+
+<p>
+
+The source flux density, in Jansky [Jy] units, is computed from the calibrated WISE magnitudes, m<sub>vega</sub> using:
+</p>
+<br />
+<center>
+<table>
+<tr><td>
+<img src="figures/4_4hEq1.gif"> </td><td> (Eq. 1)</td>
+</tr>
+</table>
+</center>
+<p>
+where <sub><img src="figures/fnu1.gif"></sub> is the zero magnitude flux density
+ corresponding to the
+ constant that gives the same
+response as that of Alpha Lyrae (Vega). 
+<i>For most sources, 
+the zero magnitude flux density, derived using a constant power-law spectra, is appropriate and may be used to convert WISE magnitudes to flux density [Jy] units</i>.  Table 1 lists the zero magnitude flux density (column 2)
+for each WISE band.   
+<p>
+
+For sources with steeply rising MIR spectra or with spectra that deviate significantly from
+F<sub>&nu;</sub>=constant, including cool asteroids
+and dusty star-forming galaxies, a color correction is required, especially for W3 due to its wide
+bandpass.  With a given flux correction, f<sub>c</sub>, the flux density conversion is given by:
+<center>
+<table>
+<tr><td>
+<img src="figures/4_4hEq2.gif"> </td><td> (Eq. 2)</td>
+</tr>
+</table>
+</center>
+where <sub><img src = "figures/fnu2.gif" width=35></sub> is the zero magnitude flux density
+derived for sources with
+power-law spectra:  <sub><img src = "figures/fnu_-2.gif" width=80></sub>, listed in Table 1 (column 3)
+and the flux correction, f<sub>c</sub>, listed in Table 2 for
+<sub><img src = "figures/fnu_alpha.gif" width=80></sub>,
+where the index &alpha; ranges from:  -3, -2, -1, 0, 1, 2, 3, and 4, and for blackbody spectra, B<sub>&nu;</sub>(T) for a variety of temperatures,
+and for stars of two main-sequence spectral types (K2V and G2V).
+
+<p>
+
+<center>
+<table width=750 cellspacing="50">
+<td valign=top>
+<center><b>Table 1</b>-  Zero Magnitude Flux Density<br><img src="figures/sec4_4ht1.png"></center>
+<br>
+where <img src = "figures/fnu1.gif" width=29> is the flux density for sources with constant
+power-law spectra:  <img src = "figures/fnu_0.gif" width=80>;  in the third column,
+<img src = "figures/fnu2.gif" width=40> is the flux density for sources with
+power-law spectra:  <img src = "figures/fnu_-2.gif" width=90>, and is used for
+color corrections such that <img src = "figures/fnu_fc.gif" width=110>, where fc is
+the flux correction given in Table 2.
+
+</td>
+
+<td valign=top>
+<center><b>Table 2</b>- Color corrections (from <a href="https://ui.adsabs.harvard.edu/abs/2010AJ....140.1868W" target="_blank">Wright et al. 2010</a>)</center>
+<br>
+<a href="figures/sec4_4ht2.gif">
+<img src="figures/sec4_4ht2_sm.gif"></a>
+</td>
+</table>
+
+</center>
+
+<p>
+<h4><a name="red"></a>2. Additional W4 Correction for "Red" Sources</h4>
+<p>
+
+Because of uncertainty in the calibration of the W4 Relative Spectral Response
+(RSR), sources that have a steeply rising mid-IR spectrum,
+<sub><img src = "figures/fnu_alpha.gif" width=80></sub> where &alpha; >= 1,
+require approximately an 8 to  10% correction to the W4 flux, as follows:
+<center>
+<table>
+<tr><td><img src="figures/4_4hEq3.gif"></td><td> &nbsp; &nbsp;(Eq. 3)</td></tr>
+</table></center>
+<p>
+Additional details are given in <a href="sec4_4h.html#blue_red">
+Discrepancy between blue and red source measurements</a>.</p>
+ 
+
+
+<p>
+<h4><a name="conv2ab"></a>3. Vega to AB Magnitudes</h4>
+<p>
+
+Monochromatic AB magnitudes are defined by
+<sub><img src = "figures/ab.gif" width=180></sub> (see e.g., Tokunaga
+& Vaca 2005).
+Hence, conversion from the WISE Vega-system magnitudes to flux density using
+<sub><img src = "figures/fnu1.gif" width=27></sub> (column 2 of Table 1)
+and to AB magnitudes follows:
+<center>
+<table>
+<tr><td>
+<img src="figures/4_4hEq4.gif"> </td><td>(Eq. 4)</td></tr>
+</table></center>
+where <sub><img src = "figures/delta_m.gif" width=28></sub> is the constant magnitude offset
+specified in Table 3.
+
+<p>
+<center>
+<table border="+1" width="300">
+<caption>
+<b>Table 3 </b>- Conversion to the AB system <br>(m<sub>AB</sub> = m<sub>Vega</sub> + &Delta;m)<br>
+</caption>
+<tr>
+<th width="63">Band</th><th width="164">magnitude offset (&Delta;m)</th></tr>
+<tr>
+<th>W1</th><td align="center">2.699</td></tr>
+<tr>
+<th>W2</th><td align="center">3.339</td></tr>
+<tr>
+<th>W3</th><td align="center">5.174</td></tr>
+<tr>
+<th>W4</th><td align="center">6.620</td></tr>
+</table>
+</center>
+<br><br>
+
+
+<a name="example"></a>
+<h4>4. Examples for Converting WISE Magnitudes to Flux Densities</h4>
+
+<p>
+<b>Case 1 (blue source) -- WISE J091538.49+095230 </b>
+
+<pr><br>
+<center>
+<table border="1" width="520" align="center">
+<tr align="center">
+<td><a href="figures/sec4_4hf1a.png"><img src ="figures/sec4_4hf1a_sm.png"></a>
+</td>
+<td><a href="figures/sec4_4hf1b.png"><img src ="figures/sec4_4hf1b_sm.png"></a>
+</td>
+
+<tr>
+<td><b>Figure 1a -</b> WISE W1, W2, W3 and W4 Atlas Images of source 
+J091538.49+095230.  The field of view is 90 arcsec.</td> 
+<td><b>Figure 1b -</b> 3-color composite image:  blue = W1, green = W2, red = W3.
+</table>
+</center>
+
+<p>
+WISE J091538.49+095230 is a QSO at z= 0.62 (SDSS J091538.48+095230.0), 
+a relatively "blue" extragalactic object that is well detected in the 
+first three WISE bands and detected, but quite faint (SNR ~ 4) in W4.
+The profile-fit magnitudes 
+(<a href="sec2_2a.html#w1mpro"><i>w?mpro</i></a>) in the All-Sky Release 
+Catalog for this sources are listed in column 2 of Table 4.
+
+<p>
+<table border="1" width = "550" align="center">
+<caption>
+<b>Table 4 </b>- Photometry of WISE J091538.49+095230 using Eq. 2
+</caption>
+
+<tr align="center">
+<th rowspan="2">band</th>
+<th>w?mpro (unc)</th>
+<th>F<sub>&nu;</sub>(corr) (unc)</th>
+<tr  align="center">
+<td>mag</td>
+<td>mJy</td>
+<tr align="center">
+<td>W1</td><td>14.474 (0.035)</td> <td>0.50 (0.02)</td>
+<tr align="center">
+<td>W2</td><td>13.318 (0.037)</td> <td>0.81 (0.03)</td>
+<tr align="center">
+<td>W3</td><td>10.465 (0.082)</td> <td>2.02 (0.15)</td>
+<tr align="center">
+<td>W4</td><td>8.059 (0.245)</td> <td>4.99 (1.13)</td>
+</table>
+
+<p>
+The colors of this source are:  [W1-W2] = 1.16 mag and  [W2-W3] = 2.85 mag.  
+Looking at the spectral colors in Table 2, the source appears to have spectral 
+slope that is somewhat flat, an index between "0" and "1" for 
+<sub><img src = "figures/fnu_alpha.gif" width=80></sub>.
+For a slope of "1", the corresponding flux corrections are:  0.992, 0.994, 
+0.937, 0.993, applied with <sub><img src = "figures/fnu_fc.gif" width="110"></sub>.   
+The corrected, monochromatic (&lambda;<sub>iso</sub>) flux densities after 
+application of the flux corrections are listed in column 3 of Table 4
+
+<p>
+Finally, as noted above, most stars and galaxies (with &alpha; &lt; 1) do not 
+require a color correction.  Simply using the constant power-law 
+conversion,  <sub> <img src = "figures/fnu1.gif" width=29></sub> (column 2 of 
+Table 1) provides a reasonable conversion to flux density.  
+The monochromatic flux densities using the constant power-law conversion 
+are listed in Table 5, and are nearly identical to the color-corrected
+versions shown in Table 4. 
+
+<p>
+
+<table border="1" width = "550" align="center">
+<caption>
+<b>Table 5 </b>- Photometry of WISE J091538.49+095230 using Eq. 1
+</caption>
+
+<tr align="center">
+<td>band</td>
+<td>w?mpro (unc)</td>
+<td>F<sub>&nu;</sub>(corr) (unc)</td>
+<tr  align="center">
+<td></td>
+<td>mag</td>
+<td>mJy</td>
+<tr align="center">
+
+<td>W1</td><td>14.474 (0.035)</td> <td>0.50 (0.02)</td>
+<tr align="center">
+<td>W2</td><td>13.318 (0.037)</td> <td>0.81 (0.03)</td>
+<tr align="center">
+<td>W3</td><td>10.465 (0.082)</td> <td>2.06 (0.15)</td>
+<tr align="center">
+<td>W4</td><td>8.059 (0.245)</td> <td>5.00 (1.13)</td>
+</table>
+
+
+<br><br><p>
+<b>Case 2 (red source) -- WISE J145606.01+193839.6</b>
+
+<p>
+<table border="1" width = "520" align="center">
+<tr align="center">
+<td><a href="figures/sec4_4hf2a.png"><img src="figures/sec4_4hf2a_sm.png"></a>
+</td>
+<td><a href="figures/sec4_4hf2b.png"><img src="figures/sec4_4hf2b_sm.png"></a>
+</td>
+<tr>
+<td><b>Figure 2a -</b> WISE W1, W2, W3 and W4 Atlas Images of source 
+J145606.01+193839.6.  The field of view is 90 arcsec.</td>
+<td><b>Figure 2b -</b> 3-color composite image:  blue = W1, green = W2, red = W3.</td>
+</table>
+
+<p>
+This strikingly red WISE source is associated with the IRAS source
+IRAS F14537+1950 (z = 0.64), a starbursting hyperluminous infrared galaxy. 
+The WISE All-Sky Release Catalog photometry for this source is given in 
+column 2 of Table 6, below.
+
+<p>
+<table border="1" width = "550" align="center">
+<caption>
+<b>Table 6 </b>- Photometry of WISE source J145606.01+193839.6 using Eq. 2</b>
+</caption>
+
+<tr align="center">
+<td>band</td>
+<td>w?mpro (unc)</td>
+<td>F<sub>&nu;</sub>(corr) (unc)</td>
+<tr  align="center">
+<td></td>
+<td>mag</td>
+<td>mJy</td>
+<tr align="center">
+<td>W1</td><td>14.492 (0.029)</td> <td>0.49 (0.01)</td>
+<tr align="center">
+<td>W2</td><td>14.012 (0.037)</td> <td>0.42 (0.01)</td>
+<tr align="center">
+<td>W3</td><td>9.985 (0.038)</td> <td>2.94 (0.10)</td>
+<tr align="center">
+<td>W4</td><td>6.656 (0.056)</td> <td>16.58 (0.86)</td>
+</table>
+
+<p>
+The colors of this source are:  [W1-W2] = 0.48 mag and [W2-W3] = 4.03 mag.  
+Looking at the spectral colors in Table 2, the source appears to have an index 
+between "2" and "3" for <sub><img src = "figures/fnu_alpha.gif" width="80"></sub>.
+The corresponding flux corrections (adopting an index of 2) are unity for 
+all bands, as used with <sub><img src = "figures/fnu_fc.gif" width="110"></sub>.
+This source has a rising mid-IR color (&alpha; &gt; 1), and thus W4 needs an 
+additional 8% correction to its flux (that is, decrease the flux by 8%) 
+to account for the blue vs. red calibration discrepancy.
+Applying the flux corrections and <sub><img src = "figures/fnu2.gif" width="40"></sub>, 
+and the W4 8% correction (Eq. 3) gives the monochromatic 
+(&lambda;<sub>iso</sub>) flux densities given in column 3 of Table 6.
+
+<p>
+Note that adopting the flat-spectrum constant  <sub><img src = "figures/fnu1.gif" width=29></sub> (Eq. 1) gives a slightly larger W3 flux of 3.21 mJy.
+The reason for this is that more of the galaxy light comes from the 
+long-wavelength side of the <a href="figures/sec4_4hf5b.gif">W3 RSR</a>. 
+To get the calibrated flux corresponding to the light that is
+centered near the W3 &lambda;(iso), an appropriate correction (Eq. 2) is needed to adjust for source spectral
+shape convolved with the WISE RSR shape.
+<br><br>
+
+
+<p>
+<a name="WISEPS"></a>
+<h4>ii. WISE Calibration Source Network </h4>
+
+
+<p>WISE is calibrated on the same absolute basis as that established for the 
+Spitzer Space Telescope.  Networks of calibration stars support Spitzer 
+observations with IRAC, MIPS and IRS, further providing cross-calibration 
+between all three instruments. IRAC's primary suite of standard calibration 
+stars lies in the north ecliptic pole continuous viewing zone 
+(<a href="https://ui.adsabs.harvard.edu/abs/2005PASP..117..978R" target="_blank">Reach et al. 2005
+PASP, 117, 978</a>). Their stellar energy distributions were constructed by 
+<a href="https://ui.adsabs.harvard.edu/abs/2003AJ....125.2645C" target="_blank">Cohen et al. (2003, AJ, 125, 2645)</a> to tie directly 
+to the absolute mid-infrared calibrations by Midcourse Space Experiment MSX 
+(<a href="https://ui.adsabs.harvard.edu/abs/2004SSRv..113..409P" target="_blank">Price et al. 2004, 
+SSRv 113, 409</a>). Japan's AKARI mission uses 
+the identical techniques and is tied to Spitzer by having absolute calibrators 
+in common, drawn from the same networks 
+(<a href="https://ui.adsabs.harvard.edu/abs/2006PASP..118..324I" target="_blank">Ishihara et al. 
+2006, PASP, 118, 324</a>). It was natural that WISE adopted the same 
+approach to absolute and relative calibration 
+so that data from all of these infrared missions can be simply co-analyzed. 
+
+<p>
+The WISE team, in collaboration with the Spitzer Science Center, carried out 
+a survey of the north and source ecliptic poles (NEP and SEP), the WISE 
+"continuous viewing zones" (CVZs), using the 
+full complement of Spitzer instrumentation: IRAC and MIPS 
+broad-band mapping of a 47x47 arcmin (0.6 deg<sup>2</sup>) region for each CVZ, 
+and IRS spectroscopy of either previously identified calibrator stars or newly 
+developed standard calibrators.  
+The imaging and spectroscopic observations include the galaxy NGC 6552, which 
+is used to cross-calibrate the long-wavelength band of WISE with the
+Spitzer IRS-LL and MIPS 24 micron channel.
+
+<p>
+The polar surveys were used to (i) provide consistent calibrators in both of 
+the WISE CVZs, (ii) develop new calibrators near the south ecliptic pole
+where few existed previously , (iii) establish the 
+photospheric character of all candidate calibrators, (iv) assess the long-term 
+stability for secondary standards, (v) identify objects that would saturate the 
+WISE arrays, (vi) identify galaxies that are resolved by IRAC, and measure 
+their properties using methods appropriate to extended sources, and
+(vii) study the extragalactic population.
+The observations, results and analysis are presented in 
+<a href="https://ui.adsabs.harvard.edu/abs/2011ApJ...735..112J" target="_blank">Jarrett et al. 
+(2011)</a>.
+
+<p>
+Because of the scarcity of W4 calibrators near the ecliptic poles, a set of 
+W4 calibrators located further from the poles are selected to supplement the 
+initial set of W4 WISE calibrators. The complete set of WISE photometric calibrators is listed in <a href="sec4_4ht7.html">Tables 7a-7d</a>.
+
+<p>
+<h4><a href="sec4_4ht7.html">Tables 7a-7d - WISE Photometric Calibration Sources</a></h4>
+<br>
+
+<a name="CalibratedM"></a>
+<h4>iii. Calibrated Magnitudes</h4>
+<p> 
+The instrumental source brightness measurements made by the pipeline photometry
+module (<a href="sec4_4c.html">IV.4.c</a>) are calibrated by adding
+an <i>instrumental zero point magnitude</i>.  The calibrated magnitudes
+given in the WISE All-Sky Release Source Catalog and Single-exposure Source 
+Database magnitudes are given by:
+
+<p>
+<center><i>M<sub>cal</sub> = M<sub>0,inst</sub> - 2.5*log<sub>10</sub>(<i>flux</i>) - [AC]</i></center>
+
+<p>
+where 
+
+<ul>
+<li><i>M<sub>cal</sub></i> is the calibrated magnitude</li>
+<li><i>M<sub>0,inst</sub></i> is the instrumental zero point (magnitudes);  
+given in <a href="#Table8">Table 8</a>, below</li>
+<li><i>flux</i> is the integrated, background subtracted source
+brightness, measured in in digital numbers (DN), or the 2-&sigma; upper
+limit to the flux (see <a href="sec4_4c.html#ul2">IV.4.c.iv.5</a>)</li>
+<li><i>AC</i> is the aperture correction, applied only for the
+standard aperture magnitudes, <a href="sec2_2a.html#w1mag"><i>w?mag</i></a>;
+given in <a href="sec4_4c.html#circ">Table 4 in IV.4.c.iv.2</a></li>
+</ul>
+
+<p>The instrumental zero point magnitudes are band-dependent,
+and are different for the photometry in the All-Sky Release
+Catalog/Reject Table and Single-exposure Source Database. 
+The zero point derivation is described
+in <a href="#PhotometricZP">IV.4.h.iv</a>.  
+</p>
+<br>
+
+<a name="PhotometricZP"></a>
+<h4>iv. Photometric Zero Point Evaluation</h4>
+
+<p>The instrumental zero point magnitudes for photometry on the Single-exposure
+images were derived using the measurements of the 
+<a href="#WISEPS">calibration sources</a> made during each scan.
+The zero point magnitudes, <i>M<sub>0,inst</sub></i>, were
+computed for each band, <i>b</i>, and are equal to the average difference 
+between
+the prior, "true" magnitude of each calibrator and the instrumental
+magnitude measured by the <a href="sec4_3a.html">Scan/frame Pipeline</a>.
+
+<p><center><i>M<sub>0,inst,b</sub> = AVG(M<sub>p,b</sub> - M<sub>m,b</sub>)</i></center>
+
+<p>
+where <i>M<sub>p,b</sub></i> is the prior, "true" magnitude of the calibrator,
+and <i>M<sub>m,b</sub></i> is the measured, instrumental 
+magnitude in band, <i>b</i>.  The instrumental zero points used for the
+Single-exposure Source Database for the full cryogenic survey phase are 
+listed in <a href="#Table8">Table 8</a>.  
+The RMS values listed are the root variance of the differences between the 
+true and measured magnitudes for all calibration source measurements.  
+The standard deviations of the mean instrumental zero points are &lt;&lt;1% 
+for all bands because thousands of measurements are used to evaluate them.
+The Single-exposure database instrumental zero point magnitudes 
+are also carried in the MAGZP values in the Single-exposure
+<a href="sec2_4bi.html">FITS headers</a> and 
+<a href="sec2_4g.html#w1zero">w?zero</a> values in the
+Frame Metadata Table.
+
+<p>Initial estimates of the Single-exposure instrumental zero point values 
+were made early in the WISE survey and were used to calibrate photometry
+during <a href="sec4_1.html#first_pass">first-pass</a> processing.
+The zero points were refined prior to
+<a href="sec4_1.html#second_pass">second-pass</a> processing
+and were based on analysis of all measurements of the calibration
+sources over the full cryogenic survey phase. 
+
+<p>The instrumental zero point magnitudes used to calibrate 
+source measurements in the <a href="sec4_3c.html">Multiframe Pipeline</a>
+for the All-Sky Release Source Catalog and Reject Table are <i>selected</i> 
+values that are similar but not identical to the Single-exposure
+instrumental zero points.  
+Pixel values in each of the Single-exposure images contributing to
+an Atlas Image were scaled to a common gain in the 
+<a href="sec4_4f.html#tmatch">throughput matching</a> step of the 
+Atlas Image Generation module, using factors computed from the
+instrumental zero points of the individual exposures and the pre-defined
+Atlas Image zero point.  This scaling step was designed to accomodate 
+possible changes in the system throughput throughout the survey.  
+No measurable throughput changes were seen during the full cryogenic survey 
+phase, but significant changes were measured during the 
+<a href="sec7_1.html">3-Band Cryo</a> and <a href="sec8_1.html">Post-Cryo</a> 
+phases.  The Catalog and Reject Table instrumental zero point 
+magnitudes listed in <a href="#Table8">Table 8</a> are also carried in the 
+MAGZP values in the Atlas Image <a href="sec2_3b.html">FITS headers</a> and 
+<a href="sec2_4f.html#w1magzp">w?magzp</a> values in the Atlas Image
+Metadata Table</a>.
+
+
+<center>
+<a name="Table8"></a>
+<table border="+1" width="500">
+<caption>
+<b>Table 8 </b>- Instrumental Zero Point Magnitudes for WISE All-Sky Release
+Source Photometry </caption>
+<tr>
+<th width="50" rowspan="2">Band</th><th width="100" rowspan="2">wavelength (&micro;m)</th><th width="200" colspan="2">Single-exposure Source Database</th><th width="150">Source Catalog and Reject Table</th></tr>
+<tr>
+<th width="100">M<sub>0,inst</sub> (mag)</th><th width="100">RMS (mag)</th><th>M<sub>0,inst</sub> (mag)</th></tr>
+<tr>
+<th>W1</th><th>3.4</th><td align="center">20.752</td><td align="center">0.032</td><td align="center">20.5</td></tr>
+<tr>
+<th>W2</th><th>4.6</th><td align="center">19.596</td><td align="center">0.037</td><td align="center">19.5</td></tr>
+<tr>
+<th>W3</th><th>12</th><td align="center">17.800</td><td align="center">0.051</td><td align="center">18.0</td></tr>
+<tr>
+<th>W4</th><th>22</th><td align="center">12.945</td><td align="center">0.063</td><td align="center">13.0</td></tr>
+</table>
+</center>
+<br>
+
+<p>
+In Figures 3a through 3d are shown the differences between true and 
+measured Single-exposure magnitudes that have been 
+<a href="#CalibratedM">calibrated</a>
+using the instrumental zero points in Table 8, for all calibrators, plotted 
+as a function of time.  For W4 in figure 3d, the blue and red points
+represent the residuals for stellar (blue) calibrators
+and the Seyfert galacy NGC6552 (red) calibrator, respectively.
+The discrepancy between the blue and red source measurements is
+discussed in <a href="#CalibrationU">IV.3.g.vii</a>. 
+These residual time histories illustrate that the WISE system
+photometric throughput was extremely stable over the period of the
+full cryogenic survey.  
+The average residuals between true and measured magnitudes is 0.008, -0.001,
+-0.001 and 0.028 mag in the four bands, respectively. 
+
+<p>The WISE photometric stability is even better than represented by 
+Figures 3a-3d.  Some of the apparent scatter in the 
+time histories of the photometric residuals comes from uncertainty in the 
+knowledge of the "true" brightness of the calibration sources. Figures 
+4a-4c show the time history of the W1-W3 zero point residuals, as in 
+Figures 3a-3c, but in each of these plots residuals from a single calibrator 
+are shown in green.  The scatter in the single source distributions is 
+noticeably smaller than for the ensemble, and the corresponding
+RMS values are commensurate: 0.023, 0.024 and 0.025 mag in
+W1, W2 and W3, respectively.  Only one of the W4 calibration sources,
+NGC6552, is near an ecliptic pole and was therefore monitored
+continuously during the survey.  The blue calibrators are all at lower
+ecliptic latitudes, and thus different calibrators are observed at
+different times. This combined with inherent uncertainties in their
+true 22&mu;m fluxes produces the apparent
+large temporal variation in the residuals seen in Figure 3d.
+
+<p>
+
+<a name="Figure3"></a>
+<center>
+<table border="1" width="610">
+<tr align="center">
+<td><a href="figures/sec4_4hf3a.gif"><img src="figures/sec4_4hf3a_sm.gif"></a></td>
+<td><a href="figures/sec4_4hf3b.gif"><img src="figures/sec4_4hf3b_sm.gif"></a></td>
+</tr>
+<tr>
+<td><b>Figure 3a </b>-  W1</td>
+<td><b>Figure 3b </b>-  W2</td>
+</tr>
+
+<tr align="center">
+<td><a href="figures/sec4_4hf3c.gif"><img src="figures/sec4_4hf3c_sm.gif"></a></td>
+<td><a href="figures/sec4_4hf3d.gif"><img src="figures/sec4_4hf3d_sm.gif"></a></td>
+</tr>
+<tr>
+<td><b>Figure 3c </b>-  W3</td>
+<td><b>Figure 3d </b>-  W4</td>
+</tr>
+<tr>
+<td colspan="2">Differences between "true" (predicted) and measured 
+Single-exposure magnitudes for
+all WISE primary calibration sources, plotted as a function of 2010
+day number.  The measured magnitudes were calibrated using the
+Single-exposure instrument zero points listed in Table 8.  For W4, the 
+residuals for stellar calibrators and NGC6552 are shown in blue and red, 
+respectively.</td>
+</table>
+</center>
+
+
+<p>
+<a name="Figure4"></a>
+<center>
+<table border="1" width="800">
+<tr align="center">
+<td><a href="figures/sec4_4hf4a.gif"><img src="figures/sec4_4hf4a_sm.gif"></a></td>
+<td><a href="figures/sec4_4hf4b.gif"><img src="figures/sec4_4hf4b_sm.gif"></a></td>
+<td><a href="figures/sec4_4hf4c.gif"><img src="figures/sec4_4hf4c_sm.gif"></a></td>
+</tr>
+<tr>
+<td><b>Figure 4a </b>-  As in Figure 3a, but with W1 Primary Calibrator: KF03T1 M<sub>p</sub>=9.88 mag plotted in green (<a href="figures/sec4_4hf2aDETAIL.gif">Detail</a>)</td>
+<td><b>Figure 4b </b>-  As in Figure 3b, but with W2 Primary Calibrator: HD270422 M<sub>p</sub>=7.38 plotted in green (<a href="figures/sec4_4hf2bDETAIL.gif">Detail</a>)</td>
+<td><b>Figure 4c </b>-  As in Figure 3c, but with W3 Primary Calibrator: WOH_S527 M<sub>p</sub>=7.50  plotted in green (<a href="figures/sec4_4hf2cDETAIL.gif">Detail</a>)</td>
+</tr>
+</table>
+</center>
+<br>
+
+<p>
+
+
+
+<a name="WISEZMA"></a>
+<h4>v. WISE Filter Bandpasses and Zero Magnitude Attributes</h4><p>The WISE relative system response curves (RSRs) were created from the end-to-end 
+lab measurements by modifying the prediction and design values at each wavelength 
+by fitting a line in log-log space and using this to replace any originally negative values. 
+Following the prescription of Bessell (2000), we convert the QE-based 
+<a href="https://ui.adsabs.harvard.edu/abs/2010AJ....140.1868W">Wright et al. (2010)</a> 
+RSRs (Fig. 5) from electrons per photon to photon-counting response curves by multiplying by &lambda; 
+and renormalizing each curve to a peak of unity; see Fig. 5b. 
+Both W1 and W2 passbands have close correspondence with those of IRAC-1 and IRAC-2, 
+although the W1 passband is slightly `blue' compared to IRAC-1 and W2 is slightly `red' compared to IRAC-2. 
+The reddest channel of WISE, W4 at 22 &micro;m, compares well with MIPS-24, although it is 
+slightly bluer in response. Compared to Spitzer imaging, the only unique band of WISE 
+is that of W3 (12 &micro;m) which has only small overlap with that of IRAC-4 (8 &micro;m), 
+but is comparable to the IRAS 12 &micro;m channel. One consequence of this band-to-band 
+difference is demonstrated in Fig. 4b, the spectrum of ultra-luminous infrared 
+galaxy Arp 220 has strong polycyclic aromatic hydrocarbon (PAH) emission bands, 
+notably at 11.3 &micro;m compared to the bands at 6.2 and 7.7 &micro;m. 
+WISE W3 compared to IRAC-4 will be more sensitive to both PAH emission 
+and amorphous silicate absorption (10 &micro;m) in nearby star-forming galaxies. 
+Moreover, because W3 is a longer wavelength channel than IRAC-4, 
+it is more sensitive to higher redshift galaxies in which strong 
+near-IR continuum and mid-IR emission features redshift into the band.
+
+<p>
+<center>
+<table border="1" width="800">
+<td align="center" width="300">
+<a href="figures/sec4_4hf5a.gif"><img src="figures/sec4_4hf5a_sm.gif"></a><br></td>
+<td align="center" width="500">
+<a href="figures/sec4_4hf5b.gif"><img src="figures/sec4_4hf5b_sm.gif"></a><br></td></tr>
+<tr>
+<td><b>Figure 5a </b> - The QE-based (response per photon) 
+relative system response (RSR) curves normalized to a peak value of unity,
+on a logarithmic scale.  
+
+<p>The QE-based RSRs in ASCII table format are available for 
+<a href="figures/RSR-W1.txt">W1</a>,
+<a href="figures/RSR-W2.txt">W2</a>,
+<a href="figures/RSR-W3.txt">W3</a>, and
+<a href="figures/RSR-W4.txt">W4</a>,
+which includes wavelength in microns, the response, and the uncertainty in the response in parts per thousand
+(from <a href="https://ui.adsabs.harvard.edu/abs/2010AJ....140.1868W" target="_blank">Wright et al. 2010</a>).
+</td>
+<td><b>Figure 5b </b>- 
+WISE energy based relative system response (RSR) curves, &lambda;R(&lambda;),
+normalized to unity. (Left) The WISE RSRs of W1 (3.4&micro;m; blue),
+W2 (4.6&micro;m; green), W3 (12&micro;m; orange), and W4 (22&micro;m; red)
+are compared to the Spitzer IRAC-1 (3.6&micro;m), IRAC-2 (4.5&micro;m),
+IRAC-3 (5.8&micro;m), IRAC-4 (8.0&micro;m), andMIPS-24 (24&micro;m)
+array-averaged response curves (all shown with black and gray lines).
+(Right) Contrasting spectra, the
+starburst galaxy Arp 220 (<a href="https://ui.adsabs.harvard.edu/abs/2007ApJ...656..148A" target="_blank">Armus et al. 2007 ApJ, 656, 148</a>) and the K2III calibration star
+HD32174 spectra are shown in relation to the WISE RSRs.
+
+<p>
+The response per unit energy RSRs in ASCII table format are available for
+<a href="figures/RSR-W1.EE.txt">W1</a>,
+<a href="figures/RSR-W2.EE.txt">W2</a>,
+<a href="figures/RSR-W3.EE.txt">W3</a>, and
+<a href="figures/RSR-W4.EE.txt">W4</a>,
+which include wavelength in microns, the response, and the uncertainty in
+the response in parts per thousand (from
+<a href="https://ui.adsabs.harvard.edu/abs/2011ApJ...735..112J" target="_blank">Jarrett et al.
+2011</a>).
+ </td>
+</tr>
+</table>
+</center>
+<br>
+
+<p>
+<center>
+<table border="1">
+<caption><b>Table 9 </b>- WISE Zero Magnitude Attributes (from 
+<a href="https://ui.adsabs.harvard.edu/abs/2011ApJ...735..112J" target="_blank">Jarrett et al. 2011</a>)</caption>
+<tr>
+<th> <a href = "figures/sec4_4ht9.gif">
+<img src = "figures/sec4_4ht9_sm.gif"></a></th>
+<tr>
+</tr>
+</table>
+</center>
+<p>Adopting a stellar photospheric spectrum, specifically that for an "ideal" Vega in which 
+the effective temperature is uniform across the stellar surface (described in Cohen et al. 1992), 
+the system, or isophotal wavelengths, &lambda;(iso), are found to be 
+3.35, 4.60, 11.56, and 22.08 &micro;m (see also <a href="https://ui.adsabs.harvard.edu/abs/2010AJ....140.1868W" target="_blank">Wright et al. 2010</a>). 
+The isophotal flux F<sub>&lambda;(iso)</sub> was derived by integrating the modified Vega spectrum across the WISE
+RSRs. For the frequency equivalent integral, F<sub>&nu;</sub>(iso), we applied the method described in Cohen et al. (1999) 
+and Tokunaga & Vacca (2005), recasting each WISE RSR in frequency terms and integrating the 
+stellar spectrum over the RSR to derive the in-band flux. The resultant isophotal quantities 
+and other WISE system attributes are given in Table 8 for both wavelength-based and frequency-based RSRs. 
+Note that <a href="https://ui.adsabs.harvard.edu/abs/2010AJ....140.1868W" target="_blank">Wright et al. (2010)</a> use a different treatment to calculate the  F<sub>&nu;</sub>(iso) 
+values that is based on the direct conversion of &lambda;(iso) to F<sub>&nu;</sub> using the formulation 
+F<sub>&nu;</sub>(iso) equals (&lambda;<sup>2</sup>(iso)/c)F<sub>&lambda;(iso)</sub>; 
+this method is strictly an approximation used for narrow-band filters and is 
+typically unsuitable for wide passbands (Cohen et al. 1999, their Sec. 3.3; and the 
+standard method is restated by Tokunaga & Vacca 2005). 
+The approximation is in fact adequate for W1, W2 and W4. 
+<a href="https://ui.adsabs.harvard.edu/abs/2010AJ....140.1868W" target="_blank">Wright et al. (2010)</a> 
+provide a set of flux corrections, f<sub>c</sub>, that properly transform from F<sub>&nu;</sub><sup>*</sup>(iso) to `in-band' 
+F<sub>&nu;</sub>(iso): <sub><img src = "figures/fnu_fc.gif" width=110></sub>,
+notably important for W3 and its broad passband.
+
+<p> Absolute measurements of stars and comparisons of stellar irradiances with those of emissive 
+  reference spheres were made by MSX. This `ideal' Vega spectrum was absolutely validated by 
+  photometry on the MSX and provided the basis for defining the zero magnitude for Infrared 
+  Space Observatory (ISO), MSX, Spitzer, and AKARI infrared space telescopes. This validated 
+  zero magnitude system is traceable to measurements using K (primary) and M giant (secondary) 
+  calibrators and has an absolute precision of &plusmn;1.10%. This basis now serves the same purpose 
+  for the four WISE bands, ensuring that their photometric calibrations have been computed 
+  in the same manner as for these previous missions.</p>
+<p> The in-band fluxes of the Vega spectrum were adopted to define zero magnitude for WISE bands 
+  W1, W2, and W3. Data for W4 incorporate the 2.7% upward offset from the Vega basis model 
+  that was established absolutely by MSX at 21.3 &micro;m (Price et al. 2004: Table 4, Column 7, 
+  and Table 9, Column 2), and applied by Cohen (2009) in the validation of the diffuse 
+  calibration of Spitzer MIPS-24 by comparison with the MSX 21.3 &micro;m  band. This Vega basis has 
+  an overall systematic uncertainty of ~1.45%.</p>
+
+<a name="FluxCC"></a>
+<h4>vi. Flux Corrections and Colors for Power Laws and Blackbodies</h4>
+
+<a href="https://ui.adsabs.harvard.edu/abs/2010AJ....140.1868W" target="_blank">Wright et al. (2010)</a> 
+define the photometric system for WISE as follows: 
+<p>
+<ul>
+This definition of the isophotal wavelength and flux zeropoint means that the 
+color 
+correction term for a source with a different spectrum than Vega vanishes by construction 
+when f<sub>&lambda;</sub> is a constant ( f<sub>&nu;</sub> ~ &nu;<sup>-2</sup>) 
+and very nearly vanishes for Rayleigh-Jeans sources with
+f<sub>&lambda;</sub> ~ &lambda;<sup>-4</sup> or f<sub>&nu;</sub> ~ &nu;<sup>2</sup>.
+These spectral energy distributions bracket those of the vast majority of WISE
+sources, so the color corrections are generally small. But the extremely wide W3 filter 
+does lead to color corrections as large as 0.1 mag for a constant 
+ f<sub>&nu;</sub>. Table 10 (identical to Table 2) gives 
+the flux correction factors in the WISE bands for several input spectra and the WISE 
+colors for these spectra. These factors multiply the signal S given by a spectrum 
+ f<sub>&nu;</sub> =  f<sub>&nu;</sub><sup>o</sup>(&lambda;(iso) / &lambda;)<sup>&beta;</sup> . 
+Thus, a spectrum with f<sub>&nu;</sub>  = const = 29.0 Jy gives a signal 
+that is f<sub>c</sub>(W3) = 0.9169 times the signal from Vega, so one would need a constant 
+f<sub>&nu;</sub> of 29.0/0.9169 = 31.7 Jy to give zero magnitude.
+</ul>
+
+<p>
+<center>
+<table border="1">
+<caption><b>Table 10 </b>- Color corrections (from <a href="https://ui.adsabs.harvard.edu/abs/2010AJ....140.1868W" target="_blank">Wright et al. 2010</a>)</caption>
+<tr>
+<th> <a href = "figures/sec4_4ht10.gif">
+<img src = "figures/sec4_4ht10.gif"></a></th>
+<tr>
+</tr>
+</table>
+</center>
+<br>
+
+<p>
+<a name="CalibrationU"></a>
+<h4>vii. Calibration Uncertainties</h4> 
+ 
+<p>Photometric performance is gauged using the individual and time history 
+measurements of the WISE calibrators.  The RMS residuals in the zero point 
+offset for each WISE band (<a href="#Table8">Table 8</a>) provide a measure 
+of the accuracy of the calibration solution, while the time history provides 
+a metric for the photometric stability over the lifetime of the cryogenic 
+mission (<a href="#Figure3">Figure 3</a>).
+
+<p>
+Figure 6 shows the time history of the difference between the
+predicted (true) and measured magnitudes for the 
+ensemble of calibration stars, average in coarse time bins. 
+In Figure 7 are shown the mean and standard deviation of the
+flux residuals for each calibration source, plotted as a function of
+the source brightness. 
+
+<p>
+<center>
+<table border="1" width="900">
+<tr align="center">
+<td><a href="figures/sec4_4hf6.gif"><img src="figures/sec4_4hf6_sm.gif"></a></td>
+<td><a href="figures/sec4_4hf7.gif"><img src="figures/sec4_4hf7_sm.gif"></a></td>
+</tr>
+<tr>
+<td>
+<b>Figure 6 -</b> WISE instrumental zero point magnitude time history (from <a href="https://ui.adsabs.harvard.edu/abs/2011ApJ...735..112J" target="_blank">Jarrett et al. 2011</a>).
+</td>
+<td><b>Figure 7 -</b> WISE photometry of the Spitzer-WISE cross-calibration stars (from <a href="https://ui.adsabs.harvard.edu/abs/2011ApJ...735..112J" target="_blank">Jarrett et al. 2011</a>).</td> 
+</tr>
+</table>
+</center>
+
+<p>
+Time variability in the instrumental zero point magnitude is ruled out with 
+individual (repeated) measurements over the lifetime of the mission;
+repeated observations of the individual calibrators reveal an RMS scatter, 
+typically better than 1% (Figure 6).
+In contrast, the ensemble plotted in Figure 7 has a much larger scatter
+than the trending in the zero point.
+For both W1 and W2, the inverse variance-weighted mean is 0.007 &plusmn; 0.025 mag,
+for W3 it is 0.017 &plusmn; 0.045 mag, and 
+for W4, it is -0.021 &plusmn;  0.057 mag.
+The ensemble results suggest that the  WISE absolute calibration, tied to 
+that of Spitzer, has an RMS scatter in the standard calibration stars at 
+the 2.4, 2.8, 4.5 & 5.7% levels for W1, W2, W3 and W4, respectively.
+
+<p>
+The observed scatter in Figure 7 arises chiefly from the uncertainty in the 
+predicted WISE flux values for the calibration sources, reflecting the 
+inherent errors associated with model fitting to the broad-band SED 
+measurements, as well as the uncertainty in the WISE RSRs.  These errors 
+are much larger then the expectation at the 
+longer mid-IR wavelengths, notably in the W4 window --  the red calibrator 
+NGC 6552 has a W4 residual of ~6%, a difference that appears to be systematic
+for very red sources as measured using Spitzer-IRS spectra from ultra-luminous 
+infrared galaxies 
+(see <a href="https://ui.adsabs.harvard.edu/abs/2010AJ....140.1868W" target="_blank">Wright et al. 2010</a>). 
+
+
+<a name = "blue_red"></a>
+<h4>Discrepancy between blue and red source measurements</h4>
+
+<p>Photometric calibration is based on measurements of bright stars, A-K 
+dwarfs and K/M giants, which are relatively blue in color in comparison 
+to star-forming galaxies, for example.  As shown in
+<a href="#Figure3">Figures 3d</a> above, the Sy-2 galaxy NGC 6552 appears to
+have a significantly different zero point offset compared to the bluer stellar 
+calibrators.  This difference has been observed
+in other red extragalactic objects, notably ultra-luminous infrared galaxys 
+(ULIRGs).  
+<a href="https://ui.adsabs.harvard.edu/abs/2010AJ....140.1868W" target="_blank">Wright et al. 
+(2010)</a> describe the blue vs. red calibration discrepancy as follows:
+
+<ul>
+We have also observed in-flight a discrepancy between red (typically sources with 
+f<sub>&nu;</sub> ~ &nu;<sup>-2</sup>) 
+and blue (stars with f<sub>&nu;</sub> ~ &nu;<sup>2</sup>)
+calibrators in W3 and W4, the 12 and 22&micro;m bands. This amounts to about -17% and 9% 
+in the fluxes for W3 and W4, with the red sources appearing too bright in 
+W4 and too faint in W3. The flux differences could be resolved by adjusting the 
+effective wavelength of W3 and W4 3%-5% blueward and 2%-3% redward, respectively. 
+This would change the zero magnitude f<sub>&nu;</sub><sup>o</sup> by about -8% in W3 and +4% in W4. 
+But the zeropoints and isophotal wavelengths reported here are based on the 
+relative spectral responses derived from ground calibration without any such 
+adjustment. The instrumental zeropoints that define the conversion from counts 
+to magnitudes have been based on standard stars, which are the blue calibrators. 
+Given the discrepancy between red and blue calibrators we estimate that the 
+conversion from magnitudes to Janskys are currently uncertain by 10% in W3 and W4. 
+
+</ul>
+
+<p>
+<a href="https://ui.adsabs.harvard.edu/abs/2014ApJS..212...18B" target="_blank">Brown 
+et al. (2014)</a> find that the residual between W4 Source Catalog photometry 
+and photometry synthesized using spectral energy distributions for
+galaxies can be approximated by the functional form:</p>
+
+<p><center>&Delta;m<sub>W4</sub> = 0.035 * (&alpha;<sub>22</sub>-2) mag </center></p>
+
+<p>where <em>&alpha;<sub>22</sub></em> is the spectral index near 22 &mu;m.
+These residuals are larger than expected from the flux corrections given in
+Table 10.</p>
+
+<p>  
+<a href="https://ui.adsabs.harvard.edu/abs/2014PASA...31...49B" target="_blank">
+Brown, Jarrett and Cluver (2014)</a> report that the residuals can be explained if the 
+wavelengths of the laboratory-measured W4 RSR are scaled by a factor of 1.033. This 
+scaling would result in the effective wavelength of the W4 passband being 22.8 &mu;m, 
+and a flux for zero magnitude of 7.871 Jy. The corresponding W4 AB magnitude of 
+Vega would be 6.66 mag.  While the scaled RSR provides a useful empirical correction 
+to compare spectra and W4 photometry in 
+the WISE Source Catalog, these authors caution that it may not be a unique solution,
+and does not necessarily provide the true W4 RSR.
+</p>
+ 
+ 
+<br>
+Last update: 2017 August 7<br> 
+
+<hr> 
+<a href="sec4_4g.html"> <img src="Prev1.gif" alt="previous page"></a> &nbsp; <a href="index.html"> <img src="Home.png" alt="back to table of contents"></a> &nbsp; <a href="sec4_5.html"> <img src="Next1.gif" alt="next page"></a> <br>
+
+</body> 
+</html> 

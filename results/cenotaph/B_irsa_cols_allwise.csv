@@ -1,0 +1,299 @@
+column_name,datatype,unit,description
+designation,char,,WISE source designation
+ra,double,deg,right ascension (J2000)
+dec,double,deg,declination (J2000)
+sigra,double,arcsec,uncertainty in RA
+sigdec,double,arcsec,uncertainty in DEC
+sigradec,double,arcsec,cross-term of RA and Dec uncertainties
+glon,double,deg,galactic longitude
+glat,double,deg,galactic latitude
+elon,double,deg,ecliptic longitude
+elat,double,deg,ecliptic latitude
+wx,double,pix,"x-pixel coordinate, all bands"
+wy,double,pix,"y-pixel coordinate, all bands"
+cntr,long,,unique entry counter (key) number
+source_id,char,,unique source ID (coadd ID and source number)
+coadd_id,char,,coadd ID
+src,long,,source number in coadd
+w1mpro,float,mag,"instrumental profile-fit photometry magnitude, band 1"
+w1sigmpro,float,mag,"instrumental profile-fit photometry flux uncertainty in mag units, band 1"
+w1snr,double,,"instrumental profile-fit photometry S/N ratio, band 1"
+w1rchi2,float,,"instrumental profile-fit photometry reduced chi^2, band 1"
+w2mpro,float,mag,"instrumental profile-fit photometry magnitude, band 2"
+w2sigmpro,float,mag,"instrumental profile-fit photometry flux uncertainty in mag units, band 2"
+w2snr,double,,"instrumental profile-fit photometry S/N ratio, band 2"
+w2rchi2,float,,"instrumental profile-fit photometry reduced chi^2, band 2"
+w3mpro,float,mag,"instrumental profile-fit photometry magnitude, band 3"
+w3sigmpro,float,mag,"instrumental profile-fit photometry flux uncertainty in mag units, band 3"
+w3snr,double,,"instrumental profile-fit photometry S/N ratio, band 3"
+w3rchi2,float,,"instrumental profile-fit photometry reduced chi^2, band 3"
+w4mpro,float,mag,"instrumental profile-fit photometry magnitude, band 4"
+w4sigmpro,float,mag,"instrumental profile-fit photometry flux uncertainty in mag units, band 4"
+w4snr,double,,"instrumental profile-fit photometry S/N ratio, band 4"
+w4rchi2,float,,"instrumental profile-fit photometry reduced chi^2, band 4"
+rchi2,float,,"instrumental profile-fit photometry reduced chi squared, total"
+nb,long,,number of blend components used in each fit
+na,long,,active deblend flag (=1 if actively deblended)
+w1sat,float,,"fraction of pixels affected by saturation, band 1"
+w2sat,float,,"fraction of pixels affected by saturation, band 2"
+w3sat,float,,"fraction of pixels affected by saturation, band 3"
+w4sat,float,,"fraction of pixels affected by saturation, band 4"
+satnum,char,,"minimum sample at which saturation occurs in frame stack, 1 char per band"
+ra_pm,double,deg,Right ascension at epoch MJD=55400.0 (2010.5589) from pff model incl. motion
+dec_pm,double,deg,Declination at epoch MJD=55400.0 (2010.5589) from pff model incl. motion
+sigra_pm,double,arcsec,One-sigma uncertainty in RA from pff model incl. motion
+sigdec_pm,double,arcsec,One-sigma uncertainty in DEC  from pff model incl. motion
+sigradec_pm,double,arcsec,The co-sigma of the equatorial position uncertainties from ppf model incl motion
+pmra,long,mas/yr,Apparent motion in RA
+sigpmra,long,mas/yr,Uncertainty in the RA motion estimate
+pmdec,long,mas/yr,Apparent motion in Dec
+sigpmdec,long,mas/yr,Uncertainty in the Dec  motion estimate
+w1rchi2_pm,float,,Reduced chi^2 of the W1 profile-fit photometry measurement including motion est
+w2rchi2_pm,float,,Reduced chi^2 of the W2 profile-fit photometry measurement including motion est
+w3rchi2_pm,float,,Reduced chi^2 of the W3 profile-fit photometry measurement including motion est
+w4rchi2_pm,float,,Reduced chi^2 of the W4 profile-fit photometry measurement including motion est
+rchi2_pm,float,,Combined Reduced chi^2 in all bands for the pff photometry includes src motion
+pmcode,char,,Motion estimate quality code
+cc_flags,char,,prioritized artifacts affecting the source in each band
+rel,char,,Small separation multiple detection flag
+ext_flg,long,,probability that source morphology is not consistent with single PSF
+var_flg,char,,probability that flux varied in any band greater than amount expected from unc.s
+ph_qual,char,,"photometric quality of each band (A=highest, U=upper limit)"
+det_bit,long,,bit-encoded integer indicating detection for each band
+moon_lev,char,,"level of moon contamination in coadd (ceiling(#frmmoon/#frames*10)), 1 per band"
+w1nm,long,,"number of profile-fit flux measurements for source with SNR >= 3, band 1"
+w1m,long,,"number of profile-fit flux measurements for source, band 1"
+w2nm,long,,"number of profile-fit flux measurements for source with SNR >= 3, band 2"
+w2m,long,,"number of profile-fit flux measurements for source, band 2"
+w3nm,long,,"number of profile-fit flux measurements for source with SNR >= 3, band 3"
+w3m,long,,"number of profile-fit flux measurements for source, band 3"
+w4nm,long,,"number of profile-fit flux measurements for source with SNR >= 3, band 4"
+w4m,long,,"number of profile-fit flux measurements for source, band 4"
+w1cov,float,,"mean coverage depth, band 1"
+w2cov,float,,"mean coverage depth, band 2"
+w3cov,float,,"mean coverage depth, band 3"
+w4cov,float,,"mean coverage depth, band 4"
+w1cc_map,long,,contamination and confusion bit array for the source in band 1
+w1cc_map_str,char,,contamination and confusion character array for the source in band 1
+w2cc_map,long,,contamination and confusion bit array for the source in band 2
+w2cc_map_str,char,,contamination and confusion character array for the source in band 2
+w3cc_map,long,,contamination and confusion bit array for the source in band 3
+w3cc_map_str,char,,contamination and confusion character array for the source in band 3
+w4cc_map,long,,contamination and confusion bit array for the source in band 4
+w4cc_map_str,char,,contamination and confusion character array for the source in band 4
+best_use_cntr,long,,'cntr' of source to use from 'best' duplicate resolution group for this source
+ngrp,int,,number of additional duplicate resolution groups in which this source resides
+w1flux,float,count,"profile-fit photometry raw flux, band 1"
+w1sigflux,float,count,"profile-fit photometry raw flux uncertainty, band 1"
+w1sky,double,count,"sky background value, band 1"
+w1sigsk,float,count,"sky background value uncertainty, band 1"
+w1conf,double,count,"sky confusion based on the uncertainty images, band 1"
+w2flux,float,count,"profile-fit photometry raw flux, band 2"
+w2sigflux,float,count,"profile-fit photometry raw flux uncertainty, band 2"
+w2sky,double,count,"sky background value, band 2"
+w2sigsk,float,count,"sky background value uncertainty, band 2"
+w2conf,double,count,"sky confusion based on the uncertainty images, band 2"
+w3flux,float,count,"profile-fit photometry raw flux, band 3"
+w3sigflux,float,count,"profile-fit photometry raw flux uncertainty, band 3"
+w3sky,double,count,"sky background value, band 3"
+w3sigsk,float,count,"sky background value uncertainty, band 3"
+w3conf,double,count,"sky confusion based on the uncertainty images, band 3"
+w4flux,float,count,"profile-fit photometry raw flux, band 4"
+w4pa,float,deg,"position angle (E of N) of galaxy from XSC, band 4"
+w4gmag,float,mag,"elliptical aperture mag of extracted galaxy, band 4"
+w4gerr,float,mag,"elliptical aperture mag uncertainty of extracted galaxy, band 4"
+w4gflg,long,,"elliptical aperture flag of extracted galaxy, band 4"
+tmass_key,long,,closest associated 2MASS All-Sky Release PSC key
+r_2mass,float,arcsec,radial offset between WISE src and associated 2MASS src
+pa_2mass,float,deg,position angle (E of N) of vector from WISE src to associated 2MASS src
+n_2mass,long,,number of 2MASS All-Sky PSC entries found within search radius of WISE src
+j_m_2mass,float,mag,J magnitude entry of the associated 2MASS All-Sky PSC source
+j_msig_2mass,float,mag,J photometric uncertainty of the associated 2MASS All-Sky PSC source
+h_m_2mass,float,mag,H magnitude entry of the associated 2MASS All-Sky PSC source
+h_msig_2mass,float,mag,H photometric uncertainty of the associated 2MASS All-Sky PSC source
+k_m_2mass,float,mag,Ks magnitude entry of the associated 2MASS All-Sky PSC source
+k_msig_2mass,float,mag,Ks photometric uncertainty of the associated 2MASS All-Sky PSC source
+x,double,,"unit sphere (x,y,z) position x value"
+y,double,,"unit sphere (x,y,z) position y value"
+z,double,,"unit sphere (x,y,z) position z value"
+spt_ind,long,,"spatial (x,y,z) index key"
+htm20,long,,HTM20 spatial index key
+w4sigflux,float,count,"profile-fit photometry raw flux uncertainty, band 4"
+w4sky,double,count,"sky background value, band 4"
+w4sigsk,float,count,"sky background value uncertainty, band 4"
+w4conf,double,count,"sky confusion based on the uncertainty images, band 4"
+w1mag,float,mag,"instrumental standard aperture mag w/ aperture correction applied, band 1"
+w1sigm,float,mag,"instrumental standard aperture mag uncertainty, band 1"
+w1flg,long,,"instrumental standard aperture flag, band 1"
+w1mcor,float,mag,"instrumental aperture correction, band 1, standard aperture"
+w2mag,float,mag,"instrumental standard aperture mag w/ aperture correction applied, band 2"
+w2sigm,float,mag,"instrumental standard aperture mag uncertainty, band 2"
+w2flg,long,,"instrumental standard aperture flag, band 2"
+w2mcor,float,mag,"instrumental aperture correction, band 2, standard aperture"
+w3mag,float,mag,"instrumental standard aperture mag w/ aperture correction applied, band 3"
+w3sigm,float,mag,"instrumental standard aperture mag uncertainty, band 3"
+w3flg,long,,"instrumental standard aperture flag, band 3"
+w3mcor,float,mag,"instrumental aperture correction, band 3, standard aperture"
+w4mag,float,mag,"instrumental standard aperture mag w/ aperture correction applied, band 4"
+w4sigm,float,mag,"instrumental standard aperture mag uncertainty, band 4"
+w4flg,long,,"instrumental standard aperture flag, band 4"
+w4mcor,float,mag,"instrumental aperture correction, band 4, standard aperture"
+w1mag_1,float,mag,"aperture 1 instrumental aperture mag, band 1"
+w1sigm_1,float,mag,"aperture 1 instrumental aperture mag uncertainty, band 1"
+w1flg_1,long,,"aperture 1 instrumental aperture flag, band 1"
+w2mag_1,float,mag,"aperture 1 instrumental aperture mag, band 2"
+w2sigm_1,float,mag,"aperture 1 instrumental aperture mag uncertainty, band 2"
+w2flg_1,long,,"aperture 1 instrumental aperture flag, band 2"
+w3mag_1,float,mag,"aperture 1 instrumental aperture mag, band 3"
+w3sigm_1,float,mag,"aperture 1 instrumental aperture mag uncertainty, band 3"
+w3flg_1,long,,"aperture 1 instrumental aperture flag, band 3"
+w4mag_1,float,mag,"aperture 1 instrumental aperture mag, band 4"
+w4sigm_1,float,mag,"aperture 1 instrumental aperture mag uncertainty, band 4"
+w4flg_1,long,,"aperture 1 instrumental aperture flag, band 4"
+w1mag_2,float,mag,"aperture 2 instrumental aperture mag, band 1"
+w1sigm_2,float,mag,"aperture 2 instrumental aperture mag uncertainty, band 1"
+w1flg_2,long,,"aperture 2 instrumental aperture flag, band 1"
+w2mag_2,float,mag,"aperture 2 instrumental aperture mag, band 2"
+w2sigm_2,float,mag,"aperture 2 instrumental aperture mag uncertainty, band 2"
+w2flg_2,long,,"aperture 2 instrumental aperture flag, band 2"
+w3mag_2,float,mag,"aperture 2 instrumental aperture mag, band 3"
+w3sigm_2,float,mag,"aperture 2 instrumental aperture mag uncertainty, band 3"
+w3flg_2,long,,"aperture 2 instrumental aperture flag, band 3"
+w4mag_2,float,mag,"aperture 2 instrumental aperture mag, band 4"
+w4sigm_2,float,mag,"aperture 2 instrumental aperture mag uncertainty, band 4"
+w4flg_2,long,,"aperture 2 instrumental aperture flag, band 4"
+w1mag_3,float,mag,"aperture 3 instrumental aperture mag, band 1"
+w1sigm_3,float,mag,"aperture 3 instrumental aperture mag uncertainty, band 1"
+w1flg_3,long,,"aperture 3 instrumental aperture flag, band 1"
+w2mag_3,float,mag,"aperture 3 instrumental aperture mag, band 2"
+w2sigm_3,float,mag,"aperture 3 instrumental aperture mag uncertainty, band 2"
+w2flg_3,long,,"aperture 3 instrumental aperture flag, band 2"
+w3mag_3,float,mag,"aperture 3 instrumental aperture mag, band 3"
+w3sigm_3,float,mag,"aperture 3 instrumental aperture mag uncertainty, band 3"
+w3flg_3,long,,"aperture 3 instrumental aperture flag, band 3"
+w4mag_3,float,mag,"aperture 3 instrumental aperture mag, band 4"
+w4sigm_3,float,mag,"aperture 3 instrumental aperture mag uncertainty, band 4"
+w4flg_3,long,,"aperture 3 instrumental aperture flag, band 4"
+w1mag_4,float,mag,"aperture 4 instrumental aperture mag, band 1"
+w1sigm_4,float,mag,"aperture 4 instrumental aperture mag uncertainty, band 1"
+w1flg_4,long,,"aperture 4 instrumental aperture flag, band 1"
+w2mag_4,float,mag,"aperture 4 instrumental aperture mag, band 2"
+w2sigm_4,float,mag,"aperture 4 instrumental aperture mag uncertainty, band 2"
+w2flg_4,long,,"aperture 4 instrumental aperture flag, band 2"
+w3mag_4,float,mag,"aperture 4 instrumental aperture mag, band 3"
+w3sigm_4,float,mag,"aperture 4 instrumental aperture mag uncertainty, band 3"
+w3flg_4,long,,"aperture 4 instrumental aperture flag, band 3"
+w4mag_4,float,mag,"aperture 4 instrumental aperture mag, band 4"
+w4sigm_4,float,mag,"aperture 4 instrumental aperture mag uncertainty, band 4"
+w4flg_4,long,,"aperture 4 instrumental aperture flag, band 4"
+w1mag_5,float,mag,"aperture 5 instrumental aperture mag, band 1"
+w1sigm_5,float,mag,"aperture 5 instrumental aperture mag uncertainty, band 1"
+w1flg_5,long,,"aperture 5 instrumental aperture flag, band 1"
+w2mag_5,float,mag,"aperture 5 instrumental aperture mag, band 2"
+w2sigm_5,float,mag,"aperture 5 instrumental aperture mag uncertainty, band 2"
+w2flg_5,long,,"aperture 5 instrumental aperture flag, band 2"
+w3mag_5,float,mag,"aperture 5 instrumental aperture mag, band 3"
+w3sigm_5,float,mag,"aperture 5 instrumental aperture mag uncertainty, band 3"
+w3flg_5,long,,"aperture 5 instrumental aperture flag, band 3"
+w4mag_5,float,mag,"aperture 5 instrumental aperture mag, band 4"
+w4sigm_5,float,mag,"aperture 5 instrumental aperture mag uncertainty, band 4"
+w4flg_5,long,,"aperture 5 instrumental aperture flag, band 4"
+w1mag_6,float,mag,"aperture 6 instrumental aperture mag, band 1"
+w1sigm_6,float,mag,"aperture 6 instrumental aperture mag uncertainty, band 1"
+w1flg_6,long,,"aperture 6 instrumental aperture flag, band 1"
+w2mag_6,float,mag,"aperture 6 instrumental aperture mag, band 2"
+w2sigm_6,float,mag,"aperture 6 instrumental aperture mag uncertainty, band 2"
+w2flg_6,long,,"aperture 6 instrumental aperture flag, band 2"
+w3mag_6,float,mag,"aperture 6 instrumental aperture mag, band 3"
+w3sigm_6,float,mag,"aperture 6 instrumental aperture mag uncertainty, band 3"
+w3flg_6,long,,"aperture 6 instrumental aperture flag, band 3"
+w4mag_6,float,mag,"aperture 6 instrumental aperture mag, band 4"
+w4sigm_6,float,mag,"aperture 6 instrumental aperture mag uncertainty, band 4"
+w4flg_6,long,,"aperture 6 instrumental aperture flag, band 4"
+w1mag_7,float,mag,"aperture 7 instrumental aperture mag, band 1"
+w1sigm_7,float,mag,"aperture 7 instrumental aperture mag uncertainty, band 1"
+w1flg_7,long,,"aperture 7 instrumental aperture flag, band 1"
+w2mag_7,float,mag,"aperture 7 instrumental aperture mag, band 2"
+w2sigm_7,float,mag,"aperture 7 instrumental aperture mag uncertainty, band 2"
+w2flg_7,long,,"aperture 7 instrumental aperture flag, band 2"
+w3mag_7,float,mag,"aperture 7 instrumental aperture mag, band 3"
+w3sigm_7,float,mag,"aperture 7 instrumental aperture mag uncertainty, band 3"
+w3flg_7,long,,"aperture 7 instrumental aperture flag, band 3"
+w4mag_7,float,mag,"aperture 7 instrumental aperture mag, band 4"
+w4sigm_7,float,mag,"aperture 7 instrumental aperture mag uncertainty, band 4"
+w4flg_7,long,,"aperture 7 instrumental aperture flag, band 4"
+w1mag_8,float,mag,"aperture 8 instrumental aperture mag, band 1"
+w1sigm_8,float,mag,"aperture 8 instrumental aperture mag uncertainty, band 1"
+w1flg_8,long,,"aperture 8 instrumental aperture flag, band 1"
+w2mag_8,float,mag,"aperture 8 instrumental aperture mag, band 2"
+w2sigm_8,float,mag,"aperture 8 instrumental aperture mag uncertainty, band 2"
+w2flg_8,long,,"aperture 8 instrumental aperture flag, band 2"
+w3mag_8,float,mag,"aperture 8 instrumental aperture mag, band 3"
+w3sigm_8,float,mag,"aperture 8 instrumental aperture mag uncertainty, band 3"
+w3flg_8,long,,"aperture 8 instrumental aperture flag, band 3"
+w4mag_8,float,mag,"aperture 8 instrumental aperture mag, band 4"
+w4sigm_8,float,mag,"aperture 8 instrumental aperture mag uncertainty, band 4"
+w4flg_8,long,,"aperture 8 instrumental aperture flag, band 4"
+w1magp,float,mag,"profile-fit repeatability mag -- inverse-variance weighted mean mag, band 1"
+w1sigp1,float,mag,"standard deviation of population of profile-fit repeatability mag, band 1"
+w1sigp2,float,mag,"standard deviation of the mean of profile-fit repeatability mag, band 1"
+w1k,float,,"Stetson K variability index, band 1"
+w1ndf,long,,"number degrees of freedom in variability chi^2, band 1"
+w1mlq,float,,"-ln(Q), where Q = 1 - P(chi^2), band 1"
+w1mjdmin,double,,"minimum modified Julian Date of frame extractions, band 1"
+w1mjdmax,double,,"maximum modified Julian Date of frame extractions, band 1"
+w1mjdmean,double,,"mean modified Julian Date of frame extractions, band 1"
+w2magp,float,mag,"profile-fit repeatability mag -- inverse-variance weighted mean mag, band 2"
+w2sigp1,float,mag,"standard deviation of the population of profile-fit repeatability mag, band 2"
+w2sigp2,float,mag,"standard deviation of the mean of profile-fit repeatability mag, band 2"
+w2k,float,,"Stetson K variability index, band 2"
+w2ndf,long,,"number degrees of freedom in variability chi^2, band 2"
+w2mlq,float,,"-ln(Q), where Q = 1 - P(chi^2), band 2"
+w2mjdmin,double,,"minimum modified Julian Date of frame extractions, band 2"
+w2mjdmax,double,,"maximum modified Julian Date of frame extractions, band 2"
+w2mjdmean,double,,"mean modified Julian Date of frame extractions, band 2"
+w3magp,float,mag,"profile-fit repeatability mag -- inverse-variance weighted mean mag, band 3"
+w3sigp1,float,mag,"standard deviation of the population of profile-fit repeatability mag, band 3"
+w3sigp2,float,mag,"standard deviation of the mean of profile-fit repeatability mag, band 3"
+w3k,float,,"Stetson K variability index, band 3"
+w3ndf,long,,"number degrees of freedom in variability chi^2, band 3"
+w3mlq,float,,"-ln(Q), where Q = 1 - P(chi^2), band 3"
+w3mjdmin,double,,"minimum modified Julian Date of frame extractions, band 3"
+w3mjdmax,double,,"maximum modified Julian Date of frame extractions, band 3"
+w3mjdmean,double,,"mean modified Julian Date of frame extractions, band 3"
+w4magp,float,mag,"profile-fit repeatability mag -- inverse-variance weighted mean mag, band 4"
+w4sigp1,float,mag,"standard deviation of the population of profile-fit repeatability mag, band 4"
+w4sigp2,float,mag,"standard deviation of the mean of profile-fit repeatability mag, band 4"
+w4k,float,,"Stetson K variability index, band 4"
+w4ndf,long,,"number degrees of freedom in variability chi^2, band 4"
+w4mlq,float,,"-ln(Q), where Q = 1 - P(chi^2), band 4"
+w4mjdmin,double,,"minimum modified Julian Date of frame extractions, band 4"
+w4mjdmax,double,,"maximum modified Julian Date of frame extractions, band 4"
+w4mjdmean,double,,"mean modified Julian Date of frame extractions, band 4"
+rho12,long,,band 1 - band 2 correlation coefficient
+rho23,long,,band 2 - band 3 correlation coefficient
+rho34,long,,band 3 - band 4 correlation coefficient
+q12,long,,"-log10(1 - P(rho12)), given no real correlation"
+q23,long,,"-log10(1 - P(rho23)), given no real correlation"
+q34,long,,"-log10(1 - P(rho34)), given no real correlation"
+xscprox,double,arcsec,distance between source center and XSC galaxy
+w1rsemi,double,arcsec,"semi-major axis of galaxy from XSC, band 1"
+w1ba,float,,"axis ratio of galaxy from XSC, band 1"
+w1pa,float,deg,"position angle (E of N) of galaxy from XSC, band 1"
+w1gmag,float,mag,"elliptical aperture mag of extracted galaxy, band 1"
+w1gerr,float,mag,"elliptical aperture mag uncertainty of extracted galaxy, band 1"
+w1gflg,long,,"elliptical aperture flag of extracted galaxy, band 1"
+w2rsemi,double,arcsec,"semi-major axis of galaxy from XSC, band 2"
+w2ba,float,,"axis ratio of galaxy from XSC, band 2"
+w2pa,float,deg,"position angle (E of N) of galaxy from XSC, band 2"
+w2gmag,float,mag,"elliptical aperture mag of extracted galaxy, band 2"
+w2gerr,float,mag,"elliptical aperture mag uncertainty of extracted galaxy, band 2"
+w2gflg,long,,"elliptical aperture flag of extracted galaxy, band 2"
+w3rsemi,double,arcsec,"semi-major axis of galaxy from XSC, band 3"
+w3ba,float,,"axis ratio of galaxy from XSC, band 3"
+w3pa,float,deg,"position angle (E of N) of galaxy from XSC, band 3"
+w3gmag,float,mag,"elliptical aperture mag of extracted galaxy, band 3"
+w3gerr,float,mag,"elliptical aperture mag uncertainty of extracted galaxy, band 3"
+w3gflg,long,,"elliptical aperture flag of extracted galaxy, band 3"
+w4rsemi,double,arcsec,"semi-major axis of galaxy from XSC, band 4"
+w4ba,float,,"axis ratio of galaxy from XSC, band 4"

@@ -3,7 +3,9 @@
 ``herdsman-b --stage all`` on the runner does: membership pull -> chemistry
 join (chunk-checkpointed) -> field pull -> score + report.  Any stage can be
 re-run alone; completed checkpoints are skipped, so a killed job resumes at
-the chunk where it died.
+the chunk where it died.  ``--stage spectro`` is the v2 spectroscopic
+crossmatch (GALAH DR3 / APOGEE DR17); it is dispatched separately because it
+needs only the membership checkpoint, not the GSP-Phot stages.
 """
 
 from __future__ import annotations
@@ -45,7 +47,8 @@ def _std_field(field: pd.DataFrame) -> pd.DataFrame:
                           field["dec"].to_numpy(float), d_kpc.to_numpy(float))
     return pd.DataFrame({
         "mh": pd.to_numeric(field["mh_gspphot"], errors="coerce"),
-        "r_gal": r_gal})
+        "r_gal": r_gal,
+        "dist_kpc": d_kpc.to_numpy(float)})
 
 
 def score_and_write(cfg: Config, members_std: pd.DataFrame,
@@ -75,8 +78,15 @@ def score_and_write(cfg: Config, members_std: pd.DataFrame,
         "n_assembly_candidates": int(cands.shape[0]) if len(tab) else 0,
         "x_trim_percentiles": ({p: float(np.nanpercentile(tab["x_trim"], p))
                                 for p in (50, 90, 99)} if len(tab) else {}),
+        "n_mag_systematic": int(tab["mag_systematic"].sum()) if len(tab) else 0,
+        "n_beyond_phot_trust": (int(tab["beyond_phot_trust"].sum())
+                                if len(tab) else 0),
+        "n_gc_like": int(tab["gc_like"].sum()) if len(tab) else 0,
+        "n_field_bin_matched": (int(tab["field_bin_matched"].sum())
+                                if len(tab) else 0),
         "top": (tab.head(10)[["cluster", "n_used", "x_trim", "z_census",
-                              "field_likeness", "two_pop",
+                              "field_likeness", "two_pop", "corr_mh_gmag",
+                              "mag_systematic", "beyond_phot_trust", "gc_like",
                               "assembly_candidate"]].to_dict("records")
                 if len(tab) else []),
     }
@@ -89,19 +99,31 @@ def score_and_write(cfg: Config, members_std: pd.DataFrame,
         "A candidate is a bound group whose Teff-detrended, interloper-trimmed",
         "[M/H] spread is a >=4-sigma outlier against comparable-N clusters,",
         "exceeds twice its error floor, is unimodal, and mirrors the local",
-        "field spread (docs/herdsman.md section 5). Two-population outliers",
+        "field spread (docs/herdsman.md section 5). v2 vetoes (each a failure",
+        "mode v1 demonstrated): |corr(mh_resid, G)| > 0.4 (GSP-Phot",
+        "extinction/magnitude systematic), dist >= 2.5 kpc (beyond the",
+        "GSP-Phot trust region), and gc_like (globular-cluster heuristic);",
+        "the field baseline is distance-matched. Two-population outliers",
         "are reported separately (natural heterogeneous channel).", "",
         "Top of census (by z):", "",
     ]
     for r in summary["top"]:
+        corr = r["corr_mh_gmag"]
+        corr_s = f"{corr:.2f}" if np.isfinite(corr) else "nan"
         lines.append(f"- {r['cluster']}: n={r['n_used']}, "
                      f"x_trim={r['x_trim']:.2f}, z={r['z_census']:.1f}, "
                      f"field_likeness={r['field_likeness']:.2f}, "
-                     f"two_pop={r['two_pop']}, "
+                     f"two_pop={r['two_pop']}, corr_mh_gmag={corr_s}, "
+                     f"mag_sys={r['mag_systematic']}, "
+                     f"far={r['beyond_phot_trust']}, gc={r['gc_like']}, "
                      f"candidate={r['assembly_candidate']}")
     two_pop_n = int(tab["two_pop"].sum()) if len(tab) else 0
     lines += ["", f"Two-population flags (stripped-nucleus/merger channel): "
-                  f"{two_pop_n}.", "",
+                  f"{two_pop_n}. Vetoes: mag_systematic="
+                  f"{summary['n_mag_systematic']}, beyond_phot_trust="
+                  f"{summary['n_beyond_phot_trust']}, gc_like="
+                  f"{summary['n_gc_like']}; distance-matched field bins used "
+                  f"for {summary['n_field_bin_matched']} clusters.", "",
               "No-null rule: an empty candidate list at these thresholds is a "
               "domain statement (this census, these quality cuts), not a "
               "result — next moves are deeper chemistry (GALAH/APOGEE "
@@ -136,6 +158,12 @@ def herdsman_b_run(cfg: Config | None = None, stage: str = "all") -> dict:
         field_raw = field if field is not None else \
             pd.read_parquet(out_dir / "field.parquet")
         return score_and_write(cfg, members_std, _std_field(field_raw))
+    if stage == "spectro":
+        # Spectroscopic crossmatch (GALAH DR3 [+ APOGEE DR17 when it
+        # resolves]); needs the membership checkpoint (members.parquet from
+        # the catalog stage) — GSP-Phot chem/field stages are not required.
+        from .spectro import spectro_run
+        return spectro_run(cfg)
     return {"stage": stage, "status": "done"}
 
 

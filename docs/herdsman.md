@@ -209,6 +209,23 @@ astrophysical discovery regardless of interpretation. Homogeneity has only
 ever been measured for tens of clusters; the census-wide audit is unclaimed
 in any framing (checked in the 2026-07-25/26 literature sweeps).
 
+**v2 (post first-run vetting, 2026-07-26):** the v1 GSP-Phot run scored
+5,106 clusters and its lone formal candidate (Hogg_4) died on a
+magnitude-correlated extinction systematic (corr(mh, G) = -0.68 at 4.2 kpc);
+the top-10 was globulars + distant reddened open clusters. v2 scorer adds:
+|corr(mh_resid, G)| > 0.4 kill switch, a < 2.5 kpc GSP-Phot trust gate
+(`beyond_phot_trust`), a field baseline matched in *both* R_gal and
+heliocentric distance (so distance-driven systematics inflate cluster and
+reference alike), and a `gc_like` heuristic veto — all flags reported, all
+clusters still scored. The decisive v2 stage is the spectroscopic
+crossmatch (`--stage spectro`, src/seti/herdsman_b/spectro.py): GALAH DR3
+(flag_sp = flag_fe_h = 0) and, when the VizieR mirror resolves, APOGEE DR17
+[Fe/H] joined to the membership checkpoint; clusters with >= 6 clean
+spectroscopic members at prob >= 0.7 are scored with the same
+self-calibrating census-z machinery against the survey's own non-member
+field — spectroscopic iron cannot be faked by extinction, so a surviving
+field-sampled spread there is a real candidate.
+
 ## 6. Sister channels from the same derivation (queued)
 
 * **MIDDEN** — survey-scale short-lived-radionuclide search (Tc/Pm/actinides

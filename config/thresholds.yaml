@@ -367,6 +367,10 @@ tidemark:
     n_feature_bins: 5        # quantile bins per detectability covariate
     min_pool: 25             # min parent rows per stratum before collapsing
     n_null: 500              # matched draws for the gradient/age statistics
+    # A p-value sitting on the 1/(n_null+1) floor is a BOUND, not a measurement.
+    # Floor-limited statistics are automatically re-run with 8x the draws, up to
+    # this cap, before any verdict logic is allowed to look at them.
+    max_n_null: 8000
   covariates:
     # strict: heliocentric distance IS matched out, so a radial gradient must be
     # a difference between DIRECTIONS at matched distance. Immune to every
@@ -382,6 +386,7 @@ tidemark:
     n_bins_1d: 24
     widths: [1, 2, 3, 4, 6]      # step half-widths, in bins
     n_null_scan: 300
+    max_n_null_scan: 4000    # escalation cap for floor-limited scan statistics
     shell_centres_per_axis: 4    # 3D bubble-centre grid (+ Sun + anomaly centroid)
     shell_n_bins: 20
     cap_directions: 96

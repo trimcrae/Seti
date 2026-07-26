@@ -50,8 +50,7 @@ from __future__ import annotations
 import numpy as np
 
 from .gradient import bin_index, expected_quantile_edges, poisson_glm
-from .nulls import (MIN_ANOMALIES_PER_TEST, MatchedNull, empirical_p,
-                    insufficient, p_report)
+from .nulls import MIN_ANOMALIES_PER_TEST, MatchedNull, empirical_p, insufficient, p_report
 
 
 def _xlogy(n: np.ndarray, r: np.ndarray) -> np.ndarray:
@@ -226,17 +225,26 @@ def edge_scan_1d(coord: np.ndarray, null: MatchedNull, *, name: str = "coord",
                                np.cumsum(null_counts, axis=1)], axis=1)
     null_max, _ = _best_step(null_cum, e_cum, widths, min_expected)
 
+    pv = empirical_p(obs, null_max, tail="greater")
     out = {"coordinate": name, "insufficient": False, "n_bins": int(nb),
+           "n_anom": n_usable, "n_anom_total": int(null.mask.sum()),
            "smooth_model": tinfo, "max_abs_score": float(obs),
            "null_max_mean": float(np.mean(null_max)) if null_max.size else float("nan"),
            "null_max_p95": float(np.percentile(null_max, 95)) if null_max.size else float("nan"),
-           "p_value": empirical_p(obs, null_max, tail="greater")}
+           "p_value": pv, "p": p_report(pv, len(null_max)),
+           "coordinate_balance": null.coordinate_balance(x, name)}
+    out["floor_limited"] = out["p"]["floor_limited"]
+    out["p_repr"] = out["p"]["p_repr"]
     if best is not None:
-        lo, hi = float(edges[best["bin"]]), float(edges[best["bin"]])
-        out["best_edge"] = dict(best, position=lo,
-                                inner_range=[float(edges[max(best["bin"] - best["half_width_bins"], 0)]), hi],
-                                outer_range=[lo, float(edges[min(best["bin"] + best["half_width_bins"], nb)])])
-    out["significant"] = bool(np.isfinite(out["p_value"]) and out["p_value"] < 0.05)
+        lo_i = float(edges[max(best["bin"] - best["half_width_bins"], 0)])
+        hi = float(edges[best["bin"]])
+        out["best_edge"] = dict(best, position=hi, inner_range=[lo_i, hi],
+                                outer_range=[hi, float(edges[min(best["bin"] + best["half_width_bins"], nb)])])
+        # Which anomalies actually produced the step -- used to test whether
+        # separate "geometries" are seeing one feature or several.
+        out["_inside_mask"] = tilted.mask & (x >= lo_i) & (x < hi)
+    out["significant"] = bool(np.isfinite(pv) and pv < 0.05 and not out["floor_limited"])
+    out["verdict"] = "FLOOR_LIMITED" if out["floor_limited"] else "OK"
     return out
 
 
@@ -306,7 +314,7 @@ def edge_scan_shell3d(xyz: np.ndarray, null: MatchedNull, *, centres=None,
 
     draws = _materialise_draws(tilted, n_null, seed)
     w = tilted.weights
-    best_overall, best_info = 0.0, None
+    best_overall, best_info, best_inside = 0.0, None, None
     null_max = np.zeros(draws.shape[0])
     for c in centres:
         r = np.sqrt(np.sum((xyz - c) ** 2, axis=1))
@@ -322,22 +330,32 @@ def edge_scan_shell3d(xyz: np.ndarray, null: MatchedNull, *, centres=None,
         obs, best = _best_step(n_cum, e_cum, widths, min_expected)
         if obs > best_overall and best is not None:
             best_overall = float(obs)
-            best_info = dict(best, centre=[float(v) for v in c],
-                             radius=float(edges[best["bin"]]))
+            lo_i = float(edges[max(best["bin"] - best["half_width_bins"], 0)])
+            hi = float(edges[best["bin"]])
+            best_info = dict(best, centre=[float(v) for v in c], radius=hi,
+                             inner_range=[lo_i, hi])
+            best_inside = tilted.mask & (r >= lo_i) & (r < hi)
         if null_counts.shape[0]:
             null_cum = np.concatenate([np.zeros((null_counts.shape[0], 1)),
                                        np.cumsum(null_counts, axis=1)], axis=1)
             nm, _ = _best_step(null_cum, e_cum, widths, min_expected)
             null_max = np.maximum(null_max, nm)
 
+    pv = empirical_p(best_overall, null_max, tail="greater")
     out = {"insufficient": False, "n_centres": int(len(centres)),
            "n_radial_bins": int(n_bins), "smooth_model": tinfo,
+           "n_anom": n_usable, "n_anom_total": int(null.mask.sum()),
            "max_abs_score": best_overall,
            "null_max_mean": float(np.mean(null_max)) if null_max.size else float("nan"),
            "null_max_p95": float(np.percentile(null_max, 95)) if null_max.size else float("nan"),
-           "p_value": empirical_p(best_overall, null_max, tail="greater"),
+           "p_value": pv, "p": p_report(pv, len(null_max)),
            "best_shell": best_info}
-    out["significant"] = bool(np.isfinite(out["p_value"]) and out["p_value"] < 0.05)
+    out["floor_limited"] = out["p"]["floor_limited"]
+    out["p_repr"] = out["p"]["p_repr"]
+    if best_inside is not None:
+        out["_inside_mask"] = best_inside
+    out["significant"] = bool(np.isfinite(pv) and pv < 0.05 and not out["floor_limited"])
+    out["verdict"] = "FLOOR_LIMITED" if out["floor_limited"] else "OK"
     return out
 
 
@@ -377,7 +395,7 @@ def edge_scan_cap(l_deg, b_deg, null: MatchedNull, *, n_directions: int = 96,
     dirs = _fibonacci_directions(n_directions)
     draws = _materialise_draws(null, n_null, seed)
     w = null.weights
-    best_overall, best_info = 0.0, None
+    best_overall, best_info, best_inside = 0.0, None, None
     null_max = np.zeros(draws.shape[0])
     for d in dirs:
         ang = np.degrees(np.arccos(np.clip(u @ d, -1, 1)))
@@ -395,21 +413,31 @@ def edge_scan_cap(l_deg, b_deg, null: MatchedNull, *, n_directions: int = 96,
             gl = float(np.degrees(np.arctan2(d[1], d[0])) % 360.0)
             gb = float(np.degrees(np.arcsin(np.clip(d[2], -1, 1))))
             best_overall = float(obs)
+            lo_i = float(edges[max(best["bin"] - best["half_width_bins"], 0)])
+            hi = float(edges[best["bin"]])
             best_info = dict(best, cap_centre_l_deg=gl, cap_centre_b_deg=gb,
-                             cap_radius_deg=float(edges[best["bin"]]))
+                             cap_radius_deg=hi, inner_range=[lo_i, hi])
+            best_inside = null.mask & (ang >= lo_i) & (ang < hi)
         if null_counts.shape[0]:
             null_cum = np.concatenate([np.zeros((null_counts.shape[0], 1)),
                                        np.cumsum(null_counts, axis=1)], axis=1)
             nm, _ = _best_step(null_cum, e_cum, widths, min_expected)
             null_max = np.maximum(null_max, nm)
 
+    pv = empirical_p(best_overall, null_max, tail="greater")
     out = {"insufficient": False, "n_directions": int(len(dirs)),
+           "n_anom": n_usable, "n_anom_total": int(null.mask.sum()),
            "max_abs_score": best_overall,
            "null_max_mean": float(np.mean(null_max)) if null_max.size else float("nan"),
            "null_max_p95": float(np.percentile(null_max, 95)) if null_max.size else float("nan"),
-           "p_value": empirical_p(best_overall, null_max, tail="greater"),
+           "p_value": pv, "p": p_report(pv, len(null_max)),
            "best_cap": best_info}
-    out["significant"] = bool(np.isfinite(out["p_value"]) and out["p_value"] < 0.05)
+    out["floor_limited"] = out["p"]["floor_limited"]
+    out["p_repr"] = out["p"]["p_repr"]
+    if best_inside is not None:
+        out["_inside_mask"] = best_inside
+    out["significant"] = bool(np.isfinite(pv) and pv < 0.05 and not out["floor_limited"])
+    out["verdict"] = "FLOOR_LIMITED" if out["floor_limited"] else "OK"
     return out
 
 

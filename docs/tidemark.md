@@ -280,14 +280,20 @@ produces.**
    `median_pool`, `frac_anom_in_thin_strata`, `effective_parent_size` and a
    per-covariate standardised-mean-difference balance check. **If
    `frac_anom_in_thin_strata` is not ~0, the correction is not trustworthy.**
-5. **The trials correction is over-conservative.** The Šidák correction over the
-   family of tests treats them as independent, and they are not — a bubble offset
-   from the Sun produces a radial gradient, a longitude dipole and a shell edge
-   simultaneously. It over-corrects rather than under-corrects, which is the right
-   direction to err, but a genuine detection will look weaker than it is.
-6. **Monte Carlo p-values have a resolution floor** of `1/(n_null + 1)`, reported
-   as `p_resolution_floor`. A p-value at the floor means "as extreme as any draw
-   produced", not "exactly this small".
+5. **The trials correction is measured, not assumed.** The statistics are
+   strongly correlated — a bubble offset from the Sun produces a radial gradient,
+   a longitude dipole and a shell edge simultaneously — so a Šidák correction
+   over the raw count of tests would be wrong in both directions depending on the
+   case. Each edge geometry therefore reports *which anomalies produced its
+   step*, geometries overlapping by Jaccard ≥ 0.5 are counted once, and the
+   correction runs over `n_effective_independent_tests`. This is still
+   approximate: the grouping threshold is a choice, and gradient tests carry no
+   firing set so they are always counted separately (conservative).
+6. **Monte Carlo p-values have a resolution floor** of `1/(n_null + 1)`. A
+   p-value at the floor is a **bound**, not a measurement, and is reported as
+   `p < x` in `p_repr`. Floor-limited statistics are automatically re-run with 8×
+   the draws up to `max_n_null`; if they survive the cap they keep the inequality
+   and **cannot** satisfy the `not_floor_limited` gate. See §4A.
 7. **Distance is `1/parallax`.** No Bayesian distance prior, no parallax
    zero-point correction beyond what the parent channel applied. Adequate for
    `parallax_over_error > 10`; not adequate beyond ~2 kpc.
@@ -302,6 +308,47 @@ produces.**
 9. **The parent sample is a hard requirement.** A channel that publishes only its
    survivors has no denominator and gets `NO_PARENT_SAMPLE`. A synthetic
    denominator is never substituted — that would be fabricating data.
+
+## 4A. Verdict semantics — what each result string commits to
+
+The first committed TIDEMARK run emitted `verdict: DETECTION`. It should not
+have, and the reasons are worth keeping in the open because every one of them is
+a way a population statistic can look like a discovery while being an artefact.
+What went wrong, and what now prevents it:
+
+| Failure | Fix |
+|---|---|
+| p-value equal to `1/(n_null+1)` reported as a point estimate and fed to a trials correction | every p ships with `p_floor`, `floor_limited` and `p_repr`; a floor-limited statistic is **re-run with 8× the draws** (up to `max_n_null`), and if it survives the cap it is reported as `p < x` and **cannot** be called significant |
+| three "independent" edge geometries returning the *identical* p | each edge test reports which anomalies produced its step; geometries whose firing sets overlap by Jaccard ≥ 0.5 are **one feature** and the correction counts them once (`n_effective_independent_tests`) |
+| 2555 anomalies in the catalogue, 30 with a parallax, and a 3D scan run on the 30 while guarded by the 2555 | every statistic counts the anomalies carrying **its own** coordinate and returns `INSUFFICIENT_ANOMALIES` below 30, with `p_value: null` and an explicit reason the aggregator surfaces in `insufficient_tests` |
+| `p = None` silently skipped by the aggregator | insufficient tests are a first-class entry; they never appear in `p_values` and never contribute to a verdict |
+| the tested coordinate was the *worst*-balanced covariate (SMD 0.197) and this was buried in diagnostics | `coordinate_balance` travels next to every p-value, graded good/marginal/poor on the Rubin (2001) convention, and `|SMD| ≥ 0.10` blocks `DETECTION` |
+| the channel declared `[g_mag, bp_rp, n_epochs]` but the code used the global list whose magnitude column is `phot_g_mean_mag`, so **apparent magnitude was never matched on at all** | `_resolve_covariates` unions the channel's declared columns with the global defaults, resolves them into physical *families* through an alias table, and **refuses `DETECTION` if no magnitude covariate exists** |
+| the anomaly set was a bare top-1% score cut | `anomaly_definition` is recorded (`percentile_cut` / `score_threshold` / `vetted_candidate_list` / `explicit_mask`); only a vetted list sets `vetted=True`, and only a vetted population can earn `DETECTION` |
+
+A percentile cut deserves its own note. It selects, by construction, exactly the
+fraction of the parent you asked for, whatever the data looks like. Spatial
+structure in the top percentile of a score is therefore at least as likely to
+trace the survey's footprint, cadence and depth as anything on the sky — and for
+`dimming_secular` specifically, `STATUS.md` records that the population sits **at
+the ZTF systematics floor** (19 marginal faders assessed, 18 of 19 not confirmed
+in a second band). That channel now carries `caveat_tag: AT_SYSTEMATICS_FLOOR`
+into its result string, so the caveat cannot be lost between the doc and the JSON.
+
+### The vocabulary
+
+| Result | Means |
+|---|---|
+| `DETECTION` | resolved, family-corrected, covariate-balanced structure in a **vetted** population, with every gate passed |
+| `STRUCTURE_UNRESOLVED` | the statistic never exceeded any null realisation even after escalation — a bound, not a measurement |
+| `STRUCTURE_UNCORRECTED` | significant, but the parent lacks a covariate the null needs (typically magnitude): may be a depth map |
+| `STRUCTURE_UNVETTED_POPULATION` | significant, but the anomaly set is a bare score percentile |
+| `STRUCTURE_CONFOUNDED` | significant, but the tested coordinate is itself poorly balanced |
+| `CLEAN_NULL` | no structure beyond the parent-matched null |
+| `NOT_TESTABLE` | no statistic could be computed |
+
+`verdict_gates` and `failed_gates` are always written, so a non-detection says
+*which* gate stopped it rather than leaving the reader to guess.
 
 ## 5. What can be discriminated, and what cannot
 

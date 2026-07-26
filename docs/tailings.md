@@ -194,9 +194,25 @@ simultaneously the strongest form of the argument and the detection threshold.
 
 ## 2. Novelty adjudication
 
-Runner-fetched evidence in `results/tailingslit/` (107/107 fetches successful,
-run `30202628318`) plus `results/necrolit/`, `results/litcheck/` and
-`results/przybylski_lit/`.
+Runner-fetched evidence in `results/tailingslit/` plus `results/necrolit/`,
+`results/chemlit/`, `results/litcheck/` and `results/przybylski_lit/`.
+
+**A corpus-integrity failure, recorded because it nearly poisoned this
+document.** The first fetch (run `30202628318`) reported 107/107 URLs
+successful — and **12 of its 24 hardcoded arXiv identifiers had resolved to
+entirely unrelated papers**: a neutron-star precession paper standing in for
+Richer's AmFm diffusion work, an LHC dark-matter paper for Vick, a
+condensed-matter paper for the lambda Boo review, *Plenoxels* for APOGEE DR17.
+Every one fetched cleanly. **A successful fetch is no evidence at all that the
+paper is the right one.** The mismatches are enumerated in
+`results/tailingslit/INTEGRITY.md`, the offending files have been deleted
+rather than left where a later reader could quote them, and the harness now
+resolves every decisive paper by **title search with a title-token
+verification step**, writing `verification.json` and fetching nothing for a
+slug it cannot verify. The numbers quoted below come from arXiv *search-result*
+Atom files — which carry the real title and abstract of whatever matched and
+cannot fail this way — and from the verified full texts, chief among them
+arXiv:2605.29811.
 
 ### 2.1 The real competitor: Huang, Tao & Zhang 2026 (arXiv:2605.29811)
 
@@ -299,6 +315,33 @@ The direct arXiv queries `all:"anomaly detection" AND all:APOGEE`,
 Zero-result queries are narrow phrase searches and are evidence, not proof; but
 they are consistent, and the positive evidence points the same way.
 
+**The field excludes this signature by construction, and says so in print.**
+This is the sharpest novelty statement available and it is stronger than "nobody
+thought of it". Weinberg et al. (arXiv:2108.08860) built exactly the residual
+manifold this channel uses — 16 elements, 34,410 stars, two-process model, RMS
+residuals 0.01–0.03 dex for the best-measured abundances — and then searched it
+star by star. Their selection rule, verbatim:
+
+> *"High χ² values can arise from single deviant measurements, which may have a
+> variety of mundane observational causes. To preferentially select genuine
+> physical outliers, we have used a modified χ² criterion in which … for each
+> star, we omit the element that makes the single largest contribution to χ².
+> **This criterion thus requires at least two anomalous abundances**."*
+
+Li et al. 2015 hard-code the same convention (*"at least two elements … showing
+deviations larger than 0.5 dex"*). So the one group that built the residual
+manifold and searched it deliberately deleted the single-element outliers
+*before looking*, for a defensible reason — a lone deviant element usually *is*
+an artifact — and nobody has since asked whether real sparse anomalies are
+hiding behind that choice. TAILINGS is the question that convention forecloses.
+
+**And sparse anomalies are real.** Griffith et al. (arXiv:2110.06240), while
+inspecting large residuals: *"we identify **15 stars that have 0.3–0.6 dex
+enhancements of Na but normal abundances of other elements from O to Ni**."*
+Amplitude ~10× the residual scatter, found incidentally, never by a dedicated
+per-element scan. Those 15 stars are this channel's proof of concept and its
+validation target: the pipeline must recover them.
+
 What *does* exist is the chemical-tagging literature, and every statistic in it
 is a **global distance**: PCA and EMPCA (Ting et al. 2012; Price-Jones & Bovy
 2018), functional PCA (Patil et al. 2022), t-SNE (Anders et al. 2018), k-means
@@ -307,8 +350,38 @@ autoencoders (Quandt-Rodriguez et al. 2026), spectral similarity (de Mijolla &
 Ness 2021). All of them are built to **cluster stars into birth groups**, not
 to score an individual star's abundance vector for a single-element excursion —
 and a reconstruction-error or full-vector-distance statistic is *maximised* by
-dense anomalies and actively suppresses sparse ones. That is the structural gap
-this channel occupies.
+dense anomalies and actively suppresses sparse ones.
+
+**That last claim is demonstrated, not cited** — no paper states it, so
+asserting it with a citation would be dishonest. `sparse.global_statistics`
+computes the reduced χ² and the Weinberg leave-one-out χ² alongside the sparse
+statistic, and `tests/test_tailings.py` injects two stars with the *same*
+per-element amplitude — one single-element, one four-element — and measures
+what each statistic does. The global statistic ranks the dense star far above
+the sparse one; this one inverts the ordering; and the leave-one-out criterion
+scores the sparse star at essentially zero. That injection–recovery comparison
+is the methodological core, and it is a result rather than an assumption.
+
+The empirical support that *can* be cited is Manea et al. 2025
+(arXiv:2508.16717): 25 APOGEE "doppelgänger" pairs declared near-identical by a
+global 20-element statistic differ by up to **0.38 dex in single
+neutron-capture elements** on follow-up at R~60,000. The global statistic is
+demonstrably blind to exactly this.
+
+Prior art that makes the *method* sound rather than unprecedented, and which
+should be cited as such: Signor et al. 2025 (arXiv:2511.09733), per-element VAE
+decoders — but on synthetic data with three labels; Kügler et al. 2015
+(arXiv:1409.8417), per-feature rather than global model fitting; Rousseeuw et
+al. 2017 (arXiv:1608.05012), pointwise directional outlyingness on spectra. The
+statistical machinery of per-coordinate outlyingness exists; it has never been
+pointed at survey abundances.
+
+**A ready-made input.** Sit et al. 2024 (arXiv:2403.08067) published
+element-by-element residuals for **288,789 APOGEE stars × 17 elements** recast
+into two-process amplitudes — a manifold of the same construction. It covers
+*evolved* stars, so it is not the dwarf sample this channel needs, but it is a
+free cross-check and its published use was population medians (14 open
+clusters, 9 globulars, 4 dwarf galaxies), not per-star sparse scanning.
 
 ### 2.4 What the tagging literature supplies: the thresholds
 
@@ -481,6 +554,43 @@ entirely empirical and lives in the next section.
 | duplicate rows | inflated counts | dedupe on survey ID, keep highest SNR |
 | single-survey anomaly | one line list, one wavelength region, one pipeline | cross-survey confirmation where covered; absence of coverage recorded as `not_covered`, never as refutation |
 
+**The Karinkuzhi test — resolution and saturation.** There is a published
+precedent showing that low resolution *manufactures* sparse anomalies, and it
+is the single most dangerous result for this channel. Karinkuzhi et al.
+(arXiv:2107.08401) re-observed at R~86,000 the 15 brightest of 895 s-process
+candidates an ML pipeline had selected from LAMOST at R~1,800 — **13 classified
+"Sr-only" and 2 "Ba-only"**, i.e. exactly this morphology. Every one dissolved:
+*"four have no s-process overabundances, eight are mild barium stars, and one
+is a strong barium star. The two Ba-only stars turn out to be both strong
+barium stars and are actually dwarf barium stars."* Their conclusion is adopted
+here as a rule: *"blending effects and saturated lines have to be considered
+very carefully when using machine-learning techniques, especially on
+low-resolution spectra."*
+
+So two gates sit in the funnel, not in the discussion:
+
+* `resolution_verdict` — below R = 20,000 a sparse anomaly is presumed to be
+  unresolved blending, and the candidate carries
+  `needs_high_resolution_confirmation = True`. This is why GALAH (R=28,000) and
+  APOGEE (R=22,500) are the primary corpus and LAMOST MRS (R=7,500) is third,
+  contributing targets rather than candidates.
+* `curve_of_growth_regime` — an abundance is only recoverable from a line on
+  the **linear** part of the curve of growth. A saturated core is insensitive
+  to abundance, so it can carry an arbitrary apparent abundance error in either
+  direction and a pipeline that fits it will report one.
+
+**Instrumental covariates.** The dominant population of real single-element
+outliers is instrumental, and instruments leave footprints in *instrument*
+coordinates. Weinberg et al. traced two high-Ca APOGEE stars to bad pixels hit
+by one particular radial-velocity + fibre combination, and a whole *population*
+of low-K stars to a heliocentric velocity near −70 km/s that slid the K lines
+onto a telluric band; their own conclusion is that a rare outlier and a rare
+reduction problem *"are not always easy to tell one from the other"*. A real
+anomaly has no reason to correlate with the star's radial velocity or its fibre
+number. `covariate_rate_veto` bins the flag rate in each such covariate and
+vetoes the outlying bins — the abundance-space form of the ledger rule that a
+feature recurring across unrelated sightlines is instrumental.
+
 **The decisive step is re-measurement.** A catalogue-level survivor is a
 *target*, not a detection. `measure_ew` re-measures the specific line from the
 raw spectrum with a robust local continuum (deg-2 polynomial over ±3 Å, core
@@ -587,5 +697,36 @@ occurrence limit will be written up. The escalation path is:
   of a much smaller sample;
 * **lower thresholds with a matched null**, if and only if the contrast table
   shows the SPARSE fraction rising with `z_max` rather than flat.
+
+## 6. Stated limitations
+
+* **An iron-only anomaly is invisible by construction.** The manifold
+  conditions on [Fe/H], so a star whose only anomaly is iron is absorbed into
+  its own predictor. This is the price of working in [X/H] rather than [X/Fe],
+  which is itself non-negotiable: an error in the star's own [Fe/H] otherwise
+  propagates into every element at once and smears a sparse anomaly into a weak
+  dense one.
+* **The convective-envelope mass for a K or M dwarf is modelled, not cited.**
+  The quantitative chain runs Xiang (envelope mass fraction 10⁻⁴ at the
+  boundary) → Church (3.45 × 10⁻³ M☉ at a solar-metallicity turnoff) → Michaud
+  (10⁻⁷–10⁻⁶ M☉ required for large anomalies). No source on hand gives the K/M
+  dwarf value directly, and the `M_cz(Teff)` tabulation in `twins.py` is a
+  coarse standard-model interpolation good to a factor of ~2. It is validated
+  externally at one point: applied to bulk metals it reproduces Church's
+  published 0.128 dex for 5.2 M⊕ of rock at that envelope mass, exactly.
+* **No closed-form diffusion-versus-mixing timescale criterion is quoted**,
+  because none was found in the fetched corpus. The literature expresses the
+  criterion as a *mass* (mixed mass, envelope mass fraction), and that is how it
+  is used here.
+* **Two elements at once is allowed, and Gao et al. (arXiv:1804.06394) is the
+  nearest natural false positive**: Al and Si trends surviving NLTE in M67 while
+  every other element flattens. Two elements, partly attributed to modelling.
+  A two-element candidate is therefore weaker than a one-element one, not
+  stronger, and the report ranks them accordingly.
+* **NLTE and 3D line-formation error is the real adversary**, because it is
+  single-element by construction. Non-LTE corrections for Al I 3944/3961 are
+  *"significantly large (0.3 < Δ < 1.0 dex depending on Teff)"* and reach
+  0.4 dex for Ti. No candidate can be believed without an NLTE audit of the
+  specific line it rests on.
 
 The question changes; the write-up waits for a detection.

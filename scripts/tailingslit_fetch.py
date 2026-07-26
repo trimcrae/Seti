@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import subprocess
 import time
 import urllib.parse
@@ -74,77 +75,182 @@ def get(url: str, dest: pathlib.Path, tries: int = 3, pause: float = PAUSE) -> b
 # --------------------------------------------------------------------------
 # 1. Papers whose FULL TEXT decides the novelty verdict.
 # --------------------------------------------------------------------------
-FULLTEXT: dict[str, str] = {
-    # *** THE REAL COMPETITOR ***  Huang, Tao & Zhang 2026. Meteorite-calibrated
-    # Bayesian test for processed/refined material in polluted white dwarfs.
-    # Q: population (WD accretion vs MS photosphere)? discriminant (bulk
-    # siderophile ratio vs sparse-vs-dense residual)? Does it ever look at
-    # main-sequence stars, or at SPARSITY of the anomaly? 697 records / >=397
-    # objects / 8 with BF>10 -- verify those numbers verbatim.
-    "huang2026_refined_material": "2605.29811",
-    # The 2026 flagship technosignature review (Vidal et al., 118 pp, PSETI
-    # 2023): its section V.4 "Stellar Pollution" is one paragraph of proposals
-    # with no executed search. Full text is already on disk at
-    # results/litcheck/html_2605.21093.html; re-fetched here for provenance.
-    # (NB: 2601.07297 is Huang et al.'s CatWISE waste-heat paper, a different
-    # work by an overlapping author list -- do not confuse the two.)
-    "technosig_review_2026": "2605.21093",
-    # --- Chemical-tagging dimensionality: sets sigma_X and the "families" claim.
-    # Ting, Freeman, Kobayashi, De Silva, Bland-Hawthorn 2012: PCA on abundances,
-    # how many independent dimensions does chemical space actually have?
-    "ting2012_pca_dimensionality": "1207.5074",
-    # Price-Jones & Bovy 2018: dimensionality of chemical space from APOGEE.
-    "pricejones2018_dimensionality": "1710.08442",
-    # Ting & Weinberg 2021: "How Many Elements Matter?" -- residual abundance
-    # correlations after conditioning on [Fe/H] and [Mg/Fe]. THE key paper for
-    # the manifold-residual construction.
-    "ting2021_how_many_elements": "2102.04992",
-    # Weinberg et al. 2019/2021: APOGEE two-process model. The explicit
-    # statement that abundances move in nucleosynthetic FAMILIES.
-    "weinberg2019_two_process": "1810.01470",
-    "weinberg2021_two_process_residuals": "2108.08860",
-    # Ness et al. 2018 "Galactic doppelgangers": how well one star's abundances
-    # predict another's -- the empirical floor on chemical individuality.
-    "ness2018_doppelgangers": "1701.07829",
-    # Bedell et al. 2018: 79 solar twins at 0.01-0.02 dex -- the precision floor.
-    "bedell2018_chemical_homogeneity": "1802.02576",
+# RESOLVED BY TITLE, NOT BY HARDCODED ID, AND VERIFIED AFTER FETCH.
+#
+# The first version of this file used hardcoded arXiv identifiers. Thirteen of
+# twenty-four resolved to unrelated papers -- a neutron-star precession paper
+# standing in for Richer's AmFm diffusion work, an LHC dark-matter paper for
+# Vick, a condensed-matter paper for the lambda Boo review -- and every one of
+# them fetched *successfully*. A successful fetch is no evidence at all that
+# the paper is the right one, and citing from those files would have put
+# fabricated attributions into the channel documentation.
+#
+# So each entry is now (exact-ish title, tokens that MUST appear in the title
+# of whatever comes back). The id is discovered by title search and the result
+# is checked before anything is written; failures are recorded in
+# verification.json rather than silently accepted.
+FULLTEXT: dict[str, tuple[str, tuple[str, ...]]] = {
+    # *** THE REAL COMPETITOR *** Huang, Tao & Zhang 2026: the one executed
+    # meteorite-calibrated test for processed material, in polluted WDs.
+    "huang2026_refined_material": (
+        "A Calibrated Bayesian Search for Potential Chemical Technosignatures "
+        "in Polluted White Dwarf",
+        ("technosignature", "white dwarf"),
+    ),
+    # The 2026 flagship review; its "Stellar Pollution" section is one paragraph.
+    "technosig_review_2026": (
+        "The Search for Technosignatures: a Review of Possibilities",
+        ("technosignature", "review"),
+    ),
+    # --- Chemical-tagging dimensionality: sets sigma_X and the families claim.
+    "ting2012_pca_dimensionality": (
+        "Principal component analysis on chemical abundances spaces",
+        ("principal component", "abundance"),
+    ),
+    "pricejones2018_dimensionality": (
+        "Blind Chemical Tagging with Density Estimation",
+        ("chemical tagging",),
+    ),
+    "ting2021_how_many_elements": (
+        "How Many Elements Matter?",
+        ("elements", "matter"),
+    ),
+    "weinberg2019_two_process": (
+        "Chemical Cartography with APOGEE: Multi-element Abundance Ratios",
+        ("apogee", "abundance"),
+    ),
+    "weinberg2021_two_process_residuals": (
+        "Chemical Cartography with APOGEE: Two-process Parameters and "
+        "Residual Abundances",
+        ("apogee", "residual"),
+    ),
+    "ness2018_doppelgangers": (
+        "Galactic Doppelgangers: The Chemical Similarity Among Field Stars "
+        "and Among Stars with a Common Birth Origin",
+        ("doppelganger",),
+    ),
+    "bedell2018_chemical_homogeneity": (
+        "The Chemical Homogeneity of Sun-like Stars in the Solar Neighborhood",
+        ("chemical", "sun-like"),
+    ),
     # --- Anomaly detection already run on these surveys.
-    # Reis, Poznanski & Hall: unsupervised outlier detection on APOGEE spectra.
-    "reis_apogee_outliers": "1711.00022",
-    # Random-forest / autoencoder outlier detection on stellar spectra.
-    "baron_poznanski_weirdest": "1611.07526",
+    "reis_apogee_outliers": (
+        "Detecting Outliers and Learning Complex Structures with Large "
+        "Spectroscopic Surveys",
+        ("outlier", "spectroscopic"),
+    ),
+    "baron_poznanski_weirdest": (
+        "The weirdest SDSS galaxies: results from an outlier detection "
+        "algorithm",
+        ("weirdest", "outlier"),
+    ),
     # --- Diffusion / peculiarity physics: WHY a cool dwarf cannot do this.
-    # Richer, Michaud & Turcotte 2000: diffusion in AmFm stars; the convective
-    # envelope mass threshold that switches the anomalies OFF.
-    "richer2000_amfm_diffusion": "astro-ph/0004035",
-    # Vick et al. 2010: AmFm with mass loss.
-    "vick2010_amfm_massloss": "1002.1922",
-    # Michaud/Richard: diffusion in solar-type and metal-poor stars.
-    "michaud2011_diffusion_popii": "1011.4212",
-    "deal2020_diffusion_solar_type": "2007.02528",
-    # Lambda Boo: the one refractory-DEPLETION peculiarity class -- the nearest
-    # natural analogue of a sparse anomaly, and hot-star-only. Confounder check.
-    "lambda_boo_review": "1908.03976",
+    "richer_amfm_diffusion": (
+        "Abundance anomalies in main sequence A stars",
+        ("abundance", "main sequence"),
+    ),
+    "vick_amfm_massloss": (
+        "Abundance anomalies in AmFm stars: mass loss",
+        ("amfm", "mass loss"),
+    ),
+    "michaud_diffusion_popii": (
+        "Models for metal poor stars with gravitational settling and "
+        "radiative accelerations",
+        ("metal poor", "radiative"),
+    ),
+    "deal_diffusion_solar_type": (
+        "Chemical mixing in low mass stars",
+        ("mixing", "low mass"),
+    ),
+    "xiang_peculiar_boundary": (
+        "Chemically peculiar A and F stars with enhanced s-process and "
+        "iron-peak elements",
+        ("peculiar", "s-process"),
+    ),
+    "matrozis_thin_envelope": (
+        "Constraining the thermohaline mixing efficiency and the "
+        "accretion history",
+        ("accretion", "carbon-enhanced"),
+    ),
+    "lambda_boo_review": (
+        "The lambda Bootis stars",
+        ("bootis",),
+    ),
+    "karinkuzhi_sr_only": (
+        "Sr and Ba enrichment in barium stars",
+        ("barium",),
+    ),
     # --- Planet engulfment in co-natal pairs: the stage-4 mass budget.
-    # Spina et al. 2021 (Nature Astronomy): 33 wide binaries, engulfment rate.
-    "spina2021_engulfment": "2108.12040",
-    # Liu et al. 2024 (Nature): planetary ingestion in co-natal pairs.
-    "liu2024_nature_ingestion": "2405.10339",
-    # Behmard et al.: how long an engulfment signature survives (the dilution
-    # and the thermohaline mixing timescale) -- decides whether the signal can
-    # persist at all in a convective envelope.
-    "behmard2023_engulfment_signature": "2210.11330",
-    "behmard2025_engulfment": "2501.03252",
-    # Melendez/Ramirez solar-twin refractory trend -- the 0.08 dex Tcond slope
-    # that any "engulfment" claim must exceed.
-    "melendez2009_solar_twins": "0910.5845",
+    "spina2021_engulfment": (
+        "Chemical evidence for planetary ingestion in a quarter of Sun-like "
+        "stars",
+        ("planetary", "ingestion"),
+    ),
+    "liu2024_nature_ingestion": (
+        "At least one in a dozen stars exhibits evidence of planetary "
+        "ingestion",
+        ("planetary", "ingestion"),
+    ),
+    "behmard_engulfment_signature": (
+        "Planet Engulfment Detections are Rare",
+        ("engulfment",),
+    ),
+    "melendez_solar_twins": (
+        "The peculiar solar composition and its possible relation to planet "
+        "formation",
+        ("solar", "composition"),
+    ),
+    "griffith_na_rich": (
+        "Chemical Cartography with APOGEE: Mapping Disk Populations",
+        ("apogee",),
+    ),
+    "sit_residual_abundances": (
+        "Chemical Cartography with APOGEE: Mapping the Disk",
+        ("apogee",),
+    ),
+    "manea_doppelganger_followup": (
+        "Chemical doppelgangers",
+        ("doppelganger",),
+    ),
     # --- Surveys.
-    "galah_dr4": "2409.19858",
-    "apogee_dr17": "2112.05131",
-    # --- Whitmire & Wright's own prediction, and the modern restatement.
-    # (1980 Icarus is pre-arXiv; see the Crossref/OpenAlex block below.)
-    "wright2019_technosig_search_landscape": "1907.07830",
+    "galah_dr4": ("The GALAH Survey: Data Release 4", ("galah",)),
+    "apogee_dr17": (
+        "The Seventeenth Data Release of the Sloan Digital Sky Surveys",
+        ("data release", "sloan"),
+    ),
 }
+
+VERIFY: list[dict] = []
+
+
+def resolve_by_title(title: str, must: tuple[str, ...]) -> tuple[str | None, str]:
+    """Find an arXiv id by title search and VERIFY the title that comes back.
+
+    Returns ``(arxiv_id, returned_title)``, or ``(None, reason)``. A hit is
+    accepted only when every token in ``must`` appears in the returned title,
+    case-insensitively -- which is what the hardcoded-id version never did.
+    """
+    q = urllib.parse.quote(f'ti:"{title}"')
+    url = f"http://export.arxiv.org/api/query?search_query={q}&max_results=8"
+    try:
+        req = urllib.request.Request(url, headers=UA)
+        with urllib.request.urlopen(req, timeout=90) as r:
+            xml = r.read().decode("utf-8", "replace")
+    except Exception as exc:  # noqa: BLE001
+        return None, f"title search failed: {exc!r}"
+    time.sleep(PAUSE)
+    entries = re.findall(r"<entry>(.*?)</entry>", xml, re.S)
+    for e in entries:
+        m_id = re.search(r"<id>http://arxiv.org/abs/([^<]+)</id>", e)
+        m_ti = re.search(r"<title>(.*?)</title>", e, re.S)
+        if not (m_id and m_ti):
+            continue
+        got = " ".join(m_ti.group(1).split())
+        low = got.lower()
+        if all(tok.lower() in low for tok in must):
+            return m_id.group(1).split("v")[0], got
+    return None, f"no title match among {len(entries)} results"
+
 
 # --------------------------------------------------------------------------
 # 2. Discovery searches: has ANYONE run the search TAILINGS proposes?
@@ -211,9 +317,16 @@ def main() -> None:
     print("TAILINGS literature evidence fetch")
     print("=" * 70)
 
-    print("\n[1] arXiv metadata + full text for decisive papers")
-    for name, aid in FULLTEXT.items():
-        print(f"-- {name} ({aid})")
+    print("\n[1] Resolve by TITLE, verify, then fetch full text")
+    for name, (title, must) in FULLTEXT.items():
+        aid, info = resolve_by_title(title, must)
+        VERIFY.append({"slug": name, "wanted_title": title, "must": list(must),
+                       "arxiv_id": aid, "returned_title": info,
+                       "verified": aid is not None})
+        if aid is None:
+            print(f"-- {name}: UNRESOLVED ({info}) -- nothing fetched, nothing citable")
+            continue
+        print(f"-- {name} -> {aid}  |  {info[:70]}")
         get(
             f"http://export.arxiv.org/api/query?id_list={urllib.parse.quote(aid)}&max_results=1",
             OUT / f"arxiv_id_{name}.atom",
@@ -230,6 +343,14 @@ def main() -> None:
                 pdf.unlink(missing_ok=True)  # keep the repo small; text is enough
             except Exception as exc:  # noqa: BLE001
                 print(f"  pdftotext failed: {exc!r}")
+
+    n_ver = sum(1 for v in VERIFY if v["verified"])
+    (OUT / "verification.json").write_text(json.dumps(
+        {"n_requested": len(VERIFY), "n_verified": n_ver,
+         "unverified": [v for v in VERIFY if not v["verified"]],
+         "all": VERIFY}, indent=2))
+    print(f"\n[1] title-verified {n_ver}/{len(VERIFY)}; "
+          "UNVERIFIED slugs have no files and must not be cited")
 
     print("\n[2] arXiv discovery searches")
     for name, q in ARXIV_Q.items():
@@ -289,7 +410,10 @@ def main() -> None:
     n_ok = sum(1 for s in STATUS if s["ok"])
     (OUT / "summary.json").write_text(
         json.dumps(
-            {"n_urls": len(STATUS), "n_ok": n_ok, "n_failed": len(STATUS) - n_ok, "status": STATUS},
+            {"n_urls": len(STATUS), "n_ok": n_ok, "n_failed": len(STATUS) - n_ok,
+             "n_title_verified": sum(1 for v in VERIFY if v["verified"]),
+             "n_title_requested": len(VERIFY), "verification": VERIFY,
+             "status": STATUS},
             indent=2,
         )
     )

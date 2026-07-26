@@ -195,11 +195,16 @@ def score_and_write(cfg: Config, results: pd.DataFrame, probe: dict | None = Non
         verdicts = results["verdict"].fillna("unknown")
         counts = verdicts.value_counts().to_dict()
         n_screened_out = int((verdicts == "screened_out").sum())
-        n_full = int(n_analysed - n_screened_out)
+        # A row that returned INSUFFICIENT_DATA carried no usable spectrum, so
+        # the full shape analysis did NOT run on it. Counting it in n_full made
+        # the funnel self-contradictory in run 30211326404: 5,480 "full shape
+        # analysis" alongside 5,480 INSUFFICIENT_DATA.
+        n_insufficient = int((verdicts == "INSUFFICIENT_DATA").sum())
+        n_full = int(n_analysed - n_screened_out - n_insufficient)
         cands = results[verdicts.isin(["S5_ISOTHERMAL_REVIEW",
                                        "S6_MATRIOSHKA_CASCADE_REVIEW"])]
     else:
-        counts, n_screened_out, n_full = {}, 0, 0
+        counts, n_screened_out, n_full, n_insufficient = {}, 0, 0, 0
         cands = results.iloc[:0] if len(results.columns) else pd.DataFrame()
 
     if n_analysed:
@@ -218,12 +223,11 @@ def score_and_write(cfg: Config, results: pd.DataFrame, probe: dict | None = Non
     # that report as a clean null would be precisely the silent degradation the
     # channel brief forbids: a statement about the sky inferred from zero
     # measurements.
-    n_insufficient = int(counts.get("INSUFFICIENT_DATA", 0)) if n_analysed else 0
     n_with_spectra = n_analysed - n_insufficient
     if archive_verdict == "NO_DATA_REACHED" or n_analysed == 0:
         verdict = "NO_DATA_REACHED"
     elif n_with_spectra == 0:
-        verdict = "NO_SPECTRA_REACHED"
+        verdict = "NO_SPECTRAL_ARCHIVE_REACHED"
     elif len(cands):
         verdict = "SHAPE_CANDIDATES_FOR_REVIEW"
     else:

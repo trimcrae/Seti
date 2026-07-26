@@ -1,0 +1,94 @@
+{
+  "field": "ra258.000_dec+67.000_r0.40",
+  "ra": 258.0,
+  "dec": 67.0,
+  "radius_deg": 0.4,
+  "verdict": "SEARCHED",
+  "n_stars_in_field": 185,
+  "untimely_preselect": {
+    "label": "untimely_preselect",
+    "table": "",
+    "service": "",
+    "applied": false,
+    "n_in": 183,
+    "n_out": 183,
+    "n_untimely_rows": 0,
+    "status": "NO_TABLE_DISCOVERED"
+  },
+  "n_stars_with_neowise": 182,
+  "n_scored": 182,
+  "n_candidates": 0,
+  "stage_counts": {
+    "NOT_VARIABLE": 163,
+    "NOT_MEASURED": 16,
+    "AMPLITUDE_EXCESS_INCONSISTENT": 3
+  },
+  "ensemble_common_mode_w1": {
+    "applied": true,
+    "n_stars": 182,
+    "n_epochs": 22,
+    "rms_common_mode_mag": 0.00797701821336221
+  },
+  "ensemble_common_mode_w2": {
+    "applied": true,
+    "n_stars": 182,
+    "n_epochs": 22,
+    "rms_common_mode_mag": 0.01138568735264163
+  },
+  "ensemble_correction_applied": true,
+  "neowise_query_rollup": {
+    "n_ok": 182,
+    "n_zero_rows": 1,
+    "n_failed": 0,
+    "n_from_field_query": 182
+  },
+  "archive_ledger": [
+    {
+      "label": "gaia_field",
+      "service": "gaia",
+      "status": "OK",
+      "n_rows": 183,
+      "count_star": 183,
+      "truncated": false,
+      "query": "SELECT TOP 60000 source_id, ra, dec, parallax, parallax_over_error, pmra, pmdec, ruwe, phot_g_mean_mag, bp_rp, phot_variable_flag, non_single_star, phot_g_mean_flux_over_error, astrometric_excess_noise, teff_gspphot FROM gaiadr3.gaia_source \n        WHERE 1 = CONTAINS(POINT('ICRS', ra, dec),\n                           CIRCLE('ICRS', 258.0, 67.0, 0.4))\n          AND phot_g_mean_mag < 15.0\n          AND parallax_over_error > 10.0\n    ",
+      "error": "",
+      "elapsed_s": 4.512786563999995,
+      "n_rows_raw": null,
+      "n_rows_cleaned_out": null
+    },
+    {
+      "label": "untimely_preselect",
+      "table": "",
+      "service": "",
+      "applied": false,
+      "n_in": 183,
+      "n_out": 183,
+      "n_untimely_rows": 0,
+      "status": "NO_TABLE_DISCOVERED"
+    },
+    {
+      "label": "neowise_field",
+      "service": "https://irsa.ipac.caltech.edu/TAP",
+      "status": "OK",
+      "n_rows": 903840,
+      "count_star": 947046,
+      "truncated": false,
+      "query": "SELECT TOP 3000000 ra, dec, mjd, w1mpro, w1sigmpro, w2mpro, w2sigmpro, qual_frame, cc_flags, ph_qual, saa_sep, moon_masked, w1rchi2, w2rchi2 FROM neowiser_p1bs_psd WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 258.0000000, 67.0000000, 0.400000)) AND w1mpro < 14.5",
+      "error": "",
+      "elapsed_s": 231.99323874900006,
+      "n_rows_raw": 947046,
+      "n_rows_cleaned_out": 43206
+    },
+    {
+      "label": "neowise_epochs_rollup",
+      "status": "SUMMARY",
+      "n_ok": 182,
+      "n_zero_rows": 1,
+      "n_failed": 0,
+      "n_from_field_query": 182,
+      "n_stars_attempted": 185
+    }
+  ],
+  "cadence_bias_note": "per-exposure errors are rescaled per star by the within-visit scatter; the primary statistic is the unbiased normalised excess variance and its uncertainty carries the exact N dependence (Vaughan et al. 2003); a per-field ensemble common mode is fitted and removed",
+  "instrumental_bound": "NEOWISE is W1/W2 only (Wien peaks 852 K and 630 K), so this channel probes hot material and is structurally blind to 100-300 K"
+}

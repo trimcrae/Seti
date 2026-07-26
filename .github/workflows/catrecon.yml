@@ -29,7 +29,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests astroquery
       - name: Run catalogue metadata recon
-        run: python scripts/catrecon4.py
+        run: |
+          python scripts/catrecon.py
+          python scripts/catrecon2.py
+          python scripts/catrecon3.py
+          python scripts/catrecon4.py
       - name: Commit results
         run: |
           git config user.name "github-actions[bot]"

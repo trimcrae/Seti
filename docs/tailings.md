@@ -957,6 +957,32 @@ and the **instrumental covariate vetoes** (RV, fibre, field, detector position),
 not a tighter cut. Any future version of this channel should be built on those
 axes, with amplitude as a necessary but grossly insufficient condition.
 
+### The calibration curve on real data (run 30214999391)
+
+`threshold_sweep_galah.csv`, at the shipped `quiet_excess_sigma = 2`,
+`min_contrast = 3`:
+
+| `z_flag` | GALAH n_sparse | rate | × Griffith | APOGEE n_sparse | × Griffith |
+|---|---|---|---|---|---|
+| 5.0 (shipped) | 1,341 | 1.8 × 10⁻² | **100** | 3,173 | 128 |
+| 6.0 | 758 | 1.0 × 10⁻² | 57 | 1,736 | 70 |
+| 7.0 | 437 | 5.9 × 10⁻³ | 33 | 933 | 38 |
+| 8.0 | 242 | 3.3 × 10⁻³ | 18 | 520 | 21 |
+| 10.0 | 64 | 8.7 × 10⁻⁴ | 4.8 | 169 | 6.8 |
+| **12.0** | **15** | **2.0 × 10⁻⁴** | **1.12** | 65 | 2.6 |
+
+**GALAH reaches the published rate at `z_flag` ≈ 12 — and returns exactly 15
+candidates, the same number Griffith found in a comparable sample.** That
+coincidence is arresting and it is also the trap, because the injection harness
+says `z_flag = 10` already recovers only **1.5 of 15** planted Na stars and
+`z_flag = 12` recovers essentially none. **The threshold that reproduces the
+published rate is the threshold at which the pipeline can no longer see the
+published population.** The 15 survivors at `z_flag = 12` are therefore not
+Griffith's 15; they are the extreme tail of the same error model, thinned to the
+same number by coincidence of sample size. Quoting them as a detection would be
+the single most seductive mistake available in this channel, and it is recorded
+here so that no future run makes it.
+
 ### Four independent lines of evidence, all pointing the same way
 
 Full numbers in `results/tailings/systematics_diagnostic.json`.

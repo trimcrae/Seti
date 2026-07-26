@@ -717,6 +717,19 @@ def test_derelict_run_emits_no_data_reached_when_the_archive_is_blocked(tmp_path
     assert json.loads((tmp_path / "results" / "derelict" / "candidates.json").read_text()) == []
 
 
+def test_empty_offline_input_is_never_an_OK_verdict(tmp_path):
+    """An empty table cannot be a success, whatever the fetch wrapper reports."""
+    from seti.config import load_config
+
+    src = tmp_path / "empty.csv"
+    pd.DataFrame(columns=["full_name", "A1", "sigma_A1"]).to_csv(src, index=False)
+    cfg = load_config()
+    cfg.root = tmp_path
+    summary = derelict_run(cfg, offline_input=str(src), skip_control=True)
+    assert summary["verdict"] == "NO_DATA_REACHED"
+    assert summary["funnel"]["input"] == 0
+
+
 def test_derelict_run_offline_input_end_to_end(tmp_path):
     """The full funnel on a synthetic table containing one of each species."""
     from seti.config import load_config

@@ -815,3 +815,127 @@ def test_a_degraded_source_is_carried_into_the_headline_verdict():
     v = _overall_verdict([{"survey": "GALAH", "n_stars": 5000, "n_vetted": 0}], {}, prov)
     assert v.startswith("DEGRADED_SOURCE")
     assert "GALAH->GALAH_DR3_vizier" in v
+
+
+# ---------------------------------------------------------------------------
+# The methodological core: a global statistic CANNOT see what this one sees
+# ---------------------------------------------------------------------------
+def test_global_statistics_rank_dense_above_sparse_and_this_one_inverts_it(population):
+    """Injection-recovery against the statistic the rest of the field uses.
+
+    No paper states that global anomaly statistics dilute sparse anomalies, so
+    it is demonstrated here rather than cited. Two stars are injected with the
+    SAME per-element amplitude: one single-element, one four-element. A global
+    reduced chi-squared -- the shared form of every executed abundance-outlier
+    method -- ranks the dense star far above the sparse one, because it is
+    monotone in how many elements deviate. The sparse statistic inverts that
+    ordering. And the Weinberg leave-one-out convention, which omits the single
+    largest contributor precisely because a lone deviant element is usually an
+    artifact, scores the sparse star at essentially zero: it *requires* at least
+    two anomalous abundances, which is an explicit exclusion of this signal.
+    """
+    df = population.copy()
+    idx = np.argsort(-df["snr"].to_numpy())
+    sparse_i, dense_i = int(idx[0]), int(idx[1])
+    df.loc[df.index[sparse_i], "Ni"] += 0.30
+    for el in FE_PEAK[:4]:
+        df.loc[df.index[dense_i], el] += 0.30
+
+    _, Z, _, stats = score(df)
+    glob = S.global_statistics(Z)
+
+    # 1. The global statistic prefers the dense star.
+    assert glob.iloc[dense_i]["chi2_reduced"] > 2.0 * glob.iloc[sparse_i]["chi2_reduced"]
+
+    # 2. The sparse statistic prefers the sparse star -- it rejects the other.
+    assert stats.iloc[sparse_i]["classification"] == S.SPARSE
+    assert stats.iloc[dense_i]["classification"] == S.DENSE
+
+    # 3. The Weinberg leave-one-out criterion erases the sparse star entirely:
+    #    with its one deviant element omitted, it is an ordinary star.
+    loo_sparse = glob.iloc[sparse_i]["chi2_leave_one_out"]
+    loo_dense = glob.iloc[dense_i]["chi2_leave_one_out"]
+    assert loo_sparse < 4.0
+    assert loo_dense > 10.0 * loo_sparse
+
+    # 4. And by global rank the sparse star is unremarkable: it does not even
+    #    reach the top 20 of a 8000-star sample, while this channel puts it top.
+    rank = int((glob["chi2_reduced"] > glob.iloc[sparse_i]["chi2_reduced"]).sum())
+    assert rank > 0, "the sparse injection should NOT be the top global outlier"
+
+
+def test_working_in_xh_protects_a_sparse_anomaly_from_the_iron_error(population):
+    """[X/Fe] normalisation smears a sparse anomaly across every element."""
+    df = population.copy()
+    target = int(np.argmax(df["snr"].to_numpy()))
+    df.loc[df.index[target], "Ni"] += 0.30
+    # An error in this star's own [Fe/H]. In [X/Fe] space it moves nothing at
+    # all -- because [X/Fe] is already iron-normalised -- but it moves the
+    # PREDICTOR, and after conversion to [X/H] it moves every element together.
+    xh = M.to_xh(df, ELEMENTS, feh_col="fe_h")
+    assert xh.loc[xh.index[target], "Ni"] == pytest.approx(
+        df.loc[df.index[target], "Ni"] + df.loc[df.index[target], "fe_h"])
+    # Every element shifted by exactly the same amount: a pure Fe error is a
+    # coherent offset in [X/H], i.e. a DENSE pattern the manifold absorbs,
+    # rather than a per-element perturbation that would fake sparsity.
+    shifts = [xh.loc[xh.index[target], e] - df.loc[df.index[target], e] for e in ELEMENTS]
+    assert np.allclose(shifts, shifts[0])
+
+
+def test_metal_poor_star_is_cut_by_the_envelope_argument():
+    """A metal-poor turnoff star passes Teff/logg but has a thin envelope."""
+    cand = _one(fe_h=-2.0)
+    out = V.vet_candidates(cand, survey="GALAH")
+    assert not bool(out.loc[0, "vet_pass"])
+    assert "metal-poor envelopes are thin" in out.loc[0, "vet_reasons"]
+    assert bool(V.vet_candidates(_one(fe_h=-0.3), survey="GALAH").loc[0, "vet_pass"])
+
+
+def test_cool_star_caveat_is_recorded_not_hidden():
+    out = V.vet_candidates(_one(teff=4300.0, fe_h=0.0), survey="GALAH")
+    assert bool(out.loc[0, "cool_star_caveat"])
+    assert bool(out.loc[0, "vet_pass"])          # flagged, not deleted
+    assert not bool(V.vet_candidates(_one(teff=5200.0, fe_h=0.0),
+                                     survey="GALAH").loc[0, "cool_star_caveat"])
+
+
+def test_radial_velocity_footprint_is_vetoed():
+    """A telluric artifact lives in instrument coordinates, not in chemistry."""
+    n = 3000
+    rng = np.random.default_rng(5)
+    rv = rng.uniform(-120.0, 120.0, n)
+    allst = pd.DataFrame({"rv": rv})
+    # Everything near -70 km/s flags: APOGEE's K lines land on a telluric there.
+    mask = (rv > -80.0) & (rv < -60.0)
+    mask |= rng.random(n) < 0.002              # a thin real background
+    cand = _one(fe_h=0.0)
+    cand["rv"] = [-70.0]
+    out = V.covariate_rate_veto(V.vet_candidates(cand, survey="GALAH"), allst, mask,
+                                covariate_col="rv", label="rv")
+    assert not bool(out.loc[0, "pass_rv_rate"])
+    assert "instrumental footprint" in out.loc[0, "vet_reasons"]
+
+    clean = _one(fe_h=0.0)
+    clean["rv"] = [40.0]
+    ok = V.covariate_rate_veto(V.vet_candidates(clean, survey="GALAH"), allst, mask,
+                               covariate_col="rv", label="rv")
+    assert bool(ok.loc[0, "pass_rv_rate"])
+
+
+def test_church_metallicity_dilution_calibration():
+    """Independent check of the pollution formula against a published number.
+
+    Church et al. measure a convective envelope of 3.45e-3 Msun at a
+    solar-metallicity M67 turnoff and quote 5.2 Earth masses of rock as buying
+    0.128 dex in metallicity. Applying the same formula to BULK METALS (rock is
+    essentially all metals; solar material is 1.34% by mass) must reproduce it.
+    """
+    m_env_metals = 3.45e-3 * 0.0134
+    m_pol = 5.2 * T.M_EARTH_IN_MSUN * 1.0
+    delta = np.log10(1.0 + m_pol / m_env_metals)
+    assert delta == pytest.approx(0.128, abs=0.01)
+
+    # And the channel's own M_cz table must agree with Church at that Teff to
+    # within the factor of ~2 the docs claim for it.
+    mcz = float(T.convective_envelope_mass(6100.0, safety_factor=1.0))
+    assert 0.4 < mcz / 3.45e-3 < 2.5

@@ -147,7 +147,10 @@ def derelict_run(cfg: Config | None = None,
         # There are unambiguously objects with a fitted A1 in SBDB (every
         # non-gravitational comet solution has one), so a zero here is a query
         # defect until proven otherwise -- never an occurrence limit.
-        summary["verdict"] = getattr(fetch, "status", "NO_DATA_REACHED")
+        status = getattr(fetch, "status", "NO_DATA_REACHED")
+        # An empty table can never be an "OK" verdict, whatever the fetch said
+        # (an empty offline CSV would otherwise report success on zero rows).
+        summary["verdict"] = "NO_DATA_REACHED" if status == "OK" else status
         summary["funnel"] = {
             "input": 0,
             "rows_returned_by_server": int(getattr(fetch, "n_rows_raw", 0)),

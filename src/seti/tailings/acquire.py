@@ -136,6 +136,8 @@ def resolve_abundance_columns(columns) -> dict[str, dict[str, str]]:
 
 _PARAM_PATTERNS: dict[str, tuple[str, ...]] = {
     "teff": (r"^teff$", r"^teff_spec$", r"^teff_gspspec$", r"^teff_?1?$"),
+    "rv": (r"^rv$", r"^vhelio$", r"^vhelio_avg$", r"^rv_com$", r"^hrv$", r"^vrad$"),
+    "fiber": (r"^fiber$", r"^fiberid$", r"^fibre$", r"^pivot$", r"^fibre_?id$"),
     "logg": (r"^logg$", r"^logg_spec$", r"^logg_?1?$"),
     "fe_h": (r"^fe_h$", r"^feh$", r"^m_h$", r"^__fe_h_$", r"^fe_h_atmo$"),
     "snr": (r"^snr$", r"^snr_c3_iraf$", r"^snrev$", r"^snr_?g?$", r"^s_n$"),
@@ -321,7 +323,7 @@ class Acquisition:
 
 COOL_DWARF_ADQL = (
     "{teff} < {teff_max} AND {teff} > {teff_min} AND {logg} > {logg_min} "
-    "AND {snr} > {snr_min}"
+    "AND {snr} > {snr_min} AND {feh} > {feh_min}"
 )
 
 
@@ -332,6 +334,7 @@ def fetch_survey(
     teff_min: float = 3000.0,
     logg_min: float = 4.0,
     snr_min: float = 40.0,
+    feh_min: float = -1.0,
     max_rows: int = 400_000,
     n_chunks: int = 8,
     tap_url: str = VIZIER_TAP,
@@ -397,7 +400,7 @@ def fetch_survey(
 
     cols: list[str] = []
     for k in ("star_id", "ra", "dec", "teff", "logg", "fe_h", "snr", "chi2",
-              "ruwe", "vbroad", "rv_scatter", "field_id"):
+              "ruwe", "vbroad", "rv_scatter", "rv", "fiber", "field_id"):
         if k in params:
             cols.append(f'"{params[k]}"')
     for _el, d in elements.items():
@@ -418,6 +421,8 @@ def fetch_survey(
             logg_min=logg_min,
             snr=f'"{params["snr"]}"' if "snr" in params else "1e9",
             snr_min=snr_min,
+            feh=f'"{params["fe_h"]}"',
+            feh_min=feh_min,
         )
         adql = (f"SELECT TOP {per_chunk} " + select
                 + f' FROM "{locator}" WHERE ' + where)
@@ -484,7 +489,8 @@ def normalize(df: pd.DataFrame, *, survey: str) -> pd.DataFrame:
             out[f"e_{el}"] = pd.to_numeric(df[d["err"]], errors="coerce")
         if "flag" in d:
             out[f"f_{el}"] = df[d["flag"]]
-    for c in ("teff", "logg", "fe_h", "snr", "chi2", "ruwe", "vbroad", "rv_scatter"):
+    for c in ("teff", "logg", "fe_h", "snr", "chi2", "ruwe", "vbroad",
+              "rv_scatter", "rv", "fiber"):
         if c in out.columns:
             out[c] = pd.to_numeric(out[c], errors="coerce")
     out["survey"] = survey

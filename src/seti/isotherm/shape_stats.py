@@ -453,7 +453,15 @@ def temperature_width(lam_um, flux, err, beta: float | None = None,
 
     dl_grid = np.concatenate([[0.0], np.geomspace(0.005, 2.0, 20)])
     prof = profile_scan(obj, dl_grid)
-    out["chi2_at_zero_width"] = float(obj(0.0))
+    # Report the PROFILE minimum, not fit_gradient's point estimate: the profile
+    # minimises over beta, p and central temperature at each width and is far
+    # better converged than the multistart, whose two near-degenerate minima
+    # (narrow/low-beta and broad/high-beta) it otherwise flips between.
+    if np.isfinite(prof["best"]):
+        out["effective_width_dex"] = float(abs(prof["best"]))
+        out["dt_over_t"] = float(dex_to_dt_over_t(prof["best"]))
+        out["dr_over_r"] = 2.0 * out["dt_over_t"]
+        out["chi2_profile_min"] = float(prof["chi2_min"])
     if np.isfinite(prof["upper_95"]):
         w = float(dex_to_dt_over_t(prof["upper_95"]))
         out["dt_over_t_upper95"] = float(w)

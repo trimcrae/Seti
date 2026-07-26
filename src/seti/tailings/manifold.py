@@ -102,6 +102,38 @@ def family_members(element: str, available: list[str]) -> list[str]:
     return [e for e in available if e != element and element_family(e) == fam]
 
 
+def to_xh(
+    df: pd.DataFrame,
+    elements: list[str],
+    *,
+    feh_col: str = "fe_h",
+    prefix: str = "",
+) -> pd.DataFrame:
+    """Convert published ``[X/Fe]`` into ``[X/H] = [X/Fe] + [Fe/H]``.
+
+    This is not cosmetic, it is the difference between finding a sparse anomaly
+    and destroying it. Surveys publish abundances normalised to iron, so a
+    random error in the star's *own* [Fe/H] propagates into **every** [X/Fe] at
+    once. Weinberg et al. call this the measurement aberration: it smears a
+    genuinely single-element excursion across the whole vector, turning a sparse
+    anomaly into a weak dense one, and it manufactures spurious element-element
+    correlations at the same time. Searching in [X/Fe] space would therefore
+    attack the very signature this channel exists to find.
+
+    The cost is stated plainly: with [Fe/H] as a manifold predictor, an
+    **iron-only** anomaly is absorbed by construction and cannot be detected
+    here. That is a real blind spot, not a subtlety, and it is the price of
+    removing the normalisation aberration everywhere else.
+    """
+    out = df.copy()
+    feh = df[feh_col].to_numpy(dtype=float)
+    for el in elements:
+        col = f"{prefix}{el}"
+        if col in out.columns:
+            out[col] = out[col].to_numpy(dtype=float) + feh
+    return out
+
+
 def alpha_proxy(
     df: pd.DataFrame,
     *,

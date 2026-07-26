@@ -230,9 +230,23 @@ tailings:
     # diffusion/levitation start producing genuine single-element anomalies —
     # that is exactly the Am/Fm domain and it is excluded by construction.
     teff_max: 6000.0
-    teff_min: 3000.0
+    # GALAH's release notes: cool stars carry systematic trends "that can reach
+    # values of 0.5 dex for some elements" and "dwarf stars are most affected at
+    # Teff < 4600 K". The M-dwarf tail is the least trustworthy part of any
+    # abundance sample, so it is bounded out rather than silently included;
+    # survivors between 4000 and 4600 K carry a cool_star_caveat flag.
+    teff_min: 4000.0
     logg_min: 4.0            # dwarfs only; giants mix C/N and dilute everything
     snr_min: 40.0            # below this the residual tails go non-Gaussian
+    # LEDGER RULE: convective protection depends on METALLICITY as well as Teff
+    # and logg. A ~0.85 Msun metal-poor turnoff star has an envelope below
+    # 1e-7 Msun -- four orders of magnitude thinner than a solar-metallicity
+    # dwarf -- and passes a Teff/logg cut while keeping exactly the thin
+    # envelope that makes diffusive peculiarity possible (Matrozis et al.).
+    # Measured diffusion runs 0.3 dex at [Fe/H]=-2.3 falling to 0.1 dex at -1.1,
+    # so a floor at -1.0 caps the natural effect an order of magnitude below the
+    # signal. NB: OSSUARY deliberately SELECTS the stars this excludes.
+    feh_min: -1.0
   manifold:
     degree: 2                # quadratic in ([Fe/H], Teff/1000, logg, alpha_LOO)
     clip_sigma: 4.0          # so a real 6-8 sigma anomaly cannot fit its own surface
@@ -261,6 +275,9 @@ tailings:
     dense_min_discrepant: 3
   vet:
     snr_min: 40.0
+    feh_min: -1.0            # re-applied after acquisition; see sample.feh_min
+    teff_min: 4000.0
+    teff_caveat_below: 4600.0
     chi2_max: 4.0
     ruwe_max: 1.4            # LEDGER RULE: unresolved binaries masquerade as anomalies
     rv_scatter_max_kms: 1.0  # spectroscopic binary

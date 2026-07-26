@@ -126,6 +126,11 @@ def read_cds(cat: str, tag: str, prefer: str | None = None):
         raise RuntimeError(f"no ReadMe for {cat}")
     rmtext = rm.read_text("utf-8", "replace")
     (OUT / f"readme_{tag}.txt").write_text(rmtext, "utf-8")
+    # II/125's ReadMe says "Byte-per-byte Description of file:", which astropy's
+    # CDS reader does not recognise (it requires "Byte-by-byte"). Normalise.
+    if "Byte-per-byte" in rmtext:
+        log("normalising 'Byte-per-byte' -> 'Byte-by-byte' in ReadMe")
+        rm.write_text(rmtext.replace("Byte-per-byte", "Byte-by-byte"), "utf-8")
 
     files = parse_readme_files(rmtext)
     log(f"ReadMe lists data files: {files}")
@@ -333,8 +338,9 @@ def akari_fis():
         res[f"flux_{band}um"] = entry
 
     # --- flag columns: anything that looks like quality/confusion/scan
-    flagpat = re.compile(r"(qual|flag|conf|scan|ndens|nscan|mconf|fqual|q_)",
-                         re.I)
+    flagpat = re.compile(
+        r"(qual|flag|conf|scan|ndens|nscan|mconf|fqual|q_|^Ns\d|^Np\d|^M\d|^f_S)",
+        re.I)
     flags = {}
     for c in t.colnames:
         if not flagpat.search(c):
@@ -665,15 +671,47 @@ def positional_accuracy():
             f"r(95%)={entry.get('radius_containing', {}).get('95pct')}\" "
             f"median_sep={entry.get('sep_pct_50')}\"")
 
-        # split by |b| -- crowding changes the chance background, not sigma
-        for lbl, msk in (("b_gt_30", np.abs(b_a) > 30), ("b_lt_10", np.abs(b_a) < 10)):
+        # split by |b| -- crowding changes the chance background, not sigma.
+        # The |b|>30 cut is the honest one: clustering is weak there, so the
+        # uniform-background model actually applies.
+        FINE = np.arange(0, 61, 1.0)
+        for lbl, msk in (("b_gt_30", np.abs(b_a) > 30),
+                         ("b_gt_45", np.abs(b_a) > 45),
+                         ("b_lt_10", np.abs(b_a) < 10)):
             if msk.sum() > 500:
                 sp = sep[msk]
-                res[f"{tag}_{lbl}"] = {
-                    "n": int(msk.sum()),
-                    "median_sep": round(float(np.median(sp)), 3),
-                    "frac_within_15as": round(float((sp <= 15).mean()), 5),
-                    "frac_within_30as": round(float((sp <= 30).mean()), 5)}
+                ent = {"n": int(msk.sum()),
+                       "median_sep": round(float(np.median(sp)), 3)}
+                for r_as in (3, 5, 8, 10, 12, 15, 20, 25, 30, 45, 60):
+                    ent[f"frac_within_{r_as}as"] = round(float((sp <= r_as).mean()), 5)
+                hh, _ = np.histogram(sp, bins=FINE)
+                ent["hist_1as_bins_0_60"] = [int(x) for x in hh]
+                ent["bin_edges"] = [float(x) for x in FINE]
+                # Rayleigh sigma from the excess over a locally fitted background
+                cc = 0.5 * (FINE[:-1] + FINE[1:])
+                fit = (cc >= 25) & (cc <= 60)
+                if fit.sum() > 5 and hh[fit].sum() > 20:
+                    A = np.vstack([np.ones(fit.sum()), cc[fit]]).T
+                    coef, *_ = np.linalg.lstsq(A, hh[fit].astype(float), rcond=None)
+                    bgm = coef[0] + coef[1] * cc
+                    ex = np.maximum(hh - bgm, 0.0)
+                    core = cc <= 25
+                    if ex[core].sum() > 30:
+                        s2 = float((ex[core] * cc[core] ** 2).sum() / ex[core].sum())
+                        sg = math.sqrt(s2 / 2.0)
+                        ent["bg_fit_a_b"] = [round(float(coef[0]), 3),
+                                             round(float(coef[1]), 4)]
+                        ent["n_real_excess"] = round(float(ex[core].sum()), 1)
+                        ent["rayleigh_sigma_arcsec"] = round(sg, 2)
+                        ent["radius_containing"] = {
+                            "50pct": round(1.1774 * sg, 2),
+                            "90pct": round(2.1460 * sg, 2),
+                            "95pct": round(2.4477 * sg, 2),
+                            "99pct": round(3.0349 * sg, 2)}
+                res[f"{tag}_{lbl}"] = ent
+                log(f"   {tag} {lbl}: n={ent['n']} sigma="
+                    f"{ent.get('rayleigh_sigma_arcsec')}\" "
+                    f"frac<15\"={ent['frac_within_15as']}")
     json.dump(res, (OUT / "positional_accuracy.json").open("w"), indent=1)
     return res
 

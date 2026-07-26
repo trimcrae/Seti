@@ -332,7 +332,8 @@ def stage_grey(df: pd.DataFrame, out: Path, cfg_twin: TwinConfig | None = None,
 # --------------------------------------------------------------------------
 def stage_farir(df: pd.DataFrame, fits: pd.DataFrame, out: Path,
                 synthetic: bool = False, t_assumed_k: float = 50.0,
-                far_ir_table: pd.DataFrame | None = None) -> pd.DataFrame:
+                far_ir_table: pd.DataFrame | None = None,
+                max_beam_checks: int = 400) -> pd.DataFrame:
     """Associate surviving candidates with far-IR catalogues and close the budget."""
     if fits.empty:
         _write_json(out / "farir_meta.json",
@@ -370,6 +371,33 @@ def stage_farir(df: pd.DataFrame, fits: pd.DataFrame, out: Path,
             for p in parts[1:]:
                 matches = matches.merge(p, on="source_id", how="outer")
 
+        # Beam crowding, measured rather than assumed. A far-IR flux attributed
+        # to a star that shares its beam with another catalogued source is not
+        # attributable to that star -- and with a 25-40" beam that is common.
+        # Only the handful of stars with an actual association need the cone
+        # search, so this is affordable; it is a funnel stage, not follow-up,
+        # because background-galaxy confusion destroyed every Hephaistos
+        # candidate and the far-IR beams here are 10^2-10^4x larger in area.
+        if len(matches):
+            from .acquire import FAR_IR_CATALOGS as _CATS
+            from .acquire import count_beam_neighbours
+
+            radius = max(float(c["match_radius_arcsec"]) for c in _CATS.values())
+            pos = merged.set_index("source_id")[["ra", "dec"]]
+            counts = {}
+            for sid in list(matches["source_id"])[:max_beam_checks]:
+                try:
+                    p = pos.loc[sid]
+                    counts[sid] = count_beam_neighbours(
+                        float(p["ra"]), float(p["dec"]), radius,
+                        exclude_source_id=int(sid))
+                except Exception as exc:  # noqa: BLE001
+                    print(f"[cenotaph] beam count failed for {sid}: {exc!r}")
+            if counts:
+                matches["n_beam_neighbours"] = matches["source_id"].map(counts)
+                coverage["beam_counts_measured"] = int(len(counts))
+                coverage["beam_radius_arcsec"] = radius
+
     rows = []
     for _, r in merged.iterrows():
         dpc = 1000.0 / float(r["parallax"]) if r.get("parallax", 0) else np.nan
@@ -377,10 +405,17 @@ def stage_farir(df: pd.DataFrame, fits: pd.DataFrame, out: Path,
         if not np.isfinite(lsun) or not np.isfinite(dpc):
             continue
         fluxes, errs = {}, {}
+        extra = {}
         if len(matches):
             hit = matches[matches["source_id"] == r["source_id"]]
             if len(hit):
                 h = hit.iloc[0]
+                for k in ("n_beam_neighbours",):
+                    if k in h.index:
+                        extra[k] = h.get(k)
+                for k in h.index:
+                    if k.endswith("_n_within") or k.endswith("_sep_arcsec"):
+                        extra[k] = h.get(k)
                 for b in FAR_IR_BANDS:
                     v = h.get(b.name)
                     if v is not None and np.isfinite(v):
@@ -393,7 +428,7 @@ def stage_farir(df: pd.DataFrame, fits: pd.DataFrame, out: Path,
                           far_ir_fluxes_jy=fluxes, far_ir_flux_errs_jy=errs)
         rows.append({"source_id": r["source_id"], "d_pc": dpc, "l_lsun": lsun,
                      **{k: v for k, v in cl.to_dict().items() if k != "notes"},
-                     "notes": "; ".join(cl.notes)})
+                     **extra, "notes": "; ".join(cl.notes)})
     res = pd.DataFrame(rows)
     if len(res):
         res.to_parquet(out / "farir.parquet", index=False)
@@ -426,6 +461,13 @@ def stage_reduce(df: pd.DataFrame, fits: pd.DataFrame, farir: pd.DataFrame,
     merged = df.merge(fits, on="source_id", how="inner", suffixes=("", "_fit"))
     funnel["n_fitted"] = int(len(merged))
 
+    # Beam-neighbour counts are measured in the far-IR stage, only for stars
+    # that actually have an association; fold them in before vetting so the
+    # crowding test is a real measurement rather than a missing column.
+    if len(farir) and "n_beam_neighbours" in farir.columns:
+        merged = merged.merge(farir[["source_id", "n_beam_neighbours"]],
+                              on="source_id", how="left")
+
     vet = vet_table(merged, thr)
     merged = pd.concat([merged.reset_index(drop=True),
                         vet.reset_index(drop=True)], axis=1)
@@ -443,19 +485,35 @@ def stage_reduce(df: pd.DataFrame, fits: pd.DataFrame, farir: pd.DataFrame,
     step = step[~step["param_edge"]]
     funnel["n_vet_core"] = int(step["pass_core"].sum())
     step = step[step["pass_core"]]
-    funnel["n_far_ir_context"] = int(step["pass_far_ir_context"].sum())
 
+    # The candidate list is legs 1 and 2 plus the core vetting. Leg 3 is an
+    # *annotation* on that list, not a gate applied before it: a star with no
+    # far-IR coverage, or one outside the horizon for its f and distance, has
+    # not failed the energy test — the test simply could not be run, and
+    # dropping it silently would turn missing data into a rejection.
     candidates = step.copy()
+    funnel["n_leg3_closes"] = 0
     if len(farir):
+        keep = [c for c in ["source_id", "verdict", "closure_ratio", "f_ir",
+                            "decidable", "horizon_pc", "far_ir_band",
+                            "far_ir_flux_jy", "n_beam_neighbours"]
+                if c in farir.columns]
         candidates = candidates.merge(
-            farir[["source_id", "verdict", "closure_ratio", "f_ir", "decidable",
-                   "horizon_pc", "far_ir_band", "far_ir_flux_jy"]]
-            .rename(columns={"verdict": "closure_verdict"}),
-            on="source_id", how="left")
-        funnel["n_leg3_closes"] = int(
-            (candidates.get("closure_verdict") == "closes").sum())
-    else:
-        funnel["n_leg3_closes"] = 0
+            farir[keep].rename(columns={"verdict": "closure_verdict"}),
+            on="source_id", how="left", suffixes=("", "_far"))
+        cv = candidates.get("closure_verdict")
+        if cv is not None:
+            funnel["n_leg3_decidable"] = int(
+                candidates.get("decidable", pd.Series(dtype=bool)).fillna(False).sum())
+            funnel["n_leg3_closes"] = int((cv == "closes").sum())
+            # A closure is only believable in an uncrowded beam at high
+            # latitude: background-galaxy confusion killed every Hephaistos
+            # candidate, and these beams are 10^2-10^4x larger in area.
+            clean_ctx = candidates["pass_far_ir_context"].fillna(False)
+            funnel["n_leg3_closes_clean_beam"] = int(
+                ((cv == "closes") & clean_ctx).sum())
+            funnel["closure_verdicts"] = {
+                str(k): int(v) for k, v in cv.value_counts().items()}
 
     # Empirical null: the fitted-grey distribution over the *whole* fitted set.
     g = pd.to_numeric(fits["grey_sigma"], errors="coerce").to_numpy(float)
@@ -507,8 +565,10 @@ def stage_reduce(df: pd.DataFrame, fits: pd.DataFrame, farir: pd.DataFrame,
     }
 
     verdict = "no_candidates"
-    if len(candidates) and funnel.get("n_leg3_closes", 0) > 0:
+    if funnel.get("n_leg3_closes_clean_beam", 0) > 0:
         verdict = "candidates_with_energy_closure"
+    elif funnel.get("n_leg3_closes", 0) > 0:
+        verdict = "closure_but_crowded_beam"
     elif len(candidates):
         verdict = "leg1_leg2_survivors_far_ir_pending"
 
@@ -586,7 +646,8 @@ def cenotaph_run(cfg=None, stage: str = "all", out_dir: str | Path | None = None
     farir = _load("farir")
     if "farir" in stages:
         farir = stage_farir(tw, fits, out, synthetic=synthetic,
-                            t_assumed_k=t_assumed_k)
+                            t_assumed_k=t_assumed_k,
+                            max_beam_checks=kw.get("max_beam_checks", 400))
 
     if "reduce" in stages:
         return stage_reduce(tw, fits, farir, out, z_min=z_min)

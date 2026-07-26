@@ -106,17 +106,23 @@ FULLTEXT: dict[str, dict] = {
         "question": "Q4 (the live novelty risk): did they compute an AMR/beta "
                     "for 2005 VL1, and is it one object or a population test?",
     },
-    "micheli2018_oumuamua_nongrav": {
-        "arxiv": "1811.05519",
-        "expect_title": "",
-        "question": "the calibration anchor: the published A1 / radial "
-                    "acceleration at 1 au used to validate our conversions",
-    },
-    "seligman_2021_darkcomet_precursor": {
-        "arxiv": "2104.10184",
-        "expect_title": "",
-        "question": "context: earlier non-grav-acceleration work by the same group",
-    },
+    # NOTE: `micheli2018_oumuamua_nongrav` and `seligman_2021_darkcomet_precursor`
+    # USED to live here with guessed ids 1811.05519 and 2104.10184 and an EMPTY
+    # `expect_title`.  Both fetched the wrong paper -- 1811.05519 returns
+    # "Acoplanarity of Lepton Pair to Probe the Electromagnetic Property of Quark
+    # Matter" (nucl-th) and 2104.10184 returns "Finite-size evaporating droplets
+    # in weakly compressible homogeneous shear turbulence" (physics.flu-dyn) --
+    # and BOTH were recorded `id_ok: true, title_ok: true`, because an empty
+    # `expect_title` made the title check vacuously true.  That is the third and
+    # fourth wrong-paper incidents in this repository, and the first two that the
+    # verification step was supposed to catch and did not.
+    #
+    # Two fixes: an empty `expect_title` is now an explicit UNVERIFIED state
+    # rather than a pass (see `arxiv_id_query`), and Micheli et al. moves to
+    # TITLE_RESOLVED below so no id is guessed for it.  The Seligman "precursor"
+    # entry is REMOVED outright: there is no verified id for it, it was never
+    # decisive for the novelty argument, and guessing a fifth time is exactly the
+    # behaviour that produced this comment.
 }
 
 #: Papers resolved by TITLE rather than by a guessed id.  Guessing an arXiv id
@@ -130,6 +136,17 @@ TITLE_RESOLVED: dict[str, dict] = {
         "expect_title": "dark comet",
         "question": "Q1/Q2 for the 14-object PNAS sample (PNAS 121, "
                     "e2406424121). Same questions as 2023.",
+    },
+    "micheli2018_oumuamua_nongrav": {
+        "title": "Non-gravitational acceleration in the trajectory of 1I/2017 U1 (Oumuamua)",
+        # The verification fragment is the load-bearing part: if the search
+        # returns anything whose title does not contain "Oumuamua", NOTHING is
+        # written and an id_mismatch is recorded.  A title search that fails is
+        # reported; it cannot fetch the wrong paper the way a guessed id can.
+        "expect_title": "Oumuamua",
+        "question": "the calibration anchor: the published A1 / radial "
+                    "acceleration at 1 au used to validate our conversions "
+                    "(docs/derelict.md section 1.3 asserts 4.92e-6 m/s^2)",
     },
 }
 
@@ -183,15 +200,28 @@ def arxiv_id_query(name: str, arxiv_id: str, expect_title: str) -> bool:
     got_id_s = got_id.group(1) if got_id else ""
     got_title_s = " ".join(got_title.group(1).split()) if got_title else ""
     ok_id = got_id_s.startswith(arxiv_id)
-    ok_title = (expect_title.lower() in got_title_s.lower()) if expect_title else True
+    # An EMPTY expect_title used to make this vacuously True, and that is exactly
+    # how two wrong papers were fetched, recorded `title_ok: true`, and believed
+    # (arXiv 1811.05519 -> a quark-matter paper; 2104.10184 -> a fluid-dynamics
+    # paper).  "The title was never checked" and "the title checked out" are
+    # different statements and must not share a value, so an absent fragment now
+    # yields `title_ok: null` and an explicit `title_unverified` flag.
+    ok_title = (expect_title.lower() in got_title_s.lower()) if expect_title else None
     rec = {"name": name, "requested": arxiv_id, "returned_id": got_id_s,
            "returned_title": got_title_s, "id_ok": ok_id, "title_ok": ok_title}
-    if not (ok_id and ok_title):
+    if ok_title is None:
+        rec["title_unverified"] = True
+        print(f"  ?? UNVERIFIED TITLE for {name}: no expect_title fragment, so "
+              f"the returned paper '{got_title_s[:70]}' was NOT checked")
+    if not ok_id or ok_title is False:
         rec["id_mismatch"] = True
         print(f"  !! MISMATCH for {name}: asked {arxiv_id}, got {got_id_s} "
               f"'{got_title_s[:70]}'")
     STATUS.append(rec)
-    return ok_id and ok_title
+    # An unverified title is not a verification failure, but it IS a reason not
+    # to treat the fetched text as evidence; the caller still stores it, and the
+    # summary counts it separately so it can never pass as confirmed.
+    return ok_id and ok_title is not False
 
 
 def fetch_fulltext(name: str, arxiv_id: str) -> None:
@@ -270,12 +300,18 @@ def main() -> None:
         get(url, OUT / f"s2_{name}.json")
 
     mismatches = [s for s in STATUS if s.get("id_mismatch")]
+    unverified = [s for s in STATUS if s.get("title_unverified")]
     summary = {
         "n_urls": len([s for s in STATUS if "url" in s]),
         "n_ok": len([s for s in STATUS if s.get("ok")]),
         "n_failed": len([s for s in STATUS if s.get("ok") is False]),
         "n_id_mismatch": len(mismatches),
         "id_mismatches": mismatches,
+        # Counted SEPARATELY from mismatches: a paper whose title was never
+        # checked is not verified, and must not be able to hide inside a
+        # zero-mismatch summary the way 1811.05519 and 2104.10184 did.
+        "n_title_unverified": len(unverified),
+        "title_unverified": unverified,
         "targets": {k: v for k, v in FULLTEXT.items()},
         "title_resolved_targets": TITLE_RESOLVED,
         "queries": QUERIES,

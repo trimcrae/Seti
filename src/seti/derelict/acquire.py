@@ -120,6 +120,70 @@ STATUS_A1_ALL_NULL = "A1_COLUMN_PRESENT_BUT_ALL_NULL"  # field exists, no values
 STATUS_NO_ROWS = "QUERY_RETURNED_NO_ROWS"         # query worked, zero rows at all
 STATUS_UNREACHABLE = "NO_DATA_REACHED"            # every strategy failed
 
+#: The two statuses a SINGLE query can have that must never be confused.  This
+#: is the guard against the failure mode of run 30203392288, where a 400 on a
+#: mistyped field name (`sigma_A1`) was indistinguishable, from the outside,
+#: from "the database contains no such object".
+STATUS_QUERY_FAILED = "QUERY_FAILED"                    # transport/HTTP/parse error
+STATUS_ZERO_ROWS = "QUERY_RETURNED_ZERO_ROWS"           # server answered, 0 rows
+
+
+@dataclass
+class QueryRecord:
+    """One HTTP query, exactly as issued and exactly as answered.
+
+    ``url`` is stored **verbatim and unredacted**: a reader must be able to
+    paste it into a browser and reproduce the response.  ``http_status`` is the
+    real HTTP code when one was received and ``None`` when the request never got
+    that far (DNS/TLS/proxy/timeout) -- the two are different failures and are
+    kept apart.
+    """
+    label: str = ""
+    url: str = ""
+    http_status: int | None = None
+    status: str = STATUS_QUERY_FAILED
+    n_rows: int = 0
+    attempt: int = 1
+    error: str = ""
+
+    @property
+    def failed(self) -> bool:
+        return self.status == STATUS_QUERY_FAILED
+
+    def to_dict(self) -> dict:
+        return {"label": self.label, "url": self.url,
+                "http_status": self.http_status, "status": self.status,
+                "n_rows": int(self.n_rows), "attempt": int(self.attempt),
+                "error": self.error}
+
+
+@dataclass
+class QueryLog:
+    """Every query the channel issued, in order.
+
+    Threaded through acquisition so ``results/derelict/summary.json`` can carry a
+    complete, reconstructible record.  An empty result and an unreached archive
+    must never look the same in this log.
+    """
+    records: list[QueryRecord] = field(default_factory=list)
+
+    def add(self, **kw) -> QueryRecord:
+        rec = QueryRecord(**kw)
+        self.records.append(rec)
+        return rec
+
+    def to_list(self) -> list[dict]:
+        return [r.to_dict() for r in self.records]
+
+    def counts(self) -> dict[str, int]:
+        out: dict[str, int] = {}
+        for r in self.records:
+            out[r.status] = out.get(r.status, 0) + 1
+        return out
+
+    def __len__(self) -> int:  # pragma: no cover - trivial
+        return len(self.records)
+
 
 @dataclass
 class FetchResult:
@@ -138,6 +202,8 @@ class FetchResult:
     a1_column_present: bool = False
     signature: dict = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
+    #: Every query this fetch issued, verbatim.  See :class:`QueryRecord`.
+    queries: list[dict] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
@@ -151,7 +217,8 @@ class FetchResult:
                 "fields_returned": list(self.fields_returned),
                 "fields_dropped": list(self.fields_dropped),
                 "fields_rejected": list(self.fields_rejected),
-                "signature": self.signature, "errors": self.errors}
+                "signature": self.signature, "errors": self.errors,
+                "queries": self.queries}
 
 
 #: Characters the SBDB constraint syntax needs to survive URL encoding.
@@ -164,8 +231,19 @@ def _build_url(base: str, params: dict[str, Any]) -> str:
     return f"{base}?{query}"
 
 
+#: Columns SBDB returns as strings and that must NOT be coerced to numbers.
+_STRING_COLUMNS = frozenset({"full_name", "pdes", "name", "kind", "class",
+                             "first_obs", "last_obs", "spkid", "prefix"})
+
+
 def _parse_query_payload(raw: bytes) -> tuple[pd.DataFrame, dict]:
-    """Turn an ``sbdb_query.api`` JSON body into a DataFrame + signature."""
+    """Turn an ``sbdb_query.api`` JSON body into a DataFrame + metadata.
+
+    The metadata dict is the response ``signature`` plus the server's own
+    ``count``.  The count matters: it is the server's statement of how many rows
+    it believes match, and comparing it to ``len(df)`` is how a silently
+    truncated pull is caught.
+    """
     payload = json.loads(raw.decode("utf-8", errors="replace"))
     if "message" in payload and "data" not in payload:
         raise ValueError(f"SBDB error: {payload.get('message')}")
@@ -174,19 +252,36 @@ def _parse_query_payload(raw: bytes) -> tuple[pd.DataFrame, dict]:
     df = pd.DataFrame(rows, columns=cols)
     # SBDB returns everything as strings; coerce the numeric columns.
     for c in df.columns:
-        if c in {"full_name", "pdes", "name", "kind", "class", "first_obs",
-                 "last_obs", "spkid", "prefix"}:
+        if c in _STRING_COLUMNS:
             continue
         df[c] = pd.to_numeric(df[c], errors="coerce")
-    return df, payload.get("signature", {})
+    meta = dict(payload.get("signature") or {})
+    if payload.get("count") is not None:
+        try:
+            meta["server_count"] = int(payload["count"])
+        except (TypeError, ValueError):
+            meta["server_count"] = payload["count"]
+    return df, meta
 
 
 def _attempt(transport: Transport, url: str, tries: int = 3,
-             pause: float = 5.0) -> tuple[pd.DataFrame | None, dict, str | None]:
+             pause: float = 5.0, log: QueryLog | None = None,
+             label: str = "") -> tuple[pd.DataFrame | None, dict, str | None]:
+    """Issue one query, with retries, recording every attempt in ``log``.
+
+    The recorded status distinguishes :data:`STATUS_QUERY_FAILED` (the server
+    never answered with a parseable table) from :data:`STATUS_ZERO_ROWS` (it
+    did, and the answer was empty).  Collapsing those two is precisely how a
+    schema typo once presented as an empty universe.
+    """
     last = None
     for i in range(tries):
         try:
             df, sig = _parse_query_payload(transport(url))
+            if log is not None:
+                log.add(label=label, url=url, http_status=200, attempt=i + 1,
+                        status=STATUS_OK if len(df) else STATUS_ZERO_ROWS,
+                        n_rows=int(len(df)))
             return df, sig, None
         except urllib.error.HTTPError as exc:  # noqa: PERF203
             body = ""
@@ -195,11 +290,39 @@ def _attempt(transport: Transport, url: str, tries: int = 3,
             except Exception:  # noqa: BLE001
                 pass
             last = f"HTTP {exc.code} for {url}: {body}"
+            if log is not None:
+                log.add(label=label, url=url, http_status=int(exc.code),
+                        attempt=i + 1, status=STATUS_QUERY_FAILED, error=last)
         except Exception as exc:  # noqa: BLE001
             last = f"{type(exc).__name__}: {exc} for {url}"
+            if log is not None:
+                log.add(label=label, url=url, http_status=_http_code_from_text(last),
+                        attempt=i + 1, status=STATUS_QUERY_FAILED, error=last)
         if i + 1 < tries:
             time.sleep(pause * (i + 1))
     return None, {}, last
+
+
+_HTTP_CODE_RE = re.compile(r"\bHTTP\s+(\d{3})\b|\b(\d{3})\s+Bad Request\b")
+
+
+def _http_code_from_text(text: str | None) -> int | None:
+    """Best-effort HTTP code out of a non-HTTPError message.
+
+    Transports other than ``urllib`` (requests, or a test double) surface the
+    status inside the exception text.  Recovering it keeps ``http_status``
+    meaningful instead of silently ``None``.
+    """
+    if not text:
+        return None
+    m = _HTTP_CODE_RE.search(text)
+    if not m:
+        return None
+    code = m.group(1) or m.group(2)
+    try:
+        return int(code)
+    except (TypeError, ValueError):  # pragma: no cover - regex guarantees digits
+        return None
 
 
 # --- schema discovery ---------------------------------------------------------
@@ -286,13 +409,89 @@ _DETAIL_FIELD_MAP: tuple[tuple[str, str, str], ...] = (
 _ELEMENT_KEYS: tuple[str, ...] = ("a", "e", "i", "q", "om", "w", "ma", "moid")
 
 
+def query_with_field_pruning(fields: tuple[str, ...],
+                             params: dict[str, Any],
+                             *,
+                             transport: Transport | None = None,
+                             log: QueryLog | None = None,
+                             label: str = "",
+                             tries: int = 3,
+                             required: frozenset[str] = REQUIRED_FIELDS,
+                             base: str = SBDB_QUERY_URL,
+                             ) -> tuple[pd.DataFrame | None, dict, str | None, tuple[str, ...]]:
+    """Issue an SBDB query, dropping any field the server rejects, and retry.
+
+    A **single** unrecognised field name 400s the entire query -- which is how a
+    schema typo (``sigma_A1``) once presented as "0 rows in the whole database".
+    The server names the offending field in its error body, so it is parsed out,
+    dropped, and the query reissued.  Fields in ``required`` are never dropped:
+    if the server rejects ``A1`` there is genuinely nothing to search for and the
+    caller must see the failure.
+
+    Returns ``(table, meta, error, fields_rejected)``.  ``table is None`` means
+    the query failed; an empty table means it succeeded and returned nothing.
+    Those two are different and this function keeps them different.
+    """
+    tr = transport or _default_transport
+    use_fields = tuple(fields)
+    rejected: tuple[str, ...] = ()
+    df = meta = err = None
+    for _ in range(len(use_fields) + 1):
+        q = dict(params)
+        q["fields"] = ",".join(use_fields)
+        url = _build_url(base, q)
+        df, meta, err = _attempt(tr, url, tries=tries, log=log, label=label)
+        if df is not None:
+            return df, meta or {}, None, rejected
+        bad = _invalid_fields_from_error(err) & set(use_fields)
+        if not bad or (bad & required):
+            break
+        rejected += tuple(sorted(bad))
+        use_fields = tuple(f for f in use_fields if f not in bad)
+        if not use_fields:
+            break
+    return None, meta or {}, err, rejected
+
+
 def fetch_nongrav_table(kind: str = "a",
                         fields: tuple[str, ...] = DEFAULT_FIELDS,
                         transport: Transport | None = None,
                         limit: int | None = None,
                         strategies: tuple[tuple[str, str | None], ...] | None = None,
                         available_fields: set[str] | None = None,
-                        tries: int = 3) -> FetchResult:
+                        tries: int = 3,
+                        log: QueryLog | None = None) -> FetchResult:
+    """Pull the small-body table, recording every query it had to issue.
+
+    Thin wrapper around :func:`_fetch_nongrav_impl` whose only job is to make
+    the query log a first-class part of the result: ``FetchResult.queries``
+    carries the literal URL, HTTP status, per-query status and row count of
+    every request, so a reader can reconstruct exactly what was asked and
+    exactly what came back.  Without that, an empty result and an unreached
+    archive look identical from the outside -- the failure mode that cost run
+    30203392288.
+    """
+    own = QueryLog()
+    try:
+        res = _fetch_nongrav_impl(
+            kind=kind, fields=fields, transport=transport, limit=limit,
+            strategies=strategies, available_fields=available_fields,
+            tries=tries, log=own)
+    finally:
+        if log is not None:
+            log.records.extend(own.records)
+    res.queries = own.to_list()
+    return res
+
+
+def _fetch_nongrav_impl(kind: str = "a",
+                        fields: tuple[str, ...] = DEFAULT_FIELDS,
+                        transport: Transport | None = None,
+                        limit: int | None = None,
+                        strategies: tuple[tuple[str, str | None], ...] | None = None,
+                        available_fields: set[str] | None = None,
+                        tries: int = 3,
+                        log: QueryLog | None = None) -> FetchResult:
     """Pull the small-body table, preferring a server-side ``A1`` constraint.
 
     ``kind='a'`` is the science sample (asteroids); ``kind='c'`` is the comet
@@ -305,7 +504,6 @@ def fetch_nongrav_table(kind: str = "a",
     caller filter client-side, so an unexpected constraint syntax costs
     bandwidth, not the run.
     """
-    tr = transport or _default_transport
     strategies = strategies or CDATA_STRATEGIES
     kept, dropped = _prune_fields(fields, available_fields)
     res = FetchResult(fields_requested=fields, fields_dropped=dropped)
@@ -319,36 +517,31 @@ def fetch_nongrav_table(kind: str = "a",
         if cdata is None:
             use_fields = tuple(f for f in kept if f in set(MINIMAL_FIELDS)) or MINIMAL_FIELDS
 
-        # Self-healing field pruning.  A SINGLE unrecognised field name 400s the
-        # entire query -- which is exactly how a schema typo (`sigma_A1`) once
-        # turned into "0 rows in the whole database".  The server names the
-        # offending field in its error body, so drop it and retry.  Required
-        # fields are never dropped: if the server rejects `A1` there is nothing
-        # to search for and the strategy genuinely fails.
-        df = sig = err = None
-        for _ in range(len(use_fields) + 1):
-            params = {"fields": ",".join(use_fields), "sb-kind": kind, "full-prec": "1"}
-            if cdata:
-                params["sb-cdata"] = cdata
-            if limit:
-                params["limit"] = limit
-            df, sig, err = _attempt(tr, _build_url(SBDB_QUERY_URL, params), tries=tries)
-            if df is not None:
-                break
-            bad = _invalid_fields_from_error(err) & set(use_fields)
-            if not bad or (bad & REQUIRED_FIELDS):
-                break
-            res.fields_rejected += tuple(sorted(bad))
-            res.errors.append(f"[{name}] server rejected {sorted(bad)}; retrying without")
-            use_fields = tuple(f for f in use_fields if f not in bad)
-            if not use_fields:
-                break
+        params: dict[str, Any] = {"sb-kind": kind, "full-prec": "1"}
+        if cdata:
+            params["sb-cdata"] = cdata
+        if limit:
+            params["limit"] = limit
+        # Self-healing field pruning lives in query_with_field_pruning(): a
+        # SINGLE unrecognised field name 400s the entire query, which is exactly
+        # how a schema typo (`sigma_A1`) once turned into "0 rows in the whole
+        # database".
+        df, sig, err, bad = query_with_field_pruning(
+            use_fields, params, transport=transport, log=log, tries=tries,
+            label=f"fetch_nongrav:{kind}:{name}")
+        if bad:
+            res.fields_rejected += bad
+            res.errors.append(f"[{name}] server rejected {list(bad)}; retried without")
 
         if df is None:
             res.errors.append(f"[{name}] {err}")
             continue
         if df.empty:
-            res.errors.append(f"[{name}] returned 0 rows")
+            # The server ANSWERED and the answer was empty.  That is a different
+            # statement from "the query failed", and the query log keeps them
+            # apart; here we keep walking the ladder because a less specific
+            # constraint may still return rows.
+            res.errors.append(f"[{name}] {STATUS_ZERO_ROWS}: server returned 0 rows")
             continue
         res.n_rows_raw = len(df)
         res.a1_column_present = "A1" in df.columns
@@ -468,7 +661,8 @@ def enrich_from_details(df: pd.DataFrame, details: dict[str, dict]) -> pd.DataFr
 
 # --- per-object detail --------------------------------------------------------
 def fetch_object_detail(designation: str, transport: Transport | None = None,
-                        tries: int = 3, pause: float = 2.0) -> dict:
+                        tries: int = 3, pause: float = 2.0,
+                        log: QueryLog | None = None, label: str = "") -> dict:
     """``sbdb.api`` record for one object: model_pars, covariance, phys pars.
 
     ``orbit.model_pars`` is what tells us whether the fitted non-grav law was
@@ -482,6 +676,7 @@ def fetch_object_detail(designation: str, transport: Transport | None = None,
         "sstr": designation, "cov": "mat", "full-prec": "1",
         "phys-par": "1", "discovery": "1",
     })
+    lbl = label or f"object_detail:{designation}"
     last = None
     for i in range(tries):
         try:
@@ -489,11 +684,34 @@ def fetch_object_detail(designation: str, transport: Transport | None = None,
             payload["ok"] = "object" in payload or "orbit" in payload
             if not payload["ok"]:
                 payload["error"] = payload.get("message", "no object/orbit key")
+            if log is not None:
+                # A per-object record that resolves to nothing is a REAL answer
+                # ("no such object"), not a failure -- and an unresolvable
+                # designation is a finding that must be reported, so the two get
+                # different statuses here as well.
+                log.add(label=lbl, url=url, http_status=200, attempt=i + 1,
+                        status=STATUS_OK if payload["ok"] else STATUS_ZERO_ROWS,
+                        n_rows=1 if payload["ok"] else 0,
+                        error="" if payload["ok"] else str(payload.get("error", "")))
+            payload["url"] = url
             return payload
+        except urllib.error.HTTPError as exc:  # noqa: PERF203
+            body = ""
+            try:
+                body = exc.read().decode("utf-8", errors="replace")[:400]
+            except Exception:  # noqa: BLE001
+                pass
+            last = f"HTTP {exc.code} for {url}: {body}"
+            if log is not None:
+                log.add(label=lbl, url=url, http_status=int(exc.code), attempt=i + 1,
+                        status=STATUS_QUERY_FAILED, error=last)
         except Exception as exc:  # noqa: BLE001
             last = f"{type(exc).__name__}: {exc}"
-            if i + 1 < tries:
-                time.sleep(pause * (i + 1))
+            if log is not None:
+                log.add(label=lbl, url=url, http_status=_http_code_from_text(last),
+                        attempt=i + 1, status=STATUS_QUERY_FAILED, error=last)
+        if i + 1 < tries:
+            time.sleep(pause * (i + 1))
     return {"ok": False, "error": last, "url": url}
 
 

@@ -307,6 +307,15 @@ def _cmd_midden(args, cfg):
                batch_size=args.batch_size)
 
 
+def _cmd_midden_deep(args, cfg):
+    from .midden.deepdive import deepdive_run
+
+    deepdive_run(cfg, stage=args.stage, epochs_per_star=args.epochs_per_star,
+                 target_epochs=args.target_epochs,
+                 radius_arcsec=args.radius_arcsec,
+                 batch_size=args.batch_size)
+
+
 def _cmd_tailings(args, cfg):
     from .tailings.run import tailings_run
 
@@ -378,11 +387,24 @@ def _cmd_derelict(args, cfg):
                            offline_input=args.offline_input, max_vet=args.max_vet,
                            max_enrich=args.max_enrich,
                            max_control_enrich=args.max_control_enrich,
-                           skip_control=args.skip_control)
+                           skip_control=args.skip_control,
+                           skip_completeness=args.skip_completeness,
+                           skip_dark_comets=args.skip_dark_comets,
+                           skip_high_albedo=args.skip_high_albedo,
+                           completeness_limit=args.completeness_limit)
+    # The query-status counts are printed with the verdict on purpose: a reader
+    # must be able to tell "the archive answered and the answer was empty" from
+    # "the archive was never reached" without opening a file.
     print(json.dumps({"verdict": summary.get("verdict"),
                       "funnel": summary.get("funnel"),
                       "fetch": summary.get("fetch"),
-                      "degradation": summary.get("degradation")}, indent=2))
+                      "completeness": (summary.get("completeness") or {}).get("verdict"),
+                      "dark_comets": summary.get("dark_comets"),
+                      "high_albedo": summary.get("high_albedo"),
+                      "negative_a1_census": summary.get("negative_a1_census"),
+                      "query_status_counts": summary.get("query_status_counts"),
+                      "degradation": summary.get("degradation")}, indent=2,
+                     default=str))
 
 
 def _cmd_panspermia_regime(args, cfg):
@@ -1114,6 +1136,25 @@ def main(argv=None):
                    help="FITS per download/measure/discard batch")
     p.set_defaults(func=_cmd_midden)
 
+    p = sub.add_parser("midden-deep",
+                       help="runner: HD 217522 deep-dive — every triplet-"
+                            "covering high-resolution ESO spectrum of the "
+                            "target and a roAp comparison panel; epoch "
+                            "stability + panel-standing scoring")
+    p.add_argument("--stage",
+                   choices=("discover", "measure", "score", "all"),
+                   default="all",
+                   help="stage to run (each checkpoints; 'all' resumes)")
+    p.add_argument("--epochs-per-star", type=int, default=30,
+                   help="epoch cap per comparison star (best SNR first)")
+    p.add_argument("--target-epochs", type=int, default=80,
+                   help="epoch cap for the target itself")
+    p.add_argument("--radius-arcsec", type=float, default=20.0,
+                   help="ObsCore position-match box half-width")
+    p.add_argument("--batch-size", type=int, default=25,
+                   help="FITS per download/measure/discard batch")
+    p.set_defaults(func=_cmd_midden_deep)
+
     p = sub.add_parser("herdsman-reduce",
                        help="staged runner 3/3: aggregate all scan shards "
                             "(tolerant of lost ones), vet candidates, compute "
@@ -1186,6 +1227,17 @@ def main(argv=None):
                         "rejects sigma_A1, so sigmas come from orbit.model_pars)")
     p.add_argument("--skip-control", action="store_true",
                    help="skip the comet control sample")
+    p.add_argument("--skip-completeness", action="store_true",
+                   help="skip the unconstrained completeness pull (~1.4M rows). "
+                        "Completeness is then UNTESTED, not proven")
+    p.add_argument("--skip-dark-comets", action="store_true",
+                   help="skip the Seligman et al. dark-comet named-target census")
+    p.add_argument("--skip-high-albedo", action="store_true",
+                   help="skip the catalogue-wide p_V > 0.7 screen; screen 4 then "
+                        "covers only the A1 sample, a much narrower question")
+    p.add_argument("--completeness-limit", type=int, default=None,
+                   help="cap rows in the unconstrained completeness pull "
+                        "(debugging only: a capped pull cannot prove completeness)")
     p.set_defaults(func=_cmd_derelict)
 
     p = sub.add_parser("panspermia-regime",

@@ -775,6 +775,10 @@ def read_fits_table(
                 v = np.asarray([str(x).strip() for x in v])
             out[name] = v
         df = pd.DataFrame(out)
+        # FITS is big-endian; pyarrow will not accept byte-swapped arrays, and
+        # the failure surfaces much later at the first to_parquet.  Normalise
+        # here so nothing downstream ever handles a '>i8'.
+        df = to_native_byteorder(df)
         df.attrs["n_rows_file"] = n_total
         df.attrs["n_rows_selected"] = int(idx.size)
         df.attrs["hdu"] = int(idx_hdu)
@@ -1807,11 +1811,41 @@ def join_pairs(
     return out
 
 
+def to_native_byteorder(df: pd.DataFrame) -> pd.DataFrame:
+    """Force every column to the machine's native byte order.
+
+    FITS stores numbers big-endian, so ``astropy`` hands back dtypes like
+    ``>i8`` / ``>f8`` on a little-endian runner.  pyarrow refuses those outright
+    -- ``ArrowNotImplementedError: ('Byte-swapped arrays not supported',
+    'Conversion failed for column star_id with type >i8')`` -- so the first
+    ``to_parquet`` after a successful bulk-file download dies, *after* the
+    hundreds of megabytes have been fetched and parsed.  That is exactly the
+    expensive place to fail, so the conversion is done centrally rather than
+    trusted to each reader.
+
+    ``newbyteorder`` only relabels the dtype; ``astype`` does the actual swap.
+    """
+    if df is None or df.empty:
+        return df
+    fixed = {}
+    for col in df.columns:
+        s = df[col]
+        dt = getattr(s, "dtype", None)
+        # '>' is big-endian; '=' and '|' are already native/not-applicable.
+        if getattr(dt, "byteorder", "=") == ">":
+            fixed[col] = s.astype(dt.newbyteorder("="))
+    if fixed:
+        df = df.copy()
+        for col, s in fixed.items():
+            df[col] = s
+    return df
+
+
 def write_checkpoint(df: pd.DataFrame, path: str | Path) -> Path:
     """Write a parquet checkpoint, creating parents. Returns the path."""
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(p, index=False)
+    to_native_byteorder(df).to_parquet(p, index=False)
     return p
 
 
@@ -1822,6 +1856,7 @@ __all__ = [
     "DownloadRoute",
     "FILE_ROUTES",
     "SOURCES",
+    "to_native_byteorder",
     "Selection",
     "Source",
     "TARGET_ELEMENTS",

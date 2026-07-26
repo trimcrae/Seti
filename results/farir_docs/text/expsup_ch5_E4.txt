@@ -1,0 +1,100 @@
+V.E.4 Cluster Analysis Processing 
+
+ IRAS Explanatory Supplement
+
+ V. Data Reduction
+
+ E. Overview of Small Extended Source Data Processing
+
+ E.4 Cluster Analysis Processing
+
+ Chapter Contents | 
+ Introduction | 
+ Authors | 
+ References 
+
+ Table of Contents | 
+ Index | 
+ Previous Section | 
+ Next Section 
+
+Before weeks-confirmation was attempted, it proved necessary to verify
+that the candidates were well-defined and relatively isolated.
+ 
+When the focal plane passed over an object more extended than 10', structures
+within the object often gave rise to many detections whose properties depended
+on the scan direction. The simple detection algorithm grossly misrepresented
+such large sources, since only the flux at the spatial frequencies of the
+square-wave filters was detected. This value could be far less than the
+true total flux. Large extended objects were characterized by strings and
+clusters of sources. This behavior was found particularly pronounced at
+100 um.
+ 
+A somewhat similar situation arose in regions with a high density of
+sources, or equavlently, because of complex backgrounds, such as the Galactic
+plane. The results from such regions were particularly sensitive to scan
+direction. Fluxes quoted in regions of complex structure should NEVER be
+taken at face value.
+ 
+Before weeks-confirmation was attempted the sources were first analyzed
+by the cluster analysis processor, which looked for clusters of detections
+at the same wavelength and from the same hours-confirming coverage. If
+the cluster was below a certain critical size then its constituent detections
+were merged into a single source which was then ready for weeks-confirmation.
+If, however, the cluster was larger than the threshold size, then it was
+deemed part of a large extended object. In this case the detections 
+contributing
+to the cluster were rejected from any future processing. All detections
+which were not found to be members of large clusters were kept for subsequent
+processing.
+ 
+Clusters were identified by finding sources observed within 36 hours
+and which could be linked together spatially. A detection was considered
+to be linked to a cluster if it was a close neighbor to at least one other
+source in the cluster. Two detections were considered to be close neighbors
+if their link parameter, L , was less than a certain threshold. The link
+parameter, L , is given by,
+
+L = D/(r 1 + r 2 )
+ 
+ (V.E.4)
+
+where D is the distance between the centroids of the two sources and
+ r 1 and 
+ r 2 are the radii of their equivalent-area circles, i.e. 
+if a and b are the semi-major and semi-minor axes of the source, then the 
+equivalent-area
+circle has a radius given by
+
+r = (a x b)
+ 
+ (V.E.5)
+
+The value of the threshold on the link parameter was taken to be 3.5
+for reasons discussed in Section V.E.7.a .
+ 
+When the detections in a cluster were merged, the flux of the merged
+object was taken to be the sum of the fluxes of the constituent sources.
+The position was the flux-weighted centroid from all the constituent 
+detections
+in the cluster. The extent of the source was obtained by combining the
+covariance matrices about the new centroid; the new matrix was then 
+diagonalized
+to yield new estimates of the semi-major and semi-minor axes and twist
+angle. Relatively bright sources were not greatly altered when merged with
+fainter detections.
+ 
+The maximum semi-major axis that a merged cluster could have before
+being rejected was set at 5', since extended source processing was not
+intended for larger sources and could not accurately estimate fluxes on
+size scales greater than about 8'.
+
+ Chapter Contents | 
+ Introduction | 
+ Authors | 
+ References 
+
+ Table of Contents | 
+ Index | 
+ Previous Section | 
+ Next Section

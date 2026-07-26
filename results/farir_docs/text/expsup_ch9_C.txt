@@ -1,0 +1,264 @@
+IX.C. Data Processing 
+
+ IRAS Explanatory Supplement
+
+IX. The Low-Resolution Spectra
+
+C. Data Processing
+
+ Chapter Contents 
+ | Authors 
+| References 
+
+ Table of Contents |
+ Index | Previous Section 
+| Next Section 
+
+ The Database 
+ Processing the Individual Spectra 
+ 
+ Despiking 
+ Conversion to a Linear Scale 
+ Interpolation to a Standard Wavelength Grid 
+ Correction for Wavelength-Dependent Responsivity 
+ Correction for Cross-Scan-Dependent Responsivity 
+ Overall Responsivity 
+ Joining of the Two Spectrum Halves 
+ 
+ Averaging Spectra, Quality Checks 
+ Final Selection of Spectra 
+
+ C.1 The Database 
+
+ The spectrometer data consist of three types of data: (i)
+uncorrected spectra with header information, (ii) calibration
+tables, and (iii) administrative files. The spectra were extracted
+out of the data stream whenever an hours-confirmed source with
+a signal-to-noise ratio greater than 25 or a source specified
+as "known source" 
+( Section V.D.4 ), crossed the spectrometer
+aperture. Extractions were also made for designated calibration
+sources. The spectra were linked to survey sources using index
+association records produced by the hours-and weeks- confirmation
+processors ( Section V.D.7 ).
+ 
+ There were three types of calibration tables: (a) the responses
+of the five detectors to the internal reference source flashes
+and the intensities of the flashes as derived by the survey calibration
+processor; (b) correction tables for the relative responsivity
+as a function of position across the five detectors; (c) correction
+tables for the relative responsivity as a function of wavelength.
+The cross-scan and wavelength dependent responsivity tables were
+derived from special observations (see Section IX.B ).
+
+ C.2 Processing the Individual Spectra 
+
+ Processing of the data always started with the raw data.
+This allowed the correction procedures to be improved continuously
+up to the time of production of the catalog. The major processing
+steps are discussed below.
+
+ C.2.a Despiking 
+
+ Single sample spikes with an amplitude greater than 8% caused
+by multiplexer errors ( Section IX.B ) were removed 
+and replaced
+by an interpolated value using a simple algorithm operating on
+the raw data. Multiple-sample spikes were not removed but their
+presence was noted so that the spectrum-half would be rejected
+later (see Section IX.C.3 ).
+
+ C.2.b Conversion to a Linear Scale 
+
+ A lookup table of 256 entries was used to convert the raw
+data to voltages on a linear scale. A standard reconstruction
+of the input-voltage to the high-pass filter from the measured
+output voltage was carried out. An offset correction was reset
+to zero whenever the sample voltage dropped below a specified
+threshold because of the effects of the zero clamping 
+( Section IX.A.4 ).
+
+ C.2.c Interpolation to a Standard Wavelength Grid 
+
+ For ease of processing, an interpolation was carried out
+to a standard regular grid of angular positions in the dispersion
+direction. Because the dispersion of the spectrograph changed
+rapidly as a function of the angular position 
+( Fig. IX.A.1 ), the
+wavelength values corresponding to the standard sample values
+were not equidistant. Before the interpolation, allowance was
+made for variations in the scan speed of the telescope. For the
+spectra of the brighter sources (signal-to-noise ratio greater
+than 10) the well-defined in-scan detector edges were in-scan
+to center the spectrum. The centering correction reduced in-scan
+errors to approximately 2", corresponding to approximately
+0.03 um in wavelength.
+
+ C.2.d Correction for Wavelength-Dependent Responsivity 
+
+ The interpolated samples were multiplied by a responsivity
+table sampled at the same standard grid. There was a table for
+each of the five detectors derived from observations of 
+ -Tau 
+( Fig. IX.B.2 ). 
+Although the software allowed selecting a different
+table for each of 16 regularly spaced cross-scan positions on
+the detector, the evidence for a cross-scan variation of the 
+wavelength-dependent
+gain was too weak to justify using this option.
+
+ C.2.e Correction for Cross-Scan-Dependent Responsivity 
+
+ Depending on the nominal cross-scan position of the source,
+a correction ( Fig. IX.B.1 ) was applied for 
+the decrease of responsivity
+towards the edges of the detectors. This correction was the weakest
+link in the calibration process because of the relatively large
+uncertainty in the cross-scan position. The correction applied
+is uncertain by up to 20%, although this uncertainty was decreased
+by the process of joining the two spectrum-halves together (see
+ Section IX.C.2.g ).
+
+ C.2.f Overall Responsivity 
+
+ The overall responsivity depended on the individual detector,
+on the time and/or on the sky position. To account for these
+variations a correction was derived from the voltage responses
+to the two internal reference source flashes bracketing the time
+of observation. After applying the responsivity
+correction to a large sample of spectra the integrated fluxes
+in the spectra were compared to the fluxes measured by the survey
+array. Systematic factors of 0.75 and 1.00 were applied to the
+integrated spectrometer fluxes to bring them in line with the
+survey observations.
+
+ C.2.g Joining of the Two Spectrum Halves 
+
+ The two spectrum-halves (8-12 um and 11-25 um) were treated
+independently until this point. Because of uncertainties in the
+cross-scan position of the scan path over the detectors and therefore
+in the nominal cross-scan responsivity correction, the two spectrum-halves
+often differed by up to 15 or 20% after subtraction of a linear
+baseline. The overlapping portion of the spectrum-halves was
+used to determine another correction factor. In doing so, the
+nominal relative cross-scan positions were used to determine which
+half of the spectrum to change by the largest amount. If either
+half had been observed by the central part of a detector, it was
+considered reliably calibrated, and that portion was not changed
+by the joining process, and the half of the spectrum observed
+near the edge of a detector was shifted up or down towards the
+other half. If both halves were considered equally reliable, then
+each was scaled by the square root of the ratio between the overlapping
+sections. This joining process reduced the overall error in the
+responsivity correction to less than 10%.
+
+ C.3 Averaging Spectral Quality Checks 
+
+ Before spectra were averaged, a number of quality checks
+were performed on the individual measurements of the two halves
+of a source's spectrum. First, all measurements made within 18"
+of the edge of any detector were flagged. Measurements were rejected:
+
+ if they contained multiple-sample spikes ( Section IX.C.2 );
+ if the join-factor obtained before ( Section IX.C.2 )
+ was outside the range 0.30 to 3.3;
+ if the measurement was confused by neighboring sources;
+ this was considered to occur when the measurement met one of two
+ criteria: (i) the central portion was below the baseline determined
+ from signal-free parts of the spectrum-half; (ii) the baseline
+ at the low wavelength end of the spectrum-half differed from that
+ at the high wavelength end by more than 20% of the signal in the
+ 8-12 um band or by 10% in the 11-25 um band. 
+ The lower limit of these thresholds was 2.5 times the sample noise.
+ if the measurement did not correlate with the "reference
+ measurement", defined as the measurement with the smallest
+ number of check-flags. This choice gave preference to measurements
+ passing over the central part of the detector. Any 8-12 um measurement
+ for which the correlation coefficient with the reference was below
+ 60% or any 11-25 um measurement for which it was below 50% was
+ rejected. For line spectra without a continuum in the 8-12 um
+ region the first criterion was waived.
+
+ At least 80% of the spectra in the catalog had correlation
+coefficients above 70 and 60% in the short and long wavelength
+halves, respectively. Some 40% correlated internally with coefficients
+better than 80% in both spectrum-halves (see Section IX.C.4 ).
+ 
+ The spectrum-halves passing through all of the above tests
+were averaged using the inverse of the square of the noise as
+a weighting factor. At least two measurements in each of the two
+spectrum-halves (8-13 and 11-25 um) had to be accepted 
+before the spectrum could
+be averaged and included in the spectral catalog.
+ 
+ After averaging the two spectrum-halves were rejoined, giving
+both halves equal weight (see Section IX.C.1 ). Generally the
+join factors differed from 1.00 by only a few percent.
+ 
+ The averaged spectrum was convolved with the 12 um survey
+passband. The integrated flux thus obtained, was compared to the
+average 12 um survey flux of the source. The ratio between the
+two fluxes is given in the low resolution spectrometer catalog
+record and has a 1 dispersion around 
+unity of about 15%. Exceptions to this rule will be spectra with sharp 
+lines (classes 8 and 9; see Section IX.D.2 ) or 
+small 12 um fluxes.
+
+ C.4 Final Selection of Spectra 
+
+ Three selection criteria were applied for inclusion in the
+Catalog of Low Resolution Spectra.
+
+ The source is contained in the IRAS point source catalog.
+ The entire spectrum must have been observed at least
+ twice and the individual measurements should be mutually consistent.
+ (individual spectra must pass all the checks mentioned in
+ Section IX.C.3 and must have a minimum correlation 
+ coefficient of 50% between any two measurements of the source. The 
+ large majority of spectra had however, much higher correlation 
+ coefficients (see below).
+ The source must pass a subjective visual inspection.
+ About 2.5% of all sources were rejected by this process, mostly
+ because they showed non-point source characteristics or confusion
+ with other sources.
+
+ Four samples of sources were selected for inclusion in the
+catalog.
+
+ Sources whose 12 um survey flux density was larger than
+ 25 Jy or whose 25 um survey flux density was larger than 50 Jy.
+ Individual spectrum-halves were required to correlate with each
+ other with a correlation coefficient of 80% in either spectrum-half.
+ This sample contains about 2150 sources.
+ Sources with 12 um flux densities larger than 1 Jy or 25 
+ um flux densities larger than 2 Jy but not contained in Sample
+ a. The vast majority of these sources proved to be brighter than
+ approximately 5 Jy at 12 um or 10 Jy at 25 um. The correlation
+ coefficients were required to exceed 70% in the 8-12 um band and
+ 60% in the 11-25 um band. This sample contains about 2450 sources.
+ Sources in the same flux density range as sample b but with
+ lower correlation coefficients: between 60 and 70% in the 11-22 
+ um spectrum-half or between 50 and 60% in the 11-25 um hall; 
+ respectively. There are roughly 850 sources in this sample.
+ Sources with minimum survey flux densities of 1 Jy at 12 
+ um or 2 Jy at 25 um. Of these sources only the 11-25 um
+ spectrum-half was required to have been measured consistently with a minimum
+ correlation coefficient of 50% between individual measurements.
+ Out of this sample only sources with specified spectral lines
+ and not contained in sample a b, c were selected for the catalog.
+ The selection was carried out by the classification program: only
+ classes 8 and 9 (see Section IX.D.2 and 
+ Table IX.D.1 ) were kept.
+ There are approximately 40 spectra with lines in this sample.
+
+ Samples a b, and c contain continuum sources and approximately
+75% of the line sources of the catalog; sample d contains the
+remainder of the line sources.
+
+ Chapter Contents 
+| Authors 
+| References 
+
+ Table of Contents |
+ Index | Previous Section 
+| Next Section

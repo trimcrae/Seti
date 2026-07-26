@@ -1,0 +1,140 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+
+<HEAD>
+   <title>D.9 Conversion of Position Uncertainties to Gaussian Approximation</title>
+</HEAD>
+
+<BODY bgcolor="#FFFFFF">
+
+<h1 align="center">
+   IRAS Explanatory Supplement<br>
+   V. Data Reduction<br>
+   D. Point Source Confirmation<br>
+   D.9 Conversion of Position Uncertainties to Gaussian Approximation
+</h1>
+
+<hr>
+
+<font size=+1>
+<center>
+   <a href="index.html#toc">Chapter Contents</a> | 
+   <a href="index.html#intro">Introduction</a> | 
+   <a href="index.html#auth">Authors</a> | 
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> | 
+   <a href="../index/index.html">Index</a> | 
+   <a href="D8.html">Previous Section</a> | 
+   <a href="E.html">Next Section</a>
+</font>
+</center>
+
+<hr>
+      Throughout the processing, the position error model was
+based on the non-Gaussian formalism mentioned in 
+<a href="D1.html">Section V.D.1</a>.
+ Because most of the point source position probability density
+functions evolve toward Gaussian shapes at each stage of refinement,
+the catalog description was designed to approximate the more familiar
+error eclipses of two-dimensional Gaussians, while retaining most
+of the accuracy of the non-Gaussian model. This involved bracketing
+the nominal positions on each coordinate axis with a single number
+to be interpreted as a confidence interval on that axis. This
+is a simplification of the optimal cross-scan description, which
+requires two numbers to define the distribution about the mean.
+<P>
+      For sources with strongly non-Gaussian position uncertainties,
+there is no way to escape the fact that some aspects of the error
+behavior will not generally be Gaussian. An important specific
+example is the relation between error in sigma units and the fraction
+of all cases exceeding that error. Because of the decision to
+quote the axes of the two-dimensional contour enclosing 95% of
+the probability mass, the error bars given were selected to match
+the corresponding deviations on the axes of the random variables
+used in the error model. Thus the expected frequency at which
+the true source position lies outside of the quoted contour is
+5%. The contour is not generally elliptical, however, as this
+is a Gaussian feature not necessarily shared by the actual distributions.
+The error incurred by assuming that the contours are all elliptical,
+on the other hand should not be extreme, and in fact this approximation
+played a role in mapping the two-dimensional 95% confidence into
+one-dimensional confidences on each axis.
+<P>
+      The error bars were obtained as follows. For Gaussian errors,
+the two-dimensional 95% confidence would correspond to a 
+<img src="../images/chi-lc.gif"><sup>2</sup> probability of 0.95 with two 
+degrees of freedom. 
+This implies a value of 5.99 for the 
+<img src="../images/chi-lc.gif"><sup>2</sup> random 
+variable, so that the eclipse crosses each axis at 
+2.45-<img src="../images/sigma-lc.gif">, 
+corresponding to a confidence of 98.6%. This was used for the 
+confidence level for both axes. On the Gaussian axis of the 
+error model, the interval used was 
+2.45-<img src="../images/sigma-lc.gif"><sub><i>y</i></sub>. On 
+the non-Gaussian axis, a lookup table was used to obtain the 
+98.6% confidence deviation as a function of the ratio of the 
+uniform half-width, <I>L<sub>z</sub></i>, to the Gaussian 
+<img src="../images/sigma-lc.gif"><sub><i>z</i></sub>. This table was 
+computed by numerical 
+quadrature for a grid of these ratios ranging from 0.1 to 30. 
+Below 0.1, the probability density was considered Gaussian, 
+and above 30 it was taken as purely uniform.
+
+<hr>
+
+<font size=+1>
+<center>
+   <a href="index.html#toc">Chapter Contents</a> | 
+   <a href="index.html#intro">Introduction</a> | 
+   <a href="index.html#auth">Authors</a> | 
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> | 
+   <a href="../index/index.html">Index</a> | 
+   <a href="D8.html">Previous Section</a> | 
+   <a href="E.html">Next Section</a>
+</font>
+</center>
+
+<hr>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+
+

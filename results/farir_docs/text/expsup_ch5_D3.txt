@@ -1,0 +1,190 @@
+V.D.3 Band-Merging 
+
+ IRAS Explanatory Supplement
+
+ V. Data Reduction
+
+ D. Point Source Confirmation
+
+ D.3 Band-Merging
+
+ Chapter Contents |
+ Introduction |
+ Authors |
+ References 
+
+ Table of Contents |
+ Index |
+ Previous Section |
+ Next Section 
+
+ Overview of Band-Merging 
+ Band Filling 
+ Special Considerations Regarding Band-Merging 
+ Focal Plane Geometry Analysis 
+
+ D.3.a Overview of Band-Merging 
+
+ Band-merging was performed in a manner very similar to in-band
+seconds-confirmation, except that detection buffers were maintained
+for all bands simultaneously, and detections in different bands
+were combined. Again a "drop-dead" source was selected
+as a nucleus to which detections in other bands were attached
+if they could be associated with it. Up to four attempts were
+made to obtain some type of flux measure to put in all three other
+bands for each drop-dead. In the first round a detection from
+the primary source buffer in each band was sought. These buffers
+contained sources which were either seconds-confirmed (SC) or
+were on detectors opposite a failed or noisy redundant detector
+(NSCF). The drop-dead source was selected as the SC or NSCF source
+with the earliest time tag. The drop-dead's band determined the
+order in which the other bands were searched according to
+ Table V.D.4 .
+ 
+ Coarse windows in time and in-scan position angle were used
+to limit the search for merging candidates. When found, such
+candidates were subjected to a fine position test such as that
+of in-band seconds-confirmation, an n- 
+test on the in-scan
+position angle ( Table V.D.1 ). In the
+cross-scan direction, the nominal
+slot extents of the drop-dead and the candidate were required
+to overlap.
+ 
+ If more than one candidate was acceptable in a given band
+the priority was given to SC candidates over NSCF candidates and
+otherwise the best in-scan match was taken. A bit was set in the
+confusion status word for the source.
+
+ Order of Band-Merging
+
+ Table V.D.4
+
+ Drop-Dead Band Order in which Other
+Bands Were Searched 
+
+ um um 
+ 
+ 12 25 60 100 
+
+ 25 10 60 100 
+
+ 60 25 100 12 
+
+ 100 60 25 10 
+
+ When a candidate was merged with a drop-dead the position
+parameters were refined immediately with the same algorithm as
+that used for in-band seconds-confirmation. This was done before
+resuming the merging search in the next band so that subsequent
+candidates would have to be compatible with the position information
+of all detections merged up to that point.
+
+ D.3.b Band Filling
+
+ After the attempt to merge sources from the SC/NSCF buffers,
+if any bands remained empty, the non-seconds-confirmed (NSC) detections
+were searched for band-filling candidates. These were the detections
+which failed seconds-confirmation without the alibi of a dead
+or noisy redundant detector. The tests were identical to those
+for SC/NSCF sources, except that the threshold used was just under
+4.1 , which should reject one true case out
+ of every 20,000.
+ The NSC detections were used for flux estimates only; their position
+information was considered too risky to use for parameter refinement.
+If more than one NSC detection was acceptable for filling a given
+band the confusion status bit for that band was set, and the best
+in-scan position match was kept. After the NSC buffers were searched,
+unused NSC detections were passed on to the input file for use
+at hours-confirmation.
+ 
+ Any bands which remained empty were filled with low signal-to-noise
+detections ( Section V.C.6 ) or with upper limits
+based on the noise
+histories of the detectors which the source image crossed. If
+any detectors were certain to have been crossed then the upper
+limit was based on the lowest noise of any such detector otherwise
+the highest noise on any detector which might have been crossed
+was used.
+
+ D.3.c Special Considerations Regarding Band-Merging
+
+ Three special considerations entered the band-merging problem.
+These were deferred in the discussion above in order to minimize
+the complexity of the description. The first of these was concerned
+with the selection of the drop-dead detection from one of the
+SC/NSCF buffers. Rather than selecting the oldest detection in
+any of the four bands, a time offset of seven seconds was applied
+against detections in the 100 um band in order to
+reduce the amount
+of cirrus contamination. This compensated for the fact that the
+100 um band was the first to register observable point source
+detections, because of its location at the entrance to the focal
+plane. Without the time offset, cirrus detections had been able
+to claim nearby point source detections before they could be associated
+with their proper partners. Implementing the seven-second delay
+forced all multi-band sources to begin band-merging with drop-dead
+detections at shorter wavelengths, where cirrus was much less
+of a problem.
+ 
+ The second special consideration related to the handing
+of SC and NSCF detections of the same source in the same band.
+It was not unusual for edge-overlap detectors opposite a noisy
+detector to participate in a triple-detection with the noisy detector.
+ Usually this triple-detection mode was processed without any
+problem, but occasionally the three detections would fail the
+tests required for acceptance of the triple-detection mode. These
+tests attempted to prevent confusion of close sources, as described
+above under in-band seconds-confirmation. When these tests failed
+it was possible for the source to be carried forward in both the
+SC form and the NSCF form. Experience showed that the SC form
+was practically always a better representation of the source than
+the NSCF form, but half of the time the NSCF had the earlier time
+tag and hence had first choice of band-merging candidates. In
+order to correct this, a test was added after selection of a drop-dead
+to see whether it was NSCF and was followed closely by any
+SC source in the same band. In such cases, the SC and NSCF sources
+were swapped in the buffer, so that the SC source would be processed
+for band-merging first. The time windows used were one second
+in the 12, 25, and 60 um bands, and 1.5 seconds in the 100 um
+band.
+ 
+ The third special consideration involved the use of position
+information of NSCF sources in parameter refinement. With three
+dead detectors and several more with degraded noise properties,
+NSCF sources were too numerous to permit completely ignoring their
+position information. On the other hand false alarms on detectors
+opposite dead or noisy redundant detectors had to be accepted
+as NSCF. The only partially distinguishing characteristic of
+false alarms was their tendency toward low detection correlation
+coefficients. A compromise was therefore developed which permitted
+the use of NSCF position information in parameter refinement provided
+that the detection had a signal-to-noise ratio of at least ten
+with a correlation coefficient of at least 0.98. The only exception
+to this rule was when no SC or qualifying NSCF sources were present,
+in which case all NSCF position information was used in parameter
+refinement.
+
+ D.3.d Focal Plane Geometry Analysis
+
+ The mean in-scan position angle discrepancies for each pair
+of redundant detectors in a band were interpreted as errors in
+the focal-plane geometry as mapped through the optics onto the
+sky. These errors could not not be distinguished from timing errors,
+because all data were taken at the survey scan rate, but separation
+into components was not necessary for survey analysis purposes.
+ Whenever detections in different bands were merged and qualified
+for position refinement, the in-scan position discrepancies were
+computed for all possible band combinations. After sufficient
+data were obtained, these mean discrepancies were forced toward
+zero by modifying the model of the focal plane geometry.
+
+ Chapter Contents |
+ Introduction |
+ Authors |
+ References 
+
+ Table of Contents |
+ Index |
+ Previous Section |
+ Next Section

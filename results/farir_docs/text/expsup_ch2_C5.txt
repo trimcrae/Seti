@@ -1,0 +1,246 @@
+II.C.5 Electronics 
+
+ IRAS Explanatory Supplement
+
+ II. Satellite Description
+
+ C. Telescope System Overview
+
+ C.5 Electronics
+
+ Chapter Contents |
+ Authors 
+ | References 
+
+ Table of Contents |
+ Index |
+ Previous Section 
+ | Next Section 
+
+ Figure II.C.10 Preamp and bias supply schematic. The JFET module
+is indicated by the dashed line, the dewar boundary by the dash-dot
+line. 
+
+ larger 
+ largest 
+
+The photoconductive detector elements responded to infrared radiation
+by altering their electrical resistance.
+ Figure II.C.10.a shows schematically
+the nominal preamplifier and bias voltage design. A matched pair of junction
+field effect transistors (JFETs) for each detector acted as a unity-gain
+source-follower amplifier, converting the high impedance output of the
+photodetectors to low impedance for transmission to the warm electronics
+outside the dewar. The JFET pairs were each suspended by Dacron threads
+inside a small 2 K light-tight box such that electrical dissipation in
+the JFETs themselves (about 200 microwatts) maintained the JFETs at
+temperatures of 60 to 70 K. A 3
+M metal-film resistor
+cemented to the JFET
+acted as a heater for cold starting the amplifier during ground testing
+and several hours after launch. The JFETs formed a differential input stage
+of the trans-impedance amplifier. At low frequencies the output voltage
+of the trans-impedance amplifier was equal to the voltage difference between
+the gates of the JFET pair plus any offset voltage at the input of the
+operational amplifier plus the voltage drop across the feedback resistor
+due to the photocurrent from the detector.
+ 
+The detector bias was applied to one detector contact and the trans-impedance
+amplifier maintained the other contact at a constant DC voltage very near
+signal ground independent of photocurrent until the trans-impedance amplifier
+output saturated at about 11 volts. All detectors in a module had a common
+bias voltage, applied through the module frame, which are listed in
+ Table II.C.6 . An exception to this biasing scheme was
+module A in the 25 um band. During testing, the frame of this module
+became shorted
+to signal ground rendering the entire module inoperative. The alternative
+biasing approach used for this module only (suggested by Dr. J. Houck)
+is shown in Fig. II.C.10.b . The bias voltage, with
+reversed polarity, was applied to the gate of the reference JFET. This
+voltage also appeared at the operational amplifier input so the output
+of the trans-impedance amplifier was compensated by the same amount. The
+net effect of this modification was to increase the gain of the
+trans-impedance amplifier by a factor of 1.2.
+ 
+During laboratory testing the responsivity and noise of the detectors
+were found to depend on their history of exposure to energetic radiation,
+such as gamma-rays, and energetic electrons and protons.
+The observed sensitivity
+change resulting from an exposure of 0.6 Rads of Co60, roughly equivalent
+in dosage to a passage through a deep portion of the South Atlantic Anomaly
+(SAA), was about a factor of 1.2, 2, 6 and 10 for the 12, 25, 60 and 100
+um detectors. Biasing the detectors into a "breakdown"
+condition resulted in a large current flowing through the detector that
+annealed the radiation effects. The hardware provided a second bias voltage
+level, called the "bias boost" voltage, which effected this
+annealing
+process after exposure to SAA protons during the mission. The bias boost
+voltages are listed in Table II.C.6 and the effects
+of the bias boost are discussed in
+ Section IV.A.7 .
+Because the 12 um detectors did not require annealing, the
+second bias voltage provided an alternative operating bias.
+
+ Figure II.C.11 Resistance vs. voltage characteristics of feedback
+resistor for detector 29. Measurements were made at 2 K.
+Solid line shows the shape of resistance vs. voltage relation adopted
+for processing. 
+
+ larger 
+ largest 
+
+The rolloff frequency of the trans-impedance amplifier was set to
+approximately 80 Hz by a 0.1 pf shunt capacitor across the feedback resistor.
+The feedback resistors, Eltec model 102 metal film resistors, were selected
+from 1 x 10 10 
+room temperature elements. At 2 K their impedance
+was 2.05 +/- 0.1 x 10 10 
+ and varied slightly with
+voltage. Figure II.C.11 shows a sample resistance
+vs. voltage curve as measured at 2 K. A combination of three straight lines
+fitted to the measured points defined the shape of the non-linear resistance
+versus voltage relationship used for data reduction
+(see Section VI.A.5 ).
+
+Electrical Characteristics of Survey Arrays
+
+Table II.C.6
+
+ Effective Wavelength (um) 
+ 12 
+ 25 
+ 60 
+ 100 
+
+ Nominal bias (volts) 
+ 3.27(A)
+2.50(B) 
+ 1.50 
+ 0.160 
+ 0.185 
+
+ Boosted bias (volts) 
+ 2.50(A)
+
+2.00(B) 
+ 11.00(A)
+
+7.00(B) 
+ 1.00 
+ 1.00 
+
+ Nominal/Low Gain 
+ 7.18 
+ 5.98 
+ 10.8 
+ 13.4 
+
+ Nominal/High Gain 
+ 0.107 
+ 0.109 
+ 0.102 
+ 0.100 
+
+The rest of the telescope electronics processed the signals from the
+visible and infrared preamplifiers, transferred data to the spacecraft
+onboard computer for storage and subsequent transmission to the ground
+station, and received commands from the spacecraft and distributed them
+to the telescope systems. This data-processing was split into two major
+elements: the analog electronics and the digital electronics. More details
+are contained in Langford et al. (1983) 
+and Long and Langford (1983) .
+
+ Figure II.C.12 Focal plane array infrared channel data flow. 
+
+ larger 
+ largest 
+
+The analog signal path for the infrared detectors was entirely DC-coupled.
+ Figure II.C.12 shows a functional diagram of the
+components of the analog electronics for one infrared detector channel.
+In order to maintain a negative voltage at the output of the analog
+electronics,
+the DC offset voltage at the output of the trans-impedance amplifier could
+be changed by 17.8 mV steps using an 8 level commandable offset with level
+4 corresponding to no change. The commandable offset levels utilized during
+the mission are listed in Table II.C.3 .
+ 
+Nuclear pulse circumvention circuitry prevented sharp pulses from cosmic
+rays and charged particle hits on the detectors in the SAA and in the polar
+horns from contaminating the infrared data stream. The output of the
+trans-impedance amplifier was fed to an integrator and to a pole-zero
+amplifier which flattened
+the frequency response to 450 Hz to improve the operation of the circumvention
+circult. The output of the pole-zero amplifier went to a differentiator
+and to a Bessel filter which delayed the signal by about 150 us. The
+differentiated
+and integrated signals led to a comparator which opened a switch to prevent
+the unwanted, fast rise-time pulses from passing through the system. The
+integrator raised the minimum threshold to blank the unwanted spike as
+the DC voltage from the trans-impedance amplifier increased. The track/hold
+capacitor clamped the input to the gain amplifier to a fixed level while
+the switch was open. Further details of the design and performance of the
+pulse circumvention circuitry can be found in Emming
+ et al. (1983) and
+ Long and Langford (1983) .
+ 
+The Bessel filter boosted the trans-impedance amplifier output by a
+factor of two. An additional amplifier could increase the system gain by
+software commandable factors of unity (low gain), of 5 to 12 depending
+on the wavelenght band (nominal gain), and of ten times nominal gain (high
+gain). All survey scans were made using the nominal gain except in those
+areas, typically close to the Galactic plane. Some of these areas were
+rescanned using low gain ( Section III.D ). The
+overtall nominal gain for each infrared channel and the ratios of the nominal
+to low and high gains for the different detector modules are listed in
+ Table II.C.3 . Finally. 12 dB/octave
+low-pass filters
+with cutoff frequencies of 6, 6, 3, 1.5 Hz for the 12, 25, 60 and 100 um
+bands, respectively, limited the frequency response and reduced high frequency
+noise. The outputs of the low-pass filters were fed into multiplexers and
+then to a 16-bit analog-to-digital converter operating at 125 uV
+per data number for subsequent processing by the digital electronics.
+ 
+The visible detector data flow was similar to the infrared data flow,
+except that the trans-impedance amplifier was AC-coupled to a MOSFET
+preamplifier.
+For both infrared and visible channels, the pole zero amplifier, integrator,
+differentiator, comparator, track/hold calacitor, switch, gain amplifier
+and low-pass filter were contained in a single miniature hybrid circuit.
+ 
+Under low background conditions the limiting noise in the analog
+electronics
+chain was the Johnson noise of the 2 x 10 10 
+ feedback
+resistor. At a temperature of 2 K this noise level was roughly 1.6 uV
+Hz -&frac12; .
+ 
+The digital electronics processed the digitized infrared and visible
+detector data, collected telemetry information from various sensors located
+on the telescope, received and executed commands issued from the onboard
+computer and transmitted the formatted telemetry, infrared and visble detector
+data to the onboard computer. The infrared detectors were sampled at 16,
+16, 8 and 4 Hz at 12, 25, 60 and 100 um, respectively. To minimize
+spacecraft data storage requirements, the digital electronics compressed
+each 16-bit infrared detector value to an 8-bit value representing the
+difference between the successive 16-bit numbers. For details of compression
+scheme, see Appendix II. 1 .
+ 
+During star crossings, two of the eight visual detectors were sampled
+at a 500 Hz rate. The onboard digital electronics determined the visual
+magnitude of the star and its crossing time, passed this information to
+the spacecraft attitude control software to update the satellite pointing
+and recorded the data for subsequent use in the attitude reconstruction.
+The digital electronics also measured 108 temperatures, voltages and pressures
+to monitor the health of the telescope. These and other housekeeping data
+were multiplexed, digitized and formatted for transferral to the onboard
+computer.
+
+ Chapter Contents 
+ | Authors 
+ | References 
+
+ Table of Contents |
+ Index |
+ Previous Section 
+ | Next Section

@@ -1,0 +1,144 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+<HEAD>
+   <TITLE>XI.J.  Minor Problems</TITLE>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H1 ALIGN=CENTER>IRAS Explanatory Supplement<BR>
+XI. Known Processing Anomalies<BR>
+J.  Overestimated Weak Fluxes</H1>
+
+<HR>
+<CENTER><FONT SIZE=+1><A HREF="index.html#toc">Chapter Contents</A>
+ | <A HREF="index.html#auth">Authors</A>
+| <A HREF="index.html#ref">References</A>
+<BR>
+<A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> | <A HREF="I.html">Previous Section</A>
+| <A HREF="../ch11/K.html">Next Section</A></FONT></CENTER>
+<HR>
+
+<p>There is a systematic error associated with the measured flux densities, particularly those of moderate quality, near the noise limit of the detectors, which can increase the quoted value by as much as a factor of two compared with the true value.  Weak sources were often detected when positive noise excursions dropped the signal below the SNR cutoff and so were not included in the flux averaging.  While the problem is complicated by the uneven sensitivities of the detectors, a simple analysis demonstrates the problem and leads to a simple correction factor.</p>
+
+<p>Assume that all of the noise sources are Gaussian and neglect spikes and cosmic ray hits as second order effects (see <a href="../ch7/D.html">Sec VII.D</a> of the Supplement).  Define</p>
+
+<blockquote>
+The noise level = <img src="../images/sigma-lc.gif"><br>
+The true source flux density, <i>f<sub>true</sub></i> = n<img src="../images/sigma-lc.gif"><br>
+The flux threshold = m<img src="../images/sigma-lc.gif"><br>
+The measured flux density, <i>f<sub>obs</sub></i> = n<sup>'</sup><img src="../images/sigma-lc.gif">
+</blockquote>
+
+<p>A source will be detected whenever the measured flux density exceeds the threshold, i.e. <i>n<sup>'</sup></i> &gt; <i>m</i>.  For a perfectly uniform focal plane with no failed detectors the fraction of times, <i>p</i>, that a source was seen is given by:</p>
+
+<center><img src="images/eqJ1.gif"></center>
+<p align="right">(XI.J.1)</p>
+<p>The expectation value of the observed flux density is given by the average of all detected values,</p>
+
+<center><img src="images/eqJ2.gif"></center>
+<p align="right">(XI.J.2)</p>
+<p>Then the expectation value of the ratio of the observed flux density to the true flux density is given by</p>
+
+<center><img src="images/eqJ3.gif"></center>
+<p align="right">(XI.J.3)</p>
+<p>The fraction of possible times the source was detected, p, (Eqn. XI.J.1) can be used to estimate the fractional amount, &lt;<i>n'</i>/<i>n</i>&gt; (Eqn. XI.J.3) by which the source's flux density was overestimated.  Table 1 gives the relationship between p and &lt;<i>n'</i>/<i>n</i>&gt; for two SNR thresholds, 2<img src="../images/sigma-lc.gif"> and 3<img src="../images/sigma-lc.gif">, to bracket the range of sensitivities of the focal plane detectors.  To use the table, one must determine from the Working Survey Data Base the number of times the source should have been seen and the number of times it actually was seen.  The ratio of those two numbers is approximately equal to p which can then be used to estimate a correction factor to the quoted flux density using Table XI.J.1.</p>
+<p>The correction factor has been verified by using the moderate quality detections at 25 &micro;m of hot stars with accurate 12 &micro;m detections.  At low flux levels the 12 &micro;, - 25 &micro;m flux density ratio deviates from the Rayleigh Jeans limit.  Application of this correction algorithm reduces this error considerably.</p>
+<p>It should be emphasized that this correction procedure ignores the effects of radiation hits and of extra sensitive detectors.  For cases where very accurate photometry is required, one should co-add the survey data.</p>
+
+<center>
+<b>
+Table XI.J.1<br>Relation between Fraction of Possible Sightings (p) and Flux Overestimate (&lt;<i>n'</i>/<i>n</i>&gt;)</b>
+<table border="1" cellpadding="2" cellspacing="1">
+<tr>
+<th rowspan="2">Frac. of<br>Sightings</th>
+<th colspan="2">Flux Overestimate<br>SNR THRESHOLD</th>
+</tr>
+<tr>
+<th>(=2<img src="../images/sigma-lc.gif">)</th>
+<th>(=3<img src="../images/sigma-lc.gif">)</th>
+</tr>
+<tr>
+<td>p</td>
+<td>&lt;<i>n'</i>/<i>n</i>&gt;</td>
+<td>&lt;<i>n'</i>/<i>n</i>&gt;</td>
+</tr>
+<tr>
+<td>0.16</td>
+<td>2.51</td>
+<td>1.76</td>
+</tr>
+<tr>
+<TD>0.31 </TD>
+<TD>1.76 </TD>
+<TD>1.60 </TD>
+</tr>
+<tr>
+<TD>0.50 </TD>
+<TD>1.40 </TD>
+<TD>1.27 </TD>
+</tr>
+<tr>
+<TD>0.69 </TD>
+<TD>1.20 </TD>
+<TD>1.15 </TD>
+</tr>
+<tr>
+<TD>0.84 </TD>
+<TD>1.10 </TD>
+<TD>1.07 </TD>
+</tr>
+<tr>
+<TD>0.94 </TD>
+<TD>1.04 </TD>
+<TD>1.02 </TD>
+</tr>
+</table>
+</center>
+<HR>
+<CENTER><FONT SIZE=+1><A HREF="index.html#toc">Chapter Contents</A>
+| <A HREF="index.html#auth">Authors</A>
+| <A HREF="index.html#ref">References</A>
+<BR>
+<A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> | <A HREF="I.html">Previous Section</A>
+| <A HREF="../ch11/K.html">Next Section</A></FONT></CENTER>
+<HR>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

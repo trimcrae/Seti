@@ -1,0 +1,870 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>[1503.06422] Calibration of the AKARI Far-infrared All Sky Survey Maps.</title><meta property="og:description" content="We present an initial analysis of the properties of the all-sky image obtained by the Far-Infrared Surveyor (FIS) onboard the AKARI satellite, at 65 m (N60), 90 m (WIDE-S), 140 m (WIDE-L),and 160 m (N160).
+Absolute flu…">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Calibration of the AKARI Far-infrared All Sky Survey Maps.">
+<meta name="twitter:image:src" content="https://ar5iv.labs.arxiv.org/assets/ar5iv_card.png">
+<meta name="twitter:image:alt" content="ar5iv logo">
+<meta property="og:title" content="Calibration of the AKARI Far-infrared All Sky Survey Maps.">
+<meta property="og:site_name" content="ar5iv">
+<meta property="og:image" content="https://ar5iv.labs.arxiv.org/assets/ar5iv_card.png">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://ar5iv.labs.arxiv.org/html/1503.06422">
+<link rel="canonical" target="_blank" href="https://ar5iv.labs.arxiv.org/html/1503.06422">
+
+<!--Generated on Fri Mar  8 16:42:24 2024 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<script>
+  function detectColorScheme(){
+    var theme="light";
+    var current_theme = localStorage.getItem("ar5iv_theme");
+    if(current_theme){
+      if(current_theme == "dark"){
+        theme = "dark";
+      } }
+    else if(!window.matchMedia) { return false; }
+    else if(window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      theme = "dark"; }
+    if (theme=="dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light"); } }
+
+  detectColorScheme();
+
+  function toggleColorScheme(){
+    var current_theme = localStorage.getItem("ar5iv_theme");
+    if (current_theme) {
+      if (current_theme == "light") {
+        localStorage.setItem("ar5iv_theme", "dark"); }
+      else {
+        localStorage.setItem("ar5iv_theme", "light"); } }
+    else {
+        localStorage.setItem("ar5iv_theme", "dark"); }
+    detectColorScheme(); }
+</script>
+<link media="all" rel="stylesheet" href="/assets/ar5iv-fonts.0.8.4.css"><link media="all" rel="stylesheet" href="/assets/ar5iv.0.8.5.css"><link media="all" rel="stylesheet" href="/assets/ar5iv-site.0.2.2.css">
+</head>
+<body>
+<div class="ltx_page_main">
+<div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line">
+<div id="p1" class="ltx_para">
+<span id="p1.1" class="ltx_ERROR undefined">\SetRunningHead</span>
+<p id="p1.2" class="ltx_p">Takita et al.Calibration of AFASS data.</p>
+</div>
+<div id="p2" class="ltx_para">
+<span id="p2.1" class="ltx_ERROR undefined">\KeyWords</span>
+<p id="p2.2" class="ltx_p">infrared: general – space vehicles – surveys</p>
+</div>
+<h1 class="ltx_title ltx_title_document">Calibration of the AKARI Far-infrared All Sky Survey Maps.</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Satoshi <span id="id12.1.id1" class="ltx_text ltx_font_smallcaps">Takita</span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"> <span id="id13.1.id1" class="ltx_note ltx_role_affiliation"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_note_type">affiliation: </span>Institute of Space and Astronautical Science, Japan Aerospace Exploration Agency,
+3-1-1 Yoshinodai, Chuo, Sagamihara, Kanagawa 252-5210, Japan</span></span></span> 
+Yasuo <span id="id14.2.id2" class="ltx_text ltx_font_smallcaps">Doi</span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"> <span id="id15.1.id1" class="ltx_note ltx_role_affiliation"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_note_type">affiliation: </span>Department of Earth Science and Astronomy, Graduate School of Arts and Sciences, The University of Tokyo,
+Komaba 3-8-1, Meguro, Tokyo 153-8902, Japan</span></span></span> 
+Takafumi <span id="id16.2.id2" class="ltx_text ltx_font_smallcaps">Ootsubo</span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"> <span id="id17.1.id1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span> 
+Ko <span id="id18.2.id2" class="ltx_text ltx_font_smallcaps">Arimatsu</span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"> <span id="id19.1.id1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span> <span id="id20.2.id2" class="ltx_note ltx_role_affiliation"><sup class="ltx_note_mark">3</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">3</sup><span class="ltx_note_type">affiliation: </span>Department of Astronomy, Graduate school of Science, The University of Tokyo,
+7-3-1 Hongo, Bunkyo, Tokyo 113-0033, Japan</span></span></span> 
+Norio <span id="id21.3.id3" class="ltx_text ltx_font_smallcaps">Ikeda</span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"> <span id="id22.1.id1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span> 
+Mitsunobu <span id="id23.2.id2" class="ltx_text ltx_font_smallcaps">Kawada</span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"> <span id="id24.1.id1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span> 
+Yoshimi <span id="id25.2.id2" class="ltx_text ltx_font_smallcaps">Kitamura</span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"> <span id="id26.1.id1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span> 
+Shuji <span id="id27.2.id2" class="ltx_text ltx_font_smallcaps">Matsuura</span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"> <span id="id28.1.id1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span> 
+Takao <span id="id29.2.id2" class="ltx_text ltx_font_smallcaps">Nakagawa</span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"> <span id="id30.1.id1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span> 
+Makoto <span id="id31.2.id2" class="ltx_text ltx_font_smallcaps">Hattori</span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"> <span id="id32.1.id1" class="ltx_note ltx_role_affiliation"><sup class="ltx_note_mark">4</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">4</sup><span class="ltx_note_type">affiliation: </span>Astronomical Institute, Graduate School of Science, Tohoku University,
+Aramaki, Aoba-ku, Sendai 980-8578, Japan</span></span></span> 
+Takahiro <span id="id33.2.id2" class="ltx_text ltx_font_smallcaps">Morishima</span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"> <span id="id34.1.id1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">4</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">4</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span> 
+Masahiro <span id="id35.2.id2" class="ltx_text ltx_font_smallcaps">Tanaka</span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"> <span id="id36.1.id1" class="ltx_note ltx_role_affiliation"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup><span class="ltx_note_type">affiliation: </span>Center for Computational Sciences, Tsukuba University,
+1-1-1 Tennodai, Tsukuba-city, Ibaraki 305-8577, Japan</span></span></span> 
+and
+Shinya <span id="id37.2.id2" class="ltx_text ltx_font_smallcaps">Komugi</span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"> <span id="id38.1.id1" class="ltx_note ltx_role_affiliation"><sup class="ltx_note_mark">6</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">6</sup><span class="ltx_note_type">affiliation: </span>National Astronomical Observatory of Japan,
+2-21-1 Osawa, Mitaka, Tokyo, Japan</span></span></span>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_email"><a href="mailto:takita@ir.isas.jaxa.jp">takita@ir.isas.jaxa.jp</a>
+</span></span></span>
+</div>
+
+<div class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p id="id11.11" class="ltx_p">We present an initial analysis of the properties of the all-sky image obtained by the Far-Infrared Surveyor (FIS) onboard the AKARI satellite, at 65 <math id="id1.1.m1.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="id1.1.m1.1a"><mi id="id1.1.m1.1.1" xref="id1.1.m1.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="id1.1.m1.1b"><ci id="id1.1.m1.1.1.cmml" xref="id1.1.m1.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="id1.1.m1.1c">\mu</annotation></semantics></math>m (N60), 90 <math id="id2.2.m2.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="id2.2.m2.1a"><mi id="id2.2.m2.1.1" xref="id2.2.m2.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="id2.2.m2.1b"><ci id="id2.2.m2.1.1.cmml" xref="id2.2.m2.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="id2.2.m2.1c">\mu</annotation></semantics></math>m (WIDE-S), 140 <math id="id3.3.m3.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="id3.3.m3.1a"><mi id="id3.3.m3.1.1" xref="id3.3.m3.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="id3.3.m3.1b"><ci id="id3.3.m3.1.1.cmml" xref="id3.3.m3.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="id3.3.m3.1c">\mu</annotation></semantics></math>m (WIDE-L),and 160 <math id="id4.4.m4.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="id4.4.m4.1a"><mi id="id4.4.m4.1.1" xref="id4.4.m4.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="id4.4.m4.1b"><ci id="id4.4.m4.1.1.cmml" xref="id4.4.m4.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="id4.4.m4.1c">\mu</annotation></semantics></math>m (N160).
+Absolute flux calibration was determined by comparing the data with the COBE/DIRBE data sets, and the intensity range was as wide as from a few MJy sr<sup id="id11.11.1" class="ltx_sup"><span id="id11.11.1.1" class="ltx_text ltx_font_italic">-1</span></sup> to <math id="id6.6.m6.1" class="ltx_Math" alttext="&gt;" display="inline"><semantics id="id6.6.m6.1a"><mo id="id6.6.m6.1.1" xref="id6.6.m6.1.1.cmml">&gt;</mo><annotation-xml encoding="MathML-Content" id="id6.6.m6.1b"><gt id="id6.6.m6.1.1.cmml" xref="id6.6.m6.1.1"></gt></annotation-xml><annotation encoding="application/x-tex" id="id6.6.m6.1c">&gt;</annotation></semantics></math>1 GJy sr<sup id="id11.11.2" class="ltx_sup"><span id="id11.11.2.1" class="ltx_text ltx_font_italic">-1</span></sup>.
+The uncertainties are considered to be the standard deviations with respect to the DIRBE data, and they are less than 10% for intensities above 10, 3, 25, and 26 MJy sr<sup id="id11.11.3" class="ltx_sup"><span id="id11.11.3.1" class="ltx_text ltx_font_italic">-1</span></sup> at the N60, WIDE-S, WIDE-L, and N160 bands, respectively.
+The characteristics of point sources in the image were also determined by stacking maps centred on photometric standard stars.
+The full width at half maxima of the point spread functions (PSFs) were 63<sup id="id11.11.4" class="ltx_sup"><span id="id11.11.4.1" class="ltx_text ltx_font_italic">′′</span></sup>, 78<sup id="id11.11.5" class="ltx_sup"><span id="id11.11.5.1" class="ltx_text ltx_font_italic">′′</span></sup>, and 88<sup id="id11.11.6" class="ltx_sup"><span id="id11.11.6.1" class="ltx_text ltx_font_italic">′′</span></sup> at the N60, WIDE-S, and WIDE-L bands, respectively.
+The PSF at the N160 band was not obtained due to the sensitivity, but it is thought to be the same as that of the WIDE-L one.</p>
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.6" class="ltx_p">The Japanese infrared astronomical satellite AKARI <cite class="ltx_cite ltx_citemacro_citep">(Murakami et al., <a href="#bib.bib14" title="" class="ltx_ref">2007</a>)</cite> performed an all sky survey at six infrared bands centred at 9, 18, 65, 90, 140 and 160 <math id="S1.p1.1.m1.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S1.p1.1.m1.1a"><mi id="S1.p1.1.m1.1.1" xref="S1.p1.1.m1.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S1.p1.1.m1.1b"><ci id="S1.p1.1.m1.1.1.cmml" xref="S1.p1.1.m1.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S1.p1.1.m1.1c">\mu</annotation></semantics></math>m.
+The four longer wavelength bands were observed with the Far-Infrared Surveyor (FIS), one of the two focal plane instruments onboard <cite class="ltx_cite ltx_citemacro_citep">(Kawada et al., <a href="#bib.bib9" title="" class="ltx_ref">2007</a>)</cite>.
+The two shorter FIS bands (N60 centred at 65 <math id="S1.p1.2.m2.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S1.p1.2.m2.1a"><mi id="S1.p1.2.m2.1.1" xref="S1.p1.2.m2.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S1.p1.2.m2.1b"><ci id="S1.p1.2.m2.1.1.cmml" xref="S1.p1.2.m2.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S1.p1.2.m2.1c">\mu</annotation></semantics></math>m and WIDE-S centred at 90 <math id="S1.p1.3.m3.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S1.p1.3.m3.1a"><mi id="S1.p1.3.m3.1.1" xref="S1.p1.3.m3.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S1.p1.3.m3.1b"><ci id="S1.p1.3.m3.1.1.cmml" xref="S1.p1.3.m3.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S1.p1.3.m3.1c">\mu</annotation></semantics></math>m) were observed by the SW detector, and the other two bands (WIDE-L at 140 <math id="S1.p1.4.m4.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S1.p1.4.m4.1a"><mi id="S1.p1.4.m4.1.1" xref="S1.p1.4.m4.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S1.p1.4.m4.1b"><ci id="S1.p1.4.m4.1.1.cmml" xref="S1.p1.4.m4.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S1.p1.4.m4.1c">\mu</annotation></semantics></math>m and N160 at 160 <math id="S1.p1.5.m5.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S1.p1.5.m5.1a"><mi id="S1.p1.5.m5.1.1" xref="S1.p1.5.m5.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S1.p1.5.m5.1b"><ci id="S1.p1.5.m5.1.1.cmml" xref="S1.p1.5.m5.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S1.p1.5.m5.1c">\mu</annotation></semantics></math>m) by the LW detector.
+The all sky survey was started in 2006 May and covered <math id="S1.p1.6.m6.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S1.p1.6.m6.1a"><mo id="S1.p1.6.m6.1.1" xref="S1.p1.6.m6.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S1.p1.6.m6.1b"><csymbol cd="latexml" id="S1.p1.6.m6.1.1.cmml" xref="S1.p1.6.m6.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S1.p1.6.m6.1c">\sim</annotation></semantics></math>98 % of the whole sky during its cold phase <cite class="ltx_cite ltx_citemacro_citep">(Nakagawa et al., <a href="#bib.bib15" title="" class="ltx_ref">2007</a>)</cite>, continuing until helium exhaustion in 2007 Aug.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.9" class="ltx_p">The All-sky Bright Source Catalogue (BSC, version 1), one of the primary goals of AKARI, was released in 2010 Mar <cite class="ltx_cite ltx_citemacro_citep">(Yamamura et al., <a href="#bib.bib21" title="" class="ltx_ref">2010</a>)</cite>.
+Although an all-sky survey image was not one of the primary goals of AKARI, it is scientifically valuable because extended sources are not covered by the BSC.
+There are two previous All-sky Far-infrared (FIR) surveys that were obtained by the IRAS <cite class="ltx_cite ltx_citemacro_citep">(Neugebauer et al., <a href="#bib.bib16" title="" class="ltx_ref">1984</a>)</cite> and COBE <cite class="ltx_cite ltx_citemacro_citep">(Boggess et al., <a href="#bib.bib2" title="" class="ltx_ref">1992</a>)</cite> satellites.
+The IRAS survey was made with two FIR photometric bands centred at 60 and 100 <math id="S1.p2.1.m1.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S1.p2.1.m1.1a"><mi id="S1.p2.1.m1.1.1" xref="S1.p2.1.m1.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S1.p2.1.m1.1b"><ci id="S1.p2.1.m1.1.1.cmml" xref="S1.p2.1.m1.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S1.p2.1.m1.1c">\mu</annotation></semantics></math>m, with a spatial resolution of <math id="S1.p2.2.m2.1" class="ltx_Math" alttext="\sim 4^{\prime}" display="inline"><semantics id="S1.p2.2.m2.1a"><mrow id="S1.p2.2.m2.1.1" xref="S1.p2.2.m2.1.1.cmml"><mi id="S1.p2.2.m2.1.1.2" xref="S1.p2.2.m2.1.1.2.cmml"></mi><mo id="S1.p2.2.m2.1.1.1" xref="S1.p2.2.m2.1.1.1.cmml">∼</mo><msup id="S1.p2.2.m2.1.1.3" xref="S1.p2.2.m2.1.1.3.cmml"><mn id="S1.p2.2.m2.1.1.3.2" xref="S1.p2.2.m2.1.1.3.2.cmml">4</mn><mo id="S1.p2.2.m2.1.1.3.3" xref="S1.p2.2.m2.1.1.3.3.cmml">′</mo></msup></mrow><annotation-xml encoding="MathML-Content" id="S1.p2.2.m2.1b"><apply id="S1.p2.2.m2.1.1.cmml" xref="S1.p2.2.m2.1.1"><csymbol cd="latexml" id="S1.p2.2.m2.1.1.1.cmml" xref="S1.p2.2.m2.1.1.1">similar-to</csymbol><csymbol cd="latexml" id="S1.p2.2.m2.1.1.2.cmml" xref="S1.p2.2.m2.1.1.2">absent</csymbol><apply id="S1.p2.2.m2.1.1.3.cmml" xref="S1.p2.2.m2.1.1.3"><csymbol cd="ambiguous" id="S1.p2.2.m2.1.1.3.1.cmml" xref="S1.p2.2.m2.1.1.3">superscript</csymbol><cn type="integer" id="S1.p2.2.m2.1.1.3.2.cmml" xref="S1.p2.2.m2.1.1.3.2">4</cn><ci id="S1.p2.2.m2.1.1.3.3.cmml" xref="S1.p2.2.m2.1.1.3.3">′</ci></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S1.p2.2.m2.1c">\sim 4^{\prime}</annotation></semantics></math>.
+The COBE mission expanded the wavelength coverage to 240 <math id="S1.p2.3.m3.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S1.p2.3.m3.1a"><mi id="S1.p2.3.m3.1.1" xref="S1.p2.3.m3.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S1.p2.3.m3.1b"><ci id="S1.p2.3.m3.1.1.cmml" xref="S1.p2.3.m3.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S1.p2.3.m3.1c">\mu</annotation></semantics></math>m by using the DIRBE instrument <cite class="ltx_cite ltx_citemacro_citep">(Hauser et al., <a href="#bib.bib7" title="" class="ltx_ref">1998</a>)</cite>, but the spatial resolutions were only <math id="S1.p2.4.m4.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S1.p2.4.m4.1a"><mo id="S1.p2.4.m4.1.1" xref="S1.p2.4.m4.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S1.p2.4.m4.1b"><csymbol cd="latexml" id="S1.p2.4.m4.1.1.cmml" xref="S1.p2.4.m4.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S1.p2.4.m4.1c">\sim</annotation></semantics></math>0<span id="S1.p2.9.1" class="ltx_ERROR undefined">\fdg</span>7.
+Recently, <cite class="ltx_cite ltx_citemacro_citet">Miville-Deschênes &amp; Lagache (<a href="#bib.bib13" title="" class="ltx_ref">2005</a>)</cite> created a new data set of IRIS (Improved Reprocessing of the IRAS Survey) by combining the IRAS and COBE data.
+The IRIS is referred in many fields, but it only covers the wavelengths at or shorter than 100 <math id="S1.p2.5.m5.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S1.p2.5.m5.1a"><mi id="S1.p2.5.m5.1.1" xref="S1.p2.5.m5.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S1.p2.5.m5.1b"><ci id="S1.p2.5.m5.1.1.cmml" xref="S1.p2.5.m5.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S1.p2.5.m5.1c">\mu</annotation></semantics></math>m.
+Since the thermal radiation from interstellar dust, whose typical temperature is <math id="S1.p2.6.m6.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S1.p2.6.m6.1a"><mo id="S1.p2.6.m6.1.1" xref="S1.p2.6.m6.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S1.p2.6.m6.1b"><csymbol cd="latexml" id="S1.p2.6.m6.1.1.cmml" xref="S1.p2.6.m6.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S1.p2.6.m6.1c">\sim</annotation></semantics></math>30 K, has its peak at 100–200 <math id="S1.p2.7.m7.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S1.p2.7.m7.1a"><mi id="S1.p2.7.m7.1.1" xref="S1.p2.7.m7.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S1.p2.7.m7.1b"><ci id="S1.p2.7.m7.1.1.cmml" xref="S1.p2.7.m7.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S1.p2.7.m7.1c">\mu</annotation></semantics></math>m, the longer wavelength data are important.
+The present AKARI all-sky image includes data at 65, 90, 140, and 160 <math id="S1.p2.8.m8.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S1.p2.8.m8.1a"><mi id="S1.p2.8.m8.1.1" xref="S1.p2.8.m8.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S1.p2.8.m8.1b"><ci id="S1.p2.8.m8.1.1.cmml" xref="S1.p2.8.m8.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S1.p2.8.m8.1c">\mu</annotation></semantics></math>m, with spatial resolution of <math id="S1.p2.9.m9.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S1.p2.9.m9.1a"><mo id="S1.p2.9.m9.1.1" xref="S1.p2.9.m9.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S1.p2.9.m9.1b"><csymbol cd="latexml" id="S1.p2.9.m9.1.1.cmml" xref="S1.p2.9.m9.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S1.p2.9.m9.1c">\sim</annotation></semantics></math>1<span id="S1.p2.9.2" class="ltx_ERROR undefined">\farcm</span>5.
+Thus we have created an all sky survey map from the AKARI data set <cite class="ltx_cite ltx_citemacro_citep">(Doi et al., <a href="#bib.bib4" title="" class="ltx_ref">2009</a>)</cite> to provide new legacy data which has a wide potential application for use by the scientific community in many studies.
+In this paper, we report the calibration processes and performance of the FIS all sky maps.</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>Data</h2>
+
+<div id="S2.p1" class="ltx_para">
+<p id="S2.p1.4" class="ltx_p">In the all sky survey mode, AKARI scanned the sky in an ecliptic orbit, with the telescope always pointing away from the earth.
+At an altitude of <math id="S2.p1.1.m1.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S2.p1.1.m1.1a"><mo id="S2.p1.1.m1.1.1" xref="S2.p1.1.m1.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S2.p1.1.m1.1b"><csymbol cd="latexml" id="S2.p1.1.m1.1.1.cmml" xref="S2.p1.1.m1.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S2.p1.1.m1.1c">\sim</annotation></semantics></math>700 km, AKARI made the orbit around the earth in <math id="S2.p1.2.m2.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S2.p1.2.m2.1a"><mo id="S2.p1.2.m2.1.1" xref="S2.p1.2.m2.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S2.p1.2.m2.1b"><csymbol cd="latexml" id="S2.p1.2.m2.1.1.cmml" xref="S2.p1.2.m2.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S2.p1.2.m2.1c">\sim</annotation></semantics></math>100 minutes, scanning at a constant speed of <math id="S2.p1.3.m3.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S2.p1.3.m3.1a"><mo id="S2.p1.3.m3.1.1" xref="S2.p1.3.m3.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S2.p1.3.m3.1b"><csymbol cd="latexml" id="S2.p1.3.m3.1.1.cmml" xref="S2.p1.3.m3.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S2.p1.3.m3.1c">\sim</annotation></semantics></math>3<span id="S2.p1.4.1" class="ltx_ERROR undefined">\farcm</span>6 s<sup id="S2.p1.4.2" class="ltx_sup"><span id="S2.p1.4.2.1" class="ltx_text ltx_font_italic">-1</span></sup>.
+We refer to the all sky image obtained in this way as the AFASS (AKARI Far-infrared All Sky Survey) image.</p>
+</div>
+<div id="S2.p2" class="ltx_para">
+<p id="S2.p2.1" class="ltx_p">The observing strategy is explained in <cite class="ltx_cite ltx_citemacro_citet">Kawada et al. (<a href="#bib.bib9" title="" class="ltx_ref">2007</a>)</cite>.
+The detector was read out continuously with a constant sampling rate for each array, and reset to discharge the photocurrent at intervals of about 2 seconds nominally, or 0.5 seconds toward bright sky.
+Close to the Galactic plane, where these long reset intervals were expected to lead to detector saturation, the detectors were reset for each sampling (correlated double sampling: CDS), with reset intervals corresponding to about 26 and 45 ms for the SW and LW detectors, respectively.
+In this paper we refer to the “Normal mode” for the data which were taken with long reset intervals (i.e., 2 or 0.5 seconds) to distinguish it from the “CDS mode” for the short reset intervals.</p>
+</div>
+<div id="S2.p3" class="ltx_para">
+<p id="S2.p3.1" class="ltx_p">The data were pre-processed using the AKARI pipeline tool called “Green-Box”.
+This pipeline applied basic calibrations such as corrections of non-linearity and sensitivity drifts of the detector, rejection of anomalous data due to charged particle hit (glitch), saturation, and other instrumental effects as well as dark-current subtraction.
+Following this initial processing, another “image” pipeline optimised for imaging large spatial scale structures was applied.
+At first, this image pipeline applied a transient response correction to the detector signal and subtraction of zodiacal emission.
+Since the detector had a slow response, the detector output drifted along the scan causing some stripe patterns in the image.
+To remove this artificial stripe pattern, we applied destriping.
+This destriping procedure is as follows.
+Firstly, we applied a two-dimensional Fourier transformation of the image.
+Secondly, we masked the regions corresponding to the stripe patterns along the scan direction in wave number space.
+Next, we interpolated the intensities from the surrounding regions into the masked regions.
+Finally, we applied an inverse Fourier transformation to obtain the destriped image.
+After the image destriping, we performed recursive deglitching and flat-fielding to produce the final processed image.
+Details of the image pipeline are presented in <cite class="ltx_cite ltx_citemacro_citet">Doi et al. (<a href="#bib.bib4" title="" class="ltx_ref">2009</a>, <a href="#bib.bib5" title="" class="ltx_ref">in prep.</a>)</cite>.
+The final image is made with a pixel scale of 15<sup id="S2.p3.1.1" class="ltx_sup"><span id="S2.p3.1.1.1" class="ltx_text ltx_font_italic">′′</span></sup>.</p>
+</div>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Calibrating the FIS Images</h2>
+
+<section id="S3.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.1 </span>Calibration Method</h3>
+
+<div id="S3.SS1.p1" class="ltx_para">
+<p id="S3.SS1.p1.4" class="ltx_p">The FIS had a cold shutter whose temperature was <math id="S3.SS1.p1.1.m1.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S3.SS1.p1.1.m1.1a"><mo id="S3.SS1.p1.1.m1.1.1" xref="S3.SS1.p1.1.m1.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S3.SS1.p1.1.m1.1b"><csymbol cd="latexml" id="S3.SS1.p1.1.m1.1.1.cmml" xref="S3.SS1.p1.1.m1.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S3.SS1.p1.1.m1.1c">\sim</annotation></semantics></math>2.5 K and an internal calibration lamp, which had been well-calibrated in the laboratory.
+However, the characteristics changed in-flight because of differences of the operation mode, surrounding environment, and modified sensitivities due to charged particle hits.
+Thus, we needed to re-calibrate the FIS data using in-flight data.
+In the FIS BSC, the flux densities of point sources were calibrated by measuring the photometric standard stars, the asteroids, and the planets Uranus and Neptune with well-known flux densities.
+This calibration was made for point sources and the data reduction processes were highly optimized for extracting point sources, for which the optimal method differed from that needed to reduce the all-sky image (which included diffuse emission).
+In addition to the normal all sky survey observations, AKARI also had capability to carry out pointed observations toward selected objects/regions with improved sensitivity.
+In these pointed observations, the FIS intensity scales were determined on the basis of the COBE/DIRBE data by the self-flat-fielding method <cite class="ltx_cite ltx_citemacro_citep">(Matsuura et al., <a href="#bib.bib12" title="" class="ltx_ref">2007</a>; Ikeda et al., <a href="#bib.bib8" title="" class="ltx_ref">2012</a>)</cite>.
+The calibration factors were obtained at those regions where the emission from the zodiacal light and the infrared cirrus dominated for the SW and LW detectors, respectively.
+However, this method was applied only to the Normal mode data and the brightness range of the selected regions is of the order of 1–10 MJy sr<sup id="S3.SS1.p1.4.1" class="ltx_sup"><span id="S3.SS1.p1.4.1.1" class="ltx_text ltx_font_italic">-1</span></sup>, while the brightness reaches as high as <math id="S3.SS1.p1.3.m3.1" class="ltx_Math" alttext="&gt;" display="inline"><semantics id="S3.SS1.p1.3.m3.1a"><mo id="S3.SS1.p1.3.m3.1.1" xref="S3.SS1.p1.3.m3.1.1.cmml">&gt;</mo><annotation-xml encoding="MathML-Content" id="S3.SS1.p1.3.m3.1b"><gt id="S3.SS1.p1.3.m3.1.1.cmml" xref="S3.SS1.p1.3.m3.1.1"></gt></annotation-xml><annotation encoding="application/x-tex" id="S3.SS1.p1.3.m3.1c">&gt;</annotation></semantics></math>1 GJy sr<sup id="S3.SS1.p1.4.2" class="ltx_sup"><span id="S3.SS1.p1.4.2.1" class="ltx_text ltx_font_italic">-1</span></sup> at the Galactic plane in the all sky survey.
+Therefore, we needed to extend this method to include brighter emission and also the CDS mode data to be able to calibrate the AFASS image.</p>
+</div>
+<div id="S3.SS1.p2" class="ltx_para">
+<p id="S3.SS1.p2.3" class="ltx_p">First of all, we estimated the expected brightnesses in the four FIS bands.
+We used the DIRBE Zodi-Subtracted Mission Average (ZSMA) data set as an absolute brightness reference because it was one of the most reliable, well-calibrated all-sky data sets at far-infrared wavelengths to date.
+The uncertainties in the absolute brightness were 10–14 % for the 60–140 <math id="S3.SS1.p2.1.m1.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S3.SS1.p2.1.m1.1a"><mi id="S3.SS1.p2.1.m1.1.1" xref="S3.SS1.p2.1.m1.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S3.SS1.p2.1.m1.1b"><ci id="S3.SS1.p2.1.m1.1.1.cmml" xref="S3.SS1.p2.1.m1.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S3.SS1.p2.1.m1.1c">\mu</annotation></semantics></math>m bands <cite class="ltx_cite ltx_citemacro_citep">(Hauser et al., <a href="#bib.bib7" title="" class="ltx_ref">1998</a>)</cite>.
+Although there was another data set of IRIS, it was also calibrated with the DIRBE, and it does not have <math id="S3.SS1.p2.2.m2.1" class="ltx_Math" alttext="&gt;" display="inline"><semantics id="S3.SS1.p2.2.m2.1a"><mo id="S3.SS1.p2.2.m2.1.1" xref="S3.SS1.p2.2.m2.1.1.cmml">&gt;</mo><annotation-xml encoding="MathML-Content" id="S3.SS1.p2.2.m2.1b"><gt id="S3.SS1.p2.2.m2.1.1.cmml" xref="S3.SS1.p2.2.m2.1.1"></gt></annotation-xml><annotation encoding="application/x-tex" id="S3.SS1.p2.2.m2.1c">&gt;</annotation></semantics></math>100 <math id="S3.SS1.p2.3.m3.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S3.SS1.p2.3.m3.1a"><mi id="S3.SS1.p2.3.m3.1.1" xref="S3.SS1.p2.3.m3.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S3.SS1.p2.3.m3.1b"><ci id="S3.SS1.p2.3.m3.1.1.cmml" xref="S3.SS1.p2.3.m3.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S3.SS1.p2.3.m3.1c">\mu</annotation></semantics></math>m bands.
+The expected brightnesses were calculated as follows:
+First, we created continuous Spectral Energy Distributions (SEDs) by interpolating the DIRBE data with a power-low function, for each DIRBE pixel.
+Since the DIRBE data were calibrated under the flat spectrum assumption, we made a colour correction using the applied power-law spectra.
+Second, we multiplied the interpolated SEDs by the FIS relative spectral response function.
+Third, we again made a colour correction to acquire the expected FIS values under the flat spectrum assumption.
+Furthermore, since we selected ZSMA data, we calculated the brightnesses of the zodiacal emission in the FIS bands at the corresponding epoch using the Gorjian model <cite class="ltx_cite ltx_citemacro_citep">(Gorjian et al., <a href="#bib.bib6" title="" class="ltx_ref">2000</a>)</cite>.
+Here, we note that we only considered the “smooth cloud” component because remaining small-scale structures, such as asteroidal dust bands and a mean motion resonance were not well understood so far <cite class="ltx_cite ltx_citemacro_citep">(Ootsubo et al., <a href="#bib.bib17" title="" class="ltx_ref">in prep.</a>)</cite>.
+The sum of the “DIRBE-expected” and zodiacal emission model brightnesses should be compared to the observed FIS brightness.</p>
+</div>
+<div id="S3.SS1.p3" class="ltx_para">
+<p id="S3.SS1.p3.11" class="ltx_p">To calibrate the FIS data, we also prepared the AFASS image.
+The Green-Box tool converted the detector outputs to intensities in units of Jy pixel<sup id="S3.SS1.p3.11.1" class="ltx_sup"><span id="S3.SS1.p3.11.1.1" class="ltx_text ltx_font_italic">-1</span></sup> with the conversion factors obtained in the laboratory.
+As noted above, they were not well calibrated for the in-flight environment.
+Although the image pipeline basically subtracted the zodiacal emission, we skipped this process to create image at this time.
+Furthermore, since the intensity of the zodiacal light varies with time, we needed to restrict the epoch.
+The all sky survey was the top priority during the first half year of AKARI’s cold operations, with only a limited number of pointed observations made.
+During the remaining time, the all sky survey was completed at high priority, although the fraction of time devoted to pointed observations was increased.
+Thus, we chose data from the first half year (i.e., 2006 May to Oct), where there were few observational gaps due to pointed observations.
+We convolved the FIS image with the beam pattern of the DIRBE at each DIRBE pixel to directly compare the FIS and DIRBE-expected brightnesses.
+From this comparison, we estimated the conversion factors from the Green-Box-processed data into the absolute intensity.
+As noted before, since we did not consider small-scale structures of the zodiacal emission, we excluded those regions of <math id="S3.SS1.p3.2.m2.1" class="ltx_math_unparsed" alttext="|\beta" display="inline"><semantics id="S3.SS1.p3.2.m2.1a"><mrow id="S3.SS1.p3.2.m2.1b"><mo fence="false" rspace="0.167em" stretchy="false" id="S3.SS1.p3.2.m2.1.1">|</mo><mi id="S3.SS1.p3.2.m2.1.2">β</mi></mrow><annotation encoding="application/x-tex" id="S3.SS1.p3.2.m2.1c">|\beta</annotation></semantics></math> (Ecliptic latitude)<math id="S3.SS1.p3.3.m3.1" class="ltx_math_unparsed" alttext="|&lt;" display="inline"><semantics id="S3.SS1.p3.3.m3.1a"><mrow id="S3.SS1.p3.3.m3.1b"><mo fence="false" stretchy="false" id="S3.SS1.p3.3.m3.1.1">|</mo><mo lspace="0.167em" id="S3.SS1.p3.3.m3.1.2">&lt;</mo></mrow><annotation encoding="application/x-tex" id="S3.SS1.p3.3.m3.1c">|&lt;</annotation></semantics></math>40 deg to avoid the effects of zodiacal emission.
+The expected brightnesses of small-scale structures near the ecliptic plane are <math id="S3.SS1.p3.4.m4.1" class="ltx_Math" alttext="&lt;" display="inline"><semantics id="S3.SS1.p3.4.m4.1a"><mo id="S3.SS1.p3.4.m4.1.1" xref="S3.SS1.p3.4.m4.1.1.cmml">&lt;</mo><annotation-xml encoding="MathML-Content" id="S3.SS1.p3.4.m4.1b"><lt id="S3.SS1.p3.4.m4.1.1.cmml" xref="S3.SS1.p3.4.m4.1.1"></lt></annotation-xml><annotation encoding="application/x-tex" id="S3.SS1.p3.4.m4.1c">&lt;</annotation></semantics></math>5 MJy sr<sup id="S3.SS1.p3.11.2" class="ltx_sup"><span id="S3.SS1.p3.11.2.1" class="ltx_text ltx_font_italic">-1</span></sup>, <math id="S3.SS1.p3.6.m6.1" class="ltx_Math" alttext="&lt;" display="inline"><semantics id="S3.SS1.p3.6.m6.1a"><mo id="S3.SS1.p3.6.m6.1.1" xref="S3.SS1.p3.6.m6.1.1.cmml">&lt;</mo><annotation-xml encoding="MathML-Content" id="S3.SS1.p3.6.m6.1b"><lt id="S3.SS1.p3.6.m6.1.1.cmml" xref="S3.SS1.p3.6.m6.1.1"></lt></annotation-xml><annotation encoding="application/x-tex" id="S3.SS1.p3.6.m6.1c">&lt;</annotation></semantics></math>4 MJy sr<sup id="S3.SS1.p3.11.3" class="ltx_sup"><span id="S3.SS1.p3.11.3.1" class="ltx_text ltx_font_italic">-1</span></sup>, <math id="S3.SS1.p3.8.m8.1" class="ltx_Math" alttext="&lt;" display="inline"><semantics id="S3.SS1.p3.8.m8.1a"><mo id="S3.SS1.p3.8.m8.1.1" xref="S3.SS1.p3.8.m8.1.1.cmml">&lt;</mo><annotation-xml encoding="MathML-Content" id="S3.SS1.p3.8.m8.1b"><lt id="S3.SS1.p3.8.m8.1.1.cmml" xref="S3.SS1.p3.8.m8.1.1"></lt></annotation-xml><annotation encoding="application/x-tex" id="S3.SS1.p3.8.m8.1c">&lt;</annotation></semantics></math>1 MJy sr<sup id="S3.SS1.p3.11.4" class="ltx_sup"><span id="S3.SS1.p3.11.4.1" class="ltx_text ltx_font_italic">-1</span></sup>, and <math id="S3.SS1.p3.10.m10.1" class="ltx_Math" alttext="&lt;" display="inline"><semantics id="S3.SS1.p3.10.m10.1a"><mo id="S3.SS1.p3.10.m10.1.1" xref="S3.SS1.p3.10.m10.1.1.cmml">&lt;</mo><annotation-xml encoding="MathML-Content" id="S3.SS1.p3.10.m10.1b"><lt id="S3.SS1.p3.10.m10.1.1.cmml" xref="S3.SS1.p3.10.m10.1.1"></lt></annotation-xml><annotation encoding="application/x-tex" id="S3.SS1.p3.10.m10.1c">&lt;</annotation></semantics></math>1 MJy sr<sup id="S3.SS1.p3.11.5" class="ltx_sup"><span id="S3.SS1.p3.11.5.1" class="ltx_text ltx_font_italic">-1</span></sup> for the N60, WIDE-S, WIDE-L, and N160 bands, respectively <cite class="ltx_cite ltx_citemacro_citep">(Gorjian et al., <a href="#bib.bib6" title="" class="ltx_ref">2000</a>; Ootsubo et al., <a href="#bib.bib17" title="" class="ltx_ref">in prep.</a>)</cite>.
+After determining the conversion factors, we recreated the AFASS image using the conversion factors, and then compared with those predicted from the DIRBE data again.
+This process was repeated several times, because the image pipeline does not guarantee the linear relation between the Green-Box calibrated FIS data and the processed image.
+Figure <a href="#S3.F1" title="Figure 1 ‣ 3.1 Calibration Method ‣ 3 Calibrating the FIS Images ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a> shows the converged conversion factors.</p>
+</div>
+<figure id="S3.F1" class="ltx_figure">
+<div class="ltx_flex_figure">
+<div class="ltx_flex_cell ltx_flex_size_1"><img src="/html/1503.06422/assets/x1.png" id="S3.F1.1.g1" class="ltx_graphics ltx_centering ltx_figure_panel ltx_img_landscape" width="484" height="128" alt="Refer to caption"></div>
+<div class="ltx_flex_break"></div>
+<div class="ltx_flex_cell ltx_flex_size_1"><img src="/html/1503.06422/assets/x2.png" id="S3.F1.2.g2" class="ltx_graphics ltx_centering ltx_figure_panel ltx_img_landscape" width="484" height="128" alt="Refer to caption"></div>
+</div>
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>
+Relations between the Green-Box-precessed FIS intensity and the expected one based on the DIRBE data, including the zodiacal light emission.
+The colour scales are the number of the DIRBE pixels, where <math id="S3.F1.4.m1.1" class="ltx_Math" alttext="|\beta|&gt;" display="inline"><semantics id="S3.F1.4.m1.1b"><mrow id="S3.F1.4.m1.1.2" xref="S3.F1.4.m1.1.2.cmml"><mrow id="S3.F1.4.m1.1.2.2.2" xref="S3.F1.4.m1.1.2.2.1.cmml"><mo stretchy="false" id="S3.F1.4.m1.1.2.2.2.1" xref="S3.F1.4.m1.1.2.2.1.1.cmml">|</mo><mi id="S3.F1.4.m1.1.1" xref="S3.F1.4.m1.1.1.cmml">β</mi><mo stretchy="false" id="S3.F1.4.m1.1.2.2.2.2" xref="S3.F1.4.m1.1.2.2.1.1.cmml">|</mo></mrow><mo id="S3.F1.4.m1.1.2.1" xref="S3.F1.4.m1.1.2.1.cmml">&gt;</mo><mi id="S3.F1.4.m1.1.2.3" xref="S3.F1.4.m1.1.2.3.cmml"></mi></mrow><annotation-xml encoding="MathML-Content" id="S3.F1.4.m1.1c"><apply id="S3.F1.4.m1.1.2.cmml" xref="S3.F1.4.m1.1.2"><gt id="S3.F1.4.m1.1.2.1.cmml" xref="S3.F1.4.m1.1.2.1"></gt><apply id="S3.F1.4.m1.1.2.2.1.cmml" xref="S3.F1.4.m1.1.2.2.2"><abs id="S3.F1.4.m1.1.2.2.1.1.cmml" xref="S3.F1.4.m1.1.2.2.2.1"></abs><ci id="S3.F1.4.m1.1.1.cmml" xref="S3.F1.4.m1.1.1">𝛽</ci></apply><csymbol cd="latexml" id="S3.F1.4.m1.1.2.3.cmml" xref="S3.F1.4.m1.1.2.3">absent</csymbol></apply></annotation-xml><annotation encoding="application/x-tex" id="S3.F1.4.m1.1d">|\beta|&gt;</annotation></semantics></math>40 degrees.
+The top row panels are for the Normal mode data, and the bottom rows for the CDS mode.
+The red broken lines show the adopted conversion factors.
+</figcaption>
+</figure>
+</section>
+<section id="S3.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.2 </span>Flux Uncertainties</h3>
+
+<div id="S3.SS2.p1" class="ltx_para">
+<p id="S3.SS2.p1.13" class="ltx_p">Figure <a href="#S3.F2" title="Figure 2 ‣ 3.2 Flux Uncertainties ‣ 3 Calibrating the FIS Images ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> shows the pixel-to-pixel comparison between the calibrated FIS intensities and the expected values calculated from the DIRBE data, for each DIRBE pixel where <math id="S3.SS2.p1.1.m1.1" class="ltx_Math" alttext="|\beta|&gt;" display="inline"><semantics id="S3.SS2.p1.1.m1.1a"><mrow id="S3.SS2.p1.1.m1.1.2" xref="S3.SS2.p1.1.m1.1.2.cmml"><mrow id="S3.SS2.p1.1.m1.1.2.2.2" xref="S3.SS2.p1.1.m1.1.2.2.1.cmml"><mo stretchy="false" id="S3.SS2.p1.1.m1.1.2.2.2.1" xref="S3.SS2.p1.1.m1.1.2.2.1.1.cmml">|</mo><mi id="S3.SS2.p1.1.m1.1.1" xref="S3.SS2.p1.1.m1.1.1.cmml">β</mi><mo stretchy="false" id="S3.SS2.p1.1.m1.1.2.2.2.2" xref="S3.SS2.p1.1.m1.1.2.2.1.1.cmml">|</mo></mrow><mo id="S3.SS2.p1.1.m1.1.2.1" xref="S3.SS2.p1.1.m1.1.2.1.cmml">&gt;</mo><mi id="S3.SS2.p1.1.m1.1.2.3" xref="S3.SS2.p1.1.m1.1.2.3.cmml"></mi></mrow><annotation-xml encoding="MathML-Content" id="S3.SS2.p1.1.m1.1b"><apply id="S3.SS2.p1.1.m1.1.2.cmml" xref="S3.SS2.p1.1.m1.1.2"><gt id="S3.SS2.p1.1.m1.1.2.1.cmml" xref="S3.SS2.p1.1.m1.1.2.1"></gt><apply id="S3.SS2.p1.1.m1.1.2.2.1.cmml" xref="S3.SS2.p1.1.m1.1.2.2.2"><abs id="S3.SS2.p1.1.m1.1.2.2.1.1.cmml" xref="S3.SS2.p1.1.m1.1.2.2.2.1"></abs><ci id="S3.SS2.p1.1.m1.1.1.cmml" xref="S3.SS2.p1.1.m1.1.1">𝛽</ci></apply><csymbol cd="latexml" id="S3.SS2.p1.1.m1.1.2.3.cmml" xref="S3.SS2.p1.1.m1.1.2.3">absent</csymbol></apply></annotation-xml><annotation encoding="application/x-tex" id="S3.SS2.p1.1.m1.1c">|\beta|&gt;</annotation></semantics></math>40 deg.
+In this figure, the zodiacal emission of the smooth cloud component was subtracted, and all-season data were used for the AFASS image.
+We note that the FIS data still included other zodiacal emission components of asteroidal dust bands and a mean motion resonance.
+A good correlation exists for brighter (<math id="S3.SS2.p1.2.m2.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S3.SS2.p1.2.m2.1a"><mo id="S3.SS2.p1.2.m2.1.1" xref="S3.SS2.p1.2.m2.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S3.SS2.p1.2.m2.1b"><csymbol cd="latexml" id="S3.SS2.p1.2.m2.1.1.cmml" xref="S3.SS2.p1.2.m2.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S3.SS2.p1.2.m2.1c">\sim</annotation></semantics></math>10 MJy sr<sup id="S3.SS2.p1.13.1" class="ltx_sup"><span id="S3.SS2.p1.13.1.1" class="ltx_text ltx_font_italic">-1</span></sup>) region, while there are some deviations from the linear relation at fainter brightness levels due to the incompleteness of the zodiacal emission model and the DIRBE sensitivity of <math id="S3.SS2.p1.4.m4.1" class="ltx_Math" alttext="\gtrsim" display="inline"><semantics id="S3.SS2.p1.4.m4.1a"><mo id="S3.SS2.p1.4.m4.1.1" xref="S3.SS2.p1.4.m4.1.1.cmml">≳</mo><annotation-xml encoding="MathML-Content" id="S3.SS2.p1.4.m4.1b"><csymbol cd="latexml" id="S3.SS2.p1.4.m4.1.1.cmml" xref="S3.SS2.p1.4.m4.1.1">greater-than-or-equivalent-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S3.SS2.p1.4.m4.1c">\gtrsim</annotation></semantics></math>10 MJy sr<sup id="S3.SS2.p1.13.2" class="ltx_sup"><span id="S3.SS2.p1.13.2.1" class="ltx_text ltx_font_italic">-1</span></sup>.
+The intensity uncertainties were considered to be the standard deviations with respect to the DIRBE-expected intensities in Figure <a href="#S3.F2" title="Figure 2 ‣ 3.2 Flux Uncertainties ‣ 3 Calibrating the FIS Images ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> for various intensity ranges, as shown in Table <a href="#S3.T1" title="Table 1 ‣ 3.2 Flux Uncertainties ‣ 3 Calibrating the FIS Images ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.
+We concluded that the standard deviations are less than 10 % for <math id="S3.SS2.p1.6.m6.1" class="ltx_Math" alttext="&gt;" display="inline"><semantics id="S3.SS2.p1.6.m6.1a"><mo id="S3.SS2.p1.6.m6.1.1" xref="S3.SS2.p1.6.m6.1.1.cmml">&gt;</mo><annotation-xml encoding="MathML-Content" id="S3.SS2.p1.6.m6.1b"><gt id="S3.SS2.p1.6.m6.1.1.cmml" xref="S3.SS2.p1.6.m6.1.1"></gt></annotation-xml><annotation encoding="application/x-tex" id="S3.SS2.p1.6.m6.1c">&gt;</annotation></semantics></math>10, 3, 25, and 26 MJy sr<sup id="S3.SS2.p1.13.3" class="ltx_sup"><span id="S3.SS2.p1.13.3.1" class="ltx_text ltx_font_italic">-1</span></sup> at the N60, WIDE-S, WIDE-L, and N160 bands, respectively.
+We note that these estimates are based on the spatial resolution of DIRBE, i.e., about 0.7 <math id="S3.SS2.p1.8.m8.1" class="ltx_Math" alttext="\deg" display="inline"><semantics id="S3.SS2.p1.8.m8.1a"><mi id="S3.SS2.p1.8.m8.1.1" xref="S3.SS2.p1.8.m8.1.1.cmml">deg</mi><annotation-xml encoding="MathML-Content" id="S3.SS2.p1.8.m8.1b"><csymbol cd="latexml" id="S3.SS2.p1.8.m8.1.1.cmml" xref="S3.SS2.p1.8.m8.1.1">degree</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S3.SS2.p1.8.m8.1c">\deg</annotation></semantics></math>.
+The WIDE-S band is the most sensitive one, and the two longer wavelength bands have large scatter at fainter (a few MJy sr<sup id="S3.SS2.p1.13.4" class="ltx_sup"><span id="S3.SS2.p1.13.4.1" class="ltx_text ltx_font_italic">-1</span></sup>) regions.
+This is because the performance of the LW detector is not as good as that of the SW one, which can be also seen in Figure <a href="#S3.F1" title="Figure 1 ‣ 3.1 Calibration Method ‣ 3 Calibrating the FIS Images ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.
+Since the LW detector consisted of independent Ge:Ga elements, the sensitivity between the elements was largely scattered, while the SW detector was a monolithic Ge:Ga array and the sensitivity is quite uniform.
+It is hard to estimate the sensitivity for the N60 band, because it is the one most seriously affected by the zodiacal emission of the 4 FIS bands.
+Although we excluded the regions of <math id="S3.SS2.p1.10.m10.1" class="ltx_Math" alttext="|\beta|&lt;" display="inline"><semantics id="S3.SS2.p1.10.m10.1a"><mrow id="S3.SS2.p1.10.m10.1.2" xref="S3.SS2.p1.10.m10.1.2.cmml"><mrow id="S3.SS2.p1.10.m10.1.2.2.2" xref="S3.SS2.p1.10.m10.1.2.2.1.cmml"><mo stretchy="false" id="S3.SS2.p1.10.m10.1.2.2.2.1" xref="S3.SS2.p1.10.m10.1.2.2.1.1.cmml">|</mo><mi id="S3.SS2.p1.10.m10.1.1" xref="S3.SS2.p1.10.m10.1.1.cmml">β</mi><mo stretchy="false" id="S3.SS2.p1.10.m10.1.2.2.2.2" xref="S3.SS2.p1.10.m10.1.2.2.1.1.cmml">|</mo></mrow><mo id="S3.SS2.p1.10.m10.1.2.1" xref="S3.SS2.p1.10.m10.1.2.1.cmml">&lt;</mo><mi id="S3.SS2.p1.10.m10.1.2.3" xref="S3.SS2.p1.10.m10.1.2.3.cmml"></mi></mrow><annotation-xml encoding="MathML-Content" id="S3.SS2.p1.10.m10.1b"><apply id="S3.SS2.p1.10.m10.1.2.cmml" xref="S3.SS2.p1.10.m10.1.2"><lt id="S3.SS2.p1.10.m10.1.2.1.cmml" xref="S3.SS2.p1.10.m10.1.2.1"></lt><apply id="S3.SS2.p1.10.m10.1.2.2.1.cmml" xref="S3.SS2.p1.10.m10.1.2.2.2"><abs id="S3.SS2.p1.10.m10.1.2.2.1.1.cmml" xref="S3.SS2.p1.10.m10.1.2.2.2.1"></abs><ci id="S3.SS2.p1.10.m10.1.1.cmml" xref="S3.SS2.p1.10.m10.1.1">𝛽</ci></apply><csymbol cd="latexml" id="S3.SS2.p1.10.m10.1.2.3.cmml" xref="S3.SS2.p1.10.m10.1.2.3">absent</csymbol></apply></annotation-xml><annotation encoding="application/x-tex" id="S3.SS2.p1.10.m10.1c">|\beta|&lt;</annotation></semantics></math>40 deg, where the zodiacal emission is dominant, there still remain the small-scale structures of the emission at <math id="S3.SS2.p1.11.m11.1" class="ltx_Math" alttext="|\beta|&gt;" display="inline"><semantics id="S3.SS2.p1.11.m11.1a"><mrow id="S3.SS2.p1.11.m11.1.2" xref="S3.SS2.p1.11.m11.1.2.cmml"><mrow id="S3.SS2.p1.11.m11.1.2.2.2" xref="S3.SS2.p1.11.m11.1.2.2.1.cmml"><mo stretchy="false" id="S3.SS2.p1.11.m11.1.2.2.2.1" xref="S3.SS2.p1.11.m11.1.2.2.1.1.cmml">|</mo><mi id="S3.SS2.p1.11.m11.1.1" xref="S3.SS2.p1.11.m11.1.1.cmml">β</mi><mo stretchy="false" id="S3.SS2.p1.11.m11.1.2.2.2.2" xref="S3.SS2.p1.11.m11.1.2.2.1.1.cmml">|</mo></mrow><mo id="S3.SS2.p1.11.m11.1.2.1" xref="S3.SS2.p1.11.m11.1.2.1.cmml">&gt;</mo><mi id="S3.SS2.p1.11.m11.1.2.3" xref="S3.SS2.p1.11.m11.1.2.3.cmml"></mi></mrow><annotation-xml encoding="MathML-Content" id="S3.SS2.p1.11.m11.1b"><apply id="S3.SS2.p1.11.m11.1.2.cmml" xref="S3.SS2.p1.11.m11.1.2"><gt id="S3.SS2.p1.11.m11.1.2.1.cmml" xref="S3.SS2.p1.11.m11.1.2.1"></gt><apply id="S3.SS2.p1.11.m11.1.2.2.1.cmml" xref="S3.SS2.p1.11.m11.1.2.2.2"><abs id="S3.SS2.p1.11.m11.1.2.2.1.1.cmml" xref="S3.SS2.p1.11.m11.1.2.2.2.1"></abs><ci id="S3.SS2.p1.11.m11.1.1.cmml" xref="S3.SS2.p1.11.m11.1.1">𝛽</ci></apply><csymbol cd="latexml" id="S3.SS2.p1.11.m11.1.2.3.cmml" xref="S3.SS2.p1.11.m11.1.2.3">absent</csymbol></apply></annotation-xml><annotation encoding="application/x-tex" id="S3.SS2.p1.11.m11.1c">|\beta|&gt;</annotation></semantics></math>40 deg.
+The faint intensity (<math id="S3.SS2.p1.12.m12.1" class="ltx_Math" alttext="\lesssim" display="inline"><semantics id="S3.SS2.p1.12.m12.1a"><mo id="S3.SS2.p1.12.m12.1.1" xref="S3.SS2.p1.12.m12.1.1.cmml">≲</mo><annotation-xml encoding="MathML-Content" id="S3.SS2.p1.12.m12.1b"><csymbol cd="latexml" id="S3.SS2.p1.12.m12.1.1.cmml" xref="S3.SS2.p1.12.m12.1.1">less-than-or-similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S3.SS2.p1.12.m12.1c">\lesssim</annotation></semantics></math>1 MJy sr<sup id="S3.SS2.p1.13.5" class="ltx_sup"><span id="S3.SS2.p1.13.5.1" class="ltx_text ltx_font_italic">-1</span></sup>) regions are thought to be affected by the zodiacal emission.
+Therefore, we should re-calibrate the image when the model of the zodiacal emission becomes more reliable.</p>
+</div>
+<figure id="S3.F2" class="ltx_figure"><img src="/html/1503.06422/assets/x3.png" id="S3.F2.1.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="484" height="128" alt="Refer to caption">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>
+Relations between the calibrated FIS intensity and the expected intensity based on the DIRBE data, after subtraction of the smooth cloud component.
+The colour scales are the number of the DIRBE pixels, where <math id="S3.F2.5.m1.1" class="ltx_Math" alttext="|\beta|&gt;" display="inline"><semantics id="S3.F2.5.m1.1b"><mrow id="S3.F2.5.m1.1.2" xref="S3.F2.5.m1.1.2.cmml"><mrow id="S3.F2.5.m1.1.2.2.2" xref="S3.F2.5.m1.1.2.2.1.cmml"><mo stretchy="false" id="S3.F2.5.m1.1.2.2.2.1" xref="S3.F2.5.m1.1.2.2.1.1.cmml">|</mo><mi id="S3.F2.5.m1.1.1" xref="S3.F2.5.m1.1.1.cmml">β</mi><mo stretchy="false" id="S3.F2.5.m1.1.2.2.2.2" xref="S3.F2.5.m1.1.2.2.1.1.cmml">|</mo></mrow><mo id="S3.F2.5.m1.1.2.1" xref="S3.F2.5.m1.1.2.1.cmml">&gt;</mo><mi id="S3.F2.5.m1.1.2.3" xref="S3.F2.5.m1.1.2.3.cmml"></mi></mrow><annotation-xml encoding="MathML-Content" id="S3.F2.5.m1.1c"><apply id="S3.F2.5.m1.1.2.cmml" xref="S3.F2.5.m1.1.2"><gt id="S3.F2.5.m1.1.2.1.cmml" xref="S3.F2.5.m1.1.2.1"></gt><apply id="S3.F2.5.m1.1.2.2.1.cmml" xref="S3.F2.5.m1.1.2.2.2"><abs id="S3.F2.5.m1.1.2.2.1.1.cmml" xref="S3.F2.5.m1.1.2.2.2.1"></abs><ci id="S3.F2.5.m1.1.1.cmml" xref="S3.F2.5.m1.1.1">𝛽</ci></apply><csymbol cd="latexml" id="S3.F2.5.m1.1.2.3.cmml" xref="S3.F2.5.m1.1.2.3">absent</csymbol></apply></annotation-xml><annotation encoding="application/x-tex" id="S3.F2.5.m1.1d">|\beta|&gt;</annotation></semantics></math>40 degrees.
+The broken lines indicate the deviations of <math id="S3.F2.6.m2.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S3.F2.6.m2.1b"><mo id="S3.F2.6.m2.1.1" xref="S3.F2.6.m2.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S3.F2.6.m2.1c"><csymbol cd="latexml" id="S3.F2.6.m2.1.1.cmml" xref="S3.F2.6.m2.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S3.F2.6.m2.1d">\pm</annotation></semantics></math>3 MJy sr<sup id="S3.F2.9.1" class="ltx_sup"><span id="S3.F2.9.1.1" class="ltx_text ltx_font_italic">-1</span></sup> from the linear relation of (expected intensity) = (calibrated intensity).
+</figcaption>
+</figure>
+<figure id="S3.T1" class="ltx_table">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 1: </span>
+Uncertainties in the intensity calibration for each band.
+The uncertainties from the slope of unity in Figure <a href="#S3.F2" title="Figure 2 ‣ 3.2 Flux Uncertainties ‣ 3 Calibrating the FIS Images ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> are given for individual intensity bins.
+The 1 <math id="S3.T1.3.3.m1.1" class="ltx_Math" alttext="\sigma" display="inline"><semantics id="S3.T1.3.3.m1.1b"><mi id="S3.T1.3.3.m1.1.1" xref="S3.T1.3.3.m1.1.1.cmml">σ</mi><annotation-xml encoding="MathML-Content" id="S3.T1.3.3.m1.1c"><ci id="S3.T1.3.3.m1.1.1.cmml" xref="S3.T1.3.3.m1.1.1">𝜎</ci></annotation-xml><annotation encoding="application/x-tex" id="S3.T1.3.3.m1.1d">\sigma</annotation></semantics></math> uncertainties is calculated for each DIRBE pixel where <math id="S3.T1.4.4.m2.1" class="ltx_Math" alttext="|\beta|&gt;" display="inline"><semantics id="S3.T1.4.4.m2.1b"><mrow id="S3.T1.4.4.m2.1.2" xref="S3.T1.4.4.m2.1.2.cmml"><mrow id="S3.T1.4.4.m2.1.2.2.2" xref="S3.T1.4.4.m2.1.2.2.1.cmml"><mo stretchy="false" id="S3.T1.4.4.m2.1.2.2.2.1" xref="S3.T1.4.4.m2.1.2.2.1.1.cmml">|</mo><mi id="S3.T1.4.4.m2.1.1" xref="S3.T1.4.4.m2.1.1.cmml">β</mi><mo stretchy="false" id="S3.T1.4.4.m2.1.2.2.2.2" xref="S3.T1.4.4.m2.1.2.2.1.1.cmml">|</mo></mrow><mo id="S3.T1.4.4.m2.1.2.1" xref="S3.T1.4.4.m2.1.2.1.cmml">&gt;</mo><mi id="S3.T1.4.4.m2.1.2.3" xref="S3.T1.4.4.m2.1.2.3.cmml"></mi></mrow><annotation-xml encoding="MathML-Content" id="S3.T1.4.4.m2.1c"><apply id="S3.T1.4.4.m2.1.2.cmml" xref="S3.T1.4.4.m2.1.2"><gt id="S3.T1.4.4.m2.1.2.1.cmml" xref="S3.T1.4.4.m2.1.2.1"></gt><apply id="S3.T1.4.4.m2.1.2.2.1.cmml" xref="S3.T1.4.4.m2.1.2.2.2"><abs id="S3.T1.4.4.m2.1.2.2.1.1.cmml" xref="S3.T1.4.4.m2.1.2.2.2.1"></abs><ci id="S3.T1.4.4.m2.1.1.cmml" xref="S3.T1.4.4.m2.1.1">𝛽</ci></apply><csymbol cd="latexml" id="S3.T1.4.4.m2.1.2.3.cmml" xref="S3.T1.4.4.m2.1.2.3">absent</csymbol></apply></annotation-xml><annotation encoding="application/x-tex" id="S3.T1.4.4.m2.1d">|\beta|&gt;</annotation></semantics></math>40 deg.
+</figcaption>
+<table id="S3.T1.13.13" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr id="S3.T1.13.13.10.1" class="ltx_tr">
+<th id="S3.T1.13.13.10.1.1" class="ltx_td ltx_th ltx_th_row ltx_border_t"></th>
+<td id="S3.T1.13.13.10.1.2" class="ltx_td ltx_align_right ltx_border_t">N60</td>
+<td id="S3.T1.13.13.10.1.3" class="ltx_td ltx_align_right ltx_border_t">WIDE-S</td>
+<td id="S3.T1.13.13.10.1.4" class="ltx_td ltx_align_right ltx_border_t">WIDE-L</td>
+<td id="S3.T1.13.13.10.1.5" class="ltx_td ltx_align_right ltx_border_t">N160</td>
+</tr>
+<tr id="S3.T1.5.5.1" class="ltx_tr">
+<th id="S3.T1.5.5.1.1" class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_t">MJy sr<sup id="S3.T1.5.5.1.1.1" class="ltx_sup"><span id="S3.T1.5.5.1.1.1.1" class="ltx_text ltx_font_italic">-1</span></sup>
+</th>
+<td id="S3.T1.5.5.1.2" class="ltx_td ltx_border_t"></td>
+<td id="S3.T1.5.5.1.3" class="ltx_td ltx_border_t"></td>
+<td id="S3.T1.5.5.1.4" class="ltx_td ltx_border_t"></td>
+<td id="S3.T1.5.5.1.5" class="ltx_td ltx_border_t"></td>
+</tr>
+<tr id="S3.T1.8.8.4" class="ltx_tr">
+<th id="S3.T1.8.8.4.4" class="ltx_td ltx_align_right ltx_th ltx_th_row">2.5</th>
+<td id="S3.T1.6.6.2.1" class="ltx_td ltx_align_right"><math id="S3.T1.6.6.2.1.m1.1" class="ltx_Math" alttext="\ast" display="inline"><semantics id="S3.T1.6.6.2.1.m1.1a"><mo id="S3.T1.6.6.2.1.m1.1.1" xref="S3.T1.6.6.2.1.m1.1.1.cmml">∗</mo><annotation-xml encoding="MathML-Content" id="S3.T1.6.6.2.1.m1.1b"><ci id="S3.T1.6.6.2.1.m1.1.1.cmml" xref="S3.T1.6.6.2.1.m1.1.1">∗</ci></annotation-xml><annotation encoding="application/x-tex" id="S3.T1.6.6.2.1.m1.1c">\ast</annotation></semantics></math></td>
+<td id="S3.T1.8.8.4.5" class="ltx_td ltx_align_right">15.1%</td>
+<td id="S3.T1.7.7.3.2" class="ltx_td ltx_align_right"><math id="S3.T1.7.7.3.2.m1.1" class="ltx_Math" alttext="\ast" display="inline"><semantics id="S3.T1.7.7.3.2.m1.1a"><mo id="S3.T1.7.7.3.2.m1.1.1" xref="S3.T1.7.7.3.2.m1.1.1.cmml">∗</mo><annotation-xml encoding="MathML-Content" id="S3.T1.7.7.3.2.m1.1b"><ci id="S3.T1.7.7.3.2.m1.1.1.cmml" xref="S3.T1.7.7.3.2.m1.1.1">∗</ci></annotation-xml><annotation encoding="application/x-tex" id="S3.T1.7.7.3.2.m1.1c">\ast</annotation></semantics></math></td>
+<td id="S3.T1.8.8.4.3" class="ltx_td ltx_align_right"><math id="S3.T1.8.8.4.3.m1.1" class="ltx_Math" alttext="\ast" display="inline"><semantics id="S3.T1.8.8.4.3.m1.1a"><mo id="S3.T1.8.8.4.3.m1.1.1" xref="S3.T1.8.8.4.3.m1.1.1.cmml">∗</mo><annotation-xml encoding="MathML-Content" id="S3.T1.8.8.4.3.m1.1b"><ci id="S3.T1.8.8.4.3.m1.1.1.cmml" xref="S3.T1.8.8.4.3.m1.1.1">∗</ci></annotation-xml><annotation encoding="application/x-tex" id="S3.T1.8.8.4.3.m1.1c">\ast</annotation></semantics></math></td>
+</tr>
+<tr id="S3.T1.11.11.7" class="ltx_tr">
+<th id="S3.T1.11.11.7.4" class="ltx_td ltx_align_right ltx_th ltx_th_row">4.0</th>
+<td id="S3.T1.9.9.5.1" class="ltx_td ltx_align_right"><math id="S3.T1.9.9.5.1.m1.1" class="ltx_Math" alttext="\ast" display="inline"><semantics id="S3.T1.9.9.5.1.m1.1a"><mo id="S3.T1.9.9.5.1.m1.1.1" xref="S3.T1.9.9.5.1.m1.1.1.cmml">∗</mo><annotation-xml encoding="MathML-Content" id="S3.T1.9.9.5.1.m1.1b"><ci id="S3.T1.9.9.5.1.m1.1.1.cmml" xref="S3.T1.9.9.5.1.m1.1.1">∗</ci></annotation-xml><annotation encoding="application/x-tex" id="S3.T1.9.9.5.1.m1.1c">\ast</annotation></semantics></math></td>
+<td id="S3.T1.11.11.7.5" class="ltx_td ltx_align_right">8.1%</td>
+<td id="S3.T1.10.10.6.2" class="ltx_td ltx_align_right"><math id="S3.T1.10.10.6.2.m1.1" class="ltx_Math" alttext="\ast" display="inline"><semantics id="S3.T1.10.10.6.2.m1.1a"><mo id="S3.T1.10.10.6.2.m1.1.1" xref="S3.T1.10.10.6.2.m1.1.1.cmml">∗</mo><annotation-xml encoding="MathML-Content" id="S3.T1.10.10.6.2.m1.1b"><ci id="S3.T1.10.10.6.2.m1.1.1.cmml" xref="S3.T1.10.10.6.2.m1.1.1">∗</ci></annotation-xml><annotation encoding="application/x-tex" id="S3.T1.10.10.6.2.m1.1c">\ast</annotation></semantics></math></td>
+<td id="S3.T1.11.11.7.3" class="ltx_td ltx_align_right"><math id="S3.T1.11.11.7.3.m1.1" class="ltx_Math" alttext="\ast" display="inline"><semantics id="S3.T1.11.11.7.3.m1.1a"><mo id="S3.T1.11.11.7.3.m1.1.1" xref="S3.T1.11.11.7.3.m1.1.1.cmml">∗</mo><annotation-xml encoding="MathML-Content" id="S3.T1.11.11.7.3.m1.1b"><ci id="S3.T1.11.11.7.3.m1.1.1.cmml" xref="S3.T1.11.11.7.3.m1.1.1">∗</ci></annotation-xml><annotation encoding="application/x-tex" id="S3.T1.11.11.7.3.m1.1c">\ast</annotation></semantics></math></td>
+</tr>
+<tr id="S3.T1.13.13.9" class="ltx_tr">
+<th id="S3.T1.13.13.9.3" class="ltx_td ltx_align_right ltx_th ltx_th_row">6.3</th>
+<td id="S3.T1.13.13.9.4" class="ltx_td ltx_align_right">20.1%</td>
+<td id="S3.T1.13.13.9.5" class="ltx_td ltx_align_right">4.7%</td>
+<td id="S3.T1.12.12.8.1" class="ltx_td ltx_align_right"><math id="S3.T1.12.12.8.1.m1.1" class="ltx_Math" alttext="\ast" display="inline"><semantics id="S3.T1.12.12.8.1.m1.1a"><mo id="S3.T1.12.12.8.1.m1.1.1" xref="S3.T1.12.12.8.1.m1.1.1.cmml">∗</mo><annotation-xml encoding="MathML-Content" id="S3.T1.12.12.8.1.m1.1b"><ci id="S3.T1.12.12.8.1.m1.1.1.cmml" xref="S3.T1.12.12.8.1.m1.1.1">∗</ci></annotation-xml><annotation encoding="application/x-tex" id="S3.T1.12.12.8.1.m1.1c">\ast</annotation></semantics></math></td>
+<td id="S3.T1.13.13.9.2" class="ltx_td ltx_align_right"><math id="S3.T1.13.13.9.2.m1.1" class="ltx_Math" alttext="\ast" display="inline"><semantics id="S3.T1.13.13.9.2.m1.1a"><mo id="S3.T1.13.13.9.2.m1.1.1" xref="S3.T1.13.13.9.2.m1.1.1.cmml">∗</mo><annotation-xml encoding="MathML-Content" id="S3.T1.13.13.9.2.m1.1b"><ci id="S3.T1.13.13.9.2.m1.1.1.cmml" xref="S3.T1.13.13.9.2.m1.1.1">∗</ci></annotation-xml><annotation encoding="application/x-tex" id="S3.T1.13.13.9.2.m1.1c">\ast</annotation></semantics></math></td>
+</tr>
+<tr id="S3.T1.13.13.11.2" class="ltx_tr">
+<th id="S3.T1.13.13.11.2.1" class="ltx_td ltx_align_right ltx_th ltx_th_row">10</th>
+<td id="S3.T1.13.13.11.2.2" class="ltx_td ltx_align_right">9.9%</td>
+<td id="S3.T1.13.13.11.2.3" class="ltx_td ltx_align_right">4.5%</td>
+<td id="S3.T1.13.13.11.2.4" class="ltx_td ltx_align_right">45.4%</td>
+<td id="S3.T1.13.13.11.2.5" class="ltx_td ltx_align_right">56.1%</td>
+</tr>
+<tr id="S3.T1.13.13.12.3" class="ltx_tr">
+<th id="S3.T1.13.13.12.3.1" class="ltx_td ltx_align_right ltx_th ltx_th_row">16</th>
+<td id="S3.T1.13.13.12.3.2" class="ltx_td ltx_align_right">8.4%</td>
+<td id="S3.T1.13.13.12.3.3" class="ltx_td ltx_align_right">4.2%</td>
+<td id="S3.T1.13.13.12.3.4" class="ltx_td ltx_align_right">14.3%</td>
+<td id="S3.T1.13.13.12.3.5" class="ltx_td ltx_align_right">16.6%</td>
+</tr>
+<tr id="S3.T1.13.13.13.4" class="ltx_tr">
+<th id="S3.T1.13.13.13.4.1" class="ltx_td ltx_align_right ltx_th ltx_th_row">25</th>
+<td id="S3.T1.13.13.13.4.2" class="ltx_td ltx_align_right">9.7%</td>
+<td id="S3.T1.13.13.13.4.3" class="ltx_td ltx_align_right">4.3%</td>
+<td id="S3.T1.13.13.13.4.4" class="ltx_td ltx_align_right">10.1%</td>
+<td id="S3.T1.13.13.13.4.5" class="ltx_td ltx_align_right">11.2%</td>
+</tr>
+<tr id="S3.T1.13.13.14.5" class="ltx_tr">
+<th id="S3.T1.13.13.14.5.1" class="ltx_td ltx_align_right ltx_th ltx_th_row">40</th>
+<td id="S3.T1.13.13.14.5.2" class="ltx_td ltx_align_right">10.8%</td>
+<td id="S3.T1.13.13.14.5.3" class="ltx_td ltx_align_right">4.5%</td>
+<td id="S3.T1.13.13.14.5.4" class="ltx_td ltx_align_right">8.3%</td>
+<td id="S3.T1.13.13.14.5.5" class="ltx_td ltx_align_right">8.8%</td>
+</tr>
+<tr id="S3.T1.13.13.15.6" class="ltx_tr">
+<th id="S3.T1.13.13.15.6.1" class="ltx_td ltx_align_right ltx_th ltx_th_row">63</th>
+<td id="S3.T1.13.13.15.6.2" class="ltx_td ltx_align_right">11.1%</td>
+<td id="S3.T1.13.13.15.6.3" class="ltx_td ltx_align_right">5.3%</td>
+<td id="S3.T1.13.13.15.6.4" class="ltx_td ltx_align_right">8.1%</td>
+<td id="S3.T1.13.13.15.6.5" class="ltx_td ltx_align_right">7.9%</td>
+</tr>
+<tr id="S3.T1.13.13.16.7" class="ltx_tr">
+<th id="S3.T1.13.13.16.7.1" class="ltx_td ltx_align_right ltx_th ltx_th_row">100</th>
+<td id="S3.T1.13.13.16.7.2" class="ltx_td ltx_align_right">12.5%</td>
+<td id="S3.T1.13.13.16.7.3" class="ltx_td ltx_align_right">5.7%</td>
+<td id="S3.T1.13.13.16.7.4" class="ltx_td ltx_align_right">8.9%</td>
+<td id="S3.T1.13.13.16.7.5" class="ltx_td ltx_align_right">8.9%</td>
+</tr>
+<tr id="S3.T1.13.13.17.8" class="ltx_tr">
+<th id="S3.T1.13.13.17.8.1" class="ltx_td ltx_align_right ltx_th ltx_th_row">160</th>
+<td id="S3.T1.13.13.17.8.2" class="ltx_td ltx_align_right">10.4%</td>
+<td id="S3.T1.13.13.17.8.3" class="ltx_td ltx_align_right">7.3%</td>
+<td id="S3.T1.13.13.17.8.4" class="ltx_td ltx_align_right">9.6%</td>
+<td id="S3.T1.13.13.17.8.5" class="ltx_td ltx_align_right">9.7%</td>
+</tr>
+<tr id="S3.T1.13.13.18.9" class="ltx_tr">
+<th id="S3.T1.13.13.18.9.1" class="ltx_td ltx_align_right ltx_th ltx_th_row">250</th>
+<td id="S3.T1.13.13.18.9.2" class="ltx_td ltx_align_right">13.2%</td>
+<td id="S3.T1.13.13.18.9.3" class="ltx_td ltx_align_right">8.3%</td>
+<td id="S3.T1.13.13.18.9.4" class="ltx_td ltx_align_right">9.8%</td>
+<td id="S3.T1.13.13.18.9.5" class="ltx_td ltx_align_right">10.3%</td>
+</tr>
+<tr id="S3.T1.13.13.19.10" class="ltx_tr">
+<th id="S3.T1.13.13.19.10.1" class="ltx_td ltx_align_right ltx_th ltx_th_row">400</th>
+<td id="S3.T1.13.13.19.10.2" class="ltx_td ltx_align_right">11.3%</td>
+<td id="S3.T1.13.13.19.10.3" class="ltx_td ltx_align_right">8.1%</td>
+<td id="S3.T1.13.13.19.10.4" class="ltx_td ltx_align_right">8.8%</td>
+<td id="S3.T1.13.13.19.10.5" class="ltx_td ltx_align_right">8.9%</td>
+</tr>
+<tr id="S3.T1.13.13.20.11" class="ltx_tr">
+<th id="S3.T1.13.13.20.11.1" class="ltx_td ltx_align_right ltx_th ltx_th_row">630</th>
+<td id="S3.T1.13.13.20.11.2" class="ltx_td ltx_align_right">11.7%</td>
+<td id="S3.T1.13.13.20.11.3" class="ltx_td ltx_align_right">10.3%</td>
+<td id="S3.T1.13.13.20.11.4" class="ltx_td ltx_align_right">7.0%</td>
+<td id="S3.T1.13.13.20.11.5" class="ltx_td ltx_align_right">7.3%</td>
+</tr>
+<tr id="S3.T1.13.13.21.12" class="ltx_tr">
+<th id="S3.T1.13.13.21.12.1" class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_b">1000</th>
+<td id="S3.T1.13.13.21.12.2" class="ltx_td ltx_align_right ltx_border_b">13.0%</td>
+<td id="S3.T1.13.13.21.12.3" class="ltx_td ltx_align_right ltx_border_b">7.9%</td>
+<td id="S3.T1.13.13.21.12.4" class="ltx_td ltx_align_right ltx_border_b">5.9%</td>
+<td id="S3.T1.13.13.21.12.5" class="ltx_td ltx_align_right ltx_border_b">6.5%</td>
+</tr>
+</tbody>
+</table>
+</figure>
+</section>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Point Sources</h2>
+
+<section id="S4.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.1 </span>Point Spread Function</h3>
+
+<div id="S4.SS1.p1" class="ltx_para">
+<p id="S4.SS1.p1.1" class="ltx_p"><cite class="ltx_cite ltx_citemacro_citet">Arimatsu et al. (<a href="#bib.bib1" title="" class="ltx_ref">2014</a>)</cite> have investigated the characteristics of point sources in the FIS maps using preliminary data, which were almost the same as the released data.
+Here, we re-estimated the Point Spread Functions (PSFs) using the released data, following <cite class="ltx_cite ltx_citemacro_citet">Arimatsu et al. (<a href="#bib.bib1" title="" class="ltx_ref">2014</a>)</cite>.
+We chose 352 photometric standard stars from <cite class="ltx_cite ltx_citemacro_citet">Cohen et al. (<a href="#bib.bib3" title="" class="ltx_ref">1999</a>)</cite> with expected flux densities of 0.02–10 Jy at the WIDE-S band.
+To derive the PSF, we picked up those sources whose flux densities were greater than the 2.5 <math id="S4.SS1.p1.1.m1.1" class="ltx_Math" alttext="\sigma" display="inline"><semantics id="S4.SS1.p1.1.m1.1a"><mi id="S4.SS1.p1.1.m1.1.1" xref="S4.SS1.p1.1.m1.1.1.cmml">σ</mi><annotation-xml encoding="MathML-Content" id="S4.SS1.p1.1.m1.1b"><ci id="S4.SS1.p1.1.m1.1.1.cmml" xref="S4.SS1.p1.1.m1.1.1">𝜎</ci></annotation-xml><annotation encoding="application/x-tex" id="S4.SS1.p1.1.m1.1c">\sigma</annotation></semantics></math> detection limit to secure sufficient number of sources.
+We then stacked 49, 97, and 9 stars with flux densities above 1.2, 0.28, and 0.7 Jy at the N60, WIDE-S, and WIDE-L bands, respectively.
+The derived PSFs are shown in Figure <a href="#S4.F3" title="Figure 3 ‣ 4.1 Point Spread Function ‣ 4 Point Sources ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a> and their full width at half maximum (FWHM) are listed in Table <a href="#S4.T2" title="Table 2 ‣ 4.1 Point Spread Function ‣ 4 Point Sources ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>.
+We did not determine the PSF at the N160 band, because there were not enough bright standard stars detected at the band.
+However, since the FIS PSFs are determined by the detector characteristics rather than optics and the PSF shapes at the WIDE-L and N160 bands are similar in pointed observations <cite class="ltx_cite ltx_citemacro_citep">(Shirahata et al., <a href="#bib.bib18" title="" class="ltx_ref">2009</a>)</cite>, we assume that the N160 PSF is same as the WIDE-L one in the AFASS image.</p>
+</div>
+<figure id="S4.T2" class="ltx_table">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 2: </span>FWHMs of stacked PSFs.</figcaption>
+<table id="S4.T2.14.14" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S4.T2.14.14.15.1" class="ltx_tr">
+<th id="S4.T2.14.14.15.1.1" class="ltx_td ltx_th ltx_th_row ltx_border_t"></th>
+<th id="S4.T2.14.14.15.1.2" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_t">N60</th>
+<th id="S4.T2.14.14.15.1.3" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_t">WIDE-S</th>
+<th id="S4.T2.14.14.15.1.4" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_t">WIDE-L</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S4.T2.3.3.3" class="ltx_tr">
+<th id="S4.T2.3.3.3.4" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_t">FWHM [arcsec]</th>
+<td id="S4.T2.1.1.1.1" class="ltx_td ltx_align_right ltx_border_t"><math id="S4.T2.1.1.1.1.m1.1" class="ltx_Math" alttext="63.4\pm 0.2" display="inline"><semantics id="S4.T2.1.1.1.1.m1.1a"><mrow id="S4.T2.1.1.1.1.m1.1.1" xref="S4.T2.1.1.1.1.m1.1.1.cmml"><mn id="S4.T2.1.1.1.1.m1.1.1.2" xref="S4.T2.1.1.1.1.m1.1.1.2.cmml">63.4</mn><mo id="S4.T2.1.1.1.1.m1.1.1.1" xref="S4.T2.1.1.1.1.m1.1.1.1.cmml">±</mo><mn id="S4.T2.1.1.1.1.m1.1.1.3" xref="S4.T2.1.1.1.1.m1.1.1.3.cmml">0.2</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.T2.1.1.1.1.m1.1b"><apply id="S4.T2.1.1.1.1.m1.1.1.cmml" xref="S4.T2.1.1.1.1.m1.1.1"><csymbol cd="latexml" id="S4.T2.1.1.1.1.m1.1.1.1.cmml" xref="S4.T2.1.1.1.1.m1.1.1.1">plus-or-minus</csymbol><cn type="float" id="S4.T2.1.1.1.1.m1.1.1.2.cmml" xref="S4.T2.1.1.1.1.m1.1.1.2">63.4</cn><cn type="float" id="S4.T2.1.1.1.1.m1.1.1.3.cmml" xref="S4.T2.1.1.1.1.m1.1.1.3">0.2</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.T2.1.1.1.1.m1.1c">63.4\pm 0.2</annotation></semantics></math></td>
+<td id="S4.T2.2.2.2.2" class="ltx_td ltx_align_right ltx_border_t"><math id="S4.T2.2.2.2.2.m1.1" class="ltx_Math" alttext="77.8\pm 0.2" display="inline"><semantics id="S4.T2.2.2.2.2.m1.1a"><mrow id="S4.T2.2.2.2.2.m1.1.1" xref="S4.T2.2.2.2.2.m1.1.1.cmml"><mn id="S4.T2.2.2.2.2.m1.1.1.2" xref="S4.T2.2.2.2.2.m1.1.1.2.cmml">77.8</mn><mo id="S4.T2.2.2.2.2.m1.1.1.1" xref="S4.T2.2.2.2.2.m1.1.1.1.cmml">±</mo><mn id="S4.T2.2.2.2.2.m1.1.1.3" xref="S4.T2.2.2.2.2.m1.1.1.3.cmml">0.2</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.T2.2.2.2.2.m1.1b"><apply id="S4.T2.2.2.2.2.m1.1.1.cmml" xref="S4.T2.2.2.2.2.m1.1.1"><csymbol cd="latexml" id="S4.T2.2.2.2.2.m1.1.1.1.cmml" xref="S4.T2.2.2.2.2.m1.1.1.1">plus-or-minus</csymbol><cn type="float" id="S4.T2.2.2.2.2.m1.1.1.2.cmml" xref="S4.T2.2.2.2.2.m1.1.1.2">77.8</cn><cn type="float" id="S4.T2.2.2.2.2.m1.1.1.3.cmml" xref="S4.T2.2.2.2.2.m1.1.1.3">0.2</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.T2.2.2.2.2.m1.1c">77.8\pm 0.2</annotation></semantics></math></td>
+<td id="S4.T2.3.3.3.3" class="ltx_td ltx_align_right ltx_border_t"><math id="S4.T2.3.3.3.3.m1.1" class="ltx_Math" alttext="88.3\pm 0.9" display="inline"><semantics id="S4.T2.3.3.3.3.m1.1a"><mrow id="S4.T2.3.3.3.3.m1.1.1" xref="S4.T2.3.3.3.3.m1.1.1.cmml"><mn id="S4.T2.3.3.3.3.m1.1.1.2" xref="S4.T2.3.3.3.3.m1.1.1.2.cmml">88.3</mn><mo id="S4.T2.3.3.3.3.m1.1.1.1" xref="S4.T2.3.3.3.3.m1.1.1.1.cmml">±</mo><mn id="S4.T2.3.3.3.3.m1.1.1.3" xref="S4.T2.3.3.3.3.m1.1.1.3.cmml">0.9</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.T2.3.3.3.3.m1.1b"><apply id="S4.T2.3.3.3.3.m1.1.1.cmml" xref="S4.T2.3.3.3.3.m1.1.1"><csymbol cd="latexml" id="S4.T2.3.3.3.3.m1.1.1.1.cmml" xref="S4.T2.3.3.3.3.m1.1.1.1">plus-or-minus</csymbol><cn type="float" id="S4.T2.3.3.3.3.m1.1.1.2.cmml" xref="S4.T2.3.3.3.3.m1.1.1.2">88.3</cn><cn type="float" id="S4.T2.3.3.3.3.m1.1.1.3.cmml" xref="S4.T2.3.3.3.3.m1.1.1.3">0.9</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.T2.3.3.3.3.m1.1c">88.3\pm 0.9</annotation></semantics></math></td>
+</tr>
+<tr id="S4.T2.6.6.6" class="ltx_tr">
+<th id="S4.T2.6.6.6.4" class="ltx_td ltx_align_center ltx_th ltx_th_row">(in-scan)</th>
+<td id="S4.T2.4.4.4.1" class="ltx_td ltx_align_right"><math id="S4.T2.4.4.4.1.m1.1" class="ltx_Math" alttext="76.1\pm 0.4" display="inline"><semantics id="S4.T2.4.4.4.1.m1.1a"><mrow id="S4.T2.4.4.4.1.m1.1.1" xref="S4.T2.4.4.4.1.m1.1.1.cmml"><mn id="S4.T2.4.4.4.1.m1.1.1.2" xref="S4.T2.4.4.4.1.m1.1.1.2.cmml">76.1</mn><mo id="S4.T2.4.4.4.1.m1.1.1.1" xref="S4.T2.4.4.4.1.m1.1.1.1.cmml">±</mo><mn id="S4.T2.4.4.4.1.m1.1.1.3" xref="S4.T2.4.4.4.1.m1.1.1.3.cmml">0.4</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.T2.4.4.4.1.m1.1b"><apply id="S4.T2.4.4.4.1.m1.1.1.cmml" xref="S4.T2.4.4.4.1.m1.1.1"><csymbol cd="latexml" id="S4.T2.4.4.4.1.m1.1.1.1.cmml" xref="S4.T2.4.4.4.1.m1.1.1.1">plus-or-minus</csymbol><cn type="float" id="S4.T2.4.4.4.1.m1.1.1.2.cmml" xref="S4.T2.4.4.4.1.m1.1.1.2">76.1</cn><cn type="float" id="S4.T2.4.4.4.1.m1.1.1.3.cmml" xref="S4.T2.4.4.4.1.m1.1.1.3">0.4</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.T2.4.4.4.1.m1.1c">76.1\pm 0.4</annotation></semantics></math></td>
+<td id="S4.T2.5.5.5.2" class="ltx_td ltx_align_right"><math id="S4.T2.5.5.5.2.m1.1" class="ltx_Math" alttext="102.3\pm 0.3" display="inline"><semantics id="S4.T2.5.5.5.2.m1.1a"><mrow id="S4.T2.5.5.5.2.m1.1.1" xref="S4.T2.5.5.5.2.m1.1.1.cmml"><mn id="S4.T2.5.5.5.2.m1.1.1.2" xref="S4.T2.5.5.5.2.m1.1.1.2.cmml">102.3</mn><mo id="S4.T2.5.5.5.2.m1.1.1.1" xref="S4.T2.5.5.5.2.m1.1.1.1.cmml">±</mo><mn id="S4.T2.5.5.5.2.m1.1.1.3" xref="S4.T2.5.5.5.2.m1.1.1.3.cmml">0.3</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.T2.5.5.5.2.m1.1b"><apply id="S4.T2.5.5.5.2.m1.1.1.cmml" xref="S4.T2.5.5.5.2.m1.1.1"><csymbol cd="latexml" id="S4.T2.5.5.5.2.m1.1.1.1.cmml" xref="S4.T2.5.5.5.2.m1.1.1.1">plus-or-minus</csymbol><cn type="float" id="S4.T2.5.5.5.2.m1.1.1.2.cmml" xref="S4.T2.5.5.5.2.m1.1.1.2">102.3</cn><cn type="float" id="S4.T2.5.5.5.2.m1.1.1.3.cmml" xref="S4.T2.5.5.5.2.m1.1.1.3">0.3</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.T2.5.5.5.2.m1.1c">102.3\pm 0.3</annotation></semantics></math></td>
+<td id="S4.T2.6.6.6.3" class="ltx_td ltx_align_right"><math id="S4.T2.6.6.6.3.m1.1" class="ltx_Math" alttext="98.3\pm 1.4" display="inline"><semantics id="S4.T2.6.6.6.3.m1.1a"><mrow id="S4.T2.6.6.6.3.m1.1.1" xref="S4.T2.6.6.6.3.m1.1.1.cmml"><mn id="S4.T2.6.6.6.3.m1.1.1.2" xref="S4.T2.6.6.6.3.m1.1.1.2.cmml">98.3</mn><mo id="S4.T2.6.6.6.3.m1.1.1.1" xref="S4.T2.6.6.6.3.m1.1.1.1.cmml">±</mo><mn id="S4.T2.6.6.6.3.m1.1.1.3" xref="S4.T2.6.6.6.3.m1.1.1.3.cmml">1.4</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.T2.6.6.6.3.m1.1b"><apply id="S4.T2.6.6.6.3.m1.1.1.cmml" xref="S4.T2.6.6.6.3.m1.1.1"><csymbol cd="latexml" id="S4.T2.6.6.6.3.m1.1.1.1.cmml" xref="S4.T2.6.6.6.3.m1.1.1.1">plus-or-minus</csymbol><cn type="float" id="S4.T2.6.6.6.3.m1.1.1.2.cmml" xref="S4.T2.6.6.6.3.m1.1.1.2">98.3</cn><cn type="float" id="S4.T2.6.6.6.3.m1.1.1.3.cmml" xref="S4.T2.6.6.6.3.m1.1.1.3">1.4</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.T2.6.6.6.3.m1.1c">98.3\pm 1.4</annotation></semantics></math></td>
+</tr>
+<tr id="S4.T2.9.9.9" class="ltx_tr">
+<th id="S4.T2.9.9.9.4" class="ltx_td ltx_align_center ltx_th ltx_th_row">(cross-scan)</th>
+<td id="S4.T2.7.7.7.1" class="ltx_td ltx_align_right"><math id="S4.T2.7.7.7.1.m1.1" class="ltx_Math" alttext="31.3\pm 0.3" display="inline"><semantics id="S4.T2.7.7.7.1.m1.1a"><mrow id="S4.T2.7.7.7.1.m1.1.1" xref="S4.T2.7.7.7.1.m1.1.1.cmml"><mn id="S4.T2.7.7.7.1.m1.1.1.2" xref="S4.T2.7.7.7.1.m1.1.1.2.cmml">31.3</mn><mo id="S4.T2.7.7.7.1.m1.1.1.1" xref="S4.T2.7.7.7.1.m1.1.1.1.cmml">±</mo><mn id="S4.T2.7.7.7.1.m1.1.1.3" xref="S4.T2.7.7.7.1.m1.1.1.3.cmml">0.3</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.T2.7.7.7.1.m1.1b"><apply id="S4.T2.7.7.7.1.m1.1.1.cmml" xref="S4.T2.7.7.7.1.m1.1.1"><csymbol cd="latexml" id="S4.T2.7.7.7.1.m1.1.1.1.cmml" xref="S4.T2.7.7.7.1.m1.1.1.1">plus-or-minus</csymbol><cn type="float" id="S4.T2.7.7.7.1.m1.1.1.2.cmml" xref="S4.T2.7.7.7.1.m1.1.1.2">31.3</cn><cn type="float" id="S4.T2.7.7.7.1.m1.1.1.3.cmml" xref="S4.T2.7.7.7.1.m1.1.1.3">0.3</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.T2.7.7.7.1.m1.1c">31.3\pm 0.3</annotation></semantics></math></td>
+<td id="S4.T2.8.8.8.2" class="ltx_td ltx_align_right"><math id="S4.T2.8.8.8.2.m1.1" class="ltx_Math" alttext="55.0\pm 0.1" display="inline"><semantics id="S4.T2.8.8.8.2.m1.1a"><mrow id="S4.T2.8.8.8.2.m1.1.1" xref="S4.T2.8.8.8.2.m1.1.1.cmml"><mn id="S4.T2.8.8.8.2.m1.1.1.2" xref="S4.T2.8.8.8.2.m1.1.1.2.cmml">55.0</mn><mo id="S4.T2.8.8.8.2.m1.1.1.1" xref="S4.T2.8.8.8.2.m1.1.1.1.cmml">±</mo><mn id="S4.T2.8.8.8.2.m1.1.1.3" xref="S4.T2.8.8.8.2.m1.1.1.3.cmml">0.1</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.T2.8.8.8.2.m1.1b"><apply id="S4.T2.8.8.8.2.m1.1.1.cmml" xref="S4.T2.8.8.8.2.m1.1.1"><csymbol cd="latexml" id="S4.T2.8.8.8.2.m1.1.1.1.cmml" xref="S4.T2.8.8.8.2.m1.1.1.1">plus-or-minus</csymbol><cn type="float" id="S4.T2.8.8.8.2.m1.1.1.2.cmml" xref="S4.T2.8.8.8.2.m1.1.1.2">55.0</cn><cn type="float" id="S4.T2.8.8.8.2.m1.1.1.3.cmml" xref="S4.T2.8.8.8.2.m1.1.1.3">0.1</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.T2.8.8.8.2.m1.1c">55.0\pm 0.1</annotation></semantics></math></td>
+<td id="S4.T2.9.9.9.3" class="ltx_td ltx_align_right"><math id="S4.T2.9.9.9.3.m1.1" class="ltx_Math" alttext="72.1\pm 1.1" display="inline"><semantics id="S4.T2.9.9.9.3.m1.1a"><mrow id="S4.T2.9.9.9.3.m1.1.1" xref="S4.T2.9.9.9.3.m1.1.1.cmml"><mn id="S4.T2.9.9.9.3.m1.1.1.2" xref="S4.T2.9.9.9.3.m1.1.1.2.cmml">72.1</mn><mo id="S4.T2.9.9.9.3.m1.1.1.1" xref="S4.T2.9.9.9.3.m1.1.1.1.cmml">±</mo><mn id="S4.T2.9.9.9.3.m1.1.1.3" xref="S4.T2.9.9.9.3.m1.1.1.3.cmml">1.1</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.T2.9.9.9.3.m1.1b"><apply id="S4.T2.9.9.9.3.m1.1.1.cmml" xref="S4.T2.9.9.9.3.m1.1.1"><csymbol cd="latexml" id="S4.T2.9.9.9.3.m1.1.1.1.cmml" xref="S4.T2.9.9.9.3.m1.1.1.1">plus-or-minus</csymbol><cn type="float" id="S4.T2.9.9.9.3.m1.1.1.2.cmml" xref="S4.T2.9.9.9.3.m1.1.1.2">72.1</cn><cn type="float" id="S4.T2.9.9.9.3.m1.1.1.3.cmml" xref="S4.T2.9.9.9.3.m1.1.1.3">1.1</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.T2.9.9.9.3.m1.1c">72.1\pm 1.1</annotation></semantics></math></td>
+</tr>
+<tr id="S4.T2.13.13.13" class="ltx_tr">
+<th id="S4.T2.10.10.10.1" class="ltx_td ltx_align_center ltx_th ltx_th_row">solid angle [arcsec<sup id="S4.T2.10.10.10.1.1" class="ltx_sup">2</sup>]</th>
+<td id="S4.T2.11.11.11.2" class="ltx_td ltx_align_right"><math id="S4.T2.11.11.11.2.m1.1" class="ltx_Math" alttext="2699\pm 40" display="inline"><semantics id="S4.T2.11.11.11.2.m1.1a"><mrow id="S4.T2.11.11.11.2.m1.1.1" xref="S4.T2.11.11.11.2.m1.1.1.cmml"><mn id="S4.T2.11.11.11.2.m1.1.1.2" xref="S4.T2.11.11.11.2.m1.1.1.2.cmml">2699</mn><mo id="S4.T2.11.11.11.2.m1.1.1.1" xref="S4.T2.11.11.11.2.m1.1.1.1.cmml">±</mo><mn id="S4.T2.11.11.11.2.m1.1.1.3" xref="S4.T2.11.11.11.2.m1.1.1.3.cmml">40</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.T2.11.11.11.2.m1.1b"><apply id="S4.T2.11.11.11.2.m1.1.1.cmml" xref="S4.T2.11.11.11.2.m1.1.1"><csymbol cd="latexml" id="S4.T2.11.11.11.2.m1.1.1.1.cmml" xref="S4.T2.11.11.11.2.m1.1.1.1">plus-or-minus</csymbol><cn type="integer" id="S4.T2.11.11.11.2.m1.1.1.2.cmml" xref="S4.T2.11.11.11.2.m1.1.1.2">2699</cn><cn type="integer" id="S4.T2.11.11.11.2.m1.1.1.3.cmml" xref="S4.T2.11.11.11.2.m1.1.1.3">40</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.T2.11.11.11.2.m1.1c">2699\pm 40</annotation></semantics></math></td>
+<td id="S4.T2.12.12.12.3" class="ltx_td ltx_align_right"><math id="S4.T2.12.12.12.3.m1.1" class="ltx_Math" alttext="6375\pm 30" display="inline"><semantics id="S4.T2.12.12.12.3.m1.1a"><mrow id="S4.T2.12.12.12.3.m1.1.1" xref="S4.T2.12.12.12.3.m1.1.1.cmml"><mn id="S4.T2.12.12.12.3.m1.1.1.2" xref="S4.T2.12.12.12.3.m1.1.1.2.cmml">6375</mn><mo id="S4.T2.12.12.12.3.m1.1.1.1" xref="S4.T2.12.12.12.3.m1.1.1.1.cmml">±</mo><mn id="S4.T2.12.12.12.3.m1.1.1.3" xref="S4.T2.12.12.12.3.m1.1.1.3.cmml">30</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.T2.12.12.12.3.m1.1b"><apply id="S4.T2.12.12.12.3.m1.1.1.cmml" xref="S4.T2.12.12.12.3.m1.1.1"><csymbol cd="latexml" id="S4.T2.12.12.12.3.m1.1.1.1.cmml" xref="S4.T2.12.12.12.3.m1.1.1.1">plus-or-minus</csymbol><cn type="integer" id="S4.T2.12.12.12.3.m1.1.1.2.cmml" xref="S4.T2.12.12.12.3.m1.1.1.2">6375</cn><cn type="integer" id="S4.T2.12.12.12.3.m1.1.1.3.cmml" xref="S4.T2.12.12.12.3.m1.1.1.3">30</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.T2.12.12.12.3.m1.1c">6375\pm 30</annotation></semantics></math></td>
+<td id="S4.T2.13.13.13.4" class="ltx_td ltx_align_right"><math id="S4.T2.13.13.13.4.m1.1" class="ltx_Math" alttext="8031\pm 237" display="inline"><semantics id="S4.T2.13.13.13.4.m1.1a"><mrow id="S4.T2.13.13.13.4.m1.1.1" xref="S4.T2.13.13.13.4.m1.1.1.cmml"><mn id="S4.T2.13.13.13.4.m1.1.1.2" xref="S4.T2.13.13.13.4.m1.1.1.2.cmml">8031</mn><mo id="S4.T2.13.13.13.4.m1.1.1.1" xref="S4.T2.13.13.13.4.m1.1.1.1.cmml">±</mo><mn id="S4.T2.13.13.13.4.m1.1.1.3" xref="S4.T2.13.13.13.4.m1.1.1.3.cmml">237</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.T2.13.13.13.4.m1.1b"><apply id="S4.T2.13.13.13.4.m1.1.1.cmml" xref="S4.T2.13.13.13.4.m1.1.1"><csymbol cd="latexml" id="S4.T2.13.13.13.4.m1.1.1.1.cmml" xref="S4.T2.13.13.13.4.m1.1.1.1">plus-or-minus</csymbol><cn type="integer" id="S4.T2.13.13.13.4.m1.1.1.2.cmml" xref="S4.T2.13.13.13.4.m1.1.1.2">8031</cn><cn type="integer" id="S4.T2.13.13.13.4.m1.1.1.3.cmml" xref="S4.T2.13.13.13.4.m1.1.1.3">237</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.T2.13.13.13.4.m1.1c">8031\pm 237</annotation></semantics></math></td>
+</tr>
+<tr id="S4.T2.14.14.14" class="ltx_tr">
+<th id="S4.T2.14.14.14.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_b ltx_border_t">N<sub id="S4.T2.14.14.14.1.1" class="ltx_sub">source</sub>
+</th>
+<td id="S4.T2.14.14.14.2" class="ltx_td ltx_align_right ltx_border_b ltx_border_t">49</td>
+<td id="S4.T2.14.14.14.3" class="ltx_td ltx_align_right ltx_border_b ltx_border_t">97</td>
+<td id="S4.T2.14.14.14.4" class="ltx_td ltx_align_right ltx_border_b ltx_border_t">9</td>
+</tr>
+</tbody>
+</table>
+</figure>
+<figure id="S4.F3" class="ltx_figure"><img src="/html/1503.06422/assets/x4.png" id="S4.F3.1.g1" class="ltx_graphics ltx_centering ltx_img_portrait" width="484" height="626" alt="Refer to caption">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>
+Obtained PSFs for the FIS N60 (65 <math id="S4.F3.5.m1.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S4.F3.5.m1.1b"><mi id="S4.F3.5.m1.1.1" xref="S4.F3.5.m1.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S4.F3.5.m1.1c"><ci id="S4.F3.5.m1.1.1.cmml" xref="S4.F3.5.m1.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S4.F3.5.m1.1d">\mu</annotation></semantics></math>m), WIDE-S (90 <math id="S4.F3.6.m2.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S4.F3.6.m2.1b"><mi id="S4.F3.6.m2.1.1" xref="S4.F3.6.m2.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S4.F3.6.m2.1c"><ci id="S4.F3.6.m2.1.1.cmml" xref="S4.F3.6.m2.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S4.F3.6.m2.1d">\mu</annotation></semantics></math>m), and WIDE-L (140 <math id="S4.F3.7.m3.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S4.F3.7.m3.1b"><mi id="S4.F3.7.m3.1.1" xref="S4.F3.7.m3.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S4.F3.7.m3.1c"><ci id="S4.F3.7.m3.1.1.cmml" xref="S4.F3.7.m3.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S4.F3.7.m3.1d">\mu</annotation></semantics></math>m) bands.
+The contours are at 75 %, 50 %, 25 %, and 10 % of the peak intensities.
+</figcaption>
+</figure>
+</section>
+<section id="S4.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.2 </span>Flux Calibrations</h3>
+
+<div id="S4.SS2.p1" class="ltx_para">
+<p id="S4.SS2.p1.7" class="ltx_p">We examined the flux calibrations for the point sources in the AFASS map.
+We prepared <math id="S4.SS2.p1.1.m1.1" class="ltx_Math" alttext="10^{\prime}\times 10^{\prime}" display="inline"><semantics id="S4.SS2.p1.1.m1.1a"><mrow id="S4.SS2.p1.1.m1.1.1" xref="S4.SS2.p1.1.m1.1.1.cmml"><msup id="S4.SS2.p1.1.m1.1.1.2" xref="S4.SS2.p1.1.m1.1.1.2.cmml"><mn id="S4.SS2.p1.1.m1.1.1.2.2" xref="S4.SS2.p1.1.m1.1.1.2.2.cmml">10</mn><mo id="S4.SS2.p1.1.m1.1.1.2.3" xref="S4.SS2.p1.1.m1.1.1.2.3.cmml">′</mo></msup><mo lspace="0.222em" rspace="0.222em" id="S4.SS2.p1.1.m1.1.1.1" xref="S4.SS2.p1.1.m1.1.1.1.cmml">×</mo><msup id="S4.SS2.p1.1.m1.1.1.3" xref="S4.SS2.p1.1.m1.1.1.3.cmml"><mn id="S4.SS2.p1.1.m1.1.1.3.2" xref="S4.SS2.p1.1.m1.1.1.3.2.cmml">10</mn><mo id="S4.SS2.p1.1.m1.1.1.3.3" xref="S4.SS2.p1.1.m1.1.1.3.3.cmml">′</mo></msup></mrow><annotation-xml encoding="MathML-Content" id="S4.SS2.p1.1.m1.1b"><apply id="S4.SS2.p1.1.m1.1.1.cmml" xref="S4.SS2.p1.1.m1.1.1"><times id="S4.SS2.p1.1.m1.1.1.1.cmml" xref="S4.SS2.p1.1.m1.1.1.1"></times><apply id="S4.SS2.p1.1.m1.1.1.2.cmml" xref="S4.SS2.p1.1.m1.1.1.2"><csymbol cd="ambiguous" id="S4.SS2.p1.1.m1.1.1.2.1.cmml" xref="S4.SS2.p1.1.m1.1.1.2">superscript</csymbol><cn type="integer" id="S4.SS2.p1.1.m1.1.1.2.2.cmml" xref="S4.SS2.p1.1.m1.1.1.2.2">10</cn><ci id="S4.SS2.p1.1.m1.1.1.2.3.cmml" xref="S4.SS2.p1.1.m1.1.1.2.3">′</ci></apply><apply id="S4.SS2.p1.1.m1.1.1.3.cmml" xref="S4.SS2.p1.1.m1.1.1.3"><csymbol cd="ambiguous" id="S4.SS2.p1.1.m1.1.1.3.1.cmml" xref="S4.SS2.p1.1.m1.1.1.3">superscript</csymbol><cn type="integer" id="S4.SS2.p1.1.m1.1.1.3.2.cmml" xref="S4.SS2.p1.1.m1.1.1.3.2">10</cn><ci id="S4.SS2.p1.1.m1.1.1.3.3.cmml" xref="S4.SS2.p1.1.m1.1.1.3.3">′</ci></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.SS2.p1.1.m1.1c">10^{\prime}\times 10^{\prime}</annotation></semantics></math> maps centred at the positions of selected standard stars.
+We subtracted the sky background from each map by taking the median value, and normalized it to the expected flux density.
+We separated selected sources into several groups over their appropriate flux density.
+Then, we stacked the maps for each group and took average values.
+We performed aperture photometry on the stacked maps using an aperture of 90<sup id="S4.SS2.p1.7.1" class="ltx_sup"><span id="S4.SS2.p1.7.1.1" class="ltx_text ltx_font_italic">′′</span></sup> radius with a sky background area of 120–300<sup id="S4.SS2.p1.7.2" class="ltx_sup"><span id="S4.SS2.p1.7.2.1" class="ltx_text ltx_font_italic">′′</span></sup> radius.
+Figure <a href="#S4.F4" title="Figure 4 ‣ 4.2 Flux Calibrations ‣ 4 Point Sources ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a> shows the observed-to-expected flux density ratio for the stacked sources as a function of the expected flux density in each bin, and the mean ratios are 0.627<math id="S4.SS2.p1.4.m4.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S4.SS2.p1.4.m4.1a"><mo id="S4.SS2.p1.4.m4.1.1" xref="S4.SS2.p1.4.m4.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S4.SS2.p1.4.m4.1b"><csymbol cd="latexml" id="S4.SS2.p1.4.m4.1.1.cmml" xref="S4.SS2.p1.4.m4.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S4.SS2.p1.4.m4.1c">\pm</annotation></semantics></math>0.029, 0.696<math id="S4.SS2.p1.5.m5.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S4.SS2.p1.5.m5.1a"><mo id="S4.SS2.p1.5.m5.1.1" xref="S4.SS2.p1.5.m5.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S4.SS2.p1.5.m5.1b"><csymbol cd="latexml" id="S4.SS2.p1.5.m5.1.1.cmml" xref="S4.SS2.p1.5.m5.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S4.SS2.p1.5.m5.1c">\pm</annotation></semantics></math>0.008, and 0.381<math id="S4.SS2.p1.6.m6.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S4.SS2.p1.6.m6.1a"><mo id="S4.SS2.p1.6.m6.1.1" xref="S4.SS2.p1.6.m6.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S4.SS2.p1.6.m6.1b"><csymbol cd="latexml" id="S4.SS2.p1.6.m6.1.1.cmml" xref="S4.SS2.p1.6.m6.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S4.SS2.p1.6.m6.1c">\pm</annotation></semantics></math>0.043 for the N60, WIDE-S and WIDE-L bands, respectively.
+Due to several improvements of the data reduction processes, these ratios differe from those of <cite class="ltx_cite ltx_citemacro_citet">Arimatsu et al. (<a href="#bib.bib1" title="" class="ltx_ref">2014</a>)</cite>, which used preliminary data.
+One significant difference is that the ratio at the N60 band becomes smaller for the faint source bins (<math id="S4.SS2.p1.7.m7.1" class="ltx_Math" alttext="&lt;" display="inline"><semantics id="S4.SS2.p1.7.m7.1a"><mo id="S4.SS2.p1.7.m7.1.1" xref="S4.SS2.p1.7.m7.1.1.cmml">&lt;</mo><annotation-xml encoding="MathML-Content" id="S4.SS2.p1.7.m7.1b"><lt id="S4.SS2.p1.7.m7.1.1.cmml" xref="S4.SS2.p1.7.m7.1.1"></lt></annotation-xml><annotation encoding="application/x-tex" id="S4.SS2.p1.7.m7.1c">&lt;</annotation></semantics></math>0.5 Jy).
+However, these small ratios are likely caused by the poor sensitivity of the N60 band, i.e., the signal-to-noise ratios of the faint sources in each map are smaller than one.
+Details of these processes are described in <cite class="ltx_cite ltx_citemacro_citet">Arimatsu et al. (<a href="#bib.bib1" title="" class="ltx_ref">2014</a>)</cite>.</p>
+</div>
+<figure id="S4.F4" class="ltx_figure"><img src="/html/1503.06422/assets/x5.png" id="S4.F4.1.g1" class="ltx_graphics ltx_centering ltx_img_portrait" width="242" height="313" alt="Refer to caption">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 4: </span>
+Observed-to-expected flux density ratio as a function of the expected flux density for the FIS (a) N60, (b) WIDE-S, and (c) WIDE-L bands.
+The error bars on the y-axis represent the 1 <math id="S4.F4.5.m1.1" class="ltx_Math" alttext="\sigma" display="inline"><semantics id="S4.F4.5.m1.1b"><mi id="S4.F4.5.m1.1.1" xref="S4.F4.5.m1.1.1.cmml">σ</mi><annotation-xml encoding="MathML-Content" id="S4.F4.5.m1.1c"><ci id="S4.F4.5.m1.1.1.cmml" xref="S4.F4.5.m1.1.1">𝜎</ci></annotation-xml><annotation encoding="application/x-tex" id="S4.F4.5.m1.1d">\sigma</annotation></semantics></math> photometry uncertainties.
+The solid lines with the filled areas are the weighted averages with 1 <math id="S4.F4.6.m2.1" class="ltx_Math" alttext="\sigma" display="inline"><semantics id="S4.F4.6.m2.1b"><mi id="S4.F4.6.m2.1.1" xref="S4.F4.6.m2.1.1.cmml">σ</mi><annotation-xml encoding="MathML-Content" id="S4.F4.6.m2.1c"><ci id="S4.F4.6.m2.1.1.cmml" xref="S4.F4.6.m2.1.1">𝜎</ci></annotation-xml><annotation encoding="application/x-tex" id="S4.F4.6.m2.1d">\sigma</annotation></semantics></math> uncertainties.
+The dashed lines indicate the ratio of unity.
+The vertical lines represent the 5 <math id="S4.F4.7.m3.1" class="ltx_Math" alttext="\sigma" display="inline"><semantics id="S4.F4.7.m3.1b"><mi id="S4.F4.7.m3.1.1" xref="S4.F4.7.m3.1.1.cmml">σ</mi><annotation-xml encoding="MathML-Content" id="S4.F4.7.m3.1c"><ci id="S4.F4.7.m3.1.1.cmml" xref="S4.F4.7.m3.1.1">𝜎</ci></annotation-xml><annotation encoding="application/x-tex" id="S4.F4.7.m3.1d">\sigma</annotation></semantics></math> detection limits of 2.4, 0.55, and 1.4 Jy for the All-Sky Survey at the FIS N60, WIDE-S, and WIDE-L bands, respectively <cite class="ltx_cite ltx_citemacro_citep">(Kawada et al., <a href="#bib.bib9" title="" class="ltx_ref">2007</a>)</cite>.
+</figcaption>
+</figure>
+</section>
+<section id="S4.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.3 </span>Comparison with the FIS Bright Source Catalogue</h3>
+
+<div id="S4.SS3.p1" class="ltx_para">
+<p id="S4.SS3.p1.2" class="ltx_p">We checked the confidence of the data by comparing with the FIS BSC.
+Here, we used sources whose quality flags (FQUALxx) are 3 in the BSC, indicating the sources are reliable.
+We performed centroid determination for each BSC source using the GCNTRD procedure in the Interactive Data Language (IDL) Astronomy User’s Library <cite class="ltx_cite ltx_citemacro_citep">(Landsman, <a href="#bib.bib11" title="" class="ltx_ref">1993</a>)</cite> to check whether or not the source is detected in the AFASS map.
+We rejected those sources whose positional differences between the BSC and the AFASS maps were larger than 48<sup id="S4.SS3.p1.2.1" class="ltx_sup"><span id="S4.SS3.p1.2.1.1" class="ltx_text ltx_font_italic">′′</span></sup>, which was used to extract a unique source in the BSC.
+As a result, we have detection rates of <math id="S4.SS3.p1.2.m2.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S4.SS3.p1.2.m2.1a"><mo id="S4.SS3.p1.2.m2.1.1" xref="S4.SS3.p1.2.m2.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S4.SS3.p1.2.m2.1b"><csymbol cd="latexml" id="S4.SS3.p1.2.m2.1.1.cmml" xref="S4.SS3.p1.2.m2.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S4.SS3.p1.2.m2.1c">\sim</annotation></semantics></math>50 % for all the 4 bands.
+These relatively low detection rates were caused by the large size of the PSFs of the AFASS maps.
+Since most of the undetected sources are located around extended objects such as molecular clouds, planetary nebulae and galaxies, it is hard to determine the source centroid in such a region (see Figure <a href="#S4.F5" title="Figure 5 ‣ 4.3 Comparison with the FIS Bright Source Catalogue ‣ 4 Point Sources ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>).
+We note that the data reduction processes of the BSC were highly optimized for extracting point sources.
+Figure <a href="#S4.F6" title="Figure 6 ‣ 4.3 Comparison with the FIS Bright Source Catalogue ‣ 4 Point Sources ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">6</span></a> shows the positional accuracy of the AFASS maps.
+For the N60 and WIDE-S bands, the accuracy becomes worse along the y-axis, i.e., the scan direction, caused by the elongated shape of the PSFs along the scan direction.</p>
+</div>
+<figure id="S4.F5" class="ltx_figure"><img src="/html/1503.06422/assets/x6.png" id="S4.F5.1.g1" class="ltx_graphics ltx_centering ltx_img_square" width="242" height="265" alt="Refer to caption">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 5: </span>
+Example of the centroid determination of BSC sources around M33 on the AFASS map in the WIDE-S band.
+The circle symbols are the sources whose centroids were determined, and the cross ones not well determined.
+</figcaption>
+</figure>
+<div id="S4.SS3.p2" class="ltx_para">
+<p id="S4.SS3.p2.4" class="ltx_p">We also performed aperture photometry for the detected sources using an aperture size of 90<sup id="S4.SS3.p2.4.1" class="ltx_sup"><span id="S4.SS3.p2.4.1.1" class="ltx_text ltx_font_italic">′′</span></sup> with a sky region of 120–300<sup id="S4.SS3.p2.4.2" class="ltx_sup"><span id="S4.SS3.p2.4.2.1" class="ltx_text ltx_font_italic">′′</span></sup> in radius.
+Since the aperture size was very large, we only considered the source observed in the Normal mode to avoid contaminations from surroundings.
+The CDS mode was used near the Galactic plane, and thus, the source density was high.
+Figure <a href="#S4.F7" title="Figure 7 ‣ 4.3 Comparison with the FIS Bright Source Catalogue ‣ 4 Point Sources ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">7</span></a> shows the ratio of the measured to BSC flux densities as a function of NDENS, which is the number of nearby point sources within 5<sup id="S4.SS3.p2.4.3" class="ltx_sup"><span id="S4.SS3.p2.4.3.1" class="ltx_text ltx_font_italic">′</span></sup> from each detected source in the BSC.
+The ratio is found to become large at NDENS<math id="S4.SS3.p2.4.m4.1" class="ltx_Math" alttext="\geq" display="inline"><semantics id="S4.SS3.p2.4.m4.1a"><mo id="S4.SS3.p2.4.m4.1.1" xref="S4.SS3.p2.4.m4.1.1.cmml">≥</mo><annotation-xml encoding="MathML-Content" id="S4.SS3.p2.4.m4.1b"><geq id="S4.SS3.p2.4.m4.1.1.cmml" xref="S4.SS3.p2.4.m4.1.1"></geq></annotation-xml><annotation encoding="application/x-tex" id="S4.SS3.p2.4.m4.1c">\geq</annotation></semantics></math>1, because of serious contamination caused by the large aperture size.</p>
+</div>
+<div id="S4.SS3.p3" class="ltx_para">
+<p id="S4.SS3.p3.1" class="ltx_p">We also show the flux density ratio as a function of the BSC flux density for the sources with NDENS=0 in Figure  <a href="#S4.F8" title="Figure 8 ‣ 4.3 Comparison with the FIS Bright Source Catalogue ‣ 4 Point Sources ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">8</span></a>.
+There is no significant correlation with the source flux density, which is consistent with <cite class="ltx_cite ltx_citemacro_citet">Arimatsu et al. (<a href="#bib.bib1" title="" class="ltx_ref">2014</a>)</cite>.
+The large scatters in flux density ratio are due to the difference in photometry method, i.e., the BSC flux densities are determined by the PSF-fitting method.</p>
+</div>
+<figure id="S4.T3" class="ltx_table">
+
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 3: </span>Number of the point sources detected in the AFASS maps.</figcaption><div class="ltx_flex_figure">
+<div class="ltx_flex_cell ltx_flex_size_1">
+<table id="S4.T3.1.1" class="ltx_tabular ltx_centering ltx_figure_panel ltx_guessed_headers ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr id="S4.T3.1.1.2.1" class="ltx_tr">
+<th id="S4.T3.1.1.2.1.1" class="ltx_td ltx_th ltx_th_row ltx_border_t"></th>
+<td id="S4.T3.1.1.2.1.2" class="ltx_td ltx_align_right ltx_border_t">N60</td>
+<td id="S4.T3.1.1.2.1.3" class="ltx_td ltx_align_right ltx_border_t">WIDE-S</td>
+<td id="S4.T3.1.1.2.1.4" class="ltx_td ltx_align_right ltx_border_t">WIDE-L</td>
+<td id="S4.T3.1.1.2.1.5" class="ltx_td ltx_align_right ltx_border_t">N160</td>
+</tr>
+<tr id="S4.T3.1.1.3.2" class="ltx_tr">
+<th id="S4.T3.1.1.3.2.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_t" colspan="5">Normal mode</th>
+</tr>
+<tr id="S4.T3.1.1.4.3" class="ltx_tr">
+<th id="S4.T3.1.1.4.3.1" class="ltx_td ltx_align_center ltx_th ltx_th_row">BSC</th>
+<td id="S4.T3.1.1.4.3.2" class="ltx_td ltx_align_right">10799</td>
+<td id="S4.T3.1.1.4.3.3" class="ltx_td ltx_align_right">250804</td>
+<td id="S4.T3.1.1.4.3.4" class="ltx_td ltx_align_right">66276</td>
+<td id="S4.T3.1.1.4.3.5" class="ltx_td ltx_align_right">14722</td>
+</tr>
+<tr id="S4.T3.1.1.5.4" class="ltx_tr">
+<th id="S4.T3.1.1.5.4.1" class="ltx_td ltx_align_center ltx_th ltx_th_row">AFASS</th>
+<td id="S4.T3.1.1.5.4.2" class="ltx_td ltx_align_right">8683</td>
+<td id="S4.T3.1.1.5.4.3" class="ltx_td ltx_align_right">166831</td>
+<td id="S4.T3.1.1.5.4.4" class="ltx_td ltx_align_right">39415</td>
+<td id="S4.T3.1.1.5.4.5" class="ltx_td ltx_align_right">9353</td>
+</tr>
+<tr id="S4.T3.1.1.1" class="ltx_tr">
+<th id="S4.T3.1.1.1.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_t" colspan="5">CDS mode<sup id="S4.T3.1.1.1.1.1" class="ltx_sup"><span id="S4.T3.1.1.1.1.1.1" class="ltx_text ltx_font_italic">†</span></sup>
+</th>
+</tr>
+<tr id="S4.T3.1.1.6.5" class="ltx_tr">
+<th id="S4.T3.1.1.6.5.1" class="ltx_td ltx_align_center ltx_th ltx_th_row">BSC</th>
+<td id="S4.T3.1.1.6.5.2" class="ltx_td ltx_align_right">17980</td>
+<td id="S4.T3.1.1.6.5.3" class="ltx_td ltx_align_right">122749</td>
+<td id="S4.T3.1.1.6.5.4" class="ltx_td ltx_align_right">52983</td>
+<td id="S4.T3.1.1.6.5.5" class="ltx_td ltx_align_right">22135</td>
+</tr>
+<tr id="S4.T3.1.1.7.6" class="ltx_tr">
+<th id="S4.T3.1.1.7.6.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_b">AFASS</th>
+<td id="S4.T3.1.1.7.6.2" class="ltx_td ltx_align_right ltx_border_b">12774</td>
+<td id="S4.T3.1.1.7.6.3" class="ltx_td ltx_align_right ltx_border_b">50683</td>
+<td id="S4.T3.1.1.7.6.4" class="ltx_td ltx_align_right ltx_border_b">23139</td>
+<td id="S4.T3.1.1.7.6.5" class="ltx_td ltx_align_right ltx_border_b">11547</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="ltx_flex_break"></div>
+<div class="ltx_flex_cell ltx_flex_size_1">
+<p id="S4.T3.2" class="ltx_p ltx_figure_panel">(<sup id="S4.T3.2.1" class="ltx_sup">†</sup>Sources which were took in the CDS mode are indicated by the first bit of the FLAGSxx flag in the BSC.)</p>
+</div>
+</div>
+</figure>
+<figure id="S4.F6" class="ltx_figure">
+<div class="ltx_flex_figure">
+<div class="ltx_flex_cell ltx_flex_size_1"><img src="/html/1503.06422/assets/x7.png" id="S4.F6.1.g1" class="ltx_graphics ltx_centering ltx_figure_panel ltx_img_landscape" width="484" height="128" alt="Refer to caption"></div>
+<div class="ltx_flex_break"></div>
+<div class="ltx_flex_cell ltx_flex_size_1"><img src="/html/1503.06422/assets/x8.png" id="S4.F6.2.g2" class="ltx_graphics ltx_centering ltx_figure_panel ltx_img_landscape" width="484" height="128" alt="Refer to caption"></div>
+</div>
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 6: </span>
+Positional differences of the point sources between the AFASS maps and the FIS BSC for the Normal (top rows) and CDS (bottom rows) modes.
+The dash-dotted ovals represent the FWHM of the PSF, tabulated in Table <a href="#S4.T2" title="Table 2 ‣ 4.1 Point Spread Function ‣ 4 Point Sources ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>.
+The differences are estimated on the Ecliptic coordinates, and thus, the x- and y-axis correspond to the cross-scan and in-scan directions of AKARI, respectively.
+</figcaption>
+</figure>
+<figure id="S4.F7" class="ltx_figure"><img src="/html/1503.06422/assets/x9.png" id="S4.F7.1.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="484" height="128" alt="Refer to caption">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 7: </span>
+Flux density ratios between the AFASS map and the FIS BSC as a function of the NDENS number.
+The dotted lines show the ratio of unity, and the broken lines indicate the ratios derived from the PSF analysis (0.627, 0.696, and 0.381 for the N60, WIDE-S, and WIDE-L bands, respectively).
+</figcaption>
+</figure>
+<figure id="S4.F8" class="ltx_figure"><img src="/html/1503.06422/assets/x10.png" id="S4.F8.1.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="484" height="128" alt="Refer to caption">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 8: </span>
+Flux density ratios of the NDENS=0 sources between the AFASS map and the FIS BSC as a function of BSC flux density.
+The dotted and broken lines have the same meaning as in Figure <a href="#S4.F7" title="Figure 7 ‣ 4.3 Comparison with the FIS Bright Source Catalogue ‣ 4 Point Sources ‣ Calibration of the AKARI Far-infrared All Sky Survey Maps." class="ltx_ref"><span class="ltx_text ltx_ref_tag">7</span></a>.
+</figcaption>
+</figure>
+</section>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">5 </span>Summary</h2>
+
+<div id="S5.p1" class="ltx_para">
+<p id="S5.p1.1" class="ltx_p">This paper presents an initial analysis of the imaging performance of the AKARI Far-infrared all sky survey.
+We have performed the absolute calibration of the AFASS image by comparing with the COBE/DIRBE data, and the standard deviations with respect to the DIRBE-expected intensities are less than 10% for intensities above 10, 3, 25, and 26 MJy sr<sup id="S5.p1.1.1" class="ltx_sup"><span id="S5.p1.1.1.1" class="ltx_text ltx_font_italic">-1</span></sup> at the N60, WIDE-S, WIDE-L and N160 bands, respectively.
+The accuracy at the N60 band was reduced by the unreliability of the zodiacal light model, and those at the two longer wavelengths were due to the detector performances.
+The AFASS image is improved in spatial resolution and wavelength coverage, compared with the COBE/DIRBE and IRAS surveys.
+The positional accuracies are in good agreement with the PSFs.
+The characteristics of point sources in the image were also checked, and are consistent with <cite class="ltx_cite ltx_citemacro_citet">Arimatsu et al. (<a href="#bib.bib1" title="" class="ltx_ref">2014</a>)</cite>.</p>
+</div>
+<div id="S5.p2" class="ltx_para">
+<p id="S5.p2.1" class="ltx_p">The AFASS data will be useful for studies of the Solar system, the Galaxy and nearby galaxies, in terms of both the spatial distribution of dust and their spectral energy distributions.
+It is also helpful for future/on-going infrared/submm missions such as ALMA, JWST, and SPICA.</p>
+</div>
+<div id="S5.p3" class="ltx_para">
+<p id="S5.p3.1" class="ltx_p">This research is based on observations with AKARI, a JAXA project with the participation of ESA.
+This work has been supported by JSPS KAKENHI Grant Number 19204020, 21111005, 25247016, and 25400220.</p>
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul class="ltx_biblist">
+<li id="bib.bib1" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Arimatsu et al. (2014)</span>
+<span class="ltx_bibblock"> Arimatsu, K., Doi, Y., Wada, T., Takita, S., Kawada, M., Matsuura, S., Ootsubo, T., &amp; Kataza, H. 2014, PASJ, 66, 47
+
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Boggess et al. (1992)</span>
+<span class="ltx_bibblock"> Boggess, N. W., et al. 1992, ApJ, 397, 420
+
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Cohen et al. (1999)</span>
+<span class="ltx_bibblock"> Cohen, M., Walker, R. G., Carter, B., Hammersley, P., Kidger, M., &amp; Noguchi, K. 1999, AJ, 117, 1864
+
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Doi et al. (2009)</span>
+<span class="ltx_bibblock"> Doi, Y., et al. 2009, AKARI, a Light to Illuminate the Misty Universe, 418, 387
+
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Doi et al. (in prep.)</span>
+<span class="ltx_bibblock"> Doi, Y., et al. submitted to PASJ.
+
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Gorjian et al. (2000)</span>
+<span class="ltx_bibblock"> Gorjian, V., Wright, E. L., &amp; Chary, R. R. 2000, ApJ, 536, 550
+
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Hauser et al. (1998)</span>
+<span class="ltx_bibblock"> Hauser, M. G., et al. 1998, ApJ, 508, 25
+
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Ikeda et al. (2012)</span>
+<span class="ltx_bibblock"> Ikeda, N., Kitamura, Y., Takita, S., Ueno, M., Suzuki, T., Kawamura, A., &amp; Kaneda, H., 2012, ApJ, 745, 48
+
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kawada et al. (2007)</span>
+<span class="ltx_bibblock"> Kawada, M., et al. 2007, PASJ, 59, 389
+
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kelsall et al. (1998)</span>
+<span class="ltx_bibblock"> Kelsall, T., et al. 1998, ApJ, 508, 44
+
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Landsman  (1993)</span>
+<span class="ltx_bibblock"> Landsman, W. B., 1993, Astronomical Data Analysis Software and Systems II, 246
+
+</span>
+</li>
+<li id="bib.bib12" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Matsuura et al. (2007)</span>
+<span class="ltx_bibblock"> Matsuura, S., et al. 2007, PASJ, 59, 503
+
+</span>
+</li>
+<li id="bib.bib13" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Miville-Deschênes &amp; Lagache (2005)</span>
+<span class="ltx_bibblock"> Miville-Deschênes, M.-A., &amp; Lagache, G. 2005, ApJS, 157, 302
+
+</span>
+</li>
+<li id="bib.bib14" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Murakami et al. (2007)</span>
+<span class="ltx_bibblock"> Murakami, H., et al. 2007, PASJ, 59, 369
+
+</span>
+</li>
+<li id="bib.bib15" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Nakagawa et al. (2007)</span>
+<span class="ltx_bibblock"> Nakagawa, T., et al. 2007, PASJ, 59, 377
+
+</span>
+</li>
+<li id="bib.bib16" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Neugebauer et al. (1984)</span>
+<span class="ltx_bibblock"> Neugebauer, G., et al. 1984, ApJ, 278, L1
+
+</span>
+</li>
+<li id="bib.bib17" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Ootsubo et al. (in prep.)</span>
+<span class="ltx_bibblock"> Ootsubo, T., et al. in prep.
+
+</span>
+</li>
+<li id="bib.bib18" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Shirahata et al. (2009)</span>
+<span class="ltx_bibblock"> Shirahata, M., et al. 2009, PASJ, 61, 737
+
+</span>
+</li>
+<li id="bib.bib19" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Verdugo et al. (2007)</span>
+<span class="ltx_bibblock"> Verdugo, E., et al. 2007, AKARI FIS Data User Manual, http://www.ir.isas.jaxa.jp/ASTRO-F/Observation/IDUM/FIS_IDUM_1.3.pdf
+
+</span>
+</li>
+<li id="bib.bib20" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wright (1998)</span>
+<span class="ltx_bibblock"> Wright, E. L. 1998, ApJ, 496, 1
+
+</span>
+</li>
+<li id="bib.bib21" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Yamamura et al. (2010)</span>
+<span class="ltx_bibblock"> Yamamura, I., Makiuti, S., Ikeda, N., Fukuda, U., Oyabu, S., Koga, T., &amp; White, G. J. 2010,
+AKARI/FIS All-Sky Survey Bright Source Catalog Version 1.0 Release Note, http://www.ir.isas.jaxa. jp/ASTRO-F/Observation/PSC/Public/RN/AKARI-FIS_BSC_V1_RN.pdf
+
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+<div class="ar5iv-footer"><a href="/html/1503.06421" class="ar5iv-nav-button ar5iv-nav-button-prev">◄</a>
+    <a class="ar5iv-home-button" href="/"><img height="40" alt="ar5iv homepage" src="/assets/ar5iv.png"></a>
+    <a href="/feeling_lucky" class="ar5iv-text-button">Feeling<br>lucky?</a>
+    <a href="/land_of_honey_and_milk" rel="nofollow" aria-hidden="true" tabindex="-1"></a>
+    <a href="/log/1503.06422" class="ar5iv-text-button ar5iv-severity-error">Conversion<br>report</a>
+    <a class="ar5iv-text-button" target="_blank" href="https://github.com/dginev/ar5iv/issues/new?template=improve-article--arxiv-id-.md&title=Improve+article+1503.06422">Report<br>an issue</a>
+    <a href="https://arxiv.org/abs/1503.06422" class="ar5iv-text-button arxiv-ui-theme">View&nbsp;original<br>on&nbsp;arXiv</a><a href="/html/1503.06423" class="ar5iv-nav-button ar5iv-nav-button-next">►</a>
+</div><footer class="ltx_page_footer">
+<a class="ar5iv-toggle-color-scheme" href="javascript:toggleColorScheme()" title="Toggle ar5iv color scheme"><span class="color-scheme-icon"></span></a>
+<a class="ar5iv-footer-button" href="https://arxiv.org/help/license" target="_blank">Copyright</a>
+<a class="ar5iv-footer-button" href="https://arxiv.org/help/policies/privacy_policy" target="_blank">Privacy Policy</a>
+
+<div class="ltx_page_logo">Generated  on Fri Mar  8 16:42:24 2024 by <a target="_blank" href="http://dlmf.nist.gov/LaTeXML/" class="ltx_LaTeXML_logo"><span style="letter-spacing:-0.2em; margin-right:0.1em;">L<span class="ltx_font_smallcaps" style="position:relative; bottom:2.2pt;">a</span>T<span class="ltx_font_smallcaps" style="font-size:120%;position:relative; bottom:-0.2ex;">e</span></span><span style="font-size:90%; position:relative; bottom:-0.2ex;">XML</span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==" alt="Mascot Sammy"></a>
+</div></footer>
+</div>
+
+    <script>
+      var canMathML = typeof(MathMLElement) == "function";
+      if (!canMathML) {
+        var body = document.querySelector("body");
+        body.firstElementChild.setAttribute('style', 'opacity: 0;');
+        var loading = document.createElement("div");
+        loading.setAttribute("id", "mathjax-loading-spinner");
+        var message = document.createElement("div");
+        message.setAttribute("id", "mathjax-loading-message");
+        message.innerText = "Typesetting Equations...";
+        body.prepend(loading);
+        body.prepend(message);
+
+        var el = document.createElement("script");
+        el.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js";
+        document.querySelector("head").appendChild(el);
+
+        window.MathJax = {
+          startup: {
+            pageReady: () => {
+              return MathJax.startup.defaultPageReady().then(() => {
+                body.removeChild(loading);
+                body.removeChild(message);
+                body.firstElementChild.removeAttribute('style');
+              }); } } };
+      }
+    </script>
+    <script>
+    // Auxiliary function, building the preview feature when
+    // an inline citation is clicked
+    function clicked_cite(e) {
+      e.preventDefault();
+      let cite = this.closest('.ltx_cite');
+      let next = cite.nextSibling;
+      if (next && next.nodeType == Node.ELEMENT_NODE && next.getAttribute('class') == "ar5iv-bibitem-preview") {
+        next.remove();
+        return; }
+      // Before adding a preview modal,
+      // cleanup older previews, in case they're still open
+      document.querySelectorAll('span.ar5iv-bibitem-preview').forEach(function(node) {
+        node.remove();
+      })
+
+      // Create the preview
+      preview = document.createElement('span');
+      preview.setAttribute('class','ar5iv-bibitem-preview');
+      let target = document.getElementById(this.getAttribute('href').slice(1));
+      target.childNodes.forEach(function (child) {
+        preview.append(child.cloneNode(true));
+      });
+      let close_x = document.createElement('button');
+      close_x.setAttribute("aria-label","Close modal for bibliography item preview");
+      close_x.textContent = "×";
+      close_x.setAttribute('class', 'ar5iv-button-close-preview');
+      close_x.setAttribute('onclick','this.parentNode.remove()');
+      preview.append(close_x);
+      preview.querySelectorAll('.ltx_tag_bibitem').forEach(function(node) {
+        node.remove();
+      });
+      cite.parentNode.insertBefore(preview, cite.nextSibling);
+      return;
+    }
+    // Global Document initialization:
+    // - assign the preview feature to all inline citation links
+    document.querySelectorAll(".ltx_cite .ltx_ref").forEach(function (link) {
+      link.addEventListener("click", clicked_cite);
+    });
+    </script>
+    </body>
+</html>

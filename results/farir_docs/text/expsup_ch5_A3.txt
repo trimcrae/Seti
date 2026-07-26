@@ -1,0 +1,370 @@
+V.A.3 Processing Summary 
+
+ IRAS Explanatory Supplement
+
+ V. Data Reduction
+
+ A. Overview
+
+ A.3 Processing Summary
+
+ Chapter Contents |
+ Introduction |
+ Authors |
+ References 
+
+ Table of Contents |
+ Index |
+ Previous Section |
+ Next Section 
+
+ Processing Steps 
+
+ Data Reconstruction 
+ Pointing Reconstruction 
+ Source Detection 
+ Point Source Confirmation 
+ Small Extended Source Confirmation 
+ Asteroids and Comets 
+ Extended Emission Processing 
+ Final Processing Steps 
+
+ Processing Steps
+
+ The following processing steps were applied to the data:
+ 
+ Data reconstruction ( Section V.A ),
+ Pointing reconstruction ( Section V.B ),
+ Calibration ( Chapter VI ),
+ Source detection ( Section V.C ),
+ Point source confirmation ( Section V.D ),
+ Low-resolution spectra extraction
+ ( Chapter IX ),
+ Small extended source confirmation
+ ( Section V.E ),
+ Identification of possible asteroids and comets
+ ( Section V.F ),
+ Data compression for extended source images
+ ( Section V.G ).
+
+ The point source catalog was generated after all of the
+data had been processed to create the intermediate Working Survey
+Data Base (WSDB) which contained all sources that were hours-
+or weeks-confirmed. The following steps were then applied to sources
+in the WSDB ( Section V.H ):
+ 
+ Final calibration,
+ Source clean-up and neighbor tagging,
+ Average flux computation, calculation of flux
+ uncertainty and source variability analysis,
+ High source density region clean-up,
+ Source selection,
+ Association and classification of low-resolution
+ spectra ( Chapter IX ),
+ Positional associations with other astronomical catalogs,
+ Cirrus flagging,
+ Transformation of coordinates, assignment of source
+ names and calculation of positional uncertainty
+ ellipses.
+
+ To generate the small extended source catalog, the following
+steps were applied to a file containing hours-confirmed small
+extended sources ( Section V.E ):
+ 
+ Cluster analysis processing,
+ Weeks- and months-confirmation,
+ Band-merging,
+ Final calibration,
+ Positional associations with other astronomical catalogs.
+
+ To generate the atlas of all-sky images, the following
+steps were applied to the compressed data
+( Section V.G ):
+ 
+ Quality checking and data selection,
+ Regridding into images in equatorial coordinates,
+ Final calibration.
+
+ The remainder of this overview briefly describes these
+basic processing steps, except for calibration which is discussed
+in Chapter VI . A much more detailed
+discussion of each topic is
+given in the subsequent sections of this chapter.
+
+ A.3.a. Data Reconstruction 
+
+ The detector data were reconstructed from the telemetry
+data as discussed in Appendix II.1 .
+Any one-second frame of detector
+data containing more than one parity error, indicative of a transmission
+error from the satellite station to the ground, or from Chilton
+to JPL, was discarded. Frames next to a data outage with even
+one parity error were also discarded. The frequency of such errors
+was quite low, with typically fewer than five seconds of data
+being rejected from each SOP. Each second of data was tagged
+with its time of observation in seconds since 1981, January 1.0
+UT.
+
+ A.3.b. Pointing Reconstruction 
+
+ Data from Sun sensors, gyros, and observations of bright,
+ M v < 7 visual stars were combined to determine a continuous
+record of the position in the sky that a reference point in the
+focal plane was observing. Infrared observations of stars were
+not used in the reconstruction process, but were used to verify
+the accuracy of the pointing. Most survey observations contained
+two or more visual star observations, so that in-scan pointing
+errors were typically less than 5" and cross-scan pointing
+errors less than 10". However, a few survey observations
+had none or only one visual star observation with resultant in-scan
+errors as large as 1-2'.
+
+ A.3.c. Source Detection 
+
+ For point sources, a zero-sum square-wave filter was used
+to search the calibrated data stream from each detector for peaks
+larger than roughly 2.5 times the rms noise. The noise at a given
+time was approximated by a filtered running average of the values
+of all preceding square-wave peaks. The noise estimator was a
+one-sided estimate of the noise which was in error when the noise
+changed rapidly. For each candidate peak, an 11-point template
+was fitted to the data, giving the amplitude and crossing time
+of the peak and a correlation coefficient. Those peaks with an
+amplitude above 3.0 times the noise and a correlation coefficient
+greater than 0.87 were passed to the confirmation processor as
+valid detections. Since the noise refers to a single data point
+and a point source contributes to three successive data points
+(with weights 0.5, 1.0 and 0.5), the true signal-to-noise threshold
+of the detection process was roughly 3.7, which is significantly
+below the local signal-to-noise cutoff of about 5.7, implied by
+a correlation coefficient cutoff of 0.87. The noise on a single
+data point was quoted throughout the processing.
+ 
+ For small extended sources a simpler algorithm was used
+to detect potential sources. Zero-sum square-wave filters of
+various angular extents were applied to the data from each detector.
+The filter sizes were 1, 2, 4, 8, and 16' at 12 and 25 um, 2,
+4, 8 and 16' at 60 um, and 4, 8 and 16' at 100 um.
+The data streams filtered with the smallest (1' at 12 and 25 um, 2' at
+60 um and 4' at 100 um) and largest (16') spatial filters were
+used to discriminate
+against point sources and extended sources larger than 8'. Detections
+with a larger flux in one of the extended source filters than
+in the point source filter were considered as possible extended
+sources and passed to the corresponding confirmation processor,
+independently of whether a point source detection occurred.
+
+ A.3.d. Point Source Confirmation 
+
+ The aim of point source confirmation was to glean from the
+hundreds of thousands of detections per day the properties of
+those sources, and of only those sources, which appeared as inertially
+fixed on the sky. Detections of dust, space debris and asteroids
+had to be rigorously excluded, yet not at the
+expense of celestial objects, if the complementary goals of completeness
+and reliability were to be satisfied. The existence of a point
+source had to be confirmed on timescales of seconds, hours and
+weeks for the object to be included in the catalog.
+ 
+ The layout of the focal plane ensured that any stationary
+source of infrared radiation would cross at least two detectors
+in each wavelength band as the satellite scanned the sky
+( Fig. II.C.6 ).
+The seconds-confirmation processor, which treated each
+wavelength band independently, examined each detection in turn
+in an attempt to find a detection on one of the other detectors
+in the focal plane. The other detection had to occur on one of
+the two detectors that could be hit by a true source traversing
+the focal plane, at the correct displacement in time, and agree
+in flux with the first detection to within roughly a factor of
+two. Detections satisfying these criteria were merged to become
+seconds-confirmed detections. A successful seconds-confirmation
+resulted in a refinement of both the flux and position of the
+object.
+ 
+ After all of the detections in the four bands for a given
+survey scan were examined, an attempt was made to combine observations
+in the different bands to produce a seconds-confirmed band-merged
+source. Detections in the different bands had to satisfy tests
+based on in-scan timing and cross-scan position. The order in
+which bands were taken in the search for merger candidates proved
+to be important because of the effects of the 100 um "cirrus".
+As discussed in Section V.D.3.b , a priority
+was chosen to minimize
+these deleterious effects. Bands that were not filled by successful
+mergers were given upper limits by determining which detectors
+in those bands were crossed by the source and then taking three
+times the noise on the detector with the lowest noise. The source
+position was refined during band-merging.
+ 
+ A file containing roughly 32000 previously known sources
+including SAO stars, asteroids with well determined orbits, and
+objects from the Two Micron and AFGL Surveys
+( Neugebauer and Leighton
+1969; Price and Walker 1976 ) was used to predict positions and
+fluxes for routine monitoring of the processing. The seconds-confirmed
+band-merged sources were compared to the predictions, and identification
+numbers were assigned to successful matches.
+ 
+ The next level of confirmation, hours-confirmation, was
+run on groups of three successive SOPs in at least one band. Every
+source in the first SOP received its turn to find candidates from
+successive scans in any of the three SOPs. Candidates had to
+pass a position and flux test (again, roughly a factor of two)
+in at least one band to become an hours-confirmed source. An
+hours-confirmed source had to have either two seconds-confirmed
+detections, one seconds-confirmed sighting plus one non-seconds-confirmed
+sighting or two non-seconds-confirmed sightings, each with the
+alibi of a failed detector. A successful hours-confirmation resulted
+in a refined position and a refined flux for each band where possible.
+If each candidate source had only upper limits in a given band,
+the lowest upper limit was adopted.
+ 
+ Finally, the third level of confirmation, weeks-confirmation,
+was attempted for each hours-confirmed source prior to its entry
+into the WSDB by examining the WSDB for any other hours or previously
+weeks-confirmed sources that could pass a position test. Successful
+matches resulted in a refined position for the source, but not
+a refined flux; individual hours-confirmed fluxes were retained
+for each source. It is important to note that weeks-confirmation
+represents the first and only time interval for which at least
+rough flux constancy was not required. Thus, the catalog is weakly
+biased against celestial sources more variable than a factor of
+two on time scales shorter than a few days.
+
+ A.3.e. Small Extended Source Confirmation 
+
+ The objective of the processing of small extended sources
+was to detect stationary sources which were resolved by the telescope,
+up to 8' in extent. Because of the simple detection algorithm
+described above, it was not intended that the processing produce
+intensity or flux measurements more accurate than about 50%.
+Nor were stringent goals of either completeness or reliability
+set.
+ 
+ Potential small extended source detections were identified
+in the raw data stream by their response to square-wave filters
+( Section V.A.3.c ). Each detection was tested
+to discriminate
+against point sources and sources larger than 8'. After individual
+source detections were identified, they were tested for seconds-confirmation;
+those that failed were discarded. Detections which were seconds-confirmed,
+which were from the same hours-confirming survey coverage, and
+which were sufficiently close together on the sky, were combined
+to produce a single source. These small extended sources became
+the input for all subsequent processing. No attempt was made to
+combine observations at different wavelengths until the last stages
+of the processing.
+ 
+ Structure on the scales of 2' to 10' within much larger
+extended sources gave rise to clusters of small extended sources.
+Such clusters were eliminated so that only those sources whose
+sizes were compatible with the square-wave filter used for detection
+were accepted. Sources were then tested for repeatability in
+position and flux on time scales of weeks and months. Any source
+which was not weeks-confirmed was discarded. The final stage
+of the processing was to combine those weeks-confirmed sources
+observed at different wavelengths which were sufficiently close
+together on the sky, and to merge them into a multi-band source.
+
+ A.3.f. Asteroids and Comets 
+
+ Asteroids are a population of bright infrared sources, particularly
+at 12 and 25 um. The hours-and weeks-confirmation strategy was
+developed to discriminate against these moving sources. Positions
+of known asteroids were calculated and associated with those of
+hours-confirmed point sources. In this manner the known asteroids
+were identified and used as tracers to evaluate the effectiveness
+of the confirmation filters. No known asteroids satisfied the
+stringent position coincidence requirements to become final catalog
+sources. As discussed in Section VII.F ,
+confusion with asteroids
+(known and previously unknown) was the cause of about 100 unreliable
+sources and fluxes within 25deg of the ecliptic plane.
+ 
+ To provide data for the study of the properties of known
+and newly discovered asteroids, all sources with infrared colors
+typical of solar system objects were written to auxiliary files
+at both seconds- and hours-confirmation. The emphasis was on
+completeness. The results of analyzing these data are not included
+in any of the IRAS catalogs released in 1984.
+
+ A.3.g. Extended Emission Processing 
+
+ The goal of the extended emission processing was to produce
+moderate resolution maps of the total infrared emission over the
+whole sky at 12, 25, 60 and 100 um. Special procedures
+discussed in Chapter VI were used
+to calibrate the absolute DC level of
+the data from each detector. These data were smoothed and resampled
+(compressed) in the time domain to produce two samples per second.
+ At the nominal scan rate of 3.85' s -1 this sampling
+closely matched
+the 2' spacing of detectors across the focal plane. The focal
+plane geometry and the reconstructed pointing information were
+used to locate the
+position on the sky of each data sample for projection into the
+212 images, each 16.5 x 16.5deg that cover the whole sky
+with 2' x 2' pixels.
+ 
+ Data suspected of being either noisy due to particle radiation
+events or contaminated by scattered light from bright celestial
+sources were automatically discarded. Human inspection of each
+image removed obviously bad data that occurred, for example, because
+of the presence of near field objects which flooded the focal
+plane with radiation. Otherwise, nothing was done to remove data
+which were inconsistent from one measurement to the next. Thus,
+many non-confirming sources appear in the maps. Each of the three
+sky coverages of the survey was made into a separate set of images
+so that spurious, moving or variable sources could be detected
+by comparison or "blinking" of the coverages. A fourth
+set of images was made of the limited region of sky known as the
+mini-survey ( Section III.C ).
+ 
+ Differences in the path length of the line of sight through
+the interplanetary dust cloud caused significant variability of
+the zodiacal emission background from one survey coverage to the
+next. The Zodiacal History File consists of time ordered 0.5deg
+x 0.5deg averages of the intensity data at each wavelength
+and associated pointing information. This information was designed
+to simplify modeling and removal of the zodiacal component.
+ 
+ A set of maps with 2' pixels of the Galactic plane for latitudes
+within 10deg of the plane and two maps of the full sky with
+0.5deg resolution, one centered on the Galactic center and
+one centered on the Galactic anti-center, were also produced.
+
+ A.3.h. Final Processing Steps 
+
+ After the data from the entire mission had been processed,
+several programs operated on the WSDB to produce the final entries
+for the point source catalog. For example, these programs applied
+final calibration corrections, deleted unreliable sources in regions
+of high source density, and searched for associations in other
+astronomical catalogs.
+ 
+ All of the objects found in the point source catalog were
+selected from the WSDB according to criteria that depended on
+the density of sources in a 1deg 2 area containing the source
+(see V.H.6 for a detailed discussion).
+Outside of high-density
+areas sources were required to have at least one band that was
+hours-confirmed at least twice and at least one of those sightings
+had to have a valid seconds-confirmed detection without the alibi
+of a failed detector. For objects detected in two or more bands,
+this rule was relaxed somewhat. Inside high-density areas, sources
+had to satisfy much more stringent criteria: they had to be perfectly
+hours-confirmed in one band at least twice, have no brighter or
+confusing close neighbors, have no fluxes more discrepant than
+a factor of three and have satisfied a detection correlation coefficient
+threshold greater than 0.97.
+
+ Chapter Contents |
+ Introduction |
+ Authors |
+ References 
+
+ Table of Contents |
+ Index |
+ Previous Section |
+ Next Section

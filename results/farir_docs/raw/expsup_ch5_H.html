@@ -1,0 +1,1055 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+<HEAD>
+   <TITLE>V.H. The Point Source Catalog</TITLE>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H1 ALIGN=CENTER>IRAS Explanatory Supplement<BR>
+V. Data Reduction<BR>
+H. The Point Source Catalog</H1>
+
+<P>
+<HR>
+
+<CENTER>
+<FONT SIZE=+1><A HREF="index.html#toc">Chapter Contents</A>
+| <A HREF="index.html#intro">Introduction</A> | <A HREF="index.html#auth">Authors</A>
+| <A HREF="index.html#ref">References</A>
+<BR>
+<A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> | <A HREF="G.html">Previous Section</A>
+| <A HREF="../ch6/A.html">Next Section</A></FONT></CENTER>
+
+<P>
+<HR>
+
+<OL>
+   <LI><A HREF="#1">Processing Overview</A>
+   <LI><A HREF="#2">Clean-Up Processing</A>
+   <LI><A HREF="#3">Neighbor Tagging</A>
+   <LI><A HREF="#4">Cirrus Flagging</A>
+   <LI><A HREF="#5">Average Flux Computation and Variability Analysis</A>
+   <LI><A HREF="#6">High Source Density Regions</A>
+   <OL TYPE=a>
+      <LI><A HREF="#6a">Location of High Source Density Regions</A>
+      <LI><A HREF="#6b">Catalog Selection Criteria in High Source Density Regions</A>
+      <LI><A HREF="#6c">Weaker Neighbors</A>
+      <LI><A HREF="#6d">Confused Neighbors</A>
+      <LI><A HREF="#6e">Very Near Neighbors</A>
+      <LI><A HREF="#6f">Moderate Quality Fluxes</A>
+      <LI><A HREF="#6g">Low Quality Fluxes (Upper limits)</A>
+      <LI><A HREF="#6h">Flux Averaging and Uncertainties</A>
+   </OL>
+   <LI><A HREF="#7">Catalog Source Selection</A>
+   <LI><A HREF="#8">Low-Resolution Spectral Associations</A>
+   <LI><A HREF="#9">Associations</A>
+</OL>
+
+<H2>
+<HR WIDTH="100%"><A NAME="1">H. 1 Processing Overview</H2><P>
+
+After the Working Survey Data Base (WSDB) was completed by the sequential
+processing of every SOP, several programs processed that data base to create
+the catalog.
+<P>
+The major steps were as follows:
+<OL>
+   <LI>Final calibration corrections,
+   <LI>Clean-up processing. which forced sources closer than 30&quot; (in-scan) and 90&quot; (cross-scan) to weeks-confirm,
+   <LI>Point source and small extended source neighbor tagging,
+   <LI>Cirrus (highly structured 100 &micro;m emission) flagging,
+   <LI>High source density processing,
+   <LI>Variability tagging and average flux computation,
+   <LI>Association and classification of low-resolution spectra,
+   <LI>Associations with previously known astronomical sources,
+   <LI>Catalog source selections,
+   <LI>Transformation of coordinates, assignment of position uncertainties
+   and assignment of source names.
+</OL>
+<P>
+Each of these steps is discussed separately below except for step 1.
+Step 1, incorporating the final calibration, is discussed in
+<A HREF="../ch6/B.html">Section VI.B</A>.
+
+<H2>
+<A NAME="2">
+<HR WIDTH="100%">H.2 Clean-Up Processing</H2>
+<P>
+An analysis of sources in the WSDB that were within several arc minutes
+of each other showed that roughly 5% of all sources did not have every
+possible hours-confirmed detection combined into one source. There were
+three reasons for this. First, sources scanned more than five times within
+one hours-confirming coverage were separated into two distinct
+hours-confirming
+detections due to an upper limit of four scans per hours-confirming detection
+imposed by the processing. Only one of these two detections was allowed
+to weeks-confirm with other hours-confirmed detections already present
+in the WSDB. Second sources that suffered band merging difficulties
+occasionally
+produced two hours-confirmed detections out of one hours-confirming coverage.
+Only one piece was allowed to weeks-confirm. Finally, due to the way the
+minisurvey scans were scheduled the first survey coverage was not allowed
+to weeks-confirm with some of the minisurvey sources. Each of these cases
+was sufficiently well defined to allow a clean-up processor to give these
+pieces a chance to weeks-confirm with each other. Additional problems were
+caused by radiation hits, source confusion and by multiple scans inadverently
+spaced too close together in time to allow weeks-confirmation. These sources
+were cleaned up in a two-step process. First, all weeks-confirmed sources
+were given the opportunity to confirm using the standard threshold with
+any hours- or weeks-confirmed neighbors located within 30&quot; in-scan
+and 90&quot; cross-scan. Most sources that confirmed at this stage were
+ones that had earlier been denied the opportunity for purely technical
+reasons. A single source with a refined position resulted.
+<P>
+The second stage of clean-up was to force all weeks-confirmed sources
+to merge with any neighbors located within 30&quot; in-scan and 90&quot;
+cross-scan, whether or not the sources were confirmable according to the
+weeks-confirmation decision process. No position refinement attempt was
+made. This step proved necessary because analysis of near neighbors showed
+that most were caused by the incorrect splitting of single sources in confused
+regions by the various confirmation processors.
+<P>
+A separate processing problem was partially solved by the clean-up processor
+as well. Two normal survey scans were placed within one layer of the
+minisurvey
+(<A HREF="../ch3/C.html#11">Section III.C.11</A>,
+<A HREF="../ch3/C.html#tabC1">Table III.C.1</A>). These scans were
+inadverently processed twice; once as par
+of the minisurvey and once as par of the regular survey. Thus some sources
+(those missed by that layer of the minisurvey) had identical hours-confirming
+detections present as two separate entries within the source. One of these
+was deleted by the clean-up processor, although nothing could be done to
+remove the double weight given to that sighting in the position refinement
+process.
+
+<HR WIDTH="100%">
+<H2><A NAME="3">H.3 Neighbor Tagging</H2>
+<P>
+The relative isolation of a source provides the user with an indication
+of its quality. Associated with each source are the numbers of hours- and
+weeks-confirmed point sources and small extended sources. The search area
+used was a box 6' (half-width) in-scan, which was the largest detection
+shadowing distance (<A HREF="C.html#7">Section V.C.7</A>), and 4.5
+(half-width)
+cross-scan, which was a detector length. Neighbors were tagged before the
+clean-up processor was applied. However, neighbors that were confirmed
+with the source during clean-up were not counted, nor, due to an error,
+were any sources within a box that had been successfully cleaned up.
+<P>
+If no neighbors were found, it is unlikely that processing or confusion
+problems exist. The presence of neighbors should make the user check those
+neighbors to investigate the possibility that the source was extended,
+was in a confused patch of sky, or suffered some other problem.
+
+<H2>
+<HR WIDTH="100%"><A NAME="4"></A>H.4 Cirrus Flagging</H2>
+<P>
+At 100 &micro;m the infrared sky is characterized by emission from
+interstellar dust on all spatial scales, known affectionately as
+&quot;infrared cirrus&quot;. A significant chance exists that ANY catalog
+source has been
+affected by components of this long-wavelength emission on the point source
+scale. Four separate quantities were derived for each source to assess
+the importance of contamination by cirrus. While these are imperfect flags
+(a source may be affected by cirrus without any of these flags being set,
+or may not be affected at all even at high values of the flags) they work
+for the majority of sources and provide a simple description of the sky
+at 100 &micro;m in the vicinity of each catalog object.
+<P>
+<B>Flag 1 (CIRR1)</B> is the density of WSDB sources (hours and/or
+weeks-confirmed)
+detected only at 100 &micro;m within a &plusmn; &frac12; &deg; ecliptic
+coordinate
+box of the source position. Cirrus typically produces strings of such sources,
+giving rise to a high density. Weak cirrus, producing only a few 100 &micro;m
+sources, may still affect the quality of catalog sources.
+<P>
+<B>Flags 2 (CIRR2)</B> and 3 <B>(CIRR3)</B> come from the 100 &micro;m
+extended
+source data at a resolution of &frac12; &deg; (see <A HREF="G.html#5">Section
+V.G.5</A>). Although the angular resolution is a serious limitation for
+these flags, since the angular scale of point sources is 10-30 times smaller,
+cirrus on the point source scale usually shows structure on the &frac12; &deg;
+scale as well.
+<P>
+CIRR2 was derived from a spatially filtered version of the &frac12; &deg;
+averaged 100 &micro;m emission. The value of the filtered sky brightness
+at a point, <I>J</I><SUB>i</SUB>, is given by
+<P>
+<A NAME="eqH1">
+<CENTER><FONT SIZE=+1>
+J<SUB>i</SUB> = | (-&frac12;&nbsp;&nbsp;&times; I<SUB>i-1</SUB>) + (I<SUB>i</SUB> -&frac12;&nbsp;&nbsp;&times; I<SUB>i+1</SUB>) |
+</FONT></CENTER>
+<P ALIGN=right>(V.H.1)</P>
+where adjacent measurements, <I>I<SUB>i</SUB></I>, of the total intensity
+were separated by &frac12; &deg; in the in-scan direction. This filtered
+surface brightness was converted into a &quot;cirrus flux&quot;,
+<I>F</I><SUB>c</SUB>,
+by multiplying <I>J</I><SUB>i</sub></I> by the solid angle of a typical 3' &times;
+5' 100 &micro;m detector. The cirrus flux was then compared with the 100
+&micro;m flux (or upper limit) of each catalog source, <I>F</I><SUB>s</SUB>.
+The value of CIRR2 was scaled logarithmically to fit in the range 1 to 9
+according to
+<P>
+<A NAME="eqH2">
+<CENTER><FONT SIZE=+1>CIRR2 = (8/3) x log (F<SUB>c</SUB>/F<SUB>s</SUB>) + (19/3)
+</FONT></CENTER>
+<P ALIGN=right>(V.H.2)</P>
+<P>
+A value of CIRR2=1 corresponds to the cirrus flux being less than or
+equal to 0.01 of the source flux while CIRR2=9 corresponds to the cirrus
+flux being 10 times the source flux. As described in
+<A HREF="../ch7/H.html">Section VII.H</A>, CIRR2 less than about 4 is
+indicative of little or no cirrus contamination, while larger values probably
+indicate significant contamination. A value of CIRR2=0 indicates that no 100
+&micro;m extended emission data were available.
+<P>
+<B>Flag 3 (CIRR3)</B> is the total intensity of the 100 &micro;m extended
+emission in a &frac12; &deg; beam (MJy sr<SUP>-1</SUP>) High values are
+indicative of a large column density of interstellar dust.
+<P>
+A fourth cirrus indicator is the presence of nearby small extended sources
+at 100 &micro;m. Since the small extended sources have sizes much
+closer to point sources than the &frac12; &deg; data, this flag (SESl), which
+gives the number of hours-confirmed small extended sources, will normally
+be an accurate cirrus indicator. However, because of the higher thresholds
+used for this processing. weak cirrus may not be detected.
+<P>
+As discussed in more detail in <A HREF="../ch7/H.html">Section VII.H</A>,
+if any of these flags takes on a large value, one should be cautious. Cirrus
+can affect the point source flux in any band by causing band-merging
+difficulties and can certainly affect the quality of a quoted 100 &micro;m
+flux.
+
+<H2>
+<HR WIDTH="100%"><A NAME="5">H.5 Average Flux Computation and Variability
+Analysis</H2>
+<P>
+In the computation of an average flux for each source, three levels
+of flux quality were recognized:
+<OL>
+   <LI><I>High quality</I> fluxes had no confirmation problems other than
+missing detections due to failed detectors, with at least one hours-confirming
+detection with no problems. For <I>aficionados</I>, at least two
+hours-confirming sightings with flux status, FSTAT = 4 or 7, with at least
+one  7, were required (see <A HREF="D8.html">Section V.D.8</A>).
+   <LI><I>Moderate quality</I> fluxes were believed to be reliable, but were
+missing some detections, usually because the source was at the detection
+threshold. Two hours-confirming sightings with FSTAT = 3 - 7 were required.
+   <LI><I>Upper limits</I> were given for bands lacking high or moderate
+quality fluxes. Measurements in these bands had no more than one measurement
+with FSTAT = 3 - 7. The upper limits were derived from all of the
+measurements. An analysis showed that measurements in a given band with only
+a single detection (FSTAT = 2) within an hours-confirming coverage were
+severely
+contaminated by radiation hits and were unreliable. These single
+&quot;detections&quot; were used only as upper limits. Quoted upper limits
+are nominally 3-<IMG SRC="../images/sigma-lc.gif" HEIGHT=7 WIDTH=7>
+values.
+</OL>
+<P>
+High and moderate quality fluxes were obtained by log-flux averaging
+of individual acceptable hours-confined fluxes weighted by the inverse
+of the log-flux variances. If the flux discrepancy flag was set (see below)
+and the source had more than two hours-confirmed fluxes, then one flux
+was removed from the averaging process. The rejected flux was the one farhest
+from the median flux in units of the error. The median flux was arbitarily
+picked to be the larger of the middle two fluxes when there was an even
+number of fluxes present. The rational behind this was that discrepant
+fluxes occasionally occurred because of radiation hits, a passing asteroid
+a failed detector, or processing problems. With more than two measurements
+it was possible to weed out the discrepant flux. For quoted fluxes, a&nbsp;
+<IMG SRC="../images/lambda-lc.gif" HEIGHT=10 WIDTH=8><SUP>2</SUP>
+test was applied to each band. If the value of the reduced&nbsp;
+<IMG SRC="../images/lambda-lc.gif" HEIGHT=10 WIDTH=8><SUP>2</SUP>
+was greater than 9, the flux discrepancy flag was set in that band.
+<P>
+Uncertainties quoted for high and moderate quality fluxes were the maximum
+of a) the uncertianty of the mean derived from the accepted fluxes; or
+b) the uncertainty of the mean derived by propagating the quoted uncertainties
+of the individual, accepted flux measurements.
+<P>
+Fluxes quoted as upper limits were obtained from the the largest flux
+(or limit) for sources with only two hours-confirmed sightings and from
+the median flux for sources with more than two detections. The median was
+taken as the largest of the two middle fluxes for sources with an even
+number of observations. The flux discrepancy flag was set if the largest
+and smallest flux from all the limits for low quality detections differed
+by more than a factor of 3.
+<P>
+Sources with high or moderate quality fluxes at both 12 and 25 &micro;m
+were examined for variability. A percentage probability of being variable
+was quoted for sources whose fluxes at BOTH 12 and 25 &micro;m either
+increased or decreased significantly from one hours-confirmed sighting
+to another. In other words, the changes in flux at 12 and 25 &micro;m
+had to be correlated. Although variability could have been detected in
+other ways, this method led to a simple and reliable determination of
+variability of a large number of sources. For sources with more than one pair
+of sightings,
+the value determined for the pair of sightings with the greatest likelihood
+of variability was given.
+<P>
+The probability that a source brightness varied was calculated by comparing
+the number of sources with <I>correlated </I>flux excursions exceeding
+<I>m <IMG SRC="../images/sigma-lc.gif" HEIGHT=7 WIDTH=7></I> at 12 and 25
+&micro;m,
+<I>N<SUB>corr</SUB></I>(&gt;/-m), with those sources showing <I>anti-correlated</I>
+flux excursions exceeding <I>m
+<IMG SRC="../images/sigma-lc.gif" HEIGHT=7 WIDTH=7></I> in
+both bands, N<sub>anti</sub>(&gt;/-m). The probability that a source is
+variable is given by
+
+<A NAME="eqH3">
+<CENTER><IMG SRC="../ch5/images/eqH3.gif"  ALIGN=CENTER></CENTER>
+<P ALIGN=right>(V.H.3)</P>
+
+This approach was adopted because there are many ways in addition to
+true variability that a discrepant flux could be obtained, including radiation
+hits, processing problems caused by failed detectors and confusion with
+transient spurious sources which would increase the flux in one band at
+one sighting. Thus, while <A HREF="#eqH3">Eq. (V.H.3)</A> is not rigorous,
+it gives a good measure of the significance of any flux excursion.
+As discussed in <A HREF="../ch7/D3.html">Section VII.D.3</A>, the sources
+deemed likely to be variable (<I>p</I> &gt; 0.9) represent approximately
+20% of the 12 and 25 &micro;m objects in the catalog.
+
+<H2><A NAME="6">
+<HR WIDTH="100%">H.6 High Source Density Regions</H2>
+<P>
+The density of sources in the WSDB exceeds the resolving capability
+of the instrument over some parts of the sky. The nature of both the sky
+and the instrument make this a wavelength-dependent effect; at 12 &micro;m
+the instrumental resolution was less than 1' and the sky was dominated
+by point sources, while at 100 &micro;m the resolution was about 4'
+and much of the sky was dominated by highly structured diffuse emission.
+<P>
+The overriding concern in developing a strategy for regions of high
+source density was to insure the reliability of the information presented
+in the point source catalog. Reliability, in this context, has three meanings:
+1) a point source must be an inertially fixed celestial source (the basic
+meaning of reliability throughout the catalog); 2) a source must represent
+a very compact structure that, to the extent possible, is not merely a
+fragment of a complex background; and 3) the intensity measurements reported
+in the catalog must repeatably represent the brightness of a source above
+the local background.
+<P>
+The first step in processing high source density regions was to determine
+whether the number of sources in a given wavelength band in a
+1&deg;<sup>2</sup>
+bin exceeded a &quot;confusion limit&quot;. Sources in bins with more than
+the threshold number of sources were subject to additional criteria for
+inclusion in the catalog. The decision to apply the criteria was made independently
+on a band-by-band basis. Thus, a multi-band source might have high source
+density rules applied to its 100 &micro;m measurements, but not to
+its 12 &micro;m measurements. Once the high source density rules were
+invoked in a band, each source in that band in that bin was examined for
+the quality and repeatability of its individual measurements and for its
+isolation from other potentially confusing sources. The high source density
+processor determined whether the measurement of the source in that band
+was of high, medium or low (upper limit) quality, where these definitions
+differ from those in lower density areas, and calculated an average flux
+for the source in that band. Many sources were found wanting and were excluded
+from the catalog.
+<P>
+The high source density selection criteria used only information contained
+within the WSDB to judge the relative merits of a source. The confusion
+processing algorithms were developed and tuned in two confused regions,
+one in the Large Magellanic Cloud (LMC) and one near the Galactic Center.
+Detector strip charts were examined for many of the sources to verify the
+validity of the selection criteria.
+
+<h2>
+<HR WIDTH="80%"><A NAME="6a"></A>H.6.a Location of High Source Density
+Regions</h2>
+
+<a name="figH11"></a>
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=2 width=200 align=right>
+<TR>
+<TD>
+<CENTER><A HREF="../ch5/figs/figH11-2.gif" target="fig5H11">
+<IMG SRC="../ch5/figs/figH11-3.gif" BORDER=0></A></CENTER>
+</TD>
+</TR>
+<TR>
+<TD>
+<I>Figure V.H.1.1 The parts of the 12 &micro;m sky processed according
+to high source density rules are shown in an Aitoff projection in
+Galactic coordinates. The black regions contain more than 45 sources per
+sq. deg, the threshold for high source density processing; the
+grey areas contain more than 25 sources per sq. deg, one-half
+the confusion limit.</I><br>
+<a href="../ch5/figs/figH11-2.gif" target="fig5H11">larger</a>
+<a href="../ch5/figs/figH11-1.gif" target="fig5H11">largest</a>
+</TD>
+</TR>
+</TABLE>
+<P>
+The confusion-limited source density is determined by the instrumental
+angular resolution and how many detector beam areas are, on average, required
+per source for a reliable measurement. A conservative limit of 25 beams
+per source leads to maximum source densities of 50, 50, 25 and 12 sources
+per sq. deg at 12, 25, 60 and 100 &micro;m (assuming a detector area
+of the nominal in-scan detector size times the detector cross-scan width).
+Aitoff projection maps in Galactic coordinates showing the density of sources
+with moderate or high quality fluxes (according to the basic rules described
+in <A HREF="#5">V.H.5</A>) in a given wavelength band are shown in
+<a href="#figH1">Figs. V.H.1a-d</a>. At 12, 25 and 60 &micro;m the
+region within 3 - 5&deg;
+of the Galactic plane and within &plusmn; 100&deg; of longitude of the
+Galactic
+center plus small regions in Orion, Ophiuchus and the LMC present the major
+problem areas. The 100 &micro;m sky presents a more complicated picture
+because the regions of high source density cover large parts of the sky
+due to the infrared cirrus.
+
+<br clear=right>
+
+<a name="figH12"></a>
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=2 width=200 align=right>
+<TR>
+<TD>
+<CENTER><A HREF="../ch5/figs/figH12-2.gif" target="fig5H12">
+<IMG SRC="../ch5/figs/figH12-3.gif" BORDER=0></A></CENTER>
+</TD>
+</TR>
+<TR>
+<TD>
+<I>Figure V.H.1.2 The parts of the 25 &micro;m sky processed according
+to high source density rules are shown in an Aitoff projection in
+Galactic coordinates. The black regions contain more than 45 sources per
+sq. deg, the threshold for high source density processing; the
+grey areas contain more than 25 sources per sq. deg, one-half
+the confusion limit.</I><br>
+<a href="../ch5/figs/figH12-2.gif" target="fig5H12">larger</a>
+<a href="../ch5/figs/figH12-1.gif" target="fig5H12">largest</a>
+</TD>
+</TR>
+</TABLE>
+<P>
+To set the thresholds for high source density processing, the numbers
+of sources in 1&deg;<sup>2</sup> and &frac14;&deg;<sup>2</sup> bins were
+examined in  the WSDB. It was determined that processing all
+1&deg;<sup>2</sup> bins containing at  least
+45, 45, 16, and 6 sources (at 12, 25, 60 and 100 &micro;m) would clean
+up 90% of all &frac14;&deg;<sup>2</sup> areas with confusion-limited source
+densities. Thus, any 1&deg;<sup>2</sup> bin (defined in ecliptic coordinates,
+cf. <A HREF="../ch10/ap1.html">Appendix X.1</A>) containing at least the
+threshold number of sources in a particular
+band was processed according to high source density rules in that band.
+No attempt was made to join together high source density regions into a
+few simply connected areas. A list of the high source density bins in each
+band is available with the machine readable version of the catalog.
+
+<br clear=right>
+
+<a name="figH13">
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=2 width=200 align=right>
+<TR>
+<TD>
+<CENTER><A HREF="../ch5/figs/figH13-2.gif" target="fig5H13">
+<IMG SRC="../ch5/figs/figH13-3.gif" BORDER=0></A></CENTER>
+</TD>
+</TR>
+<TR>
+<TD>
+<I>Figure V.H.1.3 The parts of the 60 &micro;m sky processed according
+to high source density rules are shown in an Aitoff projection in
+Galactic coordinates. The black regions contain more than 16 sources per
+sq. deg, the threshold for high source density processing; the
+grey areas contain more than 12 sources per sq. deg, one-half
+the confusion limit.</I><br>
+<a href="../ch5/figs/figH13-2.gif" target="fig5H13">larger</a>
+<a href="../ch5/figs/figH13-1.gif" target="fig5H13">largest</a>
+</TD>
+</TR>
+</TABLE>
+<P>
+High source density rules were occasionally invoked for wavelength bands
+with fewer than the threshold number of sources in a bin if failure to
+include that band would have resulted in a non-adjacent set of bands being
+processed, i.e., a &quot;spectral hole&quot;. Thus, for example, if the
+number of sources at 25 and 100 &micro;m, but not at 60 &micro;m,
+exceeded the thresholds, the decision was made to process 60 &micro;m
+sources as well.
+
+<br clear=right>
+
+<a name="figH14"></a>
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=2 width=200 align=right>
+<TR>
+<TD>
+<CENTER><A HREF="../ch5/figs/figH14-2.gif" target="fig5H14">
+<IMG SRC="../ch5/figs/figH14-3.gif" BORDER=0></A></CENTER>
+</TD>
+</TR>
+<TR>
+<TD>
+<I>Figure V.H.1.4 The parts of the 100 &micro;m sky processed according
+to high source density rules are shown in an Aitoff projection in
+Galactic coordinates. The black regions contain more than 12 sources per
+sq. deg, the threshold for high source density processing; the
+grey areas contain more than 6 sources per sq. deg, one-half
+the confusion limit.</I><br>
+<a href="../ch5/figs/figH14-2.gif" target="fig5H14">larger</a>
+<a href="../ch5/figs/figH14-1.gif" target="fig5H14">largest</a>
+</TD>
+</TR>
+</TABLE>
+
+<br clear=right>
+
+<h2>
+<HR><A NAME="6b">H.6.b Catalog Selection Criteria in High
+Source Density Regions</h2>
+<P>
+In unconfused regions where the reliability of a single hours-confirmed
+source is high, the criteria for including sources in the catalog emphasized
+completeness. In high source density regions, however, the criteria emphasized
+reliability. Thus, the first step toward weeding out unreliable point sources
+was to stiffen the requirements for accepted detections and valid
+weeks-confirmed sources in a given band.
+<P>
+The concept of high, medium and low quality fluxes is crucial to understanding
+how sources were included in the catalog. High quality measurements were
+those which passed through the entire data processing chain without blemishes
+such as more than one missing detection (per hours-confirmed sightings),
+even those missing due to failed detectors. Medium quality fluxes could
+suffer from a variety of problems due either to the faintness of the source,
+the presence of failed detectors, the complexity of the background or
+peculiarities
+of the data processing. Low quality fluxes were upper limits based on an
+estimate of the local noise. The definition of the relative quality of
+fluxes and the way that sources were selected for inclusion in the catalog
+on the basis of their quality differs depending on whether a source was
+found in a region of high or low source density.
+<P>
+In regions of high source density, tests were applied successively to
+the measurements of a source to determine its quality. If all of the criteria
+described below were satisfied, the source was deemed to have a high quality
+measurement in that band. If only a subset of the criteria were satisfied,
+then the source was considered to have a medium quality measurement in
+that band. If none, or only a few, of the criteria were satisfied then
+an upper limit was given for the flux of that source. To be included in
+the catalog a source had to have a high quality measurement in at least
+one band.
+<P>
+For high source density regions the requirements for a high quality
+flux were stiffened by demanding that at least two hours-confirmed sightings
+in one band each meet all of the following criteria: 1) seconds-confirmed
+detections on at least two orbits; 2) a minimum correlation coefficient
+of 0.97, corresponding to a local signal-to-noise ratio of about 12; and
+3) fewer than four detections within the seconds-confirmation window on
+a given scan. Simple edge detections (3 detections) were permitted.
+<P>
+A high quality measurement had to be repeatable. The ratio of brightness
+to faintest high quality flux measurements in a band had to differ by less
+than a factor of 3.0. If this repeatability requirement was not satisfied,
+then the brightest measurement was taken as a medium quality
+<P>
+measurement. Although this requirement in principle biases the catalog
+against variable sources in high source density regions, in practice,
+relatively few sources were rejected for this reason.
+
+<h2>
+<HR><A NAME="6c">H.6.c Weaker Neighbors</h2>
+<P>
+The above rules all pertain to a single source, independent of its
+environment. The weaker neighbor algorithm was designed to remove sources
+adversely
+affected by brighter, neighboring sources. The &quot;neighbor&quot; of
+a source with a high quality flux in some band must itself have at least
+two hours-confirmed measurements in that same band and lie within a wavelength
+dependent position window. If the brightest flux of one source was a factor
+of 1.2 weaker than the faintest flux of the other object in the same
+<P>
+band then the fainter object was marked as a &quot;weaker neighbor&quot; in
+that band. The flux status of the weaker neighbor was demoted to low quality
+and the upper limit assigned was that of the flux of the brighter object.
+The half-widths of the weaker neighbor window at (12, 25, 60 and 100 &micro;m)
+were (90&quot;, 90&quot;, 180&quot; and 360&quot;) and the half-lengths
+were (270&quot;, 272&quot;,286&quot;, 300&quot;-a detector length).
+
+<h2>
+<HR><A NAME="6d">H.6.d Confused Neighbors</h2>
+<P>
+A good indicator that a source was part of a more extended structure
+was to have two or more sources located very close together. A source with
+a high quality measurement in one band was examined for neighbors in the
+same window as described for weaker neighbors. If another source were located
+sufficiently close to the first and if any confusion status flags other
+than edge detection flags (<A HREF="D2.html">Section V. D.2</A>) were set
+in either source, then the fluxes of both were marked low quality and the
+brightest of the two fluxes was assigned as an upper limit to each source.
+If no confusion status flags were set, neither source was changed. The
+definition of a neighbor and the size of the confused neighbor window were
+as described above for the weaker neighbor test.
+
+<h2>
+<HR><A NAME="6e">H.6.e Very Near Neighbors</h2>
+<P>
+One of the original selection rules was to exclude from the catalog
+all sources, in ail bands, with a neighbor closer than 30&quot; in-scan
+and 90&quot; cross-scan. Because the clean-up processor described in Section
+V.H.2 forced the weeks-confirmation of all sources within-n such a box,
+there should have been no such sources remaining to delete. Due, however,
+to slight differences in the way in which the neighbor boxes were calculated
+by the two programs, about twenty sources at the periphery of the neighbor
+box were deleted by the high source density processor.
+
+<h2>
+<HR><A NAME="6f">H.6.f Moderate Quality Fluxes</h2>
+<P>
+Measurements that failed one or another of the above rules could still
+carry useful information about the strength of a source in a given band.
+Moderate quality fluxes had to have at least two hours-confirmed measurements
+with flux status, FSTAT = 3, 4, 5 or 7, and correlation coefficient &gt; 0.95.
+Fluxes of otherwise moderate quality could be demoted to low quality by
+either the weaker or confused neighbor rules.
+
+<h2>
+<HR><A NAME="6g">H.6.g Low Quality Fluxes (Upper Limits)</h2>
+<P>
+Measurements in a given band that failed to meet either the high or
+moderate quality criteria become upper limits for the source. If multiple
+detections were available, the brightest one was given. As mentioned above,
+confused or weaker neighbors were given the brightest flux of either of
+the two sources as an upper limit. Sources of low quality were examined
+for brighter neighbors and were assigned the brightest neighboring flux
+(see above for neighbor rules). Sources with no detections on any sightings
+(i.e., with only noise fills present) and no neighbors were given an upper
+limit based on 12 times the
+1-<IMG SRC="../images/sigma-lc.gif" HEIGHT=7 WIDTH=7> value
+reported by the noise estimator. This value was chosen since the correlation
+coefficient requirement of &gt;/- 0.97 corresponds to roughly a local
+signal-to-noise ratio of 12.
+
+<h2>
+<HR><A NAME="6h"></A>H.6.h Flux Averaging and Uncertainties</h2>
+<P>
+In all cases, averages and uncertainties were computed using the logarithms
+of the fluxes, not the fluxes themselves. However, the technique used to
+obtain the average values for both high and moderate quality fluxes in
+high source density regions was different from the one used outside of
+dense regions. Rather than computing inverse-variance weighted averages
+in regions where the noise estimator was suspect, simple averages of the
+logarithms of the valid high (or moderate) quality fluxes were computed.
+The uncertainty associated with the measurement was the greater of: 1)
+the average of the N uncertainties quoted for the N valid hours-confirmed
+measurements, divided by N &frac12;; or 2) the standard deviation of the mean
+of the N values averaged together to obtain the flux average.
+
+<H2>
+<HR WIDTH="100%"><A NAME="7"></A>H.7 Catalog Source Selection</H2>
+<P>
+Outside of regions of high source density, two rules were used to select
+weeks-confirmed WSDB sources for inclusion in the catalog: sources had
+to have either a high quality flux in at least one band or adjacent bands,
+both of which have an HCON with FSTAT = 7 and another with FSTAT = 3 or 5
+(<A HREF="#5">Section V.H.5</A>). The minimum time separation of 123,000 sec.
+ required for two hours-confirmed sightings to weeks-confirm was found
+to be long enough to reject even slow moving asteroids.
+<P>
+Within high source density regions, as described in
+<A HREF="#6">V.H.6</A>, sources had
+to have at least one high quality flux in one band and be relatively isolated
+from other sources to be included in the catalog.
+
+<H2>
+<HR WIDTH="100%"><A NAME="8">H.8 Low-Resolution Spectral Associations</H2>
+<P>
+For each source in the WSDB, a check was made to see whether a low-resolution
+spectrum was available. See <A HREF="../ch9/index.html">Chapter IX</A>
+for more details.
+
+<H2>
+<HR WIDTH="100%"><A NAME="9">H.9 Associations</H2>
+<P>
+Positional associations of IRAS sources are made with objects in other
+astronomical catalogs. The associations in the IRAS catalog were based
+purely on positional agreement, with no attempt made to distinguish between
+multiple sources associated with a particular IRAS source. Any number of
+sources from a variety of catalogs could be associated with a specific
+IRAS object as long as the position test was met. No attempt was made to
+&quot;identify&quot; an IRAS source with a source from another catalog,
+by requiring the IRAS source to have a &quot;reasonable&quot; energy
+distribution for the identification. The only attempt to preclude spurious
+associations was to forbid a source with only a 100 &micro;m flux (i.e., a
+source having a significant likehood of being Galactic &quot;cirrus&quot;)
+from being associated with stars.
+<P>
+Because the catalogs used for associations had a wide range of positional
+accuracies, and the IRAS positions were intermediate between the very high
+positional accuracy catalogs and the lower accuracy catalogs, the following
+procedures were adopted to make the associations. For the
+high-positional-accuracy catalogs, a window of half width 8&quot; in-scan and
+45&quot; cross-scan was used. If the position of the IRAS source lay within
+this distance of the cataloged source, then an association was made. For
+those catalogs where the positional uncertainty was greater than that of the
+IRAS source, an association was made if the source position and the IRAS
+position agreed to within a fixed radius or to within the radius (see below)
+of the cataloged source, if available.
+<P>
+In addition to the other catalogs, associations with IRAS small extended
+sources have been included so that the user will know if a small extended
+source is close to the point source.
+<P>
+<A HREF="#tabH1">Table V.H.1</A> identifies the catalogs used and gives
+the search radius for the association and an indication of whether a source
+slae was used for the association radius. The information carried with
+the association is described in detail in <A HREF="../ch10/B.html">Section
+X.B</A> and includes such information as visible magnitude, size, spectral
+type, and morphological type. In addition, the distance and position angle
+from the IRAS position to the location of the cataloged source are given.
+
+<CENTER><A NAME="tabH1">
+<TABLE border=1 cellpadding="2">
+<CAPTION>
+<B><FONT SIZE=+1>
+Catalogs Used for Associations with IRAS Sources<BR>
+Table V.H.1 </FONT></B>
+</CAPTION>
+
+<TR BGCOLOR="#CCCCCC">
+<TH>Catalog<BR>
+No.</TH>
+<TH><A HREF="#CatTypFtnt">Catalog<BR>
+Type</A></TH>
+<TH>Catalog Name</TH>
+<TH>Search<BR>
+Radius</TH>
+<TH>Source Size<BR>
+Used in<BR>
+Association</TH>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>01</TD>
+<TD>2</TD>
+<TD>General Catalogue of Variable Stars Kukarkin, <I>et al</I>.</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>02</TD>
+<TD>2</TD>
+<TD>Dearborn Observatory Catalogue of Faint Red Stars, Lee, <I>et al</I>.</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD><A NAME="tabH1-cat03"></A>03</TD>
+<TD>3</TD>
+<TD>Air Force Geophysical Laboratory Four-Color Survey, Price &amp; Murdock</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>04</TD>
+<TD>2</TD>
+<TD>Two Micron Sky Survey Neugebauer and Leighton</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>05</TD>
+<TD>3</TD>
+<TD>Globule List Wesselius</TD>
+<TD>90&quot;</TD>
+<TD>X</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>06</TD>
+<TD>1</TD>
+<TD>Second Reference Catalogue of Bright Galaxies, de Vaucouleurs,<I> et
+al</I>.</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>07</TD>
+<TD>2</TD>
+<TD>Early Type Stars with Emission Lines Wackerling</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD><A NAME="tabH1-cat08"></A>08</TD>
+<TD>3</TD>
+<TD>Equatorial Infrared Catalogue (Sweeney <I>et al</I>.)</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>09</TD>
+<TD>1</TD>
+<TD>Uppsala General Catalogue of Galaxies Nilson</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>10</TD>
+<TD>1</TD>
+<TD>Morphological Catalogof Galaxies Vorontsov-Velyaminov, et al.</TD>
+<TD>180&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>11</TD>
+<TD>3</TD>
+<TD>Strasbourg Planetary Nebulae</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>12</TD>
+<TD>1</TD>
+<TD>Catalogue of Galaxies and Clusters of Galaxies, Zwicky, <I>et al</I>.</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD><A NAME="tabH1-cat13"></A>13</TD>
+<TD>2</TD>
+<TD>Smithsonian Astronomical Observatory Star Catalog</TD>
+<TD>45&quot;(x-scan)<BR>
+x8&quot;(in-scan)</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>14</TD>
+<TD>3</TD>
+<TD>ESO/Uppsala Survey of the ESO (B) Atlas, Lauberts</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>15</TD>
+<TD>2</TD>
+<TD>Bright Star Catalogue - 4th Edition Hoffieit</TD>
+<TD>45&quot;x8&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>16</TD>
+<TD>2</TD>
+<TD>New Catalog of Suspected Variable Stars Kukarkin, et al.</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>17</TD>
+<TD>2</TD>
+<TD>General Catalogue of Cool Carbon Stars</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>18</TD>
+<TD>2</TD>
+<TD>Catalog of Nearby Stars Gliese</TD>
+<TD>45&quot;x30&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>19</TD>
+<TD>2</TD>
+<TD>General Catalog of S Stars Stephenson</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>20</TD>
+<TD>3</TD>
+<TD>Parkes HII Region Survey Haynes, <I>et al</I>.</TD>
+<TD>120&quot;</TD>
+<TD>X</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>21</TD>
+<TD>3</TD>
+<TD>Bonn HII Region Survey Altenhoff et al.</TD>
+<TD>80&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER VALIGN=CENTER>
+<TD>22</TD>
+<TD>3</TD>
+<TD>Catalog of CO Radial Velocities Toward Galactic HII Regions, Blitz
+<I>et al</I>.</TD>
+<TD>80&quot;</TD>
+<TD>X</TD>
+</TR>
+<TR ALIGN=CENTER>
+<TD>23</TD>
+<TD>3</TD>
+<TD>
+<LI>Catalogue of Dark Nebulae X Lynds
+
+<LI>Comparison Catalog of HII Regions Marsalkova
+
+<LI>Catalog of Star Clusters and Associations Alter, <I>et al</I>.
+
+<LI>Catalogue of Bright Diffuse Galactic Nebulae, Cederblad
+
+<LI>Untersuchungen &Uuml;ber Reflexionsnebel am Palomar Sky Survey, Dorschner
+and G&uuml;rtler
+
+<LI>A Study of Reflection Nebulae van den Bergh
+
+<LI>Catalog of Southern Stars Embedded in Nebulosity, van den Bergh and
+Herbst
+</TD>
+<TD>&nbsp;</TD>
+<TD>X</TD>
+</TR>
+<TR ALIGN=CENTER>
+<TD>24</TD>
+<TD>2</TD>
+<TD>Two Micron Sky Survey with Improved Positions, Kleinmann and Joyce</TD>
+<TD>45&quot;x8&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER>
+<TD>25</TD>
+<TD>1</TD>
+<TD>Catalog of Dwarf Galaxies van den Bergh</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER>
+<TD>26</TD>
+<TD>1</TD>
+<TD>Atlas of Peculiar Galaxies Arp</TD>
+<TD>120&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER>
+<TD>27</TD>
+<TD>1</TD>
+<TD>Galaxies withanUltraviolet Continuum, Markarian, <I>et al.</I></TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER>
+<TD>28</TD>
+<TD>1</TD>
+<TD>Catalog of Extragalactic Radio Sources Having Flux Densities Greater
+than 1 Jy at 5 GHz, Kuhr, <I>et al</I>.</TD>
+<TD>60&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER>
+<TD>29</TD>
+<TD>1</TD>
+<TD>Catalogue of Quasars and Active Nuclei, Veron-Cetty and Veron</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER>
+<TD>30</TD>
+<TD>1</TD>
+<TD>Lists of Galaxies Zwicky</TD>
+<TD>90&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER>
+<TD>31</TD>
+<TD>1</TD>
+<TD>Atlas and Catalog of Interacting Galaxies, Vorontsov-Velyaminov</TD>
+<TD>120&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER>
+<TD>32</TD>
+<TD>3</TD>
+<TD>IRAS Small Scale Structure Catalog</TD>
+<TD>min(120&quot;,<BR>
+diameter/2)</TD>
+<TD>X</TD>
+</TR>
+<TR ALIGN=CENTER>
+<TD>39</TD>
+<TD>3</TD>
+<TD>Ohio State University Radio Catalog</TD>
+<TD>120&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=CENTER>
+<TD>40</TD>
+<TD>2</TD>
+<TD>University of Michigan Spectral Atlas</TD>
+<TD>60&quot;<BR>
+45&quot; x 8&quot;</TD>
+<TD>(Vol. 1)<BR>
+&nbsp;(Vols. 2,3)</TD>
+</TR>
+<TR ALIGN=CENTER>
+<TD>41</TD>
+<TD>3</TD>
+<TD>IRAS Serendipitous Survey Catalog</TD>
+<TD>60&quot;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR ALIGN=LEFT BGCOLOR="#CCCCCC">
+<TD COLSPAN="5"><A NAME="CatTypFtnt"></A>Catalog types include (1) extragalactic,
+(2) stellar or (3) other, e.g. dark clouds, HII regions, etc.</TD>
+</TR>
+<TR ALIGN=LEFT BGCOLOR="#CCCCCC">
+<TD colSPAN="5"><A NAME="tabH1li39ftnt"></A>Catalog numbers 33-38 reserved
+for internal use.</TD>
+</TR>
+</TABLE></CENTER>
+<P>
+
+<HR>
+
+<CENTER>
+<FONT SIZE=+1><A HREF="index.html#toc">Chapter Contents</A>
+| <A HREF="index.html#intro">Introduction</A> | <A HREF="index.html#auth">Authors</A>
+| <A HREF="index.html#ref">References</A></FONT></CENTER>
+
+<CENTER>
+<FONT SIZE=+1><A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> | <A HREF="G.html">Previous Section</A>
+| <A HREF="../ch6/A.html">Next Section</A></FONT></CENTER>
+<P>
+
+<HR>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

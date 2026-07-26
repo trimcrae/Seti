@@ -1,0 +1,154 @@
+V.D.2.g In-Band Seconds-Confirmation Confusion Processing 
+
+ IRAS Explanatory Supplement
+
+ V. Data Reduction
+
+ D. Point Source Confirmation
+
+ D.2 Overview of Seconds-Confirmation
+
+ D.2.g In-Band Seconds-Confirmation Confusion Processing
+
+ Chapter Contents |
+ Introduction |
+ Authors |
+ References 
+
+ Table of Contents |
+ Index |
+ Previous Section |
+ Next Section 
+
+ The drop-dead detection and all candidates which had passed
+the fine position test were immediately marked as confused upon
+initiation of confusion processing. Status bits set here and
+in corresponding subsequent analyses were carried in a status
+word, hereafter denoted CSTAT, throughout all remaining processing
+stages (see Table V.D.3 a , b ).
+ 
+ Several attempts were made to unravel confused situations.
+The first stage involved discarding any detections with signal-to-noise
+ratios below 5 or detection correlation coefficients below 0.92.
+ Such detections were never used in any future confirmation processing.
+If this dropped the number of candidates to
+zero or one, then the drop-dead was processed for rejection or
+for the double-detection mode, respectively. Otherwise confusion
+processing continued by attempting to identify pairs of candidates
+which would confirm each other without the help of the drop-dead
+detection and without confusion from other detections in the buffer.
+ Any such detection pairs were set aside from the current situation
+and left for the time when one of them would become a drop-dead.
+Finding such pairs reduced the number of candidates involved in
+the confused situation being processed, and after all such possible
+reduction had been achieved, the number of remaining candidates
+was checked as described above.
+ 
+ If the situation remained confused then processing continued
+by casting aside the detections whose slots had an edge-overlap
+relationship with the drop-dead's slot; if any, unless the detector
+status information indicated that these were allowable for pairwise
+confirmation with the drop-dead. Again the branching possibilities
+were checked. In this case, and in all remaining cases in this
+section, discarded candidates remained eligible for future confirmations
+on subsequent processing.
+
+Confusion Status (CSTAT) Bit Assignments
+
+Table V.D.3a
+
+ Bit No. Meaning (Applies if Bit = 1) 
+
+ 0 Either triple-detection mode or possible
+
+ confusion in seconds-confirmation 
+
+ 1 Triple-detection mode accepted 
+
+ 2 Confusion diagnosed and cleanup attempted
+
+ in seconds-confirmation 
+
+ 3 Confusion diagnosed in band-merging, only
+
+ best match retained 
+
+ 4 Confusion diagnosed in hours-confirmation,
+
+ only best match retained 
+
+ 5 In 12 um Band Byte: Not Used
+
+ In 25 um Band Byte: Not Used
+
+ In 60 um Band Byte: Detector number
+ arrays
+
+ (all bands) are out time order
+
+ In 100 um Band Byte: More then 3 sightings
+ were hours-confirmed 
+
+ 6 ADC saturation occurred for at least one
+ detection in this band 
+
+ 7 Not used
+
+ Common CSTAT Values (Decimal)
+
+Table V.D.3b.
+
+ CSTAT Meaning 
+
+ 3 Triple-detection mode 
+
+ 5 Possibly confused 
+
+ 7 Triple-detection mode after confusion
+ cleanup; usually not reliable 
+
+ 8 Possibly confused in band-merging 
+
+ 13 Possibly confused in both seconds-confirmation
+ and band-merging 
+
+ 16 Possibly confused in hours-confirmation
+
+ If further candidate reduction was needed, the candidates
+were required to pass a stricter position test, similar to the
+one discussed above, but with a threshold value such that one
+real detection pair out of one hundred would be expected to fail
+this test. Again the branches considered above were checked except
+this time the case of two remaining candidates was included, with
+a branch to the triple-detection mode processing if applicable,
+provided that a branch from that mode to confusion processing
+had not already been executed.
+ 
+ If more than two candidates remained at this point (or two
+which had been found unacceptable for the triple-detection mode),
+then that combination whose summed fluxes came closest to those
+of the drop-dead were retained and the others were discarded.
+ If this left no candidates, the drop-dead was rejected; if only
+one candidate remained the double-detection mode processing was
+performed. Otherwise, a flux test between the summed candidate
+fluxes and the drop-dead flux was performed which was similar
+to the triple-detection mode flux test, except that the threshold
+value used was chosen so that one real case out of a million would
+be rejected. If this test was passed then all remaining candidates
+were confirmed with the drop-dead which was considered to be a
+simultaneous confused observation of all of them. This type of
+salvaging was possible only when the drop-dead was the confused
+sighting (rather than one of the candidates). In this case, no
+flux refinement was performed; the individual candidate fluxes
+were retained, but position refinement was performed as described
+below.
+
+ Chapter Contents |
+ Introduction |
+ Authors |
+ References 
+
+ Table of Contents |
+ Index |
+ Previous Section |
+ Next Section

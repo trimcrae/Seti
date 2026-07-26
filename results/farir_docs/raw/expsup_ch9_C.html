@@ -1,0 +1,319 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+<HEAD>
+<TITLE>IX.C. Data Processing</TITLE>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H1 ALIGN=CENTER>IRAS Explanatory Supplement<BR>
+IX. The Low-Resolution Spectra<BR>
+C. Data Processing</H1>
+
+<HR>
+<CENTER><FONT SIZE=+1><A HREF="index.html#toc">Chapter Contents</A>
+ | <A HREF="index.html#auth">Authors</A>
+| <A HREF="index.html#ref">References</A>
+<BR>
+<A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> | <A HREF="B.html">Previous Section</A>
+| <A HREF="D.html">Next Section</A></FONT></CENTER>
+<HR>
+
+<ol type=1>
+<li><a href=#1>The Database</a>
+<li><a href=#2>Processing the Individual Spectra</a>
+  <ol type=a>
+  <li><a href=#2a>Despiking</a>
+  <li><a href=#2b>Conversion to a Linear Scale</a>
+  <li><a href=#2c>Interpolation to a Standard Wavelength Grid</a>
+  <li><a href=#2d>Correction for Wavelength-Dependent Responsivity</a>
+  <li><a href=#2e>Correction for Cross-Scan-Dependent Responsivity</a>
+  <li><a href=#2f>Overall Responsivity</a>
+  <li><a href=#2g>Joining of the Two Spectrum Halves</a>
+  </ol>
+<li><a href=#3>Averaging Spectra, Quality Checks</a>
+<li><a href=#4>Final Selection of Spectra</a>
+</ol>
+<HR>
+<h2><a name=1>C.1 The Database</a></h2>
+      The spectrometer data consist of three types of data: (i)
+uncorrected spectra with header information, (ii) calibration
+tables, and (iii) administrative files.  The spectra were extracted
+out of the data stream whenever an hours-confirmed source with
+a signal-to-noise ratio greater than 25 or a source specified
+as &quot;known source&quot; 
+(<a href=../ch5/D4.html>Section V.D.4</a>), crossed the spectrometer
+aperture. Extractions were also made for designated calibration
+sources.  The spectra were linked to survey sources using index
+association records produced by the hours-and weeks- confirmation
+processors (<a href=../ch5/D7.html>Section V.D.7</a>).
+<P>
+      There were three types of calibration tables:  (a) the responses
+of the five detectors to the internal reference source flashes
+and the intensities of the flashes as derived by the survey calibration
+processor; (b) correction tables for the relative responsivity
+as a function of position across the five detectors; (c) correction
+tables for the relative responsivity as a function of wavelength.
+The cross-scan and wavelength  dependent responsivity tables were
+derived from special observations (see <a href=B.html>Section IX.B</a>).
+
+<HR>
+<h2><a name=2>C.2 Processing the Individual Spectra</a></h2>
+      Processing of the data always started with the raw data.
+This allowed the correction procedures to be improved continuously
+up to the time of production of the catalog.  The major processing
+steps are discussed below.
+
+<HR>
+<h2><a name=2a>C.2.a Despiking</a></h2>
+      Single sample spikes with an amplitude greater than 8% caused
+by multiplexer errors (<a href=B.html>Section IX.B</a>) were removed 
+and replaced
+by an interpolated value using a simple algorithm operating on
+the raw data. Multiple-sample spikes were not removed but their
+presence was noted so that the spectrum-half would be rejected
+later (see <a href="#3">Section IX.C.3</a>).
+
+<HR>
+<h2><a name=2b>C.2.b Conversion to a Linear Scale</a></h2>
+      A lookup table of 256 entries was used to convert the raw
+data to voltages on a linear scale. A standard reconstruction
+of the input-voltage to the high-pass filter from the measured
+output voltage was carried out. An offset correction was reset
+to zero whenever the sample voltage dropped below a specified
+threshold because of the effects of the zero clamping 
+(<a href=A.html#4>Section IX.A.4</a>).
+
+<HR>
+<h2><a name=2c>C.2.c Interpolation to a Standard Wavelength Grid</a></h2>
+<P>
+      For ease of processing, an interpolation was carried out
+to a standard regular grid of angular positions in the dispersion
+direction. Because the dispersion of the spectrograph changed
+rapidly as a function of the angular position 
+(<a href="../ch9/A.html#figA1">Fig. IX.A.1</a>), the
+wavelength values corresponding to the standard sample values
+were not equidistant.  Before the interpolation, allowance was
+made for variations in the scan speed of the telescope. For the
+spectra of the brighter sources (signal-to-noise ratio greater
+than 10) the well-defined in-scan detector edges were in-scan
+to center the spectrum.  The centering correction reduced in-scan
+errors to approximately 2&quot;, corresponding to approximately
+0.03 &micro;m in wavelength.
+
+<HR>
+<h2><a name=2d>C.2.d Correction for Wavelength-Dependent Responsivity</a></h2>
+      The interpolated samples were multiplied by a responsivity
+table sampled at the same standard grid. There was a table for
+each of the five detectors derived from observations of 
+<img src=../images/alpha-lc.gif>-Tau 
+(<a href="../ch9/B.html#figB2">Fig. IX.B.2</a>). 
+Although the software allowed selecting a different
+table for each of 16 regularly spaced cross-scan positions on
+the detector, the evidence for a cross-scan variation of the 
+wavelength-dependent
+gain was too weak to justify using this option.
+
+<HR>
+<h2><a name=2e>C.2.e Correction for Cross-Scan-Dependent Responsivity</a></h2>
+      Depending on the nominal cross-scan position of the source,
+a correction (<a href="../ch9/B.html#figB1">Fig. IX.B.1</a>) was applied for 
+the  decrease of responsivity
+towards the edges of the detectors.  This correction was the weakest
+link in the calibration process because of the relatively large
+uncertainty in the cross-scan position.  The correction applied
+is uncertain by up to 20%, although this uncertainty was decreased
+by the process of joining the two spectrum-halves together (see
+<a href=#2g>Section IX.C.2.g</a>).
+
+<HR>
+<h2><a name=2f>C.2.f Overall Responsivity</a></h2>
+<P>
+      The overall responsivity depended on the individual detector,
+on the time and/or on the sky position.  To account for these
+variations a correction was derived from the voltage responses
+to the two internal reference source flashes bracketing the time
+of observation.  After applying the responsivity
+correction to a large sample of spectra the integrated fluxes
+in the spectra were compared to the fluxes measured by the survey
+array. Systematic factors of 0.75 and 1.00 were applied to the
+integrated spectrometer fluxes to bring them in line with the
+survey observations.
+
+<HR>
+<h2><a name=2g>C.2.g Joining of the Two Spectrum Halves</a></h2>
+     The two spectrum-halves (8-12 &micro;m and 11-25 &micro;m) were treated
+independently until this point. Because of uncertainties in the
+cross-scan position of the scan path over the detectors and therefore
+in the nominal cross-scan responsivity correction, the two spectrum-halves
+often differed by up to 15 or 20% after subtraction of a linear
+baseline.  The overlapping portion of the spectrum-halves was
+used to determine another correction factor. In doing so, the
+nominal relative cross-scan positions were used to determine which
+half of the spectrum to change by the largest amount. If either
+half had been observed by the central part of a detector, it was
+considered reliably calibrated, and that portion was not changed
+by the joining process, and the half of the spectrum observed
+near the edge of a detector was shifted up or down towards the
+other half. If both halves were considered equally reliable, then
+each was scaled by the square root of the ratio between the overlapping
+sections. This joining process reduced the overall error in the
+responsivity correction to less than 10%.
+
+<HR>
+<h2><a name="3">C.3  Averaging Spectral Quality Checks</a></h2>
+     Before spectra were averaged, a number of quality checks
+were performed on the individual measurements of the two halves
+of a source's spectrum. First, all measurements made within 18&quot;
+of the edge of any detector were flagged. Measurements were rejected:
+
+<ol type=a>
+<li>if they contained multiple-sample spikes (<a href=#2>Section IX.C.2</a>);
+<li>if the join-factor obtained before (<a href=#2>Section IX.C.2</a>)
+    was outside the range 0.30 to 3.3;
+<li>if the measurement was confused by neighboring sources;
+    this was considered to occur when the measurement met one of two
+    criteria: (i) the central portion was below the baseline determined
+    from signal-free parts of the spectrum-half; (ii) the baseline
+    at the low wavelength end of the spectrum-half differed from that
+    at the high wavelength end by more than 20% of the signal in the
+    8-12 &micro;m band or by 10% in the 11-25 &micro;m band. 
+    The lower limit of these thresholds was 2.5 times the sample noise.
+<li>if the measurement did not correlate with the &quot;reference
+    measurement&quot;, defined as the measurement with the smallest
+    number of check-flags.  This choice gave preference to measurements
+    passing over the central part of the detector. Any 8-12 &micro;m measurement
+    for which the correlation coefficient with the reference was below
+    60% or any 11-25 &micro;m measurement for which it was below 50% was
+    rejected. For line spectra without a continuum in the 8-12 &micro;m
+    region the first criterion was waived.
+</ol>
+<P>
+     At least 80% of the spectra in the catalog had correlation
+coefficients above 70 and 60% in the short and long wavelength
+halves, respectively.  Some 40% correlated internally with coefficients
+better than 80% in both spectrum-halves (see <a href=#4>Section IX.C.4</a>).
+<P>
+     The spectrum-halves passing through all of the above tests
+were averaged using the inverse of the square of the noise as
+a weighting factor. At least two measurements in each of the two
+spectrum-halves (8-13 and 11-25 &micro;m) had to be accepted 
+before the spectrum could
+be averaged and included in the spectral catalog.
+<P>
+      After averaging the two spectrum-halves were rejoined, giving
+both halves equal weight (see <a href=#1>Section IX.C.1</a>). Generally the
+join factors differed from 1.00 by only a few percent.
+<P>
+      The averaged spectrum was convolved with the 12 &micro;m survey
+passband. The integrated flux thus obtained, was compared to the
+average 12 &micro;m survey flux of the source.  The ratio between the
+two fluxes is given in the low resolution spectrometer catalog
+record and has a 1 <img src=../images/omega-uc.gif> dispersion around 
+unity of about 15%. Exceptions to this rule will be spectra with sharp 
+lines (classes 8 and 9; see <a href=D.html#2>Section IX.D.2</a>) or 
+small 12 &micro;m fluxes.
+
+<HR>
+<h2><a name=4>C.4 Final Selection of Spectra</a></h2>
+      Three selection criteria were applied for inclusion in the
+Catalog of Low Resolution Spectra.
+
+<ol type=i>
+<li>The source is contained in the IRAS point source catalog.
+<li>The entire spectrum must have been observed at least
+    twice and the individual measurements should be mutually consistent.
+    (individual spectra must pass all the checks mentioned in
+    <a href=#3>Section IX.C.3</a> and must have a minimum correlation 
+    coefficient of 50% between any two measurements of the source. The 
+    large majority of spectra had however, much higher correlation 
+    coefficients (see below).
+<li>The source must pass a subjective visual inspection.
+    About 2.5% of all sources were rejected by this process, mostly
+    because they showed non-point source characteristics or confusion
+    with other sources.
+</ol>
+<P>
+      Four samples of sources were selected for inclusion in the
+catalog.
+
+<ol type=a>
+<li>Sources whose 12 &micro;m survey flux density was larger than
+    25 Jy or whose 25 &micro;m survey flux density was larger than 50 Jy.
+    Individual spectrum-halves were required to correlate with each
+    other with a correlation coefficient of 80% in either spectrum-half.
+    This sample contains about 2150 sources.
+<li>Sources with 12 &micro;m flux densities larger than 1 Jy or 25&nbsp;
+    &micro;m flux densities larger than 2 Jy but not contained in Sample
+    a. The vast majority of these sources proved to be brighter than
+    approximately 5 Jy at 12 &micro;m or 10 Jy at 25 &micro;m.  The correlation
+    coefficients were required to exceed 70% in the 8-12 &micro;m band and
+    60% in the 11-25 &micro;m band. This sample contains about 2450 sources.
+<li>Sources in the same flux density range as sample b but with
+    lower correlation coefficients: between 60 and 70% in the 11-22&nbsp;
+    &micro;m spectrum-half or between 50 and 60% in the 11-25 &micro;m hall; 
+    respectively. There are roughly 850 sources in this sample.
+<li>Sources with minimum survey flux densities of 1 Jy at 12&nbsp;
+    &micro;m or 2 Jy at 25 &micro;m. Of these sources only the 11-25 &micro;m
+    spectrum-half was required to have been measured consistently with a minimum
+    correlation coefficient of 50% between individual measurements.
+    Out of this sample only sources with specified spectral lines
+    and not contained in sample a b, c were selected for the catalog.
+    The selection was carried out by the classification program: only
+    classes 8 and 9 (see <a href=D.html#2>Section IX.D.2</a> and 
+    <a href=D.html#tabD1>Table IX.D.1</a>) were kept.
+    There are approximately 40 spectra with lines in this sample.
+</ol>
+<P>
+      Samples a b, and c contain continuum sources and approximately
+75% of the line sources of the catalog; sample d contains the
+remainder of the line sources.
+
+<P>
+<HR>
+<CENTER><FONT SIZE=+1><A HREF="index.html#toc">Chapter Contents</A>
+| <A HREF="index.html#auth">Authors</A>
+| <A HREF="index.html#ref">References</A>
+<BR>
+<A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> | <A HREF="B.html">Previous Section</A>
+| <A HREF="D.html">Next Section</A></FONT></CENTER>
+<HR>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

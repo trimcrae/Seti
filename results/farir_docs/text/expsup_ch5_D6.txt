@@ -1,0 +1,110 @@
+V.D.6 Overview of Weeks-Confirmation 
+
+ IRAS Explanatory Supplement
+
+ V. Data Reduction
+
+ D. Point Source Confirmation
+
+ D.6 Overview of Weeks-Confirmation
+
+ Chapter Contents | 
+ Introduction | 
+ Authors | 
+ References 
+
+ Table of Contents | 
+ Index | 
+ Previous Section | 
+ Next Section 
+
+ Weeks-Confirmation Decision 
+ Weeks-Confirmation Position Refinement 
+ Weeks-Confirmation Statistical Processing 
+
+ The last stage in the confirmation chain searched for observations
+of the same sources with time separations on the order of a week
+to six months. All hours-confirmed sources became input to the
+weeks-confirmation processor. Sources which were not confirmed
+were placed in the WSDB along with those which were, and no rejections
+were enforced until final catalog preparation. As each new region
+of sky was processed, the new sources were put unconfirmed into
+the WSDB, where they remained until that region was covered again,
+at which time the sources from the earlier coverage served as
+candidates to confirm the newer ones.
+ 
+ As each hours-confirmed source arrived for processing, a
+coarse window on the sky was used to select candidates from the
+WSDB. These may or may not have been weeks-confirmed already.
+The window was 10.3'.square, and the candidates were required
+to be separated in time by at least 36 hours from the source being
+processed. No flux tests were performed. Only a position test
+was used and if more than one candidate passed this test, only
+the candidate with the highest score was kept as a match. Because
+of the sequential testing, valid multiple sightings should have
+been confirmed pairwise as each new sighting entered the processing,
+removing the need to identify more than one correct candidate
+from the WSDB. When a choice had to be made, a counter was incremented
+for possible confusion. Typically only about 3% of the confirmed
+sources were diagnosed as potentially confused at weeks-confirmation.
+ 
+ If there were no acceptable candidates, the new source was
+placed in the WSDB. Otherwise position refinement and discrepancy
+statistical computations were performed.
+
+ D.6.a Weeks-Confirmation Decision 
+
+ The confirmation decision algorithm was a position test
+applied to each pairing of the new hours-confirmed source with
+the candidates. The candidate position probability density function
+was mapped into the in-scan/cross-scan coordinate system of the
+new source. The test was based on the two-dimensional cross-covariance
+of the position probability density functions, evaluated at the
+observed nominal separation. The underlying principle was identical
+to the position test used at hours confirmation, and for relative
+twist angles of less than 4.6 degrees, the same algorithm was
+employed. Otherwise, a generalized implementation was used which
+was extensively complicated by the need to handle arbitrary relative
+twist angles between the axes of symmetry of the density functions.
+ The details of this generalized version are discussed by 
+ Rolfe, Otake, and Fowler (1984) . 
+When the value of the cross-covariance
+fell below the threshold the candidate was released from consideration.
+
+ D.6.b Weeks-Confirmation Position Refinement
+
+ Confirmed source sightings were processed for refinement
+of the position parameters by renormalizing the product of the
+probability density functions. This procedure was similar in
+concept to that of hours-confirmation, but was complicated by
+the generalization to arbitrary relative twist angles. When the
+relative twist angle was less than 4.6 degrees, the hours-confirmation
+algorithm was used. For larger angles, the refined density function
+was sufficiently Gaussian that it was satisfactory merely to assign
+a value of one second of arc to the uniform-error component.
+
+ D.6.c Weeks-Confirmation Statistical Processing
+
+ As at hours-confirmation, histograms of the value of the
+ threshold parameter for confined and non-confined sources were
+separately accumulated position data for both types were output
+for downstream analysis of the sky distribution of these events,
+and known source tracking was performed.
+ 
+ Statistical summations for computing the means and variances
+of position discrepancies were maintained over the SOP period
+and over periods of approximately 50 days. This was done for the
+observed sightings relative to each other, and separately for
+known sources relative to refined position parameters, where applicable.
+Good agreement between a priori error modeling and the observed
+dispersions was found.
+
+ Chapter Contents | 
+ Introduction | 
+ Authors | 
+ References 
+
+ Table of Contents | 
+ Index | 
+ Previous Section | 
+ Next Section

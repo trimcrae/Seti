@@ -1,0 +1,525 @@
+[1503.06422] Calibration of the AKARI Far-infrared All Sky Survey Maps. 
+
+ \SetRunningHead 
+ Takita et al.Calibration of AFASS data.
+
+ \KeyWords 
+ infrared: general – space vehicles – surveys
+
+ Calibration of the AKARI Far-infrared All Sky Survey Maps.
+
+ Satoshi Takita 
+
+ 1 1 affiliation: Institute of Space and Astronautical Science, Japan Aerospace Exploration Agency,
+3-1-1 Yoshinodai, Chuo, Sagamihara, Kanagawa 252-5210, Japan 
+Yasuo Doi 
+
+ 2 2 affiliation: Department of Earth Science and Astronomy, Graduate School of Arts and Sciences, The University of Tokyo,
+Komaba 3-8-1, Meguro, Tokyo 153-8902, Japan 
+Takafumi Ootsubo 
+
+ 2 2 affiliationmark: 
+Ko Arimatsu 
+
+ 1 1 affiliationmark: 3 3 affiliation: Department of Astronomy, Graduate school of Science, The University of Tokyo,
+7-3-1 Hongo, Bunkyo, Tokyo 113-0033, Japan 
+Norio Ikeda 
+
+ 1 1 affiliationmark: 
+Mitsunobu Kawada 
+
+ 1 1 affiliationmark: 
+Yoshimi Kitamura 
+
+ 1 1 affiliationmark: 
+Shuji Matsuura 
+
+ 1 1 affiliationmark: 
+Takao Nakagawa 
+
+ 1 1 affiliationmark: 
+Makoto Hattori 
+
+ 4 4 affiliation: Astronomical Institute, Graduate School of Science, Tohoku University,
+Aramaki, Aoba-ku, Sendai 980-8578, Japan 
+Takahiro Morishima 
+
+ 4 4 affiliationmark: 
+Masahiro Tanaka 
+
+ 5 5 affiliation: Center for Computational Sciences, Tsukuba University,
+1-1-1 Tennodai, Tsukuba-city, Ibaraki 305-8577, Japan 
+and
+Shinya Komugi 
+
+ 6 6 affiliation: National Astronomical Observatory of Japan,
+2-21-1 Osawa, Mitaka, Tokyo, Japan 
+ 
+ takita@ir.isas.jaxa.jp 
+
+ Abstract
+
+ We present an initial analysis of the properties of the all-sky image obtained by the Far-Infrared Surveyor (FIS) onboard the AKARI satellite, at 65  μ 𝜇 \mu m (N60), 90  μ 𝜇 \mu m (WIDE-S), 140  μ 𝜇 \mu m (WIDE-L),and 160  μ 𝜇 \mu m (N160).
+Absolute flux calibration was determined by comparing the data with the COBE/DIRBE data sets, and the intensity range was as wide as from a few MJy sr -1 to > > 1 GJy sr -1 .
+The uncertainties are considered to be the standard deviations with respect to the DIRBE data, and they are less than 10% for intensities above 10, 3, 25, and 26 MJy sr -1 at the N60, WIDE-S, WIDE-L, and N160 bands, respectively.
+The characteristics of point sources in the image were also determined by stacking maps centred on photometric standard stars.
+The full width at half maxima of the point spread functions (PSFs) were 63 ′′ , 78 ′′ , and 88 ′′ at the N60, WIDE-S, and WIDE-L bands, respectively.
+The PSF at the N160 band was not obtained due to the sensitivity, but it is thought to be the same as that of the WIDE-L one.
+
+ 1 Introduction
+
+ The Japanese infrared astronomical satellite AKARI (Murakami et al., 2007 ) performed an all sky survey at six infrared bands centred at 9, 18, 65, 90, 140 and 160  μ 𝜇 \mu m.
+The four longer wavelength bands were observed with the Far-Infrared Surveyor (FIS), one of the two focal plane instruments onboard (Kawada et al., 2007 ) .
+The two shorter FIS bands (N60 centred at 65  μ 𝜇 \mu m and WIDE-S centred at 90  μ 𝜇 \mu m) were observed by the SW detector, and the other two bands (WIDE-L at 140  μ 𝜇 \mu m and N160 at 160  μ 𝜇 \mu m) by the LW detector.
+The all sky survey was started in 2006 May and covered ∼ similar-to \sim 98 % of the whole sky during its cold phase (Nakagawa et al., 2007 ) , continuing until helium exhaustion in 2007 Aug.
+
+ The All-sky Bright Source Catalogue (BSC, version 1), one of the primary goals of AKARI, was released in 2010 Mar (Yamamura et al., 2010 ) .
+Although an all-sky survey image was not one of the primary goals of AKARI, it is scientifically valuable because extended sources are not covered by the BSC.
+There are two previous All-sky Far-infrared (FIR) surveys that were obtained by the IRAS (Neugebauer et al., 1984 ) and COBE (Boggess et al., 1992 ) satellites.
+The IRAS survey was made with two FIR photometric bands centred at 60 and 100  μ 𝜇 \mu m, with a spatial resolution of ∼ 4 ′ similar-to absent superscript 4 ′ \sim 4^{\prime} .
+The COBE mission expanded the wavelength coverage to 240  μ 𝜇 \mu m by using the DIRBE instrument (Hauser et al., 1998 ) , but the spatial resolutions were only ∼ similar-to \sim 0 \fdg 7.
+Recently, Miville-Deschênes & Lagache ( 2005 ) created a new data set of IRIS (Improved Reprocessing of the IRAS Survey) by combining the IRAS and COBE data.
+The IRIS is referred in many fields, but it only covers the wavelengths at or shorter than 100  μ 𝜇 \mu m.
+Since the thermal radiation from interstellar dust, whose typical temperature is ∼ similar-to \sim 30 K, has its peak at 100–200  μ 𝜇 \mu m, the longer wavelength data are important.
+The present AKARI all-sky image includes data at 65, 90, 140, and 160  μ 𝜇 \mu m, with spatial resolution of ∼ similar-to \sim 1 \farcm 5.
+Thus we have created an all sky survey map from the AKARI data set (Doi et al., 2009 ) to provide new legacy data which has a wide potential application for use by the scientific community in many studies.
+In this paper, we report the calibration processes and performance of the FIS all sky maps.
+
+ 2 Data
+
+ In the all sky survey mode, AKARI scanned the sky in an ecliptic orbit, with the telescope always pointing away from the earth.
+At an altitude of ∼ similar-to \sim 700 km, AKARI made the orbit around the earth in ∼ similar-to \sim 100 minutes, scanning at a constant speed of ∼ similar-to \sim 3 \farcm 6 s -1 .
+We refer to the all sky image obtained in this way as the AFASS (AKARI Far-infrared All Sky Survey) image.
+
+ The observing strategy is explained in Kawada et al. ( 2007 ) .
+The detector was read out continuously with a constant sampling rate for each array, and reset to discharge the photocurrent at intervals of about 2 seconds nominally, or 0.5 seconds toward bright sky.
+Close to the Galactic plane, where these long reset intervals were expected to lead to detector saturation, the detectors were reset for each sampling (correlated double sampling: CDS), with reset intervals corresponding to about 26 and 45 ms for the SW and LW detectors, respectively.
+In this paper we refer to the “Normal mode” for the data which were taken with long reset intervals (i.e., 2 or 0.5 seconds) to distinguish it from the “CDS mode” for the short reset intervals.
+
+ The data were pre-processed using the AKARI pipeline tool called “Green-Box”.
+This pipeline applied basic calibrations such as corrections of non-linearity and sensitivity drifts of the detector, rejection of anomalous data due to charged particle hit (glitch), saturation, and other instrumental effects as well as dark-current subtraction.
+Following this initial processing, another “image” pipeline optimised for imaging large spatial scale structures was applied.
+At first, this image pipeline applied a transient response correction to the detector signal and subtraction of zodiacal emission.
+Since the detector had a slow response, the detector output drifted along the scan causing some stripe patterns in the image.
+To remove this artificial stripe pattern, we applied destriping.
+This destriping procedure is as follows.
+Firstly, we applied a two-dimensional Fourier transformation of the image.
+Secondly, we masked the regions corresponding to the stripe patterns along the scan direction in wave number space.
+Next, we interpolated the intensities from the surrounding regions into the masked regions.
+Finally, we applied an inverse Fourier transformation to obtain the destriped image.
+After the image destriping, we performed recursive deglitching and flat-fielding to produce the final processed image.
+Details of the image pipeline are presented in Doi et al. ( 2009 , in prep. ) .
+The final image is made with a pixel scale of 15 ′′ .
+
+ 3 Calibrating the FIS Images
+
+ 3.1 Calibration Method
+
+ The FIS had a cold shutter whose temperature was ∼ similar-to \sim 2.5 K and an internal calibration lamp, which had been well-calibrated in the laboratory.
+However, the characteristics changed in-flight because of differences of the operation mode, surrounding environment, and modified sensitivities due to charged particle hits.
+Thus, we needed to re-calibrate the FIS data using in-flight data.
+In the FIS BSC, the flux densities of point sources were calibrated by measuring the photometric standard stars, the asteroids, and the planets Uranus and Neptune with well-known flux densities.
+This calibration was made for point sources and the data reduction processes were highly optimized for extracting point sources, for which the optimal method differed from that needed to reduce the all-sky image (which included diffuse emission).
+In addition to the normal all sky survey observations, AKARI also had capability to carry out pointed observations toward selected objects/regions with improved sensitivity.
+In these pointed observations, the FIS intensity scales were determined on the basis of the COBE/DIRBE data by the self-flat-fielding method (Matsuura et al., 2007 ; Ikeda et al., 2012 ) .
+The calibration factors were obtained at those regions where the emission from the zodiacal light and the infrared cirrus dominated for the SW and LW detectors, respectively.
+However, this method was applied only to the Normal mode data and the brightness range of the selected regions is of the order of 1–10 MJy sr -1 , while the brightness reaches as high as > > 1 GJy sr -1 at the Galactic plane in the all sky survey.
+Therefore, we needed to extend this method to include brighter emission and also the CDS mode data to be able to calibrate the AFASS image.
+
+ First of all, we estimated the expected brightnesses in the four FIS bands.
+We used the DIRBE Zodi-Subtracted Mission Average (ZSMA) data set as an absolute brightness reference because it was one of the most reliable, well-calibrated all-sky data sets at far-infrared wavelengths to date.
+The uncertainties in the absolute brightness were 10–14 % for the 60–140  μ 𝜇 \mu m bands (Hauser et al., 1998 ) .
+Although there was another data set of IRIS, it was also calibrated with the DIRBE, and it does not have > > 100  μ 𝜇 \mu m bands.
+The expected brightnesses were calculated as follows:
+First, we created continuous Spectral Energy Distributions (SEDs) by interpolating the DIRBE data with a power-low function, for each DIRBE pixel.
+Since the DIRBE data were calibrated under the flat spectrum assumption, we made a colour correction using the applied power-law spectra.
+Second, we multiplied the interpolated SEDs by the FIS relative spectral response function.
+Third, we again made a colour correction to acquire the expected FIS values under the flat spectrum assumption.
+Furthermore, since we selected ZSMA data, we calculated the brightnesses of the zodiacal emission in the FIS bands at the corresponding epoch using the Gorjian model (Gorjian et al., 2000 ) .
+Here, we note that we only considered the “smooth cloud” component because remaining small-scale structures, such as asteroidal dust bands and a mean motion resonance were not well understood so far (Ootsubo et al., in prep. ) .
+The sum of the “DIRBE-expected” and zodiacal emission model brightnesses should be compared to the observed FIS brightness.
+
+ To calibrate the FIS data, we also prepared the AFASS image.
+The Green-Box tool converted the detector outputs to intensities in units of Jy pixel -1 with the conversion factors obtained in the laboratory.
+As noted above, they were not well calibrated for the in-flight environment.
+Although the image pipeline basically subtracted the zodiacal emission, we skipped this process to create image at this time.
+Furthermore, since the intensity of the zodiacal light varies with time, we needed to restrict the epoch.
+The all sky survey was the top priority during the first half year of AKARI’s cold operations, with only a limited number of pointed observations made.
+During the remaining time, the all sky survey was completed at high priority, although the fraction of time devoted to pointed observations was increased.
+Thus, we chose data from the first half year (i.e., 2006 May to Oct), where there were few observational gaps due to pointed observations.
+We convolved the FIS image with the beam pattern of the DIRBE at each DIRBE pixel to directly compare the FIS and DIRBE-expected brightnesses.
+From this comparison, we estimated the conversion factors from the Green-Box-processed data into the absolute intensity.
+As noted before, since we did not consider small-scale structures of the zodiacal emission, we excluded those regions of | β |\beta (Ecliptic latitude) | < |< 40 deg to avoid the effects of zodiacal emission.
+The expected brightnesses of small-scale structures near the ecliptic plane are < < 5 MJy sr -1 , < < 4 MJy sr -1 , < < 1 MJy sr -1 , and < < 1 MJy sr -1 for the N60, WIDE-S, WIDE-L, and N160 bands, respectively (Gorjian et al., 2000 ; Ootsubo et al., in prep. ) .
+After determining the conversion factors, we recreated the AFASS image using the conversion factors, and then compared with those predicted from the DIRBE data again.
+This process was repeated several times, because the image pipeline does not guarantee the linear relation between the Green-Box calibrated FIS data and the processed image.
+Figure  1 shows the converged conversion factors.
+
+ Figure 1: 
+Relations between the Green-Box-precessed FIS intensity and the expected one based on the DIRBE data, including the zodiacal light emission.
+The colour scales are the number of the DIRBE pixels, where | β | > 𝛽 absent |\beta|> 40 degrees.
+The top row panels are for the Normal mode data, and the bottom rows for the CDS mode.
+The red broken lines show the adopted conversion factors.
+
+ 3.2 Flux Uncertainties
+
+ Figure  2 shows the pixel-to-pixel comparison between the calibrated FIS intensities and the expected values calculated from the DIRBE data, for each DIRBE pixel where | β | > 𝛽 absent |\beta|> 40 deg.
+In this figure, the zodiacal emission of the smooth cloud component was subtracted, and all-season data were used for the AFASS image.
+We note that the FIS data still included other zodiacal emission components of asteroidal dust bands and a mean motion resonance.
+A good correlation exists for brighter ( ∼ similar-to \sim 10 MJy sr -1 ) region, while there are some deviations from the linear relation at fainter brightness levels due to the incompleteness of the zodiacal emission model and the DIRBE sensitivity of ≳ greater-than-or-equivalent-to \gtrsim 10 MJy sr -1 .
+The intensity uncertainties were considered to be the standard deviations with respect to the DIRBE-expected intensities in Figure  2 for various intensity ranges, as shown in Table  1 .
+We concluded that the standard deviations are less than 10 % for > > 10, 3, 25, and 26 MJy sr -1 at the N60, WIDE-S, WIDE-L, and N160 bands, respectively.
+We note that these estimates are based on the spatial resolution of DIRBE, i.e., about 0.7  deg degree \deg .
+The WIDE-S band is the most sensitive one, and the two longer wavelength bands have large scatter at fainter (a few MJy sr -1 ) regions.
+This is because the performance of the LW detector is not as good as that of the SW one, which can be also seen in Figure  1 .
+Since the LW detector consisted of independent Ge:Ga elements, the sensitivity between the elements was largely scattered, while the SW detector was a monolithic Ge:Ga array and the sensitivity is quite uniform.
+It is hard to estimate the sensitivity for the N60 band, because it is the one most seriously affected by the zodiacal emission of the 4 FIS bands.
+Although we excluded the regions of | β | < 𝛽 absent |\beta|< 40 deg, where the zodiacal emission is dominant, there still remain the small-scale structures of the emission at | β | > 𝛽 absent |\beta|> 40 deg.
+The faint intensity ( ≲ less-than-or-similar-to \lesssim 1 MJy sr -1 ) regions are thought to be affected by the zodiacal emission.
+Therefore, we should re-calibrate the image when the model of the zodiacal emission becomes more reliable.
+
+ Figure 2: 
+Relations between the calibrated FIS intensity and the expected intensity based on the DIRBE data, after subtraction of the smooth cloud component.
+The colour scales are the number of the DIRBE pixels, where | β | > 𝛽 absent |\beta|> 40 degrees.
+The broken lines indicate the deviations of ± plus-or-minus \pm 3 MJy sr -1 from the linear relation of (expected intensity) = (calibrated intensity).
+
+ Table 1: 
+Uncertainties in the intensity calibration for each band.
+The uncertainties from the slope of unity in Figure  2 are given for individual intensity bins.
+The 1  σ 𝜎 \sigma uncertainties is calculated for each DIRBE pixel where | β | > 𝛽 absent |\beta|> 40 deg.
+
+ N60 
+ WIDE-S 
+ WIDE-L 
+ N160 
+
+ MJy sr -1 
+
+ 2.5 
+ ∗ ∗ \ast 
+ 15.1% 
+ ∗ ∗ \ast 
+ ∗ ∗ \ast 
+
+ 4.0 
+ ∗ ∗ \ast 
+ 8.1% 
+ ∗ ∗ \ast 
+ ∗ ∗ \ast 
+
+ 6.3 
+ 20.1% 
+ 4.7% 
+ ∗ ∗ \ast 
+ ∗ ∗ \ast 
+
+ 10 
+ 9.9% 
+ 4.5% 
+ 45.4% 
+ 56.1% 
+
+ 16 
+ 8.4% 
+ 4.2% 
+ 14.3% 
+ 16.6% 
+
+ 25 
+ 9.7% 
+ 4.3% 
+ 10.1% 
+ 11.2% 
+
+ 40 
+ 10.8% 
+ 4.5% 
+ 8.3% 
+ 8.8% 
+
+ 63 
+ 11.1% 
+ 5.3% 
+ 8.1% 
+ 7.9% 
+
+ 100 
+ 12.5% 
+ 5.7% 
+ 8.9% 
+ 8.9% 
+
+ 160 
+ 10.4% 
+ 7.3% 
+ 9.6% 
+ 9.7% 
+
+ 250 
+ 13.2% 
+ 8.3% 
+ 9.8% 
+ 10.3% 
+
+ 400 
+ 11.3% 
+ 8.1% 
+ 8.8% 
+ 8.9% 
+
+ 630 
+ 11.7% 
+ 10.3% 
+ 7.0% 
+ 7.3% 
+
+ 1000 
+ 13.0% 
+ 7.9% 
+ 5.9% 
+ 6.5% 
+
+ 4 Point Sources
+
+ 4.1 Point Spread Function
+
+ Arimatsu et al. ( 2014 ) have investigated the characteristics of point sources in the FIS maps using preliminary data, which were almost the same as the released data.
+Here, we re-estimated the Point Spread Functions (PSFs) using the released data, following Arimatsu et al. ( 2014 ) .
+We chose 352 photometric standard stars from Cohen et al. ( 1999 ) with expected flux densities of 0.02–10 Jy at the WIDE-S band.
+To derive the PSF, we picked up those sources whose flux densities were greater than the 2.5  σ 𝜎 \sigma detection limit to secure sufficient number of sources.
+We then stacked 49, 97, and 9 stars with flux densities above 1.2, 0.28, and 0.7 Jy at the N60, WIDE-S, and WIDE-L bands, respectively.
+The derived PSFs are shown in Figure  3 and their full width at half maximum (FWHM) are listed in Table  2 .
+We did not determine the PSF at the N160 band, because there were not enough bright standard stars detected at the band.
+However, since the FIS PSFs are determined by the detector characteristics rather than optics and the PSF shapes at the WIDE-L and N160 bands are similar in pointed observations (Shirahata et al., 2009 ) , we assume that the N160 PSF is same as the WIDE-L one in the AFASS image.
+
+ Table 2: FWHMs of stacked PSFs. 
+
+ N60 
+ WIDE-S 
+ WIDE-L 
+
+ FWHM [arcsec] 
+ 63.4 ± 0.2 plus-or-minus 63.4 0.2 63.4\pm 0.2 
+ 77.8 ± 0.2 plus-or-minus 77.8 0.2 77.8\pm 0.2 
+ 88.3 ± 0.9 plus-or-minus 88.3 0.9 88.3\pm 0.9 
+
+ (in-scan) 
+ 76.1 ± 0.4 plus-or-minus 76.1 0.4 76.1\pm 0.4 
+ 102.3 ± 0.3 plus-or-minus 102.3 0.3 102.3\pm 0.3 
+ 98.3 ± 1.4 plus-or-minus 98.3 1.4 98.3\pm 1.4 
+
+ (cross-scan) 
+ 31.3 ± 0.3 plus-or-minus 31.3 0.3 31.3\pm 0.3 
+ 55.0 ± 0.1 plus-or-minus 55.0 0.1 55.0\pm 0.1 
+ 72.1 ± 1.1 plus-or-minus 72.1 1.1 72.1\pm 1.1 
+
+ solid angle [arcsec 2 ] 
+ 2699 ± 40 plus-or-minus 2699 40 2699\pm 40 
+ 6375 ± 30 plus-or-minus 6375 30 6375\pm 30 
+ 8031 ± 237 plus-or-minus 8031 237 8031\pm 237 
+
+ N source 
+ 
+ 49 
+ 97 
+ 9 
+
+ Figure 3: 
+Obtained PSFs for the FIS N60 (65  μ 𝜇 \mu m), WIDE-S (90  μ 𝜇 \mu m), and WIDE-L (140  μ 𝜇 \mu m) bands.
+The contours are at 75 %, 50 %, 25 %, and 10 % of the peak intensities.
+
+ 4.2 Flux Calibrations
+
+ We examined the flux calibrations for the point sources in the AFASS map.
+We prepared 10 ′ × 10 ′ superscript 10 ′ superscript 10 ′ 10^{\prime}\times 10^{\prime} maps centred at the positions of selected standard stars.
+We subtracted the sky background from each map by taking the median value, and normalized it to the expected flux density.
+We separated selected sources into several groups over their appropriate flux density.
+Then, we stacked the maps for each group and took average values.
+We performed aperture photometry on the stacked maps using an aperture of 90 ′′ radius with a sky background area of 120–300 ′′ radius.
+Figure  4 shows the observed-to-expected flux density ratio for the stacked sources as a function of the expected flux density in each bin, and the mean ratios are 0.627 ± plus-or-minus \pm 0.029, 0.696 ± plus-or-minus \pm 0.008, and 0.381 ± plus-or-minus \pm 0.043 for the N60, WIDE-S and WIDE-L bands, respectively.
+Due to several improvements of the data reduction processes, these ratios differe from those of Arimatsu et al. ( 2014 ) , which used preliminary data.
+One significant difference is that the ratio at the N60 band becomes smaller for the faint source bins ( < < 0.5 Jy).
+However, these small ratios are likely caused by the poor sensitivity of the N60 band, i.e., the signal-to-noise ratios of the faint sources in each map are smaller than one.
+Details of these processes are described in Arimatsu et al. ( 2014 ) .
+
+ Figure 4: 
+Observed-to-expected flux density ratio as a function of the expected flux density for the FIS (a) N60, (b) WIDE-S, and (c) WIDE-L bands.
+The error bars on the y-axis represent the 1  σ 𝜎 \sigma photometry uncertainties.
+The solid lines with the filled areas are the weighted averages with 1  σ 𝜎 \sigma uncertainties.
+The dashed lines indicate the ratio of unity.
+The vertical lines represent the 5  σ 𝜎 \sigma detection limits of 2.4, 0.55, and 1.4 Jy for the All-Sky Survey at the FIS N60, WIDE-S, and WIDE-L bands, respectively (Kawada et al., 2007 ) .
+
+ 4.3 Comparison with the FIS Bright Source Catalogue
+
+ We checked the confidence of the data by comparing with the FIS BSC.
+Here, we used sources whose quality flags (FQUALxx) are 3 in the BSC, indicating the sources are reliable.
+We performed centroid determination for each BSC source using the GCNTRD procedure in the Interactive Data Language (IDL) Astronomy User’s Library (Landsman, 1993 ) to check whether or not the source is detected in the AFASS map.
+We rejected those sources whose positional differences between the BSC and the AFASS maps were larger than 48 ′′ , which was used to extract a unique source in the BSC.
+As a result, we have detection rates of ∼ similar-to \sim 50 % for all the 4 bands.
+These relatively low detection rates were caused by the large size of the PSFs of the AFASS maps.
+Since most of the undetected sources are located around extended objects such as molecular clouds, planetary nebulae and galaxies, it is hard to determine the source centroid in such a region (see Figure  5 ).
+We note that the data reduction processes of the BSC were highly optimized for extracting point sources.
+Figure  6 shows the positional accuracy of the AFASS maps.
+For the N60 and WIDE-S bands, the accuracy becomes worse along the y-axis, i.e., the scan direction, caused by the elongated shape of the PSFs along the scan direction.
+
+ Figure 5: 
+Example of the centroid determination of BSC sources around M33 on the AFASS map in the WIDE-S band.
+The circle symbols are the sources whose centroids were determined, and the cross ones not well determined.
+
+ We also performed aperture photometry for the detected sources using an aperture size of 90 ′′ with a sky region of 120–300 ′′ in radius.
+Since the aperture size was very large, we only considered the source observed in the Normal mode to avoid contaminations from surroundings.
+The CDS mode was used near the Galactic plane, and thus, the source density was high.
+Figure  7 shows the ratio of the measured to BSC flux densities as a function of NDENS, which is the number of nearby point sources within 5 ′ from each detected source in the BSC.
+The ratio is found to become large at NDENS ≥ \geq 1, because of serious contamination caused by the large aperture size.
+
+ We also show the flux density ratio as a function of the BSC flux density for the sources with NDENS=0 in Figure   8 .
+There is no significant correlation with the source flux density, which is consistent with Arimatsu et al. ( 2014 ) .
+The large scatters in flux density ratio are due to the difference in photometry method, i.e., the BSC flux densities are determined by the PSF-fitting method.
+
+ Table 3: Number of the point sources detected in the AFASS maps. 
+
+ N60 
+ WIDE-S 
+ WIDE-L 
+ N160 
+
+ Normal mode 
+
+ BSC 
+ 10799 
+ 250804 
+ 66276 
+ 14722 
+
+ AFASS 
+ 8683 
+ 166831 
+ 39415 
+ 9353 
+
+ CDS mode † 
+
+ BSC 
+ 17980 
+ 122749 
+ 52983 
+ 22135 
+
+ AFASS 
+ 12774 
+ 50683 
+ 23139 
+ 11547 
+
+ ( † Sources which were took in the CDS mode are indicated by the first bit of the FLAGSxx flag in the BSC.)
+
+ Figure 6: 
+Positional differences of the point sources between the AFASS maps and the FIS BSC for the Normal (top rows) and CDS (bottom rows) modes.
+The dash-dotted ovals represent the FWHM of the PSF, tabulated in Table 2 .
+The differences are estimated on the Ecliptic coordinates, and thus, the x- and y-axis correspond to the cross-scan and in-scan directions of AKARI, respectively.
+
+ Figure 7: 
+Flux density ratios between the AFASS map and the FIS BSC as a function of the NDENS number.
+The dotted lines show the ratio of unity, and the broken lines indicate the ratios derived from the PSF analysis (0.627, 0.696, and 0.381 for the N60, WIDE-S, and WIDE-L bands, respectively).
+
+ Figure 8: 
+Flux density ratios of the NDENS=0 sources between the AFASS map and the FIS BSC as a function of BSC flux density.
+The dotted and broken lines have the same meaning as in Figure  7 .
+
+ 5 Summary
+
+ This paper presents an initial analysis of the imaging performance of the AKARI Far-infrared all sky survey.
+We have performed the absolute calibration of the AFASS image by comparing with the COBE/DIRBE data, and the standard deviations with respect to the DIRBE-expected intensities are less than 10% for intensities above 10, 3, 25, and 26 MJy sr -1 at the N60, WIDE-S, WIDE-L and N160 bands, respectively.
+The accuracy at the N60 band was reduced by the unreliability of the zodiacal light model, and those at the two longer wavelengths were due to the detector performances.
+The AFASS image is improved in spatial resolution and wavelength coverage, compared with the COBE/DIRBE and IRAS surveys.
+The positional accuracies are in good agreement with the PSFs.
+The characteristics of point sources in the image were also checked, and are consistent with Arimatsu et al. ( 2014 ) .
+
+ The AFASS data will be useful for studies of the Solar system, the Galaxy and nearby galaxies, in terms of both the spatial distribution of dust and their spectral energy distributions.
+It is also helpful for future/on-going infrared/submm missions such as ALMA, JWST, and SPICA.
+
+ This research is based on observations with AKARI, a JAXA project with the participation of ESA.
+This work has been supported by JSPS KAKENHI Grant Number 19204020, 21111005, 25247016, and 25400220.
+
+ References
+
+ Arimatsu et al. (2014) 
+ Arimatsu, K., Doi, Y., Wada, T., Takita, S., Kawada, M., Matsuura, S., Ootsubo, T., & Kataza, H. 2014, PASJ, 66, 47
+
+ Boggess et al. (1992) 
+ Boggess, N. W., et al. 1992, ApJ, 397, 420
+
+ Cohen et al. (1999) 
+ Cohen, M., Walker, R. G., Carter, B., Hammersley, P., Kidger, M., & Noguchi, K. 1999, AJ, 117, 1864
+
+ Doi et al. (2009) 
+ Doi, Y., et al. 2009, AKARI, a Light to Illuminate the Misty Universe, 418, 387
+
+ Doi et al. (in prep.) 
+ Doi, Y., et al. submitted to PASJ.
+
+ Gorjian et al. (2000) 
+ Gorjian, V., Wright, E. L., & Chary, R. R. 2000, ApJ, 536, 550
+
+ Hauser et al. (1998) 
+ Hauser, M. G., et al. 1998, ApJ, 508, 25
+
+ Ikeda et al. (2012) 
+ Ikeda, N., Kitamura, Y., Takita, S., Ueno, M., Suzuki, T., Kawamura, A., & Kaneda, H., 2012, ApJ, 745, 48
+
+ Kawada et al. (2007) 
+ Kawada, M., et al. 2007, PASJ, 59, 389
+
+ Kelsall et al. (1998) 
+ Kelsall, T., et al. 1998, ApJ, 508, 44
+
+ Landsman (1993) 
+ Landsman, W. B., 1993, Astronomical Data Analysis Software and Systems II, 246
+
+ Matsuura et al. (2007) 
+ Matsuura, S., et al. 2007, PASJ, 59, 503
+
+ Miville-Deschênes & Lagache (2005) 
+ Miville-Deschênes, M.-A., & Lagache, G. 2005, ApJS, 157, 302
+
+ Murakami et al. (2007) 
+ Murakami, H., et al. 2007, PASJ, 59, 369
+
+ Nakagawa et al. (2007) 
+ Nakagawa, T., et al. 2007, PASJ, 59, 377
+
+ Neugebauer et al. (1984) 
+ Neugebauer, G., et al. 1984, ApJ, 278, L1
+
+ Ootsubo et al. (in prep.) 
+ Ootsubo, T., et al. in prep.
+
+ Shirahata et al. (2009) 
+ Shirahata, M., et al. 2009, PASJ, 61, 737
+
+ Verdugo et al. (2007) 
+ Verdugo, E., et al. 2007, AKARI FIS Data User Manual, http://www.ir.isas.jaxa.jp/ASTRO-F/Observation/IDUM/FIS_IDUM_1.3.pdf
+
+ Wright (1998) 
+ Wright, E. L. 1998, ApJ, 496, 1
+
+ Yamamura et al. (2010) 
+ Yamamura, I., Makiuti, S., Ikeda, N., Fukuda, U., Oyabu, S., Koga, T., & White, G. J. 2010,
+AKARI/FIS All-Sky Survey Bright Source Catalog Version 1.0 Release Note, http://www.ir.isas.jaxa. jp/ASTRO-F/Observation/PSC/Public/RN/AKARI-FIS_BSC_V1_RN.pdf
+
+ ◄ 
+ 
+ Feeling
+lucky? 
+ 
+ Conversion
+report 
+ Report
+an issue 
+ View original
+on arXiv ► 
+
+ Copyright 
+ Privacy Policy 
+
+ Generated on Fri Mar 8 16:42:24 2024 by L a T e XML

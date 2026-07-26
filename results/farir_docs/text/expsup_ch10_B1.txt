@@ -1,0 +1,705 @@
+X.B.1 The Machine Readable Version of the Point
+Source Catalog 
+
+ IRAS Explanatory Supplement
+
+X. The Formats of the IRAS Catalogs and Atlases
+
+B. Point Sources
+
+B.1 The Machine Readable Version of the Point Source Catalog
+
+ Chapter Contents |
+ Authors |
+ References 
+
+ Table of Contents |
+ Index |
+ Previous Section |
+ Next Section 
+
+ The point source catalog tape is divided into six individual
+files, covering the range 0 to 24 hr in right ascension in blocks
+of four hours each. Each file contains from 20,000 to 90,000 sources
+arranged in order of increasing right ascension. Each of the six
+catalog files is preceded by a file containing a single 80-character
+ASCII record which lists the date and version number of the catalog.
+ Thus to read the entire catalog one must read sequentially through
+12 files, six containing the data and six containing dates and
+version numbers.
+ 
+ Table X.B.1 describes each
+entry in the catalog tape. Those
+columns that are also included in the printed version are marked.
+ Each catalog entry requires 160 + NID x
+40 bytes of ASCII data
+where NID is the number of positional associations for each source.
+In the table the column "Format" refers to the length
+and type of the (FORTRAN) character field used to read or write
+each entry. Figure X.B.1 describes the
+format of the printed
+version of the catalog.
+ 
+ The tape is written with 80-character (ASCII) logical records
+and blocked with 256 logical records per physical record so that
+one can regard the tape as a sequence of card images. The entries
+are arranged so that the source data fits into two records. Association
+information requires an additional 40 characters per association
+and appears in subsequent records, two associations per record.
+If one assumes an average
+of two associations per source, then a file for one of the right
+ascension blocks will require about 10 Mbytes.
+
+ Format of Point Source Catalog Tape
+Table X.B.1 
+
+ Start Byte 
+ Name 
+ Description 
+ Units 
+ Format 
+
+ 00 
+ NAME 1 
+ Source Name 
+ --- 
+ 11A1
+
+ 11 
+ HOURS 
+ Right Ascension 1950. 
+ Hours 
+ I2
+
+ 13 
+ MINUTE 
+ Right Ascension 1950. 
+ Minutes 
+ I2
+
+ 15 
+ SECOND 1 
+ Right Ascension 1950. 
+ deci-Seconds 
+ I3
+
+ 18 
+ DSIGN 1 
+ Declination Sign 
+ +/- 
+ A1
+
+ 19 
+ DECDEG 
+ Declination 1950. 
+ Arc Deg 
+ I2
+
+ 21 
+ DECMIN 
+ Declination 1950. 
+ Arc Min 
+ I2
+
+ 23 
+ DECSEC 1 
+ Declination 1950. 
+ Arc Sec 
+ I2
+
+ 25 
+ MAJOR 1 
+ Uncertainty ellipse major axis 
+ Arc Sec 
+ I3
+
+ 28 
+ MINOR 1 
+ Uncertainty ellipse minor axis 
+ Arc Sec 
+ I3
+
+ 31 
+ POSANG 1 
+ Uncertainty ellipse position angle 
+ Degree (East of North) 
+ I3
+
+ 34 
+ NHCON 1 (<25) 
+ Number of times observed 
+ --- 
+ I2
+
+ 36 
+ FLUX1 
+ Averaged non-color corrected flux densities (1 value per band) 
+ Jansky (10 -26 W m -2 Hz -1 ) 
+ 4E9.3
+
+ 72 
+ FQUAL 1 
+ flux density quality. (1 value per band) 
+ --- 
+ 4I1
+
+ 76 
+ NLRS 
+ Number of significant LRS spectra 
+ --- 
+ I2
+
+ 78 
+ LRSCHAR 1 
+ Characterization of averaged LRS spectrum. 
+ --- 
+ 2A1
+ (---------------new record--------------)
+
+ 80 
+ RELUNC 1 
+ percent relative flux density uncertainties (1 value per band). 
+ --- 
+ 4I3
+
+ 92 
+ TSNR 
+ ten times the minimum signal-to-noise ratio in each band 
+ --- 
+ 4I5
+
+ 112 
+ CC 1 
+ point source correlation coefficient (1 value per band). 
+ --- 
+ 4A1
+
+ 116 
+ VAR 1 
+ percent Likelihood of Variability 
+ 
+ I2
+
+ 118 
+ DISC 
+ Discrepant Fluxes flag (one per band, hex-encoded) 
+ --- 
+ A1
+
+ 119 
+ CONFUSE 1 
+ Confusion flag (1 flag per band, hex-encoded) 
+ --- 
+ A1
+
+ 120 
+ PNEARH 1 
+ Number of nearby hours- confirmed point sources 
+ --- 
+ I1
+
+ 121 
+ PNEARW 1 
+ Number of nearby weeks- confirmed point sources 
+ --- 
+ I1
+
+ 122 
+ SES1 1 
+ Number of seconds-confirmed nearby small extended sources. (1 value per band) 
+ --- 
+ 4I1
+
+ 126 
+ SES2 1 
+ Number of nearby weeks-confirmed small extended sources. (1 value per band) 
+ --- 
+ 4I1
+
+ 130 
+ HSDFLAG 1 
+ Source is located in high source density bin. (1 value per band, hex-encoded) 
+ --- 
+ A1
+
+ 131 
+ CIRR1 1 
+ Number of nearby 100 um only WSDB sources 
+ --- 
+ I1
+
+ 132 
+ CIRR2 1 
+ Spatially filtered 100 um sky brightness ratio to flux density of point source (see text) 
+ --- 
+ I1
+
+ 133 
+ CIRR3 
+ Total 100 um sky surface brightness 
+ MJy sr -1 
+ I3
+
+ 136 
+ NID 1 (<25) 
+ Number of positional associations. 
+ --- 
+ I2
+
+ 138 
+ IDTYPE 
+ Type of Object 
+ --- 
+ I1
+
+ 139 
+ SPARE 
+ 21 spare bytes 
+ --- 
+ 21A1
+ (---------------new record--------------)
+
+ 160 
+ CATN0 1 
+ Catalog number 
+ --- 
+ I2
+
+ 162 
+ SOURCE 1 
+ Source ID 
+ --- 
+ 15A1
+
+ 177 
+ TYPE 1 
+ Source Type/Spectral Class 
+ --- 
+ 5A1
+
+ 182 
+ RADIUS 1 
+ Radius Vector from IRAS Source to Association 
+ Arc Sec 
+ I3
+
+ 185 
+ POS 
+ Position Angle from IRAS Source to Association 
+ Degree E of N. 
+ I3
+
+ 188 
+ FIELD1 2 
+ object field #1 (magnitude/other) 
+ catalog dependent 
+ I4
+
+ 192 
+ FIELD2 2 
+ object field #2 (magnitude/other) 
+ catalog dependent 
+ I4
+
+ 196 
+ FIELD3 
+ object field #3 (size/other) 
+ catalog dependent 
+ I4
+
+ 200 
+ 
+ continuation of associations 3 
+
+ -240 
+ 
+ in blocks of 40 bytes 
+
+ etc. 
+
+ 1 Quantities listed in printed version of catalog.
+ 2 FIELD1 is listed in printed version of catalog, except for catalogs
+2 and 19, where FIELD2 is listed.
+ 3 CATNO, SOURCE, TYPE, RADIUS, POS, FIELD 1-3 are repeated in blocks
+of 40 bytes, 2 per logical record, as necessary. The definition
+and formats of FIELD1-3 depend on the individual catalog in which
+the association is found. See Table X.B.4 .
+
+ Figure X.B.1 Explanation of format of printed version of point source catalog.
+
+ larger 
+ largest 
+
+ In general, for quantities that have a value in each wavelength
+band, subscripts or array indices range from 1 to 4 and refer,
+respectively, to 12, 25, 60 and 100 um. A number of the flags
+discussed below have values in each of the four wavelength bands.
+For compactness these are encoded into a single base-16 (Hex)
+digit (values 0-F) in the following manner ( Table X.B.2 ).
+The four bits of that hex digit correspond to the four wavelength
+bands with bit 0 (Least Significant Bit) for 12 um, bit 1 for
+25 um, bit 2 for 60 um and bit 3 for 100 um. The presence
+of a flag in a band is denoted by setting its bit to 1. Thus a source
+with a particular flag, e.g. CONFUSE, set at 12 and 25 um would
+have CONFUSE = 0011 = 3(Hex) while one confused in 25,60
+ and 100 um would have CONFUSE = 1110 = E(Hex). A flag
+encoded
+in this manner will be referred to as "hex-encoded by band".
+ 
+ The remainder of this section discusses individual entries
+in the catalog. At the end of the section a few remarks relevant
+only to the printed version of the catalog are given. 
+
+ Meaning of Hex Encoded Flags
+
+Table X.B.2 
+
+ Flag Set in A Particular Band 
+ Resultant Value 
+ 
+ 100 um (Bit 3) 
+ 60 um (Bit 2) 
+ 25 um (Bit 1) 
+ 12 um (Bit 0) 
+ of Encoded Flag xxxx = HEX=Decimal 
+
+ 0 
+ 0 
+ 0 
+ 0 
+ 0000=0=0
+
+ 0 
+ 0 
+ 0 
+ 1 
+ 0001=1=1
+
+ 0 
+ 0 
+ 1 
+ 0 
+ 0010=2=2
+
+ 0 
+ 0 
+ 1 
+ 1 
+ 0011=3=3
+
+ 0 
+ 1 
+ 0 
+ 0 
+ 0100=4=4
+
+ 0 
+ 1 
+ 0 
+ 1 
+ 0101=5=5
+
+ 0 
+ 1 
+ 1 
+ 0 
+ 0110=6=6
+
+ 0 
+ 1 
+ 1 
+ 1 
+ 0111=7=7
+
+ 1 
+ 0 
+ 0 
+ 0 
+ 1000=8=8
+
+ 1 
+ 0 
+ 0 
+ 1 
+ 1001=9=9
+
+ 1 
+ 0 
+ 1 
+ 0 
+ 1010=A=10
+
+ 1 
+ 0 
+ 1 
+ 1 
+ 1011=B=11
+
+ 1 
+ 1 
+ 0 
+ 0 
+ 1100=C=12
+
+ 1 
+ 1 
+ 0 
+ 1 
+ 1101=D=13
+
+ 1 
+ 1 
+ 1 
+ 0 
+ 1110=E=14
+
+ 1 
+ 1 
+ 1 
+ 1 
+ 1111=F=15 
+
+ Source Name: NAME
+
+ The IRAS source name is derived from its position by combining
+the hours, minutes and tenths of minutes of right ascension and
+the sign,deg and minutes of the declination. In obtaining
+the minutes of right ascension and declination for the name, the
+positions were truncated. The letters 'A','B','C', etc. are appended
+to names of sources so close together that they would otherwise
+have had identical names. Names were uniquely assigned to both
+catalog and reject file sources, with catalog sources receiving
+letters first.
+
+ Position: (HOURS,MINUTE,SECOND,DSIGN,DECDEG,DECMIN,DECSEC)
+
+ Positions are given for the equinox 1950.0, and epoch 1983.5.
+ Hours (HOURS) and minutes (MINUTE) of right ascension are given
+as integers while seconds (SECOND) are rounded to integer deciseconds.
+ The declination is given as a character sign (DSIGN) followed
+by integer values ofdeg (DECDEG), minutes (DECMIN) and seconds
+(DECSEC). Values of 60 seconds are given when the truncated minutes
+(given here) disagree with the minutes in the rounded position.
+
+ Position Uncertainty: MAJOR, MINOR, POSANG
+
+ As discussed in Section VII.B.2 ,
+the uncertainty in the
+position for a source depends on its brightness in the various
+wavelength bands, its path across the focal plane and the number
+of sightings. The final uncertainty after position refinement
+is expressed as a 95% confidence uncertainty ellipse
+(see Section V.D.9 ) whose
+semi-major (MAJOR) and semi-minor (MINOR) axes are
+given in seconds of arc. The orientation (POSANG) of the ellipse
+on the sky is expressed in terms of the angle between the major
+axis of the ellipse and the local equatorial meridian. It is expressed
+indeg east of north
+
+ Number of Sightings: NHCON
+
+ The number of hour-confirmed sightings is given. This number
+of flux entries will be found in the WSDB.
+
+ Flux Density: FLUX(4)
+
+ Each of the four wavelengths has a non-color-corrected flux
+density in units of Janskys,
+(1 Jy = 10 -26 W m -2 Hz -1 ). The quoted
+value is an average of all the hours-confirmed sightings as obtained
+by the prescription described in
+ Section V.H.5 . The quality of
+each flux density is designated by FQUAL (see below).
+ 
+The flux densities have been calculated assuming an intrinsic
+source energy distribution such that the flux density
+ f v is proportional to v -1 .
+Corrections to other spectral shapes can be made by consulting
+ Section VI.C .
+ 
+ The flux densities for sources so bright that they saturated
+the analog-to-digital converter on every sighting are lower limits
+based on the brightest value recorded. The uncertainties are
+given as ten times the quoted flux density and a flag is set indicating
+saturation has occurred ( Table X.B.7a ).
+
+ Signal-to-Noise Ratio: TSNR(4)
+
+ The signal-to-noise ratio given for an individual hours-confirmed
+sighting is the highest value of the detections comprising that
+sighting ( Section V.C.2 ). The
+values quoted in the catalog are ten times the minimum 
+of the signal-to-noise ratios for the
+various sightings (HCONs) of the source. A value is given for
+each wavelength band with a high or moderate quality measurement
+and for those upper limits coming from a non-seconds-confirmed
+detection. Values of TSNR greater than 30,000 are given as 30,000.
+
+ Source Variability: VAR
+
+ VAR is the percent probability (0-99) that a source is variable
+based on an analysis of the 12 and 25 um flux densities and their
+uncertainties (see Section V.H.5 ).
+The value "-1 " indicates
+that the source was not examined for variability.
+
+ Discrepant Fluxes: DISC(4)
+
+ The DISC flag indicates whether any one of the fluxes in
+a given band disagrees with others in that band, hex-encoded by
+band ( Section V.H.5 ).
+
+ Flux Density Quality: FQUAL(4)
+
+ As described in Section V.H.5 ,
+a flux density measurement
+can be either high quality (FQUAL=3), moderate quality (FQUAL=2)
+or an upper limit (FQUAL= 1).
+ 
+ Low-Resolution Spectra: NLRS,LRSCHAR
+
+ The Low-Resolution Spectrometer obtained 8-25 um spectra
+of bright 12 and 25 um sources
+( Chapter IX ). NLRS gives the number
+of statistically meaningful spectra available for the source.
+LRSCHAR gives a short characterization of the nature of the spectrum
+( Table IX.D.1 ). All of
+the LRS spectra are available in tape and
+printed forms ( Astronomy and Astrophysics
+Supplement, 1985 ) as described below
+( Section X.E ) and in Chapter IX .
+
+ Flux Density Uncertainties: RELUNC (4)
+
+ Each flux density measurement other than an upper limit
+has an associated uncertainty expressed as a 1
+ value in units
+of l00 x
+ f v / f v .
+Uncertainties are discussed in Sections V.H.5 
+and VII.D.2 .
+
+ Point Source Correlation: CC(4)
+
+ As described in Section V.C.4 ,
+the point source correlation
+coefficient can have values between 87-100%. These are encoded
+as alphabetic characters with A=100, B=99...N=87, one value per
+band. The value quoted is for the highest correlation coefficient
+seen for that source on any sighting.
+
+ Confusion: CONFUSE,PNEARN,PNEARW,HSDFLAG
+
+ As described in Section V.D.2 ,
+a great deal of care went
+into trying to untangle instances of confusion between neighboring
+sources. In parts of the sky where the source density is low,
+confusion processing was sometimes able to separate sources that
+are quite close together. The CONFUSE flag is set if two or more
+sightings of the source in a given band had confusion status bits
+set indicating confusion in the seconds-confirmation or band-merging
+processes. This flag is hex-encoded by band.
+ 
+ Other indicators of possible confusion are given by PNEARN
+and PNEARW which are, respectively, the numbers of hours-confirmed
+and weeks-confirmed point sources located within a 4.5 cross-scan
+and 6' in-scan (half-widths) window centered on the source. Values
+larger than 9 are given as 9.
+ 
+ Regions of high source density received special processing
+to improve the reliability of the quoted sources (see
+ Section V.H.6 ).
+The regions are band-dependent. If a particular band
+of a given source went through high source density processing,
+then the appropriate bit in HSDFLAG ( Table X.B.7 )
+is set. HSDFLAG is hex encoded by band.
+
+ Small Extended Sources: SES1 (4), SES2(4)
+
+ SES1 is the number of seconds-confirmed, small extended
+source detections in a given band found within a window centered
+on the source. The size of the window is 6' in-scan x 4.5' cross-scan
+(half-widths). As described in Sections V.H.3-4 
+and VII.H.1 ,
+values of SES1 greater than 1 should caution the
+reader that significant extended structure may exist in the region
+and that the source in question may be a point-source like piece
+of a complex field.
+ 
+ SES2 is the number of weeks-confirmed small extended sources
+in a given band, located within a 6' in-scan x 4.5' cross-scan
+window (half-width) centered on the source. SES2 greater than
+0 means that the point source flux measurement should be treated
+with caution as the source in question may, in fact, be extended.
+ The flux quoted in the catalog of small extended sources may
+provide a better value for the source.
+
+ Cirrus Indicators: CIRR1, CIRR2, CIRR3
+
+ Over a large range of Galactic latitudes the infrared sky
+at 100 um is characterized by emission from interstellar dust
+on a wide range of angular scales. The so-called "infrared
+cirrus" can seriously hamper efforts to extract point source
+detections from the data. To aid the user in interpreting the
+quoted 100 um measurements three quantities have been established
+(Section V.H.4 and
+ VII.H ).
+ 
+ CIRR1 gives the number of 100 um-only WSDB sources located
+within a +/- &frac12;deg box in ecliptic coordinates centered
+on the source. The sources included in this count are the weeks-confirmed
+sources prior to high source density region processing (if applicable)
+plus those sources hours-confirmed but not weeks-confirmed. Values
+of CIRR1 greater than 3 may indicate contamination by cirrus with
+structure on the point source size scale.
+ 
+ CIRR2 gives a cirrus indication on a larger scale than CIRR1
+and compares a "cirrus flux" with the source flux at
+100 um (see (Eq. V.H.2) ).
+Values larger than 4 ~ 5 indicate the
+presence of considerable structure in the 100 um emission on a
+&frac12;deg scale. A value of 0 indicates that no &frac12;deg data
+were available for the source in question.
+ 
+ CIRR3 is the total surface brightness of the sky surrounding
+the source in a &frac12;deg beam at 100 um, clipped to exclude
+values greater than 254 MJy sr -1 . Values of CIRR3 greater than
+30 MJy sr -1 indicate emission from dust with an
+appreciable column
+density. A value of CIRR3 = -1 means that no data were available.
+
+ Positional Associations: NID, IDTYPE, CATNO, SOURCE, TYPE, RADIUS, POS, FIELD1-3
+
+ Much of the utility of the IRAS catalog comes from the association
+of infrared objects with sources known to exist from other astronomical
+catalogs. As described in Section V.H.9 ,
+a large number of catalogs
+have been searched for positional matches. The total number of
+matches found is given by NID. Each match results in a forty-character
+description (2 per record).
+ 
+ IDTYPE ranges from 1 to 4 and states whether an association
+was found in an extragalactic catalog (1), a stellar catalog (2),
+other catalogs (3), or matches in multiple types of catalogs (4).
+ CATNO is the number of the catalog in which the match was found
+(Tables V.H.1 ,
+ X.B.4 ).
+ 
+ SOURCE is the name of the object in that catalog and TYPE
+its character or spectral type, if available. A vector is drawn
+from the IRAS position to the associated object. RADIUS is the
+length of that vector in arc seconds. POS is the angle between
+the vector and the local equatorial meridian expressed indeg
+east of north. Three fields (FIELD1-3) have values depending
+on the catalog in question ( Table X.B.4 ).
+Typically FlELD1,2 are
+magnitudes (in decimag) and FIELD3 a size.
+
+ Chapter Contents |
+ Authors |
+ References 
+
+ Table of Contents |
+ Index |
+ Previous Section |
+ Next Section

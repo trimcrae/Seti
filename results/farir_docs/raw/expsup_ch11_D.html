@@ -1,0 +1,102 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+<HEAD>
+   <TITLE>XI.D.  Errors in Cross-Scan Uncertainties Related to Failed Detectors</TITLE>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H1 ALIGN=CENTER>IRAS Explanatory Supplement<BR>
+XI. Known Processing Anomalies<BR>
+D.  Errors in Cross-Scan Uncertainties Related to Failed Detectors</H1>
+
+<HR>
+<CENTER>
+<FONT SIZE=+1>
+   <A HREF="index.html#toc">Chapter Contents</A>
+ | <A HREF="index.html#auth">Authors</A>
+ | <A HREF="index.html#ref">References</A>
+<BR>
+    <A HREF="../toc.html">Table of Contents</A> |
+    <A HREF="../index/index.html">Index</A> | 
+    <A HREF="C.html">Previous Section</A> | 
+    <A HREF="E.html">Next Section</A>
+</FONT>
+</CENTER>
+<HR>
+
+      Several changes were made in the course of the processing
+to ameliorate the effects of failed detectors.  While all of the
+changes Resulted in overall improvements, the last change introduced
+an error as well. The last change handled the situation when an
+edge detection occurred opposite a failed detector and when the
+fluxes of the detections differed by more than a factor of two,
+so that the detections failed to seconds-confirmed. Since only
+one detection could band-merge with the rest of the source, an
+improvement was made to select always the brighter detection and
+to delete the fainter one.  An error in the software assigned
+a wildly incorrect cross-scan uniform uncertainty to the remaining
+detection one-third of the time.
+<P>
+      This change still resulted in a net improvement in the quality
+of the sources. The erroneous cross-scan uncertainties were immediately
+eliminated if band-merging was successful. A problem was created
+when the faulty detection was merged with another real source
+that had transited the focal plane at precisely the same time.
+No restriction on cross-scan position existed because of the impossibly
+large cross-scan uniform uncertainty associated with the detection.
+ The resulting incorrectly band-merged source failed to have upper
+limits from being assigned to unobserved (or unmerged) bands.
+ Thus, the Working Survey Data Base (WSDB) contains some hours-confirmation
+with some bands with FSTAT = 0, and detectors all 0 (see 
+<A HREF="../ch5/D8.html">Section
+V.D.8</A>). A detailed comparison of the processing of the data with
+and without this error showed that no sources with signal-to-noise
+ratio greater than 9 were lost due to this error.
+
+<HR>
+<CENTER><FONT SIZE=+1><A HREF="index.html#toc">Chapter Contents</A>
+| <A HREF="index.html#auth">Authors</A>
+| <A HREF="index.html#ref">References</A>
+<BR>
+<A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> | <A HREF="C.html">Previous Section</A>
+| <A HREF="E.html">Next Section</A></FONT></CENTER>
+<HR>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

@@ -1,0 +1,303 @@
+V.G Extended Source Products 
+
+ IRAS Explanatory Supplement
+
+V. Data Reduction
+
+G. Extended Source Products
+
+ Chapter Contents 
+| Introduction | Authors 
+| References 
+
+ Table of Contents |
+ Index | Previous Section 
+| Next Section 
+
+ Processing Overview 
+ Quality Checking, Selection, and Weights 
+ Phasing, Sorting, and Gaps 
+ Conversion to Surface Brightness 
+ Compression and the Time-Ordered Files 
+ Destripting 
+ Projection into Sky Maps 
+ Consistency Checking and Removal of Bad Data 
+ Final Map Image Generation 
+
+ G. 1 Processing Overview
+
+The basic approach to the compilation of the two-dimensional images
+and related time-ordered files was to select high-quality data meeting criteria
+based on observing conditions and the performance of individual detectors.
+Since extensive automatic confirmation tests were not applied as in the
+case of the discrete sources, internal consistency between different detectors
+within each survey observation was imposed by adjusting individual baselines
+and responsivities to produce the same mean brightness as the band average
+for that observation (the "destriping" operation). Weighted averages
+of the data were used to mosaic data from multiple survey scans of the
+same region into single digital images. Consistency between the scans forming
+an hours-confirming coverage was checked by human scanning of difference
+images; significantly discrepant data were deleted from the images. Finally,
+since the zodiacal emission toward any given direction on the celestial
+sphere depended upon the Earth's orbital position and Sun-referenced
+observation angles at the time of the observation, data obtained in the three
+hours-confirming coverages of the sky were processed and presented separately.
+A file needed to reconstruct the observing geometry for each observation of a
+given region of the sky, the Zodiacal Observation History File, was produced.
+
+ G.2 Quality Checking, Selection, and Weights
+
+Calibrated time-ordered detector data were used for the extended emission
+files if they had been obtained under acceptable observing conditions with
+respect to nuclear radiation event rate, adequate off-axis distance from
+strong potential sources of stray light, and satellite scanning rate. Data
+were deleted near the beginning and end of scans when the scan rate deviated
+from the nominal survey value, or if the detector signal saturated the
+analog-to-digital converer.
+ 
+The radiation blanking time introduced by triggering of the spike
+"deglitcher"
+in two detectors of each band was averaged over 2.5 sec intervals. Data
+were deleted from any band during any interval in which the dead time
+introduced
+by the deglitcher exceeded 10% in that band.
+ 
+The processing was designed to allow definition of a cone of avoidance
+for closest approach to the Earth, Moon, Mars, Jupiter, and Saturn. Stray
+light performance of the instrument was examined early in the mission,
+and it was concluded that the nominal scan constraints on closest approach
+to the Earth and Jupiter produced data of acceptable quality for extended
+source processing, and that no constraint on data near Saturn or Mars would
+be imposed. No data within 30deg of the Moon were included in the
+extended source products. This resulted in a series of lune shaped gaps
+spread across the ecliptic plane in each of the three sky coverages
+( Fig. III.C.6 ).
+ 
+A weight factor was assigned to each sample from each detector as a
+quality indicator for that sample. The weights followed the samples through
+all subsequent averaging, image creation, and image mosaic processes, yielding
+a weight map corresponding to each intensity map produced. A general weight
+was assigned to data from each detector based on the nominal sensitivity
+and noise of that detector observed early in the mission. Inoperative
+detectors
+were assigned zero weight. The weight was proportional to the variance
+of the data sample, so that it could be used as a statistical weight in
+an averaging process.
+ 
+The extended source images were not intended to give high-quality photometric
+information for point or small extended sources. However, to maintain
+consistency for small sources, data from the two edge detectors in each band
+which were substantially smaller than nominal detectors in that band
+(detectors 26, 47, 39, 42, 1 1, 31, 4, and 55) were deleted.
+
+ G.3 Phasing, Sorting, and Gaps
+
+In preparation for smoothing and binning the data for the various extended
+source products, the time-ordered calibrated data were adjusted on a
+detector-by-detector basis to align samples obtained at the same sky position
+of the telescope boresight. This phasing took account of both the scan rate
+of the telescope and of electronic phase shifts in the sampling of individual
+detectors.
+Detector data were also sorted into cross-scan order in each band according
+to their centroid positions. Because of the phasing operation, some data
+were lost at the beginning of each scan and whenever a gap in the telemetry
+stream occurred. The star-up time for the phasing was 11 seconds, or about
+&frac34; deg on the sky.
+
+ G.4 Conversion to Surface Brightness
+
+Detector data were converted from calibrated in-band fluxes (W m -2 )
+to surface brightness, (W m -2 sr -1 ), using an effective
+instantaneous field of view for each detector obtained from slow scans
+of point sources across the array ( Table
+IV.A.1 ).
+
+ G.5 Compression and the Time-Ordered Files
+
+ The detector data were compressed in the in-scan direction prior to
+projection into the image domain. Compression was accomplished by filtering
+and then decimating in order to prevent aliasing. A symmetric filter was
+desired to provide zero phase shifts, and a Lanczos single smoothed filter
+((sin x )/ x ) 2 weighting in the window) was selected.
+The filter width was chosen for each band to provide two output samples
+per second corresponding to a nominal 2' sample spacing. No compression
+or interpolation was applied in the cross-scan direction because the
+construction of the telescope's focal plane array produced samples with 2'
+spacing.
+These compressed data formed the time-ordered input for the sky plates and
+Galactic plane maps.
+ 
+A lower resolution time-ordered file of intensity data was also created.
+The Zodiacal Observation History File (ZOHF) contains the data samples
+obtained by averaging data from all detectors in each band (according to
+their weights) over an interval of 8 seconds of time. This provides data
+samples at approximately 30' intervals in both in-scan and cross-scan
+directions.
+Thee file also retains, in addition to celestial coordinates, the
+Sun-referenced observation angles and time, and information necessary to
+evaluate the
+zodiacal emission contribution to the intensity in each sample (see discussion
+below). Data from this file were used to create the low-resolution all-sky
+maps.
+
+ G.6 Destriping
+
+In the course of reducing the scan data into images, it was found that,
+in spite of the efforts to calibrate the gain and offset for each detector
+individually, small inconsistencies remained between detectors in a given
+band within a single scan. Such systematic inconsistencies showed up clearly
+as "stripes", i.e., persistent streaks in the in-scan direction
+in the images on the cross-scan scale of a detector length.
+A "destriping"
+procedure was developed to remove these high spatial-frequency inconsistencies
+while preserving the best available photometric information for the band
+as a whole. The procedure consisted of determining a responsivity and baseline
+correction for the data from each detector for each survey scan, and then
+applying that correction to the time-ordered data file prior to projection
+into images. The corrections were determined by requiring that the intensity
+from each detector follow the weighted band-average intensity during that
+observation. This procedure depended on the scan passing over areas of
+both low and high average background so that responsivity effects could
+be separated from baseline effects. Prominent small sources (high curvature
+regions) in the data were excluded in computing the averages. If insufficient
+data were available in a given observation, or if the correlation of the
+output of a detector with the band average was poor, the corrections
+determined
+in the previous observation were used.
+ 
+This process reduced the striping on a scale of a few arc minutes introduced
+by variations among the detectors in the focal plane. It did nothing to
+remove the &frac12; deg wide stripes caused by variations in calibration
+or sky brightness between different scans of the same piece of sky. The
+treatment of these wider stripes is discussed below under the topic of
+consistency checking in Section G.8 .
+
+ G.7 Projection into Sky Maps
+
+ After phasing, smoothing, and resampling to produce the compressed data
+the time-ordered detector data formed the equlavent of a two-dimensional
+array 15 or 16 samples wide (depending on the band) and several thousand
+samples long. Exact positional information was carried for every other
+sample of the two detectors at the edges of the array in each band the
+"tie points". The map projection was accomplished by projecting
+the exact positions of the tie points into the tie and sample space of
+the map images with the mapping transformation, and doing a bi-linear
+interpolation
+in line and sample space to get the projections of the other samples. All
+projections were done so that the sky coordinate associated with a pixeI
+refers to the position at the center of the pixel. The map projections
+used are discussed in Section X.D . Once assigned
+a position in image space, a particular data sample was binned by dividing
+the weight of the sample among the nearest four bins with an inverse bi-linear
+interpolation, multiplying the sample value by the divided weights and
+accumulating the weighted samples into the four bins of the intensity image
+and the weights into the four bins of the weight image. Maintaining these
+separate weighted intensity and weight images facilitated combining data
+from multiple scans into a single image. The final average intensity image
+was produced by dividing the weighted intensity image, pixel-by-pixel,
+by the weigh image. These procedures applied to the processing of the
+low-resolution
+all-sky map data as well as the sky plate data.
+
+ G.8 Consistency Checking and Removal of
+Bad Data
+
+After the data had been assembled into maps, the images were examined
+to check for anomalies. One coverage of the sky consisted of &frac12; deg
+wide survey scans spaced every &frac14; deg. By selecting alternate scans,
+a coverage could be split into two sets of non-overlapping scans, each
+of which essentially covered the whole sky. The check consisted of examining
+the difference image between these two halves of a sky coverage. Anomalies
+discovered in this way were then classified and if necessary, examined
+further in the two direct intensity images. If the anomaly was severe,
+the offending data were removed from the map. Three classes of anomalies
+were removed:
+
+ Obvious flooding of the focal plane by near-field objects.
+ Scans or sections of scans which were substantially noisier than their
+neighbors. The random noise level needed to be about two times larger than
+normal before this effect was noticeable, so relatively few data were removed
+for this reason. More frequently, the destriping strategy would fail and
+noise in the form of objectionable 2'-wide stripes would appear. Scans
+causing such stripes were rejected.
+ The brightness of the scan differed substantially from the generally
+smooth background level of its neighbors. The criterion used for removal
+was a difference of more than 10% of the baseline value from neighboring
+scans on adjacent orbits. A substantial amount of data was removed for
+this reason. Particularly offensive in this respect were 25 um
+scans made near edges of the South Atlantic Anomaly (SAA) where bias-boost
+( Section III.C.4 ) procedures were not used.
+
+Data removal was accomplished by adding the offending scan or section
+of a scan back into the map with the negative of its original weight.
+ 
+Several known residual anomalies remain from this cleaning process.
+No attempt was made to remove or even find small scale discrepancies between
+different scans of the same piece of sky, and many small, generally
+point-hike,
+sources remain in the maps which DO NOT appear in the same place in two
+different scans. This point cannot be overemphasized; when using the sky
+maps to look at small sources, even bright ones, at least two separate
+coverages MUST BE COMPARED or THE USER WILL BE FOOLED. Many, maybe most,
+of the non-confirming sources are due to asteroids; however, they do occur
+in all parts of the sky, and caution must be exercised in all cases.
+ 
+Noticeable &frac12; deg-wide stripes run across many of the sky plates.
+Regularly spaced patterns of these stripes were due to the effects of
+non-boosted
+SAA crossings, as mentioned above. Isolated stripes were due to some
+undetermined
+calibration anomaly. Almost none of the stripes exceed the 10% difference
+criterion; however, an occasional stripe which differs by more that this
+has been left in to prevent creation of a hole in the map.
+ 
+It is not known at this time whether the scans deleted due to non-boosted
+SAA crossings, or their neighboring scans, were correct. The maps have
+been made flatter by the deletions of data, but the possibillty of small,
+systematic DC calibration errors in the middle of scans, deemed unlikely,
+cannot be excluded.
+ 
+No attempt has been made to exclude the effects of photon-induced responsivity
+enhancement in the data (see Section IV.A.8 ).
+For instance, passage across bright regions in the Galactic plane increased
+the responsivities of the 60 and 100 um detectors for some time
+after passage. Similar effects near bright discrete sources are evident
+as well. Again, comparison among the three sky coverages should be made
+to avoid unrecognized problems due to these effects. All three coverages
+should be compared for this purpose, since the first two coverages generally
+passed over a given piece of sky in nearly the same direction, while the
+third coverage, where present, generally passed in a different direction.
+
+ G.9 Final Map Image Generation
+
+The final steps in production of sky plate maps were the reduction to
+average intensity, conversion from in-band average intensity to brightness
+density (Jy sr -1 ) and application of final calibration data.
+Reduction to average in-band intensity was accomplished by division of
+the weighted intensity image by the corresponding weight image. The conversion
+to brightness density was based on the knowledge of the shapes of the filter
+passbands of the instrument and the assumption of a radiation source with
+an energy distribution flat in flux per octave. Small corrections modified
+the baseline and rescanned the resulting brightness on a pixel-by-pixel
+basis to reflect the final calibration.
+ 
+Maps of the sky within 10deg of the Galactic plane were made by
+remapping the pixels from the sky plates into Galactic coordinates using
+the cylindrical projection described in Section
+X.D . The remaping was done by the tie point technique described above,
+where the full map transformation was applied only to a subset of the pixels
+and linear interpolation is applied to the rest. Binning of a data sample
+into the nearest four pixels was nlso done as described in
+ Section V.G.7 .
+ 
+The low-resolution all-sky maps and the Zodiacal Observation History
+File were subject to the same modifications as the sky plates for final
+generation processing.
+
+ Chapter Contents 
+| Introduction | Authors 
+| References 
+
+ Table of Contents |
+ Index | Previous Section 
+| Next Section

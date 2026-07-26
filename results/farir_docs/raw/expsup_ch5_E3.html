@@ -1,0 +1,181 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+
+<HEAD>
+   <title>V.E.3 Source Construction and Hours-Confirmation</title>
+</HEAD>
+
+<BODY bgcolor="#FFFFFF">
+
+<h1 align="center">
+   IRAS Explanatory Supplement<br>
+   V. Data Reduction<br>
+   E. Overview of Small Extended Source Data Processing<br>
+   E.3 Source Construction and Hours-Confirmation
+</h1>
+
+<hr>
+
+<font size=+1>
+<center>
+   <a href="index.html#toc">Chapter Contents</a> | 
+   <a href="index.html#intro">Introduction</a> | 
+   <a href="index.html#auth">Authors</a> | 
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> | 
+   <a href="../index/index.html">Index</a> | 
+   <a href="E2.html">Previous Section</a> | 
+   <a href="E4.html">Next Section</a>
+</font>
+</center>
+
+<hr>
+      In <i>point source</i> processing each pair of seconds-confirming
+detections was merged into a single detection.  This was not the
+case for extended sources, nor was there any explicit check analogous
+to the <i>point source</i> hours-confirmation processing.   Each individual
+seconds-confirmed detection was passed to a processor which attempted
+to piece together detections from the same band and the same hours-confirming
+coverage into a single source. Sources were considered to be from
+the same hours-confirming coverage if they were observed within
+36 hours of each other.  In most cases this process resulted in
+an hours-confirmed source in the <i>point source</i> processing sense,
+i.e., the resultant source was made up of two or more pairs of
+seconds-confirming detections whose detection times differed by
+a few hours. However, it was also possible for two or more seconds-confirming
+detections without a subsequent hours-confirming sighting to result
+in an acceptable source.
+<P>
+      The piecing together of sources involved several stages.
+First, seconds-confirmed detections which lay sufficiently close
+to one another on the sky and which had detection times within
+36 hours were linked together. If a detection failed to link with
+any other detection, it was rejected and not used in subsequent
+processing.  Each group of linked detections was mapped onto a
+rectangular grid representing their distribution on the sky. 
+Each pixel in the grid was a 1' square. The size of each detection
+was just the detector size in the cross-scan direction, and 
+<I>W</I>(<I>k</I>)
+in the in-scan direction (<a href="E1.html#eqE2">Eq. (V.E.2)</a>).  
+This grid consisted of
+a number of cells which may be referred to by the coordinates
+(<I>K</I>, <I>L</I>).  The number of detections, 
+<I>N</I>(<I>K</I>,<I>L</I>), which overlapped each
+grid cell was found and each cell was assigned a weight, 
+<I>W</I>(<I>K</I>,<I>L</I>),
+which was proportional to the sum of the intensities in each of
+the detections overlapping the cell.  The intensity in a detection
+was taken to be the amplitude of the square-wave peak divided
+by the detector aperture area.  The flux from the source seen
+by each of the detectors was calculated. This flux was then distributed
+among the grid cells overlapped by the detector according to the
+weights <I>W</I>(<I>K</I>,<I>L</I>).  The total intensity associated with 
+each grid
+cell was then the sum of the contributions from each overlapping
+detector, divided by the number of such detectors.
+<P>
+      Having assigned an intensity to each grid cell, the cells
+which were regarded as contributing to the source were identified.
+ The cell with the maximum intensity was located.  If this lay
+close to the boundary of the grid then no source was identified.
+Otherwise all the cells near to the maximum intensity cell which
+had an intensity above 1% of the maximum were linked into a single
+source; if the intensity distribution had a minimum boundary and 
+then a rise beyond the minimum,
+ the linking process was stopped at this minimum.
+<P>
+      After all the cells within the source were identified, a
+check was made to see if most of the source lay on the grid. 
+This was done by requiring the intensity on all four boundaries
+of the grid to be less than 10% of the maximum intensity on the
+grid. If this was not the case then &quot;source run-off&quot;
+was said to have occurred.  If, in addition to source run-off,
+the maximum intensities on either pair of opposite grid boundaries
+were sufficiently different, indicating the presence of a strong
+flux gradient, then the source was likely to be a relatively small
+bump on the side of a larger source, and no source was returned.
+If source run-off occurred, but there was no evidence of a strong
+flux gradient across the grid then the source was accepted but
+a flag was set to indicate that it was possibly a fragment of
+a larger source.
+<P>
+      The flux of the source was taken to be the sum of the intensities
+of all the grid cells which were linked into the source, multiplied
+by the grid cell area.  The intensity-weighted sum of the number
+of detections contributing to each grid cell in the source was
+found. This was called the confirmation level of the source, and
+gives an indication of how well the various detections contributing
+to the source were put together to form a single source. Only
+those sources whose confirmation level was above a threshold of
+2 were passed on for further processing. In addition, a source
+was required to have at least one detection with a signal-to-noise
+ratio greater than 3.
+<P>
+      Sources which passed the confirmation level and signal-to-noise
+thresholds became the input for subsequent confirmation processing,
+they were referred to as intermediate small extended sources,
+and were treated as hours-confirmed sources.  The centroid and
+extent of each of those sources was computed the extent being
+characterized by the matrix of the second moments of the flux
+distribution.  This matrix was diagonalized to yield the semi-major
+and semi-minor axes of the source, together with the angle between
+the semi-major axis and the ecliptic meridian. The number of detections
+in the source was also carried. A detection was counted if it
+contributed more than half its own flux to the source.
+
+<hr>
+
+<font size=+1>
+<center>
+   <a href="index.html#toc">Chapter Contents</a> | 
+   <a href="index.html#intro">Introduction</a> | 
+   <a href="index.html#auth">Authors</a> | 
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> | 
+   <a href="../index/index.html">Index</a> | 
+   <a href="E2.html">Previous Section</a> | 
+   <a href="E4.html">Next Section</a>
+</font>
+</center>
+
+<hr>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

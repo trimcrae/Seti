@@ -353,7 +353,7 @@ unvalidated code path.
 
 ---
 
-## 7. Measured performance (`tests/test_knell.py`, offline, no network)
+## 7. Measured performance (`tests/test_knell.py` — 32 offline tests, no network)
 
 | Case | Realisations | Flagged |
 |---|---|---|

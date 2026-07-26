@@ -1,0 +1,1424 @@
+                                              MNRAS 000, 1–21 (2026)                                                     Preprint 7 July 2026                Compiled using MNRAS LATEX style file v3.3
+
+
+
+
+                                              Archival Diagnostics for Potential Background Contaminants of Project
+                                              Hephaistos Dyson Sphere Candidates
+                                               T. Ren,1★ M. A. Garrett,1,2,7 , E. Zackrisson,3 , A. J. Korn,3 A. P. V. Siemion,1,4,5,6,7 J. T. Wright,8,9,10
+                                              and A. Brandeker11
+                                              1 Jodrell Bank Centre for Astrophysics, Department of Physics and Astronomy, University of Manchester, Oxford Road, Manchester M13 9PL, UK
+                                              2 Leiden Observatory, Leiden University, PO Box 9513, NL-2300 RA Leiden, the Netherlands
+                                              3 Observational Astrophysics, Department of Physics and Astronomy, Uppsala University, Box 516, SE-751 20 Uppsala, Sweden
+                                              4 Breakthrough Listen, Astrophysics sub-department, Department of Physics, University of Oxford, Denys Wilkinson Building, Keble Road, Oxford OX1 3RH, UK
+                                              5 Berkeley SETI Research Center, University of California, Berkeley, CA 94720, USA
+arXiv:2607.03619v1 [astro-ph.SR] 3 Jul 2026
+
+
+
+
+                                              6 SETI Institute, 339 Bernardo Avenue, Suite 200, Mountain View, CA 94043, USA
+                                              7 University of Malta, Institute of Space Sciences and Astronomy, Msida, MSD2080, Malta
+                                              8 Department of Astronomy and Astrophysics, The Pennsylvania State University, University Park, PA 16802, USA
+                                              9 Penn State Extraterrestrial Intelligence Center, The Pennsylvania State University, University Park, PA 16802, USA
+                                              10 Center for Exoplanets and Habitable Worlds, The Pennsylvania State University, University Park, PA 16802, USA
+                                              11 Department of Astronomy, Stockholm University, AlbaNova University Center, 10691 Stockholm, Sweden
+
+
+
+
+                                              Submitted to the Monthly Notices of the Royal Astronomical Society (MNRAS).
+
+
+
+                                              ABSTRACT
+                                              We report on the diagnostic inspection of nine Project Hephaistos Dyson Sphere candidate M-dwarfs based on archival data.
+                                              By comparing the Gaia positions, propagated to the AllWISE epoch, with the mid-infrared centroids measured from the
+                                              AllWISE images, together with deep archival optical/near-infrared imaging, we identified significant background contamination
+                                              in candidates B and C—candidate B coincident with a radio counterpart with spectral index 𝛼 = 0.63 ± 0.11, and candidate
+                                              C with a near-infrared companion at a 3.75′′ offset. Candidate A provides suggestive evidence through a radio counterpart
+                                              with 𝛼 = 0.40 ± 0.35, while candidates E, F, H and J show some marginal evidence. These systems exhibit either significant
+                                              astrometric offsets or visible interlopers, indicating that the mid-infrared excess likely arises from line-of-sight contamination by
+                                              hot, dust-obscured galaxies. However, candidates D and I still lack obvious signs of contamination. Dedicated observations are
+                                              therefore essential to characterise these potential interlopers, in order to eliminate false positives and ensure that techno-signature
+                                              searches focus on the most robust Dyson Sphere candidates.
+                                              Key words: extraterrestrial intelligence – infrared: stars – infrared: galaxies
+
+
+
+                                              1 INTRODUCTION                                                                   view (Garrett & Siemion 2023), this same principle applies anal-
+                                                                                                                               ogously to infrared SETI searches. The cross-matching of seven
+                                              In mid-2024, Project Hephaistos1 reported seven Dyson sphere can-
+                                                                                                                               candidates with archival radio surveys revealed offset radio counter-
+                                              didates. Dyson spheres are hypothetical megastructures envisioned
+                                                                                                                               parts for candidates A, B, and G (Ren, Garrett & Siemion 2024).
+                                              to harvest stellar energy, with their most distinctive observable signa-
+                                                                                                                               High-resolution e-MERLIN (1.5 GHz) and EVN (5 GHz) observa-
+                                              ture being excess infrared emission produced by the re-radiation of
+                                                                                                                               tions (Ren, Garrett & Siemion 2025) confirmed that J2335−0004, the
+                                              absorbed starlight as thermal waste heat (Dyson 1960; Wright 2020).
+                                                                                                                               radio source associated with candidate G, is a high brightness tem-
+                                              The project identified these candidates by identifying stars with sig-
+                                                                                                                               perature (> 1 × 108 K) background active galactic nucleus (AGN)
+                                              nificant mid-infrared (MIR) excess from a sample of approximately
+                                                                                                                               located more than 5 arcseconds from the Gaia position of the star in
+                                              5 million stars detected by Gaia, 2MASS, and WISE, all within 300
+                                                                                                                               2025. We did not detect radio emission exceeding 3𝜎 at the stellar
+                                              parsecs of us (Suazo et al. 2024). All candidates are M-dwarf stars
+                                                                                                                               coordinates at 1.5 or 5 GHz, and thus found no evidence of broadband
+                                              exhibiting MIR excess in the WISE W3 and W4 bands, with spectral
+                                                                                                                               radio emission at these frequencies that could represent unintentional
+                                              energy distributions (SEDs) consistent with blackbody temperatures
+                                                                                                                               radio leakage from the candidate system.
+                                              in the range of 100–300 K, as expected from partial Dyson Sphere
+                                              models (Suazo et al. 2022).
+                                                 Just as radio SETI surveys targeting nearby stars frequently encom-              Furthermore, the positional offset analysis of the ALLWISE images
+                                              pass background extragalactic objects within the telescope’s field of            revealed that while the emission in the WISE W1 and W2 bands is
+                                                                                                                               associated with the M-dwarf, the W3 and W4 emission is primar-
+                                                                                                                               ily contributed by the offset AGN. The spectral energy distribution
+                                              ★   E-mail: tongtian.ren@manchester.ac.uk (TR)                                   (SED) of the AGN suggested that it was most likely a Hot Dust-
+                                              1   https://www.astro.uu.se/~ez/hephaistos/hephaistos.html                       Obscured Galaxy (Hot DOG; Assef et al. 2015; Tsai et al. 2015) -
+
+                                              © 2026 The Authors
+2      T. Ren et al.
+bright in W3 and W4 bands but faint and obscured in the W1 and                This paper presents a comprehensive assessment of the Dyson
+W2 bands.                                                                  Sphere candidates through two complementary approaches: an as-
+   Hot Dust-Obscured Galaxies (Hot DOGs) are a rare class of lumi-         trometric diagnosis based on positional offsets and a detailed inspec-
+nous galaxies powered by heavily obscured supermassive black holes,        tion of deep photometric surveys. The paper is structured as follows:
+representing a distinct phase in galaxy evolution. Due to severe dust      in Section 2, we briefly describe the data and methods used in this
+obscuration, they appear faint in the optical and near-infrared (NIR)      paper. We present the results of our astrometric diagnostics in Sec-
+but exhibit strong emission in the mid-infrared (MIR) as heated dust       tion 3, followed by the archival image examination results in Section
+re-radiates energy. Consequently, Hot DOGs are faint in the WISE           4. Finally, we discuss our findings in Section 5 and summarise our
+W1 and W2 bands but prominent in W3 and W4. When coincident                conclusions in Section 6.
+with nearby M-dwarfs along the line of sight, the coarse 6–12 arcsec
+resolution of WISE results in blended photometry that can mimic the
+SED of a cold Dyson Sphere. Notably, Blain (2024) estimated the
+                                                                           2 DATA AND METHODS
+Hot DOG occurrence rate in the WISE catalogue, concluding that
+their surface density is sufficient to explain all seven reported Dyson    2.1 Gaia Astrometry, Radio Counterparts, and WISE Centroid
+Sphere candidates as chance alignments.                                        Measurement
+   For the remaining six Dyson Sphere candidates of Suazo et al.
+                                                                           We collected public archival data for nine M-dwarf candidates: six
+(2024), two have radio counterparts (Ren, Garrett & Siemion 2024)
+                                                                           from Suazo et al. (2024) (S24 hereafter) and three from Suazo (2024)
+that are also likely to be AGNs (candidates A and B). The nature of
+                                                                           and Korn et al. (prep) (K26 hereafter), all of which have Gaia DR3
+the other four (candidates C, D, E, and F) is unclear. Subsequently,
+                                                                           source identifiers (see Table 1). We retrieved their high-precision as-
+further identification of the optical spectra of the Project Hephaistos
+                                                                           trometry, including coordinates and proper motions, for all nine stars
+stars led to the ancillary discovery of three additional Dyson Sphere
+                                                                           from the Gaia DR3 database. Using these positions, we searched
+candidates (H, I and J), which show significant MIR excesses in the
+                                                                           for counterparts at complementary wavelengths. Radio counterparts
+W3 and W4 bands (Suazo (2024) and Korn et al. (prep)).
+                                                                           for candidates A and B were found in the predecessor identification
+   Beyond searching for typical AGN signatures in potential back-
+                                                                           (Ren, Garrett & Siemion 2024) via the VizieR access tool (Ochsen-
+ground contaminants (e.g. high brightness temperature radio and X-
+                                                                           bein et al. 2000), while candidates C–F and X-ray counterparts for all
+ray emission), a complementary method involves identifying signifi-
+                                                                           candidates remained undetected. In this work, we updated the VizieR
+cant astrometric offsets across wavebands. By comparing WISE cen-
+                                                                           query to account for new radio survey data and cross-matched all po-
+troid positions with high-precision Gaia astrometry (accurate to mi-
+                                                                           sitions with the High Energy Astrophysics Science Archive Research
+croarcsecond scales), we can detect spatial offsets that serve as clear
+                                                                           Center (HEASARC) database2 , which similarly yielded no additional
+indicators of background contamination. This effect was explicitly
+                                                                           detections.
+observed in the analysis of Candidate G. Crucially, however, this ap-
+                                                                              To prepare the data for MIR centroid analysis in Section 3, we
+proach relies on the background contaminant being spatially distinct
+                                                                           retrieved 1′ × 1′ image cutouts for each star in all four WISE bands
+from the foreground star; if the alignment is sufficiently precise, such
+                                                                           from the ALLWISE atlas (WISE Team 2020) via the NASA/IPAC
+offsets will remain unmeasurable. While Suazo et al. (2024) used
+                                                                           Infrared Science Archive (IRSA)3 . To refine the centroid analysis,
+W1 and W3 offsets to evaluate discrepancies and employed the Im-
+                                                                           we manually measured the signal-to-noise ratios (SNRs) for the
+proved Reprocessing of the IRAS Survey (IRIS; Miville-Deschênes
+                                                                           four ALLWISE band images of each source, rather than adopting
+& Lagache 2005) maps at 100 𝜇m to mitigate potential contami-
+                                                                           the pipeline-generated SNR values in the ALLWISE catalogue (Cutri
+nation, residual contamination still exists in some cases, as proved
+                                                                           et al. 2021). We used the sep.extract method from SEP Python
+by the radio observation results of candidate G (Ren, Garrett &
+                                                                           library (Barbary 2016), a re-implementation of SExtractor (Bertin
+Siemion 2025). Owing to the limited spatial resolution of WISE and
+                                                                           & Arnouts 1996), to detect the centroids of the ALLWISE maps.
+IRAS, directly measuring the offset between MIR centroids across
+                                                                           The W1 and W2 images, which have significantly higher SNRs,
+the four WISE bands and Gaia-measured stellar positions provides
+                                                                           can generally be fitted successfully with SEP. We evaluated several
+a more effective and precise diagnostic for identifying extragalac-
+                                                                           alternative methods for detecting WISE spatial centroids and deter-
+tic contamination in apparent infrared-excess sources, yielding the
+                                                                           mined that SEP generally yields the best performance. However, for
+best constraint attainable from existing data before high-resolution
+                                                                           lower-resolution W3 and W4 images where if SEP fails to provide
+imaging observations.
+                                                                           a successful fit, we adopted the scipy.ndimage.center_of_mass
+   Supplementing the primary data from Gaia (Gaia Collaboration            (Virtanen et al. 2020) function.
+et al. 2016, 2023), 2MASS (Skrutskie et al. 2006), and WISE (Wright           Neither sep.extract nor scipy.ndimage.center_of_mass
+et al. 2010), deeper archival imaging surveys cover several of the nine    provides direct centroid position uncertainties. We estimated these
+targets. These include optical surveys such as the Dark Energy Survey      using the standard photon-limited centroiding precision formula:
+(DES; Dark Energy Survey Collaboration et al. 2016; DES DR1: Ab-
+bott et al. 2018; DES DR2: Abbott et al. 2021), the Panoramic Survey
+                                                                                      FWHM
+Telescope and Rapid Response System (Pan-STARRS; Chambers                  𝜎position ≈                                                     (1)
+et al. 2016), SkyMapper (Onken et al. 2024), and the DESI Legacy                      𝑘 × SNR
+                                                                                          √
+Imaging Surveys (Dey et al. 2019), as well as NIR surveys such as             where 𝑘 = 2 2 ln 2 ≈ 2.355 (Howell 2006) converts between Full
+the VISTA Science Archive (Cross et al. 2012), and the WFCAM               Width at Half Maximum (FWHM) and Gaussian 𝜎. We adopted
+Science Archive (Hambly et al. 2008). The greater depth of these           WISE point spread function (PSF) FWHM of 6.1, 6.4, 6.5, and 12.0
+images provides a valuable independent diagnostic, offering clues          arcseconds for W1–W4, respectively (Wright et al. 2010). The SNR at
+to potential faint background extragalactic objects contaminating the
+MIR flux of the Dyson Sphere candidates. The culprits responsible
+for the excess, though absent in shallower surveys like SDSS and           2   https://heasarc.gsfc.nasa.gov/
+2MASS, may be detectable in these high-sensitivity archival images.        3   https://irsa.ipac.caltech.edu/irsaviewer/
+
+MNRAS 000, 1–21 (2026)
+                                                                                            Diagnostics of Dyson Sphere Candidate Stars                                       3
+
+Table 1. Basic Gaia DR3 parameters of the Dyson Sphere candidate stars from Suazo et al. (2024), Suazo (2024), and Korn et al. (prep).
+
+      Candidate           Gaia DR3                   RA, DEC              𝐺 (Vega)   𝑇eff     pmRA      pmDEC       Plx    W1/W2      W3/W4                Selected surveys
+                                                     (J2016.0)             [mag]      [K]    [mas/yr]   [mas/yr]   [mas]    epoch      epoch
+    A (J1245-2652)   3496509309189181184   12 45 12.9417, -26 52 03.276    15.996    3823      -5.717    -88.760    6.93   2010.516   2010.512        Legacy (𝑔𝑖𝑟 𝑧 ); VHS(𝑌 𝐽 𝐾𝑠 )
+    B (J0356-4031)   4843191593270342656   03 56 03.8102, -40 31 48.524    17.713    3431       7.051    -31.500    4.68   2010.588   2010.579         Legacy (𝑔𝑖𝑟 𝑧 ); VHS( 𝐽 𝐾𝑠 )
+    C (J0456-7410)   4649396037451459712   04 56 03.0461, -74 10 14.156    18.393    3239      39.525    -19.288    4.54   2010.781   2010.294       Legacy (𝑔𝑖𝑟 𝑧 ); VMC(𝑌 𝐽 𝐾𝑠 )
+    D (J2327+0506)   2660349163149053824   23 27 51.2948, +05 06 26.143    17.662    3473     -30.674    -21.611    4.70   2010.459   2010.456     Legacy (𝑔𝑖𝑟 𝑧 ); UKIDSS (𝑌 𝐽 𝐻𝐾 )
+    E (J0402-1054)   3190232820489766656   04 02 07.7970, -10 54 40.726    17.008    3557      33.957     30.112    3.62   2010.624   2010.107        Legacy (𝑔𝑟 𝑧 ); VHS(𝑌 𝐽 𝐾𝑠 )
+    F (J0513-2511)   2956570141274256512   05 13 46.5124, -25 11 11.490    16.330    3674     11.575     -20.615    3.73   2010.164   2010.160         Legacy (𝑔𝑖𝑟 𝑧 ); VHS( 𝐽 𝐾𝑠 )
+    G (J2335-0004)   2644370304260053376   23 35 32.4891, -00 04 24.208    16.482    3481     -47.485    -49.646    3.97   2010.458   2010.455       Legacy (𝑔𝑖𝑟 𝑧 ); VHS ( 𝐽 𝐻𝐾𝑠 )
+    H (J2336-0920)   2437221214075471744   23 36 02.6653, -09 20 00.394    17.312    3418     -23.535    -15.753    3.68   2010.449   2010.446        Legacy (𝑔𝑖𝑟 𝑧 ); VHS(𝑌 𝐽 𝐾𝑠 )
+    I (J0939+0700)   3854090071297359616   09 39 54.3199, +07 00 27.868    17.402    3327      -4.744    -14.760    5.89   2010.358   2010.354     Legacy (𝑔𝑖𝑟 𝑧 ); UKIDSS (𝑌 𝐽 𝐻𝐾 )
+    J (J0832+1442)    651765552072217216   08 32 16.5787, +14 42 18.557    16.133    3677      -5.615    -30.893    3.42   2010.823   2010.300       Legacy (𝑔𝑖𝑟 𝑧 ); UHS ( 𝐽 𝐻𝐾 )
+
+Note. — All the candidates have complete Gaia astrometry and WISE photometry data. 𝑇eff (Effective Temperature) is not available in Gaia DR3 for candidate
+A; we adopted its 𝑇eff from Gaia DR2 instead. All the right ascension and declination positions are reported for the Gaia DR3 reference epoch J2016.0; pmRA,
+pmDEC, and Plx denote the proper motions in right ascension, declination, and the trigonometric parallax extracted from Gaia DR3. All 𝐺-band magnitudes
+are reported on the Vega system. All optical and NIR band availabilities from selected surveys are presented, while the radio band information for A and B is
+described in Table 3.
+
+
+each centroid was manually measured via SEP aperture photometry.                            the central/effective wavelengths (or frequencies) and nominal angu-
+Therefore, all the centroiding uncertainties (𝜎position ) can be derived                    lar resolutions of the optical and infrared datasets used in this work,
+through this formula.                                                                       together with the RACS radio surveys (Hale et al. 2021; Duchesne
+                                                                                            et al. 2024, 2025) covering candidates A and B. We find that all can-
+                                                                                            didates are covered by the Legacy DR10 Survey, which provides the
+2.2 Epoch Propagation and Proper Motion Corrections                                         ideal optical imaging and serves as the primary dataset for this study.
+                                                                                            Additionally, six candidate stars have available VISTA images: A, B,
+The extracted WISE centroids and their associated positional uncer-
+                                                                                            E, F, H from the VHS, and C from the VMC. All candidates without
+tainties reflect the state of the MIR emission at the specific epoch of
+                                                                                            VISTA coverage are accounted for by the Infrared Deep Sky Survey
+the observations. As summarised in Table 1, the ALLWISE epochs for
+                                                                                            (UKIRT): D and I are covered by UKIDSS, and J is covered by the
+our targets span J2010.0 to J2011.0. Even within the same survey, the
+                                                                                            UHS. These Legacy optical images, combined with the NIR data
+W3 and W4 band data were often collected slightly earlier than the
+                                                                                            from VISTA or UKIRT surveys, provide deep, multi-band imaging
+W1 and W2 data. Because our multi-wavelength dataset compiles im-
+                                                                                            across all candidate fields. This enables a visual diagnosis entirely
+ages from multiple independent surveys, these epoch differences can
+                                                                                            independent of our mid-infrared centroid analysis.
+be substantial. Consequently, we rigorously accounted for the proper
+motions of the target stars when examining and cross-matching the                              To provide identifiers for newly discovered or faint objects in
+spatial centroids in Section 3.                                                             each candidate’s images, we queried nearby NIR sources from the
+                                                                                            VISTA and UKIRT catalogues and optical sources from the Legacy
+   For instance, candidate A has a significant proper motion of
+                                                                                            DR10 Tractor catalogue. We also examined other major optical
+88.944 mas yr −1 . While its RACS-high radio image was obtained
+                                                                                            and NIR surveys, including DES, Pan-STARRS, SDSS, 2MASS,
+at J2022.518, its mid-infrared images date back to the AllWISE
+                                                                                            and SkyMapper. The DES images are already included in the DESI
+deployment near J2010.5. This ∼12 yr baseline introduces a purely
+                                                                                            Legacy DR10 Imaging Surveys and thus are effectively represented
+kinematic positional displacement of 1.07′′ . Propagating the stellar
+                                                                                            in our Legacy analysis. The other surveys: Pan-STARRS, SDSS,
+coordinates from the Gaia DR3 reference epoch (J2016.0) to the
+                                                                                            2MASS, and SkyMapper, have imaging quality and depth that are
+precise epoch of each individual map is therefore essential to prevent
+                                                                                            generally inferior to those of the Legacy, VISTA, and UKIRT datasets
+proper motion from distorting the true physical offsets. By executing
+                                                                                            in the regions of interest. Our follow-up examination in Section 4
+this temporal alignment for every dataset, the final derived offset can
+                                                                                            based on them did not yield additional detections of background or
+reliably incorporate the centroiding uncertainty (𝜎position ) fully prop-
+                                                                                            blended sources.
+agated alongside the intrinsic positional and proper motion errors of
+the Gaia stellar hosts and their corresponding radio counterparts.
+
+                                                                                            3 ASTROMETRIC DIAGNOSTICS
+2.3 Deep Optical and Near-Infrared Imaging Surveys
+                                                                                            In this section, we analyse the positional offset between the MIR
+To examine the candidates using deep photometric and imaging data                           emission and the propagated Gaia position for each candidate star.
+in Section 4, we queried several wide-field optical and NIR surveys,                        As demonstrated by Ren, Garrett & Siemion (2025), which analysed
+including the DES DR2, Pan-STARRS DR2, DESI Legacy Imaging                                  the case of candidate G, a significant offset between W3 & W4
+Surveys (DR10), the UKIRT Infrared Deep Sky Survey (UKIDSS;                                 emission spatial distribution to the star’s coordinate is the indicator of
+Lawrence et al. 2007) and the UKIRT Hemisphere Survey (UHS; Dye                             background contamination. For clarity, we divide our nine candidates
+et al. 2018) from the WFCAM Science Archive 4 , and two VISTA                               into three subsamples based on their properties and origin:
+programmes from the VISTA Science Archive 5 : the Hemisphere
+Survey (VHS; DR5, McMahon et al. (2013))) and the Magellanic                                   • Candidates A and B, which are found to have radio counterparts.
+Clouds Survey (VMC; DR6, Cioni et al. (2011)). Table 2 summarises                           We additionally compare the radio counterpart positions with the
+                                                                                            WISE centroids and the propagated Gaia positions of the candidate
+                                                                                            stars.
+4   http://wsa.roe.ac.uk/                                                                      • Candidates C, D, E, and F, the other four candidates drawn from
+5   http://vsa.roe.ac.uk/                                                                   S24 without radio counterparts.
+
+                                                                                                                                                 MNRAS 000, 1–21 (2026)
+4       T. Ren et al.
+
+Table 2. Summary of the observational datasets used in this work. For each band we give the effective wavelength or central frequency and the nominal angular
+resolution, quoted as the full width at half-maximum (FWHM) of the synthesised beam for the radio surveys and of the point-spread function (PSF) for the
+optical and infrared imaging data. The final column gives the reference for each survey.
+
+    Survey (instrument)                    Band        Effective Wavelength / Central Frequency        FWHM          Reference
+                                                                        (𝜆eff / 𝜈c )                     (′′ )
+                                        RACS-low                       887.5 MHz                         ∼25         Hale et al. (2021)
+    ASKAP RACS                          RACS-mid                      1367.5 MHz                         ∼10         Duchesne et al. (2024)
+                                        RACS-high                     1655.5 MHz                         ∼10         Duchesne et al. (2025)
+                                           𝑔                             0.48 𝜇m                         1.3
+                                           𝑟                             0.64 𝜇m                         1.2
+    Legacy Survey                                                                                                    Dey et al. (2019)
+                                            𝑖                            0.78 𝜇m                       ∼1.1–1.2
+                                           𝑧                             0.92 𝜇m                         1.1
+                                           𝑌                             1.02 𝜇m
+                                           𝐽                             1.25 𝜇m
+    VISTA (VMC, VHS)                                                                                   ∼0.8–1.0      Cioni et al. (2011); McMahon et al. (2013)
+                                           𝐻                             1.65 𝜇m
+                                           𝐾𝑠                            2.15 𝜇m
+                                           𝑌                             1.03 𝜇m
+                                           𝐽                             1.25 𝜇m
+    UKIRT/WFCAM (UKIDSS, UHS)                                                                          ∼0.75–1.0     Lawrence et al. (2007); Dye et al. (2018)
+                                           𝐻                             1.63 𝜇m
+                                           𝐾                             2.20 𝜇m
+                                          𝑊1                              3.4 𝜇m                           6.1
+                                          𝑊2                              4.6 𝜇m                           6.4
+    AllWISE                                                                                                          Wright et al. (2010)
+                                          𝑊3                              12 𝜇m                            6.5
+                                          𝑊4                              22 𝜇m                           12.0
+
+
+  • Candidates H, I, and J, the three newly identified targets from              cies below 300 MHz and shows a steep spectral index (𝑆 𝜈 ∝ 𝜈 − 𝛼 )
+K26, also without radio counterparts.                                                 1655.5 = 0.63 ± 0.11 (Figure 2). The radio source J1245-2652
+                                                                                 of 𝛼87.5
+                                                                                 associated with candidate A, detected only in RACS, has a less well-
+   The diagnostic process and results for each group are detailed                                                1655.5 = 0.40 ± 0.35.
+                                                                                 constrained spectral index of 𝛼887.5
+in Subsections 3.1, 3.2, and 3.3. In Section 3.4, we compare the
+                                                                                    Using the ALLWISE centroid detection method described in Sec-
+candidate centroiding results in this work with the offsets reported
+                                                                                 tion 2, we obtained the MIR centroids for candidates A and B. All
+in S24. We then evaluate our astrometric approach in Subsection 3.5
+                                                                                 the W1, W2, and W3 band centroids were measured by the SEP, and
+by analysing control samples with W3 SNRs similar to those of the
+                                                                                 both W4 images were measured by the scipy. These were then com-
+candidate stars.
+                                                                                 pared with their radio counterparts at 1367.5 MHz and 1655.5 MHz,
+                                                                                 a band that offers superior angular resolution and a circular beam.
+                                                                                 These WISE centroids were also compared with the stellar positions
+3.1 Radio, WISE and Gaia astrometric diagnostics for                             propagated using Gaia DR3 proper motions, accounting for the time
+    candidates A and B                                                           offset between the ALLWISE observations and the radio measure-
+Candidates A (Gaia DR3 3496509309189181184) and B (Gaia                          ment epochs. Figure 3 shows the locations of the stars, radio sources,
+DR3 4843191593270342656) are two of the three radio-associated                   and MIR centroids, and Table 4 lists the measured offsets between
+sources (A, B, and G) reported by Ren, Garrett & Siemion (2024);                 the Gaia, radio, and WISE centroids for candidates A and B.
+the radio source associated with G has been confirmed as an AGN                     After accounting for proper motion, candidate A shows a ∼ 3.3′′
+(Ren, Garrett & Siemion 2025). Candidates A and B are located in                 offset between the propagated Gaia position of the star and the
+the southern sky, with associated radio sources detected in RACS-                887.5 MHz radio source. This is smaller than 4.9′′ reported in
+DR1 (Hale et al. 2021) at 887.5 MHz with an angular resolution                   Ren, Garrett & Siemion (2024), which did not correct for the star’s
+of 25′′ . More recent RACS-mid (Duchesne et al. 2024) and RACS-                  proper motion. At higher frequencies with improved angular resolu-
+high (Duchesne et al. 2025) observations at 1367.5 MHz and at                    tion (1367.5 MHz and 1655.5 MHz), the radio source to stellar offset
+1655.5 MHz, provided significantly improved angular resolution                   reduces to ∼1.2′′ and ∼1.6′′ (Table 3). The W1 and W2 centroids
+                               ′′
+compared to the original 25 beam observations, enabling more                     lie ∼ 1.6′′ and ∼ 1.5′′ from the propagated Gaia position of the
+precise comparison between radio source positions and stellar coor-              candidate star A, respectively—closer than the corresponding offsets
+dinates from Gaia. Figure 1 shows the positions of the radio sources A           to the 1655.5 MHz radio source by over 2′′ , but still much larger
+and B in different radio frequencies, and Table 3 shows the properties           than the offsets to the 1367.5 MHz source by ∼ 1.2′′ . In the W3
+of the radio sources associated with candidate A and B.                          and W4 bands, the centroid–star offsets increase to about 2′′ , which
+   Another supplementary dataset is the second data release for the              exceed all centroid–radio offsets at 1367.5 MHz and 1655.5 MHz
+GaLactic and Extragalactic All-sky Murchison Widefield Array eX-                 (both ∼ 1.6′′ ). Combining the individual per-band measurements
+tended (GLEAM-X)(Ross et al. 2024) which covers a frequency                      with inverse-variance weighting, the weighted-mean offset between
+range of 72–231 MHz with twenty frequency bands. Although the                    the radio source and the epoch-corrected stellar (Gaia) position is
+angular resolution of GLEAM-X is at the arcminute level, it still                1.27 ± 0.34′′ for candidate A and 2.64 ± 0.36′′ for candidate B.
+effectively captures the fluxes of candidate B at lower frequencies.                For candidate B, while the stellar-radio offset at 887.5 MHz is only
+Combining GLEAM-X and RACS data extends the coverage from                        ∼ 0.5′′ , observations with smaller beam sizes at 1367.5 MHz and
+87.5 to 1655.5 MHz. J0356-4031, the radio source associated with                 1655.5 MHz frequencies reveal significantly larger radio to stellar
+candidate B, has a high flux density exceeding 10 mJy at frequen-                offsets exceeding 2′′ (Table 3). Significantly, the WISE centroids
+
+MNRAS 000, 1–21 (2026)
+                                                                                                              Diagnostics of Dyson Sphere Candidate Stars                                                       5
+
+
+
+
+Figure 1. The Rapid ASKAP Continuum Survey (RACS) radio images of radio sources associated with candidates A (J1245-2652, top row) and B (J0356-4031,
+                                                                                                                                                            ′′
+bottom row) are shown at three frequencies: 887.5 MHz (left), 1367.5 MHz (centre), and 1655.5 MHz (right), with each panel covering a field of view of 65 ×
+   ′′
+65 . White ellipses show the PyBDSF source fits from the RACS catalogues, with thick solid lines indicating the fits at the frequency of the image, while thin
+dashed lines show fits from the other radio frequencies for comparison. Large blue crosses (×) mark radio source positions for the corresponding frequency, and
+small blue plus signs (+) indicate positions at other frequencies. The red stars represent the Gaia positions propagated to the corresponding RACS observation
+epochs using the measured proper motions.
+
+
+Table 3. The properties of the radio source associated with candidates A and B.
+
+      Source               Survey                  Central Freq.      RA (J2000)       Dec (J2000)        Flux Density            Beam size                   PyBDSF fit            Offset to star   Weighted mean
+                          (Epoch)                    (MHz)              (h m s)           (d m s)            (mJy)               [′′ × ′′ (◦)]                [′′ × ′′ (◦)]             (′′ )          offset (′′ )
+         A          RACS-low (J2020.7917)             887.5          12 45 12.783      − 26 52 06.20      1.75 ± 0.40         25.0 × 25.0 (0.0)           27.4 × 22.8 (171.8)       3.26 ± 2.03
+    (J1245-2652)    RACS-mid (J2021.0490)            1367.5          12 45 12.864      − 26 52 03.11      1.24 ± 0.31          9.3 × 7.9 (67.3)             9.4 × 8.8 (45.0)        1.18 ± 0.36        1.27 ± 0.34
+                    RACS-high (J2022.0518)           1655.5          12 45 13.022      − 26 52 04.94      1.45 ± 0.39         11.0 × 8.1 (82.9)            13.0 × 11.0 (2.0)        1.59 ± 1.24
+                                                       87.5                                                  11.43          186.9 × 152.4 ( − 53.2)     188.2 × 151.4 ( − 54.0)
+                                                      118.5                                                  11.81          123.5 × 97.6 ( − 53.9)       123.5 × 96.0 ( − 54.0)
+                      GLEAM-X (J2020.0)               154.5           03 56 03.86       − 40 31 48.8         12.27           95.1 × 74.3 ( − 54.9)       97.5 × 72.2 ( − 54.0)      0.58 ± 4.07
+         B                                            185.0                                                  10.74           77.5 × 61.9 ( − 56.0)       80.5 × 59.4 ( − 54.0)
+                                                                                                                                                                                                       2.64 ± 0.36
+    (J0356-4031)                                      215.5                                                   6.79           65.7 × 52.7 ( − 55.0)       69.1 × 49.7 ( − 54.0)
+                    RACS-low (J2020.7924)             887.5          03 56 03.831      − 40 31 48.19      2.90 ± 0.46         25.0 × 25.0 (0.0)           27.8 × 22.6 (178.3)       0.53 ± 1.41
+                    RACS-mid (J2021.0179)            1367.5          03 56 04.074      − 40 31 48.00      2.22 ± 0.29          9.6 × 9.1 (37.6)             9.3 × 8.8 (25.0)        3.05 ± 0.36
+                    RACS-high (J2022.0645)           1655.5          03 56 03.998      − 40 31 49.12      2.01 ± 0.35         10.7 × 8.6 (58.8)            11.8 × 6.0 (29.2)        2.14 ± 0.50
+
+Note. — Beam sizes are the synthesised beam FWHM, given as major axis × minor axis (′′ × ′′ ) and position angle (PA, ◦). PyBDSF fit sizes are the fitted source parameters (convolved with beam) from RACS
+catalogues (Hale et al. 2021; Duchesne et al. 2024, 2025) and GLEAM-X (Ross et al. 2024). The ’Offset to star’ is the angular offset between the radio source position and the proper-motion (epoch) corrected Gaia
+DR3 position of the star. Radio-to-stellar offsets for GLEAM-X are calculated using the propagated Gaia position at epoch ∼2020.0; radio-to-stellar offsets for RACS are based on their epochs provided by the
+corresponding source catalogues. The ’Weighted mean offset’ column gives the inverse-variance weighted average of the per-band offsets for each candidate.
+
+
+
+
+at W3 bands are substantially displaced from star B’s position by                                            C, D, and E were successfully fitted with SEP, but candidate F is
+∼ 2.8′′ , but align better with the 1367.5 MHz radio source location                                         elongated and could not be fitted by SEP, so we used scipy for its
+by only ∼ 0.5′′ (Figure 3). In the W4 band with lower resolution than                                        centroid. The astrometric results for these candidates are shown in
+W3, the centroid is almost 4′′ away from star B, while only ∼ 1′′                                            Figure 4 and Table 5.
+from the 1367.5 MHz radio source.                                                                               Candidate C (Gaia DR3 4649396037451459712) exhibits a posi-
+                                                                                                             tional offset between its W1&W2 emissions and W3&W4 emissions.
+                                                                                                             As shown in Figure 4, the W3 and W4 emission centroids of candidate
+3.2 Astrometric diagnostics for candidate C, D, E and F                                                      C are offset by ∼ 3.7′′ and ∼ 5.0′′ , respectively, from the propagated
+.                                                                                                            Gaia position. In contrast, the W1 and W2 centroid offsets from the
+   We conducted the centroiding analysis for all four S24 candidate                                          propagated Gaia position are both < 1′′ .
+stars with no associated radio sources: C, D, E, and F. All W1 and                                              For candidates D, E, and F, their W1 and W2 centroid-to-stellar
+W2 centroids for the four cases were obtained using SEP, while all                                           offsets are all below 1′′ . Their W3 and W4 positional offsets are
+W4 images were fitted with scipy. For the W3 band, candidates                                                also less significant than those of C. Candidates D (Gaia DR3
+
+                                                                                                                                                                                  MNRAS 000, 1–21 (2026)
+6        T. Ren et al.
+
+Table 4. ALLWISE W1 to W4 band emission centroid positions, centroiding uncertainties, and angular offsets (with uncertainties) to star positions in the
+ALLWISE epoch, and to the radio positions (1367.5 MHz and 1655.5 MHz) for candidates A and B.
+
+                                                                          Centroiding
+                                           RA               Dec                              Offset to star      Offset to 1367.5 MHz         Offset to 1655.5 MHz
+     Candidate          Band                                              Uncertainty
+                                         (h m s)          (d m s)                                 (′′ )                    (′′ )                        (′′ )
+                                                                              (′′ )
+                        W1            12 45 12.945      −26 52 02.97         0.08            1.60 ± 0.08              1.09 ± 0.23                  2.23 ± 0.95
+         A              W2            12 45 12.951      −26 52 02.85         0.14            1.48 ± 0.14              1.19 ± 0.25                  2.30 ± 0.97
+    (J1245-2652)        W3            12 45 12.971      −26 52 03.51         0.17            2.16 ± 0.17              1.49 ± 0.27                  1.59 ± 0.97
+                        W4            12 45 12.991      −26 52 03.25         1.10            1.96 ± 1.09              1.71 ± 1.01                  1.75 ± 1.48
+                   Weighted mean                                                             1.66 ± 0.12              1.25 ± 0.14                  2.01 ± 0.52
+                        W1            03 56 03.831      −40 31 48.50         0.21            0.76 ± 0.20              2.81 ± 0.25                  2.01 ± 0.36
+         B              W2            03 56 03.886      −40 31 48.49         0.32            1.20 ± 0.27              2.20 ± 0.31                  1.43 ± 0.41
+    (J0356-4031)        W3            03 56 04.042      −40 31 48.33         0.25            2.84 ± 0.19              0.49 ± 0.32                  0.94 ± 0.37
+                        W4            03 56 04.140      −40 31 47.28         2.91            3.95 ± 2.23              1.04 ± 2.58                  2.45 ± 2.65
+                   Weighted mean                                                             1.73 ± 0.56              2.00 ± 0.55                  1.48 ± 0.26
+
+Notes. Throughout this paper, “Offset to the star” represents the angular separation between each MIR centroid and the corresponding Gaia position
+propagated to the corresponding ALLWISE epoch. This convention, featuring the red star as a reference marker, applies specifically to all WISE analysis maps
+(Figures 3, 4, and 5) throughout
+                         √︁      this paper. The “Weighted mean” row gives the inverse-variance weighted average of the W1–W4 offsets in each column; the
+uncertainty is scaled by 𝜒 2 /dof where the band-to-band scatter exceeds the formal errors.
+
+
+Table 5. AllWISE MIR centroid positions, centroiding uncertainties, and offsets (with uncertainties) relative to the propagated Gaia positions at the AllWISE
+epoch for candidates C, D, E, and F.
+
+                                                                                              Centroiding        Offset to
+                                                                RA               Dec
+                                   Candidate       Band                                       Uncertainty         the star
+                                                              (h m s)          (d m s)
+                                                                                                  (′′ )             (′′ )
+                                                   W1      04 56 03.036    −74 10 13.95          0.25           0.82 ± 0.09
+                                     C             W2      04 56 03.025    −74 10 13.87          0.40           0.76 ± 0.13
+                                (J0456-7410)       W3      04 56 03.184    −74 10 10.36          0.27           3.67 ± 0.25
+                                                   W4      04 56 03.430    −74 10 09.39          2.43           4.98 ± 2.15
+                                                   W1      23 27 51.319    +05 06 26.17          0.29           0.53 ± 0.19
+                                     D             W2      23 27 51.332    +05 06 26.16          0.30           0.46 ± 0.30
+                                (J2327+0506)       W3      23 27 51.389    +05 06 26.69          0.22           0.75 ± 0.22
+                                                   W4      23 27 51.357    +05 06 28.39          1.80           1.80 ± 1.80
+                                                   W1      04 02 07.783    −10 54 40.66          0.16           0.88 ± 0.16
+                                     E             W2      04 02 07.789    −10 54 41.06          0.26           0.68 ± 0.26
+                                (J0402-1054)       W3      04 02 07.747    −10 54 39.89          0.24           1.50 ± 0.24
+                                                   W4      04 02 07.810    −10 54 40.19          2.26           1.52 ± 2.25
+                                                   W1      05 13 46.524    −25 11 11.44          0.12           0.57 ± 0.11
+                                     F             W2      05 13 46.536    −25 11 11.51          0.20           0.74 ± 0.19
+                                (J0513-2511)       W3      05 13 46.539    −25 11 10.82          0.34           0.65 ± 0.31
+                                                   W4      05 13 46.632    −25 11 11.37          2.85           1.90 ± 2.59
+
+
+2660349163149053824) and F (Gaia DR3 2956570141274256512)                        X-ray sources based on our VizieR cross-match. The corresponding
+show relatively small stellar-to-centroid offsets in the W3 and W4               ALLWISE images and centroid measurements are shown in Figure 5
+bands: their W3 centroids are all displaced by only ∼ 0.7′′ , whereas            and Table 6.
+the W4 centroids are by ∼ 1.8′′ (Table 5). However, the W4 detec-                   In the W1 and W2 bands, three candidates were detected using
+tions for candidates D and F have only 3–– 5𝜎 significance above                 SEP, and their MIR centroids show offsets below 1′′ . In the W3 and
+extended background structures, making the image quality insuffi-                W4 bands, however, the MIR centroids—except for the W3 centroid
+cient to determine the true positional offsets in the W4 bands.                  of candidate H—were measured with scipy, as the image quality in
+   In contrast, candidate E (Gaia DR3 3190232820489766656) shows                 these bands is too poor for reliable SEP detections. The W3 and W4
+a larger centroid–stellar offset in both W3 and W4, with the emission            SNRs of candidates H, I, and J are generally low; only the W3 image
+centroids lying ∼ 1.5′′ north of the star. The W3 and W4 centroids               of candidate J reaches a detection significance above 5𝜎.
+themselves differ by ∼ 1′′ , and the detections are significant at > 10𝜎            Candidate H (Gaia DR3 2437221214075471744) shows a W3
+and > 6𝜎, respectively. The above results for candidate E make its               centroid displaced by ∼ 2.6′′ from the propagated Gaia position of
+ALLWISE positional offset more reliable than those of candidates D               the star with a ∼ 2𝜎 detection. In the W4 band, the source appears
+and F, and less susceptible to low-SNR artefacts.                                elongated, showing a centroid-to-stellar offset of ∼ 1′′ . The detailed
+                                                                                 spatial structure of this elongated source in the W4 is obscured due
+                                                                                 to the low image quality.
+3.3 Astrometric diagnostics for candidate H, I and J
+                                                                                    Similarly, the W3 and W4 images of candidates I and J
+We present the astrometric analysis of the three new Dyson Sphere                exhibit elongated brightness profiles. Candidate I (Gaia DR3
+candidates in K26. None of these sources shows associated radio or               3854090071297359616) appears as an extended stripe in W3, pos-
+
+MNRAS 000, 1–21 (2026)
+                                                                                 Diagnostics of Dyson Sphere Candidate Stars                            7
+                                                                                 our centroiding methods are not identical to those used in S24, our
+                                                                                 results are broadly consistent with the values presented in Table 7
+                                                                                 of S24. Our calculated W1/W2 total offsets remain below 0.5′′ . For
+                                                                                 candidates B and C, the W1/W3 total offsets of 2.43′′ and 3.64′′
+                                                                                 align with the significant displacements reported for those cases in
+                                                                                 S24. Table 7 presents a comparison between the results from S24
+                                                                                 and this work.
+                                                                                    For the remaining candidates (A, D, E, and F), W1/W3 positional
+                                                                                 offsets range from 0.7′′ to 1.2′′ . These do not deviate from the
+                                                                                 broad distributions suggested in Theissen & West (2017) (𝜎 ≈ 5′′ ),
+                                                                                 where band-to-band centroiding was applied to investigate warm dust
+                                                                                 around M dwarfs. While utilising precise Gaia DR3 positions in this
+                                                                                 work provides a better stellar reference, it does not inherently mitigate
+                                                                                 the degeneracy caused by such wide statistical ranges. To better
+                                                                                 examine the potential background contaminants of the candidate
+                                                                                 stars, we selected sets of SNR-matched control stars for a comparative
+                                                                                 analysis, as detailed in Section 3.5.
+
+
+                                                                                 3.5 ALLWISE Image Centroid Analysis of Ordinary M-Dwarf
+                                                                                     Control Stars
+                                                                                 To evaluate the statistical significance of our astrometric offsets, we
+                                                                                 constructed nine distinct control groups—one corresponding to each
+                                                                                 of the investigated candidates from A to J, except for candidate G,
+                                                                                 as it was previously identified as a clear case of AGN contamination
+                                                                                 (Ren, Garrett & Siemion 2025).
+                                                                                    We first construct an initial parent sample of ordinary M-dwarfs by
+                                                                                 selecting sources from Gaia DR3 with a Renormalised Unit Weight
+                                                                                 Error (RUWE) < 1.4 located within 300 pc. To specifically isolate the
+                                                                                 M-dwarf population, we applied multiple astrophysical constraints,
+Figure 2. Radio spectral energy distributions and spectral index fits for can-   including an absolute magnitude cut of 𝑀𝐺 > 7.7, an effective
+didates A (J1245-2652, top panel) and B (J0356-4031, bottom panel). Dark         temperature threshold of 𝑇eff < 4000 K, and a colour cut of 𝐺 BP −
+blue squares represent RACS-low, RACS-mid, and RACS-high observations            𝐺 RP ≥ 1.84 (Montalto et al. 2021). Following cross-matching with
+at 887.5, 1367.5, and 1655.5 MHz. Orange circles in the bottom panel show        the 2MASS and AllWISE catalogues, this initial selection yielded
+GLEAM-X wideband integrated fluxes across five frequency channels (87.5,         approximately 2 million sources.
+118.5, 154.5, 185.5, and 215.5 MHz). The red dashed lines show power-law            Subsequently, we applied a series of stringent AllWISE photo-
+fits to the data, with spectral indices (𝛼) derived via weighted least-squares   metric quality filters to ensure the reliability of the MIR detections.
+fitting in log-space.                                                            We required a signal-to-noise ratio SNR > 3 in both the W3 and
+                                                                                 W4 bands, a criterion that excluded over 99 per cent of the sources.
+                                                                                 Additionally, we imposed profile-fit 𝜒2 limits (w3rchi2 < 1.05 and
+sibly arising from blended emission associated with multiple nearby
+                                                                                 w4rchi2 < 1.3), mandated the absence of saturation, and required at
+sources, and is detected at only ∼ 2𝜎. In W4, the source exhibits
+                                                                                 least one valid profile-fit measurement in both the W3 and W4 bands.
+a smoother morphology with a significance of ∼ 3𝜎. For W3, we
+                                                                                 Collectively, these requirements reduced the parent population to a
+derived the centroid using the southeastern peak emission, which is
+                                                                                 final baseline sample of 3,582 high-quality ordinary M-dwarfs (see
+closest to the propagated Gaia position of the candidate star I. The
+                                                                                 Table 8).
+resulting W3 and W4 centroids lie more than 2′′ and 3′′ from the
+                                                                                    To establish a reliable astrometric baseline, we matched stars based
+propagated Gaia position, respectively. These centroids are oriented
+                                                                                 on their Gaia DR3 𝐺-band magnitudes, W1 SNR, and W2 SNR. This
+in nearly opposite directions, differing by over 5′′ . The W4 centroid
+                                                                                 selection relies on the premise that at these shorter wavelengths, cor-
+is offset by ∼ 3.2′′ from the star I, showing a pattern similar to that
+                                                                                 responding to the Rayleigh–Jeans tail, the SEDs of potential Dyson
+seen for candidate C.
+                                                                                 Sphere candidates should remain similar from ordinary M-dwarfs.
+   Candidate J (Gaia DR3 651765552072217216) also shows an off-
+                                                                                 This matching criterion initially yielded 406 stars selected from the
+set between the W3 and W4 centroids. Its centroid-to-stellar offsets
+                                                                                 parent sample of 3,582. We then performed a direct visual inspection
+are ∼ 2′′ in W3 and ∼ 6′′ in W4, with opposite directions—the
+                                                                                 to ensure clear profile structures in the W3 and W4 bands, filtering
+W3 and W4 centroids of candidate J are separated by more than 7′′ ,
+                                                                                 the sample down to 155 final control stars across the nine groups (see
+appearing as if W3 and W4 are dominated by two different MIR
+                                                                                 Table 9).
+sources.
+                                                                                    We then performed a centroid analysis on the 155 stars, following
+                                                                                 the same procedure introduced in Section 2 and applied in Sub-
+                                                                                 sections 3.1, 3.2, and 3.3. For each star where a centroid was suc-
+3.4 Comparison with the Photocentre for the S24 Candidate
+                                                                                 cessfully detected, the centroiding process yielded both a positional
+    Stars
+                                                                                 offset and the corresponding uncertainty. The positional offsets of the
+Candidates A and B in Subsection 3.1 and C, D, E, and F in Sub-                  control stars, used as the reference for the candidate stars, are then
+section 3.2 were analysed for photocentre offsets in S24. Although               quantitatively analysed using the Rayleigh distribution by employing
+
+                                                                                                                                MNRAS 000, 1–21 (2026)
+8      T. Ren et al.
+
+Table 6. AllWISE MIR centroid positions, centroiding uncertainties, and offsets (with uncertainties) relative to the propagated Gaia positions at the AllWISE
+epoch for candidates H, I, and J.
+
+                                                                                                      Centroiding       Offset to
+                                                                     RA               Dec
+                                  Candidate          Band                                             Uncertainty        the star
+                                                                   (h m s)          (d m s)
+                                                                                                          (′′ )            (′′ )
+                                                     W1       23 36 02.707      −09 20 00.560            0.19          0.55 ± 0.19
+                                     H               W2       23 36 02.694      −09 20 00.066            0.34          0.38 ± 0.34
+                                (J2336-0920)         W3       23 36 02.834      −09 20 01.461            0.53          2.63 ± 0.53
+                                                     W4       23 36 02.733      −09 20 00.496            2.37          0.89 ± 2.34
+                                                     W1       09 39 54.337      +07 00 27.928            0.16          0.24 ± 0.16
+                                     I               W2       09 39 54.344      +07 00 27.746            0.27          0.40 ± 0.27
+                               (J0939+0700)          W3       09 39 54.315      +07 00 25.856            0.62          2.10 ± 0.62
+                                                     W4       09 39 54.239      +07 00 30.934            2.15          3.22 ± 2.15
+                                                     W1       08 32 16.575      +14 42 18.643            0.11          0.11 ± 0.11
+                                     J               W2       08 32 16.575      +14 42 18.751            0.20          0.09 ± 0.19
+                               (J0832+1442)          W3       08 32 16.694      +14 42 17.700            0.33          1.94 ± 0.33
+                                                     W4       08 32 16.694      +14 42 24.985            2.17          6.46 ± 2.17
+
+
+Table 7. Comparison of photocentre offsets (arcsec) between S24 and this work.
+
+                          Candidate          W1/W2 Offset (RA/Dec)                 W1/W3 Offset (RA/Dec)            W2/W3 Offset (RA/Dec)
+                                               S24         This Work                 S24         This Work               This Work
+                       A (J1245-2652)      −0.25/−0.01     0.00/0.01              −0.03/0.33    0.33/−0.65              0.33/−0.66
+                       B (J0356-4031)       0.40/0.31      0.63/0.03              3.21/0.06      2.43/0.15               1.80/0.12
+                       C (J0456-7410)      0.25/−0.32     −0.05/0.08             1.52/−3.68      0.77/3.56               0.81/3.48
+                       D (J2327+0506)      −0.31/−0.12    0.19/−0.01             0.60/−0.09      1.05/0.52               0.85/0.53
+                       E (J0402-1054)       −0.09/0.48    0.10/−0.40             −1.15/−0.38    −0.52/0.73              −0.62/1.13
+                       F (J0513-2511)       0.03/0.10     0.19/−0.08              −1.04/0.79    −0.08/1.18              −0.27/1.26
+
+
+Table 8. Summary of the selection criteria used to construct the M-dwarf control sample.
+
+                               Step                                    Filter Criterion                              Source Count
+                                                                       Initial Sample Selection
+                                  1                  Gaia DR3 RUWE < 1.4 and Distance < 300 pc                           6,346,475
+                                                                         M-dwarfs Selection
+                                                  Absolute Magnitude MG > 7.7 (Pass rate: 85%)                                  —
+                                  2           2MASS & AllWISE Best Neighbour Match (Pass rate: 61%)                             —
+                                                 Teff < 4000 K & BP − RP ≥ 1.84 (Pass rate: 61%)                         2,016,459
+                                                                    Photometric Quality Selection
+                                                     Both W3 and W4 SNR > 3 (Pass rate: 1%)
+                                         Profile-fit 𝜒 2 (w3rchi2 < 1.05, w4rchi2 < 1.3) (Pass rate: 88%)
+                                  3           No Saturation (w3sat = 0, w4sat = 0) (Pass rate: 97%)                          3,582
+                                        Number of Measurements (w3nm > 0, w4nm > 0) (Pass rate: 30%)
+
+
+Table 9. The candidate star properties and the corresponding control sample selection. The left section lists properties for the candidate stars, while the
+right section defines the selection criteria and resulting sample sizes for the control groups. SNR values are taken from AllWISE catalogue and 𝐺-band Vega
+magnitudes are from Gaia DR3. 𝑁sel shows the number of control stars that passed the SNR and 𝐺-magnitude selection, while 𝑁fit denotes the number of
+control stars that passed the visual check and were therefore used for the Rayleigh distribution analysis.
+
+                                                     Candidate Star                             Control Sample (M-dwarfs)
+                      Candidate           SNRW1           SNRW2        𝐺-mag     W1 Range       W2 Range      𝐺-mag Range       𝑁sel   𝑁fit
+                      A (J1245−2652)          45.8          48.2       15.996     44.8–46.8       47.2–49.2    15.75–16.25      25     15
+                      B (J0356−4031)          43.7          39.5       17.713     41.7–45.7       37.5–41.5    17.20–18.20      58     20
+                      C (J0456−7410)          41.8          33.3       18.393     39.8–43.8       31.3–35.3    17.90–18.90      28     16
+                      D (J2327+0506)          41.9          31.4       17.662     39.9–43.9       29.4–33.4    17.20–18.20      29     13
+                      E (J0402−1054)          43.3          38.4       17.008     41.3–45.3       36.4–40.4    16.50–17.50      94     25
+                      F (J0513−2511)          44.0          42.4       16.330     42.0–46.0       40.4–44.4    15.80–16.80      95     37
+                      H (J2336−0920)          41.6          29.5       17.312     39.6–43.6       27.5–31.5    16.30–18.30      23      9
+                      I (J0939+0700)          44.4          34.9       17.402     42.4–46.4       32.9–36.9    16.90–17.90      26      9
+                      J (J0832−1442)          44.7          32.6       16.133     40.0–45.0       28.0–38.0    15.00–17.00      28     11
+
+
+
+MNRAS 000, 1–21 (2026)
+                                                                                  Diagnostics of Dyson Sphere Candidate Stars                               9
+
+
+
+
+Figure 3. ALLWISE infrared images of radio source candidates A and B across four bands. Each subplot has a field of view of 30′′ × 30′′ , with a 5′′ scalebar
+provided for reference. Green contours show surface brightness at multiple 𝜎 levels above the background, where 𝜎 is the per-pixel background noise (RMS).
+Blue dashed ellipses and crosses mark the positions of the 1367.5 MHz radio sources, and the blue plus signs (+) mark the 1655.5 MHz radio sources. The red
+star and the underlying yellow star indicate the Gaia stellar positions corrected to the ALLWISE epoch and the RACS epoch (J2021), respectively. Green crosses
+(×) and plus signs (+) mark the infrared centroids. Candidate B’s W1 and W2 centroids are offset from the radio source, while W3 and W3 are consistent,
+suggesting a background IR source. While candidate A appears to exhibit a higher degree of positional blending compared to candidate B.
+
+
+scipy.stats.rayleigh, with the quantitative results presented in                  but reach Gaussian-equivalent significances of 3.1𝜎, 2.6𝜎 and 2.7𝜎
+Table 10.                                                                         under the median scale, respectively (Table 10). However, across all
+   The typical offset scale of the M dwarfs in each band of each                  bands, the centroid-to-stellar offsets for candidates D, H, I, and J do
+control sample is characterised by the Rayleigh scale parameter 𝜎R .              not behave as anomalies under either of the two quantitative analysis
+Each candidate’s offset rcand is compared against this scale to deter-            methods.
+mine a Rayleigh survival probability pR , which represents the chance
+of a control star showing an offset at least as large. We then re-
+cast this probability as a one-sided Gaussian-equivalent significance,
+Φ−1 (1−pR ), which enables the standard-deviation expression. For all             4 ARCHIVAL IMAGE DIAGNOSTICS
+control samples, we also calculate an outlier-insensitive median scale            To identify potential background contaminants that escape detection
+𝜎med as an independent baseline. This serves as a reliable backup be-             in the Gaia, 2MASS and WISE surveys with shallower depth, we
+cause some datasets, most notably the W3 and W4 bands, do not                     utilise deep archival optical and NIR photometric data. In the op-
+strictly follow a Rayleigh distribution. As shown in Table 10, several            tical regime, all candidates are covered by the deep DESI Legacy
+cases (the W1 and W2 bands of C, and the W2 band of F) that are not               Survey DR10 imaging, which offers superior depth compared to
+significant under the Rayleigh scale reach > 2𝜎 Gaussian-equivalent               shallower surveys (e.g., SDSS, SkyMapper, and Pan-STARRS). In the
+significance under the median scale. Appendix A presents further                  NIR regime, coverage varies depending on the specific survey foot-
+details of the Rayleigh-distribution analysis beyond the table, includ-           prints: A, B, E, F, and H are imaged by the VHS surveys, while only
+ing the full centroid-offset distributions for all candidates and bands           candidate C is covered by the VMC surveys. The remaining three
+and an example of the control-star centroiding for candidate A.                   candidates lack VISTA imaging but are instead covered by UKIRT
+   Candidate A is the clear standout of the quantitative analysis in              surveys, with D and I observed by UKIDSS and J captured by the
+Table 10. In both its W1 and W2 bands, the Rayleigh fits yield pR <               UHS. Consequently, we divide the sample into three groups based
+1 × 10−10 and a Gaussian-equivalent significance of > 6𝜎, indicating              on their available near-infrared survey coverage:
+that its W1/W2 WISE centroids deviate strongly from clean M-
+                                                                                    • Candidates A, B, E, F, and H (with VHS coverage);
+dwarf behaviour. Whether this reflects an unrecognised background
+                                                                                    • Candidate C (with VMC coverage);
+galaxy, an unusual debris configuration, or a genuine waste heat
+                                                                                    • Candidates D, I, and J (with UKIDSS or UHS coverage).
+technosignature, the centroid profile of A is statistically distinct from
+the normal M-dwarf population in W1 and W2.                                          We complement our image inspection by examining the associated
+  Among the other candidates, the next most significant after A are               VISTA and UKIRT catalogues in the NIR regime, and DESI Legacy
+the W2 band of B (Gaussian-equivalent significance 3.7𝜎) and the                  DR10 Tractor optical catalogues to find identifiers and existing pho-
+W1 band of E (3.3𝜎). A marginal case is the W1 band of candidate B,               tometric classifications for sources apparent in the images of each
+with a Gaussian-equivalent significance of 2.3𝜎; here the median-                 candidate. The VISTA and UKIRT catalogues provide basic stel-
+scale baseline suggests a higher value of 4.3𝜎, indicating an anoma-              lar/galaxy morphological classifications, and the Legacy Tractor cat-
+lous offset discrepancy between candidate B and its control stars in              alogue offers detailed brightness profile types (PSF, REX, EXP, etc.)
+the W1 band offsets. Similarly, the W1 and W2 bands of C and the                  and properties. The combined optical and NIR data approach enables
+W2 band of F show no significant deviation under the Rayleigh scale               us to diagnose the nature of the associated sources preliminarily.
+
+                                                                                                                                   MNRAS 000, 1–21 (2026)
+10       T. Ren et al.
+
+
+
+
+Figure 4. ALLWISE infrared images of the radio-undetected candidates C, D, E, and F across four bands. Each subplot has a field of view of 30′′ × 30′′ , with
+a 5′′ scalebar provided for reference. Green contours show surface brightness at multiple 𝜎 levels above the background, where 𝜎 is the per-pixel background
+noise (RMS), and the Green crosses (×) and plus signs (+) mark the MIR centroids. The red star and the underlying yellow star indicate the Gaia stellar positions
+corrected to the ALLWISE epoch and the Gaia DR3 epoch (2016.0). For the four sources, candidate C appears to have positional offsets between different WISE
+bands similar to the pattern of Candidate B, while the MIR centroids and star positions in candidates D, E, and F appear more blended.
+
+
+   To identify potentially uncatalogued radio sources that might indi-             to the hot DOG associated with candidate G (J2335–0004). This
+cate AGN contamination, we also inspected archival radio imaging,                  object was recently confirmed as a radio-loud AGN by Ren, Garrett &
+including the NRAO VLA Sky Survey (NVSS; Condon et al. 1998),                      Siemion (2025) using VLBI astrometry, and the ALLWISE positional
+the Faint Images of the Radio Sky at Twenty-Centimeters (FIRST;                    offset analysis supports its hot DOG properties. We examined the
+Becker et al. 1995), the VLA Low-frequency Sky Survey Redux                        same archival Legacy, VISTA and UKIRT survey datasets used for
+(VLSSr; Lane et al. 2014), and the Sydney University Molonglo                      the nine new candidates to determine if this known contaminant
+Sky Survey (SUMSS; Mauch et al. 2003), for sources lacking radio                   could be identified solely through archival inspection.
+catalogue counterparts. No new radio candidates with significance                     J2335-0004 was effectively detected by the DESI Legacy Survey.
+exceeding 3𝜎 were identified.                                                      The Legacy DR10 Tractor catalogue suggested that this object has
+   We applied the imaging and photometric inspection method to                     an REX profile, consistent with an extended source (a galaxy). It is
+candidate G as a verification case, utilising its Legacy Survey DR1,               notably faint across optical bands, with 𝑔, 𝑟, 𝑖, and 𝑧 AB magnitudes
+VHS and UHS data; the findings are described in Subsection 4.1. The                of 24.43, 24.23, 24.20, and 23.11 mag, respectively. This Legacy
+diagnostic results for the three groups, derived from archival image               object in the optical regime is located 0.28′′ away from the AGN
+inspections, follow in Subsections 4.2, 4.3, and 4.4.                              core position of J2335-0004 (23:35:32.8406, -0:04:25.069) detected
+                                                                                   through the EVN (e-VLBI) by Ren, Garrett & Siemion (2025).
+                                                                                      In the VHS survey, J2335–0004 was reported to be an ex-
+4.1 Searching for the AGN associated with Candidate G in the
+                                                                                   tended, galaxy-like source, with a Ks -band AB magnitude of
+    Optical and NIR regimes
+                                                                                   19.89 ± 0.26 mag. Additionally, the VHS DR5 catalogue (McMa-
+To validate the effectiveness of detecting background contaminants                 hon et al. 2013) reported a double detection at this location: VHS
+using deep archival imaging, we first apply our analysis methodology               J233532.82-000424.9 and VHS J233532.84-000425.2. Both detec-
+
+MNRAS 000, 1–21 (2026)
+                                                                                  Diagnostics of Dyson Sphere Candidate Stars                                 11
+
+
+
+
+Figure 5. ALLWISE infrared images of candidate stars H, I, and J across four bands. Each subplot has a field of view of 36′′ × 36′′ , with a 5′′ scalebar provided
+for reference. Green contours show surface brightness at multiple 𝜎 levels above the background, where 𝜎 is the per-pixel background noise (RMS), and the
+Green crosses (×) and plus signs (+) mark the MIR centroids. The red star and the underlying yellow star indicate the Gaia stellar positions corrected to the
+ALLWISE epoch and the Gaia DR3 epoch (2016.0). Three candidates generally exhibit lower W3 and W4 SNRs compared to A–F. Among these, only the W4
+emission for candidate H appears positionally aligned; all other W3 and W4 detections show apparent offsets, with the W3 flux for candidate I notably displaying
+an extended strip.
+
+
+tions are found to be highly coincident, lying ∼ 0.3′′ away from the                ages for candidates A and B, the two sources with confirmed radio
+AGN core position of J2335-0004. In another NIR survey, this source                 counterparts. For candidate A, we find a significant spatial coinci-
+was catalogued in the UKIDSS DR9 Large Area Survey (Lawrence                        dence between the WISE W3 and W4 centroids, the 1367.5 MHz
+et al. 2007) as ULAS J233532.83-000425.1; it is classified as a                     and 1655.5 MHz radio positions, and the central optical/NIR source
+galaxy-like object with a 𝐾-band AB magnitude of 20.09±0.21 mag.                    brightness profile in Figure 7. The source maintains a consistent,
+   We also inspected archival image data from the SkyMapper, Pan-                   unresolved morphology across all available archival bands (VHS 𝐽
+STARRS, and SDSS; however, the faint optical magnitude (as re-                      and 𝑌 ; Legacy 𝑟, 𝑖, and 𝑧). The associated VHS and Legacy Tractor
+vealed by the Legacy DR10 catalogue) falls below their respective                   catalogues don’t show any companion objects within a 10′′ distance
+detection thresholds, and we did not find its presence. These findings              from candidate A.
+on the AGN companion of candidate G effectively demonstrate that                       For candidate B, as revealed by Section 3.1, the 1367.5 MHz and
+deep public archival surveys can identify background contaminants                   1655.5 MHz radio counterparts, along with the WISE W3 and W4
+at minimal cost, if their depth and sensitivity are adequate. How-                  centroids, are tightly clustered ∼ 3′′ to the east of the candidate star
+ever, this archival evidence alone is insufficient for a complete MIR               B. This position does not exhibit significant emission in the VHS
+contributor diagnosis. A further astrometric analysis, similar to that              Ks -band image (Figure 7) and is not detected in the other available
+performed in Section 3, is required to confirm that the MIR emission                VHS bands. Furthermore, no close companion source is catalogued
+is genuinely contributed by the background galaxy revealed in the                   at this position in either the VHS or Legacy DR10 Tractor catalogues.
+archival images.                                                                    However, the Legacy 𝑔-band image reveals a faint, tail-like structure
+                                                                                    at this offset location, consistent with the radio and WISE positions,
+                                                                                    detected with a peak significance of ∼ 4.7𝜎.
+4.2 Image diagnostics for candidate A, B, E, F, and H
+                                                                                       As for the remaining candidates, E and F show conditions similar
+The five candidates covered by the VHS survey include A and B,                      to candidate A (Figure 8). They exhibit W3 and W4 centroids that are
+both of which have radio counterparts in the public surveys, and E,                 spatially coincident with the brightness profiles of the central stars.
+F, and H, which show no associated radio emission.                                  Additionally, no other objects appear to be located within the regions
+   Figure 7 presents the VHS Ks -band and Legacy DR10 𝑔-band im-                    of MIR flux.
+
+                                                                                                                                      MNRAS 000, 1–21 (2026)
+12       T. Ren et al.
+
+Table 10. Rayleigh-distribution analysis of centroid offsets for the candidate control samples (W1–W4). 𝑁 is the number of valid control stars; 𝜎𝑅 is the
+Rayleigh scale of the control sample, where the Rayleigh distribution peaks at (illustrated in Fig. A2); 𝑝𝑅 is the Rayleigh survival probability at the candidate
+offset; and the Gaussian-equivalent significance is the one-sided 𝜎 transformed from 𝑝𝑅 . The Note column flags bands anomalous (> 3𝜎) or marginal (2–3𝜎);
+"median" entries represent the significance under an alternative median scale 𝜎med for some cases.
+
+                                      Rayleigh scale     Rayleigh survival      Gaussian-equivalent significance
+     Candidate        Band      𝑁                                                                                                          Note
+                                       𝜎𝑅 (arcsec)        probability 𝑝𝑅                (Rayleigh) [𝜎]
+                      W1        15     0.17 ± 0.03          4 × 10 −19                    8.86 ± 1.54                               Anomalous (> 3𝜎)
+                      W2        15     0.21 ± 0.04          3 × 10 −11                    6.55 ± 1.37                               Anomalous (> 3𝜎)
+ A (J1245−2652)
+                      W3        15     1.50 ± 0.27             0.355                      0.37 ± 0.58
+                      W4         9     3.29 ± 0.77             0.837                     −0.98 ± 1.50
+                      W1        19     0.26 ± 0.04             0.012                      2.26 ± 1.41                  Marginal; 4.3𝜎 under the median scale 𝜎med
+                      W2        19     0.28 ± 0.05           1 × 10−4                     3.66 ± 1.18                              Anomalous (> 3𝜎)
+ B (J0356−4031)
+                      W3        18     2.29 ± 0.38             0.463                      0.09 ± 0.29
+                      W4         9     2.80 ± 0.66             0.371                      0.33 ± 1.96
+                      W1        14     0.33 ± 0.06             0.048                      1.66 ± 1.08                       3.1𝜎 under the median scale 𝜎med
+                      W2        14     0.35 ± 0.07             0.091                      1.33 ± 0.72                       2.6𝜎 under the median scale 𝜎med
+ C (J0456−7410)
+                      W3        12     2.59 ± 0.53             0.367                      0.34 ± 0.33
+                      W4         7     2.74 ± 0.73             0.192                      0.87 ± 1.69
+                      W1        13     0.33 ± 0.06             0.276                      0.59 ± 1.39
+                      W2        13     0.35 ± 0.07             0.425                      0.19 ± 2.35
+  D (J2327+0506)
+                      W3        10     2.39 ± 0.53             0.952                     −1.66 ± 0.36
+                      W4         5     3.30 ± 1.04             0.862                     −1.09 ± 2.76
+                      W1        25     0.23 ± 0.03           5 × 10−4                     3.29 ± 0.94                               Anomalous (> 3𝜎)
+                      W2        25     0.30 ± 0.04             0.071                      1.47 ± 1.29
+  E (J0402−1054)
+                      W3        20     2.57 ± 0.41             0.843                     −1.01 ± 0.31
+                      W4        14     2.48 ± 0.47             0.828                     −0.95 ± 3.40
+                      W1        36     0.53 ± 0.06             0.562                     −0.16 ± 1.00
+                      W2        37     0.46 ± 0.05             0.275                      0.60 ± 1.05                       2.7𝜎 under the median scale 𝜎med
+  F (J0513−2511)
+                      W3        28     2.28 ± 0.30             0.960                     −1.75 ± 0.98
+                      W4        21     2.99 ± 0.46             0.817                     −0.91 ± 3.31
+                      W1         7     0.56 ± 0.11             0.618                     −0.30 ± 0.79
+                      W2         7     0.51 ± 0.07             0.760                     −0.71 ± 2.71
+ H (J2336−0920)
+                      W3         5     3.54 ± 0.92             0.759                     −0.70 ± 0.48
+                      W4         4     2.35 ± 0.83             0.931                     −1.48 ± 3.69
+                      W1         7     0.16 ± 0.04             0.336                      0.42 ± 2.65
+                      W2         7     0.16 ± 0.03             0.037                      1.78 ± 3.25
+  I (J0939+0700)
+                      W3         3     1.94 ± 0.29             0.557                     −0.14 ± 0.66
+                      W4         6     2.53 ± 0.73             0.444                      0.14 ± 2.41
+                      W1        10     0.29 ± 0.07             0.933                     −1.50 ± 2.58
+                      W2        10     0.38 ± 0.09             0.973                     −1.92 ± 3.17
+  J (J0832−1442)
+                      W3         9     1.49 ± 0.29             0.429                      0.18 ± 0.50
+                      W4         5     2.93 ± 0.93             0.088                      1.35 ± 1.05
+
+
+   Candidate H presents a more complex morphology. While its W4                    extended source with a Ks -band AB magnitude of 21.60 ± 0.32 mag.
+centroid aligns with the central stellar source, the W3 centroid is sig-           The morphological analysis in the VISTA Magellanic Survey (VMC)
+nificantly offset by ∼ 2.6′′ , placing it outside the star’s main bright-          catalogue (YJKs ) DR6 (Cioni et al. 2011) classifies this source as a
+ness profile. Unlike candidate B, the multi-band images of candidate               likely galaxy with a 90% probability. We also validated this detec-
+H do not reveal obvious extended structures or ’tails’ that clearly                tion by inspecting the VMC 𝐾𝑠 -band PSF residual, which confirmed
+indicate a companion. However, inspection of the Legacy DR10                       the significance of the feature distinct from the stellar profile. (Fig-
+data reveals a faint source with a PSF-like profile (DESI Legacy ID                ure 10). Crucially, while VMC J045603.25-741010.66 is 3.59′′ away
+10995408501213714) located ∼ 5′′ to the northeast (Figure 8). This                 from the propagated Gaia position of candidate star C, it is only 0.4′′
+object, likely a distant galaxy, coincides with the high-flux region of            from the WISE W3 centroid.
+the W4 emission and lies on the fringe of the W3 emission.                            VMC J045603.25-741010.66, the companion source, lacks a sig-
+                                                                                   nificant counterpart in the VMC J and Y band images, as confirmed
+                                                                                   by both the VMC catalogue and our inspection of the correspond-
+                                                                                   ing image data. Furthermore, while the source remains faint in the
+4.3 Image diagnostics for candidate C
+                                                                                   Legacy DR10 𝑟 and 𝑖 bands, it exhibits a detection of 3.6𝜎 above the
+Candidate C is the only case covered by the VMC survey, and it lacks               background in the Legacy 𝑧-band image.
+any associated radio or X-ray counterparts from archival data. Fig-
+ure 9 shows its VMC J, Y, and Ks band images, and the Legacy DR10 r,
+i, and z band images. A critical finding is the presence of an extended
+                                                                                   4.4 Image diagnostics for candidate D, I and J
+tail-like structure located to the north of the central star, with a peak
+emission reaching a significance of 6.1𝜎. This tail corresponds to the             Candidates D, I, and J have complete Legacy imaging coverage but
+catalogued source VMC J045603.25-741010.66, detected as a faint                    lack VISTA data; instead, they are covered by the UKIRT surveys. In
+
+MNRAS 000, 1–21 (2026)
+                                                                                 Diagnostics of Dyson Sphere Candidate Stars                                13
+
+
+
+
+                                                                                 Figure 7. VHS Ks -band (left panels) and Legacy 𝑔-band (right panels) images
+                                                                                 of candidates A and B. Red stars mark the propagated Gaia positions at the
+                                                                                 VHS imaging epochs (2015 for A and 2013 for B), while yellow stars show
+                                                                                 the propagated Gaia positions at the RACS observation epoch (2021). Green
+                                                                                 plus signs (+) and crosses (×) mark the W3 and W4 centroids, respectively.
+                                                                                 The corresponding green W3 (solid) and W4 (dashed) high flux contours for
+                                                                                 candidates A and B are also shown, with all data measured in Section 3. The
+                                                                                 1367.5 MHz radio source positions are indicated by blue crosses (×), with
+                                                                                 blue ellipses representing the 1367.5 MHz radio source size as determined by a
+                                                                                 pyBDSF fit. Blue plus signs (+) mark 1655.5 MHz radio-detected positions. In
+                                                                                 the VHS panels, red circles show stellar objects from the VHS catalogue. In the
+                                                                                 Legacy 𝑔-band panels, red circles indicate sources with PSF profiles, while red
+                                                                                 triangles mark REX sources using upward triangles and EXP sources using
+Figure 6. Legacy DR10 𝑔- and 𝑟-band images (upper panels), VHS 𝐽- and Ks -
+                                                                                 downward triangles. North (N) and east (E) directions are indicated by the
+band images (middle panels), and UHS 𝐻- and 𝐾-band images (lower panels)
+                                                                                 compass marker in the bottom-right corner of the upper-left (VHS–Ks ) panel.
+for candidate G. Red stars mark the propagated Gaia positions in 2005, 2010,
+                                                                                 While the WISE emissions, the propagated Gaia position of the candidate
+and 2024, and the yellow circles indicate the AGN core position detected by
+                                                                                 stars, and the radio source position for candidate A are spatially blended,
+EVN (e-VLBI). In the Legacy g band panels, red circles indicate sources with
+                                                                                 candidate B exhibits alignment between the radio and WISE emissions, both
+PSF profiles, while red triangles mark REX sources using upward triangles
+                                                                                 of which are separated from the propagated Gaia position.
+and mark EXP sources using downward triangles. In the VHS and UHS
+panels, red circles show stellar objects from the VHS catalogue, and the green
+squares mark the galaxy-like objects. In the middle-left (VHS–J) panel, a
+compass marker in the bottom-right corner indicates the orientation, with        UKIDSS images (Figure 12), there are even fewer companion objects
+arrows marking north (N) and east (E).                                           or nearby stars in the vicinity of the candidates D and I, and no case
+                                                                                 obviously indicates an explicit culprit.
+                                                                                    In contrast, candidate J shows a blended morphology, with the
+the NIR regime, we analyse D and I using UKIDSS imaging data,                    Legacy image revealing a distinct bulge extending north-east from
+and J using the UHS. Figure 11 presents the Legacy images used                   the stellar profile (Figure 13). This feature also behaves as a faint
+to assess the optical morphology of candidates D and I, while the                companion, located at the same position in the UHS NIR band im-
+UKIDSS images for them are shown in Figure 12.                                   ages, most notably in the 𝐻 band (Figure 14). However, this object
+   For candidate D, the Legacy catalogue reveals a faint com-                    is not catalogued as an independent source in either the Legacy or
+panion object. With an REX profile and the DESI Legacy ID                        UHS catalogues. To evaluate its properties, we conducted photomet-
+10995494344987809, this object is located in the south-east fringe               ric measurements across several optical and NIR bands. Figures 13
+of the stellar brightness profile. This object appears as a marginal             and 14 display the full-band Legacy and UHS maps, along with the
+detection in the r-band image (Figure 11), and is offset by 2.4′′ from           residual maps of the vicinity after subtracting the stellar point spread
+the W3 centroid position. For candidate I, the W3 centroid detected at           function (PSF) of Candidate J. Table 11 presents the measurement
+low SNR appears to lie on the fringe of the stellar brightness profile,          results.
+while the W4 centroid lies outside the profile. Despite the positional              In the optical regime, this companion is most prominent in the
+separation suggested by the WISE images, the Legacy catalogue did                𝑔- and 𝑟-bands, where the photometric measurements are most re-
+not identify any clear companion object located within 3′′ of the                liable, yielding SNR = 14.8 and 13.4 respectively (Figure 13). The
+position of the candidate star, unlike the case of candidate D. In the           𝑖-band image suffers from saturation and a bleed trail originating
+
+                                                                                                                                    MNRAS 000, 1–21 (2026)
+14       T. Ren et al.
+
+
+
+
+Figure 8. VHS Ks -band (left panels) and Legacy 𝑔-band (right panels) images
+                                                                                 Figure 9. VMC Y, J, and Ks band (left panels) and Legacy DR10 i, r, and z
+of candidates E, F and H. Red stars mark the propagated Gaia positions at the
+                                                                                 band (right panels) images of candidate C. Red stars mark the stellar position
+VHS imaging epochs (2017 for E, 2016 for F, and 2012 for H), while yellow
+                                                                                 at the respective imaging epochs: 2012.0 for the VMC images and 2016.0 (the
+stars show the Gaia positions at the Gaia DR3 reference epoch (2016.0). Green
+                                                                                 Gaia DR3 epoch) for the Legacy images. Green plus signs (+) and crosses
+plus signs (+) and crosses (×) mark the W3 and W4 centroids, respectively.
+                                                                                 (×) mark the W3 and W4 centroids, respectively. The corresponding green
+The corresponding green W3 (solid) and W4 (dashed) high flux contours for
+                                                                                 W3 (solid) and W4 (dashed) high flux contours for candidates are also shown,
+candidates are also shown, with all data measured in Section 3. In the VHS
+                                                                                 with all data measured in Section 3. In the VMC panels, red circles denote
+panels, red circles show stellar objects from the VHS catalogue, and the red
+                                                                                 stellar-like objects from the VMC catalogue, and the red squares mark the
+squares mark the galaxy-like objects. In the Legacy 𝑔-band panels, red circles
+                                                                                 galaxy-like objects; in the Legacy panels, the red circles indicate sources best
+indicate sources with PSF profiles, while red triangles mark REX sources
+                                                                                 fit by PSF profiles. VMC J045603.25-741010.66 is visible north of the star,
+using upward triangles, and mark EXP sources using downward triangles. A
+                                                                                 most significantly in the VMC 𝐾𝑠 -band.
+nearby companion (Legacy ID: 10995408501213714) was highlighted in the
+g-band panel of candidate H.
+
+
+
+
+from candidate J, permitting only an unreliable measurement, while
+the source is faint and undetected above 3𝜎 in the 𝑧 band; these two
+bands are thus far less constraining than 𝑔 and 𝑟. We attempt to fit the
+companion on the 𝑔- and 𝑟-band residuals and find that a PSF model
+best describes its morphology, meaning the companion is consistent
+with a point source and cannot be spatially resolved at this resolution.         𝐾-band provides a clear detection comparable to that in 𝐻-band, or
+   We also performed photometric extraction in the UHS NIR bands                 to the 𝑔 and 𝑟-bands from the Legacy imaging.
+(Figure 14). The 𝐻 band provides the best detection, recovering a                   This bulge-like companion lies ∼ 3′′ from both the W3 and W4
+3.9𝜎 source with an elongated, bar-like residual structure. In the 𝐽             centroids. The Legacy DR10 also identified an EXP profile source
+band, a nominal 2.6𝜎 peak is present but is indistinct from the fringe           (DESI Legacy ID 10995551421076405) ∼ 5′′ from candidate J, to
+features of the candidate star’s brightness profile. In the 𝐾 band, an           the south-east of the W3 centroid. The complexity of the vicinity of
+elongated structure is again visible, but its significance is too low            candidate J, together with the results for the remaining candidates, is
+(SNR = 0.3) to make a convincing detection. Neither the 𝐽 nor the                discussed and synthesised in Section 5.
+
+MNRAS 000, 1–21 (2026)
+                                                                               Diagnostics of Dyson Sphere Candidate Stars                                15
+
+Table 11. Photometric extraction results of the optical/NIR companion source located 3′′ away to candidate J, from Legacy DR10 (𝑔𝑟𝑖𝑧) and UHS (𝐽 𝐻𝐾)
+imaging.
+
+                                Band       AB magnitude          𝐹𝜈 (𝜇Jy)      Significance                  Note
+                             𝑔 (Legacy)     23.38 ± 0.07        1.61 ± 0.11       14.8𝜎
+                             𝑟 (Legacy)     22.42 ± 0.08       3.92 ± 0.29        13.4𝜎
+                             𝑖 (Legacy)          —                  —               —          excluded (saturation / bleed trail)
+                             𝑧 (Legacy)       > 23.27             < 11.27         < 3𝜎               ∼3.6𝜎 residual peak
+                              𝐽 (UHS)         > 21.55             < 8.71           2.6𝜎
+                              𝐻 (UHS)       21.05 ± 0.28       13.80 ± 3.56        3.9𝜎               tentative detection
+                              𝐾 (UHS)         > 20.74             < 18.37         0.3𝜎
+
+
+
+
+Figure 10. PSF residual images of candidate C in the VMC 𝐾𝑠 band. The
+two central red dashed circles show the PSF FWHM and the 99% brightness
+profile of the stars. The offset red dashed circle marks VMC J045603.25-
+741010.66, the companion source detected outside the PSF brightness profile.
+
+
+5 DISCUSSION
+5.1 Evaluating the Likelihood of Contamination for the Nine
+    Candidates
+Building on the multi-wavelength and astrometric diagnostics pre-                Figure 11. Legacy DR10 images for candidates D and I. The upper panels
+                                                                                 show the r-band and z-band images for candidate D, and the lower panels show
+sented in Sections 3 and 4, we can now classify the nine Dyson
+                                                                                 the g-band and r-band images for candidate I. Each panel spans ∼20′′ ×20′′
+Sphere star candidates based on the likelihood of extragalactic con-
+                                                                                 in RA and Dec. Red stars mark the Gaia positions at the Gaia DR3 epoch
+tamination. Similar to the analysis of candidate G, we integrate these           (2016.0). Green plus signs (+) and crosses (×) mark the W3 and W4 centroids,
+archival findings to identify which sources show clear signs of back-            respectively. The corresponding green W3 (solid) and W4 (dashed) high flux
+ground contaminants and which remain ambiguous.                                  contours for the candidates are also shown, with all data measured in Section
+                                                                                 3. Red circles indicate sources with PSF profiles from the Legacy catalogue,
+                                                                                 red upward triangles mark REX sources, and red downward triangles mark
+5.1.1 Candidates B and C: the most likely contaminated cases                     EXP sources. One nearby companion, Legacy ID: 10995494344987809 for
+                                                                                 candidate D, is highlighted by annotation.
+Candidates B and C represent the two cases exhibiting the strongest
+evidence of background contaminants contributing to the MIR ex-
+cess. For these sources, the archival data reveal the presence of                maps (Figure 3) suggest that this background galaxy is likely a Hot
+background objects consistent with the observed infrared anoma-                  DOG, which dominates the observed W3 and W4 bands MIR fluxes.
+lies. Compared to the control-sample M dwarfs of similar 𝐺-band                  From the view of WISE’s resolution, the 3′′ galaxy-to-stellar offset
+magnitude and 𝑊1/𝑊2 SNR, the two candidates exhibit significantly                makes the illusion that candidate star B itself is emitting the W3 and
+larger W1 and W2 bands emission centroid offsets from the propa-                 W4 excess fluxes, consistent with the predicted MIR signature of a
+gated Gaia position, with a Gaussian-equivalent significance of > 2𝜎             modelled Dyson Sphere star.
+(Table 10).                                                                         Although candidate C lacks radio counterparts, its W3 and W4
+   As shown in Figures 3 and 7, the 1367.5 MHz and 1655.5 MHz ra-                emissions are offset from the central star by several arcseconds, sim-
+dio sources of candidate B, along with the W3 and W4 centroids, are              ilar to candidates B and G. The W3 and W4 centroids are spatially
+all spatially associated with the faint, extended tail/bulge structure           coincident with VMC J045603.25-741010.66, a source multiply de-
+visible in the Legacy Survey images, lying at the fringe of Candi-               tected in the VMC and Legacy surveys. Given that its location is
+date B’s PSF brightness profile. The spatial alignment, reinforced by            nearly identical to the W3 centroid measured in our work, and there
+the typical AGN spectral index of 𝛼 ∼ 0.59 presented in Subsec-                  is no other nearby object detected, VMC J045603.25-741010.66 is
+tion 3.1, supports the presence of a background extragalactic source             likely the genuine contributor to the W3 and W4 band MIR flux
+blended with the foreground candidate star B. The WISE emission                  excesses of candidate C. The WISE photometric characteristics of
+
+                                                                                                                                     MNRAS 000, 1–21 (2026)
+16       T. Ren et al.
+
+
+
+
+Figure 12. UKIDSS 𝑌 𝐽 𝐻𝐾 band images for candidates D and I, with each subplot displaying an 18′′ × 18′′ field of view. The upper panels display data for
+candidate D observed between August and October 2009, while the lower panels display data for candidate I observed between April 2007 and February 2008.
+Red stars mark the propagated Gaia positions at the precise observation epochs retrieved from the archive logs (annotated by year). Red circles indicate sources
+classified as stars within the companion survey catalogue. Green plus signs (+) and crosses (×) mark the W3 and W4 emission centroids, respectively. The
+corresponding green solid lines outline the W3 flux contours, and the green dashed lines outline the W4 contours.
+
+
+VMC J045603.25-741010.66 suggest that it is a potential hot DOG                    pared to those of the control stars. In the Rayleigh significance
+previously unknown to the literature. However, it appears undetected               analysis presented in Section 3.5, the offset between the Gaia po-
+in both the RACS and GLEAM radio surveys. Frey et al. (2016). Such                 sition of candidate A and the WISE centroids yields the highest
+a non-detection is consistent with the typically radio-quiet nature of             Gaussian-equivalent significance in both the W1 and W2 bands (Ta-
+the Hot DOG population (Bridge et al. 2013). We further discuss                    ble 10), which offer the highest spatial resolution for characterising
+the implications of this result and evaluate the expected radio-loud               the stellar flux. That said, direct evidence is still lacking without
+fraction of hot DOGs based on a sample of 144 confirmed hot DOGs                   dedicated high-resolution observations. Upcoming high-resolution
+in Section 5.2.                                                                    observations from the JWST GO programme 7199 (Zackrisson et al.
+                                                                                   2025) using the MIRI instrument will be essential to disentangle the
+                                                                                   mid-infrared emission from the stellar profile.
+5.1.2 Candidates A: a suggestive contaminated case
+Candidate A represents a highly suggestive case of contamination
+                                                                                   5.1.3 Candidates E, F, H and J: the candidates with ambiguous
+by a background Active Galactic Nucleus (AGN). Unlike candidates
+                                                                                         evidence
+B and C, which have catalogued companions spatially separated
+from the propagated Gaia positions, candidate A’s radio companion                  Candidates E and F present more ambiguous evidence than can-
+(RACS-DR1 J124512.7-265206) is blended with the star position and                  didates A, B, and C, as they exhibit lower MIR centroid-to-stellar
+thus not distinct. The radio spectral index of RACS-DR1 J124512.7-                 offsets and have no detected companion objects near the stellar
+265206 (𝛼 ∼ 0.39) is characteristic of a flat-spectrum AGN. The                    brightness profile fringe that resemble extragalactic sources. While
+radio sources, WISE centroids, and the propagated Gaia positions of                candidates A, B, and C exhibit W3 offsets exceeding 2′′ , they also
+the candidate stars are highly coincident, with mutual offsets of less             show Gaussian-equivalent significances of at least 2𝜎 in both W1
+than 2.5′′ . As shown in Figure 7, these positions align closely within            and W2, derived from fitting a Rayleigh distribution to the control-
+the brightness profile of the candidate star, and archival optical/NIR             star centroid offsets. By contrast, candidates E and F display > 2𝜎
+imaging reveals no other nearby sources. Given the statistical rarity of           significance in only a single W1 or W2 band (Table 10), and their W3
+a flat-spectrum radio source aligning so precisely with a foreground               offsets are also smaller. Specifically, candidate E shows a ∼ 3.3𝜎 sig-
+star, it is highly probable that the star’s emission is being contam-              nificance in the W1 band under a Rayleigh distribution scale (rather
+inated by a background AGN along the same line of sight. This                      than a median scale), whereas candidate F exhibits a 2.7𝜎 signifi-
+alignment explains the minimal positional offsets observed across                  cance in the W2 band under the median scale. The W3 offsets for
+the different wavebands.                                                           both candidates E and F remain below 1.5′′ (Table 5).
+   A further, independent line of evidence for this hidden AGN comes                  The inspection of the images in Subsection 4.2 provides supple-
+from the larger AllWISE centroid-to-stellar positional offsets com-                mentary evaluation for candidates E and F. For candidate E, the
+
+MNRAS 000, 1–21 (2026)
+                                                                                Diagnostics of Dyson Sphere Candidate Stars                               17
+
+
+
+
+Figure 13. Legacy DR10 𝑔𝑟𝑖𝑧-band images (upper panels) and corresponding PSF-subtracted residual images (lower panels) for radio source candidate J, each
+displaying an 18′′ × 18′′ field of view. The upper panels show the original images, with standard WISE W3 emission centroids (green +) and W4 centroids
+(green ×) annotated. The solid green lines outline the W3 5𝜎 flux contours, and the dashed green lines outline the W4 2.5𝜎 contours. Red stars mark the Gaia
+stellar at the epoch of J2016.0. A nearby catalogued source (Legacy ID: 10995551421076405) is additionally highlighted by the red marker, label, and arrow in
+the upper panels. The lower panels display the residual images following subtraction of a fitted circular PSF model of candidate J. The two central red dashed
+circles show the PSF FWHM and the 99% brightness profile of candidate J, while the offset red dashed circle marks the position of the uncatalogued companion
+located ∼ 3′′ to the north-west. The companion is recovered as a significant residual in the 𝑔 and 𝑟-band images.
+
+
+closest external object is a galaxy-like source (VHS J040208.07-                  tion 3.5 suggests that the W3 offset does not deviate significantly
+105434.4) located > 5′′ away, which is too distant to interfere with              from the control star distribution, the control sample contains only
+the stellar MIR flux (Figure 8). Similarly, for candidate F, the near-            five stars. Therefore, this statistical result should not obscure the re-
+est catalogued source—a PSF-profile object in the Legacy DR10                     ality of the high positional W3-band offset of candidate H, which is
+Tractor—is located over 5′′ to the north. Additional faint objects                clearly visible in Figure 5. Although its W4 centroid offset is smaller
+near candidate F, including a southern EXP-profile source (Legacy                 (< 2.5′′ ), the spatial MIR emission morphology appears elongated.
+DR8 ID: 8000189778005482) and several northeastern sources, also
+lie well outside the main MIR emission region.                                      Using Legacy Survey data, we identified a faint object with a
+                                                                                  PSF brightness profile—likely a background galaxy (LegacyID:
+   Given that the visible neighbouring sources identified for candi-
+                                                                                  10995408501213714)—situated to the northeast of candidate star
+dates E and F are situated too distant to plausibly influence the MIR
+                                                                                  H that contributes to the W4 flux (Figure 8). The blending of these
+photometry, the > 2𝜎 Gaussian-equivalent centroid offsets signif-
+                                                                                  two sources may result in the observed elongation of the W4 emission
+icance, which appear in the W2 band for E, and the W1 band for
+                                                                                  region. However, the SNR for the W3 and W4 emissions of candidate
+F, serve as indirect evidence of background contamination. The W1
+                                                                                  H is low (∼ 3𝜎), significantly undermining the reliability of its mea-
+and W2 bands are capable of tracing the stellar photosphere with
+                                                                                  sured offsets. Furthermore, unlike candidate C, where the catalogued
+high precision; therefore, significant offsets in these bands provide a
+                                                                                  background galaxy is nearly coincident with the W3-band centroid,
+reliable indicator of an underlying, unresolved source, even if the W3
+                                                                                  the catalogued background galaxy near candidate H lies ∼ 3′′ from
+flux is expected to be more strongly dominated by emission from a
+                                                                                  the W3 centroid.
+putative interloper. Although the overall evidence strength for E and
+F is lower than that of A, B, and C, the lack of spatially coincident
+                                                                                     The final ambiguous case is candidate J. As detailed in Section 4.4,
+background sources in deep survey imaging and photometric data
+                                                                                  we retrieved photometric evidence for an uncatalogued companion
+suggests that while contaminants for E and F are likely present, the
+                                                                                  source at the stellar fringe, detected consistently in the Legacy 𝑔 and
+sources must be highly blended with the target stars.
+                                                                                  𝑟 bands and tentatively in the UHS 𝐻 band, and exhibiting a point-
+   Candidate H represents another ambiguous case. Its W3-band cen-                source morphology. This companion is not, however, the only source
+troid is offset by ∼ 3.5′′ from the propagated Gaia position and                  projected onto the W3 emission of candidate J: it lies 3.35′′ from
+exceeds the W3-band offsets of candidates B and C. This is the high-              the W3 centroid and 3.94′′ from the W4 centroid, while the Legacy
+est W3-band offset and the only one exceeding 3′′ among all nine                  DR10 Tractor catalogue separately lists a resolved, galaxy-like source
+candidates throughout this paper, while its W1 and W2 band offsets                with an exponential (EXP) profile (Legacy ID 10995551421076405;
+are only ∼ 0.5′′ . Although the quantitative Rayleigh test in Subsec-             Figure 13). As with candidate H, both putative contributors to the
+
+                                                                                                                                   MNRAS 000, 1–21 (2026)
+18       T. Ren et al.
+                                                                                    spectral index, the companion of candidate J lacks comparably direct
+                                                                                    evidence for its nature, and definitively assigning the mid-infrared
+                                                                                    emission to any single feature will require future observations of
+                                                                                    higher angular resolution and sensitivity. Given the lack of exact
+                                                                                    spatial coincidence between the identified galaxies and the W3 cen-
+                                                                                    troids, both candidates H and J carry significantly lower confidence
+                                                                                    than candidates A, B and C. Consequently, we relegate both candi-
+                                                                                    dates H and J to a lower, ambiguous classification tier.
+                                                                                       In summary, while the specific evidence for candidates E, F, H,
+                                                                                    and J is more ambiguous than for A, B, and C, owing variously to
+                                                                                    low SNR, blending, or the lack of spatially coincident background
+                                                                                    sources, their significant positional offsets still indicatively suggest
+                                                                                    background contamination. Resolving these cases requires dedicated
+                                                                                    higher-resolution observations, such as the approved observations of
+                                                                                    candidate E via the JWST GO programme 7199 (Zackrisson et al.
+                                                                                    2025).
+
+
+                                                                                    5.1.4 Candidates that lack critical evidence for MIR contamination
+                                                                                    Candidates D and I lack both clear evidence of contamination and the
+                                                                                    definitive proof needed for a final classification. Without radio detec-
+                                                                                    tions, their analysis relies solely on ALLWISE centroids and archival
+                                                                                    optical/NIR imaging analysis, following the same methodology used
+                                                                                    for candidates C, E, F, H, and J.
+                                                                                       Candidate D presents a spatial contradiction: while Legacy imag-
+                                                                                    ing reveals an REX-profile galaxy (Legacy ID: 10995494344987809)
+                                                                                    on the southeastern fringe of the stellar profile (Figure 11), the WISE
+                                                                                    centroids are oriented toward the north. The MIR imaging shows no
+                                                                                    clear spatial separation between the WISE MIR spatial emission and
+                                                                                    the position of candidate star D (Figure 4). As detailed in Subsec-
+                                                                                    tion 3.4, candidate D exhibits the smallest positional offset among all
+                                                                                    the candidates. Furthermore, the four-band comparison with the con-
+                                                                                    trol star offsets presented in Subsection 3.5 demonstrates that none of
+                                                                                    the WISE bands for candidate D pass the Rayleigh distribution test,
+Figure 14. UHS DR2 NIR data and corresponding PSF-subtracted residual               suggesting that its offsets are statistically indistinguishable from the
+images for radio source candidate J across the J, H, and K bands, each              control population. A plausible explanation for the low-level excess
+displaying an 18′′ × 18′′ field of view. The left panels show the original multi-   is a proximate, highly blended AGN—an arrangement analogous to
+band stacked images, with standard WISE W3 emission centroids (green +)
+                                                                                    the blending of candidate A, but without radio emission to confirm an
+and W4 centroids (green ×) mapped. The solid green lines outline the W3 3𝜎
+                                                                                    extragalactic nature. Despite candidate D lying within the footprint
+flux contours, while the dashed green lines outline the W4 2.5𝜎 contours.
+Red stars mark the Gaia positions propagated via proper motions to the per-         of multiple major radio surveys (𝛿 ≈ +05◦ ), the absence of a radio
+band observation epoch (annotated by year: 2013, 2022, 2019). The right             counterpart suggests that any contaminant would have to be radio-
+panels display the residual images following subtraction of a fitted circular       quiet. Ultimately, the true origin of this emission will be determined
+PSF model, revealing persistent, non-stellar near-infrared emission coincident      by high-resolution MIRI data from the JWST GO 7199 programme
+with the pre-computed W4 centroid location, as highlighted by the red dashed        (Zackrisson et al. 2025).
+circle.                                                                                The final case is candidate I. Its W3 centroid appears to be located
+                                                                                    on the fringe of the stellar brightness profile, while the W4 centroid
+                                                                                    is positioned outside the profile. The W3 emission, however, dis-
+MIR flux are offset from the W3 centroid by ∼ 3′′ rather than being                 plays a stripe-like structure with only ∼ 2𝜎 significance, making it
+coincident with it.                                                                 ambiguous for reliably indicating the true background source posi-
+   Since the candidate star J, the companion, and the catalogued                    tion. Its W4 emission, with > 3𝜎 significance, shows an offset of
+galaxy-like source (Legacy ID: 10995551421076405) all lie within                    ∼ 3.2′′ from the propagated Gaia position. However, the comparison
+the W3 > 5𝜎 emission region, the W3 flux cannot be unwarrantably                    in Subsection 3.5 does not support the presence of a significant offset
+attributed to a single source: owing to the blending and co-location                discrepancy relative to the control stars. Unlike candidates H and J,
+within the WISE beam, it may plausibly be dominated by the star,                    for which deep optical/NIR imaging revealed sources projected onto
+by the companion, by the galaxy-like source, or by a combination                    the high W3 and/or W4 flux regions, we find no such counterpart for
+of these objects. The W4 emission, by contrast, exhibits a signifi-                 the MIR emission of candidate I in the deep Legacy Survey and UHS
+cant positional offset from both the candidate star and the catalogued              images. Candidate I has neither a statistically robust positional offset,
+galaxy-like source, leaving the companion as the only optical/NIR                   unlike candidates E and F, nor an identifiable optical/NIR counter-
+feature that could be preliminarily identified as a contributor to the              part, unlike candidates H and J. It therefore presents the weakest
+W4 flux. We accordingly regard candidate J as an ambiguous case                     evidence among the candidates. We accordingly place it in the low-
+of background contamination; unlike candidates A and B, whose                       est classification class, along with candidate D. If a faint background
+blended companion can be identified as an AGN through its radio                     AGN spatially coincident with the stellar profile is the genuine MIR
+
+MNRAS 000, 1–21 (2026)
+                                                                            Diagnostics of Dyson Sphere Candidate Stars                        19
+contributor, high-resolution imaging will be required to disentangle        stars, the close proximity between the propagated Gaia positions of
+these components, particularly since candidate I was not included in        the star, radio source, and WISE centroids implies that the contami-
+the JWST GO 7199 programme.                                                 nating background source must lie nearly along the line of sight.
+  Finally, all the potential hot DOG contaminants analysed in Sub-             Candidates E, F, H and J are classified as a lower, ambiguous class:
+section 5.1 are presented in Table 12.                                      marginal cases requiring further evidence to assess the potential con-
+                                                                            tamination. For E and F, although their MIR centroid-to-stellar offsets
+                                                                            reach a Gaussian-equivalent significance above 2𝜎 in one of the four
+5.2 The Radio Detection Rate of Hot Dust-Obscured Galaxies                  WISE bands, the remaining bands show no offset excess, and no
+Among the ten Dyson Sphere candidates analysed in this work, only           counterparts can be confirmed in deep imaging to serve as a clear
+three (A, B, and G) were detected in archival radio surveys. If one as-     source of contamination. Candidate H displays the largest W3-band
+sumes that all ten candidates are contaminated by Hot Dust-Obscured         offset among the nine candidates, and candidate J exhibits multiple
+Galaxies (Hot DOGs), the remaining seven would necessarily be               likely background contaminants; for both, some possible contaminat-
+radio-quiet AGNs. To evaluate the plausibility of this scenario, we         ing sources were identified nearby, but low SNR or blending limits
+examined a sample of 144 catalogued Hot DOGs from Assef et al.              the reliability of these associations.
+(2015)—a robust sample selected from WISE data and verified with               Lastly, candidates D and I show no radio counterparts, no un-
+ground-based NIR observations.                                              ambiguously outstanding centroid offsets, and no faint companions
+   We queried the VizieR service for radio counterparts within this         that could plausibly contribute to the MIR excess. However, we sus-
+reference sample and identified only 12 detections (Table 13), rep-         pect that these sources might also be contaminated by radio-quiet
+resenting a detection rate of < 10%. The radio catalogues include:          AGNs that lie close to the line of sight towards the M-dwarf star.
+the FIRST survey(Becker et al. 1995), NVSS (Condon et al. 1998),            Our identification of a sample of 144 Hot DOGs suggests that more
+SUMSS (Mauch et al. 2003), the TIFR GMRT Sky Survey (TGSS;                  than 90% of them are radio-quiet. This result agrees with the low
+Intema et al. 2017), the Australia Telescope Compact Array XXL sur-         radio-detection rate observed in the Project Hephaistos Dyson Sphere
+vey (ATCA XXL; Butler et al. 2018), the VLA Sky Survey (VLASS;              candidate sample.
+Lacy et al. 2020), the RACS surveys (Hale et al. 2021; Duchesne                Despite the resolution limitations of current MIR datasets like the
+et al. 2024, 2025), the LOFAR Two-metre Sky Survey Data Release             WISE archive, our analysis demonstrates that supplementary multi-
+2 (LoTSS DR2; Shimwell et al. 2022), and the GLEAM-X survey                 wavelength data offer valuable insights into the nature of these Dyson
+(Ross et al. 2024). This low detection rate is consistent with the char-    Sphere candidates. The suspected contaminants near Candidates B
+acterisation of similar WISE-selected dusty extragalactic sources as        and C still require confirmation of their extragalactic nature. Dedi-
+typically radio-quiet (Bridge et al. 2013). Consequently, the lack of       cated observations, such as deep infrared imaging and spectral analy-
+radio emission in seven out of ten candidates aligns with the low           sis, are essential to conclusively disentangle hypothetical Hot DOGs
+radio-loud fraction expected for this galaxy class.                         from the foreground stars. Such observations are equally critical for
+                                                                            resolving the possible cases (A, E, F, H, and J) and clarifying the
+                                                                            nature of candidates D and I, where radio data remains insufficient. In
+                                                                            this regard, the ongoing JWST GO 7199 observations of Candidates
+6 CONCLUSIONS                                                               A, D, and E will provide the direct results needed to identify the
+We conducted a combined analysis of nine Project Hephaistos Dyson           genuine contributors to their infrared excess. Ultimately, rigorously
+Sphere candidates using two complementary approaches based on               identifying and eliminating such false positives is a fundamental step
+archival data: (1) an astrometric examination of AllWISE four-band          in the search for techno-signatures; by systematically ruling out nat-
+image centroids to identify mid-infrared (MIR) flux offsets relative to     ural contamination, we can ensure that future resources focus only
+the propagated Gaia positions, a method whose effectiveness can be          on the most robust and compelling Dyson Sphere candidates.
+validated through a comparative analysis of ordinary M-dwarf control
+samples, and (2) a search for potential extragalactic companions in
+deep NIR and optical images.                                                ACKNOWLEDGEMENTS
+   By comparing the WISE centroids with the Gaia stellar positions
+propagated to the AllWISE epoch (the first method), we found that           We sincerely thank the referee for the helpful suggestions, which
+candidates B and C exhibit the largest positional offsets, with W3          have significantly improved the manuscript. TR and MAG applied
+centroid-to-stellar offsets of approximately 3′′ . Notably, the W3 cen-     the centroid analysis originally developed for their Candidate G in-
+troid of candidate B aligns with RACS 1367.5 MHz and 1655.5 MHz             vestigation. EZ first noted the faint, fuzzy feature near Candidate C,
+radio counterparts to within < 1′′ , indicating that a radio source dom-    motivating the development of the deep-image inspection method
+inates the emission observed in the W3 and W4 bands.                        used in this study. AB was supported by the SNSA. TR is funded by
+   Using the second method—searching for extragalactic compan-              the China Scholarship Council.
+ions in deep imaging, we confirmed that J2335-0004, the Hot DOG
+which contaminated candidate G, is present and catalogued in the
+VISTA and Legacy surveys. Although no radio companion was found
+                                                                            DATA AVAILABILITY
+near candidate C, we found a faint NIR source located at the position
+of the W3 centroid in the VMC data. These results suggest that both         This work used software: Astroquery (Ginsburg et al. 2019), As-
+B and C are likely Hot DOGs, similar to the MIR positional offset           tropy(Astropy Collaboration et al. 2013, 2018, 2022), NumPy (Har-
+observed in candidate G, which was later confirmed as a hot DOG by          ris et al. 2020), Photutils (Bradley et al. 2024), Matplotlib (Hunter
+high-resolution radio observations (Ren, Garrett & Siemion 2025).           2007), SEP (Barbary 2016), SciPy (Virtanen et al. 2020). This work
+   We also identified candidate A as a suggestive case. It exhibits         used data from the Aladin Sky Atlas (Bonnarel et al. 2000), AllWISE
+a radio counterpart with an AGN-like spectral index. Because its            (Cutri et al. 2021; WISE Team 2020), the Australia Telescope Com-
+centroid-to-stellar offset is far larger than those of the control sample   pact Array XXL survey (ATCA XXL; Butler et al. 2018), the Dark
+
+                                                                                                                          MNRAS 000, 1–21 (2026)
+20      T. Ren et al.
+
+Table 12. Summary of potential background contaminants among the Dyson Sphere candidates.
+
+                  Candidate     Evidence Strength         Likely Contaminant ID                            Note
+                     A              Suggestive         RACS-DR1 J124512.7-265206              Exhibits AGN-like radio spectrum
+                     B                Strong           RACS-DR1 J035603.8-403148              Exhibits AGN-like radio spectrum
+                     C                Strong            VMC J045603.25-741010.66
+                     D                Weak                          –
+                     E             Ambiguous                        –
+                     F             Ambiguous                        –
+                     H             Ambiguous            Legacy 10995408501213714
+                     I                Weak                          –
+                     J             Ambiguous            Legacy 10995551421076405         An uncatalogued companion source identified
+
+
+Table 13. Radio detections for the sample of 144 catalogued Hot DOGs.
+
+WISE ID                    Survey       Central Frequency      Flux Density (mJy)
+J022052.12+013711.6        VLA𝑎              6.2 GHz               0.20 ± 0.01
+J022646.85+051422.7        NVSS              1.4 GHz               6.10 ± 0.50
+                           FIRST             1.4 GHz               6.49 ± 0.12
+                           VLASS             3.0 GHz               3.22 ± 0.23
+J075725.07+511319.7        FIRST             1.4 GHz               3.57 ± 0.15
+                           NVSS              1.4 GHz               3.20 ± 0.50
+J085124.78+314856.1     LoTSS DR2            144 MHz               5.22 ± 2.83
+J094608.30+500820.4       FIRST              1.4 GHz               1.21 ± 0.16
+                        LoTSS DR2            144 MHz               6.64 ± 1.16
+J100636.34+510500.7       FIRST              1.4 GHz              4.13 ± 0.13
+                          NVSS               1.4 GHz              3.20 ± 0.40
+                          VLASS              3.0 GHz              2.02 ± 0.25
+                        LoTSS DR2            144 MHz              31.95 ± 9.64
+                          TGSS               147 MHz               40.0 ± 9.0
+J114612.87+412914.4       FIRST              1.4 GHz               4.39 ± 0.13
+                          NVSS               1.4 GHz               4.10 ± 0.40
+                          VLASS              3.0 GHz               2.39 ± 0.20
+                        LoTSS DR2            144 MHz               4.38 ± 1.89
+J145705.92+293231.6     LoTSS DR2            144 MHz               2.10 ± 1.67
+J154840.15+263029.3       FIRST              1.4 GHz               0.96 ± 0.14
+                         RACS-low           850 MHz                2.27 ± 0.46
+                         RACS-mid          1367.5 MHz              1.97 ± 0.41
+J160357.39+274553.2       NVSS               1.4 GHz               2.80 ± 0.50
+                          FIRST              1.4 GHz               2.28 ± 0.14
+                          VLASS              3.0 GHz               0.86 ± 0.17
+                         RACS-low           850 MHz                3.75 ± 0.66
+                         RACS-mid          1367.5 MHz              2.10 ± 0.50
+                         RACS-mid          1655.5 MHz              1.68 ± 0.39
+J171400.14+524231.6        NVSS              1.4 GHz               2.80 ± 0.40
+                           FIRST             1.4 GHz               2.76 ± 0.13
+                           VLASS             3.0 GHz               1.30 ± 0.25
+J233953.74-561301.1      SUMSS              843 MHz                21.2 ± 1.1
+                         GLEAM              200 MHz                 86 ± 0.50
+                        RACS-low            850 MHz               17.84 ± 0.40
+                        RACS-mid           1367.5 MHz             11.28 ± 0.81
+                        RACS-mid           1655.5 MHz              9.05 ± 0.97
+                        ATCA XXL             2.1 GHz               7.70 ± 0.39
+𝑎 Hwang et al. (2018)
+
+
+
+Energy Survey (DES; Dark Energy Survey Collaboration et al. 2016;                X survey (Ross et al. 2024), HEASARC, the LOFAR Two-metre
+DES DR1: Abbott et al. 2018; DES DR2: Abbott et al. 2021), the                   Sky Survey Data Release 2 (LoTSS DR2; Shimwell et al. 2022),
+DESI Legacy Imaging Surveys (Dey et al. 2019), ESASky (Baines                    NVSS (Condon et al. 1998), the Panoramic Survey Telescope and
+et al. 2017; Giordano et al. 2018), the FIRST survey (Becker et al.              Rapid Response System (Pan-STARRS; Chambers et al. 2016), the
+1995), Gaia (Gaia Collaboration et al. 2016, 2023), the GLEAM-                   RACS surveys (Hale et al. 2021; Duchesne et al. 2024, 2025), Sim-
+
+
+MNRAS 000, 1–21 (2026)
+                                                                               Diagnostics of Dyson Sphere Candidate Stars                              21
+bad (Wenger et al. 2000), SkyMapper (Onken et al. 2024), SUMSS                 Miville-Deschênes M.-A., Lagache G., 2005, ApJS, 157, 302
+(Mauch et al. 2003), the TIFR GMRT Sky Survey (TGSS; Intema                    Montalto M., et al., 2021, A&A, 653, A98
+et al. 2017), the Two Micron All Sky Survey (2MASS) (Skrutskie                 Ochsenbein F., Bauer P., Marcout J., 2000, A&AS, 143, 23
+et al. 2006), the Very Large Array Sky Survey (VLASS; Lacy et al.              Onken C. A., Wolf C., Bessell M. S., Chang S.-W., Luvaul L. C., Tonry J. L.,
+2020), and the VISTA Science Archive (Cross et al. 2012). The data                 White M. C., Da Costa G. S., 2024, Publ. Astron. Soc. Australia, 41, e061
+                                                                               Ren T., Garrett M. A., Siemion A. P. V., 2024, Research Notes of the American
+supporting this article will be made available by the corresponding
+                                                                                   Astronomical Society, 8, 145
+author upon reasonable request.                                                Ren T., Garrett M. A., Siemion A. P. V., 2025, MNRAS, 538, L56
+                                                                               Ross K., et al., 2024, Publ. Astron. Soc. Australia, 41, e054
+                                                                               Shimwell T. W., et al., 2022, A&A, 659, A1
+                                                                               Skrutskie M. F., et al., 2006, AJ, 131, 1163
+REFERENCES
+                                                                               Suazo M., 2024, PhD thesis, Uppsala University, Uppsala, http://urn.kb.
+Abbott T. M. C., et al., 2018, ApJS, 239, 18                                       se/resolve?urn=urn:nbn:se:uu:diva-524893
+Abbott T. M. C., et al., 2021, ApJS, 255, 20                                   Suazo M., Zackrisson E., Wright J. T., Korn A. J., Huston M., 2022, MNRAS,
+Assef R. J., et al., 2015, ApJ, 804, 27                                            512, 2988
+Astropy Collaboration et al., 2013, A&A, 558, A33                              Suazo M., Zackrisson E., Mahto P. K., Lundell F., Nettelblad C., Korn A. J.,
+Astropy Collaboration et al., 2018, AJ, 156, 123                                   Wright J. T., Majumdar S., 2024, MNRAS, 531, 695
+Astropy Collaboration et al., 2022, ApJ, 935, 167                              Theissen C. A., West A. A., 2017, AJ, 153, 165
+Baines D., et al., 2017, PASP, 129, 028001                                     Tsai C.-W., et al., 2015, ApJ, 805, 90
+Barbary K., 2016, Journal of Open Source Software, 1, 58                       Virtanen P., et al., 2020, Nature Methods, 17, 261
+Becker R. H., White R. L., Helfand D. J., 1995, ApJ, 450, 559                  WISE Team 2020, AllWISE Atlas (L3a) Coadd Images, NASA IPAC DataSet,
+Bertin E., Arnouts S., 1996, A&AS, 117, 393                                        IRSA153, doi:10.26131/IRSA153
+Blain A. W., 2024, arXiv e-prints, p. arXiv:2409.11447                         Wenger M., et al., 2000, A&AS, 143, 9
+Bonnarel F., et al., 2000, A&AS, 143, 33                                       Wright J. T., 2020, Serbian Astronomical Journal, 200, 1
+Bradley       L.,      et      al.,    2024,      astropy/photutils: 1.13.0,   Wright E. L., et al., 2010, AJ, 140, 1868
+    doi:10.5281/zenodo.12585239,                https://doi.org/10.5281/       Zackrisson E., et al., 2025, Anomalous infrared fluxes of M dwarfs, JWST
+    zenodo.12585239                                                                Proposal. Cycle 4, ID. #7199
+Bridge C. R., et al., 2013, ApJ, 769, 91
+Butler A., et al., 2018, A&A, 620, A16
+Chambers K. C., et al., 2016, arXiv e-prints, p. arXiv:1612.05560
+                                                                               APPENDIX A: CENTROID-OFFSET DISTRIBUTIONS OF
+Cioni M.-R. L., et al., 2011, A&A, 527, A116
+Condon J. J., Cotton W. D., Greisen E. W., Yin Q. F., Perley R. A., Taylor
+                                                                               THE CONTROL SAMPLES
+    G. B., Broderick J. J., 1998, AJ, 115, 1693                                As described in Section 3.5, we performed the centroid analysis on
+Cross N. J. G., et al., 2012, A&A, 548, A119                                   the full set of 155 control stars, grouped into nine control samples
+Cutri R. M., et al., 2021, VizieR Online Data Catalog: AllWISE Data Release
+                                                                               corresponding to the nine candidates. To illustrate the procedure,
+    (Cutri+ 2013), VizieR On-line Data Catalog: II/328. Originally published
+    in: IPAC/Caltech (2013)
+                                                                               Figure A1 shows the centroiding results for the 15 control stars of
+Dark Energy Survey Collaboration et al., 2016, MNRAS, 460, 1270                Candidate A as an example. For each star and WISE band, we mark
+Dey A., et al., 2019, AJ, 157, 168                                             the Gaia position propagated to the corresponding WISE observation
+Duchesne S. W., et al., 2024, Publ. Astron. Soc. Australia, 41, e003           epoch and the measured centroid, from which the positional offset
+Duchesne S. W., et al., 2025, Publ. Astron. Soc. Australia, 42, e038           and associated uncertainty are derived. During the positional analysis
+Dye S., et al., 2018, MNRAS, 473, 5113                                         of the control stars, the Gaia astrometric data are used to propagate
+Dyson F. J., 1960, Science, 131, 1667                                          the stellar positions to the WISE observation epochs, accounting for
+Frey S., Paragi Z., Gabányi K. É., An T., 2016, MNRAS, 455, 2058               proper motion and parallax.
+Gaia Collaboration et al., 2016, A&A, 595, A1                                     To further address the centroiding analysis presented in Sec-
+Gaia Collaboration et al., 2023, A&A, 674, A1
+                                                                               tion 3.5, we provide the complete set of results for all targets in
+Garrett M. A., Siemion A. P. V., 2023, MNRAS, 519, 4581
+Ginsburg A., et al., 2019, AJ, 157, 98
+                                                                               Fig. A2. This figure displays the full grid of centroid-offset distribu-
+Giordano F., et al., 2018, Astronomy and Computing, 24, 97                     tions for the control samples of nine candidates across the four WISE
+Hale C. L., et al., 2021, Publ. Astron. Soc. Australia, 38, e058               bands. In each panel, a direct visual comparison can be made between
+Hambly N. C., et al., 2008, MNRAS, 384, 637                                    the distribution of the background control stars and the specific offset
+Harris C. R., et al., 2020, Nature, 585, 357                                   of the candidate. This comprehensive visualisation directly reflects
+Howell S. B., 2006, Handbook of CCD Astronomy. Cambridge Observing             the statistical metrics compiled in Table 10; in particular, the signifi-
+    Handbooks for Research Astronomers Vol. 5, Cambridge University Press      cantly higher offsets of candidates A, B, C, E, and F relative to their
+Hunter J. D., 2007, Computing in Science and Engineering, 9, 90                baseline control populations are clearly apparent.
+Hwang H.-C., Zakamska N. L., Alexandroff R. M., Hamann F., Greene J. E.,
+    Perrotta S., Richards G. T., 2018, MNRAS, 477, 830
+Intema H. T., Jagannathan P., Mooley K. P., Frail D. A., 2017, A&A, 598,       This paper has been typeset from a TEX/LATEX file prepared by the author.
+    A78
+Korn A. J., et al., in prep., Paper in preparation
+Lacy M., et al., 2020, PASP, 132, 035001
+Lane W. M., Cotton W. D., van Velzen S., Clarke T. E., Kassim N. E.,
+    Helmboldt J. F., Lazio T. J. W., Cohen A. S., 2014, MNRAS, 440, 327
+Lawrence A., et al., 2007, MNRAS, 379, 1599
+Mauch T., Murphy T., Buttery H. J., Curran J., Hunstead R. W., Piestrzynski
+    B., Robertson J. G., Sadler E. M., 2003, MNRAS, 342, 1117
+McMahon R. G., Banerji M., Gonzalez E., Koposov S. E., Bejar V. J., Lodieu
+    N., Rebolo R., VHS Collaboration 2013, The Messenger, 154, 35
+
+                                                                                                                                MNRAS 000, 1–21 (2026)
+22       T. Ren et al.
+
+
+
+
+Figure A1. ALLWISE infrared images of the 15 control-sample stars for candidate star A. For each star, the four WISE bands are shown, each panel spanning
+a field of view of 30′′ × 30′′ . Green contours show surface brightness at multiple 𝜎 levels above the background, where 𝜎 is the per-pixel background noise
+(RMS), and the green crosses (×) and plus signs (+) mark the MIR centroids. The red star indicates the propagated Gaia position at the AllWISE epoch. The
+angular offset, Δ, between the propagated Gaia position and the measured centroid is labelled in each panel. Note that three candidate stars lacked significant
+W4 emission and were consequently excluded from the W4 centroid fitting.
+
+
+
+
+MNRAS 000, 1–21 (2026)
+                                                                                Diagnostics of Dyson Sphere Candidate Stars                               23
+
+
+
+
+Figure A2. Distributions of AllWISE centroid-to-stellar-position offsets for the control-star samples of the candidates A, B, C, D, E, F, H, I and J, with one
+candidate per row and the four WISE bands across the columns. In each panel the grey histogram shows the number of control stars per offset bin, with bin
+widths of 0.1 ′′ for W1 and W2, 0.25 ′′ for W3, and 0.5 ′′ for W4. The solid purple curves display the maximum-likelihood Rayleigh distribution fitted to that
+control sample; the purple dashed lines mark its Rayleigh scale parameter 𝜎𝑅 , and the limegreen dashed lines show the median-based robust scale 𝜎med . The
+light-red shaded band gives the measured offset of the corresponding candidate star, its half-width the 1𝜎 centroid uncertainty, and the red dashed line marks
+the central value. The number of control stars with successful centroid fits is given in each panel as 𝑁 = 𝑛/𝑛tot .
+
+
+
+                                                                                                                                   MNRAS 000, 1–21 (2026)
+

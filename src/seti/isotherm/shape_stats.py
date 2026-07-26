@@ -52,6 +52,7 @@ from .sed_model import (
     chi2_one_component,
     fit_discrete,
     fit_gradient,
+    ladder_degeneracy_report,
     select_n_components,
 )
 
@@ -785,6 +786,12 @@ def compute_shape_stats(lam_um, flux, err, thresholds: dict | None = None,
     stats["fit_best"] = best.to_dict()
     stats["fit_ladder"] = [x.to_dict() for x in ladder]
     stats["fit_gradient"] = grad.to_dict()
+    # S6 rests on component multiplicity, so record which rungs of the ladder
+    # came back SHORT of what was requested (NNLS zeroed an amplitude).  Without
+    # this, "no 3-component fit" and "a 3-component fit collapsed to 2" are the
+    # same output, and the second is a hole in the statistic rather than a
+    # statement about the source.
+    stats["fit_degeneracy"] = ladder_degeneracy_report(ladder)
     stats["delta_bic_discrete_minus_gradient"] = (
         float(best.bic - grad.bic) if np.isfinite(best.bic) and np.isfinite(grad.bic)
         else float("nan"))

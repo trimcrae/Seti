@@ -66,6 +66,7 @@ IDS = [
     "2501.05152",  # high-res radio imaging of candidate G (MNRAS Letters 538, L56)
     "2607.03619",  # archival diagnostics for background contaminants (IAUS 404)
     "2204.01959",  # Zackrisson+ : Dyson spheres at white dwarfs (MNRAS 514, 227) - series context
+    "2409.11447",  # Blain: "Did WISE detect Dyson Spheres/Structures around Gaia-2MASS-selected stars?"
 ]
 
 get(ARXIV_API + urllib.parse.urlencode(
@@ -96,7 +97,7 @@ for name, q in QUERIES.items():
 
 # ------------------------------------------------------------ 3. full texts
 FULLTEXT = ["2201.11123", "2405.02927", "2607.09460",
-            "2405.14921", "2501.05152", "2607.03619"]
+            "2405.14921", "2501.05152", "2607.03619", "2409.11447"]
 
 for aid in FULLTEXT:
     pdf = OUT / f"pdf_{aid}.pdf"

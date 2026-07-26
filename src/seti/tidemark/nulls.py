@@ -294,6 +294,35 @@ class MatchedNull:
         other._rng = np.random.default_rng(self.seed)
         return other.set_tilt(tilt)
 
+    def coordinate_balance(self, values, name: str = "coord") -> dict:
+        """Residual imbalance of the *tested* coordinate between the anomaly set
+        and the matched null, as a standardised mean difference.
+
+        The coordinate under test is deliberately **not** matched on, so it is
+        the one covariate the null makes no promise about --- and any residual
+        imbalance in it is the leading candidate for a spurious gradient or edge.
+        This therefore belongs next to every p-value, not in a diagnostics
+        appendix.  Convention (Rubin 2001): |SMD| < 0.10 is good balance,
+        0.10-0.25 is marginal, > 0.25 is poor.
+        """
+        v = np.asarray(values, float)
+        ok = np.isfinite(v)
+        sel = self.mask & ok
+        w = np.where(ok, self.weights, 0.0)
+        if sel.sum() < 5 or w.sum() <= 0:
+            return {"coordinate": name, "std_diff": float("nan"), "quality": "undefined"}
+        m_a = float(np.mean(v[sel]))
+        m_n = float(np.average(v[ok], weights=w[ok]))
+        sd = float(np.std(v[ok])) or 1.0
+        smd = (m_a - m_n) / sd
+        q = ("good" if abs(smd) < 0.10 else
+             "marginal" if abs(smd) < 0.25 else "poor")
+        return {"coordinate": name, "anomaly_mean": m_a, "matched_null_mean": m_n,
+                "std_diff": float(smd), "quality": q,
+                "note": ("the tested coordinate is not matched on by design; "
+                         "residual imbalance here bounds the credibility of this "
+                         "specific test")}
+
     # ------------------------------------------------------------ expectation
     @property
     def n_anom(self) -> int:
@@ -380,5 +409,41 @@ def empirical_p(observed: float, null_values, *, tail: str = "two") -> float:
     return float((k + 1) / (v.size + 1))
 
 
+#: A statistic computed on fewer anomalies than this is not reported as a
+#: p-value.  Every test counts the anomalies that actually have a finite value
+#: of *its own* coordinate --- a catalogue can have thousands of anomalies and
+#: only a handful with a parallax, and a scan run on the handful while guarded
+#: by the thousands is exactly how a meaningless number acquires a small
+#: p-value.
+MIN_ANOMALIES_PER_TEST = 30
+
+
+def p_report(p_value: float, n_null: int) -> dict:
+    """Package a Monte Carlo p-value with its resolution floor.
+
+    A p-value equal to ``1/(n_null+1)`` means "no null realisation was as
+    extreme", i.e. ``p < 1/(n_null+1)``.  It is a **bound, not a point
+    estimate**, and reporting it as the latter --- then feeding it to a trials
+    correction as though it were measured --- overstates the evidence.  Anything
+    consuming these must branch on ``floor_limited``.
+    """
+    floor = 1.0 / (int(n_null) + 1)
+    limited = bool(np.isfinite(p_value) and p_value <= floor + 1e-12)
+    return {"p_value": (float(p_value) if np.isfinite(p_value) else None),
+            "p_floor": float(floor), "floor_limited": limited,
+            "n_null": int(n_null),
+            "p_repr": (f"<{floor:.3g}" if limited
+                       else (f"{p_value:.4g}" if np.isfinite(p_value) else "undefined"))}
+
+
+def insufficient(reason: str, **extra) -> dict:
+    """A test that cannot be run returns this, never a p-value."""
+    out = {"insufficient": True, "verdict": "INSUFFICIENT_ANOMALIES",
+           "reason": reason, "p_value": None, "significant": False}
+    out.update(extra)
+    return out
+
+
 __all__ = ["MatchedNull", "NullDiagnostics", "empirical_p", "quantile_bins",
+           "p_report", "insufficient", "MIN_ANOMALIES_PER_TEST",
            "DEFAULT_FORBIDDEN"]

@@ -853,14 +853,26 @@ def probe_gaia(poe_min: float = 20.0, ruwe_max: float = 1.4,
                          "query": count_rec["query"]}
     print(f"[cenotaph probe] COUNT(*) for the shell = {n_expected}", flush=True)
 
-    q = f"SELECT TOP 200000{_GSPSPEC_SELECT}{_GSPSPEC_FROM}{where}"
-    df, rec = run_gaia_query(q, label="probe sample", expect_rows=n_expected)
+    # One *planned* slice, exactly as the real pull issues them. This is the
+    # question that matters: does a query sized the way the fix sizes them come
+    # back whole? Asking the archive for the entire shell in one go is the thing
+    # that was already proved not to work.
+    slices = plan_random_index_slices(n_expected or 1, TARGET_CHUNK_ROWS)
+    a, b = slices[0]
+    out["slice_plan"] = {"n_slices": len(slices),
+                         "target_rows_per_slice": TARGET_CHUNK_ROWS,
+                         "first_slice_random_index": [a, b]}
+    slice_where = _shell_where(plx_lo, plx_hi, w, a, b)
+    n_slice, _ = gaia_count(_GSPSPEC_FROM + slice_where, label="probe slice count")
+    q = f"SELECT TOP 200000{_GSPSPEC_SELECT}{_GSPSPEC_FROM}{slice_where}"
+    df, rec = run_gaia_query(q, label="probe sample", expect_rows=n_slice)
     out["sample_query"] = {"status": rec["status"], "n_rows": rec["n_rows"],
-                           "expected_rows": n_expected,
+                           "expected_rows": n_slice,
+                           "shell_total_rows": n_expected,
                            "transport": rec["transport"],
                            "attempts": rec["attempts"], "query": rec["query"]}
     out["truncation_detected"] = bool(
-        n_expected is not None and rec["n_rows"] < n_expected)
+        n_slice is not None and rec["n_rows"] < n_slice)
     if len(df):
         show = [c for c in ("source_id", "ra", "dec", "parallax",
                             "parallax_over_error", "ruwe", "phot_g_mean_mag",

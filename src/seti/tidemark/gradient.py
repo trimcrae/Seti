@@ -41,7 +41,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from .nulls import MatchedNull, empirical_p
+from .nulls import (MIN_ANOMALIES_PER_TEST, MatchedNull, empirical_p,
+                    insufficient, p_report)
 
 
 # --- binning ----------------------------------------------------------------
@@ -169,8 +170,16 @@ def gradient_test(coord: np.ndarray, null: MatchedNull, *, name: str = "coord",
     w = null.weights
     good = np.isfinite(x)
     n_anom = int((mask & good).sum())
-    if n_anom < 5:
-        return {"coordinate": name, "insufficient": True, "n_anom": n_anom}
+    # Guard on the anomalies that have *this* coordinate, not on the catalogue's
+    # total.  A dimming catalogue can carry 2555 anomalies of which 30 have a
+    # parallax; a radial gradient fitted to the 30 while guarded by the 2555 is
+    # a meaningless number wearing a small p-value.
+    if n_anom < MIN_ANOMALIES_PER_TEST:
+        return insufficient(
+            f"only {n_anom} of {int(mask.sum())} anomalies have a finite "
+            f"{name}; need {MIN_ANOMALIES_PER_TEST}",
+            coordinate=name, n_anom=n_anom, n_anom_total=int(mask.sum()),
+            headline_p=None)
 
     edges = expected_quantile_edges(x, w, n_bins)
     prof = rate_profile(x, null, edges=edges)
@@ -258,8 +267,18 @@ def gradient_test(coord: np.ndarray, null: MatchedNull, *, name: str = "coord",
         out["rate_ratio_per_unit"] = float(np.exp(sl["value"])) if np.isfinite(sl["value"]) else None
         out["direction"] = ("increasing_outward" if sl["value"] > 0 else
                             "decreasing_outward") if np.isfinite(sl["value"]) else None
-    out["significant"] = bool(np.isfinite(out.get("headline_p", np.nan))
-                              and out["headline_p"] < 0.05)
+    # The tested coordinate is the one covariate the null makes no promise
+    # about, so its residual imbalance travels with the p-value.
+    out["coordinate_balance"] = null.coordinate_balance(x, name)
+    hp = out.get("headline_p")
+    out["p"] = p_report(hp if hp is not None else float("nan"), n_null)
+    out["floor_limited"] = out["p"]["floor_limited"]
+    out["p_repr"] = out["p"]["p_repr"]
+    # "Significant" requires a *resolved* p-value. A p sitting on the Monte
+    # Carlo floor is a bound; escalate n_null and ask again.
+    out["significant"] = bool(np.isfinite(hp if hp is not None else np.nan)
+                              and hp < 0.05 and not out["floor_limited"])
+    out["verdict"] = ("FLOOR_LIMITED" if out["floor_limited"] else "OK")
     return out
 
 

@@ -615,3 +615,42 @@ def test_isotherm_thresholds_load_from_config(cfg):
     assert th["beta_planck_max"] == pytest.approx(0.35)
     assert th["delta_bic_component"] >= 10.0
     assert th["feature_veto_abs_ew_um"] > 0
+
+
+def test_a_corpus_with_no_usable_spectra_is_not_a_clean_null(tmp_path):
+    """Indexing 5,480 catalogue rows and fitting zero spectra is NOT a null.
+
+    Run 30211326404 pulled the IRAS LRS Calgary atlas (5,480 rows), got
+    INSUFFICIENT_DATA on every one -- the catalogue carries F12/F25/F60/F100 and
+    an LRS class letter, not the spectra -- and reported
+    ``no_shape_anomaly_in_corpus``. That is a statement about the sky inferred
+    from zero measurements, which the channel brief forbids.
+    """
+    import pandas as pd
+
+    from seti.config import load_config
+    from seti.isotherm.run import score
+
+    cfg = load_config()
+    cfg.root = tmp_path
+    out = tmp_path / "results" / "isotherm"
+    out.mkdir(parents=True, exist_ok=True)
+
+    probe = {"verdict": "SPECTRAL_ARCHIVE_REACHED", "cassis_reachable": False,
+             "any_spectral_archive_reachable": True}
+
+    # Every row indexed, none with a spectrum.
+    none_usable = pd.DataFrame({"name": [f"s{i}" for i in range(20)],
+                                "verdict": ["INSUFFICIENT_DATA"] * 20})
+    s = score(cfg, none_usable, sensitivity=None, probe=probe, corpus_n=20)
+    assert s["verdict"] == "NO_SPECTRA_REACHED"
+    assert s["funnel"]["n_with_usable_spectrum"] == 0
+    assert s["funnel"]["n_insufficient_data"] == 20
+
+    # Genuinely fitted spectra with nothing anomalous IS a clean null.
+    usable = pd.DataFrame({"name": [f"s{i}" for i in range(20)],
+                           "verdict": ["REJECTED_NATURAL"] * 18
+                                      + ["INSUFFICIENT_DATA"] * 2})
+    s2 = score(cfg, usable, sensitivity=None, probe=probe, corpus_n=20)
+    assert s2["verdict"] == "no_shape_anomaly_in_corpus"
+    assert s2["funnel"]["n_with_usable_spectrum"] == 18

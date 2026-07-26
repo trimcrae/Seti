@@ -138,8 +138,31 @@ and different seasonal depths. A perfectly constant star observed with a rising
 cadence therefore shows a **rising measured scatter**. A search that skips this
 does not measure astrophysics; it measures ZTF's operations calendar.
 
-Five layers, none optional. Layers 1–3 are in `src/seti/rust/scatter.py`,
+Six layers, none optional. Layers 0–3 are in `src/seti/rust/scatter.py`,
 layer 4 in `trend.py`, layer 5 in `run.py`.
+
+### 5.0 Remove a *line* per season, not just the season mean
+
+Before any of the machinery below, each season's residuals are taken about a
+**fitted line**, not about the season median. This is what makes the statistic
+genuinely *aperiodic*, and it closes a confounder that would otherwise pipe the
+sibling channel's entire population into this one:
+
+> A star whose brightness is fading at an **accelerating** rate drifts further
+> within each successive season than the last. Season-median subtraction leaves
+> that drift in, so it reads as a rising second moment produced entirely by a
+> *first*-moment phenomenon.
+
+Measured (`tests/test_rust.py::test_an_accelerating_secular_fade_does_not_flag`):
+a 0.72 mag accelerating fade flags **46 of 60** realisations without the line
+removal and **0 of 60** with it. A megaswarm cascade is short-timescale and
+irregular; a fade is smooth. Subtracting the line separates them.
+
+The null table is switched to its **line-detrended variant** to match, because a
+line fit removes two degrees of freedom by an N-dependent amount — `b(N)` falls
+from 0.900 to 0.811 at N = 8 but only 0.990 → 0.984 at N = 80. Scoring detrended
+residuals against the un-detrended table would reintroduce exactly the
+cadence-tracking offset the module exists to remove.
 
 ### 5.1 Exact null expectation per season, at that season's own N
 
@@ -237,12 +260,34 @@ Too slow for a sweep, mandatory for a claim (`run.confirm_survivor`):
 Both numbers are reported for every survivor, pass or fail, alongside the
 per-season epoch counts so a reviewer can audit the cadence history by hand.
 
-**Measured performance** (`tests/test_rust.py`): across five cadence histories
-(rising 8→70, falling 70→8, a ZTF-style jump, an erratic pattern, and a
-doubling), **0 of 600 constant stars flag**. In a wider sweep of 2,000
-realisations over four cadence patterns the false-positive rate was 0. Recovery
-of an injected linear amplitude rise at realistic ZTF sampling (80 epochs/season,
-7 seasons) is ~57% at a 36 mmag terminal amplitude and ~80% at 60 mmag.
+**Measured performance** (`tests/test_rust.py`, 39 offline tests):
+
+| Null | Realisations | Flagged |
+|---|---|---|
+| Constant star, 5 cadence histories (8→70, 70→8, ZTF-style jump, erratic, doubling) | 600 | **0** |
+| Constant star, wider 4-pattern sweep | 2,000 | **0** |
+| Constant star, rising per-epoch **errors** (10 → 46 mmag) | — | rejected |
+| Field-wide `magerr` drift (κ: 1.0 → 4.0), 60 stars | 60 | ≥20 before detrend, **0** after |
+| Accelerating secular fade, 0.72 mag total | 60 | 46 without §5.0, **0** with |
+
+Completeness for an injected linear amplitude rise at realistic ZTF sampling
+(80 epochs/season, 7 seasons, 20 mmag photometric error):
+
+| Terminal amplitude | Per band | **Two-band AND** |
+|---|---|---|
+| 36 mmag | 58% | 34% |
+| 60 mmag | 81% | 66% |
+| 90 mmag | 81% | 65% |
+| ≥120 mmag | ~78% | ~60% |
+
+The two-band requirement roughly squares the per-band completeness — that is the
+price of the ledger's first rule and it is paid deliberately. The **plateau near
+80% per band is a real ceiling, not noise**: it is the χ²-inflated linear-slope
+gate refusing to certify an accelerating rise that a straight line fits badly.
+The rank test almost never fails (2 of 200 at 120 mmag); the linear gate fails
+~38%. Sensitivity is therefore set by a deliberately conservative secondary
+statistic, and could be raised by fitting a growth law — at the cost of assuming
+one, which §5.3 declines to do.
 
 ---
 

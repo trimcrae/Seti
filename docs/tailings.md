@@ -42,6 +42,89 @@ single-element anomaly does not operate. The convective envelope mass runs from
 below ~3500 K — three to four orders of magnitude more diluting material than
 an A star has.
 
+### 1.1 The boundary, quantitatively
+
+The diffusion/levitation zoo — Ap, Am/Fm, HgMn, roAp, He-weak, lambda Boo —
+terminates at a *sharp* boundary. Xiang et al. (arXiv:2006.03329), on ~15,000
+LAMOST A/F stars: the peculiar stars are *"almost exclusively main sequence and
+subgiant stars with Teff ≳ 6300 K"*, tracing *"a sharp border at low
+temperatures along a roughly fixed-mass trajectory (around 1.4 M☉) that
+corresponds to an upper limit in convective envelope mass fraction of around
+10⁻⁴"*. Above 1.5 M☉ these stars are **40% of everything** — the phenomenon is
+ubiquitous right up to the boundary and absent below it. The coolest lambda Boo
+object in the fetched corpus is a pre-main-sequence Herbig star at Teff 6500 K
+and **log g 3.5 — not a dwarf**.
+
+The mechanism side agrees. Sweigart (astro-ph/0103133): *"the onset of
+radiative levitation … coincide[s] with the disappearance of surface
+convection."* Michaud et al. (arXiv:1102.1969) find the large anomalies require
+separation confined to a mixed mass of ~10⁻⁷–10⁻⁶ M☉. Church et al.
+(arXiv:1908.06988) measure **3.45 × 10⁻³ M☉** already at a solar-metallicity
+M67 turnoff — a three-to-four decade margin before one even reaches a G dwarf.
+
+The amplitude ladder tracks envelope mass across ~7 decades:
+
+| regime | anomaly amplitude |
+|---|---|
+| radiative-envelope CP stars | **1–4 dex** |
+| metal-poor MS turnoff | 0.1–0.3 dex |
+| solar-metallicity turnoff | 0.05–0.2 dex |
+| **G/K/M dwarfs** | **≲0.02–0.04 dex** |
+
+Korn et al. (arXiv:2111.00913) measure 0.3 dex at [Fe/H] = −2.3 falling to
+0.1 dex at −1.1 — the trend runs the right way, and caps the natural effect at
+~0.3 dex even in the most favourable case ever measured. In the target box
+itself, Souto et al. (arXiv:2105.01667) find Coma Ber G/K/M dwarfs at Teff
+3200–6500 K, log g 4.3–5.0 homogeneous to ⟨[Fe/H]⟩ = +0.04 ± 0.02 dex.
+
+**Two things must be conceded, not hidden.**
+
+*Sparse anomalies are physically possible* — Te at ~10⁶× solar, Zr/Pb/Ge/Y, Br,
+Sb, Ni at +0.6 dex against solar Cr/Mn/Co. But **every documented instance is at
+Teff ≳ 10,000–20,000 K in a star with essentially no convection zone.** The
+physics that makes a sparse anomaly possible is exactly what this population
+lacks; that is the boundary condition which *strengthens* the argument rather
+than weakening it.
+
+*Diffusion is detected in cool main-sequence stars* — at ~0.1 dex, in clusters,
+at the turnoff. But it is never sparse. Michaud et al. (astro-ph/0402544) on
+M67 and NGC 188: *"small **generalized** underabundances"*. Souto et al.
+(arXiv:2607.14208) on NGC 752 and Ruprecht 147 measure Fe, C, N, Na, Mg, Al,
+Si, S, K, Ca, Ti, V, Cr, Mn, Co and Ni and find the warmer stars depleted
+*"at the ≥1σ level for **all elements available in the analysis**"* — sixteen
+elements, one direction. The honest nuance is that the amplitudes differ
+smoothly by element, ordered by radiative acceleration (Mg 0.2 / Fe 0.1 /
+Ti 0.07 dex), so the correct claim is "many elements move together,
+monotonically with Teff, with a smooth element ordering" — not that the shift
+is uniform. Either way it forbids a lone-element outlier.
+
+### 1.2 The metallicity bound — a leak that had to be closed
+
+Convective protection is a function of **metallicity as well as Teff and
+log g**. Matrozis et al. (arXiv:1605.02791): *"stars with typical CEMP-s star
+masses (M ~ 0.85 M☉) have very shallow convective envelopes (Menv < 1e-7
+M☉)."* Four orders of magnitude thinner than a solar-metallicity dwarf — and
+such a star can pass a Teff < 6000 K / log g > 4.0 cut while keeping exactly
+the thin envelope that makes diffusive peculiarity possible.
+
+The sample is therefore bounded at **[Fe/H] ≥ −1.0**, enforced in the ADQL, in
+`config/thresholds.yaml` and again in the vetting funnel. Korn's measured
+amplitudes (0.3 dex at −2.3, 0.1 dex at −1.1) put the natural effect an order
+of magnitude below the signal at that floor. There is a cross-channel irony
+worth stating: OSSUARY *selects* the metal-poor halo stars this channel must
+*exclude*, and for the mirror-image reason.
+
+The sample is also bounded at **Teff ≥ 4000 K**. GALAH's own release notes
+state that cool stars carry systematic trends *"that can reach values of 0.5
+dex for some elements"* and that *"dwarf stars are most affected at Teff <
+4600 K"*; a measured G-vs-K offset of 0.08 dex within a single cluster
+(Praesepe), with 5 of 18 elements disagreeing by >0.1 dex, says the same. The
+M-dwarf tail is the least trustworthy part of any abundance sample, so it is
+bounded out rather than silently included, and survivors between 4000 and
+4600 K carry a `cool_star_caveat`.
+
+### 1.3 Where the null leaks
+
 **The null is strong but it is not airtight, and the honest statement is that
 it is a strong prior, not a theorem.** Known and suspected leaks, each of which
 the funnel must handle rather than assume away:
@@ -59,8 +142,53 @@ the funnel must handle rather than assume away:
 
 The last three are why this channel's centre of gravity is the *vetting*, not
 the statistic. A single-element catalogue outlier is, on the prior, a bad
-measurement. The design earns its keep only if every one of those routes has a
-discriminator that does not require trusting the catalogue.
+measurement — Griffith et al. found, from inspecting large-residual stars,
+roughly **40% physical and 60% data problems** (unflagged binarity, poor
+wavelength solutions, poor telluric subtraction). Design for a 60% junk rate.
+
+**The mass-transfer family must be conceded outright**, because it is cool,
+main-sequence and hugely anomalous: barium dwarfs, CH subgiants, dC and CEMP-s
+stars are F/G main-sequence stars reaching log g 4.6 and Teff ~4300 K. The
+defence is *not* "cool dwarfs are not peculiar". It is that **cool dwarfs are
+peculiar only densely**. Liu et al. (arXiv:0811.2079) is the cleanest contrast:
+*"Y, Zr, Ba, La, Eu show obvious overabundance… Other elements, including Na,
+Mg, Al, Si, Ca, Sc, Ti, V, Cr, Mn, Ni, show comparable abundances to the Solar
+ones."* Fifteen s-process elements up, eleven light and Fe-peak normal — a
+family, caught by the family veto. These are ~100% binaries, so RV monitoring
+and C/N are the additional discriminants.
+
+**Lithium is conceded and pre-empted.** It is the one genuinely
+quasi-single-element anomaly and it is nuclear, not diffusive. Sun et al.
+(arXiv:2410.20632) measure an intrinsic scatter of **0.35 dex for G/F dwarfs
+and up to 0.6 dex for older, cooler stars** at fixed parameters; Spina et al.
+delete stars below 6000 K from their Li analysis entirely because it is
+unreliable there, and document a co-natal pair differing by **ΔLi = 1.9 dex**
+and identical in everything else — a textbook sparse anomaly with a mundane
+cause. Li, Be and B therefore cannot carry a candidacy here, by construction.
+
+**Three classes a referee will invoke, and why they do not apply.** *P-rich
+stars* are the most-cited "exotic single element" class in modern spectroscopy,
+but the discovery abstract itself names five co-enhanced elements — *"15
+phosphorus-rich stars with unusual overabundances of O, Mg, Si, Al, and Ce"* —
+the follow-up adds Sr, Y, Zr, Ba, La, Nd, Pb and Cu, and they are metal-poor
+**giants**. *K-rich stars* are one node of an O–Na–Mg–Al–Si–K–Ca–Sc H-burning
+network in giants, and the dwarf test was actually run: Carretta et al.
+(arXiv:1303.4740) measured K in turn-off and subgiant stars of four globular
+clusters and found *"the stars lie in the K-Mg abundance plane on the same
+locus occupied by … field stars. This holds both for giants and less evolved
+stars."* *Przybylski's star*, the most famous weird-abundance star in
+astronomy, is the maximally **dense** counterexample — *"the abundances
+determined for about 60 chemical elements"* — and it is a cool magnetic Ap, not
+a G/K/M dwarf; its exotic-element claims are upper limits rather than
+detections.
+
+**The floor to beat.** Nature does not move one element alone even at the
+0.02 dex level. Ting & Weinberg reach σ ≲ 0.02 dex after conditioning and note
+*"Despite the small scatter, residual abundances display clear correlations
+between elements"*; Weinberg et al. find the residual noise itself is
+element-correlated, in *"a correlated element group comprised of Ca, Na, Al, K,
+Cr, and Ce and a separate group comprised of Ni, V, Mn, and Co."* That is
+simultaneously the strongest form of the argument and the detection threshold.
 
 ---
 

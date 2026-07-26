@@ -27,6 +27,16 @@ season:
   # because this channel *wants* variability — it only wants to drop cosmic-ray
   # and bad-subtraction garbage.  Never applied if it would remove >5% of epochs.
   clip_sigma: 6.0
+  # Remove a fitted LINE per season, not just the season median.  This is what
+  # makes the statistic aperiodic: a star fading at an ACCELERATING rate drifts
+  # further within each successive season, which reads as a rising second moment
+  # produced entirely by a first-moment phenomenon — i.e. the `dimming`
+  # channel's population leaking straight into this one.  Measured: a 0.72 mag
+  # accelerating fade flags 46/60 realisations without this and 0/60 with it.
+  # The null table switches to its line-detrended variant to match (b(8) falls
+  # 0.900 -> 0.811, b(80) only 0.990 -> 0.984, so the difference is itself
+  # N-dependent and cannot be ignored).
+  detrend_season: true
 
 acquire:
   # A source needs ~8 epochs per season in EACH band across >=4 seasons, so the

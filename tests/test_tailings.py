@@ -939,3 +939,30 @@ def test_church_metallicity_dilution_calibration():
     # within the factor of ~2 the docs claim for it.
     mcz = float(T.convective_envelope_mass(6100.0, safety_factor=1.0))
     assert 0.4 < mcz / 3.45e-3 < 2.5
+
+
+# ---------------------------------------------------------------------------
+# The Karinkuzhi precedent: low resolution MANUFACTURES sparse anomalies
+# ---------------------------------------------------------------------------
+def test_low_resolution_sparsity_is_presumed_to_be_blending():
+    ok, note = V.resolution_verdict("GALAH")
+    assert ok and "adequate" in note
+    bad, note = V.resolution_verdict("LAMOST")
+    assert not bad
+    assert "unresolved blends" in note and "dissolved" in note
+    assert not V.resolution_verdict("LAMOST_MRS")[0]
+    assert V.resolution_verdict("APOGEE")[0]
+
+
+def test_resolution_requirement_travels_with_every_candidate():
+    hi = V.vet_candidates(_one(fe_h=0.0), survey="GALAH")
+    lo = V.vet_candidates(_one(fe_h=0.0), survey="LAMOST")
+    assert not bool(hi.loc[0, "needs_high_resolution_confirmation"])
+    assert bool(lo.loc[0, "needs_high_resolution_confirmation"])
+
+
+def test_saturated_lines_cannot_carry_an_abundance_claim():
+    assert V.curve_of_growth_regime(0.35)[0] == V.WEAK
+    assert V.curve_of_growth_regime(0.90)[0] == V.SATURATED
+    assert "no longer a measure of abundance" in V.curve_of_growth_regime(0.90)[1]
+    assert V.curve_of_growth_regime(0.005)[0] == V.UNDETECTED

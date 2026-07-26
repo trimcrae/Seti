@@ -255,6 +255,11 @@ def reduce_survey(
         # Instrumental covariates: a real anomaly has no reason to correlate
         # with the star's radial velocity or its fibre; a telluric or bad-pixel
         # artifact does, sharply.
+        # Quantile bins catch a broad drift; a telluric is NARROW and needs a
+        # sliding-window scan per element, or it is diluted to invisibility.
+        for cov in ("rv", "fiber"):
+            if cov in cand.columns:
+                cand = V.covariate_window_veto(cand, covariate_col=cov)
         for cov, lab in (("rv", "rv"), ("fiber", "fiber"), ("rv_scatter", "rvscatter")):
             cand = V.covariate_rate_veto(cand, joined, flagged_mask,
                                          covariate_col=cov, label=lab, cfg=vcfg)

@@ -105,8 +105,13 @@ def analyse_one(lam_um, flux, err, thresholds: dict | None = None,
 def cascade_sensitivity(snrs=(60, 150, 400, 1000), ratios=(1.5, 2.0, 2.5, 3.0),
                         t_hot_k: float = 600.0, n_shells: int = 3,
                         lam_lo: float = 5.2, lam_hi: float = 38.0,
-                        n_lam: int = 180, seed: int = 17) -> pd.DataFrame:
+                        n_lam: int = 180, seed: int = 17,
+                        temp_tol: float = 0.15) -> pd.DataFrame:
     """At what (SNR, temperature ratio) is a cascade separable from a gradient?
+
+    ``temp_tol`` is the fractional tolerance within which a fitted component
+    counts as recovering a true one (default 15%).  It is reported in every row
+    so the map cannot be read without its tolerance.
 
     This is a *completeness map*, not a null result: it states the region of
     parameter space in which a detection would have been possible, which is the
@@ -130,17 +135,48 @@ def cascade_sensitivity(snrs=(60, 150, 400, 1000), ratios=(1.5, 2.0, 2.5, 3.0),
             best, _ = select_n_components(lam, f, e, n_max=4)
             grad = fit_gradient(lam, f, e)
             dbic = float(best.bic - grad.bic)
+            matched, frac_err = _temps_match(temps, best.temps_k, temp_tol)
             rows.append({
                 "temperature_ratio": float(ratio), "snr": float(snr),
                 "n_components_recovered": int(best.n_components),
                 "delta_bic_discrete_minus_gradient": dbic,
                 "discrete_wins": bool(dbic < -10.0),
-                "recovered": bool(best.n_components >= int(n_shells)
-                                  and dbic < -10.0),
+                # RECOVERY REQUIRES THE TEMPERATURES TO MATCH, not merely the
+                # component count. Keyed on count alone, run 30211326404
+                # reported ratio 1.5 / SNR 1000 as "recovered" on a fit of
+                # [283, 523, 3000] K against a truth of [600, 400, 267] K --
+                # three components, none of them real, including an invented
+                # 3000 K one. A sensitivity curve built from that is worthless.
+                "n_temps_matched": int(matched),
+                "max_frac_temp_error": float(frac_err),
+                "temp_tolerance_frac": float(temp_tol),
+                "recovered": bool(matched >= int(n_shells) and dbic < -10.0),
                 "temps_true_k": [float(t) for t in temps],
                 "temps_fit_k": [float(t) for t in best.temps_k],
             })
     return pd.DataFrame(rows)
+
+
+def _temps_match(true_k, fit_k, tol: float) -> tuple[int, float]:
+    """Greedily pair fitted temperatures to true ones within ``tol`` fractional.
+
+    Returns ``(n_matched, worst_fractional_error_over_matched)``.  Each fitted
+    component may claim at most one true temperature, so an invented extra
+    component cannot manufacture a match and duplicated fits cannot double-count.
+    """
+    true_list = [float(t) for t in true_k]
+    remaining = [float(t) for t in fit_k]
+    matched, worst = 0, 0.0
+    for t in sorted(true_list, reverse=True):
+        if not remaining:
+            break
+        errs = [abs(f - t) / t for f in remaining]
+        j = int(np.argmin(errs))
+        if errs[j] <= tol:
+            matched += 1
+            worst = max(worst, errs[j])
+            remaining.pop(j)
+    return matched, (worst if matched else float("inf"))
 
 
 # ---------------------------------------------------------------------------
@@ -174,8 +210,20 @@ def score_and_write(cfg: Config, results: pd.DataFrame, probe: dict | None = Non
         sensitivity.to_csv(out_dir / "sensitivity.csv", index=False)
 
     archive_verdict = probe.get("verdict", "NOT_PROBED")
+    # "No shape anomaly in the corpus" is a claim about SPECTRA that were
+    # actually fitted. Rows whose analysis returned INSUFFICIENT_DATA carried no
+    # usable spectrum at all -- run 30211326404 indexed 5,480 IRAS LRS catalogue
+    # entries and got INSUFFICIENT_DATA on every one, because the catalogue
+    # carries broadband fluxes and an LRS class letter, not the spectra. Letting
+    # that report as a clean null would be precisely the silent degradation the
+    # channel brief forbids: a statement about the sky inferred from zero
+    # measurements.
+    n_insufficient = int(counts.get("INSUFFICIENT_DATA", 0)) if n_analysed else 0
+    n_with_spectra = n_analysed - n_insufficient
     if archive_verdict == "NO_DATA_REACHED" or n_analysed == 0:
         verdict = "NO_DATA_REACHED"
+    elif n_with_spectra == 0:
+        verdict = "NO_SPECTRA_REACHED"
     elif len(cands):
         verdict = "SHAPE_CANDIDATES_FOR_REVIEW"
     else:
@@ -193,6 +241,10 @@ def score_and_write(cfg: Config, results: pd.DataFrame, probe: dict | None = Non
             "n_analysed": n_analysed,
             "n_screened_out_stage1": n_screened_out,
             "n_full_shape_analysis": n_full,
+            # The number that decides whether any statement about the sky is
+            # possible at all: rows carrying a usable spectrum, not rows indexed.
+            "n_with_usable_spectrum": n_with_spectra,
+            "n_insufficient_data": n_insufficient,
             "n_s5_isothermal": int((results["verdict"] == "S5_ISOTHERMAL_REVIEW").sum())
             if n_analysed else 0,
             "n_s6_cascade": int(

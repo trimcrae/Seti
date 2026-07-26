@@ -181,14 +181,37 @@ def _retry(fn, retries: int = 3, label: str = "fetch"):
 
 
 def tap_query(adql: str, *, url: str = VIZIER_TAP, retries: int = 3) -> pd.DataFrame:
-    """Run an ADQL query against a TAP service and return a DataFrame."""
+    """Run an ADQL query against a TAP service and return a DataFrame.
+
+    Asynchronous first: a synchronous VizieR query silently truncates or times
+    out well below the row counts this channel needs, and a truncated
+    catalogue would quietly shrink the sample without saying so. The sync path
+    is kept as the last-attempt fallback, matching the pattern the other
+    channels in this repository settled on.
+    """
     import pyvo  # noqa: PLC0415 - runner-only import; keeps the module offline-importable
 
     def _go():
         svc = pyvo.dal.TAPService(url)
-        return svc.search(adql).to_table().to_pandas()
+        try:
+            return svc.run_async(adql).to_table().to_pandas()
+        except Exception as exc:  # noqa: BLE001
+            print(f"[tailings] async TAP failed ({exc!r}); retrying synchronously")
+            return svc.search(adql).to_table().to_pandas()
 
     return _retry(_go, retries=retries, label="TAP query")
+
+
+def teff_bands(teff_min: float, teff_max: float, n: int) -> list[tuple[float, float]]:
+    """Split the temperature range into ``n`` query chunks.
+
+    A single monolithic query at >10^5 rows times out; chunking bounds every
+    request and lets a lost chunk be re-fetched on its own. Teff is the natural
+    axis because it is indexed in every one of these catalogues and because the
+    cool-dwarf selection is already a Teff cut.
+    """
+    edges = np.linspace(float(teff_min), float(teff_max), int(n) + 1)
+    return [(float(edges[i]), float(edges[i + 1])) for i in range(int(n))]
 
 
 def probe_table(table: str, *, url: str = VIZIER_TAP) -> pd.DataFrame | None:
@@ -243,6 +266,7 @@ def fetch_survey(
     logg_min: float = 4.0,
     snr_min: float = 40.0,
     max_rows: int = 400_000,
+    n_chunks: int = 8,
     tap_url: str = VIZIER_TAP,
     probe_fn=None,
     query_fn=None,
@@ -282,28 +306,54 @@ def fetch_survey(
                 if kind in d:
                     cols.append(f'"{d[kind]}"')
 
-        where = COOL_DWARF_ADQL.format(
-            teff=f'"{params["teff"]}"',
-            teff_max=teff_max,
-            teff_min=teff_min,
-            logg=f'"{params["logg"]}"',
-            logg_min=logg_min,
-            snr=f'"{params["snr"]}"' if "snr" in params else "1e9",
-            snr_min=snr_min,
-        )
-        adql = (f"SELECT TOP {int(max_rows)} " + ", ".join(dict.fromkeys(cols))
-                + f' FROM "{src.locator}" WHERE ' + where)
-        try:
-            df = query_fn(adql)
-        except Exception as exc:  # noqa: BLE001
-            print(f"[tailings] {survey}/{src.name}: main query failed: {exc!r}")
-            continue
-        if df is None or len(df) == 0:
+        select = ", ".join(dict.fromkeys(cols))
+        bands = teff_bands(teff_min, teff_max, max(1, int(n_chunks)))
+        per_chunk = max(1, int(max_rows) // len(bands))
+        frames: list[pd.DataFrame] = []
+        for lo, hi in bands:
+            where = COOL_DWARF_ADQL.format(
+                teff=f'"{params["teff"]}"',
+                teff_max=hi,
+                teff_min=lo,
+                logg=f'"{params["logg"]}"',
+                logg_min=logg_min,
+                snr=f'"{params["snr"]}"' if "snr" in params else "1e9",
+                snr_min=snr_min,
+            )
+            adql = (f"SELECT TOP {per_chunk} " + select
+                    + f' FROM "{src.locator}" WHERE ' + where)
+            try:
+                chunk = query_fn(adql)
+            except Exception as exc:  # noqa: BLE001 - a lost chunk is not a lost run
+                print(f"[tailings] {survey}/{src.name}: chunk {lo:.0f}-{hi:.0f} K "
+                      f"failed: {exc!r}")
+                continue
+            if chunk is not None and len(chunk):
+                frames.append(chunk)
+                print(f"[tailings] {survey}/{src.name}: {len(chunk)} rows "
+                      f"in {lo:.0f}-{hi:.0f} K")
+        if not frames:
             print(f"[tailings] {survey}/{src.name}: zero rows returned")
             continue
+        df = pd.concat(frames, ignore_index=True)
+        truncated = [1 for f in frames if len(f) >= per_chunk]
 
         norm = normalize(df, survey=survey)
-        degraded = src is not SOURCES[survey][0]
+        fell_back = src is not SOURCES[survey][0]
+        notes = []
+        if fell_back:
+            notes.append(f"fell back to {src.name} ({src.note}); the preferred source "
+                         f"{SOURCES[survey][0].name} did not answer")
+        if truncated:
+            # A chunk that returns exactly its cap was cut off; the sample is a
+            # truncation of the catalogue, not the catalogue, and the report
+            # must say so rather than quoting a row count as coverage.
+            notes.append(f"{len(truncated)}/{len(bands)} Teff chunks hit the "
+                         f"{per_chunk}-row cap: the sample is TRUNCATED, "
+                         "raise --max-rows for full coverage")
+        if len(frames) < len(bands):
+            notes.append(f"only {len(frames)}/{len(bands)} Teff chunks returned; "
+                         "the temperature coverage is incomplete")
         return Acquisition(
             survey=survey,
             table=norm,
@@ -312,9 +362,8 @@ def fetch_survey(
             n_rows=len(norm),
             elements=sorted(resolve_abundance_columns(df.columns)),
             param_columns=params,
-            degraded=degraded,
-            degradation=(f"fell back to {src.name} ({src.note}); the preferred source "
-                         f"{SOURCES[survey][0].name} did not answer") if degraded else "",
+            degraded=bool(notes),
+            degradation="; ".join(notes),
             sources_tried=tried,
         )
 

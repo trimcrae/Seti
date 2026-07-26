@@ -211,6 +211,12 @@ def rust_sweep(
                        "loo_sigma_min": LOO_SIGMA_MIN, "amp_growth_min": AMP_GROWTH_MIN,
                        "amp_last_mmag_min": AMP_LAST_MMAG_MIN},
         "ensemble_detrend_g": diag_g, "ensemble_detrend_r": diag_r,
+        # If the field was too thin to measure a common mode, every candidate it
+        # produced is UNCORRECTED for the drifting-magerr systematic.  Surface
+        # that at the top level, not buried two dicts down.
+        "ensemble_correction_applied": bool(
+            diag_g.get("ensemble_correction_applied")
+            and diag_r.get("ensemble_correction_applied")),
         "detrend_season": bool(detrend_season),
         "cadence_bias_note": ("a fitted line is removed per season (not just the "
                               "median), the scatter is compared against a per-season "

@@ -180,11 +180,28 @@ def test_natural_floor_follows_from_the_radial_temperature_law():
     assert natural_floor_dt_over_t(0.05) == pytest.approx(0.025)
 
 
-def test_width_is_bounded_small_for_an_isothermal_emitter():
-    f, e = _noisy(mbb(IRS_LAM, 250.0, 0.0), 120, 5)
+@pytest.mark.parametrize("seed", [5, 23, 42])
+def test_width_is_bounded_small_for_an_isothermal_emitter(seed):
+    """Must hold for EVERY noise realisation, not a lucky seed.
+
+    The limit scales as ~SNR^(-1/2): 0.196 at SNR 60, 0.130 at 120, 0.080 at
+    300, 0.043 at 1000.  SNR 300 is the measured requirement for this test to
+    reach the 0.10 natural floor (docs/isotherm.md sec. 7).
+    """
+    f, e = _noisy(mbb(IRS_LAM, 250.0, 0.0), 300, seed)
     w = temperature_width(IRS_LAM, f, e)
     assert w["success"]
     assert w["dt_over_t_upper95"] < w["floor_nominal"]
+
+
+def test_width_limit_tightens_with_snr():
+    """Below SNR ~300 the S5 test cannot reach the floor — and must say so."""
+    f_lo, e_lo = _noisy(mbb(IRS_LAM, 250.0, 0.0), 60, 5)
+    f_hi, e_hi = _noisy(mbb(IRS_LAM, 250.0, 0.0), 1000, 5)
+    lo = temperature_width(IRS_LAM, f_lo, e_lo)
+    hi = temperature_width(IRS_LAM, f_hi, e_hi)
+    assert hi["dt_over_t_upper95"] < lo["dt_over_t_upper95"]
+    assert not lo["narrower_than_nominal_floor"]
 
 
 def test_width_is_large_for_a_radial_gradient():
@@ -313,8 +330,9 @@ def test_companion_photosphere_is_vetoed():
 # THE FOUR REQUIRED INJECTIONS
 # ---------------------------------------------------------------------------
 
-def test_injected_isothermal_beta0_emitter_is_flagged_s5():
-    f, e = _noisy(mbb(IRS_LAM, 250.0, 0.0), 120, 11)
+@pytest.mark.parametrize("seed", [11, 23, 42])
+def test_injected_isothermal_beta0_emitter_is_flagged_s5(seed):
+    f, e = _noisy(mbb(IRS_LAM, 250.0, 0.0), 300, seed)
     v = analyse_spectrum(IRS_LAM, f, e)
     assert v.verdict == "S5_ISOTHERMAL_REVIEW", (v.verdict, v.flags, v.vetoes)
     assert "beta_planck_consistent" in v.flags

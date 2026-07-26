@@ -102,6 +102,29 @@ Organised by *what the residue physically is*, not by wavelength.
   levitation — the natural sources of single-element peculiarity — are
   suppressed. → **TAILINGS**
 * **S13 Short-lived radionuclides** (Tc, Pm, actinides) in unevolved stars.
+  *Atomic-data finding (136 NIST ASD pulls, `results/chemlit_nist/`, 2026-07-26):*
+  **GALAH is not blind to Tc and Pm, contrary to the natural assumption.** Its
+  blue arm carries **33 Tc I lines**, including **4853.588 Å — the highest
+  tabulated relative intensity of any optical Tc I line (I=2×10⁴, twice the
+  resonance triplet)** — and its red arm carries **Pm II 6659.050 Å**, precisely
+  the line claimed for Przybylski's star. In a normal G/K dwarf the rare-earth
+  line forest that defeated every Przybylski claim **does not exist**, so the
+  blend situation is far better than in an Ap star. A ~900k-star GALAH DR4
+  Tc/Pm search is therefore structurally possible and has never been attempted.
+  Separately, **APOGEE carries 76 Th II lines in the H band**, two at I≈1000 and
+  low excitation (15240.251 Å, E=0.51 eV) — the one place a 733k-star infrared
+  survey could carry an actinide test. Nobody has looked.
+  *Two caveats that bound this:* NIST relative intensities are laboratory **arc**
+  intensities, **not log gf** — NIST returns no transition probabilities for Tc I
+  or Pm, so converting "catalogued and strong in an arc" into "detectable at
+  X mÅ in a 5500 K dwarf" needs VALD log gf plus synthesis against a
+  Teff-matched comparison star. The table establishes *possibility*, not
+  detectability. And the E≈1.3–2.0 eV excitation of the blue/red Tc I lines
+  costs ~×20 in Boltzmann population at 5000 K relative to the ground-state
+  resonance triplet, so the blue arm's apparent advantage is partly illusory.
+  Hard nulls (not sensitivity limits): Gaia RVS/RAVE, and APOGEE for Tc/Pm/U.
+  LAMOST LRS and SDSS/BOSS *cover* 4238–4297 Å but at R≈1,500–2,500 against a
+  required R>30,000 — the blue coverage is illusory.
   *(covered by the existing `midden` channel)*
 * **S14 Fission-product pattern** in a photosphere. *(covered by `midden`)*
 * **S15 Twin-pair refractory excess** beyond any engulfed-planet mass budget.

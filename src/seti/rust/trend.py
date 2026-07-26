@@ -363,8 +363,19 @@ def ensemble_detrend_scatter(rows: list[dict], min_stars: int = 8,
 
     kappas = [v for d in kap.values() for v in d.values()]
     adds = [v for d in add.values() for v in d.values()]
+    # A thin field cannot support an ensemble measurement, and a run in that
+    # state is NOT ensemble-corrected however much its column names suggest it
+    # is.  Say so as a first-class field rather than emitting NaNs that a reader
+    # might mistake for "the correction was zero".
+    applied = bool(kappas)
+    n_glob = len(kap.get("__global__", {}))
     return {
+        "ensemble_correction_applied": applied,
+        "ensemble_verdict": ("APPLIED" if applied else
+                             "NOT_APPLIED_TOO_FEW_STARS"),
         "n_ccd_channels": len([k for k in kap if k != "__global__"]),
+        "n_seasons_with_global_kappa": int(n_glob),
+        "n_stars": int(len(rows)),
         "kappa_median": float(np.median(kappas)) if kappas else float("nan"),
         "kappa_min": float(np.min(kappas)) if kappas else float("nan"),
         "kappa_max": float(np.max(kappas)) if kappas else float("nan"),

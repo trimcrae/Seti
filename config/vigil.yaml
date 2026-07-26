@@ -1,0 +1,67 @@
+# VIGIL --- waste heat with a duty cycle (docs/vigil.md).
+#
+# The observable is a star variable in the mid-infrared while constant in the
+# optical, at LOW fractional infrared excess.  The dominant natural confounder
+# is the extreme debris disk, which has the same phenomenology at HIGH excess,
+# so every threshold below exists to separate those two populations.
+
+visit:
+  # NEOWISE revisits a field roughly twice a year; exposures inside a visit
+  # span ~1 day and are the free noise calibrator.
+  gap_days: 30.0
+  min_exposures_per_visit: 3
+  min_visits: 8              # ~4 yr of NEOWISE
+  clip_sigma: 5.0
+  err_scale_min: 0.5         # bounds on the fitted per-exposure error rescale
+  err_scale_max: 5.0
+
+detect:
+  fvar_sigma_min: 5.0        # significance of the normalised excess variance
+  fvar_min: 0.02             # 2% fractional rms; below this NEOWISE systematics rule
+  optical_ratio_min: 4.0     # f_var(mid-IR) / f_var(optical)
+  optical_fvar_max: 0.02     # optical constancy in absolute terms
+  # The brief's primary cut, kept explicitly so it can be compared on the runner
+  # against the dimensionless form below.
+  # Applied to the 2-sigma UPPER limit on tau, not to the point estimate: "low"
+  # must be a bound.  At T_dust = 600 K around a 5000 K star, tau = 5e-3
+  # corresponds to an 11.5% W2 band excess -- a factor ~2 below where an extreme
+  # debris disk (tau ~ 1e-2 -> ~23%) sits, which a 3% photosphere floor resolves.
+  tau_max: 5.0e-3            # L_IR/L_star ceiling (EDDs live at ~1e-2)
+  # The sharpened, temperature-free form: m = A_ptp (1+f) / (2f), the fraction of
+  # the measured BAND excess f that is switching.  R (and hence T_dust, T_star,
+  # distance) cancels.  Rejects only when significantly below threshold.
+  modulation_min: 0.5
+  modulation_max: 1.6        # above this the variability is not the excess at all
+  decay_r2_max: 0.5          # a decay-dominated light curve is a collisional cascade
+  two_state_dbic_min: 6.0
+  colour_drift_sigma_max: 3.0
+  excess_precision_max: 0.06 # an UNMEASURED excess is not a LOW excess
+
+excess:
+  sys_floor: 0.03            # fractional systematic floor on the predicted photosphere
+  t_dust_grid_k: [300.0, 450.0, 600.0, 850.0, 1200.0]
+  t_dust_ref_k: 600.0        # near the W2 Wien peak
+
+vet:
+  w1_saturation_mag: 8.0     # NEOWISE bright-source bias onset
+  w2_saturation_mag: 7.0
+  neighbour_beam_arcsec: 6.1 # WISE W1 PSF FWHM
+  neighbour_dg_max: 2.0
+  galactic_latitude_min_deg: 10.0
+  stern_w1w2_min: 0.8        # AGN colour box -- NEVER used alone (see docs/vigil.md)
+  parallax_sig_min: 5.0
+  pm_sig_min: 5.0
+  mira_amp_mag: 0.5
+
+sample:
+  g_max: 15.0
+  parallax_over_error_min: 10.0
+  max_stars_per_field: 400
+  field_radius_deg: 0.4
+
+bounds:
+  # Stated, not assumed away.  NEOWISE / CatWISE2020 / unWISE coadds are W1/W2
+  # only; W3/W4 depth has been frozen since the 2010 cryogenic mission.
+  w1_wien_peak_k: 852.0
+  w2_wien_peak_k: 630.0
+  blind_below_k: 200.0

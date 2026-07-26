@@ -55,7 +55,29 @@ Organised by *what the residue physically is*, not by wavelength.
   radiating measurably less than its radius and T_eff demand. → CENOTAPH stage 3
 * **S4 Duty-cycled waste heat.** Mid-IR variable, optically constant — thermal
   load tracking computational load; and the cessation of that variability.
-  → **VIGIL**
+  → **VIGIL** — *built and dispatched 2026-07-26 (`docs/vigil.md`).*
+  The novelty is that Hephaistos II's `G_var > 2` cut explicitly **rejects**
+  variable stars ("could generate detectable variations in the photometry of the
+  host star") — that is a cut against *optical* variability from occultation,
+  while this channel selects on *mid-infrared* variability from modulated
+  re-emission. The whole difficulty is one confounder: **extreme debris disks
+  have exactly this phenomenology** — strongly mid-IR variable with flat optical
+  light curves (Moor et al. 2021, arXiv:2103.00568) — so optical constancy buys
+  nothing against the dominant contaminant and a channel that stops there has
+  produced an EDD catalogue. The discriminator is mid-IR variability at **low**
+  fractional excess (an EDD is "extreme" precisely because `τ ~ 1e-2`), sharpened
+  into the temperature-free **modulation index** `m = A_obs(1+f)/(2f)` — the
+  fraction of the measured band excess that is actually switching, in which the
+  excess-to-photosphere conversion factor `R` (and hence `T_dust`, `T_*` and
+  distance) cancels. An EDD's variability is a perturbation on a large steady
+  excess (`m ≪ 1`); a load-following radiator switches essentially all of it
+  (`m → 1`). Two shape discriminators back it: decay-versus-duty-cycle morphology,
+  and colour-temperature stability of the *varying component* (a cascade changes
+  the amount and the temperature; a radiator changes only the amount).
+  **Bounded hard by instrumentation:** NEOWISE/CatWISE/unWISE are W1/W2 only
+  (Wien peaks 852 K and 630 K), so VIGIL sees only **hot** material and is
+  structurally blind to the 100–300 K regime where most Dyson models sit — the
+  same frozen-W3/W4 ceiling as §3A(i).
 * **S5 Isothermal excess.** Engineered radiators are single-temperature; dust
   spans a radial temperature range.
 * **S6 Matrioshka step structure.** Discrete, quantised temperature components
@@ -191,7 +213,27 @@ Organised by *what the residue physically is*, not by wavelength.
 * **S31 Vanished radio sources** with stellar counterparts (NVSS/FIRST→VLASS).
   → **SHROUD**
 * **S32 Clocks that stopped** — periodicity that ceased. Eclipsing binaries do
-  not stop. → **KNELL**
+  not stop. → **KNELL** — *built and dispatched 2026-07-26 (`docs/knell.md`).*
+  The signature's unique property is that **dust cannot fake it**: obscuration
+  changes a signal's amplitude, not the existence of a period, so the confounder
+  that dominates every other channel here is absent by construction. What
+  replaces it is **survey-dependent detectability**, and the whole channel is
+  organised around removing it: the primary search is **intra-survey** (ZTF's own
+  early seasons against its own late seasons, in g *and* r) and every claimed
+  non-detection is normalised by the **injection-measured detection efficiency
+  for that star's own period and amplitude in that block's own sampling and
+  noise**. Measured: the uncorrected statistic flags **22 of 24** constant-signal
+  stars whose only change is a degrading cadence; the efficiency gate flags
+  **0 of 24**. Novelty is narrowed honestly — cessation events have only ever been
+  found *one at a time and serendipitously* (HD 60435, arXiv:2412.04840, claims a
+  *first* in 2025; OGLE found "objects ceasing pulsations" by accident inside a
+  catalogue paper, arXiv:1601.02020) and **no survey has measured the rate at
+  fixed sensitivity** — while **eclipsing binaries are deliberately excluded from
+  the anomaly sample**, because third-body nodal precession is a named, modelled,
+  actively hunted mechanism whose rate would swamp anything exotic. The
+  theoretical anchor is Kipping & Teachey 2016 (arXiv:1603.08928), the only paper
+  to propose *deliberate erasure* of a periodic signal as a technosignature and
+  which runs no search.
 * **S33 Optically vanished sources *with* an infrared counterpart** = enshrouded,
   not destroyed. → SHROUD
 

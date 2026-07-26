@@ -656,6 +656,48 @@ def _cmd_rust_vet(args, cfg):
     rust_vet(cfg, max_candidates=args.max_candidates, offline=args.offline)
 
 
+def _cmd_knell_sweep(args, cfg):
+    from .knell.run import knell_sweep
+
+    knell_sweep(cfg, ra=args.ra, dec=args.dec, radius_deg=args.radius_deg,
+                box_deg=args.box_deg, min_epochs=args.min_epochs,
+                time_budget_s=args.time_budget_s, max_boxes=args.max_boxes,
+                max_sources=args.max_sources, seed=args.seed)
+
+
+def _cmd_knell_vet(args, cfg):
+    from .knell.run import knell_vet
+
+    knell_vet(cfg, max_candidates=args.max_candidates, offline=args.offline)
+
+
+def _cmd_knell_cross(args, cfg):
+    from .knell.run import knell_cross
+
+    knell_cross(cfg, ra=args.ra, dec=args.dec, radius_deg=args.radius_deg,
+                max_targets=args.max_targets, seed=args.seed)
+
+
+def _cmd_vigil_probe(args, cfg):
+    from .vigil.run import vigil_probe
+
+    vigil_probe(cfg, ra=args.ra, dec=args.dec)
+
+
+def _cmd_vigil_sweep(args, cfg):
+    from .vigil.run import vigil_sweep
+
+    vigil_sweep(cfg, ra=args.ra, dec=args.dec, radius_deg=args.radius_deg,
+                g_max=args.g_max, max_stars=args.max_stars,
+                time_budget_s=args.time_budget_s)
+
+
+def _cmd_vigil_vet(args, cfg):
+    from .vigil.run import vigil_vet
+
+    vigil_vet(cfg, max_candidates=args.max_candidates, offline=args.offline)
+
+
 def _cmd_spectra_confirm(args, cfg):
     from .spectra.confirm import cross_confirm
 
@@ -1060,6 +1102,101 @@ def main(argv=None):
                    help="skip every network follow-up; verdicts degrade "
                         "explicitly rather than silently")
     p.set_defaults(func=_cmd_rust_vet)
+
+    p = sub.add_parser("knell-sweep",
+                       help="runner: KNELL stage 1 — one sky field's worth of "
+                            "paired ZTF g+r light curves searched for a PERIOD "
+                            "THAT CEASED (signature S32). Cessation is "
+                            "established INTRA-SURVEY at FIXED SENSITIVITY: "
+                            "every claimed non-detection is scored against the "
+                            "injection-measured detection efficiency for that "
+                            "star's own period and amplitude in that block's own "
+                            "sampling and noise (docs/knell.md §3)")
+    p.add_argument("--ra", type=float, default=270.0)
+    p.add_argument("--dec", type=float, default=30.0)
+    p.add_argument("--radius-deg", type=float, default=0.5,
+                   help="half-width of the square field to tile")
+    p.add_argument("--box-deg", type=float, default=None,
+                   help="IRSA bulk-fetch tile size (default from config/knell.yaml)")
+    p.add_argument("--min-epochs", type=int, default=None,
+                   help="minimum ZTF epochs per band; a PER-BLOCK periodogram "
+                        "needs ~15+ epochs in each of >=4 blocks in each band")
+    p.add_argument("--time-budget-s", type=float, default=None)
+    p.add_argument("--max-boxes", type=int, default=None)
+    p.add_argument("--max-sources", type=int, default=None)
+    p.add_argument("--seed", type=int, default=20260726,
+                   help="RNG seed for the permutation nulls and the injections")
+    p.set_defaults(func=_cmd_knell_sweep)
+
+    p = sub.add_parser("knell-vet",
+                       help="KNELL stage 2: aggregate every field's candidates "
+                            "and run the contamination gauntlet — mandatory "
+                            "two-band coincidence at a common epoch and period, "
+                            "crowding, ZTF's photometric walls, SIMBAD classes, "
+                            "and the named astrophysical cessation mechanisms "
+                            "(third-body precession, Blazhko, mode switching, "
+                            "spot cycles, CV disc states)")
+    p.add_argument("--max-candidates", type=int, default=200)
+    p.add_argument("--offline", action="store_true",
+                   help="skip every network follow-up; verdicts degrade "
+                        "explicitly rather than silently")
+    p.set_defaults(func=_cmd_knell_vet)
+
+    p = sub.add_parser("knell-cross",
+                       help="KNELL stage 3 (SECONDARY): catalogued VSX variables "
+                            "that ZTF no longer detects. Every candidate carries "
+                            "an explicit injection demonstration that ZTF WOULD "
+                            "HAVE detected the catalogued period and amplitude; "
+                            "without it a catalogue-vs-ZTF difference is a "
+                            "statement about two telescopes, not about a star")
+    p.add_argument("--ra", type=float, default=270.0)
+    p.add_argument("--dec", type=float, default=30.0)
+    p.add_argument("--radius-deg", type=float, default=0.5)
+    p.add_argument("--max-targets", type=int, default=200)
+    p.add_argument("--seed", type=int, default=20260726)
+    p.set_defaults(func=_cmd_knell_cross)
+
+    p = sub.add_parser("vigil-probe",
+                       help="runner: VIGIL stage 0 — one minimal live call per "
+                            "route. Establishes whether the unTimely mid-IR "
+                            "variable catalogue (arXiv:2511.22071) is reachable "
+                            "and what it is called, and whether NEOWISE "
+                            "per-epoch W1/W2 photometry comes back, BEFORE a "
+                            "multi-hour sweep is spent finding out")
+    p.add_argument("--ra", type=float, default=266.0,
+                   help="probe position; the default is near the north ecliptic "
+                        "pole, where NEOWISE visit counts are highest")
+    p.add_argument("--dec", type=float, default=65.0)
+    p.set_defaults(func=_cmd_vigil_probe)
+
+    p = sub.add_parser("vigil-sweep",
+                       help="runner: VIGIL stage 1 — one sky field searched for "
+                            "stars VARIABLE IN THE MID-INFRARED WHILE CONSTANT "
+                            "IN THE OPTICAL at LOW fractional excess (waste heat "
+                            "tracking a computational load; docs/vigil.md). The "
+                            "confounder is the extreme debris disk, which has "
+                            "the same phenomenology at HIGH excess")
+    p.add_argument("--ra", type=float, default=266.0)
+    p.add_argument("--dec", type=float, default=65.0)
+    p.add_argument("--radius-deg", type=float, default=0.4)
+    p.add_argument("--g-max", type=float, default=15.0,
+                   help="magnitude ceiling on the Gaia sample")
+    p.add_argument("--max-stars", type=int, default=400,
+                   help="cap on stars sent to per-object NEOWISE fetching")
+    p.add_argument("--time-budget-s", type=float, default=3000.0)
+    p.set_defaults(func=_cmd_vigil_sweep)
+
+    p = sub.add_parser("vigil-vet",
+                       help="VIGIL stage 2: aggregate every field's candidates "
+                            "and run the contamination gauntlet — optical "
+                            "constancy, SIMBAD YSO/AGB types, the astrometric "
+                            "(not colour) AGN test, W4-only cirrus, blends, "
+                            "NEOWISE saturation")
+    p.add_argument("--max-candidates", type=int, default=200)
+    p.add_argument("--offline", action="store_true",
+                   help="skip every network follow-up; verdicts degrade "
+                        "explicitly rather than silently")
+    p.set_defaults(func=_cmd_vigil_vet)
 
     p = sub.add_parser("herdsman-fetch",
                        help="staged runner 1/3: acquire + preprocess the Gaia "

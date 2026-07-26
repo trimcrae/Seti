@@ -957,6 +957,60 @@ and the **instrumental covariate vetoes** (RV, fibre, field, detector position),
 not a tighter cut. Any future version of this channel should be built on those
 axes, with amplitude as a necessary but grossly insufficient condition.
 
+### Four independent lines of evidence, all pointing the same way
+
+Full numbers in `results/tailings/systematics_diagnostic.json`.
+
+**(a) Concentration.** 74.1% of all 4,514 sparse candidates (GALAH 84.8%,
+APOGEE 69.5%) are carried by few-line species: GALAH K 39.4% + Y 18.6%,
+APOGEE Na 49.8% + Cr 22.4%. The data-internal version is stronger — **not one
+element in either survey has a run-measured median residual width below 0.028
+dex**. All 17 APOGEE and 23/25 GALAH species sit at or above Bedell's *few-line*
+floor (0.03–0.06 dex); none is near the ~0.01 dex well-measured floor. APOGEE
+Na, the single largest carrier, has a residual width of **0.22 dex**. The
+denominator of every z-score is set by measurement systematics.
+
+**(b) Sign-locking.** The candidates are sign-locked **by element, not by star**:
+GALAH Y is 98.4% *excess* while Al is 97.8% *deficit*; APOGEE Na is 99.8%
+deficit, V 99.1%, Cr 98.7%, and APOGEE overall is 92.5% deficits. Ten of eleven
+GALAH elements with ≥20 candidates are ≥80/20 one-signed. **No enrichment or
+refining process has a preferred sign, and TAILINGS is sign-agnostic by
+construction** — line loss depresses an abundance, an unrecognised blend
+inflates it. This is per-element pipeline pathology.
+
+**(c) A live Weinberg artefact.** On APOGEE, K-carried candidates are enhanced
+**4.03× over an (Fe/H, Teff)-matched control in −110 to −60 km/s (p = 2.7 ×
+10⁻¹⁰)**, across five contiguous 10 km/s bins, and **28 of the 29 K anomalies in
+that window are deficits** — a telluric eating the 7699 Å line. That is
+Weinberg's low-K population, reproduced. **The pipeline vetoed none of them**
+(fixed; see below).
+
+**(d) No independent-noise model fits.** The Gaussian null predicts **0.59**
+(GALAH) and **0.41** (APOGEE) sparse stars against 1,341 and 3,173 observed —
+excesses of **2,271× and 7,718×**. Matching the rate needs Student-t with
+dof ≈ 7.3 / 4.6, but matching the `z_max` distribution directly needs dof
+*falling* from 6.2 → 4.1 as the threshold rises, so no single t fits. And no
+independent model of any dof reproduces the observed sparse/dense ratio (0.52
+and 1.30 observed, ≥ 2.4 for every model tested): the residuals are
+**element-correlated as well as heavy-tailed**.
+
+### Two veto bugs this exposed, both fixed
+
+* **A veto that could not run was reporting "pass".** The GALAH FITS route
+  carries no `rv` and no `fiber` column, so `rv_flag_ratio` and
+  `fiber_flag_ratio` were 100% null for all 1,341 candidates while
+  `pass_rv_rate` and `pass_fiber_rate` read `True` — **True by default, not by
+  test** — on the survey whose dominant carrier is K, the exact Weinberg failure
+  mode. Untested vetoes now set `<name>_rate_untested` with a reason.
+* **The covariate veto was structurally blind to tellurics.**
+  `covariate_rate_veto` uses 12 equal-population quantile bins over the full
+  ±200 km/s range, so a ~20 km/s absorption window is diluted into a bin of
+  ordinary stars: the observed `rv_flag_ratio` spanned only 0.81–1.32 against a
+  threshold of 5.0. Not un-triggered — **un-triggerable**. Added
+  `covariate_window_veto`, a per-element sliding-window scan (the artefact is
+  element-locked because the offending *line* is, and pooling elements averages
+  it away), with a clean null control.
+
 ### Coverage gap: the co-natal test got nothing
 
 `twins: n_pairs: 0` — **no wide binary had both components in the spectroscopic

@@ -336,7 +336,11 @@ def test_light_elements_are_removed_from_the_statistic_not_merely_labelled():
     ``n_elements``. If Li were merely flagged-and-reported it would still drive
     ``z_max`` and the contrast.
     """
-    els = ["Mg", "Si", "Ca", "Ti", "Na", "Al", "Cr", "Mn", "Ni", "Ba"]
+    # At least ``min_elements`` (12) real elements, or the row is INSUFFICIENT
+    # before the exclusion logic is ever reached and the test proves nothing.
+    els = ["Mg", "Si", "Ca", "Ti", "Na", "Al", "Cr", "Mn", "Ni", "Ba",
+           "Cu", "Zn", "Y", "Sc"]
+    assert len(els) >= S.SparseConfig().min_elements
     Z = pd.DataFrame({e: [0.1] for e in els})
     for light in ("Li", "Be", "B", "C", "N"):
         Z[light] = 50.0

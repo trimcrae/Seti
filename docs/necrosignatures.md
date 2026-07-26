@@ -132,10 +132,24 @@ Organised by *what the residue physically is*, not by wavelength.
   refractory tailings. → TAILINGS
 
 ### V. Spatial residue — the front that stopped
-* **S23 A sharp anomaly edge** in the Galactic disk. → **TIDEMARK**
+* **S23 A sharp anomaly edge** in the Galactic disk. → **TIDEMARK** *(built
+  2026-07-26; `docs/tidemark.md`. Three geometries — 1D, 3D spherical shells over
+  a centre grid, and sky caps — each scored against a null that already contains
+  the fitted smooth gradient, so a gradient cannot be reported as an edge.)*
 * **S24 Anomaly clustering** beyond a matched null. *(engine exists in
-  `cluster`; needs new anomaly axes — this program supplies them)*
-* **S25 Anomaly rate vs stellar age** — a filter clock. → TIDEMARK
+  `cluster`; needs new anomaly axes — this program supplies them. Note
+  clustering is **not** a front: TIDEMARK's gradient/edge statistics are a
+  different question, and `cluster_run` now also writes the parent sample
+  without which no rate test of any kind is possible.)*
+* **S25 Anomaly rate vs stellar age** — a filter clock. → **TIDEMARK**
+  *(`agerate.py`: flat / rising / saturating / turnover, with metallicity forced
+  into the stratification because old = metal-poor = fewer planets would
+  otherwise read as a filter clock.)*
+* **S23a A large-scale rate *gradient*** — the discriminating observable nobody
+  has measured. Ćirković & Bradbury 2006 predicts the **outer rim**, Wright et
+  al. 2021 (RNAAS 5, 141) the **Galactic centre**, and Wright et al. 2014 **no
+  coherent structure at all** (shear mixes any bubble on a rotation timescale).
+  Three mutually exclusive published predictions, none ever tested. → TIDEMARK
 
 ### VI. Informational residue — deliberate tombstones
 * **S26 A photospheric flag** — the cheapest galaxy-visible, Myr-durable marker

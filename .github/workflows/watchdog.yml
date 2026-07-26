@@ -39,8 +39,17 @@ jobs:
                       or .conclusion == "timed_out")
              | {id, name, head_branch, conclusion, run_attempt,
                 html_url, created_at}]' > /tmp/failures.json
+          # Superseded runs (root cause fixed, replacement dispatched) are
+          # listed in the skiplist and never resurrected — retrying them just
+          # races the replacement run for commits and API quota.
+          skip='[]'
+          [ -f results/watchdog/skiplist.json ] && skip=$(cat results/watchdog/skiplist.json)
+          jq --argjson skip "$skip" \
+            '[.[] | select(.id as $i | ($skip | index($i)) == null)]' \
+            /tmp/failures.json > /tmp/failures_filtered.json
+          mv /tmp/failures_filtered.json /tmp/failures.json
           n=$(jq length /tmp/failures.json)
-          echo "failed/cancelled/timed-out runs in last 24h: $n"
+          echo "failed/cancelled/timed-out runs in last 24h (after skiplist): $n"
           retried=0
           if [ "$n" -gt 0 ]; then
             mapfile -t rows < <(jq -c '.[]' /tmp/failures.json)

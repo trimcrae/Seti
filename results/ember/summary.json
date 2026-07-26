@@ -28,16 +28,96 @@
   },
   "acquisition": {
     "source": "cache",
-    "n_rows": 0,
-    "archive_reachable": false
+    "n_rows": 412914,
+    "archive_reachable": true,
+    "archives_that_returned_rows": [
+      "akari",
+      "allwise",
+      "gaia",
+      "iras_fsc",
+      "iras_psc"
+    ],
+    "per_archive": {
+      "akari": {
+        "n_rows": 4354865,
+        "errors": [],
+        "query": "SELECT TOP 4000000 \"RAJ2000\" AS \"ra\", \"DEJ2000\" AS \"dec\", \"objID\" AS \"name\", \"S09\" AS \"s09\", \"e_S09\" AS \"e_s09\", \"S18\" AS \"s18\", \"e_S18\" AS \"e_s18\", \"q_S09\" AS \"q09\", \"q_S18\" AS \"q18\" FROM \"II/297/irc\" WHERE \"RAJ2000\" >= 0.0 AND \"RAJ2000\" < 30.0",
+        "status": "OK"
+      },
+      "iras_psc": {
+        "n_rows": 1229445,
+        "errors": [],
+        "query": "SELECT TOP 4000000 \"RA1950\" AS \"ra\", \"DE1950\" AS \"dec\", \"IRAS\" AS \"name\", \"Fnu_12\" AS \"f12\", \"Fnu_25\" AS \"f25\", \"Fnu_60\" AS \"f60\", \"Fnu_100\" AS \"f100\", \"e_Fnu_12\" AS \"e_f12\", \"e_Fnu_25\" AS \"e_f25\", \"q_Fnu_12\" AS \"q12\", \"q_Fnu_25\" AS \"q25\", \"Cirr1\" AS \"cirr1\", \"Cirr2\" AS \"cirr2\", \"Cirr3\" AS \"cirr3\", \"Var\" AS \"var\", \"Major\" AS \"major\", \"Minor\" AS \"minor\", \"PosAng\" AS \"posang\" FROM \"II/125/main\" WHERE \"RA1950\" >= 0.0 AND \"RA1950\" < 30.0",
+        "status": "OK"
+      },
+      "iras_fsc": {
+        "n_rows": 865220,
+        "errors": [],
+        "query": "SELECT TOP 4000000 \"RA1950\" AS \"ra\", \"DE1950\" AS \"dec\", \"IRAS\" AS \"name\", \"Fnu12\" AS \"f12\", \"Fnu25\" AS \"f25\", \"Fnu60\" AS \"f60\", \"Fnu100\" AS \"f100\", \"e_Fnu12\" AS \"e_f12\", \"e_Fnu25\" AS \"e_f25\", \"q_Fnu12\" AS \"q12\", \"q_Fnu25\" AS \"q25\", \"Conf\" AS \"conf\", \"Major\" AS \"major\", \"Minor\" AS \"minor\", \"PosAng\" AS \"posang\" FROM \"II/156A/main\" WHERE \"RA1950\" >= 0.0 AND \"RA1950\" < 30.0",
+        "status": "OK"
+      },
+      "gaia": {
+        "n_rows": 833606,
+        "errors": [
+          "every Gaia strategy failed: [{'strategy': 'cds_xmatch', 'error': 'RuntimeError(\"[xmatch:vizier:I/355/gaiadr3:0] failed after 3 attempts: InvalidQueryError(\\'Message: Too many jobs are being processed, try later!\\')\")'}, {'strategy': 'esa_upload_5000', 'error': 'RuntimeError(\"[gaia:5000:0] failed after 3 attempts: HTTPError(\\'Error 500:\\\\\\\\nnull\\')\")'}, {'strategy': 'esa_upload_2000', 'error': 'RuntimeError(\"[gaia:2000:0] failed after 3 attempts: HTTPError(\\'Error 500:\\\\\\\\nnull\\')\")'}, {'strategy': 'esa_upload_500', 'error': 'RuntimeError(\"[gaia:500:0] failed after 3 attempts: HTTPError(\\'Error 500:\\\\\\\\nnull\\')\")'}]"
+        ],
+        "query": "XMatch cat2=vizier:I/355/gaiadr3 r=6.0\"",
+        "status": "OK"
+      },
+      "allwise": {
+        "n_rows": 402171,
+        "errors": [],
+        "query": "XMatch cat2=vizier:II/328/allwise r=3.0\" on 81419 propagated positions",
+        "status": "OK"
+      }
+    },
+    "shards_reporting": 5,
+    "stopped_at": [
+      "gaia"
+    ]
   },
-  "verdict": "NO_DATA_REACHED",
+  "photosphere": {
+    "loci": {},
+    "bands_fitted": []
+  },
+  "cessation": {
+    "null": {
+      "threshold": 5.0,
+      "n": 0,
+      "degraded": true,
+      "note": "too few sources for an empirical null; Gaussian 5 sigma used"
+    },
+    "n_scored": 412914,
+    "n_shortlist": 0
+  },
   "counts": {
-    "acquired": 0,
-    "with_excess": 0,
-    "scored": 0,
+    "acquired": 412914,
+    "with_early_photometry": 0,
+    "scored": 412914,
     "shortlist": 0,
     "survivors": 0
   },
-  "note": "No usable rows were obtained. No candidate is emitted and no occurrence limit is computed: an unreached archive is not a null result, it is an absence of data."
+  "killed_by_stage": {
+    "ladder_coherent": 0,
+    "fade_amplitude": 0,
+    "beam_blending": 0,
+    "far_ir_background": 0,
+    "saturation": 0,
+    "early_quality": 0,
+    "cirrus": 0,
+    "association": 0,
+    "stellar_astrometry": 0,
+    "solar_system": 0,
+    "blend": 0,
+    "variability": 0,
+    "late_epoch_flat": 0,
+    "not_eruptive": 0,
+    "not_evolved": 0,
+    "not_young": 0,
+    "coverage": 0
+  },
+  "survivors": [],
+  "null_threshold": 5.0,
+  "verdict": "NO_SURVIVOR",
+  "limitations": "NEOWISE carries W1/W2 only, so no epoch after 2010 measures 12-25 micron flux; the decades-long baseline exists exclusively between IRAS (1983), AKARI (2006-07) and WISE (2010). Sensitivity is set by the early epoch: IRAS reaches ~0.4 Jy at 12 micron, so the 27-year pair probes only very large excesses. The published cross-epoch stability floor for IRAS-to-WISE is 4 percent (HD 172555), and no fade smaller than a few times that is believable regardless of its formal significance."
 }

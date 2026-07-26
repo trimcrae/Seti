@@ -90,7 +90,11 @@ def stage_acquire(cfg: Config, *, surveys: list[str], max_rows: int, out_dir: Pa
             write_checkpoint(tab, out_dir / f"stars_{sv.lower()}.parquet")
             print(f"[tailings] {sv}: {acq.n_rows} rows from {acq.source_used}")
         else:
-            print(f"[tailings] {sv}: {acq.degradation}")
+            # Name the verdict explicitly: "nothing answered", "answered then
+            # errored" and "answered fine, the cuts emptied it" need different
+            # fixes, and the log is where the next dispatch learns which it was.
+            print(f"[tailings] {sv}: {getattr(acq, 'verdict', 'UNKNOWN')} -- "
+                  f"{acq.degradation}")
 
     wb = fetch_wide_binaries(max_r_chance_align=float(
         (block.get("twins") or {}).get("max_r_chance_align", 0.1)))
@@ -258,9 +262,35 @@ def stage_twins(cfg: Config, *, out_dir: Path, block: dict) -> dict:
 # ---------------------------------------------------------------------------
 # Report
 # ---------------------------------------------------------------------------
+def _acquisition_verdicts(prov: dict | None) -> dict[str, str]:
+    """Per-survey acquisition verdict, lifted out of the provenance block.
+
+    ``acquire`` distinguishes NO_DATA_REACHED / QUERY_FAILED /
+    QUERY_RETURNED_ZERO_ROWS as separate first-class strings; this surfaces them
+    where a reader looks first instead of three levels down under
+    ``provenance.surveys[i]``.
+    """
+    return {str(p.get("survey")): str(p.get("verdict") or "UNKNOWN")
+            for p in (prov or {}).get("surveys", [])}
+
+
 def _overall_verdict(per_survey: list[dict], twins: dict, prov: dict | None) -> str:
     reached = [s for s in per_survey if s.get("n_stars", 0) > 0]
     if not reached:
+        # Zero rows everywhere has three quite different causes and they must not
+        # collapse into one verdict: nothing answered at all, something answered
+        # and then errored, or everything answered correctly and the *cuts*
+        # emptied the sample.  Only the first is an archive-access statement;
+        # the third is a real (if uninformative) statement about the sample.
+        vs = set(_acquisition_verdicts(prov).values())
+        if vs and vs <= {"QUERY_RETURNED_ZERO_ROWS"}:
+            return ("QUERY_RETURNED_ZERO_ROWS: every catalogue answered correctly and "
+                    "the selection returned no stars. This is a statement about the "
+                    "sample cuts, not about archive access.")
+        if vs and "QUERY_FAILED" in vs and "NO_DATA_REACHED" not in vs:
+            return ("QUERY_FAILED: a catalogue answered and then errored, so nothing was "
+                    "searched. This is a query/schema fault, not evidence about the "
+                    "signature and not proof the archive is unreachable.")
         return ("NO_DATA_REACHED: no survey catalogue answered, so nothing was searched. "
                 "This is an archive-access statement, not a limit on the signature.")
     scored = [s for s in reached if not str(s.get("verdict") or "").startswith("INSUFFICIENT")]
@@ -444,6 +474,7 @@ def tailings_run(
         "per_survey": per_survey,
         "twins": twins_out,
         "funnel": {
+            "acquisition_verdicts": _acquisition_verdicts(prov),
             "n_stars_total": sum(int(s.get("n_stars", 0)) for s in per_survey),
             "n_sparse_total": sum(int(s.get("n_sparse", 0)) for s in per_survey),
             "n_vetted_total": sum(int(s.get("n_vetted", 0)) for s in per_survey),

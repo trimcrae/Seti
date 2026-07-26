@@ -41,6 +41,9 @@ Modules
               exceeds any plausible engulfed-planet mass budget.
 ``vet``       the contamination funnel, including the raw-spectrum
               re-measurement statistic that any survivor must pass.
+``validate``  the validation target — inject Griffith et al. 2021's fifteen
+              Na-enhanced stars (arXiv:2110.06240) into a synthetic GALAH DR3
+              and measure what the statistic actually recovers. Offline.
 ``run``       stage orchestration; writes ``results/tailings/``.
 
 See ``docs/tailings.md`` for the claim, the novelty adjudication and the
@@ -49,4 +52,4 @@ contamination ledger.
 
 from __future__ import annotations
 
-__all__ = ["acquire", "manifold", "run", "sparse", "twins", "vet"]
+__all__ = ["acquire", "manifold", "run", "sparse", "twins", "validate", "vet"]

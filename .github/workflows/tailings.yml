@@ -44,6 +44,15 @@ jobs:
   tailings:
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    env:
+      # Acquisition is now a BULK-FILE pull first (GALAH DR4/DR3 allstar from
+      # Data Central, APOGEE DR17 allStar from the SDSS SAS) with VizieR TAP as
+      # the fallback -- the VizieR locators were dead on all three earlier
+      # dispatches, and the abbreviated CDS tables drop the fibre/RV columns
+      # that correction #5 needs to de-trend the flag rate. Those files run to
+      # hundreds of megabytes, so they land in the runner's scratch space and
+      # never inside the checkout, where they could be committed by accident.
+      TAILINGS_CACHE: ${{ runner.temp }}/tailings-cache
     steps:
       - uses: actions/checkout@v4
         with:
@@ -70,6 +79,8 @@ jobs:
       - name: Run the sparse chemical-anomaly search
         run: |
           ls -la results/tailings/ 2>/dev/null || true
+          df -h / | tail -1
+          mkdir -p "$TAILINGS_CACHE"
           python -m seti.cli tailings \
             --stage ${{ github.event.inputs.stage || 'all' }} \
             --surveys "${{ github.event.inputs.surveys || 'GALAH,APOGEE' }}" \
@@ -78,6 +89,41 @@ jobs:
           cat results/tailings/summary.json || true
           echo "=== report ==="
           cat results/tailings/REPORT.md || true
+      - name: Acquisition post-mortem (which URL is live, where the rows went)
+        if: always()
+        run: |
+          # The sandbox cannot verify a download URL, so this is how the next
+          # dispatch learns which host and path actually answered, and whether
+          # an empty stage was a dead archive (NO_DATA_REACHED), a broken query
+          # (QUERY_FAILED) or an empty selection (QUERY_RETURNED_ZERO_ROWS).
+          python - <<'PY' || true
+          import json
+          from pathlib import Path
+          p = Path("results/tailings/provenance.json")
+          if not p.exists():
+              print("no provenance.json -- acquisition did not reach the reporting step")
+              raise SystemExit(0)
+          prov = json.loads(p.read_text())
+          blocks = list(prov.get("surveys") or [])
+          wb = prov.get("wide_binaries")
+          if wb:
+              blocks.append(wb)
+          for b in blocks:
+              print(f"\n=== {b.get('survey')}: {b.get('verdict')} via {b.get('route')} "
+                    f"-> {b.get('n_rows')} rows, {b.get('n_elements')} elements")
+              if b.get("degradation"):
+                  print(f"    degradation: {b['degradation']}")
+              counts = b.get("stage_counts") or {}
+              for k, v in counts.items():
+                  print(f"    count {k}: {v}")
+              for r in (b.get("download_routes") or []):
+                  mark = "USED " if r.get("used") else ("PICK " if r.get("selected") else "     ")
+                  print(f"    {mark}HTTP {r.get('status'):>4} len={r.get('content_length')} "
+                        f"{r.get('url')}  [{r.get('why')}]")
+              for r in (b.get("scoreboard") or [])[:8]:
+                  print(f"    TAP  score {r.get('score'):>4} n_el={r.get('n_elements')} "
+                        f"{r.get('table')}  [{r.get('why')}]")
+          PY
       - name: Commit results (small files only; star tables stay artifacts)
         if: always()
         run: |

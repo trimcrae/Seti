@@ -151,7 +151,16 @@ def _effective_units(pos_now_pc: np.ndarray, members: np.ndarray,
     return len({uf.find(i) for i in range(len(members))})
 
 
+_MEDIAN_PAIRWISE_CAP = 2048
+
+
 def _median_pairwise(x: np.ndarray) -> float:
+    # The full pairwise tensor is O(N^2) memory; giant percolation components
+    # (tens of thousands of stars at kpc depths) would need tens of GiB, so
+    # above the cap estimate the median from a deterministic strided subsample.
+    if len(x) > _MEDIAN_PAIRWISE_CAP:
+        stride = int(np.ceil(len(x) / _MEDIAN_PAIRWISE_CAP))
+        x = x[::stride]
     d = x[:, None, :] - x[None, :, :]
     dd = np.sqrt((d * d).sum(-1))
     iu = np.triu_indices(len(x), k=1)
@@ -210,16 +219,18 @@ def detect_convergences(pos0_kpc: np.ndarray, vel0_kpcmyr: np.ndarray,
             m_eff = _effective_units(pos_now_pc, members, p.now_collapse_pc)
             if m_eff < p.n_min:
                 continue
-            med_now = _median_pairwise(pos_now_pc[members])
-            if med_now < p.r_now_min_pc:
-                continue
+            # Cheap O(N) shape cuts first: giant percolation components at
+            # kpc depths must die on ball-likeness before any O(N^2) work.
             rms_now = _rms_radius(pos_now_pc[members])
             rms_t = _rms_radius(pos[members] * PC_PER_KPC)
-            if rms_t <= 0 or rms_now / max(rms_t, 1e-6) < p.focus_min:
-                continue
             # Ball-likeness: linking can chain filaments whose extent exceeds
             # the ball the Poisson score assumes; reject non-compact shapes.
             if rms_t > 1.5 * r_t_pc:
+                continue
+            if rms_t <= 0 or rms_now / max(rms_t, 1e-6) < p.focus_min:
+                continue
+            med_now = _median_pairwise(pos_now_pc[members])
+            if med_now < p.r_now_min_pc:
                 continue
             centroid = pos[members].mean(0)
             n_loc = tree.query_ball_point(centroid, r=p.density_r_pc / PC_PER_KPC,

@@ -45,17 +45,107 @@ on:
         description: "Re-reduce a previous run's artifacts without refetching"
         required: false
         default: ""
+      probe_only:
+        description: "Run ONLY the archive probe (one query per primitive, no science)"
+        required: false
+        default: "false"
 
 permissions:
   contents: write
 
 jobs:
   # ------------------------------------------------------------------
+  # 0. Archive probe. One query per primitive, row counts and first rows.
+  #    Cheap, and the only way to check an archive contract at all: the
+  #    sandbox has no egress, so every assumption about VizieR column
+  #    names, coordinate frames and the ESA upload limit is unverified
+  #    until this runs.  Run 30203763934 lost IRAS to an unresolvable
+  #    RA column and lost Gaia to an HTTP 500 on a 20,000-row upload,
+  #    and neither was visible until the logs were read afterwards.
+  # ------------------------------------------------------------------
+  probe:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.reduce_only_run_id == ''
+    timeout-minutes: 45
+    env:
+      # Unbuffered, or the probe's progress lines only appear at process exit —
+      # which is exactly why the first probe attempt (run 30208679328) had to be
+      # killed after 45 minutes having printed nothing at all.
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import pyvo, astroquery, pyarrow; print('imports OK')"
+      - name: Probe every acquisition primitive
+        continue-on-error: true
+        timeout-minutes: 25
+        run: |
+          python -u -m seti.cli ember --stage probe
+          echo "=== catalogue resolution ==="
+          python - <<'PY'
+          import json
+          p = json.load(open("results/ember/probe.json"))
+          pr = p.get("probe", p)
+          for k, v in pr.get("catalogues", {}).items():
+              r = v.get("resolved", {})
+              print(f"{k:>10}  resolvable={v.get('resolvable')}  "
+                    f"ra={r.get('ra')}  dec={r.get('dec')}  "
+                    f"frame={r.get('frame')}  route={r.get('route')}  "
+                    f"total_rows={v.get('total_rows')}  "
+                    f"sample={v.get('sample_status')}")
+              for e in v.get("errors", []):
+                  print(f"             ! {e}")
+          print("--- gaia upload ceiling ---")
+          for size, rec in pr.get("gaia", {}).get("upload_chunk_tests", {}).items():
+              print(f"  chunk {size:>6}: {rec.get('status')} "
+                    f"n_rows={rec.get('n_rows')} {rec.get('seconds')}s "
+                    f"{rec.get('error','')[:160]}")
+          print("--- cds xmatch ---")
+          for k, rec in pr.get("xmatch", {}).items():
+              print(f"  {k:>8}: {rec.get('status')} n_rows={rec.get('n_rows')} "
+                    f"unmapped={rec.get('unmapped_canonical')}")
+          print("--- irsa ---")
+          print(" ", json.dumps(pr.get("irsa", {}), default=str)[:600])
+          PY
+      - name: Commit the probe report
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/ember/probe.json || true
+          if git diff --cached --quiet; then
+            echo "No probe report to commit."
+          else
+            git commit -m "ember: archive probe (VizieR schemas, Gaia upload ceiling, X-Match)"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ember-probe
+          path: results/ember/probe.json
+          if-no-files-found: warn
+
+  # ------------------------------------------------------------------
   # 1. Systematics audit + real response curves. Needs no archive access,
   #    so it always runs and always produces a committable verdict.
   # ------------------------------------------------------------------
   audit:
     runs-on: ubuntu-latest
+    if: github.event.inputs.probe_only != 'true'
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -99,7 +189,7 @@ jobs:
   # ------------------------------------------------------------------
   novelty:
     runs-on: ubuntu-latest
-    if: github.event.inputs.run_novelty != 'false' && github.event.inputs.reduce_only_run_id == ''
+    if: github.event.inputs.run_novelty != 'false' && github.event.inputs.reduce_only_run_id == '' && github.event.inputs.probe_only != 'true'
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
@@ -144,7 +234,7 @@ jobs:
   # ------------------------------------------------------------------
   plan:
     runs-on: ubuntu-latest
-    if: github.event.inputs.reduce_only_run_id == ''
+    if: github.event.inputs.reduce_only_run_id == '' && github.event.inputs.probe_only != 'true'
     timeout-minutes: 5
     outputs:
       shards: ${{ steps.mk.outputs.shards }}
@@ -159,7 +249,7 @@ jobs:
   acquire:
     needs: [audit, plan]
     runs-on: ubuntu-latest
-    if: github.event.inputs.reduce_only_run_id == ''
+    if: github.event.inputs.reduce_only_run_id == '' && github.event.inputs.probe_only != 'true'
     timeout-minutes: 330
     strategy:
       fail-fast: false
@@ -202,7 +292,7 @@ jobs:
   # ------------------------------------------------------------------
   analyse:
     needs: [acquire]
-    if: always() && github.event.inputs.reduce_only_run_id == ''
+    if: always() && github.event.inputs.reduce_only_run_id == '' && github.event.inputs.probe_only != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 240
     steps:

@@ -33,16 +33,28 @@ from ..config import Config, load_config
 from .acquire import (
     DEFAULT_FIELDS,
     FetchResult,
+    QueryLog,
     discover_fields,
     enrich_from_details,
     fetch_nongrav_table,
     fetch_object_detail,
+)
+from .census import (
+    CensusParams,
+    completeness_probe,
+    dark_comet_census,
+    high_albedo_census,
+    negative_a1_census,
 )
 from .radiation import OUMUAMUA_A1_AU_DAY2, REFERENCE_OBJECTS, amr_from_a1, beta_from_a1
 from .screen import ScreenParams, run_screens
 from .vet import UNEXPLAINED, VetParams, dedupe, vet_table
 
 CHANNEL = "derelict"
+
+#: Stages the CLI and the workflow can dispatch individually.
+STAGES: tuple[str, ...] = ("all", "probe", "search", "completeness",
+                           "dark_comets", "high_albedo")
 
 
 def load_derelict_config(cfg: Config | None = None) -> dict:
@@ -82,13 +94,26 @@ def derelict_run(cfg: Config | None = None,
                  max_enrich: int = 1500,
                  max_control_enrich: int = 400,
                  skip_control: bool = False,
+                 skip_completeness: bool = False,
+                 skip_dark_comets: bool = False,
+                 skip_high_albedo: bool = False,
+                 completeness_limit: int | None = None,
+                 searcher=None,
+                 tries: int = 3,
                  transport=None) -> dict:
     """Run the channel.  Returns the summary dict (also written to disk)."""
     cfg = cfg or load_config()
     dcfg = load_derelict_config(cfg)
     sp = ScreenParams.from_config(dcfg)
     vp = VetParams.from_config(dcfg)
+    cp = CensusParams.from_config(dcfg)
     out = _out_dir(cfg)
+
+    # Every query the run issues, in order, verbatim.  This is the standing
+    # guard against the failure mode of run 30203392288: without it, "the
+    # archive was never reached" and "the archive answered with nothing" are
+    # indistinguishable in the outputs.
+    qlog = QueryLog()
 
     summary: dict = {
         "channel": CHANNEL,
@@ -119,8 +144,28 @@ def derelict_run(cfg: Config | None = None,
         if stage == "probe":
             summary["verdict"] = "PROBE_ONLY"
             summary["schema"] = schema
-            _write(out, summary, None, None, None, None)
+            _write(out, summary, qlog=qlog, cp=cp)
             return summary
+
+    # --- standalone census stages ---------------------------------------------
+    # Each of these answers a question the 22-row A1 parent sample cannot, and
+    # each is dispatchable on its own so a heavy pull can be re-run without
+    # re-running the whole channel.  A standalone stage writes its OWN outputs
+    # and a `summary_<stage>.json`; it never overwrites the main summary, so a
+    # partial run cannot silently replace a full one.
+    if stage == "dark_comets":
+        summary["dark_comets"] = _run_dark_comets(out, sp, cp, transport, qlog,
+                                                  tries=tries)
+        summary["verdict"] = "DARK_COMET_CENSUS_ONLY"
+        _write_stage(out, "dark_comets", summary, qlog, cp)
+        return summary
+    if stage == "high_albedo":
+        summary["high_albedo"] = _run_high_albedo(
+            out, sp, cp, transport, qlog, searcher, limit,
+            skip_control=skip_control, tries=tries)
+        summary["verdict"] = "HIGH_ALBEDO_CENSUS_ONLY"
+        _write_stage(out, "high_albedo", summary, qlog, cp)
+        return summary
 
     # --- acquisition ----------------------------------------------------------
     if offline_input:
@@ -131,18 +176,56 @@ def derelict_run(cfg: Config | None = None,
         summary["degradation"].append(f"offline input {offline_input}: no archive touched")
     else:
         fetch = fetch_nongrav_table(kind="a", transport=transport, limit=limit,
-                                    available_fields=available)
+                                    available_fields=available, log=qlog,
+                                    tries=tries)
         table = fetch.table
         control = pd.DataFrame()
         if not skip_control:
             cf = fetch_nongrav_table(kind="c", transport=transport, limit=limit,
-                                     available_fields=available)
+                                     available_fields=available, log=qlog,
+                                     tries=tries)
             control = cf.table
             summary["control_fetch"] = cf.to_dict()
         summary["fetch"] = fetch.to_dict()
         schema["strategy_used"] = fetch.strategy
         schema["fields_returned"] = list(fetch.fields_returned)
         (out / "schema.json").write_text(json.dumps(schema, indent=2))
+
+    # --- completeness cross-check (decisive; runs BEFORE anything is believed) -
+    # 22 rows is small enough that "the A1|DF constraint is subtly wrong" and
+    # "the A1 population really is that small" are indistinguishable.  They are
+    # completely different statements, so prove which one it is before screening
+    # anything: pull the catalogue UNCONSTRAINED with a minimal column set,
+    # count non-null A1 client-side, and compare designation SETS.
+    if offline_input is None and not skip_completeness and stage in {"all", "completeness"}:
+        comp = {}
+        for kind_label, kind_code, constrained, chunks in (
+                ("asteroid", "a", table, cp.completeness_chunk_classes),
+                ("comet", "c", control, cp.completeness_comet_chunk_classes)):
+            if kind_code == "c" and skip_control:
+                continue
+            cr = completeness_probe(
+                kind_code, constrained, transport=transport, log=qlog,
+                fields=tuple(cp.completeness_fields),
+                limit=completeness_limit, class_chunks=chunks,
+                max_listed=cp.completeness_max_listed, tries=tries)
+            comp[kind_label] = cr.to_dict()
+            summary["degradation"].extend(
+                f"completeness[{kind_label}]: {n}" for n in cr.notes)
+        comp["verdict"] = _combined_completeness_verdict(comp)
+        (out / "completeness.json").write_text(json.dumps(comp, indent=2, default=str))
+        summary["completeness"] = comp
+        if stage == "completeness":
+            summary["verdict"] = f"COMPLETENESS_ONLY:{comp['verdict']}"
+            _write_stage(out, "completeness", summary, qlog, cp)
+            return summary
+    elif stage == "completeness":
+        summary["verdict"] = "COMPLETENESS_NOT_RUN"
+        summary["degradation"].append(
+            "the completeness stage was requested but is unavailable offline or "
+            "was explicitly skipped; completeness is UNTESTED, not proven")
+        _write_stage(out, "completeness", summary, qlog, cp)
+        return summary
 
     if table is None or len(table) == 0:
         # These three are NOT the same statement and must never collapse:
@@ -170,7 +253,7 @@ def derelict_run(cfg: Config | None = None,
             f"A1 column present: {getattr(fetch, 'a1_column_present', False)}; "
             f"fields the server rejected: "
             f"{list(getattr(fetch, 'fields_rejected', ()))}.")
-        _write(out, summary, None, None, None, None)
+        _write(out, summary, qlog=qlog, cp=cp)
         return summary
 
     table = dedupe(table)
@@ -206,7 +289,9 @@ def derelict_run(cfg: Config | None = None,
         for _, row in subset.iterrows():
             key = str(row.get("full_name") or row.get("pdes") or "")
             sstr = str(row.get("spkid") or row.get("pdes") or key)
-            prefetched[key] = fetch_object_detail(sstr, transport=transport)
+            prefetched[key] = fetch_object_detail(
+                sstr, transport=transport, log=qlog, tries=tries,
+                label=f"enrich:asteroid:{sstr}")
         table = enrich_from_details(table, prefetched)
         summary["enriched_from_detail"] = int(
             sum(1 for d in prefetched.values() if d.get("ok")))
@@ -219,7 +304,7 @@ def derelict_run(cfg: Config | None = None,
     summary["degradation"].extend(sr.notes)
     if len(sr.table) == 0:
         summary["verdict"] = "SCHEMA_UNUSABLE"
-        _write(out, summary, None, None, None, None)
+        _write(out, summary, qlog=qlog, cp=cp)
         return summary
 
     scr = sr.table
@@ -229,8 +314,6 @@ def derelict_run(cfg: Config | None = None,
     _safe_csv(scr, out / "screened.csv")
     survivors = scr[scr["screen_a1_only"]].copy()
     survivors = survivors.sort_values("R", ascending=False, na_position="last")
-    negative = scr[scr["screen_negative_a1"]].copy()
-    high_albedo = scr[scr["screen_albedo"]].copy()
 
     # --- control sample -------------------------------------------------------
     # Comets run through the IDENTICAL machinery.  They should light up: their
@@ -238,6 +321,7 @@ def derelict_run(cfg: Config | None = None,
     # the standing proof that the field names and the response parsing work --
     # it needs no sigmas, so it is diagnostic even when enrichment is skipped.
     control_funnel = {}
+    control_scr = pd.DataFrame()
     if control is not None and len(control):
         control = dedupe(control)
         if offline_input is None and max_control_enrich > 0:
@@ -246,7 +330,9 @@ def derelict_run(cfg: Config | None = None,
             for _, row in csub.iterrows():
                 key = str(row.get("full_name") or row.get("pdes") or "")
                 sstr = str(row.get("spkid") or row.get("pdes") or key)
-                cdetails[key] = fetch_object_detail(sstr, transport=transport)
+                cdetails[key] = fetch_object_detail(
+                    sstr, transport=transport, log=qlog, tries=tries,
+                    label=f"enrich:comet:{sstr}")
             control = enrich_from_details(control, cdetails)
             summary["control_enriched"] = int(
                 sum(1 for d in cdetails.values() if d.get("ok")))
@@ -257,8 +343,47 @@ def derelict_run(cfg: Config | None = None,
                     "cannot register on any SNR screen")
         cr = run_screens(control, sp)
         control_funnel = cr.funnel
+        control_scr = cr.table
         _safe_csv(cr.table, out / "control_comets.csv")
         summary["control_funnel"] = control_funnel
+
+    # --- screen 3: the negative-A1 census, as a RATE with its denominator ------
+    # Radiation pressure cannot push sunward, so every object here is a
+    # systematic, and |R| is the size-normalised magnitude of that systematic --
+    # the empirical false-positive floor the R threshold has to clear.  Measured
+    # on the comet control as well, because a floor estimated from 272 objects
+    # is worth far more than one estimated from 22.
+    negative, neg_summary = negative_a1_census(
+        {"asteroid": scr, "comet": control_scr}, sp)
+    summary["negative_a1_census"] = neg_summary
+    for label, st in (neg_summary.get("populations") or {}).items():
+        summary["funnel"][f"screen3_negative_a1_{label}"] = int(st.get("n_negative", 0))
+        summary["funnel"][f"screen3_denominator_{label}"] = int(st.get("n_a1_fitted", 0))
+
+    # --- screen 4: the INDEPENDENT, catalogue-wide albedo census ---------------
+    # Deliberately not restricted to the A1 sample: whether an orbit solution
+    # happened to include a non-gravitational term has nothing to do with
+    # whether the body reflects 80% of the light that hits it.
+    high_albedo = scr[scr["screen_albedo"]].copy()   # the A1-sample view
+    if offline_input is None and not skip_high_albedo and stage in {"all", "search"}:
+        ha = _run_high_albedo(out, sp, cp, transport, qlog, searcher, limit,
+                              skip_control=skip_control, tries=tries)
+        summary["high_albedo"] = ha
+        summary["funnel"]["screen4_albedo_catalogue_wide"] = int(
+            ha.get("asteroid", {}).get("n_above_cut", 0))
+        summary["funnel"]["screen4_albedo_confirmed_two_sources"] = int(
+            (ha.get("asteroid", {}).get("crosscheck") or {}).get(
+                "n_confirmed_above_cut", 0))
+    else:
+        _safe_csv(high_albedo, out / "high_albedo_a1_sample.csv")
+        summary["degradation"].append(
+            "the catalogue-wide albedo census did not run; screen 4 covers only "
+            "the A1 sample, which is a far narrower question")
+
+    # --- the dark-comet named-target census -----------------------------------
+    if offline_input is None and not skip_dark_comets and stage in {"all", "search"}:
+        summary["dark_comets"] = _run_dark_comets(out, sp, cp, transport, qlog,
+                                                  tries=tries)
 
     # --- vetting --------------------------------------------------------------
     details: dict[str, dict] = dict(prefetched)   # reuse, never refetch
@@ -269,7 +394,9 @@ def derelict_run(cfg: Config | None = None,
             if key in details and details[key].get("ok"):
                 continue
             sstr = str(row.get("spkid") or row.get("pdes") or key)
-            details[key] = fetch_object_detail(sstr, transport=transport)
+            details[key] = fetch_object_detail(
+                sstr, transport=transport, log=qlog, tries=tries,
+                label=f"vet:{sstr}")
     vet_df = vet_table(to_vet, details, vp)
     if len(vet_df):
         for c in ("verdict", "flags", "notes", "detail_ok"):
@@ -292,8 +419,116 @@ def derelict_run(cfg: Config | None = None,
         summary["verdict"] = "NO_SURVIVORS"
     summary["n_objects_with_fitted_A1"] = int(summary["funnel"].get("a1_fitted", 0))
 
-    _write(out, summary, survivors, negative, high_albedo, vet_df)
+    _write(out, summary, survivors=survivors, negative=negative,
+           high_albedo=high_albedo, vet_df=vet_df, qlog=qlog, cp=cp)
     return summary
+
+
+def _combined_completeness_verdict(comp: dict) -> str:
+    """One verdict over the per-kind completeness probes.
+
+    Deliberately pessimistic: the census is only ``CONSTRAINT_COMPLETE`` when
+    **every** probed kind agreed.  Anything else keeps the worst outcome, so a
+    comet-side disagreement can never be hidden behind an asteroid-side pass.
+    """
+    from .census import CONSTRAINT_COMPLETE, CONSTRAINT_INCOMPLETE, PROBE_FAILED
+
+    verdicts = [v.get("verdict") for k, v in comp.items()
+                if isinstance(v, dict) and v.get("verdict")]
+    if not verdicts:
+        return PROBE_FAILED
+    for bad in (CONSTRAINT_INCOMPLETE, PROBE_FAILED):
+        if bad in verdicts:
+            return bad
+    if all(v == CONSTRAINT_COMPLETE for v in verdicts):
+        return CONSTRAINT_COMPLETE
+    return next(v for v in verdicts if v != CONSTRAINT_COMPLETE)
+
+
+def _run_dark_comets(out: Path, sp: ScreenParams, cp: CensusParams,
+                     transport, qlog: QueryLog, tries: int = 3) -> dict:
+    """The Seligman et al. dark-comet named-target census.
+
+    Those papers selected on large **non-radial** acceleration -- the complement
+    of what this channel wants -- so the question worth asking of their sample
+    is which members have a JPL-fitted ``A1`` at all, which are A1-*only*, and
+    what ``R`` they sit at.  Designations come from ``config/derelict.yaml``
+    with their source paper attached and are resolved through ``sbdb.api``; an
+    unresolvable designation is reported, never silently dropped.
+    """
+    if not cp.dark_comets:
+        return {"status": "NO_TARGETS_CONFIGURED",
+                "note": "config/derelict.yaml carries no dark_comets.targets; "
+                        "the census cannot run on a list recalled from memory"}
+    table, dsummary = dark_comet_census(cp.dark_comets, params=sp,
+                                        transport=transport, log=qlog,
+                                        tries=tries)
+    _safe_csv(table, out / "dark_comets.csv")
+    dsummary["status"] = "OK"
+    dsummary["provenance"] = (
+        "designations read verbatim from the fetched full text in "
+        "results/derelictlit/ (Seligman et al. 2023 arXiv:2212.08115 Table 1; "
+        "Seligman et al. 2024 PNAS 121 e2406424121 Tables 1-2), never recalled")
+    return dsummary
+
+
+def _run_high_albedo(out: Path, sp: ScreenParams, cp: CensusParams,
+                     transport, qlog: QueryLog, searcher, limit: int | None,
+                     *, skip_control: bool = False, tries: int = 3) -> dict:
+    """Screen 4, run catalogue-wide and independently of the A1 sample."""
+    result: dict = {}
+    frames = []
+    for label, kind in (("asteroid", "a"), ("comet", "c")):
+        if kind == "c" and skip_control:
+            continue
+        hr = high_albedo_census(
+            params=sp, kind=kind, transport=transport, log=qlog, limit=limit,
+            searcher=searcher, crosscheck=cp.high_albedo_crosscheck,
+            max_crosscheck=cp.high_albedo_max_crosscheck, tries=tries)
+        result[label] = hr.to_dict()
+        if len(hr.table):
+            t = hr.table.copy()
+            t["population"] = label
+            frames.append(t)
+    if frames:
+        _safe_csv(pd.concat(frames, ignore_index=True, sort=False),
+                  out / "high_albedo.csv")
+    else:
+        _safe_csv(None, out / "high_albedo.csv")
+    return result
+
+
+def _write_stage(out: Path, stage: str, summary: dict, qlog: QueryLog,
+                 cp: CensusParams) -> None:
+    """Write a standalone stage's own summary WITHOUT clobbering the main one.
+
+    A stage run on its own has not screened anything, so letting it overwrite
+    ``summary.json`` would replace a full funnel with a partial one and make the
+    channel look like it had regressed.
+    """
+    summary["queries"], note = _query_payload(qlog, cp)
+    if note:
+        summary["queries_truncated"] = note
+    (out / "queries.json").write_text(json.dumps(qlog.to_list(), indent=2, default=str))
+    (out / f"summary_{stage}.json").write_text(
+        json.dumps(summary, indent=2, default=str))
+
+
+def _query_payload(qlog: QueryLog | None, cp: CensusParams | None
+                   ) -> tuple[list[dict], dict | None]:
+    """The query log for ``summary.json``, with any truncation made explicit."""
+    if qlog is None:
+        return [], None
+    records = qlog.to_list()
+    cap = cp.max_queries_in_summary if cp else 4000
+    if len(records) <= cap:
+        return records, None
+    return records[:cap], {
+        "n_total": len(records), "n_inlined": cap,
+        "complete_log": "results/derelict/queries.json",
+        "note": "summary.json inlines the first N queries only; the COMPLETE, "
+                "unredacted log is written to queries.json. Nothing is dropped.",
+    }
 
 
 def _safe_csv(df: pd.DataFrame | None, path: Path) -> None:
@@ -307,10 +542,25 @@ def _safe_csv(df: pd.DataFrame | None, path: Path) -> None:
     d.to_csv(path, index=False)
 
 
-def _write(out: Path, summary: dict, survivors, negative, high_albedo, vet_df) -> None:
+def _write(out: Path, summary: dict, survivors=None, negative=None,
+           high_albedo=None, vet_df=None, *, qlog: QueryLog | None = None,
+           cp: CensusParams | None = None) -> None:
     _safe_csv(survivors, out / "nongrav.csv")
     _safe_csv(negative, out / "negative_a1.csv")
-    _safe_csv(high_albedo, out / "high_albedo.csv")
+    # The A1-sample view of screen 4 keeps its own file; `high_albedo.csv` is
+    # written by the catalogue-wide census, which is a different (much larger)
+    # question and must not be conflated with it.
+    _safe_csv(high_albedo, out / "high_albedo_a1_sample.csv")
+    # Every query, verbatim and unredacted: label, URL, HTTP status, per-query
+    # status and row count.  A reader must be able to reconstruct exactly what
+    # was asked and exactly what came back.
+    if qlog is not None:
+        summary["queries"], note = _query_payload(qlog, cp)
+        if note:
+            summary["queries_truncated"] = note
+        summary["query_status_counts"] = qlog.counts()
+        (out / "queries.json").write_text(
+            json.dumps(qlog.to_list(), indent=2, default=str))
     cands = []
     if survivors is not None and len(survivors):
         keep = [c for c in ("full_name", "pdes", "spkid", "class", "H", "diameter",
@@ -355,6 +605,65 @@ def _report_md(summary: dict, cands: list[dict]) -> str:
     if summary.get("vetting_breakdown"):
         lines += ["", "## Vetting", "", "| verdict | n |", "|---|---|"]
         lines += [f"| {k} | {v} |" for k, v in summary["vetting_breakdown"].items()]
+    comp = summary.get("completeness") or {}
+    if comp:
+        lines += ["", "## Is the A1 census complete?", "",
+                  f"**{comp.get('verdict')}**", "",
+                  "| kind | constrained | unconstrained rows | non-null A1 | "
+                  "missing | extra | verdict |", "|---|---|---|---|---|---|---|"]
+        for k, v in comp.items():
+            if not isinstance(v, dict):
+                continue
+            lines.append(
+                f"| {k} | {v.get('n_constrained')} | {v.get('n_unconstrained_rows')} "
+                f"| {v.get('n_unconstrained_nonnull_A1')} | "
+                f"{v.get('n_missing_from_constrained')} | "
+                f"{v.get('n_extra_in_constrained')} | {v.get('verdict')} |")
+    neg = summary.get("negative_a1_census") or {}
+    if neg.get("populations"):
+        lines += ["", "## Screen 3 — the sunward-acceleration floor", "",
+                  "| population | negative | denominator (A1 fitted) | rate | "
+                  "max \\|R\\| | median \\|R\\| |", "|---|---|---|---|---|---|"]
+        for k, v in neg["populations"].items():
+            lines.append(
+                f"| {k} | {v.get('n_negative')} | {v.get('n_a1_fitted')} | "
+                f"{_fmt(v.get('rate'))} | {_fmt(v.get('abs_R_max'))} | "
+                f"{_fmt(v.get('abs_R_median'))} |")
+        lines += ["", f"Flag threshold R = {_fmt(neg.get('r_flag_threshold'))}; "
+                  f"measured floor max |R| = {_fmt(neg.get('floor_abs_R_max'))}. "
+                  "Radiation pressure cannot push sunward, so every row above is "
+                  "a systematic."]
+    dc = summary.get("dark_comets") or {}
+    if dc.get("n_targets"):
+        lines += ["", "## Dark-comet named-target census", "",
+                  f"- targets: {dc.get('n_targets')}, resolved: "
+                  f"{dc.get('n_resolved')}, unresolved: {dc.get('n_unresolved')}",
+                  f"- with a JPL-fitted A1 (value + sigma): "
+                  f"{dc.get('n_with_A1_and_sigma')}",
+                  f"- A1-only (screen 1 pass): {dc.get('n_a1_only')}",
+                  f"- no A1 fitted at all: {', '.join(dc.get('no_A1_fitted') or []) or 'none'}"]
+        if dc.get("unresolved"):
+            lines.append(f"- **UNRESOLVED designations:** {', '.join(dc['unresolved'])}")
+    ha = summary.get("high_albedo") or {}
+    if ha:
+        lines += ["", "## Screen 4 — catalogue-wide albedo (independent of A1)", "",
+                  "| population | status | strategy | rows returned | above cut | "
+                  "confirmed by IRSA |", "|---|---|---|---|---|---|"]
+        for k, v in ha.items():
+            if not isinstance(v, dict):
+                continue
+            lines.append(
+                f"| {k} | {v.get('status')} | {v.get('strategy')} | "
+                f"{v.get('n_rows_returned')} | {v.get('n_above_cut')} | "
+                f"{(v.get('crosscheck') or {}).get('n_confirmed_above_cut', '-')} |")
+    if summary.get("query_status_counts"):
+        lines += ["", "## Queries issued", "",
+                  "| status | n |", "|---|---|"]
+        lines += [f"| {k} | {v} |" for k, v in summary["query_status_counts"].items()]
+        lines += ["", "_Every query is recorded verbatim (URL, HTTP status, row "
+                  "count) in `queries.json`. `QUERY_FAILED` and "
+                  "`QUERY_RETURNED_ZERO_ROWS` are different statements and are "
+                  "never merged._"]
     if summary.get("degradation"):
         lines += ["", "## Degradation", ""]
         lines += [f"- {d}" for d in summary["degradation"]]

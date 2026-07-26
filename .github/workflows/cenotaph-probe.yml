@@ -1,0 +1,97 @@
+name: cenotaph-probe
+
+# ONE minimal live Gaia query, printed. Nothing else.
+#
+# Why this exists: run 30203250183 spent 110 minutes discovering that ESA's
+# async job-result endpoint was returning HTTP 500, that the sync fallback was
+# silently capping shells at 8193 rows, and that a single dead shell discarded
+# ten good ones. Every one of those facts is visible in under two minutes from
+# a single query plus its COUNT(*). Iterate here, not in the full pipeline.
+#
+# The probe reports, per transport (astroquery async, pyvo async, astroquery
+# sync, pyvo sync): does it work, how long does it take, and does a plain
+# SELECT return as many rows as COUNT(*) says exist.
+
+on:
+  workflow_dispatch:
+    inputs:
+      plx_lo:
+        description: "Test shell lower parallax edge (mas)"
+        required: false
+        default: "2.0"
+      plx_hi:
+        description: "Test shell upper parallax edge (mas)"
+        required: false
+        default: "2.5"
+      poe_min:
+        description: "Minimum parallax_over_error"
+        required: false
+        default: "20"
+      teff_lo:
+        description: "Teff lower bound (K)"
+        required: false
+        default: "4000"
+      teff_hi:
+        description: "Teff upper bound (K)"
+        required: false
+        default: "7000"
+      logg_min:
+        description: "log g lower bound, dex cgs (dwarfs are the HIGH side)"
+        required: false
+        default: "3.8"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Probe the Gaia TAP (one query, all transports)
+        run: |
+          python -m seti.cli cenotaph --stage probe \
+            --probe-plx-lo ${{ github.event.inputs.plx_lo || '2.0' }} \
+            --probe-plx-hi ${{ github.event.inputs.plx_hi || '2.5' }} \
+            --poe-min ${{ github.event.inputs.poe_min || '20' }} \
+            --teff-lo ${{ github.event.inputs.teff_lo || '4000' }} \
+            --teff-hi ${{ github.event.inputs.teff_hi || '7000' }} \
+            --logg-min ${{ github.event.inputs.logg_min || '3.8' }}
+          echo "=== probe.json ==="
+          cat results/cenotaph/probe.json
+      - name: Commit the probe result
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # One pathspec at a time: `git add` with several pathspecs is ATOMIC,
+          # so one missing file stages NOTHING and the whole result is lost.
+          git add -f -- results/cenotaph/probe.json 2>/dev/null \
+            && echo "staged probe.json" || echo "absent: probe.json"
+          if git diff --cached --quiet; then
+            echo "No probe changes to commit."
+          else
+            git commit -m "cenotaph-probe: live Gaia TAP transport + row-count probe"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cenotaph-probe
+          path: results/cenotaph/probe.json
+          if-no-files-found: warn

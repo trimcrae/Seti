@@ -128,35 +128,58 @@ the early→late flux transfer moves as the excess temperature runs over
 bounded below by the early survey's sensitivity and above by the late band's
 saturation, expressed in early-band flux.
 
+The numbers below are computed from the **real SVO relative system response
+curves**, fetched on the runner in run 30203763934 and committed to
+`src/seti/data_assets/rsr/` (all eleven bands, `rsr_source = "svo"` throughout).
+They supersede an earlier version of this table computed from the documented
+trapezoid fallback; §3.1 records what changed and why it matters.
+
 | pair | baseline | transfer@300K | spread | bandpass sys | beam ratio | usable window | verdict |
 |---|---|---|---|---|---|---|---|
-| **I12 → W3** | 26.9 yr | 0.607 | **1.20** | 9.3% | 286× | 0.40–1.6 Jy | **PRIMARY**, conditional on beam-summing |
-| **I25 → W4** | 26.9 yr | 0.912 | **1.24** | 0.9% | 84× | 0.40–13.2 Jy | **USABLE** — best-conditioned pair |
-| I12 → S9W | 23.2 yr | 0.629 | 4.50 | 2.5% | 400× | 0.40–286 Jy | conditional; AKARI arbitrates where W3 saturates |
-| I25 → L18W | 23.2 yr | 0.992 | 2.49 | 1.1% | 372× | 0.40–91 Jy | conditional |
-| S9W → W3 | 3.7 yr | 0.965 | **5.18** | 9.3% | 0.7× | 0.05–0.99 Jy | **DEMOTED** — see below |
-| L18W → W4 | 3.7 yr | 0.919 | 2.02 | 0.7% | 0.2× | 0.09–13.1 Jy | conditional |
+| **I25 → W4** | 26.9 yr | 0.925 | **1.03** | 0.9% | 84× | 0.40–13.1 Jy | **PRIMARY** — near-null transfer |
+| **I12 → W3** | 26.9 yr | 0.910 | **1.71** | 6.2% | 286× | 0.40–1.05 Jy | **SECONDARY**, conditional on beam-summing |
+| L18W → W4 | 3.7 yr | 0.984 | 1.98 | 0.6% | 0.23× | 0.09–12.3 Jy | **USABLE** — short baseline |
+| I25 → L18W | 23.2 yr | 0.940 | 2.01 | 1.2% | 372× | 0.40–95.7 Jy | conditional |
+| I12 → S9W | 23.2 yr | 0.632 | 4.81 | 2.5% | 400× | 0.40–285 Jy | conditional; AKARI arbitrates where W3 saturates |
+| S9W → W3 | 3.7 yr | 1.44 | **8.25** | 6.2% | 0.72× | 0.05–0.67 Jy | **DEMOTED** — see below |
 
 ### 3.1 The finding that reorganised the channel
 
 The original design brief proposed that "the cleanest pair is almost certainly
 AKARI 9 µm (2006) → WISE W3 12 µm (2010)". **That is wrong on the spectral
 axis, and the audit shows it quantitatively.** AKARI S9W and WISE W3 have a
-transfer that moves by a factor of **5.18** across the plausible dust
+transfer that moves by a factor of **8.25** across the plausible dust
 temperature range: converting a 9 µm excess to a 12 µm excess without knowing
-the excess temperature can manufacture — or conceal — a factor-of-several change
-on its own. It is the *worst*-conditioned pair spectrally, even though it is the
-best astrometrically, and its 3.7-year baseline is the shortest available.
+the excess temperature can manufacture — or conceal — nearly an order of
+magnitude of change on its own. It is the *worst*-conditioned pair spectrally,
+even though it is the best astrometrically, and its 3.7-year baseline is the
+shortest available.
 
-**IRAS 12 µm and WISE W3 are the near-identical pair**: spread 1.20, i.e. the
-transformation is null to within 20% no matter what the dust temperature is.
-Together with a 27-year baseline, that makes IRAS→WISE the discovery pair and
-AKARI the arbiter, not the reverse.
+**The near-identical pair is I25 → W4**: spread **1.03**, i.e. the transformation
+is null to within 3% no matter what the dust temperature is, with a bandpass
+systematic under 1%, a beam ratio 3.4× smaller than I12→W3, and a usable flux
+window **twelve times wider**, because W4 saturates at 12 Jy while W3 saturates
+at 0.96 Jy. Together with a 27-year baseline that makes **I25 → W4 the discovery
+pair**, I12 → W3 the corroborating pair, and AKARI the arbiter.
 
-The best-conditioned pair of all is **I25 → W4**: spread 1.24, bandpass
-systematic under 1%, a beam ratio 3.4× smaller than I12→W3, and — decisively — a
-usable flux window **eight times wider**, because W4 saturates at 12 Jy while W3
-saturates at 0.96 Jy.
+#### The real response curves cost I12 → W3 its primacy
+
+This is a correction, and it is worth stating plainly because it moved the
+channel's primary pair. With the **trapezoid** response fallback, I12 → W3 has a
+temperature spread of 1.20 and I25 → W4 has 1.24, which made 12 µm look like the
+cleanest available step and put it first. With the **real SVO curves** the two
+numbers are 1.71 and 1.03: I12 → W3 is *worse* than the trapezoid implied and
+I25 → W4 is *better*, and the ordering reverses. The reason is structural rather
+than numerical — the true IRAS 12 µm band runs 7.5–15 µm and the true WISE W3
+runs 7.5–17 µm, so they overlap heavily but weight the short-wavelength Wien
+side very differently, whereas IRAS 25 µm and WISE W4 both sample the
+Rayleigh-Jeans side of 150–1500 K dust where the ratio barely moves.
+
+The lesson generalises: **a trapezoidal bandpass is not a conservative
+approximation.** Here it understated the systematic on the pair the channel had
+chosen as primary by 40%. `rsr_source` is recorded per band in every audit for
+exactly this reason, and `tests/test_ember.py` now asserts the *ordering* of the
+three spreads rather than any single number.
 
 ### 3.2 What was rejected, and why
 
@@ -369,6 +392,140 @@ three instruments.
    **report** with funnel counts and coverage.
 
 ---
+
+## 7.1 What the first run actually did, and the three bugs it exposed
+
+Run **30203763934** (2026-07-26) reported `verdict: NO_DATA_REACHED`,
+`acquisition: {"source": "cache", "n_rows": 0, "archive_reachable": false}` and
+`counts.acquired: 0`. **Every one of those statements was false**, and the way
+they became false is the most important operational lesson this channel has
+produced. Reading the runner logs rather than the committed summary shows what
+happened.
+
+**What worked.** The `audit` job fetched all eleven SVO response curves and
+produced the systematics verdict above. All six acquisition shards pulled the
+**AKARI/IRC PSC in full** — 12 RA slices, 871,331 rows, checkpointed to parquet
+and uploaded as artifacts:
+
+```
+[ember] akari RA[0,30)   ->  24,543 rows      [ember] akari RA[240,270) -> 177,739 rows
+[ember] akari RA[30,60)  ->  24,979 rows      [ember] akari RA[270,300) -> 225,288 rows
+…                                             [ember] akari RA[330,360) ->  33,296 rows
+```
+
+So `II/297/irc` is the right VizieR identifier and the RA-chunked TAP pull is
+sound. **`archive_reachable: false` was simply wrong.**
+
+**Bug 1 — IRAS was lost to an unresolvable RA column, silently.** No
+`iras_psc_ra*.parquet` was written in any shard and no IRAS line appears in any
+log — not even a retry failure. That combination has exactly one explanation:
+the `SELECT TOP 1 *` probe *succeeded* and `resolve_columns` then failed to find
+an RA column, raising a `RuntimeError` that `build_working_table`'s `_pull`
+caught in a bare `except` and converted into an empty frame. The alias table
+knew only J2000 spellings, and **IRAS PSC (II/125) and FSC (II/156A) are B1950
+catalogues.** A schema mismatch presented as an empty catalogue.
+
+Two defences, both now in place. Position columns are resolved from
+`TAP_SCHEMA.columns` by **UCD** (`pos.eq.ra;meta.main`), which is frame- and
+name-independent, with the alias list — now including the B1950 spellings — only
+as a fallback; and a resolved B1950 column is **precessed to J2000** rather than
+used as though it were ICRS. That second point is not pedantry: B1950 and J2000
+differ by ~0.5°, some 300× the 6″ match radius, so a B1950 position used raw
+would have produced zero cross-matches while every query looked healthy.
+
+**Bug 2 — Gaia 500'd and took the whole shard with it.**
+
+```
+[gaia:0] attempt 1/4 failed: HTTPError('500')   …   attempt 4/4 failed: HTTPError('Error 500:\nnull')
+```
+
+The ESA archive refused a 20,000-row anonymous TAP upload on all four attempts.
+The shard then returned an empty frame and **discarded 871,331 already-fetched
+catalogue rows** because the archive that ran *second* was down. Acquisition now
+(a) walks a chunk-size ladder — 5,000, then 2,000, then 500 — before concluding
+the service is unusable, (b) falls back to **CDS X-Match** against
+`vizier:I/355/gaiadr3`, which needs no upload quota, and (c) checkpoints the
+infrared-only anchor table *before* the optical join, so a Gaia outage costs the
+join and not the catalogue pull.
+
+**Bug 3 — one IRSA cone query per source.** `_allwise_for_rows` issued a
+positional query per row. At ~1 s each and a working sample of order 10⁵ that is
+over a day of wall clock per shard; it never ran, so it never showed up as a
+failure. AllWISE is now cross-matched in bulk via CDS X-Match against
+`vizier:II/328/allwise`, with the per-object cone retained only below
+`ALLWISE_CONE_MAX_ROWS = 2,000` and as the fallback.
+
+**The meta-bug, and the guard against it.** Three unrelated causes — a schema
+mismatch, a service outage, and an unrun stage — all surfaced as the single
+number `acquired: 0`. Acquisition now returns a `FetchStatus` per archive
+carrying `OK` / `QUERY_RETURNED_ZERO_ROWS` / `QUERY_FAILED`, **the literal query
+text**, the row count and the exception; the per-shard status is written *inside*
+the cache directory so it travels in the artifact; and `summary.json`
+distinguishes three verdicts that used to be one:
+
+| verdict | meaning |
+|---|---|
+| `ACQUISITION_QUERY_FAILED` | at least one archive query blew up — a defect in our query or in the service, **not** a statement about the sky |
+| `ARCHIVES_RETURNED_ZERO_ROWS` | every query succeeded and returned nothing; the queries are printed so they can be re-issued and checked |
+| `NO_DATA_REACHED` | nothing was even attempted |
+
+`seti ember --stage probe` exists so this never has to be diagnosed from a
+post-mortem again: it issues one query per primitive and reports the VizieR
+schema and resolved frame for all four catalogues, the largest upload the
+anonymous ESA archive will accept, whether CDS X-Match can substitute, and what
+IRSA returns — with row counts and first rows. It is dispatchable on its own
+(`probe_only: true`).
+
+### 7.2 What the probe measured — run 30209647320, `results/ember/probe.json`
+
+| primitive | result |
+|---|---|
+| `II/125/main` (IRAS PSC) | RA/Dec resolve to **`RA1950` / `DE1950`**, frame **B1950**; 632 rows in a 1° RA slice |
+| `II/156A/main` (IRAS FSC) | **`RA1950` / `DE1950`**, frame **B1950**; 412 rows in a 1° slice |
+| `II/297/irc` (AKARI/IRC) | `RAJ2000` / `DEJ2000`, ICRS; 1,590 rows in a 1° slice |
+| `II/328/allwise` | `RAJ2000` / `DEJ2000`, ICRS; **2,304,340 rows in a 1° slice** |
+| ESA Gaia TAP upload | **`HTTP 500` at 200 rows**, after 80 s |
+| CDS X-Match → `vizier:I/355/gaiadr3` | **OK — 405 positions → 225 matches in 3.0 s** |
+| CDS X-Match → `vizier:II/328/allwise` | **OK — 200 matches in 0.6 s** |
+| IRSA AllWISE cone | OK, 7.9 s |
+| IRSA NEOWISE light curve | OK, 84 s per object |
+
+Four things follow, and three of them changed the code.
+
+**The IRAS diagnosis is confirmed exactly.** `RA1950`/`DE1950` is precisely the
+spelling the old alias table did not know, and the frame flag reads `b1950`, so
+the precession path is the one that runs. Both IRAS catalogues are queryable and
+populated.
+
+**The ESA upload is not size-limited, it is unavailable.** 500 at 200 rows is not
+a quota; a smaller chunk cannot duck it. Since each attempt costs 80 s, the
+ladder was **reversed**: CDS X-Match is now the primary Gaia route and the ESA
+archive the fallback. The chunk ladder is retained for the day the service comes
+back.
+
+**AllWISE at 2.3 million rows per square degree of RA settles the AllWISE
+question too.** A bulk pull is out of the question and per-object cones at 7.9 s
+each are out of the question; X-Match at 0.6 s for 200 positions is the only
+route that works, and it works.
+
+**A bug the probe caught before it could ship.** An X-Match response carries the
+*uploaded* `ra`/`dec` alongside the catalogue's — for Gaia DR3 the catalogue's
+are `RAdeg`/`DEdeg`. The alias for `ra` resolved to the **uploaded** column,
+which would have made every Gaia position identical to the infrared position it
+was queried with. `sep_arcsec` would then have been ~0 for every source, and
+§4.5's astrometric veto — the one that rejects background galaxies, the
+contaminant that destroyed every Project Hephaistos candidate — would have
+passed everything while looking like it was working. `xmatch_cds` now moves the
+uploaded position to `xm_query_ra`/`xm_query_dec`, the Gaia aliases prefer the
+catalogue spellings, and acquisition **refuses** an X-Match result with no usable
+catalogue position rather than substituting one.
+
+One limitation stays open and is recorded rather than hidden: TAPVizieR returned
+**zero rows** from `TAP_SCHEMA.columns` for all four tables — no error, just
+nothing — so the UCD route never fired and alias matching carried the run.
+Several `table_name` spellings are now tried, but until one of them works the
+principled frame-independent resolution is unavailable and the alias list is
+load-bearing. That is why the B1950 spellings are in it explicitly.
 
 ## 8. Honest limitations
 

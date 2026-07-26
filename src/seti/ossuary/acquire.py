@@ -248,9 +248,16 @@ def fetch_track(track: str, out_dir: Path, *, feh_max: float = -1.0,
             degraded = True
             q = _build_query(track, lo, hi, wise_cols, {}, None, **kw)
             df = _run_query(q, tag=f"ossuary/{track}")
-        if len(df) >= limit_per_band:
+        # A capped band is a *biased* band, not merely a small one: ADQL TOP with
+        # no ORDER BY returns an arbitrary subset, so whatever the server happened
+        # to emit first becomes the sample. Record it per row rather than only in
+        # the log, so the analysis can report which sky the result actually covers.
+        capped = len(df) >= limit_per_band
+        if capped:
             print(f"[ossuary/{track}] WARNING dec [{lo},{hi}) hit the row limit "
-                  f"({limit_per_band}); this band is incomplete")
+                  f"({limit_per_band}); this band is an ARBITRARY subset, not a "
+                  f"complete sample -- treat its sky coverage as biased")
+        df["row_limit_hit"] = capped
         df["dec_band_lo"] = lo
         df["track"] = track
         df.to_parquet(part, index=False)
@@ -262,8 +269,12 @@ def fetch_track(track: str, out_dir: Path, *, feh_max: float = -1.0,
     else:
         out = pd.concat(frames, ignore_index=True).drop_duplicates("source_id")
     out.attrs["tmass_degraded"] = degraded
+    n_capped = int(out["row_limit_hit"].sum()) if "row_limit_hit" in out else 0
+    out.attrs["n_rows_from_capped_bands"] = n_capped
     print(f"[ossuary/{track}] total {len(out)} stars"
-          + (" (2MASS anchor degraded)" if degraded else ""))
+          + (" (2MASS anchor degraded)" if degraded else "")
+          + (f"; {n_capped} rows came from row-limited (biased) bands"
+             if n_capped else ""))
     return out
 
 

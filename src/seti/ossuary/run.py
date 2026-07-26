@@ -181,6 +181,11 @@ def analyze(df: pd.DataFrame, cfg: Config, *, anchor: str | None = None,
         "verdict": "OK",
         "anchor": anchor,
         "n_input": int(len(df)),
+        # Sky-coverage honesty: rows from declination bands that hit the ADQL row
+        # cap are an arbitrary subset (no ORDER BY), so their sky is biased.
+        "n_from_row_limited_bands": int(
+            pd.to_numeric(df.get("row_limit_hit"), errors="coerce").fillna(0).sum())
+        if "row_limit_hit" in df.columns else 0,
         "n_dwarfs": int((vetted["luminosity_class"] == "dwarf").sum()),
         "n_giants": int((vetted["luminosity_class"] == "giant").sum()),
         "n_metal_poor": int(vetted["metal_poor"].sum()),

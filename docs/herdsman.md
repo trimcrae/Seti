@@ -15,11 +15,32 @@ technosignature search has used.
 
 ## 1. Novelty status (literature check, 2026-07-25)
 
-Five parallel deep literature sweeps (~150 distinct queries, ~200 abstracts;
-sandbox egress blocked direct arXiv/ADS fetches, so confirmations are from
-multiple independent search-result snippets quoting the primary pages —
-verbatim-abstract verification runs on the Actions runner in
-`results/litcheck/`; re-check before any public claim):
+Five parallel deep literature sweeps (~150 distinct queries, ~200 abstracts),
+then **verbatim verification on the Actions runner** (2026-07-26, evidence in
+`results/litcheck/`: full texts of the 2026 near-neighbours, 23 arXiv-API
+sweeps, Semantic Scholar / OpenAlex citation trees). Verified findings:
+
+* Hooper 2018's complete citation tree contains no observational follow-up —
+  only constraints theory (Lingam & Loeb 2020), Dyson-cloak photometry, and
+  essays.
+* The Vidal et al. 2026 review's stellar-engine entry (full text) lists
+  detection via "high-precision astrometry (Gaia and successors)" as a
+  *requirement/prospect*, names "as a pioneering observational search of
+  stellar engines, Lingam and Loeb (2020) searched the Gaia catalog for
+  hypervelocity stars, but without finding good candidates" (hypervelocity
+  regime only), and calls Hansen 2022 "a pioneering study [that] looked for
+  close stellar encounters in the solar neighborhood" (pairwise,
+  target-selection framing). No convergence search exists in its ~118 pages.
+* The phase-space-crystallization paper (2605.06072, full text) targets GC
+  internal order only; its future-work section gestures at "forward models
+  that connect hypothetical engineered phase-space structures to observable
+  kinematic signatures" — i.e., the field is pointing at this gap, not
+  filling it.
+* Targeted arXiv API sweeps ("orbit convergence", "kinematic technosignature",
+  "moved star", "phase space technosignature", "astrometric SETI", ...)
+  surface no N-star convergence work under any framing.
+
+Original sweep summary (agent-level, pre-verification):
 
 * **Unclaimed (no proposal, no search found):** N≥3 forward-time orbital
   convergence of field stars; heterogeneous past-rendezvous searches;

@@ -1,9 +1,11 @@
 {
-  "n_urls": 33,
-  "n_ok": 31,
-  "n_failed": 2,
+  "n_urls": 26,
+  "n_ok": 9,
+  "n_failed": 17,
   "n_id_mismatch": 0,
   "id_mismatches": [],
+  "n_title_unverified": 0,
+  "title_unverified": [],
   "targets": {
     "seligman2023_dark_comets": {
       "arxiv": "2212.08115",
@@ -19,16 +21,6 @@
       "arxiv": "2503.03552",
       "expect_title": "Venera",
       "question": "Q4 (the live novelty risk): did they compute an AMR/beta for 2005 VL1, and is it one object or a population test?"
-    },
-    "micheli2018_oumuamua_nongrav": {
-      "arxiv": "1811.05519",
-      "expect_title": "",
-      "question": "the calibration anchor: the published A1 / radial acceleration at 1 au used to validate our conversions"
-    },
-    "seligman_2021_darkcomet_precursor": {
-      "arxiv": "2104.10184",
-      "expect_title": "",
-      "question": "context: earlier non-grav-acceleration work by the same group"
     }
   },
   "title_resolved_targets": {
@@ -36,6 +28,11 @@
       "title": "Two distinct populations of dark comets delineated by orbits and sizes",
       "expect_title": "dark comet",
       "question": "Q1/Q2 for the 14-object PNAS sample (PNAS 121, e2406424121). Same questions as 2023."
+    },
+    "micheli2018_oumuamua_nongrav": {
+      "title": "Non-gravitational acceleration in the trajectory of 1I/2017 U1 (Oumuamua)",
+      "expect_title": "Oumuamua",
+      "question": "the calibration anchor: the published A1 / radial acceleration at 1 au used to validate our conversions (docs/derelict.md section 1.3 asserts 4.92e-6 m/s^2)"
     }
   },
   "queries": {
@@ -57,16 +54,7 @@
     {
       "url": "http://export.arxiv.org/api/query?id_list=2212.08115&max_results=1",
       "dest": "arxiv_id_seligman2023_dark_comets.atom",
-      "ok": true,
-      "bytes": 4258
-    },
-    {
-      "name": "seligman2023_dark_comets",
-      "requested": "2212.08115",
-      "returned_id": "2212.08115v2",
-      "returned_title": "Dark Comets? Unexpectedly Large Nongravitational Accelerations on a Sample of Small Asteroids",
-      "id_ok": true,
-      "title_ok": true
+      "ok": false
     },
     {
       "url": "https://ar5iv.labs.arxiv.org/html/2212.08115",
@@ -83,16 +71,7 @@
     {
       "url": "http://export.arxiv.org/api/query?id_list=1810.11490&max_results=1",
       "dest": "arxiv_id_bialy_loeb_2018.atom",
-      "ok": true,
-      "bytes": 2881
-    },
-    {
-      "name": "bialy_loeb_2018",
-      "requested": "1810.11490",
-      "returned_id": "1810.11490v4",
-      "returned_title": "Could Solar Radiation Pressure Explain 'Oumuamua's Peculiar Acceleration?",
-      "id_ok": true,
-      "title_ok": true
+      "ok": false
     },
     {
       "url": "https://ar5iv.labs.arxiv.org/html/1810.11490",
@@ -133,152 +112,74 @@
       "bytes": 379641
     },
     {
-      "url": "http://export.arxiv.org/api/query?id_list=1811.05519&max_results=1",
-      "dest": "arxiv_id_micheli2018_oumuamua_nongrav.atom",
-      "ok": true,
-      "bytes": 2540
-    },
-    {
-      "name": "micheli2018_oumuamua_nongrav",
-      "requested": "1811.05519",
-      "returned_id": "1811.05519v1",
-      "returned_title": "Acoplanarity of Lepton Pair to Probe the Electromagnetic Property of Quark Matter",
-      "id_ok": true,
-      "title_ok": true
-    },
-    {
-      "url": "https://ar5iv.labs.arxiv.org/html/1811.05519",
-      "dest": "ar5iv_micheli2018_oumuamua_nongrav.html",
-      "ok": true,
-      "bytes": 471020
-    },
-    {
-      "url": "https://arxiv.org/pdf/1811.05519",
-      "dest": "pdf_micheli2018_oumuamua_nongrav.pdf",
-      "ok": true,
-      "bytes": 224278
-    },
-    {
-      "url": "http://export.arxiv.org/api/query?id_list=2104.10184&max_results=1",
-      "dest": "arxiv_id_seligman_2021_darkcomet_precursor.atom",
-      "ok": true,
-      "bytes": 3582
-    },
-    {
-      "name": "seligman_2021_darkcomet_precursor",
-      "requested": "2104.10184",
-      "returned_id": "2104.10184v3",
-      "returned_title": "Finite-size evaporating droplets in weakly compressible homogeneous shear turbulence",
-      "id_ok": true,
-      "title_ok": true
-    },
-    {
-      "url": "https://ar5iv.labs.arxiv.org/html/2104.10184",
-      "dest": "ar5iv_seligman_2021_darkcomet_precursor.html",
-      "ok": true,
-      "bytes": 3298109
-    },
-    {
-      "url": "https://arxiv.org/pdf/2104.10184",
-      "dest": "pdf_seligman_2021_darkcomet_precursor.pdf",
-      "ok": true,
-      "bytes": 12174364
-    },
-    {
       "url": "http://export.arxiv.org/api/query?search_query=ti%3A%22Two%20distinct%20populations%20of%20dark%20comets%20delineated%20by%20orbits%20and%20sizes%22&max_results=5",
       "dest": "arxiv_title_seligman2024_two_populations.atom",
-      "ok": true,
-      "bytes": 4153
+      "ok": false
     },
     {
-      "name": "seligman2024_two_populations",
-      "resolved_by": "title",
-      "resolved_id": "2412.07603",
-      "resolved_title": "Two Distinct Populations of Dark Comets Delineated by Orbits and Sizes"
-    },
-    {
-      "url": "https://ar5iv.labs.arxiv.org/html/2412.07603",
-      "dest": "ar5iv_seligman2024_two_populations.html",
-      "ok": true,
-      "bytes": 327682
-    },
-    {
-      "url": "https://arxiv.org/pdf/2412.07603",
-      "dest": "pdf_seligman2024_two_populations.pdf",
-      "ok": true,
-      "bytes": 1534442
+      "url": "http://export.arxiv.org/api/query?search_query=ti%3A%22Non-gravitational%20acceleration%20in%20the%20trajectory%20of%201I/2017%20U1%20%28Oumuamua%29%22&max_results=5",
+      "dest": "arxiv_title_micheli2018_oumuamua_nongrav.atom",
+      "ok": false
     },
     {
       "url": "http://export.arxiv.org/api/query?search_query=all%3A%22non-gravitational%20acceleration%22%20AND%20all%3A%22radial%22%20AND%20all%3Aasteroid&max_results=60&sortBy=relevance",
       "dest": "arxiv_q_a1_only_nongrav_asteroids.atom",
-      "ok": true,
-      "bytes": 3250
+      "ok": false
     },
     {
       "url": "http://export.arxiv.org/api/query?search_query=all%3A%22radiation%20pressure%22%20AND%20all%3A%22area-to-mass%22%20AND%20all%3Aasteroid&max_results=60&sortBy=relevance",
       "dest": "arxiv_q_radiation_pressure_asteroid_catalog.atom",
-      "ok": true,
-      "bytes": 14170
+      "ok": false
     },
     {
       "url": "http://export.arxiv.org/api/query?search_query=abs%3A%22solar%20radiation%20pressure%22%20AND%20abs%3A%22near-Earth%22%20AND%20abs%3Aastrometry&max_results=60&sortBy=relevance",
       "dest": "arxiv_q_srp_detection_neo_astrometry.atom",
-      "ok": true,
-      "bytes": 3284
+      "ok": false
     },
     {
       "url": "http://export.arxiv.org/api/query?search_query=all%3A%22area-to-mass%20ratio%22%20AND%20all%3A%22small%20body%22&max_results=60&sortBy=relevance",
       "dest": "arxiv_q_amr_small_body_survey.atom",
-      "ok": true,
-      "bytes": 772
+      "ok": false
     },
     {
       "url": "http://export.arxiv.org/api/query?search_query=abs%3A%22dark%20comet%22&max_results=60&sortBy=relevance",
       "dest": "arxiv_q_dark_comet_population.atom",
-      "ok": true,
-      "bytes": 16271
+      "ok": false
     },
     {
       "url": "http://export.arxiv.org/api/query?search_query=abs%3A%22interstellar%20object%22%20AND%20abs%3Atechnosignature&max_results=60&sortBy=relevance",
       "dest": "arxiv_q_interstellar_object_technosignature_survey.atom",
-      "ok": true,
-      "bytes": 29351
+      "ok": false
     },
     {
       "url": "http://export.arxiv.org/api/query?search_query=abs%3A%22light%20sail%22%20AND%20abs%3Atechnosignature&max_results=60&sortBy=relevance",
       "dest": "arxiv_q_lightsail_technosignature_detection.atom",
-      "ok": true,
-      "bytes": 3308
+      "ok": false
     },
     {
       "url": "http://export.arxiv.org/api/query?search_query=abs%3A%22artificial%22%20AND%20abs%3A%22solar%20system%22%20AND%20abs%3A%22search%22%20AND%20abs%3A%22probe%22&max_results=60&sortBy=relevance",
       "dest": "arxiv_q_artificial_object_solar_system_search.atom",
-      "ok": true,
-      "bytes": 10207
+      "ok": false
     },
     {
       "url": "http://export.arxiv.org/api/query?search_query=abs%3A%22SETA%22%20OR%20abs%3A%22search%20for%20extraterrestrial%20artifacts%22&max_results=60&sortBy=relevance",
       "dest": "arxiv_q_seta_artifact_search.atom",
-      "ok": true,
-      "bytes": 40572
+      "ok": false
     },
     {
       "url": "http://export.arxiv.org/api/query?search_query=all%3A%22high%20area-to-mass%20ratio%22%20AND%20all%3Adebris&max_results=60&sortBy=relevance",
       "dest": "arxiv_q_hamr_debris.atom",
-      "ok": true,
-      "bytes": 15844
+      "ok": false
     },
     {
       "url": "http://export.arxiv.org/api/query?search_query=all%3A%22area-to-mass%22%20AND%20all%3A%22geosynchronous%22&max_results=60&sortBy=relevance",
       "dest": "arxiv_q_hamr_geo_objects.atom",
-      "ok": true,
-      "bytes": 11451
+      "ok": false
     },
     {
       "url": "http://export.arxiv.org/api/query?search_query=all%3A%22rocket%20body%22%20AND%20all%3A%22minor%20planet%22&max_results=60&sortBy=relevance",
       "dest": "arxiv_q_rocket_body_asteroid_designation.atom",
-      "ok": true,
-      "bytes": 762
+      "ok": false
     },
     {
       "url": "http://export.arxiv.org/api/query?search_query=all%3A%22artificial%22%20AND%20all%3A%22asteroid%22%20AND%20all%3A%22designation%22&max_results=60&sortBy=relevance",
@@ -289,7 +190,8 @@
     {
       "url": "https://api.semanticscholar.org/graph/v1/paper/search?query=dark%20comets%20non-gravitational%20acceleration&limit=50&fields=title,abstract,year,externalIds,citationCount",
       "dest": "s2_dark_comet_ads.json",
-      "ok": false
+      "ok": true,
+      "bytes": 103206
     },
     {
       "url": "https://api.semanticscholar.org/graph/v1/paper/search?query=area-to-mass%20ratio%20technosignature&limit=50&fields=title,abstract,year,externalIds,citationCount",

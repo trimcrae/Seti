@@ -359,15 +359,22 @@ def analyse_catalogue(cat: ingest.AnomalyCatalogue, *, blocks: dict | None = Non
     for v in entries.values():
         v.pop("_inside_mask", None)
 
-    # Only *resolved, sufficiently-powered* tests can support a claim.
+    # A floor-limited p is a BOUND ("p < floor"), and the floor is the
+    # *conservative* end of that bound -- the true p is smaller.  So such a test
+    # is not discarded (that would throw away the strongest evidence); it enters
+    # the family at its floor value and is labelled as bounded.  What it must
+    # NOT do is enter unescalated: with only a few hundred draws the tail of the
+    # max-statistic null is barely sampled, which is what made three geometries
+    # tie at 1/301 and read as agreement.
     usable = {k: v for k, v in entries.items()
               if v["p_value"] is not None and np.isfinite(v["p_value"])
               and not v["insufficient"]}
     resolved = {k: v for k, v in usable.items() if not v["floor_limited"]}
     n_eff = max(indep["n_independent_groups"], 1)
 
-    best = min(resolved, key=lambda k: resolved[k]["p_value"]) if resolved else None
-    best_p = resolved[best]["p_value"] if best else None
+    best = min(usable, key=lambda k: usable[k]["p_value"]) if usable else None
+    best_p = usable[best]["p_value"] if best else None
+    best_bounded = bool(best is not None and usable[best]["floor_limited"])
     fam_p = (1.0 - (1.0 - best_p) ** n_eff) if best_p is not None else None
 
     out["tests"] = entries
@@ -384,24 +391,36 @@ def analyse_catalogue(cat: ingest.AnomalyCatalogue, *, blocks: dict | None = Non
     out["p_values_repr"] = {k: v["p_repr"] for k, v in entries.items()}
     out["best_test"] = best
     out["best_p"] = best_p
+    out["best_p_is_bound"] = best_bounded
+    out["best_p_repr"] = (usable[best]["p_repr"] if best else None)
     out["best_p_family_corrected"] = fam_p
+    out["best_p_family_corrected_repr"] = (
+        (f"<{fam_p:.3g}" if best_bounded else f"{fam_p:.4g}")
+        if fam_p is not None else None)
     # Retained under the old name so downstream readers do not silently get None.
     out["best_p_trials_corrected"] = fam_p
 
     # --- verdict gates -------------------------------------------------------
     cov = (out.get("covariate_resolution") or {}).get("strict") or {}
-    bal = resolved[best]["coordinate_balance"] if best else None
+    bal = usable[best]["coordinate_balance"] if best else None
+    esc = ((strict.get("gradient") or {}).get(best.split(":", 1)[1])
+           if best and best.startswith("gradient:") else
+           (strict.get("edge") or {}).get(best.split(":", 1)[1])
+           if best and best.startswith("edge:") else {}) or {}
+    escalated = bool((esc.get("escalation") or {}).get("rounds", 0) > 0)
     gates = {
-        "any_resolved_test": bool(resolved),
+        "any_usable_test": bool(usable),
         "family_p_below_alpha": bool(fam_p is not None and fam_p < 0.05),
-        "not_floor_limited": bool(best is not None),
+        # A bound is admissible evidence only once the draw count has actually
+        # been escalated; an unescalated floor value is an artefact of n_null.
+        "bound_was_escalated": bool(not best_bounded or escalated),
         "tested_coordinate_balanced": bool(
             bal is None or abs(bal) < 0.10),
         "essential_covariates_present": bool(cov.get("essential_covariates_present", False)),
         "anomaly_population_vetted": bool(getattr(cat, "vetted", False)),
         "sufficient_anomalies_in_winning_test": bool(
             best is not None
-            and (resolved[best]["n_anom"] or 0) >= MIN_ANOMALIES_PER_TEST),
+            and (usable[best]["n_anom"] or 0) >= MIN_ANOMALIES_PER_TEST),
     }
     failed = [k for k, v in gates.items() if not v]
     out["verdict_gates"] = gates
@@ -409,7 +428,7 @@ def analyse_catalogue(cat: ingest.AnomalyCatalogue, *, blocks: dict | None = Non
 
     if not usable:
         out["result"] = "NOT_TESTABLE"
-    elif not gates["any_resolved_test"] and out["floor_limited_tests"]:
+    elif not gates["bound_was_escalated"]:
         out["result"] = "STRUCTURE_UNRESOLVED"
     elif not gates["family_p_below_alpha"]:
         out["result"] = "CLEAN_NULL"

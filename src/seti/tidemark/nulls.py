@@ -417,6 +417,17 @@ def empirical_p(observed: float, null_values, *, tail: str = "two") -> float:
 #: p-value.
 MIN_ANOMALIES_PER_TEST = 30
 
+#: Scans need far more than a two-parameter fit does.  A scan maximises over
+#: every position and width, so near-empty bins supply extreme scores for free:
+#: 30 anomalies across 24 bins is 1.25 per bin, and the maximum of a few hundred
+#: such windows is not a statistic. Require this many anomalies PER BIN before a
+#: scan is allowed to report a p-value at all.
+MIN_ANOMALIES_PER_SCAN_BIN = 5
+
+
+def min_anomalies_for_scan(n_bins: int) -> int:
+    return max(MIN_ANOMALIES_PER_TEST, int(MIN_ANOMALIES_PER_SCAN_BIN) * int(n_bins))
+
 
 def p_report(p_value: float, n_null: int) -> dict:
     """Package a Monte Carlo p-value with its resolution floor.
@@ -446,4 +457,5 @@ def insufficient(reason: str, **extra) -> dict:
 
 __all__ = ["MatchedNull", "NullDiagnostics", "empirical_p", "quantile_bins",
            "p_report", "insufficient", "MIN_ANOMALIES_PER_TEST",
+           "MIN_ANOMALIES_PER_SCAN_BIN", "min_anomalies_for_scan",
            "DEFAULT_FORBIDDEN"]

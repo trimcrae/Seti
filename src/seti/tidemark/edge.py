@@ -50,7 +50,7 @@ from __future__ import annotations
 import numpy as np
 
 from .gradient import bin_index, expected_quantile_edges, poisson_glm
-from .nulls import MIN_ANOMALIES_PER_TEST, MatchedNull, empirical_p, insufficient, p_report
+from .nulls import MatchedNull, empirical_p, insufficient, min_anomalies_for_scan, p_report
 
 
 def _xlogy(n: np.ndarray, r: np.ndarray) -> np.ndarray:
@@ -200,11 +200,13 @@ def edge_scan_1d(coord: np.ndarray, null: MatchedNull, *, name: str = "coord",
     """Scan a scalar coordinate for a step in rate beyond the smooth trend."""
     x = np.asarray(coord, float)
     n_usable = int((null.mask & np.isfinite(x)).sum())
-    if n_usable < MIN_ANOMALIES_PER_TEST:
+    need = min_anomalies_for_scan(n_bins)
+    if n_usable < need:
         return insufficient(
             f"only {n_usable} of {int(null.mask.sum())} anomalies have a finite "
-            f"{name}; need {MIN_ANOMALIES_PER_TEST}",
-            coordinate=name, n_anom=n_usable, n_anom_total=int(null.mask.sum()))
+            f"{name}; a {n_bins}-bin scan needs {need}",
+            coordinate=name, n_anom=n_usable, n_anom_total=int(null.mask.sum()),
+            n_required=need)
     tilt, tinfo = smooth_tilt({name: x}, null, order=smooth_order)
     tilted = null.copy_with_tilt(tilt)
 
@@ -284,11 +286,12 @@ def edge_scan_shell3d(xyz: np.ndarray, null: MatchedNull, *, centres=None,
     # meaningless statistic acquires a small p-value.
     finite_xyz = np.all(np.isfinite(xyz), axis=1)
     n_usable = int((null.mask & finite_xyz).sum())
-    if n_usable < MIN_ANOMALIES_PER_TEST:
+    need = min_anomalies_for_scan(n_bins)
+    if n_usable < need:
         return insufficient(
             f"only {n_usable} of {int(null.mask.sum())} anomalies have finite 3D "
-            f"positions; need {MIN_ANOMALIES_PER_TEST}",
-            n_anom=n_usable, n_anom_total=int(null.mask.sum()))
+            f"positions; a {n_bins}-bin shell scan needs {need}",
+            n_anom=n_usable, n_anom_total=int(null.mask.sum()), n_required=need)
 
     tinfo = {}
     tilted = null
@@ -387,11 +390,12 @@ def edge_scan_cap(l_deg, b_deg, null: MatchedNull, *, n_directions: int = 96,
     u = _unit_vectors(l_deg, b_deg)
     finite_dir = np.all(np.isfinite(u), axis=1)
     n_usable = int((null.mask & finite_dir).sum())
-    if n_usable < MIN_ANOMALIES_PER_TEST:
+    need = min_anomalies_for_scan(n_bins)
+    if n_usable < need:
         return insufficient(
             f"only {n_usable} of {int(null.mask.sum())} anomalies have finite sky "
-            f"directions; need {MIN_ANOMALIES_PER_TEST}",
-            n_anom=n_usable, n_anom_total=int(null.mask.sum()))
+            f"directions; a {n_bins}-bin cap scan needs {need}",
+            n_anom=n_usable, n_anom_total=int(null.mask.sum()), n_required=need)
     dirs = _fibonacci_directions(n_directions)
     draws = _materialise_draws(null, n_null, seed)
     w = null.weights

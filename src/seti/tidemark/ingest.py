@@ -235,15 +235,20 @@ def from_frames(name: str, parent: pd.DataFrame, anomalies=None, *,
                 id_col: str = "source_id", mask=None, score_col: str | None = None,
                 score_min: float | None = None, covariates=DEFAULT_COVARIATES,
                 provenance: dict | None = None, caveat: str = "",
-                caveat_tag: str = "") -> AnomalyCatalogue:
+                caveat_tag: str = "", vetted: bool | None = None) -> AnomalyCatalogue:
     """Build a catalogue from a parent frame plus either an explicit mask, an
     anomaly frame/id list to join on ``id_col``, or a score column + threshold."""
     parent = parent.reset_index(drop=True)
     notes: list[str] = []
-    definition, vetted = "unspecified", False
+    # Default to UNVETTED. A caller supplying a bare boolean flag has not told
+    # us whether its members were individually assessed or bulk-selected, and
+    # assuming the generous answer is how an unvetted percentile becomes a
+    # "detection". ``vetted=True`` must be asserted explicitly, by the caller or
+    # by the channel spec.
+    definition, inferred_vetted = "unspecified", False
     if mask is not None:
         m = np.asarray(mask, bool)
-        definition, vetted = "explicit_mask", False
+        definition, inferred_vetted = "explicit_mask", False
     elif score_col is not None and score_col in parent.columns:
         v = pd.to_numeric(parent[score_col], errors="coerce").to_numpy(float)
         if score_min is not None:
@@ -282,7 +287,7 @@ def from_frames(name: str, parent: pd.DataFrame, anomalies=None, *,
             return cat
         m = parent[id_col].astype(str).isin(ids).to_numpy()
         notes.append(f"anomaly = membership in the candidate list by {id_col}")
-        definition, vetted = "vetted_candidate_list", True
+        definition, inferred_vetted = "vetted_candidate_list", True
     else:
         m = np.zeros(len(parent), bool)
         notes.append("no anomaly definition supplied")
@@ -293,7 +298,8 @@ def from_frames(name: str, parent: pd.DataFrame, anomalies=None, *,
     cat = AnomalyCatalogue(name=name, parent=parent, anomaly_mask=m, id_col=id_col,
                            score=score, covariates=covariates,
                            provenance=provenance or {},
-                           anomaly_definition=definition, vetted=vetted,
+                           anomaly_definition=definition,
+                           vetted=(inferred_vetted if vetted is None else bool(vetted)),
                            caveat=str(caveat or ""), caveat_tag=str(caveat_tag or ""))
     cat.notes.extend(notes)
     return cat.with_frame()
@@ -359,7 +365,7 @@ def load_channel(root, name: str, spec: dict) -> AnomalyCatalogue:
         score_col=spec.get("score_col"), score_min=spec.get("score_min"),
         covariates=tuple(spec.get("covariates") or DEFAULT_COVARIATES),
         provenance=prov, caveat=spec.get("caveat", ""),
-        caveat_tag=spec.get("caveat_tag", ""))
+        caveat_tag=spec.get("caveat_tag", ""), vetted=spec.get("vetted"))
 
 
 def load_all(root, specs: dict) -> dict:

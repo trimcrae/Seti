@@ -461,16 +461,21 @@ def test_end_to_end_run_writes_a_summary(tmp_path, parent):
     cfg.root = tmp_path
     m = inject_bubble(parent, centre_pc=(600.0, -400.0, 0.0), radius_pc=900.0,
                       contrast=5.0, base_rate=0.02, seed=12)
-    cat = ingest.from_frames("synthetic_bubble", parent, mask=m)
+    cat = ingest.from_frames("synthetic_bubble", parent, mask=m, vetted=True)
     out = tidemark_run(cfg, catalogues=[cat], quick=True, out_dir=tmp_path / "res",
                        do_calibrate=False)
-    assert out["verdict"] in ("DETECTION", "CLEAN_NULL")
+    assert out["verdict"] in ("DETECTION", "CLEAN_NULL", "STRUCTURE_UNRESOLVED",
+                              "STRUCTURE_CONFOUNDED")
     assert out["n_tested"] == 1
     assert "predictions_discriminated" in out
+    assert "reporting_rules" in out
     written = json.loads((tmp_path / "res" / "summary.json").read_text())
     assert written["catalogue_verdicts"]["synthetic_bubble"] == ingest.OK
+    assert "results_by_channel" in written and "failed_gates_by_channel" in written
     per = json.loads((tmp_path / "res" / "synthetic_bubble" / "summary.json").read_text())
     assert per["p_values"]["edge:shell_3d"] <= 0.05
+    # The private numpy firing masks must never reach the JSON.
+    assert "_inside_mask" not in json.dumps(per)
     weights = pd.read_csv(tmp_path / "res" / "synthetic_bubble" / "selection_weights.csv")
     assert "selection_weight" in weights.columns and len(weights) > 0
 
@@ -802,10 +807,58 @@ def test_verdict_gates_are_all_reported(parent):
     m = inject_none(parent, base_rate=0.02, seed=11)
     cat = ingest.from_frames("gates", parent, mask=m)
     res = analyse_catalogue(cat, quick=True)
-    for g in ("any_resolved_test", "family_p_below_alpha", "not_floor_limited",
+    for g in ("any_usable_test", "family_p_below_alpha", "bound_was_escalated",
               "tested_coordinate_balanced", "essential_covariates_present",
               "anomaly_population_vetted",
               "sufficient_anomalies_in_winning_test"):
         assert g in res["verdict_gates"], g
     assert res["result"] in ("CLEAN_NULL", "STRUCTURE_UNRESOLVED", "NOT_TESTABLE")
     assert res["detection"] is False
+
+
+def test_wise_chunk_fits_a_synchronous_get_request():
+    """The first runner attempt lost every cone: the Gaia async endpoint 500'd
+    under concurrent shards and the synchronous fallback --- which submits over
+    GET --- then failed to parse a ~40 kB URL built from 2000 19-digit ids.
+    Keep the generated query comfortably inside a URL length limit."""
+    from seti.tidemark.acquire import _WISE_CHUNK, _WISE_QUERY
+    ids = ",".join(str(5602781028001212160 + i) for i in range(_WISE_CHUNK))
+    q = _WISE_QUERY.format(ids=ids)
+    assert len(q) < 10000, f"WISE chunk query is {len(q)} chars; sync GET will truncate"
+    assert _WISE_CHUNK <= 500
+
+
+def test_scan_refuses_when_bins_outnumber_anomalies(parent):
+    """A 24-bin scan over 30 anomalies is 1.25 per bin, and the maximum over
+    hundreds of near-empty windows is not a statistic. Scans require anomalies
+    per bin, not just a global floor."""
+    from seti.tidemark.nulls import min_anomalies_for_scan
+    assert min_anomalies_for_scan(24) == 120
+    assert min_anomalies_for_scan(4) == MIN_ANOMALIES_PER_TEST   # never below the floor
+
+    p = parent.head(20000).copy()
+    mask = np.zeros(len(p), bool)
+    mask[np.random.default_rng(2).choice(len(p), size=60, replace=False)] = True
+    null = MatchedNull(p, mask, ["phot_g_mean_mag", "bp_rp"], seed=1)
+    e = edge_scan_1d(p["R_gal_kpc"].to_numpy(float), null, name="R_gal_kpc",
+                     n_bins=24, n_null=40)
+    assert e["insufficient"], "24-bin scan ran on 60 anomalies"
+    assert e["n_required"] == 120
+    # The same data with a coarse binning is admissible.
+    e2 = edge_scan_1d(p["R_gal_kpc"].to_numpy(float), null, name="R_gal_kpc",
+                      n_bins=8, n_null=40)
+    assert not e2["insufficient"]
+
+
+def test_floor_limited_bound_enters_the_family_but_is_labelled(parent):
+    """A bound is the conservative end of the evidence, so it is used -- but it
+    is reported as an inequality and only admitted once escalation has run."""
+    m = inject_bubble(parent, centre_pc=(600.0, -400.0, 0.0), radius_pc=900.0,
+                      contrast=6.0, base_rate=0.02, seed=12)
+    cat = ingest.from_frames("bounded", parent, mask=m)
+    res = analyse_catalogue(cat, quick=True)
+    if res.get("best_p_is_bound"):
+        assert res["best_p_repr"].startswith("<")
+        assert res["best_p_family_corrected_repr"].startswith("<")
+        assert "bound_was_escalated" in res["verdict_gates"]
+    assert res["best_p"] is not None

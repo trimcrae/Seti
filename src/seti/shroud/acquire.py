@@ -217,15 +217,16 @@ def _svo_urls(root: str, cfg: dict, ra: float | None = None,
     """
     a = cfg.get("acquire", {})
     if ra is None:
-        q = a.get("svo_allsky_query",
-                  "RA=180.000000&DEC=0.000000&SR=180.000000&VERB=1"
-                  "&nocoor=1&format=ascii")
+        queries = list(a.get("svo_allsky_queries", [
+            "RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=ascii"]))
     else:
-        q = urllib.parse.urlencode({"RA": f"{ra:.6f}", "DEC": f"{dec:.6f}",
-                                    "SR": f"{sr:.4f}", "VERB": 2}) + "&format=ascii"
+        queries = [urllib.parse.urlencode(
+            {"RA": f"{ra:.6f}", "DEC": f"{dec:.6f}", "SR": f"{sr:.4f}",
+             "VERB": 2}) + "&format=ascii"]
     urls = []
-    for path in a.get("svo_paths", ["cs.php", "", "cs"]):
-        urls.append(f"{root}/{path}?{q}" if path else f"{root}?{q}")
+    for q in queries:
+        for path in a.get("svo_paths", ["cs.php", "", "cs"]):
+            urls.append(f"{root}/{path}?{q}" if path else f"{root}?{q}")
     return urls
 
 
@@ -286,8 +287,13 @@ def fetch_svo_catalog(name: str, root: str, cfg: dict, out_dir: Path
             continue
         (out_dir / f"svo_{name}_allsky.raw").write_bytes(body)
         df = _votable_to_frame(body) if b"<TABLE" in body[:200000] else _read_csvish(body)
-        prov.record(url, bool(len(df)), detail, len(df))
-        if len(df):
+        # A table without usable coordinates cannot be analysed; reject it and
+        # try the next query form rather than accepting a useless response.
+        has_pos = len(df) > 0 and _ra_dec_columns(df)[0] is not None
+        prov.record(url, has_pos, detail if has_pos else
+                    f"{detail}; {len(df)} rows but no RA/DEC column "
+                    f"(cols: {list(df.columns)[:12]})", len(df))
+        if has_pos:
             prov.status, prov.n_rows, prov.url = "ok", len(df), url
             _check_expected_rows(name, len(df), cfg, prov)
             df.to_parquet(out_dir / f"svo_{name}_raw.parquet", index=False)
@@ -360,13 +366,20 @@ def _dedupe_positions(df: pd.DataFrame, tol_deg: float = 1.0 / 3600.0) -> pd.Dat
 
 
 def _ra_dec_columns(df: pd.DataFrame) -> tuple[str | None, str | None]:
+    """Locate the coordinate columns whatever the archive chose to call them."""
     cols = {c.lower(): c for c in df.columns}
-    for r in ("ra", "raj2000", "ra_icrs", "_raj2000", "radeg", "ra_deg", "alpha"):
-        for d in ("dec", "de", "dej2000", "de_icrs", "_dej2000", "dedeg",
-                  "dec_deg", "delta"):
-            if r in cols and d in cols:
-                return cols[r], cols[d]
-    return None, None
+    named_ra = ("ra_neowise", "ra", "raj2000", "ra_icrs", "_raj2000", "radeg",
+                "ra_deg", "alpha", "_ra")
+    named_dec = ("dec_neowise", "de_neowise", "dec", "de", "dej2000", "de_icrs",
+                 "_dej2000", "dedeg", "dec_deg", "delta", "_de")
+    r = next((cols[k] for k in named_ra if k in cols), None)
+    d = next((cols[k] for k in named_dec if k in cols), None)
+    if r is None:
+        r = next((cols[k] for k in cols if k.startswith(("ra", "_ra"))), None)
+    if d is None:
+        d = next((cols[k] for k in cols
+                  if k.startswith(("dec", "de_", "_de")) or k == "de"), None)
+    return (r, d) if r is not None and d is not None else (None, None)
 
 
 # --- route 2: VizieR --------------------------------------------------------

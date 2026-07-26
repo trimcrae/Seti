@@ -32,10 +32,18 @@ acquire:
       - "https://svocats.cab.inta-csic.es/vanish-possi"
       - "http://svo2.cab.inta-csic.es/vocats/v2/vanish-possi"
       - "http://svo2.cab.inta-csic.es/vocats/vanish-possi"
-  # Whole-sky dump in one request: SR=180 about (RA,DEC)=(180,0).  Parameter set
-  # taken from working production code against another svocats catalogue
-  # (jeroenbouwman/CASCADe scripts/check_phase_error.py).
-  svo_allsky_query: "RA=180.000000&DEC=0.000000&SR=180.000000&VERB=1&nocoor=1&format=ascii"
+  # Whole-sky dump in one request: SR=180 about (RA,DEC)=(180,0).  The first
+  # form is the parameter set used by working production code against another
+  # svocats catalogue (jeroenbouwman/CASCADe scripts/check_phase_error.py).
+  # The variants exist because `nocoor=1` is not documented and may mean
+  # "drop the coordinate COLUMNS" rather than "drop the cone CONSTRAINT" - a
+  # response without RA/DEC is useless here, so the fetcher rejects it and
+  # falls through to the next form rather than accepting a truncated table.
+  svo_allsky_queries:
+    - "RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=ascii"
+    - "RA=180.000000&DEC=0.000000&SR=180.000000&VERB=1&nocoor=1&format=ascii"
+    - "RA=180.000000&DEC=0.000000&SR=180.000000&VERB=2&format=votable"
+    - "RA=180.000000&DEC=0.000000&SR=180.000000&VERB=3&format=ascii"
   svo_paths: ["cs.php", "", "cs"]
   # Published row counts.  The abstract says 172 163 for the IR set; the LIVE
   # archive served 171 753 on 2025-12-08 (Watters et al. 2026, stated four

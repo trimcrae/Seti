@@ -387,11 +387,24 @@ def _cmd_derelict(args, cfg):
                            offline_input=args.offline_input, max_vet=args.max_vet,
                            max_enrich=args.max_enrich,
                            max_control_enrich=args.max_control_enrich,
-                           skip_control=args.skip_control)
+                           skip_control=args.skip_control,
+                           skip_completeness=args.skip_completeness,
+                           skip_dark_comets=args.skip_dark_comets,
+                           skip_high_albedo=args.skip_high_albedo,
+                           completeness_limit=args.completeness_limit)
+    # The query-status counts are printed with the verdict on purpose: a reader
+    # must be able to tell "the archive answered and the answer was empty" from
+    # "the archive was never reached" without opening a file.
     print(json.dumps({"verdict": summary.get("verdict"),
                       "funnel": summary.get("funnel"),
                       "fetch": summary.get("fetch"),
-                      "degradation": summary.get("degradation")}, indent=2))
+                      "completeness": (summary.get("completeness") or {}).get("verdict"),
+                      "dark_comets": summary.get("dark_comets"),
+                      "high_albedo": summary.get("high_albedo"),
+                      "negative_a1_census": summary.get("negative_a1_census"),
+                      "query_status_counts": summary.get("query_status_counts"),
+                      "degradation": summary.get("degradation")}, indent=2,
+                     default=str))
 
 
 def _cmd_panspermia_regime(args, cfg):
@@ -1210,6 +1223,17 @@ def main(argv=None):
                         "rejects sigma_A1, so sigmas come from orbit.model_pars)")
     p.add_argument("--skip-control", action="store_true",
                    help="skip the comet control sample")
+    p.add_argument("--skip-completeness", action="store_true",
+                   help="skip the unconstrained completeness pull (~1.4M rows). "
+                        "Completeness is then UNTESTED, not proven")
+    p.add_argument("--skip-dark-comets", action="store_true",
+                   help="skip the Seligman et al. dark-comet named-target census")
+    p.add_argument("--skip-high-albedo", action="store_true",
+                   help="skip the catalogue-wide p_V > 0.7 screen; screen 4 then "
+                        "covers only the A1 sample, a much narrower question")
+    p.add_argument("--completeness-limit", type=int, default=None,
+                   help="cap rows in the unconstrained completeness pull "
+                        "(debugging only: a capped pull cannot prove completeness)")
     p.set_defaults(func=_cmd_derelict)
 
     p = sub.add_parser("panspermia-regime",

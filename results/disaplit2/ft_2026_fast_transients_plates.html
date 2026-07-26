@@ -1,0 +1,768 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Searching for Fast Astronomical Transients in Archival Photographic Plates</title>
+<!--Generated on Tue Mar 24 16:47:32 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+    // Pre-apply spinout-banner dismissal here, before the banner paints, so it
+    // never flashes in only to be hidden later by the deferred arxiv-header.js.
+    // Key matches arxiv-header.js: "arxiv-banner-dismissed:" + data-banner-name.
+    if (localStorage.getItem('arxiv-banner-dismissed:spinout-nonprofit')) {
+      document.documentElement.setAttribute("data-banner-dismissed", "");
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css"><link rel="stylesheet" type="text/css" media="screen"
+  href="/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626"><style>
+  /* Banner pre-dismissal (set above before paint -> no flash-then-hide) and
+     reading-mode chrome hiding. */
+  html[data-banner-dismissed] .ds-announcement { display: none; }
+  html[data-reading-mode="enabled"] .ds-announcement,
+  html[data-reading-mode="enabled"] .ds-site-footer { display: none; }
+  /* Keep the announcement text dark on the Open-Blue band in both colour themes
+     (otherwise it inherits the paper's warm-wash text in dark mode and washes out). */
+  .ds-announcement-text { color: var(--arxiv-ink, #1c1a17); }
+</style>
+<script defer src="/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog><div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement"
+    data-banner-name="spinout-nonprofit">
+    <img class="ds-announcement-glyph" src="/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+    <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+    <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+    <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/"><img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/base/1.0.1/images/arxiv-logo-primary-light.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2603.20407v2">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2603.20407v2"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_abstract"><a href="#abstract1" title="In Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_title">Abstract</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S1" title="In Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">I </span>Introduction</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S2" title="In Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II </span>Data</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S3" title="In Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III </span>Analysis</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S4" title="In Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">IV </span>Results</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S5" title="In Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">V </span>Conclusions</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_acknowledgements"><a href="#S5.acknowledgements1" title="In V Conclusions ‣ Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_title">Acknowledgements</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_bibliography"><a href="#bib" title="In Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: CC BY 4.0
+  </a>
+  <div id="watermark-tr">
+arXiv:2603.20407v2 [astro-ph.IM] 24 Mar 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document ltx_authors_multiline">
+<h1 class="ltx_title ltx_title_document">Searching for Fast Astronomical Transients in Archival Photographic Plates</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Ivo Busko
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_email"><a href="2603.20407v2/mailto:ivobusko@gmail.com">ivobusko@gmail.com</a>
+</span></span></span>
+</div>
+
+<div id="abstract1" class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">Fast astronomical transients were observed by the VASCO Project <cite class="ltx_cite ltx_citemacro_citep">(Villarroel<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib3" title="The Vanishing and Appearing Sources during a Century of Observations Project. I. USNO Objects Missing in Modern Sky Surveys and Follow-up Observations of a “Missing Star”" class="ltx_ref">2020</a>)</cite> in photographic sky surveys conducted in the 1950s.
+Those searches analyzed the Palomar Observatory Sky Survey (POSS-I and POSS-II) digitized plates.
+In this article, we present a preliminary report on a similar but independent
+search using archival plates taken at the Hamburg Observatory with the Großer Schmidtspiegel
+1.2-m Schmidt camera, also from the mid-1950s. These plates were digitized by the APPLAUSE
+Archive, which provides both images and tables of detected objects.
+By analyzing pairs of plates taken in rapid sequence (about 30 minutes apart) of the same sky regions, we find
+evidence of transients similar to those previously reported by the VASCO Project for POSS plates.
+While the analysis is ongoing, one notable result is that our findings independently confirm that these transients exhibit systematically
+narrow full width at half maximum (FWHM) compared to stellar point spread functions. This provides further support for their interpretation as sub-second optical flashes,
+consistent with reflections from flat, rotating objects in orbit around Earth.</p>
+</div>
+<span id="id1" class="ltx_note ltx_note_frontmatter ltx_role_software"><sup class="ltx_note_mark">†</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">†</sup><span class="ltx_note_type">software: </span>plateanalysis <cite class="ltx_cite ltx_citemacro_citep">(Busko, <a href="#bib.bib6" title="plateanalysis: analysis of archival photographic plates" class="ltx_ref">2026</a>)</cite>,
+astropy <cite class="ltx_cite ltx_citemacro_citep">(Astropy Collaboration<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib7" title="Astropy: A community Python package for astronomy" class="ltx_ref">2013</a>, <a href="#bib.bib8" title="The Astropy Project: Building an Open-science Project and Status of the v2.0 Core Package" class="ltx_ref">2018</a>, <a href="#bib.bib9" title="The Astropy Project: Sustaining and Growing a Community-oriented Open-source Package" class="ltx_ref">2022</a>)</cite>,
+Source Extractor <cite class="ltx_cite ltx_citemacro_citep">(Bertin and Arnouts, <a href="#bib.bib2" title="SExtractor: Software for source extraction." class="ltx_ref">1996</a>)</cite>,
+numpy <cite class="ltx_cite ltx_citemacro_citep">(Harris and others, <a href="#bib.bib1" title="Array programming with numpy" class="ltx_ref">2020</a>)</cite>
+</span></span></span>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">I </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.1" class="ltx_p">The Vanishing &amp; Appearing Sources during a Century of Observations (VASCO) project <cite class="ltx_cite ltx_citemacro_citep">(Villarroel<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib3" title="The Vanishing and Appearing Sources during a Century of Observations Project. I. USNO Objects Missing in Modern Sky Surveys and Follow-up Observations of a “Missing Star”" class="ltx_ref">2020</a>)</cite>
+detected a number of fast transient events using celestial observations from photographic
+plates.
+All these observations are based on the Palomar Observatory Sky Surveys conducted
+in the 1950s. The favored interpretation of these events is that, absent reasonable astronomical
+explanations for their very odd appearance and behavior, they nevertheless are consistent with
+the hypothesis that orbiting, or passing, artificial objects near Earth could create sub-second
+glints from reflected Sun light <cite class="ltx_cite ltx_citemacro_citep">(Villarroel<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib5" title="Aligned, multiple-transient events in the first palomar sky survey" class="ltx_ref">2025a</a>)</cite>. Given that these observations were
+obtained at a time that predates our first artificial satellite, they become especially notewhorthy
+in the context of SETI. Thus,
+it would be important to confirm the VASCO detections with independent experiments.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.1" class="ltx_p">We looked for other archives of astronomical photographic plates that could serve as a
+basis for an independent search. Such archives must provide plate data in digitized form,
+accessible via online tools, and contain a significant number of plates obtained in the pre-Sputnik
+era. We found that the digitized plates and ancillary data provided by the Archives of Photographic PLates for Astronomical USE (APPLAUSE) <span id="footnote1" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_tag ltx_tag_note">1</span><a href="https://www.plate-archive.org/cms/home/" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.plate-archive.org/cms/home/</a></span></span></span> are very suitable for the purposes of this project. Aside from the digitized scans, it provides
+tables of detected objects in each plate, obtained by running the SExtractor software
+<cite class="ltx_cite ltx_citemacro_citep">(Bertin and Arnouts, <a href="#bib.bib2" title="SExtractor: Software for source extraction." class="ltx_ref">1996</a>)</cite></p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p id="S1.p3.1" class="ltx_p">The most important difference between the methodology used in this work, and the one used by the
+VASCO team <cite class="ltx_cite ltx_citemacro_citep">(Solano<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib4" title="On the nature of apparent transient sources on the National Geographic Society - Palomar Observatory Sky Survey" class="ltx_ref">2022</a>)</cite>, is that we use no external catalogs as a source of reference positions
+for objects recorded in the plates. We work only with plate pairs that share a common FOV on the sky, and
+are separated by a short time interval (ideally taken in the same night.). The VASCO search starts by
+searching on any given plate, objects taken from a number of astronomical catalogs, and then works with
+objects that fail identification. This approach has the advantage of being able to access almost any plate
+at any region on the sky, at any time. Our approach gives access to a much more limited set of plates. Since
+our purpose, at least initially, is not to study the phenomenon in a comprehensive way, but just to
+confirm/follow up
+the work done by VASCO, use of a more limited data set doesn’t pose a problem. And, by using a
+different methodology, any confirmation that comes from this study can potentialy add even more
+significance to the discoveries.</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">II </span>Data</h2>
+
+<div id="S2.p1" class="ltx_para">
+<p id="S2.p1.1" class="ltx_p">The APPLAUSE archive contains about 98,000 scanned plates, and about 4.5 billion extracted sources.
+We started by looking, among the 27 plate archives/collections from Hamburg, Bamberg, Potsdam,
+Tautenburg, Tartu and Vatican Observatories, which collection / telescope would make a suitable target for
+searching. Given that the VASCO Project focussed on plates taken by a large Schmidt camera, we looked into the holdings associated with the Hamburger Sternwarte Großer Schmidtspiegel 1.2-m camera. It has in principle very similar optical
+and mechanical characteristics as the Samuel Oschin telescope at Palomar Observatory. Thus we should have similar plate scales, plate sizes, resolutions, and limiting magnitudes.</p>
+</div>
+<div id="S2.p2" class="ltx_para">
+<p id="S2.p2.1" class="ltx_p">In this paper, we present a short description of the methodology, and report the preliminary findings of a search of transients in the plates produced by the Großer Schmidtspiegel camera.</p>
+</div>
+<div id="S2.p3" class="ltx_para">
+<p id="S2.p3.1" class="ltx_p">About 900 digitized plates can be found for that telescope, covering dates from 1954 to 1957 (later dates are avoided because we want skies free of human contaminants - Sputnik was launched in Oct 4, 1957).
+The plates cover typically FOVs about 2 X 2 deg, and were scanned at a resolution of 0.91 arcsec/pixel.
+The resulting digital files are about 10,000 x 10,000 pixels in size. A large majority of the plates from that
+plate set were scanned twice by the APPLAUSE team, rotating
+the plate by 90 deg over the scanner bed in between scans (generating X and Y scans). Each one of these
+scans were separately analyzed by SExtractor, producing two different lists of sources for each plate.</p>
+</div>
+<div id="S2.p4" class="ltx_para">
+<p id="S2.p4.1" class="ltx_p">Searching the archive catalog for at least three plates that share a common footprint on the sky (FOVs overlapping 50% or more), share the same date, and were taken in quick succession, we found 41 plates that fulfill these requirements. This initial
+data set is used here primarily to develop and test possible search procedures. Planned work will augment the number of plates to be analyzed, by including plates sharing a common FOV but taken on separate nights, as well as data sets with only two plates..</p>
+</div>
+<div id="S2.p5" class="ltx_para">
+<p id="S2.p5.1" class="ltx_p">The basic data set for each plate includes two plate scans, and two source tables: one for raw scan quantities, and another for calibrated quantities. Both the raw and calibrated tables contain data from both X and Y scans.
+They can be told apart in the table via the unique source ID and scan number associated with each object
+detected.</p>
+</div>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">III </span>Analysis</h2>
+
+<div id="S3.p1" class="ltx_para">
+<p id="S3.p1.1" class="ltx_p">A very time and resource-consuming part of this kind of analysis is to just examine the entire plate scan with source-identification software. Also, astrometric solutions are mandatory for the plate scans to be usable in any form. By running SExtractor and astrometry solving software themselves, and providing us with excellent tables and astrometry solutions with a lot of information on each and every single detected feature on the photographic images, the APPLAUSE archive helped significantly with the feasibility of this project.</p>
+</div>
+<div id="S3.p2" class="ltx_para">
+<p id="S3.p2.1" class="ltx_p">The analysis steps can be summarized this way:</p>
+</div>
+<div id="S3.p3" class="ltx_para">
+<ul id="S3.I1" class="ltx_itemize">
+<li id="S3.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i1.p1" class="ltx_para">
+<p id="S3.I1.i1.p1.1" class="ltx_p">look for suitable plates in the database that fulfill certain criteria, such as:</p>
+<ul id="S3.I1.i1.I1" class="ltx_itemize">
+<li id="S3.I1.i1.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item"><span id="S3.I1.i1.I1.i1.1.1.1" class="ltx_text ltx_font_bold">–</span></span> 
+<div id="S3.I1.i1.I1.i1.p1" class="ltx_para">
+<p id="S3.I1.i1.I1.i1.p1.1" class="ltx_p">plates taken before October 1957;</p>
+</div>
+</li>
+<li id="S3.I1.i1.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item"><span id="S3.I1.i1.I1.i2.1.1.1" class="ltx_text ltx_font_bold">–</span></span> 
+<div id="S3.I1.i1.I1.i2.p1" class="ltx_para">
+<p id="S3.I1.i1.I1.i2.p1.1" class="ltx_p">plates from the desired telescope;</p>
+</div>
+</li>
+<li id="S3.I1.i1.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item"><span id="S3.I1.i1.I1.i3.1.1.1" class="ltx_text ltx_font_bold">–</span></span> 
+<div id="S3.I1.i1.I1.i3.p1" class="ltx_para">
+<p id="S3.I1.i1.I1.i3.p1.1" class="ltx_p">plates taken in the same night;</p>
+</div>
+</li>
+<li id="S3.I1.i1.I1.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item"><span id="S3.I1.i1.I1.i4.1.1.1" class="ltx_text ltx_font_bold">–</span></span> 
+<div id="S3.I1.i1.I1.i4.p1" class="ltx_para">
+<p id="S3.I1.i1.I1.i4.p1.1" class="ltx_p">plate FOVs overlap by a significant area;</p>
+</div>
+</li>
+<li id="S3.I1.i1.I1.i5" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item"><span id="S3.I1.i1.I1.i5.1.1.1" class="ltx_text ltx_font_bold">–</span></span> 
+<div id="S3.I1.i1.I1.i5.p1" class="ltx_para">
+<p id="S3.I1.i1.I1.i5.p1.1" class="ltx_p">at least three plates within these conditions.</p>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li id="S3.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i2.p1" class="ltx_para">
+<p id="S3.I1.i2.p1.1" class="ltx_p">all data for a sequence of such plates (scans, source tables) is downloaded from APPLAUSE. A
+sequence is formed by all plates with common FOV and taken on the same night;</p>
+</div>
+</li>
+<li id="S3.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i3.p1" class="ltx_para">
+<p id="S3.I1.i3.p1.1" class="ltx_p">a sequence is broken down into pairs of consecutive exposures, and, for each one of those pairs:</p>
+<ul id="S3.I1.i3.I1" class="ltx_itemize">
+<li id="S3.I1.i3.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item"><span id="S3.I1.i3.I1.i1.1.1.1" class="ltx_text ltx_font_bold">–</span></span> 
+<div id="S3.I1.i3.I1.i1.p1" class="ltx_para">
+<p id="S3.I1.i3.I1.i1.p1.1" class="ltx_p">cross-match the first plate’s source table, with the second plate’s source table. Objects that
+do not have a counterpart in the second plate - these are the candidates for (vanishing) transients;</p>
+</div>
+</li>
+<li id="S3.I1.i3.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item"><span id="S3.I1.i3.I1.i2.1.1.1" class="ltx_text ltx_font_bold">–</span></span> 
+<div id="S3.I1.i3.I1.i2.p1" class="ltx_para">
+<p id="S3.I1.i3.I1.i2.p1.1" class="ltx_p">fit FWHM and other parameters (from model Gaussians, from empirical radial profiles, from shape analysis functions) onto each one of these non-matched sources;</p>
+</div>
+</li>
+<li id="S3.I1.i3.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item"><span id="S3.I1.i3.I1.i3.1.1.1" class="ltx_text ltx_font_bold">–</span></span> 
+<div id="S3.I1.i3.I1.i3.p1" class="ltx_para">
+<p id="S3.I1.i3.I1.i3.p1.1" class="ltx_p">compare these parameters with the same parameters derived from sources <span id="S3.I1.i3.I1.i3.p1.1.1" class="ltx_text ltx_font_italic">with</span> a counterpart;</p>
+</div>
+</li>
+<li id="S3.I1.i3.I1.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item"><span id="S3.I1.i3.I1.i4.1.1.1" class="ltx_text ltx_font_bold">–</span></span> 
+<div id="S3.I1.i3.I1.i4.p1" class="ltx_para">
+<p id="S3.I1.i3.I1.i4.p1.1" class="ltx_p">display results from the few promising candidates that result from the statistical comparison, and vet them manually.</p>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div id="S3.p4" class="ltx_para">
+<p id="S3.p4.1" class="ltx_p">The requirement that at least three plates be present in each sequence will be relaxed in a forthcoming iteration: because the core idea of the method is to compare a given plate with another plate of the same field, minimum
+sequence size is 2. There are, for this telescope, about 60 additional pairs of plates (taken on the same night) that fulfill the requirements.</p>
+</div>
+<div id="S3.p5" class="ltx_para">
+<p id="S3.p5.1" class="ltx_p">The analysis steps were implemented in a series of Jupyter notebooks. These notebooks can be run
+individually, and also in batch mode (pipeline) over one entire sequence of plates, or a series of sequences.
+Manual running of a particular notebook over a selected subset of the data is sometimes necessary to
+fine-tune certain analysis parameters for certain plates or sequences.</p>
+</div>
+<div id="S3.p6" class="ltx_para">
+<p id="S3.p6.1" class="ltx_p">The entire process starts with extracting a suitable ”master” table from APPLAUSE that contains all
+necessary data to control what will be downloaded from the archive. Notebook <span id="S3.p6.1.1" class="ltx_text ltx_font_italic">footprint_analysis.ipynb</span>
+contains, at the top, an example of a SQL query that can be used to extract the master table.
+The <span id="S3.p6.1.2" class="ltx_text ltx_font_italic">footprint_analysis.ipynb</span> notebook reads the master table and looks for suitable plate pairs and sequences. Once found, the pipeline can be run over the desired sequences.</p>
+</div>
+<div id="S3.p7" class="ltx_para">
+<p id="S3.p7.1" class="ltx_p">The main step in the pipeline is carried out by notebook <span id="S3.p7.1.1" class="ltx_text ltx_font_italic">find_mismatches.ipynb</span>, which cross-matches
+sources for the first plate in the pair with sources for the second plate, looking for matches in celestial
+coordinates (within 5 arcsec).</p>
+</div>
+<div id="S3.p8" class="ltx_para">
+<p id="S3.p8.1" class="ltx_p">At the very beginning of this step, the code apply filters/thresholds to several
+SExtractor-generated parameters, such as flags, elongation, position on plate, peak flux, model prediction.
+This removes the most blatant artifacts and bad quality star images from subsequent processing.</p>
+</div>
+<div id="S3.p9" class="ltx_para">
+<p id="S3.p9.1" class="ltx_p">At the cross-match step, we exploit the fact there are two scans for each plate, made in directions perpendicular to each other. Before looking for the mismatches between first and second plates, as described above, the code
+uses the same cross-matching procedure, but looking for mismatches between the X and Y scans <span id="S3.p9.1.1" class="ltx_text ltx_font_italic">of the first
+plate</span>. That way, any artifact introduced by the scanning process, such as dirt on the scanner bed, and dirt
+that was somehow dislodged from, or acquired by, the plate when it gets rotated, can be filtered out by removing detections
+that appear on the X scan but do not have a counterpart on the Y scan. That significantly reduces the number of artifacts that get included in the output of this step.</p>
+</div>
+<div id="S3.p10" class="ltx_para">
+<p id="S3.p10.1" class="ltx_p">One should note that the Y scan image itself is not needed for this analysis, but just its associated
+source table. In practice, sources from both scans are included in one single table as delivered by
+APPLAUSE. We do not download the corresponding Y image file.</p>
+</div>
+<div id="S3.p11" class="ltx_para">
+<p id="S3.p11.1" class="ltx_p">The PSF analysis step generates a number of diagnostics that help to understand the image characteristics,
+and hopefully could be of use in segregating real transients, from artifacts. First, it fits Gaussians to a subset
+of stars, that is, objects that <span id="S3.p11.1.1" class="ltx_text ltx_font_italic">do have</span> a match in the second plate. Next, it fits Gaussians to all non-matched
+objects. Results are plotted and can be used to help figure out which parameters to use in filtering for
+candidates.</p>
+</div>
+<figure id="S3.F1" class="ltx_figure"><img src="2603.20407v2/PSF.png" id="S3.F1.g1" class="ltx_graphics ltx_img_landscape" width="476" height="353" alt="Refer to caption">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>One of the output diagnostics from the PSF analysis, for plate pair 9319-9320</figcaption>
+</figure>
+<div id="S3.p12" class="ltx_para">
+<p id="S3.p12.1" class="ltx_p">One could argue that a Gaussian is not a perfect model for a star image on a photographic plate, based on
+the fact that photographic density has a logarithmic dependency on exposure (a better model would be
+perhaps a quadratic). However, in practice the approach seems to work satisfactorily; the diagnostics
+generated by the fit procedure (Fig. <a href="#S3.F1" title="Figure 1 ‣ III Analysis ‣ Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>) show how much the actual data departs from the
+Gaussian model. The departure is consistent with the quadratic model. In particular, FWHM tends to
+be underestimated.</p>
+</div>
+<div id="S3.p13" class="ltx_para">
+<p id="S3.p13.1" class="ltx_p">A more important factor is the position on the plate, since FWHM is clearly dependent on radial distance
+from plate center, on some plates. Certainly a telescope focus issue; it should be accounted for when vetting
+candidates.</p>
+</div>
+<div id="S3.p14" class="ltx_para">
+<p id="S3.p14.1" class="ltx_p">The analysis step also computes radial profiles for each non-matched object, and for a number of stars
+in its neighborhood (<math id="S3.p14.1.m1" class="ltx_Math" alttext="\sim 6" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>6</mn></mrow><annotation encoding="application/x-tex">\sim 6</annotation></semantics></math> arcmin), and with peak flux within 0.1 mag of its peak flux. It also computes
+some shape parameters for a fixed isophote, as an attempt to characterize the object’s shape (this is
+still being worked out).</p>
+</div>
+<div id="S3.p15" class="ltx_para">
+<p id="S3.p15.1" class="ltx_p">A filtering step is applied before the output of the analysis step, removing anything that has FWHM
+and peak flux outside limits specified by user-settable parameters.</p>
+</div>
+<div id="S3.p16" class="ltx_para">
+<p id="S3.p16.1" class="ltx_p">Finally, the display notebook creates visualizations for all surviving non-matched sources, after applying
+additional filtering based on shape parameters. Due to false positives in the SExtractor table for the
+second plate (when the table doesn’t list an entry for a visible but faint object),
+an additional filter based on aperture photometry is used to reject these (few) false positives.</p>
+</div>
+<div id="S3.p17" class="ltx_para">
+<p id="S3.p17.1" class="ltx_p">The pipeline includes additional steps to collate and summarize results.</p>
+</div>
+<div id="S3.p18" class="ltx_para">
+<p id="S3.p18.1" class="ltx_p">The code in the notebooks exploits the fact laptop computers can provide a significant degree of
+parallelization (10 processors on a MacBook M1). That, on top of significant gains in performance enabled
+by vectorized operations in the <span id="S3.p18.1.1" class="ltx_text ltx_font_italic">numpy</span> library <cite class="ltx_cite ltx_citemacro_citep">(Harris and others, <a href="#bib.bib1" title="Array programming with numpy" class="ltx_ref">2020</a>)</cite>, rendered this project feasible at
+no cost on a personal laptop computer.</p>
+</div>
+<figure id="S3.F2" class="ltx_figure"><img src="2603.20407v2/Event.png" id="S3.F2.g1" class="ltx_graphics ltx_img_square" width="476" height="471" alt="Refer to caption">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>Output of the ’display’ pipeline step for one particular transient candidate. <span id="S3.F2.5.1" class="ltx_text ltx_font_bold">Top left:</span>
+transient on the first plate; <span id="S3.F2.6.2" class="ltx_text ltx_font_bold">Top right:</span> position of transient on the second plate (about 30 min.
+later); <span id="S3.F2.7.3" class="ltx_text ltx_font_bold">Bottom left:</span> 6 arcmin neighborhood around transient; the marked stars lie within 0.1 mag
+of the transient itself; <span id="S3.F2.8.4" class="ltx_text ltx_font_bold">Bottom right:</span> normalized radial profiles, and stats.</figcaption>
+</figure>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">IV </span>Results</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p id="S4.p1.1" class="ltx_p">Results to date are summarized in the <span id="S4.p1.1.1" class="ltx_text ltx_font_italic">results.ipynb</span> notebook in the software repository <cite class="ltx_cite ltx_citemacro_citep">(Busko, <a href="#bib.bib6" title="plateanalysis: analysis of archival photographic plates" class="ltx_ref">2026</a>)</cite>. The 41 plates analyzed so far yielded 70 candidates; visual vetting
+dropped that to 35 “good candidates”.</p>
+</div>
+<div id="S4.p2" class="ltx_para">
+<p id="S4.p2.1" class="ltx_p">Some preliminary results related to the analysis process itself were found. In particular, we found that
+the FWHM by itself, as derived by Gaussian fitting, is not a reliable discriminator against artifacts: it can
+depend on the position on the plate, and can be biased by the non-Gaussian nature of the light distribution
+of each detected source. The radial brightness profile seems to be more useful, by comparing
+the source profile with an average profile of stars with similar magnitude in the neighborhood.</p>
+</div>
+<div id="S4.p3" class="ltx_para">
+<p id="S4.p3.1" class="ltx_p">Shape parameters are still being evaluated as a discrimination tool, but we likely need a larger
+sample before trying to use them as discrimination criteria.</p>
+</div>
+<div id="S4.p4" class="ltx_para">
+<p id="S4.p4.1" class="ltx_p">While the final interpretation of the morphological properties of the detected transients is still under analysis, one noteworthy
+result should be highlighted regarding their FWHM. Specifically, the events exhibit systematically FWHM
+compared to stellar point spread functions, consistent with their interpretation as extremely short-duration flashes (see Fig. <a href="#S3.F2" title="Figure 2 ‣ III Analysis ‣ Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>).
+As discussed by <cite class="ltx_cite ltx_citemacro_citep">(Villarroel<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib10" title="Aligned, multiple-transient events in the first palomar sky survey" class="ltx_ref">2025b</a>)</cite>, unresolved flashes lasting less than a second naturally appear sharper and more circular than
+stellar images, particularly on long-exposure plates where stars are significantly blurred by seeing and tracking errors. Such profiles are therefore
+an expected observational signature of sub-second optical flashes, further reinforcing the transient interpretation.</p>
+</div>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">V </span>Conclusions</h2>
+
+<div id="S5.p1" class="ltx_para">
+<p id="S5.p1.1" class="ltx_p">This paper describes the basics of an ongoing experiment designed to independently verify and support
+the findings of the VASCO project. In particular, it addresses the existence and properties of fast celestial
+transients recorded in archival photographic plates taken decades ago. While such transients are difficult to
+reconcile within a conventional astronomical framework, they are consistent with sub-second optical glints produced by
+sunlight reflecting from flat surfaces on rotating objects transiting above Earth’s atmosphere. Given the potential
+implications for SETI-related research, establishing a robust observational basis for the reality and behavior of these
+events is of clear importance.</p>
+</div>
+<div id="S5.p2" class="ltx_para">
+<p id="S5.p2.1" class="ltx_p">Using astronomical plates taken in the 1950s with the Großer Schmidtspiegel camera at Hamburger Sternwarte, and digitized within the
+APPLAUSE Archive, we obtain initial results that seems independently confirm the presence of such transients.
+While the work is still ongoing, one notable result is the emerging consistency with previous findings from the VASCO project, particularly
+regarding the expected observational signatures of sub-second optical glints in photographic plates. Specifically, the detected events exhibit a
+systematically narrow FWHM compared to stellar point spread functions, which is consistent with their interpretation
+as extremely short-duration flashes.</p>
+</div>
+<div id="S5.p3" class="ltx_para">
+<p id="S5.p3.1" class="ltx_p">So far, only a small fraction of the available plates has been analyzed. Future work will expand the dataset to include additional
+plates from the same telescope, as well as material from other instruments within the APPLAUSE Archive.
+The goal is to assemble all events into a database, and then search for possible
+alignments, or other correlations, in between different events in the database. Ultimately, cross-correlation with transients already
+identified by the VASCO project will be essential for advancing our understanding of these phenomena.</p>
+</div>
+<div id="S5.acknowledgements1" class="ltx_acknowledgements">Funding for APPLAUSE has been provided by DFG (German Research Foundation, Grant ),
+Leibniz Institute for Astrophysics Potsdam (AIP), Dr. Remeis Sternwarte Bamberg (University
+Nuernberg/Erlangen), the Hamburger Sternwarte (University of Hamburg) and Tartu Observatory.
+
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul id="bib.L1" class="ltx_biblist">
+<li id="bib.bib8" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Astropy Collaboration, A. M. Price-Whelan, B. M. Sipőcz, <span class="ltx_text ltx_bib_etal">et al.</span> (2018)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Astropy Project: Building an Open-science Project and Status of the v2.0 Core Package</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">156</span>, <span class="ltx_text ltx_bib_pages"> pp. 123</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/aabc4f" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#id1" title="Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_title">Searching for Fast Astronomical Transients in Archival Photographic Plates</span></a>.
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Astropy Collaboration, T. P. Robitaille, E. J. Tollerud, <span class="ltx_text ltx_bib_etal">et al.</span> (2013)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Astropy: A community Python package for astronomy</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">A&amp;A</span> <span class="ltx_text ltx_bib_volume">558</span>, <span class="ltx_text ltx_bib_pages"> pp. A33</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1051/0004-6361/201322068" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#id1" title="Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_title">Searching for Fast Astronomical Transients in Archival Photographic Plates</span></a>.
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Astropy Collaboration, A. Rousselle, B. M. Sipőcz, <span class="ltx_text ltx_bib_etal">et al.</span> (2022)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Astropy Project: Sustaining and Growing a Community-oriented Open-source Package</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">935</span>, <span class="ltx_text ltx_bib_pages"> pp. 167</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-4357/ac7c74" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#id1" title="Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_title">Searching for Fast Astronomical Transients in Archival Photographic Plates</span></a>.
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">E. Bertin and S. Arnouts (1996)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">SExtractor: Software for source extraction.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">A&amp;AS</span> <span class="ltx_text ltx_bib_volume">117</span>, <span class="ltx_text ltx_bib_pages"> pp. 393–404</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1051/aas%3A1996164" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="I Introduction ‣ Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>,
+<a href="#id1" title="Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_title">Searching for Fast Astronomical Transients in Archival Photographic Plates</span></a>.
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">I. Busko (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">plateanalysis: analysis of archival photographic plates</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://github.com/cuernodegazpacho/plateanalysis" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.p1.1" title="IV Results ‣ Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§IV</span></a>,
+<a href="#id1" title="Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_title">Searching for Fast Astronomical Transients in Archival Photographic Plates</span></a>.
+</span>
+</li>
+<li id="bib.bib1" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">C. R. Harris <span class="ltx_text ltx_bib_etal">et al.</span> (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Array programming with numpy</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Nature</span> <span class="ltx_text ltx_bib_volume">585</span>, <span class="ltx_text ltx_bib_pages"> pp. 357–362</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p18.1" title="III Analysis ‣ Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III</span></a>,
+<a href="#id1" title="Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_title">Searching for Fast Astronomical Transients in Archival Photographic Plates</span></a>.
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">E. Solano, B. Villarroel, and C. Rodrigo (2022)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">On the nature of apparent transient sources on the National Geographic Society - Palomar Observatory Sky Survey</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv:2206.13563</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.48550/arXiv.2206.00907" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2206.13563</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3.1" title="I Introduction ‣ Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. Villarroel, E. Solano, H. Guergouri, A. Streblyanska, S. Bruehl, V. Andruk, L. Mattsson, R. Bär, J. Mimouni, S. Geier, A. Gupta, V. Okororie, K. Laggoune, M. Shultz, and R. Freitas (2025a)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Aligned, multiple-transient events in the first palomar sky survey</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. </span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.13140/RG.2.2.17502.14402" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="I Introduction ‣ Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. Villarroel, E. Solano, and G. W. Marcy (2025b)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Aligned, multiple-transient events in the first palomar sky survey</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">2507.15896</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.p4.1" title="IV Results ‣ Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§IV</span></a>.
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. Villarroel, J. Soodla, S. Comerón, L. Mattsson, K. Pelckmans, M. López-Corredoira, K. Krisciunas, E. Guerras, O. Kochukhov, J. Bergstedt, B. Buelens, R. E. Bär, R. Cubo, J. E. Enriquez, A. C. Gupta, I. Imaz, T. Karlsson, M. A. Prieto, A. A. Shlyapnikov, R. S. de Souza, I. B. Vavilova, and M. J. Ward (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Vanishing and Appearing Sources during a Century of Observations Project. I. USNO Objects Missing in Modern Sky Surveys and Follow-up Observations of a “Missing Star”</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">159</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 8</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/ab570f" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">1911.05068</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="I Introduction ‣ Searching for Fast Astronomical Transients in Archival Photographic Plates" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2603.20407v2/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer><footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation">
+        </a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International">
+        </a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences">
+        </a>
+      </div>
+    </div>
+  </div>
+</footer><div id="fixed-buttons-container">
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>

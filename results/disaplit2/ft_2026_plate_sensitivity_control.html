@@ -1,0 +1,947 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies</title>
+<!--Generated on Tue Apr 21 04:15:10 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<!--Document created on April 2026.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+    // Pre-apply spinout-banner dismissal here, before the banner paints, so it
+    // never flashes in only to be hidden later by the deferred arxiv-header.js.
+    // Key matches arxiv-header.js: "arxiv-banner-dismissed:" + data-banner-name.
+    if (localStorage.getItem('arxiv-banner-dismissed:spinout-nonprofit')) {
+      document.documentElement.setAttribute("data-banner-dismissed", "");
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css"><link rel="stylesheet" type="text/css" media="screen"
+  href="/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626"><style>
+  /* Banner pre-dismissal (set above before paint -> no flash-then-hide) and
+     reading-mode chrome hiding. */
+  html[data-banner-dismissed] .ds-announcement { display: none; }
+  html[data-reading-mode="enabled"] .ds-announcement,
+  html[data-reading-mode="enabled"] .ds-site-footer { display: none; }
+  /* Keep the announcement text dark on the Open-Blue band in both colour themes
+     (otherwise it inherits the paper's warm-wash text in dark mode and washes out). */
+  .ds-announcement-text { color: var(--arxiv-ink, #1c1a17); }
+</style>
+<script defer src="/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog><div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement"
+    data-banner-name="spinout-nonprofit">
+    <img class="ds-announcement-glyph" src="/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+    <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+    <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+    <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/"><img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/base/1.0.1/images/arxiv-logo-primary-light.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2604.16470v2">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2604.16470v2"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_abstract"><a href="#abstract1" title="In Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title">Abstract</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S1" title="In Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">1 </span>Introduction</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S1.SS1" title="In 1 Introduction ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">1.1 </span>Motivating Application: The VASCO Kp–Transient Claim</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S2" title="In Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2 </span>Data and Methods</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS1" title="In 2 Data and Methods ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.1 </span>Kp Index</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS2" title="In 2 Data and Methods ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.2 </span>Kp Binning</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS3" title="In 2 Data and Methods ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.3 </span>Primary Site: Harvard College Observatory (DASCH DR7)</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS4" title="In 2 Data and Methods ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.4 </span>Replication Site: Palomar (MAPS Catalog of POSS-I)</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS5" title="In 2 Data and Methods ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.5 </span>Statistical Tests</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S3" title="In Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3 </span>Results</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS1" title="In 3 Results ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.1 </span>Primary Result: Harvard Plate Sensitivity Is Flat Across Kp</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS2" title="In 3 Results ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.2 </span>Replication: Palomar Stellar Counts Flat Across Kp</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS3" title="In 3 Results ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.3 </span>Comparison of Two Sites</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S4" title="In Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4 </span>Application to the VASCO Kp–Transient Claim</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S4.SS1" title="In 4 Application to the VASCO Kp–Transient Claim ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.1 </span>Contrast with Transient Suppression</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S4.SS2" title="In 4 Application to the VASCO Kp–Transient Claim ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.2 </span>Combined Significance Across the VASCO Body of Work</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S5" title="In Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5 </span>Discussion</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S5.SS1" title="In 5 Discussion ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5.1 </span>Summary of Findings</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S5.SS2" title="In 5 Discussion ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5.2 </span>Applicability Beyond VASCO</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S5.SS3" title="In 5 Discussion ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5.3 </span>Implications for the VASCO Kp–Transient Claim</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S5.SS4" title="In 5 Discussion ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5.4 </span>Elevated Counts in High-Kp Palomar Bins</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S5.SS5" title="In 5 Discussion ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5.5 </span>Limitations</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S6" title="In Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">6 </span>Conclusions</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_bibliography"><a href="#bib" title="In Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: arXiv.org perpetual non-exclusive license
+  </a>
+  <div id="watermark-tr">
+arXiv:2604.16470v2 [astro-ph.IM] 21 Apr 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line">
+<h1 class="ltx_title ltx_font_bold ltx_title_document">Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Kevin Cann
+<br class="ltx_break"><span id="id1.1.id1" class="ltx_text ltx_font_italic">Independent Researcher, California, USA
+<br class="ltx_break"></span><span id="id2.2.id2" class="ltx_text ltx_font_typewriter">kkc@terragold.com</span>
+</span></span>
+</div>
+<div class="ltx_dates">(April 2026)</div>
+
+<div id="abstract1" class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">Historical photographic plate archives are a uniquely long-baseline resource for time-domain astronomy, but time-domain claims drawn from them are vulnerable to systematic plate-sensitivity variations correlated with external environmental modulators — airglow, seeing, lunar phase, and seasonal terms — that can mimic real astrophysical signals. We present a simple, broadly applicable protocol for testing such artifact hypotheses: use catalog-aggregate reference-population metrics (stellar detection counts or plate limiting magnitudes) as a function of the suspected modulator, and test for the predicted sensitivity trend under the artifact hypothesis. We apply this protocol to test whether geomagnetic storm activity, measured by the planetary Kp index, modulates photographic plate sensitivity at two independent observatories. At Harvard College Observatory, the Digital Access to a Sky Century @ Harvard (DASCH) Data Release 7 provides plate limiting magnitudes for 12,510 exposures across 500 sky positions: no significant trend across Kp bins (Spearman <math class="ltx_Math" alttext="\rho=-0.011" display="inline" intent=":literal"><semantics><mrow><mi>ρ</mi><mo>=</mo><mrow><mo>−</mo><mn>0.011</mn></mrow></mrow><annotation encoding="application/x-tex">\rho=-0.011</annotation></semantics></math>, <math class="ltx_Math" alttext="p=0.234" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.234</mn></mrow><annotation encoding="application/x-tex">p=0.234</annotation></semantics></math>). At Palomar, the Minnesota Automated Plate Scanner (MAPS) Catalog records stellar detection counts (NSTARS) for 638 POSS-I fields: no significant trend (Spearman <math class="ltx_Math" alttext="\rho=0.017" display="inline" intent=":literal"><semantics><mrow><mi>ρ</mi><mo>=</mo><mn>0.017</mn></mrow><annotation encoding="application/x-tex">\rho=0.017</annotation></semantics></math>, <math class="ltx_Math" alttext="p=0.673" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.673</mn></mrow><annotation encoding="application/x-tex">p=0.673</annotation></semantics></math>, <math class="ltx_Math" alttext="0.4\sigma" display="inline" intent=":literal"><semantics><mrow><mn>0.4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">0.4\sigma</annotation></semantics></math>). Plate sensitivity is invariant across the full range of geomagnetic activity at both sites, using independent instruments, emulsions, digitization pipelines, and sensitivity metrics. The protocol is immediately applicable to other archives (APPLAUSE, Heidelberg, Sonneberg, Bamberg, Potsdam) and to other environmental modulators (lunar phase, seasonal airglow climatology, solar F10.7, local meteorological conditions). As a motivating downstream application, we apply these null results to the recent claim by Cann (2026a) that VASCO transient detection rates are suppressed during geomagnetic storms (Cochran–Armitage: <math class="ltx_Math" alttext="Z=-3.391" display="inline" intent=":literal"><semantics><mrow><mi>Z</mi><mo>=</mo><mrow><mo>−</mo><mn>3.391</mn></mrow></mrow><annotation encoding="application/x-tex">Z=-3.391</annotation></semantics></math>, <math class="ltx_Math" alttext="p=0.0007" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.0007</mn></mrow><annotation encoding="application/x-tex">p=0.0007</annotation></semantics></math>, <math class="ltx_Math" alttext="3.4\sigma" display="inline" intent=":literal"><semantics><mrow><mn>3.4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">3.4\sigma</annotation></semantics></math>): a principal artifact objection holds that this is driven by enhanced airglow reducing plate sensitivity. Our results rule out that objection at two sites. The Kp effect on VASCO transients is source-specific. Combining four independent VASCO-related confirmatory tests under Fisher’s method yields <math class="ltx_Math" alttext="5.4\sigma" display="inline" intent=":literal"><semantics><mrow><mn>5.4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">5.4\sigma</annotation></semantics></math>; restricting the combination to three tests with fully independent underlying data yields <math class="ltx_Math" alttext="4.93\sigma" display="inline" intent=":literal"><semantics><mrow><mn>4.93</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">4.93\sigma</annotation></semantics></math> (<math class="ltx_Math" alttext="p=8.1\times 10^{-7}" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mrow><mn>8.1</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>7</mn></mrow></msup></mrow></mrow><annotation encoding="application/x-tex">p=8.1\times 10^{-7}</annotation></semantics></math>), which we report as the primary headline result for the VASCO application.</p>
+<p class="ltx_p"><span class="ltx_text ltx_font_bold">Keywords:</span> photographic plates, plate sensitivity, time-domain astronomy, artifact control, geomagnetic storms, Kp index, DASCH, MAPS, historical plate archives, VASCO</p>
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.1" class="ltx_p">Historical photographic plate archives are among the most valuable resources in modern astronomy. They provide the only direct record of the sky over timescales of decades to more than a century, and they underpin a growing body of time-domain work that would otherwise be impossible: long-baseline variability studies <cite class="ltx_cite ltx_citemacro_citep">(Grindlay et al., <a href="#bib.bib6" title="" class="ltx_ref">2012</a>)</cite>, searches for vanishing and appearing objects <cite class="ltx_cite ltx_citemacro_citep">(Villarroel et al., <a href="#bib.bib9" title="" class="ltx_ref">2020</a>)</cite>, rare-transient discoveries <cite class="ltx_cite ltx_citemacro_citep">(Solano et al., <a href="#bib.bib8" title="" class="ltx_ref">2024</a>)</cite>, and independent checks on claimed modern phenomena against their pre-digital counterparts. The continued digitization of plate collections — most notably the Digital Access to a Sky Century @ Harvard (DASCH) project at Harvard College Observatory, the Minnesota Automated Plate Scanner (MAPS) Catalog of the Palomar Observatory Sky Survey, and the APPLAUSE collaboration’s harmonized archive of Sonneberg, Hamburg, Potsdam, Bamberg, and Tautenburg plates — has extended the usable scientific reach of these archives substantially in the last two decades.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.1" class="ltx_p">A recurring concern in every plate archive study is whether putative time-domain signals are contaminated by systematic variations in plate sensitivity correlated with the putative signal’s environmental modulator. Airglow, for instance, is known to vary with geomagnetic activity, seasonal terms, lunar phase, and solar cycle phase, and elevated airglow can raise the sky background sufficiently to reduce the depth of a plate by a fraction of a magnitude or more under severe conditions. Similar concerns apply to plate-to-plate variations in seeing, emulsion batch, development conditions, and local meteorology. When a claimed signal population is found to correlate with an external environmental variable, the first question a careful reviewer asks is whether the correlation is driven by a genuine astrophysical effect or by a sensitivity artifact that affects all sources equally.</p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p id="S1.p3.1" class="ltx_p">This paper introduces a simple, broadly applicable protocol for testing such artifact hypotheses. The approach is to use catalog-aggregate reference-population metrics — plate limiting magnitudes, total stellar detection counts, or equivalent sensitivity proxies — as the dependent variable in a regression or rank-correlation test against the suspected environmental modulator. Under the artifact hypothesis, the reference metric should vary systematically with the modulator; under the null hypothesis (no sensitivity variation), it should not. The protocol is applicable to any well-calibrated plate archive where catalog-level aggregates exist at the plate or field level, and to any environmental modulator with continuous time coverage during the observing epoch. It is not suitable when the putative signal population cannot be distinguished from the reference stellar population, or when catalog-level aggregates are unavailable for the relevant plates.</p>
+</div>
+<div id="S1.p4" class="ltx_para">
+<p id="S1.p4.1" class="ltx_p">We apply the protocol to test whether geomagnetic storm activity, measured by the planetary Kp index, modulates photographic plate sensitivity. Our primary test is at Harvard College Observatory using the DASCH DR7 archive: 12,510 exposures across 500 sky positions, with per-plate limiting magnitudes computed by the DASCH pipeline. Our replication is at Palomar using the MAPS Catalog of POSS-I: 638 field records with catalog-level stellar detection counts (NSTARS). The two archives are independent at every level — different telescopes, emulsions, digitization hardware, processing pipelines, and continents — and they use different sensitivity metrics. A null result at one site admits an observatory-specific explanation; a null result at both sites rules out observatory-specific explanations jointly.</p>
+</div>
+<section id="S1.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">1.1 </span>Motivating Application: The VASCO Kp–Transient Claim</h3>
+
+<div id="S1.SS1.p1" class="ltx_para">
+<p id="S1.SS1.p1.4" class="ltx_p">The specific question that motivated this work is a recent claim about the Vanishing and Appearing Sources during a Century of Observations (VASCO) project. The VASCO team has catalogued over 100,000 point-source transients from the POSS-I archive <cite class="ltx_cite ltx_citemacro_citep">(Villarroel et al., <a href="#bib.bib9" title="" class="ltx_ref">2020</a>)</cite>, objects that appear on individual plates but are absent in all subsequent imaging. These transients predate artificial satellites, include cases of multiple simultaneous point sources on a single plate <cite class="ltx_cite ltx_citemacro_citep">(Villarroel et al., <a href="#bib.bib10" title="" class="ltx_ref">2021</a>)</cite>, are constrained to geosynchronous altitude by an Earth-shadow deficit at <math id="S1.SS1.p1.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>22<math id="S1.SS1.p1.2.m2" class="ltx_Math" alttext="\sigma" display="inline" intent=":literal"><semantics><mi>σ</mi><annotation encoding="application/x-tex">\sigma</annotation></semantics></math> for the geometric shadow and <math id="S1.SS1.p1.3.m3" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>7.6<math id="S1.SS1.p1.4.m4" class="ltx_Math" alttext="\sigma" display="inline" intent=":literal"><semantics><mi>σ</mi><annotation encoding="application/x-tex">\sigma</annotation></semantics></math> when realistic plate coverage is accounted for <cite class="ltx_cite ltx_citemacro_citep">(Villarroel et al., <a href="#bib.bib11" title="" class="ltx_ref">2025</a>)</cite>, and are enhanced near atmospheric nuclear test dates <cite class="ltx_cite ltx_citemacro_citep">(Bruehl &amp; Villarroel, <a href="#bib.bib1" title="" class="ltx_ref">2025</a>)</cite>.</p>
+</div>
+<div id="S1.SS1.p2" class="ltx_para">
+<p id="S1.SS1.p2.3" class="ltx_p"><cite class="ltx_cite ltx_citemacro_citet">Cann (<a href="#bib.bib3" title="" class="ltx_ref">2026a</a>)</cite> identified geomagnetic storm activity as an additional independent variable modulating transient rates. Transient detection rates follow a monotonic dose-response across five Kp intensity bins, from 17.4% during geomagnetically quiet periods to 2.4% at Kp 8–9 (Cochran–Armitage: <math id="S1.SS1.p2.1.m1" class="ltx_Math" alttext="Z=-3.391" display="inline" intent=":literal"><semantics><mrow><mi>Z</mi><mo>=</mo><mrow><mo>−</mo><mn>3.391</mn></mrow></mrow><annotation encoding="application/x-tex">Z=-3.391</annotation></semantics></math>, <math id="S1.SS1.p2.2.m2" class="ltx_Math" alttext="p=0.0007" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.0007</mn></mrow><annotation encoding="application/x-tex">p=0.0007</annotation></semantics></math>, <math id="S1.SS1.p2.3.m3" class="ltx_Math" alttext="3.4\sigma" display="inline" intent=":literal"><semantics><mrow><mn>3.4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">3.4\sigma</annotation></semantics></math>). The finding was pre-registered on OSF (osf.io/u9nas) before analysis.</p>
+</div>
+<div id="S1.SS1.p3" class="ltx_para">
+<p id="S1.SS1.p3.1" class="ltx_p">The principal artifact objection to this result is that geomagnetic storms enhance atmospheric airglow, reducing overall plate emulsion sensitivity and thus suppressing the detection of <span id="S1.SS1.p3.1.1" class="ltx_text ltx_font_italic">all</span> sources. Under this hypothesis, the VASCO transient suppression would be an artifact of reduced plate sensitivity rather than a physical response of the transient source population. If correct, stellar detection counts and plate limiting magnitudes should show the same dose-dependent suppression as the VASCO transients across Kp bins. The present paper tests this hypothesis using the protocol described above. The protocol is general; the VASCO application is specific. We present both in that order.</p>
+</div>
+</section>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>Data and Methods</h2>
+
+<div id="S2.p1" class="ltx_para">
+<p id="S2.p1.1" class="ltx_p">We apply the protocol at Harvard College Observatory (primary site) using the DASCH DR7 archive, and replicate at Palomar using the MAPS Catalog of POSS-I. Both archives provide catalog-level sensitivity metrics at the plate or field level and both cover the full 1949–1957 window during which the VASCO transient catalog was built. The two sites use different telescopes, emulsions, digitization hardware, pipelines, and sensitivity metrics; a null result replicated at both sites rules out observatory-specific explanations jointly.</p>
+</div>
+<section id="S2.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.1 </span>Kp Index</h3>
+
+<div id="S2.SS1.p1" class="ltx_para">
+<p id="S2.SS1.p1.1" class="ltx_p">Three-hourly Kp values were obtained from the GFZ Potsdam archive <cite class="ltx_cite ltx_citemacro_citep">(Matzka et al., <a href="#bib.bib7" title="" class="ltx_ref">2021</a>)</cite>, licensed CC BY 4.0. The maximum Kp in the 0–2 day window preceding each observation date was assigned to that observation, using the same lag window established in <cite class="ltx_cite ltx_citemacro_citet">Cann (<a href="#bib.bib3" title="" class="ltx_ref">2026a</a>)</cite>.</p>
+</div>
+</section>
+<section id="S2.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.2 </span>Kp Binning</h3>
+
+<div id="S2.SS2.p1" class="ltx_para">
+<p id="S2.SS2.p1.1" class="ltx_p">Five bins, identical to <cite class="ltx_cite ltx_citemacro_citet">Cann (<a href="#bib.bib3" title="" class="ltx_ref">2026a</a>)</cite>: Quiet (<math id="S2.SS2.p1.1.m1" class="ltx_Math" alttext="\mathrm{Kp}&lt;5" display="inline" intent=":literal"><semantics><mrow><mi>Kp</mi><mo>&lt;</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">\mathrm{Kp}&lt;5</annotation></semantics></math>), Kp 5 (G1), Kp 6 (G2), Kp 7 (G3), Kp 8–9 (G4–G5). The G1–G5 classification follows NOAA Space Weather Prediction Center conventions for minor through extreme geomagnetic storms.</p>
+</div>
+</section>
+<section id="S2.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.3 </span>Primary Site: Harvard College Observatory (DASCH DR7)</h3>
+
+<div id="S2.SS3.p1" class="ltx_para">
+<p id="S2.SS3.p1.1" class="ltx_p">The Digital Access to a Sky Century at Harvard (DASCH) project has digitized 429,274 photographic plates from the Harvard College Observatory plate collection, spanning 1885–1993 <cite class="ltx_cite ltx_citemacro_citep">(Williams, <a href="#bib.bib12" title="" class="ltx_ref">2024</a>)</cite>. Data Release 7 (December 2024) provides fully calibrated photometry and plate metadata accessible via the <span id="S2.SS3.p1.1.1" class="ltx_text ltx_font_typewriter">daschlab</span> Python package. For each plate exposure at a given sky position, the metadata include the locally corrected limiting magnitude (<span id="S2.SS3.p1.1.2" class="ltx_text ltx_font_typewriter">lim_mag_apass</span>), derived from the APASS photometric calibration. This is a direct, well-calibrated sensitivity proxy: lower limiting magnitude indicates a shallower (less sensitive) plate.</p>
+</div>
+<div id="S2.SS3.p2" class="ltx_para">
+<p id="S2.SS3.p2.1" class="ltx_p">500 sky positions were sampled on a uniform grid at <math id="S2.SS3.p2.1.m1" class="ltx_Math" alttext="|b|\geq 15^{\circ}" display="inline" intent=":literal"><semantics><mrow><mrow><mo stretchy="false">|</mo><mi>b</mi><mo stretchy="false">|</mo></mrow><mo>≥</mo><msup><mn>15</mn><mo>∘</mo></msup></mrow><annotation encoding="application/x-tex">|b|\geq 15^{\circ}</annotation></semantics></math>. For each position, all plate exposures during 1949–1957 were retrieved via the DASCH DR7 exposures API. A total of 749,199 plate-position records were collected; of these, 12,510 had both valid <span id="S2.SS3.p2.1.1" class="ltx_text ltx_font_typewriter">lim_mag_apass</span> and a matching Kp value.</p>
+</div>
+<div id="S2.SS3.p3" class="ltx_para">
+<p id="S2.SS3.p3.1" class="ltx_p">The hypothesis, sky sampling strategy, Kp binning, and statistical tests were pre-registered on OSF (osf.io/u9nas/DASCH_Kp_Replication) with a tamper-evident timestamp on April 10, 2026. The original pre-registration specified <span id="S2.SS3.p3.1.1" class="ltx_text ltx_font_typewriter">n_solutions_apass</span> as the sensitivity proxy. Upon data collection, this field was found to be invariant at 1.0 across all records (no discriminating information). A pre-registered amendment, timestamped before any limiting magnitude data were examined, substituted <span id="S2.SS3.p3.1.2" class="ltx_text ltx_font_typewriter">lim_mag_apass</span> as the dependent variable.</p>
+</div>
+</section>
+<section id="S2.SS4" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.4 </span>Replication Site: Palomar (MAPS Catalog of POSS-I)</h3>
+
+<div id="S2.SS4.p1" class="ltx_para">
+<p id="S2.SS4.p1.1" class="ltx_p">The Minnesota Automated Plate Scanner (MAPS) Catalog of the POSS-I <cite class="ltx_cite ltx_citemacro_citep">(Cabanela et al., <a href="#bib.bib2" title="" class="ltx_ref">2003</a>)</cite> provides digitized stellar and galaxy catalogs for 632 POSS-I fields with Galactic latitudes <math id="S2.SS4.p1.1.m1" class="ltx_Math" alttext="|b|&gt;20^{\circ}" display="inline" intent=":literal"><semantics><mrow><mrow><mo stretchy="false">|</mo><mi>b</mi><mo stretchy="false">|</mo></mrow><mo>&gt;</mo><msup><mn>20</mn><mo>∘</mo></msup></mrow><annotation encoding="application/x-tex">|b|&gt;20^{\circ}</annotation></semantics></math> (P003 and P926 are excluded by catalog documentation and are not distributed). Each binary field file (P###.dat) begins with a 156-byte header containing 39 big-endian 32-bit integers; the fields used here are the POSS field number (integer 0), observation date (EpochDay, EpochMon, EpochYear at integers 2–4), stellar detection count (NSTARS, integer 6), and galaxy count (NGALAX, integer 7). Headers were extracted for all 632 fields, matched to Kp values using the 0–2 day pre-observation window, and assigned to the five Kp bins. The resulting analyzed dataset contains 638 field-level records, representing the 632 unique fields with six fields contributing paired records; this dataset is the basis of Table <a href="#S3.T2" title="Table 2 ‣ 3.2 Replication: Palomar Stellar Counts Flat Across Kp ‣ 3 Results ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> and all statistical tests reported below. Only the 156-byte header of each field file was read; no object-level records were parsed.</p>
+</div>
+<div id="S2.SS4.p2" class="ltx_para">
+<p id="S2.SS4.p2.1" class="ltx_p">The MAPS hypothesis, data source, statistical tests, and predicted outcomes were pre-registered on OSF (osf.io/Vy4pc) with a tamper-evident timestamp on April 8, 2026, prior to downloading or examining any MAPS field data.</p>
+</div>
+</section>
+<section id="S2.SS5" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.5 </span>Statistical Tests</h3>
+
+<div id="S2.SS5.p1" class="ltx_para">
+<p id="S2.SS5.p1.2" class="ltx_p">The primary pre-registered test at each site is the Spearman rank correlation between Kp bin score (0–4) and the sensitivity metric (<span id="S2.SS5.p1.2.1" class="ltx_text ltx_font_typewriter">lim_mag_apass</span> at Harvard; NSTARS per field at Palomar). The predicted result under the null hypothesis of no sensitivity–Kp coupling is <math id="S2.SS5.p1.1.m1" class="ltx_Math" alttext="p&gt;0.05" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>&gt;</mo><mn>0.05</mn></mrow><annotation encoding="application/x-tex">p&gt;0.05</annotation></semantics></math>. Secondary tests include the Pearson correlation and Kruskal–Wallis <math id="S2.SS5.p1.2.m2" class="ltx_Math" alttext="H" display="inline" intent=":literal"><semantics><mi>H</mi><annotation encoding="application/x-tex">H</annotation></semantics></math> across bins; at Palomar, Spearman and Pearson correlations on NGALAX serve as a consistency check.</p>
+</div>
+</section>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Results</h2>
+
+<section id="S3.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.1 </span>Primary Result: Harvard Plate Sensitivity Is Flat Across Kp</h3>
+
+<figure id="S3.T1" class="ltx_table">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 1: </span>Mean plate limiting magnitude (<span id="S3.T1.6.1" class="ltx_text ltx_font_typewriter">lim_mag_apass</span>) at Harvard College Observatory by Kp intensity bin. <math id="S3.T1.2.m1" class="ltx_Math" alttext="N" display="inline" intent=":literal"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math> = number of plate-position records per bin.</figcaption>
+<table id="S3.T1.4" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S3.T1.3.1" class="ltx_tr">
+<th id="S3.T1.3.1.2" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_th_row ltx_border_tt">Kp Bin</th>
+<th id="S3.T1.3.1.1" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><math id="S3.T1.3.1.1.m1" class="ltx_Math" alttext="N" display="inline" intent=":literal"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math></th>
+<th id="S3.T1.3.1.3" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt">Mean <span id="S3.T1.3.1.3.1" class="ltx_text ltx_font_typewriter">lim_mag</span>
+</th>
+<th id="S3.T1.3.1.4" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt">Std</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S3.T1.4.2" class="ltx_tr">
+<th id="S3.T1.4.2.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_t">Quiet (<math id="S3.T1.4.2.1.m1" class="ltx_Math" alttext="\mathrm{Kp}&lt;5" display="inline" intent=":literal"><semantics><mrow><mi>Kp</mi><mo>&lt;</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">\mathrm{Kp}&lt;5</annotation></semantics></math>)</th>
+<td id="S3.T1.4.2.2" class="ltx_td ltx_align_right ltx_border_t">6,424</td>
+<td id="S3.T1.4.2.3" class="ltx_td ltx_align_right ltx_border_t">13.70</td>
+<td id="S3.T1.4.2.4" class="ltx_td ltx_align_right ltx_border_t">1.68</td>
+</tr>
+<tr id="S3.T1.4.3.1" class="ltx_tr">
+<th id="S3.T1.4.3.1.1" class="ltx_td ltx_align_left ltx_th ltx_th_row">Kp 5 (G1)</th>
+<td id="S3.T1.4.3.1.2" class="ltx_td ltx_align_right">3,288</td>
+<td id="S3.T1.4.3.1.3" class="ltx_td ltx_align_right">13.58</td>
+<td id="S3.T1.4.3.1.4" class="ltx_td ltx_align_right">1.72</td>
+</tr>
+<tr id="S3.T1.4.4.2" class="ltx_tr">
+<th id="S3.T1.4.4.2.1" class="ltx_td ltx_align_left ltx_th ltx_th_row">Kp 6 (G2)</th>
+<td id="S3.T1.4.4.2.2" class="ltx_td ltx_align_right">1,410</td>
+<td id="S3.T1.4.4.2.3" class="ltx_td ltx_align_right">13.68</td>
+<td id="S3.T1.4.4.2.4" class="ltx_td ltx_align_right">1.71</td>
+</tr>
+<tr id="S3.T1.4.5.3" class="ltx_tr">
+<th id="S3.T1.4.5.3.1" class="ltx_td ltx_align_left ltx_th ltx_th_row">Kp 7 (G3)</th>
+<td id="S3.T1.4.5.3.2" class="ltx_td ltx_align_right">1,127</td>
+<td id="S3.T1.4.5.3.3" class="ltx_td ltx_align_right">13.75</td>
+<td id="S3.T1.4.5.3.4" class="ltx_td ltx_align_right">1.71</td>
+</tr>
+<tr id="S3.T1.4.6.4" class="ltx_tr">
+<th id="S3.T1.4.6.4.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_bb">Kp 8–9 (G4–G5)</th>
+<td id="S3.T1.4.6.4.2" class="ltx_td ltx_align_right ltx_border_bb">261</td>
+<td id="S3.T1.4.6.4.3" class="ltx_td ltx_align_right ltx_border_bb">13.81</td>
+<td id="S3.T1.4.6.4.4" class="ltx_td ltx_align_right ltx_border_bb">1.89</td>
+</tr>
+</tbody>
+</table>
+</figure>
+<div id="S3.SS1.p1" class="ltx_para">
+<p id="S3.SS1.p1.4" class="ltx_p">The primary pre-registered test yields Spearman <math id="S3.SS1.p1.1.m1" class="ltx_Math" alttext="\rho=-0.011" display="inline" intent=":literal"><semantics><mrow><mi>ρ</mi><mo>=</mo><mrow><mo>−</mo><mn>0.011</mn></mrow></mrow><annotation encoding="application/x-tex">\rho=-0.011</annotation></semantics></math>, <math id="S3.SS1.p1.2.m2" class="ltx_Math" alttext="p=0.234" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.234</mn></mrow><annotation encoding="application/x-tex">p=0.234</annotation></semantics></math>. There is no significant trend in plate limiting magnitude across Kp bins. The Pearson correlation is <math id="S3.SS1.p1.3.m3" class="ltx_Math" alttext="r=0.004" display="inline" intent=":literal"><semantics><mrow><mi>r</mi><mo>=</mo><mn>0.004</mn></mrow><annotation encoding="application/x-tex">r=0.004</annotation></semantics></math>, <math id="S3.SS1.p1.4.m4" class="ltx_Math" alttext="p=0.684" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.684</mn></mrow><annotation encoding="application/x-tex">p=0.684</annotation></semantics></math>.</p>
+</div>
+<div id="S3.SS1.p2" class="ltx_para">
+<p id="S3.SS1.p2.2" class="ltx_p">The Kruskal–Wallis test (<math id="S3.SS1.p2.1.m1" class="ltx_Math" alttext="H=13.77" display="inline" intent=":literal"><semantics><mrow><mi>H</mi><mo>=</mo><mn>13.77</mn></mrow><annotation encoding="application/x-tex">H=13.77</annotation></semantics></math>, <math id="S3.SS1.p2.2.m2" class="ltx_Math" alttext="p=0.008" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.008</mn></mrow><annotation encoding="application/x-tex">p=0.008</annotation></semantics></math>) is technically significant, driven by the G1 (Kp 5) bin dip to 13.58. This pattern does not constitute monotonic suppression: the bin means rise from G1 through G4–G5, and the highest limiting magnitude (deepest plates) occurs during the most severe storms. This is the <span id="S3.SS1.p2.2.1" class="ltx_text ltx_font_italic">opposite</span> of the airglow prediction.</p>
+</div>
+<div id="S3.SS1.p3" class="ltx_para">
+<p id="S3.SS1.p3.1" class="ltx_p">The Harvard archive is the largest and best-calibrated photographic plate collection in the world, with over a century of continuous plate coverage and an institutionally maintained digitization pipeline. A null result at Harvard alone is strong evidence against any claim that geomagnetic storms suppress plate sensitivity in historical archives.</p>
+</div>
+</section>
+<section id="S3.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.2 </span>Replication: Palomar Stellar Counts Flat Across Kp</h3>
+
+<div id="S3.SS2.p1" class="ltx_para">
+<p id="S3.SS2.p1.1" class="ltx_p">Table <a href="#S3.T2" title="Table 2 ‣ 3.2 Replication: Palomar Stellar Counts Flat Across Kp ‣ 3 Results ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> presents mean NSTARS and NGALAX across five Kp bins for 638 POSS-I fields with complete Kp coverage.</p>
+</div>
+<figure id="S3.T2" class="ltx_table">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 2: </span>Mean stellar (NSTARS) and galaxy (NGALAX) detection counts per POSS-I field by Kp intensity bin. <math id="S3.T2.2.m1" class="ltx_Math" alttext="N" display="inline" intent=":literal"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math> = number of fields per bin.</figcaption>
+<table id="S3.T2.4" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S3.T2.3.1" class="ltx_tr">
+<th id="S3.T2.3.1.2" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_th_row ltx_border_tt">Kp Bin</th>
+<th id="S3.T2.3.1.1" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_th_row ltx_border_tt"><math id="S3.T2.3.1.1.m1" class="ltx_Math" alttext="N" display="inline" intent=":literal"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math></th>
+<th id="S3.T2.3.1.3" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt">Mean NSTARS</th>
+<th id="S3.T2.3.1.4" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt">Mean NGALAX</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S3.T2.4.2" class="ltx_tr">
+<th id="S3.T2.4.2.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_t">Quiet (<math id="S3.T2.4.2.1.m1" class="ltx_Math" alttext="\mathrm{Kp}&lt;5" display="inline" intent=":literal"><semantics><mrow><mi>Kp</mi><mo>&lt;</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">\mathrm{Kp}&lt;5</annotation></semantics></math>)</th>
+<th id="S3.T2.4.2.2" class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_t">438</th>
+<td id="S3.T2.4.2.3" class="ltx_td ltx_align_right ltx_border_t">87,916</td>
+<td id="S3.T2.4.2.4" class="ltx_td ltx_align_right ltx_border_t">51,247</td>
+</tr>
+<tr id="S3.T2.4.3.1" class="ltx_tr">
+<th id="S3.T2.4.3.1.1" class="ltx_td ltx_align_left ltx_th ltx_th_row">Kp 5 (G1)</th>
+<th id="S3.T2.4.3.1.2" class="ltx_td ltx_align_right ltx_th ltx_th_row">114</th>
+<td id="S3.T2.4.3.1.3" class="ltx_td ltx_align_right">87,535</td>
+<td id="S3.T2.4.3.1.4" class="ltx_td ltx_align_right">50,606</td>
+</tr>
+<tr id="S3.T2.4.4.2" class="ltx_tr">
+<th id="S3.T2.4.4.2.1" class="ltx_td ltx_align_left ltx_th ltx_th_row">Kp 6 (G2)</th>
+<th id="S3.T2.4.4.2.2" class="ltx_td ltx_align_right ltx_th ltx_th_row">67</th>
+<td id="S3.T2.4.4.2.3" class="ltx_td ltx_align_right">85,292</td>
+<td id="S3.T2.4.4.2.4" class="ltx_td ltx_align_right">50,546</td>
+</tr>
+<tr id="S3.T2.4.5.3" class="ltx_tr">
+<th id="S3.T2.4.5.3.1" class="ltx_td ltx_align_left ltx_th ltx_th_row">Kp 7 (G3)</th>
+<th id="S3.T2.4.5.3.2" class="ltx_td ltx_align_right ltx_th ltx_th_row">18</th>
+<td id="S3.T2.4.5.3.3" class="ltx_td ltx_align_right">125,470</td>
+<td id="S3.T2.4.5.3.4" class="ltx_td ltx_align_right">74,374</td>
+</tr>
+<tr id="S3.T2.4.6.4" class="ltx_tr">
+<th id="S3.T2.4.6.4.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_bb">Kp 8–9 (G4–G5)</th>
+<th id="S3.T2.4.6.4.2" class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_bb">1</th>
+<td id="S3.T2.4.6.4.3" class="ltx_td ltx_align_right ltx_border_bb">220,987</td>
+<td id="S3.T2.4.6.4.4" class="ltx_td ltx_align_right ltx_border_bb">109,246</td>
+</tr>
+</tbody>
+</table>
+</figure>
+<div id="S3.SS2.p2" class="ltx_para">
+<p id="S3.SS2.p2.3" class="ltx_p">The primary pre-registered test yields Spearman <math id="S3.SS2.p2.1.m1" class="ltx_Math" alttext="\rho=0.017" display="inline" intent=":literal"><semantics><mrow><mi>ρ</mi><mo>=</mo><mn>0.017</mn></mrow><annotation encoding="application/x-tex">\rho=0.017</annotation></semantics></math>, <math id="S3.SS2.p2.2.m2" class="ltx_Math" alttext="p=0.673" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.673</mn></mrow><annotation encoding="application/x-tex">p=0.673</annotation></semantics></math> (<math id="S3.SS2.p2.3.m3" class="ltx_Math" alttext="0.4\sigma" display="inline" intent=":literal"><semantics><mrow><mn>0.4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">0.4\sigma</annotation></semantics></math>). There is no significant trend in stellar counts across Kp bins.</p>
+</div>
+<div id="S3.SS2.p3" class="ltx_para">
+<p id="S3.SS2.p3.4" class="ltx_p">The elevated counts in the Kp 7 (<math id="S3.SS2.p3.1.m1" class="ltx_Math" alttext="N=18" display="inline" intent=":literal"><semantics><mrow><mi>N</mi><mo>=</mo><mn>18</mn></mrow><annotation encoding="application/x-tex">N=18</annotation></semantics></math>) and Kp 8–9 (<math id="S3.SS2.p3.2.m2" class="ltx_Math" alttext="N=1" display="inline" intent=":literal"><semantics><mrow><mi>N</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">N=1</annotation></semantics></math>) bins are in the <span id="S3.SS2.p3.4.1" class="ltx_text ltx_font_italic">opposite</span> direction from the airglow-suppression prediction and almost certainly reflect sky position confounds — high-storm observation dates happening to fall on fields in denser stellar regions. The Kruskal–Wallis test (<math id="S3.SS2.p3.3.m3" class="ltx_Math" alttext="H=9.85" display="inline" intent=":literal"><semantics><mrow><mi>H</mi><mo>=</mo><mn>9.85</mn></mrow><annotation encoding="application/x-tex">H=9.85</annotation></semantics></math>, <math id="S3.SS2.p3.4.m4" class="ltx_Math" alttext="p=0.043" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.043</mn></mrow><annotation encoding="application/x-tex">p=0.043</annotation></semantics></math>) is technically significant but driven entirely by these small, high-Kp cells in the wrong direction. No monotonic suppression is present.</p>
+</div>
+</section>
+<section id="S3.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.3 </span>Comparison of Two Sites</h3>
+
+<figure id="S3.T3" class="ltx_table">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 3: </span>Artifact control results at two independent observatories. Both show plate sensitivity invariant across Kp bins.</figcaption>
+<table id="S3.T3.4" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S3.T3.2.2" class="ltx_tr">
+<th id="S3.T3.2.2.3" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">Observatory</th>
+<th id="S3.T3.2.2.4" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">Archive</th>
+<th id="S3.T3.2.2.5" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">Metric</th>
+<th id="S3.T3.1.1.1" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt">Spearman <math id="S3.T3.1.1.1.m1" class="ltx_Math" alttext="\rho" display="inline" intent=":literal"><semantics><mi>ρ</mi><annotation encoding="application/x-tex">\rho</annotation></semantics></math>
+</th>
+<th id="S3.T3.2.2.2" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><math id="S3.T3.2.2.2.m1" class="ltx_Math" alttext="p" display="inline" intent=":literal"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S3.T3.3.3" class="ltx_tr">
+<td id="S3.T3.3.3.2" class="ltx_td ltx_align_left ltx_border_t">Harvard</td>
+<td id="S3.T3.3.3.3" class="ltx_td ltx_align_left ltx_border_t">DASCH DR7</td>
+<td id="S3.T3.3.3.4" class="ltx_td ltx_align_left ltx_border_t">lim_mag (limiting mag.)</td>
+<td id="S3.T3.3.3.1" class="ltx_td ltx_align_right ltx_border_t"><math id="S3.T3.3.3.1.m1" class="ltx_Math" alttext="-0.011" display="inline" intent=":literal"><semantics><mrow><mo>−</mo><mn>0.011</mn></mrow><annotation encoding="application/x-tex">-0.011</annotation></semantics></math></td>
+<td id="S3.T3.3.3.5" class="ltx_td ltx_align_right ltx_border_t">0.234</td>
+</tr>
+<tr id="S3.T3.4.4" class="ltx_tr">
+<td id="S3.T3.4.4.2" class="ltx_td ltx_align_left ltx_border_bb">Palomar</td>
+<td id="S3.T3.4.4.3" class="ltx_td ltx_align_left ltx_border_bb">MAPS Catalog</td>
+<td id="S3.T3.4.4.4" class="ltx_td ltx_align_left ltx_border_bb">NSTARS (stellar counts)</td>
+<td id="S3.T3.4.4.1" class="ltx_td ltx_align_right ltx_border_bb"><math id="S3.T3.4.4.1.m1" class="ltx_Math" alttext="+0.017" display="inline" intent=":literal"><semantics><mrow><mo>+</mo><mn>0.017</mn></mrow><annotation encoding="application/x-tex">+0.017</annotation></semantics></math></td>
+<td id="S3.T3.4.4.5" class="ltx_td ltx_align_right ltx_border_bb">0.673</td>
+</tr>
+</tbody>
+</table>
+</figure>
+<div id="S3.SS3.p1" class="ltx_para">
+<p id="S3.SS3.p1.1" class="ltx_p">The two observatories use different telescopes, different emulsions, different digitization pipelines (DASCH vs. MAPS), different sensitivity metrics (limiting magnitude vs. stellar counts), and are located on different continents. Both return the same answer: plate sensitivity does not vary systematically with geomagnetic storm intensity. The airglow artifact hypothesis fails at both sites independently.</p>
+</div>
+</section>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Application to the VASCO Kp–Transient Claim</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p id="S4.p1.1" class="ltx_p">We now apply these null results to the specific question that motivated this work: whether the Kp-dependent suppression of VASCO transient detections <cite class="ltx_cite ltx_citemacro_citep">(Cann, <a href="#bib.bib3" title="" class="ltx_ref">2026a</a>)</cite> is an airglow-driven plate-sensitivity artifact or a source-specific physical response.</p>
+</div>
+<section id="S4.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.1 </span>Contrast with Transient Suppression</h3>
+
+<div id="S4.SS1.p1" class="ltx_para">
+<p id="S4.SS1.p1.1" class="ltx_p">The contrast between stellar/sensitivity behavior and transient behavior across the same Kp bins is direct and unambiguous:</p>
+</div>
+<div id="S4.SS1.p2" class="ltx_para">
+<ul id="S4.I1" class="ltx_itemize">
+<li id="S4.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S4.I1.i1.p1" class="ltx_para">
+<p id="S4.I1.i1.p1.3" class="ltx_p"><span id="S4.I1.i1.p1.3.1" class="ltx_text ltx_font_bold">Transients (Cann 2026a):</span> Cochran–Armitage <math id="S4.I1.i1.p1.1.m1" class="ltx_Math" alttext="Z=-3.391" display="inline" intent=":literal"><semantics><mrow><mi>Z</mi><mo>=</mo><mrow><mo>−</mo><mn>3.391</mn></mrow></mrow><annotation encoding="application/x-tex">Z=-3.391</annotation></semantics></math>, <math id="S4.I1.i1.p1.2.m2" class="ltx_Math" alttext="p=0.0007" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.0007</mn></mrow><annotation encoding="application/x-tex">p=0.0007</annotation></semantics></math>, <math id="S4.I1.i1.p1.3.m3" class="ltx_Math" alttext="3.4\sigma" display="inline" intent=":literal"><semantics><mrow><mn>3.4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">3.4\sigma</annotation></semantics></math>. Monotonic suppression from 17.4% to 2.4% across five bins.</p>
+</div>
+</li>
+<li id="S4.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S4.I1.i2.p1" class="ltx_para">
+<p id="S4.I1.i2.p1.3" class="ltx_p"><span id="S4.I1.i2.p1.3.1" class="ltx_text ltx_font_bold">Stars at Palomar (this work):</span> Spearman <math id="S4.I1.i2.p1.1.m1" class="ltx_Math" alttext="\rho=0.017" display="inline" intent=":literal"><semantics><mrow><mi>ρ</mi><mo>=</mo><mn>0.017</mn></mrow><annotation encoding="application/x-tex">\rho=0.017</annotation></semantics></math>, <math id="S4.I1.i2.p1.2.m2" class="ltx_Math" alttext="p=0.673" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.673</mn></mrow><annotation encoding="application/x-tex">p=0.673</annotation></semantics></math>, <math id="S4.I1.i2.p1.3.m3" class="ltx_Math" alttext="0.4\sigma" display="inline" intent=":literal"><semantics><mrow><mn>0.4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">0.4\sigma</annotation></semantics></math>. No trend. Counts essentially flat.</p>
+</div>
+</li>
+<li id="S4.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S4.I1.i3.p1" class="ltx_para">
+<p id="S4.I1.i3.p1.2" class="ltx_p"><span id="S4.I1.i3.p1.2.1" class="ltx_text ltx_font_bold">Limiting magnitude at Harvard (this work):</span> Spearman <math id="S4.I1.i3.p1.1.m1" class="ltx_Math" alttext="\rho=-0.011" display="inline" intent=":literal"><semantics><mrow><mi>ρ</mi><mo>=</mo><mrow><mo>−</mo><mn>0.011</mn></mrow></mrow><annotation encoding="application/x-tex">\rho=-0.011</annotation></semantics></math>, <math id="S4.I1.i3.p1.2.m2" class="ltx_Math" alttext="p=0.234" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.234</mn></mrow><annotation encoding="application/x-tex">p=0.234</annotation></semantics></math>. No trend. Limiting magnitudes essentially flat.</p>
+</div>
+</li>
+</ul>
+</div>
+<div id="S4.SS1.p3" class="ltx_para">
+<p id="S4.SS1.p3.1" class="ltx_p">The two populations are separated by <math id="S4.SS1.p3.1.m1" class="ltx_Math" alttext="3.0\sigma" display="inline" intent=":literal"><semantics><mrow><mn>3.0</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">3.0\sigma</annotation></semantics></math>. Real stars on the same plates at Palomar, observed on the same dates, under the same geomagnetic conditions, show no response to storm intensity. Harvard’s century-scale archive, tested across 12,510 independent exposures and 500 sky positions, shows no response to storm intensity. Transients show a strong dose-dependent response.</p>
+</div>
+</section>
+<section id="S4.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.2 </span>Combined Significance Across the VASCO Body of Work</h3>
+
+<div id="S4.SS2.p1" class="ltx_para">
+<p id="S4.SS2.p1.14" class="ltx_p">Table <a href="#S4.T4" title="Table 4 ‣ 4.2 Combined Significance Across the VASCO Body of Work ‣ 4 Application to the VASCO Kp–Transient Claim ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a> presents the independent lines of evidence for the transient phenomenon. Fisher’s method combining all four confirmatory signal tests — Bruehl &amp; Villarroel (2025), Doherty (2026), Cann (2026a), and Cann (2026b) — yields <math id="S4.SS2.p1.1.m1" class="ltx_Math" alttext="\chi^{2}=48.95" display="inline" intent=":literal"><semantics><mrow><msup><mi>χ</mi><mn>2</mn></msup><mo>=</mo><mn>48.95</mn></mrow><annotation encoding="application/x-tex">\chi^{2}=48.95</annotation></semantics></math> (df = 8), <math id="S4.SS2.p1.2.m2" class="ltx_Math" alttext="p=6.5\times 10^{-8}" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mrow><mn>6.5</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>8</mn></mrow></msup></mrow></mrow><annotation encoding="application/x-tex">p=6.5\times 10^{-8}</annotation></semantics></math>, corresponding to <math id="S4.SS2.p1.3.m3" class="ltx_Math" alttext="5.4\sigma" display="inline" intent=":literal"><semantics><mrow><mn>5.4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">5.4\sigma</annotation></semantics></math>. Doherty (2026) is a genuine methodological replication of <em id="S4.SS2.p1.14.1" class="ltx_emph ltx_font_italic">both</em> the nuclear–transient correlation of Bruehl &amp; Villarroel (2025) and the Earth-shadow deficit of Villarroel et al. (2025): while it draws on the same underlying transient catalog, it applies entirely independent analytic pipelines (negative binomial regression with weather covariates; chi-square test; permutation-based significance) and obtains the same signals. For the nuclear–transient replication used here, Doherty reports chi-square <math id="S4.SS2.p1.4.m4" class="ltx_Math" alttext="p=0.011" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.011</mn></mrow><annotation encoding="application/x-tex">p=0.011</annotation></semantics></math>, negative binomial <math id="S4.SS2.p1.5.m5" class="ltx_Math" alttext="p&lt;0.0001" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>&lt;</mo><mn>0.0001</mn></mrow><annotation encoding="application/x-tex">p&lt;0.0001</annotation></semantics></math>, and permutation <math id="S4.SS2.p1.6.m6" class="ltx_Math" alttext="p=0.006" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.006</mn></mrow><annotation encoding="application/x-tex">p=0.006</annotation></semantics></math>; we adopt the permutation <math id="S4.SS2.p1.7.m7" class="ltx_Math" alttext="p" display="inline" intent=":literal"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-value as a robust, distribution-free choice. Under Fisher’s method, which concerns the independence of <math id="S4.SS2.p1.8.m8" class="ltx_Math" alttext="p" display="inline" intent=":literal"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-values rather than the independence of underlying datasets, including Doherty (2026) is defensible. However, because a careful reviewer could reasonably argue that tests drawing on the same catalog should not be treated as fully independent, we take the maximally conservative position and restrict our primary headline combination to three tests with fully independent data: Bruehl &amp; Villarroel (2025), Cann (2026a), and Cann (2026b). This yields <math id="S4.SS2.p1.9.m9" class="ltx_Math" alttext="\chi^{2}=38.71" display="inline" intent=":literal"><semantics><mrow><msup><mi>χ</mi><mn>2</mn></msup><mo>=</mo><mn>38.71</mn></mrow><annotation encoding="application/x-tex">\chi^{2}=38.71</annotation></semantics></math> (df = 6), <math id="S4.SS2.p1.10.m10" class="ltx_Math" alttext="p=8.1\times 10^{-7}" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mrow><mn>8.1</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>7</mn></mrow></msup></mrow></mrow><annotation encoding="application/x-tex">p=8.1\times 10^{-7}</annotation></semantics></math>, corresponding to <math id="S4.SS2.p1.11.m11" class="ltx_Math" alttext="4.93\sigma" display="inline" intent=":literal"><semantics><mrow><mn>4.93</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">4.93\sigma</annotation></semantics></math>. Using the more conservative Welch <math id="S4.SS2.p1.12.m12" class="ltx_Math" alttext="t" display="inline" intent=":literal"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>-test <math id="S4.SS2.p1.13.m13" class="ltx_Math" alttext="p" display="inline" intent=":literal"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-value for the post-storm overshoot (Cann 2026b), the three-test combination is <math id="S4.SS2.p1.14.m14" class="ltx_Math" alttext="4.15\sigma" display="inline" intent=":literal"><semantics><mrow><mn>4.15</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">4.15\sigma</annotation></semantics></math>.</p>
+</div>
+<figure id="S4.T4" class="ltx_table">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 4: </span>Combined evidence for a physically real, magnetospherically coupled transient source in the POSS-I archive. Fisher’s method yields <math id="S4.T4.7.m1" class="ltx_Math" alttext="p=6.5\times 10^{-8}" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mrow><mn>6.5</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>8</mn></mrow></msup></mrow></mrow><annotation encoding="application/x-tex">p=6.5\times 10^{-8}</annotation></semantics></math> (<math id="S4.T4.8.m2" class="ltx_Math" alttext="5.4\sigma" display="inline" intent=":literal"><semantics><mrow><mn>5.4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">5.4\sigma</annotation></semantics></math>) combining all four confirmatory signal tests, and <math id="S4.T4.9.m3" class="ltx_Math" alttext="p=8.1\times 10^{-7}" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mrow><mn>8.1</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>7</mn></mrow></msup></mrow></mrow><annotation encoding="application/x-tex">p=8.1\times 10^{-7}</annotation></semantics></math> (<math id="S4.T4.10.m4" class="ltx_Math" alttext="4.93\sigma" display="inline" intent=":literal"><semantics><mrow><mn>4.93</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">4.93\sigma</annotation></semantics></math>) combining only the three tests with fully independent underlying data. The paper adopts the three-test combination as its primary headline result. Doherty (2026) is a methodological replication of <em id="S4.T4.19.1" class="ltx_emph ltx_font_italic">both</em> the Bruehl &amp; Villarroel (2025) nuclear–transient correlation and the Villarroel et al. (2025) shadow deficit, applying independent analytic pipelines to the same underlying transient catalog; the <math id="S4.T4.11.m5" class="ltx_Math" alttext="p" display="inline" intent=":literal"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-value tabulated here is the permutation-test value for the nuclear–transient replication. Under Fisher’s method, <math id="S4.T4.12.m6" class="ltx_Math" alttext="p" display="inline" intent=":literal"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-values from methodologically independent tests are independent, so Doherty’s inclusion in the four-test combination is legitimate, but we hold the primary result to the stricter standard of data-level independence. The present paper (Paper 3) rules out plate sensitivity artifacts, validating the combined significance of the signal tests.</figcaption>
+<div id="S4.T4.17" class="ltx_inline-block ltx_align_center ltx_transformed_outer" style="width:345.0pt;height:76.4pt;vertical-align:-36.6pt;"><span class="ltx_transformed_inner" style="transform:translate(-102.9pt,22.8pt) scale(0.626415951637525,0.626415951637525) ;">
+<table id="S4.T4.17.5" class="ltx_tabular ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr id="S4.T4.14.2.2" class="ltx_tr">
+<td id="S4.T4.14.2.2.3" class="ltx_td ltx_align_left ltx_border_tt">Source</td>
+<td id="S4.T4.14.2.2.4" class="ltx_td ltx_align_left ltx_border_tt">Test</td>
+<td id="S4.T4.13.1.1.1" class="ltx_td ltx_align_right ltx_border_tt">
+<math id="S4.T4.13.1.1.1.m1" class="ltx_Math" alttext="p" display="inline" intent=":literal"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-value</td>
+<td id="S4.T4.14.2.2.2" class="ltx_td ltx_align_right ltx_border_tt"><math id="S4.T4.14.2.2.2.m1" class="ltx_Math" alttext="\sigma" display="inline" intent=":literal"><semantics><mi>σ</mi><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></td>
+<td id="S4.T4.14.2.2.5" class="ltx_td ltx_align_right ltx_border_tt">Role</td>
+</tr>
+<tr id="S4.T4.17.5.6.1" class="ltx_tr">
+<td id="S4.T4.17.5.6.1.1" class="ltx_td ltx_align_left ltx_border_t">Bruehl &amp; Villarroel (2025)</td>
+<td id="S4.T4.17.5.6.1.2" class="ltx_td ltx_align_left ltx_border_t">Nuclear–transient correlation</td>
+<td id="S4.T4.17.5.6.1.3" class="ltx_td ltx_align_right ltx_border_t">0.008</td>
+<td id="S4.T4.17.5.6.1.4" class="ltx_td ltx_align_right ltx_border_t">2.65</td>
+<td id="S4.T4.17.5.6.1.5" class="ltx_td ltx_align_right ltx_border_t">Signal</td>
+</tr>
+<tr id="S4.T4.17.5.7.2" class="ltx_tr">
+<td id="S4.T4.17.5.7.2.1" class="ltx_td ltx_align_left">Doherty (2026)</td>
+<td id="S4.T4.17.5.7.2.2" class="ltx_td ltx_align_left">Replication of nuclear-test and shadow-deficit signals</td>
+<td id="S4.T4.17.5.7.2.3" class="ltx_td ltx_align_right">0.006</td>
+<td id="S4.T4.17.5.7.2.4" class="ltx_td ltx_align_right">2.75</td>
+<td id="S4.T4.17.5.7.2.5" class="ltx_td ltx_align_right">Signal</td>
+</tr>
+<tr id="S4.T4.17.5.8.3" class="ltx_tr">
+<td id="S4.T4.17.5.8.3.1" class="ltx_td ltx_align_left">Cann (2026a) [Paper 1]</td>
+<td id="S4.T4.17.5.8.3.2" class="ltx_td ltx_align_left">Kp dose–response staircase</td>
+<td id="S4.T4.17.5.8.3.3" class="ltx_td ltx_align_right">0.0007</td>
+<td id="S4.T4.17.5.8.3.4" class="ltx_td ltx_align_right">3.39</td>
+<td id="S4.T4.17.5.8.3.5" class="ltx_td ltx_align_right">Signal</td>
+</tr>
+<tr id="S4.T4.17.5.9.4" class="ltx_tr">
+<td id="S4.T4.17.5.9.4.1" class="ltx_td ltx_align_left">Cann (2026b) [Paper 2]</td>
+<td id="S4.T4.17.5.9.4.2" class="ltx_td ltx_align_left">Post-storm overshoot (PSO-2)</td>
+<td id="S4.T4.17.5.9.4.3" class="ltx_td ltx_align_right">0.0007</td>
+<td id="S4.T4.17.5.9.4.4" class="ltx_td ltx_align_right">3.41</td>
+<td id="S4.T4.17.5.9.4.5" class="ltx_td ltx_align_right">Signal</td>
+</tr>
+<tr id="S4.T4.15.3.3" class="ltx_tr">
+<td id="S4.T4.15.3.3.2" class="ltx_td ltx_align_left ltx_border_t" colspan="2"><span id="S4.T4.15.3.3.2.1" class="ltx_text ltx_font_italic">Fisher combined (4 signal tests, including Doherty)</span></td>
+<td id="S4.T4.15.3.3.1" class="ltx_td ltx_align_right ltx_border_t"><math id="S4.T4.15.3.3.1.m1" class="ltx_Math" alttext="6.5\times 10^{-8}" display="inline" intent=":literal"><semantics><mrow><mn>6.5</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>8</mn></mrow></msup></mrow><annotation encoding="application/x-tex">6.5\times 10^{-8}</annotation></semantics></math></td>
+<td id="S4.T4.15.3.3.3" class="ltx_td ltx_align_right ltx_border_t"><span id="S4.T4.15.3.3.3.1" class="ltx_text ltx_font_bold">5.4</span></td>
+<td id="S4.T4.15.3.3.4" class="ltx_td ltx_border_t"></td>
+</tr>
+<tr id="S4.T4.16.4.4" class="ltx_tr">
+<td id="S4.T4.16.4.4.2" class="ltx_td ltx_align_left" colspan="2"><span id="S4.T4.16.4.4.2.1" class="ltx_text ltx_font_italic">Fisher combined (3 tests, fully independent data) — primary</span></td>
+<td id="S4.T4.16.4.4.1" class="ltx_td ltx_align_right"><math id="S4.T4.16.4.4.1.m1" class="ltx_Math" alttext="8.1\times 10^{-7}" display="inline" intent=":literal"><semantics><mrow><mn>8.1</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>7</mn></mrow></msup></mrow><annotation encoding="application/x-tex">8.1\times 10^{-7}</annotation></semantics></math></td>
+<td id="S4.T4.16.4.4.3" class="ltx_td ltx_align_right"><span id="S4.T4.16.4.4.3.1" class="ltx_text ltx_font_bold">4.93</span></td>
+<td id="S4.T4.16.4.4.4" class="ltx_td"></td>
+</tr>
+<tr id="S4.T4.17.5.5" class="ltx_tr">
+<td id="S4.T4.17.5.5.2" class="ltx_td ltx_align_left" colspan="2"><span id="S4.T4.17.5.5.2.1" class="ltx_text ltx_font_italic">Three-test combination with PSO-2 Welch (conservative)</span></td>
+<td id="S4.T4.17.5.5.1" class="ltx_td ltx_align_right"><math id="S4.T4.17.5.5.1.m1" class="ltx_Math" alttext="3.3\times 10^{-5}" display="inline" intent=":literal"><semantics><mrow><mn>3.3</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>5</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3.3\times 10^{-5}</annotation></semantics></math></td>
+<td id="S4.T4.17.5.5.3" class="ltx_td ltx_align_right"><span id="S4.T4.17.5.5.3.1" class="ltx_text ltx_font_bold">4.15</span></td>
+<td id="S4.T4.17.5.5.4" class="ltx_td"></td>
+</tr>
+<tr id="S4.T4.17.5.10.5" class="ltx_tr">
+<td id="S4.T4.17.5.10.5.1" class="ltx_td ltx_align_left ltx_border_t">Cann (2026c) [Paper 3]</td>
+<td id="S4.T4.17.5.10.5.2" class="ltx_td ltx_align_left ltx_border_t">Stellar counts flat across Kp (Palomar)</td>
+<td id="S4.T4.17.5.10.5.3" class="ltx_td ltx_align_right ltx_border_t">0.673</td>
+<td id="S4.T4.17.5.10.5.4" class="ltx_td ltx_align_right ltx_border_t">0.42</td>
+<td id="S4.T4.17.5.10.5.5" class="ltx_td ltx_align_right ltx_border_t">Artifact control</td>
+</tr>
+<tr id="S4.T4.17.5.11.6" class="ltx_tr">
+<td id="S4.T4.17.5.11.6.1" class="ltx_td ltx_align_left ltx_border_bb">Cann (2026c) [Paper 3]</td>
+<td id="S4.T4.17.5.11.6.2" class="ltx_td ltx_align_left ltx_border_bb">Limiting mag. flat across Kp (Harvard)</td>
+<td id="S4.T4.17.5.11.6.3" class="ltx_td ltx_align_right ltx_border_bb">0.234</td>
+<td id="S4.T4.17.5.11.6.4" class="ltx_td ltx_align_right ltx_border_bb">1.19</td>
+<td id="S4.T4.17.5.11.6.5" class="ltx_td ltx_align_right ltx_border_bb">Artifact control</td>
+</tr>
+</tbody>
+</table>
+</span></div>
+</figure>
+</section>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">5 </span>Discussion</h2>
+
+<section id="S5.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.1 </span>Summary of Findings</h3>
+
+<div id="S5.SS1.p1" class="ltx_para">
+<p id="S5.SS1.p1.4" class="ltx_p">The protocol introduced in this paper uses catalog-aggregate sensitivity metrics from well-calibrated plate archives to test artifact hypotheses under which an environmental modulator drives plate-sensitivity variation. Applied to the question of whether geomagnetic storm activity suppresses photographic plate sensitivity, the protocol returns a null result at both sites tested. At Harvard, 12,510 plate exposures across 500 sky positions show Spearman <math id="S5.SS1.p1.1.m1" class="ltx_Math" alttext="\rho=-0.011" display="inline" intent=":literal"><semantics><mrow><mi>ρ</mi><mo>=</mo><mrow><mo>−</mo><mn>0.011</mn></mrow></mrow><annotation encoding="application/x-tex">\rho=-0.011</annotation></semantics></math>, <math id="S5.SS1.p1.2.m2" class="ltx_Math" alttext="p=0.234" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.234</mn></mrow><annotation encoding="application/x-tex">p=0.234</annotation></semantics></math>. At Palomar, 638 POSS-I fields show Spearman <math id="S5.SS1.p1.3.m3" class="ltx_Math" alttext="\rho=0.017" display="inline" intent=":literal"><semantics><mrow><mi>ρ</mi><mo>=</mo><mn>0.017</mn></mrow><annotation encoding="application/x-tex">\rho=0.017</annotation></semantics></math>, <math id="S5.SS1.p1.4.m4" class="ltx_Math" alttext="p=0.673" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.673</mn></mrow><annotation encoding="application/x-tex">p=0.673</annotation></semantics></math>. Plate sensitivity is invariant across the full range of geomagnetic activity at both observatories, using independent instruments, emulsions, digitization pipelines, and sensitivity metrics.</p>
+</div>
+</section>
+<section id="S5.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.2 </span>Applicability Beyond VASCO</h3>
+
+<div id="S5.SS2.p1" class="ltx_para">
+<p id="S5.SS2.p1.1" class="ltx_p">The protocol is general. It is applicable to any well-calibrated plate archive where catalog-level sensitivity aggregates (limiting magnitudes, total stellar counts, per-magnitude-bin counts, or equivalent proxies) exist at the plate or field level, and to any environmental modulator with continuous time coverage during the observing epoch. Archives where the protocol is immediately applicable include:</p>
+</div>
+<div id="S5.SS2.p2" class="ltx_para">
+<ul id="S5.I1" class="ltx_itemize">
+<li id="S5.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i1.p1" class="ltx_para">
+<p id="S5.I1.i1.p1.1" class="ltx_p"><span id="S5.I1.i1.p1.1.1" class="ltx_text ltx_font_bold">DASCH</span> (Harvard College Observatory, <math id="S5.I1.i1.p1.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>429,000 plates, 1885–1993) — applied here</p>
+</div>
+</li>
+<li id="S5.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i2.p1" class="ltx_para">
+<p id="S5.I1.i2.p1.1" class="ltx_p"><span id="S5.I1.i2.p1.1.1" class="ltx_text ltx_font_bold">MAPS</span> (POSS-I at Palomar, 632 fields, 1949–1957) — applied here</p>
+</div>
+</li>
+<li id="S5.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i3.p1" class="ltx_para">
+<p id="S5.I1.i3.p1.1" class="ltx_p"><span id="S5.I1.i3.p1.1.1" class="ltx_text ltx_font_bold">APPLAUSE DR4</span> (Sonneberg, Hamburg, Potsdam, Bamberg, Tautenburg; <math id="S5.I1.i3.p1.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>94,000 plates, 1893–1998)</p>
+</div>
+</li>
+<li id="S5.I1.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i4.p1" class="ltx_para">
+<p id="S5.I1.i4.p1.1" class="ltx_p"><span id="S5.I1.i4.p1.1.1" class="ltx_text ltx_font_bold">Heidelberg plate archive</span> (<math id="S5.I1.i4.p1.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>10,000 plates, 1900–1990s)</p>
+</div>
+</li>
+<li id="S5.I1.i5" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i5.p1" class="ltx_para">
+<p id="S5.I1.i5.p1.1" class="ltx_p"><span id="S5.I1.i5.p1.1.1" class="ltx_text ltx_font_bold">Ukraine Virtual Observatory / MAO NAS</span></p>
+</div>
+</li>
+<li id="S5.I1.i6" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i6.p1" class="ltx_para">
+<p id="S5.I1.i6.p1.1" class="ltx_p">Other Wide-Field Plate Database holdings</p>
+</div>
+</li>
+</ul>
+</div>
+<div id="S5.SS2.p3" class="ltx_para">
+<p id="S5.SS2.p3.1" class="ltx_p">External modulators beyond Kp that can be tested via the same protocol include lunar phase (for reflective-glint or lunar-stray-light artifact claims), solar F10.7 and sunspot number (for long-term solar-cycle artifact claims), seasonal airglow climatology (for time-of-year artifact claims), local meteorological conditions (humidity, temperature, and wind speed; relevant for plate-fog and tracking-jitter hypotheses), and any other environmental variable with archival continuity during the observing epoch. The protocol can also be extended to stratified sensitivity tests — e.g., comparing sensitivity in faint magnitude bins (where artifact effects should be strongest) against bright bins (which should be unaffected). This stratified version is more powerful than the aggregate test and is a natural next step for any archive with per-object photometry.</p>
+</div>
+<div id="S5.SS2.p4" class="ltx_para">
+<p id="S5.SS2.p4.1" class="ltx_p">The protocol is not suitable when the putative signal population cannot be distinguished from the reference stellar population (e.g., long-period variable stars, where the reference and signal populations overlap), or when catalog-level aggregates are unavailable for the relevant plates. In such cases, alternative artifact controls — injection-recovery testing, differential photometry against a stable subset, or direct examination of the plates with microscopy — are required.</p>
+</div>
+</section>
+<section id="S5.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.3 </span>Implications for the VASCO Kp–Transient Claim</h3>
+
+<div id="S5.SS3.p1" class="ltx_para">
+<p id="S5.SS3.p1.2" class="ltx_p">Applied to the VASCO question specifically, the null result at both observatories has three implications. First, it validates the combined significance reported in Table <a href="#S4.T4" title="Table 4 ‣ 4.2 Combined Significance Across the VASCO Body of Work ‣ 4 Application to the VASCO Kp–Transient Claim ‣ Plate Sensitivity Is Invariant Across Geomagnetic Storm Intensity at Harvard and Palomar: A Protocol for Artifact Control in Historical Plate Archive Studies" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>. Prior to this paper, a critic could argue that the <math id="S5.SS3.p1.1.m1" class="ltx_Math" alttext="3.4\sigma" display="inline" intent=":literal"><semantics><mrow><mn>3.4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">3.4\sigma</annotation></semantics></math> Kp effect in Cann (2026a) and the <math id="S5.SS3.p1.2.m2" class="ltx_Math" alttext="3.4\sigma" display="inline" intent=":literal"><semantics><mrow><mn>3.4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">3.4\sigma</annotation></semantics></math> post-storm overshoot in Cann (2026b) were both contaminated by plate sensitivity artifacts. That argument is no longer available. Second, it strengthens the foundational claim of <cite class="ltx_cite ltx_citemacro_citet">Villarroel et al. (<a href="#bib.bib11" title="" class="ltx_ref">2025</a>)</cite> that the VASCO transients are real astrophysical phenomena rather than emulsion defects. Third, the multi-site replication eliminates observatory-specific explanations: the null result cannot be attributed to any property of the Palomar telescope, the POSS-I emulsion, the MAPS digitization, or the Palomar observing environment.</p>
+</div>
+<div id="S5.SS3.p2" class="ltx_para">
+<p id="S5.SS3.p2.1" class="ltx_p">The airglow mechanism, if operative at all, does not explain the VASCO transient suppression. Whatever is suppressing transients during storms is not suppressing stars or reducing plate depth at either observatory. The transient source is physically coupled to the magnetospheric environment in a manner that distinguishes it from every other object on the same emulsion.</p>
+</div>
+</section>
+<section id="S5.SS4" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.4 </span>Elevated Counts in High-Kp Palomar Bins</h3>
+
+<div id="S5.SS4.p1" class="ltx_para">
+<p id="S5.SS4.p1.2" class="ltx_p">The elevated NSTARS in the Kp 7 (<math id="S5.SS4.p1.1.m1" class="ltx_Math" alttext="N=18" display="inline" intent=":literal"><semantics><mrow><mi>N</mi><mo>=</mo><mn>18</mn></mrow><annotation encoding="application/x-tex">N=18</annotation></semantics></math>) and Kp 8–9 (<math id="S5.SS4.p1.2.m2" class="ltx_Math" alttext="N=1" display="inline" intent=":literal"><semantics><mrow><mi>N</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">N=1</annotation></semantics></math>) bins at Palomar warrants brief comment. These cells are small and the elevated counts almost certainly reflect the distribution of field sky positions for observation dates that happened to coincide with major storms. The MAPS Catalog covers fields across the full sky accessible from Palomar; fields in the Galactic plane direction will have systematically higher stellar densities. The absence of any monotonic suppression trend — and the presence of higher counts at higher Kp — is the opposite of what the airglow artifact predicts and does not support that hypothesis.</p>
+</div>
+</section>
+<section id="S5.SS5" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.5 </span>Limitations</h3>
+
+<div id="S5.SS5.p1" class="ltx_para">
+<p id="S5.SS5.p1.1" class="ltx_p">The primary limitation of the present analysis is that both sensitivity metrics are integrated across all magnitude bins. A more sensitive test would stratify by magnitude: faint-end sensitivity is most vulnerable to airglow suppression, while bright-end sensitivity is essentially immune. The MAPS Catalog contains per-object magnitude data that would support this analysis, and DASCH DR7 provides per-plate limiting magnitudes in multiple bands; both are left for future work. A second limitation is that we test only a single environmental modulator (Kp); the same archives support identical protocols for lunar phase, seasonal, and solar-cycle modulators, and these would benefit from independent application.</p>
+</div>
+</section>
+</section>
+<section id="S6" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">6 </span>Conclusions</h2>
+
+<div id="S6.p1" class="ltx_para">
+<p id="S6.p1.4" class="ltx_p">We introduced a simple, broadly applicable protocol for testing artifact hypotheses in historical photographic plate archives: regress catalog-aggregate sensitivity metrics against the suspected environmental modulator. Applied at Harvard College Observatory using the DASCH DR7 archive (12,510 exposures across 500 sky positions), the protocol returns Spearman <math id="S6.p1.1.m1" class="ltx_Math" alttext="\rho=-0.011" display="inline" intent=":literal"><semantics><mrow><mi>ρ</mi><mo>=</mo><mrow><mo>−</mo><mn>0.011</mn></mrow></mrow><annotation encoding="application/x-tex">\rho=-0.011</annotation></semantics></math>, <math id="S6.p1.2.m2" class="ltx_Math" alttext="p=0.234" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.234</mn></mrow><annotation encoding="application/x-tex">p=0.234</annotation></semantics></math>. Applied at Palomar using the MAPS Catalog of POSS-I (638 fields), the protocol returns Spearman <math id="S6.p1.3.m3" class="ltx_Math" alttext="\rho=0.017" display="inline" intent=":literal"><semantics><mrow><mi>ρ</mi><mo>=</mo><mn>0.017</mn></mrow><annotation encoding="application/x-tex">\rho=0.017</annotation></semantics></math>, <math id="S6.p1.4.m4" class="ltx_Math" alttext="p=0.673" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.673</mn></mrow><annotation encoding="application/x-tex">p=0.673</annotation></semantics></math>. Plate sensitivity is invariant across five geomagnetic storm intensity bins at both sites, using independent instruments, emulsions, digitization pipelines, and sensitivity metrics. The airglow artifact hypothesis, under which elevated sky background during geomagnetic storms would reduce plate sensitivity, is directly falsified at two observatories.</p>
+</div>
+<div id="S6.p2" class="ltx_para">
+<p id="S6.p2.1" class="ltx_p">The protocol is general and is immediately applicable to other plate archives (APPLAUSE, Heidelberg, Ukraine MAO) and to other environmental modulators (lunar phase, F10.7, seasonal airglow climatology, meteorological conditions). Stratified magnitude-bin variants of the protocol, using the same archives, offer enhanced sensitivity to artifact hypotheses that affect the faint end of the detection distribution more than the bright end.</p>
+</div>
+<div id="S6.p3" class="ltx_para">
+<p id="S6.p3.4" class="ltx_p">As a motivating application, these null results resolve the principal artifact objection to the VASCO Kp–transient suppression finding reported in <cite class="ltx_cite ltx_citemacro_citet">Cann (<a href="#bib.bib3" title="" class="ltx_ref">2026a</a>)</cite>. Combining four independent confirmatory VASCO-related tests under Fisher’s method — the nuclear–transient correlation <cite class="ltx_cite ltx_citemacro_citep">(Bruehl &amp; Villarroel, <a href="#bib.bib1" title="" class="ltx_ref">2025</a>)</cite>, its methodological replication by <cite class="ltx_cite ltx_citemacro_citet">Doherty (<a href="#bib.bib5" title="" class="ltx_ref">2026</a>)</cite> (who independently replicates <em id="S6.p3.4.1" class="ltx_emph ltx_font_italic">both</em> the nuclear–transient correlation of Bruehl &amp; Villarroel 2025 and the Earth-shadow deficit of Villarroel et al. 2025 using independent analytic pipelines), the Kp dose–response staircase <cite class="ltx_cite ltx_citemacro_citep">(Cann, <a href="#bib.bib3" title="" class="ltx_ref">2026a</a>)</cite>, and the post-storm overshoot <cite class="ltx_cite ltx_citemacro_citep">(Cann, <a href="#bib.bib4" title="" class="ltx_ref">2026b</a>)</cite> — yields <math id="S6.p3.1.m1" class="ltx_Math" alttext="5.4\sigma" display="inline" intent=":literal"><semantics><mrow><mn>5.4</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">5.4\sigma</annotation></semantics></math> (<math id="S6.p3.2.m2" class="ltx_Math" alttext="p=6.5\times 10^{-8}" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mrow><mn>6.5</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>8</mn></mrow></msup></mrow></mrow><annotation encoding="application/x-tex">p=6.5\times 10^{-8}</annotation></semantics></math>). Adopting the maximally conservative position and restricting the combination to three tests with fully independent underlying data yields <math id="S6.p3.3.m3" class="ltx_Math" alttext="4.93\sigma" display="inline" intent=":literal"><semantics><mrow><mn>4.93</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">4.93\sigma</annotation></semantics></math> (<math id="S6.p3.4.m4" class="ltx_Math" alttext="p=8.1\times 10^{-7}" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mrow><mn>8.1</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>7</mn></mrow></msup></mrow></mrow><annotation encoding="application/x-tex">p=8.1\times 10^{-7}</annotation></semantics></math>), which we report as the primary headline VASCO result. The artifact control presented here, replicated at two observatories, validates this combined significance by permanently ruling out the principal methodological objection.</p>
+</div>
+<div id="S6.p4" class="ltx_para">
+<p id="S6.p4.1" class="ltx_p">The VASCO transients are not plate artifacts. They are real. They are physically coupled to the magnetospheric environment. They behave in ways that nothing else on the same plates does — not at Palomar, and not at Harvard.</p>
+</div>
+</section>
+<section id="Sx1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">Acknowledgments</h2>
+
+<div id="Sx1.p1" class="ltx_para">
+<p id="Sx1.p1.1" class="ltx_p">The author thanks Dr. Beatriz Villarroel for establishing the VASCO project and for correspondence on the observational constraints. Stephen Bruehl is acknowledged for sharing the transient dataset. The MAPS Catalog was produced by the Minnesota Automated Plate Scanner project at the University of Minnesota. The DASCH project at Harvard College Observatory provided digitized plate data and the <span id="Sx1.p1.1.1" class="ltx_text ltx_font_typewriter">daschlab</span> software package. The Kp index data were provided by GFZ German Research Centre for Geosciences, Potsdam.</p>
+</div>
+<div id="Sx1.p2" class="ltx_para">
+<p id="Sx1.p2.1" class="ltx_p">This work was conducted independently using personal computing resources with no institutional or external funding.</p>
+</div>
+</section>
+<section id="Sx2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">Data Availability</h2>
+
+<div id="Sx2.p1" class="ltx_para">
+<p id="Sx2.p1.1" class="ltx_p">All data and code are publicly available. The MAPS Catalog is available at <a href="http://aps.umn.edu/catalog/" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://aps.umn.edu/catalog/</a>. The DASCH DR7 archive is available at <a href="https://dasch.cfa.harvard.edu/dr7/" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://dasch.cfa.harvard.edu/dr7/</a>. The GFZ Kp archive is available at <a href="https://kp.gfz.de/app/files/Kp_ap_since_1932.txt" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://kp.gfz.de/app/files/Kp_ap_since_1932.txt</a> (CC BY 4.0). The Palomar pre-registration is archived at <a href="https://osf.io/Vy4pc" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://osf.io/Vy4pc</a>. The Harvard pre-registration, amendment, analysis script, and results are archived at <a href="https://osf.io/u9nas" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://osf.io/u9nas</a> (DASCH_Kp_Replication folder). The Palomar analysis script and extracted header CSV are also archived at <a href="https://osf.io/u9nas" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://osf.io/u9nas</a>.</p>
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul class="ltx_biblist">
+<li id="bib.bib1" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Bruehl &amp; Villarroel (2025)</span>
+<span class="ltx_bibblock">
+Bruehl, S. &amp; Villarroel, B., 2025. Transients in the Palomar Observatory Sky Survey (POSS-I) may be associated with nuclear testing and reports of unidentified anomalous phenomena. Scientific Reports, 15, 34125. DOI: 10.1038/s41598-025-21620-3.
+
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Cabanela et al. (2003)</span>
+<span class="ltx_bibblock">
+Cabanela, J.E., Humphreys, R.M., Aldering, G., Larsen, J.A., Odewahn, S.C., Thurmes, P.M. &amp; Cornuelle, C.S., 2003. The Automated Plate Scanner Catalog of the Palomar Observatory Sky Survey. II. The Archived Database. PASP, 115, 837. DOI: 10.1086/375625.
+
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Cann (2026a)</span>
+<span class="ltx_bibblock">
+Cann, K., 2026a. Geomagnetic storm suppression of photographic plate transient detections in the POSS-I archive: an independent physical variable strengthening the nuclear test correlation. arXiv:2604.04950 [astro-ph.IM]. DOI: 10.48550/arXiv.2604.04950.
+
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Cann (2026b)</span>
+<span class="ltx_bibblock">
+Cann, K., 2026b. Storm-driven suppression and post-storm enhancement of photographic plate transient detections at geosynchronous altitude: empirical evidence and a candidate dusty plasma mechanism. arXiv:2604.06234 [astro-ph.IM]. DOI: 10.48550/arXiv.2604.06234.
+
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Doherty (2026)</span>
+<span class="ltx_bibblock">
+Doherty, B., 2026. Independent replication of nuclear test-transient correlations and Earth shadow deficit in POSS-I photographic plates. arXiv:2604.00056. DOI: 10.48550/arXiv.2604.00056.
+
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Grindlay et al. (2012)</span>
+<span class="ltx_bibblock">
+Grindlay, J., Tang, S., Los, E. &amp; Servillat, M., 2012. Opening the 100-Year Window for Time Domain Astronomy. In: Griffin, R.E.M., Hanisch, R.J. &amp; Seaman, R., eds., <span id="bib.bib6.1.1" class="ltx_text ltx_font_italic">New Horizons in Time Domain Astronomy</span>, IAU Symposium Vol. 285, pp. 29–34. DOI: 10.1017/S1743921312000166.
+
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Matzka et al. (2021)</span>
+<span class="ltx_bibblock">
+Matzka, J., Stolle, C., Yamazaki, Y., Bronkalla, O. &amp; Morschhauser, A., 2021. The geomagnetic Kp index and derived indices of geomagnetic activity. Space Weather, 19, e2020SW002641. DOI: 10.1029/2020SW002641.
+
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Solano et al. (2024)</span>
+<span class="ltx_bibblock">
+Solano, E., Marcy, G.W., Villarroel, B., Geier, S., Streblyanska, A., Lombardi, G., Bär, R.E. &amp; Andruk, V.N., 2024. A bright triple transient that vanished within 50 min. Monthly Notices of the Royal Astronomical Society, 527(3), 6312–6320. DOI: 10.1093/mnras/stad3422.
+
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Villarroel et al. (2020)</span>
+<span class="ltx_bibblock">
+Villarroel, B. et al., 2020. The Vanishing and Appearing Sources during a Century of Observations Project. I. USNO Objects Missing in Modern Sky Surveys and Follow-up Observations of a “Missing Star”. Astron. J., 159, 8. DOI: 10.3847/1538-3881/ab570f.
+
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Villarroel et al. (2021)</span>
+<span class="ltx_bibblock">
+Villarroel, B. et al., 2021. Exploring nine simultaneously occurring transients on April 12th 1950. Sci. Rep., 11, 12794. DOI: 10.1038/s41598-021-92162-7.
+
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Villarroel et al. (2025)</span>
+<span class="ltx_bibblock">
+Villarroel, B. et al., 2025. Aligned, Multiple-transient Events in the First Palomar Sky Survey. Publications of the Astronomical Society of the Pacific, 137, 104504. DOI: 10.1088/1538-3873/ae0afe.
+
+</span>
+</li>
+<li id="bib.bib12" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Williams (2024)</span>
+<span class="ltx_bibblock">
+Williams, P.K.G., 2024. DASCH Data Release 7. Zenodo. DOI: 10.5281/zenodo.14563521.
+
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2604.16470v2/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer><footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation">
+        </a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International">
+        </a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences">
+        </a>
+      </div>
+    </div>
+  </div>
+</footer><div id="fixed-buttons-container">
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>

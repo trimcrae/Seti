@@ -1,0 +1,1131 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching</title>
+<!--Generated on Mon Apr  6 16:12:03 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<meta name="keywords" lang="en" content="surveys — methods: data analysis — techniques: image processing
+— astrometry — stars: variables: general">
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+    // Pre-apply spinout-banner dismissal here, before the banner paints, so it
+    // never flashes in only to be hidden later by the deferred arxiv-header.js.
+    // Key matches arxiv-header.js: "arxiv-banner-dismissed:" + data-banner-name.
+    if (localStorage.getItem('arxiv-banner-dismissed:spinout-nonprofit')) {
+      document.documentElement.setAttribute("data-banner-dismissed", "");
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css"><link rel="stylesheet" type="text/css" media="screen"
+  href="/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626"><style>
+  /* Banner pre-dismissal (set above before paint -> no flash-then-hide) and
+     reading-mode chrome hiding. */
+  html[data-banner-dismissed] .ds-announcement { display: none; }
+  html[data-reading-mode="enabled"] .ds-announcement,
+  html[data-reading-mode="enabled"] .ds-site-footer { display: none; }
+  /* Keep the announcement text dark on the Open-Blue band in both colour themes
+     (otherwise it inherits the paper's warm-wash text in dark mode and washes out). */
+  .ds-announcement-text { color: var(--arxiv-ink, #1c1a17); }
+</style>
+<script defer src="/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog><div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement"
+    data-banner-name="spinout-nonprofit">
+    <img class="ds-announcement-glyph" src="/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+    <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+    <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+    <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/"><img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/base/1.0.1/images/arxiv-logo-primary-light.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2604.04810v1">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2604.04810v1"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_abstract"><a href="#abstract1" title="In Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title">Abstract</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S1" title="In Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">I </span>Introduction</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S2" title="In Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II </span>Method</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS1" title="In II Method ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.1 </span>Data</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS2" title="In II Method ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.2 </span>Source Detection and Filtering</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS3" title="In II Method ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.3 </span>Local Registration Refinement</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS4" title="In II Method ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.4 </span>Transient Identification</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS5" title="In II Method ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.5 </span>Pan-STARRS Verification</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS6" title="In II Method ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.6 </span>Synthetic Injection Testing</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S3" title="In Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III </span>Results</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS1" title="In III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.1 </span>Benchmark Validation</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS2" title="In III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.2 </span>Solano Catalog Cross-Match</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS3" title="In III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.3 </span>Full-Sky Survey</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection">
+<a href="#S3.SS4" title="In III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.4 </span>Temporal Correlation with Nuclear Tests</span></a>
+<ol class="ltx_toclist ltx_toclist_subsection">
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="#S3.SS4.SSS1" title="In III.4 Temporal Correlation with Nuclear Tests ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.4.1 </span>Calendar-Day Binary Analysis</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="#S3.SS4.SSS2" title="In III.4 Temporal Correlation with Nuclear Tests ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.4.2 </span>Negative Binomial GLM</span></a></li>
+</ol>
+</li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S4" title="In Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">IV </span>Discussion</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S5" title="In Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">V </span>Conclusions</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_acknowledgements"><a href="#S5.acknowledgements1" title="In V Conclusions ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title">Acknowledgements</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_bibliography"><a href="#bib" title="In Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: CC BY 4.0
+  </a>
+  <div id="watermark-tr">
+arXiv:2604.04810v1 [astro-ph.IM] 06 Apr 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document ltx_authors_multiline">
+<h1 class="ltx_title ltx_title_document">Independent Recovery of Vanishing Sources on POSS-I Photographic Plates
+Using Automated Source Detection and Cross-Epoch Matching</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Zachary Hayes
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Independent Researcher
+</span></span></span>
+</div>
+
+<div id="abstract1" class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">We present an independent pipeline for detecting candidate vanished
+sources on digitized first-epoch Palomar Observatory Sky Survey
+(POSS-I) photographic plates. The pipeline detects and PSF-filters
+sources on POSS-I Red DSS cutouts, applies local astrometric
+registration refinement, and identifies candidates by cross-epoch
+matching against POSS-I Blue and POSS-II Red with Pan-STARRS DR1
+rejection. On a 20-case benchmark harness, the pipeline recovers 8/9
+sources in the April 1950 field and 3/3 in the July 1952 field, with a
+false positive rate of <math class="ltx_Math" alttext="{\sim}0.2" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>0.2</mn></mrow><annotation encoding="application/x-tex">{\sim}0.2</annotation></semantics></math> per 10 arcmin field on random
+non-crowded controls. A full-footprint sweep over the POSS-I coverage using
+30 arcmin patches yields a filtered catalog of 2.85 million candidate
+vanished sources after post-processing PSF cuts, deduplication, and
+Pan-STARRS DR1 rejection. Cross-matching against the 5,399-source
+<cite class="ltx_cite ltx_citemacro_citet">Solano<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib3" title="Identification of vanishing objects in multi-epoch surveys" class="ltx_ref">2022</a>)</cite> catalog yields 3,450 matches (63.9%) with median
+separation 0.94 arcsec; among unrecovered catalog entries within our
+footprint, we find no Pan-STARRS DR1 counterpart within 3 arcsec.
+Applying <cite class="ltx_cite ltx_citemacro_citet">Bruehl and Villarroel (<a href="#bib.bib1" title="A statistical analysis of the temporal and spatial distributions of POSS-I transient candidates" class="ltx_ref">2025</a>)</cite>-style temporal windows to this catalog over
+the 368 POSS-I observation nights in the 1949–1957 interval gives a
+post-test calendar-day relative risk of 1.35 for the <math class="ltx_Math" alttext="[+1]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>+</mo><mn>1</mn></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[+1]</annotation></semantics></math> window,
+but the effect is not statistically significant (95% CI [0.91, 2.00];
+two-sided Fisher <math class="ltx_Math" alttext="p=0.17" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.17</mn></mrow><annotation encoding="application/x-tex">p=0.17</annotation></semantics></math>) and is sensitive to coding unobserved days
+as zero-transient days. A negative binomial model of nightly candidate
+counts with nightly patch coverage as exposure is likewise null
+(IRR <math class="ltx_Math" alttext="=1.03" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><mn>1.03</mn></mrow><annotation encoding="application/x-tex">=1.03</annotation></semantics></math>, 95% CI [0.89, 1.18], <math class="ltx_Math" alttext="p=0.71" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.71</mn></mrow><annotation encoding="application/x-tex">p=0.71</annotation></semantics></math>). The catalog-level
+replication is strong; the temporal association remains inconclusive.</p>
+</div>
+<div class="ltx_keywords">surveys — methods: data analysis — techniques: image processing
+— astrometry — stars: variables: general
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">I </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.1" class="ltx_p">The Vanishing and Appearing Sources during a Century of Observations
+(VASCO) project has cataloged thousands of candidate transient sources
+by comparing historical sky survey plates against modern digital
+archives <cite class="ltx_cite ltx_citemacro_citep">(Villarroel<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib5" title="Our Sky now and then: searches for lost stars and impossible effects as a tool for discovering new astrophysics" class="ltx_ref">2020</a>)</cite>. Among the most striking results are
+nine simultaneously appearing and vanishing point sources on a single
+POSS-I Red plate from April 1950 <cite class="ltx_cite ltx_citemacro_citep">(Villarroel<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib2" title="Exploring nine simultaneously occurring transients on 12 April 1950" class="ltx_ref">2021</a>)</cite>, a bright
+triple transient from July 1952 <cite class="ltx_cite ltx_citemacro_citep">(Solano and others, <a href="#bib.bib4" title="A bright triple transient that appeared on a POSS-I plate in July 1952" class="ltx_ref">2024</a>)</cite>, and a
+publicly available catalog of 5,399 vanishing-source candidates
+identified on POSS-I plates <cite class="ltx_cite ltx_citemacro_citep">(Solano<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib3" title="Identification of vanishing objects in multi-epoch surveys" class="ltx_ref">2022</a>)</cite>.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.1" class="ltx_p">The nature of these transients remains debated: while some authors
+have attributed the narrower, rounder profiles of the transient
+candidates to emulsion flaws, <cite class="ltx_cite ltx_citemacro_citet">Villarroel<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib9" title="On the image profiles of transients in the Palomar Sky Survey" class="ltx_ref">2025</a>)</cite> argue
+that sub-second optical flashes naturally produce sharper, more
+circular profiles than stars on long-exposure plates due to reduced
+seeing and tracking blur. Meanwhile, <cite class="ltx_cite ltx_citemacro_citet">Bruehl and Villarroel (<a href="#bib.bib1" title="A statistical analysis of the temporal and spatial distributions of POSS-I transient candidates" class="ltx_ref">2025</a>)</cite> reported a
+statistical association between the temporal distribution of POSS-I
+transient candidates and above-ground nuclear weapons tests conducted
+during the 1949–1957 survey period. Their analysis found an elevated transient rate within
+<math id="S1.p2.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math>1 day of nuclear test dates, raising the question of whether
+some fraction of photographic-plate transients may be attributable
+to environmental contamination rather than astrophysical phenomena.</p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p id="S1.p3.1" class="ltx_p">Independent replication of these results using different detection
+methods is essential for assessing their robustness. In this work, we
+describe a fully automated pipeline that detects sources on digitized
+POSS-I plates, filters by point-spread function (PSF) morphology,
+performs local astrometric refinement, and identifies candidate
+vanished sources via cross-epoch matching—without reference to
+existing transient catalogs. We validate the pipeline against known
+benchmark fields and cross-match it against the <cite class="ltx_cite ltx_citemacro_citet">Solano<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib3" title="Identification of vanishing objects in multi-epoch surveys" class="ltx_ref">2022</a>)</cite>
+catalog to quantify independent recovery rates.</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">II </span>Method</h2>
+
+<section id="S2.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.1 </span>Data</h3>
+
+<div id="S2.SS1.p1" class="ltx_para">
+<p id="S2.SS1.p1.4" class="ltx_p">We use digitized plate cutouts from the STScI Digitized Sky Survey
+(DSS) archive <cite class="ltx_cite ltx_citemacro_citep">(Lasker<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib6" title="The second-generation guide star catalog: description and properties" class="ltx_ref">2008</a>)</cite>, with embedded WCS headers for three
+epochs: POSS-I Red (<math id="S2.SS1.p1.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>1949–1957), POSS-I Blue (same epoch), and
+POSS-II Red (<math id="S2.SS1.p1.2.m2" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>1985–2000). Benchmark cases are evaluated at their
+case-specific cutout sizes (4–10 arcmin). The production sweep uses a
+30 arcmin patch grid with <math id="S2.SS1.p1.3.m3" class="ltx_Math" alttext="\cos(\delta)" display="inline" intent=":literal"><semantics><mrow><mi>cos</mi><mo>⁡</mo><mrow><mo stretchy="false">(</mo><mi>δ</mi><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">\cos(\delta)</annotation></semantics></math>-corrected spacing over the
+full POSS-I footprint (Dec <math id="S2.SS1.p1.4.m4" class="ltx_Math" alttext="&gt;-33\arcdeg" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&gt;</mo><mrow><mo>−</mo><mrow><mn>33</mn><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">°</mi></mrow></mrow></mrow><annotation encoding="application/x-tex">&gt;-33\arcdeg</annotation></semantics></math>), yielding 122,991 patch
+positions across 932 plates.</p>
+</div>
+</section>
+<section id="S2.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.2 </span>Source Detection and Filtering</h3>
+
+<div id="S2.SS2.p1" class="ltx_para">
+<p id="S2.SS2.p1.1" class="ltx_p">For each cutout, sources are detected via sigma-clipped thresholding
+above the local background, followed by connected-component labeling.
+Each detection is characterized by its full width at half maximum
+(FWHM) and ellipticity. A PSF morphology filter retains only sources
+within a specified FWHM range relative to the plate median and below
+a maximum ellipticity, rejecting extended objects, plate artifacts,
+and noise peaks.</p>
+</div>
+<div id="S2.SS2.p2" class="ltx_para">
+<p id="S2.SS2.p2.6" class="ltx_p">The detection threshold and filter bounds were calibrated on a 20-case
+benchmark harness (Section <a href="#S3.SS1" title="III.1 Benchmark Validation ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.1</span></a>). The resulting
+calibrated settings (<math id="S2.SS2.p2.1.m1" class="ltx_Math" alttext="8\sigma" display="inline" intent=":literal"><semantics><mrow><mn>8</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">8\sigma</annotation></semantics></math>, FWHM <math id="S2.SS2.p2.2.m2" class="ltx_Math" alttext="0.7" display="inline" intent=":literal"><semantics><mn>0.7</mn><annotation encoding="application/x-tex">0.7</annotation></semantics></math>–<math id="S2.SS2.p2.3.m3" class="ltx_math_unparsed" alttext="1.5\times" display="inline" intent=":literal"><semantics><mrow><mn>1.5</mn><mo lspace="0.222em">×</mo></mrow><annotation encoding="application/x-tex">1.5\times</annotation></semantics></math> median,
+ellipticity <math id="S2.SS2.p2.4.m4" class="ltx_Math" alttext="&lt;0.3" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&lt;</mo><mn>0.3</mn></mrow><annotation encoding="application/x-tex">&lt;0.3</annotation></semantics></math>) reduce false positives to <math id="S2.SS2.p2.5.m5" class="ltx_Math" alttext="{\sim}0.2" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>0.2</mn></mrow><annotation encoding="application/x-tex">{\sim}0.2</annotation></semantics></math> per
+10 arcmin field on random non-crowded control fields. The full-sky sweep
+(Section <a href="#S3.SS3" title="III.3 Full-Sky Survey ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.3</span></a>) was executed with an earlier set of
+preliminary parameters (<math id="S2.SS2.p2.6.m6" class="ltx_Math" alttext="5\sigma" display="inline" intent=":literal"><semantics><mrow><mn>5</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">5\sigma</annotation></semantics></math>, broader PSF acceptance) prior to
+this calibration; the differences in catalog composition are discussed
+there.</p>
+</div>
+</section>
+<section id="S2.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.3 </span>Local Registration Refinement</h3>
+
+<div id="S2.SS3.p1" class="ltx_para">
+<p id="S2.SS3.p1.1" class="ltx_p">Although the DSS WCS headers provide global astrometric solutions,
+spatially correlated residuals of 1–3 arcsec are common across
+Schmidt plates. We compute a local affine correction for each
+cutout by matching the 20–50 brightest isolated sources between
+epochs and fitting a 6-parameter transformation with iterative
+sigma-clipping. Post-correction median residuals are
+0.2–0.5 arcsec, with 95th-percentile residuals below 1.3 arcsec.</p>
+</div>
+</section>
+<section id="S2.SS4" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.4 </span>Transient Identification</h3>
+
+<div id="S2.SS4.p1" class="ltx_para">
+<p id="S2.SS4.p1.1" class="ltx_p">A source detected on POSS-I Red is flagged as a transient candidate
+if no counterpart is found within 8 arcsec (after local registration
+correction) on <em id="S2.SS4.p1.1.1" class="ltx_emph ltx_font_italic">both</em> POSS-I Blue and POSS-II Red. The
+requirement for absence in two independent reference epochs reduces
+contamination from color-dependent detection limits and
+epoch-specific artifacts. Given 95th-percentile post-correction
+residuals below 1.3 arcsec, this radius is intentionally
+conservative: it favors missed recoveries in crowded fields over
+falsely labeling obvious cross-epoch counterparts as vanished.</p>
+</div>
+</section>
+<section id="S2.SS5" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.5 </span>Pan-STARRS Verification</h3>
+
+<div id="S2.SS5.p1" class="ltx_para">
+<p id="S2.SS5.p1.1" class="ltx_p">For full-sky analysis, we additionally cross-match candidate
+transients against Pan-STARRS DR1 <cite class="ltx_cite ltx_citemacro_citep">(Chambers<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib7" title="The Pan-STARRS1 surveys" class="ltx_ref">2016</a>)</cite> via CDS XMatch.
+Sources with a Pan-STARRS counterpart within 3 arcsec are rejected
+as persistent objects that failed cross-epoch matching due to
+astrometric or morphological differences between plate and CCD
+data. This step removes obvious persistent objects and leaves a
+catalog of candidate archive-absence sources. Because this screen
+relies on a single modern survey and simple positional matching, we
+refer to the retained sample as candidate vanished sources rather
+than confirmed astrophysical disappearances.</p>
+</div>
+</section>
+<section id="S2.SS6" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.6 </span>Synthetic Injection Testing</h3>
+
+<div id="S2.SS6.p1" class="ltx_para">
+<p id="S2.SS6.p1.1" class="ltx_p">To assess completeness and purity independently of historical
+benchmark cases, we inject synthetic sources into plate cutouts.
+Artificial stars are generated by scaling template PSFs from confirmed
+real stars on each plate; artificial artifacts are generated as
+sharp-edged Gaussian profiles lacking atmospheric wings. Across 120
+star-injection trials, the pipeline recovers 79.2% of injected
+stars. Across 120 artifact-injection trials, 96.7% of artifacts are
+correctly rejected by the PSF filter. The star-recovery rate indicates
+that the pipeline is useful for independent validation but not
+exhaustive for population-level completeness claims.</p>
+</div>
+</section>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">III </span>Results</h2>
+
+<section id="S3.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">III.1 </span>Benchmark Validation</h3>
+
+<div id="S3.SS1.p1" class="ltx_para">
+<p id="S3.SS1.p1.1" class="ltx_p">Table <a href="#S3.T1" title="Table 1 ‣ III.1 Benchmark Validation ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a> summarizes results on a 20-case benchmark
+harness. The pipeline recovers 8 of 9 known transients on the
+April 1950 field <cite class="ltx_cite ltx_citemacro_citep">(Villarroel<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib2" title="Exploring nine simultaneously occurring transients on 12 April 1950" class="ltx_ref">2021</a>)</cite> and all 3 transients on the
+July 1952 field <cite class="ltx_cite ltx_citemacro_citep">(Solano and others, <a href="#bib.bib4" title="A bright triple transient that appeared on a POSS-I plate in July 1952" class="ltx_ref">2024</a>)</cite>. Blue-plate controls of both fields
+return zero candidates, confirming that detections are
+epoch-dependent. Of 6 random control fields at diverse Galactic
+latitudes, 5 return zero candidates and 1 returns a single candidate.
+Crowded Galactic plane fields show elevated false positive rates
+(up to 22 per field), as expected from source confusion in
+dense stellar environments.</p>
+</div>
+<figure id="S3.T1" class="ltx_table">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_table">Table 1: </span>Benchmark results with calibrated pipeline parameters
+(<math id="S3.T1.6.m1" class="ltx_Math" alttext="\sigma=8" display="inline" intent=":literal"><semantics><mrow><mi>σ</mi><mo>=</mo><mn>8</mn></mrow><annotation encoding="application/x-tex">\sigma=8</annotation></semantics></math>, match radius <math id="S3.T1.7.m2" class="ltx_Math" alttext="=8^{\prime\prime}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><msup><mn>8</mn><mo>′′</mo></msup></mrow><annotation encoding="application/x-tex">=8^{\prime\prime}</annotation></semantics></math>, FWHM <math id="S3.T1.8.m3" class="ltx_Math" alttext="=0.7" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><mn>0.7</mn></mrow><annotation encoding="application/x-tex">=0.7</annotation></semantics></math>–<math id="S3.T1.9.m4" class="ltx_math_unparsed" alttext="1.5\times" display="inline" intent=":literal"><semantics><mrow><mn>1.5</mn><mo lspace="0.222em">×</mo></mrow><annotation encoding="application/x-tex">1.5\times</annotation></semantics></math> median,
+ellipticity <math id="S3.T1.10.m5" class="ltx_Math" alttext="&lt;0.3" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&lt;</mo><mn>0.3</mn></mrow><annotation encoding="application/x-tex">&lt;0.3</annotation></semantics></math>). </figcaption>
+<table id="S3.T1.11" class="ltx_tabular">
+<thead class="ltx_thead">
+<tr id="S3.T1.11.1" class="ltx_tr">
+<th id="S3.T1.11.1.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">Field type</th>
+<th id="S3.T1.11.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><math id="S3.T1.11.1.1.m1" class="ltx_Math" alttext="N" display="inline" intent=":literal"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math></th>
+<th id="S3.T1.11.1.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">Expected</th>
+<th id="S3.T1.11.1.4" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">Observed</th>
+<th id="S3.T1.11.1.5" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">FP rate</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S3.T1.11.2.1" class="ltx_tr">
+<td id="S3.T1.11.2.1.1" class="ltx_td ltx_align_left ltx_border_t">April 1950 Red</td>
+<td id="S3.T1.11.2.1.2" class="ltx_td ltx_align_center ltx_border_t">1</td>
+<td id="S3.T1.11.2.1.3" class="ltx_td ltx_align_center ltx_border_t">9</td>
+<td id="S3.T1.11.2.1.4" class="ltx_td ltx_align_center ltx_border_t">8</td>
+<td id="S3.T1.11.2.1.5" class="ltx_td ltx_align_center ltx_border_t">—</td>
+</tr>
+<tr id="S3.T1.11.3.2" class="ltx_tr">
+<td id="S3.T1.11.3.2.1" class="ltx_td ltx_align_left">July 1952 Red</td>
+<td id="S3.T1.11.3.2.2" class="ltx_td ltx_align_center">1</td>
+<td id="S3.T1.11.3.2.3" class="ltx_td ltx_align_center">3</td>
+<td id="S3.T1.11.3.2.4" class="ltx_td ltx_align_center">3</td>
+<td id="S3.T1.11.3.2.5" class="ltx_td ltx_align_center">—</td>
+</tr>
+<tr id="S3.T1.11.4.3" class="ltx_tr">
+<td id="S3.T1.11.4.3.1" class="ltx_td ltx_align_left">Blue-plate neg.</td>
+<td id="S3.T1.11.4.3.2" class="ltx_td ltx_align_center">2</td>
+<td id="S3.T1.11.4.3.3" class="ltx_td ltx_align_center">0</td>
+<td id="S3.T1.11.4.3.4" class="ltx_td ltx_align_center">0</td>
+<td id="S3.T1.11.4.3.5" class="ltx_td ltx_align_center">0.0</td>
+</tr>
+<tr id="S3.T1.11.5.4" class="ltx_tr">
+<td id="S3.T1.11.5.4.1" class="ltx_td ltx_align_left">Same-plate ctrl</td>
+<td id="S3.T1.11.5.4.2" class="ltx_td ltx_align_center">8</td>
+<td id="S3.T1.11.5.4.3" class="ltx_td ltx_align_center">0</td>
+<td id="S3.T1.11.5.4.4" class="ltx_td ltx_align_center">0–10</td>
+<td id="S3.T1.11.5.4.5" class="ltx_td ltx_align_center">2.0</td>
+</tr>
+<tr id="S3.T1.11.6.5" class="ltx_tr">
+<td id="S3.T1.11.6.5.1" class="ltx_td ltx_align_left">Random ctrl</td>
+<td id="S3.T1.11.6.5.2" class="ltx_td ltx_align_center">6</td>
+<td id="S3.T1.11.6.5.3" class="ltx_td ltx_align_center">0</td>
+<td id="S3.T1.11.6.5.4" class="ltx_td ltx_align_center">0–1</td>
+<td id="S3.T1.11.6.5.5" class="ltx_td ltx_align_center">0.2</td>
+</tr>
+<tr id="S3.T1.11.7.6" class="ltx_tr">
+<td id="S3.T1.11.7.6.1" class="ltx_td ltx_align_left ltx_border_b">Crowded galactic</td>
+<td id="S3.T1.11.7.6.2" class="ltx_td ltx_align_center ltx_border_b">2</td>
+<td id="S3.T1.11.7.6.3" class="ltx_td ltx_align_center ltx_border_b">0</td>
+<td id="S3.T1.11.7.6.4" class="ltx_td ltx_align_center ltx_border_b">1–22</td>
+<td id="S3.T1.11.7.6.5" class="ltx_td ltx_align_center ltx_border_b">11.5</td>
+</tr>
+</tbody>
+</table>
+</figure>
+<figure id="S3.F1" class="ltx_figure"><img src="2604.04810v1/apr1950_red_positive_panel.png" id="S3.F1.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="238" height="86" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>April 1950 benchmark field. Left: POSS-I Red with 8 detected
+transient candidates circled (of 9 known). Center: POSS-I Blue (same
+date)—no candidates detected. Right: POSS-II Red (<math id="S3.F1.2.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>1996)—no
+counterparts at candidate positions. </figcaption>
+</figure>
+<figure id="S3.F2" class="ltx_figure"><img src="2604.04810v1/jul1952_red_positive_panel.png" id="S3.F2.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="238" height="86" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>July 1952 benchmark field. All 3 known transients from
+<cite class="ltx_cite ltx_citemacro_citet">Solano and others (<a href="#bib.bib4" title="A bright triple transient that appeared on a POSS-I plate in July 1952" class="ltx_ref">2024</a>)</cite> recovered. Same panel layout as
+Figure <a href="#S3.F1" title="Figure 1 ‣ III.1 Benchmark Validation ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>. </figcaption>
+</figure>
+</section>
+<section id="S3.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">III.2 </span>Solano Catalog Cross-Match</h3>
+
+<div id="S3.SS2.p1" class="ltx_para">
+<p id="S3.SS2.p1.1" class="ltx_p">We cross-match our filtered 2,852,431-source candidate-vanished
+catalog with the public 5,399-source unidentified-transient subset
+reported by <cite class="ltx_cite ltx_citemacro_citet">Solano<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib3" title="Identification of vanishing objects in multi-epoch surveys" class="ltx_ref">2022</a>)</cite>, itself derived from a broader
+298,165-source POSS-I-only workflow sample.
+At a matching radius of 10 arcsec, we independently recover 3,450
+sources (63.9%), with a median angular separation of 0.94 arcsec
+(Figure <a href="#S3.F3" title="Figure 3 ‣ III.2 Solano Catalog Cross-Match ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>). The separation distribution is sharply
+peaked: 98.7% of matches fall within 3 arcsec, indicating that
+positional accuracy is not a limiting factor.</p>
+</div>
+<div id="S3.SS2.p2" class="ltx_para">
+<p id="S3.SS2.p2.1" class="ltx_p">Of the 1,949 unrecovered Solano sources, 66 (3.4% of unrecovered)
+lie outside our survey footprint. For the remaining 1,883 within
+our coverage, we classify each source by re-examining the raw
+6.6-million-source pre-filter catalog:</p>
+</div>
+<div id="S3.SS2.p3" class="ltx_para">
+<ul id="S3.I1" class="ltx_itemize">
+<li id="S3.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i1.p1" class="ltx_para">
+<p id="S3.I1.i1.p1.1" class="ltx_p">Approximately 54% (<math id="S3.I1.i1.p1.1.m1" class="ltx_Math" alttext="{\sim}" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">{\sim}</annotation></semantics></math>1,010) are detected on the plate
+in the raw catalog but rejected during PSF morphology
+filtering—they appear as real sources but do not meet our
+point-source criteria for FWHM or ellipticity.</p>
+</div>
+</li>
+<li id="S3.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i2.p1" class="ltx_para">
+<p id="S3.I1.i2.p1.2" class="ltx_p">Approximately 46% (<math id="S3.I1.i2.p1.1.m1" class="ltx_Math" alttext="{\sim}" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">{\sim}</annotation></semantics></math>870) show no source-like detection
+above our <math id="S3.I1.i2.p1.2.m2" class="ltx_Math" alttext="5\sigma" display="inline" intent=":literal"><semantics><mrow><mn>5</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">5\sigma</annotation></semantics></math> threshold at the cataloged position, suggesting
+either that these sources fall below our detection limit or that
+they are catalog-level artifacts.</p>
+</div>
+</li>
+</ul>
+</div>
+<div id="S3.SS2.p4" class="ltx_para">
+<p id="S3.SS2.p4.1" class="ltx_p">Direct verification of all unrecovered Solano sources within our
+coverage against Pan-STARRS DR1 finds no counterpart within
+3 arcsec. This result is consistent with the archive-absence
+classification in <cite class="ltx_cite ltx_citemacro_citet">Solano<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib3" title="Identification of vanishing objects in multi-epoch surveys" class="ltx_ref">2022</a>)</cite>, but it should be interpreted as
+a Pan-STARRS-specific validation rather than proof that the sources
+are absent from every modern archive.</p>
+</div>
+<figure id="S3.F3" class="ltx_figure"><img src="2604.04810v1/x1.png" id="S3.F3.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="330" height="231" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>Distribution of angular separations between independently
+detected Vela sources and their nearest <cite class="ltx_cite ltx_citemacro_citet">Solano<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib3" title="Identification of vanishing objects in multi-epoch surveys" class="ltx_ref">2022</a>)</cite>
+counterpart. The median separation of 0.94 arcsec reflects the
+combined astrometric precision of both catalogs.
+</figcaption>
+</figure>
+<figure id="S3.F4" class="ltx_figure"><img src="2604.04810v1/x2.png" id="S3.F4.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="330" height="257" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 4: </span>Classification of all 5,399 <cite class="ltx_cite ltx_citemacro_citet">Solano<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib3" title="Identification of vanishing objects in multi-epoch surveys" class="ltx_ref">2022</a>)</cite> vanishing-source
+candidates by independent detection status. 3,450 are independently
+recovered; <math id="S3.F4.4.m1" class="ltx_Math" alttext="{\sim}" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">{\sim}</annotation></semantics></math>1,010 of the unrecovered sources are detected in
+our raw catalog but rejected by PSF filtering; <math id="S3.F4.5.m2" class="ltx_Math" alttext="{\sim}" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">{\sim}</annotation></semantics></math>870 show no
+detection above <math id="S3.F4.6.m3" class="ltx_Math" alttext="5\sigma" display="inline" intent=":literal"><semantics><mrow><mn>5</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">5\sigma</annotation></semantics></math>; 66 fall outside survey coverage. None of
+the unrecovered sources have a Pan-STARRS DR1 counterpart within
+3 arcsec.
+</figcaption>
+</figure>
+</section>
+<section id="S3.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">III.3 </span>Full-Sky Survey</h3>
+
+<div id="S3.SS3.p1" class="ltx_para">
+<p id="S3.SS3.p1.4" class="ltx_p">The full-sky sweep was executed on four rented A100-equipped nodes, each
+scanning a quarter of the RA range (<math id="S3.SS3.p1.1.m1" class="ltx_Math" alttext="0\arcdeg" display="inline" intent=":literal"><semantics><mrow><mn>0</mn><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">°</mi></mrow><annotation encoding="application/x-tex">0\arcdeg</annotation></semantics></math>–<math id="S3.SS3.p1.2.m2" class="ltx_Math" alttext="360\arcdeg" display="inline" intent=":literal"><semantics><mrow><mn>360</mn><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">°</mi></mrow><annotation encoding="application/x-tex">360\arcdeg</annotation></semantics></math>) at
+Dec <math id="S3.SS3.p1.3.m3" class="ltx_Math" alttext="-33\arcdeg" display="inline" intent=":literal"><semantics><mrow><mo>−</mo><mrow><mn>33</mn><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">°</mi></mrow></mrow><annotation encoding="application/x-tex">-33\arcdeg</annotation></semantics></math> to <math id="S3.SS3.p1.4.m4" class="ltx_Math" alttext="+90\arcdeg" display="inline" intent=":literal"><semantics><mrow><mo>+</mo><mrow><mn>90</mn><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">°</mi></mrow></mrow><annotation encoding="application/x-tex">+90\arcdeg</annotation></semantics></math>. For each of the 122,991 grid
+positions, the pipeline downloaded three 30 arcmin FITS cutouts from
+the STScI Digitized Sky Survey—POSS-I Red, POSS-I Blue, and
+POSS-II Red—detected sources on each cutout, applied PSF morphology
+filtering, computed a local affine registration correction between
+epochs, and flagged sources present on POSS-I Red with no counterpart
+within 8 arcsec on <em id="S3.SS3.p1.4.1" class="ltx_emph ltx_font_italic">either</em> reference epoch as transient
+candidates.</p>
+</div>
+<div id="S3.SS3.p2" class="ltx_para">
+<p id="S3.SS3.p2.4" class="ltx_p">The sweep was executed with preliminary detection parameters
+(<math id="S3.SS3.p2.1.m1" class="ltx_Math" alttext="5\sigma" display="inline" intent=":literal"><semantics><mrow><mn>5</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">5\sigma</annotation></semantics></math> threshold, FWHM range <math id="S3.SS3.p2.2.m2" class="ltx_Math" alttext="0.5" display="inline" intent=":literal"><semantics><mn>0.5</mn><annotation encoding="application/x-tex">0.5</annotation></semantics></math>–<math id="S3.SS3.p2.3.m3" class="ltx_math_unparsed" alttext="2.0\times" display="inline" intent=":literal"><semantics><mrow><mn>2.0</mn><mo lspace="0.222em">×</mo></mrow><annotation encoding="application/x-tex">2.0\times</annotation></semantics></math> median,
+ellipticity <math id="S3.SS3.p2.4.m4" class="ltx_Math" alttext="&lt;0.5" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&lt;</mo><mn>0.5</mn></mrow><annotation encoding="application/x-tex">&lt;0.5</annotation></semantics></math>) prior to the benchmark calibration described in
+Section <a href="#S3.SS1" title="III.1 Benchmark Validation ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.1</span></a>. In benchmark testing these looser settings
+produce substantially more false candidates than the calibrated
+configuration, especially on same-plate control fields.
+Across 932 plates spanning 380 unique observation dates (November
+1949 to December 1958), the sweep yielded 6,646,874 transient
+candidates—sources on POSS-I Red absent from both POSS-I Blue and
+POSS-II Red at the preliminary threshold.</p>
+</div>
+<div id="S3.SS3.p3" class="ltx_para">
+<p id="S3.SS3.p3.1" class="ltx_p">These candidates were then post-processed with stricter fixed
+morphology cuts (catalog-measured FWHM 2–8 and ellipticity <math id="S3.SS3.p3.1.m1" class="ltx_Math" alttext="&lt;0.3" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&lt;</mo><mn>0.3</mn></mrow><annotation encoding="application/x-tex">&lt;0.3</annotation></semantics></math>),
+deduplicated on a 3 arcsec grid between adjacent patches, and bulk
+cross-matched against Pan-STARRS DR1 via CDS XMatch. Sources with a
+modern counterpart within 3 arcsec were rejected. After this
+filtering, 2,852,431 candidate vanished sources remain. Of the 380
+observation dates, 368 fall within the 1949–1957 study window used
+for temporal analysis.
+Total compute cost for the sweep was approximately $50 USD.</p>
+</div>
+<div id="S3.SS3.p4" class="ltx_para">
+<p id="S3.SS3.p4.1" class="ltx_p">A full 30 arcmin reprocessing with the calibrated <math id="S3.SS3.p4.1.m1" class="ltx_Math" alttext="8\sigma" display="inline" intent=":literal"><semantics><mrow><mn>8</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">8\sigma</annotation></semantics></math> parameters
+has not yet been performed. On benchmark fields, the calibrated settings
+materially improve negative-control performance relative to the
+preliminary settings, so the reprocessed catalog is expected to be
+substantially smaller and cleaner. All results in
+Sections <a href="#S3.SS2" title="III.2 Solano Catalog Cross-Match ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.2</span></a>–<a href="#S3.SS4" title="III.4 Temporal Correlation with Nuclear Tests ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.4</span></a> use the preliminary
+catalog described above.</p>
+</div>
+</section>
+<section id="S3.SS4" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">III.4 </span>Temporal Correlation with Nuclear Tests</h3>
+
+<div id="S3.SS4.p1" class="ltx_para">
+<p id="S3.SS4.p1.3" class="ltx_p">Following the methodology of <cite class="ltx_cite ltx_citemacro_citet">Bruehl and Villarroel (<a href="#bib.bib1" title="A statistical analysis of the temporal and spatial distributions of POSS-I transient candidates" class="ltx_ref">2025</a>)</cite>, we test whether
+the occurrence of candidate vanished sources is temporally associated with
+above-ground nuclear weapons tests conducted during the POSS-I
+survey period. <cite class="ltx_cite ltx_citemacro_citet">Solano<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib3" title="Identification of vanishing objects in multi-epoch surveys" class="ltx_ref">2022</a>)</cite> report a broader 298,165-source
+POSS-I-only workflow sample, of which 5,399 unidentified transients
+were released in the public archive. As discussed by
+<cite class="ltx_cite ltx_citemacro_citet">Villarroel<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib10" title="A response to paper critical evaluation of studies alleging evidence for technosignatures in the POSS1-E photographic plates by watters et al. (2026)" class="ltx_ref">2026</a>)</cite>, the later ensemble temporal analyses in
+<cite class="ltx_cite ltx_citemacro_citet">Bruehl and Villarroel (<a href="#bib.bib1" title="A statistical analysis of the temporal and spatial distributions of POSS-I transient candidates" class="ltx_ref">2025</a>)</cite> use an improved <math id="S3.SS4.p1.1.m1" class="ltx_Math" alttext="{\sim}" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">{\sim}</annotation></semantics></math>107,000-source transient
+sample derived from that broader workflow; the transient dataset
+described in <cite class="ltx_cite ltx_citemacro_citet">Bruehl and Villarroel (<a href="#bib.bib1" title="A statistical analysis of the temporal and spatial distributions of POSS-I transient candidates" class="ltx_ref">2025</a>)</cite> contains 107,875 objects with
+observation dates and times. This is the relevant published comparison
+sample for temporal inference, rather than the public 5,399-source
+subset used for our cross-match validation in Section <a href="#S3.SS2" title="III.2 Solano Catalog Cross-Match ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.2</span></a>. Our temporal analysis uses the full
+2.85-million-source catalog produced by our pipeline. We identify 126 above-ground tests
+between November 1949 and April 1957 from the Johnston Archive. For calendar-day
+summaries, we construct day sets relative to each test date (e.g.,
+<math id="S3.SS4.p1.2.m2" class="ltx_Math" alttext="[+1]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>+</mo><mn>1</mn></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[+1]</annotation></semantics></math>, <math id="S3.SS4.p1.3.m3" class="ltx_Math" alttext="[-1,0]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>−</mo><mn>1</mn></mrow><mo>,</mo><mn>0</mn><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[-1,0]</annotation></semantics></math>); these sets are descriptive and can overlap when
+tests cluster in time. For count modeling, we analyze the 368 nights
+with POSS-I observations in this study interval.</p>
+</div>
+<section id="S3.SS4.SSS1" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">III.4.1 </span>Calendar-Day Binary Analysis</h4>
+
+<div id="S3.SS4.SSS1.p1" class="ltx_para">
+<p id="S3.SS4.SSS1.p1.7" class="ltx_p">For each calendar day, we record whether any vanished source was
+observed on that date. Of the 2,718 days, 368 (13.5%) have at
+least one vanished source. The baseline rate—days more than 3
+days from any test—is 13.3% (271/2,038 days). Before-test
+windows show rates close to the baseline: 13.3% at <math id="S3.SS4.SSS1.p1.1.m1" class="ltx_Math" alttext="[-2,-1]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>−</mo><mn>2</mn></mrow><mo>,</mo><mrow><mo>−</mo><mn>1</mn></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[-2,-1]</annotation></semantics></math> days
+and 14.1% at <math id="S3.SS4.SSS1.p1.2.m2" class="ltx_Math" alttext="[-1,0]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>−</mo><mn>1</mn></mrow><mo>,</mo><mn>0</mn><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[-1,0]</annotation></semantics></math> days. On the day immediately following a test
+(<math id="S3.SS4.SSS1.p1.3.m3" class="ltx_Math" alttext="[+1]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>+</mo><mn>1</mn></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[+1]</annotation></semantics></math> day), the rate rises to 17.9% (22/123 days), corresponding
+to RR <math id="S3.SS4.SSS1.p1.4.m4" class="ltx_Math" alttext="=1.35" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><mn>1.35</mn></mrow><annotation encoding="application/x-tex">=1.35</annotation></semantics></math> with 95% CI [0.91, 2.00]. Relative to the baseline,
+the two-sided Fisher exact <math id="S3.SS4.SSS1.p1.5.m5" class="ltx_Math" alttext="p" display="inline" intent=":literal"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-value is 0.17; under the published
+directional hypothesis of <cite class="ltx_cite ltx_citemacro_citet">Bruehl and Villarroel (<a href="#bib.bib1" title="A statistical analysis of the temporal and spatial distributions of POSS-I transient candidates" class="ltx_ref">2025</a>)</cite>, the one-sided
+<math id="S3.SS4.SSS1.p1.6.m6" class="ltx_Math" alttext="p" display="inline" intent=":literal"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-value is 0.098. The rate at <math id="S3.SS4.SSS1.p1.7.m7" class="ltx_Math" alttext="[+1,+2]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>+</mo><mn>1</mn></mrow><mo>,</mo><mrow><mo>+</mo><mn>2</mn></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[+1,+2]</annotation></semantics></math> days is 15.4%.</p>
+</div>
+<div id="S3.SS4.SSS1.p2" class="ltx_para">
+<p id="S3.SS4.SSS1.p2.1" class="ltx_p">This directional pattern—flat before tests, higher after—is
+qualitatively similar to the result reported by <cite class="ltx_cite ltx_citemacro_citet">Bruehl and Villarroel (<a href="#bib.bib1" title="A statistical analysis of the temporal and spatial distributions of POSS-I transient candidates" class="ltx_ref">2025</a>)</cite>,
+but it should be interpreted cautiously here. All 368 study-window
+observation nights contain at least one candidate vanished source
+after Pan-STARRS filtering, so the binary calendar-day indicator
+collapses to whether the survey observed that date. We therefore
+report the <math id="S3.SS4.SSS1.p2.1.m1" class="ltx_Math" alttext="[+1]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>+</mo><mn>1</mn></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[+1]</annotation></semantics></math> relative risk descriptively for comparison with
+<cite class="ltx_cite ltx_citemacro_citet">Bruehl and Villarroel (<a href="#bib.bib1" title="A statistical analysis of the temporal and spatial distributions of POSS-I transient candidates" class="ltx_ref">2025</a>)</cite>, not as independent inferential evidence for a
+post-test transient excess. The window comparisons in
+Figure <a href="#S3.F5" title="Figure 5 ‣ III.4.2 Negative Binomial GLM ‣ III.4 Temporal Correlation with Nuclear Tests ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a> are exploratory and uncorrected for
+multiple testing.</p>
+</div>
+</section>
+<section id="S3.SS4.SSS2" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">III.4.2 </span>Negative Binomial GLM</h4>
+
+<div id="S3.SS4.SSS2.p1" class="ltx_para">
+<p id="S3.SS4.SSS2.p1.1" class="ltx_p">To test whether the nuclear test window predicts the
+<em id="S3.SS4.SSS2.p1.1.1" class="ltx_emph ltx_font_italic">number</em> of candidate vanished-source detections per observation night
+(rather than simply their presence or absence), we fit a
+negative binomial GLM to the 368 observation nights, following
+the count-based approach of <cite class="ltx_cite ltx_citemacro_citet">Bruehl and Villarroel (<a href="#bib.bib1" title="A statistical analysis of the temporal and spatial distributions of POSS-I transient candidates" class="ltx_ref">2025</a>)</cite>. The response
+variable is the number of candidate vanished-source detections on each
+night. The predictor is a binary indicator for whether the
+observation date falls within <math id="S3.SS4.SSS2.p1.1.m1" class="ltx_Math" alttext="\pm 1" display="inline" intent=":literal"><semantics><mrow><mo>±</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\pm 1</annotation></semantics></math> day of a nuclear test.
+We include the nightly number of observed grid patches, computed from
+the full patch summary, as an exposure term to account for the varying
+sky coverage per night (range: 11–1,000; median: 278); for
+<span id="S3.SS4.SSS2.p1.1.2" class="ltx_text ltx_font_typewriter">NegativeBinomialP</span>, the exposure is supplied on the
+original scale and logged internally by the model.</p>
+</div>
+<div id="S3.SS4.SSS2.p2" class="ltx_para">
+<p id="S3.SS4.SSS2.p2.17" class="ltx_p">Nightly counts are highly overdispersed relative to Poisson
+(variance-to-mean ratio <math id="S3.SS4.SSS2.p2.1.m1" class="ltx_Math" alttext="\approx 4.1\times 10^{3}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>≈</mo><mrow><mn>4.1</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mn>3</mn></msup></mrow></mrow><annotation encoding="application/x-tex">\approx 4.1\times 10^{3}</annotation></semantics></math>), supporting
+the negative binomial specification. For the symmetric
+<math id="S3.SS4.SSS2.p2.2.m2" class="ltx_Math" alttext="\pm 1" display="inline" intent=":literal"><semantics><mrow><mo>±</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\pm 1</annotation></semantics></math> day window, we find an incidence rate ratio
+(IRR) of 1.03 (95% CI: [0.89, 1.18]; <math id="S3.SS4.SSS2.p2.3.m3" class="ltx_Math" alttext="p=0.71" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.71</mn></mrow><annotation encoding="application/x-tex">p=0.71</annotation></semantics></math>).
+Asymmetric windows are likewise null: the <math id="S3.SS4.SSS2.p2.4.m4" class="ltx_Math" alttext="[0,+1]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mn>0</mn><mo>,</mo><mrow><mo>+</mo><mn>1</mn></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[0,+1]</annotation></semantics></math> day
+window gives IRR <math id="S3.SS4.SSS2.p2.5.m5" class="ltx_Math" alttext="=1.01" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><mn>1.01</mn></mrow><annotation encoding="application/x-tex">=1.01</annotation></semantics></math> (<math id="S3.SS4.SSS2.p2.6.m6" class="ltx_Math" alttext="p=0.90" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.90</mn></mrow><annotation encoding="application/x-tex">p=0.90</annotation></semantics></math>), the <math id="S3.SS4.SSS2.p2.7.m7" class="ltx_Math" alttext="[-1,0]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>−</mo><mn>1</mn></mrow><mo>,</mo><mn>0</mn><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[-1,0]</annotation></semantics></math> day
+window gives IRR <math id="S3.SS4.SSS2.p2.8.m8" class="ltx_Math" alttext="=0.98" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><mn>0.98</mn></mrow><annotation encoding="application/x-tex">=0.98</annotation></semantics></math> (<math id="S3.SS4.SSS2.p2.9.m9" class="ltx_Math" alttext="p=0.82" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.82</mn></mrow><annotation encoding="application/x-tex">p=0.82</annotation></semantics></math>), the
+<math id="S3.SS4.SSS2.p2.10.m10" class="ltx_Math" alttext="[+1]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>+</mo><mn>1</mn></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[+1]</annotation></semantics></math>-only window gives IRR <math id="S3.SS4.SSS2.p2.11.m11" class="ltx_Math" alttext="=1.06" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><mn>1.06</mn></mrow><annotation encoding="application/x-tex">=1.06</annotation></semantics></math> (<math id="S3.SS4.SSS2.p2.12.m12" class="ltx_Math" alttext="p=0.60" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.60</mn></mrow><annotation encoding="application/x-tex">p=0.60</annotation></semantics></math>),
+and the <math id="S3.SS4.SSS2.p2.13.m13" class="ltx_Math" alttext="[-1]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>−</mo><mn>1</mn></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[-1]</annotation></semantics></math>-only window gives IRR <math id="S3.SS4.SSS2.p2.14.m14" class="ltx_Math" alttext="=1.01" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><mn>1.01</mn></mrow><annotation encoding="application/x-tex">=1.01</annotation></semantics></math>
+(<math id="S3.SS4.SSS2.p2.15.m15" class="ltx_Math" alttext="p=0.95" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.95</mn></mrow><annotation encoding="application/x-tex">p=0.95</annotation></semantics></math>). The fitted dispersion parameter for the
+primary <math id="S3.SS4.SSS2.p2.16.m16" class="ltx_Math" alttext="\pm 1" display="inline" intent=":literal"><semantics><mrow><mo>±</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\pm 1</annotation></semantics></math> day model is <math id="S3.SS4.SSS2.p2.17.m17" class="ltx_Math" alttext="\alpha=0.23" display="inline" intent=":literal"><semantics><mrow><mi>α</mi><mo>=</mo><mn>0.23</mn></mrow><annotation encoding="application/x-tex">\alpha=0.23</annotation></semantics></math>. None of the
+five exploratory windows in Table <a href="#S3.T2" title="Table 2 ‣ III.4.2 Negative Binomial GLM ‣ III.4 Temporal Correlation with Nuclear Tests ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> reach
+significance.</p>
+</div>
+<figure id="S3.T2" class="ltx_table">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_table">Table 2: </span>Negative binomial GLM results for nightly candidate
+counts as a function of nuclear test proximity. Exposure term:
+nightly patch coverage from the full patch summary
+(<math id="S3.T2.4.m1" class="ltx_Math" alttext="N_{\mathrm{patches}}" display="inline" intent=":literal"><semantics><msub><mi>N</mi><mi>patches</mi></msub><annotation encoding="application/x-tex">N_{\mathrm{patches}}</annotation></semantics></math>, logged internally by the model).
+<math id="S3.T2.5.m2" class="ltx_Math" alttext="N_{\mathrm{in}}" display="inline" intent=":literal"><semantics><msub><mi>N</mi><mi>in</mi></msub><annotation encoding="application/x-tex">N_{\mathrm{in}}</annotation></semantics></math> is the number of observation nights in the
+specified window; <math id="S3.T2.6.m3" class="ltx_Math" alttext="p" display="inline" intent=":literal"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-values are two-sided and uncorrected across
+the five exploratory windows. </figcaption>
+<table id="S3.T2.13" class="ltx_tabular">
+<thead class="ltx_thead">
+<tr id="S3.T2.8.2" class="ltx_tr">
+<th id="S3.T2.8.2.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">Window</th>
+<th id="S3.T2.7.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><math id="S3.T2.7.1.1.m1" class="ltx_Math" alttext="N_{\mathrm{in}}" display="inline" intent=":literal"><semantics><msub><mi>N</mi><mi>in</mi></msub><annotation encoding="application/x-tex">N_{\mathrm{in}}</annotation></semantics></math></th>
+<th id="S3.T2.8.2.4" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">IRR</th>
+<th id="S3.T2.8.2.5" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">95% CI</th>
+<th id="S3.T2.8.2.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><math id="S3.T2.8.2.2.m1" class="ltx_Math" alttext="p" display="inline" intent=":literal"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S3.T2.9.3" class="ltx_tr">
+<td id="S3.T2.9.3.1" class="ltx_td ltx_align_left ltx_border_t">
+<math id="S3.T2.9.3.1.m1" class="ltx_Math" alttext="\pm 1" display="inline" intent=":literal"><semantics><mrow><mo>±</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\pm 1</annotation></semantics></math> day</td>
+<td id="S3.T2.9.3.2" class="ltx_td ltx_align_center ltx_border_t">52</td>
+<td id="S3.T2.9.3.3" class="ltx_td ltx_align_center ltx_border_t">1.03</td>
+<td id="S3.T2.9.3.4" class="ltx_td ltx_align_center ltx_border_t">[0.89, 1.18]</td>
+<td id="S3.T2.9.3.5" class="ltx_td ltx_align_center ltx_border_t">0.71</td>
+</tr>
+<tr id="S3.T2.10.4" class="ltx_tr">
+<td id="S3.T2.10.4.1" class="ltx_td ltx_align_left"><math id="S3.T2.10.4.1.m1" class="ltx_Math" alttext="[0,+1]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mn>0</mn><mo>,</mo><mrow><mo>+</mo><mn>1</mn></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[0,+1]</annotation></semantics></math></td>
+<td id="S3.T2.10.4.2" class="ltx_td ltx_align_center">38</td>
+<td id="S3.T2.10.4.3" class="ltx_td ltx_align_center">1.01</td>
+<td id="S3.T2.10.4.4" class="ltx_td ltx_align_center">[0.86, 1.19]</td>
+<td id="S3.T2.10.4.5" class="ltx_td ltx_align_center">0.90</td>
+</tr>
+<tr id="S3.T2.11.5" class="ltx_tr">
+<td id="S3.T2.11.5.1" class="ltx_td ltx_align_left"><math id="S3.T2.11.5.1.m1" class="ltx_Math" alttext="[-1,0]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>−</mo><mn>1</mn></mrow><mo>,</mo><mn>0</mn><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[-1,0]</annotation></semantics></math></td>
+<td id="S3.T2.11.5.2" class="ltx_td ltx_align_center">34</td>
+<td id="S3.T2.11.5.3" class="ltx_td ltx_align_center">0.98</td>
+<td id="S3.T2.11.5.4" class="ltx_td ltx_align_center">[0.83, 1.16]</td>
+<td id="S3.T2.11.5.5" class="ltx_td ltx_align_center">0.82</td>
+</tr>
+<tr id="S3.T2.12.6" class="ltx_tr">
+<td id="S3.T2.12.6.1" class="ltx_td ltx_align_left">
+<math id="S3.T2.12.6.1.m1" class="ltx_Math" alttext="[+1]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>+</mo><mn>1</mn></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[+1]</annotation></semantics></math> only</td>
+<td id="S3.T2.12.6.2" class="ltx_td ltx_align_center">22</td>
+<td id="S3.T2.12.6.3" class="ltx_td ltx_align_center">1.06</td>
+<td id="S3.T2.12.6.4" class="ltx_td ltx_align_center">[0.86, 1.30]</td>
+<td id="S3.T2.12.6.5" class="ltx_td ltx_align_center">0.60</td>
+</tr>
+<tr id="S3.T2.13.7" class="ltx_tr">
+<td id="S3.T2.13.7.1" class="ltx_td ltx_align_left ltx_border_b">
+<math id="S3.T2.13.7.1.m1" class="ltx_Math" alttext="[-1]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>−</mo><mn>1</mn></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[-1]</annotation></semantics></math> only</td>
+<td id="S3.T2.13.7.2" class="ltx_td ltx_align_center ltx_border_b">17</td>
+<td id="S3.T2.13.7.3" class="ltx_td ltx_align_center ltx_border_b">1.01</td>
+<td id="S3.T2.13.7.4" class="ltx_td ltx_align_center ltx_border_b">[0.80, 1.27]</td>
+<td id="S3.T2.13.7.5" class="ltx_td ltx_align_center ltx_border_b">0.95</td>
+</tr>
+</tbody>
+</table>
+</figure>
+<div id="S3.SS4.SSS2.p3" class="ltx_para">
+<p id="S3.SS4.SSS2.p3.1" class="ltx_p">The calendar-day summary and the nightly-count model answer different
+questions, but in the present dataset the former is dominated by the
+observation schedule. Because every study-window observation night
+contains at least one candidate vanished source, the binary day-level
+outcome cannot distinguish “night with observations but no
+candidates” from “night not observed.” The negative binomial model
+therefore provides the more relevant inferential check here, and it is
+null across all tested windows.</p>
+</div>
+<div id="S3.SS4.SSS2.p4" class="ltx_para">
+<p id="S3.SS4.SSS2.p4.2" class="ltx_p">We retain the temporal section because it identifies a concrete
+limitation of the current full-sky catalog. The 1949–1957 nightly
+counts average <math id="S3.SS4.SSS2.p4.1.m1" class="ltx_Math" alttext="{\sim}" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">{\sim}</annotation></semantics></math>7,250 candidate vanished sources, far above
+the benchmark false-positive floor. As noted in
+Section <a href="#S3.SS3" title="III.3 Full-Sky Survey ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.3</span></a>, the full-sky sweep used preliminary
+detection parameters; a reprocessing with the calibrated <math id="S3.SS4.SSS2.p4.2.m2" class="ltx_Math" alttext="8\sigma" display="inline" intent=":literal"><semantics><mrow><mn>8</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">8\sigma</annotation></semantics></math>
+settings should substantially lower the candidate baseline. The
+present null result establishes that any temporal claim depends
+sensitively on filtering methodology and explicit control of the
+observing schedule.</p>
+</div>
+<figure id="S3.F5" class="ltx_figure"><img src="2604.04810v1/x3.png" id="S3.F5.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="660" height="330" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 5: </span>Left: Bruehl-style calendar-day summary of study days with at
+least one candidate vanished source, binned by relation to nuclear test
+dates. The <math id="S3.F5.3.m1" class="ltx_Math" alttext="[+1]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>+</mo><mn>1</mn></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[+1]</annotation></semantics></math> window is elevated relative to the baseline
+(17.9% vs 13.3%; RR <math id="S3.F5.4.m2" class="ltx_Math" alttext="=1.35" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><mn>1.35</mn></mrow><annotation encoding="application/x-tex">=1.35</annotation></semantics></math>), but the effect is not statistically
+significant and is schedule-sensitive because all 368 study-window
+observation nights contain at least one candidate. Right: published
+<cite class="ltx_cite ltx_citemacro_citet">Bruehl and Villarroel (<a href="#bib.bib1" title="A statistical analysis of the temporal and spatial distributions of POSS-I transient candidates" class="ltx_ref">2025</a>)</cite> calendar-day comparison shown for context only.
+</figcaption>
+</figure>
+</section>
+</section>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">IV </span>Discussion</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p id="S4.p1.1" class="ltx_p">The 63.9% independent recovery rate against <cite class="ltx_cite ltx_citemacro_citet">Solano<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib3" title="Identification of vanishing objects in multi-epoch surveys" class="ltx_ref">2022</a>)</cite>
+shows that our automated source-level analysis reproduces most
+catalog-level vanishing-source detections despite using a
+fundamentally different pipeline. The 0.94 arcsec median positional
+agreement also argues against the matches being chance coincidences.</p>
+</div>
+<div id="S4.p2" class="ltx_para">
+<p id="S4.p2.1" class="ltx_p">The 36.1% of Solano sources not recovered by our pipeline divide into
+two informative categories after excluding the 66 sources outside our
+footprint. Roughly half of the remaining unrecovered sources are
+present in our raw catalog but rejected by the PSF filter, indicating a
+methodological disagreement about source morphology. Some may be
+genuine astrophysical transients with non-stellar morphology (e.g.,
+resolved sources or overlapping objects); others may reflect
+contamination or thresholding differences between the two pipelines.
+The other roughly half show no raw detection above our <math id="S4.p2.1.m1" class="ltx_Math" alttext="5\sigma" display="inline" intent=":literal"><semantics><mrow><mn>5</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">5\sigma</annotation></semantics></math>
+threshold and require further investigation to determine whether they
+represent very faint real sources below our detection limit or
+catalog-level artifacts in the original survey.</p>
+</div>
+<div id="S4.p3" class="ltx_para">
+<p id="S4.p3.1" class="ltx_p">The 0% Pan-STARRS match rate among unrecovered Solano sources is a
+notable positive result for the VASCO program: whatever these sources
+are, they are not explained by an obvious Pan-STARRS counterpart. This
+supports the narrower claim that many catalog entries lack a modern
+optical match at Pan-STARRS depth; it does not, by itself, establish
+astrophysical disappearance.</p>
+</div>
+<div id="S4.p4" class="ltx_para">
+<p id="S4.p4.2" class="ltx_p">The temporal correlation with nuclear weapons testing
+(Figure <a href="#S3.F5" title="Figure 5 ‣ III.4.2 Negative Binomial GLM ‣ III.4 Temporal Correlation with Nuclear Tests ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>) yields a narrower conclusion than the
+current draft implied. The Bruehl-style calendar-day comparison shows
+a post-test elevation at <math id="S4.p4.1.m1" class="ltx_Math" alttext="[+1]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>+</mo><mn>1</mn></mrow><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[+1]</annotation></semantics></math> day (RR <math id="S4.p4.2.m2" class="ltx_Math" alttext="=1.35" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><mn>1.35</mn></mrow><annotation encoding="application/x-tex">=1.35</annotation></semantics></math>). But the confidence
+interval is wide and includes unity, and the binary indicator is
+schedule-sensitive because all 368 study-window observation nights
+contain at least one candidate vanished source. In our data, the
+statistic is therefore equivalent to asking whether POSS-I happened to
+observe on that date.</p>
+</div>
+<div id="S4.p5" class="ltx_para">
+<p id="S4.p5.1" class="ltx_p">The correctly parameterized negative binomial model, which uses nightly
+candidate counts with sky coverage as an exposure term, is null for
+the primary <math id="S4.p5.1.m1" class="ltx_Math" alttext="\pm 1" display="inline" intent=":literal"><semantics><mrow><mo>±</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\pm 1</annotation></semantics></math> window and for all asymmetric windows in
+Table <a href="#S3.T2" title="Table 2 ‣ III.4.2 Negative Binomial GLM ‣ III.4 Temporal Correlation with Nuclear Tests ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>. These null results do not rule out a weaker
+association in a cleaner catalog, but they do show that the present
+data do not independently support a count-level temporal effect. Any
+future reanalysis should use calibrated filtering, explicit control
+for the observation schedule and plate-level clustering, and
+pre-specified windows to avoid over-interpreting exploratory
+comparisons.</p>
+</div>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">V </span>Conclusions</h2>
+
+<div id="S5.p1" class="ltx_para">
+<p id="S5.p1.1" class="ltx_p">We have demonstrated that a fully automated pipeline can independently
+recover 63.9% of published POSS-I vanishing-source candidates with
+sub-arcsecond positional accuracy, while maintaining low false positive
+rates on benchmark fields. The pipeline recovers the well-studied
+April 1950 and July 1952 transient fields and confirms that unmatched
+catalog sources in our footprint generally lack obvious
+Pan-STARRS counterparts.</p>
+</div>
+<div id="S5.p2" class="ltx_para">
+<p id="S5.p2.4" class="ltx_p">For the temporal association with nuclear weapons tests, our
+independently constructed 2,852,431-source catalog yields only
+inconclusive evidence. The directly comparable published benchmark for
+this ensemble test is the <math id="S5.p2.1.m1" class="ltx_Math" alttext="{\sim}" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">{\sim}</annotation></semantics></math>107,000-source VASCO statistical
+sample used by <cite class="ltx_cite ltx_citemacro_citet">Bruehl and Villarroel (<a href="#bib.bib1" title="A statistical analysis of the temporal and spatial distributions of POSS-I transient candidates" class="ltx_ref">2025</a>)</cite>, not the public 5,399-source subset
+that we use above for catalog-overlap validation.
+A Bruehl-style calendar-day comparison gives a descriptive post-test
+asymmetry (RR <math id="S5.p2.2.m2" class="ltx_Math" alttext="=1.35" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><mn>1.35</mn></mrow><annotation encoding="application/x-tex">=1.35</annotation></semantics></math>, 95% CI [0.91, 2.00]), but that statistic is
+tied to the survey schedule in our dataset. A negative binomial model
+of nightly counts with nightly patch coverage as exposure is null
+(IRR <math id="S5.p2.3.m3" class="ltx_Math" alttext="=1.03" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>=</mo><mn>1.03</mn></mrow><annotation encoding="application/x-tex">=1.03</annotation></semantics></math>, 95% CI [0.89, 1.18], <math id="S5.p2.4.m4" class="ltx_Math" alttext="p=0.71" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.71</mn></mrow><annotation encoding="application/x-tex">p=0.71</annotation></semantics></math>). The main robust
+result of this study is therefore the independent catalog-level
+replication; the nuclear-test question remains open and will require a
+cleaner full-sky reprocessing plus explicit control of observational
+confounds.</p>
+</div>
+<div id="S5.acknowledgements1" class="ltx_acknowledgements">This work uses data from the STScI Digitized Sky Survey, the
+Pan-STARRS1 survey, and the Spanish Virtual Observatory vanishing
+sources catalog. We thank Enrique Solano for providing catalog access.
+
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul id="bib.L1" class="ltx_biblist">
+<li id="bib.bib1" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Bruehl and B. Villarroel (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A statistical analysis of the temporal and spatial distributions of POSS-I transient candidates</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Scientific Reports</span> <span class="ltx_text ltx_bib_volume">15</span>, <span class="ltx_text ltx_bib_pages"> pp. 34125</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1038/s41598-025-21620-3" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="I Introduction ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>,
+<a href="#S3.F5" title="In III.4.2 Negative Binomial GLM ‣ III.4 Temporal Correlation with Nuclear Tests ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Figure 5</span></a>,
+<a href="#S3.SS4.SSS1.p1.7" title="III.4.1 Calendar-Day Binary Analysis ‣ III.4 Temporal Correlation with Nuclear Tests ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.4.1</span></a>,
+<a href="#S3.SS4.SSS1.p2.1" title="III.4.1 Calendar-Day Binary Analysis ‣ III.4 Temporal Correlation with Nuclear Tests ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.4.1</span></a>,
+<a href="#S3.SS4.SSS2.p1.1" title="III.4.2 Negative Binomial GLM ‣ III.4 Temporal Correlation with Nuclear Tests ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.4.2</span></a>,
+<a href="#S3.SS4.p1.3" title="III.4 Temporal Correlation with Nuclear Tests ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.4</span></a>,
+<a href="#S5.p2.4" title="V Conclusions ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§V</span></a>.
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">K. C. Chambers, E. A. Magnier, N. Metcalfe, <span class="ltx_text ltx_bib_etal">et al.</span> (2016)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Pan-STARRS1 surveys</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">1612.05560</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS5.p1.1" title="II.5 Pan-STARRS Verification ‣ II Method ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II.5</span></a>.
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. M. Lasker, M. G. Lattanzi, B. J. McLean, <span class="ltx_text ltx_bib_etal">et al.</span> (2008)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The second-generation guide star catalog: description and properties</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astronomical Journal</span> <span class="ltx_text ltx_bib_volume">136</span>, <span class="ltx_text ltx_bib_pages"> pp. 735–766</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1088/0004-6256/136/2/735" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p1.4" title="II.1 Data ‣ II Method ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II.1</span></a>.
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">E. Solano, D. García-Alvarez, P. Marcos-Arenal, <span class="ltx_text ltx_bib_etal">et al.</span> (2022)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Identification of vanishing objects in multi-epoch surveys</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Monthly Notices of the Royal Astronomical Society</span> <span class="ltx_text ltx_bib_volume">515</span>, <span class="ltx_text ltx_bib_pages"> pp. 1380–1395</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1093/mnras/stac1880" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="I Introduction ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>,
+<a href="#S1.p3.1" title="I Introduction ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>,
+<a href="#S3.F3" title="In III.2 Solano Catalog Cross-Match ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Figure 3</span></a>,
+<a href="#S3.F4" title="In III.2 Solano Catalog Cross-Match ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Figure 4</span></a>,
+<a href="#S3.SS2.p1.1" title="III.2 Solano Catalog Cross-Match ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.2</span></a>,
+<a href="#S3.SS2.p4.1" title="III.2 Solano Catalog Cross-Match ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.2</span></a>,
+<a href="#S3.SS4.p1.3" title="III.4 Temporal Correlation with Nuclear Tests ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.4</span></a>,
+<a href="#S4.p1.1" title="IV Discussion ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§IV</span></a>.
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">E. Solano <span class="ltx_text ltx_bib_etal">et al.</span> (2024)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A bright triple transient that appeared on a POSS-I plate in July 1952</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Monthly Notices of the Royal Astronomical Society</span> <span class="ltx_text ltx_bib_volume">527</span>, <span class="ltx_text ltx_bib_pages"> pp. 6312–6324</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1093/mnras/stad3726" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="I Introduction ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>,
+<a href="#S3.F2" title="In III.1 Benchmark Validation ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Figure 2</span></a>,
+<a href="#S3.SS1.p1.1" title="III.1 Benchmark Validation ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.1</span></a>.
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. Villarroel, I. Imaz, J. Joshi, <span class="ltx_text ltx_bib_etal">et al.</span> (2021)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Exploring nine simultaneously occurring transients on 12 April 1950</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Scientific Reports</span> <span class="ltx_text ltx_bib_volume">11</span>, <span class="ltx_text ltx_bib_pages"> pp. 12794</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1038/s41598-021-92162-7" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="I Introduction ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>,
+<a href="#S3.SS1.p1.1" title="III.1 Benchmark Validation ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.1</span></a>.
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. Villarroel, E. Solano, and G. W. Marcy (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">On the image profiles of transients in the Palomar Sky Survey</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">2507.15896</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="I Introduction ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. Villarroel, E. Solano, L. Mattsson, <span class="ltx_text ltx_bib_etal">et al.</span> (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Our Sky now and then: searches for lost stars and impossible effects as a tool for discovering new astrophysics</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astronomical Journal</span> <span class="ltx_text ltx_bib_volume">159</span>, <span class="ltx_text ltx_bib_pages"> pp. 8</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/ab570f" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="I Introduction ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. Villarroel, A. Streblyanska, S. Bruehl, and S. Geier (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A response to paper critical evaluation of studies alleging evidence for technosignatures in the POSS1-E photographic plates by watters et al. (2026)</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">2602.15171</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS4.p1.3" title="III.4 Temporal Correlation with Nuclear Tests ‣ III Results ‣ Independent Recovery of Vanishing Sources on POSS-I Photographic Plates Using Automated Source Detection and Cross-Epoch Matching" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.4</span></a>.
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2604.04810v1/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer><footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation">
+        </a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International">
+        </a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences">
+        </a>
+      </div>
+    </div>
+  </div>
+</footer><div id="fixed-buttons-container">
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>

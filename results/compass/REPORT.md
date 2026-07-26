@@ -23,3 +23,13 @@ Deepening dispatched: tight radii (10/15 pc, n_min 6, 400 shuffles) for
 small engineered patches, reusing the sample artifact. If that is also null
 the channel rests until DR4 roughly doubles the orbit count and precision;
 per policy, no writeup.
+
+## Session verdict — tight-radius pass (2026-07-26, resumed sample)
+
+Also null, decisively: r = 10 pc max statistic 18.2 vs null median 19.3
+(p = 0.67 — the real maximum is BELOW the typical shuffle maximum), r = 15 pc
+p = 0.38, nothing above any null p99, 400 shuffles per radius. COMPASS is a
+complete first-generation null across 10-100 pc coherence scales: the DR3
+orbital-pole field carries no local alignment patches at any scale the
+catalogue can resolve. The channel rests until DR4 (~2x orbits, better
+inclinations). Per policy, no writeup; the question changes.

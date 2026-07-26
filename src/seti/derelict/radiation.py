@@ -313,7 +313,7 @@ def r_statistic(a1_au_day2: float | None,
     amr_imp = float(amr_from_beta(beta, q_pr=q_pr))
 
     # --- size ---
-    d_lo = d_hi = None
+    d_for_r_lo = d_for_r_hi = None
     if diameter_m is not None and np.isfinite(diameter_m) and diameter_m > 0:
         d = float(diameter_m)
         source = "measured"
@@ -324,17 +324,22 @@ def r_statistic(a1_au_day2: float | None,
             else "H_albedo_assumed"
         d = float(diameter_from_h(h_mag, albedo=p))
         if source == "H_albedo_assumed":
-            # Larger albedo -> smaller D -> smaller AMR_natural -> LARGER R.
-            d_hi = float(diameter_from_h(h_mag, albedo=albedo_lo))   # -> smaller R
-            d_lo = float(diameter_from_h(h_mag, albedo=albedo_hi))   # -> larger R
+            # R = AMR_implied * 2 D rho / 3, so R is LINEAR IN D.  A darker
+            # assumed albedo implies a LARGER body, which is MORE anomalous for
+            # the same measured acceleration (more mass behind the same
+            # cross-section).  So albedo_lo -> R_hi and albedo_hi -> R_lo.
+            d_for_r_hi = float(diameter_from_h(h_mag, albedo=albedo_lo))
+            d_for_r_lo = float(diameter_from_h(h_mag, albedo=albedo_hi))
     else:
         return RStatistic(beta=beta, amr_implied=amr_imp, valid=False,
                           reason="no diameter and no H; cannot normalise")
 
     amr_nat = float(amr_natural(d, rho_kg_m3=rho_kg_m3))
     r = amr_imp / amr_nat
-    r_lo = amr_imp / float(amr_natural(d_hi, rho_kg_m3=rho_kg_m3)) if d_hi else r
-    r_hi = amr_imp / float(amr_natural(d_lo, rho_kg_m3=rho_kg_m3)) if d_lo else r
+    r_lo = (amr_imp / float(amr_natural(d_for_r_lo, rho_kg_m3=rho_kg_m3))
+            if d_for_r_lo else r)
+    r_hi = (amr_imp / float(amr_natural(d_for_r_hi, rho_kg_m3=rho_kg_m3))
+            if d_for_r_hi else r)
 
     return RStatistic(r=r, r_lo=r_lo, r_hi=r_hi,
                       amr_implied=amr_imp, amr_natural_=amr_nat, beta=beta,

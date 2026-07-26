@@ -33,8 +33,9 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 import pandas as pd
 
@@ -95,9 +96,14 @@ class FetchResult:
                 "signature": self.signature, "errors": self.errors}
 
 
+#: Characters the SBDB constraint syntax needs to survive URL encoding.
+_URL_SAFE = '{}[]|"'
+
+
 def _build_url(base: str, params: dict[str, Any]) -> str:
     clean = {k: v for k, v in params.items() if v is not None}
-    return f"{base}?{urllib.parse.urlencode(clean, safe='{}[]|\"',)}"
+    query = urllib.parse.urlencode(clean, safe=_URL_SAFE)
+    return f"{base}?{query}"
 
 
 def _parse_query_payload(raw: bytes) -> tuple[pd.DataFrame, dict]:

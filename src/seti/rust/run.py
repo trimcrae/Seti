@@ -101,6 +101,7 @@ def rust_sweep(
     min_epochs_season: int = 8,
     min_seasons: int = 4,
     season_days: float = 365.25,
+    detrend_season: bool = True,
     time_budget_s: float = 2400.0,
     max_boxes: int | None = None,
     out_root: Path | None = None,
@@ -113,6 +114,7 @@ def rust_sweep(
     season_days = float(sea.get("season_days", season_days))
     min_epochs_season = int(sea.get("min_epochs_season", min_epochs_season))
     min_seasons = int(sea.get("min_seasons", min_seasons))
+    detrend_season = bool(sea.get("detrend_season", detrend_season))
 
     root = Path(out_root) if out_root is not None else (
         (Path(cfg.root) if cfg is not None else Path(".")) / "results" / "rust")
@@ -137,7 +139,8 @@ def rust_sweep(
             ss = season_scatter(lc["mjd"].to_numpy(), lc["mag"].to_numpy(),
                                 lc["magerr"].to_numpy(), season_days=season_days,
                                 min_epochs_season=min_epochs_season,
-                                min_seasons=min_seasons)
+                                min_seasons=min_seasons,
+                                detrend_season=detrend_season)
             if ss is None:
                 continue
             got[band] = True
@@ -208,10 +211,13 @@ def rust_sweep(
                        "loo_sigma_min": LOO_SIGMA_MIN, "amp_growth_min": AMP_GROWTH_MIN,
                        "amp_last_mmag_min": AMP_LAST_MMAG_MIN},
         "ensemble_detrend_g": diag_g, "ensemble_detrend_r": diag_r,
-        "cadence_bias_note": ("season scatter is compared against a per-season null "
-                              "computed with that season's own epoch count and error "
-                              "vector; a per-CCD ensemble error-scale factor is then "
-                              "fitted and removed"),
+        "detrend_season": bool(detrend_season),
+        "cadence_bias_note": ("a fitted line is removed per season (not just the "
+                              "median), the scatter is compared against a per-season "
+                              "null computed with that season's own epoch count and "
+                              "error vector using the line-detrended null table, and "
+                              "a per-CCD ensemble error-scale factor is then fitted "
+                              "and removed"),
     }
     (out_dir / "field_summary.json").write_text(json.dumps(summary, indent=2))
     print(f"[rust] {tag}: {n_measured} two-band sources, "

@@ -654,10 +654,16 @@ egress.
   exist for the 2010 cryogenic phase alone. W1/W2 reach only T ≳ 500–700 K, so
   *any* decade-baseline mid-IR excess-change search at 100–300 K is impossible
   with it. Do not propose one. NEOWISE's real value is as a **flatness** test.
-* **IRAS 12 µm and WISE W3 are near-identical bandpasses**: the early→late flux
-  transfer moves by only 1.20× across dust temperatures of 150–1500 K. **AKARI
-  S9W → W3 moves by 5.18×** — the 9-to-12 µm step is emphatically *not* a null
-  transformation and must never be treated as one.
+* **IRAS 25 µm → WISE W4 is the near-identical pair**: the early→late flux
+  transfer moves by only **1.03×** across dust temperatures of 150–1500 K.
+  I12 → W3 moves by **1.71×** and **AKARI S9W → W3 by 8.25×** — the 9-to-12 µm
+  step is emphatically *not* a null transformation and must never be treated as
+  one. These are the numbers from the **real SVO response curves** (committed
+  in `src/seti/data_assets/rsr/`); the documented trapezoid fallback gives 1.24,
+  1.20 and 5.18 respectively, which **reverses the ordering of the top two
+  pairs** and understates the systematic on I12→W3 by 40%. A trapezoidal
+  bandpass is not a conservative approximation. `rsr_source` is recorded per
+  band in every audit for exactly this reason.
 * **The IRAS 100 µm background cut is worth a factor of ~30.** Kennedy & Wyatt
   2012 (arXiv:1207.0521): ~8,000 of 180,000 stars show an apparent IRAS excess
   correlated with the 100 µm background; below 5 MJy/sr, 271 remain. Mandatory

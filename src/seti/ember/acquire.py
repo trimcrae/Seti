@@ -319,14 +319,35 @@ def tap_schema_columns(table: str, url: str = VIZIER_TAP) -> list[dict]:
     ``TAP_SCHEMA.columns.table_name`` stores it unquoted.
     """
     tap = _tap_service(url)
-    q = _TAP_SCHEMA_QUERY.format(table=table.strip('"'))
-    tbl = _retry(lambda: tap.run_sync(q).to_table(), label=f"schema:{table}")
-    out = []
-    for row in tbl:
-        out.append({k: (None if row[k] is None else str(row[k]))
-                    for k in ("column_name", "ucd", "unit", "datatype", "description")
-                    if k in tbl.colnames})
-    return out
+    bare = table.strip('"')
+    # MEASURED (probe, run 30209647320): TAPVizieR returned **0 rows** for the
+    # unquoted form on all four catalogues -- no error, just nothing, which is
+    # the shape of failure this module exists to make visible. Several
+    # spellings are therefore tried and the one that worked is reported; if
+    # none does, the caller falls back to alias matching (which is what
+    # actually carried that run).
+    forms = (bare, table, bare.replace("/", "."), bare.rsplit("/", 1)[0])
+    last: Exception | None = None
+    for form in dict.fromkeys(forms):
+        q = _TAP_SCHEMA_QUERY.format(table=form)
+        try:
+            tbl = _retry(lambda q=q: tap.run_sync(q).to_table(),
+                         retries=2, label=f"schema:{form}")
+        except Exception as exc:  # noqa: BLE001
+            last = exc
+            continue
+        if len(tbl) == 0:
+            continue
+        out = []
+        for row in tbl:
+            out.append({k: (None if row[k] is None else str(row[k]))
+                        for k in ("column_name", "ucd", "unit", "datatype",
+                                  "description")
+                        if k in tbl.colnames})
+        return out
+    if last is not None:
+        raise last
+    return []
 
 
 def describe_catalogue(table: str, aliases: dict[str, tuple[str, ...]],
@@ -506,8 +527,15 @@ GAIA_UPLOAD_CHUNKS: tuple[int, ...] = (5_000, 2_000, 500)
 #: alias-based and *recorded*, never assumed.
 _GAIA_VIZIER_ALIASES: dict[str, tuple[str, ...]] = {
     "source_id": ("source", "source_id", "dr3name", "gaiadr3"),
-    "ra": ("ra_icrs", "raicrs", "ra"),
-    "dec": ("de_icrs", "deicrs", "dec", "de"),
+    # MEASURED (probe, run 30209647320): I/355/gaiadr3 returns the ICRS
+    # position as ``RAdeg``/``DEdeg``.  The catalogue's spellings MUST come
+    # before a bare ``ra``, because an X-Match response also carries the
+    # *uploaded* ``ra``/``dec`` -- and mapping those onto the canonical names
+    # would make the Gaia position identical to the infrared position, so
+    # ``sep_arcsec`` would be ~0 for every source and the astrometric
+    # association test would silently pass everything.
+    "ra": ("radeg", "ra_icrs", "raicrs", "raj2000", "ra"),
+    "dec": ("dedeg", "de_icrs", "deicrs", "dej2000", "dec", "de"),
     "parallax": ("plx", "parallax"),
     "parallax_error": ("e_plx", "parallax_error"),
     "pmra": ("pmra",),
@@ -542,9 +570,29 @@ _ALLWISE_VIZIER_ALIASES: dict[str, tuple[str, ...]] = {
 
 def _rename_by_alias(df: pd.DataFrame, aliases: dict[str, tuple[str, ...]]
                      ) -> tuple[pd.DataFrame, dict[str, str]]:
-    """Rename ``df``'s columns to canonical names, reporting what matched."""
+    """Rename ``df``'s columns to canonical names, reporting what matched.
+
+    Collisions are real here and would be silent. An X-Match result carries the
+    *uploaded* table's columns (``match_id``, ``ra``, ``dec``) alongside the
+    catalogue's (``RAJ2000``, ``DEJ2000``, …). Renaming ``RAJ2000`` to ``ra``
+    without care produces two columns both called ``ra``, after which
+    ``df["ra"]`` returns a DataFrame rather than a Series and every downstream
+    numeric operation misbehaves in a way that is hard to trace back here. The
+    uploaded column keeps the canonical name (it is the position we asked
+    about); the catalogue's is preserved under ``<name>_cat``.
+    """
     mapping = resolve_columns(df.columns, aliases)
-    out = df.rename(columns={v: k for k, v in mapping.items()})
+    renames: dict[str, str] = {}
+    for canonical, actual in mapping.items():
+        if actual == canonical:
+            continue
+        renames[actual] = (f"{canonical}_cat" if canonical in df.columns
+                           else canonical)
+    out = df.rename(columns=renames)
+    if out.columns.duplicated().any():        # belt and braces
+        dupes = sorted(set(out.columns[out.columns.duplicated()]))
+        raise RuntimeError(f"alias rename produced duplicate columns {dupes}; "
+                           f"mapping={mapping}")
     return out, mapping
 
 
@@ -578,7 +626,15 @@ def xmatch_cds(positions: pd.DataFrame, cat2: str, radius_arcsec: float = 6.0,
         print(f"[ember] xmatch {cat2} rows {start}-{start + len(sub)} -> "
               f"{len(df):,} matches")
         frames.append(df)
-    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    if not frames:
+        return pd.DataFrame()
+    out = pd.concat(frames, ignore_index=True)
+    # An X-Match response carries the UPLOADED columns alongside the
+    # catalogue's.  Move the uploaded position out of the canonical namespace
+    # so it cannot shadow the catalogue's -- measured, probe run 30209647320:
+    # without this the Gaia alias for "ra" resolved to the *infrared* position
+    # we had just asked about.
+    return out.rename(columns={colra: "xm_query_ra", coldec: "xm_query_dec"})
 
 
 def fetch_gaia_for_positions(positions: pd.DataFrame, radius_arcsec: float = 6.0,
@@ -594,10 +650,17 @@ def fetch_gaia_for_positions(positions: pd.DataFrame, radius_arcsec: float = 6.0
 
     Ladder, in order, with whichever worked recorded in ``status.strategy``:
 
-    1. ESA Gaia archive TAP upload at 5,000 rows a chunk, then 2,000, then 500.
-       Smaller is slower but the anonymous upload limit is the binding
-       constraint, not throughput.
-    2. CDS X-Match against ``vizier:I/355/gaiadr3``.
+    1. **CDS X-Match against ``vizier:I/355/gaiadr3``.**  Measured in the probe
+       (run 30209647320): 405 positions -> 225 matches in 3.0 s.
+    2. ESA Gaia archive TAP upload, 5,000 rows a chunk, then 2,000, then 500.
+
+    That order is the opposite of the obvious one and it is empirical. The same
+    probe found the anonymous ESA upload returns ``HTTP 500`` **even at 200
+    rows**, taking 80 s to do so -- so it is not a size limit that a smaller
+    chunk can duck, the route is simply unavailable, and leading with it costs
+    minutes per shard to learn nothing. It is kept as a fallback because it
+    returns the native Gaia column names and because service outages are not
+    permanent.
 
     A total failure returns an empty frame **with ``status`` saying
     ``QUERY_FAILED``**, which the caller must not confuse with an empty sky.
@@ -612,30 +675,21 @@ def fetch_gaia_for_positions(positions: pd.DataFrame, radius_arcsec: float = 6.0
         return pd.DataFrame()
 
     q = _GAIA_QUERY.format(radius_deg=radius_arcsec / 3600.0)
-    st.query = q
-    sizes = (chunk,) if chunk else GAIA_UPLOAD_CHUNKS
+    st.query = f"XMatch cat2={XMATCH_CATALOGUES['gaia_dr3']} r={radius_arcsec}\""
     attempts: list[dict] = []
 
-    for size in sizes:
-        try:
-            df = _gaia_upload(positions, q, int(size), out_dir, retries)
-        except Exception as exc:  # noqa: BLE001
-            attempts.append({"strategy": f"esa_upload_{size}", "error": repr(exc)})
-            print(f"[ember] gaia upload at chunk={size} failed: {exc!r}")
-            continue
-        st.strategy = f"esa_upload_{size}"
-        st.n_rows = int(len(df))
-        st.status = _classify(df, None)
-        st.detail["attempts"] = attempts
-        return df
-
-    # Fallback: CDS X-Match against the VizieR mirror of Gaia DR3.
+    # 1. CDS X-Match against the VizieR mirror of Gaia DR3.
     try:
         raw = xmatch_cds(positions[["match_id", "ra", "dec"]],
                          XMATCH_CATALOGUES["gaia_dr3"], radius_arcsec)
         df, mapping = _rename_by_alias(raw, _GAIA_VIZIER_ALIASES)
+        missing = {"ra", "dec"} - set(df.columns)
+        if missing:
+            raise RuntimeError(
+                f"X-Match returned no usable Gaia position ({missing} unmapped "
+                f"from {list(raw.columns)[:40]}); refusing to proceed, because a "
+                "missing Gaia position would silently become the infrared one")
         st.strategy = "cds_xmatch_vizier_I355"
-        st.query = f"XMatch cat2={XMATCH_CATALOGUES['gaia_dr3']} r={radius_arcsec}\""
         st.detail["xmatch_column_mapping"] = mapping
         st.detail["xmatch_columns_returned"] = list(raw.columns)
         st.n_rows = int(len(df))
@@ -644,11 +698,28 @@ def fetch_gaia_for_positions(positions: pd.DataFrame, radius_arcsec: float = 6.0
         return df
     except Exception as exc:  # noqa: BLE001
         attempts.append({"strategy": "cds_xmatch", "error": repr(exc)})
-        st.status = STATUS_QUERY_FAILED
-        st.error = f"every Gaia strategy failed: {attempts}"
+        print(f"[ember] gaia xmatch failed ({exc!r}); trying the ESA archive")
+
+    # 2. ESA Gaia archive TAP upload, shrinking the chunk before giving up.
+    for size in ((chunk,) if chunk else GAIA_UPLOAD_CHUNKS):
+        try:
+            df = _gaia_upload(positions, q, int(size), out_dir, retries)
+        except Exception as exc:  # noqa: BLE001
+            attempts.append({"strategy": f"esa_upload_{size}", "error": repr(exc)})
+            print(f"[ember] gaia upload at chunk={size} failed: {exc!r}")
+            continue
+        st.strategy = f"esa_upload_{size}"
+        st.query = q
+        st.n_rows = int(len(df))
+        st.status = _classify(df, None)
         st.detail["attempts"] = attempts
-        print(f"[ember] gaia: every strategy failed; last was {exc!r}")
-        return pd.DataFrame()
+        return df
+
+    st.status = STATUS_QUERY_FAILED
+    st.error = f"every Gaia strategy failed: {attempts}"
+    st.detail["attempts"] = attempts
+    print("[ember] gaia: every strategy failed")
+    return pd.DataFrame()
 
 
 def _gaia_upload(positions: pd.DataFrame, q: str, chunk: int,

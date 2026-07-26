@@ -476,6 +476,57 @@ anonymous ESA archive will accept, whether CDS X-Match can substitute, and what
 IRSA returns — with row counts and first rows. It is dispatchable on its own
 (`probe_only: true`).
 
+### 7.2 What the probe measured — run 30209647320, `results/ember/probe.json`
+
+| primitive | result |
+|---|---|
+| `II/125/main` (IRAS PSC) | RA/Dec resolve to **`RA1950` / `DE1950`**, frame **B1950**; 632 rows in a 1° RA slice |
+| `II/156A/main` (IRAS FSC) | **`RA1950` / `DE1950`**, frame **B1950**; 412 rows in a 1° slice |
+| `II/297/irc` (AKARI/IRC) | `RAJ2000` / `DEJ2000`, ICRS; 1,590 rows in a 1° slice |
+| `II/328/allwise` | `RAJ2000` / `DEJ2000`, ICRS; **2,304,340 rows in a 1° slice** |
+| ESA Gaia TAP upload | **`HTTP 500` at 200 rows**, after 80 s |
+| CDS X-Match → `vizier:I/355/gaiadr3` | **OK — 405 positions → 225 matches in 3.0 s** |
+| CDS X-Match → `vizier:II/328/allwise` | **OK — 200 matches in 0.6 s** |
+| IRSA AllWISE cone | OK, 7.9 s |
+| IRSA NEOWISE light curve | OK, 84 s per object |
+
+Four things follow, and three of them changed the code.
+
+**The IRAS diagnosis is confirmed exactly.** `RA1950`/`DE1950` is precisely the
+spelling the old alias table did not know, and the frame flag reads `b1950`, so
+the precession path is the one that runs. Both IRAS catalogues are queryable and
+populated.
+
+**The ESA upload is not size-limited, it is unavailable.** 500 at 200 rows is not
+a quota; a smaller chunk cannot duck it. Since each attempt costs 80 s, the
+ladder was **reversed**: CDS X-Match is now the primary Gaia route and the ESA
+archive the fallback. The chunk ladder is retained for the day the service comes
+back.
+
+**AllWISE at 2.3 million rows per square degree of RA settles the AllWISE
+question too.** A bulk pull is out of the question and per-object cones at 7.9 s
+each are out of the question; X-Match at 0.6 s for 200 positions is the only
+route that works, and it works.
+
+**A bug the probe caught before it could ship.** An X-Match response carries the
+*uploaded* `ra`/`dec` alongside the catalogue's — for Gaia DR3 the catalogue's
+are `RAdeg`/`DEdeg`. The alias for `ra` resolved to the **uploaded** column,
+which would have made every Gaia position identical to the infrared position it
+was queried with. `sep_arcsec` would then have been ~0 for every source, and
+§4.5's astrometric veto — the one that rejects background galaxies, the
+contaminant that destroyed every Project Hephaistos candidate — would have
+passed everything while looking like it was working. `xmatch_cds` now moves the
+uploaded position to `xm_query_ra`/`xm_query_dec`, the Gaia aliases prefer the
+catalogue spellings, and acquisition **refuses** an X-Match result with no usable
+catalogue position rather than substituting one.
+
+One limitation stays open and is recorded rather than hidden: TAPVizieR returned
+**zero rows** from `TAP_SCHEMA.columns` for all four tables — no error, just
+nothing — so the UCD route never fired and alias matching carried the run.
+Several `table_name` spellings are now tried, but until one of them works the
+principled frame-independent resolution is unavailable and the alias list is
+load-bearing. That is why the B1950 spellings are in it explicitly.
+
 ## 8. Honest limitations
 
 * NEOWISE cannot see 100–300 K dust. There is no epoch after 2010 at 12–25 µm,

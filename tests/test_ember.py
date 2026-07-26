@@ -1012,8 +1012,98 @@ def test_allwise_falls_back_to_cones_when_xmatch_fails(monkeypatch):
     assert "xmatch_error" in st.detail
 
 
-def test_gaia_ladder_shrinks_the_upload_before_giving_up(monkeypatch):
-    """Run 30203763934 died at chunk=20000; the ladder must try smaller first."""
+#: The columns CDS X-Match actually returns for ``vizier:I/355/gaiadr3``,
+#: measured by the probe in run 30209647320. Using the real names is the whole
+#: point: the bug these tests pin was invisible against invented ones.
+_XM_GAIA_COLS = ("angDist", "match_id", "xm_query_ra", "xm_query_dec",
+                 "DR3Name", "RAdeg", "DEdeg", "Source", "Plx", "e_Plx",
+                 "pmRA", "e_pmRA", "pmDE", "e_pmDE", "RUWE", "Gmag",
+                 "BPmag", "RPmag", "BP-RP", "Teff")
+
+
+def _fake_xmatch_gaia(n=2, gaia_offset_deg=0.001):
+    """An X-Match response shaped like the real one, Gaia offset from the IR."""
+    ir_ra = np.linspace(10.0, 11.0, n)
+    d = {"angDist": np.full(n, 1.2), "match_id": [f"m{i}" for i in range(n)],
+         "xm_query_ra": ir_ra, "xm_query_dec": np.zeros(n),
+         "DR3Name": [f"Gaia DR3 {i}" for i in range(n)],
+         "RAdeg": ir_ra + gaia_offset_deg, "DEdeg": np.full(n, gaia_offset_deg),
+         "Source": np.arange(n), "Plx": np.full(n, 5.0),
+         "e_Plx": np.full(n, 0.02), "pmRA": np.full(n, 12.0),
+         "e_pmRA": np.full(n, 0.03), "pmDE": np.full(n, -7.0),
+         "e_pmDE": np.full(n, 0.03), "RUWE": np.full(n, 1.0),
+         "Gmag": np.full(n, 10.0), "BPmag": np.full(n, 10.5),
+         "RPmag": np.full(n, 9.6), "BP-RP": np.full(n, 0.9),
+         "Teff": np.full(n, 5500.0)}
+    return pd.DataFrame(d)[list(_XM_GAIA_COLS)]
+
+
+def test_gaia_uses_cds_xmatch_first(monkeypatch):
+    """Measured, probe run 30209647320: the ESA upload 500s even at 200 rows.
+
+    It is therefore not a size limit a smaller chunk can duck, and leading with
+    it costs 80 s an attempt to learn nothing. X-Match went first from then on.
+    """
+    positions = pd.DataFrame({"match_id": ["m0", "m1"], "ra": [10.0, 11.0],
+                              "dec": [0.0, 0.0]})
+    uploads: list[int] = []
+    monkeypatch.setattr(A, "_gaia_upload",
+                        lambda *a, **kw: uploads.append(1) or pd.DataFrame())
+    monkeypatch.setattr(A, "xmatch_cds", lambda *a, **kw: _fake_xmatch_gaia())
+
+    st = A.FetchStatus(label="gaia")
+    out = A.fetch_gaia_for_positions(positions, status=st)
+    assert st.strategy == "cds_xmatch_vizier_I355"
+    assert st.status == A.STATUS_OK
+    assert not uploads, "the ESA archive must not be tried when X-Match works"
+    assert {"source_id", "ra", "dec", "parallax", "pmra", "pmdec", "ruwe",
+            "bp_rp", "phot_g_mean_mag"} <= set(out.columns)
+
+
+def test_gaia_xmatch_returns_the_gaia_position_not_the_infrared_one(monkeypatch):
+    """The bug the probe caught before it could ship.
+
+    An X-Match response carries the *uploaded* ``ra``/``dec`` next to the
+    catalogue's ``RAdeg``/``DEdeg``. If the alias for ``ra`` resolves to the
+    uploaded column, every Gaia position becomes the infrared position it was
+    queried with, ``sep_arcsec`` collapses to ~0 for every source, and the
+    astrometric association test -- the veto that rejects background galaxies --
+    silently passes everything.
+    """
+    positions = pd.DataFrame({"match_id": ["m0", "m1"], "ra": [10.0, 11.0],
+                              "dec": [0.0, 0.0]})
+    monkeypatch.setattr(A, "_gaia_upload", lambda *a, **kw: pd.DataFrame())
+    monkeypatch.setattr(A, "xmatch_cds",
+                        lambda *a, **kw: _fake_xmatch_gaia(gaia_offset_deg=0.001))
+    st = A.FetchStatus(label="gaia")
+    out = A.fetch_gaia_for_positions(positions, status=st)
+
+    assert st.detail["xmatch_column_mapping"]["ra"] == "RAdeg"
+    assert st.detail["xmatch_column_mapping"]["dec"] == "DEdeg"
+    # The Gaia position is genuinely displaced from the queried position.
+    sep = A.angular_sep_arcsec(out["ra"], out["dec"],
+                               out["xm_query_ra"], out["xm_query_dec"])
+    assert np.all(sep > 3.0), f"Gaia position collapsed onto the IR one: {sep}"
+
+
+def test_gaia_refuses_an_xmatch_result_with_no_usable_position(monkeypatch):
+    """No position is a failure, never a silent substitution."""
+    positions = pd.DataFrame({"match_id": ["a"], "ra": [1.0], "dec": [0.0]})
+    monkeypatch.setattr(A, "xmatch_cds", lambda *a, **kw: pd.DataFrame(
+        {"match_id": ["a"], "Source": [1], "Plx": [5.0]}))
+    monkeypatch.setattr(A, "_gaia_upload",
+                        lambda *a, **kw: (_ for _ in ()).throw(
+                            RuntimeError("HTTP 500")))
+    st = A.FetchStatus(label="gaia")
+    out = A.fetch_gaia_for_positions(positions, status=st)
+    assert out.empty
+    assert st.status == A.STATUS_QUERY_FAILED
+    assert any("no usable Gaia position" in str(a.get("error"))
+               for a in st.detail["attempts"])
+
+
+def test_gaia_ladder_shrinks_the_upload_when_xmatch_is_unavailable(monkeypatch):
+    """With X-Match down, the ESA ladder still shrinks before giving up."""
     positions = pd.DataFrame({"match_id": [f"m{i}" for i in range(30)],
                               "ra": np.linspace(0, 1, 30),
                               "dec": np.zeros(30)})
@@ -1023,9 +1113,13 @@ def test_gaia_ladder_shrinks_the_upload_before_giving_up(monkeypatch):
         tried.append(chunk)
         if chunk > 2_000:
             raise RuntimeError("HTTP 500")
-        return pd.DataFrame({"match_id": pos["match_id"], "source_id": range(len(pos))})
+        return pd.DataFrame({"match_id": pos["match_id"],
+                             "source_id": range(len(pos))})
 
     monkeypatch.setattr(A, "_gaia_upload", _upload)
+    monkeypatch.setattr(A, "xmatch_cds",
+                        lambda *a, **kw: (_ for _ in ()).throw(
+                            RuntimeError("xmatch down")))
     st = A.FetchStatus(label="gaia")
     out = A.fetch_gaia_for_positions(positions, status=st)
     assert tried == [5_000, 2_000]
@@ -1033,22 +1127,39 @@ def test_gaia_ladder_shrinks_the_upload_before_giving_up(monkeypatch):
     assert st.status == A.STATUS_OK and len(out) == 30
 
 
-def test_gaia_falls_back_to_cds_xmatch_when_every_upload_fails(monkeypatch):
-    positions = pd.DataFrame({"match_id": ["a", "b"], "ra": [1.0, 2.0],
-                              "dec": [0.0, 0.0]})
+def test_xmatch_moves_the_uploaded_position_out_of_the_way(monkeypatch):
+    """`xmatch_cds` renames the uploaded ra/dec so they cannot shadow cat2's."""
+    monkeypatch.setattr(A, "_retry", lambda fn, **kw: fn())
 
-    def _boom(*a, **kw):
-        raise RuntimeError("HTTP 500")
+    class _FakeXMatch:
+        @staticmethod
+        def query(cat1=None, cat2=None, max_distance=None, colRA1=None,
+                  colDec1=None):
+            n = len(cat1)
 
-    monkeypatch.setattr(A, "_gaia_upload", _boom)
-    monkeypatch.setattr(A, "xmatch_cds", lambda *a, **kw: pd.DataFrame(
-        {"match_id": ["a", "b"], "Source": [1, 2], "Plx": [5.0, 6.0],
-         "pmRA": [1.0, 2.0], "pmDE": [1.0, 2.0], "Gmag": [10.0, 11.0]}))
-    st = A.FetchStatus(label="gaia")
-    out = A.fetch_gaia_for_positions(positions, status=st)
-    assert st.strategy == "cds_xmatch_vizier_I355"
-    assert st.status == A.STATUS_OK
-    assert {"source_id", "parallax", "pmra", "pmdec"} <= set(out.columns)
+            class _R:
+                @staticmethod
+                def to_pandas():
+                    return pd.DataFrame({
+                        "angDist": np.full(n, 0.4),
+                        "match_id": list(cat1["match_id"]),
+                        "ra": list(cat1["ra"]), "dec": list(cat1["dec"]),
+                        "RAJ2000": np.array(cat1["ra"]) + 1e-4,
+                        "DEJ2000": np.array(cat1["dec"]) + 1e-4,
+                        "W3mag": np.full(n, 5.0)})
+            return _R()
+
+    import astroquery.xmatch as _x
+    monkeypatch.setattr(_x, "XMatch", _FakeXMatch)
+    pos = pd.DataFrame({"match_id": ["a", "b"], "ra": [10.0, 11.0],
+                        "dec": [0.0, 1.0]})
+    out = A.xmatch_cds(pos, "vizier:II/328/allwise", 3.0)
+    assert "xm_query_ra" in out.columns and "xm_query_dec" in out.columns
+    assert "ra" not in out.columns and "dec" not in out.columns
+    # And the catalogue position now maps cleanly onto the canonical name.
+    named, mapping = A._rename_by_alias(out, A._ALLWISE_VIZIER_ALIASES)
+    assert mapping["ra"] == "RAJ2000"
+    assert not named.columns.duplicated().any()
 
 
 def test_gaia_total_failure_is_query_failed_not_an_empty_sky(monkeypatch):
@@ -1064,3 +1175,55 @@ def test_gaia_total_failure_is_query_failed_not_an_empty_sky(monkeypatch):
     assert out.empty
     assert st.status == A.STATUS_QUERY_FAILED
     assert st.error and "every Gaia strategy failed" in st.error
+
+
+def test_alias_rename_does_not_collide_with_the_uploaded_columns():
+    """An X-Match result carries BOTH the uploaded ra/dec and the catalogue's.
+
+    Renaming ``RAJ2000`` onto ``ra`` when ``ra`` is already present yields two
+    columns of the same name, after which ``df["ra"]`` is a DataFrame and every
+    downstream numeric operation is quietly wrong.
+    """
+    raw = pd.DataFrame({"match_id": ["a"], "ra": [10.0], "dec": [1.0],
+                        "AllWISE": ["J0001"], "RAJ2000": [10.0001],
+                        "DEJ2000": [1.0001], "W3mag": [5.0]})
+    out, mapping = A._rename_by_alias(raw, A._ALLWISE_VIZIER_ALIASES)
+    assert not out.columns.duplicated().any(), list(out.columns)
+    # The uploaded position keeps the canonical name; the catalogue's is kept
+    # too, under a distinct one -- neither is silently dropped.
+    assert out["ra"].tolist() == [10.0]
+    assert out["ra_cat"].tolist() == [10.0001]
+    assert out["w3mpro"].tolist() == [5.0]
+    assert mapping["ra"] == "RAJ2000"
+
+
+def test_alias_rename_is_a_noop_when_names_already_canonical():
+    raw = pd.DataFrame({"match_id": ["a"], "w1mpro": [8.0], "w2mpro": [7.0]})
+    out, mapping = A._rename_by_alias(raw, A._ALLWISE_VIZIER_ALIASES)
+    assert list(out.columns) == list(raw.columns)
+    assert mapping["w1mpro"] == "w1mpro"
+
+
+def test_acquire_status_lands_inside_the_uploaded_cache_directory(tmp_path):
+    """The status must travel in the artifact, or the diagnosis is unreadable.
+
+    The workflow uploads ``results/ember/cache/`` and the analyse job
+    re-downloads exactly that. Writing the acquisition status beside
+    ``summary.json`` instead is how run 30203763934 ended up with no record at
+    all of *why* its shards were empty.
+    """
+    from seti.ember.run import load_acquire_status, stage_acquire
+
+    out = tmp_path / "results" / "ember"
+    df, status = stage_acquire(
+        out, n_ra_chunks=1, shard=2, n_shards=6,
+        fetchers={"akari": lambda st: pd.DataFrame(),
+                  "iras_psc": lambda st: pd.DataFrame(),
+                  "iras_fsc": lambda st: pd.DataFrame()})
+    assert df.empty
+    path = out / "cache" / "acquire_status_002.json"
+    assert path.exists(), "status must be inside the artifact directory"
+    saved = json.loads(path.read_text())
+    assert saved["shard"] == 2
+    assert saved["fetches"]["akari"]["status"] == "QUERY_RETURNED_ZERO_ROWS"
+    assert load_acquire_status(out)["shard_002"]["shard"] == 2

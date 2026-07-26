@@ -371,6 +371,19 @@ def quoted_flux_ratio(band: Band, shape, edge_scale: float = 1.0) -> float:
     return float(num / den)
 
 
+@lru_cache(maxsize=65536)
+def _q_planck(band_name: str, temp_k: float, edge_scale: float) -> float:
+    """Cached ``Q(band, blackbody(T))``.
+
+    The cessation statistic evaluates this on a fixed temperature grid for every
+    source in the catalogue, so without memoisation the band integrals dominate
+    the runtime by orders of magnitude. The grid points are identical floats
+    across sources, which makes the cache hit essentially always.
+    """
+    band = BANDS[band_name]
+    return quoted_flux_ratio(band, lambda lam: planck_fnu(lam, temp_k), edge_scale)
+
+
 def transfer(band_from: Band, band_to: Band, temp_k: float,
              edge_scale: float = 1.0) -> float:
     """Catalogue-to-catalogue flux ratio for a blackbody of temperature ``temp_k``.
@@ -384,11 +397,8 @@ def transfer(band_from: Band, band_to: Band, temp_k: float,
     reference wavelengths; for a 200 K source it does not, which is exactly why
     the transformation cannot be treated as null.
     """
-    def shape(lam):
-        return planck_fnu(lam, temp_k)
-
-    q_from = quoted_flux_ratio(band_from, shape, edge_scale)
-    q_to = quoted_flux_ratio(band_to, shape, edge_scale)
+    q_from = _q_planck(band_from.name, float(temp_k), float(edge_scale))
+    q_to = _q_planck(band_to.name, float(temp_k), float(edge_scale))
     if not np.isfinite(q_from) or q_from == 0:
         return float("nan")
     return float(q_to / q_from)
@@ -407,8 +417,8 @@ def transfer_with_systematic(band_from: Band, band_to: Band, temp_k: float
     vals = []
     for s_from in (1 - EDGE_JITTER, 1 + EDGE_JITTER):
         for s_to in (1 - EDGE_JITTER, 1 + EDGE_JITTER):
-            q_from = quoted_flux_ratio(band_from, lambda lam: planck_fnu(lam, temp_k), s_from)
-            q_to = quoted_flux_ratio(band_to, lambda lam: planck_fnu(lam, temp_k), s_to)
+            q_from = _q_planck(band_from.name, float(temp_k), float(s_from))
+            q_to = _q_planck(band_to.name, float(temp_k), float(s_to))
             if np.isfinite(q_from) and q_from != 0:
                 vals.append(q_to / q_from)
     if not vals:

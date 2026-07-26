@@ -1,0 +1,222 @@
+name: shroud
+
+# SHROUD — "enshrouded, not destroyed" (necrosignature S33).
+#
+# Analyses the never-analysed CATALOGUE BY-PRODUCT of Solano, Villarroel &
+# Rodrigo 2022 (MNRAS 515, 1380): the ~172 000 sources present on POSS-I and
+# absent from the modern optical but detected in the infrared, published to an
+# SVO VO archive and characterised only as "unidentified red transients".
+#
+# SCOPING: this workflow touches the archival crossmatch ONLY.  It does not
+# use, replicate, or depend on the contested VASCO transient / Earth-shadow /
+# nuclear-test analyses.  See docs/shroud.md.
+#
+# The sandbox has no archive egress (403); everything here runs on the runner.
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_sources:
+        description: "Truncate the sample (0 = all ~177k). Use e.g. 2000 for a smoke run."
+        default: "0"
+      skip_photometry:
+        description: "Skip the X-Match photometry join + offset null (true/false)"
+        default: "false"
+      reduce_only_run_id:
+        description: "Re-reduce a previous run's artifacts without refetching"
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  # -------------------------------------------------------------------------
+  # 1. Acquire both published catalogues: the IR-present sample and the
+  #    no-counterpart control.  The channel exists to compare them.
+  # -------------------------------------------------------------------------
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip -q
+          pip install -e ".[dev]" -q
+
+      - name: Probe the SVO endpoints and report reachability
+        run: |
+          for u in \
+            "http://svocats.cab.inta-csic.es/vanish-neowise/" \
+            "http://svocats.cab.inta-csic.es/vanish-possi/" \
+            "https://vizier.cds.unistra.fr/viz-bin/votable?-source=J/AJ/159/8" ; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$u" || echo "ERR")
+            echo "REACHABILITY $code  $u"
+          done
+
+      - name: Retrieve the VO catalogues (falls back to VizieR, then degrades)
+        run: |
+          timeout -k 60 4200 python -m seti.cli shroud --stage acquire \
+            || echo "acquire hit the soft deadline; committing whatever landed"
+          echo "=== acquire verdict ==="
+          cat results/shroud/acquire_verdict.json 2>/dev/null | head -60 || true
+          ls -la results/shroud/ || true
+
+      - name: Commit the sample + provenance
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/shroud ':!results/shroud/*.raw' \
+            ':!results/shroud/svo_*_raw.parquet' || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "shroud: acquire Solano+2022 VO catalogues (vanish-neowise + vanish-possi)"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shroud-sample
+          path: results/shroud/
+          if-no-files-found: warn
+          retention-days: 30
+
+  # -------------------------------------------------------------------------
+  # 2. Photometry join.  The published table was matched to NeoWISE, which
+  #    carries only W1/W2 — the energy budget needs AllWISE W3/W4 and 2MASS,
+  #    and the proper-motion test needs a WIDE-radius Gaia pull (a 200 mas/yr
+  #    star sits 12.6" from its 1953 position).  The offset-position null
+  #    measures the chance-match rate on the real sky.
+  # -------------------------------------------------------------------------
+  photometry:
+    needs: acquire
+    if: ${{ github.event.inputs.skip_photometry != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip -q
+          pip install -e ".[dev]" -q
+      - uses: actions/download-artifact@v4
+        with:
+          name: shroud-sample
+          path: results/shroud/
+        continue-on-error: true
+
+      - name: X-Match join + offset-position null
+        run: |
+          timeout -k 60 20400 python -m seti.cli shroud --stage photometry \
+            --max-sources ${{ github.event.inputs.max_sources || 0 }} \
+            || echo "photometry hit the soft deadline; partial join kept"
+          echo "=== chance-match null ==="
+          cat results/shroud/null_stats.json 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shroud-photometry
+          path: results/shroud/
+          if-no-files-found: warn
+          retention-days: 30
+
+  # -------------------------------------------------------------------------
+  # 3. Classify, fit both SED models, run the energy budget, vet, report.
+  #    This stage is pure computation and always runs, so a failed or skipped
+  #    photometry join still produces an honest (degraded) report.
+  # -------------------------------------------------------------------------
+  analyze:
+    needs: [acquire, photometry]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip -q
+          pip install -e ".[dev]" -q
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: shroud-photometry
+          path: results/shroud/
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: shroud-sample
+          path: results/shroud/
+        continue-on-error: true
+      - name: Re-reduce a previous run instead (optional)
+        if: ${{ github.event.inputs.reduce_only_run_id != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download ${{ github.event.inputs.reduce_only_run_id }} \
+            -n shroud-photometry -D results/shroud/ || true
+
+      - name: Offline gate — the physics must pass its own tests first
+        run: python -m pytest tests/test_shroud.py -q
+
+      - name: Classify, fit, budget, vet, report
+        run: |
+          timeout -k 60 12600 python -m seti.cli shroud --stage analyze \
+            --offline \
+            --max-sources ${{ github.event.inputs.max_sources || 0 }} \
+            || echo "analyze hit the soft deadline; partial report kept"
+          echo "=== REPORT ==="
+          cat results/shroud/REPORT.md 2>/dev/null || true
+
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Keep the small, reviewable outputs; the bulk tables stay artifacts.
+          git add -f -- results/shroud/summary.json results/shroud/REPORT.md \
+            results/shroud/population.csv results/shroud/survivors.csv \
+            results/shroud/null_stats.json results/shroud/acquire_verdict.json \
+            results/shroud/photometry_provenance.json || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "shroud: population breakdown + energy-budget results"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shroud-results
+          path: results/shroud/
+          if-no-files-found: warn
+          retention-days: 90

@@ -512,10 +512,12 @@ def energy_budget(sed: SED, cfg: dict, fit_dust: FitResult | None = None) -> Ene
         return EnergyBudget("NO_VIABLE_PROGENITOR", nan, nan, nan, nan,
                             nan, nan, nan, nan, nan, nan, nan, len(ir),
                             note="bolometric correction diverged on the whole grid")
+    # F_bol(then) is bounded, not known: the grid gives its full allowed range.
+    # The minimum is the progenitor temperature most favourable to obscuration
+    # (it demands the least missing energy), so it yields the LARGEST eta.
     f_then_vals = {t: f_hist * v for t, v in bcs.items()}
-    f_then_min = min(f_then_vals.values())
-    f_then_lo = np.percentile(list(f_then_vals.values()), 0)
-    f_then_hi = np.percentile(list(f_then_vals.values()), 100)
+    f_then_min = f_then_lo = min(f_then_vals.values())
+    f_then_hi = max(f_then_vals.values())
 
     # --- modern optical flux (detections; limits contribute nothing).
     opt = sed.detected(OPTICAL_BANDS)
@@ -560,6 +562,25 @@ def energy_budget(sed: SED, cfg: dict, fit_dust: FitResult | None = None) -> Ene
     cons_hi = float(eb_cfg.get("eta_conserving_hi", 3.0))
     too_faint = float(eb_cfg.get("eta_too_faint", 0.10))
 
+    # With no fitted dust component the infrared flux is only the trapezoid over
+    # the detected bands, which spans a small part of a thermal SED and is a
+    # severe *under*estimate.  Calling that "IR too faint" would manufacture the
+    # channel's headline result out of missing photometry.  The published
+    # ``vanish-neowise`` table carries W1/W2 only, so this is the normal case
+    # until AllWISE W3/W4 and 2MASS are joined on.
+    modelled = fit_dust is not None and getattr(fit_dust, "ok", False) \
+        and np.isfinite(t_dust)
+    if not modelled and n_ir < 3 and eta_max < cons_lo:
+        return EnergyBudget("IR_UNDERSAMPLED", float(eta_max), float(eta_lo),
+                            float(eta_hi), float(eta_trapz_max), f_ir_model,
+                            f_ir_trapz, f_then_min, f_then_lo, f_then_hi,
+                            f_now_opt, t_dust, n_ir,
+                            note=(f"only {n_ir} IR band(s) and no constrained "
+                                  "dust temperature: the infrared integral is a "
+                                  "lower bound too weak to support a verdict. "
+                                  "Join AllWISE W3/W4 + 2MASS before believing "
+                                  "any deficit."))
+
     if eta_max < too_faint:
         verdict = "IR_TOO_FAINT"
         note = ("even the progenitor temperature that minimises the missing "
@@ -584,6 +605,82 @@ def energy_budget(sed: SED, cfg: dict, fit_dust: FitResult | None = None) -> Ene
                         float(eta_trapz_max), float(f_ir_model), float(f_ir_trapz),
                         float(f_then_min), float(f_then_lo), float(f_then_hi),
                         float(f_now_opt), float(t_dust), int(n_ir), note)
+
+
+def fit_powerlaw(sed: SED, bands: list[str] | None = None,
+                 floor_modern: float = 0.05) -> tuple[float, float]:
+    """Fit ``F_nu ∝ nu^beta`` to the infrared bands; returns ``(chi2, beta)``.
+
+    An AGN / dusty galaxy is a power law across 3-22 µm; a circumstellar shroud
+    is a single-temperature blackbody, which is *curved* in log-log.  This is a
+    **shape** discriminant, which the repository's literature sweep records as
+    the axis every published catalogue search omitted.
+    """
+    bands = bands or [b for b in sed.detected(IR_BANDS)]
+    if len(bands) < 3:
+        return float("inf"), float("nan")
+    x = np.log(np.array([nu_hz(b) for b in bands]))
+    y = np.log(np.array([sed.fnu(b) for b in bands]))
+    # sigma in log-flux = fractional flux error
+    s = np.array([sed.sigma_fnu(b, 0.30, floor_modern) / max(sed.fnu(b), 1e-300)
+                  for b in bands])
+    w = 1.0 / s ** 2
+    sw, swx, swy = w.sum(), (w * x).sum(), (w * y).sum()
+    swxx, swxy = (w * x * x).sum(), (w * x * y).sum()
+    det = sw * swxx - swx * swx
+    if abs(det) < 1e-300:
+        return float("inf"), float("nan")
+    beta = (sw * swxy - swx * swy) / det
+    a = (swy - beta * swx) / sw
+    resid = y - (a + beta * x)
+    return float(np.sum(w * resid ** 2)), float(beta)
+
+
+def fit_ir_blackbody(sed: SED, tdust_grid, floor_modern: float = 0.05
+                     ) -> tuple[float, float]:
+    """Fit a single-temperature blackbody to the IR bands in log space.
+
+    Returned in the same (chi2, parameter) form as :func:`fit_powerlaw` and on
+    the same weighting, so the two chi-squareds are directly comparable: both
+    models have two free parameters (amplitude + shape).
+    """
+    bands = [b for b in sed.detected(IR_BANDS)]
+    if len(bands) < 3:
+        return float("inf"), float("nan")
+    lam = np.array([BANDS[b][0] for b in bands])
+    y = np.log(np.array([sed.fnu(b) for b in bands]))
+    s = np.array([sed.sigma_fnu(b, 0.30, floor_modern) / max(sed.fnu(b), 1e-300)
+                  for b in bands])
+    w = 1.0 / s ** 2
+    best = (float("inf"), float("nan"))
+    for t in tdust_grid:
+        shape = _planck_fnu_arr(float(t), lam)
+        if not np.all(shape > 0):
+            continue
+        ly = np.log(shape)
+        a = float(np.sum(w * (y - ly)) / np.sum(w))     # best log-amplitude
+        c = float(np.sum(w * (y - ly - a) ** 2))
+        if c < best[0]:
+            best = (c, float(t))
+    return best
+
+
+def ir_shape_prefers_powerlaw(sed: SED, tdust_grid,
+                              margin: float = 1.0) -> tuple[bool, dict]:
+    """Is the infrared SED better described by a power law than a blackbody?
+
+    Needs >= 3 infrared bands.  With only the two NeoWISE bands the shapes are
+    indistinguishable in principle and the function says so
+    (``decidable = False``) rather than guessing.
+    """
+    chi_pl, beta = fit_powerlaw(sed)
+    chi_bb, t_bb = fit_ir_blackbody(sed, tdust_grid)
+    info = {"chi2_powerlaw": chi_pl, "beta": beta,
+            "chi2_ir_blackbody": chi_bb, "t_ir_blackbody_k": t_bb,
+            "decidable": bool(np.isfinite(chi_pl) and np.isfinite(chi_bb))}
+    if not info["decidable"]:
+        return False, info
+    return bool(chi_pl + margin < chi_bb), info
 
 
 def luminosity_ratio(budget: EnergyBudget) -> float:
@@ -617,9 +714,10 @@ __all__ = [
     "BANDS", "HISTORICAL_BANDS", "IR_BANDS", "MIDIR_BANDS", "OPTICAL_BANDS",
     "SED", "EnergyBudget", "FitResult",
     "blackbody_bolometric_from_band", "bolometric_correction_factor",
-    "energy_budget", "extinction_factor", "fit_both", "fit_obscured_dust",
-    "fit_photosphere", "fnu_to_mag", "integrate_blackbody_flux",
-    "integrate_ir_trapz", "lambda_eff_um", "luminosity_ratio", "mag_to_fnu",
-    "magerr_to_fnuerr", "nu_hz", "obscured_plus_dust_fnu", "photosphere_fnu",
-    "planck_fnu", "temperature_minimising_fbol",
+    "energy_budget", "extinction_factor", "fit_both", "fit_ir_blackbody",
+    "fit_obscured_dust", "fit_photosphere", "fit_powerlaw", "fnu_to_mag",
+    "integrate_blackbody_flux", "integrate_ir_trapz",
+    "ir_shape_prefers_powerlaw", "lambda_eff_um", "luminosity_ratio",
+    "mag_to_fnu", "magerr_to_fnuerr", "nu_hz", "obscured_plus_dust_fnu",
+    "photosphere_fnu", "planck_fnu", "temperature_minimising_fbol",
 ]

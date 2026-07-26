@@ -1,0 +1,106 @@
+# RUST channel — every selection / rejection threshold in one place.
+#
+# Signature S9 (docs/necrosignatures.md): "Unmaintained decay — photometric
+# irregularity secularly *increasing*".  The mechanism is Lacki 2025, "Ground to
+# Dust" (arXiv:2504.21151, ApJ 985, 191): a megaswarm is "liable to be subject to
+# collisional cascades once guidance systems start failing", with a collisional
+# time of roughly an orbital period divided by the swarm's covering fraction.
+# Lacki proposes no photometric observable and runs no search; this channel is
+# the observable.
+#
+# The statistic is the SECOND moment of the light curve as a function of
+# calendar time, which is a different moment from the `dimming` channel's
+# season-median brightness trend and therefore has different systematics.  See
+# docs/rust.md for why that matters and how far it is demonstrated.
+
+season:
+  # Full-year seasons, not the half-year bins seti.dimming.secular uses: a
+  # scatter estimate needs an order of magnitude more epochs than a median does.
+  season_days: 365.25
+  # Below ~8 epochs the MAD's sampling scatter exceeds 40% and the season carries
+  # essentially no information, however well the bias is corrected.
+  min_epochs_season: 8
+  # A trend needs a lever arm.  Four seasons is the floor; a full ZTF decade
+  # gives 7-8.
+  min_seasons: 4
+  # Global outlier clip before the season statistic, in robust sigma.  Generous,
+  # because this channel *wants* variability — it only wants to drop cosmic-ray
+  # and bad-subtraction garbage.  Never applied if it would remove >5% of epochs.
+  clip_sigma: 6.0
+
+acquire:
+  # A source needs ~8 epochs per season in EACH band across >=4 seasons, so the
+  # dimming channel's 30-epoch floor is far too permissive here.
+  min_epochs_total: 60
+  # ZTF assigns different oids to the same star in different filters, so g/r
+  # pairing is positional.  1.5" sits inside the ~2" PSF and outside the
+  # per-band astrometric jitter.
+  pair_tol_arcsec: 1.5
+  box_deg: 0.12
+  time_budget_s: 2400
+
+detect:
+  # PRIMARY GATE, distribution-free.  Exact one-sided permutation p-value for a
+  # positive Spearman rho of season excess-variance against season index.  With
+  # the 7-8 seasons a ZTF decade provides this is computed by enumerating all n!
+  # orderings — no asymptotic approximation anywhere.  It is primary precisely
+  # because Lacki gives a cascade *timescale*, not a light-curve shape: assuming
+  # the second moment rises linearly would be assuming a result.
+  rank_p_max: 0.01
+  # SECONDARY, model-dependent: significance of a weighted linear fit of excess
+  # variance against time, with the slope error inflated by sqrt(chi2/dof).  For
+  # an accelerating rise a straight line fits badly and the inflation is large,
+  # so this number is deliberately conservative and is NOT the detector.
+  slope_sigma_min: 2.5
+  # Weakest slope significance over all leave-one-season-out refits.  A trend
+  # carried by a single anomalous season dies here.
+  loo_sigma_min: 1.5
+  # Fitted amplitude must actually grow, and must end somewhere measurable.
+  amp_growth_min: 1.3
+  amp_last_mmag_min: 15.0
+  # Lomb-Scargle power above this means the variability is coherent — a
+  # growing-amplitude pulsator or a spotted rotator, not an aperiodic cascade.
+  periodic_power_max: 0.35
+
+# The g/r amplitude-growth ratio is the channel's physics discriminant, not a
+# sanity check.  Debris occulting a star blocks light geometrically, so the
+# induced magnitude excursion is identical in both bands.
+achromaticity:
+  # ZTF g (4746 A) / r (6366 A) under a Cardelli / Wang & Chen R_V = 3.1 law:
+  # A_g/A_V ~ 1.21, A_r/A_V ~ 0.85.
+  extinction_g_over_r: 1.42
+  gray_ratio_lo: 0.80
+  gray_ratio_hi: 1.20
+  reddening_ratio_lo: 1.25
+  reddening_ratio_hi: 1.70
+
+vet:
+  # ZTF's usable photometric range.  Both walls manufacture exactly the trend
+  # this channel searches for: below the bright limit the detector is
+  # non-linear, above the faint limit the scatter is set by the survey's own
+  # depth — and the survey's depth changed over the decade.
+  ztf_bright_limit: 13.5
+  ztf_faint_limit_g: 20.3
+  ztf_faint_limit_r: 20.1
+  # A Gaia neighbour this close and this comparable in brightness leaks its own
+  # variability into the ZTF aperture — the most mundane way to manufacture a
+  # rising second moment.
+  crowd_radius_arcsec: 5.0
+  crowd_delta_g: 2.5
+  # Astrometric quality: an unresolved companion is a blend in disguise.
+  ruwe_max: 1.4
+  astrometric_excess_noise_max: 1.0
+  # NEOWISE trend significance for a dust-production verdict.  NOTE the inverted
+  # logic relative to seti.dimming: there, a mid-IR brightening killed a
+  # candidate; here a cascade grinding a swarm to fragments SHOULD make dust, so
+  # a brightening CORROBORATES.  Its absence is informative but not fatal —
+  # W1/W2 only probe material hotter than ~600-850 K.
+  neowise_sigma_min: 2.0
+
+systematics:
+  # Minimum stars per readout channel per season before an ensemble common-mode
+  # correction is trusted; thinner channels fall back to the field-global value.
+  ensemble_min_stars: 8
+  # Survivor-only cross-checks (too slow for a sweep, mandatory for a claim).
+  mc_trials: 400
+  equalize_draws: 32

@@ -50,6 +50,13 @@ import numpy as np
 
 # --- thresholds (mirrored into config/thresholds.yaml under `ember:`) -------
 CIRR_MAX = 3  # IRAS CIRR2/CIRR3 index above which the field is cirrus-dominated
+#: Kennedy & Wyatt (2012, arXiv:1207.0521) found ~8,000 of 180,000 stars with an
+#: apparent IRAS excess (mostly at 12 micron) whose sky positions correlate with
+#: the 100-micron background -- i.e. the excess is cirrus, not a disc. Cutting at
+#: 100-micron surface brightness < 5 MJy/sr leaves 271 of 180,000. That single
+#: number takes the per-star false-excess rate from 4.4e-2 to 1.5e-3, a factor of
+#: ~30, and it is the most valuable published cut available to this channel.
+IRAS_BACKGROUND_100UM_MAX = 5.0  # MJy/sr
 IRAS_SNR_MIN = 7.0  # early-epoch flux S/N; also bounds the Eddington deboost
 IRAS_QUAL_MIN = 3  # 3 = high quality, 2 = moderate, 1 = upper limit
 PLX_SNR_MIN = 8.0  # parallax significance required to call it a star
@@ -57,6 +64,15 @@ PM_SNR_MIN = 5.0  # proper-motion significance; a galaxy has none
 MATCH_RADIUS_ARCSEC = 2.0  # optical-to-infrared association at the WISE epoch
 VAR_INDEX_MAX = 50  # IRAS VAR: percentage probability of variability
 GAIA_VAR_AMP_MAX = 0.05  # mag; optical constancy required
+#: NEOWISE W1 flatness after the drop. Every persistent natural variable class
+#: exceeds this; the one known step-and-stay object does not.
+NEOWISE_RMS_MAX = 0.08  # mag
+NEOWISE_SLOPE_SIG_MAX = 3.0  # sigma on a secular W1 trend
+#: Published empirical floor for the IRAS(1983)-to-WISE(2010) comparison:
+#: HD 172555 was stable to within 4% over those 27 years (arXiv:1210.6258).
+#: Any claimed fade must be large compared with this, not merely significant.
+CROSS_EPOCH_FLOOR_FRAC = 0.04
+F_CESS_MIN = 0.5  # a "cessation" must lose at least half the excess
 TANGENTIAL_V_MIN_KMS = 30.0  # kinematic age proxy for the "old host" cut
 YOUNG_NIR_EXCESS_MAX = 0.15  # mag; H-Ks excess flags a YSO/disc
 W1W2_BLEND_FLOOR = -0.05  # negative W1-W2 is a blend, not a photosphere
@@ -116,6 +132,67 @@ def check_cirrus(row: dict) -> tuple[bool | None, str]:
     if worst > CIRR_MAX:
         return False, f"cirrus index {worst} > {CIRR_MAX}"
     return True, f"cirrus index {worst} acceptable"
+
+
+def check_far_ir_background(row: dict) -> tuple[bool | None, str]:
+    """The single highest-yield cut available: IRAS 100-micron surface brightness.
+
+    Kennedy & Wyatt (2012) showed that the ~8,000 apparent IRAS excesses among
+    180,000 stars are positionally correlated with the 100-micron background, and
+    that requiring that background to be below 5 MJy/sr leaves 271. The
+    surviving number counts then match extragalactic counts, meaning even most
+    of *those* are background sources rather than discs.
+
+    This is a factor of ~30 on the dominant contaminant for one number, so it
+    runs early and is not optional for any IRAS-based pair.
+    """
+    bkg = _f(row, "iras_100um_bkg_mjysr")
+    if not np.isfinite(bkg):
+        return None, "no 100-micron background measurement"
+    if bkg > IRAS_BACKGROUND_100UM_MAX:
+        return False, (f"IRAS 100 um background {bkg:.1f} MJy/sr > "
+                       f"{IRAS_BACKGROUND_100UM_MAX}: the apparent excess is "
+                       "cirrus (Kennedy & Wyatt 2012)")
+    return True, f"IRAS 100 um background {bkg:.1f} MJy/sr: low-cirrus field"
+
+
+def check_late_epoch_flat(row: dict) -> tuple[bool | None, str]:
+    """Require the *late* epoch to be photometrically flat -- the class discriminant.
+
+    This is the most discriminating rule in the funnel and it comes straight out
+    of the confounder literature. Every natural class that varies in the
+    mid-infrared varies *persistently*: 14 of 17 extreme debris disks changed at
+    3-5 micron between 2010 and 2019 and 5 of 6 varied on sub-year timescales;
+    R Coronae Borealis stars swing by factors of up to 10 between the IRAS,
+    AKARI and WISE epochs; ~85% of white-dwarf discs vary on all timescales; YSOs
+    are variable at the tens-of-percent level.
+
+    None of them produce a single monotonic step down followed by a decade of
+    flatness. TYC 8241 2652 1 is the sole known object that does -- its WISE
+    fluxes showed no significant change between 2010 and 2019 after its earlier
+    collapse -- and it remains unexplained fourteen years later.
+
+    So NEOWISE earns its place here not as a cessation measurement -- it flies
+    W1/W2 only and cannot see 100-300 K dust at all -- but as the stability
+    requirement that separates a step from a wobble.
+    """
+    rms = _f(row, "neowise_w1_rms_mag")
+    slope = _f(row, "neowise_w1_slope_mag_yr")
+    slope_sig = _f(row, "neowise_w1_slope_sigma")
+    n_ep = row.get("neowise_n_epochs")
+    if not np.isfinite(rms) and not np.isfinite(slope):
+        return None, "no NEOWISE light curve"
+    if n_ep is not None and int(n_ep) < 20:
+        return None, f"only {n_ep} NEOWISE epochs: too few to test flatness"
+    if np.isfinite(rms) and rms > NEOWISE_RMS_MAX:
+        return False, (f"NEOWISE W1 rms {rms:.3f} mag > {NEOWISE_RMS_MAX}: "
+                       "persistently variable, like every natural confounder")
+    if np.isfinite(slope) and np.isfinite(slope_sig) and slope_sig > 0:
+        if abs(slope / slope_sig) > NEOWISE_SLOPE_SIG_MAX:
+            return False, (f"NEOWISE W1 secular slope {slope:.4f} mag/yr at "
+                           f"{abs(slope / slope_sig):.1f} sigma: still evolving, "
+                           "not a completed step")
+    return True, f"NEOWISE W1 flat (rms {rms:.3f} mag) after the drop: step-and-stay"
 
 
 def check_early_quality(row: dict) -> tuple[bool | None, str]:
@@ -275,6 +352,53 @@ def check_not_evolved(row: dict) -> tuple[bool | None, str]:
     return True, f"M_G = {abs_g:.2f}, BP-RP = {bp_rp:.2f}: main sequence"
 
 
+def check_fade_amplitude(row: dict) -> tuple[bool | None, str]:
+    """Require the fade to be large compared with the published cross-epoch floor.
+
+    HD 172555's mid-infrared flux was stable to within 4% between IRAS in 1983
+    and WISE in 2010 -- the only explicit IRAS-to-WISE stability measurement in
+    the literature, and therefore the empirical floor of this comparison. A
+    statistically significant 10% fade sits barely above that floor and is not
+    worth believing. TYC 8241 2652 1 dropped by a factor of ~30, which is far
+    above it. Demanding a large *fraction* as well as a large *significance*
+    keeps the search in the regime the systematics can support.
+    """
+    f_cess = _f(row, "f_cess")
+    if not np.isfinite(f_cess):
+        return None, "no cessation fraction"
+    if f_cess < F_CESS_MIN:
+        return False, f"only {100 * f_cess:.0f}% of the excess lost, < {100 * F_CESS_MIN:.0f}%"
+    if f_cess < 3 * CROSS_EPOCH_FLOOR_FRAC:
+        return False, (f"fade of {100 * f_cess:.0f}% is within 3x the published "
+                       f"{100 * CROSS_EPOCH_FLOOR_FRAC:.0f}% cross-epoch stability floor")
+    return True, f"{100 * f_cess:.0f}% of the excess is gone"
+
+
+def check_not_eruptive(row: dict) -> tuple[bool | None, str]:
+    """Veto R CrB stars, carbon stars and post-AGB objects.
+
+    R Coronae Borealis stars puff out carbon dust and clear it again, producing
+    factor-of-ten mid-infrared swings *between the very epochs this channel
+    uses* -- the IRAS, AKARI and WISE comparison has already been run on them
+    (Melis et al. 2023) and it fades exactly like the target signature. Post-AGB
+    binaries and carbon stars behave similarly. Spectral class alone rejects
+    the entire group.
+    """
+    spt = str(row.get("spectral_type", "") or "")
+    known = str(row.get("known_class", "") or "").lower()
+    eruptive = ("rcb", "r crb", "rcrb", "post-agb", "postagb", "carbon", "mira",
+                "ysо", "yso", "herbig", "t tauri", "ttauri", "symbiotic")
+    if not spt and not known:
+        return None, "no spectral classification"
+    hay = f"{spt} {known}".lower()
+    for tag in eruptive:
+        if tag in hay:
+            return False, f"classified as an eruptive/dusty variable: '{spt or known}'"
+    if spt.strip().upper().startswith(("C", "S")) and len(spt.strip()) > 1:
+        return False, f"carbon/S-type star ({spt}): circumstellar dust varies"
+    return True, f"spectral class '{spt or known}' is not an eruptive dust producer"
+
+
 def check_ladder_coherent(row: dict) -> tuple[bool | None, str]:
     """Reject non-monotonic three-epoch behaviour and un-adjudicable two-epoch cases."""
     verdict = row.get("ladder_verdict")
@@ -294,7 +418,9 @@ def check_ladder_coherent(row: dict) -> tuple[bool | None, str]:
 #: contaminants are removed first and the astrophysical discriminant last.
 RULES: tuple[tuple[str, object], ...] = (
     ("ladder_coherent", check_ladder_coherent),
+    ("fade_amplitude", check_fade_amplitude),
     ("beam_blending", check_beam_blending),
+    ("far_ir_background", check_far_ir_background),
     ("saturation", check_saturation),
     ("early_quality", check_early_quality),
     ("cirrus", check_cirrus),
@@ -303,6 +429,8 @@ RULES: tuple[tuple[str, object], ...] = (
     ("solar_system", check_solar_system),
     ("blend", check_blend),
     ("variability", check_variability),
+    ("late_epoch_flat", check_late_epoch_flat),
+    ("not_eruptive", check_not_eruptive),
     ("not_evolved", check_not_evolved),
     ("not_young", check_not_young),
 )

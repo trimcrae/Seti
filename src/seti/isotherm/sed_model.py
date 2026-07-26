@@ -362,6 +362,40 @@ def _package_discrete(logts, beta, lam, flux, err, lam0_um, n_data,
                   success=success, message=message)
 
 
+def chi2_one_component(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
+                       beta: float, lam0_um: float = LAM0_UM,
+                       n_grid: int = 48) -> tuple[float, float]:
+    """Fast single-component chi2 at FIXED beta.  Returns ``(chi2, T)``.
+
+    A dense 1-D temperature grid plus one golden-section refinement.  Used by
+    the beta profile, which calls it ~20 times per spectrum; going through the
+    full multistart ``fit_discrete`` there made the profile dominate the run.
+    """
+    lam = np.asarray(lam_um, float)
+    flux = np.asarray(flux, float)
+    err = np.asarray(err, float)
+    grid = np.geomspace(T_MIN_K, T_MAX_K, int(n_grid))
+    vals = np.empty(grid.size)
+    for i, t in enumerate(grid):
+        vals[i] = _solve_amps(_design(lam, [t], beta, lam0_um), flux, err)[1]
+    i = int(np.argmin(vals))
+    lo = np.log10(grid[max(i - 1, 0)])
+    hi = np.log10(grid[min(i + 1, grid.size - 1)])
+
+    def f(lt):
+        return _solve_amps(_design(lam, [10.0 ** float(lt)], beta, lam0_um),
+                           flux, err)[1]
+
+    best_v, best_t = float(vals[i]), float(grid[i])
+    if hi > lo:
+        res = minimize(lambda z: f(z[0]), [np.log10(grid[i])],
+                       method="Nelder-Mead",
+                       options={"maxiter": 120, "xatol": 1e-4, "fatol": 1e-7})
+        if float(res.fun) < best_v:
+            best_v, best_t = float(res.fun), float(10.0 ** res.x[0])
+    return best_v, best_t
+
+
 def fit_discrete(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
                  n_components: int = 1, beta: float | None = None,
                  lam0_um: float = LAM0_UM, min_t_ratio: float = MIN_T_RATIO,
@@ -524,6 +558,66 @@ def fit_gradient(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
                   success=True)
 
 
+def multi_gradient_sed(lam_um: np.ndarray, temps_k, width_dex: float,
+                       p_index: float = 1.0, beta: float = 0.0,
+                       lam0_um: float = LAM0_UM) -> list[np.ndarray]:
+    """N components, each a radial gradient of *shared fractional width*.
+
+    This is the honest null for the S6 cascade test.  A set of N natural belts
+    is N components each with a radial extent; a set of N engineered shells is N
+    components each individually narrow.  ``width_dex = log10(T_in / T_out)`` is
+    shared so the test costs one parameter, not N.
+    """
+    cols = []
+    w = abs(float(width_dex))
+    for t in temps_k:
+        t = float(t)
+        if w < 1e-4:
+            cols.append(mbb(lam_um, t, beta, lam0_um))
+        else:
+            cols.append(gradient_sed(lam_um, t * 10 ** (w / 2), t * 10 ** (-w / 2),
+                                     p_index, beta, lam0_um))
+    return cols
+
+
+def fit_multi_gradient(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
+                       temps_k, width_dex: float, beta: float | None = None,
+                       lam0_um: float = LAM0_UM, refine_temps: bool = True) -> float:
+    """chi2 of the shared-width multi-gradient model; amplitudes by NNLS.
+
+    Temperatures are refined locally (they shift as the width opens up), so the
+    profile over ``width_dex`` is a genuine profile likelihood rather than a
+    slice at fixed temperature.
+    """
+    lam = np.asarray(lam_um, float)
+    flux = np.asarray(flux, float)
+    err = np.asarray(err, float)
+    betas = [0.0, 0.5, 1.0, 1.5, 2.0] if beta is None else [float(beta)]
+
+    def chi2_at(logts, b):
+        cols = multi_gradient_sed(lam, 10.0 ** np.asarray(logts, float),
+                                  width_dex, 1.0, b, lam0_um)
+        des = []
+        for c in cols:
+            mx = c.max() if c.size else 0.0
+            if not np.isfinite(mx) or mx <= 0:
+                return 1e18
+            des.append(c / mx)
+        return _solve_amps(np.stack(des, axis=1), flux, err)[1]
+
+    best = np.inf
+    lt0 = np.log10(np.asarray(temps_k, float))
+    for b in betas:
+        val = chi2_at(lt0, b)
+        if refine_temps and np.isfinite(val):
+            res = minimize(lambda lt, bb=b: chi2_at(lt, bb), lt0,
+                           method="Nelder-Mead",
+                           options={"maxiter": 1200, "xatol": 1e-3, "fatol": 1e-5})
+            val = min(val, float(res.fun))
+        best = min(best, val)
+    return float(best)
+
+
 def select_n_components(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
                         n_max: int = 4, delta_bic: float = 10.0,
                         beta: float | None = None,
@@ -550,5 +644,6 @@ __all__ = [
     "LAM0_UM", "MIN_T_RATIO", "SEDFit", "T_MAX_K", "T_MIN_K",
     "apply_systematic_floor", "bin_to_resolution", "bolometric",
     "component_bolometric", "emissivity", "fit_discrete", "fit_gradient",
-    "gradient_sed", "mbb", "planck_nu", "select_n_components",
+    "fit_multi_gradient", "gradient_sed", "mbb", "multi_gradient_sed",
+    "planck_nu", "select_n_components",
 ]

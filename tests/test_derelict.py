@@ -312,10 +312,40 @@ def test_missing_orbit_quality_fails_closed():
 
 
 def test_comet_is_excluded_by_designation_and_by_DT():
-    for kw in ({"full_name": "1P/Halley"}, {"kind": "cn"}, {"DT": 12.0}):
+    for kw in ({"full_name": "1P/Halley"}, {"full_name": "C/2017 U1"},
+               {"full_name": "D/1993 F2"}, {"kind": "cn"},
+               {"class": "HYP"}, {"DT": 12.0}):
         df = pd.DataFrame([_row(A1=2e-8, sigma_A1=2e-9, **kw)])
         res = run_screens(df, _params())
         assert not res.table.iloc[0]["screen_a1_only"], kw
+
+
+def test_interstellar_I_prefix_is_not_treated_as_a_coma_report():
+    """REGRESSION: 1I/'Oumuamua must not be excluded from its own channel.
+
+    The "I" designation prefix means *interstellar*, not comet.  1I is
+    designated 1I precisely because it showed NO coma -- it is the calibration
+    anchor for every conversion in this package.  A cometary-prefix regex that
+    swallows I/ would silently delete the exemplar, and any 'Oumuamua-like
+    interloper, from the search.
+    """
+    df = pd.DataFrame([_row(full_name="1I/'Oumuamua (2017 U1)", **{"class": "HYA"},
+                            diameter=0.100,
+                            A1=OUMUAMUA_A1_AU_DAY2, sigma_A1=OUMUAMUA_A1_AU_DAY2 / 10,
+                            A2=0.0, sigma_A2=1e-14, A3=0.0, sigma_A3=1e-14)])
+    res = run_screens(df, _params())
+    r = res.table.iloc[0]
+    assert r["s1_no_coma"], "the I/ prefix is not a coma report"
+    assert r["screen_a1_only"], "'Oumuamua must pass its own channel's screen 1"
+    assert r["screen_r_extreme"], "and must land in the extreme-R bin"
+    assert r["R"] > 1e4
+
+
+def test_genuinely_cometary_interstellar_object_is_still_excluded():
+    """2I/Borisov IS a comet -- caught by kind/class even though I/ is allowed."""
+    df = pd.DataFrame([_row(full_name="2I/Borisov (C/2019 Q4)", kind="cu",
+                            A1=2e-8, sigma_A1=2e-9)])
+    assert not run_screens(df, _params()).table.iloc[0]["screen_a1_only"]
 
 
 def test_cometary_nongrav_law_blocks_the_conversion():

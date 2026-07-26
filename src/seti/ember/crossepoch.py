@@ -65,7 +65,7 @@ from dataclasses import asdict, dataclass, field
 
 import numpy as np
 
-from .bands import BANDS, Band, transfer, transfer_with_systematic
+from .bands import BANDS, transfer, transfer_with_systematic
 
 #: Fractional systematic floor on the photospheric prediction, added in
 #: quadrature to the measurement error. Covers residual scatter of the empirical
@@ -87,10 +87,14 @@ T_DUST_DEFAULT_K = 400.0
 class PhotosphereLocus:
     """Robust empirical relation ``(Ks - band)_0`` as a function of a colour.
 
-    Fitted by binned medians rather than least squares because the contaminating
-    population -- stars with a genuine excess -- is strictly one-sided (excess
-    makes ``Ks - band`` *larger*). A median is unmoved by a positive tail up to
-    50% contamination; a mean is not.
+    Fitted by binned **low quantiles** rather than least squares or even
+    medians. The contaminating population -- stars with a genuine excess -- is
+    strictly one-sided, since an excess can only make the band brighter. A mean
+    is destroyed by it; a median survives only while the contaminated fraction
+    stays under 50%, which is not guaranteed in an infrared-selected catalogue,
+    where excess sources are exactly what got selected. Anchoring on the 25th
+    percentile and reconstructing the ridge centre under a Gaussian core pushes
+    the breakdown point to ~75% contamination.
     """
 
     band: str
@@ -116,6 +120,34 @@ class PhotosphereLocus:
         return val, np.maximum(sca, 1e-3)
 
 
+#: Quantile anchoring the photospheric ridge. Excess sources contaminate only
+#: the upper tail, so a low quantile is uncontaminated until they dominate.
+LOCUS_QUANTILE = 0.25
+#: Gaussian quantile constants for reconstructing the ridge centre and width
+#: from two *lower* quantiles (0.10 and 0.25), neither of which a one-sided
+#: positive tail can reach until it exceeds ~75% of the sample.
+_Z25 = -0.6744897501960817  # Phi^-1(0.25)
+_Z10 = -1.2815515655446004  # Phi^-1(0.10)
+
+
+def _ridge_from_low_quantiles(y: np.ndarray) -> tuple[float, float]:
+    """Recover (centre, sigma) of a Gaussian core from its 10th/25th percentiles.
+
+    Both anchors lie below the median, so a positive contaminating tail cannot
+    move them until it makes up most of the sample. Falls back to the median and
+    the MAD when the quantile spread is degenerate.
+    """
+    q10, q25 = np.percentile(y, [10.0, 25.0])
+    spread = q25 - q10
+    if not np.isfinite(spread) or spread <= 0:
+        med = float(np.median(y))
+        mad = float(1.4826 * np.median(np.abs(y - med)))
+        return med, max(mad, 1e-3)
+    sigma = spread / (_Z25 - _Z10)
+    centre = q25 - _Z25 * sigma
+    return float(centre), float(max(sigma, 1e-3))
+
+
 def fit_photosphere_locus(colour: np.ndarray, ks_mag: np.ndarray, band_mag: np.ndarray,
                           band: str, colour_name: str = "bp_rp",
                           n_bins: int = 20, min_per_bin: int = 25,
@@ -124,12 +156,14 @@ def fit_photosphere_locus(colour: np.ndarray, ks_mag: np.ndarray, band_mag: np.n
 
     ``band_mag`` must be on the same magnitude system used downstream; for the
     Jy-native catalogues (IRAS, AKARI) pass ``-2.5*log10(F_Jy)`` with any fixed
-    zero point -- the locus absorbs the constant.
+    zero point -- the locus absorbs the constant, and with it every per-survey
+    calibration offset.
 
-    Iterative clipping is deliberately **asymmetric**: high outliers (the excess
-    sources we are hunting) are rejected at 3 sigma, low outliers only at
-    5 sigma, so the locus tracks the bare-photosphere ridge rather than being
-    dragged up by the very population under study.
+    Within each colour bin the ridge is reconstructed from the 10th and 25th
+    percentiles, which a one-sided excess population cannot reach. Iterative
+    clipping is then deliberately **asymmetric** -- high outliers rejected at
+    3 sigma, low outliers only at 5 sigma -- so the fit tracks the bare
+    photosphere rather than being dragged up by the very population under study.
     """
     col = np.asarray(colour, dtype=float)
     y = np.asarray(ks_mag, dtype=float) - np.asarray(band_mag, dtype=float)
@@ -145,26 +179,24 @@ def fit_photosphere_locus(colour: np.ndarray, ks_mag: np.ndarray, band_mag: np.n
 
     knots = values = scatter = counts = np.array([])
     for _ in range(max(1, clip_iters)):
-        edges = np.quantile(col[keep], np.linspace(0, 1, n_bins + 1))
-        edges = np.unique(edges)
+        edges = np.unique(np.quantile(col[keep], np.linspace(0, 1, n_bins + 1)))
         if edges.size < 3:
             break
         idx = np.clip(np.digitize(col, edges) - 1, 0, edges.size - 2)
-        k, v, s, c = [], [], [], []
+        k, v, sg, c = [], [], [], []
         for b in range(edges.size - 1):
             sel = keep & (idx == b)
             if sel.sum() < min_per_bin:
                 continue
-            med = float(np.median(y[sel]))
-            mad = float(1.4826 * np.median(np.abs(y[sel] - med)))
+            centre, sigma = _ridge_from_low_quantiles(y[sel])
             k.append(float(np.median(col[sel])))
-            v.append(med)
-            s.append(max(mad, 1e-3))
+            v.append(centre)
+            sg.append(sigma)
             c.append(int(sel.sum()))
         if not k:
             break
         knots, values = np.asarray(k), np.asarray(v)
-        scatter, counts = np.asarray(s), np.asarray(c)
+        scatter, counts = np.asarray(sg), np.asarray(c)
         pred = np.interp(col, knots, values, left=values[0], right=values[-1])
         sca = np.interp(col, knots, scatter, left=scatter[0], right=scatter[-1])
         resid = y - pred
@@ -277,8 +309,16 @@ def measure_excess(band_key: str, f_obs_jy: float, f_obs_err_jy: float,
     """
     band = BANDS[band_key]
     colour_term, locus_scatter = locus.predict(np.array([colour]))
-    # (Ks - band)_0 in magnitudes -> a flux ratio.
-    ratio = 10.0 ** (-0.4 * float(colour_term[0]))
+    # (Ks - band)_0 in magnitudes -> the photospheric FLUX ratio F_band / F_Ks.
+    #
+    # Sign matters and is easy to invert. With C = Ks - band in magnitudes,
+    # m_band = m_Ks - C, so F_band / F_Ks = 10**(-0.4 * (m_band - m_Ks))
+    #                                     = 10**(+0.4 * C).
+    # Getting this backwards biases the predicted photosphere by 10**(0.8*C),
+    # and because C differs from band to band it biases each epoch by a
+    # *different* amount -- which manufactures apparent fades wholesale rather
+    # than cancelling out.
+    ratio = 10.0 ** (0.4 * float(colour_term[0]))
     f_phot = float(ks_jy) * ratio
     rel_locus = 0.4 * np.log(10.0) * float(locus_scatter[0])
     rel_ks = abs(ks_err_jy / ks_jy) if ks_jy else 0.0

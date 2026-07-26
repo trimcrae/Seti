@@ -219,8 +219,17 @@ def _coma_reported(df: pd.DataFrame) -> pd.Series:
         if col in df.columns:
             flag |= df[col].fillna(False).astype(bool)
     if "full_name" in df.columns:
-        # Cometary designations carry a P/ C/ D/ I/ prefix or a "P" suffix number.
-        flag |= df["full_name"].astype(str).str.match(r"^\s*\d*[PCDXI]/", na=False)
+        # Cometary designations carry a P/ C/ D/ X/ prefix (periodic,
+        # non-periodic, defunct, no-orbit-computable).
+        #
+        # "I" is DELIBERATELY EXCLUDED.  The I prefix means *interstellar*, not
+        # comet -- and 1I/'Oumuamua, the object this entire channel is calibrated
+        # against, is designated 1I precisely because it is an interstellar
+        # object with NO detected coma.  Treating I/ as cometary would silently
+        # delete the exemplar (and any 'Oumuamua-like interloper) from its own
+        # search.  Genuinely cometary interstellar objects such as 2I/Borisov are
+        # still caught by ``kind`` and by their orbit ``class``.
+        flag |= df["full_name"].astype(str).str.match(r"^\s*\d*[PCDX]/", na=False)
     return flag
 
 

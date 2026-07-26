@@ -731,3 +731,26 @@ def test_epoch_propagation_applied_across_a_table(sc):
     # A Gaia table without proper motions must not silently claim recovery.
     assert "pm_recovered" not in runmod.apply_epoch_propagation(
         df, gaia.drop(columns=["pmRA"]), sc).columns
+
+
+def test_ra_dec_column_detection():
+    """The archive's own column names must be found, whatever they are."""
+    for cols in (["RA_NEOWISE", "DEC_NEOWISE"], ["RAJ2000", "DEJ2000"],
+                 ["ra", "dec"], ["_RAJ2000", "_DEJ2000"], ["RA_ICRS", "DE_ICRS"],
+                 ["radeg", "dedeg"]):
+        df = pd.DataFrame({cols[0]: [1.0], cols[1]: [2.0], "junk": ["x"]})
+        assert acq._ra_dec_columns(df) == (cols[0], cols[1]), cols
+    assert acq._ra_dec_columns(pd.DataFrame({"w1mpro": [1.0]})) == (None, None)
+
+
+def test_allsky_query_forms_are_tried_in_order(sc):
+    """`nocoor=1` is undocumented, so several query forms must be generated."""
+    urls = acq._svo_urls("http://host/vanish-neowise", sc)
+    assert len(urls) >= 4
+    assert any("VERB=2&format=ascii" in u for u in urls)
+    assert any("nocoor=1" in u for u in urls)
+    assert all(u.startswith("http://host/vanish-neowise") for u in urls)
+    assert any("/cs.php?" in u for u in urls)
+    # A cone query is a single form.
+    cone = acq._svo_urls("http://host/x", sc, ra=10.0, dec=-5.0, sr=1.0)
+    assert all("SR=1.0000" in u and "RA=10.000000" in u for u in cone)

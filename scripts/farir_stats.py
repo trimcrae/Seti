@@ -21,7 +21,6 @@ Outputs under results/farir_stats/ -- summaries only, no bulk tables in git.
 from __future__ import annotations
 
 import gzip
-import io
 import json
 import math
 import pathlib
@@ -163,8 +162,8 @@ def read_cds(cat: str, tag: str, prefer: str | None = None):
 
 def iras_icrs(t):
     """IRAS PSC gives B1950 sexagesimal at epoch 1983.5; build ICRS deg."""
-    from astropy.coordinates import SkyCoord, FK4
     import astropy.units as u
+    from astropy.coordinates import FK4, SkyCoord
     ra_h = arr(t, "RAh"); ra_m = arr(t, "RAm"); ra_ds = arr(t, "RAds")
     de_d = arr(t, "DEd"); de_m = arr(t, "DEm"); de_s = arr(t, "DEs")
     sign = np.where(np.asarray(t["DE-"]).astype(str) == "-", -1.0, 1.0)
@@ -252,8 +251,8 @@ def band_area_deg2(b1: float, b2: float) -> float:
 
 
 def galactic(ra, dec):
-    from astropy.coordinates import SkyCoord
     import astropy.units as u
+    from astropy.coordinates import SkyCoord
     c = SkyCoord(np.asarray(ra) * u.deg, np.asarray(dec) * u.deg, frame="icrs")
     g = c.galactic
     return np.asarray(g.l.deg), np.asarray(g.b.deg)
@@ -524,9 +523,9 @@ def gaia_density():
                                 dens, [1, 5, 25, 50, 75, 95, 99])]))}
         # density by |b|
         try:
+            import astropy.units as u
             import healpy as hp
             from astropy.coordinates import SkyCoord
-            import astropy.units as u
             th, ph = hp.pix2ang(nside, np.arange(npix), nest=True)
             c = SkyCoord(ra=np.degrees(ph) * u.deg,
                          dec=(90 - np.degrees(th)) * u.deg, frame="icrs")
@@ -597,8 +596,8 @@ def positional_accuracy():
         r(50%)  = 1.177 sigma      r(90%) = 2.146 sigma
         r(95%)  = 2.448 sigma      r(99%) = 3.035 sigma
     """
-    from astropy.coordinates import SkyCoord, match_coordinates_sky
     import astropy.units as u
+    from astropy.coordinates import SkyCoord, match_coordinates_sky
 
     res: dict = {}
     ra_a = np.load(WORK / "akari_ra.npy")
@@ -781,9 +780,9 @@ def chance_coincidence(gdens):
 def xmatch_null():
     """Real CDS X-Match of AKARI FIS positions vs Gaia/2MASS/AllWISE, and the
     same positions displaced by +5 arcmin in Dec (pure chance alignments)."""
-    from astroquery.xmatch import XMatch
-    from astropy.table import Table
     import astropy.units as u
+    from astropy.table import Table
+    from astroquery.xmatch import XMatch
 
     ra = np.load(WORK / "akari_ra.npy")
     de = np.load(WORK / "akari_de.npy")
@@ -837,9 +836,9 @@ def cirrus_levels():
         dmconfig["data_dir"] = str(WORK / "dustmaps")
         import dustmaps.sfd
         dustmaps.sfd.fetch()
-        from dustmaps.sfd import SFDQuery
-        from astropy.coordinates import SkyCoord
         import astropy.units as u
+        from astropy.coordinates import SkyCoord
+        from dustmaps.sfd import SFDQuery
         sfd = SFDQuery()
         rng = np.random.default_rng(3)
         n = 400000

@@ -1,0 +1,61 @@
+name: cenotaph-recon
+
+# CENOTAPH channel recon: far-IR (>25um) Dyson/waste-heat PRIOR ART (Task A)
+# plus EXACT VizieR/IRSA catalogue identifiers and column names (Task B).
+# The sandbox egress policy allows GitHub only; the runner has open egress
+# (CLAUDE.md acquisition pattern).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cenotaph-recon:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pdftotext
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Fetch prior art + catalogue schemas (soft deadline, partials kept)
+        run: |
+          timeout -k 30 2700 python scripts/cenotaph_recon.py \
+            || echo "fetcher hit soft deadline or errored; committing partials"
+          echo "=== files ==="
+          ls -la results/cenotaph/ || true
+      - name: Convert any PDFs to text
+        run: |
+          for f in results/cenotaph/*.pdf; do
+            [ -e "$f" ] || continue
+            pdftotext -layout "$f" "${f%.pdf}.txt" || true
+          done
+          ls -la results/cenotaph/ || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/cenotaph/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "cenotaph-recon: far-IR prior art + VizieR/IRSA catalogue schemas"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cenotaph-recon-outputs
+          path: results/cenotaph/
+          if-no-files-found: warn

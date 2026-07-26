@@ -1,0 +1,141 @@
+name: derelict
+
+# DERELICT — thin-film / high area-to-mass debris, found by what solar radiation
+# pressure does to it (docs/derelict.md, necrosignature S19).
+#
+# JPL already fits a radial non-gravitational coefficient A1 to small-body
+# astrometry.  A1 -> beta -> area-to-mass is a two-line conversion, and a thin
+# film sits 4-5 orders of magnitude above any natural body of the same size.
+# Bialy & Loeb 2018 ran exactly this inference for 1I/'Oumuamua and stopped
+# there; the dark-comet catalogues selected on the OPPOSITE signature (large
+# NON-radial acceleration, which excludes radiation pressure).  This workflow
+# executes the complement.
+#
+# The SBDB Query API contract was UNVERIFIED at build time (the sandbox is
+# egress-blocked), so the `probe` stage exists to discover the real schema and
+# the acquisition walks a ladder of constraint syntaxes, falling back to an
+# unconstrained pull + client-side filter.  Whatever happened is recorded in
+# results/derelict/schema.json.
+#
+# The `lit` stage re-fetches the novelty-critical primary sources WITH AN
+# ID+TITLE VERIFICATION STEP.  It exists because the earlier necrolit sweep
+# fetched arXiv:2306.16966 (a hep-ph dark-matter paper) believing it was the
+# dark-comet paper, and the fetch succeeded so nothing flagged it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Stage to run (probe|search|lit|all)"
+        required: false
+        default: "all"
+      limit:
+        description: "Cap rows per SBDB query (blank = no cap)"
+        required: false
+        default: ""
+      max_vet:
+        description: "How many survivors get a per-object sbdb.api detail fetch"
+        required: false
+        default: "60"
+      skip_control:
+        description: "Skip the comet control sample (true/false)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+jobs:
+  derelict:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+          python -c "import numpy, pandas, requests; print('imports OK')"
+
+      # The offline gate runs first: if the physics conversions regress, the
+      # run must not touch the archive at all.
+      - name: Offline test gate
+        run: python -m pytest tests/test_derelict.py -q
+
+      - name: Probe the SBDB schema
+        if: ${{ github.event.inputs.stage == 'probe' || github.event.inputs.stage == 'all' || github.event.inputs.stage == '' }}
+        continue-on-error: true
+        run: |
+          echo "--- raw API reachability ---"
+          curl -sS -m 60 -w '\nHTTP %{http_code}\n' \
+            "https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=full_name&limit=1" \
+            | head -c 2000 || true
+          echo "--- constraint-operator syntax probe (the least-certain part) ---"
+          curl -sS -m 120 -w '\nHTTP %{http_code}\n' \
+            "https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=full_name,A1,sigma_A1&sb-kind=a&sb-cdata=%7B%22AND%22%3A%5B%22A1%7CDF%22%5D%7D&limit=5&full-prec=1" \
+            | head -c 3000 || true
+          echo "--- doc page (field names) ---"
+          curl -sS -m 60 -o results/derelict_sbdb_query_doc.html \
+            "https://ssd-api.jpl.nasa.gov/doc/sbdb_query.html" || true
+          python -m seti.cli derelict --stage probe
+          cat results/derelict/schema.json || true
+
+      - name: Run the search
+        if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'lit' }}
+        run: |
+          python -m seti.cli derelict \
+            ${{ github.event.inputs.limit != '' && format('--limit {0}', github.event.inputs.limit) || '' }} \
+            --max-vet ${{ github.event.inputs.max_vet || '60' }} \
+            ${{ github.event.inputs.skip_control == 'true' && '--skip-control' || '' }}
+          echo "=== summary ==="
+          cat results/derelict/summary.json || true
+          echo "=== report ==="
+          cat results/derelict/REPORT.md || true
+
+      - name: Novelty check — fetch primary sources (id-verified)
+        if: ${{ github.event.inputs.stage == 'lit' || github.event.inputs.stage == 'all' || github.event.inputs.stage == '' }}
+        continue-on-error: true
+        run: |
+          python scripts/derelict_lit.py
+          echo "=== id mismatches (must be zero) ==="
+          python -c "import json;d=json.load(open('results/derelictlit/summary.json'));print(json.dumps({'n_ok':d['n_ok'],'n_failed':d['n_failed'],'n_id_mismatch':d['n_id_mismatch'],'mismatches':d['id_mismatches']},indent=2))" || true
+
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/derelict/ 2>/dev/null || true
+          # Literature evidence: keep metadata/text/summaries, not the bulk HTML.
+          git add -f -- results/derelictlit/summary.json \
+                        results/derelictlit/arxiv_id_*.atom \
+                        results/derelictlit/arxiv_q_*.atom \
+                        results/derelictlit/s2_*.json \
+                        results/derelictlit/txt_*.txt 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "derelict: A1-only radiation-pressure debris search + novelty evidence"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: derelict-outputs
+          path: |
+            results/derelict/
+            results/derelictlit/
+            results/derelict_sbdb_query_doc.html
+          if-no-files-found: warn

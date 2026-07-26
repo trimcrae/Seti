@@ -230,8 +230,12 @@ def stage_report(cfg: Config, sc: dict, df: pd.DataFrame, prov: dict,
                         "eta_max", "eta_lo", "eta_hi", "budget_verdict",
                         "ftk_class", "vet_flags", "p_chance_match")
             if c in df.columns]
+    # survivors.csv is committed back, so it is capped; classified.csv is the
+    # full table and travels as a workflow artifact only.
+    max_csv = 5000
     if len(surv):
-        surv[keep].to_csv(out_dir / "survivors.csv", index=False)
+        surv.sort_values("eta_max", ascending=False)[keep].head(max_csv).to_csv(
+            out_dir / "survivors.csv", index=False)
     if len(df):
         df[keep].to_csv(out_dir / "classified.csv", index=False)
 

@@ -793,3 +793,25 @@ def test_wide_binary_missing_purity_column_is_flagged():
     assert acq.n_rows == 2
     assert acq.degraded
     assert "chance alignments are NOT removed" in acq.degradation
+
+
+def test_rows_without_enough_elements_is_insufficient_not_a_null(tmp_path):
+    """A thin element vector is a coverage statement, never 'we found nothing'."""
+    from seti.tailings.run import _overall_verdict
+
+    v = _overall_verdict(
+        [{"survey": "GALAH", "n_stars": 5000, "n_vetted": 0,
+          "verdict": "INSUFFICIENT_SAMPLE: too few elements"}],
+        {}, None)
+    assert v.startswith("INSUFFICIENT_SAMPLE")
+    assert "not a limit on the signature" in v
+
+
+def test_a_degraded_source_is_carried_into_the_headline_verdict():
+    from seti.tailings.run import _overall_verdict
+
+    prov = {"surveys": [{"survey": "GALAH", "source_used": "GALAH_DR3_vizier",
+                         "degraded": True}]}
+    v = _overall_verdict([{"survey": "GALAH", "n_stars": 5000, "n_vetted": 0}], {}, prov)
+    assert v.startswith("DEGRADED_SOURCE")
+    assert "GALAH->GALAH_DR3_vizier" in v

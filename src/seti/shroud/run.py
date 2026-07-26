@@ -252,6 +252,7 @@ def stage_report(cfg: Config, sc: dict, df: pd.DataFrame, prov: dict,
         "budget_verdicts": (df["budget_verdict"].value_counts().to_dict()
                             if "budget_verdict" in df.columns else {}),
         "n_survivors": int(len(surv)),
+        "survivors_csv_truncated_to": (max_csv if len(surv) > max_csv else None),
         "n_energy_conserving": int(len(cons)),
         "n_ir_too_faint": int(len(faint)),
         "n_ir_undersampled": undersampled,

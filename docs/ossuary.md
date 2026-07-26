@@ -398,6 +398,15 @@ at 3σ, got 5 candidates, and found all five spurious. `chi_min = 5.0` in
 `config/thresholds.yaml`, with an *additional* 3σ requirement on the
 anchor-independent colour excess.
 
+**Sky coverage can be capped, and that is recorded.** The archive pull chunks by
+15-degree declination band with a row cap per band. ADQL `TOP` has no `ORDER BY`,
+so a band that hits its cap returns an *arbitrary* subset — biased sky, not merely
+less sky. `acquire.fetch_track` therefore stamps `row_limit_hit` on every row and
+`analyze` reports `n_from_row_limited_bands` in `summary.json`. The `spec` and
+`halo` tracks are not expected to cap; the `phot` track (GSP-Phot metallicities,
+a much larger parent population) may, and if it does its coverage claim must be
+read accordingly or the run re-dispatched with a tighter cut.
+
 **What this channel cannot do.** It cannot distinguish ground-up megaswarm debris
 from an exotic natural dust source by mineralogy — metal-poor dust is featureless
 (§3). It cannot detect cold (<200 K) relics at all. It cannot confirm a candidate:

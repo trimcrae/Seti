@@ -44,15 +44,17 @@ jobs:
   tailings:
     runs-on: ubuntu-latest
     timeout-minutes: 300
-    env:
-      # Acquisition is now a BULK-FILE pull first (GALAH DR4/DR3 allstar from
-      # Data Central, APOGEE DR17 allStar from the SDSS SAS) with VizieR TAP as
-      # the fallback -- the VizieR locators were dead on all three earlier
-      # dispatches, and the abbreviated CDS tables drop the fibre/RV columns
-      # that correction #5 needs to de-trend the flag rate. Those files run to
-      # hundreds of megabytes, so they land in the runner's scratch space and
-      # never inside the checkout, where they could be committed by accident.
-      TAILINGS_CACHE: ${{ runner.temp }}/tailings-cache
+    # Acquisition is now a BULK-FILE pull first (GALAH DR4/DR3 allstar from
+    # Data Central, APOGEE DR17 allStar from the SDSS SAS) with VizieR TAP as
+    # the fallback -- the VizieR locators were dead on all three earlier
+    # dispatches, and the abbreviated CDS tables drop the fibre/RV columns that
+    # correction #5 needs to de-trend the flag rate. Those files run to hundreds
+    # of megabytes, so TAILINGS_CACHE points them at the runner's scratch space
+    # and never inside the checkout, where they could be committed by accident.
+    # It is set from $RUNNER_TEMP inside the step, NOT in a job-level `env:`:
+    # the `runner` context does not exist there and the workflow fails to parse
+    # ("Unrecognized named-value: 'runner'") before any job starts, which reads
+    # as a dispatch failure rather than the YAML error it is.
     steps:
       - uses: actions/checkout@v4
         with:
@@ -80,7 +82,10 @@ jobs:
         run: |
           ls -la results/tailings/ 2>/dev/null || true
           df -h / | tail -1
+          echo "TAILINGS_CACHE=${RUNNER_TEMP}/tailings-cache" >> "$GITHUB_ENV"
+          export TAILINGS_CACHE="${RUNNER_TEMP}/tailings-cache"
           mkdir -p "$TAILINGS_CACHE"
+          echo "cache dir: $TAILINGS_CACHE"
           python -m seti.cli tailings \
             --stage ${{ github.event.inputs.stage || 'all' }} \
             --surveys "${{ github.event.inputs.surveys || 'GALAH,APOGEE' }}" \

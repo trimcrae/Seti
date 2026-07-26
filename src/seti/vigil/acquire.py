@@ -284,6 +284,42 @@ def fetch_neowise_epochs(ra: float, dec: float, pmra: float = 0.0, pmdec: float 
     return res
 
 
+def fetch_neowise_field(ra: float, dec: float, radius_deg: float = 0.4,
+                        w1_max: float = 14.5, max_rows: int = 3_000_000,
+                        retries: int = 3) -> QueryResult:
+    """**One** NEOWISE query for a whole field, instead of one per star.
+
+    The first run measured ~90 s for a single-star cone (COUNT(*) plus the query),
+    which caps a 400-star field at a few dozen stars inside any sane wall-clock
+    budget --- and scale is this programme's second priority after novelty.  A
+    single cone over the field returns every exposure of every source in it, and
+    :func:`seti.vigil.run.group_neowise_by_star` then assigns rows to stars with a
+    KD-tree.  One query replaces four hundred.
+
+    ``w1_max`` keeps the row count bounded: the channel's stars are Gaia G < 15,
+    which are comfortably brighter than this in W1, so the cut costs nothing real
+    while removing the faint-source bulk that dominates the row count.  The
+    ``COUNT(*)`` comparison is retained because a silently truncated field query
+    would now cost the whole field rather than one star.
+    """
+    cols = "ra, dec, " + ", ".join(_NEOWISE_COLS)
+    where = (f"1 = CONTAINS(POINT('ICRS', ra, dec), "
+             f"CIRCLE('ICRS', {float(ra):.7f}, {float(dec):.7f}, {float(radius_deg):.6f})) "
+             f"AND w1mpro < {w1_max}")
+    q = f"SELECT TOP {max_rows} {cols} FROM neowiser_p1bs_psd WHERE {where}"
+    cq = f"SELECT COUNT(*) FROM neowiser_p1bs_psd WHERE {where}"
+    res = run_tap(IRSA_TAP, q, label="neowise_field", count_query=cq,
+                  retries=retries, async_first=True)
+    if res.data is not None and len(res.data):
+        res.n_rows_raw = int(len(res.data))
+        res.data = clean_neowise(res.data)
+        res.n_rows = int(len(res.data))
+        res.n_rows_cleaned_out = res.n_rows_raw - res.n_rows
+        if res.n_rows == 0:
+            res.status = "QUERY_RETURNED_ZERO_ROWS_AFTER_QUALITY_CUTS"
+    return res
+
+
 def clean_neowise(df: pd.DataFrame) -> pd.DataFrame:
     """Standard NEOWISE frame-quality cleaning, applied identically in both bands."""
     d = df.copy()
@@ -460,6 +496,7 @@ def fetch_simbad_type(ra: float, dec: float, radius_arcsec: float = 5.0) -> str:
 __all__ = ["ALLWISE_EPOCH", "DATALAB_TAP", "GAIA_EPOCH", "IRSA_TAP",
            "NEOWISE_END", "NEOWISE_MID_EPOCH", "NEOWISE_START", "UNTIMELY_HINTS",
            "VIZIER_TAP", "QueryResult", "clean_neowise", "fetch_allwise_for",
-           "fetch_gaia_field", "fetch_neowise_epochs", "fetch_optical_constancy",
+           "fetch_gaia_field", "fetch_neowise_epochs", "fetch_neowise_field",
+           "fetch_optical_constancy",
            "fetch_simbad_type", "fetch_untimely_variables", "pm_sweep_arcsec",
            "probe_untimely", "propagate_pm", "run_tap"]

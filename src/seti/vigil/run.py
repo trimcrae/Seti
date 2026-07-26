@@ -310,13 +310,54 @@ def preselect_from_untimely(stars: pd.DataFrame, table: str, service: str,
     return out, ledger
 
 
+def group_neowise_by_star(df: pd.DataFrame, stars: pd.DataFrame,
+                          tol_arcsec: float = 2.5,
+                          from_epoch: float = 2016.0) -> dict[str, pd.DataFrame]:
+    """Assign one field's NEOWISE exposures to stars, with PM propagated.
+
+    Each star's position is moved to the NEOWISE mission mid-epoch before
+    matching --- the same correction the per-star path applies --- and the match
+    radius is widened per star by half its mission-long proper-motion sweep, so a
+    high-PM star's track stays inside its own aperture instead of falling out of
+    the sample without explanation.  Pure function: no network.
+    """
+    from scipy.spatial import cKDTree
+
+    from .acquire import NEOWISE_MID_EPOCH, pm_sweep_arcsec, propagate_pm
+
+    out: dict[str, pd.DataFrame] = {}
+    if df is None or not len(df) or not len(stars):
+        return out
+    d = df.copy()
+    d.columns = [c.lower() for c in d.columns]
+    if "ra" not in d or "dec" not in d:
+        return out
+    dec0 = float(np.median(pd.to_numeric(d["dec"], errors="coerce").dropna()))
+    cosd = max(np.cos(np.radians(dec0)), 1e-3)
+    tree = cKDTree(np.column_stack([
+        pd.to_numeric(d["ra"], errors="coerce").to_numpy() * cosd,
+        pd.to_numeric(d["dec"], errors="coerce").to_numpy()]))
+
+    for _, s in stars.iterrows():
+        pmra = float(s.get("pmra", 0.0) or 0.0)
+        pmdec = float(s.get("pmdec", 0.0) or 0.0)
+        ra_m, dec_m = propagate_pm(float(s["ra"]), float(s["dec"]), pmra, pmdec,
+                                   from_epoch, NEOWISE_MID_EPOCH)
+        rad = (tol_arcsec + 0.5 * pm_sweep_arcsec(pmra, pmdec)) / 3600.0
+        idx = tree.query_ball_point([float(ra_m) * cosd, float(dec_m)], r=rad)
+        if len(idx) >= 3:
+            out[str(s["source_id"])] = d.iloc[idx].reset_index(drop=True)
+    return out
+
+
 def vigil_sweep(cfg=None, ra: float = 266.0, dec: float = 65.0,
                 radius_deg: float = 0.4, g_max: float = 15.0,
                 max_stars: int = 400, time_budget_s: float = 3000.0,
                 out_root: Path | None = None, untimely_table: str = "",
-                untimely_service: str = "",
+                untimely_service: str = "", use_field_query: bool = True,
+                w1_max: float = 14.5,
                 gaia_fetch=None, neowise_fetch=None, allwise_fetch=None,
-                untimely_fetch=None) -> dict:
+                untimely_fetch=None, neowise_field_fetch=None) -> dict:
     """Sweep one sky field for mid-IR variables at low fractional excess.
 
     ``gaia_fetch`` / ``neowise_fetch`` / ``allwise_fetch`` are injectable so the
@@ -338,6 +379,8 @@ def vigil_sweep(cfg=None, ra: float = 266.0, dec: float = 65.0,
         from .acquire import fetch_neowise_epochs as neowise_fetch
     if allwise_fetch is None:
         from .acquire import fetch_allwise_for as allwise_fetch
+    if neowise_field_fetch is None and use_field_query:
+        from .acquire import fetch_neowise_field as neowise_field_fetch
 
     gres = gaia_fetch(ra, dec, radius_deg=radius_deg, g_max=g_max)
     ledger.append(gres.to_ledger())
@@ -372,7 +415,34 @@ def vigil_sweep(cfg=None, ra: float = 266.0, dec: float = 65.0,
     per_star_w2: dict[str, list] = {}
     meta: dict[str, dict] = {}
     n_nw_ok = n_nw_zero = n_nw_fail = 0
+
+    # --- fast path: ONE field query, rows assigned to stars locally ---------
+    grouped: dict[str, pd.DataFrame] = {}
+    if use_field_query and neowise_field_fetch is not None:
+        try:
+            fr = neowise_field_fetch(ra, dec, radius_deg=radius_deg, w1_max=w1_max)
+            ledger.append(fr.to_ledger())
+            if fr.status.startswith("OK") and fr.data is not None and len(fr.data):
+                grouped = group_neowise_by_star(fr.data, stars)
+                print(f"[vigil] field query: {fr.n_rows} rows -> "
+                      f"{len(grouped)}/{len(stars)} stars matched")
+        except Exception as exc:                       # noqa: BLE001
+            ledger.append({"label": "neowise_field", "status": "QUERY_FAILED",
+                           "error": repr(exc)})
+    for sid, d in grouped.items():
+        v1 = bin_visits(d["mjd"], d["w1mpro"], d["w1sigmpro"])
+        v2 = bin_visits(d["mjd"], d["w2mpro"], d["w2sigmpro"])
+        if not v1 or not v2:
+            continue
+        n_nw_ok += 1
+        per_star_w1[sid] = v1
+        per_star_w2[sid] = v2
+        meta[sid] = stars[stars["source_id"].astype(str) == sid].iloc[0].to_dict()
+
+    # --- slow path: per-star cones, for whatever the field query did not cover
     for _, s in stars.iterrows():
+        if str(s["source_id"]) in meta:
+            continue
         if _time.monotonic() - t0 > time_budget_s:
             print("[vigil] time budget reached during NEOWISE fetch")
             break
@@ -405,6 +475,7 @@ def vigil_sweep(cfg=None, ra: float = 266.0, dec: float = 65.0,
 
     ledger.append({"label": "neowise_epochs_rollup", "status": "SUMMARY",
                    "n_ok": n_nw_ok, "n_zero_rows": n_nw_zero, "n_failed": n_nw_fail,
+                   "n_from_field_query": int(len(grouped)),
                    "n_stars_attempted": int(len(stars))})
 
     if not meta:
@@ -416,7 +487,8 @@ def vigil_sweep(cfg=None, ra: float = 266.0, dec: float = 65.0,
             "archive_ledger": ledger, "n_stars_in_field": int(len(stars)),
             "n_stars_with_neowise": 0, "n_scored": 0, "n_candidates": 0,
             "neowise_query_rollup": {"n_ok": n_nw_ok, "n_zero_rows": n_nw_zero,
-                                     "n_failed": n_nw_fail}})
+                                     "n_failed": n_nw_fail,
+                                     "n_from_field_query": int(len(grouped))}})
 
     per_star_w1, cm1 = ensemble_common_mode(per_star_w1)
     per_star_w2, cm2 = ensemble_common_mode(per_star_w2)
@@ -453,7 +525,8 @@ def vigil_sweep(cfg=None, ra: float = 266.0, dec: float = 65.0,
         "ensemble_common_mode_w1": cm1, "ensemble_common_mode_w2": cm2,
         "ensemble_correction_applied": cm_applied,
         "neowise_query_rollup": {"n_ok": n_nw_ok, "n_zero_rows": n_nw_zero,
-                                 "n_failed": n_nw_fail},
+                                 "n_failed": n_nw_fail,
+                                 "n_from_field_query": int(len(grouped))},
         "archive_ledger": ledger,
         "cadence_bias_note": (
             "per-exposure errors are rescaled per star by the within-visit scatter; "
@@ -581,5 +654,6 @@ def vigil_vet(cfg=None, out_root: Path | None = None, max_candidates: int = 200,
     return summary
 
 
-__all__ = ["load_vigil_config", "preselect_from_untimely", "vigil_probe",
+__all__ = ["group_neowise_by_star", "load_vigil_config",
+           "preselect_from_untimely", "vigil_probe",
            "vigil_sweep", "vigil_vet"]

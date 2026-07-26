@@ -18,15 +18,66 @@ a machine that stops computing goes thermally quiet while its structure remains.
 This is the photometric negative of every executed waste-heat search, all of
 which require a *static positive* infrared excess.
 
-## 2. Novelty
+## 2. Novelty — verdict `UNOCCUPIED`, established on the runner
 
 **No published search selects on mid-infrared variability with optical
-constancy as a technosignature.** Three independent facts support this, and the
-`novelty` job in `.github/workflows/vigil.yml` (`scripts/vigillit_fetch.py`)
-establishes them from the record on a machine with egress rather than from
-memory — including verifying every decisive arXiv ID **by title**, because
-earlier agents in this repository recorded hallucinated IDs that resolved to
-unrelated physics.
+constancy as a technosignature.** The `novelty` job of run **30215516935**
+(`scripts/vigillit_fetch.py`, `results/vigillit/`) established this on a machine
+with egress: **39/39 fetches succeeded, 303 abstracts scanned across 17 targeted
+arXiv queries, and 0 genuine prior-art hits** — no abstract matched the
+conjunction *(mid-IR OR WISE OR NEOWISE) AND (variability) AND (optically
+constant) AND (technosignature OR Dyson OR SETI OR megastructure)* free of the
+four decoy classes. The two abstracts scoring 3–4 concept groups were both
+decoy-tagged `agn_blazar`. The decoys are excluded deliberately and named:
+YSO/protostar mid-IR variability (ordinary accretion physics), extreme debris
+disks (the physical **confounder**, not a technosignature claim), AGN/blazar
+mid-IR variability, and optical-transit megastructure searches (Boyajian's star
+and successors — a different observable). The verdict vocabulary distinguishes
+`UNOCCUPIED` from `UNDETERMINED_FETCH_FAILED`, because "we could not look" and
+"we found nothing" are different statements.
+
+**Every decisive citation was verified by title, not by ID** — earlier agents in
+this repository recorded hallucinated arXiv IDs that resolved to unrelated
+physics. All four resolved correctly:
+
+| ID | Fetched title | Verified |
+|---|---|---|
+| 2511.22071 | *A Catalogue of Mid-infrared Variable Sources from unTimely* | yes |
+| 2103.00568 | *A new sample of warm extreme debris disks from the ALLWISE catalog* | yes |
+| 2006.16734 | *Dyson Spheres* | yes |
+| 2403.18941 | *A Data-Driven Search For Mid-Infrared Excesses Among Five Million Main-Sequence FGK Stars* | yes |
+
+The unTimely variable catalogue's own abstract confirms the scale the channel
+was designed around: it identifies **8,256,042 variable sources in W1 and
+7,147,661 in W2** from unTimely coadded photometry, and states plainly that
+"the WISE and NEOWISE missions have provided the only mid-infrared all-sky
+time-domain data" and that "a comprehensive and systematic catalog of mid-infrared
+variable sources has remained unavailable" until it. Its listed science
+applications are stellar evolution, accretion and dust-enshrouded environments —
+no technosignature use.
+
+**The Hephaistos quote is now verbatim from fetched full text, not memory.**
+Project Hephaistos II (arXiv:2405.02927) says of its variability check:
+
+> "It is important to note that this check rejects potential Dyson swarms with
+> very large absorbing elements since these in principle could generate
+> detectable variations in the photometry of the host star."
+
+and, in its modelling assumptions:
+
+> "We also assume that Dyson spheres are built up slowly and uniformly
+> everywhere, with equal covering factor (γ) in every direction, **with no pieces
+> large enough to cause stellar variability**."
+
+Hephaistos I (arXiv:2201.11123) is more equivocal — "while variability could
+provide an interesting auxiliary diagnostic, we cannot easily dismiss DS
+candidates based on whether they display variability" — so the *series* is aware
+of the issue and still ends up excluding the population. Either way the point
+stands and is now sourced: the nearest prior art discards variable stars, and in
+any case its cut is on **optical** variability from occultation, not on
+**mid-infrared** variability from modulated re-emission.
+
+Three independent structural facts support the same conclusion:
 
 1. **Variability is what the flagship Dyson search throws away.** Hephaistos II
    imposes a `G_var > 2` cut that explicitly *rejects* variable stars, on the
@@ -50,6 +101,18 @@ The honest boundary: the *data* is not novel (NEOWISE has been mined hard), the
 *statistic* is not exotic, and mid-IR variability catalogues exist. What is
 unoccupied is the **selection**: mid-IR variability at a fractional excess too
 small to be a debris disk, with the optical flat.
+
+**One negative finding worth recording.** The unTimely variable catalogue paper
+is real and verified, but 35,230 characters of its abstract and full text contain
+**no data URL, no Zenodo deposit, no VizieR catalogue identifier and no Astro
+Data Lab table name** — `results/vigillit/data_access_routes.json` is empty on
+every access field. That is consistent with what the TAP probes found, and it
+means the catalogue has no discoverable machine-readable release yet. The parent
+unTimely Catalog does: `https://catalog.unwise.me/` and
+`https://github.com/fkiwy/unTimely`. So the pre-selector is currently
+unavailable *as a table*, and the channel runs on the NEOWISE field-sweep
+architecture — which was always the fallback, and which the probe selects
+automatically.
 
 ## 3. The confounder is the whole problem
 
@@ -205,7 +268,8 @@ and that a W4-only signal is cirrus.
 probe    → is the unTimely mid-IR variable catalogue reachable, and what is it called?
            does NEOWISE per-epoch photometry come back?          [results/vigil/probe.json]
 sweep    → per field:  Gaia DR3 sample (parallax_over_error > 10, G < 15)
-           → PM-PROPAGATED NEOWISE single-exposure W1/W2
+           → ONE field-wide PM-propagated NEOWISE query, rows assigned to stars
+             by KD-tree (per-star cones only for what it misses)
            → visit binning + empirical per-star noise calibration
            → field-wide ensemble common mode removed
            → normalised excess variance and its Vaughan et al. 2003 uncertainty
@@ -253,6 +317,20 @@ in a field (moon, scan angle, thermal state) — is fitted and removed, and whet
 it *could* be fitted is reported at the top level of the field summary. A field
 too thin to measure a common mode produces uncorrected statistics, and that has
 to be visible, not assumed away.
+
+### 5.1a Throughput — one query, not four hundred
+
+Run 1's probe measured **~92 s for a single-star NEOWISE cone** (the `COUNT(*)`
+plus the query). At that rate a 400-star field exhausts a 3000 s budget after a
+few dozen stars, and scale is this programme's second priority after novelty. So
+the sweep issues **one cone over the whole field** (`fetch_neowise_field`, with a
+`W1 < 14.5` cut that bounds the row count without touching a G < 15 sample), and
+`group_neowise_by_star` assigns exposures to stars locally with a KD-tree —
+propagating each star's proper motion to the mission mid-epoch and widening its
+own match radius by half its mission-long sweep, so the grouping inherits the
+same PM correction the per-star path applies. Per-star cones remain as the
+fallback for whatever the field query misses, and a field-query failure is
+recorded in the ledger rather than silently degrading the coverage.
 
 ### 5.2 Proper motion
 

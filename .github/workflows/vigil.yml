@@ -69,6 +69,13 @@ on:
         description: "TAP endpoint hosting untimely_table"
         required: false
         default: ""
+      w1_max:
+        description: >-
+          W1 ceiling on the single field-wide NEOWISE query.  One field query
+          replaces one cone per star; the first run measured ~90 s per single-star
+          cone, which caps a 400-star field well below its own row budget.
+        required: false
+        default: "14.5"
       max_candidates:
         description: "Cap on candidates carried into the vetting gauntlet"
         required: false
@@ -239,7 +246,8 @@ jobs:
             --max-stars ${{ github.event.inputs.max_stars || '400' }} \
             --time-budget-s ${{ github.event.inputs.time_budget_s || '3000' }} \
             --untimely-table "${{ github.event.inputs.untimely_table }}" \
-            --untimely-service "${{ github.event.inputs.untimely_service }}"
+            --untimely-service "${{ github.event.inputs.untimely_service }}" \
+            --w1-max ${{ github.event.inputs.w1_max || '14.5' }}
           echo "=== field summary ==="
           cat results/vigil/*/field_summary.json
       - name: Shard name

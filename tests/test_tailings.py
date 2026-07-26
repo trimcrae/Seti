@@ -1543,3 +1543,44 @@ def test_fits_big_endian_columns_survive_the_parquet_checkpoint(tmp_path):
     assert back["fe_h"].tolist() == [-0.1, 0.0, 0.2]
     # An empty or already-native frame must pass through untouched.
     assert to_native_byteorder(pd.DataFrame()).empty
+
+
+def test_threshold_sweep_reports_the_rate_against_the_published_scale():
+    """The calibration curve, not the candidate count, is the channel's output.
+
+    The real run flagged 2,100 vetted sparse anomalies in 210,867 stars (1.0%)
+    against Griffith et al. 2022's 15 in 82,910 (1.8e-4) -- a 55x excess that
+    cannot be astrophysical. A raw count is meaningless without the rate it
+    implies, so ``threshold_sweep`` is computed on the same z-matrix as the
+    candidates and carries ``rate_over_griffith`` explicitly.
+    """
+    import numpy as np
+    import pandas as pd
+
+    from seti.tailings.run import GRIFFITH_RATE, threshold_sweep
+    from seti.tailings.sparse import SparseConfig
+
+    assert GRIFFITH_RATE == pytest.approx(15 / 82910)
+
+    els = ["O", "Na", "Mg", "Al", "Si", "K", "Ca", "Sc", "Ti", "V",
+           "Cr", "Mn", "Co", "Ni", "Cu", "Zn", "Y", "Ba", "Ce", "Eu"]
+    rng = np.random.default_rng(0)
+    Z = pd.DataFrame(rng.standard_normal((2000, len(els))), columns=els)
+
+    sw = threshold_sweep(Z, SparseConfig(), z_flags=(5.0, 8.0),
+                         quiet_sigmas=(2.0,), contrasts=(3.0,))
+    for col in ("z_flag", "n_stars", "n_sparse", "n_dense", "sparse_rate",
+                "sparse_over_dense", "rate_over_griffith"):
+        assert col in sw.columns
+    assert len(sw) == 2
+    assert (sw["n_stars"] == 2000).all()
+    # PURE GAUSSIAN NOISE PRODUCES NO SPARSE CANDIDATES. This is the reference
+    # point that makes the real 1,341 interpretable: they are entirely
+    # non-Gaussian tail, i.e. the survey error model, not chance.
+    assert (sw["n_sparse"] == 0).all(), (
+        "Gaussian noise is producing sparse candidates: the rules are too loose "
+        "to be a meaningful null reference"
+    )
+    # Tightening must be monotonic: more z_flag can never yield more candidates.
+    tight = sw.sort_values("z_flag")
+    assert tight["n_sparse"].is_monotonic_decreasing

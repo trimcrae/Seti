@@ -1,0 +1,51 @@
+name: litcheck-dyson
+
+# Dyson-sphere / waste-heat / IR-excess technosignature literature survey.
+# The sandbox blocks arxiv.org, Semantic Scholar and OpenAlex; the runner has
+# egress (CLAUDE.md acquisition pattern). Results are committed back to the branch.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  litcheck-dyson:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Fetch literature evidence (soft 45-min deadline, partials kept)
+        run: |
+          timeout -k 30 2700 python scripts/litcheck_dyson.py \
+            || echo "fetcher hit soft deadline or errored; committing partials"
+          echo "=== summary ==="
+          python -c "import json,pathlib; p=pathlib.Path('results/litcheck_dyson/summary.json'); d=json.loads(p.read_text()) if p.exists() else []; print(sum(1 for x in d if x.get('ok')), '/', len(d), 'ok')" || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/litcheck_dyson/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "litcheck-dyson: Dyson/waste-heat IR-excess literature evidence"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: litcheck-dyson-outputs
+          path: results/litcheck_dyson/
+          if-no-files-found: warn

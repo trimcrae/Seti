@@ -1,0 +1,164 @@
+{
+  "channel": "derelict",
+  "verdict": "NO_DATA_REACHED",
+  "stage": "all",
+  "degradation": [
+    "JPL SBDB returned no rows with a fitted A1; no screening performed and no candidate emitted"
+  ],
+  "funnel": {
+    "input": 0
+  },
+  "reference_physics": [
+    {
+      "object": "natural_sphere_D100m_rho2000",
+      "amr_m2_kg": 7.5e-06,
+      "beta": 5.742367611644455e-09,
+      "q_pr": 1.0,
+      "note": "solid 100 m body, rho = 2000 kg/m^3"
+    },
+    {
+      "object": "natural_sphere_D10m_rho2000",
+      "amr_m2_kg": 7.5e-05,
+      "beta": 5.7423676116444545e-08,
+      "q_pr": 1.0,
+      "note": "solid 10 m body, rho = 2000 kg/m^3"
+    },
+    {
+      "object": "oumuamua_if_pure_srp",
+      "amr_m2_kg": 1.0837,
+      "beta": 0.0008297338374318795,
+      "q_pr": 1.0,
+      "note": "1I/'Oumuamua, A1 = 2.455e-7 au/d^2 (a = 4.92e-6 m/s^2 at 1 au, Micheli et al. 2018); Bialy & Loeb 2018 quote m/A ~ 0.1 g/cm^2"
+    },
+    {
+      "object": "ikaros_sailcraft",
+      "amr_m2_kg": 0.632258064516129,
+      "beta": 0.0009681755285009144,
+      "q_pr": 2.0,
+      "note": "JAXA IKAROS: 196 m^2 sail, 310 kg; specular reflector"
+    },
+    {
+      "object": "bare_mylar_1um",
+      "amr_m2_kg": 714.2857142857143,
+      "beta": 1.0937843069798963,
+      "q_pr": 2.0,
+      "note": "1 micron mylar film, rho = 1400 kg/m^3, reflective"
+    },
+    {
+      "object": "oumuamua_A1_au_day2",
+      "amr_m2_kg": 1.0836138933610862,
+      "beta": 0.00082966790996862,
+      "q_pr": 1.0,
+      "note": "A1 = 2.4551e-07 au/day^2 from Micheli et al. 2018"
+    }
+  ],
+  "conversions": {
+    "beta_per_A1_au_day2": 3379.3806811609434,
+    "amr_per_A1_au_day2_m2_kg_qpr1": 4413746.528054283,
+    "q_pr": 1.0,
+    "rho_natural_kg_m3": 1000.0,
+    "albedo_assumed": 0.15
+  },
+  "control_fetch": {
+    "status": "NO_DATA_REACHED",
+    "strategy": "",
+    "n_rows": 0,
+    "fields_requested": [
+      "spkid",
+      "full_name",
+      "pdes",
+      "name",
+      "kind",
+      "class",
+      "neo",
+      "pha",
+      "H",
+      "diameter",
+      "albedo",
+      "rot_per",
+      "e",
+      "a",
+      "q",
+      "i",
+      "om",
+      "w",
+      "ma",
+      "epoch",
+      "moid",
+      "n_obs_used",
+      "data_arc",
+      "condition_code",
+      "rms",
+      "first_obs",
+      "last_obs",
+      "A1",
+      "A2",
+      "A3",
+      "DT",
+      "sigma_A1",
+      "sigma_A2",
+      "sigma_A3",
+      "sigma_DT"
+    ],
+    "fields_returned": [],
+    "fields_dropped": [],
+    "signature": {},
+    "errors": [
+      "[cdata_A1_defined] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=c&full-prec=1&sb-cdata={\"AND\"%3A[\"A1|DF\"]}: {\"code\":\"400\",\"message\":\"invalid field specified: 'sigma_A1'\"}\n",
+      "[cdata_A1_notnull] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=c&full-prec=1&sb-cdata={\"AND\"%3A[\"A1|NE|0\"]}: {\"code\":\"400\",\"message\":\"invalid field specified: 'sigma_A1'\"}\n",
+      "[cdata_A1_defined_bare] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=c&full-prec=1&sb-cdata={AND%3A[A1|DF]}: {\"code\":\"400\",\"message\":\"invalid value specified for query parameter 'sb-cdata': invalid JSON content\"}\n",
+      "[unconstrained_full_pull] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=c&full-prec=1: {\"message\":\"invalid field specified: 'sigma_A1'\",\"code\":\"400\"}\n"
+    ]
+  },
+  "fetch": {
+    "status": "NO_DATA_REACHED",
+    "strategy": "",
+    "n_rows": 0,
+    "fields_requested": [
+      "spkid",
+      "full_name",
+      "pdes",
+      "name",
+      "kind",
+      "class",
+      "neo",
+      "pha",
+      "H",
+      "diameter",
+      "albedo",
+      "rot_per",
+      "e",
+      "a",
+      "q",
+      "i",
+      "om",
+      "w",
+      "ma",
+      "epoch",
+      "moid",
+      "n_obs_used",
+      "data_arc",
+      "condition_code",
+      "rms",
+      "first_obs",
+      "last_obs",
+      "A1",
+      "A2",
+      "A3",
+      "DT",
+      "sigma_A1",
+      "sigma_A2",
+      "sigma_A3",
+      "sigma_DT"
+    ],
+    "fields_returned": [],
+    "fields_dropped": [],
+    "signature": {},
+    "errors": [
+      "[cdata_A1_defined] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=a&full-prec=1&sb-cdata={\"AND\"%3A[\"A1|DF\"]}: {\"message\":\"invalid field specified: 'sigma_A1'\",\"code\":\"400\"}\n",
+      "[cdata_A1_notnull] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=a&full-prec=1&sb-cdata={\"AND\"%3A[\"A1|NE|0\"]}: {\"code\":\"400\",\"message\":\"invalid field specified: 'sigma_A1'\"}\n",
+      "[cdata_A1_defined_bare] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=a&full-prec=1&sb-cdata={AND%3A[A1|DF]}: {\"code\":\"400\",\"message\":\"invalid value specified for query parameter 'sb-cdata': invalid JSON content\"}\n",
+      "[unconstrained_full_pull] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=a&full-prec=1: {\"message\":\"invalid field specified: 'sigma_A1'\",\"code\":\"400\"}\n"
+    ]
+  }
+}

@@ -1,0 +1,57 @@
+name: zacklit
+
+# Prior-art dossier for Zackrisson et al. 2018 "SETI with Gaia" (arXiv:1804.08351,
+# ApJ 862, 21). Fetches verbatim full text (PDF text + ar5iv HTML + LaTeX source)
+# and the complete citation graph, so the underluminosity-channel novelty claim can
+# be checked against the primary source. Sandbox blocks arxiv/ar5iv/OpenAlex; the
+# runner has egress (CLAUDE.md acquisition pattern).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  zacklit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pdftotext
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Fetch paper + citation graph (soft 20-min deadline, partials kept)
+        env:
+          ADS_TOKEN: ${{ secrets.ADS_TOKEN }}
+        run: |
+          timeout -k 30 1200 python scripts/zacklit_fetch.py \
+            || echo "fetcher hit soft deadline or errored; committing partials"
+          echo "=== files ==="
+          ls -laR results/zacklit/ || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/zacklit/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "zacklit: Zackrisson+2018 SETI-with-Gaia full text + citation graph"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zacklit-outputs
+          path: results/zacklit/
+          if-no-files-found: warn

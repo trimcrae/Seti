@@ -231,6 +231,13 @@ def _cmd_herdsman_b(args, cfg):
     herdsman_b_run(cfg, stage=args.stage)
 
 
+def _cmd_midden(args, cfg):
+    from .midden.run import midden_run
+
+    midden_run(cfg, stage=args.stage, max_spectra=args.max_spectra,
+               batch_size=args.batch_size)
+
+
 def _cmd_herdsman(args, cfg):
     from .herdsman.run import herdsman_run
 
@@ -773,6 +780,22 @@ def main(argv=None):
                         "the members.parquet checkpoint from 'catalog', not "
                         "the GSP-Phot chem/field stages)")
     p.set_defaults(func=_cmd_herdsman_b)
+
+    p = sub.add_parser("midden",
+                       help="runner: survey-scale short-lived-radionuclide "
+                            "search (Whitmire & Wright 1980) in ESO Phase-3 "
+                            "HARPS+FEROS spectra (docs/midden.md)")
+    p.add_argument("--stage",
+                   choices=("verify-lines", "targets", "acquire",
+                            "acquire-analyze", "score", "all"),
+                   default="all",
+                   help="stage to run (each checkpoints; 'all' resumes; "
+                        "verify-lines always re-runs the NIST gate)")
+    p.add_argument("--max-spectra", type=int, default=3000,
+                   help="v1 corpus cap (spectra, after per-star de-dup)")
+    p.add_argument("--batch-size", type=int, default=50,
+                   help="FITS per download/measure/discard batch")
+    p.set_defaults(func=_cmd_midden)
 
     p = sub.add_parser("herdsman-reduce",
                        help="staged runner 3/3: aggregate all scan shards "

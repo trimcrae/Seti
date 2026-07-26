@@ -347,3 +347,23 @@ def test_staged_pipeline_recovers_herd(tmp_path):
     top = cands["candidates"][0]
     assert len(set(top["member_source_ids"]) & herd_ids) >= 4
     assert abs(top["t_myr"] - t_meet) < 2.5
+
+
+def test_median_pairwise_subsamples_giant_components():
+    """Giant percolation components must not allocate O(N^2) memory.
+
+    Run 30199588771 died allocating 42.7 GiB for a 43,692-star component; the
+    strided-subsample estimator has to stay accurate and bounded above the cap.
+    """
+    from seti.herdsman.convergence import _MEDIAN_PAIRWISE_CAP, _median_pairwise
+
+    rng = np.random.default_rng(7)
+    small = rng.uniform(0.0, 100.0, size=(500, 3))
+    exact = _median_pairwise(small)
+
+    big = rng.uniform(0.0, 100.0, size=(6 * _MEDIAN_PAIRWISE_CAP, 3))
+    approx = _median_pairwise(big)
+    # Same uniform-cube distribution: subsampled median must agree with the
+    # exact small-N median to a few percent, deterministically.
+    assert abs(approx - exact) / exact < 0.05
+    assert _median_pairwise(big) == approx

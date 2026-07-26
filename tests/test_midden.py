@@ -265,3 +265,99 @@ def test_process_corpus_reruns_all_error_batches(tmp_path):
                           fetch_fn=fetch_fn)
     assert calls["n"] == 2                 # batch was re-run, not reused
     assert (meas["role"] == "error").all() and list(meas["error"]) != ["old", "old"]
+
+
+# ---------------------------------------------------------------------------
+# Deep-dive (HD 217522 epoch audit)
+# ---------------------------------------------------------------------------
+
+def _deep_meas(star, dp_id, inst, depths, depth_err=0.005, teff=7000.0):
+    """Synthetic per-epoch measurement rows for the three Tc lines + controls."""
+    from seti.midden.deepdive import TARGET  # noqa: F401 — import check
+    rows = []
+    lams = {"Tc I": [(4238.19, depths[0]), (4262.27, depths[1]),
+                     (4297.06, depths[2])]}
+    for sp, pairs in lams.items():
+        for lam, d in pairs:
+            rows.append({"star": star, "dp_id": dp_id, "instrument": inst,
+                         "species": sp, "wavelength": lam,
+                         "role": "radionuclide", "depth": d,
+                         "depth_err": depth_err, "teff": teff,
+                         "t_min": 50000.0 + hash(dp_id) % 1000})
+    for lam in (4152.3, 4222.1):
+        rows.append({"star": star, "dp_id": dp_id, "instrument": inst,
+                     "species": "DUMMY", "wavelength": lam, "role": "control",
+                     "depth": 0.01, "depth_err": depth_err, "teff": teff,
+                     "t_min": 50000.0 + hash(dp_id) % 1000})
+    return rows
+
+
+def test_deepdive_stability_flags_variable_lines():
+    """A pulsation-modulated blend must fail the constant-depth test."""
+    from seti.midden.deepdive import _stability
+
+    rows = []
+    for i, d in enumerate([0.02, 0.02, 0.02, 0.02]):        # static line set
+        rows += _deep_meas("HD 217522", f"s{i}", "HARPS", [d, 0.03, 0.01])
+    static = pd.DataFrame(rows)
+    st = _stability(static)
+    assert st["4238.19"]["p_constant"] > 0.01                # constant passes
+
+    rows = []
+    for i, d in enumerate([0.01, 0.05, 0.01, 0.05]):        # modulating line
+        rows += _deep_meas("HD 217522", f"v{i}", "HARPS", [d, 0.03, 0.01])
+    varying = pd.DataFrame(rows)
+    sv = _stability(varying)
+    assert sv["4238.19"]["p_constant"] < 1e-6                # variability caught
+
+
+def test_deepdive_scoring_end_to_end(tmp_path):
+    """Panel percentile + epoch verdicts + report files from synthetic rows."""
+    from seti.config import load_config
+    from seti.midden.deepdive import score_deepdive
+
+    rows = []
+    # Comparison panel: 5 stars x 12 epochs of unremarkable depths.
+    rng = np.random.default_rng(3)
+    for s in range(5):
+        for e in range(12):
+            d = 0.010 + 0.002 * rng.standard_normal(3)
+            rows += _deep_meas(f"HD {1000+s}", f"c{s}_{e}", "HARPS",
+                               list(np.abs(d)))
+    # Target: 6 epochs with a consistently deep, coherent triplet.
+    for e in range(6):
+        rows += _deep_meas("HD 217522", f"t{e}", "HARPS",
+                           [0.030, 0.032, 0.031])
+    meas = pd.DataFrame(rows)
+
+    cfg = load_config()
+    cfg.root = tmp_path
+    summary = score_deepdive(cfg, meas)
+    assert summary["n_target_epochs"] == 6
+    assert summary["target_panel_percentile_tc_quad"] == 1.0
+    assert summary["target_epochs_coherent"] >= 1
+    # a static deep triplet must PASS stability
+    for rec in summary["stability"].values():
+        assert rec["p_constant"] > 0.01
+    assert (tmp_path / "results" / "midden_deepdive" / "DEEPDIVE.md").exists()
+    assert (tmp_path / "results" / "midden_deepdive"
+            / "target_epochs.csv").exists()
+
+
+def test_deepdive_resolution_gate_and_box():
+    """R gate trusts em_res_power, whitelists known-R instruments on null."""
+    from seti.midden.deepdive import resolution_ok, star_box
+
+    df = pd.DataFrame([
+        {"instrument_name": "XSHOOTER", "em_res_power": 9000.0},
+        {"instrument_name": "UVES", "em_res_power": np.nan},
+        {"instrument_name": "HARPS", "em_res_power": 115000.0},
+        {"instrument_name": "MUSE", "em_res_power": np.nan},
+    ])
+    ok = resolution_ok(df)
+    assert list(ok) == [False, True, True, False]
+
+    box = star_box(345.629, -44.846, 20.0)
+    assert box["dec_hi"] - box["dec_lo"] == pytest.approx(2 * 20.0 / 3600.0)
+    # RA box must widen by 1/cos(dec)
+    assert (box["ra_hi"] - box["ra_lo"]) > (box["dec_hi"] - box["dec_lo"])

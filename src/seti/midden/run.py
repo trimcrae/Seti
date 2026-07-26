@@ -36,7 +36,17 @@ def score_and_write(cfg: Config, meas: pd.DataFrame,
     out_dir = cfg.root / "results" / "midden"
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    if meas.empty or "role" not in meas.columns:
+        raise RuntimeError(
+            "MIDDEN: no measurement rows at all — every spectrum download or "
+            "parse failed; see the per-batch logs before re-dispatching")
+    n_err = int((meas["role"] == "error").sum())
     meas = meas[meas["role"].isin(["radionuclide", "rv_ref", "control"])].copy()
+    if meas.empty:
+        raise RuntimeError(
+            f"MIDDEN: zero usable line measurements ({n_err} error rows) — "
+            "every spectrum failed to download or parse; fix acquisition "
+            "before scoring")
     stars, meas_z = score_corpus(meas)
     rates = line_flag_rates(meas_z)
     if len(stars):

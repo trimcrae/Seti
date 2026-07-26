@@ -244,7 +244,7 @@ class MatchedNull:
         self.active_strata = np.where(self.anom_count > 0)[0]
 
     # ----------------------------------------------------------------- tilt
-    def set_tilt(self, tilt) -> "MatchedNull":
+    def set_tilt(self, tilt) -> MatchedNull:
         """Reweight *within* each stratum by a positive per-row factor.
 
         Used by the edge test: tilting the null by the measured smooth radial
@@ -283,7 +283,7 @@ class MatchedNull:
             self._probs[int(s)] = (sl, (p / tot) if tot > 0 else None)
         return self
 
-    def copy_with_tilt(self, tilt) -> "MatchedNull":
+    def copy_with_tilt(self, tilt) -> MatchedNull:
         """A view of this null with different within-stratum draw probabilities.
 
         The stratification (the expensive part) is shared; only the weights and

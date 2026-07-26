@@ -1,0 +1,102 @@
+# TIDEMARK --- anomaly-catalogue adapters.
+#
+# One block per anomaly axis.  TIDEMARK is channel-agnostic: it needs a PARENT
+# SAMPLE (every star the channel searched) and an ANOMALY SUBSET of it.  A
+# channel that publishes only its survivors cannot support a rate measurement,
+# and TIDEMARK will report NO_PARENT_SAMPLE rather than invent a denominator.
+#
+# Keys per block:
+#   parent      glob (repo-relative, may be a list) for the searched population
+#   candidates  glob for the flagged subset, joined to the parent on id_col
+#   id_col      join key (default source_id)
+#   score_col   continuous anomaly score living on the *parent* table --- if
+#               present this is preferred over the candidate join, because it
+#               lets the threshold be varied without refetching
+#   score_min   threshold on score_col (default: the 99th percentile)
+#   covariates  detectability covariates to match the null on, in priority
+#               order (thin strata drop the last entries first).  Never list a
+#               coordinate under test --- MatchedNull raises if you do.
+#
+# Onboarding a new channel is adding a block, not writing code.
+
+channels:
+
+  # --- self-sufficient axis, built by seti.tidemark.acquire ----------------
+  gaia_allwise_ir_excess:
+    parent: results/tidemark/parent/parent_sample.parquet
+    score_col: ir_excess_z
+    score_min: 4.0
+    covariates: [phot_g_mean_mag, dist_pc, bp_rp, ebv, log_local_density,
+                 w1w2_sigma, n_obs]
+
+  # --- sibling channels ----------------------------------------------------
+  # CENOTAPH writes a genuine parent (sample.parquet) and, better, a per-star
+  # score for every fitted star in greyfit.parquet.  Grey attenuation deficit.
+  cenotaph_grey_deficit:
+    parent: results/cenotaph/greyfit.parquet
+    score_col: grey_sigma
+    score_min: 3.0
+    covariates: [phot_g_mean_mag, dist_pc, bp_rp, ebv, log_local_density]
+
+  # OSSUARY writes sample.parquet (parent) and excess_flagged.csv (subset).
+  ossuary_impossible_debris:
+    parent: results/ossuary/sample.parquet
+    candidates: results/ossuary/candidates.csv
+    id_col: source_id
+    covariates: [phot_g_mean_mag, dist_pc, bp_rp, ebv, log_local_density]
+
+  # CLUSTER: the sibling engine's IR-excess axis.  Requires the parent-sample
+  # export added to cluster_run (parent_sample.parquet per cone); the survivors
+  # -only ir_excess_tail.csv cannot support a rate.
+  cluster_ir_excess:
+    parent: results/cluster/f*/parent_sample.parquet
+    score_col: ir_excess_z
+    score_min: 4.0
+    covariates: [phot_g_mean_mag, dist_pc, bp_rp, log_local_density]
+
+  # DIMMING: dimming_scored.csv is one row per object that got a light curve,
+  # with is_candidate as the survivor flag --- a real tier-B parent sample.
+  dimming_secular:
+    parent: results/dimming/fp*/dimming_scored.csv
+    score_col: score
+    covariates: [g_mag, bp_rp, n_epochs, log_local_density]
+
+  # EMBER (IR-excess cessation), ISOTHERM (SED shape) and TAILINGS (sparse
+  # chemical anomaly) are under construction.  Their blocks are declared here so
+  # they are picked up the moment they land; until then load_channel returns
+  # NO_PARENT_SAMPLE and the run says so.
+  ember_cessation:
+    parent: results/ember/parent_sample.parquet
+    score_col: cessation_z
+    score_min: 3.0
+    covariates: [phot_g_mean_mag, dist_pc, bp_rp, ebv, log_local_density]
+
+  isotherm_sed_shape:
+    parent: results/isotherm/parent_sample.parquet
+    score_col: isothermality_z
+    score_min: 3.0
+    covariates: [phot_g_mean_mag, dist_pc, bp_rp, ebv, log_local_density]
+
+  tailings_sparse_chemical:
+    parent: results/tailings/parent_sample.parquet
+    score_col: sparsity_z
+    score_min: 4.0
+    covariates: [phot_g_mean_mag, teff, feh, log_local_density]
+
+# Channels TIDEMARK deliberately does NOT ingest, and why.  Recorded so the
+# omission is a decision rather than an oversight.
+excluded:
+  derelict: >
+    Solar-system minor bodies keyed by designation with orbital elements and no
+    sky position or distance.  A Galactic spatial rate test is not defined for
+    them.
+  midden: >
+    Keyed by star name with no ra/dec in the scored table; the parent is a
+    spectroscopic corpus rather than a sky-defined population.  Ingestable only
+    once positions are attached.
+  herdsman: >
+    Rows are convergence *events* with semicolon-joined member lists, not stars.
+    The unit of the rate is undefined.
+  shroud: >
+    Positions exist but the parent is the VASCO vanishing-source list, whose own
+    selection function is the object of study in that channel.

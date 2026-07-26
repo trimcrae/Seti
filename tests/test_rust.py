@@ -225,11 +225,45 @@ def test_cadence_bias_the_uncorrected_statistic_would_have_failed():
     # And the residual is small in absolute terms: an equivalent amplitude far
     # below the 15 mmag floor the candidate gate requires.
     assert 1e3 * np.sqrt(np.max(np.abs(exc_mean))) < 8.0
-    # The same test applied to the uncorrected variance fails outright, which is
-    # what makes the correction load-bearing rather than decorative.
-    raw_var_mean = (raw ** 2).mean(axis=0)
-    assert raw_var_mean[-1] - raw_var_mean[0] > 10.0 * np.max(np.abs(exc_mean))
     assert corr_flag == 0
+
+
+def test_the_correction_is_load_bearing_at_the_estimator_level():
+    """Measure the bias directly, so its removal is demonstrated and not assumed.
+
+    The light-curve-level guard above shows no false positives, but a guard that
+    is never tested against a real bias proves nothing.  Here the bias is
+    measured at the estimator level with enough Monte-Carlo to resolve it:
+    ``E[sigma_hat^2]/sigma^2`` differs by ~7% between an 8-epoch and a 70-epoch
+    season, and the corrected excess variance differs from zero at neither.
+    """
+    sigma, trials = 0.02, 6000
+    rng = np.random.default_rng(5)
+    uncorrected, corrected, sems = {}, {}, {}
+    for n in (8, 70):
+        draws = rng.normal(0, sigma, size=(trials, n))
+        s = np.array([mad_scale(row) for row in draws])
+        v_raw = s ** 2
+        # The module's own null for this exact (N, error vector), assembled from
+        # the same public pieces season_scatter uses internally: the
+        # heteroscedastic MAD scale, the finite-N bias, and the second-order
+        # E[s^2] = (b sigma)^2 (1 + u^2) term.
+        u = float(rel_scatter(n)[0])
+        v_null = (mixture_mad_sigma(np.full(n, sigma))
+                  * float(bias_factor(n)[0])) ** 2 * (1.0 + u ** 2)
+        uncorrected[n] = float(np.mean(v_raw)) / sigma ** 2
+        corrected[n] = float(np.mean(v_raw - v_null)) / sigma ** 2
+        sems[n] = float(np.std(v_raw)) / np.sqrt(trials) / sigma ** 2
+
+    # The uncorrected squared estimator is biased low at N=8 and near-unbiased at
+    # N=70 --- a several-per-cent step driven by nothing but the epoch count.
+    step = uncorrected[70] - uncorrected[8]
+    assert step > 0.04
+    assert step > 3.0 * np.hypot(sems[8], sems[70]), "bias not resolved by the MC"
+    # After correction both are consistent with zero at the same precision.
+    for n in (8, 70):
+        assert abs(corrected[n]) < 3.0 * sems[n], f"N={n}: {corrected[n]:.4f}"
+    assert abs(corrected[70] - corrected[8]) < 0.5 * step
 
 
 def test_equal_n_subsampling_agrees_with_the_bias_correction():

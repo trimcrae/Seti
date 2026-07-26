@@ -754,3 +754,83 @@ def test_allsky_query_forms_are_tried_in_order(sc):
     # A cone query is a single form.
     cone = acq._svo_urls("http://host/x", sc, ra=10.0, dec=-5.0, sr=1.0)
     assert all("SR=1.0000" in u and "RA=10.000000" in u for u in cone)
+
+
+# ===========================================================================
+# The vectorised grid search must reproduce the scalar reference exactly.
+# ===========================================================================
+def _scalar_fit_obscured(sed, teff_grid, av_grid, tdust_grid, a_v_ism=0.0):
+    """Naive triple loop — the reference the vectorised solver must match."""
+    bands = sed.detected_modern()
+    obs = np.array([sed.fnu(b) for b in bands])
+    sig = np.array([sed.sigma_fnu(b, 0.30, 0.05) for b in bands])
+    lim = [b for b in sed.limits if b in S.BANDS and b not in bands]
+    best = None
+    for teff in teff_grid:
+        shp_s = S.photosphere_fnu(bands, float(teff), 1.0, 0.0)
+        for a_v in av_grid:
+            shp_s = S.photosphere_fnu(bands, float(teff), 1.0, float(a_v))
+            for t_d in tdust_grid:
+                if float(t_d) >= float(teff):
+                    continue
+                shp_d = S.photosphere_fnu(bands, float(t_d), 1.0, a_v_ism)
+                ss, sd = S._linear_scales_two(shp_s, shp_d, obs, sig)
+                c = S._chi2(ss * shp_s + sd * shp_d, obs, sig)
+                c += S._limit_penalty(
+                    sed, lim,
+                    lambda bb, t=teff, a=a_v, td=t_d, s1=ss, s2=sd:
+                    S.obscured_plus_dust_fnu(bb, float(t), s1, float(a),
+                                             float(td), s2, a_v_ism))
+                if best is None or c < best[0]:
+                    best = (c, float(teff), float(a_v), float(t_d), ss, sd)
+    return best
+
+
+@pytest.mark.parametrize("scale,plate", [(1.0, 17.0), (0.01, 17.0),
+                                         (50.0, 15.5), (1.0, 19.0)])
+def test_vectorised_fit_matches_the_scalar_reference(sc, scale, plate):
+    sed = V.build_sed(_enshrouded_row(ir_scale_factor=scale, plate_mag=plate))
+    tg, ag, dg = (sc["sed"]["teff_star_grid_k"], sc["sed"]["av_grid_mag"],
+                  sc["sed"]["tdust_grid_k"])
+    ref = _scalar_fit_obscured(sed, tg, ag, dg)
+    fast = S.fit_obscured_dust(sed, tg, ag, dg)
+    assert fast.chi2 == pytest.approx(ref[0], rel=1e-9, abs=1e-12)
+    assert fast.t_dust_k == ref[3]
+    assert fast.scale_dust == pytest.approx(ref[5], rel=1e-9)
+
+
+def test_vectorised_photosphere_matches_the_scalar_reference(sc):
+    bands = ["2mass_j", "2mass_h", "2mass_ks", "w1", "w2"]
+    f = S.photosphere_fnu(bands, 4500.0, 3.0e-19, 1.0)
+    sed = S.SED("R", mags={b: S.fnu_to_mag(b, x)
+                           for b, x in zip(bands, f, strict=True)},
+                errs=dict.fromkeys(bands, 0.02), limits={"w4": 8.0})
+    obs = np.array([sed.fnu(b) for b in bands])
+    sig = np.array([sed.sigma_fnu(b, 0.30, 0.05) for b in bands])
+    best = None
+    for t in sc["sed"]["teff_star_grid_k"]:
+        for a in sc["sed"]["av_grid_mag"]:
+            shp = S.photosphere_fnu(bands, float(t), 1.0, float(a))
+            s = S._linear_scale(shp, obs, sig)
+            c = S._chi2(s * shp, obs, sig) + S._limit_penalty(
+                sed, ["w4"],
+                lambda bb, t_=t, a_=a, s_=s: S.photosphere_fnu(bb, float(t_), s_,
+                                                               float(a_)))
+            if best is None or c < best[0]:
+                best = (c, float(t), float(a), s)
+    fast = S.fit_photosphere(sed, sc["sed"]["teff_star_grid_k"],
+                             sc["sed"]["av_grid_mag"])
+    assert fast.chi2 == pytest.approx(best[0], rel=1e-9, abs=1e-12)
+    assert (fast.teff_k, fast.a_v_mag) == (best[1], best[2])
+
+
+def test_shape_cache_returns_read_only_arrays():
+    """A caller must not be able to corrupt the shared grid cache."""
+    a = S._photosphere_shape(("w1", "w2"), 3000.0, 1.0)
+    assert not a.flags.writeable
+    with pytest.raises(ValueError):
+        a[0] = 1.0
+    # photosphere_fnu must hand back a fresh, writeable array.
+    b = S.photosphere_fnu(["w1", "w2"], 3000.0, 2.0, 1.0)
+    b[0] = 1.0
+    assert np.asarray(S._photosphere_shape(("w1", "w2"), 3000.0, 1.0))[0] != 1.0

@@ -145,9 +145,19 @@ def fetch_cone(ra: float, dec: float, *, radius_deg: float = 6.0,
 def parent_sample(*, grid: str = "sparse", radius_deg: float = 6.0,
                   plx_min: float = 1.0, g_max: float = 17.0, stride: int = 20,
                   cap: int = 400000, limit: int | None = None,
-                  cones: pd.DataFrame | None = None) -> pd.DataFrame:
-    """Fetch the whole grid.  Returns *every* star searched, not a candidate list."""
+                  cones: pd.DataFrame | None = None,
+                  shard: int = 0, n_shards: int = 1) -> pd.DataFrame:
+    """Fetch the whole grid.  Returns *every* star searched, not a candidate list.
+
+    ``shard``/``n_shards`` take an interleaved subset of the cone list so the
+    workflow can run the fetch as a ``fail-fast: false`` matrix: interleaving
+    (rather than blocking) means a lost shard costs sky coverage uniformly
+    instead of removing a whole contiguous region, which would be a footprint
+    change rather than a sample-size change.
+    """
     cones = cone_grid(grid) if cones is None else cones
+    if int(n_shards) > 1:
+        cones = cones.iloc[int(shard) % int(n_shards)::int(n_shards)]
     frames = []
     for _, c in cones.iterrows():
         try:

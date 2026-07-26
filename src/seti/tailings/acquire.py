@@ -202,6 +202,71 @@ def tap_query(adql: str, *, url: str = VIZIER_TAP, retries: int = 3) -> pd.DataF
     return _retry(_go, retries=retries, label="TAP query")
 
 
+#: Keywords used to *discover* a survey's table when the encoded locators miss.
+DISCOVERY_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "GALAH": ("GALAH",),
+    "APOGEE": ("APOGEE",),
+    "LAMOST": ("LAMOST",),
+    "WIDEBINARY": ("wide binar", "El-Badry", "El-Badry", "binaries"),
+}
+
+
+def discover_tables(
+    keywords: tuple[str, ...],
+    *,
+    url: str = VIZIER_TAP,
+    query_fn=None,
+    limit: int = 40,
+) -> list[str]:
+    """Find candidate tables by keyword in ``TAP_SCHEMA``.
+
+    VizieR catalogue *numbers* drift between data releases -- III/283 is not
+    III/298, and neither is guaranteed to be the current GALAH. Hard-coding one
+    means the channel dies the day CDS renumbers, which is exactly what
+    happened on the first dispatch. Asking the service what it actually holds
+    removes the whole failure mode, and it is the same reasoning that made the
+    *column* names dynamic.
+    """
+    query_fn = query_fn or (lambda q: tap_query(q, url=url))
+    pats = []
+    for k in keywords:
+        for variant in {k, k.upper(), k.lower(), k.capitalize()}:
+            pats.append(f"description LIKE '%{variant}%'")
+            pats.append(f"table_name LIKE '%{variant}%'")
+    adql = (f"SELECT TOP {int(limit)} table_name, description FROM TAP_SCHEMA.tables "
+            "WHERE " + " OR ".join(dict.fromkeys(pats)))
+    try:
+        df = query_fn(adql)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[tailings] table discovery failed: {exc!r}")
+        return []
+    if df is None or len(df) == 0:
+        return []
+    col = "table_name" if "table_name" in df.columns else df.columns[0]
+    return [str(t) for t in df[col].tolist()]
+
+
+def score_schema(columns) -> tuple[int, dict[str, str], dict[str, dict[str, str]]]:
+    """Rank a candidate table by how much of what this channel needs it has.
+
+    Returns ``(score, params, elements)``; a score of 0 means unusable. Ranking
+    rather than first-match matters because discovery returns many tables per
+    survey (per-field subsets, VACs, README stubs) and only one of them is the
+    main abundance catalogue.
+    """
+    params = resolve_param_columns(columns)
+    elements = resolve_abundance_columns(columns)
+    if any(k not in params for k in ("teff", "logg", "fe_h")) or not elements:
+        return 0, params, elements
+    score = 10 * len(elements)
+    for k, w in (("snr", 5), ("star_id", 5), ("chi2", 3), ("ruwe", 3),
+                 ("vbroad", 2), ("rv_scatter", 2), ("field_id", 2),
+                 ("ra", 1), ("dec", 1)):
+        if k in params:
+            score += w
+    return score, params, elements
+
+
 def teff_bands(teff_min: float, teff_max: float, n: int) -> list[tuple[float, float]]:
     """Split the temperature range into ``n`` query chunks.
 
@@ -237,6 +302,7 @@ class Acquisition:
     degraded: bool = False
     degradation: str = ""
     sources_tried: list[str] = field(default_factory=list)
+    scoreboard: list[dict] = field(default_factory=list)
 
     def provenance(self) -> dict:
         return {
@@ -249,6 +315,7 @@ class Acquisition:
             "degraded": bool(self.degraded),
             "degradation": self.degradation,
             "sources_tried": self.sources_tried,
+            "scoreboard": self.scoreboard,
         }
 
 
@@ -268,115 +335,134 @@ def fetch_survey(
     max_rows: int = 400_000,
     n_chunks: int = 8,
     tap_url: str = VIZIER_TAP,
+    discover: bool = True,
+    max_candidates: int = 12,
     probe_fn=None,
     query_fn=None,
 ) -> Acquisition:
-    """Pull cool dwarfs with abundances from the first source that answers.
+    """Pull cool dwarfs with abundances from the BEST table this service holds.
+
+    Not the first that answers: the *best*. Discovery returns many tables per
+    survey -- per-field subsets, value-added catalogues, README stubs -- and
+    only one of them is the main abundance catalogue. Each candidate is probed
+    for one row, scored by how much of what this channel needs it actually has
+    (stellar parameters, SNR, an identifier, and above all how many elements),
+    and the highest scorer is used. The full scoreboard travels in the
+    provenance, so the choice is auditable rather than incidental.
 
     ``probe_fn`` and ``query_fn`` exist so the offline suite can drive the full
-    source-selection and degradation logic without a network.
+    selection and degradation logic without a network.
     """
     probe_fn = probe_fn or (lambda t: probe_table(t, url=tap_url))
     query_fn = query_fn or (lambda q: tap_query(q, url=tap_url))
 
+    encoded = [s.locator for s in SOURCES.get(survey, ()) if s.kind == "tap"]
+    names = {s.locator: s.name for s in SOURCES.get(survey, ())}
+    candidates = list(encoded)
+    if discover:
+        found = discover_tables(DISCOVERY_KEYWORDS.get(survey, (survey,)),
+                                url=tap_url, query_fn=query_fn)
+        candidates += [t for t in found if t not in candidates]
+        print(f"[tailings] {survey}: {len(encoded)} encoded + "
+              f"{len(candidates) - len(encoded)} discovered candidate tables")
+
     tried: list[str] = []
-    for src in SOURCES.get(survey, ()):
-        tried.append(src.name)
-        if src.kind != "tap":
-            print(f"[tailings] {survey}: skipping non-TAP source {src.name} in this pass")
-            continue
-        head = probe_fn(src.locator)
+    scoreboard: list[dict] = []
+    best = None
+    for locator in candidates[:max_candidates]:
+        tried.append(names.get(locator, locator))
+        head = probe_fn(locator)
         if head is None or len(head.columns) == 0:
+            scoreboard.append({"table": locator, "score": 0, "why": "no response"})
             continue
-        params = resolve_param_columns(head.columns)
-        elements = resolve_abundance_columns(head.columns)
-        missing = [k for k in ("teff", "logg", "fe_h") if k not in params]
-        if missing or not elements:
-            print(f"[tailings] {survey}/{src.name}: unusable schema "
-                  f"(missing {missing}, {len(elements)} elements)")
-            continue
+        score, params, elements = score_schema(head.columns)
+        scoreboard.append({"table": locator, "score": int(score),
+                           "n_elements": len(elements),
+                           "why": "usable" if score else "missing parameters or elements"})
+        if score and (best is None or score > best[0]):
+            best = (score, locator, params, elements)
 
-        cols: list[str] = []
-        for k in ("star_id", "ra", "dec", "teff", "logg", "fe_h", "snr", "chi2",
-                  "ruwe", "vbroad", "rv_scatter", "field_id"):
-            if k in params:
-                cols.append(f'"{params[k]}"')
-        for _el, d in elements.items():
-            for kind in ("value", "err", "flag"):
-                if kind in d:
-                    cols.append(f'"{d[kind]}"')
-
-        select = ", ".join(dict.fromkeys(cols))
-        bands = teff_bands(teff_min, teff_max, max(1, int(n_chunks)))
-        per_chunk = max(1, int(max_rows) // len(bands))
-        frames: list[pd.DataFrame] = []
-        for lo, hi in bands:
-            where = COOL_DWARF_ADQL.format(
-                teff=f'"{params["teff"]}"',
-                teff_max=hi,
-                teff_min=lo,
-                logg=f'"{params["logg"]}"',
-                logg_min=logg_min,
-                snr=f'"{params["snr"]}"' if "snr" in params else "1e9",
-                snr_min=snr_min,
-            )
-            adql = (f"SELECT TOP {per_chunk} " + select
-                    + f' FROM "{src.locator}" WHERE ' + where)
-            try:
-                chunk = query_fn(adql)
-            except Exception as exc:  # noqa: BLE001 - a lost chunk is not a lost run
-                print(f"[tailings] {survey}/{src.name}: chunk {lo:.0f}-{hi:.0f} K "
-                      f"failed: {exc!r}")
-                continue
-            if chunk is not None and len(chunk):
-                frames.append(chunk)
-                print(f"[tailings] {survey}/{src.name}: {len(chunk)} rows "
-                      f"in {lo:.0f}-{hi:.0f} K")
-        if not frames:
-            print(f"[tailings] {survey}/{src.name}: zero rows returned")
-            continue
-        df = pd.concat(frames, ignore_index=True)
-        truncated = [1 for f in frames if len(f) >= per_chunk]
-
-        norm = normalize(df, survey=survey)
-        fell_back = src is not SOURCES[survey][0]
-        notes = []
-        if fell_back:
-            notes.append(f"fell back to {src.name} ({src.note}); the preferred source "
-                         f"{SOURCES[survey][0].name} did not answer")
-        if truncated:
-            # A chunk that returns exactly its cap was cut off; the sample is a
-            # truncation of the catalogue, not the catalogue, and the report
-            # must say so rather than quoting a row count as coverage.
-            notes.append(f"{len(truncated)}/{len(bands)} Teff chunks hit the "
-                         f"{per_chunk}-row cap: the sample is TRUNCATED, "
-                         "raise --max-rows for full coverage")
-        if len(frames) < len(bands):
-            notes.append(f"only {len(frames)}/{len(bands)} Teff chunks returned; "
-                         "the temperature coverage is incomplete")
+    if best is None:
         return Acquisition(
-            survey=survey,
-            table=norm,
-            source_used=src.name,
-            locator=src.locator,
-            n_rows=len(norm),
-            elements=sorted(resolve_abundance_columns(df.columns)),
-            param_columns=params,
-            degraded=bool(notes),
-            degradation="; ".join(notes),
-            sources_tried=tried,
+            survey=survey, table=pd.DataFrame(), source_used=None, locator=None,
+            n_rows=0, elements=[], degraded=True,
+            degradation="NO_DATA_REACHED: no candidate table for this survey had a usable schema",
+            sources_tried=tried, scoreboard=scoreboard,
         )
 
+    score, locator, params, elements = best
+    label = names.get(locator, locator)
+    print(f"[tailings] {survey}: using {label} ({locator}), score {score}, "
+          f"{len(elements)} elements")
+
+    cols: list[str] = []
+    for k in ("star_id", "ra", "dec", "teff", "logg", "fe_h", "snr", "chi2",
+              "ruwe", "vbroad", "rv_scatter", "field_id"):
+        if k in params:
+            cols.append(f'"{params[k]}"')
+    for _el, d in elements.items():
+        for kind in ("value", "err", "flag"):
+            if kind in d:
+                cols.append(f'"{d[kind]}"')
+
+    select = ", ".join(dict.fromkeys(cols))
+    bands = teff_bands(teff_min, teff_max, max(1, int(n_chunks)))
+    per_chunk = max(1, int(max_rows) // len(bands))
+    frames: list[pd.DataFrame] = []
+    for lo, hi in bands:
+        where = COOL_DWARF_ADQL.format(
+            teff=f'"{params["teff"]}"',
+            teff_max=hi,
+            teff_min=lo,
+            logg=f'"{params["logg"]}"',
+            logg_min=logg_min,
+            snr=f'"{params["snr"]}"' if "snr" in params else "1e9",
+            snr_min=snr_min,
+        )
+        adql = (f"SELECT TOP {per_chunk} " + select
+                + f' FROM "{locator}" WHERE ' + where)
+        try:
+            chunk = query_fn(adql)
+        except Exception as exc:  # noqa: BLE001 - a lost chunk is not a lost run
+            print(f"[tailings] {survey}/{label}: chunk {lo:.0f}-{hi:.0f} K failed: {exc!r}")
+            continue
+        if chunk is not None and len(chunk):
+            frames.append(chunk)
+            print(f"[tailings] {survey}/{label}: {len(chunk)} rows in {lo:.0f}-{hi:.0f} K")
+
+    if not frames:
+        return Acquisition(
+            survey=survey, table=pd.DataFrame(), source_used=label, locator=locator,
+            n_rows=0, elements=sorted(elements), param_columns=params, degraded=True,
+            degradation=("NO_DATA_REACHED: the chosen table has a usable schema but "
+                         "returned zero rows under the cool-dwarf selection"),
+            sources_tried=tried, scoreboard=scoreboard,
+        )
+
+    df = pd.concat(frames, ignore_index=True)
+    truncated = [1 for f in frames if len(f) >= per_chunk]
+    norm = normalize(df, survey=survey)
+
+    notes = []
+    preferred = SOURCES.get(survey, ())
+    if not preferred or locator != preferred[0].locator:
+        notes.append(f"used {label} ({locator}) rather than the preferred "
+                     f"{preferred[0].name if preferred else 'n/a'}")
+    if truncated:
+        # A chunk that returns exactly its cap was cut off; the sample is a
+        # truncation of the catalogue, not the catalogue, and the report must
+        # say so rather than quoting a row count as coverage.
+        notes.append(f"{len(truncated)}/{len(bands)} Teff chunks hit the "
+                     f"{per_chunk}-row cap: the sample is TRUNCATED, "
+                     "raise --max-rows for full coverage")
+    if len(frames) < len(bands):
+        notes.append(f"only {len(frames)}/{len(bands)} Teff chunks returned; "
+                     "the temperature coverage is incomplete")
     return Acquisition(
-        survey=survey,
-        table=pd.DataFrame(),
-        source_used=None,
-        locator=None,
-        n_rows=0,
-        elements=[],
-        degraded=True,
-        degradation="NO_DATA_REACHED: no candidate source for this survey answered",
-        sources_tried=tried,
+        survey=survey, table=norm, source_used=label, locator=locator,
+        n_rows=len(norm), elements=sorted(resolve_abundance_columns(df.columns)),
+        param_columns=params, degraded=bool(notes), degradation="; ".join(notes),
+        sources_tried=tried, scoreboard=scoreboard,
     )
 
 
@@ -432,6 +518,8 @@ def fetch_wide_binaries(
     max_rows: int = 200_000,
     max_r_chance_align: float = 0.1,
     tap_url: str = VIZIER_TAP,
+    discover: bool = True,
+    max_candidates: int = 12,
     probe_fn=None,
     query_fn=None,
 ) -> Acquisition:
@@ -441,40 +529,69 @@ def fetch_wide_binaries(
     than a bound system. Keeping it below 0.1 is the standard purity cut and it
     matters here more than usual: a chance alignment of two unrelated stars has
     no reason to share a composition, and would manufacture exactly the
-    differential anomaly stage 4 looks for.
+    differential anomaly stage 4 looks for. Where the catalogue does not carry
+    that column the pull still proceeds, but the omission is recorded as
+    degradation rather than passed over.
     """
     probe_fn = probe_fn or (lambda t: probe_table(t, url=tap_url))
     query_fn = query_fn or (lambda q: tap_query(q, url=tap_url))
+
+    encoded = [s.locator for s in SOURCES["WIDEBINARY"]]
+    names = {s.locator: s.name for s in SOURCES["WIDEBINARY"]}
+    candidates = list(encoded)
+    if discover:
+        found = discover_tables(DISCOVERY_KEYWORDS["WIDEBINARY"], url=tap_url,
+                                query_fn=query_fn)
+        candidates += [t for t in found if t not in candidates]
+
     tried: list[str] = []
-    for src in SOURCES["WIDEBINARY"]:
-        tried.append(src.name)
-        head = probe_fn(src.locator)
-        if head is None:
+    scoreboard: list[dict] = []
+    for locator in candidates[:max_candidates]:
+        label = names.get(locator, locator)
+        tried.append(label)
+        head = probe_fn(locator)
+        if head is None or len(head.columns) == 0:
+            scoreboard.append({"table": locator, "score": 0, "why": "no response"})
             continue
         cols = {_canon(c): str(c) for c in head.columns}
-        id1 = cols.get("source_id1") or cols.get("gaiaedr3_1") or cols.get("source1")
-        id2 = cols.get("source_id2") or cols.get("gaiaedr3_2") or cols.get("source2")
-        rca = cols.get("r_chance_align") or cols.get("rchancealign")
+        id1 = next((v for k, v in cols.items()
+                    if k in ("source_id1", "gaiaedr3_1", "source1", "sourceid1")), None)
+        id2 = next((v for k, v in cols.items()
+                    if k in ("source_id2", "gaiaedr3_2", "source2", "sourceid2")), None)
+        rca = next((v for k, v in cols.items()
+                    if k in ("r_chance_align", "rchancealign", "rchance")), None)
         if not (id1 and id2):
+            scoreboard.append({"table": locator, "score": 0,
+                               "why": "no pair of Gaia source identifiers"})
             continue
+        scoreboard.append({"table": locator, "score": 1 + (1 if rca else 0),
+                           "why": "usable"})
         sel = f'"{id1}", "{id2}"' + (f', "{rca}"' if rca else "")
         where = f' WHERE "{rca}" < {max_r_chance_align}' if rca else ""
         try:
-            df = query_fn(f"SELECT TOP {int(max_rows)} {sel} FROM \"{src.locator}\"{where}")
+            df = query_fn(f"SELECT TOP {int(max_rows)} {sel} FROM \"{locator}\"{where}")
         except Exception as exc:  # noqa: BLE001
-            print(f"[tailings] wide binaries: query failed: {exc!r}")
+            print(f"[tailings] wide binaries {locator}: query failed: {exc!r}")
             continue
         if df is None or len(df) == 0:
             continue
         df = df.rename(columns={id1: "source_id_a", id2: "source_id_b",
                                 **({rca: "r_chance_align"} if rca else {})})
-        return Acquisition(survey="WIDEBINARY", table=df, source_used=src.name,
-                           locator=src.locator, n_rows=len(df), elements=[],
-                           sources_tried=tried)
+        notes = []
+        if not rca:
+            notes.append("catalogue has no R_chance_align column: chance alignments "
+                         "are NOT removed and every pair verdict is provisional")
+        if len(df) >= int(max_rows):
+            notes.append(f"hit the {max_rows}-row cap: the pair list is TRUNCATED")
+        print(f"[tailings] wide binaries: {len(df)} pairs from {label}")
+        return Acquisition(survey="WIDEBINARY", table=df, source_used=label,
+                           locator=locator, n_rows=len(df), elements=[],
+                           degraded=bool(notes), degradation="; ".join(notes),
+                           sources_tried=tried, scoreboard=scoreboard)
     return Acquisition(survey="WIDEBINARY", table=pd.DataFrame(), source_used=None,
                        locator=None, n_rows=0, elements=[], degraded=True,
                        degradation="NO_DATA_REACHED: wide-binary catalogue unreachable",
-                       sources_tried=tried)
+                       sources_tried=tried, scoreboard=scoreboard)
 
 
 def join_pairs(
@@ -521,8 +638,10 @@ __all__ = [
     "SOURCES",
     "TARGET_ELEMENTS",
     "VIZIER_TAP",
+    "DISCOVERY_KEYWORDS",
     "Source",
     "apply_element_flags",
+    "discover_tables",
     "fetch_survey",
     "fetch_wide_binaries",
     "join_pairs",
@@ -530,6 +649,8 @@ __all__ = [
     "probe_table",
     "resolve_abundance_columns",
     "resolve_param_columns",
+    "score_schema",
     "tap_query",
+    "teff_bands",
     "write_checkpoint",
 ]

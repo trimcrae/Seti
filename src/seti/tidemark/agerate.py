@@ -45,8 +45,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .gradient import (bin_index, expected_quantile_edges, gradient_test,
-                       poisson_glm, rate_profile)
+from .gradient import bin_index, expected_quantile_edges, gradient_test, poisson_glm, rate_profile
 from .ingest import numeric
 from .nulls import MatchedNull, empirical_p
 
@@ -130,21 +129,32 @@ def _shape_models(x: np.ndarray, n_obs: np.ndarray, e_exp: np.ndarray) -> dict:
     b1 = lin["theta"][1] if len(lin["theta"]) > 1 else float("nan")
     c1 = quad["theta"][1] if len(quad["theta"]) > 2 else float("nan")
     c2 = quad["theta"][2] if len(quad["theta"]) > 2 else float("nan")
+    vertex = None
     if d_aic_linear > 2:
         shape = "rising" if b1 > 0 else "falling"
         note = "monotone trend preferred over constant"
-        if d_aic_curved > 2 and np.isfinite(c2) and c2 < 0:
-            vertex = -c1 / (2 * c2) if c2 != 0 else np.inf   # in standardised units
-            hi = float(np.max(u))
-            if vertex < hi:
-                shape, note = "turnover", "curvature preferred; maximum inside the sampled range"
-            else:
-                shape, note = "saturating", "curvature preferred; flattens toward the top of the range"
+        if d_aic_curved > 2 and np.isfinite(c2) and c2 != 0:
+            vertex = float(-c1 / (2 * c2))
+            # Classify from the *fitted curve over the sampled range*, not from
+            # the sign of a coefficient: a quadratic can be formally concave with
+            # its vertex just past the last bin while the rate is still climbing
+            # there, and calling that a turnover would invent a lifetime.
+            f = c1 * u + c2 * u ** 2
+            i_max = int(np.argmax(f))
+            decline = float(f[i_max] - f[-1])
+            slope_lo = float(c1 + 2 * c2 * u[0])
+            slope_hi = float(c1 + 2 * c2 * u[-1])
+            if c2 < 0 and i_max < len(f) - 1 and decline > 0.15:
+                shape = "turnover"
+                note = ("rate peaks inside the sampled range and declines by "
+                        f"{100 * (1 - np.exp(-decline)):.0f}% to the oldest bin")
+            elif c2 < 0 and slope_hi > 0 and abs(slope_hi) < 0.4 * abs(slope_lo):
+                shape = "saturating"
+                note = "still rising at the oldest bin but decelerating strongly"
     return {"fits": fits, "delta_aic_linear_vs_flat": float(d_aic_linear),
             "delta_aic_curved_vs_linear": float(d_aic_curved),
             "shape": shape, "interpretation": note,
-            "vertex_standardised": (float(-c1 / (2 * c2)) if np.isfinite(c2) and c2 != 0
-                                    else None)}
+            "vertex_standardised": vertex}
 
 
 def age_rate_test(parent: pd.DataFrame, anomaly_mask, *, covariates,

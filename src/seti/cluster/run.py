@@ -186,11 +186,20 @@ def cluster_run(cfg: Config | None = None, ra: float = 200.0, dec: float = 0.0,
     tag = f"f{ra:+06.1f}{dec:+05.1f}".replace(".", "p").replace("+", "p").replace("-", "m")
     out_dir = base / tag
     out_dir.mkdir(parents=True, exist_ok=True)
+    cols = [c for c in ("source_id", "ra", "dec", "parallax", "dist_pc",
+                        "pmra", "pmdec", "vtan_kms", "phot_g_mean_mag", "bp_rp",
+                        "w1_w2", "ir_excess_z") if c in df.columns]
     if n_excess:
-        cols = [c for c in ("source_id", "ra", "dec", "parallax", "dist_pc",
-                            "pmra", "pmdec", "vtan_kms", "phot_g_mean_mag", "bp_rp",
-                            "w1_w2", "ir_excess_z") if c in df.columns]
         df[mask][cols].to_csv(out_dir / "ir_excess_tail.csv", index=False)
+    # The *parent sample*: every star searched, carrying its excess score, not
+    # just the survivors.  Without this a downstream population test has no
+    # denominator and cannot form a rate at all (see src/seti/tidemark/).  The
+    # frame already exists in memory; writing it costs one line and unblocks
+    # every rate measurement anyone will ever want from this cone.
+    if len(df):
+        parent = df[cols].copy()
+        parent["is_excess"] = mask
+        parent.to_parquet(out_dir / "parent_sample.parquet", index=False)
     if groups:
         pd.DataFrame(groups).to_csv(out_dir / "clustered_groups.csv", index=False)
 

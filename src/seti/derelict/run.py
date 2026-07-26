@@ -75,6 +75,7 @@ def derelict_run(cfg: Config | None = None,
                  limit: int | None = None,
                  offline_input: str | None = None,
                  max_vet: int = 60,
+                 max_enrich: int = 1500,
                  skip_control: bool = False,
                  transport=None) -> dict:
     """Run the channel.  Returns the summary dict (also written to disk)."""
@@ -139,11 +140,28 @@ def derelict_run(cfg: Config | None = None,
         (out / "schema.json").write_text(json.dumps(schema, indent=2))
 
     if table is None or len(table) == 0:
-        summary["verdict"] = "NO_DATA_REACHED"
+        # These three are NOT the same statement and must never collapse:
+        #   - the server has no such column      -> our query is wrong
+        #   - the column exists but is all null  -> our constraint is wrong
+        #   - the endpoint was unreachable       -> no data was seen at all
+        # There are unambiguously objects with a fitted A1 in SBDB (every
+        # non-gravitational comet solution has one), so a zero here is a query
+        # defect until proven otherwise -- never an occurrence limit.
+        summary["verdict"] = getattr(fetch, "status", "NO_DATA_REACHED")
+        summary["funnel"] = {
+            "input": 0,
+            "rows_returned_by_server": int(getattr(fetch, "n_rows_raw", 0)),
+            "a1_column_present": bool(getattr(fetch, "a1_column_present", False)),
+        }
         summary["degradation"].append(
-            "JPL SBDB returned no rows with a fitted A1; "
-            "no screening performed and no candidate emitted")
-        summary["funnel"] = {"input": 0}
+            "NO rows with a fitted A1 were obtained. This is a QUERY DEFECT "
+            "until proven otherwise -- SBDB certainly contains objects with a "
+            "fitted A1 (every non-gravitational comet solution has one). "
+            "No screening performed and no candidate emitted. "
+            f"Server returned {getattr(fetch, 'n_rows_raw', 0)} raw rows; "
+            f"A1 column present: {getattr(fetch, 'a1_column_present', False)}; "
+            f"fields the server rejected: "
+            f"{list(getattr(fetch, 'fields_rejected', ()))}.")
         _write(out, summary, None, None, None, None)
         return summary
 
@@ -157,19 +175,35 @@ def derelict_run(cfg: Config | None = None,
     # the gap per object BEFORE screening -- the A1 population is small enough
     # that this is cheap, and vetting would fetch these records anyway.
     prefetched: dict[str, dict] = {}
-    needs_enrich = (offline_input is None
-                    and fetch.strategy == "unconstrained_full_pull")
+    # The bulk query REJECTS `sigma_A1` outright (measured, run 30203392288), and
+    # every SNR screen is meaningless without sigmas.  So enrich whenever the
+    # sigmas are missing or all-null -- not only on the minimal-field fallback.
+    sig_missing = ("sigma_A1" not in table.columns
+                   or not table["sigma_A1"].notna().any())
+    needs_enrich = offline_input is None and (
+        sig_missing or fetch.strategy == "unconstrained_full_pull")
+    summary["sigma_A1_in_bulk"] = not sig_missing
     if needs_enrich:
+        subset = table.head(max_enrich)
         summary["degradation"].append(
-            f"minimal-field fallback used; enriching {len(table)} objects "
-            "per-object from sbdb.api before screening")
-        for _, row in table.iterrows():
+            f"bulk pull lacks usable sigma_A1 (or minimal-field fallback used); "
+            f"enriching {len(subset)} of {len(table)} objects per-object from "
+            "sbdb.api (orbit.model_pars carries A1/A2/A3 AND their sigmas) "
+            "before screening")
+        if len(table) > max_enrich:
+            summary["degradation"].append(
+                f"ENRICHMENT CAPPED at {max_enrich}; {len(table) - max_enrich} "
+                "objects were NOT enriched and will fail the quality gate for "
+                "lack of metadata, not for lack of signal")
+        for _, row in subset.iterrows():
             key = str(row.get("full_name") or row.get("pdes") or "")
             sstr = str(row.get("spkid") or row.get("pdes") or key)
             prefetched[key] = fetch_object_detail(sstr, transport=transport)
         table = enrich_from_details(table, prefetched)
         summary["enriched_from_detail"] = int(
             sum(1 for d in prefetched.values() if d.get("ok")))
+        summary["enrich_failures"] = int(
+            sum(1 for d in prefetched.values() if not d.get("ok")))
 
     # --- screening ------------------------------------------------------------
     sr = run_screens(table, sp)

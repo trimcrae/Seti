@@ -36,12 +36,12 @@ from .nulls import MatchedNull
 CHANNEL = "tidemark"
 
 _DEFAULTS = {
-    "null": {"n_feature_bins": 5, "min_pool": 25, "n_null": 500},
+    "matched_null": {"n_feature_bins": 5, "min_pool": 25, "n_null": 500},
     "gradient": {"n_bins": 10,
                  "coordinates": ["R_gal_kpc", "abs_z_gal_kpc", "l_deg"]},
     "edge": {"n_bins_1d": 24, "widths": [1, 2, 3, 4, 6], "n_null_scan": 300,
              "shell_centres_per_axis": 4, "shell_n_bins": 20,
-             "cap_directions": 96, "smooth_order": 1, "min_expected": 3.0},
+             "cap_directions": 96, "smooth_order": 3, "min_expected": 3.0},
     "age": {"n_bins": 8, "n_null": 400},
     "calibration": {"contrasts": [2.0, 4.0], "radii_pc": [400.0, 900.0],
                     "n_null": 200, "n_trials": 2},
@@ -104,7 +104,7 @@ def analyse_catalogue(cat: ingest.AnomalyCatalogue, *, blocks: dict | None = Non
 
     parent = age_proxies(cat.parent)
     mask = cat.anomaly_mask
-    n_null = int(b["null"]["n_null"]) if not quick else 60
+    n_null = int(b["matched_null"]["n_null"]) if not quick else 60
     n_scan = int(b["edge"]["n_null_scan"]) if not quick else 40
 
     out["tested"] = True
@@ -116,8 +116,8 @@ def analyse_catalogue(cat: ingest.AnomalyCatalogue, *, blocks: dict | None = Non
             continue
         try:
             null = MatchedNull(parent, mask, covs,
-                               n_bins=int(b["null"]["n_feature_bins"]),
-                               min_pool=int(b["null"]["min_pool"]), seed=seed)
+                               n_bins=int(b["matched_null"]["n_feature_bins"]),
+                               min_pool=int(b["matched_null"]["min_pool"]), seed=seed)
         except (ValueError, KeyError) as exc:
             out["modes"][mode] = {"error": str(exc)}
             continue
@@ -247,8 +247,8 @@ def gradient_transfer(cat: ingest.AnomalyCatalogue, *, coord: str = "R_gal_kpc",
             continue
         try:
             null = MatchedNull(parent, m, covs,
-                               n_bins=int(b["null"]["n_feature_bins"]),
-                               min_pool=int(b["null"]["min_pool"]), seed=seed)
+                               n_bins=int(b["matched_null"]["n_feature_bins"]),
+                               min_pool=int(b["matched_null"]["min_pool"]), seed=seed)
         except (ValueError, KeyError):
             continue
         g = gradient_test(x, null, name=coord, n_bins=int(b["gradient"]["n_bins"]),
@@ -300,8 +300,8 @@ def calibrate(cat: ingest.AnomalyCatalogue, *, blocks: dict | None = None,
                     continue
                 try:
                     null = MatchedNull(parent, m, covs,
-                                       n_bins=int(b["null"]["n_feature_bins"]),
-                                       min_pool=int(b["null"]["min_pool"]), seed=seed)
+                                       n_bins=int(b["matched_null"]["n_feature_bins"]),
+                                       min_pool=int(b["matched_null"]["min_pool"]), seed=seed)
                 except (ValueError, KeyError) as exc:
                     rows.append({"radius_pc": radius, "contrast": contrast,
                                  "trial": trial, "error": str(exc)})
@@ -376,8 +376,8 @@ def tidemark_run(cfg: Config | None = None, *, channels=None, catalogues=None,
             try:
                 covs = [c for c in blocks["covariates"]["strict"] if c in cat.parent.columns]
                 null = MatchedNull(cat.parent, cat.anomaly_mask, covs,
-                                   n_bins=int(blocks["null"]["n_feature_bins"]),
-                                   min_pool=int(blocks["null"]["min_pool"]), seed=seed)
+                                   n_bins=int(blocks["matched_null"]["n_feature_bins"]),
+                                   min_pool=int(blocks["matched_null"]["min_pool"]), seed=seed)
                 cols = [c for c in (cat.id_col, "ra", "dec", "l_deg", "b_deg",
                                     "dist_pc", "R_gal_kpc", "z_gal_kpc")
                         if c in cat.parent.columns]
@@ -455,6 +455,7 @@ def tidemark_selfsearch(cfg: Config | None = None, *, table: pd.DataFrame | None
                         grid: str = "sparse", excess_z_min: float = 4.0,
                         plx_min: float = 1.0, g_max: float = 17.0,
                         radius_deg: float = 6.0, limit: int = 400000,
+                        parent_glob: str | None = None,
                         quick: bool = False, seed: int = 20260726) -> dict:
     """Self-sufficient path: build a wide-area Gaia x AllWISE parent sample with
     an IR-excess anomaly axis, then run the full TIDEMARK analysis on it.
@@ -466,6 +467,19 @@ def tidemark_selfsearch(cfg: Config | None = None, *, table: pd.DataFrame | None
     field-to-field rate differences this channel exists to measure.
     """
     cfg = cfg or load_config()
+    if table is None and parent_glob:
+        # Reduce path: concatenate the sharded acquisition, then fit the excess
+        # locus ONCE over the whole sky (never per shard).
+        frames = []
+        for f in sorted(Path(cfg.root).glob(parent_glob)):
+            try:
+                frames.append(pd.read_parquet(f))
+                print(f"[tidemark] read {f.name}: {len(frames[-1])} rows")
+            except Exception as exc:                          # noqa: BLE001
+                print(f"[tidemark] could not read {f}: {exc!r}")
+        if frames:
+            table = pd.concat(frames, ignore_index=True).drop_duplicates("source_id")
+            print(f"[tidemark] combined parent sample: {len(table)} stars")
     if table is None:
         from .acquire import parent_sample
         table = parent_sample(grid=grid, radius_deg=radius_deg, plx_min=plx_min,

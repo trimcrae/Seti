@@ -29,6 +29,7 @@ Endpoints
 from __future__ import annotations
 
 import json
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -47,6 +48,14 @@ USER_AGENT = "Seti-derelict/1.0 (mailto:trimcrae@gmail.com)"
 
 #: Columns we want.  Anything the server rejects is dropped and recorded rather
 #: than aborting the run -- the field list is the second-least-certain part.
+#:
+#: MEASURED 2026-07-26 (run 30203392288): the server accepts ``A1``/``A2``/
+#: ``A3``/``DT`` but rejects ``sigma_A1`` with
+#: ``{"message":"invalid field specified: 'sigma_A1'","code":"400"}``.  A single
+#: bad name 400s the WHOLE query, which is how a schema typo turned into
+#: "0 rows in the entire database".  Two defences now exist: the sigmas are
+#: optional (see :data:`OPTIONAL_FIELDS`) and the server's own error message
+#: drives automatic pruning (see :func:`_invalid_fields_from_error`).
 DEFAULT_FIELDS: tuple[str, ...] = (
     "spkid", "full_name", "pdes", "name", "kind", "class", "neo", "pha",
     "H", "diameter", "albedo", "rot_per",
@@ -55,6 +64,37 @@ DEFAULT_FIELDS: tuple[str, ...] = (
     "A1", "A2", "A3", "DT",
     "sigma_A1", "sigma_A2", "sigma_A3", "sigma_DT",
 )
+
+#: Fields the channel can live without in the BULK pull.  The non-gravitational
+#: uncertainties are the important case: they are what the SNR screens need, but
+#: they are also available per object from ``sbdb.api``'s
+#: ``orbit.model_pars[].sigma``, which is the authoritative source anyway.  So
+#: the bulk query's job is only to FIND the A1 population; the precision numbers
+#: come from the per-object records.  Losing these from the bulk pull costs a
+#: second request per object, not the run.
+OPTIONAL_FIELDS: frozenset[str] = frozenset({
+    "sigma_A1", "sigma_A2", "sigma_A3", "sigma_DT",
+    "rot_per", "moid", "rms", "neo", "pha", "name", "epoch",
+})
+
+#: Extract the field name(s) the server rejected, so we can retry without them.
+_INVALID_FIELD_RE = re.compile(r"invalid field[s]?\s+specified[^:]*:\s*(.+?)(?:\"|\}|$)",
+                               re.IGNORECASE)
+_QUOTED_RE = re.compile(r"'([^']+)'")
+
+
+def _invalid_fields_from_error(err: str | None) -> set[str]:
+    """Field names named in an SBDB ``invalid field specified`` 400 body."""
+    if not err:
+        return set()
+    m = _INVALID_FIELD_RE.search(err)
+    if not m:
+        return set()
+    blob = m.group(1)
+    names = set(_QUOTED_RE.findall(blob))
+    if not names:
+        names = {t.strip().strip("'\"") for t in blob.split(",") if t.strip()}
+    return {n for n in names if n and " " not in n}
 
 #: Fields without which the channel cannot function at all.
 REQUIRED_FIELDS: frozenset[str] = frozenset({"full_name", "A1"})
@@ -70,29 +110,47 @@ def _default_transport(url: str, timeout: float = 600.0) -> bytes:
 Transport = Callable[[str], bytes]
 
 
+#: Distinct acquisition outcomes.  These MUST NOT collapse into one another:
+#: "the server has no such column", "the column exists but is null for every
+#: row", and "rows came back but none passed a screen" are three completely
+#: different statements about the sky and about our query.
+STATUS_OK = "OK"                                  # rows with a non-null A1
+STATUS_A1_FIELD_REJECTED = "A1_FIELD_NOT_IN_SCHEMA"   # server has no such field
+STATUS_A1_ALL_NULL = "A1_COLUMN_PRESENT_BUT_ALL_NULL"  # field exists, no values
+STATUS_NO_ROWS = "QUERY_RETURNED_NO_ROWS"         # query worked, zero rows at all
+STATUS_UNREACHABLE = "NO_DATA_REACHED"            # every strategy failed
+
+
 @dataclass
 class FetchResult:
     """A bulk-query outcome, degradation included as a first-class field."""
     table: pd.DataFrame = field(default_factory=pd.DataFrame)
-    status: str = "NO_DATA_REACHED"
+    status: str = STATUS_UNREACHABLE
     strategy: str = ""
     fields_requested: tuple[str, ...] = ()
     fields_returned: tuple[str, ...] = ()
     fields_dropped: tuple[str, ...] = ()
+    fields_rejected: tuple[str, ...] = ()
     n_rows: int = 0
+    #: Rows the server returned BEFORE any client-side A1 filter.  This is what
+    #: separates "the query failed" from "the query worked and the sky is empty".
+    n_rows_raw: int = 0
+    a1_column_present: bool = False
     signature: dict = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
-        return self.status == "OK"
+        return self.status == STATUS_OK
 
     def to_dict(self) -> dict:
         return {"status": self.status, "strategy": self.strategy,
-                "n_rows": self.n_rows,
+                "n_rows": self.n_rows, "n_rows_raw": self.n_rows_raw,
+                "a1_column_present": self.a1_column_present,
                 "fields_requested": list(self.fields_requested),
                 "fields_returned": list(self.fields_returned),
                 "fields_dropped": list(self.fields_dropped),
+                "fields_rejected": list(self.fields_rejected),
                 "signature": self.signature, "errors": self.errors}
 
 
@@ -260,38 +318,83 @@ def fetch_nongrav_table(kind: str = "a",
         use_fields = kept
         if cdata is None:
             use_fields = tuple(f for f in kept if f in set(MINIMAL_FIELDS)) or MINIMAL_FIELDS
-        params = {"fields": ",".join(use_fields), "sb-kind": kind, "full-prec": "1"}
-        if cdata:
-            params["sb-cdata"] = cdata
-        if limit:
-            params["limit"] = limit
-        df, sig, err = _attempt(tr, _build_url(SBDB_QUERY_URL, params), tries=tries)
+
+        # Self-healing field pruning.  A SINGLE unrecognised field name 400s the
+        # entire query -- which is exactly how a schema typo (`sigma_A1`) once
+        # turned into "0 rows in the whole database".  The server names the
+        # offending field in its error body, so drop it and retry.  Required
+        # fields are never dropped: if the server rejects `A1` there is nothing
+        # to search for and the strategy genuinely fails.
+        df = sig = err = None
+        for _ in range(len(use_fields) + 1):
+            params = {"fields": ",".join(use_fields), "sb-kind": kind, "full-prec": "1"}
+            if cdata:
+                params["sb-cdata"] = cdata
+            if limit:
+                params["limit"] = limit
+            df, sig, err = _attempt(tr, _build_url(SBDB_QUERY_URL, params), tries=tries)
+            if df is not None:
+                break
+            bad = _invalid_fields_from_error(err) & set(use_fields)
+            if not bad or (bad & REQUIRED_FIELDS):
+                break
+            res.fields_rejected += tuple(sorted(bad))
+            res.errors.append(f"[{name}] server rejected {sorted(bad)}; retrying without")
+            use_fields = tuple(f for f in use_fields if f not in bad)
+            if not use_fields:
+                break
+
         if df is None:
             res.errors.append(f"[{name}] {err}")
             continue
         if df.empty:
             res.errors.append(f"[{name}] returned 0 rows")
             continue
+        res.n_rows_raw = len(df)
+        res.a1_column_present = "A1" in df.columns
+        res.fields_returned = tuple(df.columns)
+        res.strategy = name
+        res.signature = sig
+
         # An unconstrained pull still has to be reduced to the A1 population.
-        if cdata is None and "A1" in df.columns:
+        if cdata is None and res.a1_column_present:
             before = len(df)
             df = df[df["A1"].notna()].copy()
             res.errors.append(
                 f"[{name}] client-side A1 filter: {before} -> {len(df)} rows")
+
         res.table = df.reset_index(drop=True)
-        res.status = "OK" if len(res.table) else "NO_ROWS_WITH_A1"
-        res.strategy = name
-        res.fields_returned = tuple(df.columns)
         res.n_rows = len(res.table)
-        res.signature = sig
+        # The three-way distinction: no such column / column all-null / real rows.
+        if not res.a1_column_present:
+            res.status = STATUS_A1_FIELD_REJECTED
+            res.errors.append(
+                f"[{name}] the response schema has no A1 column at all "
+                f"(returned {list(df.columns)}); this is a QUERY defect, not an "
+                "empty sky")
+        elif res.n_rows == 0:
+            res.status = STATUS_A1_ALL_NULL
+            res.errors.append(
+                f"[{name}] A1 column present but null for all {res.n_rows_raw} "
+                "returned rows")
+        else:
+            res.status = STATUS_OK
         if cdata is None:
             res.errors.append(
                 "[minimal-field fallback] orbit-quality and physical columns were "
                 "NOT requested in bulk; they must be enriched per object via "
                 "enrich_from_details() or the quality gate will fail closed")
-        return res
+        if res.status == STATUS_OK:
+            return res
+        # A missing A1 column or an all-null A1 is a defect in THIS strategy, not
+        # a statement about the sky -- keep walking the ladder.  The partial
+        # result is retained so the caller still sees what happened if every
+        # strategy degrades.
+        res.errors.append(f"[{name}] status {res.status}; trying next strategy")
 
-    res.status = "NO_DATA_REACHED"
+    if res.strategy and res.status != STATUS_UNREACHABLE:
+        return res          # keep the most informative partial outcome
+    res.status = STATUS_UNREACHABLE
     return res
 
 
@@ -339,6 +442,27 @@ def enrich_from_details(df: pd.DataFrame, details: dict[str, dict]) -> pd.DataFr
         for k in _ELEMENT_KEYS:
             if k in els and (k not in out.columns or pd.isna(row.get(k))):
                 out.loc[idx, k] = pd.to_numeric(els[k], errors="coerce")
+
+        # The non-gravitational parameters AND their uncertainties.  This is the
+        # authoritative source: the bulk query exposes A1/A2/A3 but rejects
+        # `sigma_A1` outright (measured, run 30203392288), and the SNR screens
+        # are meaningless without sigmas.  ``orbit.model_pars`` carries both,
+        # plus the parameter NAMES that reveal whether a cometary g(r) was
+        # fitted -- which decides whether A1 is an SRP coefficient at all.
+        pars = model_par_values(rec)
+        for pname, pv in pars.items():
+            key_u = str(pname).strip().upper()
+            if key_u not in {"A1", "A2", "A3", "DT"}:
+                continue
+            if key_u not in out.columns or pd.isna(row.get(key_u)):
+                out.loc[idx, key_u] = pv.get("value")
+            scol = f"sigma_{key_u}"
+            if scol not in out.columns or pd.isna(row.get(scol)):
+                out.loc[idx, scol] = pv.get("sigma")
+        if pars:
+            if "model_pars" not in out.columns:
+                out["model_pars"] = None
+            out.at[idx, "model_pars"] = sorted(pars)
     return out
 
 

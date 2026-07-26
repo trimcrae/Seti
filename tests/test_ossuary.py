@@ -36,6 +36,21 @@ def cfg():
     return load_config()
 
 
+@pytest.fixture(autouse=True)
+def _isolate_results(tmp_path, monkeypatch):
+    """Keep tests out of the live ``results/ossuary/`` directory.
+
+    ``orun.out_dir`` resolves to ``cfg.root/results/ossuary`` irrespective of
+    where a test points ``input_path``, so any test that reaches the report
+    stage overwrites the real ``summary.json``. That already happened: a
+    committed summary read ``NO_DATA_REACHED`` with a note naming a
+    ``/tmp/pytest-of-root/...`` fixture path, which is indistinguishable at a
+    glance from a genuine empty search result. Redirect the output for every
+    test in this module so a unit test can never be mistaken for a run.
+    """
+    monkeypatch.setattr(orun, "out_dir", lambda _cfg: tmp_path)
+
+
 def _photosphere(bp_rp: np.ndarray, ks: np.ndarray) -> dict:
     """Photospheric magnitudes for each band from the linear colour locus."""
     return {b: ks - (a + s * (bp_rp - 0.5)) for b, (a, s) in _LOCUS.items()}

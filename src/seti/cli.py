@@ -307,6 +307,16 @@ def _cmd_midden(args, cfg):
                batch_size=args.batch_size)
 
 
+def _cmd_compass(args, cfg):
+    from .compass.run import compass_run
+
+    compass_run(cfg, stage=args.stage,
+                radii_pc=tuple(float(r) for r in args.radii.split(",")),
+                n_min=args.n_min, n_shuffles=args.n_shuffles,
+                band_deg=args.band_deg, sig_min=args.sig_min,
+                poe_min=args.poe_min, d_max_pc=args.d_max_pc)
+
+
 def _cmd_midden_deep(args, cfg):
     from .midden.deepdive import deepdive_run
 
@@ -1171,6 +1181,27 @@ def main(argv=None):
     p.add_argument("--batch-size", type=int, default=50,
                    help="FITS per download/measure/discard batch")
     p.set_defaults(func=_cmd_midden)
+
+    p = sub.add_parser("compass",
+                       help="runner: orbital-pole coherence patches in Gaia "
+                            "DR3 NSS astrometric orbits (docs/compass.md)")
+    p.add_argument("--stage", choices=("fetch", "all"), default="all",
+                   help="fetch = Gaia pull only; all = pull + scan + null")
+    p.add_argument("--radii", default="25,50,100",
+                   help="comma-separated neighbourhood radii (pc)")
+    p.add_argument("--n-min", type=int, default=8,
+                   help="minimum systems per neighbourhood")
+    p.add_argument("--n-shuffles", type=int, default=200,
+                   help="scanning-law-banded shuffles per radius")
+    p.add_argument("--band-deg", type=float, default=5.0,
+                   help="ecliptic-latitude shuffle band width (deg)")
+    p.add_argument("--sig-min", type=float, default=10.0,
+                   help="minimum NSS orbit significance")
+    p.add_argument("--poe-min", type=float, default=5.0,
+                   help="minimum parallax_over_error")
+    p.add_argument("--d-max-pc", type=float, default=2000.0,
+                   help="field depth (pc)")
+    p.set_defaults(func=_cmd_compass)
 
     p = sub.add_parser("midden-deep",
                        help="runner: HD 217522 deep-dive — every triplet-"

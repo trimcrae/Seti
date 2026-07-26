@@ -38,9 +38,13 @@ from the same face sits at ``T = 393.6 K · (L/L_⊙)^(1/4) / √(r/AU)``. So
     100 K → 15.5 AU      50 K → 62 AU      30 K → 172 AU
 
 and the Wien peak moves to 29 / 58 / 97 µm respectively. The first of those is
-already past WISE's longest band; the searched regime and the regime that
-Ćirković & Bradbury (2006) argued postbiological computation would prefer do
-not overlap at all.
+already past WISE's longest band. Ćirković & Bradbury (2006) argue on
+Landauer/Brillouin grounds that computation is more efficient against a colder
+reservoir, and that advanced civilisations therefore migrate toward cold
+regions; they give no specific shell temperature (see ``docs/cenotaph.md`` §1.2
+— an earlier draft of this repository misattributed a "50 K vs 300 K" quote to
+them). The 30-100 K window here is set by what the far-IR all-sky catalogues
+can actually reach.
 """
 
 from __future__ import annotations
@@ -83,12 +87,16 @@ class FarIRBand:
 # *decidability* — how far out the far-IR leg can actually rule on a star — and
 # any real run reads the measured per-source flux, never these numbers.
 FAR_IR_BANDS: tuple[FarIRBand, ...] = (
-    FarIRBand("iras60", 60.0, 0.5, 90.0, "IRAS PSC"),
+    FarIRBand("iras60", 60.0, 0.5, 120.0, "IRAS PSC"),
     FarIRBand("iras100", 100.0, 1.0, 180.0, "IRAS PSC"),
-    FarIRBand("akari65", 65.0, 3.0, 37.0, "AKARI/FIS BSC N60"),
-    FarIRBand("akari90", 90.0, 0.55, 39.0, "AKARI/FIS BSC WIDE-S"),
-    FarIRBand("akari140", 140.0, 3.8, 58.0, "AKARI/FIS BSC WIDE-L"),
-    FarIRBand("akari160", 160.0, 7.5, 61.0, "AKARI/FIS BSC N160"),
+    # AKARI/FIS 5-sigma point-source limits from Kawada et al. (2007).
+    # Beams are the ALL-SKY SURVEY PSF (~60" at 65/90 um, ~90" at 140/160),
+    # not the much narrower slow-scan pointed PSF the instrument paper quotes;
+    # the BSC is built from the survey mode.
+    FarIRBand("akari65", 65.0, 2.4, 60.0, "AKARI/FIS BSC N60"),
+    FarIRBand("akari90", 90.0, 0.55, 60.0, "AKARI/FIS BSC WIDE-S"),
+    FarIRBand("akari140", 140.0, 1.4, 90.0, "AKARI/FIS BSC WIDE-L"),
+    FarIRBand("akari160", 160.0, 6.3, 90.0, "AKARI/FIS BSC N160"),
 )
 
 MID_IR_BANDS: tuple[FarIRBand, ...] = (

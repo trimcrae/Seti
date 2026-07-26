@@ -56,44 +56,91 @@ SURVEY_EPOCH = {
 # VizieR catalogue identifiers. Kept here (not in code paths) so that a
 # correction is a one-line change; every one is probed for its real column
 # names at runtime before use.
+# Column names below are LIVE-VERIFIED against VizieR TAP, not guessed. Three
+# traps that each cost a job if assumed:
+#
+#  * AKARI FIS quality flags are ``q_S65``…, **not** ``FQUAL65`` — the latter is
+#    the JAXA-native name and does not exist in VizieR. Bit flags are ``f_S*``.
+#  * IRAS PSC uses ``Fnu_12`` (with underscore); IRAS FSC uses ``Fnu12``
+#    (without). A shared alias silently fails on one of the two.
+#  * **The IRAS catalogues carry no J2000 columns at all** — TAP exposes only
+#    the raw ``RA1950``/``DE1950``. VizieR's ``_RAJ2000`` is a web-interface
+#    convenience that TAP does not serve. The B1950 positions must be precessed
+#    (see ``_maybe_precess``), and at IRAS declinations the FK4→ICRS shift is
+#    ~0.3-0.6 deg — a hundred times the match radius, so getting this wrong
+#    does not degrade the match, it destroys it.
 FAR_IR_CATALOGS = {
     "akari_fis": {
         "table": '"II/298/fis"',
         "epoch": "akari",
-        "ra": ("raj2000", "_raj2000", "ra"),
-        "dec": ("dej2000", "_dej2000", "de", "dec"),
+        "ra": ("raj2000", "radeg", "_raj2000", "ra"),
+        "dec": ("dej2000", "dedeg", "_dej2000", "de", "dec"),
+        "frame": "icrs",
         "fluxes": {"akari65": ("s65",), "akari90": ("s90",),
                    "akari140": ("s140",), "akari160": ("s160",)},
         "errors": {"akari65": ("e_s65",), "akari90": ("e_s90",),
                    "akari140": ("e_s140",), "akari160": ("e_s160",)},
-        "quality": {"akari65": ("fqual65", "q_s65"), "akari90": ("fqual90", "q_s90"),
-                    "akari140": ("fqual140", "q_s140"),
-                    "akari160": ("fqual160", "q_s160")},
-        "match_radius_arcsec": 25.0,
+        # q_S*: 3 = confirmed, flux reliable; 2 = confirmed, flux UNreliable;
+        # 1 = not confirmed; 0 = not observed. Note this is NOT the IRAS
+        # convention, where 1 means "upper limit".
+        "quality": {"akari65": ("q_s65",), "akari90": ("q_s90",),
+                    "akari140": ("q_s140",), "akari160": ("q_s160",)},
+        # f_S* hex bits: 1 = CDS mode, 2 = flux too low, 8 = possible side-lobe.
+        "bits": {"akari65": ("f_s65",), "akari90": ("f_s90",),
+                 "akari140": ("f_s140",), "akari160": ("f_s160",)},
+        "context": {"ndens": ("ndens",)},   # sources within 5 arcmin: crowding
+        # The BSC is built from the All-Sky Survey, whose PSF is ~60" at
+        # 65/90 um and ~90" at 140 um -- far broader than the slow-scan pointed
+        # PSF (30-41") that the instrument papers quote. Matching at the pointed
+        # PSF would lose real associations; the price is a larger chance-match
+        # rate, which is why the closure ratio, not the position, is the
+        # evidence.
+        "match_radius_arcsec": 40.0,
+        "beam_fwhm_arcsec": 60.0,
     },
     "iras_psc": {
         "table": '"II/125/main"',
         "epoch": "iras",
-        "ra": ("_raj2000", "raj2000", "ra"),
-        "dec": ("_dej2000", "dej2000", "de", "dec"),
+        "ra": ("_raj2000", "raj2000", "ra1950", "raj1950", "ra"),
+        "dec": ("_dej2000", "dej2000", "de1950", "dej1950", "de", "dec"),
+        "frame": "fk4_1950",
         "fluxes": {"iras12": ("fnu_12",), "iras25": ("fnu_25",),
                    "iras60": ("fnu_60",), "iras100": ("fnu_100",)},
-        "errors": {},
-        "quality": {"iras60": ("q_fnu_60",), "iras100": ("q_fnu_100",)},
-        "match_radius_arcsec": 40.0,
+        # e_Fnu_* are RELATIVE uncertainties in PERCENT, not Jy.
+        "errors": {"iras12": ("e_fnu_12",), "iras25": ("e_fnu_25",),
+                   "iras60": ("e_fnu_60",), "iras100": ("e_fnu_100",)},
+        "errors_are_percent": True,
+        "quality": {"iras12": ("q_fnu_12",), "iras25": ("q_fnu_25",),
+                    "iras60": ("q_fnu_60",), "iras100": ("q_fnu_100",)},
+        # Cirr3 is the total 100-um sky surface brightness in MJy/sr at the
+        # source: the direct cirrus discriminant, and the single most useful
+        # context column in the whole far-IR leg.
+        "context": {"cirr1": ("cirr1",), "cirr2": ("cirr2",), "cirr3": ("cirr3",),
+                    "confuse": ("confuse",), "var": ("var",)},
+        "match_radius_arcsec": 60.0,
+        "beam_fwhm_arcsec": 120.0,
     },
     "iras_fsc": {
         "table": '"II/156A/main"',
         "epoch": "iras",
-        "ra": ("_raj2000", "raj2000", "ra"),
-        "dec": ("_dej2000", "dej2000", "de", "dec"),
-        "fluxes": {"iras12": ("fnu_12", "s12"), "iras25": ("fnu_25", "s25"),
-                   "iras60": ("fnu_60", "s60"), "iras100": ("fnu_100", "s100")},
+        "ra": ("_raj2000", "raj2000", "ra1950", "raj1950", "ra"),
+        "dec": ("_dej2000", "dej2000", "de1950", "dej1950", "de", "dec"),
+        "frame": "fk4_1950",
+        # FSC drops the underscore. |b| > 10 deg only, which suits this channel.
+        "fluxes": {"iras12": ("fnu12",), "iras25": ("fnu25",),
+                   "iras60": ("fnu60",), "iras100": ("fnu100",)},
         "errors": {},
-        "quality": {},
-        "match_radius_arcsec": 30.0,
+        "quality": {"iras12": ("q_fnu12",), "iras25": ("q_fnu25",),
+                    "iras60": ("q_fnu60",), "iras100": ("q_fnu100",)},
+        "context": {"cir1": ("cir1",), "conf": ("conf",), "rel": ("rel",)},
+        "match_radius_arcsec": 45.0,
+        "beam_fwhm_arcsec": 90.0,
     },
 }
+
+# Quality codes that mean "this flux is a reliable detection".
+AKARI_GOOD_QUALITY = (3,)
+IRAS_GOOD_QUALITY = (3,)   # IRAS: 3 = high, 2 = moderate, 1 = upper limit
 
 _GSPSPEC_QUERY = """
 SELECT TOP {top}
@@ -390,6 +437,42 @@ def fetch_external_photometry(kind: str, where: dict,
 # --------------------------------------------------------------------------
 # 3. Far-infrared
 # --------------------------------------------------------------------------
+
+def _maybe_precess(df: pd.DataFrame, frame: str, name: str,
+                   ra_col_used: str) -> pd.DataFrame:
+    """Convert B1950/FK4 positions to ICRS when that is what the table serves.
+
+    The IRAS catalogues expose only ``RA1950``/``DE1950`` over TAP. The FK4
+    (B1950, epoch 1950) to ICRS shift is ~0.3-0.6 deg at IRAS declinations --
+    roughly a hundred times the match radius -- so a missed precession does not
+    merely degrade the crossmatch, it produces zero real matches and a pure
+    chance-coincidence sample. If the resolved column was already a J2000 one,
+    nothing is done.
+    """
+    if frame != "fk4_1950" or "1950" not in ra_col_used:
+        return df
+    try:
+        import astropy.units as u
+        from astropy.coordinates import FK4, SkyCoord
+
+        c = SkyCoord(ra=df["ra"].to_numpy(float) * u.deg,
+                     dec=df["dec"].to_numpy(float) * u.deg,
+                     frame=FK4(equinox="B1950", obstime="B1950"))
+        icrs = c.icrs
+        out = df.copy()
+        out["ra"] = icrs.ra.deg
+        out["dec"] = icrs.dec.deg
+        print(f"[cenotaph] {name}: precessed {len(out)} FK4/B1950 positions "
+              f"to ICRS (median shift "
+              f"{float(np.nanmedian(np.abs(out['dec'] - df['dec']))) * 60:.1f} arcmin)")
+        return out
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(
+            f"{name}: table serves B1950 positions ({ra_col_used}) but the "
+            f"FK4->ICRS conversion failed ({exc!r}); refusing to crossmatch, "
+            "because an unprecessed match is pure chance coincidence") from exc
+
+
 def fetch_far_ir_catalog(name: str, checkpoint: Path | None = None) -> pd.DataFrame:
     """Download an entire far-IR catalogue (≤ ~0.5 M rows) for local matching.
 
@@ -408,14 +491,16 @@ def fetch_far_ir_catalog(name: str, checkpoint: Path | None = None) -> pd.DataFr
         raise RuntimeError(f"{name}: no RA/Dec column found in {table} "
                            f"(available: {sorted(available)[:40]})")
     sel = {"ra": ra_col, "dec": dec_col}
-    for group in ("fluxes", "errors", "quality"):
+    for group in ("fluxes", "errors", "quality", "bits", "context"):
         for out_name, cands in spec.get(group, {}).items():
             got = _pick(cands, available)
             if got:
-                key = out_name if group == "fluxes" else f"{out_name}_{group[:3]}"
+                key = out_name if group in ("fluxes", "context") \
+                    else f"{out_name}_{group[:3]}"
                 sel[key] = got
     cols = ", ".join(f"{v} AS {k}" for k, v in sel.items())
     df = _run_vizier(f"SELECT {cols} FROM {table}")
+    df = _maybe_precess(df, spec.get("frame", "icrs"), name, ra_col)
     print(f"[cenotaph] {name}: {len(df)} rows, columns {sorted(sel)}")
     if checkpoint is not None:
         checkpoint.parent.mkdir(parents=True, exist_ok=True)

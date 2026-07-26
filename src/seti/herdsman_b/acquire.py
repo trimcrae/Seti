@@ -142,8 +142,13 @@ def fetch_chemistry(members: pd.DataFrame, out_dir: Path,
 
 def fetch_field(out_path: Path, top: int = 2_000_000,
                 rand_max: int = 80_000_000, teff_lo: float = 4000.0,
-                teff_hi: float = 7500.0) -> pd.DataFrame:
-    """Random Gaia field sample with metallicities (checkpointed)."""
+                teff_hi: float = 7500.0, retries: int = 4) -> pd.DataFrame:
+    """Random Gaia field sample with metallicities (checkpointed, retried).
+
+    The Gaia TAP server intermittently drops async results (HTTP 500 "cannot
+    find result") — the failure that killed the first census run four hours
+    in.  Same backoff discipline as the chemistry chunks.
+    """
     if out_path.exists():
         print(f"[herdsman-b] field checkpoint exists: {out_path}")
         return pd.read_parquet(out_path)
@@ -151,12 +156,21 @@ def fetch_field(out_path: Path, top: int = 2_000_000,
 
     q = _FIELD_QUERY.format(top=top, rand_max=rand_max, teff_lo=teff_lo,
                             teff_hi=teff_hi)
-    job = Gaia.launch_job_async(q)
-    df = job.get_results().to_pandas()
-    df = df.rename(columns={c: c.lower() for c in df.columns})
-    df.to_parquet(out_path, index=False)
-    print(f"[herdsman-b] field sample: {len(df)} stars -> {out_path}")
-    return df
+    last = None
+    for attempt in range(retries):
+        try:
+            job = Gaia.launch_job_async(q)
+            df = job.get_results().to_pandas()
+            df = df.rename(columns={c: c.lower() for c in df.columns})
+            df.to_parquet(out_path, index=False)
+            print(f"[herdsman-b] field sample: {len(df)} stars -> {out_path}")
+            return df
+        except Exception as exc:  # noqa: BLE001
+            last = exc
+            print(f"[herdsman-b] field attempt {attempt + 1}/{retries} "
+                  f"failed: {exc!r}")
+            time.sleep(5 * (attempt + 1))
+    raise RuntimeError(f"field fetch failed after {retries} attempts: {last!r}")
 
 
 __all__ = ["fetch_membership", "fetch_chemistry", "fetch_field"]

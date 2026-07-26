@@ -1,0 +1,254 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+<HEAD>
+   <TITLE>VII.H. Meaning of Point Source Flags</TITLE>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H1 ALIGN=CENTER>IRAS Explanatory Supplement<BR>
+VII. Analysis of Processing<BR>
+H. Meaning of Point Source Flags</H1>
+
+<HR>
+
+<CENTER>
+<FONT SIZE=+1>
+<A HREF=index.html#toc>Chapter Contents</A> |
+<A HREF=index.html#auth>Authors</A> |
+<A HREF=index.html#ref>References</A>
+<BR>
+<A HREF=../toc.html>Table of Contents</A> |
+<A HREF=../index/index.html>Index</A> |
+<A HREF=G.html>Previous Section</A> |
+<A HREF=I.html>Next Section</A></FONT></CENTER>
+
+<HR>
+
+<ol type=1>
+<li><a href=#1>Confusion Flags</a>
+ <ol type=a>
+ <li><a href=#1a>Point Source Neighbors</a>
+ <li><a href=#1b>Small Extended Source Neighbors</a>
+ <li><a href=#1c>Confuse Flag</a>
+ <li><a href=#1d>Summary</a>
+ </ol>
+
+<li><a href=#2>Cirrus Flags</a>
+
+</ol>
+
+<hr>
+<h2><a name=1></a>H.1  Confusion Flags</h2>
+
+     Confusion flags are essential in assessing the quality of
+a point source.  Sources with all flags equal to zero can be accepted
+without question.  Sources with non-zero flags may have some problems
+as discussed below.
+<P>
+      The confusion flags include a count of neighbors around
+a given source that were found in either the point or small extended
+source WSDBs, as well as a flag which was set by the processors
+during seconds-confirmation, band-merging and hours-confirmations.
+ This relatively large number of flags was required by the complexities
+of the processing and of the infrared sky.
+
+<hr>
+<h2><a name=1a></a>H.1.a  Point Source Neighbors</h2>
+
+      Point source neighbor flags warn of problems in the immediate
+vicinity of the source.  The point source neighbors come from
+the cleaned-up WSDB.  The number of neighbors is counted in a
+rectangle oriented along the largest position uncertainty direction.
+That rectangle usually reflects the original scan direction used
+to observe that source.  The large dimension of the box is a half-width
+of 6' along the smallest position uncertainty axis, which corresponds
+to the maximum distance in which another source may have shadowed
+or stolen any detections of the source in question
+
+(<a href=../ch5/C.html#7>Section V.C.7</a>).
+The half-width is 4.5' along the orthogonal axis, corresponding
+to a full detector width.  Neighboring sources within this distance
+produced at least one detection that was the sum of the two sources.
+<P>
+      Weeks-confirmed and single hours-confirmed point source
+neighbors are counted separately in that box.  Non-zero values
+for either count, but especially for PNEARW, the count of weeks-confirmed
+sources, should caution the user that one or more bands of the
+source may be reported incorrectly and to look in a small region
+around the source for confusing neighbors.  Most sources with
+neighbors are found in regions of high source density.
+
+<hr>
+<h2><a name=1b></a>H.1.b  Small Extended Source Neighbors</h2>
+
+      Two types of small extended source counts are given.  The
+SES1 flag counts separately in each band the total number of hours-confirmed
+small extended sources.  Note that a weeks-confirmed small extended
+source containing three hours-confirmations would contribute three
+to this count, and a small extended source containing only one
+hour-confirmation would contribute one to this count.  The SES2
+flag counts separately in each band only the number of weeks-confirmed
+small extended sources.  Both flags use the box described above
+for point source neighbor counting.
+<P>
+      Both flags warn of the presence of structures larger than
+point sources, and hence cast doubt on whether the reported source
+is truly point-like or is only part of a larger complex.  Two
+separate flags exist for1 the following reason. In cold regions
+containing only a single small extended source, SES1 would equal
+the number of hours-confirmations times SES2, and thus the flags
+would be redundant. However, in complex regions SES1 may be unrelated
+to SES2.  That is, because of the effects of cluster analysis
+(<a href=../ch5/E.html>Section V.E</a>) there may have been no
+
+acceptable small extended
+source, even though many small extended source detections occurred.
+The distribution of sources with high values of SES1 and
+with non-zero values of SES2 is shown in <a href="../ch7/Ap.html#figAp21">Figs.VII.Ap.21</a> and <a href="../ch7/Ap.html#figAp22">Figs.VII.Ap.22</a>.
+
+<hr>
+<h2><a name=1c></a>H.1.c  Confuse Flag</h2>
+<P>
+      A final flag related to near neighbor confusion is derived
+from the repeated occurrence of confusion during the processing
+of a source.  In a given band, if more than one candidate per
+scan could confirm with the source at either seconds-confirmation
+(excluding edge detections), band-merging, or hours-confirmation,
+the processor set a flag.  If any such flag was set in two separate
+hours-confirmations of a source, then the confuse flag was also
+set in that band.  Thus if the confuse flag is set, something
+other than an isolated point source was present at or near the
+position of the source in question, and the user should again
+be cautious.  The distribution of sources with the confuse flag
+set correlates well with high source density areas.
+
+<hr>
+<h2><a name=1d>H.1.d  Summary</h2>
+
+      The user examining an (IRAS source can immediately rule
+out almost any problem if all of its neighbor flags are zero,
+and SESl is 0 or l.  Sources that have all those flags set to
+zero are almost always completely clean point sources.  There
+are about 63,000 such sources in the entire catalog, 25% of all
+sources.  Above a Galactic latitude of 20&deg;, the fraction
+is much higher, 30,000 out of 60,000 sources. Including sources
+with SES1 less than 2, which are still almost always clean sources,
+increases the percen- tage of clean sources to 38% in the entire
+sky, and to 70% in the sky above Galactic latitude 20&deg;.
+<P>
+      Sources with non-zero flags may be confused with point source
+neighbors or may only be part of an extended complex, and unfortunately
+must be examined in more detail.
+
+<hr>
+<h2><a name=2>H.2  Cirrus Flags</h2>
+
+    Cirrus flags are set to warn the user that a catalog source
+may be adversely affected by infrared cirrus or may even be no
+more than a bump in the infrared cirrus.  These flags and the
+2' sky brightness images are the best possible substitutes for
+examining the raw detector data.  If all cirrus flags are smaller
+than the limits discussed below, then one can infer that the source
+is unlikely to have been affected by cirrus.
+
+<P>
+<font size=+1>CIRR1</font><br>
+      CIRR1 gives an estimate of the existence of cirrus on the
+point source scale.  CIRRl is total number of sources detected
+only at 100 &micro;m , including sources with single and
+multiple hours-confirmations, in a 1 sq. deg box centered on
+the source.  The sky distribution of sources with CIRR1 greater
+than three is displayed in <a href="../ch7/Ap.html#figAp23">Fig. VII.Ap.23</a>,
+and shows the areas where cirrus is a problem.  This figure is
+similar to the map of sources detected only at 100 &micro;m 
+shown earlier (<a href="../ch7/Ap.html#figAp10">Fig. VII.Ap.10</a>).
+
+<P>
+<font size=+1>CIRR2</font><br>
+      CIRR2 is a logarithmic function of the ratio of the 100 &micro;m
+point source flux to an estimate of the 100 &micro;m  flux produced
+by cirrus, derived from the filtered 0.5' 100 &micro;m  data
+(<a href=../ch5/H.html#4>Section V.H.4</a>).
+<a href="../ch7/Ap.html#figAp24">Figure VII.Ap.24</a> shows that the distribution
+of sources with CIRR2 greater than 4 correlates well with other
+cirrus maps.
+
+<P>
+<font size=+1>CIRR3</font><br>
+      Another estimate of the importance of cirrus comes directly
+from the total 100 &micro;m  emission is a 0.5' beam data.
+CIRR3 is equal to the intensity of the 100 &micro;m
+emission in MJy sr<sup>-1</sup>.
+
+<P>
+<font size=+1>SES1</font><br>
+      The SES1 flag at 100 &micro;m , discussed earlier, is a good
+cirrus indicator. See the earlier discussion.
+<hr>
+<h2>Summary</h2>
+      No clear-cut prescription can be given to a user to guarantee
+that cirrus has not adversely affected a given source.  If the
+source has a strong 100 &micro;m  flux, no missing bands, and
+all cirrus
+flags are well below the cutoff values discussed above, then it
+is likely that few problems exist. If any of the above conditions
+are violated a closer examination of nearby sources will usually
+indicate the importance of cirrus. However, in some cases, only
+an examination of images or, finally, the detector data will resolve
+all doubts.
+
+<HR>
+
+
+
+<CENTER>
+<FONT SIZE=+1>
+
+<A HREF=index.html#toc>Chapter Contents</A> |
+<A HREF=index.html#auth>Authors</A> |
+<A HREF=index.html#ref>References</A>
+<BR>
+<A HREF=../toc.html>Table of Contents</A> |
+<A HREF=../index/index.html>Index</A> |
+<A HREF=G.html>Previous Section</A> |
+<A HREF=I.html>Next Section</A></FONT></CENTER>
+
+<HR>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

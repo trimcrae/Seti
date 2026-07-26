@@ -1,0 +1,728 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+ <html xmlns="http://www.w3.org/1999/xhtml"> 
+<head>
+    <title> GATOR CATALOG LIST PAGE </title>
+<style type="text/css"> 
+pre { white-space: pre-wrap; max-width: 800px; } 
+</style> 
+<script src="/applications/Gator/gator/gator.js" language="javascript" type="text/javascript"> </script>
+<link rel="stylesheet" type="text/css" href="/applications/Gator/gator/gator.css" media="screen, print" />
+<link rel="stylesheet" type="text/css" href="/applications/Gator/css/gator_scan.css" media="screen, print" />
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body ">
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px;"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--  #include virtual="/include/sysnotice.html"  -->
+
+<form method="post" name="area" action="/cgi-bin/Gator/nph-query" enctype="multipart/form-data">
+<center>
+<div class="webpage">
+<h1>AKARI/FIS Bright Source Catalogue<br /><i></i></h1>
+<h4>powered by Gator</h4>
+</div>
+&nbsp;<br />
+    <span class="gatorbutton">
+      <a href="/applications/Gator/GatorAid/irsa/QuickGuidetoGator.htm">Quick Guide</a>
+    </span>
+
+    <span class="gatorbutton">
+      <a href="/applications/Gator/GatorAid/irsa/Tutorial/tutorial.htm">Tutorial</a>
+    </span>
+
+    <span class="gatorbutton">
+      <a href="/applications/Gator/index.html">Catalog List</a>
+    </span>
+
+    <span class="gatorbutton">
+      <a href= "/cgi-bin/Gator/nph-monitor-sel?mission=irsa">Process Monitor</a>
+    </span>
+
+    <span class="gatorbutton">
+      <a href= "/applications/Gator/GatorAid/irsa/catsearch.html"> Program Interface</a>
+    </span>
+
+   <p>&nbsp;</p>
+</center>
+<center>
+<div style="margin: auto; width:400px; background:#fff;">
+    <input style="background-color: #99ccff; color: #000000" type="submit" name="submit" value="Run Query" />
+    <input type="reset" onclick="selectReset();" value="Reset" />
+</div>
+<p>&nbsp;</p>
+<input type="hidden" name="mission" value="irsa" />
+<input type="hidden" name="dbms"    value="21" /> </td>
+<table  width="400">
+  <tr>
+    <td style="color:#e2eeff; text:nodedoration; size:strong;"><input type="radio" id="ConeR" name="searchForm" value="Cone" onclick="selectForm();" checked="checked"  /> <a href="/onlinehelp/catalogs/#searching.SingleObject" target="help"><b>Single Object Search</b></a></td>
+    <td><input type="radio" id="UploadR" name="searchForm" value="Upload" onclick="selectForm()"   /> <a href="/onlinehelp/catalogs/#searching.MultiObject" target="help"><b>Multi-Object Search</b></a></td>
+    <td><input type="radio" id="NoneR" name="searchForm" value="None" onclick="selectForm()"    /> <a href="/onlinehelp/catalogs/#searching.AllSky" target="help"><b>All Sky Search</b></a></td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<div id="Cone">
+<table class="sp">
+  <tr>
+    <th colspan="3">SPATIAL CONSTRAINTS</th>
+  </tr>
+  <tr><td colspan="3">&nbsp;</td></tr>
+  <tr>
+    <td colspan="2"><a href="/onlinehelp/catalogs/#searching.SingleObject" target="help"><b>Coordinate or <br />Object Name:</b></a></td>
+    <td><input size="35" name="objstr" value="" /></td>
+  </tr>
+  <tr>
+    <td colspan="2">&nbsp;</td>
+    <td ><font size="-1"><i><b>Examples:</b></i><br /><a href="/cgi-bin/Gator/nph-query?objstr=NGC6240+&amp;catalog=akari_fis&amp;mission=irsa" target="example" >NGC6240 </a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="/cgi-bin/Gator/nph-query?objstr=+15h34m57.1s+%2B23d30m11s+&amp;catalog=akari_fis&amp;mission=irsa" target="example" > 15h34m57.1s +23d30m11s </a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="/cgi-bin/Gator/nph-query?objstr=+289.9508894++64.3599708+ga+&amp;catalog=akari_fis&amp;mission=irsa" target="example" > 289.9508894  64.3599708 ga </a>&nbsp;&nbsp; | &nbsp;&nbsp;<br /><a href="/cgi-bin/Gator/nph-query?objstr=+28.79638066+33.67524065+ecl&amp;catalog=akari_fis&amp;mission=irsa" target="example" > 28.79638066 33.67524065 ecl</a> 	    </font>
+	  </td>
+  </tr>
+  <tr><td colspan="3">&nbsp;</td></tr>
+  <tr><td colspan="3"><b>Search Method (choose one):</b></td></tr>
+  <tr>
+    <td><input type="radio" name="spatialS" id="ConeS" value="Cone" checked="checked"  />
+<b><a href="/onlinehelp/catalogs/#searching.cone" target="help">Cone:</a></b></td>
+    <td colspan="2" > <b>Radius</b>
+      <input type="text" name="radius" size="8" value="10" />&nbsp;
+        <select name = "radunits">
+          <option  > deg     </option>
+          <option  > arcmin  </option>
+          <option selected='selected'> arcsec  </option>
+        </select>
+        <font size="-1"><b>PA</b></font>
+        <input name="posang" size="7" value="" />
+        <font size="-1"><b>Axial Ratio</b></font>
+        <input name="ratio" size="5" value ="" />
+        <br /><font size="-1" color="#990000">(0&lt;Radius&le;3600 arcsec)</font> &nbsp;
+    </td>
+  </tr>
+  <tr>
+    <td><input type="radio" name="spatialS"  id="BoxS" value="Box"  /><b><a href="/onlinehelp/catalogs/#searching.box" target="help">&nbsp;Box:</a></b></td>
+    <td colspan="2"><b>Size:</b> &nbsp;<input name="size" value="" size="8" /><b>arcsec</b> <font size="-1" color="#990000"><br />(0&lt;Size&le;7200)</font></td>
+  </tr>
+  <tr>
+    <td><input type="radio" name="spatialS" id="PolygonS" value="Polygon"   />
+<b><a href="/onlinehelp/catalogs/#searching.polygon" target="help">Polygon:</a></b></td>
+    <td colspan="2"><b>Vertices:</b><font size="-1"><input name="polygon" size="50"  value="" /></font>
+    </td>
+  </tr>
+  <tr><td colspan="3">&nbsp;</td></tr>
+</table>
+</div>
+
+<div id="Upload">
+
+<table class="sp">
+  <tr>
+    <th colspan="3">SPATIAL CONSTRAINTS</th>
+  </tr>
+  <tr>
+    <td valign="top"  rowspan="2" >&nbsp;&nbsp;<input type="radio" name="spatial" id="UploadS" value="Upload" /><b>Upload Table:</b>
+    <td colspan="2"><input type="file" name="filename" size="25" value="" /><a href="/applications/TblValidator/" target="help"><img src="/images/icons/help.gif" alt="help" /></a><br />&nbsp;<br />
+<input type="checkbox" name="one_to_one" id="one_to_one" /><a href="/onlinehelp/catalogs/#searching.OnetoOne" target="help"><b>One to One Match</b></a>    </td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <font size="-1"><b>Cone Search Radius:</b>
+      <input type="text" name="uradius" size="4" value="10" />
+        <select name = "uradunits">
+          <option  > deg     </option>
+          <option  > arcmin  </option>
+          <option selected='selected'> arcsec  </option>
+        </select>
+        <b>PA</b>
+        <input name="uposang" size="4" value="" /><b>&nbsp;Axial Ratio</b>&nbsp;<input name="uratio" size="4" value="" /></font>
+<br /><font color="#660000" size="-1">(0&lt;Radius&lt;=300 arcsec)</font>
+<br /><font size="-1">NOTE: A blank radius value will trigger a search for radius ("major") from the table.<br/>But any valid value will override the table.</font></td>
+  </tr>
+  <tr><td colspan="3"></td>&nbsp;</tr>
+</table>
+
+</div>
+
+<div id="None">
+
+<table class="sp">
+
+  <tr>
+    <th colspan="3">SPATIAL CONSTRAINTS</th>
+  </tr>
+  <tr>
+    <td colspan="3">&nbsp;&nbsp;
+    <input type="radio" name="spatial" id="NoneS" value="None" />
+    <b>No Spatial Constraints</b></td>
+  </tr>
+</table>
+</div>
+
+<br />&nbsp;<br /><table class="sp">
+<tr><th colspan="4">OPTIONS:</th></tr>
+<tr>
+<td><input type="radio" name="process" value="Table Output" checked="checked" /></td>
+<td class="rightbar"><b>Table Output</b></td>
+<td rowspan="2" >&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td align="center"><a href="/onlinehelp/catalogs/#searching.Options" target="help"><b>E-mail Address</b> (optional):</a> 
+<select name="mailcheck">
+<option>Send email</option>
+<option selected="selected">No email</option>
+</select></td>
+</tr>
+<tr>
+<td><input type="radio" name="process" value="Source Counts"></input></td>
+<td class="rightbar"><a href="/onlinehelp/catalogs/#searching.sourcecounts" target="help"><b>Source Counts Only</b></a><font size="-1">(all-sky search only)</font></td>
+<td align="center"><input type="text" size="25" name="email" value=""></input></td>
+</tr></table>
+<br />
+<div style="margin: auto; width:400px; background:#fff;">
+    <input style="background-color: #99ccff; color: #000000" type="submit" name="submit" value="Run Query" />
+    <input type="reset" onclick="selectReset();" value="Reset" />
+</div>
+</center>
+<input type="hidden" name="catalog" value="akari_fis" />
+<input type="hidden" name="key"     value="cntr" />
+<input type="hidden" name="where1"  value="Ex: ra=271 AND dec = -30" />
+<input type="hidden" name="where2"  value="" />
+<input type="hidden" name="simulated"  value="n" />
+<br />&nbsp;<br />
+<center><table>  <tr>
+    <td class="center" colspan="16">
+      <a href="/onlinehelp/catalogs/#searching.OutputColumn" target="help">      COLUMN CONSTRAINTS/OUTPUT COLUMN SELECTION</a> <br />
+    <input type="button" value="Select All Columns" style="background-color:#660000; color:#ffffff;font-weight:bold; font-size:x-small;margin:0;padding:1;border=0; " onclick="Select();" /> <input type="button" value="Clear All Selections" style="background-color:#660000; color:#ffffff;font-weight:bold;font-size:x-small;margin:0;padding:1;border:0; " onclick="Clear();" />&nbsp;<input type="reset" onclick="selectReset();" value="Reset" style="background-color:#660000; color:#ffffff;font-weight:bold;font-size:x-small;margin:0;padding:1;border:0; " />
+</td>
+  </tr>
+  <tr>
+    <th colspan="6">  
+<font color="#f9f9f9">Table Selection</font>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <input type="submit" name="short" value="Standard" />&nbsp;&nbsp;&nbsp;&nbsp;
+      <input type="submit" name="long" value="Long Form" />&nbsp;&nbsp;&nbsp;&nbsp;
+      <input type="hidden" name="cur_sel" value="0" />
+    </th>
+    <th colspan="2"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <font color="#f9f9f9">Sexagesimal Output </font> &nbsp;
+      <select name="runsexa" >             <option > Yes </option>             <option selected = 'selected'> No </option>           </select>
+    </th>
+  </tr>
+  <tr>
+    <td class="sub">Name</td>
+    <td class="sub">Description</td>
+    <td class="sub">Sel</td>
+    <td class="sub"><a href="/onlinehelp/catalogs/#searching.ColumnConstraints" target="help">Low Limit</a><br /><font size="-1">(include &gt;,&ge;,=)</font></td>
+    <td class="sub"><a href="/onlinehelp/catalogs/#searching.ColumnConstraints" target="help">Up Limit</a><br /><font size="-1">(include &lt;,&le;,=)</font></td>
+    <td class="sub">Units</td>
+    <td class="sub">Indx</td>
+    <td class="sub">DBType</td>
+  </tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#objid" target="help">
+          <b>objid</b></a></td>
+    <td>&nbsp;Internal Object ID</td>
+    <td>
+       <input type="checkbox" name="select_objid" />
+    </td>
+    <td><input name="min_objid" size="10" /></td>
+    <td><input name="max_objid" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">int8</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#objname" target="help">
+          <b>objname</b></a></td>
+    <td>&nbsp;Source Identifier</td>
+    <td>
+       <input type="checkbox" name="select_objname" checked="checked" />
+    </td>
+    <td><input name="min_objname" size="10" /></td>
+    <td><input name="max_objname" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">character(15)</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#ra" target="help">
+          <b>ra</b></a></td>
+    <td>&nbsp;Right Ascension (J2000)</td>
+    <td>
+       &nbsp;
+       <input type="hidden" name="select_ra" checked="checked" />
+    </td>
+    <td><input name="min_ra" size="10" /></td>
+    <td><input name="max_ra" size="10" /></td>
+    <td>deg</td>
+    <td>&nbsp;</td>
+    <td align="right">float(126)</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#dec" target="help">
+          <b>dec</b></a></td>
+    <td>&nbsp;Declination (J2000)</td>
+    <td>
+       &nbsp;
+       <input type="hidden" name="select_dec" checked="checked" />
+    </td>
+    <td><input name="min_dec" size="10" /></td>
+    <td><input name="max_dec" size="10" /></td>
+    <td>deg</td>
+    <td>&nbsp;</td>
+    <td align="right">float(126)</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#poserrmj" target="help">
+          <b>poserrmj</b></a></td>
+    <td>&nbsp;Position error major axis</td>
+    <td>
+       <input type="checkbox" name="select_poserrmj" checked="checked" />
+    </td>
+    <td><input name="min_poserrmj" size="10" /></td>
+    <td><input name="max_poserrmj" size="10" /></td>
+    <td>arcsec</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#poserrmi" target="help">
+          <b>poserrmi</b></a></td>
+    <td>&nbsp;Position error minor axis</td>
+    <td>
+       <input type="checkbox" name="select_poserrmi" checked="checked" />
+    </td>
+    <td><input name="min_poserrmi" size="10" /></td>
+    <td><input name="max_poserrmi" size="10" /></td>
+    <td>arcsec</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#posserrpa" target="help">
+          <b>posserrpa</b></a></td>
+    <td>&nbsp;Position error Position Angle</td>
+    <td>
+       <input type="checkbox" name="select_posserrpa" checked="checked" />
+    </td>
+    <td><input name="min_posserrpa" size="10" /></td>
+    <td><input name="max_posserrpa" size="10" /></td>
+    <td>deg</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#flux65" target="help">
+          <b>flux65</b></a></td>
+    <td>&nbsp;Flux density in N60</td>
+    <td>
+       <input type="checkbox" name="select_flux65" checked="checked" />
+    </td>
+    <td><input name="min_flux65" size="10" /></td>
+    <td><input name="max_flux65" size="10" /></td>
+    <td>Jy</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#flux90" target="help">
+          <b>flux90</b></a></td>
+    <td>&nbsp;Flux density in WIDE-S</td>
+    <td>
+       <input type="checkbox" name="select_flux90" checked="checked" />
+    </td>
+    <td><input name="min_flux90" size="10" /></td>
+    <td><input name="max_flux90" size="10" /></td>
+    <td>Jy</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#flux140" target="help">
+          <b>flux140</b></a></td>
+    <td>&nbsp;Flux density in WIDE-L</td>
+    <td>
+       <input type="checkbox" name="select_flux140" checked="checked" />
+    </td>
+    <td><input name="min_flux140" size="10" /></td>
+    <td><input name="max_flux140" size="10" /></td>
+    <td>Jy</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#flux160" target="help">
+          <b>flux160</b></a></td>
+    <td>&nbsp;Flux density in N160</td>
+    <td>
+       <input type="checkbox" name="select_flux160" checked="checked" />
+    </td>
+    <td><input name="min_flux160" size="10" /></td>
+    <td><input name="max_flux160" size="10" /></td>
+    <td>Jy</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#ferr65" target="help">
+          <b>ferr65</b></a></td>
+    <td>&nbsp;Flux uncertainty in N60</td>
+    <td>
+       <input type="checkbox" name="select_ferr65" checked="checked" />
+    </td>
+    <td><input name="min_ferr65" size="10" /></td>
+    <td><input name="max_ferr65" size="10" /></td>
+    <td>Jy</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#ferr90" target="help">
+          <b>ferr90</b></a></td>
+    <td>&nbsp;Flux uncertainty in WIDE-S</td>
+    <td>
+       <input type="checkbox" name="select_ferr90" checked="checked" />
+    </td>
+    <td><input name="min_ferr90" size="10" /></td>
+    <td><input name="max_ferr90" size="10" /></td>
+    <td>Jy</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#ferr140" target="help">
+          <b>ferr140</b></a></td>
+    <td>&nbsp;Flux uncertainty in WIDE-L</td>
+    <td>
+       <input type="checkbox" name="select_ferr140" checked="checked" />
+    </td>
+    <td><input name="min_ferr140" size="10" /></td>
+    <td><input name="max_ferr140" size="10" /></td>
+    <td>Jy</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#ferr160" target="help">
+          <b>ferr160</b></a></td>
+    <td>&nbsp;Flux uncertainty in N160</td>
+    <td>
+       <input type="checkbox" name="select_ferr160" checked="checked" />
+    </td>
+    <td><input name="min_ferr160" size="10" /></td>
+    <td><input name="max_ferr160" size="10" /></td>
+    <td>Jy</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#fqual65" target="help">
+          <b>fqual65</b></a></td>
+    <td>&nbsp;Flux density quality flag for N60</td>
+    <td>
+       <input type="checkbox" name="select_fqual65" checked="checked" />
+    </td>
+    <td><input name="min_fqual65" size="10" /></td>
+    <td><input name="max_fqual65" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#fqual90" target="help">
+          <b>fqual90</b></a></td>
+    <td>&nbsp;Flux density quality flag for WIDE-S</td>
+    <td>
+       <input type="checkbox" name="select_fqual90" checked="checked" />
+    </td>
+    <td><input name="min_fqual90" size="10" /></td>
+    <td><input name="max_fqual90" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#fqual140" target="help">
+          <b>fqual140</b></a></td>
+    <td>&nbsp;Flux density quality flag for WIDE-L</td>
+    <td>
+       <input type="checkbox" name="select_fqual140" checked="checked" />
+    </td>
+    <td><input name="min_fqual140" size="10" /></td>
+    <td><input name="max_fqual140" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#fqual160" target="help">
+          <b>fqual160</b></a></td>
+    <td>&nbsp;Flux density quality flag for N160</td>
+    <td>
+       <input type="checkbox" name="select_fqual160" checked="checked" />
+    </td>
+    <td><input name="min_fqual160" size="10" /></td>
+    <td><input name="max_fqual160" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#flags65" target="help">
+          <b>flags65</b></a></td>
+    <td>&nbsp;Bit flags of data quality for N60</td>
+    <td>
+       <input type="checkbox" name="select_flags65" checked="checked" />
+    </td>
+    <td><input name="min_flags65" size="10" /></td>
+    <td><input name="max_flags65" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">character(10)</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#flags90" target="help">
+          <b>flags90</b></a></td>
+    <td>&nbsp;Bit flags of data quality for WIDE-S</td>
+    <td>
+       <input type="checkbox" name="select_flags90" checked="checked" />
+    </td>
+    <td><input name="min_flags90" size="10" /></td>
+    <td><input name="max_flags90" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">character(10)</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#flags140" target="help">
+          <b>flags140</b></a></td>
+    <td>&nbsp;Bit flags of data quality for WIDE-L</td>
+    <td>
+       <input type="checkbox" name="select_flags140" checked="checked" />
+    </td>
+    <td><input name="min_flags140" size="10" /></td>
+    <td><input name="max_flags140" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">character(11)</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#flags160" target="help">
+          <b>flags160</b></a></td>
+    <td>&nbsp;Bit flags of data quality for N160</td>
+    <td>
+       <input type="checkbox" name="select_flags160" checked="checked" />
+    </td>
+    <td><input name="min_flags160" size="10" /></td>
+    <td><input name="max_flags160" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">character(11)</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#nscanc65" target="help">
+          <b>nscanc65</b></a></td>
+    <td>&nbsp;nScanConfirm for N60</td>
+    <td>
+       <input type="checkbox" name="select_nscanc65" checked="checked" />
+    </td>
+    <td><input name="min_nscanc65" size="10" /></td>
+    <td><input name="max_nscanc65" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#nscanc90" target="help">
+          <b>nscanc90</b></a></td>
+    <td>&nbsp;nScanConfirm for WIDE-S</td>
+    <td>
+       <input type="checkbox" name="select_nscanc90" checked="checked" />
+    </td>
+    <td><input name="min_nscanc90" size="10" /></td>
+    <td><input name="max_nscanc90" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#nscanc140" target="help">
+          <b>nscanc140</b></a></td>
+    <td>&nbsp;nScanConfirm for WIDE-L</td>
+    <td>
+       <input type="checkbox" name="select_nscanc140" checked="checked" />
+    </td>
+    <td><input name="min_nscanc140" size="10" /></td>
+    <td><input name="max_nscanc140" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#nscanc160" target="help">
+          <b>nscanc160</b></a></td>
+    <td>&nbsp;nScanConfirm for N160</td>
+    <td>
+       <input type="checkbox" name="select_nscanc160" checked="checked" />
+    </td>
+    <td><input name="min_nscanc160" size="10" /></td>
+    <td><input name="max_nscanc160" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#nscanp65" target="help">
+          <b>nscanp65</b></a></td>
+    <td>&nbsp;nScanPossible for N60</td>
+    <td>
+       <input type="checkbox" name="select_nscanp65" checked="checked" />
+    </td>
+    <td><input name="min_nscanp65" size="10" /></td>
+    <td><input name="max_nscanp65" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#nscanp90" target="help">
+          <b>nscanp90</b></a></td>
+    <td>&nbsp;nScanPossible for WIDE-S</td>
+    <td>
+       <input type="checkbox" name="select_nscanp90" checked="checked" />
+    </td>
+    <td><input name="min_nscanp90" size="10" /></td>
+    <td><input name="max_nscanp90" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#nscanp140" target="help">
+          <b>nscanp140</b></a></td>
+    <td>&nbsp;nScanPossible for WIDE-L</td>
+    <td>
+       <input type="checkbox" name="select_nscanp140" checked="checked" />
+    </td>
+    <td><input name="min_nscanp140" size="10" /></td>
+    <td><input name="max_nscanp140" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#nscanp160" target="help">
+          <b>nscanp160</b></a></td>
+    <td>&nbsp;nScanPossible for N160</td>
+    <td>
+       <input type="checkbox" name="select_nscanp160" checked="checked" />
+    </td>
+    <td><input name="min_nscanp160" size="10" /></td>
+    <td><input name="max_nscanp160" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#mconf65" target="help">
+          <b>mconf65</b></a></td>
+    <td>&nbsp;Months confirmation flag for N60</td>
+    <td>
+       <input type="checkbox" name="select_mconf65" checked="checked" />
+    </td>
+    <td><input name="min_mconf65" size="10" /></td>
+    <td><input name="max_mconf65" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#mconf90" target="help">
+          <b>mconf90</b></a></td>
+    <td>&nbsp;Months confirmation flag for WIDE-S</td>
+    <td>
+       <input type="checkbox" name="select_mconf90" checked="checked" />
+    </td>
+    <td><input name="min_mconf90" size="10" /></td>
+    <td><input name="max_mconf90" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#mconf140" target="help">
+          <b>mconf140</b></a></td>
+    <td>&nbsp;Months confirmation flag for WIDE-L</td>
+    <td>
+       <input type="checkbox" name="select_mconf140" checked="checked" />
+    </td>
+    <td><input name="min_mconf140" size="10" /></td>
+    <td><input name="max_mconf140" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#mconf160" target="help">
+          <b>mconf160</b></a></td>
+    <td>&nbsp;Months confirmation flag for N160</td>
+    <td>
+       <input type="checkbox" name="select_mconf160" checked="checked" />
+    </td>
+    <td><input name="min_mconf160" size="10" /></td>
+    <td><input name="max_mconf160" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+  <tr > 
+    <td>&nbsp;
+      <a href="/data/AKARI/gator_docs/akari_fis_colDescriptions.html#ndens" target="help">
+          <b>ndens</b></a></td>
+    <td>&nbsp;Number of neighboring sources</td>
+    <td>
+       <input type="checkbox" name="select_ndens" checked="checked" />
+    </td>
+    <td><input name="min_ndens" size="10" /></td>
+    <td><input name="max_ndens" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">integer</td></tr>
+</table>
+<input type="hidden" name="spt" value="4" />
+&nbsp;<br />&nbsp;<br />
+<div style="width:658px;">
+    <a href="/onlinehelp/catalogs/#additionalconstraints" target="help">ADDITIONAL CONSTRAINTS (SQL)<img src="/images/icons/help.gif" alt="help" /></a><br />
+    <textarea rows="8" cols="70" name="constraints"></textarea><br />
+    <font size="-1">Ex: ra=271 AND dec = -30</font><br />
+    <font size="-1"></font><br />
+    <font size="-1" color="red">The format for date type is yyyy-mm-dd</font><div style="margin: auto; width:400px; background:#fff;">
+    <input style="background-color:#99ccff; color:#000000" type="submit" name="submit" value="Run Query" />
+    <input type="reset" onclick="selectReset();" value="Reset" />
+</div>
+</center>
+</form>
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>

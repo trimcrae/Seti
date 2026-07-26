@@ -1,0 +1,177 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+
+<HEAD>
+   <title>V.E.1  Potential Detections</title>
+</HEAD>
+
+<BODY bgcolor="#FFFFFF">
+
+<h1 align="center">
+   IRAS Explanatory Supplement<br>
+   V. Data Reduction<br>
+   E. Overview of Small Extended Source Data Processing<br>
+   E. 1  Potential Detections
+</h1>
+
+<hr>
+<font size=+1>
+<center>
+   <a href="index.html#toc">Chapter Contents</a> | 
+   <a href="index.html#intro">Introduction</a> | 
+   <a href="index.html#auth">Authors</a> | 
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> | 
+   <a href="../index/index.html">Index</a> | 
+   <a href="D9.html">Previous Section</a> | 
+   <a href="E2.html">Next Section</a>
+</font>
+</center>
+
+<hr>
+      To locate potential small extended sources the data stream
+of each detector was first successively compressed by adding consecutive
+pairs of data samples. Designating the original data stream of
+each detector to be of level 0, new data streams of higher levels
+were generated according to the rule that the <I>j</I><SUP>th</SUP> data 
+sample in the <I>k</I><SUP>th</SUP> level data stream was given by,
+<P>
+<CENTER>
+<a name="eqE1">
+<font size=+1>
+X(j, k) = X(j, k-1) + X(j+1, k-1)
+</font>
+</CENTER>
+<p align=right>(V.E.1)</P>
+<P>
+      Potential detections in any data stream were found by applying
+a narrow-bandpass, digital filter at each point in the data stream.
+ This filter consisted of an eight-point, zero-sum, square-wave
+which subtracted the first and last two data points from the middle
+four (<a href="C.html#eqC1">Eq. (V.C.1)</a>). When the filter passed over a 
+source it gave
+rise to a characteristic peak, and thus picked out structures
+whose width spanned approximately four sample points. If we denote
+the spatial sampling frequency of the level 0 data stream by <i>S</i>
+(i.e. <i>S</i> is the number of data samples per arc min in the data
+stream of level 0), then the approximate width of an object (in
+arcmin) detected by the square-wave filtering the <I>k</I><SUP>th</SUP> level 
+data stream is given by,
+<P>
+<a name="eqE2">
+<CENTER><FONT SIZE=+1>
+W(k) = (4/S) x (2<sup>k</sup>)
+</font>
+</center>
+<p align="right">(V.E.2)</P>
+<P>
+     The spatial sampling frequency, <I>S</I>, was approximately 4 in
+the 12 &micro;m and 25 &micro;m wavelength bands, 2 in the 60 &micro;m 
+wavelength
+band and 1 in the 100 &micro;m wavelength band.  Since it was not
+intended to detect structures greater than 8' in extent, the 12
+um and 25 &micro;m detections were retained from levels 1, 2 and 3,
+corresponding to characteristic square-widths of 2', 4', and 8'.
+At 60 &micro;m the level 1 and 2 data streams were searched for sources
+4' and 8' in size while at 100 &micro;m only level 1 detections were
+kept for small extended sources.
+<P>
+      A peak in the <I>k</I><sup>th</SUP> level data stream which was 
+picked out
+by the square-wave filter was accepted as a potential detection
+if its amplitude was greater than 3 times the local noise appropriate
+for that data stream. The amplitude of a square-wave peak was
+defined as
+<P>
+<a name="eqE3">
+<CENTER><font size=+1>
+A(k) = E/(2<sup>k</sup>)
+</font>
+</center>
+<p align=right>(V.E.3)</P>
+<p>
+where <i>E</i> is the maximum value attained above zero in the square-wave
+filtered data stream. The noise was estimated in the same way
+as described for point sources.
+<P>
+      Since a source typically produced detections in more than
+just a single data stream for a given detector, each candidate
+detection from a level <i>k</i> data stream was compared with all candidates
+from the level (<i>k</i> + 1) data stream of the same detector that were
+within a distance of five level <i>k</i> samples. In such a comparison
+the detection with the largest square-wave peak was chosen as
+the best representation of the source, and other detections were
+rejected. To reject sources larger than 8', a comparison was also
+made with the amplitude on a scale of 16'. If, as a result of
+this comparison, the accepted detection had a characteristic size
+of 16' (corresponding to a level 4 detection at 12 &micro;m and 
+25 &micro;m, a level 3 detection at 60 &micro;m, and a level 
+2 detection at 100 &micro;m),
+then this source was rejected. Similarly, since point sources
+were also to be excluded a comparison of each extended source
+detection was made with any level 0 detections (point source)
+in the neighborhood. If the level 1 detection was found to have
+a square-wave
+amplitude less than 0.75 times the level 0 amplitude, then no
+ extended source was identified. The value 0.75 proved to be optimal
+for the discrimination between point-like and extended sources
+and was evaluated after processing data from the Large Magellanic
+Cloud, where many small extended sources could be clearly seen.
+<P>
+
+<hr>
+
+<font size=+1>
+<center>
+   <a href="index.html#toc">Chapter Contents</a> | 
+   <a href="index.html#intro">Introduction</a> | 
+   <a href="index.html#auth">Authors</a> | 
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> | 
+   <a href="../index/index.html">Index</a> | 
+   <a href="D9.html">Previous Section</a> | 
+   <a href="E2.html">Next Section</a>
+</font>
+</center>
+
+<hr>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

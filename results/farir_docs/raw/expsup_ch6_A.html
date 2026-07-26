@@ -1,0 +1,403 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+<HEAD>
+   <TITLE>VI.A. Processing - Removal of Telescope Transfer Function</TITLE>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H1 ALIGN=CENTER>IRAS Explanatory Supplement<BR>
+VI. Flux Reconstruction and Calibration<BR>
+A. Processing - Removal of Telescope Transfer Function</H1>
+
+<HR>
+
+<CENTER>
+<FONT SIZE=+1><A HREF="index.html#toc">Chapter Contents</A>
+| <A HREF="index.html#intro">Introduction</A> | <A HREF="index.html#auth">Authors</A>
+| <A HREF="index.html#ref">References</A>
+<BR>
+<A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> | <A HREF="../ch5/H.html">Previous
+Section</A> | <A HREF="B.html">Next Section</A></FONT></CENTER>
+
+<HR>
+
+<OL type=1>
+   <LI><A HREF="A.html#1">Digital Electronics</A>
+   <LI><A HREF="A.html#2">Analog Electronics Amplifiers</A>
+   <LI><A HREF="A.html#3">Trans-impedance Amplifier</A>
+   <LI><A HREF="A.html#4">Removal of Coherent Detector Noise</A>
+   <LI><A HREF="A.html#5">Feedback Resistor</A>
+   <LI><A HREF="A.html#6">Summary</A>
+</OL>
+<P>
+The electronic chain by which the current caused by photons incident
+onto the detector is transferred to the signal received at the ground station
+is described in <A HREF="../ch2/C.html#5">Section II.C.5</A>. Briefly,
+the detector acted as a current source as a result of the incident photons.
+This current was input to a trans-impedance amplifier which transformed
+the signal into a voltage equaling the total current times the feedback
+resistor plus a small offset voltage due primarily to the imbalance in
+the cold JFETs at the inputs to the operational amplifiers. The output
+voltage from the trans-impedance amplifier was amplified and shaped by
+analog electronics, fast rise time nuclear particle spikes were removed
+and the analog voltage was converted into a digital signal for transmission
+in a compressed format to the Earth. In the processing, the route was 
+reversed.
+As described below, the received signal, in data numbers, was retraced
+to the current at the detector.
+
+<H2>
+<HR WIDTH="100%"><A NAME="1">A.1 Digital Electronics</H2>
+<P>
+Pre-launch ground tests determined that there were no significant errors
+or non-linearities introduced by the digital electronics or by the analog
+to digital conversion. Any errors introduced by the compression of digital
+data on board the telescope and reconstruction at the processing center
+were assumed to be random and to be in the least significant bit and were
+ignored. The raw input was therefore assumed to correspond exactly to the
+output of the analog to digital converter. Since a linear analog to digital
+converter was assumed, the voltage into the analog to digital converter,
+i.e., the voltage at the output of the analog chain was given by:
+<P>
+<A NAME="eqA1">
+<CENTER><FONT SIZE=+1>
+V<SUB>anlg</SUB> = C<SUB>0</SUB> + C<SUB>1</SUB> &times; DN
+</FONT>
+</CENTER>
+<P>
+where
+
+<CENTER>
+<TABLE CELLSPACING=0 CELLPADDING=0 >
+<TR>
+<TD ALIGN=RIGHT VALIGN=CENTER>
+<FONT SIZE=+1>
+V<SUB>anlg</SUB></FONT>
+</TD>
+<TD><FONT SIZE=+1>
+=</TD>
+<TD><FONT SIZE=+1>voltage at output of the analog amplifier = voltage at the analog digital
+converter</TD>
+</TR>
+
+<TR>
+<TD ALIGN=RIGHT>
+<FONT SIZE=+1>
+C<SUB>0</SUB>
+</FONT>
+</TD>
+
+<TD><FONT SIZE=+1>=</FONT>
+</TD>
+
+<TD><FONT SIZE=+1>inherent voltage offset of the analog digital converter</FONT>
+</TD>
+</TR>
+
+<TR>
+<TD ALIGN=RIGHT>
+<FONT SIZE=+1>
+<I>DN</I>
+</FONT>
+</TD>
+
+<TD><FONT SIZE=+1>=</FONT></TD>
+
+<TD><FONT SIZE=+1>observed signal in data numbers.</FONT></TD>
+</TR>
+
+<TR>
+<TD ALIGN=RIGHT>
+<FONT SIZE=+1>C<SUB>1</SUB>
+</FONT>
+</TD>
+
+<TD><FONT SIZE=+1>=</FONT></TD>
+
+<TD><FONT SIZE=+1>data number voltage conversion factor (volts/DN)</FONT></TD>
+</TR>
+</TABLE>
+</CENTER>
+<P>
+Preflight measurements showed that any adverse effect on the data due
+to the multiplexer should be negligible and it was therefore assumed to
+be linear.
+
+<H2>
+<HR WIDTH="100%"><A NAME="2">A.2 Analog Electronics Amplifiers</H2>
+<P>
+The analog electronics contained the commandable gains and offsets.
+The input voltage to this part of the electronics can be recovered by
+<P>
+<FONT SIZE=+1><CENTER>
+<A NAME="eqA2"><img alt="eq. (VI.A.2)" src="figs/eqA2.gif">
+<p align=right>(VI.A.2)</P>
+</FONT></CENTER>
+<P>
+where,
+<CENTER>
+<TABLE CELLSPACING=0 CELLPADDING=0 >
+<TR>
+<TD ALIGN=RIGHT>
+<FONT SIZE=+1>
+V<SUB>tia</SUB>
+</FONT>
+</TD>
+<TD><FONT SIZE=+1>=</FONT></TD>
+<TD><FONT SIZE=+1>voltage at trans-impedance amplifier output</FONT></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT>
+<FONT SIZE=+1>G<SUB>i</SUB></FONT>
+</TD>
+<TD><FONT SIZE=+1>=</FONT></TD>
+
+<TD><FONT SIZE=+1>commandable gain, <I>i</I> = 1, 2, 3.</FONT></TD>
+</TR>
+
+<TR>
+<TD ALIGN=RIGHT>
+<FONT SIZE=+1>
+S<SUB>j</SUB>
+</FONT>
+</TD>
+
+<TD><FONT SIZE=+1>=</FONT></TD>
+
+<TD><FONT SIZE=+1>commandable offset, <I>j</I> = 1, 2,..., 8 .</FONT></TD>
+</TR>
+</TABLE>
+</CENTER>
+<P>
+The effects on the flux calibration due to the pole zero amplifier and
+the pulse circumvention circuit (deglitcher), which also lie in the analog
+electronics board between the output of the preamplifier electronics and
+the commandable offset electronics, were ignored. The analog electronics
+also contained a filter to remove high frequencies in the signal. Adverse
+effects due to the filter were considered to be small at the frequencies
+of interest and were therefore ignored.
+
+<HR WIDTH="100%">
+
+<H2>
+<A NAME="3">A.3 Trans-impedance Amplifier</H2>
+<P>
+In order to recover the extended component of the incident flux, it
+was necessary to determine, and remove, any electronic baseline offset.
+The voltage at the output of the trans-impedance amplifier was taken to
+be of the form:
+<P>
+<A NAME="eqA3">
+<CENTER><FONT SIZE=+1>
+V<SUB>tia</SUB>[observed] =
+I<SUB>d</SUB> &times; R<SUB>f</SUB> + V<SUB>tia</SUB>[off]
+</CENTER></FONT>
+
+<P>
+where <I>I</I><SUB>d</SUB> is the current through the detector and 
+<I>R</I><SUB>f</SUB> is the feedback resistor.
+<P>
+The offset voltage, <I>V</I><SUB>tia</SUB>[<I>off</I>] represents a
+sum of terms due to (a) offsets in the trans-impedance amplifier, including
+the cold JFETs, and (b) offsets in the analog electronic boards. Since
+the effects are indistinguishable at the output, both have been lumped
+into one equivalent offset voltage at the output of the trans-impedance
+amplifier. Although these offsets were in principle temperature dependent,
+it was concluded from pre-flight tests of the relevant temperature 
+coefficient, and the relative stability of the electronics boxes in flight, 
+that this
+effect was small enough that it was not necessary to model the temperature
+dependent aspects of <I>V</I><SUB>tia</SUB>[<I>off</I>]. A single fixed
+value for the electronic baseline was therefore used for each SOP. The
+detaiIs of the determination of <I>V</I><SUB>tia</SUB>[<I>off</I>] are
+given in <A HREF="B3.html">Section VI.B.3</A>.
+<P>
+After launch, the electronic baselines at 60 and 100 &micro;m were
+found to be affected by the bias boosts induced during crossings of the
+South Atlantic Anomaly (SAA). The effect is thought to be due to the \
+differential
+heating of the JFETs because of the large current passing through the JFET
+connected to the detector. This effect was modeled by adding a time dependent
+exponential function to <I>V</I><SUB>tia</SUB>[<I>off</I>]
+<P>
+<A NAME="eqA4">
+<CENTER>
+<FONT SIZE=+1>
+Corr = (a + b &times; T) &times; 
+exp(-<img alt="delta.uc" src="../images/delta-uc.gif"> /
+<img alt="tau" src="../images/tau-lc.gif">)
+</CENTER></FONT>
+<P ALIGN=RIGHT>(V.A.4)</P>
+<P>
+where:
+<CENTER>
+<TABLE ALIGN=ABSCENTER CELLSPACING=0 CELLPADDING=0 >
+<TR>
+<TD ALIGN=RIGHT VALIGN=CENTER><FONT SIZE=+1>T</FONT></TD>
+<TD><FONT SIZE=+1>=</FONT></TD>
+<TD><FONT SIZE=+1>duration of the most recent bias boost</FONT></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=CENTER><FONT SIZE=+1>a,b</FONT></TD>
+<TD><FONT SIZE=+1>=</FONT></TD>
+<TD><FONT SIZE=+1>constants</FONT></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=CENTER><img alt="delta.uc" src="../images/delta-uc.gif"></FONT></TD>
+<TD><FONT SIZE=+1>=</FONT></TD>
+<TD><FONT SIZE=+1>time interval between time of interest and end of most recent bias
+boost</FONT></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT><img alt="tau" src="../images/tau-lc.gif"></FONT></TD>
+<TD><FONT SIZE=+1>=</FONT></TD>
+<TD><FONT SIZE=+1>characteristic decay time of the baseline shift</FONT></TD>
+</TR>
+</TABLE>
+</CENTER>
+<P>
+This correction was added to the electronic baseline value before removing
+the electronic baseline from the data. For a typical passage through the
+SAA, the magnitude of this baseline shift was about 2O% and 8O% of the
+signal from the TFPR at 60 &micro;m and 100 &micro;m. The time
+constant<img alt="tau" src="../images/tau-lc.gif">was typically 52 minutes
+at 60 &micro;m and 42 minutes at 100 &micro;m.
+<H2>
+<HR WIDTH="100%"><A NAME="4"></A>A.4 Removal of Coherent Detector Noise</H2>
+<P>
+Detector 5 (100 &micro;m) exhibited a stable, coherent 0.25 Hz
+waveform. By adding successive 4-second intervals of data coherently, it
+was possible to determine the shape of the waveform to better than l% of
+the remaining rms noise. This wave form was then subtracted from the detector
+5 data stream. This resulted in an order of magnitude improvement in the
+rms noise and greatly reduced the number of spurious point source detections
+for detector 5. After removal of the wave form, the character of the resulting
+detector 5 data stream was typical of 100 &micro;m detectors.
+<P>
+Detector 19 (25 &micro;m) exhibited a spike, of randomly varying
+amplitude, every second at sample #9 of the 16 Hz sampled data stream.
+The typical amplitude was approximately 6-8 times the cleaned rms noise
+for detector 19. The amplitude was measured by subtracting the average
+of the neighboring samples, which showed no evidence of electronic cross-talk
+from the value of the spike sample. If the spike amplitude was less than
+a maximum allowable amplitude (approximately 10 times the rms noise of
+the cleaned detector 19 data), then the spiked sample was replaced by the
+average of its neighboring samples. If the spike amplitude was greater
+than the maximum allowable amplitude, then the maximum allowable amplitude
+was subtracted from the spike sample. The latter case can occur in the
+6% of detector 19 detections for which the spike appears on top of a point
+source. If the signal to noise ratio of such a point source after the spike
+was removed is less than 20, the result will be a &quot;topped&quot; source.
+This process can lower the correlation coefficient below threshold for
+some of the weaker sources. Sources brighter than signal to noise ratio
+~ 2O will have progressively higher correlation coefficients. After removing
+the spikes, the overall rms noise for detector 19 was reduced by a factor
+~3.
+<P>
+Detector 43 exhibited a 1 Hz waveform that consisted of a positive spike
+with signal to noise ratio ~2 at sample #9 of the 16 Hz sampled output,
+followed by a small negative spike, with signal to noise ratio ~&frac12;, at
+sample #10. The amplitude varied randomly, but remained small, with a signal
+to noise ratio &lt; 3. In this case a constant waveform of the above shape
+was subtracted, resulting in a reduction of the detector 43 rms noise by
+a factor of ~1.3. All subtractions were effectively done at the output
+of the trans-impedance amplifier.
+
+<H2>
+<HR WIDTH="100%"><A NAME="5">A.5. Feedback Resistor</H2>
+
+<a name="figA1">
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=2 align=right width=200>
+<TR>
+<TD>
+<CENTER><A HREF="../ch6/figs/figA1-2.gif" target="fig6A1">
+<IMG SRC="../ch6/figs/figA1-3.gif" BORDER=0></A></CENTER>
+</TD>
+</TR>
+<TR>
+<TD>
+<I>Figure VI.A.1 The fit used to represent the feedback resistor is shown
+in the four wavelength bands. The flux densities corresponding
+to the appropriate voltages across the resistor are shown.
+The same fit, that shown in <A HREF="../ch2/C5.html#figC11">Fig. II.C.11</A>,
+was used for all the detectors.</I><br>
+<a href="../ch6/figs/figA1-2.gif" target="fig6A1">larger</a>
+<a href="../ch6/figs/figA1-1.gif" target="fig6A1">largest</a>
+</TD>
+</TR>
+</TABLE>
+<P>
+The feedback resistors had a nominal resistance of 2 &times; 10<SUP>10</SUP>
+<img alt="omega.uc" src="../images/omega-uc.gif">, but in fact the resistance
+of the feedback resistor was dependent on the voltage across the resistor.
+The fit to the feedback resistor used in the data reduction is a three-piece
+curve shown in <A HREF="#figA1">Fig. VI.A.1</A>a-d. It is the same fit
+as shown in <A HREF="../ch2/C5.html#figC11">Fig. II.C.11</A>. This was the
+only nonlinearity assumed in the processing.
+
+<br clear=right>
+
+<HR WIDTH="100%">
+<H2><A NAME="6">A.6 Summary</H2>
+<P>
+The processing to remove the instrumental transfer functions can be
+summarized by the following equation for the current in the detector.
+<P>
+<A NAME="eqA5.gif">
+<CENTER>
+<img alt="eq (VI.A.5)" align="center" src="../ch6/figs/eqA5.gif">
+</CENTER>
+<P ALIGN=RIGHT>(V.A.5)</P>
+
+<HR>
+
+<CENTER>
+<FONT SIZE=+1><A HREF="index.html#toc">Chapter Contents</A>
+| <A HREF="index.html#intro">Introduction</A> | <A HREF="index.html#auth">Authors</A>
+| <A HREF="index.html#ref">References</A>
+<BR>
+<A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> | <A HREF="../ch5/H.html">Previous
+Section</A> | <A HREF="B.html">Next Section</A></FONT></CENTER>
+<P>
+
+<HR>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

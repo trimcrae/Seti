@@ -1,0 +1,521 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+<HEAD>
+<title>V. Data Reduction</title>
+</HEAD>
+
+<BODY bgcolor="#FFFFFF">
+
+<h1 align="center">
+   IRAS Explanatory Supplement<br>
+V. Data Reduction
+</h1>
+
+<font size=+1>
+<center>
+  <a href="#toc">Chapter Contents</a> | 
+  <a href="#intro">Introduction</a> | 
+  <a href="#auth">Authors</a> | 
+  <a href="#ref">References</a>
+<BR>
+  <a href="../toc.html">Table of Contents</a> | 
+  <a href="../index/index.html">Index</a> | 
+  <a href="../ch4/index.html">Previous Chapter</a> | 
+  <a href="../ch6/index.html">Next Chapter</a>
+</font></center>
+
+<hr>
+<h2><a name="toc">Chapter V Contents</a></h2>
+<ol type=A>
+      <li><a href="A.html">Overview</a>
+<ol type=1>
+          <li><a href="A1.html">General</a>
+          <li><a href="A2.html">IRAS Catalogs and Atlases</a>
+          <li><a href="A3.html">Processing Summary</a>
+<ol type=a>
+            <li><a href="A3.html#3a">Data Reconstruction</a>
+            <li><a href="A3.html#3b">Pointing Reconstruction</a>
+            <li><a href="A3.html#3c">Source Detection</a>
+            <li><a href="A3.html#3d">Point Source Confirmation</a>
+            <li><a href="A3.html#3e">Small Extended Source Confirmation</a>
+            <li><a href="A3.html#3f">Asteroids and Comets</a>
+            <li><a href="A3.html#3g">Extended Emission Processing</a>
+            <li><a href="A3.html#3h">Final Processing Steps</a>
+</ol>
+</ol>
+      <li><a href="B.html">Pointing Reconstruction</a>
+      <li><a href="C.html">Source Detection</a>
+<ol type=1>
+          <li><a href="C.html#1">Square Wave Filter</a>
+          <li><a href="C.html#2">Noise Estimator</a>
+          <li><a href="C.html#3">Timing Estimate</a>
+          <li><a href="C.html#4">Correlation with Point Source Template</a>
+          <li><a href="C.html#5">Determination of Templates</a>
+          <li><a href="C.html#6">Low Signal-to-Noise Detections</a>
+          <li><a href="C.html#7">Source Shadowing</a>
+</ol>
+      <li><a href="D.html">Point Source Confirmation</a>
+<ol type=1>
+          <li><a href="D1.html">Processing Overview</a>
+          <li><a href="D2.html">Overview of Seconds-Confirmation</a>
+<ol type=a>
+            <li><a href="D2a.html">Band Seconds-Confirmation</a>
+            <li><a href="D2b.html">Position Reconstruction</a>
+            <li><a href="D2c.html">Optical Crosstalk Removal</a>
+            <li><a href="D2d.html">In-Band Seconds-Confirmation Decision</a>
+            <li><a href="D2e.html">Double-Detection Mode</a>
+            <li><a href="D2f.html">Triple-Detection Mode (Edge Detections)</a>
+            <li><a href="D2g.html">In-Band Seconds-Confirmation Confusion 
+                              Processing</a>
+            <li><a href="D2h.html">In-Band Seconds-Confirmation Position 
+                              Refinement</a>
+            <li><a href="D2i.html">In-Band Seconds-Confirmation Photometric 
+                              Refinement</a>
+            <li><a href="D2j.html">In-Band Seconds-Confirmation Statistical
+                              Processing</a>
+</ol>
+          <li><a href="D3.html">Band-Merging</a>
+<ol type=a>
+            <li><a href="D3.html#3a">Overview of Band-Merging</a>
+            <li><a href="D3.html#3b">Band Filling</a>
+            <li><a href="D3.html#3c">Special Considerations Regarding 
+                              Band-Merging</a>
+            <li><a href="D3.html#3d">Focal Plane Geometry Analysis</a>
+</ol>
+          <li><a href="D4.html">Known Source Correlation</a>
+<ol type=a>
+            <li><a href="D4.html#4a">Known Source Prediction</a>
+            <li><a href="D4.html#4b">Correlation of Observations With
+                              Predictions</a>
+            <li><a href="D4.html#4c">Known Source Flux and Position Discrepancy
+                              Analysis</a>
+</ol>
+          <li><a href="D5.html">Overview of Hours-Confirmation</a>
+<ol type=a>
+            <li><a href="D5.html#5a">Hours-Confirmation Decision</a>
+            <li><a href="D5.html#5b">Position Agreement</a>
+            <li><a href="D5.html#5c">Photometric Agreement</a>
+            <li><a href="D5.html#5d">Hours-Confirmation Confusion Processing</a>
+            <li><a href="D5.html#5e">Hours-Confirmation Position and Photometric
+                              Refinement</a>
+            <li><a href="D5.html#5f">Hours-Confirmation Statistical 
+			      Processing</a>
+            <li><a href="D5.html#5g">Special Considerations Regarding
+                              Hours-Confirmation</a>
+</ol>
+          <li><a href="D6.html">Overview of Weeks-Confirmation</a>
+<ol type=a>
+            <li><a href="D6.html#6a">Weeks-Confirmation Decision</a>
+            <li><a href="D6.html#6b">Weeks-Confirmation Position Refinement</a>
+            <li><a href="D6.html#6c">Weeks-Confirmation Statistical 
+			      Processing</a>
+</ol>
+          <li><a href="D7.html">Auxiliary Processing for Low Resolution 
+                                Spectra</a>
+          <li><a href="D8.html">Flux and Confusion Status Words</a>
+          <li><a href="D9.html">Conversion of Position Uncertainties to 
+                                Gaussian Approximation</a>
+</ol>
+      <li><a href="E.html">Overview of Small Extended Source Data Processing</a>
+<ol type=1>
+          <li><a href="E1.html">Potential Detections</a>
+          <li><a href="E2.html">Seconds-Confirmation</a>
+          <li><a href="E3.html">Source Construction and Hours-Confirmation</a>
+          <li><a href="E4.html">Cluster Analysis Processing</a>
+          <li><a href="E5.html">Weeks-Confirmation</a>
+          <li><a href="E6.html">Band-Merging</a>
+          <li><a href="E7.html">Optimizing the Processor</a>
+<ol type=a>
+              <li><a href="E7.html#7a">Choosing the Clustering Threshold</a>
+              <li><a href="E7.html#7b">Choosing the Weeks-Confirmation
+                  Threshold</a>
+              <li><a href="E7.html#7c">Choosing the Band-Merging Threshold</a>
+              <li><a href="E7.html#7d">Summary and Discussion</a>
+</ol>
+          <li><a href="E8.html">The Small Extended Source Catalog</a>
+</ol>
+      <li><a href="F.html">Asteroids and Comets</a>
+      <li><a href="G.html">Extended Source Products</a>
+<ol type=1>
+          <li><a href="G.html#1">Processing Overview</a>
+          <li><a href="G.html#2">Quality Checking, Selection, and Weights</a>
+          <li><a href="G.html#3">Phasing, Sorting, and Gaps</a>
+          <li><a href="G.html#4">Conversion to Surface Brightness</a>
+          <li><a href="G.html#5">Compression and the Time-Ordered Files</a>
+          <li><a href="G.html#6">Destriping</a>
+          <li><a href="G.html#7">Projection into Sky Maps</a>
+          <li><a href="G.html#8">Consistency Checking and Removal of Bad Data</a>
+          <li><a href="G.html#9">Final Image Generation</a>
+</ol>
+      <li><a href="H.html">The Point Source Catalog</a>
+<ol type=1>
+          <li><a href="H.html#1">Processing Overview</a>
+          <li><a href="H.html#2">Clean-Up Processing</a>
+          <li><a href="H.html#3">Neighbor Tagging</a>
+          <li><a href="H.html#4">Cirrus Flagging</a>
+          <li><a href="H.html#5">Average Flux Computation and Variability Analysis</a>
+          <li><a href="H.html#6">High Source Density Regions</a>
+          <li><a href="H.html#7">Catalog Source Selection</a>
+          <li><a href="H.html#8">Low-Resolution Spectral Associations</a>
+          <li><a href="H.html#9">Associations</a>
+</ol>
+</ol>
+
+<hr>
+<h2><a name="intro">Introduction</a></h2>
+<p>      This chapter describes the transformation of the raw data
+into its final forms.  <a href="A.html">Section V.A</a> provides a general 
+overview
+of the data reduction, while subsequent sections provide a more
+detailed description. The relative and absolute calibration of
+the data is discussed separately in <a href="../ch6/index.html">Chapter VI</a>.
+The results of the analysis of the data processing are given in 
+<a href="../ch7/index.html">Chapter VII</a>.
+An overall description of the survey, including sky coverage,
+completeness and reliability, is given in
+<a href="../ch8/index.html">Chapter VIII</a>.
+
+<hr>
+<h2><a name="auth">Authors:</a></h2>
+
+     T. Chester, B. T. Soifer, C. Beichman, J. Fowler, T.N. Gautier,
+G. Helou, H. McCallon, M. Rowan-Robinson, T. Conrow, M. Hauser,
+D. Walker, R. Walker.
+
+<hr>
+<h2><a name="ref">References:</a></h2>
+
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1981A%26AS...43..265A">
+Acker, A., Marcout, J., and Ochsenbein, F., 1981, <i>Astron. Astrophys</i>.
+   [Supp.] <b>43</b>, 265.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1979A%26AS...35...23A">
+Altenhoff, W.J.,  Downes, D., Pauls, T., and Schraml, J., 1979,
+   <i>Astron. Astrophys</i>. [Suppl.] <b>35</b>, 23.
+</A>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1970csca.book.....A"><BR>Alter, G., Balasz, B., and Ruprecht, J., 1970, <i>Catalogue of Star
+   Clusters and Associations</i>. Budapest: Akademiai Kiado.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1966ApJS...14....1A">
+Arp, H., 1966, <i>Ap.J.</i> [Suppl.] <b>14</b>, 1.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1982ApJS...49..183B">
+Blitz, L., Fich, M. and Stark, A.A., 1982, <i>Ap.J.</i> [Supp.] <b>49</b>,
+   183.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1946MeLu2.119....1C">
+Cederblad S., 1946, <i>Lund Annals</i>, Ser. 2, No. 119.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1976rcbg.book.....D">
+de Vaucouleurs, G., de Vauncouleurs, A., and Corwin, Jr., H.G.,
+   1976, <i>Second Reference Catalogue of Bright Galaxies</i>. Austin:
+   University of Texas Press.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1963AN....287..257D">
+Dorschner, V.J., and Gurtler, J., 1964, <i>Ast. Nachr.</i> <b>287</b>, 257.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1975A%26A....44..151F">
+Fisher, J.R., and Tully, R.B., 1975, <b>Astron. Astrophys</b>.
+   <b>44</b>, 151.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1980AJ.....85.1328F">
+Foltz, C.B., Peterson, B.M., and Boronson, T.A., 1980, <i>A. J.</i>
+   <b>85</b>, 1328.
+</A><BR>Fowler, J.W., and Rolfe, E.G., 1982, <i>Journal of the Astronautical
+   Sciences</i>, Vol. XXX, No. 4, 385<BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1969VeARI..22....1G">
+Gliese, W., 1969, <i>Veroffentl. Astron. Rechen-Instituts Heideberg</i>,
+   No. 22.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1979AuJPA..48....1H">
+Haynes, R.F., Caswell, J.L., and Simons, L.W.J., 1979, <i>Aust. J.
+   Phys. Astrophys</i>. [Supp.], No. 48.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1982bsc..book.....H">
+Hoffleit, D., and Jaschek, C., 1982, <i>The Bright Star Catalogue,
+   Fourth Revised Edition</i>. New Haven: Yale University Observatory.
+</A><BR>Kleinmann, S.G., and Joyce, R.R., 1984, private communication.<BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1984AJ.....89..332K">
+Kojoian, G., Chute, P.A., and Aumann, C.E., 1984, <i>A. J.</i>
+   <b>89</b>, 332.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1981AJ.....86..816K">
+Kojoian, G., Elliott, R., and Bicay, M.D., 1981, <i>A. J.</i>
+   <b>86</b>, 816.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1982AJ.....87.1364K">
+Kojoian, G., Elliott, R., and Bicay, M.D., 1982, <i>A. J.</i>
+   <b>87</b> 1364.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1978AJ.....83.1545K">
+Kojoian, G., Elliott, R., and Tovmassian, H.M., 1978, <i>A. J.</i>
+   <b>83</b>, 1545.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1981AJ.....86..811K">
+Kojoian, G., Elliott, R., and Tovmassian, H.M., 1981, <i>A. J.</i>
+   <b>86</b>, 811.
+</A><BR>
+<A href="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1981A%26AS...45..367K">
+Kuhr, H., Witzel, A., Pauliny-Toth, I.I.K., and Nauber, U., 1981,
+   <i>Astron. Astrophys.</i> [Supp.] <b>45</b>, 367.
+</a><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1981CSVS..C......0K">
+Kukarkin, B.V.,  Kholopov, P.N.,  Arirukhina, N.M., Fedorich V.P.,
+   Frolov, M.S., Goranskij, V.P., Gorynya, N.A. Karitskaya E.A.,
+   Kireeva, N.N., Kukarkina N.P., Kurochkin N.E., Medvedevna, G.I.,
+   Perova N.B. Ponomareva, J A. Samus' N.N.  and Shugarov, S. Yu.
+   1981, <i>New Catalog of Suspected Variahle Stars</i> (on magnetic
+   tape), Moscow.
+</A><BR>Kukarkin, B.V., Kholopov, P.N., Efremov, Yu. N., Kukarkina, N.P.,
+   Kurochkin, N.E., Medvedeva, G.I., Perova N.B., Fedorovich, V.P.,
+   and Frolov, M.S., 1970, <i>General Catalog of Variable Stars, Vol
+   II.</i> Sternberg Inst., Moscow State University.<BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1971GCVS3.C......0K">
+Kukarkin, B.V., Kholopov, P.N., Pskovsky, Yu.P., Efremov, Yu.N.,
+   Kukarkina, N.P., Kurochkin, N.E., Medvedeva, G.I., Perova, N.B.,
+   Fedorovich, V.P., and Frolov, M.S., 1971, <i>General Catalogue of
+   Variable Stars, Vol. III.</i> Sternberg Inst., Moscow State
+   University.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1982euse.book.....L">
+Lauberts, A., 1982, <i>The ESO/Uppsala Survey of the ESO(B) Atlas.</i>
+   Mucnich: European Southern Observatory.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1943AnDea...5Q....L">
+Lee, O.J., Baldwin, R.J., and Hamlin, D.W., 1943, <i>Annals of the
+   Dearborn Observatory V, Part 1A.</i>
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1943AnDea...5R....L">
+Lee, O.J., and Bartlett, T.J., 1944, <i>Annals of the Dearborn
+   Observatory V, Part 1B.</i>
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1947AnDea...5Q....L">
+Lee, O.J., Gore, G.D., and Bartlett, T.J., 1947, Annals of the
+   Dearborn Observatory V, Part 1C.</i>
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1962ApJS....7....1L">
+Lynds, B.T., 1962, <I>Ap. J.</i> [Suppl.] <b>7</b>, 1.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1967Afz.....3...55M">
+Markarian, B.E., 1967, <I>Astrofizika 3</i>, <b>55</b>.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1969Afz.....5..443M">
+Markarian, B.E., 1969a, <i>Astrofizika 5</i>, <b>443</b>.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1969Afz.....5..581M">
+Markarian, B.E., 1969b, <i>Astrofizika 5</i>, <b>581</b>.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1971Afz.....7..299M">
+Markarian, B.E., and Lipovetskii, V.A., 1971, <i>Astrofizika 7</i>,
+   <b>299</b>.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1972Afz.....8...89M">
+Markarian, B.E., and Lipovetskii, V.A., 1972, <i>Astrofizika 8</i>,
+   <b>89</b>.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1973Afz.....9..283M">
+Markarian, B.E., and Lipovetskii, V.A., 1973, <i>Astrofizika 9</i>,
+   <b>283</b>.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1974Afz....10..307M">
+Markarian, B.E., and Lipovetskii, V.A., 1974, <i>Astrofizika 10</i>,
+   <b>307</b>.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1976Afz....12..389M">
+Markarian, B.E., and Lipovetskii, V.A., 1976a, <i>Astrofizika 12</i>,
+   <b>389</b>.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1976Afz....12..657M">
+Markarian, B.E., and Lipovetskii, V.A., 1976b, <i>Astrofizika 12</i>,
+   <b>657</b>.<BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1977Afz....13..225M">
+Markarian, B.E., Lipovetskii, V.A., and Stepanyan, D.A., 1977a,
+   <i>Astrofizika 13</i>, <b>225</b>.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1977Afz....13..397M">
+Markarian, B.E., Lipovetskii, V.A., and Stepanyan, D.A., 1977b,
+   <i>Astrofizika 13</i>, <b>397</b>.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1979Afz....15..201M">
+Markarian, B.E., Lipovetskii, V.A., and Stepanyan, D.A., 1979a
+   <i>Astofizika 15</i>, <b>201</b>.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1979Afz....15..363M">
+Markarian, B.E., Lipovetskii, V.A., and Stepanyan, D.A., 1979b,
+   <i>Astrofizika 15</i>, <b>363</b>.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1979Afz....15..549M">
+Markarian, B.E., Lipovetskii, V.A., and Stepanyan, D.A., 1979c,
+   <i>Astrofizika 15</i>, <b>549</b>.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1981Afz....17..619M">
+Markarian, B.E., Lipovetskii, V.A. and Stepanyan, D.A., 1981,
+   <i>Astrofizika 17</i>, <b>619</b>.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1974Ap%26SS..27....3M">
+Marsalkova, P. 1974, <i>Astrophys. Sp. Sci.</i> <b>27</b>, 3.
+</A><BR>McCallon, H.L. and Kopan, E.L., <i>IRAS Telescope Pointing 
+   Reconstruction</i>, JPL Publication No. 85-1, to be published.<BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1969tmss.book.....N">
+Neugebauer, G., and Leighton, R.B., 1969, <i>Two-Micron Sky Survey,
+   NASA SP-3047</i>.  Washington, D.C.: National Aeronautics and Space
+   Administration.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1973ugcg.book.....N">
+Nilson, P., 1973, <i>Uppsala General Catalogue of Galaxies</i>. Act 
+   Universitatis Upsailensis, Nova Regiae Societatis Upsallensis, Series V:A,
+   Vol. 1.
+</A><BR>Peterson, D.S., 1973, <i>A. J.</i> <b>78</b>, 811.<BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1983AFGL..161.....P">
+Price, S.D., and Murdock, T.L., 1983, <i>The Revised Air Force
+   Geophysics Laboratory Infrared Sky Survey, AFGL-TR-83-0161.</i>
+   Hanscom Air Force Base, Massachusetts: Air Force Geophysics
+   Laboratory.
+</A><BR>Rolfe, E.G., Otake, H., and Fowler, J.W., 1984 (in preparation
+   for submission to the <i>Journal of the Astronautical Sciences</i>).<BR><i>Smithsonian Astrophysical Ohservatory Star Catalog (4 vols.)</i>
+   1966. Washington, D.C.: Smithsonian Institution.<BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1973PW%26SO...1d...1S">
+Stephenson, C.B., 1973, <i>Publications of the Warner and Swasey
+   Observatory, Case Western Reserve University</i>, <b>1</b>, No. 4.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1976PW%26SO...2...21S">
+Stephenson, C.B., 1976, <i>Publications of the Warner and Swasey
+   Observatory, Case Western Reserve University</i>, <b>2</b>, No. 2.
+</A><BR>Sweeney, L.H., Heinsheimer, T.F., Yates, F.F., Maran, S.P., Lesh,
+   J.R., and Nagy, T.A., 1978, <i>Interim Equatorial Infrared Catalogue,
+   TR-0078(3409-Z0)-1</i>. Los Angeles: The Aerospace Corporation.<BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1966AJ.....71..922V">
+van den Bergh, S., 1966a, <i>A. J.</i> <b>71</b>, 922.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1966AJ.....71..990V">
+van den Bergh, S., 1966b, <i>A. J.</i> <b>71</b>, 990.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1975AJ.....80..208V">
+van den Bergh, S., and Herbst, W., 1975, <i>A. J.</i> <b>80</b>, 208.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1985cqan.book.....V">
+Veron-Cetty, M.P., and Veron, P., 1984, <i>A Catalogue of Quasars
+   and Active Nuclei</i>. Munich: European Southern Observatory.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1959VV....C......0V">
+Vorontsov-Velyaminov, B.A., 1959, <i>Atlas and Catalog of Interacting
+   Galaxies</i>. Sternberg Inst., Moscow State University.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1963MCG...C03....0V">
+Vorontsov-Velyaminov, B.A., and Arhipova, V.P., 1963, <i>Morphological
+   Catalog of Galaxies, Part III</i>. Moscow State University.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1964MCG...C02....0V">
+Vorontsov-Velyaminov, B.A., and Arhipova, V.P., 1964, <i>Morpological
+   Catalog of Galaxies, Part II</i>. Moscow State University.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1968MCG...C04....0V">
+Vorontsov-Velyaminov B.A.,  and Arhipova V.P., 1968, <i>Morphological
+   Catalog of Galaxies, Part IV</i>. Moscow State University.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1974MCG...C05....0V">
+Vorontsov-Velyaminov, B.A., and Arhipova, V.P., 1974, <i>Morphological
+   Catalog of Galaxies, Part V</i>. Moscow State University.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1962MCG...C01....0V">
+Vorontsov-Velyaminov, B.A., and Krasnogorskaja, A.A., 1962,
+   <i>Morphological Catalog of Galaxies, Part I</i>.  Moscow State
+   University.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1970MmRAS..73..153W">
+Wackerling. L.R., 1970, <i>Mem. R.A.S.</i> <b>73</b>, 153.
+</A><BR>Wesselius, P.R., 1979, unpublished.<BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1963CGCG..C02....0Z">
+Zwicky, F., and Herzog, E., 1963, <i>Catalogue of Galaxies and of
+   Clusters of Galaxies, Vol II.</i> Pasadena: California Institute of
+   Technology.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1966CGCG..C03....0Z">
+Zwicky, F., and Herzog, E., 1966, <i>Catalogue of Galaxies and of
+   Clusters of Galaxies, Vol III.</i> Pasadena: California Institute
+   of Technology.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1968CGCG..C04....0Z">
+Zwicky, F., and Herzog, E., 1968, <i>Catalogue of Galaxies and of
+   Clusters of Galaxies, Vol. IV.</i> Pasadena: Calfornia Institute of
+   Technology.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1961cgcg.book.....Z">
+Zwicky, F., Herzog, E., and Wild P., 1961, <i>Catalogue of Galaxies
+   and of Clusters of Galaxies, Vol I.</i> Pasadena: California
+   Institute of Technology.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1965CGCG..C05....0Z">
+Zwicky, F., Karpowicz, M., and Kowal, C.T., 1965, <i>Catalogue of
+   Galaxies and of Clusters of Galaxies, Vol. V.</i> Pasadena. California
+   Institute of Technology.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1968CGCG..C06....0Z">
+Zwicky, F. and Kowal, C.T., 1968, <i>Catalogue of Galaxies and of
+   Clusters of Galaxies, Vol. VI.</i> Pasadena. California Institute
+   of Technology.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1975AJ.....80..545Z">
+Zwicky, F., Sargent, W.L.W., and Kowal, C.T., 1975, <i>A. J.</i>
+   <b>80</b>, 545.
+</A><BR>
+<A HREF="http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=1971cscg.book.....Z">
+Zwicky, F., and Zwicky, M.A., 1971, <i>Catalogue of Selected Compact
+   Galaxies and of Post-eruptive Galaxies.</i> Zurich:  Offsetdruk L.
+   Speich.
+</A>
+
+
+
+<hr><center>
+<font size=+1>
+<center>
+  <a href="#toc">Chapter Contents</a> | 
+  <a href="#intro">Introduction</a> | 
+  <a href="#auth">Authors</a> | 
+  <a href="#ref">References</a>
+<br>
+  <a href="../toc.html">Table of Contents</a> | 
+  <a href="../index/index.html">Index</a> | 
+  <a href="../ch4/index.html">Previous Chapter</a> | 
+  <a href="../ch6/index.html">Next Chapter</a>
+</font></center>
+
+<hr>
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

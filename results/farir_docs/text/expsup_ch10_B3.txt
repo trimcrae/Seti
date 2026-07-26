@@ -1,0 +1,463 @@
+X.B.3 The Working Survey Data Base 
+
+ IRAS Explanatory Supplement
+
+X. The Formats of the IRAS Catalogs and Atlases
+
+B. Point Sources
+
+B.3 The Working Survey Data Base
+
+ Chapter Contents 
+ | Authors 
+| References 
+
+ Table of Contents |
+ Index | Previous Section 
+| Next Section 
+ 
+ The most complete observational and data reduction history
+for point sources is contained within the Working Survey Data
+Base (WSDB). The WSDB is broken up into 20 files, one for each
+range of ecliptic longitudes called a Lune. Each
+file is preceded by a header file containing a single 80-character
+ASCII record giving the date and version of the WSDB
+( Table X.A.1 ).
+ Except as noted below, the entries are similar to those listed
+above for the catalog tape.
+ Table X.B.3a lists the entries, their
+variable type and length. A second file, called the Ancillary
+file
+( Table X.B.3b )
+contains additional flags and derived quantities
+obtained during final product generation. Most of the information
+in the ancillary file is the same as that in the catalog tape
+described in
+ Section X.B.1 . Character variables are in ASCII
+format. All arithmetic quantities are in integer format with
+the high order byte first.
+ 
+ It is important to note that the WSDB and Ancillary files
+are in binary format with variable length, blocked records (due
+to the variable number of hours-confirmed sightings or associations).
+ Extra information has been added to the WSDB and Ancillary file
+tapes to make it possible to read in these variable length records.
+Each physical block on the tape begins with a Block Control Word
+of length I*4. Its high order two bytes give the length of the
+physical block in bytes; this length includes the 4-byte length
+of the Block Control Word itself. In addition, each logical record
+within the physical block is preceded by a Segment Control Word
+of length I*4. Its high order two bytes give the length of the
+logical record in bytes; again, this length includes the 4-byte
+length of the Segment Control Word itself. The inclusion of this
+information should make it possible for computers that can work
+with Variable Block formats to easily read the tape. In no case
+does the information for a single source span two physical blocks.
+ 
+ The remainder of this section describes WSDB and ancillary
+file entries not discussed above.
+ 
+ SDAS Lune Number: LUNE
+
+ In the data reduction the sky was divided into twenty "lunes"
+based on ecliptic coordinates. Lune 1 comprises that part of
+the sky with ( X ) > 60deg; Lune 2 comprises that sky with
+( X ) < -60deg. Lunes 3-20 comprise that part of the sky with
+|( X )| 60deg and ecliptic longitudes,
+( X ) in 20deg
+wide blocks. Lune 3 extends from 0deg ( X ) < 20deg,
+lune 4 from 20deg < ( X ) < 40deg. etc.
+ 
+ Ecliptic Bin Number: BIN
+
+ To aid the data reduction the entire sky was divided into
+some 40,000 1deg sq. bins. The bin structure is quite simple
+in ecliptic coordinates
+( Fig. X.Ap1.1 ) and an algorithm for generating
+bin numbers is given in Appendix X. 1.
+ 
+ Ecliptic Coordinates: ELAT, ELONG
+
+ Ecliptic coordinates are given in units of 10 -8 radians in
+the equinox 1950.
+ 
+ Scan Angle: SCAN
+
+ After weeks-confirmation SCAN gives the average scan angle
+of the focal plane with respect to the south-going local ecliptic
+meridian.
+ 
+ Positional Uncertainty: SIGY, LZ, SIGZ
+
+ As discussed in detail in
+ Section V.D , the position refinement
+describes the source positional uncertainty in terms of 1( X )
+in-scan and cross-scan gaussian uncertainties (SIGY and SIGZ)
+and a uniform uncertainty (of half-width LZ) whose size depends
+on the exact paths of the source across the focal plane.
+ 
+ Number of LRS Extractions: LRSX
+
+ Each time a source with a signal-to-noise ratio greater than
+25 at either 12 or 25 um transversed the focal plane, the data
+reduction software automatically triggered a request to extract
+a spectra from the low-resolution spectrometer data
+( Chapter IX ).
+ The threshold was purposefully set quite low so that sources
+with weak continuua but strong lines could be detected. Many sources
+with LRSX > 0 will fail to have meaningful spectra and will thus
+have NLRS = 0.
+ 
+ Known Source ID: KSID
+
+ The positions and predicted brightnesses of some 32,000 point
+sources including SAO stars, IRC objects and asteroids were incorporated
+into the data reduction software to provide a check on the positional
+and photometric accuracy of the IRAS sources.
+ Table X.B.5 lists
+the range of KSID values assigned to sources of various types.
+ 
+The following values are given for each hours-confirmed sighting:
+ 
+ Flux and Flux Uncertainty: FLUX(4),SIGF(4)
+
+ Flux and flux uncertainty measurements are given in units
+of 10-16 W m -2 for each hours-confirmed sighting. Note that an
+instrumental flux, not the flux density, is given. In order to
+convert the instrumental flux to flux density, one must divide
+the instrumental flux by 13.48, 5.16, 2.58, 1.00 x 10 12 Hz at
+12, 25, 60 and 100 um respectively. The derivation of flux uncertainties
+and the averaging of the individual hour-confirmed fluxes to give
+the average value (see AVGFLUX, below) quoted in the catalog is
+discussed in Section V.H.5.
+ 
+ Signal-to-Noise Ratio: TSNR(4)
+
+ If a source is detected (but not necessarily even seconds-confirmed)
+in a given band, then a value equal to ten times the maximum signal-to-noise
+ratio (SNR) observed on any detector in that band in the hours-confirmed
+sighting is retained. In relatively simple parts of the sky the
+noise estimator used to derive SNR gives reasonable values. In
+more complex regions near the Galactic plane (see
+ Section V.C.2 )
+the utility of SNR is very limited.
+ 
+ Correlation Coefficient: CORR
+
+ The maximum point source correlation coefficient (see
+ Section V.C.4 ) obtained during a
+hours-confirmed sighting is retained
+for each band. The values for each band, expressed as percentages
+up to a maximum of 100, are encoded into a single integer according
+to the following algorithm:
+
+ CORR = CC(1) x 2 24 + CC(2) x 2 16 
++ CC(3) x 2 8 + CC(4)
+
+ (X.B.1)
+
+ Flux Status: FSTAT
+
+ In each band there is a hierarchy of measurement quality
+depending on how many times a given source is observed within
+a given hours-confirmed sighting. FSTAT plays a crucial role in
+determining whether a source is included in the catalog at all,
+whether a flux is of high, medium or low quality and how the flux
+averaging was performed
+( Section V.H.5 ). for the meaning of each
+FSTAT value refer to Section V.D.8 .
+ 
+ The values of FSTAT for the four bands are compressed into
+a single integer according to the following algorithm:
+
+ FSTAT = FSTAT(1) x 2 12 + FSTAT(2) x
+2 8 + FSTAT(3) x 2 4 + FSTAT(4)
+ 
+ (X.B.2)
+
+ Detector ID's: DETID
+
+ The identities of all detectors observing a given source
+on the sightings (up to a maximum of 3 sightings) comprising a
+given hours-confirmed observation are recorded in the array DETID( I ,
+ J ).
+ The four bands run from I = 1 to 4 while the three sightings run
+from J = 1 to 3.
+ 
+ Each value of DETID contains an integer that must be decoded
+according to the following algorithm to obtain the detectors observing
+the source:
+
+ DETID(I,J) = D1 x 2 10 + D2 x 2 5 
++ D3
+ 
+ (X.B.3)
+
+where detector numbers, D1, D2 and D3, range from 1 to 16 within
+each band.
+ Table X.B.6 lists the correspondence between
+detector number within a band to the true detector number. The order of
+detector number is significant as described in
+ Chapter V.D.5 . It should
+be emphasized that when three detectors are named in a sighting,
+indicating the presence of an edge detection, the weakest of the
+edge detections may not have played any part in the assignment
+of flux or position.
+ 
+ Detector Name: DNAM, TNAM
+
+ Throughout the course of the data processing each hours-confirmed
+sighting is known by a combination of the first detector measuring
+the object (DNAM) and the time (in deci-UTCS since 1981, January
+1, 0h UT) of that sighting (TNAM).
+ 
+ Confusion Status: CSTAT, PNEARH, PNEARW
+
+ At various stages in the reconstruction of a point source
+attempts are made to recognize (and remedy) the effects of confusion
+between nearby sources. The confusion status word CSTAT plays
+an important role in selecting sources to be treated by the
+"clean-up" processor ( Section V.H.2 )
+and in determining which sources to keep in regions of high source density
+(see Section V.H.6 ). For
+a detailed discussion of confusion processing see
+ Section V.D.2 .
+Values of CSTAT and brief descriptions of their meaning are given
+in Section V.D.8 .
+ 
+ The values of CSTAT for each band are encoded into a single
+integer according to the following algorithm:
+
+ CSTAT = CSTAT(1) x 2 24 + CSTAT(2) x 2 16 +
+STAT(3) x 2 8 + CSTAT(4)
+ 
+ (X.B.4)
+
+The number of hours- and weeks-confirmed point sources within
+6' x 4.5' (half-widths) of the quoted source, PNEARH and PNEARW,
+are encoded into a single byte:
+
+ PNEAR = PNEARW x 24 + PNEARN
+ 
+ (X.B.5)
+
+ Cirrus Flags:. CIRRUS, CIRR1, CIRR2, CIRR3
+
+ The three flags denoting the presence of extended 100 um
+emission ("cirrus") as discussed in
+ Section V.H.4 , are
+encoded in two bytes according to the algorithm:
+
+ CIRRUS = CIRR3 x 2 8 + CIRR1 x 2 4 + CIRR2
+ 
+ (X.B.6)
+
+Values of CIRR2 = 0 and CIRR3 = 255 mean no data were available.
+
+ Small Extended Source Flags: SES1, SES2
+
+ The two small extended source flags for each band discussed
+in Section V.E.1 are encoded into two integers
+according to the following algorithm:
+
+ SES1 = SES1(1) x 2 12 + SES1(2) x 2 8 
++ SES1(3) x 2 4 + SES1(4)
+ 
+ (X.B.7)
+
+and
+ 
+ SES2 = SES2(1) x 2 12 + SES2(2) x 2 8 
++ SES2(3) x 2 4 + SES2(4)
+ 
+ (X.B.8)
+
+ Clean up Processors: CLEAN, BRIGHT, ACCEPT, HSDPROC, MISC
+
+ In creating the WSDB from the weeks-confirmed data, several
+processors were applied in order to fix various known problems
+(see
+ Section V.H ).
+These processors set various flags that allow
+the user to understand what processing occurred. The clean-up
+processor allowed the weeks-confirmation of various WSDB sources
+that did not previously have an opportunity to weeks-confirm for
+purely technical reasons or which were incorrectly split asunder
+during band merging. The flags set by that processor are described
+in
+ Table X.B.7a ,
+and include flags indicating saturated fluxes.
+Optical crosstalk from certain bright objects such as Saturn and
+IRC+10216 produced a few spurious sources. These were marked for
+deletion. The byte BRIGHT
+( Table X.B.7b )
+notes these cases and
+also contains flags denoting final acceptance (ACCEPT) or rejection
+of the source in each band. The flags from the High Source Density
+processor (HSDPROC, see
+ Section V.H.6 )
+are given in 2 bytes per
+band
+( Table X.B.7c ).
+Miscellaneous flags are set in MISC
+( Table X.B.7d )
+and include the presence of flux discrepancies in each
+band, whether the in-scan positional uncertainties needed to be
+increased
+( Section VII.C )
+and whether the source was accepted
+in the catalog.
+
+The Catalog Working Survey Data Base (WSDB)
+
+Table X.B.3a.
+
+ Byte Name Description Units Type 
+
+ 0* LUNE SDAS Lune number --- I*4 
+
+ 4 BIN Ecliptic Bin Number --- I*4 
+
+ 8 ELONG Ecliptic longitude 1950. 10 -8 rad I*4 
+
+ 12 ELAT Ecliptic latitude 1950. 10 -8 rad I*4 
+
+ 16 SCAN average scan angle with respect to ecliptic meridian milli-rad I*2 
+
+ 18 SIGY In-scan Gaussian position uncertainty u-rad I*2 
+
+ 20 LZ Cross-scan Uniform position uncertainty u-rad I*2 
+
+ 22 SIGZ Cross-scan Gaussian position uncertainty u-rad I*2 
+
+ 24 LRSX Total number of LRS extraction requests --- I*2 
+
+ 26 KSID Known Source ID --- I*2 
+
+ 28 NHCON Number of Hours --- I*4 
+
+(<25) confirmed sightings
+
+The following values repeat for each hours-confirmed sighting:
+
+ 32 FLUX FLUX(I)=In-band power 10 -16 W m -2 4I*4 
+
+ 48 SIGF SIGF(I)=Uncertainty in FLUX(I) 10 -16 W m -2 4I*4 
+
+ 64 TSNR TSNR(I)=10x(max SNR) --- 4I*2 
+
+ 72 CORR Maximum correlation coefficient (1 value per band, Eq. X.B.1 ) --- I*4 
+
+ 76 FSTAT Flux status word (1 value per band, Eq.X.B.2 ) --- I*2 
+
+ 88 DETID Detector ID Array (4,3) for 4 bands
+( Eq.X.B.3 ) --- 12I*2 
+
+ 102 LRSXNO Number of LRS extraction requests --- I*1 
+
+ 103 DNAM detector part of source name --- I*1 
+
+ 104 TNAM deci-UTCS part of source name deci-sec I*4 
+
+ 108 CSTAT Confusion status flags
+( Eq.X.B.4 ) --- I*4 
+
+ 112--- 191 repeats bytes 36-115 
+
+ 192--- 271 for subsequent hours etc... confirmed sightings.
+
+ Ancillary WSDB File
+
+ Table X.B.3b.
+
+ Byte Name Description Units Type 
+
+ 0 PNEAR Nearby hours and weeks-confirmed neighbors --- I*1 
+
+ 1 CLEAN Clean up Processor flags --- I*1 
+
+ 2 SES1 Number of nearby unconfirmed SES (4 bands encoded) --- I*2 
+
+ 4 SES2 Number of nearby weeks-confirmed SES (4 bands encoded) --- I*2 
+
+ 6 CIRR1 Number of 100 um only WSDB sources,
+spatially filtered 100 um emission. --- I*2 
+
+ CIRR2 
+ 
+ CIRR3 value of 100 um half-degree beam total intensity MJy sr -1 
+
+ 8 AVGFLUX AVGFLUX(I) Averaged flux (in-band power) in band I. 10 -16 W m -2 4I*4 
+
+ 24 AVGUNC AVGUNC(I) Uncertainty in averaged (in-band) flux in band I. 10 -16 W m -2 4I*4 
+
+ 40 HSDPROC HSDPROC(I). Flags set by the high source density processor in band I --- 4I*2 
+
+ 48 RA Right ascension 1950 10 -5 " I*4 
+
+ 52 DEC Declination 10 -5 " I*4 
+
+ 56 NAME source name --- A*12 
+
+ 68 NLRS Number of meaningful LRS spectra --- I*2 
+
+ 70 LRSCHAR characterization of LRS spectra --- A*2 
+
+ 72 BRIGHT Bright Source Clean up flag for catalog sources accepted in the catalog --- I*1 
+
+ ACCEPT 
+
+ 73 VAR Percent likelihood of Variability --- I*2 
+
+ 74 FQUAL FLUX Quality flags (one per band)
+BIT 0-1, 12 um
+ BIT 2-3, 25 um, etc. --- I*1 
+
+ 75 MISC Miscellaneous Status bits, incl. DISC, ACCEPT,SIGY
+See Table X.B.7d --- I*1 
+
+ 76 LUNE SDAS Lune number --- I*4 
+
+ 80 BIN Ecliptic Bin Number --- I*4 
+
+ 84 ELONG Ecliptic longitude 10 -8 rad I*4
+
+ 88 ELAT Ecliptic Latitude 10 -8 rad I*4
+
+ 92 NID 2 Number of Associations --- I*2 
+
+ 94 IDTYPE Type of association --- I*2 
+
+ 96 CATNO Catalog Number --- I*2 
+
+ 98 SOURCE Source ID --- A*15 
+
+ 113 TYPE Source Type/Spectral Class --- A*5 
+
+ 118 RADIUS Position difference (") I*2 
+
+ 120 POS Position Angle ' E of N I*2 
+
+ 122 FIELD1 object field #1 --- I*2 
+
+ 124 FIELD2 object field #2 --- I*2
+
+ 126 FIELD3 object field #3 --- I*2
+
+ 128-160 continuation of association 3 in blocks of 32 bytes 
+
+ See X.B.3 for discussion of blcck and segment control words
+ If NID=0, one blank association field of 32 bytes is written.
+ CATNO,SOURCE,TYPE,RADIUS,POS,FIELD 1-3 are repeated in blocks
+of 32 bytes, 2 per logical record, as necessary. The definition
+and formats of FIELD1-3 depend on the individual catalog in which
+the association is found. See Table X.B.4 .
+
+ Chapter Contents |
+ Authors |
+ References 
+
+ Table of Contents |
+ Index |
+ Previous Section |
+ Next Section

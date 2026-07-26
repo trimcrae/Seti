@@ -1,0 +1,1170 @@
+arXiv:1002.1922v1 [hep-ph] 9 Feb 2010
+
+Preprint typeset in JHEP style - HYPER VERSION
+
+Cavendish-HEP-2010-02
+
+MSSM dark matter measurements at the
+LHC without squarks and sleptons
+
+M. J. White and F. Feroz
+Cavendish Laboratory. Madingley Road. Cambridge CB3 0HE, UK
+
+Abstract: We examine the case of neutralino dark matter in the focus point region of the MSSM, in which the scalar sparticles are too heavy to be produced at
+the LHC. Whilst it has been previously asserted that the LHC alone would fail to
+constrain the properties of the lightest neutralino for such a scenario, we find that
+one can obtain good predictions of astrophysical quantities such as the relic density,
+annihilation cross-section and direct search cross-sections by using the shape of the
+dilepton invariant mass spectrum to constrain neutralino mixing. We demonstrate
+our technique using a Bayesian analysis of the 24 parameter MSSM model space,
+and in the process introduce a novel way of improving the LHC results even without
+assumptions on which new sparticles are responsible for the kinematic features in
+the dilepton invariant mass distribution.
+Keywords: Beyond the Standard Model, MSSM, Dark Matter.
+
+Contents
+1. Introduction
+
+1
+
+2. Background
+2.1 Neutralino dark matter in the focus point region
+2.2 Benchmark point
+2.3 Constraining the MSSM parameter space
+
+3
+3
+5
+6
+
+3. Focus point SUSY at the LHC
+3.1 Conventional input measurements
+3.2 New input measurements
+3.3 Discussion
+
+9
+9
+12
+17
+
+4. Conclusions
+
+19
+
+5. Acknowledgements
+
+20
+
+1. Introduction
+The existence of a large amount of non-baryonic ‘dark’ matter (DM) in the universe
+is now relatively uncontroversial, and the precise nature of the matter is currently
+the source of much speculation. The WMAP observations of the cosmic microwave
+background have provided a precise measurement of the dark matter relic density [1],
+and also strongly support cold dark matter in the form of weakly interacting massive
+particles (WIMPs). Since the Standard Model (SM) of particle physics does not
+contain any particles that fit this description, searches for dark matter are intimately
+connected with searches for new physics.
+The Large Hadron Collider (LHC) at CERN, Geneva, is designed to probe the
+TeV scale for evidence of new fundamental theories, and can be expected to produce
+dark matter particles if a WIMP exists with an accessible mass. At the same time,
+direct search experiments continue to look for interactions between Earth-based targets and passing WIMPs, indirect search experiments look for evidence of WIMP
+annihilation in space, and the cosmic microwave background is being mapped with
+ever greater precision. If it is genuinely true that a single WIMP candidate explains dark matter, one should obtain a consistent set of observations from these
+experiments, but checking this consistency is hampered by large uncertainties in the
+
+–1–
+
+relevant astrophysics. For example, if no annihilation signal is observed, how do
+we know if this is because the annihilation cross-section lies below the reach of our
+current apparatus or whether we simply looked in a region where there was too little
+dark matter to give a strong flux? If a direct search experiment fails to see a signal,
+how do we untangle the interaction cross-section from the uncertainties in the local
+density and velocity of the dark matter that affect the number of observed events?
+From a particle physics perspective, the only answer is to try and measure the microscopic properties of the WIMP as precisely as possible in accelerator experiments
+in order to make accurate predictions of the astrophysical data. These measurements can then either be used with halo models to predict annihilation fluxes and
+direct search cross-sections, or, in the exciting case of a positive result in one or more
+astrophysical experiments, to directly constrain the halo distributions themselves.
+Comparisons with the relic density could give important clues on the proportion of
+dark matter composed of the WIMP observed at the LHC or could help validate the
+standard picture of Big Bang cosmology.
+This paper examines dark matter arising from the Minimal Supersymmetric
+Standard Model (MSSM) in the popular case that the WIMP is the lightest neutralino
+of the model. Previous studies [2,3] have indicated that, under favourable conditions,
+one can measure the WIMP mass and couplings rather well at the LHC but, in the
+case that the scalars are too heavy to be produced, one might get the mass but
+certainly not the couplings. A classic example is the ‘focus point’ region of the
+mSUGRA parameter space [4], in which the scalar masses may be high while the
+model still obeys all experimental constraints, including the WMAP constraint on
+the relic density. A linear collider could resolve these issues but is still many years
+away and, while it would be possible to use astrophysical data in combination with
+the LHC data, this relies on assuming the model which we are trying to test. Hence
+there is a clear need to improve DM predictions at the LHC if we are to make proper
+use of the rich astrophysical data sets expected over the next ten years.
+We revisit the focus point SUSY case and demonstrate that the LHC can do
+significantly better than previously advertised, by using the shape of the dilepton
+invariant mass spectrum to constrain neutralino mixing. We also find that the improvements are still obtained even if one assumes that the sparticles producing kinematic endpoints at the LHC have not been correctly identified. In analysing our
+benchmark point we quote a study from members of the ATLAS collaboration [5],
+though our results would apply equally well to CMS [6]. We then use the anticipated
+ATLAS data in a Bayesian analysis of the 24 parameter MSSM space, and hence
+although we use an mSUGRA benchmark point, our analysis is not restricted to the
+mSUGRA parameter set. Moreover, it should be possible to apply our approach to
+other SUSY models with heavy scalars.
+The paper is structured as follows. Section 2 briefly reviews the relevant background, defines the benchmark point used in this study and introduces the Multi-
+
+–2–
+
+Nest sampling algorithm [7] used to obtain our results. In Section 3 we describe
+how to use the shape information to improve the results, and present the posteriors
+obtained using the ‘conventional’ and ‘new’ approaches. We also discuss potential
+pitfalls. We present conclusions in section 4.
+
+2. Background
+2.1 Neutralino dark matter in the focus point region
+The Minimal Supersymmetric Standard Model (MSSM) describing broken SUSY
+permits 108 parameters and, although a large number of these must be small to
+suppress flavour changing processes, at least 24 parameters are normally considered necessary to investigate LHC phenomenology. Although SUSY provides several
+WIMP candidates (including the sneutrino and gravitino), the most popular is the
+lightest neutralino, which is an admixture of the superpartners of the standard model
+gauge bosons, with components set by the following mixing matrix:
+
+
+M1
+0
+−mZ cos βsW mZ sin βsW
+
+
+
+
+0
+M
+m
+cos
+βc
+−m
+sin
+βc
+2
+Z
+W
+Z
+W
+
+
+M=
+(2.1)
+
+ −mZ cos βsW mZ cos βcW
+
+0
+−µ
+
+
+mZ sin βsW −mZ sin βcW
+−µ
+0
+
+where M1 and M2 are the U(1) and SU(2) gaugino masses, µ is the Higgsino mass
+parameter, tanβ is the ratio of the vacuum expectation values of the two Higgs
+doublets and the other parameters are all from the standard model. Measuring the
+couplings of a neutralino WIMP essentially comes down to trying to constrain the
+components of this matrix which is not generically possible at the LHC.
+Many phenomenological studies have been performed using simpler frameworks
+such as the minimal supergravity model (mSUGRA) [8] where SUSY breaking, which
+is assumed to occur in a hidden sector, is communicated to the observable sector via
+gravitational interactions. The mSUGRA model unifies various GUT scale parameters, obtaining the following parameter set: the scalar mass m0 , the gaugino mass
+m1/2 , the trilinear coupling A0 , the ratio of Higgs expectation values tanβ, and the
+sign of the SUSY Higgs mass parameter µ. Assuming the lightest neutralino is the
+correct WIMP candidate, one finds that, in most of the mSUGRA parameter space,
+too many neutralinos would survive after the Big Bang, and hence the only allowed
+regions must have some kind of annihilation mechanism to bring the density down to
+within the limits set by astrophysical observation. There are four main mechanisms,
+each of which dominates in a particular region of the parameter space [2]:
+1. Slepton exchange. This is suppressed unless the slepton masses are lighter than
+approximately 200 GeV and gives rise to the ‘bulk’ region at low values of the
+mass parameters.
+
+–3–
+
+
+
+lnear
+
+q
+
+q~
+
+
+lfar
+
+~l
+
+~02
+
+R
+
+~01
+
+Figure 1: A popular cascade decay chain used to measure sparticle masses at the LHC.
+The invariant mass distributions of the decay products will exhibit kinematic endpoints
+whose position is a function of the four sparticle masses involved in the cascade.
+
+2. Co-annihilation with light sleptons. This occurs when there are suitable mass
+degeneracies in the sparticle spectrum, giving rise to a suitably named ‘coannihilation region’.
+3. Annihilation to third-generation fermions. This is enhanced when the heavy
+Higgs boson A is almost twice as massive as the LSP, giving rise to a ‘funnel
+region’ for models with reasonably large tanβ.
+4. Annihilation to vector bosons. This can occur if the neutralino LSP acquires a
+significant wino or higgsino component, which happens in the so-called ‘focus
+point’ region at high m0 .
+One must remember that the tight level of constraint provided by the WMAP data
+is only a feature of models with a small number of parameters. A recent review of
+mSUGRA results that investigates the effect of adding new parameters can be found
+in reference [9], while the results of a 24 parameter Bayesian analysis incorporating
+all current data can be found in [10].
+The high value of m0 in the focus point region puts the squark and slepton masses
+in the multi-TeV range and thus out of direct reach of the LHC, and this forms the
+basis of why the LHC is expected to struggle to measure the WIMP couplings in this
+region. The main method of constraining the parameters of the mixing matrix is to
+look for cascade decay processes featuring squarks and sleptons (see figure 1) and use
+kinematic endpoints in the invariant mass distributions of the SM decay products to
+measure mass differences between the sparticles. If a large amount of the sparticle
+mass spectrum can be measured (for example in the bulk or coannihilation regions),
+one can tell that the LSP is almost purely bino and reconstruct the relic density to a
+precision of around 10% [3], dependant on assumptions about the LHC reach in the
+Higgs sector. This remains true in a 24 parameter MSSM analysis, and thus is not
+limited to an unreasonably restrictive mSUGRA analysis. Mass differences can still
+be measured in the focus point region using cascade decays headed by gluinos, but
+
+–4–
+
+the lack of squarks and sleptons will clearly reduce the number of decays that we can
+observe, and it was previously argued that this leaves the dominant component of
+the neutralino ambiguous when one attempts to fit the SUSY parameters [2], leading
+to substantial (i.e. orders of magnitude) uncertainties in the gamma ray flux, direct
+detection cross-section and relic density results from the LHC.
+Nevertheless, the focus point is attractive for a number of reasons. From a DM
+perspective, it is interesting to note that the higgsino component of the neutralino
+WIMP implies large annihilation via W + W − and ZZ bosons, and a large number of
+gamma rays in the final state, thus improving the prospects for finding dark matter
+using the forthcoming generation of gamma ray telescopes. Indeed, a previous study
+comparing the search reach of the LHC and H.E.S.S. II revealed a region of overlap
+in the focus point region that would give clear signals in both experiments [11]. If
+a focus point type scenario were chosen by Nature, we therefore have the potential
+to learn much about dark matter. Furthermore, the focus point region is actually
+favoured by constrained MSSM fits to particle physics and cosmological data if one
+assumes ‘natural priors’ [12].
+2.2 Benchmark point
+Our study uses a particular benchmark point that
+gives a typical focus point phenomenology, and a discussion of the generality of our results is deferred to section 3.3. One of the problems of performing studies of
+the focus point region is that the results of spectrum calculations are highly sensitive to the top Yukawa coupling,
+and therefore to the physical top mass. Given that one
+of the leading aims of this paper is to show improvement
+over previously published results, we have chosen to use
+the same spectrum generator as that used in [2] (ISAJET
+7.69 [13]), with the same focus point region benchmark
+point (their ‘LCC2’) and the same value of the top mass.
+While it is true that a more recent and improved version
+Table 1: Particle masses of ISAJET is available, along with a revised measurement
+for the benchmark point de- of the top mass, the results of this paper should be viewed
+scribed in the text. The as comparitive rather than definitive. We thus use the
+squarks and sleptons of the
+following values of the mSUGRA parameters:
+Particle
+χ̃01
+χ̃02
+χ̃03
+g̃
+b̃1
+b̃2
+t̃1
+t̃2
+τ̃1
+τ̃2
+h
+
+Mass/GeV
+106
+165
+191
+850
+2710
+3241
+1977
+2720
+3252
+3268
+118.7
+
+first two generations all
+have a mass greater than 3
+TeV.
+
+m0 = 3280GeV, m1/2 = 300GeV, tanβ = 10, A0 = 0, µ > 0
+(2.2)
+with a top mass of 175 GeV. We ran ISASUGRA with these parameters, generating
+the equivalent 24 parameter MSSM input for ISASUSY. We then used this input
+
+–5–
+
+to generate the expected values for the observables used in our analysis 1 . The
+ISASUSY parameter set gives a slightly different mass spectrum and a relic density
+Ωχ h2 = 0.089 which is a little lower than the WMAP limit but this does not affect
+the validity of our conclusions. Important masses are given in Table 1, as generated
+from ISASUSY.
+2.3 Constraining the MSSM parameter space
+Given a set of LHC observables O and our set of hypothesised MSSM parameters
+PMSSM , we will shortly wish to evaluate p(PMSSM |O) and thus to find the region
+of parameter space consistent with the data. This posterior probability is related to
+the likelihood L(PMSSM ) = p(O|PMSSM ) by Bayes theorem:
+p(O|PMSSM )p(PMSSM )
+(2.3)
+p(PMSSM |O) =
+Z
+where p(PMSSM ) represents our prior knowledge on the distribution of parameters,
+and the normalization constant Z is the ‘Bayesian evidence’, given by the average of
+the likelihood over the prior:
+Z
+Z = L(PMSSM )p(PMSSM )dNpar PMSSM
+(2.4)
+In our study, we assign points the following likelihood:
+
+
+Y
+(Oi (PMSSM ) − oi )2
+p(O|PMSSM ) =
+exp −
+2σi2
+i
+
+(2.5)
+
+where Oi (PMSSM ) is the predicted value of the ith observable oi , σi is the error in
+Oi and the product runs over all observables.
+In typical SUSY phenomenology problems such as that presented here, the posterior cannot be evaluated analytically and one can instead use a sampling approach.
+Most popular are Markov Chain Monte Carlo algorithms that draw samples in such a
+way that the distribution of samples tends towards the unnormalised posterior distribution. This allows one to make inferences on parameter constraints while bypassing
+the evaluation of the Bayesian evidence. Although this has proven successful in the
+past in MSSM case studies, the methods (such as the Metropolis algorithm) become
+far less efficient as the dimension of the parameter space increases, and additionally
+they struggle in cases with a multimodal posterior where the most likely islands of
+interest occupy a vanishingly small volume of the parameter space. Sadly, this is the
+quintessential MSSM posterior, and previous examples have either used many CPU
+years or have varied the step size as the sampling progresses from a large initial value
+tuned to find disparate islands to a small value designed to explore the region around
+each mode. One still has to choose sensible initial conditions for these algorithms, as
+well as finding sensible step sizes in each parameter if one chooses not to vary them.
+1
+
+Note that we do not set the top, bottom and tau masses, Higgs vacuum expectation value and
+strong coupling constant to the benchmark value as in [2], nor do we scale the Yukawa couplings to
+more closely match mSUGRA.
+
+–6–
+
+A more recent approach is that of ‘nested sampling’ which targets the Bayesian
+evidence first, subsequently obtaining samples from the posterior as a by product.
+We here give a brief description and refer the reader to [7, 14] for more details.
+
+Figure 2: Cartoon illustrating (a) the posterior of a two dimensional problem; and (b) the
+transformed L(X) function where the prior volumes Xi are associated with each likelihood
+Li .
+
+Nested sampling [15] is a Monte Carlo method that calculates the evidence by
+transforming the multi–dimensional evidence integral into a one–dimensional integral
+that is easy to evaluate numerically. This is accomplished by defining the prior
+volume X as dX = p(PMSSM )dNpar PMSSM , so that
+Z
+X(λ) =
+p(PMSSM )dNpar PMSSM ,
+(2.6)
+L(PMSSM )>λ
+
+where the integral extends over the region(s) of parameter space contained within
+the iso-likelihood contour L(PMSSM ) = λ. The evidence integral, Eq. (2.4), can then
+be written as
+Z
+1
+
+Z=
+
+0
+
+L(X)dX,
+
+(2.7)
+
+where L(X), the inverse of Eq. (2.6), is a monotonically decreasing function of X.
+Thus, if one can evaluate the likelihoods Li = L(Xi ), where Xi is a sequence of
+decreasing values,
+0 < XM < · · · < X2 < X1 < X0 = 1,
+(2.8)
+as shown schematically in Fig. 2, the evidence can be approximated numerically
+using standard quadrature methods as a weighted sum
+Z=
+
+M
+X
+i=1
+
+Li wi ,
+
+(2.9)
+
+where the weights wi for the simple trapezium rule are given by wi = 21 (Xi−1 −Xi+1 ).
+An example of a posterior in two dimensions and its associated function L(X) is
+shown in Fig. 2.
+
+–7–
+
+The summation in Eq. (2.9) is performed as follows. The iteration counter is
+first set to i = 0 and N ‘active’ (or ‘live’) samples are drawn from the full prior
+p(PMSSM ), so the initial prior volume is X0 = 1. The samples are then sorted in
+order of their likelihood and the smallest (with likelihood L0 ) is removed from the
+active set (hence becoming ‘inactive’) and replaced by a point drawn from the prior
+subject to the constraint that the point has a likelihood L > L0 . The corresponding
+prior volume contained within the iso-likelihood contour associated with the new live
+point will be a random variable given by X1 = t1 X0 , where t1 follows the distribution
+Pr(t) = NtN −1 (i.e., the probability distribution for the largest of N samples drawn
+uniformly from the interval [0, 1]). At each subsequent iteration i, the removal of the
+lowest likelihood point Li in the active set, the drawing of a replacement with L > Li
+and the reduction of the corresponding prior volume Xi = ti Xi−1 are repeated, until
+the entire prior volume has been traversed. The algorithm thus travels through
+nested shells of likelihood as the prior volume is reduced. The mean and standard
+deviation of log t, which dominates the geometrical exploration, are:
+E[log t] = −1/N,
+
+σ[log t] = 1/N.
+
+(2.10)
+
+Since each value of log t is independent,
+after i iterations the prior volume will shrink
+√
+down such that log Xi ≈ −(i ± i)/N. Thus, one takes Xi = exp(−i/N).
+Once the evidence Z is found, posterior inferences can be easily generated using
+the final live points and the full sequence of discarded points from the nested sampling
+process, i.e., the points with the lowest likelihood value at each iteration i of the
+algorithm. Each such point is simply assigned the probability weight
+pi =
+
+Li wi
+.
+Z
+
+(2.11)
+
+These samples can then be used to calculate inferences of posterior parameters such
+as means, standard deviations, covariances and so on, or to construct marginalised
+posterior distributions.
+The most challenging task in implementing nested sampling is to draw samples
+from the prior within the hard constraint L > Li at each iteration i. The MultiNest algorithm [7,14] tackles this problem through an ellipsoidal rejection sampling
+scheme. The live point set is enclosed within a set of (possibly overlapping) ellipsoids and a new point is then drawn uniformly from the region enclosed by these
+ellipsoids. The ellipsoidal decomposition of the live point set is chosen to minimize
+the sum of volumes of the ellipsoids. The ellipsoidal decomposition is well suited to
+dealing with posteriors that have curving degeneracies, and allows mode identification in multi-modal posteriors. If there are subsets of the ellipsoid set that do not
+overlap with the remaining ellipsoids, these are identified as a distinct mode and subsequently evolved independently. The MultiNest algorithm has proven very useful
+for tackling inference problems in cosmology and particle physics(see e.g. [10,16–21])
+
+–8–
+
+typically showing two orders of magnitude improvement in efficiency over conventional techniques. We use this algorithm for exploring the posterior distributions in
+this paper.
+
+3. Focus point SUSY at the LHC
+3.1 Conventional input measurements
+Before explaining how to improve the LHC measurements in the focus point region,
+we will reproduce the existing approach to provide a comparison for our later results.
+Assuming that the LHC will not produce squarks or sleptons, mass measurements
+are restricted to cascade decays of the form:
+g̃ → χ̃0j q q̄ → χ̃0i q q̄l+ l−
+
+(3.1)
+
+where j > i. The neutralino decays give rise to kinematic endpoints in the dilepton
+invariant mass distribution that will be recognisable as arising from three body decays
+(by virtue of shape or possibly by using a wedgebox technique as in [22]). In fact, two
+endpoints are visible for the focus point model considered here, arising from decays of
+the χ̃02 and χ̃03 , and their positions are simply given by the difference mχ̃0i − mχ̃01 . The
+most recent relevant study performed by members of the ATLAS collaboration [23]
+gives an error of 0.5 GeV on mχ̃02 − mχ̃01 , and 1.5 GeV on mχ̃03 − mχ̃01 if we assume,
+as these studies have, that we have correctly identified the neutralinos producing the
+bumps. The resulting distribution is shown in figure 3 and would be very similar for
+the benchmark point used in this study. We therefore assume for our study that the
+neutralino mass differences have been determined to be the nominal values obtained
+from the ISASUSY mass spectrum for our MSSM benchmark point, with the same
+errors as those quoted in the ATLAS study.
+Reference [2] further assumes that the χ̃01 and g̃ masses can be fixed to within
+10% by kinematic fits, and the lightest Higgs mass could be obtained with an accuracy
+of 0.25 GeV. Again, we assume these same errors, and use the nominal mass values
+from our benchmark point spectrum for the reconstructed masses. Finally, one can
+set limits on the squark and slepton masses based on their non-observation, which we
+impose approximately by restricting the prior range for the squark and slepton mass
+parameters. A summary of the observables used in our analysis is given in Table 2,
+while the prior range used in our exploration of the MSSM parameter space is given
+in Table 3.
+
+–9–
+
+Events/2 GeV/30 fb-1
+
+200
+
+150
+
+100
+
+50
+
+0
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+120
+Minv (GeV)
+
+Figure 3: The dilepton invariant mass reconstructed by the ATLAS detector for a benchmark point in the focus point region (taken from reference [23]). Two kinematic endpoints
+are clearly visible and can be measured precisely by fitting with the analytic form of the
+three body endpoint shape.
+
+– 10 –
+
+We have performed a nested sampling of
+the MSSM parameter space, using a log prior
+on all parameters except the A parameters
+for which we follow [2] in using the formula
+A = Msinh(x), with M = 50 GeV. A log
+prior is generally useful for parameters with
+1
+a scale uncertainty, while A = Msinh(x) is
+Table 2: Set of observables used for the chosen since the A parameters can take ei‘conventional’ analysis of our focus point ther sign. For simplicity, we have further
+benchmark point. All masses were calcu- restricted M1 and µ to be positive as this
+ated using ISASUSY, while the errors are will not affect the validity of our conclusions.
+quoted from the studies in [23] and [2]. For each point selected by MultiNest we
+See text for further explanation.
+run ISASUSY on the 24 MSSM parameters to
+generate the mass and decay spectrum. We
+then use the masses and neutralino mass differences to calculate the predicted values
+of the observables given in Table 2 and evaluate the likelihood using equation 2.5.
+Observable
+mχ̃02 − mχ̃01
+mχ̃03 − mχ̃01
+mg̃
+mh
+mχ˜0
+
+Value
+59.5 ± 0.5 GeV
+85.3 ± 1.5 GeV
+850 ± 85 GeV
+118.72 ± 0.25 GeV
+106 ± 11 GeV
+
+Parameters
+M1 , M2 , µ, mA
+tanβ
+mg̃
+1st and 2nd generation squark masses
+3rd generation squark masses
+slepton masses
+At , Ab , Ac
+
+Prior range
+0.1 GeV – 4000 GeV
+2 – 60
+700 GeV – 4000 GeV
+2000 GeV – 4000 GeV
+1500 GeV – 4000 GeV
+350 GeV – 4000 GeV
+-4000 – 4000
+
+Table 3: Prior ranges used in all fits for the 24 MSSM parameters.
+
+Figure 4 shows the marginalised posterior in the (M1 ,µ) plane as evaluated by
+MultiNest for this set of input measurements, and one can clearly see three solutions. Each of these has a lightest neutralino of different dominant character,
+with the left-most island corresponding to the benchmark model2 . One can use the
+points in this posterior to calculate astrophysical observables, and we used DarkSUSY
+5.05 [24–27] with a custom interface to ISASUSY based on the Les Houches format [28]. The WIMP relic density and neutralino pair annihilation cross-section
+at threshold (used to calculate the flux expected in indirect search experiments)
+are shown in Figures 5 and 6, and we see that the effect of the extra islands is to
+2
+
+The results agree closely but not exactly with those shown in [2], but the differences can be
+explained either by our slightly different procedure of handling the MSSM weak scale spectrum or
+by the fact that we do not impose a Tevatron-inspired limit on the lightest chargino mass. This
+latter cut restricted the phase space for the false solutions in [2] and, without it, we essentially get
+extra points in the ‘wrong’ islands which contribute to raising the ‘wrong peaks’ in figures 5 and 6.
+
+– 11 –
+
+Figure 4: Marginalised posterior in the (M1 ,µ) plane, resulting from a 24D MultiNest
+sampling of the weak scale MSSM parameters with the ‘conventional’ set of input measurements.
+
+give us false regions of high likelihood orders of magnitude away from the correct
+value. These would clearly destroy any reasonable prospect of accurately predicting
+the relic density or gamma ray flux based on LHC measurements. Direct search
+cross-sections divide into spin-dependent and spin-independent contributions, with
+the spin-independent term enhanced by a factor of the square of the target nucleus
+mass. The effect of false posterior regions at the LHC is to contribute an extra peak to
+each of these terms, as shown in Figure 7 for the spin-independent neutralino-proton
+direct detection cross-section and in Figure 8 for the spin-dependent neutralinoneutron direct detection cross-section (the spin-dependent proton-neutralino and
+spin-independent neutralino-neutron cross-sections are very similar). We see a longer
+tail on the spin dependent distribution than in [2], but this is almost certainly due
+to MultiNest having explored the bino mode more thoroughly than their sampling
+method.
+3.2 New input measurements
+To remove the false regions of the posterior in Figure 4, we need to find observables
+at the LHC that are sensitive to neutralino mixing. Here we suggest one example in
+the form of the shape of the dilepton invariant mass distribution, since the number
+of events contributing to each bump in the distribution is sensitive to the couplings
+
+– 12 –
+
+0.1
+0.06
+0.08
+
+0.05
+0.04
+
+0.06
+
+0.03
+0.04
+0.02
+0.02
+
+0
+0
+
+0.01
+0
+10-1
+
+0.02 0.04 0.06 0.08 0.1 0.12 0.14 0.16 0.18
+Ωχh2
+
+Figure 5: The relic density as predicted
+from the ‘conventional’ set of LHC measurements.
+
+102
+10
+<σ v> (10-26 cm3 s-1)
+
+1
+
+Figure 6: The neutralino pair annihilation cross-section at threshold as predicted from the ‘conventional’ set of LHC
+measurements.
+
+0.035
+0.03
+
+0.06
+
+0.025
+
+0.05
+
+0.02
+
+0.04
+
+0.015
+
+0.03
+
+0.01
+
+0.02
+
+0.005
+
+0.01
+
+0
+
+-8
+
+10
+
+10-7
+
+0
+10-4
+
+-6
+
+10
+σSI(χ + p) (pb)
+
+Figure 7:
+The spin-independent
+neutralino-proton
+direct
+detection
+cross-section as predicted from the
+‘conventional’ set of LHC measurements.
+
+-3
+
+10
+
+σSD(χ + n) (pb)
+
+Figure 8:
+The spin-dependent
+neutralino-neutron
+direct
+detection
+cross-section as predicted from the
+‘conventional’ set of LHC measurements.
+
+of the relevant neutralinos producing the bumps. Tuning the WIMP components
+has the effect of raising and lowering the two bumps, and thus changing the shape.
+In general, tuning the neutralino couplings could also add or remove endpoints, or
+change their interpretation (i.e. making an endpoint appear from a χ̃04 → χ̃01 l+ l−
+decay rather than from a χ̃03 → χ̃01 l+ l− , etc). Although the dependence of the shape
+on the neutralino components is non-trivial, we are helped in the case of heavy
+scalars by the fact that we know from the LHC data that there are no on shell
+sleptons contributing to the endpoints, and thus the shape is even more sensitive to
+
+– 13 –
+
+the neutralino couplings than in the generic case where one would complicate matters
+by introducing greater dependence on the slepton masses.
+In principle, one could model the shape of the dilepton invariant mass precisely at
+a given point in parameter space by generating a large sample of Monte Carlo events
+at that point, and passing them through a detector simulation. For a thorough
+sampling of the 24 parameter MSSM involving millions of explored points, this is
+clearly unfeasible, however, and we must use some shortcuts to encode the shape
+information in a manner that is easy to calculate. Under the assumption that the
+three body neutralino decays proceed dominantly through an off-shell Z boson 3 ,
+the shape of the dilepton invariant mass distribution is a known function of the
+neutralino masses, whose fit to the measured distribution is shown in Figure 3. The
+integral can be used to calculate the ratio of the number of events arising from each
+neutralino decay contributing to the dilepton invariant mass, which is related to the
+branching ratios of the sparticles by:
+BR(g̃ → ... → χ̃02 + X) × BR(χ̃02 → χ̃01 l+ l− )
+BR(g̃ → ... → χ̃03 + X) × BR(χ̃03 → χ̃01 l+ l− )
+
+(3.2)
+
+where the first decay in the numerator and denominator can proceed through multiples steps provided they do not produce leptons. The ATLAS study in reference [23]
+quotes a measured value of 1.4 ± 0.3 for this ratio, comparing favourably to their
+theoretical value of 1.19, even in the presence of background and a detailed simulation of the ATLAS detector resolution. Our benchmark point has a slightly different
+theoretical value of 1.46. The study in [23] further assumed that the χ̃03 and χ̃02 had
+been correctly identified as the cause of the endpoints in the dilepton invariant mass
+spectrum, an assumption that we do not wish to work with here since it presupposes knowledge of neutralino mixing which we are trying to determine in a general
+manner.
+There are other more trivial details of the shape of the dilepton invariant mass
+distribution. It is clear that any parameter point capable of explaining the distribution in figure 3 must have a taller endpoint on the left, and a shorter endpoint on the
+right (this is of course the same as using ratio information). It is also clear that only
+two endpoints were observed, and hence any model that would have given more or
+less than two endpoints is also not capable of explaining the observed distribution.
+If we now assume we have not identified the neutralinos producing the endpoints, we must examine the general case where the number of χ̃0j → χ̃0i l+ l− decays
+3
+
+Our decay through Z boson assumption is in fact true in the focus point region since the sleptons
+are very heavy, though a priori one can only set lower bounds on the slepton masses and hence
+might encounter a systematic uncertainty due to this asssumption. In practise, however, we shall
+find the ratio of the number of events contributing to each bump in the invariant mass distribution
+is ≈50 times higher in one of the false solutions, and ≈5 times higher in the other which probably
+exceeds any systematic correction to the ratio measurement.
+
+– 14 –
+
+contributing to the dilepton invariant mass distribution is given by:
+N ∝ BR(g̃ → ... → χ̃0j + X) × BR(χ̃0j → χ̃0i l+ l− )
+
+(3.3)
+
+where the exact number of events depends on the cross-section for gluino production
+and the efficiency of the kinematic cuts. Again, the first branching ratio shown could
+in fact be the product of various decay processes that end with a χ̃0j and anything
+else (excluding leptons), and could consist of multiple steps. Since we know (from
+measurement) that all decay chains contributing to our dilepton plot started with
+gluinos, however, we can confidently state that we would have seen two endpoints
+if the two largest combined branching ratios of the form of equation 3.3 are close
+in value while the third highest branching ratio is much lower. This encodes the
+shape of the distribution in a way which is easy to evaluate quickly at many points
+in parameter space, making it possible to scan or sample the parameter space to
+reject points on the basis of shape.
+We therefore reran the MultiNest sampling with the following additions. At
+each point in the parameter space, we used the ISASUSY decay spectrum to work
+out the combined branching ratios for all processes of the form given in equation 3.3.
+The two highest of these branching ratios are assumed to have caused the observed
+bumps in the dilepton invariant mass distribution, and the ratio of the number of
+events contributing to each endpoint is obtained using the following generalisation
+of equation 3.2:
+BR(g̃ → ... → χ̃0p + X) × BR(χ̃0p → χ̃0q l+ l− )
+(3.4)
+BR(g̃ → ... → χ̃0r + X) × BR(χ̃0r → χ̃0s l+ l− )
+The gluino cross-section and reconstruction efficiency cancel in this division and
+thus do not need to be explicitly evaluated- we are indeed fortunate that squarks are
+not contributing otherwise this procedure would not have worked. Note that our two
+highest branching ratios can in principle come from any neutralino decay process, so
+in principle we have endpoints arising from the decays χ̃0p → χ̃0q l+ l− and χ̃0r → χ̃0s l+ l− ,
+where p,q,r and s can take any value as long as p > q and r > s (in the previous
+section, we had p = 2, r = 3 and q = s = 1). We now assign a likelihood based on
+the observables listed in Table 4, which simply comprise of generalisations of those
+in the previous section plus the addition of the ratio measurement. Furthermore, we
+assign zero likelihood to points that could not have produced the observed dilepton
+distribution because they fell into the following categories:
+1. Points in which the ‘wrong’ endpoint is highest, i.e. the kinematic endpoint
+with the largest mll value is taller than the endpoint with the lowest mll value
+2. Points in which the third highest combined branching ratio of the form of
+equation 3.3 is more than 10% of the second highest branching ratio (this is
+
+– 15 –
+
+considered a sensible boundary of visibility).
+
+Results of a MultiNest sampling in the
+same parameter space as the previous subsection are shown in the (M1 ,µ) plane in figure 9, and the extra regions have been completely removed. Further investigation reveals that the vetos listed above are not the
+1
+dominant contribution to this improvement,
+Np /Nr
+1.5 ± 0.3
+since both leave many points in both of the
+Table 4: Set of observables used for incorrect regions. Rather, it is the ratio meathe ‘new’ analysis of our focus point surement that provides enough discriminabenchmark point. All masses were calcu- tion between them to improve the results,
+ated using ISASUSY, while the errors are leading to a substantial decrease in likelihood
+quoted from the studies in [23] and [2]. in the false regions. Since this is the ratio
+Np /Nr is the ratio of the number of
+between the two highest endpoints produced
+events arising from the decays χ̃0p →
+by the gluino cascade processes, this is really
+χ̃0r l+ l− and χ̃0r → χ̃0s l+ l− , measured by
+telling us that the “two bump” feature of the
+fitting a functional form to the dilepton
+dilepton invariant mass plot is a feature of
+invariant mass distribution. See text for
+the focus point model. The large spread in
+further explanation.
+this ratio between the different regions also
+indicates that even a reasonably imprecise measurement of this quantity would be
+enough to favour the correct region. We also note that the selected region has endpoints arising from χ̃02 → χ̃01 l+ l− and χ̃03 → χ̃01 l+ l− decays and hence, although we
+had not assumed this advance, we have successfully inferred it from the data.
+Observable
+mχ̃0p − mχ̃0q
+mχ̃0r − mχ̃0s
+mg̃
+mh
+mχ˜0
+
+Value
+59.5 ± 0.5 GeV
+85.3 ± 1.5 GeV
+850 ± 85 GeV
+118.72 ± 0.25 GeV
+106 ± 11 GeV
+
+The relic density and annihilation cross-section are shown in figures 10 and 11,
+where it can immediately be seen that the ‘fake’ solution peaks are removed from the
+annihilation cross-section prediction, thus allowing an accurate comparison of LHC
+data with the forthcoming round of gamma ray results. The relic density prediction
+is improved but still suffers from a lack of constraint at low values which is caused by
+the effect of the A pole; resonant annihilation through the A boson leads to a large
+reduction of the relic density for any model in which mA ≈ 2mχ̃01 . The direct search
+cross-sections, meanwhile, enjoy a similar improvement to the annihilation crosssection, as seen in Figures 12 and 13, though the spin-dependent cross-section has a
+tail to large values in which it is possible to get a larger cross-section by increasing
+the amount of bino-Higgsino mixing or by increasing tanβ 4 . This would seem to be
+irreducible at the LHC.
+4
+
+We thank Michael Peskin for this suggestion.
+
+– 16 –
+
+Figure 9: Marginalised posterior in the (M1 ,µ) plane, resulting from a 24D MultiNest
+sampling of the weak scale MSSM parameters with the ‘new’ set of input measurements.
+0.08
+
+0.007
+
+0.07
+
+0.006
+
+0.06
+0.005
+0.05
+0.004
+0.04
+0.003
+0.03
+0.002
+
+0.02
+
+0.001
+0
+0
+
+0.01
+0
+10-1
+
+0.02 0.04 0.06 0.08 0.1 0.12 0.14 0.16 0.18
+Ωχh2
+
+Figure 10: The relic density as predicted from the ‘new’ set of LHC measurements.
+
+1
+
+102
+10
+<σ v> (10-26 cm3 s-1)
+
+Figure 11: The neutralino pair annihilation cross-section at threshold (right)
+as predicted from the ‘new’ set of LHC
+measurements.
+
+3.3 Discussion
+Having demonstrated an improvement in the LHC capability at one benchmark point,
+we now consider the generality of our result, along with any potential pitfalls. Firstly,
+
+– 17 –
+
+0.14
+0.035
+0.12
+0.03
+0.1
+0.025
+0.08
+
+0.02
+
+0.06
+
+0.015
+0.01
+
+0.04
+
+0.005
+
+0.02
+
+0
+
+-8
+
+10
+
+10-7
+
+0
+10-4
+
+-6
+
+10
+σSI(χ + p) (pb)
+
+Figure 12: The neutralino-proton direct detection cross-section as predicted
+from the ‘conventional’ set of LHC measurements.
+
+-3
+
+10
+
+σSD(χ + n) (pb)
+
+Figure 13: The neutralino-neutron direct detection cross-section as predicted
+from the ‘conventional’ set of LHC measurements.
+
+it is clear that the improvement in our results comes from using shape information,
+and one must therefore carefully consider whether there are issues that might distort this shape. The dilepton invariant mass is a particularly clean signature, since
+practically all SUSY backgrounds can be removed via ‘flavour-subtraction’ (i.e. one
+plots the combination e+ e− + µ+ µ− − e+ µ− + µ+ e− ). This explains the precision of
+the quoted ATLAS result which survived a rigorous detector simulation.
+It is more likely that the method described here will fail if Nature presents a
+focus point scenario with larger mass differences between the neutralinos such that
+the endpoints are either obscured by the Z peak or, in the case where the mass
+difference exceeds the Z mass, are not produced at all since the decay χ̃0j → Z χ̃01 is
+open. One could also push the gluino mass to large values and reduce the overall
+production cross-section at the LHC without violating any current constraints. In
+such a case, the LHC is trivially bound to fail.
+On the plus side, it is possible that the precision of the measurement could be
+improved further by using inclusive signatures in addition to the endpoint information, using a method similar to that in reference [29]. The focus point is conceptually
+simpler than most other regions of the parameter space, as the fact that the LHC
+would only be producing gauginos means that any inclusive signature must be telling
+us something about the gaugino sector. Thus, if dark matter is a gaugino, the focus
+point could be one of the more promising cases to handle at the LHC rather than
+one of the hardest, and this is a promising avenue for future work.
+Finally, we consider the relic density prediction, and speculate as to whether
+the low values arising from the A pole can be removed by any further LHC data.
+Although mA is well in excess of 2mχ˜0 in the focus point region, there is no way a
+1
+
+– 18 –
+
+priori to rule out low heavy Higgs masses. If one could measure a lower bound on mA ,
+it is worth noting that the low values are substantially reduced for mA > 300 GeV
+(Figure 14).
+Previous studies have placed bounds on
+the Higgs mass by either examining the Higgs
+0.005
+search reach for the LHC in the mA −tanβ
+plane and determining which region is com0.004
+patible with non-observation or by using the
+0.003
+measured mass difference between sparticles
+to place bounds on the Higgs mass based
+0.002
+on its non-appearance in cascade decays [3].
+0.001
+Neither method is particularly useful here
+since a rather large region of the mA −tanβ
+0
+0 0.02 0.04 0.06 0.08 0.1 0.12 0.14 0.16 0.18
+search plane is compatible with the observaΩh
+tion of only mh , while (mχ˜0 − mχ˜0 ) < 2mχ˜0
+1
+1
+4
+for
+our
+benchmark
+point,
+meaning
+that
+even
+Figure 14: The relic density as predicted from the ‘new’ set of LHC mea- if the branching ratios were favourable enough
+to produce heavy Higgs bosons in cascade
+surements with a cut mA > 300 GeV.
+decays, the only lower limit we could place
+on the A mass would still be insufficient to rule out the low values. We therefore
+consider it unlikely that the LHC could set a lower limit sufficient to reduce this
+uncertainty on the relic density calculation, though it is not inconceivable that new
+work on Higgs decays to SUSY particles might extend the search reach for the A
+boson sufficiently to improve general limits. If evidence suggests that a focus point
+scenario is realised in Nature, there is a clear incentive to pursue this line of enquiry.
+χ
+
+2
+
+4. Conclusions
+We have revisited the case of focus point neutralino dark matter at the LHC, for
+which it was previously assumed that it was not possible to make accurate predictions of astrophysical observables due to poorly constrained neutralino mixing parameters. Using similar Bayesian sampling techniques as the previous literature, we
+have demonstrated a method by which the shape of the dilepton invariant mass distribution can be used to remove false solutions and substantially improve predictions
+of the annihilation cross-section at threshold and the direct search cross-sections.
+The relic density prediction is also improved and could be significantly enhanced if
+one could set a lower bound on the A mass. If Nature has chosen a focus point
+scenario, we will thus be able to test the compatibility of LHC WIMP measurements
+with astrophysical data without having to wait for a linear collider. This is particularly important given the rich astrophysical data sets expected over the next few
+
+– 19 –
+
+years, and given the high likelihood of obtaining a strong indirect detection signal in
+focus point models.
+Although there are still specific reasons why we might be unlucky at the LHC (we
+are still dependent on favourable details of the mass spectrum), we remain optimistic
+that the LHC will be able to make stronger statements on neutralino mixing than has
+previously been assumed if Nature has chosen a model with heavy scalars. Applying
+our technique to other such scenarios would be an interesting line of future work.
+
+5. Acknowledgements
+MJW gratefully acknowledges the financial support of the Science and Technology
+Facilities Council, and wishes to thank Howie Baer, Michael Peskin, Edward Baltz,
+Are Raklev, Giacomo Polesello, Csaba Balazs and the members of the Cambridge
+Supersymmetry Working group for helpful discussions. FF is supported by a
+research fellowship from Trinity Hall, Cambridge.
+
+References
+[1] WMAP Collaboration, E. Komatsu et. al., Five-Year Wilkinson Microwave
+Anisotropy Probe (WMAP) Observations:Cosmological Interpretation, Astrophys. J.
+Suppl. 180 (2009) 330–376, [arXiv:0803.0547].
+[2] E. A. Baltz, M. Battaglia, M. E. Peskin, and T. Wizansky, Determination of dark
+matter properties at high-energy colliders, Physical Review D 74 (2006) 103521.
+[3] M. M. Nojiri, G. Polesello, and D. R. Tovey, Constraining dark matter in the MSSM
+at the LHC, JHEP 0603 (2006) 063.
+[4] J. L. Feng, K. T. Matchev, and F. Wilczek, Neutralino Dark Matter in Focus Point
+Supersymmetry, Phys. Lett. B482 (2000) 388–399, [hep-ph/0004043].
+[5] ATLAS Collaboration, G. Aad et. al., The ATLAS Experiment at the CERN Large
+Hadron Collider, JINST 3 (2008) S08003.
+[6] CMS Collaboration, R. Adolphi et. al., The CMS experiment at the CERN LHC,
+JINST 3 (2008) S08004.
+[7] F. Feroz, M. P. Hobson, and M. Bridges, MULTINEST: an efficient and robust
+Bayesian inference tool for cosmology and particle physics, Mon. Not. Roy. Astron.
+Soc. 398 (Oct., 2009) 1601–1614, [arXiv:0809.3437].
+[8] H. P. Nilles Phys. Lett. B 115 (1982) 193.
+[9] H. Baer, A. Mustafayev, E.-K. Park, and X. Tata, Collider signals and neutralino
+dark matter detection in relic-density-consistent models without universality, JHEP
+05 (2008) 058, [arXiv:0802.3384].
+
+– 20 –
+
+[10] S. S. AbdusSalam, B. C. Allanach, F. Quevedo, F. Feroz, and M. Hobson, Fitting the
+Phenomenological MSSM, arXiv:0904.2548.
+[11] E. Moulin, A. Jacholkowska, G. Moultaka, J. L. Kneur, E. Nuss, T. Lari,
+G. Polesello, D. Tovey, M. White, and Z. Yang, Complementarity of gamma-ray and
+LHC searches for neutralino dark matter in the focus point region, Physical Review
+D 77 (2008) 055014.
+[12] B. C. Allanach and D. Hooper, Panglossian Prospects for Detecting Neutralino Dark
+Matter in Light of Natural Priors, JHEP 10 (2008) 071, [arXiv:0806.1923].
+[13] H. Baer, F. E. Paige, S. D. Protopescu, and X. Tata, ISAJET 7.69: A Monte Carlo
+event generator for pp, p̄p, and e+ e− reactions, 2003.
+[14] F. Feroz and M. P. Hobson, Multimodal nested sampling: an efficient and robust
+alternative to Markov Chain Monte Carlo methods for astronomical data analyses,
+Mon. Not. Roy. Astron. Soc. 384 (Feb., 2008) 449–463, [arXiv:0704.3704].
+[15] J. Skilling, Nested Sampling, in American Institute of Physics Conference Series
+(R. Fischer, R. Preuss, & U. V. Toussaint, ed.), vol. 735 of American Institute of
+Physics Conference Series, pp. 395–405, Nov., 2004.
+[16] M. Bridges, F. Feroz, M. P. Hobson, and A. N. Lasenby, Bayesian optimal
+reconstruction of the primordial power spectrum, Mon. Not. Roy. Astron. Soc. 400
+(Dec., 2009) 1075–1084, [arXiv:0812.3541].
+[17] S. S. AbdusSalam, B. C. Allanach, M. J. Dolan, F. Feroz, and M. P. Hobson,
+Selecting a model of supersymmetry breaking mediation, Physical Review D 80 (Aug.,
+2009) 035017, [arXiv:0906.0957].
+[18] F. Feroz, B. C. Allanach, M. Hobson, S. S. Abdus Salam, R. Trotta, and A. M.
+Weber, Bayesian selection of sign µ within mSUGRA in global fits including WMAP5
+results, Journal of High Energy Physics 10 (Oct., 2008) 64, [arXiv:0807.4512].
+[19] R. Trotta, F. Feroz, M. Hobson, L. Roszkowski, and R. Ruiz de Austri, The impact
+of priors and observables on parameter inferences in the constrained MSSM, Journal
+of High Energy Physics 12 (Dec., 2008) 24, [arXiv:0809.3792].
+[20] A. R. Raklev and M. J. White, Constraining the MSSM with Dark Matter indirect
+detection data, arXiv:0911.1986.
+[21] F. Feroz, J. R. Gair, M. P. Hobson, and E. K. Porter, Use of the MULTINEST
+algorithm for gravitational wave data analysis, Classical and Quantum Gravity 26
+(2009), no. 21 215003.
+[22] Z. Kang, N. Kersting, S. Kraml, A. R. Raklev, and M. J. White, Neutralino
+Reconstruction at the LHC from Decay-frame Kinematics, arXiv:0908.1550.
+
+– 21 –
+
+[23] U. De Sanctis, T. Lari, S. Montesano, and C. Troncon, Perspectives for the detection
+and measurement of supersymmetry in the focus point region of mSUGRA models
+with the ATLAS detector at LHC, 2007.
+[24] P. Gondolo, J. Edsjo, P. Ullio, L. Bergstrom, M. Schelke, and E. A. Baltz,
+DarkSUSY: Computing supersymmetric dark matter properties numerically, JCAP
+0407 (2004) 008.
+[25] M. Frank, T. Hahn, S. Heinemeyer, W. Hollik, H. Rzehak, and G. Weiglein, The
+Higgs boson masses and mixings of the complex MSSM in the
+Feynman-diagrammatic approach, JHEP0702 047 (2007).
+[26] G. Degrassi, S. Heinemeyer, W. Hollik, P. Slavich, and G. Weiglein, Towards
+high-precision predictions for the MSSM Higgs sector, European Physical Journal C
+28 (2003) 133.
+[27] S. Heinemeyer, W. Hollik, and G. Weiglein, Feynhiggs: a program for the calculation
+of the masses of the neutral CP-even higgs bosons in the MSSM, 1998.
+[28] P. Skands, B. C. Allanach, H. Baer, C. Balazs, G. Belanger, F. Boudjema,
+A. Djouadi, R. Godbole, J. Guasch, S. Heinemeyer, W. Kilian, J.-L. Kneur,
+S. Kraml, F. Moortgat, S. Moretti, M. Muhlleitner, W. Porod, A. Pukhov,
+P. Richardson, S. Schumann, P. Slavich, M. Spira, and G. Weiglein, SUSY les
+houches accord: Interfacing SUSY spectrum calculators, decay packages, and event
+generators, JHEP 0407 (2004) 036.
+[29] C. G. Lester, M. A. Parker, and M. J. White, Determining SUSY model parameters
+and masses at the LHC using cross-sections, kinematic edges and other observables,
+JHEP 0601 (2006) 080.
+
+– 22 –
+
+

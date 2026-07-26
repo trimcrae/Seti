@@ -1,0 +1,206 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+
+<HEAD>
+   <title>V.D.4   Known Source Correlation</title>
+</HEAD>
+
+<BODY bgcolor="#FFFFFF">
+
+<h1 align="center">
+   IRAS Explanatory Supplement<br>
+   V. Data Reduction<br>
+   D. Point Source Confirmation<br>
+   D.4   Known Source Correlation
+</h1>
+
+<hr>
+<font size=+1>
+<center>
+   <a href="index.html#toc">Chapter Contents</a> | 
+   <a href="index.html#intro">Introduction</a> | 
+   <a href="index.html#auth">Authors</a> | 
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> | 
+   <a href="../index/index.html">Index</a> | 
+   <a href="D3.html">Previous Section</a> | 
+   <a href="D5.html">Next Section</a>
+</font>
+</center>
+
+<hr>
+
+<ol type=a>
+   <li><a href="#4a">Known Source Prediction</a>
+   <li><a href="#4b">Correlation of Observations With Predictions</a>
+   <li><a href="#4c">Known Source Flux and Position Discrepancy  Analysis</a>
+</ol>
+
+      A measure of processing quality was obtained by tracking
+the progress of certain known sources of infrared emission through
+the various stages of the data reduction. These included most
+of the IRC and AFGL objects, along with about 25,000 K Stars and
+2500 numbered asteroids. A dozen comets and the major planets
+within the viewing constraints were also included as well as about
+200 objects which were selected on the basis of potential interest
+to users of the low-resolution spectrometer.
+
+<hr>
+
+<a name="4a">
+<h2>D.4.a Known Source Prediction</h2>
+<P>
+      The a priori fluxes in the IRAS bands for the IRC, AFGL,
+and K stars were estimated by blackbody curves run through measured
+flux points.  The K star estimates were adjusted by global rescaling
+after a month's accumulation of data.  The fluxes for the solar
+system objects were obtained via standard thermal models. The
+low-resolution spectrometer objects had no flux estimates.
+<P>
+      For each survey scan, the known objects which were to be
+covered were predicted. The predictions involved the detectors
+which would be crossed by each source image, the times of these
+crossings, the flux that should be observed, and a measure of
+the probability that a detection would result. The scan parameters
+and the known positions of the sources were used with the detailed
+boresight pointing history to calculate the geometrical predictions,
+and once the detectors were identified, their sensitivities and
+the intersections of their slots with the image blur were used
+to obtain the expected flux values.  The probability of detection
+was based on the expected signal-to-noise ratio and photometric
+error, along with the uncertainty in the reconstructed solar aspect angle, 
+the clearance
+in the slot of the image center, and the width of the image blur.
+ The probability increased with higher signal-to-noise ratio,
+as photometric error became less likely to thwart the detection
+process, and it decreased with smaller slot clearance, as cross-scan
+limit cycling and image blur width became more likely to prevent
+the necessary amount of flux from arriving at the detector. For
+the solar system objects, orbital position calculations were necessary.
+ These were computed in heliocentric ecliptic coordinates at the
+time corresponding to the middle of the observation period and
+transformed to spacecraft-centered position angles.  The remainder
+of the task was the same as for inertially fixed sources.
+<P>
+     After each anticipated known source image had been mapped
+through the focal plane, the number  of detections predicted for
+it was checked to determine whether the source could reasonably
+be expected to be detected.  The flux predicted for each detector
+was required to be above a certain level corresponding to the
+detection threshold on that detector.  At least one SC or NSCF
+prediction was required before any prediction at all was generated.
+ If any prediction was issued, then the estimated fluxes in all
+bands, even those below threshold, were passed on to the correlation
+analysis, although no detectors were associated with any band
+for which the fluxes were expected to be below the detection threshold.
+
+<hr>
+
+<a name="4b">
+<h2>D.4.b Correlation of Observations With Predictions</h2>
+<P>
+      Association of an observed source with a predicted known
+source was done strictly on the basis of position agreement using
+the non-Gaussian statistics described at the beginning of 
+<a href="D1.html">Section V.D.1 
+(<a href="index.html#ref">Fowler and Rolfe 1982</a>).  
+After an identification was made,
+a subsequent identification of the same prediction with another
+observation could still occur and have a chance to replace the
+earlier association if appropriate.  In such a case, the two associations
+were compared and only the better match was kept. Similarly, if
+one observed source was found to pass the tests for association
+with more than one prediction, only the best match was kept.
+<P>
+      If a predicted source was never matched to an observation,
+then the predicted probabilities of detection were checked to
+see whether any were above 0.99 and if so, a warning message issued.
+ A given prediction was considered unable to acquire further matches
+if the latest observation processed was more than 41' past it
+in the scan direction, or if another prediction at least five
+positions further downstream was matched.
+
+<hr>
+<a name="4c">
+<h2>D.4.c Known Source Flux and Position Discrepancy Analysis</h2>
+<P>
+      When final match decisions had been made for each predicted
+known source, those which were identified with observations were
+investigated for discrepancies in the flux and position.  The
+various types of known sources mentioned above were all kept separated
+in the statistical analysis of the discrepancies.
+<P>
+      In-scan position discrepancies were used to compute the
+mean, variance, and statistical significance of this error. The
+information was used in the focal plane geometrical calibration.
+Only very small mean errors were found and the variances indicated
+that the a priori errors were slightly conservative. In addition,
+data were grouped in cross-scan cells in order to determine whether
+the mean in-scan error was a function of the cross-scan location
+of the detectors involved. This would reveal any significant rotational
+misalignment of the focal plane about the optical axis; an upper
+limit of less than half a second of arc was found for the impact
+of this effect on source position reconstruction.
+<P>
+      Cross-scan position discrepancies were studied in three
+groups: sources observed only in one band, sources observed in
+more than one band and sources containing any triple detections.
+ These groups have distinctive ranges of cross-scan errors, and
+are listed above in order of decreasing uncertainty. For each
+group, the mean and variance of the cross-scan position discrepancies
+were computed. General agreement with <i>a priori</i> values was found.
+
+<hr>
+<font size=+1>
+<center>
+   <a href="index.html#toc">Chapter Contents</a> | 
+   <a href="index.html#intro">Introduction</a> | 
+   <a href="index.html#auth">Authors</a> | 
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> | 
+   <a href="../index/index.html">Index</a> | 
+   <a href="D3.html">Previous Section</a> | 
+   <a href="D5.html">Next Section</a>
+</font>
+</center>
+<hr>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

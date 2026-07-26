@@ -1,0 +1,354 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+<HEAD>
+   <TITLE>II.C.5 Electronics</TITLE>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H1 ALIGN=CENTER>
+   IRAS Explanatory Supplement<BR>
+   II. Satellite Description<BR>
+   C. Telescope System Overview<BR>
+   C.5 Electronics
+</H1>
+
+<HR>
+
+<CENTER>
+<FONT SIZE=+1>
+   <A HREF="index.html#toc">Chapter Contents</A> |
+   <A HREF="index.html#auth">Authors</A>
+ | <A HREF="index.html#ref">References</A>
+<BR>
+   <A HREF="../toc.html">Table of Contents</A> |
+   <A HREF="../index/index.html">Index</A> |
+   <A HREF="C4.html">Previous Section</A>
+ | <A HREF="ap1.html">Next Section</A>
+</FONT>
+</CENTER>
+
+<HR>
+
+<a name="figC10">
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=2 align=right width=200>
+<TR>
+<TD ALIGN=CENTER>
+<A HREF="../ch2/figs/figC10-2.gif" target="fig2C10">
+<IMG SRC="../ch2/figs/figC10-3.gif" BORDER=0></A>
+</TD>
+</TR>
+<TR>
+<TD>
+<I>Figure II.C.10 Preamp and bias supply schematic.  The JFET module
+is indicated by the dashed line, the dewar boundary by the dash-dot
+line.</I><br>
+<a href="../ch2/figs/figC10-2.gif" target="fig2C10">larger</a>
+<a href="../ch2/figs/figC10-1.gif" target="fig2C10">largest</a>
+</TD>
+</TR>
+</TABLE>
+<P>
+The photoconductive detector elements responded to infrared radiation
+by altering their electrical resistance.
+<a href="#figC10">Figure II.C.10.a</a> shows schematically
+the nominal preamplifier and bias voltage design. A matched pair of junction
+field effect transistors (JFETs) for each detector acted as a unity-gain
+source-follower amplifier, converting the high impedance output of the
+photodetectors to low impedance for transmission to the warm electronics
+outside the dewar. The JFET pairs were each suspended by Dacron threads
+inside a small 2 K light-tight box such that electrical dissipation in
+the JFETs themselves (about 200 microwatts) maintained the JFETs at
+temperatures of 60 to 70 K. A 3
+M<img alt="omega-uc" src="../images/omega-uc.gif"> metal-film resistor
+cemented to the JFET
+acted as a heater for cold starting the amplifier during ground testing
+and several hours after launch. The JFETs formed a differential input stage
+of the trans-impedance amplifier. At low frequencies the output voltage
+of the trans-impedance amplifier was equal to the voltage difference between
+the gates of the JFET pair plus any offset voltage at the input of the
+operational amplifier plus the voltage drop across the feedback resistor
+due to the photocurrent from the detector.
+<P>
+The detector bias was applied to one detector contact and the trans-impedance
+amplifier maintained the other contact at a constant DC voltage very near
+signal ground independent of photocurrent until the trans-impedance amplifier
+output saturated at about 11 volts. All detectors in a module had a common
+bias voltage, applied through the module frame, which are listed in
+<A HREF="#tabC6">Table II.C.6</A>. An exception to this biasing scheme was
+module A in the 25 &micro;m band. During testing, the frame of this module
+became shorted
+to signal ground rendering the entire module inoperative. The alternative
+biasing approach used for this module only (suggested by Dr. J. Houck)
+is shown in <A HREF="#figC10">Fig. II.C.10.b</A>. The bias voltage, with
+reversed polarity, was applied to the gate of the reference JFET. This
+voltage also appeared at the operational amplifier input so the output
+of the trans-impedance amplifier was compensated by the same amount. The
+net effect of this modification was to increase the gain of the
+trans-impedance amplifier by a factor of 1.2.
+<P>
+During laboratory testing the responsivity and noise of the detectors
+were found to depend on their history of exposure to energetic radiation,
+such as gamma-rays, and energetic electrons and protons.
+The observed sensitivity
+change resulting from an exposure of 0.6 Rads of Co60, roughly equivalent
+in dosage to a passage through a deep portion of the South Atlantic Anomaly
+(SAA), was about a factor of 1.2, 2, 6 and 10 for the 12, 25, 60 and 100
+&micro;m detectors. Biasing the detectors into a &quot;breakdown&quot;
+condition resulted in a large current flowing through the detector that
+annealed the radiation effects. The hardware provided a second bias voltage
+level, called the &quot;bias boost&quot; voltage, which effected this
+annealing
+process after exposure to SAA protons during the mission. The bias boost
+voltages are listed in <A HREF="#tabC6">Table II.C.6</A> and the effects
+of the bias boost are discussed in
+<A HREF="../ch4/A.html#7">Section IV.A.7</A>.
+Because the 12 &micro;m detectors did not require annealing, the
+second bias voltage provided an alternative operating bias.
+<br clear=right>
+
+<a name="figC11">
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=2 align=right width=200>
+<TR>
+<TD ALIGN=CENTER>
+<A HREF="../ch2/figs/figC11-2.gif" target="fig2C11">
+<IMG SRC="../ch2/figs/figC11-3.gif" BORDER=0></A>
+</TD>
+</TR>
+<TR>
+<TD>
+<I>Figure II.C.11 Resistance vs. voltage characteristics of feedback
+resistor for detector 29. Measurements were made at 2 K.
+Solid line shows the shape of resistance vs. voltage relation adopted
+for processing.</I><br>
+<a href="../ch2/figs/figC11-2.gif" target="fig2C11">larger</a>
+<a href="../ch2/figs/figC11-1.gif" target="fig2C11">largest</a>
+</TD>
+</TR>
+</TABLE>
+<P>
+The rolloff frequency of the trans-impedance amplifier was set to
+approximately 80 Hz by a 0.1 pf shunt capacitor across the feedback resistor.
+The feedback resistors, Eltec model 102 metal film resistors, were selected
+from 1 &times; 10<SUP>10</SUP> <img src="../images/omega-uc.gif">
+room temperature elements. At 2 K their impedance
+was 2.05 &plusmn; 0.1 &times; 10<SUP>10</SUP>
+<img src="../images/omega-uc.gif"> and varied slightly with
+voltage. <A HREF="#figC11">Figure II.C.11</A> shows a sample resistance
+vs. voltage curve as measured at 2 K. A combination of three straight lines
+fitted to the measured points defined the shape of the non-linear resistance
+versus voltage relationship used for data reduction
+(see <A HREF="../ch6/A.html#5">Section VI.A.5</A>).
+
+<BR clear=right>
+
+<A NAME="tabC6">
+<center>
+<TABLE border=1 cellspacing="0" cellpadding="5">
+<CAPTION>
+<B><FONT SIZE=+1>
+Electrical Characteristics of Survey Arrays<BR>
+Table II.C.6
+</FONT></B>
+</CAPTION>
+
+<TR BGCOLOR="#CCCCCC">
+<Th>Effective Wavelength (&micro;m)</Th>
+<Th>12</Th>
+<Th>25</Th>
+<Th>60</Th>
+<Th>100</Th>
+</TR>
+<TR>
+<TD>Nominal bias (volts)</TD>
+<TD>3.27(A)<BR>2.50(B)</TD>
+<TD>1.50</TD>
+<TD>0.160</TD>
+<TD>0.185</TD>
+</TR>
+<TR>
+<TD>Boosted bias (volts)</TD>
+<TD>2.50(A)<BR>
+2.00(B)</TD>
+<TD>11.00(A)<BR>
+7.00(B)</TD>
+<TD>1.00</TD>
+<TD>1.00</TD>
+</TR>
+<TR>
+<TD>Nominal/Low Gain</TD>
+<TD>7.18</TD>
+<TD>5.98</TD>
+<TD>10.8</TD>
+<TD>13.4</TD>
+</TR>
+<TR>
+<TD>Nominal/High Gain</TD>
+<TD>0.107</TD>
+<TD>0.109</TD>
+<TD>0.102</TD>
+<TD>0.100</TD>
+</TR>
+</TABLE>
+</center>
+<P>
+The rest of the telescope electronics processed the signals from the
+visible and infrared preamplifiers, transferred data to the spacecraft
+onboard computer for storage and subsequent transmission to the ground
+station, and received commands from the spacecraft and distributed them
+to the telescope systems. This data-processing was split into two major
+elements: the analog electronics and the digital electronics. More details
+are contained in <A HREF="index.html#ref">Langford <I>et al.</I> (1983)</A>
+and <A HREF="index.html#ref">Long and Langford (1983)</A>.<BR>
+
+<a name="figC12"></a>
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=2 align=right width=200>
+<TR>
+<TD ALIGN=CENTER>
+<A HREF="../ch2/figs/figC12-2.gif" target="fig2C12">
+<IMG SRC="../ch2/figs/figC12-3.gif" BORDER=0></A>
+</TD>
+</TR>
+<TR>
+<TD>
+<I>Figure II.C.12 Focal plane array infrared channel data flow.</I><br>
+<a href="../ch2/figs/figC12-2.gif" target="fig2C12">larger</a>
+<a href="../ch2/figs/figC12-1.gif" target="fig2C12">largest</a>
+</TD>
+</TR>
+</TABLE>
+<P>
+The analog signal path for the infrared detectors was entirely DC-coupled.
+<A HREF="#figC12">Figure II.C.12</A> shows a functional diagram of the
+components of the analog electronics for one infrared detector channel.
+In order to maintain a negative voltage at the output of the analog
+electronics,
+the DC offset voltage at the output of the trans-impedance amplifier could
+be changed by 17.8 mV steps using an 8 level commandable offset with level
+4 corresponding to no change. The commandable offset levels utilized during
+the mission are listed in <A HREF="../ch2/C4.html#tabC3">Table II.C.3</A>.
+<P>
+Nuclear pulse circumvention circuitry prevented sharp pulses from cosmic
+rays and charged particle hits on the detectors in the SAA and in the polar
+horns from contaminating the infrared data stream. The output of the
+trans-impedance amplifier was fed to an integrator and to a pole-zero
+amplifier which flattened
+the frequency response to 450 Hz to improve the operation of the circumvention
+circult. The output of the pole-zero amplifier went to a differentiator
+and to a Bessel filter which delayed the signal by about 150 &micro;s. The
+differentiated
+and integrated signals led to a comparator which opened a switch to prevent
+the unwanted, fast rise-time pulses from passing through the system. The
+integrator raised the minimum threshold to blank the unwanted spike as
+the DC voltage from the trans-impedance amplifier increased. The track/hold
+capacitor clamped the input to the gain amplifier to a fixed level while
+the switch was open. Further details of the design and performance of the
+pulse circumvention circuitry can be found in <A HREF="index.html#ref">Emming
+<I>et al.</I> (1983)</A> and
+<A HREF="index.html#ref">Long and Langford (1983)</A>.
+<P>
+The Bessel filter boosted the trans-impedance amplifier output by a
+factor of two. An additional amplifier could increase the system gain by
+software commandable factors of unity (low gain), of 5 to 12 depending
+on the wavelenght band (nominal gain), and of ten times nominal gain (high
+gain). All survey scans were made using the nominal gain except in those
+areas, typically close to the Galactic plane. Some of these areas were
+rescanned using low gain (<A HREF="../ch3/D.html">Section III.D</A>). The
+overtall nominal gain for each infrared channel and the ratios of the nominal
+to low and high gains for the different detector modules are listed in
+<A HREF="../ch2/C4.html#tabC3">Table II.C.3</A>. Finally. 12 dB/octave
+low-pass filters
+with cutoff frequencies of 6, 6, 3, 1.5 Hz for the 12, 25, 60 and 100 &micro;m
+bands, respectively, limited the frequency response and reduced high frequency
+noise. The outputs of the low-pass filters were fed into multiplexers and
+then to a 16-bit analog-to-digital converter operating at 125 &micro;V
+per data number for subsequent processing by the digital electronics.
+<P>
+The visible detector data flow was similar to the infrared data flow,
+except that the trans-impedance amplifier was AC-coupled to a MOSFET
+preamplifier.
+For both infrared and visible channels, the pole zero amplifier, integrator,
+differentiator, comparator, track/hold calacitor, switch, gain amplifier
+and low-pass filter were contained in a single miniature hybrid circuit.
+<P>
+Under low background conditions the limiting noise in the analog
+electronics
+chain was the Johnson noise of the 2 &times; 10<SUP>10</SUP>
+<img alt="omega-uc" src="../images/omega-uc.gif"> feedback
+resistor. At a temperature of 2 K this noise level was roughly 1.6 &micro;V
+Hz<SUP>-&frac12;</SUP>.
+<P>
+The digital electronics processed the digitized infrared and visible
+detector data, collected telemetry information from various sensors located
+on the telescope, received and executed commands issued from the onboard
+computer and transmitted the formatted telemetry, infrared and visble detector
+data to the onboard computer. The infrared detectors were sampled at 16,
+16, 8 and 4 Hz at 12, 25, 60 and 100 &micro;m, respectively. To minimize
+spacecraft data storage requirements, the digital electronics compressed
+each 16-bit infrared detector value to an 8-bit value representing the
+difference between the successive 16-bit numbers. For details of compression
+scheme, see <A HREF="ap1.html">Appendix II. 1</A>.
+<P>
+During star crossings, two of the eight visual detectors were sampled
+at a 500 Hz rate. The onboard digital electronics determined the visual
+magnitude of the star and its crossing time, passed this information to
+the spacecraft attitude control software to update the satellite pointing
+and recorded the data for subsequent use in the attitude reconstruction.
+The digital electronics also measured 108 temperatures, voltages and pressures
+to monitor the health of the telescope. These and other housekeeping data
+were multiplexed, digitized and formatted for transferral to the onboard
+computer.
+
+<HR>
+
+<CENTER>
+<FONT SIZE=+1>
+   <A HREF="index.html#toc">Chapter Contents</A>
+ | <A HREF="index.html#auth">Authors</A>
+ | <A HREF="index.html#ref">References</A>
+<BR>
+   <A HREF="../toc.html">Table of Contents</A> |
+   <A HREF="../index/index.html">Index</A> |
+   <A HREF="C4.html">Previous Section</A>
+ | <A HREF="ap1.html">Next Section</A>
+</FONT>
+</CENTER>
+
+<HR>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

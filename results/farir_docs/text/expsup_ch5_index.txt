@@ -1,0 +1,412 @@
+V. Data Reduction 
+
+ IRAS Explanatory Supplement
+
+V. Data Reduction
+
+ Chapter Contents | 
+ Introduction | 
+ Authors | 
+ References 
+
+ Table of Contents | 
+ Index | 
+ Previous Chapter | 
+ Next Chapter 
+
+ Chapter V Contents 
+
+ Overview 
+ 
+ General 
+ IRAS Catalogs and Atlases 
+ Processing Summary 
+ 
+ Data Reconstruction 
+ Pointing Reconstruction 
+ Source Detection 
+ Point Source Confirmation 
+ Small Extended Source Confirmation 
+ Asteroids and Comets 
+ Extended Emission Processing 
+ Final Processing Steps 
+
+ Pointing Reconstruction 
+ Source Detection 
+ 
+ Square Wave Filter 
+ Noise Estimator 
+ Timing Estimate 
+ Correlation with Point Source Template 
+ Determination of Templates 
+ Low Signal-to-Noise Detections 
+ Source Shadowing 
+ 
+ Point Source Confirmation 
+ 
+ Processing Overview 
+ Overview of Seconds-Confirmation 
+ 
+ Band Seconds-Confirmation 
+ Position Reconstruction 
+ Optical Crosstalk Removal 
+ In-Band Seconds-Confirmation Decision 
+ Double-Detection Mode 
+ Triple-Detection Mode (Edge Detections) 
+ In-Band Seconds-Confirmation Confusion 
+ Processing 
+ In-Band Seconds-Confirmation Position 
+ Refinement 
+ In-Band Seconds-Confirmation Photometric 
+ Refinement 
+ In-Band Seconds-Confirmation Statistical
+ Processing 
+ 
+ Band-Merging 
+ 
+ Overview of Band-Merging 
+ Band Filling 
+ Special Considerations Regarding 
+ Band-Merging 
+ Focal Plane Geometry Analysis 
+ 
+ Known Source Correlation 
+ 
+ Known Source Prediction 
+ Correlation of Observations With
+ Predictions 
+ Known Source Flux and Position Discrepancy
+ Analysis 
+ 
+ Overview of Hours-Confirmation 
+ 
+ Hours-Confirmation Decision 
+ Position Agreement 
+ Photometric Agreement 
+ Hours-Confirmation Confusion Processing 
+ Hours-Confirmation Position and Photometric
+ Refinement 
+ Hours-Confirmation Statistical 
+ Processing 
+ Special Considerations Regarding
+ Hours-Confirmation 
+ 
+ Overview of Weeks-Confirmation 
+ 
+ Weeks-Confirmation Decision 
+ Weeks-Confirmation Position Refinement 
+ Weeks-Confirmation Statistical 
+ Processing 
+ 
+ Auxiliary Processing for Low Resolution 
+ Spectra 
+ Flux and Confusion Status Words 
+ Conversion of Position Uncertainties to 
+ Gaussian Approximation 
+ 
+ Overview of Small Extended Source Data Processing 
+ 
+ Potential Detections 
+ Seconds-Confirmation 
+ Source Construction and Hours-Confirmation 
+ Cluster Analysis Processing 
+ Weeks-Confirmation 
+ Band-Merging 
+ Optimizing the Processor 
+ 
+ Choosing the Clustering Threshold 
+ Choosing the Weeks-Confirmation
+ Threshold 
+ Choosing the Band-Merging Threshold 
+ Summary and Discussion 
+ 
+ The Small Extended Source Catalog 
+ 
+ Asteroids and Comets 
+ Extended Source Products 
+ 
+ Processing Overview 
+ Quality Checking, Selection, and Weights 
+ Phasing, Sorting, and Gaps 
+ Conversion to Surface Brightness 
+ Compression and the Time-Ordered Files 
+ Destriping 
+ Projection into Sky Maps 
+ Consistency Checking and Removal of Bad Data 
+ Final Image Generation 
+ 
+ The Point Source Catalog 
+ 
+ Processing Overview 
+ Clean-Up Processing 
+ Neighbor Tagging 
+ Cirrus Flagging 
+ Average Flux Computation and Variability Analysis 
+ High Source Density Regions 
+ Catalog Source Selection 
+ Low-Resolution Spectral Associations 
+ Associations 
+
+ Introduction 
+
+ This chapter describes the transformation of the raw data
+into its final forms. Section V.A provides a general 
+overview
+of the data reduction, while subsequent sections provide a more
+detailed description. The relative and absolute calibration of
+the data is discussed separately in Chapter VI .
+The results of the analysis of the data processing are given in 
+ Chapter VII .
+An overall description of the survey, including sky coverage,
+completeness and reliability, is given in
+ Chapter VIII .
+
+ Authors: 
+
+ T. Chester, B. T. Soifer, C. Beichman, J. Fowler, T.N. Gautier,
+G. Helou, H. McCallon, M. Rowan-Robinson, T. Conrow, M. Hauser,
+D. Walker, R. Walker.
+
+ References: 
+
+Acker, A., Marcout, J., and Ochsenbein, F., 1981, Astron. Astrophys .
+ [Supp.] 43 , 265.
+
+Altenhoff, W.J., Downes, D., Pauls, T., and Schraml, J., 1979,
+ Astron. Astrophys . [Suppl.] 35 , 23.
+
+Alter, G., Balasz, B., and Ruprecht, J., 1970, Catalogue of Star
+ Clusters and Associations . Budapest: Akademiai Kiado.
+
+Arp, H., 1966, Ap.J. [Suppl.] 14 , 1.
+
+Blitz, L., Fich, M. and Stark, A.A., 1982, Ap.J. [Supp.] 49 ,
+ 183.
+
+Cederblad S., 1946, Lund Annals , Ser. 2, No. 119.
+
+de Vaucouleurs, G., de Vauncouleurs, A., and Corwin, Jr., H.G.,
+ 1976, Second Reference Catalogue of Bright Galaxies . Austin:
+ University of Texas Press.
+
+Dorschner, V.J., and Gurtler, J., 1964, Ast. Nachr. 287 , 257.
+
+Fisher, J.R., and Tully, R.B., 1975, Astron. Astrophys .
+ 44 , 151.
+
+Foltz, C.B., Peterson, B.M., and Boronson, T.A., 1980, A. J. 
+ 85 , 1328.
+ 
+Fowler, J.W., and Rolfe, E.G., 1982, Journal of the Astronautical
+ Sciences , Vol. XXX, No. 4, 385
+
+Gliese, W., 1969, Veroffentl. Astron. Rechen-Instituts Heideberg ,
+ No. 22.
+
+Haynes, R.F., Caswell, J.L., and Simons, L.W.J., 1979, Aust. J.
+ Phys. Astrophys . [Supp.], No. 48.
+
+Hoffleit, D., and Jaschek, C., 1982, The Bright Star Catalogue,
+ Fourth Revised Edition . New Haven: Yale University Observatory.
+ 
+Kleinmann, S.G., and Joyce, R.R., 1984, private communication.
+
+Kojoian, G., Chute, P.A., and Aumann, C.E., 1984, A. J. 
+ 89 , 332.
+
+Kojoian, G., Elliott, R., and Bicay, M.D., 1981, A. J. 
+ 86 , 816.
+
+Kojoian, G., Elliott, R., and Bicay, M.D., 1982, A. J. 
+ 87 1364.
+
+Kojoian, G., Elliott, R., and Tovmassian, H.M., 1978, A. J. 
+ 83 , 1545.
+
+Kojoian, G., Elliott, R., and Tovmassian, H.M., 1981, A. J. 
+ 86 , 811.
+
+Kuhr, H., Witzel, A., Pauliny-Toth, I.I.K., and Nauber, U., 1981,
+ Astron. Astrophys. [Supp.] 45 , 367.
+
+Kukarkin, B.V., Kholopov, P.N., Arirukhina, N.M., Fedorich V.P.,
+ Frolov, M.S., Goranskij, V.P., Gorynya, N.A. Karitskaya E.A.,
+ Kireeva, N.N., Kukarkina N.P., Kurochkin N.E., Medvedevna, G.I.,
+ Perova N.B. Ponomareva, J A. Samus' N.N. and Shugarov, S. Yu.
+ 1981, New Catalog of Suspected Variahle Stars (on magnetic
+ tape), Moscow.
+ 
+Kukarkin, B.V., Kholopov, P.N., Efremov, Yu. N., Kukarkina, N.P.,
+ Kurochkin, N.E., Medvedeva, G.I., Perova N.B., Fedorovich, V.P.,
+ and Frolov, M.S., 1970, General Catalog of Variable Stars, Vol
+ II. Sternberg Inst., Moscow State University.
+
+Kukarkin, B.V., Kholopov, P.N., Pskovsky, Yu.P., Efremov, Yu.N.,
+ Kukarkina, N.P., Kurochkin, N.E., Medvedeva, G.I., Perova, N.B.,
+ Fedorovich, V.P., and Frolov, M.S., 1971, General Catalogue of
+ Variable Stars, Vol. III. Sternberg Inst., Moscow State
+ University.
+
+Lauberts, A., 1982, The ESO/Uppsala Survey of the ESO(B) Atlas. 
+ Mucnich: European Southern Observatory.
+
+Lee, O.J., Baldwin, R.J., and Hamlin, D.W., 1943, Annals of the
+ Dearborn Observatory V, Part 1A. 
+
+Lee, O.J., and Bartlett, T.J., 1944, Annals of the Dearborn
+ Observatory V, Part 1B. 
+
+Lee, O.J., Gore, G.D., and Bartlett, T.J., 1947, Annals of the
+ Dearborn Observatory V, Part 1C. 
+
+Lynds, B.T., 1962, Ap. J. [Suppl.] 7 , 1.
+
+Markarian, B.E., 1967, Astrofizika 3 , 55 .
+
+Markarian, B.E., 1969a, Astrofizika 5 , 443 .
+
+Markarian, B.E., 1969b, Astrofizika 5 , 581 .
+
+Markarian, B.E., and Lipovetskii, V.A., 1971, Astrofizika 7 ,
+ 299 .
+
+Markarian, B.E., and Lipovetskii, V.A., 1972, Astrofizika 8 ,
+ 89 .
+
+Markarian, B.E., and Lipovetskii, V.A., 1973, Astrofizika 9 ,
+ 283 .
+
+Markarian, B.E., and Lipovetskii, V.A., 1974, Astrofizika 10 ,
+ 307 .
+
+Markarian, B.E., and Lipovetskii, V.A., 1976a, Astrofizika 12 ,
+ 389 .
+
+Markarian, B.E., and Lipovetskii, V.A., 1976b, Astrofizika 12 ,
+ 657 .
+
+Markarian, B.E., Lipovetskii, V.A., and Stepanyan, D.A., 1977a,
+ Astrofizika 13 , 225 .
+
+Markarian, B.E., Lipovetskii, V.A., and Stepanyan, D.A., 1977b,
+ Astrofizika 13 , 397 .
+
+Markarian, B.E., Lipovetskii, V.A., and Stepanyan, D.A., 1979a
+ Astofizika 15 , 201 .
+
+Markarian, B.E., Lipovetskii, V.A., and Stepanyan, D.A., 1979b,
+ Astrofizika 15 , 363 .
+
+Markarian, B.E., Lipovetskii, V.A., and Stepanyan, D.A., 1979c,
+ Astrofizika 15 , 549 .
+
+Markarian, B.E., Lipovetskii, V.A. and Stepanyan, D.A., 1981,
+ Astrofizika 17 , 619 .
+
+Marsalkova, P. 1974, Astrophys. Sp. Sci. 27 , 3.
+ 
+McCallon, H.L. and Kopan, E.L., IRAS Telescope Pointing 
+ Reconstruction , JPL Publication No. 85-1, to be published.
+
+Neugebauer, G., and Leighton, R.B., 1969, Two-Micron Sky Survey,
+ NASA SP-3047 . Washington, D.C.: National Aeronautics and Space
+ Administration.
+
+Nilson, P., 1973, Uppsala General Catalogue of Galaxies . Act 
+ Universitatis Upsailensis, Nova Regiae Societatis Upsallensis, Series V:A,
+ Vol. 1.
+ 
+Peterson, D.S., 1973, A. J. 78 , 811.
+
+Price, S.D., and Murdock, T.L., 1983, The Revised Air Force
+ Geophysics Laboratory Infrared Sky Survey, AFGL-TR-83-0161. 
+ Hanscom Air Force Base, Massachusetts: Air Force Geophysics
+ Laboratory.
+ 
+Rolfe, E.G., Otake, H., and Fowler, J.W., 1984 (in preparation
+ for submission to the Journal of the Astronautical Sciences ).
+ Smithsonian Astrophysical Ohservatory Star Catalog (4 vols.) 
+ 1966. Washington, D.C.: Smithsonian Institution.
+
+Stephenson, C.B., 1973, Publications of the Warner and Swasey
+ Observatory, Case Western Reserve University , 1 , No. 4.
+
+Stephenson, C.B., 1976, Publications of the Warner and Swasey
+ Observatory, Case Western Reserve University , 2 , No. 2.
+ 
+Sweeney, L.H., Heinsheimer, T.F., Yates, F.F., Maran, S.P., Lesh,
+ J.R., and Nagy, T.A., 1978, Interim Equatorial Infrared Catalogue,
+ TR-0078(3409-Z0)-1 . Los Angeles: The Aerospace Corporation.
+
+van den Bergh, S., 1966a, A. J. 71 , 922.
+
+van den Bergh, S., 1966b, A. J. 71 , 990.
+
+van den Bergh, S., and Herbst, W., 1975, A. J. 80 , 208.
+
+Veron-Cetty, M.P., and Veron, P., 1984, A Catalogue of Quasars
+ and Active Nuclei . Munich: European Southern Observatory.
+
+Vorontsov-Velyaminov, B.A., 1959, Atlas and Catalog of Interacting
+ Galaxies . Sternberg Inst., Moscow State University.
+
+Vorontsov-Velyaminov, B.A., and Arhipova, V.P., 1963, Morphological
+ Catalog of Galaxies, Part III . Moscow State University.
+
+Vorontsov-Velyaminov, B.A., and Arhipova, V.P., 1964, Morpological
+ Catalog of Galaxies, Part II . Moscow State University.
+
+Vorontsov-Velyaminov B.A., and Arhipova V.P., 1968, Morphological
+ Catalog of Galaxies, Part IV . Moscow State University.
+
+Vorontsov-Velyaminov, B.A., and Arhipova, V.P., 1974, Morphological
+ Catalog of Galaxies, Part V . Moscow State University.
+
+Vorontsov-Velyaminov, B.A., and Krasnogorskaja, A.A., 1962,
+ Morphological Catalog of Galaxies, Part I . Moscow State
+ University.
+
+Wackerling. L.R., 1970, Mem. R.A.S. 73 , 153.
+ 
+Wesselius, P.R., 1979, unpublished.
+
+Zwicky, F., and Herzog, E., 1963, Catalogue of Galaxies and of
+ Clusters of Galaxies, Vol II. Pasadena: California Institute of
+ Technology.
+
+Zwicky, F., and Herzog, E., 1966, Catalogue of Galaxies and of
+ Clusters of Galaxies, Vol III. Pasadena: California Institute
+ of Technology.
+
+Zwicky, F., and Herzog, E., 1968, Catalogue of Galaxies and of
+ Clusters of Galaxies, Vol. IV. Pasadena: Calfornia Institute of
+ Technology.
+
+Zwicky, F., Herzog, E., and Wild P., 1961, Catalogue of Galaxies
+ and of Clusters of Galaxies, Vol I. Pasadena: California
+ Institute of Technology.
+
+Zwicky, F., Karpowicz, M., and Kowal, C.T., 1965, Catalogue of
+ Galaxies and of Clusters of Galaxies, Vol. V. Pasadena. California
+ Institute of Technology.
+
+Zwicky, F. and Kowal, C.T., 1968, Catalogue of Galaxies and of
+ Clusters of Galaxies, Vol. VI. Pasadena. California Institute
+ of Technology.
+
+Zwicky, F., Sargent, W.L.W., and Kowal, C.T., 1975, A. J. 
+ 80 , 545.
+
+Zwicky, F., and Zwicky, M.A., 1971, Catalogue of Selected Compact
+ Galaxies and of Post-eruptive Galaxies. Zurich: Offsetdruk L.
+ Speich.
+
+ Chapter Contents | 
+ Introduction | 
+ Authors | 
+ References 
+
+ Table of Contents | 
+ Index | 
+ Previous Chapter | 
+ Next Chapter

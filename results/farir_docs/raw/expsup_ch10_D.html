@@ -1,0 +1,748 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+<HEAD>
+   <TITLE>X.D. Extended Emission</TITLE>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H1 ALIGN=CENTER>IRAS Explanatory Supplement<BR>
+X. The Formats of the IRAS Catalogs and Atlases<BR>
+D. Extended Emission</H1>
+
+<HR>
+<CENTER><FONT SIZE=+1><A HREF="index.html#toc">Chapter Contents</A>
+ | <A HREF="index.html#auth">Authors</A>
+| <A HREF="index.html#ref">References</A>
+<BR>
+<A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> | <A HREF="C.html">Previous Section</A>
+| <A HREF="E.html">Next Section</A></FONT></CENTER>
+<HR>
+<P>
+<OL>
+<LI><A HREF="#1">Introductory Comments</A>
+<LI><A HREF="#2">Map Projections and Transformation Equations</A>
+<OL type="a">
+<li><A HREF="#2a">Gnomonic Projection - 16.5&deg; Images</A>
+<li><A HREF="#2b">Equivalent Cylindrical Projection - Galactic Plane Fields</A>
+<li><A HREF="#2c">Aitoff Projection - Low-Resolution All-Sky Maps</A>
+</OL>
+<li><A href="#3">16.5&deg; Images</A>
+<OL type="a">
+<li><A HREF="#3a">Prints of 16.5&deg; Images</A>
+<li><A HREF="#3b">Tapes of 16.5&deg; Images</A>
+</OL>
+<li><A HREF="#4">Galactic Plane Maps</A>
+<li><A HREF="#5">Low-Resolution All-Sky Maps</A>
+<li><A HREF="#6"> Zodiacal Observation History file</A>
+<li><A HREF="#7">Coordinate Overlays</A>
+</OL>
+
+<HR>
+<a name="1">
+<H2>D.1. Introductory Comments</H2>
+<P>
+     The extended emission data are presented as maps of the infrared
+sky at two different scales in all four wavelength bands.  The
+entire sky surveyed is mapped with 2' pixels at an effective resolution
+of 4'-6' in 212 16.5&deg; &times; 16.5&deg; fields and also with
+an effective resolution of l&deg; in a single field. A special
+map of the region within &plusmn; 10&deg; of the Galactic plane was
+also made at 4'-6' resolution. All of these maps are available
+in both digital and photographic formats. In addition, data from
+the survey averaged in a &frac12;&deg; &times; &frac12;&deg; beam is available
+in time ordered form.  The details of the presentation of each
+of these products are described below. The methods used to produce
+the products were described in <A HREF="../ch5/G.html">Section V.G</A>. 
+All the map projections
+used are described below.
+<P>
+     The survey covered most parts of the sky several times and
+the extended emission data have been separated for the reasons
+outlined in <A HREF="../ch5/G.html#1">Section V.G.1</A>.  The data released in Nov. 1984 includes
+the 188 fields in the 75% of the sky covered in the third sky
+coverage, along with the associated Galactic plane and low-resolution
+all-sky maps.  Subsequent releases include a small part of the
+sky covered by the &quot;minisurvey&quot; done at the beginning of
+the mission 
+(<A HREF="../ch3/C.html#11">Section III.C.11</A>) and the first and second coverages,
+each of about 95% of the sky.
+<P>
+<A NAME="2">
+<HR>
+<H2>D.2.  Map Projections and Transformation Equations</H2>
+<P>
+     Three separate map projections were used.  The descriptions
+below provide enough information for the user of the IRAS data.
+More information can be found in 
+<A HREF="index.html#ref">Richardus and Adler (1972)</A>.
+<P>
+<A NAME="2a">
+<HR>
+<H2>D.2.a Gnomonic Projection - 16.5&deg; Images</H2>
+<P>
+     The gnonomic projection used for 16.5&deg; images produces
+a geometric projection of the celestial sphere onto a tangent
+plane from a center of projection at the center of the sphere.
+Each individual field has its own tangent projection plane with
+the tangent point at the center of the field.  This projection
+is neither conformal (angle preserving) nor equivalent (equal
+area) but does have the property that all straight lines in the
+projection are great circles on the sphere. All projections were
+done so that the sky coordinate associated with a pixel refers
+to the position at the center of the pixel. For the 16.5&deg;
+fields the maximum distortion of angles is 0.6&deg; and  the
+maximum distortion of area is 6%. The area distortion is approximately
+proportional to the inverse cube of the cosine of the angular
+displacement from the center of the field. The distortion is in
+the sense to make extended areas cover more sq. arcminute pixels
+than their true solid angles would require.  This results in overestimating 
+fluxes when integrating sources within fixed intensity
+contours.
+<P>
+     The transformation equations for conversion between line
+and sample number in the map and right ascension and declination
+on the sky are shown below.
+<P>
+Forward:
+<P>
+<center>
+<table>
+<tr>
+<td colspan=2>define:</font></td>
+</tr>
+<tr>
+<td align=right><font size=+1>scale</font></td> 
+<td><font size=+1>
+= 30 pixels/degree
+</font></td>
+</tr>
+<tr>
+<td align=right><font size=+1>A</font></td>
+<td><font size=+1>
+= cos(X) &times; cos(X - X)</font></td>
+</tr>
+<tr>
+<td align=right><font size=+1>
+<A name="eqD1">
+F</font></td>
+<td><font size=+1>= scale &times; (180/(X))/[sin(X) &times; sin(X) + A &times; cos(X)
+</font></td>
+</tr>
+</table>
+</center>
+<P ALIGN=RIGHT>(X.D.1)
+<P>
+<center>
+<table>
+<a name="eqD2">
+<tr>
+<td colspan=2>
+then
+</td>
+</tr>
+<tr>
+<td align=right><font size=+1>LINE</font></td>
+<td><font size=+1>
+ = -F &times; [cos(X) &times; sin(X) -- A &times; sin(X)]
+</font></td>
+</tr>
+<tr>
+<td align=right><font size=+1>SAMPLE</font></td>
+<td><font size=+1> = -F &times; cos(X) &times; sin(X -- X) </font></td>
+</tr>  
+</table>
+</center>
+<p align=right> (X.D.2)
+<P>
+     Reverse:
+<P>
+<A name="eqD3">
+<center>
+<table>
+<tr>
+<td colspan=2>define</td>
+</tr>
+<tr>
+<td align=right><font size=+1>X </font></td>
+<td><font size=+1>= SAMPLE(scale &times; 180/(X))
+</font></td></tr><tr>
+         <td align=right><font size=+1>Y</font></td>
+<td><font size=+1>= LINE/(scale &times; 180/(X))
+</font></td></tr><tr>
+       <td align=right><font size=+1>(X)</font></td>
+<td><font size=+1>= arctan [(X2 + Y2) &frac12; ]
+</font></td></tr><tr>
+       <td align=right><font size=+1>(X)</font></td>
+<td><font size=+1>= arctan(-X/Y)
+</font></td></tr><tr>
+     <td align=right><font size=+1>XX</font></td>
+<td><font size=+1>= sin(X) &times; sin(X) &times; cos(X) + cos(X) &times; cos(X)
+</font></td></tr><tr>
+      <td align=right><font size=+1>YY</font></td>
+<td><font size=+1>= sin(X) &times; sin(X)
+</font></td></tr>
+</table>
+</center>
+<P>
+<center>
+<table>
+<tr>
+<td colspan=2>
+then</td>
+</tr>
+<tr>
+<td align=right><font size=+1>(X)</font></td>
+<td><font size=+1>= arcsin [sin(X) &times; cos(X) - cos(X) &times; sin(X) &times; cos(X)]
+</font></td></tr><tr>
+       <td align=right><font size=+1>(X)</font></td>
+<td><font size=+1>= (X) + arctan(YY/XX) </font></td>
+</tr>
+</table>
+</center>
+<P align=RIGHT>(X.D.3) 
+<P>
+where (X) and (X) are the declination and right ascension of the
+field center. The arctangent functions for (X) and (X) must be
+four quadrant arctangents.
+<P>
+<A NAME="2b">
+<HR>
+<H2>     D.2.b Equivalent Cylindrical Projection - Galactic Plane
+Fields</h2>
+<P>
+     The Lambert normal equivalent cylindrical project was used
+to provide an equal area projection of the sky within 10&deg;
+of the Galactic plane. The projection cylinder is tangent to the
+celestial sphere at the Galactic equator and the projection proceeds
+by projecting radially outward from each point on the polar axis
+of the Galactic coordinate system in a plane parallel to the equatorial
+plane. The maximum  angular distortion (deviation of bearing)
+is 0.9&deg;. The equal area property of the transformation
+preserves photometric accuracy when integrating fluxes for an
+extended source.
+<P>
+     The transformation equations are:
+<P>
+     Forward:
+<A NAME="eqD4">
+<center>
+<table>
+<tr>
+<td colspan=2>define</td>
+</tr>
+<tr>
+<td align=right><font size=+1>
+     scale</font></td>
+<td><font size=+1>= 30 pixels/degree
+</td></tr><tr><td colspan=2>
+then
+</td></tr><tr><td align=right><font size=+1>
+              LINE</font></td>
+<td align=left><font size=+1>= -scale &times; 180/(X) &times; sin(X)
+</font></td></tr><tr><td align=right><font size=+1>
+                     SAMPLE</font></td>
+<td><font size=+1>= -scale &times; (X - X)               
+</font></td>
+</tr>
+</table>
+</center>
+<P align=right>
+   (X.D.4)
+<P>
+    Reverse:
+<A NAME="eqD5">
+<center>
+<table>
+<tr>
+<td align=right>
+                           (X)</td>
+<td><font size=+1>= (X) - SAMPLE/scale
+</td></tr></tr><td align=right>
+                       (X)</td>
+<td><font size=+1>= -arcsin [LINE/(scale &times; 180(X)]
+</td></tr>
+</table>
+</center>
+<P ALIGN=RIGHT>(X.D.5)
+<P>
+where (X) and (X) are Galactic latitude and longitude and subscript
+zero denotes the field center.
+<P>
+<A name="2c">
+<HR>
+<H2>      D.2.c. Aitoff Projection - Low-Resolution All-Sky Maps</H2>
+<P>
+      The Aitoff equal area projection was used to provide a photometrically
+correct map of the entire celestial sphere.  Galactic coordinates
+were chosen as a convenient and natural coordinate system.  The
+transformation equations are:
+<P>
+      Forward:
+<center>
+<table>
+<tr>
+<td colspan=2>define</td>
+</tr>
+<tr>
+<td align=right><font size=+1>scale</font>
+<td><font size=+1>= 2 pixels/degree
+</font></tr>
+<tr><td align=right>(X)</font>
+<td><font size=+1>= arccos [cos(X) &times; cos(X - X)/2]
+</font></tr>
+<tr><td align=right>
+                   0</font>
+<td><font size=+1>= arcsin [cos(X) &times; sin({X - X}/2)/sin(X)]
+</font></tr>
+</table>
+</center>
+<P align=right>(X.D.6)</P>
+<center>
+<table>
+<tr>
+<td colspan=2>
+then
+</td></tr>
+<tr><td align=right><font size=+1>
+            SAMPLE</font></td>
+<td><font size=+1>= -4 &times; scale &times; 180/(X) &times; sin(p/2) &times; sin(X)
+</font></td></tr>
+<tr><td align=right><font size=+1>
+            LINE</font></td>
+<td><font size=+1>= &plusmn; 2 &times; scale &times; 180/(X) &times; sin(X)/2) &times; cos(X)</font></td></tr>
+</table>
+</center>
+<P align=right>       (X.D.7)</P>
+where the'+' applies to (X) &lt; 0 and the '-' to (X) = 0.
+<P>
+      Reverse:
+<center>
+<A name="eqD8">
+<table>
+<tr><td colspan=2>
+define
+</font></td></tr>
+<tr><td align=right><font size=+1>
+        Y</font></td>
+<td><font size=+1>= -LINE/(2 &times; scale &times; 180/(X))
+</font></td></tr>
+<tr><td align=right><font size=+1>
+        X</font></td>
+<td><font size=+1>= -SAMPLE/(2 &times; scale &times; 180/(X))
+</font></td></tr>
+<tr><td align=right><font size=+1>
+        A</td>
+<td><font size=+1>=(4 - X<SUP>2</SUP> - 4 &times; Y<SUP>2</SUP>) &frac12;
+</font></td></tr>
+<tr><td colspan=2>
+then
+</font></td></tr>
+<tr><td align=right><font size=+1>
+                (X)</font></td>
+<td><font size=+1>= 180/(X) &times; arcsin(A &times; Y)
+</font></td></tr>
+<tr><td align=right><font size=+1>
+         (X)</font></td>
+<td><font size=+1>= (X) + 2 &times; 180/(X) &times; arcsin[A &times; X/(2 &times; cos(X))]</font></td>
+</tr>
+</table>
+</center>
+  <P align=Right>   (X.D.8)
+<P>
+where (X) and (X) are Galactic longitude and latitude and subscript
+zero denotes the field center.
+<P>
+<A NAME="3">
+<HR>
+<H2>D.3   16.5&deg; Images</h2>
+<P>
+      The 16.5&deg; images the high-resolution presentation
+of the IRAS sky survey in image form.  Two hundred twelve (212)
+16.5&deg; &times; 16.5&deg; fields cover the whole sky with field
+centers spaced by approximately 15&deg;.  The three sky coverages
+of the full mission are presented as three separate sets of 212
+maps, with
+<P>
+some maps not included in the third coverage (<A HREF="#tabD1">Table X.D.1</A>). A
+list of plate numbers vs. plate centers comprises 
+<A HREF="Ap2.html">Appendix X.2</A>
+and a map of plate locations is given in 
+<A HREF="#figD1">Fig. X.D.1</A>. An individual
+map consists of 499 &times; 499 array 2' &times; 2' pixels into which the IRAS
+survey data were mapped using a gnomonic projection (described
+in <A HREF="#2a">Section X.D.2.a</A>).  
+The 16.5&deg; images are available as
+photographic prints and as digital magnetic tape.  The formats
+of these two forms are described below.  Detailed descriptions
+of the procedures used to produce the maps are given in 
+<A HREF="../ch5/G.html">Section V.G</A>.
+<P>
+<A NAME="tabD1">
+<center>
+<table border=1 width=50%>
+<caption>
+<font size=+1><b>
+Plates Missing From the Third Sky Coverage<br>
+         Table X.D.1
+</b></font>
+</caption>
+<tr><td align=center>47</td><td align=center>95</td><td align=center>    130
+</td></tr><tr><td align=center>        60</td><td align=center>96</td><td align=center>    131
+</td></tr><tr><td align=center>        70</td><td align=center>97</td><td align=center>    132
+</td></tr><tr><td align=center>        71</td><td align=center>107</td><td align=center>   143
+</td></tr><tr><td align=center>        72</td><td align=center>108</td><td align=center>   144
+</td></tr><tr><td align=center>        83</td><td align=center>118</td><td align=center>   154
+</td></tr><tr><td align=center>        84</td><td align=center>119</td><td align=center>   115
+</td></tr><tr><td align=center>        94</td><td align=center>120</td><td align=center>   168
+</td>
+</tr>
+</table>
+</center>
+<A NAME="3a">
+<HR>
+<H2>      D.3.a. Prints of 16.5&deg; Images</h2>
+      Photographic black and white negative transparencies were
+produced from the digital map data with a film recorder.  All
+four bands of each field were reproduced side by side in a rectangular
+format approximately 5 inches sq. intended for enlargement to
+16 inches by 20 inches. Two hundred fifty-six (256) brightness
+levels were available with the film recorder and the brightness
+range in each band of each field was individually compressed,
+clipped and scaled to fit within these 256 levels.
+<P>
+      The compression, clipping and scaling were accomplished
+by first extracting the fifth root of the surface brightness to
+compress the dynamic range of the data.  A histogram of the the
+root map was made and the pixel values were shifted and scaled
+into the 0 - 255 range so as to saturate the lower and upper one
+percent of the histogram. The approximate surface brightness value
+of any pixel can be recovered by first comparing the density of
+the pixel of interest to the grey scales which show every 17<sup>th</sup>
+pixel value from zero to 255. The shift and scale are removed using the 0
+DN = X Jy sr-1 and 255 DN = Y Jy sr<SUP>-1</SUP> information in the label
+(see the sample label below).
+<P>
+      The complete formula is:
+<P>
+<CENTER><FONT SIZE=+1>
+ surface brightness (Jy sr<SUP>-1</SUP>) = [ (D/255)(Y<SUP>1/5</SUP> - X<SUP>1/5</SUP>) + X<SUP>1/5</SUP>]<SUP>1/5</SUP>
+</center></font>
+<P align=right>   (X.D.9)</P>
+
+where <I>D</I> is the pixel value determined by comparison with the grey
+scale and <I>Y</I> and <I>X</I> are obtained from the label.
+<P>
+      Final calibration factors were not applied to the third
+sky coverage data before production of the photo products.  Therefore,
+the intensities obtained using the procedure above on the third
+coverage may not agree with intensities found on the magnetic
+tape versions of the maps. The magnetic tape version uses the
+final IRAS catalog calibration and should be used in case of discrepancy.
+<P>
+ Intensities obtained
+from the third coverage photo products can be approximately corrected
+to the final calibration by multiplying the intensity derived
+from a photograph by the following factors:
+<center>
+<table>
+<tr>
+<td>
+                           12 &micro;m</td><td>   0.84
+</td>
+</tr>
+<tr>
+<td>                           25 &micro;m </td><td>  0.80
+</td>
+</tr>
+<tr>
+<td>                           60 &micro;m </td><td>  0.80
+</td>
+</tr>
+<tr>
+<td>                          100 &micro;m </td><td>  0.69</td>
+</tr>
+</table>
+</center>
+<P>
+The first, second and mini-survey coverage photos were corrected
+to the final calibration.
+<P>
+     The coordinate system of each map is arranged so that when
+viewed with the printing in the label right side up north is up
+and east is to the left at the field center, which is adopted
+as pixel (0, 0). In this orientation the horizontal rows of pixels
+are by convention called lines and the pixels within each line
+are called samples.  Line numbers increase from top to bottom
+and sample numbers increase from left to right.  The line numbers
+of the top and bottom lines are given in the label as TOP and
+BOTTOM, respectively.  Similarly the left and right extreme sample
+numbers are given as LEFT and RIGHT. With this information and
+the tic marks along the sides of the image area the line and sample
+coordinates of any pixel can be determined for application of
+the inverse map projection formulae given above in 
+<A HREF="#2">Section X.D.2</A>.
+ The tic marks also allow alignment of the coordinate overlay
+grids as described in <A HREF="#7">Section X.D.7</A>.
+<P>
+     Color composite negative transparencies in 4 &times; 5 inch format
+of each sky plate field have been produced by recording the 100
+&micro;m map in red (positive), the 60 &micro;m map in green and the 
+12 &micro;m
+map in blue.  These color versions of the data are not intended
+for quantitative analysis.  The shift and scale information in
+the label is difficult to read and no attempt has been made to
+produce a consistent color balance among the plates. In one plate
+a particular hue will indicate one ratio to 100 &micro;m to 60 &micro;m to
+12 &micro;m brightness and in another plate the ratio for that hue will
+be somewhat different.
+<P>
+<B>                 Sample Label from 16.5&deg; Image Photograph
+</B>
+<PRE>
+     IRAS SKYFLUX HCON:    3    FIELD: 153     DEC:-30 RA:   10:00    25 MICRON
+
+     R.A. &amp; DEC GNOMONIC    PIXEL: 2.00 ARCMIN      JD:2445654.25-2445660.25
+
+     TOP:-249 BOTTOM: 249 LEFT:-249 RIGHT: 249     1 TIC = 5 PIXELS
+
+     0DN= 4.28E+ 2 JY/SR    255DN= 5.38E+ 2 MJY/SR     5TH ROOT DATE:84/08/10
+</PRE>
+<P>
+     First line:
+<DD>
+SKYFLUX:  refers to the 212 maps which cover the whole sky with
+2' pixels. Can also be ALL SKY for the &frac12;&deg; pixel all-sky
+maps or GALPLANE for the Galactic plane maps.
+</DD>
+<DD>
+HCON:     serial number of the sky coverage
+</DD>
+<DD>
+FIELD:    IRAS field number. See maps in <A HREF="#figD1">Fig. X.D.1</A>.
+</DD>
+<DD>
+DEC, RA:   coordinates of field center. DEC in degrees, RA in hours
+and minutes. Can also be LON and LAT for Galactic coordinate (X) (X) projections.
+</DD>
+<DD>
+MICRON:   wavelength band of the map.
+</DD>
+<P>
+     Second line:
+<DD>
+RA &amp; DEC GNOMONIC:      Projection type.  Can also be LON &amp; LAT CYLINDRICAL or LON &amp; LAT AITOFF
+</DD>
+<DD>
+PIXEL:                  Pixel size.
+</DD>
+<DD>
+JD:                     Julian dates of the earliest and latest
+data in the  map, accurate to &frac12; day.
+</DD>
+<P>
+     Third line:
+<DD>
+TOP,BOTTOM,LEFT,RIGHT:  Line and sample numbers at the edges of
+the map.
+</DD>
+<DD>
+1 TIC:                  Spacing between the tic marks around the
+edge in pixels
+<P>
+     Fourth line:
+<DD>
+0DN, 255DN:  Surface brightness values of the minimum and maximum
+pixels in the map.
+</DD>
+<DD>
+5TH  ROOT:   Indicates that the fifth root of the actual surface brightness is shown.  Can also be LINEAR in which case the true, uncompressed, surface brightness is shown.
+</DD>
+<DD>
+DATE:        Year/Month/Day on which the map was assembled.
+</DD>
+<P>
+<A NAME="3b">
+<HR>
+<H2>     D.3.b Tapes of 16.5&deg; Images</H2>
+<P>
+     The magnetic tape form of the 16.5&deg; images contains
+the calibrated surface brightness data in 499x499 arrays of 2' &times; 2'
+pixels recorded in the FITS format.  The article by 
+<A HREF="index.html#ref">Wells et al.
+(1981)</A> in conjunction with the label records of each tape file
+gives a detailed description of the format of each map image.
+ A brief description of the format follows and a listing of a
+sample FITS label can be found in <A HREF="Ap.html">Appendix X.3</A>.
+<P>
+     One sky coverage consists of 27 tapes of 6250 bpi (bits per
+inch) density.  The third coverage has only 24 tapes with a total
+of 188 plates.  Each plate consists of four surface brightness
+maps and four statistical weight maps, one of each for each wavelength
+band.  The plates are ordered on the tapes by plate number and
+within a plate the image files are ordered: 12 &micro;m brightness,
+12 &micro;m weight, 25 &micro;m brightness, 25 &micro;m weight, 60 &micro;m 
+brightness,
+60 &micro;m weight, 100 &micro;m brightness and 100 &micro;m weight.  The 
+first
+two records of each file contain the label, then the image appears
+as a stream of pixel values divided into 2880 byte records without
+regard for line length. The stream begins with the smallest line
+and smallest sample number and the sample number increases fastest.
+ The last record is padded to 2880 bytes with zeros.  Four-byte
+integers are used for brightness image data numbers and 2-byte
+integers for weight images, high order byte first. All this and
+other information necessary to successfully regenerate a map is
+contained in the FITS label records described in 
+<A HREF="Ap.html">Appendix X.3</A>.
+<P>
+<A NAME="4">
+<HR>
+<H2>D.4.  Galactic Plane Maps</H2>
+
+     For convenience in dealing with the Galactic plane the survey
+data within 10&deg; of the Galactic plane were remapped from
+the into a set of images in Galactic coordinates to cover the
+full circle of the Galaxy. This remapping from the 16.5&deg;
+images resulted in a slight degradation in resolution even though
+the pixel size was the same in both sets of maps. Twenty-four
+16.7&deg; &times; 20&deg; fields cover the Galactic plane with field
+centers at integral multiples of 15&deg; Galactic longitude.
+The three sky coverages of the survey were separated into three
+sets of maps.  The image format is 499 lines of 599 samples each,
+projected from Galactic coordinates with an equal area cylindrical
+projection (see 
+<A HREF="#2b">Section X.D.2.b</A>). Galactic plane maps are available
+in both photographic and FITS tape formats. Two 6250 bpi tapes
+of 12 maps each hold the 24 Galactic plane maps.  The differences
+in the FITS label between the 16.5&deg; images and the 
+Galactic plane maps are noted in the description and listing of
+the FITS label in 
+<A HREF="Ap.html">Appendix X.3</A>. No statistical weight images are
+included for the Galactic plane maps. Statistical weight information
+may be obtained from the 16.5&deg; maps.  Coordinate overlays
+described in 
+<A HREF="#7">Section X.D.7</A> are available for the Galactic plane
+maps.
+<P>
+<A NAME="5">
+<HR>
+<H2>D.5.  Low-Resolution All-Sky Maps</H2>
+<P>
+     The &frac12;&deg; &times; &frac12;&deg; beam data contained in the Zodiacal
+History file described below was split into the three separate
+sky coverages and assembled into three all-sky maps with an Aitoff
+equal area projection in Galactic coordinates.  Two fields of
+each sky coverage were produced; one centered on the Galactic
+center and one centered on the Galactic anti-center. The pixel
+arrays consist of 325 lines of 649 samples
+each. Galactic north is in the direction of decreasing line number
+(up) and Galactic east in the direction of decreasing sample number
+(left). The all-sky maps are available in both photographic and
+FITS tape forms. The formats of the photographic and tape forms
+of all-sky maps are very similar to those of the 16.5&deg; images
+(see 
+<A HREF="#3">Section X.D.3</A>) with the differences described in the labels
+of the photographs and tape files. Coordinate overlays described
+in 
+<A HREF="#7">Section X.D.7</A> are available for the all-sky maps.
+<P>
+<A NAME="6">
+<HR>
+<H2>D.6.  Zodiacal Observation History file</h2>
+<P>
+     For convenience in the analysis and treatment of background
+emission from interplanetary dust (zodiacal emission) and other
+extremely large scale emission features, the survey data were
+averaged to &frac12;&deg; &times; &frac12;&deg; beam size and along with pointing
+information was preserved as a time ordered data set containing
+all three sky coverages of the survey. This file is available
+on magnetic tape written with the format described in 
+<A HREF="Ap4.html">Appendix X.4</A>.
+<P>
+<A NAME="7">
+<HR>
+<H2>D.7.  Coordinate Overlays</h2>
+<P>
+     A set of coordinate overlays for the photographs is available
+as photographic negative transparencies in the 5 inch sq. format.
+ The scale is identical to the corresponding map product so the
+overlays will be the correct size if enlarged by the same factor
+as the map. One overlay is provided for each declination zone
+from -30&deg; to +30&deg; where the overlays for zones of
+opposite sign are obtained by rotating the grids through 180&deg;.
+Five overlays are provided for each declination zone between 45&deg;
+ and 75&deg; to accommodate the fact that integer hour
+meridians cross the plates in these zones in five different configurations.
+Again the overlay for the zone of opposite sign is obtained by
+rotating the grid 180&deg;. All integer hour meridians are
+labeled 00M.  The hour of right ascension should be determined
+from the position of the plate center given in the label on the
+photograph.  The plate numbers to which a particular overlay pertains
+are printed in the lower right cornerof the overlay.  The overlays
+are aligned by matching the two triangular fiducials along each
+edge of the overlay with the two large map border tics which straddle
+the center of each side of the map.  The two overlays for the
+polar regions are similarly aligned with the fiducials and tics.
+The correct orientation makes the lettering on the overlay read
+the same way as the lettering in the plate label.
+<P>
+     One overlay is used for all Galactic plane maps.  It is aligned
+with the same method as the sky plates.  One orientation of the
+overlay is used for even numbered fields and has 0&deg; as
+the center longitude; the other orientation, used for all fields,
+has 5&deg; as the center longitude. The tens digit of the true
+longitude should be obtained from label of the picture.
+<P>
+     The overlays for the low-resolution all-sky maps come in
+only two varieties, (X) = 0.0&deg; in the center and (X) =
+180.0&deg; in the center. Alignment of the overlays is similar
+to that for the other maps.
+<P>
+<HR>
+<CENTER><FONT SIZE=+1><A HREF="index.html#toc">Chapter Contents</A>
+| <A HREF="index.html#auth">Authors</A>
+| <A HREF="index.html#ref">References</A>
+<BR>
+<A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> | <A HREF="C.html">Previous Section</A>
+| <A HREF="E.html">Next Section</A></FONT></CENTER>
+<HR>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

@@ -1,0 +1,1160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+ <html xmlns="http://www.w3.org/1999/xhtml"> 
+<head>
+    <title> GATOR CATALOG LIST PAGE </title>
+<style type="text/css"> 
+pre { white-space: pre-wrap; max-width: 800px; } 
+</style> 
+<script src="/applications/Gator/gator/gator.js" language="javascript" type="text/javascript"> </script>
+<link rel="stylesheet" type="text/css" href="/applications/Gator/gator/gator.css" media="screen, print" />
+<link rel="stylesheet" type="text/css" href="/applications/Gator/css/gator_scan.css" media="screen, print" />
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body ">
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px;"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--  #include virtual="/include/sysnotice.html"  -->
+
+<form method="post" name="area" action="/cgi-bin/Gator/nph-query" enctype="multipart/form-data">
+<center>
+<div class="webpage">
+<h1>IRAS Faint Source Catalog v2.0 (FSC)<br /><i></i></h1>
+<h4>powered by Gator</h4>
+</div>
+&nbsp;<br />
+    <span class="gatorbutton">
+      <a href="/applications/Gator/GatorAid/irsa/QuickGuidetoGator.htm">Quick Guide</a>
+    </span>
+
+    <span class="gatorbutton">
+      <a href="/applications/Gator/GatorAid/irsa/Tutorial/tutorial.htm">Tutorial</a>
+    </span>
+
+    <span class="gatorbutton">
+      <a href="/applications/Gator/index.html">Catalog List</a>
+    </span>
+
+    <span class="gatorbutton">
+      <a href= "/cgi-bin/Gator/nph-monitor-sel?mission=irsa">Process Monitor</a>
+    </span>
+
+    <span class="gatorbutton">
+      <a href= "/applications/Gator/GatorAid/irsa/catsearch.html"> Program Interface</a>
+    </span>
+
+   <p>&nbsp;</p>
+</center>
+<center>
+<div style="margin: auto; width:400px; background:#fff;">
+    <input style="background-color: #99ccff; color: #000000" type="submit" name="submit" value="Run Query" />
+    <input type="reset" onclick="selectReset();" value="Reset" />
+</div>
+<p>&nbsp;</p>
+<input type="hidden" name="mission" value="irsa" />
+<input type="hidden" name="dbms"    value="21" /> </td>
+<table  width="400">
+  <tr>
+    <td style="color:#e2eeff; text:nodedoration; size:strong;"><input type="radio" id="ConeR" name="searchForm" value="Cone" onclick="selectForm();" checked="checked"  /> <a href="/onlinehelp/catalogs/#searching.SingleObject" target="help"><b>Single Object Search</b></a></td>
+    <td><input type="radio" id="UploadR" name="searchForm" value="Upload" onclick="selectForm()"   /> <a href="/onlinehelp/catalogs/#searching.MultiObject" target="help"><b>Multi-Object Search</b></a></td>
+    <td><input type="radio" id="NoneR" name="searchForm" value="None" onclick="selectForm()"    /> <a href="/onlinehelp/catalogs/#searching.AllSky" target="help"><b>All Sky Search</b></a></td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<div id="Cone">
+<table class="sp">
+  <tr>
+    <th colspan="3">SPATIAL CONSTRAINTS</th>
+  </tr>
+  <tr><td colspan="3">&nbsp;</td></tr>
+  <tr>
+    <td colspan="2"><a href="/onlinehelp/catalogs/#searching.SingleObject" target="help"><b>Coordinate or <br />Object Name:</b></a></td>
+    <td><input size="35" name="objstr" value="" /></td>
+  </tr>
+  <tr>
+    <td colspan="2">&nbsp;</td>
+    <td ><font size="-1"><i><b>Examples:</b></i><br /><a href="/cgi-bin/Gator/nph-query?objstr=IRAS+00000-0359+&amp;catalog=irasfsc&amp;mission=irsa" target="example" >IRAS 00000-0359 </a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="/cgi-bin/Gator/nph-query?objstr=+0.6430+23.1497+eq+&amp;catalog=irasfsc&amp;mission=irsa" target="example" > 0.6430 23.1497 eq </a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="/cgi-bin/Gator/nph-query?objstr=+00h02m38.32s+08d44m01.17s+&amp;catalog=irasfsc&amp;mission=irsa" target="example" > 00h02m38.32s 08d44m01.17s </a>&nbsp;&nbsp; | &nbsp;&nbsp;<br /><a href="/cgi-bin/Gator/nph-query?objstr=+105.3793+-47.2700+ga+&amp;catalog=irasfsc&amp;mission=irsa" target="example" > 105.3793 -47.2700 ga </a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="/cgi-bin/Gator/nph-query?objstr=+359.11371+-3.66067+ecl&amp;catalog=irasfsc&amp;mission=irsa" target="example" > 359.11371 -3.66067 ecl</a> 	    </font>
+	  </td>
+  </tr>
+  <tr><td colspan="3">&nbsp;</td></tr>
+  <tr><td colspan="3"><b>Search Method (choose one):</b></td></tr>
+  <tr>
+    <td><input type="radio" name="spatialS" id="ConeS" value="Cone" checked="checked"  />
+<b><a href="/onlinehelp/catalogs/#searching.cone" target="help">Cone:</a></b></td>
+    <td colspan="2" > <b>Radius</b>
+      <input type="text" name="radius" size="8" value="10" />&nbsp;
+        <select name = "radunits">
+          <option  > deg     </option>
+          <option  > arcmin  </option>
+          <option selected='selected'> arcsec  </option>
+        </select>
+        <font size="-1"><b>PA</b></font>
+        <input name="posang" size="7" value="" />
+        <font size="-1"><b>Axial Ratio</b></font>
+        <input name="ratio" size="5" value ="" />
+        <br /><font size="-1" color="#990000">(0&lt;Radius&le;72000 arcsec)</font> &nbsp;
+    </td>
+  </tr>
+  <tr>
+    <td><input type="radio" name="spatialS"  id="BoxS" value="Box"  /><b><a href="/onlinehelp/catalogs/#searching.box" target="help">&nbsp;Box:</a></b></td>
+    <td colspan="2"><b>Size:</b> &nbsp;<input name="size" value="" size="8" /><b>arcsec</b> <font size="-1" color="#990000"><br />(0&lt;Size&le;144000)</font></td>
+  </tr>
+  <tr>
+    <td><input type="radio" name="spatialS" id="PolygonS" value="Polygon"   />
+<b><a href="/onlinehelp/catalogs/#searching.polygon" target="help">Polygon:</a></b></td>
+    <td colspan="2"><b>Vertices:</b><font size="-1"><input name="polygon" size="50"  value="" /></font>
+    </td>
+  </tr>
+  <tr><td colspan="3">&nbsp;</td></tr>
+</table>
+</div>
+
+<div id="Upload">
+
+<table class="sp">
+  <tr>
+    <th colspan="3">SPATIAL CONSTRAINTS</th>
+  </tr>
+  <tr>
+    <td valign="top"  rowspan="2" >&nbsp;&nbsp;<input type="radio" name="spatial" id="UploadS" value="Upload" /><b>Upload Table:</b>
+    <td colspan="2"><input type="file" name="filename" size="25" value="" /><a href="/applications/TblValidator/" target="help"><img src="/images/icons/help.gif" alt="help" /></a><br />&nbsp;<br />
+<input type="checkbox" name="one_to_one" id="one_to_one" /><a href="/onlinehelp/catalogs/#searching.OnetoOne" target="help"><b>One to One Match</b></a>    </td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <font size="-1"><b>Cone Search Radius:</b>
+      <input type="text" name="uradius" size="4" value="10" />
+        <select name = "uradunits">
+          <option  > deg     </option>
+          <option  > arcmin  </option>
+          <option selected='selected'> arcsec  </option>
+        </select>
+        <b>PA</b>
+        <input name="uposang" size="4" value="" /><b>&nbsp;Axial Ratio</b>&nbsp;<input name="uratio" size="4" value="" /></font>
+<br /><font color="#660000" size="-1">(0&lt;Radius&lt;=72000 arcsec)</font>
+<br /><font size="-1">NOTE: A blank radius value will trigger a search for radius ("major") from the table.<br/>But any valid value will override the table.</font></td>
+  </tr>
+  <tr><td colspan="3"></td>&nbsp;</tr>
+</table>
+
+</div>
+
+<div id="None">
+
+<table class="sp">
+
+  <tr>
+    <th colspan="3">SPATIAL CONSTRAINTS</th>
+  </tr>
+  <tr>
+    <td colspan="3">&nbsp;&nbsp;
+    <input type="radio" name="spatial" id="NoneS" value="None" />
+    <b>No Spatial Constraints</b></td>
+  </tr>
+</table>
+</div>
+
+<br />&nbsp;<br /><table class="sp">
+<tr><th colspan="4">OPTIONS:</th></tr>
+<tr>
+<td><input type="radio" name="process" value="Table Output" checked="checked" /></td>
+<td class="rightbar"><b>Table Output</b></td>
+<td rowspan="2" >&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td align="center"><a href="/onlinehelp/catalogs/#searching.Options" target="help"><b>E-mail Address</b> (optional):</a> 
+<select name="mailcheck">
+<option>Send email</option>
+<option selected="selected">No email</option>
+</select></td>
+</tr>
+<tr>
+<td><input type="radio" name="process" value="Source Counts"></input></td>
+<td class="rightbar"><a href="/onlinehelp/catalogs/#searching.sourcecounts" target="help"><b>Source Counts Only</b></a><font size="-1">(all-sky search only)</font></td>
+<td align="center"><input type="text" size="25" name="email" value=""></input></td>
+</tr></table>
+<br />
+<div style="margin: auto; width:400px; background:#fff;">
+    <input style="background-color: #99ccff; color: #000000" type="submit" name="submit" value="Run Query" />
+    <input type="reset" onclick="selectReset();" value="Reset" />
+</div>
+</center>
+<input type="hidden" name="catalog" value="irasfsc" />
+<input type="hidden" name="key"     value="cntr" />
+<input type="hidden" name="where1"  value="Ex: fnu_60 > 1000.0 AND fqual_12 > 1 AND fqual_25 > 1 AND fqual_60 > 1 AND fqual_100 > 1" />
+<input type="hidden" name="where2"  value="Ex: fnu_60 > 1000.0" />
+<input type="hidden" name="simulated"  value="n" />
+<br />&nbsp;<br />
+<center><table>  <tr>
+    <td class="center" colspan="16">
+      <a href="/onlinehelp/catalogs/#searching.OutputColumn" target="help">      COLUMN CONSTRAINTS/OUTPUT COLUMN SELECTION</a> <br />
+    <input type="button" value="Select All Columns" style="background-color:#660000; color:#ffffff;font-weight:bold; font-size:x-small;margin:0;padding:1;border=0; " onclick="Select();" /> <input type="button" value="Clear All Selections" style="background-color:#660000; color:#ffffff;font-weight:bold;font-size:x-small;margin:0;padding:1;border:0; " onclick="Clear();" />&nbsp;<input type="reset" onclick="selectReset();" value="Reset" style="background-color:#660000; color:#ffffff;font-weight:bold;font-size:x-small;margin:0;padding:1;border:0; " />
+</td>
+  </tr>
+  <tr>
+    <th colspan="6">  
+<font color="#f9f9f9">Table Selection</font>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <input type="submit" name="short" value="Standard" />&nbsp;&nbsp;&nbsp;&nbsp;
+      <input type="submit" name="long" value="Long Form" />&nbsp;&nbsp;&nbsp;&nbsp;
+      <input type="hidden" name="cur_sel" value="0" />
+    </th>
+    <th colspan="2"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <font color="#f9f9f9">Sexagesimal Output </font> &nbsp;
+      <select name="runsexa" >             <option > Yes </option>             <option selected = 'selected'> No </option>           </select>
+    </th>
+  </tr>
+  <tr>
+    <td class="sub">Name</td>
+    <td class="sub">Description</td>
+    <td class="sub">Sel</td>
+    <td class="sub"><a href="/onlinehelp/catalogs/#searching.ColumnConstraints" target="help">Low Limit</a><br /><font size="-1">(include &gt;,&ge;,=)</font></td>
+    <td class="sub"><a href="/onlinehelp/catalogs/#searching.ColumnConstraints" target="help">Up Limit</a><br /><font size="-1">(include &lt;,&le;,=)</font></td>
+    <td class="sub">Units</td>
+    <td class="sub">Indx</td>
+    <td class="sub">DBType</td>
+  </tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>fscname</b></td>
+    <td>&nbsp;Source name</td>
+    <td>
+       <input type="checkbox" name="select_fscname" checked="checked" />
+    </td>
+    <td><input name="min_fscname" size="10" /></td>
+    <td><input name="max_fscname" size="10" /></td>
+    <td>&nbsp;</td>
+    <td align="center">X</td>
+    <td align="right">char(12)</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>rah</b></td>
+    <td>&nbsp;Hours RA, equinox 1950.0, epoch 1983.5</td>
+    <td>
+       <input type="checkbox" name="select_rah" />
+    </td>
+    <td><input name="min_rah" size="10" /></td>
+    <td><input name="max_rah" size="10" /></td>
+    <td>h</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>ram</b></td>
+    <td>&nbsp;Minutes RA, equinox 1950.0, epoch 1983.5</td>
+    <td>
+       <input type="checkbox" name="select_ram" />
+    </td>
+    <td><input name="min_ram" size="10" /></td>
+    <td><input name="max_ram" size="10" /></td>
+    <td>min</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>ras</b></td>
+    <td>&nbsp;Seconds RA, equinox 1950.0, epoch 1983.5</td>
+    <td>
+       <input type="checkbox" name="select_ras" />
+    </td>
+    <td><input name="min_ras" size="10" /></td>
+    <td><input name="max_ras" size="10" /></td>
+    <td>s</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>decsign</b></td>
+    <td>&nbsp;Sign of DEC, equinox 1950.0, epoch 1983.5</td>
+    <td>
+       <input type="checkbox" name="select_decsign" />
+    </td>
+    <td><input name="min_decsign" size="10" /></td>
+    <td><input name="max_decsign" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">char(1)</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>decd</b></td>
+    <td>&nbsp;Degrees Dec, equinox 1950.0, epoch 1983.5</td>
+    <td>
+       <input type="checkbox" name="select_decd" />
+    </td>
+    <td><input name="min_decd" size="10" /></td>
+    <td><input name="max_decd" size="10" /></td>
+    <td>deg</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>decm</b></td>
+    <td>&nbsp;Minutes Dec, equinox 1950.0, epoch 1983.5</td>
+    <td>
+       <input type="checkbox" name="select_decm" />
+    </td>
+    <td><input name="min_decm" size="10" /></td>
+    <td><input name="max_decm" size="10" /></td>
+    <td>arcmin</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>decs</b></td>
+    <td>&nbsp;Seconds Dec, equinox 1950.0, epoch 1983.5</td>
+    <td>
+       <input type="checkbox" name="select_decs" />
+    </td>
+    <td><input name="min_decs" size="10" /></td>
+    <td><input name="max_decs" size="10" /></td>
+    <td>arcsec</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>semimajor</b></td>
+    <td>&nbsp;95% confidence error ellipse semimajor axis</td>
+    <td>
+       <input type="checkbox" name="select_semimajor" checked="checked" />
+    </td>
+    <td><input name="min_semimajor" size="10" /></td>
+    <td><input name="max_semimajor" size="10" /></td>
+    <td>arcsec</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>semiminor</b></td>
+    <td>&nbsp;95% confidence error ellipse semiminor axis</td>
+    <td>
+       <input type="checkbox" name="select_semiminor" checked="checked" />
+    </td>
+    <td><input name="min_semiminor" size="10" /></td>
+    <td><input name="max_semiminor" size="10" /></td>
+    <td>arcsec</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>posang</b></td>
+    <td>&nbsp;Uncertainty ellipse position angle</td>
+    <td>
+       <input type="checkbox" name="select_posang" checked="checked" />
+    </td>
+    <td><input name="min_posang" size="10" /></td>
+    <td><input name="max_posang" size="10" /></td>
+    <td>deg</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>nobs_12</b></td>
+    <td>&nbsp;Number of times observed at 12um</td>
+    <td>
+       <input type="checkbox" name="select_nobs_12" />
+    </td>
+    <td><input name="min_nobs_12" size="10" /></td>
+    <td><input name="max_nobs_12" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>nobs_25</b></td>
+    <td>&nbsp;Number of times observed at 25um</td>
+    <td>
+       <input type="checkbox" name="select_nobs_25" />
+    </td>
+    <td><input name="min_nobs_25" size="10" /></td>
+    <td><input name="max_nobs_25" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>nobs_60</b></td>
+    <td>&nbsp;Number of times observed at 60um</td>
+    <td>
+       <input type="checkbox" name="select_nobs_60" />
+    </td>
+    <td><input name="min_nobs_60" size="10" /></td>
+    <td><input name="max_nobs_60" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>nobs_100</b></td>
+    <td>&nbsp;Number of times observed at 100um</td>
+    <td>
+       <input type="checkbox" name="select_nobs_100" />
+    </td>
+    <td><input name="min_nobs_100" size="10" /></td>
+    <td><input name="max_nobs_100" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>fnu_12</b></td>
+    <td>&nbsp;Non-color corrected flux density at 12um</td>
+    <td>
+       <input type="checkbox" name="select_fnu_12" checked="checked" />
+    </td>
+    <td><input name="min_fnu_12" size="10" /></td>
+    <td><input name="max_fnu_12" size="10" /></td>
+    <td>Jy</td>
+    <td align="center">X</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>fnu_25</b></td>
+    <td>&nbsp;Non-color corrected flux density at 25um</td>
+    <td>
+       <input type="checkbox" name="select_fnu_25" checked="checked" />
+    </td>
+    <td><input name="min_fnu_25" size="10" /></td>
+    <td><input name="max_fnu_25" size="10" /></td>
+    <td>Jy</td>
+    <td align="center">X</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>fnu_60</b></td>
+    <td>&nbsp;Non-color corrected flux density at 60um</td>
+    <td>
+       <input type="checkbox" name="select_fnu_60" checked="checked" />
+    </td>
+    <td><input name="min_fnu_60" size="10" /></td>
+    <td><input name="max_fnu_60" size="10" /></td>
+    <td>Jy</td>
+    <td align="center">X</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>fnu_100</b></td>
+    <td>&nbsp;Non-color corrected flux density at 100um</td>
+    <td>
+       <input type="checkbox" name="select_fnu_100" checked="checked" />
+    </td>
+    <td><input name="min_fnu_100" size="10" /></td>
+    <td><input name="max_fnu_100" size="10" /></td>
+    <td>Jy</td>
+    <td align="center">X</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>fqual_12</b></td>
+    <td>&nbsp;Flux density quality at 12um</td>
+    <td>
+       <input type="checkbox" name="select_fqual_12" checked="checked" />
+    </td>
+    <td><input name="min_fqual_12" size="10" /></td>
+    <td><input name="max_fqual_12" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>fqual_25</b></td>
+    <td>&nbsp;Flux density quality at 25um</td>
+    <td>
+       <input type="checkbox" name="select_fqual_25" checked="checked" />
+    </td>
+    <td><input name="min_fqual_25" size="10" /></td>
+    <td><input name="max_fqual_25" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>fqual_60</b></td>
+    <td>&nbsp;Flux density quality at 60um</td>
+    <td>
+       <input type="checkbox" name="select_fqual_60" checked="checked" />
+    </td>
+    <td><input name="min_fqual_60" size="10" /></td>
+    <td><input name="max_fqual_60" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>fqual_100</b></td>
+    <td>&nbsp;Flux density quality at 100um</td>
+    <td>
+       <input type="checkbox" name="select_fqual_100" checked="checked" />
+    </td>
+    <td><input name="min_fqual_100" size="10" /></td>
+    <td><input name="max_fqual_100" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>relunc_12</b></td>
+    <td>&nbsp;Percent rel. flux density uncertainty at 12um</td>
+    <td>
+       <input type="checkbox" name="select_relunc_12" />
+    </td>
+    <td><input name="min_relunc_12" size="10" /></td>
+    <td><input name="max_relunc_12" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>relunc_25</b></td>
+    <td>&nbsp;Percent rel. flux density uncertainty at 25um</td>
+    <td>
+       <input type="checkbox" name="select_relunc_25" />
+    </td>
+    <td><input name="min_relunc_25" size="10" /></td>
+    <td><input name="max_relunc_25" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>relunc_60</b></td>
+    <td>&nbsp;Percent rel. flux density uncertainty at 60um</td>
+    <td>
+       <input type="checkbox" name="select_relunc_60" />
+    </td>
+    <td><input name="min_relunc_60" size="10" /></td>
+    <td><input name="max_relunc_60" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>relunc_100</b></td>
+    <td>&nbsp;Percent rel. flux density uncertainty at 100um</td>
+    <td>
+       <input type="checkbox" name="select_relunc_100" />
+    </td>
+    <td><input name="min_relunc_100" size="10" /></td>
+    <td><input name="max_relunc_100" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>minrel</b></td>
+    <td>&nbsp;Percent minimum source reliability</td>
+    <td>
+       <input type="checkbox" name="select_minrel" />
+    </td>
+    <td><input name="min_minrel" size="10" /></td>
+    <td><input name="max_minrel" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>snr_12</b></td>
+    <td>&nbsp;SNR at 12um</td>
+    <td>
+       <input type="checkbox" name="select_snr_12" />
+    </td>
+    <td><input name="min_snr_12" size="10" /></td>
+    <td><input name="max_snr_12" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>snr_25</b></td>
+    <td>&nbsp;SNR at 25um</td>
+    <td>
+       <input type="checkbox" name="select_snr_25" />
+    </td>
+    <td><input name="min_snr_25" size="10" /></td>
+    <td><input name="max_snr_25" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>snr_60</b></td>
+    <td>&nbsp;SNR at 60um</td>
+    <td>
+       <input type="checkbox" name="select_snr_60" />
+    </td>
+    <td><input name="min_snr_60" size="10" /></td>
+    <td><input name="max_snr_60" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>snr_100</b></td>
+    <td>&nbsp;SNR at 100um</td>
+    <td>
+       <input type="checkbox" name="select_snr_100" />
+    </td>
+    <td><input name="min_snr_100" size="10" /></td>
+    <td><input name="max_snr_100" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>locsnr_12</b></td>
+    <td>&nbsp;Local SNR at 12um</td>
+    <td>
+       <input type="checkbox" name="select_locsnr_12" />
+    </td>
+    <td><input name="min_locsnr_12" size="10" /></td>
+    <td><input name="max_locsnr_12" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>locsnr_25</b></td>
+    <td>&nbsp;Local SNR at 25um</td>
+    <td>
+       <input type="checkbox" name="select_locsnr_25" />
+    </td>
+    <td><input name="min_locsnr_25" size="10" /></td>
+    <td><input name="max_locsnr_25" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>locsnr_60</b></td>
+    <td>&nbsp;Local SNR at 60um</td>
+    <td>
+       <input type="checkbox" name="select_locsnr_60" />
+    </td>
+    <td><input name="min_locsnr_60" size="10" /></td>
+    <td><input name="max_locsnr_60" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>locsnr_100</b></td>
+    <td>&nbsp;Local SNR at 100um</td>
+    <td>
+       <input type="checkbox" name="select_locsnr_100" />
+    </td>
+    <td><input name="min_locsnr_100" size="10" /></td>
+    <td><input name="max_locsnr_100" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>area_12</b></td>
+    <td>&nbsp;Number of pixels above threshold at 12um</td>
+    <td>
+       <input type="checkbox" name="select_area_12" />
+    </td>
+    <td><input name="min_area_12" size="10" /></td>
+    <td><input name="max_area_12" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>area_25</b></td>
+    <td>&nbsp;Number of pixels above threshold at 25um</td>
+    <td>
+       <input type="checkbox" name="select_area_25" />
+    </td>
+    <td><input name="min_area_25" size="10" /></td>
+    <td><input name="max_area_25" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>area_60</b></td>
+    <td>&nbsp;Number of pixels above threshold at 60um</td>
+    <td>
+       <input type="checkbox" name="select_area_60" />
+    </td>
+    <td><input name="min_area_60" size="10" /></td>
+    <td><input name="max_area_60" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>area_100</b></td>
+    <td>&nbsp;Number of pixels above threshold at 100um</td>
+    <td>
+       <input type="checkbox" name="select_area_100" />
+    </td>
+    <td><input name="min_area_100" size="10" /></td>
+    <td><input name="max_area_100" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>catnbr</b></td>
+    <td>&nbsp;Number of nearby catalog sources</td>
+    <td>
+       <input type="checkbox" name="select_catnbr" />
+    </td>
+    <td><input name="min_catnbr" size="10" /></td>
+    <td><input name="max_catnbr" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>extnbr_12</b></td>
+    <td>&nbsp;Number of nearby extractions at 12 um</td>
+    <td>
+       <input type="checkbox" name="select_extnbr_12" />
+    </td>
+    <td><input name="min_extnbr_12" size="10" /></td>
+    <td><input name="max_extnbr_12" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>extnbr_25</b></td>
+    <td>&nbsp;Number of nearby extractions at 25 um</td>
+    <td>
+       <input type="checkbox" name="select_extnbr_25" />
+    </td>
+    <td><input name="min_extnbr_25" size="10" /></td>
+    <td><input name="max_extnbr_25" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>extnbr_60</b></td>
+    <td>&nbsp;Number of nearby extractions at 60 um</td>
+    <td>
+       <input type="checkbox" name="select_extnbr_60" />
+    </td>
+    <td><input name="min_extnbr_60" size="10" /></td>
+    <td><input name="max_extnbr_60" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>extnbr_100</b></td>
+    <td>&nbsp;Number of nearby extractions at 100 um</td>
+    <td>
+       <input type="checkbox" name="select_extnbr_100" />
+    </td>
+    <td><input name="min_extnbr_100" size="10" /></td>
+    <td><input name="max_extnbr_100" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>cirrus</b></td>
+    <td>&nbsp;Number of nearby 100 um-only extractions</td>
+    <td>
+       <input type="checkbox" name="select_cirrus" checked="checked" />
+    </td>
+    <td><input name="min_cirrus" size="10" /></td>
+    <td><input name="max_cirrus" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>confuse</b></td>
+    <td>&nbsp;Confusion flag, 1 per band, hex-encoded</td>
+    <td>
+       <input type="checkbox" name="select_confuse" checked="checked" />
+    </td>
+    <td><input name="min_confuse" size="10" /></td>
+    <td><input name="max_confuse" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>noiscor_12</b></td>
+    <td>&nbsp;Noise correction factor at 12um</td>
+    <td>
+       <input type="checkbox" name="select_noiscor_12" />
+    </td>
+    <td><input name="min_noiscor_12" size="10" /></td>
+    <td><input name="max_noiscor_12" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>noiscor_25</b></td>
+    <td>&nbsp;Noise correction factor at 25um</td>
+    <td>
+       <input type="checkbox" name="select_noiscor_25" />
+    </td>
+    <td><input name="min_noiscor_25" size="10" /></td>
+    <td><input name="max_noiscor_25" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>noiscor_60</b></td>
+    <td>&nbsp;Noise correction factor at 60um</td>
+    <td>
+       <input type="checkbox" name="select_noiscor_60" />
+    </td>
+    <td><input name="min_noiscor_60" size="10" /></td>
+    <td><input name="max_noiscor_60" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>noiscor_100</b></td>
+    <td>&nbsp;Noise correction factor at 100um</td>
+    <td>
+       <input type="checkbox" name="select_noiscor_100" />
+    </td>
+    <td><input name="min_noiscor_100" size="10" /></td>
+    <td><input name="max_noiscor_100" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>nid</b></td>
+    <td>&nbsp;Number of positional associations</td>
+    <td>
+       <input type="checkbox" name="select_nid" checked="checked" />
+    </td>
+    <td><input name="min_nid" size="10" /></td>
+    <td><input name="max_nid" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>idtype</b></td>
+    <td>&nbsp;Type of object</td>
+    <td>
+       <input type="checkbox" name="select_idtype" checked="checked" />
+    </td>
+    <td><input name="min_idtype" size="10" /></td>
+    <td><input name="max_idtype" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallint</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>noisrat_12</b></td>
+    <td>&nbsp;Ratio of 85% to 68% of flux distribution, 12um</td>
+    <td>
+       <input type="checkbox" name="select_noisrat_12" />
+    </td>
+    <td><input name="min_noisrat_12" size="10" /></td>
+    <td><input name="max_noisrat_12" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>noisrat_25</b></td>
+    <td>&nbsp;Ratio of 85% to 68% of flux distribution, 25um</td>
+    <td>
+       <input type="checkbox" name="select_noisrat_25" />
+    </td>
+    <td><input name="min_noisrat_25" size="10" /></td>
+    <td><input name="max_noisrat_25" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>noisrat_60</b></td>
+    <td>&nbsp;Ratio of 85% to 68% of flux distribution, 60um</td>
+    <td>
+       <input type="checkbox" name="select_noisrat_60" />
+    </td>
+    <td><input name="min_noisrat_60" size="10" /></td>
+    <td><input name="max_noisrat_60" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>noisrat_100</b></td>
+    <td>&nbsp;Ratio of 85% to 68% of flux distribution, 100u</td>
+    <td>
+       <input type="checkbox" name="select_noisrat_100" />
+    </td>
+    <td><input name="min_noisrat_100" size="10" /></td>
+    <td><input name="max_noisrat_100" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>rat_12_25</b></td>
+    <td>&nbsp;=fnu_12 / fnu_25</td>
+    <td>
+       <input type="checkbox" name="select_rat_12_25" />
+    </td>
+    <td><input name="min_rat_12_25" size="10" /></td>
+    <td><input name="max_rat_12_25" size="10" /></td>
+    <td>&nbsp;</td>
+    <td align="center">X</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>err_12_25</b></td>
+    <td>&nbsp;= % uncertainty in rat_12_25, -1=upperlim, -2=lowerlim</td>
+    <td>
+       <input type="checkbox" name="select_err_12_25" />
+    </td>
+    <td><input name="min_err_12_25" size="10" /></td>
+    <td><input name="max_err_12_25" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>rat_25_60</b></td>
+    <td>&nbsp;=fnu_25 / fnu_60</td>
+    <td>
+       <input type="checkbox" name="select_rat_25_60" />
+    </td>
+    <td><input name="min_rat_25_60" size="10" /></td>
+    <td><input name="max_rat_25_60" size="10" /></td>
+    <td>&nbsp;</td>
+    <td align="center">X</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>err_25_60</b></td>
+    <td>&nbsp;= % uncertainty in rat_25_60, -1=upperlim, -2=lowerlim</td>
+    <td>
+       <input type="checkbox" name="select_err_25_60" />
+    </td>
+    <td><input name="min_err_25_60" size="10" /></td>
+    <td><input name="max_err_25_60" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>rat_60_100</b></td>
+    <td>&nbsp;=fnu_60 / fnu_100</td>
+    <td>
+       <input type="checkbox" name="select_rat_60_100" />
+    </td>
+    <td><input name="min_rat_60_100" size="10" /></td>
+    <td><input name="max_rat_60_100" size="10" /></td>
+    <td>&nbsp;</td>
+    <td align="center">X</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>err_60_100</b></td>
+    <td>&nbsp;= % uncertainty in rat_60_100, -1=upperlim, -2=lowerlim</td>
+    <td>
+       <input type="checkbox" name="select_err_60_100" />
+    </td>
+    <td><input name="min_err_60_100" size="10" /></td>
+    <td><input name="max_err_60_100" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>glon</b></td>
+    <td>&nbsp;=Galactic Longitude, epoch B1983.5</td>
+    <td>
+       <input type="checkbox" name="select_glon" checked="checked" />
+    </td>
+    <td><input name="min_glon" size="10" /></td>
+    <td><input name="max_glon" size="10" /></td>
+    <td>deg</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>glat</b></td>
+    <td>&nbsp;=Galactic Latitude, epoch B1983.5</td>
+    <td>
+       <input type="checkbox" name="select_glat" checked="checked" />
+    </td>
+    <td><input name="min_glat" size="10" /></td>
+    <td><input name="max_glat" size="10" /></td>
+    <td>deg</td>
+    <td align="center">X</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>elon</b></td>
+    <td>&nbsp;=Ecliptic Longitude, equinox J2000.0, epoch B1983.5</td>
+    <td>
+       <input type="checkbox" name="select_elon" />
+    </td>
+    <td><input name="min_elon" size="10" /></td>
+    <td><input name="max_elon" size="10" /></td>
+    <td>deg</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>elat</b></td>
+    <td>&nbsp;=Ecliptic Latitude, equinox J2000.0, epoch B1983.5</td>
+    <td>
+       <input type="checkbox" name="select_elat" />
+    </td>
+    <td><input name="min_elat" size="10" /></td>
+    <td><input name="max_elat" size="10" /></td>
+    <td>deg</td>
+    <td align="center">X</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>ra</b></td>
+    <td>&nbsp;=RA equinox J2000.0, epoch B1983.5</td>
+    <td>
+       &nbsp;
+       <input type="hidden" name="select_ra" checked="checked" />
+    </td>
+    <td><input name="min_ra" size="10" /></td>
+    <td><input name="max_ra" size="10" /></td>
+    <td>deg</td>
+    <td align="center">X</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>dec</b></td>
+    <td>&nbsp;=Dec equinox J2000.0, epoch B1983.5</td>
+    <td>
+       &nbsp;
+       <input type="hidden" name="select_dec" checked="checked" />
+    </td>
+    <td><input name="min_dec" size="10" /></td>
+    <td><input name="max_dec" size="10" /></td>
+    <td>deg</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>cra</b></td>
+    <td>&nbsp;=RA equinox J2000.0, epoch B1983.5</td>
+    <td>
+       <input type="checkbox" name="select_cra" checked="checked" />
+    </td>
+    <td><input name="min_cra" size="10" /></td>
+    <td><input name="max_cra" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">char(8)</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>cdec</b></td>
+    <td>&nbsp;=Dec equinox J2000.0, epoch B1983.5</td>
+    <td>
+       <input type="checkbox" name="select_cdec" checked="checked" />
+    </td>
+    <td><input name="min_cdec" size="10" /></td>
+    <td><input name="max_cdec" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">char(7)</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>ra1950</b></td>
+    <td>&nbsp;=RA equinox B1950.0, epoch B1983.5</td>
+    <td>
+       <input type="checkbox" name="select_ra1950" />
+    </td>
+    <td><input name="min_ra1950" size="10" /></td>
+    <td><input name="max_ra1950" size="10" /></td>
+    <td>deg</td>
+    <td align="center">X</td>
+    <td align="right">smallfloat</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>dec1950</b></td>
+    <td>&nbsp;=Dec equinox B1950.0, epoch B1983.5</td>
+    <td>
+       <input type="checkbox" name="select_dec1950" />
+    </td>
+    <td><input name="min_dec1950" size="10" /></td>
+    <td><input name="max_dec1950" size="10" /></td>
+    <td>deg</td>
+    <td>&nbsp;</td>
+    <td align="right">smallfloat</td></tr>
+  <tr > 
+    <td>&nbsp;
+          <b>cra1950</b></td>
+    <td>&nbsp;=RA equinox B1950.0, epoch B1983.5</td>
+    <td>
+       <input type="checkbox" name="select_cra1950" />
+    </td>
+    <td><input name="min_cra1950" size="10" /></td>
+    <td><input name="max_cra1950" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">char(8)</td></tr>
+  <tr class="alt"> 
+    <td>&nbsp;
+          <b>cdec1950</b></td>
+    <td>&nbsp;=Dec equinox B1950.0, epoch B1983.5</td>
+    <td>
+       <input type="checkbox" name="select_cdec1950" />
+    </td>
+    <td><input name="min_cdec1950" size="10" /></td>
+    <td><input name="max_cdec1950" size="10" /></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td align="right">char(7)</td></tr>
+</table>
+<input type="hidden" name="spt" value="4" />
+&nbsp;<br />&nbsp;<br />
+<div style="width:658px;">
+    <a href="/onlinehelp/catalogs/#additionalconstraints" target="help">ADDITIONAL CONSTRAINTS (SQL)<img src="/images/icons/help.gif" alt="help" /></a><br />
+    <textarea rows="8" cols="70" name="constraints"></textarea><br />
+    <font size="-1">Ex: fnu_60 > 1000.0 AND fqual_12 > 1 AND fqual_25 > 1 AND fqual_60 > 1 AND fqual_100 > 1</font><br />
+    <font size="-1">Ex: fnu_60 > 1000.0</font><br />
+    <font size="-1" color="red">The format for date type is yyyy-mm-dd</font><div style="margin: auto; width:400px; background:#fff;">
+    <input style="background-color:#99ccff; color:#000000" type="submit" name="submit" value="Run Query" />
+    <input type="reset" onclick="selectReset();" value="Reset" />
+</div>
+</center>
+</form>
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>

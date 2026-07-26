@@ -1,0 +1,1517 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>[0811.2867] Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument</title><meta property="og:description" content="We have developed an imaging Fourier transform spectrometer (FTS) for
+space-based far-infrared astronomical observations. The FTS employs a
+newly developed photoconductive detector arrays with a capacitive
+trans-impeda…">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument">
+<meta name="twitter:image:src" content="https://ar5iv.labs.arxiv.org/assets/ar5iv_card.png">
+<meta name="twitter:image:alt" content="ar5iv logo">
+<meta property="og:title" content="Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument">
+<meta property="og:site_name" content="ar5iv">
+<meta property="og:image" content="https://ar5iv.labs.arxiv.org/assets/ar5iv_card.png">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://ar5iv.labs.arxiv.org/html/0811.2867">
+<link rel="canonical" target="_blank" href="https://ar5iv.labs.arxiv.org/html/0811.2867">
+
+<!--Generated on Thu Feb 29 10:44:09 2024 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<script>
+  function detectColorScheme(){
+    var theme="light";
+    var current_theme = localStorage.getItem("ar5iv_theme");
+    if(current_theme){
+      if(current_theme == "dark"){
+        theme = "dark";
+      } }
+    else if(!window.matchMedia) { return false; }
+    else if(window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      theme = "dark"; }
+    if (theme=="dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light"); } }
+
+  detectColorScheme();
+
+  function toggleColorScheme(){
+    var current_theme = localStorage.getItem("ar5iv_theme");
+    if (current_theme) {
+      if (current_theme == "light") {
+        localStorage.setItem("ar5iv_theme", "dark"); }
+      else {
+        localStorage.setItem("ar5iv_theme", "light"); } }
+    else {
+        localStorage.setItem("ar5iv_theme", "dark"); }
+    detectColorScheme(); }
+</script>
+<link media="all" rel="stylesheet" href="/assets/ar5iv-fonts.0.8.4.css"><link media="all" rel="stylesheet" href="/assets/ar5iv.0.8.5.css"><link media="all" rel="stylesheet" href="/assets/ar5iv-site.0.2.2.css">
+</head>
+<body>
+<div class="ltx_page_main">
+<div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line">
+<div id="p1" class="ltx_para">
+<span id="p1.1" class="ltx_ERROR undefined">\SetRunningHead</span>
+<p id="p1.2" class="ltx_p">M. KawadaImaging FTS for AKARI
+<span id="p1.2.1" class="ltx_ERROR undefined">\Received</span>2008/06/00<span id="p1.2.2" class="ltx_ERROR undefined">\Accepted</span>2008/00/00</p>
+</div>
+<div id="p2" class="ltx_para">
+<span id="p2.1" class="ltx_ERROR undefined">\KeyWords</span>
+<p id="p2.2" class="ltx_p">instrumentation:spectrographs — space vehicles:instruments — techniques:spectroscopic</p>
+</div>
+<h1 class="ltx_title ltx_title_document">Performance of the Imaging Fourier Transform Spectrometer
+with Photoconductive Detector Arrays:
+
+<br class="ltx_break">An Application for the AKARI Far-Infrared Instrument</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Mitsunobu <span id="id1.1.id1" class="ltx_text ltx_font_smallcaps">Kawada<span id="id1.1.id1.1" class="ltx_note ltx_role_affiliation"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_note_type">affiliation: </span><span id="id1.1.id1.1.1" class="ltx_text ltx_font_upright">Graduate School of Sciences, Nagoya University,
+Furo-cho, Chikusa-ku, Nagoya 464-8602, Japan</span></span></span></span></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Hidenori <span id="id2.1.id1" class="ltx_text ltx_font_smallcaps">Takahashi<span id="id2.1.id1.1" class="ltx_note ltx_role_affiliation"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_note_type">affiliation: </span><span id="id2.1.id1.1.1" class="ltx_text ltx_font_upright">Gunma Astronomical Observatory, 6860-86 Nakayama,
+Takayama, Agatsuma, Gunma 377-0702, Japan</span></span></span></span></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Noriko <span id="id3.1.id1" class="ltx_text ltx_font_smallcaps">Murakami<span id="id3.1.id1.1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span></span> <span id="id4.2.id2" class="ltx_note ltx_role_affiliation"><sup class="ltx_note_mark">3</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">3</sup><span class="ltx_note_type">affiliation: </span>Bisei Astronomical Observatory, Okura, Bisei-cho,
+Ibara-shi, Okayama 714-1411, Japan</span></span></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Hiroshi <span id="id5.1.id1" class="ltx_text ltx_font_smallcaps">Matsuo<span id="id5.1.id1.1" class="ltx_note ltx_role_affiliation"><sup class="ltx_note_mark">4</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">4</sup><span class="ltx_note_type">affiliation: </span><span id="id5.1.id1.1.1" class="ltx_text ltx_font_upright">Advanced Technology Center,
+National Astronomical Observatory of Japan,
+2-21-1 Osawa, Mitaka, Tokyo 181-8588, Japan</span></span></span></span></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Yoko <span id="id6.1.id1" class="ltx_text ltx_font_smallcaps">Okada<span id="id6.1.id1.1" class="ltx_note ltx_role_affiliation"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup><span class="ltx_note_type">affiliation: </span><span id="id6.1.id1.1.1" class="ltx_text ltx_font_upright">Institute of Space and Astronautical Science, JAXA,
+3-1-1 Yoshinodai, Sagamihara 229-8510, Japan</span></span></span></span></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Akiko <span id="id7.1.id1" class="ltx_text ltx_font_smallcaps">Yasuda<span id="id7.1.id1.1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Shuji <span id="id8.1.id1" class="ltx_text ltx_font_smallcaps">Matsuura<span id="id8.1.id1.1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Mai <span id="id9.1.id1" class="ltx_text ltx_font_smallcaps">Shirahata<span id="id9.1.id1.1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Yasuo <span id="id10.1.id1" class="ltx_text ltx_font_smallcaps">Doi<span id="id10.1.id1.1" class="ltx_note ltx_role_affiliation"><sup class="ltx_note_mark">6</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">6</sup><span class="ltx_note_type">affiliation: </span><span id="id10.1.id1.1.1" class="ltx_text ltx_font_upright">Department of General System Studies,
+Graduate School of Arts and Sciences,
+The University of Tokyo, 3-8-1 Komaba, Meguro-ku,
+Tokyo 153-8902, Japan</span></span></span></span></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Hidehiro <span id="id11.1.id1" class="ltx_text ltx_font_smallcaps">Kaneda<span id="id11.1.id1.1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Takafumi <span id="id12.1.id1" class="ltx_text ltx_font_smallcaps">Ootsubo</span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><span id="id13.1.id1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span> 
+Takao <span id="id14.2.id2" class="ltx_text ltx_font_smallcaps">Nakagawa<span id="id14.2.id2.1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+and
+Hiroshi <span id="id15.1.id1" class="ltx_text ltx_font_smallcaps">Shibai<span id="id15.1.id1.1" class="ltx_note ltx_role_affiliationmark"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_note_type">affiliationmark: </span></span></span></span></span> <span id="id16.2.id2" class="ltx_note ltx_role_affiliation"><sup class="ltx_note_mark">7</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">7</sup><span class="ltx_note_type">affiliation: </span>Graduate School of Sciences, Osaka University,
+1-1 Machikaneyama-cho,Toyonaka-shi,Osaka 560-0043,Japan</span></span></span>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_email"><a href="mailto:kawada@u.phys.nagoya-u.ac.jp">kawada@u.phys.nagoya-u.ac.jp</a>
+</span></span></span>
+</div>
+
+<div class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p id="id17.id1" class="ltx_p">We have developed an imaging Fourier transform spectrometer (FTS) for
+space-based far-infrared astronomical observations. The FTS employs a
+newly developed photoconductive detector arrays with a capacitive
+trans-impedance amplifier, which makes the FTS a completely unique
+instrument. The FTS was installed as a function of the far-infrared
+instrument (FIS: Far-Infrared Surveyor) on the Japanese astronomical
+satellite, AKARI, which was launched on February 21, 2006 (UT) from
+the Uchinoura Space Center. The FIS-FTS had been operated for more
+than one year before liquid helium ran out on August 26, 2007. The
+FIS-FTS was operated nearly six hundreds times, which corresponds to
+more than one hundred hours of astronomical observations and almost
+the same amount of time for calibrations. As expected from laboratory
+measurements, the FIS-FTS performed well and has produced a large
+set of astronomical data for valuable objects. Meanwhile, it becomes
+clear that the detector transient effect is a considerable factor
+for FTSs with photoconductive detectors. In this paper, the
+instrumentation of the FIS-FTS and interesting phenomena related
+to FTS using photoconductive detectors are described, and future
+applications of this kind of FTS system are discussed.</p>
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.1" class="ltx_p">Observations using infrared wavelengths are progressing in many fields
+of science and technology. In astrophysics, space-based infrared
+astronomy has become a powerful tool for deep insights into the universe
+ever since the first astronomical satellite, IRAS, was launched in 1983
+<cite class="ltx_cite ltx_citemacro_citep">(Neugebauer et al., <a href="#bib.bib19" title="" class="ltx_ref">1984</a>)</cite>.
+The earliest instruments for infrared astronomy were photometers using
+discrete detectors, and observations become gradually more precise,
+driven by the evolution of infrared technology. The development of
+detector arrays allowed detailed images to be recorded efficiently,
+and when coupled with spectrometers, provided detailed imaging
+spectroscopy. The COBE satellite
+<cite class="ltx_cite ltx_citemacro_citep">(Mather, <a href="#bib.bib11" title="" class="ltx_ref">1993</a>)</cite>,
+which was launched in 1989, measured the precise spectra and absolute
+power of the cosmic infrared background radiation.
+IRTS <cite class="ltx_cite ltx_citemacro_citep">(Murakami et al., <a href="#bib.bib13" title="" class="ltx_ref">1996</a>)</cite>, which was launched in 1995 as the first
+Japanese infrared telescope in space, have mapped 7 % of the sky,
+and have provided near- <cite class="ltx_cite ltx_citemacro_citep">(Tanaka et al., <a href="#bib.bib28" title="" class="ltx_ref">1996</a>)</cite>, mid- <cite class="ltx_cite ltx_citemacro_citep">(Onaka et al., <a href="#bib.bib22" title="" class="ltx_ref">1996</a>)</cite>, and
+far- <cite class="ltx_cite ltx_citemacro_citep">(Shibai et al., <a href="#bib.bib24" title="" class="ltx_ref">1996</a>)</cite> infrared spectra and line intensities as well as
+sub-millimeter brightness distribution <cite class="ltx_cite ltx_citemacro_citep">(Hirao et al., <a href="#bib.bib3" title="" class="ltx_ref">1996</a>)</cite>.
+The ISO <cite class="ltx_cite ltx_citemacro_citep">(Kessler et al., <a href="#bib.bib7" title="" class="ltx_ref">1996</a>; Kessler, <a href="#bib.bib8" title="" class="ltx_ref">2002</a>)</cite>,
+which was launched in 1995, provided a lot of infrared spectra for
+various objects, and emphasized the importance of studying infrared
+lines for investigations of the interstellar medium. The Spitzer Space
+Telescope
+<cite class="ltx_cite ltx_citemacro_citep">(Werner et al., <a href="#bib.bib29" title="" class="ltx_ref">2004</a>)</cite>,
+the infrared astronomical satellite launched in 2003, provides
+valuable images and spectra for various objects, but has only limited
+spectroscopic capabilities in the far infrared wavelength range.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.1" class="ltx_p">The AKARI satellite <cite class="ltx_cite ltx_citemacro_citep">(Murakami et al., <a href="#bib.bib14" title="" class="ltx_ref">2007</a>)</cite>
+is the Japanese infrared astronomical satellite, which was launched in
+2006. AKARI has a 68.5 cm diameter cooled telescope <cite class="ltx_cite ltx_citemacro_citep">(Kaneda et al., <a href="#bib.bib5" title="" class="ltx_ref">2007</a>)</cite>
+and two focal plane instruments; one is the IRC (InfraRed Camera)
+<cite class="ltx_cite ltx_citemacro_citep">(Onaka et al., <a href="#bib.bib23" title="" class="ltx_ref">2007</a>)</cite>
+for near to mid infrared range and the other is the FIS (Far-Infrared
+Surveyor) <cite class="ltx_cite ltx_citemacro_citep">(Kawada et al., <a href="#bib.bib6" title="" class="ltx_ref">2007</a>)</cite>
+for far-infrared imaging photometry. The FIS has spectroscopic
+capabilities as an optional function, provided by a Fourier transform
+spectrometer (FTS) <cite class="ltx_cite ltx_citemacro_citep">(Takahashi et al., <a href="#bib.bib26" title="" class="ltx_ref">2003</a>)</cite>.
+The FTS of the FIS (hereafter FIS-FTS) is the second spectrometer for
+far-infrared astronomy operated in space after FIRAS <cite class="ltx_cite ltx_citemacro_citep">(Mather et al., <a href="#bib.bib12" title="" class="ltx_ref">1993</a>)</cite>
+of the COBE satellite. A unique feature of the FIS-FTS is the imaging
+FTS design using a photoconductive detector system. The design,
+operation and performance of the FIS-FTS are described in this paper;
+the data reduction and the calibration of the FIS-FTS are treated in
+the companion paper <cite class="ltx_cite ltx_citemacro_citep">(Murakami et al., <a href="#bib.bib15" title="" class="ltx_ref">2008</a>)</cite>,
+and some scientific results related to the FIS-FTS are discussed by
+some authors <cite class="ltx_cite ltx_citemacro_citep">(Yasuda et al., <a href="#bib.bib30" title="" class="ltx_ref">2008</a>; Okada et al., <a href="#bib.bib21" title="" class="ltx_ref">2008</a>; Takahashi et al., <a href="#bib.bib27" title="" class="ltx_ref">2008</a>)</cite>.
+In the next section, the optical and mechanical design of the FIS-FTS
+are described. After explaining the operation of the FIS-FTS in
+section 3, the performance and some interesting properties of the
+FIS-FTS are presented in section 4. In section 5, we discuss special
+topics related to the FIS-FTS and future applications of FTSs with
+photoconductive detectors.</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>Instrumentation</h2>
+
+<section id="S2.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.1 </span>Optical Design</h3>
+
+<figure id="S2.F1" class="ltx_figure">
+<div class="ltx_flex_figure">
+<div class="ltx_flex_cell ltx_flex_size_1"><span id="S2.F1.1" class="ltx_ERROR ltx_centering ltx_figure_panel undefined">\FigureFile</span></div>
+<div class="ltx_flex_break"></div>
+<div class="ltx_flex_cell ltx_flex_size_1">
+<p id="S2.F1.2" class="ltx_p ltx_figure_panel ltx_align_center">(150mm,100mm)figure1.eps</p>
+</div>
+</div>
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>Drawings of the FIS optical configuration. The major optical
+components are shown with labels. The FIS instrument provides two
+functions — the photometer (right side) and the spectrometer (left
+side), which use different optical paths. Each function is
+selected by rotating the filter wheel. </figcaption>
+</figure>
+<div id="S2.SS1.p1" class="ltx_para">
+<p id="S2.SS1.p1.1" class="ltx_p">The FIS-FTS adopts a polarized Michelson-type Martin-Puplett
+interferometer (MPI) design <cite class="ltx_cite ltx_citemacro_citep">(Martin &amp; Puplett, <a href="#bib.bib10" title="" class="ltx_ref">1969</a>)</cite>.
+MPIs require a linear polarized light for input, which is then divided
+into two polarization components by a polarizing beam splitter.
+The two components are interfered as an elliptically polarized beam
+according to the incident spectrum and the optical path difference
+between the two components. By picking up the polarization component
+parallel or perpendicular to the polarization angle of the incident
+beam, interferograms can be recorded.</p>
+</div>
+<div id="S2.SS1.p2" class="ltx_para">
+<p id="S2.SS1.p2.23" class="ltx_p">A schematic view of the FIS-FTS optics is shown in figure <a href="#S2.F1" title="Figure 1 ‣ 2.1 Optical Design ‣ 2 Instrumentation ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.
+The photometer and the FTS are individually selected by rotating the
+filter wheel. The collimator and camera optics, some optical filters
+and the detector system are commonly used in both functions. The
+incident beam (<math id="S2.SS1.p2.1.m1.1" class="ltx_Math" alttext="I_{0}" display="inline"><semantics id="S2.SS1.p2.1.m1.1a"><msub id="S2.SS1.p2.1.m1.1.1" xref="S2.SS1.p2.1.m1.1.1.cmml"><mi id="S2.SS1.p2.1.m1.1.1.2" xref="S2.SS1.p2.1.m1.1.1.2.cmml">I</mi><mn id="S2.SS1.p2.1.m1.1.1.3" xref="S2.SS1.p2.1.m1.1.1.3.cmml">0</mn></msub><annotation-xml encoding="MathML-Content" id="S2.SS1.p2.1.m1.1b"><apply id="S2.SS1.p2.1.m1.1.1.cmml" xref="S2.SS1.p2.1.m1.1.1"><csymbol cd="ambiguous" id="S2.SS1.p2.1.m1.1.1.1.cmml" xref="S2.SS1.p2.1.m1.1.1">subscript</csymbol><ci id="S2.SS1.p2.1.m1.1.1.2.cmml" xref="S2.SS1.p2.1.m1.1.1.2">𝐼</ci><cn type="integer" id="S2.SS1.p2.1.m1.1.1.3.cmml" xref="S2.SS1.p2.1.m1.1.1.3">0</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p2.1.m1.1c">I_{0}</annotation></semantics></math>) is collimated by the collimator mirror and passed
+to the input polarizer (PL<sub id="S2.SS1.p2.23.1" class="ltx_sub"><span id="S2.SS1.p2.23.1.1" class="ltx_text ltx_font_italic">IN</span></sub>) on the filter wheel through the blocking
+filters (BF#1 &amp; #2).
+The input polarizer (PL<sub id="S2.SS1.p2.23.2" class="ltx_sub"><span id="S2.SS1.p2.23.2.1" class="ltx_text ltx_font_italic">IN</span></sub>) produces linear polarization; the reflected
+component (<math id="S2.SS1.p2.4.m4.1" class="ltx_Math" alttext="I_{r}" display="inline"><semantics id="S2.SS1.p2.4.m4.1a"><msub id="S2.SS1.p2.4.m4.1.1" xref="S2.SS1.p2.4.m4.1.1.cmml"><mi id="S2.SS1.p2.4.m4.1.1.2" xref="S2.SS1.p2.4.m4.1.1.2.cmml">I</mi><mi id="S2.SS1.p2.4.m4.1.1.3" xref="S2.SS1.p2.4.m4.1.1.3.cmml">r</mi></msub><annotation-xml encoding="MathML-Content" id="S2.SS1.p2.4.m4.1b"><apply id="S2.SS1.p2.4.m4.1.1.cmml" xref="S2.SS1.p2.4.m4.1.1"><csymbol cd="ambiguous" id="S2.SS1.p2.4.m4.1.1.1.cmml" xref="S2.SS1.p2.4.m4.1.1">subscript</csymbol><ci id="S2.SS1.p2.4.m4.1.1.2.cmml" xref="S2.SS1.p2.4.m4.1.1.2">𝐼</ci><ci id="S2.SS1.p2.4.m4.1.1.3.cmml" xref="S2.SS1.p2.4.m4.1.1.3">𝑟</ci></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p2.4.m4.1c">I_{r}</annotation></semantics></math>)
+goes into the interferometer and the transmitted component (<math id="S2.SS1.p2.5.m5.1" class="ltx_Math" alttext="I_{t}" display="inline"><semantics id="S2.SS1.p2.5.m5.1a"><msub id="S2.SS1.p2.5.m5.1.1" xref="S2.SS1.p2.5.m5.1.1.cmml"><mi id="S2.SS1.p2.5.m5.1.1.2" xref="S2.SS1.p2.5.m5.1.1.2.cmml">I</mi><mi id="S2.SS1.p2.5.m5.1.1.3" xref="S2.SS1.p2.5.m5.1.1.3.cmml">t</mi></msub><annotation-xml encoding="MathML-Content" id="S2.SS1.p2.5.m5.1b"><apply id="S2.SS1.p2.5.m5.1.1.cmml" xref="S2.SS1.p2.5.m5.1.1"><csymbol cd="ambiguous" id="S2.SS1.p2.5.m5.1.1.1.cmml" xref="S2.SS1.p2.5.m5.1.1">subscript</csymbol><ci id="S2.SS1.p2.5.m5.1.1.2.cmml" xref="S2.SS1.p2.5.m5.1.1.2">𝐼</ci><ci id="S2.SS1.p2.5.m5.1.1.3.cmml" xref="S2.SS1.p2.5.m5.1.1.3">𝑡</ci></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p2.5.m5.1c">I_{t}</annotation></semantics></math>)
+is absorbed by a black wall. The linear polarized beam (<math id="S2.SS1.p2.6.m6.1" class="ltx_Math" alttext="I_{r}" display="inline"><semantics id="S2.SS1.p2.6.m6.1a"><msub id="S2.SS1.p2.6.m6.1.1" xref="S2.SS1.p2.6.m6.1.1.cmml"><mi id="S2.SS1.p2.6.m6.1.1.2" xref="S2.SS1.p2.6.m6.1.1.2.cmml">I</mi><mi id="S2.SS1.p2.6.m6.1.1.3" xref="S2.SS1.p2.6.m6.1.1.3.cmml">r</mi></msub><annotation-xml encoding="MathML-Content" id="S2.SS1.p2.6.m6.1b"><apply id="S2.SS1.p2.6.m6.1.1.cmml" xref="S2.SS1.p2.6.m6.1.1"><csymbol cd="ambiguous" id="S2.SS1.p2.6.m6.1.1.1.cmml" xref="S2.SS1.p2.6.m6.1.1">subscript</csymbol><ci id="S2.SS1.p2.6.m6.1.1.2.cmml" xref="S2.SS1.p2.6.m6.1.1.2">𝐼</ci><ci id="S2.SS1.p2.6.m6.1.1.3.cmml" xref="S2.SS1.p2.6.m6.1.1.3">𝑟</ci></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p2.6.m6.1c">I_{r}</annotation></semantics></math>)
+is divided by the polarizing beam splitter (PL<sub id="S2.SS1.p2.23.3" class="ltx_sub"><span id="S2.SS1.p2.23.3.1" class="ltx_text ltx_font_italic">BS</span></sub>), whose polarization angle
+is rotated by 45 degrees to the polarization angle of the incident beam.
+The two divided components (<math id="S2.SS1.p2.8.m8.1" class="ltx_math_unparsed" alttext="I_{r\parallel}" display="inline"><semantics id="S2.SS1.p2.8.m8.1a"><msub id="S2.SS1.p2.8.m8.1.1"><mi id="S2.SS1.p2.8.m8.1.1.2">I</mi><mrow id="S2.SS1.p2.8.m8.1.1.3"><mi id="S2.SS1.p2.8.m8.1.1.3.1">r</mi><mo lspace="0em" id="S2.SS1.p2.8.m8.1.1.3.2">∥</mo></mrow></msub><annotation encoding="application/x-tex" id="S2.SS1.p2.8.m8.1b">I_{r\parallel}</annotation></semantics></math> and <math id="S2.SS1.p2.9.m9.1" class="ltx_Math" alttext="I_{r\perp}" display="inline"><semantics id="S2.SS1.p2.9.m9.1a"><msub id="S2.SS1.p2.9.m9.1.1" xref="S2.SS1.p2.9.m9.1.1.cmml"><mi id="S2.SS1.p2.9.m9.1.1.2" xref="S2.SS1.p2.9.m9.1.1.2.cmml">I</mi><mrow id="S2.SS1.p2.9.m9.1.1.3" xref="S2.SS1.p2.9.m9.1.1.3.cmml"><mi id="S2.SS1.p2.9.m9.1.1.3.2" xref="S2.SS1.p2.9.m9.1.1.3.2.cmml">r</mi><mo id="S2.SS1.p2.9.m9.1.1.3.1" xref="S2.SS1.p2.9.m9.1.1.3.1.cmml">⟂</mo><mi id="S2.SS1.p2.9.m9.1.1.3.3" xref="S2.SS1.p2.9.m9.1.1.3.3.cmml"></mi></mrow></msub><annotation-xml encoding="MathML-Content" id="S2.SS1.p2.9.m9.1b"><apply id="S2.SS1.p2.9.m9.1.1.cmml" xref="S2.SS1.p2.9.m9.1.1"><csymbol cd="ambiguous" id="S2.SS1.p2.9.m9.1.1.1.cmml" xref="S2.SS1.p2.9.m9.1.1">subscript</csymbol><ci id="S2.SS1.p2.9.m9.1.1.2.cmml" xref="S2.SS1.p2.9.m9.1.1.2">𝐼</ci><apply id="S2.SS1.p2.9.m9.1.1.3.cmml" xref="S2.SS1.p2.9.m9.1.1.3"><csymbol cd="latexml" id="S2.SS1.p2.9.m9.1.1.3.1.cmml" xref="S2.SS1.p2.9.m9.1.1.3.1">perpendicular-to</csymbol><ci id="S2.SS1.p2.9.m9.1.1.3.2.cmml" xref="S2.SS1.p2.9.m9.1.1.3.2">𝑟</ci><csymbol cd="latexml" id="S2.SS1.p2.9.m9.1.1.3.3.cmml" xref="S2.SS1.p2.9.m9.1.1.3.3">absent</csymbol></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p2.9.m9.1c">I_{r\perp}</annotation></semantics></math>)
+are reflected by roof-top mirrors; one is fixed and the other is
+movable to produce an optical path difference. Since the polarization
+angle of each component is rotated by 90 degrees by roof-top mirrors, the
+reflected component (<math id="S2.SS1.p2.10.m10.1" class="ltx_math_unparsed" alttext="I_{r\parallel}" display="inline"><semantics id="S2.SS1.p2.10.m10.1a"><msub id="S2.SS1.p2.10.m10.1.1"><mi id="S2.SS1.p2.10.m10.1.1.2">I</mi><mrow id="S2.SS1.p2.10.m10.1.1.3"><mi id="S2.SS1.p2.10.m10.1.1.3.1">r</mi><mo lspace="0em" id="S2.SS1.p2.10.m10.1.1.3.2">∥</mo></mrow></msub><annotation encoding="application/x-tex" id="S2.SS1.p2.10.m10.1b">I_{r\parallel}</annotation></semantics></math>)
+is transmitted and the transmitted component (<math id="S2.SS1.p2.11.m11.1" class="ltx_Math" alttext="I_{r\perp}" display="inline"><semantics id="S2.SS1.p2.11.m11.1a"><msub id="S2.SS1.p2.11.m11.1.1" xref="S2.SS1.p2.11.m11.1.1.cmml"><mi id="S2.SS1.p2.11.m11.1.1.2" xref="S2.SS1.p2.11.m11.1.1.2.cmml">I</mi><mrow id="S2.SS1.p2.11.m11.1.1.3" xref="S2.SS1.p2.11.m11.1.1.3.cmml"><mi id="S2.SS1.p2.11.m11.1.1.3.2" xref="S2.SS1.p2.11.m11.1.1.3.2.cmml">r</mi><mo id="S2.SS1.p2.11.m11.1.1.3.1" xref="S2.SS1.p2.11.m11.1.1.3.1.cmml">⟂</mo><mi id="S2.SS1.p2.11.m11.1.1.3.3" xref="S2.SS1.p2.11.m11.1.1.3.3.cmml"></mi></mrow></msub><annotation-xml encoding="MathML-Content" id="S2.SS1.p2.11.m11.1b"><apply id="S2.SS1.p2.11.m11.1.1.cmml" xref="S2.SS1.p2.11.m11.1.1"><csymbol cd="ambiguous" id="S2.SS1.p2.11.m11.1.1.1.cmml" xref="S2.SS1.p2.11.m11.1.1">subscript</csymbol><ci id="S2.SS1.p2.11.m11.1.1.2.cmml" xref="S2.SS1.p2.11.m11.1.1.2">𝐼</ci><apply id="S2.SS1.p2.11.m11.1.1.3.cmml" xref="S2.SS1.p2.11.m11.1.1.3"><csymbol cd="latexml" id="S2.SS1.p2.11.m11.1.1.3.1.cmml" xref="S2.SS1.p2.11.m11.1.1.3.1">perpendicular-to</csymbol><ci id="S2.SS1.p2.11.m11.1.1.3.2.cmml" xref="S2.SS1.p2.11.m11.1.1.3.2">𝑟</ci><csymbol cd="latexml" id="S2.SS1.p2.11.m11.1.1.3.3.cmml" xref="S2.SS1.p2.11.m11.1.1.3.3">absent</csymbol></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p2.11.m11.1c">I_{r\perp}</annotation></semantics></math>)
+is reflected by the beam splitter (PL<sub id="S2.SS1.p2.23.4" class="ltx_sub"><span id="S2.SS1.p2.23.4.1" class="ltx_text ltx_font_italic">BS</span></sub>). The two interfering beams (<math id="S2.SS1.p2.13.m13.1" class="ltx_Math" alttext="I_{ri}" display="inline"><semantics id="S2.SS1.p2.13.m13.1a"><msub id="S2.SS1.p2.13.m13.1.1" xref="S2.SS1.p2.13.m13.1.1.cmml"><mi id="S2.SS1.p2.13.m13.1.1.2" xref="S2.SS1.p2.13.m13.1.1.2.cmml">I</mi><mrow id="S2.SS1.p2.13.m13.1.1.3" xref="S2.SS1.p2.13.m13.1.1.3.cmml"><mi id="S2.SS1.p2.13.m13.1.1.3.2" xref="S2.SS1.p2.13.m13.1.1.3.2.cmml">r</mi><mo lspace="0em" rspace="0em" id="S2.SS1.p2.13.m13.1.1.3.1" xref="S2.SS1.p2.13.m13.1.1.3.1.cmml">​</mo><mi id="S2.SS1.p2.13.m13.1.1.3.3" xref="S2.SS1.p2.13.m13.1.1.3.3.cmml">i</mi></mrow></msub><annotation-xml encoding="MathML-Content" id="S2.SS1.p2.13.m13.1b"><apply id="S2.SS1.p2.13.m13.1.1.cmml" xref="S2.SS1.p2.13.m13.1.1"><csymbol cd="ambiguous" id="S2.SS1.p2.13.m13.1.1.1.cmml" xref="S2.SS1.p2.13.m13.1.1">subscript</csymbol><ci id="S2.SS1.p2.13.m13.1.1.2.cmml" xref="S2.SS1.p2.13.m13.1.1.2">𝐼</ci><apply id="S2.SS1.p2.13.m13.1.1.3.cmml" xref="S2.SS1.p2.13.m13.1.1.3"><times id="S2.SS1.p2.13.m13.1.1.3.1.cmml" xref="S2.SS1.p2.13.m13.1.1.3.1"></times><ci id="S2.SS1.p2.13.m13.1.1.3.2.cmml" xref="S2.SS1.p2.13.m13.1.1.3.2">𝑟</ci><ci id="S2.SS1.p2.13.m13.1.1.3.3.cmml" xref="S2.SS1.p2.13.m13.1.1.3.3">𝑖</ci></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p2.13.m13.1c">I_{ri}</annotation></semantics></math>)
+are modulated as an elliptical polarization and divided into two axis
+components by the output polarizer (PL<sub id="S2.SS1.p2.23.5" class="ltx_sub"><span id="S2.SS1.p2.23.5.1" class="ltx_text ltx_font_italic">OUT</span></sub>) on the filter wheel, whose polarizing
+angle is the same with that of the input polarizer. The component reflected
+by the output polarizer (<math id="S2.SS1.p2.15.m15.1" class="ltx_math_unparsed" alttext="I_{ri\parallel}" display="inline"><semantics id="S2.SS1.p2.15.m15.1a"><msub id="S2.SS1.p2.15.m15.1.1"><mi id="S2.SS1.p2.15.m15.1.1.2">I</mi><mrow id="S2.SS1.p2.15.m15.1.1.3"><mi id="S2.SS1.p2.15.m15.1.1.3.1">r</mi><mi id="S2.SS1.p2.15.m15.1.1.3.2">i</mi><mo lspace="0em" id="S2.SS1.p2.15.m15.1.1.3.3">∥</mo></mrow></msub><annotation encoding="application/x-tex" id="S2.SS1.p2.15.m15.1b">I_{ri\parallel}</annotation></semantics></math>)
+is focused on the LW detector through the low pass filter (WL) which covers
+the 55 – 90 cm<sup id="S2.SS1.p2.23.6" class="ltx_sup"><span id="S2.SS1.p2.23.6.1" class="ltx_text ltx_font_italic">-1</span></sup> wavenumber range (110 – 180 <math id="S2.SS1.p2.17.m17.1" class="ltx_Math" alttext="\micron" display="inline"><semantics id="S2.SS1.p2.17.m17.1a"><merror class="ltx_ERROR undefined undefined" id="S2.SS1.p2.17.m17.1.1" xref="S2.SS1.p2.17.m17.1.1b.cmml"><mtext id="S2.SS1.p2.17.m17.1.1a" xref="S2.SS1.p2.17.m17.1.1b.cmml">\micron</mtext></merror><annotation-xml encoding="MathML-Content" id="S2.SS1.p2.17.m17.1b"><ci id="S2.SS1.p2.17.m17.1.1b.cmml" xref="S2.SS1.p2.17.m17.1.1"><merror class="ltx_ERROR undefined undefined" id="S2.SS1.p2.17.m17.1.1.cmml" xref="S2.SS1.p2.17.m17.1.1"><mtext id="S2.SS1.p2.17.m17.1.1a.cmml" xref="S2.SS1.p2.17.m17.1.1">\micron</mtext></merror></ci></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p2.17.m17.1c">\micron</annotation></semantics></math> in wavelength),
+and the other component (<math id="S2.SS1.p2.18.m18.1" class="ltx_Math" alttext="I_{ri\perp}" display="inline"><semantics id="S2.SS1.p2.18.m18.1a"><msub id="S2.SS1.p2.18.m18.1.1" xref="S2.SS1.p2.18.m18.1.1.cmml"><mi id="S2.SS1.p2.18.m18.1.1.2" xref="S2.SS1.p2.18.m18.1.1.2.cmml">I</mi><mrow id="S2.SS1.p2.18.m18.1.1.3" xref="S2.SS1.p2.18.m18.1.1.3.cmml"><mrow id="S2.SS1.p2.18.m18.1.1.3.2" xref="S2.SS1.p2.18.m18.1.1.3.2.cmml"><mi id="S2.SS1.p2.18.m18.1.1.3.2.2" xref="S2.SS1.p2.18.m18.1.1.3.2.2.cmml">r</mi><mo lspace="0em" rspace="0em" id="S2.SS1.p2.18.m18.1.1.3.2.1" xref="S2.SS1.p2.18.m18.1.1.3.2.1.cmml">​</mo><mi id="S2.SS1.p2.18.m18.1.1.3.2.3" xref="S2.SS1.p2.18.m18.1.1.3.2.3.cmml">i</mi></mrow><mo id="S2.SS1.p2.18.m18.1.1.3.1" xref="S2.SS1.p2.18.m18.1.1.3.1.cmml">⟂</mo><mi id="S2.SS1.p2.18.m18.1.1.3.3" xref="S2.SS1.p2.18.m18.1.1.3.3.cmml"></mi></mrow></msub><annotation-xml encoding="MathML-Content" id="S2.SS1.p2.18.m18.1b"><apply id="S2.SS1.p2.18.m18.1.1.cmml" xref="S2.SS1.p2.18.m18.1.1"><csymbol cd="ambiguous" id="S2.SS1.p2.18.m18.1.1.1.cmml" xref="S2.SS1.p2.18.m18.1.1">subscript</csymbol><ci id="S2.SS1.p2.18.m18.1.1.2.cmml" xref="S2.SS1.p2.18.m18.1.1.2">𝐼</ci><apply id="S2.SS1.p2.18.m18.1.1.3.cmml" xref="S2.SS1.p2.18.m18.1.1.3"><csymbol cd="latexml" id="S2.SS1.p2.18.m18.1.1.3.1.cmml" xref="S2.SS1.p2.18.m18.1.1.3.1">perpendicular-to</csymbol><apply id="S2.SS1.p2.18.m18.1.1.3.2.cmml" xref="S2.SS1.p2.18.m18.1.1.3.2"><times id="S2.SS1.p2.18.m18.1.1.3.2.1.cmml" xref="S2.SS1.p2.18.m18.1.1.3.2.1"></times><ci id="S2.SS1.p2.18.m18.1.1.3.2.2.cmml" xref="S2.SS1.p2.18.m18.1.1.3.2.2">𝑟</ci><ci id="S2.SS1.p2.18.m18.1.1.3.2.3.cmml" xref="S2.SS1.p2.18.m18.1.1.3.2.3">𝑖</ci></apply><csymbol cd="latexml" id="S2.SS1.p2.18.m18.1.1.3.3.cmml" xref="S2.SS1.p2.18.m18.1.1.3.3">absent</csymbol></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p2.18.m18.1c">I_{ri\perp}</annotation></semantics></math>) is focused on the SW detector through
+the low pass filter (WS) which covers the 90 – 200
+cm<sup id="S2.SS1.p2.23.7" class="ltx_sup"><span id="S2.SS1.p2.23.7.1" class="ltx_text ltx_font_italic">-1</span></sup> wavenumber range (50 – 110 <math id="S2.SS1.p2.20.m20.1" class="ltx_Math" alttext="\micron" display="inline"><semantics id="S2.SS1.p2.20.m20.1a"><merror class="ltx_ERROR undefined undefined" id="S2.SS1.p2.20.m20.1.1" xref="S2.SS1.p2.20.m20.1.1b.cmml"><mtext id="S2.SS1.p2.20.m20.1.1a" xref="S2.SS1.p2.20.m20.1.1b.cmml">\micron</mtext></merror><annotation-xml encoding="MathML-Content" id="S2.SS1.p2.20.m20.1b"><ci id="S2.SS1.p2.20.m20.1.1b.cmml" xref="S2.SS1.p2.20.m20.1.1"><merror class="ltx_ERROR undefined undefined" id="S2.SS1.p2.20.m20.1.1.cmml" xref="S2.SS1.p2.20.m20.1.1"><mtext id="S2.SS1.p2.20.m20.1.1a.cmml" xref="S2.SS1.p2.20.m20.1.1">\micron</mtext></merror></ci></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p2.20.m20.1c">\micron</annotation></semantics></math> in wavelength).
+The modulated powers on each detector (<math id="S2.SS1.p2.21.m21.1" class="ltx_math_unparsed" alttext="I_{ri\parallel}" display="inline"><semantics id="S2.SS1.p2.21.m21.1a"><msub id="S2.SS1.p2.21.m21.1.1"><mi id="S2.SS1.p2.21.m21.1.1.2">I</mi><mrow id="S2.SS1.p2.21.m21.1.1.3"><mi id="S2.SS1.p2.21.m21.1.1.3.1">r</mi><mi id="S2.SS1.p2.21.m21.1.1.3.2">i</mi><mo lspace="0em" id="S2.SS1.p2.21.m21.1.1.3.3">∥</mo></mrow></msub><annotation encoding="application/x-tex" id="S2.SS1.p2.21.m21.1b">I_{ri\parallel}</annotation></semantics></math> and <math id="S2.SS1.p2.22.m22.1" class="ltx_Math" alttext="I_{ri\perp}" display="inline"><semantics id="S2.SS1.p2.22.m22.1a"><msub id="S2.SS1.p2.22.m22.1.1" xref="S2.SS1.p2.22.m22.1.1.cmml"><mi id="S2.SS1.p2.22.m22.1.1.2" xref="S2.SS1.p2.22.m22.1.1.2.cmml">I</mi><mrow id="S2.SS1.p2.22.m22.1.1.3" xref="S2.SS1.p2.22.m22.1.1.3.cmml"><mrow id="S2.SS1.p2.22.m22.1.1.3.2" xref="S2.SS1.p2.22.m22.1.1.3.2.cmml"><mi id="S2.SS1.p2.22.m22.1.1.3.2.2" xref="S2.SS1.p2.22.m22.1.1.3.2.2.cmml">r</mi><mo lspace="0em" rspace="0em" id="S2.SS1.p2.22.m22.1.1.3.2.1" xref="S2.SS1.p2.22.m22.1.1.3.2.1.cmml">​</mo><mi id="S2.SS1.p2.22.m22.1.1.3.2.3" xref="S2.SS1.p2.22.m22.1.1.3.2.3.cmml">i</mi></mrow><mo id="S2.SS1.p2.22.m22.1.1.3.1" xref="S2.SS1.p2.22.m22.1.1.3.1.cmml">⟂</mo><mi id="S2.SS1.p2.22.m22.1.1.3.3" xref="S2.SS1.p2.22.m22.1.1.3.3.cmml"></mi></mrow></msub><annotation-xml encoding="MathML-Content" id="S2.SS1.p2.22.m22.1b"><apply id="S2.SS1.p2.22.m22.1.1.cmml" xref="S2.SS1.p2.22.m22.1.1"><csymbol cd="ambiguous" id="S2.SS1.p2.22.m22.1.1.1.cmml" xref="S2.SS1.p2.22.m22.1.1">subscript</csymbol><ci id="S2.SS1.p2.22.m22.1.1.2.cmml" xref="S2.SS1.p2.22.m22.1.1.2">𝐼</ci><apply id="S2.SS1.p2.22.m22.1.1.3.cmml" xref="S2.SS1.p2.22.m22.1.1.3"><csymbol cd="latexml" id="S2.SS1.p2.22.m22.1.1.3.1.cmml" xref="S2.SS1.p2.22.m22.1.1.3.1">perpendicular-to</csymbol><apply id="S2.SS1.p2.22.m22.1.1.3.2.cmml" xref="S2.SS1.p2.22.m22.1.1.3.2"><times id="S2.SS1.p2.22.m22.1.1.3.2.1.cmml" xref="S2.SS1.p2.22.m22.1.1.3.2.1"></times><ci id="S2.SS1.p2.22.m22.1.1.3.2.2.cmml" xref="S2.SS1.p2.22.m22.1.1.3.2.2">𝑟</ci><ci id="S2.SS1.p2.22.m22.1.1.3.2.3.cmml" xref="S2.SS1.p2.22.m22.1.1.3.2.3">𝑖</ci></apply><csymbol cd="latexml" id="S2.SS1.p2.22.m22.1.1.3.3.cmml" xref="S2.SS1.p2.22.m22.1.1.3.3">absent</csymbol></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p2.22.m22.1c">I_{ri\perp}</annotation></semantics></math>)
+are described for incident photons of a wavenumber <math id="S2.SS1.p2.23.m23.1" class="ltx_Math" alttext="\sigma" display="inline"><semantics id="S2.SS1.p2.23.m23.1a"><mi id="S2.SS1.p2.23.m23.1.1" xref="S2.SS1.p2.23.m23.1.1.cmml">σ</mi><annotation-xml encoding="MathML-Content" id="S2.SS1.p2.23.m23.1b"><ci id="S2.SS1.p2.23.m23.1.1.cmml" xref="S2.SS1.p2.23.m23.1.1">𝜎</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p2.23.m23.1c">\sigma</annotation></semantics></math>,</p>
+<table id="S2.Ex1" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.Ex1.m1.4" class="ltx_math_unparsed" alttext="I_{ri\parallel}(\sigma)=\frac{I_{r}}{2}(1+cos2\pi\sigma x),\\
+I_{ri\perp}(\sigma)=\frac{I_{r}}{2}(1-cos2\pi\sigma x)" display="block"><semantics id="S2.Ex1.m1.4a"><mrow id="S2.Ex1.m1.4.4.2"><mrow id="S2.Ex1.m1.3.3.1.1"><mrow id="S2.Ex1.m1.3.3.1.1.3"><msub id="S2.Ex1.m1.3.3.1.1.3.2"><mi id="S2.Ex1.m1.3.3.1.1.3.2.2">I</mi><mrow id="S2.Ex1.m1.3.3.1.1.3.2.3"><mi id="S2.Ex1.m1.3.3.1.1.3.2.3.1">r</mi><mi id="S2.Ex1.m1.3.3.1.1.3.2.3.2">i</mi><mo lspace="0em" id="S2.Ex1.m1.3.3.1.1.3.2.3.3">∥</mo></mrow></msub><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.3.3.1.1.3.1">​</mo><mrow id="S2.Ex1.m1.3.3.1.1.3.3.2"><mo stretchy="false" id="S2.Ex1.m1.3.3.1.1.3.3.2.1">(</mo><mi id="S2.Ex1.m1.1.1">σ</mi><mo stretchy="false" id="S2.Ex1.m1.3.3.1.1.3.3.2.2">)</mo></mrow></mrow><mo id="S2.Ex1.m1.3.3.1.1.2">=</mo><mrow id="S2.Ex1.m1.3.3.1.1.1"><mfrac id="S2.Ex1.m1.3.3.1.1.1.3"><msub id="S2.Ex1.m1.3.3.1.1.1.3.2"><mi id="S2.Ex1.m1.3.3.1.1.1.3.2.2">I</mi><mi id="S2.Ex1.m1.3.3.1.1.1.3.2.3">r</mi></msub><mn id="S2.Ex1.m1.3.3.1.1.1.3.3">2</mn></mfrac><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.3.3.1.1.1.2">​</mo><mrow id="S2.Ex1.m1.3.3.1.1.1.1.1"><mo stretchy="false" id="S2.Ex1.m1.3.3.1.1.1.1.1.2">(</mo><mrow id="S2.Ex1.m1.3.3.1.1.1.1.1.1"><mn id="S2.Ex1.m1.3.3.1.1.1.1.1.1.2">1</mn><mo id="S2.Ex1.m1.3.3.1.1.1.1.1.1.1">+</mo><mrow id="S2.Ex1.m1.3.3.1.1.1.1.1.1.3"><mi id="S2.Ex1.m1.3.3.1.1.1.1.1.1.3.2">c</mi><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.3.3.1.1.1.1.1.1.3.1">​</mo><mi id="S2.Ex1.m1.3.3.1.1.1.1.1.1.3.3">o</mi><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.3.3.1.1.1.1.1.1.3.1a">​</mo><mi id="S2.Ex1.m1.3.3.1.1.1.1.1.1.3.4">s</mi><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.3.3.1.1.1.1.1.1.3.1b">​</mo><mn id="S2.Ex1.m1.3.3.1.1.1.1.1.1.3.5">2</mn><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.3.3.1.1.1.1.1.1.3.1c">​</mo><mi id="S2.Ex1.m1.3.3.1.1.1.1.1.1.3.6">π</mi><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.3.3.1.1.1.1.1.1.3.1d">​</mo><mi id="S2.Ex1.m1.3.3.1.1.1.1.1.1.3.7">σ</mi><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.3.3.1.1.1.1.1.1.3.1e">​</mo><mi id="S2.Ex1.m1.3.3.1.1.1.1.1.1.3.8">x</mi></mrow></mrow><mo stretchy="false" id="S2.Ex1.m1.3.3.1.1.1.1.1.3">)</mo></mrow></mrow></mrow><mo id="S2.Ex1.m1.4.4.2.3">,</mo><mrow id="S2.Ex1.m1.4.4.2.2"><mrow id="S2.Ex1.m1.4.4.2.2.3"><msub id="S2.Ex1.m1.4.4.2.2.3.2"><mi id="S2.Ex1.m1.4.4.2.2.3.2.2">I</mi><mrow id="S2.Ex1.m1.4.4.2.2.3.2.3"><mrow id="S2.Ex1.m1.4.4.2.2.3.2.3.2"><mi id="S2.Ex1.m1.4.4.2.2.3.2.3.2.2">r</mi><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.4.4.2.2.3.2.3.2.1">​</mo><mi id="S2.Ex1.m1.4.4.2.2.3.2.3.2.3">i</mi></mrow><mo id="S2.Ex1.m1.4.4.2.2.3.2.3.1">⟂</mo><mi id="S2.Ex1.m1.4.4.2.2.3.2.3.3"></mi></mrow></msub><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.4.4.2.2.3.1">​</mo><mrow id="S2.Ex1.m1.4.4.2.2.3.3.2"><mo stretchy="false" id="S2.Ex1.m1.4.4.2.2.3.3.2.1">(</mo><mi id="S2.Ex1.m1.2.2">σ</mi><mo stretchy="false" id="S2.Ex1.m1.4.4.2.2.3.3.2.2">)</mo></mrow></mrow><mo id="S2.Ex1.m1.4.4.2.2.2">=</mo><mrow id="S2.Ex1.m1.4.4.2.2.1"><mfrac id="S2.Ex1.m1.4.4.2.2.1.3"><msub id="S2.Ex1.m1.4.4.2.2.1.3.2"><mi id="S2.Ex1.m1.4.4.2.2.1.3.2.2">I</mi><mi id="S2.Ex1.m1.4.4.2.2.1.3.2.3">r</mi></msub><mn id="S2.Ex1.m1.4.4.2.2.1.3.3">2</mn></mfrac><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.4.4.2.2.1.2">​</mo><mrow id="S2.Ex1.m1.4.4.2.2.1.1.1"><mo stretchy="false" id="S2.Ex1.m1.4.4.2.2.1.1.1.2">(</mo><mrow id="S2.Ex1.m1.4.4.2.2.1.1.1.1"><mn id="S2.Ex1.m1.4.4.2.2.1.1.1.1.2">1</mn><mo id="S2.Ex1.m1.4.4.2.2.1.1.1.1.1">−</mo><mrow id="S2.Ex1.m1.4.4.2.2.1.1.1.1.3"><mi id="S2.Ex1.m1.4.4.2.2.1.1.1.1.3.2">c</mi><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.4.4.2.2.1.1.1.1.3.1">​</mo><mi id="S2.Ex1.m1.4.4.2.2.1.1.1.1.3.3">o</mi><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.4.4.2.2.1.1.1.1.3.1a">​</mo><mi id="S2.Ex1.m1.4.4.2.2.1.1.1.1.3.4">s</mi><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.4.4.2.2.1.1.1.1.3.1b">​</mo><mn id="S2.Ex1.m1.4.4.2.2.1.1.1.1.3.5">2</mn><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.4.4.2.2.1.1.1.1.3.1c">​</mo><mi id="S2.Ex1.m1.4.4.2.2.1.1.1.1.3.6">π</mi><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.4.4.2.2.1.1.1.1.3.1d">​</mo><mi id="S2.Ex1.m1.4.4.2.2.1.1.1.1.3.7">σ</mi><mo lspace="0em" rspace="0em" id="S2.Ex1.m1.4.4.2.2.1.1.1.1.3.1e">​</mo><mi id="S2.Ex1.m1.4.4.2.2.1.1.1.1.3.8">x</mi></mrow></mrow><mo stretchy="false" id="S2.Ex1.m1.4.4.2.2.1.1.1.3">)</mo></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex" id="S2.Ex1.m1.4b">I_{ri\parallel}(\sigma)=\frac{I_{r}}{2}(1+cos2\pi\sigma x),\\
+I_{ri\perp}(\sigma)=\frac{I_{r}}{2}(1-cos2\pi\sigma x)</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr></tbody>
+</table>
+<p id="S2.SS1.p2.24" class="ltx_p">where the <math id="S2.SS1.p2.24.m1.1" class="ltx_Math" alttext="x" display="inline"><semantics id="S2.SS1.p2.24.m1.1a"><mi id="S2.SS1.p2.24.m1.1.1" xref="S2.SS1.p2.24.m1.1.1.cmml">x</mi><annotation-xml encoding="MathML-Content" id="S2.SS1.p2.24.m1.1b"><ci id="S2.SS1.p2.24.m1.1.1.cmml" xref="S2.SS1.p2.24.m1.1.1">𝑥</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p2.24.m1.1c">x</annotation></semantics></math>
+is the optical path difference. As shown in eq. (<a href="#S2.Ex1" title="2.1 Optical Design ‣ 2 Instrumentation ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2.1</span></a>),
+the polarities of the modulated signals are opposite each other.</p>
+</div>
+<div id="S2.SS1.p3" class="ltx_para">
+<p id="S2.SS1.p3.1" class="ltx_p">To reduce the size of the optics, the incident angles of the polarizers
+are 30 and 60 degrees instead of the usual 45 degrees. All polarizers
+are wire grid type filters. The structure of the
+filters is thin copper wires printed on thin Mylar film mounted in a
+stainless frame. All optical filters used in the FIS-FTS are listed
+in table <a href="#S2.T1" title="Table 1 ‣ 2.1 Optical Design ‣ 2 Instrumentation ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>, which were supplied by QMC Ins. Ltd.
+As the result of the optical configuration of MPIs, only one fourth of
+the incident power is utilized for each detector for unpolarized
+incident flux, even in the ideal case. The actual optical efficiency is
+degraded by the quality of the optical components. Furthermore, the
+modulation efficiency depends on the optical alignment of the
+interferometer and on the detector properties. The performance of the
+FIS-FTS is described in section <a href="#S4" title="4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>.</p>
+</div>
+<figure id="S2.T1" class="ltx_table">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_table">Table 1: </span>Specifications of optical filters using in the FIS-FTS.</figcaption>
+<table id="S2.T1.18.18" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S2.T1.18.18.19.1" class="ltx_tr">
+<th id="S2.T1.18.18.19.1.1" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_t">GROUP</th>
+<th id="S2.T1.18.18.19.1.2" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_t">NAME</th>
+<th id="S2.T1.18.18.19.1.3" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_t">TYPE</th>
+<th id="S2.T1.18.18.19.1.4" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_t">EFFECTIVE SIZE</th>
+<th id="S2.T1.18.18.19.1.5" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_t">PROPERTY</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S2.T1.3.3.3" class="ltx_tr">
+<td id="S2.T1.3.3.3.4" class="ltx_td ltx_align_left ltx_border_t">blocking filter</td>
+<td id="S2.T1.3.3.3.5" class="ltx_td ltx_align_left ltx_border_t">BF#1</td>
+<td id="S2.T1.3.3.3.6" class="ltx_td ltx_align_left ltx_border_t">multi mesh LPF</td>
+<td id="S2.T1.1.1.1.1" class="ltx_td ltx_align_left ltx_border_t">27 mm<math id="S2.T1.1.1.1.1.m1.1" class="ltx_Math" alttext="\phi" display="inline"><semantics id="S2.T1.1.1.1.1.m1.1a"><mi id="S2.T1.1.1.1.1.m1.1.1" xref="S2.T1.1.1.1.1.m1.1.1.cmml">ϕ</mi><annotation-xml encoding="MathML-Content" id="S2.T1.1.1.1.1.m1.1b"><ci id="S2.T1.1.1.1.1.m1.1.1.cmml" xref="S2.T1.1.1.1.1.m1.1.1">italic-ϕ</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.T1.1.1.1.1.m1.1c">\phi</annotation></semantics></math>
+</td>
+<td id="S2.T1.3.3.3.3" class="ltx_td ltx_align_left ltx_border_t">
+<math id="S2.T1.2.2.2.2.m1.1" class="ltx_Math" alttext="\sigma_{cut}" display="inline"><semantics id="S2.T1.2.2.2.2.m1.1a"><msub id="S2.T1.2.2.2.2.m1.1.1" xref="S2.T1.2.2.2.2.m1.1.1.cmml"><mi id="S2.T1.2.2.2.2.m1.1.1.2" xref="S2.T1.2.2.2.2.m1.1.1.2.cmml">σ</mi><mrow id="S2.T1.2.2.2.2.m1.1.1.3" xref="S2.T1.2.2.2.2.m1.1.1.3.cmml"><mi id="S2.T1.2.2.2.2.m1.1.1.3.2" xref="S2.T1.2.2.2.2.m1.1.1.3.2.cmml">c</mi><mo lspace="0em" rspace="0em" id="S2.T1.2.2.2.2.m1.1.1.3.1" xref="S2.T1.2.2.2.2.m1.1.1.3.1.cmml">​</mo><mi id="S2.T1.2.2.2.2.m1.1.1.3.3" xref="S2.T1.2.2.2.2.m1.1.1.3.3.cmml">u</mi><mo lspace="0em" rspace="0em" id="S2.T1.2.2.2.2.m1.1.1.3.1a" xref="S2.T1.2.2.2.2.m1.1.1.3.1.cmml">​</mo><mi id="S2.T1.2.2.2.2.m1.1.1.3.4" xref="S2.T1.2.2.2.2.m1.1.1.3.4.cmml">t</mi></mrow></msub><annotation-xml encoding="MathML-Content" id="S2.T1.2.2.2.2.m1.1b"><apply id="S2.T1.2.2.2.2.m1.1.1.cmml" xref="S2.T1.2.2.2.2.m1.1.1"><csymbol cd="ambiguous" id="S2.T1.2.2.2.2.m1.1.1.1.cmml" xref="S2.T1.2.2.2.2.m1.1.1">subscript</csymbol><ci id="S2.T1.2.2.2.2.m1.1.1.2.cmml" xref="S2.T1.2.2.2.2.m1.1.1.2">𝜎</ci><apply id="S2.T1.2.2.2.2.m1.1.1.3.cmml" xref="S2.T1.2.2.2.2.m1.1.1.3"><times id="S2.T1.2.2.2.2.m1.1.1.3.1.cmml" xref="S2.T1.2.2.2.2.m1.1.1.3.1"></times><ci id="S2.T1.2.2.2.2.m1.1.1.3.2.cmml" xref="S2.T1.2.2.2.2.m1.1.1.3.2">𝑐</ci><ci id="S2.T1.2.2.2.2.m1.1.1.3.3.cmml" xref="S2.T1.2.2.2.2.m1.1.1.3.3">𝑢</ci><ci id="S2.T1.2.2.2.2.m1.1.1.3.4.cmml" xref="S2.T1.2.2.2.2.m1.1.1.3.4">𝑡</ci></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.T1.2.2.2.2.m1.1c">\sigma_{cut}</annotation></semantics></math> = 430 cm<sup id="S2.T1.3.3.3.3.1" class="ltx_sup"><span id="S2.T1.3.3.3.3.1.1" class="ltx_text ltx_font_italic">-1</span></sup>
+</td>
+</tr>
+<tr id="S2.T1.6.6.6" class="ltx_tr">
+<td id="S2.T1.6.6.6.4" class="ltx_td"></td>
+<td id="S2.T1.6.6.6.5" class="ltx_td ltx_align_left">BF#2</td>
+<td id="S2.T1.6.6.6.6" class="ltx_td ltx_align_left">multi mesh LPF</td>
+<td id="S2.T1.4.4.4.1" class="ltx_td ltx_align_left">27 mm<math id="S2.T1.4.4.4.1.m1.1" class="ltx_Math" alttext="\phi" display="inline"><semantics id="S2.T1.4.4.4.1.m1.1a"><mi id="S2.T1.4.4.4.1.m1.1.1" xref="S2.T1.4.4.4.1.m1.1.1.cmml">ϕ</mi><annotation-xml encoding="MathML-Content" id="S2.T1.4.4.4.1.m1.1b"><ci id="S2.T1.4.4.4.1.m1.1.1.cmml" xref="S2.T1.4.4.4.1.m1.1.1">italic-ϕ</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.T1.4.4.4.1.m1.1c">\phi</annotation></semantics></math>
+</td>
+<td id="S2.T1.6.6.6.3" class="ltx_td ltx_align_left">
+<math id="S2.T1.5.5.5.2.m1.1" class="ltx_Math" alttext="\sigma_{cut}" display="inline"><semantics id="S2.T1.5.5.5.2.m1.1a"><msub id="S2.T1.5.5.5.2.m1.1.1" xref="S2.T1.5.5.5.2.m1.1.1.cmml"><mi id="S2.T1.5.5.5.2.m1.1.1.2" xref="S2.T1.5.5.5.2.m1.1.1.2.cmml">σ</mi><mrow id="S2.T1.5.5.5.2.m1.1.1.3" xref="S2.T1.5.5.5.2.m1.1.1.3.cmml"><mi id="S2.T1.5.5.5.2.m1.1.1.3.2" xref="S2.T1.5.5.5.2.m1.1.1.3.2.cmml">c</mi><mo lspace="0em" rspace="0em" id="S2.T1.5.5.5.2.m1.1.1.3.1" xref="S2.T1.5.5.5.2.m1.1.1.3.1.cmml">​</mo><mi id="S2.T1.5.5.5.2.m1.1.1.3.3" xref="S2.T1.5.5.5.2.m1.1.1.3.3.cmml">u</mi><mo lspace="0em" rspace="0em" id="S2.T1.5.5.5.2.m1.1.1.3.1a" xref="S2.T1.5.5.5.2.m1.1.1.3.1.cmml">​</mo><mi id="S2.T1.5.5.5.2.m1.1.1.3.4" xref="S2.T1.5.5.5.2.m1.1.1.3.4.cmml">t</mi></mrow></msub><annotation-xml encoding="MathML-Content" id="S2.T1.5.5.5.2.m1.1b"><apply id="S2.T1.5.5.5.2.m1.1.1.cmml" xref="S2.T1.5.5.5.2.m1.1.1"><csymbol cd="ambiguous" id="S2.T1.5.5.5.2.m1.1.1.1.cmml" xref="S2.T1.5.5.5.2.m1.1.1">subscript</csymbol><ci id="S2.T1.5.5.5.2.m1.1.1.2.cmml" xref="S2.T1.5.5.5.2.m1.1.1.2">𝜎</ci><apply id="S2.T1.5.5.5.2.m1.1.1.3.cmml" xref="S2.T1.5.5.5.2.m1.1.1.3"><times id="S2.T1.5.5.5.2.m1.1.1.3.1.cmml" xref="S2.T1.5.5.5.2.m1.1.1.3.1"></times><ci id="S2.T1.5.5.5.2.m1.1.1.3.2.cmml" xref="S2.T1.5.5.5.2.m1.1.1.3.2">𝑐</ci><ci id="S2.T1.5.5.5.2.m1.1.1.3.3.cmml" xref="S2.T1.5.5.5.2.m1.1.1.3.3">𝑢</ci><ci id="S2.T1.5.5.5.2.m1.1.1.3.4.cmml" xref="S2.T1.5.5.5.2.m1.1.1.3.4">𝑡</ci></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.T1.5.5.5.2.m1.1c">\sigma_{cut}</annotation></semantics></math> = 300 cm<sup id="S2.T1.6.6.6.3.1" class="ltx_sup"><span id="S2.T1.6.6.6.3.1.1" class="ltx_text ltx_font_italic">-1</span></sup>
+</td>
+</tr>
+<tr id="S2.T1.8.8.8" class="ltx_tr">
+<td id="S2.T1.8.8.8.3" class="ltx_td ltx_align_left">polarizing filter</td>
+<td id="S2.T1.7.7.7.1" class="ltx_td ltx_align_left">PL<sub id="S2.T1.7.7.7.1.1" class="ltx_sub"><span id="S2.T1.7.7.7.1.1.1" class="ltx_text ltx_font_italic">IN</span></sub>
+</td>
+<td id="S2.T1.8.8.8.4" class="ltx_td ltx_align_left">wire grid</td>
+<td id="S2.T1.8.8.8.2" class="ltx_td ltx_align_left">30 mm<math id="S2.T1.8.8.8.2.m1.1" class="ltx_Math" alttext="\phi" display="inline"><semantics id="S2.T1.8.8.8.2.m1.1a"><mi id="S2.T1.8.8.8.2.m1.1.1" xref="S2.T1.8.8.8.2.m1.1.1.cmml">ϕ</mi><annotation-xml encoding="MathML-Content" id="S2.T1.8.8.8.2.m1.1b"><ci id="S2.T1.8.8.8.2.m1.1.1.cmml" xref="S2.T1.8.8.8.2.m1.1.1">italic-ϕ</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.T1.8.8.8.2.m1.1c">\phi</annotation></semantics></math>
+</td>
+<td id="S2.T1.8.8.8.5" class="ltx_td"></td>
+</tr>
+<tr id="S2.T1.10.10.10" class="ltx_tr">
+<td id="S2.T1.10.10.10.3" class="ltx_td"></td>
+<td id="S2.T1.9.9.9.1" class="ltx_td ltx_align_left">PL<sub id="S2.T1.9.9.9.1.1" class="ltx_sub"><span id="S2.T1.9.9.9.1.1.1" class="ltx_text ltx_font_italic">BS</span></sub>
+</td>
+<td id="S2.T1.10.10.10.4" class="ltx_td ltx_align_left">wire grid</td>
+<td id="S2.T1.10.10.10.2" class="ltx_td ltx_align_left">85 mm<math id="S2.T1.10.10.10.2.m1.1" class="ltx_Math" alttext="\phi" display="inline"><semantics id="S2.T1.10.10.10.2.m1.1a"><mi id="S2.T1.10.10.10.2.m1.1.1" xref="S2.T1.10.10.10.2.m1.1.1.cmml">ϕ</mi><annotation-xml encoding="MathML-Content" id="S2.T1.10.10.10.2.m1.1b"><ci id="S2.T1.10.10.10.2.m1.1.1.cmml" xref="S2.T1.10.10.10.2.m1.1.1">italic-ϕ</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.T1.10.10.10.2.m1.1c">\phi</annotation></semantics></math>
+</td>
+<td id="S2.T1.10.10.10.5" class="ltx_td"></td>
+</tr>
+<tr id="S2.T1.12.12.12" class="ltx_tr">
+<td id="S2.T1.12.12.12.3" class="ltx_td"></td>
+<td id="S2.T1.11.11.11.1" class="ltx_td ltx_align_left">PL<sub id="S2.T1.11.11.11.1.1" class="ltx_sub"><span id="S2.T1.11.11.11.1.1.1" class="ltx_text ltx_font_italic">OUT</span></sub>
+</td>
+<td id="S2.T1.12.12.12.4" class="ltx_td ltx_align_left">wire grid</td>
+<td id="S2.T1.12.12.12.2" class="ltx_td ltx_align_left">56 mm<math id="S2.T1.12.12.12.2.m1.1" class="ltx_Math" alttext="\phi" display="inline"><semantics id="S2.T1.12.12.12.2.m1.1a"><mi id="S2.T1.12.12.12.2.m1.1.1" xref="S2.T1.12.12.12.2.m1.1.1.cmml">ϕ</mi><annotation-xml encoding="MathML-Content" id="S2.T1.12.12.12.2.m1.1b"><ci id="S2.T1.12.12.12.2.m1.1.1.cmml" xref="S2.T1.12.12.12.2.m1.1.1">italic-ϕ</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.T1.12.12.12.2.m1.1c">\phi</annotation></semantics></math>
+</td>
+<td id="S2.T1.12.12.12.5" class="ltx_td"></td>
+</tr>
+<tr id="S2.T1.15.15.15" class="ltx_tr">
+<td id="S2.T1.15.15.15.4" class="ltx_td ltx_align_left">shaping filter</td>
+<td id="S2.T1.15.15.15.5" class="ltx_td ltx_align_left">WS</td>
+<td id="S2.T1.15.15.15.6" class="ltx_td ltx_align_left">multi mesh LPF</td>
+<td id="S2.T1.13.13.13.1" class="ltx_td ltx_align_left">22 mm<math id="S2.T1.13.13.13.1.m1.1" class="ltx_Math" alttext="\phi" display="inline"><semantics id="S2.T1.13.13.13.1.m1.1a"><mi id="S2.T1.13.13.13.1.m1.1.1" xref="S2.T1.13.13.13.1.m1.1.1.cmml">ϕ</mi><annotation-xml encoding="MathML-Content" id="S2.T1.13.13.13.1.m1.1b"><ci id="S2.T1.13.13.13.1.m1.1.1.cmml" xref="S2.T1.13.13.13.1.m1.1.1">italic-ϕ</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.T1.13.13.13.1.m1.1c">\phi</annotation></semantics></math>
+</td>
+<td id="S2.T1.15.15.15.3" class="ltx_td ltx_align_left">
+<math id="S2.T1.14.14.14.2.m1.1" class="ltx_Math" alttext="\sigma_{cut}" display="inline"><semantics id="S2.T1.14.14.14.2.m1.1a"><msub id="S2.T1.14.14.14.2.m1.1.1" xref="S2.T1.14.14.14.2.m1.1.1.cmml"><mi id="S2.T1.14.14.14.2.m1.1.1.2" xref="S2.T1.14.14.14.2.m1.1.1.2.cmml">σ</mi><mrow id="S2.T1.14.14.14.2.m1.1.1.3" xref="S2.T1.14.14.14.2.m1.1.1.3.cmml"><mi id="S2.T1.14.14.14.2.m1.1.1.3.2" xref="S2.T1.14.14.14.2.m1.1.1.3.2.cmml">c</mi><mo lspace="0em" rspace="0em" id="S2.T1.14.14.14.2.m1.1.1.3.1" xref="S2.T1.14.14.14.2.m1.1.1.3.1.cmml">​</mo><mi id="S2.T1.14.14.14.2.m1.1.1.3.3" xref="S2.T1.14.14.14.2.m1.1.1.3.3.cmml">u</mi><mo lspace="0em" rspace="0em" id="S2.T1.14.14.14.2.m1.1.1.3.1a" xref="S2.T1.14.14.14.2.m1.1.1.3.1.cmml">​</mo><mi id="S2.T1.14.14.14.2.m1.1.1.3.4" xref="S2.T1.14.14.14.2.m1.1.1.3.4.cmml">t</mi></mrow></msub><annotation-xml encoding="MathML-Content" id="S2.T1.14.14.14.2.m1.1b"><apply id="S2.T1.14.14.14.2.m1.1.1.cmml" xref="S2.T1.14.14.14.2.m1.1.1"><csymbol cd="ambiguous" id="S2.T1.14.14.14.2.m1.1.1.1.cmml" xref="S2.T1.14.14.14.2.m1.1.1">subscript</csymbol><ci id="S2.T1.14.14.14.2.m1.1.1.2.cmml" xref="S2.T1.14.14.14.2.m1.1.1.2">𝜎</ci><apply id="S2.T1.14.14.14.2.m1.1.1.3.cmml" xref="S2.T1.14.14.14.2.m1.1.1.3"><times id="S2.T1.14.14.14.2.m1.1.1.3.1.cmml" xref="S2.T1.14.14.14.2.m1.1.1.3.1"></times><ci id="S2.T1.14.14.14.2.m1.1.1.3.2.cmml" xref="S2.T1.14.14.14.2.m1.1.1.3.2">𝑐</ci><ci id="S2.T1.14.14.14.2.m1.1.1.3.3.cmml" xref="S2.T1.14.14.14.2.m1.1.1.3.3">𝑢</ci><ci id="S2.T1.14.14.14.2.m1.1.1.3.4.cmml" xref="S2.T1.14.14.14.2.m1.1.1.3.4">𝑡</ci></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.T1.14.14.14.2.m1.1c">\sigma_{cut}</annotation></semantics></math> = 218 cm<sup id="S2.T1.15.15.15.3.1" class="ltx_sup"><span id="S2.T1.15.15.15.3.1.1" class="ltx_text ltx_font_italic">-1</span></sup> (for SW)</td>
+</tr>
+<tr id="S2.T1.18.18.18" class="ltx_tr">
+<td id="S2.T1.18.18.18.4" class="ltx_td"></td>
+<td id="S2.T1.18.18.18.5" class="ltx_td ltx_align_left">WL</td>
+<td id="S2.T1.18.18.18.6" class="ltx_td ltx_align_left">multi mesh LPF</td>
+<td id="S2.T1.16.16.16.1" class="ltx_td ltx_align_left">22 mm<math id="S2.T1.16.16.16.1.m1.1" class="ltx_Math" alttext="\phi" display="inline"><semantics id="S2.T1.16.16.16.1.m1.1a"><mi id="S2.T1.16.16.16.1.m1.1.1" xref="S2.T1.16.16.16.1.m1.1.1.cmml">ϕ</mi><annotation-xml encoding="MathML-Content" id="S2.T1.16.16.16.1.m1.1b"><ci id="S2.T1.16.16.16.1.m1.1.1.cmml" xref="S2.T1.16.16.16.1.m1.1.1">italic-ϕ</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.T1.16.16.16.1.m1.1c">\phi</annotation></semantics></math>
+</td>
+<td id="S2.T1.18.18.18.3" class="ltx_td ltx_align_left">
+<math id="S2.T1.17.17.17.2.m1.1" class="ltx_Math" alttext="\sigma_{cut}" display="inline"><semantics id="S2.T1.17.17.17.2.m1.1a"><msub id="S2.T1.17.17.17.2.m1.1.1" xref="S2.T1.17.17.17.2.m1.1.1.cmml"><mi id="S2.T1.17.17.17.2.m1.1.1.2" xref="S2.T1.17.17.17.2.m1.1.1.2.cmml">σ</mi><mrow id="S2.T1.17.17.17.2.m1.1.1.3" xref="S2.T1.17.17.17.2.m1.1.1.3.cmml"><mi id="S2.T1.17.17.17.2.m1.1.1.3.2" xref="S2.T1.17.17.17.2.m1.1.1.3.2.cmml">c</mi><mo lspace="0em" rspace="0em" id="S2.T1.17.17.17.2.m1.1.1.3.1" xref="S2.T1.17.17.17.2.m1.1.1.3.1.cmml">​</mo><mi id="S2.T1.17.17.17.2.m1.1.1.3.3" xref="S2.T1.17.17.17.2.m1.1.1.3.3.cmml">u</mi><mo lspace="0em" rspace="0em" id="S2.T1.17.17.17.2.m1.1.1.3.1a" xref="S2.T1.17.17.17.2.m1.1.1.3.1.cmml">​</mo><mi id="S2.T1.17.17.17.2.m1.1.1.3.4" xref="S2.T1.17.17.17.2.m1.1.1.3.4.cmml">t</mi></mrow></msub><annotation-xml encoding="MathML-Content" id="S2.T1.17.17.17.2.m1.1b"><apply id="S2.T1.17.17.17.2.m1.1.1.cmml" xref="S2.T1.17.17.17.2.m1.1.1"><csymbol cd="ambiguous" id="S2.T1.17.17.17.2.m1.1.1.1.cmml" xref="S2.T1.17.17.17.2.m1.1.1">subscript</csymbol><ci id="S2.T1.17.17.17.2.m1.1.1.2.cmml" xref="S2.T1.17.17.17.2.m1.1.1.2">𝜎</ci><apply id="S2.T1.17.17.17.2.m1.1.1.3.cmml" xref="S2.T1.17.17.17.2.m1.1.1.3"><times id="S2.T1.17.17.17.2.m1.1.1.3.1.cmml" xref="S2.T1.17.17.17.2.m1.1.1.3.1"></times><ci id="S2.T1.17.17.17.2.m1.1.1.3.2.cmml" xref="S2.T1.17.17.17.2.m1.1.1.3.2">𝑐</ci><ci id="S2.T1.17.17.17.2.m1.1.1.3.3.cmml" xref="S2.T1.17.17.17.2.m1.1.1.3.3">𝑢</ci><ci id="S2.T1.17.17.17.2.m1.1.1.3.4.cmml" xref="S2.T1.17.17.17.2.m1.1.1.3.4">𝑡</ci></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.T1.17.17.17.2.m1.1c">\sigma_{cut}</annotation></semantics></math> = 90 cm<sup id="S2.T1.18.18.18.3.1" class="ltx_sup"><span id="S2.T1.18.18.18.3.1.1" class="ltx_text ltx_font_italic">-1</span></sup> (for LW)</td>
+</tr>
+<tr id="S2.T1.18.18.20.1" class="ltx_tr">
+<td id="S2.T1.18.18.20.1.1" class="ltx_td ltx_align_left ltx_border_t" colspan="5"><span id="S2.T1.18.18.20.1.1.1" class="ltx_text ltx_inline-block" style="width:0.0pt;">
+<span id="S2.T1.18.18.20.1.1.1.1" class="ltx_inline-block ltx_parbox ltx_align_middle" style="width:455.2pt;">
+<span id="S2.T1.18.18.20.1.1.1.1.1" class="ltx_p"><span id="S2.T1.18.18.20.1.1.1.1.1.1" class="ltx_text" style="font-size:80%;">Notes: All filters were supplied by QMC Instruments Ltd.</span></span>
+</span></span></td>
+</tr>
+</tbody>
+</table>
+</figure>
+<div id="S2.SS1.p4" class="ltx_para">
+<p id="S2.SS1.p4.2" class="ltx_p">The FIS-FTS has two internal calibration sources; one consists of
+micro-lamps to monitor the detector responsivity and the other is a
+small blackbody source, whose temperature is controllable up to about
+50K. The blackbody source is put at the input of the interferometer
+opposite to the input polarizer. The attenuation factor of the small
+blackbody source relative to the sky signal is about <math id="S2.SS1.p4.1.m1.1" class="ltx_Math" alttext="10^{-3}" display="inline"><semantics id="S2.SS1.p4.1.m1.1a"><msup id="S2.SS1.p4.1.m1.1.1" xref="S2.SS1.p4.1.m1.1.1.cmml"><mn id="S2.SS1.p4.1.m1.1.1.2" xref="S2.SS1.p4.1.m1.1.1.2.cmml">10</mn><mrow id="S2.SS1.p4.1.m1.1.1.3" xref="S2.SS1.p4.1.m1.1.1.3.cmml"><mo id="S2.SS1.p4.1.m1.1.1.3a" xref="S2.SS1.p4.1.m1.1.1.3.cmml">−</mo><mn id="S2.SS1.p4.1.m1.1.1.3.2" xref="S2.SS1.p4.1.m1.1.1.3.2.cmml">3</mn></mrow></msup><annotation-xml encoding="MathML-Content" id="S2.SS1.p4.1.m1.1b"><apply id="S2.SS1.p4.1.m1.1.1.cmml" xref="S2.SS1.p4.1.m1.1.1"><csymbol cd="ambiguous" id="S2.SS1.p4.1.m1.1.1.1.cmml" xref="S2.SS1.p4.1.m1.1.1">superscript</csymbol><cn type="integer" id="S2.SS1.p4.1.m1.1.1.2.cmml" xref="S2.SS1.p4.1.m1.1.1.2">10</cn><apply id="S2.SS1.p4.1.m1.1.1.3.cmml" xref="S2.SS1.p4.1.m1.1.1.3"><minus id="S2.SS1.p4.1.m1.1.1.3.1.cmml" xref="S2.SS1.p4.1.m1.1.1.3"></minus><cn type="integer" id="S2.SS1.p4.1.m1.1.1.3.2.cmml" xref="S2.SS1.p4.1.m1.1.1.3.2">3</cn></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p4.1.m1.1c">10^{-3}</annotation></semantics></math>
+due to its small aperture size of 0.7 mm<math id="S2.SS1.p4.2.m2.1" class="ltx_Math" alttext="\phi" display="inline"><semantics id="S2.SS1.p4.2.m2.1a"><mi id="S2.SS1.p4.2.m2.1.1" xref="S2.SS1.p4.2.m2.1.1.cmml">ϕ</mi><annotation-xml encoding="MathML-Content" id="S2.SS1.p4.2.m2.1b"><ci id="S2.SS1.p4.2.m2.1.1.cmml" xref="S2.SS1.p4.2.m2.1.1">italic-ϕ</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.SS1.p4.2.m2.1c">\phi</annotation></semantics></math>.
+As the results of the small aperture size of the internal blackbody
+source, the effects of vignetting for pixels at the edge of the
+detector arrays and the modulation efficiency due to the misalignment
+of the two beams are smaller than for sky signals.
+Furthermore, the polarity of the blackbody interferograms is opposite
+to those for astronomical sources, since the transmitted beam is used
+for the internal blackbody source.</p>
+</div>
+</section>
+<section id="S2.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.2 </span>Mechanical Design</h3>
+
+<div id="S2.SS2.p1" class="ltx_para">
+<p id="S2.SS2.p1.1" class="ltx_p">To realize the interferometer described above, the mechanical and
+thermal designs were optimized for the operation in space and
+cryogenic environment. The fundamental mechanical component of the
+interferometer is the mirror driving mechanism which produces the
+optical path difference between the two interfering beams. The
+driving mechanism for the FIS-FTS is based on the mechanism of the
+CIRS instrument on the Cassini spacecraft <cite class="ltx_cite ltx_citemacro_citep">(Kunde et al., <a href="#bib.bib9" title="" class="ltx_ref">1996</a>)</cite>.
+The roof-top mirror is mounted on a moving coil supported by four
+parallel tri-symmetrical leaf springs made of phosphor bronze,
+although the CIRS adopts a moving magnet. The coil, made of
+superconducting wire to reduce power dissipation, is enclosed in a
+magnet made of rare earth metals, which is designed to optimize both
+of the magnetic field and weight. The driving mechanism of the FIS-FTS
+is shown in figure <a href="#S2.F2" title="Figure 2 ‣ 2.2 Mechanical Design ‣ 2 Instrumentation ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>.
+The traveling length of the mirror driver is about <math id="S2.SS2.p1.1.m1.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S2.SS2.p1.1.m1.1a"><mo id="S2.SS2.p1.1.m1.1.1" xref="S2.SS2.p1.1.m1.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S2.SS2.p1.1.m1.1b"><csymbol cd="latexml" id="S2.SS2.p1.1.m1.1.1.cmml" xref="S2.SS2.p1.1.m1.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S2.SS2.p1.1.m1.1c">\pm</annotation></semantics></math> 9.2 mm
+from the mechanical neutral position. The optical zero is set at the
+offset position about the half of the near side span. As the result of
+this configuration, the maximum optical path difference is about
+27.6 mm (twice of 13.8 mm) and the shorter side is about 9.2 mm.</p>
+</div>
+<figure id="S2.F2" class="ltx_figure">
+<div class="ltx_flex_figure">
+<div class="ltx_flex_cell ltx_flex_size_1"><span id="S2.F2.1" class="ltx_ERROR ltx_centering ltx_figure_panel undefined">\FigureFile</span></div>
+<div class="ltx_flex_break"></div>
+<div class="ltx_flex_cell ltx_flex_size_1">
+<p id="S2.F2.2" class="ltx_p ltx_figure_panel ltx_align_center">(80mm,60mm)figure2.eps</p>
+</div>
+</div>
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>A photograph of the mirror driving mechanism before installing on the FIS
+instrument. Optical shield is removed to see the inside of the mechanism.</figcaption>
+</figure>
+<div id="S2.SS2.p2" class="ltx_para">
+<p id="S2.SS2.p2.2" class="ltx_p">To measure the mirror position, a Heidenhain type optical scale is
+adopted. The optical scale and sensor optics used are from a
+commercial grade Heidenhain LIP-401P module. The sensor unit,
+however, is modified because the original module does not work at
+cryogenic temperatures. The resolution of the mirror position is 1 <math id="S2.SS2.p2.1.m1.1" class="ltx_Math" alttext="\micron" display="inline"><semantics id="S2.SS2.p2.1.m1.1a"><merror class="ltx_ERROR undefined undefined" id="S2.SS2.p2.1.m1.1.1" xref="S2.SS2.p2.1.m1.1.1b.cmml"><mtext id="S2.SS2.p2.1.m1.1.1a" xref="S2.SS2.p2.1.m1.1.1b.cmml">\micron</mtext></merror><annotation-xml encoding="MathML-Content" id="S2.SS2.p2.1.m1.1b"><ci id="S2.SS2.p2.1.m1.1.1b.cmml" xref="S2.SS2.p2.1.m1.1.1"><merror class="ltx_ERROR undefined undefined" id="S2.SS2.p2.1.m1.1.1.cmml" xref="S2.SS2.p2.1.m1.1.1"><mtext id="S2.SS2.p2.1.m1.1.1a.cmml" xref="S2.SS2.p2.1.m1.1.1">\micron</mtext></merror></ci></annotation-xml><annotation encoding="application/x-tex" id="S2.SS2.p2.1.m1.1c">\micron</annotation></semantics></math>
+at ambient temperature (half of the scale pitch), corresponding to 2 <math id="S2.SS2.p2.2.m2.1" class="ltx_Math" alttext="\micron" display="inline"><semantics id="S2.SS2.p2.2.m2.1a"><merror class="ltx_ERROR undefined undefined" id="S2.SS2.p2.2.m2.1.1" xref="S2.SS2.p2.2.m2.1.1b.cmml"><mtext id="S2.SS2.p2.2.m2.1.1a" xref="S2.SS2.p2.2.m2.1.1b.cmml">\micron</mtext></merror><annotation-xml encoding="MathML-Content" id="S2.SS2.p2.2.m2.1b"><ci id="S2.SS2.p2.2.m2.1.1b.cmml" xref="S2.SS2.p2.2.m2.1.1"><merror class="ltx_ERROR undefined undefined" id="S2.SS2.p2.2.m2.1.1.cmml" xref="S2.SS2.p2.2.m2.1.1"><mtext id="S2.SS2.p2.2.m2.1.1a.cmml" xref="S2.SS2.p2.2.m2.1.1">\micron</mtext></merror></ci></annotation-xml><annotation encoding="application/x-tex" id="S2.SS2.p2.2.m2.1c">\micron</annotation></semantics></math>
+in optical path difference. However, the actual step size is reduced
+at the operation temperature of about 3K, because of its thermal
+contraction. Since we did not calibrate the scale in laboratory, we
+have to calibrate the scale in space using well known astronomical
+lines. Unfortunately, we have no sensor to detect the optical zero
+position. The optical zero position must be determined from the
+interferograms themselves. The specifications of the mirror
+mechanism is summarized in table <a href="#S2.T2" title="Table 2 ‣ 2.2 Mechanical Design ‣ 2 Instrumentation ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>
+with general properties of the FIS-FTS.</p>
+</div>
+<div id="S2.SS2.p3" class="ltx_para">
+<p id="S2.SS2.p3.1" class="ltx_p">The mirror driving mechanism is quite fragile, because of its
+requirements of optical accuracy and high mobility to reduce power
+consumption. This is not a problem for operation in space, but is
+troublesome as a result of the strong vibrations experienced during
+the launch. To survive the launch, a launch lock mechanism was adopted
+which fixes all movable parts by electromagnetic force during launch.
+The launch lock mechanism worked very well and the interferometer works
+as well in space as it did in the laboratory.</p>
+</div>
+<figure id="S2.T2" class="ltx_table">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_table">Table 2: </span>Specifications of the FIS-FTS.</figcaption>
+<table id="S2.T2.23.23" class="ltx_tabular ltx_centering ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr id="S2.T2.23.23.24.1" class="ltx_tr">
+<td id="S2.T2.23.23.24.1.1" class="ltx_td ltx_align_center ltx_border_t" colspan="4">Imaging Fourier Transform Spectrometer for Far-Infrared Surceyor</td>
+</tr>
+<tr id="S2.T2.23.23.25.2" class="ltx_tr">
+<td id="S2.T2.23.23.25.2.1" class="ltx_td ltx_align_left ltx_border_t">Optics</td>
+<td id="S2.T2.23.23.25.2.2" class="ltx_td ltx_align_center ltx_border_t" colspan="2">Polarized Michelson Interferometer</td>
+<td id="S2.T2.23.23.25.2.3" class="ltx_td ltx_align_left ltx_border_t">Martin-Puplett type</td>
+</tr>
+<tr id="S2.T2.23.23.26.3" class="ltx_tr">
+<td id="S2.T2.23.23.26.3.1" class="ltx_td ltx_align_left">Mirror driving mechanism</td>
+<td id="S2.T2.23.23.26.3.2" class="ltx_td ltx_align_center" colspan="2">leaf springs axis support with voice coil actuator</td>
+<td id="S2.T2.23.23.26.3.3" class="ltx_td"></td>
+</tr>
+<tr id="S2.T2.1.1.1" class="ltx_tr">
+<td id="S2.T2.1.1.1.2" class="ltx_td ltx_align_left">Position Sensor</td>
+<td id="S2.T2.1.1.1.1" class="ltx_td ltx_align_center" colspan="2">optical scale (2 <math id="S2.T2.1.1.1.1.m1.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S2.T2.1.1.1.1.m1.1a"><mi id="S2.T2.1.1.1.1.m1.1.1" xref="S2.T2.1.1.1.1.m1.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S2.T2.1.1.1.1.m1.1b"><ci id="S2.T2.1.1.1.1.m1.1.1.cmml" xref="S2.T2.1.1.1.1.m1.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.1.1.1.1.m1.1c">\mu</annotation></semantics></math>m in o.p.d.<span id="footnotex1" class="ltx_note ltx_role_footnotemark"><sup class="ltx_note_mark">∗*</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">∗*</sup><span class="ltx_note_type">footnotemark: </span><span class="ltx_tag ltx_tag_note"><math id="footnotex1.1.1.m1.1" class="ltx_Math" alttext="*" display="inline"><semantics id="footnotex1.1.1.m1.1c"><mo id="footnotex1.1.1.m1.1.1" xref="footnotex1.1.1.m1.1.1.cmml">∗</mo><annotation-xml encoding="MathML-Content" id="footnotex1.1.1.m1.1d"><times id="footnotex1.1.1.m1.1.1.cmml" xref="footnotex1.1.1.m1.1.1"></times></annotation-xml><annotation encoding="application/x-tex" id="footnotex1.1.1.m1.1e">*</annotation></semantics></math></span></span></span></span>)</td>
+<td id="S2.T2.1.1.1.3" class="ltx_td ltx_align_left">no zero path detector</td>
+</tr>
+<tr id="S2.T2.3.3.3" class="ltx_tr">
+<td id="S2.T2.3.3.3.3" class="ltx_td ltx_align_left">Spectral coverage</td>
+<td id="S2.T2.2.2.2.1" class="ltx_td ltx_align_center" colspan="2">55 – 200 cm<sup id="S2.T2.2.2.2.1.1" class="ltx_sup"><span id="S2.T2.2.2.2.1.1.1" class="ltx_text ltx_font_italic">-1</span></sup>
+</td>
+<td id="S2.T2.3.3.3.2" class="ltx_td ltx_align_left">50 – 180 <math id="S2.T2.3.3.3.2.m1.1" class="ltx_Math" alttext="\mu" display="inline"><semantics id="S2.T2.3.3.3.2.m1.1a"><mi id="S2.T2.3.3.3.2.m1.1.1" xref="S2.T2.3.3.3.2.m1.1.1.cmml">μ</mi><annotation-xml encoding="MathML-Content" id="S2.T2.3.3.3.2.m1.1b"><ci id="S2.T2.3.3.3.2.m1.1.1.cmml" xref="S2.T2.3.3.3.2.m1.1.1">𝜇</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.3.3.3.2.m1.1c">\mu</annotation></semantics></math>m</td>
+</tr>
+<tr id="S2.T2.4.4.4" class="ltx_tr">
+<td id="S2.T2.4.4.4.1" class="ltx_td ltx_align_left">Maximum o.p.d.<span id="footnotex2" class="ltx_note ltx_role_footnotemark"><sup class="ltx_note_mark">∗*</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">∗*</sup><span class="ltx_note_type">footnotemark: </span><span class="ltx_tag ltx_tag_note"><math id="footnotex2.1.1.m1.1" class="ltx_Math" alttext="*" display="inline"><semantics id="footnotex2.1.1.m1.1c"><mo id="footnotex2.1.1.m1.1.1" xref="footnotex2.1.1.m1.1.1.cmml">∗</mo><annotation-xml encoding="MathML-Content" id="footnotex2.1.1.m1.1d"><times id="footnotex2.1.1.m1.1.1.cmml" xref="footnotex2.1.1.m1.1.1"></times></annotation-xml><annotation encoding="application/x-tex" id="footnotex2.1.1.m1.1e">*</annotation></semantics></math></span></span></span></span> (<math id="S2.T2.4.4.4.1.m1.1" class="ltx_Math" alttext="L" display="inline"><semantics id="S2.T2.4.4.4.1.m1.1a"><mi id="S2.T2.4.4.4.1.m1.1.1" xref="S2.T2.4.4.4.1.m1.1.1.cmml">L</mi><annotation-xml encoding="MathML-Content" id="S2.T2.4.4.4.1.m1.1b"><ci id="S2.T2.4.4.4.1.m1.1.1.cmml" xref="S2.T2.4.4.4.1.m1.1.1">𝐿</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.4.4.4.1.m1.1c">L</annotation></semantics></math>)</td>
+<td id="S2.T2.4.4.4.2" class="ltx_td ltx_align_center" colspan="2">-0.9 – +2.8 cm</td>
+<td id="S2.T2.4.4.4.3" class="ltx_td"></td>
+</tr>
+<tr id="S2.T2.7.7.7" class="ltx_tr">
+<td id="S2.T2.5.5.5.1" class="ltx_td ltx_align_left">Spectra resolution (1/2<math id="S2.T2.5.5.5.1.m1.1" class="ltx_Math" alttext="L" display="inline"><semantics id="S2.T2.5.5.5.1.m1.1a"><mi id="S2.T2.5.5.5.1.m1.1.1" xref="S2.T2.5.5.5.1.m1.1.1.cmml">L</mi><annotation-xml encoding="MathML-Content" id="S2.T2.5.5.5.1.m1.1b"><ci id="S2.T2.5.5.5.1.m1.1.1.cmml" xref="S2.T2.5.5.5.1.m1.1.1">𝐿</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.5.5.5.1.m1.1c">L</annotation></semantics></math>)</td>
+<td id="S2.T2.6.6.6.2" class="ltx_td ltx_align_center">0.19 cm<sup id="S2.T2.6.6.6.2.1" class="ltx_sup"><span id="S2.T2.6.6.6.2.1.1" class="ltx_text ltx_font_italic">-1</span></sup> (full res. mode)</td>
+<td id="S2.T2.7.7.7.3" class="ltx_td ltx_align_center">1.2 cm<sup id="S2.T2.7.7.7.3.1" class="ltx_sup"><span id="S2.T2.7.7.7.3.1.1" class="ltx_text ltx_font_italic">-1</span></sup> (SED mode)</td>
+<td id="S2.T2.7.7.7.4" class="ltx_td ltx_align_left">without apodization</td>
+</tr>
+<tr id="S2.T2.9.9.9" class="ltx_tr">
+<td id="S2.T2.9.9.9.3" class="ltx_td ltx_align_left">Mirror scan speed</td>
+<td id="S2.T2.9.9.9.2" class="ltx_td ltx_align_center" colspan="2">
+<math id="S2.T2.8.8.8.1.m1.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S2.T2.8.8.8.1.m1.1a"><mo id="S2.T2.8.8.8.1.m1.1.1" xref="S2.T2.8.8.8.1.m1.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S2.T2.8.8.8.1.m1.1b"><csymbol cd="latexml" id="S2.T2.8.8.8.1.m1.1.1.cmml" xref="S2.T2.8.8.8.1.m1.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.8.8.8.1.m1.1c">\sim</annotation></semantics></math>0.08 cm s<sup id="S2.T2.9.9.9.2.1" class="ltx_sup"><span id="S2.T2.9.9.9.2.1.1" class="ltx_text ltx_font_italic">-1</span></sup>
+</td>
+<td id="S2.T2.9.9.9.4" class="ltx_td"></td>
+</tr>
+<tr id="S2.T2.23.23.27.4" class="ltx_tr">
+<td id="S2.T2.23.23.27.4.1" class="ltx_td ltx_align_left">Detector system</td>
+<td id="S2.T2.23.23.27.4.2" class="ltx_td ltx_align_center" colspan="2">2D photoconductive detector arrays with CTIAs<span id="footnotex3" class="ltx_note ltx_role_footnotemark"><sup class="ltx_note_mark">††\dagger</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">††\dagger</sup><span class="ltx_note_type">footnotemark: </span><span class="ltx_tag ltx_tag_note"><math id="footnotex3.1.1.m1.1" class="ltx_Math" alttext="\dagger" display="inline"><semantics id="footnotex3.1.1.m1.1c"><mo id="footnotex3.1.1.m1.1.1" xref="footnotex3.1.1.m1.1.1.cmml">†</mo><annotation-xml encoding="MathML-Content" id="footnotex3.1.1.m1.1d"><ci id="footnotex3.1.1.m1.1.1.cmml" xref="footnotex3.1.1.m1.1.1">†</ci></annotation-xml><annotation encoding="application/x-tex" id="footnotex3.1.1.m1.1e">\dagger</annotation></semantics></math></span></span></span></span>
+</td>
+<td id="S2.T2.23.23.27.4.3" class="ltx_td"></td>
+</tr>
+<tr id="S2.T2.23.23.28.5" class="ltx_tr">
+<td id="S2.T2.23.23.28.5.1" class="ltx_td ltx_align_left">Detector unit name</td>
+<td id="S2.T2.23.23.28.5.2" class="ltx_td ltx_align_center">SW</td>
+<td id="S2.T2.23.23.28.5.3" class="ltx_td ltx_align_center">LW</td>
+<td id="S2.T2.23.23.28.5.4" class="ltx_td"></td>
+</tr>
+<tr id="S2.T2.23.23.29.6" class="ltx_tr">
+<td id="S2.T2.23.23.29.6.1" class="ltx_td ltx_align_left">Detector type</td>
+<td id="S2.T2.23.23.29.6.2" class="ltx_td ltx_align_center">monolithic Ge:Ga array</td>
+<td id="S2.T2.23.23.29.6.3" class="ltx_td ltx_align_center">stressed Ge:Ga array</td>
+<td id="S2.T2.23.23.29.6.4" class="ltx_td"></td>
+</tr>
+<tr id="S2.T2.11.11.11" class="ltx_tr">
+<td id="S2.T2.11.11.11.3" class="ltx_td ltx_align_left">Array format</td>
+<td id="S2.T2.10.10.10.1" class="ltx_td ltx_align_center">3 <math id="S2.T2.10.10.10.1.m1.1" class="ltx_Math" alttext="\times" display="inline"><semantics id="S2.T2.10.10.10.1.m1.1a"><mo id="S2.T2.10.10.10.1.m1.1.1" xref="S2.T2.10.10.10.1.m1.1.1.cmml">×</mo><annotation-xml encoding="MathML-Content" id="S2.T2.10.10.10.1.m1.1b"><times id="S2.T2.10.10.10.1.m1.1.1.cmml" xref="S2.T2.10.10.10.1.m1.1.1"></times></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.10.10.10.1.m1.1c">\times</annotation></semantics></math> 20</td>
+<td id="S2.T2.11.11.11.2" class="ltx_td ltx_align_center">3 <math id="S2.T2.11.11.11.2.m1.1" class="ltx_Math" alttext="\times" display="inline"><semantics id="S2.T2.11.11.11.2.m1.1a"><mo id="S2.T2.11.11.11.2.m1.1.1" xref="S2.T2.11.11.11.2.m1.1.1.cmml">×</mo><annotation-xml encoding="MathML-Content" id="S2.T2.11.11.11.2.m1.1b"><times id="S2.T2.11.11.11.2.m1.1.1.cmml" xref="S2.T2.11.11.11.2.m1.1.1"></times></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.11.11.11.2.m1.1c">\times</annotation></semantics></math> 15</td>
+<td id="S2.T2.11.11.11.4" class="ltx_td"></td>
+</tr>
+<tr id="S2.T2.23.23.30.7" class="ltx_tr">
+<td id="S2.T2.23.23.30.7.1" class="ltx_td ltx_align_left">Pixel size</td>
+<td id="S2.T2.23.23.30.7.2" class="ltx_td ltx_align_center">0.5 (0.55) mm</td>
+<td id="S2.T2.23.23.30.7.3" class="ltx_td ltx_align_center">0.9 (1.0) mm</td>
+<td id="S2.T2.23.23.30.7.4" class="ltx_td ltx_align_left">(pixel pitch)</td>
+</tr>
+<tr id="S2.T2.15.15.15" class="ltx_tr">
+<td id="S2.T2.15.15.15.5" class="ltx_td ltx_align_left">Pixel FOV</td>
+<td id="S2.T2.13.13.13.2" class="ltx_td ltx_align_center">26.8<math id="S2.T2.12.12.12.1.m1.1" class="ltx_Math" alttext="\times" display="inline"><semantics id="S2.T2.12.12.12.1.m1.1a"><mo id="S2.T2.12.12.12.1.m1.1.1" xref="S2.T2.12.12.12.1.m1.1.1.cmml">×</mo><annotation-xml encoding="MathML-Content" id="S2.T2.12.12.12.1.m1.1b"><times id="S2.T2.12.12.12.1.m1.1.1.cmml" xref="S2.T2.12.12.12.1.m1.1.1"></times></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.12.12.12.1.m1.1c">\times</annotation></semantics></math>26.8 arcsec<sup id="S2.T2.13.13.13.2.1" class="ltx_sup">2</sup>
+</td>
+<td id="S2.T2.15.15.15.4" class="ltx_td ltx_align_center">44.2<math id="S2.T2.14.14.14.3.m1.1" class="ltx_Math" alttext="\times" display="inline"><semantics id="S2.T2.14.14.14.3.m1.1a"><mo id="S2.T2.14.14.14.3.m1.1.1" xref="S2.T2.14.14.14.3.m1.1.1.cmml">×</mo><annotation-xml encoding="MathML-Content" id="S2.T2.14.14.14.3.m1.1b"><times id="S2.T2.14.14.14.3.m1.1.1.cmml" xref="S2.T2.14.14.14.3.m1.1.1"></times></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.14.14.14.3.m1.1c">\times</annotation></semantics></math>44.2 arcsec<sup id="S2.T2.15.15.15.4.1" class="ltx_sup">2</sup>
+</td>
+<td id="S2.T2.15.15.15.6" class="ltx_td"></td>
+</tr>
+<tr id="S2.T2.17.17.17" class="ltx_tr">
+<td id="S2.T2.17.17.17.3" class="ltx_td ltx_align_left">PSF<span id="footnotex4" class="ltx_note ltx_role_footnotemark"><sup class="ltx_note_mark">‡‡\ddagger</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">‡‡\ddagger</sup><span class="ltx_note_type">footnotemark: </span><span class="ltx_tag ltx_tag_note"><math id="footnotex4.1.1.m1.1" class="ltx_Math" alttext="\ddagger" display="inline"><semantics id="footnotex4.1.1.m1.1c"><mo id="footnotex4.1.1.m1.1.1" xref="footnotex4.1.1.m1.1.1.cmml">‡</mo><annotation-xml encoding="MathML-Content" id="footnotex4.1.1.m1.1d"><ci id="footnotex4.1.1.m1.1.1.cmml" xref="footnotex4.1.1.m1.1.1">‡</ci></annotation-xml><annotation encoding="application/x-tex" id="footnotex4.1.1.m1.1e">\ddagger</annotation></semantics></math></span></span></span></span> (model)</td>
+<td id="S2.T2.17.17.17.2" class="ltx_td ltx_align_left" colspan="3">
+<math id="S2.T2.16.16.16.1.m1.6" class="ltx_Math" alttext='P_{FTS}(x,y)=P_{phot}(x-7",y)+P_{phot}(x+7",y)' display="inline"><semantics id="S2.T2.16.16.16.1.m1.6a"><mrow id="S2.T2.16.16.16.1.m1.6.6" xref="S2.T2.16.16.16.1.m1.6.6.cmml"><mrow id="S2.T2.16.16.16.1.m1.6.6.4" xref="S2.T2.16.16.16.1.m1.6.6.4.cmml"><msub id="S2.T2.16.16.16.1.m1.6.6.4.2" xref="S2.T2.16.16.16.1.m1.6.6.4.2.cmml"><mi id="S2.T2.16.16.16.1.m1.6.6.4.2.2" xref="S2.T2.16.16.16.1.m1.6.6.4.2.2.cmml">P</mi><mrow id="S2.T2.16.16.16.1.m1.6.6.4.2.3" xref="S2.T2.16.16.16.1.m1.6.6.4.2.3.cmml"><mi id="S2.T2.16.16.16.1.m1.6.6.4.2.3.2" xref="S2.T2.16.16.16.1.m1.6.6.4.2.3.2.cmml">F</mi><mo lspace="0em" rspace="0em" id="S2.T2.16.16.16.1.m1.6.6.4.2.3.1" xref="S2.T2.16.16.16.1.m1.6.6.4.2.3.1.cmml">​</mo><mi id="S2.T2.16.16.16.1.m1.6.6.4.2.3.3" xref="S2.T2.16.16.16.1.m1.6.6.4.2.3.3.cmml">T</mi><mo lspace="0em" rspace="0em" id="S2.T2.16.16.16.1.m1.6.6.4.2.3.1a" xref="S2.T2.16.16.16.1.m1.6.6.4.2.3.1.cmml">​</mo><mi id="S2.T2.16.16.16.1.m1.6.6.4.2.3.4" xref="S2.T2.16.16.16.1.m1.6.6.4.2.3.4.cmml">S</mi></mrow></msub><mo lspace="0em" rspace="0em" id="S2.T2.16.16.16.1.m1.6.6.4.1" xref="S2.T2.16.16.16.1.m1.6.6.4.1.cmml">​</mo><mrow id="S2.T2.16.16.16.1.m1.6.6.4.3.2" xref="S2.T2.16.16.16.1.m1.6.6.4.3.1.cmml"><mo stretchy="false" id="S2.T2.16.16.16.1.m1.6.6.4.3.2.1" xref="S2.T2.16.16.16.1.m1.6.6.4.3.1.cmml">(</mo><mi id="S2.T2.16.16.16.1.m1.1.1" xref="S2.T2.16.16.16.1.m1.1.1.cmml">x</mi><mo id="S2.T2.16.16.16.1.m1.6.6.4.3.2.2" xref="S2.T2.16.16.16.1.m1.6.6.4.3.1.cmml">,</mo><mi id="S2.T2.16.16.16.1.m1.2.2" xref="S2.T2.16.16.16.1.m1.2.2.cmml">y</mi><mo stretchy="false" id="S2.T2.16.16.16.1.m1.6.6.4.3.2.3" xref="S2.T2.16.16.16.1.m1.6.6.4.3.1.cmml">)</mo></mrow></mrow><mo id="S2.T2.16.16.16.1.m1.6.6.3" xref="S2.T2.16.16.16.1.m1.6.6.3.cmml">=</mo><mrow id="S2.T2.16.16.16.1.m1.6.6.2" xref="S2.T2.16.16.16.1.m1.6.6.2.cmml"><mrow id="S2.T2.16.16.16.1.m1.5.5.1.1" xref="S2.T2.16.16.16.1.m1.5.5.1.1.cmml"><msub id="S2.T2.16.16.16.1.m1.5.5.1.1.3" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.cmml"><mi id="S2.T2.16.16.16.1.m1.5.5.1.1.3.2" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.2.cmml">P</mi><mrow id="S2.T2.16.16.16.1.m1.5.5.1.1.3.3" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.cmml"><mi id="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.2" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.2.cmml">p</mi><mo lspace="0em" rspace="0em" id="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.1" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.1.cmml">​</mo><mi id="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.3" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.3.cmml">h</mi><mo lspace="0em" rspace="0em" id="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.1a" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.1.cmml">​</mo><mi id="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.4" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.4.cmml">o</mi><mo lspace="0em" rspace="0em" id="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.1b" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.1.cmml">​</mo><mi id="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.5" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.5.cmml">t</mi></mrow></msub><mo lspace="0em" rspace="0em" id="S2.T2.16.16.16.1.m1.5.5.1.1.2" xref="S2.T2.16.16.16.1.m1.5.5.1.1.2.cmml">​</mo><mrow id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.2.cmml"><mo stretchy="false" id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.2" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.2.cmml">(</mo><mrow id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.cmml"><mi id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.2" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.2.cmml">x</mi><mo id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.1" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.1.cmml">−</mo><mrow id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3.cmml"><mn id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3.2" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3.2.cmml">7</mn><mo lspace="0em" rspace="0em" id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3.1" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3.1.cmml">​</mo><mi mathvariant="normal" id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3.3" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3.3.cmml">"</mi></mrow></mrow><mo id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.3" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.2.cmml">,</mo><mi id="S2.T2.16.16.16.1.m1.3.3" xref="S2.T2.16.16.16.1.m1.3.3.cmml">y</mi><mo stretchy="false" id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.4" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.2.cmml">)</mo></mrow></mrow><mo id="S2.T2.16.16.16.1.m1.6.6.2.3" xref="S2.T2.16.16.16.1.m1.6.6.2.3.cmml">+</mo><mrow id="S2.T2.16.16.16.1.m1.6.6.2.2" xref="S2.T2.16.16.16.1.m1.6.6.2.2.cmml"><msub id="S2.T2.16.16.16.1.m1.6.6.2.2.3" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.cmml"><mi id="S2.T2.16.16.16.1.m1.6.6.2.2.3.2" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.2.cmml">P</mi><mrow id="S2.T2.16.16.16.1.m1.6.6.2.2.3.3" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.cmml"><mi id="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.2" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.2.cmml">p</mi><mo lspace="0em" rspace="0em" id="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.1" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.1.cmml">​</mo><mi id="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.3" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.3.cmml">h</mi><mo lspace="0em" rspace="0em" id="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.1a" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.1.cmml">​</mo><mi id="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.4" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.4.cmml">o</mi><mo lspace="0em" rspace="0em" id="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.1b" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.1.cmml">​</mo><mi id="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.5" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.5.cmml">t</mi></mrow></msub><mo lspace="0em" rspace="0em" id="S2.T2.16.16.16.1.m1.6.6.2.2.2" xref="S2.T2.16.16.16.1.m1.6.6.2.2.2.cmml">​</mo><mrow id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.2.cmml"><mo stretchy="false" id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.2" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.2.cmml">(</mo><mrow id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.cmml"><mi id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.2" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.2.cmml">x</mi><mo id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.1" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.1.cmml">+</mo><mrow id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3.cmml"><mn id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3.2" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3.2.cmml">7</mn><mo lspace="0em" rspace="0em" id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3.1" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3.1.cmml">​</mo><mi mathvariant="normal" id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3.3" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3.3.cmml">"</mi></mrow></mrow><mo id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.3" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.2.cmml">,</mo><mi id="S2.T2.16.16.16.1.m1.4.4" xref="S2.T2.16.16.16.1.m1.4.4.cmml">y</mi><mo stretchy="false" id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.4" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.2.cmml">)</mo></mrow></mrow></mrow></mrow><annotation-xml encoding="MathML-Content" id="S2.T2.16.16.16.1.m1.6b"><apply id="S2.T2.16.16.16.1.m1.6.6.cmml" xref="S2.T2.16.16.16.1.m1.6.6"><eq id="S2.T2.16.16.16.1.m1.6.6.3.cmml" xref="S2.T2.16.16.16.1.m1.6.6.3"></eq><apply id="S2.T2.16.16.16.1.m1.6.6.4.cmml" xref="S2.T2.16.16.16.1.m1.6.6.4"><times id="S2.T2.16.16.16.1.m1.6.6.4.1.cmml" xref="S2.T2.16.16.16.1.m1.6.6.4.1"></times><apply id="S2.T2.16.16.16.1.m1.6.6.4.2.cmml" xref="S2.T2.16.16.16.1.m1.6.6.4.2"><csymbol cd="ambiguous" id="S2.T2.16.16.16.1.m1.6.6.4.2.1.cmml" xref="S2.T2.16.16.16.1.m1.6.6.4.2">subscript</csymbol><ci id="S2.T2.16.16.16.1.m1.6.6.4.2.2.cmml" xref="S2.T2.16.16.16.1.m1.6.6.4.2.2">𝑃</ci><apply id="S2.T2.16.16.16.1.m1.6.6.4.2.3.cmml" xref="S2.T2.16.16.16.1.m1.6.6.4.2.3"><times id="S2.T2.16.16.16.1.m1.6.6.4.2.3.1.cmml" xref="S2.T2.16.16.16.1.m1.6.6.4.2.3.1"></times><ci id="S2.T2.16.16.16.1.m1.6.6.4.2.3.2.cmml" xref="S2.T2.16.16.16.1.m1.6.6.4.2.3.2">𝐹</ci><ci id="S2.T2.16.16.16.1.m1.6.6.4.2.3.3.cmml" xref="S2.T2.16.16.16.1.m1.6.6.4.2.3.3">𝑇</ci><ci id="S2.T2.16.16.16.1.m1.6.6.4.2.3.4.cmml" xref="S2.T2.16.16.16.1.m1.6.6.4.2.3.4">𝑆</ci></apply></apply><interval closure="open" id="S2.T2.16.16.16.1.m1.6.6.4.3.1.cmml" xref="S2.T2.16.16.16.1.m1.6.6.4.3.2"><ci id="S2.T2.16.16.16.1.m1.1.1.cmml" xref="S2.T2.16.16.16.1.m1.1.1">𝑥</ci><ci id="S2.T2.16.16.16.1.m1.2.2.cmml" xref="S2.T2.16.16.16.1.m1.2.2">𝑦</ci></interval></apply><apply id="S2.T2.16.16.16.1.m1.6.6.2.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2"><plus id="S2.T2.16.16.16.1.m1.6.6.2.3.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.3"></plus><apply id="S2.T2.16.16.16.1.m1.5.5.1.1.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1"><times id="S2.T2.16.16.16.1.m1.5.5.1.1.2.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.2"></times><apply id="S2.T2.16.16.16.1.m1.5.5.1.1.3.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3"><csymbol cd="ambiguous" id="S2.T2.16.16.16.1.m1.5.5.1.1.3.1.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3">subscript</csymbol><ci id="S2.T2.16.16.16.1.m1.5.5.1.1.3.2.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.2">𝑃</ci><apply id="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.3"><times id="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.1.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.1"></times><ci id="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.2.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.2">𝑝</ci><ci id="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.3.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.3">ℎ</ci><ci id="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.4.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.4">𝑜</ci><ci id="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.5.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.3.3.5">𝑡</ci></apply></apply><interval closure="open" id="S2.T2.16.16.16.1.m1.5.5.1.1.1.2.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1"><apply id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1"><minus id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.1.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.1"></minus><ci id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.2.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.2">𝑥</ci><apply id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3"><times id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3.1.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3.1"></times><cn type="integer" id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3.2.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3.2">7</cn><ci id="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3.3.cmml" xref="S2.T2.16.16.16.1.m1.5.5.1.1.1.1.1.3.3">"</ci></apply></apply><ci id="S2.T2.16.16.16.1.m1.3.3.cmml" xref="S2.T2.16.16.16.1.m1.3.3">𝑦</ci></interval></apply><apply id="S2.T2.16.16.16.1.m1.6.6.2.2.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2"><times id="S2.T2.16.16.16.1.m1.6.6.2.2.2.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.2"></times><apply id="S2.T2.16.16.16.1.m1.6.6.2.2.3.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3"><csymbol cd="ambiguous" id="S2.T2.16.16.16.1.m1.6.6.2.2.3.1.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3">subscript</csymbol><ci id="S2.T2.16.16.16.1.m1.6.6.2.2.3.2.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.2">𝑃</ci><apply id="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.3"><times id="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.1.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.1"></times><ci id="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.2.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.2">𝑝</ci><ci id="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.3.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.3">ℎ</ci><ci id="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.4.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.4">𝑜</ci><ci id="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.5.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.3.3.5">𝑡</ci></apply></apply><interval closure="open" id="S2.T2.16.16.16.1.m1.6.6.2.2.1.2.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1"><apply id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1"><plus id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.1.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.1"></plus><ci id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.2.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.2">𝑥</ci><apply id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3"><times id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3.1.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3.1"></times><cn type="integer" id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3.2.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3.2">7</cn><ci id="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3.3.cmml" xref="S2.T2.16.16.16.1.m1.6.6.2.2.1.1.1.3.3">"</ci></apply></apply><ci id="S2.T2.16.16.16.1.m1.4.4.cmml" xref="S2.T2.16.16.16.1.m1.4.4">𝑦</ci></interval></apply></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.16.16.16.1.m1.6c">P_{FTS}(x,y)=P_{phot}(x-7",y)+P_{phot}(x+7",y)</annotation></semantics></math>
+; (<math id="S2.T2.17.17.17.2.m2.1" class="ltx_Math" alttext="x" display="inline"><semantics id="S2.T2.17.17.17.2.m2.1a"><mi id="S2.T2.17.17.17.2.m2.1.1" xref="S2.T2.17.17.17.2.m2.1.1.cmml">x</mi><annotation-xml encoding="MathML-Content" id="S2.T2.17.17.17.2.m2.1b"><ci id="S2.T2.17.17.17.2.m2.1.1.cmml" xref="S2.T2.17.17.17.2.m2.1.1">𝑥</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.17.17.17.2.m2.1c">x</annotation></semantics></math>: major axis of array)</td>
+</tr>
+<tr id="S2.T2.23.23.31.8" class="ltx_tr">
+<td id="S2.T2.23.23.31.8.1" class="ltx_td ltx_align_left">   FWHM</td>
+<td id="S2.T2.23.23.31.8.2" class="ltx_td ltx_align_center">44” / 39”</td>
+<td id="S2.T2.23.23.31.8.3" class="ltx_td ltx_align_center">57” / 53”</td>
+<td id="S2.T2.23.23.31.8.4" class="ltx_td ltx_align_left">(major/minor)</td>
+</tr>
+<tr id="S2.T2.19.19.19" class="ltx_tr">
+<td id="S2.T2.19.19.19.3" class="ltx_td ltx_align_left">Spectral coverage</td>
+<td id="S2.T2.18.18.18.1" class="ltx_td ltx_align_center">85 – 200 cm<sup id="S2.T2.18.18.18.1.1" class="ltx_sup"><span id="S2.T2.18.18.18.1.1.1" class="ltx_text ltx_font_italic">-1</span></sup>
+</td>
+<td id="S2.T2.19.19.19.2" class="ltx_td ltx_align_center">55 - 90 cm<sup id="S2.T2.19.19.19.2.1" class="ltx_sup"><span id="S2.T2.19.19.19.2.1.1" class="ltx_text ltx_font_italic">-1</span></sup>
+</td>
+<td id="S2.T2.19.19.19.4" class="ltx_td"></td>
+</tr>
+<tr id="S2.T2.23.23.32.9" class="ltx_tr">
+<td id="S2.T2.23.23.32.9.1" class="ltx_td ltx_align_left">Sampling rate</td>
+<td id="S2.T2.23.23.32.9.2" class="ltx_td ltx_align_center">85.336Hz</td>
+<td id="S2.T2.23.23.32.9.3" class="ltx_td ltx_align_center">170.672Hz</td>
+<td id="S2.T2.23.23.32.9.4" class="ltx_td"></td>
+</tr>
+<tr id="S2.T2.23.23.23" class="ltx_tr">
+<td id="S2.T2.23.23.23.4" class="ltx_td ltx_align_left ltx_border_t" colspan="4"><span id="S2.T2.23.23.23.4.4" class="ltx_text ltx_inline-block" style="width:0.0pt;"><span id="S2.T2.23.23.23.4.4.4" class="ltx_inline-logical-block ltx_parbox ltx_align_middle" style="width:455.2pt;">
+<span id="S2.T2.23.23.23.4.4.4.p4" class="ltx_para">
+<span id="S2.T2.23.23.23.4.4.4.p4.1" class="ltx_p"><span id="S2.T2.23.23.23.4.4.4.p4.1.1" class="ltx_text" style="font-size:80%;">Notes.</span></span>
+</span>
+<span id="S2.T2.20.20.20.1.1.1.p1" class="ltx_para ltx_noindent"><span id="footnotex5" class="ltx_note ltx_role_footnotemark"><sup class="ltx_note_mark">∗*</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">∗*</sup><span class="ltx_note_type">footnotemark: </span><span class="ltx_tag ltx_tag_note"><math id="footnotex5.1.1.m1.1" class="ltx_Math" alttext="*" display="inline"><semantics id="footnotex5.1.1.m1.1c"><mo id="footnotex5.1.1.m1.1.1" xref="footnotex5.1.1.m1.1.1.cmml">∗</mo><annotation-xml encoding="MathML-Content" id="footnotex5.1.1.m1.1d"><times id="footnotex5.1.1.m1.1.1.cmml" xref="footnotex5.1.1.m1.1.1"></times></annotation-xml><annotation encoding="application/x-tex" id="footnotex5.1.1.m1.1e">*</annotation></semantics></math></span></span></span></span>
+<span id="S2.T2.20.20.20.1.1.1.p1.1" class="ltx_p"><span id="S2.T2.20.20.20.1.1.1.p1.1.1" class="ltx_text" style="font-size:80%;">optical path difference</span></span>
+</span>
+<span id="S2.T2.21.21.21.2.2.2.p2" class="ltx_para ltx_noindent"><span id="footnotex6" class="ltx_note ltx_role_footnotemark"><sup class="ltx_note_mark">††\dagger</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">††\dagger</sup><span class="ltx_note_type">footnotemark: </span><span class="ltx_tag ltx_tag_note"><math id="footnotex6.1.1.m1.1" class="ltx_Math" alttext="\dagger" display="inline"><semantics id="footnotex6.1.1.m1.1c"><mo id="footnotex6.1.1.m1.1.1" xref="footnotex6.1.1.m1.1.1.cmml">†</mo><annotation-xml encoding="MathML-Content" id="footnotex6.1.1.m1.1d"><ci id="footnotex6.1.1.m1.1.1.cmml" xref="footnotex6.1.1.m1.1.1">†</ci></annotation-xml><annotation encoding="application/x-tex" id="footnotex6.1.1.m1.1e">\dagger</annotation></semantics></math></span></span></span></span>
+<span id="S2.T2.21.21.21.2.2.2.p2.1" class="ltx_p"><span id="S2.T2.21.21.21.2.2.2.p2.1.1" class="ltx_text" style="font-size:80%;">Charge Trans-Impedance Amplifiers</span></span>
+</span>
+<span id="S2.T2.22.22.22.3.3.3.p3" class="ltx_para ltx_noindent"><span id="footnotex7" class="ltx_note ltx_role_footnotemark"><sup class="ltx_note_mark">‡‡\ddagger</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">‡‡\ddagger</sup><span class="ltx_note_type">footnotemark: </span><span class="ltx_tag ltx_tag_note"><math id="footnotex7.1.1.m1.1" class="ltx_Math" alttext="\ddagger" display="inline"><semantics id="footnotex7.1.1.m1.1c"><mo id="footnotex7.1.1.m1.1.1" xref="footnotex7.1.1.m1.1.1.cmml">‡</mo><annotation-xml encoding="MathML-Content" id="footnotex7.1.1.m1.1d"><ci id="footnotex7.1.1.m1.1.1.cmml" xref="footnotex7.1.1.m1.1.1">‡</ci></annotation-xml><annotation encoding="application/x-tex" id="footnotex7.1.1.m1.1e">\ddagger</annotation></semantics></math></span></span></span></span>
+<span id="S2.T2.22.22.22.3.3.3.p3.7" class="ltx_p"><span id="S2.T2.22.22.22.3.3.3.p3.7.1" class="ltx_text" style="font-size:80%;">Point Spread Function for the photometer: </span><math id="S2.T2.22.22.22.3.3.3.p3.1.m1.3" class="ltx_Math" alttext="P_{phot}=\varepsilon e^{-(x^{2}+y^{2})/2{\sigma_{1}}^{2}}+(1-\varepsilon)e^{-(x^{2}+y^{2})/2{\sigma_{2}}^{2}}" display="inline"><semantics id="S2.T2.22.22.22.3.3.3.p3.1.m1.3a"><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.cmml"><msub id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.2.cmml">P</mi><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.2.cmml">p</mi><mo lspace="0em" rspace="0em" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.1.cmml">​</mo><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.3.cmml">h</mi><mo lspace="0em" rspace="0em" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.1a" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.1.cmml">​</mo><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.4" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.4.cmml">o</mi><mo lspace="0em" rspace="0em" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.1b" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.1.cmml">​</mo><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.5" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.5.cmml">t</mi></mrow></msub><mo mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.2.cmml">=</mo><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.cmml"><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.2.cmml">ε</mi><mo lspace="0em" rspace="0em" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.1.cmml">​</mo><msup id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.3.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.3.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.3.2.cmml">e</mi><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.cmml"><mo mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1a" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.cmml">−</mo><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.cmml"><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.cmml"><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.cmml"><mo maxsize="80%" minsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.cmml">(</mo><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.cmml"><msup id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.2.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.2.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.2.2.cmml">x</mi><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.2.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.2.3.cmml">2</mn></msup><mo mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.1.cmml">+</mo><msup id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.3.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.3.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.3.2.cmml">y</mi><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.3.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.3.3.cmml">2</mn></msup></mrow><mo maxsize="80%" minsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.cmml">)</mo></mrow><mo maxsize="80%" minsize="80%" stretchy="true" symmetric="true" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.2.cmml">/</mo><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.3.cmml">2</mn></mrow><mo lspace="0em" rspace="0em" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.2.cmml">​</mo><mmultiscripts id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.2.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.2.2.cmml">σ</mi><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.2.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.2.3.cmml">1</mn><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3a" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.cmml"></mrow><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3b" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.cmml"></mrow><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.3.cmml">2</mn></mmultiscripts></mrow></mrow></msup></mrow><mo mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.2.cmml">+</mo><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.cmml"><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.cmml"><mo maxsize="80%" minsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.cmml">(</mo><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.cmml"><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.2.cmml">1</mn><mo mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.1.cmml">−</mo><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.3.cmml">ε</mi></mrow><mo maxsize="80%" minsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.cmml">)</mo></mrow><mo lspace="0em" rspace="0em" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.2.cmml">​</mo><msup id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.3.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.3.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.3.2.cmml">e</mi><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.cmml"><mo mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1a" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.cmml">−</mo><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.cmml"><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.cmml"><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.cmml"><mo maxsize="80%" minsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.cmml">(</mo><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.cmml"><msup id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.2.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.2.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.2.2.cmml">x</mi><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.2.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.2.3.cmml">2</mn></msup><mo mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.1" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.1.cmml">+</mo><msup id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.3.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.3.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.3.2.cmml">y</mi><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.3.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.3.3.cmml">2</mn></msup></mrow><mo maxsize="80%" minsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.cmml">)</mo></mrow><mo maxsize="80%" minsize="80%" stretchy="true" symmetric="true" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.2.cmml">/</mo><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.3.cmml">2</mn></mrow><mo lspace="0em" rspace="0em" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.2.cmml">​</mo><mmultiscripts id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.2.2" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.2.2.cmml">σ</mi><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.2.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.2.3.cmml">2</mn><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3a" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.cmml"></mrow><mrow id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3b" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.cmml"></mrow><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.3" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.3.cmml">2</mn></mmultiscripts></mrow></mrow></msup></mrow></mrow></mrow><annotation-xml encoding="MathML-Content" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3b"><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3"><eq id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.2"></eq><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3">subscript</csymbol><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.2">𝑃</ci><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3"><times id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.1"></times><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.2">𝑝</ci><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.3">ℎ</ci><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.4.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.4">𝑜</ci><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.5.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.3.3.5">𝑡</ci></apply></apply><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1"><plus id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.2"></plus><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3"><times id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.1"></times><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.2">𝜀</ci><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.3"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.3.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.3">superscript</csymbol><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.3.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.3.3.2">𝑒</ci><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1"><minus id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1"></minus><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1"><times id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.2"></times><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1"><divide id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.2"></divide><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1"><plus id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.1"></plus><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.2"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.2.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.2">superscript</csymbol><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.2.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.2.2">𝑥</ci><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.2.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.2.3">2</cn></apply><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.3"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.3.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.3">superscript</csymbol><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.3.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.3.2">𝑦</ci><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.3.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.1.1.1.3.3">2</cn></apply></apply><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.1.3">2</cn></apply><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3">superscript</csymbol><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.2.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3">subscript</csymbol><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.2.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.2.2">𝜎</ci><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.2.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.2.3">1</cn></apply><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.1.1.1.1.3.3">2</cn></apply></apply></apply></apply></apply><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1"><times id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.2"></times><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1"><minus id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.1"></minus><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.2">1</cn><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.1.1.1.3">𝜀</ci></apply><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.3"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.3.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.3">superscript</csymbol><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.3.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.3.3.1.1.3.2">𝑒</ci><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1"><minus id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1"></minus><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1"><times id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.2"></times><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1"><divide id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.2"></divide><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1"><plus id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.1"></plus><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.2"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.2.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.2">superscript</csymbol><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.2.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.2.2">𝑥</ci><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.2.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.2.3">2</cn></apply><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.3"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.3.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.3">superscript</csymbol><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.3.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.3.2">𝑦</ci><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.3.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.1.1.1.3.3">2</cn></apply></apply><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.1.3">2</cn></apply><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3">superscript</csymbol><apply id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.2.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3">subscript</csymbol><ci id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.2.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.2.2">𝜎</ci><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.2.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.2.3">2</cn></apply><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.1.m1.2.2.1.1.3.3">2</cn></apply></apply></apply></apply></apply></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.22.22.22.3.3.3.p3.1.m1.3c">P_{phot}=\varepsilon e^{-(x^{2}+y^{2})/2{\sigma_{1}}^{2}}+(1-\varepsilon)e^{-(x^{2}+y^{2})/2{\sigma_{2}}^{2}}</annotation></semantics></math><span id="S2.T2.22.22.22.3.3.3.p3.7.2" class="ltx_text" style="font-size:80%;">; </span>
+<br class="ltx_break"><math id="S2.T2.22.22.22.3.3.3.p3.2.m2.1" class="ltx_Math" alttext="\varepsilon" display="inline"><semantics id="S2.T2.22.22.22.3.3.3.p3.2.m2.1a"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.2.m2.1.1" xref="S2.T2.22.22.22.3.3.3.p3.2.m2.1.1.cmml">ε</mi><annotation-xml encoding="MathML-Content" id="S2.T2.22.22.22.3.3.3.p3.2.m2.1b"><ci id="S2.T2.22.22.22.3.3.3.p3.2.m2.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.2.m2.1.1">𝜀</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.22.22.22.3.3.3.p3.2.m2.1c">\varepsilon</annotation></semantics></math><span id="S2.T2.22.22.22.3.3.3.p3.7.3" class="ltx_text" style="font-size:80%;"> = 0.8; </span><math id="S2.T2.22.22.22.3.3.3.p3.3.m3.1" class="ltx_Math" alttext="\sigma_{1}" display="inline"><semantics id="S2.T2.22.22.22.3.3.3.p3.3.m3.1a"><msub id="S2.T2.22.22.22.3.3.3.p3.3.m3.1.1" xref="S2.T2.22.22.22.3.3.3.p3.3.m3.1.1.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.3.m3.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.3.m3.1.1.2.cmml">σ</mi><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.3.m3.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.3.m3.1.1.3.cmml">1</mn></msub><annotation-xml encoding="MathML-Content" id="S2.T2.22.22.22.3.3.3.p3.3.m3.1b"><apply id="S2.T2.22.22.22.3.3.3.p3.3.m3.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.3.m3.1.1"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.3.m3.1.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.3.m3.1.1">subscript</csymbol><ci id="S2.T2.22.22.22.3.3.3.p3.3.m3.1.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.3.m3.1.1.2">𝜎</ci><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.3.m3.1.1.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.3.m3.1.1.3">1</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.22.22.22.3.3.3.p3.3.m3.1c">\sigma_{1}</annotation></semantics></math><span id="S2.T2.22.22.22.3.3.3.p3.7.4" class="ltx_text" style="font-size:80%;"> = 14.2”; </span><math id="S2.T2.22.22.22.3.3.3.p3.4.m4.1" class="ltx_Math" alttext="\sigma_{2}" display="inline"><semantics id="S2.T2.22.22.22.3.3.3.p3.4.m4.1a"><msub id="S2.T2.22.22.22.3.3.3.p3.4.m4.1.1" xref="S2.T2.22.22.22.3.3.3.p3.4.m4.1.1.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.4.m4.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.4.m4.1.1.2.cmml">σ</mi><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.4.m4.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.4.m4.1.1.3.cmml">2</mn></msub><annotation-xml encoding="MathML-Content" id="S2.T2.22.22.22.3.3.3.p3.4.m4.1b"><apply id="S2.T2.22.22.22.3.3.3.p3.4.m4.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.4.m4.1.1"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.4.m4.1.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.4.m4.1.1">subscript</csymbol><ci id="S2.T2.22.22.22.3.3.3.p3.4.m4.1.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.4.m4.1.1.2">𝜎</ci><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.4.m4.1.1.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.4.m4.1.1.3">2</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.22.22.22.3.3.3.p3.4.m4.1c">\sigma_{2}</annotation></semantics></math><span id="S2.T2.22.22.22.3.3.3.p3.7.5" class="ltx_text" style="font-size:80%;"> = 40.0” (for SW),
+</span><math id="S2.T2.22.22.22.3.3.3.p3.5.m5.1" class="ltx_Math" alttext="\quad\varepsilon" display="inline"><semantics id="S2.T2.22.22.22.3.3.3.p3.5.m5.1a"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.5.m5.1.1" xref="S2.T2.22.22.22.3.3.3.p3.5.m5.1.1.cmml">ε</mi><annotation-xml encoding="MathML-Content" id="S2.T2.22.22.22.3.3.3.p3.5.m5.1b"><ci id="S2.T2.22.22.22.3.3.3.p3.5.m5.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.5.m5.1.1">𝜀</ci></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.22.22.22.3.3.3.p3.5.m5.1c">\quad\varepsilon</annotation></semantics></math><span id="S2.T2.22.22.22.3.3.3.p3.7.6" class="ltx_text" style="font-size:80%;"> = 0.65; </span><math id="S2.T2.22.22.22.3.3.3.p3.6.m6.1" class="ltx_Math" alttext="\sigma_{1}" display="inline"><semantics id="S2.T2.22.22.22.3.3.3.p3.6.m6.1a"><msub id="S2.T2.22.22.22.3.3.3.p3.6.m6.1.1" xref="S2.T2.22.22.22.3.3.3.p3.6.m6.1.1.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.6.m6.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.6.m6.1.1.2.cmml">σ</mi><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.6.m6.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.6.m6.1.1.3.cmml">1</mn></msub><annotation-xml encoding="MathML-Content" id="S2.T2.22.22.22.3.3.3.p3.6.m6.1b"><apply id="S2.T2.22.22.22.3.3.3.p3.6.m6.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.6.m6.1.1"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.6.m6.1.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.6.m6.1.1">subscript</csymbol><ci id="S2.T2.22.22.22.3.3.3.p3.6.m6.1.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.6.m6.1.1.2">𝜎</ci><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.6.m6.1.1.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.6.m6.1.1.3">1</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.22.22.22.3.3.3.p3.6.m6.1c">\sigma_{1}</annotation></semantics></math><span id="S2.T2.22.22.22.3.3.3.p3.7.7" class="ltx_text" style="font-size:80%;"> = 17.0”; </span><math id="S2.T2.22.22.22.3.3.3.p3.7.m7.1" class="ltx_Math" alttext="\sigma_{2}" display="inline"><semantics id="S2.T2.22.22.22.3.3.3.p3.7.m7.1a"><msub id="S2.T2.22.22.22.3.3.3.p3.7.m7.1.1" xref="S2.T2.22.22.22.3.3.3.p3.7.m7.1.1.cmml"><mi mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.7.m7.1.1.2" xref="S2.T2.22.22.22.3.3.3.p3.7.m7.1.1.2.cmml">σ</mi><mn mathsize="80%" id="S2.T2.22.22.22.3.3.3.p3.7.m7.1.1.3" xref="S2.T2.22.22.22.3.3.3.p3.7.m7.1.1.3.cmml">2</mn></msub><annotation-xml encoding="MathML-Content" id="S2.T2.22.22.22.3.3.3.p3.7.m7.1b"><apply id="S2.T2.22.22.22.3.3.3.p3.7.m7.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.7.m7.1.1"><csymbol cd="ambiguous" id="S2.T2.22.22.22.3.3.3.p3.7.m7.1.1.1.cmml" xref="S2.T2.22.22.22.3.3.3.p3.7.m7.1.1">subscript</csymbol><ci id="S2.T2.22.22.22.3.3.3.p3.7.m7.1.1.2.cmml" xref="S2.T2.22.22.22.3.3.3.p3.7.m7.1.1.2">𝜎</ci><cn type="integer" id="S2.T2.22.22.22.3.3.3.p3.7.m7.1.1.3.cmml" xref="S2.T2.22.22.22.3.3.3.p3.7.m7.1.1.3">2</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.T2.22.22.22.3.3.3.p3.7.m7.1c">\sigma_{2}</annotation></semantics></math><span id="S2.T2.22.22.22.3.3.3.p3.7.8" class="ltx_text" style="font-size:80%;"> = 46.5” (for LW)</span></span>
+</span></span></span></td>
+</tr>
+</tbody>
+</table>
+</figure>
+</section>
+<section id="S2.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.3 </span>Detector System</h3>
+
+<div id="S2.SS3.p1" class="ltx_para">
+<p id="S2.SS3.p1.4" class="ltx_p">The FIS-FTS is an imaging FTS incorporating two, two-dimensional
+detector arrays. The detectors for the FIS-FTS are common with the
+photometer of the FIS instrument. There are two sets of detector array,
+one is a monolithic Ge:Ga array which covers 90 – 200 cm<sup id="S2.SS3.p1.4.1" class="ltx_sup"><span id="S2.SS3.p1.4.1.1" class="ltx_text ltx_font_italic">-1</span></sup>
+(50 – 110 <math id="S2.SS3.p1.2.m2.1" class="ltx_Math" alttext="\micron" display="inline"><semantics id="S2.SS3.p1.2.m2.1a"><merror class="ltx_ERROR undefined undefined" id="S2.SS3.p1.2.m2.1.1" xref="S2.SS3.p1.2.m2.1.1b.cmml"><mtext id="S2.SS3.p1.2.m2.1.1a" xref="S2.SS3.p1.2.m2.1.1b.cmml">\micron</mtext></merror><annotation-xml encoding="MathML-Content" id="S2.SS3.p1.2.m2.1b"><ci id="S2.SS3.p1.2.m2.1.1b.cmml" xref="S2.SS3.p1.2.m2.1.1"><merror class="ltx_ERROR undefined undefined" id="S2.SS3.p1.2.m2.1.1.cmml" xref="S2.SS3.p1.2.m2.1.1"><mtext id="S2.SS3.p1.2.m2.1.1a.cmml" xref="S2.SS3.p1.2.m2.1.1">\micron</mtext></merror></ci></annotation-xml><annotation encoding="application/x-tex" id="S2.SS3.p1.2.m2.1c">\micron</annotation></semantics></math>) (SW)
+<cite class="ltx_cite ltx_citemacro_citep">(Fujiwara et al., <a href="#bib.bib2" title="" class="ltx_ref">2003</a>; Shirahata et al., <a href="#bib.bib25" title="" class="ltx_ref">2004</a>)</cite>
+and the other is a compact stressed Ge:Ga array for 55 – 90 cm<sup id="S2.SS3.p1.4.2" class="ltx_sup"><span id="S2.SS3.p1.4.2.1" class="ltx_text ltx_font_italic">-1</span></sup>
+(110 – 180 <math id="S2.SS3.p1.4.m4.1" class="ltx_Math" alttext="\micron" display="inline"><semantics id="S2.SS3.p1.4.m4.1a"><merror class="ltx_ERROR undefined undefined" id="S2.SS3.p1.4.m4.1.1" xref="S2.SS3.p1.4.m4.1.1b.cmml"><mtext id="S2.SS3.p1.4.m4.1.1a" xref="S2.SS3.p1.4.m4.1.1b.cmml">\micron</mtext></merror><annotation-xml encoding="MathML-Content" id="S2.SS3.p1.4.m4.1b"><ci id="S2.SS3.p1.4.m4.1.1b.cmml" xref="S2.SS3.p1.4.m4.1.1"><merror class="ltx_ERROR undefined undefined" id="S2.SS3.p1.4.m4.1.1.cmml" xref="S2.SS3.p1.4.m4.1.1"><mtext id="S2.SS3.p1.4.m4.1.1a.cmml" xref="S2.SS3.p1.4.m4.1.1">\micron</mtext></merror></ci></annotation-xml><annotation encoding="application/x-tex" id="S2.SS3.p1.4.m4.1c">\micron</annotation></semantics></math>) (LW) <cite class="ltx_cite ltx_citemacro_citep">(Doi et al., <a href="#bib.bib1" title="" class="ltx_ref">2002</a>)</cite>.
+The readout method of both detectors is a Charge Trans-Impedance
+Amplifier (CTIA) realized by cryogenic Silicon MOS-FETs
+<cite class="ltx_cite ltx_citemacro_citep">(Nagata et al., <a href="#bib.bib16" title="" class="ltx_ref">2004</a>)</cite>.
+The CTIA integrates the photo-current of detector and is must be
+discharged periodically. The actual detector system has
+non-linearity due to the CTIA circuit itself, and additionally, the
+responsivity changes due to the drift of the effective detector bias
+voltage during the charge integration. Furthermore, extrinsic
+photoconductive detectors have a transient response with properties
+depending on both the background flux and the modulation amplitude
+<cite class="ltx_cite ltx_citemacro_citep">(Kaneda et al., <a href="#bib.bib4" title="" class="ltx_ref">2002</a>)</cite>.
+These properties of the detector system make it difficult to analyze
+the interferometer output. In particular, since FTSs measure the
+modulation of the signal in the time domain, understanding the detector
+transient response is critical. Effects of these properties on the
+interferograms and spectra are described later.</p>
+</div>
+</section>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Operation</h2>
+
+<div id="S3.p1" class="ltx_para">
+<p id="S3.p1.6" class="ltx_p">The FIS-FTS is operated in time domain. The moving mirror is controlled
+without mirror position feedback. That is, the mirror position is
+controlled by certain fixed pattern of the driving current. The driving
+current pattern is optimized to drive the mirror with constant speed.
+Sampling timing is also determined in the time domain and not in the
+optical phase domain. As a result, the sampling interval is not
+constant in optical path difference, but constant in time.
+The nominal mirror speed is nearly 0.08 cm sec<sup id="S3.p1.6.1" class="ltx_sup"><span id="S3.p1.6.1.1" class="ltx_text ltx_font_italic">-1</span></sup>
+in optical path difference. The actual mirror speed has a global trend
+which is slower at the travel limits; the variation of the speed is
+less than <math id="S3.p1.2.m2.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S3.p1.2.m2.1a"><mo id="S3.p1.2.m2.1.1" xref="S3.p1.2.m2.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S3.p1.2.m2.1b"><csymbol cd="latexml" id="S3.p1.2.m2.1.1.cmml" xref="S3.p1.2.m2.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S3.p1.2.m2.1c">\pm</annotation></semantics></math> 5%
+across the whole travel span. The amplitude of the mirror speed
+fluctuation is also less than <math id="S3.p1.3.m3.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S3.p1.3.m3.1a"><mo id="S3.p1.3.m3.1.1" xref="S3.p1.3.m3.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S3.p1.3.m3.1b"><csymbol cd="latexml" id="S3.p1.3.m3.1.1.cmml" xref="S3.p1.3.m3.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S3.p1.3.m3.1c">\pm</annotation></semantics></math> 5%
+at the Nyquist sampling frequency without any disturbance. The normal
+sampling rate is nearly five times higher than the highest Nyquist
+frequency, which is helpful for reconstructing the interferograms from
+the integrated signal. After installing the FIS-FTS into the AKARI
+satellite, a mechanical interference between the mechanical cooler
+<cite class="ltx_cite ltx_citemacro_citep">(Nakagawa et al., <a href="#bib.bib17" title="" class="ltx_ref">2007</a>)</cite>
+and the mirror driving mechanism was recognized. The driving speed is
+modulated by the 15 Hz drive frequency of the cooler, with an amplitude
+of about <math id="S3.p1.4.m4.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S3.p1.4.m4.1a"><mo id="S3.p1.4.m4.1.1" xref="S3.p1.4.m4.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S3.p1.4.m4.1b"><csymbol cd="latexml" id="S3.p1.4.m4.1.1.cmml" xref="S3.p1.4.m4.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S3.p1.4.m4.1c">\pm</annotation></semantics></math> 25%
+of the mirror speed, reduced to about <math id="S3.p1.5.m5.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S3.p1.5.m5.1a"><mo id="S3.p1.5.m5.1.1" xref="S3.p1.5.m5.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S3.p1.5.m5.1b"><csymbol cd="latexml" id="S3.p1.5.m5.1.1.cmml" xref="S3.p1.5.m5.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S3.p1.5.m5.1c">\pm</annotation></semantics></math> 15%
+in space. Since the interference frequency is almost out of the optical
+modulation frequency corresponding to the effective wavelength (<math id="S3.p1.6.m6.1" class="ltx_Math" alttext="&lt;" display="inline"><semantics id="S3.p1.6.m6.1a"><mo id="S3.p1.6.m6.1.1" xref="S3.p1.6.m6.1.1.cmml">&lt;</mo><annotation-xml encoding="MathML-Content" id="S3.p1.6.m6.1b"><lt id="S3.p1.6.m6.1.1.cmml" xref="S3.p1.6.m6.1.1"></lt></annotation-xml><annotation encoding="application/x-tex" id="S3.p1.6.m6.1c">&lt;</annotation></semantics></math> 15Hz),
+its influence can not be seen in spectra.
+The sampling timing and the mirror driving pattern are synchronized by
+the FIS-FTS controller. All pixel signals for each detector array are
+acquired at nearly the same time as the mirror position.
+The data reduction method of the FIS-FTS is described by <cite class="ltx_cite ltx_citemacro_citet">Murakami et al. (<a href="#bib.bib15" title="" class="ltx_ref">2008</a>)</cite>.</p>
+</div>
+<div id="S3.p2" class="ltx_para">
+<p id="S3.p2.1" class="ltx_p">For observation using the FIS-FTS, an astronomical observation template (AOT)
+is provided (see <cite class="ltx_cite ltx_citemacro_citet">Kawada et al. (<a href="#bib.bib6" title="" class="ltx_ref">2007</a>)</cite>),
+in which the calibration and the observation sequence are combined with
+some selectable parameters. Two driving current patterns are prepared
+for observations; one supports full travel span for high spectral
+resolution (full-res. mode) and the other reduces the span to one fourth
+but enables four times more scans (low-res. mode, which is called SED
+(Spectral Energy Distribution) mode).
+Driving speeds are almost the same in both modes.</p>
+</div>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Performances</h2>
+
+<section id="S4.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.1 </span>Optical Performances</h3>
+
+<section id="S4.SS1.SSS1" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">4.1.1 </span>Modulation Efficiency</h4>
+
+<div id="S4.SS1.SSS1.p1" class="ltx_para">
+<p id="S4.SS1.SSS1.p1.1" class="ltx_p">Optical performance of the interferometer is indicated by the modulation
+efficiency, which is defined as a ratio of the peak value of interferograms
+at the optical zero position to the constant signal level (constant part in
+eq. (<a href="#S2.Ex1" title="2.1 Optical Design ‣ 2 Instrumentation ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2.1</span></a>)). The modulation efficiency is primarily
+affected by two factors; filter properties and optical alignment.</p>
+</div>
+<div id="S4.SS1.SSS1.p2" class="ltx_para">
+<p id="S4.SS1.SSS1.p2.1" class="ltx_p">Three polarizing filters are used in the FIS-FTS; all the same type of
+wire grid filter. The polarizing efficiency was measured for each in the
+laboratory and is more than 90%
+for all. The resulting modulation efficiency due to the three polarizing
+filters in the MPIs configuration is about 80%.
+The misalignment of the polarization angle of three filters and ridge
+angle of roof-top mirrors reduce this efficiency. Since the
+misalignment of these angles was expected to be on the order of one
+degree, the effect of the misalignment to the modulation efficiency is
+negligible (less than 1%).
+A major factor affecting the modulation efficiency is the misalignment
+of optical axes of the two beams, which is generated by the roof-top
+mirrors. That is, the opening angle of the roof-top mirrors and the
+alignment of the tilt angle to the optical axis. The opening angle of
+the roof-top mirrors is less than one arcmin from 90 degrees, which was
+measured in the laboratory at cryogenic temperature. The remaining
+misalignment of two beams is due to the tilt of the roof-top mirrors.
+The misalignment of the two beam axes can be derived from the
+interferograms. If the tilting angles of the two roof-top mirrors are
+the same, the optical zero will appear at the same time for all pixels.
+The actual optical zero for each pixel, however, appear at different
+times; there is a delay along the major axis of the detector array.
+From the measurement of this delay, the displacement angle of the two
+roof-top mirrors could be estimated at about 3.5 arcmin in orbit, which
+corresponds to a misalignment of about 7 arcmin for the two beams. This
+value is consistent with the laboratory measurement, and means that
+there is no degradation in optical alignment due to the launch. The
+expected optical modulation efficiency was calculated for several
+degrees of misalignment. As shown in figure <a href="#S4.F3" title="Figure 3 ‣ 4.1.1 Modulation Efficiency ‣ 4.1 Optical Performances ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>,
+the optical modulation efficiency due to the misalignment of two beams
+is about 95–85% for LW detector and about 85–60% for SW detector.</p>
+</div>
+<div id="S4.SS1.SSS1.p3" class="ltx_para">
+<p id="S4.SS1.SSS1.p3.1" class="ltx_p">The modulation efficiency can be estimated from the measured signal ratio
+of the peak value of the interferogram at the optical zero to the DC value,
+which indicates the total incident power containing both coherent and
+incoherent components. Due to the transient response of the detectors,
+however, it is difficult to estimate the actual modulation efficiency
+from the interferograms. In suction 5, we discuss the interferometric
+efficiency of the FIS-FTS estimated from the derived spectra, which
+include the detector transient response.</p>
+</div>
+<figure id="S4.F3" class="ltx_figure">
+<div class="ltx_flex_figure">
+<div class="ltx_flex_cell ltx_flex_size_1"><span id="S4.F3.1" class="ltx_ERROR ltx_centering ltx_figure_panel undefined">\FigureFile</span></div>
+<div class="ltx_flex_break"></div>
+<div class="ltx_flex_cell ltx_flex_size_1">
+<p id="S4.F3.2" class="ltx_p ltx_figure_panel ltx_align_center">(80mm,60mm)figure3.eps</p>
+</div>
+</div>
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>Optical modulation efficiency expected as a function of misalignment of
+the two beams. Several cases of misalignment are calculated and the seven
+arcmin (red line) is the plausible case which is derived from the analysis
+of zero path positions (see text for details).</figcaption>
+</figure>
+</section>
+<section id="S4.SS1.SSS2" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">4.1.2 </span>Image Quality</h4>
+
+<figure id="S4.F4" class="ltx_figure">
+<div class="ltx_flex_figure">
+<div class="ltx_flex_cell ltx_flex_size_1"><span id="S4.F4.1" class="ltx_ERROR ltx_centering ltx_figure_panel undefined">\FigureFile</span></div>
+<div class="ltx_flex_break"></div>
+<div class="ltx_flex_cell ltx_flex_size_1">
+<p id="S4.F4.2" class="ltx_p ltx_figure_panel ltx_align_center">(80mm,60mm)figure4.eps</p>
+</div>
+</div>
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 4: </span>The relative responsivity measured by telescope lid, which should be a flat source with
+temperature of 35K. The plot show the ratio of the integrated power of derived spectra of
+the lid to that of the internal blackbody source (T=52K) or to that of the DC component.
+The ratio of the lid to the internal blackbody (filled square) indicate the no uniformity
+of the internal blackbody source primarily, though the ratio affected by the spectral
+response and the transient response of the detector. The ratios to the DC component (open
+square) indicates the interferometric efficiency, which includes the optical modulation
+efficiency and the detector transient effect. The plot of this value show wide variety
+from pixel to pixel, especially for the LW detector.</figcaption>
+</figure>
+<div id="S4.SS1.SSS2.p1" class="ltx_para">
+<p id="S4.SS1.SSS2.p1.1" class="ltx_p">Image quality, which is a prominent feature of the FIS-FTS, was
+evaluated in orbit by observing Neptune with the FTS optics. The image of
+Neptune, which can be considered as a point source for the FIS
+instrument, was taken by a scanning observation mode. During the
+scanning observation, the movable mirror is in free motion away from the
+optical zero position (<math id="S4.SS1.SSS2.p1.1.m1.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S4.SS1.SSS2.p1.1.m1.1a"><mo id="S4.SS1.SSS2.p1.1.m1.1.1" xref="S4.SS1.SSS2.p1.1.m1.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S4.SS1.SSS2.p1.1.m1.1b"><csymbol cd="latexml" id="S4.SS1.SSS2.p1.1.m1.1.1.cmml" xref="S4.SS1.SSS2.p1.1.m1.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S4.SS1.SSS2.p1.1.m1.1c">\sim</annotation></semantics></math> 0.9 cm
+in optical path difference). Neptune was observed with the same scanning
+mode with the photometer optics. The point spread functions (PSFs) of the
+photometer are well described by double Gaussian profiles, whose
+parameters are summarized in table <a href="#S2.T2" title="Table 2 ‣ 2.2 Mechanical Design ‣ 2 Instrumentation ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>.
+The resulting PSF of the FIS-FTS is rather broader than that of the
+photometer. The width of the PSF along the major axis of the detector
+array is wider, but there is no significant difference along the minor
+axis. This means that there is little affect on the image quality due
+to the FTS optics, i.e. the reflections at the surface of thin film
+polarizers. On the other hand, due to the misalignment of the roof-top
+mirrors, the image is elongated along the major axis of the detector.
+The elongated image of Neptune along the major axis of detector is
+consistent with an image derived from a beam misaligned by 7 arcmin,
+as described above. The imaging spectroscopic performance is
+demonstrated by observations of the Galactic center region
+<cite class="ltx_cite ltx_citemacro_citep">(Yasuda et al., <a href="#bib.bib30" title="" class="ltx_ref">2008</a>)</cite>,
+the star forming regions on the Galactic plane <cite class="ltx_cite ltx_citemacro_citep">(Okada et al., <a href="#bib.bib21" title="" class="ltx_ref">2008</a>)</cite>,
+and nearby galaxies <cite class="ltx_cite ltx_citemacro_citep">(Takahashi et al., <a href="#bib.bib27" title="" class="ltx_ref">2008</a>)</cite>.</p>
+</div>
+<div id="S4.SS1.SSS2.p2" class="ltx_para">
+<p id="S4.SS1.SSS2.p2.1" class="ltx_p">The FIS-FTS measures a wide wavenumber region (55 - 200 cm<sup id="S4.SS1.SSS2.p2.1.1" class="ltx_sup"><span id="S4.SS1.SSS2.p2.1.1.1" class="ltx_text ltx_font_italic">-1</span></sup>)
+at the same time with two kinds of detector array. To produce the whole
+spectrum of a sky position, we have to know the alignment of the field
+of views (FOVs) of two detector arrays. The alignment of two arrays was
+determined from scanning observations of point like sources. The FOVs
+of two detector arrays are not aligned well on the sky as shown in
+figure 3 in <cite class="ltx_cite ltx_citemacro_citet">Kawada et al. (<a href="#bib.bib6" title="" class="ltx_ref">2007</a>)</cite>.
+The overlap region of the FOVs for the FIS-FTS is different from that
+of the FIS photometer, possibly arising from the alignment of the
+filter wheel. The smaller overlap region made it difficult to observe
+point like objects with both the arrays simultaneously.</p>
+</div>
+<div id="S4.SS1.SSS2.p3" class="ltx_para">
+<p id="S4.SS1.SSS2.p3.4" class="ltx_p">Another factor affecting the image quality is a pixel-to-pixel
+variation in detector responsivity. During ground measurements of the
+instrument, the aperture lid of the cryostat was observed with the FIS-FTS as
+a flat source. The variations of the integrated signal power were
+about <math id="S4.SS1.SSS2.p3.1.m1.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S4.SS1.SSS2.p3.1.m1.1a"><mo id="S4.SS1.SSS2.p3.1.m1.1.1" xref="S4.SS1.SSS2.p3.1.m1.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S4.SS1.SSS2.p3.1.m1.1b"><csymbol cd="latexml" id="S4.SS1.SSS2.p3.1.m1.1.1.cmml" xref="S4.SS1.SSS2.p3.1.m1.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S4.SS1.SSS2.p3.1.m1.1c">\pm</annotation></semantics></math> 30%
+for the SW detector and <math id="S4.SS1.SSS2.p3.2.m2.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S4.SS1.SSS2.p3.2.m2.1a"><mo id="S4.SS1.SSS2.p3.2.m2.1.1" xref="S4.SS1.SSS2.p3.2.m2.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S4.SS1.SSS2.p3.2.m2.1b"><csymbol cd="latexml" id="S4.SS1.SSS2.p3.2.m2.1.1.cmml" xref="S4.SS1.SSS2.p3.2.m2.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S4.SS1.SSS2.p3.2.m2.1c">\pm</annotation></semantics></math> 50%
+for the LW detector, excluding a few extremely high pixels (see
+figure <a href="#S4.F4" title="Figure 4 ‣ 4.1.2 Image Quality ‣ 4.1 Optical Performances ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>).
+Since pixels of the LW detector were made from discrete chips, in
+contrast to the monolithic array of the SW detector, it exhibits much
+larger variations in the integrated signal power, which is coupled
+with the variation of the spectral response of each pixel. In
+combination with the internal blackbody source, which is not a flat
+source due to the influence of the FIS-FTS optics, we expect to
+improve the flatness of each detector to about <math id="S4.SS1.SSS2.p3.3.m3.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S4.SS1.SSS2.p3.3.m3.1a"><mo id="S4.SS1.SSS2.p3.3.m3.1.1" xref="S4.SS1.SSS2.p3.3.m3.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S4.SS1.SSS2.p3.3.m3.1b"><csymbol cd="latexml" id="S4.SS1.SSS2.p3.3.m3.1.1.cmml" xref="S4.SS1.SSS2.p3.3.m3.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S4.SS1.SSS2.p3.3.m3.1c">\pm</annotation></semantics></math> 15%
+and <math id="S4.SS1.SSS2.p3.4.m4.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S4.SS1.SSS2.p3.4.m4.1a"><mo id="S4.SS1.SSS2.p3.4.m4.1.1" xref="S4.SS1.SSS2.p3.4.m4.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S4.SS1.SSS2.p3.4.m4.1b"><csymbol cd="latexml" id="S4.SS1.SSS2.p3.4.m4.1.1.cmml" xref="S4.SS1.SSS2.p3.4.m4.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S4.SS1.SSS2.p3.4.m4.1c">\pm</annotation></semantics></math> 30%
+for the SW and LW detectors, respectively.</p>
+</div>
+</section>
+</section>
+<section id="S4.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.2 </span>Performance as a Spectrometer</h3>
+
+<section id="S4.SS2.SSS1" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">4.2.1 </span>Distortion of Interferograms</h4>
+
+<div id="S4.SS2.SSS1.p1" class="ltx_para">
+<p id="S4.SS2.SSS1.p1.1" class="ltx_p">An example of the detector signal is shown in
+figures <a href="#S4.F5" title="Figure 5 ‣ 4.2.1 Distortion of Interferograms ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>(a) and <a href="#S4.F5" title="Figure 5 ‣ 4.2.1 Distortion of Interferograms ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>(f).
+The output signal is an integration ramp curve with periodic resets
+due to the CTIA readout circuit. By differentiating the signal, a
+nominal intereferogram including a DC component is derived
+(figures <a href="#S4.F5" title="Figure 5 ‣ 4.2.1 Distortion of Interferograms ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>(b) and <a href="#S4.F5" title="Figure 5 ‣ 4.2.1 Distortion of Interferograms ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>(g)).
+The periodic feature in the reset interval as mentioned in
+section <a href="#S2.SS3" title="2.3 Detector System ‣ 2 Instrumentation ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2.3</span></a>
+can be clearly seen. The periodic structure in the reset interval and
+random spikes due to cosmic ray hits must be removed. The standard
+data reduction flow for the FIS-FTS is described in <cite class="ltx_cite ltx_citemacro_citet">Murakami et al. (<a href="#bib.bib15" title="" class="ltx_ref">2008</a>)</cite>.
+A typical FIS-FTS interferogram after processing by the standard data
+reduction tool is shown in figures <a href="#S4.F5" title="Figure 5 ‣ 4.2.1 Distortion of Interferograms ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>(c) and
+<a href="#S4.F5" title="Figure 5 ‣ 4.2.1 Distortion of Interferograms ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>(h).
+The left panels in figure <a href="#S4.F5" title="Figure 5 ‣ 4.2.1 Distortion of Interferograms ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>
+are plots of the LW detector (LW07) and the right panels are of the SW
+detector (SW32) using the internal blackbody source in the SED mode.
+This interferogram still has asymmetrical feature at the optical zero
+position, which can be clearly seen in the LW detector
+(figure <a href="#S4.F5" title="Figure 5 ‣ 4.2.1 Distortion of Interferograms ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>(c)).
+The distortion of the interferogram comes from the detector transient
+response (time is from left to right in the figure). Due to the
+difference in the time constant between upward and downward signals,
+the baseline is decreasing near the optical zero position. The
+influence of the distortion of interferograms is discussed in next
+section.</p>
+</div>
+<figure id="S4.F5" class="ltx_figure">
+<table id="S4.F5.5" class="ltx_tabular ltx_centering ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr id="S4.F5.5.1.1" class="ltx_tr">
+<td id="S4.F5.5.1.1.1" class="ltx_td ltx_align_center">
+<span id="S4.F5.5.1.1.1.1" class="ltx_ERROR undefined">\FigureFile</span>(80mm,50mm)figure5ab.eps</td>
+<td id="S4.F5.5.1.1.2" class="ltx_td ltx_align_center">
+<span id="S4.F5.5.1.1.2.1" class="ltx_ERROR undefined">\FigureFile</span>(80mm,50mm)figure5fg.eps</td>
+</tr>
+<tr id="S4.F5.5.2.2" class="ltx_tr">
+<td id="S4.F5.5.2.2.1" class="ltx_td ltx_align_center">
+<span id="S4.F5.5.2.2.1.1" class="ltx_ERROR undefined">\FigureFile</span>(80mm,60mm)figure5c.eps</td>
+<td id="S4.F5.5.2.2.2" class="ltx_td ltx_align_center">
+<span id="S4.F5.5.2.2.2.1" class="ltx_ERROR undefined">\FigureFile</span>(80mm,60mm)figure5h.eps</td>
+</tr>
+<tr id="S4.F5.5.3.3" class="ltx_tr">
+<td id="S4.F5.5.3.3.1" class="ltx_td ltx_align_center">
+<span id="S4.F5.5.3.3.1.1" class="ltx_ERROR undefined">\FigureFile</span>(80mm,60mm)figure5de.eps</td>
+<td id="S4.F5.5.3.3.2" class="ltx_td ltx_align_center">
+<span id="S4.F5.5.3.3.2.1" class="ltx_ERROR undefined">\FigureFile</span>(80mm,60mm)figure5ij.eps</td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 5: </span>An Example of the FIS-FTS signals, interferograms and spectra as an
+demonstration, which is measurement of the internal blackbody taken by the SED mode.
+The left panels are plots of the LW detector and the right panels are of the SW
+detector. Top panels (a) and (f) are raw signals of the LW07 and SW32 pixels, which
+are typical pixels of each detector. Panels of (b) and (g) show differentiations
+of raw signal in time domain. The corrected signals of the non-linearity related
+to the readout electronics are also plotted on the raw signals. The middle panels
+(c) and (h) indicate the averaged interferograms of twelve scans (for same scan
+direction). The bottom panels (d) and (i) show raw spectra of the interferograms shown in
+(c) and (h). Both real and imaginary part are plotted, and the phase signal are indicated
+in (e) and (j). Low frequency structures appeared in (d) and (i) come from the distortion
+of the interferograms. The contribution of low frequency components (<math id="S4.F5.3.m1.1" class="ltx_Math" alttext="&lt;" display="inline"><semantics id="S4.F5.3.m1.1b"><mo id="S4.F5.3.m1.1.1" xref="S4.F5.3.m1.1.1.cmml">&lt;</mo><annotation-xml encoding="MathML-Content" id="S4.F5.3.m1.1c"><lt id="S4.F5.3.m1.1.1.cmml" xref="S4.F5.3.m1.1.1"></lt></annotation-xml><annotation encoding="application/x-tex" id="S4.F5.3.m1.1d">&lt;</annotation></semantics></math> 50 cm<sup id="S4.F5.7.1" class="ltx_sup"><span id="S4.F5.7.1.1" class="ltx_text ltx_font_italic">-1</span></sup>)
+are plotted on the interfergrams (c) and (h), which are derived by the inverse Fourier
+transformation.</figcaption>
+</figure>
+</section>
+<section id="S4.SS2.SSS2" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">4.2.2 </span>Channel Fringes</h4>
+
+<div id="S4.SS2.SSS2.p1" class="ltx_para">
+<p id="S4.SS2.SSS2.p1.3" class="ltx_p">As shown in figure <a href="#S4.F6" title="Figure 6 ‣ 4.2.3 Spectral Resolution ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">6</span></a>,
+there is a strong fringe structure in both SW and LW signals, especially
+in the SW. A periodic structure can be seen in the SW interferogram
+with about <math id="S4.SS2.SSS2.p1.1.m1.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S4.SS2.SSS2.p1.1.m1.1a"><mo id="S4.SS2.SSS2.p1.1.m1.1.1" xref="S4.SS2.SSS2.p1.1.m1.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S4.SS2.SSS2.p1.1.m1.1b"><csymbol cd="latexml" id="S4.SS2.SSS2.p1.1.m1.1.1.cmml" xref="S4.SS2.SSS2.p1.1.m1.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S4.SS2.SSS2.p1.1.m1.1c">\pm</annotation></semantics></math>0.4 cm
+periodicity, occurring on both sides of the optical zero position
+(figure <a href="#S4.F6" title="Figure 6 ‣ 4.2.3 Spectral Resolution ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">6</span></a>(a)).
+This fringe can be identified to the third order at least, and comes
+from multi-beam interference in the detector substrate, which is made
+of Ge crystal with 0.5 mm thickness. The optical path difference due to
+one reflection is
+0.5 mm <math id="S4.SS2.SSS2.p1.2.m2.1" class="ltx_Math" alttext="\times" display="inline"><semantics id="S4.SS2.SSS2.p1.2.m2.1a"><mo id="S4.SS2.SSS2.p1.2.m2.1.1" xref="S4.SS2.SSS2.p1.2.m2.1.1.cmml">×</mo><annotation-xml encoding="MathML-Content" id="S4.SS2.SSS2.p1.2.m2.1b"><times id="S4.SS2.SSS2.p1.2.m2.1.1.cmml" xref="S4.SS2.SSS2.p1.2.m2.1.1"></times></annotation-xml><annotation encoding="application/x-tex" id="S4.SS2.SSS2.p1.2.m2.1c">\times</annotation></semantics></math> 4 (refraction index of Ge) <math id="S4.SS2.SSS2.p1.3.m3.1" class="ltx_Math" alttext="\times" display="inline"><semantics id="S4.SS2.SSS2.p1.3.m3.1a"><mo id="S4.SS2.SSS2.p1.3.m3.1.1" xref="S4.SS2.SSS2.p1.3.m3.1.1.cmml">×</mo><annotation-xml encoding="MathML-Content" id="S4.SS2.SSS2.p1.3.m3.1b"><times id="S4.SS2.SSS2.p1.3.m3.1.1.cmml" xref="S4.SS2.SSS2.p1.3.m3.1.1"></times></annotation-xml><annotation encoding="application/x-tex" id="S4.SS2.SSS2.p1.3.m3.1c">\times</annotation></semantics></math> 2 = 4 mm,
+and the actual value derived from the signal is 3.946 mm. The
+reflectivity estimated from the fringe contrast is about 0.4, which is
+consistent with reflectivity expected from the refractive index of Ge
+(n = 4).</p>
+</div>
+<div id="S4.SS2.SSS2.p2" class="ltx_para">
+<p id="S4.SS2.SSS2.p2.1" class="ltx_p">Another type of channel fringe exists in the FIS-FTS, which can be
+clearly seen in the LW interferograms shown in figure <a href="#S4.F6" title="Figure 6 ‣ 4.2.3 Spectral Resolution ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">6</span></a>(a).
+The first order of peaks appear on both sides of the main peak with
+about 0.8 cm separation in optical path difference. The corresponding
+fringe pitch in the spectra is about 1.21 cm<sup id="S4.SS2.SSS2.p2.1.1" class="ltx_sup"><span id="S4.SS2.SSS2.p2.1.1.1" class="ltx_text ltx_font_italic">-1</span></sup>
+(figure <a href="#S4.F6" title="Figure 6 ‣ 4.2.3 Spectral Resolution ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">6</span></a>(b)),
+with modulation amplitude significantly smaller than the other fringe
+seen in the SW spectrum. The observed fringes are nearly reproduced by
+a two parallel multi-reflection model with 4.1 mm gap and with about 20%
+reflectivity. A plausible explanation of this phenomena is the two
+blocking filters put on the optical path just after the collimator
+mirror (BF#1 &amp; #2 in figure <a href="#S2.F1" title="Figure 1 ‣ 2.1 Optical Design ‣ 2 Instrumentation ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>), with a physical
+gap of about 4 mm. The fact that this type of
+fringe can be seen in only sky signals, and not in the internal
+blackbody source, supports the multi-reflection model due to the
+blocking filters. The reflectivity of 20%,
+however, is rather high compared to the laboratory measurements of the
+filters (about 10%).
+In SW detector spectrum, this type of fringe is not clear because the
+other fringe dominates, but it can be found in the SW interferograms.</p>
+</div>
+<div id="S4.SS2.SSS2.p3" class="ltx_para">
+<p id="S4.SS2.SSS2.p3.1" class="ltx_p">As the result of the fringe structure, the spectral response of the
+FIS-FTS changes rapidly with frequency. It is important to correct the
+fringe structure to derive line intensities. Details of the treatment
+of the fringe in the data reduction are described in <cite class="ltx_cite ltx_citemacro_citet">Murakami et al. (<a href="#bib.bib15" title="" class="ltx_ref">2008</a>)</cite>.</p>
+</div>
+</section>
+<section id="S4.SS2.SSS3" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">4.2.3 </span>Spectral Resolution</h4>
+
+<div id="S4.SS2.SSS3.p1" class="ltx_para">
+<p id="S4.SS2.SSS3.p1.7" class="ltx_p">The spectral resolution of the FIS-FTS is evaluated only in orbit
+using well known far-infrared lines of several sources. The expected
+spectral resolution from the maximum optical path difference
+(<math id="S4.SS2.SSS3.p1.1.m1.1" class="ltx_Math" alttext="L\sim" display="inline"><semantics id="S4.SS2.SSS3.p1.1.m1.1a"><mrow id="S4.SS2.SSS3.p1.1.m1.1.1" xref="S4.SS2.SSS3.p1.1.m1.1.1.cmml"><mi id="S4.SS2.SSS3.p1.1.m1.1.1.2" xref="S4.SS2.SSS3.p1.1.m1.1.1.2.cmml">L</mi><mo id="S4.SS2.SSS3.p1.1.m1.1.1.1" xref="S4.SS2.SSS3.p1.1.m1.1.1.1.cmml">∼</mo><mi id="S4.SS2.SSS3.p1.1.m1.1.1.3" xref="S4.SS2.SSS3.p1.1.m1.1.1.3.cmml"></mi></mrow><annotation-xml encoding="MathML-Content" id="S4.SS2.SSS3.p1.1.m1.1b"><apply id="S4.SS2.SSS3.p1.1.m1.1.1.cmml" xref="S4.SS2.SSS3.p1.1.m1.1.1"><csymbol cd="latexml" id="S4.SS2.SSS3.p1.1.m1.1.1.1.cmml" xref="S4.SS2.SSS3.p1.1.m1.1.1.1">similar-to</csymbol><ci id="S4.SS2.SSS3.p1.1.m1.1.1.2.cmml" xref="S4.SS2.SSS3.p1.1.m1.1.1.2">𝐿</ci><csymbol cd="latexml" id="S4.SS2.SSS3.p1.1.m1.1.1.3.cmml" xref="S4.SS2.SSS3.p1.1.m1.1.1.3">absent</csymbol></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.SS2.SSS3.p1.1.m1.1c">L\sim</annotation></semantics></math> 2.7 cm)
+is about 1/2<math id="S4.SS2.SSS3.p1.2.m2.1" class="ltx_Math" alttext="L\sim" display="inline"><semantics id="S4.SS2.SSS3.p1.2.m2.1a"><mrow id="S4.SS2.SSS3.p1.2.m2.1.1" xref="S4.SS2.SSS3.p1.2.m2.1.1.cmml"><mi id="S4.SS2.SSS3.p1.2.m2.1.1.2" xref="S4.SS2.SSS3.p1.2.m2.1.1.2.cmml">L</mi><mo id="S4.SS2.SSS3.p1.2.m2.1.1.1" xref="S4.SS2.SSS3.p1.2.m2.1.1.1.cmml">∼</mo><mi id="S4.SS2.SSS3.p1.2.m2.1.1.3" xref="S4.SS2.SSS3.p1.2.m2.1.1.3.cmml"></mi></mrow><annotation-xml encoding="MathML-Content" id="S4.SS2.SSS3.p1.2.m2.1b"><apply id="S4.SS2.SSS3.p1.2.m2.1.1.cmml" xref="S4.SS2.SSS3.p1.2.m2.1.1"><csymbol cd="latexml" id="S4.SS2.SSS3.p1.2.m2.1.1.1.cmml" xref="S4.SS2.SSS3.p1.2.m2.1.1.1">similar-to</csymbol><ci id="S4.SS2.SSS3.p1.2.m2.1.1.2.cmml" xref="S4.SS2.SSS3.p1.2.m2.1.1.2">𝐿</ci><csymbol cd="latexml" id="S4.SS2.SSS3.p1.2.m2.1.1.3.cmml" xref="S4.SS2.SSS3.p1.2.m2.1.1.3">absent</csymbol></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.SS2.SSS3.p1.2.m2.1c">L\sim</annotation></semantics></math> 0.19 cm<sup id="S4.SS2.SSS3.p1.7.1" class="ltx_sup"><span id="S4.SS2.SSS3.p1.7.1.1" class="ltx_text ltx_font_italic">-1</span></sup>
+(rectangle apodization) for the full-res. mode. Some fine structure
+lines, like [CII] (63.40 cm<sup id="S4.SS2.SSS3.p1.7.2" class="ltx_sup"><span id="S4.SS2.SSS3.p1.7.2.1" class="ltx_text ltx_font_italic">-1</span></sup>),
+[NII] (82.10 cm<sup id="S4.SS2.SSS3.p1.7.3" class="ltx_sup"><span id="S4.SS2.SSS3.p1.7.3.1" class="ltx_text ltx_font_italic">-1</span></sup>),
+[OIII] (113.18 cm<sup id="S4.SS2.SSS3.p1.7.4" class="ltx_sup"><span id="S4.SS2.SSS3.p1.7.4.1" class="ltx_text ltx_font_italic">-1</span></sup>),
+are detected from many observations. An example of the detected lines
+is shown in figure 10 in <cite class="ltx_cite ltx_citemacro_citet">Kawada et al. (<a href="#bib.bib6" title="" class="ltx_ref">2007</a>)</cite>,
+which is the [CII] line of the M82 galaxy. Physical line broadening of
+sources are negligible for the FIS-FTS because of its rather low
+spectral resolution (<math id="S4.SS2.SSS3.p1.7.m7.1" class="ltx_Math" alttext="R\sim" display="inline"><semantics id="S4.SS2.SSS3.p1.7.m7.1a"><mrow id="S4.SS2.SSS3.p1.7.m7.1.1" xref="S4.SS2.SSS3.p1.7.m7.1.1.cmml"><mi id="S4.SS2.SSS3.p1.7.m7.1.1.2" xref="S4.SS2.SSS3.p1.7.m7.1.1.2.cmml">R</mi><mo id="S4.SS2.SSS3.p1.7.m7.1.1.1" xref="S4.SS2.SSS3.p1.7.m7.1.1.1.cmml">∼</mo><mi id="S4.SS2.SSS3.p1.7.m7.1.1.3" xref="S4.SS2.SSS3.p1.7.m7.1.1.3.cmml"></mi></mrow><annotation-xml encoding="MathML-Content" id="S4.SS2.SSS3.p1.7.m7.1b"><apply id="S4.SS2.SSS3.p1.7.m7.1.1.cmml" xref="S4.SS2.SSS3.p1.7.m7.1.1"><csymbol cd="latexml" id="S4.SS2.SSS3.p1.7.m7.1.1.1.cmml" xref="S4.SS2.SSS3.p1.7.m7.1.1.1">similar-to</csymbol><ci id="S4.SS2.SSS3.p1.7.m7.1.1.2.cmml" xref="S4.SS2.SSS3.p1.7.m7.1.1.2">𝑅</ci><csymbol cd="latexml" id="S4.SS2.SSS3.p1.7.m7.1.1.3.cmml" xref="S4.SS2.SSS3.p1.7.m7.1.1.3">absent</csymbol></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.SS2.SSS3.p1.7.m7.1c">R\sim</annotation></semantics></math> 300 at [CII] line).
+A spectral resolution derived from the observed lines is in good
+agreement with the expected value, which means the mirror driving
+mechanism works very well over the full travel span. There is no
+evidence of wavenumber and pixel position dependence to the spectral
+resolution. A wavenumber scale correction, however, is required for
+each pixel according to the actual optical path length, which is
+longer than scale length because of the off-axis beam. The maximum
+scale factor is expected to be less than 0.2%,
+for ideal, which is consistent with the observed trend.</p>
+</div>
+<figure id="S4.F6" class="ltx_figure">
+<div class="ltx_flex_figure">
+<div class="ltx_flex_cell ltx_flex_size_1"><span id="S4.F6.1" class="ltx_ERROR ltx_centering ltx_figure_panel undefined">\FigureFile</span></div>
+<div class="ltx_flex_break"></div>
+<div class="ltx_flex_cell ltx_flex_size_1">
+<p id="S4.F6.2" class="ltx_p ltx_figure_panel ltx_align_center">(80mm,50mm)figure6a.eps</p>
+</div>
+<div class="ltx_flex_break"></div>
+<div class="ltx_flex_cell ltx_flex_size_1"><span id="S4.F6.3" class="ltx_ERROR ltx_centering ltx_figure_panel undefined">\FigureFile</span></div>
+<div class="ltx_flex_break"></div>
+<div class="ltx_flex_cell ltx_flex_size_1">
+<p id="S4.F6.4" class="ltx_p ltx_figure_panel ltx_align_center">(80mm,60mm)figure6b.eps</p>
+</div>
+<div class="ltx_flex_break"></div>
+</div>
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure 6: </span>An example of spectra taken by the full res. mode, which are spectra of the
+telescope lid. The top panel (a) shows interferograms averaging 6 scans of same
+scanning direction. There are sub-structures in the interferograms. The upper
+interferogram is of LW07, and the lower one is of SW32. In the SW32 interferogram,
+same sub-feature seen in the LW07 can be recognized adding to the own
+periodic sub-structures. The bottom panel (b) indicates the Fourier transformed
+spectra of the interferograms in the top panel. There are fringe structures in
+both SW and LW spectra, whose periods are different from each other.</figcaption>
+</figure>
+</section>
+</section>
+<section id="S4.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.3 </span>Stability and Reproducibility</h3>
+
+<div id="S4.SS3.p1" class="ltx_para">
+<p id="S4.SS3.p1.1" class="ltx_p">There are two types of internal calibration sources in the FIS-FTS: one
+is a micro lamp put in front of the detectors, the other is a small
+blackbody source put at the opposite port of the input polarizer. In
+the AOT of the FIS-FTS, the micro lamps are flashed at the beginning
+and end of each observation. The duration of each observation is about
+30 minutes. The blackbody source is activated prior to observing the
+sky for about 7 minutes, with temperature fixed to about 38 K. Since
+the blackbody source is quite stable and reproducible, it can be used
+as the health check of the FIS-FTS.</p>
+</div>
+<div id="S4.SS3.p2" class="ltx_para">
+<p id="S4.SS3.p2.2" class="ltx_p">In the one and half year lifetime of the AKARI cryogens, the FIS-FTS
+has been operated for about 600 sets of pointed observations,
+corresponding to a total
+operation time of the FIS-FTS of about 200 hours. Using all observation
+data, we monitored the spectra of the internal blackbody source. Except
+for a few observations, which may be affected by radiation effects, the
+spectra of the internal blackbody source taken by the FIS-FTS are well
+reproducible within about <math id="S4.SS3.p2.1.m1.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S4.SS3.p2.1.m1.1a"><mo id="S4.SS3.p2.1.m1.1.1" xref="S4.SS3.p2.1.m1.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S4.SS3.p2.1.m1.1b"><csymbol cd="latexml" id="S4.SS3.p2.1.m1.1.1.cmml" xref="S4.SS3.p2.1.m1.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S4.SS3.p2.1.m1.1c">\pm</annotation></semantics></math> 10%
+variation. If the spectra are scaled with the integrated power of
+spectra, the variation of the spectra is reduced to less than <math id="S4.SS3.p2.2.m2.1" class="ltx_Math" alttext="\pm" display="inline"><semantics id="S4.SS3.p2.2.m2.1a"><mo id="S4.SS3.p2.2.m2.1.1" xref="S4.SS3.p2.2.m2.1.1.cmml">±</mo><annotation-xml encoding="MathML-Content" id="S4.SS3.p2.2.m2.1b"><csymbol cd="latexml" id="S4.SS3.p2.2.m2.1.1.cmml" xref="S4.SS3.p2.2.m2.1.1">plus-or-minus</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S4.SS3.p2.2.m2.1c">\pm</annotation></semantics></math> 5%
+for whole effective wavenumber region. The FIS-FTS system is quite
+stable and reproducible in spectra over the whole observation period.</p>
+</div>
+<div id="S4.SS3.p3" class="ltx_para">
+<p id="S4.SS3.p3.1" class="ltx_p">The FIS-FTS covers a wide wavenumber region with two kinds of detector
+arrays. To get the whole spectrum, we must combine two spectra taken by
+both detector arrays. The effective wavenumber overlap of the two
+detector arrays is around 85 – 90 cm <sup id="S4.SS3.p3.1.1" class="ltx_sup"><span id="S4.SS3.p3.1.1.1" class="ltx_text ltx_font_italic">-1</span></sup>,
+which is helpful to check the reproducibility of the spectra for both
+detector arrays.</p>
+</div>
+</section>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">5 </span>Discussions</h2>
+
+<div id="S5.p1" class="ltx_para">
+<p id="S5.p1.1" class="ltx_p">The overall spectral response of the FIS-FTS is determined by three
+factors, mainly; the filter transmission including multi-beam
+interference, the modulation efficiency due to the optical alignment,
+and the detector spectral response including the multi-beam reflections.
+In addition to the optical response, the transient response of the
+photoconductive detectors affects the resulting spectra through the
+distortion of the interferograms. In this section, we discuss about the
+performance as the FTS with photoconductive detectors.</p>
+</div>
+<div id="S5.p2" class="ltx_para">
+<p id="S5.p2.1" class="ltx_p">The fringe structure in the spectra complicates derivation of line
+intensities. Though the multiple reflections in the substrate of the
+SW detector contribute to the improvement of the total responsivity,
+the mulit-beam interference fringes make it difficult to measure the
+spectra. The fringes could be modeled by multi-beam interference of
+the detector substrate or two parallel blocking filters. The actual
+fringe shape is, however, different from an ideal Airy function with
+proper parameters. It may be effects of the convergent beam or
+imperfect parallelism of the two flat surfaces. In practice, correction
+using templates made from actual data are effective. The continuum
+spectra derived from the short range interferograms are equal to the
+smoothed spectra with high resolution. If the responsivity at the line
+center is higher than the smoothed responsivity, a line to continuum
+ratio should be an overestimation, and vice versa. The data analysis
+and calibration methods are discussed in detail by <cite class="ltx_cite ltx_citemacro_citet">Murakami et al. (<a href="#bib.bib15" title="" class="ltx_ref">2008</a>)</cite>.</p>
+</div>
+<div id="S5.p3" class="ltx_para">
+<p id="S5.p3.1" class="ltx_p">The FIS-FTS is the first FTS operating with an extrinsic photoconductive
+detector in space. As shown in figure <a href="#S4.F5" title="Figure 5 ‣ 4.2.1 Distortion of Interferograms ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>,
+interferograms are distorted by the detector transient response. As the
+result of the distorted interferogram, the spectrum has a prominent
+structure at lower frequency as shown in figure <a href="#S4.F5" title="Figure 5 ‣ 4.2.1 Distortion of Interferograms ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>(d)(i).
+The low frequency component comes from the bump in the baseline around
+the optical zero position. It can be clearly seen as the inverse
+Fourier transform of the low frequency component (see figure
+<a href="#S4.F5" title="Figure 5 ‣ 4.2.1 Distortion of Interferograms ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>(c)(h)). For the nominal
+operation of the FIS-FTS, the effective wavenumber ranges correspond to
+the modulation frequency ranges of 3.5 - 7 Hz and 7 - 15 Hz for the LW
+detector and the SW detector, respectively. As shown in figure <a href="#S4.F5" title="Figure 5 ‣ 4.2.1 Distortion of Interferograms ‣ 4.2 Performance as a Spectrometer ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a>(d)(i),
+which are the data of LW07 and SW32 pixels, the real spectrum may be
+isolated from the low frequency component, which comes from the detector
+transient response artifact. The influence of the detector transient
+effect on the spectra are different from pixel to pixel. The LW
+detector has an especially wide variation in the transient response
+from pixel to pixel. Therefore, the distortion of the real spectrum
+by the detector transient effect should be evaluated carefully for
+precise analysis. In the zero order analysis, however, it may be
+acceptable to ignore the detector transient effects. The calibration
+strategy and accuracy of the FIS-FTS are discussed in <cite class="ltx_cite ltx_citemacro_citet">Murakami et al. (<a href="#bib.bib15" title="" class="ltx_ref">2008</a>)</cite>.</p>
+</div>
+<div id="S5.p4" class="ltx_para">
+<p id="S5.p4.2" class="ltx_p">We can derive the interferometric efficiency by comparing the integrated
+power of the spectrum in the effective wavenumber range with the incident
+power. The overall efficiencies are around 50% and 20% for SW and
+LW detectors, respectively (open squares in figure <a href="#S4.F4" title="Figure 4 ‣ 4.1.2 Image Quality ‣ 4.1 Optical Performances ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>).
+Considering the optical modulation efficiency
+(see <a href="#S4.SS1.SSS1" title="4.1.1 Modulation Efficiency ‣ 4.1 Optical Performances ‣ 4 Performances ‣ Performance of the Imaging Fourier Transform Spectrometer with Photoconductive Detector Arrays: An Application for the AKARI Far-Infrared Instrument" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4.1.1</span></a>),
+the degradation factors due to the detector transient response are
+<math id="S5.p4.1.m1.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S5.p4.1.m1.1a"><mo id="S5.p4.1.m1.1.1" xref="S5.p4.1.m1.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S5.p4.1.m1.1b"><csymbol cd="latexml" id="S5.p4.1.m1.1.1.cmml" xref="S5.p4.1.m1.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S5.p4.1.m1.1c">\sim</annotation></semantics></math>0.7 and <math id="S5.p4.2.m2.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S5.p4.2.m2.1a"><mo id="S5.p4.2.m2.1.1" xref="S5.p4.2.m2.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S5.p4.2.m2.1b"><csymbol cd="latexml" id="S5.p4.2.m2.1.1.cmml" xref="S5.p4.2.m2.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S5.p4.2.m2.1c">\sim</annotation></semantics></math>0.25 for SW and LW detectors, respectively.
+In a future paper, we will
+discuss the correction of the interferograms in the time domain
+considering the physical model of the photoconductive detector response.
+The operation of the FIS-FTS, unfortunately, was not optimized for
+photoconductive detectors because of our poor experience of FTS with
+photoconductive detectors. For future missions, such as SPICA which is
+the large infrared telescope mission <cite class="ltx_cite ltx_citemacro_citep">(Nakagawa &amp; Murakami, <a href="#bib.bib18" title="" class="ltx_ref">2007</a>)</cite>,
+a FTS with photoconductive detectors is one of the possible choices for
+a high performance spectrometer. To bring out the maximum performance,
+we have to study the FTS with photoconductive detectors and a proper
+physical model of the photoconductive detector. The data produced by
+the FIS-FTS are quite valuable for this purpose as a precursor mission.</p>
+</div>
+</section>
+<section id="S6" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">6 </span>Summary</h2>
+
+<div id="S6.p1" class="ltx_para">
+<p id="S6.p1.1" class="ltx_p">The FIS-FTS instrument is the first imaging Fourier transform
+spectrometer for far-infrared astronomy operated in space. The FIS-FTS
+was installed as an function of the Far-Infrared Surveyor (FIS) on the
+AKARI satellite, which was launched on February 21, 2006 (UT). All
+functions of the FIS-FTS worked in orbit as well as they did in the
+laboratory. The performance of the FIS-FTS also achieved the same level
+seen in the laboratory. During the one and half year lifetime of the
+FIS instrument, the total operation time reached more than 200 hours or
+about 600 sets of pointed observations. The sensitivity, spectral response and
+resolution are quite stable for all observations.</p>
+</div>
+<div id="S6.p2" class="ltx_para">
+<p id="S6.p2.1" class="ltx_p">A unique feature of the FIS-FTS is the detector system; it is the first
+case to adopt a photoconductive detector array to FTSs. Photoconductive
+detectors have high responsivity on one side, but severe transient
+response effect on the other side. As the result of this combination,
+the interferograms taken by the FIS-FTS are distorted and the spectra
+are affected by the transient response of the detectors. These
+difficulties in measuring the spectra should be avoided or reduced in
+future missions, if adopting a FTS with photoconductive detectors.
+The FIS-FTS provides good data for studying the detector transient
+effects on FTSs.</p>
+</div>
+<div id="S6.p3" class="ltx_para">
+<br class="ltx_break">
+</div>
+<div id="S6.p4" class="ltx_para">
+<p id="S6.p4.1" class="ltx_p">The AKARI project, previously named ASTRO-F, is managed and operated by
+the Institute of Space and Astronautical Science (ISAS) of Japan
+Aerospace Exploration Agency (JAXA) in collaboration with groups in
+universities and research institutes in Japan, the European Space
+Agency, and Korea. We thank all the members of the AKARI/ASTRO-F
+project for their continuous help and support. FIS was developed in
+collaboration with Nagoya University, ISAS, University of Tokyo,
+National Institute of Information and Communications Technology (NICT),
+National Astronomical Observatory of Japan (NAOJ), and other research
+institutes. Optical design of the FIS-FTS was done with the help of
+JASCO, and mechanical design was done with the Technical Center of
+Nagoya University. QMC Instruments Ltd developed optical filters for
+the FIS instrument. Many graduate students, especially Mr. Yasushi
+Tsuzuku, Mr. Yoshikazu Kuwata, Mr. Hiroshi Utsuno, Mr. Keita Ozawa and
+Mr. Tetsuo Imamura, worked for development, fabrication and testing of
+the FIS-FTS. We thank all the members related to the FIS-FTS for their
+intensive efforts. We really appreciate the useful advice on FTSs
+from Prof. Donald E. Jennings at NASA/Goddard Space Flight Center.
+We would like to thank Prof. Annie Zavagno and Dr. Jean-Paul Baluteau
+at the Laboratoire d’Astrophysique de Marseille in France, Peter Davis
+at Blue Sky Spectroscopy in Canada, and Prof. David Naylor and Brad Gom
+at the University of Lethbridge in Canada for their contributions to
+the FIS-FTS data reduction and valuable discussions.</p>
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul class="ltx_biblist">
+<li id="bib.bib1" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Doi et al.  (2002)</span>
+<span class="ltx_bibblock">
+Doi, Y. et al. 2002, Adv. Space Res., 30, 2099–2104
+
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Fujiwara et al.  (2003)</span>
+<span class="ltx_bibblock">
+Fujiwara, M., Hirao, T., Kawada, M., Shibai, H., Matsuura, S., Kaneda, H.,
+Patrashin, M. A., &amp; Nakagawa, T. 2003, Appl. Opt., 42, 2166–2173
+
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Hirao et al.  (1996)</span>
+<span class="ltx_bibblock">
+Hirao, T., Matsumoto, T., Sato, S., Ganga, K., Lange, A. E.,
+Smith, B. J., &amp; Freund, M. 1996, PASJ, 48, L77–L82
+
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kaneda et al.  (2002)</span>
+<span class="ltx_bibblock">
+Kaneda, H., Okamura, Y., Nakagawa, T., &amp; Shibai, H. 2002,
+Adv. Space Res., 30, 2105–2110
+
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kaneda et al.  (2007)</span>
+<span class="ltx_bibblock">
+Kaneda, H., Kim, W., Onaka, T., Wada, T., Ita, Y.,
+Sakon, I., &amp; Takagi, T. 2007, PASJ, 59, 423–427
+
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kawada et al.  (2007)</span>
+<span class="ltx_bibblock">
+Kawada, M. et al. 2007, PASJ, 59, 389–400
+
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kessler et al.  (1996)</span>
+<span class="ltx_bibblock">
+Kessler, M. F. et al. 1996, A&amp;A, 315, L27–L31
+
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kessler  (2002)</span>
+<span class="ltx_bibblock">
+Kessler, M. F. 2002, Adv. Space Res., 30, 1957–1965
+
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kunde et al.  (1996)</span>
+<span class="ltx_bibblock">
+Kunde, V. G. et al. 1996, Proc. SPIE, 2803, Ed. L. Horn, 162–177
+
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Martin &amp; Puplett  (1969)</span>
+<span class="ltx_bibblock">
+Martin, D. H., &amp; Puplett, E. 1969, Infrared Phys., 10, 105
+
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Mather  (1993)</span>
+<span class="ltx_bibblock">
+Mather, J. C. 1993, Proc. SPIE, 2019, Ed. M. S. Scholl, 146–157
+
+</span>
+</li>
+<li id="bib.bib12" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Mather et al.  (1993)</span>
+<span class="ltx_bibblock">
+Mather, J. C., Fixsen, D. J., &amp; Shafer, R. A. 1993,
+Proc. SPIE, 2019, Ed. M. S. Scholl, 168–179
+
+</span>
+</li>
+<li id="bib.bib13" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Murakami et al.  (1996)</span>
+<span class="ltx_bibblock">
+Murakami, H. et al. 1996, PASJ, 48, L41–L46
+
+</span>
+</li>
+<li id="bib.bib14" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Murakami et al.  (2007)</span>
+<span class="ltx_bibblock">
+Murakami, H. et al. 2007, PASJ, 59, 369–376
+
+</span>
+</li>
+<li id="bib.bib15" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Murakami et al.  (2008)</span>
+<span class="ltx_bibblock">
+Murakami, N. et al. 2008, PASJ, XX, XXX–XXX
+
+</span>
+</li>
+<li id="bib.bib16" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Nagata et al.  (2004)</span>
+<span class="ltx_bibblock">
+Nagata H., Shibai H., Hirao T., Watabe T., Noda M., Hibi Y.,
+Kawada M., &amp; Nakagawa T. 2004, IEEE Trans. Elec. Devices, 51, 270
+
+</span>
+</li>
+<li id="bib.bib17" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Nakagawa et al.  (2007)</span>
+<span class="ltx_bibblock">
+Nakagawa, T., et al. 2007, PASJ, 59, 377–387
+
+</span>
+</li>
+<li id="bib.bib18" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Nakagawa &amp; Murakami  (2007)</span>
+<span class="ltx_bibblock">
+Nakagawa, T., &amp; Murakami, H. 2007, Adv. Space Res., 40, 679–683
+
+</span>
+</li>
+<li id="bib.bib19" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Neugebauer et al.  (1984)</span>
+<span class="ltx_bibblock"> Neugebauer, G. et al. 1984, ApJ, 278, L1–L6
+
+</span>
+</li>
+<li id="bib.bib20" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Ohyama et al.  (2007)</span>
+<span class="ltx_bibblock">
+Ohyama, Y. et al. 2007, PASJ, 59, 411–422
+
+</span>
+</li>
+<li id="bib.bib21" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Okada et al.  (2008)</span>
+<span class="ltx_bibblock">
+Okada, Y. et al. 2008, in preparation 
+</span>
+</li>
+<li id="bib.bib22" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Onaka et al.  (1996)</span>
+<span class="ltx_bibblock">
+Onaka, T., Yamamura, I., Tanabe, T., Roellig, T. L., &amp; Yuen, L. 1996,
+PASJ, 48, L59–L63
+
+</span>
+</li>
+<li id="bib.bib23" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Onaka et al.  (2007)</span>
+<span class="ltx_bibblock">
+Onaka, T. et al. 2007, PASJ, 59, 401–410
+
+</span>
+</li>
+<li id="bib.bib24" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Shibai et al.  (1996)</span>
+<span class="ltx_bibblock">
+Shibai, H., Okuda, H., Nakagawa, T., Makiuti, S., Matsuhara, H.,
+Hiromoto, N., &amp; Okumura, K. 1996, PASJ, 48, L127–L131
+
+</span>
+</li>
+<li id="bib.bib25" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Shirahata et al.  (2004)</span>
+<span class="ltx_bibblock">
+Shirahata, M. et al. 2004, Proc. SPIE, 5487, Ed. J. C. Mather, 369–380
+
+</span>
+</li>
+<li id="bib.bib26" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Takahashi et al.  (2003)</span>
+<span class="ltx_bibblock">
+Takahashi, H., Kawada, M., Murakami, N., Ozawa, K.,
+Shibai, H., &amp; Nakagawa, T. 2003,
+Proc. SPIE, 4850, Ed. J. C. Mather, 191–201
+
+</span>
+</li>
+<li id="bib.bib27" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Takahashi et al.  (2008)</span>
+<span class="ltx_bibblock">
+Takahashi, H. et al. 2008, in preparation 
+</span>
+</li>
+<li id="bib.bib28" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Tanaka et al.  (1996)</span>
+<span class="ltx_bibblock">
+Tanaka, M., Matsumoto, T., Murakami, H., Kawada, M.,
+Noda, M., &amp; Matsuura, S. 1996, PASJ, 48, L53–L57
+
+</span>
+</li>
+<li id="bib.bib29" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Werner et al.  (2004)</span>
+<span class="ltx_bibblock">
+Werner, M. W. et al. 2004, ApJS, 154, 1–9
+
+</span>
+</li>
+<li id="bib.bib30" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Yasuda et al.  (2008)</span>
+<span class="ltx_bibblock">
+Yasuda, A. et al. 2008, in preparation 
+</span>
+</li>
+</ul>
+</section>
+<div class="ltx_pagination ltx_role_newpage"></div>
+</article>
+</div>
+<div class="ar5iv-footer"><a href="/html/0811.2866" class="ar5iv-nav-button ar5iv-nav-button-prev">◄</a>
+    <a class="ar5iv-home-button" href="/"><img height="40" alt="ar5iv homepage" src="/assets/ar5iv.png"></a>
+    <a href="/feeling_lucky" class="ar5iv-text-button">Feeling<br>lucky?</a>
+    <a href="/land_of_honey_and_milk" rel="nofollow" aria-hidden="true" tabindex="-1"></a>
+    <a href="/log/0811.2867" class="ar5iv-text-button ar5iv-severity-error">Conversion<br>report</a>
+    <a class="ar5iv-text-button" target="_blank" href="https://github.com/dginev/ar5iv/issues/new?template=improve-article--arxiv-id-.md&title=Improve+article+0811.2867">Report<br>an issue</a>
+    <a href="https://arxiv.org/abs/0811.2867" class="ar5iv-text-button arxiv-ui-theme">View&nbsp;original<br>on&nbsp;arXiv</a><a href="/html/0811.2868" class="ar5iv-nav-button ar5iv-nav-button-next">►</a>
+</div><footer class="ltx_page_footer">
+<a class="ar5iv-toggle-color-scheme" href="javascript:toggleColorScheme()" title="Toggle ar5iv color scheme"><span class="color-scheme-icon"></span></a>
+<a class="ar5iv-footer-button" href="https://arxiv.org/help/license" target="_blank">Copyright</a>
+<a class="ar5iv-footer-button" href="https://arxiv.org/help/policies/privacy_policy" target="_blank">Privacy Policy</a>
+
+<div class="ltx_page_logo">Generated  on Thu Feb 29 10:44:09 2024 by <a target="_blank" href="http://dlmf.nist.gov/LaTeXML/" class="ltx_LaTeXML_logo"><span style="letter-spacing:-0.2em; margin-right:0.1em;">L<span class="ltx_font_smallcaps" style="position:relative; bottom:2.2pt;">a</span>T<span class="ltx_font_smallcaps" style="font-size:120%;position:relative; bottom:-0.2ex;">e</span></span><span style="font-size:90%; position:relative; bottom:-0.2ex;">XML</span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==" alt="Mascot Sammy"></a>
+</div></footer>
+</div>
+
+    <script>
+      var canMathML = typeof(MathMLElement) == "function";
+      if (!canMathML) {
+        var body = document.querySelector("body");
+        body.firstElementChild.setAttribute('style', 'opacity: 0;');
+        var loading = document.createElement("div");
+        loading.setAttribute("id", "mathjax-loading-spinner");
+        var message = document.createElement("div");
+        message.setAttribute("id", "mathjax-loading-message");
+        message.innerText = "Typesetting Equations...";
+        body.prepend(loading);
+        body.prepend(message);
+
+        var el = document.createElement("script");
+        el.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js";
+        document.querySelector("head").appendChild(el);
+
+        window.MathJax = {
+          startup: {
+            pageReady: () => {
+              return MathJax.startup.defaultPageReady().then(() => {
+                body.removeChild(loading);
+                body.removeChild(message);
+                body.firstElementChild.removeAttribute('style');
+              }); } } };
+      }
+    </script>
+    <script>
+    // Auxiliary function, building the preview feature when
+    // an inline citation is clicked
+    function clicked_cite(e) {
+      e.preventDefault();
+      let cite = this.closest('.ltx_cite');
+      let next = cite.nextSibling;
+      if (next && next.nodeType == Node.ELEMENT_NODE && next.getAttribute('class') == "ar5iv-bibitem-preview") {
+        next.remove();
+        return; }
+      // Before adding a preview modal,
+      // cleanup older previews, in case they're still open
+      document.querySelectorAll('span.ar5iv-bibitem-preview').forEach(function(node) {
+        node.remove();
+      })
+
+      // Create the preview
+      preview = document.createElement('span');
+      preview.setAttribute('class','ar5iv-bibitem-preview');
+      let target = document.getElementById(this.getAttribute('href').slice(1));
+      target.childNodes.forEach(function (child) {
+        preview.append(child.cloneNode(true));
+      });
+      let close_x = document.createElement('button');
+      close_x.setAttribute("aria-label","Close modal for bibliography item preview");
+      close_x.textContent = "×";
+      close_x.setAttribute('class', 'ar5iv-button-close-preview');
+      close_x.setAttribute('onclick','this.parentNode.remove()');
+      preview.append(close_x);
+      preview.querySelectorAll('.ltx_tag_bibitem').forEach(function(node) {
+        node.remove();
+      });
+      cite.parentNode.insertBefore(preview, cite.nextSibling);
+      return;
+    }
+    // Global Document initialization:
+    // - assign the preview feature to all inline citation links
+    document.querySelectorAll(".ltx_cite .ltx_ref").forEach(function (link) {
+      link.addEventListener("click", clicked_cite);
+    });
+    </script>
+    </body>
+</html>

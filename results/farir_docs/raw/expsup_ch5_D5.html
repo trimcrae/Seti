@@ -1,0 +1,366 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+
+<HEAD>
+<title>V.D.5   Overview of Hours-Confirmation</title>
+</HEAD>
+
+<BODY bgcolor="#FFFFFF">
+
+<h1 align="center">
+   IRAS Explanatory Supplement<br>
+   V. Data Reduction<br>
+   D. Point Source Confirmation<br>
+   D.5   Overview of Hours-Confirmation
+</h1>
+
+<hr>
+<font size=+1>
+<center>
+   <a href="index.html#toc">Chapter Contents</a> | 
+   <a href="index.html#intro">Introduction</a> | 
+   <a href="index.html#auth">Authors</a> | 
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> | 
+   <a href="../index/index.html">Index</a> | 
+   <a href="D4.html">Previous Section</a> | 
+   <a href="D6.html">Next Section</a>
+</font>
+</center>
+
+<hr>
+<ol type=a>
+   <li><a href="#5a">Hours-Confirmation Decision</a>
+   <li><a href="#5b">Position Agreement</a>
+   <li><a href="#5c">Photometric Agreement</a>
+   <li><a href="#5d">Hours-Confirmation Confusion Processing</a>
+   <li><a href="#5e">Hours-Confirmation Position and Photometric Refinement</a>
+   <li><a href="#5f">Hours-Confirmation Statistical Processing</a>
+   <li><a href="#5g">Special Considerations Regarding Hours-Confirmation</a>
+</ol>
+      The next level of source confirmation involved observations
+with time separations from 100 minutes up to 36 hours.  Most objects
+were observed on consecutive orbits, but the upper limit was chosen
+to accommodate recovery scans for areas of sky not covered satisfactorily
+on the first attempt for a variety of reasons 
+(see <a href="../ch3/D.html">Section III.D</a>).
+Generally, hours-confirmation was run on groups of three successive
+SOPs, although this rule was violated during the minisurvey (SOPs
+29-44) and in two cases of survey restarts (SOPs 57-61, 256-257,
+and 265).
+<P>
+      The &quot;drop-dead&quot; approach was used again to select
+a source for processing. When the oldest source became 36 hours
+older than the most recently acquired source, then the oldest
+source became eligible for hours-confirmation processing. A maximum
+of four scans were allowed to participate in one hours-confirmation
+of one source. Match candidates were selected by taking all subsequent
+unconfirmed observations within a coarse window centered on the
+drop-dead source. This window was 27.5' across in ecliptic longitude
+and 10.3' high in latitude.  When the drop-dead source was within
+30' of an ecliptic pole, all unconfirmed sources within 30' of
+that pole were included in the candidate set.
+<P>
+      Both seconds-confirmed/band-merged and non-seconds-confirmed
+(NSC) sources were included in the processing. but drop-dead sources
+were taken only from the seconds-confirmed set until all eligible
+ones had been processed after which all eligible NSC sources were
+used in time order as drop-deads.
+
+<hr>
+
+<a name="5a">
+<h2>D.5.a Hours-Confirmation Decision</h2>
+<P>
+      The candidates were required to come from orbits other than
+that of the drop-dead source, or else they were discarded from
+the processing of the drop-dead.  They were also required to have
+detected fluxes (i.e., not band-filled fluxes) in at least one
+band in common with the drop-dead. Those remaining were then tested
+pairwise with the drop-dead for position agreement, and any which
+were not acceptable on this basis were discarded.  Those that
+passed were grouped into sets belonging to individual orbits and
+checked for confusion.  If no two remaining candidates were from
+the same orbit, then processing proceeded to flux tests and combined
+flux/position tests. If two or more candidates from the same orbit
+had  detected fluxes in at least one common band, then confusion
+was diagnosed and status bits were set which would identify this
+condition to all downstream processing 
+(<a href="D8.html">Section V.D.8</a>).  If more
+than one candidate remained from a given orbit, but no common
+bands were found then the situation was not labeled as confusion,
+but only one candidate was retained; this was the one which passed
+the combined flux/position test with the highest score.
+<P>
+      If no candidates were found to be acceptable, the drop-dead
+source was rejected. Otherwise parameter refinement was performed
+for the flux and position information.  Tracking of known sources
+was performed and various statistical computations were carried
+out. Candidates which were not confirmed
+with the drop-dead source remained for subsequent use, but confirmed
+candidates were not available for further hours-confirmation.
+
+<hr>
+
+<a name="5b">
+<h2>D.5.b Position Agreement</h2>
+<P>
+      Each pairing of the drop-dead source with a candidate was
+tested for position agreement with the method mentioned at the
+beginning of this section. The position of the candidate was transformed
+to the local in-scan/cross-scan coordinates of the drop-dead and
+the two-dimensional cross-covariance of the two position probability
+density functions was evaluated for the separation observed. If
+the result was below the threshold 
+(<a href="D1.html#tabD1">Table V.D.1</a>), the candidate
+was not considered further for confirmation with the drop-dead.
+Otherwise the result was stored for use later, and the candidate
+remained viable.
+<P>
+      The threshold was set during simulation tests, and it was
+verified as acceptable during the processing of early survey data.
+As in the known source correlation processing, it was easier to
+arrive at a threshold experimentally than to attempt to accept
+a specific fraction of ail true cases. This follows from the fact
+that the algorithm's acceptance fraction of true cases increases
+as the position uncertainties decrease.
+
+<hr>
+
+<a name="5c">
+<h2>D.5.c Photometric Agreement</h2>
+<P>
+      Each candidate which survived the position test was examined
+for photometric agreement with the drop-dead in all bands in which
+both sources had detected fluxes. A 
+<img src="../images/chi-lc.gif"><sup>2</sup> test was used 
+which was based on the logarithmic discrepancies of the fluxes 
+and the corresponding variances.  The number of degrees of freedom 
+was the number of common bands. The parameter tested was the 
+complement of the cumulative probability; this was required to 
+be above 1 &times; 10<sup>-4</sup>, or else the
+candidate was discarded.  No more than one true case out of every
+ten thousand should be rejected by this test.  If the requirement
+was met, then a combined flux/position test was performed which
+required the product of the flux test score and the position test
+score to be above ten.  Again the candidate was discarded or retained
+based on the outcome of this test, which also served as the tie
+breaker when more than one candidate from the same orbit passed
+all the tests.
+
+<hr>
+
+<a name="5d">
+<h2>D.5.d Hours-Confirmation Confusion Processing</h2>
+<P>
+      When more than one candidate was confirmed with the drop-dead
+source, a series of pairings of each candidate with each other
+was performed and the requirements placed on each pairing were
+to have at least one band with detected fluxes in common, to pass
+the position test, the flux test, and the combined flux/position
+test.  When one of these requirements was not met, the candidate
+with the higher combined flux/position test score with respect
+to the drop-dead source was retained and the other was discarded.
+
+<hr>
+<a name="5e">
+<h2>D.5.e Hours-Confirmation Position and Photometric Refinement</h2>
+<P>
+      Position refinement was performed for the drop-dead source
+and all confirmed candidates by applying the technique discussed
+by <a href="index.html#ref">Fowler and Rolfe (1982)</a> in 
+pairwise fashion to the drop-dead
+source and the first candidate, then to the result of this process
+and the next candidate, and so on until all source observations
+involved had been processed. The method essentially computes the
+renormalized product of all of the position probability density
+functions and calculates the parameters which describe this product
+in terms an approximation to the original form of the density
+function.  In this way, the near-optimal treatment of the non-Gaussian
+errors was maintained.
+<P>
+      Pairwise photometric refinement was performed in a manner
+analogous to the position refinement. Bands in which the paired
+observations had equal flux status were refined otherwise the
+flux with the higher status was retained alone. Fluxes obtained
+by detection with the point-source template were taken as having
+the highest status; seconds-confirmed and non-seconds-confirmed
+both qualified.  These were refined with Gaussian estimation applied
+to the logarithms of the fluxes, and so seconds-confirmed fluxes
+were usually weighted more heavily because of their smaller uncertainties.
+Low signal-to-noise ratio fluxes were refined by simple weighted
+averaging of the fluxes, with the signal-to-noise ratio values
+used as the weights.  Upper limits based on noise were refined
+by retaining the lower value.  All detector numbers involved were
+stored in arrays (see <a href="D1.html">Section V.D.1</a>) and kept 
+with the confirmed
+source with the following exceptions. Detectors supplying noise
+fills which were not used were discarded.  When four source observations
+were confirmed, only the first, second and last set of detector
+number arrays were kept; this was done for purposes of space conservation,
+and a flag was set to indicate this condition.
+
+<hr>
+
+<a name="5f">
+<h2>D.5.f Hours-Confirmation Statistical Processing</a></h2>
+<P>
+      Confirmed source positions were written to an output file
+for downstream tracking of confirmation frequency as a function
+of sky position, and histogram data were maintained to display
+confirmation frequency as a function of signal-to-noise ratio.
+A histogram counter corresponding to the highest signal to-noise
+ratio in, any rejected source was also maintained.
+<P>
+      Flux discrepancies in each band were processed to obtain
+the mean and the standard deviation as functions of signal-to-noise
+ratio; this was done in a format similar to that of seconds-confirmation,
+and was used in the photometric uncertainty analysis to feed back
+a posteriori dispersions for use as subsequent <i>a priori</i> errors.
+<img src="../images/chi-lc.gif"><SUP>2</SUP> tests on the fidelity of the 
+photometric error modeling showed
+that this process was working as expected. Only confirmed sources
+devoid of confusion, outer-slot confinement, and other questionable
+symptoms were used to generate the photometric dispersion data.
+ The standard deviations were similar to those of seconds-confirmation
+but slightly larger, indicating more power in the photometric
+error spectrum at orbital frequencies.
+<P>
+      Position discrepancies were examined for in-scan mean error,
+variance, and statistical significance, and the cross-scan discrepancies
+were studied as functions of latitude. The solar motion caused
+the scan overlap from one orbit to the next to be a function of
+latitude, and the overlap was designed to minimize the total cross-scan
+error of single-band sources.  This anticipated effect was confirmed,
+and this strengthened confidence in the fidelity of the error
+modeling.  Slightly larger discrepancies were found very near
+the ecliptic, and these were probably due to the confirmation
+of asteroids which moved slightly  between observations but not
+enough to preclude confirmation. This effect was not included
+in the pre-launch estimation of position errors at hours-confirmation.
+ The primary effect, larger cross-scan errors for single-band
+sources at latitudes between 40 degrees and 50 degrees from the
+ecliptic, was clearly present.
+<P>
+      Histograms of the threshold parameters were generated to
+show their distributions. The main concern was for the cutoffs
+to lie in regions where variations in value did not cause significant
+variations in the number of confirmations and rejections.  This
+would be possible if the noise processes were not saturating the
+decision process, and if the cutoffs were placed well above the
+values produced by most correct matches and well below the values
+produced by most false matches. This appeared to be the case.
+<P>
+      Confirmation and rejection of numbered asteroids were tracked
+and printed in the summary.  The fraction of these which survived
+hours-confirmation was about half, as predicted before launch.
+
+<h2><a name="5g">D.5.g Special Considerations Regarding 
+Hours-Confirmation</a></h2>
+<P>
+      Some complications to the hours-confirmation processing
+were omitted from the discussion above in order to limit its intricacy.
+These provisos will be described briefly in this section.
+<P>
+      As mentioned in the discussion of seconds-confirmation,
+sometimes a source was observed only on detectors which lay at
+the cross-scan boundary of the survey array. It was not possible
+on a single pass to determine whether the source actually missed
+the detector slots, so that both its flux and position information
+would be incorrect. The position uncertainties were expanded as
+described above, as this could be done in a way which virtually
+guaranteed bracketing the true position; there could be no such
+guarantee for the flux.  As a result, the flux test was not performed
+when at least one of the sightings involved only outer-slot detectors
+in all bands containing detected fluxes.  Flux refinement was
+also bypassed in these cases unless both sightings being processed
+were exclusively on outer slots; when this happened, the refined
+flux kept the status of being outer-slot only.  If a subsequent
+pairing involved a sighting with detections inside the survey
+array cross-scan boundaries, its fluxes were retained without
+any averaging, and the outer-slot status was removed.
+<P>
+      When any source was processed which was detected but not
+seconds-confirmed in the 25 &micro;m band next to the gap 
+left by the demise of detectors 17 and 20, special checking was 
+performed.  If detections in other bands were present, the detector 
+geometry was examined to determine whether actual image center 
+passage between the cross-scan limits of the 25 &micro;m 
+band detector could be verified; if so, no further special action 
+was taken. Otherwise the flux in the 25 &micro;m band-was 
+treated as an outer-slot flux, since the image center may actually 
+have missed the slot involved in the detection. This disqualified 
+the source's 25 &micro;m flux from testing, inclusion in the 
+photometric dispersion analysis, and contributing to refinement 
+unless no better data were available.
+<P>
+      Particle radiation posed a significant threat to the photometric
+accuracy, and sources observed in all four bands were more likely
+to be affected by it.  The error caused by this source of noise
+produced a broad non-Gaussian component to the photometric dispersion
+which highlighted the fact that it did not conform to the assumptions
+underlying the <img src="../images/chi-lc.gif"><sup>2</sup> tests used for flux agreement.  A 
+rule was implemented, therefore, which was applied when the sources 
+tested had at least three bands in common and failed the flux test. 
+In such a case, the single most discrepant band was removed from
+consideration, and the <img src="../images/chi-lc.gif"><sup>2</sup> test with one fewer degree 
+of freedom was used. This exemption could be invoked only once per 
+source pair.
+
+<hr>
+
+<font size=+1>
+<center>
+   <a href="index.html#toc">Chapter Contents</a> | 
+   <a href="index.html#intro">Introduction</a> | 
+   <a href="index.html#auth">Authors</a> | 
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> | 
+   <a href="../index/index.html">Index</a> | 
+   <a href="D4.html">Previous Section</a> | 
+   <a href="D6.html">Next Section</a>
+</font>
+</center>
+
+<hr>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+
+

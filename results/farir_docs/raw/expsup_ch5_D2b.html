@@ -1,0 +1,171 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+
+<HEAD>
+   <title>V.D.2.b Position Reconstruction</title>
+</HEAD>
+
+<BODY bgcolor="#FFFFFF">
+
+<h1 align="center">
+   IRAS Explanatory Supplement<br>
+   V. Data Reduction<br>
+   D. Point Source Confirmation<br>
+   D.2 Overview of Seconds-Confirmation<br>
+   D.2.b Position Reconstruction
+</h1>
+
+<hr>
+<font size=+1><center>
+   <a href="index.html#toc">Chapter Contents</a> |
+   <a href="index.html#intro">Introduction</a> |
+   <a href="index.html#auth">Authors</a> |
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> |
+   <a href="../index/index.html">Index</a> |
+   <a href="D2a.html">Previous Section</a> |
+   <a href="D2c.html">Next Section</a>
+</font></center>
+<hr>
+      Detections in a single band were processed in time order.
+ Each detection had its position in the Sun-referenced coordinate
+system computed. At the same time the photometric uncertainties,
+modeled as a white-noise Gaussian random variable in the logarithm
+of the flux and a constant but unknown calibration scale factor
+error in the flux, were obtained from lookup tables as functions
+of signal-to-noise ratio and correlation coefficient.
+<P>
+      The position reconstruction was performed by searching the
+pointing history for records with time tags bracketing that of
+the detection.  The matrices for transforming from the focal plane
+coordinates to the Sun-referenced system and to the 1950.0 mean
+ecliptic system were obtained by cubic spline interpolation.
+Each detector was characterized by a unique unit vector in the
+focal plane coordinate system.  The transformation matrices yielded
+the polar, azimuthal, and twist angles defining the position of
+the detector slot on the sky in the Sun-referenced and 1950.0
+mean ecliptic systems.  The cross-scan half-width of the slot
+defined the uniform error component, denoted <i>L<sub>z</sub></i>,
+in that direction.
+ The cross-scan limit cycle reconstruction uncertainty was modeled
+as a Gaussian random error,
+<img src="../images/sigma-lc.gif"><sub><i>z</i></sub>. These and
+the in-scan errors
+discussed below were the only significant uncertainties involved
+in the confirmation decision process. After all confirmation and
+refinement processing was completed the absolute position angle
+errors, which were estimated by the pointing reconstruction program
+but which cancel out of the confirmation decision, were taken
+into account.
+<P>
+      The uncertainties in the scan direction which affected the
+confirmation decision were a time-interpolation error and the
+detection timing uncertainty.  The latter yielded an angular uncertainty
+when
+multiplied by the scan rate.  These were taken to be independent
+Gaussian errors with a combined effect of a zero-mean Gaussian
+random error, denoted <I>(X)y</I>, with a variance equal to to the sum
+of the two error variances.
+<P>
+<a name="tabD2">
+<center>
+<table align=center border=1 cellpadding="2">
+<caption>
+<b><font size=+1>
+  Input Data for In-Band Seconds Confirmation<br>
+  Table V.D.2
+  </font></b>
+</caption>
+<tr>
+  <th>Detections:</th>
+  <td>Flux and uncertainty, time and uncertainty, signal-to-noise
+    ratio, detection correlation coefficient, and detector number.</td>
+</tr>
+<tr>
+  <th>Pointing:</th>
+  <td>Telescope boresight angles in the Sun-referenced
+    system  and uncertainties, scan rate, time tag, sines and cosines
+    of the angles in both the Sun-referenced and 1950.0 mean ecliptic
+    systems, and rates of these angles, all sampled at one-second
+    intervals.</td>
+</tr>
+<tr>
+  <th>Detectors:</th>
+  <td>Status (on/off) and geometrical models in image space.</td>
+</tr>
+<tr>
+  <th>Optics:</th>
+  <td>Point-spread function model.</td>
+</tr>
+<tr>
+  <th>Error Tables:</th>
+  <td>Model of pointing reconstruction error due to time
+    interpolations; photometric error as a function of signal-to-noise
+    ratio and correlation coefficient for each band.</td>
+</tr>
+<tr>
+  <th>Thresholds:</th>
+  <td>Confirmation acceptance, search windows, etc.</td>
+</tr>
+</table>
+</center>
+<hr>
+
+
+<br clear=all>
+<!--Begin Chapter V Header-->
+<hr>
+<font size=+1>
+<p align=center>
+   <a href="index.html#toc">Chapter Contents</a> |
+   <a href="index.html#intro">Introduction</a> |
+   <a href="index.html#auth">Authors</a> |
+   <a href="index.html#ref">References</a>
+<p align=center>
+   <a href="../toc.html">Table of Contents</a> |
+   <a href="../index/index.html">Index</a> |
+   <a href="D2a.html">Previous Section</a> |
+   <a href="D2c.html">Next Section</a>
+</font>
+<hr>
+<!--End Chapter V Header-->
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+
+

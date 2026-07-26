@@ -1,0 +1,244 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+
+<HEAD>
+   <title>V.B.  Pointing Reconstruction</title>
+</HEAD>
+
+<BODY bgcolor="#FFFFFF">
+
+<h1 align="center">
+   IRAS Explanatory Supplement<br>
+   V. Data Reduction<br>
+   B.  Pointing Reconstruction
+</h1>
+
+<hr>
+
+<font size=+1><center>
+   <a href="index.html#toc">Chapter Contents</a> | 
+   <a href="index.html#intro">Introduction</a> | 
+   <a href="index.html#auth">Authors</a> | 
+   <a href="index.html#ref">References</a>
+<BR>
+   <a href="../toc.html">Table of Contents</a> | 
+   <a href="../index/index.html">Index</a> | 
+   <a href="A3.html">Previous Section</a> | 
+   <a href="C.html">Next Section</a>
+</font></center>
+
+<hr>
+      The term &quot;pointing reconstruction&quot; as used here
+refers to the process of reconstructing the pointing direction
+of a fiducial point in the focal plane, as well as the twist angle
+of the telescope about the reference point, referred to as the
+boresight.  Since the accuracy with which the pointing could be
+reconstructed varied as a function of time, uncertainty histories
+were also specified. Use was made of all available fine attitude
+sensor data to maximize the accuracy of the reconstructed pointing
+during the various
+attitude modes.  A smoothed estimate of the pointing was obtained
+using a recursive form of an extended Kalman filter. A more detailed
+discussion of the pointing reconstruction than is given here is
+provided by <a href="index.html#ref">McCallon and Kopan (1985)</a>.
+<P>
+      The pointing reconstruction was based on the output of the
+fine attitude sensors which include eight slit-type visible star
+sensors, a three-degree-of-freedom gyro package and a dual-axis
+fine Sun sensor.  The star sensors were mounted on the periphery
+of the focal plane, four slits being normal to the scan direction,
+and the remaining four slits skewed at angles of approximately
+&plusmn; 40 degrees (see <a href="../ch2/C4.html#figC6">Fig. II.C.6</a>).  
+The slits were used in pairs,
+one normal and one skewed, to provide two axes of boresight information
+at each visual star sighting, hereafter called a fine attitude
+calibration, or FAC.  The gyros and fine Sun sensors were mounted
+together on the outside of the spacecraft.  There were, of course,
+misalignments between the gyros and fine Sun sensors due to limits
+on the accuracy with which they could be positioned.  Unfortunately,
+the misalignments between the gyro-Sun sensor package and the
+telescope were found to vary with time (mainly in cross-scan)
+due to bending of the telescope mount with respect to the spacecraft
+due to temperature gradients.
+<P>
+      Pointing reconstruction was accomplished by integrating
+the gyro outputs to provide an initial estimate of the attitude
+history.  Concurrent processing of frequent Sun sensor measurements
+and relatively infrequent FACs was performed with an extended
+Kalman filter to estimate model parameter errors and refine the
+attitude history.  The model parameters estimated include initial-attitude
+errors, spacecraft-telescope misalignment errors, gyro drift,
+gyro scale factor errors, and gyro alignment errors.  Gyro drift
+was modeled as a constant rate plus a random Gauss-Markov process.
+ Process noise was added to all model parameters with the exception
+of the initial attitude parameters to allow for modeling errors
+and slow changes with time.
+<P>
+      The recursive Kalman filter was run first forward in time
+and then backward over a scan and then the two estimates were
+combined to provide a smoothed estimate sampled every second.
+The Kalman filter was reinitialized with the updated model parameters,
+and the process was repeated for the next scan using any available
+boundary conditions.  The scan was chosen as the basic processing
+block because it normally contained at least two FACs and was
+of manageable length. A special file of boundary conditions was
+maintained for each SOP, and processing of observations with fewer
+than two FACs was deferred until the multi-FAC observations were
+finished in order to pick up final boundary conditions for the
+others.
+<P>
+      This approach to the pointing reconstruction worked quite
+well as shown by the statistics on known star position matches
+(see <a href="../ch7/C.html">Section VII.C</a>).  One danger 
+which was carefully guarded against
+was giving bad data to the filter.  Considerable effort was put
+into algorithms to perform automated consistency checking and
+to provide measurement rejection capability.  There were problems
+associated with each type of attitude sensor.
+<P>
+      The fine Sun sensor hardware had severe spiking problems
+from the beginning of the mission. This had the greatest effect
+on spacecraft control, causing several fallbacks to the safe attitude
+control mode. The spikes were thrown out in the pointing reconstruction
+algorithm by consistency checks.  Spikes occasionally caused a
+brief cross-scan excursion in the actual pointing.
+<P>
+      Another problem associated with the fine Sun sensors was
+less dramatic but potentially of greater consequence for the pointing
+reconstruction.  The y-axis fine Sun sensor characteristics varied
+with time over the mission.  Thus the transfer function used to
+convert from the integer output of that Sun sensor to the desired
+cross-scan angle should have been varied slowly over the course
+of the mission. This problem was only partially alleviated by
+the fact that the spacecraft-telescope misalignment angle about
+the y-axis was being continually re-estimated.  The pointing reconstruction
+used only two transfer functions for the y-axis fine sun sensor
+over the course of the mission.  Ideally, a separate transfer
+function would have been used for every 75 to 100 SOPs.
+<P>
+      The gyros also had their difficulties.  Early in the mission
+it was apparent that the gyros (especially one of the z-axis gyros,
+denoted Gyro ZA) were noisier than expected, and that their characteristics,
+especially those of the x-axis gyro, varied with time. Gyro ZA
+was used by the on-board control system for in-scan control. 
+Unfortunately the control system was not designed for a gyro as
+noisy as ZA, and this resulted in the occasional occurrence of
+a phenomenon referred to as the limit-cycle-burst problem. During
+a burst, the limit cycle amplitude and frequency increased by
+a factor of three or four; amplitudes of 13&quot; were observed.
+ This problem occurred much more frequently after the star of
+the third hours-confirming coverage and was finally solved by
+switching to Gyro ZB for control.  The limit cycle bursts were,
+however, reconstructed without apparent difficulty.  The long-term
+changes in gyro characteristics were tracked by the Kalman filter,
+but process noise had to be increased to give the filter enough
+freedom to follow the changes.  There was also some indication
+of even faster changes suggestive of thermally induced misalignments
+between the gyros and the fine Sun sensors. These problems worsened
+as the mission progressed.  The x-axis gyro was dropped from use
+in reconstruction beginning with SOP 187 and the y-axis gyro was
+dropped beginning with SOP 316.
+<P>
+      The gyros were far more susceptible to the Earth's magnetic
+field than expected.  This problem was discovered early in the
+mission, and a software compensation algorithm was developed for
+pointing reconstruction.
+<P>
+      Very early in the processing it was noted that errors in
+the reconstructed position of known infrared sources were sometimes
+larger near certain FACs rather than smaller as expected. It appeared
+that the FAC was degrading the solution.  These cases became generally
+known as &quot;biased FACs&quot;.  Most biased FACs had errors
+on the order of 5&quot; to 10&quot;, but some were much worse,
+up to 6'.  It was determined that the worst biased FACs were the
+result of having selected stars for FACs which had other bright
+stars close enough to interfere with the star sensor observations.
+Occasionally, biased FACs were the result of catalog errors. An
+algorithm was developed to identify the FACs with disturbing stars,
+and in reprocessing SOPs 29 through 446 these FACs were either
+given larger uncertainties or deleted.  The worst biased FACs
+(errors greater than 30&quot;) in the 446 to 600 SOP range were
+corrected in the same manner.
+<P>
+      Another problem was the thermal misalignment about the y-axis
+(cross-scan) between the gyro/Sun sensor package and the telescope.
+This caused particular difficulties during the third sky coverage
+because of large and frequent changes in solar aspect angle.
+<P>
+      Lack of a time-variant y-axis fine Sun sensor transfer function
+had the greatest effect on cross-scan reconstruction for observations
+with slews between the FAC and the survey scan.  In this situation
+the Kalman filter was unable to compensate for the y-axis fine Sun
+sensor errors by adjusting the telescope misalignment about the
+y-axis as it would normally do. In the worst-case, cross-scan
+slews on the order of one to two degrees resulted in reconstruction
+errors as large as 25&quot;. The actual magnitude of the error
+varied greatly depending on the exact star and end points of the
+slew and was not necessarily greater for longer slews.  The only
+survey scans affected by this problem were those with out-of-scan
+FACs.
+<P>
+      Lack of the improved y-axis thermal misalignment model was
+significant only for observations which were both without a FAC
+and without a boundary condition on the same end.  In the worst-case
+situation, cross-scan reconstruction errors as large as 30&quot;
+were possible for a one-FAC observation; this could happen on
+full length observation following a maximum cross-scan slew with
+the worst possible placement of the FAC. Such large slews were
+executed only after the star of the third survey coverage (SOPs
+426 to 600).  For SOPs 29 to 425, peak errors due to this problem
+were less than half as large.
+
+<hr>
+
+<font size=+1><center>
+   <a href="index.html#toc">Chapter Contents</a> | 
+   <a href="index.html#intro">Introduction</a> | 
+   <a href="index.html#auth">Authors</a> | 
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> | 
+   <a href="../index/index.html">Index</a> | 
+   <a href="A3.html">Previous Section</a> | 
+   <a href="C.html">Next Section</a>
+</font></center>
+
+<hr>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

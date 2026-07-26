@@ -1,0 +1,226 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+
+<HEAD>
+   <title>V.D.1  Processing Overview</title>
+</HEAD>
+
+<BODY bgcolor="#FFFFFF">
+
+<h1 align="center">
+   IRAS Explanatory Supplement<br>
+   V. Data Reduction<br>
+   D. Point Source Confirmation<br>
+   D.1  Processing Overview
+</h1>
+
+<hr>
+<font size=+1><center>
+   <a href="index.html#toc">Chapter Contents</a> |
+   <a href="index.html#intro">Introduction</a> |
+   <a href="index.html#auth">Authors</a> |
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> |
+   <a href="../index/index.html">Index</a> |
+   <a href="C.html">Previous Section</a> |
+   <a href="D2a.html">Next Section</a>
+</font></center>
+
+<hr>
+      The arrangement of the detectors in the focal plane of the
+telescope and the survey strategy permitted reobservation of inertially
+fixed point sources after time intervals of several seconds, several
+hours, and several weeks.  The confirmation process consisted
+of examining those multiple observations and identifying which
+plausibly belonged to the same object. Once this identification
+was made for a given source, refinement of the parameters describing
+that source was performed by combining the observations into a
+single improved description.
+<P>
+      When comparing two sightings, positional agreement was always
+a part of the decision whether to accept them as the same object.
+ Over the seconds and hours intervals, photometric agreement was
+required as well. Because the cross-scan position was tested only
+by requiring that a real object be sighted by a compatible pair
+(or triplet) of detectors, the decision problem at the seconds-confirmation
+level involved only in-scan position agreement, and the tests
+could be based on Gaussian error models.
+<P>
+At the hours and weeks level, the position error had to be modeled
+as a non-Gaussian random variable because of the uniform uncertainty
+due to the cross-scan extents of the detector slots.
+<P>
+      The hours-and weeks-confirmation decision was based on the
+correlation of the probability density functions which describe
+the two-dimensional position information. The parameter which
+was required to be above a certain threshold to confirm two sightings
+was the cross-covariance of these density functions, evaluated
+at the separation of the nominal positions.  The formalism is
+discussed and derived by
+<a href="index.html#ref">Fowler and Rolfe (1982)</a>.  There were
+several virtues in this approach, among which the most important
+was its freedom from the Gaussian approximation.  The position
+error due to the detector slots was uniformly distributed,
+making any Gaussian algorithm unacceptable.
+ Another aspect of the decision algorithm was that the fraction
+of true cases accepted increased as the size of the position uncertainties
+decreased. Because the threshold could not easily be set to accept
+a specific fraction of all cases, it was set during simulation
+tests by opening up the the threshold until just before the acceptance
+of false events became significant.
+
+<a name="figD1">
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=2 width=200 align=right>
+<TR>
+<TD>
+<CENTER><A HREF="../ch5/figs/figD1-2.gif" target="fig5D1">
+<IMG SRC="../ch5/figs/figD1-3.gif" BORDER=0></A></CENTER>
+</TD>
+</TR>
+<TR>
+<TD>
+<I>Figure V.D.1 a) As described in the text, the position and associated
+uncertainty of each source is represented by a probability distribution
+function consisting of Gaussian and uniform components. Shown
+here (left) are the distribution functions for two sightings of
+a single source. b) The position of the source resulting from
+the merging of the two sightings shown in V.D.1.a is described
+by the new probability distribution function shown here (right).</I><br>
+<a href="../ch5/figs/figD1-2.gif" target="fig5D1">larger</a>
+<a href="../ch5/figs/figD1-1.gif" target="fig5D1">largest</a>
+</TD>
+</TR>
+</TABLE>
+<P>
+      <a href="#figD1">Figure V.D.1</a>a depicts two position probability density functions
+in a typical case.  Each density function has a broad, flat ridge
+which shows the uniform contribution of the net intersection of
+the seconds-confirmed detector slots' cross-scan domains.  The
+orthogonal direction is that of the scanning motion, and the corresponding
+position errors were found to be well modeled as Gaussian.  In
+the figure, the agreement between the two position estimates is
+about as good as it could be. The large difference shown between
+the scan directions occurred only at the weeks-confirmation level.
+ At hours-confirmation, the major axes of the density functions
+were approximately parallel.  Refinement of position leads to
+a new probability density function which is more centrally concentrated
+as shown ia <a href="#figD1">Fig. V.D.1</a>b for the current example.
+<P>
+      The confirmation decisions are summarized in
+<a href="#tabD1">Table V.D.1</a>
+which gives, for each step in the confirmation process, the type
+of position test (Gaussian or two-dimensional), the threshold
+used the flux agreement required and the net effect of these criteria
+on real sources.
+<P>
+      Although the confirmation decision and parameter refinement
+lay at the core of the point source confirmation processing, many
+peripheral issues also had to handled. These aspects are discussed
+at a level of detail which attempts to be concise while not leaving
+an inordinate number of questions unanswered.
+
+<br clear=right>
+
+<a name="tabD1">
+<table border align=center cellpadding="2">
+<caption>
+<b><font size=+1>
+  Confirmation Summary<BR>
+  Table V.D.1
+</font></b>
+</caption>
+<tr bgcolor="#CCCCCC">
+    <th>Confirmation<br>Level</th>
+    <th>In-Scan<br>Limit</th>
+    <th>X-Scan<br>Limit</th>
+    <th>2-D<br>Limit</th>
+    <th>Flux Ratio<br>Limit</th>
+    <th>Comment</th>
+</tr>
+<tr align=center>
+    <td>Seconds</td>
+    <td>4.4 Sigma</td>
+    <td>Compat. Det.</td>
+    <td>-<td>2</td>
+    <td>1 Real per 50,000 Rejected
+</tr>
+<tr align=center>
+    <td>Band Merge</td>
+    <td>4.2 Sigma</td>
+    <td>Compat. Det.</td>
+    <td>-</td>
+    <td>-</td>
+    <td>1 Real Match per 40,000 Rejected
+</tr>
+<tr align=center>
+    <td>Hours</td>
+    <td>-</td>
+    <td>-</td>
+    <td>1x10<sup>-4</sup>sr<sup>-1</sup></td>
+    <td>2</td>
+    <td>1 Real Match per 20,000 Rejected
+</tr>
+<tr align=center>
+    <td>Months</td>
+    <td>-</td>
+    <td>-</td>
+    <td>1x10<sup>-4</sup>sr<sup>-1</sup></td>
+    <td>-</td>
+    <td>1 Real Match per 20,000 Rejected
+</table>
+
+<br clear=all>
+
+<hr>
+<center><font size=+1>
+   <a href="index.html#toc">Chapter Contents</a> |
+   <a href="index.html#intro">Introduction</a> |
+   <a href="index.html#auth">Authors</a> |
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> |
+   <a href="../index/index.html">Index</a> |
+   <a href="C.html">Previous Section</a> |
+   <a href="D2a.html">Next Section</a>
+</font></center>
+<hr>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+
+

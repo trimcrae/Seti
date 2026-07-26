@@ -1,0 +1,59 @@
+II.Ap.1 Data Compression 
+
+ IRAS Explanatory Supplement
+
+ II. Satellite Description
+
+ Appendix II.1 - Data Compression
+
+ Chapter Contents | 
+ Authors | 
+ References 
+
+ Table of Contents | 
+ Index | 
+ Previous Section | 
+ Next Section 
+
+ In order to conserve space on the spacecraft digital tape
+recorder, the 16-bit output of the analog to digital was compressed
+to an 8-bit value. The current 8-bit data output represented
+the absolute difference between the current 16-bit analog to digital
+value for a detector and the same detector's reconstructed 16-bit
+value. The reconstructed value was derived from the previous
+8-bit compressed difference value taken during the preceding data
+iteration.
+
+ Figure II.Ap.1 a) The format of the compressed 8-bit data word (top); and
+b) the meaning of portions of the code used for data compression (bottom). 
+
+ larger 
+ largest 
+
+ The compressed 8-bit value represented only the 4 to 5 most
+significant bits of the difference between the current analog
+to digital reading and the reconstructed value. The 8-bit compressed
+value consisted of the sign of the difference (positive or negative),
+three significant bits of the difference called the significand
+and a shift code indicating the most signficant bit of the difference
+as indicated in Fig. II.Ap.1 .a.
+ 
+ Figure II.Ap.1 .b shows the correlation between the shift
+code, the positions of the 3-bit significand and the most significant
+bits of the difference. The right column indicates the total
+number of significant bits of the difference that could be stored
+in the 8-bit compressed form.
+ 
+ Every 4 seconds the 16-bit value, called the key value,
+for a detector was inserted as the first word of a data line.
+The key value was provided as a means to moniter and synchronize
+the data compression with the ground reconstruction software.
+
+ Chapter Contents | 
+ Authors | 
+ References 
+ 
+ Table of Contents | 
+ Index | 
+ Previous Section | 
+ Next Section

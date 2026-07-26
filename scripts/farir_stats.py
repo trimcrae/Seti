@@ -106,12 +106,21 @@ def parse_readme_files(readme_text: str) -> list[tuple[str, int, int]]:
     return out
 
 
-def read_cds(cat: str, tag: str):
+def read_cds(cat: str, tag: str, prefer: str | None = None):
     """Download a VizieR catalogue + ReadMe and parse it with astropy's CDS
-    reader, which honours the byte-by-byte description exactly."""
+    reader, which honours the byte-by-byte description exactly.
+
+    IMPORTANT: astropy's CDS reader identifies the table by matching the data
+    file's BASENAME against the ReadMe's 'File Summary'. The file must
+    therefore keep its catalogue name (fis.dat, main.dat, ...) on disk -- an
+    earlier version renamed it and every parse failed with
+    "Can't find table <renamed> in <readme>".
+    """
     from astropy.io import ascii as apascii
 
-    rm = WORK / f"ReadMe_{tag}"
+    cdir = WORK / tag
+    cdir.mkdir(parents=True, exist_ok=True)
+    rm = cdir / "ReadMe"
     if not any(fetch(f"{h}/{cat}/ReadMe", rm, tries=1, timeout=120)
                for h in VIZ_HOSTS):
         raise RuntimeError(f"no ReadMe for {cat}")
@@ -120,30 +129,45 @@ def read_cds(cat: str, tag: str):
 
     files = parse_readme_files(rmtext)
     log(f"ReadMe lists data files: {files}")
-    # Prefer the biggest .dat -- that is the catalogue proper.
     files = [f for f in files if not f[0].lower().startswith(("readme", "notes"))]
-    files.sort(key=lambda t: -t[2])
+    if prefer:
+        files.sort(key=lambda t: (t[0] != prefer, -t[2]))
+    else:
+        files.sort(key=lambda t: -t[2])
     last_err = None
     for fname, lrecl, nrec in files[:3]:
-        for cand in (fname, fname + ".gz"):
-            dat = WORK / f"{tag}_{cand.replace('/', '_')}"
-            if not viz_get(cat, cand, dat):
-                continue
-            try:
-                if cand.endswith(".gz"):
-                    plain = dat.with_suffix("")
-                    with gzip.open(dat, "rb") as fi, plain.open("wb") as fo:
-                        shutil.copyfileobj(fi, fo)
-                    src = plain
-                else:
-                    src = dat
-                t = apascii.read(str(src), format="cds", readme=str(rm))
-                log(f"parsed {cand}: {len(t)} rows x {len(t.colnames)} cols")
-                return t, rmtext
-            except Exception as e:  # noqa: BLE001
-                last_err = e
-                log(f"   parse of {cand} failed: {e}")
+        dat = cdir / fname                      # keep the catalogue's own name
+        got = viz_get(cat, fname, dat)
+        if not got:
+            gz = cdir / (fname + ".gz")
+            if viz_get(cat, fname + ".gz", gz):
+                with gzip.open(gz, "rb") as fi, dat.open("wb") as fo:
+                    shutil.copyfileobj(fi, fo)
+                got = dat
+        if not got or not dat.exists():
+            continue
+        try:
+            t = apascii.read(str(dat), format="cds", readme=str(rm))
+            log(f"parsed {fname}: {len(t)} rows x {len(t.colnames)} cols")
+            return t, rmtext
+        except Exception as e:  # noqa: BLE001
+            last_err = e
+            log(f"   parse of {fname} failed: {e}")
     raise RuntimeError(f"could not parse any data file for {cat}: {last_err}")
+
+
+def iras_icrs(t):
+    """IRAS PSC gives B1950 sexagesimal at epoch 1983.5; build ICRS deg."""
+    from astropy.coordinates import SkyCoord, FK4
+    import astropy.units as u
+    ra_h = arr(t, "RAh"); ra_m = arr(t, "RAm"); ra_ds = arr(t, "RAds")
+    de_d = arr(t, "DEd"); de_m = arr(t, "DEm"); de_s = arr(t, "DEs")
+    sign = np.where(np.asarray(t["DE-"]).astype(str) == "-", -1.0, 1.0)
+    ra = (ra_h + ra_m / 60.0 + (ra_ds / 10.0) / 3600.0) * 15.0
+    dec = sign * (de_d + de_m / 60.0 + de_s / 3600.0)
+    c = SkyCoord(ra * u.deg, dec * u.deg,
+                 frame=FK4(equinox="B1950", obstime="B1983.5")).icrs
+    return np.asarray(c.ra.deg), np.asarray(c.dec.deg)
 
 
 def col_inventory(t, tag: str):
@@ -233,7 +257,7 @@ def galactic(ra, dec):
 # ============================================================ 1-5 AKARI + IRAS
 @stage("AKARI FIS BSC (VizieR II/298): columns, errors, fluxes, flags")
 def akari_fis():
-    t, rmtext = read_cds("II/298", "akari_fis")
+    t, rmtext = read_cds("II/298", "akari_fis", prefer="fis.dat")
     RESULT["akari_fis_nrows"] = len(t)
     RESULT["akari_fis_columns"] = list(t.colnames)
     inv = col_inventory(t, "akari_fis")
@@ -266,8 +290,8 @@ def akari_fis():
             flux_cols[band] = c
     res["flux_columns"] = flux_cols
 
-    ra_c = pick(t, "RAJ2000", "_RAJ2000", "RA")
-    de_c = pick(t, "DEJ2000", "_DEJ2000", "DE")
+    ra_c = pick(t, "RAdeg", "RAJ2000", "_RAJ2000", "RA")
+    de_c = pick(t, "DEdeg", "DEJ2000", "_DEJ2000", "DE")
     lg, bg = galactic(arr(t, ra_c), arr(t, de_c))
     res["galactic_available"] = True
 
@@ -360,7 +384,7 @@ def akari_fis():
 
 @stage("IRAS PSC (VizieR II/125): columns, error ellipse, CIRR flags")
 def iras_psc():
-    t, rmtext = read_cds("II/125", "iras_psc")
+    t, rmtext = read_cds("II/125", "iras_psc", prefer="main.dat")
     RESULT["iras_psc_nrows"] = len(t)
     inv = col_inventory(t, "iras_psc")
     res: dict = {"n_sources": len(t), "columns": list(t.colnames)}
@@ -424,20 +448,21 @@ def iras_psc():
                                                 v, [1, 10, 50, 90, 99])]))}
     res["fluxes"] = fx
 
-    ra_c = pick(t, "RAJ2000", "_RAJ2000", "RA1950", "RA")
-    de_c = pick(t, "DEJ2000", "_DEJ2000", "DE1950", "DE")
-    if ra_c and de_c:
-        try:
-            ra = arr(t, ra_c)
-            de = arr(t, de_c)
-            _, bg = galactic(ra, de)
-            res["n_highlat_b30"] = int((np.abs(bg) > 30).sum())
-            res["all_sky_per_deg2"] = round(len(t) / 41252.96, 4)
-            np.save(WORK / "iras_ra.npy", ra)
-            np.save(WORK / "iras_de.npy", de)
-            np.save(WORK / "iras_b.npy", bg)
-        except Exception as e:  # noqa: BLE001
-            res["galactic_error"] = str(e)
+    try:
+        if pick(t, "RAh") and pick(t, "DEd"):
+            ra, de = iras_icrs(t)          # B1950 sexagesimal -> ICRS deg
+        else:
+            ra = arr(t, pick(t, "RAdeg", "RAJ2000", "_RAJ2000", "RA"))
+            de = arr(t, pick(t, "DEdeg", "DEJ2000", "_DEJ2000", "DE"))
+        _, bg = galactic(ra, de)
+        res["n_highlat_b30"] = int((np.abs(bg) > 30).sum())
+        res["all_sky_per_deg2"] = round(len(t) / FULL_SKY_DEG2, 4)
+        np.save(WORK / "iras_ra.npy", ra)
+        np.save(WORK / "iras_de.npy", de)
+        np.save(WORK / "iras_b.npy", bg)
+    except Exception as e:  # noqa: BLE001
+        res["galactic_error"] = str(e)
+        traceback.print_exc()
 
     json.dump(res, (OUT / "iras_psc_stats.json").open("w"), indent=1)
     return res
@@ -449,6 +474,21 @@ def gaia_density():
     from astroquery.gaia import Gaia
     Gaia.ROW_LIMIT = -1
     res = {}
+    cached = OUT / "gaia_dens_nside16_nest.json"
+    if cached.exists():
+        try:
+            dens = np.array(json.load(cached.open()), dtype=float)
+            if dens.size == 3072:
+                np.save(WORK / "gaia_dens_nside16.npy", dens)
+                log("reusing cached Gaia nside=16 density map "
+                    f"(total {dens.sum()*FULL_SKY_DEG2/3072:.4g} sources)")
+                res["method"] = "cached_healpix_nside16"
+                res["npix"] = 3072
+                res["pix_area_deg2"] = round(FULL_SKY_DEG2 / 3072, 4)
+                json.dump(res, (OUT / "gaia_density_reuse.json").open("w"), indent=1)
+                return res
+        except Exception as e:  # noqa: BLE001
+            log(f"cached map unusable ({e}); recomputing")
     try:
         q = ("SELECT gaia_healpix_index(4, source_id) AS hpx, COUNT(*) AS n "
              "FROM gaiadr3.gaia_source GROUP BY hpx")
@@ -461,9 +501,11 @@ def gaia_density():
         npix = 12 * nside * nside
         counts = np.zeros(npix)
         counts[hpx] = n
-        area = 41252.96 / npix          # deg^2 per pixel
+        area = FULL_SKY_DEG2 / npix     # deg^2 per pixel
         dens = counts / area            # stars deg^-2
         np.save(WORK / "gaia_dens_nside16.npy", dens)
+        json.dump([round(float(x), 3) for x in dens],
+                  (OUT / "gaia_dens_nside16_nest.json").open("w"))
         res["method"] = "healpix_nside16_groupby"
         res["npix"] = npix
         res["pix_area_deg2"] = round(area, 4)
@@ -531,6 +573,108 @@ def gaia_density():
                                    "pct": [float(x) for x in
                                            np.percentile(v, [5, 50, 95])]}
     json.dump(res, (OUT / "gaia_density.json").open("w"), indent=1)
+    return res
+
+
+@stage("EMPIRICAL positional accuracy: FIS x IRC and FIS x IRAS separations")
+def positional_accuracy():
+    """The catalogue's quoted error ellipse is a constant; measure the real
+    thing instead.
+
+    AKARI/IRC (II/297) is the same spacecraft with far better astrometry, and
+    IRAS PSC is an independent FIR survey. The separation distribution of
+    genuine FIS counterparts is Rayleigh, p(s) = (s/sigma^2) exp(-s^2/2sigma^2),
+    sitting on a chance background that rises LINEARLY with s
+    (dN_chance/ds = 2 pi s sigma_cat). Fitting the two components gives sigma
+    -- the true 1-D positional uncertainty -- and the radius that contains a
+    chosen fraction of real counterparts:
+        r(50%)  = 1.177 sigma      r(90%) = 2.146 sigma
+        r(95%)  = 2.448 sigma      r(99%) = 3.035 sigma
+    """
+    from astropy.coordinates import SkyCoord, match_coordinates_sky
+    import astropy.units as u
+
+    res: dict = {}
+    ra_a = np.load(WORK / "akari_ra.npy")
+    de_a = np.load(WORK / "akari_de.npy")
+    b_a = np.load(WORK / "akari_b.npy")
+    ca = SkyCoord(ra_a * u.deg, de_a * u.deg)
+
+    partners: dict = {}
+    # AKARI/IRC all-sky PSC -- same satellite, ~ arcsec astrometry
+    try:
+        tirc, _ = read_cds("II/297", "akari_irc")
+        rc = pick(tirc, "RAdeg", "RAJ2000", "_RAJ2000")
+        dc = pick(tirc, "DEdeg", "DEJ2000", "_DEJ2000")
+        partners["akari_irc"] = (arr(tirc, rc), arr(tirc, dc), len(tirc))
+        col_inventory(tirc, "akari_irc")
+    except Exception as e:  # noqa: BLE001
+        log(f"IRC load failed: {e}")
+    try:
+        partners["iras_psc"] = (np.load(WORK / "iras_ra.npy"),
+                                np.load(WORK / "iras_de.npy"),
+                                len(np.load(WORK / "iras_ra.npy")))
+    except Exception as e:  # noqa: BLE001
+        log(f"IRAS positions unavailable: {e}")
+
+    EDGES = np.arange(0, 121, 2.0)          # arcsec
+    for tag, (rb, db, nb) in partners.items():
+        ok = np.isfinite(rb) & np.isfinite(db)
+        cb = SkyCoord(rb[ok] * u.deg, db[ok] * u.deg)
+        idx, d2d, _ = match_coordinates_sky(ca, cb)
+        sep = d2d.arcsec
+        h, _ = np.histogram(sep, bins=EDGES)
+        # chance background from the partner catalogue's own surface density
+        sigma_cat = nb / FULL_SKY_DEG2 / 3600.0 ** 2      # per arcsec^2
+        centres = 0.5 * (EDGES[:-1] + EDGES[1:])
+        width = EDGES[1] - EDGES[0]
+        # nearest-neighbour chance expectation per bin, for len(ca) sources
+        exp_chance = len(ca) * 2 * math.pi * centres * width * sigma_cat
+        entry = {"partner_n": int(nb),
+                 "partner_density_per_deg2": round(nb / FULL_SKY_DEG2, 4),
+                 "bin_edges_arcsec": [float(x) for x in EDGES],
+                 "hist_observed": [int(x) for x in h],
+                 "hist_chance_expected": [round(float(x), 2) for x in exp_chance],
+                 "excess": [round(float(a - b), 2) for a, b in zip(h, exp_chance)]}
+        for q in (0.5, 0.68, 0.9, 0.95, 0.99):
+            entry[f"sep_pct_{int(q*100)}"] = round(float(np.percentile(sep, q * 100)), 3)
+        for r_as in (3, 5, 8, 10, 15, 20, 25, 30, 40, 60):
+            n_obs = int((sep <= r_as).sum())
+            n_ch = len(ca) * math.pi * r_as ** 2 * sigma_cat
+            entry[f"r{r_as}"] = {
+                "n_matched": n_obs,
+                "n_chance_expected": round(float(n_ch), 1),
+                "n_real_estimate": round(float(n_obs - n_ch), 1),
+                "purity": round(float(max(0.0, n_obs - n_ch) / n_obs), 4)
+                if n_obs else None,
+                "frac_of_akari": round(n_obs / len(ca), 5)}
+        # Rayleigh sigma from the excess (real) separations, low-s only
+        real_hi = 30.0
+        m = centres <= real_hi
+        exc = np.maximum(h[m] - exp_chance[m], 0)
+        if exc.sum() > 100:
+            # <s^2> = 2 sigma^2 for a Rayleigh distribution
+            s2 = float((exc * centres[m] ** 2).sum() / exc.sum())
+            entry["rayleigh_sigma_arcsec"] = round(math.sqrt(s2 / 2.0), 2)
+            sg = math.sqrt(s2 / 2.0)
+            entry["radius_containing"] = {
+                "50pct": round(1.1774 * sg, 2), "90pct": round(2.1460 * sg, 2),
+                "95pct": round(2.4477 * sg, 2), "99pct": round(3.0349 * sg, 2)}
+        res[tag] = entry
+        log(f"{tag}: sigma={entry.get('rayleigh_sigma_arcsec')}\" "
+            f"r(95%)={entry.get('radius_containing', {}).get('95pct')}\" "
+            f"median_sep={entry.get('sep_pct_50')}\"")
+
+        # split by |b| -- crowding changes the chance background, not sigma
+        for lbl, msk in (("b_gt_30", np.abs(b_a) > 30), ("b_lt_10", np.abs(b_a) < 10)):
+            if msk.sum() > 500:
+                sp = sep[msk]
+                res[f"{tag}_{lbl}"] = {
+                    "n": int(msk.sum()),
+                    "median_sep": round(float(np.median(sp)), 3),
+                    "frac_within_15as": round(float((sp <= 15).mean()), 5),
+                    "frac_within_30as": round(float((sp <= 30).mean()), 5)}
+    json.dump(res, (OUT / "positional_accuracy.json").open("w"), indent=1)
     return res
 
 
@@ -715,6 +859,7 @@ def cirrus_levels():
 def main():
     akari_fis()
     iras_psc()
+    positional_accuracy()
     g = gaia_density()
     chance_coincidence(g)
     xmatch_null()

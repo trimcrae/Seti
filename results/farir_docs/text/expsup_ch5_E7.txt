@@ -1,0 +1,307 @@
+V.E.7 Optimizing the Processor 
+
+ IRAS Explanatory Supplement
+
+ V. Data Reduction
+
+ E. Overview of Small Extended Source Data Processing
+
+ E.7 Optimizing the Processor
+
+ Chapter Contents 
+| Introduction 
+ | Authors 
+| References 
+
+ Table of Contents |
+ Index | 
+ Previous Section 
+| Next Section 
+
+ Choosing the Clustering Threshold 
+ Choosing the Weeks-Confirmation Threshold 
+ Choosing the Band-Merging Threshold 
+ Summary and Discussion 
+
+The intermediate file of hours-confirmed sources (in the restricted
+sense of Section V.E.3 above) accumulated as the
+satellite data were processed. Cluster analysis, weeks-confirmation, and
+band-merging were run repeatedly on this intermediate file to optimize
+the the thresholds in these processors. This section describes how the
+thresholds were arrived at and discusses the implications of the choices.
+ 
+It was determined from preliminary analysis that the threshold on the
+link parameter used in the cluster analysis processor would have to be
+larger than 2, and that the weeks-confirmation threshold would have to
+be in the vicinity of 1. It also became clear that in the range of interest,
+the clustering threshold had the greatest influence on the output. This
+threshold was therefore optimized with the weeks-confirmation threshold
+held at 0.8; then the weeks-confirmation threshold was chosen. The final
+changes in confirmation did not affect the clustering enough to require
+more tuning.
+ 
+The goal in optimizing the processor was enhanced reliability; completeness
+was only a secondary concern. Reliability included the requirement that
+the source be free of potentially confusing neighbors. Regions of low source
+density (such as high Galactic latitudes) were the prime areas where the
+processor was expected to perform well.
+
+ E.7.a Choosing the Clustering Threshold
+
+As stated earlier ( Section V.E.4 ), cluster analysis
+was meant to filter out fragments of sources that were larger than 8' and
+sources that were confused.
+
+ Figure V.E.1 This shows that cluster analysis processing does not
+greatly affect the number of small extended sources that are
+weeks-confirmed at high galactic latitudes. Only at 100 um
+is there a substantial dependence, because of the cirrus. 
+
+ larger 
+ largest 
+
+Neither problem was common at high Galactic latitudes, and while it
+was necessary to apply cluster processing in these areas, it was not possible
+to select an optimal threshold by studying these areas alone. 
+ Figure V.E.1 illustrates this point clearly by showing 
+that the number of
+weeks-confirmed sources at high Galactic latitudes was essentially independent
+of the clustering threshold at 12 um and 25 um; and
+at 60 um and 100 um the number of sources dropped
+as the clustering threshold increased indicating the presence of complex
+structure at these wavelengths. Figure V.E.1 displays
+the results of processing in a region (henceforth Region A) at high Galactic
+latitudes, defined in ecliptic coordinates by 0deg < 
+ <
+90deg and 135deg < <
+205deg; its total area was about 4010deg 2 , about 10% of the 
+sky. The source density was on the order of 0.02 to 0.05 per sq. deg. too low
+for confusion to be a problem.
+
+ Figure V.E.2 In contrast with Figure V.E.1, regions of high source
+density are heavily affected by cluster analysis. 
+
+ larger 
+ largest 
+
+ Figure V.E.2 displays the number of weeks-confirmed
+sources as a function of clustering threshold for Region B, which includes
+a crowded portion of the Galactic plane. It was defined in ecliptic 
+coordinates
+by 25deg < <
+45deg, and 280deg < 
+ <
+300deg; its total areawas about 326 sq. deg, which implies a source
+density of about 0.3 to 6.0 per sq. deg. Both figures were obtained with
+a weeks-confirmation threshold of 0.8.
+ 
+The shape of the curves in Figure V.E.2 suggested
+that a natural choice of clustering threshold could be based on keeping
+the final source density near the confusion limit. The confusion limit
+was obtained by requiring a minimum number of 25 beams per source (as in -
+ Section V.H.6 ), which corresponds to a probability 
+less than 0.1% that two
+sources will be found in the same beam, and a probability of about 1% that
+two adjacent beams will both have sources in them, assuming Poisson 
+statistics.
+To use this criterion, an estimate was needed for beam size. A close upper
+limit was simply the in-scan width of the largest detector template (about
+10') times twice the cross-scan width of a detector (about 10'), leading
+to an effective "beam size" of 1/36 sq. deg.
+ 
+In practice, however, and especially at 12 and 25 um, detections
+on smaller templates were common, and the effective beam size was found
+to be smaller than the upper limit by a factor two or more. To estimate
+the effective beam size, the average density of small extended source detections
+per survey coverage per band was found in the five most crowded bins on
+the sky. Each bin was approximately a sq. deg in size. This density was
+the same at 12 and 25 um, namely 77 sources per sq. deg. with
+a population dispersion of 4; at 100 um, the density was 40
++/- 5 per sq. deg At 60 um, the average density in the five
+most crowded bins was 78 +/- 20; if the highest density bin was thrown
+out, the average in the next five was 68 +/- 10. The result at 
+100 um
+was quite close to the upper limit estimate above, as expected since only
+the largest template was available at 100 um.
+ 
+Adopting as effective beam sizes 1/40, 1/68, 1/77 and 1/77 sq. deg.
+respectively in the 100 um, 60 um, 25 um
+and 12 um, the critical densities are 1.6, 2.7, 3.1 and 3.1
+sources per sq. deg. To find the corresponding critical clustering threshold,
+small heavily populated windows within Region B, with a total area of 9.8
+sq. deg were used. The average density of weeks-confirmed sources dropped
+quickly as the clustering threshold increased from 2 to 3, and then leveled
+off in a way similar to, but steeper than, what was seen in 
+ Fig. V.E.2 . The critical source density was reached in 
+all bands for thresholds
+between 3 and 4. A value of 3.5 was chosen for all four bands. 
+
+ E.7.b Choosing the Weeks-Confirmation Threshold
+
+ Figure V.E.3 Effect of weeks-confirmation threshold on the number of
+sources. The chosen threshold is indicated by the vertical
+broken line. 
+
+ larger 
+ largest 
+
+ Figure V.E.3 shows the number of
+weeks-confirmed sources as a function
+of the weeks-confirmation threshold for Region A. Clearly, almost all 
+confirmations
+were acquired by a threshold of 2; the slow rise beyond that point was
+roughly linear, as expected for false confirmations. The linear rise with
+threshold was expected because the search area (rather than the search
+radius) scales linearly with the confirmation threshold. Reliability dictated
+dictates these false confirmations, while completeness demanded keeping
+as many of the better positional matches as possible. A value of 1.4 for
+weeks-confirmation threshold was selected because it marked the boundary
+between the steep climb due to true confirmations and the gradual climb
+due to the false confirmations. 
+
+ E.7.c Choosing the Band-Merging Threshold
+
+ Figure V.E.4 The optimal threshold for band-merging is indicated by the
+vertical broken line. It is the same as for weeks-confirmation. 
+
+ larger 
+ largest 
+
+Because both spatial resolution and source properties changed with wavelength,
+an astronomical object could appear extended in one band and point-like
+in others. In view of that, band-merging was carried out after confirmation,
+in contrast to point source processing.
+ 
+ Figure V.E.4 shows the output of the band-merge
+processor as a function of the band-merging link parameter threshold in
+Region B how Galactic latitudes). As anticipated most sources turned out
+to be single-band sources. Past a threshold of 1.4 very little new 
+band-merging took place. A threshold of 1.4, the same as for 
+weeks-confirmation, was adopted. 
+
+ E.7.d Summary and Discussion
+
+It was evident that the performance of the small extended source processor
+at high Galactic latitudes varied slowly as a function of the cluster 
+processing
+threshold. In contrast, crowded regions provided the testing ground for
+selecting an optimal clustering threshold. With a first determination of
+3.5 as the clustering threshold high Galactic latitudes provided the optimal
+choice of 1.4 as the weeks-confirmation threshold ( Fig.
+V.E.2 ). A value of 1.4 was also chosen as the optimal threshold for
+band-merging.
+
+ Figure V.E.5 A final check on the optimal thresholds: the
+weeks-confirmation threshold used here is the final one (1.4);
+the effects of cluster analysis are quite drastic, as expected.
+The tick mark on each curve indicates the critical source density;
+in all cases this density is obtained at thresholds greater than
+the optimal choice of 3.5. 
+
+ larger 
+ largest 
+
+The final iteration was to repeat clustering optimization using the
+final choice for confirmation threshold. This was done using 
+ Fig. V.E.5 , where the density of weeks-confirmed 
+sources is shown as a function of the clustering threshold in the three 
+crowded regions mentioned in Section V.E.7.a . The confusion
+limits were 3.1, 3.1, 2.7, and 1.6 sources per sq. deg in the 12, 25, 60, and
+ 100 um bands, respectively. This critical density was reached for all 
+bands between clustering thresholds of 3 and 4; as expected a value of 3.5 
+was still the optimal common choice for all
+bands.
+ 
+To assess the significance of this choice, one can estimate the size
+of the area searched for close neighbors by the cluster analysis processor
+both in relative and absolute terms.
+ 
+If an extended source is thought of as a square-wave in one dimension
+with total width W , then its corresponding rms size is W /(2 x 3 &frac12; ).
+The template used for detecting this source would have been itself square-wave
+shaped with a width W , and baseline segments W /2 on each side. 
+A clustering
+threshold of 3.5 implies that 2 sources are considered close neighbors
+as soon as the baseline segments of their respective detection templates
+star to overlap. This was clearly a reasonable, though somewhat conservative,
+way of guarding against confusion.
+ 
+To estimate the angular distances involved in cluster analysis, the
+mean size of a sample of 111 sources in each band was calculated after
+clustering and weeks-confirmation; these mean sizes (always close to the
+medians as well) were 1.5', 1.5', 1.8', and 2.2' at 12, 25, 60, and 100 
+um.
+The largest size in any band was 3'. On average, therefore, cluster analysis
+treated as "close neighbors" two sources within 10' of each other
+at 12 and 25 um, 12' at 60 um, and 15' at 100 um.
+ 
+Cluster analysis fulfilled its objective in recognizing and setting
+aside large structures that were fragmented into small extended sources;
+this was the reason for the decrease in 100 um and 60 um source
+counts with increasing clustering threshold in Region A ( Fig.
+V.E.1 ): cirrus was integrated into larger structures and dropped from
+further processing. It should be stressed, however, that cirrus is not
+absent from the small extended source catalog.
+ 
+Cluster processing also fulfilled its objective as a confusion processor,
+as shown by the reduction by an order of magnitude of the source density
+in crowded areas ( Fig. V.E.4 ) as the clustering
+threshold was varied from 1 to greater than 3.5. The sources that survived
+in densely populated areas were either very isolated or locally dominant.
+isolated sources had no neighbors within the search window. Dominant sources
+were so much brighter than their neighbors that when the latter were combined
+with them the source parameters were barely altered so that the size in
+particular did not grow beyond the maximum cutoff value. In confused areas
+most sources were dropped because they combined with a neighbor within
+the search radius, but far enough away that the combined structure exceeded
+the size limit. Such occurrences were recognized by the rejected source
+having an axial ratio much larger than unity.
+ 
+It should therefore, be stressed that the absence of a small extended
+source where one was expected, in crowded or uncrowded regions, may be
+due to the presence of a neighbor; the two sources may have combined into
+too large a source.
+ 
+ Table V.E.1 traces the number of small extended
+sources that were processed through clustering analysis and weeks-confirmation
+with the final choice for the thresholds in Regions A and B. The fraction
+of sources that survived cluster analysis and went on to weeks-confirmation
+was much higher in Region A (high latitude) than in Region B (low latitude).
+At 12 and 25 um, about 90% of the sources surviving cluster
+analysis did not pass weeks- confirmation and were therefore discarded
+this percentage decreased at longer wavelengths but remained substantial.
+The main reason for this high failure rate was the lack of a rigorous 
+requirement for hours-confirmation, such as was required for point sources. 
+Detector noise or other transients could trigger detections which 
+seconds-confirmed, and then were used to construct a source that was 
+discarded only at weeks-confirmation.
+ 
+The excess of 25 um detections in Region A was a direct result
+of the lack of hours-confirmation: the dead detectors in this band relaxed
+the seconds-confirmation filter, and therefore allowed many more. stray
+detections than in other bands. The problem was hardly noticeable in Region
+B because most detections there were triggered by real but complex structure
+on the sky. That difference just reflects the contrasting definitions of
+Regions A and B: A has a low surface density of sources at the survey 
+sensitivity, and the noise was dominated by the detector noise; B was 
+dominated by confusion noise, in the sense that it was densely packed with 
+detectable sources.
+The result was that most detections were discarded by cluster processing
+in Region B, and by weeks-confirmation in Region A. When all bands were
+combined it turned out that in both regions about one out of every seven
+detections ended up contributing to a source in the catalog; this fraction
+was remarkably similar for Regions A and B.
+ 
+Region B was surveyed three times by the satellite, but only about a
+quarter of all sources were detected on all three passes; this was mostly
+due to "shadowing" by the Galactic plane, and hysteresis in the
+detectors (see Section VIII.D ). The coverage
+of Region A was more complex including areas with
+
+ Chapter Contents 
+| Introduction | Authors 
+| References 
+
+ Table of Contents |
+ Index | Previous Section 
+| Next Section

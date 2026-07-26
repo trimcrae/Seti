@@ -1,0 +1,348 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+<HEAD>
+<TITLE>IX.B. Performance and Calibration</TITLE>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H1 ALIGN=CENTER>IRAS Explanatory Supplement<BR>
+IX. The Low-Resolution Spectra<BR>
+B. Performance and Calibration</H1>
+
+<HR>
+<CENTER><FONT SIZE=+1><A HREF="index.html#toc">Chapter Contents</A>
+ | <A HREF="index.html#auth">Authors</A>
+| <A HREF="index.html#ref">References</A>
+<BR>
+<A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> | <A HREF="A.html">Previous Section</A>
+| <A HREF="C.html">Next Section</A></FONT></CENTER>
+<HR>
+
+<ol type=1>
+<li><a href=#1>Detectors</a>
+<li><a href=#2>Wavelength Scale</a>
+<li><a href=#3>Cross-Scan Responsivity</a>
+<li><a href=#4>Wavelength-Dependent Responsivity</a>
+<li><a href=#5>Radiation Effects</a>
+<li><a href=#6>Multiplexer Glitches</a>
+<li><a href=#7>Confusion</a>
+<li><a href=#8>Photon Induced Responsivity Enhancement</a>
+<li><a href=#9>Memory Effects</a>
+<li><a href=#10>Linearity Checks</a>
+<li><a href=#11>Overall Flux-Density Scale</a>
+</ol>
+<hr>
+<h2><a name=1>B.1 Detectors</a></h2>
+      The global properties of the detectors in the spectrometer
+are listed in <a href=#tabB1>Table IX.B.1</a>.  The weekly averages
+of the responses to flashes of the internal reference source
+(<a href=../ch2/C.html>Section II.C</a>) stayed
+within 1% of the values given, although systematic variations
+of up to 15% were found on shorter timescales. These were associated
+with passages through the South Atlantic Anomaly (SAA) and across
+the Galactic plane.  The spectra were corrected for these effects
+by using a flash response interpolated between the most recent
+flash and the next one.  As described below, other correction
+factors (especially the cross-scan gain) introduced larger uncertainties
+in the flux scale of the spectra.
+<P>
+      The noise estimates given in <a href=#tabB1>Table IX.B.1</a> are
+based on baseline
+readings, and refer to a single spectral resolution element. Estimates
+for individual spectra deviate from the mean value by typically
+20%.
+
+<center>
+<table border=1 cellpadding="2">
+
+<caption>
+<b><font size=+1><a name=tabB1>
+Table IX.B.1   Detector Characteristics</a></font></b>
+</caption>
+
+<tr bgcolor="#CCCCCC">
+<th>Detector Number</th>
+<th>Response to Internal Reference (mV)</th>
+<th>Noise level (mV)</th>
+<th>NEFD (Jy)</th>
+<th>Wavelengths (&micro;m)</th>
+</tr>
+
+<tr>
+<td>1</td>
+<td>11.9</td>
+<td>0.10</td>
+<td>1.4</td>
+<td>8 - 13</td>
+
+<tr>
+<td>2</td>
+<td>4.4</td>
+<td>0.04</td>
+<td>1.6</td>
+<td>8 - 13</td>
+</tr>
+
+<tr>
+<td>3</td>
+<td>7.4</td>
+<td>0.06</td>
+<td>1.3</td>
+<td>8 - 13</td>
+</tr>
+
+<tr>
+<td>4</td>
+<td>22.8</td>
+<td>0.12</td>
+<td>3.0</td>
+<td>11 - 22</td>
+</tr>
+
+<tr>
+<td>5</td>
+<td>46.3</td>
+<td>0.20</td>
+<td>2.5</td>
+<td>11 - 22</td>
+</tr>
+</table>
+</center>
+
+<HR>
+<h2><a name=2>B.2   Wavelength Scale</a></h2>
+      The conversion from in-scan position to wavelength was adjusted
+and monitored using the lines in the spectrum of the planetary
+nebula NGC 6543. The wavelength scale is accurate within 0.1 &micro;m.
+<P>
+      The zero point of the wavelength scale could be determined
+by the in-scan position of the source as determined by the survey
+instrument during the same scan. The uncertainty in this position
+caused a jitter in the zero point of up to 1 sample (corresponding
+to 7&quot; or one-half of a spectral resolution element). This
+effect degraded the correction for wavelength-dependent gain and
+the averaging of individual spectra. A better estimate of the
+zero point was obtained using the four well-defined band edges
+of the spectrometer. A signal-to-noise ratio of 10 measured at
+one of the edges gave an accuracy of 0.3 sample (2&quot;).
+
+<a name="figB1">
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=2 align=right width=200>
+<TR><TD>
+<CENTER><A HREF="../ch9/figs/figB1-2.gif" target="fig9B1">
+<IMG SRC="../ch9/figs/figB1-3.gif" BORDER=0></A></CENTER>
+</TD></TR>
+<TR><TD>
+<I>Figure IX.B.1  Cross-scan responsivity for each of the five spectrometer
+detectors. Detectors 1, 2 and 3 cover the 8-12 &micro;m wavelength range,
+and detectors  4 and 5 cover the 11-25 &micro;m wavelenght range. Open
+circles indicate the R UMi results; the curves were used for the
+correction (Section IX.C.2.e).</I><br>
+<a href="../ch9/figs/figB1-2.gif" target="fig9B1">larger</a>
+<a href="../ch9/figs/figB1-1.gif" target="fig9B1">largest</a>
+</TD></TR>
+</TABLE>
+
+<HR>
+<h2><a name=3>B.3 Cross-Scan Responsivity</a></h2>
+<P>
+      The cross-scan responsivity of the detectors was determined
+by finely spaced raster scans across the star R UMi (as shown
+in <a href=#figB1>Fig. IX.B.1</a>.) where the curves are
+normalized over the central
+half of the detectors. The sharp dip in response of detector 4
+was also found in the laboratory tests. Although the curves are
+accurate within a few percent, the derived value of the cross-scan
+correction is much less accurate. Because the cross-scan position
+determined by the survey instrument during a scan had a typical
+uncertainty of 1'.  Except for sources passing over the very center
+of a detector this introduced an uncertainty in the cross-scan
+correction factor of 10-20%.
+<P>
+<HR>
+<h2><a name=4>B.4 Wavelength-Dependent Responsivity</a></h2>
+<P>
+      In order to determine the factor for conversion of sample
+values into flux densities, the observed spectra of a Tau were
+compared with a black body spectrum of 10,000 K.  The resultant
+responsivity curves (<a href=#figB2>Fig. IX.B.2</a>) show the
+ratios of flux density
+to sample value as a function of wavelength.  The curves have
+been normalized in the overlap region from 11 to 12 &micro;m and are
+and to 2% at the shortest and to 4% at the longest wavelengths.
+ No significant differences were found between detectors 1, 2
+and 3, or between detectors 4 and 5. All detectors had somewhat
+better responsivity in the center of their wavelength range than
+at the edges.  Except near the very edges of the band, the responsivity
+correction did not exceed 30%.  The feature seen between 9 and
+12 &micro;m in the short-wavelength band is a characteristic of the
+instrument that is found in all raw spectra and was already known
+from laboratory tests.
+
+<BR CLEAR="RIGHT">
+<HR>
+<h2><a name=5>B.5 Radiation Effects</a></h2>
+
+<a name="figB2"></a>
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=2 align=right width=200>
+<TR><TD>
+<CENTER><A HREF="../ch9/figs/figB2-2.gif" target="fig9B2">
+<IMG SRC="../ch9/figs/figB2-3.gif" BORDER=0></A></CENTER>
+</TD></TR>
+<TR><TD>
+<I>Figure IX.B.2 Wavelength dependent responsivity for the 8-13
+and the 11-25 &micro;m detectors, respectively, plotted on the standard
+samples (Section IX.C.2.c).  The responsivities are normalized
+in the 11-12 &micro;m region.</I><br>
+<a href="../ch9/figs/figB2-2.gif" target="fig9B2">larger</a>
+<a href="../ch9/figs/figB2-1.gif" target="fig9B2">largest</a>
+</TD></TR>
+</TABLE>
+      Spikes caused by energetic particle radiation hits were
+removed by the electronic deglitcher without significantly increasing
+the noise.  Only near the maximum of the SAA, where no regular
+observations were taken, were residual glitches and increased
+noise found.  The polar horns appear to have had no effect on
+the detectors. Outside the SAA, baseline drifts on a time scale
+of 1.5 sec, roughly the dwell time of a point source on a detector
+had an amplitude of less than twice the noise level.  Inside the
+SAA, the drifts increased by about a factor of ten.
+
+<HR>
+<h2><a name=6>B.6 Multiplexer Glitches</a></h2>
+<P>
+      Occasionally, the data streams of the detectors were scrambled
+by the multiplexer. In most cases this was evident in the spectra
+as single-sample spikes.  The larger ones were easily recognized
+and removed (see <a href=C.html>Section IX.C</a>). In some cases a
+series of samples
+was scrambled and the spectrum could not be repaired without running
+the risk of erasing real features.
+
+
+<HR>
+<h2><a name=7>B.7 Confusion</a></h2>
+<P>
+      Since the slitless spectrometer had a field-of-view of 5'
+by 6' (short wavelengths) or 7.5' by 6' (long wavelengths), regions
+that were confused in the short wavelength survey bands were also
+confused for the spectrometer. A spectrum could be confused by
+a nearby point source, or by extended structure associated with
+the source itself or in the background. In most cases such confusion
+was recognizable as a difference in the baseline level between
+the two sides of each spectrum-half. However, as discussed below,
+if the test of baseline asymmetry was made too restrictive, otherwise
+good spectra were lost.
+
+<HR>
+<h2><a name=8>B.8 Photon Induced Responsivity Enhancement</a></h2>
+<P>
+      No evidence was found for photon induced responsivity enhancement
+(<a href=../ch4/A.html#8>Section IV.A.8</a> and
+<a href=../ch6/B4.html#4c>VI.B.4c</a>), although it would have been hard
+to discover. In the first place, most spectrometer sources were
+stars or star-like sources with flux densities gradually decreasing
+towards longer wavelengths.  Since the spectra were scanned starting
+at the long wavelengths, and thus at the lowest flux density,
+the deformation of the spectra was minimized.  Secondly, close
+to the Galactic plane, where the effects were greatest there were
+very few clean, isolated point sources.  Confusion probably masked
+any effects of photon induced enhancement present.
+
+<HR>
+<h2><a name=9>B.9 Memory Effects</a></h2>
+<P>
+      Changes in the detector responsivity on a time scale of
+minutes due to exposure to a bright source or to a prolonged exposure
+to a medium bright source like the Galactic plane were found to
+occur. The latter effect was compensated for to within 5% by using
+interpolated internal reference flash responses to correct the
+flux densities.
+<P>
+      Memory effects did not cause differences in response of
+the system between spectral lines and continuous spectra.  The
+planetary nebula NGC 6543 was scanned at the nominal survey rate
+and at &frac12; , &frac14; , and 1/8 of that speed. The line intensities did
+not change noticeably as a function of the different scan speeds.
+
+<HR>
+<h2><a name=10>B.10  Linearity Checks</a></h2>
+<P>
+      It is expected that any non-linearity effects were small,
+although no comprehensive linearity tests were made. This statement
+is based on the agreement between two different determinations
+of the wavelength dependent responsivity curves.  One set of curves
+was determined using <img src=../images/alpha-lc.gif>-Tau, a star
+with a spectrum that rises
+steeply towards shorter wavelengths. The second set of curves
+was determined using asteroids -- cool objects which are brightest
+at the longer wavelengths. The differences between the two sets
+were small, and the comparison was limited by the accuracy with
+which the asteroid curves could be determined.
+
+<HR>
+<h2><a name=11>B. 11 Overall Flux-Density Scale</a></h2>
+<P>
+      After processing a large sample of spectra with the correction
+techniques described in <a href=C.html>Section IX.C</a>, the integrated
+fluxes in
+the spectra (after convolution with the survey pass-band) were
+compared with the fluxes measured by the survey array at 12 &micro;m.
+ Comparison with the 25 &micro;m survey fluxes was not attempted because
+the spectrometer hardly overlaps the survey 25 &micro;m pass-band. Systematic
+factors of 0.75 and 1.00, respectively, were applied to the data
+to make the 8-13 and 11-25 &micro;m spectrometer fluxes were with the
+survey fluxes.  On the average the spectrometer flux densities
+in the catalog are consistent with the survey flux densities to
+within 10-15%.
+
+
+<P>
+<HR>
+<CENTER><FONT SIZE=+1><A HREF="index.html#toc">Chapter Contents</A>
+| <A HREF="index.html#auth">Authors</A>
+| <A HREF="index.html#ref">References</A>
+<BR>
+<A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> | <A HREF="A.html">Previous Section</A>
+| <A HREF="C.html">Next Section</A></FONT></CENTER>
+<HR>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

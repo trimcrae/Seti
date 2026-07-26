@@ -1,0 +1,225 @@
+X.E. Low-Resolution Spectra 
+
+ IRAS Explanatory Supplement
+
+X. The Formats of the IRAS Catalogs and Atlases
+
+E. Low-Resolution Spectra
+
+ Chapter Contents 
+ | Authors 
+| References 
+
+ Table of Contents |
+ Index | Previous Section 
+| Next Section 
+
+ Catalog Header File 
+ Spectra Records 
+
+ Two files give the data for the low-resolution spectra (LRS)
+which, as described in
+ Chapter IX , consist of two bands (8-13
+um and 11-25 um). The first file on the tape consists of a single
+80-character ASCII record giving the date and version of the LRS
+data. The next file lists only the wavelengths corresponding
+to each sample of the spectra
+( Table X.E.1a ). The last file contains
+the spectra and associated header information
+( Table X.E.1b ).
+The spectra are in order of increasing right ascension. Both
+files have 80-character ASCII logical records and 256 logical
+records per physical record. An atlas of the spectra will be
+published as an Astronomy and Astrophysics Supplement.
+
+ E.1. Catalog Header File
+
+ Distance from Slit. ANGLE(100) 
+ 
+ As described in detail in
+ Chapter IX , each sample in the
+spectrum corresponds to a certain in-scan distance of the source
+from the centerline of the spectrometer entrance aperture. ANGLE
+lists these angular distances.
+ 
+ Wavelength Calibration.: LAMBDA1, LAMBDA2 
+ 
+ There is a non-linear relation between the displacement of
+the source from the centerline of the spectrometer and the sampled
+wavelength. The wavelengths corresponding to each sample (or
+ANGLE) are given in LAMBDA1 and LAMBDA2 for the two wavelength
+bands. The beginning and end of each spectrum contain measurements
+that lie outside of the wavelength coverage of the instrument
+but which can be used for electronic baseline determination. The
+wavelength values corresponding to these values of sample number
+(or ANGLE) are set to 0.
+
+ E.2. Spectra Records
+
+ The items starting at bytes 0 through 25 are identical to
+the items with the same names in the point source catalog (see
+ Section X.B.1 ).
+This is also the case for the items starting at
+bytes 71, 73, 75 and 960.
+ 
+ Number of Spectra: NSPECTRA, NACCEPT 
+ 
+ NSPECTRA is the number of spectra of this source observed;
+NACCEPT are the numbers of 8-12 um and the 11-25 um spectrum halves
+ultimately averaged to make the entry in the catalog.
+ 
+ Characterization of the Spectrum.: LRSCHAR 
+ 
+ A description of the method of characterization is given
+in Section IX.D .
+ Table X.E.2 lists the spectral classes used
+to characterize the spectrum.
+ 
+ Quality of the Spectrum Halves:. SPQUAL 
+ 
+ Depending on the signal-to-noise ratio of the 8-12 um and
+11-25 um halves of the spectra, the number of accepted spectra
+halves and the difference in level of the baselines on either
+side of the spectrum halves, a quality digit is assigned to each
+half of the spectrum; 1 indicates good quality, 2 moderate quality,
+and 3 barely acceptable.
+ 
+ Scale factor For All Spectrum Flux Densities: SCALE 
+ 
+ Multiplying the integers BASELINE, NOISE, and SPECTRUM by
+the factor SCALE converts the values into units of
+W m -2 um -1 .
+ 
+ Baseline of Spectrum Halves: BASELINE 
+ 
+ These four values give the average value of samples 1 through
+20 (short wavelength end) and 81 through 100 (long wavelength
+end) of both the 8-12 um and the 11-25 um halves of the spectrum.
+ 
+ RMS Noise: NOISE 
+ 
+ Using the twenty samples on the long wavelength end used
+for BASELINE, the rms noise per spectrum half is determined.
+ 
+ Signal-to-Noise Ratio: SNR 
+ 
+ The average value of the samples in the wavelength ranges
+8-12 um and 11-25 um, respectively, are divided by the NOISE values
+determined.
+ 
+ Baseline Asymmetry: ASYMM 
+ 
+ This value indicates by what fraction of the average signal
+the baselines on the short and long wavelength sides of the spectrum
+halves differ. A large baseline asymmetry indicates that a confusing
+source may have contaminated the spectrum. The baseline asymmetry
+is usually large near the Galactic plane.
+ 
+ LRS/Survey Flux Ratio:. SRATIO 
+ 
+ The ratio of the integrated flux (after convolution of the
+spectrum flux densities with the 12 um band pass of the survey
+instrument) in the spectrum and the 12 um survey flux is given
+in this item. Normally this value should be close to unity
+( Section
+IX.C ). As the 11-25 um part of the LRS spectrum hardly overlaps
+with the 25 um survey band, a ratio of LRS/survey for this band
+is not significant.
+ 
+ The Spectrum: SPECTRUM 
+ 
+ The integer values of the spectrum must be multiplied by
+SCALE for conversion to m -2 um -1 . The wavelengths
+corresponding
+to the 100 samples given for the 8-12 um and the 11-25 um halves
+of the spectrum are given in the catalog header file. Values for
+non-significant wavelengths are set to zero. For baseline interpolation,
+either the sample numbers or the ANGLE (distance in arcmin from
+the spectrometer center line) can be used.
+
+ Header Information for Catalog of Spectra
+
+ Table X.E.1a
+
+ Byte Name Description Units Format 
+
+ 0 ANGLE Angle from center of slit (one number per sample) arc min 100F8.4 
+
+800 LAMBDA1 Wavelength in 8-12 um corresponding to each sample um 100F8.4 
+
+ 1600 LAMBDA2 Wavelength in 11-25 umcorresponding to each sample um 100F8.4 
+
+Format of Spectra in Catalog
+
+Table X.E.1b.
+
+ Byte Name Description Units Format 
+
+ 0 NAME Source name --- 11A1 
+
+11 HOURS RA 1950 hrs I2 
+
+ 13 MINUTE RA 1950 min I2 
+
+ 15 SECOND RA 1950 deci-sec I3 
+
+ 18 DSIGN Declination sign +/- A1 
+
+ 19 DECDEG DEC 1950 arc deg I2 
+
+ 21 DECMIN DEC 1950 arc min I2 
+
+ 23 DECSEC DEC 1950 arc sec I2 
+
+ 25 FLUX Averaged non-color corrected flux densities (1 value per band) Jy 4E9.3 
+
+ 61 NSPECTRA No. of observed spectra --- I2 
+
+ 63 NACCEPT No. of accepted spectrum halves --- 2I2 
+
+ 67 LRSCHAR Characterization of spectrum --- 2I1 
+
+ 69 SPQUAL Quality of 8-12 um and 11-25 um parts of spectra --- 2I1 
+
+ 71 VAR Percent of variability likelihood (from catalog) ---
+ I2 
+
+ 73 NID No. of associations (<25) --- I2 
+
+ 75 IDTYPE Type of association --- I1 
+
+ 76 SPARE 4 spare bytes --- 4A1
+
+ (---------------new record--------------) 
+
+ 80 BASELINE Average of outer 20 samples of spectra. Short and long wavelength end for each spectrum half scaled by SCALE 4I4 
+
+ 96 NOISE RMS noise per sample (one value per spectrum half) scaled by SCALE 2I4 
+
+ 104 SNR Signal-to-noise ratio (average signal in spectrum part divided by noise, one value per spectrum half) --- 2E10.3 
+
+ 124 ASYMM Relative baseline asymmetry (difference of left and right baselines divided by average signal. one value per band) --- 2E10.3 
+
+ 144 SRATIO Ratio of integrated LRS flux to 12 um survey flux --- F5.2 
+
+ 149 SCALE Scale factor for all flux densities W m -2 um -1 E11.5 
+
+ (---------------new record---------------) 
+
+ 160 SPECTRUM 100 samples for each of the two bands (8-12 um, 11-25 um), scaled by SCALE scaled by
+SCALE 200I4 
+
+ (---------------new record--------------) 
+
+ 960 ID#1 Association field from main catalog
+(see Section X.B.1 ) --- 40A1 
+
+ 1000 ID#2 additional records as required. 
+
+ Chapter Contents 
+| Authors 
+| References 
+
+ Table of Contents |
+ Index | Previous Section 
+| Next Section

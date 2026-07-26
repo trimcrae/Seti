@@ -1,0 +1,409 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+   <TITLE>V.C.  Source Detection</TITLE>
+<BODY BGCOLOR="#FFFFFF">
+
+<H1 ALIGN=CENTER>
+   IRAS Explanatory Supplement<BR>
+   V. Data Reduction<BR>
+   C. Source Detection
+</H1>
+
+<HR>
+
+<CENTER>
+<FONT SIZE=+1>
+   <A HREF="index.html#toc">Chapter Contents</A> |
+   <A HREF="index.html#intro">Introduction</A> |
+   <A HREF="index.html#auth">Authors</A> |
+   <A HREF="index.html#ref">References</A>
+<BR>
+   <A HREF="../toc.html">Table of Contents</A> |
+   <A HREF="../index/index.html">Index</A> |
+   <A HREF="B.html">Previous Section</A>
+ | <A HREF="D1.html">Next Section</A>
+</FONT></CENTER>
+
+<HR>
+<P>
+The calibrated raw data for each of the 59 operating detectors were
+examined for point sources and small extended sources. The detection of
+the latter is described in <A HREF="E1.html">Section V.E.1</A>. For each
+observation the accepted point source detections were passed, with detector
+number, time of detection (and uncertainty), flux (and uncertainty),
+signal-to-noise ratio (SNR), and the correlation coefficient with the point
+source template (CC, see below), to the seconds-confirmation processor
+(<A HREF="D2.html">Section V.D.2</A>). A noise history was also created for
+each detector. If a detection occurred in a one-second period in which the
+analog-to-digital converter was saturated, then the detection was flagged.
+
+<HR>
+
+<A NAME="1">
+<H2>C.1 Square Wave Filter</H2>
+
+<a name="figC1">
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=2 width=200 align=right>
+<TR>
+<TD ALIGN=CENTER>
+<A HREF="../ch5/figs/figC1-2.gif" target="fig5C1">
+<IMG SRC="../ch5/figs/figC1-3.gif" BORDER=0></A>
+</TD>
+</TR>
+<TR>
+<TD>
+<I>Figure V.C.1 a) An eight-point zero-sum,
+square-wave filter was applied to the data streams (top panel);
+b) The detection processor looked for positive square wave peaks
+between zero crossings in the filtered data stream (bottom panel).</I><br>
+<a href="../ch5/figs/figC1-2.gif" target="fig5C1">larger</a>
+<a href="../ch5/figs/figC1-1.gif" target="fig5C1">largest</a>
+</TD>
+</TR>
+</TABLE>
+<P>
+The first step in the detection process was to search for potential
+sources by applying a narrow bandpass digital filter to the detector data
+streams. This filter consisted of an eight-point zero-sum square-wave
+function.
+The effect of the filter was to subtract the first two and last two points
+from the sum of the middle four points; more formally, for a sequence of
+data points <I>x</I><SUB>i</SUB> (<A HREF="#figC1">Fig. V.C.1a</A>), the
+amplitude of the square-wave of <I>x</I> at the point <I>i</I> is defined as:
+<P>
+<A NAME="eqC1">
+<CENTER><FONT SIZE=+1>E(x,i) = -X<SUB>i</SUB> - X<SUB>i+1</SUB> + X<SUB>i+2</SUB> + X<SUB>i+3</SUB> + X<SUB>i+4</SUB> + X<SUB>i+5</SUB> - X<SUB>i+6</SUB> - X<SUB>i+7</SUB></FONT></CENTER>
+
+<P ALIGN="RIGHT">(V.C.1)</P>
+<P ALIGN="LEFT">
+This square-wave filter was applied at each point in the data stream,
+and a search was made for positive square-wave excursions between zero
+crossings, defined as a pair of data points (<I>i,j</I>) such that
+(see <A HREF="#figC1">Fig. V.C.1b</A>):<BR>
+<TABLE ALIGN=CENTER>
+<TR>
+<TD ALIGN=LEFT>
+<FONT SIZE=+1>E(x,i) &gt; 0;<BR>
+E(x,k) &gt;/- 0 for i &lt;/- k &lt;/- j;<BR>
+E(x,j+1) &lt; 0;<BR>
+and for some n, E(x,n) &lt; 0<BR>
+and E(x,n),....., E(x,i-1) &lt; 0.
+</FONT>
+</TD></TR>
+</TABLE>
+That is, find the values <I>n</I>, <I>i</I>, <I>j</I> such that:
+<i>n</i> with
+<i>E</i>(<i>x,n</i>) &lt; 0; the first <i>i &gt; n</i> with
+<i>E</i>(<i>x,i</i>) &gt; 0; and the first <i>j &gt; i</i> with
+<i>E</i>(<i>x,j</i>+1) &lt; 0. The positive excursion (<i>i,j</i>)
+has a peak at the first <i>p</i> with <i>i</i> <img src="../images/leq.gif">
+ <i>p</i>
+<img src="../images/leq.gif"> <i>j</i>, such that <i>E</i>(<i>x,p</i>)
+is maximal among
+<i>E</i>(<i>x,i</i>),..., <i>E</i>(<i>x,j</i>). Peaks with
+square-wave amplitudes, <i>E</i>(<i>n,p</i>), greater than 2.5
+times the noise <i>N<sub>x</sub></i> were passed on as candidates
+for point sources.
+<P>
+<HR>
+
+<A NAME="2">
+<H2>C.2 Noise Estimator</H2>
+<P>
+The noise <I>N<SUB>x</SUB></I> for a data stream was defined as the
+median of all <I>E</I>(<I>x,p</I>) for square-wave peaks <I>p</I>. Such
+positive square-wave excursions occurred about once every 6 samples. It
+was found from prelaunch simulations and from analysis of in-flight data
+that this median noise estimator gave a reasonable representation of the
+rms noise, in the sense that
+<P>
+<A NAME="eqC2">
+<CENTER>
+<FONT SIZE=+1>
+<img src=../images/sigma-lc.gif><SUB>rms</SUB>
+<img src="../images/appeq.gif"> 1.2 N<SUB>x</SUB></FONT></CENTER>
+<P ALIGN=right>(V.C.2)</P>
+The enormous volume of data meant that determination of a running estimate
+of the rms noise would have involved a prohibitive computational run time.
+<P>
+The initial value of <I>N<SUB>x</SUB></I> was the median of the first
+50 square-wave peaks. <I>N<SUB>x</SUB></I> was then updated at every
+square-wave peak <I>E</I>(<I>x,p</I>) as follows:<BR>
+<DD>If <I>E</I>(<I>x,p</I>) &lt; <I>N<SUB>x</SUB></I> then reduce
+<I>N<SUB>x</SUB></I> by the factor <img src="../images/lambda-lc.gif">
+(&lt; 1); otherwise, increase <I>N<SUB>x</SUB></I> by the factor
+1/<img src="../images/lambda-lc.gif">.
+<P>
+The parameter <img src="../images/lambda-lc.gif"> controlled the stability
+of the noise estimator. As <img src="../images/lambda-lc.gif"> approached 1,
+the noise estimator became very stable, but it also lagged behind any change
+in the noise by about 5/(1 - <img src="../images/lambda-lc.gif">)
+samples. In tuning the value of <img src="../images/lambda-lc.gif"> great
+importance was attached to achieving a stable noise estimate at high Galactic
+latitudes, where the noise was mainly due to detector noise, and a value
+<img src="../images/lambda-lc.gif"> = 0.95 was set at 12, 25 and 60 &micro;m,
+and 0.90 at 100 &micro;m.  This meant that the noise estimate lagged by about
+25', 25', 50', 50' at
+12, 25, 60 and 100 &micro;m. Regions with steep gradients in the density
+of point sources, such as the Galactic plane, had large gradients in the
+noise amplitude. Hence the noise was underestimated as the plane was
+approached and overestimated after it was passed
+(<A HREF="C.html#7">Sections V.C.7</A>,
+<A HREF="../ch8/D.html#6">VIII.D.6</A>). This error was very large, and
+since sources were thresholded partly on signal-to-noise ratio
+(<A HREF="#4">Section V.C.4</A>, below), the effective threshold was raised
+to very large values after passing the Galactic plane, resulting in a shadow
+zone in which few sources were accepted. To keep the extent of the 100
+&micro;m shadow zone no larger than that at 60 &micro;m,
+<img src="../images/lambda-lc.gif"> was set to 0.90 at 100 &micro;m compared
+with 0.95 at 60 &micro;m. However, this
+adversely affected the stability of the 100 &micro;m noise estimate
+in the presence of cirrus at higher Galactic latitudes, resulting in the
+rejection of some detections that should have been accepted and hence a
+reduction in completeness of the catalog at 100 &micro;m
+(<A HREF="../ch8/D.html">Section VIII.D</A>).
+<P>
+The noise estimate was maintained in a noise history file for each detector
+after multiplication by the factor to convert it to an estimate of the
+rms noise on a single sample. To compress the size of this file, an entry
+was made only if linear extrapolation of the previous two entries would
+lead to an error greater than 35%.
+<HR>
+
+<A NAME="3">
+<H2>C.3 Timing Estimate</H2>
+<P>
+The time of the square-wave peak at <I>E</I>(<I>x,p</I>) was estimated
+from the maximum of the parabola passing through the three points (<I>p</I>
+- 1,<I>E</I>(<I>x,p</I> - 1)), (<I>p,E</I>(<I>x,p</I>)), (<I>p</I> + 1,
+<I>E</I>(<I>x,p</I> + 1)). The delay between a source in the unfiltered data
+and its peak in the square-wave function was subtracted from the estimate to
+give the detection time. A small offset to account for electronic delay and
+the sampling time of the detector was included. The timing uncertainty was
+taken from a look-up
+table as a function of the values of signal-to-noise ratio and correlation
+coefficient for the source.
+<HR>
+
+<A NAME="4">
+<H2>C.4 Correlation with Point Source Template</H2>
+<P>
+The heart of the point source detection processor was the comparison
+of the data for candidate sources selected by the square-wave filter with
+the profile, or template, expected for an ideal point source. For this
+purpose the 11 samples centered on the candidate detection time,
+<I>Y<SUB>i</SUB>, i</I> = 0...10, were compared with the appropriately
+shifted template <I>R<SUB>i</SUB></I> superimposed on a linear baseline. The
+amplitude A of the detection was determined from fitting the 11 data values
+<I>Y<SUB>i</SUB></I> to the function
+<P>
+<A NAME="eqC3">
+<CENTER>
+   <img alt="V.C.3" src="../ch5/figs/eqC3.gif">
+</CENTER>
+<P ALIGN=RIGHT>(V.C.3)</P>
+where <i>B</i> is the baseline height and <i>M</i> is its slope,
+<i>A</i>, <i>M</i>, and <i>B</i> were determined by the method of least
+squares, i.e., by minimizing
+<A NAME="eqC32">
+<CENTER>
+   <img alt="V.C.3.2" src="../ch5/figs/eqC32.gif">
+</CENTER>
+<P ALIGN=RIGHT>(V.C.3.2)</P>
+where <img src="../images/sigma-uc.gif"> stands for
+<img alt="V.C.3.3" align="middle" src="../ch5/figs/eqC33.gif">
+<P ALIGN="RIGHT">(V.C.3.3)</P>
+
+Thus,
+<P>
+<CENTER>
+<A NAME="eqC41">
+<img alt="B=" src="../ch5/figs/eqC4-1.gif"><BR><br>
+<A NAME="eqC42">
+<img alt="M=" src="../ch5/figs/eqC4-2.gif"><BR><br>
+<A NAME="eqC43">
+<img alt="A=" src="../ch5/figs/eqC4-3.gif"><BR><br>
+<A NAME="eqC44">
+<img alt="B=" src="../ch5/figs/eqC4-4.gif"><BR>
+<P ALIGN=RIGHT>(V.C.4.1)</P>
+</CENTER>
+<P>
+The correlation coefficient of <i>y</i><sub>i</sub> with
+<i>R<sub>i</sub></i> is given by
+<A NAME="eqC5">
+<center>
+<img align="middle" alt="eqC5" src="../ch5/figs/eqC5.gif">
+<P ALIGN=RIGHT>(V.C.5)</P>
+</CENTER>
+<P>
+<A NAME="eqC51">
+where &nbsp;<img alt="eqC51" align="top" src="../ch5/figs/eqC51.gif">
+<P ALIGN=RIGHT>(V.C.5.1)</P>
+<P>A candidate detection was accepted only if
+<A NAME="eqC61">
+<CENTER>
+<P>(i) <img alt="eqC61" ALIGN="CENTER" src="../ch5/figs/eqC6-1.gif">
+<P ALIGN="RIGHT">(V.C.6.1)</P>
+and
+<A NAME="eqC62">
+<P>(ii) <img alt="eqC62" ALIGN="CENTER" src="../ch5/figs/eqC6-2.gif">,
+<P ALIGN=RIGHT>(V.C.6.2)</P>
+</CENTER>
+<P>
+where the factor 1.2 converts the median noise estimate to an rms noise
+estimate (see <a href="#2">Section V.C.2</a>).
+<P>
+The total rms uncertainty in amplitude, <I>A</I>, over the 11 data samples
+can be shown to be
+<P>
+<A NAME="eqC7">
+<CENTER><img alt="B=" src="../ch5/figs/eqC7.gif"></CENTER>
+<P ALIGN=RIGHT>(V.C.7)</P>
+<P>
+Thus the correlation coefficient is a measure of the local signal-to-noise
+ratio and a threshold of 0.87 corresponds to a signal-to-noise ratio of
+about 5.7. In regions where the noise was roughly independent of time,
+the main thresholding was therefore provided by the correlation coefficient.
+The square-wave filter threshold (<a href="#1">Section V.C.1</a> above)
+was set low so that
+as few acceptable detections as possible were rejected, within the constraints
+of the available computer time. It should be noted that a low correlation
+coefficient for a bright point-source is probably an indication that the
+source is slightly extended. In regions of high source density
+(see <a href="H.html#6">Section V.H.6</a>),
+where extended structure is a considerable problem, the correlation
+coefficient threshold was increased to 0.97.
+
+<hr>
+
+<a name="5">
+<h2>C.5 Determination of Templates</h2>
+<P>
+The templates for each wavelength band were stored with a sampling
+frequency 64 times that of the survey data. The candidate detection time in
+sampling was determined, rounded off to the nearest 1/64th of a sample and
+the  appropriate 11-point template selected by taking every 64th point from
+the template array.
+
+<a name="figC2">
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=2 width=200 align=right>
+<TR>
+<TD>
+<CENTER><A HREF="../ch5/figs/figC2-2.gif" target="fig5C2">
+<IMG SRC="../ch5/figs/figC2-3.gif" BORDER=0></A></CENTER>
+</TD>
+</TR>
+<TR>
+<TD>
+<I>Figure V.C.2 Detections found by the square-wave filter
+were compared with the response of the telescope-detector-electronics
+combination to a true point source.  Representative point source
+templates are shown for one detector in each wavelength band.</I><br>
+<a href="../ch5/figs/figC2-2.gif" target="fig5C2">larger</a>
+<a href="../ch5/figs/figC2-1.gif" target="fig5C2">largest</a>
+</TD>
+</TR>
+</TABLE>
+<P>
+Immediately after launch, predicted detector responses to an ideal point
+source were used. Composite templates were constructed for each detector
+using sources detected with high correlation coefficient and signal-to-noise
+ratio. The a priori templates were replaced with the composite templates
+and the analysis repeated, using 12 hours worth of data. Convergence was
+achieved after only a few iterations. <a href="#figC2">Figure V.C.2</a>
+shows representative
+point source templates for one detector in each wavelength band. Since
+no evidence for detector-to-detector variation within a band was found,
+the results for all the detectors in each band were averaged together to
+produce the final composite templates.<br clear=right>
+
+<hr>
+
+<a name="6">
+<h2>C.6 Low Signal-to-Noise Detections</h2>
+<P>
+A secondary class of detections called low signal-to-noise detections
+was defined as those with signal-to-noise ratios between 3 and the threshold
+required for a valid detection. Because the threshold for valid detections
+was itself set at 3, no low signal-to-noise detections should have been
+generated. However, due to the round-off errors in the computation of the
+signal-to-noise ratio, a few were created. These were only used to provide
+upper limits for sources confirmed in other bands.
+
+<hr>
+
+<a name="7">
+<h2>C.7 Source Shadowing</h2>
+<P>
+When two sources crossed the same detector within 6 samples of each
+other, i.e., within 1.4', 1.4', 2.9', 5.9' of each other in the scan direction
+at 12, 25, 60 and 100 &micro;m, respectively, the detection of one
+or both of the sources may have been inhibited. Generally, the brighter
+source was detected without mishap, but the fainter source may have had
+its baseline so modified by the brighter source that it failed to be detected
+at all. This is the phenomenon of source &quot;shadowing&quot;. A source
+may have been shadowed in a longer wavelength band but detected perfectly
+at shorter wavelengths. To warn of the possibility of this effect, sources
+were tagged at a later stage in the processing
+(see <a href="H.html#3">Section V.H.3</a>) If they
+had near neighbors. The fluxes of such flagged sources should be regarded
+with caution. No significance should be attached to the absence of a detected
+flux in a shadowed band. The completeness figures given in
+<a href="../ch8/index.html">Chapter VIII</a>
+do not apply to the shadow zone around a source.
+
+<HR>
+
+<CENTER>
+<FONT SIZE=+1>
+   <A HREF="index.html#toc">Chapter Contents</A>
+ | <A HREF="index.html#intro">Introduction</A> |
+   <A HREF="index.html#auth">Authors</A>
+ | <A HREF="index.html#ref">References</A>
+<BR>
+   <A HREF="../toc.html">Table of Contents</A> |
+   <A HREF="../index/index.html">Index</A> |
+   <A HREF="B.html">Previous Section</A>
+ | <A HREF="D1.html">Next Section</A>
+</FONT>
+</CENTER>
+
+<HR>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

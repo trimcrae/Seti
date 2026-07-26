@@ -1,0 +1,834 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+<HEAD>
+<TITLE>X.B.1 The Machine Readable Version of the Point
+Source Catalog</TITLE>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H1 ALIGN=CENTER>IRAS Explanatory Supplement<BR>
+X. The Formats of the IRAS Catalogs and Atlases<BR>
+B. Point Sources<br>
+B.1 The Machine Readable Version of the Point Source Catalog</H1>
+
+<HR>
+
+<CENTER><FONT SIZE=+1>
+<A HREF="index.html#toc">Chapter Contents</A>  |
+<A HREF="index.html#auth">Authors</A> |
+<A HREF="index.html#ref">References</A>
+<BR>
+<A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> |
+<A HREF=B.html>Previous Section</A> |
+<A HREF=B2.html>Next Section</A></FONT></CENTER>
+
+<HR>
+     The point source catalog tape is divided into six individual
+files, covering the range 0 to 24 hr in right ascension in blocks
+of four hours each. Each file contains from 20,000 to 90,000 sources
+arranged in order of increasing right ascension. Each of the six
+catalog files is <i>preceded</i> by a file containing a single 80-character
+ASCII record which lists the date and version number of the catalog.
+ Thus to read the entire catalog one must read sequentially through
+12 files, six containing the data and six containing dates and
+version numbers.
+<P>
+      <a href=#tabB1>Table X.B.1</a> describes each
+entry in the catalog tape. Those
+columns that are also included in the printed version are marked.
+ Each catalog entry requires 160 + <i>NID</i> &times;
+40 bytes of ASCII data
+where NID is the number of positional associations for each source.
+In the table the column &quot;Format&quot; refers to the length
+and type of the (FORTRAN) character field used to read or write
+each entry.  <a href="#figB1">Figure X.B.1</a> describes the
+format of the printed
+version of the catalog.
+<P>
+      The tape is written with 80-character (ASCII) logical records
+and blocked with 256 logical records per physical record so that
+one can regard the tape as a sequence of card images. The entries
+are arranged so that the source data fits into two records. Association
+information requires an additional 40 characters per association
+and appears in subsequent records, two associations per record.
+If one assumes an average
+of two associations per source, then a file for one of the right
+ascension blocks will require about 10 Mbytes.
+
+<center>
+<table border=1 cellpadding="2">
+<caption>
+<a name=tabB1>
+<b><font size=+1>Format of Point Source Catalog Tape<BR>Table X.B.1 </font></b>
+</caption>
+<tr bgcolor="#CCCCCC">
+<th>Start Byte</th>
+<th>Name</th>
+<th>Description</th>
+<th>Units</th>
+<th>Format</th>
+</tr>
+<tr>
+<td>00</td>
+<td>NAME<sup>1</sup></td>
+<td>Source Name</td>
+<td>---</td>
+<td>11A1
+</td></tr>
+<tr>
+<td>11</td>
+<td>HOURS</td>
+<td>Right Ascension 1950.</td>
+<td>Hours</td>
+<td>I2
+</td></tr>
+<tr>
+<td>13</td>
+<td>MINUTE</td>
+<td>Right Ascension 1950.</td>
+<td>Minutes</td>
+<td>I2
+</td></tr>
+<tr>
+<td>15</td>
+<td>SECOND<sup>1</sup></td>
+<td>Right Ascension 1950.</td>
+<td>deci-Seconds</td>
+<td>I3
+</td></tr>
+<tr>
+<td>18</td>
+<td>DSIGN<sup>1</sup></td>
+<td>Declination Sign</td>
+<td>&plusmn;</td>
+<td>A1
+</td></tr>
+<tr>
+<td>19</td>
+<td>DECDEG</td>
+<td>Declination 1950.</td>
+<td>Arc Deg</td>
+<td>I2
+</td></tr>
+<tr>
+<td>21</td>
+<td>DECMIN</td>
+<td>Declination 1950.</td>
+<td>Arc Min</td>
+<td>I2
+</td></tr>
+<tr>
+<td>23</td>
+<td>DECSEC<sup>1</sup></td>
+<td>Declination 1950.</td>
+<td>Arc Sec</td>
+<td>I2
+</td></tr>
+<tr>
+<td>25</td>
+<td>MAJOR<sup>1</sup></td>
+<td>Uncertainty ellipse major axis</td>
+<td>Arc Sec</td>
+<td>I3
+</td></tr>
+<tr>
+<td>28</td>
+<td>MINOR<sup>1</sup></td>
+<td>Uncertainty ellipse minor axis</td>
+<td>Arc Sec</td>
+<td>I3
+</td></tr>
+<tr>
+<td>31</td>
+<td>POSANG<sup>1</sup></td>
+<td>Uncertainty ellipse position angle</td>
+<td>Degree (East of North)</td>
+<td>I3
+</td></tr>
+<tr>
+<td>34</td>
+<td>NHCON<sup>1</sup> (&lt;25)</td>
+<td>Number of times observed</td>
+<td>---</td>
+<td>I2
+</td></tr>
+<tr>
+<td>36</td>
+<td>FLUX1</td>
+<td>Averaged non-color corrected flux densities (1 value per band)</td>
+<td>Jansky (10<sup>-26</sup>W m<sup>-2</sup> Hz<sup>-1</sup>)</td>
+<td>4E9.3
+</td></tr>
+<tr>
+<td>72</td>
+<td>FQUAL<sup>1</sup></td>
+<td>flux density quality. (1 value per band)</td>
+<td>---</td>
+<td>4I1
+</td></tr>
+<tr>
+<td>76</td>
+<td>NLRS</td>
+<td>Number of significant LRS spectra</td>
+<td>---</td>
+<td>I2
+</td></tr>
+<tr>
+<td>78</td>
+<td>LRSCHAR<sup>1</sup></td>
+<td>Characterization of averaged LRS spectrum.</td>
+<td>---</td>
+<td>2A1
+<tr><td colspan=5 align=center>(---------------new record--------------)
+</td></tr>
+<tr>
+<td>80</td>
+<td>RELUNC<sup>1</sup></td>
+<td>percent relative flux density uncertainties (1 value per band).</td>
+<td>---</td>
+<td>4I3
+</td></tr>
+<tr>
+<td>92</td>
+<td>TSNR</td>
+<td>ten times the minimum signal-to-noise ratio in each band</td>
+<td>---</td>
+<td>4I5
+</td></tr>
+<tr>
+<td>112</td>
+<td>CC<sup>1</sup></td>
+<td>point source correlation coefficient (1 value per band).</td>
+<td>---</td>
+<td>4A1
+</td></tr>
+<tr>
+<td>116</td>
+<td>VAR<sup>1</sup></td>
+<td>percent Likelihood of Variability</td>
+<td>&nbsp;</td>
+<td>I2
+</td></tr>
+<tr>
+<td>118</td>
+<td>DISC</td>
+<td>Discrepant Fluxes flag (one per band, hex-encoded)</td>
+<td>---</td>
+<td>A1
+</td></tr>
+<tr>
+<td>119</td>
+<td>CONFUSE<sup>1</sup></td>
+<td>Confusion flag (1 flag per band, hex-encoded)</td>
+<td>---</td>
+<td>A1
+</td></tr>
+<tr>
+<td>120</td>
+<td>PNEARH<sup>1</sup></td>
+<td>Number of nearby hours- confirmed point sources</td>
+<td>---</td>
+<td>I1
+</td></tr>
+<tr>
+<td>121</td>
+<td>PNEARW<sup>1</sup></td>
+<td>Number of nearby weeks- confirmed point sources</td>
+<td>---</td>
+<td>I1
+</td></tr>
+<tr>
+<td>122</td>
+<td>SES1<sup>1</sup></td>
+<td>Number of seconds-confirmed nearby small extended sources. (1 value per band)</td>
+<td>---</td>
+<td>4I1
+</td></tr>
+<tr>
+<td>126</td>
+<td>SES2<sup>1</sup></td>
+<td>Number of nearby weeks-confirmed small extended sources. (1 value per band)</td>
+<td>---</td>
+<td>4I1
+</td></tr>
+<tr>
+<td>130</td>
+<td>HSDFLAG<sup>1</sup></td>
+<td>Source is located in high source density bin. (1 value per band, hex-encoded)</td>
+<td>---</td>
+<td>A1
+</td></tr>
+<tr>
+<td>131</td>
+<td>CIRR1<sup>1</sup></td>
+<td>Number of nearby 100 &micro;m only WSDB sources</td>
+<td>---</td>
+<td>I1
+</td></tr>
+<tr>
+<td>132</td>
+<td>CIRR2<sup>1</sup></td>
+<td>Spatially filtered 100 &micro;m sky brightness ratio to flux density of point source (see text)</td>
+<td>---</td>
+<td>I1
+</td></tr>
+<tr>
+<td>133</td>
+<td>CIRR3</td>
+<td>Total 100 &micro;m sky surface brightness</td>
+<td>MJy sr<sup>-1</sup></td>
+<td>I3
+</td></tr>
+<tr>
+<td>136</td>
+<td>NID<sup>1</sup> (&lt;25)</td>
+<td>Number of positional associations.</td>
+<td>---</td>
+<td>I2
+</td></tr>
+<tr>
+<td>138</td>
+<td>IDTYPE</td>
+<td>Type of Object</td>
+<td>---</td>
+<td>I1
+</td></tr>
+<tr>
+<td>139</td>
+<td>SPARE</td>
+<td>21 spare bytes</td>
+<td>---</td>
+<td>21A1
+<tr><td colspan=5 align=center>(---------------new record--------------)
+</td></tr>
+<tr>
+<td>160</td>
+<td>CATN0<sup>1</sup></td>
+<td>Catalog number</td>
+<td>---</td>
+<td>I2
+</td></tr>
+<tr>
+<td>162</td>
+<td>SOURCE<sup>1</sup></td>
+<td>Source ID</td>
+<td>---</td>
+<td>15A1
+</td></tr>
+<tr>
+<td>177</td>
+<td>TYPE<sup>1</sup></td>
+<td>Source Type/Spectral Class</td>
+<td>---</td>
+<td>5A1
+</td></tr>
+<tr>
+<td>182</td>
+<td>RADIUS<sup>1</sup></td>
+<td>Radius Vector from IRAS Source to Association</td>
+<td>Arc Sec</td>
+<td>I3
+</td></tr>
+<tr>
+<td>185</td>
+<td>POS</td>
+<td>Position Angle from IRAS Source to Association</td>
+<td>Degree E of N.</td>
+<td>I3
+</td></tr>
+<tr>
+<td>188</td>
+<td>FIELD1<sup>2</sup></td>
+<td>object field #1 (magnitude/other)</td>
+<td>catalog dependent</td>
+<td>I4
+</td></tr>
+<tr>
+<td>192</td>
+<td>FIELD2<sup>2</sup></td>
+<td>object field #2 (magnitude/other)</td>
+<td>catalog dependent</td>
+<td>I4
+</td></tr>
+<tr>
+<td>196</td>
+<td>FIELD3</td>
+<td>object field #3 (size/other)</td>
+<td>catalog dependent</td>
+<td>I4
+</td></tr>
+<tr>
+<td>200</td>
+<td>&nbsp;</td>
+<td>continuation of associations<sup>3</sup></td>
+<td>&nbsp;</td>
+<td>&nbsp;
+</td></tr>
+<tr>
+<td>-240</td>
+<td>&nbsp;</td>
+<td>in blocks of 40 bytes</td>
+<td>&nbsp;</td>
+<td>&nbsp;
+</td></tr>
+<tr>
+<td>etc.</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;
+<tr><td colspan=5>
+<p><b>1</b> Quantities listed in printed version of catalog.
+<P><b>2</b> FIELD1 is listed in printed version of catalog, except for catalogs
+2 and 19, where FIELD2 is listed.
+<P><b>3</b> CATNO, SOURCE, TYPE, RADIUS, POS, FIELD 1-3 are repeated in blocks
+of 40 bytes, 2 per logical record, as necessary. The definition
+and formats of FIELD1-3 depend on the individual catalog in which
+the association is found. See <a href=#tabB4>Table X.B.4</a>.
+</td></tr>
+</table></center>
+
+<A NAME="figB1">
+<table border=1 align="right" width="200">
+<tr>
+<td>
+<center>
+<A HREF="figs/figB1-2.gif">
+<img src="figs/figB1-3.gif" border=0></A>
+</center>
+</td>
+</tr>
+<tr>
+<td>
+<I>Figure X.B.1 Explanation of format of printed version of point source catalog.<BR>
+<A HREF="figs/figB1-2.gif">larger</A>
+<A HREF="figs/figB1-1.gif">largest</A></I>
+</td>
+</tr>
+</table>
+
+<P>
+      In general, for quantities that have a value in each wavelength
+band, subscripts or array indices range from 1 to 4 and refer,
+respectively, to 12, 25, 60 and 100 &micro;m. A number of the flags
+discussed below have values in each of the four wavelength bands.
+For compactness these are encoded into a single base-16 (Hex)
+digit (values 0-F) in the following manner (<a href=#tabB2>Table X.B.2</a>).
+The four bits of that hex digit correspond to the four wavelength
+bands with bit 0 (Least Significant Bit) for 12 &micro;m, bit 1 for
+25 &micro;m, bit 2 for 60 &micro;m and bit 3 for 100 &micro;m. The presence
+of a flag in a band is denoted by setting its bit to 1. Thus a source
+with a particular flag, e.g.  CONFUSE, set at 12 and 25 &micro;m would
+have CONFUSE = 0011 = 3(Hex)  while   one   confused   in    25,60
+  and   100  &nbsp;&micro;m   would   have CONFUSE = 1110 = E(Hex).  A flag
+encoded
+in this manner will be referred to as &quot;hex-encoded by band&quot;.
+<P>
+      The remainder of this section discusses individual entries
+in the catalog. <i><u>At the end of the section a few remarks relevant
+only to the printed version of the catalog are given.</u></i>
+<P>
+<center>
+<table border=1 cellpadding="2">
+<caption>
+<a name=tabB2>
+<b><font size=+1>Meaning of Hex Encoded Flags<BR>
+Table X.B.2 </font></b>
+</caption>
+<tr bgcolor="#CCCCCC">
+<th colspan=4>Flag Set in A Particular Band</th>
+<th>Resultant Value</th>
+<tr bgcolor="#CCCCCC">
+<th>100 &micro;m (Bit 3)</th>
+<th>60 &micro;m (Bit 2)</th>
+<th>25 &micro;m (Bit 1)</th>
+<th>12 &micro;m (Bit 0)</th>
+<th>of Encoded Flag xxxx = HEX=Decimal</th>
+</tr>
+<tr>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0000=0=0
+</td></tr>
+<tr>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0001=1=1
+</td></tr>
+<tr>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0010=2=2
+</td></tr>
+<tr>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>0011=3=3
+</td></tr>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0100=4=4
+</td></tr>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>0101=5=5
+</td></tr>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0110=6=6
+</td></tr>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>0111=7=7
+</td></tr>
+<tr>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1000=8=8
+</td></tr>
+<tr>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>1001=9=9
+</td></tr>
+<tr>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1010=A=10
+</td></tr>
+<tr>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>1011=B=11
+</td></tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1100=C=12
+</td></tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>1101=D=13
+</td></tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>1110=E=14
+</td></tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1111=F=15</td>
+</tr>
+</table></center>
+
+<h2>Source Name:  NAME</h2>
+      The IRAS source name is derived from its position by combining
+the hours, minutes and tenths of minutes of right ascension and
+the sign,&deg; and minutes of the declination.  In obtaining
+the minutes of right ascension and declination for the name, the
+positions were truncated.  The letters 'A','B','C', etc. are appended
+to names of sources so close together that they would otherwise
+have had identical names. Names were uniquely assigned to both
+catalog and reject file sources, with catalog sources receiving
+letters first.
+
+<h2>Position: (HOURS,MINUTE,SECOND,DSIGN,DECDEG,DECMIN,DECSEC)</h2>
+      Positions are given for the equinox 1950.0, and epoch 1983.5.
+ Hours (HOURS) and minutes (MINUTE) of right ascension are given
+as integers while seconds (SECOND) are rounded to integer deciseconds.
+ The declination is given as a character sign (DSIGN) followed
+by integer values of&deg; (DECDEG), minutes (DECMIN) and seconds
+(DECSEC).  Values of 60 seconds are given when the truncated minutes
+(given here) disagree with the minutes in the rounded position.
+
+<h2>Position Uncertainty: MAJOR, MINOR, POSANG</h2>
+      As discussed in <a href=../ch7/B.html#2>Section VII.B.2</a>,
+the uncertainty in the
+position for a source depends on its brightness in the various
+wavelength bands, its path across the focal plane and the number
+of sightings. The final uncertainty after position refinement
+is expressed as a 95% confidence uncertainty ellipse
+(see <a href=../ch5/D9.html>Section V.D.9</a>) whose
+semi-major (MAJOR) and semi-minor (MINOR) axes are
+given in seconds of arc. The orientation (POSANG) of the ellipse
+on the sky is expressed in terms of the angle between the major
+axis of the ellipse and the local equatorial meridian. It is expressed
+in&deg; east of north
+
+<h2>Number of Sightings: NHCON</h2>
+      The number of hour-confirmed sightings is given. This number
+of flux entries will be found in the WSDB.
+
+<h2>Flux Density: FLUX(4)</h2>
+      Each of the four wavelengths has a <b>non-color-corrected</b> flux
+density in units of Janskys,
+(1 Jy = 10<sup>-26</sup> W m<sup>-2</sup> Hz<sup>-1</sup>). The quoted
+value is an average of all the hours-confirmed sightings as obtained
+by the prescription described in
+<a href=../ch5/H.html#5>Section V.H.5</a>.  The quality of
+each flux density is designated by FQUAL (see below).
+<P>
+The flux densities have been calculated assuming an intrinsic
+source energy distribution such that the flux density
+<i>f<sub>v</sub></i> is proportional to <i>v</i><sup>-1</sup>.
+Corrections to other spectral shapes can be made by consulting
+<a href=../ch6/C.html>Section VI.C</a>.
+<P>
+      The flux densities for sources so bright that they saturated
+the analog-to-digital converter on every sighting are lower limits
+based on the brightest value recorded.  The uncertainties are
+given as ten times the quoted flux density and a flag is set indicating
+saturation has occurred (<a href=B3.html#tabB7a>Table X.B.7a</a>).
+
+<h2>Signal-to-Noise Ratio: TSNR(4)</h2>
+      The signal-to-noise ratio given for an individual hours-confirmed
+sighting is the highest value of the detections comprising that
+sighting (<a href=../ch5/C.html#2>Section V.C.2</a>). The
+values quoted in the catalog are <i>ten times the minimum</i>
+of the signal-to-noise ratios for the
+various sightings (HCONs) of the source.  A value is given for
+each wavelength band with a high or moderate quality measurement
+and for those upper limits coming from a non-seconds-confirmed
+detection.  Values of TSNR greater than 30,000 are given as 30,000.
+
+<h2>Source Variability: VAR</h2>
+      VAR is the percent probability (0-99) that a source is variable
+based on an analysis of the 12 and 25 &micro;m flux densities and their
+uncertainties (see <a href=../ch5/H.html#5>Section V.H.5</a>).
+The value &quot;-1 &quot; indicates
+that the source was not examined for variability.
+
+<h2>Discrepant Fluxes: DISC(4)</h2>
+      The DISC flag indicates whether any one of the fluxes in
+a given band disagrees with others in that band, hex-encoded by
+band (<a href=../ch5/H.html#5>Section V.H.5</a>).
+
+<h2>Flux Density Quality: FQUAL(4)</h2>
+      As described in <a href=../ch5/H.html#5>Section V.H.5</a>,
+a flux density measurement
+can be either high quality (FQUAL=3), moderate quality (FQUAL=2)
+or an upper limit (FQUAL= 1).
+<P>
+     <h2> Low-Resolution Spectra: NLRS,LRSCHAR</h2>
+      The Low-Resolution Spectrometer obtained 8-25 &micro;m spectra
+of bright 12 and 25 &micro;m sources
+(<a href="../ch9/index.html">Chapter IX</a>).  NLRS gives the number
+of statistically meaningful spectra available for the source.
+LRSCHAR gives a short characterization of the nature of the spectrum
+(<a href=../ch9/D.html#tabD1>Table IX.D.1</a>). All of
+the LRS spectra are available in tape and
+printed forms (<a href=index.html#ref><i>Astronomy and Astrophysics
+Supplement, 1985</i></a>) as described below
+(<a href=E.html>Section X.E</a>) and in <a href="../ch9/index.html">Chapter IX</a>.
+
+<h2>Flux Density Uncertainties: RELUNC (4)</h2>
+      Each flux density measurement other than an upper limit
+has an associated uncertainty expressed as a 1
+<img src="../images/sigma-lc.gif"> value in units
+of l00 &times;
+<img src="../images/delta-lc.gif"> f<sub>v</sub>/<i>f<sub>v</sub></i>.
+Uncertainties are discussed in Sections <a href=../ch5/H.html#5>V.H.5</a>
+and <a href=../ch7/D2.html>VII.D.2</a>.
+
+<h2>Point Source Correlation: CC(4)</h2>
+      As described in <a href=../ch5/C.html#4>Section V.C.4</a>,
+the point source correlation
+coefficient can have values between 87-100%.  These are encoded
+as alphabetic characters with A=100, B=99...N=87, one value per
+band. The value quoted is for the highest correlation coefficient
+seen for that source on any sighting.
+
+<h2>Confusion: CONFUSE,PNEARN,PNEARW,HSDFLAG</h2>
+      As described in <a href=../ch5/D2.html>Section V.D.2</a>,
+a great deal of care went
+into trying to untangle instances of confusion between neighboring
+sources. In parts of the sky where the source density is low,
+confusion processing was sometimes able to separate sources that
+are quite close together. The CONFUSE flag is set if two or more
+sightings of the source in a given band had confusion status bits
+set indicating confusion in the seconds-confirmation or band-merging
+processes. This flag is hex-encoded by band.
+<P>
+      Other indicators of possible confusion are given by PNEARN
+and PNEARW which are, respectively, the numbers of hours-confirmed
+and weeks-confirmed point sources located within a 4.5 cross-scan
+and 6' in-scan (half-widths) window centered on the source. Values
+larger than 9 are given as 9.
+<P>
+      Regions of high source density received special processing
+to improve the reliability of the quoted sources (see
+<a href=../ch5/H.html#6>Section V.H.6</a>).
+The regions are band-dependent.  If a particular band
+of a given source went through high source density processing,
+then the appropriate bit in HSDFLAG (<a href=B3.html#tabB7>Table X.B.7</a>)
+is set. HSDFLAG is hex encoded by band.
+
+<h2>Small Extended Sources: SES1 (4), SES2(4)</h2>
+      SES1 is the number of seconds-confirmed, small extended
+source detections in a given band found within a window centered
+on the source. The size of the window is 6' in-scan &times; 4.5' cross-scan
+(half-widths). As described in Sections <a href=../ch5/H.html#3>V.H.3-4</a>
+and <a href=../ch7/H.html#1>VII.H.1</a>,
+values of SES1 greater than 1 should caution the
+reader that significant extended structure may exist in the region
+and that the source in question may be a point-source like piece
+of a complex field.
+<P>
+      SES2 is the number of weeks-confirmed small extended sources
+in a given band, located within a 6' in-scan &times; 4.5' cross-scan
+window (half-width) centered on the source. SES2 greater than
+0 means that the point source flux measurement should be treated
+with caution as the source in question may, in fact, be extended.
+ The flux quoted in the catalog of small extended sources may
+provide a better value for the source.
+
+<h2>Cirrus Indicators: CIRR1, CIRR2, CIRR3</h2>
+      Over a large range of Galactic latitudes the infrared sky
+at 100 &micro;m is characterized by emission from interstellar dust
+on a wide range of angular scales.  The so-called &quot;infrared
+cirrus&quot; can seriously hamper efforts to extract point source
+detections from the data.  To aid the user in interpreting the
+quoted 100 &micro;m measurements three quantities have been established
+(Section <a href=../ch5/H.html#4>V.H.4</a> and
+<a href=../ch7/H.html>VII.H</a>).
+<P>
+      CIRR1 gives the number of 100 &micro;m-only WSDB sources located
+within a &plusmn; &frac12;&deg; box in ecliptic coordinates centered
+on the source.  The sources included in this count are the weeks-confirmed
+sources prior to high source density region processing (if applicable)
+plus those sources hours-confirmed but not weeks-confirmed.  Values
+of CIRR1 greater than 3 may indicate contamination by cirrus with
+structure on the point source size scale.
+<P>
+      CIRR2 gives a cirrus indication on a larger scale than CIRR1
+and compares a &quot;cirrus flux&quot; with the source flux at
+100 &micro;m (see <a href=../ch5/H.html#eqH2>(Eq. V.H.2)</a>).
+Values larger than 4<sup>~</sup>5 indicate the
+presence of considerable structure in the 100 &micro;m emission on a
+&frac12;&deg; scale. A value of 0 indicates that no &frac12;&deg; data
+were available for the source in question.
+<P>
+      CIRR3 is the total surface brightness of the sky surrounding
+the source in a &frac12;&deg; beam at 100 &micro;m, clipped to exclude
+values greater than 254 MJy sr<sup>-1</sup>. Values of CIRR3 greater than
+30 MJy sr<sup>-1</sup> indicate emission from dust with an
+appreciable column
+density. A value of CIRR3 = -1 means that no data were available.
+
+<h2>Positional Associations: NID, IDTYPE, CATNO, SOURCE, TYPE, RADIUS, POS, FIELD1-3</h2>
+<P>
+      Much of the utility of the IRAS catalog comes from the association
+of infrared objects with sources known to exist from other astronomical
+catalogs. As described in <a href=../ch5/H.html#9>Section V.H.9</a>,
+a large number of catalogs
+have been searched for positional matches.  The total number of
+matches found is given by NID. Each match results in a forty-character
+description (2 per record).
+<P>
+      IDTYPE ranges from 1 to 4 and states whether an association
+was found in an extragalactic catalog (1), a stellar catalog (2),
+other catalogs (3), or matches in multiple types of catalogs (4).
+ CATNO is the number of the catalog in which the match was found
+(Tables <a href=../ch5/H.html#tabH1>V.H.1</a>,
+<a href=B3.html#tabB4>X.B.4</a>).
+<P>
+      SOURCE is the name of the object in that catalog and TYPE
+its character or spectral type, if available. A vector is drawn
+from the IRAS position to the associated object. RADIUS is the
+length of that vector in arc seconds. POS is the angle between
+the vector and the local equatorial meridian expressed in&deg;
+east of north.  Three fields (FIELD1-3) have values depending
+on the catalog in question (<a href=B3.html#tabB4>Table X.B.4</a>).
+Typically FlELD1,2 are
+magnitudes (in decimag) and FIELD3 a size.
+
+<HR>
+
+<p><CENTER><FONT SIZE=+1>
+<A HREF="index.html#toc">Chapter Contents</A>  |
+<A HREF="index.html#auth">Authors</A> |
+<A HREF="index.html#ref">References</A>
+<BR>
+<A HREF="../toc.html">Table of Contents</A> |
+<A HREF="../index/index.html">Index</A> |
+<A HREF=B.html>Previous Section</A> |
+<A HREF=B2.html>Next Section</A></FONT></CENTER>
+
+<HR>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

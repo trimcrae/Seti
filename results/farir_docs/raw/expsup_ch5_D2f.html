@@ -1,0 +1,179 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+
+<HEAD>
+   <title>V.D.2.f Triple-Detection Mode (Edge Detections)</title>
+</HEAD>
+
+<BODY bgcolor="#FFFFFF">
+
+<h1 align="center">
+   IRAS Explanatory Supplement<br>
+   V. Data Reduction<br>
+   D. Point Source Confirmation<br>
+   D.2 Overview of Seconds-Confirmation<br>
+   D.2.f Triple-Detection Mode (Edge Detections)
+</h1>
+
+<hr>
+<font size=+1>
+<center>
+   <a href="index.html#toc">Chapter Contents</a> | 
+   <a href="index.html#intro">Introduction</a> | 
+   <a href="index.html#auth">Authors</a> | 
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> | 
+   <a href="../index/index.html">Index</a> | 
+   <a href="D2e.html">Previous Section</a> | 
+   <a href="D2g.html">Next Section</a>
+</font>
+</center>
+<hr>
+
+<a name="figD2">
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=2 width=200 align=right>
+<TR>
+<TD>
+<CENTER><A HREF="../ch5/figs/figD2-2.gif" target="fig5D2">
+<IMG SRC="../ch5/figs/figD2-3.gif" BORDER=0></A></CENTER>
+</TD>
+</TR>
+<TR>
+<TD>
+<I>Figure V.D.2 The confusion processing described in the text
+attempted to deal with the various combinations of possibly multiple
+sources seen on more than one detector.</I><br>
+<a href="../ch5/figs/figD1-2.gif" target="fig5D1">larger</a>
+<a href="../ch5/figs/figD1-1.gif" target="fig5D1">largest</a>
+</TD>
+</TR>
+</TABLE>
+
+<P>
+      Some scan paths available to inertially fixed point source
+images traversed three detector slots in the same wavelength band
+as portrayed in <a href="#figD2">Fig. V.D.2</a>a. Only some 
+combinations of detector
+slots were consistent with this possibility. When three detections
+were found to be confirmable on the basis of position, the slots
+involved were tested for compatibility with this triple-detection
+mode. If they were consistent, then the source position could
+be localized to within the small region of cross-scan overlap,
+and a small uniform uncertainty in the cross-scan position of
+the source resulted.  Many sources in the catalog have at least
+one edge detection, resulting in correspondingly small cross-scan
+uncertainties.
+
+<P>
+      If the slots were not consistent with an edge detection,
+then the situation was diagnosed as confused (see below). An example
+of three detections which were not consistent with the triple-detection
+mode is shown in <a href="#figD2">Fig. V.D.2</a>b. 
+Whenever a legitimate triple-detection
+pattern occurred the possibility that two or more point source
+images were confused on the central detector had to be considered.
+<a href="#figD2">Figure V.D.2</a>c  shows two point-source 
+image paths which are close
+together in the scan direction but separated in the cross-scan
+direction, so that the central detection is a confused response
+to the two.  The additional cross-scan coverage of the triple-detection
+mode increased the probability that such confusion would occur.
+ The only thing that could be done to avoid accepting this case
+as a single point source was to require the edge-overlap detections
+to be of roughly comparable brightness, so that if they were actually
+two different sources, one would expect the central detector to
+see about twice as much flux. This would tend to cause the flux
+test to be failed, so that the triple-detection mode would be
+rejected, and confusion processing would be invoked. A faint confused
+source might not upset the flux test, and so relative faintness
+on an edge-overlap detector itself was made to be a reason for
+disqualification of the triple-detection mode. On the other hand
+if only one source were involved but it barely grazed one of the
+edge-overlap slots, there would be no great loss in disallowing
+it, as it contained little information anyway, although the detection
+could cause confusion again at hours-confirmation.
+<P>
+      These considerations led to requiring the ratio of fainter
+to brighter edge-overlap detection to be greater than 0.01 in
+order to continue to entertain the possibility of a triple detection
+mode.  Failure to pass this test caused the situation to be processed
+for confusion processing.
+
+<P>
+      Next a flux test was applied to the brighter of the two
+edge-overlap detections and the full-hit detection.  This was
+an n<img src="../images/sigma-lc.gif"> test on the log-flux discrepancy and 
+had a threshold of 4.4 <img src="../images/sigma-lc.gif"> (i.e., reject one 
+real source per hundred thousand). If
+this test failed, confusion processing was applied; otherwise
+parameter refinement was performed for position and flux.  The
+fainter edge-overlap detection was not used for flux refinement,
+and the brighter was used only if the ratio of the fainter flux
+to the full-hit flux was less than 0.1, as this indicated that
+the brighter edge-overlap detection's slot should have intercepted
+essentially all of the flux. To reduce the effects of spurious
+weak detections, the fainter edge-overlap detection could contribute
+to the position refinement only by having a signal-to-noise ratio
+above 5 and a detection correlation coefficient above 0.96.  If
+it qualified then the pairwise position refinement described below
+was performed first for pair consisting of it and the full-hit
+detection, so that the slot-extension logic (see below) could
+be activated for this pair.  The brighter edge-overlap detection
+contributed position and flux information according to the same
+rules as the double-detection mode; these are discussed in the
+parameter refinement sections below.
+
+<hr>
+<font size=+1>
+<center>
+   <a href="index.html#toc">Chapter Contents</a> | 
+   <a href="index.html#intro">Introduction</a> | 
+   <a href="index.html#auth">Authors</a> | 
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> | 
+   <a href="../index/index.html">Index</a> | 
+   <a href="D2e.html">Previous Section</a> | 
+   <a href="D2g.html">Next Section</a>
+</font>
+</center>
+<hr>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+

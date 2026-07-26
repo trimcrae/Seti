@@ -1,0 +1,229 @@
+
+
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/style.css" />
+<link rel="stylesheet" type="text/css" media="print" href="/print_style.css" />
+<link rel="stylesheet" type="text/css" media="screen,projection" href="/ui.css" />
+<script type="text/javascript" src="/ui_verbose.js"></script>
+
+<!--[if lt IE 7]>
+<style type="text/css" media="screen, projection">
+#irsa-menu li
+{
+float: left;
+height: 1%;
+}
+#irsa-menu a
+{
+height: 1%;
+}
+</style>
+<![endif]-->
+</head>
+<body >
+
+<div id="irsa-banner"   style= "min-width:768px; min-height:95px"></div>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'> </script>
+
+<div id="content">
+<!--   #include virtual="/include/sysnotice.html"  -->
+
+
+<HEAD>
+   <title>V.D.2.g In-Band Seconds-Confirmation Confusion Processing</title>
+</HEAD>
+
+<BODY bgcolor="#FFFFFF">
+
+<h1 align="center">
+   IRAS Explanatory Supplement<br>
+   V. Data Reduction<br>
+   D. Point Source Confirmation<br>
+   D.2 Overview of Seconds-Confirmation<br>
+   D.2.g In-Band Seconds-Confirmation Confusion Processing
+</h1>
+
+<hr>
+<font size=+1>
+<center>
+   <a href="index.html#toc">Chapter Contents</a> |
+   <a href="index.html#intro">Introduction</a> |
+   <a href="index.html#auth">Authors</a> |
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> |
+   <a href="../index/index.html">Index</a> |
+   <a href="D2f.html">Previous Section</a> |
+   <a href="D2h.html">Next Section</a>
+</font>
+</center>
+
+<hr>
+      The drop-dead detection and all candidates which had passed
+the fine position test were immediately marked as confused upon
+initiation of confusion processing.  Status bits set here and
+in corresponding subsequent analyses were carried in a status
+word, hereafter denoted CSTAT, throughout all remaining processing
+stages (see Table V.D.3<a href="#tabD3a">a</a>,<a href="#tabD3b">b</a>).
+<P>
+      Several attempts were made to unravel confused situations.
+The first stage involved discarding any detections with signal-to-noise
+ratios below 5 or detection correlation coefficients below 0.92.
+ Such detections were never used in any future confirmation processing.
+If this dropped the number of candidates to
+zero or one, then the drop-dead was processed for rejection or
+for the double-detection mode, respectively.  Otherwise confusion
+processing continued by attempting to identify pairs of candidates
+which would confirm each other without the help of the drop-dead
+detection and without confusion from other detections in the buffer.
+ Any such detection pairs were set aside from the current situation
+and left for the time when one of them would become a drop-dead.
+Finding such pairs reduced the number of candidates involved in
+the confused situation being processed, and after all such possible
+reduction had been achieved, the number of remaining candidates
+was checked as described above.
+<P>
+      If the situation remained confused then processing continued
+by casting aside the detections whose slots had an edge-overlap
+relationship with the drop-dead's slot; if any, unless the detector
+status information indicated that these were allowable for pairwise
+confirmation with the drop-dead.  Again the branching possibilities
+were checked.  In this case, and in all remaining cases in this
+section, discarded candidates remained eligible for future confirmations
+on subsequent processing.
+<P>
+<a name="tabD3a">
+<table border=1 align=center cellpadding="2">
+<caption>
+<b><font size=+1>
+Confusion Status (CSTAT) Bit Assignments<br>
+Table V.D.3a
+</font></b>
+</caption>
+<tr bgcolor="#CCCCCC">
+   <th align=center>Bit No.</th><th>Meaning (Applies if Bit = 1)</th>
+</tr>
+<tr>
+   <td align=center>0</td><td>Either triple-detection mode or possible<br>
+                          confusion in seconds-confirmation</td>
+</tr>
+<tr>
+   <td align=center>1</td><td>Triple-detection mode accepted</td>
+</tr>
+<tr>
+   <td align=center>2</td><td>Confusion diagnosed and cleanup attempted<br>
+                          in seconds-confirmation</td>
+</tr>
+<tr>
+   <td align=center>3</td><td>Confusion diagnosed in band-merging, only<br>
+                          best match retained</td>
+</tr>
+<tr>
+   <td align=center>4</td><td>Confusion diagnosed in hours-confirmation,<br>
+                          only best match retained</td>
+</tr>
+<tr>
+   <td align=center>5</td><td>In 12 &micro;m Band Byte: Not Used<br>
+                          In 25 &micro;m Band Byte: Not Used<br>
+                          In 60 &micro;m Band Byte: Detector number
+                            arrays<br>
+                            (all bands) are out time order<BR>
+                          In 100 &micro;m Band Byte: More then 3 sightings
+                            were hours-confirmed</td>
+</tr>
+<tr>
+   <td align=center>6</td><td>ADC saturation occurred for at least one
+                          detection in this band</td>
+</tr>
+<tr>
+   <td align=center>7</td><td>Not used
+</table>
+<P>
+<a name="tabD3b">
+<table border=1 align=center cellpadding="2">
+<caption>
+<b><font size=+1>Common CSTAT Values (Decimal)<BR>
+Table V.D.3b.
+</font></b>
+</caption>
+<tr bgcolor="#CCCCCC">
+   <th>CSTAT<th>Meaning</td>
+</tr>
+<tr>
+   <td align=center>3</td><td>Triple-detection mode</td>
+</tr>
+<tr>
+   <td align=center>5</td><td>Possibly confused</td>
+</tr>
+<tr>
+   <td align=center>7</td><td>Triple-detection mode after confusion
+                          cleanup; usually not reliable</td>
+</tr>
+<tr>
+   <td align=center>8</td><td>Possibly confused in band-merging</td>
+</tr>
+<tr>
+   <td align=center>13</td><td>Possibly confused in both seconds-confirmation
+                           and band-merging</td>
+</tr>
+<tr>
+   <td align=center>16</td><td>Possibly confused in hours-confirmation
+</table>
+
+<P>
+      If further candidate reduction was needed, the candidates
+were required to pass a stricter position test, similar to the
+one discussed above, but with a threshold value such that one
+real detection pair out of one hundred would be expected to fail
+this test. Again the branches considered above were checked except
+this time the case of two remaining candidates was included, with
+a branch to the triple-detection mode processing if applicable,
+provided that a branch from that mode to confusion processing
+had not already been executed.
+<P>
+      If more than two candidates remained at this point (or two
+which had been found unacceptable for the triple-detection mode),
+then that combination whose summed fluxes came closest to those
+of the drop-dead were retained and the others were discarded.
+ If this left no candidates, the drop-dead was rejected; if only
+one candidate remained the double-detection mode processing was
+performed.  Otherwise, a flux test between the summed candidate
+fluxes and the drop-dead flux was performed which was similar
+to the triple-detection mode flux test, except that the threshold
+value used was chosen so that one real case out of a million would
+be rejected.  If this test was passed then all remaining candidates
+were confirmed with the drop-dead which was considered to be a
+simultaneous confused observation of all of them.  This type of
+salvaging was possible only when the drop-dead was the confused
+sighting (rather than one of the candidates).  In this case, no
+flux refinement was performed; the individual candidate fluxes
+were retained, but position refinement was performed as described
+below.
+
+<hr>
+<font size=+1>
+<center>
+   <a href="index.html#toc">Chapter Contents</a> |
+   <a href="index.html#intro">Introduction</a> |
+   <a href="index.html#auth">Authors</a> |
+   <a href="index.html#ref">References</a>
+<br>
+   <a href="../toc.html">Table of Contents</a> |
+   <a href="../index/index.html">Index</a> |
+   <a href="D2f.html">Previous Section</a> |
+   <a href="D2h.html">Next Section</a>
+</font>
+</center>
+
+<hr>
+
+
+</div> <!-- end #content -->
+<div id="irsa-footer" style="position:absolute;left:0;right:0;margin-top:20px">
+<iframe src="/frontpage/footer.html" width="100%" frameborder=0 scrolling=0 seamless=1/>
+</div>  <!-- end #irsa-footer -->
+
+</body>
+</html>
+
+
+

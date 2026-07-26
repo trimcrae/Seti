@@ -1,0 +1,99 @@
+name: compass
+
+# COMPASS — orbital-pole coherence patches in Gaia DR3 NSS astrometric
+# orbits (docs/compass.md; novelty verified in results/litcheck/compass_*).
+# Single checkpointed job: the Gaia pull chunks by random_index, the shuffle
+# null checkpoints every 25 shuffles, and a resume_run_id seeds a rerun.
+
+on:
+  workflow_dispatch:
+    inputs:
+      radii:
+        description: "Neighbourhood radii in pc (comma-separated)"
+        required: false
+        default: "25,50,100"
+      n_shuffles:
+        description: "Scanning-law-banded shuffles per radius"
+        required: false
+        default: "200"
+      n_min:
+        description: "Minimum systems per neighbourhood"
+        required: false
+        default: "8"
+      sig_min:
+        description: "Minimum NSS orbit significance"
+        required: false
+        default: "10"
+      d_max_pc:
+        description: "Field depth (pc)"
+        required: false
+        default: "2000"
+      resume_run_id:
+        description: "Prior run id whose checkpoint artifact should seed this run"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  compass:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Seed checkpoints from a prior run's artifact
+        if: ${{ github.event.inputs.resume_run_id != '' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: compass-outputs
+          run-id: ${{ github.event.inputs.resume_run_id }}
+          github-token: ${{ github.token }}
+          path: results/compass/
+      - name: Run coherence search
+        run: |
+          ls -la results/compass/ 2>/dev/null || true
+          python -m seti.cli compass \
+            --radii ${{ github.event.inputs.radii || '25,50,100' }} \
+            --n-shuffles ${{ github.event.inputs.n_shuffles || '200' }} \
+            --n-min ${{ github.event.inputs.n_min || '8' }} \
+            --sig-min ${{ github.event.inputs.sig_min || '10' }} \
+            --d-max-pc ${{ github.event.inputs.d_max_pc || '2000' }}
+          echo "=== summary ==="
+          cat results/compass/summary.json || true
+      - name: Commit results (summary + candidates + report; parquets stay artifacts)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          for f in results/compass/summary.json \
+                   results/compass/candidates.json \
+                   results/compass/REPORT.md; do
+            [ -f "$f" ] && git add -f -- "$f" || true
+          done
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "compass: Gaia DR3 NSS orbital-pole coherence search results"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compass-outputs
+          path: results/compass/
+          if-no-files-found: warn

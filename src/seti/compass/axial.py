@@ -141,3 +141,54 @@ def ecliptic_latitude_deg(ra_deg, dec_deg) -> np.ndarray:
     sb = (np.sin(dec) * np.cos(eps)
           - np.cos(dec) * np.sin(eps) * np.sin(ra))
     return np.degrees(np.arcsin(np.clip(sb, -1.0, 1.0)))
+
+
+def group_matrix(pos_pc: np.ndarray, radius_pc: float, n_min: int = 8):
+    """Sparse membership matrix + member counts for all >=n_min neighbourhoods.
+
+    Built once per radius; shuffle nulls then reuse it, because permuting
+    axes among stars changes tensors but not neighbourhoods.
+    """
+    from scipy.sparse import csr_matrix
+
+    tree = cKDTree(pos_pc)
+    groups = tree.query_ball_point(pos_pc, r=radius_pc)
+    seen: set[tuple] = set()
+    rows, cols, centers = [], [], []
+    gi = 0
+    for ci, members in enumerate(groups):
+        if len(members) < n_min:
+            continue
+        key = tuple(sorted(members))
+        if key in seen:
+            continue
+        seen.add(key)
+        rows.extend([gi] * len(members))
+        cols.extend(members)
+        centers.append(ci)
+        gi += 1
+    if gi == 0:
+        return None, np.array([], int), np.array([], int)
+    m = csr_matrix((np.ones(len(rows)), (rows, cols)),
+                   shape=(gi, len(pos_pc)))
+    counts = np.asarray(m.sum(axis=1)).ravel().astype(int)
+    return m, counts, np.array(centers, int)
+
+
+def bingham_stats_batch(m, counts: np.ndarray, axes: np.ndarray) -> np.ndarray:
+    """Bingham statistic for every group at once (batched 3x3 eigenvalues)."""
+    a = np.asarray(axes, float)
+    outer = np.stack([a[:, 0] * a[:, 0], a[:, 1] * a[:, 1], a[:, 2] * a[:, 2],
+                      a[:, 0] * a[:, 1], a[:, 0] * a[:, 2],
+                      a[:, 1] * a[:, 2]], axis=1)
+    s = m @ outer                                   # (n_groups, 6) sums
+    n = counts.astype(float)[:, None]
+    t = np.empty((len(counts), 3, 3))
+    t[:, 0, 0], t[:, 1, 1], t[:, 2, 2] = (s[:, 0] / n[:, 0],
+                                          s[:, 1] / n[:, 0],
+                                          s[:, 2] / n[:, 0])
+    t[:, 0, 1] = t[:, 1, 0] = s[:, 3] / n[:, 0]
+    t[:, 0, 2] = t[:, 2, 0] = s[:, 4] / n[:, 0]
+    t[:, 1, 2] = t[:, 2, 1] = s[:, 5] / n[:, 0]
+    lam = np.linalg.eigvalsh(t)
+    return 15.0 * counts / 2.0 * ((lam - 1.0 / 3.0) ** 2).sum(axis=1)

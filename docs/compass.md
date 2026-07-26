@@ -70,8 +70,41 @@ period coverage < mission span, eccentricity validity.
    jackknife and solution-type split -> candidate; deep-dive per-system orbit
    re-fits and literature cross-ID before any claim.
 
-## 6. Status
+## 6. Novelty verdict (litcheck pass=compass, 2026-07-26 — evidence in
+results/litcheck/compass_*)
 
-- 2026-07-26: axial core implemented + tested (8 offline tests); litcheck
-  novelty sweep dispatched (pass=compass). Acquisition and staged workflow
-  gated on the litcheck verdict.
+**Clean.** Verbatim evidence:
+
+- Agati et al. 2015 (arXiv:1411.4919, abstract fetched): tests *global
+  isotropy* of orbital poles for **95 systems within 18 pc**, node-ambiguity
+  acknowledged. Global question, 3 orders of magnitude smaller sample.
+- All 15 Semantic Scholar citations of Agati 2015 examined: none performs a
+  local-coherence scan. Nearest adjacent work: LISA-era proposals to measure
+  a *global dipole* alignment of compact white-dwarf binaries in the mHz band
+  (2024-2025) — different population, global moment, future instrument,
+  natural framing. Cite as adjacent, not prior.
+- Gaia DR3 NSS "hidden treasure" paper (arXiv:2206.05595): ~800k solutions,
+  no pole-orientation analysis.
+- arXiv full-text sweeps (9 queries incl. technosignature+geometry and
+  SETI+orbital-elements): zero hits on pole-coherence or geometry-residue
+  searches; hits are satellite-plane dynamics, within-system spin-orbit
+  alignment, circumbinary discs.
+
+No one has scanned any catalogue for spatially coherent orbital-pole patches,
+under any framing. The channel proceeds.
+
+## 7. Implementation notes
+
+- DR3 `Orbital` solutions publish **Thiele-Innes coefficients (A, B, F, G)**,
+  not Campbell elements — (i, Omega) must be derived via the standard
+  inversion (k1 = |a0(1+cos i)|, k2 = |a0(1-cos i)| from the (A+G, B-F) and
+  (A-G, B+F) pairs). Implemented in `src/seti/compass/orbit.py` with
+  round-trip tests; the Omega mod 180 output is exactly the axial ambiguity
+  the detector already assumes.
+
+## 8. Status
+
+- 2026-07-26: axial core implemented + tested; litcheck verdict clean;
+  Thiele-Innes inversion + acquisition + single-job checkpointed workflow in
+  progress. This channel is compute-light (~1.5e5 axes, KD-tree scans and a
+  few hundred banded shuffles run in minutes).

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
+import pandas as pd
 import pytest
 
 from seti.compass.axial import (
@@ -131,3 +134,146 @@ def test_ecliptic_latitude_known_points():
     assert ecliptic_latitude_deg(270.0, 66.5607) == pytest.approx(90.0, abs=0.01)
     # A point on the ecliptic: ra=0, dec=0 -> beta = 0.
     assert ecliptic_latitude_deg(0.0, 0.0) == pytest.approx(0.0, abs=1e-9)
+
+
+# ---------------------------------------------------------------------------
+# Thiele-Innes inversion (DR3 Orbital solutions publish A,B,F,G, not i/Omega)
+# ---------------------------------------------------------------------------
+
+def test_thiele_innes_round_trip_recovers_inclination_and_axial_node():
+    from seti.compass.orbit import (
+        geometric_to_thiele_innes,
+        thiele_innes_to_geometric,
+    )
+
+    rng = np.random.default_rng(8)
+    n = 500
+    a0 = rng.uniform(0.1, 10.0, n)
+    inc = rng.uniform(1.0, 179.0, n)
+    node = rng.uniform(0.0, 360.0, n)
+    omega = rng.uniform(0.0, 360.0, n)
+
+    A, B, F, G = geometric_to_thiele_innes(a0, inc, node, omega)
+    a0_r, inc_r, node_r, _ = thiele_innes_to_geometric(A, B, F, G)
+
+    assert np.allclose(a0_r, a0, rtol=1e-9)
+    # The inversion cannot distinguish (i, O) from (180-i, O+180): both give
+    # identical (A,B,F,G) up to the omega redefinition. What IS recoverable —
+    # and all the detector needs — is the POLE AXIS. Check axis equality.
+    from seti.compass.axial import pole_axes
+    ra = np.full(n, 120.0)
+    dec = np.full(n, -25.0)
+    p_true = pole_axes(ra, dec, inc, node % 180.0)
+    p_rec = pole_axes(ra, dec, inc_r, node_r)
+    dots = np.abs((p_true * p_rec).sum(1))
+    assert np.all(dots > 1.0 - 1e-9), f"min |dot| {dots.min()}"
+
+
+def test_thiele_innes_face_on_and_edge_on_limits():
+    from seti.compass.orbit import (
+        geometric_to_thiele_innes,
+        thiele_innes_to_geometric,
+    )
+
+    # Face-on: i = 0 -> k2 = 0, cos i = +1.
+    A, B, F, G = geometric_to_thiele_innes(2.0, 0.0, 45.0, 30.0)
+    _, inc, _, _ = thiele_innes_to_geometric(A, B, F, G)
+    assert float(inc) == pytest.approx(0.0, abs=1e-6)
+
+    # Edge-on: i = 90 -> k1 = k2, cos i = 0.
+    A, B, F, G = geometric_to_thiele_innes(2.0, 90.0, 45.0, 30.0)
+    _, inc, node, _ = thiele_innes_to_geometric(A, B, F, G)
+    assert float(inc) == pytest.approx(90.0, abs=1e-6)
+    assert float(node) == pytest.approx(45.0, abs=1e-6)
+
+
+def test_batched_stats_match_per_group_scan():
+    from seti.compass.axial import bingham_stats_batch, group_matrix
+
+    rng = np.random.default_rng(21)
+    pos = rng.uniform(-100, 100, (400, 3))
+    axes = _random_axes(400, rng)
+    m, counts, centers = group_matrix(pos, radius_pc=40.0, n_min=8)
+    stats = bingham_stats_batch(m, counts, axes)
+
+    hits = scan_coherence(pos, axes, radius_pc=40.0, n_min=8)
+    assert len(hits) == len(stats)
+    assert max(h["stat"] for h in hits) == pytest.approx(float(stats.max()),
+                                                         rel=1e-9)
+
+
+def test_compass_run_end_to_end_with_injected_patch(tmp_path):
+    """Full offline pipeline: synthetic NSS table -> scan -> shuffle null.
+
+    The injected aligned patch must surface as the max statistic with a
+    globally significant p; the isotropic remainder must not.
+    """
+    from seti.compass.orbit import geometric_to_thiele_innes
+    from seti.compass.run import compass_run
+    from seti.config import load_config
+
+    rng = np.random.default_rng(31)
+    n_field = 600
+
+    # Field: isotropic poles. Draw random axes, convert to (i, node) per
+    # star... simpler: random (i, node) uniform in cos i and node gives an
+    # isotropic pole distribution in the tangent frame.
+    ra = rng.uniform(0, 360, n_field)
+    dec = np.degrees(np.arcsin(rng.uniform(-0.95, 0.95, n_field)))
+    inc = np.degrees(np.arccos(rng.uniform(-1, 1, n_field)))
+    node = rng.uniform(0, 180, n_field)
+    parallax = rng.uniform(2.5, 20.0, n_field)     # 50-400 pc
+
+    # Patch: 20 stars in a small sky region at a common distance sharing a
+    # pole (same i/node works because they share a tangent frame closely).
+    n_p = 20
+    ra_p = 40.0 + rng.uniform(-2, 2, n_p)
+    dec_p = -10.0 + rng.uniform(-2, 2, n_p)
+    plx_p = np.full(n_p, 10.0) + rng.uniform(-0.2, 0.2, n_p)   # ~100 pc
+    inc_p = np.full(n_p, 55.0) + rng.normal(0, 3.0, n_p)
+    node_p = np.full(n_p, 120.0) + rng.normal(0, 3.0, n_p)
+
+    ra = np.concatenate([ra, ra_p])
+    dec = np.concatenate([dec, dec_p])
+    inc = np.concatenate([inc, inc_p])
+    node = np.concatenate([node, node_p])
+    parallax = np.concatenate([parallax, plx_p])
+    n = len(ra)
+    a, b, f, g = geometric_to_thiele_innes(
+        rng.uniform(0.5, 5.0, n), inc, node, rng.uniform(0, 360, n))
+
+    nss = pd.DataFrame({
+        "source_id": np.arange(n, dtype=np.int64),
+        "nss_solution_type": "Orbital",
+        "a_thiele_innes": a, "b_thiele_innes": b,
+        "f_thiele_innes": f, "g_thiele_innes": g,
+        "period": rng.uniform(100, 900, n),
+        "eccentricity": rng.uniform(0, 0.6, n),
+        "significance": rng.uniform(10, 60, n),
+        "ra": ra, "dec": dec, "parallax": parallax,
+        "parallax_over_error": np.full(n, 20.0),
+        "pmra": rng.normal(0, 20, n), "pmdec": rng.normal(0, 20, n),
+        "radial_velocity": rng.normal(0, 25, n),
+        "phot_g_mean_mag": rng.uniform(8, 15, n),
+        "mh_gspphot": rng.normal(-0.1, 0.3, n),
+        "teff_gspphot": rng.uniform(4500, 7500, n),
+        "random_index": np.arange(n, dtype=np.int64),
+    })
+
+    cfg = load_config()
+    cfg.root = tmp_path
+    out = tmp_path / "results" / "compass"
+    out.mkdir(parents=True)
+    nss.to_parquet(out / "nss_sample.parquet", index=False)   # fetch checkpoint
+
+    summary = compass_run(cfg, radii_pc=(30.0,), n_min=8, n_shuffles=60,
+                          d_max_pc=1000.0)
+    r = summary["radii"]["r30"]
+    assert r["n_groups"] > 0
+    assert r["p_global"] <= 1.0 / 61 + 1e-9        # patch beats every shuffle
+
+    cands = json.loads((out / "candidates.json").read_text())
+    top = cands["top_per_radius"][0]
+    injected = set(range(600, 620))
+    assert len(set(top["member_source_ids"]) & injected) >= 12
+    assert top["above_null_p99"]

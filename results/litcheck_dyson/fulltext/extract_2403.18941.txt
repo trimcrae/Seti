@@ -1,0 +1,135 @@
+# 2403.18941  
+# why: must-have: Contardo & Hogg 2024 - data-driven mid-IR excess, 5M FGK stars (AJ)
+
+3.1 Additional cuts to reduce false-detection by contamination and other artefacts
+We combine observations from ESA Gaia DR3, 2MASS , and the unWISE version of NASA WISE , and create a catalogue of 4,898,812 stars with G < 16 𝐺 16 G<16 italic_G < 16 mag.
+We consider a star to have an excess if it is substantially brighter in W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 2 𝑊 2 W2 italic_W 2 bands than what is predicted from an ensemble of machine-learning models trained on the data, taking optical and near-infrared information as input features.
+We apply a set of additional cuts (derived from the ML models and the objects’ astronomical features) to avoid false-positive and identify a set of 53 objects (a rate of 1.1 × 10 − 5 1.1 superscript 10 5 1.1\times 10^{-5} 1.1 × 10 start_POSTSUPERSCRIPT - 5 end_POSTSUPERSCRIPT ), including one previously identified EDD candidate.
+Typical infrared-excess fractional luminosities we find are in the range 0.005 0.005 0.005 0.005 to 0.1 0.1 0.1 0.1 , consistent with known EDDs.
+( 2021 ) searched through 78 , 650 78 650 78,650 78 , 650 objects and found 8 candidates –6 new and 2 known, i.e.
+an “occurrence” 1 1 1 We note that due to the way the searches (including this one) are done –usually involving a variety of threshold-based or hard cuts, it is difficult to define properly the occurrence rate of those excesses.
+We choose to conduct our search in the mid-IR, and more specifically we look for excess in the WISE W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 2 𝑊 2 W2 italic_W 2 bands: It has been shown that IR-excess typical of EDDs are hot enough to show in W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 2 𝑊 2 W2 italic_W 2 , and we expect (possibly extremely naively) to see techno-signatures near the water triple-point.
+Restricting to these two WISE bands unlocks a large sample, as the sensitivity and reliability of WISE is much higher in those bands than in the W ⁢ 3 𝑊 3 W3 italic_W 3 and W ⁢ 4 𝑊 4 W4 italic_W 4 bands.
+On the other hand, this means that we target only extreme events that can nonetheless be subtle (especially in the W ⁢ 1 𝑊 1 W1 italic_W 1 band).
+We train a machine learning model to predict the expected W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 2 𝑊 2 W2 italic_W 2 magnitudes from other (optical and near-infrared) photometric features.
+This process is indirectly doing a form of density estimation: as we assume our model is flexible enough and generalizes well, objects with a high, confident error, deviate from the training set distribution in some significant ways, that are not predictable from their “context” (input features).
+One amusing thing about taking a data-driven approach is that we require less, and less accurate, knowledge about how stars work.
+we require only that infrared excess events be around stars that are typical in the sense that there are (many) other stars in the target sample that are similar but lacking an infrared excess.
+The method details are provided in Section 3 along with a list of subsequent cuts applied to obtain our final set of 53 candidates.
+Babusiaux et al., 2023 ) , the Two Micron All Sky Survey ( 2MASS ) (Skrutskie et al., 2006 ) (Skrutskie et al., 2006 ) , the unWISE catalogue (Schlafly et al., 2019 ) and AllWISE catalogue (Cutri et al., 2021 ) .
+Using Gaia DR3 observations, we select stars with a G 𝐺 G italic_G -band magnitude brighter than G < 16 ⁢ m ⁢ a ⁢ g 𝐺 16 𝑚 𝑎 𝑔 G<16mag italic_G < 16 italic_m italic_a italic_g .
+We apply a temperature cut s.t.
+the effective temperature is between 4000 4000 4000 4000 and 7000 7000 7000 7000 K (restricting the stellar types to FGK).
+We impose the parallax over error to be over 10 10 10 10 , ruwe < 1.4 absent 1.4 <1.4 < 1.4 and require that ebpminrp_gspphot (reddening value using BP/RP sepctra) is not null.
+Using the DPAC curated catalogues available on ESA Gaia archive, we impose that the contamination flags ( cc_flags ) from AllWISE is ’ 0000 0000 0000 0000 ’, i.e.
+SNR > 10 absent 10 >10 > 10 ).
+Additional cuts to prevent potential mismatch or contamination are also applied: we enforce that the ”number of mates” in both 2MASS and AllWISE is 0 (i.e.
+Note that those cuts do not necessarily prevent potential contamination from close nearby sources if both sources were resolved in all catalogues (we suggest an additional crowding flag to address this in Section 3 ).
+Finally, we impose that the angular distance between the Gaia source and its best neighbours in the external catalogues is under 0.15 0.15 0.15 0.15 arcseconds.
+It results in a preliminary dataset of 18,751,187 stars, or roughly about 1 % percent 1 1\% 1 % of Gaia DR3.
+We restrict this sample further by selecting stars along the main sequence, with the following colour cut:
+and a cut in the color-absolute magnitude plane:
+This reduces our dataset to 5,979,478 stars.
+We additionally apply a dust cut, using the dustmaps library (Green, 2018 ) with the SFD (Schlegel et al., 1998 ) dust reddening map.
+The dashed black box illustrates our main-sequence cut.
+Right panel shows the final sample used for our search, after our main-sequence cut, dust cut and unWISE control cut as described in Section 2 .
+We then use the cross-match service provided by the NOIRLab ’s Astro Data Lab to obtain the corresponding unWISE values for W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 2 𝑊 2 W2 italic_W 2 bands.
+We remove sources matched with more than one counterpart in the unWISE cross-match table (where the original cone-search was of 1.5 1.5 1.5 1.5 arc-seconds), and we apply a distance cut between matched sources under 0.15 0.15 0.15 0.15 arc-seconds.
+We control for valid values in W1 and W2 magnitudes and restrict our sample to stars with unwise_flags values of 0 0 for the bitmask for both W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 2 𝑊 2 W2 italic_W 2 bands (i.e.
+This results in a final sample of 4,898,812 million stars.
+Namely, our goal is to fit (or learn) a model on the data to predict the expected values for W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 2 𝑊 2 W2 italic_W 2 bands, and to use the error in prediction as an indicator for anomalies, and potential infrared-excesses.
+We fit independent Random Forest (RF) regressors to predict respectively the colors K − W ⁢ 1 𝐾 𝑊 1 K-W1 italic_K - italic_W 1 and K − W ⁢ 2 𝐾 𝑊 2 K-W2 italic_K - italic_W 2 .
+We use the default setup from sklearn (Pedregosa et al., 2011a ) using a mean-squared error criterion, 100 100 100 100 trees and no maximum depth.
+We perform an 8-fold split, where different RFs are trained separately on each fold ( 12.5 % percent 12.5 12.5\% 12.5 % of the data or about 600,000 stars).
+(for both W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 2 𝑊 2 W2 italic_W 2 bands).
+Using W ^ i subscript ^ 𝑊 𝑖 \widehat{W}_{i} over^ start_ARG italic_W end_ARG start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT as our predictor, we obtain a Mean Absolute Error of 0.016 0.016 0.016 0.016 for W ⁢ 1 𝑊 1 W1 italic_W 1 and 0.023 0.023 0.023 0.023 for W ⁢ 2 𝑊 2 W2 italic_W 2 .
+We highlight as red points a set of preliminary candidates selected from a cut within that error space (dashed lines, corresponding to Equation 8 described below).
+We can also see in this Figure panel that there seem to be two “types” of excess candidates: one kind lying on the 1-to-1 line in terms of error in predicted magnitude, and another kind where the excess (error) is (roughly two times) stronger in W2, but less candidates lying in between those “groups”.
+Therefore, we propose to introduce additional criteria to flag candidates that (i) have a high prediction precision, i.e.
+Figure 3: Left panel shows the difference between observed W ⁢ 1 𝑊 1 W1 italic_W 1 (resp.
+W ⁢ 2 𝑊 2 W2 italic_W 2 on y 𝑦 y italic_y -axis) and the predicted W ^ ⁢ 1 ^ 𝑊 1 \widehat{W}1 over^ start_ARG italic_W end_ARG 1 (resp.
+We select stars with a high error in both bands as a preliminary sample of IR-excess candidates, depicted in red (cuts as dashed grey-lines corresponding to Eq.
+We select another set of candidates in this space, depicted in orange.
+: For each object in our sample, we take their K-nearest neighbours ( K = 30 𝐾 30 K=30 italic_K = 30 ) in the following feature space, in each test-fold: H − K , G − R , J − K , G − J , B − G , M G 𝐻 𝐾 𝐺 𝑅 𝐽 𝐾 𝐺 𝐽 𝐵 𝐺 subscript 𝑀 𝐺 H-K,G-R,J-K,G-J,B-G,M_{G} italic_H - italic_K , italic_G - italic_R , italic_J - italic_K , italic_G - italic_J , italic_B - italic_G , italic_M start_POSTSUBSCRIPT italic_G end_POSTSUBSCRIPT , parallax, ebpminrp (reddening), and ruwe.
+Where NN ⁢ ( i , j ) NN 𝑖 𝑗 \text{NN}(i,j) NN ( italic_i , italic_j ) denotes the K 𝐾 K italic_K nearest neighbours indices for the object i 𝑖 i italic_i in the test-set of fold j 𝑗 j italic_j , and W 𝑊 W italic_W denotes either W ⁢ 1 𝑊 1 W1 italic_W 1 or W ⁢ 2 𝑊 2 W2 italic_W 2 bands.
+candidates for which similar objects were correctly predicted), increasing our confidence in the anomalous nature of the object, or to reweight the significance of an error in prediction through the K-MAD (i.e.
+We note however that if we had a “cluster” of, say, objects with an IR excess that were all very similar in the feature space (enough so that they’d form the majority of each others’ neighbourhood), this criterion could mechanically discard these objects.
+The right panel of Figure 3 shows the distribution of our sample in the prediction error divided by the K-MAD (computed per fold), averaged across the test-folds, for W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 2 𝑊 2 W2 italic_W 2 .
+We also plot the standard deviation across the folds as error bars for a selection of infrared excess candidates (negative values) under this criterion, shown in yellow.
+We can use this metric as a criterion for flagging or removing candidates that might live in a low-density region of the input feature space (hence with possibly less reliable prediction, and for which the K-MAD might not be indicative).
+We propose to further investigate a set of candidate stars that are selected through a combination of the prediction error criterion (red points in Figure 3 ), the error over K-MAD criterion (yellow point in Figure 3 , down-weighting the points that are in a region of the feature-space that is badly predicted, favouring high-accuracy regions), and the fold-MAD, to ensure our candidates have small prediction uncertainties (low scatter).
+More specifically, we select the stars with an error in each band under the 0.008 0.008 0.008 0.008 -th percentile value (dashed light-grey diagonal line in the left panel of Figure 3 ), and with both errors under − 0.1 0.1 -0.1 - 0.1 mag:
+( W ⁢ 1 i − W ⁢ 1 ^ i ) + ( W ⁢ 2 i − W ⁢ 2 ^ i ) < − 0.42 ( W ⁢ 1 i − W ⁢ 1 ^ i ) < − 0.1 ( W ⁢ 2 i − W ⁢ 2 ^ i ) < − 0.1 𝑊 subscript 1 𝑖 subscript ^ 𝑊 1 𝑖 𝑊 subscript 2 𝑖 subscript ^ 𝑊 2 𝑖 0.42 𝑊 subscript 1 𝑖 subscript ^ 𝑊 1 𝑖 0.1 𝑊 subscript 2 𝑖 subscript ^ 𝑊 2 𝑖 0.1 \begin{split}&(W1_{i}-\widehat{W1}_{i})+(W2_{i}-\widehat{W2}_{i})<-0.42\\
+&(W1_{i}-\widehat{W1}_{i})<-0.1\\
+For the error over k-MAD cut, we similarly select stars with a sum of the mean of error over k-MAD under the 0.007 0.007 0.007 0.007 -th percentile value, and with both means of error over K-MAD under − 5 5 -5 - 5 :
+_{i,j})}{\text{K-MAD1}_{i,j}}+\frac{1}{7}\sum_{j\in\mathrm{F}_{i}}\frac{(W2_{i%
+}-\widetilde{W2}_{i,j})}{\text{K-MAD2}_{i,j}}<-23.59\\
+&\frac{1}{7}\sum_{j\in\mathrm{F}_{i}}\frac{(W1_{i}-\widetilde{W1}_{i,j})}{%
+&\frac{1}{7}\sum_{j\in\mathrm{F}_{i}}\frac{(W2_{i}-\widetilde{W2}_{i,j})}{%
+Median ⁢ ( { | W ⁢ 1 ^ i − W ⁢ 1 ~ i , j | } j ∈ F i ) < 0.01 Median ⁢ ( { | W ⁢ 2 ^ i − W ⁢ 2 ~ i , j | } j ∈ F i ) < 0.01 Median subscript subscript ^ 𝑊 1 𝑖 subscript ~ 𝑊 1 𝑖 𝑗 𝑗 subscript F 𝑖 0.01 Median subscript subscript ^ 𝑊 2 𝑖 subscript ~ 𝑊 2 𝑖 𝑗 𝑗 subscript F 𝑖 0.01 \begin{split}&\mathrm{Median}(\{|\widehat{W1}_{i}-\widetilde{W1}_{i,j}|\}_{j%
+&\mathrm{Median}(\{|\widehat{W2}_{i}-\widetilde{W2}_{i,j}|\}_{j\in\mathrm{F}_{%
+This results in a preliminary set of excess candidates of 127 stars.
+( 2020 ) suggest as a rule of thumb to discard sources with a high SNR but a low FoM (they suggest that excesses with SNR > 10 absent 10 >10 > 10 but FoM < 4 absent 4 <4 < 4 are likely the result of source confusion).
+They indicate that the proper motion accuracy in CatWise depends on the magnitude of the source ( 10 10 10 10 mas yr 1 − {}^{-}1 start_FLOATSUPERSCRIPT - end_FLOATSUPERSCRIPT 1 for bright sources, 30 30 30 30 mas yr 1 − {}^{-}1 start_FLOATSUPERSCRIPT - end_FLOATSUPERSCRIPT 1 for W ⁢ 1 ≈ 15.5 𝑊 1 15.5 W1\approx 15.5 italic_W 1 ≈ 15.5 mag).
+We therefore compare the proper motions from Gaia and from CatWise , and apply a cut when the proper motions in either R ⁢ A 𝑅 𝐴 RA italic_R italic_A or D ⁢ E ⁢ C 𝐷 𝐸 𝐶 DEC italic_D italic_E italic_C disagree more than the approximated accuracy for the source brightness.
+unWISE documentation recommends subtracting 4 mmag from unWISE W1 and 32 mmag from unWISE W2 to improve agreement between both catalogues.
+We provide in Table 1 the number of candidates remaining after applying each cut.
+Table 1: Table of criterion for our candidates selection, and the number of candidates remaining after each cut.
+Mean (Prediction Error / k-MAD) cut (Eq.
+Error cut AND error/k-MAD cut
+Crowding cut at 5 arcsecond
+FoM > 4 absent 4 >4 > 4 cut
+Proper-Motion disagreement cut
+Disagreement AllWISE / unWISE cut
+We indicate which of those objects make it through our preliminary cut (combining Equations 8 , 9 and 10 ) (fourth column) and through the complete pipeline (fifth column).
+The excesses most similar to our candidates are likely to be Extreme Debris Disks candidates, and we indeed find that these objects are the ones that most often make it through our preliminary cut.
+Out of 23 objects matched from the catalogue available on SIMBAD 2 2 2 We note that the original paper however mentions 17 candidates.
+, 5 appear in our full sample, and they all make it through our preliminary cut, confirming the ability of our pipeline to detect such IR-excesses.
+Two of those are then discarded by the crowding cut, one is discarded by the proper-motion disagreement cut, and one by the k-NN “density” cut.
+Out of the few other IR-excess candidates appearing in our 4.9M sample (42 in total), only one passes through the preliminary cut (from the Reserved catalogue by Cotten & Song ( 2016 ) ), but is discarded by the crowding criterion.
+It is relevant to note that the IR-excesses in the literature were detected in W ⁢ 3 𝑊 3 W3 italic_W 3 and W ⁢ 4 𝑊 4 W4 italic_W 4 bands, and hence might not produce an excess in the MIR detectable by our pipeline.
+It also requires stringent cuts on the quality and SNR of W ⁢ 4 𝑊 4 W4 italic_W 4 , which eliminates a large number of objects.
+Our detection pipeline allows for the discovery of extreme outliers (similar to potential EDDs) by relying on W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 2 𝑊 2 W2 italic_W 2 bands only, while being rather conservative in further removing potential false detection.
+We retrieve the DR3 identifiers counterparts of the candidates using SIMBAD and indicates the number of objects in our full sample and the number of objects passing the preliminary cut and the full pipeline selection.
+We observe a gap in our candidates’ distribution around 1 in B − R 𝐵 𝑅 B-R italic_B - italic_R , 5.5 in M G subscript 𝑀 𝐺 M_{G} italic_M start_POSTSUBSCRIPT italic_G end_POSTSUBSCRIPT and 5400 5400 5400 5400 K in Teff.
+Because of the data-driven nature of our approach, the subsequent cuts used to create our candidates’ sample, and the small size of our final sample, it is hard to give clear interpretations and conclusions about these trends.
+8 ) or the k 𝑘 k italic_k -MAD cut only (Eq.
+9 ), and only start appearing when combining Eqs 8 , 9 and 10 altogether, and is further depleted by subsequent cuts (at a somewhat similar rate than other color-bins), but those are small numbers statistics.
+The left panel of Figure 5 shows the distribution of this measurement for our candidates’ sample (dark red line), as well as a randomly selected control sample of 1,600 stars from our 4.9M sample (blue) and a set of stars similar to our candidates called “Neighbors” (dashed black line).
+Two objects are (tentatively) classified as RS Canum Venaticorum variable ( Gaia DR3 3183786280737192704 and 2256421065353454464), one as a δ 𝛿 \delta italic_δ Scuti or γ 𝛾 \gamma italic_γ Doradus or SX Phoenicis star.
+Figure 8: NeoWISE time-series for two of our candidates, in W ⁢ 1 𝑊 1 W1 italic_W 1 (blue) and W ⁢ 2 𝑊 2 W2 italic_W 2 (red) bands.
+Ariadne uses by default all observed photometry up to W ⁢ 2 𝑊 2 W2 italic_W 2 for the fit, but not W ⁢ 3 𝑊 3 W3 italic_W 3 and W ⁢ 4 𝑊 4 W4 italic_W 4 .
+We show in Figure 9 the flux value observed in W ⁢ 2 𝑊 2 W2 italic_W 2 band versus the flux predicted by the SED-fit as red points, confirming excess for all of our candidates (lying under the 1-to-1 dashed line).
+To do so, we build a grid of blackbody spectra with a range of temperatures from 100 100 100 100 K to 1500 1500 1500 1500 K with a step of 5 5 5 5 K, and a range of angular sizes from 10 − 23 superscript 10 23 10^{-23} 10 start_POSTSUPERSCRIPT - 23 end_POSTSUPERSCRIPT to 10 − 16 superscript 10 16 10^{-16} 10 start_POSTSUPERSCRIPT - 16 end_POSTSUPERSCRIPT with 200 200 200 200 bins spaced evenly on log-scale.
+For each candidate, we select the blackbody that minimizes the sum of the squared errors as: a ⁢ r ⁢ g ⁢ m ⁢ i ⁢ n B ⁢ B ⁢ ∑ j ( F B ⁢ B ⁢ ( λ j ) − ( F o ⁢ b ⁢ s ⁢ ( λ j ) − F S ⁢ E ⁢ D ⁢ ( λ j ) ) ) 2 𝑎 𝑟 𝑔 𝑚 𝑖 subscript 𝑛 𝐵 𝐵 subscript 𝑗 superscript subscript 𝐹 𝐵 𝐵 subscript 𝜆 𝑗 subscript 𝐹 𝑜 𝑏 𝑠 subscript 𝜆 𝑗 subscript 𝐹 𝑆 𝐸 𝐷 subscript 𝜆 𝑗 2 argmin_{BB}\sum_{j}(F_{BB}(\lambda_{j})-(F_{obs}(\lambda_{j})-F_{SED}(\lambda_%
+We fit the blackbody using four wavelengths corresponding to K ⁢ s 𝐾 𝑠 Ks italic_K italic_s , W ⁢ 1 , W ⁢ 2 𝑊 1 𝑊 2 W1,W2 italic_W 1 , italic_W 2 , and W ⁢ 3 𝑊 3 W3 italic_W 3 bands.
+Figure 9 shows as blue dots the flux in W ⁢ 2 𝑊 2 W2 italic_W 2 of the SED with the additional blackbody, against the observed flux.
+Our fitting procedure tends to over-correct in the W ⁢ 2 𝑊 2 W2 italic_W 2 band, but not in W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 3 𝑊 3 W3 italic_W 3 .
+Figure 9: Observed flux (in W ⁢ 2 𝑊 2 W2 italic_W 2 band) vs predicted flux from Ariadne -SED only (red points) and Ariadne -SED + + + a BlackBody (blue points), fitted on the flux residuals in bands K ⁢ s , W ⁢ 1 , W ⁢ 2 𝐾 𝑠 𝑊 1 𝑊 2 Ks,W1,W2 italic_K italic_s , italic_W 1 , italic_W 2 and W ⁢ 3 𝑊 3 W3 italic_W 3 .
+Red points are the unWISE (for W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 2 𝑊 2 W2 italic_W 2 ) and AllWISE (for W ⁢ 3 𝑊 3 W3 italic_W 3 and W ⁢ 4 𝑊 4 W4 italic_W 4 ) values.
+The letters above W ⁢ 3 𝑊 3 W3 italic_W 3 and W ⁢ 4 𝑊 4 W4 italic_W 4 are AllWISE photometric quality flag.
+The SED and black-body fits for all of our candidates are shown in Figures LABEL:fig:SED0 - 14 , along with their XP spectra (H α 𝛼 \alpha italic_α line indicated in blue) and imaging visualization of the objects in W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 2 𝑊 2 W2 italic_W 2 bands using AllWISE , and in the optical using the Digitized Sky Survey (DSS), on 3 ′ superscript 3 ′ 3^{\prime} 3 start_POSTSUPERSCRIPT ′ end_POSTSUPERSCRIPT square.
+We observe in these Figures a diversity of “excess shape” and strength: we see candidates with some extreme “bumps” in W ⁢ 3 𝑊 3 W3 italic_W 3 – which are often not well fitted by our black body estimates –, similar to EDDs candidates.
+However, as we also display the photometric quality flag of W ⁢ 3 𝑊 3 W3 italic_W 3 and W ⁢ 4 𝑊 4 W4 italic_W 4 from AllWISE 3 3 3 The quality flag is A 𝐴 A italic_A if a source is detected with a flux SNR > 10 absent 10 >10 > 10 , B 𝐵 B italic_B if 3 < SNR < 10 3 SNR 10 3<\text{SNR}<10 3 < SNR < 10 , C if 2 < SNR < 3 2 SNR 3 2<\text{SNR}<3 2 < SNR < 3 , and U 𝑈 U italic_U if SNR < 2 SNR 2 \text{SNR}<2 SNR < 2 , indicating upper limit on magnitude: the magnitude of the given band is a 95% confidence upper limit.
+All our excess candidates have an A 𝐴 A italic_A quality flag for W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 2 𝑊 2 W2 italic_W 2 .
+, we can see that for some of those objects, the W ⁢ 3 𝑊 3 W3 italic_W 3 band might not be reliable.
+Our candidates would fall around HD 141569 for the flux ratio at 12 ⁢ μ ⁢ m 12 𝜇 𝑚 12\mu m 12 italic_μ italic_m .
+We select as a sample of stars the set of neighbours (in colour space using NN-colour) of our candidate, ∼ 1500 similar-to absent 1500 \sim 1500 ∼ 1500 objects.
+We create a grid of BB parameters, where the temperature ranges from 200 200 200 200 to 1575 ⁢ K 1575 𝐾 1575K 1575 italic_K by step of 25 ⁢ K 25 𝐾 25K 25 italic_K , and the angular size ranges from 10 − 23 superscript 10 23 10^{-23} 10 start_POSTSUPERSCRIPT - 23 end_POSTSUPERSCRIPT to 10 − 16 superscript 10 16 10^{-16} 10 start_POSTSUPERSCRIPT - 16 end_POSTSUPERSCRIPT with 50 bins in log-scale.
+We only consider here the recovery as passing the cut of the first three masks used in this paper relying on prediction error (Eq 8 ), the confidence of error compared to similar objects (Eq 9 ) and the precision criterion (Eq 10 ).
+It is also important to note that our selection pipeline relies in the first cut on rather arbitrarily chosen thresholds (Equations 8 - 10 ): relaxing these choices and threshold might lead to more detections and higher recovery rates of fainter MIR-excess, but also potentially to an increase in the false detection rate.
+Figure 12: Map of the recovery rate of Black Body injections in a sample of stars similar to our candidates ( ∼ similar-to \sim ∼ 1,500 stars).
+We proposed and executed a data-driven approach for the discovery of infrared (IR) excesses around stellar objects, more specifically among main-sequence FGK stars.
+We used robust machine learning methods to bypass stellar modelling to estimate the “expected” mid-IR (MIR) magnitudes, and we designed a set of curated statistics derived from the predictions and the predictions’ quality to define a set of criterion cuts.
+We combined those with additional cuts to prevent as much as possible false detection and artificial excess due, e.g., to contamination.
+Using SED-fitting and fitting black bodies on the flux residuals in 4 bands ( K , W ⁢ 1 , W ⁢ 2 , W ⁢ 3 𝐾 𝑊 1 𝑊 2 𝑊 3 K,W1,W2,W3 italic_K , italic_W 1 , italic_W 2 , italic_W 3 ), we compute black body properties and obtain estimated fractional luminosities coherent with the ones associated with Extreme Debris Disks (EDDs).
+“true” occurrence rate of EDDs) is not trivially doable with this approach, as it relies heavily on a series of (sometimes arbitrarily chosen) threshold cuts to build the candidate sample.
+Each plot also displays imaging from AllWISE ( W ⁢ 1 , W ⁢ 2 𝑊 1 𝑊 2 W1,W2 italic_W 1 , italic_W 2 ) and DSS of a 3 ′ superscript 3 ′ 3^{\prime} 3 start_POSTSUPERSCRIPT ′ end_POSTSUPERSCRIPT square centred on the source candidate.
+Each plot also displays imaging from AllWISE W ⁢ 1 , W ⁢ 2 𝑊 1 𝑊 2 W1,W2 italic_W 1 , italic_W 2 and DSS of a 3 ′ superscript 3 ′ 3^{\prime} 3 start_POSTSUPERSCRIPT ′ end_POSTSUPERSCRIPT square centred on the source candidate.
+Applying all the additional cuts (Table 1) on these objects leaves 7 candidates that we plot in Figure 15 .
+They do not appear as strong deficit either in W ⁢ 1 𝑊 1 W1 italic_W 1 and W ⁢ 2 𝑊 2 W2 italic_W 2 according to the SED-fit too.
+For all of these examples, the W ⁢ 3 𝑊 3 W3 italic_W 3 and W ⁢ 4 𝑊 4 W4 italic_W 4 land above the SED-fit.
+However, they also all have a quality flag U 𝑈 U italic_U (meaning that the source measurement had an SNR < 2 absent 2 <2 < 2 , and the profile-fit magnitude is a 95% confidence upper limit).
+doing the true opposite cut in terms of the “strength” of the anomalies, leads to only 13 deficit candidates in the preliminary cut.
+All of them then get discarded either by the crowding or the proper-motion disagreement cut.
+Wright, E., Eisenhardt, P., Mainzer, A., Ressler, M., & Cutri, R.

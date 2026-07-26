@@ -1,0 +1,648 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Dust to Dust: Prospects for Passive Technosignatures as Relics of ETI</title>
+<!--Generated on Sat Jun  6 23:36:10 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+    // Pre-apply spinout-banner dismissal here, before the banner paints, so it
+    // never flashes in only to be hidden later by the deferred arxiv-header.js.
+    // Key matches arxiv-header.js: "arxiv-banner-dismissed:" + data-banner-name.
+    if (localStorage.getItem('arxiv-banner-dismissed:spinout-nonprofit')) {
+      document.documentElement.setAttribute("data-banner-dismissed", "");
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css"><link rel="stylesheet" type="text/css" media="screen"
+  href="/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626"><style>
+  /* Banner pre-dismissal (set above before paint -> no flash-then-hide) and
+     reading-mode chrome hiding. */
+  html[data-banner-dismissed] .ds-announcement { display: none; }
+  html[data-reading-mode="enabled"] .ds-announcement,
+  html[data-reading-mode="enabled"] .ds-site-footer { display: none; }
+  /* Keep the announcement text dark on the Open-Blue band in both colour themes
+     (otherwise it inherits the paper's warm-wash text in dark mode and washes out). */
+  .ds-announcement-text { color: var(--arxiv-ink, #1c1a17); }
+</style>
+<script defer src="/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog><div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement"
+    data-banner-name="spinout-nonprofit">
+    <img class="ds-announcement-glyph" src="/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+    <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+    <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+    <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/"><img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/base/1.0.1/images/arxiv-logo-primary-light.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2606.08373v1">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2606.08373v1"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_abstract"><a href="#abstract1" title="In Dust to Dust: Prospects for Passive Technosignatures as Relics of ETI" class="ltx_ref"><span class="ltx_text ltx_ref_title">Abstract</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S1" title="In Dust to Dust: Prospects for Passive Technosignatures as Relics of ETI" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">1 </span>Introduction: transitory intelligence in an ancient universe</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S2" title="In Dust to Dust: Prospects for Passive Technosignatures as Relics of ETI" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2 </span>The fundamentals of passive broadcasts</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S3" title="In Dust to Dust: Prospects for Passive Technosignatures as Relics of ETI" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3 </span>Glints from relic mirrors: passive beacons in the Solar System</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S4" title="In Dust to Dust: Prospects for Passive Technosignatures as Relics of ETI" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4 </span>Considerations for interstellar passive beacons</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S5" title="In Dust to Dust: Prospects for Passive Technosignatures as Relics of ETI" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5 </span>Lens flare: intergalactic passive broadcasts?</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S6" title="In Dust to Dust: Prospects for Passive Technosignatures as Relics of ETI" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">6 </span>The mortality of megaswarms: collisional cascades</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S7" title="In Dust to Dust: Prospects for Passive Technosignatures as Relics of ETI" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">7 </span>The final passive technosignature</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_bibliography"><a href="#bib" title="In Dust to Dust: Prospects for Passive Technosignatures as Relics of ETI" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: arXiv.org perpetual non-exclusive license
+  </a>
+  <div id="watermark-tr">
+arXiv:2606.08373v1 [astro-ph.IM] 06 Jun 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line">
+<div id="p1" class="ltx_para">
+<span id="p1.1" class="ltx_ERROR undefined">\lefttitle</span>
+<p id="p1.2" class="ltx_p">Lacki
+<span id="p1.2.1" class="ltx_ERROR undefined">\righttitle</span>Dust to Dust: Prospects for Passive Technosignatures as Relics of ETI</p>
+</div>
+<div id="p2" class="ltx_para">
+<span id="p2.1" class="ltx_ERROR undefined">\jnlPage</span>
+<p id="p2.2" class="ltx_p">??
+<span id="p2.2.1" class="ltx_ERROR undefined">\jnlDoiYr</span>2026
+<span id="p2.2.2" class="ltx_ERROR undefined">\doival</span>10.1017/xxxxx</p>
+</div>
+<div id="p3" class="ltx_para">
+<span id="p3.1" class="ltx_ERROR undefined">\aopheadtitle</span>
+<p id="p3.2" class="ltx_p">Proceedings IAU Symposium</p>
+</div>
+<h1 class="ltx_title ltx_title_document">Dust to Dust: Prospects for Passive Technosignatures as Relics of ETI</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Brian C. Lacki
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Breakthrough Listen, Department of Physics, Oxford University, 
+</span></span></span>
+</div>
+
+<div id="abstract1" class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">Technological societies are separated in time, not just space – that is the lesson of the Drake equation. Might the best way to seek them be to find technosignatures that persist long after their creators? I present work I and my collaborators have done on the idea of passive technosignatures, requiring no upkeep from an active society. These range from microscopic to galactic in scale, including specular reflections from shiny artifacts in the Solar System, lens flares from X-ray binaries, and the survivability of Dyson swarms. I discuss prospects for detecting these technosignatures. In the end, what we may be left with are the end products of collisional cascades: dust.</p>
+</div>
+<div class="ltx_classification">
+<h6 class="ltx_title ltx_title_classification">keywords: </h6>
+Technosignatures, SETI, passive broadcasts, beacons, optical transients, satellite glints, X-ray transients, low-mass X-ray binaries, Dyson spheres, megastructures, collisional cascades, technograins
+
+</div>
+<span id="id1" class="ltx_note ltx_note_frontmatter ltx_role_editors"><sup class="ltx_note_mark">†</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">†</sup><span class="ltx_note_type">editors: </span>J. Haqq-Misra &amp; R. Kopparapu, eds.</span></span></span>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction: transitory intelligence in an ancient universe</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.3" class="ltx_p">If an alien visited the Earth at a random point in its history, would they observe a technological society? We can’t know what will happen in the billions of years to come, but if they visited in the past, the answer is no. Earth has hosted radio broadcasting for <math id="S1.p1.1.m1" class="ltx_Math" alttext="10^{2}" display="inline" intent=":literal"><semantics><msup><mn>10</mn><mn>2</mn></msup><annotation encoding="application/x-tex">10^{2}</annotation></semantics></math> years, agriculture for <math id="S1.p1.2.m2" class="ltx_Math" alttext="10^{4}" display="inline" intent=":literal"><semantics><msup><mn>10</mn><mn>4</mn></msup><annotation encoding="application/x-tex">10^{4}</annotation></semantics></math>, and behaviorally modern <em id="S1.p1.3.1" class="ltx_emph ltx_font_italic">H. sapiens</em> for <math id="S1.p1.3.m3" class="ltx_Math" alttext="10^{5}" display="inline" intent=":literal"><semantics><msup><mn>10</mn><mn>5</mn></msup><annotation encoding="application/x-tex">10^{5}</annotation></semantics></math>, give or take. The entire Phanerozoic spans merely about an eighth of the Earth’s age. Our visitor usually misses not only us, but the whole reign of complex plants and animals. We are separated not just in space but in time.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.1" class="ltx_p">This temporal gulf is implicit in the Drake equation, which includes a slew of factors describing how many stars – thus, how far in space – we need to search to find one that <em id="S1.p2.1.1" class="ltx_emph ltx_font_italic">has ever or will ever</em> give rise to an ETI. The final term is a mean longevity that determines the fraction of societies overlapping us in time. If ETIs are fleeting, then even in standard “optimistic” scenarios, our nearest contemporaries could be across the Galaxy. Yet we might find evidence of ETIs around the nearest stars, if only they left a lasting sign (cf. <cite class="ltx_cite ltx_citemacro_citet">Freeman &amp; Lampton <a href="#bib.bib11" title="" class="ltx_ref">1975</a></cite>). But how could they possibly bridge that gulf in time?</p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p id="S1.p3.1" class="ltx_p">At least one complex system has survived for billions of years: the Earth’s biosphere. The ability of living things to replicate enables this persistence,<span id="footnote1" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_tag ltx_tag_note">1</span><cite class="ltx_cite ltx_citemacro_cite">Yokoo &amp; Oshima (<a href="#bib.bib28" title="" class="ltx_ref">1979</a>)</cite> and others have suggested ETIs could create a kind of passive self-replicating message encoded in genes. The reliability of this method over geological epochs remains unproven.</span></span></span> bridging space and time even as organisms and species come and go. ETIs too might replicate by going out to the stars and establishing new communities. Taken to its natural conclusion, the replication populates the Galaxy over millions of years. If society fails around one star, migrants from another take its place <cite class="ltx_cite ltx_citemacro_citep">(Wright et al., <a href="#bib.bib25" title="" class="ltx_ref">2014</a>)</cite>. We have seen no signs of anything like this: this is the heart of the Fermi Paradox <cite class="ltx_cite ltx_citemacro_citep">(Ćirković, <a href="#bib.bib8" title="" class="ltx_ref">2018</a>)</cite>. Let us suppose some still-unknown factor has suppressed a Galactic ecology. How else might someone make their existence known across cosmic time?</p>
+</div>
+<div id="S1.p4" class="ltx_para">
+<p id="S1.p4.1" class="ltx_p">We need a relic technosignature: something recognizably artificial that manages to survive far longer than any of our technology without any possible maintenance or upkeep (as in <cite class="ltx_cite ltx_citemacro_citet">Balbi &amp; Ćirković <a href="#bib.bib3" title="" class="ltx_ref">2021</a></cite>). Solar System artifacts are a strong contender. Interplanetary space and inactive planetary bodies like the Moon lack weathering, the only hazards being occasional meteoroid impacts and radiation exposure. Relics in these environments could last millions of years, far outliving the ETIs themselves <cite class="ltx_cite ltx_citemacro_citep">(Rose &amp; Wright, <a href="#bib.bib23" title="" class="ltx_ref">2004</a>; Davies, <a href="#bib.bib10" title="" class="ltx_ref">2012</a>; Benford, <a href="#bib.bib4" title="" class="ltx_ref">2021</a>)</cite>. But if no artifact reaches our Solar System specifically, we need to look for some kind of radiative technosignature. Even locally deposited artifacts might use broadcasts to get our attention in the vastness of interplanetary space <cite class="ltx_cite ltx_citemacro_citep">(Bracewell, <a href="#bib.bib6" title="" class="ltx_ref">1960</a>)</cite>. Could they set up a passive broadcasts, emitted without any effort or artificial power?</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>The fundamentals of passive broadcasts</h2>
+
+<div id="S2.p1" class="ltx_para">
+<p id="S2.p1.1" class="ltx_p">Beacons are classic technosignatures. They emit broadcasts meant to be easily detected and recognized as artificial, regardless of information content. Active technological broadcasts require large power plants, control mechanisms, and so on, in turn implying active maintenance when they break down. An abandoned beacon cannot rely on that. Fortunately, the Universe already has plenty of radiating objects like stars that can act as signal lamps. The passive beacon uses a <em id="S2.p1.1.1" class="ltx_emph ltx_font_italic">modulator</em> to create artificial fluctuations in its lamp’s luminosity. These can create positive fluctuations in the lamp’s apparent brightness (making it appear brighter) or negative (apparently dimming it); the behavior may even vary with time and frequency.</p>
+</div>
+<div id="S2.p2" class="ltx_para">
+<p id="S2.p2.9" class="ltx_p">Consider an idealized modulator orbiting a lamp with surface brightness (surface flux per unit solid angle) <math id="S2.p2.1.m1" class="ltx_Math" alttext="I_{\star}" display="inline" intent=":literal"><semantics><msub><mi>I</mi><mo>⋆</mo></msub><annotation encoding="application/x-tex">I_{\star}</annotation></semantics></math> and radius <math id="S2.p2.2.m2" class="ltx_Math" alttext="R_{\star}" display="inline" intent=":literal"><semantics><msub><mi>R</mi><mo>⋆</mo></msub><annotation encoding="application/x-tex">R_{\star}</annotation></semantics></math> at a distance <math id="S2.p2.3.m3" class="ltx_Math" alttext="d_{\star}" display="inline" intent=":literal"><semantics><msub><mi>d</mi><mo>⋆</mo></msub><annotation encoding="application/x-tex">d_{\star}</annotation></semantics></math>. Lamp-light coming from a solid angle <math id="S2.p2.4.m4" class="ltx_Math" alttext="\Omega_{\mathrm{in}}=\Omega_{\star}\approx\pi(R_{\star}/d_{\star})^{2}" display="inline" intent=":literal"><semantics><mrow><msub><mi mathvariant="normal">Ω</mi><mi>in</mi></msub><mo>=</mo><msub><mi mathvariant="normal">Ω</mi><mo>⋆</mo></msub><mo>≈</mo><mrow><mi>π</mi><mo lspace="0em" rspace="0em">​</mo><msup><mrow><mo stretchy="false">(</mo><mrow><msub><mi>R</mi><mo>⋆</mo></msub><mo>/</mo><msub><mi>d</mi><mo>⋆</mo></msub></mrow><mo stretchy="false">)</mo></mrow><mn>2</mn></msup></mrow></mrow><annotation encoding="application/x-tex">\Omega_{\mathrm{in}}=\Omega_{\star}\approx\pi(R_{\star}/d_{\star})^{2}</annotation></semantics></math> enters the modulator through an input area <math id="S2.p2.5.m5" class="ltx_Math" alttext="A_{\mathrm{in}}" display="inline" intent=":literal"><semantics><msub><mi>A</mi><mi>in</mi></msub><annotation encoding="application/x-tex">A_{\mathrm{in}}</annotation></semantics></math>. A fraction <math id="S2.p2.6.m6" class="ltx_Math" alttext="\eta" display="inline" intent=":literal"><semantics><mi>η</mi><annotation encoding="application/x-tex">\eta</annotation></semantics></math> of that power is emitted through an output of area <math id="S2.p2.7.m7" class="ltx_Math" alttext="A_{\mathrm{out}}" display="inline" intent=":literal"><semantics><msub><mi>A</mi><mi>out</mi></msub><annotation encoding="application/x-tex">A_{\mathrm{out}}</annotation></semantics></math> into a cone of solid angle <math id="S2.p2.8.m8" class="ltx_Math" alttext="\Omega_{\mathrm{out}}" display="inline" intent=":literal"><semantics><msub><mi mathvariant="normal">Ω</mi><mi>out</mi></msub><annotation encoding="application/x-tex">\Omega_{\mathrm{out}}</annotation></semantics></math>. The modulator may also cover an area <math id="S2.p2.9.m9" class="ltx_Math" alttext="A_{\mathrm{cov}}" display="inline" intent=":literal"><semantics><msub><mi>A</mi><mi>cov</mi></msub><annotation encoding="application/x-tex">A_{\mathrm{cov}}</annotation></semantics></math> of the star. Working in a spectral band that excludes the modulator’s waste heat, the apparent change in the lamp’s luminosity is, by conservation of energy,</p>
+<table id="S2.E1" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E1.m1" class="ltx_Math" alttext="\Delta L_{\star}=4\pi[I_{\mathrm{out}}A_{\mathrm{out}}-I_{\star}A_{\mathrm{cov}}]=4\pi I_{\star}[\eta\omega A_{\mathrm{in}}\Omega_{\mathrm{in}}/\Omega_{\mathrm{out}}-A_{\mathrm{cov}}]," display="block" intent=":literal"><semantics><mrow><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>L</mi><mo>⋆</mo></msub></mrow><mo>=</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>π</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">[</mo><mrow><mrow><msub><mi>I</mi><mi>out</mi></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>A</mi><mi>out</mi></msub></mrow><mo>−</mo><mrow><msub><mi>I</mi><mo>⋆</mo></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>A</mi><mi>cov</mi></msub></mrow></mrow><mo stretchy="false">]</mo></mrow></mrow><mo>=</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>π</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>I</mi><mo>⋆</mo></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">[</mo><mrow><mrow><mrow><mi>η</mi><mo lspace="0em" rspace="0em">​</mo><mi>ω</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>A</mi><mi>in</mi></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi mathvariant="normal">Ω</mi><mi>in</mi></msub></mrow><mo>/</mo><msub><mi mathvariant="normal">Ω</mi><mi>out</mi></msub></mrow><mo>−</mo><msub><mi>A</mi><mi>cov</mi></msub></mrow><mo stretchy="false">]</mo></mrow></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">\Delta L_{\star}=4\pi[I_{\mathrm{out}}A_{\mathrm{out}}-I_{\star}A_{\mathrm{cov}}]=4\pi I_{\star}[\eta\omega A_{\mathrm{in}}\Omega_{\mathrm{in}}/\Omega_{\mathrm{out}}-A_{\mathrm{cov}}],</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(1)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.p2.18" class="ltx_p">where <math id="S2.p2.10.m1" class="ltx_Math" alttext="I_{\mathrm{out}}" display="inline" intent=":literal"><semantics><msub><mi>I</mi><mi>out</mi></msub><annotation encoding="application/x-tex">I_{\mathrm{out}}</annotation></semantics></math> is the observed surface brightness of the modulator and <math id="S2.p2.11.m2" class="ltx_Math" alttext="\omega" display="inline" intent=":literal"><semantics><mi>ω</mi><annotation encoding="application/x-tex">\omega</annotation></semantics></math> is <math id="S2.p2.12.m3" class="ltx_Math" alttext="1" display="inline" intent=":literal"><semantics><mn>1</mn><annotation encoding="application/x-tex">1</annotation></semantics></math> if the observer is in <math id="S2.p2.13.m4" class="ltx_Math" alttext="\Omega_{\mathrm{out}}" display="inline" intent=":literal"><semantics><msub><mi mathvariant="normal">Ω</mi><mi>out</mi></msub><annotation encoding="application/x-tex">\Omega_{\mathrm{out}}</annotation></semantics></math> and <math id="S2.p2.14.m5" class="ltx_Math" alttext="0" display="inline" intent=":literal"><mn>0</mn></math> outside of it.<span id="footnote2" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_tag ltx_tag_note">2</span>I exclude waste heat because typically the instruments that observe the modulation cannot detect it (e.g., optical CCDs are not sensitive to mid-infrared). When included, waste heat is relatively faint because, like the output of a diffuser, it is emitted nearly isotropically. A modulator is cooler than its lamp.</span></span></span> While light going into a small <math id="S2.p2.15.m6" class="ltx_Math" alttext="A_{\mathrm{in}}" display="inline" intent=":literal"><semantics><msub><mi>A</mi><mi>in</mi></msub><annotation encoding="application/x-tex">A_{\mathrm{in}}</annotation></semantics></math> can be beamed out of large <math id="S2.p2.16.m7" class="ltx_Math" alttext="A_{\mathrm{out}}" display="inline" intent=":literal"><semantics><msub><mi>A</mi><mi>out</mi></msub><annotation encoding="application/x-tex">A_{\mathrm{out}}</annotation></semantics></math> under etendue conservation (a reversed telescope), modulators can much simpler – a single element like a metal foil, lens, or flat mirror suffices, with <math id="S2.p2.17.m8" class="ltx_Math" alttext="A_{\mathrm{out}}=A_{\mathrm{in}}" display="inline" intent=":literal"><semantics><mrow><msub><mi>A</mi><mi>out</mi></msub><mo>=</mo><msub><mi>A</mi><mi>in</mi></msub></mrow><annotation encoding="application/x-tex">A_{\mathrm{out}}=A_{\mathrm{in}}</annotation></semantics></math> and <math id="S2.p2.18.m9" class="ltx_Math" alttext="\Omega_{\mathrm{out}}=\Omega_{\mathrm{in}}" display="inline" intent=":literal"><semantics><mrow><msub><mi mathvariant="normal">Ω</mi><mi>out</mi></msub><mo>=</mo><msub><mi mathvariant="normal">Ω</mi><mi>in</mi></msub></mrow><annotation encoding="application/x-tex">\Omega_{\mathrm{out}}=\Omega_{\mathrm{in}}</annotation></semantics></math>.</p>
+</div>
+<div id="S2.p3" class="ltx_para">
+<p id="S2.p3.3" class="ltx_p">A modulator that simply scatter light nearly isotropically (<math id="S2.p3.1.m1" class="ltx_Math" alttext="\Omega_{\mathrm{out}}\sim 4\pi" display="inline" intent=":literal"><semantics><mrow><msub><mi mathvariant="normal">Ω</mi><mi>out</mi></msub><mo>∼</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>π</mi></mrow></mrow><annotation encoding="application/x-tex">\Omega_{\mathrm{out}}\sim 4\pi</annotation></semantics></math>) is here called a <em id="S2.p3.3.1" class="ltx_emph ltx_font_italic">diffuser</em>. A diffuser can serve as a passive beacon: for example, it might reflect only an unusual color or circularly polarized light. While the “broadcast” is visible to nearly anyone, it is faint <em id="S2.p3.3.2" class="ltx_emph ltx_font_italic">because</em> its light goes in all directions, with <math id="S2.p3.2.m2" class="ltx_Math" alttext="\Delta L_{\star}\sim\pi I_{\star}A(R_{\star}/d_{\star})^{2}" display="inline" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>L</mi><mo>⋆</mo></msub></mrow><mo>∼</mo><mrow><mi>π</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>I</mi><mo>⋆</mo></msub><mo lspace="0em" rspace="0em">​</mo><mi>A</mi><mo lspace="0em" rspace="0em">​</mo><msup><mrow><mo stretchy="false">(</mo><mrow><msub><mi>R</mi><mo>⋆</mo></msub><mo>/</mo><msub><mi>d</mi><mo>⋆</mo></msub></mrow><mo stretchy="false">)</mo></mrow><mn>2</mn></msup></mrow></mrow><annotation encoding="application/x-tex">\Delta L_{\star}\sim\pi I_{\star}A(R_{\star}/d_{\star})^{2}</annotation></semantics></math>. Equivalently, <math id="S2.p3.3.m3" class="ltx_Math" alttext="I_{\mathrm{out}}" display="inline" intent=":literal"><semantics><msub><mi>I</mi><mi>out</mi></msub><annotation encoding="application/x-tex">I_{\mathrm{out}}</annotation></semantics></math> is small because the diffuser averages the bright lamp with the dark sky around it. Indeed, non-transiting terrestrial exoplanets are diffusers and their light is difficult to detect.</p>
+</div>
+<div id="S2.p4" class="ltx_para">
+<p id="S2.p4.4" class="ltx_p">A bright passive beacon maximizes surface brightness. The Second Law of Thermodynamics sets a hard limit for a passive optical system: surface brightness is at best conserved (<math id="S2.p4.1.m1" class="ltx_Math" alttext="I_{\mathrm{out}}\leq I_{\star}" display="inline" intent=":literal"><semantics><mrow><msub><mi>I</mi><mi>out</mi></msub><mo>≤</mo><msub><mi>I</mi><mo>⋆</mo></msub></mrow><annotation encoding="application/x-tex">I_{\mathrm{out}}\leq I_{\star}</annotation></semantics></math>). A <em id="S2.p4.4.1" class="ltx_emph ltx_font_italic">glinter</em> is a perfect mirror or lens that reaches the limit when properly aligned, achieving <math id="S2.p4.2.m2" class="ltx_Math" alttext="\Delta L_{\star}=+4\pi I_{\star}A" display="inline" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>L</mi><mo>⋆</mo></msub></mrow><mo>=</mo><mrow><mo>+</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>π</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>I</mi><mo>⋆</mo></msub><mo lspace="0em" rspace="0em">​</mo><mi>A</mi></mrow></mrow></mrow><annotation encoding="application/x-tex">\Delta L_{\star}=+4\pi I_{\star}A</annotation></semantics></math>. An <em id="S2.p4.4.2" class="ltx_emph ltx_font_italic">occulter</em> is a modulator that simply blocks out part of the star, so that <math id="S2.p4.3.m3" class="ltx_Math" alttext="\Delta L_{\star}=-4\pi I_{\star}A" display="inline" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>L</mi><mo>⋆</mo></msub></mrow><mo>=</mo><mrow><mo>−</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>π</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>I</mi><mo>⋆</mo></msub><mo lspace="0em" rspace="0em">​</mo><mi>A</mi></mrow></mrow></mrow><annotation encoding="application/x-tex">\Delta L_{\star}=-4\pi I_{\star}A</annotation></semantics></math>. Glinters and occulters are much easier to detect than diffusers, but the signal is beamed into <math id="S2.p4.4.m4" class="ltx_Math" alttext="\Omega_{\star}" display="inline" intent=":literal"><semantics><msub><mi mathvariant="normal">Ω</mi><mo>⋆</mo></msub><annotation encoding="application/x-tex">\Omega_{\star}</annotation></semantics></math>. This fundamental trade-off follows directly from energy conservation – high surface brightness implies rare events.</p>
+</div>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Glints from relic mirrors: passive beacons in the Solar System</h2>
+
+<div id="S3.p1" class="ltx_para">
+<p id="S3.p1.2" class="ltx_p">Let’s first consider a passive beacon in the Solar System. If ETIs have left behind an artifact in space for us, a passive beacon can help us find it. A free-floating planar mirror (or a flat, specularly reflective surface like a solar panel acting like one) is a glinter, reflecting sunlight into a cone opening into angular radius <math id="S3.p1.1.m1" class="ltx_Math" alttext="\theta_{\odot}\approx R_{\odot}/d_{\odot}=0.27^{\circ}(d_{\odot}/\mathrm{AU})^{-1}" display="inline" intent=":literal"><semantics><mrow><msub><mi>θ</mi><mo>⊙</mo></msub><mo>≈</mo><mrow><msub><mi>R</mi><mo>⊙</mo></msub><mo>/</mo><msub><mi>d</mi><mo>⊙</mo></msub></mrow><mo>=</mo><mrow><msup><mn>0.27</mn><mo>∘</mo></msup><mo lspace="0em" rspace="0em">​</mo><msup><mrow><mo stretchy="false">(</mo><mrow><msub><mi>d</mi><mo>⊙</mo></msub><mo>/</mo><mi>AU</mi></mrow><mo stretchy="false">)</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow></mrow><annotation encoding="application/x-tex">\theta_{\odot}\approx R_{\odot}/d_{\odot}=0.27^{\circ}(d_{\odot}/\mathrm{AU})^{-1}</annotation></semantics></math>. From our perspective, the mirror usually reflects empty space and is completely dark, but when the cone sweeps over us, we see a <em id="S3.p1.2.1" class="ltx_emph ltx_font_italic">glint</em>. Now, a relic mirror with no attitude control cannot aim. Instead, the cone sweeps past the Earth at a speed <math id="S3.p1.2.m2" class="ltx_Math" alttext="v_{\mathrm{rel}}" display="inline" intent=":literal"><semantics><msub><mi>v</mi><mi>rel</mi></msub><annotation encoding="application/x-tex">v_{\mathrm{rel}}</annotation></semantics></math> because of orbital motion and the glint lasts for</p>
+<table id="S3.E2" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S3.E2.m1" class="ltx_Math" alttext="\tau_{\mathrm{glint}}\sim\theta_{\odot}d_{\oplus}/v_{\mathrm{rel}}=0.81\ \mathrm{day}({d_{\oplus}}/{d_{\odot}})({v_{\mathrm{rel}}}/{10\ \mathrm{km~s}^{-1}})." display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>τ</mi><mi>glint</mi></msub><mo>∼</mo><mrow><mrow><msub><mi>θ</mi><mo>⊙</mo></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>d</mi><mo>⊕</mo></msub></mrow><mo>/</mo><msub><mi>v</mi><mi>rel</mi></msub></mrow><mo>=</mo><mrow><mn>0.81</mn><mo lspace="0.500em" rspace="0em">​</mo><mi>day</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><msub><mi>d</mi><mo>⊕</mo></msub><mo>/</mo><msub><mi>d</mi><mo>⊙</mo></msub></mrow><mo stretchy="false">)</mo></mrow><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mrow><msub><mi>v</mi><mi>rel</mi></msub><mo>/</mo><mn>10</mn></mrow><mo lspace="0.500em" rspace="0em">​</mo><mi>km</mi><mo lspace="0.330em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow><mo lspace="0em">.</mo></mrow><annotation encoding="application/x-tex">\tau_{\mathrm{glint}}\sim\theta_{\odot}d_{\oplus}/v_{\mathrm{rel}}=0.81\ \mathrm{day}({d_{\oplus}}/{d_{\odot}})({v_{\mathrm{rel}}}/{10\ \mathrm{km~s}^{-1}}).</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(2)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S3.p2" class="ltx_para">
+<p id="S3.p2.3" class="ltx_p">Glints are a proven technosignature. We observe them from our own satellites in Earth orbit, so often they are a kind of “RFI” for rapid optical transient searches <cite class="ltx_cite ltx_citemacro_citep">(Corbett et al., <a href="#bib.bib9" title="" class="ltx_ref">2020</a>)</cite>.<span id="footnote3" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">3</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">3</sup><span class="ltx_tag ltx_tag_note">3</span><cite class="ltx_cite ltx_citemacro_cite">Villarroel et al. (<a href="#bib.bib24" title="" class="ltx_ref">2022</a>)</cite> aims to suppress this foreground by examining archival pre-Space Age photographs. Subsequent claimed detections, and whether they might be spurious, are still debated.</span></span></span> Anthropic glints come from Earth orbit, however, where they last only seconds. Relic mirrors in interplanetary space would distinctly glint for several hours. A non-spinning mirror as small as 100 cm<sup id="S3.p2.3.1" class="ltx_sup">2</sup> is visible at <math id="S3.p2.2.m2" class="ltx_Math" alttext="d_{\oplus}=1\ \mathrm{AU}" display="inline" intent=":literal"><semantics><mrow><msub><mi>d</mi><mo>⊕</mo></msub><mo>=</mo><mrow><mn>1</mn><mo lspace="0.500em" rspace="0em">​</mo><mi>AU</mi></mrow></mrow><annotation encoding="application/x-tex">d_{\oplus}=1\ \mathrm{AU}</annotation></semantics></math> in the LSST <cite class="ltx_cite ltx_citemacro_citep">(Lacki, <a href="#bib.bib16" title="" class="ltx_ref">2019</a>)</cite>. However, the probability any one randomly mirror is visible in a single snapshot of the entire sky is <math id="S3.p2.3.m3" class="ltx_Math" alttext="\sim\Omega_{\odot}/(4\pi)\sim 5\times 10^{-6}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mrow><msub><mi mathvariant="normal">Ω</mi><mo>⊙</mo></msub><mo>/</mo><mrow><mo stretchy="false">(</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>π</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>∼</mo><mrow><mn>5</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>6</mn></mrow></msup></mrow></mrow><annotation encoding="application/x-tex">\sim\Omega_{\odot}/(4\pi)\sim 5\times 10^{-6}</annotation></semantics></math>.</p>
+</div>
+<div id="S3.p3" class="ltx_para">
+<p id="S3.p3.2" class="ltx_p">Relic mirrors lacking attitude control may be spinning. Rotation causes the cone of reflected light to sweep a band in the mirror’s sky over one rotation period. From our perspective, the glint resolves into a series of pulses with low duty cycle. Averaging over phase, the glint is much dimmer but we are more likely to see it. The tradeoffs are somewhat complicated, but while slow spinning may enhance the effective sample volume, <cite class="ltx_cite ltx_citemacro_cite">Lacki (<a href="#bib.bib16" title="" class="ltx_ref">2019</a>)</cite> finds that very rapidly spinning mirrors are much harder to detect: <math id="S3.p3.1.m1" class="ltx_Math" alttext="A\gtrsim 30" display="inline" intent=":literal"><semantics><mrow><mi>A</mi><mo lspace="0em" rspace="0em">​</mo><merror class="ltx_ERROR undefined undefined"><mtext>\gtrsim</mtext></merror><mo lspace="0em" rspace="0em">​</mo><mn>30</mn></mrow><annotation encoding="application/x-tex">A\gtrsim 30</annotation></semantics></math> m<sup id="S3.p3.2.1" class="ltx_sup">2</sup> is visible in the LSST at 1 AU.</p>
+</div>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Considerations for interstellar passive beacons</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p id="S4.p1.1" class="ltx_p">In the Solar System, glinters are clearly superior to occulters. A glint occurs against the dark night sky, where the backgrounds are small; an occulter transits the Sun, with an incredibly high shot noise and natural surface variations. That’s why we do not observe the transits of natural meter-scale meteoroids across the Sun. Interstellar passive beacons cannot be resolved from the lamp, and thus both glinters and occulters fight against the lamp’s shot noise. Thus small glinters and occulters with the same area have the same detectability – the blip from a transiting rough metal sheet is just as big as one from a finely-machined lens. The only difference is that a glinter <em id="S4.p1.1.1" class="ltx_emph ltx_font_italic">adds</em> an area glowing with <math id="S4.p1.1.m1" class="ltx_Math" alttext="I_{\star}" display="inline" intent=":literal"><semantics><msub><mi>I</mi><mo>⋆</mo></msub><annotation encoding="application/x-tex">I_{\star}</annotation></semantics></math>, while the occulter <em id="S4.p1.1.2" class="ltx_emph ltx_font_italic">subtracts</em> that area.</p>
+</div>
+<div id="S4.p2" class="ltx_para">
+<p id="S4.p2.1" class="ltx_p"><cite class="ltx_cite ltx_citemacro_cite">Arnold (<a href="#bib.bib2" title="" class="ltx_ref">2005</a>)</cite> first proposed occulters as interstellar passive beacons. Because there is a foreground of natural occulters like transiting exoplanets, Arnold suggested that they would have unusual shapes we would infer from the light curve. Searching for transits with unusual features is now established in SETI <cite class="ltx_cite ltx_citemacro_citep">(Zuckerman et al., <a href="#bib.bib30" title="" class="ltx_ref">2024</a>)</cite>. The “inverted transit” of a glinter is also likewise anomalous. Although a glinter event is only as detectable as an occultation, it may be more <em id="S4.p2.1.1" class="ltx_emph ltx_font_italic">recognizable</em> because its anomalous characteristic is the brightening itself. But a single occulter is a poor beacon. The signal from each modulator sweeps out a band of width <math id="S4.p2.1.m1" class="ltx_Math" alttext="2\theta_{\star}" display="inline" intent=":literal"><semantics><mrow><mn>2</mn><mo lspace="0em" rspace="0em">​</mo><msub><mi>θ</mi><mo>⋆</mo></msub></mrow><annotation encoding="application/x-tex">2\theta_{\star}</annotation></semantics></math> in its sky as it orbits (analogous to our rotating mirror in the previous section), visible from a small range of inclinations. For an “isotropic” beacon, the number of modulators is:</p>
+<table id="S4.E3" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S4.E3.m1" class="ltx_Math" alttext="N_{E}\gtrsim\pi d_{\star}/(2R_{\star})\approx 340(d_{\star}/\mathrm{AU})(R_{\star}/R_{\odot})." display="block" intent=":literal"><semantics><mrow><mrow><mrow><mrow><msub><mi>N</mi><mi>E</mi></msub><mo lspace="0em" rspace="0em">​</mo><merror class="ltx_ERROR undefined undefined"><mtext>\gtrsim</mtext></merror><mo lspace="0em" rspace="0em">​</mo><mi>π</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>d</mi><mo>⋆</mo></msub></mrow><mo>/</mo><mrow><mo stretchy="false">(</mo><mrow><mn>2</mn><mo lspace="0em" rspace="0em">​</mo><msub><mi>R</mi><mo>⋆</mo></msub></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>≈</mo><mrow><mn>340</mn><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><msub><mi>d</mi><mo>⋆</mo></msub><mo>/</mo><mi>AU</mi></mrow><mo stretchy="false">)</mo></mrow><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><msub><mi>R</mi><mo>⋆</mo></msub><mo>/</mo><msub><mi>R</mi><mo>⊙</mo></msub></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow><mo lspace="0em">.</mo></mrow><annotation encoding="application/x-tex">N_{E}\gtrsim\pi d_{\star}/(2R_{\star})\approx 340(d_{\star}/\mathrm{AU})(R_{\star}/R_{\odot}).</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(3)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S4.p3" class="ltx_para">
+<p id="S4.p3.1" class="ltx_p">Glinters may have another upside: there is no fundamental limit to their luminosity. While an occulter can only block out 100% of a lamp, a glinter could hypothetically be much larger than the lamp itself (<math id="S4.p3.1.m1" class="ltx_Math" alttext="\Delta L_{\star}/L_{\star}=A_{\mathrm{out}}/A_{\star}" display="inline" intent=":literal"><semantics><mrow><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>L</mi><mo>⋆</mo></msub></mrow><mo>/</mo><msub><mi>L</mi><mo>⋆</mo></msub></mrow><mo>=</mo><mrow><msub><mi>A</mi><mi>out</mi></msub><mo>/</mo><msub><mi>A</mi><mo>⋆</mo></msub></mrow></mrow><annotation encoding="application/x-tex">\Delta L_{\star}/L_{\star}=A_{\mathrm{out}}/A_{\star}</annotation></semantics></math>). For a sun, it essentially requires a Dyson swarm of mirrors, all reflecting sunlight in the same direction. This implies attitude active control, not a passive beacon. The challenge is finding a lamp small enough a single structure could dwarf it, but bright enough to be seen at galactic distances.</p>
+</div>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">5 </span>Lens flare: intergalactic passive broadcasts?</h2>
+
+<div id="S5.p1" class="ltx_para">
+<p id="S5.p1.1" class="ltx_p">A superluminous glinter needs a hot lamp to maximize surface brightness. The hottest thermal sources we know occur in Low Mass X-ray Binary (LMXB) systems.<span id="footnote4" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">4</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">4</sup><span class="ltx_tag ltx_tag_note">4</span>Nonthermal emission can reach even higher brightness temperatures. A radio-emission zone on a pulsar may also be a good lamp. <cite class="ltx_cite ltx_citemacro_cite">Chennamangalam et al. (<a href="#bib.bib7" title="" class="ltx_ref">2015</a>)</cite> considers occulters, but in principle there could be radio lens flares, possibly resembling fast radio bursts <cite class="ltx_cite ltx_citemacro_citep">(Lacki, <a href="#bib.bib17" title="" class="ltx_ref">2020</a>)</cite>. Natural analogs from plasma lensing have been observed in certain pulsar systems <cite class="ltx_cite ltx_citemacro_citep">(Main et al., <a href="#bib.bib19" title="" class="ltx_ref">2018</a>)</cite>.</span></span></span> Material reaches near relativistic orbital speeds as it accretes onto a compact object, but if the object is a neutron star, it must come to a complete stop almost instantaneously, releasing all of the kinetic energy at once (e.g., <cite class="ltx_cite ltx_citemacro_citet">Popham &amp; Sunyaev <a href="#bib.bib22" title="" class="ltx_ref">2001</a></cite>). The impact region is the boundary layer, a mere few square kilometers with a luminosity of up to <math id="S5.p1.1.m1" class="ltx_Math" alttext="\sim 10^{5}L_{\odot}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mrow><msup><mn>10</mn><mn>5</mn></msup><mo lspace="0em" rspace="0em">​</mo><msub><mi>L</mi><mo>⊙</mo></msub></mrow></mrow><annotation encoding="application/x-tex">\sim 10^{5}L_{\odot}</annotation></semantics></math> – an ideal lamp.</p>
+</div>
+<div id="S5.p2" class="ltx_para">
+<p id="S5.p2.1" class="ltx_p">LMXBs are enticing lamps for passive beacons, <em id="S5.p2.1.1" class="ltx_emph ltx_font_italic">if</em> ETIs can reach them. The potential for occulters has already been noted <cite class="ltx_cite ltx_citemacro_citep">(Imara &amp; Di Stefano, <a href="#bib.bib13" title="" class="ltx_ref">2018</a>)</cite>, but we can go further with a glinter larger than the boundary layer. Consider a collimating lens, magnifying whatever is directly behind its center. Most of the time, it magnifies the much colder accretion disk or empty space. Indeed, an off-center lens much larger than our lamp acts as an occulter. If the lens center passes directly in front of the boundary layer, the entire lens lights up with its surface brightness. A lens flare results. A 1,000 km radius lens can appear as luminous as a billion suns for a fraction of a second – maybe bright enough for an <em id="S5.p2.1.2" class="ltx_emph ltx_font_italic">intergalactic</em> beacon.</p>
+</div>
+<div id="S5.p3" class="ltx_para">
+<p id="S5.p3.1" class="ltx_p">The catch is that this luminosity is mostly hard X-rays. Both refractive and diffractive hard X-ray optics suffer from chromatic aberration, thus focusing only in a narrow range of energies and diluting the lens flare signal. The lenses also need some passive method to point themselves at the LMXB. Our own ability to detect X-ray transients is limited; we have no X-ray equivalent of the Rubin telescope. <cite class="ltx_cite ltx_citemacro_cite">Lacki (<a href="#bib.bib17" title="" class="ltx_ref">2020</a>)</cite> shows that an <math id="S5.p3.1.m1" class="ltx_Math" alttext="R=" display="inline" intent=":literal"><semantics><mrow><mi>R</mi><mo>=</mo><mi></mi></mrow><annotation encoding="application/x-tex">R=</annotation></semantics></math> 1,000 km achromatic lens flare could be detectable in M31 with our most sensitive X-ray facilities. But we almost certainly would miss them, because they are rare events. The boundary layer is a small moving target and the swarm must be located far from the binary, tens of AU, to not instantly sublimate from the intense luminosity. Indeed, there may not be enough local solid matter to build a lens swarm in the first place – a very large number of lenses is needed to ensure a decent flare rate. For now, if these lens swarms exist, we probably will only find them in our own Galaxy and possibly the Magellanic Clouds, where they would be bright enough to be picked up by widefield monitors.</p>
+</div>
+</section>
+<section id="S6" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">6 </span>The mortality of megaswarms: collisional cascades</h2>
+
+<div id="S6.p1" class="ltx_para">
+<p id="S6.p1.1" class="ltx_p">A megastructure is a technological artifact of astronomical scale. The archetypal megastructure is a Dyson sphere, which surrounds a sun and has covering factor <math id="S6.p1.1.m1" class="ltx_Math" alttext="\sim 1" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\sim 1</annotation></semantics></math>.<span id="footnote5" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup><span class="ltx_tag ltx_tag_note">5</span>All Dyson spheres are thus occulters. In addition to their positive waste heat, itself a passive broadcast, the abnormal dimming of their host star is a potential technosignature <cite class="ltx_cite ltx_citemacro_citep">(Zackrisson et al., <a href="#bib.bib29" title="" class="ltx_ref">2018</a>)</cite>.</span></span></span> In general, a megastructure is envisioned as a megaswarm, with a large number of elements in orbit around a host like a star; no single solid structure of that scale could survive <cite class="ltx_cite ltx_citemacro_citep">(Wright, <a href="#bib.bib26" title="" class="ltx_ref">2020</a>)</cite>. Interstellar passive beacons, including occulter swarms and X-ray lens swarms, are sparse megaswarms, with each sightline uncovered most of the time. Both Dyson spheres and passive beacons need elements with a full range of orbital inclinations to intercept all possible sightlines.<span id="footnote6" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">6</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">6</sup><span class="ltx_tag ltx_tag_note">6</span><cite class="ltx_cite ltx_citemacro_cite">McInnes (<a href="#bib.bib20" title="" class="ltx_ref">2026</a>)</cite> has an elegant solution: radiation-pressure supported elements can simply float at high latitude. Degradation in attitude control or reflectivity might upset the balance needed for this configuration.</span></span></span></p>
+</div>
+<div id="S6.p2" class="ltx_para">
+<p id="S6.p2.1" class="ltx_p">The scale of a megaswarm and the effort to build one is imposing. But if the elements of a swarm are unguided and their orbits are even partially randomized, they collide with each other. A collisional cascade ensues, the hypervelocity fragments from each collision obliterating further elements, initiating a rapid grinding process that smashes everything into dust. Collisional cascades are inferred to happen for minor body populations throughout the Solar System and in the debris disks of exoplanetary systems (e.g., <cite class="ltx_cite ltx_citemacro_citet">Wyatt <a href="#bib.bib27" title="" class="ltx_ref">2008</a>; Hughes et al. <a href="#bib.bib12" title="" class="ltx_ref">2018</a></cite>). Technological collisional cascade is also a threat to the growing swarm of satellites in Earth orbit <cite class="ltx_cite ltx_citemacro_citep">(Kessler &amp; Cour-Palais, <a href="#bib.bib14" title="" class="ltx_ref">1978</a>)</cite>. Our satellites take evasive actions, expending propellant. A long abandoned megaswarm, where the elements have lost maneuvering abilities and lack self-repair, has no way to avoid this fate <cite class="ltx_cite ltx_citemacro_citep">(Lacki, <a href="#bib.bib18" title="" class="ltx_ref">2025</a>)</cite>.</p>
+</div>
+<div id="S6.p3" class="ltx_para">
+<p id="S6.p3.8" class="ltx_p">The collisional time describes the instantaneous rate an element can expect to be hit by another in a fully randomized swarm. For a naive estimate, suppose the megaswarm fills a shell around a host with radius <math id="S6.p3.1.m1" class="ltx_Math" alttext="R_{S}" display="inline" intent=":literal"><semantics><msub><mi>R</mi><mi>S</mi></msub><annotation encoding="application/x-tex">R_{S}</annotation></semantics></math> and thickness <math id="S6.p3.2.m2" class="ltx_Math" alttext="r_{S}" display="inline" intent=":literal"><semantics><msub><mi>r</mi><mi>S</mi></msub><annotation encoding="application/x-tex">r_{S}</annotation></semantics></math>. The swarm has <math id="S6.p3.3.m3" class="ltx_Math" alttext="N_{E}" display="inline" intent=":literal"><semantics><msub><mi>N</mi><mi>E</mi></msub><annotation encoding="application/x-tex">N_{E}</annotation></semantics></math> elements placed on random orbits, with periods <math id="S6.p3.4.m4" class="ltx_Math" alttext="t_{\mathrm{orb}}" display="inline" intent=":literal"><semantics><msub><mi>t</mi><mi>orb</mi></msub><annotation encoding="application/x-tex">t_{\mathrm{orb}}</annotation></semantics></math>. Typical relative velocities <math id="S6.p3.5.m5" class="ltx_Math" alttext="v_{\mathrm{rel}}" display="inline" intent=":literal"><semantics><msub><mi>v</mi><mi>rel</mi></msub><annotation encoding="application/x-tex">v_{\mathrm{rel}}</annotation></semantics></math> are comparable to the circular orbital velocity. Likewise, the collisional cross sectional area <math id="S6.p3.6.m6" class="ltx_Math" alttext="A_{\mathrm{coll}}" display="inline" intent=":literal"><semantics><msub><mi>A</mi><mi>coll</mi></msub><annotation encoding="application/x-tex">A_{\mathrm{coll}}</annotation></semantics></math> is of order the projected area of each element <math id="S6.p3.7.m7" class="ltx_Math" alttext="A" display="inline" intent=":literal"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>. Defining <math id="S6.p3.8.m8" class="ltx_Math" alttext="n_{E}" display="inline" intent=":literal"><semantics><msub><mi>n</mi><mi>E</mi></msub><annotation encoding="application/x-tex">n_{E}</annotation></semantics></math> to be the number density of elements, the collisional time is</p>
+<table id="S6.E4" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S6.E4.m1" class="ltx_Math" alttext="t_{\mathrm{coll}}=(n_{E}A_{\mathrm{coll}}v_{\mathrm{rel}})^{-1}=4\pi R_{S}^{2}r_{S}/(N_{E}A_{\mathrm{coll}}v_{\mathrm{rel}})\sim t_{\mathrm{orb}}\cdot F_{S}^{-1}\cdot(r_{S}/R_{S})," display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>t</mi><mi>coll</mi></msub><mo>=</mo><msup><mrow><mo stretchy="false">(</mo><mrow><msub><mi>n</mi><mi>E</mi></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>A</mi><mi>coll</mi></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>v</mi><mi>rel</mi></msub></mrow><mo stretchy="false">)</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo>=</mo><mrow><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>π</mi><mo lspace="0em" rspace="0em">​</mo><msubsup><mi>R</mi><mi>S</mi><mn>2</mn></msubsup><mo lspace="0em" rspace="0em">​</mo><msub><mi>r</mi><mi>S</mi></msub></mrow><mo>/</mo><mrow><mo stretchy="false">(</mo><mrow><msub><mi>N</mi><mi>E</mi></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>A</mi><mi>coll</mi></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>v</mi><mi>rel</mi></msub></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>∼</mo><mrow><msub><mi>t</mi><mi>orb</mi></msub><mo lspace="0.222em" rspace="0.222em">⋅</mo><msubsup><mi>F</mi><mi>S</mi><mrow><mo>−</mo><mn>1</mn></mrow></msubsup><mo lspace="0.222em" rspace="0.222em">⋅</mo><mrow><mo stretchy="false">(</mo><mrow><msub><mi>r</mi><mi>S</mi></msub><mo>/</mo><msub><mi>R</mi><mi>S</mi></msub></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">t_{\mathrm{coll}}=(n_{E}A_{\mathrm{coll}}v_{\mathrm{rel}})^{-1}=4\pi R_{S}^{2}r_{S}/(N_{E}A_{\mathrm{coll}}v_{\mathrm{rel}})\sim t_{\mathrm{orb}}\cdot F_{S}^{-1}\cdot(r_{S}/R_{S}),</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(4)</span></td>
+</tr></tbody>
+</table>
+<p id="S6.p3.11" class="ltx_p">where <math id="S6.p3.9.m1" class="ltx_Math" alttext="F_{S}=N_{E}A/(4\pi R_{S}^{2})" display="inline" intent=":literal"><semantics><mrow><msub><mi>F</mi><mi>S</mi></msub><mo>=</mo><mrow><mrow><msub><mi>N</mi><mi>E</mi></msub><mo lspace="0em" rspace="0em">​</mo><mi>A</mi></mrow><mo>/</mo><mrow><mo stretchy="false">(</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>π</mi><mo lspace="0em" rspace="0em">​</mo><msubsup><mi>R</mi><mi>S</mi><mn>2</mn></msubsup></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow><annotation encoding="application/x-tex">F_{S}=N_{E}A/(4\pi R_{S}^{2})</annotation></semantics></math> is the covering fraction of the megaswarm. Thus a filled megaswarm like a Dyson swarm, left to its own devices and with randomized orbits, would immediately self-destruct. Even sparse megaswarms have a limited life: <math id="S6.p3.10.m2" class="ltx_Math" alttext="t_{\mathrm{coll}}\sim 1\ \mathrm{Myr}" display="inline" intent=":literal"><semantics><mrow><msub><mi>t</mi><mi>coll</mi></msub><mo>∼</mo><mrow><mn>1</mn><mo lspace="0.500em" rspace="0em">​</mo><mi>Myr</mi></mrow></mrow><annotation encoding="application/x-tex">t_{\mathrm{coll}}\sim 1\ \mathrm{Myr}</annotation></semantics></math> for occulters around a solar twin at 1 AU. A lens swarm around an LMXB is estimated to have <math id="S6.p3.11.m3" class="ltx_Math" alttext="t_{\mathrm{coll}}\sim 100\ \mathrm{kyr}" display="inline" intent=":literal"><semantics><mrow><msub><mi>t</mi><mi>coll</mi></msub><mo>∼</mo><mrow><mn>100</mn><mo lspace="0.500em" rspace="0em">​</mo><mi>kyr</mi></mrow></mrow><annotation encoding="application/x-tex">t_{\mathrm{coll}}\sim 100\ \mathrm{kyr}</annotation></semantics></math>. While long, the lifespans are mere stubs in geological time.</p>
+</div>
+<div id="S6.p4" class="ltx_para">
+<p id="S6.p4.1" class="ltx_p">This estimate proves robust even when the orbits are not fully randomized. The underlying issue is the wide range of inclinations. To impose order on the megaswarm, the elements could be confined to concentric circular belts, each a small range of semimajor axis and inclination. The small mutual inclinations reduces the relative velocities, but at the same time, it reduces the fraction of the shell volume that is occupied – all of the space at high relative inclination is wasted. In fact, relative velocity trades against density so that the collisional time is unchanged. Actual collisional cascades can proceed much faster than <math id="S6.p4.1.m1" class="ltx_Math" alttext="t_{\mathrm{coll}}" display="inline" intent=":literal"><semantics><msub><mi>t</mi><mi>coll</mi></msub><annotation encoding="application/x-tex">t_{\mathrm{coll}}</annotation></semantics></math> – any one of the numerous tiny fragments is moving fast enough to shatter a large element.</p>
+</div>
+<div id="S6.p5" class="ltx_para">
+<p id="S6.p5.1" class="ltx_p">The cascade begins once the orbits of elements start crossing. Many stellar systems have either a companion star or orbiting planets, either of which are a source of perturbations. The Lidov-Kozai instability is a particular threat to megaswarms with a wide range of inclinations: circular orbits above a threshold inclination oscillate into highly eccentric orbits with low inclination and back. Higher-order effects can operate as well (e.g., <cite class="ltx_cite ltx_citemacro_citet">Naoz et al. <a href="#bib.bib21" title="" class="ltx_ref">2013</a></cite>). The timescale for a full Lidov-Kozai cycle is around 150 kyr for an element at 1 AU perturbed by a Jupiter analog. Even absent gravitational perturbations, elements can drift off-orbit from their own radiative thrust, as small asteroids do <cite class="ltx_cite ltx_citemacro_citep">(Bottke et al., <a href="#bib.bib5" title="" class="ltx_ref">2006</a>)</cite>.</p>
+</div>
+<div id="S6.p6" class="ltx_para">
+<p id="S6.p6.1" class="ltx_p">A megaswarm has an inherent self-destruction mode, leaving us back where we started: as a relic technosignature, it requires maintenance. A Dyson swarm is not a good monument; and even a passive beacon is transient in the cosmic scheme of things. Any sample of abandoned megaswarms we observe will be biased to those with long lifespans. These could be found around solitary stars with no perturbing companions. When there is a companion, Lidov-Kozai perturbations are slower in swarms far interior or exterior to it – although swarms close to a star are especially vulnerable to radiatively induced perturbations. Very cold megaswarms, operating far from their star, however, generally can have long lives and thus may dominate the observable population. The ultimate extreme would be artificial elements distributed in the interstellar medium itself, untethered to any star, where the Galactic orbital period is a few hundred million years. <cite class="ltx_cite ltx_citemacro_citet">Lacki (<a href="#bib.bib15" title="" class="ltx_ref">2016</a>)</cite> investigated these “blackboxes”, arguing they could take the form of thin dipole needles to absorb and radiate in microwaves. Instead of being ground to dust, a blackbox is already a form of dust.</p>
+</div>
+</section>
+<section id="S7" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">7 </span>The final passive technosignature</h2>
+
+<div id="S7.p1" class="ltx_para">
+<p id="S7.p1.1" class="ltx_p">In the absence of easy interstellar travel, short-lived ETIs trying to memorialize themselves may try to build a passive beacon visible from interstellar distances. These could be swarms of modulators around a lamp like a star, but the elements must be big and numerous for maximum signal. In turn, these swarms are susceptible to collisional cascades, eventually smashing each of these elements into bits. Without the ability to replicate and regenerate themselves, it seems any sign of an ETI might vanish. Might there even have been a Kardashev Type III ETI pervading our Milky Way a billion years ago that vanished without a trace?</p>
+</div>
+<div id="S7.p2" class="ltx_para">
+<p id="S7.p2.1" class="ltx_p">And yet, in being ground to dust, the final act of a passive beacon is to spread itself among the stars. As the fragments are broken into smaller pieces, the ratio of radiation pressure to gravity rises. Once it exceeds <math id="S7.p2.1.m1" class="ltx_Math" alttext="\frac{1}{2}" display="inline" intent=":literal"><semantics><mfrac><mn>1</mn><mn>2</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{2}</annotation></semantics></math> – typically micron-scale grains for a sunlike star – the broken pieces are blown out of the system, removed from the cascade and saved from further destruction <cite class="ltx_cite ltx_citemacro_citep">(Hughes et al., <a href="#bib.bib12" title="" class="ltx_ref">2018</a>)</cite>. Thus, even if the builders never go to the stars, the fine remnants of their works do, as long as their home sun is bright enough. Each broken swarm releases an astronomical number of grains into the interstellar medium. As the Solar System passes through this reservoir, the worlds within it would be exposed to a sprinkling of technograins, and a small fraction of those can land softly enough in the regolith of worlds like the Moon to maybe be recognizable even over billions of years (cf. <cite class="ltx_cite ltx_citemacro_citet">Arkhipov <a href="#bib.bib1" title="" class="ltx_ref">1996</a></cite>). And so we are back again at the prospect of Solar System artifact by a different route: not macroscopic objects deliberately placed here, but dust, the unintended microscopic testament to our possible predecessors still waiting to be found (Pinault et al. 2026, submitted).</p>
+</div>
+</section>
+<section id="Sx1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">Acknowledgments</h2>
+
+<div id="Sx1.p1" class="ltx_para">
+<p id="Sx1.p1.1" class="ltx_p">I thank the Breakthrough Listen program for their support. Funding for Breakthrough Listen research is sponsored by the Breakthrough Prize Foundation (<a href="https://breakthroughprize.org/" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://breakthroughprize.org/</a>). I am grateful for the collaboration of Lewis Pinault, Ian Crawford, and Andrew Siemion on micron-scale fragments as technosignatures, and to Jason Wright and several referees for comments and discussion.</p>
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul class="ltx_biblist">
+<li id="bib.bib1" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Arkhipov (1996)</span>
+<span class="ltx_bibblock"> Arkhipov, A. V. 1996, <span id="bib.bib1.1.1" class="ltx_text ltx_font_italic">The Observatory</span>, 116, 175.
+
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Arnold (2005)</span>
+<span class="ltx_bibblock"> Arnold, L. F. A. 2005, <span id="bib.bib2.1.1" class="ltx_text ltx_font_italic">ApJ</span>, 627, 1, 534.
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Balbi &amp; Ćirković (2021)</span>
+<span class="ltx_bibblock"> Balbi, A. &amp; Ćirković, M. M. 2021, <span id="bib.bib3.1.1" class="ltx_text ltx_font_italic">AJ</span>, 161, 5, 222.
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Benford (2021)</span>
+<span class="ltx_bibblock"> Benford, J. 2021, <span id="bib.bib4.1.1" class="ltx_text ltx_font_italic">Astrobiology</span>, 21, 6, 757.
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Bottke et al. (2006)</span>
+<span class="ltx_bibblock"> Bottke, W. F., Vokrouhlický, D., Rubincam, D. P., et al. 2006, <span id="bib.bib5.1.1" class="ltx_text ltx_font_italic">Annual Review of Earth and Planetary Sciences</span>, 34, 157. 
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Bracewell (1960)</span>
+<span class="ltx_bibblock"> Bracewell, R. N. 1960, <span id="bib.bib6.1.1" class="ltx_text ltx_font_italic">Nature</span>, 186, 4726, 670.
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Chennamangalam et al. (2015)</span>
+<span class="ltx_bibblock"> Chennamangalam, J., Siemion, A. P. V., Lorimer, D. R., et al. 2015, <span id="bib.bib7.1.1" class="ltx_text ltx_font_italic">New Astron.</span>, 34, 245.
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Ćirković (2018)</span>
+<span class="ltx_bibblock"> Ćirković, M. M. 2018, <em id="bib.bib8.1.1" class="ltx_emph ltx_font_italic">The Great Silence</em>. Oxford University Press.
+
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Corbett et al. (2020)</span>
+<span class="ltx_bibblock"> Corbett, H., Law, N. M., Soto, A. V., et al. 2020, <span id="bib.bib9.1.1" class="ltx_text ltx_font_italic">ApJL</span>, 903, 2, L27.
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Davies (2012)</span>
+<span class="ltx_bibblock"> Davies, P. C. W. 2012, <span id="bib.bib10.1.1" class="ltx_text ltx_font_italic">Acta Astronautica</span>, 73, 250.
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Freeman &amp; Lampton (1975)</span>
+<span class="ltx_bibblock"> Freeman, J. &amp; Lampton, M. 1975, <span id="bib.bib11.1.1" class="ltx_text ltx_font_italic">Icarus</span>, 25, 2, 368.
+</span>
+</li>
+<li id="bib.bib12" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Hughes et al. (2018)</span>
+<span class="ltx_bibblock"> Hughes, A. M., Duchêne, G., &amp; Matthews, B. C. 2018, <span id="bib.bib12.1.1" class="ltx_text ltx_font_italic">ARAA</span>, 56, 541.
+</span>
+</li>
+<li id="bib.bib13" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Imara &amp; Di Stefano (2018)</span>
+<span class="ltx_bibblock"> Imara, N. &amp; Di Stefano, R. 2018, <span id="bib.bib13.1.1" class="ltx_text ltx_font_italic">ApJ</span>, 859, 1, 40.
+</span>
+</li>
+<li id="bib.bib14" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kessler &amp; Cour-Palais (1978)</span>
+<span class="ltx_bibblock"> Kessler, D. J. &amp; Cour-Palais, B. G. 1978, <span id="bib.bib14.1.1" class="ltx_text ltx_font_italic">Journal of Geophysical Research</span>, 83, A6, 2637.
+</span>
+</li>
+<li id="bib.bib15" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Lacki (2016)</span>
+<span class="ltx_bibblock"> Lacki, B. C. 2016, arXiv:1604.07844.
+</span>
+</li>
+<li id="bib.bib16" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Lacki (2019)</span>
+<span class="ltx_bibblock"> Lacki, B. C. 2019, <span id="bib.bib16.1.1" class="ltx_text ltx_font_italic">PASP</span>, 131, 1002, 084401.
+</span>
+</li>
+<li id="bib.bib17" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Lacki (2020)</span>
+<span class="ltx_bibblock"> Lacki, B. C. 2020, <span id="bib.bib17.1.1" class="ltx_text ltx_font_italic">ApJ</span>, 905, 1, 18.
+</span>
+</li>
+<li id="bib.bib18" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Lacki (2025)</span>
+<span class="ltx_bibblock"> Lacki, B. C. 2025, <span id="bib.bib18.1.1" class="ltx_text ltx_font_italic">ApJ</span>, 985, 2, 191.
+</span>
+</li>
+<li id="bib.bib19" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Main et al. (2018)</span>
+<span class="ltx_bibblock"> Main, R., Yang, I.-S., Chan, V., et al. 2018, <span id="bib.bib19.1.1" class="ltx_text ltx_font_italic">Nature</span>, 557, 7706, 522. 
+</span>
+</li>
+<li id="bib.bib20" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">McInnes (2026)</span>
+<span class="ltx_bibblock"> McInnes, C. R. 2026, <span id="bib.bib20.1.1" class="ltx_text ltx_font_italic">MNRAS</span>, 546, 4, stag100. 
+</span>
+</li>
+<li id="bib.bib21" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Naoz et al. (2013)</span>
+<span class="ltx_bibblock"> Naoz, S., Farr, W. M., Lithwick, Y., et al. 2013, <span id="bib.bib21.1.1" class="ltx_text ltx_font_italic">MNRAS</span>, 431, 3, 2155.
+</span>
+</li>
+<li id="bib.bib22" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Popham &amp; Sunyaev (2001)</span>
+<span class="ltx_bibblock"> Popham, R. &amp; Sunyaev, R. 2001, <span id="bib.bib22.1.1" class="ltx_text ltx_font_italic">ApJ</span>, 547, 1, 355.
+</span>
+</li>
+<li id="bib.bib23" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Rose &amp; Wright (2004)</span>
+<span class="ltx_bibblock"> Rose, C. &amp; Wright, G. 2004, <span id="bib.bib23.1.1" class="ltx_text ltx_font_italic">Nature</span>, 431, 7004, 47. 
+</span>
+</li>
+<li id="bib.bib24" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Villarroel et al. (2022)</span>
+<span class="ltx_bibblock"> Villarroel, B., Mattsson, L., Guergouri, H., et al. 2022, <span id="bib.bib24.1.1" class="ltx_text ltx_font_italic">Acta Astronautica</span>, 194, 106.
+</span>
+</li>
+<li id="bib.bib25" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wright et al. (2014)</span>
+<span class="ltx_bibblock"> Wright, J. T., Mullan, B., Sigurdsson, S., et al. 2014, <span id="bib.bib25.1.1" class="ltx_text ltx_font_italic">ApJ</span>, 792, 1, 26.
+</span>
+</li>
+<li id="bib.bib26" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wright (2020)</span>
+<span class="ltx_bibblock"> Wright, J. T. 2020, <span id="bib.bib26.1.1" class="ltx_text ltx_font_italic">Serbian Astronomical Journal</span>, 200, 1.
+</span>
+</li>
+<li id="bib.bib27" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wyatt (2008)</span>
+<span class="ltx_bibblock"> Wyatt, M. C. 2008, <span id="bib.bib27.1.1" class="ltx_text ltx_font_italic">ARAA</span>, 46, 339.
+</span>
+</li>
+<li id="bib.bib28" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Yokoo &amp; Oshima (1979)</span>
+<span class="ltx_bibblock"> Yokoo, H. &amp; Oshima, T. 1979, <span id="bib.bib28.1.1" class="ltx_text ltx_font_italic">Icarus</span>, 38, 1, 148. 
+</span>
+</li>
+<li id="bib.bib29" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Zackrisson et al. (2018)</span>
+<span class="ltx_bibblock"> Zackrisson, E., Korn, A. J., Wehrhahn, A., et al. 2018, <span id="bib.bib29.1.1" class="ltx_text ltx_font_italic">ApJ</span>, 862, 1, 21.
+</span>
+</li>
+<li id="bib.bib30" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Zuckerman et al. (2024)</span>
+<span class="ltx_bibblock"> Zuckerman, A., Davenport, J. R. A., Croft, S., et al. 2024, <span id="bib.bib30.1.1" class="ltx_text ltx_font_italic">AJ</span>, 167, 1, 20.
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2606.08373v1/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer><footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation">
+        </a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International">
+        </a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences">
+        </a>
+      </div>
+    </div>
+  </div>
+</footer><div id="fixed-buttons-container">
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>

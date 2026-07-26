@@ -1,0 +1,58 @@
+{
+  "stage": "probe",
+  "untimely": {
+    "routes": [
+      {
+        "label": "untimely_schema@https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
+        "service": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
+        "status": "QUERY_FAILED",
+        "n_rows": 0,
+        "count_star": null,
+        "truncated": null,
+        "query": "SELECT table_name, description FROM TAP_SCHEMA.tables WHERE LOWER(description) LIKE '%untimely%' OR LOWER(description) LIKE '%un-timely%' OR LOWER(description) LIKE '%unwise variab%' OR LOWER(description) LIKE '%mid-infrared variable%' OR LOWER(table_name) LIKE '%untimely%' OR LOWER(table_name) LIKE '%un-timely%'",
+        "error": "DALQueryError: Incorrect ADQL query:  Encountered \"(\". Was expecting one of: \".\" \"=\" <NOT_EQUAL> \"<\" \"<=\" \">\" \">=\" \"NOT\" \"IN\" \"+\" \"-\" \"*\" \"/\" \"&\" \"|\" \"||\" \"BETWEEN\" \"IS\" \"LIKE\"",
+        "elapsed_s": 10.904344155000004
+      },
+      {
+        "label": "untimely_schema@https://irsa.ipac.caltech.edu/TAP",
+        "service": "https://irsa.ipac.caltech.edu/TAP",
+        "status": "QUERY_RETURNED_ZERO_ROWS",
+        "n_rows": 0,
+        "count_star": null,
+        "truncated": false,
+        "query": "SELECT table_name, description FROM TAP_SCHEMA.tables WHERE LOWER(description) LIKE '%untimely%' OR LOWER(description) LIKE '%un-timely%' OR LOWER(description) LIKE '%unwise variab%' OR LOWER(description) LIKE '%mid-infrared variable%' OR LOWER(table_name) LIKE '%untimely%' OR LOWER(table_name) LIKE '%un-timely%'",
+        "error": "",
+        "elapsed_s": 0.31675476400000946
+      },
+      {
+        "label": "untimely_schema@https://datalab.noirlab.edu/tap",
+        "service": "https://datalab.noirlab.edu/tap",
+        "status": "QUERY_RETURNED_ZERO_ROWS",
+        "n_rows": 0,
+        "count_star": null,
+        "truncated": false,
+        "query": "SELECT table_name, description FROM TAP_SCHEMA.tables WHERE LOWER(description) LIKE '%untimely%' OR LOWER(description) LIKE '%un-timely%' OR LOWER(description) LIKE '%unwise variab%' OR LOWER(description) LIKE '%mid-infrared variable%' OR LOWER(table_name) LIKE '%untimely%' OR LOWER(table_name) LIKE '%un-timely%'",
+        "error": "",
+        "elapsed_s": 1.3292113480000012
+      }
+    ],
+    "tables_found": [],
+    "reachable": false,
+    "verdict": "CATALOGUE_NOT_FOUND_ON_ANY_TAP_ROUTE"
+  },
+  "neowise": {
+    "label": "neowise_epochs_pm0.00as",
+    "service": "https://irsa.ipac.caltech.edu/TAP",
+    "status": "OK",
+    "n_rows": 27,
+    "count_star": 32,
+    "truncated": false,
+    "query": "SELECT mjd, w1mpro, w1sigmpro, w2mpro, w2sigmpro, qual_frame, cc_flags, ph_qual, saa_sep, moon_masked, w1rchi2, w2rchi2 FROM neowiser_p1bs_psd WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 266.0000000, 65.0000000, 0.000833333))",
+    "error": "",
+    "elapsed_s": 91.86880212700001,
+    "n_visits_binned": 0,
+    "err_scale_fitted": 1.0
+  },
+  "verdict": "NEOWISE_ONLY",
+  "architecture": "neowise_field_sweep"
+}

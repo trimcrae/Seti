@@ -1,0 +1,1298 @@
+Draft version November 15, 2022
+Typeset using LATEX twocolumn style in AASTeX631
+
+unTimely: a Full-sky, Time-Domain unWISE Catalog
+Aaron M. Meisner
+
+,1 Dan Caselden
+
+,2 Edward F. Schlafly
+
+,3 and Frank Kiwy
+
+4
+
+1 NSF’s National Optical-Infrared Astronomy Research Laboratory, 950 N. Cherry Ave., Tucson, AZ 85719, USA
+2 Department of Astrophysics, American Museum of Natural History, Central Park West at 79th Street, NY 10024, USA
+
+arXiv:2209.14327v2 [astro-ph.IM] 14 Nov 2022
+
+3 Space Telescope Science Institute, 3700 San Martin Drive, Baltimore, MD 21218, USA
+4 Backyard Worlds: Planet 9
+
+ABSTRACT
+We present the unTimely Catalog, a deep time-domain catalog of detections based on Wide-field
+Infrared Survey Explorer (WISE) and NEOWISE observations spanning the 2010 through 2020 time
+period. Detections are extracted from ‘time-resolved unWISE coadds’, which stack together each
+biannual sky pass of WISE imaging to create a set of ∼16 all-sky maps (per band), each much deeper
+and cleaner than individual WISE exposures. unTimely incorporates the W1 (3.4 µm) and W2 (4.6 µm)
+channels, meaning that our data set effectively consists of ∼32 full-sky unWISE catalogs. We run the
+crowdsource crowded-field point source photometry pipeline (Schlafly et al. 2018) on each epochal
+coadd independently, with low detection thresholds: S/N = 4.0 (2.5) in W1 (W2). In total, we tabulate
+and publicly release 23.5 billion (19.9 billion) detections at W1 (W2). unTimely is ∼1.3 mag deeper
+than the WISE/NEOWISE Single Exposure Source Tables near the ecliptic, with further enhanced
+depth toward higher ecliptic latitudes. The unTimely Catalog is primarily designed to enable novel
+searches for faint, fast-moving objects, such as Y dwarfs and/or late-type (T/Y) subdwarfs in the Milky
+Way’s thick disk or halo. unTimely will also facilitate other time-domain science applications, such as
+all-sky studies of quasar variability at mid-infrared wavelengths over a decade-long time baseline.
+
+Keywords: infrared: general — surveys — catalogs — techniques: photometric — time domain astronomy
+1. INTRODUCTION
+
+The Wide-field Infrared Survey Explorer (WISE;
+Wright et al. 2010) provides an unprecedented timedomain view of the mid-infrared sky, offering a decade
+plus time baseline at W1 = 3.4 µm and W2 = 4.6 µm
+thanks to the NEOWISE mission extension (Mainzer
+et al. 2011, 2014). As of this writing, WISE has completed more than 19 full-sky mappings over the course
+of > 12.5 years, with each sky location observed in &12
+single exposures (per band) spanning a ∼1 day time interval during each biannual sky pass. The public archive
+of WISE/NEOWISE single-exposure source extractions
+contains a remarkable > 165 billion detections (Cutri
+et al. 2015). However, the WISE/NEOWISE Single
+Exposure (L1b) Source Tables are limited by the relCorresponding author: Aaron M. Meisner
+aaron.meisner@noirlab.edu
+
+atively shallow per-exposure depth, and inevitably contain many contaminants such as satellite streaks and
+cosmic rays. By coadding WISE observations on a per
+sky pass basis,
+√ it is possible to reach ∼1.3 magnitudes
+(2.5 × log10 12) or more deeper while also nulling out
+short-lived artifacts, at the expense of losing temporal
+information on timescales .1 day.
+Although upcoming projects such as NEO Surveyor
+(Mainzer et al. 2021; Kirkpatrick et al. 2019; Ross et al.
+2019) and Rubin Observatory’s Legacy Survey of Space
+and Time (LSST; Ivezić et al. 2019) promise exciting
+new hauls of wide-area time series data, no current or
+planned mission will surpass WISE in terms of all-sky
+imaging at mid-infrared wavelengths. It is therefore critical to maximally mine the WISE archive, especially
+given WISE’s complementarity with JWST (Gardner
+et al. 2006) and future surveys including SPHEREx
+(Doré et al. 2018), Euclid (Racca et al. 2016), Rubin/LSST, NEO surveyor, and Roman (Spergel et al.
+2015).
+
+2
+
+Meisner et al.
+
+Our “unWISE” archival data analysis effort (http:
+//unwise.me) seeks to fully realize the potential of
+WISE/NEOWISE imaging for extragalactic and Galactic science (Lang 2014; Lang et al. 2016; Meisner et al.
+2017c,b, 2018b,c,d, 2019; Schlafly et al. 2019; Dey et al.
+2019; Meisner et al. 2021a,b, 2022). In particular, our
+‘time-resolved unWISE coadds’ (Meisner et al. 2018b),
+which stack exposures on a per sky pass basis, provide
+a novel, deep, and clean time-domain view of the midinfrared sky. But until now there has been no full-sky
+catalog based on these time-resolved unWISE coadds.
+Here we remedy this situation by creating and publicly
+releasing a full-sky catalog built from the unWISE timeresolved coadds spanning 2010 through 2020, which
+we refer to as the “unTimely Catalog”. Typically, a
+given sky location has a set of 16 epochal unTimely
+catalogs per-band, each much deeper and cleaner than
+the WISE/NEOWISE Single Exposure Source Tables.
+We therefore expect the unTimely Catalog to enable
+studies/discoveries of cool moving objects (e.g., nearby
+brown dwarfs; Pinfield et al. 2014; Kuchner et al. 2017)
+and flux variables (e.g., quasars and young stellar objects; Kozlowski et al. 2010; Koenig et al. 2015) to depths
+& 1.3 mag fainter than would be possible with individual
+WISE exposures.
+In §2 we describe the set of time-resolved unWISE
+coadds that forms the input for our unTimely Catalog
+source extraction. In §3 we discuss our deployment of
+the crowdsource source detection/photometry software
+(Schlafly et al. 2018; Schlafly 2021) on the time-resolved
+unWISE coadd data set. In §4 we evaluate the completeness/reliability of our unTimely catalogs. In §5 we investigate unTimely’s photometric zeropoint consistency
+over time and bright end scatter. In §6 we highlight
+example unTimely Catalog science use cases. In §7 we
+describe our unTimely Catalog data release. In §8 we
+list cautionary notes regarding the use of our catalogs
+and outline some potential improvements/features that
+may be implemented for future data releases. We conclude in §9.
+2. INPUT TIME-RESOLVED UNWISE COADDS
+
+Combining WISE and NEOWISE data uniformly
+across all mission phases, we have built a custom set
+of time-domain 3-5µm coadds optimized for detecting
+long-timescale (τ & 0.5 yr) motion and variability of
+faint sources. We stack the &12 single exposures at
+each sky location during each sky pass, thereby obtaining one “coadd epoch” in each of the W1 and W2
+channels every six months during which WISE has been
+operational. We refer to these image stacks as “timeresolved unWISE coadds”. Each time-resolved unWISE
+
+coadd is 2048 pixels by 2048 pixels, with a pixel scale of
+2.7500 /pix, an angular extent of 1.56◦ on a side, and a
+solid angle of 2.45 square degrees.
+In Meisner et al. (2018d) we publicly released a fullsky set of typically 8 such coadd epochs per band per sky
+location, based on the first 4 years of available W1/W2
+data (2010 January through 2016 mid-December). Here,
+we use an updated set of time-resolved unWISE coadds
+that folds in an additional 4 years of NEOWISE exposures acquired between 2016 December 13 and 2020
+December 13. This new full-sky set of time-resolved unWISE coadds was generated using the same code and
+output data model as in Meisner et al. (2018d), and
+now features 16 coadd epochs per band per typical sky
+location (see Figure 1). Most sky locations have a time
+baseline of 10.5 years (early-mid 2010 to mid-late 2020).
+The coadds include ∼8 years of WISE/NEOWISE observations (early 2010 to early 2011 and late 2013 through
+late 2020; note the hibernation period from early 2011
+to late 2013 during which time WISE did not acquire
+science data).
+At a given sky location, there are never fewer than
+15 coadd epochs available per band, and the maximum number of coadd epochs per band is 295, near
+the ecliptic poles. The total number of single-band sets
+of unWISE time-resolved coadds used for this study is
+616,838: 308,424 (308,414) in W1 (W2)1 . Therefore, we
+expect the unTimely Catalog to correspondingly consist of 616,838 per-band epochal catalogs. As there are
+18,240 unique astrometric footprints defining the fullsky tiling used by unWISE (Cutri et al. 2012; Lang
+2014), this epochal coadd data set can be thought of
+as containing the equivalent of roughly 616,838/18,240
+= 33.8 all-sky maps.
+Epochal unWISE coadds and their corresponding unTimely catalogs are each identified by a unique (band,
+epoch, coadd id) triplet, where band is an integer (1
+for W1, 2 for W2), epoch is a zero-indexed integer
+counter that increases with time, and coadd id is a string
+encoding the tile center’s equatorial coordinates (e.g.,
+coadd id = 1497p015 is centered at α = 149.748462◦ , δ
+= 1.514444◦ ). In this scheme, (band, epoch, coadd id)
+= (1, 0, 1497p015) is the earliest W1 coadd epoch for
+tile footprint 1497p015, (1, 1, 1497p015) is the second
+earliest W1 coadd epoch for tile footprint 1497p015,
+and so forth. More details about the unWISE timeresolved coadds can be found in Meisner et al. (2018b),
+1 The number of single-band coadds can differ between W1 and W2
+
+because unWISE coaddition performs exposure-level data quality
+cuts which may, on rare occasions, exclude all exposures in one
+band while retaining nonzero coverage in the other band.
+
+unWISE Time-Domain Catalog
+
+Figure 1. Number of W1 coadd epochs per coadd id astrometric footprint (ecliptic coordinates). Typically there are 16
+coadd epochs available in W1 (black dots). The red-colored
+ranges of ecliptic longitude have only 15 coadd epochs per
+band because they were impacted by the 2014 April WISE
+command timing anomaly. The green-colored ranges of ecliptic longitude have 17 coadd epochs in W1. The purplecolored regions have 18 coadd epochs in W1. The ecliptic
+poles (|β| > 80◦ ) are blue, indicating > 18 available coadd
+epochs in W1 as a result of the modified unWISE time-slicing
+rules employed for these regions (Meisner et al. 2018b). Yellow boxes signify coadd id footprints for which the number
+of W1 coadd epochs differs from the number of W2 coadd
+epochs.
+
+which also uses this same (band, epoch, coadd id) notation/convention.
+3. CROWDSOURCE PROCESSING
+
+Due to the ∼6.500 FWHM point spread function (PSF)
+at W1/W2, blending is prevalent in WISE imaging
+across all Galactic latitudes. This ubiquitous blending
+strongly influences our approach for cataloging the timeresolved unWISE coadds. The crowdsource crowded
+field point source photometry module (Schlafly et al.
+2018; Schlafly 2021) is an excellent match to the cataloging task at hand, as it performs PSF modeling for
+thousands of point sources simultaneously, resulting in
+excellent deblending performance (Schlafly et al. 2018;
+Saydjari et al. 2022). crowdsource has previously been
+applied to (static sky) unWISE coadds to create the ‘unWISE Catalog’ (Schlafly et al. 2019).
+We deployed essentially the same version of
+crowdsource used for the unWISE Catalog (Schlafly
+et al. 2019) on the entire set of time-resolved unWISE
+coadds described in §2. Each time-resolved coadd is
+processed entirely independently of all other coadds —
+
+3
+
+there is no multi-band component of the cataloging, nor
+is there any forced photometry. In contrast to the unWISE Catalog processing, for the unTimely Catalog we
+did not make use of the neural network based flagging of
+‘nebulous’ regions affected by Milky Way dust (Schlafly
+et al. 2018, 2019).
+We inherit the unWISE Catalog’s column definitions2
+with only a few minor modifications. We also inherit
+three newly added columns (XISO, YISO, FLUXISO)
+from crowdsource updates implemented after unWISE
+Catalog processing3 . We updated the format of the
+UNWISE DETID column’s values to encode the unWISE coadd epoch number. For example, the one
+thousandth detection cataloged for (band = 1, epoch
+= 5, coadd id = 1497p015) has UNWISE DETID =
+1497p015w1o0000999e005. Also, the FLAGS INFO bitmask column’s nebulosity bit (25 ) is always zero, because we did not use the crowdsource nebulosity classifier (but see §7 for the alternative nebulosity labeling
+mechanism employed within our unTimely Catalog data
+release). Lastly, we added seven new metadata columns
+(COADD ID, BAND, EPOCH, FORWARD, MJDMIN,
+MJDMAX, MJDMEAN), mostly related to the timedomain aspect of the unTimely Catalog. All unTimely
+Catalog column definitions are provided in Table 1.
+Because one of our primary science goals is to discover extremely faint and fast-moving objects, we ran
+the unTimely cataloging with lower than usual detection thresholds: S/N = 4.0 (2.5) in W1 (W2). We
+pushed the threshold so low in W2 because we suspect that the most extreme as-yet overlooked objects
+in the solar neighborhood are probably quite cold (e.g.,
+Y dwarfs and late-T/Y subdwarfs; Cushing et al. 2011;
+Kirkpatrick et al. 2011; Luhman et al. 2011; Burgasser
+et al. 2005; Zhang et al. 2019; Schneider et al. 2020; Kirkpatrick et al. 2021a; Meisner et al. 2021c; Lodieu et al.
+2022), and hence would emit more flux at W2 than W1.
+Having chosen the S/N = 2.5 threshold for W2, we then
+selected a corresponding W1 threshold (S/N = 4.0) that
+yielded a source density roughly matching that obtained
+in W2 given its 2.5σ threshold.
+In all, 616,806 epochal unTimely catalogs were generated, 308,409 in W1 and 308,397 in W2 — very
+nearly one per input time-resolved unWISE coadd (see
+§2). The few cases of ‘missing’ unTimely catalogs (15
+such occurrences in W1, 17 in W2) are instances of
+so-called “partial coadds”. These are cases where the
+WISE survey strategy and unWISE time slicing have
+2 https://catalog.unwise.me/catalogs.html
+3 http://decaps.skymaps.info/catalogs.html
+
+4
+
+Meisner et al.
+Table 1. All unTimely Catalog columns.
+
+Column
+X
+Y
+FLUX
+
+Description
+x coordinate within unWISE coadd image (pixels)
+y coordinate within unWISE coadd image (pixels)
+PSF-fit flux in units of Vega nanomaggies; magVega = 22.5 − 2.5×log10 (FLUX)
+
+DX
+DY
+DFLUX
+QF
+RCHI2
+FRACFLUX
+FLUXLBS
+DFLUXLBS
+FWHM
+SPREAD MODEL
+DSPREAD MODEL
+FLUXISO
+XISO
+YISO
+SKY
+RA
+DEC
+COADD ID
+BAND
+UNWISE DETID
+NM
+PRIMARY
+FLAGS UNWISE
+
+uncertainty in X (pixels)
+uncertainty in Y (pixels)
+uncertainty in flux (Vega nanomaggies; statistical only)
+“quality factor”
+average χ2 per pixel, weighted by the PSF
+fraction of flux in this object’s PSF that comes from this object
+local-background-subtracted flux (Vega nanomaggies)
+uncertainty in local-background-subtracted flux (Vega nanomaggies)
+full-width at half-maximum of the PSF (pixels)
+Source Extractor (Bertin & Arnouts 1996) spread model parameter
+uncertainty in SPREAD MODEL
+flux derived from linear least squares fit to neighbor-subtracted image (Vega nanomaggies)
+x coordinate derived from linear least squares fit to neighbor-subtracted image (pixels)
+y coordinate derived from linear least squares fit to neighbor-subtracted image (pixels)
+local sky level (Vega nanomaggies per unWISE coadd pixel)
+right ascension (degrees); inherits L1b astrometry
+declination (degrees); inherits L1b astrometry
+unWISE coadd astrometric footprint identifier (see §2)
+WISE band; 1 for W1, 2 for W2
+unique detection identifier (see §3 for details)
+number of WISE/NEOWISE exposures contributing to the unWISE coadd at this location
+is the center of this source in the primary region of its coadd?
+unWISE coadd flags at central pixela
+
+FLAGS INFO
+additional informational flags at central pixelb
+EPOCH
+unWISE epoch number, as defined in §2
+FORWARD
+boolean — were input frames acquired pointing forward (1) or backward (0) along Earth’s orbit?
+MJDMIN
+MJD value of earliest contributing exposure
+MJDMAX
+MJD value of latest contributing exposure
+MJDMEAN
+mean of MJDMIN and MJDMAX
+a
+https://catalog.unwise.me/catalogs.html#flags unwise
+b
+https://catalog.unwise.me/catalogs.html#flags info
+
+conspired to leave a time-resolved coadd with regions
+of missing coverage (see Meisner et al. 2018b, particularly their §5.2, for further explanation/illustration of
+the partial time-resolved coadd phenomenon). The 32
+missing catalog cases all correspond to nearly empty unWISE coadds, each with fewer than 1,000 pixels out of
+20482 = 4.19 million having nonzero integer coverage
+i.e., a fractional populated area less than 2.3 × 10−4 .
+With ≤ 2 square arcminutes of observations available
+per such time-resolved coadd, it is reasonable that no
+corresponding unTimely source catalogs were generated.
+
+Our creation of the unTimely Catalog used a total of
+226,620 CPU hours4 : 112,823 (113,797) in W1 (W2).
+A map of the number of W2 sources per coadd id footprint is shown in Figure 2. The total number of unTimely Catalog extracted detections is 43,459,534,445:
+23,538,460,814 (19,921,073,631) in W1 (W2). The median number of unTimely Catalog detections per timeresolved unWISE coadd is 56,010 (50,574) in W1 (W2).
+The mean number of unTimely Catalog detections per
+time-resolved unWISE coadd is 76,322 (64,596) in W1
+4 Intel Xeon “Haswell” processors.
+
+unWISE Time-Domain Catalog
+median n mber of detections per epochal coadd; W2
+200
+
+sin(Galactic latit de)
+
+0.75
+
+175
+
+0.50
+
+150
+
+0.25
+
+125
+
+0.00
+
+100
+
+−0.25
+
+75
+
+−0.50
+
+50
+
+−0.75
+−1.00
+
+detections per epochal coadd / 1000
+
+1.00
+
+25
+350
+
+300
+
+250
+
+200
+
+150
+
+100
+
+Galactic longit de (deg)
+
+50
+
+0
+
+Figure 2. All-sky map (Galactic coordinates) of the median
+number of unTimely Catalog detections per time-resolved
+unWISE coadd in W2. The analogous plot for W1 looks materially the same, though with number count values scaled
+up by ∼18% overall. The Galactic plane is clearly visible.
+The two low density regions at (lgal , bgal ) ≈ (96◦ , +30◦ ) and
+(lgal , bgal ) ≈ (276◦ , −30◦ ) are the north and south ecliptic
+poles, respectively. The unWISE coadd time-slicing rules
+change near the ecliptic poles (|β| > 80◦ ; Meisner et al.
+2018b), resulting in many coadds with large regions of zero
+coverage, which imprints as a relatively low source density
+in this visualization.
+
+(W2). The maximum number of unTimely Catalog
+detections per time-resolved unWISE coadd is 272,062
+(238,767) in W1 (W2). The minimum number of unTimely Catalog detections per time-resolved unWISE
+coadd is 2, in both W1 and W2. Such cases coincide
+with partial coadds that consist almost entirely of regions with no frame coverage but still manage to yield
+an output crowdsource catalog file.
+4. COMPLETENESS & RELIABILITY
+
+We assess the unTimely Catalog’s differential completeness and reliability5 by comparison against deeper,
+higher angular resolution (FWHM ≈ 1.700 ) Spitzer imaging in the COSMOS region 6 . COSMOS lies near the
+ecliptic plane and at high Galactic latitude, and therefore is representative of ‘typical’ sky locations. Our
+completeness/reliability analysis proceeds analogously
+to §5.1 of Schlafly et al. (2019) and inherits the detailed parameter choices made therein, such as a 200
+Spitzer-WISE cross-match radius. Figure 3 shows the
+results of our unTimely Catalog differential complete-
+
+5
+
+ness and reliability analyses. Figure 3 also overplots
+differential completeness and reliability curves for the
+WISE/NEOWISE Single Exposure Source Tables7 . All
+magnitudes quoted in this section are in the Vega system.
+We find 50% unTimely completeness thresholds of
+17.14 mag (16.08 mag) in W1 (W2) and 90% unTimely
+reliability thresholds of 16.81 mag (15.34 mag) in W1
+(W2). The WISE/NEOWISE Single Exposure Source
+Table curves reach 50% completeness at 16.48 mag
+(14.94 mag) in W1 (W2) and 90% reliability at 15.35
+mag (13.55 mag) for W1 (W2)8 . Therefore, unTimely
+pushes 0.66 mag (1.14 mag) fainter than the Single Exposure Source Tables in terms of 50% completeness in
+W1 (W2), and 1.46 mag (1.79 mag) fainter in terms
+of 90% reliability. The unTimely depth enhancements
+compared to the Single Exposure Source Table will generally be even larger at higher eclipitic latitudes than
+the COSMOS values derived here, because of increasing
+WISE/NEOWISE frame coverage per sky pass at higher
+|β| (for reference, the COSMOS field is at |β| = 10.1◦ ).
+One exception to this trend is that very near the ecliptic poles (|β| > 80◦ ), there can often be areas of low (or
+even zero) coverage in particular time-resolved unWISE
+coadds due to the modified unWISE time-slicing rules
+employed in those regions.
+5. ZEROPOINT CONSISTENCY AND
+
+BRIGHT END SCATTER
+We investigate the unTimely Catalog’s photometric
+zeropoint consistency from epoch to epoch and its bright
+end photometric scatter using a set of four unWISE tile
+footprints covering the COSMOS region (∼10 square
+degrees in total). Over this region, we select a bright
+star sample to study for each band. We use the deep,
+static-sky unWISE Catalog (Schlafly et al. 2019) for our
+bright star selections. We require FLAGS UNWISE =
+0, FLAGS INFO = 0, FRACFLUX > 0.99 and PRIMARY = 1 in the unWISE Catalog. We also limit to
+Vega magnitude ranges of [9.5, 10.5] ([8.7, 10.5]) in W1
+(W2). These magnitude ranges correspond to bright but
+unsaturated sources and our selections yield samples of
+167 (212) stars in W1 (W2).
+For each selected star in each unTimely catalog epoch,
+we compute the ratio of its epochal flux to that of its
+counterpart in the static-sky unWISE Catalog. We then
+7 https://wise2.ipac.caltech.edu/docs/release/neowise/expsup/
+
+5 By differential reliability, we mean the fraction of unTimely de-
+
+tections in a given narrow unTimely magnitude bin that have
+counterparts in a deeper “truth” catalog.
+6 https://cosmos.astro.caltech.edu/
+
+sec2 1e.html
+8 The WISE/NEOWISE Single Exposure Source Table reliability
+
+values quoted here and shown in Figure 3 are based on the NEOWISE Explanatory Supplement’s “moderate filtering” approach
+that requires w?frtr like ‘00%’.
+
+6
+
+Meisner et al.
+
+Figure 3. Differential completeness and reliability results for the unTimely Catalog (black plus marks) and for the
+WISE/NEOWISE Single Exposure (L1b) Source Tables (gray lines). The unTimely differential completeness and reliability
+are assessed via comparison against the Spitzer S-COSMOS catalog (Sanders et al. 2007), as COSMOS is representative of
+the sky at low ecliptic latitude and high Galactic latitude. Top left: W1 differential completeness. Top right: W1 differential
+reliability. Bottom left: W2 differential completeness. Bottom right: W2 differential reliability. Red annotations provide the
+unTimely 50% completeness and 90% reliability limits in the left and right column panels, respectively. The unTimely curves
+shown average together the results for all 16 unTimely coadd epochs per band in the COSMOS sky region. The plotted Single
+Exposure Source Table values average together the per-year curves from 2010-2020, to match unTimely’s temporal extent. The
+Single Exposure Source Table completeness values were tabulated as a function of W1 mag and W2 mag, but have been plotted
+in the left column as if W1 = ch1 and W2 = ch2.
+
+bin these ratios by unTimely epoch number and plot the
+median ratio versus epoch number in the top two panels of Figure 4. During the very first WISE sky pass,
+the W1 (W2) bright stars appear to have fluxes consistently ∼1.8% (∼2.5%) brighter than in all following
+sky passes, which remain consistent with one another
+at the .1% level. We speculate that the ∼2+% unTimely zeropoint offsets seen in the first WISE sky pass
+may be due to imperfections in the WISE/NEOWISE
+zeropoint determination procedure presented in Meisner et al. (2017c), particularly its assumption that zeropoints computed near the ecliptic poles can be applied
+without modification to the rest of the sky.
+We also compute, for each epoch in each band, the
+scatter among the per star ratios of unTimely epochal
+flux to static-sky flux. These bright end scatter values
+are shown in the bottom panels of Figure 4, and are
+.1%. Users with science applications that may demand
+photometric zeropoint consistency at the better than
+
+±2% (±3%) level in W1 (W2) should consider computing small zeropoint recalibration offsets on a per (band,
+epoch, coadd id) triplet basis, to remove features like
+the ∼2+% offset seen here during the first sky pass. We
+have not computed an all-sky lookup table of photometric zeropoint recalibration parameters, though we may
+do so for future unTimely data releases.
+6. EXAMPLE SCIENCE APPLICATIONS
+
+6.1. Faint, Fast-Moving Objects
+6.1.1. Discovering New Members of the Solar Neighborhood
+Of particular interest will be searching the unTimely
+Catalog for extremely faint and fast-moving objects in
+the solar neighborhood, which may be lurking very close
+to the Sun but have so far evaded detection due to their
+cold temperatures (e.g., Luhman 2014a). Despite extensive surveying in recent years (e.g., Kuchner et al.
+2017; Meisner et al. 2020a,b) and full-sky astrometry
+from Gaia (Gaia Collaboration et al. 2016, 2018, 2022),
+
+7
+
+unWISE Time-Domain Catalog
+
+(a)
+
+(b)
+
+Figure 4. Photometric zeropoint stability and bright end scatter, assessed using a sample of bright but unsaturated stars in a
+set of four unWISE tiles (∼10 square degrees total) encompassing the COSMOS region. (a) W1 (b) W2. Top panels: in both
+bands, the zeropoint during the very first WISE sky pass appears to have fluxes consistently ∼2% brighter than in all following
+sky passes, which remain consistent with one another at the sub-percent level. Bottom panels: in both bands, the bright end
+scatter is .1%.
+
+Barnard’s Star (Barnard 1916) still stands as the highest known proper motion source (µ ≈ 10.4 asec/yr),
+Proxima Centauri remains our nearest known stellar
+or substellar neighbor (d = 1.3 pc), and WISE 0855
+(Teff ≈ 250 K; Luhman 2014a) still represents the coldest known brown dwarf.
+It is perhaps especially surprising that no brown
+dwarfs as cool or cooler than WISE 0855 have thus far
+been discovered by recent unWISE-based searches such
+as Backyard Worlds and CatWISE (e.g., Marocco et al.
+2019, 2020). Owing to enhanced depth versus individual WISE exposures, these searches should have yielded
+between 4 and 35 discoveries comparable to WISE 0855
+(16th -84th percentile, with a median of 15; Wright et al.
+2014). Kirkpatrick et al. (2021b) commented on this
+dearth of new WISE 0855 analogs, with one possible
+resolution being that deep WISE/NEOWISE catalogs
+like unWISE Catalog (Schlafly et al. 2019) and CatWISE2020 (Eisenhardt et al. 2020; Marocco et al. 2021)
+perform their source detection steps on static sky coadds
+spanning ∼5-10 year time baselines. This source detection methodology has the potential to ‘smear out’ any
+signal from very faint/fast-moving objects. unTimely
+avoids this pitfall by performing source detection on
+
+epochal coadds, and so provides renewed hope of finding superlative moving objects, for instance cooler than
+WISE 0855 or with higher proper motion than Barnard’s
+Star. During the ∼1 day timespan of a time-resolved
+unWISE coadd, even a 1000 /yr total proper motion corresponds to a negligible ‘smearing’ of 27 mas, equivalent
+to ∼ 4 × 10−3 PSF FWHM.
+unTimely can be used to optimize unWISE-based PSF
+subtraction searches for faint brown dwarf companions
+to nearby stars, by providing a best-fit flux and centroid
+for the primary during each WISE sky pass. The unTimely Catalog may also be a valuable proving ground
+for advanced (machine learning) moving object detection linking algorithms beyond standard approaches like
+DBSCAN (Ester et al. 1996).
+The unTimely Catalog is effectively optimized to find
+objects with exceptionally high WISE reduced proper
+motions (Jones 1972), a useful indicator of extremely
+low luminosity in the absence of trigonometric parallax measurements. Several sought after low-temperature
+populations have characteristically high reduced proper
+motions: Y dwarfs, (extreme) T type subdwarfs (Schneider et al. 2020) and, more speculatively, Y-type subdwarfs. Figure 5 illustrates the tracklet of many un-
+
+8
+
+Meisner et al.
+
+Timely Catalog detections for the faint, fast-moving Ttype subdwarf candidate WISE J1130+3139 (Meisner
+et al. 2020a). It is critical to pinpoint the coldest, lowest luminosity brown dwarfs so that JWST (Gardner
+et al. 2006) can observe them spectroscopically in the
+mid-infrared (e.g., Leggett et al. 2019; Kirkpatrick et al.
+2019).
+6.1.2. Characterizing Solar Neighborhood Members
+In addition to discovery of new members of the solar neighborhood, unTimely will also be useful for further detailed characterization of nearby moving objects.
+Given the pervasive blending present in WISE observations, many fast-moving sources are contaminated by
+unrelated background objects at some epochs but are
+entirely free of such contamination at other epochs.
+These situations cause problems for CatWISE and the
+unWISE Catalog, which combine all WISE epochs together and cannot permit selective pruning of confused
+epochs on a per object basis. On the other hand, the
+unTimely Catalog allows for custom selection of ‘clean’
+epochs/detections for every moving object, enabling improved photometric measurements and astrometric fits.
+Examples of recent solar neighborhood discoveries that
+benefit from such treatment are WISE 0855, Ross 19b
+(Schneider et al. 2021) and WISE 1810−1010 (Schneider
+et al. 2020; Lodieu et al. 2022), all of which were blended
+with background contaminants at early WISE epochs
+circa 2010. unTimely Catalog can also enable a &1.3
+magnitude deeper version of the Theissen (2018) WISE
+parallax-fitting analysis/methodology, further filling in
+the set of solar neighborhood trigonometric parallaxes
+for cool objects not detectable with Gaia.
+6.1.3. Further Constraining Possible Saturn/Jupiter Mass
+Companions to the Sun
+
+There has been considerable past work searching for
+or ruling out hypothesized planets in the outer solar system at mid-infrared wavelengths (e.g., Luhman 2014b;
+Meisner et al. 2017a, 2018a; Rowan-Robinson 2022).
+By grouping single-exposure WISE detections, Luhman
+(2014b) placed the most stringent ever constraints on
+the presence of a Saturn/Jupiter mass companion to
+the Sun (“Planet X”) in the outer solar system’s distant reaches. The unTimely Catalog’s W2 detections
+can enable a &1.3 magnitude deeper variant of the Luhman (2014b) analysis, with a ∼10× longer time baseline
+and ∼8× more input W2 imaging.
+6.2. White Dwarf Science
+The unTimely Catalog provides multiple science opportunities with regard to infrared excesses around
+white dwarfs (WDs). Many WISE-based searches for
+
+WD infrared excesses have been performed (e.g., Lai
+et al. 2021; Xu et al. 2020; Dennihy et al. 2017). However, a common problem with such studies is WISE
+blending/confusion, which might artificially cause a mistaken infrared excess identification (e.g., Dennihy et al.
+2020). Debes et al. (2019) noted that such contamination can be avoided for cases of white dwarfs with
+significant proper motion by checking whether or not
+the apparent WISE excess is comoving with the WD.
+unTimely provides a deep and convenient data set for
+performing such verifications.
+WD disks have also been found to display variability
+at WISE wavelengths (e.g., Xu et al. 2018). Swan et al.
+(2019) found that most WDs with detectable dust disks
+show variability at the tens of percent level in multi-year
+WISE light curves. Wang et al. (2019) discovered a ∼1
+mag outburst at W1 and W2 attributed to the tidal disruption of an exo-asteroid around WD 0145+234. unTimely can push such studies of WD disk variability at
+3-5µm wavelengths &1.3 magnitudes fainter than would
+otherwise be possible with only WISE single-exposure
+detections.
+For certain white dwarf applications involving
+timescales . 1 day (e.g., Hermes et al. 2021), the
+WISE/NEOWISE Single Exposure Source Tables are a
+more appropriate resource than unTimely, as unTimely
+sacrifices any information on timescales . 1 day for enhanced depth.
+6.3. AGN Variability
+Active galactic nuclei (AGN) are known to vary in
+both the optical and infrared (e.g., Ulrich et al. 1997),
+though their variability has been much more thoroughly
+studied in the optical (e.g., Morganson et al. 2014).
+Large-scale population-level analyses of AGN/quasar
+variability remain relatively unexplored at wavelengths
+of 3-5 µm, with the definitive study to date performed
+on ∼10 square degrees of repeat Spitzer/IRAC imaging (Kozlowski et al. 2010). unTimely can permit allsky studies of long timescale AGN variability in W1/W2
+to &1.3 magnitudes fainter than is possible with singleexposure WISE detections, and with fewer spurious flux
+variations caused by artifacts like cosmic rays and satellite streaks.
+Beyond allowing detailed study of variability for tens
+of thousands of spectroscopically confirmed quasars,
+unTimely will also enable searches for rare cases of
+high amplitude mid-infrared AGN variability. Examples of the populations which can be thus probed include
+blazars and changing-look quasars (e.g., Mao et al. 2018;
+Ross et al. 2018; Stern et al. 2018; Yang et al. 2018).
+Figure 6 shows examples of large amplitude W1/W2
+
+9
+
+unWISE Time-Domain Catalog
+
+Figure 5. All S/N > 3 unTimely Catalog W2 detections (black plus marks) in the vicinity of the faint (W2 ≈ 15.4 mag)
+and fast-moving brown dwarf CWISEP J1130+3139 (Meisner et al. 2020a). The size of each black plus mark indicates its ±1σ
+positional uncertainties. The dotted black line represents a linear proper motion fit based on Meisner et al. (2020a). CWISEP
+J1130+3139 is moving toward the southwest (bottom right) over time. Red lines connect the 16 detections within 1 unWISE
+pixel (2.7500 ) of the linear motion trajectory with their corresponding epoch’s location on the linear trajectory. The cluster of
+detections centered at (∆α, ∆δ) ≈ (1500 , 2.500 ) is a faint background galaxy with W2 = 16.65 mag. The isolated detection near
+(∆α, ∆δ) = (800 , −600 ) is a very low significance noise detection extracted from a single unWISE epochal coadd image. In this
+visualization, (∆α, ∆δ) = (0, 0) is at (α, δ) = (172.54118◦ , 31.66166◦ ).
+
+quasar/blazar variability in the unTimely Catalog, for a
+set of AGN spectroscopically confirmed by SDSS (Pâris
+et al. 2018).
+
+• Searching for additional instances of “blinking giant” stars (Smith et al. 2021).
+
+6.4. Other Flux Variables and Transients
+
+• Periodic and episodic mid-infrared brightening in
+Wolf-Rayet stars (e.g., Williams 2019a,b).
+
+Additional flux variability classes/topics for which the
+unTimely Catalog should prove relevant include:
+
+• Previously unobserved classes of infrared transients/variables (e.g., Kasliwal et al. 2017).
+
+• FU Orionis stars (e.g., Hillenbrand et al. 2018) and
+young stellar object outbursts more generally (e.g.,
+Lucas et al. 2020; Hillenbrand et al. 2021; Guo
+et al. 2021).
+• Searching for and/or constraining mid-infrared
+variability of L, T and Y brown dwarfs (e.g., Artigau 2018, Brooks et al., submitted).
+• Mira variables and other long period variables
+(e.g., Chen et al. 2018; Sanders et al. 2022; Groenewegen 2022).
+• Tidal disruption events and nuclear transients
+more broadly (e.g., Jiang et al. 2019; Sun et al.
+2020; Jiang et al. 2021).
+• Accreting disks around young M dwarfs and/or ultracool dwarfs (e.g., Murphy et al. 2018; Liu et al.
+2022).
+• Superluminous supernovae (e.g., Sun et al. 2022).
+
+7. DATA RELEASE
+
+We release the unTimely Catalog as a set of FITS files
+organized within a hierarchy of directories9 . The main
+contents of the data release are 616,806 epochal catalog
+files named according to the following pattern:
+<COADD ID> w<BAND> e<EPOCH>.cat.fits.gz
+Where, in this context, <COADD ID> is an 8character string (for instance, “1497p015”), <BAND>
+is a 1-character string version of the WISE band (either “1” or “2”) and <EPOCH> is a 3-character
+(left) zero-padded string encoding the epoch number
+(e.g., “008” for epoch 8, “015” for epoch 15, “101
+for epoch 101). As a concrete example, epoch 12 of
+coadd id = 1497p015 in W2 has a catalog basename of
+1497p015 w2 e012.cat.fits.gz.
+9 https://portal.nersc.gov/project/cosmo/data/unwise/neo7/
+
+untimely-catalog
+
+10
+
+Meisner et al.
+
+Figure 6. Six infrared variable quasars drawn from the SDSS DR14 quasar catalog (Pâris et al. 2018). The solid (dashed)
+line in each panel is the unTimely Catalog W1 (W2) Vega magnitude. The “radio = true” or “radio = false” annotation is
+determined by whether (true) or not (false) the SDSS DR14 quasar catalog reports a FIRST (Becker et al. 1994) counterpart.
+A lack of FIRST counterpart could indicate either a FIRST non-detection or a sky region outside the FIRST footprint. We
+visually inspected each of these quasars using WiseView (Caselden et al. 2018) to validate that the variability shown is not
+spurious. Note that the unTimely Catalog reports only fluxes, not magnitudes. The unTimely FLUX column’s units are Vega
+nanomaggies, which are also the native flux units for the unWISE Catalog (see https://catalog.unwise.me/catalogs.html for
+details).
+
+The catalogs for each coadd id astrometric footprint
+are co-located within a subdirectory named coadd id,
+itself within a subdirectory specified by the first 3 characters of the coadd id. For example, the coadd id =
+1497p015 unTimely catalog files (for all epochs and both
+bands) reside within the 149/1497p015 subdirectory.
+We
+provide
+an
+index
+table
+called
+untimely neo7 index.fits.gz with 616,806 rows, one per
+cat.fits.gz catalog file. Table 2 provides full column
+definitions for this index table, which includes a column
+called CATALOG FILENAME specifying the relative
+path of each catalog file within the unTimely data
+release.
+As mentioned in §3, we ran crowdsource without employing its nebulosity flagging capabilities. Instead, we
+have incorporated the deeper static sky nebulosity masking information from the 6-year version of the unWISE
+
+Catalog10 into the unTimely index table. The unWISE
+Catalog’s nebulosity masking breaks each of the 18,240
+coadd id footprints into 64 non-overlapping 256 pix ×
+256 pix patches and labels each of these as being either affected (Ni,j = 1) or unaffected by nebulosity
+(Ni,j = 0). The nebulosity flagging for a given unWISE
+coadd id can therefore be encoded as an unsigned 64 bit
+integer in the following way:
+
+NEBULOSITY BITMASK =
+
+7 X
+7
+X
+
+Ni,j × 28i+j (1)
+
+i=0 j=0
+
+Where Ni,j ∈ [0, 1] is the native unWISE
+Catalog’s nebulosity mask (originally 2048 pix ×
+2048 pix) rebinned to an 8 × 8 image.
+This
+NEBULOSITY BITMASK integer value is then re10 https://portal.nersc.gov/project/cosmo/data/unwise/neo5/
+
+unwise-catalog/iminfo
+
+11
+
+unWISE Time-Domain Catalog
+ported in a correspondingly named column of untimely neo7 index.fits.gz, based on each row’s coadd id.
+The index file also includes a convenience column called
+HAS ANY NEBULOSITY, which is 0 when NEBULOSITY BITMASK is 0 and 1 otherwise. Note that
+some FITS readers (such as IDL/mrdfits) may have difficulty properly parsing 64-bit unsigned integers. 9.5% of
+all unTimely epochal catalogs correspond to a coadd id
+with at least one of its 64 sectors affected by nebulosity. Given that crowdsource attempts to aggressively decompose nebulosity into a sum of point sources,
+which are likely deblended differently from one epoch to
+the next, it may be advisable to avoid catalogs with
+HAS ANY NEBULOSITY = 1 when performing rare
+object searches or all-sky population studies.
+We also include the W1/W2 PSF models used by
+crowdsource during unTimely processing, in a directory named psfs. These PSF models are organized into
+359 compressed tar files, one per three-digit RA subdirectory of unTimely catalog outputs.
+The total unTimely Catalog data volume is 4.3
+TB. Whereas the unWISE Catalog data release includes metadata image files (https://catalog.unwise.me/
+images.html), we exclude these from the unTimely Catalog data release to minimize the total data volume.
+
+7.1. unTimely Catalog Explorer Tool
+Although the unTimely Catalog is not, as of this writing, hosted by any archive/database service, we have
+built Python tools for conveniently querying and visualizing the unTimely Catalog, abstracting away the need
+for end users to consider details like catalog file names.
+We refer to this set of tools as unTimely Catalog Explorer11 . unTimely Catalog Explorer offers capabilities
+to: box search query unTimely by (RA, Dec) coordinates, overlay these unTimely query results on unWISE
+coadd cutouts in the form of a finder chart, produce light
+curve check plots of the detections retrieved, and generate unWISE time series image blinks with unTimely
+detections overplotted. Instructions for using these unTimely Catalog Explorer functionalities are provided in
+the repository’s README.md file12 . We note that unTimely Catalog Explorer is an excellent resource for
+users interested in detailed analysis of a modest number
+of objects, but is still not a substitute for a database
+service in the limit of large samples/queries.
+11 https://github.com/fkiwy/unTimely Catalog explorer
+12 https://github.com/fkiwy/unTimely Catalog explorer/blob/
+
+main/README.md
+
+8. CAUTIONARY NOTES & POTENTIAL FUTURE
+
+IMPROVEMENTS
+Here we provide a list of cautionary notes which we
+expect to be relevant for unTimely Catalog end users:
+• As mentioned in §3, some time-resolved unWISE
+coadds have regions of very low or zero frame
+coverage. The unTimely photometry/astrometry
+in regions of low (but nonzero coverage) may
+be problematic. Users can flag regions of low
+coverage based on the NM integer coverage column provided by crowdsource. The amount
+of zero (or very low) frame coverage in the
+time-resolved coadd corresponding to each unTimely catalog file can be assessed using the untimely neo7 index.fits.gz columns N PIX COV[02] or FRAC PIX COV[0-2].
+• At present, there is no positional grouping of
+detections into celestial ‘objects’, either across
+epochal catalogs or across bands.
+• unTimely Catalog deblending can be different
+from one epoch to another, potentially leading
+to spurious variability signatures in light curves.
+Users are advised to check for these situations
+upon encountering any seemingly remarkable instances of large photometric variability.
+• In terms of visually inspecting the time-resolved
+unWISE coadds for potential artifacts or blending, we strongly recommend using the WiseView
+browser-based image blinking tool (http://byw.
+tools/wiseview; Caselden et al. 2018).
+• Users may wish to restrict to relatively secure
+detections (for instance, S/N > 5σ). This is a
+reasonable data analysis approach, but note that
+the simultaneous deblending of high and low significance sources means that the rejected lowsignificance sources may still have influenced the
+remaining high significance sources, potentially in
+different ways at different epochs.
+• Because unTimely performs source detection independently on each time-resolved coadd, light
+curves of objects with fluxes near the detection
+threshold are subject to a selection bias whereby
+detections are more likely to be made when the
+source is brighter and/or random image noise happens to enhance rather than detract from the true
+flux.
+• The unTimely Catalog does not incorporate
+W1/W2 observations from the 2022 March NE-
+
+12
+
+Meisner et al.
+Table 2. unTimely Catalog index table column descriptions.
+
+Column
+BAND
+COADD ID
+EPOCH
+CATALOG FILENAME
+N DET
+N DET 5SIGMA
+COVMIN
+COVMAX
+COVMED
+NPIX COV0
+NPIX COV1
+NPIX COV2
+FRAC COV0
+FRAC COV1
+FRAC COV2
+N EXP
+RA
+DEC
+LGAL
+BGAL
+LAMBDA
+BETA
+MJDMIN
+MJDMAX
+MJDMEAN
+DT
+FORWARD
+NEBULOSITY BITMASK
+HAS ANY NEBULOSITY
+
+Description
+integer WISE band; either 1 or 2
+coadd id astrometric footprint identifier as defined in §2
+epoch number, as defined in §2
+relative path of unTimely catalog FITS file
+number of unTimely Catalog detections
+number of ≥5σ unTimely Catalog detections
+minimum integer coverage in unWISE -n-u coverage map
+maximum integer coverage in unWISE -n-u coverage map
+median integer coverage in unWISE -n-u coverage map
+number of pixels in -n-u map with integer coverage of 0 frames
+number of pixels in -n-u map with integer coverage of 1 frame
+number of pixels in -n-u map with integer coverage of 2 frames
+fraction of pixels in -n-u map with integer coverage of 0 frames
+fraction of pixels in -n-u map with integer coverage of 1 frame
+fraction of pixels in -n-u map with integer coverage of 2 frames
+number of exposures contributing to the coadd
+tile center right ascension (degrees)
+tile center declination (degrees)
+Galactic longitude corresponding to the tile center (degrees)
+Galactic latitude corresponding to the tile center (degrees)
+ecliptic longitude corresponding to the tile center (degrees)
+ecliptic latitude corresponding to the tile center (degrees)
+MJD value of earliest contributing exposure
+MJD value of latest contributing exposure
+mean of MJDMIN and MJDMAX
+difference of MJDMAX and MJDMIN (days)
+boolean — were input frames acquired pointing forward (1) or backward (0) along Earth’s orbit?
+integer encoding which image sectors have nebulosity; see §7 for details
+0 if NEBULOSITY BITMASK is 0; 1 if NEBULOSITY BITMASK > 0
+
+OWISE release, which made public the calendar
+2021 year of NEOWISE imaging.
+• To conserve disk space, we have removed the
+crowdsource “mod” and “info” metadata images.
+Ideally these could be retained, as they have been
+for the unWISE Catalog data release (Schlafly
+et al. 2019). The image-level artifact/quality bitmasks contained in the omitted unTimely “info”
+images can nevertheless be obtained from the -msk
+files available in other unWISE data releases13 .
+• crowdsource models images as sums of point
+sources — it provides no extended galaxy profile modeling capabilities. Well-resolved galaxies
+13 For
+
+instance
+https://portal.nersc.gov/project/cosmo/data/
+unwise/neo7/unwise-coadds/fulldepth.
+
+are likely deblended into large numbers of point
+sources in ways that are not consistent from one
+unWISE coadd epoch to another. This may be
+particularly relevant for any transients embedded within large, well-resolved galaxies. This
+issue is at least partially mitigated thanks to
+crowdsource’s implementation of less aggressive
+deblending within HyperLeda galaxies (Makarov
+et al. 2014; Schlafly et al. 2019). Also, the 21 bit of
+unTimely’s FLAGS INFO column labels sources
+that overlap with large (d25 & 700 ) HyperLeda
+galaxies.
+• While the time-resolved unWISE coadds largely
+filter out cosmic ray strikes, some residual cosmic ray imprints occasionally leak through. These
+residual cosmic ray imprints can appear as unTimely Catalog detections. We have found that,
+for S/N > 10 sources in relatively uncrowded
+
+13
+
+unWISE Time-Domain Catalog
+fields, SPREAD MODEL < −0.021 identifies
+residual cosmic ray imprints reasonably well.
+• We have not attempted to recalibrate the unTimely Catalog astrometry to Gaia. The unTimely Catalog astrometry therefore inherits all
+of the astrometric imperfections/caveats discussed
+extensively in Meisner et al. (2018b). These astrometric systematics can reach levels of up to ∼250
+mas per coordinate. For any applications such as
+parallax fitting that require high fidelity astrometry, users should perform their own astrometric
+calibration tweaks/checks relative to Gaia.
+• It may be possible to refine the unTimely Catalog
+photometry at the ≤ 3% level by computing small
+zeropoint corrections on a per time-resolved coadd
+basis, but we have not done so as part of this data
+release (see §5 and Figure 4).
+• At present, the unTimely Catalog only exists as
+a (large) set of FITS files. It would be helpful to
+host the unTimely Catalog in a database at an
+archiving facility such as NOIRLab’s Astro Data
+Lab (Fitzpatrick et al. 2019, 2014) and/or IRSA.
+It would also be useful to have an unTimely Catalog ‘light curve service’ such that one could easily
+collect the light curve of a particular (stationary)
+object of interest — this application would benefit from an unTimely table that groups epochal
+detections into objects.
+9. CONCLUSION
+
+We have generated and publicly released a full-sky,
+time-domain unWISE catalog which we refer to as the
+
+unTimely Catalog. We expect that this catalog will be
+used to discover faint, fast-moving objects and probe
+long timescale mid-infrared variability to depths not previously attainable. We hope to address many of the opportunities for improvement outlined in §8 with future
+data releases of the unTimely Catalog. It would also
+be of interest to build a complementary version of the
+unTimely Catalog that operates in a pure forced photometry mode, rather than performing source detection
+separately on all time-resolved unWISE coadds.
+
+ACKNOWLEDGMENTS
+We thank the anonymous referee for helpful comments which improved this manuscript. We thank Sarah
+Casewell, Erik Dennihy, Siyi Xu, and Laura Rogers
+for input regarding potential white dwarf science applications. We thank Dustin Lang for suggesting “unTimely” as the name for our catalog. We thank Phil
+Lucas for valuable comments on a preliminary version
+of this manuscript. We thank Roc Cutri for sharing
+WISE/NEOWISE single-exposure completeness and reliability data.
+
+Facilities: IRSA (NEOWISE Team 2020a,b; WISE
+Team 2020; NEOWISE-R Team 2020), NEOWISE,
+NERSC, WISE
+Software: Astropy (Astropy Collaboration et al.
+2013, 2018), crowdsource (Schlafly et al. 2018; Schlafly
+2021), fkiwy/Finder charts (Kiwy 2022), IDLUTILS,
+unwise psf (Meisner & Schlafly 2019), WiseView
+(Caselden et al. 2018)
+
+REFERENCES
+Artigau, É. 2018, in Handbook of Exoplanets, ed. H. J.
+Deeg & J. A. Belmonte, 94,
+doi: 10.1007/978-3-319-55333-7 94
+Astropy Collaboration, Robitaille, T. P., Tollerud, E. J.,
+et al. 2013, A&A, 558, A33,
+doi: 10.1051/0004-6361/201322068
+Astropy Collaboration, Price-Whelan, A. M., Sipőcz, B. M.,
+et al. 2018, AJ, 156, 123, doi: 10.3847/1538-3881/aabc4f
+Barnard, E. E. 1916, AJ, 29, 181, doi: 10.1086/104156
+Becker, R. H., White, R. L., & Helfand, D. J. 1994, in
+Astronomical Society of the Pacific Conference Series,
+Vol. 61, Astronomical Data Analysis Software and
+Systems III, ed. D. R. Crabtree, R. J. Hanisch, &
+J. Barnes, 165
+
+Bertin, E., & Arnouts, S. 1996, A&AS, 117, 393,
+doi: 10.1051/aas:1996164
+Burgasser, A. J., Kirkpatrick, J. D., & Lépine, S. 2005, in
+ESA Special Publication, Vol. 560, 13th Cambridge
+Workshop on Cool Stars, Stellar Systems and the Sun,
+ed. F. Favata, G. A. J. Hussain, & B. Battrick, 237.
+https://arxiv.org/abs/astro-ph/0409178
+Caselden, D., Westin, III, P., Meisner, A., Kuchner, M., &
+Colin, G. 2018, WiseView: Visualizing motion and
+variability of faint WISE sources, Astrophysics Source
+Code Library. http://ascl.net/1806.004
+Chen, X., Wang, S., Deng, L., de Grijs, R., & Yang, M.
+2018, ApJS, 237, 28, doi: 10.3847/1538-4365/aad32b
+Cushing, M. C., Kirkpatrick, J. D., Gelino, C. R., et al.
+2011, ApJ, 743, 50, doi: 10.1088/0004-637X/743/1/50
+
+14
+
+Meisner et al.
+
+Cutri, R. M., Wright, E. L., Conrow, T., et al. 2012,
+Explanatory Supplement to the WISE All-Sky Data
+Release Products, Tech. rep.
+Cutri, R. M., Mainzer, A., Conrow, T., et al. 2015,
+Explanatory Supplement to the NEOWISE Data Release
+Products, Tech. rep.
+Debes, J. H., Thévenot, M., Kuchner, M. J., et al. 2019,
+ApJL, 872, L25, doi: 10.3847/2041-8213/ab0426
+Dennihy, E., Clemens, J. C., Debes, J. H., et al. 2017, ApJ,
+849, 77, doi: 10.3847/1538-4357/aa8ef2
+Dennihy, E., Farihi, J., Gentile Fusillo, N. P., & Debes,
+J. H. 2020, ApJ, 891, 97, doi: 10.3847/1538-4357/ab7249
+Dey, A., Schlegel, D. J., Lang, D., et al. 2019, AJ, 157, 168,
+doi: 10.3847/1538-3881/ab089d
+Doré, O., Werner, M. W., Ashby, M. L. N., et al. 2018,
+arXiv e-prints, arXiv:1805.05489.
+https://arxiv.org/abs/1805.05489
+Eisenhardt, P. R. M., Marocco, F., Fowler, J. W., et al.
+2020, ApJS, 247, 69, doi: 10.3847/1538-4365/ab7f2a
+Ester, M., Kriegel, H.-P., Sander, J., & Xu, X. 1996, in
+(AAAI Press), 226–231
+Fitzpatrick, M., Olsen, K., Eychaner, G., et al. 2019,
+Astronomical Society of the Pacific Conference Series,
+Vol. 523, The NOAO Data Lab: Design, Capabilities, and
+Community Development, ed. P. J. Teuben, M. W.
+Pound, B. A. Thomas, & E. M. Warner, 233
+Fitzpatrick, M. J., Olsen, K., Economou, F., et al. 2014,
+Society of Photo-Optical Instrumentation Engineers
+(SPIE) Conference Series, Vol. 9149, The NOAO Data
+Laboratory: a conceptual overview, 91491T,
+doi: 10.1117/12.2057445
+Gaia Collaboration, Prusti, T., de Bruijne, J. H. J., et al.
+2016, A&A, 595, A1, doi: 10.1051/0004-6361/201629272
+Gaia Collaboration, Brown, A. G. A., Vallenari, A., et al.
+2018, A&A, 616, A1, doi: 10.1051/0004-6361/201833051
+Gaia Collaboration, Vallenari, A., Brown, A. G. A., et al.
+2022, arXiv e-prints, arXiv:2208.00211.
+https://arxiv.org/abs/2208.00211
+Gardner, J. P., Mather, J. C., Clampin, M., et al. 2006,
+SSRv, 123, 485, doi: 10.1007/s11214-006-8315-7
+Groenewegen, M. A. T. 2022, A&A, 659, A145,
+doi: 10.1051/0004-6361/202142648
+Guo, Z., Lucas, P. W., Contreras Peña, C., et al. 2021,
+MNRAS, 504, 830, doi: 10.1093/mnras/stab882
+Hermes, J. J., Putterman, O., Hollands, M. A., et al. 2021,
+ApJL, 914, L3, doi: 10.3847/2041-8213/ac00a8
+Hillenbrand, L. A., Contreras Peña, C., Morrell, S., et al.
+2018, ApJ, 869, 146, doi: 10.3847/1538-4357/aaf414
+Hillenbrand, L. A., De, K., Hankins, M., et al. 2021, AJ,
+161, 220, doi: 10.3847/1538-3881/abe406
+
+Ivezić, Ž., Kahn, S. M., Tyson, J. A., et al. 2019, ApJ, 873,
+111, doi: 10.3847/1538-4357/ab042c
+Jiang, N., Wang, T., Hu, X., et al. 2021, ApJ, 911, 31,
+doi: 10.3847/1538-4357/abe772
+Jiang, N., Wang, T., Mou, G., et al. 2019, ApJ, 871, 15,
+doi: 10.3847/1538-4357/aaf6b2
+Jones, E. M. 1972, ApJ, 173, 671, doi: 10.1086/151454
+Kasliwal, M. M., Bally, J., Masci, F., et al. 2017, ApJ, 839,
+88, doi: 10.3847/1538-4357/aa6978
+Kirkpatrick, J. D., Cushing, M. C., Gelino, C. R., et al.
+2011, ApJS, 197, 19, doi: 10.1088/0067-0049/197/2/19
+Kirkpatrick, J. D., Metchev, S. A., Hillenbrand , L. A.,
+et al. 2019, BAAS, 51, 108
+Kirkpatrick, J. D., Marocco, F., Caselden, D., et al. 2021a,
+ApJL, 915, L6, doi: 10.3847/2041-8213/ac0437
+Kirkpatrick, J. D., Gelino, C. R., Faherty, J. K., et al.
+2021b, ApJS, 253, 7, doi: 10.3847/1538-4365/abd107
+Kiwy, F. 2022, Finder charts: Create finder charts from
+image data of various sky surveys, Astrophysics Source
+Code Library, record ascl:2210.004.
+http://ascl.net/2210.004
+Koenig, X., Hillenbrand, L. A., Padgett, D. L., &
+DeFelippis, D. 2015, AJ, 150, 100,
+doi: 10.1088/0004-6256/150/4/100
+Kozlowski, S., Kochanek, C. S., Stern, D., et al. 2010, ApJ,
+716, 530, doi: 10.1088/0004-637X/716/1/530
+Kuchner, M. J., Faherty, J. K., Schneider, A. C., et al.
+2017, ApJL, 841, L19, doi: 10.3847/2041-8213/aa7200
+Lai, S., Dennihy, E., Xu, S., et al. 2021, ApJ, 920, 156,
+doi: 10.3847/1538-4357/ac1354
+Lang, D. 2014, AJ, 147, 108,
+doi: 10.1088/0004-6256/147/5/108
+Lang, D., Hogg, D. W., & Schlegel, D. 2016, AJ, 151, 36,
+doi: 10.3847/0004-6256/151/2/36
+Leggett, S., Apai, D., Burgasser, A., et al. 2019, BAAS, 51,
+95. https://arxiv.org/abs/1903.04686
+Liu, M. C., Magnier, E. A., Gaidos, E., et al. 2022, arXiv
+e-prints, arXiv:2208.14551.
+https://arxiv.org/abs/2208.14551
+Lodieu, N., Zapatero Osorio, M. R., Martı́n, E. L., Rebolo
+López, R., & Gauza, B. 2022, A&A, 663, A84,
+doi: 10.1051/0004-6361/202243516
+Lucas, P. W., Elias, J., Points, S., et al. 2020, MNRAS,
+499, 1805, doi: 10.1093/mnras/staa2915
+Luhman, K. L. 2014a, ApJ, 786, L18,
+doi: 10.1088/2041-8205/786/2/L18
+—. 2014b, ApJ, 781, 4, doi: 10.1088/0004-637X/781/1/4
+Luhman, K. L., Burgasser, A. J., & Bochanski, J. J. 2011,
+ApJL, 730, L9, doi: 10.1088/2041-8205/730/1/L9
+
+unWISE Time-Domain Catalog
+Mainzer, A., Bauer, J., Grav, T., et al. 2011, ApJ, 731, 53,
+doi: 10.1088/0004-637X/731/1/53
+Mainzer, A., Bauer, J., Cutri, R., et al. 2014, ApJ, 792, 30,
+doi: 10.1088/0004-637X/792/1/30
+Mainzer, A., Abell, P., Bauer, J., et al. 2021, in
+AAS/Division for Planetary Sciences Meeting Abstracts,
+Vol. 53, AAS/Division for Planetary Sciences Meeting
+Abstracts, 306.16
+Makarov, D., Prugniel, P., Terekhova, N., Courtois, H., &
+Vauglin, I. 2014, A&A, 570, A13,
+doi: 10.1051/0004-6361/201423496
+Mao, L., Zhang, X., & Yi, T. 2018, Ap&SS, 363, 167,
+doi: 10.1007/s10509-018-3388-9
+Marocco, F., Caselden, D., Meisner, A. M., et al. 2019,
+ApJ, 881, 17, doi: 10.3847/1538-4357/ab2bf0
+Marocco, F., Kirkpatrick, J. D., Meisner, A. M., et al. 2020,
+ApJL, 888, L19, doi: 10.3847/2041-8213/ab6201
+Marocco, F., Eisenhardt, P. R. M., Fowler, J. W., et al.
+2021, ApJS, 253, 8, doi: 10.3847/1538-4365/abd805
+Meisner, A., Bromley, B. C., Nugent, P. E., et al. 2017a,
+AJ, 153, 65, doi: 10.3847/1538-3881/153/2/65
+Meisner, A., Lang, D., & Schlegel, D. 2017b, AJ, 154, 161,
+doi: 10.3847/1538-3881/aa894e
+Meisner, A., & Schlafly, E. 2019, unwise psf: PSF models
+for unWISE coadds, Astrophysics Source Code Library,
+record ascl:1901.004. http://ascl.net/1901.004
+Meisner, A. M., Bromley, B. C., Kenyon, S. J., & Anderson,
+T. E. 2018a, AJ, 155, 166, doi: 10.3847/1538-3881/aaae70
+Meisner, A. M., Lang, D., Schlafly, E. F., & Schlegel, D. J.
+2019, PASP, 131, 124504, doi: 10.1088/1538-3873/ab3df4
+—. 2021a, Research Notes of the American Astronomical
+Society, 5, 168, doi: 10.3847/2515-5172/ac1684
+—. 2021b, Research Notes of the American Astronomical
+Society, 5, 200, doi: 10.3847/2515-5172/ac21ca
+—. 2022, Research Notes of the American Astronomical
+Society, 6, 62, doi: 10.3847/2515-5172/ac616b
+Meisner, A. M., Lang, D., & Schlegel, D. J. 2017c, AJ, 153,
+38, doi: 10.3847/1538-3881/153/1/38
+—. 2018b, AJ, 156, 69, doi: 10.3847/1538-3881/aacbcd
+—. 2018c, Research Notes of the American Astronomical
+Society, 2, 1, doi: 10.3847/2515-5172/aaa4bc
+Meisner, A. M., Lang, D. A., & Schlegel, D. J. 2018d,
+Research Notes of the American Astronomical Society, 2,
+202, doi: 10.3847/2515-5172/aaecd5
+Meisner, A. M., Caselden, D., Kirkpatrick, J. D., et al.
+2020a, ApJ, 889, 74, doi: 10.3847/1538-4357/ab6215
+Meisner, A. M., Faherty, J. K., Kirkpatrick, J. D., et al.
+2020b, ApJ, 899, 123, doi: 10.3847/1538-4357/aba633
+Meisner, A. M., Schneider, A. C., Burgasser, A. J., et al.
+2021c, ApJ, 915, 120, doi: 10.3847/1538-4357/ac013c
+
+15
+
+Morganson, E., Burgett, W. S., Chambers, K. C., et al.
+2014, ApJ, 784, 92, doi: 10.1088/0004-637X/784/2/92
+Murphy, S. J., Mamajek, E. E., & Bell, C. P. M. 2018,
+MNRAS, 476, 3290, doi: 10.1093/mnras/sty471
+NEOWISE-R Team. 2020, NEOWISE-R L1b Images,
+IPAC, doi: 10.26131/IRSA147
+NEOWISE Team. 2020a, NEOWISE-R Single Exposure
+(L1b) Frame Metadata Table, IPAC,
+doi: 10.26131/IRSA143
+—. 2020b, NEOWISE-R Single Exposure (L1b) Source
+Table, IPAC, doi: 10.26131/IRSA144
+Pâris, I., Petitjean, P., Aubourg, É., et al. 2018, A&A, 613,
+A51, doi: 10.1051/0004-6361/201732445
+Pinfield, D. J., Gomes, J., Day-Jones, A. C., et al. 2014,
+MNRAS, 437, 1009, doi: 10.1093/mnras/stt1437
+Racca, G. D., Laureijs, R., Stagnaro, L., et al. 2016, in
+Society of Photo-Optical Instrumentation Engineers
+(SPIE) Conference Series, Vol. 9904, Space Telescopes
+and Instrumentation 2016: Optical, Infrared, and
+Millimeter Wave, 99040O, doi: 10.1117/12.2230762
+Ross, N., Assef, R. J., Kirkpatrick, J. D., & Graham, M. J.
+2019, BAAS, 51, 321. https://arxiv.org/abs/1904.06160
+Ross, N. P., Ford, K. E. S., Graham, M., et al. 2018,
+MNRAS, 480, 4468, doi: 10.1093/mnras/sty2002
+Rowan-Robinson, M. 2022, MNRAS, 510, 3716,
+doi: 10.1093/mnras/stab3212
+Sanders, D. B., Salvato, M., Aussel, H., et al. 2007, ApJS,
+172, 86, doi: 10.1086/517885
+Sanders, J. L., Matsunaga, N., Kawata, D., et al. 2022,
+arXiv e-prints, arXiv:2208.04966.
+https://arxiv.org/abs/2208.04966
+Saydjari, A. K., Schlafly, E. F., Lang, D., et al. 2022, arXiv
+e-prints, arXiv:2206.11909.
+https://arxiv.org/abs/2206.11909
+Schlafly, E. F. 2021, crowdsource: Crowded field
+photometry pipeline, Astrophysics Source Code Library,
+record ascl:2106.004. http://ascl.net/2106.004
+Schlafly, E. F., Meisner, A. M., & Green, G. M. 2019,
+ApJS, 240, 30, doi: 10.3847/1538-4365/aafbea
+Schlafly, E. F., Green, G. M., Lang, D., et al. 2018, ApJS,
+234, 39, doi: 10.3847/1538-4365/aaa3e2
+Schneider, A. C., Burgasser, A. J., Gerasimov, R., et al.
+2020, ApJ, 898, 77, doi: 10.3847/1538-4357/ab9a40
+Schneider, A. C., Meisner, A. M., Gagné, J., et al. 2021,
+ApJ, 921, 140, doi: 10.3847/1538-4357/ac1c75
+Smith, L. C., Koposov, S. E., Lucas, P. W., et al. 2021,
+MNRAS, 505, 1992, doi: 10.1093/mnras/stab1211
+Spergel, D., Gehrels, N., Baltay, C., et al. 2015, arXiv
+e-prints, arXiv:1503.03757.
+https://arxiv.org/abs/1503.03757
+
+16
+
+Meisner et al.
+
+Stern, D., McKernan, B., Graham, M. J., et al. 2018, ApJ,
+864, 27, doi: 10.3847/1538-4357/aac726
+Sun, L., Xiao, L., & Li, G. 2022, MNRAS, 513, 4057,
+doi: 10.1093/mnras/stac1121
+Sun, L., Jiang, N., Wang, T., et al. 2020, ApJ, 898, 129,
+doi: 10.3847/1538-4357/ab9f2c
+Swan, A., Farihi, J., & Wilson, T. G. 2019, MNRAS, 484,
+L109, doi: 10.1093/mnrasl/slz014
+Theissen, C. A. 2018, ApJ, 862, 173,
+doi: 10.3847/1538-4357/aaccfa
+Ulrich, M.-H., Maraschi, L., & Urry, C. M. 1997, ARA&A,
+35, 445, doi: 10.1146/annurev.astro.35.1.445
+Wang, T.-g., Jiang, N., Ge, J., et al. 2019, ApJL, 886, L5,
+doi: 10.3847/2041-8213/ab53ed
+Williams, P. M. 2019a, MNRAS, 488, 1282,
+doi: 10.1093/mnras/stz1784
+—. 2019b, Research Notes of the American Astronomical
+Society, 3, 71, doi: 10.3847/2515-5172/ab1f75
+
+WISE Team. 2020, AllWISE Atlas (L3a) Coadd Images,
+IPAC, doi: 10.26131/IRSA153
+Wright, E., Eisenhardt, P., Mainzer, A., et al. 2010, AJ,
+140, 1868, doi: 10.1088/0004-6256/140/6/1868
+Wright, E. L., Mainzer, A., Kirkpatrick, J. D., et al. 2014,
+AJ, 148, 82, doi: 10.1088/0004-6256/148/5/82
+Xu, S., Lai, S., & Dennihy, E. 2020, ApJ, 902, 127,
+doi: 10.3847/1538-4357/abb3fc
+Xu, S., Su, K. Y. L., Rogers, L. K., et al. 2018, ApJ, 866,
+108, doi: 10.3847/1538-4357/aadcfe
+Yang, Q., Wu, X.-B., Fan, X., et al. 2018, ApJ, 862, 109,
+doi: 10.3847/1538-4357/aaca3a
+Zhang, Z. H., Burgasser, A. J., Gálvez-Ortiz, M. C., et al.
+2019, MNRAS, 486, 1260, doi: 10.1093/mnras/stz777
+
+

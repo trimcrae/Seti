@@ -179,7 +179,37 @@ per the project's contamination-first discipline.
 next moves are deeper RVs (DR4), n_min = 3 with harder vetting, and the
 backward/rendezvous channel — change the question, don't write up the null.
 
-## 5. Sister channels from the same derivation (queued)
+## 5. HERDSMAN-B — completed assemblies (queued next; user corollary 2026-07-26)
+
+Steady-state corollary: gathering takes 10^8–10^9 yr but a finished collection
+persists ~indefinitely, so completed assemblies should outnumber mid-flight
+herds by ~(lifetime/transit) ≈ 1–100x. The forward scan's dispersed-today cut
+*deliberately excludes* them — they are a separate channel:
+
+**Signature:** a bound/compact group whose members are a random draw from the
+surrounding field — field-like [M/H] and age spread (vs. co-natal homogeneity
+at 0.02–0.05 dex, which every naturally-born cluster obeys), ordinary disk
+orbit. Sharpeners: bottom-heavy mass function (Hooper predicts harvesting
+0.2–1 M_sun; dynamical evolution makes old clusters bottom-LIGHT, so
+bottom-heavy is anti-natural), sub-virial coldness, IR-excess cross-flag.
+
+**Natural mimic and discriminator:** stripped dwarf nuclei (omega Cen,
+Terzan 5, M54) are heterogeneous by dynamical-friction assembly — but their
+stars are a *foreign coherent population* (own age-metallicity relation,
+alpha patterns, accretion-debris orbits). Artificial collection of local
+stars chemically mirrors the *local field*. "Foreign-coherent" is natural;
+"locally-sampled yet bound" has no natural channel.
+
+**Implementation:** chemical-coherence audit of the full cluster census
+(~7,000 Gaia-vetted clusters, e.g. Hunt & Reffert) + co-moving group catalogs,
+crossed with Gaia XP metallicities and GALAH/APOGEE abundances; per-group
+Bayes factor of co-natal vs field-sampled ancestry. No orbit integration;
+cheap. Byproduct guarantee: any strongly heterogeneous disk cluster is an
+astrophysical discovery regardless of interpretation. Homogeneity has only
+ever been measured for tens of clusters; the census-wide audit is unclaimed
+in any framing (checked in the 2026-07-25/26 literature sweeps).
+
+## 6. Sister channels from the same derivation (queued)
 
 * **MIDDEN** — survey-scale short-lived-radionuclide search (Tc/Pm/actinides
   without s-/r-process patterns) in public spectra archives; Whitmire & Wright

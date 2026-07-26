@@ -396,6 +396,194 @@ def test_empty_archive_degrades_to_NO_DATA_REACHED(tmp_path):
         "NO_DATA_REACHED"
 
 
+# ------------------------------------------------- acquisition honesty guard --
+# Run 30203250183 reported `NO_DATA_REACHED, n_sample: 0` after successfully
+# pulling 703,555 rows. These tests exist so that cannot happen again silently:
+# a failed query, an empty-but-valid query, a truncated query and a partial
+# pull must each carry their own name.
+
+
+def _fake_rows(n, start=0):
+    return pd.DataFrame({"source_id": np.arange(start, start + n, dtype=np.int64),
+                         "parallax": np.full(n, 2.1)})
+
+
+def test_run_gaia_query_separates_failure_from_an_empty_result(monkeypatch):
+    """The whole point: an exception and an empty table are different facts."""
+    from seti.cenotaph import acquire
+
+    acquire.reset_transport_state()
+    monkeypatch.setattr(acquire, "GAIA_TRANSPORTS",
+                        (("boom", lambda q, m: (_ for _ in ()).throw(
+                            RuntimeError("connection refused")), False),))
+    df, rec = acquire.run_gaia_query("SELECT 1", retries_per_transport=1,
+                                     base_sleep=0.0)
+    assert rec["status"] == acquire.QUERY_FAILED
+    assert df.empty
+    assert "connection refused" in rec["error"]
+    assert rec["query"] == "SELECT 1"
+
+    acquire.reset_transport_state()
+    monkeypatch.setattr(acquire, "GAIA_TRANSPORTS",
+                        (("empty", lambda q, m: pd.DataFrame(), False),))
+    df, rec = acquire.run_gaia_query("SELECT 1", retries_per_transport=1,
+                                     base_sleep=0.0)
+    assert rec["status"] == acquire.QUERY_ZERO
+    assert rec["n_rows"] == 0
+    assert rec["error"] is None
+
+
+def test_truncated_result_is_flagged_against_its_own_count_star(monkeypatch):
+    """8193 rows where COUNT(*) says 200000 is a row cap, not astrophysics."""
+    from seti.cenotaph import acquire
+
+    acquire.reset_transport_state()
+    monkeypatch.setattr(acquire, "GAIA_TRANSPORTS",
+                        (("capped", lambda q, m: _fake_rows(8193), True),))
+    df, rec = acquire.run_gaia_query("SELECT x", expect_rows=200000,
+                                     retries_per_transport=1, base_sleep=0.0)
+    assert rec["status"] == acquire.QUERY_TRUNCATED
+    assert rec["n_rows"] == 8193
+    assert rec["expected_rows"] == 200000
+
+
+def test_a_working_transport_is_preferred_over_a_truncating_one(monkeypatch):
+    """A cap on one transport must not become the answer while another works."""
+    from seti.cenotaph import acquire
+
+    acquire.reset_transport_state()
+    monkeypatch.setattr(acquire, "GAIA_TRANSPORTS", (
+        ("capped", lambda q, m: _fake_rows(8193), True),
+        ("full", lambda q, m: _fake_rows(50000), False),
+    ))
+    df, rec = acquire.run_gaia_query("SELECT x", expect_rows=50000,
+                                     retries_per_transport=1, base_sleep=0.0)
+    assert rec["status"] == acquire.QUERY_OK
+    assert rec["transport"] == "full"
+    assert len(df) == 50000
+
+
+def test_dead_async_transport_is_disabled_after_the_esa_500(monkeypatch):
+    """The observed ESA 500 never recovers; retrying it cost 75 min of a run."""
+    from seti.cenotaph import acquire
+
+    acquire.reset_transport_state()
+    calls = {"n": 0}
+
+    def _esa_500(q, m):
+        calls["n"] += 1
+        raise RuntimeError(
+            "Error 500:\nCannot find result 'result' for job 'abc-O'. "
+            "Path does not exists: /gaia_netapp/tap-server/storage/O/anonymous/x")
+
+    monkeypatch.setattr(acquire, "GAIA_TRANSPORTS", (
+        ("astroquery_async", _esa_500, False),
+        ("astroquery_sync", lambda q, m: _fake_rows(10), True),
+    ))
+    for _ in range(3):
+        df, rec = acquire.run_gaia_query("SELECT x", retries_per_transport=3,
+                                         base_sleep=0.0)
+        assert rec["transport"] == "astroquery_sync"
+    # One attempt on the first query, then never again in this process.
+    assert calls["n"] == 1
+
+
+def test_one_dead_shell_does_not_discard_the_shells_that_worked(monkeypatch):
+    """The actual failure of run 30203250183, as a regression test."""
+    from seti.cenotaph import acquire
+
+    acquire.reset_transport_state()
+    state = {"n": 0}
+
+    def _chunk(plx_lo, plx_hi, w, top, rlo, rhi, depth, max_depth, ledger):
+        state["n"] += 1
+        if state["n"] == 3:
+            raise RuntimeError("Error 408: Job timeout/aborted.")
+        ledger.append({"chunk": f"shell[{plx_lo:g},{plx_hi:g})",
+                       "status": acquire.QUERY_OK, "n_rows": 100,
+                       "expected_rows": 100, "depth": 0})
+        return _fake_rows(100, start=state["n"] * 1000)
+
+    monkeypatch.setattr(acquire, "_fetch_shell_chunk", _chunk)
+    ledger = []
+    df = acquire.fetch_gspspec_sample(plx_min_mas=5.0, checkpoint_dir=None,
+                                      ledger_out=ledger)
+    assert len(df) > 0, "a dead shell must not take the good shells with it"
+    acq = acquire.summarise_acquisition(ledger)
+    assert acq["acquisition_verdict"] == "PARTIAL_SAMPLE"
+    assert acq["n_chunks_failed"] == 1
+    assert any("408" in (f.get("error") or "") for f in acq["failures"])
+
+
+def test_acquisition_verdicts_are_distinct_not_merged():
+    from seti.cenotaph.acquire import (
+        QUERY_FAILED,
+        QUERY_OK,
+        QUERY_TRUNCATED,
+        QUERY_ZERO,
+        summarise_acquisition,
+    )
+
+    assert summarise_acquisition(
+        [{"status": QUERY_FAILED, "n_rows": 0}] * 3
+    )["acquisition_verdict"] == "NO_DATA_REACHED"
+    # Reached the archive, valid ADQL, cuts matched nothing. NOT the same fact.
+    assert summarise_acquisition(
+        [{"status": QUERY_ZERO, "n_rows": 0, "expected_rows": 0}] * 3
+    )["acquisition_verdict"] == "QUERY_RETURNED_ZERO_ROWS"
+    assert summarise_acquisition(
+        [{"status": QUERY_OK, "n_rows": 10, "expected_rows": 10}]
+    )["acquisition_verdict"] == "COMPLETE"
+    assert summarise_acquisition(
+        [{"status": QUERY_OK, "n_rows": 10, "expected_rows": 10},
+         {"status": QUERY_TRUNCATED, "n_rows": 5, "expected_rows": 90}]
+    )["acquisition_verdict"] == "PARTIAL_SAMPLE"
+
+
+def test_summary_names_zero_rows_differently_from_an_unreached_archive(tmp_path):
+    """summary.json must never call a valid empty result 'NO_DATA_REACHED'."""
+    out = tmp_path / "cenotaph"
+    out.mkdir()
+    pd.DataFrame().to_parquet(out / "sample.parquet", index=False)
+    (out / "sample_meta.json").write_text(json.dumps({
+        "mode": "archive", "n": 0, "verdict": "QUERY_RETURNED_ZERO_ROWS",
+        "acquisition": {"acquisition_verdict": "QUERY_RETURNED_ZERO_ROWS",
+                        "n_chunks": 4, "n_chunks_zero_rows": 4,
+                        "n_chunks_failed": 0, "n_rows_returned": 0,
+                        "chunks": [{"chunk": "shell[2,2.5)", "status":
+                                    "QUERY_RETURNED_ZERO_ROWS", "n_rows": 0,
+                                    "query": "SELECT ... WHERE ..."}]},
+    }))
+    summary = run.cenotaph_run(out_dir=out, stage="reduce")
+    assert summary["verdict"] == "QUERY_RETURNED_ZERO_ROWS"
+    written = json.loads((out / "summary.json").read_text())
+    assert written["verdict"] == "QUERY_RETURNED_ZERO_ROWS"
+    # The query text and the per-stage row counts must be in the report.
+    assert written["acquisition"]["chunks"][0]["query"]
+    assert written["acquisition"]["n_chunks"] == 4
+
+
+def test_shell_predicate_is_shared_by_count_and_select():
+    """If the ruler and the query disagree, the truncation guard is worthless."""
+    from seti.cenotaph.acquire import _GSPSPEC_FROM, _GSPSPEC_SELECT, _shell_where
+
+    w = {"poe_min": 20.0, "ruwe_max": 1.4, "logg_min": 3.8,
+         "teff_lo": 4000.0, "teff_hi": 7000.0}
+    where = _shell_where(2.0, 2.5, w)
+    count_q = f"SELECT COUNT(*) AS n {_GSPSPEC_FROM}{where}"
+    select_q = f"SELECT TOP 10{_GSPSPEC_SELECT}{_GSPSPEC_FROM}{where}"
+    assert where in count_q and where in select_q
+    # Units and cut senses, spelled out because a flipped sign returns zero
+    # rows without erroring: dwarfs are HIGH log g, parallax is in mas.
+    assert "logg_gspspec > 3.8" in where
+    assert "teff_gspspec BETWEEN 4000.0 AND 7000.0" in where
+    assert "g.parallax >= 2.0 AND g.parallax < 2.5" in where
+    assert "ruwe < 1.4" in where
+    # random_index slicing must be absent unless a sub-chunk asked for it.
+    assert "random_index" not in where
+    assert "random_index >= 0" in _shell_where(2.0, 2.5, w, 0, 100)
+
+
 def test_far_ir_non_detection_beyond_the_horizon_makes_no_claim():
     """Honest degradation: outside the horizon a non-detection means nothing."""
     far = budget.close_budget(0.1, 0.01, 1.0, 5000.0, 50.0,

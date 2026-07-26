@@ -710,7 +710,9 @@ def test_end_to_end_sweep_with_a_planted_cascade(tmp_path, monkeypatch):
     def fake_iter(*_a, **_k):
         rng = np.random.default_rng(99)
         for i in range(41):
-            amps = [0.018 * k for k in range(7)] if i == 0 else [0.0] * 7
+            # The two-band AND requirement multiplies the per-band completeness,
+            # so the planted cascade is well above the single-band threshold.
+            amps = [0.030 * k for k in range(7)] if i == 0 else [0.0] * 7
             out = {}
             for band in ("g", "r"):
                 t, m, e = make_lc(ns, amps, seed=int(rng.integers(1e6)))

@@ -1,0 +1,1208 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Untitled Document</title>
+<!--Generated on Mon Mar 30 23:58:56 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+    // Pre-apply spinout-banner dismissal here, before the banner paints, so it
+    // never flashes in only to be hidden later by the deferred arxiv-header.js.
+    // Key matches arxiv-header.js: "arxiv-banner-dismissed:" + data-banner-name.
+    if (localStorage.getItem('arxiv-banner-dismissed:spinout-nonprofit')) {
+      document.documentElement.setAttribute("data-banner-dismissed", "");
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css"><link rel="stylesheet" type="text/css" media="screen"
+  href="/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626"><style>
+  /* Banner pre-dismissal (set above before paint -> no flash-then-hide) and
+     reading-mode chrome hiding. */
+  html[data-banner-dismissed] .ds-announcement { display: none; }
+  html[data-reading-mode="enabled"] .ds-announcement,
+  html[data-reading-mode="enabled"] .ds-site-footer { display: none; }
+  /* Keep the announcement text dark on the Open-Blue band in both colour themes
+     (otherwise it inherits the paper's warm-wash text in dark mode and washes out). */
+  .ds-announcement-text { color: var(--arxiv-ink, #1c1a17); }
+</style>
+<script defer src="/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog><div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement"
+    data-banner-name="spinout-nonprofit">
+    <img class="ds-announcement-glyph" src="/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+    <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+    <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+    <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/"><img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/base/1.0.1/images/arxiv-logo-primary-light.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2604.00056v1">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2604.00056v1"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: CC BY 4.0
+  </a>
+  <div id="watermark-tr">
+arXiv:2604.00056v1 [astro-ph.IM] 31 Mar 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document">
+<div id="p1" class="ltx_para">
+<p id="p1.1" class="ltx_p"><span id="p1.1.1" class="ltx_text ltx_font_bold">Independent Replication of Nuclear Test-Transient Correlations and Earth Shadow Deficit in POSS-I Photographic Plates</span></p>
+</div>
+<div id="p2" class="ltx_para">
+<p id="p2.1" class="ltx_p">Brian Doherty</p>
+</div>
+<div id="p3" class="ltx_para">
+<p id="p3.1" class="ltx_p"><em id="p3.1.1" class="ltx_emph ltx_font_italic">Independent Researcher, Dallas, TX, USA</em></p>
+</div>
+<div id="p4" class="ltx_para">
+<p id="p4.1" class="ltx_p"><span id="p4.1.1" class="ltx_text ltx_font_typewriter">briandohertyresearch@gmail.com</span></p>
+</div>
+<div id="p5" class="ltx_para">
+<p id="p5.1" class="ltx_p">March 2026</p>
+</div>
+<div id="p6" class="ltx_para">
+<p id="p6.1" class="ltx_p"><span id="p6.1.1" class="ltx_text ltx_font_bold">Abstract</span></p>
+</div>
+<div id="p7" class="ltx_para">
+<p id="p7.1" class="ltx_p"><span id="p7.1.1" class="ltx_text ltx_font_bold">Transient sources on astronomical photographic plates are objects that appear on a single exposure but have no counterpart in modern sky surveys or on temporally adjacent plates. I present an independent replication of two findings reported by Bruehl and Villarroel (2025) and Villarroel et al. (2025): (1) a temporal correlation between transient detections on Palomar Observatory Sky Survey (POSS-I) photographic plates and atmospheric nuclear weapons tests, and (2) a deficit of transient sources within Earth’s geometric shadow cone at geosynchronous orbit altitude. Using the original dataset provided by the authors, I reproduce the chi-square contingency analysis (relative risk = 1.45, p = 0.011), extend the analysis with negative binomial regression controlling for precipitation, lunar illumination, and cloud cover (all-transient incidence rate ratio = 1.80; sunlit-only IRR = 3.98, reproducing the original paper’s reported findings), and confirm temporal specificity of the association via a 10,000-iteration permutation test (p = 0.006). The Earth shadow classification identifies 499 transients (0.46%) within the umbral cone in the full catalog and 142 (0.45%) in the more stringent center-of-plate subset, both significantly below the geometric expectation of approximately 1.4%, consistent with the findings of Villarroel et al. (2025). All transients predate the launch of Sputnik 1. These results confirm the core statistical claims of the original papers based on an independent analysis.</span></p>
+</div>
+<div id="p8" class="ltx_para">
+<p id="p8.1" class="ltx_p"><span id="p8.1.1" class="ltx_text ltx_font_bold">1. Introduction</span></p>
+</div>
+<div id="p9" class="ltx_para">
+<p id="p9.1" class="ltx_p">The Palomar Observatory Sky Survey (POSS-I), conducted between 1949 and 1958, imaged the sky in red and blue photographic bands using the 48-inch Samuel Oschin Schmidt telescope. While the survey was designed for static astronomy, the VASCO (Vanishing and Appearing Sources during a Century of Observations) project has cataloged thousands of transient sources detected on individual POSS-I plates that do not correspond to known astrophysical objects (Villarroel et al. 2019; Solano et al. 2022).</p>
+</div>
+<div id="p10" class="ltx_para">
+<p id="p10.1" class="ltx_p">Bruehl and Villarroel (2025) reported a surprising temporal correlation: dates within +/-1 day of atmospheric nuclear weapons tests show significantly elevated transient detection rates compared to non-test dates, with a relative risk of 1.45. Separately, Villarroel et al. (2025) showed that POSS-I transients exhibit a deficit within Earth’s geometric shadow at geosynchronous orbit altitude, a result that constrains possible physical explanations for the transient population.</p>
+</div>
+<div id="p11" class="ltx_para">
+<p id="p11.1" class="ltx_p">These are striking claims. A correlation between nuclear detonations and photographic plate anomalies detected at a civilian observatory hundreds of kilometers from the test sites, if robust, demands either a physical mechanism or reflects an extraordinary coincidence. Independent replication is essential before the community invests further in mechanistic interpretation of such findings.</p>
+</div>
+<div id="p12" class="ltx_para">
+<p id="p12.1" class="ltx_p">This paper presents such a replication. Upon request, the Bruehl and Villarroel (2025) authors provided the original dataset and the VASCO transient catalog consisting of 107,875 transients used in Bruehl and Villarroel (2025) and Villarroel et al. (2025). Analysis code was then written independent of the original authors’ implementations and was used to test whether the reported findings replicated upon independent analysis. I also extend the original chi-square test with a negative binomial regression model that controls for environmental confounders and a permutation test that addresses temporal autocorrelation. A separate independent replication by Sinkkonen (2025), using different statistical methods, reached broadly consistent conclusions regarding the nuclear timing correlation.</p>
+</div>
+<div id="p13" class="ltx_para">
+<p id="p13.1" class="ltx_p"><span id="p13.1.1" class="ltx_text ltx_font_bold">2. Data</span></p>
+</div>
+<div id="p14" class="ltx_para">
+<p id="p14.1" class="ltx_p"><span id="p14.1.1" class="ltx_text ltx_font_bold">2.1 Transient Dataset and VASCO Catalog</span></p>
+</div>
+<div id="p15" class="ltx_para">
+<p id="p15.1" class="ltx_p">The primary nuclear-transient dataset was provided upon request by one of the authors (Dr. Stephen Bruehl). It consists of 2,718 observation days spanning November 19, 1949 through April 28, 1957, each annotated with a daily transient count, a binary nuclear test window indicator (+/-1 day from detonation), and independent UFOCAT sighting counts per date. The total number of transients across the study period is 107,862.</p>
+</div>
+<div id="p16" class="ltx_para">
+<p id="p16.1" class="ltx_p">I did not perform raw plate extraction or transient detection. The transient catalog was produced by the VASCO team using their published pipeline (Solano et al. 2022). My role is limited to statistical analysis of the processed catalog.</p>
+</div>
+<div id="p17" class="ltx_para">
+<p id="p17.1" class="ltx_p">For the Earth shadow analysis, I used the VASCO catalog file containing individual source positions (J2000 RA/Dec) and observation timestamps (UTC) for 107,875 transients detected on POSS-I plates across 635 plates. A center-of-plate subset restricted to sources within 2<sup id="p17.1.1" class="ltx_sup"><span id="p17.1.1.1" class="ltx_text ltx_font_italic">∘</span></sup> of each plate’s computed center (determined by unit-vector averaging of source positions per plate) retains 31,525 transients (29.2%). This latter more restricted dataset addresses the possibility of increased artifacts at the plate edges. The shadow classification was run on both the full catalog and the center-of-plate subset.</p>
+</div>
+<div id="p18" class="ltx_para">
+<p id="p18.1" class="ltx_p"><span id="p18.1.1" class="ltx_text ltx_font_bold">2.2 Nuclear Test Dates</span></p>
+</div>
+<div id="p19" class="ltx_para">
+<p id="p19.1" class="ltx_p">Nuclear test dates were drawn from DOE/NV-209 Rev 16, the official US Department of Energy compilation, cross-referenced with Johnston’s Archive. The test window is defined as the detonation date +/- 1 day, following the definition used by Bruehl and Villarroel (2025). Of the 2,718 observation days, 347 fall within at least one nuclear test window.</p>
+</div>
+<div id="p20" class="ltx_para">
+<p id="p20.1" class="ltx_p"><span id="p20.1.1" class="ltx_text ltx_font_bold">2.3 Environmental Covariates</span></p>
+</div>
+<div id="p21" class="ltx_para">
+<p id="p21.1" class="ltx_p">To control for observing conditions that might confound the nuclear-transient association, I assembled the following covariates:</p>
+</div>
+<div id="p22" class="ltx_para">
+<p id="p22.3" class="ltx_p"><span id="p22.3.1" class="ltx_text ltx_font_bold">Moon illumination:</span> Computed from Astropy ephemeris calculations (vectorized) for each observation date at Palomar Observatory (latitude 33.356<sup id="p22.3.2" class="ltx_sup"><span id="p22.3.2.1" class="ltx_text ltx_font_italic">∘</span></sup>, longitude <math id="p22.2.m2" class="ltx_Math" alttext="-" display="inline" intent=":literal"><semantics><mo>−</mo><annotation encoding="application/x-tex">-</annotation></semantics></math>116.865<sup id="p22.3.3" class="ltx_sup"><span id="p22.3.3.1" class="ltx_text ltx_font_italic">∘</span></sup>, elevation 1,712 m). Accuracy is approximately 1 arcminute.</p>
+</div>
+<div id="p23" class="ltx_para">
+<p id="p23.1" class="ltx_p"><span id="p23.1.1" class="ltx_text ltx_font_bold">Cloud cover:</span> Daily mean cloud cover from NOAA Integrated Surface Database (ISD), San Diego station WBAN 23188, parsed from hourly sky condition reports (GF1 field, oktas converted to 0–1 scale). Coverage: 3,287 daily records with zero missing days across the study period.</p>
+</div>
+<div id="p24" class="ltx_para">
+<p id="p24.1" class="ltx_p"><span id="p24.1.1" class="ltx_text ltx_font_bold">Precipitation:</span> Binary indicator from NOAA GHCND station records for the San Diego area (1949–1957). When NOAA records are unavailable, a seasonal probability proxy is used.</p>
+</div>
+<div id="p25" class="ltx_para">
+<p id="p25.1" class="ltx_p">All environmental covariates use real historical station data. As discussed in Section 4, the nuclear-transient association persists after controlling for these variables, indicating that environmental confounding does not explain the observed association.</p>
+</div>
+<div id="p26" class="ltx_para">
+<p id="p26.1" class="ltx_p"><span id="p26.1.1" class="ltx_text ltx_font_bold">3. Methods</span></p>
+</div>
+<div id="p27" class="ltx_para">
+<p id="p27.1" class="ltx_p"><span id="p27.1.1" class="ltx_text ltx_font_bold">3.1 Chi-Square Contingency Test</span></p>
+</div>
+<div id="p28" class="ltx_para">
+<p id="p28.1" class="ltx_p">I constructed a 2 <math id="p28.1.m1" class="ltx_Math" alttext="\times" display="inline" intent=":literal"><semantics><mo>×</mo><annotation encoding="application/x-tex">\times</annotation></semantics></math> 2 contingency table classifying each observation day by (a) whether it falls within a nuclear test window and (b) whether at least one transient was detected. The Pearson chi-square statistic and associated p-value were computed using scipy.stats.chi2_contingency. Relative risk was calculated as the ratio of transient detection rates inside versus outside the test window.</p>
+</div>
+<div id="p29" class="ltx_para">
+<p id="p29.1" class="ltx_p"><span id="p29.1.1" class="ltx_text ltx_font_bold">3.2 Negative Binomial Regression</span></p>
+</div>
+<div id="p30" class="ltx_para">
+<p id="p30.1" class="ltx_p">Daily transient counts exhibit substantial overdispersion (Poisson deviance/df = 847.3), motivating a negative binomial generalized linear model (NB2 parameterization with log link). The model is specified as:</p>
+</div>
+<div id="p31" class="ltx_para">
+<p id="p31.6" class="ltx_p">log E[Transients] = <math id="p31.1.m1" class="ltx_Math" alttext="\beta" display="inline" intent=":literal"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>0 + <math id="p31.2.m2" class="ltx_Math" alttext="\beta" display="inline" intent=":literal"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>1W + <math id="p31.3.m3" class="ltx_Math" alttext="\beta" display="inline" intent=":literal"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>2U + <math id="p31.4.m4" class="ltx_Math" alttext="\beta" display="inline" intent=":literal"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>3M + <math id="p31.5.m5" class="ltx_Math" alttext="\beta" display="inline" intent=":literal"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>4C + <math id="p31.6.m6" class="ltx_Math" alttext="\beta" display="inline" intent=":literal"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>5P</p>
+</div>
+<div id="p32" class="ltx_para">
+<p id="p32.1" class="ltx_p">where W is the nuclear window indicator, U is the UFOCAT sighting count, M is moon illumination, C is estimated cloud cover, and P is a binary precipitation indicator. Binary predictors (W, P) were kept on their natural 0/1 scale; continuous predictors were standardized prior to fitting. The model was estimated by iteratively reweighted least squares (IRLS) using statsmodels.</p>
+</div>
+<div id="p33" class="ltx_para">
+<p id="p33.1" class="ltx_p">Model selection was based on AIC comparison across Poisson, negative binomial, and zero-inflated alternatives (Table 4). Variance inflation factors were computed to check for multicollinearity; all values fell below 2.0.</p>
+</div>
+<div id="p34" class="ltx_para">
+<p id="p34.1" class="ltx_p"><span id="p34.1.1" class="ltx_text ltx_font_bold">3.3 Permutation Test</span></p>
+</div>
+<div id="p35" class="ltx_para">
+<p id="p35.1" class="ltx_p">To confirm that the specific nuclear test dates drive the correlation rather than general temporal structure in the transient series, I performed a permutation test. The procedure is straightforward: shuffle the nuclear window labels across the 2,718 observation days, recompute the relative risk, and repeat 10,000 times. The permutation p-value is the fraction of shuffled datasets producing a relative risk at least as large as the observed value. The random seed was fixed at 42 for reproducibility.</p>
+</div>
+<div id="p36" class="ltx_para">
+<p id="p36.1" class="ltx_p">This test is important because it addresses a potential objection: perhaps any set of ~350 dates drawn from the study period would show elevated transient rates due to autocorrelation or seasonal clustering. If the permutation null distribution concentrates well below the observed relative risk, that objection fails. As an additional robustness check, I performed block permutation tests at 30-day, 60-day, and 90-day block sizes, which preserve within-block temporal autocorrelation while shuffling blocks. This addresses the stronger objection that individual-day shuffling may destroy temporal structure that could produce spurious associations.</p>
+</div>
+<div id="p37" class="ltx_para">
+<p id="p37.1" class="ltx_p"><span id="p37.1.1" class="ltx_text ltx_font_bold">3.4 Earth Shadow Classification</span></p>
+</div>
+<div id="p38" class="ltx_para">
+<p id="p38.1" class="ltx_p">Objects inside Earth’s geometric shadow cone cannot reflect sunlight. If transients comprise reflective objects in orbit as argued by Villarroel et al. (2025), few transients would be expected to be imaged in the shadow cone. At geosynchronous orbit (GEO) altitude, the umbral shadow subtends approximately 8.50<sup id="p38.1.1" class="ltx_sup"><span id="p38.1.1.1" class="ltx_text ltx_font_italic">∘</span></sup> on the sky, centered at the anti-solar point. For each transient in the VASCO catalog, I computed:</p>
+</div>
+<div id="p39" class="ltx_para">
+<p id="p39.1" class="ltx_p">1. The Sun’s apparent position using the Meeus algorithm, accurate to ~1 arcminute.</p>
+</div>
+<div id="p40" class="ltx_para">
+<p id="p40.4" class="ltx_p">2. The anti-solar point: RA(shadow) = RA(<math id="p40.1.m1" class="ltx_Math" alttext="\odot" display="inline" intent=":literal"><semantics><mo>⊙</mo><annotation encoding="application/x-tex">\odot</annotation></semantics></math>) + 180<sup id="p40.4.1" class="ltx_sup"><span id="p40.4.1.1" class="ltx_text ltx_font_italic">∘</span></sup>, Dec(shadow) = <math id="p40.3.m3" class="ltx_Math" alttext="-" display="inline" intent=":literal"><semantics><mo>−</mo><annotation encoding="application/x-tex">-</annotation></semantics></math>Dec(<math id="p40.4.m4" class="ltx_Math" alttext="\odot" display="inline" intent=":literal"><semantics><mo>⊙</mo><annotation encoding="application/x-tex">\odot</annotation></semantics></math>).</p>
+</div>
+<div id="p41" class="ltx_para">
+<p id="p41.1" class="ltx_p">3. The angular separation between the transient and the shadow center using the haversine formula.</p>
+</div>
+<div id="p42" class="ltx_para">
+<p id="p42.1" class="ltx_p">4. A binary classification: “in shadow” if angular separation &lt; 8.50<sup id="p42.1.1" class="ltx_sup"><span id="p42.1.1.1" class="ltx_text ltx_font_italic">∘</span></sup>.</p>
+</div>
+<div id="p43" class="ltx_para">
+<p id="p43.6" class="ltx_p">The shadow geometry parameters are: R(umbra) = R(<math id="p43.1.m1" class="ltx_Math" alttext="\oplus" display="inline" intent=":literal"><semantics><mo>⊕</mo><annotation encoding="application/x-tex">\oplus</annotation></semantics></math>)(1 <math id="p43.2.m2" class="ltx_Math" alttext="-" display="inline" intent=":literal"><semantics><mo>−</mo><annotation encoding="application/x-tex">-</annotation></semantics></math> r(GEO)/L(umbra)) = 6,234 km; <math id="p43.3.m3" class="ltx_Math" alttext="\theta" display="inline" intent=":literal"><semantics><mi>θ</mi><annotation encoding="application/x-tex">\theta</annotation></semantics></math>(shadow) = arcsin(R(umbra)/r(GEO)) = 8.50<sup id="p43.6.1" class="ltx_sup"><span id="p43.6.1.1" class="ltx_text ltx_font_italic">∘</span></sup>, where R(<math id="p43.5.m5" class="ltx_Math" alttext="\oplus" display="inline" intent=":literal"><semantics><mo>⊕</mo><annotation encoding="application/x-tex">\oplus</annotation></semantics></math>) = 6,371 km, r(GEO) = 42,164 km, and the umbra length L(umbra) <math id="p43.6.m6" class="ltx_Math" alttext="\approx" display="inline" intent=":literal"><semantics><mo>≈</mo><annotation encoding="application/x-tex">\approx</annotation></semantics></math> 1,380,000 km.</p>
+</div>
+<div id="p44" class="ltx_para">
+<p id="p44.1" class="ltx_p">The algorithm was validated against JPL Horizons ephemeris for 100 random dates; all shadow center positions agreed within 0.02<sup id="p44.1.1" class="ltx_sup"><span id="p44.1.1.1" class="ltx_text ltx_font_italic">∘</span></sup>.</p>
+</div>
+<div id="p45" class="ltx_para">
+<p id="p45.1" class="ltx_p"><span id="p45.1.1" class="ltx_text ltx_font_bold">4. Results</span></p>
+</div>
+<div id="p46" class="ltx_para">
+<p id="p46.1" class="ltx_p"><span id="p46.1.1" class="ltx_text ltx_font_bold">4.1 Chi-Square Test</span></p>
+</div>
+<div id="p47" class="ltx_para">
+<p id="p47.1" class="ltx_p">Table 1 presents the contingency table. The transient detection rate is 15.6% inside nuclear test windows versus 10.8% outside, yielding a relative risk of 1.45 and chi-square statistic of 6.47 (p = 0.011).</p>
+</div>
+<div id="p48" class="ltx_para">
+<p id="p48.1" class="ltx_p"><em id="p48.1.1" class="ltx_emph ltx_font_italic">Table 1. Contingency table for transient detection by nuclear test window status.</em></p>
+</div>
+<figure id="S0.T1" class="ltx_table">
+<table id="S0.T1.1" class="ltx_tabular">
+<tr id="S0.T1.1.1" class="ltx_tr">
+<td id="S0.T1.1.1.1" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T1.1.1.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.1.1.1.1" class="ltx_p" style="width:114.5pt;"></span>
+</span>
+</td>
+<td id="S0.T1.1.1.2" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T1.1.1.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.1.2.1.1" class="ltx_p" style="width:74.9pt;"><span id="S0.T1.1.1.2.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">No Transient</span></span>
+</span>
+</td>
+<td id="S0.T1.1.1.3" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T1.1.1.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.1.3.1.1" class="ltx_p" style="width:74.9pt;"><span id="S0.T1.1.1.3.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Has Transient</span></span>
+</span>
+</td>
+<td id="S0.T1.1.1.4" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T1.1.1.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.1.4.1.1" class="ltx_p" style="width:60.7pt;"><span id="S0.T1.1.1.4.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Total</span></span>
+</span>
+</td>
+<td id="S0.T1.1.1.5" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T1.1.1.5.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.1.5.1.1" class="ltx_p" style="width:60.7pt;"><span id="S0.T1.1.1.5.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Rate</span></span>
+</span>
+</td>
+</tr>
+<tr id="S0.T1.1.2" class="ltx_tr">
+<td id="S0.T1.1.2.1" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T1.1.2.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.2.1.1.1" class="ltx_p" style="width:114.5pt;">Outside window</span>
+</span>
+</td>
+<td id="S0.T1.1.2.2" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T1.1.2.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.2.2.1.1" class="ltx_p" style="width:74.9pt;">2,116</span>
+</span>
+</td>
+<td id="S0.T1.1.2.3" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T1.1.2.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.2.3.1.1" class="ltx_p" style="width:74.9pt;">255</span>
+</span>
+</td>
+<td id="S0.T1.1.2.4" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T1.1.2.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.2.4.1.1" class="ltx_p" style="width:60.7pt;">2,371</span>
+</span>
+</td>
+<td id="S0.T1.1.2.5" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top">
+<span id="S0.T1.1.2.5.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.2.5.1.1" class="ltx_p" style="width:60.7pt;">10.8%</span>
+</span>
+</td>
+</tr>
+<tr id="S0.T1.1.3" class="ltx_tr">
+<td id="S0.T1.1.3.1" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T1.1.3.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.3.1.1.1" class="ltx_p" style="width:114.5pt;">In nuclear window</span>
+</span>
+</td>
+<td id="S0.T1.1.3.2" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T1.1.3.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.3.2.1.1" class="ltx_p" style="width:74.9pt;">293</span>
+</span>
+</td>
+<td id="S0.T1.1.3.3" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T1.1.3.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.3.3.1.1" class="ltx_p" style="width:74.9pt;">54</span>
+</span>
+</td>
+<td id="S0.T1.1.3.4" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T1.1.3.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.3.4.1.1" class="ltx_p" style="width:60.7pt;">347</span>
+</span>
+</td>
+<td id="S0.T1.1.3.5" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T1.1.3.5.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T1.1.3.5.1.1" class="ltx_p" style="width:60.7pt;">15.6%</span>
+</span>
+</td>
+</tr>
+</table>
+</figure>
+<div id="p49" class="ltx_para">
+<p id="p49.1" class="ltx_p">Table 2 compares these values to the original paper. The relative risk matches exactly. The small chi-square difference (6.47 vs. 6.94) likely reflects minor differences in contingency table construction at boundary dates.</p>
+</div>
+<div id="p50" class="ltx_para">
+<p id="p50.1" class="ltx_p"><em id="p50.1.1" class="ltx_emph ltx_font_italic">Table 2. Chi-square test comparison with the original paper.</em></p>
+</div>
+<figure id="S0.T2" class="ltx_table">
+<table id="S0.T2.1" class="ltx_tabular">
+<tr id="S0.T2.1.1" class="ltx_tr">
+<td id="S0.T2.1.1.1" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T2.1.1.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.1.1.1.1" class="ltx_p" style="width:99.4pt;"><span id="S0.T2.1.1.1.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Metric</span></span>
+</span>
+</td>
+<td id="S0.T2.1.1.2" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T2.1.1.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.1.2.1.1" class="ltx_p" style="width:99.4pt;"><span id="S0.T2.1.1.2.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">This replication</span></span>
+</span>
+</td>
+<td id="S0.T2.1.1.3" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T2.1.1.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.1.3.1.1" class="ltx_p" style="width:99.4pt;"><span id="S0.T2.1.1.3.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Original paper</span></span>
+</span>
+</td>
+<td id="S0.T2.1.1.4" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T2.1.1.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.1.4.1.1" class="ltx_p" style="width:99.4pt;"><span id="S0.T2.1.1.4.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Match</span></span>
+</span>
+</td>
+</tr>
+<tr id="S0.T2.1.2" class="ltx_tr">
+<td id="S0.T2.1.2.1" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T2.1.2.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.2.1.1.1" class="ltx_p" style="width:99.4pt;">Chi-square</span>
+</span>
+</td>
+<td id="S0.T2.1.2.2" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T2.1.2.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.2.2.1.1" class="ltx_p" style="width:99.4pt;">6.47</span>
+</span>
+</td>
+<td id="S0.T2.1.2.3" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T2.1.2.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.2.3.1.1" class="ltx_p" style="width:99.4pt;">6.94</span>
+</span>
+</td>
+<td id="S0.T2.1.2.4" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top">
+<span id="S0.T2.1.2.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.2.4.1.1" class="ltx_p" style="width:99.4pt;">Close</span>
+</span>
+</td>
+</tr>
+<tr id="S0.T2.1.3" class="ltx_tr">
+<td id="S0.T2.1.3.1" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T2.1.3.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.3.1.1.1" class="ltx_p" style="width:99.4pt;">p-value</span>
+</span>
+</td>
+<td id="S0.T2.1.3.2" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T2.1.3.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.3.2.1.1" class="ltx_p" style="width:99.4pt;">0.011</span>
+</span>
+</td>
+<td id="S0.T2.1.3.3" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T2.1.3.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.3.3.1.1" class="ltx_p" style="width:99.4pt;">0.008</span>
+</span>
+</td>
+<td id="S0.T2.1.3.4" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top">
+<span id="S0.T2.1.3.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.3.4.1.1" class="ltx_p" style="width:99.4pt;">Consistent</span>
+</span>
+</td>
+</tr>
+<tr id="S0.T2.1.4" class="ltx_tr">
+<td id="S0.T2.1.4.1" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T2.1.4.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.4.1.1.1" class="ltx_p" style="width:99.4pt;">Relative risk</span>
+</span>
+</td>
+<td id="S0.T2.1.4.2" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T2.1.4.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.4.2.1.1" class="ltx_p" style="width:99.4pt;">1.45</span>
+</span>
+</td>
+<td id="S0.T2.1.4.3" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T2.1.4.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.4.3.1.1" class="ltx_p" style="width:99.4pt;">1.45</span>
+</span>
+</td>
+<td id="S0.T2.1.4.4" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T2.1.4.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T2.1.4.4.1.1" class="ltx_p" style="width:99.4pt;">Exact</span>
+</span>
+</td>
+</tr>
+</table>
+</figure>
+<div id="p51" class="ltx_para">
+<p id="p51.1" class="ltx_p"><span id="p51.1.1" class="ltx_text ltx_font_bold">4.2 Negative Binomial Regression</span></p>
+</div>
+<div id="p52" class="ltx_para">
+<p id="p52.1" class="ltx_p">Table 3 presents the incidence rate ratios (IRR = exp(<math id="p52.1.m1" class="ltx_Math" alttext="\beta" display="inline" intent=":literal"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>)) from the negative binomial model. Using all transients, the nuclear window IRR is 1.80 (p &lt; 0.0001), meaning days within +/-1 day of a nuclear test have roughly 80% more transients than non-test days after controlling for environmental conditions.</p>
+</div>
+<div id="p53" class="ltx_para">
+<p id="p53.1" class="ltx_p">However, restricting the analysis to transients in sunlit sky positions (those outside Earth’s geometric shadow) substantially increases the effect. The sunlit-only nuclear window IRR is 3.98 (95% CI: 3.475 to 4.562, p &lt; 0.0001), representing nearly four times the expected transient count during nuclear test windows. This is statistically compatible with the value reported in the original paper (IRR = 3.53, 95% CI: 2.799 to 4.446), with overlapping confidence intervals.</p>
+</div>
+<div id="p54" class="ltx_para">
+<p id="p54.1" class="ltx_p"><em id="p54.1.1" class="ltx_emph ltx_font_italic">Table 3. Negative binomial regression results (incidence rate ratios).</em></p>
+</div>
+<figure id="S0.T3" class="ltx_table">
+<table id="S0.T3.1" class="ltx_tabular">
+<tr id="S0.T3.1.1" class="ltx_tr">
+<td id="S0.T3.1.1.1" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T3.1.1.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.1.1.1.1" class="ltx_p" style="width:74.2pt;"><span id="S0.T3.1.1.1.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Sample</span></span>
+</span>
+</td>
+<td id="S0.T3.1.1.2" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T3.1.1.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.1.2.1.1" class="ltx_p" style="width:82.4pt;"><span id="S0.T3.1.1.2.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Variable</span></span>
+</span>
+</td>
+<td id="S0.T3.1.1.3" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T3.1.1.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.1.3.1.1" class="ltx_p" style="width:49.4pt;"><span id="S0.T3.1.1.3.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">IRR</span></span>
+</span>
+</td>
+<td id="S0.T3.1.1.4" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T3.1.1.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.1.4.1.1" class="ltx_p" style="width:89.0pt;"><span id="S0.T3.1.1.4.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">95% CI</span></span>
+</span>
+</td>
+<td id="S0.T3.1.1.5" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T3.1.1.5.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.1.5.1.1" class="ltx_p" style="width:90.6pt;"><span id="S0.T3.1.1.5.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">p-value</span></span>
+</span>
+</td>
+</tr>
+<tr id="S0.T3.1.2" class="ltx_tr">
+<td id="S0.T3.1.2.1" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T3.1.2.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.2.1.1.1" class="ltx_p" style="width:74.2pt;">All transients</span>
+</span>
+</td>
+<td id="S0.T3.1.2.2" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T3.1.2.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.2.2.1.1" class="ltx_p" style="width:82.4pt;">Nuclear window</span>
+</span>
+</td>
+<td id="S0.T3.1.2.3" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T3.1.2.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.2.3.1.1" class="ltx_p" style="width:49.4pt;">1.803</span>
+</span>
+</td>
+<td id="S0.T3.1.2.4" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T3.1.2.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.2.4.1.1" class="ltx_p" style="width:89.0pt;">1.601 – 2.030</span>
+</span>
+</td>
+<td id="S0.T3.1.2.5" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top">
+<span id="S0.T3.1.2.5.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.2.5.1.1" class="ltx_p" style="width:90.6pt;">&lt; 0.0001</span>
+</span>
+</td>
+</tr>
+<tr id="S0.T3.1.3" class="ltx_tr">
+<td id="S0.T3.1.3.1" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T3.1.3.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.3.1.1.1" class="ltx_p" style="width:74.2pt;">Sunlit only</span>
+</span>
+</td>
+<td id="S0.T3.1.3.2" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T3.1.3.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.3.2.1.1" class="ltx_p" style="width:82.4pt;">Nuclear window</span>
+</span>
+</td>
+<td id="S0.T3.1.3.3" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T3.1.3.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.3.3.1.1" class="ltx_p" style="width:49.4pt;">3.981</span>
+</span>
+</td>
+<td id="S0.T3.1.3.4" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T3.1.3.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.3.4.1.1" class="ltx_p" style="width:89.0pt;">3.475 – 4.562</span>
+</span>
+</td>
+<td id="S0.T3.1.3.5" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top">
+<span id="S0.T3.1.3.5.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.3.5.1.1" class="ltx_p" style="width:90.6pt;">&lt; 0.0001</span>
+</span>
+</td>
+</tr>
+<tr id="S0.T3.1.4" class="ltx_tr">
+<td id="S0.T3.1.4.1" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T3.1.4.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.4.1.1.1" class="ltx_p" style="width:74.2pt;">Original paper</span>
+</span>
+</td>
+<td id="S0.T3.1.4.2" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T3.1.4.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.4.2.1.1" class="ltx_p" style="width:82.4pt;">Nuclear window</span>
+</span>
+</td>
+<td id="S0.T3.1.4.3" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T3.1.4.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.4.3.1.1" class="ltx_p" style="width:49.4pt;">3.527</span>
+</span>
+</td>
+<td id="S0.T3.1.4.4" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T3.1.4.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.4.4.1.1" class="ltx_p" style="width:89.0pt;">2.799 – 4.446</span>
+</span>
+</td>
+<td id="S0.T3.1.4.5" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T3.1.4.5.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T3.1.4.5.1.1" class="ltx_p" style="width:90.6pt;">&lt; 0.0001</span>
+</span>
+</td>
+</tr>
+</table>
+</figure>
+<div id="p55" class="ltx_para">
+<p id="p55.1" class="ltx_p">The near-doubling of the IRR when restricting to sunlit positions is itself a physically meaningful result. If the transients are solar reflections from objects whose presence correlates with nuclear test timing, the nuclear association should be strongest for transients that could reflect sunlight and weakest for those in Earth’s shadow. That is exactly what the data show.</p>
+</div>
+<div id="p56" class="ltx_para">
+<p id="p56.1" class="ltx_p"><em id="p56.1.1" class="ltx_emph ltx_font_italic">Table 4. Model comparison by AIC.</em></p>
+</div>
+<figure id="S0.T4" class="ltx_table">
+<table id="S0.T4.1" class="ltx_tabular">
+<tr id="S0.T4.1.1" class="ltx_tr">
+<td id="S0.T4.1.1.1" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T4.1.1.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T4.1.1.1.1.1" class="ltx_p" style="width:136.5pt;"><span id="S0.T4.1.1.1.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Model</span></span>
+</span>
+</td>
+<td id="S0.T4.1.1.2" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T4.1.1.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T4.1.1.2.1.1" class="ltx_p" style="width:136.5pt;"><span id="S0.T4.1.1.2.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">AIC</span></span>
+</span>
+</td>
+<td id="S0.T4.1.1.3" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T4.1.1.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T4.1.1.3.1.1" class="ltx_p" style="width:136.5pt;"><span id="S0.T4.1.1.3.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Notes</span></span>
+</span>
+</td>
+</tr>
+<tr id="S0.T4.1.2" class="ltx_tr">
+<td id="S0.T4.1.2.1" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T4.1.2.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T4.1.2.1.1.1" class="ltx_p" style="width:136.5pt;">Poisson GLM</span>
+</span>
+</td>
+<td id="S0.T4.1.2.2" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T4.1.2.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T4.1.2.2.1.1" class="ltx_p" style="width:136.5pt;">18,247</span>
+</span>
+</td>
+<td id="S0.T4.1.2.3" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top">
+<span id="S0.T4.1.2.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T4.1.2.3.1.1" class="ltx_p" style="width:136.5pt;">Severe overdispersion</span>
+</span>
+</td>
+</tr>
+<tr id="S0.T4.1.3" class="ltx_tr">
+<td id="S0.T4.1.3.1" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T4.1.3.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T4.1.3.1.1.1" class="ltx_p" style="width:136.5pt;">Negative binomial</span>
+</span>
+</td>
+<td id="S0.T4.1.3.2" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T4.1.3.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T4.1.3.2.1.1" class="ltx_p" style="width:136.5pt;">12,891</span>
+</span>
+</td>
+<td id="S0.T4.1.3.3" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top">
+<span id="S0.T4.1.3.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T4.1.3.3.1.1" class="ltx_p" style="width:136.5pt;">Preferred</span>
+</span>
+</td>
+</tr>
+<tr id="S0.T4.1.4" class="ltx_tr">
+<td id="S0.T4.1.4.1" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T4.1.4.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T4.1.4.1.1.1" class="ltx_p" style="width:136.5pt;">Zero-inflated NB</span>
+</span>
+</td>
+<td id="S0.T4.1.4.2" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T4.1.4.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T4.1.4.2.1.1" class="ltx_p" style="width:136.5pt;">12,903</span>
+</span>
+</td>
+<td id="S0.T4.1.4.3" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T4.1.4.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T4.1.4.3.1.1" class="ltx_p" style="width:136.5pt;">No improvement</span>
+</span>
+</td>
+</tr>
+</table>
+</figure>
+<div id="p57" class="ltx_para">
+<p id="p57.1" class="ltx_p"><span id="p57.1.1" class="ltx_text ltx_font_bold">4.3 Permutation Test of the Nuclear-Transient Association</span></p>
+</div>
+<div id="p58" class="ltx_para">
+<p id="p58.1" class="ltx_p">The observed relative risk of 1.447 for the nuclear-transient association exceeds 99.4% of the permutation distribution (Figure 1). The permutation mean is 1.009, and the 95% interval from the null distribution is [0.708, 1.319]. The permutation p-value is 0.006.</p>
+</div>
+<div id="p59" class="ltx_para">
+<p id="p59.1" class="ltx_p">This result rules out the hypothesis that temporal autocorrelation alone could produce the observed nuclear-transient association. The specific nuclear test dates carry information; randomly chosen sets of dates do not reproduce the effect.</p>
+</div>
+<div id="p60" class="ltx_para">
+<p id="p60.1" class="ltx_p">To address the concern that shuffling individual days may break temporal structure, I also performed block permutation tests that preserve autocorrelation within contiguous time blocks. Table 5 presents the results. The nuclear window effect remains significant at 30-day and 60-day block scales (p &lt; 0.05). The 90-day blocks are marginal (p = 0.053), as expected given that only 31 blocks limits permutation resolution. The observed relative risk falls outside the null 95% confidence interval at all block sizes, indicating that the nuclear-transient association cannot be attributed to broad temporal autocorrelation structure in the data.</p>
+</div>
+<div id="p61" class="ltx_para">
+<p id="p61.1" class="ltx_p"><em id="p61.1.1" class="ltx_emph ltx_font_italic">Table 5. Block permutation test results by block size.</em></p>
+</div>
+<figure id="S0.T5" class="ltx_table">
+<table id="S0.T5.1" class="ltx_tabular">
+<tr id="S0.T5.1.1" class="ltx_tr">
+<td id="S0.T5.1.1.1" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T5.1.1.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.1.1.1.1" class="ltx_p" style="width:132.5pt;"><span id="S0.T5.1.1.1.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Method</span></span>
+</span>
+</td>
+<td id="S0.T5.1.1.2" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T5.1.1.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.1.2.1.1" class="ltx_p" style="width:88.4pt;"><span id="S0.T5.1.1.2.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Blocks</span></span>
+</span>
+</td>
+<td id="S0.T5.1.1.3" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T5.1.1.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.1.3.1.1" class="ltx_p" style="width:88.4pt;"><span id="S0.T5.1.1.3.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">p-value</span></span>
+</span>
+</td>
+<td id="S0.T5.1.1.4" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T5.1.1.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.1.4.1.1" class="ltx_p" style="width:88.4pt;"><span id="S0.T5.1.1.4.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Status</span></span>
+</span>
+</td>
+</tr>
+<tr id="S0.T5.1.2" class="ltx_tr">
+<td id="S0.T5.1.2.1" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T5.1.2.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.2.1.1.1" class="ltx_p" style="width:132.5pt;">IID (individual days)</span>
+</span>
+</td>
+<td id="S0.T5.1.2.2" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T5.1.2.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.2.2.1.1" class="ltx_p" style="width:88.4pt;">2,718</span>
+</span>
+</td>
+<td id="S0.T5.1.2.3" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T5.1.2.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.2.3.1.1" class="ltx_p" style="width:88.4pt;">0.006</span>
+</span>
+</td>
+<td id="S0.T5.1.2.4" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top">
+<span id="S0.T5.1.2.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.2.4.1.1" class="ltx_p" style="width:88.4pt;">Significant</span>
+</span>
+</td>
+</tr>
+<tr id="S0.T5.1.3" class="ltx_tr">
+<td id="S0.T5.1.3.1" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T5.1.3.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.3.1.1.1" class="ltx_p" style="width:132.5pt;">30-day blocks</span>
+</span>
+</td>
+<td id="S0.T5.1.3.2" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T5.1.3.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.3.2.1.1" class="ltx_p" style="width:88.4pt;">91</span>
+</span>
+</td>
+<td id="S0.T5.1.3.3" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T5.1.3.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.3.3.1.1" class="ltx_p" style="width:88.4pt;">0.036</span>
+</span>
+</td>
+<td id="S0.T5.1.3.4" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top">
+<span id="S0.T5.1.3.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.3.4.1.1" class="ltx_p" style="width:88.4pt;">Significant</span>
+</span>
+</td>
+</tr>
+<tr id="S0.T5.1.4" class="ltx_tr">
+<td id="S0.T5.1.4.1" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T5.1.4.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.4.1.1.1" class="ltx_p" style="width:132.5pt;">60-day blocks</span>
+</span>
+</td>
+<td id="S0.T5.1.4.2" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T5.1.4.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.4.2.1.1" class="ltx_p" style="width:88.4pt;">46</span>
+</span>
+</td>
+<td id="S0.T5.1.4.3" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T5.1.4.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.4.3.1.1" class="ltx_p" style="width:88.4pt;">0.034</span>
+</span>
+</td>
+<td id="S0.T5.1.4.4" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top">
+<span id="S0.T5.1.4.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.4.4.1.1" class="ltx_p" style="width:88.4pt;">Significant</span>
+</span>
+</td>
+</tr>
+<tr id="S0.T5.1.5" class="ltx_tr">
+<td id="S0.T5.1.5.1" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T5.1.5.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.5.1.1.1" class="ltx_p" style="width:132.5pt;">90-day blocks</span>
+</span>
+</td>
+<td id="S0.T5.1.5.2" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T5.1.5.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.5.2.1.1" class="ltx_p" style="width:88.4pt;">31</span>
+</span>
+</td>
+<td id="S0.T5.1.5.3" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T5.1.5.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.5.3.1.1" class="ltx_p" style="width:88.4pt;">0.053</span>
+</span>
+</td>
+<td id="S0.T5.1.5.4" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T5.1.5.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T5.1.5.4.1.1" class="ltx_p" style="width:88.4pt;">Marginal</span>
+</span>
+</td>
+</tr>
+</table>
+</figure>
+<div id="p62" class="ltx_para">
+<img src="2604.00056v1/figure1.png" id="p62.g1" class="ltx_graphics ltx_img_landscape" width="494" height="312" alt="[Uncaptioned image]">
+</div>
+<div id="p63" class="ltx_para">
+<p id="p63.1" class="ltx_p"><em id="p63.1.1" class="ltx_emph ltx_font_italic"><span id="p63.1.1.1" class="ltx_text ltx_font_bold">Figure 1.</span> Null distribution of relative risk from 10,000 random permutations of nuclear test date labels. The observed relative risk (1.447, solid red line) falls far outside the 95% interval of the null distribution (dashed grey lines). The red-shaded tail represents the fraction of permutations exceeding the observed value (p = 0.006).</em></p>
+</div>
+<div id="p64" class="ltx_para">
+<p id="p64.1" class="ltx_p"><span id="p64.1.1" class="ltx_text ltx_font_bold">4.4 Center-of-Plate Robustness Check</span></p>
+</div>
+<div id="p65" class="ltx_para">
+<p id="p65.1" class="ltx_p">Restricting analysis to transients within 2<sup id="p65.1.1" class="ltx_sup"><span id="p65.1.1.1" class="ltx_text ltx_font_italic">∘</span></sup> of plate center eliminates potential edge artifacts from plate scanning. This filter retains 31,525 transients (29.2% of the original count). The nuclear window effect in the center-only subset is significant at p &lt; 0.0001, stronger than in the full dataset. The finding is not an edge artifact.</p>
+</div>
+<div id="p66" class="ltx_para">
+<p id="p66.1" class="ltx_p"><span id="p66.1.1" class="ltx_text ltx_font_bold">4.5 Sensitivity Analyses</span></p>
+</div>
+<div id="p67" class="ltx_para">
+<p id="p67.1" class="ltx_p">The nuclear window effect is robust to several perturbations. Using +/-2 day and +/-4 day windows dilutes the effect (more non-signal days included) but retains significance. Splitting the study period into early (1949–1953) and late (1953–1957) subsets shows the effect in both halves, ruling out single-era artifacts. Removing each covariate individually from the negative binomial model does not eliminate the nuclear window significance. Alternative distributional assumptions (Poisson, NB1 and NB2 parameterizations, zero-inflated Poisson, hurdle model) all yield significant nuclear window effects (p &lt; 0.0001), with all-transient IRR estimates in the range of 1.7 to 2.0. Restricting to sunlit transients approximately doubles the IRR across all model specifications.</p>
+</div>
+<div id="p68" class="ltx_para">
+<p id="p68.1" class="ltx_p"><em id="p68.1.1" class="ltx_emph ltx_font_italic">Replication of the Earth Shadow Deficit Finding</em></p>
+</div>
+<div id="p69" class="ltx_para">
+<p id="p69.1" class="ltx_p"><span id="p69.1.1" class="ltx_text ltx_font_bold">4.6 Earth Shadow Deficit</span></p>
+</div>
+<div id="p70" class="ltx_para">
+<p id="p70.1" class="ltx_p">Table 6 presents the shadow classification results. Of the 107,875 transients in the full catalog, 499 (0.46%) fall within the proper umbral shadow at GEO altitude. Restricting to the center-of-plate subset yields 142 of 31,525 transients (0.45%) in shadow. For comparison, the geometric expectation for uniform sky coverage is approximately 1.4%, based on the solid angle subtended by the shadow cone relative to the visible hemisphere.</p>
+</div>
+<div id="p71" class="ltx_para">
+<p id="p71.1" class="ltx_p"><em id="p71.1.1" class="ltx_emph ltx_font_italic">Table 6. Earth shadow classification of VASCO transients.</em></p>
+</div>
+<figure id="S0.T6" class="ltx_table">
+<table id="S0.T6.1" class="ltx_tabular">
+<tr id="S0.T6.1.1" class="ltx_tr">
+<td id="S0.T6.1.1.1" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T6.1.1.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.1.1.1.1" class="ltx_p" style="width:135.9pt;"><span id="S0.T6.1.1.1.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Dataset</span></span>
+</span>
+</td>
+<td id="S0.T6.1.1.2" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T6.1.1.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.1.2.1.1" class="ltx_p" style="width:93.4pt;"><span id="S0.T6.1.1.2.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Total</span></span>
+</span>
+</td>
+<td id="S0.T6.1.1.3" class="ltx_td ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T6.1.1.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.1.3.1.1" class="ltx_p" style="width:84.1pt;"><span id="S0.T6.1.1.3.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">In shadow</span></span>
+</span>
+</td>
+<td id="S0.T6.1.1.4" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_border_tt">
+<span id="S0.T6.1.1.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.1.4.1.1" class="ltx_p" style="width:84.1pt;"><span id="S0.T6.1.1.4.1.1.1" class="ltx_text ltx_align_left ltx_font_bold">Rate</span></span>
+</span>
+</td>
+</tr>
+<tr id="S0.T6.1.2" class="ltx_tr">
+<td id="S0.T6.1.2.1" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T6.1.2.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.2.1.1.1" class="ltx_p" style="width:135.9pt;">VASCO (full plate)</span>
+</span>
+</td>
+<td id="S0.T6.1.2.2" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T6.1.2.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.2.2.1.1" class="ltx_p" style="width:93.4pt;">107,875</span>
+</span>
+</td>
+<td id="S0.T6.1.2.3" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T6.1.2.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.2.3.1.1" class="ltx_p" style="width:84.1pt;">499</span>
+</span>
+</td>
+<td id="S0.T6.1.2.4" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top">
+<span id="S0.T6.1.2.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.2.4.1.1" class="ltx_p" style="width:84.1pt;">0.46%</span>
+</span>
+</td>
+</tr>
+<tr id="S0.T6.1.3" class="ltx_tr">
+<td id="S0.T6.1.3.1" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T6.1.3.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.3.1.1.1" class="ltx_p" style="width:135.9pt;">VASCO (center-of-plate)</span>
+</span>
+</td>
+<td id="S0.T6.1.3.2" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T6.1.3.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.3.2.1.1" class="ltx_p" style="width:93.4pt;">31,525</span>
+</span>
+</td>
+<td id="S0.T6.1.3.3" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T6.1.3.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.3.3.1.1" class="ltx_p" style="width:84.1pt;">142</span>
+</span>
+</td>
+<td id="S0.T6.1.3.4" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top">
+<span id="S0.T6.1.3.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.3.4.1.1" class="ltx_p" style="width:84.1pt;">0.45%</span>
+</span>
+</td>
+</tr>
+<tr id="S0.T6.1.4" class="ltx_tr">
+<td id="S0.T6.1.4.1" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T6.1.4.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.4.1.1.1" class="ltx_p" style="width:135.9pt;">Plate-coverage expectation</span>
+</span>
+</td>
+<td id="S0.T6.1.4.2" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T6.1.4.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.4.2.1.1" class="ltx_p" style="width:93.4pt;">—</span>
+</span>
+</td>
+<td id="S0.T6.1.4.3" class="ltx_td ltx_align_justify ltx_align_top">
+<span id="S0.T6.1.4.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.4.3.1.1" class="ltx_p" style="width:84.1pt;">—</span>
+</span>
+</td>
+<td id="S0.T6.1.4.4" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top">
+<span id="S0.T6.1.4.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.4.4.1.1" class="ltx_p" style="width:84.1pt;">0.78%</span>
+</span>
+</td>
+</tr>
+<tr id="S0.T6.1.5" class="ltx_tr">
+<td id="S0.T6.1.5.1" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T6.1.5.1.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.5.1.1.1" class="ltx_p" style="width:135.9pt;">Hemispheric expectation</span>
+</span>
+</td>
+<td id="S0.T6.1.5.2" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T6.1.5.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.5.2.1.1" class="ltx_p" style="width:93.4pt;">—</span>
+</span>
+</td>
+<td id="S0.T6.1.5.3" class="ltx_td ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T6.1.5.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.5.3.1.1" class="ltx_p" style="width:84.1pt;">—</span>
+</span>
+</td>
+<td id="S0.T6.1.5.4" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_border_bb">
+<span id="S0.T6.1.5.4.1" class="ltx_inline-block ltx_align_top">
+<span id="S0.T6.1.5.4.1.1" class="ltx_p" style="width:84.1pt;">~1.4%</span>
+</span>
+</td>
+</tr>
+</table>
+</figure>
+<div id="p72" class="ltx_para">
+<p id="p72.1" class="ltx_p">The shadow deficit is present in both the full catalog and the center-of-plate subset, with nearly identical rates (0.46% and 0.45% respectively). The consistency across both filters indicates that edge artifacts do not preferentially populate the shadow region and that the deficit is not an artifact of plate-edge effects. Both rates fall well below the geometric expectation of approximately 1.4%.</p>
+</div>
+<div id="p73" class="ltx_para">
+<p id="p73.1" class="ltx_p">To verify that this deficit is not an artifact of non-uniform sky coverage, I performed a Monte Carlo analysis using actual plate-by-plate coverage. For each of the 635 POSS-I plates in the catalog, I computed the plate center and observation time, then determined whether the plate’s 2<sup id="p73.1.1" class="ltx_sup"><span id="p73.1.1.1" class="ltx_text ltx_font_italic">∘</span></sup> center-of-plate field overlapped with Earth’s shadow cone at the time of observation. Of the 635 plates, only 9 have any overlap with the shadow region (2 fully inside, 7 partially overlapping), yielding a total shadow overlap of 62.4 sq deg out of 7,980 sq deg total plate area. The expected shadow transient fraction under actual plate coverage is 0.78%, compared to the observed 0.45% (center-of-plate) and 0.46% (full plate). The naive hemispheric estimate (~1.4%) overstates the expectation because POSS-I plates do not uniformly tile the sky; the plate-specific calculation is more conservative. Even so, the observed rates remain well below the plate-coverage expectation, confirming that non-uniform sky sampling does not explain the deficit.</p>
+</div>
+<div id="p74" class="ltx_para">
+<p id="p74.1" class="ltx_p"><span id="p74.1.1" class="ltx_text ltx_font_bold">5. Discussion</span></p>
+</div>
+<div id="p75" class="ltx_para">
+<p id="p75.1" class="ltx_p"><span id="p75.1.1" class="ltx_text ltx_font_bold">5.1 Strength of the Nuclear-Transient Association</span></p>
+</div>
+<div id="p76" class="ltx_para">
+<p id="p76.1" class="ltx_p">Three independent tests converge on the same conclusion: transient detection rates on POSS-I plates are significantly elevated during nuclear test windows. The chi-square test confirms the basic association. The negative binomial model shows the effect persists after controlling for precipitation, lunar phase, and cloud cover. The permutation test confirms that the specific nuclear test dates matter, and that the observed association is not just due to temporal autocorrelation.</p>
+</div>
+<div id="p77" class="ltx_para">
+<p id="p77.1" class="ltx_p">These three tests are not multiple comparisons on the same hypothesis. Each addresses a distinct question: Does the association exist? Does it survive confounder adjustment? Is it driven by the specific test dates? All three answer affirmatively.</p>
+</div>
+<div id="p78" class="ltx_para">
+<p id="p78.1" class="ltx_p"><span id="p78.1.1" class="ltx_text ltx_font_bold">5.2 Confounder Adjustment</span></p>
+</div>
+<div id="p79" class="ltx_para">
+<p id="p79.1" class="ltx_p">The fact that the strength of the association between nuclear testing and transient counts nearly doubles when restricted to sunlit transients is the most physically informative result from the regression analysis. It demonstrates that the nuclear-transient association is concentrated among transients in sky positions where solar illumination is available. Transients in or near Earth’s shadow contribute proportionally less to the nuclear timing signal. This is consistent with a population of reflective objects whose appearance rate is linked to nuclear test activity, and it further corroborates the shadow deficit finding from Section 4.6.</p>
+</div>
+<div id="p80" class="ltx_para">
+<p id="p80.1" class="ltx_p">A note on analytical sequence: the sunlit-only regression reported here was not pre-specified. It was motivated by the shadow deficit finding (Section 4.6), which demonstrated that transients avoid Earth’s geometric shadow. The physical reasoning (that solar reflections cannot occur inside the shadow cone, so the nuclear timing signal should concentrate among sunlit transients) led to partitioning the regression by shadow status. While the result is physically coherent and reproduces the original paper’s IRR, it should be treated as hypothesis-generating rather than confirmatory until replicated on an independent dataset.</p>
+</div>
+<div id="p81" class="ltx_para">
+<p id="p81.1" class="ltx_p"><span id="p81.1.1" class="ltx_text ltx_font_bold">5.3 Earth Shadow Implications</span></p>
+</div>
+<div id="p82" class="ltx_para">
+<p id="p82.1" class="ltx_p">The shadow deficit has a straightforward physical interpretation. If the POSS-I transients were sunlit reflective objects in Earth orbit (satellites, debris, rocket bodies), one would expect a uniform or nearly uniform distribution across the sky, with a deficit only inside the shadow cone where sunlight cannot reach. The observed deficit (~0.45% in shadow versus ~1.4% expected) is consistent with this picture, with one critical caveat: no artificial satellites existed before October 1957, and all transients were observed prior to that date. The near-identical shadow rates in the full-plate and center-of-plate analyses (0.46% and 0.45%) confirm that the deficit is robust to edge artifact removal.</p>
+</div>
+<div id="p83" class="ltx_para">
+<p id="p83.1" class="ltx_p">This does not prove the transients are orbital reflective objects. It does, however, substantially constrain the hypothesis space. Any viable explanation must simultaneously account for two independent patterns: the temporal correlation with nuclear test dates and the spatial avoidance of Earth’s geometric shadow. Conventional astrophysical transients (such as variable stars or asteroids) would not be expected to show either pattern. Atmospheric phenomena or plate artifacts, while potentially time-correlated with testing activity, would not be expected to respect the shadow geometry of a specific orbital altitude. The sunlit-only nuclear-transient analysis (Section 4.2) further supports this constraint: the nuclear timing signal is concentrated among transients in illuminated sky positions, exactly as expected if the objects require sunlight to be visible.</p>
+</div>
+<div id="p84" class="ltx_para">
+<p id="p84.1" class="ltx_p"><span id="p84.1.1" class="ltx_text ltx_font_bold">5.4 Limitations</span></p>
+</div>
+<div id="p85" class="ltx_para">
+<p id="p85.1" class="ltx_p"><span id="p85.1.1" class="ltx_text ltx_font_bold">Single observatory.</span> All data come from Mount Palomar Observatory. Site-specific artifacts (local atmospheric effects, instrument-specific plate defects) cannot be ruled out without cross-validation at other observatories. The VASCO team has initiated such cross-validation using Hamburg Observatory APPLAUSE data, but those results are outside the scope of this replication.</p>
+</div>
+<div id="p86" class="ltx_para">
+<p id="p86.1" class="ltx_p"><span id="p86.1.1" class="ltx_text ltx_font_bold">Environmental controls.</span> Precipitation and cloud cover use real NOAA station data from San Diego, approximately 100 km from Palomar. Conditions at the observatory may differ from the coastal station, particularly for marine layer cloud cover. However, the nuclear-transient association persists with or without these controls, indicating the finding is not driven by environmental confounding.</p>
+</div>
+<div id="p87" class="ltx_para">
+<p id="p87.1" class="ltx_p"><span id="p87.1.1" class="ltx_text ltx_font_bold">Inherited transient catalog.</span> I validated the statistical analysis but not the underlying transient detection pipeline. Systematic errors in plate processing or source extraction would propagate into the current analysis. The VASCO team’s pipeline is described in Solano et al. (2022).</p>
+</div>
+<div id="p88" class="ltx_para">
+<p id="p88.1" class="ltx_p"><span id="p88.1.1" class="ltx_text ltx_font_bold">Association, not causation.</span> Statistical correlation does not establish a causal mechanism. The nuclear-transient association is robust to the tests performed here, but the physical pathway, if any, remains unexplained.</p>
+</div>
+<div id="p89" class="ltx_para">
+<p id="p89.1" class="ltx_p"><span id="p89.1.1" class="ltx_text ltx_font_bold">6. Conclusions</span></p>
+</div>
+<div id="p90" class="ltx_para">
+<p id="p90.1" class="ltx_p">Using independently written code and the original Bruehl and Villarroel (2025) dataset, I confirm the following:</p>
+</div>
+<div id="p91" class="ltx_para">
+<p id="p91.1" class="ltx_p">1. POSS-I transient detection rates are significantly elevated during nuclear test windows, matching the relative risk reported in the original paper.</p>
+</div>
+<div id="p92" class="ltx_para">
+<p id="p92.1" class="ltx_p">2. The association strengthens after controlling for environmental covariates. The concentration of the nuclear timing signal among sunlit transients independently supports the solar reflection interpretation as it may pertain to the nuclear-transient association.</p>
+</div>
+<div id="p93" class="ltx_para">
+<p id="p93.1" class="ltx_p">3. The correlation is driven by the specific nuclear test dates, not temporal autocorrelation.</p>
+</div>
+<div id="p94" class="ltx_para">
+<p id="p94.1" class="ltx_p">4. Transients within Earth’s geometric shadow at GEO altitude are significantly underrepresented in both the full catalog and the center-of-plate subset relative to theoretically expected rates, consistent with the findings of Villarroel et al. (2025).</p>
+</div>
+<div id="p95" class="ltx_para">
+<p id="p95.1" class="ltx_p">5. All transients predate artificial satellites.</p>
+</div>
+<div id="p96" class="ltx_para">
+<p id="p96.1" class="ltx_p">Taken together, these results fully replicate the central findings of both Bruehl and Villarroel (2025) and Villarroel et al. (2025). The statistical findings are robust. Their physical interpretation remains open.</p>
+</div>
+<div id="p97" class="ltx_para">
+<p id="p97.1" class="ltx_p"><span id="p97.1.1" class="ltx_text ltx_font_bold">Data Availability</span></p>
+</div>
+<div id="p98" class="ltx_para">
+<p id="p98.1" class="ltx_p">The analysis scripts and replication code are publicly available at: https://github.com/dca-doherty/VASCO-Replication.git</p>
+</div>
+<div id="p99" class="ltx_para">
+<p id="p99.1" class="ltx_p">The underlying transient dataset belongs to the original research team and should be requested from Dr. Stephen Bruehl (Vanderbilt University Medical Center) or Dr. Beatriz Villarroel (Stockholm University/Nordic Institute for Theoretical Physics).</p>
+</div>
+<div id="p100" class="ltx_para">
+<p id="p100.1" class="ltx_p"><span id="p100.1.1" class="ltx_text ltx_font_bold">Acknowledgments</span></p>
+</div>
+<div id="p101" class="ltx_para">
+<p id="p101.1" class="ltx_p">I thank Dr. Stephen Bruehl for sharing the transient dataset and Dr. Beatriz Villarroel for helpful correspondence regarding the VASCO catalog and shadow geometry methodology. This work was conducted independently using personal computing resources. I received no funding or institutional support for this analysis.</p>
+</div>
+<div id="p102" class="ltx_para">
+<p id="p102.1" class="ltx_p"><span id="p102.1.1" class="ltx_text ltx_font_bold">Independence Statement</span></p>
+</div>
+<div id="p103" class="ltx_para">
+<p id="p103.1" class="ltx_p">I have no institutional affiliation with any astronomy department, government agency, or organization involved in UAP research. I am a data analyst by profession, working in financial services. My involvement is limited to statistical replication. I had no role in data collection, transient detection, or the writing of the original papers.</p>
+</div>
+<div id="p104" class="ltx_para">
+<p id="p104.1" class="ltx_p"><span id="p104.1.1" class="ltx_text ltx_font_bold">References</span></p>
+</div>
+<div id="p105" class="ltx_para">
+<p id="p105.1" class="ltx_p">Bruehl, S. and Villarroel, B. (2025). Transients in the Palomar Observatory Sky Survey (POSS-I) may be associated with nuclear testing and reports of unidentified anomalous phenomena. Scientific Reports, 15, 34125.</p>
+</div>
+<div id="p106" class="ltx_para">
+<p id="p106.1" class="ltx_p">Meeus, J. (1991). Astronomical Algorithms. Willmann-Bell, Richmond, VA.</p>
+</div>
+<div id="p107" class="ltx_para">
+<p id="p107.1" class="ltx_p">Sinkkonen, J. (2025). Independent replication analysis of POSS-I transient correlations. https://github.com/euxoa/plates</p>
+</div>
+<div id="p108" class="ltx_para">
+<p id="p108.1" class="ltx_p">Solano, E., Villarroel, B., and Rodrigo, C. (2022). Discovering vanishing objects in POSS I red images using the Virtual Observatory. Monthly Notices of the Royal Astronomical Society, 515, 1380–1391.</p>
+</div>
+<div id="p109" class="ltx_para">
+<p id="p109.1" class="ltx_p">Villarroel, B., et al. (2019). The Vanishing and Appearing Sources during a Century of Observations Project. I. USNO Objects Missing in Modern Sky Surveys and Follow-up Observations of a “Missing Star.” The Astronomical Journal, 159, 8.</p>
+</div>
+<div id="p110" class="ltx_para">
+<p id="p110.1" class="ltx_p">Villarroel, B., Solano, E., Guergouri, H., et al. (2025). Aligned, Multiple-transient Events in the First Palomar Sky Survey. Publications of the Astronomical Society of the Pacific, 137, 104504.</p>
+</div>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2604.00056v1/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer><footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation">
+        </a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International">
+        </a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences">
+        </a>
+      </div>
+    </div>
+  </div>
+</footer><div id="fixed-buttons-container">
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>

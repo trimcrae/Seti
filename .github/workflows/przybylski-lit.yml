@@ -1,0 +1,64 @@
+name: przybylski-lit
+
+# Przybylski's star (HD 101065) literature survey: fetch primary sources on the
+# runner. The sandbox egress policy blocks arxiv / ADS / A&A / OUP / Springer /
+# Crossref / OpenAlex / SIMBAD; the runner has egress (CLAUDE.md acquisition
+# pattern). Verbatim sources are committed back to the dispatching branch.
+
+on:
+  workflow_dispatch:
+    inputs:
+      pass:
+        description: "Which fetch pass to run (1 or 2)"
+        required: false
+        default: "1"
+
+permissions:
+  contents: write
+
+jobs:
+  przybylski-lit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pdftotext
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Fetch literature (soft 70-min deadline, partials always kept)
+        run: |
+          if [ "${{ github.event.inputs.pass }}" = "2" ]; then
+            timeout -k 30 4200 python scripts/przybylski_lit2.py \
+              || echo "fetcher hit soft deadline or errored; committing partials"
+          else
+            timeout -k 30 4200 python scripts/przybylski_lit.py \
+              || echo "fetcher hit soft deadline or errored; committing partials"
+          fi
+          echo "=== files ==="
+          ls -la results/przybylski_lit/ | head -120
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/przybylski_lit/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "przybylski-lit: primary-source literature evidence for HD 101065 survey"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: przybylski-lit-outputs
+          path: results/przybylski_lit/
+          if-no-files-found: warn

@@ -106,6 +106,58 @@ def luminosity_lsun(m_ks: np.ndarray) -> np.ndarray:
 
 
 # --------------------------------------------------------------------------
+# Stage 0: probe — one minimal query, live, before spending a 5-hour pull
+# --------------------------------------------------------------------------
+def stage_probe(out: Path, **kw) -> dict:
+    """Run ONE minimal archive query and print what came back.
+
+    Cheap enough to iterate on (seconds, not the 110 minutes the full sample
+    stage burned before failing), and it answers the only questions that
+    matter after an acquisition failure: which transport works, what
+    ``COUNT(*)`` says, and whether a plain ``SELECT`` returns that many rows.
+    """
+    from .acquire import probe_gaia
+
+    res = probe_gaia(poe_min=kw.get("poe_min", 20.0),
+                     ruwe_max=kw.get("ruwe_max", 1.4),
+                     logg_min=kw.get("logg_min", 3.8),
+                     teff_lo=kw.get("teff_lo", 4000.0),
+                     teff_hi=kw.get("teff_hi", 7000.0),
+                     plx_lo=kw.get("probe_plx_lo", 2.0),
+                     plx_hi=kw.get("probe_plx_hi", 2.5))
+    _write_json(out / "probe.json", res)
+    print(json.dumps(_jsonable({k: v for k, v in res.items()
+                                if k not in ("first_rows", "columns")}), indent=2))
+    return res
+
+
+def _empty_sample_summary(out: Path) -> dict:
+    """The verdict for an empty parent sample — read off the ledger, not guessed.
+
+    ``NO_DATA_REACHED`` is now reserved for its literal meaning: no query
+    executed anywhere. A query that ran and matched nothing is
+    ``QUERY_RETURNED_ZERO_ROWS``, which is a statement about the cuts and is
+    actionable in a completely different way.
+    """
+    meta_path = out / "sample_meta.json"
+    acq = {}
+    verdict = "NO_DATA_REACHED"
+    note = ("no sample.parquet and no acquisition ledger: the sample stage did "
+            "not run, or its output never reached this job")
+    if meta_path.exists():
+        try:
+            meta = json.loads(meta_path.read_text())
+            acq = meta.get("acquisition", {}) or {}
+            verdict = meta.get("verdict") or acq.get("acquisition_verdict") \
+                or "NO_DATA_REACHED"
+            note = acq.get("note", note)
+        except Exception as exc:  # noqa: BLE001
+            note = f"sample_meta.json unreadable: {exc!r}"
+    return {"verdict": verdict, "funnel": {"n_sample": 0},
+            "acquisition": acq, "note": note}
+
+
+# --------------------------------------------------------------------------
 # Stage 1: sample
 # --------------------------------------------------------------------------
 def stage_sample(out: Path, synthetic: bool = False, n_synth: int = 4000,
@@ -137,26 +189,44 @@ def stage_sample(out: Path, synthetic: bool = False, n_synth: int = 4000,
                  "logg_min": kw.get("logg_min", 3.8),
                  "teff_lo": kw.get("teff_lo", 4000.0),
                  "teff_hi": kw.get("teff_hi", 7000.0)}
+        from .acquire import summarise_acquisition
+
         ck = out / "checkpoints"
+        ledger: list = []
         df = fetch_gspspec_sample(
             poe_min=where["poe_min"], ruwe_max=where["ruwe_max"],
             logg_min=where["logg_min"], teff_lo=where["teff_lo"],
             teff_hi=where["teff_hi"], plx_min_mas=kw.get("plx_min_mas", 1.0),
-            checkpoint_dir=ck)
+            checkpoint_dir=ck, ledger_out=ledger)
+        acq = summarise_acquisition(ledger)
         if df.empty:
+            # The three ways to have no stars are three different facts, and
+            # the archive tells us which. Reporting "NO_DATA_REACHED" for a
+            # query that ran fine and matched nothing — or for one that
+            # returned 703k rows and then hit a dead shell — is the bug this
+            # guard exists to prevent.
             _write_json(out / "sample_meta.json",
-                        {"mode": "archive", "n": 0, "verdict": "NO_DATA_REACHED"})
+                        {"mode": "archive", "n": 0,
+                         "verdict": acq["acquisition_verdict"],
+                         "cuts": where, "acquisition": acq})
+            print(f"[cenotaph] stage sample: 0 stars, "
+                  f"verdict {acq['acquisition_verdict']}")
             return df
         df = filter_gspspec_flags(df)
         df = apply_parallax_zero_point(df)
+        phot_acq = {}
         for kind in ("twomass", "allwise"):
+            pled: list = []
             try:
                 ph = fetch_external_photometry(
                     kind, where, plx_min_mas=kw.get("plx_min_mas", 1.0),
-                    checkpoint_dir=ck)
+                    checkpoint_dir=ck, ledger_out=pled)
                 df = df.merge(ph, on="source_id", how="left")
             except Exception as exc:  # noqa: BLE001
+                pled.append({"chunk": kind, "status": "QUERY_FAILED",
+                             "n_rows": 0, "error": repr(exc)})
                 print(f"[cenotaph] {kind} photometry unavailable: {exc!r}")
+            phot_acq[kind] = summarise_acquisition(pled)
         df = df.rename(columns={"phot_g_mean_mag": "g_mag",
                                 "phot_bp_mean_mag": "bp_mag",
                                 "phot_rp_mean_mag": "rp_mag",
@@ -170,9 +240,12 @@ def stage_sample(out: Path, synthetic: bool = False, n_synth: int = 4000,
                 df[f"{b}_mag_error"] = (2.5 / np.log(10.0)) / pd.to_numeric(
                     df[foe], errors="coerce")
         meta = {"mode": "archive", "n": int(len(df)),
+                "verdict": acq["acquisition_verdict"],
                 "parallax_zp_method": str(df.get("parallax_zp_method",
                                                  pd.Series(["unknown"])).iloc[0]),
-                "cuts": where}
+                "cuts": where,
+                "acquisition": acq,
+                "photometry_acquisition": phot_acq}
 
     df.to_parquet(out / "sample.parquet", index=False)
     _write_json(out / "sample_meta.json", meta)
@@ -584,8 +657,26 @@ def stage_reduce(df: pd.DataFrame, fits: pd.DataFrame, farir: pd.DataFrame,
         candidates[cols].to_csv(out / "candidates.csv", index=False)
         candidates.to_parquet(out / "candidates.parquet", index=False)
 
+    # The acquisition ledger travels into every summary, not just the failing
+    # ones. Row counts at each stage of the pull, the transport that served
+    # them, and any chunk that failed or was truncated are part of the result:
+    # a funnel quoted without its parent-sample completeness is unauditable.
+    acq_block = {}
+    meta_path = out / "sample_meta.json"
+    if meta_path.exists():
+        try:
+            _m = json.loads(meta_path.read_text())
+            acq_block = {"sample_verdict": _m.get("verdict"),
+                         "n_sample_rows": _m.get("n"),
+                         "cuts": _m.get("cuts"),
+                         "parent": _m.get("acquisition", {}),
+                         "photometry": _m.get("photometry_acquisition", {})}
+        except Exception as exc:  # noqa: BLE001
+            acq_block = {"error": f"sample_meta.json unreadable: {exc!r}"}
+
     summary = {
         "verdict": verdict,
+        "acquisition": acq_block,
         "funnel": funnel,
         "null_distribution": null,
         "sensitivity": sens,
@@ -627,15 +718,18 @@ def cenotaph_run(cfg=None, stage: str = "all", out_dir: str | Path | None = None
         p = out / f"{name}.parquet"
         return pd.read_parquet(p) if p.exists() else pd.DataFrame()
 
+    if stage == "probe":
+        return stage_probe(out, **kw)
+
     df = pd.DataFrame()
     if "sample" in stages:
         df = stage_sample(out, synthetic=synthetic, n_synth=n_synth, seed=seed, **kw)
     else:
         df = _load("sample")
     if df.empty:
-        summary = {"verdict": "NO_DATA_REACHED", "funnel": {"n_sample": 0},
-                   "note": "the parent-sample query returned nothing"}
+        summary = _empty_sample_summary(out)
         _write_json(out / "summary.json", summary)
+        print(json.dumps({"verdict": summary["verdict"]}, indent=2))
         return summary
 
     tw = _load("twins")
@@ -660,4 +754,5 @@ def cenotaph_run(cfg=None, stage: str = "all", out_dir: str | Path | None = None
 
 
 __all__ = ["STAGES", "cenotaph_run", "luminosity_lsun", "stage_farir",
-           "stage_grey", "stage_reduce", "stage_sample", "stage_twins"]
+           "stage_grey", "stage_probe", "stage_reduce", "stage_sample",
+           "stage_twins"]

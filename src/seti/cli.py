@@ -675,7 +675,11 @@ def _cmd_cenotaph(args, cfg):
                        t_assumed_k=args.t_assumed_k, max_fit=args.max_fit,
                        poe_min=args.poe_min, ruwe_max=args.ruwe_max,
                        logg_min=args.logg_min, teff_lo=args.teff_lo,
-                       teff_hi=args.teff_hi, plx_min_mas=args.plx_min_mas)
+                       teff_hi=args.teff_hi, plx_min_mas=args.plx_min_mas,
+                       probe_plx_lo=args.probe_plx_lo,
+                       probe_plx_hi=args.probe_plx_hi)
+    if args.stage == "probe":
+        return
     print(json.dumps({"verdict": res.get("verdict"),
                       "funnel": res.get("funnel", {})}, indent=2))
 
@@ -1275,8 +1279,11 @@ def main(argv=None):
                        help="cold-Dyson search: grey attenuation, no mid-IR "
                             "excess, far-IR recovery of the intercepted L")
     p.add_argument("--stage", default="all",
-                   choices=["all", "sample", "twins", "grey", "midir", "farir",
-                            "reduce"])
+                   choices=["all", "probe", "sample", "twins", "grey", "midir",
+                            "farir", "reduce"],
+                   help="'probe' runs ONE minimal live query and prints the "
+                        "transport status, COUNT(*) and the first rows — use "
+                        "it before spending a multi-hour pull")
     p.add_argument("--out", default=None)
     p.add_argument("--synthetic", action="store_true",
                    help="offline smoke run against a synthetic population")
@@ -1294,6 +1301,10 @@ def main(argv=None):
     p.add_argument("--teff-lo", type=float, default=4000.0)
     p.add_argument("--teff-hi", type=float, default=7000.0)
     p.add_argument("--plx-min-mas", type=float, default=1.0)
+    p.add_argument("--probe-plx-lo", type=float, default=2.0,
+                   help="probe stage: lower parallax edge of the test shell (mas)")
+    p.add_argument("--probe-plx-hi", type=float, default=2.5,
+                   help="probe stage: upper parallax edge of the test shell (mas)")
     p.set_defaults(func=_cmd_cenotaph)
 
     p = sub.add_parser("figures")

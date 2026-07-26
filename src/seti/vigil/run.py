@@ -70,10 +70,25 @@ def _field_tag(ra: float, dec: float, radius_deg: float) -> str:
 # --------------------------------------------------------------------------
 # Stage 0: the probe
 # --------------------------------------------------------------------------
-def vigil_probe(cfg=None, out_root: Path | None = None, ra: float = 266.0,
-                dec: float = 65.0) -> dict:
-    """One minimal call per route.  Cheap, and it decides the run's architecture."""
-    from .acquire import fetch_neowise_epochs, probe_untimely
+# The probe's field centre: the North Ecliptic Pole, where the NEOWISE scan
+# pattern piles up and the per-star visit count is highest.
+PROBE_RA, PROBE_DEC = 270.0, 66.56
+
+
+def vigil_probe(cfg=None, out_root: Path | None = None, ra: float = PROBE_RA,
+                dec: float = PROBE_DEC) -> dict:
+    """One minimal call per route.  Cheap, and it decides the run's architecture.
+
+    The NEOWISE leg deliberately does **not** probe a bare coordinate.  The first
+    probe run did, got 32 single exposures across the whole mission --- a marginal
+    source detected sporadically --- and binned to ZERO usable visits.  The code
+    was right to report zero rather than invent a light curve, but the probe was
+    then measuring an empty patch of sky rather than the transport.  So the probe
+    now *resolves a real star first*: it asks Gaia for a bright, well-behaved star
+    in the field and fetches NEOWISE at that star's PM-propagated position.  A
+    zero then means the transport is broken, which is what a probe is for.
+    """
+    from .acquire import fetch_gaia_field, fetch_neowise_epochs, probe_untimely
 
     root = _root(cfg, out_root)
     out: dict = {"stage": "probe"}
@@ -83,15 +98,42 @@ def vigil_probe(cfg=None, out_root: Path | None = None, ra: float = 266.0,
         out["untimely"] = {"reachable": False, "verdict": "PROBE_FAILED",
                            "error": repr(exc)}
 
-    # A NEOWISE ecliptic-pole position: maximum visit count, so if per-epoch
-    # photometry is reachable at all it is reachable here.
+    # Resolve a real, bright star in the field before asking for its photometry.
+    tgt = {"ra": ra, "dec": dec, "pmra": 0.0, "pmdec": 0.0, "resolved": False}
     try:
-        r = fetch_neowise_epochs(ra, dec, 0.0, 0.0, radius_arcsec=3.0)
+        g = fetch_gaia_field(ra, dec, radius_deg=0.3, g_max=12.0,
+                             plx_over_err_min=5.0, max_rows=200)
+        out["gaia"] = g.to_ledger()
+        if g.status == "OK" and g.data is not None and len(g.data):
+            d = g.data.sort_values("phot_g_mean_mag")
+            row = d.iloc[len(d) // 2]          # mid-range: bright but not saturated
+            tgt = {"ra": float(row["ra"]), "dec": float(row["dec"]),
+                   "pmra": float(row.get("pmra") or 0.0),
+                   "pmdec": float(row.get("pmdec") or 0.0),
+                   "g_mag": float(row.get("phot_g_mean_mag") or float("nan")),
+                   "source_id": str(row.get("source_id")), "resolved": True}
+    except Exception as exc:                           # noqa: BLE001
+        out["gaia"] = {"status": "QUERY_FAILED", "error": repr(exc)}
+    out["probe_target"] = tgt
+
+    try:
+        r = fetch_neowise_epochs(tgt["ra"], tgt["dec"], tgt["pmra"], tgt["pmdec"],
+                                 radius_arcsec=3.0)
         out["neowise"] = r.to_ledger()
         if r.data is not None and len(r.data):
             v = bin_visits(r.data["mjd"], r.data["w1mpro"], r.data["w1sigmpro"])
             out["neowise"]["n_visits_binned"] = len(v)
             out["neowise"]["err_scale_fitted"] = fit_error_scale(v)
+            out["neowise"]["exposures_per_visit_median"] = (
+                float(np.median([x.n_exp for x in v])) if v else 0.0)
+            if not v:
+                # Distinguish "the transport failed" from "this position has too
+                # few exposures per visit to calibrate the noise", which is a
+                # sensitivity statement about the source, not about the archive.
+                out["neowise"]["binning_note"] = (
+                    "rows returned but no visit reached the minimum exposure "
+                    "count; the source is too faint or too sparsely detected "
+                    "for the within-visit noise calibration")
     except Exception as exc:                           # noqa: BLE001
         out["neowise"] = {"status": "QUERY_FAILED", "error": repr(exc)}
 

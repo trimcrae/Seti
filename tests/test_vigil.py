@@ -659,3 +659,53 @@ def test_sweep_records_the_preselector_in_the_field_summary(tmp_path):
     assert s["untimely_preselect"]["applied"] is True
     assert s["n_stars_in_field"] == 2
     assert s["verdict"] == "SEARCHED"
+
+
+def test_untimely_schema_query_avoids_the_adql_LOWER_that_vizier_rejects():
+    """The first probe run got a bare ADQL syntax error from VizieR on LOWER()."""
+    import seti.vigil.acquire as acq
+
+    captured = {}
+
+    def fake_run_tap(url, adql, label, **kw):
+        captured[url] = adql
+        return QueryResult(label=label, service=url,
+                           status="QUERY_RETURNED_ZERO_ROWS", query=adql)
+
+    orig = acq.run_tap
+    acq.run_tap = fake_run_tap
+    try:
+        out = acq.probe_untimely()
+    finally:
+        acq.run_tap = orig
+
+    for q in captured.values():
+        assert "LOWER(" not in q.upper().replace("LOWER (", "LOWER("), q[:200]
+        assert "unTimely" in q            # the catalogue's own capitalisation
+        assert "UNTIMELY" in q            # and the upper-case spelling
+    # All three routes answered, none failed -> the "not found" is a real search.
+    assert out["verdict"] == "CATALOGUE_NOT_FOUND_ON_ANY_TAP_ROUTE"
+    assert out["n_routes_failed"] == 0
+
+
+def test_partial_route_failure_is_not_reported_as_a_clean_absence():
+    """One broken route means the search was incomplete, not that nothing is there."""
+    import seti.vigil.acquire as acq
+
+    calls = {"n": 0}
+
+    def fake_run_tap(url, adql, label, **kw):
+        calls["n"] += 1
+        status = "QUERY_FAILED" if calls["n"] == 1 else "QUERY_RETURNED_ZERO_ROWS"
+        return QueryResult(label=label, service=url, status=status, query=adql,
+                           error="synthetic")
+
+    orig = acq.run_tap
+    acq.run_tap = fake_run_tap
+    try:
+        out = acq.probe_untimely()
+    finally:
+        acq.run_tap = orig
+    assert out["reachable"] is False
+    assert out["verdict"] == "NOT_FOUND_BUT_SEARCH_INCOMPLETE"
+    assert out["n_routes_failed"] == 1

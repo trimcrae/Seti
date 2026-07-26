@@ -1,0 +1,281 @@
+name: ossuary
+
+# OSSUARY — warm dust around stars that cannot make it (docs/ossuary.md).
+#
+#   acquire (matrix: one shard per sample track) ──▶ analyze ──▶ (commit)
+#
+# Design copied from herdsman.yml, which encodes what previous runs cost:
+#  * checkpointing — every declination band writes its own parquet immediately and
+#    is skipped on re-run, so a killed shard loses minutes, not hours; every
+#    upload is `if: always()`.
+#  * sharding — the three sample tracks (spec / phot / halo) are an independent
+#    fail-fast:false matrix, so wall-clock is one track and a lost track can be
+#    re-run on its own with "re-run failed jobs".
+#  * artifact passthrough — the archive pull happens once; the sample travels to
+#    the analysis job as an artifact.
+#  * reduce_only_run_id — re-analyse a prior run's sample without refetching, which
+#    is the normal way to retune a threshold.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tracks:
+        description: "Sample tracks to pull (comma-separated: spec,phot,halo)"
+        required: false
+        default: "spec,phot,halo"
+      g_max:
+        description: "G magnitude ceiling on the sample (WISE confusion limit)"
+        required: false
+        default: "18.0"
+      limit_per_band:
+        description: "Row cap per 15-degree declination band"
+        required: false
+        default: "400000"
+      max_followup:
+        description: "Cap on candidates sent to per-object follow-up"
+        required: false
+        default: "200"
+      skip_followup:
+        description: "Set to 'true' to skip the reddening/neighbour/SIMBAD stage"
+        required: false
+        default: "false"
+      reduce_only_run_id:
+        description: "Skip the archive pull; re-analyse this prior run's sample"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  plan:
+    if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      tracks: ${{ steps.mk.outputs.tracks }}
+    steps:
+      - id: mk
+        run: |
+          python3 -c "import json,os; s=os.environ['T']; print('tracks=' + json.dumps([x.strip() for x in s.split(',') if x.strip()]))" >> "$GITHUB_OUTPUT"
+        env:
+          T: ${{ github.event.inputs.tracks || 'spec,phot,halo' }}
+
+  acquire:
+    needs: plan
+    if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    # The Gaia join is over gaia_source x astrophysical_parameters x AllWISE x
+    # 2MASS in 12 declination bands; be generous, the bands checkpoint anyway.
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix:
+        track: ${{ fromJSON(needs.plan.outputs.tracks) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Fetch track ${{ matrix.track }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from seti.config import load_config
+          from seti.ossuary import acquire as acq
+          from seti.ossuary.run import out_dir
+
+          cfg = load_config()
+          s = cfg.thresholds["ossuary"]["sample"]
+          track = os.environ["TRACK"]
+          d = out_dir(cfg) / "chunks"
+          df = acq.fetch_track(
+              track, d,
+              feh_max=s["feh_max"],
+              poe_min=s["parallax_over_error_min"],
+              ruwe_max=s["ruwe_max"],
+              g_max=float(os.environ.get("G_MAX") or s["g_max"]),
+              limit_per_band=int(os.environ.get("LIMIT") or 400000),
+          )
+          print(f"track {track}: {len(df)} rows")
+          PY
+        env:
+          TRACK: ${{ matrix.track }}
+          G_MAX: ${{ github.event.inputs.g_max || '18.0' }}
+          LIMIT: ${{ github.event.inputs.limit_per_band || '400000' }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ossuary-chunks-${{ matrix.track }}
+          path: results/ossuary/chunks/
+          if-no-files-found: warn
+
+  analyze:
+    needs: acquire
+    if: ${{ always() && github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ossuary-chunks-*
+          merge-multiple: true
+          path: results/ossuary/chunks/
+      - name: Assemble the sample from the checkpointed bands
+        run: |
+          python - <<'PY'
+          import glob
+          import pandas as pd
+          from seti.config import load_config
+          from seti.ossuary import acquire as acq
+          from seti.ossuary.run import out_dir
+
+          cfg = load_config()
+          d = out_dir(cfg)
+          files = sorted(glob.glob(str(d / "chunks" / "*.parquet")))
+          print(f"{len(files)} checkpointed declination bands")
+          if not files:
+              # Honest degradation: no archive data reached us at all.
+              import json
+              (d / "summary.json").write_text(json.dumps(
+                  {"verdict": "NO_DATA_REACHED", "n_input": 0,
+                   "note": "no declination band returned rows"}, indent=2))
+              raise SystemExit(0)
+          df = pd.concat([pd.read_parquet(f) for f in files], ignore_index=True)
+          df = df.drop_duplicates("source_id")
+          df = acq.harmonise(df)
+          df.to_parquet(d / "sample.parquet", index=False)
+          print(f"sample: {len(df)} stars; "
+                f"{int(df['feh'].notna().sum())} with a metallicity")
+          PY
+      - name: Analyze (kinematics, locus, excess, gauntlet, follow-up)
+        run: |
+          EXTRA=""
+          if [ "${{ github.event.inputs.skip_followup }}" = "true" ]; then
+            EXTRA="--no-followup"
+          fi
+          python -m seti.cli ossuary --stage analyze \
+            --max-followup ${{ github.event.inputs.max_followup || '200' }} $EXTRA
+          echo "=== summary ==="
+          cat results/ossuary/summary.json || true
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/ossuary \
+            ':(exclude)results/ossuary/sample.parquet' \
+            ':(exclude)results/ossuary/chunks'
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "ossuary: warm dust around metal-poor / halo-kinematic hosts (staged run)"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ossuary-final
+          path: |
+            results/ossuary/
+            !results/ossuary/chunks
+          if-no-files-found: warn
+
+  reduce-only:
+    if: ${{ github.event.inputs.reduce_only_run_id != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Fetch the prior run's checkpointed bands
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ossuary-chunks-*
+          merge-multiple: true
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/ossuary/chunks/
+      - name: Re-assemble and re-analyze
+        run: |
+          python - <<'PY'
+          import glob
+          import pandas as pd
+          from seti.config import load_config
+          from seti.ossuary import acquire as acq
+          from seti.ossuary.run import out_dir
+
+          cfg = load_config()
+          d = out_dir(cfg)
+          files = sorted(glob.glob(str(d / "chunks" / "*.parquet")))
+          print(f"{len(files)} checkpointed declination bands")
+          if files:
+              df = pd.concat([pd.read_parquet(f) for f in files], ignore_index=True)
+              acq.harmonise(df.drop_duplicates("source_id")).to_parquet(
+                  d / "sample.parquet", index=False)
+          PY
+          EXTRA=""
+          if [ "${{ github.event.inputs.skip_followup }}" = "true" ]; then
+            EXTRA="--no-followup"
+          fi
+          python -m seti.cli ossuary --stage analyze \
+            --max-followup ${{ github.event.inputs.max_followup || '200' }} $EXTRA
+          echo "=== summary ==="
+          cat results/ossuary/summary.json || true
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/ossuary \
+            ':(exclude)results/ossuary/sample.parquet' \
+            ':(exclude)results/ossuary/chunks'
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "ossuary: re-analysis of a prior run's sample"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ossuary-final
+          path: |
+            results/ossuary/
+            !results/ossuary/chunks
+          if-no-files-found: warn

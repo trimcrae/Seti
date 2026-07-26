@@ -64,12 +64,14 @@ def make_population(n: int = 4000, seed: int = 7, intrinsic_scatter: float = 0.0
                     bands: list[str] | None = None,
                     parallax_over_error: float = 50.0,
                     phot_err: float = 0.02,
-                    mh_mean: float = -0.10, mh_sigma: float = 0.25) -> pd.DataFrame:
+                    mh_mean: float = -0.10, mh_sigma: float = 0.25,
+                    teff_range: tuple[float, float] = (4600.0, 6400.0)
+                    ) -> pd.DataFrame:
     """A clean synthetic dwarf population with no injected signal."""
     rng = np.random.default_rng(seed)
     bands = bands or [b.name for b in BANDS]
 
-    teff = rng.uniform(4600.0, 6400.0, n)
+    teff = rng.uniform(teff_range[0], teff_range[1], n)
     logg = rng.normal(4.40, 0.12, n)
     mh = rng.normal(mh_mean, mh_sigma, n)
     alphafe = np.clip(-0.25 * mh + rng.normal(0.0, 0.03, n), -0.1, 0.5)
@@ -146,7 +148,9 @@ def inject_reddening(df: pd.DataFrame, idx, av: float,
 
 def add_subdwarfs(df: pd.DataFrame, n: int = 200, seed: int = 11,
                   mh_range: tuple[float, float] = (-1.6, -0.9),
-                  bands: list[str] | None = None) -> pd.DataFrame:
+                  bands: list[str] | None = None,
+                  teff_range: tuple[float, float] = (4600.0, 6400.0)
+                  ) -> pd.DataFrame:
     """Append a genuine metal-poor subdwarf population.
 
     These stars are *really* underluminous relative to solar-metallicity dwarfs
@@ -159,7 +163,8 @@ def add_subdwarfs(df: pd.DataFrame, n: int = 200, seed: int = 11,
     bands = bands or [b.name for b in BANDS]
     sub = make_population(n=n, seed=seed + 1, bands=bands,
                           mh_mean=float(np.mean(mh_range)),
-                          mh_sigma=(mh_range[1] - mh_range[0]) / 4.0)
+                          mh_sigma=(mh_range[1] - mh_range[0]) / 4.0,
+                          teff_range=teff_range)
     sub["mh"] = rng.uniform(mh_range[0], mh_range[1], n)
     sub["alphafe"] = np.clip(-0.25 * sub["mh"] + rng.normal(0.0, 0.03, n), -0.1, 0.5)
     m_ks = intrinsic_m_ks(sub["teff"], sub["logg"], sub["mh"], sub["alphafe"])

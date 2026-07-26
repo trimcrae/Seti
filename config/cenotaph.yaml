@@ -1,0 +1,82 @@
+# CENOTAPH thresholds. No magic numbers in code.
+#
+# The cold-Dyson search: grey attenuation + no mid-IR excess + far-IR recovery
+# of the intercepted luminosity. See docs/cenotaph.md.
+
+sample:
+  # Gaia DR3 GSP-Spec is the primary spectroscopic source: it supplies all four
+  # twin axes (Teff, logg, [M/H], [alpha/Fe]) from a single pipeline for ~5.6e6
+  # stars. A single pipeline is not a convenience -- the twin estimator cancels
+  # pipeline systematics differentially, and that cancellation is exact only
+  # within one pipeline.
+  parallax_over_error_min: 20.0
+  ruwe_max_query: 1.4          # loose in the query so the funnel stays visible
+  logg_min: 3.8                # dwarfs
+  teff_lo: 4000.0              # matches Contardo & Hogg 2024, the largest
+  teff_hi: 7000.0              # positive-excess search, for comparability
+  plx_min_mas: 1.0             # d < 1 kpc
+  gspspec_max_flag: 1          # first 13 flags <= 1 (Recio-Blanco et al. 2023)
+
+twins:
+  params: [teff, logg, mh, alphafe]
+  scales:                      # ~ internal per-star precision; a scaled
+    teff: 100.0                # distance of 1 means "indistinguishable stars"
+    logg: 0.15
+    mh: 0.10
+    alphafe: 0.05
+  n_twins: 50
+  n_twins_min: 20
+  max_scaled_dist: 1.5
+  param_edge_tol: 0.5          # lopsided twin cloud -> gradient bias
+  band: ks                     # A_Ks/A_V = 0.078: near extinction-immune
+
+greyfit:
+  sys_floor_mag: 0.02          # cross-survey zero-point ties
+  min_lever_arm: 0.30          # max(R_b)-min(R_b); below this, refuse to fit
+  max_abs_rho: 0.995           # |corr(g, A_V)| ceiling
+  max_reduced_chi2: 6.0        # SED not describable as grey + R_V=3.1 dust
+  z_min: 3.0                   # leg 1 threshold
+
+midir:
+  # Leg 2. Measured here from the photometry, never inherited from a published
+  # excess catalogue: Silverberg et al. 2018 find at most 7.9% of AllWISE-
+  # selected excesses are real disks, so inheriting one imports a ~92% error
+  # rate. An excess makes a star BRIGHTER than its twins, i.e. a negative
+  # residual after the fitted grey and reddening are removed.
+  excess_nsigma: 3.0
+  bands: [w3, w4]
+
+farir:
+  # Leg 3. The intercepted f*L must reappear. Catalogue limits are practical
+  # (cirrus-set away from the plane), used only to decide whether a
+  # non-detection carries information.
+  t_assumed_k: 50.0            # Cirkovic & Bradbury's contrast case
+  closure_tol_dex: 0.5         # |log10(f_IR/f_dim)| for "closes"
+  match_radius_arcsec:
+    akari_fis: 25.0
+    iras_psc: 40.0
+    iras_fsc: 30.0
+  band_limit_jy:               # practical 5-sigma point-source limits
+    iras60: 0.5
+    iras100: 1.0
+    akari65: 3.0
+    akari90: 0.55
+    akari140: 3.8
+    akari160: 7.5
+
+vet:
+  ruwe_max: 1.2
+  ipd_frac_multi_peak_max: 2.0
+  astrometric_excess_noise_sig_max: 2.0
+  bp_rp_excess_nsigma_max: 3.0     # Riello et al. 2021 C* blend test
+  variability_amp_max_mag: 0.05    # star caught in a low state
+  galactic_latitude_min_deg: 20.0  # cirrus + background-galaxy confusion
+  uv_excess_nsigma_max: 3.0        # hot companion biases Teff up
+  beam_neighbour_g_max: 18.0
+
+epochs:                        # proper-motion propagation targets (Julian year)
+  gaia: 2016.0
+  twomass: 1999.5
+  wise: 2010.5
+  akari: 2006.5
+  iras: 1983.5

@@ -56,6 +56,58 @@ FAR_IR_SOURCE_DENSITY_PER_SQDEG: dict[str, float] = {
 }
 
 
+# Measured on the runner from the full Gaia DR3 source table aggregated on a
+# HEALPix nside=16 grid (1.81e9 sources, 3072 pixels) -- see
+# results/farir_stats/gaia_density.json. Median sources per square degree in
+# each |b| band. This turns the Galactic-latitude cut from a rule of thumb into
+# a computed beam-crowding budget.
+GAIA_DENSITY_PER_DEG2_BY_ABSB: tuple[tuple[float, float, float], ...] = (
+    (0.0, 5.0, 101_852.8), (5.0, 10.0, 82_944.3), (10.0, 20.0, 30_298.7),
+    (20.0, 30.0, 12_663.6), (30.0, 45.0, 6_573.8), (45.0, 60.0, 3_938.8),
+    (60.0, 90.0, 3_118.8),
+)
+
+# SFD 100-um cirrus surface brightness, same source
+# (results/farir_stats/cirrus_levels.json). Cirrus, not detector noise, sets the
+# practical far-IR point-source limit, and it is a steep function of latitude:
+# 64.5 MJy/sr in the plane versus 2.3 MJy/sr at the pole.
+CIRRUS_I100_MJY_SR_BY_ABSB: tuple[tuple[float, float, float], ...] = (
+    (0.0, 5.0, 64.508), (5.0, 10.0, 21.883), (10.0, 20.0, 8.598),
+    (20.0, 30.0, 4.244), (30.0, 90.0, 2.5),
+)
+
+
+def _band_lookup(table, abs_b: float) -> float:
+    for lo, hi, v in table:
+        if lo <= abs_b < hi:
+            return v
+    return table[-1][2]
+
+
+def gaia_density_at(abs_b_deg: float) -> float:
+    """Measured Gaia DR3 source density (per deg²) at Galactic latitude ``|b|``."""
+    return _band_lookup(GAIA_DENSITY_PER_DEG2_BY_ABSB, abs(abs_b_deg))
+
+
+def cirrus_i100_at(abs_b_deg: float) -> float:
+    """Measured SFD 100-µm cirrus brightness (MJy/sr) at ``|b|``."""
+    return _band_lookup(CIRRUS_I100_MJY_SR_BY_ABSB, abs(abs_b_deg))
+
+
+def beam_crowding_expectation(abs_b_deg: float, radius_arcsec: float,
+                              bright_fraction: float = 1.0) -> float:
+    """Expected number of Gaia sources inside a far-IR beam at latitude ``|b|``.
+
+    At full Gaia depth a 25″ AKARI beam contains ~0.06 sources at the pole but
+    ~4.3 in the plane, which is why the far-IR leg is restricted to high
+    latitude and why the *measured* neighbour count (``count_beam_neighbours``,
+    run per surviving candidate at G < 18) is a funnel stage rather than a
+    footnote. ``bright_fraction`` scales to a magnitude-limited subset.
+    """
+    area_deg2 = math.pi * (radius_arcsec / 3600.0) ** 2
+    return gaia_density_at(abs_b_deg) * area_deg2 * bright_fraction
+
+
 def chance_match_probability(density_per_sqdeg: float, radius_arcsec: float) -> float:
     """Poisson probability of ≥1 unrelated catalogue source inside a radius."""
     area_sqdeg = math.pi * (radius_arcsec / 3600.0) ** 2

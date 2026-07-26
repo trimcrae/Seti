@@ -66,7 +66,7 @@ DEFAULT_SCALES: dict[str, float] = {
 
 DEFAULT_PARAMS: tuple[str, ...] = ("teff", "logg", "mh", "alphafe")
 
-MAX_SCALED_DIST: float = 2.0
+MAX_SCALED_DIST: float = 1.5
 """Twins farther than this in quadrature-scaled parameter space are not twins."""
 
 PARAM_EDGE_TOL: float = 0.5
@@ -134,7 +134,11 @@ def twin_statistics(df: pd.DataFrame, cfg: TwinConfig | None = None,
     ``dm_local``         the same, against a *local linear* fit in parameter
                          space (removes first-order edge bias)
     ``n_twins``          twins actually used
-    ``twin_scatter``     robust σ of the twin absolute magnitudes (mag)
+    ``twin_scatter``     robust σ about the *local linear* model (the true
+                         irreducible spread; this is the sensitivity floor)
+    ``twin_scatter_median`` robust σ about the twin median — larger, because it
+                         also contains the parameter gradient across the box
+    ``z_local``          the local-linear statistic in σ units
     ``param_edge``       twin set is lopsided in ≥1 parameter -> gradient bias
     ``twin_verdict``     ``ok`` | ``no_twins`` | ``bad_input``
     """
@@ -187,6 +191,7 @@ def twin_statistics(df: pd.DataFrame, cfg: TwinConfig | None = None,
     dm_local = np.full(n, np.nan)
     n_tw = np.zeros(n, dtype=int)
     scat = np.full(n, np.nan)
+    scat_med = np.full(n, np.nan)
     edge = np.zeros(n, dtype=bool)
     verdict = np.array(["bad_input"] * n, dtype=object)
 
@@ -216,23 +221,7 @@ def twin_statistics(df: pd.DataFrame, cfg: TwinConfig | None = None,
 
             mt = m_abs_u[n_row]
             med = float(np.median(mt))
-            mad = float(np.median(np.abs(mt - med)))
-            sigma_int = 1.4826 * mad
-            if not np.isfinite(sigma_int) or sigma_int <= 0:
-                sigma_int = float(np.std(mt)) or 0.05
-
             dm = float(m_abs[gi] - med)
-            # Target draws once from the intrinsic spread; the median itself is
-            # uncertain by sigma_int/sqrt(N); the distance modulus is grey; the
-            # photometry adds its own error.
-            err = math.sqrt(
-                sigma_int**2 * (1.0 + 1.0 / n_row.size)
-                + sig_mu[gi] ** 2
-                + mag_err[gi] ** 2
-            )
-            dm_twin[gi] = dm
-            dm_err[gi] = err
-            scat[gi] = sigma_int
 
             # Lopsidedness of the twin cloud: a star at the edge of the
             # parameter distribution has twins on one side only, so the median
@@ -244,12 +233,38 @@ def twin_statistics(df: pd.DataFrame, cfg: TwinConfig | None = None,
             # Local linear model M = a0 + sum_p a_p * (x_p - x_p,target).
             # Evaluated at the target, the intercept a0 is the twin prediction
             # with the first-order gradient bias removed.
+            resid = mt - med
             try:
                 design = np.column_stack([np.ones(n_row.size), dx])
                 coef, *_ = np.linalg.lstsq(design, mt, rcond=None)
                 dm_local[gi] = float(m_abs[gi] - coef[0])
+                resid = mt - design @ coef
             except np.linalg.LinAlgError:
                 dm_local[gi] = dm
+
+            # The irreducible spread is the scatter about the *local linear
+            # model*, not about the median. Scatter about the median also
+            # contains the parameter gradient across the twin box, which is a
+            # deterministic trend that the local fit removes; using it would
+            # inflate every error bar by the box width times dM/dTeff and throw
+            # away most of the channel's sensitivity.
+            sigma_int = 1.4826 * float(np.median(np.abs(resid - np.median(resid))))
+            if not np.isfinite(sigma_int) or sigma_int <= 0:
+                sigma_int = float(np.std(resid)) or 0.05
+            sigma_med = 1.4826 * float(np.median(np.abs(mt - med)))
+
+            # Target draws once from the intrinsic spread; the twin prediction
+            # itself is uncertain by sigma_int/sqrt(N); the distance modulus is
+            # grey; the photometry adds its own error.
+            err = math.sqrt(
+                sigma_int**2 * (1.0 + 1.0 / n_row.size)
+                + sig_mu[gi] ** 2
+                + mag_err[gi] ** 2
+            )
+            dm_twin[gi] = dm
+            dm_err[gi] = err
+            scat[gi] = sigma_int
+            scat_med[gi] = sigma_med
             verdict[gi] = "ok"
 
         if verbose and (start // cfg.chunk) % 20 == 0:
@@ -263,6 +278,9 @@ def twin_statistics(df: pd.DataFrame, cfg: TwinConfig | None = None,
     out["dm_local"] = dm_local
     out["n_twins"] = n_tw
     out["twin_scatter"] = scat
+    out["twin_scatter_median"] = scat_med
+    with np.errstate(divide="ignore", invalid="ignore"):
+        out["z_local"] = dm_local / dm_err
     out["param_edge"] = edge
     out["twin_verdict"] = verdict
     return out

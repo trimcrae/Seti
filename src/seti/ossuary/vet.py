@@ -22,11 +22,11 @@ attached**, not as follow-up.  The three legs:
 2. **Co-movement.**  Where CatWISE2020 measures its own proper motion, it must
    agree with Gaia's.  A zero-proper-motion infrared source sitting on a
    high-proper-motion star is a background object, full stop.
-3. **Chance-superposition prior.**  For each candidate, compute the sky density
-   of AllWISE sources at least as bright as the *excess itself* and turn it into
-   an a-priori probability of an interloper inside the registration radius.  A
-   candidate whose excess could be supplied by a run-of-the-mill background
-   source at p > 1e-3 is not evidence of anything.
+3. **Chance-superposition prior.**  For each candidate, compute the sky density of
+   sources able to supply the excess *in the band where the excess is claimed*,
+   and turn it into an a-priori probability of an interloper inside the
+   registration radius.  A candidate whose excess could be supplied by a
+   run-of-the-mill background source at p > 1e-3 is not evidence of anything.
 
 A note on Galactic latitude, stated honestly because it is easy to overclaim:
 the halo sample sits at high |b|, and that is a large real advantage against
@@ -44,6 +44,27 @@ import pandas as pd
 from ..discriminate.blend import _gmag_to_w1_approx, _vega_mag_to_flux
 
 MAS_PER_DEG = 3.6e6
+
+
+def _num(df: pd.DataFrame, *names, default=np.nan) -> pd.Series:
+    """Always a float Series aligned to ``df`` -- absent columns become NaN.
+
+    ``DataFrame.get`` returns ``None`` for a missing column, and ``pd.to_numeric``
+    then quietly collapses that to a scalar, which silently breaks every
+    downstream ``.fillna``.  Every gate must be able to run on a frame that is
+    missing a column (an archive that returned no 2MASS, a stage that produced no
+    dust fit) and report "untested" rather than crash or, worse, pass.
+    """
+    for n in names:
+        if n in df.columns:
+            return pd.to_numeric(df[n], errors="coerce")
+    return pd.Series(default, index=df.index, dtype=float)
+
+
+def _flag(df: pd.DataFrame, name: str, default: bool = False) -> pd.Series:
+    if name in df.columns:
+        return df[name].fillna(default).astype(bool)
+    return pd.Series(default, index=df.index, dtype=bool)
 
 
 # --------------------------------------------------------------------------
@@ -79,18 +100,18 @@ def wise_quality_gate(df: pd.DataFrame, cfg: dict,
         out[f"cc_flag_{b}_ok"] = cb_ok
         ok &= pb_ok & cb_ok
 
-    w1 = pd.to_numeric(df.get("W1mag"), errors="coerce")
+    w1 = _num(df, "W1mag")
     out["not_saturated"] = ~(w1 < q["w1_bright_limit_mag"]).fillna(False)
     ok &= out["not_saturated"]
 
-    mates = pd.to_numeric(df.get("number_of_mates"), errors="coerce")
-    neigh = pd.to_numeric(df.get("number_of_neighbours"), errors="coerce")
+    mates = _num(df, "number_of_mates")
+    neigh = _num(df, "number_of_neighbours")
     out["xmatch_unambiguous"] = (
         (mates.fillna(0) <= q["max_number_of_mates"])
         & (neigh.fillna(1) <= q["max_number_of_neighbours"]))
     ok &= out["xmatch_unambiguous"]
 
-    ext = pd.to_numeric(df.get("ext_flag"), errors="coerce")
+    ext = _num(df, "ext_flag")
     out["not_extended"] = (ext.fillna(0) <= 0)
     ok &= out["not_extended"]
 
@@ -128,17 +149,17 @@ def ledger_gate(df: pd.DataFrame, excess_cfg: dict, sample_cfg: dict) -> pd.Data
     out["w4_only"] = (w4 & ~star_band).fillna(False)
     out["star_band_excess"] = star_band.fillna(False)
 
-    w1w2 = pd.to_numeric(df.get("w1_w2_obs"), errors="coerce")
+    w1w2 = _num(df, "w1_w2_obs")
     if w1w2.isna().all() and {"W1mag", "W2mag"} <= set(df.columns):
         w1w2 = pd.to_numeric(df["W1mag"], errors="coerce") - \
             pd.to_numeric(df["W2mag"], errors="coerce")
     out["w1_w2_physical"] = (w1w2 >= excess_cfg["w1_w2_min"]).fillna(False)
     out["not_agn_wedge"] = (w1w2 <= excess_cfg["w1_w2_agn_max"]).fillna(False)
 
-    g = pd.to_numeric(df.get("phot_g_mean_mag", df.get("g_mag")), errors="coerce")
+    g = _num(df, "phot_g_mean_mag", "g_mag")
     out["not_confusion_limited"] = (g <= sample_cfg["g_max"]).fillna(False)
 
-    bprp = pd.to_numeric(df.get("bp_rp"), errors="coerce")
+    bprp = _num(df, "bp_rp")
     out["locus_anchored"] = ((bprp >= sample_cfg["bp_rp_min"])
                              & (bprp <= sample_cfg["bp_rp_max"])).fillna(False)
 
@@ -165,7 +186,7 @@ def companion_gate(df: pd.DataFrame, excess_cfg: dict) -> pd.DataFrame:
       temperature test.
     """
     out = pd.DataFrame(index=df.index)
-    t = pd.to_numeric(df.get("t_dust_k"), errors="coerce")
+    t = _num(df, "t_dust_k")
     out["t_dust_too_hot"] = (t > excess_cfg["t_dust_max_k"]).fillna(False)
     out["t_dust_too_cold"] = (t < excess_cfg["t_dust_min_k"]).fillna(False)
 
@@ -195,12 +216,12 @@ def registration_offset_arcsec(df: pd.DataFrame, astro_cfg: dict,
     rather than assert that it did.
     """
     dt = astro_cfg["wise_mean_epoch"] - astro_cfg["gaia_ref_epoch"]
-    ra = pd.to_numeric(df.get("ra"), errors="coerce").to_numpy(float)
-    dec = pd.to_numeric(df.get("dec"), errors="coerce").to_numpy(float)
-    ra_w = pd.to_numeric(df.get("ra_wise"), errors="coerce").to_numpy(float)
-    dec_w = pd.to_numeric(df.get("dec_wise"), errors="coerce").to_numpy(float)
-    pmra = pd.to_numeric(df.get("pmra"), errors="coerce").to_numpy(float)
-    pmdec = pd.to_numeric(df.get("pmdec"), errors="coerce").to_numpy(float)
+    ra = _num(df, "ra").to_numpy(float)
+    dec = _num(df, "dec").to_numpy(float)
+    ra_w = _num(df, "ra_wise").to_numpy(float)
+    dec_w = _num(df, "dec_wise").to_numpy(float)
+    pmra = _num(df, "pmra").to_numpy(float)
+    pmdec = _num(df, "pmdec").to_numpy(float)
 
     cosd = np.cos(np.radians(dec))
     obs_dra = (ra_w - ra) * MAS_PER_DEG * cosd
@@ -235,17 +256,17 @@ def astrometry_gate(df: pd.DataFrame, astro_cfg: dict) -> pd.DataFrame:
     out["registration_ok"] = (off <= astro_cfg["max_registration_arcsec"]).fillna(False)
 
     dt = abs(astro_cfg["wise_mean_epoch"] - astro_cfg["gaia_ref_epoch"])
-    mu = np.hypot(pd.to_numeric(df.get("pmra"), errors="coerce"),
-                  pd.to_numeric(df.get("pmdec"), errors="coerce"))
+    mu = np.hypot(_num(df, "pmra"),
+                  _num(df, "pmdec"))
     out["pm_leverage_mas"] = mu * dt
     out["pm_has_leverage"] = (mu >= astro_cfg["min_pm_for_leverage_mas_yr"]).fillna(False)
 
     sigma = pd.Series(np.nan, index=df.index)
     if {"pmra_wise", "pmdec_wise"} <= set(df.columns):
-        e_r = pd.to_numeric(df.get("e_pmra_wise"), errors="coerce").fillna(50.0)
-        e_d = pd.to_numeric(df.get("e_pmdec_wise"), errors="coerce").fillna(50.0)
-        g_r = pd.to_numeric(df.get("pmra_error"), errors="coerce").fillna(1.0)
-        g_d = pd.to_numeric(df.get("pmdec_error"), errors="coerce").fillna(1.0)
+        e_r = _num(df, "e_pmra_wise").fillna(50.0)
+        e_d = _num(df, "e_pmdec_wise").fillna(50.0)
+        g_r = _num(df, "pmra_error").fillna(1.0)
+        g_d = _num(df, "pmdec_error").fillna(1.0)
         d_r = (pd.to_numeric(df["pmra"], errors="coerce")
                - pd.to_numeric(df["pmra_wise"], errors="coerce")) / np.hypot(e_r, g_r)
         d_d = (pd.to_numeric(df["pmdec"], errors="coerce")
@@ -279,32 +300,59 @@ def allwise_source_density_per_arcsec2(w1_mag: np.ndarray, cfg: dict) -> np.ndar
 
 
 def chance_superposition_p(df: pd.DataFrame, cfg: dict) -> pd.Series:
-    """Probability an unrelated AllWISE source bright enough to supply the excess
-    falls inside the registration radius by chance.
+    """Probability an unrelated source able to supply the excess lands in the beam.
 
-    The relevant interloper is not "any WISE source" but one at least as bright as
-    the *excess flux itself* -- a fainter one cannot produce the signal.  Turning
-    the excess into an equivalent W1 magnitude and reading the source counts there
-    is what makes this a per-candidate number instead of a global hand-wave.
+    The relevant interloper is not "any WISE source" but one bright enough, **in
+    the band where the excess is actually claimed**, to produce it.  Evaluating
+    this always in W1 would be wrong for cool dust: a 300 K excess is far down the
+    Wien tail at 3.4 um, so its W1 flux is nearly zero and the naive W1-equivalent
+    magnitude is absurdly faint, implying a huge interloper density and rejecting
+    exactly the coolest -- most interesting -- detections.
+
+    So the excess is converted to a magnitude *in its own detection band*, then to
+    an equivalent W1 magnitude using the colour of the interloper population that
+    actually matters (dusty galaxies and Hot DOGs are red, W1-W3 ~ 3), and only
+    then read against the AllWISE counts.  Sources are catalogued by W1, so W1 is
+    the right axis for the counts law; the colour term is what makes the
+    conversion physical rather than dimensional.
     """
     from ..photometry import BANDS
 
-    exc_jy = pd.to_numeric(df.get("W1_excess_jy"), errors="coerce").to_numpy(float)
-    # If W1 carries no excess, use the largest positive short-band excess.
-    for b in ("W2", "W3"):
-        col = f"{b}_excess_jy"
-        if col in df.columns:
-            alt = pd.to_numeric(df[col], errors="coerce").to_numpy(float)
-            exc_jy = np.where(np.isfinite(exc_jy) & (exc_jy > 0), exc_jy, alt)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        w1_equiv = -2.5 * np.log10(np.where(exc_jy > 0, exc_jy, np.nan)
-                                   / BANDS["W1"]["zp_jy"])
+    e = cfg["extragalactic"]
+    # Interloper colours: how much brighter in W1 than in the detection band.
+    colour = {"W1": 0.0,
+              "W2": float(e.get("interloper_w1_minus_w2", 0.8)),
+              "W3": float(e.get("interloper_w1_minus_w3", 3.0)),
+              "W4": float(e.get("interloper_w1_minus_w4", 4.5))}
 
-    dens = allwise_source_density_per_arcsec2(w1_equiv, cfg)
-    r = float(cfg["astrometry"]["max_registration_arcsec"])
-    area = np.pi * r ** 2
-    p = 1.0 - np.exp(-dens * area)
-    return pd.Series(p, index=df.index)
+    # Only bands that actually *participate in the detection* may drive the prior.
+    # A 0.3-sigma positive noise fluctuation is a very faint equivalent source, and
+    # faint sources are common, so letting an insignificant band in would reject
+    # real detections on the strength of noise in a band nobody is claiming.
+    min_chi = float(e.get("min_chi_for_prior", 3.0))
+
+    n = len(df)
+    best_p = np.zeros(n)
+    any_band = np.zeros(n, bool)
+    for b in ("W1", "W2", "W3", "W4"):
+        col = f"{b}_excess_jy"
+        if col not in df.columns:
+            continue
+        exc = pd.to_numeric(df[col], errors="coerce").to_numpy(float)
+        chi = _num(df, f"chi_{b}").to_numpy(float)
+        pos = np.isfinite(exc) & (exc > 0) & np.isfinite(chi) & (chi >= min_chi)
+        if not pos.any():
+            continue
+        with np.errstate(divide="ignore", invalid="ignore"):
+            mag_b = -2.5 * np.log10(np.where(pos, exc, np.nan) / BANDS[b]["zp_jy"])
+        w1_equiv = mag_b + colour[b]
+        dens = allwise_source_density_per_arcsec2(w1_equiv, cfg)
+        r = float(cfg["astrometry"]["max_registration_arcsec"])
+        p_b = 1.0 - np.exp(-dens * np.pi * r ** 2)
+        # The candidate is only as safe as its most easily faked band.
+        best_p = np.where(pos & np.isfinite(p_b) & (p_b > best_p), p_b, best_p)
+        any_band |= pos
+    return pd.Series(np.where(any_band, best_p, np.nan), index=df.index)
 
 
 def extragalactic_gate(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
@@ -314,7 +362,7 @@ def extragalactic_gate(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     out["chance_superposition_p"] = p
     out["chance_superposition_ok"] = (
         p <= cfg["extragalactic"]["max_chance_superposition_p"]).fillna(False)
-    ext = pd.to_numeric(df.get("ext_flag"), errors="coerce")
+    ext = _num(df, "ext_flag")
     out["not_wise_extended"] = (ext.fillna(0) <= 0)
     out["extragalactic_ok"] = out["chance_superposition_ok"] & out["not_wise_extended"]
     return out
@@ -334,8 +382,8 @@ def cirrus_gate(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     """
     c = cfg["cirrus"]
     out = pd.DataFrame(index=df.index)
-    ebv = pd.to_numeric(df.get("ebv_sfd"), errors="coerce")
-    b = pd.to_numeric(df.get("b"), errors="coerce")
+    ebv = _num(df, "ebv_sfd")
+    b = _num(df, "b")
     if b.isna().all() and "gal_b" in df.columns:
         b = pd.to_numeric(df["gal_b"], errors="coerce")
 
@@ -426,8 +474,8 @@ def globular_cluster_veto(df: pd.DataFrame, cfg: dict,
         clusters = pd.DataFrame(_BRIGHT_GLOBULARS,
                                 columns=["name", "ra", "dec", "rh_arcmin"])
     out = pd.DataFrame(index=df.index)
-    ra = pd.to_numeric(df.get("ra"), errors="coerce").to_numpy(float)
-    dec = pd.to_numeric(df.get("dec"), errors="coerce").to_numpy(float)
+    ra = _num(df, "ra").to_numpy(float)
+    dec = _num(df, "dec").to_numpy(float)
 
     nearest = np.full(len(df), np.inf)
     which = np.full(len(df), "", dtype=object)
@@ -464,7 +512,7 @@ def impostor_gate(df: pd.DataFrame, sample_cfg: dict) -> pd.DataFrame:
       infrared excess.  The T_eff ceiling and the RUWE cut both bear on these.
     """
     out = pd.DataFrame(index=df.index)
-    teff = pd.to_numeric(df.get("teff"), errors="coerce")
+    teff = _num(df, "teff")
     if teff.isna().all():
         for alt in ("teff_gspspec", "teff_gspphot"):
             if alt in df.columns:
@@ -479,8 +527,8 @@ def impostor_gate(df: pd.DataFrame, sample_cfg: dict) -> pd.DataFrame:
 
     # Blue straggler locus: brighter than M_G ~ 4.5 while bluer than BP-RP ~ 0.65
     # is above and blueward of the metal-poor main-sequence turnoff.
-    mg = pd.to_numeric(df.get("M_G"), errors="coerce")
-    bprp = pd.to_numeric(df.get("bp_rp"), errors="coerce")
+    mg = _num(df, "M_G")
+    bprp = _num(df, "bp_rp")
     out["blue_straggler_risk"] = ((mg < 4.5) & (bprp < 0.65)).fillna(False)
 
     otype = df.get("simbad_otype", pd.Series("", index=df.index)).astype(str).str.lower()

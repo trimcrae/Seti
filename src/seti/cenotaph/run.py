@@ -38,11 +38,10 @@ from .budget import (
     FAR_IR_BANDS,
     close_budget,
     coverage_table,
-    equilibrium_temperature,
     radius_for_temperature,
     wise_temperature_ceilings,
 )
-from .extinction import BANDS, EXCESS_BANDS, FIT_BANDS, a_over_av
+from .extinction import EXCESS_BANDS, FIT_BANDS, a_over_av
 from .greyfit import fit_grey_reddening, minimum_detectable_f
 from .twins import TwinConfig, twin_colour_medians, twin_statistics
 from .vet import (
@@ -267,11 +266,18 @@ def stage_grey(df: pd.DataFrame, out: Path, cfg_twin: TwinConfig | None = None,
         n_tw = max(int(row.get("n_twins", 50) or 50), 1)
         sig_mu_only = (5.0 / np.log(10.0)) * float(
             row.get("parallax_error", 0.0)) / max(float(row.get("parallax", 1.0)), 1e-9)
-        diag = np.hypot(sig, scat * np.sqrt(1.0 + 1.0 / n_tw))
+        # The twin scatter enters *every* band identically, because every band's
+        # residual is built from the same reference-band deficit dm_ref. It is
+        # therefore common-mode, exactly like the distance modulus, and belongs
+        # in the rank-1 correlated term. Putting it on the diagonal instead
+        # would treat one shared draw as N independent ones and inflate every
+        # significance in the channel by ~sqrt(N_bands).
+        common = float(np.hypot(sig_mu_only, scat * np.sqrt(1.0 + 1.0 / n_tw)))
+        diag = np.asarray(sig, dtype=float)
         av_prior = None
         if np.isfinite(row.get("azero_gspphot", np.nan)):
             av_prior = (float(row["azero_gspphot"]), 0.15)
-        fit = fit_grey_reddening(names, dm, diag, dist_modulus_sigma=sig_mu_only,
+        fit = fit_grey_reddening(names, dm, diag, dist_modulus_sigma=common,
                                  av_prior=av_prior)
         rec = {"source_id": row["source_id"], "row": int(i),
                "grey_mag": fit.grey_mag, "grey_err": fit.grey_err,
@@ -487,7 +493,6 @@ def stage_reduce(df: pd.DataFrame, fits: pd.DataFrame, farir: pd.DataFrame,
                  "the twin scatter plus the parallax term"),
     }
 
-    n_far_ir_candidates = int(funnel.get("n_far_ir_context", 0))
     confusion = {
         "expected_chance_akari_matches": expected_false_matches(
             funnel["n_fitted"], FAR_IR_SOURCE_DENSITY_PER_SQDEG["akari"], 25.0),

@@ -197,6 +197,9 @@ def analyze(df: pd.DataFrame, cfg: Config, *, anchor: str | None = None,
                            .value_counts().items() if k2},
         "n_candidates": int(vetted["candidate"].sum()),
         "cirrus_correlation": cirrus,
+        "chance_alignment_budget": vetting.expected_chance_alignments(
+            int(len(vetted)), c),
+        "wien_peak_k": {b: exc.wien_peak_k(b) for b in ("W1", "W2", "W3", "W4")},
         "locus": {b: loc.to_dict() for b, loc in usable.items()},
     }
     return vetted, summary
@@ -334,9 +337,19 @@ def _report_md(s: dict) -> str:
         L += [f"* `{k}`: {v:,}" for k, v in s["population_counts"].items()]
         L.append("")
     if s.get("funnel"):
+        f = s["funnel"]
+        removed = f.get("removed_by_stage", {})
         L += ["## Contamination funnel (excess-flagged sources only)", "",
-              "| stage | surviving |", "|---|---|"]
-        L += [f"| {k} | {v:,} |" for k, v in s["funnel"].items()]
+              "Silverberg et al. 2018 measured a ~92% false-positive rate for "
+              "AllWISE-selected infrared excesses, so the funnel reports what "
+              "each stage removed, not only the running total.", "",
+              "| stage | surviving | removed here |", "|---|---|---|"]
+        for k, v in f.items():
+            if not isinstance(v, int):
+                continue
+            name = k[len("after_"):] if k.startswith("after_") else k
+            r = removed.get(name)
+            L.append(f"| {k} | {v:,} | {r if r is not None else ''} |")
         L.append("")
     if s.get("reject_reasons"):
         L += ["### Rejections by first failing gate", ""]
@@ -349,6 +362,18 @@ def _report_md(s: dict) -> str:
               f"between flag rate and E(B-V) over {cc['n']:,} stars.",
               f"Flag rate by E(B-V) quartile: {cc.get('flag_rate_by_ebv_quartile')}",
               ""]
+    cab = s.get("chance_alignment_budget", {})
+    if cab:
+        L += ["### Expected chance extragalactic alignments", "",
+              f"Over {cab['n_stars']:,} stars, within the "
+              f"{cab['registration_radius_arcsec']:.1f}\" registration radius:",
+              f"* Hot DOGs (9e-6 arcsec^-2): **{cab['expected_hot_dogs']:.3g}** expected",
+              f"* any AllWISE source bright enough to supply the excess: "
+              f"**{cab['expected_allwise_interlopers']:.3g}** expected",
+              f"* the same, in the full 6.5\" beam without the registration cut: "
+              f"{cab['expected_allwise_interlopers_in_full_beam']:.3g} "
+              f"(the cut buys a factor "
+              f"{cab.get('leverage_of_registration_cut', float('nan')):.0f})", ""]
     L += ["## Candidates", "",
           f"* excess-flagged: {s.get('n_excess_flagged', 0):,}",
           f"* surviving the full gauntlet: **{s.get('n_candidates', 0):,}**"]

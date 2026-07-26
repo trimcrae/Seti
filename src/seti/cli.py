@@ -238,6 +238,13 @@ def _cmd_midden(args, cfg):
                batch_size=args.batch_size)
 
 
+def _cmd_tailings(args, cfg):
+    from .tailings.run import tailings_run
+
+    tailings_run(cfg, stage=args.stage, surveys=args.surveys,
+                 max_rows=args.max_rows)
+
+
 def _cmd_herdsman(args, cfg):
     from .herdsman.run import herdsman_run
 
@@ -278,6 +285,17 @@ def _cmd_iso_backtrack(args, cfg):
     iso_run(cfg, t_max_myr=args.t_max_myr, n_mc=args.n_mc,
             nearby_pc=args.nearby_pc, d_close_pc=args.d_close_pc,
             scan_nearby=not args.no_scan)
+
+
+def _cmd_derelict(args, cfg):
+    from .derelict.run import derelict_run
+
+    summary = derelict_run(cfg, stage=args.stage, limit=args.limit,
+                           offline_input=args.offline_input, max_vet=args.max_vet,
+                           skip_control=args.skip_control)
+    print(json.dumps({"verdict": summary.get("verdict"),
+                      "funnel": summary.get("funnel"),
+                      "degradation": summary.get("degradation")}, indent=2))
 
 
 def _cmd_panspermia_regime(args, cfg):
@@ -537,6 +555,28 @@ def _cmd_laser_numbers(args, cfg):
     print(f"wrote {out}")
 
 
+def _cmd_ossuary(args, cfg):
+    from .ossuary.run import run
+
+    run(cfg, stage=args.stage, input_path=args.input, g_max=args.g_max,
+        limit_per_band=args.limit_per_band,
+        do_followup=not args.no_followup, max_followup=args.max_followup)
+
+
+def _cmd_cenotaph(args, cfg):
+    from .cenotaph.run import cenotaph_run
+
+    res = cenotaph_run(cfg, stage=args.stage, out_dir=args.out,
+                       synthetic=args.synthetic, n_synth=args.n_synth,
+                       seed=args.seed, z_min=args.z_min,
+                       t_assumed_k=args.t_assumed_k, max_fit=args.max_fit,
+                       poe_min=args.poe_min, ruwe_max=args.ruwe_max,
+                       logg_min=args.logg_min, teff_lo=args.teff_lo,
+                       teff_hi=args.teff_hi, plx_min_mas=args.plx_min_mas)
+    print(json.dumps({"verdict": res.get("verdict"),
+                      "funnel": res.get("funnel", {})}, indent=2))
+
+
 def _cmd_figures(args, cfg):
     from .figures import render_all
 
@@ -746,6 +786,24 @@ def main(argv=None):
                    help="shuffle cell size (pc)")
     p.set_defaults(func=_cmd_herdsman)
 
+    p = sub.add_parser("tailings",
+                       help="runner: sparse chemical-anomaly search — one or "
+                            "two elements extreme with the rest normal, in "
+                            "GALAH/APOGEE cool dwarfs where the convective "
+                            "envelope forbids natural single-element "
+                            "peculiarity (docs/tailings.md)")
+    p.add_argument("--stage",
+                   choices=("acquire", "manifold", "sparse", "vet", "twins", "all"),
+                   default="all",
+                   help="stage to run (each checkpoints; 'all' resumes from "
+                        "whatever checkpoints exist, so a re-reduction never "
+                        "costs an archive pull)")
+    p.add_argument("--surveys", default="GALAH,APOGEE",
+                   help="comma-separated surveys to search")
+    p.add_argument("--max-rows", type=int, default=400_000,
+                   help="per-survey row cap for the catalogue pull")
+    p.set_defaults(func=_cmd_tailings)
+
     p = sub.add_parser("herdsman-fetch",
                        help="staged runner 1/3: acquire + preprocess the Gaia "
                             "6D detection table, save results/herdsman/"
@@ -850,6 +908,22 @@ def main(argv=None):
                    help="skip the nearby-star context scan (offline / dynamics only)")
     p.set_defaults(func=_cmd_iso_backtrack)
 
+    p = sub.add_parser("derelict",
+                       help="runner: thin-film / high area-to-mass debris via the "
+                            "radial non-gravitational acceleration JPL already "
+                            "fits (A1 -> beta -> area-to-mass -> R statistic)")
+    p.add_argument("--stage", default="all", choices=["all", "probe"],
+                   help="'probe' only discovers the SBDB schema and exits")
+    p.add_argument("--limit", type=int, default=None,
+                   help="cap rows per SBDB query (debugging)")
+    p.add_argument("--offline-input", default=None,
+                   help="CSV of pre-fetched SBDB rows; skips all network access")
+    p.add_argument("--max-vet", type=int, default=60,
+                   help="how many survivors get a per-object sbdb.api detail fetch")
+    p.add_argument("--skip-control", action="store_true",
+                   help="skip the comet control sample")
+    p.set_defaults(func=_cmd_derelict)
+
     p = sub.add_parser("panspermia-regime",
                        help="offline: classify K2-18 encounters by transfer mode "
                             "(capture vs interception) across reservoir radii")
@@ -916,6 +990,51 @@ def main(argv=None):
 
     p = sub.add_parser("laser-numbers")
     p.set_defaults(func=_cmd_laser_numbers)
+
+    p = sub.add_parser("ossuary",
+                       help="runner: OSSUARY -- warm dust around stars that "
+                            "cannot make it (metal-poor / halo-kinematic hosts; "
+                            "docs/ossuary.md)")
+    p.add_argument("--stage", choices=("acquire", "analyze", "followup", "all"),
+                   default="all",
+                   help="'acquire' pulls the Gaia x AllWISE x 2MASS sample "
+                        "(runner only); 'analyze' is offline given the sample")
+    p.add_argument("--input", default=None,
+                   help="sample parquet (default results/ossuary/sample.parquet)")
+    p.add_argument("--g-max", type=float, default=None,
+                   help="override the G magnitude ceiling on the sample")
+    p.add_argument("--limit-per-band", type=int, default=400_000,
+                   help="row cap per declination band in the archive pull")
+    p.add_argument("--no-followup", action="store_true",
+                   help="skip the per-candidate reddening/neighbour/SIMBAD stage")
+    p.add_argument("--max-followup", type=int, default=200,
+                   help="cap on the number of candidates sent to follow-up")
+    p.set_defaults(func=_cmd_ossuary)
+
+    p = sub.add_parser("cenotaph",
+                       help="cold-Dyson search: grey attenuation, no mid-IR "
+                            "excess, far-IR recovery of the intercepted L")
+    p.add_argument("--stage", default="all",
+                   choices=["all", "sample", "twins", "grey", "midir", "farir",
+                            "reduce"])
+    p.add_argument("--out", default=None)
+    p.add_argument("--synthetic", action="store_true",
+                   help="offline smoke run against a synthetic population")
+    p.add_argument("--n-synth", type=int, default=4000)
+    p.add_argument("--seed", type=int, default=7)
+    p.add_argument("--z-min", type=float, default=3.0,
+                   help="leg-1 grey significance threshold")
+    p.add_argument("--t-assumed-k", type=float, default=50.0,
+                   help="assumed re-radiation temperature for the closure test")
+    p.add_argument("--max-fit", type=int, default=None,
+                   help="cap the number of grey fits (tail + random control)")
+    p.add_argument("--poe-min", type=float, default=20.0)
+    p.add_argument("--ruwe-max", type=float, default=1.4)
+    p.add_argument("--logg-min", type=float, default=3.8)
+    p.add_argument("--teff-lo", type=float, default=4000.0)
+    p.add_argument("--teff-hi", type=float, default=7000.0)
+    p.add_argument("--plx-min-mas", type=float, default=1.0)
+    p.set_defaults(func=_cmd_cenotaph)
 
     p = sub.add_parser("figures")
     p.set_defaults(func=_cmd_figures)

@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="robots" content="nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+    <title>SBDB Query API</title>
+    <meta name="description" content="SBDB Query APIVersion: 1.0 (2021 August)change logThe SBDB (Small-Body DataBase) query API provides a method of requesting datafor a set of asteroids and/or ...">
+  
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="canonical" href="https://ssd-api.jpl.nasa.gov/doc/sbdb_query.html">
+
+    <script type="text/javascript" src="/js/vendor/modernizr.js"></script>
+    <script type="text/javascript" src="/js/vendor/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/vendor/fastclick.js"></script>
+    <script type="text/javascript" src="/js/vendor/foundation.min.js"></script>
+
+    <link rel="stylesheet" href="/css/github-markdown.css">
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+  </head>
+
+  <body>
+
+
+
+
+
+    <!-- force this div to stay at the top of the page to ensure we can always see the menu -->
+    <div class="sticky">
+      <!-- alert when Javascript is disabled -->
+      <noscript>
+        <div data-alert class="alert-box alert">
+          <a href="#" class="close">&times;</a>This site requires JavaScript for most of its functionality.
+          See <a href="http://www.enable-javascript.com">these instructions</a> for enabling JavaScript in your web browser.
+        </div>
+      </noscript>
+      <!-- Top Nav-Bar (begin) -->
+      <nav class="top-bar" role="navigation" data-topbar>
+        <!-- here is the left-side site-logo-go-to-our-home-page button/label -->
+        <ul class="title-area">
+          <li class="name">
+          
+            <div class="logo-container">
+              <div class="nasa-logo">
+                <a id="logo_link_nasa" href="https://www.nasa.gov/">
+                  <img src="/images/transparent.gif" class="hidden-image" alt="NASA Home" />
+                </a>
+                <a id="logo_link_jpl" href="http://www.jpl.nasa.gov/">
+                  <img src="/images/transparent.gif" class="hidden-image" alt="JPL Home" />
+                </a>
+                <a id="logo_link_caltech" href="http://www.caltech.edu/">
+                  <img src="/images/transparent.gif" class="hidden-image" alt="Caltech Home" />
+                </a>
+              </div>
+            </div>
+          </li>
+          
+          <li class="toggle-topbar menu-icon"><a href="/"><span><img id="gear_logo" src="/images/logo_gears.png" alt="Home" /></span></a></li>
+        </ul>
+        <!-- start of main navigation buttons -->
+        <section class="top-bar-section">
+          <ul class="right">
+            <li><a href="/"><div id="api_logo"><img src="/images/api_logo.png" alt="Home" /></div></a></li>
+            <li class="divider"></li>
+            <li><a href="/about/">About</a></li>
+            <li class="divider"></li>
+            <li><a href="/doc/">Documents</a></li>
+          </ul>
+        </section>
+      </nav>
+      <!-- Top Nav-Bar (end) -->
+
+
+
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+<!-- page content: begin -->
+
+
+<div class="markdown-body">
+<div class="row">
+  <div class="small-12 columns">
+
+
+
+
+
+
+<h1 id="sbdb-query-api">SBDB Query API</h1>
+<p><strong>Version: 1.0</strong> (2021 August)<br /><a href="#change_log">change log</a></p>
+
+<p>The SBDB (Small-Body DataBase) query API provides a method of requesting data
+for a set of asteroids and/or comets matching specified constraints.</p>
+
+<p>For more information about JPL’s SBDB, see <a href="https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html">this page</a>
+from the <a href="https://ssd.jpl.nasa.gov/">SSD website</a>.</p>
+
+<p><a id="request"></a></p>
+<h2>HTTP Request</h2>
+
+<p><span class="label">GET</span>
+<code>https://ssd-api.jpl.nasa.gov/sbdb_query.api</code></p>
+
+<h3 id="example-queries">Example Queries</h3>
+
+<ul>
+  <li>Get orbital elements for all known Atira-class NEAs:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=full_name,epoch,e,a,q,i,om,w&amp;sb-class=IEO</code></li>
+    </ul>
+  </li>
+  <li>Determine the number of known numbered periodic comets, not including fragments:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">https://ssd-api.jpl.nasa.gov/sbdb_query.api?sb-ns=n&amp;sb-kind=c&amp;sb-xfrag=1</code></li>
+    </ul>
+  </li>
+</ul>
+
+<p>ADD EXAMPLES HERE</p>
+
+<h2 id="query-parameters">Query Parameters</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th style="text-align: center">Type</th>
+      <th style="text-align: center">Default</th>
+      <th style="text-align: center">Allowable Values</th>
+      <th style="text-align: center">Mode</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>info</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: center">none</td>
+      <td style="text-align: center"><code class="language-plaintext highlighter-rouge">count</code>,<code class="language-plaintext highlighter-rouge">field</code>,<code class="language-plaintext highlighter-rouge">all</code></td>
+      <td style="text-align: center"><code class="language-plaintext highlighter-rouge">I</code></td>
+      <td>When <code class="language-plaintext highlighter-rouge">count</code> is selected, return the number of objects available in the SBDB. When <code class="language-plaintext highlighter-rouge">field</code> is selected, return all available output fields. If <code class="language-plaintext highlighter-rouge">all</code> is selected, output <code class="language-plaintext highlighter-rouge">count</code> and <code class="language-plaintext highlighter-rouge">field</code> results. See “mode” <code class="language-plaintext highlighter-rouge">I</code> section below for details.</td>
+    </tr>
+    <tr>
+      <td>fields</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: center">none</td>
+      <td style="text-align: center"><em>see description</em></td>
+      <td style="text-align: center"><code class="language-plaintext highlighter-rouge">Q</code></td>
+      <td>List of fields to be output. If no fields are specified, only the count (number of records matching found) is output. Field names are <strong>case-sensitive</strong>.</td>
+    </tr>
+    <tr>
+      <td>sort</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: center">none</td>
+      <td style="text-align: center"><em>see description</em></td>
+      <td style="text-align: center"><code class="language-plaintext highlighter-rouge">Q</code></td>
+      <td>Sort results by the specified field(s). Up to three fields can be specified, separated by commas <code class="language-plaintext highlighter-rouge">,</code> and descending direction can be specified by prefixing the field name with minus <code class="language-plaintext highlighter-rouge">-</code> (ascending is the default).</td>
+    </tr>
+    <tr>
+      <td>limit</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: center">none</td>
+      <td style="text-align: center"><em>see description</em></td>
+      <td style="text-align: center"><code class="language-plaintext highlighter-rouge">Q</code></td>
+      <td>Limit data to the first N results (where N is the specified number and must be an integer value greater than zero).</td>
+    </tr>
+    <tr>
+      <td>limit-from</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: center">none</td>
+      <td style="text-align: center"><em>see description</em></td>
+      <td style="text-align: center"><code class="language-plaintext highlighter-rouge">Q</code></td>
+      <td>Limit data starting from the specified record (where zero is the first record). Useful for “paging” through large datasets. Requires <code class="language-plaintext highlighter-rouge">limit</code>. <strong>CAUTION:</strong> it is possible for the underlying database to change between API calls.</td>
+    </tr>
+    <tr>
+      <td>full-prec</td>
+      <td style="text-align: center">boolean</td>
+      <td style="text-align: center"><code class="language-plaintext highlighter-rouge">false</code></td>
+      <td style="text-align: center"><code class="language-plaintext highlighter-rouge">true</code> or <code class="language-plaintext highlighter-rouge">1</code>, <code class="language-plaintext highlighter-rouge">false</code> or <code class="language-plaintext highlighter-rouge">0</code></td>
+      <td style="text-align: center"><code class="language-plaintext highlighter-rouge">Q</code></td>
+      <td>output data in full precision (normally, data are returned in reduced precision for display purposes)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Please see <a href="sbdb_filter.html">SBDB (filter)</a> for additional query parameters.</p>
+
+<h2 id="query-modes">Query Modes</h2>
+
+<h3 id="mode-i">mode <code class="language-plaintext highlighter-rouge">I</code></h3>
+
+<p>Information mode. This mode provides various information about the SBDB and this API.</p>
+
+<p>Setting query parameter <code class="language-plaintext highlighter-rouge">info=count</code> returns the current total number of small-bodies
+in the SBDB grouped by:</p>
+<ul>
+  <li>numbered asteroids</li>
+  <li>unnumbered asteroids</li>
+  <li>numbered comets (includes comet fragments)</li>
+  <li>unnumbered comets (includes comet fragments)</li>
+</ul>
+
+<p>Example output:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"info" : {
+   "count" : {
+      "au" : "258103",
+      "cu" : "3088",
+      "cn" : "447",
+      "an" : "523584"
+   }
+}
+</code></pre></div></div>
+
+<p>Setting the query parameter <code class="language-plaintext highlighter-rouge">info=field</code> returns all available output fields
+with units and description for each.
+Results are grouped by broad categories “Object Fields”, “Orbit and Model Parameter Fields”,
+and “Physical Parameter Fields”.
+Partial example output follows:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"info" : {
+  "field" : {
+    "object" : {
+      "field_label" : "Object Fields",
+      "list" : [
+        {
+          "name" : "spkid",
+          "title" : "SPK-ID",
+          "description" : "object primary SPK-ID",
+          "units" : null
+        },
+        {
+          "name" : "full_name",
+          "title" : "object fullname",
+          "description" : "object full name/designation",
+          "units" : null
+        },
+        ...
+      ]
+    },
+    "orbit" : {
+      "field_label" : "Orbit and Model Parameter Fields",
+      "list" : [
+        {
+          "name" : "orbit_id",
+          "title" : "orbit ID",
+          "description" : "orbit solution ID",
+          "units" : null
+        },
+        {
+          "name" : "epoch",
+          "title" : "epoch",
+          "description" : "epoch of osculation in Julian day form",
+          "units" : "TDB"
+        },
+        {
+          "name" : "e",
+          "title" : "e",
+          "description" : "eccentricity",
+          "units" : null
+        },
+        ...
+      ]
+    },
+    "phys_par" : {
+      "field_label" : "Physical Parameter Fields",
+      "list" : [
+        {
+        "name" : "H",
+        "title" : "H",
+        "description" : "absolute magnitude parameter",
+        "units" : null
+        },
+        {
+        "name" : "G",
+        "title" : "G",
+        "description" : "magnitude slope parameter (default is 0.15)",
+        "units" : null
+        },
+        ...
+      ]
+    }
+  }
+}
+</code></pre></div></div>
+
+<p>Please see <a href="sbdb_filter.html">SBDB (filter)</a> for additional mode <code class="language-plaintext highlighter-rouge">I</code> parameters.</p>
+
+<h3 id="mode-q">mode <code class="language-plaintext highlighter-rouge">Q</code></h3>
+
+<p>Normal query mode. This mode provides a list (or count) of small-bodies matching
+user-specified constraints.
+When no output fields are requested, a simple total count of the matching small-bodies
+if returned.
+Otherwise, a list with user-specified output fields for each matching small-body is returned.</p>
+
+<h2 id="available-sbdb-fields">Available SBDB Fields</h2>
+
+<p>The following table lists fields available for output from the SBDB.
+You can select any combination of fields from none to all in any order desired.
+Any given field may only be specified once
+(e.g., you cannot request <code class="language-plaintext highlighter-rouge">fields=spkid,pdes,a,spkid</code> as <code class="language-plaintext highlighter-rouge">spkid</code> is specified more than once).</p>
+
+<blockquote>
+  <p>Field names are <strong>case-sensitive</strong>.</p>
+</blockquote>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Field Name</th>
+      <th style="text-align: center">Type</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">spkid</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">primary SPK-ID</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">full_name</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">full designation (and name)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">kind</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">indicates whether asteroid (<code class="language-plaintext highlighter-rouge">a</code>) or comet (<code class="language-plaintext highlighter-rouge">c</code>) and whether numbered (<code class="language-plaintext highlighter-rouge">n</code>) or unnumbered (<code class="language-plaintext highlighter-rouge">u</code>); for example a value of <code class="language-plaintext highlighter-rouge">an</code> indicates a numbered asteroid and <code class="language-plaintext highlighter-rouge">cu</code> indicates an unnumbered comet</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">pdes</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">primary designation (for numbered asteroids, this is the IAU number); examples: <code class="language-plaintext highlighter-rouge">433</code>, <code class="language-plaintext highlighter-rouge">2016 B1</code>, <code class="language-plaintext highlighter-rouge">1999 AN10</code></td>
+    </tr>
+    <tr>
+      <td style="text-align: left">name</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">IAU name (if any); examples: <code class="language-plaintext highlighter-rouge">Ceres</code>, <code class="language-plaintext highlighter-rouge">Halley</code>, <code class="language-plaintext highlighter-rouge">d'Arrest</code></td>
+    </tr>
+    <tr>
+      <td style="text-align: left">prefix</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">comet prefix: <code class="language-plaintext highlighter-rouge">P</code>, <code class="language-plaintext highlighter-rouge">C</code>, <code class="language-plaintext highlighter-rouge">D</code> (<code class="language-plaintext highlighter-rouge">A</code> for asteroids previously designated as comets)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">class</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">orbit classification code</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">neo</td>
+      <td style="text-align: center">boolean</td>
+      <td style="text-align: left">flag indicating the object is an NEO (<code class="language-plaintext highlighter-rouge">Y</code> or <code class="language-plaintext highlighter-rouge">N</code>)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">pha</td>
+      <td style="text-align: center">boolean</td>
+      <td style="text-align: left">flag indicating the object is a PHA (<code class="language-plaintext highlighter-rouge">Y</code> or <code class="language-plaintext highlighter-rouge">N</code>)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">t_jup</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">Jupiter Tisserand parameter</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">moid</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">minimum distance between the orbits of Earth and the small-body (au); use <code class="language-plaintext highlighter-rouge">moid_ld</code> for units in lunar distances (LD)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">moid_jup</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">minimum distance between the orbits of Jupiter and the small-body (au)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">orbit_id</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">orbit solution ID</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">epoch</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">epoch of osculation in Julian day form (TDB); use <code class="language-plaintext highlighter-rouge">epoch_mjd</code> for modified Julian day form; use <code class="language-plaintext highlighter-rouge">epoch_cal</code> for calendar form <code class="language-plaintext highlighter-rouge">YYYY-MM-DD.D</code></td>
+    </tr>
+    <tr>
+      <td style="text-align: left">equinox</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">equinox date of the heliocentric IAU76/80 ecliptic reference system (e.g., <code class="language-plaintext highlighter-rouge">J2000</code> meaning reference date J2000.0, 2000-Jan-1 12:00 TT)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">e</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">eccentricity</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">a</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">semimajor axis (au)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">q</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">perihelion distance (au)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">i</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">inclination (deg)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">om</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">longitude of the ascending node (deg)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">w</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">argument of perihelion (deg)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">ma</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">mean anomaly (deg)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">tp</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">time of perihelion passage in Julian day form (TDB); use <code class="language-plaintext highlighter-rouge">tp_cal</code> for calendar form <code class="language-plaintext highlighter-rouge">YYYY-MM-DD.D</code></td>
+    </tr>
+    <tr>
+      <td style="text-align: left">per</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">orbital period (d); use <code class="language-plaintext highlighter-rouge">per_y</code> for orbital period in Julian years (y)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">n</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">mean motion (deg/d)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">ad</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">aphelion distance (au)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">sigma_e</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">1-sigma uncertainty in the eccentricity</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">sigma_a</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">1-sigma uncertainty in the semimajor axis (au)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">sigma_q</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">1-sigma uncertainty in the perihelion distance (au)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">sigma_i</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">1-sigma uncertainty in the inclination (deg)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">sigma_om</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">1-sigma uncertainty in the longitude of the ascending node (deg)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">sigma_w</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">1-sigma uncertainty in the argument of perihelion (deg)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">sigma_tp</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">1-sigma uncertainty in the time of perihelion passage (d)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">sigma_ma</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">1-sigma uncertainty in the mean anomaly (deg)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">sigma_per</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">1-sigma uncertainty in the period (d)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">sigma_n</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">1-sigma uncertainty in the mean motion (deg/d)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">sigma_ad</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">1-sigma uncertainty in the aphelion distance (au)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">source</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">code indicating the source of the orbit: <code class="language-plaintext highlighter-rouge">ORB</code>=”JPL orbit file”, <code class="language-plaintext highlighter-rouge">MPC:mpn</code>=”MPC numbered asteroid orbit file”, <code class="language-plaintext highlighter-rouge">MPC:mpu</code>=”MPC unnumbered asteroid orbit file”, <code class="language-plaintext highlighter-rouge">MPC:mp1</code>=”MPC single opposition short-arc orbit file”</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">soln_date</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">date/time of orbit determination (<code class="language-plaintext highlighter-rouge">YYYY-MM-DD hh:mm:ss</code>, Pacific Local)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">producer</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">name of the person or institution responsible for the orbit determination</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">data_arc</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">number of days spanned by the observations used in the orbit determination</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">first_obs</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">date of the first observation used in the orbit (<code class="language-plaintext highlighter-rouge">YYYY-MM-DD</code> or <code class="language-plaintext highlighter-rouge">YYYY-??-??</code> when only the year is known)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">last_obs</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">date of the last observation used in the orbit (<code class="language-plaintext highlighter-rouge">YYYY-MM-DD</code> or <code class="language-plaintext highlighter-rouge">YYYY-??-??</code> when only the year is known)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">n_obs_used</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">total number of observations of all types used in the orbit</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">n_del_obs_used</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">number of radar delay observations used in the orbit</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">n_dop_obs_used</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">number of radar Doppler observations used in the orbit</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">two_body</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">flag indicating a low-precision 2-body dynamic model was used in the OD</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">pe_used</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">JPL internal ID of the planetary ephemeris used in the OD</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">sb_used</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">JPL internal ID of the small-body ephemeris used in the OD</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">condition_code</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">MPC “U” parameter: orbit uncertainty estimate 0-9, with 0 being good, and 9 being highly uncertain</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">rms</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">normalized RMS of the observation fit in the OD</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">A1</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">A2</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">A3</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">DT</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">S0</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">A1_sigma</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">A2_sigma</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">A3_sigma</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">DT_sigma</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">S0_sigma</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">H</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">absolute magnitude (magnitude at 1 au from the Sun and the observer)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">G</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">magnitude slope parameter used in the standard asteroid H/G magnitude law</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">M1</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">K1</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">M2</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">K2</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">PC</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">H_sigma</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">diameter</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">effective body diameter (km)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">extent</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">tri(or bi)-axial body dimensions (km)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">GM</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">mass expressed as a product of the mass “M” and gravitational constant “G” (km<sup>3</sup>/s<sup>2</sup>)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">density</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">bulk density (g/cm<sup>3</sup>)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">rot_per</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">body rotation period (synodic) (h)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">pole</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">spin-pole direction in R.A./Dec. (deg)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">albedo</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">geometric albedo</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">BV</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">color index B-V</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">UB</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">color index U-B</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">IR</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">color index I-R</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">spec_T</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">Tholen spectral taxonomic classification</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">spec_B</td>
+      <td style="text-align: center">string</td>
+      <td style="text-align: left">SMASSII spectral taxonomic classification</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">diameter_sigma</td>
+      <td style="text-align: center">number</td>
+      <td style="text-align: left">1-sigma formal (or estimated) uncertainty in diameter</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Although the field <code class="language-plaintext highlighter-rouge">id</code> (a string-type field representing an internal object ID) is available,
+it is intentionally not listed in the above table because its value and format
+are <strong>subject to change without notice</strong>.
+The <code class="language-plaintext highlighter-rouge">id</code> field is only provided as a convenient sortable field resulting in objects sorted by
+first numbered asteroids, then unnumbered asteroids, followed by numbered then unnumbered comets.
+Either <code class="language-plaintext highlighter-rouge">spkid</code> or <code class="language-plaintext highlighter-rouge">pdes</code> should be used for permanent IDs of a given object.</p>
+
+<h3 id="constraints-on-fields">Constraints on Fields</h3>
+
+<p>Please see <a href="sbdb_filter.html">SBDB (filter)</a> for details on available
+user-specified constraints.</p>
+
+<h3 id="field-definitions">Field Definitions</h3>
+
+<p>Please see <a href="sbdb_filter.html">SBDB (filter)</a>, section “MODE I”,
+for available definitions.</p>
+
+<h2 id="http-response-codes">HTTP Response Codes</h2>
+
+<p>All errors are returned via appropriate HTTP response codes.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">HTTP Code</th>
+      <th style="text-align: center">Description</th>
+      <th>Typical Usage</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">200</td>
+      <td style="text-align: center">OK</td>
+      <td>normal successful result for a single object: object data returned (an error message is returned if the object was not found)</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">400</td>
+      <td style="text-align: center">Bad Request</td>
+      <td>the request contained invalid keywords and/or content: details returned</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">405</td>
+      <td style="text-align: center">Method Not Allowed</td>
+      <td>the request used an incorrect method (see the <a href="#request">HTTP Request</a> section)</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">500</td>
+      <td style="text-align: center">Internal Server Error</td>
+      <td>the database is not available at the time of the request</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">503</td>
+      <td style="text-align: center">Service Unavailable</td>
+      <td>the server is currently unable to handle the request due to a temporary overloading or maintenance of the server, which will likely be alleviated after some delay</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="-change-log"><a name="change_log"></a> Change Log</h2>
+
+<h3 id="version-10-2021-august">Version 1.0 (2021 August)</h3>
+
+<ul>
+  <li>Initial release</li>
+</ul>
+
+
+  </div>
+</div>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-links">
+    <ul class="hide-for-small-only inline-list">
+      <li><a href="http://www.jpl.nasa.gov/copyrights.php">Privacy</a></li>
+      <li><a>|</a></li>
+      <li><a href="http://www.jpl.nasa.gov/imagepolicy">Image Policy</a></li>
+    </ul>
+    <ul class="show-for-small-only no-bullet">
+      <li><a href="http://www.jpl.nasa.gov/copyrights.php">Privacy</a></li>
+      <li><a href="http://www.jpl.nasa.gov/imagepolicy">Image Policy</a></li>
+    </ul>
+  </div>
+  <div class="footer-people">
+    <table id="footer-people-table" role="presentation">
+      <tr>
+        <td class="people-label text-right">Site Manager :</td>
+        <td class="text-left">Ryan Park</td>
+      </tr>
+      <tr>
+        <td class="people-label text-right">Webmaster :</td>
+        <td class="text-left">Alan Chamberlin</td>
+      </tr>
+      <tr>
+        <td class="people-label text-right">URS Clearance :</td>
+        <td class="text-left">CL#16-5242</td>
+      </tr>
+    </table>
+  </div>
+
+
+</footer>
+
+<script>
+var name = 'contact-ssd-api';
+var domain = 'jpl.nasa.gov';
+var maddr = name + String.fromCharCode(64) + domain;
+var html = '<tr><td class="people-label text-right">Contact :</td>';
+html += '<td class="text-left">' + maddr + '</td></tr>';
+$('#footer-people-table').append(html);
+</script>
+
+<!-- Initialize Foundation JS at the end of the BODY section -->
+<script>
+$(document).foundation({
+  accordion: {
+    multi_expand: true
+  }
+});
+//
+// Force external links to open in a new tab/window (A.Chamberlin)
+$(document).ready(function() {
+  $('a[href^="http"]').attr('target','_blank');
+});
+</script>
+
+  </body>
+</html>

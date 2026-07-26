@@ -1,12 +1,27 @@
 {
   "channel": "derelict",
-  "verdict": "NO_DATA_REACHED",
+  "verdict": "NO_SURVIVORS",
   "stage": "all",
   "degradation": [
-    "JPL SBDB returned no rows with a fitted A1; no screening performed and no candidate emitted"
+    "bulk pull lacks usable sigma_A1 (or minimal-field fallback used); enriching 22 of 22 objects per-object from sbdb.api (orbit.model_pars carries A1/A2/A3 AND their sigmas) before screening"
   ],
   "funnel": {
-    "input": 0
+    "input": 22,
+    "a1_fitted": 22,
+    "a1_positive": 19,
+    "a1_significant": 11,
+    "nonradial_constrained": 10,
+    "screen1_a1_only": 0,
+    "screen1_a1_only_strict": 0,
+    "r_computable": 1,
+    "screen2_r_flag": 0,
+    "screen2_r_strong": 0,
+    "screen2_r_extreme": 0,
+    "screen3_negative_a1": 1,
+    "screen4_albedo": 0,
+    "cometary_law_excluded": 20,
+    "vetted": 0,
+    "unexplained_after_vetting": 0
   },
   "reference_physics": [
     {
@@ -60,9 +75,11 @@
     "albedo_assumed": 0.15
   },
   "control_fetch": {
-    "status": "NO_DATA_REACHED",
-    "strategy": "",
-    "n_rows": 0,
+    "status": "OK",
+    "strategy": "cdata_A1_defined",
+    "n_rows": 272,
+    "n_rows_raw": 272,
+    "a1_column_present": true,
     "fields_requested": [
       "spkid",
       "full_name",
@@ -100,20 +117,63 @@
       "sigma_A3",
       "sigma_DT"
     ],
-    "fields_returned": [],
+    "fields_returned": [
+      "spkid",
+      "full_name",
+      "pdes",
+      "name",
+      "kind",
+      "class",
+      "neo",
+      "pha",
+      "H",
+      "diameter",
+      "albedo",
+      "rot_per",
+      "e",
+      "a",
+      "q",
+      "i",
+      "om",
+      "w",
+      "ma",
+      "epoch",
+      "moid",
+      "n_obs_used",
+      "data_arc",
+      "condition_code",
+      "rms",
+      "first_obs",
+      "last_obs",
+      "A1",
+      "A2",
+      "A3",
+      "DT"
+    ],
     "fields_dropped": [],
-    "signature": {},
+    "fields_rejected": [
+      "sigma_A1",
+      "sigma_A2",
+      "sigma_A3",
+      "sigma_DT"
+    ],
+    "signature": {
+      "version": "1.0",
+      "source": "NASA/JPL SBDB (Small-Body DataBase) Query API"
+    },
     "errors": [
-      "[cdata_A1_defined] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=c&full-prec=1&sb-cdata={\"AND\"%3A[\"A1|DF\"]}: {\"code\":\"400\",\"message\":\"invalid field specified: 'sigma_A1'\"}\n",
-      "[cdata_A1_notnull] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=c&full-prec=1&sb-cdata={\"AND\"%3A[\"A1|NE|0\"]}: {\"code\":\"400\",\"message\":\"invalid field specified: 'sigma_A1'\"}\n",
-      "[cdata_A1_defined_bare] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=c&full-prec=1&sb-cdata={AND%3A[A1|DF]}: {\"code\":\"400\",\"message\":\"invalid value specified for query parameter 'sb-cdata': invalid JSON content\"}\n",
-      "[unconstrained_full_pull] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=c&full-prec=1: {\"message\":\"invalid field specified: 'sigma_A1'\",\"code\":\"400\"}\n"
+      "[cdata_A1_defined] server rejected ['sigma_A1']; retrying without",
+      "[cdata_A1_defined] server rejected ['sigma_A2']; retrying without",
+      "[cdata_A1_defined] server rejected ['sigma_A3']; retrying without",
+      "[cdata_A1_defined] server rejected ['sigma_DT']; retrying without"
     ]
   },
   "fetch": {
-    "status": "NO_DATA_REACHED",
-    "strategy": "",
-    "n_rows": 0,
+    "status": "OK",
+    "strategy": "cdata_A1_defined",
+    "n_rows": 22,
+    "n_rows_raw": 22,
+    "a1_column_present": true,
     "fields_requested": [
       "spkid",
       "full_name",
@@ -151,14 +211,76 @@
       "sigma_A3",
       "sigma_DT"
     ],
-    "fields_returned": [],
+    "fields_returned": [
+      "spkid",
+      "full_name",
+      "pdes",
+      "name",
+      "kind",
+      "class",
+      "neo",
+      "pha",
+      "H",
+      "diameter",
+      "albedo",
+      "rot_per",
+      "e",
+      "a",
+      "q",
+      "i",
+      "om",
+      "w",
+      "ma",
+      "epoch",
+      "moid",
+      "n_obs_used",
+      "data_arc",
+      "condition_code",
+      "rms",
+      "first_obs",
+      "last_obs",
+      "A1",
+      "A2",
+      "A3",
+      "DT"
+    ],
     "fields_dropped": [],
-    "signature": {},
+    "fields_rejected": [
+      "sigma_A1",
+      "sigma_A2",
+      "sigma_A3",
+      "sigma_DT"
+    ],
+    "signature": {
+      "version": "1.0",
+      "source": "NASA/JPL SBDB (Small-Body DataBase) Query API"
+    },
     "errors": [
-      "[cdata_A1_defined] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=a&full-prec=1&sb-cdata={\"AND\"%3A[\"A1|DF\"]}: {\"message\":\"invalid field specified: 'sigma_A1'\",\"code\":\"400\"}\n",
-      "[cdata_A1_notnull] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=a&full-prec=1&sb-cdata={\"AND\"%3A[\"A1|NE|0\"]}: {\"code\":\"400\",\"message\":\"invalid field specified: 'sigma_A1'\"}\n",
-      "[cdata_A1_defined_bare] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=a&full-prec=1&sb-cdata={AND%3A[A1|DF]}: {\"code\":\"400\",\"message\":\"invalid value specified for query parameter 'sb-cdata': invalid JSON content\"}\n",
-      "[unconstrained_full_pull] HTTP 400 for https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields=spkid%2Cfull_name%2Cpdes%2Cname%2Ckind%2Cclass%2Cneo%2Cpha%2CH%2Cdiameter%2Calbedo%2Crot_per%2Ce%2Ca%2Cq%2Ci%2Com%2Cw%2Cma%2Cepoch%2Cmoid%2Cn_obs_used%2Cdata_arc%2Ccondition_code%2Crms%2Cfirst_obs%2Clast_obs%2CA1%2CA2%2CA3%2CDT%2Csigma_A1%2Csigma_A2%2Csigma_A3%2Csigma_DT&sb-kind=a&full-prec=1: {\"message\":\"invalid field specified: 'sigma_A1'\",\"code\":\"400\"}\n"
+      "[cdata_A1_defined] server rejected ['sigma_A1']; retrying without",
+      "[cdata_A1_defined] server rejected ['sigma_A2']; retrying without",
+      "[cdata_A1_defined] server rejected ['sigma_A3']; retrying without",
+      "[cdata_A1_defined] server rejected ['sigma_DT']; retrying without"
     ]
-  }
+  },
+  "sigma_A1_in_bulk": false,
+  "enriched_from_detail": 22,
+  "enrich_failures": 0,
+  "control_funnel": {
+    "input": 272,
+    "a1_fitted": 272,
+    "a1_positive": 240,
+    "a1_significant": 0,
+    "nonradial_constrained": 0,
+    "screen1_a1_only": 0,
+    "screen1_a1_only_strict": 0,
+    "r_computable": 39,
+    "screen2_r_flag": 0,
+    "screen2_r_strong": 0,
+    "screen2_r_extreme": 0,
+    "screen3_negative_a1": 0,
+    "screen4_albedo": 0,
+    "cometary_law_excluded": 44
+  },
+  "vetting_breakdown": {},
+  "n_objects_with_fitted_A1": 22
 }

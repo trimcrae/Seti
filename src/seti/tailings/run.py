@@ -242,6 +242,11 @@ def _overall_verdict(per_survey: list[dict], twins: dict, prov: dict | None) -> 
     if not reached:
         return ("NO_DATA_REACHED: no survey catalogue answered, so nothing was searched. "
                 "This is an archive-access statement, not a limit on the signature.")
+    scored = [s for s in reached if not str(s.get("verdict") or "").startswith("INSUFFICIENT")]
+    if not scored:
+        return ("INSUFFICIENT_SAMPLE: rows were retrieved but no survey supplied enough "
+                "stars or enough elements to define a manifold, so no sparsity claim is "
+                "possible. This is a coverage statement, not a limit on the signature.")
     n_vet = sum(int(s.get("n_vetted", 0)) for s in per_survey)
     n_un = int(twins.get("n_unexplainable", 0))
     degraded = [p for p in (prov or {}).get("surveys", []) if p.get("degraded")]

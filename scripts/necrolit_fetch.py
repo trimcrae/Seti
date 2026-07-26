@@ -140,6 +140,23 @@ QUERIES: dict[str, str] = {
     "far_ir_excess_mainsequence": 'all:"far-infrared excess" AND all:"main-sequence"',
     "iras_60_100_excess_stars": 'all:IRAS AND all:"60 micron" AND all:excess AND all:stars',
     "waste_heat_temperature_range": 'all:"waste heat" AND all:Dyson AND all:temperature',
+    # TIDEMARK -- has ANYONE tested an anomaly population for spatial structure?
+    # These are the gap-closing queries the 2026-07-26 sweep identified. Note the
+    # arXiv "all:" field is metadata-only and returns spurious zeros for papers
+    # that are demonstrably present, so a zero here is weak evidence; the
+    # citation trees below carry the weight.
+    "tidemark_galactocentric_technosig": 'all:"Galactocentric" AND all:technosignature',
+    "tidemark_galactocentric_dyson": 'all:"Galactocentric" AND all:"Dyson"',
+    "tidemark_technosig_spatial_distribution": 'all:technosignature AND (all:"spatial distribution" OR all:"sky distribution" OR all:"surface density")',
+    "tidemark_dyson_galactic_latitude": 'all:"Dyson sphere" AND (all:"Galactic latitude" OR all:"scale height")',
+    "tidemark_occurrence_rate_technosig": 'all:"occurrence rate" AND all:technosignature',
+    "tidemark_fermi_bubble_seti": 'all:"Fermi bubble" AND (all:SETI OR all:technosignature)',
+    "tidemark_colonization_boundary_search": 'all:"colonization" AND all:"boundary" AND all:search AND all:galaxy',
+    "tidemark_grabby_observational": '(all:"grabby aliens" OR all:"expanding civilizations") AND (all:"sky survey" OR all:constraint)',
+    # The AGE leg (S25) -- the weakest-evidenced part of the novelty claim.
+    "tidemark_technosig_stellar_age": 'all:technosignature AND (all:"stellar age" OR all:"age distribution")',
+    "tidemark_great_filter_observational": 'all:"Great Filter" AND (all:"observational test" OR all:occurrence)',
+    "tidemark_technosig_metallicity": 'all:technosignature AND all:metallicity',
     # ISOTHERM — the shape statistic
     "blackbody_shape_technosig": 'all:"single blackbody" AND all:technosignature',
     "matrioshka_brain": 'all:"Matrioshka" OR all:"nested Dyson"',

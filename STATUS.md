@@ -690,3 +690,84 @@ egress.
   is the sole known step-and-stay object and is still unexplained.
 * **Smooth disc dispersal cannot make this signal**: τ = 2–3 Myr at 3.4–12 µm is
   a ~10⁻⁵ change over 27 years. Only discrete events can.
+
+### TIDEMARK (population-level spatial structure) — established 2026-07-26
+
+The first channel here that asks a question **about a population rather than
+about objects**, and therefore the first one immune to the per-object
+contamination that ended the previous six. Full design and honest limits in
+`docs/tidemark.md`.
+
+* **The question.** Is the anomaly rate *per star* structured across the Galaxy
+  — a gradient in Galactocentric R / |z| / longitude, a sharp edge (a boundary),
+  or a trend with stellar age? Not "is this object real", which is the question
+  that always fails.
+* **Novelty: three published predictions that contradict each other, and none has
+  ever been tested.** Ćirković & Bradbury 2006 (New Astronomy 11, 628) predicts
+  the **outer rim**; Wright, Carroll-Nellenback, Frank & Scharf 2021 (RNAAS 5,
+  141) predicts the **Galactic centre**; Wright et al. 2014 (Ĝ I, ApJ 792, 26)
+  predicts **no coherent structure at all** because rotational shear mixes any
+  Fermi bubble on a rotation timescale. Carrigan 2010 / Landis 1998 / Hanson et
+  al. 2021 predict a **boundary** as the observable — Hanson et al. explicitly
+  estimate "how common in the sky the volume borders would be, for which
+  astronomers might search", with no published response. Verified against 642
+  citing titles plus the 2026 field-wide review (arXiv:2605.21093), which
+  contains zero occurrences of "galactocentric", "spatial distribution",
+  "percolation", "Fermi bubble" or "border".
+* **In every executed search, Galactic position appears in exactly four modes and
+  none is this test**: as a cut (|b| ≥ 10, bulge excision); as qualitative
+  Aitoff eyeballing (Carrigan 2009 Fig. 8); as a sky-averaged, position-*independent*
+  surface density for chance-alignment budgets; and as rate vs heliocentric
+  distance where the trend *is* the incompleteness (Hephaistos I, Table 1,
+  stated as such). Everybody imposes the selection function; nobody inverts it.
+* **Nearest misses.** Blain 2024 (arXiv:2409.11447) *proposes* the sky-distribution
+  test and implements nothing — and his null ("do candidates shadow the Gaia
+  stellar density?") is exactly the selection function TIDEMARK divides out.
+  Huang, Tao & Zhang 2026 (arXiv:2605.06072) is the closest methodological
+  precedent: a dynamical index regressed against R_GC over 79 globular clusters
+  with a selection-preserving null — but the units are clusters, the observable
+  is not a technosignature, and the paper disclaims the interpretation.
+* **The selection function is the whole difficulty and the whole contribution.**
+  Every parent star carries `w_i = c_s / N_s` (anomalies in its detectability
+  stratum / parent rows in it): the empirical, non-parametric probability that a
+  star like it is flagged. `Σ w_i = n_anom` exactly — the correction
+  redistributes anomalies, never invents them. `ρ = n_obs / Σw` is the
+  selection-corrected rate ratio and `ρ ≡ 1` is the null. Weights are written out
+  per star so the correction can be audited rather than trusted.
+* **`MatchedNull` raises if you stratify on the coordinate under test.** A
+  silently self-cancelling test is worse than no test.
+* **THE CORRECTION IS CONSERVATIVE BY A FACTOR OF ~2, AND THIS MUST BE QUOTED.**
+  Detectability covariates are themselves correlated with position (magnitude
+  with distance, distance with R_gal through the GC direction, extinction with
+  |b|), so matching absorbs part of a *real* trend. Measured: an injected
+  0.6/kpc radial gradient returns as ≈0.27/kpc — transfer ≈ 0.45. Every run
+  measures its own transfer coefficient and reports
+  `R_gal_slope_deabsorbed_ln_per_kpc`. **A measured slope is a lower bound.**
+* **A smooth gradient will fake an edge unless the null contains the gradient.**
+  Calibrated: a pure 0.8/kpc gradient fires the edge detector 15% of the time
+  with a quadratic trend model in the null and 5% (nominal) with a **cubic**, at
+  no cost in bubble power. Hence `smooth_order: 3`. Do not lower it.
+* **The scan's look-elsewhere effect is paid for**, not ignored: the statistic is
+  the max |S| over every centre, radius and width, calibrated against the same
+  max recomputed on each matched-null draw.
+* **Injection performance** (synthetic parent with the full confounder stack —
+  exponential disk, magnitude limit, plane extinction, radial metallicity
+  gradient, AVR): a 900 pc / contrast-5 bubble recovered at p = 0.004 with the
+  centre localised to 89 pc and radius to 902 pc vs 900 pc true. Clean nulls on a
+  pure density gradient, a hard detectability artifact, and both footprint
+  shapes.
+* **Most channels here cannot be ingested, because they publish survivors only.**
+  Only `cenotaph` (`greyfit.parquet`) and `ossuary` (`sample.parquet`) write a
+  real parent sample. `cluster_run` held its full frame in memory and threw it
+  away — now fixed, it writes `parent_sample.parquet` per cone. **Any new channel
+  should write its parent, not just its candidates**: without a denominator there
+  is no rate, and TIDEMARK reports `NO_PARENT_SAMPLE` rather than invent one.
+* **The excess locus must be fitted globally, never per cone.** Fitting per field
+  normalises every field to its own median and deletes exactly the
+  field-to-field rate differences being measured. `tests/test_tidemark.py`
+  asserts this against the per-cone counterfactual.
+* **`cites:doi:<doi>` is a broken OpenAlex filter** — it is accepted and silently
+  returns `meta.count = 0` for every DOI. All earlier citation-tree fetches in
+  this repo are empty for that reason, not because the papers are uncited.
+  Resolve the DOI to a work ID and use `cites:W...`. Fixed in
+  `scripts/necrolit_fetch.py`.

@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VOTABLE version="1.4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://www.ivoa.net/xml/VOTable/v1.3"
+  xsi:schemaLocation="http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3">
+ <DESCRIPTION>
+   VizieR Astronomical Server vizier.cds.unistra.fr
+    Date: 2026-07-26T12:45:08 [V7.5.6]
+   Explanations and Statistics of UCDs:			See LINK below
+   In case of problem, please report to:	cds-question@unistra.fr
+ </DESCRIPTION>
+<!-- VOTable description at http://www.ivoa.net/Documents/latest/VOT.html -->
+<INFO name="service_protocol" value="ASU">  IVOID of the protocol through which the data was retrieved</INFO>
+<INFO name="request_date" value="2026-07-26T12:45:08">  Query execution date</INFO>
+<INFO name="request" value="https://vizier.cds.unistra.fr/viz-bin/votable?-source=II/156A/main&amp;-out.max=2&amp;-out.all">  Full request URL</INFO>
+<INFO name="contact" value="cds-question@unistra.fr">  Email or URL to contact publisher</INFO>
+<INFO name="server_software" value="VizieR/7.5.6">  Software version</INFO>
+<INFO name="publisher" value="CDS">  Data centre that produced the VOTable</INFO>
+
+<!--
+Execution Reports
+ -->
+
+<RESOURCE ID="yCat_2156" name="II/156A" type="results">
+  <DESCRIPTION>IRAS Faint Source Catalog, |b| &gt; 10, Version 2.0 (Moshir+ 1989)</DESCRIPTION>  <INFO name="ivoid" value="ivo://cds.vizier/ii/156a">    IVOID of underlying data collection  </INFO>
+  <INFO name="data_ivoid" value="ivo://cds.vizier/ii/156a">    IVOID of underlying data collection  </INFO>
+  <INFO name="creator" value="Moshir">    First author or institution  </INFO>
+  <INFO name="cites" value="1990IRASF.C......0M">    Article or Data origin sources  </INFO>
+  <INFO name="reference_url" value="https://cdsarc.cds.unistra.fr/viz-bin/cat/II/156A">    Dataset landing page  </INFO>
+  <INFO name="publication_date" value="2017-06-22">    Date of first publication in the data centre  </INFO>
+  <INFO name="rights_uri" value="https://cds.unistra.fr/vizier-org/licences_vizier.html">    Licence URI  </INFO>
+
+  <COOSYS ID="B1950_1983.500" system="eq_FK4" equinox="B1950" epoch="1983.500"/>
+  <TABLE ID="II_156A_main" name="II/156A/main">
+    <DESCRIPTION>IRAS Faint Sources</DESCRIPTION>
+<!-- IRAS Faint Sources \ifnum\Vphase&gt;3({\fg{red3}fluxes in red for upper limits})\fi -->
+
+    <!-- RowName: ${IRAS} -->
+    <!-- Definitions of GROUPs and FIELDs -->
+    <FIELD name="recno" ucd="meta.record" datatype="int" width="8"><!-- ucd="RECORD" -->
+      <DESCRIPTION>Record number assigned by the VizieR team. Should Not be used for identification.</DESCRIPTION>
+      <LINK href="http://vizier.cds.unistra.fr/viz-bin/VizieR-5?-info=XML&amp;-out.add=.&amp;-source=II/156A/main&amp;recno=${recno}"/>
+    </FIELD>
+    <FIELD name="IRAS" ucd="meta.id;meta.main" datatype="char" arraysize="12*"><!-- ucd="ID_MAIN" -->
+      <DESCRIPTION>IRAS faint source name (starts by F)</DESCRIPTION>
+      <LINK href="http://vizier.cds.unistra.fr/viz-bin/VizieR-5?-info=XML&amp;-out.add=.&amp;-source=II/156A/main&amp;recno=${recno}"/>
+    </FIELD>
+    <FIELD name="RA1950" ucd="pos.eq.ra;meta.main" ref="B1950_1983.500" datatype="char" arraysize="10" xtype="hms"><!-- ucd="POS_EQ_RA_MAIN" -->
+      <DESCRIPTION>Hours RA, equinox 1950.0, epoch 1983.5</DESCRIPTION>
+    </FIELD>
+    <FIELD name="DE1950" ucd="pos.eq.dec;meta.main" ref="B1950_1983.500" datatype="char" arraysize="9" xtype="dms"><!-- ucd="POS_EQ_DEC_MAIN" -->
+      <DESCRIPTION>Degrees Dec, equinox 1950.0, epoch 1983.5</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Major" ucd="stat.error" datatype="short" width="3" unit="arcsec"><!-- ucd="ERROR" -->
+      <DESCRIPTION>Uncertainty ellipse major axis</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Minor" ucd="stat.error" datatype="short" width="3" unit="arcsec"><!-- ucd="ERROR" -->
+      <DESCRIPTION>Uncertainty ellipse minor axis</DESCRIPTION>
+    </FIELD>
+    <FIELD name="PosAng" ucd="stat.error;pos.posAng" datatype="short" width="3" unit="deg"><!-- ucd="POS_POS-ANG" -->
+      <DESCRIPTION>Uncertainty ellipse position angle</DESCRIPTION>
+    </FIELD>
+    <FIELD name="o_Fnu12" ucd="meta.number" datatype="short" width="3"><!-- ucd="NUMBER" -->
+      <DESCRIPTION>? Number of times observed at 12um</DESCRIPTION>
+      <VALUES null="-32768" />
+    </FIELD>
+    <FIELD name="Fnu12" ucd="phot.flux.density;em.IR.8-15um" datatype="float" width="9" precision="E2" unit="Jy"><!-- ucd="PHOT_FLUX_IR_12" -->
+      <DESCRIPTION>Non-color corrected flux density at 12um \ifnum\Vphase&gt;3({\fg{red3}in red for upper limits})\fi</DESCRIPTION>
+    </FIELD>
+    <FIELD name="e_Fnu12" ucd="stat.error" datatype="short" width="3" unit="%"><!-- ucd="ERROR" -->
+      <DESCRIPTION>Relative flux density uncertainty at 12um</DESCRIPTION>
+    </FIELD>
+    <FIELD name="q_Fnu12" ucd="meta.code.qual" datatype="unsignedByte" width="1"><!-- ucd="CODE_QUALITY" -->
+      <DESCRIPTION>Flux density quality at 12um</DESCRIPTION>
+    </FIELD>
+    <FIELD name="o_Fnu25" ucd="meta.number" datatype="short" width="3"><!-- ucd="NUMBER" -->
+      <DESCRIPTION>? Number of times observed at 25um</DESCRIPTION>
+      <VALUES null="-32768" />
+    </FIELD>
+    <FIELD name="Fnu25" ucd="phot.flux.density;em.IR.15-30um" datatype="float" width="9" precision="E2" unit="Jy"><!-- ucd="PHOT_FLUX_IR_25" -->
+      <DESCRIPTION>Non-color corrected flux density at 25um \ifnum\Vphase&gt;3({\fg{red3}in red for upper limits})\fi</DESCRIPTION>
+    </FIELD>
+    <FIELD name="e_Fnu25" ucd="stat.error" datatype="short" width="3" unit="%"><!-- ucd="ERROR" -->
+      <DESCRIPTION>Relative flux density uncertainty at 25um</DESCRIPTION>
+    </FIELD>
+    <FIELD name="q_Fnu25" ucd="meta.code.qual" datatype="unsignedByte" width="1"><!-- ucd="CODE_QUALITY" -->
+      <DESCRIPTION>Flux density quality at 25um</DESCRIPTION>
+    </FIELD>
+    <FIELD name="o_Fnu60" ucd="meta.number" datatype="short" width="3"><!-- ucd="NUMBER" -->
+      <DESCRIPTION>? Number of times observed at 60um</DESCRIPTION>
+      <VALUES null="-32768" />
+    </FIELD>
+    <FIELD name="Fnu60" ucd="phot.flux.density;em.IR.30-60um" datatype="float" width="9" precision="E2" unit="Jy"><!-- ucd="PHOT_FLUX_IR_60" -->
+      <DESCRIPTION>Non-color corrected flux density at 60um \ifnum\Vphase&gt;3({\fg{red3}in red for upper limits})\fi</DESCRIPTION>
+    </FIELD>
+    <FIELD name="e_Fnu60" ucd="stat.error" datatype="short" width="3" unit="%"><!-- ucd="ERROR" -->
+      <DESCRIPTION>Relative flux density uncertainty at 60um</DESCRIPTION>
+    </FIELD>
+    <FIELD name="q_Fnu60" ucd="meta.code.qual" datatype="unsignedByte" width="1"><!-- ucd="CODE_QUALITY" -->
+      <DESCRIPTION>Flux density quality at 60um</DESCRIPTION>
+    </FIELD>
+    <FIELD name="o_Fnu100" ucd="meta.number" datatype="short" width="3"><!-- ucd="NUMBER" -->
+      <DESCRIPTION>? Number of times observed at 100um</DESCRIPTION>
+      <VALUES null="-32768" />
+    </FIELD>
+    <FIELD name="Fnu100" ucd="phot.flux.density;em.IR.60-100um" datatype="float" width="9" precision="E2" unit="Jy"><!-- ucd="PHOT_FLUX_IR_100" -->
+      <DESCRIPTION>Non-color corrected flux density at 100um \ifnum\Vphase&gt;3({\fg{red3}in red for upper limits})\fi</DESCRIPTION>
+    </FIELD>
+    <FIELD name="e_Fnu100" ucd="stat.error" datatype="short" width="3" unit="%"><!-- ucd="ERROR" -->
+      <DESCRIPTION>Relative flux density uncertainty at 100um</DESCRIPTION>
+    </FIELD>
+    <FIELD name="q_Fnu100" ucd="meta.code.qual" datatype="unsignedByte" width="1"><!-- ucd="CODE_QUALITY" -->
+      <DESCRIPTION>Flux density quality at 100um</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Rel" ucd="meta.code.error" datatype="short" width="2" unit="%"><!-- ucd="CODE_ERROR" -->
+      <DESCRIPTION>Percent minimum source reliability</DESCRIPTION>
+    </FIELD>
+    <FIELD name="SNR12" ucd="stat.snr" datatype="float" width="7"><!-- ucd="INST_S/N" -->
+      <DESCRIPTION>? Signal/Noise ratio at 12um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="SNR25" ucd="stat.snr" datatype="float" width="7"><!-- ucd="INST_S/N" -->
+      <DESCRIPTION>? Signal/Noise ratio at 25um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="SNR60" ucd="stat.snr" datatype="float" width="7"><!-- ucd="INST_S/N" -->
+      <DESCRIPTION>? Signal/Noise ratio at 60um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="SNR100" ucd="stat.snr" datatype="float" width="7"><!-- ucd="INST_S/N" -->
+      <DESCRIPTION>? Signal/Noise ratio at 100um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="locSNR12" ucd="stat.snr" datatype="float" width="7"><!-- ucd="INST_S/N" -->
+      <DESCRIPTION>? Local Signal/Noise ratio at 12um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="locSNR25" ucd="stat.snr" datatype="float" width="7"><!-- ucd="INST_S/N" -->
+      <DESCRIPTION>? Local Signal/Noise ratio at 25um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="locSNR60" ucd="stat.snr" datatype="float" width="7"><!-- ucd="INST_S/N" -->
+      <DESCRIPTION>? Local Signal/Noise ratio at 60um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="locSNR100" ucd="stat.snr" datatype="float" width="7"><!-- ucd="INST_S/N" -->
+      <DESCRIPTION>? Local Signal/Noise ratio at 100um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="A12" ucd="phys.angSize" datatype="short" width="3" unit="pix"><!-- ucd="EXTENSION_AREA" -->
+      <DESCRIPTION>? Number of pixels above threshold at 12um</DESCRIPTION>
+      <VALUES null="-32768" />
+    </FIELD>
+    <FIELD name="A25" ucd="phys.angSize" datatype="short" width="3" unit="pix"><!-- ucd="EXTENSION_AREA" -->
+      <DESCRIPTION>? Number of pixels above threshold at 25um</DESCRIPTION>
+      <VALUES null="-32768" />
+    </FIELD>
+    <FIELD name="A60" ucd="phys.angSize" datatype="short" width="3" unit="pix"><!-- ucd="EXTENSION_AREA" -->
+      <DESCRIPTION>? Number of pixels above threshold at 60um</DESCRIPTION>
+      <VALUES null="-32768" />
+    </FIELD>
+    <FIELD name="A100" ucd="phys.angSize" datatype="short" width="3" unit="pix"><!-- ucd="EXTENSION_AREA" -->
+      <DESCRIPTION>? Number of pixels above threshold at 100um</DESCRIPTION>
+      <VALUES null="-32768" />
+    </FIELD>
+    <FIELD name="Ncat" ucd="meta.number" datatype="short" width="2"><!-- ucd="NUMBER" -->
+      <DESCRIPTION>Number of nearby catalog sources (6')</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Nx12" ucd="meta.number" datatype="short" width="2"><!-- ucd="NUMBER" -->
+      <DESCRIPTION>Number of nearby extractions at 12 um</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Nx25" ucd="meta.number" datatype="short" width="2"><!-- ucd="NUMBER" -->
+      <DESCRIPTION>Number of nearby extractions at 25 um</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Nx60" ucd="meta.number" datatype="short" width="2"><!-- ucd="NUMBER" -->
+      <DESCRIPTION>Number of nearby extractions at 60 um</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Nx100" ucd="meta.number" datatype="short" width="2"><!-- ucd="NUMBER" -->
+      <DESCRIPTION>Number of nearby extractions at 100 um</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Cir1" ucd="meta.number" datatype="short" width="2"><!-- ucd="NUMBER" -->
+      <DESCRIPTION>Number of nearby 100 um-only extractions</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Conf" ucd="meta.code" datatype="short" width="2"><!-- ucd="CODE_MISC" -->
+      <DESCRIPTION>Confusion flag, 1 per band, bit-encoded (1)</DESCRIPTION>
+    </FIELD>
+    <FIELD name="NoisC12" ucd="instr.det.noise" datatype="float" width="5" precision="2"><!-- ucd="INST_NOISE" -->
+      <DESCRIPTION>? Noise correction factor at 12um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="NoisC25" ucd="instr.det.noise" datatype="float" width="5" precision="2"><!-- ucd="INST_NOISE" -->
+      <DESCRIPTION>? Noise correction factor at 25um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="NoisC60" ucd="instr.det.noise" datatype="float" width="5" precision="2"><!-- ucd="INST_NOISE" -->
+      <DESCRIPTION>? Noise correction factor at 60um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="NoisC100" ucd="instr.det.noise" datatype="float" width="5" precision="2"><!-- ucd="INST_NOISE" -->
+      <DESCRIPTION>? Noise correction factor at 100um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="nID" ucd="meta.number" datatype="short" width="2"><!-- ucd="NUMBER" -->
+      <DESCRIPTION>? Number of positional associations</DESCRIPTION>
+      <VALUES null="-32768" />
+    </FIELD>
+    <FIELD name="Type" ucd="src.class" datatype="short" width="2"><!-- ucd="CLASS_OBJECT" -->
+      <DESCRIPTION>? Type of associated object (G1)</DESCRIPTION>
+      <VALUES null="-32768" />
+    </FIELD>
+    <FIELD name="NoisR12" ucd="phot.flux;arith.ratio" datatype="float" width="6" precision="3"><!-- ucd="PHOT_FLUX_RATIO" -->
+      <DESCRIPTION>? Ratio of 85% to 68% quantiles of flux distribution at 12um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="NoisR25" ucd="phot.flux;arith.ratio" datatype="float" width="6" precision="3"><!-- ucd="PHOT_FLUX_RATIO" -->
+      <DESCRIPTION>? Ratio of 85% to 68% quantiles of flux distribution at 25um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="NoisR60" ucd="phot.flux;arith.ratio" datatype="float" width="6" precision="3"><!-- ucd="PHOT_FLUX_RATIO" -->
+      <DESCRIPTION>? Ratio of 85% to 68% quantiles of flux distribution at 60um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="NoisR100" ucd="phot.flux;arith.ratio" datatype="float" width="6" precision="3"><!-- ucd="PHOT_FLUX_RATIO" -->
+      <DESCRIPTION>? Ratio of 85% to 68% quantiles of flux distribution at 100um</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+<DATA><TABLEDATA>
+<TR><TD>1</TD><TD>F00000+2252</TD><TD>00 00 00.4</TD><TD>+22 52 17</TD><TD>23</TD><TD>6</TD><TD>64</TD><TD></TD><TD>1.18e-01</TD><TD>29</TD><TD>1</TD><TD></TD><TD>2.41e-01</TD><TD>29</TD><TD>1</TD><TD>7</TD><TD>4.77e-01</TD><TD>13</TD><TD>3</TD><TD></TD><TD>1.07e+00</TD><TD>27</TD><TD>1</TD><TD>99</TD><TD></TD><TD></TD><TD>1e+01</TD><TD></TD><TD></TD><TD></TD><TD>7e+00</TD><TD></TD><TD></TD><TD></TD><TD>40</TD><TD></TD><TD>0</TD><TD>0</TD><TD>0</TD><TD>0</TD><TD>0</TD><TD>0</TD><TD>0</TD><TD></TD><TD></TD><TD>1.35</TD><TD></TD><TD>0</TD><TD></TD><TD></TD><TD></TD><TD>1.600</TD><TD></TD></TR>
+<TR><TD>2</TD><TD>F00000-0359</TD><TD>00 00 00.8</TD><TD>-03 59 24</TD><TD>16</TD><TD>4</TD><TD>67</TD><TD></TD><TD>1.56e-01</TD><TD>28</TD><TD>1</TD><TD></TD><TD>1.74e-01</TD><TD>28</TD><TD>1</TD><TD>12</TD><TD>1.12e+00</TD><TD>6</TD><TD>3</TD><TD>12</TD><TD>2.59e+00</TD><TD>8</TD><TD>2</TD><TD>99</TD><TD></TD><TD></TD><TD>3e+01</TD><TD>2e+01</TD><TD></TD><TD></TD><TD>2e+01</TD><TD>3e+01</TD><TD></TD><TD></TD><TD>16</TD><TD>31</TD><TD>0</TD><TD>0</TD><TD>0</TD><TD>0</TD><TD>0</TD><TD>0</TD><TD>0</TD><TD></TD><TD></TD><TD>1.19</TD><TD>1.80</TD><TD>2</TD><TD>10</TD><TD></TD><TD></TD><TD>1.600</TD><TD>1.610</TD></TR>
+</TABLEDATA></DATA>
+</TABLE>
+<INFO name="matches" value="2">matching records</INFO>
+
+<INFO name="Warning" value="truncated result (maxtup=2)"/><INFO name="QUERY_STATUS" value="OVERFLOW"> value="truncated result (maxtup=2)"</INFO>
+
+</RESOURCE>
+</VOTABLE>

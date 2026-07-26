@@ -1,0 +1,939 @@
+<html>
+<head>
+<meta charset="utf-8" />
+<title>AllWISE Explanatory Supplement: Source Catalog and Reject Table</title>
+</head>
+<body bgcolor="#F3E2A9">
+
+<a href="sec2_3c.html"> <img src="Prev1.gif" alt="previous page"></a> &nbsp; <a href="index.html"> <img src="Home.png" alt="back to table of contents"></a> &nbsp; <a href="sec2_4b.html"> <img src="Next1.gif" alt="next page"></a> <br>
+<hr>
+
+<h1>II. AllWISE Source Catalog and Reject Table</h1>
+
+<h2>II.4. Completeness and Reliability</h2>
+
+<h3>II.4.a. Catalog Completeness</h3>
+<hr>
+
+<h2>Contents</h2>
+<a href="#sum">II.4.a.i. Summary</a>
+<br />
+<a href="#allwisesdss">II.4.a.ii. Comparison with SDSS Selected Stars</a>
+<br />
+<a href="#allwisespitzer">II.4.a.iii. Comparison with <em>Spitzer</em></a>
+<br />
+<a href="#allwisew3w4">II.4.a.iv. Completeness in W3 and W4</a>
+<br />
+<a href="#modelcompleteness">II.4.a.v. Empirical Models of Completeness</a>
+<br />
+<a href="#modeldetails">II.4.a.vi. Stellar Modeling Details</a>
+<hr>
+
+<a name="sum"></a>
+<h4>II.4.a.i. Summary</h4>
+
+<p>Completeness is the quantity that describes the fraction of real sources that are detected. Put another way, it's the probability that a source is detected given that a source exists to be detected. In formal statistics completeness is closely related to what is called a
+"type II error," or a false positive. Completeness is therefore an important metric of a catalog's performance and an essential tool for working with data near the limit of a survey's sensitivity.</p>
+
+<p>The AllWISE Source Catalog does not have any completeness level it is formally
+required to meet. We show herein that AllWISE meets and surpasses the <a href="/data/WISE/docs/release/All-Sky/expsup/sec6_5.html#req"  target="_blank">requirements
+imposed on the WISE All&ndash;Sky data release</a>, with the possible exception of sources
+affected by the <a href="sec5_1b.html#satw1">W1 saturation problem</a> near the beginning of the 3&ndash;band cryo stage
+of the mission, and even exceeds the completeness of the All&ndash;Sky at the same coverage most
+over most of the sky in the short wavelength band (W1) due to the reduction of the
+background over&ndash;subtraction issue.</p>
+
+<p>In the process of examining completeness we found a deficit in high snr sources for W1.
+Details of the cause of the problem are in <a href="sec5_1b.html#w1sat">Section V.1.b.iii</a>.
+<a href="#allwisesumm_fig1">Figure 1</a> shows that the problem is well isolated in two stripes of
+ecliptic longitude. We therefore split the analysis of completeness for AllWISE by
+ecliptic longitude into the High W1sat stripes
+(<math><mn>45</mn><mi>&deg;</mi> <mo>&lt; </mo><mi>&lambda;</mi> <mo> &lt; </mo> <mn>59</mn><mi>&deg;</mi></math> or
+<math><mn>229</mn><mi>&deg;</mi> <mo>&lt; </mo><mi>&lambda;</mi> <mo> &lt; </mo> <mn>243</mn><mi>&deg;</mi></math>),
+and the Main Sample outside of those stripes. </p>
+<br />
+<a name="allwisesumm_fig1"></a>
+<center>
+<table border="1" width="400">
+<tbody><tr align="center">
+<td> <a href="figures/sec2_4aif1.png"><img src="figures/sec2_4aif1_sm.png"></a></td> </tr>
+<tr> <td> <strong>Figure 1</strong> &ndash; Cylindrical equal area projection of AllWISE
+sources satisfying
+<math><mn>15.0</mn><mo>&le;</mo> <mi>w1mpro</mi> <mo>&lt; </mo> <mn>15.05</mn></math> on
+an ecliptic grid. The color of the points encodes the fraction of W1 pixels in the
+source that were saturated. Because the sources are faint, 15th magnitude, all of
+the saturated pixels are exogenous (eg: cosmic ray hits, contamination). The red
+vertical lines highlight the rough boundaries in ecliptic longitude that separate the
+stripes with high w1sat from the regions containing the main sample. </td></tr>
+</tbody></table>
+</center>
+<br />
+<p>The approach we take in assessing completeness for AllWISE is very different than what
+was done for All&ndash;Sky. Like for assessing reliability, any assessment of completeness begins
+with the construction of a "truth list," a list of sources that WISE could detect and the
+fluxes WISE would measure for them. In order to be useful, the truth list must be both
+more sensitive than WISE and highly reliable; unreliability in the truth list looks like
+false incompleteness, just as incompleteness in the truth list can falsely lower measured
+reliability. For Allsky, we produced truth lists using external data from <em>Spitzer</em>/IRAC
+and internal lists based on artificially decimating the coverage of tiles, using the
+source list from the deepest versions of the tiles as the truth lists, as described in
+<a href="/data/WISE/docs/release/All-Sky/expsup/sec6_5.html#internal" target="_blank">Section VI.5.b.</a> of the WISE All&ndash;Sky Explanatory Supplement.
+The former truth sets are not available on a very large area of the sky to sufficient
+depth, and we did not have the resources to do the latter. We therefore leveraged the
+list of stellar models based on data from Sloan Digital Sky Survey, data release 9,
+(SDSSdr9) and Two Micron All Sky Survey (2MASS) presented by
+<a href="https://ui.adsabs.harvard.edu/abs/2013AAS...22144309L" target="_blank">Lake et al.</a> at winter
+AAS 2013 to evaluate the completeness of WISE's two short wavelength bands, W1 and W2, the ones with significantly increased depth in AllWISE.
+For the long wavelength bands,
+W3 and W4, it is safe to assume that the completeness
+ is identical to WISE All&ndash;Sky because the underlying data
+content of the frames is the same. Time permitting, we will assess the completeness W3 and W4
+at a later date using a less detailed analysis, boot strapping a truth list of color selected
+stars from 2MASS, W1, and W2.  Focusing on a single source type, ordinary stars, forces
+us to assess completeness based on whether the source meets the <a href="sec5_4.html">selection criteria</a> for the particular band being assessed, not the catalog. The advantages of this approach are: it permits a detailed assessment of how coverage affects completeness over a large area, and it makes it possible
+to calculate the completeness of sub&ndash;populations with unusual colors. The disadvantage of this
+approach is that it doesn't permit a meaningful assessment of the global completeness of
+the catalog. For that reason, the summary of AllWISE's completeness in
+<A href="#summary-table">Table 1</a> includes on fluxes for which AllWISE achieves 95%
+completeness based on the performance of a single band in the given range of coverages.
+For any source which exceeds these limits in any band, that isn't lost to contamination or
+confusion, AllWISE will be at least 95% complete before applying any Eddington bias
+correction.</p>
+
+<a name="summary-table"></a>
+<center>
+<table border="1">
+<caption><strong>Table 1 </strong>&ndash; 95% Completeness Summary</caption>
+<tbody><tr>
+<th width="85">Subset</th>
+<th width="77">W1 / <math><mi>&mu;</mi></math>Jy</th><th width="77">W1 / mag</th>
+<th width="77">W2 / <math><mi>&mu;</mi></math>Jy</th><th width="77">W2 / mag</th>
+</tr>
+<tr><th>AllWISE Main</th>
+<td>44</td> <td>17.1</td> <td>88</td> <td>15.7</td> </tr>
+
+<tr><th>AllWISE High W1sat</th>
+<td>126</td> <td>16</td> <td>83</td> <td>15.8</td> </tr>
+
+<tr><th>WISE All&ndash;Sky</th>
+<td>69</td> <td>16.6</td> <td>120</td> <td>15.4</td> </tr>
+
+</tbody></table>
+</center>
+
+<a name="allwisesdss"></a>
+<h4>II.4.a.ii. Comparison with SDSS Selected Stars</h4>
+
+<p>In order to maximize the reliability of the truth list, we required that
+all SDSSdr9 selected targets: exhibit stellar morphology, be high signal to noise in all
+5 SDSS filters, have no SDSSdr9 detected neighbors within 15 arcseconds, be at high
+galactic latitude (<math><mi>b</mi><mo>&ge;</mo><mn>30</mn><mi>&deg;</mi></math>), and have high
+quality photometry. Where high quality 2MASS photometry was available it was used to
+constrain the stellar models, too. We then fit the data using the ATLAS 9 grid of
+<a href="http://kurucz.harvard.edu/grids.html" target="_blank">stellar atmosphere models of Kurucz (1993)</a>
+(only those of the form GRIDPnn or GRIDMnn), subject to interstellar dust extinction using
+the model of Cardelli et al. 1989 (<a href="https://ui.adsabs.harvard.edu//abs/1989ApJ...345..245C" target="_blank">doi:10.1086/167900</a>,
+assuming <math><msub><mi>R</mi> <mi>&nu;</mi></msub> <mo>=</mo> <mn>3.1</mn></math>).
+Selecting for only those sources that were well modelled left <strong>1,346,467</strong>
+targets, shown in an ecliptic projection of the sky in
+<A href="#allwisesdss_fig2">Figure 2</a>. Full
+details are in the <A href="#modeldetails">Stellar Modeling Details</a> section.
+</p>
+<br />
+<a name="allwisesdss_fig2"></a>
+<center>
+<table border="1" width="400">
+<tbody><tr align="center">
+<td> <a href="figures/sec2_4aiif2.png"><img src="figures/sec2_4aiif2_sm.png"></a></td> </tr>
+<tr> <td> <strong>Figure 2</strong> &ndash; Aitoff projection of well modelled stars on
+the Ecliptic coordinate grid.</td></tr>
+</tbody></table>
+</center>
+
+<p>Of the 1.3 million stars in the global sample, the relative uncertainty of the W1
+prediction is <math><mo>&le;</mo><mn>0.2</mn></math> for <strong>974,553</strong> of them,
+and likewise for <strong>953,907</strong> of them in W2. There are not enough well
+modelled stars bright enough in W3 to measure completeness, and none in W4.
+Dividing the samples into main and high w1sat gives: <strong>880,106</strong>
+and <strong>94,447</strong> in W1, and <strong>861,508</strong> and
+<strong>92,399</strong> in W2, each respectively. The frame coverages probed
+by the W1 and W2 samples are shown in <a href="#allwisesdss_fig3">Figure 3</a>
+for both AllWISE and All&ndash;Sky. The extent to which the histograms in
+<A href="#allwisesdss_fig3">Figure 3</a>
+differ from those in (link to coverage section) measures how accurately the
+overall coverage measures of completeness represents the catalog.</p>
+<br />
+
+<a name="allwisesdss_fig3"></a>
+<center>
+<table border="1" width="400">
+<tbody>
+
+<tr align="center">
+<td> Band </td>
+<td> AllWISE Main (<strong>1</strong>) </td>
+<td> AllWISE High W1sat (<strong>2</strong>) </td>
+<td> WISE All&ndash;Sky (<strong>3</strong>) </td></tr>
+
+<tr align="center">
+<td> W1 (<strong>a</strong>) </td>
+<td> <a href="figures/sec2_4aiif3_a1.png"><img src="figures/sec2_4aiif3_a1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif3_a2.png"><img src="figures/sec2_4aiif3_a2_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif3_a3.png"><img src="figures/sec2_4aiif3_a3_sm.png"></a></td></tr>
+
+<tr align="center">
+<td> W2 (<strong>b</strong>)</td>
+<td> <a href="figures/sec2_4aiif3_b1.png"><img src="figures/sec2_4aiif3_b1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif3_b2.png"><img src="figures/sec2_4aiif3_b2_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif3_b3.png"><img src="figures/sec2_4aiif3_b3_sm.png"></a></td></tr>
+
+<tr> <td colspan="4"> <strong>Figure 3</strong> &ndash; Histograms of coverages probed by the
+SDSSdr9 selected stellar samples, as estimated by the nearest source in the AllWISE combined
+catalog (the union of the AllWISE catalog and reject table that is marked with use_src = 1).
+The first row (<strong>a</strong>) contains the W1 samples, and the second
+(<strong>b</strong>) the W2 samples. The first column (<strong>1</strong>) contains
+the AllWISE Main samples, the second (<strong>2</strong>) the AllWISE High W1sat
+samples, and the third (<strong>3</strong>) the All&ndash;Sky samples.</td></tr>
+</tbody></table>
+</center>
+<br />
+<p>We searched for the truth list in the AllWISE combined catalog (the union of the
+AllWISE catalog and reject table) requiring that use_src = 1. We then repeatedly searched
+for unmatched sources, expanding the search radius for until there was a nearest
+neighbor of every source in the truth list. It is the coverage of that nearest neighbor
+that served as a proxy for the coverage of the source. This means that undetected
+sources have a slight bias toward higher coverages, but the effect should be small.
+A source was considered detected if the nearest AllWISE source was
+<math><mo>&le;</mo><mn>3</mn></math> arcseconds from the truth source and the WISE source
+satisfied the catalog selection criteria described in section (link) for the individual
+band being measured. Because using model stars is so radically different from the
+approach taken for All&ndash;Sky, we performed this task for WISE All&ndash;Sky, too. The detected
+sources and truth sources were then binned into histograms. Dividing the detected
+sources histogram by the truth list histogram gives a histogrammed "differential"
+completeness. The plots of completeness for different coverage cuts are in
+<a href="#allwisesdss_fig4">Figure 4</a> for W1 and
+<a href="#allwisesdss_fig5">Figure 5</a> for W2.
+<a href="#allwisesdss_tbl2">Table 2</a> contains a list of the fluxes at which the plots in
+Figures 4 and 5 achieve 95% completeness. </p>
+<br />
+
+<center>
+<a name="allwisesdss_fig4"></a>
+<table border="1" width="400">
+<tbody><tr align="center">
+<td> <math><mi>w1cov</mi></math> </td>
+<td> AllWISE Main (<strong>1</strong>) </td>
+<td> AllWISE High W1sat (<strong>2</strong>) </td>
+<td> WISE All&ndash;Sky (<strong>3</strong>) </td></tr>
+<tr align="center">
+<td>  &lt; 20 (<strong>a</strong>) </td>
+<td> <a href="figures/sec2_4aiif4_a1.png"><img src="figures/sec2_4aiif4_a1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif4_a2.png"><img src="figures/sec2_4aiif4_a2_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif4_a3.png"><img src="figures/sec2_4aiif4_a3_sm.png"></a></td></tr>
+
+<tr align="center">
+<td> 28&ndash;38 (<strong>b</strong>)</td>
+<td> <a href="figures/sec2_4aiif4_b1.png"><img src="figures/sec2_4aiif4_b1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif4_b2.png"><img src="figures/sec2_4aiif4_b2_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif4_b3.png"><img src="figures/sec2_4aiif4_b3_sm.png"></a></td></tr>
+
+<tr align="center">
+<td> 40&ndash;50 (<strong>c</strong>)</td>
+<td> <a href="figures/sec2_4aiif4_c1.png"><img src="figures/sec2_4aiif4_c1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif4_c2.png"><img src="figures/sec2_4aiif4_c2_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif4_c3.png"><img src="figures/sec2_4aiif4_c3_sm.png"></a></td></tr>
+
+<tr align="center">
+<td> &ge; 100 (<strong>d</strong>)</td>
+<td> <a href="figures/sec2_4aiif4_d1.png"><img src="figures/sec2_4aiif4_d1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif4_d2.png"><img src="figures/sec2_4aiif4_d2_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif4_d3.png"><img src="figures/sec2_4aiif4_d3_sm.png"></a></td></tr>
+
+<tr align="center">
+<td> any (<strong>e</strong>)</td>
+<td> <a href="figures/sec2_4aiif4_e1.png"><img src="figures/sec2_4aiif4_e1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif4_e2.png"><img src="figures/sec2_4aiif4_e2_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif4_e3.png"><img src="figures/sec2_4aiif4_e3_sm.png"></a></td></tr>
+
+<tr> <td colspan="4"> <strong>Figure 4</strong> &ndash; Completeness in W1 plotted versus
+predicted flux in WISE W1. The rows are different coverage ranges, and the columns are
+AllWISE Main (<strong>1</strong>), AllWISE High W1sat (<strong>2</strong>), and
+WISE All&ndash;Sky (<strong>3</strong>). The black line is the measured completeness, the
+blue and red lines bound the 1&ndash;sigma confidence band, the horizontal dashed line
+represents 95% completeness, the purple line is a best fit empirical model (see
+<a href="#modelcompleteness">Section II.4.a.v.</a>), and the vertical dotted line
+is where the model line hits 95% completeness. Note that the black line is set to
+zero when there are no truth sources in a given bin. </td></tr>
+</tbody></table>
+<br />
+<a name="allwisesdss_fig5"></a>
+<table border="1" width="400">
+<tbody><tr align="center">
+<td> <math><mi>w2cov</mi></math> </td>
+<td> AllWISE Main (<strong>1</strong>) </td>
+<td> AllWISE High W1sat (<strong>2</strong>) </td>
+<td> WISE All&ndash;Sky (<strong>3</strong>) </td></tr>
+<tr align="center">
+<td>  &lt; 20 (<strong>a</strong>) </td>
+<td> <a href="figures/sec2_4aiif5_a1.png"><img src="figures/sec2_4aiif5_a1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif5_a2.png"><img src="figures/sec2_4aiif5_a2_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif5_a3.png"><img src="figures/sec2_4aiif5_a3_sm.png"></a></td></tr>
+
+<tr align="center">
+<td> 28&ndash;38 (<strong>b</strong>)</td>
+<td> <a href="figures/sec2_4aiif5_b1.png"><img src="figures/sec2_4aiif5_b1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif5_b2.png"><img src="figures/sec2_4aiif5_b2_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif5_b3.png"><img src="figures/sec2_4aiif5_b3_sm.png"></a></td></tr>
+
+<tr align="center">
+<td> 40&ndash;50 (<strong>c</strong>)</td>
+<td> <a href="figures/sec2_4aiif5_c1.png"><img src="figures/sec2_4aiif5_c1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif5_c2.png"><img src="figures/sec2_4aiif5_c2_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif5_c3.png"><img src="figures/sec2_4aiif5_c3_sm.png"></a></td></tr>
+
+<tr align="center">
+<td> &ge; 100 (<strong>d</strong>)</td>
+<td> <a href="figures/sec2_4aiif5_d1.png"><img src="figures/sec2_4aiif5_d1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif5_d2.png"><img src="figures/sec2_4aiif5_d2_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif5_d3.png"><img src="figures/sec2_4aiif5_d3_sm.png"></a></td></tr>
+
+<tr align="center">
+<td> any (<strong>e</strong>)</td>
+<td> <a href="figures/sec2_4aiif5_e1.png"><img src="figures/sec2_4aiif5_e1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif5_e2.png"><img src="figures/sec2_4aiif5_e2_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif5_e3.png"><img src="figures/sec2_4aiif5_e3_sm.png"></a></td></tr>
+
+<tr> <td colspan="4"> <strong>Figure 5</strong> &ndash; Completeness in W2 plotted versus
+predicted flux in WISE W2. The rows are different coverage ranges, and the columns are
+AllWISE Main (<strong>1</strong>), AllWISE High W1sat (<strong>2</strong>), and
+WISE All&ndash;Sky (<strong>3</strong>). The black line is the measured completeness, the
+blue and red lines bound the 1&ndash;sigma confidence band, the horizontal dashed line
+represents 95% completeness, the purple line is a best fit empirical model (see
+<a href="#modelcompleteness">Section II.4.a.v.</a>), and the vertical dotted line
+is where the model line hits 95% completeness. Note that the black line is set to
+zero when there are no truth sources in a given bin.</td></tr>
+</tbody></table>
+</center>
+<br />
+<a name="allwisesdss_tbl2"></a>
+<center>
+<table border="1">
+<caption><strong>Table 2 </strong>&ndash; 95% Completeness Levels, SDSS</caption>
+<tbody><tr>
+<th width="80">Subset</th><th width="77">Coverage</th>
+<th width="77">W1 / <math><mi>&mu;</mi></math>Jy</th><th width="77">W1 / mag</th>
+<th width="77">W2 / <math><mi>&mu;</mi></math>Jy</th><th width="77">W2 / mag</th>
+</tr>
+<tr><th rowspan="5">AllWISE Main</th>
+<td>&lt; 20</td> <td>49</td> <td>17.0 </td> <td>119</td> <td>15.4</td></tr>
+<tr><td>28&ndash;38</td> <td>42</td> <td>17.2</td> <td>78</td> <td>15.8</td> </tr>
+<tr><td>40&ndash;50</td> <td>37</td> <td>17.3</td> <td>66</td> <td>16.0</td> </tr>
+<tr><td>&ge; 100</td> <td>38</td> <td>17.3</td> <td>43</td> <td>16.5</td> </tr>
+<tr><td>overall</td> <td>44</td> <td>17.1</td> <td>88</td> <td>15.7</td> </tr>
+
+<tr><th rowspan="5">AllWISE high w1sat</th>
+<td>&lt; 20</td> <td>52</td> <td>16.9</td> <td>95</td> <td>15.6</td> </tr>
+<tr><td>28–38</td> <td>83</td> <td>16.4</td> <td>80</td> <td>15.8</td> </tr>
+<tr><td>40&ndash;50</td> <td>640</td> <td>14.2</td> <td>69</td> <td>16.0</td> </tr>
+<tr><td>&ge; 100</td> <td>199</td> <td>15.5</td> <td>54</td> <td>16.3</td> </tr>
+<tr><td>overall</td> <td>126</td> <td>16.0</td> <td>83</td> <td>15.8</td> </tr>
+
+<tr><th rowspan="5">WISE All&ndash;Sky</th>
+<td>&lt; 20</td> <td>72</td> <td>16.6</td> <td>128</td> <td>15.3</td> </tr>
+<tr><td>28&ndash;38</td> <td>55</td> <td>16.9</td> <td>75</td> <td>15.9</td> </tr>
+<tr><td>40&ndash;50</td> <td>50</td> <td>17.0</td> <td>64</td> <td>16.1</td> </tr>
+<tr><td>&ge; 100</td> <td>51</td> <td>16.9</td> <td>50</td> <td>16.4</td> </tr>
+<tr><td>overall</td> <td>69</td> <td>16.6</td> <td>120</td> <td>15.4</td> </tr>
+
+</tbody></table>
+</center>
+
+<p>The large number of sources in our truth lists and large area on the sky permits
+an analysis that is far more finely binned in the coverage direction.
+<a href="#allwisesdss_fig6">Figure 6</a>
+contains source density in log coverage &ndash; log predicted flux space for the truth list
+and observed completeness in the same space. To produce the plots we binned the
+both the truth list and detected list on grids 1024 wide by 724 long. We then smoothed
+the both images by convolving with a Gaussian kernel with standard deviation 0.015 dex
+in both directions. The completeness image comes from dividing the smoothed detection
+image by the smoothed truth image. Finally, all pixels with a density lower than
+<math>
+<mn>4</mn>
+<msup><mn>e</mn> <mi><mo>&ndash;</mo><mn>1</mn><mo>/</mo><mn>2</mn></mi></msup>
+<mo>/</mo>
+<mfenced open="(" close=")" separators=""> <mn>2</mn><mn>&pi;</mn> <msup><mi>&sigma;</mi> <mn>2</mn></msup>  </mfenced>
+<mo>&approx;</mo>
+<mn>1716</mn> <mspace width="mediummathspace"/> <msup>dex <mn>&ndash;2</mn></msup></math></p>
+(i.e. farther than 1&ndash;sigma from 4 sources, or equivalent) in the truth set image is
+masked off in all images as unreliable. An empirical model fit to the completeness images in
+<a href="#allwisesdss_fig6">Figure 6</a> is in <a href="#modelcompleteness">Section II.4.a.v</a>. Broadly,
+the images in <a href="#allwisesdss_fig6">Figure 6</a> show the transition between
+<math><msqrt>coverage</msqrt></math> scaling of SNR and the confusion limit, around 60 frames
+in W1 and 100 frames in W2. Also of note is that the high w1sat region is only detrimental
+to the completeness in W1, as explained in <a href="sec5_1b.html#w1sat">V.1.b</a>.</p>
+<br />
+<a name="allwisesdss_fig6"></a>
+<center>
+<table border="1" width="611">
+<tbody><tr align="center">
+<th width="39"> Band </th>
+<th width="71"> Sample </th>
+<th width="237"> Completeness (<strong>1</strong>) </th>
+<th width="236"> Truth Set Density (<strong>2</strong>) </th></tr>
+<tr align="center">
+<th rowspan="3">  W1 </th>
+<th> AllWISE Main (<strong>a</strong>)</th>
+<td> <a href="figures/sec2_4aiif6_a1.png"><img src="figures/sec2_4aiif6_a1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif6_a2.png"><img src="figures/sec2_4aiif6_a2_sm.png"></a></td></tr>
+
+<tr align="center">
+<th> AllWISE High W1sat (<strong>b</strong>)</th>
+<td> <a href="figures/sec2_4aiif6_b1.png"><img src="figures/sec2_4aiif6_b1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif6_b2.png"><img src="figures/sec2_4aiif6_b2_sm.png"></a></td></tr>
+
+<tr align="center">
+<th> WISE All&ndash;Sky (<strong>c</strong>)</th>
+<td> <a href="figures/sec2_4aiif6_c1.png"><img src="figures/sec2_4aiif6_c1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif6_c2.png"><img src="figures/sec2_4aiif6_c2_sm.png"></a></td></tr>
+
+<tr align="center">
+<th rowspan=3> W2 </th>
+<th> AllWISE Main (<strong>d</strong>)</th>
+<td> <a href="figures/sec2_4aiif6_d1.png"><img src="figures/sec2_4aiif6_d1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif6_d2.png"><img src="figures/sec2_4aiif6_d2_sm.png"></a></td></tr>
+
+<tr align="center">
+<th> AllWISE High W1sat (<strong>e</strong>)</th>
+<td> <a href="figures/sec2_4aiif6_e1.png"><img src="figures/sec2_4aiif6_e1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif6_e2.png"><img src="figures/sec2_4aiif6_e2_sm.png"></a></td></tr>
+
+<tr align="center">
+<th> WISE All&ndash;Sky (<strong>f</strong>)</th>
+<td> <a href="figures/sec2_4aiif6_f1.png"><img src="figures/sec2_4aiif6_f1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiif6_f2.png"><img src="figures/sec2_4aiif6_f2_sm.png"></a></td></tr>
+
+<tr> <td colspan="4"> <strong>Figure 6</strong> &ndash; Completeness (column <strong>a</strong>)
+and sampling (truth set) density (column <strong>b</strong>) in log coverage &ndash; log flux space. Rows
+(<strong>a</strong>)&ndash;(<strong>c</strong>) contain plots about W1, and
+(<strong>d</strong>)&ndash;(<strong>f</strong>) contain plots about W2. Rows
+(<strong>a</strong>) and (<strong>d</strong>) are data from the AllWISE Main sample,
+(<strong>b</strong>) and (<strong>e</strong>) are from the AllWISE High W1sat sample, and
+(<strong>c</strong>) and (<strong>f</strong>) are from the WISE All&ndash;Sky sample. Each
+plot contains a point with error bars with the size of the error bars set to
+the 1&ndash;sigma scale of the smoothing. </td></tr>
+</tbody></table>
+</center>
+
+
+
+<a name="allwisespitzer"></a>
+<h4>II.4.a.iii. Comparison with <em>Spitzer</em>/IRAC</h4>
+<p>The planning for AllWISE included a comparison with external data sets generated
+by <em>Spitzer</em>/IRAC, similar to what was done for All&ndash;Sky. This more direct external
+test also has the advantage that it can also check the validity of the approach taken in
+<a href="#allwisesdss">Section II.4.a.ii</a>. The description for how the plots in
+<a href="#allwisespitzer_fig7">Figure 7</a> were
+generated can be found in
+<a href="/data/WISE/docs/release/All-Sky/expsup/sec6_5.html" target="_blank">WISE All&ndash;Sky Explanatory Supplement Section VI.5</a>.</p>
+
+<p>The plots in <a href="#allwisespitzer_fig7">Figure 7</a> are most directly comparable
+to the (<strong>b</strong>) rows of Figures 4 and 5 for the SERVS fields, and the
+(<strong>c</strong>) rows for Bo&ouml;tes. <a href="#spitzertable">Table 3</a> contains
+estimates of the 95% completeness fluxes from linearly interpolating the plots in
+<a href="#allwisespitzer_fig7">Figure 7</a>.
+The figures therein are consistent with the coverage matching contents of <a href="#allwisesdss_tbl2">Table 2</a>.</p>
+
+
+<a name="allwisespitzer_fig7"></a>
+<center>
+<table border="1" width="400">
+<tbody><tr align="center">
+<td>  </td>
+<td> SERVS Lockman (<strong>1</strong>) </td>
+<td> SERVS XMMLSS (<strong>2</strong>) </td>
+<td> SDWFS Bo&ouml;tes (<strong>2</strong>) </td></tr>
+
+<tr align="center">
+<td>  W1/[3.6] (<strong>a</strong>) </td>
+<td> <a href="figures/sec2_4aiiif7_a1.png"><img src="figures/sec2_4aiiif7_a1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiiif7_a2.png"><img src="figures/sec2_4aiiif7_a2_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiiif7_a3.png"><img src="figures/sec2_4aiiif7_a3_sm.png"></a></td></tr>
+
+<tr align="center">
+<td> W2/[4.5] (<strong>b</strong>)</td>
+<td> <a href="figures/sec2_4aiiif7_b1.png"><img src="figures/sec2_4aiiif7_b1_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiiif7_b2.png"><img src="figures/sec2_4aiiif7_b2_sm.png"></a></td>
+<td> <a href="figures/sec2_4aiiif7_b3.png"><img src="figures/sec2_4aiiif7_b3_sm.png"></a></td></tr>
+
+
+<tr> <td colspan="4"> <strong>Figure 7</strong> &ndash; Completeness as measured by using
+catalogs produced from mosaics of <em>Spitzer</em>/IRAC images of the named fields as
+the truth set. </td></tr>
+</tbody></table>
+</center>
+<br />
+<a name="spitzertable"></a>
+<center>
+<table border="1">
+<caption><strong>Table 3 </strong>&ndash; <em>Spitzer</em>/IRAC Summary Table</caption>
+<tbody><tr>
+<th width="100"></th>
+<th width="120">SERVS Lockman</th>
+<th width="120">SERVS XMMLSS</th>
+<th width="120">SDWFS Bo&ouml;tes</th>
+</tr>
+<tr><th>Coordinates [J2000 (Ra,Dec)]</th>
+<td>10:49:12, +58:07</td> <td>02:20:00,&ndash;04:48</td> <td>14:32:00, +34:00</td> </tr>
+<tr><th>Area (<math><msup><mi>deg</mi> <mn>2</mn></msup></math>)</th> <td>4.0</td> <td>4.5</td> <td>5</td> </tr>
+<tr><th>Sources</th>  <td>180,000</td> <td>200,000</td> <td>170,000</td> </tr>
+<tr><th>AllWISE Coverage</th> <td>28&ndash;38</td> <td>28&ndash;38</td> <td>40&ndash;50</td> </tr>
+<tr><th>W1/[3.6] 95% Completeness (<math><mi>&mu;Jy</mi></math>)</th> <td>44</td> <td>42</td> <td>39</td> </tr>
+<tr><th>W2/[4.5] 95% Completeness (<math><mi>&mu;Jy</mi></math>)</th> <td>77</td> <td>75</td> <td>61</td> </tr>
+
+</tbody></table>
+</center>
+
+<a name="allwisew3w4"></a>
+<h4>II.4.a.iv. Completeness in W3 and W4</h4>
+<p>The data content of AllWISE does not differ significantly from All&ndash;Sky for W3 and W4,
+so we did not put as much effort into measuring the completeness in these channels,
+and will be included in an addendum at a later date, time permitting.</p>
+
+<a name="modelcompleteness"></a>
+<h4>II.4.a.v. Empirical Models of Completeness</h4>
+<p> The structure of the catalog selection criteria(link) makes the catalog functionally
+a union of 4 catalogs independently selected on each band. The initial source detection
+done by MDET(link) is based on a detection image that uses data from all 4 bands, so
+the independence of the catalogs is only approximate, but the high SNR cutoff for
+full catalog inclusion (SNR &ge; 5) mitigates this issue for assessing the catalog.
+Independence of selection means that in order for a source to be missed it must be
+missed by all 4 WISE bands. If the overall completeness is denoted
+<math><mi>C</mi></math>, and the completeness of band <math><mi>i</mi></math> is
+<math><msub><mi>C</mi> <mi>i</mi></msub></math>, then:
+
+<a name="eqn1"></a>
+<math display="block">
+	<mspace width="5em"/>
+	<mi>C</mi> <mo>=</mo> <mrow><mn>1</mn> <mo>&ndash;</mo>
+				<munderover> <mo>&prod;</mo>
+					<mrow> <mi>i</mi> <mo>=</mo> <mn>1</mn> </mrow>
+					<mn>4</mn>
+				</munderover>
+				<mfenced open="(" close=")" separators="">
+					<mn>1</mn> <mo>&ndash;</mo> <msub><mi>C</mi> <mi>i</mi></msub>
+				</mfenced> </mrow>. <mspace width="5em"/>
+				<mtext mathvariant="bold">(II.4.a.v.1)</mtext>
+</math>
+It is therefore possible to calculate the completeness of the catalog in terms of the
+completeness of the four WISE bands. </p>
+
+<p>A full treatment of the <math><msub><mi>C</mi> <mi>i</mi></msub></math>
+would include a complicated treatment of confusion, the background, source flux,
+coverage, etc. We find that, as is can be seen in
+Figures <a href="#allwisesdss_fig4">4</a> and <a href="#allwisesdss_fig5">5</a>,
+we have found that the following formula does a good job in approximating
+observed completeness for a fixed coverage:
+<a name="eqn2"></a>
+<math display="block">
+	<mspace width="5em"/>
+	<mi>C</mi> <mo>(</mo> <mi>F</mi> <mo>)</mo> <mo>=</mo>
+	<mi>CDF</mi><mfenced open="(" close=")" separators="">
+		<msub><mi>log</mi> <mn>10</mn></msub>
+		<mfenced open="(" close=")" separators=""><mfrac>
+			<mrow> <mi>F</mi> </mrow>
+			<mrow> <msub> <mi>F</mi> <mi>inflect</mi> </msub> </mrow>
+		</mfrac></mfenced>
+	</mfenced>,
+	<mspace width="5em"/>
+				<mtext mathvariant="bold">(II.4.a.v.2)</mtext>
+</math>
+where the definition of <math><mi>CDF</mi><mo>(</mo><mi>x</mi><mo>)</mo></math>,
+found in <a href="#allwiseadv_eqn3">Equation II.4.a.v.3</a>, is the integral of two
+S&eacute;rsic profiles with independent indicies and scale lengths, one for positive
+<math><mi>x</mi></math> one for negative, continuously linked together. The main
+difference is that the S&eacute;rsic index is inverted.
+<math><msub> <mi>F</mi> <mi>inflect</mi> </msub></math> is the flux at which
+the completeness undergoes a change in inflection.</p>
+
+<a name="allwiseadv_eqn3"></a>
+<center>
+<table border="1">
+<tbody>
+<tr align="center">
+<td><a href="figures/sec2_4ae03.pdf"><img src="figures/sec2_4ae03_sm.png"></a></td>
+</tr>
+<tr><td> <strong>Equations II.4.a.v.3</strong> &ndash; Empirical equation used for fitting
+completeness.
+</tbody>
+</table>
+</center>
+
+<p><a href="#eqn2">Equation II.4.a.v.2</a> was fit to the data in Figures
+<a href="#allwisesdss_fig4">4</a> and <a href="#allwisesdss_fig5">5</a>
+using a maximum likelihood fit, where the likelihood was the product of the
+binomial distribution applied to each bin,
+<math><msub><mi>L</mi> <mi>bin</mi></msub> <mo>=</mo>
+	<msub><mi>N</mi> <mi>true</mi></msub> <mo>!</mo> /
+		<mo>(</mo> <msub><mi>n</mi> <mi>det</mi></msub><mo>!</mo>
+		<mo>[</mo><msub><mi>N</mi> <mi>true</mi></msub> &ndash; <msub><mi>n</mi> <mi>det</mi></msub> <mo>]</mo><mo>!</mo><mo>)</mo>
+	<mo>&times;</mo>
+	<mmultiscripts><mi>C</mi> <mi>model</mi> <mrow><msub><mi>n</mi> <mi>det</mi></msub></mrow></mmultiscripts>
+	<msup><mrow><mo>(</mo><mn>1</mn> <mo>&ndash;</mo> <msub><mi>C</mi> <mi>model</mi></msub><mo>)</mo></mrow> <mrow><msub><mi>N</mi> <mi>true</mi></msub> <mo>&ndash;</mo> <msub><mi>n</mi> <mi>det</mi></msub></mrow></msup>
+</math>.
+The fitting parameters that resulted from maximizing the likelihood for each of the
+plots in Figures
+<a href="#allwisesdss_fig4">4</a> and <a href="#allwisesdss_fig5">5</a> are
+in <a href="#allwiseadv_tbl4">Table 4</a>.</p>
+
+<a name="allwiseadv_tbl4"></a>
+<center>
+<table border="1">
+<caption><strong>Table 4 </strong>&ndash; Completeness Fitting Parameters</caption>
+<tbody><tr>
+<th> Band </th>
+<th width="80">Subset</th>
+<th width="77">Coverage</th>
+<th width="77"><math><msub><mi>N</mi> <mi>stars</mi></msub></math></th>
+<th width="100"><math><msub><mi>F</mi> <mi>inflect</mi></msub></math> / <math><mi>&mu;</mi></math>Jy</th>
+<th width="77"><math><msub><mi>s</mi> <mi>l</mi></msub></math> / dex</th>
+<th width="77"><math><msub><mi>s</mi> <mi>r</mi></msub></math> / dex</th>
+<th width="77"><math><msub><mi>n</mi> <mi>l</mi></msub></math></th>
+<th width="77"><math><msub><mi>n</mi> <mi>r</mi></msub></math></th></th>
+</tr>
+<tr><th rowspan="15">W1</th>
+<th rowspan="5">AllWISE Main</th>
+<td>&lt; 20</td> <td>15,274</td> <td>46.0</td> <td>0.338</td> <td>0.00939</td> <td>1.45</td> <td>0.422</td></tr>
+<tr><td>28&ndash;38</td> <td>268,398</td> <td>30.3</td> <td>0.293</td> <td>0.0509</td> <td>1.27</td> <td>0.670</td></tr>
+<tr><td>40–50</td> <td>74,998</td> <td>26.2</td> <td>0.310</td> <td>0.0468</td> <td>1.38</td> <td>0.634</td> </tr>
+<tr><td>&ge; 100</td> <td>13,939</td> <td>20.9</td> <td>0.368</td> <td>0.0712</td> <td>1.15</td> <td>0.637</td> </tr>
+<tr><td>overall</td> <td>880,041</td> <td>34.0</td> <td>0.389</td> <td>0.0447</td> <td>1.56</td> <td>0.636</td> </tr>
+
+<tr><th rowspan="5">AllWISE high w1sat</th>
+<td>&lt; 20</td> <td>1,266</td> <td>49</td> <td>0.56</td> <td>0.0022</td> <td>6.6</td> <td>0.27</td></tr>
+<tr><td>28&ndash;38</td> <td>32,772</td> <td>36.0</td> <td>0.438</td> <td>0.0195</td> <td>2.08</td> <td>0.384</td></tr>
+<tr><td>40&ndash;50</td> <td>9,287</td> <td>23.7</td> <td>0.119</td> <td>0.0310</td> <td>0.689</td> <td>0.390</td> </tr>
+<tr><td>&ge; 100</td> <td>1,303</td> <td><math><mn>1.0</mn> <mo>&times;</mo> <msup><mn>10</mn> <mn>2</mn></msup></math></td> <td>0.97</td> <td><math><mn>8.4</mn><mo>&times;</mo><msup><mn>10</mn> <mn>&ndash;6</mn></msup></math></td> <td>2.1</td> <td>0.38</td> </tr>
+<tr><td>overall</td> <td>94,444</td> <td>35.0</td> <td>0.438</td> <td>0.0195</td> <td>2.08</td> <td>0.384</td> </tr>
+
+<tr><th rowspan="5">WISE All&ndash;Sky</th>
+<td>&lt; 20</td> <td>647,041</td> <td>53.8</td> <td>0.134</td> <td>0.0174</td> <td>0.917</td> <td>0.501</td></tr>
+<tr><td>28&ndash;38</td> <td>76,135</td> <td>36.5</td> <td>0.122</td> <td>0.0238</td> <td>0.867</td> <td>0.524</td></tr>
+<tr><td>40&ndash;50</td> <td>22,852</td> <td>33.8</td> <td>0.115</td> <td>0.0149</td> <td>0.836</td> <td>0.458</td> </tr>
+<tr><td>&ge; 100</td> <td>5,123</td> <td>31</td> <td>0.24</td> <td>0.019</td> <td>1.3</td> <td>0.44</td> </tr>
+<tr><td>overall</td> <td>974,314</td> <td>51.9</td> <td>0.220</td> <td>0.0236</td> <td>1.16</td> <td>0.526</td> </tr>
+
+<tr><th rowspan="15">W2</th>
+<th rowspan="5">AllWISE Main</th>
+<td>&lt; 20</td> <td>32,196</td> <td>85.7</td> <td>0.0995</td> <td>0.0657</td> <td>0.837</td> <td>0.951</td></tr>
+<tr><td>28&ndash;38</td> <td>251,861</td> <td>55.5</td> <td>0.0673</td> <td>0.0731</td> <td>0.669</td> <td>1.04</td></tr>
+<tr><td>40&ndash;50</td> <td>67,481</td> <td>39.5</td> <td>0.0571</td> <td>0.178</td> <td>0.602</td> <td>1.96</td> </tr>
+<tr><td>&ge; 100</td> <td>14,120</td> <td>39.0</td> <td>0.218</td> <td>0.0142</td> <td>1.04</td> <td>0.519</td> </tr>
+<tr><td>overall</td> <td>857,017</td> <td>62.4</td> <td>0.146</td> <td>0.0850</td> <td>0.883</td> <td>1.08</td> </tr>
+
+<tr><th rowspan="5">AllWISE high w1sat</th>
+<td>&lt; 20</td> <td>986</td> <td>77</td> <td>0.027</td> <td>0.0065</td> <td>0.55</td> <td>0.45</td></tr>
+<tr><td>28&ndash;38</td> <td>32,300</td> <td>56.5</td> <td>0.0941</td> <td>0.0732</td> <td>0.768</td> <td>1.00</td></tr>
+<tr><td>40&ndash;50</td> <td>9,599</td> <td>44.7</td> <td>0.0665</td> <td>0.0826</td> <td>0.659</td> <td>0.985</td> </tr>
+<tr><td>&ge; 100</td> <td>1,370</td> <td>30.3</td> <td>0.055</td> <td>0.091</td> <td>0.55</td> <td>0.90</td> </tr>
+<tr><td>overall</td> <td>91,979</td> <td>63.8</td> <td>0.188</td> <td>0.0596</td> <td>1.03</td> <td>0.887</td> </tr>
+
+<tr><th rowspan="5">WISE All&ndash;Sky</th>
+<td>&lt; 20</td> <td>641,213</td> <td>85.8</td> <td>0.0880</td> <td>0.0680</td> <td>0.782</td> <td>0.893</td></tr>
+<tr><td>28&ndash;38</td> <td>127,804</td> <td>57.9</td> <td>0.133</td> <td>0.0298</td> <td>0.864</td> <td>0.631</td></tr>
+<tr><td>40&ndash;50</td> <td>22,601</td> <td>58.5</td> <td>0.149</td> <td>0.00770</td> <td>0.907</td> <td>0.445</td> </tr>
+<tr><td>&ge; 100</td> <td>5,060</td> <td>41</td> <td>0.079</td> <td>0.0031</td> <td>0.70</td> <td>0.35</td> </tr>
+<tr><td>overall</td> <td>948,830</td> <td>85.7</td> <td>0.176</td> <td>0.0658</td> <td>1.00</td> <td>0.862</td> </tr>
+
+</tbody></table>
+</center>
+
+<p>A simple addition to the model in <a href="#eqn1">Equation II.4.a.v.2</a> makes it
+suitable for modeling the images in <a href="#allwisesdss_fig6">Figure 6</a>. The
+change is to make <math><msub><mi>F</mi> <mi>inflect</mi></msub></math> a smoothly broken
+power law in coverage. Specifically:
+<math display="block">
+	<mspace width="5em"/>
+	<msub><mi>F</mi> <mi>inflect</mi></msub> <mo>=</mo>
+				<msub><mi>F</mi> <mi>0</mi></msub>
+				<msubsup><mi>cov</mi> <mi>c</mi> <mi>&alpha;</mi> </msubsup>
+				<msup><mfenced open="(" close=")" separators="">
+					<msup><mfenced open="[" close="]" separators="">
+					<mfrac><mi>cov</mi> <mrow><msub><mi>cov</mi> <mi>c</mi></msub></mrow> </mfrac>
+					</mfenced>
+					<mrow> <mi>&alpha;</mi> <mo>/</mo> <mi>s</mi> </mrow> </msup>
+					<mo>+</mo>
+					<msup><mfenced open="[" close="]" separators="">
+					<mfrac><mi>cov</mi> <mrow><msub><mi>cov</mi> <mi>c</mi></msub></mrow> </mfrac>
+					</mfenced>
+					<mrow> <mi>&beta;</mi> <mo>/</mo> <mi>s</mi> </mrow> </msup>
+					</mfenced>
+
+				</mfenced> <mi>s</mi></msup>, <mspace width="5em"/>
+				<mtext mathvariant="bold">(II.4.a.v.1)</mtext>
+</math>
+where <math><mi>&alpha;</mi> <mo>~ </mo> <mn>&ndash;1</mn><mo>/</mo><mn>2</mn></math> is the
+low coverage slope, <math><mi>&beta;</mi> <mo>~</mo> <mn>0</mn></math>
+is the confusion limited slope, <math><msub><mi>cov</mi> <mi>c</mi></msub></math> is the
+coverage where the completeness transitions to confusion limited scaling,
+<math> <msub><mi>F</mi> <mn>0</mn></msub></math> is the constant of proportionality for
+asymptotically low coverage,
+and <math><mi>s</mi></math> is the amount of smoothing in the power law transition.
+</p>
+
+<p>The augmented model was fit to 2&ndash;dimensional histograms, unsmoothed, and binned
+more coarsely: 64 bins in log coverage, 138 in log flux. The fitting used the same
+likelihood as the 1&ndash;dimensional fits. The residuals of the smoothed image with respect
+to the fitted models are found in <a href="#allwiseadv_fig8">Figure 8</a>, and
+the the parameters from those fits are found in <a href="#allwiseadv_tbl5">Table 5</a>.</p>
+
+<a name="allwiseadv_fig8"></a>
+<center>
+<table border="1">
+<tbody><tr>
+<th> Band </th>
+<th width="80">Subset</th>
+<th width="77">Residuals</th>
+</tr>
+<tr><th rowspan="3">W1</th>
+<th>AllWISE Main</th>
+<td><a href="figures/sec2_4avf8_a1.png"><img src="figures/sec2_4avf8_a1_sm.png"></a></td> </tr>
+
+<tr><th>AllWISE high w1sat</th>
+<td><a href="figures/sec2_4avf8_b1.png"><img src="figures/sec2_4avf8_b1_sm.png"></a></td></tr>
+
+<tr><th>WISE All&ndash;Sky</th>
+<td><a href="figures/sec2_4avf8_c1.png"><img src="figures/sec2_4avf8_c1_sm.png"></a></td></tr>
+
+<tr><th rowspan="3">W2</th>
+<th>AllWISE Main</th>
+<td><a href="figures/sec2_4avf8_d1.png"><img src="figures/sec2_4avf8_d1_sm.png"></a></td></tr>
+
+<tr><th>AllWISE high w1sat</th>
+<td><a href="figures/sec2_4avf8_e1.png"><img src="figures/sec2_4avf8_e1_sm.png"></a></td></tr>
+
+<tr><th>WISE All&ndash;Sky</th>
+<td><a href="figures/sec2_4avf8_f1.png"><img src="figures/sec2_4avf8_f1_sm.png"></a></td></tr>
+
+<tr>
+  <td colspan="3"><strong>Figure 8</strong> &ndash; Completeness residuals, observed in
+ Column 1 of <a href="#allwisesdss_fig6">Figure 6</a> minus fitted model.</td></tr>
+
+</tbody>
+</table>
+</center>
+<br />
+<a name="allwiseadv_tbl5"></a>
+<center>
+<table border="1">
+<caption><strong>Table 5 </strong>&ndash; 2&ndash;d Completeness Fitting Parameters</caption>
+ <tr>
+<th> Band </th>
+<th width="80">Subset</th>
+<th width="77"><math><msub><mi>N</mi> <mi>stars</mi></msub></math></th>
+<th width="100"><math><msub><mi>F</mi> <mi>0</mi></msub></math> / <math><mi>&mu;</mi></math>Jy</th>
+<th width="100"><math><msub><mi>cov</mi> <mi>c</mi></msub></math> / frames</th>
+<th width="77"><math><mi>&alpha;</mi></math></th>
+<th width="77"><math><mi>&beta;</mi></math></th>
+<th width="90"><math><mi>s</mi> </math> </th>
+<th width="77"><math><msub><mi>s</mi> <mi>l</mi></msub></math> / dex</th>
+<th width="77"><math><msub><mi>s</mi> <mi>r</mi></msub></math> / dex</th>
+<th width="77"><math><msub><mi>n</mi> <mi>l</mi></msub></math></th>
+<th width="77"><math><msub><mi>n</mi> <mi>r</mi></msub></math></th>
+</tr>
+<tr><th rowspan="3">W1</th>
+<th>AllWISE Main</th>
+<td><strong>880,106</strong></td> <td>153</td> <td>59.4</td> <td>&ndash;0.470</td> <td>&ndash;0.0602</td> <td>0.0197</td> <td>0.265</td> <td>0.0549</td> <td>1.18</td> <td>0.692</td> </tr>
+
+<tr><th>AllWISE high w1sat</th>
+<td><strong>94,447</strong></td> <td>109</td> <td>25.5</td> <td>&ndash;0.356</td> <td><math><msup><mn>0</mn> <mi>&dagger;</mi></msup></math></td> <td>0.0543</td> <td>0.333</td> <td>0.0284</td> <td>1.25</td> <td>0.410</td> </tr>
+
+<tr><th>WISE All&ndash;Sky</th>
+<td><strong>974,382</strong></td> <td>154</td> <td>47.3</td> <td>&ndash;0.411</td> <td>&ndash;0.0498</td> <td>0.0805</td> <td>0.113</td> <td>0.0181</td> <td>0.851</td> <td>0.502</td> </tr>
+
+<tr><th rowspan="3">W2</th>
+<th>AllWISE Main</th>
+<td><strong>861,508</strong></td> <td>322</td> <td>259</td> <td><math><msup><mn>&ndash;0.5</mn> <mi>*</mi></msup></math> </td> <td>&ndash;0.239</td> <td><math><mn>2.67</mn> <mo>&times;</mo> <msup><mn>10</mn> <mn>&ndash;3</mn></msup></math></td> <td>0.0697</td> <td>0.0696</td> <td>0.684</td> <td>1.02</td> </tr>
+
+<tr><th>AllWISE high w1sat</th>
+<td><strong>92,399</strong></td> <td>334</td> <td>74.2</td> <td><math><msup><mn>&ndash;0.5</mn> <mi>*</mi></msup></math></td> <td>&ndash;0.199</td> <td><math><msup><mfenced open="(" close=")" separators=""><mn>1</mn> <mo>&times;</mo> <msup><mn>10</mn> <mn>&ndash;3</mn></msup></mfenced> <mi>*</mi></msup></math></td> <td>0.0863</td> <td>0.0499</td> <td>0.749</td> <td>0.825</td> </tr>
+
+<tr><th>WISE All&ndash;Sky</th>
+<td><strong>953,738</strong></td> <td>329</td> <td>48.3</td> <td>&ndash;0.489</td> <td>&ndash;0.232</td> <td><math><mn>9.75</mn> <mo>&times;</mo> <msup><mn>10</mn> <mn>&ndash;3</mn></msup></math></td> <td>0.0935</td> <td>0.0397</td> <td>0.796</td> <td>0.749</td> </tr>
+
+<tr> <td colspan="12"><strong>Note:</strong> values marked with a
+<math><msup><mphantom></mphantom> <mi>*</mi></msup></math> were constrained not to be less
+than the marked value, and
+<math><msup><mphantom></mphantom> <mi>&dagger;</mi></msup></math> were constrained not
+to be greater.</td></tr>
+ </table>
+</center>
+
+
+<a name="modeldetails"></a>
+<h4>II.4.a.vi. Stellar Modeling Details</h4>
+<p>We retrieved the data using the SDSS CasJobs service to get data from SDSS Data Release 9,
+including the 2MASS data from the TwoMass Table on the same service. The data were
+required to satisfy all of the following:
+<ul>
+<li>no SDSS detected primary neighbors within 15",</li>
+<li>high Galactic latitude (<math><mo>|</mo> <mi>b</mi> <mo>|</mo> <mo>&ge;</mo> <mn>30</mn><mi>&deg;</mi></math>),</li>
+<li>stellar morphology (type=6),
+<li>brighter than 20.0 AB magnitude in SDSS <math><mi>i</mi></math> filter (<math><mi>psfFlux_i</mi> <mo>&ge;</mo> <mn>10.0</mn></math>)</li>
+<li>high SNR in all 5 SDSS filters ( griz &ge; 5, u &ge; 3 ), and</li>
+<li>unblended, not a child, and far from the image edge (<math><mi>flags</mi> <mo>&</mo> <mn>28</mn> <mo>=</mo> <mn>0</mn></math>).
+</ul>
+
+<p>The fluxes from each 2MASS filter was used if the following flags were set:
+<math><mi>ccFlag</mi><mo>=</mo><mn>0</mn></math>
+and <math><mi>blFlag</mi> <mo>=</mo> <mn>1</mn></math>.
+This process resulted in <strong>4,412,967</strong> candidate sources.
+</p>
+
+<p>Combining the Kurucz stellar atmosphere grid with the Cardelli dust model yields
+5 parameters to vary in the fitting of each star: effective temperature
+(<math><msub><mi>T</mi> <mi>eff</mi></msub></math>), metallicity
+(<math><msub><mi>log</mi> <mn>10</mn></msub><mo>(</mo> <mi>Z</mi> <mo>)</mo></math>),
+surface gravity (<math><msub><mi>log</mi> <mn>10</mn></msub><mo>(</mo> <mi>g</mi> <mo>)</mo></math>),
+distance to photosphere radius ratio (<math><mi>D</mi> <mo>/</mo> <mi>R</mi></math>), and
+color excess in <math><mi>B</mi> <mo>&ndash;</mo> <mi>V</mi></math>
+(<math><mi>E</mi><mo>(</mo><mi>B</mi><mo>&ndash;</mo><mi>V</mi><mo>)</mo></math>). These
+five parameters were varied to minimize <math><msup><mi>&chi;</mi> <mn>2</mn></msup></math>
+,
+assuming Gaussian statistics in the fluxes. In principle, this means that there were
+zero degrees of freedom when no 2MASS photometry was available, but the model does not
+appear to actually cover enough 5&ndash;dimensional space to make this much of a problem.
+Indeed, <a href="#allwisestarmod_fig9">Figure 9</a> shows that the same cuts in
+reduced
+<math><msup><mi>&chi;</mi> <mn>2</mn></msup></math> work in straight
+<math><msup><mi>&chi;</mi> <mn>2</mn></msup></math> when the formal number of degrees
+of freedom is zero. The full list of cuts is:
+<ul>
+<li>typical badness of fit (<math> <mn>0.2</mn> <mo>&le;</mo> <msup><mi>&chi;</mi> <mn>2</mn></msup> <mo>/</mo>
+<mi>max</mi><mo>(</mo> <msub><mi>N</mi> <mi>df</mi></msub>, 1 <mo>)</mo>
+<mo>&le;</mo> <mn>10</mn> </math>), </li>
+<li>cool stars were modeled poorly (<math><msub><mi>T</mi> <mi>eff</mi></msub> <mo>&gt;</mo> 4750</math> K),</li>
+<li>the minimizer (the <A href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html" target="_blank">L&ndash;BFGS&ndash;B</a>
+minimizer in the scipy optimize package) must signal successful convergence,</li>
+<li>the optimal parameters must not be near the edges of the parameter search space,</li>
+<li>the eigenvalues of the Hessian matrix must all be positive definite,</li>
+<li>the nearest AllWISE source must not be associated with a 2MASS XSC source, and</li>
+<li>the nearest AllWISE source must be associated with at most one 2MASS point source.</li>
+</ul>
+Sources that match all of the above criteria are the roughly 1.3 million stars
+we describe as "well modelled" in
+<a href="#allwisesdss">Section II.4.a.ii</a>.
+</p>
+
+<a name="allwisestarmod_fig9"></a>
+<center>
+<table border="1" width="500">
+<tbody><tr>
+<td><a href="figures/sec2_4avif9_a1.png"><img src="figures/sec2_4avif9_a1_sm.png"></a></td> </tr>
+
+<tr>
+  <td><strong>Figure 9</strong> &ndash; distribution of sources in
+    <math><msup><mi>&chi;</mi> <mn>2</mn></msup></math> &ndash;
+<math><msub><mi>T</mi> <mi>eff</mi></msub></math> space. The green lines represent
+the cuts made to the data in this space:
+<math> <mn>0.2</mn> <mo>&le;</mo> <msup><mi>&chi;</mi> <mn>2</mn></msup> <mo>/</mo>
+<mi>max</mi><mo>(</mo> <msub><mi>N</mi> <mi>df</mi></msub>, 1 <mo>)</mo>
+<mo>&le;</mo> <mn>10</mn> </math>, and <math><msub><mi>T</mi> <mi>eff</mi></msub> <mo>&gt;</mo> 4750</math> K.
+The vertical striping is due to the crude (non&ndash;continuous) linear interpolation used.
+</td></tr>
+
+</tbody></table>
+</center>
+
+<p>There is the remaining question of how well the models match the measured WISE fluxes.
+<a href="#allwisestarmod_fig10">Figure 10</a> shows the source density distribution in fractional residual
+versus predicted flux space. In the case of ideal agreement, the red dashed line would
+hit the vertical tangent lines of the density curves. Missing on the high flux end is
+a disagreement in magnitude zero point (ie multiplicative offset). Missing on the low
+flux end is a background offset (i.e. additive offset). In more detail, the form is:
+<math>
+	<msub><mi>F</mi> <mi>corr</mi></msub>
+	<mo> = </mo>
+	<msub><mi>Zp</mi> <mi>corr</mi></msub>
+	<mfenced open="(" close=")" separators=""><msub><mi>F</mi> <mi>obs</mi></msub>
+	<mo>+</mo> <mi>b</mi> </mfenced>.
+</math>
+The values of <math><msub><mi>Zp</mi> <mi>corr</mi></msub></math> and <math><mi>b</mi></math>
+that qualitatively
+align the distributions are in <a href="#allwisestarmod_tbl6">Table 6</a>. Note how AllWISE requires less
+of a background offset than All&ndash;Sky.
+</p>
+
+<a name="allwisestarmod_fig10"></a>
+<center>
+<table border="1">
+<tbody><tr>
+<th> Band </th>
+<th width="80">Subset</th>
+<th width="77">Uncorrected (<strong>a</strong>)</th>
+<th width="77">Corrected (<strong>b</strong>)</th>
+</tr>
+<tr><th rowspan="2">W1</th>
+<th>AllWISE (<strong>1</strong>)</th>
+<td><a href="figures/sec2_4avif10_a1.png"><img src="figures/sec2_4avif10_a1_sm.png"></a></td>
+<td><a href="figures/sec2_4avif10_a2.png"><img src="figures/sec2_4avif10_a2_sm.png"></a></td></tr>
+
+<tr><th>WISE All&ndash;Sky (<strong>2</strong>)</th>
+<td><a href="figures/sec2_4avif10_b1.png"><img src="figures/sec2_4avif10_b1_sm.png"></a></td>
+<td><a href="figures/sec2_4avif10_b2.png"><img src="figures/sec2_4avif10_b2_sm.png"></a></td></tr>
+
+<tr><th rowspan="2">W2</th>
+<th>AllWISE (<strong>3</strong>)</th>
+<td><a href="figures/sec2_4avif10_c1.png"><img src="figures/sec2_4avif10_c1_sm.png"></a></td>
+<td><a href="figures/sec2_4avif10_c2.png"><img src="figures/sec2_4avif10_c2_sm.png"></a></td></tr>
+
+<tr><th>WISE All&ndash;Sky (<strong>4</strong>)</th>
+<td><a href="figures/sec2_4avif10_d1.png"><img src="figures/sec2_4avif10_d1_sm.png"></a></td>
+<td><a href="figures/sec2_4avif10_d2.png"><img src="figures/sec2_4avif10_d2_sm.png"></a></td></tr>
+
+<tr>
+  <td colspan="4"><strong>Figure 10</strong> &ndash; Fractional flux residual with
+  level curves
+  set by the density of points. The left column contains raw residuals, and the right
+  column contains corrected residuals. The corrections are listed in
+  <a href="#allwisestarmod_tbl6">Table 6</a>. Note that the upward trend on the
+  very faint end is a manifestation of Eddington bias.</td></tr>
+
+</tbody></table>
+</center>
+
+<br />
+<a name="allwisestarmod_tbl6"></a>
+<center>
+<table border="1">
+ <caption><strong>Table 6 </strong>&ndash; Statistical Flux Correction Parameters.</caption>
+<tr>
+<th width="121"> Band </th>
+<th width="135">Subset</th>
+<th width="120"><math><msub><mi>Zp</mi> <mi>corr</mi></msub></math></th>
+<th width="111"><math><mi>b</mi></math></th>
+</tr>
+<tr><th rowspan="2">W1</th>
+<th>AllWISE </th>
+<td>0.990 &plusmn; 0.005</td> <td>1.5 &plusmn; 0.5</td> </tr>
+
+<tr><th>WISE All&ndash;Sky </th>
+<td>0.980 &plusmn; 0.005</td> <td>10 &plusmn; 1</td></tr>
+
+<tr><th rowspan="2">W2</th>
+<th>AllWISE </th>
+<td>0.990 &plusmn; 0.005</td> <td>7&plusmn;1</td> </tr>
+
+<tr><th>WISE All&ndash;Sky </th>
+<td>0.975 &plusmn; 0.005</td> <td>13 &plusmn; 1 </td></tr>
+
+
+ </table>
+</center>
+
+<p><br />
+Last update: 22 November 2013</p>
+<hr />
+<a href="sec2_3c.html"> <img src="Prev1.gif" alt="previous page"></a> &nbsp; <a href="index.html"> <img src="Home.png" alt="back to table of contents"></a> &nbsp; <a href="sec2_4b.html"> <img src="Next1.gif" alt="next page"></a> <br>
+
+
+</body></html>

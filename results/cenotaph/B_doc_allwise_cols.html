@@ -1,0 +1,4945 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<title>AllWISE Explanatory Supplement: Source Catalog and Reject Table </title>
+</head>
+<body bgcolor="#F3E2A9">
+
+<a href="sec2_1.html"> <img src="Prev1.gif" alt="previous page"></a> &nbsp; <a href="index.html"> <img src="Home.png" alt="back to table of contents"></a> &nbsp; <a href="sec2_1.html#cat_sel"> <img src="Next1.gif" alt="next page"></a> <br>
+<hr>
+
+<h1>II. AllWISE Source Catalog and Reject Table</h1>
+
+<h2>II.1. General Properties</h2>
+<hr />
+<h3>II.1.a. Format and Column Descriptions</h3> 
+
+
+<p>The following table contains brief descriptions of the parameters
+provided for each entry in the AllWISE Source Catalog and Reject Table.
+The table is organized according to the broad function and utility
+of the parameters:  positional information, motion-fit parameters,
+photometric information, and source quality information.  For flag parameters, 
+the meaning of each possible flag value is given, along with some practical 
+information on their usage.</p>
+
+<p>The AllWISE Source Catalog and Reject Table have the same format
+with the exception of one column (<a href="#use_src"><em>use_src</em></a>).
+The Catalog contains source extractions that meet the
+uniqueness and/or reliability criteria described in 
+<a href="sec5_4.html">V.4</a>, and the Reject Table
+contains the source extractions that do not meet those criteria.
+</p>
+
+<p>The columns in each table are:
+
+<br />
+<ul>
+<li><strong>Column Name</strong>:  The parameter name in the Catalog/Reject Table.  
+Click on
+this to go to the section of the Explanatory Supplement section in which
+the derivation and/or usage of that parameter is described in greater
+detail.</li><br /> 
+
+<li><strong>Format</strong>: The ASCII-equivalent format of the field in the 
+Catalog/Reject Table, expressed in "C"-readable notation.  This is useful 
+when parsing the aligned tabular output from the
+<a href="https://irsa.ipac.caltech.edu" target="blank">IRSA/Gator</a>
+catalog query service. Although the data
+values will conform to these formats, the actual
+width of the field in the Gator output may be padded with extra
+blank spaces to accommodate column headers.  Note that
+some fields contain <em>null</em> values that will require special handling
+when parsing Catalog tables from <a href="https://irsa.ipac.caltech.edu" 
+target="blank">IRSA/Gator</a> output.
+<br />
+
+<p>The format of columns in the compressed, ascii version of the
+Catalog tables available for <a href="sec1_5.html#bulk">bulk download</a>
+do not conform to these format statements.  Columns in the bulk
+download files may have variable widths.</p>
+</li>
+
+<li><strong>Units</strong>: The units of the parameter. A value of "----" in this
+column means  the parameter is dimensionless or non-numeric.</li><br /> 
+
+<li><strong>nulls</strong>: A "yes" in this column means this parameter
+can be <em>null</em> in the Catalog or Reject Table.  A "yes" value does not 
+necessarily mean that there are null values, only that they are allowed by 
+the IRSA/WISE database server.  A "no" means  there will always
+be a value in this column in the Catalog/Reject Table.
+Note that <em>null</em> values are
+represented differently in the <a href="https://irsa.ipac.caltech.edu">
+IRSA/Gator</a> output and the compressed, ascii tables available for
+<a href="sec1_5.html#bulk">bulk download</a>.
+</li><br />
+
+<li><strong>Description</strong>: A brief description of the parameter and its values.</li> 
+</ul>
+<br />
+
+ 
+<table border=1 cellpadding="3">
+<tr><th>Column Name</th><th>Format</th><th>Units</th><th>nulls</th><th>Description</th><th>&nbsp;  </th></tr>
+
+<tr><td colspan="6"><strong><em>Basic Position and Identification Information</em></strong></td><tr>
+
+
+<tr><td><a name="designation"></a><a href="sec1_6a.html"><strong>designation</strong></a></td> <td>%20s</td><td> ---- </td><td>no</td>
+<td> Sexagesimal, equatorial 
+position-based source name in the form: 
+<strong>hhmmss.ss<u>+</u>ddmmss.s</strong>.  The full 
+<a href="sec1_6b.html">naming convention</a> for AllWISE 
+Source Catalog sources has the form 
+"<strong>WISEA &nbsp;Jhhmmss.ss<u>+</u>ddmmss.s</strong>," 
+where <strong>"WISEA"</strong> indicates  the source is from the AllWISE 
+Source Catalog, and <strong>"J"</strong> indicates the position is J2000. 
+The <strong>"WISEA"</strong> 
+acronym is not listed explicitly in the <em>designation</em> column.
+
+<p>The acronym for entries in the AllWISE Reject Table 
+is <strong>"WISEAR"</strong>. 
+</p>
+
+<p><font color="red"><strong>CAUTION:</strong></font> Source designations
+should not be used as an astrometric reference.  They 
+are not a substitute for the source position information in the
+<a href="#ra">ra</a> and <a href="#dec">dec</a> columns.</p>
+
+</td> <td>&nbsp;  </td> </tr>
+
+
+<tr><td><a name="ra"></a><a href="sec2_1.html#astrom"><strong>ra</strong></a> </td> 
+<td>%11.7f</td>
+<td><em>deg</em></td>
+<td>no</td>
+<td> J2000 right ascension with respect to the 2MASS PSC reference frame from
+the non-moving source extraction.</td><td>&nbsp; </td>  </tr>
+
+<tr><td><a name="dec"></a><a href="sec2_1.html#astrom"><strong>dec</strong></a> </td> 
+<td>%11.7f</td>
+<td><em>deg</em></td>
+<td>no</td>
+<td> J2000 declination with respect to the 2MASS PSC reference frame from
+the non-moving source extraction.</td>
+<td>&nbsp; </td>  </tr>
+
+
+<tr><td><a name="sigra"></a><a href="sec2_1.html#astrom"><strong>sigra</strong></a>  </td> 
+<td>%8.4f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td>One-sigma uncertainty in right ascension coordinate from
+the non-moving source extraction.</td>
+<td>&nbsp; </td>  </tr>
+
+<tr><td><a name="sigdec"></a><a href="sec2_1.html#astrom"><strong>sigdec</strong></a>  </td> 
+<td>%8.4f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td>One-sigma uncertainty in declination coordinate from 
+the non-moving source extraction.  </td>
+<td>&nbsp; </td>  </tr>
+
+<tr><td><a name="sigradec"><a href="sec2_1.html#astrom"><strong>sigradec</strong></a></a> </td> 
+<td>%9.4f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td>
+The <em>co-sigma</em> of the equatorial position uncertainties,
+<em>sigra, sigdec</em> (&sigma;<sub>&alpha;</sub>, &sigma;<sub>&delta;</sub>). 
+The covariance between the position errors, V<sub>&alpha;&delta;</sub>,  can
+be derived from the quoted <em>co-sigma</em>,
+&sigma;<sub>&alpha;&delta;</sub>, by the formula 
+V<sub>&alpha;&delta;</sub> = &sigma;<sub>&alpha;&delta;</sub>&times;|&sigma;<sub>&alpha;&delta;</sub>|. 
+This maintains the sign information for the covariance since 
+&sigma;<sub>&alpha;&delta;</sub> may be negative. It is more natural to carry 
+the <em>co-sigma</em> along with the other uncertainties instead of the 
+covariance because the former is in the same units as the other 
+uncertainties.
+
+</td><td>&nbsp;  </td> </tr>
+
+<tr><td><a name="glon"></a><strong>glon</strong></td>
+<td>%11.7f</td>
+<td><em>deg</em></td>
+<td>no</td>
+<td>Galactic longitude, computed from the non-moving source fit equatorial 
+position.  
+<font color="red"><strong>CAUTION:</strong></font> This coordinate should not be 
+used as an astrometric reference. </font></td>
+</tr>
+
+<tr><td><a name="glat"></a><strong>glat</strong></td>
+<td>%11.7f</td>
+<td><em>deg</em></td>
+<td>no</td>
+<td>Galactic latitude computed from the non-moving source fit equatorial
+position. 
+<font color="red"><strong>CAUTION:</strong></font> This coordinate should not be
+used as an astrometric reference. </font></td>
+</tr>
+
+<tr><td><a name="elon"></a><strong>elon</strong></td>
+<td>%11.7f</td>
+<td><em>deg</em></td>
+<td>no</td>
+<td>Ecliptic longitude computed from the non-moving source fit equatorial
+position.  
+<font color="red"><strong>CAUTION:</strong></font> This coordinate should not be
+used as an astrometric reference. </font></td>
+</tr>
+
+<tr><td><a name="elat"></a><strong>elat</strong></td>
+<td>%11.7f</td>
+<td><em>deg</em></td>
+<td>no</td>
+<td>Ecliptic latitude computed from the non-moving source fit equatorial
+position. 
+<font color="red"><strong>CAUTION:</strong></font> This coordinate should not be
+used as an astrometric reference. </font></td>
+</tr>
+
+<tr><td><a name="wx"><strong>wx</strong></a> </td> 
+<td>%8.3f</td>
+<td><em>pix</em></td>
+<td>ex</td>
+<td>The x-pixel coordinate of this source on the Atlas Image.</td></tr>
+
+<tr><td><a name="wy"><strong>wy</strong></a> </td> 
+<td>%8.3f</td>
+<td><em>pix</em></td>
+<td>yes</td>
+<td>The y-pixel coordinate of this source on the Atlas Image.</td></tr>
+
+<tr><td><a name="cntr"><strong>cntr</strong></a></td>
+<td>%19d</td>
+<td>----</td>
+<td>no</td>
+<td>Unique identification number for this object in the AllWISE Catalog/Reject
+Table. 
+This number is formed from the <a href="#source_id">source_id</a>,
+which is in turn formed from the <a href="#coadd_id">coadd_id</a> and source 
+number, <a href="#src">src</a>.  
+
+<!-- On average, sources with 
+<em>cntr</em> values close 
+to each other are also close to each other on the sky, except at Tile 
+boundaries.  <em>Cntr</em> ordering thus provides a useful mapping of the 
+AllWISE Catalog on storage media.
+-->
+
+<p>The <em>cntr</em> value is formed by making the 
+<a href="#source_id">source_id</a> into an integer, in the format:
+<strong>RRRRsDDDtrevIIIIII</strong>, where
+
+<ul>
+<li><strong>RRRR</strong> = Tile center RA in deci-degrees, truncated not rounded
+(<em>e.g. RRRR=int[10*ra]</em>), as in the <a href="#coadd_id">coadd_id</a>.</li>
+
+<li><strong>s</strong> = Tile center Declination sign translated from "p" or "m" into "1"
+or "0", respectively.</li>
+
+<li><strong>DDD</strong> = Tile center Declination in deci-degrees, as in the 
+<a href="#coadd_id">coadd_id</a>.  For positive declinations, the tenths of a 
+degree is truncated not rounded (<em>e.g. DDD=int[10*dec]</em>).
+For negative declinations, the tenths of a degree is always truncated leftward
+on the number line (<em>e.g. DDD=ceil[10*abs(dec)</em>].</li>
+
+<li><strong>[trev]</strong> = Disambiguation string, translated where necessary into 
+digits corresponding to the letters' places in the alphabet.
+   <ul>
+   <li><strong>t</strong> - Tile type translated into two digits, zero-filled ("a" = "01").</li>
+   <li><strong>r</strong> - Data Release identifier translated into a single digit,
+                  (For AllWISE: "c" = "3").</li>
+   <li><strong>e</strong> - Survey Phase ("5" = AllWISE [Full cryogenic + 3-Band Cryo + Post-Cryo]).</li>
+   <li><strong>v</strong> - Processing version.</li>
+   </ul>
+
+<p>The translated disambiguation string is always <strong>01351</strong> for AllWISE. 
+</p>
+</li>
+
+<li><strong>IIIIII</strong> = six-digit, zero-filled, sequential extracted source number,
+<a href="#src">src</a>, within the Tile.
+</ul>
+
+<p>For example, a source in the Tile <em>3041m137_ac51</em>,
+with a <a href="#source_id">source_id</a> of <em>'3041m137_ac51-012345'</em>,
+has a <em>cntr</em> value of <strong>3041013701351012345</strong>.</p>
+
+<p><strong>NOTE:</strong> AllWISE Catalog and Reject Table entries
+are cross-referenced with the <a href="sec3_1.html">Multiepoch Photometry 
+(MEP) Database</a> via
+the <em>cntr</em> identifier.  The Catalog/Reject Table <em>cntr</em>
+value is referred to as <em><a href="sec3_1a.html#cntr_mf">cntr_mf</a></em>
+in the MEP Database.</p>
+</td>
+<td>&nbsp;</td>
+</tr>
+
+<tr><td><a name="source_id"><strong>source_id</strong></a></td>
+<td>%28s</td>
+<td>----</td>
+<td>no</td>
+<td>Unique source ID, formed from a combination of the
+Atlas Tile ID, <a href="#coadd_id">coadd_id</a>, and sequential extracted 
+source number, <a href="#src">src</a>, within the Tile.  The <em>source_id</em>
+string has the form <strong>RRRRsDDD_[trev]-IIIIII</strong> where:
+
+<ul>
+<li><strong>RRRRsDDD_[trev]</strong> = the <a href="#coadd_id">coadd_id</a></li>
+<li><strong>IIIIII</strong> = six-digit, zero-filled, sequential extracted source number,
+<a href="#src">src</a>, within the Tile.
+</ul>
+
+<p>For example, the first source extracted in AllWISE Tile <em>3041m137_ac51</em>
+has a <em>source_id</em> of <strong>3041m137_ac51-000001</strong>.</p>
+
+<p><strong>NOTE:</strong> AllWISE Catalog and Reject Table entries
+are cross-referenced with the <a href="sec3_1.html">Multiepoch Photometry
+(MEP) Database</a> via
+the <em>source_id</em> identifier.  The Catalog/Reject Table <em>cntr</em>
+value is referred to as <em><a href="sec3_1a.html#source_id">source_id</a></em>
+in the MEP Database.</p>
+
+</td><td>&nbsp;</td></tr>
+
+<tr><td><a name="coadd_id"><a href="sec5_3a.html"><strong>coadd_id</strong></a></a></td>
+<td>%20s</td>
+<td>----</td>
+<td>no</td>
+<td>Atlas Tile identifier from which source was extracted. The identifier
+has the general form:  <strong>RRRRsDDD_[trev]</strong>, where
+
+<ul>
+<li><strong>RRRR</strong> = Tile center RA in deci-degrees, truncated not rounded
+(<em>e.g. RRRR=int[10*ra]</em>).</li>
+<li><strong>s</strong> = Tile center Declination sign ("p"="+", "m"="-")</li>
+<li><strong>DDD</strong> = Tile center Declination in deci-degrees.  For positive
+declinations, the tenths of a degree is truncated not rounded 
+(<em>e.g. DDD=int[10*dec]</em>).
+For negative declinations, the tenths of a degree is always truncated leftward
+on the number line (<em>e.g. DDD=ceil[10*abs(dec)</em>].</li>
+<li><strong>[trev]</strong> = Disambiguation string. 
+   <ul>
+   <li><strong>t</strong> - Tile type ("a" = Atlas)</li>
+   <li><strong>r</strong> - Data Release ("c" = AllWISE)</li>
+   <li><strong>e</strong> - Survey Phase ("5" = AllWISE [Full Cryogenic + 3-Band Cryo + Post-Cryo])</li>
+   <li><strong>v</strong> - Processing version.</li>
+   </ul>
+<p>The disambiguation string is always <strong>ac51</strong> for Tiles in the 
+AllWISE Release products.
+
+</li>
+</ul>
+
+<p>For example, the identifier of the AllWISE Atlas Tile with center at
+(&alpha;,&delta; = 304.13896,-13.63000) is <strong>3041m137_ac51</strong>.</td>
+<td>&nbsp;</td>
+</tr>
+
+<tr><td><a name="src"><strong>src</strong></a></td>
+<td>%6d</td>
+<td>----</td>
+<td>no</td>
+<td>Sequential number of the source extraction in the Atlas Tile from
+in which this source detected and measured, in approximate descending order of 
+W1 source brightness.</td><td>&nbsp;</td>
+</tr>
+
+
+
+<tr><td colspan="6"><strong><em>Primary Photometric Information</em></strong></td></tr>
+
+<tr>
+<td><a name="w1mpro"></a><a href="sec5_3bii.html"><strong>w1mpro</strong></a> </td>
+<td>%7.3f</td><td><em>mag</em></td>
+<td>yes</td>
+<td>W1 magnitude measured with profile-fitting photometry, or 
+the magnitude of the 95% confidence brightness upper limit
+if the W1 flux measurement has <a href="#w1snr">SNR</a>&lt;2.
+This column is <em>null</em> if the source is nominally detected in
+W1, but no useful brightness estimate could be made.
+
+<p><strong>NOTE:</strong> A special exception to the upper limit
+conditions described above applies if the W1 value of 
+<a href="#ph_qual"><em>ph_qual</em></a> is "Z" 
+(<em>e.g.</em> <em>ph_qual LIKE 'Z%'</em>).  In these cases, the value 
+of <em>w1mpro</em> corresponds to the actual flux measurement, 
+<a href="#w1flux"><em>w1flux</em></a>, or is <em>null</em> if 
+<a href="#w1flux"><em>w1flux</em></a> is negative.  
+This occurs for 106,140 sources in the AllWISE Catalog and 54,900 
+sources in the Reject Table, 
+all of which are confined to a narrow strip of ecliptic longitude.  
+See <a href="sec5_1b.html#w1sat">V.1.b.iii</a> for more details.</p>
+</td> 
+<td>&nbsp;  </td> 
+</tr>
+
+<tr>
+<td><a name="w1sigmpro"></a><a href="sec5_3bii.html"><strong>w1sigmpro</strong></a></td>  
+<td>%5.3f</td><td><em>mag</em></td>
+<td>yes</td>
+<td>W1 profile-fit photometric measurement uncertainty in mag units. 
+This column is <em>null</em> if the W1 profile-fit magnitude 
+is a 95% confidence upper limit or if the source is not measurable. 
+
+<p><strong>Note -</strong> In a small number of cases where the W1 value of
+<a href="#ph_qual"><em>ph_qual</em></a> is "Z"
+(<em>e.g.</em> <em>ph_qual LIKE 'Z%'</em>), the W1 source flux uncertainty
+was not measurable because of the presence of a large number of saturated
+pixels from 3-Band Cryo frames covered the source. In these cases,
+this column is <em>null</em>, but the <a href="#w1mpro"><em>w1mpro</em></a>
+column will correspond either to the actual source flux, 
+<a href="#w1flux"><em>w1flux</em></a>, rather than the 95% confidence upper 
+limit, or will be <em>null</em> if <a href="#w1flux"><em>w1flux</em></a>
+is negative.  See <a href="sec5_1b.html#w1sat">V.1.b.iii</a> for more 
+details.</p>
+
+</td> <td>&nbsp;  </td> 
+</tr>
+
+<tr>
+<td><a name="w1snr"><a href="sec5_3bii.html"><strong>w1snr</strong></a></a></td>  
+<td>%8.1f</td>
+<td>----</td>
+<td>yes</td>
+<td>W1 profile-fit measurement signal-to-noise ratio.  This value is 
+the ratio of the flux (<a href="#w1flux"><em>w1flux</em></a>) to
+flux uncertainty (<a href="#w1sigflux"><em>w1sigflux</em></a>) in the
+W1 profile-fit photometry measurement.
+This column is <em>null</em> if <a href="#w1flux"><em>w1flux</em></a> or
+<a href="#w1sigflux"><em>w1sigflux</em></a> is <em>null</em>.  </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1rchi2"><a href="sec5_3bii.html"><strong>w1rchi2</strong></a></a></td>
+<td>%9.3e</td>
+<td>----</td>
+<td>yes</td>
+<td>Reduced &chi;<sup>2</sup> of the W1 profile-fit photometry measurement.
+This column is <em>null</em> if the W1 magnitude is a 95% confidence
+upper limit (<em>i.e.</em> the source is not detected). </td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mpro"></a><a href="sec5_3bii.html"><strong>w2mpro</strong></a> </td>
+<td>%7.3f</td><td><em>mag</em></td>
+<td>yes</td>
+<td>W2 magnitude measured with profile-fitting photometry, or 
+the magnitude of the 95% confidence brightness upper limit
+if the W2 flux measurement has <a href="#w2snr">SNR</a>&lt;2.
+This column is <em>null</em> if the source is nominally detected in
+W2, but no useful brightness estimate could be made.</td> 
+<td>&nbsp;  </td> 
+</tr>
+
+<tr>
+<td><a name="w2sigmpro"></a><a href="sec5_3bii.html"><strong>w2sigmpro</strong></a></td>  
+<td>%5.3f</td><td><em>mag</em></td>
+<td>yes</td>
+<td>W2 profile-fit photometric measurement uncertainty in mag units. 
+This column is <em>null</em> if the W2 profile-fit magnitude 
+is a 95% confidence upper limit or if the source is not measurable. 
+</td> <td>&nbsp;  </td> 
+</tr>
+
+<tr>
+<td><a name="w2snr"><a href="sec5_3bii.html"><strong>w2snr</strong></a></a></td>  
+<td>%8.1f</td>
+<td>----</td>
+<td>yes</td>
+<td>W2 profile-fit measurement signal-to-noise ratio.  This value is 
+the ratio of the flux (<a href="#w2flux"><em>w2flux</em></a>) to
+flux uncertainty (<a href="#w2sigflux"><em>w2sigflux</em></a>) in the
+W2 profile-fit photometry measurement.
+This column is <em>null</em> if <a href="#w2flux"><em>w2flux</em></a> or
+<a href="#w2sigflux"><em>w2sigflux</em></a> is <em>null</em>.  </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2rchi2"></a><a href="sec5_3bii.html"><strong>w2rchi2</strong></a></td>
+<td>%9.3e</td>
+<td>----</td>
+<td>yes</td>
+<td>Reduced &chi;<sup>2</sup> of the W2 profile-fit photometry measurement.
+This column is <em>null</em> if the W2 magnitude is a 95% confidence
+upper limit (<em>i.e.</em> the source is not detected). </td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mpro"></a><a href="sec5_3bii.html"><strong>w3mpro</strong></a> </td>
+<td>%7.3f</td><td><em>mag</em></td>
+<td>yes</td>
+<td>W3 magnitude measured with profile-fitting photometry, or 
+the magnitude of the 95% confidence brightness upper limit
+if the W3 flux measurement has <a href="#w3snr">SNR</a>&lt;2.
+This column is <em>null</em> if the source is nominally detected in
+W3, but no useful brightness estimate could be made.</td> 
+<td>&nbsp;  </td> 
+</tr>
+
+<tr>
+<td><a name="w3sigmpro"></a><a href="sec5_3bii.html"><strong>w3sigmpro</strong></a></td>  
+<td>%5.3f</td><td><em>mag</em></td>
+<td>yes</td>
+<td>W3 profile-fit photometric measurement uncertainty in mag units. 
+This column is <em>null</em> if the W3 profile-fit magnitude 
+is a 95% confidence upper limit or if the source is not measurable. 
+</td> <td>&nbsp;  </td> 
+</tr>
+
+<tr>
+<td><a name="w3snr"></a><a href="sec5_3bii.html"><strong>w3snr</strong></a></td>  
+<td>%8.1f</td>
+<td>----</td>
+<td>yes</td>
+<td>W3 profile-fit measurement signal-to-noise ratio.  This value is 
+the ratio of the flux (<a href="#w3flux"><em>w3flux</em></a>) to
+flux uncertainty (<a href="#w3sigflux"><em>w3sigflux</em></a>) in the
+W3 profile-fit photometry measurement.
+This column is <em>null</em> if <a href="#w3flux"><em>w3flux</em></a> or
+<a href="#w3sigflux"><em>w3sigflux</em></a> is <em>null</em>.  </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3rchi2"></a><a href="sec5_3bii.html"><strong>w3rchi2</strong></a></td>
+<td>%9.3e</td>
+<td>----</td>
+<td>yes</td>
+<td>Reduced &chi;<sup>2</sup> of the W3 profile-fit photometry measurement.
+This column is <em>null</em> if the W3 magnitude is a 95% confidence
+upper limit (<em>i.e.</em> the source is not detected). </td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mpro"></a><a href="sec5_3bii.html"><strong>w4mpro</strong></a></td>
+<td>%7.3f</td><td><em>mag</em></td>
+<td>yes</td>
+<td>W4 magnitude measured with profile-fitting photometry, or 
+the magnitude of the 95% confidence brightness upper limit
+if the W4 flux measurement has <a href="#w4snr">SNR</a>&lt;2.
+This column is <em>null</em> if the source is nominally detected in
+W4, but no useful brightness estimate could be made.</td> 
+<td>&nbsp;  </td> 
+</tr>
+
+<tr>
+<td><a name="w4sigmpro"></a><a href="sec5_3bii.html"><strong>w4sigmpro</strong></a></td>  
+<td>%5.3f</td><td><em>mag</em></td>
+<td>yes</td>
+<td>W4 profile-fit photometric measurement uncertainty in mag units. 
+This column is <em>null</em> if the W4 profile-fit magnitude 
+is a 95% confidence upper limit or if the source is not measurable. 
+</td> <td>&nbsp;  </td> 
+</tr>
+
+<tr>
+<td><a name="w4snr"></a><a href="sec5_3bii.html"><strong>w4snr</strong></a></td>  
+<td>%8.1f</td>
+<td>----</td>
+<td>yes</td>
+<td>W4 profile-fit measurement signal-to-noise ratio.  This value is 
+the ratio of the flux (<a href="#w4flux"><em>w4flux</em></a>) to
+flux uncertainty (<a href="#w4sigflux"><em>w4sigflux</em></a>) in the
+W4 profile-fit photometry measurement.  
+This column is <em>null</em> if <a href="#w4flux"><em>w4flux</em></a> or
+<a href="#w4sigflux"><em>w4sigflux</em></a> is <em>null</em>.  </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4rchi2"></a><a href="sec5_3bii.html"><strong>w4rchi2</strong></a></td>
+<td>%9.3e</td>
+<td>----</td>
+<td>yes</td>
+<td>Reduced &chi;<sup>2</sup> of the W4 profile-fit photometry measurement.
+This column is <em>null</em> if the W4 magnitude is a 95% confidence
+upper limit (<em>i.e.</em> the source is not detected). </td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="rchi2"></a><a href="sec5_3bii.html"><strong>rchi2</strong></a></td>
+<td>%9.3f</td>
+<td>----</td>
+<td>yes</td>
+<td>Combined reduced &chi;<sup>2</sup> in all bands for the profile-fit 
+photometry measurement. </td><td>&nbsp;  </td>
+</tr>
+
+
+<tr>
+<td><a name="nb"></a><a href="sec5_3bii.html"><strong>nb</strong></a></td>
+<td>%1d</td>
+<td>----</td>
+<td>yes</td>
+<td>Number of PSF components used simultaneously in the profile-fitting 
+for this source.  This number includes the source itself, so the minimum value
+of <em>nb</em> is "1". <em>Nb</em> is greater than "1" when the source is fit
+concurrently with other nearby detections (<a href="sec5_3bii.html">passive 
+deblending</a>), or when 
+a single source is split into two components during the fitting process 
+(<a href="sec5_3bii.html">active deblending</a>). </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="na"></a><a href="sec5_3bii.html"><strong>na</strong></a></td>
+<td>%1d</td>
+<td>----</td>
+<td>yes</td>
+<td>Active deblending flag.  Indicates if a single detection was split into 
+multiple sources in the process of profile-fitting.
+<br>
+<ul>
+   <li><strong>0</strong> - the source is not actively deblended.</li>
+   <li><strong>1</strong> - the source is actively deblended.</li>
+</ul>
+</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sat"></a><a href="sec5_3bii.html"><strong>w1sat</strong></a></td>
+<td>%5.3f</td>
+<td>----</td>
+<td>yes</td>
+<td>Saturated pixel fraction, W1. The fraction of all pixels within the 
+profile-fitting area in the stack of single-exposure images 
+used to characterize this source that 
+are flagged as saturated.  A value larger than 0.0 indicates one or more pixels
+of saturation.  Saturation begins to occur for point sources brighter than
+[W1]~8 mag.  Saturation may occur in fainter sources because of
+charged particle strikes, or if the source is covered by 3-Band Cryo
+single-exposures that began to saturate because of rising 
+temperatures (see <a href="sec5_1b.html#w1sat">V.1.b.iii</a> for details).</td><td>&nbsp;</td>
+</tr>
+
+<tr>
+<td><a name="w2sat"></a><a href="sec5_3bii.html"><strong>w2sat</strong></a></td>
+<td>%5.3f</td>
+<td>----</td>
+<td>yes</td>
+<td>Saturated pixel fraction, W2. The fraction of all pixels within the 
+profile-fitting area in the stack of single-exposure images
+used to characterize this source that 
+are flagged as saturated.  A value larger than 0.0 indicates one or more pixels
+of saturation.  Saturation begins to occur for point sources brighter than
+[W2]~7 mag.  Saturation may occur in fainter sources because of
+charged particle strikes.</td><td>&nbsp;</td>
+</tr>
+
+<tr>
+<td><a name="w3sat"></a><a href="sec5_3bii.html"><strong>w3sat</strong></a></td>
+<td>%5.3f</td>
+<td>----</td>
+<td>yes</td>
+<td>Saturated pixel fraction, W3. The fraction of all pixels within the 
+profile-fitting area source in the stack of single-exposure images 
+used to characterize this source that 
+are flagged as saturated.  A value larger than 0.0 indicates one or more pixels
+of saturation.  Saturation begins to occur for point sources brighter than
+[W3]~4 mag.  Saturation may occur in fainter sources because of
+charged particle strikes.</td><td>&nbsp;</td>
+</tr>
+
+<tr>
+<td><a name="w4sat"></a><a href="sec5_3bii.html"><strong>w4sat</strong></a></td>
+<td>%5.3f</td>
+<td>----</td>
+<td>yes</td>
+<td>Saturated pixel fraction, W4. The fraction of all pixels within the 
+profile-fitting area in the stack of single-exposure
+images used to characterize this source that 
+are flagged as saturated.  A value larger than 0.0 indicates one or more pixels
+of saturation.  Saturation begins to occur for point sources brighter than
+[W4]~0 mag.  Saturation may occur in fainter sources because of
+charged particle strikes.</td><td>&nbsp;</td>
+</tr>
+
+<tr>
+<td><a name="satnum"></a><a href="sec5_3bii.html"><strong>satnum</strong></a></td>
+<td>%4s</td>
+<td>----</td>
+<td>yes</td>
+<td>Minimum sample at which saturation occurs in each band.  Four character 
+string, one character per band, that indicates the minimum SUTR sample in which 
+any pixel in the profile-fitting area in all of the single-exposure
+images used to characterize this source was flagged as having reached
+the saturation level in the on-board WISE payload processing.  If no pixels
+in a given band are flagged as saturated, the value for that band is "0".  
+</td><td>&nbsp;</td>
+</tr> 
+
+<tr><td colspan="6"><strong><em>Motion Fit Parameters</em></strong></td></tr>
+
+<tr><td><a name="ra_pm"></a><a href="sec5_3bii.html"><strong>ra_pm</strong></a> </td> 
+<td>%11.7f</td>
+<td><em>deg</em></td>
+<td>yes</td>
+<td>Right ascension at epoch MJD=55400.0 (2010.5589) from the profile-fitting 
+measurement model that includes motion. This column is <em>null</em> if 
+the fit failed to converge or was not attempted.
+
+<p><strong>NOTE:</strong> This will be similar but not identical to
+the value of <a href="#ra">ra</a> which is the measured right ascenscion
+of the source from the non-moving profile-fit.</p>
+</td>
+<td>&nbsp; </td>  </tr>
+
+<tr><td><a name="dec_pm"></a><a href="sec5_3bii.html"><strong>dec_pm</strong></a> </td> 
+<td>%11.7f</td>
+<td><em>deg</em></td>
+<td>yes</td>
+<td> Declination at epoch MJD=55400.0 (2010.5589) from the profile-fitting
+measurement model that includes motion. This column is <em>null</em> if 
+the fit failed to converge or was not attempted.
+
+<p><strong>NOTE:</strong> This will be similar but not identical to
+the value of <a href="#dec">dec</a> which is the measured declination
+of the source from the non-moving profile-fit.</p>
+</td>
+<td>&nbsp; </td>  </tr>
+
+<tr><td><a name="sigra_pm"></a><a href="sec5_3bii.html"><strong>sigra_pm</strong></a>  </td> 
+<td>%8.4f</td> <td><em>arcsec</em></td>
+<td>yes</td>
+<td>One-sigma uncertainty in right ascension from
+the profile-fitting measurement model that includes motion.  This 
+column is <em>null</em> if the motion-fit failed to converge or was not 
+attempted.</td>
+<td>&nbsp; </td>  </tr>
+
+<tr><td><a name="sigdec_pm"></a><a href="sec5_3bii.html"><strong>sigdec_pm</strong></a>  </td> 
+<td>%8.4f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td>One-sigma uncertainty in declination from
+the profile-fitting measurement model that includes motion. This 
+column is <em>null</em> if the motion-fit failed to converge or was not 
+attempted.</td>
+<td>&nbsp; </td>  </tr>
+
+<tr><td><a name="sigradec_pm"><a href="sec5_3bii.html"><strong>sigradec_pm</strong></a></a> </td> 
+<td>%9.4f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td>
+The <em>co-sigma</em> of the equatorial position uncertainties from 
+the profile-fitting measurement model that includes motion, <em>sigra_pm, 
+sigdec_pm</em> (&sigma;<sub>&alpha;_pm</sub>, &sigma;<sub>&delta;_pm</sub>).
+The covariance between the position errors, V<sub>&alpha;_pm&delta;_pm</sub>,  
+can be derived from the quoted <em>co-sigma</em>, 
+&sigma;<sub>&alpha;_pm&delta;_pm</sub>, by the formula
+V<sub>&alpha;_pm&delta;_pm</sub> = &sigma;<sub>&alpha;_pm&delta;_pm</sub>&times;|&sigma;<sub>&alpha;_pm&delta;_pm</sub>|.
+This maintains the sign information for the covariance since 
+&sigma;<sub>&alpha;_pm&delta;_pm</sub> may be negative. It is more natural to 
+carry the <em>co-sigma</em> along with the other uncertainties instead of the 
+covariance because the former is in the same units as the other 
+uncertainties.
+
+<p>This column is <em>null</em> if the motion-fit failed
+to converge or was not attempted.</p></td>
+<td>&nbsp; </td> </tr>
+
+<tr><td><a name="pmra"><a href="sec5_3bii.html"><strong>pmra</strong></a></a></td>
+<td>%8d</td>
+<td><em>mas/year</em></td>
+<td>yes</td>
+<td>The apparent motion in right ascension estimated for this source.
+This column is <em>null</em> if the motion fit failed
+to converge or was not attempted.
+
+<p><font color="red"><strong>CAUTION:</strong></font> This is the total
+motion in right ascension, and not the <em>proper motion</em>.
+The apparent motion can be significantly affected by parallax
+for nearby objects.  See <a href="sec2_6.html#How_To_Interpret">II.6.b</a>
+for more information.</p>
+
+</td>
+<td>&nbsp; </td> </tr>
+
+<tr><td><a name="sigpmra"><a href="sec5_3bii.html"><strong>sigpmra</strong></a></a></td>
+<td>%8d</td>
+<td><em>mas/year</em></td>
+<td>yes</td>
+<td>Uncertainty in the RA motion estimation. 
+This column is <em>null</em> if the motion fit failed
+to converge or was not attempted.</td>
+<td>&nbsp; </td> </tr>
+
+<tr><td><a name="pmdec"><a href="sec5_3bii.html"><strong>pmdec</strong></a></a></td>
+<td>%8d</td>
+<td><em>mas/year</em></td>
+<td>yes</td>
+<td>The apparent motion in declination estimated for this source. This column 
+is <em>null</em> if the motion fit failed to converge or was not 
+attempted.
+
+<p><font color="red"><strong>CAUTION:</strong></font> This is the total
+motion in declination, and not the <em>proper motion</em>.
+The apparent motion can be significantly affected by parallax
+for nearby objects.  See <a href="sec2_6.html#How_To_Interpret">II.6.b</a>
+for more information.</p>
+</td>
+<td>&nbsp; </td> </tr>
+
+<tr><td><a name="sigpmdec"><a href="sec5_3bii.html"><strong>sigpmdec</strong></a></a></td>
+<td>%8d</td>
+<td><em>mas/year</em></td>
+<td>yes</td>
+<td>Uncertainty in the Dec motion estimated for this source. This column 
+is <em>null</em> if the motion fit failed to converge or was not 
+attempted.</td>
+<td>&nbsp; </td> </tr>
+
+<tr>
+<td><a name="w1rchi2_pm"><a href="sec5_3bii.html"><strong>w1rchi2_pm</strong></a></a></td>
+<td>%9.3e</td>
+<td>----</td>
+<td>yes</td>
+<td>Reduced &chi;<sup>2</sup> of the W1 profile-fit photometry measurement
+including motion estimation.
+This column is <em>null</em> if the source is not detected in W1, or if
+the motion fit failed to converge or was not attempted. </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2rchi2_pm"><a href="sec5_3bii.html"><strong>w2rchi2_pm</strong></a></a></td>
+<td>%9.3e</td>
+<td>----</td>
+<td>yes</td>
+<td>Reduced &chi;<sup>2</sup> of the W2 profile-fit photometry measurement
+including motion estimation.
+This column is <em>null</em> if the source is not detected in W2 magnitude 
+or if the motion fit failed to converge or was not attempted. </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3rchi2_pm"><a href="sec5_3bii.html"><strong>w3rchi2_pm</strong></a></a></td>
+<td>%9.3e</td>
+<td>----</td>
+<td>yes</td>
+<td>Reduced &chi;<sup>2</sup> of the W3 profile-fit photometry measurement
+including motion estimation.
+This column is <em>null</em> if the source is not detected in W3 
+or if the motion fit failed to converge or was not attempted. </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4rchi2_pm"><a href="sec5_3bii.html"><strong>w4rchi2_pm</strong></a></a></td>
+<td>%9.3e</td>
+<td>----</td>
+<td>yes</td>
+<td>Reduced &chi;<sup>2</sup> of the W4 profile-fit photometry measurement
+including motion estimation.
+This column is <em>null</em> if the source is not detected in W4 
+or if the motion fit failed to converge or was not attempted. </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="rchi2_pm"></a><a href="sec5_3bii.html"><strong>rchi2_pm</strong></a></td>
+<td>%9.3f</td>
+<td>----</td>
+<td>yes</td>
+<td>Combined reduced &chi;<sup>2</sup> in all bands for the profile-fit 
+photometry measurement that includes source motion.  This column
+is <em>null</em> if the motion fit failed to converge or was not attempted.
+</td><td>&nbsp;  </td>
+</tr>
+
+<tr><td><a name="pmcode"><a href="sec2_6.html"><strong>pmcode</strong></a></a></td>
+<td>%5s</td>
+<td>---</td>
+<td>yes</td>
+<td>This is a five character string that encodes information about factors 
+that impact the accuracy of the motion estimation. These include 
+the original blend count, whether a blend-swap took place, and the 
+distance in hundredths of an arcsecond between the non-motion 
+position and the motion mean-observation-epoch position. The format
+is <br />
+
+<br />
+<center><strong>NQDDD</strong></center>
+
+<br />
+where <strong>N</strong> is the original blend count, <strong>Q</strong> is either "Y" or "N" 
+for "yes" or "no" a blend-swap occurred (i.e., the original primary component 
+was not the final primary component), and <strong>DDD</strong> is the radial distance 
+between the non-motion and motion at mean-observation
+epoch positions in units of 0.01 arcsec, clipped at 999 
+(almost 10 arcsec). 
+
+<p>
+For example, a well-behaved source that is not part of a blend
+and that has similar stationary and motion fit positions
+would have a <em>pmcode</em> value like "1N008". A source with
+a questionable motion estimate that is passively deblended 
+(<a href="#nb">nb</a>=2) and whose stationary-fit and motion
+position differ by a significant amount would have a <em>pmcode</em> value like
+"3Y234".</p>
+
+<p>This column is <em>null</em> if a motion solution was not attempted 
+or a valid solution was not found.</p>
+</td>
+<td>&nbsp;</td>
+</tr>
+
+<tr><td colspan="6"><strong><em>Measurement Quality and Source Reliability Information</em></strong></td></tr>
+
+<tr>
+<td><a name="cc_flags"></a><a href="sec5_3d.html"><strong>cc_flags</strong></a></td>  
+<td>%4s</td>
+<td>----</td>
+<td>no</td>
+<td>Contamination and confusion flag.  Four character string, one character 
+per band [W1/W2/W3/W4], that indicates that the photometry and/or position
+measurements of a source may be contaminated or biased due to proximity
+to an image artifact.  The type of artifact that may contaminate
+the measurements is denoted by the following codes. 
+Lower-case letters correspond to instances in which the source detection 
+in a band is believed to be real but the measurement may be contaminated 
+by the artifact.  Upper-case letters are instances in which the source 
+detection in a band may be a spurious detection of an artifact.
+
+<p>
+   <ul>
+   <li><strong>D,d</strong> - Diffraction spike.  Source may be a spurious
+            detection of (<strong>D</strong>) or contaminated by (<strong>d</strong>) a 
+            <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#diffraction_spikes" target="blank">diffraction spike</a> 
+            from a nearby bright star on the same image, or </li>
+   <li><strong>P,p</strong> - Persistence.  Source may be a spurious detection of 
+            (<strong>P</strong>) or contaminated by (<strong>p</strong>) a 
+            <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#latents" target="blank">short-term latent image</a> 
+            left by a bright source, or </li>
+   <li><strong>H,h</strong> - Halo.  Source may be a spurious detection of (<strong>H</strong>)
+            or contaminated by (<strong>h</strong>) the 
+            <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#halos" target="blank">scattered light halo</a> 
+            surrounding a nearby bright source, or</li>  
+   <li><strong>O,o (letter "o")</strong> - Optical ghost.  Source may be a spurious 
+            detection of (<strong>O</strong>) or contaminated by (</strong>o</strong>) an 
+            <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#ghosts" target="blank">optical ghost image</a> caused 
+            by a nearby bright source, or </li>
+   <li><strong>0 (number zero)</strong> - Source is unaffected by known artifacts. </li>
+   </ul>
+
+<p>A source extraction may be affected by more than one type of artifact
+or condition.  In this event, the <em>cc_flags</em> value in each band is set 
+in the following priority order: <strong>D,P,H,O,d,p,h,o,0</strong>.
+The full tally of artifacts affecting a source in each
+band is given in the <a href="#w1cc_map">w?cc_map</a> and
+<a href="#w1cc_map_str">w?cc_map_str</a> columns.
+
+<p>
+A source can appear in the AllWISE Source Catalog even if it is 
+flagged as a spurious artifact detection in a band if there is a 
+reliable detection in another band that is not flagged as a spurious 
+artifact detection (see <a href="/data/WISE/docs/release/All-Sky/expsup/sec5_3.html#reliab" target="_blank">V.3.b</a>).
+Entries in the AllWISE Reject Table may be flagged as spurious
+detections of artifacts in all bands.
+
+<p><font color="red"><strong>CAUTION:</strong></font> Non-zero <em>cc_flags</em>
+values in any band indicate the the measurement in that band may be 
+contaminated and the photometry should be used with caution.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="rel"></a><strong><a href="sec5_3biv.html">rel</a></strong></td>
+<td>%1c</td>
+<td>----</td>
+<td>yes</td>
+<td>Small-separation, same-Tile (<a href="sec5_3biv.html">SSST</a>) detection 
+flag.  Non-null values of
+this flag indicate that this Catalog/Reject Table entry is part of 
+a group of detections with unphysically small separations
+that were extracted on the same Tile.  SSST groups
+occurred when a faint, often spurious noise detection was shifted towards 
+the position of a brighter nearby source during the chi-squared minimization 
+profile-fit source extraction process.  This resulted in 
+two or more extractions on the same Tile that have nearly the same position 
+and similar fluxes.  SSST groups were identified and classified using the 
+<em>rel</em> flag, and the
+classifications are used as part of <a href="sec5_4.html#dupres">Catalog source 
+selection</a>.  The possible values of the <em>rel</em> column are: <br />
+
+<ul>
+<li><strong><em>null</em> -</strong> The extraction is not part of a SSST group,
+and is eligible for the AllWISE Catalog.</li>
+<li><strong><em>s</em> -</strong> The extraction is part of an SSST group,
+and is the original, correct extraction that is eligible for the AllWISE
+Catalog.</li>
+<li><strong><em>c</em> -</strong> The extraction is part of an SSST group
+amd is the original, correct extraction, but is inadvertantly flagged
+as a spurious artifact.  It is eligible for inclusion in the AllWISE 
+Catalog.</li>
+<li><strong><em>r</em> -</strong> The extraction is part of an SSST group,
+but is the least reliable extraction in the group.  It is not eligible
+for the Catalog.  These are found only in the AllWISE Reject Table.</li>
+</ul>
+
+</td>
+<td>&nbsp;</td>
+</tr>
+
+<tr>
+<td><a name="ext_flg"></a><a href="sec5_3bvii.html"><strong>ext_flg</strong></a></td>
+<td>%1d</td>
+<td>----</td>
+<td>yes</td>
+<td>Extended source flag.  This is an integer flag, the value of which 
+indicates whether or not the morphology of a source is consistent with the 
+WISE point spread function in any band, or whether the source is associated 
+with or superimposed on a previously known extended object from the 
+<a href="https://irsa.ipac.caltech.edu/data/2MASS/docs/releases/allsky/doc/sec1_3.html#xtsourcat" target="blank">2MASS Extended Source Catalog (XSC)</a>.  
+The values of the <em>ext_flg</em> indicate the following conditions:
+
+<ul>
+<li><strong>0</strong> - The source shape is consistent with a point-source and the source is not associated with or superimposed on a 2MASS XSC source</li>
+<li><strong>1</strong> - The profile-fit photometry goodness-of-fit, 
+<a href="#w1rchi2"><em>w?rchi2</em></a>, is &gt;3.0 in one or more bands.</li>
+<li><strong>2</strong> - The source falls within the extrapolated isophotal footprint
+of a 2MASS XSC source.</li>
+<li><strong>3</strong> - The profile-fit photometry goodness-of-fit,
+<a href="#w1rchi2"><em>w?rchi2</em></a>, is &gt;3.0 in one or more bands, and
+The source falls within the extrapolated isophotal footprint
+of a 2MASS XSC source.</li>
+<li><strong>4</strong> - The source position falls within 5" of a 2MASS XSC source.</li>
+<li><strong>5</strong> - The profile-fit photometry goodness-of-fit,
+<a href="#w1rchi2"><em>w?rchi2</em></a>, is &gt;3.0 in one or more bands, and 
+the source position falls within 5" of a 2MASS XSC source. </li>
+</ul>
+
+<p><font color="red"><strong>CAUTION:</strong></font> WISE profile-fit 
+(<a href="#w1mpro">w?mpro</a>) and standard aperture 
+(<a href="#w1mag">w?mag</a>) measurements are optimized for point sources 
+and will systematically underestimate the true flux of resolved objects.
+If a source entry has <em>ext_flg&gt;0</em>, you may wish to examine the
+large aperture photometry, or the <a href="#w1gmag"> elliptical aperture 
+photometry</a> which are measured using areas that are scaled from
+2MASS XSC morphologies.
+</td> <td>&nbsp;  </td>
+</tr>
+
+
+<tr>
+<td><a name="var_flg"></a><a href="sec5_3bvi.html"><strong>var_flg</strong></a></td>
+<td>%4s</td>
+<td>----</td>
+<td>yes</td>
+<td>Variability flag.  The variability flag is a four-character string,
+one character per band, in which the value for each band is related to 
+the probability that the source flux measured on the individual WISE
+exposures was not constant with time. The probability calculation
+uses the standard deviation of the single exposure flux measurements, 
+<a href="#w1sigp1"><em>w?sigp1</em></a>, as well as the band-to-band 
+flux correlation significance, <a href="#q12"><em>q12,q23,q34</em></a>.
+
+<p>The probability is computed for a band only when there are at least 
+six single-exposure measurements available that satisfy 
+<a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4ciii6.html#Overview" target="_blank">minimum quality criteria</a>.
+A value of "n" in a band 
+indicates insufficient or inadequate data to make a determination of 
+possible variability. Values of "0" through "9" indicate increasing 
+probabilities of variation. Values of "0" through "5" are most likely
+not variables.  Sources with values of "6" and "7" are likely
+flux variables, but are the most susceptible to false-positive variability.
+<em>Var_flg</em> values greater than "7" have the highest probability of 
+being true flux variables in a band.
+
+<p>
+<strong><font color="red">CAUTION:</font></strong> Estimation of flux variability
+is unreliable for sources that are extended 
+(<a href="#ext_flg"><em>ext_flg&gt;0</em></a>), and sources whose measurements
+are contaminated by image artifacts in a band 
+(<a href="#cc_flags"><em>cc_flags[b] != '0'</em></a>).
+
+</td> <td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="ph_qual"></a><strong>ph_qual</strong></td>
+<td>%4s</td>
+<td>----</td>
+<td>no</td>
+<td> <p>Photometric quality flag.  Four character flag, one character per band 
+[W1/W2/W3/W4],
+that provides a shorthand summary of the quality of the profile-fit
+photometry measurement in each band, as derived from the measurement
+signal-to-noise ratio.
+
+   <ul>
+   <li><strong>A</strong> - Source is detected in this band with a flux signal-to-noise
+ratio <em>w?snr<u>&gt;</u>10</em>.</li>
+   <li><strong>B</strong> - Source is detected in this band with a flux signal-to-noise
+ratio <em>3&lt;w?snr&lt;10</em>.</li>
+   <li><strong>C</strong> - Source is detected in this band with a flux signal-to-noise
+ratio <em>2&lt;w?snr&lt;3</em>.</li>
+   <li><strong>U</strong> - Upper limit on magnitude.  Source measurement has 
+<em>w?snr&lt;2</em>.  The profile-fit magnitude <a href="#w1mpro">w?mpro</a>
+is a 95% confidence upper limit. </li>
+   <li><strong>X</strong> - A profile-fit measurement was not possible at this location 
+   in this band.  The value of <a href="#w1mpro"><em>w?mpro</em></a> and 
+   <a href="#w1sigmpro"><em>w?sigmpro</em></a> will be "null" in this band.</li>
+   <li><strong>Z</strong> - A profile-fit source flux measurement was made at this
+   location, but the flux uncertainty could not be measured.  The value of 
+   <a href="#w1sigmpro"><em>w?sigmpro</em></a> will be "null" in this band.  
+   The value of <a href="#w1mpro"><em>w?mpro</em></a> will be "null" if the 
+   measured flux, <a href="#w1flux"><em>w?flux</em></a>, is negative, but will 
+   not be "null" if the flux is positive.
+   If a non-null magnitude is present, it corresponds to the true flux,
+   and not the 95% confidence upper limit.  This occurs for a small number
+   of sources found in a narrow range of ecliptic longitude which were
+   covered by a large number of saturated pixels from 3-Band Cryo 
+   single-exposures, as described in <a href="sec5_1b.html#w1sat">V.1.b.iii</a>.</li>
+
+   </ul> 
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="det_bit"></a><strong>det_bit</strong></td>
+<td>%3d</td>
+<td>----</td>
+<td>no</td>
+<td>Bit-encoded integer indicating bands in which a source has
+a <em>w?snr&gt;2</em> detection. For example, a source detected in W1 only
+has <em>det_bit=1</em> (binary 0001).  A source detected in
+W4 only has <em>det_bit=8</em> (binary 1000). A source detected in
+all four bands has <em>det_bit=15</em> (binary 1111).</td> <td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="moon_lev"></a><a href="sec5_3a.html#moomsk"><strong>moon_lev</strong></a></td>
+<td>%4s</td>
+<td>----</td>
+<td>no</td>
+<td>Scattered moonlight contamination flag.  This is a four-character
+string, one character per band, in which the value is an
+integer indicates the fraction of single-exposure frames on which the
+source was measured that were possibly contaminated by scattered moonlight.
+The value in each band is given by <em>[ceiling(#frmmoon/#frames*10)]</em>, 
+with a maximum value of 9,
+where <em>#frmmoon</em> is the number of affected frames and <em>#frames</em>
+is the total number of frames on which the source was measured.</td>
+<td>&nbsp;</td>
+</tr>
+
+
+<tr>
+<td><a name="w1nm"></a><a href="sec5_3bv.html"><strong>w1nm</strong></a></td>
+<td>%6d</td>
+<td>----</td>
+<td>yes</td>
+<td>Integer frame detection count.  This column gives the number of individual 
+7.7s exposures on which this source was detected with SNR&gt;3 in the 
+W1 profile-fit measurement. This number can be zero 
+for sources that are well-detected on the coadded Atlas Image, but
+too faint for detection on the single exposures.
+
+</td> <td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1m"></a><a href="sec5_3bv.html"><strong>w1m</strong></a></td>
+<td>%6d</td>
+<td>----</td>
+<td>yes</td>
+<td>Integer frame coverage.  This column gives the number of individual 
+7.7s W1 exposures on which a profile-fit measurement of this source was 
+possible.  
+
+<p>This number can differ between the four bands because band-dependent 
+criteria are used to select individual frames for inclusion in the 
+coadded Atlas Images. </p>
+
+<p>This column is <em>null</em> if there is no frame coverage in this band
+at the position of this source.</p>
+
+<p><strong><font color="red">CAUTION:</font></strong> The value of
+<em>w1m</em> may be lower than expected for sources that were covered
+by saturated 3-Band Cryo single-exposures.  A sign of this is if
+<em>w1m</em> differs significantly from <a href="#w1cov"><em>w1cov</em></a>.  See
+<a href="sec5_1b.html#w1sat">V.1.b.iii</a> for details.</p> 
+</td> 
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2nm"></a><a href="sec5_3bv.html"><strong>w2nm</strong></a></td>
+<td>%6d</td>
+<td>----</td>
+<td>yes</td>
+<td>Integer frame detection count.  This column gives the number of individual 
+7.7s exposures on which this source was detected with SNR&gt;3 in the 
+W2 profile-fit measurement. This number can be zero 
+for sources that are well-detected on the coadded Atlas Image, but
+too faint for detection on the single exposures.
+
+</td> <td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2m"></a><a href="sec5_3bv.html"><strong>w2m</strong></a></td>
+<td>%6d</td>
+<td>----</td>
+<td>yes</td>
+<td>Integer frame coverage.  This column gives the number of individual 
+7.7s W2 exposures on which a profile-fit measurement of this source was 
+possible.  
+
+<p>This number can differ between the four bands because band-dependent
+criteria are used to select individual frames for inclusion in the
+coadded Atlas Images. </p>
+
+<p>This column is <em>null</em> if there is no frame coverage in this band
+at the position of this source.</p>
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3nm"></a><a href="sec5_3bv.html"><strong>w3nm</strong></a></td>
+<td>%6d</td>
+<td>----</td>
+<td>yes</td>
+<td>Integer frame detection count.  This column gives the number of individual 
+8.8s exposures on which this source was detected with SNR&gt;3 in the 
+W3 profile-fit measurement. This number can be zero 
+for sources that are well-detected on the coadded Atlas Image, but
+too faint for detection on the single exposures.
+
+</td> <td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3m"></a><a href="sec5_3bv.html"><strong>w3m</strong></a></td>
+<td>%6d</td>
+<td>----</td>
+<td>yes</td>
+<td>Integer frame coverage.  This column gives the number of individual 
+8.8s W3 exposures on which a profile-fit measurement of this source was 
+possible.  
+
+<p>This number can differ between the four bands because band-dependent
+criteria are used to select individual frames for inclusion in the
+coadded Atlas Images.</p>
+
+<p>This column is <em>null</em> if there is no frame coverage in this band
+at the position of this source.</p>
+ </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4nm"></a><a href="sec5_3bv.html"><strong>w4nm</strong></a></td>
+<td>%6d</td>
+<td>----</td>
+<td>yes</td>
+<td>Integer frame detection count.  This column gives the number of individual 
+8.8s exposures on which this source was detected with SNR&gt;3 in the 
+W4 profile-fit measurement. This number can be zero 
+for sources that are well-detected on the coadded Atlas Image, but
+too faint for detection on the single exposures.
+
+</td> <td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4m"></a><a href="sec5_3bv.html"><strong>w4m</strong></a></td>
+<td>%6d</td>
+<td>----</td>
+<td>yes</td>
+<td>Integer frame coverage.  This column gives the number of individual 
+8.8s W4 exposures on which a profile-fit measurement of this source was 
+possible.  
+
+<p>This number can differ between the four bands because band-dependent 
+criteria are used to select individual frames for inclusion in the 
+coadded Atlas Images. </p>
+
+<p>This column is <em>null</em> if there is no frame coverage in this band
+at the position of this source.</p>
+</td> 
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1cov"></a><a href="sec4_1.html#desc.html"><strong>w1cov</strong></a></td>
+<td>%7.3f</td>
+<td>----</td>
+<td>yes</td>
+<td>Mean pixel coverage in W1.  This column gives the mean pixel
+value from the W1 <a href="sec4_1.html#desc">Atlas Tile Coverage Map</a> 
+within the "standard" aperture, a circular area 
+with a radius of 8.25" centered on the position of this source.
+
+<p><em>W1cov</em> may differ from the integer frame coverage
+value given in <em><a href="#w1m">w1m</a></em> for two reasons. 
+First, individual pixels in the measurement area may be masked or otherwise 
+unusable, reducing the effective pixel count and thus the mean coverage
+value.  Second, the effective sky area sampled by a pixels in single-exposure 
+image varies across the focal plane because of field distortion.  
+Distortion is corrected when coadding to generate the Atlas Images.
+Therefore, the effective number of pixels contributing to a pixel in the
+Atlas Coverage Map may be slightly smaller or larger than 
+expected if there was no distortion.  Third, the values of 
+<a href="#w1m"><em>w1m</em></a> may be artificially reduced for sources
+that are covered by saturated 3-Band Cryo single-exposures.
+</p>
+</td> <td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2cov"></a><a href="sec4_1.html#desc"><strong>w2cov</strong></a></td>
+<td>%7.3f</td>
+<td>----</td>
+<td>yes</td>
+<td>Mean pixel coverage in W2.  This column gives the mean pixel
+value from the W2 <a href="sec4_1.html#desc">Atlas Tile Coverage Map</a> 
+within the "standard" aperture, a circular area 
+with a radius of 8.25" centered on the position of this source.
+
+<p><em>W2cov</em> may differ from the integer frame coverage
+value given in <em><a href="#w2m">w2m</a></em> for two reasons. 
+First, individual pixels in the measurement area may be masked or otherwise 
+unusable, reducing the effective pixel count and thus the mean coverage
+value.  Second, the effective sky area sampled by a pixels in single-exposure 
+image varies across the focal plane because of field distortion.  
+Distortion is corrected when coadding to generate the Atlas Images.
+Therefore, the effective number of pixels contributing to a pixel in the
+Atlas Coverage Map may be slightly smaller or larger than 
+expected if there was no distortion.  
+</td> <td>&nbsp;  </td>
+
+<tr>
+<td><a name="w3cov"></a><a href="sec4_1.html#desc"><strong>w3cov</strong></a></td>
+<td>%7.3f</td>
+<td>----</td>
+<td>yes</td>
+<td>Mean pixel coverage in W3.  This column gives the mean pixel
+value from the W3 <a href="sec4_1.html#desc">Atlas Tile Coverage Map</a> 
+within the "standard" aperture, a circular area 
+with a radius of 8.25" centered on the position of this source.
+
+<p><em>W3cov</em> may differ from the integer frame coverage
+value given in <em><a href="#w3m">w3m</a></em> for two reasons. 
+First, individual pixels in the measurement area may be masked or otherwise 
+unusable, reducing the effective pixel count and thus the mean coverage
+value.  Second, the effective sky area sampled by a pixels in single-exposure 
+image varies across the focal plane because of field distortion.  
+Distortion is corrected when coadding to generate the Atlas Images.
+Therefore, the effective number of pixels contributing to a pixel in the
+Atlas Coverage Map may be slightly smaller or larger than 
+expected if there was no distortion.  
+</td> <td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4cov"></a><a href="sec4_1.html#desc"><strong>w4cov</strong></a></td>
+<td>%7.3f</td>
+<td>----</td>
+<td>yes</td>
+<td>Mean pixel coverage in W4.  This column gives the mean pixel
+value from the W4 <a href="sec4_1.html#desc">Atlas Tile Coverage Map</a> 
+within the "standard" aperture, a circular area 
+with a radius of 16.5" centered on the position of this source.
+
+<p><em>W4cov</em> may differ from the integer frame coverage
+value given in <em><a href="#w4m">w4m</a></em> for two reasons. 
+First, individual pixels in the measurement area may be masked or otherwise 
+unusable, reducing the effective pixel count and thus the mean coverage
+value.  Second, the effective sky area sampled by a pixels in single-exposure 
+image varies across the focal plane because of field distortion.  
+Distortion is corrected when coadding to generate the Atlas Images.
+Therefore, the effective number of pixels contributing to a pixel in the
+Atlas Coverage Map may be slightly smaller or larger than 
+expected if there was no distortion.  
+
+</td> <td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1cc_map"></a><a href="sec5_3d.html"><strong>w1cc_map</strong></a></td>
+<td>%3d</td>
+<td>----</td>
+<td>yes</td>
+<td>Contamination and confusion map for this source in W1.
+This column contains the integer equivalent of the 9-bit binary number
+that specifies if the W1 measurement is believed to be
+contaminated by or a spurious detection of 
+an image artifact.  The elements of the binary array are: 
+
+<p>
+<table border="0" width="300">
+<tr><th>S</th><th>0</th><th>0</th><th>0</th><th>O</th><th>H</th><th>0</th><th>P</th><th>D</th></tr>
+</table>
+
+<p>
+The leftmost bit, S, differentiates whether the band-detection is 
+believed to be a real detection contaminated by an artifact ("0") or a 
+spurious detection of an artifact ("1"). The remaining bits are set to
+"1" to denote contamination by different types of artifacts according 
+to the letters:
+
+<br>
+<ul>
+   <li><strong>D</strong> - Diffraction spike.  Source may be a spurious
+            detection of or contaminated by a <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#diffraction_spikes" target="blank">diffraction spike</a> 
+            a nearby bright star on the same image. </li>
+
+   <li><strong>P</strong> - Persistence.  Source may be a spurious detection of or
+            contaminated by a <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#latents" target="blank">short-term latent (persistence) image</a> 
+            left by a bright source.</li>
+
+   <li><strong>H</strong> - Halo.  Source may be a spurious detection of or
+             contaminated by the <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#halos" target="blank">scattered light halo</a> 
+             associated with a bright star.</li>
+   <li><strong>O (letter "o")</strong> - Optical ghost.  Source may be a spurious 
+             detection of or contaminated by an <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#ghosts" target="blank">optical ghost image</a> 
+             caused by a nearby bright source on the same image.</li>
+</ul>
+
+<p>For example, a measurement that is believed to be a spurious detection
+of a diffraction spike and scattered light halo has
+a binary bit map value of "100001001" and <em>w1cc_map=265</em>.
+</td> 
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1cc_map_str"></a><a href="sec5_3d.html"><strong>w1cc_map_str</strong></a></td>
+<td>%9s</td>
+<td>----</td>
+<td>yes</td>
+<td>Contamination and confusion string.  This column is a character string 
+that denotes all artifacts that may contaminate the W1 measurement
+of this source, in the priority order  <strong>D,P,H,O,d,p,h,o</strong>. 
+Lower-case letters denote cases where the source detection in this band
+is believed to be real but the measurement may be contaminated by the artifact.
+upper-case letters denote cases where the source detection in this band may be
+a spurious detection of an artifact. 
+
+<p>For example, a real detection that is contaminated by
+a diffraction spike and a latent (persistent) image has a
+<em>w1cc_map_str="dp"</em>.  A spurious detection of a diffraction
+spike that is also contaminated by a latent image has <em>w1cc_map_str="Dp"</em>.
+
+<p>This string is "null" if there are no artifacts that affect the
+measurement in this band.
+
+<p>The value that appears in first element of the 
+<a href="#cc_flags"><em>cc_flags</em></a> string is the left-most character in 
+<em>w1cc_map_str</em>.  If <em>w1cc_map_str</em> is "null", then the
+corresponding <a href="#cc_flags">cc_flags</a> entry is "0".
+</td> 
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2cc_map"></a><a href="sec5_3d.html"><strong>w2cc_map</strong></a></td>
+<td>%3d</td>
+<td>----</td>
+<td>yes</td>
+<td>Contamination and confusion map for this source in W2.
+This column contains the integer equivalent of the 9-bit binary number
+that specifies if the W2 measurement is believed to be
+contaminated by or a spurious detection of 
+an image artifact.  The elements of the binary array are: 
+
+
+<p>
+<table border="0" width="300">
+<tr><th>S</th><th>0</th><th>0</th><th>0</th><th>O</th><th>H</th><th>0</th><th>P</th><th>D</th></tr>
+</table>
+
+<p>
+The leftmost bit, S, differentiates whether the band-detection is 
+believed to be a real detection contaminated by an artifact ("0") or a 
+spurious detection of an artifact ("1"). The remaining bits are set to
+"1" to denote contamination by different types of artifacts according 
+to the letters:
+
+<br>
+<ul>
+   <li><strong>D</strong> - Diffraction spike.  Source may be a spurious
+            detection of or contaminated by a <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#diffraction_spikes" target="blank">diffraction spike</a> 
+            a nearby bright star on the same image. </li>
+
+   <li><strong>P</strong> - Persistence.  Source may be a spurious detection of or
+            contaminated by a <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#latents" target="blank">short-term latent (persistence) image</a> 
+            left by a bright source.</li>
+
+   <li><strong>H</strong> - Halo.  Source may be a spurious detection of or
+             contaminated by the <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#halos" target="blank">scattered light halo</a> 
+             associated with a bright star.</li>
+   <li><strong>O (letter "o")</strong> - Optical ghost.  Source may be a spurious 
+             detection of or contaminated by an <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#ghosts" target="blank">optical ghost image</a> 
+             caused by a nearby bright source on the same image.</li>
+</ul>
+
+<p>For example, a measurement that is believed to be a spurious detection
+of a diffraction spike and scattered light halo has
+a binary bit map value of "100001001" and <em>w2cc_map=265</em>.
+</td> 
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2cc_map_str"></a><a href="sec5_3d.html"><strong>w2cc_map_str</strong></a></td>
+<td>%9s</td>
+<td>----</td>
+<td>yes</td>
+<td><p>Contamination and confusion string.  This column is a character string 
+  that denotes all artifacts that may contaminate the W2 measurement
+  of this source, in the priority order  <strong>D,P,H,O,d,p,h,o</strong>. 
+  Lower-case letters denote cases where the source detection in this band
+  is believed to be real but the measurement may be contaminated by the artifact.
+  Upper-case letters denote cases where the source detection in this band may be
+    a spurious detection of an artifact. </p>
+<p>For example, a real detection that is contaminated by
+  a diffraction spike and a latent (persistent) image has a
+  <em>w2cc_map_str="dp"</em>.  A spurious detection of a diffraction
+  spike that is also contaminated by a latent image has <em>w2cc_map_str="Dp"</em>.
+  
+<p>This string is "null" if there are no artifacts that affect the
+measurement in this band.
+
+<p>The value that appears in second element of the 
+<a href="#cc_flags"><em>cc_flags</em></a> string is the left-most character in <em>w2cc_map_str</em>.  If <em>w2cc_map_str</em> is "null," then the
+corresponding <a href="#cc_flags">cc_flags</a> entry is "0."
+</td> 
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3cc_map"></a><a href="sec5_3d.html"><strong>w3cc_map</strong></a></td>
+<td>%3d</td>
+<td>----</td>
+<td>yes</td>
+<td>Contamination and confusion map for this source in W3.
+This column contains the integer equivalent of the 9-bit binary 
+number that specifies if the W3 measurement is believed to be
+contaminated by or a spurious detection of 
+an image artifact.  The elements of the binary array are: 
+
+<p>
+<table border="0" width="300">
+<tr><th>S</th><th>0</th><th>0</th><th>0</th><th>O</th><th>H</th><th>0</th><th>P</th><th>D</th></tr>
+</table>
+
+<p>
+The leftmost bit, S, differentiates whether the band-detection is 
+believed to be a real detection contaminated by an artifact ("0") or a 
+spurious detection of an artifact ("1"). The remaining bits are set to
+"1" to denote contamination by different types of artifacts according 
+to the letters:
+
+<br>
+<ul>
+   <li><strong>D</strong> - Diffraction spike.  Source may be a spurious
+            detection of or contaminated by a <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#diffraction_spikes" target="blank">diffraction spike</a> 
+            a nearby bright star on the same image. </li>
+
+   <li><strong>P</strong> - Persistence.  Source may be a spurious detection of or
+            contaminated by a <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#latents" target="blank">short-term latent (persistence) image</a> 
+            left by a bright source.</li>
+
+   <li><strong>H</strong> - Halo.  Source may be a spurious detection of or
+             contaminated by the <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#halos" target="blank">scattered light halo</a> 
+             associated with a bright star.</li>
+   <li><strong>O (letter "o")</strong> - Optical ghost.  Source may be a spurious 
+             detection of or contaminated by an <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#ghosts" target="blank">optical ghost image</a> 
+             caused by a nearby bright source on the same image.</li>
+</ul>
+
+<p>For example, a measurement that is believed to be a spurious detection
+of a diffraction spike and scattered light halo has
+a binary bit map value of "100001001" and <em>w3cc_map=265</em>.
+</td> 
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3cc_map_str"></a><a href="sec5_3d.html"><strong>w3cc_map_str</strong></a></td>
+<td>%9s</td>
+<td>----</td>
+<td>yes</td>
+<td>Contamination and confusion string.  This column is a character string 
+that denotes all artifacts that may contaminate the W3 measurement
+of this source, in the priority order  <strong>D,P,H,O,d,p,h,o</strong>. 
+Lower-case letters denote cases where the source detection in this band
+is believed to be real but the measurement may be contaminated by the artifact.
+Upper-case letters denote cases where the source detection in this band may be
+a spurious detection of an artifact. 
+
+<p>For example, a real detection that is contaminated by
+a diffraction spike and a latent (persistent) image has a
+<em>w3cc_map_str="dp"</em>.  A spurious detection of a diffraction
+spike that is also contaminated by a latent image has <em>w3cc_map_str="Dp"</em>.
+
+<p>This string is "null" if there are no artifacts that affect the
+measurement in this band.
+
+<p>The value that appears in first element of the 
+<a href="#cc_flags"><em>cc_flags</em></a> string is the third character in 
+<em>w3cc_map_str</em>.  If <em>w3cc_map_str</em> is "null", then the
+corresponding <a href="#cc_flags">cc_flags</a> entry is "0."
+</td> 
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4cc_map"></a><a href="sec5_3d.html"><strong>w4cc_map</strong></a></td>
+<td>%3d</td>
+<td>----</td>
+<td>yes</td>
+<td>Contamination and confusion map for this source in W4.
+This column contains the integer equivalent of the 9-bit binary 
+number that specifies if the W4 measurement is believed to be
+contaminated by or a spurious detection of 
+an image artifact.  The elements of the binary array are: 
+
+<p>
+<table border="0" width="300">
+<tr><th>S</th><th>0</th><th>0</th><th>0</th><th>O</th><th>H</th><th>0</th><th>P</th><th>D</th></tr>
+</table>
+
+<p>
+The leftmost bit, S, differentiates whether the band-detection is 
+believed to be a real detection contaminated by an artifact ("0") or a 
+spurious detection of an artifact ("1"). The remaining bits are set to
+"1" to denote contamination by different types of artifacts according 
+to the letters:
+
+<br>
+<ul>
+   <li><strong>D</strong> - Diffraction spike.  Source may be a spurious
+            detection of or contaminated by a <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#diffraction_spikes" target="blank">diffraction spike</a> 
+            a nearby bright star on the same image. </li>
+
+   <li><strong>P</strong> - Persistence.  Source may be a spurious detection of or
+            contaminated by a <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#latents" target="blank">short-term latent (persistence) image</a> 
+            left by a bright source.</li>
+
+   <li><strong>H</strong> - Halo.  Source may be a spurious detection of or
+             contaminated by the <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#halos" target="blank">scattered light halo</a> 
+             associated with a bright star.</li>
+   <li><strong>O (letter "o")</strong> - Optical ghost.  Source may be a spurious 
+             detection of or contaminated by an <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4g.html#ghosts" target="blank">optical ghost image</a> 
+             caused by a nearby bright source on the same image.</li>
+</ul>
+
+<p>For example, a measurement that is believed to be a spurious detection
+of a diffraction spike and scattered light halo has
+a binary bit map value of "100001001" and <em>w4cc_map=265</em>.
+</td> 
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4cc_map_str"></a><a href="sec5_3d.html"><strong>w4cc_map_str</strong></a></td>
+<td>%9s</td>
+<td>----</td>
+<td>yes</td>
+<td>Contamination and confusion string.  This column is a character string 
+that denotes all artifacts that may contaminate the W4 measurement
+of this source, in the priority order  <strong>D,P,H,O,d,p,h,o</strong>. 
+Lower-case letters denote cases where the source detection in this band
+is believed to be real but the measurement may be contaminated by the artifact.
+Upper-case letters denote cases where the source detection in this band may be
+a spurious detection of an artifact. 
+
+<p>For example, a real detection that is contaminated by
+a diffraction spike and a latent (persistent) image has a
+<em>w4cc_map_str="dp"</em>.  A spurious detection of a diffraction
+spike that is also contaminated by a latent image has <em>w4cc_map_str="Dp"</em>.
+
+<p>This string is "null" if there are no artifacts that affect the
+measurement in this band.
+
+<p>The value that appears in first element of the 
+<a href="#cc_flags"><em>cc_flags</em></a> string is the fourth character in 
+<em>w4cc_map_str</em>.  If <em>w4cc_map_str</em> is "null", then the
+corresponding <a href="#cc_flags">cc_flags</a> entry is "0."</td> 
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="use_src"></a><a href="sec5_4.html#dupres"><strong>use_src</strong></a></td>
+<td>%1d</td>
+<td>----</td>
+<td>no</td>
+<td>Duplicate detection resolution flag.  This is a one digit 
+integer flag <strong>that is present in the AllWISE Reject Table only</strong>. 
+The flag has a value of "0" or "1", where:<br />
+
+<ul>
+<li><strong>"0" -</strong> indicates that extraction is<br />
+   <ul>
+   <li>within 50" of a Tile edge boundary where the largest aperture
+       photometry measurements may be corrupted, or</li>
+   <li>positionally associated with one or more other extractions that 
+       are measurements of the same objects, and this extraction is
+       not the apparition that is selected for the Catalog.  </li>
+   </ul>
+<li><strong>"1" -</strong> indicates that extraction is a single, unique
+detection of an object, or it is a duplicate measurement 
+and is the apparition that is eligible for inclusion in the Source Catalog.</li>
+</ul>
+
+<p>Only extractions that have <em>use_src="1"</em> are 
+<a href="sec5_4.html">eligible for the AllWISE Source Catalog</a>, 
+so this column is not carried explicitly in the Catalog.  Entries in 
+the AllWISE Reject Table can have either value.</p>
+
+<p>The process for setting the <em>use_src</em> flag is described in
+<a href="sec5_4.html#dupres">V.4.b</a>.</p>
+<td>&nbsp;  </td>
+</tr>
+
+
+<tr>
+<td><a name="best_use_cntr"></a><a href="sec5_4.html#dupres"><strong>best_use_cntr</strong></a></td>
+<td>%19d</td>
+<td>----</td>
+<td>yes</td>
+<td><a href="#cntr">Cntr</a> identification value of the source extraction
+that was selected as a candidate Catalog source in the 
+<a href="sec5_4.html#dupres">duplicate resolution</a> process for the group of 
+associated sources that included this extraction. 
+For the AllWISE Source Catalog, <em>best_use_cntr = cntr</em>.
+For the AllWISE Reject Table, <em>best_use_cntr</em> may be the <em>cntr</em>
+value of a corresponding source in the AllWISE Source Catalog. </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="ngrp"></a><a href="sec5_4.html#dupres"><strong>ngrp</strong></a></td>
+<td>%2d</td>
+<td>----</td>
+<td>yes</td>
+<td>Excess number of positionally associated duplicate resolution groups 
+in which this extractions was included.  Values of 
+<em>ngrp</em>&gt;0 indicate that the source was associated with more
+than one possible group.
+
+<p><strong><font color="red">CAUTION:</font></strong> In the All-Sky Release
+Catalog and 3-Band Cryo Source Working Database, this column indicated
+the total number of groups with which a source was associated.
+In the AllWISE Catalog and Reject Table, <em>ngrp</em> is the
+total number of groups minus one.</p>
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr><td colspan="6"><em><strong>Additional Photometric Information</strong></em></td></tr>
+
+<tr>
+<td><a name="w1flux"></a><a href="sec5_3bii.html"><strong>w1flux</strong></a></td>
+<td>%11.4e</td>
+<td><em>dn</em></td>
+<td>yes</td>
+<td>The "raw" W1 source flux measured in profile-fit photometry in units
+of digital numbers.  This value may be negative.  This column is 
+<em>null</em> if no useful profile-fit measurement of the source is 
+possible because of masked or otherwise unusable pixels.</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sigflux"></a><a href="sec5_3bii.html"><strong>w1sigflux</strong></a></td>
+<td>%11.4e</td>
+<td><em>dn</em></td>
+<td>yes</td>
+<td>Uncertainty in the "raw" W1 source flux measurement in profile-fit 
+photometry in units of digital numbers.  This column is <em>null</em> if 
+no useful profile-fit measurement of the source is possible
+because
+of masked or otherwise unusable pixels.</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sky"></a><a href="sec5_3biii.html"><strong>w1sky</strong></a></td>
+<td>%9.3f</td>
+<td><em>dn</em></td>
+<td>yes</td>
+<td> The trimmed average of the W1 sky background value in digital numbers 
+measured in an annulus with an inner radius of 50" and outer radius of 70".  
+Both profile-fit and aperture photometry source brightness measurements are 
+made relative to this sky background value.
+
+<p>For profile-fit photometry, the sky background is measured on the
+individual single-exposure images that are used for source characterization.
+For aperture photometry, the sky background is measured on the Atlas Image.
+</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sigsk"></a><a href="sec5_3biii.html"><strong>w1sigsk</strong></a></td>
+<td>%7.3f</td><td><em>dn</em></td>
+<td>yes</td>
+<td>The uncertainty in the W1 sky background value in units of digital 
+numbers measured in an annulus with an inner radius of 50" and outer 
+radius of 70".
+</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1conf"></a><a href="sec5_3biii.html"><strong>w1conf</strong></a></td>
+<td>%9.3f</td><td><em>dn</em></td>
+<td>yes</td>
+<td>Estimated confusion noise in the W1 sky background annulus, in digital
+numbers.  This number is the difference between
+the measured noise in the sky background <em><a href="#w1sigsk">w1sigsk</a></em> 
+and the noise measured in the same region on the 
+<a href="/data/WISE/docs/release/All-Sky/expsup/sec2_3e.html" target="_blank">Atlas Uncertainty Maps</a>.
+</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2flux"></a><a href="sec5_3bii.html"><strong>w2flux</strong></a></td>
+<td>%11.4e</td>
+<td><em>dn</em></td>
+<td>yes</td>
+<td>The "raw" W2 source flux measured in profile-fit photometry in units
+of digital numbers.  This value may be negative.  This column is 
+<em>null</em> if no useful profile-fit measurement of the source is 
+possible because of masked or otherwise unusable pixels.</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2sigflux"></a><a href="sec5_3bii.html"><strong>w2sigflux</strong></a></td>
+<td>%11.4e</td>
+<td><em>dn</em></td>
+<td>yes</td>
+<td>Uncertainty in the "raw" W2 source flux measurement in profile-fit 
+photometry in units of digital numbers.  This column is <em>null</em> if 
+no useful profile-fit measurement of the source is possible because
+of masked or otherwise unusable pixels.</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2sky"></a><a href="sec5_3biii.html"><strong>w2sky</strong></a></td>
+<td>%9.3f</td>
+<td><em>dn</em></td>
+<td>yes</td>
+<td> The trimmed average of the W2 sky background value in digital numbers 
+measured in an annulus with an inner radius of 50" and outer radius of 70".  
+Both profile-fit and aperture photometry source brightness measurements are 
+made relative to this sky background value.
+
+<p>For profile-fit photometry, the sky background is measured on the
+individual single-exposure images that are used for source characterization.
+For aperture photometry, the sky background is measured on the Atlas Image.
+</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2sigsk"></a><a href="sec5_3biii.html"><strong>w2sigsk</strong></a></td>
+<td>%7.3f</td><td><em>dn</em></td>
+<td>yes</td>
+<td>The uncertainty in the W2 sky background value in units of digital 
+numbers measured in an annulus with an inner radius of 50" and outer 
+radius of 70".
+</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2conf"></a><a href="sec5_3biii.html"><strong>w2conf</strong></a></td>
+<td>%9.3f</td><td><em>dn</em></td>
+<td>yes</td>
+<td>Estimated confusion noise in the W2 sky background annulus, in digital
+numbers.  This number is the difference between
+the measured noise in the sky background <em><a href="#w2sigsk">w2sigsk</a></em> 
+and the noise measured in the same region on the 
+<a href="/data/WISE/docs/release/All-Sky/expsup/sec2_3e.html" target="_blank">Atlas Uncertainty Maps</a>.
+</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3flux"></a><a href="sec5_3bii.html"><strong>w3flux</strong></a></td>
+<td>%11.4e</td>
+<td><em>dn</em></td>
+<td>yes</td>
+<td>The "raw" W3 source flux measured in profile-fit photometry in units
+of digital numbers.  This value may be negative.  This column is 
+<em>null</em> if no useful profile-fit measurement of the source is 
+possible because of masked or otherwise unusable pixels.</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3sigflux"></a><a href="sec5_3bii.html"><strong>w3sigflux</strong></a></td>
+<td>%11.4e</td>
+<td><em>dn</em></td>
+<td>yes</td>
+<td>Uncertainty in the "raw" W3 source flux measurement in profile-fit 
+photometry in units of digital numbers.  This column is <em>null</em> if 
+no useful profile-fit measurement of the source is possible because
+of masked or otherwise unusable pixels.</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3sky"></a><a href="sec5_3biii.html"><strong>w3sky</strong></a></td>
+<td>%9.3f</td>
+<td><em>dn</em></td>
+<td>yes</td>
+<td> The trimmed average of the W3 sky background value in digital numbers 
+measured in an annulus with an inner radius of 50" and outer radius of 70".  
+Both profile-fit and aperture photometry source brightness measurements are 
+made relative to this sky background value.
+
+<p>For profile-fit photometry, the sky background is measured on the
+individual single-exposure images that are used for source characterization.
+For aperture photometry, the sky background is measured on the Atlas Image.
+</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3sigsk"></a><a href="sec5_3biii.html"><strong>w3sigsk</strong></a></td>
+<td>%7.3f</td><td><em>dn</em></td>
+<td>yes</td>
+<td>The uncertainty in the W3 sky background value in units of digital 
+numbers measured in an annulus with an inner radius of 50" and outer 
+radius of 70".
+</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3conf"></a><a href="sec5_3biii.html"><strong>w3conf</strong></a></td>
+<td>%9.3f</td><td><em>dn</em></td>
+<td>yes</td>
+<td>Estimated confusion noise in the W3 sky background annulus, in digital
+numbers.  This number is the difference between
+the measured noise in the sky background <em><a href="#w3sigsk">w3sigsk</a></em> 
+and the noise measured in the same region on the 
+<a href="/data/WISE/docs/release/All-Sky/expsup/sec2_3e.html" target="_blank">Atlas Uncertainty Maps</a>.
+</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4flux"></a><a href="sec5_3bii.html"><strong>w4flux</strong></a></td>
+<td>%11.4e</td>
+<td><em>dn</em></td>
+<td>yes</td>
+<td>The "raw" W4 source flux measured in profile-fit photometry in units
+of digital numbers.  This value may be negative.  This column is 
+<em>null</em> if no useful profile-fit measurement of the source is 
+possible because of masked or otherwise unusable pixels.</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4sigflux"></a><a href="sec5_3bii.html"><strong>w4sigflux</strong></a></td>
+<td>%11.4e</td>
+<td><em>dn</em></td>
+<td>yes</td>
+<td>Uncertainty in the "raw" W4 source flux measurement in profile-fit 
+photometry in units of digital numbers.  This column is <em>null</em> if 
+no useful profile-fit measurement of the source is possible because
+of masked or otherwise unusable pixels.</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4sky"></a><a href="sec5_3biii.html"><strong>w4sky</strong></a></td>
+<td>%9.3f</td>
+<td><em>dn</em></td>
+<td>yes</td>
+<td> The trimmed average of the W4 sky background value in digital numbers 
+measured in an annulus with an inner radius of 50" and outer radius of 70".  
+Both profile-fit and aperture photometry source brightness measurements are 
+made relative to this sky background value.
+
+<p>For profile-fit photometry, the sky background is measured on the
+individual single-exposure images that are used for source characterization.
+For aperture photometry, the sky background is measured on the Atlas Image.
+</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4sigsk"></a><a href="sec5_3biii.html"><strong>w4sigsk</strong></a></td>
+<td>%7.3f</td><td><em>dn</em></td>
+<td>yes</td>
+<td>The uncertainty in the W4 sky background value in units of digital 
+numbers measured in an annulus with an inner radius of 50" and outer 
+radius of 70".
+</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4conf"></a><a href="sec5_3biii.html"><strong>w4conf</strong></a></td>
+<td>%9.3f</td><td><em>dn</em></td>
+<td>yes</td>
+<td>Estimated confusion noise in the W4 sky background annulus, in digital
+numbers.  This number is the difference between
+the measured noise in the sky background <em><a href="#w4sigsk">w4sigsk</a></em> 
+and the noise measured in the same region on the 
+<a href="/data/WISE/docs/release/All-Sky/expsup/sec2_3e.html" target="_blank">Atlas Uncertainty Maps</a>.
+</td><td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1mag"></a><a href="sec2_1.html#phot_info"><strong>w1mag</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W1 "standard" aperture magnitude.  This is the 
+<a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4c.html#wappco" target="blank">curve-of-growth corrected</a> 
+source brightness measured in an 8.25" radius circular aperture centered
+on the source position on the Atlas Image.  If the source is not
+detected in the aperture measurement, this is the 95% confidence upper
+limit to the brightness. The background 
+sky reference level is measured in an annular region with 
+inner radius of 50" and outer radius of 70".  The curve-of-growth
+correction is given in <em><a href="#w1mcor">w1mcor</a></em>.
+
+<p>This column is <em>null</em> if an aperture measurement
+was not possible in W1.  </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sigm"></a><a href="sec2_1.html#phot_info"><strong>w1sigm</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W1 "standard" aperture magnitude.  
+
+<p>This column is <em>null</em> if the W1 "standard" aperture magnitude is
+an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1flg"></a><a href="sec2_1.html#phot_info"><strong>w1flg</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W1 "standard" aperture measurement quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated
+or otherwise unusable pixels, or is an upper limit. The flag value
+is an integer that is the combination of 
+one or more of the following values that signify different conditions:
+
+<br>
+<ul>
+<li><strong>0</strong> - No contamination</li>
+<li><strong>1</strong> - Source confusion - another source falls within the measurement aperture</li>
+<li><strong>2</strong> - Presence of bad pixels in the measurement aperture</li>
+<li><strong>4</strong> - Non-zero bit flag tripped (other than 2 or 18)</li>
+<li><strong>8</strong> - All pixels are flagged as unusable, or the aperture flux is negative.  In the former case, the aperture magnitude is <em>"null"</em>.  In the latter case, the aperture magnitude is a 95% confidence upper limit.</li>
+<li><strong>16</strong> - Saturation - there are one or more saturated pixels in the measurement aperture</li>
+<li><strong>32</strong> - The magnitude is a 95% confidence upper limit</li>
+</ul>
+</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1mcor"></a><a href="sec2_1.html#phot_info"><strong>w1mcor</strong></a></td>
+<td>%6.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>
+W1 aperture curve-of-growth correction, in magnitudes. This correction
+is subtracted from the nominal 8.25" aperture photometry brightness,
+<em><a href="#w1mag_2">w1mag_2</a></em>,
+to give the "standard-aperture" magnitude.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mag"></a><a href="sec2_1.html#phot_info"><strong>w2mag</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W2 "standard" aperture magnitude.  This is the 
+<a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4c.html#wappco" traget="blank">curve-of-growth corrected</a> 
+source brightness measured in an 8.25" radius circular aperture centered
+on the source position on the Atlas Image.  If the source is not
+detected in the aperture measurement, this is the 95% confidence upper
+limit to the brightness. The background 
+sky reference level is measured in an annular region with 
+inner radius of 50" and outer radius of 70".  The curve-of-growth
+correction is given in <em><a href="#w2mcor">w2mcor</a></em>.
+
+<p>This column is <em>null</em> if an aperture measurement
+was not possible in W2.  </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2sigm"></a><a href="sec2_1.html#phot_info"><strong>w2sigm</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W2 "standard" aperture magnitude.  
+
+<p>This column is <em>null</em> if the W2 "standard" aperture magnitude is
+an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2flg"></a><a href="sec2_1.html#phot_info"><strong>w2flg</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W2 "standard" aperture measurement quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated
+or otherwise unusable pixels, or is an upper limit. The flag value
+is an integer that is the combination of 
+one or more of the following values that signify different conditions:
+
+<br>
+<ul>
+<li><strong>0</strong> - No contamination</li>
+<li><strong>1</strong> - Source confusion - another source falls within the measurement aperture</li>
+<li><strong>2</strong> - Presence of bad pixels in the measurement aperture</li>
+<li><strong>4</strong> - Non-zero bit flag tripped (other than 2 or 18)</li>
+<li><strong>8</strong> - All pixels are flagged as unusable, or the aperture flux is negative.  In the former case, the aperture magnitude is <em>"null"</em>.  In the latter case, the aperture magnitude is a 95% confidence upper limit.</li>
+<li><strong>16</strong> - Saturation - there are one or more saturated pixels in the measurement aperture</li>
+<li><strong>32</strong> - The magnitude is a 95% confidence upper limit</li>
+</ul>
+</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mcor"></a><a href="sec2_1.html#phot_info"><strong>w2mcor</strong></a></td>
+<td>%6.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>
+W2 aperture curve-of-growth correction, in magnitudes. This correction
+is subtracted from the nominal 8.25" aperture photometry brightness,
+<em><a href="#w2mag_2">w2mag_2</a></em>,
+to give the "standard-aperture" magnitude.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mag"></a><a href="sec2_1.html#phot_info"><strong>w3mag</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W3 "standard" aperture magnitude.  This is the 
+<a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4c.html#wappco" target="blank">curve-of-growth corrected</a> 
+source brightness measured in an 8.25" radius circular aperture centered
+on the source position on the Atlas Image.  If the source is not
+detected in the aperture measurement, this is the 95% confidence upper
+limit to the brightness. The background 
+sky reference level is measured in an annular region with 
+inner radius of 50" and outer radius of 70".  The curve-of-growth
+correction is given in <em><a href="#w3mcor">w3mcor</a></em>.
+
+<p>This column is <em>null</em> if an aperture measurement
+was not possible in W3.  </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3sigm"></a><a href="sec2_1.html#phot_info"><strong>w3sigm</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W3 "standard" aperture magnitude.  
+
+<p>This column is <em>null</em> if the W3 "standard" aperture magnitude is
+an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3flg"></a><a href="sec2_1.html#phot_info"><strong>w3flg</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W3 "standard" aperture measurement quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated
+or otherwise unusable pixels, or is an upper limit. The flag value
+is an integer that is the combination of 
+one or more of the following values that signify different conditions:
+
+<br>
+<ul>
+<li><strong>0</strong> - No contamination</li>
+<li><strong>1</strong> - Source confusion - another source falls within the measurement aperture</li>
+<li><strong>2</strong> - Presence of bad pixels in the measurement aperture</li>
+<li><strong>4</strong> - Non-zero bit flag tripped (other than 2 or 18)</li>
+<li><strong>8</strong> - All pixels are flagged as unusable, or the aperture flux is negative.  In the former case, the aperture magnitude is <em>"null"</em>.  In the latter case, the aperture magnitude is a 95% confidence upper limit.</li>
+<li><strong>16</strong> - Saturation - there are one or more saturated pixels in the measurement aperture</li>
+<li><strong>32</strong> - The magnitude is a 95% confidence upper limit</li>
+</ul>
+</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mcor"></a><a href="sec2_1.html#phot_info"><strong>w3mcor</strong></a></td>
+<td>%6.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>
+W3 aperture curve-of-growth correction, in magnitudes. This correction
+is subtracted from the nominal 8.25" aperture photometry brightness,
+<em><a href="#w3mag_2">w3mag_2</a></em>,
+to give the "standard-aperture" magnitude.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mag"></a><a href="sec2_1.html#phot_info"><strong>w4mag</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W4 "standard" aperture magnitude.  This is the 
+<a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4c.html#wappco" target="blank">curve-of-growth corrected</a> 
+source brightness measured in a 16.5" radius circular aperture centered
+on the source position on the Atlas Image.  If the source is not
+detected in the aperture measurement, this is the 95% confidence upper
+limit to the brightness. The background 
+sky reference level is measured in an annular region with 
+inner radius of 50" and outer radius of 70".  The curve-of-growth
+correction is given in <em><a href="#w4mcor">w4mcor</a></em>.
+
+<p>This column is <em>null</em> if an aperture measurement
+was not possible in W4.  </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4sigm"></a><a href="sec2_1.html#phot_info"><strong>w4sigm</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W4 "standard" aperture magnitude.  
+
+<p>This column is <em>null</em> if the W4 "standard" aperture magnitude is
+an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4flg"></a><a href="sec2_1.html#phot_info"><strong>w4flg</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W4 "standard" aperture measurement quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated
+or otherwise unusable pixels, or is an upper limit. The flag value
+is an integer that is the combination of 
+one or more of the following values that signify different conditions:
+
+<br>
+<ul>
+<li><strong>0</strong> - No contamination</li>
+<li><strong>1</strong> - Source confusion - another source falls within the measurement aperture</li>
+<li><strong>2</strong> - Presence of bad pixels in the measurement aperture</li>
+<li><strong>4</strong> - Non-zero bit flag tripped (other than 2 or 18)</li>
+<li><strong>8</strong> - All pixels are flagged as unusable, or the aperture flux is negative.  In the former case, the aperture magnitude is <em>"null"</em>.  In the latter case, the aperture magnitude is a 95% confidence upper limit.</li>
+<li><strong>16</strong> - Saturation - there are one or more saturated pixels in the measurement aperture</li>
+<li><strong>32</strong> - The magnitude is a 95% confidence upper limit</li>
+</ul>
+</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mcor"></a><a href="sec2_1.html#phot_info"><strong>w4mcor</strong></a></td>
+<td>%6.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>
+W4 aperture curve-of-growth correction, in magnitudes. This correction
+is subtracted from the nominal 16.5" aperture photometry brightness,
+<em><a href="#w4mag_2">w4mag_2</a></em>,
+to give the "standard-aperture" magnitude.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1mag_1"></a><a href="sec2_1.html#phot_info"><strong>w1mag_1</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W1 5.5" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 5.5" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W1.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sigm_1"></a><a href="sec2_1.html#phot_info"><strong>w1sigm_1</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W1 5.5" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 5.5" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1flg_1"></a><a href="sec2_1.html#phot_info"><strong>w1flg_1</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W1 5.5" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w1flg">w1flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mag_1"></a><a href="sec2_1.html#phot_info"><strong>w2mag_1</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W2 5.5" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 5.5" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W2.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2sigm_1"></a><a href="sec2_1.html#phot_info"><strong>w2sigm_1</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W2 5.5" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 5.5" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2flg_1"></a><a href="sec2_1.html#phot_info"><strong>w2flg_1</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W2 5.5" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w2flg">w2flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mag_1"></a><a href="sec2_1.html#phot_info"><strong>w3mag_1</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W3 5.5" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 5.5" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W3.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3sigm_1"></a><a href="sec2_1.html#phot_info"><strong>w3sigm_1</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W3 5.5" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 5.5" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3flg_1"></a><a href="sec2_1.html#phot_info"><strong>w3flg_1</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W3 5.5" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w3flg">w3flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mag_1"></a><a href="sec2_1.html#phot_info"><strong>w4mag_1</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W4 11.0" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 11.0" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W4.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4sigm_1"></a><a href="sec2_1.html#phot_info"><strong>w4sigm_1</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W4 11.0" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 11.0" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4flg_1"></a><a href="sec2_1.html#phot_info"><strong>w4flg_1</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W4 11.0" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w4flg">w4flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1mag_2"></a><a href="sec2_1.html#phot_info"><strong>w1mag_2</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W1 8.25" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 8.25" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W1.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sigm_2"></a><a href="sec2_1.html#phot_info"><strong>w1sigm_2</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W1 8.25" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 8.25" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1flg_2"></a><a href="sec2_1.html#phot_info"><strong>w1flg_2</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W1 8.25" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w1flg">w1flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mag_2"></a><a href="sec2_1.html#phot_info"><strong>w2mag_2</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W2 8.25" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 8.25" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W2.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2sigm_2"></a><a href="sec2_1.html#phot_info"><strong>w2sigm_2</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W2 8.25" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 8.25" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2flg_2"></a><a href="sec2_1.html#phot_info"><strong>w2flg_2</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W2 8.25" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w2flg">w2flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mag_2"></a><a href="sec2_1.html#phot_info"><strong>w3mag_2</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W3 8.25" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 8.25" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W3.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3sigm_2"></a><a href="sec2_1.html#phot_info"><strong>w3sigm_2</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W3 8.25" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 8.25" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3flg_2"></a><a href="sec2_1.html#phot_info"><strong>w3flg_2</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W3 8.25" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w3flg">w3flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mag_2"></a><a href="sec2_1.html#phot_info"><strong>w4mag_2</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W4 16.5" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 16.5" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W4.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4sigm_2"></a><a href="sec2_1.html#phot_info"><strong>w4sigm_2</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W4 16.5" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 16.5" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4flg_2"></a><a href="sec2_1.html#phot_info"><strong>w4flg_2</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W4 16.5" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w4flg">w4flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1mag_3"></a><a href="sec2_1.html#phot_info"><strong>w1mag_3</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W1 11.0" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 11.0" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W1.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sigm_3"></a><a href="sec2_1.html#phot_info"><strong>w1sigm_3</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W1 11.0" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 11.0" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1flg_3"></a><a href="sec2_1.html#phot_info"><strong>w1flg_3</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W1 11.0" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w1flg">w1flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mag_3"></a><a href="sec2_1.html#phot_info"><strong>w2mag_3</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W2 11.0" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 11.0" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W2.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2sigm_3"></a><a href="sec2_1.html#phot_info"><strong>w2sigm_3</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W2 11.0" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 11.0" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2flg_3"></a><a href="sec2_1.html#phot_info"><strong>w2flg_3</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W2 11.0" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w2flg">w2flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mag_3"></a><a href="sec2_1.html#phot_info"><strong>w3mag_3</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W3 11.0" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 11.0" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W3.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3sigm_3"></a><a href="sec2_1.html#phot_info"><strong>w3sigm_3</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W3 11.0" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 11.0" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3flg_3"></a><a href="sec2_1.html#phot_info"><strong>w3flg_3</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W3 11.0" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w3flg">w3flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mag_3"></a><a href="sec2_1.html#phot_info"><strong>w4mag_3</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W4 22.0" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 22.0" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W4.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4sigm_3"></a><a href="sec2_1.html#phot_info"><strong>w4sigm_3</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W4 22.0" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 22.0" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4flg_3"></a><a href="sec2_1.html#phot_info"><strong>w4flg_3</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W4 22.0" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w4flg">w4flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1mag_4"></a><a href="sec2_1.html#phot_info"><strong>w1mag_4</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W1 13.75" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 13.75" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W1.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sigm_4"></a><a href="sec2_1.html#phot_info"><strong>w1sigm_4</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W1 13.75" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 13.75" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1flg_4"></a><a href="sec2_1.html#phot_info"><strong>w1flg_4</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W1 13.75" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w1flg">w1flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mag_4"></a><a href="sec2_1.html#phot_info"><strong>w2mag_4</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W2 13.75" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 13.75" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W2.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2sigm_4"></a><a href="sec2_1.html#phot_info"><strong>w2sigm_4</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W2 13.75" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 13.75" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2flg_4"></a><a href="sec2_1.html#phot_info"><strong>w2flg_4</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W2 13.75" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w2flg">w2flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mag_4"></a><a href="sec2_1.html#phot_info"><strong>w3mag_4</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W3 13.75" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 13.75" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W3.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3sigm_4"></a><a href="sec2_1.html#phot_info"><strong>w3sigm_4</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W3 13.75" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 13.75" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3flg_4"></a><a href="sec2_1.html#phot_info"><strong>w3flg_4</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W3 13.75" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w3flg">w3flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mag_4"></a><a href="sec2_1.html#phot_info"><strong>w4mag_4</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W4 27.5" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 27.5" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W4.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4sigm_4"></a><a href="sec2_1.html#phot_info"><strong>w4sigm_4</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W4 27.5" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 27.5" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4flg_4"></a><a href="sec2_1.html#phot_info"><strong>w4flg_4</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W4 27.5" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w4flg">w4flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1mag_5"></a><a href="sec2_1.html#phot_info"><strong>w1mag_5</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W1 16.5" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 16.5" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W1.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sigm_5"></a><a href="sec2_1.html#phot_info"><strong>w1sigm_5</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W1 16.5" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 16.5" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1flg_5"></a><a href="sec2_1.html#phot_info"><strong>w1flg_5</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W1 16.5" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w1flg">w1flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mag_5"></a><a href="sec2_1.html#phot_info"><strong>w2mag_5</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W2 16.5" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 16.5" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W2.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2sigm_5"></a><a href="sec2_1.html#phot_info"><strong>w2sigm_5</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W2 16.5" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 16.5" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2flg_5"></a><a href="sec2_1.html#phot_info"><strong>w2flg_5</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W2 16.5" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w2flg">w2flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mag_5"></a><a href="sec2_1.html#phot_info"><strong>w3mag_5</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W3 16.5" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 16.5" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W3.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3sigm_5"></a><a href="sec2_1.html#phot_info"><strong>w3sigm_5</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W3 16.5" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 16.5" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3flg_5"></a><a href="sec2_1.html#phot_info"><strong>w3flg_5</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W3 16.5" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w3flg">w3flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mag_5"></a><a href="sec2_1.html#phot_info"><strong>w4mag_5</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W4 33.0" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 33.0" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W4.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4sigm_5"></a><a href="sec2_1.html#phot_info"><strong>w4sigm_5</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W4 33.0" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 33.0" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4flg_5"></a><a href="sec2_1.html#phot_info"><strong>w4flg_5</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W4 33.0" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w4flg">w4flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1mag_6"></a><a href="sec2_1.html#phot_info"><strong>w1mag_6</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W1 19.25" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 19.25" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W1.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sigm_6"></a><a href="sec2_1.html#phot_info"><strong>w1sigm_6</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W1 19.25" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 19.25" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1flg_6"></a><a href="sec2_1.html#phot_info"><strong>w1flg_6</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W1 19.25" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w1flg">w1flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mag_6"></a><a href="sec2_1.html#phot_info"><strong>w2mag_6</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W2 19.25" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 19.25" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W2.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2sigm_6"></a><a href="sec2_1.html#phot_info"><strong>w2sigm_6</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W2 19.25" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 19.25" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2flg_6"></a><a href="sec2_1.html#phot_info"><strong>w2flg_6</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W2 19.25" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w2flg">w2flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mag_6"></a><a href="sec2_1.html#phot_info"><strong>w3mag_6</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W3 19.25" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 19.25" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W3.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3sigm_6"></a><a href="sec2_1.html#phot_info"><strong>w3sigm_6</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W3 19.25" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 19.25" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3flg_6"></a><a href="sec2_1.html#phot_info"><strong>w3flg_6</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W3 19.25" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w3flg">w3flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mag_6"></a><a href="sec2_1.html#phot_info"><strong>w4mag_6</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W4 38.5" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 38.5" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W4.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4sigm_6"></a><a href="sec2_1.html#phot_info"><strong>w4sigm_6</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W4 38.5" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 38.5" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4flg_6"></a><a href="sec2_1.html#phot_info"><strong>w4flg_6</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W4 38.5" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w4flg">w4flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1mag_7"></a><a href="sec2_1.html#phot_info"><strong>w1mag_7</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W1 22.0" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 22.0" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W1.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sigm_7"></a><a href="sec2_1.html#phot_info"><strong>w1sigm_7</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W1 22.0" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 22.0" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1flg_7"></a><a href="sec2_1.html#phot_info"><strong>w1flg_7</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W1 22.0" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w1flg">w1flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mag_7"></a><a href="sec2_1.html#phot_info"><strong>w2mag_7</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W2 22.0" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 22.0" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W2.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2sigm_7"></a><a href="sec2_1.html#phot_info"><strong>w2sigm_7</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W2 22.0" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 22.0" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2flg_7"></a><a href="sec2_1.html#phot_info"><strong>w2flg_7</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W2 22.0" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w2flg">w2flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mag_7"></a><a href="sec2_1.html#phot_info"><strong>w3mag_7</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W3 22.0" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 22.0" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W3.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3sigm_7"></a><a href="sec2_1.html#phot_info"><strong>w3sigm_7</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W3 22.0" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 22.0" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3flg_7"></a><a href="sec2_1.html#phot_info"><strong>w3flg_7</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W3 22.0" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w3flg">w3flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mag_7"></a><a href="sec2_1.html#phot_info"><strong>w4mag_7</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W4 44.0" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 44.0" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W4.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4sigm_7"></a><a href="sec2_1.html#phot_info"><strong>w4sigm_7</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W4 44.0" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 44.0" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4flg_7"></a><a href="sec2_1.html#phot_info"><strong>w4flg_7</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W4 44.0" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w4flg">w4flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1mag_8"></a><a href="sec2_1.html#phot_info"><strong>w1mag_8</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W1 24.75" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 24.75" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W1.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sigm_8"></a><a href="sec2_1.html#phot_info"><strong>w1sigm_8</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W1 24.75" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 24.75" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1flg_8"></a><a href="sec2_1.html#phot_info"><strong>w1flg_8</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W1 24.75" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w1flg">w1flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mag_8"></a><a href="sec2_1.html#phot_info"><strong>w2mag_8</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W2 24.75" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 24.75" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W2.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2sigm_8"></a><a href="sec2_1.html#phot_info"><strong>w2sigm_8</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W2 24.75" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 24.75" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2flg_8"></a><a href="sec2_1.html#phot_info"><strong>w2flg_8</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W2 24.75" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w2flg">w2flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mag_8"></a><a href="sec2_1.html#phot_info"><strong>w3mag_8</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W3 24.75" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 24.75" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W3.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3sigm_8"></a><a href="sec2_1.html#phot_info"><strong>w3sigm_8</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W3 24.75" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 24.75" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3flg_8"></a><a href="sec2_1.html#phot_info"><strong>w3flg_8</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W3 24.75" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w3flg">w3flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mag_8"></a><a href="sec2_1.html#phot_info"><strong>w4mag_8</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W4 49.5" radius aperture magnitude.  This is the 
+calibrated source brightness measured in a 49.5" radius circular aperture 
+centered on the source position on the Atlas Image.  If the source is not 
+detected in the aperture measurement, this is the 95% confidence upper limit 
+to the brightness. The background sky reference level is measured in an 
+annular region with inner radius of 50" and outer radius of 70".  No 
+curve-of-growth correction has been applied.
+
+<p>This column is <em>null</em> if an aperture measurement was not possible 
+in W4.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4sigm_8"></a><a href="sec2_1.html#phot_info"><strong>w4sigm_8</strong></a> </td>  
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W4 49.5" radius aperture magnitude. 
+
+<p>This column is <em>null</em> if the the 49.5" radius aperture magnitude
+is an upper limit, or if an aperture measurement was not possible.</td>
+
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4flg_8"></a><a href="sec2_1.html#phot_info"><strong>w4flg_8</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>
+W4 49.5" radius aperture magnitude quality flag.  This flag
+indicates if one or more image pixels in the measurement aperture for this
+band is confused with nearby objects, is contaminated by saturated or 
+otherwise unusable pixels, or is an upper limit.  The flag values
+are as described for the standard aperture photometry quality flag,
+<em><a href="#w4flg">w4flg</a></em>.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1magp"></a><a href="sec5_3bv.html"><strong>w1magp</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Magnitude computed from the inverse-variance-weighted mean of the 
+profile-fit flux 
+measurements on the <a href="#w1m"><em>w1m</em></a> individual W1 frames covering 
+this source.  This differs from 
+<a href="#w1mpro"><em>w1mpro</em></a> in that it is computed by combining the 
+profile-fit measurements from individual frames, whereas 
+<a href="#w1mpro"><em>w1mpro</em></a> is computed by fitting all W1 frames
+simultaneously and incorporating a robust error model. 
+
+<p>This column is "null" if <a href="#w1m"><em>w1m</em></a>=0, the mean flux 
+is negative or if no individual frame measurements are possible.  </p>
+
+<p>
+<font color="red"><strong>CAUTION:</strong></font> This is not a robust measurement
+of source brightness. It is provided as an internal repeatability diagnostic 
+only.  Users should always defer to <a href="#w1mpro"><em>w1mpro</em></a> 
+for the optimal flux measurement for point sources.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sigp1"></a><a href="sec5_3bv.html"><strong>w1sigp1</strong></a></td>
+<td>%6.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Standard deviation of the population of W1 fluxes measured
+on the <a href="#w1m"><em>w1m</em></a> individual frames covering this source,
+in magnitudes.
+This provides a measure of the characteristic uncertainty 
+of the measurement of this source on individual frames.
+
+<p>This column is "null" if <a href="#w1m"><em>w1m</em></a>&lt;2 or if
+no individual frame measurements are possible.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1sigp2"></a><a href="sec5_3bv.html"><strong>w1sigp2</strong></a></td>
+<td>%6.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Standard deviation of the mean of the distribution of W1 fluxes
+(<a href="#w1magp"><em>w1magp</em></a>) computed from profile-fit measurements on
+the <a href="#w1m"><em>w1m</em></a> individual frames covering this source,
+in magnitudes.  This is equivalent to 
+<em><a href="#w1sigp1">w1sigp1</a>/sqrt(<a href="#w1m">w1m</a>)</em>.
+
+<p>This column is "null" if <a href="#w1m"><em>w1m</em></a>&lt;2 or if
+no individual frame measurements are possible.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+
+<tr>
+<td><a name="w1k"><strong><a href="sec5_3bv.html">w1k</a></strong></a></td>
+<td>%5.3f</td>
+<td>----</td>
+<td>yes</td>
+<td>Stetson K variability index (<a href="https://ui.adsabs.harvard.edu/abs/1996PASP..108..851S">Stetson, P. 1996, PASP, 108, 851</a>) computed using the W1 
+profile-fit fluxes measured on the individual single-exposure images.
+This column is <em>null</em> if there are &lt;3 single-exposure measurements
+available in W1.
+<td></td>
+</tr>
+
+<tr>
+<td><a name="w1ndf"></a><a href="sec5_3bv.html"><strong>w1ndf</strong></a></td>
+<td>%6d</td>
+<td>----</td>
+<td>yes</td>
+<td>Number of degrees of freedom in the flux variability chi-square, W1.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1mlq"></a><a href="sec5_3bv.html"><strong>w1mlq</strong></a></td>
+<td>%5.2f</td>
+<td>----</td>
+<td>yes</td>
+<td>Probability measure that the source is variable in W1 flux.  The 
+value is -ln(Q), where Q = 1 - P(&chi;<sup>2</sup>).  
+P is the cumulative chi-square distribution probability for the flux sample 
+measured on the individual single-exposure images.
+The value is clipped at 9.  
+
+<p>The Q value is the fraction of all cases to be 
+at least as large as that observed if the null hypothesis is true.
+The null hypothesis is that the flux is emitted by a 
+non-variable astrophysical object. It may be false because the object is 
+a true variable. It may also be false because the flux measurement is 
+corrupted by artifacts such as cosmic rays, scattered light, etc. The smaller 
+the Q value, the more implausible the null hypothesis, <em>i.e.</em>, the more 
+likely it is that the flux is either variable or corrupted or both.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1mjdmin"></a><a href="sec5_3bv.html"><strong>w1mjdmin</strong></a></td>
+<td>%14.8f</td>
+<td>----</td>
+<td>yes</td>
+<td>The earliest modified Julian Date (mJD) of the W1 single-exposures covering
+the source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1mjdmax"></a><a href="sec5_3bv.html"><strong>w1mjdmax</strong></a></td>
+<td>%14.8f</td>
+<td>----</td>
+<td>yes</td>
+<td>The latest modified Julian Date (mJD) of the W1 single-exposures covering
+the source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1mjdmean"></a><a href="sec5_3bv.html"><strong>w1mjdmean</strong></a></td>
+<td>%14.8f</td>
+<td>----</td>
+<td>yes</td>
+<td>The average modified Julian Date (mJD) of the W1 single-exposures covering
+the source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+
+<tr>
+<td><a name="w2magp"></a><a href="sec5_3bv.html"><strong>w2magp</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>
+Magnitude computed from the inverse-variance-weighted mean of the
+profile-fit flux
+measurements on the <a href="#w2m"><em>w2m</em></a> individual W2 frames covering
+this source.  
+This differs from 
+<a href="#w2mpro"><em>w2mpro</em></a> in that it is computed by combining the 
+profile-fit measurements from individual frames, whereas 
+<a href="#w2mpro"><em>w2mpro</em></a> is computed by fitting all W2 frames
+simultaneously and incorporating a robust error model. 
+
+<p>This column is "null" if <a href="#w2m"><em>w2m</em></a>=0, the mean flux 
+is negative or if no individual frame measurements are possible.  
+
+<p>
+<font color="red"><strong>CAUTION:</strong></font> This is not a robust measurement
+of source brightness. It is provided as an internal repeatability diagnostic 
+only.  Users should always defer to <a href="#w2mpro"><em>w2mpro</em></a> 
+for the optimal flux measurement for point sources.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2sigp1"></a><a href="sec5_3bv.html"><strong>w2sigp1</strong></a></td>
+<td>%6.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Standard deviation of the population of W2 fluxes measured
+on the <a href="#w2m"><em>w2m</em></a> individual frames covering this source,
+in magnitudes.
+This provides a measure of the characteristic uncertainty 
+of the measurement of this source on individual frames.
+
+<p>This column is "null" if <a href="#w2m"><em>w2m</em></a>&lt;2 or if
+no individual frame measurements are possible.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2sigp2"></a><a href="sec5_3bv.html"><strong>w2sigp2</strong></a></td>
+<td>%6.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Standard deviation of the mean of the distribution of W2 fluxes
+(<a href="#w2magp"><em>w2magp</em></a>) computed from profile-fit measurements on
+the <a href="#w2m"><em>w2m</em></a> individual frames covering this source,
+in magnitudes.  This is equivalent to 
+<em><a href="#w2sigp1">w2sigp1</a>/sqrt(<a href="#w2m">w2m</a>)</em>.
+
+<p>This column is "null" if <a href="#w2m"><em>w2m</em></a>&lt;2 or if
+no individual frame measurements are possible.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2k"><strong><a href="sec5_3bv.html">w2k</a></strong></a></td>
+<td>%5.3f</td>
+<td>----</td>
+<td>yes</td>
+<td>Stetson K variability index (<a href="https://ui.adsabs.harvard.edu/abs/1996PASP..108..851S">Stetson, P. 1996, PASP, 108, 851</a>) computed using the W2 
+profile-fit fluxes measured on the individual single-exposure images.
+This column is <em>null</em> if there are &lt;3 single-exposure measurements
+available in W2.
+<td></td>
+</tr>
+
+<tr>
+<td><a name="w2ndf"></a><a href="sec5_3bv.html"><strong>w2ndf</strong></a></td>
+<td>%6d</td>
+<td>----</td>
+<td>yes</td>
+<td>Number of degrees of freedom in the flux variability chi-square, W2.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mlq"></a><a href="sec5_3bv.html"><strong>w2mlq</strong></a></td>
+<td>%5.2f</td>
+<td>----</td>
+<td>yes</td>
+<td>Probability measure that the source is variable in W2 flux.  The 
+value is -ln(Q), where Q = 1 - P(&chi;<sup>2</sup>).  
+P is the cumulative chi-square distribution probability for
+the flux sample measured on the individual single-exposure images.
+The value is clipped at 9.  
+
+<p>The Q value is the fraction of all cases to be expected 
+to be at least as large as that observed if the null hypothesis is true.
+The null hypothesis is that the flux is emitted by a 
+non-variable astrophysical object. It may be false because the object is 
+a true variable. It may also be false because the flux measurement is 
+corrupted by artifacts such as cosmic rays, scattered light, etc. The smaller 
+the Q value, the more implausible the null hypothesis, <em>i.e.</em>, the more 
+likely it is that the flux is either variable or corrupted or both.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mjdmin"></a><a href="sec5_3bv.html"><strong>w2mjdmin</strong></a></td>
+<td>%14.8f</td>
+<td>----</td>
+<td>yes</td>
+<td>The earliest modified Julian Date (mJD) of the W2 single-exposures covering
+the source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mjdmax"></a><a href="sec5_3bv.html"><strong>w2mjdmax</strong></a></td>
+<td>%14.8f</td>
+<td>----</td>
+<td>yes</td>
+<td>The latest modified Julian Date (mJD) of the W2 single-exposures covering
+the source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2mjdmean"></a><a href="sec5_3bv.html"><strong>w2mjdmean</strong></a></td>
+<td>%14.8f</td>
+<td>----</td>
+<td>yes</td>
+<td>The average modified Julian Date (mJD) of the W2 single-exposures covering
+the source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3magp"></a><a href="sec5_3bv.html"><strong>w3magp</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>
+Magnitude computed from the inverse-variance-weighted mean of the
+profile-fit flux
+measurements on the <a href="#w3m"><em>w3m</em></a> individual W3 frames covering
+this source.  
+This differs from 
+<a href="#w3mpro"><em>w3mpro</em></a> in that it is computed by combining the 
+profile-fit measurements from individual frames, whereas 
+<a href="#w3mpro"><em>w3mpro</em></a> is computed by fitting all W3 frames
+simultaneously and incorporating a robust error model. 
+
+<p>This column is "null" if <a href="#w3m"><em>w3m</em></a>=0, the mean flux 
+is negative or if no individual frame measurements are possible.  
+
+<p>
+<font color="red"><strong>CAUTION:</strong></font> This is not a robust measurement
+of source brightness. It is provided as an internal repeatability diagnostic 
+only.  Users should always defer to <a href="#w3mpro"><em>w3mpro</em></a> 
+for the optimal flux measurement for point sources.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3sigp1"></a><a href="sec5_3bv.html"><strong>w3sigp1</strong></a></td>
+<td>%6.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Standard deviation of the population of W3 fluxes measured
+on the <a href="#w3m"><em>w3m</em></a> individual frames covering this source,
+in magnitudes.
+This provides a measure of the characteristic uncertainty 
+of the measurement of this source on individual frames.
+
+<p>This column is "null" if <a href="#w3m"><em>w3m</em></a>&lt;2 or if
+no individual frame measurements are possible.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3sigp2"></a><a href="sec5_3bv.html"><strong>w3sigp2</strong></a></td>
+<td>%6.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Standard deviation of the mean of the distribution of W3 fluxes
+(<a href="#w3magp"><em>w3magp</em></a>) computed from profile-fit measurements on
+the <a href="#w3m"><em>w3m</em></a> individual frames covering this source,
+in magnitudes.  This is equivalent to 
+<em><a href="#w3sigp1">w3sigp1</a>/sqrt(<a href="#w3m">w3m</a>)</em>.
+
+<p>This column is "null" if <a href="#w3m"><em>w3m</em></a>&lt;2 or if
+no individual frame measurements are possible.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3k"><strong><a href="sec5_3bv.html">w3k</a></strong></a></td>
+<td>%5.3f</td>
+<td>----</td>
+<td>yes</td>
+<td>Stetson K variability index (<a href="https://ui.adsabs.harvard.edu/abs/1996PASP..108..851S">Stetson, P. 1996, PASP, 108, 851</a>) computed using the W3 
+profile-fit fluxes measured on the individual single-exposure images.
+This column is <em>null</em> if there are &lt;3 single-exposure measurements
+available in W3.
+<td></td>
+</tr>
+
+<tr>
+<td><a name="w3ndf"></a><a href="sec5_3bv.html"><strong>w3ndf</strong></a></td>
+<td>%6d</td>
+<td>----</td>
+<td>yes</td>
+<td>Number of degrees of freedom in the flux variability chi-square, W3.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mlq"></a><a href="sec5_3bv.html"><strong>w3mlq</strong></a></td>
+<td>%5.2f</td>
+<td>----</td>
+<td>yes</td>
+<td>Probability measure that the source is variable in W3 flux.  The 
+value is -ln(Q), where Q = 1 - P(&chi;<sup>2</sup>).  
+P is the cumulative chi-square distribution probability for
+the flux sample measured on the individual single-exposure images.
+The value is clipped at 9.  
+
+<p>The Q value is the fraction of all cases to be expected 
+to be at least as large as that observed if the null hypothesis is true.
+The null hypothesis is that the flux is emitted by a 
+non-variable astrophysical object. It may be false because the object is 
+a true variable. It may also be false because the flux measurement is 
+corrupted by artifacts such as cosmic rays, scattered light, etc. The smaller 
+the Q value, the more implausible the null hypothesis, <em>i.e.</em>, the more 
+likely it is that the flux is either variable or corrupted or both.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mjdmin"></a><a href="sec5_3bv.html"><strong>w3mjdmin</strong></a></td>
+<td>%14.8f</td>
+<td>----</td>
+<td>yes</td>
+<td>The earliest modified Julian Date (mJD) of the W3 single-exposures covering
+the source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mjdmax"></a><a href="sec5_3bv.html"><strong>w3mjdmax</strong></a></td>
+<td>%14.8f</td>
+<td>----</td>
+<td>yes</td>
+<td>The latest modified Julian Date (mJD) of the W3 single-exposures covering
+the source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3mjdmean"></a><a href="sec5_3bv.html"><strong>w3mjdmean</strong></a></td>
+<td>%14.8f</td>
+<td>----</td>
+<td>yes</td>
+<td>The average modified Julian Date (mJD) of the W3 single-exposures covering
+the source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4magp"></a><a href="sec5_3bv.html"><strong>w4magp</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>
+Magnitude computed from the inverse-variance-weighted mean of the
+profile-fit flux
+measurements on the <a href="#w4m"><em>w4m</em></a> individual W4 frames covering
+this source.  
+This differs from 
+<a href="#w4mpro"><em>w4mpro</em></a> in that it is computed by combining the 
+profile-fit measurements from individual frames, whereas 
+<a href="#w4mpro"><em>w4mpro</em></a> is computed by fitting all W4 frames
+simultaneously and incorporating a robust error model. 
+
+<p>This column is "null" if <a href="#w4m"><em>w4m</em></a>=0, the mean flux 
+is negative or if no individual frame measurements are possible.  
+
+<p>
+<font color="red"><strong>CAUTION:</strong></font> This is not a robust measurement
+of source brightness. It is provided as an internal repeatability diagnostic 
+only.  Users should always defer to <a href="#w4mpro"><em>w4mpro</em></a> 
+for the optimal flux measurement for point sources.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4sigp1"></a><a href="sec5_3bv.html"><strong>w4sigp1</strong></a></td>
+<td>%6.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Standard deviation of the population of W4 fluxes measured
+on the <a href="#w4m"><em>w4m</em></a> individual frames covering this source,
+in magnitudes.
+This provides a measure of the characteristic uncertainty 
+of the measurement of this source on individual frames.
+
+<p>This column is "null" if <a href="#w4m"><em>w4m</em></a>&lt;2 or if
+no individual frame measurements are possible.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4sigp2"></a><a href="sec5_3bv.html"><strong>w4sigp2</strong></a></td>
+<td>%6.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Standard deviation of the mean of the distribution of W4 fluxes
+(<a href="#w4magp"><em>w4magp</em></a>) computed from profile-fit measurements on
+the <a href="#w4m"><em>w4m</em></a> individual frames covering this source,
+in magnitudes.  This is equivalent to 
+<em><a href="#w4sigp1">w4sigp1</a>/sqrt(<a href="#w4m">w4m</a>)</em>.
+
+<p>This column is "null" if <a href="#w4m"><em>w4m</em></a>&lt;2 or if
+no individual frame measurements are possible.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4k"><strong><a href="sec5_3bv.html">w4k</a></strong></a></td>
+<td>%5.3f</td>
+<td>----</td>
+<td>yes</td>
+<td>Stetson K variability index (<a href="https://ui.adsabs.harvard.edu/abs/1996PASP..108..851S" target="blank">Stetson, P. 1996, PASP, 108, 851</a>) computed using the W4 
+profile-fit fluxes measured on the individual single-exposure images.
+This column is <em>null</em> if there are &lt;3 single-exposure measurements
+available in W4.
+<td></td>
+</tr>
+
+<tr>
+<td><a name="w4ndf"></a><a href="sec5_3bv.html"><strong>w4ndf</strong></a></td>
+<td>%6d</td>
+<td>----</td>
+<td>yes</td>
+<td>Number of degrees of freedom in the flux variability chi-square, W4.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mlq"></a><a href="sec5_3bv.html"><strong>w4mlq</strong></a></td>
+<td>%5.2f</td>
+<td>----</td>
+<td>yes</td>
+<td>Probability measure that the source is variable in W4 flux.  The 
+value is -ln(Q), where Q = 1 - P(&chi;<sup>2</sup>).  
+P is the cumulative chi-square distribution probability for
+the flux sample measured on the individual single-exposure images.
+The value is clipped at 9.  
+
+<p>The Q value is the fraction of all cases to be expected 
+to be at least as large as that observed if the null hypothesis is true.
+The null hypothesis is that the flux is emitted by a 
+non-variable astrophysical object. It may be false because the object is 
+a true variable. It may also be false because the flux measurement is 
+corrupted by artifacts such as cosmic rays, scattered light, etc. The smaller 
+the Q value, the more implausible the null hypothesis, <em>i.e.</em>, the more 
+likely it is that the flux is either variable or corrupted or both.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mjdmin"></a><a href="sec5_3bv.html"><strong>w4mjdmin</strong></a></td>
+<td>%14.8f</td>
+<td>----</td>
+<td>yes</td>
+<td>The earliest modified Julian Date (mJD) of the W4 single-exposures covering
+the source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mjdmax"></a><a href="sec5_3bv.html"><strong>w4mjdmax</strong></a></td>
+<td>%14.8f</td>
+<td>----</td>
+<td>yes</td>
+<td>The latest modified Julian Date (mJD) of the W4 single-exposures covering
+the source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4mjdmean"></a><a href="sec5_3bv.html"><strong>w4mjdmean</strong></a></td>
+<td>%14.8f</td>
+<td>----</td>
+<td>yes</td>
+<td>The average modified Julian Date (mJD) of the W4 single-exposures covering
+the source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="rho12"></a><a href="sec5_3bv.html"><strong>rho12</strong></a></td>
+<td>%3d</td>
+<td>percent</td>
+<td>yes</td>
+<td>The correlation coefficient between the W1 and W2 single-exposure flux 
+measurements.  The value is a signed 2-digit integer, expressed as a 
+percentage.  Negative values indicate anticorrelation. 
+
+<p>
+<i>rho12</i> is approximately equal to 100 times the J variability index of 
+Stetson (<a href="https://ui.adsabs.harvard.edu/abs/1996PASP..108..851S" target="blank">1996 PASP, 108, 851</a>) computed for W1 and W2.
+</p>
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="rho23"></a><a href="sec5_3bv.html"><strong>rho23</strong></a></td>
+<td>%3d</td>
+<td>percent</td>
+<td>yes</td>
+<td>The correlation coefficient between the W2 and W3 single-exposure flux
+measurements.  The value is a signed 2-digit integer, expressed as a
+percentage.  Negative values indicate anticorrelation. 
+
+<p>
+<i>rho23</i> is approximately equal to 100 times the J variability index of 
+Stetson (<a href="https://ui.adsabs.harvard.edu/abs/1996PASP..108..851S" target="blank">1996 PASP, 108, 851</a>) computed for W2 and W3.
+</p>
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="rho34"></a><a href="sec5_3bv.html"><strong>rho34</strong></a></td>
+<td>%3d</td>
+<td>percent</td>
+<td>yes</td>
+<td>The correlation coefficient between the W3 and W4 single-exposure flux
+measurements.  The value is a signed 2-digit integer, expressed as a
+percentage.  Negative values indicate anticorrelation. 
+
+<p>
+<i>rho34</i> is approximately equal to 100 times the J variability index of 
+Stetson (<a href="https://ui.adsabs.harvard.edu/abs/1996PASP..108..851S" target="blank">1996 PASP, 108, 851</a>) computed for W3 and W4.
+</p>
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="q12"></a><a href="sec5_3bv.html"><strong>q12</strong></a></td>
+<td>%4d</td>
+<td>----</td>
+<td>yes</td>
+<td>Correlation significance between W1 and W2.  The value is 
+-log10(Q2(<a href="#rho12">rho12</a>)), where Q2 is the two-tailed fraction 
+of all cases expected to show at least this much apparent positive or negative 
+correlation when in fact there is no correlation. The value is clipped at 9.
+
+<p>
+When the number of measurements is large, the significance of correlation also 
+tends to be large even though the correlations themselves may have a small 
+magnitude. This is a typical manifestation of statistical significance 
+increasing as the sample size increases; eventually the significant effect can 
+be due to small correlated errors in background estimation or even roundoff 
+errors. These effects tend to be small but become significant when there are 
+enough observations of them. High flux correlation significance should be 
+taken seriously only when the magnitude of the correlation is also fairly 
+high.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="q23"></a><a href="sec5_3bv.html"><strong>q23</strong></a></td>
+<td>%4d</td>
+<td>----</td>
+<td>yes</td>
+<td>Correlation significance between W2 and W3.  The value is
+-log10(Q2(<a href="#rho12">rho23</a>)), where Q2 is the two-tailed fraction
+of all cases expected to show at least this much apparent positive or negative
+correlation when in fact there is no correlation. The value is clipped at 9.
+
+<p>
+When the number of measurements is large, the significance of correlation also
+tends to be large even though the correlations themselves may have a small
+magnitude. This is a typical manifestation of statistical significance
+increasing as the sample size increases; eventually the significant effect can
+be due to small correlated errors in background estimation or even roundoff
+errors. These effects tend to be small but become significant when there are
+enough observations of them. High flux correlation significance should be
+taken seriously only when the magnitude of the correlation is also fairly
+high.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="q34"></a><a href="sec5_3bv.html"><strong>q34</strong></a></td>
+<td>%4d</td>
+<td>----</td>
+<td>yes</td>
+<td>Correlation significance between W3 and W4.  The value is
+-log10(Q2(<a href="#rho12">rho34</a>)), where Q2 is the two-tailed fraction
+of all cases expected to show at least this much apparent positive or negative
+correlation when in fact there is no correlation. The value is clipped at 9.
+
+<p>
+When the number of measurements is large, the significance of correlation also
+tends to be large even though the correlations themselves may have a small
+magnitude. This is a typical manifestation of statistical significance
+increasing as the sample size increases; eventually the significant effect can
+be due to small correlated errors in background estimation or even roundoff
+errors. These effects tend to be small but become significant when there are
+enough observations of them. High flux correlation significance should be
+taken seriously only when the magnitude of the correlation is also fairly
+high.</td>
+<td>&nbsp;  </td>
+</tr>
+
+
+<tr>
+<td><a name="xscprox"></a><a href="sec5_3bvii.html#xsc"><strong>xscprox</strong></a></td>
+<td>%8.2f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td><a href="https://irsa.ipac.caltech.edu/data/2MASS/docs/releases/allsky/doc/sec1_3.html#xtsourcat" target="blank">2MASS Extended Source Catalog (XSC)</a> proximity.
+This column gives the distance between the WISE source position and
+the position of a nearby 2MASS XSC source, if the separation
+is less than 1.1 times the K<sub>s</sub> isophotal radius size
+of the XSC source.  This identifies WISE sources that are identically
+the 2MASS XSC source as well as WISE sources that are fragments of 
+large galaxies.
+This column is "null" if there is no 2MASS XSC source in proximity to 
+the WISE source.  
+
+<p>If <em>xscprox</em>&lt;2" and is not "null", the WISE source
+is assumed to be the galaxy detected by 2MASS.  The WISE source is 
+measured using an elliptical aperture with a size, shape and orientation
+that is scaled from that of the 2MASS XSC source, as described
+in <a href="/data/WISE/docs/release/All-Sky/expsup/sec4_4c.html#xsc" target="_blank">IV.4.c.v</a>.  The elliptical
+aperture parameters and photometry are given in the 
+<em><a href="#w1rsemi">w?rsemi</a>, <a href="#w1pa">w?pa</a>,
+<a href="#w1ba">w?ba</a>, <a href="#w1gmag">w?gmag</a> and
+<a href="#w1gerr">w?gerr</a></em> columns.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1rsemi"></a><a href="sec5_3bvii.html#xsc"><strong>w1rsemi</strong></a></td>
+<td>%8.2f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td>Semi-major axis of the elliptical aperture used to measure source in W1. </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1ba"></a><a href="sec5_3bvii.html#xsc"><strong>w1ba</strong></a></td>
+<td>%4.2f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td>Axis ratio (b/a) of the elliptical aperture used to measure source 
+in W1.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1pa"></a><a href="sec5_3bvii.html#xsc"><strong>w1pa</strong></a></td>
+<td>%7.2f</td>
+<td><em>deg</em></td>
+<td>yes</td>
+<td>Position angle (degrees E of N) of the elliptical aperture major axis
+used to measure source in W1.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1gmag"></a><a href="sec5_3bvii.html#xsc"><strong>w1gmag</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W1 magnitude of source measured in the elliptical aperture
+described by <em><a href="#w1rsemi">w1rsemi</a>, <a href="#w1ba">w1ba</a>, 
+and <a href="#w1pa">w1pa</a></em>. </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1gerr"></a><a href="sec5_3bvii.html#xsc"><strong>w1gerr</strong></a></td>
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W1 magnitude of source measured in elliptical 
+aperture. 
+
+<p>
+<strong><font color="red">CAUTION:</font></strong> A <em>w1gerr</em> value of 9.999 
+indicates
+that the measurement uncertainty is very large, or the uncertainty
+could not be computed.  In either case, the <a href="#w1gmag"><em>w1gmag</em></a> 
+measurement should be considered highly suspect.</p> </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w1gflg"></a><a href="sec5_3bvii.html#flag"><strong>w1gflg</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>W1 elliptical aperture measurement quality flag.  This flag indicates if 
+one or more image pixels in the measurement aperture for this band is confused 
+with nearby objects, is contaminated by saturated or otherwise unusable pixels, 
+or is an upper limit. The flag values are as described for the "standard" 
+aperture photometry quality flag, <a href="#w1flg">w1flg</a>.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2rsemi"></a><a href="sec5_3bvii.html#xsc"><strong>w2rsemi</strong></a></td>
+<td>%8.2f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td>Semi-major axis of the elliptical aperture used to measure source in W2. </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2ba"></a><a href="sec5_3bvii.html#xsc"><strong>w2ba</strong></a></td>
+<td>%4.2f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td>Axis ratio (b/a) of the elliptical aperture used to measure source 
+in W2.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2pa"></a><a href="sec5_3bvii.html#xsc"><strong>w2pa</strong></a></td>
+<td>%7.2f</td>
+<td><em>deg</em></td>
+<td>yes</td>
+<td>Position angle (degrees E of N) of the elliptical aperture major axis
+used to measure source in W2.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2gmag"></a><a href="sec5_3bvii.html#xsc"><strong>w2gmag</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W2 magnitude of source measured in the elliptical aperture
+described by <em><a href="#w2rsemi">w2rsemi</a>, <a href="#w2ba">w2ba</a>, 
+and <a href="#w2pa">w2pa</a></em>. </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2gerr"></a><a href="sec5_3bvii.html#xsc"><strong>w2gerr</strong></a></td>
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W2 magnitude of source measured in elliptical 
+aperture. 
+
+<p>
+<strong><font color="red">CAUTION:</font></strong> A <em>w2gerr</em> value of 9.999 
+indicates
+that the measurement uncertainty is very large, or the uncertainty
+could not be computed.  In either case, the <a href="#w2gmag"><em>w2gmag</em></a> 
+measurement should be considered highly suspect.</p> </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w2gflg"></a><a href="sec5_3bvii.html#flag"><strong>w2gflg</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>W2 elliptical aperture measurement quality flag.  This flag indicates if 
+one or more image pixels in the measurement aperture for this band is confused 
+with nearby objects, is contaminated by saturated or otherwise unusable pixels, 
+or is an upper limit. The flag values are as described for the "standard" 
+aperture photometry quality flag, <a href="#w2flg">w2flg</a>.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3rsemi"></a><a href="sec5_3bvii.html#xsc"><strong>w3rsemi</strong></a></td>
+<td>%8.2f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td>Semi-major axis of the elliptical aperture used to measure source in W3. </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3ba"></a><a href="sec5_3bvii.html#xsc"><strong>w3ba</strong></a></td>
+<td>%4.2f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td>Axis ratio (b/a) of the elliptical aperture used to measure source 
+in W3.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3pa"></a><a href="sec5_3bvii.html#xsc"><strong>w3pa</strong></a></td>
+<td>%7.2f</td>
+<td><em>deg</em></td>
+<td>yes</td>
+<td>Position angle (degrees E of N) of the elliptical aperture major axis
+used to measure source in W3.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3gmag"></a><a href="sec5_3bvii.html#xsc"><strong>w3gmag</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W3 magnitude of source measured in the elliptical aperture
+described by <em><a href="#w3rsemi">w3rsemi</a>, <a href="#w3ba">w3ba</a>, 
+and <a href="#w3pa">w3pa</a></em>. </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3gerr"></a><a href="sec5_3bvii.html#xsc"><strong>w3gerr</strong></a></td>
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W3 magnitude of source measured in elliptical 
+aperture. 
+
+<p>
+<strong><font color="red">CAUTION:</font></strong> A <em>w3gerr</em> value of 9.999 
+indicates
+that the measurement uncertainty is very large, or the uncertainty
+could not be computed.  In either case, the <a href="#w3gmag"><em>w3gmag</em></a> 
+measurement should be considered highly suspect.</p> </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w3gflg"></a><a href="sec5_3bvii.html#flag"><strong>w3gflg</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>W3 elliptical aperture measurement quality flag.  This flag indicates if 
+one or more image pixels in the measurement aperture for this band is confused 
+with nearby objects, is contaminated by saturated or otherwise unusable pixels, 
+or is an upper limit. The flag values are as described for the "standard" 
+aperture photometry quality flag, <a href="#w3flg">w3flg</a>.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4rsemi"></a><a href="sec5_3bvii.html#xsc"><strong>w4rsemi</strong></a></td>
+<td>%8.2f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td>Semi-major axis of the elliptical aperture used to measure source in W4. </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4ba"></a><a href="sec5_3bvii.html#xsc"><strong>w4ba</strong></a></td>
+<td>%4.2f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td>Axis ratio (b/a) of the elliptical aperture used to measure source 
+in W4.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4pa"></a><a href="sec5_3bvii.html#xsc"><strong>w4pa</strong></a></td>
+<td>%7.2f</td>
+<td><em>deg</em></td>
+<td>yes</td>
+<td>Position angle (degrees E of N) of the elliptical aperture major axis
+used to measure source in W4.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4gmag"></a><a href="sec5_3bvii.html#xsc"><strong>w4gmag</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>W4 magnitude of source measured in the elliptical aperture
+described by <em><a href="#w4rsemi">w4rsemi</a>, <a href="#w4ba">w4ba</a>, 
+and <a href="#w4pa">w4pa</a></em>. </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4gerr"></a><a href="sec5_3bvii.html#xsc"><strong>w4gerr</strong></a></td>
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>Uncertainty in the W4 magnitude of source measured in elliptical 
+aperture. 
+
+<p>
+<strong><font color="red">CAUTION:</font></strong> A <em>w4gerr</em> value of 9.999 
+indicates
+that the measurement uncertainty is very large, or the uncertainty
+could not be computed.  In either case, the <a href="#w4gmag"><em>w4gmag</em></a> 
+measurement should be considered highly suspect.</p> </td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="w4gflg"></a><a href="sec5_3bvii.html#flag"><strong>w4gflg</strong></a></td>
+<td>%2d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>W4 elliptical aperture measurement quality flag.  This flag indicates if 
+one or more image pixels in the measurement aperture for this band is confused 
+with nearby objects, is contaminated by saturated or otherwise unusable pixels, 
+or is an upper limit. The flag values are as described for the "standard" 
+aperture photometry quality flag, <a href="#w4flg">w4flg</a>.</td>
+<td>&nbsp;  </td>
+</tr>
+
+
+<tr><td colspan="6"><strong><em>2MASS PSC Association Information</em></strong></td></tr>
+
+<tr>
+<td><a name="tmass_key"></a><a href="/data/WISE/docs/release/All-Sky/expsup/sec4_7.html#2mass_assoc" target="blank"><strong>tmass_key</strong></a></td>
+<td>%10d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>2MASS PSC association.  Unique identifier of the closest source in the 
+<a href="https://irsa.ipac.caltech.edu/data/2MASS/docs/releases/allsky/doc/sec1_3.html#ptsourcat" target="blank">2MASS Point Source Catalog (PSC)</a> 
+that falls within 3" of the non-motion fit position of this WISE source. 
+This is equivalent to the 
+<a href="https://irsa.ipac.caltech.edu/data/2MASS/docs/releases/allsky/doc/sec2_2a.html" target="blank">pts_key</a> 
+in the 2MASS PSC entry.   This column is "null" if there is no
+2MASS PSC source within 3" of the WISE source position.
+The number of 2MASS PSC sources within 3" of the WISE position is
+given in <a href="#n_2mass"><em>n_2mass</em></a>
+
+<p>
+<p><font color="red"><strong>CAUTION</strong></font> - 2MASS source
+information included in the WISE source record is an <strong>association</strong>
+not an <strong>identification</strong>.  Although the position accuracies of
+the two Catalogs are good, there is a non-zero probability of chance
+associations between physically unrelated objects, as well as
+missed associations between the Catalogs.  You should always
+confirm associations by reviewing the entries from both Catalogs.
+</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="r_2mass"></a><a href="/data/WISE/docs/release/All-Sky/expsup/sec4_7.html#2mass_assoc" target="blank"><strong>r_2mass</strong></a></td>
+<td>%7.3f</td>
+<td><em>arcsec</em></td>
+<td>yes</td>
+<td>Distance separating the positions of the WISE source and associated 
+2MASS PSC source within 3".  This column is "null" if there is no 
+associated 2MASS PSC source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="pa_2mass"></a><a href="/data/WISE/docs/release/All-Sky/expsup/sec4_7.html#2mass_assoc" target="blank"><strong>pa_2mass</strong></a></td>
+<td>%6.1f</td>
+<td><em>deg</em></td>
+<td>yes</td>
+<td>Position angle (degrees E of N) of the vector from the WISE source
+to the associated 2MASS PSC source.  This column is "null" if there is no 
+associated 2MASS PSC source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="n_2mass"></a><a href="/data/WISE/docs/release/All-Sky/expsup/sec4_7.html#2mass_assoc" target="blank"><strong>n_2mass</strong></a></td>
+<td>%3d</td>
+<td><em>----</em></td>
+<td>yes</td>
+<td>The number of 2MASS PSC entries found within a 3" radius of the
+WISE source position.  If more than one 2MASS PSC falls within 3" of the
+WISE position, the closest 2MASS PSC entry is listed. This column
+is zero if there is no associated 2MASS PSC source.</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="j_m_2mass"></a><a href="/data/WISE/docs/release/All-Sky/expsup/sec4_7.html#2mass_assoc" target="blank"><strong>j_m_2mass</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>2MASS J-band magnitude or magnitude upper limit of the associated 
+2MASS PSC source.  This column is "null" if there is no associated 2MASS PSC 
+source or if the 2MASS PSC J-band magnitude entry is "null".</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="j_msig_2mass"></a><a href="/data/WISE/docs/release/All-Sky/expsup/sec4_7.html#2mass_assoc" target="blank"><strong>j_msig_2mass</strong></a></td>
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>2MASS J-band corrected photometric uncertainty of the associated 2MASS 
+PSC source.  This column is "null" if there is no associated 2MASS PSC 
+source or if the 2MASS PSC J-band uncertainty entry is "null".</td>
+<td>&nbsp;  </td>
+</tr>
+
+
+<tr>
+<td><a name="h_m_2mass"></a><a href="/data/WISE/docs/release/All-Sky/expsup/sec4_7.html#2mass_assoc" target="blank"><strong>h_m_2mass</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>2MASS H-band magnitude or magnitude upper limit of the associated 2MASS 
+PSC source.  This column is "null" if there is no associated 2MASS PSC source
+or if the 2MASS PSC H-band magnitude entry is "null".</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="h_msig_2mass"></a><a href="/data/WISE/docs/release/All-Sky/expsup/sec4_7.html#2mass_assoc" target="blank"><strong>h_msig_2mass</strong></a></td>
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>2MASS H-band corrected photometric uncertainty of the associated 2MASS 
+PSC source.  This column is "null" if there is no associated 2MASS PSC 
+source or if the 2MASS PSC H-band uncertainty entry is "null".</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="k_m_2mass"></a><a href="/data/WISE/docs/release/All-Sky/expsup/sec4_7.html#2mass_assoc" target="blank"><strong>k_m_2mass</strong></a></td>
+<td>%7.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>2MASS K<sub>s</sub>-band magnitude of the associated 2MASS PSC source.  
+This column is "null" if there is no associated 2MASS PSC source or
+if the 2MASS PSC K<sub>s</sub>-band magnitude entry is "null".</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="k_msig_2mass"></a><a href="/data/WISE/docs/release/All-Sky/expsup/sec4_7.html#2mass_assoc" target="blank"><strong>k_msig_2mass</strong></a></td>
+<td>%5.3f</td>
+<td><em>mag</em></td>
+<td>yes</td>
+<td>2MASS K<sub>s</sub>-band corrected photometric uncertainty of the 
+associated 2MASS PSC source.  This column is "null" if there is no associated 
+2MASS PSC source or if the 2MASS PSC K<sub>s</sub>-band uncertainty entry 
+is "null".</td>
+<td>&nbsp;  </td>
+</tr>
+
+
+<tr><td colspan="6"><strong><em>Spatial Indexing Information</em></strong></td></tr>
+
+<tr>
+<td><a name="x"><strong>x</strong></a></td>
+<td>%19.16f</td>
+<td><em>----</em></td>
+<td>no</td>
+<td>Unit sphere position x value</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="y"><strong>y</strong></a></td>
+<td>%19.16f</td>
+<td><em>----</em></td>
+<td>no</td>
+<td>Unit sphere position y value</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="z"><strong>z</strong></a></td>
+<td>%19.16f</td>
+<td><em>----</em></td>
+<td>no</td>
+<td>Unit sphere position z value</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="spt_ind"><strong>spt_ind</strong></a></td>
+<td>%9d</td>
+<td><em>----</em></td>
+<td>no</td>
+<td>Level 7 HTM spatial index key</td>
+<td>&nbsp;  </td>
+</tr>
+
+<tr>
+<td><a name="htm20"><strong>htm20</strong></a></td>
+<td>%19d</td>
+<td><em>----</em></td>
+<td>no</td>
+<td>Level 20 HTM spatial index key</td>
+<td>&nbsp;  </td>
+</tr>
+
+</table>
+
+
+<p><br />
+Last Updated: 16 February 2024</p>
+
+<hr>
+<a href="sec2_1.html"> <img src="Prev1.gif" alt="previous page"></a> &nbsp; <a href="index.html"> <img src="Home.png" alt="back to table of contents"></a> &nbsp; <a href="sec2_1.html#cat_sel"> <img src="Next1.gif" alt="next page"></a> <br>
+</body>
+</html>

@@ -107,8 +107,15 @@ def scan_stage(cfg: Config | None = None, mode: str = "real", shard: int = 0,
 
 
 def reduce_stage(cfg: Config | None = None, n_mocks_expected: int | None = None,
-                 astro_floor_kms: float = 0.3) -> dict:
-    """Stage 3: aggregate whatever shards exist; vet; write final outputs."""
+                 astro_floor_kms: float = 0.3, vet_top: int = 50) -> dict:
+    """Stage 3: aggregate whatever shards exist; vet; write final outputs.
+
+    Vetting (chemistry + rendezvous Monte Carlo) runs only on the ``vet_top``
+    highest-surprise candidates per direction — the first reduce attempt
+    timed out MC-vetting an unbounded list, and candidates below the mock
+    null's best surprise carry no detection weight anyway.  The rest are kept
+    in the output unvetted (``vetted: false``) with all detector statistics.
+    """
     cfg = cfg or load_config()
     out_dir = cfg.root / "results" / "herdsman"
     shards_dir = out_dir / "shards"
@@ -124,10 +131,25 @@ def reduce_stage(cfg: Config | None = None, n_mocks_expected: int | None = None,
             continue
         res = json.loads(real_path.read_text())
         p = ConvergenceParams(**{k: v for k, v in res["params"].items()})
-        vetted = [vet_candidate(c, df, direction, dt_myr=p.dt_myr,
-                                astro_floor_kms=astro_floor_kms)
-                  for c in res["candidates"]]
+        ordered = sorted(res["candidates"], key=lambda c: -c["surprise"])
+        vetted = []
+        for i, c in enumerate(ordered):
+            if i < vet_top:
+                v = vet_candidate(c, df, direction, dt_myr=p.dt_myr,
+                                  astro_floor_kms=astro_floor_kms)
+                v["vetted"] = True
+            else:
+                v = dict(c)
+                v["vetted"] = False
+            vetted.append(v)
+            if (i + 1) % 10 == 0 and i < vet_top:
+                print(f"[herdsman] {tag}: vetted {i + 1}/"
+                      f"{min(vet_top, len(ordered))} candidates")
         res["candidates"] = vetted
+        res["n_unvetted"] = max(0, len(ordered) - vet_top)
+        if res["n_unvetted"]:
+            print(f"[herdsman] {tag}: {res['n_unvetted']} low-surprise "
+                  f"candidates kept unvetted (vet_top={vet_top})")
         results[tag] = res
 
         mocks = sorted(shards_dir.glob(f"mock_*_{tag}.json"))

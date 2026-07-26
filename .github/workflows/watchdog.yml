@@ -33,7 +33,7 @@ jobs:
           cutoff=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
           gh api "repos/${{ github.repository }}/actions/runs?per_page=50" --jq '
             [.workflow_runs[]
-             | select(.name != "watchdog")
+             | select(.name != "watchdog" and .name != "ci")
              | select(.created_at > "'"$cutoff"'")
              | select(.conclusion == "failure" or .conclusion == "cancelled"
                       or .conclusion == "timed_out")

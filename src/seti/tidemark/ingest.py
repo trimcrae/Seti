@@ -164,7 +164,7 @@ class AnomalyCatalogue:
     def usable(self) -> bool:
         return self.verdict == OK
 
-    def with_frame(self) -> "AnomalyCatalogue":
+    def with_frame(self) -> AnomalyCatalogue:
         """Attach Galactic/Galactocentric coordinates and the crowding proxy."""
         p = add_galactic_frame(self.parent)
         if "log_local_density" not in p.columns:
@@ -172,7 +172,7 @@ class AnomalyCatalogue:
         self.parent = p
         return self.validate()
 
-    def validate(self) -> "AnomalyCatalogue":
+    def validate(self) -> AnomalyCatalogue:
         """Set the verdict honestly.  Never invents a denominator."""
         if self.n_parent == 0:
             self.verdict = NO_DATA_REACHED

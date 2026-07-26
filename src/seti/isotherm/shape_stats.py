@@ -43,6 +43,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import numpy as np
+from scipy.optimize import minimize
 
 from .sed_model import (
     LAM0_UM,
@@ -274,13 +275,16 @@ def profile_scan(objective, grid) -> dict:
     dchi = v - v[i]
 
     def crossing(target, direction):
-        idx = range(i + 1, len(g)) if direction > 0 else range(i - 1, -1, -1)
-        prev = i
+        # Walk outward on the RUNNING MAXIMUM of delta-chi2 so a single noisy
+        # dip from the sub-optimisation cannot push the crossing far out.
+        idx = list(range(i + 1, len(g))) if direction > 0 else \
+            list(range(i - 1, -1, -1))
+        prev, run = i, 0.0
         for j in idx:
-            if dchi[j] >= target:
-                # Linear interpolation in the grid variable.
+            run = max(run, float(dchi[j]))
+            if run >= target:
                 d0, d1 = dchi[prev], dchi[j]
-                if d1 == d0:
+                if d1 <= d0:
                     return float(g[j])
                 return float(g[prev] + (g[j] - g[prev]) * (target - d0) / (d1 - d0))
             prev = j
@@ -394,10 +398,16 @@ def temperature_width(lam_um, flux, err, beta: float | None = None,
     if not grad.success or not np.isfinite(grad.t_in_k):
         return out
 
-    def width(t_in, t_out):
-        return 2.0 * (t_in - t_out) / (t_in + t_out)
+    def dex_to_dt_over_t(dex):
+        r = 10.0 ** float(abs(dex))
+        return 2.0 * (r - 1.0) / (r + 1.0)
 
-    out["dt_over_t"] = float(width(grad.t_in_k, grad.t_out_k))
+    # Emission-weighted width, not the nominal T_in/T_out bounds.
+    q_best = 2.0 * float(grad.p_index) - 5.0
+    nominal_dex = float(np.log10(max(grad.t_in_k / grad.t_out_k, 1.0)))
+    out["nominal_log_range_dex"] = nominal_dex
+    out["effective_width_dex"] = float(effective_width_dex(nominal_dex, q_best))
+    out["dt_over_t"] = float(dex_to_dt_over_t(out["effective_width_dex"]))
     out["dr_over_r"] = 2.0 * out["dt_over_t"]
 
     # Profile the log width, re-optimising T_out, p and (optionally) beta.
@@ -408,23 +418,43 @@ def temperature_width(lam_um, flux, err, beta: float | None = None,
     # lets a wide component masquerade as a narrow one with low beta.
     beta_fix = float(grad.beta) if np.isfinite(grad.beta) else 0.0
 
-    def obj(dl):
-        dl = float(abs(dl))
+    def chi2_at(log_tmid, dl, p):
+        tm = 10.0 ** float(log_tmid)
+        t_out = np.clip(tm / 10 ** (dl / 2), T_MIN_K, T_MAX_K)
+        t_in = np.clip(t_out * 10**dl, T_MIN_K, T_MAX_K)
+        return fit_discrete_gradient_fixed(lam_um, flux, err, t_in, t_out,
+                                           p, beta_fix, lam0_um)
+
+    def obj(width_dex):
+        """chi2 at fixed EFFECTIVE width, minimised over T_centre and p.
+
+        The nominal log range is solved for at each ``p`` so that every point on
+        the profile has the same *physical* temperature-distribution width — the
+        whole point of the statistic.  The central temperature is genuinely
+        re-optimised too: a coarse temperature grid made the profile
+        seed-dependent, because at zero width the model is a single blackbody
+        whose temperature must be exactly right, while at larger widths the fit
+        can slide the temperature to compensate.
+        """
+        w = float(abs(width_dex))
         best = np.inf
-        for scale in (0.7, 1.0, 1.4):
-            t_out = np.clip(tmid * scale / 10 ** (dl / 2), T_MIN_K, T_MAX_K)
-            t_in = np.clip(t_out * 10**dl, T_MIN_K, T_MAX_K)
-            for p in (0.0, 1.0, 2.0):
-                f = fit_discrete_gradient_fixed(lam_um, flux, err, t_in, t_out,
-                                                p, beta_fix, lam0_um)
-                best = min(best, f)
+        scales = np.log10(tmid) + np.linspace(-0.4, 0.4, 11)
+        for p in (0.0, 1.0, 2.0, 2.5):
+            dl = solve_log_range_for_width(w, 2.0 * p - 5.0)
+            vals = [chi2_at(s, dl, p) for s in scales]
+            i = int(np.argmin(vals))
+            best = min(best, float(vals[i]))
+            res = minimize(lambda z, pp=p, dd=dl: chi2_at(z[0], dd, pp),
+                           [scales[i]], method="Nelder-Mead",
+                           options={"maxiter": 80, "xatol": 1e-4, "fatol": 1e-7})
+            best = min(best, float(res.fun))
         return best
 
     dl_grid = np.concatenate([[0.0], np.geomspace(0.005, 2.0, 20)])
     prof = profile_scan(obj, dl_grid)
+    out["chi2_at_zero_width"] = float(obj(0.0))
     if np.isfinite(prof["upper_95"]):
-        r = 10.0 ** float(prof["upper_95"])
-        w = 2.0 * (r - 1.0) / (r + 1.0)
+        w = float(dex_to_dt_over_t(prof["upper_95"]))
         out["dt_over_t_upper95"] = float(w)
         out["dr_over_r_upper95"] = float(2.0 * w)
         out["narrower_than_absolute_floor"] = bool(w < out["floor_absolute"])
@@ -455,6 +485,53 @@ def fit_discrete_gradient_fixed(lam_um, flux, err, t_in, t_out, p_index,
         return float(best)
     return float(_solve_amps((col / mx)[:, None], np.asarray(flux, float),
                              np.asarray(err, float))[1])
+
+
+def effective_width_dex(log_range_dex: float, q: float, n: int = 129) -> float:
+    """Emission-weighted width of a gradient's temperature distribution, in dex.
+
+    The NOMINAL bounds ``T_in / T_out`` are NOT the physical width.  With a free
+    surface-density index the emission weight ``dE/dT ~ T**q`` can concentrate
+    almost all the flux at one end, so a nominally decade-wide gradient can be
+    physically isothermal.  Fitting the nominal range made this statistic
+    seed-dependent — 4 of 5 noise realisations of a *genuinely isothermal*
+    source reported a decade-wide temperature distribution.
+
+    The invariant statistic is the width of the emission-weighted distribution
+    of ``ln T``: ``sqrt(12 * Var[ln T])``, normalised so a top-hat returns its
+    own full width.
+    """
+    L = float(abs(log_range_dex)) * np.log(10.0)
+    if L < 1e-9:
+        return 0.0
+    u = np.linspace(0.0, L, int(n))
+    # Weight per d(lnT) is T**(q+1) = exp((q+1) u); shift for numerical safety.
+    z = (float(q) + 1.0) * u
+    w = np.exp(z - z.max())
+    tot = w.sum()
+    if not np.isfinite(tot) or tot <= 0:
+        return 0.0
+    mean = float((w * u).sum() / tot)
+    var = float((w * (u - mean) ** 2).sum() / tot)
+    return float(np.sqrt(max(12.0 * var, 0.0)) / np.log(10.0))
+
+
+def solve_log_range_for_width(target_dex: float, q: float,
+                              hi: float = 8.0) -> float:
+    """Invert ``effective_width_dex``: nominal log range giving a target width."""
+    target = float(abs(target_dex))
+    if target <= 1e-9:
+        return 0.0
+    lo = 0.0
+    if effective_width_dex(hi, q) < target:
+        return hi
+    for _ in range(60):
+        mid = 0.5 * (lo + hi)
+        if effective_width_dex(mid, q) < target:
+            lo = mid
+        else:
+            hi = mid
+    return 0.5 * (lo + hi)
 
 
 def component_width_limit(lam_um, flux, err, temps_k, beta: float | None = None,
@@ -976,7 +1053,8 @@ __all__ = [
     "analyse_spectrum", "classify", "component_coverage", "component_width_limit",
     "compute_shape_stats", "energy_ladder", "estimate_beta",
     "extragalactic_interloper", "feature_equivalent_width",
-    "geometric_progression_test", "measure_features", "natural_floor_dt_over_t",
+    "effective_width_dex", "geometric_progression_test", "measure_features",
+    "natural_floor_dt_over_t", "solve_log_range_for_width",
     "order_step", "profile_scan", "screen_spectrum", "temperature_width",
     "wavelength_leverage",
 ]

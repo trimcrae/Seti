@@ -37,8 +37,14 @@ the Galactic density gradient --- and solving it honestly is the contribution.
 from .agerate import age_proxies, age_rate_test
 from .edge import edge_scan_1d, edge_scan_cap, edge_scan_shell3d
 from .gradient import gradient_test, rate_profile
-from .ingest import (AnomalyCatalogue, add_galactic_frame, from_frames,
-                     load_all, load_channel, union_catalogue)
+from .ingest import (
+                     AnomalyCatalogue,
+                     add_galactic_frame,
+                     from_frames,
+                     load_all,
+                     load_channel,
+                     union_catalogue,
+)
 from .nulls import MatchedNull
 
 __all__ = [

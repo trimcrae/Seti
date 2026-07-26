@@ -524,12 +524,18 @@ def fit_gradient(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
         return _solve_amps(des, flux, err)[1]
 
     starts = []
+    # beta must be seeded at 0 as well as 1: with only a beta=1 start, an
+    # isothermal beta=0 source lands on a broad-gradient/high-beta local minimum
+    # for most noise realisations, and every downstream width statistic that
+    # conditions on this fit inherits the error.
+    beta_seeds = [0.0, 1.0, 2.0] if beta_free else [0.0]
     for lt_out in np.log10(np.geomspace(T_MIN_K, T_MAX_K / 2, 9)):
-        for dl in (0.05, 0.3, 0.7, 1.2):
+        for dl in (0.02, 0.3, 0.7, 1.2):
             for p in (0.0, 1.0, 2.0):
                 base = [lt_out, dl, p]
-                starts.append(np.asarray(base + ([1.0] if beta_free else []),
-                                         float))
+                for b in beta_seeds:
+                    starts.append(np.asarray(base + ([b] if beta_free else []),
+                                             float))
     scored = sorted(((obj(s), s) for s in starts), key=lambda x: x[0])
     if not scored or scored[0][0] >= 1e12:
         return SEDFit(kind="gradient", chi2=float("inf"), n_data=n_data,
@@ -595,8 +601,10 @@ def fit_multi_gradient(lam_um: np.ndarray, flux: np.ndarray, err: np.ndarray,
     betas = [0.0, 0.5, 1.0, 1.5, 2.0] if beta is None else [float(beta)]
 
     def chi2_at(logts, b):
+        # p = 2 gives a weight flat in ln T, so the nominal log range IS the
+        # emission-weighted effective width and ``width_dex`` is interpretable.
         cols = multi_gradient_sed(lam, 10.0 ** np.asarray(logts, float),
-                                  width_dex, 1.0, b, lam0_um)
+                                  width_dex, 2.0, b, lam0_um)
         des = []
         for c in cols:
             mx = c.max() if c.size else 0.0

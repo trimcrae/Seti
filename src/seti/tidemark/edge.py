@@ -193,7 +193,7 @@ def _materialise_draws(null: MatchedNull, n_null: int, seed: int | None) -> np.n
 # --- 1D ---------------------------------------------------------------------
 def edge_scan_1d(coord: np.ndarray, null: MatchedNull, *, name: str = "coord",
                  n_bins: int = 24, widths=(1, 2, 3, 4, 6), n_null: int = 500,
-                 smooth_order: int = 1, min_expected: float = 3.0,
+                 smooth_order: int = 3, min_expected: float = 3.0,
                  seed: int | None = None) -> dict:
     """Scan a scalar coordinate for a step in rate beyond the smooth trend."""
     x = np.asarray(coord, float)
@@ -251,7 +251,7 @@ def centre_grid(xyz: np.ndarray, n_per_axis: int = 4, pad: float = 0.15) -> np.n
 def edge_scan_shell3d(xyz: np.ndarray, null: MatchedNull, *, centres=None,
                       n_per_axis: int = 4, n_bins: int = 20, widths=(1, 2, 3, 4),
                       n_null: int = 300, min_expected: float = 3.0,
-                      smooth_coords: dict | None = None, smooth_order: int = 1,
+                      smooth_coords: dict | None = None, smooth_order: int = 3,
                       seed: int | None = None) -> dict:
     """Scan spherical shells about a grid of centres for a step in anomaly rate.
 

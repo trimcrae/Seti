@@ -1,0 +1,190 @@
+name: tidemark
+
+# TIDEMARK --- the front that stopped.
+#
+# Population-level spatial-structure test: is any anomaly population's rate PER
+# STAR structured across the Galaxy?  Three statistics (gradient, edge, age),
+# one parent-matched null.
+#
+# Two independent legs, both run in the same dispatch:
+#   * SELF-SUFFICIENT: fetch a wide-area Gaia x AllWISE parent sample (every
+#     star searched, not a candidate list) with an IR-excess anomaly axis, and
+#     test it.  The fetch is a fail-fast:false matrix over interleaved cone
+#     shards; the reduce stage concatenates and fits the excess locus ONCE over
+#     the whole sky.  Fitting it per shard would normalise every field to its
+#     own median and delete exactly the signal being measured.
+#   * CHANNEL SWEEP: run the same three statistics over every anomaly catalogue
+#     declared in config/tidemark.yaml.  Channels that publish only their
+#     survivors report NO_PARENT_SAMPLE and are counted as untested, not as
+#     nulls.
+
+on:
+  workflow_dispatch:
+    inputs:
+      grid:
+        description: "cone grid: sparse (36 cones) | dense (96) | plane | pilot"
+        required: false
+        default: "sparse"
+      radius_deg:
+        description: "cone radius in degrees"
+        required: false
+        default: "6.0"
+      plx_min:
+        description: "minimum parallax (mas); 1.0 -> within ~1 kpc"
+        required: false
+        default: "1.0"
+      g_max:
+        description: "faint G magnitude limit"
+        required: false
+        default: "17.0"
+      stride:
+        description: "uniform random_index subsampling stride (position-independent)"
+        required: false
+        default: "20"
+      excess_z_min:
+        description: "IR-excess z threshold defining the anomaly subset"
+        required: false
+        default: "4.0"
+      n_shards:
+        description: "acquisition shards (matrix width)"
+        required: false
+        default: "4"
+      skip_acquire:
+        description: "true = channel sweep only, no archive access"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+jobs:
+  # ---------------------------------------------------------------- acquire
+  acquire:
+    if: ${{ github.event.inputs.skip_acquire != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,pandas,scipy,astroquery; print('imports OK')"
+      - name: Fetch parent-sample shard
+        run: |
+          python -m seti.cli tidemark-acquire \
+            --grid "${{ github.event.inputs.grid || 'sparse' }}" \
+            --radius-deg "${{ github.event.inputs.radius_deg || '6.0' }}" \
+            --plx-min "${{ github.event.inputs.plx_min || '1.0' }}" \
+            --g-max "${{ github.event.inputs.g_max || '17.0' }}" \
+            --stride "${{ github.event.inputs.stride || '20' }}" \
+            --shard ${{ matrix.shard }} \
+            --n-shards "${{ github.event.inputs.n_shards || '4' }}"
+          cat results/tidemark/parent/acquire_status_shard*.json || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tidemark-parent-${{ matrix.shard }}
+          path: results/tidemark/parent/
+          if-no-files-found: warn
+
+  # ----------------------------------------------------------------- analyse
+  analyse:
+    needs: [acquire]
+    # Run even if some acquisition shards failed: interleaved sharding means a
+    # lost shard costs uniform sky coverage, not a footprint change.
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Offline gate --- the statistics must still pass their own tests
+        run: python -m pytest tests/test_tidemark.py -q
+      - uses: actions/download-artifact@v4
+        if: ${{ github.event.inputs.skip_acquire != 'true' }}
+        continue-on-error: true
+        with:
+          pattern: tidemark-parent-*
+          merge-multiple: true
+          path: results/tidemark/parent/
+      - name: Self-sufficient leg --- reduce shards and test the IR-excess axis
+        if: ${{ github.event.inputs.skip_acquire != 'true' }}
+        continue-on-error: true
+        run: |
+          ls -la results/tidemark/parent/ || true
+          if ls results/tidemark/parent/*.parquet >/dev/null 2>&1; then
+            python -m seti.cli tidemark-search \
+              --from-parent "results/tidemark/parent/*.parquet" \
+              --excess-z-min "${{ github.event.inputs.excess_z_min || '4.0' }}"
+          else
+            echo "NO_DATA_REACHED: no parent-sample shard survived acquisition"
+            mkdir -p results/tidemark
+            echo '{"channel":"tidemark","verdict":"NO_DATA_REACHED","note":"no acquisition shard produced rows"}' \
+              > results/tidemark/summary.json
+          fi
+      - name: Channel sweep --- every anomaly catalogue with a declared parent
+        continue-on-error: true
+        run: |
+          python -m seti.cli tidemark-run || true
+      - name: Report
+        run: |
+          echo "--- results/tidemark/summary.json ---"
+          cat results/tidemark/summary.json 2>/dev/null || echo "(none)"
+          for f in results/tidemark/*/summary.json; do
+            [ -e "$f" ] || continue
+            echo "--- $f ---"
+            python - "$f" <<'PY'
+          import json, sys
+          d = json.load(open(sys.argv[1]))
+          print(json.dumps({k: d.get(k) for k in
+                ("channel", "verdict", "n_parent", "n_anomaly", "tested",
+                 "best_test", "best_p", "best_p_trials_corrected", "detection",
+                 "R_gal_slope_deabsorbed_ln_per_kpc")}, indent=2, default=str))
+          PY
+          done
+      - name: Drop oversized intermediates before committing
+        run: |
+          # The raw parent sample is an intermediate, not a result: keep the
+          # statistics, the profiles and the per-star selection weights.
+          rm -f results/tidemark/parent/parent_sample_shard*.parquet || true
+          find results/tidemark -size +20M -print -delete || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/tidemark/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "tidemark: population-level spatial-structure test (gradient / edge / age)"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tidemark-outputs
+          path: results/tidemark/
+          if-no-files-found: warn

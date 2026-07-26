@@ -88,12 +88,12 @@ FULLTEXT: dict[str, dict] = {
         "question": "Q1/Q2: what did they select on -- A1 (radial) or A2/A3 "
                     "(non-radial)?  Do they compute AMR or beta anywhere?",
     },
-    "seligman2024_two_populations": {
-        "arxiv": "2412.02384",
-        "expect_title": "dark comet",
-        "question": "Q1/Q2 for the 14-object PNAS sample (PNAS 121, "
-                    "e2406424121). Same questions as 2023.",
-    },
+    # NOTE: no arXiv id is given for the PNAS 2024 paper ON PURPOSE.  The first
+    # run guessed "2412.02384" and the verification step caught that it is
+    # actually "Theory building for empirical software engineering in
+    # qualitative research" -- the second wrong-id incident in this repository.
+    # It is now resolved BY TITLE at fetch time (see TITLE_RESOLVED) so no id is
+    # ever guessed again.
     "bialy_loeb_2018": {
         "arxiv": "1810.11490",
         "expect_title": "radiation pressure",
@@ -116,6 +116,20 @@ FULLTEXT: dict[str, dict] = {
         "arxiv": "2104.10184",
         "expect_title": "",
         "question": "context: earlier non-grav-acceleration work by the same group",
+    },
+}
+
+#: Papers resolved by TITLE rather than by a guessed id.  Guessing an arXiv id
+#: has now produced two wrong-paper incidents in this repository (2306.16966 in
+#: necrolit, 2412.02384 here), and both fetches SUCCEEDED, so nothing flagged
+#: them.  Searching by title and reading the id back off the match cannot fail
+#: that way.
+TITLE_RESOLVED: dict[str, dict] = {
+    "seligman2024_two_populations": {
+        "title": "Two distinct populations of dark comets delineated by orbits and sizes",
+        "expect_title": "dark comet",
+        "question": "Q1/Q2 for the 14-object PNAS sample (PNAS 121, "
+                    "e2406424121). Same questions as 2023.",
     },
 }
 
@@ -192,6 +206,36 @@ def fetch_fulltext(name: str, arxiv_id: str) -> None:
             print(f"  pdftotext failed for {name}: {exc!r}")
 
 
+def resolve_by_title(name: str, title: str, expect_title: str) -> str | None:
+    """Find a paper's arXiv id by searching its exact title.
+
+    Returns the id, or ``None`` if no match whose title actually contains
+    ``expect_title`` is found.  This is the guess-free path: the id comes from
+    the search result rather than from memory.
+    """
+    q = 'ti:"' + title + '"'
+    url = ("http://export.arxiv.org/api/query?search_query="
+           + urllib.parse.quote(q) + "&max_results=5")
+    data = get(url, OUT / f"arxiv_title_{name}.atom")
+    if not data:
+        return None
+    text = data.decode("utf-8", errors="replace")
+    for entry in re.findall(r"<entry>(.*?)</entry>", text, re.S):
+        idm = re.search(r"<id>http://arxiv\.org/abs/([\d.]+)v?\d*</id>", entry)
+        tm = re.search(r"<title>(.*?)</title>", entry, re.S)
+        got_title = " ".join(tm.group(1).split()) if tm else ""
+        if idm and expect_title.lower() in got_title.lower():
+            STATUS.append({"name": name, "resolved_by": "title",
+                           "resolved_id": idm.group(1), "resolved_title": got_title})
+            print(f"  resolved {name} -> {idm.group(1)} '{got_title[:70]}'")
+            return idm.group(1)
+    STATUS.append({"name": name, "resolved_by": "title", "resolved_id": None,
+                   "id_mismatch": True,
+                   "note": f"no arXiv hit whose title contains {expect_title!r}"})
+    print(f"  !! could not resolve {name} by title")
+    return None
+
+
 def main() -> None:
     print("== full texts (identity-verified) ==")
     for name, spec in FULLTEXT.items():
@@ -200,6 +244,15 @@ def main() -> None:
         if not verified:
             print("   fetching full text anyway, but flagged as UNVERIFIED")
         fetch_fulltext(name, spec["arxiv"])
+
+    print("== full texts (resolved by title, no id guessed) ==")
+    for name, spec in TITLE_RESOLVED.items():
+        print(f"-- {name}: {spec['question']}")
+        arxiv_id = resolve_by_title(name, spec["title"], spec.get("expect_title", ""))
+        if arxiv_id:
+            fetch_fulltext(name, arxiv_id)
+        else:
+            print("   UNRESOLVED -- the keyword sweeps below are the fallback")
 
     print("== keyword sweeps ==")
     for name, q in QUERIES.items():

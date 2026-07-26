@@ -112,12 +112,20 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -f -- results/derelict/ 2>/dev/null || true
+          git add -f -- results/derelict_sbdb_query_doc.html 2>/dev/null || true
           # Literature evidence: keep metadata/text/summaries, not the bulk HTML.
-          git add -f -- results/derelictlit/summary.json \
-                        results/derelictlit/arxiv_id_*.atom \
-                        results/derelictlit/arxiv_q_*.atom \
-                        results/derelictlit/s2_*.json \
-                        results/derelictlit/txt_*.txt 2>/dev/null || true
+          # Each pattern gets its OWN git add: a single non-matching pathspec
+          # makes `git add` fail for the WHOLE command, and the `|| true` then
+          # swallows it silently -- which is exactly how run 30203392288
+          # committed no literature evidence at all despite fetching 31 files.
+          for pat in 'results/derelictlit/summary.json' \
+                     'results/derelictlit/arxiv_id_*.atom' \
+                     'results/derelictlit/arxiv_q_*.atom' \
+                     'results/derelictlit/s2_*.json' \
+                     'results/derelictlit/txt_*.txt'; do
+            # shellcheck disable=SC2086
+            git add -f -- $pat 2>/dev/null && echo "staged: $pat" || echo "no match: $pat"
+          done
           if git diff --cached --quiet; then
             echo "No result changes to commit."
           else

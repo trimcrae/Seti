@@ -559,6 +559,120 @@ def test_enrich_from_details_ignores_failed_records():
     assert pd.isna(out.loc[0, "data_arc"])
 
 
+def test_invalid_field_error_is_parsed_from_the_server_body():
+    """MEASURED against the real API: a single bad field name 400s the whole
+    query, so the offending name must be recoverable from the error body."""
+    body = ("HTTP 400 for https://...: "
+            '{"message":"invalid field specified: \'sigma_A1\'","code":"400"}')
+    assert acquire._invalid_fields_from_error(body) == {"sigma_A1"}
+    multi = '{"message":"invalid fields specified: \'sigma_A1\', \'sigma_A2\'"}'
+    assert acquire._invalid_fields_from_error(multi) == {"sigma_A1", "sigma_A2"}
+    assert acquire._invalid_fields_from_error("some other error") == set()
+    assert acquire._invalid_fields_from_error(None) == set()
+
+
+def test_fetch_self_heals_by_dropping_the_field_the_server_rejects():
+    """REGRESSION for run 30203392288: `sigma_A1` is not a valid SBDB field, and
+    one bad name turned the whole search into '0 rows in the database'.  The
+    fetch must drop it and retry rather than reporting an empty sky."""
+    good = json.dumps({"fields": ["full_name", "A1"],
+                       "data": [["(a)", "1e-8"], ["(b)", "2e-8"]]}).encode()
+
+    def _t(url: str, timeout: float = 0.0) -> bytes:
+        if "sigma_A1" in url:
+            raise OSError('HTTP 400: {"message":"invalid field specified: '
+                          "'sigma_A1'\",\"code\":\"400\"}")
+        if "sigma_A2" in url:
+            raise OSError('HTTP 400: {"message":"invalid field specified: '
+                          "'sigma_A2'\",\"code\":\"400\"}")
+        if "sigma_A3" in url:
+            raise OSError('HTTP 400: {"message":"invalid field specified: '
+                          "'sigma_A3'\",\"code\":\"400\"}")
+        if "sigma_DT" in url:
+            raise OSError('HTTP 400: {"message":"invalid field specified: '
+                          "'sigma_DT'\",\"code\":\"400\"}")
+        return good
+
+    res = acquire.fetch_nongrav_table(transport=_t, tries=1)
+    assert res.ok, res.errors
+    assert res.n_rows == 2
+    assert set(res.fields_rejected) >= {"sigma_A1"}
+    assert res.strategy == "cdata_A1_defined", "self-healed on the FIRST strategy"
+
+
+def test_fetch_never_drops_a_required_field():
+    """If the server rejects A1 itself there is nothing to search for; the
+    strategy must fail rather than silently querying without it."""
+    def _t(url: str, timeout: float = 0.0) -> bytes:
+        raise OSError('HTTP 400: {"message":"invalid field specified: \'A1\'"}')
+
+    res = acquire.fetch_nongrav_table(transport=_t, tries=1)
+    assert res.status == acquire.STATUS_UNREACHABLE
+    assert "A1" not in res.fields_rejected
+
+
+def test_missing_a1_column_is_reported_as_a_query_defect_not_an_empty_sky():
+    payload = json.dumps({"fields": ["full_name"], "data": [["(a)"], ["(b)"]]}).encode()
+    res = acquire.fetch_nongrav_table(transport=_fake_transport({"": payload}), tries=1)
+    assert res.status == acquire.STATUS_A1_FIELD_REJECTED
+    assert res.n_rows_raw == 2, "the server DID return rows -- the query is at fault"
+    assert res.a1_column_present is False
+    assert not res.ok
+    assert any("QUERY defect" in e for e in res.errors)
+    # ...and the screens must then refuse to score it rather than emit anything.
+    assert len(run_screens(res.table, _params()).table) == 0
+
+
+def test_all_null_a1_column_is_distinguished_from_a_missing_one():
+    payload = json.dumps({"fields": ["full_name", "A1"],
+                          "data": [["(a)", None], ["(b)", None]]}).encode()
+
+    def _t(url: str, timeout: float = 0.0) -> bytes:
+        if "cdata" in url:
+            raise OSError("400 Bad Request")
+        return payload
+
+    res = acquire.fetch_nongrav_table(transport=_t, tries=1)
+    assert res.status == acquire.STATUS_A1_ALL_NULL
+    assert res.a1_column_present is True
+    assert res.n_rows_raw == 2 and res.n_rows == 0
+
+
+def test_enrich_pulls_nongrav_sigmas_from_model_pars():
+    """The bulk query rejects sigma_A1, so orbit.model_pars is the ONLY source
+    of the uncertainties every SNR screen depends on."""
+    df = pd.DataFrame([{"full_name": "(a)", "A1": 1e-8}])
+    details = {"(a)": {"ok": True, "orbit": {"model_pars": [
+        {"name": "A1", "value": "1.5e-8", "sigma": "2e-10"},
+        {"name": "A2", "value": "-3e-12", "sigma": "4e-12"},
+    ]}}}
+    out = acquire.enrich_from_details(df, details)
+    assert out.loc[0, "A1"] == 1e-8, "the bulk value wins where it exists"
+    assert out.loc[0, "sigma_A1"] == pytest.approx(2e-10)
+    assert out.loc[0, "A2"] == pytest.approx(-3e-12)
+    assert out.loc[0, "sigma_A2"] == pytest.approx(4e-12)
+    assert out.loc[0, "model_pars"] == ["A1", "A2"]
+
+
+def test_enriched_sigmas_make_the_screens_runnable_end_to_end():
+    """Bulk pull with NO sigmas -> enrich -> screens work. This is the whole
+    recovery path from run 30203392288."""
+    df = pd.DataFrame([{"full_name": "(film)", "pdes": "film", "kind": "an",
+                        "class": "APO", "A1": 2e-7, "diameter": 0.030,
+                        "a": 2.4, "e": 0.45, "i": 22.0}])
+    details = {"(film)": {"ok": True, "orbit": {
+        "data_arc": "2000", "condition_code": "1", "n_obs_used": "300",
+        "model_pars": [{"name": "A1", "value": "2e-7", "sigma": "1e-8"},
+                       {"name": "A2", "value": "0", "sigma": "1e-13"},
+                       {"name": "A3", "value": "0", "sigma": "1e-13"}]}}}
+    enriched = acquire.enrich_from_details(df, details)
+    res = run_screens(enriched, _params())
+    r = res.table.iloc[0]
+    assert r["screen_a1_only"], res.funnel
+    assert r["screen_a1_only_strict"], "A2/A3 sigmas came from model_pars"
+    assert r["screen_r_extreme"]
+
+
 def test_fetch_reports_an_unexpected_schema_rather_than_inventing_rows():
     bad = json.dumps({"message": "invalid field: A1"}).encode()
     res = acquire.fetch_nongrav_table(transport=_fake_transport({"": bad}), tries=1)
@@ -593,8 +707,11 @@ def test_derelict_run_emits_no_data_reached_when_the_archive_is_blocked(tmp_path
     summary = derelict_run(cfg, transport=_fake_transport({}, OSError("blocked")),
                            skip_control=True)
     assert summary["verdict"] == "NO_DATA_REACHED"
-    assert summary["funnel"] == {"input": 0}
-    assert summary["degradation"]
+    assert summary["funnel"]["input"] == 0
+    # The funnel must let a reader tell a query failure from an empty sky.
+    assert summary["funnel"]["rows_returned_by_server"] == 0
+    assert summary["funnel"]["a1_column_present"] is False
+    assert any("QUERY DEFECT" in d for d in summary["degradation"])
     out = json.loads((tmp_path / "results" / "derelict" / "summary.json").read_text())
     assert out["verdict"] == "NO_DATA_REACHED"
     assert json.loads((tmp_path / "results" / "derelict" / "candidates.json").read_text()) == []

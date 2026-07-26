@@ -369,7 +369,8 @@ def test_pair_table_orients_on_the_polluted_component():
 # (e) honest degradation
 # ---------------------------------------------------------------------------
 def test_empty_archive_response_yields_no_data_reached():
-    acq = A.fetch_survey("GALAH", probe_fn=lambda t: None, query_fn=lambda q: None)
+    acq = A.fetch_survey("GALAH", discover=False,
+                         probe_fn=lambda t: None, query_fn=lambda q: None)
     assert acq.n_rows == 0
     assert acq.degraded
     assert acq.degradation.startswith("NO_DATA_REACHED")
@@ -398,10 +399,11 @@ def test_source_fallback_is_recorded_as_degradation():
             "Ni_fe": [0.0, 0.05], "e_Ni_fe": [0.02, 0.02],
         })
 
-    acq = A.fetch_survey("GALAH", n_chunks=1, probe_fn=probe, query_fn=query)
+    acq = A.fetch_survey("GALAH", n_chunks=1, discover=False,
+                         probe_fn=probe, query_fn=query)
     assert acq.n_rows == 2
     assert acq.degraded
-    assert "fell back" in acq.degradation
+    assert "rather than the preferred" in acq.degradation
     assert set(acq.elements) == {"Mg", "Ni"}
 
 
@@ -707,7 +709,7 @@ def test_teff_chunking_and_truncation_are_reported():
                              "e_Mg_fe": [0.02] * n, "Ni_fe": [0.0] * n,
                              "e_Ni_fe": [0.02] * n})
 
-    acq = A.fetch_survey("GALAH", max_rows=20, n_chunks=4,
+    acq = A.fetch_survey("GALAH", max_rows=20, n_chunks=4, discover=False,
                          probe_fn=lambda t: head, query_fn=query)
     assert len(seen) == 4, "the pull must be chunked in Teff, not monolithic"
     assert acq.n_rows == 20
@@ -726,7 +728,68 @@ def test_a_lost_chunk_does_not_kill_the_run():
             raise RuntimeError("TAP timeout")
         return head
 
-    acq = A.fetch_survey("GALAH", max_rows=8, n_chunks=4,
+    acq = A.fetch_survey("GALAH", max_rows=8, n_chunks=4, discover=False,
                          probe_fn=lambda t: head, query_fn=query)
     assert acq.n_rows == 3
     assert "coverage is incomplete" in acq.degradation
+
+
+# ---------------------------------------------------------------------------
+# Table discovery: the failure that killed the first dispatch
+# ---------------------------------------------------------------------------
+def test_table_discovery_finds_a_catalogue_the_encoded_locators_miss():
+    """VizieR catalogue numbers drift; asking the service removes the failure mode."""
+    rich = pd.DataFrame({"sobject_id": [1], "Teff": [5000.0], "logg": [4.4],
+                         "fe_h": [0.0], "snr": [100.0], "ruwe": [1.0],
+                         **{f"{e}_fe": [0.0] for e in ("Mg", "Si", "Ca", "Ni", "Ba")},
+                         **{f"e_{e}_fe": [0.02] for e in ("Mg", "Si", "Ca", "Ni", "Ba")}})
+    thin = pd.DataFrame({"Teff": [5000.0], "logg": [4.4], "fe_h": [0.0],
+                         "Mg_fe": [0.0]})
+
+    def query(adql):
+        if "TAP_SCHEMA" in adql:
+            return pd.DataFrame({"table_name": ["III/999/readme", "III/999/main"],
+                                 "description": ["GALAH DR4 readme", "GALAH DR4 main"]})
+        return rich.iloc[[0]]
+
+    def probe(table):
+        if table.startswith("III/28") or table.startswith("III/29"):
+            return None                       # every encoded locator is stale
+        return thin if "readme" in table else rich
+
+    acq = A.fetch_survey("GALAH", max_rows=1, n_chunks=1,
+                         probe_fn=probe, query_fn=query)
+    assert acq.locator == "III/999/main", "must pick the RICHEST schema, not the first"
+    assert acq.n_rows == 1
+    assert len(acq.elements) == 5
+    # The choice has to be auditable.
+    tables = {r["table"] for r in acq.scoreboard}
+    assert {"III/999/readme", "III/999/main"} <= tables
+    assert max(r["score"] for r in acq.scoreboard) > 0
+
+
+def test_discovery_failure_is_not_fatal():
+    def query(adql):
+        if "TAP_SCHEMA" in adql:
+            raise RuntimeError("TAP_SCHEMA unavailable")
+        return pd.DataFrame()
+
+    acq = A.fetch_survey("GALAH", probe_fn=lambda t: None, query_fn=query)
+    assert acq.n_rows == 0
+    assert acq.degradation.startswith("NO_DATA_REACHED")
+
+
+def test_wide_binary_missing_purity_column_is_flagged():
+    """No R_chance_align means chance alignments are not removed — say so."""
+    head = pd.DataFrame({"source_id1": [1], "source_id2": [2]})
+
+    def query(adql):
+        if "TAP_SCHEMA" in adql:
+            return pd.DataFrame()
+        assert "r_chance_align" not in adql.lower()
+        return pd.DataFrame({"source_id1": [1, 3], "source_id2": [2, 4]})
+
+    acq = A.fetch_wide_binaries(probe_fn=lambda t: head, query_fn=query)
+    assert acq.n_rows == 2
+    assert acq.degraded
+    assert "chance alignments are NOT removed" in acq.degradation

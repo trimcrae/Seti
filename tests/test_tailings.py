@@ -398,7 +398,7 @@ def test_source_fallback_is_recorded_as_degradation():
             "Ni_fe": [0.0, 0.05], "e_Ni_fe": [0.02, 0.02],
         })
 
-    acq = A.fetch_survey("GALAH", probe_fn=probe, query_fn=query)
+    acq = A.fetch_survey("GALAH", n_chunks=1, probe_fn=probe, query_fn=query)
     assert acq.n_rows == 2
     assert acq.degraded
     assert "fell back" in acq.degradation
@@ -689,3 +689,44 @@ def test_a_pure_alpha_family_shift_is_absorbed_by_its_own_predictor(population):
         df.loc[df.index[target], el] += 0.30
     _, _, _, stats = score(df)
     assert stats.iloc[target]["classification"] != S.SPARSE
+
+
+def test_teff_chunking_and_truncation_are_reported():
+    """A chunk that returns exactly its cap is a truncation, and must say so."""
+    head = pd.DataFrame({"sobject_id": [1], "Teff": [5000.0], "logg": [4.4],
+                         "fe_h": [0.0], "snr": [100.0], "Mg_fe": [0.0],
+                         "e_Mg_fe": [0.02], "Ni_fe": [0.0], "e_Ni_fe": [0.02]})
+    seen = []
+
+    def query(adql):
+        seen.append(adql)
+        n = 5                                   # every chunk returns its cap
+        return pd.DataFrame({"sobject_id": range(n), "Teff": [5000.0] * n,
+                             "logg": [4.4] * n, "fe_h": [0.0] * n,
+                             "snr": [100.0] * n, "Mg_fe": [0.0] * n,
+                             "e_Mg_fe": [0.02] * n, "Ni_fe": [0.0] * n,
+                             "e_Ni_fe": [0.02] * n})
+
+    acq = A.fetch_survey("GALAH", max_rows=20, n_chunks=4,
+                         probe_fn=lambda t: head, query_fn=query)
+    assert len(seen) == 4, "the pull must be chunked in Teff, not monolithic"
+    assert acq.n_rows == 20
+    assert acq.degraded and "TRUNCATED" in acq.degradation
+
+
+def test_a_lost_chunk_does_not_kill_the_run():
+    head = pd.DataFrame({"sobject_id": [1], "Teff": [5000.0], "logg": [4.4],
+                         "fe_h": [0.0], "snr": [100.0], "Mg_fe": [0.0],
+                         "e_Mg_fe": [0.02], "Ni_fe": [0.0], "e_Ni_fe": [0.02]})
+    calls = {"n": 0}
+
+    def query(adql):
+        calls["n"] += 1
+        if calls["n"] == 2:
+            raise RuntimeError("TAP timeout")
+        return head
+
+    acq = A.fetch_survey("GALAH", max_rows=8, n_chunks=4,
+                         probe_fn=lambda t: head, query_fn=query)
+    assert acq.n_rows == 3
+    assert "coverage is incomplete" in acq.degradation

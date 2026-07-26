@@ -1,0 +1,53 @@
+name: dysonlit
+
+# Dysonian-SETI literature dossier: fetch verbatim arXiv metadata + full text for
+# the Penn State G-HAT survey series and Carrigan's IRAS Dyson-sphere searches.
+# The sandbox blocks arxiv/ADS/IOP; the runner has egress (CLAUDE.md pattern).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  dysonlit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pdftotext
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Fetch literature (soft 30-min deadline, partials kept)
+        run: |
+          timeout -k 30 1800 python scripts/dysonlit_fetch.py \
+            || echo "fetcher hit soft deadline or errored; committing partials"
+          echo "=== files ==="
+          ls -la results/dysonlit/ || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/dysonlit/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "dysonlit: G-HAT + Carrigan IRAS Dyson-sphere primary-source dossier"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dysonlit-outputs
+          path: results/dysonlit/
+          if-no-files-found: warn

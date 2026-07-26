@@ -689,7 +689,9 @@ def _cmd_vigil_sweep(args, cfg):
 
     vigil_sweep(cfg, ra=args.ra, dec=args.dec, radius_deg=args.radius_deg,
                 g_max=args.g_max, max_stars=args.max_stars,
-                time_budget_s=args.time_budget_s)
+                time_budget_s=args.time_budget_s,
+                untimely_table=args.untimely_table,
+                untimely_service=args.untimely_service)
 
 
 def _cmd_vigil_vet(args, cfg):
@@ -1184,6 +1186,14 @@ def main(argv=None):
     p.add_argument("--max-stars", type=int, default=400,
                    help="cap on stars sent to per-object NEOWISE fetching")
     p.add_argument("--time-budget-s", type=float, default=3000.0)
+    p.add_argument("--untimely-table", default="",
+                   help="table name discovered by `vigil-probe` for the unTimely "
+                        "mid-IR variable catalogue (arXiv:2511.22071). When given, "
+                        "the Gaia field sample is pre-selected to catalogued mid-IR "
+                        "variables; when the fetch fails the FULL sample is searched "
+                        "and the degradation is recorded, never hidden")
+    p.add_argument("--untimely-service", default="",
+                   help="TAP endpoint hosting --untimely-table")
     p.set_defaults(func=_cmd_vigil_sweep)
 
     p = sub.add_parser("vigil-vet",

@@ -600,3 +600,62 @@ def test_discriminate_refuses_a_single_band_detection():
     assert d.is_candidate is False
     assert d.verdict == "NOT_MEASURED"
     assert "both_bands" in ";".join(d.reasons)
+
+
+# --------------------------------------------------------------------------
+# The unTimely pre-selector: load-bearing when reachable, honest when not
+# --------------------------------------------------------------------------
+def _fake_untimely(status="OK", n_match=2):
+    def f(table, service, ra, dec, radius_deg, **kw):
+        if status != "OK":
+            return QueryResult(label="untimely_cone", service=service, status=status,
+                               query="SELECT ...", error="synthetic")
+        # Positions matching the first `n_match` synthetic Gaia stars exactly.
+        df = pd.DataFrame({"ra": [ra + 0.01 * i for i in range(n_match)],
+                           "dec": [dec + 0.01 * i for i in range(n_match)],
+                           "w1_var_flag": [1] * n_match})
+        return QueryResult(label="untimely_cone", service=service, status="OK",
+                           n_rows=len(df), count_star=len(df), query="SELECT ...",
+                           data=df)
+    return f
+
+
+def test_untimely_preselector_restricts_the_sample():
+    from seti.vigil.run import preselect_from_untimely
+
+    stars = _fake_gaia(n=5)(14.0, 14.0).data
+    out, led = preselect_from_untimely(stars, "untimely.var", "svc", 14.0, 14.0, 0.4,
+                                       fetch=_fake_untimely(n_match=2))
+    assert led["applied"] is True
+    assert led["n_in"] == 5
+    assert len(out) == 2
+    assert led["n_untimely_rows"] == 2
+
+
+def test_untimely_unreachable_degrades_to_the_full_sample_and_says_so():
+    """Silently searching fewer stars and calling it a pre-selection is misreporting."""
+    from seti.vigil.run import preselect_from_untimely
+
+    stars = _fake_gaia(n=5)(15.0, 15.0).data
+    out, led = preselect_from_untimely(stars, "untimely.var", "svc", 15.0, 15.0, 0.4,
+                                       fetch=_fake_untimely(status="QUERY_FAILED"))
+    assert led["applied"] is False
+    assert led["status"] == "QUERY_FAILED"
+    assert len(out) == 5
+
+    # And with no table discovered at all, the reason is different and named.
+    out2, led2 = preselect_from_untimely(stars, "", "", 15.0, 15.0, 0.4)
+    assert led2["applied"] is False
+    assert led2["status"] == "NO_TABLE_DISCOVERED"
+    assert len(out2) == 5
+
+
+def test_sweep_records_the_preselector_in_the_field_summary(tmp_path):
+    s = vigil_sweep(ra=16.0, dec=16.0, out_root=tmp_path, gaia_fetch=_fake_gaia(n=3),
+                    neowise_fetch=_fake_neowise("signal"),
+                    allwise_fetch=_fake_allwise(),
+                    untimely_table="untimely.var", untimely_service="svc",
+                    untimely_fetch=_fake_untimely(n_match=2))
+    assert s["untimely_preselect"]["applied"] is True
+    assert s["n_stars_in_field"] == 2
+    assert s["verdict"] == "SEARCHED"

@@ -78,8 +78,13 @@ Organised by *what the residue physically is*, not by wavelength.
   are biased low at small N, epochs-per-season is set by survey cadence, and
   cadence trends with calendar time — so an uncorrected version of this search
   measures ZTF's operations calendar rather than astrophysics. See
-  `docs/rust.md` §5 for the five-layer correction and its measured false-positive
-  rate. Sensitivity is bounded honestly: RUST sees **many-element swarms whose
+  `docs/rust.md` §5 for the six-layer correction and its measured false-positive
+  rate. A second confounder is closed there too, and it is the one that would
+  have piped the sibling channel straight into this one: an **accelerating**
+  secular fade drifts further within each successive season, so removing only
+  the season median leaves a rising second moment produced entirely by a
+  first-moment phenomenon (46/60 false positives at 0.72 mag total fade; 0/60
+  once a fitted *line* is removed per season). Sensitivity is bounded honestly: RUST sees **many-element swarms whose
   collisional time `P/f` falls inside the survey decade**, and is blind to the
   passively stable architectures of McInnes 2026 (arXiv:2603.00203) — which need
   no upkeep and therefore never decay — and largely blind to Wright 2020's

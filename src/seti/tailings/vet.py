@@ -411,6 +411,11 @@ def covariate_window_veto(
                 f"{enh:.1f}x other elements, p={p:.1e} — instrumental "
                 f"(telluric / bad-pixel) footprint, not a stellar anomaly"
             )
+    # Fold the window result into the overall verdict, or the veto computes a
+    # column nobody reads: the first real run's n_vetted was byte-identical
+    # before and after this veto existed.
+    if col_out in out.columns:
+        out["vet_pass"] = (out["vet_pass"] if "vet_pass" in out.columns else True) & out[col_out]
     return out
 
 

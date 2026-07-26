@@ -93,6 +93,19 @@ _ELEMENT_CASE.update({"fe": "Fe", "ti2": "TiII", "tiii": "TiII", "ti_ii": "TiII"
 _ABUND_RE = re.compile(r"^([a-z]{1,4})_fe$")
 
 
+def unquote_table(name: str) -> str:
+    """Strip the double quotes VizieR's ``TAP_SCHEMA`` wraps table names in.
+
+    ``TAP_SCHEMA.tables.table_name`` comes back as ``"III/283/allstar"`` --
+    *including* the quote characters. Interpolating that into a quoted FROM
+    clause yields ``FROM ""III/283/allstar""``, which every candidate table
+    rejects, and the run then reports a clean NO_DATA_REACHED for what is
+    really a quoting bug. It cost a dispatch; hence a named function rather
+    than an inline strip.
+    """
+    return str(name).strip().strip('"').strip()
+
+
 def _canon(name: str) -> str:
     """Lowercase, strip VizieR's decorative underscores, collapse doubles."""
     s = str(name).strip().lower()
@@ -245,7 +258,7 @@ def discover_tables(
     if df is None or len(df) == 0:
         return []
     col = "table_name" if "table_name" in df.columns else df.columns[0]
-    return [str(t) for t in df[col].tolist()]
+    return [unquote_table(t) for t in df[col].tolist() if unquote_table(t)]
 
 
 def score_schema(columns) -> tuple[int, dict[str, str], dict[str, dict[str, str]]]:
@@ -283,6 +296,7 @@ def teff_bands(teff_min: float, teff_max: float, n: int) -> list[tuple[float, fl
 
 def probe_table(table: str, *, url: str = VIZIER_TAP) -> pd.DataFrame | None:
     """Fetch one row to discover a table's real column names, or None if absent."""
+    table = unquote_table(table)
     try:
         return tap_query(f"SELECT TOP 1 * FROM \"{table}\"", url=url, retries=1)
     except Exception as exc:  # noqa: BLE001
@@ -359,8 +373,8 @@ def fetch_survey(
     probe_fn = probe_fn or (lambda t: probe_table(t, url=tap_url))
     query_fn = query_fn or (lambda q: tap_query(q, url=tap_url))
 
-    encoded = [s.locator for s in SOURCES.get(survey, ()) if s.kind == "tap"]
-    names = {s.locator: s.name for s in SOURCES.get(survey, ())}
+    encoded = [unquote_table(s.locator) for s in SOURCES.get(survey, ()) if s.kind == "tap"]
+    names = {unquote_table(s.locator): s.name for s in SOURCES.get(survey, ())}
     candidates = list(encoded)
     if discover:
         found = discover_tables(DISCOVERY_KEYWORDS.get(survey, (survey,)),
@@ -542,8 +556,8 @@ def fetch_wide_binaries(
     probe_fn = probe_fn or (lambda t: probe_table(t, url=tap_url))
     query_fn = query_fn or (lambda q: tap_query(q, url=tap_url))
 
-    encoded = [s.locator for s in SOURCES["WIDEBINARY"]]
-    names = {s.locator: s.name for s in SOURCES["WIDEBINARY"]}
+    encoded = [unquote_table(s.locator) for s in SOURCES["WIDEBINARY"]]
+    names = {unquote_table(s.locator): s.name for s in SOURCES["WIDEBINARY"]}
     candidates = list(encoded)
     if discover:
         found = discover_tables(DISCOVERY_KEYWORDS["WIDEBINARY"], url=tap_url,
@@ -656,6 +670,7 @@ __all__ = [
     "resolve_abundance_columns",
     "resolve_param_columns",
     "score_schema",
+    "unquote_table",
     "tap_query",
     "teff_bands",
     "write_checkpoint",

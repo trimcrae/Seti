@@ -1003,3 +1003,37 @@ def test_sensitivity_and_null_strength_trade_against_each_other():
     assert need[4200.0] > 3000.0       # a K dwarf needs more rock than exists
     # Which is the honest limitation: an M/K-dwarf detection would require an
     # implausible amount of material, and that must be said rather than implied.
+
+
+def test_vizier_table_names_come_back_quoted_and_must_be_stripped():
+    """The bug that cost a dispatch: TAP_SCHEMA returns '"III/283/allstar"'.
+
+    Interpolating that into a quoted FROM clause gives FROM ""III/283/allstar"",
+    which every table rejects -- and the run then reports a clean
+    NO_DATA_REACHED for what is really a quoting bug. The honest verdict made
+    it look like an archive-access problem, which is exactly why the failure
+    has to be caught in a test rather than in a log.
+    """
+    assert A.unquote_table('"III/283/allstar"') == "III/283/allstar"
+    assert A.unquote_table("III/283/allstar") == "III/283/allstar"
+    assert A.unquote_table('  "J/MNRAS/506/2269/table1" ') == "J/MNRAS/506/2269/table1"
+
+    seen = []
+
+    def query(adql):
+        if "TAP_SCHEMA" in adql:
+            return pd.DataFrame({"table_name": ['"III/999/main"'],
+                                 "description": ["GALAH DR4"]})
+        seen.append(adql)
+        return pd.DataFrame({"sobject_id": [1], "Teff": [5000.0], "logg": [4.4],
+                             "fe_h": [0.0], "snr": [100.0], "Mg_fe": [0.0],
+                             "e_Mg_fe": [0.02], "Ni_fe": [0.0], "e_Ni_fe": [0.02]})
+
+    found = A.discover_tables(("GALAH",), query_fn=query)
+    assert found == ["III/999/main"], "the quotes must be stripped at discovery"
+
+    acq = A.fetch_survey("GALAH", max_rows=1, n_chunks=1,
+                         probe_fn=lambda t: query("probe") if "999" in t else None,
+                         query_fn=query)
+    assert acq.locator == "III/999/main"
+    assert all('""' not in q for q in seen), "no double-quoted table name may reach the service"

@@ -1,0 +1,1171 @@
+MNRAS 000, 1–10 (2021)
+
+Preprint 21 July 2022
+
+Compiled using MNRAS LATEX style file v3.0
+
+Searching for giant planets in the outer Solar System with
+far-infrared all-sky surveys
+Chris Sedgwick and Stephen Serjeant
+School of Physical Sciences, The Open University, Milton Keynes MK7 6AA
+
+arXiv:2207.09985v1 [astro-ph.EP] 20 Jul 2022
+
+Draft revised 5 July 2022
+
+ABSTRACT
+
+We have explored a method for finding giant planets in the outer Solar System by detecting their thermal emission and
+proper motion between two far-infrared all-sky surveys separated by 23.4 years, taken with the InfraRed Astronomical
+Satellite (IRAS) and the AKARI Space Telescope. An upper distance limit of about 8,000 AU is given by both the
+sensitivities of these surveys and the distance at which proper motion becomes too small to be detected. This paper
+covers the region from 8,000 AU to 700 AU. We have used a series of filtering and SED-fitting algorithms to find
+candidate pairs, whose IRAS and AKARI flux measurements could together plausibly be fitted by a Planck thermal
+distribution for a likely planetary temperature. Theoretical studies have placed various constraints on the likely
+existence of unknown planets in the outer solar system. The main observational constraint to date comes from a
+WISE study: an upper limit on an unknown planet’s mass out into the Oort cloud. Our work confirms this result
+for our distance range, and provides additional observational constraints for lower distances and planetary masses,
+subject to the proviso that the planet is not confused with Galactic cirrus. We found 535 potential candidates with
+reasonable spectral energy distribution (SED) fits. Most would have masses close to or below that of Neptune (∼0.05
+Jupiter mass), and be located below 1,000 AU. However, examination of the infrared images of these candidates
+suggests that none is sufficiently compelling to warrant follow-up, since all are located inside or close to cirrus clouds,
+which are most likely the source of the far-infrared flux.
+Key words: planets and satellites: detection – infrared: general
+
+1 INTRODUCTION
+The search for new planets in the solar system has attracted
+much work over the centuries. In general, this has been
+prompted by the need to explain observed perturbations in
+the orbits of known planets, and has involved trying to observe the planets from their reflected sunlight in the optical
+region of the spectrum. The discovery of Uranus in 1781,
+Neptune in 1846 and Pluto in 1930 resulted from such work.
+Much more recently, analysis of perturbations in the orbits
+of objects in the Kuiper Belt has suggested the likelihood of
+these being caused by a planet further out in the solar system
+(see review in Batygin et al. 2019).
+Observing reflected sunlight is not the only method by
+which planets may be detected in the Solar System. Judging
+from the known giant planets, large planets are non-negligible
+sources of heat which may be detectible in the infrared. The
+peak of this radiation will depend on the temperature at the
+highest levels of the atmosphere of the planet, and will most
+likely be in the far-infrared (see Table 1). Since reflected sunlight will fall by r−4 with distance r from the Sun, detection
+of emitted thermal radiation (which will fall by r−2 ) becomes
+a much more likely method of detecting planets in the Solar System at greater distances from the Sun. Detection in
+© 2021 The Authors
+
+this way using a planet’s proper motion has only recently become possible, with two all-sky far-infrared catalogues now
+available, taken some 23 years apart.
+The most distant giant planet currently known, Neptune,
+orbits the sun at a semi-major axis of ∼ 30 AU. The Kuiper
+Belt covers the region 30 AU to 55 AU and has three known
+dwarf planets (including Pluto) and numerous smaller objects (Kuiper Belt Objects, KBOs). A Neptune-sized planet
+at ∼ 700 AU was recently predicted to explain the eccentric orbits of several such objects (‘Planet Nine’; Batygin &
+Brown 2016). Our longer term objective is to cover this region, but this initial paper only reaches its edge, covering
+from 700 AU out to almost the beginning of the Oort Cloud,
+which is generally thought to extend from ∼ 10,000 AU to
+100,000 AU. Socas-Navarro (2022) used anomalies in the velocity and trajectory of a meteor to support the existence of
+a ninth planet. Another recent paper reported an anomaly in
+the orbits of outer Oort Cloud comets, which may suggest a
+planet of 1−4 Jupiter masses (MJ ) at ∼ 10, 000 − 30, 000 AU
+(Matese & Whitmire 2011): however, our work would not
+detect a planet as distant as the Oort Cloud.
+Individual all-sky infrared catalogues have previously been
+examined for evidence of new planets using parallax from
+orbital extremes of the space telescope. The IRAS Point
+
+2
+
+Chris Sedgwick et al.
+
+Source Catalogue (PSC) was searched for evidence of ‘Planet
+X’ shown by a slowly moving blackbody (e.g. Houck et al.
+1985) but the sources identified turned out not to be planets (see also review in Beichman 1987). The rejected sources
+catalogue (PSCR) in the IRAS survey was examined for moving sources (Davies et al. 1984) and three asteroids and six
+comets were found. A possible detection of an unknown object as large as Jupiter in the solar system was made by IRAS
+in December 1983, but further analysis showed it to be a
+known comet (Rowan-Robinson 2013). More recently, Luhman (2014) searched for planets by parallax in WISE data,
+but without success, reaching distances for potential Saturnmass and Jupiter-mass planets of 28,000 AU and 82,000 AU
+respectively. There was a recent tentative detection of a distant source in the Solar System by ALMA, although this
+paper has been withdrawn pending further analysis and new
+data (Liseau et al. 2015). Using IRAS data, a candidate for a
+planet of 3−5 Earth masses (ME ) at 225±15 AU has recently
+been identified (Rowan-Robinson 2021).
+There have also been previous studies looking for evidence
+of new planets using proper motion between surveys. A recent
+all-sky survey looked for objects by their proper motion using
+optical catalogues, identifying eight already-known objects in
+the Kuiper Belt at 31 AU to 68 AU (Brown et al. 2015).
+Luhman & Sheppard (2014) looked for high proper motion
+objects in the near- and mid-infrared by comparing 2MASS
+and WISE data, but focused on nearby stars rather than
+planets. Our work takes a similar approach in the far-infrared,
+aiming to identify objects by their proper motion in the 23.4
+year period between two all-sky far-infrared surveys (IRAS
+and AKARI) to try to identify a distant planet in the Solar
+System.
+The review article by Batygin et al. (2019) combines various theoretical studies with the WISE results to suggest that
+the parameter space for possible undiscovered planets in the
+Solar System lies between 100 − 1,000 AU, and between
+1−100 Earth masses (∼ 0.003 − 0.3 MJ ) (Figure 5 of that
+paper). We have covered part of this space (700 AU to 1,000
+AU) in this paper (illustrated in Figure 1). We also covered
+the region out to 8,000 AU, since the data are available and
+can provide confirmation of part of the results of the WISE
+study.
+The IRAS and AKARI all-sky infrared surveys are described in Section 2. The detectability in these surveys of
+a potential planet’s flux, parallax and proper motion is discussed in Section 3. The algorithms used to narrow the search
+for potential planets by rejecting unlikely candidate pairs are
+described in Section 4. The resulting shortlist is considered
+in Section 5, and the results are discussed in Section 6.
+
+2 ALL-SKY FAR-INFRARED SURVEYS
+The catalogues from two all-sky surveys which cover farinfrared wavelengths, by IRAS and AKARI, have been used
+to identify planet candidates. Both surveys cover wavelengths
+near the flux peaks for known giant planets in the solar system, with AKARI supplying coverage of the shallow
+Rayleigh-Jeans tail of an assumed thermal distribution (see
+Tables 1 and 2).
+MNRAS 000, 1–10 (2021)
+
+Figure 1. Top: observational constraints on an unknown planet,
+from WISE (red line; Luhman 2014) and from this project to date
+(red polygon). The outline blue polygon shows the theoretical constraints shown below. Bottom: theoretical constraints on an unknown planet: the purple line indicates the parameter space ruled
+out by perturbations in known giant planets; the red line indicates
+the theoretical limits for the survival of a planet from the solar
+birth cluster; the green line shows the limits of the definition of
+a planet which has cleared out its orbit over the age of the solar
+system (see Batygin et al. 2019 and references therein). The black
+hatched area is the theoretical space for the planet resulting from
+these constraints.
+
+Searching for giant planets in the outer Solar System
+Table 1. Orbital data on presently known giant planets. Sources:
+Guillot & Gautier (2015); McBride & Gilmour (2004).
+
+Jupiter
+
+Saturn
+
+Uranus
+
+Neptune
+
+1.3◦
+11.86
+5.20
+71,400
+1,900
+1.00
+124
+23
+
+2.5◦
+29.42
+9.54
+60,300
+568
+0.30
+95
+31
+
+0.8◦
+83.75
+19.19
+25,600
+87
+0.05
+59
+49
+
+1.8◦
+163.7
+30.07
+25,200
+102
+0.05
+59
+49
+
+Inclination to ecliptic
+Orbital period (yr)
+Semi-major axis (AU)
+Equatorial radius (km)
+Mass (1024 kg)
+Mass (MJ )
+Eff. temperature (K)
+Blackbody peak (µm)
+
+Table 2. Central wavelengths of IRAS and AKARI instruments
+with equivalent peak blackbody temperature.
+
+Central
+Wavelength
+(µm)
+
+Equivalent
+Temperature
+(K)
+
+IRAS
+IRAS
+IRAS
+IRAS
+
+12
+25
+60
+100
+
+241
+116
+48
+29
+
+AKARI - FIS N60
+AKARI - FIS Wide-S
+AKARI - FIS Wide-L
+AKARI - FIS N160
+
+65
+90
+140
+160
+
+45
+32
+21
+18
+
+2.1 IRAS
+Firstly, the all-sky survey by the Infrared Astronomical Satellite (IRAS; Neugebauer et al. 1984) in 1983 was taken at
+wavelength bands centred on 12 µm, 25 µm, 60 µm and
+100 µm and generated two large catalogues: the point source
+catalogue (IRAS-PSC) of some 246,000 sources and the faint
+source catalogue (IRAS-FSC) which was generated by stacking the multiple scans which yielded some 173,000 sources of
+which 58% are not in the IRAS-PSC catalogue. The IRASPSC reached a depth of 0.6 Jy, whereas the IRAS-FSC
+reached ∼0.2 Jy at 60 µm. There is also a catalogue of rejects for each of these catalogues. Since one of the reasons for
+rejection could be failure to confirm the location of a source
+in multiple scans, these are also relevant, perhaps crucial, to
+our search (see Table 3 for further details).
+This paper concentrates on far-infrared observations. We
+have not used the lowest IRAS wavelength (centred on 12 µm)
+in the blackbody SED-fitting algorithms, since the known
+gas giants have higher mid-infrared flux than that given by
+the sharp Wien tail fall-off of single-temperature blackbody
+SEDs. This is discussed further below (Section 4.5).
+2.2 AKARI
+Secondly, the AKARI Space Telescope (Murakami et al. 2007)
+all-sky survey of 2006-07 generated a bright source catalogue (AKARI-BSC; Yamamura et al. 2010). Observations at
+65 µm, 90 µm, 140 µm and 160 µm were made with the Far-
+
+3
+
+Infrared Surveyor (FIS; Kawada et al. 2017). Version 2 of this
+catalogue was released in 2016 (Yamamura et al. 2017) and
+contains 918,056 sources. The 90 µm observations reached a
+depth of 0.44 Jy and had a positional accuracy of ∼ 800 , with
+multiple scans of most of the sky. . We have used both the
+main catalogue (501,444 sources) and the supplemental catalogue (416,612 sources) for the same reason that we used
+both the main and the reject catalogues from IRAS.
+2.3 Mid-infrared all-sky catalogues: WISE and
+AKARI
+There is a mid-infrared all-sky catalogue from the Widefield Infrared Survey Explorer (WISE; Wright et al. 2010) in
+January-August 2010, covering four bands, at 3.4 µm, 4.6 µm,
+12 µm and 22 µm (referred to as W1 to W4 respectively). The
+highest of these wavelength bands, the WISE 22 µm band is
+borderline far-infrared, and is close in wavelength to the lowest IRAS band at 25 µm and can be used (after extrapolating
+the position for a further ∼4 years) to check for possible confirmation of plausible candidate planets.
+Observations for the first two WISE bands (W1 and W2)
+extended over some six years, up to 2016. However, observations at the two higher wavelength bands (W3 and W4)
+lasted for just 7 and 9 months respectively. Evidence of parallax (and, given the timescale) proper motion can be searched
+for using the W1 and W2 bands, and a number of studies
+have already been made of this data (e.g. Luhman 2014). If
+we find matches in the band 4 data to our candidates, we
+could potentially use these data to look for parallax in the
+WISE data.
+AKARI-IRC also provides all-sky data in the mid-infrared
+(at 9 µm and 18 µm). However, there is no clear method of
+using these data in matching the far-infrared data discussed
+in the paper, since they would not relate to the fitted thermal
+distribution.
+2.4 Submillimetre all-sky catalogue: Planck
+The Planck all-sky survey (Planck-Collaboration 2011)
+covered submillimetre to millimetre wavelengths down to
+350 µm. However, its depth at 350 µm was 0.7 Jy, not deep
+enough to detect emission from the Rayleigh-Jeans tail of
+giant planet SEDs for masses considered here.
+
+3 DETECTABILITY OF A PLANET’S THERMAL
+EMISSION BY IRAS AND AKARI-BSC
+The upper limit for the distance at which we may detect a
+planet is set by the sensitivity of the IRAS and AKARI instruments in terms of (a) the flux observable and (b) the
+proper motion detectable between the two surveys. We discuss each of these in turn below, together with the parallax
+detectable within each survey. We have made the simplifying
+assumptions of a circular orbit and a flux emission similar
+to that of the known giant planets for potential planets with
+masses below that of Jupiter. We have used the model predictions given in Burrows et al. (1997) to extrapolate temperature and radius for potential planets with masses greater
+than that of Jupiter. The calculations underlying the discussion below are shown in Table 4.
+MNRAS 000, 1–10 (2021)
+
+4
+
+Chris Sedgwick et al.
+
+Table 3. Numbers of sources in the IRAS and AKARI catalogues including the IRAS Rejects catalogues. Depth and resolution are shown
+for 100 µm for IRAS and at 90 µm for AKARI. Identified sources are those identified in the IRAS published catalogues. *The reliability
+of IRAS-FSCR is likely to be as low as 10%.
+
+Catalogue
+
+Wavelengths
+(µm)
+
+Date
+(mid-survey)
+
+Depth
+(Jy)
+
+Resolution
+PSF FWHM
+
+Positional
+accuracy
+
+Total
+sources
+
+Identified
+sources
+
+Unidentified
+sources
+
+IRAS-PSC
+IRAS PSCR
+IRAS-FSC
+IRAS-FSCR*
+
+12, 25, 60, 100
+12, 25, 60, 100
+12, 25, 60, 100
+12, 25, 60, 100
+
+Jun 1983
+Jun 1983
+Jun 1983
+Jun 1983
+
+0.6
+
+6000
+
+1200
+
+245,889
+372,753
+173,044
+593,516
+
+85,047
+51,000
+115,273
+211,144
+
+160,842
+321,753
+57,771
+382,372
+
+AKARI-BSCv2
+
+65, 90, 140, 160
+
+Nov 2006
+
+0.44
+
+1500
+
+0.2
+
+3900
+
+800
+
+918,056
+
+An inner limit is effectively the point where the perturbations caused by a planet would likely already have been observed, particularly by objects in the Kuiper Belt. We have
+taken 700 AU as the inner limit in this paper; we plan to
+extend inwards in future work.
+
+3.1 Detectability of flux
+The infrared flux received from the giant planets exceeds that
+expected from the planets’ reflection of the Sun’s light, and
+is due to heat generated internally, most likely from gravitational collapse over a long time scale. This excess thermal
+radiation is likely to peak in the far infrared (see Table 1).
+The four known giant planets also reflect some infrared radiation from the Sun, but the flux received from this would
+be comparatively insignificant from planets further from the
+Sun.
+Table 3 shows the detection limits for the far-infrared surveys. AKARI can detect down to about 0.44 Jy (slightly lower
+than the 0.55 Jy in Version 1 of the catalogue), and IRAS to
+0.5 Jy for PSC and 0.2 Jy for FSC. The flux detection limit
+for detecting sources matched between the two catalogues is
+therefore ∼ 0.5 Jy.
+Table 4 shows the flux receivable from a potential planet
+with mass similar to that of Uranus or Neptune (0.05 MJ ),
+of Saturn (0.3 MJ ) and of Jupiter, at various distances. We
+would not detect a Jupiter-mass planet much beyond about
+6,000 AU with either IRAS or AKARI. The limit for a Saturnmass planet (0.3 MJ ) is ∼ 4, 000 AU; for a Neptune-mass
+planet it is ∼ 800 AU. On the other hand, a planet of 5 MJ
+could be detected out to about 10,000 AU.
+It is worth considering the evidence from exoplanets on
+planet sizes (although there will be selection effects). Threequarters of exoplanets being discovered by the Kepler mission
+are smaller than Neptune, and only 2% are Jupiter-sized or
+above (Borucki et al. 2011; Howard et al. 2013). However,
+planets at the large distances from their stars considered in
+this paper (over 700 AU) are not likely to be detected in
+the work on other solar systems: virtually all exoplanets detected so far are within 100 AU (see review in Winn & Fabrycky 2015). However, brown dwarfs have been found for a
+few nearly stars at distances > 1, 000 AU (e.g. Luhman et al.
+2011).
+MNRAS 000, 1–10 (2021)
+
+Figure 2. Proper motion and parallax observed angular motion
+compared to an estimated detection limit of 3900 .
+
+3.2 Detectability of proper motion
+There was a period of some 23.4 years between the observations by IRAS and by AKARI, taking mid-points of the survey periods in each case. Table 4 shows the estimated proper
+motion of a planet over this period at various distances. As
+shown in Table 3, the angular resolution of IRAS and AKARI
+was ∼ 6000 and 3900 respectively. The IRAS resolution suggests that a source over ∼6,000 AU may not be resolved. The
+filters in our algorithms to identify candidates take sources
+within 3000 to be matches between the catalogues, and excludes them. At 700 AU, the lower limit of our survey in this
+paper, the proper motion over 23.4 years would be 27.30 . The
+positional uncertainties of both surveys (see Table 3) were
+smaller than the proper motion out to ∼ 8, 000 AU (see Table 4 and Figure 2).
+
+3.3 Detectability of parallax
+Parallax for the relevant distances is also shown in Table
+4 (last column). It is not detectable with the beam sizes
+of IRAS and AKARI for objects at distances greater than
+∼ 5, 000 AU (see also Figure 2). At closer distances, it provides an alternative method of detecting sources; this was unsuccessful in previous studies with IRAS (see Section 1) and
+multiple observation data are not (yet) available for AKARI.
+Parallax may cause problems for our detection by proper
+motion at lower distances: we have taken median values in
+SCANPI (see Section 4.2) partly for this reason. We discuss
+the evidence of parallax in IRAS data in Section 4.2 below.
+
+Searching for giant planets in the outer Solar System
+
+5
+
+Table 4. Estimates of flux, parallax and proper motion over the 23 years between IRAS and AKARI. The table shows a Saturn-mass
+planet (=0.3MJ ) drops below detectability at around 4,000 AU, and a Uranus-mass planet is potentially detectable out to ∼1,000 AU.
+Estimates of proper motion assume circular orbit and Kepler’s third law.
+
+Distance
+(AU)
+500
+700
+800
+1,000
+2,000
+3,000
+4,000
+6,000
+
+———————- Estimates of planetary flux ———————– Uranus mass –
+– Saturn mass –
+– Jupiter mass –
+60 µm
+90 µm
+60 µm
+90 µm
+60 µm
+90 µm
+Sλ /Jy
+Sλ /Jy
+Sλ /Jy
+Sλ /Jy
+Sλ /Jy
+Sλ /Jy
+1.1
+0.6
+0.4
+0.3
+0.07
+0.03
+0.02
+0.01
+
+1.4
+0.7
+0.5
+0.3
+0.09
+0.04
+0.02
+0.01
+
+32
+17
+13
+8.1
+2.0
+0.9
+0.5
+0.2
+
+25
+13
+9.8
+6.3
+1.6
+0.7
+0.4
+0.2
+
+3.4 Assumptions and approximations
+We have assumed orbits with low eccentricity. If this is not
+true, our estimates of distance and mass will be affected,
+but detection should still occur. It is quite possible that we
+should expect eccentric orbits in view of the infrequency of
+comets and asteroids knocked in the direction of Earth (and
+the eccentricity of Kuiper Belt Objects like Pluto is high).
+The four presently known giant planets lie close to the
+ecliptic plane (see Table 1), the highest inclination being
+Saturn at only 2.49◦ . New giant planets close to the ecliptic plane, however, are likely to have detectible effects on
+already-known objects, so probably planets at higher orbital
+inclinations to the ecliptic are more likely to remain to be
+discovered. This is increasingly likely as AU is reduced. We
+have ignored the effect of the Earth’s orbit: at the separations
+being considered, 2 AU would have only a tiny effect.
+3.5 Asteroids and comets
+Asteroids and comets are bright sources in the infrared. However, asteroids are fast-moving objects, so our candidates
+would not be asteroid detections. The distance of the major Asteroid Belt (2.1 AU−3.3 AU) means that their proper
+motion would be 100 −200 per day (and their orbits would be
+3−6 years): our study has produced candidates with proper
+motion which is a tiny fraction of this. Also, the emission
+from asteroids can vary significantly over short timescales,
+and the sort of matching we have done by combining fluxes
+from two surveys would not detect sources with varying flux.
+Furthermore, where multiple scans, even a day apart, have
+detected an object, this would rule out identification with an
+asteroid in the Asteroid Belt. There are also asteroids further
+out, but these are still far closer, and on far faster orbits, than
+objects considered in this paper.
+However, it is possible that some of the individual IRAS
+scans in our candidate pairs may be asteroids. Matching to
+asteroids and comets can be done using the NEOChecker
+at the IAU Minor Planet Center1 , which currently has over
+a million near-earth objects including asteroids, comets and
+other objects. Using the precise observation times given by
+1
+
+http://www.minorplanetcenter.net/iau/mpc.html.
+
+66
+34
+26
+17
+4.1
+1.8
+1.0
+0.5
+
+48
+24
+19
+12
+3.0
+1.3
+0.7
+0.3
+
+Estimates of proper motion
+Orbit
+/years
+1.1×104
+1.9×104
+2.3×104
+3.2×104
+8.9×104
+1.6×105
+2.5×105
+4.6×105
+
+Parallax
+
+Proper Motion
+p.a.
+23.4 yrs
+11600
+7000
+5700
+4100
+1500
+7.900
+5.100
+2.800
+
+45.20
+27.30
+22.40
+16.00
+5.70
+3.10
+2.00
+1.10
+
+6.90
+4.90
+4.30
+3.40
+1.70
+1.10
+51.600
+34.400
+
+SCANPI, we can check the scans of any plausible planet candidates.
+
+4 THE ALGORITHMS
+4.1 Identification of possible pairs
+Our essential approach has been to find pairs of sources across
+the two catalogues, 7 of whose 8 flux measurements (excluding the 12 µm flux in IRAS, as discussed in Section 4.5)
+matched well enough to approximate a Planck blackbody
+distribution at a plausible planetary mass and temperature.
+So the objective of these algorithms is to identify candidate
+sources which have a broad approximation to a Planck distribution, for further investigation. This was done in successive
+proper motion ranges equivalent to objects at specific distance ranges from the observer in AU (see Table 5).
+The first step was to remove all sources which matched
+between the AKARI-BSC and IRAS catalogues, and this was
+done for each of the four IRAS catalogues in turn. Sources
+were taken as matched if they were within 3000 in each pair
+of catalogues; this cutoff was based on the resolution and
+positional accuracy of the catalogues (see Table 3)2 .
+The next step was to remove already known sources. We
+excluded sources already identified to another catalogue by
+the IRAS team, as indicated by a NID value in the IRAS
+catalogue. The IRAS team matched to 41 catalogues including asteroids and comets. The matching radius used varied
+with the positional accuracy of the various catalogues, and
+was typically 9000 (details are given in the IRAS Explanatory
+Supplement3 ). Table 3 shows the number of sources identified
+by IRAS and therefore excluded from our search. Previous
+identification of already-known sources was not available for
+the AKARI catalogue when this work was done. Sources identified more recently need to be checked, but the time spent
+checking some 2.3 million sources to various catalogues would
+
+2
+
+The AKARI team also identified sources back to IRAS using a
+larger matching radius of 10000 , but their identifications are not
+included in the AKARI catalogue and have not been used here.
+3 The
+IRAS Explanatory Supplement is available at
+http://irsa.ipac.caltech.edu/IRASdocs/exp.sup/.
+MNRAS 000, 1–10 (2021)
+
+6
+
+Chris Sedgwick et al.
+
+seem to be greater than that saved in running the algorithms
+for a slightly reduced number of sources, so we decided to do
+this later when we have a shortlist of potential candidates.
+We then identified all possible pairs within a selected AU
+range between the AKARI-BSC and each of the four IRAS
+catalogues in turn, starting with 6,000−8,000 AU and working inwards in increasingly narrow bands as the number of
+possible pairs increased. The result at this stage was four
+databases of candidate pairs (one for each IRAS catalogue).
+The relation between the proper motion and distance was
+calculated assuming Keplerian orbits.
+Looking at all the sources in the two catalogues to check
+broad compatibility, we found that although the AKARI
+65 µm flux was broadly consistent with the IRAS 60 µm
+flux, the AKARI 90 µm flux was strongly inconsistent with
+the IRAS 100 µm flux in all four IRAS catalogues. This inconsistency is already known from earlier studies (Serjeant
+& Hatzimangalou 2009; Hereaudeau et al. 2004; Jeong et al.
+2007). Rowan-Robinson & Wang (2017) showed the need for
+an aperture correction to the AKARI 90 µm fluxes. We have
+accounted for this in a crude fashion across the catalogue as
+a whole, by using a fixed 1/0.7 correction for these fluxes.
+
+together. We took the median as the most appropriate average for our purposes.
+The noise measurement (root-mean-square deviation of the
+residuals after the baseline subtraction) for the coadds uses
+a Local Background Fitting Range (we took the default of
+300 ) excluding the central Source Exclusion Range (we took
+the defaults of 2.00 , 2.00 , 4.00 and 6.00 for the four bands
+respectively).
+Details of individual scans are available with SCANPI.
+Where scans were taken with a long time interval between
+them (ideally 6 months) this gives an opportunity to check
+if parallax is observed, particularly for the closer objects (at
+700 AU, parallax is 4.90 ). The SCANPI data provides the
+date and time of each scan (in Universal Time). The UT for
+each scan can be converted to Julian Day Number, and the
+Julian Day Number of the IRAS launch subtracted to give
+the number of days from launch. SCANPI also provides the
+in-scan deviation of the signal peak from the user-specified
+target position (a parameter called ‘MISS’). The location of
+the peak can be taken to be the centre of the best-fitting
+template. The MISS parameter can then be plotted against
+the days from launch for each shortlist source.5
+
+4.2 Use of SCANPI data for IRAS fluxes
+
+4.3 Filters based on position: emission from galactic
+cirrus
+
+Most of the candidate sources found from the procedures described below were from the IRAS PSCR (i.e. the IRAS point
+source catalogue reject catalogue). The problem this caused
+was that the fluxes in the sources matched to this catalogue
+were virtually all upper limits. To obtain better estimates of
+the fluxes and errors in the IRAS data, we therefore decided
+to use the Scan Processing and Integration tool (SCANPI;
+Helou et al. 1988), a revised version of which was made available in 2007. These values were often significantly different
+to the upper limits shown in the reject catalogue and are
+considered to be much improved data. The sensitivity gain
+in SCANPI4 is comparable to that obtained with the IRAS
+Faint Source Catalogue.
+SCANPI offers up to four estimates of a source’s flux, all
+given in Janskys: (a) the peak flux, (b) the average flux density between zero-flux crossings, (c) the average flux density
+between fixed points from the target, with defaults set to
+±20 for 12 µm and 25 µm, ±2.50 for 60 µm and ±40 for 100
+µm, and finally (d) the peak flux density of the best-fitting
+point source template. Not all estimates were available for all
+sources. Following the guidance in the SCANPI User’s Guide,
+we took the flux values in the following order of preference:
+the template amplitude; if not available, the flux density between the default points; failing that, the peak flux. The flux
+density between zero-crossings was not relevant since the continuum shown in the SCANPI reduction was not usually close
+to zero. If none of these three options was available, we stayed
+with the upper limit from the reject catalogue.
+In addition, SCANPI offered four averages from the multiple scans (typically between 8 and 20 scans) for each source:
+straight mean, noise-weighted mean, median and mean with
+noisy detectors half-weighted. These were usually fairly close
+
+Galactic cirrus is a significant problem when trying to identify planets at far-infrared wavelengths. A significant number
+of the pairs of candidates before filters were applied proved to
+be close to the galactic plane (see Figure 3). A study of the
+dust emission of Galactic cirrus from COBE / DIRBE observations showed a concentration at low Galactic latitudes,
+with a broader extension near the Galactic bulge (Bernard
+et al. 1994). Therefore, as a first filter, we excluded sources
+with galactic latitude |b| < 10◦ and sources within a radius
+of 27.5◦ of the Galactic centre.
+These filters removed over 90% of the total candidate pairs.
+If an unknown planet is close to the galactic plane or the
+galactic centre, it would not be identified in this work.
+Zodiacal dust within the solar system may also be a cause
+of false positives, and will be considered below when reviewing images of shortlist candidates.
+4.4 Filters based on absolute and comparative flux
+measurements
+The next stage was to apply a series of filters to reduce the
+four lists of potential pairs down to a shortlist of potential
+candidates. The filters are intended to quickly eliminate pairs
+which are clearly not from a single source. The filters used
+evolved as large numbers of plots were viewed and common
+patterns recognised. The filters were deliberately set at fairly
+loose values in order not to make false exclusions, so our
+sample would retain a high level of completeness. This was
+particularly important since the flux measurements often included upper limits in the catalogues. The final set of flux
+filters used was:
+(a) remove sources for which the fluxes were unrealistically
+high to be from potential planets; this cutoff was calculated
+
+4
+
+SCANPI User’s Guide, September 2007, available at http://
+irsa.ipac.caltech.edu/applications/Scanpi/docs/overview.html.
+MNRAS 000, 1–10 (2021)
+
+5
+
+Data from individual scans by AKARI are not yet available.
+
+Searching for giant planets in the outer Solar System
+
+7
+
+Figure 3. All candidate pairs before filtering in the range 990
+-1000 AU in galactic coordinates, showing preponderance of candidates close to the galactic plane, and close to the galactic centre,
+due to galactic cirrus. A similar pattern in the galactic plane and
+central bulge at mid- and far-infrared wavelengths was mapped by
+COBE/DIRBE (Bernard et al. 1994). The magenta circle shows
+the position of Andromeda; the green circles show the LMC and
+SMC; blue is the California nebula, brown is Orion and orange the
+Gould Strip.
+
+for candidate mass >5 MJ . As an example, this gives a maximum of 9.22 Jy at 90 µm at 2000 AU;
+(b) remove sources for which the AKARI and IRAS fluxes
+which were close in wavelength (60 - 65 µm and 90 - 100 µm)
+were strongly inconsistent. This was defined as a factor of 4,
+i.e. S60 /S65 > 4; S65 /S60 > 4; S90 /S100 > 4; or S100 /S90 > 4;
+(c) remove candidates with excessive slopes in one of the
+catalogues: S90 /S65 > 3 or S65 /S90 > 3 in AKARI or
+S100 /S60 > 3 in IRAS;
+(d) remove candidates with increasing AKARI fluxes at the
+high wavelengths: S160 >S90 ; S140 >S90 ;
+(e) remove candidates with very different colours: the
+AKARI colour S90 /S65 was compared with the IRAS colour
+S100 /S60 , and candidate pairs where the colours differed (in
+either direction) by a factor of over 3 were excluded; and
+(f) remove candidates where the IRAS 25, 60 and 100 µm
+fluxes were all upper limits, and were monotonically increasing.
+A schematic diagram of the filters is shown in Figure 4.
+
+4.5 Fitting a Planck blackbody distribution
+The next stage was to find the best-fit Planck distribution
+to seven of the eight AKARI and IRAS flux values using
+χ2 minimisation, for mass values in the range from 0.02 MJ
+(about half the mass of Uranus and Neptune) to 5 MJ .
+For sources with M > 1MJ , tables from Burrows et al.
+(1997) were used to estimate the radius and effective temperature for a given mass and age of a planet. For sources
+below 1MJ , data from the four gas giants were used. The
+minimum value of χ2 was then calculated in the usual way.
+For the best-fit distribution, we calculated the probability
+that a value of χ2 would be this value or lower as:
+p = 1 − pdf(χ2min , dof)
+
+(1)
+
+where dof represents the number of degrees of freedom and the pdf is calculated with the Python function
+scipy.stats.chi2.
+In the small number of cases where SCANPI data was not
+
+Figure 4. Outline of the filters used to find candidate pairs. The
+numbers relate to the full search to date, from 8,000 AU to 700 AU.
+
+MNRAS 000, 1–10 (2021)
+
+8
+
+Chris Sedgwick et al.
+
+available, we took the upper limit from PSCR as the value of
+the flux and estimated the error as 50% of this value.
+The Planck blackbody distribution is likely to be a fairly
+crude approximation to the detectible flux. In particular, emission from hydrocarbons dominates the mid-infrared
+emission of the gas giants. For Uranus, there is a pronounced
+peak between ∼12 µm and 15 µm: see Figure 3 in the recent
+review by Fletcher (2021). A similar peak from hydrocarbons in the near-infrared was found for Neptune by AKARI
+infrared spectroscopy (Fletcher et al. 2010). The thermal evolution models of Fortney et al. (2016) based on variations of
+Neptune-like parameters to model a potential Planet Nine
+also found flux emission up to ∼12 µm much higher than
+that expected from a blackbody spectrum at plausible temperatures. Therefore, we did not use the lowest-wavelength
+IRAS measurement (at 12 µm) in fitting the Planck distribution. Fletcher (2020) also found a broad peak from H2 -He
+collisions at ∼46-60 µm, the tail of which may affect the 60/65
+µm values observed.
+For flux values given as upper limits at other wavelengths,
+we have used the upper limit as the measurement and taken
+the error as 50% of this value. We have also limited other errors to a maximum of 50% of the measurement so that all the
+measurements (particularly the 140 µm and 160 µm AKARI
+measurements) are given some weight in the chi-square calculation, more than may be justified on a strictly statistical
+basis.
+
+4.6 Identify shortlist candidates
+Finally, we found a shortlist of planetary candidates by setting minimum χ2 probabilities. In view of the errors inherent in the data, and also the fact that planetary emission
+is likely to be more complicated than that given by a single
+Planck distribution, this has been essentially set to eliminate the sources whose best-fit Planck distributions are really poor fits. Setting p>0.4 yielded 777 sources, whose SEDs
+were then visually inspected. About one-third of these SEDs
+were clearly not viable candidates. Reasons for rejection included cases where most of the points were upper limits, and
+cases in which the IRAS and AKARI points did not look like
+they belonged to a single source. This left a final shortlist of
+535 candidates, of which most (501) had IRAS observations
+from the IRAS-PSCR catalogue. To illustrate the results at
+this point, three of the best SED fits of these candidates are
+plotted in Figure 6. The overall results are summarised by
+AU range in Table 5.
+Figure 5 shows a plot of the shortlist candidates on the
+sky in three celestial coordinate systems and reveals several
+‘clumps’ of sources close to the galactic plane cutoff and the
+galactic bulge exclusion circle. Some sources coincide with
+known objects: in particular, there are sources which coincide
+with a nearby large HII region called the California Nebula,
+and a clump of sources are in the Orion Nebula. There were
+no shortlist candidates near the positions of Andromeda, M82
+or Arp220.
+We did not find any candidates exceeding the mass of
+Jupiter, and as our search reached 1,000 AU and below, most
+candidates were around Neptune/Uranus mass. It is interesting that the most common exoplanets in the most recent
+census have sub-Neptune masses (Fulton & Petigura 2018).
+MNRAS 000, 1–10 (2021)
+
+Figure 5. The 535 shortlist candidates plotted as blue plus signs
+in equatorial, galactic and ecliptic coordinate systems. The |b| <
+10o and galactic bulge exclusion zones are shown in the galactic
+coordinates plot with grey dashed lines and a circle. Other regions
+which may be a source of cirrus are shown by circles: the magenta
+circle is centred on the position of Andromeda; the green circles on
+the Small and Large Magellanic Clouds; the brown circle is centred
+on the Orion nebula; the orange circle is the Gould strip; the blue
+circle on the California nebula, a nearby large HII region (circles
+are not to scale).
+
+5 EXAMINING THE SHORTLIST CANDIDATES
+Next, image cutouts were downloaded from publicly available
+sites for IRAS and AKARI, giving images at 8 wavelengths
+for each of the 535 candidates.
+None of the AKARI images showed a source at the expected location. For IRAS, sources close to the position of
+candidates showed in the images in seven cases, but all were
+in clouds of cirrus and were not convincing identifications of
+potential planets.
+The images proved to be fairly conclusive: not only was
+no evidence seen of the candidates in the images, but the
+images for IRAS 60 and 100 µm and for AKARI 90 µm and
+the higher wavelengths showed clear evidence of cirrus for
+almost all 535 sources. Figure 8 shows some examples of this.
+Clearly the flux is from the cirrus, which peaks in the far
+infrared, and not from a planet.
+There were only four candidates whose location in IRAS
+images showed no cirrus, and two cases where our candidate
+
+Searching for giant planets in the outer Solar System
+Table 5. Number of candidates in AU ranges showing the total
+pairs, and details of the final shortlist after all the filters (including
+Planck χ2 best-fits with p> 0.4 and visual inspection of SED) but
+before any images were examined.
+
+Distance
+range
+(AU)
+
+Separation
+range
+(arcsec)
+
+Total
+pairs
+(103 )
+
+—— Shortlist ——
+mass range
+(no.)
+(MJ )
+(MJ )
+
+6000 - 8000
+4000 - 6000
+2000 - 4000
+1500 - 2000
+1000 - 1500
+900 - 1000
+800 - 900
+750 - 800
+700 - 750
+
+42 65
+65 - 120
+120 - 339
+339 - 523
+523 - 960
+960 - 1124
+1124 - 1341
+1341 - 1478
+1478 - 1639
+
+52
+132
+1,065
+1,688
+6,812
+3,572
+5,561
+3,979
+5,183
+
+0
+1
+6
+12
+42
+31
+90
+137
+216
+
+0.13
+0.09
+0.05
+0.03
+0.02
+0.02
+0.02
+
+0.36
+0.25
+0.16
+0.18
+0.08
+0.11
+0.17
+0.14
+
+28,044
+
+535
+
+0.02
+
+0.36
+
+Total
+
+9
+
+In addition, there were many cases of fluxes being upper limits. Also, of course, a planet could reside near the galactic
+centre, or within a cloud of cirrus, and be missed by this
+work.
+A significant proportion of the emission from interstellar
+dust occurs in the far-infrared region of the spectrum which
+we are using in this work, so it is not surprising that the locations of so many of our putative candidates have turned out
+to be regions of dusty material. Investigation of dusty material in the ISM was indeed a major objective of the AKARI
+survey maps (Doi et al. 2017).
+Nevertheless, if there is an unobscured planet away from
+the galactic plane and centre at several hundred AU, this
+method has a good chance of finding it, and we are planning
+to extend inwards from 700 AU in the near future. One advantage of this method is that, if a good candidate for a planet
+is detected, we would have a good fix on its coordinates for
+follow-up confirmation.
+
+7 ACKNOWLEDGEMENTS
+positions appeared to be beyond the edge of nearby cirrus.
+The four without cirrus are all close to the Orion nebula (see
+Figure 5). Images and SEDs for two of these are shown in
+Figure 8. The flux for the two candidates outside the edge
+of the cirrus cloud is also likely to be from cirrus, since the
+boundaries of the clouds are not well-defined.
+We therefore conclude that we have not found a new planet
+in the region we have explored to date.
+If any of the candidates had survived at this point, we
+would need to check whether any of the candidates is already
+a known source - the matching to catalogues done by IRAS
+which we used at the start of the work was from nearly forty
+years ago. We would also check whether either member of the
+pairs shows up on catalogues of asteroids etc. as discussed
+above.
+If the candidates had survived these checks, we would use
+the multiple IRAS scans to check for evidence of parallax, and
+we would extrapolate the locations to check for confirmation
+from WISE catalogues and images. We estimate the positional error for follow-up observations would be about 2500 ,
+considering the positional accuracy of the two catalogues,
+proper motion error and the parallax for six months.
+
+6 DISCUSSION
+The method we have used should have a good possibility of
+identifying unknown planets in the solar system, if they exist
+and are not currently located in cirrus, as we work inwards
+from 700 AU, covering more of the region identified in Batygin review mentioned earlier. We will also reduce the lower
+bound for the planet mass as we move closer and this becomes observable with these surveys. It is worth noting that
+we have only just reached the flux detectability limit for our
+surveys for a Uranus-mass planet at 700 AU (see Table 4).
+The main weakness in the method we have used (apart
+from being dominated by cirrus) has been the limited data
+available for fitting with an SED. The IRAS 12 µm was not
+used, as discussed above, reducing the number of data points
+from 8 to 7. The AKARI 140 and 160 µm points were sometimes missing, further reducing the number of points to five.
+
+This work has used observations from IRAS and from
+AKARI, a JAXA project with participation of ESA. We have
+used the data archives and tools provided by IRSA. We would
+like to thank the referee, Michael Rowan-Robinson, for his
+constructive comments on our original draft, which led to
+significant improvements in the work.
+
+8 DATA AVAILABILITY
+All data used in this paper have been taken from public
+archives.
+
+REFERENCES
+Batygin, K., & Brown, M.E. 2016, AJ, 151, 22
+Batygin, K., Adams, F.C., Brown, M.E. Becker, J.C. 2019, PhR,
+805, 1
+Beichman, C.A. 1987, ARA&A, 25, 521
+Bernard, J.P., Boulanger, F., Desert, F.X. et al. 1994, A&A, 291,
+L5
+Borucki, W.J., Koch, D.G., Basri, G. et al. 2011, ApJ, 736, 19
+Brown, M.E., Bannister, M.T., Schmidt, B.P. et al. 2015, AJ, 149,
+69
+Burrows, A., Marley, M., Hubbard, W.B. et al. 1997, ApJ, 491,
+856
+Davies, J.K., Green, S.F., Stewart, B.C. et al. 1984, Nature, 309,
+315
+Doi, Y., Takita, S., Ootsubo, T. et al. 2015, PASJ, 67, 50
+Fletcher, L.N., Drossart, P., Burgdorf, M. et al. 2010, A&A, 514,
+A17
+Fletcher, L.N. 2021, arXiv:2105.06377
+Fortney, J.J., Marley, M.S., Laughlin, G. et al. 2016, ApJ, 824, L25
+Fulton, B.J. & Petigura, E.A., 2018, AJ, 156, 264
+Guillot, T. & Gautier, D. 2014, arXiv:1405.3752
+Helou, G., Khan, I. R., Malek, L. & Boehmer, L. 1988, ApJS, 68,
+151
+Heraudeau, P., Oliver, S., del Burgo, C. et al.2̇004, MNRAS, 354,
+924
+Houck, J.R., Schneider, D.P., Danielson, G.E. et al. 1985, ApJ,
+290, L5
+Howard, A.W. 2013, Science, 340, 572
+MNRAS 000, 1–10 (2021)
+
+10
+
+Chris Sedgwick et al.
+
+IRAS Explanatory Supplement, 1988, ed. Beichman, C.A.,
+Neugubauer, G., Habing, H.J., Clegg, P.E. & Chester, T.J. (NASA)
+Jeong, W.S. et al. 2007, PASJ, 59,429
+Kawada, M. et al. 2007, PASJ, 59, 389
+Li, L., Baines, K.H., Smith, M.A. et al. 2012, JGRE, 11711002
+Liseau, R., Vlemmings, W., O’Gorman, E. et al. 2015, arXiv:
+1512.02652v2
+Luhman, K.L., Burgasser, A.J. & Bochanski, J.J., 2011, ApJ, 730,
+L9
+Luhman, K.L. 2014, ApJ, 781, 4
+Luhman, K.L. & Sheppard, S.S. 2014, ApJ, 787, 126
+McBride, N. & Gilmour, I. (editors), 2004, An Introduction to the
+Solar System, The Open University/Cambridge University Press
+Matese, J.J. & Whitmire, D.P., 2011, Icar, 211, 926
+Murakami, H. et al. 2007, PASJ, 59, S369
+Neugebauer, G., Habing, H.J., van Duinen, R. et al. 1984, ApJ,
+278, L1
+Planck-Collaboration 2011, A&A, 536, A1
+Rowan-Robinson, M., 2013, Night Vision, Cambridge University
+Press
+Rowan-Robinson, M.& Wang, L., 2017, PKAS, 32, 293
+Rowan-Robinson, M., 2021, arXiv: 2111.03831
+Serjeant, S. & Hatziminaoglou, E., 2009, MNRAS, 397, 265
+Socas-Navarro, H., 2022, arXiv: 2205.07675
+Winn, J.N. & Fabrycky, D.C. 2015, ARA&A, 53,409
+Yamamura, I., Makiuti, S., Ikeda, N. et al. 2010, AKARI/FIS AllSky Survey Bright Source Catalogue Version 1.0 Release Note
+Yamamura, I., Makiuti, S. and the AKARI team, 2017,
+AKARI/FIR Bright Source Catalogue Public V2 Release Note
+This paper has been typeset from a TEX/LATEX file prepared by
+the author.
+
+MNRAS 000, 1–10 (2021)
+
+Searching for giant planets in the outer Solar System
+
+11
+
+Figure 6. Examples of plausible SED fits: flux measurements and SEDs of the best-fit Planck distribution for three of the shortlist
+candidates. Note that the 12 µm IRAS points are not included in the minimum-χ2 fitting. The grey band relates to expected hydrocarbon
+emission between 6-15 µm. The bottom right of each figure shows the SCANPI flux used (a=amplitude, p=peak, f=average between fixed
+points).
+
+Figure 7. Examples of IRAS and AKARI images showing candidates (like almost all of the shortlist candidates) inside clouds of cirrus
+which is almost certainly the cause of the far-infrared flux. Circles indicate target coordinates: red for IRAS; blue for AKARI. The size
+of circles is arbitrary. Note IRAS images are in J1950 equatorial coordinates; AKARI in ecliptic coordinates.
+
+MNRAS 000, 1–10 (2021)
+
+12
+
+Chris Sedgwick et al.
+
+Figure 8. Although we have concluded these are not planets, we show above the results for two of our best shortlist candidates. Target
+coordinates are located outside cirrus clouds in some of their images, but higher-wavelength AKARI images seem to suggest that their
+flux, like that of other candidates, probably comes from outlying cirrus. Circles indicate target coordinates: red for IRAS; blue for AKARI.
+The size of circles is arbitrary. Note IRAS images are in J1950 equatorial coordinates; AKARI images are in ecliptic coordinates.
+
+MNRAS 000, 1–10 (2021)
+
+

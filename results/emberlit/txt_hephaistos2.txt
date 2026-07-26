@@ -1,0 +1,1528 @@
+MNRAS 000, 1–13 (2015)
+
+Preprint 7 May 2024
+
+Compiled using MNRAS LATEX style file v3.0
+
+Project Hephaistos – II. Dyson sphere candidates from Gaia DR3, 2MASS,
+and WISE
+Matías Suazo1★ , Erik Zackrisson1,8 , Priyatam K. Mahto2 , Fabian Lundell1 , Carl Nettelblad3 , Andreas J. Korn1 ,
+Jason T. Wright4,5,6 , Suman Majumdar2,7
+1 Observational Astrophysics, Department of Physics and Astronomy, Uppsala University, Box 516, SE-751 20 Uppsala, Sweden
+2 Department of Astronomy, Astrophysics and Space Engineering, Indian Institute of Technology, Indore, India
+
+arXiv:2405.02927v1 [astro-ph.SR] 5 May 2024
+
+3 Division of Scientific Computing, Department of Information Technology, Uppsala University, SE-751 05 Uppsala, Sweden
+4 Department of Astronomy & Astrophysics, The Pennsylvania State University, University Park, PA 16802, USA
+5 Penn State Extraterrestrial Intelligence Center, The Pennsylvania State University, University Park, PA 16802, USA
+6 Center for Exoplanets and Habitable Worlds, The Pennsylvania State University, University Park, PA 16802, USA
+7 Department of Physics, Blackett Laboratory, Imperial College, London SW7 2AZ, UK
+8 Swedish Collegium for Advanced Study, Linneanum, Thunbergsvägen 2 SE-752 38 Uppsala, Sweden
+
+Accepted XXX. Received YYY; in original form ZZZ
+
+ABSTRACT
+
+The search for extraterrestrial intelligence is currently being pursued using multiple techniques and in different wavelength
+bands. Dyson spheres, megastructures that could be constructed by advanced civilizations to harness the radiation energy of
+their host stars, represent a potential technosignature, that in principle may be hiding in public data already collected as part of
+large astronomical surveys. In this study, we present a comprehensive search for partial Dyson spheres by analyzing optical and
+infrared observations from Gaia, 2MASS, and WISE. We develop a pipeline that employs multiple filters to identify potential
+candidates and reject interlopers in a sample of five million objects, which incorporates a convolutional neural network to help
+identify confusion in WISE data. Finally, the pipeline identifies 7 candidates deserving of further analysis. All of these objects
+are M-dwarfs, for which astrophysical phenomena cannot easily account for the observed infrared excess emission.
+Key words: Extraterrestrial intelligence – infrared:stars – stars:low-mass
+
+1 INTRODUCTION
+In the early 60s, Dyson (1960) proposed an innovative methodology
+for searching for signs of extraterrestrial life. He presumed that highly
+advanced civilizations, in the pursuit of more energy resources, would
+construct an artificial, light-absorbing structure around their host star.
+This hypothetical structure, later referred to as a “Dyson Sphere”,
+would allow them to harvest energy in the form of starlight. Starlight
+harvesting could, in principle, result in different observational signatures that may be detected using existing telescopes. These signatures
+include optical dimming of the host star due to direct obscuration,
+and waste-heat emission from the absorbing structure (e.g., Dyson
+1960; Wright et al. 2016; Wright 2020). Consequently, searching
+for anomalous infrared beacons in the sky has become an alternative to traditional communication-based searches for technologically
+advanced civilizations. One of the advantages of searches based on
+“Dysonian” signatures is that it does not rely on the willingness of
+other civilizations to contact us.
+Several observational projects have previously been conducted
+to detect individual Dyson spheres (e.g., Slysh 1985; Jugaku &
+Nishimura 1991; Timofeev et al. 2000; Jugaku & Nishimura 2004;
+Carrigan 2009; Zackrisson et al. 2018) and for the large-scale use
+of similar technology at extragalactic distances (Annis 1999; Wright
+
+★ E-mail: matias.suazo@physics.uu.se
+
+© 2015 The Authors
+
+et al. 2014a,b; Griffith et al. 2015; Zackrisson et al. 2015; Garrett
+2015; Lacki 2016; Olson 2017; Chen & Garrett 2021). However, none
+of these searches have revealed any strong candidates for Dysonian
+technology.
+Most search efforts have aimed for individual complete Dyson
+spheres, employing far-infrared photometry (e.g., Slysh 1985; Jugaku
+& Nishimura 1991; Timofeev et al. 2000; Carrigan 2009) from the Infrared Astronomical Satellite (IRAS: Neugebauer et al. 1984), while
+a few considered partial Dyson spheres (e.g., Jugaku & Nishimura
+2004). IRAS scanned the sky in the far infrared, providing data of
+≈ 2.5 × 105 point sources. However, nowadays, we rely on photometric surveys covering optical, near-infrared, and mid-infrared
+wavelengths that reach object counts of up to ∼109 targets and allow
+for larger search programs.
+Within the context of Project Hephaistos1 , in Suazo et al. (2022)
+we established upper limits on the prevalence of partial Dyson
+spheres in the Milky Way by analyzing the fraction of sources from
+Gaia DR2 and the Wide-field Infrared Survey Explorer (WISE) that
+exhibit infrared excess. In total, more than 108 stars were analyzed
+in that work. The exact upper limits on the fraction of stars that may
+host Dyson spheres reported by Suazo et al. (2022) are a function of
+distance, covering fraction and Dyson sphere temperature, but reach
+as low as ∼ 1 in 100,000 objects in the most constraining situation.
+1
+
+https://www.astro.uu.se/~ez/hephaistos/hephaistos.html
+
+2
+
+Suazo et al.
+
+However, the actual fraction is likely to be much lower (and possibly
+0%) since a number of other effects, such as dust emission and source
+blending, may also give rise to anomalous infrared fluxes. Note that
+the Suazo et al. (2022) upper limits are derived from color cuts rather
+than from fitting Dyson sphere models to the data, since the aim of
+that paper was not to discuss the nature of individual sources of
+excess infrared radiation.
+This second paper examines the Gaia DR3, 2MASS, and WISE
+photometry of ∼5 million sources to build a catalog of potential
+Dyson spheres. Here, we focus on the search for partial Dyson
+spheres, which partly obscure the starlight, which would still be detectable depending on the level of completion of the Dyson sphere.
+This structure would emit waste heat in the form of mid-infrared
+radiation that, in addition to the level of completion of the structure, would depend on its effective temperature. Gaia DR3 provides,
+unlike DR2, various astrophysical parameters derived from the lowresolution BP/RP spectra that can facilitate the rejection of false
+positives in the search for Dyson spheres.
+Gaia, 2MASS, and WISE all provide photometric data in the optical, near-infrared, and mid-infrared, respectively, but Gaia also provides parallax-based distances, which allow the spectral energy distributions of the targets to be converted to an absolute luminosity
+scale. The parallax data also make it possible to reject other pointlike sources of strong mid-infrared radiation such as quasars, but do
+not rule out stars with a quasar in the background.
+Since excess thermal emission at mid-infrared wavelengths represents the primary signature of Dyson spheres, searches for such
+objects naturally intersect with searches focused on mid-infrared excess sources in general. Excess emission in the infrared is a valuable
+tracer of the circumstellar dust that has been heated by the starlight
+and is reemitted at longer wavelengths. Circumstellar dust is present
+in structures such as young stars (e.g., Kennedy et al. 2012; Kennedy
+& Wyatt 2013; Patel et al. 2014; Cotten & Song 2016). Many searches
+seeking infrared excess sources have encountered various difficulties
+when using WISE/AllWISE data, including flux overestimation for
+sources near the saturation limit (Cutri et al. 2013), and the potential
+contamination from companion stars or background galaxies due to
+the large FWHM of the 12 and 22 𝜇𝑚 PSFs (6.5” and 12” respectively; e.g., Kennedy et al. 2012; Theissen & West 2017).
+It has been proposed that Dyson spheres and similar radiationharvesting megastructures could be constructed around a variety of
+stellar-mass objects, including white dwarfs (Semiz & Oğur 2015;
+Zuckerman 2022), pulsars (Osmanov 2016, 2018) and black holes
+(Hsiao et al. 2021). Here, we limit the discussion to Dyson spheres
+around main sequence stars. We additionally assume that feedback
+from Dyson spheres onto the host star may be neglected since this
+becomes relevant only when dealing with small, nearly-completed
+Dyson spheres or with highly internally reflective structures. (Huston
+& Wright 2021).
+In Section 2, we describe our overall search method. In Section 3,
+we present the most promising sources that emerged from our analysis, along with an examination of false positives encountered during
+the search. In Section 4, we discuss the likely nature of some of
+these Dyson sphere candidates and how future follow-up observations can help us disentangle their true nature. Section 5 summarizes
+our results.
+
+2 METHODS
+This paper utilizes data from Gaia Data Release 3 (Gaia Collaboration et al. 2016, 2022), 2MASS (Skrutskie et al. 2006), and AllWISE
+MNRAS 000, 1–13 (2015)
+
+Gaia-2MASSAllWISE sources
+within 300 pc
+
+W3/W4
+detection
+
+Goodness-of-fit
+
+Image
+classification
+
+Optical Variability
+Ha emission
+
+Additional cuts
+
+RUWE
+Extended source
+
+SNR > 3.5
+
+Star-like source
+
+Visual
+Inspection
+
+Figure 1. Flowchart illustrating our pipeline to find Dyson sphere candidates
+
+(Cutri & et al. 2014). Gaia DR3 provides parallaxes and fluxes in
+three optical bands (𝐺 BP , 𝐺, 𝐺 RP ) in addition to various astrophysical parameters derived from the low-resolution BP/RP spectra.
+2MASS provides near-infrared (NIR) fluxes in the J, H, and Ks bands,
+which corresponds to 1.2, 1.6, and 2.1 μm, respectively, while WISE
+provides mid-infrared (MIR) fluxes at the W1, W2, W3, and W4
+bands which corresponds to 3.4, 4.6, 12, and 22 μm. The AllWISE
+program is an extension of the WISE program (Wright et al. 2010)
+and combines data from different phases of the mission.
+A specialized pipeline has been developed to identify potential
+Dyson sphere candidates, focusing on detecting sources that display
+anomalous infrared excesses that cannot be attributed to any known
+natural source of such radiation. It is essentially impossible to prove
+the existence of a Dyson spheres based on photometric data only,
+so this search can be considered a standard search for infrared excess sources biased towards excesses that are consistent with Dyson
+spheres based on their bright mid-infrared fluxes and our models of
+what the spectral energy distribution of Dyson spheres should look
+like. A simple schematic representation of this pipeline is illustrated
+in Figure 1.
+The pipeline for identifying Dyson sphere candidates involves
+several stages. We briefly describe each step:
+• Data Collection: We collect data from Gaia, 2MASS, and AllWISE for sources within 300 pc and detections in the 12 and 22 μm
+bands (W3 and W4 WISE bands).
+
+Short title, max. 45 characters
+• Grid Search: A grid search method is employed to determine
+each star’s best-fitting Dyson sphere model, utilizing the combined
+Gaia-2MASS-AllWISE photometry.
+• Image Classification: To differentiate potential candidates located in nebular regions, a Convolutional Neural Network (CNN)based algorithm is applied to WISE images to determine if our
+sources exhibit features associated with nebular regions. Young dustobscured stars or stars otherwise associated with dusty nebulae appear as common false positives in our search. Therefore, only images
+lacking nebular features proceed to the next step.
+• Additional Analysis: This step involves utilizing several GaiaWISE flags to assess whether the stars might exhibit an infrared
+excess of natural origin.
+• Signal-to-noise ratio: Many sources with low signal-to-noise
+ratios (SNR in W3 and W4) slip through all the previous steps.
+Therefore we manually include this step where all sources with SNR
+lower than 3.5 in the W3 and W4 bands are rejected.
+• Visual inspection: We visually inspect optical, near-, and midinfrared images of all sources in order to reject problematic sources
+of mid-infrared radiation. Blends are the most typical confounder in
+this step.
+These steps filter out sources that do not exhibit the desired characteristics of a Dyson sphere. Each step is explained in more detail
+in the following sections.
+2.1 Data Collection
+We begin our search by taking a sample of stars from the Gaia DR32MASS-AllWISE catalog. The cross-matching between these catalogs was done by simultaneously using the allwise_best_neighbour,
+tmass_psc_xsc_best_neighbour, and tmass_psc_xsc_join catalogs
+provided by the Gaia consortium. Within this sample, our focus
+was on selecting stars located within a distance of 300 parsecs (pc)
+based on the geometric distance derived in the Early Data Release
+3 (EDR3) (Bailer-Jones et al. 2021). We opted to utilize EDR3 distances rather than Gaia DR3 distances, as the latter is derived from
+low-resolution BP/RP spectra and is therefore not available for most
+stars in the sample.
+Following the above mentioned criteria, our initial sample comprised approximately 5 million sources. Subsequently, we implemented an additional selection criterion, demanding detections in
+the 12 and 22 μm bands (W3 and W4, respectively) from WISE.
+This choice was motivated by the fact that the expected infrared
+excess of Dyson spheres is particularly pronounced in these bands,
+given the range of temperature expected for Dyson spheres, as elaborated in Section 2.2. We additionally excluded sources that exhibited
+contamination according to the WISE contamination flag. As a result of this filtering step, our sample was downsized to approximately
+320,000 stars.
+2.2 Theory and models
+The next step in our pipeline corresponds to determining how well the
+photometry of the stars in the catalog resembles that of hypothetical
+main-sequence stars hosting Dyson spheres. This assessment requires
+understanding how the photometry of stars changes when surrounded
+by a Dyson sphere, which involves two effects: the obscuration of the
+star by the Dyson sphere and the re-emission of absorbed radiation
+by the structure at longer wavelengths. To predict the observational
+characteristics of a composite system consisting of a star and a Dyson
+sphere (DS), we employ the model presented in Suazo et al. (2022).
+
+3
+
+This model incorporates the expected photometric fluxes of a DS
+into the photometry of observed main-sequence stars to simulate
+the combined system. In simple terms, the photometry of a star is
+modified according to the following equation:
+𝑀 = −2.5 log(10 −𝑀★ /2.5 + 10 − 𝑀DS /2.5 ),
+
+(1)
+
+where 𝑀DS represents the magnitude of the DS, and 𝑀★ corresponds
+to the magnitude of the star after it has been obscured by the Dyson
+sphere. It is important to note that this formula applies to both apparent and absolute scales and can be used in various magnitude
+systems.
+To determine 𝑀DS , we model the spectrum of the DS as a blackbody. Additionally, we assume that DSs behave as gray absorbers.
+Under these assumptions, the model star + DS depends on two free
+parameters: the covering factor (𝛾) and the effective temperature of
+the Dyson sphere (TDS ). The covering factor 𝛾 is defined as the
+normalized luminosity of the DS:
+𝛾=
+
+𝐿 DS
+,
+𝐿★
+
+(2)
+
+where 𝐿 DS is the luminosity of the DS and 𝐿★ is the luminosity of
+the star hosting the DS before being obscured. Under this definition,
+𝛾 can only be a positive number lower or equal to 1. In the case of an
+isotropically radiating star, 𝛾 also represents the fractional solid angle
+of outgoing radiation intercepted by the DS (the covering factor) or
+the DS’s completion level if we assume that the structure is nearly
+spherical. With all this information, we can determine the magnitude
+of the star when it is obscured by the DS using the following Equation:
+𝑀★ = 𝑀★,𝑂 − 2.5 log10 (1 − 𝛾),
+
+(3)
+
+where 𝑀★,𝑂 is the magnitude of the star before being obscured.
+In practice, we take 𝑀★,𝑂 values from main-sequence stars in the
+Gaia-2MASS-AllWISE photometry as described below.
+In summary, Equations 1 and 3 provide a framework for understanding the changes in the magnitude of a star if it were hosting a
+DS. These equations describe the transformation from the original
+magnitude 𝑀★,𝑂 to the modified magnitude 𝑀 when considering a
+Dyson sphere with a given temperature 𝑇DS and covering factor 𝛾.
+We also assume that Dyson spheres are built up slowly and uniformly
+everywhere, with equal covering factor (𝛾) in every direction, with no
+pieces large enough to cause stellar variability, see Section 2.5.2. An
+interesting feature of this model is that it is identical to optically thin
+blackbody debris disk models, where the covering factor 𝛾 resembles
+the fractional luminosity (LDisk /L★). Figure 2 illustrates examples of
+the photometry of a Sun-like star (𝑇eff = 5777 K) hosting Dyson
+spheres with various parameters. In the top panel, the composite
+spectrum is shown for a fixed DS temperature of 300 K and covering factors of 𝛾 = 0.1, 0.5, and 0.9, while the bottom panel displays
+the spectrum variations for a fixed covering factor of 0.5 and DS
+temperatures of 100, 300, and 600 K. The main signatures produced
+by a Dyson sphere include a drop in stellar flux and a boost of the
+flux in the mid-IR, where the mid-IR peak depends on the temperature of the Dyson sphere. The figure demonstrates how the crucial
+infrared information required for the identification of Dyson sphere
+candidates is contained within the W3 and W4 bands, as mentioned
+in Section 2.1. Consequently, we demand that all stars that undergo
+our analysis have detections in both W3 and W4 bands.
+Although the temperature of the Dyson sphere is a free parameter, we limit our search to Dyson sphere temperatures ranging from
+100 to 700 K to align with WISE’s infrared detection capabilities.
+Additionally, we consider covering factors equal to or greater than
+MNRAS 000, 1–13 (2015)
+
+4
+
+Suazo et al.
+selection is quite simple and does not consider the error measured
+since, otherwise, it would prioritize better fits in the optical rather
+than in the MIR, where the information of the infrared excess lies in
+this work. The selection of this threshold is a free parameter. Still, we
+chose it to be 0.2 magnitudes to reduce the sample of potential candidates to a reasonable number that we could potentially aim to follow
+up with additional observations on a reasonable timescale. Additionally, the selection of this threshold is motivated by comparing our
+models with Vioque et al. (2020) pre-main sequence, Classical Be
+stars, and sources that have been proposed as candidates of these two
+categories based on different features (photometry, optical variability, etc), but have not yet been confimed. We assessed what root mean
+square error (RMSE) threshold value is reasonable by comparing our
+models to the photometry of the stars presented in this catalog. Since
+pre-main sequence stars and Classical Be stars are known to be significant sources of mid-infrared emission and, therefore, represent
+potential interlopers in our search. Most stars in the Vioque et al.
+(2020) catalog that we examined displayed an RMSE higher than 0.2
+magnitudes when compared to our models, so we used this threshold
+as our goodness-of-fit criterion to select potential candidates. We
+found ∼11,000 sources whose best fit suffices an RMSE lower than
+0.2.
+After filtering the stars based on the RMSE criterion, we proceeded to classify the remaining sources using a neural network.
+This classification aimed to distinguish whether the sources were
+located in nebular regions. Nebulae can generate features that are
+similar to those hypothetically produced by a Dyson sphere, hence
+the motivation behind developing this algorithm.
+
+Figure 2. Modified photometry of a Sun-like star in the Gaia-WISE-2MASS
+bands due to the presence of various Dyson spheres. The unmodified absolute
+magnitudes of the Sun-like star (𝑇eff = 5777 K) are represented by solid black
+lines. In the top panel, the Dyson sphere models have an effective temperature
+of 𝑇DS = 300 K and covering factors of 0.1, 0.5, and 0.9, depicted by solid
+grey, dashed, and dotted lines, respectively. In the bottom panel, the Dyson
+sphere models have a fixed covering factor of 𝛾 = 0.5 and temperatures of 100,
+300, and 600 K, depicted by solid grey, dashed, and dotted lines, respectively.
+The colored bands in the plots represent the wavelength ranges detectable
+by the Gaia, 2MASS, and WISE missions. It is important to note that the
+absolute magnitudes depicted in these plots are in the AB system.
+
+0.1, as this threshold ensures significant infrared excess for detection, as shown by Suazo et al. (2022). In total, we generated 220,745
+Dyson sphere models by simulating how the Gaia-2MASS-WISE
+photometry of 265 main-sequence stars would change in the presence of Dyson spheres according to the presented models. We select
+main-sequence stars with 𝑀𝐺 values ranging from 0 to 13.6 (stellar
+effective temperatures from ∼2,800 to 12,500 K) and ensure that
+these are main-sequence stars as explained in Appendix A. We also
+ensure that these stars already do not possess any mid-infrared excess.
+
+2.3 Grid Search
+After generating the 220,745 models, we proceeded to compare the
+photometry of all remaining main-sequence stars from Section 2.1
+to these models. This involves performing a grid search to find the
+best-fitting model for each of the 320,000 sources. The selection of
+the best-fitting model for each star was based on minimizing the
+root mean squared error (RMSE) between the observed data and the
+model predictions.
+Following the search for the best models, we filtered out all stars
+whose best model yielded an RMSE higher than 0.2 mags. This
+MNRAS 000, 1–13 (2015)
+
+2.4 Image classification
+Upon selecting candidates using an RMSE as our goodness-of-fit
+metric, we found that young dust-obscured stars or stars otherwise
+associated with prominent nebulae appear as common false positives. Previous searches for infrared sources (e.g., Ribas et al. 2012;
+Kennedy et al. 2012) encountered contamination issues due to the
+presence of foreground or nearby sources, which can cause large
+photocenter shifts across all WISE bands and/or an extended morphology. All these phenomena can produce photometric signatures
+that resemble those of our models. To reduce the number of interlopers in the form of young obscured stars in our sample, we developed
+an algorithm to classify whether stars lie or not in nebular areas based
+on their WISE images. This algorithm utilizes normalized W3 images as input and aims to classify stars based on whether they reside
+in nebular regions. The CNN architecture employed in this work is
+presented in Table 1, and it was developed using the PyTorch library
+(Paszke et al. 2019).
+Our algorithm’s input images were standardized to 420 × 420
+pixels, with each pixel representing a square of side 1.375 arcsec.
+This corresponds to a squared image with a side of 9.625 arcmin.
+Then, we classified 960 images by ocular inspection, with half of
+them depicting images of stars embedded in nebulae and the other
+half representing non-nebular cases. In Figure 3, we provide examples
+of two images that were classified as nebular and non-nebular. We
+split our sample into the training, validation, and testing subsets.
+All subsets were built by selecting random images in our sample.
+Training, validation, and testing sets were randomly sampled and
+split into 70%, 15%, and 15% of the total dataset, respectively.
+We do not include W1 nor W2 bands since dusty nebular features
+are typically not detectable in these bands. We also omit the W4
+images since these tend to have lower quality and do not provide
+much extra information compared to W3.
+
+Short title, max. 45 characters
+Layer
+
+Figure 3. Two images exemplify each category’s appearance: Nebular on the
+left-hand side panel and non-nebular on the right-hand side. Both images are
+normalized. Each image corresponds to a squared region in the sky with a
+side of 9.625 arcmin.
+
+The specific CNN architecture used in this work is presented in
+Table 1. For the convolutional layers, the parameters shown in Table 1 are the filter dimensions and the number of output channels.
+No padding was applied to any of the convolutional layers. Moreover, to all the convolutional and fully connected layers, a Rectified
+Linear Unit (ReLU; Nair & Hinton 2010) activation function was
+applied, except for the last fully connected layer, which utilized a
+softmax function instead. Additionally, we "batch normalized" (Ioffe
+& Szegedy 2015) every layer after convolution. The output of the last
+convolutional layer is flattened to feed the fully connected layers. We
+additionally applied a dropout regularization after each layer in the
+fully connected network (Hinton et al. 2012). We seek the minimum
+of the loss function by using the Adam algorithm (Kingma & Ba
+2014). The network was trained using batches of 64 images.
+To optimize the performance of our classifier, we conducted a
+hyper-parameter search by randomly sampling 79 out of the 5184
+possible combinations of the parameters listed in Table 2. The parameters that were tuned include the learning rate, the beta parameters
+(𝛽1 and 𝛽2 ) of the Adam algorithm, the dropout probability (𝑝), the
+number of neurons in the fully connected network, and the kernel
+size in the convolutional matrices.
+The learning rate controls the magnitude of weight updates during
+training, whereas the beta parameters 𝛽1 and 𝛽2 are decay rates
+used to estimate the moments of the gradient for finding the global
+minimum of the loss function. The dropout probability 𝑝 determines
+the probability of zeroing out a neuron in a layer to prevent overfitting.
+The number of neurons in the fully connected network determines the
+number of units in each hidden layer. It is important to note that the
+learning rate and beta parameters are related to the training process,
+while the dropout probability and the number of neurons per hidden
+layer are design parameters of the architecture.
+We trained nine networks for each combination of hyperparameters
+with different initial random weights. The initial weights are sampled from the uniform distribution that PyTorch has implemented
+to initialize weights. Additionally, each network was trained during
+35 epochs. After evaluating 79 random hyperparameter combinations, we found several combinations that yielded accuracies ∼93
+% on the validation set. A family of neural networks with similar
+characteristics and performances was identified, and the specific hyperparameters of this family and their performance are shown in
+Table 3. Accuracies are reported on the testing set.
+From the family of neural networks with similar performances,
+we selected the architecture that achieved the highest mean accuracy
+and the lowest standard deviation. In this case, it corresponds to
+experiment F in Table 3. Additionally, in Figure 4, we show the
+confusion matrix for the testing set in the best run for this architecture.
+
+Input
+Convolutiona,b
+Max pooling
+Convolutiona,b
+Max pooling
+Convolutiona,b
+Max pooling
+Convolutiona,b
+Max pooling
+Convolutiona,b
+Flatten
+Fully Connected Network
+First Hidden Layera,b,c
+Second Hidden Layera,b,c
+Third Hidden Layera,b,c
+Softmax
+
+Layer Parameters
+
+Output Size
+
+3 × 3, 6
+2 × 2, Stride 2
+3 × 3, 12
+2 × 2, Stride 2
+3 × 3, 32
+2 × 2, Stride 2
+3 × 3, 64
+2 × 2, Stride 2
+3 × 3, 128
+
+420 × 420 × 1
+418 × 418 × 6
+209 × 209 × 6
+207 × 207 × 12
+103 × 103 × 12
+101 × 101 × 32
+50 × 50 × 32
+48 × 48 × 64
+24 × 24 × 64
+22 × 22 × 128
+61952
+
+61952 × 256
+256 × 256
+256 × 256
+256 × 2
+
+256
+256
+256
+2
+
+5
+
+Table 1. Convolutional Neural Network Architecture. Batch normalization
+is applied to all layers with superscript a . The ReLU activation function is
+applied to all processes with superscript b . A dropout regularization was
+applied to all layers with superscript c .
+
+Hyperparameter
+
+Random Search Values
+
+Learning Rate
+Regularization parameters (𝛽1 ,𝛽2 )
+Dropout probability 𝑝
+Number of neurons
+Kernel size
+
+10 −3 , 5·10 −4 , 10 −4 , 5·10 −5
+0, 0.3, 0.5, 0.7, 0.9, 0.99
+0, 0.2, 0.4, 0.6
+32, 128, 256
+3, 5, 7
+
+Table 2. Hyperparameter Random Search Values
+
+Figure 4. Normalized confusion matrix for the test set using the architecture
+yielding the best results. The test set contains 144 elements.
+
+The accuracy is 0.95, the recall is 0.975 on the non-nebular class,
+and the precision is 0.93 on the non-nebular class.
+Using the trained CNN, we proceeded to classify whether stars
+lie or not in the nebular region. We find that 5732 sources appear as
+sources in non-nebular regions according to our classifier.
+MNRAS 000, 1–13 (2015)
+
+6
+
+Suazo et al.
+Label
+Experiment
+
+Learning
+Rate
+
+𝛽1
+
+𝛽2
+
+Dropout
+probability
+
+Number
+of neurons
+
+Kernel
+size
+
+Average
+Accuracy
+
+Standard
+Deviation Accuracy
+
+A
+B
+C
+D
+E
+F
+
+5 · 10 −4
+10 −4
+10 −4
+5 · 10 −4
+10 −4
+5 · 10 −4
+
+0.5
+0.5
+0.5
+0.5
+0.5
+0.5
+
+0.9
+0.5
+0.9
+0.9
+0.5
+0.5
+
+0.6
+0.6
+0.6
+0.6
+0.6
+0.6
+
+256
+128
+128
+128
+256
+256
+
+3
+3
+3
+3
+3
+3
+
+0.916
+0.913
+0.915
+0.908
+0.906
+0.930
+
+0.031
+0.017
+0.029
+0.020
+0.034
+0.016
+
+Table 3. Best hyperparameter combination
+
+2.5 Additional Analysis
+In the next subsections, we introduce additional criteria and cuts to
+refine further and validate our selection of Dyson sphere candidates
+among the sources exhibiting an infrared excess. These criteria help
+us rule out false positives and ensure we focus on the most promising
+candidates.
+2.5.1 H𝛼 emission
+The emission of H𝛼 photons is an important signature of young stars,
+particularly during strong accreting episodes. When a young protostar
+heats up, it ionizes the surrounding hydrogen-dominated accretion
+disk, which ends up emitting H𝛼 photons (Barrado y Navascués &
+Martín 2003).
+In Gaia DR3, the pseudo equivalent width of H𝛼 is provided as
+one of the new products (Creevey et al. 2022; Fouesneau et al. 2022),
+and it becomes one of the most important parameters when weeding
+out interlopers. Just as optical variability is a characteristic feature
+of pre-main-sequence stars, the emission of H𝛼 photons due to hydrogen excitation during the accretion process is another significant
+signature. To filter out false positives, sources with H𝛼 equivalent
+widths lower than zero (at 3𝜎) are rejected, i.e., sources with H𝛼 in
+emission detected at 99.7 % confidence.
+
+relies on the fact that variable sources should have larger uncertainties compared to non-variable ones. The denominator refers to the
+median value of sources with similar fluxes since non-variable objects exhibit different uncertainties. Vioque et al. (2020) showed that
+pre-main-sequence stars exhibit a wide range of 𝐺 var that goes from
+∼0.7 to ∼100. The distribution of 𝐺 var for known pre-main-sequence
+stars peaks at 𝐺 var ∼6, and it decreases toward the above-mentioned
+values. Here, we reject all stars exhibiting a 𝐺 var higher than two,
+since they are most likely to be young stars. Similarly, Barber &
+Mann (2023) developed a proxy for stellar variability and age, indicating that Gaia excess photometric uncertainties decrease linearly
+with log10 (age) in Myr. However, this relation primarily applies to
+FGK and early M-type stars. These studies demonstrate the potential
+of using Gaia uncertainties and variability measures to infer the ages
+and variability status of stars.
+It is important to note that this check rejects potential Dyson
+swarms with very large absorbing elements since these in principle
+could generate detectable variations in the photometry of the host star.
+However, these variations could be mistaken for other astrophysical
+phenomena such as asteroseismic variations or photometric noise
+(Wright et al. 2016). It is also practical to exclude variable sources;
+otherwise, young stars would more easily slip through our pipeline.
+
+2.5.2 Optical variability
+Pre-main-sequence stars, being in the early stages of stellar evolution, can naturally emit infrared radiation due to the presence of
+an accretion disk surrounding the forming star. These young stars
+often exhibit brightness variability as a characteristic feature (e.g.,
+Joy 1945; Herbst et al. 2007). The variability can be attributed to
+various factors, including circumstellar obscuration events, hot spots
+on the star or disk, accretion bursts, and rapid structural changes in
+the accretion disk (Cody et al. 2014).
+Gaia DR3 provides an optical variability flag among other newly
+added products. However, this flag is unavailable for most sources.
+In order to assess the optical variability of stars, we ourselves constructed the observable 𝐺 var , which is defined in Vioque et al. (2020).
+This observable aims to quantify the level of optical variability and
+has been used to classify different types of variable stars, including Herbig Ae/Be stars, TTauri stars, and Classical Be stars. The
+observable 𝐺 var is defined as:
+√︁
+𝐹G′ 𝑒(𝐹G ) 𝑁obs,G
+𝐺 var =
+,
+(4)
+√︃
+′
+𝐹G 𝑒 ′ (𝐹G ) 𝑁obs,G
+where 𝐹𝐺 and 𝑒(𝐹𝐺 ) are the Gaia 𝐺 band flux and its uncertainty,
+respectively, while 𝑁obs,G corresponds to the number of times that
+that source was observed in the 𝐺 band. The logic behind this formula
+MNRAS 000, 1–13 (2015)
+
+2.5.3 Astrometry
+Our search strongly relies on parallax-based distances, which can be
+incorrectly estimated if the single-star model fails to fit the astrometric observations. In order to assess the reliability of the distance, Gaia
+provides the Renormalised Unit Weight Error (RUWE), a parameter
+that tells us how well astrometric observations fit the astrometric
+solution. RUWE values tend to be close to 1.0 for well-behaved
+sources, while significantly higher values exceeding 1.0 may indicate non-single or problematic sources. To ensure reliable astrometry, we implemented a conservative RUWE threshold of 1.4. Sources
+surpassing this threshold are excluded as potential candidates to minimize objects with unreliable distance estimates. Other studies (e.g.,
+Stassun & Torres 2021) have shown a significant correlation between
+the RUWE statistic and unresolved binary systems. Binary systems
+can generate warm dust through processes such as the catastrophic
+collision of planets (e.g., Weinberger 2008; Thompson et al. 2019).
+Given that such systems might have inaccurate distances and exhibit
+mid-IR flux excess, the aforementioned RUWE criterion aids in rejecting sources potentially comprising binaries surrounded by warm
+dust, as well as those with problematic astrometry.
+
+Short title, max. 45 characters
+Stage
+
+Number of stars
+
+Stars in Gaia DR3-2MASS-AllWISE
+within 300 pc
+W3/W4 detection
+RMSE ≤ 0.2
+Nebular classifier
+Extra cuts
+SNR W3/W4 > 3.5
+Final Candidates
+
+∼5 ·106
+∼3.2 ·105
+11243
+5732
+5137
+368
+7
+
+Table 4. Number of stars after every cut.
+
+2.5.4 Extended sources
+We expect all candidates to have a shape consistent with a point
+source, therefore, we rule out all sources having a non-zero AllWISE
+𝑒𝑥𝑡_ 𝑓 𝑙𝑎𝑔.
+
+2.5.5 Star probability
+Gaia also classifies sources into different categories. We use
+one of the probability metrics Gaia DR3 provides to ensure
+the source is more likely to be a star. In particular, we use
+𝑐𝑙𝑎𝑠𝑠𝑝𝑟𝑜𝑏_𝑑𝑠𝑐_𝑐𝑜𝑚𝑏𝑚𝑜𝑑_𝑠𝑡𝑎𝑟 > 0.9 to consider our source candidates. We found no difference when comparing similar classification metrics.
+2.5.6 Sources rejected so far
+Out of all the criteria outlined in Section 2.5, the RUWE criterion
+refutes the largest quantity of candidates. A total of 282 sources
+are rejected by this criterion alone, which corresponds to roughly
+half of all sources rejected by any criteria in Section 2.5. The 𝐻 𝛼
+emission, the optical variability, and the extended flag criteria equally
+contribute to the rest of the cuts. We noticed that over 1,000 sources
+have negative 𝐻 𝛼 EWs. However, the uncertainties are so large that
+we cannot confirm 𝐻 𝛼 emission at the 3𝜎 level.
+2.6 SNR criterion
+After applying all the cuts presented in Section 2, we ended up with
+5137 sources with DS-like SEDs. Consequently, we proceeded to
+visually inspect some of the W3/W4 images of these candidates.
+This step revealed that most of them appeared to be unconvincing
+as secure point-like sources. In many cases, these sources appear
+irregular or blend with the background noise. Although WISE data
+reduction considers any signal with a SNR value higher than 2 as
+a detection, many of these detections are not reliable and fail to
+represent genuine infrared sources; most of the inspected images
+matched this pattern. Therefore, an additional cut was applied based
+on the SNR of these ∼5,000 sources. We selected sources with SNR
+higher than 3.5 in both the W3 and W4 bands, resulting in 368
+sources.
+2.7 Visual Inspection
+After rejecting all sources with low SNRs, we conducted a second
+pass of visual inspections for all sources that survived the SNR
+cut. Visual examination of WISE images (e.g., Ribas et al. 2012;
+Sgro & Song 2021) is a common technique to identify and reject
+unreliable sources, as not all flags or metrics provided by WISE
+
+7
+
+can address issues in the data reduction. Following scrutiny of all
+WISE images, we categorized three types of confounders: blends,
+irregular structures, and nebular features. Figure 5 illustrates the
+distinctions between these classes. In the top row, we showcase the
+’blend case,’ where a source overlaps with external sources within
+the aperture of the WISE bands, particularly noticeable in the W3
+and W4 bands. Optical images with higher resolution facilitate the
+detection of blends. Even if some contaminants do not emit optical
+light, if an infrared source appears significantly shifted from the
+image center and lacks optical emission, it is considered a blend and
+subsequently rejected.
+In the second row of Figure 5, we depict the "nebular" category
+of false positives. These cases exhibit W3 and W4 images that appear hazy and disordered, lacking a discernible source of infrared
+radiation at the location of the candidate. However, upon examining large-scale images spanning approximately 600 arcseconds,
+distinctive nebular features become evident. Some of these features
+resemble the example shown in Figure 3. These confounding sources
+are instances where our Convolutional Neural Network (Section 2.4)
+failed to reject these sources accurately. In the third row, we illustrate
+the "Irregular" category, which encompasses all sources that deviate
+from a point-like source in their W3 and W4 bands despite being
+selected based on having WISE ext_flag values equal to 0. In this
+category, the sources of irregularities in our candidates’ W3 and W4
+images are unclear, and there seems to be no indication of nebulosity
+in their surroundings when looking at larger-scale images. Causes of
+irregularities could be attributed to faint nebular features, high noise,
+and blends, but it is challenging to pinpoint the exact cause of this
+phenomenon. Most sources rejected in the SNR criterion had WISE
+images that would have fallen into this category.
+Among the 368 sources that survived the last cut, we identified
+328 (89.1%) sources as blends, 29 (7.9%) as irregulars, and 4 as
+nebular (1.0 %). After this analysis, a total of 7 (2.0 %) sources
+were identified as potential candidates that appear to be free of conspicuous problems. The visual inspection results are summarized in
+Figure 6. Many blends were identified thanks to the inspection of optical images, so we double-checked that our seven final sources were
+free of contaminants by examining Pan-STARRS1 DR1 (Chambers
+et al. 2016) and Sky Mapper DR2 (Onken et al. 2019) images to
+account for both hemispheres. None of these seven sources showed
+any indication of contamination.
+Finally, for the seven sources identified as potential candidates, we
+conducted a search for nearby X-ray sources. X-rays are a powerful
+tool for tracing star-forming regions in the sky (e.g., Sciortino 2022),
+suggesting our candidates could be young stars if X-ray sources
+associated with star formation were present in their vicinity. After
+searching the XMM-Newton science archive, we found no evidence
+of X-ray sources in the neighborhood of our candidates that could be
+attributed to star formation. In one instance, there is an X-ray source
+approximately 14 arcminutes from a candidate; however, this source
+is confirmed to be a Seyfert galaxy.
+
+3 RESULTS
+In Table 5, we summarize all candidates. Our visual inspection indicates that these sources are actual sources of infrared radiation that
+are not subject to any obvious contamination. Given the limited number of candidates, we revised our model fitting using a more refined
+grid compared to the one employed in Section 2.3. This time, we
+compared our data to 6,216,900 models, encompassing 391 Dyson
+sphere effective temperatures ranging from 10 to 400 K and 60 covMNRAS 000, 1–13 (2015)
+
+8
+
+Suazo et al.
+
+Figure 5. Examples of typical confounders in our search. The top row features a source from the blends category, the middle row a source embedded in a nebular
+region, and the bottom row a case from the irregular category. On these scales, the irregular and nebular cases cannot be distinguished, but the nebular nature
+can be established by inspecting the images at larger scales.
+
+3.1 Potential contamination
+
+Figure 6. Pie chart illustrating the cause of infrared radiation according to
+our extra inspection.
+
+ering factors ranging from 10 −4 to 0.4. Table 5 presents the updated
+Dyson sphere temperature estimates and covering factors.
+While examining the pseudo-equivalent width of 𝐻 𝛼 , we observed
+that some candidates exhibit too high uncertainties. Hence, there remains a possibility that some of these sources are indeed H𝛼 emitters,
+which would reveal the early stellar evolutionary stage and explain
+their infrared radiation. Figure 7 showcases the SEDs and photometric images of two of the seven candidates, while Table 5 provides
+additional information used in our further analysis (Section 2.5). In
+the examples depicted in Figure 7, clear W3/W4 images indicate a
+distinct source of mid-infrared radiation in both bands. Candidate
+A notably displays a considerable shift between DSS, 2MASS, and
+the WISE images, which is attributed to its relatively high proper
+motion. According to Gaia DR3, this star has a proper motion of
+−88.7 mas/yr in Declination.
+MNRAS 000, 1–13 (2015)
+
+In this search, we encountered various sources of false positives, as
+detailed in previous sections. As highlighted in earlier studies (e.g.,
+Kennedy et al. 2012; Krivov et al. 2013; Gáspár & Rieke 2014),
+Galactic background contamination and chance alignments with extragalactic sources can induce a false infrared excess at the location
+of a star. In the context of investigating WISE infrared stars within the
+Kepler field-of-view, Kennedy et al. (2012) found that the Improved
+Processing of the IRAS Survey (IRIS: Miville-Deschênes & Lagache
+(2005)) offers valuable insights into potential background contamination. They identified that sources within regions where the 100
+𝜇𝑚 background level exceeded 5 MJy/sr were susceptible to galactic
+contamination. To assess whether our Dyson sphere candidates were
+prone to such contamination, we utilized the IRIS maps at 100 𝜇𝑚
+to evaluate the background level of our sources. Table 6 summarizes these values, all of which fall below the threshold suggested
+by Kennedy et al. (2012). This result stems from our procedure of
+filtering out all stars embedded in nebular regions, thereby naturally
+eliminating sources located in regions where the Galactic background
+level affects the WISE photometry of stars.
+In addition to background contamination, chance alignments with
+bright sources in the infrared but obscured in the optical present
+another potential contamination source. Kennedy et al. (2012) estimated the likelihood of such alignments by comparing galaxy counts
+with the counts of their infrared excess sources. As our Dyson sphere
+candidates are limited to only 7, we adopted a method akin to that
+used by Theissen & West (2017). In their study, which investigates the
+presence of warm dust around M dwarfs, Theissen & West (2017)
+reanalyzed the source extraction of their targets to determine offsets among their W1, W2, and W3 images. These offsets were then
+compared to the inherent offset of stationary objects like quasars.
+Quasars serve as valuable indicators of the WISE instrument’s astrometric precision as they remain stationary in the sky. Theissen
+& West (2017) focused solely on isolated quasars (with no other
+
+Short title, max. 45 characters
+
+9
+
+Label
+
+Gaia DR3 ID
+
+Distancea [pc]
+
+𝑚G b
+
+𝐺var c
+
+RUWEb
+
+𝑇eff b [K]
+
+EWH𝛼b [nm]
+
+𝑇DS c [K]
+
+𝛾c
+
+S/Nd (W3/W4)
+
+A
+B
+C
+D
+E
+F
+G
+
+3496509309189181184
+4843191593270342656
+4649396037451459712
+2660349163149053824
+3190232820489766656
+2956570141274256512
+2644370304260053376
+
+142.9 ± 1.0
+211.6 ± 3.5
+219.4 ± 6.2
+211.5 ± 5.8
+274.7 ± 6.1
+265.0 ± 2.6
+249.9 ± 3.7
+
+15.99
+17.71
+18.39
+17.66
+17.00
+16.32
+16.48
+
+1.03
+0.94
+0.90
+0.97
+0.90
+0.93
+0.99
+
+1.03
+1.06
+1.21
+0.96
+1.05
+1.01
+1.01
+
+3574
+3238
+3473
+3556
+3674
+3480
+
+0.248 ± 0.076
+0.049 ± 0.100
+0.020 ± 0.068
+0.024 ± 0.097
+
+138 ± 6
+275 ± 40
+187 ± 16
+178 ± 20
+180 ± 26
+137 ± 16
+100 ± 9
+
+0.08 ± 0.01
+0.06 ± 0.008
+0.14 ± 0.016
+0.16 ± 0.03
+0.08 ± 0.02
+0.03 ± 0.008
+0.13 ± 0.02
+
+22.5 / 16.6
+13.9 / 3.8
+10.5 / 5.0
+10.4 / 4.8
+10.3 / 3.6
+5.7 / 4.5
+5.0 / 3.5
+
+Table 5. Dyson sphere candidates. All sources are clear mid-infrared emitters with no clear contaminators or signatures that indicate an obvious mid-infrared
+origin. We present data derived from a Gaia EDR3 Bailer-Jones et al. (2021). b Gaia DR3. c This work. d AllWISE Cutri & et al. (2014).
+
+DSS: red
+
+2MASS: J
+
+WISE: W2
+
+WISE: W3
+
+WISE: W4
+
+DSS: red
+
+2MASS: J
+
+WISE: W2
+
+WISE: W3
+
+WISE: W4
+
+A
+
+≈
+
+D
+1 arcmin
+
+1 arcmin
+
+1 arcmin
+
+1 arcmin
+
+1 arcmin
+
+Figure 7. SEDs of our two Dyson spheres candidates and their photometric images. The SED panels include the model and data, with the dashed blue lines
+indicating the model without considering the emission in the infrared from the Dyson sphere and the solid black line indicating the model that includes the
+infrared flux from the Dyson sphere. Photometric images encompass one arcmin. All images are centered in the position of the candidates, according to Gaia
+DR3. All sources are clear mid-infrared emitters with no clear contaminators or signatures that indicate an obvious mid-infrared origin. The red circle marks the
+location of the star according to Gaia DR3.
+
+Label
+
+Gaia DR3 ID
+
+IRIS 100 𝜇m background
+level [MJy/sr]
+
+A
+B
+C
+D
+E
+F
+G
+
+3496509309189181184
+4843191593270342656
+4649396037451459712
+2660349163149053824
+3190232820489766656
+2956570141274256512
+2644370304260053376
+
+4.77
+1.34
+4.75
+4.17
+4.45
+1.78
+2.92
+
+Label
+
+Gaia DR3 ID
+
+W1/W2
+offset [arcsec]
+RA/DEC
+
+W1/W3
+offset [arcsec]
+RA/DEC
+
+A
+B
+C
+D
+E
+F
+G
+
+3496509309189181184
+4843191593270342656
+4649396037451459712
+2660349163149053824
+3190232820489766656
+2956570141274256512
+2644370304260053376
+
+-0.25 / -0.01
+0.40 / 0.31
+0.25 / -0.32
+-0.31 / -0.12
+-0.09 / 0.48
+0.03 / 0.10
+0.24 / 0.00
+
+-0.03 / 0.33
+3.21 / 0.06
+1.52 / -3.68
+0.60 / -0.09
+-1.15 / -0.38
+-1.04 / 0.79
+5.59 / 0.64
+
+Table 6. Dyson sphere candidates and their 100 𝜇m background level.
+Table 7. Offset in the photocenter of our sources in different WISE bands.
+
+sources within 6 arcseconds), with W3 signal-to-noise ratios (SNRs)
+between 3 and 5, at galactic latitudes higher than 77 degrees. They
+noted that the offset distributions resembled those of their disk candidate stars, both exhibiting Gaussian distributions. One distribution
+reflected the Right Ascension offset between the W1 and W3 positions (𝜇 = 0′′ .08, 𝜎 = 5′′ .00) and another for the Declination offset
+between the W1 and W3 positions (𝜇 = −0′′ .21 a, 𝜎 = 5′′ .48).
+In order to assess the probability of chance alignments with extragalactic sources, we adopted a similar approach and re-conducted
+the source extraction to determine the offset between W1, W2, and
+W3 images. Initially, we obtained unWISE images of our candidates. unWISE (Lang 2014) provides a collection of WISE co-added
+images that remain unblurred, preserving their intrinsic resolution.
+
+Subsequently, we performed a revised source extraction using the
+sep software (Barbary 2016), a Python implementation that encompasses the core algorithms of Source Extractor (SEXtractor: Bertin
+& Arnouts (1996)).
+Table 7 summarizes the offsets between the positions of the extracted sources in different filters. It is noteworthy that for the W1W2 offset, both in RA and DEC, the discrepancy is minimal and falls
+within the range obtained by Theissen & West (2017) in both RA
+and DEC. Similarly, the offsets between the W1 and W3 bands also
+align with the distribution, except for candidate G, which appears
+suspicious and warrants careful consideration. However, the current
+dataset lacks definitive evidence to either confirm or dismiss this
+candidate.
+MNRAS 000, 1–13 (2015)
+
+10
+
+Suazo et al.
+
+4 DISCUSSION
+We conducted a comprehensive search for sources exhibiting spectral energy distributions (SEDs) compatible with stars hosting partial
+Dyson spheres. The last search of this kind was carried out by Carrigan (2009), who only looked for complete Dyson spheres (𝛾 = 1)
+using IRAS data. We analyzed a significantly larger sample of approximately 320,000 sources from the Gaia DR3-2MASS-AllWISE
+dataset with W3/W4 detection, which is nearly 30 times larger than
+Carrigan’s sample. As a result, we identified seven sources displaying mid-infrared flux excess of uncertain origin. Various processes
+involving circumstellar material surrounding a star, such as binary
+interactions, pre-main sequence stars, and warm debris disks, can
+contribute to the observed mid-infrared excess (e.g. Cotten & Song
+2016). Kennedy & Wyatt (2013) estimates the occurrence rate of
+warm, bright dust. The occurrence rate is 1 over 100 for very young
+sources, whereas it becomes 1 over 10,000 for old systems (> 1 Gyr).
+However, the results of our variability check suggest that our sources
+are not young stars. If our candidates were young stars, that could
+explain the infrared excess and would match the more likely occurrence rate. Nevertheless, it is worth noting that although uncommon,
+literature has documented the existence of pre-main sequence stars
+with low 𝐺 var values (e.g., Vioque et al. 2020). On the other hand,
+our astrometric checks, which heavily rely on the RUWE parameter,
+indicate that the single-star astrometric solution is applicable to our
+sources. Despite the fact that we chose conservative thresholds for
+the 𝐺 var and RUWE parameters (2 and 1.4, respectively), our candidates have values that lie far below the thresholds chosen. The 𝐺 var
+and RUWE values are typically around unity.
+The presence of warm debris disks surrounding our candidates
+remains a plausible explanation for the infrared excess of our sources.
+However, our candidates seem to be M-type main sequence stars,
+given their stellar parameters and location in the Hertzsprung-Russell
+diagram as Figure 8 illustrates. However, M-dwarf debris disks are
+very rare objects, and up to date, only a reduced number has been
+confirmed (e.g., Luppe et al. 2020; Cronin-Coltsmann et al. 2022,
+2023). Multiple explanations have been invoked to explain the dearth
+of debris disks around M dwarfs, including detection biases (Heng
+& Malik 2013; Kennedy et al. 2018) and age biases (Riaz et al.
+2006; Avenhaus et al. 2012). Additionally, studies have suggested
+that the physical processes governing debris disk evolution around M
+dwarfs may differ significantly from those observed in solar-type stars
+(Plavchan et al. 2005). However, the temperature and the fractional
+infrared luminosity ( 𝑓 = LIR /L★) of our candidates are different from
+those of typical debris disks, which tend to be cold (10 - 100 K) and
+to have low fractional luminosities ( 𝑓 < 0.01). These high fractional
+luminosities (if we consider 𝑓 = 𝛾) is a feature more compatible with
+young disks compared to those of ordinary debris disks (Wyatt 2008),
+but the lack of variability seems to be inconsistent with the young-star
+scenario. On the other hand, Extreme Debris Disks (EDD) (Balog
+et al. 2009), are examples of mid-infrared sources with high fractional
+luminosities ( 𝑓 > 0.01) that have higher temperatures compared to
+that of standard debris disks (Moór et al. 2021). Nevertheless, these
+sources have never been observed in connection with M dwarfs. Are
+our candidates’ strange young stars whose flux does not vary with
+time? Are these stars M-dwarf debris disks with an extreme fractional
+luminosity? Or something completely different?
+Several searches for infrared sources (e.g., Kennedy et al. 2012;
+Ribas et al. 2012; Cotten & Song 2016; Theissen & West 2017) have
+faced challenges in confirming authentic infrared sources. Kennedy
+et al. (2012) demonstrated a strong correlation between the 100 𝜇𝑚
+background level from IRIS maps and contamination, setting a 5
+MNRAS 000, 1–13 (2015)
+
+Figure 8. Color-magnitude diagram displaying the distribution of our candidates in orange circles. Colored dots represent Gaia DR3 stars within 300 pc.
+The color scale represents the relative density of stars.
+
+MJy/sr threshold to circumvent spurious infrared sources. Fortunately, this was not a concern for our candidates as we utilized a CNN
+algorithm, leveraging W3 images to eliminate sources within nebular
+regions, typically linked to high levels of far-infrared radiation near
+the galactic plane. Detecting infrared sources also raises concerns
+about potential chance alignments with infrared galaxies, leading to
+significant WISE photometry contamination. Various methods exist
+to assess the likelihood of encountering such occurrences. Kennedy
+et al. (2012) compares extragalactic counts to their source counts,
+while Theissen & West (2017) re-extracts sources to compare their
+W1/W2/W3 positions. Following the Kennedy et al. (2012) idea, we
+determine the contamination rate due to background galaxies that
+could alternatively explain the mid-infrared properties of our candidates. The contamination rate mainly depends on the number of
+galaxies in the sky per unit of solid angle that can produce a specific signature. In order to determine that value, we compute the
+number of galaxies with the following properties: W3/W4 detection with signal-to-noise ratios higher or equal to 3.5, ext_flg = 0,
+𝑊1−𝑊3/𝑊4 > 1.2 as a color cut to ensure stars are removed (Jarrett
+et al. 2011), and 2.84 < 𝑊3 − 𝑊4 < 3.25 to ensure galaxies with a
+color compatible with that of our Dyson sphere models for our candidates. The total number of galactic sources per unit of solid angle is
+∼15,000 objects/sr, which yields a contamination rate of 1.1·10 −5 if
+we consider a target area of 33 arcsec2 (3.25 arcsec of radius). Notice
+that this contamination rate cannot be applied to the initial sample of
+∼ 5 · 106 since that number does not consider W3/W4 detection with
+signal-to-noise ratios higher or equal to 3.5. Instead, we must use it
+on the sample of stars with W3/W4 detection and SNR ≥ 3.5 in these
+bands, corresponding to ∼ 200,000 sources, which ultimately leads
+to ∼2 contaminated sources with the above-listed properties.
+Additionally, the offsets between positions within different bands
+can be used as a tracer of confusion. The offset of a source within all
+the WISE bands should be small, given their similar PSF FWHMs
+(6”.1, 6”.4, and 6”.5, respectively), and WISE astrometric precision
+of 0”.52 . In our analysis of sources, we observed no significant offset
+between the W1 and W2 bands. However, when examining the W1
+and W3 bands, we noticed a slightly larger offset for some sources.
+This aligns with the offset distribution reported by Theissen & West
+(2017), consistent with the offset distribution of quasars. However,
+
+2
+
+https://wise2.ipac.caltech.edu/docs/release/allsky/expsup/sec6_4.html
+
+Short title, max. 45 characters
+candidate G exhibited a higher RA offset than expected. Although this
+analysis does not indicate a significant shift for six of our candidates,
+the possibility of perfect alignments cannot be ruled out. Therefore,
+each source should be approached with caution, and the potential for
+such alignments should not be dismissed. It is important to note that
+the shift observed in the seventh object might be attributed to WISE
+confusion, as the contamination rate suggests. WISE confusion is
+quite common (e.g. Dennihy et al. 2020) and often unavoidable,
+with studies indicating that it could account for as many as 70%
+of false positives regarding infrared excesses around main-sequence
+stars (Silverberg et al. 2018).
+Upon examining the color-magnitude diagram depicted in Figure 8
+alongside our candidates, it is evident that our sample predominantly
+comprises M dwarfs. However, our candidates deviate from the core
+of the M dwarf distributions, residing toward the peripheries. The
+rightward edge aligns more closely with young stars progressing
+toward the main sequence, while the leftward edge corresponds to
+the optical dimming anticipated by our models, which can resemble
+subdwarf stars.
+Additional analyses are definitely necessary to unveil the true nature of these sources. Optical spectroscopy has shown to be valuable
+when refuting false debris disk M dwarf candidates (e.g. Murphy
+et al. 2018), and we believe it could help us constrain different features of our sources. H𝛼 is typically used to find out whether a star is
+in a young accreting stage or not. Even though chromospheric activity in M dwarfs can lead to H𝛼 emission, the equivalent width (EW)
+of the said line can be used to distinguish accretors from just chromospheric emission (Barrado y Navascués & Martín 2003). In the latter
+case, the line can be used to determine several M-dwarf characteristics, such as age, stellar rotation, and magnetic activity. Additionally,
+the intensity of H𝛼 in the case of chromospheric activity is a spectral
+type-dependant feature (e.g., Lépine et al. 2013).
+Moreover, gyrochronology can help give us more insight into the
+ages of our candidates by using stellar rotation as an independent
+proxy of age since late-type stars’ rotation slows down as they age
+(e.g., Kawaler 1989; Barnes 2003, 2007; Meibom et al. 2015).
+
+5 CONCLUSIONS
+After analyzing the optical/NIR/MIR photometry of ∼5 · 106 sources,
+we found 7 apparent M dwarfs exhibiting an infrared excess of unclear nature that is compatible with our Dyson sphere models. We
+modeled Dyson spheres with temperatures ranging from 100 to 700
+K and covering factors from 0.1 to 0.9. There are several natural
+explanations for the infrared excess in literature, but none of them
+clearly explains such a phenomenon in the candidates, especially
+given that all are M dwarfs.
+We argue that follow-up spectroscopy would help us unveil the
+nature of these sources. In particular, analyzing the spectral region
+around H𝛼 can help us ultimately discard or verify the presence of
+young disks by analyzing the potential H𝛼 emission. Spectroscopy in
+the MIR region would be very valuable when determining whether
+the emission corresponds to a single blackbody, as we assumed in
+our models. Additionally, spectroscopy can help us determine the real
+spectral type of our candidates and ultimately reject the presence of
+confounders.
+We would like to stress that although our candidates display properties consistent with partial Dyson spheres, it is definitely premature
+to presume that the mid-infrared presented in these sources originated
+from them. The MIR data quality for these objects is typically quite
+low, and additional data is required to determine their nature.
+
+11
+
+ACKNOWLEDGEMENTS
+The authors first would like to thank the anonymous referees
+for their extremely helpful comments that greatly improved the
+quality of this study. MS acknowledges funding from the Royal
+Swedish Academy of Sciences. MS and EZ acknowledge funding from the Magnus Bergvall foundation. EZ and CN acknowledge a sabbatical fellowship from AI4Research at Uppsala University. EZ and SM would like to acknowledge financial assistance
+through the SPARC project no P39 sponsored by the Ministry of
+Education, Govt. of India. EZ has also benefited from a sabbatical at the Swedish Collegium for Advanced Study. This work has
+made use of data from the European Space Agency (ESA) mission
+Gaia (https://www.cosmos.esa.int/gaia), processed by the
+Gaia Data Processing and Analysis Consortium (DPAC, https:
+//www.cosmos.esa.int/web/gaia/dpac/consortium). Funding for the DPAC has been provided by national institutions, in particular the institutions participating in the Gaia Multilateral Agreement. This publication makes use of data products from the Two
+Micron All Sky Survey, which is a joint project of the University of Massachusetts and the Infrared Processing and Analysis
+Center/California Institute of Technology, funded by the National
+Aeronautics and Space Administration and the National Science
+Foundation. This publication makes use of data products from the
+Wide-field Infrared Survey Explorer, which is a joint project of the
+University of California, Los Angeles, and the Jet Propulsion Laboratory/California Institute of Technology, and NEOWISE, which
+is a project of the Jet Propulsion Laboratory/California Institute
+of Technology. WISE and NEOWISE are funded by the National
+Aeronautics and Space Administration. The national facility capability for SkyMapper has been funded through ARC LIEF grant
+LE130100104 from the Australian Research Council, awarded to the
+University of Sydney, the Australian National University, Swinburne
+University of Technology, the University of Queensland, the University of Western Australia, the University of Melbourne, Curtin
+University of Technology, Monash University and the Australian Astronomical Observatory. SkyMapper is owned and operated by The
+Australian National University’s Research School of Astronomy and
+Astrophysics. The survey data were processed and provided by the
+SkyMapper Team at ANU. The SkyMapper node of the All-Sky Virtual Observatory (ASVO) is hosted at the National Computational
+Infrastructure (NCI). Development and support of the SkyMapper
+node of the ASVO has been funded in part by Astronomy Australia
+Limited (AAL) and the Australian Government through the Commonwealth’s Education Investment Fund (EIF) and National Collaborative Research Infrastructure Strategy (NCRIS), particularly the
+National eResearch Collaboration Tools and Resources (NeCTAR)
+and the Australian National Data Service Projects (ANDS). The PanSTARRS1 Surveys (PS1) and the PS1 public science archive have
+been made possible through contributions by the Institute for Astronomy, the University of Hawaii, the Pan-STARRS Project Office, the
+Max-Planck Society and its participating institutes, the Max Planck
+Institute for Astronomy, Heidelberg and the Max Planck Institute for
+Extraterrestrial Physics, Garching, The Johns Hopkins University,
+Durham University, the University of Edinburgh, the Queen’s University Belfast, the Harvard-Smithsonian Center for Astrophysics,
+the Las Cumbres Observatory Global Telescope Network Incorporated, the National Central University of Taiwan, the Space Telescope
+Science Institute, the National Aeronautics and Space Administration under Grant No. NNX08AR22G issued through the Planetary
+Science Division of the NASA Science Mission Directorate, the National Science Foundation Grant No. AST–1238877, the University
+MNRAS 000, 1–13 (2015)
+
+12
+
+Suazo et al.
+
+of Maryland, Eotvos Lorand University (ELTE), the Los Alamos
+National Laboratory, and the Gordon and Betty Moore Foundation.
+The Digitized Sky Survey was produced at the Space Telescope
+Science Institute under U.S. Government grant NAG W–2166. The
+images of these surveys are based on photographic data obtained
+using the Oschin Schmidt Telescope on Palomar Mountain and the
+UK Schmidt Telescope. The plates were processed into the present
+compressed digital form with the permission of these institutions.
+We made use of observations obtained with XMM-Newton, an ESA
+science mission with instruments and contributions directly funded
+by ESA Member States and NASA
+
+DATA AVAILABILITY
+Most of the underlying data used in this work is in the public domain
+(Gaia, 2MASS, WISE). Models underlying this article are available
+upon request.
+
+REFERENCES
+Annis J., 1999, Journal of the British Interplanetary Society, 52, 33
+Avenhaus H., Schmid H. M., Meyer M. R., 2012, A&A, 548, A105
+Bailer-Jones C. A. L., Rybizki J., Fouesneau M., Demleitner M., Andrae R.,
+2021, AJ, 161, 147
+Balog Z., Kiss L. L., Vinkó J., Rieke G. H., Muzerolle J., Gáspár A., Young
+E. T., Gorlova N., 2009, ApJ, 698, 1989
+Barbary K., 2016, Journal of Open Source Software, 1, 58
+Barber M. G., Mann A. W., 2023, ApJ, 953, 127
+Barnes S. A., 2003, ApJ, 586, 464
+Barnes S. A., 2007, ApJ, 669, 1167
+Barrado y Navascués D., Martín E. L., 2003, AJ, 126, 2997
+Bertin E., Arnouts S., 1996, A&AS, 117, 393
+Carrigan Jr. R. A., 2009, ApJ, 698, 2075
+Chambers K. C., et al., 2016, arXiv e-prints, p. arXiv:1612.05560
+Chen H., Garrett M. A., 2021, MNRAS,
+Cody A. M., et al., 2014, AJ, 147, 82
+Cotten T. H., Song I., 2016, ApJS, 225, 15
+Creevey O. L., et al., 2022, arXiv e-prints, p. arXiv:2206.05864
+Cronin-Coltsmann P. F., et al., 2022, MNRAS, 512, 4752
+Cronin-Coltsmann P. F., Kennedy G. M., Kral Q., Lestrade J.-F., Marino S.,
+Matrà L., Wyatt M. C., 2023, MNRAS, 526, 5401
+Cutri R. M., et al. 2014, VizieR Online Data Catalog, p. II/328
+Cutri R. M., et al., 2013, Explanatory Supplement to the AllWISE Data
+Release Products, Explanatory Supplement to the AllWISE Data Release
+Products, by R. M. Cutri et al.
+Dennihy E., Farihi J., Gentile Fusillo N. P., Debes J. H., 2020, ApJ, 891, 97
+Dyson F. J., 1960, Science, 131, 1667
+Fouesneau M., et al., 2022, arXiv e-prints, p. arXiv:2206.05992
+Gaia Collaboration et al., 2016, A&A, 595, A1
+Gaia Collaboration et al., 2022, arXiv e-prints, p. arXiv:2208.00211
+Garrett M. A., 2015, A&A, 581, L5
+Gáspár A., Rieke G. H., 2014, ApJ, 784, 33
+Griffith R. L., Wright J. T., Maldonado J., Povich M. S., Sigurđsson S., Mullan
+B., 2015, ApJS, 217, 25
+Heng K., Malik M., 2013, MNRAS, 432, 2562
+Herbst W., Eislöffel J., Mundt R., Scholz A., 2007, in Reipurth
+B., Jewitt D., Keil K., eds, Protostars and Planets V. p. 297
+(arXiv:astro-ph/0603673), doi:10.48550/arXiv.astro-ph/0603673
+Hinton G. E., Srivastava N., Krizhevsky A., Sutskever I., Salakhutdinov R. R.,
+2012, CoRR, abs/1207.0580
+Hsiao T. Y.-Y., et al., 2021, MNRAS,
+Huston M. J., Wright J. T., 2021, arXiv e-prints, p. arXiv:2110.13887
+Ioffe S., Szegedy C., 2015, in Proceedings of the 32nd International Conference on International Conference on Machine Learning - Volume 37.
+ICML’15. JMLR.org, p. 448–456
+MNRAS 000, 1–13 (2015)
+
+Jarrett T. H., et al., 2011, ApJ, 735, 112
+Joy A. H., 1945, ApJ, 102, 168
+Jugaku J., Nishimura S., 1991, A Search for Dyson Spheres Around Late-type
+Stars in the IRAS Catalog. pp 295–298, doi:10.1007/3-540-54752-5_235
+Jugaku J., Nishimura S., 2004, in Norris R., Stootman F., eds, IAU Symposium
+Vol. 213, Bioastronomy 2002: Life Among the Stars. p. 437
+Kawaler S. D., 1989, ApJ, 343, L65
+Kennedy G. M., Wyatt M. C., 2013, MNRAS, 433, 2334
+Kennedy G. M., Wyatt M. C., Sibthorpe B., Phillips N. M., Matthews B. C.,
+Greaves J. S., 2012, MNRAS, 426, 2115
+Kennedy G. M., et al., 2018, MNRAS, 476, 4584
+Kingma D. P., Ba J., 2014, Adam: A Method for Stochastic Optimization,
+http://arxiv.org/abs/1412.6980
+Krivov A. V., et al., 2013, ApJ, 772, 32
+Lacki B. C., 2016, arXiv e-prints, p. arXiv:1604.07844
+Lang D., 2014, AJ, 147, 108
+Lépine S., Hilton E. J., Mann A. W., Wilde M., Rojas-Ayala B., Cruz K. L.,
+Gaidos E., 2013, AJ, 145, 102
+Luppe P., Krivov A. V., Booth M., Lestrade J.-F., 2020, MNRAS, 499, 3932
+Meibom S., Barnes S. A., Platais I., Gilliland R. L., Latham D. W., Mathieu
+R. D., 2015, Nature, 517, 589
+Miville-Deschênes M.-A., Lagache G., 2005, ApJS, 157, 302
+Moór A., et al., 2021, ApJ, 910, 27
+Murphy S. J., Mamajek E. E., Bell C. P. M., 2018, MNRAS, 476, 3290
+Nair V., Hinton G. E., 2010, in Proceedings of the 27th International Conference on International Conference on Machine Learning. ICML’10.
+Omnipress, Madison, WI, USA, p. 807–814
+Neugebauer G., et al., 1984, ApJ, 278, L1
+Olson S. J., 2017, International Journal of Astrobiology, 16, 176
+Onken C. A., et al., 2019, Publ. Astron. Soc. Australia, 36, e033
+Osmanov Z., 2016, International Journal of Astrobiology, 15, 127
+Osmanov Z., 2018, International Journal of Astrobiology, 17, 112
+Paszke A., et al., 2019, PyTorch: An Imperative Style, High-Performance
+Deep Learning Library (arXiv:1912.01703)
+Patel R. I., Metchev S. A., Heinze A., 2014, ApJS, 212, 10
+Plavchan P., Jura M., Lipscy S. J., 2005, ApJ, 631, 1161
+Riaz B., Mullan D. J., Gizis J. E., 2006, ApJ, 650, 1133
+Ribas Á., Merín B., Ardila D. R., Bouy H., 2012, A&A, 541, A38
+Sciortino S., 2022, in , Handbook of X-ray and Gamma-ray Astrophysics.
+p. 74, doi:10.1007/978-981-16-4544-0_82-1
+Semiz İ., Oğur S., 2015, arXiv e-prints, p. arXiv:1503.04376
+Sgro L. A., Song I., 2021, MNRAS, 508, 3084
+Silverberg S. M., et al., 2018, ApJ, 868, 43
+Skrutskie M. F., et al., 2006, AJ, 131, 1163
+Slysh V. I., 1985, in Papagiannis M. D., ed., IAU Symposium Vol. 112, The
+Search for Extraterrestrial Life: Recent Developments. pp 315–319
+Stassun K. G., Torres G., 2021, ApJ, 907, L33
+Suazo M., Zackrisson E., Wright J. T., Korn A. J., Huston M., 2022, MNRAS,
+512, 2988
+Theissen C. A., West A. A., 2017, AJ, 153, 165
+Thompson M. A., Weinberger A. J., Keller L. D., Arnold J. A., Stark C. C.,
+2019, ApJ, 875, 45
+Timofeev M. Y., Kardashev N. S., Promyslov V. G., 2000, Acta Astronautica,
+46, 655
+Vioque M., Oudmaĳer R. D., Schreiner M., Mendigutía I., Baines D., Mowlavi
+N., Pérez-Martínez R., 2020, A&A, 638, A21
+Weinberger A. J., 2008, ApJ, 679, L41
+Wright J. T., 2020, Serbian Astronomical Journal, 200, 1
+Wright E. L., et al., 2010, AJ, 140, 1868
+Wright J. T., Mullan B., Sigurdsson S., Povich M. S., 2014a, ApJ, 792, 26
+Wright J. T., Griffith R. L., Sigurdsson S., Povich M. S., Mullan B., 2014b,
+ApJ, 792, 27
+Wright J. T., Cartier K. M. S., Zhao M., Jontof-Hutter D., Ford E. B., 2016,
+ApJ, 816, 17
+Wyatt M. C., 2008, ARA&A, 46, 339
+Zackrisson E., Calissendorff P., Asadi S., Nyholm A., 2015, ApJ, 810, 23
+Zackrisson E., Korn A. J., Wehrhahn A., Reiter J., 2018, ApJ, 862, 21
+Zuckerman B., 2022, MNRAS, 514, 227
+
+Short title, max. 45 characters
+
+13
+
+APPENDIX A: SELECTION OF STARS
+In order to construct our set of Dyson sphere models, we start from
+a set of observed stars with available Gaia DR3-2MASS-AllWISE
+photometry and bolometric luminosities. We select a sample of 265
+main-sequence stars within 100 pc of the Sun. To ensure the selection
+of main-sequence stars, we apply the same criteria as Suazo et al.
+(2022), which exclude red giants, white dwarfs, and sources with
+high astrometric excess noise. The filtering process is defined by
+Equation A1 for removing red giants and Equation A2 for eliminating
+white dwarfs and sources with high astrometric excess noise. In these
+equations, 𝑀G represents the absolute magnitude of the star in the 𝐺
+band, and 𝐺 BP − 𝐺 RP denotes its color, both measured in the Vega
+system.
+𝑀𝐺 < 4 and 𝑀𝐺 < 7 · (𝐺 BP − 𝐺 RP ) − 3,
+
+(A1)
+
+𝑀𝐺 > 3 · (𝐺 BP − 𝐺 RP ) + 5.
+
+(A2)
+
+In addition to the cuts ensuring only main-sequence stars, we consider only stars with flux measurements available in all relevant bands
+and a Renormalised Unit Weight Error (RUWE) below 1.4, ensuring that the astrometric solution is of high quality. Additionally, we
+include stars with FLAME luminosity estimations (Creevey et al.
+2022; Fouesneau et al. 2022), which are necessary for our models.
+We exclude stars with contamination in their WISE photometry and
+stars already exhibiting a mid-infrared (MIR) excess. To ensure a
+diverse sample, we restrict our selection to stars with absolute magnitudes (𝑀G ) ranging from 0 to 13.6, corresponding to zero-age main
+sequence masses between approximately 0.15 and 3.5 solar masses
+(M ⊙ ). Outside of this range, no stars meet the aforementioned criteria. We also selected the sample to homogeneously distribute the
+number of stars in the magnitudes range.
+Additionally, to ensure our photometric measurements’ accuracy,
+we considered the saturation limits for the WISE bands when selecting the main-sequence stars. Sources brighter than 8.1, 6.7, 3.8, and
+−0.4 mag (Vega) in W1, W2, W3, and W4, respectively, are known to
+be saturated, resulting in overestimated fluxes. To mitigate this effect,
+we applied the W2 correction proposed by Cotten & Song (2016)
+specifically for the W2 band. However, our analysis found no significant difference when considering corrected and uncorrected W2
+fluxes. This is primarily because our sources are located in the unsaturated regime, where the flux measurements are reliable without
+the need for correction.
+We applied Dyson sphere models with temperatures ranging from
+100 to 700 K and covering factors between 0.1 and 0.9 for each
+selected star. Since we have 265 stars, 17 covering factors, and 49
+temperatures, we end up with 220,745 models, 833 for each star (17
+covering factors and 49 temperatures). Please see Figure 2 for an
+example of how the model parameters alter the SED of a Sun-like
+star.
+This paper has been typeset from a TEX/LATEX file prepared by the author.
+
+MNRAS 000, 1–13 (2015)
+
+

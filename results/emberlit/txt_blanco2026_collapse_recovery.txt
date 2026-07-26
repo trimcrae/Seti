@@ -1,0 +1,1137 @@
+arXiv:2604.13774v1 [physics.soc-ph] 15 Apr 2026
+
+Projections of Earth’s Technosphere:
+Civilization Collapse–Recovery Dynamics and Detectability
+Celia Blanco1,2 , Jacob Haqq-Misra2 , George Profitiliotis2
+1. Centro de Astrobiologı́a (CSIC-INTA),
+Ctra de Torrejón a Ajalvir, km 4, 28850 Torrejón de Ardoz, Madrid, Spain
+2. Blue Marble Space Institute of Science, Seattle, WA 98104 USA
+Corresponding author: celia.blanco@cab.inta-csic.es
+
+1
+
+Abstract
+
+How long a technological civilization remains active, and what determines whether it collapses or
+persists, is a central question for both projecting humanity’s future and assessing the prevalence
+of detectable intelligence in the galaxy. We model collapse-recovery dynamics across ten plausible
+futures for Earth-originating civilization using a hybrid deterministic-stochastic simulation over a
+1000-year window. The duty cycle, defined as the fraction of its total lifespan that a civilization
+is technologically active, ranges from ∼0.38 to 1.00, with trajectory outcomes shaped by the interplay of governance structure, resource pressure, and hazard exposure. Several model parameters
+map onto actionable resilience levers, and modest improvements can qualitatively alter long-term
+trajectories. Sensitivity analysis reveals that the resource depletion rate and the post-collapse
+recovery fraction are consistently the most impactful levers across scenarios, suggesting that reducing resource consumption may be at least as important as mitigating existential hazards for
+avoiding civilizational collapse. We discuss implications for Earth’s civilizational resilience and
+for the search for extraterrestrial technosignatures. We also derive an effective detectability duration that accounts for intermittent civilizational activity, and show that the apparent absence
+of extraterrestrial signals may reflect the prevalence of low-duty-cycle civilizations rather than the
+rarity of intelligent life.
+Keywords: civilizational collapse; technological resilience; duty cycle; technosignatures; existential
+risk
+
+2
+
+Introduction
+
+One of the most puzzling questions in astrobiology is whether intelligent civilizations exist elsewhere
+in the galaxy, and if so, why we have not yet detected them. This apparent contradiction, often
+referred to as the Fermi Paradox or the Great Silence, raises the question of why, in a galaxy
+billions of years old, we observe no clear signs of advanced extraterrestrial life. Many solutions
+have been proposed to explain this Great Silence [Webb, 2015]. One class of explanations suggests
+that intelligent life is intrinsically rare, perhaps requiring an improbable convergence of planetary,
+1
+
+chemical, or biological conditions [Wesson, 1990]. Another contends that while intelligence may
+emerge, technological civilizations are typically short-lived, succumbing to self-destruction through
+ecological collapse, conflict, or other systemic instabilities [Vinn, 2024].
+The second class of explanation raises a question that is critical regardless of how common the
+emergence of intelligence may be: how long do technological civilizations last once they arise? Even
+if intelligent life is widespread, the number of civilizations detectable at any given time depends decisively on their longevity [Balbi and Ćirković, 2021]. This question is also central to projecting the
+long-term trajectory of our own civilization. Most treatments of longevity, however, assume that
+once a society becomes technologically active, it remains so continuously until it either collapses
+or deliberately goes silent. But this assumption is difficult to justify. Historical studies of Earth’s
+civilizations reveal cycles of rise and fall with typical durations on the order of centuries [Shermer,
+2002], and even within a single civilization’s lifespan, the temporal distribution of active periods
+may matter as much as their cumulative duration [Balbi, 2018]. Therefore, understanding civilizational longevity requires moving beyond static estimates and examining the temporal dynamics of
+technological activity itself.
+There are good reasons to expect that civilizational collapse-recovery dynamics are complex.
+It has been argued that planetary civilizations face a fundamental bifurcation: either ”asymptotic burnout” in which superlinear growth leads to singularity-driven collapse, or ”homeostatic
+awakening”, in which a civilization deliberately curbs expansion to achieve long-term equilibrium
+[Wong and Bartlett, 2022]. Sustainability constraints make exponential expansion highly unlikely,
+so advanced societies may stabilize or collapse before spreading across the Galaxy [Haqq-Misra and
+Baum, 2009, Mullan and Haqq-Misra, 2019]. If collapse is common and recovery uncertain, then
+the technosphere (the totality of a civilization’s technological infrastructure and output) may best
+be understood not as a permanent state but as an intermittent phenomenon, alternating between
+periods of activity and dormancy in a pattern shaped by resource availability, governance structure,
+and exposure to existential risk.
+Technological intermittency can be quantified through a civilization’s duty cycle, defined as the
+fraction of its total lifespan during which it is technologically active. The duty cycle captures a
+reality that static longevity estimates miss—that a civilization persisting for a thousand years may
+spend substantial portions of that time in dormancy, recovery, or regression. In the context of
+the search for extraterrestrial intelligence, the relevance of intermittent activity is already recognized. Interstellar signals may be intermittent due to power constraints, planetary rotation, or
+targeted sequential transmissions [Gray, 2020], and recent work applying Lindy’s law to technosignature longevities suggests that technologically active periods are more likely to be short-lived than
+long-lived [Balbi and Grimaldi, 2024]. But the implications of intermittency extend well beyond
+detectability. For our own civilization, understanding the dynamics of collapse and recovery, and
+how governance, resources, and resilience infrastructure shape the duty cycle, is directly relevant
+to long-term planning and existential risk mitigation.
+In this paper, we develop a framework for modeling these dynamics. Building on a recent scenario framework for Earth-originating civilization [Haqq-Misra et al., 2025a], we simulate collapserecovery cycles across ten diverse sociotechnical trajectories spanning 1000 years and compute duty
+cycles for each. We then derive an effective detectability duration, Leff , and explore the implications for Earth’s own civilizational resilience, for the Drake Equation’s longevity term L, and for
+the broader search for technosignatures.
+
+2
+
+3
+
+Model Description
+
+A recently proposed framework outlines ten plausible futures for Earth-originating civilization 1000
+years from now, structured around variations in governance type, resource regime, and systemic
+resilience [Haqq-Misra et al., 2025a]. These scenarios are grounded in Earth’s present-day sociotechnical conditions and extrapolated using techniques from futures studies, including PEST analysis
+(Political, Economic, Social, Technological), cross-consistency assessment, and structured scenario
+worldbuilding. Building on this qualitative scenario set, we implement a hybrid deterministicstochastic simulation to represent the temporal dynamics of growth, collapse, and recovery.
+
+3.1
+
+Simulation framework
+
+The simulation spans a fixed period of 1000 years, discretized into yearly time steps. At each step, a
+civilization is characterized by its technological capacity, T (t), and its available resource stock, R(t).
+Technological capacity increases linearly each year according to a fixed growth rate r, which we take
+directly from the values reported in Haqq-Misra et al. [2025a], Table 9. Simultaneously, the available
+resource stock is depleted at a constant rate δ. If the resource level falls to zero (i.e., R(t) < 0), or
+if an existential risk event occurs (represented as a probabilistic hazard drawn at each time step)
+the civilization undergoes a collapse. Collapse represents a systemic breakdown in infrastructure,
+coordination, and technological continuity. It leads to a sharp reduction in technological capacity,
+determined by a collapse factor cf , which defines the proportion of technology that survives the
+event. This loss can be interpreted as the result of disruptions to power grids, communication
+networks, knowledge retention, or the abandonment of complex systems.
+Following collapse, the system enters a dormant recovery period of duration rd . During this
+phase, the society is unable to grow or consume resources, reflecting a temporary halt in technological and economic activity. This delay allows time for institutional reorganization, population
+stabilization, or environmental recovery. Once the recovery period concludes, the resource stock
+is partially replenished to a fraction rf of its original value R0 . This recovery fraction represents
+retained infrastructure, stored reserves, or ecological regeneration. A full recovery (rf ≈ 1) implies
+robust contingency planning and strong institutional memory, while lower values indicate more
+severe losses and diminished rebuilding capacity. This cycle of growth, collapse, dormancy, and
+recovery can repeat multiple times during the simulation window, depending on the fragility of the
+system, the frequency of stochastic hazards, and the depletion rate of resources.
+Formally, let the initial conditions be T0 = 1, and R0 ∈ R+ , and define the indicator function
+as χ(t) ∈ {0, 1}, with χ(t) = 1 if the system is active (not collapsed or recovering) at time t, and
+χ(t) = 0 otherwise. The update rules for each time step are given by
+Tt+1 = χt (Tt + r) + (1 − χt ) Tt ,
+Rt+1 = χt (Rt − δ) + (1 − χt ) Rt .
+
+(1)
+
+We include both a deterministic and a stochastic trigger for collapse to reflect two distinct
+failure modes: internal depletion and external shocks. Collapse is deterministically triggered when
+the resource stock is fully depleted (i.e., R(t) ≤ 0). It may also be triggered by a stochastic
+existential hazard, which we model as a Bernoulli process. At each time step t, a uniform deviate
+U (t) ∼ U (0, 1) is drawn. If U (t) < h, where h ∈ [0, 1] is the hazard rate specific to the scenario,
+then a collapse is triggered independently of resource levels.
+3
+
+Upon collapse, the system state is reset according to
+Tt+1 = cf Tt ,
+Rt+1 = 0.
+
+(2)
+
+The system then remains inactive for rd time steps, after which resource availability is restored
+as
+Rt+rd = rf R0 .
+
+(3)
+
+Together, Equations (1)–(3) define the full dynamical cycle of growth, collapse, and recovery in
+the model.
+We define a civilization as being ON when it maintains a positive level of resources (i.e.,
+R(t) > 0). This assumption reflects the idea that some minimal material throughput is necessary for societal function and detectability, including energy consumption, communication, and
+technosignature production. Conversely, when resources are fully depleted (R(t) = 0), the civilization is considered OFF, representing a dormant, collapsed, or otherwise undetectable state. This
+binary definition underlies the calculation of duty cycle and related metrics discussed in subsection
+3.3.
+
+3.2
+
+Scenario typologies and parameter mapping
+
+We apply our model to the ten future scenarios to simulate the long-term behavior of civilizations
+under diverse sociotechnical conditions. Each scenario describes a distinct vision for humanity’s
+trajectory, defined by combinations of resource abundance, governance structure, institutional resilience, and technological integration. Our goal is to translate these qualitative narratives into
+a coherent set of quantitative parameters that govern dynamics of growth, collapse, and recovery. Scenarios are characterized along three conceptual axes: resource regime (scarcity vs. nonscarcity), governance type (from autocratic to participatory), and structural design (hierarchical
+vs. distributed). Scenarios are also mapped onto six thematic clusters (Table 1).
+We assign parameter values based on the sociotechnical features of each scenario. The growth
+rate r is taken directly from Haqq-Misra et al. [2025a] and held fixed. We note that assuming
+technological capacity increases linearly each year via r is a simplification, especially given scenarios
+that imply discontinuities such as collapse points or radical transformation points; we retain it
+here for consistency with the source parameterization. The remaining parameters (initial resource
+stock R0 , per-year depletion rate δ, collapse depth cf , recovery delay rd , recovery fraction rf , and
+existential hazard rate h) are derived from the narrative structure of each scenario and converted
+into quantitative values through structured reasoning.
+We assume that governance structure influences how technological civilizations respond to systemic stress and collapse. Highly centralized systems (rule by one) may retain moderate technological capacity through individual collapse events (higher cf ) due to concentrated infrastructure, and
+may recover relatively quickly (lower rd ) through top-down coordination. However, their rigidity
+and concentration of decision-making can make them more susceptible to repeated collapses when
+combined with resource scarcity or high external hazard exposure, consistent with the observation
+that increasing sociopolitical complexity yields diminishing returns, ultimately rendering centralized
+systems fragile [Tainter, 1988]. Oligarchic systems (rule by few) may experience deeper individual
+collapses (lower cf ) and slower recovery (higher rd ), reflecting fragmented coordination and weaker
+4
+
+Table 1: Scenario descriptions and sociotechnical tags
+
+†
+
+Scenario
+
+Tags
+
+Description
+
+S1: Big Brother is Watching
+
+Scarcity + Rule by One +
+Hierarchical
+Cluster 6 (Earth 2024)
+
+Centralized authoritarian system
+under resource stress
+
+S2: Wild West
+
+Scarcity + Rule by Few +
+Hierarchical
+Cluster 6 (Earth 2024)
+
+Deregulated, competitive, and
+fragmented society
+
+S3: Golden Age
+
+Non-scarcity + Rule by All
++ Distributed
+Cluster 6 (Earth 2024)†
+
+Stable egalitarian society with
+abundant resources
+
+S4: Living with the Land
+
+Scarcity + Rule by Few +
+Hierarchical
+Cluster 5 (Simplicity)
+
+Low-impact, cyclical, ecologically constrained society
+
+S5: Transhumanism
+
+Non-scarcity + Rule by All
++ Distributed
+Cluster 4 (Engineering)
+
+Technologically integrated, postbiological civilization
+
+S6: Sword of Damocles
+
+Scarcity + Rule by Few +
+Hierarchical
+Cluster 4 (Engineering)
+
+High-tech and high-risk system
+with cascading failure potential
+
+S7: Restoration
+
+Non-scarcity‡ + Rule by
+All + Distributed
+Cluster 3 (Sustainability)
+
+Recovered post-collapse world
+with resilience
+
+S8: Ouroboros
+
+Scarcity + Rule by Few +
+Hierarchical
+Cluster 3 (Sustainability)
+
+Oscillatory civilization with
+cyclical collapse and regrowth
+
+S9: Deus Ex Machina
+
+Non-scarcity + Rule by All
++ Distributed
+Cluster 2 (Tech Escape)
+
+Aggressive technological expansion with instability risk
+
+S10: Out of Eden
+
+Non-scarcity + Rule by All
++ Distributed
+Cluster 1 (Parallel Life)
+
+Harmonized coexistence with nature and machines
+
+Cluster assignments follow Haqq-Misra et al. [2025a]; S3 shares the Earth 2024 technology cluster with S1 and S2
+despite differing in global factors.
+‡
+
+S7 is tagged non-scarcity in the original framework but parameterized with scarcity-level resource pressure to
+model post-collapse recovery (see text).
+
+5
+
+institutional memory. More distributed governance (rule by all) supports greater redundancy and
+flexibility, enabling a wider range of outcomes, from near-complete resilience in post-scarcity conditions to moderate collapse depth with relatively rapid recovery. This is consistent with the finding
+that polycentric governance systems mitigate the risk of institutional failure through overlapping
+jurisdictions and redundant decision-making structures [Ostrom, 2010]. To reflect these hypothesized patterns, we selected representative parameter value ranges for collapse depth cf , recovery
+delay rd , and recovery fraction rf that align with the governance structure assumed in each scenario
+(Table 2). These values are not based on empirical observation, but represent internally consistent
+assumptions designed to explore contrasting trajectories in our scenario-based simulations.
+One exception is the Restoration scenario (S7). While it is categorized as non-scarcity and
+governed by distributed institutions, it is conceptually framed as a rebuilding civilization emerging
+from an earlier collapse. To reflect this, we initialize the simulation with a reduced effective resource
+stock and a moderate depletion rate (parameters that would otherwise suggest scarcity), thereby
+modeling a society recovering from prior systemic failure. This allows us to represent S7 as a
+post-collapse recovery regime without forcing a collapse to occur within the simulation window.
+The Ouroboros scenario (S8) is treated differently. In the original framework, S8 is described
+as a civilization that repeatedly undergoes expansion, collapse, and regrowth, with the year 3000
+situated partway through an ongoing recovery phase. Rather than imposing externally timed
+or periodic collapse events, we model this behavior as an emergent dynamical regime. Specifically, S8 is assigned moderate technological growth, partial technological survival during collapse,
+and a relatively high recovery fraction of planetary resources. This combination allows repeated
+collapse–recovery cycles to arise endogenously from the interaction between resource depletion and
+rebuilding, and permits exploration of whether oscillatory behavior remains stable or dampens over
+long timescales.
+Similarly, Deus Ex Machina (S9) is tagged as non-scarcity in the original framework but is
+parameterized with moderate resource pressure (R0 = 900, δ = 1.3) to reflect the high extraction
+demands of its aggressive technological expansion program, which drives resource depletion despite
+the scenario’s nominally post-scarcity classification.
+Table 2: Mapping sociotechnical structure to parameter logic
+
+∗
+
+Governance Type
+
+Collapse Depth cf
+
+Recovery Delay rd
+
+Recovery Fraction rf
+
+Rule by One
+Rule by Few
+Rule by All∗
+
+0.5–0.7
+0.2–0.6
+0.3–1.0
+
+40–60
+50–100
+0–70
+
+0.10–0.20
+0.10–0.35
+0.20–1.0
+
+Post-scarcity idealizations (S3, S10) use cf = 1.0, rd = 0, rf = 1.0, reflecting no-collapse conditions. S7 and S9 use
+parameters outside the typical governance range as narrative exceptions (see text).
+
+Scenarios also differ fundamentally in their assumptions about planetary resource conditions.
+Rather than define scarcity solely in terms of starting resources, we interpret it as a function of
+resource pressure (i.e., how quickly a civilization depletes its reserves). That is, systems with a large
+initial stock may still experience scarcity if it depletes resources at a high rate (e.g., S6). Conversely,
+a civilization with a modest stock may persist through repeated collapse–recovery cycles if postcollapse resource recovery partially replenishes its base (e.g., S8, S9), or may rebuild following an
+earlier systemic failure (e.g., S7).
+We implement Monte Carlo simulations to explore how uncertainty in model parameters shapes
+6
+
+Table 3: Interpreting resource pressure from R0 and δ
+Resource Pressure
+
+R0
+
+δ
+
+Scenarios
+
+High
+Moderate
+Low
+
+≤ 1000
+400–1600
+≥ 1200
+
+1.0–2.5
+0.5–1.0
+0.0–0.5
+
+S1, S2, S4, S7, S8, S9
+S6
+S3, S5, S10
+
+the long-term behavior of each scenario. Each scenario’s baseline values (Table 4) are perturbed
+using probabilistic variation to capture plausible uncertainty (Table 5). Initial resource stock (R0 )
+and depletion rate (δ) are sampled from normal distributions with modest standard deviations
+to represent uncertainty in ecological baselines and consumption patterns. Collapse depth (cf )
+and recovery fraction (rf ) are sampled using triangular distributions centered on scenario-specific
+values, allowing outcomes to concentrate near expected levels while still capturing asymmetries in
+resilience and recovery capacity. Recovery delay (rd ) is sampled from a normal distribution with
+a standard deviation of ±10 years, reflecting variability in rebuilding pace across different societal
+structures.
+The existential hazard rate (h) is held fixed for each scenario because it encodes an assumed
+background level of external risk (such as AI misalignment, interstellar conflict, or catastrophic
+environmental feedbacks) rather than internal system dynamics. Unlike other parameters whose
+variability arises from structural or operational uncertainty, h reflects a narrative-level judgment
+about a civilization’s exposure to exogenous threats. Scenarios characterized by unstable geopolitical contexts, risky technological dependencies, or unresolved existential challenges (e.g., S1, S6, S7)
+are assigned higher hazard rates to reflect this vulnerability, while S5 carries a small residual risk
+due to high systemic complexity. In contrast, scenarios with societal stability, low-impact lifestyles,
+or resilient infrastructure (e.g., S3, S4, S8, S9, S10) are assigned zero or near-zero hazard rates.
+Keeping h fixed rather than sampling it probabilistically allows for clearer attribution of collapse
+outcomes to either endogenous fragility or exogenous shocks, rather than conflating the two.
+Table 4: Final parameter values for each scenario
+Scenario
+S1
+S2
+S3
+S4
+S5
+S6
+S7
+S8
+S9
+S10
+
+r
+
+R0
+
+δ
+
+cf
+
+rd
+
+rf
+
+h
+
+0.0020
+0.0026
+0.0001
+0.0060
+0.0003
+0.0018
+0.0060
+0.0015
+0.0011
+0.0002
+
+400
+700
+2400
+600
+2500
+1600
+400
+800
+900
+2700
+
+1.2
+1.5
+0.0
+2.5
+0.1
+1.0
+1.5
+1.3
+1.3
+0.0
+
+0.6
+0.3
+1.0
+0.2
+0.9
+0.4
+0.3
+0.6
+0.5
+1.0
+
+40
+70
+0
+100
+20
+50
+60
+70
+70
+0
+
+0.15
+0.10
+1.0
+0.10
+0.80
+0.25
+0.20
+0.35
+0.35
+1.0
+
+0.003
+0.001
+0.0
+0.0
+0.0005
+0.005
+0.001
+0.0
+0.0
+0.0
+
+7
+
+Table 5: Parameter uncertainty assumptions for Monte Carlo sampling
+
+3.3
+
+Parameter
+
+Distribution
+
+Uncertainty
+
+R0
+δ
+cf
+rd
+rf
+
+Normal
+Normal
+Triangular
+Normal
+Triangular
+
+±5% of mean
+±5% of mean
+±5% of mode
+±10 years
+±5% of mode
+
+Metrics
+
+We define four metrics to reflect different aspects of technospheric persistence and collapse dynamics
+across Monte Carlo simulations. These metrics are designed to capture the onset, frequency, and
+continuity of civilization-level activity, with a focus on their implications for detectability.
+The first metric, Tc , is the mean time to first collapse across replicates. It serves as a proxy for
+system fragility: scenarios with low values of Tc tend to break down early, while those with higher
+values demonstrate greater initial stability. When a simulation run does not experience collapse
+within the 1000-year window, the full timespan is used. The second metric, fnc , denotes the
+fraction of runs that avoid collapse entirely. This value reflects the overall robustness of a scenario
+and helps differentiate consistently stable futures from those vulnerable to systemic failure. We
+also measure Dc , the average duty cycle, defined as the fraction of time a civilization remains
+active, that is, maintaining nonzero resource levels and thus potentially emitting technosignatures.
+This definition assumes that minimal resource availability is a prerequisite for detectable activity.
+Scenarios with high Dc maintain persistent activity, while those with low Dc may cycle through long
+dormant periods or experience early termination. Finally, Nc , the mean number of collapse-recovery
+cycles, captures whether a scenario tends to exhibit singular collapse events or undergo repeated
+disruptions over time. Together, these metrics provide a compact but informative summary of each
+scenario’s trajectory, enabling comparisons across sociotechnical regimes and offering insight into
+the reliability and intermittency of technosignature emission.
+
+4
+
+Results
+
+4.1
+
+Monte Carlo Outcomes and Temporal Profiles
+
+We ran 200 independent simulations for each scenario, introducing probabilistic variation in model
+parameters as described in Section 3. Figure 1 shows the resulting trajectories of global technology
+T (t) and available resources R(t), averaged across runs. These profiles reveal the distinct collapse
+and recovery dynamics that characterize each scenario. As expected, Golden Age (S3) and Out of
+Eden (S10) show uninterrupted growth and resource stability throughout the 1000-year window,
+consistent with their post-scarcity narratives and reflected in perfect duty cycles (Dc = 1.0) and
+no collapse events (N c = 0). In stark contrast, scenarios such as Big Brother (S1) and Sword of
+Damocles (S6) suffer early collapses (T c < 210) and high collapse frequency (N c ≈ 4.5 for S6 and
+nearly 10 for S1), leading to sharp contractions in technological capacity and prolonged periods of
+inactivity. Deus Ex Machina (S9), although collapsing later (T c ≈ 689), also experiences multiple
+interruptions and never recovers full continuity, with only modest duty cycle (Dc ≈ 0.91) and about
+
+8
+
+1.5 collapse events on average.
+
+Figure 1: Temporal dynamics of simulated civilizations across ten scenarios. (A) Mean trajectories
+of global technology T (t) with ±1 standard deviation shaded. (B) Mean resource levels R(t) with
+±1 standard deviation shaded.
+More complex dynamics emerge in intermediate cases. Transhumanism (S5) avoids collapse in
+roughly two-thirds of runs and achieves a near-continuous duty cycle (Dc ≈ 0.99), albeit with slower
+growth and occasional extinction. Living with the Land (S4), in contrast, undergoes frequent and
+deep collapses (N c ≈ 6.6), producing the lowest sustained activity among all non-terminal scenarios
+(Dc ≈ 0.38) despite a steep initial growth phase. Restoration (S7), designed as a post-collapse
+recovery regime, displays consistent rebuilding behavior: early collapses (T c ≈ 223), followed by
+approximately 7.5 recovery cycles and moderate continuity (Dc ≈ 0.57). Ouroboros (S8) exhibits a
+distinct pattern of low-frequency, self-stabilizing oscillations: it collapses only twice on average, yet
+maintains robust technological levels and a high duty cycle (Dc ≈ 0.87), reflecting a regime that
+cycles gracefully without exhausting resources or triggering runaway collapse.
+Because the S8 narrative implies repeated collapse–recovery cycles, we ask whether those oscillations are always transient or can be sustained; we probe this with a sweep over rf and δ (Figure 2).
+Panel A shows deterministic technology trajectories for varying rf while holding all other S8 parameters at their baseline values. For low recovery fractions (rf ≤ 0.15), the system undergoes
+rapid, repeated collapse–recovery cycles (3 cycles within the 1000-year window), as the diminished
+resource base after each recovery is quickly exhausted. At intermediate values (0.20 ≤ rf ≤ 0.50),
+9
+
+the system sustains two collapse–recovery cycles with longer growth phases between collapses. At
+higher recovery fractions (rf = 0.60), the first collapse is delayed significantly, and only a single
+cycle occurs within the simulation window. Panel B maps the number of collapse cycles across the
+(rf , δ) parameter space, revealing a clear regime boundary: high depletion rates combined with low
+recovery fractions produce the most frequent oscillations (up to 8 cycles), while low depletion and
+high recovery fractions suppress collapse entirely. The baseline S8 parameters (marked with a star)
+sit near the boundary between 2- and 3-cycle regimes, suggesting that modest shifts in resource
+recovery capacity could qualitatively alter the civilization’s long-term trajectory. These results
+confirm that S8’s oscillatory behavior is not universally stable and it depends sensitively on the
+balance between resource depletion and post-collapse recovery, with some parameter combinations
+producing sustained cycling and others leading to dampened or terminal collapse.
+
+Figure 2: Parameter sensitivity of S8 (Ouroboros) oscillatory dynamics. (A) Deterministic technology trajectories T (t) for varying recovery fraction rf , with all other parameters held at baseline
+values. The number of collapse–recovery cycles within the 1000-year window is indicated in the
+legend. (B) Number of collapse–recovery cycles as a function of recovery fraction rf and depletion
+rate δ. The star marks the baseline S8 parameter combination.
+Figure 3 summarizes the outcomes of these simulations using the four metrics described above
+(T c , fnc , Dc , N c ). The scenarios divide into two distinct groups. S3, S5, and S10 survive the
+full 1000-year window in most or all runs (fnc ≥ 0.66; Figure 3A), maintaining continuous or
+near-continuous technological activity (Dc ≥ 0.99; Figure 3B). In contrast, the remaining seven
+scenarios collapse in every run, with S1 and S6 breaking down within the first 200 years on average (Figure 3C). Among the collapse-prone scenarios, the duty cycle spans a wide range—from
+0.381 for S4 to 0.91 for S9—reflecting very different recovery capacities despite universal collapse.
+The most cyclical scenarios are S1 and S7, which undergo roughly 10 and 7.5 collapse–recovery
+cycles respectively (Figure 3D), while S8 cycles only about twice, consistent with its low-frequency
+oscillatory regime.
+
+10
+
+Figure 3: Distributions of key collapse and recovery metrics across scenarios (200 runs each). (A)
+Fraction of simulations that never experienced collapse fnc . (B) Mean duty cycle Dc , defined as the
+fraction of time the technosphere remains active. (C) Mean time to first collapse T c with standard
+deviation bars. (D) Mean number of collapse events N c .
+
+5
+
+Implications for Earth’s Future
+
+A key insight from our modeling is that the parameters governing recovery (the recovery fraction
+rf and the recovery delay rd ) are not fixed properties of a civilization but can be deliberately engineered. Investments in civilizational continuity infrastructure directly map onto these parameters:
+a higher rf corresponds to greater preservation of knowledge, technology, and resources through
+collapse events, while a lower rd corresponds to faster institutional and technological rebuilding.
+Together, improvements in these parameters increase the duty cycle Dc and thus, increase the
+fraction of time civilization remains functional and productive.
+The concept of ”recovery kits” (curated repositories of essential knowledge designed to accelerate post-collapse rebuilding) represents one practical approach to raising rf . Dartnell [2014] has
+explored in detail the minimum knowledge base required to reconstruct industrial civilization from
+scratch, spanning agriculture, materials science, medicine, power generation, and communication.
+Such recovery kits, whether physical or digital, function as a form of civilizational insurance: they
+ensure that the knowledge accumulated over centuries of development is not lost when institutional
+continuity is broken. Ongoing efforts in biological resource preservation serve as real-world examples
+of resilience infrastructure in action. The Svalbard Global Seed Vault, which now holds over one
+million seed samples from nearly every country on Earth [Asdal and Guarino, 2020], preserves agricultural biodiversity against civilizational disruption, ensuring that post-collapse societies retain
+access to the genetic resources needed to rebuild food systems. More recently, Colossal Biosciences
+has established a BioVault in Dubai dedicated to preserving broader biodiversity through cryopreservation of cellular material from threatened species [Colossal Biosciences]. In the language of
+11
+
+our model, these vaults serve to increase rf by preserving critical biological capital through collapse
+events.
+In addition to interventions targeting rf , it is also possible to concurrently engineer ways to
+decrease rd , thereby helping societies rebuild faster by utilizing whatever fraction of resources can be
+salvaged. This vastly unexplored family of interventions concerns mechanisms of intergenerational
+communication and long-term memory transmission. If post-collapse societies cannot immediately
+(or even at all) make sense of the knowledge repositories and recovery kits that had been prudently
+engineered and purposely left behind to increase rf , it will take them time to reverse-engineer
+the meaning necessary for actually using those repositories, assuming they were aware of their
+existence in the first place or accidentally came across them. This is related to the distinction
+between knowledge-that (e.g., knowledge that this is a bike) and knowledge-how (e.g., knowledge of
+how to ride a bike, in the sense of being able to ride it) [Ren, 2012]. Interventions that could decrease
+rd are related to the problem of communicating meanings to future humans that can “endure for
+a very long time and, more importantly, be correctly decoded and interpreted” [Mazzucchelli and
+Novello Paglianti, 2022]. Although this problem has been mainly studied from the perspective
+of how to clearly communicate warnings about the dangers related to long-term storage sites of
+toxic waste [Sandlos et al., 2019] or nuclear waste [Keating and Storm, 2023], the related learnings
+can be broadly applied to conceptualize such mechanisms. While the identification of promising
+combinations of exact mechanisms remains a fruitful research topic, such mechanisms appear to
+fall into two categories: indirect ones, such as education or surveillance, which aim at reinforcing
+the perpetuation of links between generations while working with social change; and direct ones,
+such as technical alterations of the environment or artifacts, which aim at immediately conveying
+information to future humans upon encountering such alterations or artifacts while remaining as
+much as possible independent of social change [Calla et al., 2023].
+Several other model inputs correspond to actionable levers for resilience policy. The depletion
+rate δ reflects the pace at which a civilization exhausts its resource base. Circular economy principles, renewable energy transitions, and efficiency improvements all serve to reduce δ, extending the
+time before resource-driven collapse. This connects directly to recent work reframing civilizational
+growth in terms of thermodynamic efficiency and exploration-exploitation trade-offs [Haqq-Misra
+et al., 2025b]. A civilization that pursues spatial expansion of its resource domain (exploration)
+effectively lowers its per-domain δ, while one that intensifies extraction within a fixed domain
+(exploitation) increases it. The existential hazard rate h can be reduced through investments in
+planetary defense (e.g., asteroid deflection programs such as NASA’s Double Asteroid Redirection
+Test, which successfully demonstrated kinetic impact as a viable deflection strategy [Daly et al.,
+2023]), pandemic preparedness, AI safety research, and nuclear risk reduction, the last of which has
+been shown capable of triggering global famine affecting over five billion people through climate
+disruption alone [Xia et al., 2022]. Ord [2020] provides a systematic assessment of existential risks
+and argues that humanity’s current exposure to catastrophic hazards is historically anomalous and
+reducible through deliberate policy. In our model, even small reductions in h can significantly
+decrease the frequency of stochastic collapse events, particularly for scenarios like S1 and S6 where
+exogenous hazards are a primary driver of instability. The collapse survival fraction cf can be raised
+through distributed and redundant infrastructure. Decentralized energy grids, mesh communication networks, and dispersed governance structures all ensure that more technological capacity
+survives a systemic disruption. Finally, while the initial resource stock R0 is treated as exogenous
+in our model, in practice it can be expanded through technologies that unlock previously inaccessible resources (e.g. asteroid mining, deep ocean extraction, nuclear fusion), effectively shifting a
+civilization into a lower resource-pressure regime.
+12
+
+Viewed through the duty-cycle framework, the question of civilizational resilience becomes quantifiable: what is the marginal improvement in Dc from a given resilience investment? To address
+this, we perform a one-at-a-time sensitivity analysis across all seven collapse-prone scenarios, sweeping each human-controllable parameter from a low to a high plausible bound while holding all others
+at their scenario-specific baselines (Table 6).
+Figure 4 summarizes the results by showing, for each scenario, the swing in all four outcome
+metrics (D̄c , T̄c , N̄c , fnc ) when each parameter is moved from its low to its high bound. Across all
+scenarios, rf and δ consistently produce the largest swings, confirming them as the most impactful
+levers for civilizational resilience. The exception is S6, where the existential hazard rate h dominates
+because exogenous risk, rather than resource depletion, is the primary driver of collapse.
+To examine the shape of these dependencies more closely, Figure 5 plots the duty cycle D̄c as a
+continuous function of each parameter across all scenarios. Rather than a gradual, linear response,
+both rf and δ exhibit sharp nonlinear transitions: small changes near critical thresholds can shift the
+duty cycle from low to high values, while changes far from these thresholds have little effect. This
+implies that targeted resilience investments near the transition region could yield disproportionate
+returns in civilizational continuity. In contrast, rd and h show more gradual responses across most
+scenarios. Together with the parameter sweep of S8 (Section 4.1), these results demonstrate that
+the duty-cycle framework provides a practical metric for evaluating resilience investments.
+Table 6: Parameter sweep ranges for sensitivity analysis. Low and high bounds are fixed across
+all scenarios; baseline values are scenario-specific. The collapse survival fraction (cf , fraction of
+technology retained through a collapse event) is excluded because it has negligible effect on all
+outcome metrics.
+Sweep bounds
+Baseline values
+Parameter
+
+Low
+
+High
+
+S1
+
+S2
+
+S4
+
+S6
+
+S7
+
+S8
+
+S9
+
+rf
+δ
+rd (yr)
+h (yr−1 )
+
+0.10
+0.1
+5
+0.0
+
+0.80
+2.5
+100
+0.005
+
+0.15
+1.2
+40
+0.003
+
+0.10
+1.5
+70
+0.001
+
+0.10
+2.5
+100
+0.0
+
+0.25
+1.0
+50
+0.005
+
+0.20
+1.5
+60
+0.001
+
+0.35
+1.3
+70
+0.0
+
+0.35
+1.3
+70
+0.0
+
+6
+
+Implications for the Search for Technosignatures
+
+6.1
+
+Reframing the Drake Equation’s Longevity Term
+
+The Drake Equation [Drake, 1965] estimates the number of detectable civilizations in our galaxy
+as
+N = R∗ fp ne fl fi fc L,
+(4)
+where R∗ is the rate of star formation, fp the fraction of those stars with planets, ne the number
+of habitable planets per system, fl the fraction of planets where life arises, fi the fraction where
+intelligence evolves, fc the fraction that develop detectable technology, and L the average duration
+such civilizations remain detectable. While the early terms are increasingly constrained by astrophysical observation, the final term L carries outsized importance and remains deeply uncertain.
+Our simulations suggest that the traditional interpretation of L as a continuous span of emission
+
+13
+
+Figure 4: Sensitivity analysis for all collapse-prone scenarios. Each row shows one scenario; columns
+show mean duty cycle (D̄c ), mean time to first collapse (T̄c ), mean number of collapse events (N̄c ),
+and fraction of runs that never collapsed (fnc ). Bars span the outcome range when each parameter—
+recovery fraction (rf ), depletion rate (δ), recovery delay (rd ), and existential hazard rate (h)—is
+swept from low to high bound; dashed lines mark baseline values. The collapse survival fraction
+(cf ) is omitted (negligible effect). Note that h dominates in S6 where exogenous risk drives collapse,
+whereas rf and δ are the most impactful levers in resource-limited regimes.
+
+14
+
+Figure 5: Duty cycle (D̄c , fraction of time the technosphere remains active) as a continuous function of each human-controllable parameter for all collapse-prone scenarios (mean ±1σ over 200
+replicates). Each row shows one scenario; columns correspond to recovery fraction (rf ), depletion
+rate (δ), recovery delay (rd ), and existential hazard rate (h). Dashed lines mark scenario-specific
+baseline values. The collapse survival fraction (cf ) is excluded (negligible effect).
+
+15
+
+is unrealistic. To account for the intermittent nature of civilizational activity, we introduce an
+effective detectability duration,
+Leff = Dc Tspan ,
+(5)
+where Dc is the mean duty cycle and Tspan is the observation window (1000 years in our simulations). If L is better understood as Leff , then models that assume continuous detectability may
+significantly overestimate N . A galaxy populated by civilizations with low duty cycles would remain largely silent, even if intelligent life is common. We note that a related but distinct concept,
+a “reappearance factor” for planets where civilizations can arise multiple times in succession [Bhattacharya et al., 2011], which counts sequential independent civilizations over geological timescales,
+whereas our duty cycle refers to the active vs. inactive phases within a single civilization’s lifespan.
+Moreover, technology can outlast its creators, as the longevity of a technosignature may far
+exceed the lifespan of the civilization that produced it [Wright et al., 2022, Ćirković et al., 2019].
+This further complicates the interpretation of L, which must account not only for active emission
+but also for the persistence of relic technosignatures, as we examine below.
+These considerations help explain the Great Silence. Civilizations may exist in abundance, but
+if they are detectable only intermittently, the probability that their technosignatures overlap with
+our observational window is low [Balbi, 2018]. For two intermittent civilizations, the probability of
+mutual visibility is the product of their duty cycles, which can be very small. The simulation results
+raise a deeper question: should we expect civilizations to be uniform in character, or drawn from a
+diverse ensemble of trajectories? If most civilizations follow fragile, collapse-prone paths (e.g., S1,
+S2, S6), then long-duty-cycle civilizations would be statistical outliers, and the apparent absence of
+signals may reflect not the rarity of extraterrestrial technology but the dominance of intermittently
+silent technospheres. Our findings support this view: only S3 and S10 avoided collapse entirely,
+while most scenarios exhibited high collapse frequency and moderate or low duty cycles. These
+collapse-prone trajectories suggest that civilizations may not follow monotonic energy-growth trajectories, but instead oscillate or regress, challenging the static assumptions of the Kardashev scale
+[Kardashev, 1964].
+Recent work by Balbi and Grimaldi [2024] provides further theoretical support for this view.
+Applying Lindy’s law to technosignature longevities, they show that for energy-intensive technoemissions the longevity distribution follows a power law ρL (L) ∝ L−α with α > 1, strongly
+disfavoring long-lived technosignatures. Under realistic assumptions (α ≥ 2), the first detected
+technosignature is predicted to be relatively short-lived (L < 102 years at 95% confidence). If most
+detectable technosignatures are intrinsically short-lived, then the combination of Lindy-distributed
+longevities and low duty cycles (as observed in our collapse-prone scenarios) implies a doubly diminished probability of detection, offering a complementary explanation for the Great Silence.
+
+6.2
+
+Technosignature Persistence and Observation Probabilities
+
+Eq. (5) gives the detectability duration in terms of the mean duty cycle and time in the observation
+window. Some technosignatures may have a lifetime exactly equal to the the civilization’s lifetime,
+but others may persist for some time after collapse. For technosignature i, the detectability duration
+is given as
+Li = {Dc Tspan + min[Ti , (1 − Dc )Tspan ]}δi ,
+(6)
+where Ti is the lifetime of technosignature i and δi is a flag that is 1 if technosignature i is present
+in the scenario and 0 otherwise.
+16
+
+Figure 6: The probability that a technosignature could be observed, taking into account the duty
+cycle for each scenario and the lifetime of each technosignature.
+The probability that technosignature i could be observed (assuming an appropriate observatory)
+is
+pi =
+
+Li
+Tspan
+
+δi = {Dc + min[
+
+Ti
+Tspan
+
+, 1 − Dc ]}δi ,
+
+(7)
+
+These probabilities are shown in Figure 6 for four example technosignatures, with a 1000-year time
+span. These probabilities should be interpreted as the probability of finding a given technosignature
+for remote observations of Earth in a given scenario, assuming the use of a capable observatory and
+sufficient observation time. The values of δi were determined from Haqq-Misra et al. [2025a, Table
+7]. Nitrogen dioxide (NO2 ) has a short lifetime of hours to days, so the probability is about equal
+to the duty cycle for scenarios in which nitrogen dioxide is present. The lifetime of CFC-11 is 55 yr,
+and the lifetime of CFC-12 is 140 yr, which could be observed in five of the scenarios. CFC-12
+has higher observation probabilities due to its longer lifetime. Carbon tetrafluoride (CF4 ) has a
+lifetime of 1000 yr or longer, observable in one of the scenarios. These are examples of atmospheric
+technosignatures that are present in the scenario set and could be observable by mission concepts
+under study such as the Habitable Worlds Observatory and the Large Interferometer for Exoplanets
+[Haqq-Misra et al., 2025c].
+The Leff formulation assumes that detectability ends when activity ceases. As noted above, this
+need not be the case [Balbi and Ćirković, 2021]. The persistence of different technosignature types
+varies enormously. Orbital debris and artificial satellites can last from decades to as long as 10,000
+to 100,000 years. Satellites in low Earth orbit typically deorbit within decades due to atmospheric
+drag, while those in geosynchronous orbit, facing minimal resistance, may persist for much longer.
+Without maintenance, a dense band of satellites in the so-called Clarke belt would slowly degrade
+through collisions and orbital perturbations over tens of thousands of years, eventually becoming
+undetectable [Socas-Navarro, 2018]. Megastructures such as Dyson spheres, space mirrors, or stellar
+
+17
+
+engines may persist longer still, though their survival depends on structural design and orbital
+stability. Rigid constructs without active station-keeping may collapse or drift within a few centuries
+to several thousand years [Wright, 2020], however, more modular configurations, like swarms of solar
+collectors, could remain in stable orbits for far longer timescales [Smith, 2022].
+Atmospheric technosignatures provide the shortest windows of detectability. On Earth, CFC-11
+and CFC-12 have atmospheric lifetimes of about 55 and 140 years, respectively, before being broken down by photolysis or other chemical processes [NOAA Global Monitoring Laboratory, 2025].
+Other compounds are more resilient: tetrafluoromethane (CF4 ) persists for ˜50,000 years, hexafluoroethane (C2 F6 ) for ˜10,000 years, and octafluoropropane (C3 F8 ) for ˜2,600 years [Trudinger et al.,
+2016]. Longer-lived isotopic signatures are conceivable, but their remote detection remains technically challenging. Electromagnetic technosignatures such as radio or laser transmissions propagate
+indefinitely but are only practically detectable for finite periods. Focused, high-power signals might
+remain observable for a few hundred light-years over spans of centuries to millennia, depending on
+the strength of the signal and the sensitivity of receivers [Sheikh et al., 2025].
+These persistence times imply that technosignature lifetimes can range from negligible (radio
+bursts) to dominant (orbital infrastructure). For short-lived civilizations with brief ON phases, persistent technosignatures could substantially extend the effective detectability window beyond what
+Leff alone would suggest. In contrast, for continuously active civilizations, persistence contributes
+relatively little. If most detectable technosignatures are short-lived (e.g., radio leakage), then the
+duty cycle remains the key parameter, and our results suggest low duty cycles make detection
+unlikely. But if many technosignatures persist for millennia beyond collapse, then the silence we
+observe becomes harder to attribute solely to civilizational fragility; it would require that either
+technosignatures are intrinsically ephemeral, or civilizations rarely produce persistent artifacts.
+In summary, our results suggest that if detectability is often sporadic, then long periods without
+contact may be the expected baseline. Intermittency may be typical, and recognizing that could
+refine our expectations and expand the scope of SETI. We also note that some persistent technologies, particularly autonomous systems such as Bracewell probes [Bracewell, 1960] or orbital
+maintenance infrastructure, may not decay passively but instead cycle through their own active
+and dormant states, creating layered duty-cycle structures that merit further investigation.
+
+7
+
+Limitations
+
+Several limitations warrant discussion. Our modeling framework is grounded in Earth-originating
+scenario typologies, drawing from narrative futures methodologies informed by contemporary geopolitical, ecological, and technological trends. These projections embed assumptions about governance
+structures, resource constraints, and recovery dynamics that may not extend to non-terrestrial civilizations or to those that do not follow Earth-like developmental pathways. While this grounding
+enables empirical plausibility, it limits extrapolation beyond our biosphere’s trajectory [Rubin,
+2001, Denning, 2011]. Our simulations assume bounded planetary systems and do not account
+for galactic colonization, interstellar migration, or modes of expansion that could alter the spatial
+and temporal visibility of civilizations [Walters et al., 1980, Papagiannis, 1983]. We also exclude
+the effects of cultural convergence, information saturation, or technological transcendence (e.g.,
+the emergence of post-biological intelligence), all of which could suppress or qualitatively change
+technosignature output. Our operational definition of detectability (based on internal sociotechnical continuity) does not differentiate among specific technosignature classes (e.g., radio emissions,
+
+18
+
+waste heat, megastructures), nor does it address detection thresholds or instrumental sensitivity.
+Additionally, our assumption that technological capacity increases linearly each year according
+to a fixed growth rate r is a significant simplification. The many discontinuities implied by the
+scenarios (not only collapse points but also radical transformation points such as the emergence of
+artificial general intelligence or breakthroughs in energy harvesting) suggest that a linear growth
+model may not adequately capture the dynamics of technological change across all regimes. Moreover, the available resource stock R0 is treated as an exogenous parameter, but in practice it is
+contingent on the technological capacity to identify and utilize resources. For example, a civilization that develops asteroid mining or nuclear fusion effectively increases its accessible resource base,
+fundamentally altering the growth-depletion dynamics. As discussed in Section 5, Haqq-Misra et al.
+[2025b] reframe the Kardashev scale as a luminosity limit constrained by thermodynamic efficiency
+(exergy) and explore exploration-exploitation trade-offs whose distinction our linear growth model
+does not capture. Future work could incorporate exergy constraints and non-linear growth functions informed by their luminosity-limit model, as well as feedback between technological capacity
+and accessible resource stocks, to produce more physically grounded projections of civilizational
+trajectories.
+
+8
+
+Conclusions
+
+We have developed a hybrid deterministic-stochastic model to simulate collapse-recovery dynamics
+across ten plausible futures for Earth-originating civilization, and used these simulations to quantify
+the duty cycles of technological civilizations. Our principal findings are as follows.
+First, collapse-recovery dynamics produce a wide range of duty cycles across plausible civilizational futures, with Dc spanning from approximately 0.38 to 1.00 across the ten scenarios, with
+outcomes shaped by the interplay of governance structure, resource pressure, and hazard exposure.
+Second, the duty-cycle framework reveals that several model parameters correspond to actionable levers for civilizational resilience (Section 5). Our sensitivity analysis demonstrates that rf
+and δ consistently emerge as the most impactful parameters across all collapse-prone scenarios,
+and that modest shifts in these levers can qualitatively alter a civilization’s long-term trajectory,
+suggesting that targeted resilience investments could yield disproportionate returns in civilizational
+continuity.
+Third, the effective detectability duration Leff = Dc Tspan provides a more realistic replacement
+for the Drake Equation’s static longevity term L. Combined with power-law longevity distributions
+that disfavor long-lived technosignatures [Balbi and Grimaldi, 2024], low duty cycles imply a doubly
+diminished probability of detection, helping explain the observed absence of extraterrestrial signals.
+Several avenues for future work emerge from this study. Incorporating exergy constraints and
+non-linear growth functions informed by thermodynamic limits to growth [Haqq-Misra et al., 2025b]
+could yield more physically grounded simulations. Introducing feedback between technological
+capacity and accessible resource stocks would address a key simplification of the current model.
+Finally, extending the framework to account for per-technosignature observation probabilities and
+for the possibility that autonomous remnant technologies may cycle through their own active and
+dormant states would add further realism to the detectability analysis.
+More broadly, our results help reconcile seemingly contradictory perspectives on civilizational
+longevity. One view posits that technological civilizations are fundamentally fragile and prone to
+19
+
+self-destruction soon after emergence [Vinn, 2024]. Another suggests that once civilizations surpass
+key thresholds of resilience and coordination, they may persist indefinitely, steadily accumulating
+across cosmic time [Grinspoon, 2009]. Both patterns emerge naturally in our simulations—not from
+differences in exogenous shocks, but from internal sociotechnical structure. The long-term fate of
+a civilization, it appears, is less a matter of luck than of design.
+
+Code Availability
+All code used to run the simulations and generate the figures in this paper is publicly available at
+https://github.com/celiablanco/technocycles.
+
+Acknowledgments
+C.B. acknowledges financial support from Ramón y Cajal grant RYC2023-045781-I funded by the
+Spanish Agencia Estatal de Investigación MICIU/AEI/10.13039/501100011033 and by “ESF Investing in your future”, and from the RyC-MAX grant 20255AT022 funded by the Spanish National
+Research Council.
+
+References
+Å. Asdal and L. Guarino. The Svalbard Global Seed Vault: 10 years—1 million samples. Biopreserv.
+Biobank., 18(5):391–392, 2020. doi:10.1089/bio.2018.0025.
+A. Balbi. The impact of the temporal distribution of communicating civilizations on their detectability. Astrobiology, 18(1):54–58, January 2018. doi:10.1089/ast.2017.1652.
+A. Balbi and M. M. Ćirković. Longevity is the key factor in the search for technosignatures. Astron.
+J., 161(5):222, May 2021. doi:10.3847/1538-3881/abec48.
+A. Balbi and C. Grimaldi. Technosignature longevity and lindy’s law. Astron. J., 167(3):119, March
+2024. doi:10.3847/1538-3881/ad217d.
+A. B. Bhattacharya, A. Sarkar, and J. Pandit. Some computations on the drake equation to
+encapsulate the probable number of broadcasting civilizations. International Journal of Applied
+Engineering Research, 2(2):590–594, 2011.
+R. N. Bracewell. Communications from superior galactic communities. Nature, 186(4726):670–671,
+May 1960. doi:10.1038/186670a0.
+S Calla, C Guinchard, A Moine, N Novello-Paglianti, L Nuninger, and L Ogorzelec-Guinchard.
+Confronting the uncertainties associated with long-time scales: Analysis of the modes of preservation of memory of radioactive waste burial sites. Worldwide Waste: Journal of Interdisciplinary
+Studies, 6(1):1–12, 2023. doi:10.5334/wwwj.75.
+M. M. Ćirković, B. Vukotić, and M. Stojanović. Persistence of technosignatures: A comment on
+lingam and loeb. May 2019. doi:10.48550/arXiv.1905.03146.
+
+20
+
+Colossal Biosciences.
+Colossal biovault.
+species-biobank/. Accessed: 2026-4-7.
+
+https://colossalfoundation.org/project/
+
+R. T. Daly, C. M. Ernst, O. S. Barnouin, et al. Successful kinetic impact into an asteroid for
+planetary defence. Nature, 616(7957):443–447, April 2023. doi:10.1038/s41586-023-05810-5.
+L. Dartnell. The Knowledge: How to Rebuild Our World from Scratch. Penguin Press, 2014.
+K. Denning.
+Being technological.
+doi:10.1016/j.actaastro.2010.02.027.
+
+Acta Astronaut., 68(3-4):372–380, February 2011.
+
+F. D. Drake. The radio search for intelligent extraterrestrial life. In Current Aspects of Exobiology,
+pages 323–345. Elsevier, 1965. doi:10.1016/b978-1-4832-0047-7.50015-0.
+R. H. Gray. Intermittent signals and planetary days in SETI. Int. J. Astrobiology, 19(4):299–307,
+August 2020. doi:10.1017/s1473550420000038.
+D. Grinspoon. Lonely planets. HarperCollins eBooks, March 2009.
+J. Haqq-Misra, G. Profitiliotis, and R. Kopparapu. Projections of earth’s technosphere: Scenario
+modeling, worldbuilding, and overview of remotely detectable technosignatures. Technol. Forecast. Soc. Change, 218(124194):124194, September 2025a. doi:10.1016/j.techfore.2025.124194.
+J. Haqq-Misra, C. Vidal, and G. Profitiliotis.
+Luminosity and mass as limits to growth.
+doi:10.1016/j.actaastro.2025.01.048.
+
+Projections of earth’s technosphere:
+Acta Astronaut., 229:831–838, 2025b.
+
+J. D. Haqq-Misra and S. D. Baum. The sustainability solution to the fermi paradox. J. Br.
+Interplanet. Soc., 62(2):47–51, 2009.
+Jacob Haqq-Misra, Ravi K Kopparapu, and George Profitiliotis. Projections of earth’s technosphere:
+Strategies for observing technosignatures on terrestrial exoplanets. The Astrophysical Journal
+Letters, 995(1):L22, 2025c.
+N. Kardashev. Transmission of information by extraterrestrial civilizations. SvA, 8:217, October
+1964.
+Thomas P Keating and Anna Storm. Nuclear memory: Archival, aesthetic, speculative. Progress
+in Environmental Geography, 2(1-2):97–117, 2023. doi:10.1177/27539687231174242.
+Francesco Mazzucchelli and Nanta Novello Paglianti. How to remember a place to forget? The
+semiotic design of deep geological nuclear repositories, from long-term communication to memory
+transmission. Linguistic Frontiers, 5(3):22–36, 2022. doi:10.2478/lf-2022-0026.
+Brendan Mullan and Jacob Haqq-Misra. Population growth, energy use, and the implications for
+the search for extraterrestrial intelligence. Futures, 106:4–17, 2019.
+NOAA Global Monitoring Laboratory. Chlorofluorocarbons (CFCs). https://gml.noaa.gov/
+hats/publictn/elkins/cfcs.html, 2025. Accessed: 2025-6-16.
+T. Ord. The Precipice: Existential Risk and the Future of Humanity. Hachette Books, 2020.
+E. Ostrom. Polycentric systems for coping with collective action and global environmental change.
+Glob. Environ. Change, 20(4):550–557, October 2010. doi:10.1016/j.gloenvcha.2010.07.004.
+21
+
+M. D. Papagiannis. The importance of exploring the asteroid belt. Acta Astronaut., 10(10):709–712,
+October 1983. doi:10.1016/0094-5765(83)90071-1.
+Huiming Ren. The distinction between knowledge-that and knowledge-how. Philosophia, 40(4):
+857–875, 2012. doi:10.1007/s11406-012-9361-x.
+C. T. Rubin. L factor: hope and fear in the search for extraterrestrial intelligence. In S. A.
+Kingsley and R. Bhathal, editors, The Search for Extraterrestrial Intelligence (SETI) in the
+Optical Spectrum III, volume 4273, pages 230–239. SPIE, August 2001. doi:10.1117/12.435379.
+John Sandlos, Arn Keeling, Caitlynn Beckett, and Rosanna Nicol. There is a monster under
+the ground: Commemorating the history of arsenic contamination at Giant Mine as a warning
+to future generations. Papers in Canadian History and Environment, (3):1–55, October 2019.
+doi:10.25071/10315/36516.
+S. Z. Sheikh, M. J. Huston, P. Fan, J. T. Wright, T. Beatty, C. Martini, R. Kopparapu, and
+A. Frank. Earth detecting earth: At what distance could earth’s constellation of technosignatures be detected with present-day technology?
+Astron. J., 169(2):118, February 2025.
+doi:10.3847/1538-3881/ada3c7.
+M. Shermer.
+Why ET hasn’t called.
+doi:10.1038/scientificamerican0802-33.
+
+Sci.
+
+Am.,
+
+287(2):33–33,
+
+August
+
+2002.
+
+J. Smith. Review and viability of a Dyson swarm as a form of Dyson sphere. Phys. Scr., 97(12):
+122001, 2022. doi:10.1088/1402-4896/ac9e78.
+H. Socas-Navarro. Possible photometric signatures of moderately advanced civilizations: The clarke
+exobelt. Astrophys. J., 855(2):110, March 2018. doi:10.3847/1538-4357/aaae66.
+J. A. Tainter. The Collapse of Complex Societies. Cambridge University Press, 1988.
+C. M. Trudinger, P. J. Fraser, D. M. Etheridge, et al. Atmospheric abundance and global emissions
+of perfluorocarbons CF4 , C2 F6 and C3 F8 since 1800 inferred from ice core, firn, air archive and in
+situ measurements. Atmos. Chem. Phys., 16(18):11733–11754, September 2016. doi:10.5194/acp16-11733-2016.
+O. Vinn. Potential incompatibility of inherited behavior patterns with civilization: Implications for
+fermi paradox. Sci. Prog., 107(3):368504241272491, July 2024. doi:10.1177/00368504241272491.
+C. Walters, R. A. Hoover, and R. K. Kotra. Interstellar colonization: A new parameter for the
+drake equation? Icarus, 41(2):193–197, February 1980. doi:10.1016/0019-1035(80)90003-2.
+S. Webb. If the Universe Is Teeming with Aliens ... WHERE IS EVERYBODY? Seventy-Five
+Solutions to the Fermi Paradox and the Problem of Extraterrestrial Life. Springer International
+Publishing, 2nd edition, 2015. doi:10.1007/978-3-319-13236-5.
+P. Wesson. Cosmology, extraterrestrial intelligence, and a resolution of the fermi-hart paradox.
+Quarterly journal of the royal astronomical society, 31:161–170, June 1990.
+M. L. Wong and S. Bartlett. Asymptotic burnout and homeostatic awakening: a possible solution to
+the fermi paradox? J. R. Soc. Interface, 19(190):20220029, May 2022. doi:10.1098/rsif.2022.0029.
+J. T. Wright. Dyson spheres. Serbian Astron. J., (200):1–18, 2020. doi:10.2298/saj2000001w.
+22
+
+J. T. Wright, J. Haqq-Misra, A. Frank, R. Kopparapu, M. Lingam, and S. Z. Sheikh. The case for
+technosignatures: Why they may be abundant, long-lived, highly detectable, and unambiguous.
+Astrophys. J. Lett., 927(2):L30, March 2022. doi:10.3847/2041-8213/ac5824.
+L. Xia, A. Robock, K. Scherrer, et al. Global food insecurity and famine from reduced crop, marine
+fishery and livestock production due to climate disruption from nuclear war soot injection. Nat.
+Food, 3(8):586–596, August 2022. doi:10.1038/s43016-022-00573-0.
+
+23
+
+

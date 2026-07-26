@@ -12,6 +12,7 @@ score            Census z, candidate logic, REPORT.md.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import tempfile
 from pathlib import Path
@@ -21,6 +22,12 @@ import pandas as pd
 
 from ..config import Config, load_config
 from .measure import Z_LINE, line_flag_rates, score_corpus
+
+
+def _corpus_key(corpus: pd.DataFrame) -> str:
+    """Content key for the measurement checkpoint dir (dp_id order matters)."""
+    joined = ",".join(corpus["dp_id"].astype(str))
+    return hashlib.sha1(joined.encode()).hexdigest()[:10]
 
 
 def _fmt(v, spec=".2f") -> str:
@@ -36,7 +43,17 @@ def score_and_write(cfg: Config, meas: pd.DataFrame,
     out_dir = cfg.root / "results" / "midden"
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    if meas.empty or "role" not in meas.columns:
+        raise RuntimeError(
+            "MIDDEN: no measurement rows at all — every spectrum download or "
+            "parse failed; see the per-batch logs before re-dispatching")
+    n_err = int((meas["role"] == "error").sum())
     meas = meas[meas["role"].isin(["radionuclide", "rv_ref", "control"])].copy()
+    if meas.empty:
+        raise RuntimeError(
+            f"MIDDEN: zero usable line measurements ({n_err} error rows) — "
+            "every spectrum failed to download or parse; fix acquisition "
+            "before scoring")
     stars, meas_z = score_corpus(meas)
     rates = line_flag_rates(meas_z)
     if len(stars):
@@ -150,7 +167,9 @@ def midden_run(cfg: Config | None = None, stage: str = "all",
         targets = targets if targets is not None else \
             pd.read_parquet(out_dir / "targets.parquet")
         obs = query_obscore(targets, out_dir)
-        corpus_path = out_dir / "corpus.parquet"
+        # v2 checkpoint name: a seeded pre-truncation-fix corpus.parquet
+        # silently pinned run 30204582971 to the stale 92-spectrum corpus.
+        corpus_path = out_dir / "corpus_v2.parquet"
         if corpus_path.exists():
             corpus = pd.read_parquet(corpus_path)
             print(f"[midden] corpus checkpoint exists: {corpus_path}")
@@ -159,13 +178,16 @@ def midden_run(cfg: Config | None = None, stage: str = "all",
             corpus.to_parquet(corpus_path, index=False)
         scratch = Path(scratch_dir) if scratch_dir else \
             Path(tempfile.gettempdir()) / "midden_scratch"
-        meas = process_corpus(corpus, out_dir / "meas", scratch,
-                              batch_size=batch_size)
+        # Measurement batches are keyed to the corpus content: batch N is only
+        # meaningful for the exact dp_id sequence it was cut from, so a corpus
+        # change must never inherit another corpus's checkpoints.
+        meas = process_corpus(corpus, out_dir / f"meas_{_corpus_key(corpus)}",
+                              scratch, batch_size=batch_size)
         meas.to_parquet(out_dir / "measurements.parquet", index=False)
     if stage in ("score", "all"):
         meas = meas if meas is not None else \
             pd.read_parquet(out_dir / "measurements.parquet")
-        corpus_path = out_dir / "corpus.parquet"
+        corpus_path = out_dir / "corpus_v2.parquet"
         corpus = corpus if corpus is not None else (
             pd.read_parquet(corpus_path) if corpus_path.exists() else None)
         return score_and_write(cfg, meas, corpus)

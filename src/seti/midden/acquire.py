@@ -287,22 +287,30 @@ def build_targets(out_dir: Path, max_gaia: int = 15000) -> pd.DataFrame:
 # ESO ObsCore discovery
 # ---------------------------------------------------------------------------
 
+_OBSCORE_MAXREC = 100_000        # requested per band query
+_OBSCORE_TRUNC_SENTINEL = 20_000  # ESO tap_obs default output cap, seen live
+
+
 def query_obscore(targets: pd.DataFrame, out_dir: Path,
                   dec_band_deg: float = 10.0) -> pd.DataFrame:
     """Discover HARPS/FEROS spectra for the targets (checkpointed).
 
     Bulk-pulls ObsCore spectrum metadata in declination bands (ESO's TAP has
-    no upload support), then position-matches against the target list locally
-    with a unit-vector KD-tree at each target's own match radius.
+    no upload support), splitting any band that hits the service output cap,
+    then position-matches against the target list locally with a unit-vector
+    KD-tree at each target's own match radius.
     """
-    out_path = out_dir / "obscore.parquet"
+    out_path = out_dir / "obscore_v2.parquet"
     if out_path.exists():
         print(f"[midden] obscore checkpoint exists: {out_path}")
         return pd.read_parquet(out_path)
     import pyvo
     from scipy.spatial import cKDTree
 
-    chunk_dir = out_dir / "obscore_chunks"
+    # v2 checkpoint namespace: the v1 band pulls were silently truncated at
+    # ESO's 20,000-row async output cap (bands 3-10 of run 30200517861 all
+    # returned exactly 20000), so any seeded v1 chunks must not be reused.
+    chunk_dir = out_dir / "obscore_chunks_v2"
     chunk_dir.mkdir(parents=True, exist_ok=True)
     tap = pyvo.dal.TAPService(_ESO_TAP)
 
@@ -317,45 +325,63 @@ def query_obscore(targets: pd.DataFrame, out_dir: Path,
     rad_max = float(np.nanmax(targets["rad"].to_numpy(float)))
     chord_max = 2.0 * np.sin(np.radians(rad_max) / 2.0)
 
-    frames = []
-    edges = np.arange(-90.0, 90.0 + dec_band_deg, dec_band_deg)
-    for i, (lo, hi) in enumerate(zip(edges[:-1], edges[1:], strict=False)):
-        part = chunk_dir / f"obscore_band_{i:03d}.parquet"
+    frames: list[pd.DataFrame] = []
+
+    def _pull(lo: float, hi: float, depth: int = 0) -> None:
+        tag = f"{lo:+08.3f}_{hi:+08.3f}".replace(".", "p")
+        part = chunk_dir / f"obscore_{tag}.parquet"
         if part.exists():
-            band = pd.read_parquet(part)
-        else:
-            q = _OBSCORE_BAND_QUERY.format(dec_lo=lo, dec_hi=hi)
+            frames.append(pd.read_parquet(part))
+            return
+        q = _OBSCORE_BAND_QUERY.format(dec_lo=lo, dec_hi=hi)
 
-            def _go(q=q):
-                res = tap.run_async(q)
-                df = res.to_table().to_pandas()
-                return df.rename(columns={c: c.lower() for c in df.columns})
+        def _go(q=q):
+            res = tap.run_async(q, maxrec=_OBSCORE_MAXREC)
+            df = res.to_table().to_pandas()
+            return df.rename(columns={c: c.lower() for c in df.columns})
 
-            band = _retry(_go, retries=3, label=f"obscore band {i}")
-            band.to_parquet(part, index=False)          # checkpoint
-            print(f"[midden] obscore band {i + 1}/{len(edges) - 1} "
-                  f"[{lo:+.0f},{hi:+.0f}): {len(band)} spectra")
-        if not len(band):
-            continue
+        band = _retry(_go, retries=3, label=f"obscore [{lo:.3f},{hi:.3f})")
+        # Truncation forensics: the service clamps to 20k regardless of the
+        # requested MAXREC, or honours MAXREC and we hit our own request.
+        truncated = (len(band) == _OBSCORE_TRUNC_SENTINEL
+                     or len(band) >= _OBSCORE_MAXREC)
+        if truncated and (hi - lo) > 0.05 and depth < 12:
+            mid = 0.5 * (lo + hi)
+            print(f"[midden] obscore [{lo:.3f},{hi:.3f}) returned {len(band)} "
+                  f"rows (output cap) — splitting at {mid:.3f}")
+            _pull(lo, mid, depth + 1)
+            _pull(mid, hi, depth + 1)
+            return
+        if truncated:
+            print(f"[midden] WARNING: obscore [{lo:.3f},{hi:.3f}) still at the "
+                  f"output cap after maximum splitting — accepting {len(band)} rows")
+        band.to_parquet(part, index=False)              # checkpoint (complete)
+        print(f"[midden] obscore [{lo:+.3f},{hi:+.3f}): {len(band)} spectra")
+        frames.append(band)
+
+    edges = np.arange(-90.0, 90.0 + dec_band_deg, dec_band_deg)
+    for lo, hi in zip(edges[:-1], edges[1:], strict=False):
+        _pull(float(lo), float(hi))
+
+    allband = (pd.concat(frames, ignore_index=True) if frames
+               else pd.DataFrame())
+    obs = pd.DataFrame()
+    if len(allband):
         # Local crossmatch: nearest target within the generous radius, then
         # exact per-target radius check.
-        b_xyz = _unit(band["s_ra"], band["s_dec"])
+        b_xyz = _unit(allband["s_ra"], allband["s_dec"])
         dist, idx = t_tree.query(b_xyz, k=1,
                                  distance_upper_bound=chord_max)
         ok = np.isfinite(dist)
-        if not ok.any():
-            continue
-        sub = band[ok].reset_index(drop=True)
-        tid_idx = idx[ok]
-        sep_deg = np.degrees(2.0 * np.arcsin(np.clip(dist[ok] / 2.0, 0, 1)))
-        per_rad = targets["rad"].to_numpy(float)[tid_idx]
-        keep = sep_deg <= per_rad
-        if not keep.any():
-            continue
-        sub = sub[keep].reset_index(drop=True)
-        sub["tid"] = targets["tid"].to_numpy(np.int64)[tid_idx[keep]]
-        frames.append(sub)
-    obs = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+        if ok.any():
+            sub = allband[ok].reset_index(drop=True)
+            tid_idx = idx[ok]
+            sep_deg = np.degrees(2.0 * np.arcsin(np.clip(dist[ok] / 2.0, 0, 1)))
+            per_rad = targets["rad"].to_numpy(float)[tid_idx]
+            keep = sep_deg <= per_rad
+            if keep.any():
+                obs = sub[keep].reset_index(drop=True)
+                obs["tid"] = targets["tid"].to_numpy(np.int64)[tid_idx[keep]]
     obs.to_parquet(out_path, index=False)
     print(f"[midden] ObsCore discovery: {len(obs)} matched spectrum rows "
           f"-> {out_path}")
@@ -394,17 +420,33 @@ def select_corpus(obs: pd.DataFrame, targets: pd.DataFrame,
 # Process-and-discard analysis loop
 # ---------------------------------------------------------------------------
 
+_ESO_FILE_URL = "https://dataportal.eso.org/dataportal_new/file/{dp_id}"
+
+
 def _default_fetch(row, dest: Path, timeout: float = 300.0) -> None:
-    """Download one Phase-3 FITS via its ObsCore access_url."""
+    """Download one Phase-3 FITS product by dp_id.
+
+    ObsCore ``access_url`` points at ESO's DataLink service, which returns a
+    VOTable *about* the file, not the file (run 30200517861 saved those as
+    '.fits' and every spectrum failed with 'No SIMPLE card').  The anonymous
+    product endpoint keyed on dp_id serves the actual FITS; the magic bytes
+    are checked so any future non-FITS payload fails loudly per-file.
+    """
     import requests
 
+    url = _ESO_FILE_URL.format(dp_id=row["dp_id"])
+
     def _go():
-        with requests.get(row["access_url"], stream=True, timeout=timeout,
+        with requests.get(url, stream=True, timeout=timeout,
                           headers={"User-Agent": "seti-midden/0.1"}) as r:
             r.raise_for_status()
             with open(dest, "wb") as fh:
                 for block in r.iter_content(1 << 20):
                     fh.write(block)
+        with open(dest, "rb") as fh:
+            magic = fh.read(6)
+        if magic != b"SIMPLE":
+            raise ValueError(f"non-FITS payload from {url} (starts {magic!r})")
 
     _retry(_go, retries=3, label=f"download {row['dp_id']}")
 
@@ -431,8 +473,17 @@ def process_corpus(corpus: pd.DataFrame, out_dir: Path, scratch_dir: Path,
     for b in range(n_batches):
         part = out_dir / f"meas_batch_{b:04d}.parquet"
         if part.exists():
-            frames.append(pd.read_parquet(part))
-            continue
+            prev = pd.read_parquet(part)
+            # A checkpoint of pure error rows means every download or parse in
+            # the batch failed (run 30200517861: DataLink VOTables saved as
+            # FITS) — reuse would silently fossilize the failure, so re-run.
+            if len(prev) and "role" in prev.columns \
+                    and not (prev["role"] == "error").all():
+                frames.append(prev)
+                continue
+            print(f"[midden] batch {b + 1}/{n_batches} checkpoint is "
+                  f"all-errors — re-running it")
+            part.unlink()
         batch = corpus.iloc[b * batch_size:(b + 1) * batch_size]
         rows, files = [], []
         try:

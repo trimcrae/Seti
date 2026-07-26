@@ -1,0 +1,61 @@
+name: necrolit
+
+# NECROSIGNATURES novelty check: fetch verbatim arXiv metadata, full text, and
+# OpenAlex citation trees for every antecedent that could sink a channel in
+# docs/necrosignatures.md. The sandbox blocks arxiv/ADS/OpenAlex and the session
+# WebSearch budget is finite; the runner has egress (CLAUDE.md pattern).
+#
+# The decisive query is the citation tree of Zackrisson et al. 2018
+# (10.3847/1538-4357/aac386), which PROPOSED the grey-attenuation / underluminous
+# Dyson statistic. Whether anyone ever EXECUTED it is the novelty question for
+# CENOTAPH, and it has to come off the record, not out of an assumption.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  necrolit:
+    runs-on: ubuntu-latest
+    # Politeness sleeps + retry backoff dominate the runtime. A soft deadline on
+    # the fetch step keeps partial evidence even if the full list overruns.
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pdftotext
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Fetch literature evidence (soft 75-min deadline, partials kept)
+        run: |
+          timeout -k 30 4500 python scripts/necrolit_fetch.py \
+            || echo "fetcher hit soft deadline or errored; committing partials"
+          echo "=== summary ==="
+          python -c "import json;d=json.load(open('results/necrolit/summary.json'));print(d['n_ok'],'ok /',d['n_urls'],'urls')" || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/necrolit/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "necrolit: NECROSIGNATURES novelty-check literature evidence"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: necrolit
+          path: results/necrolit/
+          if-no-files-found: warn

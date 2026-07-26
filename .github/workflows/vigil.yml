@@ -1,0 +1,357 @@
+name: vigil
+
+# VIGIL --- waste heat with a duty cycle (docs/vigil.md).
+#
+#   novelty ──────────────────────────────────────────────────────┐
+#   probe ──▶ plan ──▶ sweep (N parallel field shards) ──▶ vet ────┴─▶ (commit-back)
+#
+# The claim: a computing megastructure's waste heat tracks its computational
+# load, so the observable is a star VARIABLE IN THE MID-INFRARED while CONSTANT
+# IN THE OPTICAL --- and, in the extinction reading, that variability ceasing.
+# Hephaistos II's `G_var > 2` cut explicitly *rejects* variable stars; this
+# channel selects on what the flagship Dyson search throws away.
+#
+# The confounder is the entire problem.  Extreme debris disks have exactly this
+# phenomenology (mid-IR variable, optically flat) and will dominate any naive
+# selection.  The discriminator is LOW fractional excess with HIGH modulation
+# index --- see docs/vigil.md --- and it is tested offline before it is run here.
+#
+# Design notes that earlier runs paid for:
+#  * `git add` with several pathspecs is ATOMIC: one unmatched glob stages
+#    NOTHING and `|| true` swallows it.  Every stage below adds ONE path at a
+#    time, each with its own guard.
+#  * the probe job runs first and is cheap: it establishes whether the unTimely
+#    catalogue is reachable and what it is called, before a multi-hour sweep is
+#    spent finding out.
+#  * checkpointing: every field writes its own field_summary.json immediately
+#    and uploads use `if: always()`, so a killed shard loses minutes.
+#  * the novelty job is independent of the search, so the literature evidence
+#    lands even if IRSA is having a bad day.
+
+on:
+  workflow_dispatch:
+    inputs:
+      fields:
+        description: >-
+          Semicolon-separated ra,dec field centres.  The default set is at high
+          ecliptic latitude (NEOWISE visits pile up toward the poles, so the
+          per-star epoch count is highest there) AND high Galactic latitude (low
+          crowding and low cirrus, so the two dominant mid-IR systematics are
+          suppressed at selection rather than at vetting).
+        required: false
+        default: "266.0,65.0;270.0,66.5;262.0,63.5;274.0,64.0;258.0,67.0;280.0,65.5;253.0,65.0;286.0,63.0"
+      radius_deg:
+        description: "Field radius (deg)"
+        required: false
+        default: "0.4"
+      g_max:
+        description: "Gaia G ceiling on the sample (fainter = more stars, worse NEOWISE S/N)"
+        required: false
+        default: "15.0"
+      max_stars:
+        description: "Cap on stars sent to per-object NEOWISE fetching per field"
+        required: false
+        default: "400"
+      time_budget_s:
+        description: "Per-field IRSA wall-clock budget (s)"
+        required: false
+        default: "3000"
+      max_candidates:
+        description: "Cap on candidates carried into the vetting gauntlet"
+        required: false
+        default: "200"
+      run_novelty:
+        description: "Run the literature novelty fetch (true/false)"
+        required: false
+        default: "true"
+      run_probe:
+        description: "Run the archive probe (true/false)"
+        required: false
+        default: "true"
+      reduce_only_run_id:
+        description: "Skip the sweep; vet from this prior run's artifacts"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  # ------------------------------------------------------------------
+  # Novelty.  Establishes from the record --- on a machine with egress --- that
+  # nobody has framed mid-IR variability with optical constancy as a
+  # technosignature, AND verifies every decisive citation BY TITLE, because
+  # earlier agents in this repository recorded hallucinated arXiv IDs.
+  # ------------------------------------------------------------------
+  novelty:
+    if: ${{ github.event.inputs.run_novelty != 'false' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install poppler (pdftotext)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Fetch VIGIL prior art + decoy-aware concept scan
+        run: python scripts/vigillit_fetch.py
+      - name: Show the verdict inputs
+        run: |
+          echo "=== summary ==="
+          python -c "import json;d=json.load(open('results/vigillit/summary.json'));print(json.dumps(d,indent=2)[:8000])" || true
+          echo "=== concept scan ==="
+          python -c "import json;d=json.load(open('results/vigillit/concept_scan.json'));d.pop('all_hits',None);print(json.dumps(d,indent=2)[:6000])" || true
+      - name: Commit novelty evidence
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # ONE pathspec.  `git add` with several is atomic: one unmatched glob
+          # stages nothing at all, and `|| true` hides it.
+          git add -f -- results/vigillit
+          if git diff --cached --quiet; then
+            echo "No novelty changes to commit."
+          else
+            git commit -m "vigil: literature evidence for the mid-IR-variable/optically-constant novelty claim"
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vigil-novelty
+          path: results/vigillit/
+          if-no-files-found: warn
+
+  # ------------------------------------------------------------------
+  # Probe.  One minimal call per route.  Cheap, and it decides the architecture:
+  # unTimely as a pre-selector plus NEOWISE as the characteriser, or a NEOWISE
+  # field sweep alone.
+  # ------------------------------------------------------------------
+  probe:
+    if: ${{ github.event.inputs.run_probe != 'false' && github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Probe the archives
+        run: |
+          python -m seti.cli vigil-probe
+          echo "=== probe.json ==="
+          cat results/vigil/probe.json
+      - name: Commit the probe
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f -- results/vigil/probe.json
+          if git diff --cached --quiet; then
+            echo "No probe changes to commit."
+          else
+            git commit -m "vigil: archive probe --- unTimely reachability and NEOWISE per-epoch transport"
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vigil-probe
+          path: results/vigil/
+          if-no-files-found: warn
+
+  # ------------------------------------------------------------------
+  plan:
+    if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      fields: ${{ steps.mk.outputs.fields }}
+    steps:
+      - id: mk
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          raw = """${{ github.event.inputs.fields }}""".strip()
+          default = ("266.0,65.0;270.0,66.5;262.0,63.5;274.0,64.0;"
+                     "258.0,67.0;280.0,65.5;253.0,65.0;286.0,63.0")
+          fields = [f.strip() for f in (raw or default).split(";") if f.strip()]
+          print("fields=" + json.dumps(fields))
+          PY
+
+  sweep:
+    needs: plan
+    if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      max-parallel: 4          # be a good citizen toward the IRSA TAP service
+      matrix:
+        field: ${{ fromJSON(needs.plan.outputs.fields) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Sweep field ${{ matrix.field }}
+        run: |
+          RA="$(echo '${{ matrix.field }}' | cut -d, -f1)"
+          DEC="$(echo '${{ matrix.field }}' | cut -d, -f2)"
+          python -m seti.cli vigil-sweep \
+            --ra "$RA" --dec "$DEC" \
+            --radius-deg ${{ github.event.inputs.radius_deg || '0.4' }} \
+            --g-max ${{ github.event.inputs.g_max || '15.0' }} \
+            --max-stars ${{ github.event.inputs.max_stars || '400' }} \
+            --time-budget-s ${{ github.event.inputs.time_budget_s || '3000' }}
+          echo "=== field summary ==="
+          cat results/vigil/*/field_summary.json
+      - name: Shard name
+        id: nm
+        run: echo "tag=$(echo '${{ matrix.field }}' | tr ',.-' '___')" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vigil-field-${{ steps.nm.outputs.tag }}
+          path: results/vigil/
+          if-no-files-found: warn
+
+  vet:
+    needs: sweep
+    if: ${{ always() && github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: vigil-field-*
+          merge-multiple: true
+          path: results/vigil/
+      - name: Vetting gauntlet
+        run: |
+          python -m seti.cli vigil-vet \
+            --max-candidates ${{ github.event.inputs.max_candidates || '200' }}
+          echo "=== summary ==="
+          cat results/vigil/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -- . 2>/dev/null || true
+          # ONE pathspec per `git add`, each independently guarded, because a
+          # multi-pathspec add is atomic and silently stages nothing when any
+          # one of them fails to match.
+          for f in results/vigil/summary.json \
+                   results/vigil/vigil_vetted.csv \
+                   results/vigil/vigil_survivors.csv; do
+            if [ -e "$f" ]; then git add -f -- "$f" || echo "add failed: $f"; fi
+          done
+          for d in results/vigil/*/; do
+            if [ -e "$d/field_summary.json" ]; then
+              git add -f -- "$d/field_summary.json" || echo "add failed: $d"
+            fi
+            if [ -e "$d/vigil_candidates.csv" ]; then
+              git add -f -- "$d/vigil_candidates.csv" || echo "add failed: $d"
+            fi
+          done
+          git status --short | head -40
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "vigil: mid-IR variable at low fractional excess --- NEOWISE field sweep"
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vigil-final
+          path: results/vigil/
+          if-no-files-found: warn
+
+  vet-only:
+    if: ${{ github.event.inputs.reduce_only_run_id != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Fetch field artifacts from prior run
+        uses: actions/download-artifact@v4
+        with:
+          pattern: vigil-field-*
+          merge-multiple: true
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/vigil/
+      - name: Vetting gauntlet
+        run: |
+          ls results/vigil/ | head -40
+          python -m seti.cli vigil-vet \
+            --max-candidates ${{ github.event.inputs.max_candidates || '200' }}
+          cat results/vigil/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -e results/vigil/summary.json ]; then
+            git add -f -- results/vigil/summary.json
+          fi
+          if [ -e results/vigil/vigil_vetted.csv ]; then
+            git add -f -- results/vigil/vigil_vetted.csv
+          fi
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "vigil: re-vet of a prior sweep's field artifacts"
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }}
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vigil-final
+          path: results/vigil/
+          if-no-files-found: warn

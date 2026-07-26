@@ -1,0 +1,881 @@
+A&A 389, 420–438 (2002)                                                                                      Astronomy
+DOI: 10.1051/0004-6361:20020299                                                                               &
+c ESO 2002
+                                                                                                             Astrophysics
+
+
+                         Doppler Imaging of stellar magnetic fields
+       III. Abundance distribution and magnetic field geometry of α2 CVn?
+                         O. Kochukhov1 , N. Piskunov1 , I. Ilyin2 , S. Ilyina2 , and I. Tuominen2
+
+      1
+          Uppsala Astronomical Observatory, Box 515, 751 20 Uppsala, Sweden
+      2
+          Astronomy Division, Box 3000, 90014 University of Oulu, Finland
+
+      Received 13 November 2001 / Accepted 27 February 2002
+
+      Abstract. We used the new magnetic Doppler Imaging code to reconstruct the magnetic field geometry and
+      surface abundance distributions for the classical magnetic CP star α2 CVn. High-resolution spectropolarimetric
+      observations in the Stokes I and V parameters were collected with the SOFIN échelle spectrograph at the Nordic
+      Optical Telescope. This superb observational material in combination with the advanced modelling technique
+      allowed to achieve the first simultaneous self-consistent mapping of the vector magnetic field and the abundance
+      distributions of six chemical elements. In recovering the stellar magnetic distribution no prior assumptions about
+      the field geometry or strength were made. Instead, we restricted possible solutions of the inverse problem by means
+      of the multipolar regularization method which searches for the field map close to a general non-axisymmetric
+      multipolar configuration but allows departures from this geometry if that is required by the observational data.
+      We found that the magnetic field of α2 CVn is dominated by a dipolar component and has a minor quadrupole
+      contribution. The surface distributions of the chemical species form symmetric patterns which closely follow the
+      magnetic geometry. This discovery constitutes one of the first direct observational constraints on the horizontal
+      diffusion processes acting in the upper envelope of a strongly magnetized stellar atmosphere. In addition to the
+      extensive magnetic Doppler Imaging analysis, we derived new accurate estimates of the atmospheric parameters
+      and basic physical properties of α2 CVn using the energy distribution, hydrogen line profiles and the recent
+      Hipparchos parallax.
+
+      Key words. stars: chemically peculiar – stars: magnetic fields – stars: individual: α2 CVn
+
+
+1. Introduction                                                         inhomogeneities are generally non-axisymmetric with re-
+                                                                        spect to the stellar rotational axis and therefore, as the
+Magnetic chemically peculiar (CP) A and B stars are gen-                star rotates, we see variations with its rotational period.
+erally characterized by the abnormal strengths of spec-
+tral lines of some chemical elements and possess strong,                    It is believed that the abnormal chemical composition
+globally organized magnetic fields. Furthermore, CP stars               of CP stars is limited only to the outer stellar envelopes
+often show remarkable variations of line strengths, light               and is produced by chemical diffusion (Michaud 1970).
+and magnetic field with periods ranging from a few days                 This phenomenon occurs due to the imperfect balance
+to many years. These periodic variations are interpreted                between the forces of gravitational settling and radiative
+within the phenomenological Oblique Rotator Model sug-                  acceleration acting on each individual atom. If compet-
+gested by Stibbs (1950). In the framework of this hy-                   ing mixing processes, such as convection or a strong mass
+pothesis periodic variations of the magnetic CP stars are               loss, fail to hamper diffusion drift, it enriches or depletes
+attributed to the rotational modulation due to an inho-                 the line-forming region from the atoms of various trace
+mogeneous distribution of chemical abundance, magnetic                  elements. Chemical diffusion altered by a global magnetic
+field and, consequently, the whole structure of the stel-               field can produce surface abundance non-uniformities.
+lar photosphere over the stellar surface. These surface                     Although the Oblique Rotator Model and chemical
+                                                                        diffusion together form a convincing basis for the qual-
+Send offprint requests to: O. Kochukhov,                                itative interpretation of the magnetic CP phenomenon,
+e-mail: oleg@astro.uu.se                                                many fundamental questions remain unanswered. For ex-
+  ?
+    Based on observations obtained with the Nordic Optical              ample, it is not at all clear what is the typical geometry
+Telescope (NOT) and Isaac Newton Telescope (INT),                       of the global magnetic fields of the early-type stars. It was
+La Palma, Spain.                                                        widely argued in the past that the magnetic fields of CP
+
+
+
+          Article published by EDP Sciences and available at http://www.aanda.org or
+          http://dx.doi.org/10.1051/0004-6361:20020299
+                            O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.                       421
+
+stars have predominantly a dipolar structure (Landstreet        observations of line profiles in the four Stokes parame-
+1992), but the most recent studies (e.g. Bagnulo et al.         ters, INVERS10 is capable of reconstructing the abundance
+1999; Bagnulo & Landolfi 1999) hinted that more compli-         and magnetic field topology without the usual multipolar
+cated non-axisymmetric field distributions may be more          assumption about the geometry of the global stellar mag-
+common. In addition, the detailed mechanism of the chem-        netic field. Additional tests demonstrated that a modi-
+ical diffusion in the presence of a magnetic field is un-       fied version of the MDI code can extract useful informa-
+known. Any attempt to build such a theory would face            tion about the magnetic and abundance surface structures
+major difficulties in explaining scarce magnetic field mea-     even from the rotational modulation of the Stokes I and
+surements and surface chemical abundance maps, which,           V alone. It is important to remember that today even
+depending on a particular star and chemical element, may        the best four Stokes parameter observations of early-type
+or may not correlate with each other.                           magnetic stars (Wade et al. 2000a) do not have the resolu-
+    Clearly, the first fundamental step in resolving the puz-   tion and the S/N ratio required for magnetic DI. On the
+zle of the magnetic CP stars would be a detailed simul-         other hand, high-quality datasets limited to the Stokes I
+taneous investigation of the surface abundance structures       and V parameters can more easily be collected with a
+and the magnetic field topologies. In the past such stud-       number of modern high-resolution échelle spectrographs
+ies were predominantly based on the Fourier analysis of         equipped with spectropolarimetric devices. Therefore, this
+the variation of the disk-integrated quantities, such as        modified version of our MDI code can readily be applied
+equivalent widths, radial velocities and longitudinal mag-      to the existing observations and used to infer properties
+netic field (e.g. Deutsch 1958; Pyper 1969). More recent        of the surface structures in the magnetic CP stars. Here
+investigations, such as the one presented by Kuschnig           we present the first attempt to use INVERS10 for the mod-
+et al. (1999), attempt to reconstruct surface abundance         elling of Stokes I and V profiles of the prototypical mag-
+distributions with the Doppler Imaging (DI) method.             netic CP star α2 CVn.
+This technique uses a well-structured computational algo-           α2 CVn (= HD 112413 = HR 4915) was the first bright
+rithm, which inverts time-series of high-resolution profiles    A star classified as chemically peculiar. Since the begin-
+of spectral lines into maps of chemical abundance spots.        ning of the 20th century much effort has been devoted
+Doppler Imaging studies do not usually take into account        to the description of the variations of its radial velocity,
+the presence of the magnetic field and try to avoid strongly    line strengths and longitudinal magnetic field. Previous
+magnetic CP stars. On the other hand, the magnetic field        detailed investigations of the magnetic field topology
+topology is frequently inferred from the analysis of various    and chemical inhomogeneities (Pyper 1969; Khokhlova &
+magnetic observables under the assumption of a homoge-          Pavlova 1984) were based on a separate, inconsistent anal-
+neous surface abundance distribution. However, magnetic         ysis of the magnetic and abundance observables. These
+and chemical structures are closely related to each other       studies provided only a coarse estimate of the magnetic ge-
+and in most interesting CP stars (those that feature both       ometry of α2 CVn and yielded maps showing surface vari-
+strong magnetic fields and highly inhomogeneous abun-           ations of equivalent width, but not absolute abundance
+dance distribution) modelling of the global magnetic field      distributions. Thus, we decided to choose α2 CVn as the
+must take into account non-uniform sampling over the            first target for the application of our MDI code.
+stellar disk due to the presence of the abundance spots.            Our paper is organized as follows. In Sect. 2 we de-
+Conversely, unaccounted magnetic splitting and intensi-         scribe acquisition and reduction of the high-resolution
+fication can severely bias abundance maps produced for          Stokes I and V spectra and other observational data.
+the magnetic stars using conventional non-magnetic abun-        Next, in Sect. 3 we derive fundamental parameters of
+dance mapping algorithms.                                       α2 CVn. Modifications of the MDI code, determination of
+    The most promising tool for an accurate modelling of        the projected stellar rotational velocity and a description
+the stellar magnetic fields and related surface structures is   of the DI results are given in Sect. 4. The paper ends with
+magnetic Doppler Imaging (MDI) based on a direct inver-         the Discussion (Sect. 5), where we compare our results
+sion of a time-series of high-resolution Stokes profiles. In    with the outcome of the theoretical diffusion calculations
+Piskunov & Kochukhov (2002, hereafter Paper I) we de-           and outline main advantages of the MDI technique over
+scribed the new MDI code INVERS10, aimed at the simul-          other modern methods of inferring the structure of the
+taneous and self-consistent recovery of the stellar magnetic    global stellar magnetic fields.
+field vector map and the distribution of the chemical abun-
+dance over the stellar surface. Our code incorporates the
+latest developments in polarized radiative transfer algo-       2. Observations and data reduction
+rithms, optimization and parallel computing methods. It is
+                                                                2.1. High-resolution Stokes I and V spectra
+the first DI code that uses the accurate numerical solution
+of the polarized radiative transfer equation and allows to      Spectropolarimetric observations of α2 CVn were ob-
+recover an arbitrary magnetic field distribution from the       tained in 1996–1998 with the SOFIN instrument at
+full Stokes vector datasets. Numerical experiments, pre-        the 2.56 m Nordic Optical Telescope (NOT). SOFIN is
+sented in our second paper (Kochukhov & Piskunov 2002,          a high-resolution échelle spectrograph, mounted at the
+hereafter Paper II), confirmed that, given high-quality         Cassegrain focus of NOT (Tuominen et al. 1999). It is
+422                          O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.
+
+equipped with three cameras providing different resolv-          Table 1. SOFIN observations of α2 CVn.
+ing powers. Spectra of α2 CVn were collected using the
+second camera, which allows to reach a resolution R =                           Dates                Number of   Range of
+λ/∆λ ≈ 80 000. Most observations were obtained with a                                                 spectra     S/N
+1152 × 298 pixel EEV CCD detector, allowing to register               26/10/1996–27/10/1996              4       170–220
+about 12 échelle orders, partially covering the range from           22/11/1996–01/12/1996             32       160–300
+4000 to 7000 Å. The length of an individual order depends
+                                                                      22/06/1997–27/06/1997             24       200–230
+on the wavelength, but is typically about 40 Å.
+    Left and right circularly polarized spectra were ac-              15/08/1997–22/08/1997             32       190–260
+quired with the Stokesmeter, similar to the one described             12/12/1997–25/12/1997             24       190–310
+by Plachinda & Tarasova (1999). It consists of an achro-              15/03/1998–20/03/1998             16       170–250
+matic (4000–6800 Å) rotateable quarter-wave plate, a                 02/07/1998–07/07/1998             24       160–190
+beam splitter, made of a calcite plate, and a fixed achro-
+matic quarter-wave plate on exit which converts the lin-
+early polarized light into circularly polarized light to avoid       An upper limit of the spurious Stokes V signal was
+linear polarized light attenuation on the échelle. The angle    estimated from the analysis of SOFIN circular polariza-
+of the rotatable quarter-wave plate on the entrance is con-      tion measurements of α Boo. This non-magnetic star was
+trolled by a stepping motor. The thickness of the calcite        observed during the same nights and using the same in-
+defines the image separation of 300 on the slit. The two cir-    strumental configuration as we used for α2 CVn. It was
+cularly polarized beams lead to two parallel spectra on the      found that the instrumental polarization never exceeded
+detector. Since the orders lie too close to each other on the    the statistical noise and was smaller than a few times 10−3 .
+CCD, the orders of the two stellar images would overlap.             We also obtained a few unpolarized spectra of sharp-
+Thus, the two beams had to be observed in separate ex-           lined non-magnetic Am and superficially normal A stars
+posures. For accurate circular polarization measurements         for the purpose of refining relative oscillator strengths of
+4 exposures of α2 CVn were usually obtained: each of the         spectral lines used in the magnetic DI.
+two beams was exposed twice with the quarter-wave plate              Table 1 gives a summary of our spectropolarimetric
+rotated by 90◦ in between. This allowed to minimize in-          observations. It lists the dates of the observing runs, the
+strumental effects caused by misalignments of the retarder       number of spectra obtained and the typical range of signal-
+axis relative to the calcite and the wavelength dependency       to-noise ratios of the individual left and right circularly
+of the retarder axis orientation. In the second image, taken     polarized spectra. Observations of α2 CVn were phased
+with the quarter-wave plate rotated by 90 ◦ , these instru-      according to the ephemeris of Farnsworth (1932):
+mental effects change sign, and can be cancelled by aver-
+aging the two images.                                            JD = 2419869.720 + 5.d 46939 · E,                          (1)
+    Since each beam is observed in a separate exposure,
+each image is a normal échelle spectrum, and no special         which refers to the phase of the maximum intensity of
+reduction technique had to be developed. All reductions          Eu ii spectral lines. 156 individual exposures of left and
+were done with the 4A software package (Ilyin 2000).             right circularly polarized beams were averaged to pro-
+The reduction included bias subtraction, pixels sensitiv-        duce 41 pairs of Stokes I and V spectra. Observations
+ity correction with the help of a master flat field image,       with phase differences less than 0.02 were further coadded.
+subtraction of the scattered light approximated by a 2D-         Wavelength settings were not identical in the 7 observing
+smoothing spline, and weighted extraction of the orders          runs listed in Table 1, and depending on the wavelength
+with the subsequent elimination of cosmic spikes. The            region we ended up using in the magnetic Doppler Imaging
+wavelength calibration was based upon two Th-Ar expo-            Stokes I and V profiles from 20 to 27 rotational phases.
+sures acquired before and after each stellar exposure and            To our knowledge, the SOFIN observations of α2 CVn
+made use of the whole set of comparison Th-Ar lines in           comprise the most extensive spectropolarimetric dataset
+all orders of the échelle frame.                                ever obtained for a magnetic CP star and the first sys-
+    The calibration also included corrections for small          tematic Stokes I and V stellar observations at such high
+shifts between the comparison spectra and the stellar im-        spectroscopic resolution. We note that the latter is indeed
+ages using telluric lines in several orders. This drift of the   required for Doppler imaging analyses of magnetic stars
+spectrograph reference frame is caused by the difference in      with ve sin i ≤ 20 km s−1 .
+setting the star on the slit, temporal variations of the see-
+ing and bending of the Cassegrain-mounted spectrograph
+                                                                 2.2. Hydrogen Balmer lines and spectrophotometry
+during the telescope movement, all resulting in a spurious
+shift of spectral lines from one exposure to the other. This     In addition to the high-resolution spectropolarimetry with
+effect leads to additional “instrumental” polarization ef-       SOFIN we obtained several unpolarized spectra of α2 CVn
+fect since each beam is exposed separately in time. Ilyin        with the MUSICOS échelle spectrograph at the 2.5 m
+& Duemmler (1999) discussed how these shifts can be cor-         Isaac Newton Telescope (INT). α2 CVn was observed dur-
+rected very accurately using sharp telluric features.            ing 4 nights in May 1999 using a 2048 × 2048 pixel CCD
+                             O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.                       423
+
+Table 2. MUSICOS observations of α2 CVn.                        α2 CVn flux distributions with rotational phase. In fact,
+                                                                the scatter of individual spectrophotometric scans around
+                   Date        Phase    S/N                     the mean value does not exceed 0.01–0.02 mag, which is
+                27/05/1999     0.399    220                     comparable with the observational uncertainty and accu-
+                28/05/1999     0.593    230                     racy of the theoretical fit.
+                29/05/1999     0.783    140
+                30/05/1999     0.957    120                     3. Fundamental stellar parameters
+                                                                As a starting point, we adopted the atmospheric parame-
+                                                                ters of α2 CVn from the recent study of Ryabchikova et al.
+detector, which allowed us to record 91 échelle orders cov-    (1999), who found Teff = 11 500 K and log g = 4.0. Using
+ering the spectral region 3500–9200 Å without gaps at the      these values of the effective temperature and surface grav-
+resolution R ≈ 30 000. Acquisition dates, corresponding         ity as the initial guess we then adjusted the stellar param-
+rotational phases of α2 CVn and S/N ratios are listed in        eters by fitting the hydrogen Balmer lines and the energy
+Table 2. MUSICOS spectra of α2 CVn were reduced using           distribution between 3390 and 7850 Å. All model atmo-
+standard échelle reduction procedures in the IRAF pack-        spheres and theoretical flux distributions were calculated
+age. We extracted hydrogen line profiles of the first three     with the ATLAS9 code of Kurucz (1993) using an opacity
+Balmer lines from these observations and analysed a few         distribution function with 10 times solar metal abundance.
+other spectral lines located in the wavelength regions, not     Piskunov & Kupka (2001) confirmed that abundance pe-
+covered by the SOFIN spectra.                                   culiarities typical for α2 CVn are sufficiently small to jus-
+    Accurate continuum normalization is crucial for the         tify the use of the models with scaled solar abundance
+analysis of hydrogen lines in the spectra of A-type stars.      table. In model atmosphere calculations we used a micro-
+Extraction of the Balmer lines from échelle observations       turbulent velocity of 4 km s−1 . Although real microturbu-
+is further complicated by the bell-like shape of the contin-    lent motions in the atmospheres of magnetic CP stars are
+uum in uncorrected échelle orders. Although we success-        probably inhibited by the strong magnetic field, we used
+fully used flat-field lamp exposures for removing pixel-        the enhanced microturbulence in the model atmosphere
+to-pixel variations of the CCD sensitivity as well as for       calculations in order to mimic an increase in overall line
+correcting fringing effects, we found that the shape of         opacity due to the magnetic intensification. On the other
+the blaze function in the flat-field spectra differed sub-      hand, zero microturbulence was used for the spectrum syn-
+stantially from the observations of fast-rotating early-type    thesis calculations throughout this paper. Hydrogen line
+stars. Therefore, the continuum in the stellar spectra could    profiles were computed with the BALMER code (Peterson
+not be established using flat-field exposures. In order to      1969), modified to include the recent Stark broadening
+overcome this problem we constructed artificial flat fields     calculations by Stehlé (1994), instead of the Vidal et al.
+directly from the blaze function shape of the stellar ex-       (1973) Stark broadening tables.
+posures. Assuming that the relation between the blaze               Around spectral class A0, the hydrogen lines reach
+shapes of consecutive échelle orders is a smoothly chang-      their maximum strength and are mostly sensitive to the
+ing function, we iteratively fitted 2D polynomials to the       surface gravity. We found that the first three Balmer lines
+continuum regions of all orders excluding those containing      in α2 CVn spectrum are well fitted with log g = 3.9 ± 0.1
+hydrogen lines. The continuum in the latter échelle orders     (see Figs. 1a-c), with Hα indicating slightly larger surface
+was subsequently determined by interpolation. Further de-       gravity than Hβ and Hγ. The surface gravity obtained in
+tails about the procedure of the continuum determination        our study is in good agreement with the other recent spec-
+in the échelle spectra will be presented in our forthcoming    troscopic determination by Žižňovský & Zverko (1995),
+paper (Barklem et al. 2002).                                    who found log g = 3.8 from the Hβ profile of α2 CVn.
+    Careful comparison of the shapes of the Balmer lines in         The flux distribution of α2 CVn, in particular the size
+α2 CVn spectra obtained at different rotational phases did      of the Balmer jump, is a useful indicator of the effective
+not reveal any changes that would exceed the noise level of     temperature. Using the average flux distribution extracted
+our observations. Therefore, we used the average of all four    from the Adelman et al. (1989) catalogue we derived
+MUSICOS spectra in deriving atmospheric parameters of           Teff = 11 600 ± 150 K. Figure 1d compares the observed
+α2 CVn (Sect. 3).                                               and theoretical spectrophotometry. The overall shape of
+    29 spectrophotometric scans of α2 CVn were extracted        the energy distribution is fitted fairly well. The remaining
+from the catalogue of Adelman et al. (1989). These ob-          discrepancies between observations and theoretical predic-
+servations typically contain between 15 and 21 spectral         tions in the region between the Balmer jump and Hγ and
+points in the 3390–7850 Å wavelength region. All scans         redwards of Hα are probably due to the missing blue and
+are normalized to the stellar magnitude at λ 5000 Å. Since     ultraviolet line opacity and the difference between the real
+we were primarily interested in using the flux distribu-        α2 CVn abundance table and the scaled solar metal abun-
+tion for refining the atmospheric parameters of α2 CVn,         dance assumption of the Kurucz’s ODFs.
+we averaged all the scans. This approach was justified by           The helium abundance is effectively another atmo-
+the absence of any systematic variations of the normalized      spheric parameter in a model atmosphere analysis of the
+424                           O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.
+
+
+
+
+Fig. 1. The comparison between the observed and the computed hydrogen Hα, Hβ and Hγ spectral lines (panels a–c), respec-
+tively). The thick solid lines correspond to the profiles calculated with Teff = 11 600 K and log g = 3.9, while the dashed lines
+illustrate the effect of changing the surface gravity by ±0.2 dex. The lower right panel d) compares observed (triangles) and com-
+puted (lines) spectrophotometry. The thick solid line shows the energy distribution predicted by the model with Teff = 11 600 K
+and log g = 3.9, the dashed lines illustrate the effect of changing the effective temperature by ±200 K.
+
+
+chemically peculiar stars. Auer et al. (1966) showed that         extreme He-poor nature of this prototype magnetic star.
+as long as a model atmosphere’s hydrostatic stratification        We found that absorption features at the position of the
+is concerned, a change in He concentration is equivalent          He i line are much narrower than stellar spectral lines and
+to a change in surface gravity. In other words, the spec-         are almost entirely due to telluric lines. Further compari-
+troscopic gravity derived under the assumption of a solar         son of our observations with the telluric atlas by Wallace
+He content must be corrected if the star is found to pos-         et al. (2000) strengthened this conclusion. Helium is de-
+sess an anomalous He abundance. This has recently been            pleted in the α2 CVn atmosphere by at least 3 orders of
+confirmed by Leone & Manfrè (1997) in the analysis of            magnitude with respect to the normal stellar He content:
+He-weak late B stars. These authors illustrated how in-           log(NHe /Ntot ) ≤ −4.05. We derived the He abundance
+correct abundance assumptions could lead to large errors          from the average of 4 α2 CVn spectra acquired at distinct
+in the surface gravity derived from Balmer lines. Having          rotational phases. Thus an extreme He deficiency is likely
+this problem in mind we examined the MUSICOS spectra              to be characteristic for the whole α2 CVn surface. After
+of α2 CVn in the regions containing the strongest He i lines      the correction for the peculiar He abundance (see Auer
+at λ 4026, 4471 and 5876 Å. The latter He i absorption fea-      et al. 1966) our estimate of the α2 CVn spectroscopic grav-
+ture turned out to be the most suitable for the abundance         ity becomes log g = 4.02 ± 0.10.
+determination because of the lack of blending by lines of             The effective temperature and surface gravity that we
+iron-peak and rare-earth elements. The comparison be-             determined for α2 CVn correspond to the atmospheric
+tween non-magnetic synthetic spectra computed with the            structure averaged over the stellar disk and rotational
+SYNTH code (Piskunov 1992) and the average MUSICOS                period. Abundance spots and magnetic field can substan-
+spectrum of α2 CVn (see Fig. 2) led to the discovery of an        tially modify the local atmospheric structure. Modelling
+                                   O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.                          425
+
+
+
+
+Fig. 2. The comparison between observations in the region of
+the He i 5876 Å line (histogram) and synthetic stellar spectra       Fig. 3. The position of α2 CVn in the H-R diagram is com-
+(dotted lines) of α2 CVn generated for the range of He abun-          pared with the model evolutionary tracks of Schaller et al.
+dance from the solar value ([He/H] = 0.0) down to 0.1% of the         (1992), computed for solar metallicity and masses M = 2.5,
+solar He content ([He/H] = −3.0). The solid line shows a part         3.0, 3.5 and 4.0 M . The dashed line shows the isochrone for
+of the telluric spectrum extracted from the atlas of Wallace          log(Age) = 8.145.
+et al. (2000). This spectrum has been broadened to match the
+resolution of the MUSICOS observations.
+                                                                      Table 3. Basic physical properties of α2 CVn.
+
+of this phenomenon is outside the scope of our study,
+                                                                                         Teff (K)    11600 ± 150
+but nevertheless we note that with the observational data
+available to us, we do not see a clear evidence for a rota-                              log g       4.02 ± 0.10
+tional modulation of the Balmer lines or the shape of the                                L/L         100.7 ± 5.5
+flux distribution that could be parameterized with a phase                               R/R         2.488 ± 0.094
+dependent effective temperature and/or surface gravity.                                  M/M         3.010 ± 0.065
+Thus, our atmospheric parameters are adequate through                                    log (Age)   8.145 ± 0.075
+the whole rotational period of α2 CVn. Furthermore, the
+absence of any strong rotational variability of the hydro-
+gen lines or dramatic changes of the shape of the flux dis-           log(L/L ) = 2.003 ± 0.024 and R/R = 2.488 ± 0.094.
+tribution suggests that local variations of the atmospheric           The radius derived for α2 CVn is formally consistent with
+structure have only a minor contribution to the rotational            R/R = 3.13 ± 0.70 obtained by Shallis et al. (1985) from
+modulation of the metal lines. Therefore, we do not expect            the Infrared Flux Method. We note, however, that Shallis
+the abundance and magnetic field maps reconstructed for               et al. used a too small effective temperature for α2 CVn,
+α2 CVn in Sect. 4 to be severely affected by the local de-            Teff = 10 850 K, thus their stellar radius was somewhat
+partures from the average atmospheric stratification that             overestimated. Babu & Shylaja (1981) adopted a more re-
+we adopted.                                                           alistic temperature in the Infrared Flux Method. Their
+    Gómez et al. (1998) determined the absolute visual               estimate of the α2 CVn radius, corrected for the improved
+magnitude of α2 CVn, Mv = 0.3, using the Hipparchos                   parallax by Shallis et al. (1985), is R = 2.4 R and agrees
+parallax π = 29.60 ± 1.04 mas (ESA 1997). Applying a                  better with our determination.
+bolometric correction (Flower 1996) corresponding to the                  The stellar rotational period P , the radius R, the incli-
+effective temperature of α2 CVn we get the bolometric                 nation of the rotational axis i and the projected rotational
+magnitude Mbol = −0.297 ± 0.059. Effective temperature                velocity ve sin i are related via the equation:
+and bolometric magnitude are connected with the stellar
+                                                                                P ve sin i R
+luminosity and radius by the following relations:                     sin i =                ,                                    (4)
+                                                                                 50.613 R
+                  Mbol − Mbol
+log(L/L ) = −                                                   (2)   where the rotational period is measured in days and the
+                      2.5                                             rotational velocity in km s−1 . Adopting P = 5.d 46939 and
+and                                                                   using the projected rotational velocity ve sin i = 17.4 ±
+                 1/2           −2                                 0.5 km s−1 , determined in Sect. 4.2, we find i = 49.◦ 1 ± 3.◦ 1
+              L            Teff
+R/R =
+              L
+                                        ,                       (3)   (or, equivalently, i = 130.◦ 9 ± 3.◦ 1). This value is in excel-
+                           Teff
+                                                                      lent agreement with an inclination angle i = 50◦ that was
+where L , Mbol and R are the solar luminosity, bolomet-               derived in earlier detailed studies of the α2 CVn surface
+ric magnitude and radius. From Eqs. (2) and (3) we obtain             structures (e.g. Pyper 1969; Khokhlova & Pavlova 1984).
+426                         O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.
+
+    The fundamental stellar parameters determined in this      non-axisymmetric non-linear quadrupole B q (Landolfi
+section allow us to uniquely locate the position of α2 CVn     et al. 1998). Due to this general quadrupole component
+in the theoretical H-R diagram. The comparison between         the second order multipolar model defines a large fam-
+our values of stellar luminosity and effective temperature     ily of global magnetic fields, many of those having rather
+and the predictions of the Schaller et al. (1992) evolu-       complicated topology (e.g. Bagnulo & Landolfi 1999).
+tionary tracks is presented in Fig. 3 and yields a stel-       However, in the magnetic DI of α2 CVn we want to
+lar mass M = 3.010 ± 0.065 M and an age log(Age) =             avoid solutions with unnecessary strong quadrupole com-
+8.145 ± 0.075 yrs. Thus, α2 CVn is a middle age star with      ponents. We choose to find a magnetic field topology giv-
+about 40% of the main sequence lifetime behind.                ing a good fit to the observed Stokes I and V profiles, but
+    From the relation between the surface gravity and the      containing the least possible quadrupole contribution. In
+stellar mass,                                                  other words, we would like to retain some smoothness or
+                                                               simplicity constraints, similar to that the Tikhonov regu-
+log g = log g + log(M/M ) − 2 log(R/R ),                 (5)   larization imposes. A general form of the multipolar regu-
+we get log g = 4.13 ± 0.04. This value is slightly larger      larization introduced in Paper I encourages the magnetic
+than the spectroscopic surface gravity. If real, this dis-     distribution to be close to a multipolar topology, but not
+crepancy can indicate the modification of the hydrostatic      necessarily to the simplest one. An essential modification
+equilibrium in the stellar atmosphere by an outward di-        of the multipolar regularization procedure can be achieved
+rected Lorentz force induced by the global magnetic field      by using unequal weights for dipole and higher multipolar
+of α2 CVn (Stȩpień 1978).                                    components in constructing a model multipolar field:
+    In Table 3 we summarize all fundamental stellar pa-        B model = B d + αq B q + ...,                            (6)
+rameters of α2 CVn derived in our study.
+                                                               where the coefficients α scale higher multipoles by their
+4. Magnetic and abundance mapping                              increasing complexity or decreasing smoothness relative to
+                                                               that of a dipole. Smoothness of a multipolar component
+4.1. Magnetic DI strategy                                      can be conveniently assessed by, for example, computing
+                                                               its Tikhonov regularization functional T . Thus, we select
+Our magnetic DI code INVERS10 was originally developed
+                                                               the coefficients α in such a way that they equalize the
+for the MDI based on high-resolution observations in all
+                                                               Tikhonov functionals of all multipolar components of a
+four Stokes parameters. In this case the MDI problem has
+                                                               model field B model :
+a unique solution and the role of regularization reduces
+to ensuring a numerical stability and a smooth conver-         αi = T (B d )/T (B i ).                                  (7)
+gence. However, when observations are limited to circular
+polarization only, the magnetic inversion becomes intrin-      We note, that this Tikhonov regularization is computed
+sically non-unique and therefore a proper choice of reg-       for a normalized magnetic distribution. Thus, it is the
+ularization directly affects the solution. Careful analysis    magnetic field topology, but not its absolute strength, that
+of the role of regularization in the magnetic DI (Paper I)     matters. For the particular case of the imaging of α2 CVn
+and extensive numerical tests conducted in Paper II sug-       we found αq ≃ 0.5. This parameter changes very little
+gested that a modified version of our code can be also         during the iterative inversion process.
+applied to the MDI of the magnetic CP stars based on               Another important modification introduced in our
+Stokes I and V profiles alone. This is achieved by intro-      MDI code concerns fitting measurements of the disk-
+ducing a new type of regularization function, the mul-         average line-of-sight magnetic component – the mean lon-
+tipolar regularization. Unlike conventional Tikhonov and       gitudinal field. Until now, the longitudinal field was by
+Maximum Entropy regularization algorithms, which im-           far the most common observable used in determining the
+pose very general smoothness and informational criteria        magnetic geometry of CP stars. It is measured either pho-
+on an inverse problem solution, the multipolar regular-        topolarimetrically, from the wings of the hydrogen Balmer
+ization constrains the magnetic image by demanding its         lines (Landstreet et al. 1975), or directly from the Stokes V
+proximity to a best-fit multipolar field B model . The lat-    profiles of individual metal lines (Mathys 1991). The latter
+ter is evaluated during each iteration by expanding the        method also allows to obtain other magnetic field observ-
+current approximation of the stellar field into spherical      ables, but it has the disadvantage of being affected by a
+harmonics up to the second order. The discrepancy mea-         non-uniform surface abundance distribution of chemical
+sure between the current field and the best-fit multipolar     elements. As a result, the phase variation of the longitudi-
+field is scaled by the corresponding regularization param-     nal field measured from metal lines is modulated by both
+eter and added to the total discrepancy function, which        the magnetic field and the non-uniform sampling of the
+also contains χ2 of the fit to the observed Stokes profiles    stellar disk due to abundance spots. On the other hand,
+and other regularization functionals.                          the longitudinal field inferred from the wings of Balmer
+    The second order multipolar expansion used in our          lines is free from this problem, because one can safely
+code is equivalent to the approximation of the stellar         assume hydrogen to be distributed homogeneously over
+magnetic field by a superposition of a dipole B d and          the stellar surface. Therefore, it is rather straightforward
+                                O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.                           427
+
+                                                                       field topology. Nevertheless, we showed that these spu-
+                                                                       rious solutions have significantly higher χ2 of the fit to
+                                                                       the observed Stokes profiles. This degradation of the fit
+                                                                       quality is most clear for Stokes I spectra and can be
+                                                                       used to select the optimal ve sin i. In order to determine
+                                                                       ve sin i of α2 CVn we reconstructed the magnetic field dis-
+                                                                       tribution and the chromium abundance map using 6 Cr ii
+                                                                       spectral lines and adopting different rotational velocities.
+                                                                       Figure 4 shows the resulting plot of the total deviation
+                                                                       for the Stokes I profiles versus ve sin i. From a parabolic
+                                                                       fit to the points around the apparent minimum we deter-
+                                                                       mined ve sin i = 17.4 ± 0.5 km s−1 . This value is identical
+                                                                       to the rotational velocity adopted in previous DI analy-
+                                                                       ses of α2 CVn (Khokhlova & Pavlova 1984; Glagolevskij
+                                                                       et al. 1985) and agrees fairly well with the ve sin i found
+                                                                       in several recent spectrum synthesis studies of this star
+                                                                       (Ryabchikova et al. 1999; Takeda et al. 1999).
+
+Fig. 4. The quality of the fit to Cr ii Stokes I profiles is plotted
+against ve sin i. The solid curve shows the parabolic fit to the       4.3. Magnetic field geometry and surface distributions
+values between 16 and 19 km s−1 . The vertical solid line corre-            of Si, Cr, Fe
+sponds to the optimal ve sin i = 17.4 km s−1 , while the vertical
+dashed lines illustrate our estimate of the error in the derived       We reconstructed the silicon abundance distribution and
+projected rotational velocity.                                         the magnetic field geometry using two unblended Si ii
+                                                                       spectral lines at λ 5957.56 and 5978.93 Å. A total of 20 ro-
+                                                                       tational phases was available for mapping in this spectral
+to model photopolarimetric magnetic measurements and                   region. Table 4 gives the atomic parameters of the Si ii
+they can be used in combination with the high-resolution               lines and other transitions that we used for the magnetic
+Stokes I and V data in the magnetic inversion. In practice,            DI. All atomic parameters were extracted from the VALD
+we fit photopolarimetric field measurements B`obs by eval-             database (Kupka et al. 1999) unless otherwise noted be-
+uating the theoretical disk-average line-of-sight magnetic             low. Landé factors of the lower and upper levels of the
+component B`calc and adding the total weighted deviation               Si ii lines were not listed in VALD, and we estimated
+measure between the observed and computed longitudinal                 these parameters using the LS-coupling approximation.
+field,                                                                 The Zeeman splitting patterns and relative strengths of
+         X                                                             the magnetic components were computed for all spectral
+R` = Λ`     (B`calc − B`obs )2 /σ2 (B`obs ),            (8)            lines with the help of exressions given in Sobelman (1979)
+           i
+                                                                       and using the Landé factors and J quantum numbers spec-
+to the total discrepancy function. Here σ(B`obs ) represents           ified in Table 4.
+an accuracy of the individual photopolarimetric observa-                    The surface distribution of silicon and the magnetic
+tions and Λ` is a scalar, controlling the contribution of the          field map recovered from the variations of the Si ii lines
+functional R` to the total discrepancy function, which is              are presented in Fig. 8. This figure and Fig. 11 show the
+minimized by INVERS10. As before (see Papers I and II),                abundance distribution and the magnetic field structure
+we select Λ` is such a way, that at the convergence the                in the spherical projection. Figure 12 also gives an alter-
+contributions of all functionals would be approximately                native cylindrical equidistant projection of all abundance
+equal.                                                                 maps obtained in our study. The comparison between ob-
+    In all magnetic inversions presented in this paper we              served and computed Stokes I and V profiles of the two
+used the α2 CVn magnetic measurements collected by                     Si ii lines is shown in Fig. 5. At the top of each Stokes I
+Borra & Landstreet (1977) using a Hβ magnitometer.                     and V panel of this figure, as well as Figs. 6, 7 and 10,
+These authors obtained 21 longitudinal field observations              we quote mean deviation δ of the final fit to the observed
+with an accuracy ranging from 55 to 290 Gauss.                         spectra. INVERS10 typically achieved δ ≈ 0.4−0.6% in all
+                                                                       Doppler inversions, while one would expect δ ≈ 0.3% from
+                                                                       the average quality of the spectra employed for DI. This
+4.2. Stellar rotational velocity                                       remaining discrepancy can be attributed primarily to un-
+In Paper II we found that, similar to the conventional                 recognized blends and also to errors in atomic parameters
+temperature and abundance DI, the magnetic inversion                   and in continuum normalization.
+is sensitive to the adopted projected rotational velocity.                  The variations of the Stokes I and V parameters of the
+Moderate errors in ve sin i can lead to the appearance                 Si ii lines are consistent with a dipole-like magnetic field
+of spurious abundance patterns and distort the magnetic                geometry. We used the second order weighted multipolar
+428                            O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.
+
+                                                                     Table 4. Atomic parameters of the spectral lines used in mag-
+                                                                     netic DI of α2 CVn.
+
+
+                                                                            λ (Å)   El (eV) log (gf )    Jl    gl   Ju    gu
+
+                                                                                                  Cl ii
+                                                                          4819.480    13.375     0.064    2.0 2.00 1.0 2.50
+                                                                          4819.756    15.679    −0.790    4.0 1.25 4.0 1.25
+                                                                                                  Si ii
+                                                                          5957.559    10.067    −0.301    0.5 0.67 0.5 2.00
+                                                                          5978.930    10.074     0.004    1.5 1.33 0.5 2.00
+                                                                                                  Ti ii
+                                                                          5381.015     1.566    −1.970    1.5 0.80 2.5 0.87
+                                                                                                  Cr ii
+                                                                          4812.337     3.864    −1.960    3.5 1.25 4.5 1.34
+                                                                          4824.127     3.871    −0.970    4.5 1.34 4.5 1.34
+                                                                          4836.229     3.858    −1.960    2.5 1.03 3.5 1.25
+                                                                          5274.964     4.071    −1.290    3.5 1.24 3.5 1.25
+                                                                          5279.876     4.073    −1.536    4.5 1.33 3.5 1.25
+                                                                          5280.054     4.074    −2.011    2.5 1.03 3.5 1.25
+                                                                                                  Fe ii
+                                                                          5026.806    10.308    −0.222    3.5 1.43 2.5 1.49
+                                                                          5035.708    10.288     0.606    4.5 1.45 5.5 1.38
+                                                                          5045.114    10.308    −0.134    3.5 1.43 2.5 1.29
+                                                                          5260.259    10.419     1.069    6.5 1.38 7.5 1.33
+                                                                          5387.063    10.522     0.518    5.5 1.27 6.5 1.29
+                                                                          5405.099    10.562    −1.010    4.5 1.18 4.5 1.24
+                                                                          5405.106    10.560    −0.268    0.5 0.00 1.5 1.37
+                                                                          5405.663    10.523    −0.435    2.5 1.29 2.5 1.18
+                                                                          5543.955     5.571    −3.095    2.5 0.86 1.5 1.14
+                                                                          5544.196    10.623    −0.230    2.5 0.58 3.5 1.20
+                                                                          5544.763    10.522     0.117    5.5 1.27 5.5 1.26
+                                                                                                 Nd iii
+                                                                          4927.420     0.461    −0.861    7.0 1.18 7.0 1.18
+                                                                          4942.580     0.632    −1.180    8.0 1.25 7.0 1.12
+                                                                          5677.120     0.632    −1.421    8.0 1.25 7.0 1.15
+
+
+
+                                                                     expansion (see Paper I) to characterise the global proper-
+                                                                     ties of the magnetic images produced by INVERS10. This
+                                                                     analysis showed that the magnetic field, reconstructed us-
+                                                                     ing the Si ii lines, was close to a superposition of a dipole
+                                                                     with the polar strength Bd = 6.14 kG and orientation
+                                                                     βd = 107.◦ 5 and γd = 186.◦ 5 (see Paper I for the detailed
+                                                                     explanation of the multipolar parameterization that we
+Fig. 5. The comparison between observed (dots) and com-              use) and a weak quadrupole component (Bq = 1.18 kG).
+puted (lines) Stokes I and V profiles of the Si ii spectral lines.   The silicon abundance distribution is dominated by the
+Spectra for the consecutive rotational phases are shifted in the     two spots of Si overabundance (log(NSi /Ntot ) ≈ −3.0)
+vertical direction. Rotational phases are indicated in the col-      located at longitudes1 l = 90◦ and 300◦ and latitude
+umn to the right of the Stokes I panel. The bars at the lower
+                                                                       1
+left corner of each panel correspond to 1 Å and 5% of the Stokes        Similar to Papers I and II we count stellar longitudes l
+I continuum intensity. The number in brackets at the top of          from 0◦ to 360◦ in the direction of the stellar rotation. Phase
+each panel quotes mean deviation relative to the continuum           zero corresponds to l = 0◦ . Latitudes b change between −90◦
+between observations and spectrum synthesis.                         at the invisible rotational pole up to +90◦ at the visible pole.
+                             O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.                          429
+
+b ≈ 30◦ . These spots merge at high stellar latitudes form-      Table 5. Parameters of the second order multipolar expansion
+ing a semi-ring of Si overabundance around the negative          of the magnetic maps. Polar strengths of the multipole com-
+magnetic pole. A secondary bipolar area of silicon en-           ponents are given in kG, while angles specifying orientation of
+hancement is located closer to the positive magnetic pole        the multipole axes are measured in degrees.
+between longitudes l = 140◦ and 240◦ . These two spots
+possibly belong to a ring-like structure encircling the pos-                      Si ii   Cr ii      Fe ii    Average
+itive magnetic pole.                                                      Bd     6.14      6.36      6.05     6.18 ± 0.16
+    The chromium distribution was reconstructed simulta-                  βd    107.5     109.7   105.3      107.5 ± 2.2
+neously with the magnetic field map using four unblended                  γd    186.5     189.7   185.1      187.1 ± 2.4
+Cr ii lines and a blend of two Cr ii spectral features.
+                                                                          Bq     1.18      1.28      0.78     1.08 ± 0.26
+Table 4 gives the atomic data for these transitions. For
+                                                                          βq1    89.8      89.0      91.6     90.1 ± 1.3
+the Cr ii lines from the 30th multiplet (λ 4812.34, 4824.13
+and 4836.23 Å) accurate astrophysical oscillator strengths               γq1    58.8      55.8      51.9     55.5 ± 3.5
+were derived by Sigut & Landstreet (1990) and are avail-                  βq2    86.2      97.4      99.8     94.5 ± 7.3
+able via VALD. The oscillator strengths of the other Cr ii                γq2   325.2     326.0   318.9      323.4 ± 3.9
+lines were verified by the comparison between spectrum
+synthesis calculations and observations of the mildly pe-
+culiar non-magnetic A stars o Peg and 41 Peg. We found           magnetic inversion. Figure 8 presents the resulting iron
+it necessary to increase log(gf ) of the Cr ii 5279.88 Å line   distribution and a map of the magnetic field geometry.
+from −2.100 given in VALD to −1.536. In the Doppler              The iron map is also shown in Fig. 12 in the pseudo-
+Imaging based on the Cr ii lines belonging to the 30th           Mercator projection. The comparison between observed
+multiplet and other transitions of ionized chromium we           and computed Stokes I and V profiles of the Fe ii spectral
+used, respectively, 24 and 27 rotational phases.                 lines is given in Fig. 7.
+    Figure 8 shows chromium abundance map and mag-                   The magnetic map derived from the Fe ii lines was
+netic field distribution recovered from the variations of        found to be close to a dipole (Bd = 6.05 kG, βd = 105.◦ 3,
+Stokes I and V profiles of the six Cr ii lines. These maps       γd = 185.◦ 1) with a minor quadrupole contribution (Bq =
+suggest that, similar to the inversion based on the Si ii        0.78 kG). The iron distribution on the surface of α2 CVn
+lines, the rotational modulation of the Cr ii spectral lines     resembles that of chromium, but has less contrast. Two
+is consistent with a magnetic topology dominated by a            iron spots (log(NFe /Ntot ) ≈ −2.0) are located at longi-
+dipole contribution. This is confirmed by the second or-         tudes l = 80◦ and 300◦ and latitude b = 15–30◦. A sec-
+der multipolar expansion of the final magnetic map, from         ondary group of iron spots at l = 150◦ and 220◦ have com-
+which we obtained Bd = 6.36 kG, βd = 109.◦ 7, γd = 189.◦ 7       parable areas, but lower iron abundance (log(NFe /Ntot ) ≈
+and Bq = 1.28 kG. The chromium abundance image (see              −2.8). These surface features form a semicircle around the
+Figs. 8 and 12) is characterized by the two large spots of       negative magnetic pole with a radius smaller than that of
+enhanced abundance (log(NCr /Ntot ) ≈ −3.8), which are           the similar chromium structure.
+located roughly at the intersection of the stellar rotational        As it was explained in Sect. 4.1, in addition to fit-
+equator and magnetic equator (l = 90◦ and 280◦ ) and             ting high-resolution Stokes I and V profiles, our mag-
+are elongated in the latitude direction. A smaller pair of       netic DI code modells photopolarimetric Balmer line mea-
+spots is located near the positive magnetic pole (l = 140◦       surements of the disk-average longitudinal magnetic field.
+and 230◦ ) and are connected by a semicircle of chromium         Figure 9 compares the observations by Borra & Landstreet
+overabundance, suggesting that we actually see a ring of         (1977) with the predictions of magnetic models, derived
+chromium around the positive magnetic pole. In contrast,         from fitting the Si ii, Cr ii and Fe ii lines. All three mag-
+the area around the negative magnetic pole shows depleted        netic distributions provide equally good fits to the existing
+Cr abundance (log(NCr /Ntot ) ≈ −6.5).                           photopolarimetric longitudinal field measurements.
+    The observed and computed Stokes I and V profiles                Table 5 summarizes the parameters of the second or-
+of the Cr ii lines are compared in Fig. 6. In addition, in       der multipolar fit to the magnetic distributions derived
+this figure we show the effect of neglecting the magnetic        from the Si ii, Cr ii and Fe ii spectral lines. In addition to
+field in synthesizing the variations of the unpolarized spec-    this table, the upper panels in Fig. 12 show rectangular
+tral lines and the errors in synthetic circular polarization     maps of the algebraic average of the radial, meridional and
+profiles due to the assumption of a homogeneous Cr dis-          azimuthal components of the magnetic field vector distri-
+tribution (log(NCr /Ntot ) = −5.49, which is the average         butions obtained from the lines of silicon, chromium and
+value derived from our Cr abundance map) instead of the          iron. The dipole and quadrupole parameters of the mag-
+true chromium surface map.                                       netic geometry obtained from the lines of different chem-
+    The reconstruction of the iron surface distribution and      ical elements agree very well. A comparison of the mul-
+magnetic field topology was based on the analysis of ten         tipolar expansion of the magnetic distributions suggests
+Fe ii lines from six wavelength regions (four unblended          that the magnetic DI is capable of estimating the polar
+Fe ii lines and two groups of Fe ii blends). Stokes I and        strength of the dominant dipole magnetic component with
+V profiles from 27 rotational phases were used in the            an accuracy better than 5%, while a likely error of the
+430                           O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.
+
+
+
+
+Fig. 6. The comparison between observed (dots) and computed (thick lines) Stokes I and V profiles of the Cr ii spectral lines.
+Spectra for the consecutive rotational phases are shifted in the vertical direction. Rotational phases are indicated in the column
+to the right of the Stokes I panel. The bars at the lower left corner of each panel correspond to 1 Å and 5% of the Stokes I
+continuum intensity. The thin lines in the Stokes V panel show circular polarization computed with the optimum magnetic field
+geometry, but homogeneous Cr abundance distribution. The thin lines in the Stokes I panel illustrate the effect of neglecting
+the magnetic field.
+                              O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.   431
+
+
+
+
+Fig. 7. The same as in Fig. 5, but for the Stokes I and V profiles of the Fe ii spectral lines.
+432                          O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.
+
+
+
+
+Fig. 8. The chemical abundance distributions and magnetic field geometries of α2 CVn derived from the Stokes I and V profiles
+of the Si lines (two upper rows), Cr lines (two middle rows) and Fe absorption features (two lower rows). The star is shown
+at 5 equidistant rotational phases, viewed at the inclination angle i = 49.◦ 1. Each of the three panels visualize an abundance
+distribution (the upper in each pair of rows) by the greyscale image and the vector magnetic field map (the lower in each pair
+of rows). On all magnetic maps the black arrows show field vectors pointing outside the stellar surface, while the grey arrows
+correspond to the vectors pointing inwards. The arrow length is proportional to the field strength.
+
+
+
+strength of the smaller quarupole contribution is limited       we believe that this weak deviation from a pure dipole field
+to 20%. At the same time, the angles specifying the dipole      structure is not an artifact of the inversion process, but
+and quadrupole orientations agree to within 10◦ . Magnetic      reflects real properties of the magnetic field of α2 CVn.
+inversion from the lines of different ions yielded very
+similar quadrupole strengths and orientations. Therefore,
+                               O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.                                 433
+
+
+
+
+Fig. 9. The comparison between photopolarimetric Balmer
+line measurements (symbols) and longitudinal field variations
+predicted by the magnetic distributions derived from the Si ii
+(dashed curve), Cr ii (dotted curve) and Fe ii (solid curve) spec-
+tral lines.
+
+4.4. Surface distributions of Cl, Ti and Nd
+The very rich spectrum of α2 CVn gives the possibility to
+produce detailed maps of the surface abundance distribu-
+tion of many more chemical species than we studied in
+the previous Section. In a number of earlier investigations
+(e.g. Burbidge & Burbidge 1955; Cohen 1970) much atten-
+tion has been given to the qualitative description of the
+variations of the α2 CVn spectral lines, but detailed anal-
+ysis was not feasible because the presence of the strong
+magnetic field could not be properly taken into account.
+With the magnetic field geometry determined in Sect. 4.3
+from the iron, silicon and chromium lines, we can now
+extend DI of α2 CVn to other chemical elements. In this
+analysis we used a fixed magnetic topology (the average of
+the three magnetic maps derived in Sect. 4.3) and recon-
+structed the surface distributions of chemical abundance
+using Stokes I spectra only. We note, that thorough multi-
+element abundance DI of α2 CVn is outside the scope of
+our paper and can be carried out more efficiently by using
+high-resolution unpolarized spectra, obtained with one of
+the numerous échelle spectrographs at medium size tele-
+scopes. In this study we limit ourselves to the analysis
+of the surface maps of a few particularly interesting ions:
+Cl ii, Ti ii and Nd iii.
+     Cohen (1970) noted that the lines of singly ionized
+chlorine behave very similar to the rare-earth spectral fea-
+tures: Cl ii lines reach their maximum intensity around              Fig. 10. The comparison between observed (dots) and com-
+phase 0.0 and are very weak at other rotational phases.              puted (lines) Stokes I profiles of the Cl ii, Ti ii and Nd iii spec-
+We confirmed this unexpected behaviour of the chlorine               tral lines. Spectra for the consecutive rotational phases are
+lines and mapped the Cl distribution on the surface of               shifted in the vertical direction. Rotational phases are indi-
+α2 CVn using the blend of the two Cl ii lines: λ 4819.48             cated in the column to the right of the Stokes I profiles. The
+                                                                     bar at the lower left corner corresponds to 1 Å and 5% of the
+and 4819.76 Å. A nearby Cl ii 4810.07 Å line shows a
+                                                                     Stokes I continuum intensity.
+similar variability pattern, but it is blended by an uniden-
+tified line of a rare-earth element (REE) and could not
+be used in abundance mapping. The VALD database does                 modelled, therefore we computed these essential parame-
+not contain the Landé factors of the Cl ii features that we         ters assuming LS-coupling.
+434                         O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.
+
+    We compare the observed and computed profiles of the        distribution differs substantially from a single spot surface
+Cl ii blend in Fig. 10, while the Cl surface map is presented   pattern, typical for singly ionized REE. The Nd iii image
+in Figs. 11 and 12. The chlorine distribution is dominated      is dominated by a spot of overabundance at l = 340◦ and
+by a large overabundance spot near the negative magnetic        b = 15◦ and a second smaller feature at the rotational
+pole (l = 10◦ , b = 30◦ ), where the local abundance reaches    equator and l = 50◦ . These two neodymium spots, in
+log(NCl /Ntot ) ≈ −1.8. In addition, a second area of the       which we find the Nd abundance log(NNd /Ntot ) ≈ −6.4,
+weaker chlorine concentration is visible at the opposite        are responsible for the asymmetric two-component struc-
+rotational phase (l = 190◦ ).                                   ture of the Nd iii line profiles at the phase of REE maxi-
+    Reconstruction of the titanium surface map was based        mum. In addition, a third area with not so prominent Nd
+on a single line, Ti ii 5381.02 Å. Figure 10 compares our      overabundance is located close to the positive magnetic
+observations of this line with the final fit achieved by        pole (l = 150−230◦).
+INVERS10. The Ti surface map is shown in the spheri-
+cal projection in Fig. 11 and in the cylindrical equidistant
+projection in Fig. 12. The titanium distribution is clearly     5. Discussion
+different from the abundance maps of other iron-peak el-        5.1. Horizontal diffusion models
+ements (Fe and Cr). It is characterized by a large spot
+located at the stellar equator and longitude l = 310◦, a        The magnetic DI of α2 CVn presented in this paper is
+second area of Ti overabundance at l = 30◦ and b = 20◦ ,        aimed at better understanding of the interplay between
+and a low contrast elongated Ti feature above the positive      the magnetic and abundance surface structures and hence
+magnetic pole.                                                  the mechanism of the horizontal and vertical chemical dif-
+    α2 CVn is famous for its dramatic changes of the REE        fusion in the magnetized stellar atmosphere. The magnetic
+line intensity. Earlier Fourier analysis studies (Pyper 1969;   and abundance surface maps, such as those presented in
+Falk & Wehlau 1974) and DI abundance mapping by                 Fig. 12, should be compared with detailed time-dependent
+Goncharskij et al. (1983) focused mostly on Eu ii together      theoretical diffusion calculations in order to identify pro-
+with other singly ionized REE lines and established a sim-      cesses governing the evolution of the surface abundance
+ple picture of the REE surface distibution, according to        distributions. Unfortunately, even the most recent theo-
+which a single dominant spot of REE overabundance is            retical diffusion calculations are only able to grasp some
+located at or near the negative magnetic pole of α2 CVn.        general trends in chemical peculiarities of the magnetic
+It has become a general consensus that all rare-earth ele-      stars, but are not detailed enough to be useful for explain-
+ments (plus chlorine) in the atmosphere of α2 CVn follow        ing high-resolution DI surface abundance maps. We hope
+this pattern. In our spectroscopic material we also see nu-     that our investigation of α2 CVn and subsequent simulta-
+merous weak REE features appearing at phase 0.0, but            neous magnetic and abundance imaging of other strongly
+the limited wavelength coverage of our SOFIN observa-           magnetic CP stars will stimulate new more detailed and
+tions does not allow to identify any strong singly ionized      more sophisticated theoretical diffusion studies, and here
+REE lines suitable for the abundance DI. However, we            we only limit ourselves to the qualitative comparison of
+were able to identify a number of doubly ionized Nd ab-         our results with a few available predictions of the horizon-
+sorption features, of which Nd iii 4927.5 and 5677.1 Å ap-     tal diffusion models.
+peared particularly useful for mapping. Furthermore, we             Firstly, we note that all abundance maps that we de-
+noticed an unblended line at λ 4942.6 Å, that looked very      rived for α2 CVn show some degree of correlation with the
+similar to the Nd iii 4927.5 Å. The fact, that this feature    magnetic topology. The most clear examples are chlorine,
+is strong in Nd-rich cool Ap star 33 Lib and was identified     which is mostly concentrated near the negative magnetic
+as neodymium by Crosswhite (1976), suggests that this           pole, and chromium forming a ring around the positive
+line indeed belongs to Nd iii. One possibility would be a       magnetic pole. However the surface abundance distribu-
+transition with log(gf ) = −1.18 from the 5093.3 cm−1           tions cannot be reduced to a combination of rings and
+level to the predicted level at 25062.3 cm−1 (Bord 2000).       polar caps symmetric with respect to the magnetic field
+Parameters of the upper level are poorly known, which ex-       geometry. For example, the Ti as well as Nd maps are dom-
+plains the large discrepancy between the predicted wave-        inated by the two unequal spots located on both sides of
+length and the observed one. We tried to improve the            the negative magnetic pole, and all abundance distribu-
+relative agreement of the wavelengths of the three Nd iii       tions are characterized by the major overabundance areas
+lines by fitting the average α2 CVn spectrum. The result-       located roughly between latitudes b = 0◦ and b = 45◦ .
+ing wavelengths are listed in Table 4. At the same time, we     This hints that, in order to produce the observed sur-
+did not find it necessary to alter the oscillator strengths     face structures, the horizontal diffusion due to the mag-
+of these Nd iii lines with respect to the log(gf )s computed    netic field must be affected by some other phenomena.
+by Bord (2000) and distributed via VALD.                        One possibility would be an interaction between the mag-
+    The comparison between the observed and computed            netic field, mass loss and rotation. A weak stellar wind of
+profiles of the Nd iii lines is shown in Fig. 10 for 27 ro-     the order of 10−13 –10−15 M yr−1 and constrained by the
+tational phases. The neodymium surface map, presented           magnetic field was proposed by Babel & Michaud (1991)
+in Figs. 11 and 12, confirms our suspicion that the Nd iii      and Babel (1992) in order to explain the abundance maps
+                            O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.                      435
+
+
+
+
+Fig. 11. The same as in Fig. 8, but for the chemical abundance distributions of Cl (the upper row), Ti (the middle row) and
+Nd (the lower row).
+
+
+derived for 53 Cam by Landstreet (1988). On the other          Si enhancement along the magnetic equator has largely
+hand, from the studies of the mass loss from other types       disappeared and the element is concentrated in ring-like
+of stars we know that even low rotation rates could sig-       structures encircling the magnetic poles. We expect that
+nificantly modify the structure of the mass outflow (e.g.      after some (5–9)×108 years Si will form two overabun-
+Dorfi & Höfner 1996). Therefore, it seems not completely      dance areas close to the positions of the present magnetic
+inconceivable that the stellar wind confined by the mag-       poles.
+netic field and altered by the stellar rotation could play a       No general theoretical calculations of the horizontal
+role in creating the abundance patterns on the surface of      diffusion are available for the other chemical elements
+α2 CVn.                                                        studied in our paper (Cl, Ti, Cr, Fe and Nd).
+    Vauclair et al. (1991) examined He diffusion for main
+sequence magnetic stars with a dipolar magnetic field.         5.2. Magnetic DI versus other methods
+Their model predicts a strong helium underabundance at              of reconstructing stellar magnetic fields
+the magnetic equator, which is consistent with the factor
+of 103 He depletion discovered for α2 CVn in our study.        Currently the structure of the magnetic field on the sur-
+Vauclair et al. (1991) showed that a strong enough stel-       faces of CP stars is most often inferred from an analy-
+lar wind can prevent He depletion at the magnetic poles.       sis of the so-called magnetic field observables. These sur-
+Thus, within the framework of this He diffusion model,         face averaged magnetic field estimates typically include
+the absence of the He absorption at λ 5876 Å discussed in     the mean longitudinal magnetic field (Mathys 1991), the
+Sect. 3 sets an upper limit of ∼2 × 10−13 M yr−1 on the        mean magnetic field modulus (Mathys et al. 1997),
+rate of the possible mass loss of α2 CVn.                      the mean quadratic magnetic field (Mathys 1995a) and
+    The horizontal and vertical diffusion of silicon in the    the crossover (Mathys 1995b). These parameters are usu-
+presence of a global magnetic field received much atten-       ally derived from the medium resolution, low S/N mea-
+tion in the studies by Alecian & Vauclair (1981), Michaud      surements of the circular polarization and intensity of the
+et al. (1981) and Mégessier (1984). In the latter investi-    metallic absorption lines. For a few stars the net linear
+gation, the time-dependent surface distribution of Si was      polarization observations through a broadband filter are
+modelled, and silicon was found to be overabundant over        also available (Leroy 1995). A joint analysis of the mag-
+most of the stellar surface and to migrate from the mag-       netic observables (e.g. Bagnulo et al. 1999; Landstreet &
+netic equator towards the magnetic poles on time scales        Mathys 2000) usually assumes some form of a global mul-
+comparable with the lifetime on the main sequence. This        tipolar field parameterization and does not take into ac-
+picture agrees well with the Si map obtained in our study.     count any inhomogeneous surface distribution of chemi-
+α2 CVn has roughly a factor of 2 average Si overabun-          cal elements. Our study of the high-resolution, high S/N
+dance relative to the solar chemical composition, and for      Stokes I and V profiles of α2 CVn suggests that neglect-
+the intermediate age of α2 CVn we see that the initial         ing abundance spots in the interpretation of the magnetic
+436                          O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.
+
+
+
+
+Fig. 12. The cylindrical equidistant projection of the surface maps of the radial, meridional and azimuthal components of the
+vector magnetic distribution obtained by averaging the magnetic images, derived from the Si ii, Cr ii and Fe ii lines (the upper
+three panels). This average magnetic map is compared with the surface abundance distributions of singly ionized Cl, Si, Ti, Cr,
+Fe and doubly ionized Nd (the lower six panels). The solid curves shown on top of the abundance maps are the contours of
+equal radial field, plotted for the field values between −6 and 4 kG with a 2 kG step. The horizontal dotted line in each panel
+indicates the lowest visible latitude for the inclination angle i = 49.◦ 1 adopted in our study.
+
+
+
+measurements can severely affect field mapping. Figure 6         appear and are often erroneously interpreted as an evi-
+shows for the example of the Cr ii lines that abundance          dence for a strong quadrupolar contribution to the topol-
+non-uniformities have a strong effect on both the ampli-         ogy of the stellar magnetic fields. In this way a sim-
+tude and the shape of the Stokes V profiles. Similar con-        pleminded fit of the magnetic model consisting of an
+clusions have been reached by Wade et al. (2000b), who           aligned dipole and a linear quadrupole to the very accu-
+found a large discrepancy between the longitudinal field of      rate metallic line longitudinal field measurements reported
+α2 CVn derived from the iron and chromium lines and the          for α2 CVn by Wade et al. (2000b) yields Bq /Bd ≈ 2.5:
+Balmer line photopolarimetric measurements. The pres-            more than a factor of 10 increase in the ratio of quadrupole
+ence of abundance spots introduces an additional modu-           to dipole strength ratio in comparison with the results of
+lation in the phase curves of the magnetic observables ob-       our magnetic DI modelling (see Table 5)! Not surprisingly,
+tained from the metallic lines. As a result, non-sinusoidal      magnetic models built on the basis of an interpretation of
+variations of, for example, the mean longitudinal field          the magnetic observables affected by the chemical surface
+                              O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.                             437
+
+inhomogeneities fail when confronted with the high S/N             Babu, G. S. D., & Shylaja, B. S. 1981, Ap&SS, 79, 243
+observations in Stokes parameters (Bagnulo et al. 2001).           Bagnulo, S., Landolfi, M., & Landi Degl’Innocenti, M. 1999,
+    We suggest that much more caution should be ex-                    A&A, 343, 865
+ercised when interpreting magnetic observables inferred            Bagnulo, S., & Landolfi, M. 1999, A&A, 346, 158
+from the metallic lines. Complex and incoherent variations         Bagnulo, S., Wade, G. A., Donati, J.-F., et al. 2001, A&A, 369,
+                                                                       889
+of the magnetic observables with rotational phase may be
+                                                                   Barklem, P. S., Stempels, H. C., Allende Prieto, C., et al. 2002,
+indicative of abundance spots rather than hint on unusual
+                                                                       A&A, 385, 951
+magnetic geometry, especially when Balmer line photopo-            Bord, D. J. 2000, A&AS, 144, 517
+larimetry shows nearly sinusoidal variations of the longi-         Borra, E. F., & Landstreet, J. D. 1977, ApJ, 212, 141
+tudinal field and the star in question is a known spectrum         Burbidge, G. R., & Burbidge, E. 1955, ApJS, 1, 431
+variable. Clearly, the only way to verify the reliability of       Cohen, J. G. 1970, ApJ, 159, 473
+the magnetic models for such stars is to compare model             Crosswhite, H. 1976, private communication
+predictions with high-resolution spectra in several Stokes         Deutsch, A. 1958, in Electromagnetic Phenomena in Cosmical
+parameters. Furthermore, our study of α2 CVn demon-                    Physics, ed. B. Lehnert, IAU Symp. No. 6, 209
+strated that advances in the observational and modelling           Dorfi, E. A., & Höfner, S. 1996, A&A, 313, 605
+techniques make it possible to extract the full information        ESA 1997, The Hipparchos Catalogue, ESA SP-1200
+about the abundance and magnetic surface structures di-            Falk, A. E., & Wehlau, W. H. 1974, ApJ, 192, 409
+                                                                   Farnsworth, G. 1932, ApJ, 75, 364
+rectly from such spectropolarimetric observations.
+                                                                   Flower, P. J. 1996, ApJ, 469, 355
+    In conclusion we note, that magnetic Doppler Imaging           Glagolevskij, Yu. V., Piskunov, N. E., & Khokhlova, V. L. 1985,
+of α2 CVn presented in this paper was based exclusively                PAZh, 11, 371
+on high quality Stokes I and V observations. Further im-           Gómez, A. E., Luri, X., Grenier, S., et al. 1998, A&A, 336, 953
+provements of the quality of the magnetic imaging can be           Goncharskij, A. V., Ryabchikova, T. A., Stepanov, V. V.,
+achieved by modelling high S/N and high-resolution linear              Khokhlova, V. L., & Yagola, A. G. 1983, AZh, 60, 83
+polarization observations. We expect that using complete           Ilyin, I. V., & Duemmler, R. 1999, in Precise Stellar Radial
+Stokes vector datasets would make it possible to ease re-              Velocities, ed. J. B. Hearnshaw, & C. D. Scarfe, ASP Conf.
+strictions imposed by the multipolar regularization and                Ser., 185, 63
+possibly resolve finer details of the stellar surface mag-         Ilyin, I. V. 2000, Ph.D. Thesis, Oulu University
+netic distribution. It will also allow us to improve mag-          Khokhlova, V. L., & Pavlova, V. M. 1984, PAZh, 10, 377
+                                                                   Kochukhov, O., & Piskunov, N. 2002, A&A, 388, 868, Paper II
+netic reconstruction in the surface areas where magnetic
+                                                                   Kupka, F., Piskunov, N., Ryabchikova, T. A., Stempels, H. C.,
+field appears nearly tangential relative to the line-of-sight
+                                                                       & Weiss, W. W. 1999, A&AS, 138, 119
+during most of the rotational period. However, based on            Kurucz, R. 1993, CD-ROM, No. 13, Smithsonian Astrophys.
+numerical experiments of magnetic DI (Paper II), we con-               Obs.
+sider it quite unlikely that for relatively simple magnetic        Kuschnig, R., Ryabchikova, T. A., Piskunov, N. E., Weiss,
+geometry of α2 CVn incorporating Stokes Q and U spec-                  W. W., & Gelbmann, M. J. 1999, A&A, 348, 924
+tra in magnetic inversion would result in any significant          Landolfi, M., Bagnulo, S., & Landi Degl’Innocenti, M. 1998,
+changes of the global magnetic properties (i.e. parameters             A&A, 338, 111
+of the dipolar magnetic component) or would noticeably             Landstreet, J. D., Borra, E. F., Angel, J. R. P., & Illing,
+modify surface abundance maps.                                         R. M. E. 1975, ApJ, 201, 624
+                                                                   Landstreet, J. D. 1988, ApJ, 326, 967
+Acknowledgements. This work was supported by the Swedish           Landstreet, J. D. 1992, A&AR, 4, 35
+National Research Council. We would like to thank the Knut         Landstreet, J. D., & Mathys, G. 2000, A&A, 359, 213
+and Alice Wallenberg Foundation for contributing to the state-     Leone, F., & Manfrè, M. 1997, A&A, 320, 257
+of-the-art computing facilities at the Institute of Astronomy      Leroy, J. L. 1995, A&AS, 114, 79
+and Space Physics in Uppsala. We are also grateful to Eric         Mathys, G. 1991, A&AS, 89, 121
+Stempels and Paul Barklem for their assistance in obtaining        Mathys, G. 1995a, A&A, 293, 746
+and reducing MUSICOS data. We greatly appreciate the help          Mathys, G. 1995b, A&A, 293, 733
+by Rudolf Duemmler, whose numerous comments and correc-            Mathys, G., Hubrig, S., Landstreet, J. D., Lanz, T., &
+tions were very useful in improving the text of our paper.             Manfroid, J. 1997, A&AS, 123, 353
+    This research has made extensive use of the SIMBAD             Mégessier, C. 1984, A&A, 138, 267
+database, operated at CDS, Strasbourg, France.                     Michaud, G. 1970, ApJ, 160, 641
+                                                                   Michaud, G., Mégessier, C., & Charland, Y. 1981, A&A, 103,
+                                                                       244
+References                                                         Peterson, D. M. 1969, Smithsonian Astrophys. Obs. Spec. Rep.,
+Adelman, S. J., Pyper, D. M., Shore, S. N., White, R. E., &            293
+   Warren, W. H. 1989, A&AS, 81, 221                               Plachinda, S. I., & Tarasova, T. N. 1999, ApJ, 514, 402
+Alecian, G., & Vauclair, S. 1981, A&A, 101, 16                     Piskunov, N. E. 1992, in Stellar Magnetism, ed. Yu. V.
+Auer, L. H., Mihalas, D., Aller, L. H., & Ross, J. E. 1966, ApJ,       Glagolevskij, & I. I. Romanyuk, Nauka, St. Petersburg, 92
+   145, 153                                                        Piskunov, N., & Kupka, F. 2001, ApJ, 547, 1040
+Babel, J., & Michaud, G. 1991, ApJ, 366, 560                       Piskunov, N., & Kochukhov, O. 2002, A&A, 381, 736
+Babel, J. 1992, A&A, 258, 449                                      Pyper, D. M. 1969, ApJS, 18, 347
+438                          O. Kochukhov et al.: Doppler Imaging of stellar magnetic fields. III.
+
+Ryabchikova, T., Piskunov, N., Savanov, I., Kupka, F., &         Tuominen, I., Ilyin, I., & Petrov, P. 1999, in Astrophysics with
+    Malanushenko, V. 1999, A&A, 343, 229                               the NOT, ed. H. Karttunen, & V. Piirola, University of
+Schaller, G., Schaerer, D., Meynet, G., & Maeder, A. 1992,             Turku, Tuorla Observatory, 47
+    A&AS, 96, 269                                                Vauclair, S., Dolez, N., & Gough, D. O. 1991, A&A, 252, 618
+Shallis, M. J., Baruch, J. E. F., Booth, A. J., & Selby, M. J.   Vidal, C. R., Cooper, J., & Smith, E. W. 1973, ApJS, 25, 37
+    1985, MNRAS, 213, 307                                        Wade, G. A., Donati, J.-F., Landstreet, J. D., & Shorlin,
+Sigut, T. A., & Landstreet, J. D. 1990, MNRAS, 247, 611                S. L. S. 2000a, MNRAS, 313, 823
+Sobelman, I. I. 1979, Atomic Spectra and Radiative               Wade, G. A., Donati, J.-F., Landstreet, J. D., & Shorlin,
+    Transitions, Springer Series in Chemical Physics, vol. 1           S. L. S. 2000b, MNRAS, 313, 851
+    (Springer-Verlag, Berlin)                                    Wallace, L., Hinkle, K., & Livingston, W. 2000, An Atlas of
+Stehlé, C. 1994, A&AS, 104, 509                                       the Spectrum of the Solar Photosphere, NOAO
+Stȩpień, K. 1978, A&A, 70, 509                                 Žižňovský, J., & Zverko, J. 1995, Contrib. Astron. Obs.
+Stibbs, D. W. N. 1950, MNRAS, 110, 395                                 Skalnate Pleso, 25, 39
+Takeda, Y., Takada-Hidai, M., Jugaku, J., Sakaue, S., &
+    Sadakane, K. 1999, PASJ, 51, 961
+

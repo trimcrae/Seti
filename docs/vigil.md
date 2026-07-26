@@ -318,6 +318,20 @@ it *could* be fitted is reported at the top level of the field summary. A field
 too thin to measure a common mode produces uncorrected statistics, and that has
 to be visible, not assumed away.
 
+### 5.1a Throughput — one query, not four hundred
+
+Run 1's probe measured **~92 s for a single-star NEOWISE cone** (the `COUNT(*)`
+plus the query). At that rate a 400-star field exhausts a 3000 s budget after a
+few dozen stars, and scale is this programme's second priority after novelty. So
+the sweep issues **one cone over the whole field** (`fetch_neowise_field`, with a
+`W1 < 14.5` cut that bounds the row count without touching a G < 15 sample), and
+`group_neowise_by_star` assigns exposures to stars locally with a KD-tree —
+propagating each star's proper motion to the mission mid-epoch and widening its
+own match radius by half its mission-long sweep, so the grouping inherits the
+same PM correction the per-star path applies. Per-star cones remain as the
+fallback for whatever the field query misses, and a field-query failure is
+recorded in the ledger rather than silently degrading the coverage.
+
 ### 5.2 Proper motion
 
 NEOWISE spans 2014–2024; Gaia positions are at epoch 2016.0. A 200 mas/yr star

@@ -1,0 +1,2104 @@
+                                                  This draft was prepared using the LaTeX style file belonging to the Journal of Fluid Mechanics   1
+
+
+
+                                                    Finite-size evaporating droplets in weakly
+                                                   compressible homogeneous shear turbulence
+arXiv:2104.10184v3 [physics.flu-dyn] 9 Feb 2022
+
+
+
+
+                                                  Nicolò Scapin1 †, Federico Dalla Barba2 , Giandomenico Lupo1 , Marco
+                                                           Edoardo Rosti3 , Christophe Duwig4 , Luca Brandt1,5
+                                                    1
+                                                        Department of Engineering Mechanics, Royal Institute of Technology (KTH), Stockholm,
+                                                                                             Sweden,
+                                                         2
+                                                             Department of Industrial Engineering & CISAS, University of Padova, Padova, Italy,
+                                                    3
+                                                        Complex Fluids and Flows Unit, Okinawa Institute of Science and Technology Graduate
+                                                              University (OIST), 1919-1 Tancha, Onna-son, Okinawa 904-0495, Japan,
+                                                    4
+                                                        Department of Chemical Engineering, Royal Institute of Technology (KTH), Stockholm,
+                                                                                             Sweden,
+                                                        5
+                                                            Department of Energy and Process Engineering, Norwegian University of Science and
+                                                                               Technology (NTNU), Trondheim, Norway
+
+                                                                                  (Received xx; revised xx; accepted xx)
+
+
+                                                  We perform interface-resolved simulations of finite-size evaporating droplets in weakly
+                                                  compressible homogeneous shear turbulence. The study is conducted by varying three
+                                                  dimensionless physical parameters: the initial gas temperature over the critical tempera-
+                                                  ture Tg,0 /Tc , the initial droplet diameter over the Kolmogorov scale d0 /η and the surface
+                                                  tension, i.e. the shear-based Weber number, W eS .
+                                                  For the smallest W eS , we first discuss the impact on the evaporation rate of the
+                                                  three thermodynamic models employed to evaluate the gas thermophysical properties:
+                                                  a constant property model and two variable-properties approaches where either the gas
+                                                  density or all the gas properties are allowed to vary. Taking this last approach as reference,
+                                                  the model assuming constant gas properties and evaluated with the ”1/3” rule is shown
+                                                  to predict the evaporation rate better than the model where the only variable property
+                                                  is the gas density. Moreover, we observe that the well-known Frössling/Ranz-Marshall
+                                                  correlation underpredicts the Sherwood number at low temperatures, Tg,0 /Tc = 0.75.
+                                                  Next, we show that the ratio between the actual evaporation rate in turbulence and that
+                                                  computed in stagnant conditions is always much higher than one for weakly deformable
+                                                  droplets: it decreases with Tg,0 /Tc without approaching unity at the highest Tg,0 /Tc con-
+                                                  sidered. This suggests an evaporation enhancement due to turbulence also in conditions
+                                                  typical of combustion applications.
+                                                  Finally, we examine the overall evaporation rate and the local interfacial mass flux at
+                                                  higher W eS , showing a positive correlation between evaporation rate and interfacial
+                                                  curvature, especially at the lowest Tg,0 /Tc .
+
+                                                  Key words: finite-size, evaporating droplets, homogeneous shear turbulence, weakly
+                                                  compressible simulations.
+
+
+
+                                                                         † Email address for correspondence: nicolos@mech.kth.se
+2                                     Scapin et. al.
+1. Introduction
+
+   The understanding of droplets evaporation in turbulent flows is a crucial aspect in
+many different contexts, such as geophysics and spray combustion to name a few. In the
+first example, evaporation is central for the formation and evolution of clouds and, more
+in general, in many of the grand challenges of environmental fluid mechanics (Dauxois
+et al. 2021). In the second example, droplet evaporation is a precursor of combustion;
+ensuring that all the liquid vaporizes before chemical reactions occur is fundamental to
+minimize the pollutants formation and to maximize the efficiency of the entire process
+(Birouk & Gökalp 2006). More recently, evaporation in turbulence acquired a prominent
+role also in our understanding of the fluid dynamics aspects of COVID-19 spreading
+(e.g., droplet generation due to exhalation and airborne dispersion) as described in
+Mittal et al. (2020); Balachandar et al. (2020); Bourouiba (2021). Therefore, several
+studies have been conducted to understand how relative humidity affects evaporation
+and condensation (Rosti et al. 2020; Ng et al. 2021; Chong et al. 2021) as well as on
+the interaction between droplets and turbulent flows (Bourouiba 2020; Rosti et al. 2021)
+with the ultimate goal of improving social distancing guidelines.
+Historically, evaporating droplets in turbulence have been the subject of numerous and
+extensive experimental campaigns which have mainly focused on the flow topology inside
+the droplets (Wong & Lin 1992; Mandal & Bakshi 2012), on the interaction between
+droplet dispersion and vapour clouds structure (De Rivas & Villermaux 2016; Villermaux
+et al. 2017; Sahu et al. 2018) and on evaporation enhancement of super-Kolmogorov
+(i.e., finite-size) droplets (Marti et al. 2017; Verwey & Birouk 2018, 2020). On the
+computational side, the most common approach has been the point particle method
+(Kuerten 2016; Maxey 2017) for the studies of sub-Kolmogorov droplets in different
+flow configurations, i.e. forced homogeneous isotropic turbulence (Mashayek 1998a;
+Weiss et al. 2018), homogeneous shear turbulence (Mashayek 1998b; Weiss et al. 2020),
+turbulent channel flow (Russo et al. 2014; Bukhvostova et al. 2014) and turbulent jets
+(Reveillon & Demoulin 2007; Wang et al. 2021). The main limitation of this approach
+is represented by the inherent need of empirical closure equations to model the mass,
+momentum and energy coupling between the disperse and the continuous phase. This
+feature limits their rigorous applications only to sub-Kolmogorov droplets (Elghobashi
+2019) and hinders the possibility to investigate directly aspects such as the reciprocal
+influence of nearby droplets (Lupo et al. 2020; Chong et al. 2021) or the evaporation
+enhancement due to turbulence (which typically occurs for droplets of the order of
+the Taylor length, Birouk & Gökalp 2006). Moreover, assessing the impact of droplets
+deformation on the evaporation rate as well as the local interfacial mass flux distribution
+over the droplet surface is not possible, unless further models are introduced. On the
+other hand, less work has been dedicated to numerical simulations of droplets larger
+than the Kolmogorov scale and the only few works available consider homogeneous
+isotropic turbulence (HIT). Specifically, in Albernaz et al. (2017) the authors studied
+by means of a hybrid Lattice Boltzmann method the deformation and heat transfer of
+a single droplet with a diameter between 25η and 40η, with η the Kolmogorov length.
+In this set-up, however, little can be said about the mass transfer because evaporation
+and condensation compensate for a statistically constant droplet volume. Recently,
+Dodd et al. (2021) employed a geometric volume of fluid (VoF) method to study the
+evaporation of droplets at different volume fractions (0.01 % ⩽ α ⩽ 1 %) with an initial
+droplet diameter ranging between 4η and 17η, in order to highlight the limitations of
+point particle closures for the calculation of the evaporation rate and the semi-empirical
+correlations of the Sherwood number in absence of mean flow and for non-isolated
+                         Finite-size evaporating droplets in HST                          3
+droplets.
+The limited number of studies and the need of further understanding of such a
+complex process motivates us to further investigate finite-size evaporating droplets
+in homogeneous-shear turbulence (HST). As noted in Kasbaoui et al. (2017), this
+configuration can be regarded as one of intermediate complexity between homogeneous
+isotropic and non-homogeneous flows and it represents a particularly convenient set-up
+for two reasons. First, it allows to study shear flows without the complications induced
+by the presence of the walls. Next, given the intrinsic production of turbulent kinetic
+energy by the mean shear, turbulence is self-sustained without any external forcing and
+the flow achieves a statistically stationary condition (SS-HST) (Pumir 1996; Sekimoto
+et al. 2016). The SS-HST has been recently considered in multiphase flows, e.g. in Rosti
+et al. (2019b) for emulsions and in Tanaka (2017); Yousefi et al. (2020) for turbulence
+modulation by rigid particles of different shapes. In both cases, the characteristic length
+of the disperse phase was chosen larger than the Kolmogorov scale.
+In the current study we therefore consider finite-size evaporating droplets in SS-HST,
+assuming an incompressible liquid surrounded by a compressible gas phase at higher
+temperature. The initial size, ranging between 10.5η and 21.5η, is chosen to focus on
+evaporation enhancement by turbulence (Verwey & Birouk 2020) and to elucidate the
+effects of the interface deformation. This last aspect is less discussed in literature and,
+so far, the spherical assumption has been invoked to describe the droplet shape also
+in fully resolved simulations (Lupo et al. 2019, 2020). Given the large parameter space
+which characterizes evaporating flows, here we focus on changing the ratio between the
+droplet initial diameter and the Kolmogorov scale (d0 /η), the surface tension and the
+initial gas temperature. Moreover, in all cases, to study the isolated droplet behaviour,
+we consider a small initial liquid volume fraction, α0 = 0.14 %, corresponding to five
+droplets. The resulting parametric study aims at addressing the following questions:
+   a. What is the level of approximation of the estimated evaporation rates when the gas
+thermophysical properties are assumed constant?
+   b. What are the effects on the evaporation rate and on the liquid temperature of the
+droplet size? Moreover, how does the ratio K/K0 (actual evaporation rate in turbulence
+over the evaporation rate in stagnant conditions) changes when increasing the gas
+temperature in conditions relevant for combustion applications?
+   c. How does the interface deformation affect the evaporation rate and does the local
+interfacial mass flux correlates with changes in the droplet shape?
+To investigate this complex phenomenon numerically, we propose a new VoF method for
+evaporating flows in weakly compressible homogeneously sheared turbulence, extending
+the algorithm in Scapin et al. (2020). The tool addresses the two main issues arising when
+performing this kind of simulation with more realistic and challenging conditions. First, as
+already remarked in Kasbaoui et al. (2017), numerical simulations in HST are demanding
+even in single phase since the commonly employed multistep time-integration schemes
+(e.g., Adams-Bashforth and Runge-Kutta), if employed in their classical formulation, are
+weakly unstable and, therefore, not adequate for long-time simulations. Next, since the
+HST computational domain does not possess any outflow boundary, a rigorous description
+of the two-phase evaporating system requires a compressible formulation that allows the
+thermodynamic pressure to vary with the state variables. To address the first issue, we
+present a modified version of the Adams-Bashforth scheme which recovers the analytical
+solution of Kelvin modes in the limit of the rapid distortion theory (RTD) (Maxey
+1982) and, overall, ensures a stable integration over long times. The second issue is
+addressed by deriving and presenting a new mathematical formulation for evaporating
+4                                         Scapin et. al.
+flows with phase change in the low-Mach limit (weakly compressible formulation) with
+a detailed numerical implementation. Differently from other approaches available in
+literature (Wang et al. 2019; Ni et al. 2021), this formulation relaxes the assumption
+of constant thermodynamic pressure and allows its dynamic variation according to the
+global expansion and contraction of the compressible gas phase, as well as, on the amount
+of mass flux exchanged at the interface.
+This paper is organized as follows. In § 2 we introduce the mathematical model employed
+to describe a two-phase evaporating system, adapted to the HST configuration. In § 3 the
+numerical algorithm is presented, with a note on an improved Adams-Bashforth scheme
+for HST simulations. The results, discussed in § 4, focus on the role played by the specific
+thermodynamic model used to describe the weakly compressible phase and the effects on
+the evaporation induced by the variation of the shear-based Reynolds number and the
+shear-based Weber number. Finally, the main findings and conclusions are summarized
+in § 5.
+
+
+2. Governing equations
+           2.1. Mathematical model for weakly compressible evaporating flows
+   We consider a system of two immiscible and Newtonian fluids: a single component
+liquid (phase 1) and an ideal mixture of an inert gas and vaporized liquid (phase 2).
+The two phases are bounded by an infinitesimally small interface, through which mass,
+momentum and energy are exchanged. The evaporation is driven by the partial pressure
+of the inert gas in phase 2. To represent this system, a phase indicator function H is
+defined at position x and time t to distinguish between the two phases:
+                                         (
+                                           1 if x ∈ Vl ,
+                              H(x, t) =                                           (2.1)
+                                           0 if x ∈ Vg ;
+where Vl and Vg are the domains T     pertaining to the liquid and gas phases, divided by a
+zero-thickness interface Γ (t) = Vl Vg .
+Hereinafter and unless otherwise state, we assume that the liquid is incompressible with
+constant properties, while the gas is compressible and its properties are allowed to vary
+with temperature, pressure and composition. Thus, given the possible variation of the
+density with the state variables, we consider compressibility, which in this work is treated
+within the low-Mach approximation (Majda & Sethian 1985). This allows us to filter
+acoustic effects, while still retaining potentially large density variations in the bulk region
+of the compressible phase. Under this assumption, the conservation equations for species,
+momentum, thermal energy and mass across the interface read as
+                                    Du         1        fσ
+                               ρ       = −∇p +    ∇·τ +    ,                             (2.2)
+                                    Dt         Re       We
+
+                           DYlv       1
+                               ρg=         ∇ · (ρg Dlg ∇Ylv ),                           (2.3)
+                             Dt    ReSc
+                                                                    
+                                                        2
+        DT    1                       dpth      ρg Dlg X
+    ρcp    =       ∇ · (k∇T ) + Πp,1       +              ∇hj · ∇Yj  (1 − H)           (2.4)
+        Dt   ReP r                      dt      ReSc j=1
+
+                 (ṁΓ δΓ )
+             −             ,
+                   Ste
+                           Finite-size evaporating droplets in HST                             5
+                                       1 ρg,Γ Dlg,Γ       v
+                             ṁΓ =               v ∇Γ Yl · nΓ .
+                                     ReSc 1 − Yl,Γ
+                                                                                           (2.5)
+
+Here, u is the fluid velocity assumed to be continuous in the two phases, p is the
+hydrodynamic pressure, T the temperature, h the enthalpy (with ∇h = ∇(cp T )), Ylv the
+mass fraction of the vaporized liquid in the inert gas and ṁΓ is the interfacial mass flux.
+In (2.2), τ is the viscous stress tensor for compressible Newtonian flows and fσ = κΓ δΓ
+with κΓ the interfacial curvature. The generic thermophysical property ξ (density ρ,
+dynamic viscosity µ, thermal conductivity k or specific heat capacity cp ) is computed
+with an arithmetic average, i.e. ξ = 1 + (λξ − 1)H where λξ = ξl /ξg,r . Since ξl is kept
+constant and uniform no further modelling is needed, while the generic gas property ξg is
+computed with appropriate equation of states. The gas density ρg is computed with the
+ideal gas law and the liquid diffusion coefficient with the Wilke-Lee correlation (Reid et al.
+1987). More details on how the remaining gas thermophysical properties are evaluated
+are given in Appendix A. Unless otherwise stated, all the property ratios λξ are computed
+with respect to the reference gas property ξg,r , taken as the initial value.
+In equations (2.2), (2.3),(2.5) and (2.4) different dimensionless parameters appear. By
+introducing a reference velocity ur and reference length lr , we define the Reynolds number
+Re = ρg,r ur lr /µg,r , the Weber number W e = ρg,r u2r lr /σ, with σ the surface tension;
+Sc = µg,r /(ρg,r Dlg,r ) and P r = µg,r cpg,r /kg,r are the Schmidt and the Prandlt numbers.
+Note that the temperature equation (2.4) requires the definition of the Stefan number
+Ste = cpg,r Tg,0 /∆hlv , where Tg,0 is the initial gas temperature and ∆hlv is the latent
+heat and of the dimensionless group Πp,1 = Ru /(cpg,r Mg ) where Mg is the molar mass
+of the gas phase and Ru the universal gas constant. To form a close set of equations,
+two additional equations are needed, one for the velocity divergence and one for the
+thermodynamic pressure pth , i.e.
+                                                                         
+                            fY (x, t) + fT (x, t)            Πp,1    1 dpth
+   ∇ · u = fΓ (xΓ , t) +                          − 1−                        (1 − H), (2.6)
+                                     pth                  cp M m,av pth dt
+            Z                          Z                                               
+   1 dpth                 Πp,1                               fT (x, t) + fY (x, t)
+                    1−            dVg =        fΓ (xΓ , t) +                       (1 − H) dV.
+  pth dt     Vg        cp M m,av           V                          pth
+                                                                                            (2.7)
+In equations (2.6) and (2.7) the functions fΓ (xΓ , t), fY (x, t) and fT (x, t) represent the
+different contributions to the total velocity divergence from the phase change (fΓ ) and
+the change of the gas density either due to composition (fY ) or to temperature (fT ),
+                                       
+                              1      1
+         fΓ (xΓ , t) = ṁΓ        −       δΓ ,                                             (2.8a)
+                             ρg,Γ    λρ
+                                              
+                        1 M m,av       1
+         fY (x, t) =                      − 1 ∇ · (ρg Dlg ∇Ylv ),                          (2.8b)
+                      ReSc ρg         λM
+                                                                              
+                                                                 2
+                      1     Πp,1  1                     ρg Dlg X
+         fT (x, t) =                     ∇ · (k∇T ) +               ∇hj · ∇Yj  ,          (2.8c)
+                      Re cp M m,av P r                     Sc j=1
+
+where λM = Ml /Mg is the molar mass ratio. The complete derivation of equa-
+tions (2.6), (2.7) and of relations (2.8) is provided in Appendix B.
+
+                     2.2. Governing equations for the HST configuration
+  Equations (2.2), (2.3), (2.5), (2.4), (2.6) and (2.7) are solved in a periodic box assuming
+an imposed uniform mean shear S, as depicted in figure 1. In a shear-periodic domain the
+6                                       Scapin et. al.
+                                                              Ylv
+                                            0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8
+
+
+
+
+                                                                                  z
+
+                                                                                      yy
+
+                                                                                      x
+
+
+
+
+Figure 1: Sketch of the computational box: the rendering represents the volume contour
+of the vapour mass fraction for the case at ReS = 6700, W eS = 0.1 and Tg,0 /Tc = 1.5.
+
+
+
+streamwise x and spanwise y directions are periodic, whereas the so-called shear-periodic
+condition applies in the z direction, which reads for the generic scalar quantity g as
+
+                             g(x + lx , y, z) = g(x, y, z),
+                             g(x, y + ly , z) = g(x − Stly , y, z),                         (2.9)
+                             g(x, y, z + lz ) = g(x, y, z).
+
+   The presence of a mean velocity, i.e., Sz, suggests to decompose the velocity field u
+into a mean and a fluctuating component u0 ,
+
+                                       u = u0 + Szex ,                                     (2.10)
+
+where ex = (1, 0, 0). Given the decomposition (2.10), the momentum equation (2.2) is
+written in terms of u0 :
+       Du0        ∂u0
+                                                                           
+                            0                1                 ∂µ       ∂µ           fσ
+   ρ        + Sz      + Sw ex = −∇p +             ∇·τ +S          ex +      ez    +      ,
+        Dt        ∂x                       ReS                 ∂z        ∂x         W eS
+                                                                                       (2.11)
+where ez = (0, 0, 1). Three new terms appear: the first, Sz (∂u0 /∂x), is the convection of
+the velocity fluctuations by the mean shear; the second, Sw0 ex , represents the production
+of streamwise momentum caused by the fluid parcel transport in the normal direction
+owing to the mean shear; the third and last term, S (∂µ/∂zex + ∂µ/∂xez ), represents
+the viscous dissipation due to the mean shear in the case of a fluid with variable viscosity.
+Note that ReS and W eS are the shear-based Reynolds and Weber numbers, computed
+taking ur = Slr .
+  The same decomposition (2.10) is applied to the mass fraction and temperature
+equations, giving
+                          DYlv      ∂Ylv
+                                        
+                                                 1
+                     ρg        + Sz        =          ∇ · (ρg Dlg ∇Ylv ),              (2.12)
+                           Dt        ∂x        ReS Sc
+                             Finite-size evaporating droplets in HST                       7
+                       
+           DT      ∂T            1
+ ρcp          + Sz          =         ∇ · (k∇T )                                      (2.13)
+           Dt      ∂x         ReS P r
+                                                                 
+                                                     2
+                                    dpth     ρg Dlg X                        ṁΓ δΓ
+                            + Πp,1       +            ∇hj · ∇Yj  (1 − H) −        . (2.14)
+                                      dt    ReS Sc j=1                        Ste
+
+In equations (2.14) and (2.12) the two new terms, Sz (∂T /∂x) and Sz (∂Ylv /∂x), repre-
+sent the convection of the temperature/vapour mass fraction by the mean shear.
+
+
+
+3. Methodology
+           3.1. Numerical method for low-Mach HST simulations with phase change
+   The governing equations are solved on a uniform Cartesian grid of equal spacing ∆x =
+∆y = ∆z, with a staggered arrangement for the velocity while the remaining scalar
+fields are defined at the cell centres. The convection terms of the governing equations are
+discretized with the QUICK scheme (Leonard 1979), while central schemes are employed
+for the diffusive terms. The numerical method for phase change in the incompressible
+limit is presented in (Scapin et al. 2020), while the details of the weakly compressible
+two-phase code are reported in (Dalla Barba et al. 2020). Both implementations are
+based on the solver CaNS (Costa 2018), extended in this work to handle shear-periodic
+boundary conditions. In this section we therefore only describe the main modifications
+needed to handle weakly compressible phase-change processes in homogeneous shear
+turbulence (HST). The validation of the present algorithm against three benchmarks is
+provided in Appendix C.
+
+3.1.1. Dispersed phase
+  The first step is the interface reconstruction and subsequent advection, handled in
+a fully Eulerian manner using an algebraic VoF method, i.e., the MTHINC by Ii et al.
+(2012); Rosti et al. (2019a). We start from the topological equation for the phase indicator
+function (2.1):
+                                    ∂H
+                                         + uΓ · ∇H = 0,                                (3.1)
+                                     ∂t
+where uΓ is the interface velocity, taken as the sum of the extended liquid velocity uextl
+and the contribution due to the interfacial mass flux ṁΓ nΓ /ρl ; see Scapin et al. (2020)
+for more details. Note that since uext
+                                     l   and uΓ are derived from the one-fluid velocity u,
+the decomposition (2.10) applies directly to the interface velocity.
+  Equation (3.1) is then rewritten in terms of the volume fraction, Φ, defined as the
+volumetric average of H over a discrete computation cell of volume Vc = ∆x∆y∆z.
+Employing the decomposition (2.10) in the colour function advection equation (3.1) yields
+
+                         ∂Φ                        ∂H ht
+                            + ∇ · (H ht u0Γ ) + Sz       = Φ∇ · u0Γ ,                      (3.2)
+                         ∂t                         ∂x
+where H ht represents the hyperbolic tangent function approximating the indicator func-
+tion H. From equation (3.2), we see that an additional term is present, Sz(∂H ht /∂x),
+which represents the convection of volume fraction by S.
+   Equation (3.2) is solved in three sub-steps. First, it is advanced by ∆tn+1 to the new
+time step omitting the convection by the mean shear and the right-hand side term. By
+employing the classical directional splitting, we obtain a provisional Φ̃, see Ii et al. (2012)
+8                                        Scapin et. al.
+for more details. Next, the convection by mean shear is included
+                                      ∂ Φ̃      ∂ H̃ ht
+                                           + Sz         = 0.                              (3.3)
+                                      ∂t          ∂x
+Note that the time derivative in equation (3.3) is computed explicitly for Φ̃ while the
+convective term contains the phase indicator function H ht . Since the latter is a function
+of the former and the mathematical form of this dependency varies according to the
+type of interface reconstruction method, it is possible to express the convective term as
+a function of Φ. Nevertheless, this would modify the advection velocity in (3.3) adding a
+spatial-dependent term along the mean shear direction (i.e., x), making more elaborated
+and complex the application of the method of characteristics. For this reason, we prefer
+to compute this extra term by an additional directional splitting along x, with Sz as
+advection velocity.
+Finally, the divergence is corrected. This consists in adding, after the four directional
+splittings, a correction term proportional to the discrete velocity divergence, i.e.
+                  Φn+1
+                   i,j,k = Φ̃i,j,k − ∆t   Fi,j,k + ∆tn+1 Φn+1
+                                       n+1 n                             n
+                                                          i,j,k (∇ · uΓ )i,j,k ,          (3.4)
+
+where Φn+1
+         i,j,k is the volume fraction resulting from the directional splitting procedure,
+  n
+Fi,j,k represents the correction used in the previous directional splitting steps, and the
+last term is the volume correction which ensures that the interface velocity divergence is
+employed to update Φn+1 i,j,k (Scapin et al. 2020). The thermodynamic properties (ρ, µ, k
+and cp ) are then updated using the new value Φn+1 .
+
+3.1.2. Vapour mass fraction equation
+   The conservation of the vapour mass fraction, see equation (2.12), is solved only in the
+gas domain (i.e., Vg ), assuming saturation conditions at the interface Γ . In other words,
+the value Ylv = Yl,Γ
+                  v
+                     , which is a function of the thermodynamic pressure and temperature,
+                                                                                     v
+is imposed at the interface Γ as a Dirichlet boundary condition. To compute Yl,Γ       , we
+employ Span-Wagner equation of state (see equations (A 6) and (A 7) in Appendix A).
+Equation (2.12) is advanced with the first-Euler method neglecting the mean shear
+                                                                      n+1
+contribution. This yields a provisional vapour mass fraction field Ỹv,l   :
+
+            Ỹlv,n+1 − Ylv,n                          1
+     ρn+1
+      g              n+1
+                             = −ρn+1
+                                 g   (u · ∇Ylv )n +        ∇ · (ρn+1
+                                                                 g
+                                                                      n+1
+                                                                     Dlg  ∇Ylv,n ).       (3.5)
+                  ∆t                                ReS Sc
+The calculation of the gradient in the convective part of (3.5) is performed as detailed
+in Scapin et al. (2020), while some modifications are required for the linear term as it
+contains the diffusion coefficient Dlg and the gas density ρg , which, in general, vary with
+the thermodynamic pressure, temperature and composition. Since the procedure can be
+performed dimension by dimension, we present the discretization along x as example,
+the same approach being repeated for the other two directions,
+                                                                                   !
+              ∂Ylv                            ∂Ylv                       ∂Ylv
+                  
+  ∂                      1
+       ρg Dlg        =         (ρg Dlg )i+1/2           − (ρg Dlg )i−1/2              . (3.6)
+  ∂x           ∂x i     ∆x                     ∂x i+1/2                   ∂x i−1/2
+                                                                                      i
+
+The evaluation of the gradients ∂Ylv /∂xi±1/2 is performed on an irregular grid, employing
+one-sided finite difference equations for the cell cut from the interface or central scheme
+for cells away from the interface (see Scapin et al. 2020, for details). Next, the coefficients
+(ρg Dlg )i±1/2 are obtained as the arithmetic mean,
+                          (ρg Dlg )i±1/2 = 0.5[(ρg Dlg )i + (ρg Dlg )G ].                 (3.7)
+                           Finite-size evaporating droplets in HST                               9
+                                                                           G
+If the cell i and its neighbours (i ± 1) are not cut by the interface, ρg Dlg is set equal to
+                                   G
+(ρg Dlg )i±1 . Otherwise, (ρg Dlg ) is evaluated as
+                                        (ρg Dlg )Γ + (θ − 1)(ρg Dlg )i±1
+                         (ρg Dlg )G =                                      ,                  (3.8)
+                                                        θ
+where θ represents the sub-cell resolution computed from the level-set function, recon-
+structed from the volume of fluid field. Since eq. (3.8) poorly behaves for small values of
+θ, we set (ρg Dlg )G = (ρg Dlg )i when θ ⩽ 1/4. Note that equation (3.8) requires the value
+of the coefficient (ρg Dlg ) at the interface location, i.e. (ρg Dlg )Γ . These are evaluated with
+the corresponding equations of state using the temperature and the vapour composition
+at the interface location. It is worth mentioning that we cannot access directly the liquid
+and gas temperatures, separately, since the temperature equation is solved over the whole
+domain, irrespective of the interface location. Therefore, to avoid problems of artificial
+heating (especially when the difference between the gas and the liquid density is high), we
+locally reconstruct the gas temperature in Vl and the liquid temperature in Vg relying on
+a simple constant extrapolation of T . The resulting two fields, Tg and Tl , defined in a few
+grid cells around the interface, are then used to update the thermophysical properties,
+see Appendix A for more details.
+   Finally, the mean shear contribution is included using the method of characteristic
+over a time ∆tn+1 :
+                                       ∂Ylv        ∂Y v
+                                             + Sz l = 0.                                      (3.9)
+                                        ∂t          ∂x
+Equation (3.9) can be conveniently rewritten in more compact form as in Gerz et al.
+(1989); Kasbaoui et al. (2017):
+                             Ylv,n+1 = Ỹlv,n+1 (x − ∆tn+1 Szex ).                          (3.10)
+Equation (3.10) is solved using a Fourier interpolation (Tanaka 2017), which ensures a
+spectral accuracy provided that ∆tn+1 is chosen lower or equal than (SNz )−1 where Nz
+is the number of grid points along the z direction (see section 3.2 for more details).
+
+3.1.3. Calculation of the interfacial mass flux
+   The interfacial mass flux (2.5) is computed only in the gas region by projecting the
+interfacial gradient along the normal direction and adopting a dimension by dimension
+approach. The interfacial vapour mass fraction Ylv , gas density ρg and diffusion coefficient
+Dlg should be estimated at the interface location. Similarly to the case of the vapour
+mass fraction described in section 3.1.2, all these quantities depend on the local gas and
+liquid temperatures and on the thermodynamic pressure. Therefore, we first estimate the
+interfacial liquid and gas temperature in those grid cells cut by the interface. Depending
+on the interface position, this is done in each direction independently, providing different
+                                                                               x    y
+estimates for the gas and liquid temperature for the three coordinates, Tp,Γ     , Tp,Γ  and
+  z
+Tp,Γ where the subscript p stands for the gas and liquid phase. The resulting values are
+averaged using the local normal, i.e.:
+                                      x          y
+                              Tp,Γ = Tp,Γ n2x + Tp,Γ n2y + Tp,Γ
+                                                            z
+                                                                n2z .                       (3.11)
+                                                          v
+Once Tp,Γ is known, the values of ρg,Γ , Dlg,Γ and Yl,Γ     are computed using the corre-
+sponding equations of state, see Appendix A. Note that by employing the procedure here
+explained, the mass flux ṁΓ is available only on the grid nodes pertaining the gas region.
+Nevertheless, as equation (2.6) suggests, the values of ṁΓ are needed also in some grid
+points inside the liquid region. Accordingly, ṁΓ is extrapolated over a narrow band at
+the interface to populate all cells where |∇Φ|i,j,k 6= 0.
+10                                          Scapin et. al.
+3.1.4. Temperature equation
+   The temperature equation (2.4) is solved using a whole domain approach as in Scapin
+et al. (2020), with additional care paid to the time discretization. The adopted approach
+follows the one proposed in Gerz et al. (1989) and has been improved here to enhance
+the numerical stability and to include the additional source terms due to the gas
+compressibility, phase change and enthalpy diffusion. First, a prediction temperature
+field T̃ is computed using the Adams-Bashforth method:
+
+                T̃ n+1 − T n              1 ∆tn+1                     1 ∆tn+1
+                                                                             
+                             =       1+                 RT n −                      RT n−1 ,   (3.12)
+                    ∆tn+1                 2 ∆tn                       2 ∆tn
+
+where the terms RT n and RT n−1 include all the convective and diffusive terms at the
+current, n, and old time level, n − 1. The term RT n−1 is first shear mapped to the new
+time level n + 1 and this step has proved to be crucial for the numerical stability of the
+Adams-Bashforth scheme (see Appendix D).
+  Next, the temperature field is shear mapped to the new time level n + 1 by employing
+the same spectral interpolation described for the vapour mass fraction equation,
+
+                                 T n+1,∗ = T̃ (x − Sz∆tn+1 ex ).                               (3.13)
+
+Finally, the source terms in (2.4) are included using the first-order Euler scheme:
+
+                     n+1
+                                                         ext
+                        − T n+1,∗
+                                              
+                 T                                dpth
+       ρn+1 cn+1
+             p                    = Πp,1                        (1 − Φn+1 ),                   (3.14)
+                       ∆tn+1                       dt
+                                                                    n+1
+                                                       2
+                                         1            X
+                                     +        ρg Dlg     ∇Yj · ∇h∗j     (1 − Φn+1 ),
+                                       ReS Sc         j=1
+
+                                         (ṁΓ |∇Φ|)n+1
+                                     −                 ,
+                                               Ste
+where (dpth /dt)ext represents the linear extrapolation in time of the derivative of the
+thermodynamic pressure. It is important to note that the second and third terms in
+equation (3.14), which include variables shear mapped to the new time level, (i.e., Φn+1
+      v,n+1
+and Yl,j    ) should be computed after (3.13).
+
+
+3.1.5. Thermal divergence and thermodynamic pressure
+   The calculation of the velocity divergence is performed simply by discretizating the
+right-hand side of equation (2.6) node by node as done in Dalla Barba et al. (2020) for the
+case of weakly compressible two-phase solvers without phase change. The calculation of
+the thermodynamic pressure requires, however, more care. In the low-Mach framework,
+the role of pth is to ensure mass conservation of the compressible phase at the discrete
+level, since it enters the calculation of the gas density. This cannot be fulfilled simply by
+the advection of the color-function, which is designed to satisfy the volume conservation of
+the incompressible liquid, or by the pressure-correction step through the imposition of the
+divergence constrain (2.6) on u. In fact, these ensure only the overall volume conservation
+of the closed and isochoric system under consideration. Therefore, we compute pth by
+integrating the equation for the gas density (equation A 1 in Appendix A) over the
+computation domain occupied by the gas phase Vg (Demou et al. 2019; Dalla Barba
+                         Finite-size evaporating droplets in HST                          11
+et al. 2020),
+                                             Ggn+1 Πp,2
+                          pn+1
+                           th  =Z        n+1                       .                  (3.15)
+                                       M m,av
+                                              (1 − Φn+1 ) dx dy dz
+                                   V   T n+1
+The total mass of the gas Gg , used above, varies in time according to the following
+relation, derived from the material balance across the droplet surface,
+                                       Z
+                        dGg
+                            = ṁt,Γ =     ṁn+1
+                                            Γ   |∇Φn+1 | dx dy dz.             (3.16)
+                         dt             V
+
+Once the volume integral in equation (3.16) is computed, the gas mass at the new time
+level is computed from the time integration of (3.16),
+                                            Z tn+1
+                             Gn+1
+                               g   =  Gn
+                                       g +         ṁt,Γ dt.                    (3.17)
+                                                tn
+
+To evaluate numerically the integral in (3.17), we employ a trapezoidal quadrature. With
+this approach, we impose correctly the conservation of the compressible phase at the
+discrete level.
+3.1.6. Momentum equation and pressure correction method
+  Once the thermodynamic divergence is computed, the momentum equation (2.2) is
+solved with a standard pressure correction method, reported below in semi-discrete form,
+                                                          n−1
+                                 RUn−1 = RU
+                                          g     (x − ∆tn Szex ),                      (3.18)
+              ??
+              u − un        1 ∆tn+1          1 ∆tn+1
+                                                 
+                                        n
+        ρn+1
+                       = 1+           RU −             RUn−1 ,                        (3.19)
+               ∆tn+1        2 ∆tn            2 ∆tn
+                                                      ∆tn+1 κn+1 ∇Φn+1
+                        u? = u?? (x − ∆tn+1 Szex ) + n+1 Γ             ,              (3.20)
+                                                      ρ         W eS
+                              ρn+1             ρn+1
+                                       
+           ∇2 pn+1 = ∇ · 1 − n+10
+                                       ∇p̂ + 0n+1 ∇ · u? − ∇ · un+1 ,
+                                                                     
+                                                                                      (3.21)
+                              ρ               ∆t
+                                                                  
+                 n+1    ?     n+1      1     n+1       1      1
+                u    = u − ∆t             ∇p     +        − n+1 ∇p̂ ,                 (3.22)
+                                     ρn+1
+                                      0              ρn+1   ρ0
+where RUn and RUn−1 in equation (3.19) include the convective and diffusive terms
+computed at the current and previous time level, neglecting the surface tension force
+and the mean shear contribution. As done for the temperature equation and explained
+in detail in the Appendix D, it is very important for the stability and the accuracy of
+the time integration scheme that the term RUn−1 is shear mapped to the current time
+level n. The intermediate velocity u?? is shear mapped to the new time level n + 1,
+similarly to what done for the temperature and vapour mass fraction, and updated with
+the contribution from the surface tension (Rosti et al. 2019b).
+   Finally, the pressure equation (3.21) is solved with a time-splitting technique which
+allows to transform the variable Poisson equation into a constant coefficient one (Dodd
+& Ferrante 2014). Note that ρn+10   and p̂ in (3.21) and (3.22) are the minimum density
+over the entire computational domain and the extrapolated hydrodynamic pressure p̂ =
+(1 + (∆tn+1 /∆tn ))pn − (∆tn+1 /∆tn )pn−1 . As already discussed in Motheau & Abraham
+(2016); Dalla Barba et al. (2020), the use of the pressure splitting to solve the variable
+density Poisson equation in a low-Mach framework is suitable when the temperature ratio
+between the two phases is below 2 − 3, which is the case of the current study. Finally, it is
+12                                     Scapin et. al.
+worth mentioning that the presence of the shear, if left untreated, would make the use of
+the eigenexpansion method to solve (3.21) not possible, since one direction is not periodic.
+For this reasons, in order to still benefit from FFT-based solvers, equation (3.21) is solved
+in a coordinate system moving with the mean shear for which, triperiodic boundary
+conditions can be applied. The solution is then transformed back to the shear-periodic
+domain, as detailed in Tanaka (2017); Rosti et al. (2019b).
+
+                                3.2. Time-step restriction
+                    n+1
+  The time step ∆t  is estimated from the stability constraints of the overall system:
+                                                                             
+                                                               n+1        ∆z
+   ∆tn+1 = min C∆tc ∆tn+1
+                       c   , C∆td min (∆t µ , ∆tσ , ∆tm , ∆tk )    , C∆tS       , (3.23)
+                                                                          Slz
+where ∆tc , ∆tσ , ∆tµ , ∆tm and ∆tk are the maximum allowable time steps due to
+convection, surface tension, momentum, thermal energy and mass diffusion. These can
+be determined as suggested in Scapin et al. (2020); Dalla Barba et al. (2020):
+                                                                        λµ ∆x2 ReS
+                                                                        
+                        ∆x                                        µg
+    ∆tc =                               ,        ∆tµ = min min        ,            ,
+            |umax | + |vmax | + |wmax |                     Vg    ρg    λρ     6
+           s
+              W eS (minVg {ρg } + λρ )∆x3                       (θm ∆x)2 Sc
+    ∆tσ =                                    , ∆tm = min {Dlg }             ,
+                            4π                         Vg            6
+                                             ∆x2 P r
+                                        
+                          kg         λk
+    ∆tk = min min                 ,                  ,
+                    Vg   ρg cpg     λρ λcp     6
+                                                                                 (3.24)
+where |ui,max | is an estimate of the maximum value of the ith component of the flow
+velocity, θm = 0.25 and maxVg {ξg } and minVg {ξg } denote the maximum and minimum
+over the computational domain, Vg , of the generic thermophysical property of the
+gas phase. For the cases presented here, the convective contrain represents the main
+limitation; setting C∆tc = 0.15, C∆td = 0.5 and C∆tS = 1 was found sufficient for a
+stable and accurate time integration.
+
+                                3.3. Computational set-up
+   Given the large number of dimensionless parameter that characterizes flows involving
+evaporation, we focus our attention on the role of the ratio between droplet initial
+diameter and the Kolmogorov dissipative flow scale (tuned by varying the shear-based
+Reynolds number, ReS ), the role of surface tension (varying the shear-based Weber
+number W eS ), the ratio between the initial gas temperature and the critical temperature,
+Tg,0 /Tc , and the type of model employed to evaluate the thermophysical properties of
+the gas phase during the simulations. Concerning this last aspect, we first consider
+all the gas thermophyisical properties constant and computed with a proper averaging
+between the liquid and the gas temperature (i.e., with the 1/3 rule by Hubbard et al.
+1975) (case denoted as CP); secondly, we allow only the gas density ρg to vary (case
+denoted as VPρ ) and, finally, we allow all the thermophysical properties to vary with the
+local thermodynamic variables and vapour composition (case VPa ). A summary of the
+numerical campaign is reported in table 1, together with the remaining dimensionless
+physical parameters, which are all kept constant. Note that the physical parameters
+reported in table 1 are representative of pentane evaporating droplets in dry air at high
+pressure (∼ 43 bar). In particular, we will consider 3 values of the ratio Tg,0 /Tc =
+0.75, 1.00, 1.50 where Tc is the critical temperature (469.69 K for pentane), which gives
+                           Finite-size evaporating droplets in HST                         13
+
+
+
+  Case Tg,0 /Tc Model for ξg ReS WeS         Dav      Group          Definition        Value
+
+  1       1.50       CP        6700   0.02   0.8213   Pr           µg,r cpg,r /kg,r      1.39
+  2       1.50       VPρ       6700   0.02   0.8213   Sc         µg,r /(ρg,r Dlg,r )     1.66
+  3       1.50       VPa       6700   0.02   0.8213   Ste         cpg,r Tg,r /∆hlv       5.70
+  4       0.75       CP        6700   0.02   0.1528   λρ               ρl /ρg,r         13.15
+  5       0.75       VPρ       6700   0.02   0.1528   λµ               µl /µg,r          2.10
+  6       0.75       VPa       6700   0.02   0.1528   λcp             cpl /cpg,r         2.00
+  7       1.00       VPa       6700   0.02   0.5531   λk               kl /kg,r          1.87
+  8       1.50       VPa       2800   0.02   0.9584   λM               Ml /Mg            2.58
+  9       1.00       VPa       2800   0.02   0.6589   Πp,1        Ru /(Mg cpg,r )       0.18
+  10      0.75       VPa       2800   0.02   0.2341   Πp,2    pth,r Mg /(ρg,r Ru Tg,r ) 1.00
+  11      1.50       VPa       6700   0.06   0.8212   Πp,3            pc /pth,r          0.83
+  12      1.50       VPa       6700   0.10   0.8213   α0 [%]        Vl,0 /(lx ly lz )   0.14
+  13      0.75       VPa       6700   0.06   0.1528   Ndp,0                −               5
+  14      0.75       VPa       6700   0.10   0.1528   RH0 [%]              −              0.0
+
+
+Table 1: Left: Dimensionless parameters defining the investigated cases, the initial gas
+temperature over the critical temperature Tg,0 /Tc , the thermodynamic model employed
+to evaluate the gas thermophysical property, the shear-based Reynolds number ReS =
+ρg,r Sly2 /µg,r , and the shear-based Weber number W eS = ρg,r S 2 d30 /σ with d0 the initial
+droplet diameter. The vaporization Damköhler number, the ratio between the turbulence
+time scale and the evaporation time scale in stagnant conditions, Dav = τt /τv,L , is
+also reported (see equation 4.4). Note that in the current study d0 /ly = 0.10. Right:
+dimensionless parameters kept constant in the current study (Ndp,0 is the initial number
+of droplet, α0 is the initial liquid volume and RH0 is the initial relative humidity).
+
+
+
+
+Tg,0 = 354, 470 and 705 K. The initial liquid temperature Tl,0 is the wet bulb temperature
+at Tg,0 and corresponds to Tl,0 = 334, 388 and 432 K.
+   The focus of the study is the behaviour of evaporating isolated droplets in homogeneous
+shear turbulence and, therefore, we consider five isolated droplets (i.e., initial volume
+fraction α0 ≈ 0.14 % with Ndp,0 = 5), injected in a single-phase statistically steady-
+state HST field at the desired shear-based ReS (2800 or 6700). For all the cases, the
+computational domain has the streamwise aspect ratio, ARxy = lx /ly ≈ 2.10, and
+the cross-stream ratio, ARzy = lz /ly ≈ 1.05. As discussed in Sekimoto et al. (2016),
+employing such values, the effects on the flow induced by a finite-size computational box
+are reduced. The domain is discretized with 1280 × 608 × 640 grid points, thus ensuring
+not only an adequate resolution of the flow field (i.e., ∆x/η ≈ 0.33 for ReS = 2800
+and ∆x/η ≈ 0.40 for ReS = 6700 where η is the Kolmogorov length scale), but also of
+the droplets, whose initial resolution is 64 points per diameter. This value is consistent
+with our previous study (Scapin et al. 2020), where we have assessed that a minimum
+of 50 grid points per diameter is needed to fully resolve mass, momentum and energy
+transfer across the droplet interface. Note that the resolution is also sufficient to resolve
+                                                    v
+the smallest scales
+                  √of the two active scalar
+                                      √ fields, Yl and T , since the associated Batchelor
+scales ηB,Y = η/ Sc and ηB,T = η/ P r, although smaller than the Kolmogorov scale,
+are always larger than ∆x.
+14                                      Scapin et. al.
+4. Results
+                   4.1. Comparison of the three thermodynamic models
+   We start our analysis by assessing the influence on the evaporation dynamics of the
+type of thermodynamic model employed to evaluate the gas thermophysical properties.
+A common approach (Abramzon & Sirignano 1989; Lupo et al. 2019, 2020) is to consider
+the thermophysical properties of the gas phase uniform, constant and evaluate them at
+an intermediate temperature, Tm = Tg,0 + m(Tg,0 − Tl,0 ). Hubbard et al. (1975) show
+that the value m = 1/3 guarantees a good agreement between experimental results and
+the theoretical predictions based on the d2 –law (Langmuir 1918). In the mathematical
+framework introduced above, this amounts to limiting the expansion and contraction at
+the interface, i.e. the terms fY and fT in (2.6), (2.7) become zero. Here, we will denote
+the results obtained with these assumptions as CP. In many fully resolved simulations,
+the only thermophysical property allowed to vary is the density and this is typically
+done within the Oberbeck-Boussinesq approximation (Piedra et al. 2015). This model,
+denoted VPρ , is considered here to asses whether it can provide accurate results. In typical
+conditions of evaporating droplets, however, other thermophysical properties may play a
+role. In particular, ρg and Dlg scale differently with the gas temperature, i.e., ρg ∼ pth /Tg
+and Dlg ∼ Tg1.5 /pth and both appear in the expression of the interfacial mass flux.
+These variations may significantly affect the evaporation dynamics, especially when the
+difference between the liquid and gas temperatures is large. We will therefore also consider
+variations of all the thermophysical properties, case VPa . To compare the different models
+we consider two temperature ratios, Tg,0 /Tc = 0.75 and Tg,0 /Tc = 1.50 at ReS = 6700
+and the lowest Weber number under consideration in this study, W eS = 0.02, to limit
+droplet breakup and reduce the droplet deformation. Unless otherwise stated, the results
+refer to the averaged values over the five droplets initially in the computational domain
+and error bars are included to represent the droplet with the largest positive and negative
+deviation from the mean value. Firstly, we show the square of the normalized droplet
+diameter, see figure 2. From the cases at Tg,0 /Tc = 1.50, we observe that the complete
+model and the constant property model provide similar evaporation rates; when the gas
+density is the only varying thermophysical property, the evaporation rate is the highest.
+This behaviour can be attributed to the presence of colder gas around the droplets,
+leading to larger local gas densities (up to three times the initial gas density, see figure 3)
+and, thus, to increased evaporation rates, as shown in figure 4a where we report the time
+history of the surface-averaged gas temperature. Relaxing the assumption of constant
+liquid diffusion coefficient reduces Dlg ∝ Tg1.5 . This counteracts the effect of the higher
+gas density, decreasing the overall evaporation rate, which approaches the values obtained
+assuming constant property values. The results at Tg,0 /Tc = 0.75 show a limited impact
+of compressibility on the evaporation dynamics, with an almost identical evaporation
+from the CP and VPa models. Once more, allowing only the gas density to vary leads to
+an overestimation of the evaporation rate, which is explained by a lower gas temperature
+and higher density at the interface, see figure 4b.         Note that in all the cases and
+regardless of the model, the mean evaporation rate represents a good estimation of the
+evaporation rate of the single droplet since the magnitude of the largest positive and the
+negative deviations (represented by the error bars in figure 2) is within 5 %.
+Figure 5 displays the time evolution of the ratio between the instantaneous area A =
+|∇Φ|∆x3 and the area of a spherical droplet with same volume with error bars indicating
+the maximum and minimum values at each instance at Tg,0 /Tc = 1.5 and Tg,0 /Tc = 0.75.
+Note that the mean deviation form the spherical shape is always below 10 % (over the
+simulated physical time) which makes the present data suitable for comparisons with
+                           Finite-size evaporating droplets in HST                      15
+  (a)                                            (b)
+
+
+
+
+Figure 2: Normalized square droplet diameter, (d/d0 )2 , as a function of the dimensionless
+time (based on the diffusion time scale) for temperature ratio (a) Tg,0 /Tc = 1.50 and (b)
+Tg,0 /Tc = 0.75 for ReS = 6700 and W eS = 0.02. The dotted curves indicate the slope
+of the curves after the initial transient (extracted from the DNS), whereas the dashed
+curves is the estimation from the theoretical Frössling/Ranz-Marshall correlation. The
+length of the error bars indicates the droplet with the fastest/slowest evaporation rate
+among the five droplets in the simulations.
+
+                  .0                                                 3.0
+
+
+                  .6                                                 2.6
+
+                  .2                                                 2.2
+                                                                           ρg /ρg,0
+
+                  .8                                                 1.8
+                             z
+
+                  .4 x                                               1.4
+                      y           y
+                     x y
+                  .0                                                 1.0
+
+Figure 3: Volume rendering of the normalized gas density ρg /ρg,0 around a droplet for
+the case ReS = 6700, W eS = 0.02 and Tg,0 /Tc = 1.5.
+
+
+existing scaling laws, which are commonly derived under the assumption of rigid and
+spherical droplets.
+   In all cases, the evaporation rate follows the linear trend predicted by the d2 –law
+since the droplets are isolated. We therefore test the closure relations available in the
+literature against the data from the interface resolved simulations. To this end, we
+estimate the evaporation rate as proposed in Birouk & Gökalp (2006). First, we obtain
+the dimensionless evaporation rate in laminar conditions KL (Abramzon & Sirignano
+1989) as
+                                        4 ShRM log(1 + BM )
+                                 KL =                       ,                         (4.1)
+                                         ReS Sc     λρ
+                                   v         v            v
+where the Spalding number BM = (hYl,Γ iΓ − Yl,∞ )/(1 − hYl,Γ iΓ ) with hiΓ the average
+over the surface Γ . The Sherwood number in equation (4.1) is estimated with the
+16                                     Scapin et. al.
+     (a)                                       (b)
+
+
+
+
+Figure 4: Normalized gas temperature at the interface as a function of the dimensionless
+time (based on the diffusion time scale) for temperature ratio (a) Tg,0 /Tc = 1.50 and (b)
+Tg,0 /Tc = 0.75 for ReS = 6700 and W eS = 0.02. Tg,0 and Tl,0 are the initial gas and
+liquid temperature.
+
+     (a)                                        (b)
+
+
+
+
+Figure 5: Ratio between the instantaneous interfacial area A and the area of a spherical
+droplet with same volume V , i.e., Aeq = π 1/3 (6V )2/3 , for W eS = 0.02 and a):
+Tg,0 /Tc = 1.50 and b): Tg,0 /Tc = 0.75. The upper lengths of the error bar refer to the
+droplet with the largest A/Aeq , while the lower lengths displacement to the droplet with
+lowest A/Aeq . The data refers to the simulations conducted with the VPa thermodynamic
+models (negligible difference has been observed between the CP and the VPa model).
+
+
+Frössling/Ranz-Marshall correlation (Ranz et al. 1952; Birouk & Gökalp 2006),
+                                             BM
+                     ShRM = 2 +             0.7
+                                                          Sh0,RM ,                     (4.2)
+                                   (1 + BM ) log(1 + BM )
+with Sh0,RM = 2 + 0.552Re0.50d   Sc0.33 . In this last expression, Sc is the Schmidt number
+and Red is the droplet Reynolds number, defined as Red = ρg,r |u0l,d − u0g,d |d/µg,r .
+Following the original reference (Ranz et al. 1952) and more recent works (Wang et al.
+2021; Ng et al. 2021), we compute Red using the instantaneous droplet diameter, the
+instantaneous droplet velocity u0l,d and the surrounding gas velocity u0g,d at the droplet
+location (Ng et al. 2021). Note that this correlation is based on experiments with droplets
+larger than the Kolmogorov scale and in presence of a mean velocity field and, is therefore,
+                         Finite-size evaporating droplets in HST                          17
+suitable for the current study. Finally, we correct equation (4.1) for the presence of
+turbulence via a Damköhler number (Gökalp et al. 1992):
+                                   K
+                                      = 0.74Dav−0.115 .                                 (4.3)
+                                   KL
+In the above,
+                                                  τt
+                                       Dav =          ,                                 (4.4)
+                                                 τv,L
+                2/3   1/3
+where τt = d0 /hεg iMg is the characteristic time scale of the turbulent eddies, d0 is
+the initial droplet diameter and hεg iMg is the mass averaged turbulent dissipation (see
+Abramzon & Sirignano 1989; Birouk & Gökalp 2006). The characteristic time scale of
+evaporation τv,L , is computed as:
+                                                 δM
+                                        τv,L =      ,                                   (4.5)
+                                                 Vr
+where δM = d0 /(ShRM − 2) (Abramzon & Sirignano 1989) is the vapour film boundary
+layer thickness and Vr is the Stefan flow velocity computed as Vr = 8πDlg,r log(1 +
+BM )/d0 . Note that while equations (4.1), (4.2) and the expressions for τt and δM are
+evaluated using also the instantaneous data from the interface-resolved simulations, the
+Stefan velocity Vr is evaluated a-priori as it depends only on the initial thermodynamic
+conditions.
+The estimated values of K, dashed lines in figure 2, display a good agreement with
+the interface-resolved simulations at Tg,0 /Tc = 1.50, especially for the CP and VPa
+models, while a significant deviation is observed at Tg,0 /Tc = 0.75, regardless of the
+thermodynamic model employed. Finally, it is worth noting that the evaporation rate
+estimated with equation (4.1) depends linearly on Sh, whose calculation is generally
+affected by a higher degree of uncertainty (Lupo & Duwig 2020).
+   Next, we examine the temporal evolution of the Sherwood number, Sh, for the three
+different models, see figure 6, using directly the definition
+                                              ṁt,Γ deq
+                            Sh =                    v i − Y v ).                        (4.6)
+                                   ρg,r Dlg,r A(hYl,Γ  Γ   l,∞
+
+Here ṁt,Γ is the total interfacial mass flux, A the interfacial area, deq the instantaneous
+equivalent diameter (i.e., deq = (6V /π)3 ), ρg,r and Dlg,r the reference gas density and
+                                     v
+gas-vapor diffusion coefficients, hYl,Γ iΓ the surface-averaged vapour mass fraction at the
+                 v
+interface and Yl,∞   the reference vapour mass fraction, i.e. its initial value. The Sherwood
+number defines the ratio between the mass transfer in the actual flow and the mass
+transfer by diffusion, i.e. evaporation in stagnant conditions, so that it can be used
+to quantify the effect of the flow on the evaporation. Note that since we perform a
+comparison among different thermodynamic models, the gas thermophysical properties
+in equation (4.6) are taken equal to the reference ones (i.e., those obtained with the ”1/3”
+rule for the CP model, those at the initial condition for VPa and VPρ models).
+   Both at high and low temperatures, Sh approaches an asymptotic value after the initial
+transient. Note that for the cases at Tg,0 /Tc = 1.5, the transient is faster (∆tDlg,r /d20 ≈
+0.02) than for the cases at Tg,0 /Tc = 0.75 (∆tDlg,r /d20 ≈ 0.1) since large temperature
+differences increase the evaporation rates. For the high-temperature cases, the Sh number
+differs significantly with the model employed, with the model VPρ giving the largest
+value of Sh for the reasons explained above. Conversely, at lower temperature, the three
+models provide a similar Sh, confirming the limited impact on the evaporation rate
+18                                     Scapin et. al.
+ (a)                                           (b)
+
+
+
+
+Figure 6: Temporal evolution of the Sherwood number as a function of the dimensionless
+time (based on the diffusion time scale) for temperature ratio (a) Tg,0 /Tc = 1.50 and (b)
+Tg,0 /Tc = 0.75 and ReS = 6700 and W eS = 0.02. The dashed curves are the theoretical
+prediction provided from the a-priori analysis based on the Frössling/Ranz-Marshall
+correlation. For the cases at Tg,0 /Tc = 1.50, only one value of Sh is reported as the
+three models provide almost identical predictions.
+
+
+of the choice of the thermodynamic models in this regime. All other parameters being
+fixed, the Sherwood number is higher at the lower temperature ratio, Tg,0 /Tc = 0.75
+than for Tg,0 /Tc = 1.50, regardless of the thermodynamic model used. Recalling that the
+Sherwood number is the ratio between the actual mass transfer and the mass transfer
+by diffusion, the increase of evaporation rate due to the background turbulence is thus
+larger at low temperatures. For the highest temperature ratio, the enhancement induced
+by the turbulence is lower since evaporation is mainly driven by the large temperature
+                                            v        v
+difference and by the larger values of (hYl,Γ iΓ − Yl,∞ ).
+   As a final remark, note that the Sherwood number from the direct numerical simulation
+(DNS) agrees well with the estimation from the Frössling/Ranz-Marshall correlation
+at high temperature (cf. models CP and VPa against the dashed line the figure 6).
+Conversely, at lower temperature, the estimated value is much lower than the one
+extracted from the direct numerical simulations, indicating that the Frössling/Ranz-
+Marshall correlation underpredicts convective effects due to turbulence at low evaporation
+rates, i.e. when the evaporation time becomes longer than the turbulence time scale
+(Dav . 0.2 instead of Dav ≈ 1 as shown in table 1). This finding is consistent with
+the recent investigations in HIT performed by Méès et al. (2020) and suggests the
+need of including the turbulent effects (via the vaporization Damköhler number) in the
+available correlations for the Sherwood number and more in general in the evaporation
+models (Lupo et al. 2020).
+
+                     4.2. Effects of the shear-based Reynolds number
+  We now consider the effect of the shear-based Reynolds number on the evaporation
+rate. Reducing from ReS = 6700 to ReS = 2800 results in a reduction of the ratio between
+the initial droplet diameter and the Kolmogorov length scale from d0 /η = 21.5 to d0 /η =
+10.5. For this analysis, we assume W eS = 0.02, three temperature ratios, Tg,0 /Tc = 0.75−
+1.00 − 1.50 and employ the complete model (i.e., VPa ). We first examine the reduction
+of the droplet diameter, (d/d0 )2 , as a function of the diffusion time scale tDlg,r /d20 ,
+see figure 7a. In all cases, droplets with larger d0 /η (i.e. higher ReS ) evaporate faster,
+                          Finite-size evaporating droplets in HST                           19
+  (a)                                           (b)
+
+
+
+
+Figure 7: a) Normalized square droplet diameter (d/d0 )2 as a function of the diffusion
+time scale tDlg /d20 . b) Ratio between the turbulent evaporation rate K and the one at
+                                                               v     v           v
+stagnant conditions, K0 = (8/λρ ) log(1 + BM ) with BM = (Yl,Γ   − Yl,∞ )/(1 − Yl,Γ ). The
+data refer to the cases at ReS = 2800−6700 and Tg,0 /Tc = 1.5, 1.00 and 0.75. The length
+of the error bars indicates the droplet with the fastest/slowest evaporation rate among
+the five droplets in the simulations.
+
+
+in agreement with previous experimental studies in homogeneous isotropic turbulence
+(Verwey & Birouk 2018, 2020) and in the presence of a mean flow (Marti et al. 2017).
+This is explained by the enhanced surface vapour gradient and faster dispersion of the
+vapour around the droplet for larger d0 /η, related to the fact that larger flow structures
+are more energetic. Note that a relative increase of the evaporation rate, quantified as the
+ratio between the evaporation rate K extracted from the DNS and the one computed in
+stagnant conditions, K0 , occurs at all temperatures as reported in figure 7b and it scales
+with the dimensionless gas temperature with similar exponents for the two different d0 /η
+investigated, i.e. (Tg,0 /Tc )−0.76 for d0 /η = 21.5 and (Tg,0 /Tc )−0.72 for d0 /η = 10.5. The
+experimental correlations in Birouk & Gökalp (2006) suggests that, at high temperature
+and pressure i.e., when the evaporation is much faster than the turbulent time scale,
+the evaporation is only weakly dependent on the droplet size d0 /η. This is consistent
+with our results, where the difference in K for the two droplet sizes examined decreases
+when increasing the temperature; however, we do not observe the rate of evaporation to
+become independent of the size in the parameter range considered.
+   The variation of the evaporation rate with d0 /η significantly affects the liquid temper-
+ature at the interface
+               R        TΓ,l (computed as the surface average over the gas-liquid interface,
+TΓ,l = (1/Γ ) Γ T dΓ ) and the mean liquid R     temperature TV,l (computed as the volume
+average over the liquid, TV,l = (1/Vl ) Vl T dVl ). This is shown in figure 8 for the three
+temperatures under investigation. At the highest temperature, panel 8a, both TΓ,l and
+TV,l decrease with respect to the initial values due to the strong cooling caused by the
+evaporation. However, due to the heat transfer enhancement at higher ReS , TΓ,l remains
+greater than TV,l for droplets at larger d0 /η, whereas TΓ,l is lower than TV,l for the
+smaller d0 /η considered. Clearly, the two temperatures eventually converge to a similar
+value once the thermal gradients inside the liquid reduce. For the case with intermediate
+temperature, see panel 8b, the cooling due to evaporation is not sufficiently high to
+counteract the heat released from the gas and the two temperatures reach a regime value
+larger than the initial one. The final values of TΓ,l and TV,l are higher for the droplets with
+larger d0 /η (larger Reynolds number). We also note that the interface region is warmer
+20                                     Scapin et. al.
+     (a)                                      (b)
+
+
+
+
+                        (c)
+
+
+
+
+Figure 8: Dimensionless liquid temperature at the interface (Tl,Γ − Tl,0 )/(Tg,0 − Tl,0 )
+(dotted line) and average liquid temperature (Tl,V − Tl,0 )/(Tg,0 − Tl,0 ) (continuous line)
+at a) Tg,0 /Tc = 1.5 , b) Tg,0 /Tc = 1.0 and c) Tg,0 /Tc = 0.75.
+
+
+
+
+than the droplet bulk (i.e., TΓ,l > TV,l ) for both droplet sizes. At the lowest temperature,
+panel c of the figure 8, both TΓ,l and TV,l increase with time, when the evaporation is
+too slow to cool the droplets. Unlike the previous two cases, the values of TΓ,l and TV,l
+at d0 /η = 21.5 are always lower than the corresponding ones at d0 /η = 10.5, due to
+the higher evaporation rate at the highest ReS . For this case, the faster evaporation
+also changes the transient of TΓ,l , which at the beginning is higher than TV,l while for
+tDlg,r /d0 > 0.2 becomes lower.
+  We conclude this section by analysing the relative importance of the convective and
+conductive heat and mass vapour fluxes, FT,i=c,d and FY,i=c,d , in the gas region around
+the droplets and inside the liquid region. These are computed as an integral over the
+                         Finite-size evaporating droplets in HST                           21
+     (a)                                       (b)
+
+
+
+
+Figure 9: Conductive and convective heat fluxes FT (over the sum of the two, ΣF ),
+FT,i=c,d , in the gas region for Tg,0 /Tc = 0.75 − 1.00 − 1.50 and: a) ReS = 6700, b) ReS =
+2800. At ReS = 6700, ΣF ,0.75 = 0.08ΣF ,1.50 and ΣF ,1.00 = 0.14ΣF ,1.50 . At ReS = 2800,
+ΣF ,0.75 = 0.04ΣF ,1.50 and ΣF ,1.00 = 0.13ΣF ,1.50 (In ΣF ,x , x is the temperature ratio).
+
+
+control surfaces ST and SY ,
+                                   Z
+                                1
+                      FT,d = −         k∇T · nΓ dST ,
+                               ST ST
+                                 Z
+                              1
+                      FT,c =         ρcp (u0 T + Szex T ) · nΓ dST ,
+                             ST ST
+                                   Z                                                    (4.7)
+                                1
+                      FY,d = −         ρg Dlg ∇Ylv · nΓ dSY ,
+                               SY SY
+                                 Z
+                              1
+                      FY,c =         ρg (u0 Ylv + Szex Ylv ) · nΓ dSY .
+                             SY SY
+
+In the gas phase, ST and SY are surfaces conforming to the droplet shape (quasi-spherical
+at this low value of W eS ) at a distance approximately equal to the thermal and vapour
+mass fraction boundary layer thicknesses δT and δY . These are determined as the distance
+from the interface where (T (δT ) − TΓ )/(Tg,0 − TΓ ) = 0.99 and (Ylv (δY ) − Yl,Γ v      v
+                                                                                     )/(Yl,0 −
+  v
+Yl,Γ ) = 0.99 as in Ni et al. (2021), moving normal to the interface thanks to a level-set
+function, reconstructed from the VoF field. We evaluate F as in equations (4.7) after the
+evaporation reaches a steady condition (i.e., d2 regime) and average in time over a time
+interval ∆t = [0.20, 0.50, 0.60](tDlg,r )/d20 for the high, intermediate and low temperature
+ratios. To capture the dominant transport mechanism in the liquid phase, ST is defined
+at a distance from the interface equal to half the instantaneous droplet radius.
+   The relative importance of the conductive and convective heat fluxes in the gas region
+are shown in figure 9: increasing the ratio Tg,0 /Tc , the main transport mechanism changes
+from convection to conduction, as already anticipated in section 4.1 when discussing the
+Sherwood number Sh. The same applies to lower ReS , where we observe a slightly higher
+conductive contribution for Tg,0 /Tc = 1.5. In the liquid region, fig 10, the heat transport
+is mainly driven by convection in all cases. In agreement with previous experimental
+results (Wong & Lin 1992; Pinheiro et al. 2019), the dominant transport mechanism is
+weakly affected by a change of the droplet Reynolds number, here varied by changing
+ReS , since the motion of the liquid inside the droplet is not significantly affected by
+the intensity of the gas turbulence. Finally, the vapour fluxes reported in figure 11
+22                                     Scapin et. al.
+     (a)                                      (b)
+
+
+
+
+Figure 10: Conductive and convective heat fluxes FT (over the sum of the two, ΣF ),
+FT,i=c,d , in the liquid region for Tg,0 /Tc = 0.75 − 1.00 − 1.50 and: a) ReS = 6700,
+b) ReS = 2800. At ReS = 6700, ΣF ,0.75 = 0.12ΣF ,1.50 and ΣF ,1.00 = 0.24ΣF ,1.50 .
+At ReS = 2800, ΣF ,0.75 = 0.11ΣF ,1.50 and ΣF ,1.00 = 0.48ΣF ,1.50 (In ΣF ,x , x is the
+temperature ratio).
+
+     (a)                                      (b)
+
+
+
+
+Figure 11: Conductive and convective vapour mass fluxes FY (over the sum of the two,
+ΣF ), FY,i=c,d , in the gas region for Tg,0 /Tc = 0.75 − 1.00 − 1.50 and: a) ReS = 6700, b)
+ReS = 2800. At ReS = 6700, ΣF ,0.75 = 0.58ΣF ,1.50 and ΣF ,1.00 = 0.89ΣF ,Tg,0 /Tc =1.50 .
+At ReS = 2800, ΣF ,0.75 = 0.56ΣF ,Tg,0 /Tc =1.50 and ΣF ,1.00 = 0.87ΣF ,1.50 (In ΣF ,x , x is
+the temperature ratio).
+
+
+show that Ylv is predominantly transported by convection for the two Reynolds numbers
+investigated, mass diffusion being relevant only at the highest temperatures.
+
+                      4.3. Effects of the shear-based Weber number
+   At last, we consider the effect of the shear-based Weber number on the evapora-
+tion rate. For this analysis, three Weber numbers W eS = 0.02 − 0.06 − 0.10 and
+two temperature ratios Tg,0 /Tc = 0.75 − 1.5 are considered and, as for the previous
+section, the complete thermodynamic model (i.e., VPa ) is employed to evaluate the gas
+thermophysical properties. Figure 12a-b) reports the time evolution of d2 for the three
+values of W eS under investigation at high and low temperatures, respectively. Increasing
+W eS leads to a higher evaporation rate, due to the increase of the surface area available
+for mass transfer as a consequence of deformation. Note, also, that the increase in the
+                         Finite-size evaporating droplets in HST                          23
+   (a)                                        (b)
+
+
+
+
+                        (c)
+
+
+
+
+Figure 12: Time history of (d/d0 )2 when varying the Weber number, W eS = 0.02 −
+0.06 − 0.10 and for temperature ratios a): Tg,0 /Tc = 1.50 and b): Tg,0 /Tc = 0.75.
+The black dashed curves represent the theoretical prediction of the actual evaporation
+rate obtained with the procedure explained in section 4.1. The length of the error bars
+(included for tDlg,r /d20 > 0.025 and tDlg,r /d20 > 0.04, respectively) indicates the droplet
+with the fastest/slowest evaporation rate among the five droplets in the simulations.
+c) Evaporation enhancement (i.e., K/K0 ) as function of W eS for ReS = 6700 and
+Tg,0 /Tc = 0.75 − 1.50.
+
+
+
+
+evaporation rate with W eS is more pronounced at lower temperature (see 12c), which
+can be explained by the fact that the evaporation is faster at higher temperatures, the
+droplets are therefore smaller, which leads to a limited deformation with respect to
+the cases at the same W eS and Tg,0 /Tc = 0.75. In other words, the effective Weber
+number based on the droplet diameter becomes quickly smaller at higher temperatures,
+so differences in nominal surface tension are compensated by the reduced droplet size. To
+quantify deformation while accounting for the decrease of the liquid volume, we measure
+the deviation from the initial spherical shape as the ratio between the instantaneous
+interfacial area A (computed numerically as A = |∇Φ|∆x3 ) and the area of a spherical
+droplet with the same volume V , i.e., Aeq = π 1/3 (6V )2/3 . This calculation is performed
+for each droplet q separately and each contribution Aq /Aeq,q averaged according to the
+24                                     Scapin et. al.
+     (a)                                      (b)
+
+
+
+
+Figure 13: Ratio between the instantaneous interfacial area A and the area of a spherical
+droplet with same volume V , i.e., Aeq = π 1/3 (6V )2/3 , for W eS = 0.02 − 0.06 − 0.10 and
+a): Tg,0 /Tc = 1.50 and b): Tg,0 /Tc = 0.75.
+
+
+instantaneous number of droplets, Ndp :
+                                             Ndp
+                                    A     1 X Aq
+                                       =               .                                (4.8)
+                                   Aeq   Ndp q=1 Aeq,q
+
+  The time evolution of A/Aeq is reported in figure 13: as expected, the ratio A/Aeq
+increases with W eS . For Tg,0 /Tc = 1.5, the data in the figure also display two peaks: at
+tDlg,r /d20 ≈ 0.075 − 0.10 for W eS = 0.10 and tDlg,r /d20 ≈ 0.085 − 0.10 for W eS = 0.06.
+These are associated to the droplet breakup as we have Ndp = 7 droplets for W eS = 0.06
+and Ndp = 9 for W eS = 0.10 at the end of the simulations. For W eS = 0.02, no breakup
+events have been observed within the simulation time. For Tg,0 /Tc = 0.75, given the lower
+evaporation rate and consequently the higher effective Weber number, breakup events
+have been observed for all the cases in the interval 0.05 < tDlg,r /d20 < 0.125, finally
+yielding Ndp = 7 − 9 − 12 for W eS = 0.02 − 0.06 − 0.10.
+Interestingly, for the case Tg,0 /Tc = 0.75, A/Aeq approaches a statistically stationary
+value for tDlg /d20 > 0.125, whereas a regime value is not reached in the investigated time
+window for Tg,0 /Tc = 1.50. This behaviour is interpreted by comparing the time scale of
+deformation as dictated by surface tension and applied shear, τσ , with the time scale of
+evaporation extracted from the simulations, τv ,
+                                                τσ
+                                         Πσv = ,                                       (4.9)
+                                                τv
+where τσ = ρg,r (Sd0 )d20 /σ and τv = d20 /K, with K the evaporation at statically steady
+state, see figure 14. At the high temperature ratio, evaporation is faster than deformation
+(i.e., τσ > τv ) and the surface tension does not have time to adjust the droplet shape after
+the mass losses due to the differential evaporation across the interface. An increasing
+deviation from the spherical shape is therefore observed in time. Conversely, at low
+temperature, the deformation time is comparable or lower than the evaporation time
+(i.e., τσ < τv ) and the droplet shape can compensate for the local deformations induced
+by the evaporation mass flux (note that the droplet tends to a constant deformation,
+increasing with W eS and not to the spherical shape, i.e. A/Aeq > 1, as we have an
+imposed shear). From the data in figure 14, we also notice that for a fixed Tg,0 /Tc ,
+                         Finite-size evaporating droplets in HST                         25
+
+
+
+
+Figure 14: Ratio between the deformation time scale and the evaporation time scale (in
+turbulent condition) as a function of W eS for Tg,0 /Tc = 0.75 and 1.50.
+
+
+increasing W eS accelerates the evaporation time scale (i.e., higher Πσv ), consistently
+with what observed in figure 12.
+   Given the variation of the evaporation rate with the W eS , it is worth investigating
+whether the evaporation flux at the droplet surface is correlated to the local curvature.
+This has been already assessed in laminar flows analytically for evaporating droplets of
+spheroidal shapes (Tonini & Cossali 2013), and experimentally for sessile droplets (Sáenz
+et al. 2017). In turbulent flows this analysis is missing and is performed here by com-
+puting the joint probability density function (p.d.f.) of the normalized interfacial mean
+curvature κΓ /κΓ,eq and the dimensionless interfacial mass flux ṁΓ /ṁΓ,0 , where κΓ,eq
+is the curvature of a spherical droplet with same volume V (i.e., κΓ,eq = 4/deq with
+deq = (6V /π)1/3 ) and ṁΓ,0 is the interfacial mass flux for a purely diffusion-dominated
+evaporation process, i.e.,
+                           ṁΓ,0 = 8πρg,r Dlg,r log(1 + BM )/d0 .                    (4.10)
+Note that ṁΓ is evaluated using the expression (2.5) in all the nodal points cut by the
+interface, whereas κΓ is computed directly from its definition, i.e., κΓ = ∇ · nΓ . The
+reconstructed level-set function is employed for a more accurate estimation of κΓ .
+From the results at high temperature (i.e., Tg,0 /Tc = 1.5) reported in figure 15, we do
+not note a clear relation between ṁΓ and κΓ , yet there is a relatively broad distribution
+of mass fluxes over the droplet surface, which can be attributed to the local variations
+of vapour concentrations in the gas phase induced by the turbulence and by the flow
+anisotropy. Indeed, the regions whose local outward normal vector is parallel to the mean
+flow direction (i.e., droplet front) experience higher surface vapour gradients, whereas
+larger concentrations are found in those where the normal vector is opposite to the flow
+(i.e. droplet rear). Note also that the increase of W eS corresponds to a shift of the most
+probable values of ṁΓ and κΓ towards higher values.
+   When the gas temperature is reduced (i.e., Tg,0 /Tc = 0.75), the correlation between ṁΓ
+and κΓ is still weak for W eS = 0.02, while for the case at W eS = 0.10 a higher interfacial
+curvature is associated with a higher interfacial mass flux. Also at lower temperatures,
+the most probable values are located at higher κΓ when increasing the Weber number.
+Comparing with the results at higher temperatures, figure 15, we note that ṁΓ /ṁΓ,0 is
+larger: turbulence enhances evaporation more efficiently at low temperature, when the
+evaporative time scale is longer and the ratio with the turbulent time scales decreases,
+26                                   Scapin et. al.
+     (a)                                        (b)
+
+
+
+
+Figure 15: Joint p.d.f. of the dimensionless mass flux ṁΓ /ṁΓ,0 and the normalized
+interfacial curvature κΓ /κΓ,eq for ReS = 6700, Tg,0 /Tc = 1.5 and a) W eS = 0.02, b)
+W eS = 0.10.
+
+     (a)                                        (b)
+
+
+
+
+Figure 16: Joint p.d.f. of the dimensionless mass flux ṁΓ /ṁΓ,0 and the normalized
+interfacial curvature κΓ /κΓ,eq for ReS = 6700, Tg,0 /Tc = 0.75 and a) W eS = 0.02,
+b) W eS = 0.10.
+
+     (a)                                        (b)
+
+
+
+
+Figure 17: Joint p.d.f. of the dimensionless mass flux ṁΓ /ṁΓ,0 and the normalized
+interfacial curvature κΓ /κΓ,eq for ReS = 2800 for W eS = 0.02 and a) Tg,0 /Tc = 1.50 and
+b) Tg,0 /Tc = 0.75.
+
+
+i.e. Dav decreases.
+Finally, we display in figure 17 the joint p.d.f. from the simulations at lower Reynolds
+number, ReS = 2800, for Tg,0 /Tc = 0.75−1.5 and W eS = 0.02. In this case, the reduction
+of Tg,0 /Tc leads to more pronounced deformation, i.e. larger values of κΓ /κΓ,eq (due
+                         Finite-size evaporating droplets in HST                           27
+to the slower evaporation and higher effective W eS ) and to higher values of ṁΓ /ṁΓ,0
+(more pronounced effects of turbulence at lower absolute evaporation rates) and a broader
+distribution, again attributed to fluctuations induced by the turbulence. Comparing with
+the results at the same W eS and Tg,0 /Tc but ReS = 6700 in panels (a) of figures 15
+and 16, we see that, for both temperature ratios, the reduction in ReS restricts the range
+of attained values for the curvature and the ratio ṁΓ /ṁΓ,0 , confirming that the increase
+of deformation and evaporation rate is more pronounced for bigger droplets.
+
+
+5. Conclusions
+   Fully resolved simulations of finite-size evaporating droplets are performed in homoge-
+neous shear turbulence (HST) using a weakly compressible solver for evaporating flows.
+The new methodology, here described, combines two features. First, an improved version
+of the Adams-Bashforth method in order to address the limitations of the classical
+formulation, already highlighted in Kasbaoui et al. (2017). The improvement allows us
+to match the single-phase analytical solution in the Rapid Distortion Limit and ensures
+a stable integration over long times. Second, a mathematical model with the details
+of the numerical implementation for a two-phase evaporating system composed of an
+incompressible liquid and a compressible gas phase. In order to remove the acoustic
+time-step restriction, compressible effects are here handled in the low-Mach number limit.
+This new methodology is applied to investigate the behaviour of finite-size evaporating
+droplets in HST when changing the gas temperature over the critical temperature
+Tg,0 /Tc = 0.75, 1.00 and 1.50, the initial droplet diameter in terms of Kolmogorov scale,
+d0 /η = 10.5 and 21.5 and the surface tension, quantified by the shear-based Weber
+number W eS = 0.02, 0.06 and 0.10.
+First, using the data at d0 /η = 21.5 and W eS = 0.02, we study the differences when
+employing different thermodynamic models for the gas thermophysical properties. Three
+approaches are investigated: a constant property model where the gas properties are kept
+constant and initialized with the ”1/3 rule” (CP) and two variable-properties approaches
+where either the gas density, VPρ or all the gas properties are allowed to vary, VPa . We
+find that the predictions by the CP and VPa models agree well, whereas the VPρ model
+overpredicts the evaporation rate, especially at high temperature. This overestimation
+occurs since the local increase of the gas density (due to evaporative cooling) is captured
+by the V Pρ model, but the decrease of the diffusion coefficient with temperature,
+which slows down the evaporation, is not accounted. Moreover, by extracting the Sher-
+wood number for the three models at Tg,0 /Tc = 0.75, 1.50 and comparing it with the
+Frössling/Ranz-Marshall correlation (Ranz et al. 1952), we show that the correlation
+provides an excellent estimation of Sh at high temperature (conduction-dominated
+regime), whereas it substantially underestimates Sh at lower temperature (convective-
+dominated regime), in agreement with recent experimental observations (Méès et al.
+2020).
+Next, reducing the ratio d0 /η from 21.5 to 10.5 (obtained by reducing ReS from 6700
+to 2800), we show that the ratio between the actual evaporation rate, and the one
+computed in stagnant conditions, is always much higher than 1, while decreasing with
+Tg,0 /Tc . Interestingly, this ratio does not approach unity at the highest temperature level,
+suggesting an evaporation enhancement due to turbulence also in these conditions. The
+variation of the droplet size, d0 /η, also affects the liquid temperature at the interface and
+the mean liquid temperature. For Tg,0 /Tc = 1.0, 1.5, the regime values of both quantities
+are larger for droplets of d0 /η = 21.5, whereas the opposite is true at Tg,0 /Tc = 0.75
+when the regime values of the liquid temperature are lower for the largest droplets. This
+28                                      Scapin et. al.
+is explained as the result of two competing effects: cooling by evaporation and heating
+from the hot gas.
+Finally, by varying W eS in the range 0.02 and 0.10, we observe an increase in the
+evaporation rate for higher W eS given the larger surface area available for mass transfer.
+At fixed W eS , this increase is more pronounced at Tg,0 /Tc = 0.75 due to a slower
+evaporation rate and to higher deformation (larger effective Weber number based on
+the instantaneous droplet diameter). By computing the joint p.d.f. of the interfacial
+mass flux and curvature, a weak correlation between the two is observed at high tem-
+perature regardless of the Weber number, whereas a positive correlation is recovered
+at Tg,0 /Tc = 0.75 and W eS = 0.10, consistently with the theoretical prediction in
+laminar environments (Tonini & Cossali 2013) and the experimental observations for
+sessile droplets (Sáenz et al. 2017).
+Note that in all the cases, the initial liquid volume fraction has been kept small (i.e.,
+α0 ≈ 0.14 %), the droplets do not interact with each other and, as expected, no significant
+deviations from the d2 -law have been observed. To investigate such deviations and more
+in general the collective dynamics of a dense suspension of evaporating droplets we are
+currently exploring the same configurations presented in this work at higher volume
+fractions.
+
+
+
+Acknowledgements
+  N.S. and L.B. acknowledge the support from the Swedish Research Council via the
+multidisciplinary research environment INTERFACE, Hybrid multiscale modelling of
+transport phenomena for energy efficient processes and the Grant No. 2016-06119. M.E.R.
+was supported by the JSPS KAKENHI Grant Number JP20K22402. The computer time
+was provided by SNIC (Swedish National Infrastructure for Computing) and by the
+National Infrastructure for High Performance Computing and Data Storage in Norway
+(project no. NN9561K). Francesco Picano and Marco Crialesi Esposito are thanked for
+the useful discussions and, the latter, also for providing the droplet tagging algorithm.
+Karim Khamis is acknowledged for pointing out to some typos in the dimensionless
+formulation of the mathematical model.
+
+
+
+Appendix A. Equations of state
+  In this Appendix, we report the equations of state employed for the gas density, the
+gas thermal diffusivity, the gas viscosity, thermal conductivity, heat capacity at constant
+pressure and the Span-Wagner equation of state.
+
+                                      A.1. Gas density
+     The gas density variations as a function of pth , Tg and Ylv follow the ideal gas model
+
+                                                 pth M m,av
+                                     ρg = Πp,2              ,                          (A 1)
+                                                     Tg
+
+where M m,av is the mixture molar mass computed using an harmonic average between the
+gas and the liquid molar mass and Πp,2 = (pth,r Mg )/(Ru Tg,r ) where pth,r and Tg,r are the
+reference thermodynamic pressure and gas temperature, taken equal to the corresponding
+initial value and Ru is the universal gas constant.
+                         Finite-size evaporating droplets in HST                          29
+                           A.2. Liquid-gas diffusion coefficient
+  The liquid gas diffusion coefficient is computed using the relation (Reid et al. 1987):
+                                                 3/2
+                                               Tg
+                                       Dlg =        ,                                  (A 2)
+                                                pth
+where Tg is the gas temperature.
+
+                                    A.3. Gas viscosity
+  The gas viscosity varies with the temperature according to the simplified Sutherland’s
+law (Reid et al. 1987):
+                                        µg = Tg2/3 .                                   (A 3)
+
+                     A.4. Specific heat capacity at constant pressure
+  The specific heat capacity at constant pressure is evaluated as a function of the
+temperature using the virial polynomials (Reid et al. 1987):
+                        cp = A1 + A2 Tg + A3 Tg2 + A4 Tg3 + A5 Tg4 ,                   (A 4)
+where the coefficients A1 = 1.012, A2 = 0.0553, A3 = 0.006, A4 = 2 · 10−3 and A5 =
+5 · 10−4 are adequate to estimate the heat capacity at constant pressure for dry air over
+a wide range of temperatures.
+
+                              A.5. Gas thermal conductivity
+  As for the gas viscosity, the gas thermal conductivity is function of the temperature
+only and computed as (Reid et al. 1987):
+                                           µg cpg
+                                      kg =        ,                               (A 5)
+                                             Pr
+where P r is the Prandtl number.
+
+                           A.6. Span–Wagner equation of state
+   In order to compute the value of Ylv at the interface, see section 3.1.2, we assume that
+                                                                         v
+the gas mixture is ideal and composed of ideal components. Hence, Yl,Γ       can be computed
+using the Rault’s law,
+                                               ps,Γ
+                                               p
+                               v
+                             Yl,Γ =           th             ,                        (A 6)
+                                     ps,Γ          ps,Γ    1
+                                           + 1−
+                                      pth           pth λM
+where λM = Ml /Mg is the molar mass ratio, while pth and ps,Γ are the thermodynamic
+pressure and the partial pressure of the vaporized species at the interface. Since the
+interface is assumed at saturation, ps,Γ is computed as a function of the liquid tem-
+perature at the interface. For most of the substances, Span-Wagner equation of state
+represents a valid approximation over a wide range of thermodynamic pressures and
+temperatures (Span & Wagner 1996):
+                                                  1.5       2.5        5
+                                                                         
+                  ps,Γ    Πp,3       B1 ηsw + B2 ηsw  + B3 ηsw   + B4 ηsw
+                       =       exp                                          .           (A 7)
+                  pth     pth                     1 − ηsw
+where ηsw = 1 − TΓ (Tg,0 /Tc ) and Πp,3 = pc /pth,r , with Tg,0 , Tc and pc the initial gas
+temperature, the critical temperature and critical pressure, respectively. The coefficients
+30                                     Scapin et. al.
+Bi=1,4 = {−7.32714, 1.82365, −2.272744, −2.711929} are experimentally determined and
+correspond in the current study to those of pentane; see Span & Wagner (1996). Note that
+the use of Span-Wagner model is also convenient since it does not involve the saturation
+temperature (like the Clausius–Clapeyron relation), which in a weakly compressible
+phase-changing system is not a constant anymore, but should be computed as a function
+of the time-varying thermodynamic pressure.
+As a final remark, to justify the assumption of incompressible liquid with constant
+properties, we evaluate a posteriori the variations of ρl , cpl , kl and µl given the maximum
+variation of liquid temperature discussed in section 4.2. Using the data reported in Reid
+et al. (1987) and taking as reference the cases at Tg,0 /Tc = 1.5 (when the liquid
+temperature variation is more pronounced), these amount to: ∆ρl /ρl,0 = 6 %, ∆µl /µl,0 =
+8 %, ∆cpl /cpl,0 = 4 %, ∆kl /kl,0 = 5 %.
+
+
+Appendix B. Derivation of the velocity divergence
+   The system composed of equations (2.2), (2.3),(2.5) and (2.4) reported in section 2
+is not closed and an additional equation should be included. To derive it, we adapt
+the approach proposed in Majda & Sethian (1985) in the context of reacting flows and
+recently employed for phase change in Dodd et al. (2021). Nevertheless, since a detailed
+derivation is missing in literature, it is provided here for completeness. The idea is to
+compute the missing relation from the divergence of the velocity field, u, which can be
+computed as Hul + (1 − H)ug . Taking the divergence yields
+                   ∇ · u = (ug − ul ) · ∇H + (1 − H)∇ · ug + H∇ · ul .                 (B 1)
+The first term on the right-hand side represents the volume variation at the interface due
+to phase change, while the second and the third come from the density variations in the
+gas and in the liquid phases. We start with the phase-change contribution and consider a
+reference frame moving with the interface. Accordingly, we decompose the vector ug − ul
+along the normal nΓ , tangential tΓ and bi-normal directions nΓ :
+              ug − ul = (ug,n − ul,n )nΓ + (ug,t − ul,t )tΓ + (ug,b − ul,b )bΓ .       (B 2)
+If the interface has zero thickness, the mass balance imposes that the velocity is con-
+tinuous along the tangential and bi-normal direction (i.e., ug,t = ul,t and ug,b = ul,b ).
+Along the normal direction, conversely, the velocity has a discontinuity proportional to
+the mass flux ṁΓ between the two phases, i.e.,
+                                 ṁΓ = ρg,Γ (ug,n − uΓ,n ),
+                                                                                       (B 3)
+                                 ṁΓ = ρl,Γ (ul,n − uΓ,n ),
+where uΓ,n represents the normal component of the interface velocity and ρi=l,g,Γ the
+phase density at the interface location. Combining the previous two equations yields
+                                                           
+                                                 1      1
+                            ug,n − ul,n = ṁΓ        −        .                   (B 4)
+                                                ρg,Γ   ρl,Γ
+Inserting equations (B 2) and (B 4) into equation (B 1), we obtain
+                                                            
+                                                 1       1
+                        (ug − ul ) · ∇H = ṁΓ        −         δΓ ,                    (B 5)
+                                                ρg,Γ    ρl,Γ
+where δΓ = ∇H · nΓ .
+The second term of equation (B 1) is computed from the continuity in the gas region. If
+                          Finite-size evaporating droplets in HST                        31
+chemical reactions are absent, this reads as
+                                                     1 Dρg
+                                        ∇ · ug = −         .                           (B 6)
+                                                     ρg Dt
+Using the equation of state for the gas density (A 1), the total derivative of ρg can be
+expanded as follows:
+                                                                   
+                 1 Dρg      1 Dpth      1 DT            D       1
+                         =           −        − M m,av                 .            (B 7)
+                 ρg Dt     pth Dt      T Dt             Dt M m,av
+Combining eq. (B 5) and (B 7) finally provides the velocity divergence in the gas re-
+gion Dodd et al. (2021),
+                                                                 
+                             1 dpth   1 DT           D       1
+                 ∇ · ug = −         +       + M m,av                .           (B 8)
+                            pth dt    T Dt           Dt M m,av
+Note that, given the low-Mach assumption, the total derivative of pth in (B 8) has been
+replaced by the time derivative of pth . A similar strategy can be employed to compute
+∇ · ul ; however, we consider here constant and uniform liquid density and therefore,
+∇ · ul = 0 in eq. (B 1) and ρl,Γ = ρl .
+   Differently from what it is commonly done in literature (Motheau & Abraham 2016), we
+found preferable to replace the total derivative of the molar mass and of the temperature
+with the corresponding spatial derivatives. By doing so, this solution completely removes
+the time discretization errors when computing the terms in (B 8). For the contribution
+due to composition, we employ equation (2.3) and we treat the mixture of inert gas
+and vapour as ideal, so that the mixture molar mass is given by the harmonic average
+of the molar mass of each component (Reid et al. 1987). Accordingly, using the relation
+                 PN −1 v
+Yg = YN = 1− j=1 Yl,j      the third term on the right-hand side of equation (B 8) becomes
+
+                                                          N −1                v
+                                                                            DYl,j
+                                                                        
+                         D          1                     X         1
+                  M m,av                       = M m,av                 −1        .    (B 9)
+                         Dt       M m,av                  j=1
+                                                                   λM,j      Dt
+where λM,j = Ml,j /Mg . For the temperature T , we start from the generic enthalpy
+equation for the gas phase:
+                                                     N
+           Dh    1                      dpth    1 X v
+       ρ      =       ∇ · (k∇T ) + Πp,1      +         h ∇ · (ρg Dlg ∇Yj ) .          (B 10)
+           Dt   ReP r                    dt    ReSc j=1 j
+
+In a weakly compressible system, being the enthalpy of the gas phase function of tem-
+perature, thermodynamic pressure and vapour composition, the left-hand side of (B 10)
+can be expanded as
+                                                               −1
+                                                             N
+                                                                        !
+                                                                                     v
+                                                                                  DYl,j
+                                        
+      Dh       ∂h          DT          ∂h           dpth     X     ∂h
+    ρ    =ρ                    +ρ                         +ρ         v                  ,
+      Dt       ∂T Y v ,pth Dt         ∂pth Y v ,T dt         j=1
+                                                                  ∂Yl,j            Dt
+                    l,j                       l,j                         T,Yi6=j
+                                            −1
+                                          N
+                                                        !
+                                                                      v
+               DT               dpth      X        ∂h             DYl,j
+         = ρcp     + ρ(1 − βT )       +ρ             v                  .
+               Dt                dt       j=1
+                                                  ∂Yl,j         v
+                                                                   Dt
+                                                                   T,pth ,Yl,i6=j
+                                                                                      (B 11)
+Note that for an ideal gas, the isothermal compressibility coefficient β = 1/T and, thus,
+(1 − βT ) = 0, which can be omitted. Considering the term varying with the composition
+32                                             Scapin et. al.
+  v
+Yl,j , this can be recast as (see Lupo et al. 2019, for details):
+                     −1                                −1
+                   N
+                                !                    N
+                                                v                         v
+                   X       ∂h              DYl,j     X                 DYl,j
+                             v                    =       (hv,j − hg )       .        (B 12)
+                    j=1
+                          ∂Yl,j        v
+                                             Dt      j=1
+                                                                        Dt
+                                     T,pth ,Yl,i6=j
+
+Inserting equations (B 12) and (B 11) into equation (B 10) and using (2.3), we get
+                                                                      
+                                                    N
+     DT       1                      dp th    ρ g
+                                                   X
+ ρcp     =        ∇ · (k∇T ) + Πp,1       +           Dlg,j ∇hj · ∇Yj  (1 − H). (B 13)
+     Dt     ReP r                      dt    ReSc j=1
+
+Note that equation (B 13) is the same as (2.4) except for the source term due to phase
+change which acts at the interface location. Finally, by combining (B 13), (B 9) (B 8) in
+expression (B 1), the velocity divergence u can be expressed as
+                                
+                       1      1
+      ∇ · u = ṁΓ          −       δΓ ,
+                      ρg,Γ    λρ
+               |          {z        }
+                        fΓ (xΓ ,t)
+                              N −1           
+                1    1 M m,av X        1                        v
+             +                             − 1 ∇ · (ρg Dlg,j ∇Yl,j )(1 − H),
+               pth ReSc ρg    j=1
+                                     λ M,j
+                   |                     {z                        }
+                                                      fY (x,t)
+                                                                                
+                                                                        N
+                  1 1      Πp,1  1                                  ρg X
+             +                        ∇ · (k∇T ) +        Dlg,j ∇hj · ∇Yj (1 − H),
+                 pth Re cp M m,av P r              Sc j=1
+                     |                       {z                           }
+                                                          fT (x,t)
+                                    
+                         Πp,1             1 dpth
+             − 1−                                (1 − H),                             (B 14)
+                      cp M m,av          pth dt
+where fΓ , fY and fT are functions representing the different contributions to the total
+velocity divergence, i.e., phase change, (fΓ ), change of the gas density due to composition
+(fY ) and due to temperature (fT ).
+  The last step is to derive an expression for the thermodynamic pressure, pth . For
+an open domain, pth is constant, whereas for a closed or triperiodic domain it can be
+obtained by imposing the volume conservation on the global domain V . This can formally
+expressed as a constrain on the velocity divergence
+                                     Z
+                                         ∇ · u dV = 0.                               (B 15)
+                                              V
+
+By employing (B 15), we can easily rearrange the rate of change of pth as
+         Z                         Z                                               
+  1 dpth             Πp,1                              (fT (x, t) + fY (x, t))
+              1−              dVg =      fΓ (xΓ , t) +                         (1 − H) dV.
+ pth dt Vg        cp M m,av           V                          pth
+                                                                                      (B 16)
+
+
+Appendix C. Verification/validation of the low-Mach solver with
+            phase change
+  In this appendix, we provide a verification and two validation cases of the weakly
+compressible code employed to perform the numerical simulations in the present work.
+                         Finite-size evaporating droplets in HST                           33
+  (a)                                         (b)
+
+
+
+
+Figure 18: a): Temporal evolution of the instantaneous droplet diameter over the initial
+value, d/d0 , b): Temporal evolution of the thermodynamic pressure over the initial value,
+pth /pth,0 .
+
+            C.1. Droplet evaporation due to a prescribed, constant mass flux
+   The set-up of this verification case consists of a two-dimensional circular droplet with
+initial diameter d0 , which evaporates due to a prescribed, constant mass flux ṁΓ,A . In this
+case, the momentum equation is decoupled from the transport of energy and vapour mass
+fraction equations and it is straightforward to show that the droplet diameter evolves as:
+                                                        
+                                  d(t)            2ṁΓ,A
+                                        =1−                 t.                         (C 1)
+                                   d0              d0 ρl
+In our previous work (Scapin et al. 2020), we reproduce this test case using a zero-pressure
+outflow boundary condition, whereas here we prescribe periodic boundary conditions.
+Accordingly, as evaporation starts, the thermodynamic pressure builds up and eventually
+reaches a stationary value when the droplet is completely evaporated. By setting fY
+and fT to zero in equation (B 16) and after some manipulations a nonlinear ordinary
+differential equation can be derived for pth ,
+                            42ṁΓ,A πd2 (t)
+                                                                   
+               dpth (t)                                   pth (t)
+                        −                        1−                   pth (t) = 0,     (C 2)
+                 dt       30Gtot − 5ρl πd3 (t)       ρl (Ru /Mg )T0
+where d(t) is computed using equation (C 1), Gtot is the mass inside the system, taken
+equal to its initial value (i.e., Gtot = ρg,0 Vg,0 + ρl Vl,0 ), T0 and (Ru /Mg ) are chosen
+so that the group pth,0 /(ρg,0 (Ru /Mg )T0 ) = 1. Equation (C 2) is here solved with the
+fourth-order Runge-Kutta scheme. The test has been repeated for three density ratios
+λρ = 10 − 50 − 100, with the remaining dimensionless physical parameters Re = 25,
+W e = 0.10, λµ = 50; gravity is absent. The governing equations are solved in a square
+domain [−2d0 ; 2d0 ]2 , discretized with 128 × 128 grid points. The droplet is held at the
+centre of the domain. Results are reported in figure 18: an excellent agreement between
+the numerical and the analytical solutions is found for all the cases.
+
+                 C.2. Hexadecane static droplet evaporation in a hot gas
+  As a validation case, we reproduce the numerical test proposed in Ni et al. (2021)
+consisting of a static hexadecane droplet of initial diameter d0 = 550 µm, which
+evaporates in dry air at Tg = 673 K. For this test case, we set Re = 25, W e = 0.1,
+P r = Sc = 1, λρ = 770, λµ = 202, λk = 20, λcp = 2.1. Zero-pressure outflow boundary
+34                                     Scapin et. al.
+ (a)                                          (b)
+
+
+
+
+Figure 19: Temporal evolution of the instantaneous droplet diameter (d/d0 )2 over the
+initial value for the a): validation case described in C.2 and the b): C.3.
+
+conditions are prescribed (therefore, pth = pth,0 ) and the assumption of constant liquid
+bulk density is relaxed (see Ni et al. 2021, for more details). The whole set of governing
+equations are solved in a square domain [−10d0 ; 10d0 ]2 using 256 × 256 grid points.
+Once evaporation starts, the liquid droplet undergoes a local initial expansion (i.e.,
+(d/d0 )2 > 1) until t/d20 ≈ 2, after which the d2 regime is approached (see figure 19a).
+Overall, good agreement between our simulations and the reference data is observed,
+confirming once more the validity of our numerical algorithm.
+
+          C.3. Single droplet evaporating in homogeneous isotropic turbulence
+  As a final validation case, we reproduce the experimental results in Verwey & Birouk
+(2018), reproduced also in Dodd et al. (2021), consisting of a single n-heptane droplet
+of initial diameter d0 = 200 µm, which evaporates in nitrogen at Tg = 348 K and
+pth,0 = 10 bar. For this test case, we consider homogeneous isotropic turbulence sustained
+by an artificial forcing (Podvigina & Pouquet 1994) at a Reynolds number based on the
+Taylor’s microscale Reλ = u0rms λ/νg,r ≈ 32. The initial droplet Weber number W erms =
+ρg,r u02
+      rms d0 /σ is set equal to 0.0044, P r = 0.715, Sc = 2.81, Ste = 1.05, λρ = 25.27, λµ =
+11.82, λk = 3.72 and λcp = 2.45. The whole set of governing equations are solved in a
+cubic domain [−16d0 ; 16d0 ]3 using 7683 grid points corresponding to about 48 grid points
+per initial diameter. Figure 19b reports (d/d0 )2 as a function of t/d20 for the both the
+experimental and the numerical results. A good agreement is observed with a deviation of
+evaporation rate KDN S of less then 7 % with respect to the experimental data, which is
+considered a satisfactory result and within the uncertainty of the measurement (Verwey
+& Birouk 2018).
+
+
+Appendix D. Improved Adams-Bashforth scheme for HST
+            simulations
+   Kasbaoui et al. (2017) show that that the classical Adams-Bashforth scheme (AB2)
+employed in Gerz et al. (1989) is not suitable for the direct numerical simulations of
+homogeneous shear turbulence. Using as a benchmark the Kelvin modes derived in the
+framework of the Rapid Distortion Theory (RDT) (Maxey 1982; Isaza & Collins 2009),
+they show that the method fails to reproduce the analytical solution with an unbounded
+growth of the error. In this appendix, we propose a modification of the classical Adams-
+                           Finite-size evaporating droplets in HST                              35
+Bashforth scheme able to reproduce the Kelvin modes and, more generally, stable and
+accurate simulations.
+
+                              D.1. Proof the numerical stability
+   We follow the approach proposed in Kasbaoui et al. (2017) and compute the time dis-
+cretization error introduced by the classical Adams-Bashforth scheme using the simplified
+equation
+                                     ∂u       ∂u
+                                         + Sz     = Au,                               (D 1)
+                                      ∂t      ∂x
+where A is a positive constant and S is the applied shear. As noted in Kasbaoui
+et al. (2017), equation (D 1) allows us to remove the complications due to the pressure
+gradient while preserving some important key features of homogeneously sheared flows,
+i.e. the exponential growth of the turbulent kinetic energy (Maxey 1982). The solution
+of equation (D 1), u = û(t) exp(ik · x), needs to satisfy two conditions for the amplitude
+û(t) and for the wave vector k,
+                                  dû
+                                      = Aû,                                     (D 2a)
+                                  dt
+                                  dk
+                                      · x = −Szk · ex .                          (D 2b)
+                                  dt
+Assuming that the discretization error evolves as a wave of amplitude ε̂ and wavevector
+k, at the nth time step
+                                     εn = ε̂n exp(ikn · x).                                  (D 3)
+Employing the classical Adams-Bashforth integration scheme, we obtain a first interme-
+diate error neglecting the mean shear contribution,
+               εn+1 = εn + A∆tn+1 γ1 RU(ε̂n , kn ) − γ2 RU(ε̂n−1 , kn−1 ) ,
+                                                                        
+                                                                                  (D 4)
+where RU represents the discrete operator for the spatial terms in the governing equation
+of the error and γ1 = (1+0.5∆tn+1 /∆tn ) and γ2 = 0.5∆tn+1 /∆tn are the two coefficients
+of the Adams-Bashforth scheme for a variable time-step size. Note again that, at this
+stage, the mean shear contribution is not included in RU.
+Following the approach proposed by Gerz et al. (1989), we set RU(ˆ        n , kn ) = ε̂n exp(ikn ·
+               n−1    n−1        n−1        n−1
+x) and RU(ˆ       ,k     ) = ε̂     exp(ik     ·x). Moreover, by using the identity exp(ikn−1 ·
+                              n
+x) = exp(−i∆k · x) exp(ik · x), equation (D 4) becomes
+           εn+1 = εn + A∆tn+1 γ1 ε̂n − γ2 ε̂n−1 exp(−i∆k · x) exp(ikn · x),
+                                                                   
+                                                                                             (D 5)
+where ∆k = kn − kn−1 . Next, the mean shear contribution is included and this results
+in an error at time n + 1,
+
+                                            ε̂n+1
+        z                              }|                           {
+  εn+1 = εn + A∆tn+1 γ1 ε̂n − γ2 ε̂n−1 exp(−i∆k · (x − ∆tn+1 Szex )) ·
+                   
+
+                                                           exp[ikn · (x − ∆tn+1 Szex )]. (D 6)
+                                                               |          {z        }
+                                                                         ikn+1
+
+If we analyse equation (D 6), we see that the new wave vector kn+1 satisfies the first
+condition, i.e., eqn (D 2a). In fact:
+                                                     kn+1 − kn
+            kn · (x − ∆tn+1 Szex ) = kn+1 · x →                · x = −Szkn · ex .            (D 7)
+                                                       ∆tn+1
+36                                     Scapin et. al.
+Conversely, the amplitude at the new time level, ε̂n+1 , does not satisfy the condi-
+tion (D 2b) since it contains a spatial-dependent term, ∆k, which is caused by the
+difference in orientation between the wave vector at the current and old time level, n
+and n − 1.
+   The approach proposed in this work improves the method by Gerz et al. (1989) by
+removing the spatial-dependent term, ∆k. To this end, the third term on the right-hand
+side of equation (D 4) is first shear mapped to the current time level,
+                  ε̂n−1 exp(ikn−1 · (x − ∆tn Szex )) = ε̂n−1 exp(ikn · x).              (D 8)
+Equation (D 8) is key to obtain two wave errors of different amplitudes (i.e., ε̂n and ε̂n−1 )
+but equal wave vector, i.e., kn . Inserting equation (D 8) in equation (D 4) gives
+                  εn+1 = εn + A∆tn+1 γ1 ε̂n − γ2 ε̂n−1 exp(ikn · x).
+                                                       
+                                                                                        (D 9)
+Next, the shear-mapping step is applied to equation (D 9), providing an error at n + 1
+                              ε̂n+1
+             z           }|               {
+       εn+1 = εn + A∆tn+1 γ1 ε̂n − γ2 ε̂n−1 exp[ikn · (x − ∆tn+1 Szex )].              (D 10)
+                                                |          {z        }
+                                                               ikn+1
+
+As expected, and similarly to what is observed for (D 5), equation (D 10) satisfies the
+condition for kn+1 given by (D 2b). This time, however, also the condition (D 2a) is met
+since the term ε̂n+1 does not contain any spatial-dependent term, i.e., k. The effectiveness
+of the proposed approach is shown in the next subsection with an analytical benchmark.
+
+                                      D.2. Validation
+  To validate the modified algorithm proposed here, we employ the two-dimensional
+analytical Kelvin modes derived in the framework of the RDT,
+                  2         "                                      !#
+                                                          2
+   K           K    k0           tS    2
+                                                         kx,0 S 2 t2
+  v (x, t) = v0           exp −      k0 − kx,0 ky,0 St +                exp(ik · x),
+                     k           Reλ                         3
+                ky (t) K                                                             (D 11)
+  uK (x, t) = −        v (x, t),
+                 kx
+  ky = ky,0 − kx St,
+where Reλ , defined
+              p       as Sλ20 /ν, is the Reynolds number based on the perturbation wave-
+length λ0 = (2π/kx )2 + (2π/ky,0 )2 , taken as a reference length. As done by Kasbaoui
+et al. (2017), we consider a two-dimensional square box lx = ly = 2π, discretized with
+N = 128 points along each direction. The analytical solution    √ (D 11) is employed as
+the initial condition, with initial vertical amplitude v0K = 2/2, initial wavevector
+k0 = (4, 1) and Reλ = 208. We compare three time-integration methods: (1) the
+Adams-Bashforth (AB2) in the two variants (classical and modified), (2) the third-order
+Runge-Kutta (RK3) method proposed in Tanaka (2017); Yousefi et al. (2020) and (3)
+the Explicit Crank-Nicholson (CN2) method, proposed in Kasbaoui et al. (2017). In all
+cases, the momentum equation is advanced with a constant time step, ∆t = 0.25 (SN )−1 .
+  Figures 20–22 report the horizontal mode obtained with the three different time-
+integration schemes, which according to the RDT should go to zero at tS = 1. Using the
+modified AB2 scheme and CN2, we obtain almost identical results and zero horizontal
+mode up to machine precision at tS = 1. Conversely, using the original approach by Gerz
+(figure 21), the normal mode does not go to zero for tS = 1 and for tS = 5 the numerical
+errors largely affect the solution.
+                        Finite-size evaporating droplets in HST                        37
+
+
+
+
+Figure 20: Temporal evolution of the horizontal mode for tS = 1, 3 and 5 using the
+modified Adams-Bashforth.
+
+
+
+
+Figure 21: Temporal evolution of the horizontal mode for tS = 1, 3 and 5 using the
+standard Adams-Bashforth.
+
+
+
+
+Figure 22: Temporal evolution of the horizontal mode for tS = 1, 3 and 5 using the
+explicit Crank-Nicolson method.
+
+
+  The excellent agreement between the results obtained with our approach and the
+analytical solution from RDT are reported in figure 23. A more detailed analysis considers
+the evolution in time of the relative error, reported in figure 24 for the horizontal and
+vertical Kelvin modes. The modified AB2, RK3 and CN2 provide similar errors, especially
+for tS > 2, while for tS ⩽ 2, the CN2 method appears to be slightly more accurate. On the
+contrary, the error of the classical AB2 is well above that from the other three methods,
+with a local peak at tS = 1 in the horizontal mode uK , as already observed in the first
+38                                     Scapin et. al.
+
+
+
+
+Figure 23: Comparison between the numerical solution obtained with AB2 (proposed
+method) and the analytical results from RDT.
+
+
+     (a)                                        (b)
+
+
+
+
+Figure 24: Temporal evolution of the discretization of error (in log scale) for: (a) the
+horizontal mode (i.e., u), (b): the vertical mode (i.e., v) using the three time integration
+methods, AB2 - Gerz et al. and AB2 - Modified, RK3 and CN2.
+
+
+panel of figure 21. Furthermore, the error evolves at a much faster pace, which is the main
+reason for the poor performance of the classic AB2 in more demanding simulations.
+
+
+                                      REFERENCES
+Abramzon, B & Sirignano, WA 1989 Droplet vaporization model for spray combustion
+     calculations. International journal of heat and mass transfer 32 (9), 1605–1618.
+Albernaz, Daniel L, Do-Quang, Minh, Hermanson, Jim C & Amberg, Gustav 2017
+     Droplet deformation and heat transfer in isotropic turbulence. Journal of Fluid Mechanics
+     820, 61–85.
+Balachandar, S, Zaleski, Stephane, Soldati, Alfredo, Ahmadi, Goodarz &
+     Bourouiba, Lydia 2020 Host-to-host airborne transmission as a multiphase flow problem
+     for science-based social distance guidelines.
+Birouk, Madjid & Gökalp, Iskender 2006 Current status of droplet evaporation in turbulent
+     flows. Progress in Energy and Combustion Science 32 (4), 408–423.
+Bourouiba, Lydia 2020 Turbulent gas clouds and respiratory pathogen emissions: potential
+     implications for reducing transmission of covid-19. Jama 323 (18), 1837–1838.
+                          Finite-size evaporating droplets in HST                           39
+Bourouiba, Lydia 2021 The fluid dynamics of disease transmission. Annual Review of Fluid
+      Mechanics 53, 473–508.
+Bukhvostova, A, Russo, E, Kuerten, Johannes GM & Geurts, Bernardus J 2014
+      Comparison of dns of compressible and incompressible turbulent droplet-laden heated
+      channel flow with phase transition. International journal of multiphase flow 63, 68–81.
+Chong, Kai Leong, Ng, Chong Shen, Hori, Naoki, Yang, Rui, Verzicco, Roberto &
+      Lohse, Detlef 2021 Extended lifetime of respiratory droplets in a turbulent vapor puff
+      and its implications on airborne disease transmission. Physical review letters 126 (3),
+      034502.
+Costa, Pedro 2018 A fft-based finite-difference solver for massively-parallel direct numerical
+      simulations of turbulent flows. Computers & Mathematics with Applications 76 (8), 1853–
+      1862.
+Dalla Barba, Federico, Scapin, Nicoló, Demou, Andreas D, Rosti, Marco E, Picano,
+      Francesco & Brandt, Luca 2020 An interface capturing method for liquid-gas flows
+      at low-mach number. Computers & Fluids p. 104789.
+Dauxois, Thierry, Peacock, Thomas, Bauer, Peter, Caulfield, Colm-cille P,
+      Cenedese, Claudia, Gorlé, Catherine, Haller, George, Ivey, Greg N, Linden,
+      Paul F, Meiburg, Eckart & others 2021 Confronting grand challenges in
+      environmental fluid mechanics. Physical Review Fluids 6 (2), 020501.
+De Rivas, A & Villermaux, E 2016 Dense spray evaporation as a mixing process. Physical
+      Review Fluids 1 (1), 014201.
+Demou, AD, Frantzis, C & Grigoriadis, DGE 2019 A low-mach methodology for efficient
+      direct numerical simulations of variable property thermally driven flows. International
+      Journal of Heat and Mass Transfer 132, 539–549.
+Dodd, Michael S & Ferrante, Antonino 2014 A fast pressure-correction method for
+      incompressible two-fluid flows. Journal of Computational Physics 273, 416–434.
+Dodd, Michael S, Mohaddes, Danyal, Ferrante, Antonino & Ihme, Matthias 2021
+      Analysis of droplet evaporation in isotropic turbulence through droplet-resolved dns.
+      International Journal of Heat and Mass Transfer 172, 121157.
+Elghobashi, Said 2019 Direct numerical simulation of turbulent flows laden with droplets or
+      bubbles. Annual Review of Fluid Mechanics 51, 217–244.
+Gerz, Thomas, Schumann, Ulrich & Elghobashi, SE 1989 Direct numerical simulation of
+      stratified homogeneous turbulent shear flows. Journal of Fluid Mechanics 200, 563–594.
+Gökalp, Iskender, Chauveau, Christian, Simon, Olivier & Chesneau, Xavier 1992
+      Mass transfer from liquid fuel droplets in turbulent flow. Combustion and flame 89 (3-4),
+      286–298.
+Hubbard, GL, Denny, VE & Mills, AF 1975 Droplet evaporation: effects of transients and
+      variable properties. International journal of heat and mass transfer 18 (9), 1003–1008.
+Ii, Satoshi, Sugiyama, Kazuyasu, Takeuchi, Shintaro, Takagi, Shu, Matsumoto,
+      Yoichiro & Xiao, Feng 2012 An interface capturing method with a continuous function:
+      The thinc method with multi-dimensional reconstruction. Journal of Computational
+      Physics 231 (5), 2328–2358.
+Isaza, Juan C & Collins, Lance R 2009 On the asymptotic behaviour of large-scale
+      turbulence in homogeneous shear flow. Journal of fluid mechanics 637, 213.
+Kasbaoui, M Houssem, Patel, Ravi G, Koch, Donald L & Desjardins, Olivier 2017 An
+      algorithm for solving the navier–stokes equations with shear-periodic boundary conditions
+      and its application to homogeneously sheared turbulence. Journal of Fluid Mechanics 833,
+      687–716.
+Kuerten, Johannes GM 2016 Point-particle dns and les of particle-laden turbulent flow-a
+      state-of-the-art review. Flow, turbulence and combustion 97 (3), 689–713.
+Langmuir, Irving 1918 The evaporation of small spheres. Physical review 12 (5), 368.
+Leonard, Brian P 1979 A stable and accurate convective modelling procedure based
+      on quadratic upstream interpolation. Computer methods in applied mechanics and
+      engineering 19 (1), 59–98.
+Lupo, Giandomenico, Ardekani, Mehdi Niazi, Brandt, Luca & Duwig, Christophe
+      2019 An immersed boundary method for flows with evaporating droplets. International
+      Journal of Heat and Mass Transfer 143, 118563.
+40                                       Scapin et. al.
+Lupo, Giandomenico & Duwig, Christophe 2020 Uncertainty quantification of multispecies
+       droplet evaporation models. International Journal of Heat and Mass Transfer 154,
+       119697.
+Lupo, Giandomenico, Gruber, Andrea, Brandt, Luca & Duwig, Christophe 2020
+       Direct numerical simulation of spray droplet evaporation in hot turbulent channel flow.
+       International Journal of Heat and Mass Transfer 160, 120184.
+Majda, Andfrew & Sethian, James 1985 The derivation and numerical solution of the
+       equations for zero mach number combustion. Combustion science and technology 42 (3-4),
+       185–205.
+Mandal, Deepak Kumar & Bakshi, Shamit 2012 Internal circulation in a single droplet
+       evaporating in a closed chamber. International journal of multiphase flow 42, 42–51.
+Marti, Ferran, Martinez, Oscar, Mazo, David, Garman, John & Dunn-Rankin, Derek
+       2017 Evaporation of a droplet larger than the kolmogorov length scale immersed in a
+       relative mean flow. International Journal of Multiphase Flow 88, 63–68.
+Mashayek, Farzad 1998a Direct numerical simulations of evaporating droplet dispersion in
+       forced low mach number turbulence. International journal of heat and mass transfer
+       41 (17), 2601–2617.
+Mashayek, Farzad 1998b Droplet–turbulence interactions in low-mach-number homogeneous
+       shear two-phase flows. Journal of Fluid Mechanics 367, 163–203.
+Maxey, MR 1982 Distortion of turbulence in flows with parallel streamlines. Journal of Fluid
+       Mechanics 124, 261–282.
+Maxey, Martin 2017 Simulation methods for particulate flows and concentrated suspensions.
+       Annual Review of Fluid Mechanics 49, 171–193.
+Méès, L, Grosjean, N, Marié, Jean-Louis & Fournier, C 2020 Statistical lagrangian
+       evaporation rate of droplets released in a homogeneous quasi-isotropic turbulence. Physical
+       Review Fluids 5 (11), 113602.
+Mittal, Rajat, Ni, Rui & Seo, Jung-Hee 2020 The flow physics of covid-19. Journal of fluid
+       Mechanics 894.
+Motheau, Emmanuel & Abraham, John 2016 A high-order numerical algorithm for dns
+       of low-mach-number reactive flows with detailed chemistry and quasi-spectral accuracy.
+       Journal of Computational Physics 313, 430–454.
+Ng, Chong Shen, Chong, Kai Leong, Yang, Rui, Li, Mogeng, Verzicco, Roberto &
+       Lohse, Detlef 2021 Growth of respiratory droplets in cold and humid air. Physical
+       Review Fluids 6 (5), 054303.
+Ni, Zhaojing, Hespel, Camille, Han, Kai & Foucher, Fabrice 2021 Numerical simulation
+       of heat and mass transient behavior of single hexadecane droplet under forced convective
+       conditions. International Journal of Heat and Mass Transfer 167, 120736.
+Piedra, S, Lu, J, Ramos, E & Tryggvason, G 2015 Numerical study of the flow and heat
+       transfer of bubbly flows in inclined channels. International Journal of Heat and Fluid Flow
+       56, 43–50.
+Pinheiro, Abgail P, Vedovoto, João Marcelo, da Silveira Neto, Aristeu & van
+       Wachem, Berend GM 2019 Ethanol droplet evaporation: effects of ambient temperature,
+       pressure and fuel vapor concentration. International Journal of Heat and Mass Transfer
+       143, 118472.
+Podvigina, O & Pouquet, A 1994 On the non-linear stability of the 1: 1: 1 abc flow. Physica
+       D: Nonlinear Phenomena 75 (4), 471–508.
+Pumir, Alain 1996 Turbulence in homogeneous shear flows. Physics of Fluids 8 (11), 3112–
+       3127.
+Ranz, WE, Marshall, W R & others 1952 Evaporation from drops. Chem. eng. prog 48 (3),
+       141–146.
+Reid, Robert C, Prausnitz, John M & Poling, Bruce E 1987 The properties of gases and
+       liquids .
+Reveillon, Julien & Demoulin, François-Xavier 2007 Effects of the preferential
+       segregation of droplets on evaporation and turbulent mixing. Journal of Fluid Mechanics
+       583, 273–302.
+Rosti, ME, Cavaiola, M, Olivieri, S, Seminara, A & Mazzino, A 2021 Turbulence role in
+                           Finite-size evaporating droplets in HST                               41
+      the fate of virus-containing droplets in violent expiratory events. Physical Review Research
+      3 (1), 013091.
+Rosti, ME, Olivieri, S, Cavaiola, M, Seminara, A & Mazzino, A 2020 Fluid dynamics of
+      covid-19 airborne infection suggests urgent data for a scientific design of social distancing.
+      Scientific reports 10 (1), 1–9.
+Rosti, Marco E, De Vita, Francesco & Brandt, Luca 2019a Numerical simulations of
+      emulsions in shear flows. Acta Mechanica 230 (2), 667–682.
+Rosti, Marco E, Ge, Zhouyang, Jain, Suhas S, Dodd, Michael S & Brandt, Luca 2019b
+      Droplets in homogeneous shear turbulence. Journal of Fluid Mechanics 876, 962–984.
+Russo, E, Kuerten, Johannes GM, Van Der Geld, CWM & Geurts, Bernardus J 2014
+      Water droplet condensation and evaporation in turbulent channel flow. Journal of fluid
+      mechanics 749, 666–700.
+Sáenz, PJ, Wray, AW, Che, Z, Matar, OK, Valluri, P, Kim, J & Sefiane, K 2017
+      Dynamics and universal scaling law in geometrically-controlled sessile drop evaporation.
+      Nature communications 8 (1), 1–9.
+Sahu, S, Hardalupas, Y & Taylor, AMKP 2018 Interaction of droplet dispersion and
+      evaporation in a polydispersed spray. Journal of Fluid Mechanics 846, 37–81.
+Scapin, Nicolò, Costa, Pedro & Brandt, Luca 2020 A volume-of-fluid method for interface-
+      resolved simulations of phase-changing two-fluid flows. Journal of Computational Physics
+      407, 109251.
+Sekimoto, Atsushi, Dong, Siwei & Jiménez, Javier 2016 Direct numerical simulation of
+      statistically stationary and homogeneous shear turbulence and its relation to other shear
+      flows. Physics of Fluids 28 (3), 035101.
+Span, Roland & Wagner, Wolfgang 1996 A new equation of state for carbon dioxide
+      covering the fluid region from the triple-point temperature to 1100 k at pressures up
+      to 800 mpa. Journal of physical and chemical reference data 25 (6), 1509–1596.
+Tanaka, Mitsuru 2017 Effect of gravity on the development of homogeneous shear turbulence
+      laden with finite-size particles. Journal of Turbulence 18, 1–36.
+Tonini, Simona & Cossali, GE 2013 An exact solution of the mass transport equations for
+      spheroidal evaporating drops. International Journal of Heat and Mass Transfer 60, 236–
+      240.
+Verwey, Cameron & Birouk, Madjid 2018 Fuel vaporization: Effect of droplet size and
+      turbulence at elevated temperature and pressure. Combustion and Flame 189, 33–45.
+Verwey, Cameron & Birouk, Madjid 2020 Experimental investigation of the evaporation
+      of suspended mono-sized heptane droplets in turbulence intensities approaching unity.
+      Combustion and Flame 219, 425–436.
+Villermaux, Emmanuel, Moutte, Alexandre, Amielh, Muriel & Meunier, Patrice
+      2017 Fine structure of the vapor field in evaporating dense sprays. Physical Review Fluids
+      2 (7), 074501.
+Wang, Jietuo, Dalla Barba, Federico & Picano, Francesco 2021 Direct numerical
+      simulation of an evaporating turbulent diluted jet-spray at moderate reynolds number.
+      International Journal of Multiphase Flow 137, 103567.
+Wang, Yanxing, Chen, Xiaodong, Wang, Xingjian & Yang, Vigor 2019 Vaporization of
+      liquid droplet with large deformation and high mass transfer rate, ii: Variable-density,
+      variable-property case. Journal of Computational Physics 394, 1–17.
+Weiss, Philipp, Giddey, Valentin, Meyer, Daniel W & Jenny, Patrick 2020 Evaporating
+      droplets in shear turbulence. Physics of Fluids 32 (7), 073305.
+Weiss, Philipp, Meyer, Daniel W & Jenny, Patrick 2018 Evaporating droplets in
+      turbulence studied with statistically stationary homogeneous direct numerical simulation.
+      Physics of Fluids 30 (8), 083304.
+Wong, Shwin-Chung & Lin, Ar-Cheng 1992 Internal temperature distributions of droplets
+      vaporizing in high-temperature convective flows. Journal of fluid mechanics 237, 671–687.
+Yousefi, Ali, Ardekani, Mehdi Niazi & Brandt, Luca 2020 Modulation of turbulence by
+      finite-size particles in statistically steady-state homogeneous shear turbulence. Journal of
+      Fluid Mechanics 899.
+

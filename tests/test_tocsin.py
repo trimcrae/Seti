@@ -1664,3 +1664,62 @@ def test_footprint_epochs_land_inside_the_night_they_represent():
     null would resample the wrong nights."""
     for n in (61499, 61500, 61735):
         assert L.night_of(n + 1.1666667) == n
+
+
+def test_stratified_null_kills_a_deep_drilling_field_artefact():
+    """The first two candidates were both COSMOS, and both were spurious.
+
+    A deep-drilling field is deeper, revisited far more often (34 nights against
+    7 elsewhere), and subtracts differently — so its true per-star-night alert
+    rate is genuinely higher.  Testing such a star against the ALL-SKY rate
+    manufactures significance: measured p-values of 1.3e-03 and 2.7e-07 became
+    0.60 and 0.58 once the null was stratified by sky bin.
+    """
+    led = L.Ledger()
+    led.n_target_visits, led.n_events_kept = 55424, 87      # global rate 1.57e-3
+    # Nine stars in ONE busy bin, each with 4 events in 34 visited nights —
+    # the shape COSMOS actually produced.
+    hist = {}
+    for j in range(9):
+        tid = str(4242 + j)
+        evs = [_event(tid=tid, night=f"n{61100 + 10 * i}", mjd=61100.0 + 10 * i)
+               for i in range(4)]
+        led.add_night(f"seed{j}", evs, target_visits=0, targets_in_footprint=0,
+                      alerts_seen=0)
+        led.targets[tid]["ra"] = 150.5 + 0.01 * j
+        led.targets[tid]["dec"] = 2.5
+        hist[tid] = [61100.0 + i for i in range(34)]
+    led.apply_visit_history(hist)
+
+    # Against the all-sky rate alone these are wildly significant.
+    led.bin_trials = {}
+    led.assess()
+    assert led.targets["4242"]["p_binomial"] < 1e-4
+
+    # Against their own bin — where alerts are far more common — they are nothing.
+    led.bin_trials = {L.bin_key(150.5, 2.5): 34 * 9}
+    led.assess()
+    rec = led.targets["4242"]
+    assert rec["local_rate"] > 5 * led.rate_per_visit
+    assert rec["null_rate_used"] == pytest.approx(rec["local_rate"])
+    assert rec["p_binomial"] > 0.05
+    assert rec["tier"] != "candidate"
+
+
+def test_assess_clears_stale_verdict_notes():
+    """Notes are verdict state, not history.
+
+    A real record carried BOTH `denominator_approximate` and
+    `rejected_high_duty_cycle` while sitting at candidate tier — three mutually
+    contradictory claims left behind by three different assessments.
+    """
+    led = L.Ledger()
+    led.add_night("n1", [_event()], target_visits=10, targets_in_footprint=5,
+                  alerts_seen=10)
+    led.assess()                                   # leaves denominator_approximate
+    assert "denominator_approximate" in led.targets["4242"]["notes"]
+    led.add_night("n2", [], target_visits=10, targets_in_footprint=5,
+                  alerts_seen=0,
+                  visit_history={"4242": [61500.0 + i for i in range(20)]})
+    led.assess()                                   # now the denominator is exact
+    assert "denominator_approximate" not in led.targets["4242"]["notes"]

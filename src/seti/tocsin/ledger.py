@@ -46,6 +46,14 @@ LEDGER_VERSION = 2
 _NIGHT_BOUNDARY_FRAC = 16.0 / 24.0
 
 
+def bin_key(ra, dec, bin_deg: float = 1.0) -> str:
+    """Sky-bin key for the stratified null; must match the footprint binning."""
+    try:
+        return f"{math.floor(float(ra) / bin_deg)},{math.floor(float(dec) / bin_deg)}"
+    except (TypeError, ValueError):
+        return ""
+
+
 def night_of(mjd: float) -> int:
     """Integer observing-night label for an MJD (Cerro Pachon local night)."""
     return int(math.floor(float(mjd) - _NIGHT_BOUNDARY_FRAC))
@@ -243,6 +251,15 @@ class Ledger:
     # here, which is what makes coverage gapless AND non-overlapping regardless
     # of how far the broker's mirror lags behind the wall clock.
     last_mjd_screened: float = float("nan")
+    # Per-sky-bin trials and events, for the STRATIFIED null.  A global event
+    # rate is wrong wherever the survey's own behaviour varies: a deep-drilling
+    # field is deeper, revisited far more often, and has different template
+    # quality, so its true per-star-night alert rate is genuinely higher.
+    # Testing a deep-drilling star against the all-sky rate manufactures
+    # significance --- which is exactly how the first two "candidates" arose, both
+    # in COSMOS (RA 150, Dec +2), with 34 visited nights against 7 elsewhere.
+    bin_trials: dict = field(default_factory=dict)
+    bin_events: dict = field(default_factory=dict)
     targets: dict[str, dict] = field(default_factory=dict)
     rate_per_visit: float = float("nan")
     fdr_threshold: float = float("nan")
@@ -277,6 +294,7 @@ class Ledger:
                   alerts_seen: int,
                   visit_history: dict[str, list[float]] | None = None,
                   target_positions: dict[str, tuple[float, float]] | None = None,
+                  bin_trials: dict | None = None,
                   ) -> None:
         """Fold **one observing night** into the running state.
 
@@ -301,6 +319,8 @@ class Ledger:
             self.n_targets_screened = max(self.n_targets_screened,
                                           int(targets_in_footprint))
             self.n_alerts_seen += int(alerts_seen)
+            for k, v in (bin_trials or {}).items():
+                self.bin_trials[k] = self.bin_trials.get(k, 0) + int(v)
         for ev in events:
             tid = str(ev.target_id)
             rec = self.targets.get(tid)
@@ -354,6 +374,13 @@ class Ledger:
         screen's own history --- not assumed, and not taken from another survey
         whose cadence and depth differ.
         """
+        # Per-bin event counts, recomputed from the stored targets so they can
+        # never double-count across re-runs.
+        self.bin_events = {}
+        for rec in self.targets.values():
+            k = bin_key(rec.get("ra"), rec.get("dec"))
+            if k:
+                self.bin_events[k] = self.bin_events.get(k, 0) + len(rec["events"])
         if self.n_target_visits > 0:
             self.rate_per_visit = self.n_events_kept / self.n_target_visits
         else:
@@ -378,12 +405,30 @@ class Ledger:
         rate = _rate if _rate is not None else float("nan")
         ids, pvals = [], []
         for tid, rec in self.targets.items():
+            # Notes are verdict state, not history: leaving them to accumulate
+            # produced records carrying BOTH "denominator_approximate" and
+            # "rejected_high_duty_cycle" while sitting at candidate tier — three
+            # mutually contradictory claims from three different assessments.
+            rec["notes"] = []
             k = int(rec["n_events"])
             n = int(rec["n_visits"])
             rec["duty_cycle"] = (k / n) if n > 0 else float("nan")
-            if rec["visits_exact"] and n >= min_visits_for_rate and np.isfinite(rate) \
-                    and 0.0 < rate < 1.0:
-                rec["p_binomial"] = binomial_sf(k, n, rate)
+            # STRATIFIED NULL.  Use the more conservative of the all-sky rate
+            # and this target's own sky bin's rate, so a field whose alert
+            # density is anomalous (deep-drilling cadence, bright-star
+            # subtraction residuals) cannot manufacture significance.
+            bkey = bin_key(rec.get("ra"), rec.get("dec"))
+            bt = int(self.bin_trials.get(bkey, 0)) if bkey else 0
+            be = int(self.bin_events.get(bkey, 0)) if bkey else 0
+            local = (be / bt) if bt > 0 else float("nan")
+            rec["local_rate"] = local if np.isfinite(local) else None
+            null_rate = rate
+            if np.isfinite(local) and (not np.isfinite(rate) or local > rate):
+                null_rate = local
+            rec["null_rate_used"] = null_rate if np.isfinite(null_rate) else None
+            if rec["visits_exact"] and n >= min_visits_for_rate \
+                    and np.isfinite(null_rate) and 0.0 < null_rate < 1.0:
+                rec["p_binomial"] = binomial_sf(k, n, null_rate)
             else:
                 rec["p_binomial"] = float("nan")
                 if not rec["visits_exact"]:

@@ -759,6 +759,24 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
     trials_by_night: dict[str, int] = {}
     for _tid, night in all_pairs:
         trials_by_night[night] = trials_by_night.get(night, 0) + 1
+    # Per-bin trial counts for the stratified null (see `Ledger.bin_trials`).
+    from .ledger import bin_key as _bin_key
+    tpos = verdict.target_positions
+    bin_trials_tonight: dict[str, int] = {}
+    if targets is not None and len(targets):
+        _ra = np.asarray(targets["ra"], dtype=float)
+        _dec = np.asarray(targets["dec"], dtype=float)
+        _ids = (np.asarray(targets["source_id"]).astype(str)
+                if "source_id" in targets else np.arange(_ra.size).astype(str))
+        _pos = dict(zip(_ids, zip(_ra, _dec, strict=True), strict=True))
+        for tid, _night in all_pairs:
+            ra_dec = tpos.get(tid) or _pos.get(str(tid))
+            if not ra_dec:
+                continue
+            k = _bin_key(ra_dec[0], ra_dec[1])
+            if k:
+                bin_trials_tonight[k] = bin_trials_tonight.get(k, 0) + 1
+
     n_forced = len(forced_pairs)
     n_footprint = len(footprint_pairs)
     n_total = len(all_pairs)
@@ -837,7 +855,8 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
                       # of alerts actually seen.
                       alerts_seen=len(alerts) if first else 0,
                       visit_history=None,
-                      target_positions=verdict.target_positions)
+                      target_positions=verdict.target_positions,
+                      bin_trials=(bin_trials_tonight if first else None))
         first = False
     # AFTER every night is folded, so targets whose record is created by a later
     # night still receive their visit history.

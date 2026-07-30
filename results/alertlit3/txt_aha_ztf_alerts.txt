@@ -1,0 +1,1998 @@
+Anomaly Hunter for Alerts (AHA): Anomaly Detection in the ZTF Transient Alert Stream
+
+I Introduction
+
+II Data and Definitions
+
+II.1 Object features
+II.2 Triplet image cutouts
+II.3 Light curves
+
+III Algorithms
+
+III.1 Definition of anomalous objects and evaluation metrics
+III.2 Autoencoder 1: object features
+III.3 Autoencoder 2: triplet image
+III.4 Autoencoder 3: light curve
+
+IV Alert Stream Anomalies
+
+IV.1 Object features autoencoder anomalies
+
+IV.1.1 Most interesting objects: rank 3
+IV.1.2 Moderately interesting objects: rank 2
+IV.1.3 Least interesting objects: rank 1
+
+IV.2 Triplet image cutouts autoencoder anomalies
+
+IV.2.1 Most interesting objects: rank 3
+IV.2.2 Moderately interesting objects: rank 2
+IV.2.3 Least interesting objects: rank 1
+
+IV.3 Light curve autoencoder anomalies
+
+IV.3.1 Most interesting objects: rank 3
+IV.3.2 Moderately interesting objects: rank 2
+IV.3.3 Lowest-priority objects: rank 1
+
+V Discussion and Conclusion
+
+Anomaly Hunter for Alerts ( AHA ): Anomaly Detection in the ZTF Transient Alert Stream
+
+Leyla Iskandarli
+
+Breakthrough Listen, Department of Physics, University of Oxford, Oxford OX1 3RH, UK
+
+[
+
+Chris J. Lintott
+
+Department of Physics, University of Oxford, Oxford OX1 3RH, UK
+
+chris.lintott@physics.ox.ac.uk
+
+Steve Croft
+
+Breakthrough Listen, Department of Physics, University of Oxford, Oxford OX1 3RH, UK
+
+SETI Institute, Mountain View, CA 94043, USA
+
+Berkeley SETI Research Center, University of California, Berkeley, Berkeley CA 94720, USA
+
+scroft@berkeley.edu
+
+Heloise Stevance
+
+Department of Physics, University of Oxford, Oxford OX1 3RH, UK
+
+hfstevance@gmail.com
+
+Joshua Weston
+
+Astrophysics Research Centre, School of Mathematics and Physics, Queen’s University Belfast, Belfast BT7 1NN, UK
+
+jweston04@qub.ac.uk
+
+Abstract
+Modern time-domain surveys produce alert streams at a scale that makes exhaustive manual inspection infeasible, requiring automated methods to identify unusual transients for follow-up. In this work, we present an unsupervised anomaly detection pipeline applied to the ZTF alert stream using the Lasair broker. We define normal objects as SN Ia, SN II, and SN Ib/c. Anomalous objects include (i) more exotic transients (AGN, TDEs, SLSNe, CVs, and nuclear transients) and (ii) supernova-labeled objects, either spectroscopically or by Lasair, with anomalous properties, such as incorrect or absent host associations, or non-supernova-like light curves. Our pipeline consists of three independently trained simple autoencoders operating on distinct alert stream data products: object features, triplet image cutouts, and light curves. Each model is trained on predominantly normal transients, and performance is assessed using the recall of exotic objects and the purity of all anomalous objects across both a spectroscopically classified held-out test set and the live alert stream. In the test set, performance is evaluated at a fixed rank corresponding to the top ten scoring candidates, while in the alert stream it is evaluated using an anomaly threshold defined from test set behavior. Across both settings, the algorithms consistently recover exotic transients and anomalous supernovae among their top-ranked candidates. Over 25 days of live alert stream application, we identify 87 unusual supernova candidates for follow-up. The overlap between anomalies flagged by different autoencoders in the test set is non-existent, and in the alert stream is small, with maximum overlap between any two algorithms being 11 objects. The framework is data-efficient, requiring only a few thousand training examples, making it well suited for early and ongoing application to the Rubin Observatory alert stream.
+
+\uat Light curves918 —
+\uat Neural networks1938 —
+\uat Outlier detection1934 —
+\uat Supernovae1668 —
+\uat Time series analysis1916 —
+\uat Transient detection1957
+
+show]iskandarlileyla@gmail.com
+
+I Introduction
+
+Wide-field optical time-domain surveys now operate at alert rates that exceed the capacity of human vetting and traditional rule based filtering. The Zwicky Transient Facility (ZTF; Bellm et al. , 2019 ) alone generates on the order of 10 6 10^{6} alerts per night (Patterson et al. , 2019 ) , a number that will soon increase by an order of magnitude with the Vera C. Rubin Observatory (Bellm et al. , 2020 ; Hambleton et al. , 2023 ) . These alert streams contain a mixture of scientifically interesting transients. We adopt a broad definition of transients as sources whose observables change on timescales from minutes to years, including supernovae (SN), tidal disruption events (TDEs), kilonovae, cataclysmic variables (CVs), and active galactic nuclei (AGN).
+
+The discovery and follow-up of rare transients has repeatedly reshaped time-domain astrophysics by revealing new progenitor channels, explosion physics, and the diversity of luminous outbursts (Margutti et al. , 2019 ; Gagliano et al. , 2022 ; Jacobson-Galán et al. , 2022 ; Kuncarayakti et al. , 2023 ; Pierel et al. , 2023 ) . TDEs, for example, provide direct probes of black hole demographics and accretion physics (Komossa, 2015 ) , while kilonovae from compact object mergers connect transient astronomy to heavy element nucleosynthesis and multi-messenger astrophysics (Metzger, 2020 ) . Ongoing surveys also continue to uncover nuclear outbursts whose physical origin is uncertain, including long duration ambiguous nuclear transients and the most luminous extreme nuclear transients (e.g. Wiseman et al. , 2025 ; Hinkle et al. , 2025 ) . The statistical power and early time coverage enabled by the Vera Rubin Observatory Legacy Survey of Space and Time (LSST) can transform each of these areas by supplying both large, homogeneous samples and the rarest, most informative events (LSST Science Collaboration et al. , 2009 ; Bellm et al. , 2020 ) . Efficient triage therefore requires automated methods that can operate in real time and adapt to the scale of modern surveys. Recent work has demonstrated the effectiveness of supervised, feature based systems for operational alert filtering (Stevance et al. , 2025 ) .
+
+Machine learning anomaly detection provides a framework for identifying rare, unusual, or previously unseen phenomena within large alert streams (Chandola et al. , 2009 ; Li et al. , 2022 ) . Broadly, anomaly detection methods may be supervised, relying on labeled examples of known classes, or unsupervised, learning the structure of the data without explicit class labels and flagging deviations from this learned distribution. Most prior work in transient anomaly detection has focused on unsupervised or semi-supervised approaches applied to light curve data. Isolation Forest based methods have been applied to real and simulated photometric light curves to identify anomalous transients, including rare supernova subtypes, and microlensing
+events (Pruzhinskaya et al. , 2019 ; Webb et al. , 2020 ; Ishida et al. , 2021 ) . Autoencoder based models have been used to learn latent representations of simulated transient light curves, often in combination with Isolation Forests, demonstrating strong performance in flagging rare transient classes, such as superluminous supernovae (SLSNe), pair-instability supernovae (PISNe) and intermediate-luminosity optical transients (Villar et al. , 2021 ) . Semi-supervised approaches have also been explored, using neural-network or parametric models trained on known transient classes to flag deviations as anomalies in real time alert streams (Muthukrishna et al. , 2022 ) . These methods primarily identify kilonovae, TDEs, intermediate-luminosity transients, calcium-rich gap transients, and PISNe. More recently, anomaly detection has been extended to feature based representations derived from alert streams, using combinations of autoencoders, deep support vector data description models, and hierarchical frameworks to identify anomalous sources in real ZTF alerts (Perez-Carrasco et al. , 2023 ) , as well as hybrid neural-network architectures operating on photometric statistical features, host galaxy associations and image cutouts to isolate rare transient populations (Aleo et al. , 2024 ; Sheng et al. , 2024 ) . Supervised approaches have also been proposed, using latent embeddings from deep transient classifiers combined with class-conditioned Isolation Forests (Gupta et al. , 2025 ) .
+
+There is also an opportunity to search for technosignatures, observable signals indicative of extraterrestrial technology, within optical alert streams using anomaly detection approaches. Recent work has demonstrated that real time alert brokers can already be used to identify candidate technosignatures through targeted searches for unusual spatial, temporal, and spatiotemporal behavior (Gallay et al. , 2025 ) . These efforts have shown that broker-level filtering (implemented as rule based Structured Query Language queries within alert brokers, combining catalog cross-matching and object classification with explicit cuts on data quantity, brightness, timing, sky position, and simple variability indicators) can efficiently reduce millions of nightly alerts to fewer than five high-priority candidates suitable for follow-up. In this context, technosignatures are expected to manifest as unusual variability whose physical origin is not readily explained by known astrophysical processes, placing them within the broader category of anomalies. While fully automated machine learning pipelines for technosignature discovery in optical alert streams have not yet been realized, anomaly detection methods provide a natural extension of these broker-level approaches by enabling the identification of a wider and less prescriptive class of anomalous behavior beyond selection cuts.
+
+Alert packets distributed by brokers such as Lasair (Smith et al. , 2019 ) contain multiple data products, each encoding different aspects of a transient. These include summary features derived from photometry, small image cutouts from difference imaging, and light curves that evolve as additional detections are reported. Each representation has distinct advantages and limitations. Feature vectors are compact and efficient, but may obscure morphological information and are sensitive to missing values. Image cutouts preserve spatial structure and host-galaxy context, but are more expensive to process and may be noisy at low signal-to-noise. Light curves encode temporal evolution, but are often sparse at early times.
+
+Rather than selecting a single representation, this work investigates anomaly detection independently across all three modalities to assess their relative sensitivity and the types of anomalies each reveals. Each model is trained on historical alert data and then applied both to held-out test sets and to a live alert stream. The resulting anomalies are examined in detail to identify the types of objects preferentially flagged by each modality and to assess the extent to which different representations recover overlapping or distinct subsets of unusual transients. This paper is organized as follows. Section  II describes the data products used for algorithm training and testing. Section  III defines anomalies and algorithm performance metrics, outlines the autoencoder architectures used for each data modality, and reports the algorithm performance. Section  IV applies the trained algorithms to the ZTF live alert stream and describes the interesting anomalies flagged. Section  V discusses the results of this work and summarizes them.
+
+The code is publicly available in Github, 1 1 1 https://github.com/leylaiskandarli/AHA-Anomaly-Hunter-for-Alerts and the version of this code used in this work is available on Zenodo. 2 2 2 doi: 10.5281/zenodo.18430441
+
+II Data and Definitions
+
+ZTF (Bellm et al. , 2019 ) operates the Palomar 48-inch Schmidt telescope equipped with a 47 deg 2 field-of-view camera and an 8 s readout time, surveying the northern sky in the ZTF- g g , ZTF- r r , and ZTF- i i 3 3 3 We exclude ZTF- i i observations from this analysis due to their limited cadence (approximately 10% of ZTF observations). passbands. In Phase II operations, ZTF allocates 50% of camera time and 50% of the Spectral Energy Distribution Machine spectrograph time to a public survey of the entire northern sky on a two-night cadence. Image reduction and source detection are performed in near real time by the Infrared Processing and Analysis Center, with transient alerts generated from raw images within ∼ \sim 4 minutes (Patterson et al. , 2019 ) . These alerts are distributed publicly via the ZTF alert stream and made accessible through community alert brokers, including Lasair (Williams et al. , 2024 ) , ANTARES (Matheson et al. , 2021 ) , ALeRCE (Förster et al. , 2021 ) , Fink (Möller et al. , 2021 ) , AMPEL (Nordin et al. , 2019 ) , and Pitt-Google. These brokers are also designated to operate on the Rubin alert stream, and their ZTF deployments serve as a precursor for Rubin. For this work, we use the Lasair alert broker.
+
+We construct a labeled data set to train, validate, and test our anomaly detection pipeline using objects drawn from the full Lasair database of ZTF transients. We restrict this sample to sources with available spectroscopic classifications, obtained by cross-matching Lasair objects with the Transient Name Server (TNS) and supplemented by contextual classifications provided by the sherlock 4 4 4 https://zenodo.org/records/8289325 (Smith et al. , 2020 ) framework. sherlock assigns contextual classifications by cross-matching transients against a library of historical and ongoing sky-survey catalogs, enabling associations with nearby galaxies, known variable stars, AGN, or bright stars.
+
+The resulting data set is intentionally dominated by normal supernovae (SN Ia, SN II, and SN Ib/c), while objects not classified as these standard supernova types form a minority population. Throughout this work, we refer to this minority class as exotic objects. This includes sources labeled as AGN, TDEs, SLSNe, and nuclear transients by TNS and sherlock . This imbalance is deliberate and defines which sources are considered anomalous in this work. The final data set contains 5294 unique objects: 3923 SN Ia, 929 SN II, 262 SN Ib/c, and 186 exotic objects (see Table  1 ).
+
+Table 1: Algorithm data set composition (5294 distinct objects) queried from Lasair. All have been spectroscopically classified.
+
+SN Ia (3923)
+SN II (929)
+SN Ib/c (262)
+Exotic (186)
+
+Subtypes (count)
+
+Ia (3702)
+
+Ia-91T-like (123)
+
+Ia-91bg-like (43)
+
+Ia-pec (18)
+
+Iax[02cx-like] (17)
+
+Ia-SC (11)
+
+Ia-CSM (9)
+
+II (679)
+
+IIn (138)
+
+IIb (61)
+
+IIP (45)
+
+Ic (104)
+
+Ib (73)
+
+Ic-BL (38)
+
+Ib/c (16)
+
+Ibn/Icn (9)
+
+SLSN-I (65)
+
+SLSN-II (21)
+
+AGN (55)
+
+TDE (36)
+
+TDE-H-He (4)
+
+TDE-He (3)
+
+TDE-featureless (2)
+
+From this data set, we derive three complementary data products. First, we use object features provided by Lasair, including statistical descriptors of the light curves and inferred host-galaxy properties obtained via sherlock . Second, we retrieve alert based triplet image cutouts corresponding to each detection. Finally, we obtain full difference-flux light curves for each object directly from the broker. These data products are described in the following sections.
+
+II.1 Object features
+
+We gather object features that capture (i) the transient brightness, (ii) its recent photometric evolution, and (iii) its association with a predicted host galaxy. All features are summarized in Table  2 .
+
+The use of statistical light curve summaries and host associations for anomaly detection has precedent in the literature. For example, Pruzhinskaya et al. ( 2019 ) and Ishida et al. ( 2021 ) applied algorithms to light curve features to identify rare or misclassified transients, while Aleo et al. ( 2024 ) used a similar class of photometric summary statistics and host context to characterize transient behavior and identify anomalous events within alert streams. Our approach is similar in spirit, but differs in that we restrict the input space to broker-native Lasair features, allowing us to assess the extent to which anomalies can be identified using only information available in real time, without costly or survey-specific post-processing.
+
+Peak and typical magnitudes (e.g. gmag , rmag , maggmin , magrmin ) provide an initial estimate of luminosity. The most recent change in magnitude divided by the time difference ( dmdt_g , dmdt_r ), together with exponential moving average magnitudes measured over 2, 8, and 28 days (e.g. mag_g02 , mag_g08 , mag_g28 ; similarly in r ), compress the light curve morphology into a small set of summary statistics sensitive to rapid rises, declines, or long-lived plateaus.
+
+Additionally, host association metrics (e.g. separationArcsec , major_axis_arcsec , and z ) are informative because some exotic transients occur at systematically different locations relative to host light: compact-object mergers can occur at large projected offsets due to natal kicks and long delay times, placing them well outside the bright stellar body of the host (e.g. Troja et al. , 2019 ; Bom et al. , 2025 ) . SLSNe also show host-offset distributions that differ from normal SNe, with an enhanced tail to larger host-normalized offsets in some samples (Hsu et al. , 2024 ) . In contrast, TDEs are associated with massive black holes and therefore expected to be coincident with galactic nuclei (e.g. Holoien et al. , 2016 ) .
+
+Table 2: The 22 Lasair input features used for the object features autoencoder (See Lasair schema browser ).
+
+Feature
+Description
+
+magrmin
+Minimum r r magnitude of light curve (brightest).
+
+magrmax
+Maximum r r magnitude of light curve (faintest).
+
+maggmean
+Mean g g magnitude of light curve.
+
+maggmin
+Minimum g g magnitude of light curve (brightest).
+
+maggmax
+Maximum g g magnitude of light curve (faintest).
+
+gmag
+Latest g g magnitude.
+
+rmag
+Latest r r magnitude.
+
+g_minus_r
+Latest ( g − r ) (g-r) colour.
+
+dmdt_g
+Most recent increase in g g magnitude divided by time difference (brightening = = positive); units: mag day -1 .
+
+dmdt_r
+Most recent increase in r r magnitude divided by time difference (brightening = = positive); units: mag day -1 .
+
+mag_g02
+Latest exponential moving average of difference magnitude in g g band, with 2-day timescale.
+
+mag_g08
+Latest exponential moving average of difference magnitude in g g band, with 8-day timescale.
+
+mag_g28
+Latest exponential moving average of difference magnitude in g g band, with 28-day timescale.
+
+mag_r02
+Latest exponential moving average of difference magnitude in r r band, with 2-day timescale.
+
+mag_r08
+Latest exponential moving average of difference magnitude in r r band, with 8-day timescale.
+
+mag_r28
+Latest exponential moving average of difference magnitude in r r band, with 28-day timescale.
+
+separationArcsec
+Transient’s angular separation (arcsec) from the top-ranked catalogue host match.
+
+major_axis_arcsec
+Size of associated galaxy in arcsec.
+
+z
+Spectroscopic redshift of host.
+
+distpsnr1
+Distance to closest source from the PS1 catalogue (if one exists within 30 arcsec).
+
+sgmag1
+
+g g band point-spread-function magnitude of closest source from the PS1 catalogue (if one exists within 30 arcsec).
+
+srmag1
+
+r r band point-spread-function magnitude of closest source from the PS1 catalogue (if one exists within 30 arcsec).
+
+After selecting the input features, we apply conservative quality cuts to ensure that the autoencoder learns astrophysical structure rather than artifacts arising from non-detections or poorly constrained measurements. Objects with both g g and r r band magnitudes greater than 30 mag are removed, as these values indicate non-detections or unreliable photometry in the stored summary statistics. We further exclude objects with large photometric-rate uncertainties by requiring the uncertainties in d ​ m ​ d ​ t ​ _ ​ g dmdt\_g and d ​ m ​ d ​ t ​ _ ​ r dmdt\_r to be less than 1. These cuts result in 3076 SN Ia, 892 SN II, 259 SN Ib/c, and 172 exotic objects. For a subset of objects, Lasair does not provide an inferred host redshift ( z ) or galaxy size ( major_axis_arcsec ); in these cases we set the missing values to a null value (e.g. -999) so that “unknown host information” is represented consistently. Autoencoder based methods are commonly used in settings with missing or partially observed tabular data, and can learn representations that remain useful under missing information (e.g. Pereira and others, 2020 ) .
+
+We require many normal objects while retaining a limited number of exotic objects for evaluation; however, we also want the model to see non-Ia supernovae during training. We therefore upsampled the minority normal classes (SN II and SN Ib/c) using the Synthetic Minority Over-sampling Technique (SMOTE; Chawla et al. , 2002 ) until they matched the size of the majority normal class (SN Ia). SMOTE synthesizes new samples by interpolating along line segments in feature space between each minority example and its k k nearest neighbors. We adopt k = 8 k=8 , equal to the smallest subtype count in our data set (SN Ibn/Icn). The oversampling technique is similar to the approach taken by Aleo et al. ( 2024 ) . We ended up with a total of 9400 objects which included 3076 SN Ia, 3076 SN II, 3076 SN Ib/c and 172 exotic objects.
+
+II.2 Triplet image cutouts
+
+Each alert is accompanied by a triplet of small image stamps centered on the candidate position: (i) the science image from the most recent visit, (ii) the template image constructed from prior observations, and (iii) the difference image produced by subtracting the template from the science image. These 64 × 64 64\times 64 pixel cutouts (with 1 arcsec per pixel) are 32-bit Flexible Image Transport System (FITS) stamps that provide direct morphological information about the transient and the subtraction quality. The ZTF real time pipeline generates the difference image by performing image differencing (i.e. subtracting a reference image from the latest science image) using an optimized algorithm (Zackay et al. , 2016 ) . In the difference image, genuine transient sources appear as positive or negative detections, depending on whether the object brightened or faded relative to the reference.
+
+For objects with multiple detections, we select a single representative triplet corresponding to the detection at which the source is brightest in the difference image. To quantify the significance of the transient signal in the selected difference cutouts, we compute a peak-pixel signal-to-noise ratio. The background noise, σ \sigma , is estimated using the median absolute deviation of pixel values after masking the transient signal, defined as the central three pixels of the stamp, to avoid bias from the source flux. The signal is then defined as the maximum absolute residual within this same central region, motivated by the fact that 83% of peak residuals lie within three pixels of the stamp center. With this definition, the selected difference cutouts have a median peak-pixel signal-to-noise ratio of approximately 22, with a 16–84th percentile range of 9–56. Selecting the detection with the brightest difference image therefore minimizes the likelihood that the chosen cutout is dominated by low-significance subtraction residuals.
+
+For each alert, the three image cutouts are stacked to form a three-channel input tensor of shape 3 × 64 × 64 3\times 64\times 64 for each object. Prior to training, each cutout is standardized independently by subtracting the mean and dividing by the standard deviation computed over finite-valued pixels only. After standardization, non-finite pixel values are set to zero. This per-image normalization places the inputs in a relative intensity space, reducing sensitivity to absolute background levels and gain variations.
+
+A practical limitation of using Lasair triplet cutouts is that image stamps are not retained indefinitely. Current Lasair guidance indicates that cutouts are stored for at least two years before being deleted (R. Williams, private communication). Consequently, we cannot recover triplets for the full spectroscopic data set. After applying these availability and selection criteria, our final triplet-image dataset contains 2786 objects: 2023 SN Ia, 486 SN II, 130 SN Ib/c, and 147 exotic objects.
+
+II.3 Light curves
+
+We use light curves derived from the ZTF alert stream as served by the Lasair broker. Our goal is to isolate and compare the shape of transient brightness evolution for events that evolve on timescales typical of normal supernovae.
+For each object, we retrieve all available alert stream photometry from Lasair and retain only point-spread-function (PSF) difference magnitudes and their associated uncertainties in the g g and r r bands. These measurements are obtained from difference images. We do not use upper limits.
+
+Each light curve is aligned in time by defining t = 0 t=0 as the brightest measured point in the raw photometry. The observations are then resampled onto a fixed time grid spanning 50 days before to 300 days after t = 0 t=0 , sampled every two days, resulting in 176 time steps. Resampling is performed independently in each band using weighted Gaussian kernel regression in magnitude space, where each grid value is computed as a weighted average of nearby observations. The kernel width is narrow near peak brightness and broader at later times, preserving sharp structure where the data are dense while providing smooth, conservative estimates in sparsely sampled regions.
+
+To assess how well each resampled time step is constrained by the data, we compute a local support value from the kernel weights, representing the effective number of contributing observations at that time. Time steps supported by fewer than two effective measurements are masked and excluded from the representation. This requirement ensures that retained values are constrained by multiple observations rather than isolated measurements.
+
+Objects with fewer than ten total detections are removed. Magnitudes in each band are scaled using the median, and median absolute deviation computed over all objects in the dataset. Masked time steps are set to zero after scaling so that missing data do not introduce a constant offset. After resampling and masking, each object is represented as a fixed-size tensor of 2 × \times 176 with two channels corresponding to the g g and r r bands.
+
+After applying all quality cuts, the final light curve dataset contains 2987 objects: 2015 SN Ia, 694 SN II, 122 SN Ib/c, and 156 exotic transients.
+
+III Algorithms
+
+Autoencoders compress high-dimensional input data into a lower-dimensional latent space while preserving salient features of the original distribution (Hinton and Salakhutdinov, 2006 ) . For anomaly detection, the reconstruction loss produced by the autoencoder serves as a quantitative metric for identifying unusual objects. Additionally, the learned latent space representation enables exploration of the data manifold.
+
+We develop three independent autoencoder based anomaly detection algorithms, each operating on a single data modality and producing an anomaly score for every object. The network architectures are simple and distinct, adapted to the specific structure of each modality. Using a simple architecture reduces sensitivity to model-specific biases and limits overfitting to the training data, allowing differences in the resulting anomaly populations to be attributed primarily to the input data itself.
+
+This section is structured as follows. We first define the anomalous objects of interest and the metrics used to evaluate algorithm performance. We then describe the algorithm constructed for each data modality, and evaluate each algorithm on a held-out test set drawn from the data set described in Section  II . These test sets preserve the overall class distribution of the data set, which is dominated by normal transients. Finally, we define an anomaly threshold based on the reconstruction loss distribution in the test set, and apply this fixed threshold when scoring objects in the live ZTF alert stream in the subsequent section.
+
+III.1 Definition of anomalous objects and evaluation metrics
+
+A clear definition of what constitutes an anomaly is essential for both the design of our pipeline and the evaluation of its performance. In this work, we consider two broad categories of anomalous objects.
+
+The first category consists of exotic transients. We define exotic transients as all objects that are not spectroscopically classified as SN Ia, SN II, or SN Ib/c. This category includes AGN, SLSNe, TDEs, CVs, and nuclear transients. In addition, objects that have no spectroscopic classification, but are not classified by sherlock as supernovae are also included in this exotic class.
+
+The second category consists of objects that are labelled as supernovae (either spectroscopically or by sherlock ), but exhibit anomalous properties inconsistent with standard supernova behaviour. These include, for example, incorrect or ambiguous host-galaxy associations, large offsets from the host, the absence of a detectable host, unusually high brightness, evolution on multi-year timescales, or light curve morphologies that deviate from those expected for normal supernovae.
+
+Given these two anomaly classes, we require metrics that quantify both (i) how effectively exotic transients are recovered and (ii) how clean the set of flagged anomalies is when considering both exotic objects and anomalous supernovae. We therefore employ recall and purity, with each metric quantifying a different aspect of algorithm performance.
+
+Recall is evaluated only for exotic transients and measures the fraction of exotic objects successfully flagged as anomalous by the algorithm. Purity measures the fraction of flagged objects that are genuinely interesting anomalies, including both exotic transients and anomalous supernovae.
+
+Both metrics are evaluated at rank k, where k corresponds either to the top ten highest-scoring objects in the held-out spectroscopically labelled test set or to the anomaly threshold adopted for application to the alert stream.
+
+The formal definitions are as follows:
+
+Exotic Object Recall = TP Exo TP Exo + FN = Exotic objects flagged All exotic objects , \text{Exotic Object Recall}=\frac{\mathrm{TP}_{\mathrm{Exo}}}{\mathrm{TP}_{\mathrm{Exo}}+\mathrm{FN}}=\frac{\text{Exotic objects flagged}}{\text{All exotic objects}},
+
+(1)
+
+Purity = TP TP + FP = All anomalous objects flagged All objects flagged . \text{Purity}=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}}=\frac{\text{All anomalous objects flagged}}{\text{All objects flagged}}.
+
+(2)
+
+For recall, true positives (TP Exo ) are exotic objects flagged as anomalous by the autoencoder, defined as having a reconstruction loss above the anomaly threshold, while false negatives (FN) are exotic objects not flagged as anomalous. For purity, true positives (TP) are either exotic objects or anomalous supernova-labelled objects flagged by the autoencoder, while false positives (FP) correspond to normal supernovae incorrectly flagged as anomalous.
+
+III.2 Autoencoder 1: object features
+
+The dataset, described in Section  II.1 , is partitioned into training, validation, and test subsets in an 80/10/10 ratio. The autoencoder architecture was implemented using the Keras package (Chollet and others, 2018 ) . A fully connected, symmetric encoder and decoder were used. The encoder contains three hidden layers with widths 88, 56, and 27, followed by a latent space of dimension 8. The decoder mirrors this structure to the output. The sizes 88, 56, 27, and 8 refer to internal layer dimensions, not the input size. The six latent variables summarize joint variation across all 22 inputs (See Table  2 ) and allow nonlinear combinations. Each latent combines information from multiple inputs, and each input is reconstructed from all latent dimensions through the learned decoder weights. Rectified Linear Unit activations were applied at each hidden layer, and a final sigmoid activation was used in the output layer to produce normalized reconstructions. Batch normalization was applied after each activation layer to stabilize training. All features were scaled to the range 0 ≤ X i ′ ≤ 1 0\leq X^{\prime}_{i}\leq 1 , where X i ′ X^{\prime}_{i} is a single input feature vector, in order to match the sigmoid activation function applied in the output layer of the decoder. This choice of normalization was motivated by empirical findings in previous studies that demonstrate improved performance when using bounded activation functions on scaled input data (de Amorim et al. , 2022 ) . The model was optimized with the Adam optimizer (Kingma and Ba, 2014 ) .
+
+The Huber loss function was employed during training and is defined as:
+
+L δ ​ ( x , x ^ ) = { 1 2 ​ ( x − x ^ ) 2 for  ​ | x − x ^ | ≤ δ , δ ​ ( | x − x ^ | − 1 2 ​ δ ) otherwise L_{\delta}(x,\hat{x})=\begin{cases}\frac{1}{2}(x-\hat{x})^{2}&\text{for }|x-\hat{x}|\leq\delta,\\
+\delta\left(|x-\hat{x}|-\frac{1}{2}\delta\right)&\text{otherwise}\end{cases}
+
+(3)
+
+where δ \delta sets the transition between quadratic and linear behavior. It is quadratic for small residuals and linear for large residuals, combining the advantages of mean squared error and mean absolute error. This loss is adopted to better handle extreme values, which are often poorly reconstructed under mean squared error, a known issue in autoencoders (Neloy and Turgeon, 2024 ) . Using the Huber loss mitigates these effects and improves robustness when reconstructing extreme-valued inputs. Training was stopped at a validation set reconstruction loss of approximately 10 − 5 10^{-5} .
+
+In Figure  1 , the latent space representation of the full object features dataset is shown, with exotic objects marked in orange and normal objects marked in blue. Exotic objects form local concentrations within the latent space, but substantial overlap with the normal-object distribution is present. The absence of clear separation in two-dimensional latent-space projections may indicate that distinctions between normal and exotic objects are encoded in higher-dimensional relationships that are not captured in low-dimensional views, and only emerge when the full latent representation is considered jointly. This provides a further motivation for the use of an autoencoder, which is well suited to identifying anomalous structure in high-dimensional data (Hinton and Salakhutdinov, 2006 ) .
+
+Figure 1: Latent space projections of the autoencoder bottleneck dimensions. Axes are arbitrary latent dimensions. Normal objects are shown in blue and exotic objects are shown in orange. Exotic objects occupy overlapping regions of latent space and form localized substructure within the broader distribution rather than a clearly separated population.
+
+We next consider the three-dimensional principal component analysis (PCA) projection of the full object-features dataset shown in Figure  2 , with the top 1% of objects ranked by autoencoder reconstruction error highlighted in red. PCA is used here as a simple, linear baseline to identify obvious outliers in a low-dimensional projection of the high-dimensional feature space and to assess whether these same objects are recovered by the autoencoder. Several features are evident. A small number of extreme PCA outliers is present, associated with incorrect host-galaxy associations. These cases are consistent with a known systematic in which sherlock associates sources with nearby dwarf galaxies despite unrealistically large transient-host separations, implying an incorrect host assignment rather than a physical association (S. Smartt, private communication). Although the affected subset is small, identification is desirable because such failures can bias downstream feature construction and classification. In addition, high reconstruction-error objects are located within the high-density regions of the PCA manifold. This behavior is consistent with the autoencoder exploiting multivariate feature relationships that are not apparent in low-dimensional linear spaces.
+
+Figure 2: Three-dimensional principal component projections of the full dataset. Blue points represent the full object population, while red points indicate the top 1% of objects ranked by autoencoder reconstruction error. Each panel shows the same data from a different viewing angle to illustrate the spatial distribution of high-reconstruction-error objects relative to the PCA manifold.
+
+Evaluation on the held-out test set is more informative, as these objects were not used during training. We therefore evaluate ten test set objects with the highest reconstruction loss. The test set contains 43 exotic objects, implying a maximum possible exotic object recall of 23% at top ten. One AGN (AT 2019aawv) gets flagged, corresponding to an exotic object recall of 2.3% at top ten. Purity is evaluated separately by inspecting the objects flagged as anomalous more carefully. Within the top ten, several objects classified as SN Ia and SN II exhibit feature values that are inconsistent or incorrect. These include missing host associations (SN 2022lxg), incorrect host associations (SN 2023jxe, SN 2022adcg), unclear host associations (SN 2025arz), and misclassification by sherlock as either a variable star (SN 2025pht) or a nuclear transient (SN 2019xj). We treat these sources as true anomalies in the context of this study, despite their normal spectroscopic classifications.
+
+The remaining three objects in the top ten have faint host associations (SN 2024kng, SN 2024egg) or correspond to an otherwise typical SN II event (SN 2023cnd), and are considered false anomalies. Under this broader definition of anomalous objects, including both labeled exotics and sources with anomalous feature values, the purity at the top ten highest reconstruction loss is 70%. In the test set, purity is the more informative metric, as it quantifies how many genuinely anomalous objects are present among the ten highest ranked candidates.
+
+We select an anomaly threshold of 0.02, corresponding to the lowest reconstruction loss among true positives within the top ten. This threshold is adopted for application to the live alert stream (see Section  IV.1 ).
+
+III.3 Autoencoder 2: triplet image
+
+For the cutout images described in Section  II.2 , we adopt a convolutional autoencoder. This architecture is a direct analogue of the fully connected autoencoder used for the other modalities, but replaces dense layers with convolutional filters that are better suited to capturing the local spatial structure of image data (Masci et al. , 2011 )
+
+The autoencoder consists of a symmetric encoder–decoder architecture with three convolutional layers in each branch. Down sampling is performed using stride-2 convolutions, while up sampling is achieved with transposed convolutions. The encoder applies convolutional layers with kernel size 3, padding 1, and stride 2, mapping channel depth as 3 → 32 → 64 → 128 3\rightarrow 32\rightarrow 64\rightarrow 128 and reducing spatial dimensions as 64 → 32 → 16 → 8 64\rightarrow 32\rightarrow 16\rightarrow 8 . The resulting latent representation has shape 128 × 8 × 8 128\times 8\times 8 . The decoder mirrors this structure and restores the spatial dimensions to 64 × 64 64\times 64 . Rectified Linear Unit activations are used after each intermediate layer, and no output activation is applied, as the reconstruction target is defined in standardized pixel space. The model is trained using a mean squared error reconstruction loss.
+
+The dataset is split into training, validation, and test subsets using an 80/10/10 split. After training, the autoencoder achieves a mean reconstruction loss of approximately 10 − 3 10^{-3} on the validation set. Examples of objects that are reconstructed well by the triplet autoencoder are shown in Figure  3 . We then examine the objects ranked in the top 1% by reconstruction error across the full dataset. These are most commonly sources with noisy or low signal-to-noise cutouts, particularly where the template image is itself noisy, which is often indicative of a faint or undetected host galaxy. This behavior is consistent with prior work, in which a convolutional neural network trained on both image cutouts and contextual information, including transient brightness and host-galaxy properties, preferentially identified SLSNe and TDEs from the ZTF Bright Transient Survey sample (Sheng et al. , 2024 ) .
+
+Figure 3: Input triplet images (science, template, difference) and corresponding autoencoder reconstructions for well-reconstructed objects, illustrating the model’s ability to reproduce typical alert cutout morphology.
+
+We apply the autoencoder to the held-out test set and examine the ten highest-scoring objects. These consist of nine SN Ia objects and one SLSN-I. The test set contains ten exotic objects in total, setting a maximum possible exotic object recall of 100% at top ten highest-scoring objects. Since only one exotic object (SN 2025whv) is flagged, the exotic object recall for this algorithm on the test set is 10%. The SN Ia objects are mainly associated with very faint hosts, no detected host (SN 2025izg, SN 2023tqm), or, in one case, an incorrect host association (SN 2025cxg). Supernovae with faint or undetected hosts are not considered sufficiently anomalous for our purposes. As a result, only four of the ten flagged objects are considered truly anomalous, giving a purity of 40%. Notably, the anomalies recovered by our triplet image autoencoder in the test set are distinct from those identified by our object features autoencoder.
+
+For the test set, the lowest reconstruction loss among the true anomalies is 0.07; we adopt this value as the anomaly threshold for image based alerts in the live alert stream (see Section  IV.2 ).
+
+III.4 Autoencoder 3: light curve
+
+For the light curve modality, we use a autoencoder trained on the fixed-grid, two-band light curve representations described in Section  II.3 . The dataset is split into training, validation, and test subsets using an 80/10/10 ratio. The autoencoder adopts a symmetric encoder-decoder architecture with three hidden layers of dimension 256, 128, and 64, followed by a latent space of dimension 8. Rectified Linear Unit activations are applied after each hidden layer, and no activation is applied at the output layer, as the reconstruction target is defined in scaled magnitude space.
+
+The model is trained using a weighted mean squared error reconstruction loss. Reconstruction errors are weighted by the effective support of each light curve time step, so that sparsely sampled phases contribute less to the loss than well-constrained regions. This weighting prevents light curves with limited coverage from being systematically assigned higher anomaly scores due to sparse sampling. Optimization is performed using the Adam optimizer (Kingma and Ba, 2014 ) , and training proceeds for 500 epochs. After training, the mean reconstruction loss on the validation set converges to approximately 0.02. Visual inspection of reconstructed light curves confirms that the model accurately reproduces the typical rise-and-decline morphology of normal supernova light curves, as illustrated for representative SN Ia training examples in Figure  4 .
+
+Figure 4: Example light curves from the training set used by the light curve autoencoder, shown after model training. All panels display normal SN Ia objects. Green points and curves correspond to the g g band, and purple points and curves to the r r band. Discrete points with error bars show the raw ZTF difference-flux photometry retrieved from Lasair. The dashed, semi-transparent curves indicate the kernel-regressed light curves resampled onto a fixed temporal grid, which form the inputs to the autoencoder. Solid curves show the corresponding autoencoder reconstructions.
+
+We next apply the trained autoencoder to the held-out test set and inspect the ten objects with the highest reconstruction loss. These objects are spectroscopically classified as one AGN, three SN Ia, one SN Ic, one SN IIb, one SN Ib, two SN IIn, and one SN Ia-CSM. The held-out test set contains 12 exotic objects, setting a maximum possible exotic object recall of 83%. Since only one exotic object (AT 2019pcn) is flagged within the top ten, the exotic object recall at rank ten is 8.3%.
+
+Several of the supernova-labeled objects within the top ten exhibit anomalous properties. The most extreme case is SN 2020nps, classified as SN IIn on TNS, but displaying a multi-year, still-rising light curve that is inconsistent with supernova evolution and more consistent with AGN variability. The transient position is coincident with the galaxy LEDA 4488494, which hosts an active galactic nucleus identified by the MaNGA survey (Albán and Wylezalek, 2023 ) . The angular separation between the transient and the galaxy nucleus is 0.21 arcsec. The sherlock classifier independently identifies this source as an AGN.
+
+Other objects in the top ten include a transient with a double-peaked light curve (SN 2023aew), a rare SN Ia-CSM event (SN 2022erq), a transient located far from its host galaxy (SN 2022actt), and an object with no detected host (SN 2025fmr). The remaining four objects are normal supernovae with broad light curve peaks or poorly constrained maxima. Overall, six of the ten flagged objects are considered anomalous, yielding a purity of 60% for the held-out test set. None of the test set anomalies identified by the light curve autoencoder overlap with those identified by the object features or triplet image autoencoders in their respective test sets.
+
+Based on the test set ranking, we adopt a reconstruction loss threshold of 0.2 for the light curve modality when applying the trained autoencoder to the live alert stream (see Section  IV.3 ). Below this value, the highest-ranked objects are dominated by broadly peaked, but otherwise typical supernova light curves rather than the morphologies of interest.
+
+IV Alert Stream Anomalies
+
+We have developed and tested autoencoder based anomaly detection algorithms for three complementary data modalities, showing that each identifies distinct anomalies. The object features autoencoder preferentially flags sources with incorrect or missing host-galaxy associations, and unusual multivariate feature relationships that are not apparent in low-dimensional projections. The triplet image autoencoder primarily identifies transients associated with faint, unresolved, or undetected host galaxies. The light curve autoencoder flags objects whose photometric evolution deviates from the characteristic rise-and-decline morphology of normal supernovae. In this section, we apply each trained algorithm to the live ZTF alert stream and analyze the flagged anomalies.
+
+A public filter was constructed on the Lasair broker to access the ZTF alert stream for anomaly scoring. The filter was designed to return all objects classified as transients by the Lasair ingestion pipeline, with minimal astrophysical selection. No cuts were applied on brightness, color, host association, Galactic latitude, or external classifications, in order to maximize completeness and minimize bias against rare or poorly characterized events. Objects classified as variable stars were filtered out of the alert stream and are not included in the analysis.
+
+The filter queries the “objects” table for transients whose most recent alert time falls within the chosen date range. Contextual information from sherlock host associations and cross-matches to TNS are joined when available, but are not required for inclusion. Most alerts in the stream lack spectroscopic classifications, and object types are therefore primarily assigned by the sherlock classifier.
+
+The trained autoencoders, described in Section  III , were applied to alerts returned by this filter between 2025-12-01 and 2025-12-25.
+
+IV.1 Object features autoencoder anomalies
+
+In total, 206 objects are flagged by the object features autoencoder. Using contextual classifications provided by sherlock , these comprise 95 supernovae, 86 AGN, ten nuclear transients, seven CV, four orphan transients with no associated host galaxy, and four objects with unclear host associations.
+
+Alerts assigned high anomaly scores typically exhibit reconstruction losses two to three orders of magnitude above the anomaly threshold of 0.02, which was defined in Section  III.2 . Objects with the largest reconstruction errors are primarily characterized by poorly constrained photometric rate features, most notably dmdt_g and dmdt_r . These quantities measure the most recent change in g g and r r band PSF fit magnitude divided by the time difference. As a result, the prevalence of AGN, CVs, and nuclear transients among the anomalous population can be largely driven by extreme values of dmdt_g and dmdt_r , which manifest as sharp flux changes in their light curves.
+
+We then perform a manual, object-by-object inspection of the candidates classified as supernovae, orphan transients, and sources with unclear host associations, and assign a qualitative priority rank based on scientific interest. These objects and their ranks are listed in Table  3 . Ranks range from 1 to 3. Rank 3 objects are the highest priority: they lack spectroscopic classifications and exhibit unusual light curve behavior spanning multiple years. Rank 2 objects are potentially interesting, but have not yet evolved sufficiently for confident interpretation and also lack spectroscopic classification. Rank 1 objects are lower priority, either because they have already been spectroscopically classified, have been detected too recently to allow meaningful interpretation, or appear to be normal supernovae. This manual ranking is used to prioritize sources for follow-up and to inform future iterations of the anomaly detection pipeline.
+
+IV.1.1 Most interesting objects: rank 3
+
+Objects assigned rank 3 exhibit light curves evolving over multi-year timescales and can be associated with either faint host galaxies or no detected host. We assign rank 3 to 16 objects. Most objects in this category are listed on TNS as possible supernovae and lack multi-wavelength detections. 5 5 5 Our search consisted of coordinate queries in SIMBAD (and NED), and cross-matches against Gaia , Pan-STARRS, AllWISE , 2MASS, GALEX , ROSAT (and XMM-Newton / Swift / eROSITA where available), as well as the radio survey NVSS. Exceptions include AT 2024rsq, which has been recommended for spectroscopic follow-up by Xu et al. ( 2024b ) on TNS as a possible nova; AT 2023qhf, which has a radio counterpart (Vigotti et al. , 1989 ) and has been reported as an AGN on TNS, specifically a blazar 6 6 6 https://www.virtualtelescope.eu/2023/08/16/discovery-of-variability-of-the-optical-counterpart-of-the-nvss-j004354404634-radio-source-in-the-messier-31-field/ . AT 2017cox is reported as a possible CV on TNS (Prieto and Stanek, 2017 ) . AT 2016dum has a cataclysmic binary reported at its coordinates (Kawash et al. , 2021 ) , and is most likely a CV. ALeRCE predicts AT 2022fvo to be a quasar, AT 2021adsf and AT 2024qs to be SLSNe, and AT 2021adir to be an AGN.
+
+IV.1.2 Moderately interesting objects: rank 2
+
+Objects assigned rank 2 exhibit non-supernova-like light curves and evolve over shorter timescales. These objects can also have faint or ambiguous host associations. Light curves inconsistent with typical supernova evolution are more suggestive of CVs, variable stars, or AGN, although spectroscopic follow-up remains necessary in the absence of radio counterparts. Most objects in this category are reported on TNS as possible supernovae. Notable cases include AT 2023cqq, whose coordinates coincide with an OH/IR star and multiple infrared sources (Cutri et al. , 2003 ) , suggesting a crowded stellar environment; and AT 2018hgp, which aligns with a cataclysmic binary candidate (Szkody et al. , 2020 ) and exhibits a light curve consistent with a CV. AT 2025ojf is predicted to be a quasar by ALeRCE, and is centrally located within its host galaxy. The coordinates of AT 2019fex coincide with a known eclipsing binary (Chen et al. , 2020 ) , consistent with its light curve.
+
+IV.1.3 Least interesting objects: rank 1
+
+Objects assigned rank 1 were not considered interesting enough for further investigation as they were either normal supernova-like objects or their light curves were too sparse to make any meaningful assumptions. These objects were primarily flagged as anomalous due to known systematics, including incorrect host-galaxy associations, the absence of a detected host galaxy, and nonphysically large dmdt_g or dmdt_r values driven by sparse sampling or large photometric uncertainties. In cases where the light curves are sparse, continued monitoring by all-sky surveys provides a mechanism to track their evolution should they later develop features indicative of more interesting behavior.
+
+Table 3: Alert stream anomalies flagged by the object features autoencoder † † footnotetext: This object gets flagged by both the object features autoencoder and triplet image autoencoder. ⋆ ⋆ footnotetext: This object gets flagged by both the object features autoencoder and the light curve autoencoder.
+
+ZTF ID
+IAU Name
+
+sherlock Classification
+Notes
+Rank
+
+ZTF21abashma
+2021aibi
+SN
+800 day rise. Non-SN-like light curve
+3
+
+ZTF20abnvwor
+2025vmp
+SN
+800 day rise. Non-SN-like light curve
+3
+
+ZTF19aburnjy
+2022dxn
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF20abpehlo
+2023qhf
+SN
+800 day evolution. Far from host. Non-SN-like light curve
+3
+
+ZTF19aagmutb
+2025ahll
+SN
+800 day evolution. Far from host. Non-SN-like light curve
+3
+
+ZTF22aagawty $\dagger$ $\dagger$ footnotemark:
+2022fvo
+SN
+800 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF20achtkxi
+2020aezk
+SN
+800 day rise. Non-SN-like light curve
+3
+
+ZTF21acjcarx $\star$ $\star$ footnotemark:
+2021adsf
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF20acxqxyb
+2021eci
+SN
+700 day evolution. Non-SN-like light curve
+3
+
+ZTF23abscfuu
+2023aclf
+SN
+700 day evolution. Non-SN-like light curve
+3
+
+ZTF23aagdltf $\dagger$ $\dagger$ footnotemark:
+2024qs
+SN
+700 day evolution. Non-SN-like light curve
+3
+
+ZTF18aabezwv
+2016dum
+SN
+700 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF19aaklfkk $\star$ $\star$ footnotemark:
+2017cox
+SN
+600 day evolution. Far from host. Non-SN-like light curve
+3
+
+ZTF21acldimi $\star$ $\star$ footnotemark:
+2021adir
+SN
+600 day evolution. Unclear host. Non-SN-like light curve
+3
+
+ZTF24aakccfa
+2023aclf
+SN
+600 day evolution. Non-SN-like light curve
+3
+
+ZTF24aatkhkt
+2024rsq
+SN
+500 day rise. Far from host. Non-SN-like light curve
+3
+
+ZTF20aaaxdvw
+2020hs
+ORPHAN
+Non-SN-like light curve. No host
+2
+
+ZTF25aagpzug
+2025cie
+ORPHAN
+Non-SN-like light curve. No host
+2
+
+ZTF20aahbzhi
+2018krw
+UNCLEAR
+Non-SN-like light curve. Unclear host
+2
+
+ZTF21aaanzzg $\dagger$ $\dagger$ footnotemark:
+2021acf
+UNCLEAR
+Non-SN-like light curve. Unclear host
+2
+
+ZTF18adohecj $\star$ $\star$ footnotemark:
+2016hfm
+SN
+Non-SN-like light curve. Far from host
+2
+
+ZTF18abfxhsz
+2024fnn
+SN
+Non-SN-like light curve. Far from host
+2
+
+ZTF25aacdief
+2023acmv
+SN
+Non-SN-like light curve. Far from host
+2
+
+ZTF18acarunx $\star$ $\star$ footnotemark:
+2018hgp
+SN
+Non-SN-like light curve. Faint host
+2
+
+ZTF25aawdyvn
+2025ojf
+SN
+Non-SN-like light curve. Faint host
+2
+
+ZTF18aczrwbr $\star$ $\star$ footnotemark:
+2023cqq
+SN
+Non-SN-like light curve. Faint host
+2
+
+ZTF18adatjjz
+2021uzg
+SN
+Non-SN-like light curve. Faint host
+2
+
+ZTF18aabfxpw
+2018kfz
+SN
+Non-SN-like light curve. Faint host
+2
+
+ZTF18acaujas
+2019aaey
+SN
+Non-SN-like light curve. Faint host
+2
+
+ZTF18aaaatda
+2020aadz
+SN
+Non-SN-like light curve. Faint host
+2
+
+ZTF19aalohjc
+2020afbz
+SN
+Non-SN-like light curve
+2
+
+ZTF19aausweg
+2019fex
+SN
+Non-SN-like light curve
+2
+
+…
+
+Note. — Table 3 is published in its entirety in the machine-readable format. A portion is shown here for guidance regarding its form and content.
+
+IV.2 Triplet image cutouts autoencoder anomalies
+
+Applying the anomaly threshold defined from the test set (described in Section  III.3 ), the triplet image autoencoder flags 127 objects as anomalous. Using contextual classifications from sherlock , these comprise 78 supernovae, 31 AGN, eight orphan transients with no host association, four nuclear transients, four objects with unclear host associations, and two CVs. Alerts flagged with high anomaly scores display reconstruction losses comparable to those measured for the most anomalous objects in the held-out test set.
+
+In contrast to the object features autoencoder, the triplet image autoencoder identifies a relatively homogeneous class of anomalous objects. High anomaly scores are predominantly associated with sources that have faint, ambiguous, or undetected host galaxies. As noted previously, these observational characteristics are commonly associated with rare and luminous transients, including SLSNe; however, this interpretation cannot be confirmed from alert-level image data alone and requires spectroscopic follow-up.
+
+We perform a manual inspection of the supernova-labeled anomalies to assess their scientific interest. These objects are listed in Table  4 , and are discussed in detail below.
+
+IV.2.1 Most interesting objects: rank 3
+
+Objects assigned rank 3 are long-lived transients with faint, unclear, or no hosts. We assign rank 3 to 15 objects, of which only two overlap with the object features anomaly set; the remainder are unique to the image based analysis. This limited overlap indicates that the two approaches are sensitive to complementary manifestations of anomalous behavior. Spectroscopic follow-up is required to determine the physical nature of these objects, which are unlikely to be representative of typical supernovae.
+
+Several rank 3 objects have additional contextual information that supports these interpretations. The coordinates of AT 2024adaw coincide with a known BL Lac object (D’Abrusco et al. , 2019 ) , consistent with AGN variability, although ALeRCE predicts either a SLSN or a Type II supernova classification. AT 2020qzc coincides with an X-ray source (Voges et al. , 2000 ) , supporting an AGN or TDE interpretation. AT 2021vgt, AT 2021usy, and AT 2024quh are classified by ALeRCE as SLSN candidates. AT 2024qs and AT 2022fvo were independently identified by the object features autoencoder and discussed in Section  IV.1 .
+
+IV.2.2 Moderately interesting objects: rank 2
+
+Objects assigned rank 2 display shorter-lived variability than rank 3 objects, but exhibit light curve morphologies inconsistent with typical supernova evolution. These objects also preferentially lack clear host galaxies or are associated with very faint hosts. Only one rank 2 object is independently identified by the object features autoencoder. Additional contextual information is available for two objects in this category. The coordinates of AT 2024igr coincide with a quasar (Pâris et al. , 2018 ) , and ALeRCE predicts this object to be an AGN. AT 2025owq is predicted by ALeRCE to be a quasar.
+
+IV.2.3 Least interesting objects: rank 1
+
+Objects assigned rank 1 are not prioritized for further analysis. These sources are primarily flagged as anomalous due to elevated noise levels in the triplet image cutouts rather than intrinsically unusual astrophysical behavior. Most exhibit either typical light curve evolution or are sparsely sampled, which limits the scope for physical interpretation within the alert stream.
+
+Table 4: Alert stream anomalies flagged by the triplet image autoencoder † † footnotetext: This object gets flagged by both the object features autoencoder and triplet image autoencoder. ‡ ‡ footnotetext: This object gets flagged by both the triplet image autoencoder and the light curve autoencoder.
+
+ZTF ID
+IAU Name
+sherlock Classification
+Notes
+Rank
+
+ZTF20abpwtmi
+2020qzc
+UNCLEAR
+800 day evolution. Unclear host. Non-SN-like light curve
+3
+
+ZTF24aaivize
+2024ghi
+SN
+800 day rise. Faint host. Non-SN-like light curve
+3
+
+ZTF21abrpvho
+2021vgt
+SN
+800 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF22aagawty $\dagger$ $\dagger$ footnotemark:
+2022fvo
+SN
+800 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF22aadnwpu
+2022fvo
+SN
+800 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF21abqwtvp
+2021usy
+SN
+800 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF24aacdofk
+2024elb
+SN
+700 day rise. Unclear host. Non-SN-like light curve
+3
+
+ZTF20abnighe
+2021vqa
+SN
+700 day rise. Non-SN-like light curve
+3
+
+ZTF18aavjoas
+2019hjc
+SN
+700 day evolution. Unclear host. Non-SN-like light curve
+3
+
+ZTF23abnkdcu
+2024pjw
+SN
+700 day evolution. Non-SN-like light curve
+3
+
+ZTF21aavhxjc
+2020iqs
+SN
+700 day evolution. Non-SN-like light curve
+3
+
+ZTF23aagdltf $\dagger$ $\dagger$ footnotemark:
+2024qs
+SN
+700 day evolution. Non-SN-like light curve
+3
+
+ZTF23aajibbm
+2025aex
+SN
+700 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF23abjkwog
+2024quh
+SN
+500 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF24abuylxw
+2024adaw
+SN
+400 day evolution. Non-SN-like light curve
+3
+
+ZTF25aavgvkc
+2025osj
+ORPHAN
+Non-SN-like light curve. No host
+2
+
+ZTF20actkwpz
+2020iov
+UNCLEAR
+Non-SN-like light curve.Unclear host
+2
+
+ZTF21aaanzzg $\dagger$ $\dagger$ footnotemark:
+2021acf
+UNCLEAR
+Non-SN-like light curve. Unclear host
+2
+
+ZTF25aaxfbku
+2025owq
+SN
+Non-SN-like light curve. Faint host
+2
+
+ZTF21aaigcnr
+2025afas
+SN
+Non-SN-like light curve. Faint host
+2
+
+ZTF21aazovbp
+2024jqc
+SN
+Non-SN-like light curve. Faint host
+2
+
+ZTF18aaaedbi
+2025agpv
+SN
+Non-SN-like light curve
+2
+
+ZTF18aauhpyb $\ddagger$ $\ddagger$ footnotemark:
+2018iuh
+SN
+Non-SN-like light curve
+2
+
+…
+
+Note. — Table 4 is published in its entirety in the machine-readable format. A portion is shown here for guidance regarding its form and content.
+
+IV.3 Light curve autoencoder anomalies
+
+Applying the anomaly threshold defined from the test set (described in Section  III.4 ), the light curve autoencoder flags 359 objects as anomalous. Using sherlock classifications, these comprise 140 AGN, 139 supernovae, 42 CV, 20 nuclear transients, nine objects with unclear classifications, and nine orphan transients with no associated host. Alerts assigned high anomaly scores exhibit reconstruction losses comparable to those of the most anomalous objects identified in the held-out test set.
+
+The anomalous objects flagged by the light curve autoencoder fall into several broad morphological categories. Some exhibit flat light curves with no well defined peak, while others show very sharp, isolated peaks with little or no sustained evolution on either side. Others display secondary sharp peaks tens to hundreds of days before or after the primary peak.
+
+As in the previous sections, the autoencoder provides a ranked list of anomalous candidates. We then perform a manual inspection of sources classified as supernovae, orphan transients, and objects with unclear classifications, and assign our qualitative priority rank. These objects are listed in Table  5 and discussed below.
+
+IV.3.1 Most interesting objects: rank 3
+
+Rank 3 objects are long-lived transients whose light curve evolution is inconsistent with that of normal supernovae and which lack definitive spectroscopic classification. We assign rank 3 to 60 objects, of which only three overlap with anomalies identified by the object features autoencoder and one with the triplet image autoencoder. A large fraction of rank 3 objects have existing contextual information consistent with CV activity. Several are reported as CV candidates in TNS, such as AT 2017gkd (Delgado et al. , 2017b ) , AT 2020slo (Hodgkin et al. , 2020 ) , AT 2021tbw (Hodgkin et al. , 2021 ) , AT 2023adwz (Xu et al. , 2024a ) , AT 2018ing, AT 2022aeeu (Hodgkin et al. , 2022 ) , and AT 2016dfa. Others have coordinates coincident with known CVs, such as AT 2019qbi (Yecheistov et al. , 2013 ) , AT 2019evn (Yecheistov et al. , 2014 ) , AT 2019wxe (Gress et al. , 2015 ) , AT 2017iwm (Tomasella et al. , 2016 ) , AT 2018cvp (Szkody et al. , 2020 ) , AT 2021gfx (Kawash et al. , 2021 ) , and AT 2024leo (Inight et al. , 2023 ) .
+
+Additional rank 3 objects are associated with other classes of stellar variability. The coordinates of AT 2021twr and AT 2022sfe coincide with classical novae (Samus’ et al. , 2017 ; De et al. , 2022 ) . AT 2019cyd is linked to a white dwarf candidate (Gentile Fusillo et al. , 2019 ) . AT 2021ahpz and AT 2017mh are both associated with eclipsing binary classifications (Gaia Collaboration, 2022 ) . AT 2022ddv is associated with a known young stellar object (Cottaar et al. , 2014 ) . AT 2021gfx is reported as a variable star on TNS (Tan et al. , 2021 ) , but has coordinates coincident with a cataclysmic binary (Kawash et al. , 2021 ) .
+
+A smaller subset of rank 3 objects show indications of extragalactic or nuclear activity. AT 2018gwf has coordinates associated with a radio source (Intema et al. , 2017 ) and may correspond to an AGN or TDE. AT 2021pju is predicted as a quasar by ALeRCE, while AT 2021abit is predicted by ALeRCE as a SLSN. AT 2018mkw has been independently flagged as anomalous by the Fink broker.
+
+AT 2017cox, AT 2021adsf, and AT 2021adir were independently identified by the object features autoencoder and discussed in Section  IV.1 .
+
+IV.3.2 Moderately interesting objects: rank 2
+
+Rank 2 objects have not had enough data to let us see their evolution over multi-year time scales, but display abrupt or sharply peaked light curves. Their physical nature is less clear, and continued monitoring may be required to determine whether they represent unusual transients or more common forms of variability.
+
+The algorithm identifies 61 rank 2 objects, of which only three overlap with those flagged by the object features autoencoder, and one overlaps with the triplet image autoencoder.
+
+Several rank 2 objects are associated with CV-like or stellar variability based on contextual information. These include CV candidates reported in TNS, such as AT 2017cjf (Delgado et al. , 2017a ) , AT 2018ggg (Delgado et al. , 2018 ) , AT 2024pic (Xu et al. , 2024a ) , AT 2025adxm (Xu et al. , 2025b ) , and AT 2025abul (Xu et al. , 2025a ) . There are also objects with coordinates coincident with known CVs, such as AT 2021tbt (Gress et al. , 2014 ) , AT 2019nuv and AT 2025agcz (Drake et al. , 2014 ) , AT 2019wxe (Gress et al. , 2015 ) , AT 2020zvs (Szkody et al. , 2021 ) , and AT 2019csf (Kawash et al. , 2021 ) . AT 2021aavt has coordinates linked to an eclipsing binary (Chen et al. , 2020 ) . AT 2021zie is associated with variability in a known young stellar object (Cutri et al. , 2003 ) .
+
+A subset of rank 2 objects shows indications of extragalactic activity. AT 2022fxt is predicted as AGN by ALeRCE, while the coordinates of AT 2023win coincide with a known quasar (Caccianiga et al. , 2019 ) . AT 2025abae is associated with a radio galaxy, suggesting possible AGN-related variability (Ahumada et al. , 2020 ) .
+
+AT 2018mkt has been independently flagged as anomalous by the Fink broker, reinforcing its classification as a candidate of interest. AT 2018hgp, AT 2023cqq and AT 2016hfm have been independently identified by the object features autoencoder and discussed in Section  IV.1 .
+
+IV.3.3 Lowest-priority objects: rank 1
+
+Rank 1 objects display non-standard light curve structure, but have already been spectroscopically classified. This group includes spectroscopically confirmed two SN II, two SN Ic, nine SN Ia, two SLSNe, one Nova and four CVs. Although their light curves are atypical, they are not prioritized for further follow-up within this framework, as their nature is already established.
+
+Table 5: Alert stream anomalies flagged by the light curve autoencoder ⋆ ⋆ footnotetext: This object gets flagged by both the object features autoencoder and the light curve autoencoder.
+
+ZTF ID
+IAU Name
+sherlock Classification
+Notes
+Rank
+
+ZTF18aaqikyu
+2018gir
+SN
+800 day evolution. Unclear host. Non-SN-like light curve
+3
+
+ZTF18abviaof
+2023adwz
+UNCLEAR
+800 day evolution. Unclear host. Non-SN-like light curve
+3
+
+ZTF18acmwuum
+2018ing
+SN
+800 day evolution. Non-SN-lilke light curve
+3
+
+ZTF18adlqbdc
+2019evn
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18aaqzomm
+2019cyd
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18acswncz
+2022aeeu
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF17aadfiyg
+2020slo
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18adkwcxh
+2021gfx
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18aboehhn
+2018fjk
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18admcdum
+2019wxe
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18acjnusv
+2018imh
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18abgjrmo
+2021gfx
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18abxyuzo
+2018gue
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18abmpksk
+2016dfa
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF19abdkbtm
+2018glt
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18abxcues
+2018gwf
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18aazffjy
+2018cvp
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18abotssb
+2017fuz
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18adkbcsk
+2017gkd
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18acbvqwb
+2018iwt
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18abxpvfe
+2018cuo
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF17aabpjjg
+2021tbw
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF22abazrjk
+2022sfe
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF21abmbzax
+2021twr
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18abnyiou
+2024leo
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18actyzxn
+2022ddv
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF17aachnrk
+2018iqr
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18abjlyev
+2016eph
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18adlynmw
+2019hfp
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF21acjcarx $\star$ $\star$ footnotemark:
+2021adsf
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF18abslbyi
+2018fwh
+SN
+800 day evolution. Non-SN-like light curve
+3
+
+ZTF20abofezp
+2020boi
+SN
+800 day evolution. Far from host. Non-SN-like light curve
+3
+
+ZTF18abtsmgm
+2018fyj
+SN
+800 day evolution. Far from host. Non-SN-like light curve
+3
+
+ZTF21abflgvs
+2021pju
+SN
+800 day evolution. Far from host. Non-SN-like light curve
+3
+
+ZTF18aaxzbyo
+2017mh
+SN
+800 day evolution. Far from host. Non-SN-like light curve
+3
+
+ZTF18abjcyha
+2018gwh
+SN
+800 day evolution. Far from host. Non-SN-like light curve
+3
+
+ZTF18abtmazz
+2018mkw
+SN
+800 day evolution. Far from host. Non-SN-like light curve
+3
+
+ZTF18abcleke
+2018gqp
+SN
+800 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF18adjccrf
+2021njp
+SN
+800 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF21achjkys
+2021abit
+SN
+800 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF18abjrdjs
+2018lqm
+SN
+800 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF18abssoen
+2018kcx
+SN
+800 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF18admwica
+2021lna
+SN
+800 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF18admfbxu
+2024aaga
+SN
+800 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF19aavprpy
+2018cyo
+SN
+800 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF18abtzkab
+2018gdp
+SN
+800 day evolution. Faint host. Non-SN-like light curve
+3
+
+ZTF19aabbgoy
+2019qbi
+SN
+700 day evolution. Non-SN-like light curve
+3
+
+ZTF18aaqdozs
+2018bms
+SN
+700 day evolution. Non-SN-like light curve
+3
+
+ZTF18adovdni
+2018bbh
+SN
+700 day evolution. Non-SN-like light curve
+3
+
+…
+
+Note. — Table 5 is published in its entirety in the machine-readable format. A portion is shown here for guidance regarding its form and content.
+
+V Discussion and Conclusion
+
+In this work, we apply unsupervised autoencoder based anomaly detection to three complementary alert stream data modalities provided by the Lasair broker: object features, triplet image cutouts, and light curves. We develop a separate autoencoder for each modality and evaluate their performance using both a spectroscopically classified data set and the live ZTF alert stream.
+
+Treating each modality independently is motivated by practical considerations. In practice, alert packets are frequently incomplete. Some alerts lack derived object features, while others lack image cutouts or sufficiently sampled light curves. A single combined model would therefore exclude a substantial fraction of alerts. In tests of such a combined approach, we found that approximately half of nightly alerts were discarded due to missing modality information, resulting in a significant loss of potentially interesting events. By contrast, the ensemble approach maximizes alert stream coverage and ensures that objects are not excluded solely due to missing data products.
+
+We evaluate the performance of our algorithms using two metrics: the recall of exotic objects and the purity of anomalous objects, where anomalous objects include both exotic transients and supernova-labeled sources with anomalous properties. Both metrics are evaluated at rank k. For the test set, rank k corresponds to the top ten objects with the highest reconstruction loss. For the alert stream, rank k is defined by the reconstruction loss threshold adopted for each algorithm. The recall and purity metrics for each algorithm are reported in Table  6 .
+
+Table 6: Evaluation metrics of each algorithm in the test set and alert stream at rank k k .
+
+Exotic Recall
+Purity
+
+Object features test set
+2.3%
+70%
+
+Object features alert stream
+11%
+65%
+
+Triplet image test set
+10%
+40%
+
+Triplet image alert stream
+4.9%
+47%
+
+Light curve test set
+8.3%
+60%
+
+Light curve alert stream
+24%
+97%
+
+Note. — For the test set, rank k k corresponds to the top ten objects with the highest reconstruction loss in the held-out sample. For the alert stream, rank k k is defined by the anomaly threshold adopted for each algorithm.
+
+In the test set, exotic objects are identified using spectroscopic classifications. In the alert stream, exotic objects are identified using contextual classifications provided by sherlock . We note that sherlock classifications are not always correct, and therefore the alert stream metrics should be interpreted as indicative rather than definitive measures of performance. They are intended to provide a qualitative assessment of how each algorithm behaves in a realistic alert stream setting, rather than a fully controlled evaluation. We now summarize the performance of each algorithm on the test set and the alert stream.
+
+The object features autoencoder is sensitive to rapid changes in photometry and host association properties. In the test set, it recovers both exotic objects and sources with faint, absent, or incorrect host associations, as well as objects with missing redshift information. For the test set, the purity and exotic object recall are 70% and 2.3%, respectively. When applied to the live alert stream, the algorithm flags 207 objects as anomalous. Of these, 103 are labeled by sherlock as non-supernova objects and lack spectroscopic classification, corresponding to an exotic object recall of 11% based on sherlock labels. In addition, 32 objects labeled by sherlock as supernovae exhibit anomalous properties and are considered suitable for follow-up. Overall, 135 of the 207 flagged objects are considered anomalous, yielding a purity of 65%.
+
+The triplet image autoencoder focuses on transient morphology in image cutouts. Overall, the image autoencoder reliably reconstructs typical galaxy structure and low noise difference images, while assigning high anomaly scores to sources with noisy cutouts, faint or unresolved hosts, or ambiguous subtraction residuals. In the held-out test set, the most anomalous objects are those with faint or absent host galaxies. For this test set, the algorithm achieves a purity of 40% and an exotic object recall of 10%. When applied to the alert stream, the algorithm flags 127 objects as anomalous. Of these, 37 are labeled by sherlock as exotic objects and lack spectroscopic classification, corresponding to an exotic object recall of 4.9%. Among the remaining 90 objects that are unlabeled or labeled as supernovae, 23 are considered anomalous and recommended for follow-up, yielding a purity of 47%. The remaining flagged objects mainly have faint, unclear, or absent host galaxies.
+
+The light curve autoencoder plays a complementary role by operating in a restricted regime. The autoencoder is trained only on transients whose evolution occurs on timescales typical of normal supernovae. In the held-out test set, the most extreme anomalies correspond to objects whose light curve evolution is inconsistent with supernova behavior, including sources with multi-year, slowly evolving or non-declining light curves, double-peaked morphologies, or poorly defined maxima. The purity and exotic object recall achieved in the held-out test set for the top ten anomalies are 60% and 8/3% respectively. When applied to the live alert stream, the light curve autoencoder flags 361 objects as anomalous. Of these, 220 are not labeled as supernovae by sherlock . Among the 141 supernova-labeled objects, 121 are considered sufficiently interesting to warrant follow-up. 20 supernovae labeled objects in this set have already been spectroscopically classified, with seven of them being two SLSNe, one Nova and four CVs and requiring an updated classification by sherlock . Therefore the purity of this set is 97% and the exotic object recall is 24%.
+
+Across all three autoencoders and data modalities, in the ZTF alert stream spanning 1 to 25 December 2025, we recovered 313 objects classified as supernovae by sherlock that required manual inspection by us. Of these, 175 objects were selected and recommended for follow-up. Between the object features and triplet image autoencoders, eleven objects overlap: three AGN, one unclear classification object, and seven supernovae, of which only three are recommended for follow-up. Between the object features and light curve autoencoders, sixteen objects overlap, comprising three CVs, four AGN, and nine supernovae, with six supernovae recommended for follow-up. Between the triplet image and light curve autoencoders, six objects overlap: one CV, three AGN, one orphan transient, and one supernova, the latter being a rank 3 object. No supernova-labeled object is recovered by all three autoencoders; the only object common to all three autoencoders is classified by sherlock as an AGN. Overlap between the supernova-labeled anomaly sets recovered by different modalities is illustrated in Figure  5 . These results demonstrate that the algorithms largely recover distinct sets of anomalous objects.
+
+Figure 5: Agreement between anomaly detection algorithms for supernova-labeled objects. Each panel shows a 2 × 2 2\times 2 matrix comparing follow-up decisions for objects classified as supernovae by sherlock and manually inspected by us. For each pair of autoencoder algorithms, the axes indicate whether an object was considered interesting enough for follow-up (rank 3 or rank 2) or not interesting by each method. The numbers in each cell give the count of objects in each category. Objects in the lower-right cells are identified as interesting by both algorithms, while off-diagonal cells correspond to objects selected by only one algorithm. There is no overlap in interesting objects between all three autoencoders. The small number of objects in the shared “Yes-Yes” cells demonstrates that the different data modalities highlight distinct sets of interesting supernova candidates.
+
+Overall, within 25 days of applying our pipeline to the live alert stream, we obtain 87 rank 3 candidates. We recommend that these objects be prioritized for spectroscopic follow-up, as they may correspond to known exotic populations or previously unrecognized classes of transients. Rank 3 objects across all modalities are characterized by long-lived or persistent signals, which can plausibly arise from several distinct physical scenarios. For example, supernovae may exhibit broad P-Cygni profiles during the photospheric phase or nebular emission lines at late times (Jerkstrand, 2017 ) , although the persistence of such features over multi-year timescales would be unexpected. Alternatively, some candidates may be consistent with PISNe, which result from the explosive disruption of very massive stars following electron-positron pair production in the stellar core (Fryer et al. , 2001 ) . A further possibility is ambiguous nuclear transients, including well-studied examples such as “Scary Barbie” (Subrayan et al. , 2023 ) . Discriminating between these scenarios requires spectroscopic observations spanning ultraviolet to near-infrared wavelengths. Follow-up of these sources would also yield clean, well-characterized samples for future anomaly detection studies.
+
+Although this study uses ZTF data, the Lasair data products closely mirror those expected from the Vera C. Rubin Observatory alert stream. Rubin will deliver deeper observations, additional photometric bands, and a substantially higher alert rate, thereby increasing sensitivity to previously unobserved transient phenomena. Transferring this framework to Rubin will require the construction of a training set from early alert data, ideally anchored by spectroscopic classifications, following the same methodology adopted here. We anticipate a higher yield of rank 3 candidates from Rubin, contingent on the availability of a clean and native training set. One potential challenge during early Rubin operations is the availability of well-established reference images over large areas of the sky, which is likely to introduce additional artifacts and spurious detections. This may represent a limiting factor beyond the sheer volume of alerts.
+
+In summary, we show that unsupervised autoencoders are effective for anomaly detection in transient alert streams, and that a curated training set of a few thousand objects is sufficient to recover genuinely unusual objects in both test data and live operation. Treating alert stream modalities independently, rather than combining them into a single model, substantially improves coverage and yields distinct anomalies. Moreover, the ensemble approach enables the identification of both extreme outliers and subtle, high-dimensional deviations that are not evident in low-dimensional projections, providing a broader discovery space. We therefore conclude that an ensemble of modality-specific anomaly detectors, as implemented in our Anomaly Hunter for Alerts ( AHA ) pipeline, offers a scalable and transferable solution for current and next-generation time-domain surveys, where rapid identification of rare and unexpected phenomena is increasingly critical.
+
+Acknowledgments
+
+L.I. and S.C. are supported by funding from Breakthrough Listen. The Breakthrough Prize Foundation funds the Breakthrough Initiatives, which manages Breakthrough Listen. C.J.L. acknowledges funding from STFC via LSST:UK. H.F.S. is supported by Schmidt Sciences through the Schmidt AI in Science Fellowship. Thanks to Stephen Smartt and Roy Williams for advice on Lasair transient data retrieval. Lasair is supported by the UKRI Science and Technology Facilities Council and is a collaboration between the University of Edinburgh (grant ST/N002512/1) and Queen’s University Belfast (grant ST/N002520/1) within the LSST:UK Science Consortium.
+
+References
+
+R. Ahumada, C. Allende Prieto, A. Almeida, F. Anders, S. F. Anderson, B. H. Andrews, B. Anguiano, R. Arcodia, E. Armengaud, M. Aubert, S. Avila, V. Avila-Reese, C. Badenes, C. Balland, K. Barger, J. K. Barrera-Ballesteros, S. Basu, J. Bautista, R. L. Beaton, T. C. Beers, B. I. T. Benavides, C. F. Bender, M. Bernardi, M. Bershady, F. Beutler, C. M. Bidin, J. Bird, D. Bizyaev, G. A. Blanc, M. R. Blanton, M. Boquien, J. Borissova, J. Bovy, W. N. Brandt, J. Brinkmann, J. R. Brownstein, K. Bundy, M. Bureau, A. Burgasser, E. Burtin, M. Cano-Díaz, R. Capasso, M. Cappellari, R. Carrera, S. Chabanier, W. Chaplin, M. Chapman, B. Cherinka, C. Chiappini, P. Doohyun Choi, S. D. Chojnowski, H. Chung, N. Clerc, D. Coffey, J. M. Comerford, J. Comparat, L. da Costa, M. Cousinou, K. Covey, J. D. Crane, K. Cunha, G. d. S. Ilha, Y. S. Dai, S. B. Damsted, J. Darling, J. W. Davidson, R. Davies, K. Dawson, N. De, A. de la Macorra, N. De Lee, A. B. d. A. Queiroz, A. Deconto Machado, S. de la Torre, F. Dell’Agli, H. du Mas des Bourboux, A. M. Diamond-Stanic, S. Dillon, J. Donor, N. Drory, C. Duckworth, T. Dwelly, G. Ebelke, S. Eftekharzadeh, A. Davis Eigenbrot, Y. P. Elsworth, M. Eracleous, G. Erfanianfar, S. Escoffier, X. Fan, E. Farr, J. G. Fernández-Trincado, D. Feuillet, A. Finoguenov, P. Fofie, A. Fraser-McKelvie, P. M. Frinchaboy, S. Fromenteau, H. Fu, L. Galbany, R. A. Garcia, D. A. García-Hernández, L. A. Garma Oehmichen, J. Ge, M. A. Geimba Maia, D. Geisler, J. Gelfand, J. Goddy, V. Gonzalez-Perez, K. Grabowski, P. Green, C. J. Grier, H. Guo, J. Guy, P. Harding, S. Hasselquist, A. J. Hawken, C. R. Hayes, F. Hearty, S. Hekker, D. W. Hogg, J. A. Holtzman, D. Horta, J. Hou, B. Hsieh, D. Huber, J. A. S. Hunt, J. Ider Chitham, J. Imig, M. Jaber, C. E. Jimenez Angel, J. A. Johnson, A. M. Jones, H. Jönsson, E. Jullo, Y. Kim, K. Kinemuchi, C. C. Kirkpatrick, G. W. Kite, M. Klaene, J. Kneib, J. A. Kollmeier, H. Kong, M. Kounkel, D. Krishnarao, I. Lacerna, T. Lan, R. R. Lane, D. R. Law, J. Le Goff, H. W. Leung, H. Lewis, C. Li, J. Lian, L. Lin, D. Long, P. Longa-Peña, B. Lundgren, B. W. Lyke, J. T. Mackereth, C. L. MacLeod, S. R. Majewski, A. Manchado, C. Maraston, P. Martini, T. Masseron, K. L. Masters, S. Mathur, R. M. McDermid, A. Merloni, M. Merrifield, S. Mészáros, A. Miglio, D. Minniti, R. Minsley, T. Miyaji, F. G. Mohammad, B. Mosser, E. Mueller, D. Muna, A. Muñoz-Gutiérrez, A. D. Myers, S. Nadathur, P. Nair, K. Nandra, J. Correa do Nascimento, R. J. Nevin, J. A. Newman, D. L. Nidever, C. Nitschelm, P. Noterdaeme, J. E. O’Connell, M. D. Olmstead, D. Oravetz, A. Oravetz, Y. Osorio, Z. J. Pace, N. Padilla, N. Palanque-Delabrouille, and P. A. Palicio (2020)
+The 16th Data Release of the Sloan Digital Sky Surveys: First Release from the APOGEE-2 Southern Survey and Full Release of eBOSS Spectra .
+
+ApJS 249 ( 1 ), pp. 3 .
+
+External Links: Document ,
+1912.02905
+
+Cited by: §IV.3.2 .
+
+M. Albán and D. Wylezalek (2023)
+Classifying the full SDSS-IV MaNGA Survey using optical diagnostic diagrams: Presentation of AGN catalogs in flexible apertures .
+
+A&A 674 , pp. A85 .
+
+External Links: Document ,
+2302.08519
+
+Cited by: §III.4 .
+
+P. D. Aleo, A. W. Engel, G. Narayan, C. R. Angus, K. Malanchev, K. Auchettl, V. F. Baldassare, A. Berres, T. J. L. de Boer, B. M. Boyd, K. C. Chambers, K. W. Davis, N. Esquivel, D. Farias, R. J. Foley, A. Gagliano, C. Gall, H. Gao, S. Gomez, M. Grayling, D. O. Jones, C.-C. Lin, E. A. Magnier, K. S. Mandel, T. Matheson, S. I. Raimundo, V. G. Shah, M. D. Soraisam, K. M. de Soto, S. Vicencio, V. A. Villar, and R. J. Wainscoat (2024)
+Anomaly Detection and Approximate Similarity Searches of Transients in Real-time Data Streams .
+
+ApJ 974 ( 2 ), pp. 172 .
+
+External Links: Document ,
+2404.01235
+
+Cited by: §I ,
+§II.1 ,
+§II.1 .
+
+E. C. Bellm, R. D. Blum, M. L. Graham, L. P. Guy, Ž. Ivezić, W. O’Mullane, M. T. Patterson, J. D. Swinbank, and B. Willman (2020)
+LDM-612: Plans and Policies for LSST Alert Distribution .
+
+Note: NSF-DOE Vera C. Rubin Observatory Technical Report
+
+External Links: Document
+
+Cited by: §I ,
+§I .
+
+E. C. Bellm, S. R. Kulkarni, M. J. Graham, R. Dekany, R. M. Smith, R. Riddle, F. J. Masci, G. Helou, T. A. Prince, S. M. Adams, C. Barbarino, T. Barlow, J. Bauer, R. Beck, J. Belicki, R. Biswas, N. Blagorodnova, D. Bodewits, B. Bolin, V. Brinnel, T. Brooke, B. Bue, M. Bulla, R. Burruss, S. B. Cenko, C. Chang, A. Connolly, M. Coughlin, J. Cromer, V. Cunningham, K. De, A. Delacroix, V. Desai, D. A. Duev, G. Eadie, T. L. Farnham, M. Feeney, U. Feindt, D. Flynn, A. Franckowiak, S. Frederick, C. Fremling, A. Gal-Yam, S. Gezari, M. Giomi, D. A. Goldstein, V. Z. Golkhou, A. Goobar, S. Groom, E. Hacopians, D. Hale, J. Henning, A. Y. Q. Ho, D. Hover, J. Howell, T. Hung, D. Huppenkothen, D. Imel, W. Ip, Ž. Ivezić, E. Jackson, L. Jones, M. Juric, M. M. Kasliwal, S. Kaspi, S. Kaye, M. S. P. Kelley, M. Kowalski, E. Kramer, T. Kupfer, W. Landry, R. R. Laher, C. Lee, H. W. Lin, Z. Lin, R. Lunnan, M. Giomi, A. Mahabal, P. Mao, A. A. Miller, S. Monkewitz, P. Murphy, C. Ngeow, J. Nordin, P. Nugent, E. Ofek, M. T. Patterson, B. Penprase, M. Porter, L. Rauch, U. Rebbapragada, D. Reiley, M. Rigault, H. Rodriguez, J. van Roestel, B. Rusholme, J. van Santen, S. Schulze, D. L. Shupe, L. P. Singer, M. T. Soumagnac, R. Stein, J. Surace, J. Sollerman, P. Szkody, F. Taddia, S. Terek, A. Van Sistine, S. van Velzen, W. T. Vestrand, R. Walters, C. Ward, Q. Ye, P. Yu, L. Yan, and J. Zolkower (2019)
+The Zwicky Transient Facility: System Overview, Performance, and First Results .
+
+PASP 131 ( 995 ), pp. 018002 .
+
+External Links: Document ,
+1902.01932
+
+Cited by: §I ,
+§II .
+
+C. R. Bom, D. C. Rodrigues, A. Cortesi, A. E. Araujo-Carvalho, D. Ruschel-Dutra, G. Iorio, L. Santana-Silva, C. D. Kilpatrick, F. Ferrari, L. Lomeli-Nuñez, T. Harvey, D. Austin, C. J. Conselice, N. Adams, and R. Cid Fernandes (2025)
+Probing the origin of the kilonova candidate GRB 230307A: analysis of host galaxy and offset .
+
+arXiv e-prints , pp. arXiv:2512.09036 .
+
+External Links: Document ,
+2512.09036
+
+Cited by: §II.1 .
+
+A. Caccianiga, A. Moretti, S. Belladitta, R. Della Ceca, S. Antón, L. Ballo, C. Cicone, D. Dallacasa, A. Gargiulo, L. Ighina, M. J. Marchã, and P. Severgnini (2019)
+The space density of z ¿ 4 blazars .
+
+MNRAS 484 ( 1 ), pp. 204–217 .
+
+External Links: Document ,
+1901.02910
+
+Cited by: §IV.3.2 .
+
+V. Chandola, A. Banerjee, and V. Kumar (2009)
+Anomaly detection: a survey .
+
+ACM Comput. Surv. 41 , pp.  .
+
+External Links: Document
+
+Cited by: §I .
+
+N. V. Chawla, K. W. Bowyer, L. O. Hall, and W. P. Kegelmeyer (2002)
+SMOTE: synthetic minority over‐sampling technique .
+
+Journal of Artificial Intelligence Research 16 , pp. 321–357 .
+
+External Links: Document ,
+Link
+
+Cited by: §II.1 .
+
+X. Chen, S. Wang, L. Deng, R. de Grijs, M. Yang, and H. Tian (2020)
+The Zwicky Transient Facility Catalog of Periodic Variable Stars .
+
+ApJS 249 ( 1 ), pp. 18 .
+
+External Links: Document ,
+2005.08662
+
+Cited by: §IV.1.2 ,
+§IV.3.2 .
+
+F. Chollet et al. (2018)
+Keras: The Python Deep Learning library .
+
+Note: Astrophysics Source Code Library, record ascl:1806.022
+
+Cited by: §III.2 .
+
+M. Cottaar, K. R. Covey, M. R. Meyer, D. L. Nidever, K. G. Stassun, J. B. Foster, J. C. Tan, S. D. Chojnowski, N. da Rio, K. M. Flaherty, P. M. Frinchaboy, M. Skrutskie, S. R. Majewski, J. C. Wilson, and G. Zasowski (2014)
+IN-SYNC I: Homogeneous Stellar Parameters from High-resolution APOGEE Spectra for Thousands of Pre-main Sequence Stars .
+
+ApJ 794 ( 2 ), pp. 125 .
+
+External Links: Document ,
+1408.7113
+
+Cited by: §IV.3.1 .
+
+R. M. Cutri, M. F. Skrutskie, S. van Dyk, C. A. Beichman, J. M. Carpenter, T. Chester, L. Cambresy, T. Evans, J. Fowler, J. Gizis, E. Howard, J. Huchra, T. Jarrett, E. L. Kopan, J. D. Kirkpatrick, R. M. Light, K. A. Marsh, H. McCallon, S. Schneider, R. Stiening, M. Sykes, M. Weinberg, W. A. Wheaton, S. Wheelock, and N. Zacarias (2003)
+VizieR online data catalog: 2mass all-sky catalog of point sources (cutri+ 2003) .
+
+Note: VizieR Online Data Catalog, II/246Originally published by University of Massachusetts and IPAC/Caltech
+
+External Links: Link
+
+Cited by: §IV.1.2 ,
+§IV.3.2 .
+
+R. D’Abrusco, N. Álvarez Crespo, F. Massaro, R. Campana, V. Chavushyan, M. Landoni, F. La Franca, N. Masetti, D. Milisavljevic, A. Paggi, F. Ricci, and H. A. Smith (2019)
+Two New Catalogs of Blazar Candidates in the WISE Infrared Sky .
+
+ApJS 242 ( 1 ), pp. 4 .
+
+External Links: Document ,
+1903.11124
+
+Cited by: §IV.2.1 .
+
+L. B. V. de Amorim, G. D. C. Cavalcanti, and R. M. O. Cruz (2022)
+The choice of scaling technique matters for classification performance .
+
+arXiv e-prints , pp. arXiv:2212.12343 .
+
+External Links: Document ,
+2212.12343
+
+Cited by: §III.2 .
+
+K. De, R. Soria, M. B. Agusti, M. Kong, V. Karambelkar, M. Hankins, M. M. Kasliwal, J. Sokoloski, M. Ashley, A. Babul, R. M. Lau, A. Moore, E. O. Ofek, M. Sharma, R. Simcoe, J. Soon, R. Soria, T. Travouillon, and A. Vanderburg (2022)
+Palomar Gattini-IR discovery and classification of a new highly reddened Galactic nova PGIR22akgylf in the active TESS field .
+
+The Astronomer’s Telegram 15587 , pp. 1 .
+
+Cited by: §IV.3.1 .
+
+A. Delgado, D. Harrison, S. Hodgkin, M. V. Leeuwen, G. Rixon, and A. Yoldas (2017a)
+GaiaAlerts Transient Discovery Report for 2017-03-23 .
+
+Transient Name Server Discovery Report 2017-341 , pp. 1 .
+
+Cited by: §IV.3.2 .
+
+A. Delgado, D. Harrison, S. Hodgkin, M. V. Leeuwen, G. Rixon, and A. Yoldas (2017b)
+GaiaAlerts Transient Discovery Report for 2017-08-31 .
+
+Transient Name Server Discovery Report 2017-942 , pp. 1 .
+
+Cited by: §IV.3.1 .
+
+A. Delgado, D. Harrison, S. Hodgkin, M. V. Leeuwen, G. Rixon, and A. Yoldas (2018)
+GaiaAlerts Transient Discovery Report for 2018-09-13 .
+
+Transient Name Server Discovery Report 2018-1373 , pp. 1 .
+
+Cited by: §IV.3.2 .
+
+A. J. Drake, B. T. Gänsicke, S. G. Djorgovski, P. Wils, A. A. Mahabal, M. J. Graham, T.-C. Yang, R. Williams, M. Catelan, J. L. Prieto, C. Donalek, S. Larson, and E. Christensen (2014)
+Cataclysmic variables from the Catalina Real-time Transient Survey .
+
+MNRAS 441 ( 2 ), pp. 1186–1200 .
+
+External Links: Document ,
+1404.3732
+
+Cited by: §IV.3.2 .
+
+F. Förster, G. Cabrera-Vives, E. Castillo-Navarrete, P. A. Estévez, P. Sánchez-Sáez, J. Arredondo, F. E. Bauer, R. Carrasco-Davis, M. Catelan, F. Elorrieta, S. Eyheramendy, P. Huijse, G. Pignata, E. Reyes, I. Reyes, D. Rodríguez-Mancini, D. Ruz-Mieres, C. Valenzuela, I. Álvarez-Maldonado, N. Astorga, J. Borissova, A. Clocchiatti, D. De Cicco, C. Donoso-Oliva, L. Hernández-García, M. J. Graham, A. Jordán, R. Kurtev, A. Mahabal, J. C. Maureira, A. Muñoz-Arancibia, R. Molina-Ferreiro, A. Moya, W. Palma, M. Pérez-Carrasco, P. Protopapas, M. Romero, L. Sabatini-Gacitua, A. Sánchez, J. San Martín, C. Sepúlveda-Cobo, E. Vera, and J. R. Vergara (2021)
+The Automatic Learning for the Rapid Classification of Events (ALeRCE) Alert Broker .
+
+AJ 161 ( 5 ), pp. 242 .
+
+External Links: Document ,
+2008.03303
+
+Cited by: §II .
+
+C. L. Fryer, S. E. Woosley, and A. Heger (2001)
+Pair-Instability Supernovae, Gravity Waves, and Gamma-Ray Transients .
+
+ApJ 550 ( 1 ), pp. 372–382 .
+
+External Links: Document ,
+astro-ph/0007176
+
+Cited by: §V .
+
+A. Gagliano, L. Izzo, C. D. Kilpatrick, B. Mockler, W. V. Jacobson-Galán, G. Terreran, G. Dimitriadis, Y. Zenati, K. Auchettl, M. R. Drout, G. Narayan, R. J. Foley, R. Margutti, A. Rest, D. O. Jones, C. Aganze, P. D. Aleo, A. J. Burgasser, D. A. Coulter, R. Gerasimov, C. Gall, J. Hjorth, C. Hsu, E. A. Magnier, K. S. Mandel, A. L. Piro, C. Rojas-Bravo, M. R. Siebert, H. Stacey, M. C. Stroh, J. J. Swift, K. Taggart, S. Tinyanont, and S. Tinyanont (2022)
+An Early-time Optical and Ultraviolet Excess in the Type-Ic SN 2020oi .
+
+ApJ 924 ( 2 ), pp. 55 .
+
+External Links: Document ,
+2105.09963
+
+Cited by: §I .
+
+Gaia Collaboration (2022)
+VizieR Online Data Catalog: Gaia DR3 Part 4. Variability (Gaia Collaboration, 2022) .
+
+Note: VizieR On-line Data Catalog: I/358. Originally published in: 2023A&A…674A…1G
+
+Cited by: §IV.3.1 .
+
+E. M. Gallay, J. R. A. Davenport, and S. Croft (2025)
+Technosignature Searches with Real-time Alert Brokers .
+
+AJ 170 ( 2 ), pp. 95 .
+
+External Links: Document ,
+2506.14744
+
+Cited by: §I .
+
+N. P. Gentile Fusillo, P. Tremblay, B. T. Gänsicke, C. J. Manser, T. Cunningham, E. Cukanovaite, M. Hollands, T. Marsh, R. Raddi, S. Jordan, S. Toonen, S. Geier, M. Barstow, and J. D. Cummings (2019)
+A Gaia Data Release 2 catalogue of white dwarfs and a comparison with SDSS .
+
+MNRAS 482 ( 4 ), pp. 4570–4591 .
+
+External Links: Document ,
+1807.03315
+
+Cited by: §IV.3.1 .
+
+O. Gress, P. Balanutsa, D. Denisenko, V. Lipunov, E. Gorbovskoy, N. Tiurina, V. Kornilov, N. Shatskiy, V. Chazov, A. Kuznetsov, A. Rufanov, V. Vladimirov, V. Yecheistov, K. Ivanov, S. Yazev, N. Budnev, E. Konstantinov, O. Chuvalaev, V. Poleshchuk, A. Parkhomenko, A. Tlatov, D. Dormidontov, V. Senik, V. Yurkov, Y. Sergienko, D. Varda, E. Sinyakov, A. Gabovich, V. Krushinsky, I. Zalozhnih, A. Popov, A. Bourdanov, P. Podvorotny, V. Shumkov, S. Shurpakov, H. Levato, C. Saffe, C. Mallamaci, C. Lopez, and F. Podest (2014)
+Three Cataclysmic Variables detected by MASTER .
+
+The Astronomer’s Telegram 5749 , pp. 1 .
+
+Cited by: §IV.3.2 .
+
+O. Gress, V. Vladimirov, V. Lipunov, D. Buckley, E. Gorbovskoy, V. Kornilov, N. Tiurina, N. Samus, S. Antipin, P. Balanutsa, A. Kuznetsov, V. Chazov, E. Popova, S. Potter, A. Kniazev, M. Kotze, N. Budnev, K. Ivanov, S. Yazev, V. Poleshchuk, A. Tlatov, D. Dormidontov, V. Senik, A. Parkhomenko, V. Krushinsky, I. Zalozhnih, A. Popov, A. Bourdanov, Yu. Sergienko, V. Yurkov, A. Gabovich, V. Shumkov, and S. Shurpakov (2015)
+MASTER-Net: PSN and dwarf novae .
+
+The Astronomer’s Telegram 7566 , pp. 1 .
+
+Cited by: §IV.3.1 ,
+§IV.3.2 .
+
+R. Gupta, D. Muthukrishna, and M. Lochner (2025)
+A classifier-based approach to multiclass anomaly detection for astronomical transients .
+
+RAS Techniques and Instruments 4 , pp. rzae054 .
+
+External Links: Document ,
+2403.14742
+
+Cited by: §I .
+
+K. M. Hambleton, F. B. Bianco, R. Street, K. Bell, D. Buckley, M. Graham, N. Hernitschek, M. B. Lund, E. Mason, J. Pepper, A. Prša, M. Rabus, C. M. Raiteri, R. Szabó, P. Szkody, I. Andreoni, S. Antoniucci, B. Balmaverde, E. Bellm, R. Bonito, G. Bono, M. T. Botticella, E. Brocato, K. Bučar Bricman, E. Cappellaro, M. I. Carnerero, R. Chornock, R. Clarke, P. Cowperthwaite, A. Cucchiara, F. D’Ammando, K. C. Dage, M. Dall’Ora, J. R. A. Davenport, D. de Martino, G. de Somma, M. Di Criscienzo, R. Di Stefano, M. Drout, M. Fabrizio, G. Fiorentino, P. Gandhi, A. Garofalo, T. Giannini, A. Gomboc, L. Greggio, P. Hartigan, M. Hundertmark, E. Johnson, M. Johnson, T. Jurkic, S. Khakpash, S. Leccia, X. Li, D. Magurno, K. Malanchev, M. Marconi, R. Margutti, S. Marinoni, N. Mauron, R. Molinaro, A. Möller, M. Moniez, T. Muraveva, I. Musella, C. Ngeow, A. Pastorello, V. Petrecca, S. Piranomonte, F. Ragosta, A. Reguitti, C. Righi, V. Ripepi, L. Rivera Sandoval, K. G. Stassun, M. Stroh, G. Terreran, V. Trimble, Y. Tsapras, S. van Velzen, L. Venuti, and J. S. Vink (2023)
+Rubin Observatory LSST Transients and Variable Stars Roadmap .
+
+PASP 135 ( 1052 ), pp. 105002 .
+
+External Links: Document ,
+2208.04499
+
+Cited by: §I .
+
+J. T. Hinkle, B. J. Shappee, K. Auchettl, C. S. Kochanek, J. M. M. Neustadt, A. Polin, J. Strader, T. W.-S. Holoien, M. E. Huber, M. A. Tucker, C. Ashall, T. de Jaeger, D. D. Desai, A. Do, W. B. Hoogendam, and A. V. Payne (2025)
+The most energetic transients: Tidal disruptions of high-mass stars .
+
+Science Advances 11 ( 23 ), pp. eadt0074 .
+
+External Links: Document ,
+2405.08855
+
+Cited by: §I .
+
+G. E. Hinton and R. R. Salakhutdinov (2006)
+Reducing the Dimensionality of Data with Neural Networks .
+
+Science 313 ( 5786 ), pp. 504–507 .
+
+External Links: Document
+
+Cited by: §III.2 ,
+§III .
+
+S. T. Hodgkin, E. Breedt, A. Delgado, D. L. Harrison, M. V. Leeuwen, G. Rixon, T. Wevers, A. Yoldas, N. Ihanec, K. Kruszyńska, K. A. Rybicki, Ł. Wyrzykowski, Z. Kostrzewa-Rutkowska, D. Eappachen, and G. Marton (2020)
+GaiaAlerts Transient Discovery Report for 2020-09-04 .
+
+Transient Name Server Discovery Report 2020-2716 , pp. 1 .
+
+Cited by: §IV.3.1 .
+
+S. T. Hodgkin, E. Breedt, A. Delgado, D. L. Harrison, M. V. Leeuwen, G. Rixon, T. Wevers, A. Yoldas, N. Ihanec, K. Kruszyńska, K. A. Rybicki, Ł. Wyrzykowski, Z. Kostrzewa-Rutkowska, D. Eappachen, and G. Marton (2021)
+GaiaAlerts Transient Discovery Report for 2021-07-11 .
+
+Transient Name Server Discovery Report 2021-2402 , pp. 1–2402 .
+
+Cited by: §IV.3.1 .
+
+S. T. Hodgkin, E. Breedt, A. Delgado, D. L. Harrison, M. V. Leeuwen, G. Rixon, T. Wevers, A. Yoldas, N. Ihanec, K. Kruszyńska, K. A. Rybicki, Ł. Wyrzykowski, Z. Kostrzewa-Rutkowska, D. Eappachen, and G. Marton (2022)
+GaiaAlerts Transient Discovery Report for 2022-12-31 .
+
+Transient Name Server Discovery Report 2022-3686 , pp. 1 .
+
+Cited by: §IV.3.1 .
+
+T. W.-S. Holoien, C. S. Kochanek, J. L. Prieto, K. Z. Stanek, S. Dong, B. J. Shappee, D. Grupe, J. S. Brown, U. Basu, J. F. Beacom, D. Bersier, J. Brimacombe, A. B. Danilet, E. Falco, Z. Guo, J. Jose, G. J. Herczeg, F. Long, G. Pojmanski, G. V. Simonian, D. M. Szczygieł, T. A. Thompson, J. R. Thorstensen, R. M. Wagner, and P. R. Woźniak (2016)
+Six months of multiwavelength follow-up of the tidal disruption candidate ASASSN-14li and implied TDE rates from ASAS-SN .
+
+MNRAS 455 ( 3 ), pp. 2918–2935 .
+
+External Links: Document ,
+1507.01598
+
+Cited by: §II.1 .
+
+B. Hsu, P. K. Blanchard, E. Berger, and S. Gomez (2024)
+An Extensive Hubble Space Telescope Study of the Offset and Host Light Distributions of Type I Superluminous Supernovae .
+
+ApJ 961 ( 2 ), pp. 169 .
+
+External Links: Document ,
+2308.07271
+
+Cited by: §II.1 .
+
+K. Inight, B. T. Gänsicke, E. Breedt, H. T. Israel, S. P. Littlefair, C. J. Manser, T. R. Marsh, T. Mulvany, A. F. Pala, and J. R. Thorstensen (2023)
+A catalogue of cataclysmic variables from 20 yr of the Sloan Digital Sky Survey with new classifications, periods, trends, and oddities .
+
+MNRAS 524 ( 4 ), pp. 4867–4898 .
+
+External Links: Document ,
+2304.06749
+
+Cited by: §IV.3.1 .
+
+H. T. Intema, P. Jagannathan, K. P. Mooley, and D. A. Frail (2017)
+The GMRT 150 MHz all-sky radio survey. First alternative data release TGSS ADR1 .
+
+A&A 598 , pp. A78 .
+
+External Links: Document ,
+1603.04368
+
+Cited by: §IV.3.1 .
+
+E. E. O. Ishida, M. V. Kornilov, K. L. Malanchev, M. V. Pruzhinskaya, A. A. Volnova, V. S. Korolev, F. Mondon, S. Sreejith, A. A. Malancheva, and S. Das (2021)
+Active anomaly detection for time-domain discoveries .
+
+A&A 650 , pp. A195 .
+
+External Links: Document ,
+1909.13260
+
+Cited by: §I ,
+§II.1 .
+
+W. V. Jacobson-Galán, P. Venkatraman, R. Margutti, D. Khatami, G. Terreran, R. J. Foley, R. Angulo, C. R. Angus, K. Auchettl, P. K. Blanchard, A. Bobrick, J. S. Bright, D. Brout, K. C. Chambers, C. D. Couch, D. A. Coulter, K. Clever, K. W. Davis, T. J. L. de Boer, L. DeMarchi, S. A. Dodd, D. O. Jones, J. Johnson, C. D. Kilpatrick, N. Khetan, Z. Lai, D. Langeroodi, C.-C. Lin, E. A. Magnier, D. Milisavljevic, H. B. Perets, J. D. R. Pierel, J. Raymond, S. Rest, A. Rest, R. Ridden-Harper, K. J. Shen, M. R. Siebert, C. Smith, K. Taggart, S. Tinyanont, F. Valdes, V. A. Villar, Q. Wang, S. K. Yadavalli, Y. Zenati, and A. Zenteno (2022)
+The Circumstellar Environments of Double-peaked, Calcium-strong Transients 2021gno and 2021inl .
+
+ApJ 932 ( 1 ), pp. 58 .
+
+External Links: Document ,
+2203.03785
+
+Cited by: §I .
+
+A. Jerkstrand (2017)
+Spectra of Supernovae in the Nebular Phase .
+
+In Handbook of Supernovae , A. W. Alsabti and P. Murdin (Eds.) ,
+
+pp. 795 .
+
+External Links: Document
+
+Cited by: §V .
+
+A. Kawash, L. Chomiuk, J. Strader, E. Aydi, K. V. Sokolovsky, T. Jayasinghe, C. S. Kochanek, P. Schmeer, K. Z. Stanek, K. Mukai, B. Shappee, Z. Way, C. Basinger, T. W.-S. Holoien, and J. L. Prieto (2021)
+Classical Novae Masquerading as Dwarf Novae? Outburst Properties of Cataclysmic Variables with ASAS-SN .
+
+ApJ 910 ( 2 ), pp. 120 .
+
+External Links: Document ,
+2101.12239
+
+Cited by: §IV.1.1 ,
+§IV.3.1 ,
+§IV.3.1 ,
+§IV.3.2 .
+
+D. Kingma and J. Ba (2014)
+Adam: a method for stochastic optimization .
+
+International Conference on Learning Representations , pp.  .
+
+Cited by: §III.2 ,
+§III.4 .
+
+S. Komossa (2015)
+Tidal disruption of stars by supermassive black holes: Status of observations .
+
+Journal of High Energy Astrophysics 7 , pp. 148–157 .
+
+External Links: Document ,
+1505.01093
+
+Cited by: §I .
+
+H. Kuncarayakti, J. Sollerman, L. Izzo, K. Maeda, S. Yang, S. Schulze, C. R. Angus, M. Aubert, K. Auchettl, M. Della Valle, L. Dessart, K. Hinds, E. Kankare, M. Kawabata, P. Lundqvist, T. Nakaoka, D. Perley, S. I. Raimundo, N. L. Strotjohann, K. Taguchi, Y.-Z. Cai, P. Charalampopoulos, Q. Fang, M. Fraser, C. P. Gutiérrez, R. Imazawa, T. Kangas, K. S. Kawabata, R. Kotak, T. Kravtsov, K. Matilainen, S. Mattila, S. Moran, I. Murata, I. Salmaso, J. P. Anderson, C. Ashall, E. C. Bellm, S. Benetti, K. C. Chambers, T.-W. Chen, M. Coughlin, F. De Colle, C. Fremling, L. Galbany, A. Gal-Yam, M. Gromadzki, S. L. Groom, A. Hajela, C. Inserra, M. M. Kasliwal, A. A. Mahabal, A. Martin-Carrillo, T. Moore, T. E. Müller-Bravo, M. Nicholl, F. Ragosta, R. L. Riddle, Y. Sharma, S. Srivastav, M. D. Stritzinger, A. Wold, and D. R. Young (2023)
+The broad-lined Type-Ic supernova SN 2022xxf and its extraordinary two-humped light curves. I. Signatures of H/He-free interaction in the first four months .
+
+A&A 678 , pp. A209 .
+
+External Links: Document ,
+2303.16925
+
+Cited by: §I .
+
+X. Li, F. Ragosta, W. I. Clarkson, and F. B. Bianco (2022)
+Preparing to Discover the Unknown with Rubin LSST: Time Domain .
+
+ApJS 258 ( 1 ), pp. 2 .
+
+External Links: Document ,
+2107.10281
+
+Cited by: §I .
+
+LSST Science Collaboration, P. A. Abell, J. Allison, S. F. Anderson, J. R. Andrew, J. R. P. Angel, L. Armus, D. Arnett, S. J. Asztalos, T. S. Axelrod, S. Bailey, D. R. Ballantyne, J. R. Bankert, W. A. Barkhouse, J. D. Barr, L. F. Barrientos, A. J. Barth, J. G. Bartlett, A. C. Becker, J. Becla, T. C. Beers, J. P. Bernstein, R. Biswas, M. R. Blanton, J. S. Bloom, J. J. Bochanski, P. Boeshaar, K. D. Borne, M. Bradac, W. N. Brandt, C. R. Bridge, M. E. Brown, R. J. Brunner, J. S. Bullock, A. J. Burgasser, J. H. Burge, D. L. Burke, P. A. Cargile, S. Chandrasekharan, G. Chartas, S. R. Chesley, Y. Chu, D. Cinabro, M. W. Claire, C. F. Claver, D. Clowe, A. J. Connolly, K. H. Cook, J. Cooke, A. Cooray, K. R. Covey, C. S. Culliton, R. de Jong, W. H. de Vries, V. P. Debattista, F. Delgado, I. P. Dell’Antonio, S. Dhital, R. Di Stefano, M. Dickinson, B. Dilday, S. G. Djorgovski, G. Dobler, C. Donalek, G. Dubois-Felsmann, J. Durech, A. Eliasdottir, M. Eracleous, L. Eyer, E. E. Falco, X. Fan, C. D. Fassnacht, H. C. Ferguson, Y. R. Fernandez, B. D. Fields, D. Finkbeiner, E. E. Figueroa, D. B. Fox, H. Francke, J. S. Frank, J. Frieman, S. Fromenteau, M. Furqan, G. Galaz, A. Gal-Yam, P. Garnavich, E. Gawiser, J. Geary, P. Gee, R. R. Gibson, K. Gilmore, E. A. Grace, R. F. Green, W. J. Gressler, C. J. Grillmair, S. Habib, J. S. Haggerty, M. Hamuy, A. W. Harris, S. L. Hawley, A. F. Heavens, L. Hebb, T. J. Henry, E. Hileman, E. J. Hilton, K. Hoadley, J. B. Holberg, M. J. Holman, S. B. Howell, L. Infante, Z. Ivezic, S. H. Jacoby, B. Jain, R, Jedicke, M. J. Jee, J. Garrett Jernigan, S. W. Jha, K. V. Johnston, R. L. Jones, M. Juric, M. Kaasalainen, Styliani, Kafka, S. M. Kahn, N. A. Kaib, J. Kalirai, J. Kantor, M. M. Kasliwal, C. R. Keeton, R. Kessler, Z. Knezevic, A. Kowalski, V. L. Krabbendam, K. S. Krughoff, S. Kulkarni, S. Kuhlman, M. Lacy, S. Lepine, M. Liang, A. Lien, P. Lira, K. S. Long, S. Lorenz, J. M. Lotz, R. H. Lupton, J. Lutz, L. M. Macri, A. A. Mahabal, R. Mandelbaum, P. Marshall, M. May, P. M. McGehee, B. T. Meadows, A. Meert, A. Milani, C. J. Miller, M. Miller, D. Mills, D. Minniti, D. Monet, A. S. Mukadam, E. Nakar, D. R. Neill, J. A. Newman, S. Nikolaev, M. Nordby, P. O’Connor, M. Oguri, J. Oliver, S. S. Olivier, J. K. Olsen, K. Olsen, E. W. Olszewski, H. Oluseyi, N. D. Padilla, A. Parker, J. Pepper, J. R. Peterson, C. Petry, P. A. Pinto, J. L. Pizagno, B. Popescu, A. Prsa, V. Radcka, M. J. Raddick, A. Rasmussen, A. Rau, J. Rho, J. E. Rhoads, G. T. Richards, S. T. Ridgway, B. E. Robertson, R. Roskar, A. Saha, A. Sarajedini, E. Scannapieco, T. Schalk, R. Schindler, and S. Schmidt (2009)
+LSST Science Book, Version 2.0 .
+
+arXiv e-prints , pp. arXiv:0912.0201 .
+
+External Links: Document ,
+0912.0201
+
+Cited by: §I .
+
+R. Margutti, B. D. Metzger, R. Chornock, I. Vurm, N. Roth, B. W. Grefenstette, V. Savchenko, R. Cartier, J. F. Steiner, G. Terreran, B. Margalit, G. Migliori, D. Milisavljevic, K. D. Alexander, M. Bietenholz, P. K. Blanchard, E. Bozzo, D. Brethauer, I. V. Chilingarian, D. L. Coppejans, L. Ducci, C. Ferrigno, W. Fong, D. Götz, C. Guidorzi, A. Hajela, K. Hurley, E. Kuulkers, P. Laurent, S. Mereghetti, M. Nicholl, D. Patnaude, P. Ubertini, J. Banovetz, N. Bartel, E. Berger, E. R. Coughlin, T. Eftekhari, D. D. Frederiks, A. V. Kozlova, T. Laskar, D. S. Svinkin, M. R. Drout, A. MacFadyen, and K. Paterson (2019)
+An Embedded X-Ray Source Shines through the Aspherical AT 2018cow: Revealing the Inner Workings of the Most Luminous Fast-evolving Optical Transients .
+
+ApJ 872 ( 1 ), pp. 18 .
+
+External Links: Document ,
+1810.10720
+
+Cited by: §I .
+
+J. Masci, U. Meier, D. Cireşan, and J. Schmidhuber (2011)
+Stacked convolutional auto-encoders for hierarchical feature extraction .
+
+In Artificial Neural Networks and Machine Learning – ICANN 2011 , G. B. Orr and K.-R. Müller (Eds.) ,
+
+Lecture Notes in Computer Science , Vol. 6791 , pp. 52–59 .
+
+External Links: Document ,
+Link
+
+Cited by: §III.3 .
+
+T. Matheson, C. Stubens, N. Wolf, C. Lee, G. Narayan, A. Saha, A. Scott, M. Soraisam, A. S. Bolton, B. Hauger, D. R. Silva, J. Kececioglu, C. Scheidegger, R. Snodgrass, P. D. Aleo, E. Evans-Jacquez, N. Singh, Z. Wang, S. Yang, and Z. Zhao (2021)
+The ANTARES Astronomical Time-domain Event Broker .
+
+AJ 161 ( 3 ), pp. 107 .
+
+External Links: Document ,
+2011.12385
+
+Cited by: §II .
+
+B. D. Metzger (2020)
+Kilonovae .
+
+Living Reviews in Relativity 23 ( 1 ), pp. 1 .
+
+External Links: Document ,
+1910.01617
+
+Cited by: §I .
+
+A. Möller, J. Peloton, E. E. O. Ishida, C. Arnault, E. Bachelet, T. Blaineau, D. Boutigny, A. Chauhan, E. Gangler, F. Hernandez, J. Hrivnac, M. Leoni, N. Leroy, M. Moniez, S. Pateyron, A. Ramparison, D. Turpin, R. Ansari, T. Allam, A. Bajat, B. Biswas, A. Boucaud, J. Bregeon, J. Campagne, J. Cohen-Tanugi, A. Coleiro, D. Dornic, D. Fouchez, O. Godet, P. Gris, S. Karpov, A. Nebot Gomez-Moran, J. Neveu, S. Plaszczynski, V. Savchenko, and N. Webb (2021)
+FINK, a new generation of broker for the LSST community .
+
+MNRAS 501 ( 3 ), pp. 3272–3288 .
+
+External Links: Document ,
+2009.10185
+
+Cited by: §II .
+
+D. Muthukrishna, K. S. Mandel, M. Lochner, S. Webb, and G. Narayan (2022)
+Real-time detection of anomalies in large-scale transient surveys .
+
+MNRAS 517 ( 1 ), pp. 393–419 .
+
+External Links: Document ,
+2111.00036
+
+Cited by: §I .
+
+A. A. Neloy and M. Turgeon (2024)
+A comprehensive study of auto-encoders for anomaly detection: efficiency and trade-offs .
+
+Machine Learning with Applications 17 , pp. 100572 .
+
+External Links: ISSN 2666-8270 ,
+Document ,
+Link
+
+Cited by: §III.2 .
+
+J. Nordin, V. Brinnel, J. van Santen, M. Bulla, U. Feindt, A. Franckowiak, C. Fremling, A. Gal-Yam, M. Giomi, M. Kowalski, A. Mahabal, N. Miranda, L. Rauch, S. Reusch, M. Rigault, S. Schulze, J. Sollerman, R. Stein, O. Yaron, S. van Velzen, and C. Ward (2019)
+Transient processing and analysis using AMPEL: alert management, photometry, and evaluation of light curves .
+
+A&A 631 , pp. A147 .
+
+External Links: Document ,
+1904.05922
+
+Cited by: §II .
+
+I. Pâris, P. Petitjean, É. Aubourg, A. D. Myers, A. Streblyanska, B. W. Lyke, S. F. Anderson, É. Armengaud, J. Bautista, M. R. Blanton, M. Blomqvist, J. Brinkmann, J. R. Brownstein, W. N. Brandt, É. Burtin, K. Dawson, S. de la Torre, A. Georgakakis, H. Gil-Marín, P. J. Green, P. B. Hall, J. Kneib, S. M. LaMassa, J. Le Goff, C. MacLeod, V. Mariappan, I. D. McGreer, A. Merloni, P. Noterdaeme, N. Palanque-Delabrouille, W. J. Percival, A. J. Ross, G. Rossi, D. P. Schneider, H. Seo, R. Tojeiro, B. A. Weaver, A. Weijmans, C. Yèche, P. Zarrouk, and G. Zhao (2018)
+The Sloan Digital Sky Survey Quasar Catalog: Fourteenth data release .
+
+A&A 613 , pp. A51 .
+
+External Links: Document ,
+1712.05029
+
+Cited by: §IV.2.2 .
+
+M. T. Patterson, E. C. Bellm, B. Rusholme, F. J. Masci, M. Juric, K. S. Krughoff, V. Z. Golkhou, M. J. Graham, S. R. Kulkarni, G. Helou, and Zwicky Transient Facility Collaboration (2019)
+The Zwicky Transient Facility Alert Distribution System .
+
+PASP 131 ( 995 ), pp. 018001 .
+
+External Links: Document ,
+1902.02227
+
+Cited by: §I ,
+§II .
+
+R. C. Pereira et al. (2020)
+Reviewing autoencoders for missing data imputation: technical trends, applications and outcomes .
+
+Journal of Artificial Intelligence Research 69 , pp. 1255–1296 .
+
+External Links: Document
+
+Cited by: §II.1 .
+
+M. Perez-Carrasco, G. Cabrera-Vives, L. Hernandez-García, F. Förster, P. Sanchez-Saez, A. M. Muñoz Arancibia, J. Arredondo, N. Astorga, F. E. Bauer, A. Bayo, M. Catelan, R. Dastidar, P. A. Estévez, P. Lira, and G. Pignata (2023)
+Alert Classification for the ALeRCE Broker System: The Anomaly Detector .
+
+AJ 166 ( 4 ), pp. 151 .
+
+External Links: Document
+
+Cited by: §I .
+
+J. D. R. Pierel, N. Arendse, S. Ertl, X. Huang, L. A. Moustakas, S. Schuldt, A. J. Shajib, Y. Shu, S. Birrer, M. Bronikowski, J. Hjorth, S. H. Suyu, S. Agarwal, A. Agnello, A. S. Bolton, S. Chakrabarti, C. Cold, F. Courbin, J. M. Della Costa, S. Dhawan, M. Engesser, O. D. Fox, C. Gall, S. Gomez, A. Goobar, S. W. Jha, C. Jimenez, J. Johansson, C. Larison, G. Li, R. Marques-Chaves, S. Mao, P. A. Mazzali, I. Perez-Fournon, T. Petrushevska, F. Poidevin, A. Rest, W. Sheu, R. Shirley, E. Silver, C. Storfer, L. G. Strolger, T. Treu, R. Wojtak, and Y. Zenati (2023)
+LensWatch. I. Resolved HST Observations and Constraints on the Strongly Lensed Type Ia Supernova 2022qmx (“SN Zwicky”) .
+
+ApJ 948 ( 2 ), pp. 115 .
+
+External Links: Document ,
+2211.03772
+
+Cited by: §I .
+
+J. L. Prieto and K. Z. Stanek (2017)
+ASAS-SN Transient Discovery Report for 2017-04-01 .
+
+Transient Name Server Discovery Report 2017-382 , pp. 1 .
+
+Cited by: §IV.1.1 .
+
+M. V. Pruzhinskaya, K. L. Malanchev, M. V. Kornilov, E. E. O. Ishida, F. Mondon, A. A. Volnova, and V. S. Korolev (2019)
+Anomaly detection in the Open Supernova Catalog .
+
+MNRAS 489 ( 3 ), pp. 3591–3608 .
+
+External Links: Document ,
+1905.11516
+
+Cited by: §I ,
+§II.1 .
+
+N. N. Samus’, E. V. Kazarovets, O. V. Durlevich, N. N. Kireeva, and E. N. Pastukhova (2017)
+General catalogue of variable stars: Version GCVS 5.1 .
+
+Astronomy Reports 61 ( 1 ), pp. 80–88 .
+
+External Links: Document
+
+Cited by: §IV.3.1 .
+
+X. Sheng, M. Nicholl, K. W. Smith, D. R. Young, R. D. Williams, H. F. Stevance, S. J. Smartt, S. Srivastav, and T. Moore (2024)
+NEural Engine for Discovering Luminous Events (NEEDLE): identifying rare transient candidates in real time from host galaxy images .
+
+MNRAS 531 ( 2 ), pp. 2474–2492 .
+
+External Links: Document ,
+2312.04968
+
+Cited by: §I ,
+§III.3 .
+
+K. W. Smith, S. J. Smartt, D. R. Young, J. L. Tonry, L. Denneau, H. Flewelling, A. N. Heinze, H. J. Weiland, B. Stalder, A. Rest, C. W. Stubbs, J. P. Anderson, T.-W. Chen, P. Clark, A. Do, F. Förster, M. Fulton, J. Gillanders, O. R. McBrien, D. O’Neill, S. Srivastav, and D. E. Wright (2020)
+Design and Operation of the ATLAS Transient Science Server .
+
+PASP 132 ( 1014 ), pp. 085002 .
+
+External Links: Document ,
+2003.09052
+
+Cited by: §II .
+
+K. W. Smith, R. D. Williams, D. R. Young, A. Ibsen, S. J. Smartt, A. Lawrence, D. Morris, S. Voutsinas, and M. Nicholl (2019)
+Lasair: The Transient Alert Broker for LSST:UK .
+
+Research Notes of the American Astronomical Society 3 ( 1 ), pp. 26 .
+
+External Links: Document
+
+Cited by: §I .
+
+H. F. Stevance, K. W. Smith, S. J. Smartt, S. J. Roberts, N. Erasmus, D. R. Young, and A. Clocchiatti (2025)
+The ATLAS Virtual Research Assistant .
+
+ApJ 990 ( 2 ), pp. 201 .
+
+External Links: Document ,
+2506.09778
+
+Cited by: §I .
+
+B. M. Subrayan, D. Milisavljevic, R. Chornock, R. Margutti, K. D. Alexander, V. Ramakrishnan, P. C. Duffell, D. A. Dickinson, K. Lee, D. Giannios, G. Lentner, M. Linvill, B. Garretson, M. J. Graham, D. Stern, D. Brethauer, T. Duong, W. Jacobson-Galán, N. LeBaron, D. Matthews, H. Sears, and P. Venkatraman (2023)
+Scary Barbie: An Extremely Energetic, Long-duration Tidal Disruption Event Candidate without a Detected Host Galaxy at z = 0.995 .
+
+ApJ 948 ( 2 ), pp. L19 .
+
+External Links: Document ,
+2302.10932
+
+Cited by: §V .
+
+P. Szkody, B. Dicenzo, A. Y. Q. Ho, L. A. Hillenbrand, J. van Roestel, M. Ridder, I. DeJesus Lima, M. L. Graham, E. C. Bellm, K. Burdge, T. Kupfer, T. A. Prince, F. J. Masci, P. J. Mróz, V. Z. Golkhou, M. Coughlin, V. A. Cunningham, R. Dekany, M. J. Graham, D. Hale, D. Kaplan, M. M. Kasliwal, A. A. Miller, J. D. Neill, M. T. Patterson, R. Riddle, R. Smith, and M. T. Soumagnac (2020)
+Cataclysmic Variables in the First Year of the Zwicky Transient Facility .
+
+AJ 159 ( 5 ), pp. 198 .
+
+External Links: Document ,
+2002.08447
+
+Cited by: §IV.1.2 ,
+§IV.3.1 .
+
+P. Szkody, C. Olde Loohuis, B. Koplitz, J. van Roestel, B. Dicenzo, A. Y. Q. Ho, L. A. Hillenbrand, E. C. Bellm, R. Dekany, A. J. Drake, D. A. Duev, M. J. Graham, M. M. Kasliwal, A. A. Mahabal, F. J. Masci, J. D. Neill, R. Riddle, B. Rusholme, J. Sollerman, and R. Walters (2021)
+Cataclysmic Variables in the Second Year of the Zwicky Transient Facility .
+
+AJ 162 ( 3 ), pp. 94 .
+
+External Links: Document ,
+2107.07051
+
+Cited by: §IV.3.2 .
+
+H. Tan, M. Zhang, G. Sun, and J. Zhao (2021)
+XOSS Transient Discovery Report for 2021-03-19 .
+
+Transient Name Server Discovery Report 2021-828 , pp. 1–828 .
+
+Cited by: §IV.3.1 .
+
+L. Tomasella, S. Benetti, E. Cappellaro, N. Elias-Rosa, P. Ochner, A. Pastorello, G. Terreran, and M. Turatto (2016)
+Asiago spectroscopic classification of MASTER OT J194310.37+554900.0, ASASSN-16je and AT2016fee .
+
+The Astronomer’s Telegram 9397 , pp. 1 .
+
+Cited by: §IV.3.1 .
+
+E. Troja, A. J. Castro-Tirado, J. Becerra González, Y. Hu, G. S. Ryan, S. B. Cenko, R. Ricci, G. Novara, R. Sánchez-Rámirez, J. A. Acosta-Pulido, K. D. Ackley, M. D. Caballero García, S. S. Eikenberry, S. Guziy, S. Jeong, A. Y. Lien, I. Márquez, S. B. Pandey, I. H. Park, T. Sakamoto, J. C. Tello, I. V. Sokolov, V. V. Sokolov, A. Tiengo, A. F. Valeev, B. B. Zhang, and S. Veilleux (2019)
+The afterglow and kilonova of the short GRB 160821B .
+
+MNRAS 489 ( 2 ), pp. 2104–2116 .
+
+External Links: Document ,
+1905.01290
+
+Cited by: §II.1 .
+
+M. Vigotti, G. Grueff, R. Perley, B. G. Clark, and A. H. Bridle (1989)
+Structures, Spectral Indexes, and Optical Identifications of Radio Sources Selected from the B3 Catalogue .
+
+AJ 98 , pp. 419 .
+
+External Links: Document
+
+Cited by: §IV.1.1 .
+
+V. A. Villar, M. Cranmer, E. Berger, G. Contardo, S. Ho, G. Hosseinzadeh, and J. Y. Lin (2021)
+A Deep-learning Approach for Live Anomaly Detection of Extragalactic Transients .
+
+ApJS 255 ( 2 ), pp. 24 .
+
+External Links: Document ,
+2103.12102
+
+Cited by: §I .
+
+W. Voges, B. Aschenbach, T. Boller, H. Brauninger, U. Briel, W. Burkert, K. Dennerl, J. Englhauser, R. Gruber, F. Haberl, G. Hartner, G. Hasinger, E. Pfeffermann, W. Pietsch, P. Predehl, J. Schmitt, J. Trumper, and U. Zimmermann (2000)
+Rosat All-Sky Survey Faint Source Catalogue .
+
+IAU Circ. 7432 , pp. 3 .
+
+Cited by: §IV.2.1 .
+
+S. Webb, M. Lochner, D. Muthukrishna, J. Cooke, C. Flynn, A. Mahabal, S. Goode, I. Andreoni, T. Pritchard, and T. M. C. Abbott (2020)
+Unsupervised machine learning for transient discovery in deeper, wider, faster light curves .
+
+MNRAS 498 ( 3 ), pp. 3077–3094 .
+
+External Links: Document ,
+2008.04666
+
+Cited by: §I .
+
+R. D. Williams, G. P. Francis, A. Lawrence, T. M. Sloan, S. J. Smartt, K. W. Smith, and D. R. Young (2024)
+Enabling science from the Rubin alert stream with Lasair .
+
+RAS Techniques and Instruments 3 ( 1 ), pp. 362–371 .
+
+External Links: Document ,
+2404.08315
+
+Cited by: §II .
+
+P. Wiseman, R. D. Williams, I. Arcavi, L. Galbany, M. J. Graham, S. Hönig, M. Newsome, B. Subrayan, M. Sullivan, Y. Wang, D. Ilić, M. Nicholl, S. Oates, T. Petrushevska, and K. W. Smith (2025)
+A systematically selected sample of luminous, long-duration, ambiguous nuclear transients .
+
+MNRAS 537 ( 2 ), pp. 2024–2045 .
+
+External Links: Document ,
+2406.11552
+
+Cited by: §I .
+
+J. Xu, M. Zhang, G. Sun, J. Ruan, J. Zhao, W. Zhou, Y. Ma, Ye, Z. Chen, H. Tan, G. Wu, X. Gao, A. Esamdin, C. Bai, and Y. Wang (2025a)
+XOSS Transient Discovery Report for 2025-10-27 .
+
+Transient Name Server Discovery Report 2025-4318 , pp. 1 .
+
+Cited by: §IV.3.2 .
+
+J. Xu, M. Zhang, G. Sun, J. Ruan, J. Zhao, W. Zhou, Y. Ma, Ye, Z. Chen, H. Tan, G. Wu, X. Gao, A. Esamdin, C. Bai, and Y. Wang (2025b)
+XOSS Transient Discovery Report for 2025-11-17 .
+
+Transient Name Server Discovery Report 2025-4624 , pp. 1 .
+
+Cited by: §IV.3.2 .
+
+J. Xu, M. Zhang, G. Sun, J. Ruan, J. Zhao, W. Zhou, Y. Ma, Q. Ye, Z. Chen, H. Tan, G. Wu, X. Gao, A. Esamdin, C. Bai, Y. Wang, and T. K. Team (2024a)
+XOSS Transient Discovery Report for 2024-07-12 .
+
+Transient Name Server Discovery Report 2024-2399 , pp. 1 .
+
+Cited by: §IV.3.1 ,
+§IV.3.2 .
+
+J. Xu, J. Zhao, M. Zhang, and W. Wang (2024b)
+Transient Discovery Report for 2024-08-10 .
+
+Transient Name Server Discovery Report 2024-2857 , pp. 1 .
+
+Cited by: §IV.1.1 .
+
+V. Yecheistov, D. Denisenko, V. Lipunov, E. Gorbovskoy, N. Tiurina, P. Balanutsa, V. Kornilov, A. Belinski, N. Shatskiy, V. Chazov, A. Kuznetsov, D. Zimnukhov, V. Krushinsky, I. Zalozhnih, A. Popov, A. Bourdanov, A. Punanova, K. Ivanov, S. Yazev, N. Budnev, E. Konstantinov, O. Chuvalaev, V. Poleshchuk, O. Gress, A. Frolova, A. Parkhomenko, A. Tlatov, D. Dormidontov, V. Senik, V. Yurkov, Y. Sergienko, D. Varda, E. Sinyakov, P. Podvorotny, V. Shumkov, S. Shurpakov, H. Levato, C. Saffe, C. Mallamaci, C. Lopez, and F. Podest (2013)
+Possible SN and two CVs detected by MASTER .
+
+The Astronomer’s Telegram 4857 , pp. 1 .
+
+Cited by: §IV.3.1 .
+
+V. Yecheistov, S. Shurpakov, P. Balanutsa, D. Denisenko, V. Lipunov, E. Gorbovskoy, N. Tiurina, V. Kornilov, N. Shatskiy, V. Chazov, A. Kuznetsov, V. Vladimirov, A. Parkhomenko, A. Tlatov, D. Dormidontov, V. Senik, K. Ivanov, S. Yazev, N. Budnev, E. Konstantinov, O. Chuvalaev, V. Poleshchuk, O. Gress, V. Yurkov, Y. Sergienko, D. Varda, E. Sinyakov, A. Gabovich, V. Krushinsky, I. Zalozhnih, A. Popov, A. Bourdanov, P. Podvorotny, V. Shumkov, H. Levato, C. Saffe, C. Mallamaci, C. Lopez, and F. Podest (2014)
+Three New CVs detected by MASTER .
+
+The Astronomer’s Telegram 5973 , pp. 1 .
+
+Cited by: §IV.3.1 .
+
+B. Zackay, E. O. Ofek, and A. Gal-Yam (2016)
+Proper Image Subtraction—Optimal Transient Detection, Photometry, and Hypothesis Testing .
+
+ApJ 830 ( 1 ), pp. 27 .
+
+External Links: Document ,
+1601.02655
+
+Cited by: §II.2 .
+
+Generated on Fri Feb 13 14:21:00 2026 by L a T e XML

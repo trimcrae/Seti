@@ -1,0 +1,985 @@
+The weird and the wonderful in our Solar System: Searching for serendipity in the Legacy Survey of Space and Time
+
+Report GitHub Issue
+×
+
+Title:
+
+Content selection saved. Describe the issue below:
+
+Description:
+
+Submit without GitHub
+Submit in GitHub
+
+arXiv is now an independent nonprofit!
+Learn more
+×
+
+Back to arXiv
+
+Why HTML?
+
+Report Issue
+
+Back to Abstract
+
+Download PDF
+
+Abstract
+I Introduction
+II Data
+
+III Classic approaches to anomaly detection.
+
+III.1 Methods
+
+III.1.1 Orbit-colour feature space
+III.1.2 Gaussian mixture modelling of the orbit-colour space.
+
+III.2 Unsupervised detection results
+III.3 The deficiencies of standalone unsupervised methods.
+
+IV Deep autoencoder approach to anomaly detection.
+
+IV.1 Methods - creating the autoencoder.
+IV.2 Reconstruction loss
+IV.3 Similarity searching
+IV.4 Improved anomaly search using an ensembling approach.
+
+V Conclusion
+
+VI Software and third party data repository citations
+
+Acknowledgements
+
+References
+
+License: CC BY 4.0
+
+arXiv:2401.08763v1 [astro-ph.EP] 16 Jan 2024
+
+The weird and the wonderful in our Solar System:
+Searching for serendipity in the Legacy Survey of Space and Time
+
+Brian Rogers
+
+University of Oxford, Department of Physics, Denys Wilkinson Building, Keble Road, Oxford, OX1 3RH, UK
+
+Astrophysics Research Centre, School of Mathematics and Physics, Queen’s University Belfast, Belfast BT7 1NN, UK
+
+Chris J. Lintott
+
+University of Oxford, Department of Physics, Denys Wilkinson Building, Keble Road, Oxford, OX1 3RH, UK
+
+Steve Croft
+
+Breakthrough Listen, University of California, Berkeley, 501 Campbell Hall 3411, Berkeley, CA 94720, USA
+
+SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+
+University of Oxford, Department of Physics, Denys Wilkinson Building, Keble Road, Oxford, OX1 3RH, UK
+
+Megan E. Schwamb
+
+Astrophysics Research Centre, School of Mathematics and Physics, Queen’s University Belfast, Belfast BT7 1NN, UK
+
+James R. A. Davenport
+
+Department of Astronomy, University of Washington, Seattle, WA 98195, USA
+
+Abstract
+We present a novel method for anomaly detection in Solar System object data, in preparation for the Legacy Survey of Space and Time. We train a deep autoencoder for anomaly detection and use the learned latent space to search for other interesting objects. We demonstrate the efficacy of the autoencoder approach by finding interesting examples, such as interstellar objects, and show that using the autoencoder, further examples of interesting classes can be found. We also investigate the limits of classic unsupervised approaches to anomaly detection through the generation of synthetic anomalies and evaluate the feasibility of using a supervised learning approach. Future work should consider expanding the feature space to increase the variety of anomalies that can be uncovered during the survey using an autoencoder.
+
+Neural networks (1938) — Outlier detection (1934) — Small Solar System bodies (1469).
+
+† † software:
+DiRAC LSST Solar System platform,
+Rubin Science Platform,
+Matplotlib (Hunter, 2007 ) ,
+Seaborn (Waskom, 2021 ) ,
+NumPy (Harris et al., 2020 ) ,
+Pandas (pandas development team, 2020 ) ,
+Sci-Kit learn (Pedregosa et al., 2011 ) ,
+PyOD (Zhao et al., 2019 ) .
+
+I Introduction
+
+Cataloguing the Solar System is a key science driver of the Legacy Survey of Space and Time (LSST; Ivezić et al., 2019 ) , which is to be conducted by the Vera C. Rubin Observatory. The scale of discovery will be astounding. With over 5 million new objects expected to be found during the survey (Jones et al., 2009 , 2018 ; LSST Science Collaboration et al., 2009 ; Solontoi et al., 2010 ; Shannon et al., 2015 ; Grav et al., 2016 ; Silsbee & Tremaine, 2016 ; Vereš & Chesley, 2017 ; Schwamb et al., 2018 ; Ivezić et al., 2019 ; Fedorets et al., 2020 ; Schwamb et al., 2023 ) , we will soon have the largest catalog of Solar System objects that has ever existed. Outlined in the objectives of the Solar System Science Collaboration (SSSC) roadmap (Schwamb et al., 2018 ) , this catalog will be incredibly valuable for many areas of Solar System science. Many of the questions that LSST will answer have not yet been asked (Schwamb et al., 2023 ) . We will potentially find objects of new types and behaviours that will in turn, prompt new questions.
+
+Previous work has considered the potential for discovering the unknowns in LSST time domain data (Li et al., 2021 ) . However, work is required to understand how anomaly detection may be performed effectively on Solar System data. For example, LSST has the potential to discover tens of interstellar objects (ISOs) (Hoover et al., 2022 ) . Colour outliers could reveal new types of fragments from known bodies or new surface types. Objects in very unusual orbits such as retrograde asteroids, or objects that demonstrate changes in their orbits (Farnocchia et al., 2023 ; Micheli et al., 2018 ; Hui & Jewitt, 2017 ) , which could aid in our understanding of active processes in small bodies, are also discoverable. The most interesting examples, however, are those we have not yet imagined. Finding such objects in the large volume of data the survey will produce necessitates the development of effective anomaly detection systems; this paper demonstrates the efficiency of such a system using a simulation of the LSST survey output.
+
+Anomaly detection is the process of discovering patterns in data that do not conform to expected behaviour (Chandola et al., 2009 ) . Depending on the degree of information available about anomalies in a given data set, there are three main approaches to anomaly detection: supervised, semi-supervised, and unsupervised. With supervised detection, ideally each anomaly is identified and labelled. However, given the workload required in labelling each example, anomalies can be missed. The available instances can be used to train machine learning models that can detect anomalies, in our case unusual objects, not previously seen in training data. A large limitation of supervised detection approaches is that they can completely miss classes of anomalies that are not present in the training data. In contrast, semi-supervised approaches instead assume that data used to train a model consists of non-anomalous instances. Unsupervised techniques require neither labels nor the assumption of normality in the dataset. Instead, they assume that normal instances are far more frequent than anomalies in the data. Methods then attempt to find the instances that are much different from the bulk of the data. We primarily consider unsupervised approaches in this work because they do not require the same training resources as supervised and semi-supervised methods, and so are more widely applicable to anomaly detection tasks. We briefly introduce a supervised approach in section III.3 .
+
+We first consider a number of classic approaches to anomaly detection. Using a subspace of possible object features including orbital and colour properties, in section III we generate synthetic anomalies to evaluate a variety of unsupervised approaches. Then in section III.3 , we present how supervised anomaly detection can improve on the limitations of the classic unsupervised methods, even with modest training data.
+
+We then improve on these approaches using deep learning. Section IV demonstrates how a deep autoencoder can be applied to object anomaly detection. Introduced by Hinton & Salakhutdinov ( 2006 ) , deep autoencoders can learn a compressed representation of the feature space, effectively reducing the dimensionality of the data. Deep methods for dimensionality reduction and anomaly detection have been considered before for astronomical applications. Portillo et al. ( 2020 ) considered the application of vanilla but primarily variational autoencoders to spectra obtained by the Sloan Digital Sky Survey. However, we are unaware of any previous approaches using deep anomaly detection in the Solar System domain.
+
+We adopt the vanilla autoencoder for this work because we are interested primarily in the reconstruction loss, unlike in other autoencoder variations which consider additional factors. In section IV.1 , we reduce the dimensionality of the feature space to create a meaningful latent space. We explore two key aspects of the autoencoder approach: firstly, the reconstruction loss applied to anomaly detection, in section IV.2 ; and secondly, similarity searching to look for additional interesting objects, in section IV.3 .
+
+With the diversity of Solar System objects expected in the LSST survey, what constitutes a interesting anomaly will inevitably vary from use case to use case, and from user to user. We therefore must design a system which performs well regardless of the type of anomaly we are interested in. Constructing an agnostic anomaly detection system for objects given the number of their features to consider is a challenging task. We explore how the autoencoder can be used as a foundation for creating more complex and personalised detection systems in section IV.4 , before commenting on future uses of these technologies.
+
+II Data
+
+This paper makes use of two simulations of the LSST solar system data expected at the end of the full, ten-year, survey. These are generated using rubin    sim cadence simulations (Yoachim et al., 2022 ) . Both simulations are based on synthetic objects generated using the Synthetic Solar System Model (S3M; Grav et al., 2011 ) , in addition to already known objects. The simulations account for models of cadence, sensitivity and completeness, and though they are works in progress are sufficient here for assessing the performance of anomaly detection algorithms.
+
+In section III , we use the Solar System Products Database accessed through the LINCC (LSST Interdisciplinary Network for Collaboration and Computing) Jupyter hub. The simulation, which utilises v1.7 of the baseline cadence, consists of four tables containing synthetic objects 1 1 1 https://github.com/dirac-institute/hybrid_sso_catalogue : The SSObject table contains information for each object discovered in the survey, which is supplemented by the MPCORB table (Wagg et al., in prep ) that includes all objects known by the Minor Planet Center (MPC) 2 2 2 https://www.minorplanetcenter.net/ . The SSSource and DiaSource contain information for each detection event for these objects. The information contained in each of these tables is listed in the LSST data products definition document (DPDD; Jurić et al., 2021 ) .
+
+In section IV , we use the Rubin Data Preview 0.3 (DP0.3) version of the simulation released in August 2023 through the Rubin Science Platform (RSP) which was generated using v3.0 of the baseline cadence. The data were generated by members of the Rubin Solar System Processing team, with help from the SSSC. This version has the same schema as the Solar System Products Database. However, it is composed of two sets of catalogs containing real and simulated Solar System and interstellar objects. These catalogs are combined and form the full 10 year survey simulation, which we use in this paper.
+
+DP0.3 contains objects belonging to a variety of small body populations, including: near Earth objects, main belt asteroids, Trojans, Hildas, trans-Neptunian objects, interstellar objects and long period comets. The simulated survey detects 3.2 million S3M objects and 2,429 simulated ISOs. Further it detects 3,344 long-period comets, which were generated using a model developed by Vokrouhlický et al. ( 2019 ) 3 3 3 The full list of the long period comet populations are available from the following: https://github.com/lsst-sssc/SSSC_test_populations_gitlfs . These objects are simulated using two colour classes: silicaceous (S) and carbonaceous (C). The catalog of synthetic objects is combined with a real object population to generate a realistic version of the catalog expected from the survey 4 4 4 https://dp0-3.lsst.io/data-products-dp0-3/data-simulation-dp0-3.html . It is important to note that DP0.3 does not necessarily represent the most likely output of the LSST Solar System survey; it contains 20 % \% to 30 % \% fewer objects than expected, for example. In addition, the number of ISO and long period comets exceeds predictions, as these populations were inflated on purpose to allow for a diverse range of properties to be included. Much more work is underway to prepare realistic, well understood survey populations.
+
+However, for our purposes all we require is a simulation which reflects the diversity of objects in the final survey; techniques which perform well on this simulation can be tested on more realistic outputs once they become available. In the meantime, this work does not attempt to quantify the likely yield of unusual objects, but merely to demonstrate that we can find them in a large survey of the type which will be produced by LSST.
+
+III Classic approaches to anomaly detection.
+
+There are a wide range of approaches to anomaly detection. We evaluate the performance of a series of popular unsupervised anomaly detection methods using synthetically generated anomalies, of which we will consider three general types: global, cluster, and local. We then consider the limitations of these methods, comparing to a supervised anomaly detection approach.
+
+III.1 Methods
+
+III.1.1 Orbit-colour feature space
+
+325,000 Solar System objects with semi-major axis less than 6 au were randomly selected from the DiRAC simulation using the SSObject and MPCORB tables. Initially we restrict the objects we consider to the inner Solar Solar system. We consider five features from the tables which collectively make up the orbit-colour space. This feature space includes: semi-major axis (a), orbital eccentricity (e), the sine of the orbital inclination ( s ​ i ​ n ​ ( i ) sin(i) ), the i-z colour, and the a ∗ a^{*} composite colour. The i − z i-z colour is the difference between the fitted i i -band and z z -band magnitudes for the object. The a ∗ a^{*} composite colour is calculated as
+
+a ∗ = 0.89 ​ ( g − r ) + 0.45 ​ ( r − i ) − 0.57 a^{*}=0.89(g-r)+0.45(r-i)-0.57
+
+where g − r g-r is the difference between the g g and r r -band absolute magnitudes and r − i r-i is the difference between the r r and i i -band magnitudes. This is an optimal asteroid colour developed by Ivezić et al. ( 2001 ) using principal component analysis. Previous studies (Ivezić et al., 2002 ; Parker et al., 2008 ) have also considered the a ∗ a^{*} and i − z i-z colours for the analysis of asteroid families. They both made use of a similar parameter space but instead used the proper orbital elements, whereas we use the osculating orbital elements provided by the MPC. Given the usefulness of this subspace for previous studies of small bodies, we adopt it in this section for application to anomaly detection.
+
+III.1.2 Gaussian mixture modelling of the orbit-colour space.
+
+In order to assess the performance of unsupervised anomaly detection techniques, a test data set of anomalies is required. We trained a Gaussian mixture model (GMM) on the orbit-colour space using the Sci-Kit learn package (Pedregosa et al., 2011 ) .
+The GMM is an effective way to model the feature space by using a finite mixture of multivariate Gaussian distributions. By using a sufficient number of Gaussians, complex density functions can be approximated to arbitrary accuracy (Bishop, 2006 ) . Figure 1 shows how this learned GMM can reconstruct the feature space. Each Gaussian distribution in the mixture model, also called a component, has a mean and covariance. The Sci-Kit learn implementation of the mixture model uses the expectation-maximization (EM) algorithm to find the optimal means and covariances for each component in the model. The expectation-maximization is a general technique for finding maximum likelihood solutions for probabilistic models that have latent variables (Bishop, 2006 ) .
+
+We used a grid search to find the optimal number of components for the mixture model. We used the Bayesian information criterion (BIC; Schwarz, 1978 ) to perform this. By adding more components to the mixture model, it is possible to increase the maximum likelihood of the model. However, this can quickly result in overfitting. The BIC seeks to add a penalty term for the number of components used in the model in order to prevent the problem of overfitting. The optimal number of mixture components was determined to be 71. There is some physical intuition for a large number of components being required. Previous studies of the main belt population have revealed that many asteroids are related in families that have common origins. Hirayama ( 1918 ) originally presented this idea by using orbital elements, and Ivezić et al. ( 2002 ) and Parker et al. ( 2008 ) extended this analysis to use the a ∗ a^{*} and i − z i-z colours 5 5 5 See also recent work by Roh et al. ( 2022 ) . As these families of asteroids have similar orbital elements and colours, they cluster together in the orbit-colour space. This lends support to the idea that a large number of our model components correspond to particular asteroid families. However, we cannot perform cross correlation of known objects that belong to families, because objects in this version of the simulation cannot be directly linked to real objects. Further, the colour distribution used in the two simulations is simplified (constrained to Gaussian distributions centered around the average C-type and S-type colors) compared to the real distribution.
+
+The learned GMM can then be used as a generative model by sampling from the mixture components. We manipulated these components to generate anomalous samples that could be used to benchmark the performance of anomaly detection methods. This is an approach previously used by Han et al. ( 2022 ) for evaluating anomaly detection methods on a series of 57 benchmark anomaly datasets across various practical application domains. This procedure ensures we can make systematic choices for the given anomaly detection task, in order to find the optimal method. There are other important benefits to this approach. Complex anomaly types can be generated without making assumptions about their underlying distribution. Additionally, as the GMM is a probabilistic model, the log-likelihood score can be used to quantify how likely a given object is to be generated by the model. This means that any object, whether in the data or generated synthetically, can be ranked and scored according to its outlier properties.
+
+Figure 1: Reconstruction of the orbit-colour space using the Gaussian mixture model.
+
+Global anomalies lie outside of the distribution of normal objects such that they appear to originate from a different distribution. In order to simulate this anomaly type, we draw from a uniform distribution, U U , given by
+
+X i = U ​ ( μ i − α ⋅ σ i , μ i + α ⋅ σ i ) , X_{i}=U(\mu_{i}-\alpha\cdot\sigma_{i},\mu_{i}+\alpha\cdot\sigma_{i}),
+
+(1)
+
+where X i X_{i} is the feature vector of an object, μ i \mu_{i} and σ i \sigma_{i} are the mean and standard deviation of the i t ​ h i^{th} feature, and α \alpha is a scaling factor that controls how anomalous the generated anomalies are. We choose α = 3 \alpha=3 to provide a conservative limit on the global anomalies we aim to detect. An asteroid that lies significantly outside the orbit-colour properties of any nearby objects would be considered a global anomaly.
+
+Cluster anomalies are generated by selecting mixture components at random and multiplying their mean by a scale factor β \beta . We chose β = 1.2 \beta=1.2 which corresponds to a maximum 20 % \% shift in any of the means of a mixture component from its original centroid. We would consider an emerging new family as a cluster anomaly in the orbit-colour space.
+
+Local anomalies are more subtle than the preceding two anomalies and therefore harder to detect. They are generated by scaling the covariances of the mixture model by a scalar factor γ \gamma . We chose γ = 16 \gamma=16 so that the standard deviation, σ i \sigma_{i} of the i t ​ h i^{th} feature is scaled by a factor of 4 compared to the original distribution. This has the effect of widening and populating the edges of the distribution between 3 ​ σ i 3\sigma_{i} and 4 ​ σ i 4\sigma_{i} , a key feature of local anomalies. By scaling by much higher factors, local anomalies begin to replicate the behaviour of global anomalies. By using lower scaling factors, the generated samples are insufficiently different from the original distribution. An unusual member within an asteroid family is one practical example of a local type anomaly.
+
+A graphical representation of the anomalous points generated can be seen in the 2D projection (Figure 2 ) of the space using T-distributed Stochastic Neighbor Embedding (t-SNE; van der Maaten & Hinton, 2008 ) . t-SNE is a popular dimensionality reduction technique which is particularly useful for visualising high dimensional data. In our case it is useful for visualising the generated synthetic anomalies. Global anomalies (red) lie in less dense regions of the parameter space whilst local anomalies (black) form around the edges of clusters of normal points (blue). Cluster anomalies (orange) can be seen scattered around the edges of the core of normal points.
+
+Figure 2: The generated anomalies visualised using t-SNE. Global anomalies (red) are interwoven between the normal objects (blue). The clustered anomalies (orange) lie in dense groups around the edges of the normal objects in this reduced space. Local anomalies (black) tend to group round the edges of normal clusters of points.
+
+Each anomaly was labelled using its type for classification. With the Gaussian mixture model of the orbit-colour space, we can also quantify of how much of an outlier an object is using the log-likelihood score. Comparisons can then be performed on the scores produced by the outlier detection algorithms, in order to evaluate which method yields the greatest number of interesting anomalies.
+
+Using the log-likelihood scores, a threshold was applied to the normal training data to ensure no unlabelled anomalous samples were in the training set. We defined normal objects as falling within 3 ​ σ 3\sigma from the mean log-likelihood score, removing any normal points that broke this threshold, which we then generated 50,000 normal objects that met this criteria. This allows local anomalies to be generated and populated beyond 3 σ \sigma in accordance with their definition. 1000 anomalies in each class were generated. Anomalous objects with a semi major axis that exceeded than 6  au were removed as we only consider this particular inner region of the Solar System. Furthermore, generated anomalies that did not have values of − 1 ≤ s ​ i ​ n ​ ( i ) ≤ 1 -1\leq sin(i)\leq 1 were also removed. Using these criteria, local anomalies accounted for 1.5% of the normal object and local anomaly combined dataset. Further, we ensured that the generated anomalies were truly anomalous by setting a maximum threshold of 0 on the log-likelihood scores of the global and cluster anomalies. This implies that any generated global and cluster anomalies are at least 4 σ \sigma from the mean log-likelihood score. After generating these objects from the above description, global anomalies accounted for 0.8% of the normal and global combined dataset whereas cluster anomalies accounted for 1.9% of the combined normal and cluster dataset.
+
+Using the outlier detection library PyOD (Zhao et al., 2019 ) , which provides efficient implementations of a series of unsupervised anomaly detection methods, we found how each method performed on a given anomaly type. We used the default hyper-parameters from PyOD to ensure a fair baseline comparison between methods. We used nine methods from the PyOD library: Angle based outlier detection (ABOD), clustering based local outlier factor (CBLOF), feature bagging, Cook’s distance (CD), Copula-based outlier detection (COPOD), histogram-based outlier score (HBOS), isolation forest (IForest), k-nearest neighbors (KNN), and local outlier factor (LOF). Literature references for these methods, and the results from running them on our dataset, are presented in Section  III.2 .
+
+Each method was evaluated on balanced accuracy, F1 score, and ranking. For the binary classification of anomalies there are four possible output types from a detection model:
+
+•
+
+True positive (TP) - the model correctly predicts this is an anomalous instance.
+
+•
+
+True negative (TN) - the model correctly predicts this is not an anomalous instance.
+
+•
+
+False negative (FN) - the model incorrectly predicts that the instance is not an anomaly.
+
+•
+
+False positive (FP) - the model incorrectly predicts that the instance is an anomaly.
+
+From these the balanced accuracy can be written as
+
+A ​ c ​ c ​ u ​ r ​ a ​ c ​ y = 1 2 ​ [ T ​ N T ​ N + F ​ P + T ​ P T ​ P + F ​ N ] Accuracy=\frac{1}{2}\left[\frac{TN}{TN+FP}+\frac{TP}{TP+FN}\right]
+
+(2)
+
+The F1 metric, which is the harmonic mean of the precision and recall of the model, can be calculated by
+
+F ​ 1 = 2 ∗ P ​ r ​ e ​ c ​ i ​ s ​ i ​ o ​ n ∗ R ​ e ​ c ​ a ​ l ​ l P ​ r ​ e ​ c ​ i ​ s ​ i ​ o ​ n + R ​ e ​ c ​ a ​ l ​ l = 2 ∗ T ​ P 2 ∗ T ​ P + F ​ P + F ​ N F1=\frac{2*Precision*Recall}{Precision+Recall}=\frac{2*TP}{2*TP+FP+FN}
+
+(3)
+
+The ranking metric calculated what ratio of the highest 500 scored anomalous instances were in the top 500 instances suggested by the given method’s score. For global and cluster anomalies, the log-likelihood can be used directly as an outlier score since we are drawing from a newly created distribution. However, this methodology cannot be transferred to local anomalies because they are sampled from the model’s components. We instead rank local anomalies by the Euclidean distance from the centroid of the component they belong to.
+
+III.2 Unsupervised detection results
+
+The results for each anomaly type are presented in Tables  1 , 2 , and 3 . For global anomalies the k-Nearest Neighbors (KNN) gave the strongest performance in accuracy, F1 and ranking metrics. However, when applied to clustered anomalies its performance degraded to no better than random selection. Here we see the importance of choosing the ‘right tool for the job’ when searching for anomalies.
+
+   Algorithm
+   Global
+
+   Accuracy
+   F1
+   Ranking
+
+   Angle Based Outlier Detection
+
+    (ABOD; Kriegel et al., 2008 )
+   0.718 ± \pm 0.032
+   0.443 ± \pm 0.044
+   0.723 ± \pm 0.009
+
+   Clustering-Based Local Outlier Factor
+
+    (CBLOF; He et al., 2003 )
+   0.504 ± \pm 0.005
+   0.015 ± \pm 0.001
+   0.397 ± \pm 0.033
+
+   Cook’s Distance
+
+    (CD; Cook, 1977 )
+   0.648 ± \pm 0.027
+   0.268 ± \pm 0.025
+   0.541 ± \pm 0.015
+
+   Copula-Based Outlier Detection
+
+    (COPOD; Li et al., 2020 )
+   0.645 ± \pm 0.016
+   0.293 ± \pm 0.031
+   0.478 ± \pm 0.018
+
+   Feature Bagging
+
+    (Lazarevic & Kumar, 2005 )
+   0.680 ± \pm 0.030
+   0.363 ± \pm 0.059
+   0.484 ± \pm 0.028
+
+   Histogram-based Outlier Score
+
+    (HBOS; Goldstein & Dengel, 2012 )
+   0.719 ± \pm 0.022
+   0.442 ± \pm 0.029
+   0.518 ± \pm 0.022
+
+   Isolation Forest
+
+    (IForest; Liu et al., 2008 )
+   0.684 ± \pm 0.025
+   0.368 ± \pm 0.040
+   0.498 ± \pm 0.033
+
+   k-Nearest Neighbors
+
+    (KNN; Ramaswamy et al., 2000 )
+   0.812 ± \pm 0.020
+   0.623 ± \pm 0.025
+   0.770 ± \pm 0.010
+
+   Local outlier factor
+
+    (LOF; Breunig et al., 2000 )
+   0.690 ± \pm 0.017
+   0.382 ± \pm 0.0257
+   0.419 ± \pm 0.021
+
+Table 1: The performance results of anomaly detection models using synthetically generated global anomalies.
+
+   Algorithm
+   Cluster
+
+   Accuracy
+   F1
+   Ranking
+
+   ABOD
+   0.491 ± \pm 0.001
+   0.001 ± \pm 0.002
+   0.341 ± \pm 0.006
+
+   CBLOF
+   0.855 ± \pm 0.0147
+   0.718 ± \pm 0.019
+   0.659 ± \pm 0.012
+
+   CD
+   0.871 ± \pm 0.024
+   0.715 ± \pm 0.032
+   0.683 ± \pm 0.018
+
+   COPOD
+   0.678 ± \pm 0.008
+   0.368 ± \pm 0.0126
+   0.483 ± \pm 0.016
+
+   Feature Bagging
+   0.519 ± \pm 0.012
+   0.056 ± \pm 0.024
+   0.298 ± \pm 0.020
+
+   HBOS
+   0.701 ± \pm 0.023
+   0.412 ± \pm 0.039
+   0.487 ± \pm 0.026
+
+   IForest
+   0.890 ± \pm 0.042
+   0.784 ± \pm 0.089
+   0.684 ± \pm 0.014
+
+   KNN
+   0.490 ± \pm 0.000
+   0.000 ± \pm 0.000
+   0.363 ± \pm 0.012
+
+   LOF
+   0.499 ± \pm 0.004
+   0.017 ± \pm 0.007
+   0.216 ± \pm 0.013
+
+Table 2: The performance results of anomaly detection models using synthetically generated cluster anomalies.
+
+Considering cluster anomalies, Isolation Forest (IForest) performed best across each metric with Cook’s distance (CD) also performing relatively strongly.
+
+   Algorithm
+   Local
+
+   Accuracy
+   F1
+   Ranking
+
+   ABOD
+   0.723 ± \pm 0.021
+   0.460 ± \pm 0.030
+   0.288 ± \pm 0.013
+
+   CBLOF
+   0.578 ± \pm 0.008
+   0.171 ± \pm 0.016
+   0.625 ± \pm 0.036
+
+   CD
+   0.739 ± \pm 0.037
+   0.252 ± \pm 0.082
+   0.460 ± \pm 0.057
+
+   COPOD
+   0.648 ± \pm 0.014
+   0.305 ± \pm 0.020
+   0.379 ± \pm 0.012
+
+   Feature Bagging
+   0.733 ± \pm 0.021
+   0.464 ± \pm 0.021
+   0.244 ± \pm 0.033
+
+   HBOS
+   0.652 ± \pm 0.023
+   0.310 ± \pm 0.035
+   0.278 ± \pm 0.025
+
+   IForest
+   0.654 ± \pm 0.016
+   0.314 ± \pm 0.028
+   0.477 ± \pm 0.025
+
+   KNN
+   0.730 ± \pm 0.014
+   0.544 ± \pm 0.018
+   0.306 ± \pm 0.015
+
+   LOF
+   0.720 ± \pm 0.015
+   0.445 ± \pm 0.020
+   0.203 ± \pm 0.012
+
+Table 3: The performance results of anomaly detection models using synthetically generated local anomalies.
+
+Searching for local anomalies had a much more mixed performance. A number of methods had similar performance metrics including k-nearest neighbor (KNN), local outlier factor (LOF), feature bagging, Cook’s distance (CD) and angle based outlier detection (ABOD). This indicates that performance on local anomaly classification is largely invariant to the choice of these methods. However for the ranking metric, which we defined as the distance of the instance to its component’s centroid, the clustering based local outlier factor (CBLOF) had the best performance. Yet it performs poorly on the classification task. This highlights that the choice of detection tool is dependent on how we rank what anomalies are interesting or not. This is a problem when trying to construct an agnostic anomaly detection system as one method will not suit all possible tasks nor all user definitions of what constitutes an anomalous instance.
+
+III.3 The deficiencies of standalone unsupervised methods.
+
+In addition to the problem of defining what exactly is an interesting anomaly, the evaluation tables ( 1 , 2 , and 3 ) make it clear that the even the best classic unsupervised methods we considered can perform poorly on the F1 metric and the balanced accuracy. This means that many false positive anomaly examples may be flagged wasting a user’s valuable time, especially in the case of low balanced accuracy scores which has a much greater effect on the false positive rate. Worse still, a high rate of false negatives means that anomalies can be missed. This problem is made more acute by examining the ranking metrics, as some of the most interesting anomalies are missed by the unsupervised methods. Missing anomalous examples, especially the most interesting cases, is intolerable for any efficacious anomaly detection system.
+
+Supervised detection methods promise much better performance. However they require labelled training data which necessitates human input. In order to evaluate whether it is feasible to apply supervised techniques to this anomaly detection task, we examined how many positive anomaly training labels a classifier would require to outperform the best unsupervised methods on global anomalies.
+
+We used XGBoost (Chen & Guestrin, 2016 ) , a popular boosting method to perform binary classification: simply, is this object an anomaly or not? Examples of global anomalies were generated, selected randomly and injected into a set of normal objects. The number of anomalies used to train the classifier was then varied.
+
+Figure 3 shows the performance of the supervised classifier as a function of available labelled anomalies in the training set. In order to achieve 95 % \% of the accuracy and F1 scores of the best unsupervised method, the classifier required only 57 and 40 labelled examples respectively. The improvement of the F1 score is especially notable. This suggests that even modest levels of human input into the anomaly detection procedure can significantly improve output quality. This is important for two reasons. Firstly, decreasing the number of false negatives means fewer anomalous instances will be missed. Secondly, decreasing the number of false positives produced by the method saves valuable time for users who are looking for the most interesting objects.
+
+Figure 3: The accuracy and F1 metrics for the XGBoost classifier for given a number of training labels. The horizontal red line is 95 % \% of the score of the best performing unsupervised method (KNN) on global anomalies. The green line is the 75th percentile performance of all unsupervised detection methods considered.
+
+Anomalous examples must be found in the first place to train supervised models. Such examples are required for each type, substantially increasing the effort required. This can be achieved by using unsupervised methods to filter the bulk of the data and presenting the highest machine scoring anomalies to a user. The most interesting anomalies can then be selected by a user for training a supervised model. The performance of the unsupervised method will determine what anomalies should be presented to a user, therefore it is important that a highly effective unsupervised method is chosen, otherwise this can be a substantial limitation. From this dual approach, further examples can be found and the supervised model can be refined in an iterative loop of self-improvement, to help overcome the shortcomings of the initial unsupervised method. This approach, referred to as active learning, has been previously demonstrated by Lochner & Bassett ( 2021 ) to been effective in increasing the number of interesting anomalies that are returned to a user. This approach is also particularly beneficial as these models can be personalised per user or use case.
+
+This section has considered how effective anomaly detection can be performed on a particular subspace of possible object parameters, the orbit-colour space, using classical approaches. However, the variety of anomalies detected are limited to this selection of features. Considering more features and therefore detecting a greater variety of anomalies requires increased computational resources and encounters difficulties with computational efficiency.
+
+Even with additional resources, the performance of these methods can suffer in high dimensional spaces. Noisy features can mask more relevant features. Selecting the right features for our chosen subspace is a problem which grows with the number of dimensions we include. Choosing to split these feature spaces into smaller subspaces, i.e. consider smaller parts of the parameter space for outliers, has associated problems. Zimek et al. ( 2012 ) define a version of the ‘curse of dimensionality’ such that given enough subspaces to consider, it is possible to find a subspace in which any object appears to be an outlier. This is problematic if we want to create a general detection system, capable of finding interesting objects that are anomalous in a meaningful sense to users of the data products.
+
+Given that these methods will not scale to include the full feature space, we turn to a deep learning approach in section IV to address these problems.
+
+IV Deep autoencoder approach to anomaly detection.
+
+In the following section, we explore how a deep autoencoder can be applied to anomaly detection on Solar System object data in the era of LSST. Autoencoders have a series of useful properties that address the problems encountered in Section  III.3 . Using an autoencoder, we can reduce the dimensionality of the feature space but retain meaningful properties of the LSST data. This is an important consideration given the volume and depth of the Solar System data expected from the survey and with the problems of high dimensional feature spaces highlighted in section  III.3 . Importantly for anomaly detection, the reconstruction loss associated with an autoencoder can be used directly for anomaly detection applications. Finally, the autoencoder provides a latent space representation that can be readily searched for objects. We explore these features in the following sections.
+
+IV.1 Methods - creating the autoencoder.
+
+We select object features from the SSObject and MPCORB tables. Using each filter measurement, we compute colour indicies across the g ​ r ​ i ​ z griz filter bands. The u and y filter bands are ignored due to the low signal to noise ratio expected in these bands during the survey. We further augment the feature space by adding the semi-major axis 6 6 6 For objects with e > 1 e>1 (i.e. interstellar objects), we calculate a semi-major axis which is used as a feature in the autoencoder as was performed for objects with e < 1 e<1 . We emphasise this is not physical property of the body, rather a value must be imputed in order for the object to be input into the autoencoder for training and inference., aphelion, and Jupiter tisserand parameter. This latter parameter quantifies the effect of Jupiter on a body’s orbit and it is useful for distinguishing between different orbit types, especially for Jupiter family comets. Including other orbital elements, magnitude and phase slope parameters and their respective error measurements, we consider a total of 35 features (table 4 ).
+
+   Name
+   Description
+
+   a
+   Semi-Major axis (au)
+
+   i
+   Inclination to the ecliptic, J2000.0 (degrees)
+
+   e
+   Eccentricity
+
+   q
+   Perihelion (au)
+
+   Q
+   Aphelion (au)
+
+   peri
+   Argument of perihelion, J2000.0 (degrees)
+
+   node
+   Longitude of the ascending node, J2000.0 (degrees)
+
+   Flags
+   Bitwise flags indicating failure in phase curve fits
+
+   H
+   Absolute magnitude in V-band
+
+   gH
+   g band best fit absolute magnitude
+
+   gHErr
+   Uncertainty in gH
+
+   gG12
+   g band best fit G 12 G_{12} slope parameter
+
+   gG12Err
+   Uncertainty in gG12
+
+   gChi2
+    χ 2 \chi^{2} statistic of the phase curve fit (g band)
+
+   rH
+   r band best fit absolute magnitude
+
+   rHErr
+   Uncertainty in rH
+
+   rG12
+   r band best fit G 12 G_{12} slope parameter
+
+   rG12Err
+   Uncertainty in rG12
+
+   rChi2
+    χ 2 \chi^{2} statistic of the phase curve fit (r band)
+
+   iH
+   i band best fit absolute magnitude
+
+   iHErr
+   Uncertainty in iH
+
+   iG12
+   i band best fit G 12 G_{12} slope parameter
+
+   iG12Err
+   Uncertainty in iG12
+
+   iChi2
+    χ 2 \chi^{2} statistic of the phase curve fit (i band)
+
+   iNdata
+   Number of data points used to fit the i band phase curve
+
+   zH
+   z band best fit absolute magnitude
+
+   zHErr
+   Uncertainty in zH
+
+   zG12
+   z band best fit G 12 G_{12} slope parameter
+
+   zG12Err
+   Uncertainty in zG12
+
+   zChi2
+    χ 2 \chi^{2} statistic of the phase curve fit (z band)
+
+   i - z
+   Difference between iH and zH fitted magnitudes
+
+   g - r
+   Difference between gH and rH fitted magnitudes
+
+   r - i
+   Difference between rH and iH fitted magnitudes
+
+   a ∗
+    0.89 ​ ( g − r ) + 0.45 ​ ( r − i ) − 0.57 0.89(g-r)+0.45(r-i)-0.57
+
+    T J T_{J}
+   Tisserand’s parameter (Jupiter)
+
+    a J a + 2 ​ cos ⁡ ( i ) ​ a a J ​ ( 1 − e 2 ) \frac{a_{J}}{a}+2\cos(i)\sqrt{\frac{a}{a_{J}}(1-e^{2})}
+
+   where a J a_{J} is the semi-major axis of Jupiter
+
+Table 4: Input features and their description. These features are taken from the SSObject and MPCORB table of the simulation.
+
+See footnote 7 7 7 The iNdata has been used to inform the number of observations the object receives. Using additional number fitted values in other bands would not add any additional benefit and will contribute to noise to the feature set. Therefore they have been excluded when training the autoencoder. and footnote 8 8 8 The Flags value has been input as an integer. Given the limited number of flags present in the data, it was not necessary to introduce further encoding of this feature.
+
+Exploring the full extent of the feature space is an ideal area for future work. At this point most of the features can be considered static and neglect to a large extent, the dynamical changes of an object. As LSST will observe the 5 million small body discoveries hundreds of times (LSST Science Collaboration et al., 2009 ; Ivezić et al., 2019 ) , there will be a rich set of time series data to utilise.
+Nonetheless, analysis of measurements over time may still uncover extremely interesting objects.
+
+A data pre-processing pipeline was created before training the encoder-decoder network. Firstly, objects with missing features were dropped. This accounted for 30 % \% of objects. The majority of these objects were dropped because they simply do not have enough observations in specific filters to produce a reliable fit and derive magnitudes. We do not consider imputation of missing features in this paper. However, dealing with missing data is an important problem to address in future work. It is especially salient for enabling object anomaly detection during the course of survey operations as some features may not be available given a limited number of detections.
+
+The data were normalised to the range 0 ≤ X i ′ ≤ 1 0\leq X^{\prime}_{i}\leq 1 , where X i ′ X^{\prime}_{i} is a single input feature vector, in order to allow the sigmoid activation to be used in final layer of the autoencoder. The data were subsequently split into training (80 % \% ), validation (10 % \% ), and test sets (10 % \% ).
+
+Using the Keras package (Chollet et al., 2015 ; Chollet, 2017 ) , a deep autoencoder was constructed. A number of architecture decisions were made regarding the autoencoder’s encoder and decoder networks. The encoder and decoder were chosen to be symmetric, each with three hidden, dense layers. Each layer used the ReLU activation function apart from the final layer of the decoder, which applied a sigmoid activation function to ensure the output was normalized. Batch normalisation was also applied after each layer’s activation function.
+
+The autoencoder was trained using the Adam optimizer (Kingma & Ba, 2017 ) . The loss function consisted simply of minimising the mean square error between the input batch and the output of the encoder, e e and decoder, d d . The difference between a single instance’s input and output from an autoencoder is referred to as the reconstruction loss. The loss function is the mean reconstruction loss over the batch, which is written as
+
+l o s s = 1 N ∑ i = 1 N ( X i − d ( e ( X i ) ) 2 loss=\frac{1}{N}\sum_{i=1}^{N}(X_{i}-d(e(X_{i}))^{2}
+
+(4)
+
+where N is the batch size used in single training epoch. The validation loss was monitored using a callback function to prevent the network overfitting to the training set.
+
+The units of the autoencoder’s layers and the learning rate were determined with Bayesian optimisation using Keras Tuner (O’Malley et al., 2019 ) . This was performed for latent space dimensions of size 2, 4, 6, 8 and 10. For each latent space dimension, the network was trained over five optimisation trials using different combinations of units. The best hyper-parameter configurations from the Bayesian optimization step were stored and used to retrain the networks. Table 5 shows how each latent space component performs on the reconstruction loss and its compression ratio on the test set. Here the compression ratio is the size of the latent representation compared to the original input data.
+
+   Latent dimensions
+   Architecture
+   Mean reconstruction loss
+   Compression ratio
+
+   2
+   108-52-29-2-29-52-108
+    3.35 × 10 − 4 3.35\times 10^{-4}
+   0.029
+
+   4
+   125-59-16-4-16-59-125
+    3.65 × 10 − 5 3.65\times 10^{-5}
+   0.057
+
+   6
+   97-34-24-6-24-34-97
+    7.73 × 10 − 6 7.73\times 10^{-6}
+   0.086
+
+   8
+   88-56-27-8-27-56-88
+    6.32 × 10 − 6 6.32\times 10^{-6}
+   0.114
+
+   10
+   90-60-32-10-32-60-90
+    5.42 × 10 − 6 5.42\times 10^{-6}
+   0.143
+
+Table 5: The optimized architecture for each latent space dimension, presented with the resulting reconstruction loss performance on the test set. The compression ratio measures the size of the latent representation compared to the original dataset.
+
+Six latent dimensions were selected because this implementation had the most optimal reconstruction loss and compression ratio. Performance improvements degraded after including more components which indicates that additional components contributed noise to the latent representation. This suggests that six components is the optimal representation size for this feature space. However it could also indicate deficiencies in the training stages of the eight and ten latent component networks. Given GPU constraints, the limit of five trials means that these networks may not have found the most optimal unit configuration. With greater resources this problem could be resolved using more trials of the optimization procedure. However we will adopt six latent components for the course of this analysis.
+
+Despite the limitations of the larger latent space representations, the best model was then compared to two other dimensionality reduction techniques: principal component analysis (PCA) and non-negative matrix factorisation (NMF) (Cichocki & Phan, 2009 ) . With a reconstruction loss of 7.73 × 10 − 6 7.73\times 10^{-6} on the test set, the autoencoder outperformed PCA by 81 % 81\% and NMF by 92 % 92\% . The improvement over these benchmarks provides confidence that the autoencoder can be used as an effective dimensionality reduction method on the object feature space.
+
+Figure 4: A schematic diagram of the general network architecture of an autoencoder. The input layer is followed by the encoder which is made made up of a number of hidden layers. In the centre lies the latent representation which can be transformed into an output using the decoder.
+
+IV.2 Reconstruction loss
+
+A fundamental feature of deep autoencoders that is useful for anomaly detection tasks is the reconstruction loss.
+By encoding and decoding an object’s feature vector, we can measure the error between the input and output from the network. Normal samples are reconstructed well by the encoder-decoder network and hence have low reconstruction losses. More outlying examples have higher reconstruction losses, and therefore this loss can be used as an anomaly score.
+
+Using PCA, the latent components were reduced to three dimensions which could be plotted. Figure 5 demonstrates the reconstruction loss values across the feature space, which are redder for higher reconstruction losses. Anomalous objects tend to lie in less dense regions of the reduced feature space, away from the points in blue that are reconstructed well by the autoencoder. Global anomalies become apparent as they are distant from the low reconstruction blue instances. In some regions we see that some instances group together in clusters. We also see the fingerprints of local anomalies appearing towards the edges of more dense regions. This highlights that the anomaly prototypes defined in section III.1.2 are not exclusive to the orbit-colour space, but rather that they are an abstract way of defining anomalies in a general feature space.
+
+Figure 5: Reconstruction scores for 3.1 million Solar System objects across the reduced feature space. The colour bar describes the reconstruction loss. More anomalous points are deeper in the red. The top 0.01 % \% anomalies are enlarged for this plot. They lie distant from the majority of normal objects in blue.
+
+As these anomalous instances separate from normal points in the latent space, we can explore these regions to find potentially interesting objects. This will be the focus of our next section.
+
+IV.3 Similarity searching
+
+We saw directly in Section  IV.2 that objects with higher anomaly scores reside close to each other in the latent space, usually very distant from normal objects. Pairing this with the inherent feature of the autoencoder’s latent space, that objects with similar properties will lie close to one another, means we can look at the nearest neighbors of anomalous points to find more examples. Further, we can also use similarity searches to help explain why such an object is unusual. On one hand, this helps to address the problem of the interpretabilty of the latent space. More importantly on the other, we can build helpful search and recommender systems to assist in finding the most unusual objects discovered by LSST.
+
+To illustrate the usefulness of similarity searching, we found the top ten anomalies ranked by reconstruction loss across 3.1 million Solar System objects in the ten year survey simulation. After locating their position in the latent space, we found each object’s twenty nearest neighbors. We plotted the neighborhood of points associated with these ten anomalies in figure 6 ; each of the color-coded clusters can be clearly seen to occupy particular regions of the plots. In this figure each axis represents a latent space component; for example ‘AE 1’ is the first latent space component of the autoencoder.
+
+Figure 6: The latent space representation of the top ten anomalies and their nearest neighbors. These neighborhoods of anomalies are colour coded and lie outside the dense blue distributions of normal objects in the latent space.
+
+Each neighborhood of objects has specific anomaly characteristics. Neighborhoods 1-5 and 10 show extreme filter magnitudes and respective uncertainties in their measured magnitudes. Many of these magnitudes are beyond the detection limit of the survey and represent unusual artifacts of the survey simulation. These objects are set to be fixed for future simulations. This highlights that this approach can help to find bugs in future survey simulations.
+
+Neighborhood 6 was completely comprised of ISOs. ISOs are rare objects in the simulation. This subset is particularly unusual because of their rare eccentricities. The most anomalous of these ISOs had e = 10.78 e=10.78 . This object was confirmed to have the highest eccentricity in the processed data. The average eccentricity of the ISOs in this neighborhood was e = 6.50 ± \pm 1.72 with perihelion of q = 2.03 ± 0.44 2.03\pm 0.44 au.
+
+Neighborhood 7 was a collection of objects with highly inclined and eccentric orbits. At the centre of this neighborhood was a trans-Neptunian object with inclination of i = 169.1 ∘ i=169.1^{\circ} , e = 0.95 e=0.95 and a = 35.9 a=35.9 au. The mean inclination of the neighborhood was i = 84.85 ∘ i=84.85^{\circ} whilst the mean eccentricity was e = 0.79 e=0.79 . This further demonstrates that objects with high eccentricities, albeit not as outlying in terms of their eccentricities as the interstellar objects found in neighbourhood 6, are also grouped close in the latent space. With the high eccentricity of this group, there were found to be six Mercury crossers including the real Solar System objects (277142) 2005 L ​ G 8 LG_{8} , (494706) 2005 G ​ L 9 GL_{9} , (136874) 1998 F ​ H 74 FH_{74} , and (24443) 2000 O ​ G OG . The Mars crossing asteroid (4257) Ubasti was also in this neighborhood because of its highly eccentric and inclined orbit. The Earth crosser (3752) Camillo which is an outer grazer with a highly inclined orbit was also a neighbor. Unlike neighbourhood 6, this seems a more counter intuitive mix of objects. However given the orbital characteristics, in particular the eccentricities of the objects, this is a logical group of objects which a human may miss.
+
+Neighborhood 8 consisted of outlier objects in the vicinity of Jupiter. The most anomalous of this neighborhood were comets, LPCC1411 and LPCD1330. The latter, in particular, belongs to the rare class of long period comets in DP0.3. Both objects had extreme inclinations of i = 160.8 ∘ i=160.8^{\circ} and i = 119.0 ∘ i=119.0^{\circ} , with q = 4.40 q=4.40 au and q = 5.84 q=5.84 au. The rest of the neighborhood consisted of 18 asteroids with a = 5.20 ± 0.04 a=5.20\pm 0.04 au, making many of these objects Jupiter trojans. They have higher than average i − z i-z colours and inclinations compared to the wider trojan population.
+
+Neighborhood 9 consisted completely of non-periodic (C) type comets that were highly inclined to the ecliptic. The average inclination of this neighborhood was i = 149.2 ∘ i=149.2^{\circ} .
+
+The summaries of these neighborhoods presented here and in figure 6 demonstrate the variety of interesting objects we can now detect and discover using the autoencoder. We now move to consider how we can narrow the search for specific anomaly types using a model based outlier method in conjunction with the autoencoder.
+
+IV.4 Improved anomaly search using an ensembling approach.
+
+We will consider how the reconstruction loss can be used in conjunction with another model, narrowing the anomaly type returned. By considering multiple models, we can improve on any weakness in any one particular model. This can be considered a simple example of model ensembling. We return to the GMM model of the orbit-colour space developed in section III.1.2 . To demonstrate this hybrid approach, we consider a region defined by a semi-major axis range spanning 5.16 au to 5.24 au. This region has approximately 40,000 objects, primarily consisting of Jupiter trojan asteroids.
+
+Figure 7: Visualisation of the normalised autoencoder reconstruction loss versus normalised anomaly score from the GMM. It can be seen with points (4), (5) that outlying objects are suggested that would be missed by considering only the model based approach.
+
+One particular issue with domain specific anomaly detection is that it neglects the wider context of the object. An object may not be so anomalous when only considering the five parameters of the orbit-colour space, yet it may be much more interesting when we consider other features. To mitigate this, we combine the GMM anomaly detection model with the reconstruction loss. Using the GMM, we can find the most unlikely objects in the orbit-colour space using the log-likelihood. By computing the Euclidean distance in this 2D anomaly space, we calculate a combined anomaly score. This allows recovery of objects that are anomalous in terms of both their orbit-colour properties and in their wider context across the entire feature space.
+
+Broadly there are 4 regions of figure 7 , shown by the quadrants placed at the center of each axis. The bottom left quadrant (A) has normal objects that are not scored highly by either method, containing over 97 % 97\% of all objects. These are the bulk of of objects that can be safely ignored for anomaly searches.
+
+The top right quadrant (C) is objects rated highly by both methods. These are priority objects for review accounting for less than 0.01 % 0.01\% of all objects. Object (1) has the lowest a ∗ a^{*} value of any asteroid considered in this region. With a high i − z i-z colour and low eccentricity the GMM model rates this as a high priority object. Further it has high reconstruction loss compared to the trojan population having the largest but highly uncertain G 12 G_{12} slope parameter in the r r band. Object (2) conversely has the highest a ∗ a^{*} colour amongst the trojans with an inclined orbit rating highly in outliers in the orbit-colour space. With largest G 12 G_{12} slope parameter error in the g g band it too has large uncertainties in this band, which is reflected in the high reconstruction loss. Both objects have some of the smallest absolute magnitudes in the population.
+
+The upper left region (B) contains objects that rank low in reconstruction loss but higher in the GMM anomaly score. These have properties we expect from orbit-colour outliers and account for 2.86 % 2.86\% of all objects. Objects (11) and (12) have high inclinations and outlying i − z i-z colours. Objects (14) and (15) have extreme i − z i-z colours whilst (13) has a combination of extreme colours in both a ∗ a^{*} and i − z i-z . Given their low reconstruction losses, these objects will tend to be normal in other features. For users interested in narrow anomaly searches this region should be searched thoroughly as these objects will tend to be anomalous according to the specifics of the model.
+
+The bottom right region (D) has objects low in model score but high in reconstruction loss. These are objects outlying in other features except their orbit-colour properties. It contains 0.046 % 0.046\% of all objects. What is especially notable is that these asteroids have a mean MPC magnitude of H ¯ = 9.35 \bar{H}=9.35 which is 5 ​ σ 5\sigma from the rest of the trojan population.
+
+Each region of this graph can be used for different purposes when we consider more general ensembling approaches. Quadrant (C) can be used to find anomalous instances that are high priority for review. Detection models can be improved by looking at quadrants (B) and (D) for where there is disagreement in models, which can yield interesting results or reveal blind spots in models. In this case the magnitude was neglected by the GMM model but recovered by the autoencoder model.
+
+V Conclusion
+
+This paper has explored various methods for anomaly detection for LSST Solar System object data. Given the deep autoencoder’s breadth of application, we believe this is a promising approach going forward. By providing anomaly scores with the reconstruction loss it can be used directly for unsupervised anomaly detection. It can also be combined with other finer methods to discover more specific anomaly types. Additionally, the autoencoder’s compressed but meaningful latent representation of the features of Solar System objects is searchable and interpretable. By building efficient user interfaces on top of this search mechanism, we can easily find similar objects, anomalous or normal for users to examine. In this way the Solar System catalog becomes much more navigable, even as it expands to unprecedented sizes during the lifetime of LSST.
+
+As well as identifying natural anomalous objects, this work could be applied to technosignature searches within LSST Solar System data (Freitas & Valdes, 1980 ; Lacki et al., 2021 ) . Any search for technosignatures may also uncover objects which initially appear artificial, but which upon further study turn out to have natural astrophysical explanations.
+
+Beyond looking for outliers in orbit-colour space, anomaly searches can leverage additional dimensions of the LSST data set. Lacki ( 2019 ) considers how a technosignature may be detected using prospective surface ‘glints’, likely manifesting as a single or series of outlier measurements in the phase and light curves of the object. This is an opportune application for extending the anomaly detection approaches suggested in this paper using LSST data products, and has direct synergies with the search for outbursts of activity in small Solar System bodies, along with other interesting phenomena. Currently light curves have not been fully simulated in the data products used in this paper; however, they are planned to be included in future simulations.
+
+After evaluating the deficiencies of standalone unsupervised methods, we demonstrated the power of human feedback in detecting anomalies in section III.3 by using a supervised approach. Using human feedback can increase relevance, accuracy and precision of the anomaly detection system. An approach like Astronomaly (Lochner & Bassett, 2021 ) provides inspiration for application to LSST data. Intuitive user interfaces that display interesting objects detected by unsupervised methods can be rated by users. These ratings can be used to train supervised algorithms which can be personalised to anomaly type or to a user preference. By putting the right anomalies in the right hands we can multiply the value of the data collected by LSST and precipitate potential follow up studies for the most interesting objects found in the survey. We have demonstrated that deep autoencoders can fulfil this role as an unsupervised detection model by performing on the scale of LSST and that they can enable efficient anomaly discovery for the most interesting Solar System objects.
+
+VI Software and third party data repository citations
+
+The Solar System Products database ( https://lsst.dirac.dev/ )
+The DP0.3 simulation ( https://dp0-3.lsst.io )
+
+BR and SC were supported by Breakthrough Listen, which is managed by the Breakthrough Initiatives, sponsored by the Breakthrough Prize Foundation 9 9 9 http://www.breakthroughinitiatives.org . MES was supported by the UK Science Technology Facilities Council (STFC) grant ST/X001253/1. CJL acknowledges support from the Alfred P. Sloan foundation.
+JRAD acknowledges support from the DiRAC Institute in the Department of Astronomy at the University of Washington. The DiRAC Institute is supported through generous gifts from the Charles and Lisa Simonyi Fund for Arts and Sciences, and the Washington Research Foundation.
+This research has made use of NASA’s Astrophysics Data System Bibliographic Services.
+The authors thank the Rubin Solar System Processing, Database, the Science Platform, and Community Science Teams for their support of Rubin Observatory Data Preview 0.3. This material or work is supported in part by the National Science Foundation through Cooperative Agreement AST-1258333 and Cooperative Support Agreement AST1836783 managed by the Association of Universities for Research in Astronomy (AURA), and the Department of Energy under Contract No. DE-AC02-76SF00515 with the SLAC National Accelerator Laboratory managed by Stanford University.
+This work made also made use of the resources provided by LINCC Jupyter Hub (https://lsst.dirac.dev). The LINCC Jupyter Hub is powered by Microsoft Azure, made available through the UW eScience Institute’s Cloud Credits program. LINCC Frameworks is supported by Schmidt Futures, a philanthropic initiative founded by Eric and Wendy Schmidt, as part of the Virtual Institute of Astrophysics (VIA).
+Data Access: The contents of Rubin Observatory’s Data Preview 0.3 used in this paper are available from the Vera C. Rubin Observatory Construction Project and Operations Teams via the Rubin Science Platform https://data.lsst.cloud/ .
+
+References
+
+Bishop (2006)
+
+Bishop, C. M. 2006, Pattern Recognition and Machine Learning (Information Science and Statistics) (Berlin, Heidelberg: Springer-Verlag)
+
+Breunig et al. (2000)
+
+Breunig, M. M., Kriegel, H.-P., Ng, R. T., & Sander, J. 2000, in Proceedings of the 2000 ACM SIGMOD International Conference on Management of Data, SIGMOD ’00 (New York, NY, USA: Association for Computing Machinery), 93–104, doi:  10.1145/342009.335388
+
+Chandola et al. (2009)
+
+Chandola, V., Banerjee, A., & Kumar, V. 2009, ACM Comput. Surv., 41, doi:  10.1145/1541880.1541882
+
+Chen & Guestrin (2016)
+
+Chen, T., & Guestrin, C. 2016, in Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (ACM), doi:  10.1145/2939672.2939785
+
+Chollet (2017)
+
+Chollet, F. 2017, Deep Learning with Python, 1st edn. (USA: Manning Publications Co.)
+
+Chollet et al. (2015)
+
+Chollet, F., et al. 2015, Keras, https://keras.io
+
+Cichocki & Phan (2009)
+
+Cichocki, A., & Phan, A.-H. 2009, IEICE Transactions on Fundamentals of Electronics, Communications and Computer Sciences, E92.A, 708, doi:  10.1587/transfun.E92.A.708
+
+Cook (1977)
+
+Cook, R. D. 1977, Technometrics, 19, 15.
+
+http://www.jstor.org/stable/1268249
+
+Farnocchia et al. (2023)
+
+Farnocchia, D., Seligman, D. Z., Granvik, M., et al. 2023, The Planetary Science Journal, 4, 29, doi:  10.3847/PSJ/acb25b
+
+Fedorets et al. (2020)
+
+Fedorets, G., Granvik, M., Jones, R. L., Jurić, M., & Jedicke, R. 2020, Icarus, 338, 113517, doi:  10.1016/j.icarus.2019.113517
+
+Freitas & Valdes (1980)
+
+Freitas, R. A., J., & Valdes, F. 1980, Icarus, 42, 442, doi:  10.1016/0019-1035(80)90106-2
+
+Goldstein & Dengel (2012)
+
+Goldstein, M., & Dengel, A. R. 2012, in KI-2012: Poster and Demo Track, 59–63.
+
+https://api.semanticscholar.org/CorpusID:3590788
+
+Grav et al. (2011)
+
+Grav, T., Jedicke, R., Denneau, L., et al. 2011, Publications of the Astronomical Society of the Pacific, 123, 423.
+
+http://www.jstor.org/stable/10.1086/659833
+
+Grav et al. (2016)
+
+Grav, T., Mainzer, A. K., & Spahr, T. 2016, AJ, 151, 172, doi:  10.3847/0004-6256/151/6/172
+
+Han et al. (2022)
+
+Han, S., Hu, X., Huang, H., Jiang, M., & Zhao, Y. 2022, ADBench: Anomaly Detection Benchmark.
+
+https://arxiv.org/abs/2206.09426
+
+Harris et al. (2020)
+
+Harris, C. R., Millman, K. J., van der Walt, S. J., et al. 2020, Nature, 585, 357, doi:  10.1038/s41586-020-2649-2
+
+He et al. (2003)
+
+He, Z., Xu, X., & Deng, S. 2003, Pattern Recognition Letters, 24, 1641, doi:  https://doi.org/10.1016/S0167-8655(03)00003-5
+
+Hinton & Salakhutdinov (2006)
+
+Hinton, G. E., & Salakhutdinov, R. R. 2006, Science, 313, 504, doi:  10.1126/science.1127647
+
+Hirayama (1918)
+
+Hirayama, K. 1918, AJ, 31, 185, doi:  10.1086/104299
+
+Hoover et al. (2022)
+
+Hoover, D. J., Seligman, D. Z., & Payne, M. J. 2022, The Planetary Science Journal, 3, 71, doi:  10.3847/PSJ/ac58fe
+
+Hui & Jewitt (2017)
+
+Hui, M.-T., & Jewitt, D. 2017, AJ, 153, 80, doi:  10.3847/1538-3881/153/2/80
+
+Hunter (2007)
+
+Hunter, J. D. 2007, Computing in Science & Engineering, 9, 90, doi:  10.1109/MCSE.2007.55
+
+Ivezić et al. (2001)
+
+Ivezić, Ž., Tabachnik, S., Rafikov, R., et al. 2001, AJ, 122, 2749, doi:  10.1086/323452
+
+Ivezić et al. (2002)
+
+Ivezić, Ž., Lupton, R. H., Jurić, M., et al. 2002, AJ, 124, 2943, doi:  10.1086/344077
+
+Ivezić et al. (2019)
+
+Ivezić, Ž., Kahn, S. M., Tyson, J. A., et al. 2019, ApJ, 873, 111, doi:  10.3847/1538-4357/ab042c
+
+Jones et al. (2009)
+
+Jones, R. L., Chesley, S. R., Connolly, A. J., et al. 2009, Earth Moon and Planets, 105, 101, doi:  10.1007/s11038-009-9305-z
+
+Jones et al. (2018)
+
+Jones, R. L., Slater, C. T., Moeyens, J., et al. 2018, Icarus, 303, 181, doi:  10.1016/j.icarus.2017.11.033
+
+Jurić et al. (2021)
+
+Jurić, M., Axelrod, T., Becker, A., et al. 2021, Data Products Definition Document.
+
+https://lse-163.lsst.io/
+
+Kingma & Ba (2017)
+
+Kingma, D. P., & Ba, J. 2017, Adam: A Method for Stochastic Optimization.
+
+https://arxiv.org/abs/1412.6980
+
+Kriegel et al. (2008)
+
+Kriegel, H.-P., Schubert, M., & Zimek, A. 2008, in Proceedings of the 14th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, KDD ’08 (New York, NY, USA: Association for Computing Machinery), 444–452, doi:  10.1145/1401890.1401946
+
+Lacki (2019)
+
+Lacki, B. C. 2019, PASP, 131, 084401, doi:  10.1088/1538-3873/ab1304
+
+Lacki et al. (2021)
+
+Lacki, B. C., Brzycki, B., Croft, S., et al. 2021, ApJS, 257, 42, doi:  10.3847/1538-4365/ac168a
+
+Lazarevic & Kumar (2005)
+
+Lazarevic, A., & Kumar, V. 2005, in Proceedings of the Eleventh ACM SIGKDD International Conference on Knowledge Discovery in Data Mining, KDD ’05 (New York, NY, USA: Association for Computing Machinery), 157–166, doi:  10.1145/1081870.1081891
+
+Li et al. (2021)
+
+Li, X., Ragosta, F., Clarkson, W. I., & Bianco, F. B. 2021, The Astrophysical Journal Supplement Series, 258, 2, doi:  10.3847/1538-4365/ac3bca
+
+Li et al. (2020)
+
+Li, Z., Zhao, Y., Botta, N., Ionescu, C., & Hu, X. 2020, in 2020 IEEE International Conference on Data Mining (ICDM), 1118–1123, doi:  10.1109/ICDM50108.2020.00135
+
+Liu et al. (2008)
+
+Liu, F. T., Ting, K. M., & Zhou, Z.-H. 2008, in 2008 Eighth IEEE International Conference on Data Mining, 413–422, doi:  10.1109/ICDM.2008.17
+
+Lochner & Bassett (2021)
+
+Lochner, M., & Bassett, B. 2021, Astronomy and Computing, 36, 100481, doi:  10.1016/j.ascom.2021.100481
+
+LSST Science Collaboration et al. (2009)
+
+LSST Science Collaboration, Abell, P. A., Allison, J., et al. 2009, arXiv e-prints, arXiv:0912.0201, doi:  10.48550/arXiv.0912.0201
+
+Micheli et al. (2018)
+
+Micheli, M., Farnocchia, D., Meech, K. J., et al. 2018, Nature, 559, 223, doi:  10.1038/s41586-018-0254-4
+
+O’Malley et al. (2019)
+
+O’Malley, T., Bursztein, E., Long, J., et al. 2019, KerasTuner, https://github.com/keras-team/keras-tuner
+
+pandas development team (2020)
+
+pandas development team, T. 2020, pandas-dev/pandas: Pandas, latest, Zenodo, doi:  10.5281/zenodo.3509134
+
+Parker et al. (2008)
+
+Parker, A., Ivezić, Ž., Jurić, M., et al. 2008, Icarus, 198, 138, doi:  10.1016/j.icarus.2008.07.002
+
+Parker et al. (2008)
+
+Parker, A., Ivezić, Ž., Jurić, M., et al. 2008, Icarus, 198, 138, doi:  10.1016/j.icarus.2008.07.002
+
+Pedregosa et al. (2011)
+
+Pedregosa, F., Varoquaux, G., Gramfort, A., et al. 2011, Journal of Machine Learning Research, 12, 2825
+
+Portillo et al. (2020)
+
+Portillo, S. K. N., Parejko, J. K., Vergara, J. R., & Connolly, A. J. 2020, AJ, 160, 45, doi:  10.3847/1538-3881/ab9644
+
+Ramaswamy et al. (2000)
+
+Ramaswamy, S., Rastogi, R., & Shim, K. 2000, in Proceedings of the 2000 ACM SIGMOD International Conference on Management of Data, SIGMOD ’00 (New York, NY, USA: Association for Computing Machinery), 427–438, doi:  10.1145/342009.335437
+
+Roh et al. (2022)
+
+Roh, D.-G., Moon, H.-K., Shin, M.-S., & DeMeo, F. E. 2022, A&A, 664, A51, doi:  10.1051/0004-6361/202039551
+
+Schwamb et al. (2018)
+
+Schwamb, M. E., Jones, R. L., Chesley, S. R., et al. 2018, arXiv e-prints, arXiv:1802.01783, doi:  10.48550/arXiv.1802.01783
+
+Schwamb et al. (2023)
+
+Schwamb, M. E., Jones, R. L., Yoachim, P., et al. 2023, The Astrophysical Journal Supplement Series, 266, 22, doi:  10.3847/1538-4365/acc173
+
+Schwarz (1978)
+
+Schwarz, G. 1978, The Annals of Statistics, 6, 461.
+
+http://www.jstor.org/stable/2958889
+
+Shannon et al. (2015)
+
+Shannon, A., Jackson, A. P., Veras, D., & Wyatt, M. 2015, MNRAS, 446, 2059, doi:  10.1093/mnras/stu2267
+
+Silsbee & Tremaine (2016)
+
+Silsbee, K., & Tremaine, S. 2016, AJ, 152, 103, doi:  10.3847/0004-6256/152/4/103
+
+Solontoi et al. (2010)
+
+Solontoi, M., Ivezić, Ž., West, A. A., et al. 2010, Icarus, 205, 605, doi:  10.1016/j.icarus.2009.07.042
+
+van der Maaten & Hinton (2008)
+
+van der Maaten, L., & Hinton, G. 2008, Journal of Machine Learning Research, 9, 2579
+
+Vereš & Chesley (2017)
+
+Vereš, P., & Chesley, S. R. 2017, AJ, 154, 13, doi:  10.3847/1538-3881/aa73d0
+
+Vokrouhlický et al. (2019)
+
+Vokrouhlický, D., Nesvorný, D., & Dones, L. 2019, AJ, 157, 181, doi:  10.3847/1538-3881/ab13aa
+
+Wagg et al. (in prep)
+
+Wagg, T., et al. in prep
+
+Waskom (2021)
+
+Waskom, M. L. 2021, Journal of Open Source Software, 6, 3021, doi:  10.21105/joss.03021
+
+Yoachim et al. (2022)
+
+Yoachim, P., Jones, L., Eric H. Neilsen, J., et al. 2022, lsst/rubin_sim: Version 1.0, v1.0.0, Zenodo, Zenodo, doi:  10.5281/zenodo.7374619
+
+Zhao et al. (2019)
+
+Zhao, Y., Nasrullah, Z., & Li, Z. 2019, Journal of Machine Learning Research, 20, 1.
+
+http://jmlr.org/papers/v20/19-011.html
+
+Zimek et al. (2012)
+
+Zimek, A., Schubert, E., & Kriegel, H.-P. 2012, Statistical Analysis and Data Mining: The ASA Data Science Journal, 5, 363, doi:  https://doi.org/10.1002/sam.11161
+
+Experimental support, please
+view the build logs
+for errors. Generated by
+
+L
+A
+T
+E
+
+xml
+
+.
+
+Instructions for reporting errors
+We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+methods listed below:
+
+Click the "Report Issue" (
+
+) button, located in the page header.
+
+Tip: You can select the relevant text first, to include it in your report.
+Our team has already identified the following issues . We appreciate your time reviewing and reporting rendering errors we
+may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+all.
+Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a list of packages that need conversion , and welcome developer contributions .
+
+We gratefully acknowledge support from
+our major funders ,
+member institutions , ,
+and all contributors.
+
+About
+·
+Help
+·
+Contact
+·
+Subscribe
+·
+Copyright
+·
+Privacy
+·
+Accessibility
+·
+Operational Status (opens in new tab)
+
+Major funding support from

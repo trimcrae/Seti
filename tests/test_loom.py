@@ -1190,6 +1190,62 @@ def test_jpl_numbered_objects_match_on_their_provisional_designation():
     assert out["implied_unit_au_day2"] == pytest.approx(1e-10, rel=1e-6)
 
 
+def test_exceedances_are_vetted_for_fit_reliability():
+    """Most objects above the ceiling will be bad fits, not anomalies.
+
+    A blind Yarkovsky search returns a majority of spurious detections at nominal
+    S/N > 3, from short arcs, sparse astrometry and inflated residuals. An
+    exceedance that fails any of those is a fit artefact; only one that survives
+    them all is worth a second look, and every failure is named.
+    """
+    from seti.loom import calibrate
+
+    clean = {"A2": -1e-12, "sigma_a2": 1e-13, "rms": 0.4, "data_arc": 9000.0,
+             "n_obs_used": 800, "condition_code": 0}
+    v = calibrate.vet_exceedance(clean)
+    assert v["reliable"] and not v["fails"]
+    assert v["a2_snr"] == pytest.approx(10.0)
+
+    # Each gate trips on its own, and says which.
+    for change, marker in (({"sigma_a2": None}, "no_a2_uncertainty"),
+                           ({"sigma_a2": 1e-12}, "a2_snr"),
+                           ({"rms": 2.0}, "orbit_rms"),
+                           ({"data_arc": 300.0}, "arc_"),
+                           ({"n_obs_used": 20}, "only_20_observations"),
+                           ({"condition_code": 7}, "condition_code"),
+                           ({"two_body": "Y"}, "two_body")):
+        v2 = calibrate.vet_exceedance({**clean, **change})
+        assert not v2["reliable"], change
+        assert any(marker in f for f in v2["fails"]), (change, v2["fails"])
+
+
+def test_survivors_are_above_the_ceiling_unexplained_and_reliably_fitted():
+    """All three conditions, or it is not a survivor."""
+    from seti.loom import calibrate
+
+    good_fit = {"sigma_a2": 1e-13, "rms": 0.4, "data_arc": 9000.0,
+                "n_obs_used": 800, "condition_code": 0}
+    rows = [{"full_name": f"({i}) Rock", "class": "MBA", "A2": 1e-14,
+             "H": 18.0, "diameter": 1.0, **good_fit} for i in range(30)]
+    rows += [
+        # Above the ceiling, unexplained, well fitted -> a survivor.
+        {"full_name": "(999999) Unexplained", "class": "MBA", "A2": -1e-12,
+         "H": 20.0, "diameter": 0.5, **good_fit},
+        # Above the ceiling and well fitted, but already explained.
+        {"full_name": "523599 (2003 RM)", "class": "APO", "A2": -1e-12,
+         "H": 20.0, "diameter": 0.5, **good_fit},
+        # Above the ceiling and unexplained, but a 200-day arc.
+        {"full_name": "(888888) ShortArc", "class": "MBA", "A2": -1e-12,
+         "H": 20.0, "diameter": 0.5, **{**good_fit, "data_arc": 200.0}},
+    ]
+    out = calibrate.summarise_epsilon(rows).as_dict()
+    assert out["n_above_hard_1.0"] == 3
+    assert out["n_above_hard_already_known"] == 1
+    assert out["n_above_hard_unexplained"] == 2
+    assert out["n_above_hard_unexplained_and_reliable"] == 1
+    assert out["survivors"][0]["name"] == "(999999) Unexplained"
+
+
 def test_summarise_epsilon_degrades_on_a_thin_sample():
     from seti.loom import calibrate
 

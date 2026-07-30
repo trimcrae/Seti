@@ -29,9 +29,16 @@ photon's momentum is re-emitted in a single direction — physically unreachable
 ``epsilon = 2`` is the specular-reflection limit and is inviolable for any
 radiation-driven process whatsoever.  Calibrated against three objects with
 independently measured ``A2`` (Bennu, 2005 ES70, 2009 BD) the *realised* value is
-``epsilon_eff = 0.02–0.08``, so ``epsilon = 0.1`` is already a generous envelope
-for real thermal recoil (see :func:`calibration_table`, which the test suite
+``epsilon_eff = 0.02-0.08`` (see :func:`calibration_table`, which the test suite
 checks against those measurements).
+
+Those three are an anchor, not a distribution.  Measured on **589 asteroids** with
+a fitted ``A2`` in JPL's SBDB (``seti.loom.calibrate``, 2026-07-30), ordinary
+thermal recoil realises a median of **0.074** and a 90th percentile of **0.143** —
+so the original ``epsilon = 0.1`` "generous envelope" was really the 85th
+percentile and flagged 27% of all asteroids.  ``EPSILON_REALISTIC`` is now 0.3.
+Of the 589, **11 exceed the hard ceiling**, and they are the known anomalous
+population: 1I/'Oumuamua at 1.1e4, 362P, and two of Seligman's seven dark comets.
 
 An object above the ``epsilon = 1`` curve for its size cannot be driven by
 sunlight at all.  It requires either mass loss — outgassing, which is the dark
@@ -103,10 +110,16 @@ YARKOVSKY_COL_UNIT = 1.0e-10
 SRP_COL_UNIT = 1.0e-3
 
 # --- the three ceilings -----------------------------------------------------
-# Realised thermal-recoil efficiency, measured on objects with independent A2
-# (see calibration_table): 0.02 - 0.08.  0.1 is therefore already generous for
-# any real Yarkovsky effect.
-EPSILON_REALISTIC = 0.1
+# Realised thermal-recoil efficiency.  MEASURED 2026-07-30 on the whole published
+# population -- 589 asteroids with a fitted A2 in JPL's SBDB -- not on the three
+# anchor objects in `calibration_table`: median 0.074, p90 0.143 at rho = 2000.
+#
+# The three-object anchor suggested 0.02-0.08 and the original threshold of 0.1 was
+# set from it; the population says that is the ~85th percentile and fires on 27% of
+# all asteroids, which is not an envelope.  0.3 sits above the ordinary tail and
+# below every known-anomalous object.  This is exactly the kind of error a small
+# calibration set produces and a population measurement catches.
+EPSILON_REALISTIC = 0.3
 # All absorbed momentum re-emitted in one direction.  Unreachable in practice.
 EPSILON_HARD = 1.0
 # Perfect specular reflection: the absolute limit for ANY radiation-driven

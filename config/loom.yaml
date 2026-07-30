@@ -172,7 +172,18 @@ screen:
   # absorbed photon's momentum re-emitted in one direction (unreachable); 2.0 is
   # perfect specular reflection, the limit for ANY radiation-driven process.
   # seti.loom.nongrav.calibration_table() recomputes this and the tests check it.
-  epsilon_realistic: 0.1
+  # RECALIBRATED 2026-07-30 against the whole published population (589 asteroids
+  # with a fitted A2 in JPL's SBDB; results/loom/calibration.json).  The measured
+  # realised efficiency of ordinary thermal recoil is median 0.074, p90 0.143 at
+  # rho = 2000 -- so the original 0.1, set from a three-object anchor, is roughly
+  # the 85th percentile and fired on 27% of the population.  A `watch` tier that
+  # flags a quarter of all asteroids is not a tier.  0.3 sits above the ordinary
+  # tail (~95th percentile) and below the known-anomalous population.
+  #
+  # The density sensitivity is real and is why both are reported: at rho = 1000 the
+  # same 0.1 threshold fires on 4.4%, at rho = 2000 on 27%.  If a future result
+  # turns on this threshold, it turns on an assumed density, and that must be said.
+  epsilon_realistic: 0.3
   epsilon_hard: 1.0
   epsilon_inviolable: 2.0
 

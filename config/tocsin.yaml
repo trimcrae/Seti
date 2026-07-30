@@ -77,6 +77,16 @@ acquire:
   # so the first runs backfill ~262 nights of real archival data rather than
   # waiting for new sky.  Set to null to start a few nights back instead.
   backfill_start_mjd: 60973.0
+  # THE DENOMINATOR.  Forced photometry is the textbook source for "how many
+  # times was this star looked at and showed nothing", but MEASUREMENT BEAT
+  # THEORY: the broker's LSST forced photometry covered 0% of screened
+  # star-nights in the first backfill, which pins the ensemble rate at 1.0 and
+  # makes promotion impossible.  Detections instead trace where the camera
+  # pointed, so a 1-degree sky bin holding any detection on night N was observed
+  # on night N.  Aggregated server-side with GROUP BY, so a night's footprint is
+  # one small result rather than millions of rows.
+  use_footprint_denominator: true
+  footprint_bin_deg: 1.0
   maxrec: 2000000
   timeout_s: 900
   # Periodically re-run with the Gaia join disabled to MEASURE what the cheap

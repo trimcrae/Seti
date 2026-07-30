@@ -986,6 +986,11 @@ def test_nightly_screen_end_to_end_against_a_stubbed_broker(tmp_path, monkeypatc
                       for i in range(2)],
                 reached=True, verdict="OK")
 
+        def footprint_bins(self, lo, hi, **kw):
+            from seti.tocsin.brokers import BrokerResult
+            return BrokerResult(rows=[], reached=True,
+                                verdict="NO_FOOTPRINT_IN_WINDOW")
+
     monkeypatch.setattr(R, "AlerceTAP", _StubTAP)
 
     class _Cfg:
@@ -1046,6 +1051,10 @@ def _stub_tap_factory(frontier, seen):
 
         def forced_photometry_night(self, lo, hi, **kw):
             return BrokerResult(rows=[], reached=True, verdict="OK")
+
+        def footprint_bins(self, lo, hi, **kw):
+            return BrokerResult(rows=[], reached=True,
+                                verdict="NO_FOOTPRINT_IN_WINDOW")
 
     return _Stub
 
@@ -1218,6 +1227,10 @@ def test_detections_without_forced_photometry_still_count_as_trials(tmp_path,
         def forced_photometry_night(self, lo, hi, **kw):
             return BrokerResult(rows=[], reached=True, verdict="OK")
 
+        def footprint_bins(self, lo, hi, **kw):
+            return BrokerResult(rows=[], reached=True,
+                                verdict="NO_FOOTPRINT_IN_WINDOW")
+
     monkeypatch.setattr(R, "AlerceTAP", _Stub)
 
     class _Cfg:
@@ -1233,6 +1246,103 @@ def test_detections_without_forced_photometry_still_count_as_trials(tmp_path,
     rate = s["ledger"]["ensemble_rate_per_target_visit"]
     assert rate is None or 0.0 <= rate <= 1.0
     assert s["ledger"]["tier_counts"]["candidate"] == 0
+
+
+def test_observed_footprint_gives_a_rate_below_one(tmp_path, monkeypatch):
+    """The blocking problem, and the fix.
+
+    The broker's LSST forced photometry covered 0% of screened star-nights in
+    the first real backfill.  With no non-detection information the denominator
+    collapses onto the numerator, the ensemble rate pins at exactly 1.0, and
+    `binomial_sf(k, n, 1.0)` is 1.0 for every k — so no target can EVER reach
+    candidate tier and the channel is scientifically inert.
+
+    Detections trace where the camera pointed, so a sky bin holding any
+    detection on night N was observed on night N.  Stars in that bin were
+    screened whether or not they alerted, which is a real denominator.
+    """
+    from seti.tocsin import run as R
+    from seti.tocsin.brokers import BrokerResult
+
+    # 40 targets in one 1-degree bin; only one of them flashes.
+    rows = [_target(source_id=str(900 + i), ra=150.2 + 0.001 * i, dec=-30.4)
+            for i in range(40)]
+    tpath = tmp_path / "targets.parquet"
+    pd.DataFrame(rows).to_parquet(tpath)
+    ra0, dec0 = rows[0]["ra"], rows[0]["dec"]
+
+    class _Stub:
+        def __init__(self, *a, **kw):
+            pass
+
+        def max_available_mjd(self):
+            return 61501.0
+
+        def night_detections(self, lo, hi, **kw):
+            return BrokerResult(rows=[{
+                "measurement_id": "m1", "oid": "o1", "sid": 1, "mjd": 61500.5,
+                "ra": ra0, "dec": dec0, "band": 1, "psfflux": 900.0,
+                "psffluxerr": 27.0, "snr": 33.0, "reliability": 0.95,
+                "templateflux": 9000.0, "templatefluxerr": 90.0,
+                "extendedness": 0.0, "isdipole": False}],
+                reached=True, verdict="OK", notes=["adql=stub"])
+
+        def forced_photometry_night(self, lo, hi, **kw):
+            return BrokerResult(rows=[], reached=True, verdict="OK")
+
+        def footprint_bins(self, lo, hi, **kw):
+            # That bin was observed on the night of the detection.
+            return BrokerResult(rows=[{"rab": 150, "decb": -31,
+                                       "night": 61499, "n": 4212}],
+                                reached=True, verdict="OK")
+
+    monkeypatch.setattr(R, "AlerceTAP", _Stub)
+
+    class _Cfg:
+        root = tmp_path
+    s = R.screen_night(_Cfg(), targets_path=tpath, out_dir=tmp_path / "res")
+
+    # All 40 targets were looked at; one produced an event.
+    assert s["counts"]["target_nights_from_footprint"] == 40
+    assert s["counts"]["target_nights_screened"] == 40
+    assert s["counts"]["events_kept"] == 1
+    assert s["denominator"] == "observed_footprint"
+    rate = s["ledger"]["ensemble_rate_per_target_visit"]
+    assert rate == pytest.approx(1.0 / 40.0)
+    assert 0.0 < rate < 1.0, "a rate of 1.0 makes every p-value 1.0"
+
+
+def test_footprint_bins_are_aggregated_server_side_per_night():
+    """A night's footprint must cost one small result, not millions of rows."""
+    tap = AlerceTAP()
+    captured = {}
+    tap.query = lambda adql, maxrec=None, retries=4: (
+        captured.setdefault("adql", adql) and [])
+    tap.footprint_bins(61500.0, 61502.0, bin_deg=1.0, sid_diaobject=1)
+    adql = captured["adql"]
+    assert "GROUP BY" in adql
+    assert "COUNT(*)" in adql
+    # The night key must match `ledger.night_of` (local noon at Cerro Pachon),
+    # or the footprint would be binned into different nights than the events.
+    assert "FLOOR(d.mjd - 0.6666666666)" in adql
+
+
+def test_footprint_binning_propagates_proper_motion():
+    """A 2016 position binned into a 2026 footprint mis-assigns fast stars."""
+    from seti.tocsin.run import _trials_from_footprint
+
+    # A star that crosses a 1-degree bin boundary between 2016 and 2026.
+    tg = pd.DataFrame([_target(source_id="fast", ra=150.999, dec=-30.5,
+                               pmra=3600.0 * 2.0)])
+    rows_old = [{"rab": 150, "decb": -31, "night": 61500, "n": 10}]
+    rows_new = [{"rab": 151, "decb": -31, "night": 61500, "n": 10}]
+    at_2016, _ = _trials_from_footprint(rows_old, tg, 1.0, 2016.0)
+    at_2026, _ = _trials_from_footprint(rows_new, tg, 1.0, 2026.5)
+    assert at_2016 == {("fast", "n61500")}
+    assert at_2026 == {("fast", "n61500")}
+    # ... and the un-propagated bin is NOT where the star is in 2026.
+    wrong, _ = _trials_from_footprint(rows_old, tg, 1.0, 2026.5)
+    assert wrong == set()
 
 
 def test_screen_night_reports_an_unreachable_broker_as_such(tmp_path, monkeypatch):

@@ -63,6 +63,7 @@ DEFAULTS: dict = {
                 "xmatch_max_arcsec": 1.5, "maxrec": 2000000, "timeout_s": 900,
                 "gaia_catid": 1, "sid_diaobject": 1,
                 "max_nights_per_run": 14.0, "backfill_start_mjd": 60973.0,
+                "use_footprint_denominator": True, "footprint_bin_deg": 1.0,
                 "audit_without_gaia_join_every_n_runs": 14},
     "screen": {"min_abs_snr": 6.0, "min_reliability": 0.0,
                "require_reliability": False, "max_dipole_significance": 3.0,
@@ -374,6 +375,56 @@ def _thresholds(conf: dict) -> Thresholds:
     )
 
 
+def _trials_from_footprint(rows, targets, bin_deg: float, epoch_jyear: float
+                           ) -> tuple[set, dict]:
+    """Star-nights on which a target's own sky bin was observed.
+
+    This is the denominator that does not depend on the broker populating forced
+    photometry (it covered 0% of star-nights in the first backfill).  Target
+    positions are proper-motion propagated to the window's epoch before binning,
+    for the same reason everything else here is: nearby stars are high-proper-
+    motion stars, and binning a 2016 position into a 2026 footprint would
+    mis-assign the ones that matter most.
+    """
+    stats = {"footprint_bins": len(rows or [])}
+    if not rows or targets is None or len(targets) == 0:
+        return set(), stats
+    observed = set()
+    nights = set()
+    for r in rows:
+        try:
+            observed.add((int(r["rab"]), int(r["decb"]), int(r["night"])))
+            nights.add(int(r["night"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    if not observed:
+        return set(), stats
+    t_ra = np.asarray(targets["ra"], dtype=float)
+    t_dec = np.asarray(targets["dec"], dtype=float)
+    pmra = np.asarray(targets["pmra"], dtype=float) if "pmra" in targets else np.zeros(t_ra.size)
+    pmdec = (np.asarray(targets["pmdec"], dtype=float) if "pmdec" in targets
+             else np.zeros(t_ra.size))
+    p_ra, p_dec = propagate_pm(t_ra, t_dec, pmra, pmdec, to_epoch=epoch_jyear)
+    rab = np.floor(p_ra / bin_deg).astype(int)
+    decb = np.floor(p_dec / bin_deg).astype(int)
+    ids = (np.asarray(targets["source_id"]).astype(str) if "source_id" in targets
+           else np.arange(t_ra.size).astype(str))
+    pairs = set()
+    for night in sorted(nights):
+        # Vectorised membership: build this night's observed-bin set once.
+        bins_tonight = {(a, b) for a, b, n in observed if n == night}
+        if not bins_tonight:
+            continue
+        hit = np.fromiter(((int(a), int(b)) in bins_tonight
+                           for a, b in zip(rab, decb, strict=True)),
+                          dtype=bool, count=rab.size)
+        for tid in ids[hit]:
+            pairs.add((str(tid), f"n{night}"))
+    stats["footprint_nights"] = len(nights)
+    stats["footprint_star_nights"] = len(pairs)
+    return pairs, stats
+
+
 def _visit_history_from_forced(rows, targets, th: Thresholds, epoch_jyear: float
                                ) -> tuple[dict[str, list[float]], set, dict]:
     """Map forced-photometry rows onto targets and count the night's trials.
@@ -591,6 +642,20 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
         hist, forced_pairs = {}, set()
         summary["notes"].append(f"forced_photometry_failed: {str(exc)[:300]}")
 
+    # The footprint denominator: which targets were LOOKED AT each night,
+    # independent of whether the broker populated forced photometry for them.
+    footprint_pairs: set = set()
+    if bool(aconf.get("use_footprint_denominator", True)):
+        try:
+            fb = tap.footprint_bins(lo, hi, bin_deg=float(aconf.get("footprint_bin_deg", 1.0)),
+                                    sid_diaobject=_sid(aconf))
+            footprint_pairs, fpstats = _trials_from_footprint(
+                fb.rows, targets, float(aconf.get("footprint_bin_deg", 1.0)),
+                epoch_jyear)
+            summary["counts"].update(fpstats)
+        except BrokerError as exc:
+            summary["notes"].append(f"footprint_query_failed: {str(exc)[:300]}")
+
     # THE DENOMINATOR.  A star-night that produced a detection was, by
     # definition, a star-night that was observed --- so it is a trial whether or
     # not forced photometry happens to cover it.  Taking the union is not a
@@ -605,22 +670,32 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
     # simply reports a rate near 1 and promotes nobody --- which is the correct,
     # conservative behaviour, and is reported rather than hidden.
     event_pairs = {(ev.target_id, ev.night) for ev in verdict.events}
-    all_pairs = set(forced_pairs) | event_pairs
+    all_pairs = set(forced_pairs) | event_pairs | set(footprint_pairs)
     trials_by_night: dict[str, int] = {}
     for _tid, night in all_pairs:
         trials_by_night[night] = trials_by_night.get(night, 0) + 1
     n_forced = len(forced_pairs)
+    n_footprint = len(footprint_pairs)
     n_total = len(all_pairs)
     summary["counts"]["target_nights_screened"] = n_total
     summary["counts"]["target_nights_with_forced_photometry"] = n_forced
-    summary["counts"]["target_nights_detection_only"] = n_total - n_forced
+    summary["counts"]["target_nights_from_footprint"] = n_footprint
+    summary["counts"]["target_nights_detection_only"] = len(
+        event_pairs - set(forced_pairs) - set(footprint_pairs))
     summary["trials_by_night"] = trials_by_night
     frac = (n_forced / n_total) if n_total else 0.0
     summary["forced_coverage_fraction"] = round(frac, 4)
+    summary["footprint_coverage_fraction"] = (
+        round(n_footprint / n_total, 4) if n_total else 0.0)
     if n_total == 0:
         summary["denominator"] = "unavailable"
     elif frac >= 0.9:
         summary["denominator"] = "forced_photometry_exact"
+    elif n_footprint > 2 * len(event_pairs):
+        # The footprint carries genuine non-detection information: far more
+        # star-nights were observed than produced events, so the rate is a real
+        # rate rather than a tautology.
+        summary["denominator"] = "observed_footprint"
     else:
         # Most trials carry no non-detection information, so the rate is an
         # upper bound on the true rate and every p-value derived from it is

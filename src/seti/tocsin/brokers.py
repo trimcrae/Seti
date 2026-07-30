@@ -334,6 +334,20 @@ class AlerceTAP:
             f"AND x.catid = {int(gaia_catid)} "
             "JOIN alerce_tap.gaiadr3_source AS g ON g.oid_catalog = x.oid_catalog",
             maxrec=5)
+        # The footprint denominator depends on GROUP BY over FLOOR expressions
+        # being accepted; if it is not, the channel cannot compute a rate below
+        # 1.0 and is inert, so this is a blocking capability rather than a nicety.
+        run("footprint_group_by",
+            "SELECT FLOOR(d.ra / 1.0) AS rab, FLOOR(d.dec / 1.0) AS decb, "
+            "FLOOR(d.mjd - 0.6666666666) AS night, COUNT(*) AS n "
+            "FROM alerce_tap.detection AS d "
+            "JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
+            "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id "
+            f"WHERE d.sid = 1 AND d.mjd >= {float(now_mjd) - 30} "
+            f"AND d.mjd < {float(now_mjd) - 28} "
+            "GROUP BY FLOOR(d.ra / 1.0), FLOOR(d.dec / 1.0), "
+            "FLOOR(d.mjd - 0.6666666666)", maxrec=20)
+
         run("join_gaia_nearby_any",
             "SELECT d.oid, d.mjd, g.parallax, x.dist "
             "FROM alerce_tap.detection AS d "
@@ -463,6 +477,60 @@ class AlerceTAP:
         return res
 
     # -- stage B: the denominator ------------------------------------------
+    def footprint_bins(self, mjd_lo: float, mjd_hi: float, bin_deg: float = 1.0,
+                       sid_diaobject: int | None = ALERCE_SID_DIAOBJECT,
+                       maxrec: int | None = None) -> BrokerResult:
+        """Which patches of sky Rubin actually observed, per night, in the window.
+
+        THE PROBLEM THIS SOLVES.  The recurrence statistic needs to know how many
+        times a star was looked at and showed nothing.  Forced photometry is the
+        textbook answer, but measurement beats theory: the broker's LSST forced
+        photometry covered **0%** of screened star-nights in the first backfill,
+        which pins the ensemble rate at 1.0 and makes promotion impossible --- the
+        channel becomes scientifically inert.
+
+        THE ANSWER.  Detections themselves trace where the camera pointed.  A
+        1-degree sky bin containing any detection on night N was observed on
+        night N, so a catalogued star in that bin was screened on night N whether
+        or not it produced an alert.  That is a real denominator over *all*
+        targets, not just those that happen to have a diaObject.
+
+        The aggregation is done server-side with GROUP BY, so the whole night's
+        footprint costs one small result (at most ~360 x 180 bins per night)
+        rather than millions of rows crossing the network.
+
+        Deliberately conservative: a target counts only if its OWN bin was
+        observed, with no neighbour dilation.  Targets at field edges in empty
+        bins are therefore missed, which *under*-counts trials, which
+        *over*-estimates the event rate, which makes every p-value larger.  Erring
+        toward fewer detections is the right direction for a search.
+        """
+        res = BrokerResult()
+        b = float(bin_deg)
+        # The night key must match `schema.night_id` / `ledger.night_of`:
+        # floor(mjd - 16/24), i.e. local noon at Cerro Pachon.
+        ra_e = f"FLOOR(d.ra / {b})"
+        dec_e = f"FLOOR(d.dec / {b})"
+        night_e = "FLOOR(d.mjd - 0.6666666666)"
+        where = [f"d.mjd >= {float(mjd_lo)}", f"d.mjd < {float(mjd_hi)}"]
+        if sid_diaobject is not None:
+            where.insert(0, f"d.sid = {int(sid_diaobject)}")
+        adql = (
+            f"SELECT {ra_e} AS rab, {dec_e} AS decb, {night_e} AS night, "
+            "COUNT(*) AS n FROM alerce_tap.detection AS d "
+            "JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
+            "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id "
+            "WHERE " + " AND ".join(where) +
+            f" GROUP BY {ra_e}, {dec_e}, {night_e}"
+        )
+        res.rows = self.query(adql, maxrec=maxrec or 500000)
+        res.reached = True
+        res.calls = self.calls
+        res.notes.append(f"adql={adql}")
+        res.verdict = "OK" if res.rows else "NO_FOOTPRINT_IN_WINDOW"
+        return res
+
+
     def forced_photometry_night(self, mjd_lo: float, mjd_hi: float,
                                 parallax_min_mas: float | None = 10.0,
                                 xmatch_max_arcsec: float = 1.5,

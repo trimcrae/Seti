@@ -46,7 +46,7 @@ import hashlib
 import json
 import math
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 SEVERITIES = ("candidate", "health", "milestone")
@@ -55,6 +55,22 @@ SEVERITIES = ("candidate", "health", "milestone")
 # Nightly channels get a wider window than their cadence so one missed firing is
 # not an incident; a week of silence is.
 STALE_DAYS = {"tocsin": 4.0, "loom": 10.0}
+
+# How far the DATA may fall behind the wall clock before that is a failure.
+#
+# This is a different question from "did the channel run", and it is the one
+# that catches the failure both channels are most exposed to.  Both read Rubin
+# through ALeRCE's public mirror, and that mirror lags: 15.6 days measured, and
+# the frontier sat at MJD 61235 (2026-07-14) on 2026-07-30.  If ALeRCE simply
+# stops ingesting LSST, both channels keep running on schedule, keep writing a
+# fresh run stamp, and keep committing -- so every liveness check above stays
+# green while the repository has silently stopped tracking Rubin at all.
+#
+# 30 days is roughly twice the measured lag, so ordinary mirror latency never
+# fires and a mirror that has actually stopped shows up inside a fortnight.
+DATA_LAG_LIMIT_DAYS = 30.0
+
+MJD_EPOCH = datetime(1858, 11, 17, tzinfo=timezone.utc)
 
 
 @dataclass
@@ -317,6 +333,43 @@ def health_alerts(root: Path, now: datetime | None = None) -> list[Alert]:
                       f"days without repository activity, and a run that fails "
                       f"before its commit step leaves no trace here at all."),
                 detail={"age_days": age, "limit_days": limit}))
+
+    # HAS THE DATA STOPPED, AS OPPOSED TO THE CHANNEL?
+    #
+    # Every check above asks whether the screens ran. This asks whether they
+    # ran on anything new -- and it is the only one that can catch the mirror
+    # going dark, because a channel screening the same frontier night after
+    # night looks perfectly healthy from every other angle: it runs on
+    # schedule, writes a fresh stamp, commits, and reports a clean null.
+    for channel, marker, key in (("tocsin", "ledger.json", "last_mjd_screened"),
+                                 ("loom", "screen.json", "frontier_mjd")):
+        rec = _load(root / "results" / channel / marker)
+        if not isinstance(rec, dict):
+            continue
+        mjd = _f(rec.get(key))
+        if not math.isfinite(mjd) or mjd <= 0:
+            continue
+        lag = (now - (MJD_EPOCH + timedelta(days=mjd))).total_seconds() / 86400.0
+        if lag > DATA_LAG_LIMIT_DAYS:
+            out.append(Alert(
+                key=f"{channel}:data_frontier:{int(math.log2(lag / DATA_LAG_LIMIT_DAYS))}",
+                severity="health", channel=channel,
+                title=f"{channel.upper()} is screening data {lag:.0f} days old",
+                body=(f"The most recent Rubin data `{channel}` has reached is "
+                      f"MJD {mjd:.2f}, which is {lag:.1f} days behind now. The "
+                      f"broker mirror normally lags ~16 days; the limit here is "
+                      f"{DATA_LAG_LIMIT_DAYS:.0f}.\n\n"
+                      f"The channel itself is fine — it is running on schedule "
+                      f"and committing results. What has stopped is the DATA. "
+                      f"A screen re-reading the same frontier every night "
+                      f"produces a clean null indefinitely and looks healthy "
+                      f"from every other angle, which is why this check exists "
+                      f"separately from the staleness check.\n\n"
+                      f"Check whether ALeRCE is still ingesting the LSST alert "
+                      f"stream before reading any recent null from this "
+                      f"channel."),
+                detail={"frontier_mjd": mjd, "lag_days": lag,
+                        "limit_days": DATA_LAG_LIMIT_DAYS}))
 
     # A channel that reaches no data is not returning a null; it is not running.
     for channel, name in (("tocsin", "summary.json"), ("loom", "screen.json")):

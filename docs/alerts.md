@@ -64,7 +64,8 @@ exposed to.
   that is fixed.
 - A channel wrote `verdict: NO_DATA_REACHED` — the broker was unreachable or
   answered unusably. That is not a null result and must not be read as one.
-- A channel has gone quiet (below).
+- A channel has gone quiet (§3).
+- **The data has gone quiet even though the channel has not** (§3).
 
 **`milestone`** — a capability came online. There is one that matters now:
 LOOM's central discriminant is *which heliocentric-distance law the acceleration
@@ -112,6 +113,30 @@ notification becomes noise.
 > writes into its own result file. This is the difference between a staleness
 > check and a staleness check that can never fire on the machine it has to work
 > on.
+
+### It notices the *data* stopping, which is a different question
+
+Every check above asks whether the screens **ran**. This one asks whether they
+ran on anything **new**, and it is the only one that can catch the failure both
+Rubin channels are most exposed to.
+
+Both read Rubin through ALeRCE's public mirror, and that mirror lags — 15.6 days
+measured, with the frontier at MJD 61235 (2026-07-14) on 2026-07-30. If ALeRCE
+simply stops ingesting LSST, both channels keep running on schedule, keep
+writing a fresh run stamp, keep committing, and keep reporting a clean null.
+Every liveness check stays green while the repository has silently stopped
+tracking Rubin at all — and a clean null from a screen that is no longer being
+shown any data is the single most misleading thing this apparatus can produce.
+
+So `alerts` compares the wall clock against the frontier each channel reports
+(`results/tocsin/ledger.json` → `last_mjd_screened`, `results/loom/screen.json`
+→ `frontier_mjd`) and raises `health` past **30 days** — roughly twice the
+measured mirror lag, so ordinary latency never fires and a stalled mirror shows
+up inside a fortnight. A missing or zero frontier is treated as *unknown*, not
+as a 61,000-day lag; zero is this repository's recurring "missing" value and an
+upper bound that admits it turns every absent field into an alert.
+
+### GitHub's own inactivity policy
 
 The other thing that can stop a cron is GitHub's own policy: **scheduled
 workflows are disabled after 60 days without repository activity**. The channels

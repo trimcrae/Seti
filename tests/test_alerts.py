@@ -14,6 +14,8 @@ from pathlib import Path
 import pytest
 
 from seti.alerts import (
+    DATA_LAG_LIMIT_DAYS,
+    MJD_EPOCH,
     STALE_DAYS,
     check,
     evaluate,
@@ -176,6 +178,66 @@ def test_staleness_escalates_by_doubling_not_by_every_period(tmp_path):
         seen.append([x.key for x in health_alerts(tmp_path, NOW)
                      if ":stale:" in x.key][0])
     assert seen[0] == seen[1]
+
+
+# ---------------------------------------------------------------------------
+# The data going dark, as distinct from the channel going dark
+# ---------------------------------------------------------------------------
+def _mjd_at(dt: datetime) -> float:
+    return (dt - MJD_EPOCH).total_seconds() / 86400.0
+
+
+def test_a_stalled_mirror_alerts_even_though_the_channel_is_healthy(tmp_path):
+    """THE FAILURE EVERY OTHER CHECK MISSES.
+
+    Both channels read Rubin through ALeRCE's public mirror. If that mirror
+    stops ingesting LSST, the channels keep running on schedule, keep writing a
+    fresh run stamp, keep committing, and keep reporting a clean null. Every
+    liveness check stays green while the repository has silently stopped
+    tracking Rubin at all.
+    """
+    # Freshly run -- so the staleness check is satisfied...
+    _write(tmp_path, "results/tocsin/summary.json", {"run_at_utc": _stamp(NOW)})
+    _write(tmp_path, "results/loom/screen.json", {"screened_at_utc": _stamp(NOW)})
+    # ...but screening data from three months ago.
+    _write(tmp_path, "results/tocsin/ledger.json",
+           {"last_mjd_screened": _mjd_at(NOW - timedelta(days=90))})
+
+    alerts = health_alerts(tmp_path, NOW)
+    assert [x.key for x in alerts if ":stale:" in x.key] == []      # channel fine
+    frontier = [x for x in alerts if "data_frontier" in x.key]
+    assert len(frontier) == 1
+    assert frontier[0].severity == "health"
+    assert frontier[0].detail["lag_days"] == pytest.approx(90.0, abs=0.1)
+
+
+def test_the_broker_s_ordinary_lag_does_not_alert(tmp_path):
+    """The mirror lags ~16 days by design (15.6 d measured). If that fired, the
+    alert would be permanently on and therefore worthless."""
+    _write(tmp_path, "results/tocsin/ledger.json",
+           {"last_mjd_screened": _mjd_at(NOW - timedelta(days=16))})
+    _write(tmp_path, "results/loom/screen.json",
+           {"frontier_mjd": _mjd_at(NOW - timedelta(days=16)),
+            "screened_at_utc": _stamp(NOW)})
+    assert [x for x in health_alerts(tmp_path, NOW) if "data_frontier" in x.key] == []
+    assert DATA_LAG_LIMIT_DAYS > 16.0
+
+
+def test_loom_frontier_is_checked_too(tmp_path):
+    _write(tmp_path, "results/loom/screen.json",
+           {"frontier_mjd": _mjd_at(NOW - timedelta(days=120)),
+            "screened_at_utc": _stamp(NOW)})
+    a = [x for x in health_alerts(tmp_path, NOW) if "data_frontier" in x.key]
+    assert len(a) == 1 and a[0].channel == "loom"
+
+
+def test_a_missing_or_zeroed_frontier_is_not_an_alert(tmp_path):
+    """Zero is this repository's recurring 'missing' value, and an upper bound
+    that admits it turns every absent field into a 61,000-day lag."""
+    _write(tmp_path, "results/loom/screen.json",
+           {"frontier_mjd": 0, "screened_at_utc": _stamp(NOW)})
+    _write(tmp_path, "results/tocsin/ledger.json", {"last_mjd_screened": None})
+    assert [x for x in health_alerts(tmp_path, NOW) if "data_frontier" in x.key] == []
 
 
 # ---------------------------------------------------------------------------

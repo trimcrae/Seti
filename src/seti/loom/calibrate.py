@@ -142,6 +142,59 @@ def is_comet(row: dict) -> bool:
     return bool(re.match(r"^\s*\d*\s*[PDCXAI]/", name))
 
 
+# Objects that are inactive by classification but are known to be anomalous, so an
+# exceedance list that contains them is the gate WORKING rather than failing.  Kept
+# separate from `control.py`'s sets because these are not controls for the Rubin
+# screen -- they are the published population the ceiling should recover, and
+# recovering them is how the ceiling earns the right to flag anything else.
+KNOWN_ANOMALOUS: dict[str, str] = {
+    "AOUMUAMUA": "1I/'Oumuamua -- interstellar, non-grav acceleration, no coma",
+    "A2017U1": "1I/'Oumuamua -- interstellar, non-grav acceleration, no coma",
+    "2017U1": "1I/'Oumuamua -- interstellar, non-grav acceleration, no coma",
+    "2008GO98": "362P -- quasi-Hilda active asteroid (comet in all but number)",
+    "457175": "362P -- quasi-Hilda active asteroid (comet in all but number)",
+    "3200": "(3200) Phaethon -- active asteroid, Geminid parent",
+    "1983TB": "(3200) Phaethon -- active asteroid, Geminid parent",
+    "133P": "133P/Elst-Pizarro -- main-belt comet",
+    "1979OW7": "133P/Elst-Pizarro -- main-belt comet",
+}
+
+
+def annotate(name: str) -> str:
+    """What is this object already known to be, if anything?
+
+    Turns the exceedance list from a set of designations into an account of itself.
+    An exceedance that is a published dark comet, an active asteroid or an
+    interstellar object is the ceiling recovering a known anomaly; one that is none
+    of those is the only kind worth a second look.
+    """
+    from .control import control_index, normalise_designation
+
+    keys = {normalise_designation(name)}
+    for m in re.finditer(r"\(([^)]+)\)", name):
+        keys.add(normalise_designation(m.group(1)))
+    m = re.match(r"^\s*\D*(\d+)", name)
+    if m:
+        keys.add(str(int(m.group(1))))
+    keys.add(re.sub(r"[^A-Z0-9]", "", name.upper()))
+    for m in re.finditer(r"\(([^)]+)\)", name):
+        keys.add(re.sub(r"[^A-Z0-9]", "", m.group(1).upper()))
+    # Punctuation-free variants of everything, so "A/2017 U1" and "'Oumuamua"
+    # match keys written without the slash or the apostrophe.
+    keys |= {re.sub(r"[^A-Z0-9]", "", k.upper()) for k in list(keys)}
+    keys.discard("")
+
+    for k in keys:
+        if k in KNOWN_ANOMALOUS:
+            return KNOWN_ANOMALOUS[k]
+    idx = control_index()
+    for k in keys:
+        hit = idx.get(k)
+        if hit:
+            return f"{hit['control_set']}: {hit.get('identification') or k}"
+    return ""
+
+
 @dataclass
 class EpsilonSummary:
     """The measured distribution of realised efficiency, with its exceedances."""
@@ -154,6 +207,8 @@ class EpsilonSummary:
     rho_assumed: float = RHO_TYPICAL_KG_M3
     kind: str = "asteroid"
     n_comets_in_source: int = 0
+    n_exceedances_known: int = 0
+    n_exceedances_unexplained: int = 0
     ok: bool = False
     reason: str = ""
     exceedances: list = field(default_factory=list)
@@ -161,6 +216,8 @@ class EpsilonSummary:
     def as_dict(self) -> dict:
         return {"n": self.n, "kind": self.kind,
                 "n_comets_in_source": self.n_comets_in_source,
+                "n_above_hard_already_known": self.n_exceedances_known,
+                "n_above_hard_unexplained": self.n_exceedances_unexplained,
                 "quantiles": self.quantiles,
                 "n_above_realistic_0.1": self.n_above_realistic,
                 "n_above_hard_1.0": self.n_above_hard,
@@ -231,8 +288,12 @@ def summarise_epsilon(rows: list[dict], rho_kg_m3: float = RHO_TYPICAL_KG_M3,
         {"name": names[i], "A2_au_day2": float(a2[i]),
          "diameter_m": float(d[i]), "H": float(h[i]),
          "epsilon_effective": float(eps[i]),
-         "diameter_measured": bool(math.isfinite(_f(dkm[i])))}
+         "diameter_measured": bool(math.isfinite(_f(dkm[i]))),
+         "known_as": annotate(names[i])}
         for i in idx if eps[i] > 0.1]
+    above_hard = [x for x in out.exceedances if x["epsilon_effective"] > 1.0]
+    out.n_exceedances_known = sum(1 for x in above_hard if x["known_as"])
+    out.n_exceedances_unexplained = sum(1 for x in above_hard if not x["known_as"])
     out.ok = True
     return out
 

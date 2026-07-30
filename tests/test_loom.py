@@ -766,7 +766,7 @@ def test_watch_tier_sits_between_the_two_epsilons():
     ceiling = float(nongrav.momentum_ceiling_a2(
         22.0, albedo=th.albedo_generous, rho_kg_m3=th.rho_generous_kg_m3,
         epsilon=th.epsilon_hard))
-    a2 = 0.3 * ceiling                        # 3x the realistic envelope
+    a2 = 0.5 * ceiling                        # above eps=0.3, below the ceiling
     rec = screen.assign_tier(screen.screen_orbit_row(
         _orbit_row(h=22.0, yarkovsky=a2 / nongrav.YARKOVSKY_COL_UNIT,
                    yarkovsky_unc=a2 / nongrav.YARKOVSKY_COL_UNIT / 20.0), th), th)

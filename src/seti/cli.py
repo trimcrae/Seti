@@ -714,6 +714,33 @@ def _cmd_tocsin_assess(args, cfg):
     assess_only(cfg, out_dir=args.out_dir)
 
 
+def _cmd_loom_probe(args, cfg):
+    from .loom.run import probe
+
+    probe(cfg, out_dir=args.out_dir)
+
+
+def _cmd_loom_screen(args, cfg):
+    from .loom.run import load_loom_config, screen
+
+    conf = load_loom_config(cfg)
+    # Overrides are applied to the loaded config rather than threaded through the
+    # signature, so a new tunable needs one config entry and no CLI plumbing.
+    for name, key in (("residual_window_days", "residual_window_days"),
+                      ("shortlist_size", "shortlist_size")):
+        v = getattr(args, name, None)
+        if v is not None:
+            conf["acquire"][key] = v
+    screen(cfg, out_dir=args.out_dir, max_run_seconds=args.max_run_seconds,
+           conf=conf)
+
+
+def _cmd_loom_assess(args, cfg):
+    from .loom.run import assess
+
+    assess(cfg, out_dir=args.out_dir)
+
+
 def _cmd_vigil_probe(args, cfg):
     from .vigil.run import vigil_probe
 
@@ -1233,6 +1260,53 @@ def main(argv=None):
                             "ledger, without touching the network")
     p.add_argument("--out-dir", default=None)
     p.set_defaults(func=_cmd_tocsin_assess)
+
+    p = sub.add_parser("loom-probe",
+                       help="LOOM stage 0 (runner-only): record the live ALeRCE "
+                            "solar-system schema and MEASURE the null fraction "
+                            "of the non-gravitational columns. This is a go/no-go "
+                            "— only ~589 asteroids in JPL's SBDB have a fitted "
+                            "A2, so if the mirror is no better the channel must "
+                            "run on per-detection ephemeris residuals, which are "
+                            "delivered for every detection of every known object")
+    p.add_argument("--out-dir", default=None)
+    p.set_defaults(func=_cmd_loom_probe)
+
+    p = sub.add_parser("loom-screen",
+                       help="LOOM stage 1: screen the solar-system parent "
+                            "population against the radiation momentum ceiling "
+                            "(a theorem, not a fit), then pull the per-detection "
+                            "along-track ephemeris residuals for the shortlist "
+                            "and test their GEOMETRY and TIME STRUCTURE — "
+                            "amplitude cannot be the discriminant, because an "
+                            "MPC prediction carries star-catalogue biases up to "
+                            "175 mas")
+    p.add_argument("--residual-window-days", type=float, default=None,
+                   help="days back from the broker frontier for the residual "
+                        "pull; longer buys more apparitions, which is what the "
+                        "trend and law tests need (default from config)")
+    p.add_argument("--shortlist-size", type=int, default=None,
+                   help="how many objects get a full residual time-series pull")
+    p.add_argument("--max-run-seconds", type=float, default=None,
+                   help="wall-clock budget; the run yields voluntarily before "
+                        "the CI job timeout, because a cancelled job never runs "
+                        "its commit step and loses everything it learned")
+    p.add_argument("--out-dir", default=None)
+    p.set_defaults(func=_cmd_loom_screen)
+
+    p = sub.add_parser("loom-assess",
+                       help="LOOM stage 2 (offline): the decision stage. Collapse "
+                            "MPC mis-linkage, check the anomaly score is "
+                            "independent of orbit quality, then test whether the "
+                            "SET of anomalies has the structure replication "
+                            "implies — element clustering, orbital-pole "
+                            "coherence, inclination isotropy, resonance "
+                            "concentration, photometric homogeneity — each "
+                            "against matched random subsets of the same screened "
+                            "population, and validate against the known "
+                            "artificial objects")
+    p.add_argument("--out-dir", default=None)
+    p.set_defaults(func=_cmd_loom_assess)
 
     p = sub.add_parser("knell-vet",
                        help="KNELL stage 2: aggregate every field's candidates "

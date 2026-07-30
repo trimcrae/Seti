@@ -1,0 +1,196 @@
+name: loom
+
+# LOOM --- a population search for self-replicating probes among solar-system
+# objects, on the Rubin/LSST alert stream (docs/loom.md).
+#
+#   parent population ──▶ screen (ceiling + residual structure) ──▶ assess ──▶ commit
+#
+# THE GOVERNING METHODOLOGY (docs/loom.md §3).  A von Neumann probe is defined by
+# self-replication, so the observable is not one anomalous object --- a single
+# unexplained acceleration has a dozen mundane readings, and this repository has
+# already run the catalogue-scale single-object version and got a clean null (see
+# results/derelict/, A1 census over 1,553,263 asteroids, ALL_SURVIVORS_EXPLAINED).
+# The observable is a POPULATION SHARING AN ORIGIN, and that is a property of the
+# SET of flagged objects, not of any one of them.
+#
+# Three disciplines make the recurring screen honest, and each exists because a
+# specific failure was reached on real data in another channel here:
+#
+#   * AMPLITUDE IS NOT THE DISCRIMINANT.  ephOffset is Rubin's position (~10 mas)
+#     minus a prediction from an MPC orbit fitted to decades of heterogeneous
+#     astrometry whose star-catalogue biases reach 175 mas.  Residuals of
+#     0.1-1 arcsec are routine.  The channel keys on residual GEOMETRY
+#     (along-track vs cross-track), TIME STRUCTURE (monotone growth across
+#     apparitions; which heliocentric-distance law the drift follows) and
+#     INDEPENDENCE FROM ORBIT QUALITY.
+#   * MIS-LINKAGE IS COLLAPSED BEFORE ANY STATISTIC RUNS.  A strongly accelerating
+#     object breaks MPC linking and can enter the catalogue several times, giving
+#     near-identical elements with disjoint epochs --- exactly what this channel
+#     would otherwise call a family.
+#   * THE POSITIVE CONTROL IS CHECKED EVERY RUN.  Known artificial objects
+#     (J002E3, WT1190F, 2020 SO) were identified by the very observable this
+#     channel measures.  If the screen does not recover them it does not work, and
+#     no null from it is interpretable.  No other channel in this repository can
+#     be validated against a real positive.
+#
+# CREDENTIALS: none.  ALeRCE's public TAP service carries the whole channel.
+#
+# Scheduled runs fire from the DEFAULT BRANCH (GitHub only schedules there) and
+# commit back to whatever ref they ran on, exactly like watchdog.yml.
+
+on:
+  schedule:
+    # 15:40 UTC = 11:40 EDT.  Deliberately offset from tocsin (14:10 UTC) so the
+    # two channels do not hit the same TAP service concurrently, and late enough
+    # that the brokers have finished ingesting the Chilean night.  Weekly rather
+    # than nightly: the parent population is a catalogue, and orbit solutions do
+    # not change from one night to the next.  What accumulates is arc length.
+    - cron: "40 15 * * 1"
+  workflow_dispatch:
+    inputs:
+      residual_window_days:
+        description: >-
+          Window for the per-detection residual pull, in days back from the
+          broker frontier.  Longer windows buy more apparitions --- which is what
+          the trend and law tests need --- at the cost of query time.
+        required: false
+        default: ""
+      shortlist_size:
+        description: "How many objects get a full residual time-series pull"
+        required: false
+        default: ""
+      max_run_seconds:
+        description: >-
+          Wall-clock budget.  A cancelled job never runs its commit step, so a
+          run that overshoots loses everything it learned.
+        required: false
+        default: ""
+      assess_only:
+        description: "Skip the network entirely; re-derive the statistics offline"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  # objects.csv is a single mutable table committed back to the branch; two
+  # concurrent runs would race each other's commits and lose one.
+  group: loom-objects
+  cancel-in-progress: false
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Screen the parent population and the shortlist's residuals
+        if: github.event.inputs.assess_only != 'true'
+        run: |
+          args=""
+          if [ -n "${{ github.event.inputs.residual_window_days }}" ]; then
+            args="$args --residual-window-days ${{ github.event.inputs.residual_window_days }}"
+          fi
+          if [ -n "${{ github.event.inputs.shortlist_size }}" ]; then
+            args="$args --shortlist-size ${{ github.event.inputs.shortlist_size }}"
+          fi
+          if [ -n "${{ github.event.inputs.max_run_seconds }}" ]; then
+            args="$args --max-run-seconds ${{ github.event.inputs.max_run_seconds }}"
+          fi
+          echo "loom-screen$args"
+          python -m seti.cli loom-screen $args
+
+      # THE DECISION STAGE.  Every per-object test asks "is this object weird?",
+      # and that question is a contamination problem: dark comets, short arcs,
+      # star-catalogue bias and mis-linkage all answer yes.  This stage asks the
+      # question replication actually implies --- does the SET of anomalies have
+      # structure no natural population produces --- against a null of matched
+      # random subsets of the same screened sample.  Offline, so it can be
+      # re-derived under a changed threshold without touching the network.
+      - name: Population-structure tests and control validation (offline)
+        if: always()
+        run: python -m seti.cli loom-assess || echo "assess skipped (no sample yet)"
+
+      - name: Summarise the run
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          for name in ("screen.json", "assessment.json"):
+              p = pathlib.Path("results/loom") / name
+              if not p.exists():
+                  print(f"no {name}")
+                  continue
+              s = json.loads(p.read_text())
+              print(f"\n=== {name} ===")
+              print("verdict:", s.get("verdict"))
+              for k in ("n_orbits", "n_shortlist", "n_residual_series_done",
+                        "n_objects", "n_anomalous", "frontier_mjd",
+                        "orbits_verdict", "ss_object_verdict"):
+                  if k in s:
+                      print(f"  {k}: {s[k]}")
+              for k in ("funnel_path_a", "funnel_final", "tiers", "timings",
+                        "common_timing", "quality_independence"):
+                  if k in s:
+                      print(f"  {k}: {json.dumps(s[k], default=str)[:600]}")
+              rep = s.get("replication") or {}
+              if rep:
+                  print("  replication verdict:", rep.get("verdict"))
+                  print("  mislinkage collapsed:",
+                        (rep.get("linkage_duplicates") or {}).get("n_collapsed"))
+                  for t in rep.get("tests", []):
+                      print(f"    {t.get('name')}: p={t.get('p_value')} "
+                            f"z={t.get('z')} gate={t.get('is_gate')} "
+                            f"ok={t.get('ok')} {t.get('reason','')}")
+              ctl = s.get("controls") or {}
+              if ctl:
+                  print("  controls:", ctl.get("verdict"), "|",
+                        ctl.get("note", "")[:200])
+                  for c in ctl.get("controls_found", []):
+                      print(f"    {c['designation']} ({c['control_set']}): "
+                            f"pct={c['percentile']} flagged={c['flagged']}")
+              for n in s.get("notes", []):
+                  print("  note:", n)
+          PY
+
+      - name: Commit the screened table and the assessment
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # ONE PATHSPEC AT A TIME.  `git add` with several pathspecs is atomic:
+          # one unmatched glob stages NOTHING, `|| true` swallows the failure,
+          # and the run's results are silently discarded.  This has cost this
+          # repository whole runs (see knell.yml).
+          git add -f -- results/loom/objects.csv || echo "no objects.csv"
+          git add -f -- results/loom/screen.json || echo "no screen.json"
+          git add -f -- results/loom/assessment.json || echo "no assessment.json"
+          git add -f -- results/loom/residual_tests.json || echo "no residual_tests.json"
+          echo "=== staged ==="
+          git diff --cached --name-only
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "loom: solar-system artefact screen — residual structure + replication tests"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: loom-run
+          path: results/loom/

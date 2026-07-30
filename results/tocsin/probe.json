@@ -2,7 +2,7 @@
  "alerce": {
   "diagnostics": {
    "count_detection_last_120d": {
-    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61131.06352677611",
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61131.08347084181",
     "data": [
      {
       "n": 10468656
@@ -11,7 +11,7 @@
     "rows": 1
    },
    "count_detection_last_1d": {
-    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61250.06352677611",
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61250.08347084181",
     "data": [
      {
       "n": 0
@@ -20,7 +20,7 @@
     "rows": 1
    },
    "count_detection_last_30d": {
-    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61221.06352677611",
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61221.08347084181",
     "data": [
      {
       "n": 3777169
@@ -29,7 +29,7 @@
     "rows": 1
    },
    "count_detection_last_3d": {
-    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61248.06352677611",
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61248.08347084181",
     "data": [
      {
       "n": 0
@@ -38,7 +38,7 @@
     "rows": 1
    },
    "count_detection_last_7d": {
-    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61244.06352677611",
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61244.08347084181",
     "data": [
      {
       "n": 0
@@ -47,7 +47,7 @@
     "rows": 1
    },
    "count_lsst_join_last_30d": {
-    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.mjd >= 61221.06352677611",
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.mjd >= 61221.08347084181",
     "data": [
      {
       "n": 3777169
@@ -56,7 +56,7 @@
     "rows": 1
    },
    "count_lsst_join_sid1_last_30d": {
-    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.sid = 1 AND d.mjd >= 61221.06352677611",
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.sid = 1 AND d.mjd >= 61221.08347084181",
     "data": [
      {
       "n": 3477180
@@ -64,42 +64,168 @@
     ],
     "rows": 1
    },
+   "footprint_group_by": {
+    "adql": "SELECT FLOOR(d.ra / 1.0) AS rab, FLOOR(d.dec / 1.0) AS decb, FLOOR(d.mjd - 0.6666666666) AS night, COUNT(*) AS n FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.sid = 1 AND d.mjd >= 61221.08347084181 AND d.mjd < 61223.08347084181 GROUP BY FLOOR(d.ra / 1.0), FLOOR(d.dec / 1.0), FLOOR(d.mjd - 0.6666666666)",
+    "data": [
+     {
+      "decb": -4.0,
+      "n": 47,
+      "night": 61220.0,
+      "rab": 0.0
+     },
+     {
+      "decb": -3.0,
+      "n": 215,
+      "night": 61220.0,
+      "rab": 0.0
+     },
+     {
+      "decb": -2.0,
+      "n": 90,
+      "night": 61220.0,
+      "rab": 0.0
+     },
+     {
+      "decb": 1.0,
+      "n": 127,
+      "night": 61220.0,
+      "rab": 0.0
+     },
+     {
+      "decb": 2.0,
+      "n": 66,
+      "night": 61220.0,
+      "rab": 0.0
+     },
+     {
+      "decb": 3.0,
+      "n": 35,
+      "night": 61220.0,
+      "rab": 0.0
+     },
+     {
+      "decb": 1.0,
+      "n": 14,
+      "night": 61220.0,
+      "rab": 1.0
+     },
+     {
+      "decb": -45.0,
+      "n": 11,
+      "night": 61220.0,
+      "rab": 6.0
+     },
+     {
+      "decb": -45.0,
+      "n": 3,
+      "night": 61221.0,
+      "rab": 6.0
+     },
+     {
+      "decb": -44.0,
+      "n": 17,
+      "night": 61220.0,
+      "rab": 6.0
+     },
+     {
+      "decb": -44.0,
+      "n": 6,
+      "night": 61221.0,
+      "rab": 6.0
+     },
+     {
+      "decb": -46.0,
+      "n": 27,
+      "night": 61220.0,
+      "rab": 7.0
+     },
+     {
+      "decb": -46.0,
+      "n": 9,
+      "night": 61221.0,
+      "rab": 7.0
+     },
+     {
+      "decb": -45.0,
+      "n": 92,
+      "night": 61220.0,
+      "rab": 7.0
+     },
+     {
+      "decb": -45.0,
+      "n": 80,
+      "night": 61221.0,
+      "rab": 7.0
+     },
+     {
+      "decb": -44.0,
+      "n": 137,
+      "night": 61220.0,
+      "rab": 7.0
+     },
+     {
+      "decb": -44.0,
+      "n": 59,
+      "night": 61221.0,
+      "rab": 7.0
+     },
+     {
+      "decb": -43.0,
+      "n": 12,
+      "night": 61220.0,
+      "rab": 7.0
+     },
+     {
+      "decb": -43.0,
+      "n": 4,
+      "night": 61221.0,
+      "rab": 7.0
+     },
+     {
+      "decb": -46.0,
+      "n": 67,
+      "night": 61220.0,
+      "rab": 8.0
+     }
+    ],
+    "rows": 20
+   },
    "join_gaia_any": {
     "adql": "SELECT d.oid, d.mjd, g.oid_catalog, g.parallax, x.dist FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id JOIN alerce_tap.xmatch AS x ON x.oid = d.oid AND x.sid = d.sid AND x.catid = 1 JOIN alerce_tap.gaiadr3_source AS g ON g.oid_catalog = x.oid_catalog",
-    "error": "BrokerError: TAP query failed after 2 attempts: Field 'oid_catalog', value \"'4121251025822428928'\": required argument is not an integer"
+    "error": "BrokerError: TAP query failed after 2 attempts: Field 'oid_catalog', value \"'4828957624975225088'\": required argument is not an integer"
    },
    "join_gaia_nearby_any": {
     "adql": "SELECT d.oid, d.mjd, g.parallax, x.dist FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id JOIN alerce_tap.xmatch AS x ON x.oid = d.oid AND x.sid = d.sid AND x.catid = 1 JOIN alerce_tap.gaiadr3_source AS g ON g.oid_catalog = x.oid_catalog WHERE g.parallax > 10.0 AND x.dist < 1.5",
     "data": [
      {
-      "dist": 1.424301028251648,
-      "mjd": 61090.10343626949,
-      "oid": 313853497407176716,
-      "parallax": 11.908363409151889
+      "dist": 1.2508729696273804,
+      "mjd": 61090.33972556394,
+      "oid": 170028500586070037,
+      "parallax": 11.065927741416498
      },
      {
-      "dist": 1.424301028251648,
-      "mjd": 61090.10386545979,
-      "oid": 313853497407176716,
-      "parallax": 11.908363409151889
+      "dist": 1.496719479560852,
+      "mjd": 61091.245011524064,
+      "oid": 170028528931700792,
+      "parallax": 11.749453261210975
      },
      {
       "dist": 1.1859803199768066,
-      "mjd": 61091.244545365626,
+      "mjd": 61091.245477934455,
       "oid": 170028527274950697,
       "parallax": 20.31960975316586
      },
      {
-      "dist": 1.424301028251648,
+      "dist": 0.8036983609199524,
       "mjd": 61090.104298484046,
-      "oid": 313853497407176716,
-      "parallax": 11.908363409151889
+      "oid": 313783031965941762,
+      "parallax": 11.647621268852717
      },
      {
-      "dist": 1.424301028251648,
-      "mjd": 61090.10472905353,
-      "oid": 313853497407176716,
-      "parallax": 11.908363409151889
+      "dist": 0.7965619564056396,
+      "mjd": 61090.103003401935,
+      "oid": 170028487814414424,
+      "parallax": 11.216710889561385
      }
     ],
     "rows": 5
@@ -160,47 +286,47 @@
     "data": [
      {
       "band": 2,
-      "dec": 31.5485036,
-      "measurement_id": 3323321362715015013,
-      "mjd": 61077.3213657001,
-      "oid": 36029005848402626,
-      "ra": 117.1070729,
-      "sid": 0
-     },
-     {
-      "band": 2,
-      "dec": -14.5021343,
-      "measurement_id": 3325561071815015008,
-      "mjd": 61079.56107639987,
-      "oid": 36028949633852392,
-      "ra": 271.0526767,
-      "sid": 0
-     },
-     {
-      "band": 2,
-      "dec": 1.8834297,
-      "measurement_id": 3331504930815015014,
-      "mjd": 61085.50493060006,
-      "oid": 36028941604423954,
-      "ra": 246.1674118,
-      "sid": 0
-     },
-     {
-      "band": 2,
-      "dec": -12.3989377,
-      "measurement_id": 3325572800015015013,
-      "mjd": 61079.572800899856,
-      "oid": 36028941606822283,
-      "ra": 283.8182168,
-      "sid": 0
-     },
-     {
-      "band": 2,
-      "dec": -27.6126498,
-      "measurement_id": 3323315151015015167,
+      "dec": -27.4388669,
+      "measurement_id": 3323315151515010011,
       "mjd": 61077.31515049981,
-      "oid": 36028965691887055,
-      "ra": 146.5890893,
+      "oid": 36028973719755241,
+      "ra": 146.3568665,
+      "sid": 0
+     },
+     {
+      "band": 2,
+      "dec": -13.0554051,
+      "measurement_id": 3321568533415015033,
+      "mjd": 61075.56853009993,
+      "oid": 36028981770670851,
+      "ra": 277.1521348,
+      "sid": 0
+     },
+     {
+      "band": 2,
+      "dec": -0.8213769,
+      "measurement_id": 3325560592615010008,
+      "mjd": 61079.56059029978,
+      "oid": 36028949629139420,
+      "ra": 267.429582,
+      "sid": 0
+     },
+     {
+      "band": 2,
+      "dec": 1.0093352,
+      "measurement_id": 3332233280215015023,
+      "mjd": 61086.2332870001,
+      "oid": 36029005849130251,
+      "ra": 112.5030222,
+      "sid": 0
+     },
+     {
+      "band": 2,
+      "dec": 8.1197022,
+      "measurement_id": 3331520315615015003,
+      "mjd": 61085.520312500186,
+      "oid": 36028941605262291,
+      "ra": 253.5582786,
       "sid": 0
      }
     ],
@@ -253,47 +379,92 @@
     "rows": 5
    },
    "sample_lsst_detection": {
-    "adql": "SELECT oid, sid, measurement_id, psfflux, snr, reliability FROM alerce_tap.lsst_detection",
+    "adql": "SELECT oid, sid, measurement_id, psfflux, psffluxerr, templateflux, snr, reliability, raerr, decerr, extendedness, traillength, isnegative, isdipole, glint_trail FROM alerce_tap.lsst_detection",
     "data": [
      {
+      "decerr": 3.867568739224225e-05,
+      "extendedness": 0.019680744037032127,
+      "glint_trail": false,
+      "isdipole": false,
+      "isnegative": true,
       "measurement_id": 170028489858613355,
       "oid": 313761042377212034,
       "psfflux": -925.1854858398438,
+      "psffluxerr": 137.61270141601562,
+      "raerr": 4.2740262870211154e-05,
       "reliability": 0.33199822902679443,
       "sid": 1,
-      "snr": 6.804586410522461
+      "snr": 6.804586410522461,
+      "templateflux": 6657.1416015625,
+      "traillength": 1.3764543533325195
      },
      {
+      "decerr": 3.836737232632004e-05,
+      "extendedness": null,
+      "glint_trail": false,
+      "isdipole": false,
+      "isnegative": false,
       "measurement_id": 170028489844981830,
       "oid": 170028489844981830,
       "psfflux": 669.1904296875,
+      "psffluxerr": 122.03861999511719,
+      "raerr": 3.6528490454657e-05,
       "reliability": 0.10140680521726608,
       "sid": 1,
-      "snr": 5.279234886169434
+      "snr": 5.279234886169434,
+      "templateflux": -209.84750366210938,
+      "traillength": null
      },
      {
+      "decerr": 4.290901074455178e-07,
+      "extendedness": 0.9958180785179138,
+      "glint_trail": false,
+      "isdipole": true,
+      "isnegative": false,
       "measurement_id": 170028489865429017,
       "oid": 170028485672173579,
       "psfflux": -1314.09375,
+      "psffluxerr": 386.92578125,
+      "raerr": 5.076923912383791e-07,
       "reliability": 0.19890598952770233,
       "sid": 1,
-      "snr": 6.114821910858154
+      "snr": 6.114821910858154,
+      "templateflux": 172199.796875,
+      "traillength": 0.6458372473716736
      },
      {
+      "decerr": 1.9152064851368777e-05,
+      "extendedness": 0.5360466837882996,
+      "glint_trail": false,
+      "isdipole": false,
+      "isnegative": true,
       "measurement_id": 170028489865429116,
       "oid": 313893023232557192,
       "psfflux": -1364.37841796875,
+      "psffluxerr": 138.01805114746094,
+      "raerr": 2.65548824245343e-05,
       "reliability": 0.3166760206222534,
       "sid": 1,
-      "snr": 9.82197093963623
+      "snr": 9.82197093963623,
+      "templateflux": 6382.04345703125,
+      "traillength": 1.163180947303772
      },
      {
+      "decerr": 5.8433852245798334e-05,
+      "extendedness": 0.1767619103193283,
+      "glint_trail": false,
+      "isdipole": false,
+      "isnegative": false,
       "measurement_id": 170028489883779130,
       "oid": 170028489883779130,
       "psfflux": 713.693603515625,
+      "psffluxerr": 141.94183349609375,
+      "raerr": 6.091703471611254e-05,
       "reliability": 0.12223352491855621,
       "sid": 1,
-      "snr": 5.040578842163086
+      "snr": 5.040578842163086,
+      "templateflux": -350.1499938964844,
+      "traillength": 1.886473298072815
      }
     ],
     "rows": 5
@@ -892,90 +1063,171 @@
   },
   "url": "https://tap.alerce.online/tap",
   "wide_window_30d": {
-   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.snr, ld.reliability, ld.isnegative, ld.isdipole, ld.extendedness FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.mjd >= 61221.064385933576 AND d.mjd < 61251.064385933576",
+   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.templateflux, ld.templatefluxerr, ld.scienceflux, ld.sciencefluxerr, ld.snr, ld.reliability, ld.reliabilityversion, ld.raerr, ld.decerr, ld.isnegative, ld.isdipole, ld.dipolelength, ld.dipolechi2, ld.extendedness, ld.traillength, ld.trail_flag, ld.glint_trail, ld.pixelflags_bad, ld.pixelflags_cr, ld.pixelflags_crcenter, ld.pixelflags_edge, ld.pixelflags_offimage, ld.pixelflags_saturated, ld.pixelflags_saturatedcenter, ld.pixelflags_suspectcenter, ld.pixelflags_nodatacenter, ld.pixelflags_streak, ld.pixelflags_streakcenter, ld.pixelflags_injected, ld.pixelflags_injectedcenter, ld.visit, ld.detector FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.mjd >= 61221.08435837332 AND d.mjd < 61251.08435837332",
    "columns": [
     "band",
     "dec",
+    "decerr",
+    "detector",
+    "dipolechi2",
+    "dipolelength",
     "extendedness",
+    "glint_trail",
     "isdipole",
     "isnegative",
     "measurement_id",
     "mjd",
     "oid",
+    "pixelflags_bad",
+    "pixelflags_cr",
+    "pixelflags_crcenter",
+    "pixelflags_edge",
+    "pixelflags_injected",
+    "pixelflags_injectedcenter",
+    "pixelflags_nodatacenter",
+    "pixelflags_offimage",
+    "pixelflags_saturated",
+    "pixelflags_saturatedcenter",
+    "pixelflags_streak",
+    "pixelflags_streakcenter",
+    "pixelflags_suspectcenter",
     "psfflux",
     "psffluxerr",
     "ra",
+    "raerr",
     "reliability",
+    "reliabilityversion",
+    "scienceflux",
+    "sciencefluxerr",
     "sid",
-    "snr"
+    "snr",
+    "templateflux",
+    "templatefluxerr",
+    "trail_flag",
+    "traillength",
+    "visit"
    ],
    "rows": 20,
    "sample": [
     {
      "band": 2,
-     "dec": -25.21341919531169,
+     "dec": -22.69425006766437,
+     "decerr": 5.056896270616562e-07,
+     "detector": 151,
+     "dipolechi2": 68324.7578125,
+     "dipolelength": 0.00404879217967391,
      "extendedness": null,
+     "glint_trail": false,
      "isdipole": true,
      "isnegative": false,
-     "measurement_id": 170644227525972376,
-     "mjd": 61230.23236455001,
-     "oid": 170644227525972376,
-     "psfflux": -9643.55859375,
-     "psffluxerr": 446.9488830566406,
-     "ra": 286.2755440186596,
-     "reliability": 0.8315733671188354,
+     "measurement_id": 170644227661236697,
+     "mjd": 61230.23286556668,
+     "oid": 170644227661236697,
+     "pixelflags_bad": false,
+     "pixelflags_cr": true,
+     "pixelflags_crcenter": false,
+     "pixelflags_edge": false,
+     "pixelflags_injected": false,
+     "pixelflags_injectedcenter": false,
+     "pixelflags_nodatacenter": false,
+     "pixelflags_offimage": false,
+     "pixelflags_saturated": false,
+     "pixelflags_saturatedcenter": false,
+     "pixelflags_streak": false,
+     "pixelflags_streakcenter": false,
+     "pixelflags_suspectcenter": false,
+     "psfflux": -31072.025390625,
+     "psffluxerr": 897.2808227539062,
+     "ra": 288.4022933367444,
+     "raerr": 5.071225928077183e-07,
+     "reliability": 0.5634343028068542,
+     "reliabilityversion": "0.2",
+     "scienceflux": 582563.0625,
+     "sciencefluxerr": 798.2409057617188,
      "sid": 1,
-     "snr": 9.988719940185547
+     "snr": 11.359559059143066,
+     "templateflux": 617970.125,
+     "templatefluxerr": 550.685302734375,
+     "trail_flag": true,
+     "traillength": null,
+     "visit": 2026070800171
     },
     {
      "band": 2,
-     "dec": -25.278806400390902,
+     "dec": -23.00070404556168,
+     "decerr": 8.162417657331389e-07,
+     "detector": 147,
+     "dipolechi2": 2708.575439453125,
+     "dipolelength": 0.007707405369728804,
      "extendedness": null,
-     "isdipole": false,
-     "isnegative": true,
-     "measurement_id": 170644227525973015,
-     "mjd": 61230.23236455001,
-     "oid": 170644227525973015,
-     "psfflux": -1271.4111328125,
-     "psffluxerr": 256.0462341308594,
-     "ra": 286.24525683849646,
-     "reliability": 0.5040070414543152,
+     "glint_trail": false,
+     "isdipole": true,
+     "isnegative": false,
+     "measurement_id": 170644227659142312,
+     "mjd": 61230.23286556668,
+     "oid": 170644227659142312,
+     "pixelflags_bad": false,
+     "pixelflags_cr": true,
+     "pixelflags_crcenter": false,
+     "pixelflags_edge": false,
+     "pixelflags_injected": false,
+     "pixelflags_injectedcenter": false,
+     "pixelflags_nodatacenter": false,
+     "pixelflags_offimage": false,
+     "pixelflags_saturated": false,
+     "pixelflags_saturatedcenter": false,
+     "pixelflags_streak": false,
+     "pixelflags_streakcenter": false,
+     "pixelflags_suspectcenter": false,
+     "psfflux": -6724.720703125,
+     "psffluxerr": 319.2030944824219,
+     "ra": 288.49571186075036,
+     "raerr": 8.195983127734507e-07,
+     "reliability": 0.8063457012176514,
+     "reliabilityversion": "0.2",
+     "scienceflux": 62406.640625,
+     "sciencefluxerr": 288.55206298828125,
      "sid": 1,
-     "snr": 5.7950439453125
+     "snr": 9.860111236572266,
+     "templateflux": 71063.046875,
+     "templatefluxerr": 208.58963012695312,
+     "trail_flag": true,
+     "traillength": null,
+     "visit": 2026070800171
     }
    ],
    "verdict": "OK"
   },
   "with_gaia_join": {
-   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.snr, ld.reliability, ld.isnegative, ld.isdipole, ld.extendedness, g.oid_catalog AS gaia_source_id, g.parallax, x.dist AS xmatch_dist FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id JOIN alerce_tap.xmatch AS x ON x.oid = d.oid AND x.sid = d.sid AND x.catid = 1 JOIN alerce_tap.gaiadr3_source AS g ON g.oid_catalog = x.oid_catalog WHERE d.sid = 1 AND d.mjd >= 61248.064385933576 AND d.mjd < 61251.064385933576 AND (ld.snr > 6.0 OR ld.snr < -6.0) AND x.dist < 1.5 AND g.parallax > 10.0",
+   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.templateflux, ld.templatefluxerr, ld.scienceflux, ld.sciencefluxerr, ld.snr, ld.reliability, ld.reliabilityversion, ld.raerr, ld.decerr, ld.isnegative, ld.isdipole, ld.dipolelength, ld.dipolechi2, ld.extendedness, ld.traillength, ld.trail_flag, ld.glint_trail, ld.pixelflags_bad, ld.pixelflags_cr, ld.pixelflags_crcenter, ld.pixelflags_edge, ld.pixelflags_offimage, ld.pixelflags_saturated, ld.pixelflags_saturatedcenter, ld.pixelflags_suspectcenter, ld.pixelflags_nodatacenter, ld.pixelflags_streak, ld.pixelflags_streakcenter, ld.pixelflags_injected, ld.pixelflags_injectedcenter, ld.visit, ld.detector, g.parallax, x.dist AS xmatch_dist FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id JOIN alerce_tap.xmatch AS x ON x.oid = d.oid AND x.sid = d.sid AND x.catid = 1 JOIN alerce_tap.gaiadr3_source AS g ON g.oid_catalog = x.oid_catalog WHERE d.sid = 1 AND d.mjd >= 61248.08435837332 AND d.mjd < 61251.08435837332 AND (ld.snr > 6.0 OR ld.snr < -6.0) AND x.dist < 1.5 AND g.parallax > 10.0",
    "columns": [],
    "rows": 0,
    "sample": [],
    "verdict": "NO_DETECTIONS_IN_WINDOW"
   },
   "without_gaia_join": {
-   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.snr, ld.reliability, ld.isnegative, ld.isdipole, ld.extendedness FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.sid = 1 AND d.mjd >= 61248.064385933576 AND d.mjd < 61251.064385933576 AND (ld.snr > 6.0 OR ld.snr < -6.0)",
+   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.templateflux, ld.templatefluxerr, ld.scienceflux, ld.sciencefluxerr, ld.snr, ld.reliability, ld.reliabilityversion, ld.raerr, ld.decerr, ld.isnegative, ld.isdipole, ld.dipolelength, ld.dipolechi2, ld.extendedness, ld.traillength, ld.trail_flag, ld.glint_trail, ld.pixelflags_bad, ld.pixelflags_cr, ld.pixelflags_crcenter, ld.pixelflags_edge, ld.pixelflags_offimage, ld.pixelflags_saturated, ld.pixelflags_saturatedcenter, ld.pixelflags_suspectcenter, ld.pixelflags_nodatacenter, ld.pixelflags_streak, ld.pixelflags_streakcenter, ld.pixelflags_injected, ld.pixelflags_injectedcenter, ld.visit, ld.detector FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.sid = 1 AND d.mjd >= 61248.08435837332 AND d.mjd < 61251.08435837332 AND (ld.snr > 6.0 OR ld.snr < -6.0)",
    "columns": [],
    "rows": 0,
    "sample": [],
    "verdict": "NO_DETECTIONS_IN_WINDOW"
   },
   "without_sid_filter": {
-   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.snr, ld.reliability, ld.isnegative, ld.isdipole, ld.extendedness FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.mjd >= 61248.064385933576 AND d.mjd < 61251.064385933576 AND (ld.snr > 6.0 OR ld.snr < -6.0)",
+   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.templateflux, ld.templatefluxerr, ld.scienceflux, ld.sciencefluxerr, ld.snr, ld.reliability, ld.reliabilityversion, ld.raerr, ld.decerr, ld.isnegative, ld.isdipole, ld.dipolelength, ld.dipolechi2, ld.extendedness, ld.traillength, ld.trail_flag, ld.glint_trail, ld.pixelflags_bad, ld.pixelflags_cr, ld.pixelflags_crcenter, ld.pixelflags_edge, ld.pixelflags_offimage, ld.pixelflags_saturated, ld.pixelflags_saturatedcenter, ld.pixelflags_suspectcenter, ld.pixelflags_nodatacenter, ld.pixelflags_streak, ld.pixelflags_streakcenter, ld.pixelflags_injected, ld.pixelflags_injectedcenter, ld.visit, ld.detector FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.mjd >= 61248.08435837332 AND d.mjd < 61251.08435837332 AND (ld.snr > 6.0 OR ld.snr < -6.0)",
    "columns": [],
    "rows": 0,
    "sample": [],
    "verdict": "NO_DETECTIONS_IN_WINDOW"
   },
   "without_snr_cut": {
-   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.snr, ld.reliability, ld.isnegative, ld.isdipole, ld.extendedness FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.mjd >= 61248.064385933576 AND d.mjd < 61251.064385933576",
+   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.templateflux, ld.templatefluxerr, ld.scienceflux, ld.sciencefluxerr, ld.snr, ld.reliability, ld.reliabilityversion, ld.raerr, ld.decerr, ld.isnegative, ld.isdipole, ld.dipolelength, ld.dipolechi2, ld.extendedness, ld.traillength, ld.trail_flag, ld.glint_trail, ld.pixelflags_bad, ld.pixelflags_cr, ld.pixelflags_crcenter, ld.pixelflags_edge, ld.pixelflags_offimage, ld.pixelflags_saturated, ld.pixelflags_saturatedcenter, ld.pixelflags_suspectcenter, ld.pixelflags_nodatacenter, ld.pixelflags_streak, ld.pixelflags_streakcenter, ld.pixelflags_injected, ld.pixelflags_injectedcenter, ld.visit, ld.detector FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.mjd >= 61248.08435837332 AND d.mjd < 61251.08435837332",
    "columns": [],
    "rows": 0,
    "sample": [],
    "verdict": "NO_DETECTIONS_IN_WINDOW"
   }
  },
- "now_mjd": 61251.0635,
- "probed_at_utc": "2026-07-30T01:31:26Z",
+ "now_mjd": 61251.08345,
+ "probed_at_utc": "2026-07-30T02:00:09Z",
  "verdict": "OK"
 }

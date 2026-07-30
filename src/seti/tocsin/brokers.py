@@ -91,9 +91,17 @@ FINK_LSST_API = "https://api.lsst.fink-portal.org"
 # every colour measurement in the channel.
 ALERCE_BAND = {6: "u", 1: "g", 2: "r", 3: "i", 4: "z", 5: "y"}
 
-# ALeRCE `sid` (survey-internal source table): 1 = diaObject, 2 = ssObject.
-# Selecting sid = 1 excludes alerts already associated with a known minor
-# planet, which is ~400 per visit and up to ~5,000 near the ecliptic.
+# ALeRCE `sid`.  Documented as the source table (1 = diaObject, 2 = ssObject),
+# which if true means selecting sid = 1 excludes alerts already associated with a
+# known minor planet (~400 per visit, up to ~5,000 near the ecliptic).
+#
+# TREAT THIS AS UNVERIFIED.  `alerce_tap.object` carries BOTH `sid` and `tid`,
+# which is exactly what a survey-id/telescope-id pair looks like; if `sid` is
+# really a survey id then filtering `sid = 1` selects ZTF and the inner join to
+# `lsst_detection` returns precisely nothing --- a clean, plausible, wrong null.
+# `AlerceTAP.diagnostics()` measures the true values on the runner, and
+# `sid_diaobject` is a parameter everywhere rather than a constant, so the answer
+# can be applied without touching the query code.
 ALERCE_SID_DIAOBJECT = 1
 ALERCE_SID_SSOBJECT = 2
 
@@ -216,12 +224,124 @@ class AlerceTAP:
             out.setdefault(t, []).append(str(r.get("column_name", "")))
         return out
 
+    # -- diagnostics -------------------------------------------------------
+    def diagnostics(self, now_mjd: float, gaia_catid: int = 1) -> dict:
+        """A battery of small, independent queries that characterise the service.
+
+        Written because the first probe returned an empty night window and the
+        cause was not decidable from the schema dump alone.  Each query runs on
+        its own and its error is captured rather than raised, so one failure
+        cannot mask the others --- the point is to come back with a *complete*
+        picture in a single runner pass rather than to iterate blind.
+
+        What each group is actually asking:
+
+        * ``sample_*`` --- what do real rows look like?  This is what settles the
+          meaning of ``sid``, which is the leading suspect for the empty window.
+        * ``mjd_*`` --- how far does the data actually extend?  If the newest
+          ``mjd`` is weeks old, the window was empty because ALeRCE's LSST
+          ingestion lags, not because the query is wrong.
+        * ``count_*`` --- how much survives each cut, added one at a time, so the
+          exact clause that empties the result is identifiable.
+        * ``join_*`` --- do the joins produce rows at all, independent of time?
+        """
+        out: dict = {}
+
+        def run(name: str, adql: str, maxrec: int = 5) -> None:
+            try:
+                rows = self.query(adql, maxrec=maxrec, retries=2)
+                out[name] = {"rows": len(rows), "data": rows[:maxrec], "adql": adql}
+            except Exception as exc:                      # noqa: BLE001
+                out[name] = {"error": f"{type(exc).__name__}: {exc}"[:500],
+                             "adql": adql}
+
+        # What tables exist at all.
+        run("tables", "SELECT table_name FROM TAP_SCHEMA.tables", maxrec=200)
+
+        # What a real row looks like --- settles the sid question.
+        run("sample_lsst_detection",
+            "SELECT oid, sid, measurement_id, psfflux, snr, reliability "
+            "FROM alerce_tap.lsst_detection", maxrec=5)
+        run("sample_detection",
+            "SELECT oid, sid, measurement_id, mjd, ra, dec, band "
+            "FROM alerce_tap.detection", maxrec=5)
+        run("sample_object",
+            "SELECT oid, sid, tid, meanra, meandec, firstmjd, lastmjd, n_det "
+            "FROM alerce_tap.object", maxrec=5)
+        run("sample_forced_photometry",
+            "SELECT oid, sid, mjd, ra, dec, band FROM alerce_tap.forced_photometry",
+            maxrec=5)
+        run("sample_xmatch",
+            "SELECT oid, sid, catid, dist, oid_catalog FROM alerce_tap.xmatch",
+            maxrec=5)
+
+        # Distributions of the discriminating keys.  `object` is far smaller than
+        # `detection`, so grouping it is cheap and answers the same question.
+        run("object_sid_tid",
+            "SELECT sid, tid, COUNT(*) AS n FROM alerce_tap.object "
+            "GROUP BY sid, tid", maxrec=50)
+        run("xmatch_catid",
+            "SELECT catid, COUNT(*) AS n FROM alerce_tap.xmatch GROUP BY catid",
+            maxrec=50)
+
+        # How current is the data?
+        run("mjd_range_detection",
+            "SELECT MIN(mjd) AS mjd_min, MAX(mjd) AS mjd_max, COUNT(*) AS n "
+            "FROM alerce_tap.detection", maxrec=5)
+        run("mjd_range_object",
+            "SELECT MIN(firstmjd) AS first_min, MAX(lastmjd) AS last_max, "
+            "COUNT(*) AS n FROM alerce_tap.object", maxrec=5)
+        run("mjd_range_lsst_join",
+            "SELECT MIN(d.mjd) AS mjd_min, MAX(d.mjd) AS mjd_max, COUNT(*) AS n "
+            "FROM alerce_tap.detection AS d "
+            "JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
+            "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id",
+            maxrec=5)
+
+        # Add one cut at a time, so the clause that empties the result is named.
+        for days in (1, 3, 7, 30, 120):
+            run(f"count_detection_last_{days}d",
+                "SELECT COUNT(*) AS n FROM alerce_tap.detection "
+                f"WHERE mjd >= {float(now_mjd) - days}", maxrec=5)
+        run("count_lsst_join_last_30d",
+            "SELECT COUNT(*) AS n FROM alerce_tap.detection AS d "
+            "JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
+            "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id "
+            f"WHERE d.mjd >= {float(now_mjd) - 30}", maxrec=5)
+        run("count_lsst_join_sid1_last_30d",
+            "SELECT COUNT(*) AS n FROM alerce_tap.detection AS d "
+            "JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
+            "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id "
+            f"WHERE d.sid = 1 AND d.mjd >= {float(now_mjd) - 30}", maxrec=5)
+
+        # Do the joins yield anything at all, with no time filter?
+        run("join_gaia_any",
+            "SELECT d.oid, d.mjd, g.oid_catalog, g.parallax, x.dist "
+            "FROM alerce_tap.detection AS d "
+            "JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
+            "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id "
+            f"JOIN alerce_tap.xmatch AS x ON x.oid = d.oid AND x.sid = d.sid "
+            f"AND x.catid = {int(gaia_catid)} "
+            "JOIN alerce_tap.gaiadr3_source AS g ON g.oid_catalog = x.oid_catalog",
+            maxrec=5)
+        run("join_gaia_nearby_any",
+            "SELECT d.oid, d.mjd, g.parallax, x.dist "
+            "FROM alerce_tap.detection AS d "
+            "JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
+            "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id "
+            f"JOIN alerce_tap.xmatch AS x ON x.oid = d.oid AND x.sid = d.sid "
+            f"AND x.catid = {int(gaia_catid)} "
+            "JOIN alerce_tap.gaiadr3_source AS g ON g.oid_catalog = x.oid_catalog "
+            "WHERE g.parallax > 10.0 AND x.dist < 1.5", maxrec=5)
+        return out
+
     # -- stage A: the night's detections on nearby stars -------------------
     def night_detections(self, mjd_lo: float, mjd_hi: float,
                          parallax_min_mas: float | None = 10.0,
                          xmatch_max_arcsec: float = 1.5,
                          min_abs_snr: float = 6.0,
                          gaia_catid: int = 1,
+                         sid_diaobject: int | None = ALERCE_SID_DIAOBJECT,
                          extra_where: str = "",
                          maxrec: int | None = None) -> BrokerResult:
         """Every LSST difference-image detection in ``[mjd_lo, mjd_hi)`` on a *nearby* star.
@@ -246,8 +366,13 @@ class AlerceTAP:
         # Optional per-epoch columns: present in the alert packet, but their
         # exact TAP spelling is verified by the probe, so they are added by the
         # caller through `extra_select` rather than assumed here.
-        where = [f"d.sid = {ALERCE_SID_DIAOBJECT}",
-                 f"d.mjd >= {float(mjd_lo)}", f"d.mjd < {float(mjd_hi)}"]
+        where = [f"d.mjd >= {float(mjd_lo)}", f"d.mjd < {float(mjd_hi)}"]
+        # `sid_diaobject=None` drops the filter entirely.  The inner join to
+        # `lsst_detection` already restricts the result to LSST rows, so the sid
+        # cut is an optimisation and a solar-system exclusion --- not something
+        # worth returning zero rows over if the encoding is not what we assumed.
+        if sid_diaobject is not None:
+            where.insert(0, f"d.sid = {int(sid_diaobject)}")
         joins = ["JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
                  "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id"]
         if min_abs_snr > 0:
@@ -256,11 +381,14 @@ class AlerceTAP:
         if parallax_min_mas is not None:
             joins.append(f"JOIN alerce_tap.xmatch AS x ON x.oid = d.oid "
                          f"AND x.sid = d.sid AND x.catid = {int(gaia_catid)}")
+            # The join key is `oid_catalog` on BOTH sides.  ALeRCE's Gaia table
+            # has no `source_id` column --- the live probe caught that guess.
             joins.append("JOIN alerce_tap.gaiadr3_source AS g "
-                         "ON g.source_id = x.oid_catalog")
+                         "ON g.oid_catalog = x.oid_catalog")
             where.append(f"x.dist < {float(xmatch_max_arcsec)}")
             where.append(f"g.parallax > {float(parallax_min_mas)}")
-            sel += ["g.source_id AS gaia_source_id", "g.parallax", "x.dist AS xmatch_dist"]
+            sel += ["g.oid_catalog AS gaia_source_id", "g.parallax",
+                    "x.dist AS xmatch_dist"]
         if extra_where:
             where.append(f"({extra_where})")
         adql = ("SELECT " + ", ".join(sel) + " FROM alerce_tap.detection AS d "
@@ -279,6 +407,7 @@ class AlerceTAP:
                                 parallax_min_mas: float | None = 10.0,
                                 xmatch_max_arcsec: float = 1.5,
                                 gaia_catid: int = 1,
+                                sid_diaobject: int | None = ALERCE_SID_DIAOBJECT,
                                 maxrec: int | None = None) -> BrokerResult:
         """Forced photometry on *every* tracked nearby star in the night window.
 
@@ -298,16 +427,19 @@ class AlerceTAP:
         res = BrokerResult()
         sel = ["fp.oid", "fp.mjd", "fp.ra", "fp.dec"]
         joins = []
-        where = [f"fp.sid = {ALERCE_SID_DIAOBJECT}",
-                 f"fp.mjd >= {float(mjd_lo)}", f"fp.mjd < {float(mjd_hi)}"]
+        where = [f"fp.mjd >= {float(mjd_lo)}", f"fp.mjd < {float(mjd_hi)}"]
+        if sid_diaobject is not None:
+            where.insert(0, f"fp.sid = {int(sid_diaobject)}")
         if parallax_min_mas is not None:
             joins.append(f"JOIN alerce_tap.xmatch AS x ON x.oid = fp.oid "
                          f"AND x.sid = fp.sid AND x.catid = {int(gaia_catid)}")
+            # The join key is `oid_catalog` on BOTH sides.  ALeRCE's Gaia table
+            # has no `source_id` column --- the live probe caught that guess.
             joins.append("JOIN alerce_tap.gaiadr3_source AS g "
-                         "ON g.source_id = x.oid_catalog")
+                         "ON g.oid_catalog = x.oid_catalog")
             where.append(f"x.dist < {float(xmatch_max_arcsec)}")
             where.append(f"g.parallax > {float(parallax_min_mas)}")
-            sel.append("g.source_id AS gaia_source_id")
+            sel.append("g.oid_catalog AS gaia_source_id")
         adql = ("SELECT " + ", ".join(sel) +
                 " FROM alerce_tap.forced_photometry AS fp " + " ".join(joins) +
                 " WHERE " + " AND ".join(where))

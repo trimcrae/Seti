@@ -731,6 +731,74 @@ def test_alerce_adql_carries_the_reductions_that_make_a_night_affordable():
     assert "d.mjd >= 61500.0" in adql and "d.mjd < 61501.0" in adql
 
 
+def test_gaia_join_uses_oid_catalog_on_both_sides():
+    """Regression: ALeRCE's Gaia table has no `source_id` column.
+
+    The first live probe failed with "column 'source_id' could not be located in
+    table metadata", which broke both the nearby-star pre-cut and the
+    forced-photometry denominator.  The join key is `oid_catalog` on both sides.
+    """
+    tap = AlerceTAP()
+    captured = {}
+    tap.query = lambda adql, maxrec=None, retries=4: (
+        captured.setdefault("adql", adql) and [])
+    tap.night_detections(61500.0, 61501.0, parallax_min_mas=10.0)
+    adql = captured["adql"]
+    assert "g.oid_catalog = x.oid_catalog" in adql
+    # `g.source_id` is the column that does not exist; the output ALIAS
+    # `gaia_source_id` is fine and must not trip this check.
+    assert "g.source_id" not in adql
+
+
+def test_sid_filter_is_optional_so_a_wrong_guess_cannot_empty_the_night():
+    """`sid`'s meaning is unverified; the join to lsst_detection is what matters.
+
+    If `sid` turns out to be a survey id rather than a source-table id, filtering
+    on it would select ZTF and return a clean, plausible, wrong null.  Passing
+    None must drop the clause entirely.
+    """
+    tap = AlerceTAP()
+    captured = {}
+    tap.query = lambda adql, maxrec=None, retries=4: (
+        captured.setdefault("adql", adql) and [])
+    tap.night_detections(61500.0, 61501.0, parallax_min_mas=None,
+                         sid_diaobject=None)
+    # The JOIN legitimately contains `d.sid = ld.sid`; what must be gone is the
+    # literal WHERE filter on a specific sid value.
+    assert "d.sid = 1" not in captured["adql"]
+    # The LSST restriction survives regardless, via the inner join.
+    assert "alerce_tap.lsst_detection" in captured["adql"]
+
+    captured.clear()
+    tap.forced_photometry_night(61500.0, 61501.0, parallax_min_mas=None,
+                                sid_diaobject=None)
+    assert "fp.sid = 1" not in captured["adql"]
+
+    # ... and present when a value IS given, so the filter still works.
+    captured.clear()
+    tap.night_detections(61500.0, 61501.0, parallax_min_mas=None, sid_diaobject=1)
+    assert "d.sid = 1" in captured["adql"]
+
+
+def test_diagnostics_isolates_each_failure_instead_of_raising():
+    """One failing diagnostic must not mask the others --- that is the whole point."""
+    tap = AlerceTAP()
+    calls = []
+
+    def _flaky(adql, maxrec=None, retries=4):
+        calls.append(adql)
+        if "TAP_SCHEMA" in adql:
+            raise BrokerError("schema unavailable")
+        return [{"n": 7}]
+
+    tap.query = _flaky
+    diag = tap.diagnostics(61500.0)
+    assert "error" in diag["tables"]                    # the failure is recorded
+    assert diag["sample_detection"]["rows"] == 1        # ... and does not stop the rest
+    assert "count_detection_last_30d" in diag
+    assert all("adql" in v for v in diag.values())
+
+
 def test_alerce_forced_photometry_query_is_the_denominator_not_the_numerator():
     tap = AlerceTAP()
     captured = {}

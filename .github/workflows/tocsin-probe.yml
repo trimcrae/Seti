@@ -56,14 +56,27 @@ jobs:
         run: |
           [ -f results/tocsin/probe.json ] && python - <<'PY'
           import json, pathlib
-          p = pathlib.Path("results/tocsin/probe.json")
-          rec = json.loads(p.read_text())
-          print("verdict:", rec.get("verdict"))
+          rec = json.loads(pathlib.Path("results/tocsin/probe.json").read_text())
           al = rec.get("alerce", {})
-          print("alerce reached:", al.get("reached"))
-          for k in ("with_gaia_join", "without_gaia_join", "forced_photometry"):
-              print(f"  {k}: {json.dumps(al.get(k, {}))[:400]}")
-          print("tables:", sorted((al.get("schema") or {}).keys()))
+          print("verdict:", rec.get("verdict"), "| reached:", al.get("reached"),
+                "| now_mjd:", rec.get("now_mjd"))
+          print("\n=== schema tables ===")
+          print(sorted((al.get("schema") or {}).keys()))
+          print("\n=== diagnostics ===")
+          for name, d in (al.get("diagnostics") or {}).items():
+              if "error" in d:
+                  print(f"  {name}: ERROR {d['error'][:220]}")
+              else:
+                  print(f"  {name}: rows={d.get('rows')} "
+                        f"{json.dumps(d.get('data', []))[:400]}")
+          print("\n=== live query variants ===")
+          for k in ("with_gaia_join", "without_gaia_join", "without_sid_filter",
+                    "without_snr_cut", "wide_window_30d", "forced_photometry"):
+              d = al.get(k, {})
+              if "error" in d:
+                  print(f"  {k}: ERROR {d['error'][:220]}")
+              else:
+                  print(f"  {k}: verdict={d.get('verdict')} rows={d.get('rows')}")
           PY
       - name: Commit the probe record
         if: always()

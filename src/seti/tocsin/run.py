@@ -37,6 +37,7 @@ import numpy as np
 import pandas as pd
 
 from .brokers import (
+    ALERCE_SID_DIAOBJECT,
     ALERCE_TAP,
     AlerceTAP,
     BrokerError,
@@ -165,29 +166,53 @@ def probe(cfg=None, out_dir: str | Path | None = None) -> dict:
     except Exception as exc:                              # noqa: BLE001
         rec["alerce"]["error"] = f"{type(exc).__name__}: {exc}"[:800]
 
-    # A tiny live slice proves the join actually works, which the schema dump
-    # alone does not: TAP_SCHEMA can list a column that no row populates.
+    # The diagnostic battery.  A schema dump says a column exists; it does not
+    # say whether any row populates it, how current the data are, or what the
+    # discriminating keys actually mean.  The first probe returned an empty
+    # night window and the schema alone could not say why, so this runs a set of
+    # small independent queries and captures each error separately.
+    if rec["alerce"]["reached"]:
+        try:
+            rec["alerce"]["diagnostics"] = tap.diagnostics(
+                _now_mjd(), gaia_catid=int(conf["acquire"].get("gaia_catid", 1)))
+        except Exception as exc:                          # noqa: BLE001
+            rec["alerce"]["diagnostics"] = {
+                "error": f"{type(exc).__name__}: {exc}"[:800]}
+
+    # A tiny live slice of the real query, in both variants.
     if rec["alerce"]["reached"]:
         hi = _now_mjd()
         lo = hi - 3.0
-        for label, plx in (("with_gaia_join", conf["acquire"]["parallax_min_mas"]),
-                           ("without_gaia_join", None)):
+        # Variants ordered so that the first one to return rows identifies the
+        # clause responsible for an empty result: Gaia join, then the sid filter,
+        # then the SNR cut, then the window width.
+        variants = (
+            ("with_gaia_join", conf["acquire"]["parallax_min_mas"],
+             ALERCE_SID_DIAOBJECT, float(conf["screen"]["min_abs_snr"]), 3.0),
+            ("without_gaia_join", None,
+             ALERCE_SID_DIAOBJECT, float(conf["screen"]["min_abs_snr"]), 3.0),
+            ("without_sid_filter", None, None,
+             float(conf["screen"]["min_abs_snr"]), 3.0),
+            ("without_snr_cut", None, None, 0.0, 3.0),
+            ("wide_window_30d", None, None, 0.0, 30.0),
+        )
+        for label, plx, sid, snr, span in variants:
             try:
                 r = tap.night_detections(
-                    lo, hi, parallax_min_mas=plx,
+                    hi - span, hi, parallax_min_mas=plx,
                     xmatch_max_arcsec=float(conf["acquire"]["xmatch_max_arcsec"]),
-                    min_abs_snr=float(conf["screen"]["min_abs_snr"]), maxrec=20)
+                    min_abs_snr=snr, sid_diaobject=sid, maxrec=20)
                 rec["alerce"][label] = {
                     "verdict": r.verdict, "rows": len(r.rows),
                     "columns": sorted(r.rows[0].keys()) if r.rows else [],
+                    "sample": r.rows[:2],
                     "adql": r.notes[0] if r.notes else "",
                 }
             except Exception as exc:                      # noqa: BLE001
                 rec["alerce"][label] = {"error": f"{type(exc).__name__}: {exc}"[:800]}
         try:
             fp = tap.forced_photometry_night(
-                lo, hi, parallax_min_mas=conf["acquire"]["parallax_min_mas"],
-                maxrec=20)
+                lo, hi, parallax_min_mas=None, sid_diaobject=None, maxrec=20)
             rec["alerce"]["forced_photometry"] = {
                 "verdict": fp.verdict, "rows": len(fp.rows),
                 "columns": sorted(fp.rows[0].keys()) if fp.rows else []}

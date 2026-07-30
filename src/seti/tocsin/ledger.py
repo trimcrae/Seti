@@ -359,11 +359,13 @@ class Ledger:
         self.fdr_threshold = thresh
         for tid, rej in zip(ids, reject, strict=True):
             self._set_tier(self.targets[tid], bool(rej), max_duty_cycle,
-                           timing_alpha, max_grey_z)
+                           timing_alpha, max_grey_z,
+                           min_visits_for_duty=min_visits_for_rate)
         return self.summary()
 
     def _set_tier(self, rec: dict, fdr_reject: bool, max_duty_cycle: float,
-                  timing_alpha: float, max_grey_z: float = 3.0) -> None:
+                  timing_alpha: float, max_grey_z: float = 3.0,
+                  min_visits_for_duty: int = 5) -> None:
         events = rec["events"]
         k = len(events)
         grey_ok = [e for e in events
@@ -374,10 +376,21 @@ class Ledger:
         # residual (proper-motion dipole, template defect), not a beacon.  This
         # test costs nothing and removes the single most likely systematic for a
         # high-proper-motion nearby-star sample.
-        if np.isfinite(duty) and duty > max_duty_cycle and rec["visits_exact"]:
+        #
+        # It needs a real denominator to mean anything.  A star discovered
+        # tonight has one visit and one event, so its duty cycle is 1.0 by
+        # arithmetic --- applying the cut there would silently reject EVERY new
+        # detection on the night it is found, which is the one night that
+        # matters most.  Below `min_visits_for_duty` the statistic is not
+        # computed against, and the target waits instead.
+        n_visits = int(rec.get("n_visits") or 0)
+        if (np.isfinite(duty) and duty > max_duty_cycle and rec["visits_exact"]
+                and n_visits >= int(min_visits_for_duty)):
             rec["tier"] = "none"
             _note(rec, "rejected_high_duty_cycle")
             return
+        if np.isfinite(duty) and duty > max_duty_cycle and n_visits < int(min_visits_for_duty):
+            _note(rec, "duty_cycle_not_yet_testable")
         tier = "none"
         if k >= 1:
             tier = "watch"

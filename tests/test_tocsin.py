@@ -560,6 +560,25 @@ def test_visit_history_is_counted_in_nights_not_epochs():
     assert led.targets["4242"]["visits_exact"]
 
 
+def test_a_first_night_detection_is_not_killed_by_its_own_duty_cycle():
+    """Regression: one visit and one event is a duty cycle of 1.0 by arithmetic.
+
+    Applying the subtraction-residual cut there would reject every new detection
+    on the night it is found --- the one night that matters most.
+    """
+    led = L.Ledger()
+    led.add_night("n1", [_event()], target_visits=1, targets_in_footprint=1,
+                  alerts_seen=1, visit_history={"4242": [61500.2]})
+    led.assess(max_duty_cycle=0.2, min_visits_for_rate=5)
+    rec = led.targets["4242"]
+    assert rec["duty_cycle"] == 1.0
+    # `interest`, not `watch`: this event was colour-confirmed grey.  What
+    # matters is that it is not `none` --- it survived to be looked at again.
+    assert rec["tier"] == "interest"
+    assert "duty_cycle_not_yet_testable" in rec["notes"]
+    assert "rejected_high_duty_cycle" not in rec["notes"]
+
+
 def test_approximate_denominator_cannot_reach_candidate_tier():
     led = L.Ledger()
     evs = [_event(night="n1", mjd=61500.2), _event(night="n2", mjd=61510.2)]
@@ -752,6 +771,116 @@ def test_config_defaults_are_complete_and_overridable():
         assert section in conf
     # The shipped config must keep the deliberate no-extra-reliability-cut.
     assert float(conf["screen"]["min_reliability"]) == 0.0
+
+
+def test_nightly_screen_end_to_end_against_a_stubbed_broker(tmp_path, monkeypatch):
+    """Full nightly path with the network stubbed: broker rows in, ledger out.
+
+    The unit tests cover the pieces; this covers the plumbing between them --- the
+    ALeRCE row -> normalisation -> proper-motion match -> funnel -> forced-photometry
+    denominator -> ledger -> committed tables chain that the cron actually runs.
+    """
+    from seti.tocsin import run as R
+
+    ra, dec, pm = 150.0, -30.0, 400.0
+    epoch = R.mjd_to_jyear(61500.5) if hasattr(R, "mjd_to_jyear") else 2026.4
+    from seti.tocsin.screen import mjd_to_jyear
+    epoch = mjd_to_jyear(61500.5)
+    ra_now, dec_now = T.propagate_pm(ra, dec, pm, 0.0, GAIA_EPOCH, epoch)
+
+    tpath = tmp_path / "targets.parquet"
+    pd.DataFrame([_target(source_id="777", ra=ra, dec=dec, pmra=pm)]).to_parquet(tpath)
+
+    def _row(band_int, flux, mjd):
+        return {"measurement_id": f"m{band_int}-{mjd}", "oid": "obj9", "sid": 1,
+                "mjd": mjd, "ra": float(ra_now), "dec": float(dec_now),
+                "band": band_int, "psfflux": flux, "psffluxerr": abs(flux) * 0.03,
+                "snr": 33.0, "reliability": 0.95, "isdipole": False,
+                "isnegative": False, "extendedness": 0.0,
+                "templateflux": flux / 0.1, "templatefluxerr": flux / 0.1 * 0.01}
+
+    class _StubTAP:
+        def __init__(self, *a, **kw):
+            pass
+
+        def night_detections(self, lo, hi, **kw):
+            from seti.tocsin.brokers import BrokerResult
+            # A grey flash: 10% fractional amplitude in both g and r, the two
+            # filters of one LSST in-night pair ~33 min apart.
+            return BrokerResult(rows=[_row(1, 900.0, 61500.50),
+                                      _row(2, 4000.0, 61500.50 + 33.0 / 1440.0)],
+                                reached=True, verdict="OK", notes=["adql=stub"])
+
+        def forced_photometry_night(self, lo, hi, **kw):
+            from seti.tocsin.brokers import BrokerResult
+            return BrokerResult(
+                rows=[{"oid": "obj9", "mjd": 61500.50 + 0.001 * i,
+                       "ra": float(ra_now), "dec": float(dec_now)}
+                      for i in range(2)],
+                reached=True, verdict="OK")
+
+    monkeypatch.setattr(R, "AlerceTAP", _StubTAP)
+
+    class _Cfg:
+        root = tmp_path
+    (tmp_path / "config").mkdir(exist_ok=True)
+    (tmp_path / "config" / "tocsin.yaml").write_text(
+        "ledger:\n  path: results/tocsin/ledger.json\n")
+
+    out = tmp_path / "results" / "tocsin"
+    s = R.screen_night(_Cfg(), targets_path=tpath, out_dir=out,
+                       mjd_lo=61500.0, mjd_hi=61501.0)
+
+    assert s["verdict"] == "OK"
+    assert s["counts"]["detections_pulled"] == 2
+    assert s["counts"]["events_kept"] == 1          # one star-NIGHT, two bands
+    assert s["denominator"] == "forced_photometry_exact"
+    assert s["counts"]["target_nights_screened"] == 1
+
+    led = L.Ledger.load(tmp_path / "results" / "tocsin" / "ledger.json")
+    rec = led.targets["777"]
+    assert rec["n_events"] == 1
+    assert rec["visits_exact"] and rec["n_visits"] == 1
+    ev = rec["events"][0]
+    assert ev["polarity"] == "flash"
+    assert ev["grey_tested"] and abs(ev["grey_z"]) < 3.0
+    assert sorted(ev["bands"]) == ["g", "r"]
+    # A single grey-confirmed event is `interest`; only REPETITION can take a
+    # target to `candidate`, however clean one night looks.
+    assert rec["tier"] == "interest"
+
+    # The committed artefacts the cron pushes back must all exist.
+    for name in ("summary.json", "watchlist.csv", "events_latest.csv"):
+        assert (out / name).exists(), name
+    json.loads((out / "summary.json").read_text())
+    assert len(pd.read_csv(out / "watchlist.csv")) == 1
+
+
+def test_screen_night_reports_an_unreachable_broker_as_such(tmp_path, monkeypatch):
+    """An unreachable broker must never look like a clean null."""
+    from seti.tocsin import run as R
+    from seti.tocsin.brokers import BrokerError
+
+    tpath = tmp_path / "targets.parquet"
+    pd.DataFrame([_target(source_id="777")]).to_parquet(tpath)
+
+    class _DeadTAP:
+        def __init__(self, *a, **kw):
+            pass
+
+        def night_detections(self, *a, **kw):
+            raise BrokerError("TAP query failed after 4 attempts: connection refused")
+
+    monkeypatch.setattr(R, "AlerceTAP", _DeadTAP)
+
+    class _Cfg:
+        root = tmp_path
+    out = tmp_path / "res"
+    s = R.screen_night(_Cfg(), targets_path=tpath, out_dir=out,
+                       mjd_lo=61500.0, mjd_hi=61501.0)
+    assert s["verdict"] == "NO_DATA_REACHED"
+    assert "connection refused" in s["error"]
+    assert json.loads((out / "summary.json").read_text())["verdict"] == "NO_DATA_REACHED"
 
 
 def test_screen_night_without_a_target_list_says_so(tmp_path):

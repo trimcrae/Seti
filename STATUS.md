@@ -105,6 +105,33 @@ run windows were double-counting trials, which deflates the ensemble rate and
 makes every p-value **too small** — anti-conservative, i.e. it manufactures
 significance. The ledger now folds night by night.
 
+**RUNNING ON REAL DATA (2026-07-30).** Verification window MJD 61228→61235.4,
+254k-target Gaia list, ~62 s of network time (`night_detections` 42.8 s,
+`forced_photometry` 13.8 s, `footprint` 5.2 s):
+
+| quantity | value |
+|---|---|
+| funnel | 378 detections → 238 quality → 22 matched → 20 associated → **13 events** |
+| rejections | 140 extended, 5 **chromatic**, 2 astrometric offset |
+| denominator | `observed_footprint`, **16,816 star-nights** |
+| ensemble rate | **9.8×10⁻⁴** per star-night (a real rate, not a tautology) |
+| baselines | 13/13 from Rubin's own `templateFlux` |
+| tiers | 16 watch, 3 interest, **0 candidate** |
+
+Three things that matter in that table. The **denominator works** — forced
+photometry covered 0%, so it comes from the observed footprint instead
+(detections trace where the camera pointed). The **colour test fires**: five
+events rejected as chromatic by redder-band non-detection, a rejection that had
+never once fired before — this is precisely the discriminant the ZTF glint
+channel died on (15 candidates, all chromatic flares). And **zero candidates**,
+which is correct: promotion requires recurrence, and recurrence needs nights.
+
+Two further bugs the live runs exposed, both fixed: every event was single-band
+so the two-band colour test was dormant (hence the one-sided non-detection test,
+`docs/tocsin.md` §3.2), and the reach metric counted only *surviving* events —
+so a window in which the test had just killed five flares reported "the
+discriminant did not run at all", concealing its own success.
+
 *Next decisive action:* let `tocsin.yml` walk the backlog. Do not read anything
 into early nights — a single grey flash can never exceed `interest` by design.
 

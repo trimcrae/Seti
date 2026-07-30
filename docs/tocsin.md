@@ -187,9 +187,36 @@ error at all**. Gaia DR3 synthetic photometry (GSPC, SDSS *ugriz* + PS1 *y*) is
 the documented fallback and carries an explicit passband-mismatch systematic;
 the channel never claims greyness tighter than it.
 
-Events detected in a single band cannot be colour-tested at all. They are kept
-and marked `greyness_untested_single_band`, and the only route by which they can
-be promoted is recurrence — which is the design working as intended.
+### 3.2 Single-band events, and the one-sided test
+
+The two-band test turned out to fire almost never. In the first correct live
+window **every event was single-band** (22 of 22), so the achromaticity
+discriminant — the channel's headline argument — was dormant. Measured, not
+assumed: it is why `bands_per_event` is now a first-class output.
+
+A single-band detection is not colour-blind, though. It is **one-sided**. A grey
+event has equal *fractional* amplitude in every band, so on a red star it is
+brighter in *absolute* flux in the redder band. On an M dwarf with *g* = 18,
+*r* = 17, a grey 10% event puts 22,909 nJy into *g* but **57,544 nJy** into *r*.
+So if the event is seen in *g* while *r* was observed the same night and stayed
+silent, the grey hypothesis predicted a redder-band signal that never appeared —
+evidence against greyness, and exactly what a flare looks like.
+
+Everything the test needs is measured rather than assumed: the footprint query
+groups by **band** as well as bin and night (a band's silence is only evidence
+if that band was observed), and each band's effective detection limit comes from
+that window's own detections — the median flux error times the stream's ~5σ
+threshold. The grey prediction must clear the limit by `nondetection_margin`
+(3×) before silence counts; below that the event is recorded as *attempted but
+untestable*, never as passed.
+
+**It works on real data.** The verification window rejected **five** events as
+chromatic by redder-band non-detection — a rejection that had fired zero times
+in every earlier run. This is the discriminant the ZTF glint channel died on
+(15 candidates, all chromatic flares), now operating on the Rubin stream.
+
+Events with no other band observed remain untestable, and their only route to
+promotion is recurrence — which is the design working as intended.
 
 ## 4. Contamination ledger
 

@@ -1834,3 +1834,22 @@ def test_tisserand_separates_comet_like_from_asteroidal_dynamics():
     assert calibrate.tisserand_j(3.0, 0.0, 0.0) == pytest.approx(
         calibrate.JUPITER_A_AU / 3.0 + 2 * math.sqrt(3.0 / calibrate.JUPITER_A_AU))
     assert math.isnan(calibrate.tisserand_j(None, 0.1, 5.0))
+
+
+def test_corpus_is_built_not_assumed():
+    """Eight hand-picked papers tests the papers I thought of, not the field.
+
+    A designation lives in a TABLE, so arXiv's metadata search can never see it —
+    which means the only honest procedure is to collect the field's papers by
+    topic and then full-text every one. "Not in the literature" is otherwise a
+    claim about my reading list.
+    """
+    from seti.loom import litcheck
+
+    assert len(litcheck.CORPUS_QUERIES) >= 6
+    joined = " ".join(litcheck.CORPUS_QUERIES).lower()
+    for term in ("yarkovsky", "nongravitational", "dark comet", "active asteroid"):
+        assert term in joined, term
+    # The fixed list stays as a floor, and the corpus is added to it.
+    import inspect
+    assert "extra_ids" in inspect.signature(litcheck.check_objects).parameters

@@ -51,6 +51,53 @@ DARK_COMET_PAPERS: tuple[tuple[str, str], ...] = (
 )
 
 
+# Topic searches used to BUILD a corpus rather than assume one.  Eight hand-picked
+# papers is not a literature search: it tests whether an object is in the papers I
+# happened to think of.  These queries collect the field's output on
+# non-gravitational acceleration, and every returned paper is then full-texted --
+# which is the only way to see a designation, because they live in TABLES and
+# arXiv's API searches titles and abstracts only.
+CORPUS_QUERIES: tuple[str, ...] = (
+    'all:"Yarkovsky effect"',
+    'all:"nongravitational acceleration"',
+    'all:"non-gravitational acceleration" AND all:asteroid',
+    'all:"dark comet"',
+    'all:"active asteroid"',
+    'all:"main-belt comet"',
+    'all:"near-Earth asteroid" AND all:"orbit determination"',
+    'all:"Yarkovsky" AND all:"detection"',
+)
+
+
+def build_corpus(queries=CORPUS_QUERIES, per_query: int = 20,
+                 pause: float = 3.0, on_result=None) -> dict:
+    """Collect arXiv identifiers for the field's non-gravitational literature.
+
+    The point is to stop testing "is this object in the papers I thought of" and
+    start testing "is it in the field's output".  Returns identifiers only; the
+    caller full-texts them, because a designation in a table is invisible to the
+    metadata search that found the paper.
+    """
+    found: dict[str, str] = {}
+    log: list[dict] = []
+    for q in queries:
+        res = fetch_arxiv_search(q, max_results=per_query)
+        ids = []
+        for e in res.get("entries", []):
+            m = re.search(r"arxiv\.org/abs/([\d.]+)", e.get("id", ""))
+            if m:
+                found.setdefault(m.group(1), e.get("title", "")[:110])
+                ids.append(m.group(1))
+        rec = {"query": q, "n_entries": len(res.get("entries", [])),
+               "ids": ids, "error": res.get("error")}
+        log.append(rec)
+        if on_result is not None:
+            on_result(f"corpus:{q}", rec)
+        time.sleep(pause)
+    return {"queries": log, "ids": sorted(found), "titles": found,
+            "n_papers": len(found)}
+
+
 def designation_patterns(name: str) -> list[re.Pattern]:
     """Every form a designation might appear in, as boundary-anchored patterns.
 
@@ -204,7 +251,8 @@ def fetch_paper_text(arxiv_id: str, timeout: float = 90.0) -> dict:
 
 
 def check_objects(names: list[str], papers=DARK_COMET_PAPERS,
-                  pause: float = 3.0, on_result=None) -> dict:
+                  pause: float = 3.0, on_result=None,
+                  extra_ids: list[str] | None = None) -> dict:
     """Search the literature for every named object.  Runner-only.
 
     Returns a per-object verdict plus the evidence.  ``NOT_FOUND_IN_SEARCHED_
@@ -212,8 +260,12 @@ def check_objects(names: list[str], papers=DARK_COMET_PAPERS,
     did not find it, which is a statement about the searches as much as about the
     object, and the searched set is reported alongside so the claim can be judged.
     """
+    papers = tuple(papers) + tuple(
+        (i, "corpus (arXiv topic search)") for i in (extra_ids or [])
+        if i not in {p[0] for p in papers})
     out: dict = {"papers": {}, "objects": {},
-                 "papers_searched": [p[0] for p in papers]}
+                 "papers_searched": [p[0] for p in papers],
+                 "n_papers_searched": len(papers)}
 
     # Read the papers once; every object is then checked against all of them.
     texts: dict[str, str] = {}

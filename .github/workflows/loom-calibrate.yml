@@ -90,6 +90,9 @@ jobs:
               print(f"  {r['name']}: eps_eff = {r['epsilon_effective']:.4f}")
 
           print("\n=== MEASURED EFFICIENCY DISTRIBUTION ===")
+          print("    asteroids and comets separately: a comet accelerates by")
+          print("    SHEDDING MASS, so it is not bound by the radiation momentum")
+          print("    budget at all and exceeding the ceiling is expected of it")
           for label, e in (rec.get("epsilon") or {}).items():
               if not e.get("ok"):
                   print(f"  {label}: NOT OK -- {e.get('reason')}")

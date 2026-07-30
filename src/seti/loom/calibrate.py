@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -121,6 +122,26 @@ def epsilon_effective(a2_au_day2, diameter_metres,
         return np.where(np.isfinite(ceiling) & (ceiling > 0), a2 / ceiling, np.nan)
 
 
+# JPL orbit-class codes for comets.  A comet's acceleration is driven by MASS
+# LOSS, not by radiation, so it is not bound by the radiation momentum budget at
+# all and routinely exceeds it by orders of magnitude.  Mixing comets into the
+# asteroid distribution is not a detail: it turns the single most important
+# validation the ceiling has -- that it separates the two populations cleanly --
+# into a summary statistic that looks like a failure.
+COMET_CLASSES = frozenset({"COM", "CTc", "JFc", "JFC", "HTC", "ETc", "CTC",
+                           "PAR", "HYP", "ENC"})
+
+
+def is_comet(row: dict) -> bool:
+    """Is this a comet?  By orbit class, or by the ``nP/Name`` designation form."""
+    cls = str(row.get("class") or "").strip()
+    if cls in COMET_CLASSES:
+        return True
+    name = str(row.get("full_name") or row.get("pdes") or "")
+    # 1P/Halley, 133P/Elst-Pizarro, 75D/Kohoutek, C/2014 UN271, A/2017 U1.
+    return bool(re.match(r"^\s*\d*\s*[PDCXAI]/", name))
+
+
 @dataclass
 class EpsilonSummary:
     """The measured distribution of realised efficiency, with its exceedances."""
@@ -131,12 +152,16 @@ class EpsilonSummary:
     n_above_hard: int = 0
     n_above_specular: int = 0
     rho_assumed: float = RHO_TYPICAL_KG_M3
+    kind: str = "asteroid"
+    n_comets_in_source: int = 0
     ok: bool = False
     reason: str = ""
     exceedances: list = field(default_factory=list)
 
     def as_dict(self) -> dict:
-        return {"n": self.n, "quantiles": self.quantiles,
+        return {"n": self.n, "kind": self.kind,
+                "n_comets_in_source": self.n_comets_in_source,
+                "quantiles": self.quantiles,
                 "n_above_realistic_0.1": self.n_above_realistic,
                 "n_above_hard_1.0": self.n_above_hard,
                 "n_above_specular_2.0": self.n_above_specular,
@@ -146,25 +171,41 @@ class EpsilonSummary:
 
 def summarise_epsilon(rows: list[dict], rho_kg_m3: float = RHO_TYPICAL_KG_M3,
                       default_albedo: float = 0.14,
-                      max_exceedances: int = 40) -> EpsilonSummary:
-    """Realised-efficiency distribution over every object with a fitted ``A2``.
+                      max_exceedances: int = 40,
+                      kind: str = "asteroid") -> EpsilonSummary:
+    """Realised-efficiency distribution over objects with a fitted ``A2``.
+
+    ``kind`` selects ``"asteroid"``, ``"comet"`` or ``"all"``, and the split is
+    the point rather than a refinement.  A comet's acceleration comes from mass
+    loss, so it is not bound by the radiation momentum budget and exceeds it by
+    orders of magnitude; an asteroid's comes from re-radiated sunlight, so it is.
+    Reporting the two together produced a headline of "92 objects above the hard
+    ceiling", which reads as the gate failing when it is in fact the gate working
+    exactly as designed — every one of those 92 was a periodic comet.
 
     Objects above ``epsilon = 1`` are listed individually rather than counted,
-    because each one is a claim that sunlight cannot drive it — and the honest
-    reading of most of them will be a wrong diameter or a comet, which is only
-    checkable object by object.
+    because each one is a claim that sunlight cannot drive it.
     """
     out = EpsilonSummary(rho_assumed=float(rho_kg_m3))
+    out.kind = kind
     a2, h, dkm, alb, names = [], [], [], [], []
+    n_comet = 0
     for r in rows:
         v = _f(r.get("A2"))
         if not math.isfinite(v) or v == 0.0:
+            continue
+        comet = is_comet(r)
+        n_comet += int(comet)
+        if kind == "asteroid" and comet:
+            continue
+        if kind == "comet" and not comet:
             continue
         a2.append(v)
         h.append(_f(r.get("H")))
         dkm.append(_f(r.get("diameter")))
         alb.append(_f(r.get("albedo")))
         names.append(str(r.get("full_name") or r.get("pdes") or "?").strip())
+    out.n_comets_in_source = n_comet
     if len(a2) < 10:
         out.reason = f"only {len(a2)} objects with a non-zero fitted A2"
         return out
@@ -218,6 +259,13 @@ def verify_yarkovsky_unit(mirror: list[dict], jpl: list[dict]) -> dict:
         for key in ("pdes", "full_name", "name"):
             if r.get(key):
                 by_desig.setdefault(normalise_designation(r[key]), v)
+        # JPL's `pdes` for a NUMBERED object is its number, not its provisional
+        # designation, so an object the mirror calls "1937 UB" is "69230" here and
+        # a designation-only match silently misses it -- 9 of 12 in the first run.
+        # `full_name` carries both, e.g. "69230 Hermes (1937 UB)", so any
+        # parenthesised provisional designation inside it is indexed too.
+        for m in re.finditer(r"\(([^)]+)\)", str(r.get("full_name") or "")):
+            by_desig.setdefault(normalise_designation(m.group(1)), v)
 
     pairs = []
     for r in mirror:

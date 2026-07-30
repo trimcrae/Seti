@@ -762,7 +762,13 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
     # Per-bin trial counts for the stratified null (see `Ledger.bin_trials`).
     from .ledger import bin_key as _bin_key
     tpos = verdict.target_positions
-    bin_trials_tonight: dict[str, int] = {}
+    # Keyed by NIGHT, then by bin.  Keying only by bin and handing the whole
+    # window's dict to the first night folded meant the ledger's night-dedup
+    # guard threw it away whenever that night had already been seen — so
+    # bin_trials stayed empty, every local rate came back None, and the
+    # stratified null silently fell back to the all-sky rate it was built to
+    # replace.  Same failure shape as the visit-history ordering bug.
+    bin_trials_tonight: dict[str, dict[str, int]] = {}
     if targets is not None and len(targets):
         _ra = np.asarray(targets["ra"], dtype=float)
         _dec = np.asarray(targets["dec"], dtype=float)
@@ -775,7 +781,9 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
                 continue
             k = _bin_key(ra_dec[0], ra_dec[1])
             if k:
-                bin_trials_tonight[k] = bin_trials_tonight.get(k, 0) + 1
+                bin_trials_tonight.setdefault(_night, {})
+                bin_trials_tonight[_night][k] = \
+                    bin_trials_tonight[_night].get(k, 0) + 1
 
     n_forced = len(forced_pairs)
     n_footprint = len(footprint_pairs)
@@ -856,7 +864,7 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
                       alerts_seen=len(alerts) if first else 0,
                       visit_history=None,
                       target_positions=verdict.target_positions,
-                      bin_trials=(bin_trials_tonight if first else None))
+                      bin_trials=bin_trials_tonight.get(night))
         first = False
     # AFTER every night is folded, so targets whose record is created by a later
     # night still receive their visit history.

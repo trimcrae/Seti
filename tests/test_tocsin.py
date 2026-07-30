@@ -1052,9 +1052,11 @@ def test_window_is_anchored_to_the_broker_not_to_the_wall_clock(tmp_path, monkey
 
     assert seen, "no query was issued"
     lo, hi = seen[0]
+    # The window ends at the broker's frontier, never at "now": the mirror was
+    # 15.6 days behind when measured, so a clock-anchored window is empty.
     assert hi <= frontier + 1e-6
-    # ... and nowhere near the (much later) wall clock.
-    assert lo > frontier - 30.0
+    assert hi < R._now_mjd() - 5.0
+    assert lo < hi
 
 
 def test_the_watermark_advances_and_does_not_re_screen(tmp_path, monkeypatch):
@@ -1090,6 +1092,35 @@ def test_the_watermark_advances_and_does_not_re_screen(tmp_path, monkeypatch):
     assert hi2 - lo2 == pytest.approx(3.0)
     assert s1["watermark_mjd"] == pytest.approx(hi1)
     assert s2["watermark_mjd"] == pytest.approx(hi2)
+
+
+def test_chunked_backfill_walks_forward_and_stops_when_caught_up(tmp_path,
+                                                                 monkeypatch):
+    """One dispatch should be able to walk several windows of the backlog.
+
+    The broker holds ~262 nights already, so the early runs are a backfill; at
+    one window per dispatch that would take weeks of wall clock for data that is
+    already sitting there.
+    """
+    from seti.tocsin import run as R
+
+    frontier = 61010.0
+    seen: list[tuple[float, float]] = []
+    monkeypatch.setattr(R, "AlerceTAP", _stub_tap_factory(frontier, seen))
+    tpath = tmp_path / "targets.parquet"
+    pd.DataFrame([_target(source_id="777")]).to_parquet(tpath)
+
+    class _Cfg:
+        root = tmp_path
+    (tmp_path / "config").mkdir(exist_ok=True)
+    (tmp_path / "config" / "tocsin.yaml").write_text(
+        "acquire:\n  max_nights_per_run: 4.0\n  backfill_start_mjd: 61000.0\n"
+        "ledger:\n  path: results/tocsin/ledger.json\n")
+
+    R.screen(_Cfg(), chunks=5, targets_path=tpath, out_dir=tmp_path / "res")
+    # 61000 -> 61004 -> 61008 -> 61010 (frontier), then NO_NEW_DATA stops it.
+    assert [round(lo, 1) for lo, _ in seen] == [61000.0, 61004.0, 61008.0]
+    assert seen[-1][1] == pytest.approx(frontier)
 
 
 def test_a_caught_up_watermark_reports_no_new_data(tmp_path, monkeypatch):

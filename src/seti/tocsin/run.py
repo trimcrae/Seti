@@ -62,7 +62,7 @@ DEFAULTS: dict = {
                 "lookback_nights": 2.0, "parallax_min_mas": 10.0,
                 "xmatch_max_arcsec": 1.5, "maxrec": 2000000, "timeout_s": 900,
                 "gaia_catid": 1, "sid_diaobject": 1,
-                "max_nights_per_run": 7.0,
+                "max_nights_per_run": 14.0, "backfill_start_mjd": 60973.0,
                 "audit_without_gaia_join_every_n_runs": 14},
     "screen": {"min_abs_snr": 6.0, "min_reliability": 0.0,
                "require_reliability": False, "max_dipole_significance": 3.0,
@@ -426,6 +426,26 @@ def _visit_history_from_forced(rows, targets, th: Thresholds, epoch_jyear: float
     return ({k: sorted(set(v)) for k, v in hist.items()}, pairs, stats)
 
 
+def screen(cfg=None, chunks: int = 1, **kw) -> dict:
+    """Run :func:`screen_night` up to ``chunks`` times, stopping when caught up.
+
+    One dispatch can therefore walk several chunks of the backlog instead of
+    needing one dispatch per chunk.  Stops early on ``NO_NEW_DATA`` (the
+    watermark has reached the broker's frontier) or on any non-OK verdict, so a
+    broker failure does not burn the whole budget retrying.
+    """
+    last: dict = {}
+    for i in range(max(1, int(chunks))):
+        last = screen_night(cfg, **kw)
+        v = last.get("verdict")
+        print(f"[tocsin] chunk {i + 1}/{chunks}: {v}")
+        if v != "OK" and v != "NO_DETECTIONS_IN_WINDOW":
+            break
+        if kw.get("mjd_lo") is not None or kw.get("mjd_hi") is not None:
+            break                       # an explicit window is a single shot
+    return last
+
+
 def screen_night(cfg=None, lookback_nights: float | None = None,
                  mjd_lo: float | None = None, mjd_hi: float | None = None,
                  targets_path: str | Path | None = None,
@@ -460,7 +480,16 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
         # when unset (NaN is not valid JSON), so it comes back as None and
         # `float(None)` would raise on the second run of any live ledger.
         wm = _finite(led_peek.last_mjd_screened)
-        lo = wm if wm is not None else hi_cap - look
+        if wm is not None:
+            lo = wm
+        else:
+            # First run ever.  `backfill_start_mjd` starts the walk at the
+            # beginning of the broker's LSST holdings rather than a few nights
+            # back: ~262 nights of real data already exist, and the recurrence
+            # statistic this channel is built on needs many nights before it can
+            # say anything at all.
+            start = aconf.get("backfill_start_mjd")
+            lo = float(start) if start is not None else hi_cap - look
         # Cap the chunk so the first run against a 262-night backlog does not
         # try to pull all of it in one job.
         hi = min(hi_cap, lo + max_nights)

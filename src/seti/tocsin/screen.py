@@ -51,19 +51,17 @@ from .photometry import (
     greyness_z,
 )
 from .schema import NormalizedAlert, validate
-from .targets import match_alerts_to_targets, position_uncertainty_arcsec, propagate_pm
+from .targets import (
+    GSPC_MAG_COLUMN,
+    match_alerts_to_targets,
+    position_uncertainty_arcsec,
+    propagate_pm,
+)
 
 # Gaia GSPC synthetic-photometry column for each LSST alert band.  SDSS ugriz
 # stand in for LSST ugriz and PS1 y for LSST y; the resulting passband mismatch
 # is carried as `baseline_rel_err`, never ignored.
-BASELINE_COLUMN = {
-    "u": "mag_u_sdss",
-    "g": "mag_g_sdss",
-    "r": "mag_r_sdss",
-    "i": "mag_i_sdss",
-    "z": "mag_z_sdss",
-    "y": "mag_y_ps1",
-}
+BASELINE_COLUMN = dict(GSPC_MAG_COLUMN)
 
 # Bands ordered blue -> red, so a "bluer band" is well defined when pairing.
 BAND_ORDER = ("u", "g", "r", "i", "z", "y")

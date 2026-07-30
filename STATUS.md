@@ -148,6 +148,26 @@ claim (which heliocentric-distance law the drift follows) returns
 `min_apparitions_for_promotion = 2` now enforce that; all four become `untestable`
 with the reason named and the assessment returns `INSUFFICIENT_POPULATION`.
 
+**CALIBRATION (2026-07-30, `loom-calibrate`, needs no survey baseline).** 939
+objects with a fitted A2 from JPL's SBDB. **The ceiling separates comets from
+asteroids cleanly, without being told which is which**: 81/81 comets exceed it
+(median eps_eff 7,298 — correct, a comet accelerates by shedding mass), and only
+11/589 asteroids (1.9%) do. **Those eleven are the known anomalous population** —
+1I/'Oumuamua at eps = 1.1e4 (matching the literature's independent ~1e4, from H
+and A2 alone), 362P/(2008 GO98), and 523599 (2003 RM) and 2006 RH120, two of
+Seligman's seven dark comets; Phaethon and Toutatis just below at 0.22. Recovering
+essentially the whole published population of anomalously accelerating inactive
+bodies, with no tuning, is how the gate earns the right to flag anything else.
+
+**It also caught an error in my own threshold**: ordinary thermal recoil realises
+median 0.074 / p90 0.143 of the momentum budget, not the 0.02-0.08 the
+three-object anchor implied — so `epsilon_realistic = 0.1` was the ~85th
+percentile and the `watch` tier fired on 27% of all asteroids. Now 0.3. The
+density sensitivity is real (4.4% at rho=1000 vs 27% at rho=2000) and is reported.
+
+**The `yarkovsky` unit is settled**: 7 matched objects, median ratio 1.009e-10
+au/day^2 per count against the documented 1e-10, scatter 5.4%.
+
 **The one measurement the data DOES support today**, and it is worth more than a
 null. Path A needs no survey baseline (MPC fits `yarkovsky` against decades of
 astrometry), so the 12 objects with a genuine non-zero value are testable now.

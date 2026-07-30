@@ -2,9 +2,10 @@
 
 *A loom is the machine that makes copies of a pattern.*
 
-**Channel status:** built, offline-tested (86 tests), run against live data on
-2026-07-30. **The channel works and the data is not yet old enough to use it** —
-see §2.2. The probe changed the architecture; read §2.1 first.
+**Channel status:** built, offline-tested (96 tests), run against live data on
+2026-07-30. **The gate is validated on the published population (§2.3) and the
+Rubin data is not yet old enough to use the rest of it (§2.2).** The probe changed
+the architecture; read §2.1 first.
 
 ---
 
@@ -320,6 +321,72 @@ sensitivity to the artificiality discriminant remains untested.
 
 A matcher that is too permissive does not merely add noise in this channel. It
 fabricates the one falsifiable check the channel has.
+
+---
+
+## 2.3 The ceiling, calibrated on the published population (2026-07-30)
+
+`loom-calibrate` runs against JPL's Small-Body Database and needs no survey
+baseline, so it answers today what the residual path cannot. It pulled **939
+objects with a fitted `A2`** — 589 asteroids and 81 comets with a usable diameter.
+
+**The gate separates the two populations cleanly, without being told which is
+which.**
+
+| population | n | median eps_eff | p90 | above eps = 1 |
+|---|---|---|---|---|
+| asteroids | 589 | 0.074 | 0.143 | **11 (1.9%)** |
+| comets | 81 | 7,298 | 2.6e5 | **81 (100%)** |
+
+That is the ceiling working exactly as designed. A comet accelerates by shedding
+mass, so it is not bound by the radiation momentum budget and blows through it by
+six or seven orders of magnitude. An asteroid accelerates by re-radiating
+sunlight, so it is bound — and 98.1% of them are.
+
+**The eleven asteroids above the ceiling are the known anomalous population:**
+
+| object | eps_eff | what it already is |
+|---|---|---|
+| 457175 (2008 GO98) | 6.6e4 | 362P — quasi-Hilda active asteroid |
+| **1I/'Oumuamua** (A/2017 U1) | **1.1e4** | interstellar, non-grav acceleration, no coma |
+| (2012 UR158) | 26.7 | — |
+| 883607 (2016 TA56) | 15.8 | — |
+| **523599 (2003 RM)** | **8.2** | Seligman dark comet |
+| 452639 (2005 UY6) | 7.1 | — |
+| 152667 (1998 FR11) | 2.8 | — |
+| 139359 (2001 ME1) | 2.5 | — |
+| 875163 (1998 SH2) | 1.6 | — |
+| 428209 (2006 VC) | 1.3 | — |
+| **(2006 RH120)** | **1.3** | Seligman dark comet |
+
+(3200) Phaethon and (4179) Toutatis — both active — sit just below at 0.22.
+
+Recovering 'Oumuamua at the magnitude the literature independently quotes (~1e4),
+plus an active asteroid and two of the seven published dark comets, from `H` and
+`A2` alone and with no tuning, is how the gate earns the right to flag anything
+else. Exceedances are annotated with what each object is already known to be, so
+the list documents itself and an unannotated entry is the only kind worth a look.
+
+### It also caught an error in my own threshold
+
+Ordinary thermal recoil realises a **median 0.074** and **p90 0.143** of the
+momentum budget — not the 0.02–0.08 the three-object anchor suggested. So
+`epsilon_realistic = 0.1` was roughly the 85th percentile, and the `watch` tier
+fired on **27% of all asteroids**. A tier that flags a quarter of the population
+is not a tier. It is now **0.3**, above the ordinary tail and below every
+known-anomalous object.
+
+The density sensitivity is real and is why both are reported: the same 0.1
+threshold fires on 4.4% at rho = 1000 and 27% at rho = 2000. Any future result
+that turns on this threshold turns on an assumed density, and must say so.
+
+### The `yarkovsky` unit is settled
+
+Seven mirror objects cross-matched to JPL's own `A2`: median ratio **1.009e-10
+au/day^2 per count** against the documented **1e-10**, scatter 5.4%.
+`DOCUMENTED_UNIT_CONFIRMED` — measured on real data, not assumed. (The first
+attempt matched only three, because JPL's `pdes` for a numbered object is its
+number: "1937 UB" is "69230" there. `full_name` carries both forms.)
 
 ---
 

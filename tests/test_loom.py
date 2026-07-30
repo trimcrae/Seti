@@ -1292,6 +1292,28 @@ def test_yarkovsky_unit_is_measured_not_trusted():
     assert out4["verdict"] == "TOO_FEW_MATCHES"
 
 
+def test_invalid_field_regex_repairs_the_request():
+    """One wrong field name 400s the WHOLE query, so it must repair itself.
+
+    Guessing `sigma_a2` cost an entire calibration run: every other field went
+    down with it. The API names the field it rejected, which is enough to drop it
+    and retry — so speculative names belong in the optional list, where a
+    rejection is free.
+    """
+    from seti.loom import calibrate
+
+    body = '{"code":"400","message":"invalid field specified: \'sigma_a2\'"}'
+    m = calibrate._INVALID_FIELD.search(body)
+    assert m and m.group(1) == "sigma_a2"
+    # The verified-working core must not contain anything speculative.
+    assert "sigma_a2" not in calibrate.SBDB_CORE_FIELDS
+    assert "sigma_a2" in calibrate.SBDB_OPTIONAL_FIELDS
+    # Several candidate spellings of the A2 uncertainty are tried, since which one
+    # is right is exactly what is not known.
+    assert sum(1 for f in calibrate.SBDB_OPTIONAL_FIELDS
+               if "A2" in f or "a2" in f) >= 3
+
+
 def test_calibrate_module_imports_without_network():
     from seti.loom import calibrate
 

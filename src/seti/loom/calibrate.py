@@ -55,15 +55,33 @@ SBDB_QUERY_URL = "https://ssd-api.jpl.nasa.gov/sbdb_query.api"
 # Fields to request.  `A1`/`A2`/`A3` are JPL's Marsden non-gravitational
 # parameters in au/day^2; `diameter` is in km where measured; `albedo` is the
 # geometric albedo; `rms` is the orbit-fit residual RMS in arcsec.
-SBDB_FIELDS = (
-    "full_name,pdes,name,class,neo,pha,H,diameter,albedo,diameter_sigma,"
-    "a,e,i,A1,A2,A3,DT,rms,n_obs_used,n_del_obs_used,data_arc,condition_code,"
-    # The reliability block.  Without a sigma on A2 there is no signal-to-noise,
-    # and a blind Yarkovsky search returns a MAJORITY of spurious detections at
-    # nominal S/N > 3 -- so an unexplained exceedance with no uncertainty attached
-    # is not a candidate, it is an unmeasured number.
-    "sigma_a2,sigma_a1,sigma_a3,first_obs,last_obs,epoch,producer,two_body"
+# VERIFIED WORKING against the live API on 2026-07-30 (939 rows returned).  Do not
+# add to this tuple without a live run; put speculative names in
+# SBDB_OPTIONAL_FIELDS instead, where a rejection costs nothing.
+SBDB_CORE_FIELDS: tuple[str, ...] = (
+    "full_name", "pdes", "name", "class", "neo", "pha", "H", "diameter",
+    "albedo", "diameter_sigma", "a", "e", "i", "A1", "A2", "A3", "DT", "rms",
+    "n_obs_used", "n_del_obs_used", "data_arc", "condition_code",
 )
+
+# Fields whose exact spelling is NOT known.  The uncertainty on A2 is the one that
+# matters most -- without it an exceedance has no signal-to-noise and is an
+# unmeasured number rather than a candidate -- and its name could reasonably be any
+# of several forms.  Guessing one and putting it in the main list is what broke the
+# second calibration run: a single invalid name 400s the ENTIRE query, so one wrong
+# guess cost every field.  These are requested optimistically and dropped
+# individually when the API rejects them, which it does by name.
+SBDB_OPTIONAL_FIELDS: tuple[str, ...] = (
+    "sigma_A2", "A2_sigma", "sigma_a2",
+    "sigma_A1", "sigma_A3",
+    "first_obs", "last_obs", "epoch", "producer", "two_body", "n_opp",
+)
+
+SBDB_FIELDS = ",".join((*SBDB_CORE_FIELDS, *SBDB_OPTIONAL_FIELDS))
+
+# The API reports a bad field by name: {"code":"400","message":"invalid field
+# specified: 'sigma_a2'"}.  That is enough to repair the request automatically.
+_INVALID_FIELD = re.compile(r"invalid field specified:\s*'([^']+)'")
 
 # Del Vigna et al. (2018) call a Yarkovsky detection reliable only on TWO
 # conditions, not one: S/N >= 3 AND agreement with a size-scaled expectation.  The
@@ -85,7 +103,6 @@ SBDB_CONSTRAINTS: tuple[tuple[str, dict], ...] = (
     ("a2_defined", {"sb-cdata": json.dumps({"AND": ["A2|DF"]})}),
     ("a2_defined_asteroids", {"sb-kind": "a",
                               "sb-cdata": json.dumps({"AND": ["A2|DF"]})}),
-    ("a2_nonzero", {"sb-cdata": json.dumps({"AND": ["A2|NZ"]})}),
     ("neos_all", {"sb-group": "neo"}),
 )
 
@@ -462,36 +479,63 @@ def fetch_sbdb(fields: str = SBDB_FIELDS, timeout: float = 120.0,
                constraints=SBDB_CONSTRAINTS, on_result=None) -> dict:
     """Pull objects with fitted non-gravitational parameters from JPL's SBDB.
 
-    Tries each candidate constraint form in turn and records what every one
-    returned, so a grammar that has changed shows up as a diff rather than as an
-    empty result that reads like "no asteroid has a fitted A2".
+    Two kinds of uncertainty are handled by measurement rather than by guessing,
+    because guessing has already cost two runs here.
+
+    *Which constraint grammar works* — each candidate is tried in turn and every
+    attempt's status and row count recorded, so an API change appears as a diff
+    rather than as an empty result reading "no asteroid has a fitted A2".
+
+    *Which field names exist* — a single invalid name returns 400 for the WHOLE
+    query, so one wrong guess costs every field.  The API names the field it
+    objected to, so the request repairs itself: drop that name, retry, record the
+    drop.  The surviving list is reported, which is how the correct spelling of
+    the A2 uncertainty gets discovered rather than assumed.
     """
     import requests
 
     out: dict = {"url": SBDB_QUERY_URL, "attempts": {}, "rows": [],
-                 "verdict": "NO_DATA_REACHED"}
+                 "verdict": "NO_DATA_REACHED", "dropped_fields": []}
+    # Persistent across constraints: a field rejected once is rejected always, and
+    # rediscovering that per constraint would waste a request each time.
+    current = [f for f in fields.split(",") if f]
     for name, extra in constraints:
-        params = {"fields": fields, "limit": "20000", **extra}
-        rec: dict = {"params": {k: v for k, v in params.items() if k != "fields"}}
-        try:
-            resp = requests.get(SBDB_QUERY_URL, params=params, timeout=timeout)
+        rec: dict = {"params": dict(extra)}
+        resp = None
+        for _ in range(len(SBDB_OPTIONAL_FIELDS) + 2):
+            params = {"fields": ",".join(current), "limit": "20000", **extra}
+            try:
+                resp = requests.get(SBDB_QUERY_URL, params=params, timeout=timeout)
+            except Exception as exc:                          # noqa: BLE001
+                rec["error"] = f"{type(exc).__name__}: {exc}"[:300]
+                resp = None
+                break
+            if resp.status_code == 400:
+                m = _INVALID_FIELD.search(resp.text or "")
+                if m and m.group(1) in current:
+                    current.remove(m.group(1))
+                    out["dropped_fields"].append(m.group(1))
+                    continue
+            break
+        rec["fields_used"] = list(current)
+        if resp is not None:
             rec["status"] = resp.status_code
             if resp.status_code != 200:
                 rec["body"] = resp.text[:300]
             else:
-                payload = resp.json()
-                cols = payload.get("fields") or []
-                data = payload.get("data") or []
-                rec["n_rows"] = len(data)
-                rec["fields"] = cols
-                if data:
-                    rows = [dict(zip(cols, row, strict=False)) for row in data]
-                    if not out["rows"]:
-                        out["rows"] = rows
+                try:
+                    payload = resp.json()
+                    cols = payload.get("fields") or []
+                    data = payload.get("data") or []
+                    rec["n_rows"] = len(data)
+                    rec["fields"] = cols
+                    if data and not out["rows"]:
+                        out["rows"] = [dict(zip(cols, row, strict=False))
+                                       for row in data]
                         out["used_constraint"] = name
                         out["verdict"] = "OK"
-        except Exception as exc:                              # noqa: BLE001
-            rec["error"] = f"{type(exc).__name__}: {exc}"[:300]
+                except Exception as exc:                      # noqa: BLE001
+                    rec["error"] = f"{type(exc).__name__}: {exc}"[:300]
         out["attempts"][name] = rec
         if on_result is not None:
             on_result(name, rec)

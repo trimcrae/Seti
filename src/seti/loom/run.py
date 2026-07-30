@@ -43,7 +43,7 @@ from ..tocsin.brokers import ALERCE_TAP
 from .acquire import AlerceSSO
 from .calibrate import fetch_sbdb, summarise_epsilon, verify_yarkovsky_unit
 from .control import control_index, normalise_designation, validate
-from .litcheck import check_objects
+from .litcheck import build_corpus, check_objects
 from .nongrav import anomaly_ratio, calibration_table, ceiling_ratio, fit_envelope
 from .replication import replication_tests
 from .residuals import (
@@ -1107,7 +1107,14 @@ def litcheck(cfg=None, out_dir: str | Path | None = None,
         progress[key] = {k: v for k, v in value.items() if k != "text"}
         _write_json(out / "litcheck.json", rec)
 
-    result = check_objects(names, on_result=_record)
+    # Build the corpus first: eight hand-picked papers only tests whether an
+    # object is in the papers I thought of.  Every paper the topic searches return
+    # is then full-texted, because a designation in a table is invisible to the
+    # metadata search that found the paper.
+    corpus = build_corpus(on_result=_record)
+    rec["corpus"] = {"n_papers": corpus["n_papers"], "queries": corpus["queries"]}
+    _write_json(out / "litcheck.json", rec)
+    result = check_objects(names, on_result=_record, extra_ids=corpus["ids"])
     rec.update(result)
     rec["verdict"] = result["verdict"]
     _write_json(out / "litcheck.json", rec)

@@ -43,6 +43,17 @@ acquire:
   # what makes a night affordable (millions of rows -> thousands).
   parallax_min_mas: 10.0
   xmatch_max_arcsec: 1.5
+  # ALeRCE cross-match catalogue id for Gaia DR3.  Measured by the probe
+  # (`diagnostics.xmatch_catid`), not assumed.
+  gaia_catid: 1
+  # ALeRCE `sid` value selecting diaObject-associated (i.e. NOT known
+  # solar-system) detections.  `null` drops the filter entirely, which is the
+  # SAFE default until the probe confirms the encoding: the inner join to
+  # `lsst_detection` already restricts the result to LSST, so the sid clause is
+  # an optimisation and a solar-system exclusion, and a wrong guess here would
+  # silently return an empty night rather than an error.  Set it to the measured
+  # value once `diagnostics.sample_detection` / `object_sid_tid` confirm it.
+  sid_diaobject: null
   maxrec: 2000000
   timeout_s: 900
   # Periodically re-run with the Gaia join disabled to MEASURE what the cheap

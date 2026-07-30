@@ -61,6 +61,7 @@ DEFAULTS: dict = {
     "acquire": {"primary_broker": "alerce_tap", "alerce_tap_url": ALERCE_TAP,
                 "lookback_nights": 2.0, "parallax_min_mas": 10.0,
                 "xmatch_max_arcsec": 1.5, "maxrec": 2000000, "timeout_s": 900,
+                "gaia_catid": 1, "sid_diaobject": None,
                 "audit_without_gaia_join_every_n_runs": 14},
     "screen": {"min_abs_snr": 6.0, "min_reliability": 0.0,
                "require_reliability": False, "max_dipole_significance": 3.0,
@@ -107,6 +108,16 @@ def _repo_root() -> Path:
         if (parent / "config").is_dir():
             return parent
     return here.parents[3]
+
+
+def _sid(aconf: dict) -> int | None:
+    """The configured ALeRCE ``sid`` filter, or ``None`` to drop the clause.
+
+    Kept as a helper so the value the probe measures is applied in exactly one
+    place, from config, without editing any query code.
+    """
+    v = aconf.get("sid_diaobject")
+    return None if v is None else int(v)
 
 
 def _now_mjd() -> float:
@@ -417,6 +428,8 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
         det = tap.night_detections(
             lo, hi, parallax_min_mas=plx,
             xmatch_max_arcsec=float(aconf["xmatch_max_arcsec"]),
+            gaia_catid=int(aconf.get("gaia_catid", 1)),
+            sid_diaobject=_sid(aconf),
             min_abs_snr=float(conf["screen"]["min_abs_snr"]))
     except BrokerError as exc:
         summary["verdict"] = "NO_DATA_REACHED"
@@ -439,7 +452,9 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
     try:
         fp = tap.forced_photometry_night(
             lo, hi, parallax_min_mas=plx,
-            xmatch_max_arcsec=float(aconf["xmatch_max_arcsec"]))
+            xmatch_max_arcsec=float(aconf["xmatch_max_arcsec"]),
+            gaia_catid=int(aconf.get("gaia_catid", 1)),
+            sid_diaobject=_sid(aconf))
         hist, star_nights, fstats = _visit_history_from_forced(
             fp.rows, targets, th, epoch_jyear)
         summary["counts"].update(fstats)

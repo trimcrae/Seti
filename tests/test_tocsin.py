@@ -832,6 +832,15 @@ def test_lasair_without_a_token_fails_loudly():
 # ---------------------------------------------------------------------------
 # run --- config and honest verdicts
 # ---------------------------------------------------------------------------
+def test_shipped_config_leaves_the_sid_filter_off_until_it_is_measured():
+    """The safe default: an unverified filter must not be able to empty a night."""
+    from seti.tocsin.run import _sid, load_tocsin_config
+    conf = load_tocsin_config()
+    assert _sid(conf["acquire"]) is None
+    # ... and a measured value is applied verbatim when set.
+    assert _sid({"sid_diaobject": 2}) == 2
+
+
 def test_config_defaults_are_complete_and_overridable():
     from seti.tocsin.run import DEFAULTS, load_tocsin_config
     conf = load_tocsin_config()

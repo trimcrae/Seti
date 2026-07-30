@@ -341,10 +341,8 @@ class AlerceTAP:
             "SELECT FLOOR(d.ra / 1.0) AS rab, FLOOR(d.dec / 1.0) AS decb, "
             "FLOOR(d.mjd - 0.6666666666) AS night, COUNT(*) AS n "
             "FROM alerce_tap.detection AS d "
-            "JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
-            "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id "
             f"WHERE d.sid = 1 AND d.mjd >= {float(now_mjd) - 30} "
-            f"AND d.mjd < {float(now_mjd) - 28} "
+            f"AND d.mjd < {float(now_mjd) - 29} "
             "GROUP BY FLOOR(d.ra / 1.0), FLOOR(d.dec / 1.0), "
             "FLOOR(d.mjd - 0.6666666666)", maxrec=20)
 
@@ -515,11 +513,20 @@ class AlerceTAP:
         where = [f"d.mjd >= {float(mjd_lo)}", f"d.mjd < {float(mjd_hi)}"]
         if sid_diaobject is not None:
             where.insert(0, f"d.sid = {int(sid_diaobject)}")
+        # The join to `lsst_detection` is DELIBERATELY absent here.  The probe
+        # measured sid=1/tid=1 as LSST diaObject and sid=0/tid=0 as ZTF, so
+        # `sid = 1` already restricts to LSST on its own — and this query
+        # aggregates over the whole night's detections, where an unnecessary
+        # join to a second large table is the difference between a footprint
+        # that costs seconds and one that costs the job's timeout.  The join is
+        # kept only when the sid filter is off and cannot do the work.
+        src = "alerce_tap.detection AS d"
+        if sid_diaobject is None:
+            src += (" JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
+                    "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id")
         adql = (
             f"SELECT {ra_e} AS rab, {dec_e} AS decb, {night_e} AS night, "
-            "COUNT(*) AS n FROM alerce_tap.detection AS d "
-            "JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
-            "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id "
+            f"COUNT(*) AS n FROM {src} "
             "WHERE " + " AND ".join(where) +
             f" GROUP BY {ra_e}, {dec_e}, {night_e}"
         )
@@ -649,17 +656,15 @@ def normalize_alerce_rows(rows: list[dict]) -> list[NormalizedAlert]:
             ra=_f(r, "ra") or float("nan"),
             dec=_f(r, "dec") or float("nan"),
             dflux_njy=flux, dflux_err_njy=ferr, broker="alerce-lsst",
-            # UNITS: Rubin's `raErr`/`decErr` are taken as milliarcsec here.
-            # If that is wrong and they are already arcsec, dividing by 1000
-            # drives them below the 0.05" floor in `pos_err_arcsec`, so the
-            # funnel falls back to the floor and the separation cut is governed
-            # by `max_sep_arcsec` instead --- conservative.  The opposite mistake
-            # (reading mas as arcsec) would inflate errors ~1000x and silently
-            # DISABLE the astrometric-offset rejection, so this direction is the
-            # safe one to be wrong in.  `diagnostics.sample_lsst_detection`
-            # records real values so the assumption can be settled.
-            ra_err_arcsec=None if ra_err is None else ra_err / 1000.0,
-            dec_err_arcsec=None if dec_err is None else dec_err / 1000.0,
+            # UNITS: DEGREES.  Settled by measurement rather than argued ---
+            # `diagnostics.sample_lsst_detection` returned raerr = 4.27e-05,
+            # which is 0.154" as degrees and physically absurd read any other
+            # way.  The earlier milliarcsec guess drove every value below the
+            # 0.05" floor in `pos_err_arcsec`, which pinned every source to the
+            # floor and inflated sep_sigma about threefold --- over-rejecting
+            # genuine matches as astrometric offsets.
+            ra_err_arcsec=None if ra_err is None else ra_err * 3600.0,
+            dec_err_arcsec=None if dec_err is None else dec_err * 3600.0,
             template_flux_njy=_f(r, "templateflux"),
             template_flux_err_njy=_f(r, "templatefluxerr"),
             science_flux_njy=_f(r, "scienceflux"),
@@ -898,10 +903,10 @@ def normalize_lasair_diasources(payload: dict, min_reliability: float | None = N
             dec=(_f(s, "decl") if s.get("decl") is not None else _f(s, "dec"))
             or float("nan"),
             dflux_njy=flux, dflux_err_njy=ferr, broker="lasair-lsst",
-            # Lasair reports raErr/decErr in mas for diaSources (SDM units);
-            # convert to arcsec, the unit the funnel works in.
-            ra_err_arcsec=None if ra_err is None else ra_err / 1000.0,
-            dec_err_arcsec=None if dec_err is None else dec_err / 1000.0,
+            # Same SDM units as the ALeRCE path: raErr/decErr are DEGREES
+            # (measured, see normalize_alerce_rows).
+            ra_err_arcsec=None if ra_err is None else ra_err * 3600.0,
+            dec_err_arcsec=None if dec_err is None else dec_err * 3600.0,
             template_flux_njy=_f(s, "templateFlux"),
             template_flux_err_njy=_f(s, "templateFluxErr"),
             science_flux_njy=_f(s, "scienceFlux"),

@@ -284,6 +284,39 @@ def test_polarity_follows_the_sign_of_the_difference_flux():
     assert _alert(dflux=-500.0).polarity == "dip"
 
 
+def test_astrometric_errors_are_read_as_degrees():
+    """Regression: raErr/decErr are DEGREES, settled by measurement.
+
+    The live probe returned raerr = 4.27e-05, which is 0.154" as degrees and
+    physically absurd read as arcsec or milliarcsec.  The earlier mas assumption
+    drove every value below the 0.05" floor, pinning every source to the floor
+    and inflating sep_sigma about threefold — over-rejecting genuine matches.
+    """
+    rows = [{"measurement_id": "1", "oid": "o", "mjd": 61500.0, "band": 2,
+             "ra": 10.0, "dec": -20.0, "psfflux": 100.0, "psffluxerr": 5.0,
+             "raerr": 4.2740262870211154e-05, "decerr": 3.867568739224225e-05}]
+    a = normalize_alerce_rows(rows)[0]
+    assert a.ra_err_arcsec == pytest.approx(0.1539, rel=1e-3)
+    assert a.pos_err_arcsec > 0.05          # a real error, not the floor
+
+
+def test_a_fitted_trail_length_alone_does_not_reject_a_point_source():
+    """A probe sample showed trailLength = 1.38" on an ordinary point-like star.
+
+    The fitted length is not a clean trail indicator, so a tight cut on it would
+    discard real events.  Rubin's own `trail_flag` is the trustworthy signal.
+    """
+    tg = _targets(_target())
+    a = _alert()
+    a.trail_length_arcsec = 1.38
+    assert len(screen_alerts([a], tg, Thresholds()).events) == 1
+
+    flagged = _alert()
+    flagged.raw = {"trail_flag": True}
+    v = screen_alerts([flagged], tg, Thresholds())
+    assert v.events == [] and v.rejected[0]["reason"] == "trailed"
+
+
 def test_missing_astrometric_errors_fall_back_to_a_floor_not_to_zero():
     a = _alert()
     a.ra_err_arcsec = None
@@ -366,7 +399,7 @@ def test_moving_and_extended_and_flagged_sources_are_rejected():
     tg = _targets(_target())
     for field, value, reason in (
         ("extendedness", 0.9, "extended"),
-        ("trail_length_arcsec", 2.0, "trailed"),
+        ("trail_length_arcsec", 9.0, "trailed"),
         ("ss_object_id", "asteroid-1", "solar_system"),
         ("pixel_flag_bad", True, "bad_pixels"),
     ):
@@ -893,14 +926,15 @@ def test_alerce_forced_photometry_query_is_the_denominator_not_the_numerator():
 def test_lasair_normalisation_maps_the_vetting_fields():
     payload = {"diaObjectId": "170081276982722562", "diaSourcesList": [{
         "diaSourceId": "9", "midpointMjdTai": 61500.3, "band": "r",
-        "ra": 10.0, "decl": -20.0, "raErr": 20.0, "decErr": 20.0,
+        "ra": 10.0, "decl": -20.0, "raErr": 5.5e-05, "decErr": 5.5e-05,
         "psfFlux": 800.0, "psfFluxErr": 20.0, "templateFlux": 8000.0,
         "templateFluxErr": 40.0, "snr": 40.0, "reliability": 0.93,
         "isDipole": False, "isNegative": False, "extendedness": 0.0,
         "trailLength": 0.0, "glint_trail": False}]}
     a = normalize_lasair_diasources(payload)[0]
     assert a.dec == -20.0                     # Lasair spells it `decl`
-    assert a.ra_err_arcsec == pytest.approx(0.02)   # mas -> arcsec
+    # raErr/decErr are DEGREES (measured from the live service), not mas.
+    assert a.ra_err_arcsec == pytest.approx(5.5e-05 * 3600.0)
     assert a.template_flux_njy == 8000.0
     assert a.broker == "lasair-lsst"
 
@@ -1379,3 +1413,17 @@ def test_screen_night_without_a_target_list_says_so(tmp_path):
                      mjd_lo=61500.0, mjd_hi=61501.0)
     assert s["verdict"] == "NO_TARGET_LIST"
     assert json.loads((out / "summary.json").read_text())["verdict"] == "NO_TARGET_LIST"
+
+
+def test_threshold_dataclass_defaults_mirror_the_shipped_config():
+    """Two sources of truth drifting apart is how the greyness test died once."""
+    from seti.tocsin.run import _thresholds, load_tocsin_config
+
+    bare = Thresholds()
+    from_config = _thresholds(load_tocsin_config())
+    for field in ("min_abs_snr", "min_reliability", "require_reliability",
+                  "max_dipole_significance", "max_extendedness",
+                  "max_trail_arcsec", "match_radius_arcsec", "max_sep_arcsec",
+                  "max_sep_sigma", "max_grey_z", "baseline_rel_err",
+                  "missing_pm_penalty_arcsec"):
+        assert getattr(bare, field) == getattr(from_config, field), field

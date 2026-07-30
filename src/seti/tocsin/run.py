@@ -67,7 +67,7 @@ DEFAULTS: dict = {
                 "audit_without_gaia_join_every_n_runs": 14},
     "screen": {"min_abs_snr": 6.0, "min_reliability": 0.0,
                "require_reliability": False, "max_dipole_significance": 3.0,
-               "max_extendedness": 0.5, "max_trail_arcsec": 0.5,
+               "max_extendedness": 0.5, "max_trail_arcsec": 5.0,
                "match_radius_arcsec": 1.5, "max_sep_arcsec": 1.0,
                "max_sep_sigma": 3.0, "max_grey_z": 3.0,
                "baseline_rel_err": 0.03, "missing_pm_penalty_arcsec": 2.0},

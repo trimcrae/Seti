@@ -1543,3 +1543,57 @@ def test_colour_reach_counts_events_the_test_rejected(tmp_path, monkeypatch):
     assert s["colour_rejected_chromatic"] == 1
     assert s["greyness_tested_fraction"] == 1.0
     assert not any("did not run at all" in n for n in s["notes"])
+
+
+def test_chunk_loop_yields_before_the_job_timeout(tmp_path, monkeypatch):
+    """A cancelled CI job discards everything, including chunks that succeeded.
+
+    The commit step never runs on cancellation, so a 16-chunk backfill that hit
+    the 180-minute limit lost the whole run.  The loop must yield voluntarily so
+    the watermark and ledger are committed and the next dispatch resumes.
+    """
+    from seti.tocsin import run as R
+
+    seen: list[tuple[float, float]] = []
+    monkeypatch.setattr(R, "AlerceTAP", _stub_tap_factory(61500.0, seen))
+    tpath = tmp_path / "targets.parquet"
+    pd.DataFrame([_target(source_id="777")]).to_parquet(tpath)
+
+    class _Cfg:
+        root = tmp_path
+    (tmp_path / "config").mkdir(exist_ok=True)
+    (tmp_path / "config" / "tocsin.yaml").write_text(
+        "acquire:\n  max_nights_per_run: 1.0\n  backfill_start_mjd: 61000.0\n"
+        "ledger:\n  path: results/tocsin/ledger.json\n")
+
+    # A zero budget stops after the first chunk, however many were requested.
+    last = R.screen(_Cfg(), chunks=50, max_run_seconds=0.0,
+                    targets_path=tpath, out_dir=tmp_path / "res")
+    assert len(seen) == 1
+    assert any("wall-clock budget" in n for n in last["notes"])
+    # ... and the watermark was still advanced and saved, so nothing is lost.
+    led = L.Ledger.load(tmp_path / "results" / "tocsin" / "ledger.json")
+    assert L._finite(led.last_mjd_screened) == pytest.approx(61001.0)
+
+
+def test_tap_session_applies_a_real_timeout():
+    """`requests.Session` has no honoured `timeout` attribute; it must be injected."""
+    from unittest import mock
+
+    import requests
+
+    from seti.tocsin.brokers import _timeout_session
+
+    sess = _timeout_session(12.5)
+    assert isinstance(sess, requests.Session)
+    # Patch the BASE class method so the subclass's injection is what we observe,
+    # and so the patch is undone afterwards rather than leaking into other tests.
+    with mock.patch.object(requests.Session, "request",
+                           return_value="ok") as base:
+        sess.request("GET", "http://example.invalid")
+    assert base.call_args.kwargs.get("timeout") == 12.5
+    # An explicit timeout still wins over the injected default.
+    with mock.patch.object(requests.Session, "request",
+                           return_value="ok") as base:
+        sess.request("GET", "http://example.invalid", timeout=1.0)
+    assert base.call_args.kwargs.get("timeout") == 1.0

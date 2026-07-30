@@ -66,6 +66,7 @@ DEFAULTS: dict = {
                 "gaia_catid": 1, "sid_diaobject": 1,
                 "max_nights_per_run": 14.0, "backfill_start_mjd": 60973.0,
                 "use_footprint_denominator": True, "footprint_bin_deg": 1.0,
+                "max_run_seconds": 5400.0,
                 "audit_without_gaia_join_every_n_runs": 14},
     "screen": {"min_abs_snr": 6.0, "min_reliability": 0.0,
                "require_reliability": False, "max_dipole_significance": 3.0,
@@ -493,23 +494,43 @@ def _visit_history_from_forced(rows, targets, th: Thresholds, epoch_jyear: float
     return ({k: sorted(set(v)) for k, v in hist.items()}, pairs, stats)
 
 
-def screen(cfg=None, chunks: int = 1, **kw) -> dict:
+def screen(cfg=None, chunks: int = 1, max_run_seconds: float | None = None,
+           **kw) -> dict:
     """Run :func:`screen_night` up to ``chunks`` times, stopping when caught up.
 
     One dispatch can therefore walk several chunks of the backlog instead of
     needing one dispatch per chunk.  Stops early on ``NO_NEW_DATA`` (the
     watermark has reached the broker's frontier) or on any non-OK verdict, so a
     broker failure does not burn the whole budget retrying.
+
+    It also stops on a **wall-clock budget**, well short of the CI job timeout.
+    A 16-chunk backfill once ran into the 180-minute job limit and was cancelled
+    outright, which discards the whole run: the commit step never executes, so
+    every chunk that HAD succeeded is thrown away too.  Yielding voluntarily
+    means the watermark and ledger are always committed and the next dispatch
+    resumes exactly where this one stopped.
     """
+    conf = load_tocsin_config(cfg)
+    budget = float(max_run_seconds if max_run_seconds is not None
+                   else conf["acquire"].get("max_run_seconds", 5400.0))
+    t0 = time.monotonic()
     last: dict = {}
     for i in range(max(1, int(chunks))):
         last = screen_night(cfg, **kw)
         v = last.get("verdict")
-        print(f"[tocsin] chunk {i + 1}/{chunks}: {v}")
+        elapsed = time.monotonic() - t0
+        print(f"[tocsin] chunk {i + 1}/{chunks}: {v}  ({elapsed:.0f}s elapsed)")
         if v != "OK" and v != "NO_DETECTIONS_IN_WINDOW":
             break
         if kw.get("mjd_lo") is not None or kw.get("mjd_hi") is not None:
             break                       # an explicit window is a single shot
+        if elapsed > budget:
+            print(f"[tocsin] wall-clock budget {budget:.0f}s reached after "
+                  f"{i + 1} chunks; stopping so the ledger is committed")
+            last.setdefault("notes", []).append(
+                f"stopped after {i + 1} of {chunks} chunks on the "
+                f"{budget:.0f}s wall-clock budget; re-dispatch to continue")
+            break
     return last
 
 

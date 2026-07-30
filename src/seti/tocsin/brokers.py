@@ -125,6 +125,23 @@ _STAGE_A_SELECT = ", ".join([
   + [f"objects.{b}_latestMJD" for b in "ugrizy"])
 
 
+def _timeout_session(timeout: float):
+    """A ``requests.Session`` that applies ``timeout`` to every request.
+
+    ``requests`` only honours ``timeout`` as a per-call keyword, so a default has
+    to be injected in ``request()``.  Without this there is no client-side
+    deadline at all and a stalled query blocks until the CI job is killed.
+    """
+    import requests
+
+    class _TimeoutSession(requests.Session):
+        def request(self, *args, **kwargs):          # noqa: D102
+            kwargs.setdefault("timeout", timeout)
+            return super().request(*args, **kwargs)
+
+    return _TimeoutSession()
+
+
 class BrokerError(RuntimeError):
     """Raised when a broker is unreachable or answers unusably."""
 
@@ -168,11 +185,14 @@ class AlerceTAP:
                 import pyvo
             except ImportError as exc:  # pragma: no cover - pyvo is a dependency
                 raise BrokerError(f"pyvo unavailable: {exc}") from exc
-            self._svc = pyvo.dal.TAPService(self.url)
-            try:
-                self._svc._session.timeout = self.timeout
-            except Exception:
-                pass
+            # A REAL socket timeout, not a hopeful attribute assignment.
+            # `requests.Session` has no honoured `timeout` attribute, so setting
+            # one did nothing and a hung TAP query waited forever: a 16-chunk
+            # backfill burned the full 180-minute job timeout on a single stuck
+            # query and completed 2 chunks. An unattended nightly cron cannot
+            # hang like that, so the timeout is injected per request instead.
+            self._svc = pyvo.dal.TAPService(
+                self.url, session=_timeout_session(self.timeout))
         return self._svc
 
     def query(self, adql: str, maxrec: int | None = None, retries: int = 4):

@@ -303,7 +303,12 @@ class AlerceSSO:
         adql = f"SELECT {', '.join(cols)} FROM {SS_OBJECT_TABLE}"
         if ss_keys:
             joined = ", ".join(str(int(k)) for k in ss_keys)
-            adql += f" WHERE ssobjectid IN ({joined})"
+            # `oid`, not `ssobjectid`: this table keys on `oid` (measured
+            # 2026-07-30), and filtering on the wrong name raised "No such field
+            # known" and took the whole photometric axis down with it in the first
+            # live run.  Fall back to whichever of the two the schema actually has.
+            key_col = "oid" if "oid" in have else "ssobjectid"
+            adql += f" WHERE {key_col} IN ({joined})"
         try:
             res.rows = self.query(adql, maxrec=maxrec)
             res.reached = True
@@ -557,17 +562,26 @@ class AlerceSSO:
         """
         res = SSOResult()
         cols = [key_column, *MPC_ORBIT_COLUMNS]
+        # Every `<=` bound needs a matching `> 0`, because zero is this mirror's
+        # "missing" and an upper bound admits it.  Without the guard the cut lets
+        # through exactly the rows whose quantity is unknown -- and it must match the
+        # guard in `object_residual_summary` exactly, or the shortlist and the parent
+        # select different populations, which cost 92.5% of the first live run.
         where: list[str] = []
         if h_max is not None:
             where.append(f"h <= {float(h_max)}")
+            where.append("h > 0")
         if normalized_rms_max is not None:
             where.append(f"normalized_rms <= {float(normalized_rms_max)}")
+            where.append("normalized_rms > 0")
         if min_oppositions is not None:
             where.append(f"nopp >= {int(min_oppositions)}")
         if min_arc_days is not None:
             where.append(f"arc_length_total >= {float(min_arc_days)}")
         if require_nongrav:
-            where.append("yarkovsky IS NOT NULL")
+            # NOT NULL is not enough: `yarkovsky` is non-NULL for 1822 rows and
+            # non-zero for 12, so the NULL test alone admits 1810 zero-filled rows.
+            where.append("yarkovsky IS NOT NULL AND yarkovsky <> 0")
         if extra_where:
             where.append(f"({extra_where})")
         adql = f"SELECT {', '.join(cols)} FROM {MPC_ORBITS_TABLE}"
@@ -649,15 +663,28 @@ class AlerceSSO:
                                 min_detections: int = 6,
                                 join_on: str = "measurement_id",
                                 nearest_only: bool = True,
+                                require_orbit: bool = True,
+                                h_max: float | None = None,
+                                normalized_rms_max: float | None = None,
+                                min_oppositions: int | None = None,
+                                min_arc_days: float | None = None,
                                 maxrec: int | None = None) -> SSOResult:
         """Per-object residual aggregates computed server-side.
 
-        The cheap first pass.  Pulling every residual row for a survey that
-        detects ~10^4-10^5 minor planets a night is not affordable, and it is not
-        necessary: the objects worth a full time-series pull are the ones whose
-        *aggregate* along-track offset is large or whose scatter is structured.
-        This is the same two-stage shape TOCSIN uses — one bulk query to build a
-        shortlist, then expensive per-object work only on the shortlist.
+        The cheap first pass.  Pulling every residual row for a survey that detects
+        ~10^4-10^5 minor planets a night is not affordable, and it is not necessary:
+        the objects worth a full time-series pull are the ones whose aggregate
+        offset is large.  Same two-stage shape TOCSIN uses — one bulk query builds a
+        shortlist, expensive per-object work runs only on the shortlist.
+
+        ``require_orbit`` applies **the same quality cuts as the parent-population
+        query, server-side, inside this aggregate**.  It is on by default because
+        leaving it off wasted 92.5% of the first live run: the shortlist was drawn
+        from the detection table alone, so 370 of 400 shortlisted objects had no row
+        in the screened parent, no ``H``, and therefore no testable ceiling — the
+        per-object queries ran and their results were discarded.  The shortlist and
+        the parent must be the same population or the expensive stage is spent
+        outside it.
         """
         res = SSOResult()
         on = _join_clause(join_on)
@@ -668,6 +695,21 @@ class AlerceSSO:
             where.append(f"d.mjd < {float(mjd_hi)}")
         if nearest_only:
             where.append("ss.diadistancerank = 1")
+        if require_orbit:
+            # These must match `orbits()` clause for clause.  Every `<=` bound needs
+            # a matching `> 0`, because zero is this mirror's "missing" and an upper
+            # bound admits it -- so without the guard the cut lets through exactly
+            # the objects whose quantity is unknown.
+            if h_max is not None:
+                where.append(f"o.h <= {float(h_max)}")
+                where.append("o.h > 0")
+            if normalized_rms_max is not None:
+                where.append(f"o.normalized_rms <= {float(normalized_rms_max)}")
+                where.append("o.normalized_rms > 0")
+            if min_oppositions is not None:
+                where.append(f"o.nopp >= {int(min_oppositions)}")
+            if min_arc_days is not None:
+                where.append(f"o.arc_length_total >= {float(min_arc_days)}")
         # `mean_offset` is the ranking quantity, not `mean_along`: the along-track
         # and cross-track columns are NULL for every row in this mirror (measured
         # 2026-07-30), so a shortlist built on them would be empty and the channel
@@ -685,9 +727,19 @@ class AlerceSSO:
                 "AVG(ss.heliorange) AS mean_heliorange, "
                 "MIN(ss.heliorange) AS min_heliorange, "
                 "MAX(ss.heliorange) AS max_heliorange, "
+                # `n_det` and the epoch span let the shortlist prefer WELL-SAMPLED
+                # objects, not just large-offset ones: the along-track rotation needs
+                # pairs of detections close in time, and an object with a big offset
+                # and four epochs cannot be fitted at all.  Deliberately NOT
+                # COUNT(DISTINCT FLOOR(...)) -- ADQL support for a distinct count
+                # over an expression is not guaranteed, and a rejected query here
+                # takes the whole shortlist down rather than degrading.
                 "AVG(ss.ephrate) AS mean_ephrate "
                 f"FROM {SS_DETECTION_TABLE} AS ss "
                 f"JOIN {DETECTION_TABLE} AS d ON {on}")
+        if require_orbit:
+            adql += (f" JOIN {MPC_ORBITS_TABLE} AS o "
+                     "ON o.ssobjectid = ss.ssobjectid")
         if where:
             adql += " WHERE " + " AND ".join(where)
         adql += (" GROUP BY ss.ssobjectid "

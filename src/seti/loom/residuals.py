@@ -130,16 +130,38 @@ def offset_from_positions(ra_obs, dec_obs, eph_ra, eph_dec):
     return (dra * np.cos(dec_mid) * 3600.0, (dec_o - dec_p) * 3600.0)
 
 
-def track_direction(mjd, ra_deg, dec_deg, max_gap_days: float = 0.5):
-    """Unit sky-plane direction of motion at each epoch, from neighbouring epochs.
+def track_direction(mjd, ra_deg, dec_deg, max_gap_days: float = 5.0,
+                    min_track_arcsec: float = 1.0):
+    """Unit sky-plane direction of motion at each epoch, from nearby epochs.
 
-    For each detection the direction is taken from the nearest detection within
-    ``max_gap_days`` — within a night an object moves along its track, so the
-    displacement between two detections half an hour apart *is* the track
-    direction, to far better precision than the residual being measured.  Epochs
-    with no neighbour inside the window return NaN, which propagates: an object
-    observed once a night for a month has no measurable track direction and must
-    be reported as untestable on this axis rather than assigned an arbitrary one.
+    For each detection the direction is fitted by least squares to every detection
+    within ``max_gap_days``, which is far more robust than differencing the single
+    nearest neighbour: the first live run got a usable direction at only 4 of 9
+    epochs that way, and 273 of 400 objects failed the drift fit for want of
+    epochs rather than for want of signal.
+
+    The window can be days wide because the *direction* of apparent motion changes
+    slowly — a main-belt object moves ~0.2 deg/day, so even a tenth of a day gives
+    ~70 arcsec of track against a residual of ~0.1 arcsec — but it cannot be
+    arbitrarily wide, because near a stationary point the apparent motion genuinely
+    reverses and a window straddling one would average through the turn.
+    ``min_track_arcsec`` is the guard: if the object did not move at least that far
+    across the window, the direction is refused rather than fitted, and NaN
+    propagates. An object with no measurable track direction is *untestable* on this
+    axis, not assigned an arbitrary one.
+
+    The default of 1 arcsec is set by the *direction* error it implies, not by a
+    feeling about how far is far: the fitted direction is uncertain by roughly
+    (astrometric error) / (track length), so 1 arcsec of track against LSST's ~10 mas
+    astrometry gives ~0.01 rad, which mixes about 1% of the along-track signal into
+    cross-track — negligible against the factor-of-three power-ratio threshold the
+    channel actually tests. A main-belt object moving ~0.2 deg/day covers ~15 arcsec
+    between the two exposures of an in-night pair, so ordinary sampling clears this
+    comfortably and only a near-stationary object is refused, which is correct.
+
+    The direction is always oriented along **increasing time**, so the along-track
+    sign is meaningful; without that a real lag and a real lead would cancel and a
+    secular drift would average to nothing.
     """
     t = np.asarray(mjd, dtype=float)
     ra = np.asarray(ra_deg, dtype=float)
@@ -151,30 +173,35 @@ def track_direction(mjd, ra_deg, dec_deg, max_gap_days: float = 0.5):
     idx = np.flatnonzero(good)
     if idx.size < 2:
         return ex, ey
-    order = idx[np.argsort(t[idx])]
-    ts = t[order]
-    for k, i in enumerate(order):
-        best_j, best_dt = -1, np.inf
-        for k2 in (k - 1, k + 1):
-            if 0 <= k2 < order.size:
-                dt = abs(ts[k2] - ts[k])
-                if 0 < dt <= max_gap_days and dt < best_dt:
-                    best_dt, best_j = dt, order[k2]
-        if best_j < 0:
+    for i in idx:
+        near = idx[np.abs(t[idx] - t[i]) <= float(max_gap_days)]
+        if near.size < 2:
             continue
-        dra = (ra[best_j] - ra[i] + 180.0) % 360.0 - 180.0
-        dx = dra * math.cos(math.radians(0.5 * (dec[i] + dec[best_j])))
-        dy = dec[best_j] - dec[i]
-        # Orient along INCREASING TIME, always.  If the neighbour used is the
-        # earlier one the displacement points backwards, and leaving it that way
-        # would flip the along-track sign for half the epochs, so a real lag and a
-        # real lead would cancel and a secular drift would average to nothing.
-        if t[best_j] < t[i]:
-            dx, dy = -dx, -dy
-        norm = math.hypot(dx, dy)
+        dt = t[near] - t[i]
+        # Local flat-sky coordinates centred on this epoch, in arcsec.
+        dra = (ra[near] - ra[i] + 180.0) % 360.0 - 180.0
+        x = dra * np.cos(np.radians(0.5 * (dec[near] + dec[i]))) * 3600.0
+        y = (dec[near] - dec[i]) * 3600.0
+        span = float(dt.max() - dt.min())
+        if span <= 0:
+            continue
+        if near.size == 2:
+            vx, vy = (x[1] - x[0]) / (dt[1] - dt[0]), (y[1] - y[0]) / (dt[1] - dt[0])
+        else:
+            # Slope of position against time: the sky-plane velocity.
+            dtc = dt - dt.mean()
+            denom = float(dtc @ dtc)
+            if denom <= 0:
+                continue
+            vx, vy = float(dtc @ (x - x.mean())) / denom, float(dtc @ (y - y.mean())) / denom
+        # Did the object actually move far enough across the window for the
+        # direction to be determined?
+        if math.hypot(vx, vy) * span < float(min_track_arcsec):
+            continue
+        norm = math.hypot(vx, vy)
         if norm <= 0:
             continue
-        ex[i], ey[i] = dx / norm, dy / norm
+        ex[i], ey[i] = vx / norm, vy / norm
     return ex, ey
 
 
@@ -191,7 +218,7 @@ def rotate_to_track(dx, dy, ex, ey):
 
 
 def decompose_offset(mjd, ra_obs, dec_obs, eph_ra, eph_dec,
-                     off_ra=None, off_dec=None, max_gap_days: float = 0.5):
+                     off_ra=None, off_dec=None, max_gap_days: float = 5.0):
     """Along-track and cross-track components of the O-C offset, in arcsec.
 
     Only the *rotation* is missing from the mirror, not the offset.  Measured

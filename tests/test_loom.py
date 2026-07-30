@@ -1075,6 +1075,63 @@ def test_defaults_cover_every_config_section():
             assert key in conf[section], (section, key)
 
 
+def test_config_agrees_with_defaults_on_the_acquire_block():
+    """The YAML silently overrode a fix once; it must not do that again.
+
+    ``config/loom.yaml`` is the authority and is *meant* to override
+    :data:`DEFAULTS`, but that means a default changed in code without the YAML
+    following has no effect at all — which is exactly what happened when the
+    shortlist size and batch size were raised after the first live run and the run
+    kept using the stale YAML values. Pinning them together makes the divergence a
+    test failure rather than a silently ineffective change.
+    """
+    conf = load_loom_config()
+    for key, value in DEFAULTS["acquire"].items():
+        got = conf["acquire"][key]
+        if isinstance(value, float):
+            assert got == pytest.approx(value), key
+        else:
+            assert got == value, key
+
+
+def test_shortlist_and_parent_apply_the_same_quality_cuts():
+    """The bug that wasted 92.5% of the first live run.
+
+    ``orbits()`` and ``object_residual_summary()`` must gate on the same clauses,
+    or the shortlist is drawn from a different population than the screen and the
+    expensive per-object stage runs outside it. In particular every ``<=`` bound
+    needs a matching ``> 0``, because zero is this mirror's "missing" and an upper
+    bound admits it.
+    """
+    from seti.loom.acquire import AlerceSSO
+
+    captured: list[str] = []
+
+    class FakeTAP:
+        calls = 0
+
+        def query(self, adql, maxrec=None, retries=4):
+            captured.append(adql)
+            return []
+
+    sso = AlerceSSO()
+    sso.tap = FakeTAP()
+    cuts = {"h_max": 26.0, "normalized_rms_max": 1.5, "min_oppositions": 2,
+            "min_arc_days": 180.0}
+    sso.orbits(**cuts)
+    sso.object_residual_summary(require_orbit=True, **cuts)
+    assert len(captured) == 2
+    parent, shortlist = captured
+    for clause in ("h <= 26.0", "h > 0", "normalized_rms <= 1.5",
+                   "normalized_rms > 0", "nopp >= 2",
+                   "arc_length_total >= 180.0"):
+        assert clause in parent, clause
+        # The aggregate qualifies the same columns with the orbit table alias.
+        assert f"o.{clause}" in shortlist, clause
+    # And the aggregate must actually join the orbit table, or the cuts are inert.
+    assert "lsst_mpc_orbits" in shortlist
+
+
 def test_epsilon_ladder_is_ordered():
     """realistic < hard < inviolable, or the tier ladder is meaningless."""
     th = screen.Thresholds()
@@ -1128,7 +1185,10 @@ def test_analyse_series_uses_the_reconstruction_when_columns_are_null():
     for night in range(8):
         for k in (0, 1):
             t = 60000.0 + 40.0 * night + k * (30.0 / 1440.0)
-            ra_p = 10.0 + 0.01 * (t - 60000.0)
+            # 0.2 deg/day: an ordinary main-belt apparent rate, so the two
+            # exposures of an in-night pair are ~15 arcsec apart and the track
+            # direction is well determined.
+            ra_p = 10.0 + 0.2 * (t - 60000.0)
             lag = 0.002 * (t - 60000.0) ** 2 / 100.0     # arcsec, accelerating
             rows.append({
                 "mjd": t,
@@ -1163,7 +1223,7 @@ def test_analyse_series_refuses_a_reconstruction_that_disagrees():
     for night in range(8):
         for k in (0, 1):
             t = 60000.0 + 40.0 * night + k * (30.0 / 1440.0)
-            ra_p = 10.0 + 0.01 * (t - 60000.0)
+            ra_p = 10.0 + 0.2 * (t - 60000.0)
             rows.append({
                 "mjd": t, "ra": ra_p + 0.5 / 3600.0, "dec": 5.0,
                 "ephra": ra_p, "ephdec": 5.0,

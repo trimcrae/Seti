@@ -203,6 +203,28 @@ def _f(v) -> float:
     return x if math.isfinite(x) else float("nan")
 
 
+def _fz(v) -> float:
+    """Like :func:`_f`, but **exactly zero is missing**.
+
+    Measured on the live mirror 2026-07-30: ``srp``, ``a1``, ``a2``, ``a3`` and
+    ``dt`` are non-NULL for 1812 of 130,909 orbit rows and every one of those
+    values is identically 0.0 — fill, not measurement — and the same pattern
+    appears in ``a``, ``mean_motion``, ``period``, ``not_normalized_rms`` and
+    ``arc_length_total`` on rows where the quantity was not determined.
+
+    So ``COUNT(col)`` reports these columns as populated and a naive read treats an
+    unfitted parameter as a *measured zero*, which for a non-gravitational term is
+    the strongest possible statement that the object is ordinary.  That is the
+    difference between "untestable" and "we looked and it was fine", and this
+    channel is built on not confusing those two.  For every quantity this is
+    applied to, zero is not physically meaningful: an orbit has non-zero semimajor
+    axis, a moving object has non-zero sky rate, and a fit residual of identically
+    zero is an absence.
+    """
+    x = _f(v)
+    return float("nan") if x == 0.0 else x
+
+
 def _fin(x: float) -> bool:
     return isinstance(x, float) and math.isfinite(x)
 
@@ -221,24 +243,27 @@ def screen_orbit_row(row: dict, th: Thresholds,
                        designation=(str(row["designation"])
                                     if row.get("designation") else None),
                        path="mpc_orbits")
-    rec.h = _f(row.get("h"))
-    rec.a, rec.e, rec.i = _f(row.get("a")), _f(row.get("e")), _f(row.get("i"))
+    rec.h = _fz(row.get("h"))
+    rec.a, rec.e, rec.i = _fz(row.get("a")), _f(row.get("e")), _f(row.get("i"))
     rec.node, rec.argperi = _f(row.get("node")), _f(row.get("argperi"))
-    rec.normalized_rms = _f(row.get("normalized_rms"))
-    rec.arc_days = _f(row.get("arc_length_total"))
+    rec.normalized_rms = _fz(row.get("normalized_rms"))
+    rec.arc_days = _fz(row.get("arc_length_total"))
     rec.n_opp = _f(row.get("nopp"))
 
     if _fin(rec.h):
         rec.diameter_m = float(diameter_m_from_h(rec.h, albedo=th.albedo_typical))
 
-    yark = _f(row.get("yarkovsky"))
-    yark_unc = _f(row.get("yarkovsky_unc"))
+    # `_fz`, not `_f`: an unfitted non-gravitational term arrives as exactly 0.0 in
+    # this mirror, and reading it as a measured zero would be the strongest possible
+    # statement that the object is ordinary.
+    yark = _fz(row.get("yarkovsky"))
+    yark_unc = _fz(row.get("yarkovsky_unc"))
     if _fin(yark):
         rec.a2_au_day2 = float(a2_from_yarkovsky_column(yark))
     if _fin(yark_unc):
         rec.a2_unc_au_day2 = float(a2_from_yarkovsky_column(yark_unc))
-    srp = _f(row.get("srp"))
-    srp_unc = _f(row.get("srp_unc"))
+    srp = _fz(row.get("srp"))
+    srp_unc = _fz(row.get("srp_unc"))
     if _fin(srp):
         rec.amr_m2_kg = float(amr_from_srp_column(srp))
     if _fin(srp_unc):

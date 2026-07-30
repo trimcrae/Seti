@@ -78,9 +78,21 @@ DETECTION_TABLE = "alerce_tap.detection"
 # drops the clause entirely rather than silently returning an empty result.
 ALERCE_SID_SSOBJECT = 2
 
-# Verified column names, in schema order, for lsst_ss_detection.
+# MEASURED against the live service on 2026-07-30 (results/loom/probe.json).  Two
+# corrections to what the upstream Avro schema implied, both of which would have
+# been silent failures:
+#
+#   * there is NO `diasourceid` column.  The per-detection key is
+#     `measurement_id`, so the join to `alerce_tap.detection` is on
+#     (oid = ssobjectid, measurement_id) -- the same shape TOCSIN uses for
+#     `lsst_detection`.  The `diasourceid` form raised "No such field known",
+#     which is at least loud; joining on `oid` alone does NOT raise, it silently
+#     returns the CROSS PRODUCT of every prediction with every detection of that
+#     object, which is the worst available outcome.
+#   * `lsst_ss_detection` carries no `sid`; the parent `detection` row does, and
+#     solar-system rows are `sid = 2` (measured).
 SS_DETECTION_COLUMNS: tuple[str, ...] = (
-    "diasourceid", "ssobjectid", "designation",
+    "measurement_id", "ssobjectid", "designation",
     "ecllambda", "eclbeta", "gallon", "gallat", "elongation", "phaseangle",
     "toporange", "toporangerate", "heliorange", "heliorangerate",
     "ephra", "ephdec", "ephvmag", "ephrate", "ephratera", "ephratedec",
@@ -103,10 +115,32 @@ MPC_ORBIT_COLUMNS: tuple[str, ...] = (
     "h", "g", "earth_moid",
     "arc_length_total", "arc_length_sel", "nobs_total", "nobs_total_sel",
     "nopp", "u_param", "not_normalized_rms", "normalized_rms",
-    "epoch_mjd",
+    "epoch_mjd", "orbit_type_int",
+    "unpacked_primary_provisional_designation",
     "yarkovsky", "yarkovsky_unc", "srp", "srp_unc",
     "a1", "a1_unc", "a2", "a2_unc", "a3", "a3_unc", "dt", "dt_unc",
 )
+
+# ZERO IS THIS MIRROR'S "MISSING", AND IT IS NOT NULL.
+#
+# Measured 2026-07-30: `srp`, `a1`, `a2`, `a3`, `dt` are non-NULL for 1812 of
+# 130,909 orbit rows and every one of those values is EXACTLY 0.0 -- they are fill,
+# not measurement.  The same pattern appears in `a`, `mean_motion`, `period`,
+# `not_normalized_rms` and `arc_length_total` on rows where the quantity was not
+# determined, and in `ephrate` for every solar-system detection.
+#
+# This matters because `COUNT(col)` counts a zero as present, so a naive null-
+# fraction check reports these columns as populated and a naive read treats an
+# unfitted parameter as a measured zero.  For every quantity here, zero is not a
+# physically meaningful value: an orbit has non-zero semimajor axis, a moving
+# object has non-zero sky rate, and a fitted non-gravitational term of identically
+# 0.0 with an uncertainty of identically 0.0 is an absence.
+ZERO_MEANS_MISSING: frozenset[str] = frozenset({
+    "yarkovsky", "yarkovsky_unc", "srp", "srp_unc",
+    "a1", "a1_unc", "a2", "a2_unc", "a3", "a3_unc", "dt", "dt_unc",
+    "a", "mean_motion", "period", "not_normalized_rms", "arc_length_total",
+    "arc_length_sel", "ephrate", "ephratera", "ephratedec",
+})
 
 # `ssObject` columns: a SIX-BAND phase-curve fit per object.  This is the second,
 # photometric axis of the channel, and it is independent of the dynamical
@@ -115,20 +149,54 @@ MPC_ORBIT_COLUMNS: tuple[str, ...] = (
 # and `moid_earth` are dynamical context (which population the object belongs to,
 # and how close it comes to Earth); `extendedness` catches an unrecognised coma,
 # which is the outgassing explanation showing itself directly.
+# MEASURED 2026-07-30.  The key is `oid`, not `ssobjectid`; the per-band fields are
+# `<band>_h`, `<band>_g12`, `<band>_chi2`, `<band>_slope_fit_failed`; extendedness
+# is `extendedness{median,min,max}`; and the Tisserand parameter keeps its
+# underscore as `tisserand_j`.  Guessing any of these would have raised an ADQL
+# error and taken the whole photometric axis down with it, which is why
+# `ss_objects` resolves against TAP_SCHEMA instead of trusting this list.
+#
+# The table exists with 81 columns and **0 rows** as of 2026-07-30, so the
+# photometric axis is present in the schema and empty in the data.  That is
+# reported as EMPTY, not as a null result.
 SS_OBJECT_COLUMNS: tuple[str, ...] = (
-    "ssobjectid", "discoverysubmissiondate", "firstobservationdate",
-    "arc", "numobs",
+    "oid", "designation", "firstobservationmjdtai", "arc", "nobs",
     *[f"{b}_h" for b in "ugrizy"],
     *[f"{b}_g12" for b in "ugrizy"],
     *[f"{b}_herr" for b in "ugrizy"],
-    *[f"{b}_ndata" for b in "ugrizy"],
-    "medianextendedness", "minextendedness", "maxextendedness",
-    "moidearth", "moidearthdeltav", "tisserandj",
-    "phaseanglemin", "phaseanglemax",
+    *[f"{b}_chi2" for b in "ugrizy"],
+    *[f"{b}_nobs" for b in "ugrizy"],
+    *[f"{b}_slope_fit_failed" for b in "ugrizy"],
+    "extendednessmedian", "extendednessmin", "extendednessmax",
+    "moidearth", "moidearthdeltav", "tisserand_j",
+    "g_phaseanglemin", "g_phaseanglemax",
 )
 
 # Columns whose null fraction decides the channel's architecture.
 CRITICAL_NULLABLE = ("yarkovsky", "srp", "a1", "a2", "a3", "dt")
+
+
+def _join_clause(join_on: str) -> str:
+    """The ON clause linking a prediction row to the detection that produced it.
+
+    ``measurement_id`` is the correct one and the default: ``lsst_ss_detection``
+    carries both ``ssobjectid`` and ``measurement_id``, and both are needed,
+    because ``measurement_id`` alone is not guaranteed unique across surveys and
+    ``ssobjectid`` alone is one row per *object*.
+
+    ``object`` is retained only as an explicitly-labelled diagnostic.  It does not
+    raise, it silently returns the CROSS PRODUCT of every prediction for an object
+    with every detection of that object — so a query that looks like a residual
+    time series is really an N x M cartesian join, and the resulting "scatter" is
+    an artefact of the join.  Nothing should use it to compute anything.
+    """
+    if join_on in ("measurement_id", "measurement", ""):
+        return ("d.measurement_id = ss.measurement_id "
+                "AND d.oid = ss.ssobjectid")
+    if join_on in ("object", "oid"):
+        return "d.oid = ss.ssobjectid"
+    raise ValueError(f"unknown join_on={join_on!r}; expected "
+                     f"'measurement_id' or 'object'")
 
 
 @dataclass
@@ -246,41 +314,74 @@ class AlerceSSO:
         res.calls = self.tap.calls
         return res
 
-    def null_fractions(self, sample: int = 200_000) -> dict:
-        """Are the non-gravitational columns populated, and in what units?
+    # Every solar-system detection column whose population must be measured before
+    # anything is built on it.  Wider than the obvious set, because the first probe
+    # found the along-track/cross-track decomposition entirely NULL and the channel
+    # then had to be rebuilt around what IS there.
+    SSDET_MEASURED = (
+        "ephoffset", "ephoffsetalongtrack", "ephoffsetcrosstrack",
+        "ephoffsetra", "ephoffsetdec", "ephra", "ephdec", "ephvmag",
+        "ephrate", "ephratera", "ephratedec",
+        "heliorange", "toporange", "phaseangle", "elongation",
+        "topo_vx", "topo_vy", "topo_vz", "topo_vtot", "helio_vtot",
+        "diadistancerank",
+    )
 
-        The highest-value query in the whole channel.  Everything downstream
-        branches on the answer: if ``yarkovsky`` and ``srp`` are all-NULL in the
-        mirror then the ``mpc_orbits`` path is dead and the channel runs on
-        per-detection residuals; if they are populated then both paths run and
-        cross-check each other.
+    def null_fractions(self) -> dict:
+        """Which columns carry a measurement — counting NULL *and* zero-fill.
 
-        Counts and quantiles are computed server-side so no rows cross the wire,
-        and each column is asked for on its own so that one missing column cannot
-        take the whole answer down with it.
+        The highest-value query in the channel; everything downstream branches on
+        the answer.
+
+        ``COUNT(col)`` is not enough, and finding that out cost a probe pass.  This
+        mirror writes **exactly 0.0** where a quantity was not determined, so
+        ``srp``, ``a1``, ``a2``, ``a3`` and ``dt`` all reported "1812 of 130,909
+        populated" while every one of those values was zero — fill, not
+        measurement.  ``ephrate`` reported 100% populated and is identically zero
+        for all 961,558 solar-system detections.  So each column is counted three
+        ways: total rows, non-NULL, and non-NULL-and-non-zero, and only the third
+        is evidence of anything.
+
+        Each column is asked for on its own so one missing column cannot take the
+        whole answer down, and MIN/MAX/AVG come back with it because the *unit* of
+        the offset columns is not stated anywhere and only the distribution settles
+        it (~0.1 means arcsec, ~1e2 mas, ~1e-6 radians).
         """
         out: dict = {}
-        for col in CRITICAL_NULLABLE:
-            adql = (f"SELECT COUNT(*) AS n_total, COUNT({col}) AS n_present, "
-                    f"MIN({col}) AS v_min, MAX({col}) AS v_max, AVG({col}) AS v_mean "
-                    f"FROM {MPC_ORBITS_TABLE}")
+
+        def measure(label: str, table: str, col: str) -> None:
+            adql = (f"SELECT COUNT(*) AS n_total, COUNT({col}) AS n_nonnull, "
+                    f"SUM(CASE WHEN {col} <> 0 THEN 1 ELSE 0 END) AS n_nonzero, "
+                    f"MIN({col}) AS v_min, MAX({col}) AS v_max, "
+                    f"AVG({col}) AS v_mean FROM {table}")
             try:
                 rows = self.query(adql, maxrec=5, retries=2)
-                out[f"orbits_{col}"] = {"rows": rows, "adql": adql}
+                out[label] = {"rows": rows, "adql": adql}
             except Exception as exc:                          # noqa: BLE001
-                out[f"orbits_{col}"] = {"error": f"{type(exc).__name__}: {exc}"[:400],
-                                        "adql": adql}
-        for col in ("ephoffset", "ephoffsetalongtrack", "ephoffsetcrosstrack",
-                    "ephrate", "heliorange", "toporange", "phaseangle"):
-            adql = (f"SELECT COUNT(*) AS n_total, COUNT({col}) AS n_present, "
-                    f"MIN({col}) AS v_min, MAX({col}) AS v_max, AVG({col}) AS v_mean "
-                    f"FROM {SS_DETECTION_TABLE}")
+                out[label] = {"error": f"{type(exc).__name__}: {exc}"[:400],
+                              "adql": adql}
+
+        for col in (*CRITICAL_NULLABLE, "a", "e", "i", "h", "arc_length_total",
+                    "nopp", "normalized_rms", "u_param"):
+            measure(f"orbits_{col}", MPC_ORBITS_TABLE, col)
+        for col in self.SSDET_MEASURED:
+            measure(f"ssdet_{col}", SS_DETECTION_TABLE, col)
+
+        # Is `ephoffset` truncated by the source-association radius?  The first
+        # probe measured max = 0.99997 arcsec over 961,558 rows, which is either a
+        # remarkable coincidence or a 1-arcsec matching radius -- and if it is the
+        # radius then the channel is blind to residuals above it BY CONSTRUCTION,
+        # which is a sensitivity ceiling that must be stated in any result.
+        for lo, hi in ((0.0, 0.2), (0.2, 0.5), (0.5, 0.9), (0.9, 0.99),
+                       (0.99, 1.0), (1.0, 10.0)):
+            adql = (f"SELECT COUNT(*) AS n FROM {SS_DETECTION_TABLE} "
+                    f"WHERE ephoffset >= {lo} AND ephoffset < {hi}")
             try:
-                rows = self.query(adql, maxrec=5, retries=2)
-                out[f"ssdet_{col}"] = {"rows": rows, "adql": adql}
+                out[f"ephoffset_hist_{lo}_{hi}"] = {
+                    "rows": self.query(adql, maxrec=5, retries=2), "adql": adql}
             except Exception as exc:                          # noqa: BLE001
-                out[f"ssdet_{col}"] = {"error": f"{type(exc).__name__}: {exc}"[:400],
-                                       "adql": adql}
+                out[f"ephoffset_hist_{lo}_{hi}"] = {
+                    "error": f"{type(exc).__name__}: {exc}"[:300], "adql": adql}
         return out
 
     def diagnostics(self, on_result=None) -> dict:
@@ -316,19 +417,42 @@ class AlerceSSO:
             f"SELECT {', '.join(MPC_ORBIT_COLUMNS)} FROM {MPC_ORBITS_TABLE}",
             maxrec=10)
 
-        # Which key joins the two solar-system tables, and where does mjd live?
-        # `lsst_ss_detection` carries no epoch, so an epoch must come from the
-        # generic `detection` table and the join is the open question.
-        run("join_ss_detection_on_measurement_id",
-            "SELECT d.oid, d.sid, d.mjd, d.ra, d.dec, d.band, "
-            "ss.ssobjectid, ss.designation, ss.ephoffsetalongtrack "
+        # The join, now that the key is known to be `measurement_id` (there is no
+        # `diasourceid` column).  `lsst_ss_detection` carries neither an epoch nor a
+        # sky position, so both must come from `detection`.
+        run("join_measurement_id",
+            "SELECT d.oid, d.sid, d.mjd, d.ra, d.dec, d.band, ss.ssobjectid, "
+            "ss.designation, ss.ephra, ss.ephdec, ss.ephoffset, ss.ephoffsetra, "
+            "ss.ephoffsetdec, ss.toporange, ss.heliorange, ss.diadistancerank "
             f"FROM {SS_DETECTION_TABLE} AS ss "
-            f"JOIN {DETECTION_TABLE} AS d ON d.measurement_id = ss.diasourceid",
-            maxrec=10)
-        run("join_ss_detection_on_oid",
-            "SELECT d.oid, d.sid, d.mjd, ss.ssobjectid, ss.ephoffsetalongtrack "
+            f"JOIN {DETECTION_TABLE} AS d ON {_join_clause('measurement_id')}",
+            maxrec=20)
+        # Does the join stay 1:1?  If one prediction row matches several detection
+        # rows the "residual time series" is a cartesian product and every statistic
+        # built on it measures the join instead of the sky.  Joining on `oid` alone
+        # does exactly that, silently, which is why it is diagnostic-only.
+        run("join_cardinality",
+            "SELECT ss.measurement_id, COUNT(*) AS n_matched "
             f"FROM {SS_DETECTION_TABLE} AS ss "
-            f"JOIN {DETECTION_TABLE} AS d ON d.oid = ss.ssobjectid", maxrec=10)
+            f"JOIN {DETECTION_TABLE} AS d ON {_join_clause('measurement_id')} "
+            "GROUP BY ss.measurement_id HAVING COUNT(*) > 1", maxrec=20)
+        # Can the observed-minus-computed offset be RECONSTRUCTED from raw
+        # positions, given that ephoffsetalongtrack/crosstrack are all-NULL?  This
+        # is the channel's fallback and it needs ephra/ephdec populated alongside
+        # d.ra/d.dec, plus the topocentric velocity for the track direction.
+        run("oc_from_positions",
+            "SELECT d.ra, d.dec, ss.ephra, ss.ephdec, ss.ephoffset, "
+            "ss.ephoffsetra, ss.ephoffsetdec, "
+            "ss.topo_vx, ss.topo_vy, ss.topo_vz, ss.toporange "
+            f"FROM {SS_DETECTION_TABLE} AS ss "
+            f"JOIN {DETECTION_TABLE} AS d ON {_join_clause('measurement_id')} "
+            "WHERE ss.diadistancerank = 1", maxrec=20)
+        # How many objects have enough epochs for a time series at all?  Below
+        # ~8 the drift fit cannot separate a quadratic from noise.
+        run("detections_per_object",
+            "SELECT ss.ssobjectid, COUNT(*) AS n "
+            f"FROM {SS_DETECTION_TABLE} AS ss GROUP BY ss.ssobjectid "
+            "HAVING COUNT(*) >= 8", maxrec=50)
 
         # The photometric axis.  Column spellings here are NOT verified against a
         # primary source (unlike ss_detection and mpc_orbits), so the probe asks
@@ -340,10 +464,21 @@ class AlerceSSO:
         run("count_ss_object", f"SELECT COUNT(*) AS n FROM {SS_OBJECT_TABLE}",
             maxrec=5)
 
-        # Does mpc_orbits key on ssobjectid, on a designation, or on oid?
-        for key in ("ssobjectid", "designation", "oid", "mpc_orb_jsonb"):
+        # Which designation form does each table carry?  The detections give the
+        # PACKED form ("J97L01J") and the orbits the unpacked ("2024 RU193"), and
+        # control matching has to handle both or it silently finds nothing.
+        for key in ("ssobjectid", "designation",
+                    "unpacked_primary_provisional_designation",
+                    "packed_primary_provisional_designation", "orbit_type_int"):
             run(f"orbits_has_{key}",
                 f"SELECT {key} FROM {MPC_ORBITS_TABLE}", maxrec=5)
+        # Do the two tables actually share objects?  A residual series is only
+        # usable with an orbit to supply H and the fit quality.
+        run("join_orbits_to_detections",
+            "SELECT COUNT(*) AS n FROM ("
+            f"SELECT DISTINCT ss.ssobjectid FROM {SS_DETECTION_TABLE} AS ss "
+            f"JOIN {MPC_ORBITS_TABLE} AS o ON o.ssobjectid = ss.ssobjectid"
+            ") AS t", maxrec=5)
 
         # Population sizes and epoch coverage: is this table big enough for the
         # matched-null machinery, and how far behind is the mirror?
@@ -462,8 +597,7 @@ class AlerceSSO:
         """
         res = SSOResult()
         ss_cols = ", ".join(f"ss.{c}" for c in SS_DETECTION_COLUMNS)
-        on = ("d.measurement_id = ss.diasourceid" if join_on == "measurement_id"
-              else "d.oid = ss.ssobjectid")
+        on = _join_clause(join_on)
         where: list[str] = []
         if mjd_lo is not None:
             where.append(f"d.mjd >= {float(mjd_lo)}")
@@ -514,8 +648,7 @@ class AlerceSSO:
         shortlist, then expensive per-object work only on the shortlist.
         """
         res = SSOResult()
-        on = ("d.measurement_id = ss.diasourceid" if join_on == "measurement_id"
-              else "d.oid = ss.ssobjectid")
+        on = _join_clause(join_on)
         where: list[str] = []
         if mjd_lo is not None:
             where.append(f"d.mjd >= {float(mjd_lo)}")
@@ -557,8 +690,7 @@ class AlerceSSO:
         every night forever and look like a clean null, so every window in this
         channel is anchored to this value rather than to the wall clock.
         """
-        on = ("d.measurement_id = ss.diasourceid" if join_on == "measurement_id"
-              else "d.oid = ss.ssobjectid")
+        on = _join_clause(join_on)
         try:
             rows = self.query(
                 f"SELECT MAX(d.mjd) AS mjd_max FROM {SS_DETECTION_TABLE} AS ss "

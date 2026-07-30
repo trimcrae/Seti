@@ -49,6 +49,7 @@ from .residuals import (
     apparition_trend,
     arcsec_to_km,
     breakpoint_scan,
+    decompose_offset,
     drift_fit,
     fit_common_timing,
     law_discrimination,
@@ -193,6 +194,18 @@ def _f(v) -> float:
     except (TypeError, ValueError):
         return float("nan")
     return x if math.isfinite(x) else float("nan")
+
+
+def _fz(v) -> float:
+    """Like :func:`_f`, but exactly zero is missing --- see ``screen._fz``.
+
+    This mirror writes 0.0 where a quantity was not determined, and `ephrate` is
+    identically zero for every solar-system detection in it.  Reading that as a
+    measured rate would make the timing-degeneracy regression fit a column of
+    zeros and report a confident null.
+    """
+    x = _f(v)
+    return float("nan") if x == 0.0 else x
 
 
 # ---------------------------------------------------------------------------
@@ -503,19 +516,59 @@ def analyse_series(rows: list[dict], th: Thresholds, n_null: int = 500) -> dict:
     mjd = np.array([_f(r.get("mjd")) for r in rows])
     along = np.array([_f(r.get("ephoffsetalongtrack")) for r in rows])
     cross = np.array([_f(r.get("ephoffsetcrosstrack")) for r in rows])
-    rate = np.array([_f(r.get("ephrate")) for r in rows])
+    # `_fz`: `ephrate` is identically zero for every solar-system detection in this
+    # mirror, so reading it as a measured rate would make the timing-degeneracy
+    # regression fit a column of zeros and report a confident zero offset.
+    rate = np.array([_fz(r.get("ephrate")) for r in rows])
     helio = np.array([_f(r.get("heliorange")) for r in rows])
     topo = np.array([_f(r.get("toporange")) for r in rows])
     ra = np.array([_f(r.get("ra")) for r in rows])
     dec = np.array([_f(r.get("dec")) for r in rows])
 
     out: dict = {"n_rows": len(rows)}
+
+    # The decomposition the mirror does not carry.  Measured 2026-07-30:
+    # ephoffsetalongtrack/crosstrack are NULL for all 961,558 solar-system
+    # detections, so where the columns are absent the split is RECONSTRUCTED from
+    # the observed position, the predicted position, and the object's own track
+    # direction between neighbouring epochs (see residuals.decompose_offset).
+    if not np.any(np.isfinite(along)):
+        eph_ra = np.array([_f(r.get("ephra")) for r in rows])
+        eph_dec = np.array([_f(r.get("ephdec")) for r in rows])
+        along, cross, total = decompose_offset(mjd, ra, dec, eph_ra, eph_dec)
+        out["decomposition"] = "reconstructed_from_positions_and_track"
+        # Free validation: the reconstructed magnitude must agree with the alert's
+        # own `ephoffset`, which IS populated.  A disagreement means the frame or
+        # the sign convention is wrong and nothing downstream should be believed.
+        col_total = np.array([_f(r.get("ephoffset")) for r in rows])
+        both = np.isfinite(total) & np.isfinite(col_total) & (col_total > 0)
+        if both.sum() >= 3:
+            resid = np.abs(total[both] - col_total[both])
+            out["reconstruction_check"] = {
+                "n": int(both.sum()),
+                "median_abs_difference_arcsec": float(np.median(resid)),
+                "median_ephoffset_arcsec": float(np.median(col_total[both])),
+                "agrees": bool(np.median(resid)
+                               <= 0.1 * max(float(np.median(col_total[both])), 1e-6)),
+            }
+            if not out["reconstruction_check"]["agrees"]:
+                out["verdict"] = "RECONSTRUCTION_DISAGREES_WITH_EPHOFFSET"
+                return out
+        else:
+            out["reconstruction_check"] = {"n": int(both.sum()),
+                                           "agrees": None,
+                                           "reason": "too_few_epochs_to_validate"}
+    else:
+        out["decomposition"] = "from_alert_columns"
+
     good = np.isfinite(mjd) & np.isfinite(along)
     out["n_usable"] = int(good.sum())
     if good.sum() < th.min_detections_for_drift:
         out["verdict"] = "TOO_FEW_DETECTIONS"
         return out
 
+    # Only meaningful where `ephrate` carries a measurement; NaN otherwise, which
+    # `assign_tier` reads as "this veto could not be evaluated" rather than "passed".
     out["timing_correlation"] = per_object_rate_correlation(along, rate)
 
     # LSST per-epoch astrometric precision 10 mas with a 3-7 mas systematic floor

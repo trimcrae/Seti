@@ -205,7 +205,20 @@ Organised by *what the residue physically is*, not by wavelength.
 * **S26 A photospheric flag** — the cheapest galaxy-visible, Myr-durable marker
   a dying civilization could leave. *(the deliberate reading of S12)*
 * **S27 Mathematically patterned transits.** *(adjacent to `dimming`)*
-* **S28 Structure in timing series.** **S29 Monuments at stable points.**
+* **S28 Structure in timing series.**
+* **S29 Monuments at stable points.** → **LOOM** — *built 2026-07-30
+  (`docs/loom.md`).* Read at solar-system scale: a mean-motion resonance, a
+  Trojan point or a quasi-satellite orbit is where an object parks if it means to
+  stay, and where a natural body is least likely to arrive by chance — the
+  Kirkwood gaps exist precisely because resonances *remove* ordinary asteroids.
+  That last fact cuts both ways and is why the test is run against a null matched
+  on detectability: the belt's own density is *depleted* at exactly these
+  locations, which makes the test conservative rather than credulous. In LOOM it
+  is one of five population statistics, because the signature that actually
+  identifies a self-replicating probe is not any single object's position but the
+  **structure of the anomalous set** — replication predicts a population sharing
+  an origin, and a population is the one thing a contaminant that does not itself
+  cluster cannot fake.
 
 ### VII. Event residue — the moment of the filter
 * **S30 "Singularity flash"** — an unclassified blackbody transient on a

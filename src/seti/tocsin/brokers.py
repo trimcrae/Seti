@@ -265,7 +265,9 @@ class AlerceTAP:
 
         # What a real row looks like --- settles the sid question.
         run("sample_lsst_detection",
-            "SELECT oid, sid, measurement_id, psfflux, snr, reliability "
+            "SELECT oid, sid, measurement_id, psfflux, psffluxerr, templateflux, "
+            "snr, reliability, raerr, decerr, extendedness, traillength, "
+            "isnegative, isdipole, glint_trail "
             "FROM alerce_tap.lsst_detection", maxrec=5)
         run("sample_detection",
             "SELECT oid, sid, measurement_id, mjd, ra, dec, band "
@@ -389,14 +391,36 @@ class AlerceTAP:
         can be mis-associated).  Runs should periodically do both and compare.
         """
         res = BrokerResult()
+        # Every column the funnel's discriminators need, with the spelling the
+        # probe measured on 2026-07-30.  Pulling only flux and position would
+        # leave the glint, mover, dipole and artefact tests SILENTLY INERT ---
+        # they would run, find nothing to test, and pass everything.
         sel = [
             "d.oid", "d.sid", "d.measurement_id", "d.mjd", "d.ra", "d.dec", "d.band",
-            "ld.psfflux", "ld.psffluxerr", "ld.snr", "ld.reliability",
-            "ld.isnegative", "ld.isdipole", "ld.extendedness",
+            # photometry, and the same-band quiescent flux that makes dF/F* a
+            # ratio of two Rubin measurements with no passband transformation
+            "ld.psfflux", "ld.psffluxerr", "ld.templateflux", "ld.templatefluxerr",
+            "ld.scienceflux", "ld.sciencefluxerr",
+            "ld.snr", "ld.reliability", "ld.reliabilityversion",
+            # astrometry
+            "ld.raerr", "ld.decerr",
+            # the discriminators
+            "ld.isnegative", "ld.isdipole", "ld.dipolelength", "ld.dipolechi2",
+            "ld.extendedness", "ld.traillength", "ld.trail_flag", "ld.glint_trail",
+            # artefact flags
+            "ld.pixelflags_bad", "ld.pixelflags_cr", "ld.pixelflags_crcenter",
+            "ld.pixelflags_edge", "ld.pixelflags_offimage",
+            "ld.pixelflags_saturated", "ld.pixelflags_saturatedcenter",
+            "ld.pixelflags_suspectcenter", "ld.pixelflags_nodatacenter",
+            "ld.pixelflags_streak", "ld.pixelflags_streakcenter",
+            # synthetic-source injection: must never enter a science sample
+            "ld.pixelflags_injected", "ld.pixelflags_injectedcenter",
+            "ld.visit", "ld.detector",
         ]
-        # Optional per-epoch columns: present in the alert packet, but their
-        # exact TAP spelling is verified by the probe, so they are added by the
-        # caller through `extra_select` rather than assumed here.
+        # NOT selected: `ld.ssobjectid`.  Large integer ids stored as strings are
+        # what broke `oid_catalog` serialisation, and the `sid = 1` filter
+        # already excludes solar-system-associated detections, so it is redundant
+        # risk.
         where = [f"d.mjd >= {float(mjd_lo)}", f"d.mjd < {float(mjd_hi)}"]
         # `sid_diaobject=None` drops the filter entirely.  The inner join to
         # `lsst_detection` already restricts the result to LSST rows, so the sid
@@ -557,6 +581,15 @@ def normalize_alerce_rows(rows: list[dict]) -> list[NormalizedAlert]:
             ra=_f(r, "ra") or float("nan"),
             dec=_f(r, "dec") or float("nan"),
             dflux_njy=flux, dflux_err_njy=ferr, broker="alerce-lsst",
+            # UNITS: Rubin's `raErr`/`decErr` are taken as milliarcsec here.
+            # If that is wrong and they are already arcsec, dividing by 1000
+            # drives them below the 0.05" floor in `pos_err_arcsec`, so the
+            # funnel falls back to the floor and the separation cut is governed
+            # by `max_sep_arcsec` instead --- conservative.  The opposite mistake
+            # (reading mas as arcsec) would inflate errors ~1000x and silently
+            # DISABLE the astrometric-offset rejection, so this direction is the
+            # safe one to be wrong in.  `diagnostics.sample_lsst_detection`
+            # records real values so the assumption can be settled.
             ra_err_arcsec=None if ra_err is None else ra_err / 1000.0,
             dec_err_arcsec=None if dec_err is None else dec_err / 1000.0,
             template_flux_njy=_f(r, "templateflux"),

@@ -821,6 +821,29 @@ def test_diagnostics_isolates_each_failure_instead_of_raising():
     assert all("adql" in v for v in diag.values())
 
 
+def test_every_discriminator_column_is_actually_requested():
+    """Regression: a discriminator with no column to read is silently inert.
+
+    The funnel will happily run the glint, mover, dipole and artefact tests
+    against fields that were never SELECTed — finding nothing to test, and
+    passing everything.  That is worse than not having the tests, because the
+    funnel counts still look like vetting happened.
+    """
+    tap = AlerceTAP()
+    captured = {}
+    tap.query = lambda adql, maxrec=None, retries=4: (
+        captured.setdefault("adql", adql) and [])
+    tap.night_detections(61230.0, 61235.0, parallax_min_mas=10.0)
+    adql = captured["adql"]
+    for col in ("templateflux", "templatefluxerr", "glint_trail", "traillength",
+                "isdipole", "isnegative", "extendedness", "snr", "reliability",
+                "raerr", "decerr", "pixelflags_cr", "pixelflags_streak",
+                "pixelflags_injected", "pixelflags_saturated"):
+        assert f"ld.{col}" in adql, f"{col} is never fetched"
+    # ...and the column that breaks VOTable serialisation stays out of SELECT.
+    assert "ld.ssobjectid" not in adql
+
+
 def test_alerce_forced_photometry_query_is_the_denominator_not_the_numerator():
     tap = AlerceTAP()
     captured = {}

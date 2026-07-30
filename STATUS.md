@@ -148,6 +148,41 @@ claim (which heliocentric-distance law the drift follows) returns
 `min_apparitions_for_promotion = 2` now enforce that; all four become `untestable`
 with the reason named and the assessment returns `INSUFFICIENT_POPULATION`.
 
+**SIX VETTED EXCEEDANCES — the only thing in this channel resembling a lead, and
+it is probably not one.** Of the 11 asteroids above the hard ceiling, 4 are
+already explained ('Oumuamua, 362P, and two Seligman dark comets) and 7 are not.
+Vetting those 7 on orbit quality and A2 signal-to-noise (Del Vigna's first
+condition plus the terms that drive the spurious rate) leaves **six**:
+
+| object | eps (rho=2000) | eps (rho=1000) | A2 S/N | arc | diameter |
+|---|---|---|---|---|---|
+| (2012 UR158) | 26.7 | 13.3 | **107** | 14 yr | 629 m measured |
+| 452639 (2005 UY6) | 7.1 | 3.6 | 11.3 | 21 yr | 2249 m measured |
+| 152667 (1998 FR11) | 2.8 | 1.4 | 4.5 | **70 yr** | from H |
+| 139359 (2001 ME1) | 2.5 | 1.2 | 12.6 | 24 yr | from H |
+| 875163 (1998 SH2) | 1.6 | 0.79 | 14.3 | 27 yr | 383 m measured |
+| 428209 (2006 VC) | 1.3 | 0.65 | 3.8 | 19 yr | from H |
+
+The vetting behaves correctly on the knowns: 'Oumuamua fails at S/N 0.6 over an
+80-day arc, 2016 TA56 fails on observation count, both catalogued dark comets are
+recovered and labelled.
+
+**THREE CAVEATS, THE FIRST DECISIVE.** (1) "Unexplained" means "not in my
+SEVEN-object list" (Seligman et al. 2023). Farnocchia & Seligman 2024 (PNAS)
+extended that population and found two distinct classes of dark comet; several of
+these six may already be in it and the control list cannot say. **This is not a
+detection of anything until that check is run** — it needs the runner, arXiv being
+blocked in the sandbox. (2) Density matters: at rho = 1000 two of the six fall
+below the ceiling, so only four survive both assumptions. (3) The 589-object
+parent is NOT blind — JPL fits A2 for objects someone already thought had
+non-gravitational signal, so this re-examines a pre-selected set rather than
+surveying one.
+
+Strongest on their own terms: 452639 (2005 UY6), a 2.2 km body with a *measured*
+diameter and |A2| ~50x the Bennu-scaled Yarkovsky expectation for its size (the
+Del Vigna R-criterion failing outright), and (2012 UR158) at S/N 107, also with a
+measured diameter.
+
 **CALIBRATION (2026-07-30, `loom-calibrate`, needs no survey baseline).** 939
 objects with a fitted A2 from JPL's SBDB. **The ceiling separates comets from
 asteroids cleanly, without being told which is which**: 81/81 comets exceed it

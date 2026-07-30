@@ -367,7 +367,7 @@ class Ledger:
     def assess(self, alpha_fdr: float = 0.05, min_visits_for_rate: int = 5,
                max_duty_cycle: float = 0.2, n_null_timing: int = 2000,
                timing_alpha: float = 0.01, max_grey_z: float = 3.0,
-               require_single_polarity: bool = True) -> dict:
+               mixed_polarity_requires_grey_both: bool = True) -> dict:
         """Recompute rates, p-values and tiers over the whole accumulated state.
 
         The ensemble event rate per target-visit is the null hypothesis every
@@ -452,13 +452,14 @@ class Ledger:
             self._set_tier(self.targets[tid], bool(rej), max_duty_cycle,
                            timing_alpha, max_grey_z,
                            min_visits_for_duty=min_visits_for_rate,
-                           require_single_polarity=require_single_polarity)
+                           mixed_polarity_requires_grey_both=(
+                               mixed_polarity_requires_grey_both))
         return self.summary()
 
     def _set_tier(self, rec: dict, fdr_reject: bool, max_duty_cycle: float,
                   timing_alpha: float, max_grey_z: float = 3.0,
                   min_visits_for_duty: int = 5,
-                  require_single_polarity: bool = True) -> None:
+                  mixed_polarity_requires_grey_both: bool = True) -> None:
         events = rec["events"]
         k = len(events)
         grey_ok = [e for e in events
@@ -484,29 +485,61 @@ class Ledger:
             return
         if np.isfinite(duty) and duty > max_duty_cycle and n_visits < int(min_visits_for_duty):
             _note(rec, "duty_cycle_not_yet_testable")
-        # SINGLE-MECHANISM COHERENCE.  A specular reflector FLASHES; a grey
-        # occulter DIPS.  A star that does both on different nights is varying
-        # intrinsically --- the dominant astrophysical population at these
-        # amplitudes, and 3 of 3 of the first candidates the channel promoted
-        # (all |a| <= 3%, one at 0.013%).
+        # MIXED POLARITY: A HARDER TEST, NOT A VETO.
         #
-        # This deliberately forgoes a hypothetical dual-mode object --- a structure
-        # that both occults and glints --- in exchange for rejecting the confounder
-        # that actually dominates.  Mixed-polarity targets are kept at `interest`
-        # and flagged rather than discarded, so the trade is reversible.
+        # An earlier version of this rule barred mixed-polarity targets from
+        # candidate tier outright.  That was wrong, and wrong in the expensive
+        # direction: a megastructure is the SAME hypothesis this repository
+        # already chases from two sides --- `dimming` (it occults) and `glint`
+        # (it reflects) --- so a real structure in orbit should do BOTH, occulting
+        # when it transits and glinting when specular geometry aligns.  Mixed
+        # polarity is arguably the signature rather than the disqualifier, and a
+        # blanket veto would discard the most interesting class in the channel.
+        #
+        # What actually separates the two is COLOUR, not sign.  A variable star
+        # crosses its own template mean, so its flashes and dips are one
+        # continuous chromatic variation --- pulsators change temperature with
+        # brightness, spots are cool.  An engineered occulter-plus-reflector is
+        # grey in *both* directions.  So mixed polarity is admitted, but only on
+        # stronger evidence: grey confirmation is required INDEPENDENTLY IN EACH
+        # POLARITY.  A more exotic claim carries a heavier burden, which is the
+        # right direction for the requirement to run.
+        #
+        # Checked against the three real candidates the first full walk produced:
+        # every one had a grey-confirmed flash but a single-band, untested dip, so
+        # all three are still rejected --- while a genuine dual-mode object remains
+        # reachable.
         polarities = {e.get("polarity") for e in events}
         mixed_polarity = len(polarities) > 1
         rec["polarities"] = sorted(pol for pol in polarities if pol)
-        if mixed_polarity:
-            _note(rec, "mixed_polarity_across_nights_indicates_variable_star")
+        grey_polarities = {e.get("polarity") for e in grey_ok}
+        grey_in_every_polarity = bool(polarities) and polarities <= grey_polarities
+        rec["grey_confirmed_polarities"] = sorted(
+            pol for pol in grey_polarities if pol)
+        # Informational: a variable oscillating about its mean has roughly
+        # balanced excursions; an occulter and a glint have no reason to match.
+        amps = {}
+        for e in events:
+            a = _finite(e.get("a"))
+            if a is not None:
+                amps.setdefault(e.get("polarity"), []).append(abs(a))
+        if len(amps) > 1:
+            meds = {k: float(np.median(v)) for k, v in amps.items()}
+            lo, hi = min(meds.values()), max(meds.values())
+            rec["polarity_amplitude_ratio"] = (hi / lo) if lo > 0 else None
+        if mixed_polarity and not grey_in_every_polarity:
+            _note(rec, "mixed_polarity_without_grey_confirmation_in_both_"
+                       "polarities_consistent_with_a_variable_star")
 
         tier = "none"
         if k >= 1:
             tier = "watch"
         if grey_ok or k >= 2:
             tier = "interest"
+        polarity_ok = (not mixed_polarity) or grey_in_every_polarity \
+            or not mixed_polarity_requires_grey_both
         if k >= 2 and grey_ok and fdr_reject and rec["visits_exact"] \
-                and not (require_single_polarity and mixed_polarity):
+                and polarity_ok:
             tier = "candidate"
         if tier == "candidate" and float(rec.get("p_timing", 1.0)) <= timing_alpha:
             tier = "alarm"

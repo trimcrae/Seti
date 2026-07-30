@@ -167,12 +167,23 @@ ledger:
   # randomisations beat the data.
   n_null_timing: 2000
   timing_alpha: 0.01
-  # SINGLE-MECHANISM COHERENCE.  A reflector flashes; a grey occulter dips.  A
-  # star doing both across nights is varying intrinsically — that was 3 of 3 of
-  # the first candidates the channel promoted.  Mixed-polarity targets cap at
-  # `interest` and carry a note; they are flagged, not discarded, because this
-  # deliberately forgoes a hypothetical object that both occults and glints.
-  require_single_polarity: true
+  # MIXED POLARITY: A HARDER TEST, NOT A VETO.
+  #
+  # A megastructure is the same hypothesis this repository already chases from
+  # two sides — `dimming` (it occults) and `glint` (it reflects) — so a real
+  # structure in orbit should do BOTH.  Mixed polarity is arguably the signature,
+  # not the disqualifier, and vetoing it would discard the most interesting class
+  # in the channel.  What separates it from a variable star is COLOUR, not sign:
+  # a variable crosses its own template mean, so its flashes and dips are one
+  # continuous chromatic variation, while an engineered occulter-plus-reflector
+  # is grey in both directions.
+  #
+  # So mixed polarity is admitted on stronger evidence — grey confirmation
+  # INDEPENDENTLY IN EACH POLARITY.  Checked against the three real candidates
+  # from the first full walk: each had a grey-confirmed flash but a single-band,
+  # untested dip, so all three are still rejected while a genuine dual-mode
+  # object stays reachable.
+  mixed_polarity_requires_grey_both: true
 
 report:
   results_dir: "results/tocsin"

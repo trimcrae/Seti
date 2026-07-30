@@ -151,11 +151,17 @@ and both killing discriminators came from examining them, not from theory:**
    strategy. The null is now **stratified by 1° sky bin**; their p-values moved
    from 1.3e-03 and 2.7e-07 to 0.035 and 0.003.
 2. **Low-amplitude variable stars.** All three showed **both polarities across
-   nights** — flash on some, dip on others. A reflector flashes; a grey occulter
-   dips; something doing both is varying intrinsically. Requiring
-   **single-mechanism coherence** takes the walk to zero candidates. This
-   knowingly forgoes a hypothetical dual-mode object, so mixed-polarity targets
-   are held at `interest` with a note and the rule is config-switchable.
+   nights** — flash on some, dip on others. The first fix vetoed mixed polarity
+   outright; that was wrong in the expensive direction, because a megastructure
+   is the hypothesis this repo chases from *both* sides (`dimming` occults,
+   `glint` reflects), so a real structure should show both. The discriminator is
+   **colour, not sign**: a variable crosses its own template mean, so its
+   excursions are one continuous *chromatic* variation, while an engineered
+   occulter-plus-reflector is grey both ways. Mixed polarity is therefore
+   admitted on **grey confirmation in each polarity independently**
+   (`docs/tocsin.md` §4.2). All three real candidates had a grey-confirmed flash
+   but a single-band untested dip → still rejected, zero candidates, and a
+   genuine dual-mode object stays reachable.
 
 The 4 `none` targets are duty-cycle rejections — stars alerting on most of their
 visits, i.e. subtraction residuals. The highest-multiplicity target in the walk

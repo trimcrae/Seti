@@ -106,11 +106,27 @@ jobs:
                     f"above eps=1: {e['n_above_hard_1.0']} | "
                     f"above eps=2: {e['n_above_specular_2.0']}")
               # Each exceedance is a claim that sunlight cannot drive that object.
+              print(f"    above eps=1: {e['n_above_hard_1.0']} of which "
+                    f"{e.get('n_above_hard_already_known', 0)} already known, "
+                    f"{e.get('n_above_hard_unexplained', 0)} unexplained, "
+                    f"{e.get('n_above_hard_unexplained_and_reliable', 0)} of those "
+                    f"RELIABLY FITTED")
               for x in e.get("exceedances", [])[:15]:
                   print(f"      {x['name']}: eps={x['epsilon_effective']:.3g} "
                         f"D={x['diameter_m']:.0f} m "
                         f"({'measured' if x['diameter_measured'] else 'from H'}) "
-                        f"A2={x['A2_au_day2']:.3g}")
+                        f"A2={x['A2_au_day2']:.3g} snr={x.get('a2_snr')} "
+                        f"arc={x.get('data_arc_days')}d "
+                        f"| {x.get('known_as') or ('RELIABLE' if x.get('reliable') else '; '.join(x.get('fails', []))[:70])}")
+              # The only objects that mean anything: above the ceiling, not
+              # already explained, and with an orbit good enough for the A2 to be
+              # a measurement rather than a number.
+              for x in e.get("survivors", []):
+                  print(f"    SURVIVOR {x['name']}: eps={x['epsilon_effective']:.4g} "
+                        f"A2={x['A2_au_day2']:.3g} snr={x.get('a2_snr'):.1f} "
+                        f"rms={x.get('orbit_rms_arcsec')} "
+                        f"arc={x.get('data_arc_days')}d "
+                        f"nobs={x.get('n_obs_used')} U={x.get('condition_code')}")
 
           print("\n=== YARKOVSKY UNIT ===")
           u = rec.get("yarkovsky_unit", {})

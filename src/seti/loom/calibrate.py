@@ -57,8 +57,24 @@ SBDB_QUERY_URL = "https://ssd-api.jpl.nasa.gov/sbdb_query.api"
 # geometric albedo; `rms` is the orbit-fit residual RMS in arcsec.
 SBDB_FIELDS = (
     "full_name,pdes,name,class,neo,pha,H,diameter,albedo,diameter_sigma,"
-    "a,e,i,A1,A2,A3,DT,rms,n_obs_used,n_del_obs_used,data_arc,condition_code"
+    "a,e,i,A1,A2,A3,DT,rms,n_obs_used,n_del_obs_used,data_arc,condition_code,"
+    # The reliability block.  Without a sigma on A2 there is no signal-to-noise,
+    # and a blind Yarkovsky search returns a MAJORITY of spurious detections at
+    # nominal S/N > 3 -- so an unexplained exceedance with no uncertainty attached
+    # is not a candidate, it is an unmeasured number.
+    "sigma_a2,sigma_a1,sigma_a3,first_obs,last_obs,epoch,producer,two_body"
 )
+
+# Del Vigna et al. (2018) call a Yarkovsky detection reliable only on TWO
+# conditions, not one: S/N >= 3 AND agreement with a size-scaled expectation.  The
+# gates below are the first condition plus the orbit-quality terms that drive the
+# spurious rate -- short arcs, few observations, inflated residuals and a poor
+# uncertainty parameter are the documented causes.
+MIN_A2_SNR = 3.0
+MAX_ORBIT_RMS_ARCSEC = 0.8          # Catalina's astrometric RMS is ~0.69
+MIN_DATA_ARC_DAYS = 3650.0          # a decade; Yarkovsky needs many apparitions
+MIN_OBS_USED = 100
+MAX_CONDITION_CODE = 2.0            # MPC U parameter, 0 = best
 
 # Candidate constraint forms.  The SBDB query API's `sb-cdata` grammar is not
 # something to guess at silently: the workflow tries each in order, records what
@@ -195,6 +211,56 @@ def annotate(name: str) -> str:
     return ""
 
 
+def vet_exceedance(row: dict) -> dict:
+    """Is this object's fitted ``A2`` reliable enough to be worth anything?
+
+    An object above the momentum ceiling is making a strong claim, and the base
+    rate says most such claims are wrong: a blind search for Yarkovsky signal in
+    minor-planet astrometry returns a *majority* of spurious detections at nominal
+    S/N > 3, with short arcs, sparse or isolated astrometry and incomplete
+    dynamical models the usual causes.  That is why Del Vigna et al. require two
+    conditions rather than one.
+
+    Every gate here is named in the output, so an object that fails says which
+    test it failed and an object that survives says what it survived.  Nothing is
+    scored on absence: a missing uncertainty is ``no_a2_uncertainty``, not a pass.
+    """
+    reasons: list[str] = []
+    a2 = _f(row.get("A2"))
+    sigma = _f(row.get("sigma_a2"))
+    snr = abs(a2) / sigma if (math.isfinite(a2) and math.isfinite(sigma)
+                              and sigma > 0) else float("nan")
+    if not math.isfinite(sigma) or sigma <= 0:
+        reasons.append("no_a2_uncertainty")
+    elif snr < MIN_A2_SNR:
+        reasons.append(f"a2_snr_{snr:.1f}_below_{MIN_A2_SNR:g}")
+
+    rms = _f(row.get("rms"))
+    if math.isfinite(rms) and rms > MAX_ORBIT_RMS_ARCSEC:
+        reasons.append(f"orbit_rms_{rms:.2f}as_above_{MAX_ORBIT_RMS_ARCSEC:g}")
+
+    arc = _f(row.get("data_arc"))
+    if not math.isfinite(arc):
+        reasons.append("no_data_arc")
+    elif arc < MIN_DATA_ARC_DAYS:
+        reasons.append(f"arc_{arc:.0f}d_below_{MIN_DATA_ARC_DAYS:.0f}d")
+
+    nobs = _f(row.get("n_obs_used"))
+    if math.isfinite(nobs) and nobs < MIN_OBS_USED:
+        reasons.append(f"only_{nobs:.0f}_observations")
+
+    cc = _f(row.get("condition_code"))
+    if math.isfinite(cc) and cc > MAX_CONDITION_CODE:
+        reasons.append(f"condition_code_{cc:.0f}_above_{MAX_CONDITION_CODE:g}")
+
+    if str(row.get("two_body") or "").strip() in ("Y", "T", "1", "true"):
+        reasons.append("two_body_solution_only")
+
+    return {"a2_snr": snr, "orbit_rms_arcsec": rms, "data_arc_days": arc,
+            "n_obs_used": nobs, "condition_code": cc,
+            "reliable": not reasons, "fails": reasons}
+
+
 @dataclass
 class EpsilonSummary:
     """The measured distribution of realised efficiency, with its exceedances."""
@@ -209,6 +275,8 @@ class EpsilonSummary:
     n_comets_in_source: int = 0
     n_exceedances_known: int = 0
     n_exceedances_unexplained: int = 0
+    n_survivors: int = 0
+    survivors: list = field(default_factory=list)
     ok: bool = False
     reason: str = ""
     exceedances: list = field(default_factory=list)
@@ -218,6 +286,8 @@ class EpsilonSummary:
                 "n_comets_in_source": self.n_comets_in_source,
                 "n_above_hard_already_known": self.n_exceedances_known,
                 "n_above_hard_unexplained": self.n_exceedances_unexplained,
+                "n_above_hard_unexplained_and_reliable": self.n_survivors,
+                "survivors": self.survivors,
                 "quantiles": self.quantiles,
                 "n_above_realistic_0.1": self.n_above_realistic,
                 "n_above_hard_1.0": self.n_above_hard,
@@ -245,7 +315,7 @@ def summarise_epsilon(rows: list[dict], rho_kg_m3: float = RHO_TYPICAL_KG_M3,
     """
     out = EpsilonSummary(rho_assumed=float(rho_kg_m3))
     out.kind = kind
-    a2, h, dkm, alb, names = [], [], [], [], []
+    a2, h, dkm, alb, names, kept = [], [], [], [], [], []
     n_comet = 0
     for r in rows:
         v = _f(r.get("A2"))
@@ -262,6 +332,7 @@ def summarise_epsilon(rows: list[dict], rho_kg_m3: float = RHO_TYPICAL_KG_M3,
         dkm.append(_f(r.get("diameter")))
         alb.append(_f(r.get("albedo")))
         names.append(str(r.get("full_name") or r.get("pdes") or "?").strip())
+        kept.append(r)
     out.n_comets_in_source = n_comet
     if len(a2) < 10:
         out.reason = f"only {len(a2)} objects with a non-zero fitted A2"
@@ -289,11 +360,17 @@ def summarise_epsilon(rows: list[dict], rho_kg_m3: float = RHO_TYPICAL_KG_M3,
          "diameter_m": float(d[i]), "H": float(h[i]),
          "epsilon_effective": float(eps[i]),
          "diameter_measured": bool(math.isfinite(_f(dkm[i]))),
-         "known_as": annotate(names[i])}
+         "known_as": annotate(names[i]),
+         **vet_exceedance(kept[i])}
         for i in idx if eps[i] > 0.1]
     above_hard = [x for x in out.exceedances if x["epsilon_effective"] > 1.0]
     out.n_exceedances_known = sum(1 for x in above_hard if x["known_as"])
-    out.n_exceedances_unexplained = sum(1 for x in above_hard if not x["known_as"])
+    unexplained = [x for x in above_hard if not x["known_as"]]
+    out.n_exceedances_unexplained = len(unexplained)
+    # The only ones that mean anything: above the ceiling, not already explained,
+    # and with an orbit solution good enough for the A2 to be a measurement.
+    out.survivors = [x for x in unexplained if x["reliable"]]
+    out.n_survivors = len(out.survivors)
     out.ok = True
     return out
 

@@ -1,0 +1,586 @@
+Determinations of asteroid masses using mutual encounters observed in the Legacy Survey of Space and Time
+
+1 Introduction
+2 Identifying encounters
+3 Dynamical model
+4 Forecasting LSST  observations and impulse uncertainties
+5 Resulting deflector mass uncertainties
+6 Discussion
+
+Determinations of asteroid masses using mutual encounters observed in the Legacy Survey of Space and Time
+
+Gary M. Bernstein
+
+Department of Physics and Astronomy, University of Pennsylvania, Philadelphia, PA 19104, USA
+
+garyb@physics.upenn.edu
+Gary M. Bernstein
+
+Negin Najafi
+
+Department of Physics and Astronomy, University of Pennsylvania, Philadelphia, PA 19104, USA
+
+neginn@upenn.edu
+
+Daniel C. H. Gomes
+
+dchgomes@gmail.com
+
+Department of Physics and Astronomy, University of Pennsylvania, Philadelphia, PA 19104, USA
+
+Abstract
+Using published simulations of the 10-year Legacy Survey of Space and Time ( LSST ), we forecast its ability to determine the masses of individual main-belt asteroids (MBAs) through precise astrometry of any pairs of the ≈ 1.2 absent 1.2 \approx 1.2 ≈ 1.2  million known MBAs undergoing close gravitational encounters during the survey. The uncertainty σ I subscript 𝜎 𝐼 \sigma_{I} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT on the impulse applied to a tracer asteroid by its deflector is derived from the Fisher matrix of the tracer’s astrometric data, including an azimuthal acceleration A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT from the Yarkovsky effect as a free parameter for each tracer. If only LSST  observations are available, σ I ≈ 7 × 10 − 6 ⁢ m ⁢ s − 1 subscript 𝜎 𝐼 7 superscript 10 6 m superscript s 1 \sigma_{I}\approx 7\times 10^{-6}\,{\rm m}\,{\rm s}^{-1} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT ≈ 7 × 10 start_POSTSUPERSCRIPT - 6 end_POSTSUPERSCRIPT roman_m roman_s start_POSTSUPERSCRIPT - 1 end_POSTSUPERSCRIPT for MBAs at apparent magnitude m V < 19.5 , subscript 𝑚 𝑉 19.5 m_{V}<19.5, italic_m start_POSTSUBSCRIPT italic_V end_POSTSUBSCRIPT < 19.5 , degrading ≈ 10 × \approx 10\times ≈ 10 × for m V = 23 . subscript 𝑚 𝑉 23 m_{V}=23. italic_m start_POSTSUBSCRIPT italic_V end_POSTSUBSCRIPT = 23 . These tracers yield a median uncertainty on the mass of an MBA of ≈ 4 × 10 − 14 ⁢ M ⊙ , absent 4 superscript 10 14 subscript 𝑀 direct-product \approx 4\times 10^{-14}M_{\odot}, ≈ 4 × 10 start_POSTSUPERSCRIPT - 14 end_POSTSUPERSCRIPT italic_M start_POSTSUBSCRIPT ⊙ end_POSTSUBSCRIPT , with a wide range of variation depending on the “luck” of close encounters. Roughly 125 MBAs obtain mass measures with S / N > 5 . 𝑆 𝑁 5 S/N>5. italic_S / italic_N > 5 . If pre- LSST  astrometry yields a strong constraint on the state vector of the tracer MBA at the start of LSST , then these values improve to median σ M ≈ 1.3 × 10 − 14 ⁢ M ⊙ subscript 𝜎 𝑀 1.3 superscript 10 14 subscript 𝑀 direct-product \sigma_{M}\approx 1.3\times 10^{-14}M_{\odot} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT ≈ 1.3 × 10 start_POSTSUPERSCRIPT - 14 end_POSTSUPERSCRIPT italic_M start_POSTSUBSCRIPT ⊙ end_POSTSUBSCRIPT and 310 MBAs at S / N > 5 , 𝑆 𝑁 5 S/N>5, italic_S / italic_N > 5 , with > 1 / 2 absent 1 2 >1/2 > 1 / 2 of these having S / N > 10 . 𝑆 𝑁 10 S/N>10. italic_S / italic_N > 10 . These yields would be a ≈ 10 absent 10 \approx 10 ≈ 10 -fold increase in the number of known asteroid masses, including a nearly complete knowledge of MBAs with H < 7.5 . 𝐻 7.5 H<7.5. italic_H < 7.5 . If pre- LSST  data are sufficient to start constraining the Yarkovsky effect, another factor ∼ 1.5 similar-to absent 1.5 \sim 1.5 ∼ 1.5 can be gained. Tables of the measurable deflector MBAs and their tracers are provided.
+
+Main belt asteroids (2036), Ephemerides (464)
+
+1 Introduction
+
+Determination of the masses of asteroids is essential to understanding their composition and history, and for a complete understanding of the dynamics and precision ephemerides of the Solar System. There are multiple methods to measure a minor planet’s mass without assuming a density: high-precision values can usually be inferred for bodies having well-tracked natural satellites or visiting spacecraft. As summarized by Fienga et al. ( 2020 ) , spacecraft data have yielded masses for just 5 main-belt asteroids (MBAs): (1) Ceres and (4) Vesta, whose summed mass of 1.197 × 10 21 1.197 superscript 10 21 1.197\times 10^{21} 1.197 × 10 start_POSTSUPERSCRIPT 21 end_POSTSUPERSCRIPT  kg is roughly half of the total main-belt mass; plus (21) Lutetia, (243) Ida, and (253) Mathilde. Natural satellites’ orbits have given masses for another 12 MBAs.
+The satellite-based determinations generally yield masses at 1% accuracy or much better. A second method is to infer asteroid masses from an ephemeris solution to high-precision astrometry and ranging of the major planets, with the cm-accuracy ranging to Mars being of the most power. Fienga et al. ( 2020 ) use this method to detect masses at S / N > 3 𝑆 𝑁 3 S/N>3 italic_S / italic_N > 3 for 104 main-belt asteroids. They obtain sub-percent precision ( S / N > 100 𝑆 𝑁 100 S/N>100 italic_S / italic_N > 100 ) on Ceres and Vesta, and < 10 % absent percent 10 <10\% < 10 % uncertainty ( S / N > 10 𝑆 𝑁 10 S/N>10 italic_S / italic_N > 10 ) on 7 other bodies (including Pallas and Hygeia, the next-most-massive bodies). The JPL DE440 ephemeris (Park et al., 2021 ) and the EM2017 ephemeris (Pitjeva & Pitjev, 2018 ) create precision ephemerides including ≈ 300 absent 300 \approx 300 ≈ 300 MBAs as gravitating bodies, but the masses of these bodies are either held fixed to values determined by other means, or do not have uncertainties reported.
+
+The third method for determining asteroid masses, and the one we focus on in this paper, is by fitting to precision astrometric data for pairs of asteroids that undergo a mutual close encounter. Adopting the impulse approximation for these encounters, if the astrometric data can determine the size I 𝐼 I italic_I of the impulse applied to the tracer body, then we can infer the mass of the deflector body with knowledge of the relative speed v 𝑣 v italic_v and the separation 𝐛 𝐛 \mathbf{b} bold_b of the bodies at the time of closest approach. Approximating the bodies’ motions as inertial through the encounter yields the standard formula
+
+I = 2 ⁢ G ⁢ M b ⁢ v . 𝐼 2 𝐺 𝑀 𝑏 𝑣 I=\frac{2GM}{bv}. italic_I = divide start_ARG 2 italic_G italic_M end_ARG start_ARG italic_b italic_v end_ARG .
+
+(1)
+
+The mutual-encounter method has been used successfully for roughly 50 years (Hertz, 1966 ) . Baer et al. ( 2011 ) report masses at significance S / N ≥ 3 𝑆 𝑁 3 S/N\geq 3 italic_S / italic_N ≥ 3 for 26 MBAs derived from 82 encounters. Of these, 3 obtain sub-percent accuracy (Ceres, Vesta, and (15) Eunomia), and 9 more yield S / N > 10 . 𝑆 𝑁 10 S/N>10. italic_S / italic_N > 10 . Zielenbach ( 2011 ) fits for masses of 104 MBAs, using a large number of tracer bodies for each, obtaining S / N > 100 𝑆 𝑁 100 S/N>100 italic_S / italic_N > 100 for Ceres and Vesta, 10 < S / N < 100 10 𝑆 𝑁 100 10<S/N<100 10 < italic_S / italic_N < 100 for 9 MBAs, and 3 < S / N < 10 3 𝑆 𝑁 10 3<S/N<10 3 < italic_S / italic_N < 10 for 22 more asteroids.
+
+The review by Hilton ( 2002 ) reports just 24 known asteroid masses at that time, with some increase in the following decade from the methods described above.
+Advances in observational techniques in the 2010’s and 2020’s should, however, yield a substantial expansion in the number and accuracy of mass determinations from mutual encounters. Firstly, systematic sky surveys have vastly increased the number of known asteroids, i.e.  potential tracer particles, to over 1 million. Secondly, the Gaia  Data Release 3 (Gaia Collaboration et al., 2018 ) included mas-precision positions for > 23 absent 23 >23 > 23  million epochs of > 150 , 000 absent 150 000 >150,000 > 150 , 000 solar system bodies with apparent magnitudes G < 21 𝐺 21 G<21 italic_G < 21 over 34 months of operation, extended to 66 months in Gaia Collaboration et al. ( 2023 ) . While the number of new asteroid masses reported from Gaia  DR3 has been modest (Murray, 2023 ; Li et al., 2023 ) to date because of the short time duration of released data, the Gaia  spacecraft operated for > 10 absent 10 >10 > 10 years, and later data releases should yield a larger number of mass detections as well as better mass accuracy per event. Perhaps more importantly, Gaia has defined a stellar reference frame that allows ground-based observatories to place asteroid positions onto an inertial coordinate system with systematic errors well below 1 mas. The Legacy Survey of Space and Time (LSST) to be conducted with the Vera Rubin Observatory from 2025–2035 will detect and track millions of MBAs, with accuracy limited by a combination of (magnitude-dependent) photon noise and ≈ 2 absent 2 \approx 2 ≈ 2  mas uncertainty from refraction by atmospheric turbulence (Fortino et al., 2021 ) . Each source will be detected 200–600 astrometrically useful times over the course of the LSST . The per-observation astrometric uncertainties for LSST  are smaller than those for Gaia  at the faint limit of the latter, and LSST ’s observations will extend ≈ 3 absent 3 \approx 3 ≈ 3 mag deeper, increasing the pool of potential tracers by ≈ 100 × . \approx 100\times. ≈ 100 × . As noted in the LSST Science Book (LSST Science Collaboration et al., 2009 , Section 5.4.3) “At present only a few dozen asteroids have mass estimates based on perturbations, but LSST  will produce astrometry that is both prolific and precise, at the same time that it dramatically
+expands the pool of potential test particles. LSST  data should allow the estimation of the mass of
+several hundred or so main belt asteroids with an uncertainty of ∼ 30 % similar-to absent percent 30 \sim 30\% ∼ 30 % or less.”
+
+In this paper, with LSST  now on the verge of operation, we quantify this prediction more carefully by finding all encountering pairs among all MBA and Jupiter Trojan asteroids (henceforth simply “Trojans”) that should yield deflections of ≈ 1 absent 1 \approx 1 ≈ 1  mas or greater over the 10-year observing period of LSST , and using a simulation of LSST ’s observing schedule and performance to forecast the uncertainties in the masses of the deflectors in these encounters. While the exact sequence of observations and astrometric errors of LSST  are of course not yet known, we are at this time able to make reasonable estimates of the future performance of the survey for this purpose, to know what fractions of the asteroids of what masses will be measured to useful significance using presently-known bodies as tracers. For purposes of inferring an individual asteroid’s composition via its density, we will consider a 1 ⁢ σ 1 𝜎 1\sigma 1 italic_σ error of < 20 % absent percent 20 <20\% < 20 % on the mass, or S / N > 5 , 𝑆 𝑁 5 S/N>5, italic_S / italic_N > 5 , as the point where the mass information starts to become “useful.” One we reach S / N ≈ 10 , 𝑆 𝑁 10 S/N\approx 10, italic_S / italic_N ≈ 10 , additional precision on the mass will not generally lead to greater compositional knowledge, since uncertainties in the albedo/diameter/volume of the body will dominate the density uncertainty. For dynamical purposes, however, it is the typical uncertainty σ M subscript 𝜎 𝑀 \sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT of the MBA’s masses (rather than the S / N 𝑆 𝑁 S/N italic_S / italic_N ) that determines errors in ephemerides.
+
+The forecast for knowledge of asteroid masses arising from mutual encounters during LSST ’s 10-year lifetime still depends fairly strongly on the quality of pre- LSST  observations of the tracer body in each event. At the pessimistic “ LSST -only” limit, the pre- LSST  data offer no useful information, and LSST  astrometry must solve for the state vector ( 𝐱 0 , 𝐯 0 ) subscript 𝐱 0 subscript 𝐯 0 (\mathbf{x}_{0},\mathbf{v}_{0}) ( bold_x start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , bold_v start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT ) components at the start of LSST  and the transverse Yarkovsky acceleration coefficient A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT for each tracer, reducing the accuracy on the impulse I 𝐼 I italic_I . In the optimistic limit, pre- LSST  data are strong enough to consider 𝐱 0 , 𝐯 0 , subscript 𝐱 0 subscript 𝐯 0 \mathbf{x}_{0},\mathbf{v}_{0}, bold_x start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , bold_v start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , and A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT of the tracer to be known exactly, and LSST  is used only to measure the perturbation from the impulse. We will consider an intermediate case where the initial state vector is known, but the Yarkovsky acceleration is not—we suspect this middle case is closest to reality for most MBAs.
+
+We are not claiming to be exhaustive in our inventory of bodies whose masses LSST  will determine, since the precise list will depend upon the exact realization of the survey, and the results may also be influenced by tracer asteroids that are not yet discovered. We also have not attempted to evaluate the accuracy of pre- LSST  observations for each tracer body, but it is clear that this will be a critical activity for getting the most asteroid-mass knowledge out of LSST .
+
+2 Identifying encounters
+
+The search for asteroid-asteroid encounters with potentially detectable effects on LSST  astrometry begins with the MPCORB.DAT file containing H 𝐻 H italic_H values and osculating heliocentric orbital elements for all asteroids known to the Minor Planet Center (MPC). 1 1 1 Downloaded 6 Jan 2025 from the MPC data page . We retain from this file the 1.26 million objects with multiple oppositions of observations, semi-major axes a < 6 ⁢ au 𝑎 6 au a<6\,\mathrm{au} italic_a < 6 roman_au and MPC uncertainty indicator U ≤ 5 . 𝑈 5 U\leq 5. italic_U ≤ 5 . We also exclude Ceres, Vesta, and Pallas from the list since they will generate very large numbers of encounters above our impulse threshold that are not of interest—the first two already have their masses very well determined by spacecraft, and Pallas is already approaching percent-level accuracy from previous data on mutual encounters.
+
+The osculating heliocentric orbital elements are then converted to barycentric state vectors in the ICRS coordinate frame, and integrated forward in time to the start date of our simulated LSST  survey using a simple leapfrog integrator with time step of Δ ⁢ t = 1 Δ 𝑡 1 \Delta t=1 roman_Δ italic_t = 1  day. The integrator assumes Newtonian dynamics, with accelerations derived from the positions of the Sun and 8 planets. Masses and positions for the gravitating bodies are taken from the JPL DE440 ephemeris. 2 2 2 Downloaded from this JPL site . While measurement of asteroid masses from real data with mas accuracy will require more sophisticated integrators, incorporating relativistic effects and perturbations from some of the larger asteroids, the forecasting of inferences does not require great accuracy. The ephemeris accuracy must only be sufficient to successfully predict (1) the impact parameters and relative velocities of encounters to ≲ 10 % less-than-or-similar-to absent percent 10 \lesssim 10\% ≲ 10 % accuracy, and (b) the derivatives of the observed position with respect to initial state vector and the impulse velocity, to similar accuracy. Because the closest encounters have b ≈ 10 − 5 ⁢ au , 𝑏 superscript 10 5 au b\approx 10^{-5}\,\mathrm{au}, italic_b ≈ 10 start_POSTSUPERSCRIPT - 5 end_POSTSUPERSCRIPT roman_au , integrator accuracy of 10 − 6 ⁢ au superscript 10 6 au 10^{-6}\,\mathrm{au} 10 start_POSTSUPERSCRIPT - 6 end_POSTSUPERSCRIPT roman_au or ≈ 150 absent 150 \approx 150 ≈ 150  km is more than adequate.
+
+We wish to find all encounters during the 10-year survey that will generate a statistically significant shift in the tracer’s LSST  measurements.
+Based on estimated accuracy of ≳ 1 greater-than-or-equivalent-to absent 1 \gtrsim 1 ≳ 1  mas for LSST  astrometry of tracers, we make a rough estimate that encounters generating impulses of I < I min = 2.2 × 10 − 6 ⁢ m ⁢ s − 1 𝐼 subscript 𝐼 min 2.2 superscript 10 6 m superscript s 1 I<I_{\rm min}=2.2\times 10^{-6}\,{\textrm{m}}\,{\textrm{s}}^{-1} italic_I < italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT = 2.2 × 10 start_POSTSUPERSCRIPT - 6 end_POSTSUPERSCRIPT m s start_POSTSUPERSCRIPT - 1 end_POSTSUPERSCRIPT will not be detectable at ≳ 3 ⁢ σ greater-than-or-equivalent-to absent 3 𝜎 \gtrsim 3\sigma ≳ 3 italic_σ in the astrometry of a tracer.
+From Equation ( 1 ) we can derive a maximum impact parameter b max subscript 𝑏 max b_{\rm max} italic_b start_POSTSUBSCRIPT roman_max end_POSTSUBSCRIPT between a deflector of mass M 𝑀 M italic_M and a tracer moving at relative velocity v min subscript 𝑣 min v_{\rm min} italic_v start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT that will result in an impulse above I min . subscript 𝐼 min I_{\rm min}. italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT . Initial investigation of the distribution of relative velocities in encounters shows that
+setting v min = 100 ⁢ m ⁢ s − 1 subscript 𝑣 min 100 m superscript s 1 v_{\rm min}=100\,{\textrm{m}}\,{\textrm{s}}^{-1} italic_v start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT = 100 m s start_POSTSUPERSCRIPT - 1 end_POSTSUPERSCRIPT will exclude only a handful of encounters over a decade—and in these cases the encounter time would no longer be a small fraction of the orbital period anyway, so these would need to be studied individually as coupled bodies. We obtain
+
+b max ⁢ ( H ) = 2 ⁢ G ⁢ M I min ⁢ v min = 0.09 × 10 − 0.6 ⁢ ( H − 10 ) ⁢ au , subscript 𝑏 max 𝐻 2 𝐺 𝑀 subscript 𝐼 min subscript 𝑣 min 0.09 superscript 10 0.6 𝐻 10 au b_{\rm max}(H)=\frac{2GM}{I_{\rm min}v_{\rm min}}=0.09\times 10^{-0.6(H-10)}\,%
+\mathrm{au}, italic_b start_POSTSUBSCRIPT roman_max end_POSTSUBSCRIPT ( italic_H ) = divide start_ARG 2 italic_G italic_M end_ARG start_ARG italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT italic_v start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT end_ARG = 0.09 × 10 start_POSTSUPERSCRIPT - 0.6 ( italic_H - 10 ) end_POSTSUPERSCRIPT roman_au ,
+
+(2)
+
+We have assumed above that the asteroid’s H 𝐻 H italic_H determines its mass, under a model of spherical bodies with uniform albedo (0.25) and density (2500 kg m -3 ), such that H = 10 𝐻 10 H=10 italic_H = 10 corresponds to 2.3 × 10 16 ⁢ kg ≈ 10 − 14 ⁢ M ⊙ . 2.3 superscript 10 16 kg superscript 10 14 subscript 𝑀 direct-product 2.3\times 10^{16}\,\textrm{kg}\,\approx 10^{-14}M_{\odot}. 2.3 × 10 start_POSTSUPERSCRIPT 16 end_POSTSUPERSCRIPT kg ≈ 10 start_POSTSUPERSCRIPT - 14 end_POSTSUPERSCRIPT italic_M start_POSTSUBSCRIPT ⊙ end_POSTSUBSCRIPT . For asteroids that are denser and/or darker than these nominal values, we may miss some encounters at b > b max 𝑏 subscript 𝑏 max b>b_{\rm max} italic_b > italic_b start_POSTSUBSCRIPT roman_max end_POSTSUBSCRIPT that still yield detectable tracer displacements. We will limit b max ⁢ ( H ) subscript 𝑏 max 𝐻 b_{\rm max}(H) italic_b start_POSTSUBSCRIPT roman_max end_POSTSUBSCRIPT ( italic_H ) to a value of 0.1 ⁢ au 0.1 au 0.1\,\mathrm{au} 0.1 roman_au for H < 10 𝐻 10 H<10 italic_H < 10 deflectors—our results suggest that it is rare for the most informative encounter for a given deflector to be an event with b > 0.1 ⁢ au . 𝑏 0.1 au b>0.1\,\mathrm{au}. italic_b > 0.1 roman_au .
+
+The asteroids are split into groups spanning intervals of 1 mag in H 𝐻 H italic_H , and b max ⁢ ( H ) subscript 𝑏 max 𝐻 b_{\rm max}(H) italic_b start_POSTSUBSCRIPT roman_max end_POSTSUBSCRIPT ( italic_H ) is evaluated at the brightest H 𝐻 H italic_H value for each group.
+We next enter a loop to identify encounters occurring during the time period 1 May 2025 through 1 May 2035 of the simulated LSST . 3 3 3 The real LSST  is currently scheduled to begin later in 2025; this will change the details of individual asteroids’ mass measures, but not the statistics of the full population.
+The loop begins with t 𝑡 t italic_t at the start date of the simulated survey. Each iteration contains these steps:
+
+1.
+
+If t 𝑡 t italic_t is after the survey end date, end the loop.
+
+2.
+
+Build a k 𝑘 k italic_k -d tree of the spatial positions x ⁢ ( t ) 𝑥 𝑡 x(t) italic_x ( italic_t ) of the asteroids in each bin of H 𝐻 H italic_H .
+
+3.
+
+Use the (fast) k 𝑘 k italic_k -d tree algorithms for finding close pairs between each combination of deflector H 𝐻 H italic_H bin and tracer H 𝐻 H italic_H bin. The matching radius is set to
+
+r max = min ⁢ [ 0.1 ⁢ au , b max ⁢ ( H deflector ) ] 2 + ( v max ⁢ t step / 2 ) 2 , subscript 𝑟 max min superscript 0.1 au subscript 𝑏 max subscript 𝐻 deflector 2 superscript subscript 𝑣 max subscript 𝑡 step 2 2 r_{\rm max}=\sqrt{{\rm min}[0.1\,\mathrm{au},b_{\rm max}(H_{\rm deflector})]^{%
+2}+(v_{\rm max}t_{\rm step}/2)^{2}}, italic_r start_POSTSUBSCRIPT roman_max end_POSTSUBSCRIPT = square-root start_ARG roman_min [ 0.1 roman_au , italic_b start_POSTSUBSCRIPT roman_max end_POSTSUBSCRIPT ( italic_H start_POSTSUBSCRIPT roman_deflector end_POSTSUBSCRIPT ) ] start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT + ( italic_v start_POSTSUBSCRIPT roman_max end_POSTSUBSCRIPT italic_t start_POSTSUBSCRIPT roman_step end_POSTSUBSCRIPT / 2 ) start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT end_ARG ,
+
+(3)
+
+where v max = 3 × 10 4 ⁢ m ⁢ s − 1 subscript 𝑣 max 3 superscript 10 4 m superscript s 1 v_{\rm max}=3\times 10^{4}\,\textrm{m}\,\textrm{s}^{-1} italic_v start_POSTSUBSCRIPT roman_max end_POSTSUBSCRIPT = 3 × 10 start_POSTSUPERSCRIPT 4 end_POSTSUPERSCRIPT m s start_POSTSUPERSCRIPT - 1 end_POSTSUPERSCRIPT is the largest expected relative velocity for an interesting encounter, and t step = 2 subscript 𝑡 step 2 t_{\rm step}=2 italic_t start_POSTSUBSCRIPT roman_step end_POSTSUBSCRIPT = 2  days is the time step for the loop. This expression is the relative separation between deflector and target asteroid at time t 𝑡 t italic_t , assuming that they reach closest approach at time t imp subscript 𝑡 imp t_{\rm imp} italic_t start_POSTSUBSCRIPT roman_imp end_POSTSUBSCRIPT such that | t − t imp | ≤ t step / 2 . 𝑡 subscript 𝑡 imp subscript 𝑡 step 2 |t-t_{\rm imp}|\leq t_{\rm step}/2. | italic_t - italic_t start_POSTSUBSCRIPT roman_imp end_POSTSUBSCRIPT | ≤ italic_t start_POSTSUBSCRIPT roman_step end_POSTSUBSCRIPT / 2 .
+
+4.
+
+For each (deflector,tracer) pair found within r max , subscript 𝑟 max r_{\rm max}, italic_r start_POSTSUBSCRIPT roman_max end_POSTSUBSCRIPT , we find the time t imp , subscript 𝑡 imp t_{\rm imp}, italic_t start_POSTSUBSCRIPT roman_imp end_POSTSUBSCRIPT , and vector displacement 𝐛 𝐛 \mathbf{b} bold_b of closest approach, and relative velocity v , 𝑣 v, italic_v , assuming inertial motion with the positions x ⁢ ( t ) 𝑥 𝑡 x(t) italic_x ( italic_t ) and velocities v ⁢ ( t ) 𝑣 𝑡 v(t) italic_v ( italic_t ) of the two asteroids.
+
+5.
+
+If | t imp − t | > 0.55 ⁢ t step , subscript 𝑡 imp 𝑡 0.55 subscript 𝑡 step |t_{\rm imp}-t|>0.55t_{\rm step}, | italic_t start_POSTSUBSCRIPT roman_imp end_POSTSUBSCRIPT - italic_t | > 0.55 italic_t start_POSTSUBSCRIPT roman_step end_POSTSUBSCRIPT , i.e.  the closest approach is not within this time step, we discard the pair. It should be found again and retained at an earlier or later time step.
+
+6.
+
+We calculate the expected impulse I 𝐼 I italic_I generated by the encounter, using the mass derived from the deflector’s H 𝐻 H italic_H . If I < I min , 𝐼 subscript 𝐼 min I<I_{\rm min}, italic_I < italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT , we discard the pair.
+
+7.
+
+We use the leapfrog integrator to advance the state vectors and the time t 𝑡 t italic_t by t step = 2 subscript 𝑡 step 2 t_{\rm step}=2 italic_t start_POSTSUBSCRIPT roman_step end_POSTSUBSCRIPT = 2  days.
+
+Only those encounters occurring between 1 and 9 years after survey start are retained, on the assumption that the others have insufficient data before or after the deflection to allow a useful differential measure. In Section  5 we will calculate the actual uncertainty on I 𝐼 I italic_I for each encounter, marginalizing over the initial state vector.
+
+The results of the search for encounters with impulse above I min subscript 𝐼 min I_{\rm min} italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT are illustrated in Figures  1 . Only 10 of the 725 MBAs with H < 10 𝐻 10 H<10 italic_H < 10 fail to have potentially measurable encounters with a known target. Indeed, most H < 10 𝐻 10 H<10 italic_H < 10 MBAs perturb many targets, into the thousands, even though we have truncated our search to b < 0.1 ⁢ au . 𝑏 0.1 au b<0.1\,\mathrm{au}. italic_b < 0.1 roman_au . In further analyses, we will only examine the 20 encounters with any given deflector that generate the highest impulses, since we expect that most of the measurable information on its mass will be provided by tracers receiving these top 20 impulses.
+
+Figure 1: The results of the search for measurable deflector-target encounters in a simulated LSST  are plotted vs the absolute magnitude H 𝐻 H italic_H of the deflector. The left-hand plot gives the number of identified encounters for each unique deflector—this number is well above unity for H ≲ 9 . less-than-or-similar-to 𝐻 9 H\lesssim 9. italic_H ≲ 9 . The 10 blue triangles at the bottom mark the H 𝐻 H italic_H values of 10 MBAs with H < 10 𝐻 10 H<10 italic_H < 10 that do not impart impulses above I min subscript 𝐼 min I_{\rm min} italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT on any known tracers. The right-hand plot shows, in bins of 0.5 mag in H 𝐻 H italic_H , the total number of known asteroids at a < 6 ⁢ au , 𝑎 6 au a<6\,\mathrm{au}, italic_a < 6 roman_au , and the number that have at least one encounter perturbing a tracer with an impulse > I min = 2.3 × 10 − 6 absent subscript 𝐼 min 2.3 superscript 10 6 >I_{\rm min}=2.3\times 10^{-6} > italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT = 2.3 × 10 start_POSTSUPERSCRIPT - 6 end_POSTSUPERSCRIPT  m/s. As expected from the left-hand plot, virtually all of the 725 MBAs at H ≲ 10 less-than-or-similar-to 𝐻 10 H\lesssim 10 italic_H ≲ 10 have at least one encounter above the impulse threshold during the LSST , and another ≈ 400 absent 400 \approx 400 ≈ 400 bodies at 10 < H < 15 10 𝐻 15 10<H<15 10 < italic_H < 15 get “lucky” enough to encounter a target with small enough impact parameter to surpass the impulse threshold.
+
+At H ≳ 11 , greater-than-or-equivalent-to 𝐻 11 H\gtrsim 11, italic_H ≳ 11 , a deflector starts to require some good fortune to encounter a target and deflect it measurably. The cross-section for a measurable impact shrinks as b max 2 ∝ M 2 ∝ 10 − 1.2 ⁢ H , proportional-to superscript subscript 𝑏 max 2 superscript 𝑀 2 proportional-to superscript 10 1.2 𝐻 b_{\rm max}^{2}\propto M^{2}\propto 10^{-1.2H}, italic_b start_POSTSUBSCRIPT roman_max end_POSTSUBSCRIPT start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT ∝ italic_M start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT ∝ 10 start_POSTSUPERSCRIPT - 1.2 italic_H end_POSTSUPERSCRIPT , which is steeper than the growth in d ⁢ N / d ⁢ H ∝ 10 0.5 ⁢ H proportional-to 𝑑 𝑁 𝑑 𝐻 superscript 10 0.5 𝐻 dN/dH\propto 10^{0.5H} italic_d italic_N / italic_d italic_H ∝ 10 start_POSTSUPERSCRIPT 0.5 italic_H end_POSTSUPERSCRIPT in the number of the potential MBA deflectors, so the number of detectable encounters drops fairly quickly with deflector H 𝐻 H italic_H and mass. Another ≈ 400 absent 400 \approx 400 ≈ 400 asteroids at 10 < H ≲ 15 10 𝐻 less-than-or-similar-to 15 10<H\lesssim 15 10 < italic_H ≲ 15 generate impulses above I min , subscript 𝐼 min I_{\rm min}, italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT , i.e.  down to masses of ≈ 1 × 10 − 16 ⁢ M ⊙ . absent 1 superscript 10 16 subscript 𝑀 direct-product \approx 1\times 10^{-16}M_{\odot}. ≈ 1 × 10 start_POSTSUPERSCRIPT - 16 end_POSTSUPERSCRIPT italic_M start_POSTSUBSCRIPT ⊙ end_POSTSUBSCRIPT . We will find however that the smallest asteroids attaining useful S / N 𝑆 𝑁 S/N italic_S / italic_N on the impulses and mass are are near H = 12 . 𝐻 12 H=12. italic_H = 12 . Among the Trojans, ≈ 40 absent 40 \approx 40 ≈ 40 generate above-threshold encounters, but none of them attain S / N > 5 𝑆 𝑁 5 S/N>5 italic_S / italic_N > 5 on their masses in any forecast, so we restrict our further discussion to MBAs.
+
+If we now restrict our analysis to the 20 largest-impulse encounters for any deflector having > 20 absent 20 >20 > 20 encounters on the candidate list, we are left with 6839 encounters involving 1081 unique deflectors. There are 6800 unique tracers involved in these encounters—a small number (37, or 0.5%) are involved in 2 (or more) encounters. Ten of these are multiple encounters of the same deflector-target pair, which requires the deflector and target to be on very similar orbits. Since 6800 of the 1.2 million possible tracers, or 0.5%, are involved in 1 encounter during LSST , we would expect 0.5% of these 6800, or ≈ 34 , absent 34 \approx 34, ≈ 34 , to have 2 encounters, if encounters are uncorrelated events (Poisson statistics). This is consistent with what we find. In futher analysis we will take the shortcut of analyzing each encounter of a given tracer independently, neglecting the covariances between mass estimates from these rare multiple-encounter cases.
+
+3 Dynamical model
+
+The next step is to quantify the observational signatures of deviations from the nominal MPC orbit for each of the 6839 encounters. Free parameters of the tracer orbit are the six elements of the state vector at the start of LSST , plus the applied impulse I 𝐼 I italic_I . We need also to consider non-gravitational forces on the target body if (1) the astrometric deviations they cause, or similarly their integrated impulse on the target, are larger than ≈ 1 / 10 absent 1 10 \approx 1/10 ≈ 1 / 10 of the effects the gravitational encounter, and (2) the time signature of the effect resembles that of an impulse, such that a fit to the data would find the non-gravitational force covariant with the size of I 𝐼 I italic_I .
+
+Radiation pressure satistifies criterion (1) for smaller targets. The acceleration a rad subscript 𝑎 rad a_{\rm rad} italic_a start_POSTSUBSCRIPT roman_rad end_POSTSUBSCRIPT from incident radiation pressure on a spherical body of radius R 𝑅 R italic_R and density ρ 𝜌 \rho italic_ρ at distance r 𝑟 r italic_r from the Sun is
+
+a rad subscript 𝑎 rad \displaystyle a_{\rm rad} italic_a start_POSTSUBSCRIPT roman_rad end_POSTSUBSCRIPT
+= \displaystyle= =
+π ⁢ R 2 ⁢ L ⊙ 4 ⁢ π ⁢ r 2 ⁢ c ⁢ 3 4 ⁢ π ⁢ R 3 ⁢ ρ 𝜋 superscript 𝑅 2 subscript 𝐿 direct-product 4 𝜋 superscript 𝑟 2 𝑐 3 4 𝜋 superscript 𝑅 3 𝜌 \displaystyle\frac{\pi R^{2}L_{\odot}}{4\pi r^{2}c}\frac{3}{4\pi R^{3}\rho} divide start_ARG italic_π italic_R start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT italic_L start_POSTSUBSCRIPT ⊙ end_POSTSUBSCRIPT end_ARG start_ARG 4 italic_π italic_r start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT italic_c end_ARG divide start_ARG 3 end_ARG start_ARG 4 italic_π italic_R start_POSTSUPERSCRIPT 3 end_POSTSUPERSCRIPT italic_ρ end_ARG
+
+(4)
+
+= \displaystyle= =
+3 ⁢ L ⊙ 16 ⁢ π ⁢ R ⁢ ρ ⁢ c ⁢ 1 r 2 3 subscript 𝐿 direct-product 16 𝜋 𝑅 𝜌 𝑐 1 superscript 𝑟 2 \displaystyle\frac{3L_{\odot}}{16\pi R\rho c}\frac{1}{r^{2}} divide start_ARG 3 italic_L start_POSTSUBSCRIPT ⊙ end_POSTSUBSCRIPT end_ARG start_ARG 16 italic_π italic_R italic_ρ italic_c end_ARG divide start_ARG 1 end_ARG start_ARG italic_r start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT end_ARG
+
+≈ \displaystyle\approx ≈
+1.7 × 10 − 12 × 10 0.2 ⁢ ( H − 16 ) ⁢ m ⁢ s − 2 × ( 1 ⁢ au r ) 2 , 1.7 superscript 10 12 superscript 10 0.2 𝐻 16 m superscript s 2 superscript 1 au 𝑟 2 \displaystyle 1.7\times 10^{-12}\times 10^{0.2(H-16)}\,\text{m}\,\text{s}^{-2}%
+\times\left(\frac{1\,\mathrm{au}}{r}\right)^{2}, 1.7 × 10 start_POSTSUPERSCRIPT - 12 end_POSTSUPERSCRIPT × 10 start_POSTSUPERSCRIPT 0.2 ( italic_H - 16 ) end_POSTSUPERSCRIPT m s start_POSTSUPERSCRIPT - 2 end_POSTSUPERSCRIPT × ( divide start_ARG 1 roman_au end_ARG start_ARG italic_r end_ARG ) start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT ,
+
+(5)
+
+where the last line inserts our nominal values for asteroid albedo and density. Applying this force over 10 years yields an impulse of I rad ≈ 5 × 10 − 5 ⁢ m ⁢ s − 1 , subscript 𝐼 rad 5 superscript 10 5 m superscript s 1 I_{\rm rad}\approx 5\times 10^{-5}\,\text{m}\,\text{s}^{-1}, italic_I start_POSTSUBSCRIPT roman_rad end_POSTSUBSCRIPT ≈ 5 × 10 start_POSTSUPERSCRIPT - 5 end_POSTSUPERSCRIPT m s start_POSTSUPERSCRIPT - 1 end_POSTSUPERSCRIPT , which comparable to or larger than the typical uncertainties in gravitational impulses we will see in later sections.
+
+The incident radiation pressure does not, however, satisfy criterion (2), since a 1 / r 2 1 superscript 𝑟 2 1/r^{2} 1 / italic_r start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT radial force does not have observable consequences similar those of an instantaneous impulse. The orbit is altered only by being at very slightly larger distance for a given period, at a level that is undetectable in LSST  astrometry. Similarly, the reflex pressure from reflected sunlight should yield a nearly radial 1 / r 2 1 superscript 𝑟 2 1/r^{2} 1 / italic_r start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT force and can be ignored here. More intrusive, however, is the net reaction force from anisotropic thermal reradiation of absorbed solar flux, i.e.  the Yarkovsky effect. The component along the radius vector 𝐫 ^ ^ 𝐫 \hat{\mathbf{r}} over^ start_ARG bold_r end_ARG once again is not covariant with a gravitational impulse, but the component a Y subscript 𝑎 𝑌 a_{Y} italic_a start_POSTSUBSCRIPT italic_Y end_POSTSUBSCRIPT directed in the azimuthal direction (perpendicular to 𝐫 ^ , ^ 𝐫 \hat{\mathbf{r}}, over^ start_ARG bold_r end_ARG , in the orbital plane) must be considered.
+
+The component of an impulse that generates the largest observable signal is that parallel to the tracer’s velocity (nominally azimuthal), which changes its energy, hence its semi-major axis a 𝑎 a italic_a , and its period P . 𝑃 P. italic_P . This causes a perturbation in the tracer’s ecliptic longitude that grows linearly with time after the impulse. The azimuthal Yarkovsky force changes a 𝑎 a italic_a at a constant rate, leading to an azimuthal perturbation that grows quadratically with time. This quadratic Yarkovsky signal is covariant with the zero-then-linear signal from an encounter, degrading the accuracy of the inference on I 𝐼 I italic_I . Longer periods of observation make it easier to disentangle these effects.
+
+We therefore include an azimuthal Yarkovsky acceleration a Y = A 2 ⁢ ( 1 ⁢ au / r ) 2 subscript 𝑎 𝑌 subscript 𝐴 2 superscript 1 au 𝑟 2 a_{Y}=A_{2}(1\,\mathrm{au}/r)^{2} italic_a start_POSTSUBSCRIPT italic_Y end_POSTSUBSCRIPT = italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT ( 1 roman_au / italic_r ) start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT in the dynamical model of the tracer. We can in general write
+
+a Y = γ ⁢ g Y ⁢ a rad , subscript 𝑎 𝑌 𝛾 subscript 𝑔 𝑌 subscript 𝑎 rad a_{Y}=\gamma g_{Y}a_{\rm rad}, italic_a start_POSTSUBSCRIPT italic_Y end_POSTSUBSCRIPT = italic_γ italic_g start_POSTSUBSCRIPT italic_Y end_POSTSUBSCRIPT italic_a start_POSTSUBSCRIPT roman_rad end_POSTSUBSCRIPT ,
+
+(6)
+
+where γ 𝛾 \gamma italic_γ is the fraction of incident radiation absorbed at the surface, and g Y subscript 𝑔 𝑌 g_{Y} italic_g start_POSTSUBSCRIPT italic_Y end_POSTSUBSCRIPT is a factor giving the average azimuthal component of the angular radiation pattern. For a spherical body with a homogeneous, Lambertian surface, the maximum attainable value of g Y subscript 𝑔 𝑌 g_{Y} italic_g start_POSTSUBSCRIPT italic_Y end_POSTSUBSCRIPT is ≈ 0.1 , absent 0.1 \approx 0.1, ≈ 0.1 , for the diurnal Yarkovsky effect ( e.g. Tremaine, 2023 , Appendix H) . The maximum is attained when the spin axis of the asteroid has obliquity ϵ = 0 italic-ϵ 0 \epsilon=0 italic_ϵ = 0 or π , 𝜋 \pi, italic_π , i.e.  perpendicular to the orbital plane, and the thermal/rotation properties reach an optimum value. The diurnal effect scales as cos ⁡ ϵ , italic-ϵ \cos\epsilon, roman_cos italic_ϵ , so can be either a prograde or a retrograde force, just as a gravitational impulse can be. An isotropic distribution of spin axes would yield an RMS variation of a Y subscript 𝑎 𝑌 a_{Y} italic_a start_POSTSUBSCRIPT italic_Y end_POSTSUBSCRIPT equal to 1 / 3 1 3 1/\sqrt{3} 1 / square-root start_ARG 3 end_ARG of its maximal value, and variations in thermal properties from the optimum would lower this further.
+
+There are other subtleties to the Yarkovsky force—a seasonal effect, binary effects, and results of non-Lambertian surfaces (see review by Vokrouhlický et al., 2015 ) —but these would typically enter at lower amplitude and/or with temporal patterns less resembling those of an impulse.
+We will therefore limit our Yarkovsky treatment to having a single free parameter A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT for each tracer, and will place a prior probability distribution on A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT that is Gaussian with a standard deviation implied by Equations ( 5 ) and ( 6 ) with the H 𝐻 H italic_H value of the tracer and a value of γ ⁢ g Y = 0.05 . 𝛾 subscript 𝑔 𝑌 0.05 \gamma g_{Y}=0.05. italic_γ italic_g start_POSTSUBSCRIPT italic_Y end_POSTSUBSCRIPT = 0.05 . The resultant typical integrated impulses from Yarkovsky effect are therefore 20 × 20\times 20 × smaller than that of the full incident radiation pressure I rad subscript 𝐼 rad I_{\rm rad} italic_I start_POSTSUBSCRIPT roman_rad end_POSTSUBSCRIPT estimated above—but still have significant impact on forecasted mass measurements, as we shall quantify below.
+
+We then conduct another leapfrog integration of each tracer asteroid’s path during the time period of the simulated LSST . In this integration we consider the tracer subject to the Yarkovsky force in addition to the gravity of the Sun and 8 planets. We want the partial derivatives of the tracer’s right ascension and declination ( α , δ ) 𝛼 𝛿 (\alpha,\delta) ( italic_α , italic_δ ) with respect to the parameters 𝐪 = { x 0 , y 0 , z 0 , x ˙ 0 , y ˙ 0 , z ˙ 0 , I , A 2 } , 𝐪 subscript 𝑥 0 subscript 𝑦 0 subscript 𝑧 0 subscript ˙ 𝑥 0 subscript ˙ 𝑦 0 subscript ˙ 𝑧 0 𝐼 subscript 𝐴 2 \mathbf{q}=\{x_{0},y_{0},z_{0},\dot{x}_{0},\dot{y}_{0},\dot{z}_{0},I,A_{2}\}, bold_q = { italic_x start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , italic_y start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , italic_z start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , over˙ start_ARG italic_x end_ARG start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , over˙ start_ARG italic_y end_ARG start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , over˙ start_ARG italic_z end_ARG start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , italic_I , italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT } , as function of time t 𝑡 t italic_t of observation. We obtain this by integrating 8 test particles that have had the nominal MPC orbit perturbed by small deviations to each parameter. This yields a time-dependent 2 × 8 2 8 2\times 8 2 × 8 derivative matrix
+∂ [ α ⁢ ( t ) , δ ⁢ ( t ) ] / ∂ 𝐪 . 𝛼 𝑡 𝛿 𝑡 𝐪 \partial[\alpha(t),\delta(t)]/\partial\mathbf{q}. ∂ [ italic_α ( italic_t ) , italic_δ ( italic_t ) ] / ∂ bold_q . The apparent V 𝑉 V italic_V -band magnitude of the tracer asteroid is saved as well, for purposes of forecasting the observational errors. We ignore phase corrections for this work.
+
+4 Forecasting LSST  observations and impulse uncertainties
+
+With a list of interesting encounters in hand, we must now quantify the ability of LSST  to measure the positions of the relevant tracer asteroids. We use the table of simulated LSST  exposures given in baseline_v4.0_10yrs.db , produced by the Rubin Observatory Survey Cadence Optimization Committee group. 4 4 4 Simulation files are linked and documented at the Committee’s site . The simulations emulate a sequence of all exposures taken for the main “Wide Fast Deep” survey, and the circumstances of each, including time, sky coordinates, filter, sky conditions, and PSF size. The methods for finding the exposures containing a given asteroid, and estimating the RMS measurement error σ θ subscript 𝜎 𝜃 \sigma_{\theta} italic_σ start_POSTSUBSCRIPT italic_θ end_POSTSUBSCRIPT on each axis of its sky position, are the same as used by Gomes et al. ( 2023 ) . In brief: for each tracer MBA, we find all LSST  exposures that would contain its image. The astrometric uncertainty that would be attained on the MBA has two components. The first is a photon-noise error, which can be calculated using the estimated quantum efficiency of the observatory along with the MBA’s apparent magnitude, and the circumstances of the (simulated) exposure: filter band, sky background, cloud cover, airmass, and width of the point-spread function. The second component is a fixed 2 mas, added in quadrature to the photon-noise error to account for LSST  astrometric calibration uncertainties and the stochastic displacements from atmospheric turbulence, after correction using the techniques developed by Fortino et al. ( 2021 ) . The result is an estimate σ i ⁢ j subscript 𝜎 𝑖 𝑗 \sigma_{ij} italic_σ start_POSTSUBSCRIPT italic_i italic_j end_POSTSUBSCRIPT of the RMS uncertainty along each of the α 𝛼 \alpha italic_α and δ 𝛿 \delta italic_δ axes for the position of tracer i 𝑖 i italic_i in exposure j 𝑗 j italic_j .
+
+The uncertainty in the impulse I 𝐼 I italic_I applied to tracer i 𝑖 i italic_i is estimated using the Fisher information matrix 𝖥 i subscript 𝖥 𝑖 \mathsf{F}_{i} sansserif_F start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT for its observations, defined as
+
+( 𝖥 i ) u ⁢ v = ∑ j 1 σ i ⁢ j 2 ⁢ [ ∂ α ⁢ ( t j ) ∂ q u ⁢ ∂ α ⁢ ( t j ) ∂ q v ⁢ cos 2 ⁡ δ ⁢ ( t ) + ∂ δ ⁢ ( t j ) ∂ q u ⁢ ∂ δ ⁢ ( t j ) ∂ q v ] , subscript subscript 𝖥 𝑖 𝑢 𝑣 subscript 𝑗 1 subscript superscript 𝜎 2 𝑖 𝑗 delimited-[] 𝛼 subscript 𝑡 𝑗 subscript 𝑞 𝑢 𝛼 subscript 𝑡 𝑗 subscript 𝑞 𝑣 superscript 2 𝛿 𝑡 𝛿 subscript 𝑡 𝑗 subscript 𝑞 𝑢 𝛿 subscript 𝑡 𝑗 subscript 𝑞 𝑣 (\mathsf{F}_{i})_{uv}=\sum_{j}\frac{1}{\sigma^{2}_{ij}}\left[\frac{\partial%
+\alpha(t_{j})}{\partial q_{u}}\frac{\partial\alpha(t_{j})}{\partial q_{v}}\cos%
+^{2}\delta(t)+\frac{\partial\delta(t_{j})}{\partial q_{u}}\frac{\partial\delta%
+(t_{j})}{\partial q_{v}}\right], ( sansserif_F start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT ) start_POSTSUBSCRIPT italic_u italic_v end_POSTSUBSCRIPT = ∑ start_POSTSUBSCRIPT italic_j end_POSTSUBSCRIPT divide start_ARG 1 end_ARG start_ARG italic_σ start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT start_POSTSUBSCRIPT italic_i italic_j end_POSTSUBSCRIPT end_ARG [ divide start_ARG ∂ italic_α ( italic_t start_POSTSUBSCRIPT italic_j end_POSTSUBSCRIPT ) end_ARG start_ARG ∂ italic_q start_POSTSUBSCRIPT italic_u end_POSTSUBSCRIPT end_ARG divide start_ARG ∂ italic_α ( italic_t start_POSTSUBSCRIPT italic_j end_POSTSUBSCRIPT ) end_ARG start_ARG ∂ italic_q start_POSTSUBSCRIPT italic_v end_POSTSUBSCRIPT end_ARG roman_cos start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT italic_δ ( italic_t ) + divide start_ARG ∂ italic_δ ( italic_t start_POSTSUBSCRIPT italic_j end_POSTSUBSCRIPT ) end_ARG start_ARG ∂ italic_q start_POSTSUBSCRIPT italic_u end_POSTSUBSCRIPT end_ARG divide start_ARG ∂ italic_δ ( italic_t start_POSTSUBSCRIPT italic_j end_POSTSUBSCRIPT ) end_ARG start_ARG ∂ italic_q start_POSTSUBSCRIPT italic_v end_POSTSUBSCRIPT end_ARG ] ,
+
+(7)
+
+where u , v 𝑢 𝑣 u,v italic_u , italic_v run over the 8 elements of the parameter vector 𝐪 𝐪 \mathbf{q} bold_q for this MBA, and the sum runs over LSST  observations of tracer i 𝑖 i italic_i .
+
+The Cramer-Rao theorem then provides a lower bound on the uncertainty σ I subscript 𝜎 𝐼 \sigma_{I} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT of the inference of the impulse on a given tracer:
+
+σ I 2 subscript superscript 𝜎 2 𝐼 \displaystyle\sigma^{2}_{I} italic_σ start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT
+= [ 𝖥 − 1 ] I ⁢ I absent subscript delimited-[] superscript 𝖥 1 𝐼 𝐼 \displaystyle=\left[\mathsf{F}^{-1}\right]_{II} = [ sansserif_F start_POSTSUPERSCRIPT - 1 end_POSTSUPERSCRIPT ] start_POSTSUBSCRIPT italic_I italic_I end_POSTSUBSCRIPT
+marginalizing over ⁢ 𝐱 0 , 𝐯 0 , A 2 , marginalizing over subscript 𝐱 0 subscript 𝐯 0 subscript 𝐴 2 \displaystyle\quad\text{marginalizing over}\,\mathbf{x}_{0},\mathbf{v}_{0},A_{%
+2}, marginalizing over bold_x start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , bold_v start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT ,
+
+σ I 2 subscript superscript 𝜎 2 𝐼 \displaystyle\sigma^{2}_{I} italic_σ start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT
+= [ 𝖥 A 2 ⁢ I − 1 ] I ⁢ I absent subscript delimited-[] superscript subscript 𝖥 subscript 𝐴 2 𝐼 1 𝐼 𝐼 \displaystyle=\left[\mathsf{F}_{A_{2}I}^{-1}\right]_{II} = [ sansserif_F start_POSTSUBSCRIPT italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT start_POSTSUPERSCRIPT - 1 end_POSTSUPERSCRIPT ] start_POSTSUBSCRIPT italic_I italic_I end_POSTSUBSCRIPT
+𝐱 0 , 𝐯 0 ⁢ known, marginalizing ⁢ A 2 , subscript 𝐱 0 subscript 𝐯 0 known, marginalizing subscript 𝐴 2 \displaystyle\quad\mathbf{x}_{0},\mathbf{v}_{0}\,\text{known, marginalizing}\,%
+A_{2}, bold_x start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , bold_v start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT known, marginalizing italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT ,
+
+(8)
+
+σ I 2 subscript superscript 𝜎 2 𝐼 \displaystyle\sigma^{2}_{I} italic_σ start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT
+= ( 𝖥 I ⁢ I ) − 1 absent superscript subscript 𝖥 𝐼 𝐼 1 \displaystyle=\left(\mathsf{F}_{II}\right)^{-1} = ( sansserif_F start_POSTSUBSCRIPT italic_I italic_I end_POSTSUBSCRIPT ) start_POSTSUPERSCRIPT - 1 end_POSTSUPERSCRIPT
+𝐱 0 , 𝐯 0 , A 2 ⁢ known. subscript 𝐱 0 subscript 𝐯 0 subscript 𝐴 2 known. \displaystyle\quad\mathbf{x}_{0},\mathbf{v}_{0},A_{2}\,\text{known.} bold_x start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , bold_v start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT known.
+
+The first case corresponds to using only LSST  data to estimate the impulse I i subscript 𝐼 𝑖 I_{i} italic_I start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT simultaneously with the initial state vector ( 𝐱 0 , 𝐯 0 ) subscript 𝐱 0 subscript 𝐯 0 (\mathbf{x}_{0},\mathbf{v}_{0}) ( bold_x start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , bold_v start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT ) and Yarkovsky strength A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT ; the third case is the limit where 𝐱 0 , 𝐯 0 , subscript 𝐱 0 subscript 𝐯 0 \mathbf{x}_{0},\mathbf{v}_{0}, bold_x start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , bold_v start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT , and A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT are known precisely from pre- LSST  observations;
+and the middle case is when pre- LSST  data give 𝐱 0 subscript 𝐱 0 \mathbf{x}_{0} bold_x start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT and 𝐯 0 subscript 𝐯 0 \mathbf{v}_{0} bold_v start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT but not A 2 . subscript 𝐴 2 A_{2}. italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT .
+The notation 𝖥 A 2 ⁢ I subscript 𝖥 subscript 𝐴 2 𝐼 \mathsf{F}_{A_{2}I} sansserif_F start_POSTSUBSCRIPT italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT indicates truncation of the full Fisher matrix to the 2 × 2 2 2 2\times 2 2 × 2 submatrix for parameters A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT and I 𝐼 I italic_I . We will label these three cases as
+“ LSST  only,” “Yarkovsky unknown,” and “initial known.”
+
+The σ I ⁢ i subscript 𝜎 𝐼 𝑖 \sigma_{Ii} italic_σ start_POSTSUBSCRIPT italic_I italic_i end_POSTSUBSCRIPT determined from simulated LSST  data of a tracer is independent of the amplitude of the impulse I , 𝐼 I, italic_I , meaning it is also independent of the mass of the deflector, the impact parameter | 𝐛 | , 𝐛 |\mathbf{b}|, | bold_b | , and the relative velocity v . 𝑣 v. italic_v . This means that our 6800 tracers are effectively a random sample of the σ I subscript 𝜎 𝐼 \sigma_{I} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT available from all of the known MBAs. The forecasted σ I subscript 𝜎 𝐼 \sigma_{I} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT will depend primarily on the apparent magnitude m 𝑚 m italic_m of the tracer, which determines the LSST  measurement errors; also rather heavily on the date of the impulse relative to the start and end of the survey; and on the direction of the impulse. Atop these deterministic factors, there is substantial stochasticity in the number and quality of a tracer’s observations by LSST .
+
+Figure 2: Each plot gives information about the uncertainty σ I subscript 𝜎 𝐼 \sigma_{I} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT on the applied impulse that is forecasted for observations of each tracer MBA of a mutual encounter. The columns assume progressively more information available from pre- LSST  data about the tracers’ initial state vectors and Yarkovsky accelerations when going from left to right, as denoted in the text atop each column.
+The top row of plots is a scatter diagram (red dots) of σ I subscript 𝜎 𝐼 \sigma_{I} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT vs the apparent magnitude of the tracer; the black dots trace the mean vs apparent magnitude. The middle panels give the distribution of the apparent magnitudes of those tracers which determine their deflectors’ masses with S / N > 3 , 𝑆 𝑁 3 S/N>3, italic_S / italic_N > 3 , i.e.  the distribution of apparent magnitudes of the useful tracers. The bottom panels plot the distributions of σ I subscript 𝜎 𝐼 \sigma_{I} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT for tracers of various magnitudes.
+
+Figure  2 plots several properties of the σ I subscript 𝜎 𝐼 \sigma_{I} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT values for the tracer population. Of note, the information-content mean σ I , subscript 𝜎 𝐼 \sigma_{I}, italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT , defined as ⟨ σ I − 2 ⟩ − 1 / 2 , superscript delimited-⟨⟩ superscript subscript 𝜎 𝐼 2 1 2 \left\langle\sigma_{I}^{-2}\right\rangle^{-1/2}, ⟨ italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT start_POSTSUPERSCRIPT - 2 end_POSTSUPERSCRIPT ⟩ start_POSTSUPERSCRIPT - 1 / 2 end_POSTSUPERSCRIPT , does degrade for fainter tracers, roughly as σ I ∝ 1 / flux proportional-to subscript 𝜎 𝐼 1 flux \sigma_{I}\propto 1/\text{flux} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT ∝ 1 / flux (upper row of the Figure). The middle row shows that this leads the distribution of useful tracers to peak at magnitudes 21–22, roughly where the raw MBA counts peak, suggesting that discoveries of a large number of fainter MBAs by LSST  could increase the number of useful encounters and improve over the results we derive. We also see that there is substantial degeneracy between I 𝐼 I italic_I and the initial state vector in the orbit fits, because fixing the latter, as we move from left to central column, lowers the uncertainty on the former by 3–5 × . \times. × . Advance knowledge of the Yarkovsky strength, indicated by moving from the center to right-hand column, improves σ I subscript 𝜎 𝐼 \sigma_{I} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT by another factor of ≈ 2 , absent 2 \approx 2, ≈ 2 , for the fainter tracers, but very little for the brightest ones. 5 5 5 It is worth noting that there are currently no claims of detections of A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT for individual MBAs, but this should change when the completed Gaia  and LSST  data are coupled.
+
+The bottom row of Figure  2 also confirms that our initial choice to investigate only those mutual events causing I > 2.2 × 10 − 6 ⁢ m ⁢ s − 1 𝐼 2.2 superscript 10 6 m superscript s 1 I>2.2\times 10^{-6}\,{\rm m}\,{\rm s}^{-1} italic_I > 2.2 × 10 start_POSTSUPERSCRIPT - 6 end_POSTSUPERSCRIPT roman_m roman_s start_POSTSUPERSCRIPT - 1 end_POSTSUPERSCRIPT has not excluded any significant number of encounters that could have been useful. In the left panel, we see that none of the tracers are capable of detecting this chosen I min subscript 𝐼 min I_{\rm min} italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT when only LSST  data are used. The center and right panels shows that even with strong pre- LSST  orbital knowledge, only a few percent of tracers have σ I < I min , subscript 𝜎 𝐼 subscript 𝐼 min \sigma_{I}<I_{\rm min}, italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT < italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT , and baslically none could detect I min subscript 𝐼 min I_{\rm min} italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT with S / N > 3 . 𝑆 𝑁 3 S/N>3. italic_S / italic_N > 3 . The lowest σ I subscript 𝜎 𝐼 \sigma_{I} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT values are, as expected, attained by brighter tracer MBAs.
+
+5 Resulting deflector mass uncertainties
+
+For each deflector-tracer encounter, we have derived σ I subscript 𝜎 𝐼 \sigma_{I} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT for the tracer’s LSST  astrometry. This can be propagated into an uncertainty σ M = ( b ⁢ v / 2 ⁢ G ) ⁢ σ I subscript 𝜎 𝑀 𝑏 𝑣 2 𝐺 subscript 𝜎 𝐼 \sigma_{M}=(bv/2G)\sigma_{I} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT = ( italic_b italic_v / 2 italic_G ) italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT using the circumstances of the encounter. Because the more massive deflectors are involved in multiple deflections with I > I min , 𝐼 subscript 𝐼 min I>I_{\rm min}, italic_I > italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT , we examine results for two versions of σ M subscript 𝜎 𝑀 \sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT for deflector d : : 𝑑 absent d: italic_d :
+
+σ M subscript 𝜎 𝑀 \displaystyle\sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT
+= \displaystyle= =
+min i ⁢ ( σ M , i ) (best tracer), subscript min 𝑖 subscript 𝜎 𝑀 𝑖 (best tracer), \displaystyle{\rm min}_{i}\left(\sigma_{M,i}\right)\quad\text{(best tracer),} roman_min start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT ( italic_σ start_POSTSUBSCRIPT italic_M , italic_i end_POSTSUBSCRIPT ) (best tracer),
+
+(9)
+
+σ M subscript 𝜎 𝑀 \displaystyle\sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT
+= \displaystyle= =
+( ∑ i σ M , i − 2 ) − 1 / 2 (all tracers) . superscript subscript 𝑖 superscript subscript 𝜎 𝑀 𝑖 2 1 2 (all tracers) \displaystyle\left(\sum_{i}\sigma_{M,i}^{-2}\right)^{-1/2}\quad\text{(all %
+tracers)}. ( ∑ start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT italic_σ start_POSTSUBSCRIPT italic_M , italic_i end_POSTSUBSCRIPT start_POSTSUPERSCRIPT - 2 end_POSTSUPERSCRIPT ) start_POSTSUPERSCRIPT - 1 / 2 end_POSTSUPERSCRIPT (all tracers) .
+
+(10)
+
+In both cases, we operate on the tracers i 𝑖 i italic_i that are deflected by the chosen MBA. The “best tracer” case picks the single most informative tracer’s precision, while the “all tracers” case combines the power of all encounters with I > I min 𝐼 subscript 𝐼 min I>I_{\rm min} italic_I > italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT for up to the 20 highest- I 𝐼 I italic_I encounters. We find that combining information from the several most-informative tracers improves σ M subscript 𝜎 𝑀 \sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT by a modest factor ( ≈ 2 absent 2 \approx 2 ≈ 2 ) over using the single best tracer, and in further analysis we will combine information from up to 20 mutual events surpassing the I min subscript 𝐼 min I_{\rm min} italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT threshold. Gains from > 20 absent 20 >20 > 20 tracers per deflector are minimal.
+
+Figure 3: The distribution of forecasted σ M , subscript 𝜎 𝑀 \sigma_{M}, italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT , the uncertainty on the mass of the deflector, is plotted for all of the 725 MBA deflectors with H < 10 . 𝐻 10 H<10. italic_H < 10 . The pileup at the right-hand edge represents the few objects with large uncertainties or with no encounters generating I > I min 𝐼 subscript 𝐼 min I>I_{\rm min} italic_I > italic_I start_POSTSUBSCRIPT roman_min end_POSTSUBSCRIPT on a tracer. The dash-dot black histogram is the “ LSST  only” case, the dashed blue histogram assumes that pre- LSST  data strongly constrain the initial state vector of the tracer, and the solid red histogram shows what happens if the Yarkovsky coefficient A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT is also known precisely. Along the top row are marked nominal masses of MBAs at different H 𝐻 H italic_H values. For LSST -only inferences, σ M subscript 𝜎 𝑀 \sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT is near the typical mass of an H = 9 𝐻 9 H=9 italic_H = 9 MBA, while with initial states known, σ M subscript 𝜎 𝑀 \sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT is typically at the mass of H = 10 𝐻 10 H=10 italic_H = 10 MBAs.
+
+Figure  3 plots the distributions of σ M subscript 𝜎 𝑀 \sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT for the H < 10 𝐻 10 H<10 italic_H < 10 asteroids, for the “all tracers” case. The distribution of σ M subscript 𝜎 𝑀 \sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT should be indepedent of the deflector mass; however our imposition of a minimum on the applied impulse means that only for the H < 10 𝐻 10 H<10 italic_H < 10 deflectors are we locating most of the 20 highest- I 𝐼 I italic_I encounters with tracers in our analysis. Therefore we plot the distributions of σ M subscript 𝜎 𝑀 \sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT only for this more massive subsample of deflector MBAs, as a better representation of what σ M subscript 𝜎 𝑀 \sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT is attainable. The median deflector has σ M ≈ 10 − 13.4 ⁢ M ⊙ subscript 𝜎 𝑀 superscript 10 13.4 subscript 𝑀 direct-product \sigma_{M}\approx 10^{-13.4}M_{\odot} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT ≈ 10 start_POSTSUPERSCRIPT - 13.4 end_POSTSUPERSCRIPT italic_M start_POSTSUBSCRIPT ⊙ end_POSTSUBSCRIPT purely from LSST  information, which is comparable to the mass of an H = 9 𝐻 9 H=9 italic_H = 9 MBA. In the “Yarkovsky unknown” scenario, where pre- LSST  data fix the initial state vector, the σ M subscript 𝜎 𝑀 \sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT distribution peaks at ≈ 10 − 13.9 ⁢ M ⊙ , absent superscript 10 13.9 subscript 𝑀 direct-product \approx 10^{-13.9}M_{\odot}, ≈ 10 start_POSTSUPERSCRIPT - 13.9 end_POSTSUPERSCRIPT italic_M start_POSTSUBSCRIPT ⊙ end_POSTSUBSCRIPT , which is 3.3 × 3.3\times 3.3 × lower and close to the mass of an H = 10 𝐻 10 H=10 italic_H = 10 MBA. If the Yarkovsky term can be constrained well, this can be lowered to σ M ≈ 10 − 14.1 ⁢ M ⊙ , subscript 𝜎 𝑀 superscript 10 14.1 subscript 𝑀 direct-product \sigma_{M}\approx 10^{-14.1}M_{\odot}, italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT ≈ 10 start_POSTSUPERSCRIPT - 14.1 end_POSTSUPERSCRIPT italic_M start_POSTSUBSCRIPT ⊙ end_POSTSUBSCRIPT , another 1.7 × 1.7\times 1.7 × improvement in sensitivity.
+
+Figure 4: Histogram of the number of MBAs that are forecasted to attain S / N > 10 𝑆 𝑁 10 S/N>10 italic_S / italic_N > 10 or S / N > 5 𝑆 𝑁 5 S/N>5 italic_S / italic_N > 5 measurements of their masses by the use of LSST  astrometry on tracer asteroids. The filled histograms assume that pre- LSST  data establish the initial state vectors and Yarkovsky strengths of the tracer MBAs. In this case, comparing to the total differential MBA counts in blue, we find that nearly all MBAs with H < 8.5 𝐻 8.5 H<8.5 italic_H < 8.5 are measured at S / N > 5 . 𝑆 𝑁 5 S/N>5. italic_S / italic_N > 5 . If only LSST  observations are used, the most conservative case, the open histograms show that S / N > 5 𝑆 𝑁 5 S/N>5 italic_S / italic_N > 5 is attained for nearly all H < 7.5 𝐻 7.5 H<7.5 italic_H < 7.5 MBAs. In each case there is a tail extending 4 mag fainter in H 𝐻 H italic_H of MBAs that obtain S / N > 5 𝑆 𝑁 5 S/N>5 italic_S / italic_N > 5 from fortunate close encounters with a known MBA as tracer.
+
+Figure  4 plots our forecasts for how many MBAs will have their masses determined to S / N > 5 𝑆 𝑁 5 S/N>5 italic_S / italic_N > 5 or S / N > 10 𝑆 𝑁 10 S/N>10 italic_S / italic_N > 10 through their deflections of other MBAs. For clarity, of our three cases “ LSST  only,” “Yarkovsky unknown,” and “initial known,” we plot only the first and last. The total number of MBAs with S / N > 5 𝑆 𝑁 5 S/N>5 italic_S / italic_N > 5 on their masses (assuming nominal density and albedo) in the three cases are 126, 310, and 440, respectively. Of these, 72, 183, and 281 are forecasted to attain S / N > 10 𝑆 𝑁 10 S/N>10 italic_S / italic_N > 10 accuracy on their masses. The acquisition of LSST  data will thus increase the number of usefully-measured MBA masses into the hundreds, from the current tens.
+
+Regardless of the S / N 𝑆 𝑁 S/N italic_S / italic_N threshold and the extent of pre- LSST  data, the mass determinations follow a common pattern. Up to some H 𝐻 H italic_H corresponding to masses several times the typical σ M , subscript 𝜎 𝑀 \sigma_{M}, italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT , the mass determinations are complete. This limiting H 𝐻 H italic_H will be between 7 and 9, depending on the S / N 𝑆 𝑁 S/N italic_S / italic_N threshold and the pre- LSST  observations. But only ≈ 1 / 2 absent 1 2 \approx 1/2 ≈ 1 / 2 of the MBAs with successful mass measures are brighter than this completeness level; the other half are fainter, less massive MBAs that have fortunately close encounters with one or more known tracer MBAs, yielding σ M subscript 𝜎 𝑀 \sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT values more precise than the median. Thus we expect to gain useful mass information on an essentially random subsample of MBAs down to ≈ 100 × \approx 100\times ≈ 100 × lower mass than the nearly-complete sample.
+
+Full information on all of the forecasted encounters is given in Table  1 , namely the identities of the deflector and tracer asteroids, the time and circumstances of the impulse, the nominal size of impulse given the H 𝐻 H italic_H value of the deflector, and the forecasted σ I subscript 𝜎 𝐼 \sigma_{I} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT of the tracer in the three scenarios of pre- LSST  knowledge. Then in Table  2 , we combine the information from all tracers of a given deflector to give a forecast of the attainable σ M subscript 𝜎 𝑀 \sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT on each one.
+
+The total numbers of MBAs attaining mass measurements at S / N > 1 𝑆 𝑁 1 S/N>1 italic_S / italic_N > 1 are 401, 683, and 777 in the three scenarios of pre- LSST  data. This is a bit of an underestimate since we have not identified all mutual encounters capable of this level of precision, especially if S / N > 1 𝑆 𝑁 1 S/N>1 italic_S / italic_N > 1 can be attained by combining data from multiple tracers. As explored in Bernstein ( 2025 ) , these numbers are important if we aim to produce the most accurate possible ephemerides for objects in the asteroid belts, because the level of error in such ephemerides is determined by the masses of the largest asteroids that do not have any useful observational information on their mass. For objects with M < σ M , 𝑀 subscript 𝜎 𝑀 M<\sigma_{M}, italic_M < italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT , the mass estimate from converting H 𝐻 H italic_H to a mass with assumed albedo and density is more accurate than the estimate from mutual events.
+
+Table 1: Mutual encounters with impulse > 2.2 × 10 − 6 absent 2.2 superscript 10 6 >2.2\times 10^{-6} > 2.2 × 10 start_POSTSUPERSCRIPT - 6 end_POSTSUPERSCRIPT  m/s and b < 0.1 𝑏 0.1 b<0.1 italic_b < 0.1  au
+
+Deflector
+Tracer
+MJD
+Impact vector b 𝑏 b italic_b
+
+Relative v 𝑣 v italic_v
+
+Impulse
+
+σ I subscript 𝜎 𝐼 \sigma_{I} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT a a The three columns give values in scenarios where only LSST  data are used, where pre- LSST  data determine the tracer asteroids’ initial state vectors, and where the Yarkovsky acceleration A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT is also known, respectively.
+
+(MPC number)
+(MPC number)
+
+( 10 − 3 ⁢ au superscript 10 3 au 10^{-3}\,\mathrm{au} 10 start_POSTSUPERSCRIPT - 3 end_POSTSUPERSCRIPT roman_au , ICRS)
+(km/s)
+(m/s)
+( 10 − 6 superscript 10 6 10^{-6} 10 start_POSTSUPERSCRIPT - 6 end_POSTSUPERSCRIPT  m/s)
+
+00003
+b5337
+62737.1
+(+6.7931,+5.6376,-4.1305)
+1.59
+1.0 × 10 − 3 1.0 superscript 10 3 1.0\times 10^{-3} 1.0 × 10 start_POSTSUPERSCRIPT - 3 end_POSTSUPERSCRIPT
+14.1
+5.1
+4.0
+
+00003
+K16Q96
+63526.6
+(-2.5392,-2.5206,-2.9117)
+3.27
+1.1 × 10 − 3 1.1 superscript 10 3 1.1\times 10^{-3} 1.1 × 10 start_POSTSUPERSCRIPT - 3 end_POSTSUPERSCRIPT
+41.9
+29.7
+11.8
+
+00003
+o2558
+63497.3
+(+0.5945,+2.9759,-0.3743)
+4.91
+1.1 × 10 − 3 1.1 superscript 10 3 1.1\times 10^{-3} 1.1 × 10 start_POSTSUPERSCRIPT - 3 end_POSTSUPERSCRIPT
+116.8
+108.2
+106.6
+
+00003
+H6785
+63631.5
+(-0.6189,-4.5772,-1.7071)
+3.02
+1.1 × 10 − 3 1.1 superscript 10 3 1.1\times 10^{-3} 1.1 × 10 start_POSTSUPERSCRIPT - 3 end_POSTSUPERSCRIPT
+285.3
+268.7
+264.2
+
+00003
+K11BD0
+62485.7
+(+0.2078,+5.0813,-3.1908)
+2.43
+1.1 × 10 − 3 1.1 superscript 10 3 1.1\times 10^{-3} 1.1 × 10 start_POSTSUPERSCRIPT - 3 end_POSTSUPERSCRIPT
+77.1
+19.6
+16.1
+
+  ⋯ ⋯ \cdots ⋯
+
+17822
+0̃81n
+63907.1
+(-0.0689,-0.0165,-0.1449)
+0.23
+3.1 × 10 − 6 3.1 superscript 10 6 3.1\times 10^{-6} 3.1 × 10 start_POSTSUPERSCRIPT - 6 end_POSTSUPERSCRIPT
+102.7
+70.3
+65.0
+
+26768
+y0276
+62128.8
+(-0.0069,+0.0249,-0.0099)
+0.91
+2.6 × 10 − 6 2.6 superscript 10 6 2.6\times 10^{-6} 2.6 × 10 start_POSTSUPERSCRIPT - 6 end_POSTSUPERSCRIPT
+61.6
+21.0
+7.9
+
+55167
+t2034
+62543.7
+(+0.0158,-0.0141,-0.0027)
+0.51
+4.3 × 10 − 6 4.3 superscript 10 6 4.3\times 10^{-6} 4.3 × 10 start_POSTSUPERSCRIPT - 6 end_POSTSUPERSCRIPT
+40.6
+24.0
+23.4
+
+24680
+K20M53
+62203.2
+(+0.0000,+0.0017,-0.0005)
+3.14
+2.7 × 10 − 6 2.7 superscript 10 6 2.7\times 10^{-6} 2.7 × 10 start_POSTSUPERSCRIPT - 6 end_POSTSUPERSCRIPT
+326.4
+99.1
+73.1
+
+Note. — Table 1 is published in its entirety in the machine-readable format.
+A portion is shown here for guidance regarding its form and content.
+
+Table 2: Forecasted mass uncertainties for deflector MBAs with S / N > 5 𝑆 𝑁 5 S/N>5 italic_S / italic_N > 5
+
+MPC Number
+Designation
+H 𝐻 H italic_H
+
+σ M / M ⊙ subscript 𝜎 𝑀 subscript 𝑀 direct-product \sigma_{M}/M_{\odot} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT / italic_M start_POSTSUBSCRIPT ⊙ end_POSTSUBSCRIPT a a The three columns give values in scenarios where only LSST  data are used, where pre- LSST  data determine the tracer asteroids’ initial state vectors, and where the Yarkovsky acceleration A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT is also known, respectively.
+
+Nominal S / N 𝑆 𝑁 S/N italic_S / italic_N a a The three columns give values in scenarios where only LSST  data are used, where pre- LSST  data determine the tracer asteroids’ initial state vectors, and where the Yarkovsky acceleration A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT is also known, respectively.
+
+3
+Juno
+5.18
+6.0 × 10 − 14 6.0 superscript 10 14 6.0\times 10^{-14} 6.0 × 10 start_POSTSUPERSCRIPT - 14 end_POSTSUPERSCRIPT
+3.2 × 10 − 14 3.2 superscript 10 14 3.2\times 10^{-14} 3.2 × 10 start_POSTSUPERSCRIPT - 14 end_POSTSUPERSCRIPT
+1.1 × 10 − 14 1.1 superscript 10 14 1.1\times 10^{-14} 1.1 × 10 start_POSTSUPERSCRIPT - 14 end_POSTSUPERSCRIPT
+149.4
+285.2
+834.0
+
+5
+Astraea
+6.99
+8.1 × 10 − 15 8.1 superscript 10 15 8.1\times 10^{-15} 8.1 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT
+4.9 × 10 − 15 4.9 superscript 10 15 4.9\times 10^{-15} 4.9 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT
+3.8 × 10 − 15 3.8 superscript 10 15 3.8\times 10^{-15} 3.8 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT
+91.8
+150.6
+195.5
+
+6
+Hebe
+5.61
+6.2 × 10 − 14 6.2 superscript 10 14 6.2\times 10^{-14} 6.2 × 10 start_POSTSUPERSCRIPT - 14 end_POSTSUPERSCRIPT
+4.2 × 10 − 14 4.2 superscript 10 14 4.2\times 10^{-14} 4.2 × 10 start_POSTSUPERSCRIPT - 14 end_POSTSUPERSCRIPT
+1.5 × 10 − 14 1.5 superscript 10 14 1.5\times 10^{-14} 1.5 × 10 start_POSTSUPERSCRIPT - 14 end_POSTSUPERSCRIPT
+80.7
+118.8
+322.2
+
+7
+Iris
+5.67
+2.5 × 10 − 14 2.5 superscript 10 14 2.5\times 10^{-14} 2.5 × 10 start_POSTSUPERSCRIPT - 14 end_POSTSUPERSCRIPT
+6.1 × 10 − 15 6.1 superscript 10 15 6.1\times 10^{-15} 6.1 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT
+2.3 × 10 − 15 2.3 superscript 10 15 2.3\times 10^{-15} 2.3 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT
+186.0
+747.3
+2009.1
+
+8
+Flora
+6.62
+6.3 × 10 − 15 6.3 superscript 10 15 6.3\times 10^{-15} 6.3 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT
+3.9 × 10 − 15 3.9 superscript 10 15 3.9\times 10^{-15} 3.9 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT
+1.1 × 10 − 15 1.1 superscript 10 15 1.1\times 10^{-15} 1.1 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT
+195.1
+316.8
+1088.6
+
+  ⋯ ⋯ \cdots ⋯
+
+1282
+Utopia
+10.28
+7.1 × 10 − 14 7.1 superscript 10 14 7.1\times 10^{-14} 7.1 × 10 start_POSTSUPERSCRIPT - 14 end_POSTSUPERSCRIPT
+4.0 × 10 − 15 4.0 superscript 10 15 4.0\times 10^{-15} 4.0 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT
+1.5 × 10 − 15 1.5 superscript 10 15 1.5\times 10^{-15} 1.5 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT
+0.1
+2.0
+5.1
+
+1321
+Majuba
+10.14
+4.5 × 10 − 15 4.5 superscript 10 15 4.5\times 10^{-15} 4.5 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT
+3.0 × 10 − 15 3.0 superscript 10 15 3.0\times 10^{-15} 3.0 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT
+1.5 × 10 − 15 1.5 superscript 10 15 1.5\times 10^{-15} 1.5 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT
+2.1
+3.2
+6.6
+
+1628
+Strobel
+10.23
+1.6 × 10 − 15 1.6 superscript 10 15 1.6\times 10^{-15} 1.6 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT
+9.3 × 10 − 16 9.3 superscript 10 16 9.3\times 10^{-16} 9.3 × 10 start_POSTSUPERSCRIPT - 16 end_POSTSUPERSCRIPT
+6.3 × 10 − 16 6.3 superscript 10 16 6.3\times 10^{-16} 6.3 × 10 start_POSTSUPERSCRIPT - 16 end_POSTSUPERSCRIPT
+5.2
+9.0
+13.5
+
+2535
+Hameenlinna
+12.49
+9.8 × 10 − 16 9.8 superscript 10 16 9.8\times 10^{-16} 9.8 × 10 start_POSTSUPERSCRIPT - 16 end_POSTSUPERSCRIPT
+1.4 × 10 − 16 1.4 superscript 10 16 1.4\times 10^{-16} 1.4 × 10 start_POSTSUPERSCRIPT - 16 end_POSTSUPERSCRIPT
+3.7 × 10 − 17 3.7 superscript 10 17 3.7\times 10^{-17} 3.7 × 10 start_POSTSUPERSCRIPT - 17 end_POSTSUPERSCRIPT
+0.4
+2.7
+10.1
+
+Note. — Table 2 is published in its entirety in the machine-readable format.
+A portion is shown here for guidance regarding its form and content.
+
+6 Discussion
+
+The conclusions of our forecast of LSST  constraints on mutual encounters of asteroids can be summarized in a few different domains. In terms of ability to measure an impulse I 𝐼 I italic_I occurring sometime during LSST  years 2–9, the typical information from observations of an MBA with apparent V 𝑉 V italic_V -band magnitude m < 19.5 𝑚 19.5 m<19.5 italic_m < 19.5 measures the impulse to σ I ≈ 7 × 10 − 6 ⁢ m ⁢ s − 1 subscript 𝜎 𝐼 7 superscript 10 6 m superscript s 1 \sigma_{I}\approx 7\times 10^{-6}\,{\rm m}\,{\rm s}^{-1} italic_σ start_POSTSUBSCRIPT italic_I end_POSTSUBSCRIPT ≈ 7 × 10 start_POSTSUPERSCRIPT - 6 end_POSTSUPERSCRIPT roman_m roman_s start_POSTSUPERSCRIPT - 1 end_POSTSUPERSCRIPT if we use only data from LSST  to solve simultaneously for the initial state vector of the tracer, its non-gravitational acceleration A 2 , subscript 𝐴 2 A_{2}, italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT , and the applied impulse I 𝐼 I italic_I . If pre- LSST  observations constrain the initial state strongly, this improves to ≈ 2 × 10 − 6 ⁢ m ⁢ s − 1 absent 2 superscript 10 6 m superscript s 1 \approx 2\times 10^{-6}\,{\rm m}\,{\rm s}^{-1} ≈ 2 × 10 start_POSTSUPERSCRIPT - 6 end_POSTSUPERSCRIPT roman_m roman_s start_POSTSUPERSCRIPT - 1 end_POSTSUPERSCRIPT , and 10% or so lower if the Yarkovsky uncertainty is removed.
+These numbers degrade for fainter tracer MBAs, which have higher observational astrometric uncertainties and larger Yarkovsky accelerations, becoming ≈ 10 × \approx 10\times ≈ 10 × worse at m = 23 𝑚 23 m=23 italic_m = 23  mag.
+
+In terms of the uncertainty σ M subscript 𝜎 𝑀 \sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT on the mass of a deflector that is attained by
+LSST  astrometry of the ∼ 10 similar-to absent 10 \sim 10 ∼ 10 tracer MBAs on which it imparts the largest impulses,
+we find a median value σ M = 4 × 10 − 14 ⁢ M ⊙ subscript 𝜎 𝑀 4 superscript 10 14 subscript 𝑀 direct-product \sigma_{M}=4\times 10^{-14}M_{\odot} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT = 4 × 10 start_POSTSUPERSCRIPT - 14 end_POSTSUPERSCRIPT italic_M start_POSTSUBSCRIPT ⊙ end_POSTSUBSCRIPT using only LSST  data, improving to 1.3 × 10 − 14 ⁢ M ⊙ 1.3 superscript 10 14 subscript 𝑀 direct-product 1.3\times 10^{-14}M_{\odot} 1.3 × 10 start_POSTSUPERSCRIPT - 14 end_POSTSUPERSCRIPT italic_M start_POSTSUBSCRIPT ⊙ end_POSTSUBSCRIPT and 7 × 10 − 15 ⁢ M ⊙ 7 superscript 10 15 subscript 𝑀 direct-product 7\times 10^{-15}M_{\odot} 7 × 10 start_POSTSUPERSCRIPT - 15 end_POSTSUPERSCRIPT italic_M start_POSTSUBSCRIPT ⊙ end_POSTSUBSCRIPT as pre- LSST  data become capable of constraining the initial state vector and then the Yarkovsky A 2 . subscript 𝐴 2 A_{2}. italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT .
+The value of σ M subscript 𝜎 𝑀 \sigma_{M} italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT for a given deflector varies, however, by more than a factor 10, depending upon the “luck” of a given deflector MBA in having encounters at small distances b 𝑏 b italic_b and relative velocities v 𝑣 v italic_v with brighter tracers.
+
+In terms of the number of MBAs with masses measured to S / N > 5 , 𝑆 𝑁 5 S/N>5, italic_S / italic_N > 5 , we forecast 126, 310, and 440 in the three scenarios of pre- LSST  data quality, with > 1 / 2 absent 1 2 >1/2 > 1 / 2 of these attaining S / N > 10 . 𝑆 𝑁 10 S/N>10. italic_S / italic_N > 10 .
+The largest 10–50 bodies (beyond Vesta, Ceres, and Pallas) will have their masses measured to 1% accuracy or better.
+Typically the S / N > 5 𝑆 𝑁 5 S/N>5 italic_S / italic_N > 5 mass determinations will be nearly complete for MBAs down to 5 times the median σ M , subscript 𝜎 𝑀 \sigma_{M}, italic_σ start_POSTSUBSCRIPT italic_M end_POSTSUBSCRIPT , and this “complete” set will comprise about half of the determinations. A random selection of lower-mass objects will obtain favorable encounter circumstances and acquire useful mass determinations.
+We have provided tables of the deflectors with prospects for mass detection, and the nature of the encounters that inform their masses: the tracer involved, geometry of the event, and forecasted accuracies on the impulse applied to each tracer.
+
+Our forecasts incorporate a simplified model of the Yarkovsky effect as an azimuthal acceleration given by a time-independent A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT value for each tracer MBA. In practice it may be necessary to incorporate more complex radiation forces, but we believe the single parameter captures most of the resultant uncertainties in deflector mass. Another effect that could interfere with attaining the Fisher-forecasted uncertainties on deflector masses is that each tracer is subject to deflections by all of the millions of other MBAs, which are individually undetectable in its trajectory, but combine to cause a Brownian motion that would be a source of astrometric noise. In Bernstein ( 2025 ) , we estimate this noise and find it would indeed be negligible for present purposes. This result is perhaps expected, because in the current work we showed that only ≈ 0.5 % absent percent 0.5 \approx 0.5\% ≈ 0.5 % of MBAs are subjected to a detectable impulse during a decade’s observations.
+
+The forecasts show that there is potentially much to gain by incorporation of pre- LSST  astrometry of the tracer MBAs into the inferences on the impulses that occur during LSST . Such data would need to be placed onto the Gaia  reference frame and have reliable uncertainties estimated, if the original reported positions did not already include these. We have not delved into this exercise but it would be essential to getting the most out of LSST . Of the 440 deflectors with the potential for reaching S / N > 5 𝑆 𝑁 5 S/N>5 italic_S / italic_N > 5 mass detections in the best-case pre- LSST  scenario, 311 of them deflect at least one tracer that has measurements in the Gaia  Focused Product Release table of solar system object positions (Gaia Collaboration et al., 2023 ) . Most of the known MBAs have been measured multiple times in well-characterized ground-based surveys in 2010–2025, so the prospects for attaining the forcasts in the “Yarkovsky unknown” scenario are good.
+
+Our forecasts are pessimistic in the sense that they do not account for information that could be acquired from tracer MBAs that LSST  will discover. Since there are, by definition, no pre- LSST  MPC entries for these sources, any pre- LSST  data would have to be “precovered” from re-examination of earlier catalogs and images, and will necessarily be lower quality, if they can be found at all.
+
+The computational burden of determining the 100’s of MBA masses that are detectable in LSST  data should be small. We have seen that only a few thousand out of the many millions of LSST -detectable asteroids will need to have precision orbit fitting executed. Bernstein ( 2025 ) shows that it is only necessary to include the masses of a few hundred MBAs as free parameters in a global ephemeris fit in order to reduce errors from unmodelled masses to insignificant levels. This will be a relatively easy task.
+
+Finally, we note that it should be possible to estimate the mean relation of mass to H 𝐻 H italic_H for classes of MBAs divided into orbital and/or photometric classes, even when individual objects’ masses have insufficient S / N 𝑆 𝑁 S/N italic_S / italic_N for detection. This could be done by summing (“stacking”) the information from all of their collective gravitational encounters with other MBAs. This would allow characterization of the surface/composition properties across color and dynamical space for smaller bodies than those cataloged in this work.
+
+In summary we find that LSST  should boost the number of MBAs with usefully measured masses ( S / N ≳ 5 greater-than-or-equivalent-to 𝑆 𝑁 5 S/N\gtrsim 5 italic_S / italic_N ≳ 5 ) from the 10’s into the 100’s, including nearly complete coverage of bodies with H ≲ 9 . less-than-or-similar-to 𝐻 9 H\lesssim 9. italic_H ≲ 9 . With such studies, time is on the observer’s side: the number of measurable encounters increases with time, the size of the perturbations from a given impulse grows with time, the ability to distinguish an impulse from the Yarkovsky effect improves with time, and the continued observations improve the sensitivity of the data.
+
+This work was supported by NSF grant AST-2205808. We thank Zachary Murray for very helpful discussions. We also acknowledge the valuable work of the Rubin Observatory Survey Cadence Optimization Committee in creating and publishing simulations of the LSST . This research has made use of data and/or services provided by the International Astronomical Union’s Minor Planet Center.
+
+References
+
+Baer et al. (2011)
+
+Baer, J., Chesley, S. R., & Matson, R. D. 2011, AJ, 141, 143,
+doi:  10.1088/0004-6256/141/5/143
+
+Bernstein (2025)
+
+Bernstein, G. M. 2025, arXiv e-prints, arXiv:2503.01793,
+doi:  10.48550/arXiv.2503.01793
+
+Fienga et al. (2020)
+
+Fienga, A., Avdellidou, C., & Hanuš, J. 2020, MNRAS, 492, 589,
+doi:  10.1093/mnras/stz3407
+
+Fortino et al. (2021)
+
+Fortino, W. F., Bernstein, G. M., Bernardinelli, P. H., et al. 2021,
+AJ, 162, 106, doi:  10.3847/1538-3881/ac0722
+
+Gaia Collaboration et al. (2018)
+
+Gaia Collaboration, Spoto, F., Tanga, P., et al. 2018, A&A, 616, A13,
+doi:  10.1051/0004-6361/201832900
+
+Gaia Collaboration et al. (2023)
+
+Gaia Collaboration, David, P., Mignard, F., et al. 2023, A&A, 680,
+A37, doi:  10.1051/0004-6361/202347270
+
+Gomes et al. (2023)
+
+Gomes, D. C. H., Murray, Z., Gomes, R. C. H., Holman, M. J., &
+Bernstein, G. M. 2023, \psj , 4, 66, doi:  10.3847/PSJ/acc7a2
+
+Hertz (1966)
+
+Hertz, H. G. 1966, IAU Circ., 1983, 3
+
+Hilton (2002)
+
+Hilton, J. L. 2002, in Asteroids III, ed. W. F. Bottke, Jr., A. Cellino,
+P. Paolicchi, & R. P. Binzel, 103–112
+
+Li et al. (2023)
+
+Li, F., Yuan, Y., Fu, Y., & Chen, J. 2023, AJ, 166, 93,
+doi:  10.3847/1538-3881/ace52b
+
+LSST Science Collaboration et al. (2009)
+
+LSST Science Collaboration, Abell, P. A., Allison, J., et al. 2009,
+arXiv e-prints, arXiv:0912.0201, doi:  10.48550/arXiv.0912.0201
+
+Murray (2023)
+
+Murray, Z. 2023, \psj , 4, 239, doi:  10.3847/PSJ/ad0be5
+
+Park et al. (2021)
+
+Park, R. S., Folkner, W. M., Williams, J. G., & Boggs, D. H. 2021,
+AJ, 161, 105, doi:  10.3847/1538-3881/abd414
+
+Pitjeva & Pitjev (2018)
+
+Pitjeva, E. V., & Pitjev, N. P. 2018, Astronomy Letters, 44, 554,
+doi:  10.1134/S1063773718090050
+
+Tremaine (2023)
+
+Tremaine, S. 2023, Dynamics of Planetary Systems, Princeton Series in
+Astrophysics (Princeton University Press).
+
+https://books.google.com/books?id=FNGAEAAAQBAJ
+
+Vokrouhlický et al. (2015)
+
+Vokrouhlický, D., Bottke, W. F., Chesley, S. R., Scheeres, D. J.,
+& Statler, T. S. 2015, in Asteroids IV, ed. P. Michel, F. E. DeMeo, &
+W. F. Bottke (University of Arizona Press), 509–531,
+doi:  10.2458/azu_uapress_9780816532131-ch027
+
+Zielenbach (2011)
+
+Zielenbach, W. 2011, AJ, 142, 120, doi:  10.1088/0004-6256/142/4/120
+
+Generated on Tue Apr 1 20:46:43 2025 by L a T e XML

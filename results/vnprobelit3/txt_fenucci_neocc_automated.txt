@@ -1,0 +1,3225 @@
+[2311.10175] An automated procedure for the detection of the Yarkovsky effect and results from the ESA NEO Coordination CentreFull tables 20, 21 and 22 are only available in electronic form at the CDS via anonymous ftp to cdsarc.u-strasbg.fr (130.79.128.5) or via http://cdsweb.u-strasbg.fr/cgi-bin/qcat?J/A+A/.
+
+1 1 institutetext: ESA NEO Coordination Centre, Largo Galileo Galilei, 1, 00044 Frascati, Italy
+1 1 email: marco.fenucci@ext.esa.int
+1 1 institutetext: ESA ESRIN / PDO / NEO Coordination Centre, Largo Galileo Galilei, 1, 00044 Frascati (RM), Italy
+1 1 email: marco.fenucci@ext.esa.int
+2 2 institutetext: Elecnor Deimos, Via Giuseppe Verdi, 6, 28060 San Pietro Mosezzo (NO), Italy
+3 3 institutetext: RHEA Systems, Via di Grotte Portella, 28, 00044 Frascati (RM), Italy
+4 4 institutetext: Alia Space System Srl, Via San Giuseppe Calasanzio 15, 00044 Frascati (RM), Italy
+5 5 institutetext: ESA ESTEC / PDO, Keplerlaan 1, 2201 AZ Noordwijk, The Netherlands
+6 6 institutetext: RHEA Group, Jonckerweg 18, 2201 DZ Noordwijk, The Netherlands
+
+An automated procedure for the detection of the Yarkovsky effect and results from the ESA NEO Coordination Centre † † thanks: Full tables 20 , 21 and 22 are only available in electronic form at the CDS via anonymous ftp to cdsarc.u-strasbg.fr (130.79.128.5) or via http://cdsweb.u-strasbg.fr/cgi-bin/qcat?J/A+A/ .
+
+Marco Fenucci
+1122
+  
+Marco Micheli
+1133
+  
+Francesco Gianotto
+1133
+  
+Laura Faggioli
+1133
+  
+Dario Oliviero
+1122
+  
+Andrea Porru
+1144
+  
+Regina Rudawska
+5566
+  
+Juan Luis Cano
+11
+  
+Luca Conversi
+11
+  
+Richard Moissl
+11
+
+(Received — / Accepted —)
+
+Abstract
+Context. The measurement of the Yarkovsky effect on near-Earth asteroids (NEAs) is
+common practice in orbit determination today, and the number of detections
+will increase with the developments of new and more accurate telescopic
+surveys. However, the process of finding new detections and identifying
+spurious ones is not yet automated, and it often relies on personal judgment.
+
+Aims. We aim to introduce a more automated procedure that can search for NEA
+candidates to measure the Yarkovsky effect, and that can identify spurious
+detections.
+Methods. The expected semi-major axis drift on an NEA caused by the Yarkovsky effect
+was computed with a Monte Carlo method on a statistical model of the physical
+parameters of the asteroid that relies on the most recent NEA population
+models and data. The expected drift was used to select candidates in which
+the Yarkovsky effect might be detected, according to the current knowledge of
+their orbit and the length of their observational arc. Then, a
+nongravitational acceleration along the transverse direction was estimated
+through orbit determination for each candidate. If the detected
+acceleration was statistically significant, we performed a statistical test
+to determine whether it was compatible with the Yarkovsky effect model.
+Finally, we determined the dependence on an isolated tracklet.
+Results. Among the known NEAs, our procedure automatically found 348 detections of
+the Yarkovsky effect that were accepted. The results are overall compatible
+with the predicted trend with the the inverse of the diameter, and the
+procedure appears to be efficient in identifying and rejecting spurious
+detections. This algorithm is now adopted by the ESA NEO Coordination Centre
+to periodically update the catalogue of NEAs with a measurable Yarkovsky
+effect, and the results are automatically posted on the web portal.
+
+Key Words.:
+Astrometry and celestial mechanics - Minor planets, asteroids: general - Methods: statistical
+
+1 Introduction
+
+The Yarkovsky effect is a nongravitational force caused by thermal emission. It affects the dynamics of asteroids whose diameter is smaller than about 40 km (see e.g. Vokrouhlický, 1998 ; Bottke et al., 2006 ; Vokrouhlický et al., 2015 ) , and it mainly manifests as a drift in the semi-major axis of the object. It is known to cause several phenomena in the dynamics of small bodies in the Solar System, such as the spreading of asteroid families (see e.g. Spoto et al., 2015 ) , and the transport of objects from the main belt to the near-Earth region (see e.g. Granvik et al., 2017 ) . From the point of view of planetary defence, measuring nongravitational effects acting on near-Earth asteroids (NEAs) is important for a reliable assessment of the impact risk, especially for the long-time horizon search of potential impacts (Chesley et al., 2014 ; Farnocchia & Chesley, 2014 ; Spoto et al., 2014 ; Vokrouhlický et al., 2015 ) . Additionally, measurements of the Yarkovsky effect can be used to extrapolate the physical properties of the asteroids (see e.g. Chesley et al., 2014 ; Rozitis et al., 2014 ; Fenucci et al., 2021 , 2023 ) , which are key parameters to know for the design of lander and sample-return spacecraft missions (Murdoch et al., 2021 ) , or to predict the efficiency of a kinetic impactor-deflection mission (Cheng et al., 2023 ; Daly et al., 2023 ; Thomas et al., 2023 ) .
+
+Since the first measurement of the Yarkovsky effect on asteroid (6489) Golevka
+(Chesley et al., 2003 ) , many detections on NEAs have been found and
+announced in a series of related works (Nugent et al., 2012 ; Farnocchia et al., 2013 ; Del Vigna et al., 2018 ; Greenberg et al., 2020 ) . Today, the
+information about the detections is regularly provided by the three main
+centers for asteroid orbit computation: the ESA NEO Coordination
+Centre 1 1 1 https://neo.ssa.esa.int/ (NEOCC), the
+NEODyS 2 2 2 https://newton.spacedys.com/ service, and the NASA JPL
+Solar System Dynamics 3 3 3 https://ssd.jpl.nasa.gov/ (SSD) group.
+However, the process of detecting new measurements is not fully automated, and
+the identification of spurious detections still relies on manual checks that
+are often based on personal judgment. There are several reasons that make a
+detection spurious, such as dynamical modeling issues or poor-quality old
+astrometry. Some detections may also appear to be incompatible with the
+Yarkovsky effect, but they are in fact real and are caused by other poorly
+understood phenomena, as in the case of asteroid (523599) 2003 RM
+(Farnocchia et al., 2023 ) . Therefore, in some cases it is questionable whether a Yarkovsky effect has really been detected or not.
+On the other hand, the new and improved observational technologies and the
+high-quality data provided by the ESA Gaia mission (Tanga et al., 2022 ) mean
+that the number of detected Yarkovsky effects is only expected to increase in
+the future. This will become especially true after the beginning of the
+operational phase of new-generation ground-based surveys, such as the ESA
+Flyeye telescope (Conversi et al., 2021 ) and the Vera Rubin Observatory
+(Ivezić et al., 2019 ) , and of the the space-based infrared telescopes NEO
+Surveyor by NASA (Mainzer et al., 2021 ) and NEOMIR by ESA
+(Conversi et al., 2023 ) . These new facilities are expected to increase the
+number of known asteroids by roughly an order of magnitude
+(Jones et al., 2018 ) . This situation calls for the development of new and
+automated methods for the detection of the Yarkovsky effect and for the
+identification of spurious measurements.
+
+In contrast to previous efforts, we propose a systematic procedure here to search for candidates for measurements of the Yarkovsky effect on NEAs, and for the identification of spurious detections. We use a statistical model of the physical parameters of the asteroids that relies on the most recent NEA data sets and population models (Granvik et al., 2018 ; Morbidelli et al., 2020 ; Berthier et al., 2023 ) . We first estimate the expected Yarkovsky effect with a Monte Carlo method. Then, a list of NEA candidates for the detection of the Yarkovsky effect is determined according to the expected semi-major axis drift, the observational arc, and the uncertainty of the current orbit. For each object of the list, a nongravitational force along the transverse direction is estimated through orbit determination, and only detections with a good signal-to-noise ratio that are statistically compatible with the prediction from the physical model are kept. Then, we determine the dependence of the detections on isolated tracklets, and only those that passed the check are accepted.
+Among known NEAs, the algorithm identified 348 detections. The procedure described here is now adopted by the ESA NEO Coordination Centre, and data are automatically uploaded on the web portal.
+
+The paper is organized as follows. In Sec.  2 we describe the model for the Yarkovsky effect and the model of the physical parameters of the NEAs that we used to predict the semi-major axis drift, the method we used to determine the orbit, and the procedure we used to automatically detect the Yarkovsky effect. In Sec.  3 we provide the results we obtained by running the procedure on the known NEA population, we compare them with the results reported by the JPL SSD group, and we discuss the effectiveness and limitations of our algorithm. Finally, we summarize our conclusions in Sec.  4 .
+
+2 Methods
+
+2.1 Orbit determination
+
+The dynamical model we used to determine the orbit of a NEA includes the gravitational perturbations of the Sun, the eight planets, the Moon, the 16 most massive main-belt asteroids, and Pluto. The masses and positions of all these bodies were all retrieved from the JPL ephemeris DE441 (Park et al., 2021 ) . The masses of the 16 main-belt asteroids included in the dynamical model and the mass of Pluto are given in Table  5 . Relativistic effects of the Sun, the planets, and the Moon were also added to the dynamical model as a first-order Newtonian expansion (Will, 1993 ) .
+The Yarkovsky effect is expressed as an acceleration along the transverse direction 𝐭 ^ ^ 𝐭 \hat{\mathbf{t}} of the form
+
+𝐚 t = A 2 ​ ( 1 ​  au r ) 2 ​ 𝐭 ^ , subscript 𝐚 𝑡 subscript 𝐴 2 superscript 1  au 𝑟 2 ^ 𝐭 \mathbf{a}_{t}=A_{2}\bigg{(}\frac{1\textrm{ au}}{r}\bigg{)}^{2}\hat{\mathbf{t}},
+
+(1)
+
+where r 𝑟 r is the distance from the Sun (Farnocchia et al., 2013 ) . The corresponding semi-major axis drift is obtained through the Gauss planetary equations by
+
+d ​ a d ​ t = 2 ​ A 2 ​ ( 1 − e 2 ) n ​ p 2 , d 𝑎 d 𝑡 2 subscript 𝐴 2 1 superscript 𝑒 2 𝑛 superscript 𝑝 2 \frac{\text{d}a}{\text{d}t}=\frac{2A_{2}(1-e^{2})}{np^{2}},
+
+(2)
+
+where n 𝑛 n is the mean motion, and p = a ​ ( 1 − e 2 ) 𝑝 𝑎 1 superscript 𝑒 2 p=a(1-e^{2}) is the semilatus rectum.
+Additionally, it is possible to optionally add solar radiation pressure (SRP) to the dynamical model. The SRP is modeled as a radial force 𝐚 r subscript 𝐚 𝑟 \mathbf{a}_{r} of the form
+
+𝐚 r = A 1 ​ ( 1 ​  au r ) 2 ​ 𝐫 ^ , subscript 𝐚 𝑟 subscript 𝐴 1 superscript 1  au 𝑟 2 ^ 𝐫 \mathbf{a}_{r}=A_{1}\bigg{(}\frac{1\textrm{ au}}{r}\bigg{)}^{2}\hat{\mathbf{r}},
+
+(3)
+
+where 𝐫 ^ = 𝐫 / r ^ 𝐫 𝐫 𝑟 \hat{\mathbf{r}}=\mathbf{r}/r is the radial unit vector, and 𝐫 𝐫 \mathbf{r} is the heliocentric position of the asteroid. The coefficient A 1 subscript 𝐴 1 A_{1} is computed as in Montenbruck & Gill ( 2000 ) ,
+
+A 1 = ( 1 − Θ ) × ϕ c × A m , subscript 𝐴 1 1 Θ italic-ϕ 𝑐 𝐴 𝑚 A_{1}=(1-\Theta)\times\frac{\phi}{c}\times\frac{A}{m},
+
+(4)
+
+where ϕ = 1.361 italic-ϕ 1.361 \phi=1.361 kW m -2 is the solar radiation energy flux at 1 au, c 𝑐 c is the speed of light, A / m 𝐴 𝑚 A/m is the area-to-mass parameter, and Θ Θ \Theta is the occultation function, which determines whether the object is occulted by a major planet.
+
+The parameter A 2 subscript 𝐴 2 A_{2} (and possibly the A / m 𝐴 𝑚 A/m parameter, when SRP is included in the model) is determined together with the orbital elements by fitting the model to the observations through a least-squares procedure (Milani & Gronchi, 2009 ) . Observational outliers were identified and discarded with an automatic rejection algorithm developed by Carpino et al. ( 2003 ) . In all the computations, we used the weighting scheme based on observatory statistics developed by Vereš et al. ( 2017 ) , and the debiasing scheme based on star catalogs developed by Farnocchia et al. ( 2015 ) . The orbital elements estimated from the fit refer to the weighted mean of the observation times, as indicated in Milani & Gronchi ( 2009 ) . To perform the orbital fit, we used the ESA Aegis orbit determination and impact monitoring software (Faggioli et al., 2023 ) , developed and maintained by SpaceDyS s.r.l. 4 4 4 https://www.spacedys.com/ under ESA contracts.
+
+Table 1: Gravitational parameters G ​ M 𝐺 𝑀 GM of the 16 most massive main-belt asteroids included in the dynamical model, and that of Pluto.
+
+Asteroid
+G ​ M / G ​ M ⊙ 𝐺 𝑀 𝐺 subscript 𝑀 direct-product GM/GM_{\odot}
+
+(1) Ceres
+4.7191422767 × 10 − 10 absent superscript 10 10 \times 10^{-10}
+
+(2) Pallas
+1.0297360324 × 10 − 10 absent superscript 10 10 \times 10^{-10}
+
+(3) Juno
+1.4471670475 × 10 − 11 absent superscript 10 11 \times 10^{-11}
+
+(4) Vesta
+1.3026836726 × 10 − 10 absent superscript 10 10 \times 10^{-10}
+
+(7) Hebe
+8.5890389994 × 10 − 12 absent superscript 10 12 \times 10^{-12}
+
+(10) Hygea
+4.2385986149 × 10 − 11 absent superscript 10 11 \times 10^{-11}
+
+(15) Eunomia
+1.5243642468 × 10 − 11 absent superscript 10 11 \times 10^{-11}
+
+(16) Psyche
+1.1978215785 × 10 − 11 absent superscript 10 11 \times 10^{-11}
+
+(31) Euphrosyne
+8.1331596146 × 10 − 12 absent superscript 10 12 \times 10^{-12}
+
+(52) Europa
+2.0216913527 × 10 − 11 absent superscript 10 11 \times 10^{-11}
+
+(65) Cybele
+7.0687100328 × 10 − 12 absent superscript 10 12 \times 10^{-12}
+
+(87) Sylvia
+1.6337820878 × 10 − 11 absent superscript 10 11 \times 10^{-11}
+
+(88) Thisbe
+8.9653065564 × 10 − 12 absent superscript 10 12 \times 10^{-12}
+
+(107) Camilla
+1.0878696848 × 10 − 11 absent superscript 10 11 \times 10^{-11}
+
+(511) Davida
+2.9345275748 × 10 − 11 absent superscript 10 11 \times 10^{-11}
+
+(704) Interamnia
+2.1327387534 × 10 − 11 absent superscript 10 11 \times 10^{-11}
+
+(134340) Pluto
+7.3504789732 × 10 − 9 absent superscript 10 9 \times 10^{-9}
+
+5 5 5 The gravitational parameters of the 16 main-belt asteroids are extracted from the header of the JPL ephemerides DE441 ( https://ssd.jpl.nasa.gov/ftp/eph/planets/ascii/de441/ ). The gravitational parameter of Pluto is taken from Brozović et al. ( 2015 ) . The values are reported in the units of the gravitational parameter of the Sun, corresponding to G ​ M ⊙ = 1.32712440040944 × 10 11 𝐺 subscript 𝑀 direct-product 1.32712440040944 superscript 10 11 GM_{\odot}=1.32712440040944\times 10^{11} km 3 s -2 .
+
+2.2 Expected Yarkovsky drift
+
+2.2.1 Semi-analytical formula for the semi-major axis drift
+
+The instantaneous semi-major axis drift produced by the Yarkovsky effect can be expressed by analytical formulas (Vokrouhlický et al., 2017 ) , assuming a spherical body and a linearization of the boundary conditions.
+It is given by
+
+d ​ a d ​ t = 2 n 2 ​ a ​ 𝐟 Y ⋅ 𝐯 , d 𝑎 d 𝑡 ⋅ 2 superscript 𝑛 2 𝑎 subscript 𝐟 Y 𝐯 \frac{\text{d}a}{\text{d}t}=\frac{2}{n^{2}a}\mathbf{f}_{\text{Y}}\cdot\mathbf{v},
+
+(5)
+
+where a 𝑎 a is the semi-major axis of the asteroid orbit, 𝐯 𝐯 \mathbf{v} is the heliocentric orbital velocity, and 𝐟 Y subscript 𝐟 Y \mathbf{f}_{\text{Y}} is the instantaneous value of the Yarkovsky acceleration.
+The term 𝐟 Y subscript 𝐟 Y \mathbf{f}_{\text{Y}} is the result of the sum of the diurnal component 𝐟 Y,d subscript 𝐟 Y,d \mathbf{f}_{\text{Y,d}} and the seasonal component 𝐟 Y,s subscript 𝐟 Y,s \mathbf{f}_{\text{Y,s}} .
+The diurnal component is expressed as
+
+𝐟 Y, d = κ ​ [ ( 𝐫 ^ ⋅ 𝐬 ^ ) ​ 𝐬 ^ + γ 1 ​ ( 𝐫 ^ × 𝐬 ^ ) + γ 2 ​ 𝐬 ^ × ( 𝐫 ^ × 𝐬 ^ ) ] . subscript 𝐟 Y, d 𝜅 delimited-[] ⋅ ^ 𝐫 ^ 𝐬 ^ 𝐬 subscript 𝛾 1 ^ 𝐫 ^ 𝐬 subscript 𝛾 2 ^ 𝐬 ^ 𝐫 ^ 𝐬 \mathbf{f}_{\text{Y, d}}=\kappa[(\hat{\mathbf{r}}\cdot\hat{\mathbf{s}})\hat{\mathbf{s}}+\gamma_{1}(\hat{\mathbf{r}}\times\hat{\mathbf{s}})+\gamma_{2}\hat{\mathbf{s}}\times(\hat{\mathbf{r}}\times\hat{\mathbf{s}})].
+
+(6)
+
+In Eq. ( 6 ), 𝐫 ^ = 𝐫 / r ^ 𝐫 𝐫 𝑟 \hat{\mathbf{r}}=\mathbf{r}/r is the heliocentric unit position vector, and 𝐬 ^ ^ 𝐬 \hat{\mathbf{s}} is the unit vector of the asteroid spin axis. In addition,
+
+κ = 4 ​ α 9 ​ S ​ F m ​ c , 𝜅 4 𝛼 9 𝑆 𝐹 𝑚 𝑐 \kappa=\frac{4\alpha}{9}\frac{SF}{mc},
+
+(7)
+
+where S = π ​ R 2 𝑆 𝜋 superscript 𝑅 2 S=\pi R^{2} is the cross section of the asteroid, R 𝑅 R is the radius, F 𝐹 F is the solar radiation flux at a heliocentric distance r 𝑟 r , α 𝛼 \alpha is the absorption coefficient, m 𝑚 m is the asteroid mass, and c 𝑐 c is the speed of light. The coefficients γ 1 , γ 2 subscript 𝛾 1 subscript 𝛾 2 \gamma_{1},\gamma_{2} are expressed as
+
+γ 1 = − k 1 ​ ( R d ′ ) ​ Θ d 1 + 2 ​ k 2 ​ ( R ′ ) ​ Θ d + k 3 ​ ( R d ′ ) ​ Θ d 2 , γ 2 = − 1 + k 2 ​ ( R d ′ ) ​ Θ d 1 + 2 ​ k 2 ​ ( R ′ ) ​ Θ d + k 3 ​ ( R d ′ ) ​ Θ d 2 . formulae-sequence subscript 𝛾 1 subscript 𝑘 1 subscript superscript 𝑅 ′ d subscript Θ d 1 2 subscript 𝑘 2 superscript 𝑅 ′ subscript Θ d subscript 𝑘 3 subscript superscript 𝑅 ′ d superscript subscript Θ d 2 subscript 𝛾 2 1 subscript 𝑘 2 subscript superscript 𝑅 ′ d subscript Θ d 1 2 subscript 𝑘 2 superscript 𝑅 ′ subscript Θ d subscript 𝑘 3 subscript superscript 𝑅 ′ d superscript subscript Θ d 2 \begin{split}\gamma_{1}&=-\frac{k_{1}(R^{\prime}_{\textrm{d}})\Theta_{\textrm{d}}}{1+2k_{2}(R^{\prime})\Theta_{\textrm{d}}+k_{3}(R^{\prime}_{\textrm{d}})\Theta_{\textrm{d}}^{2}},\\
+\gamma_{2}&=-\frac{1+k_{2}(R^{\prime}_{\textrm{d}})\Theta_{\textrm{d}}}{1+2k_{2}(R^{\prime})\Theta_{\textrm{d}}+k_{3}(R^{\prime}_{\textrm{d}})\Theta_{\textrm{d}}^{2}}.\end{split}
+
+(8)
+
+In Eq. ( 8 ), R ′ = R / l d superscript 𝑅 ′ 𝑅 subscript 𝑙 d R^{\prime}=R/l_{\textrm{d}} is the scaled radius, where l d = K / ( ρ ​ C ​ ω ) subscript 𝑙 d 𝐾 𝜌 𝐶 𝜔 l_{\textrm{d}}=\sqrt{K/(\rho C\omega)} is the penetration depth of the diurnal thermal wave, obtained from the thermal conductivity K 𝐾 K , the heat capacity C 𝐶 C , the density ρ 𝜌 \rho , and the rotation frequency ω 𝜔 \omega . The functions k 1 , k 2 subscript 𝑘 1 subscript 𝑘 2 k_{1},k_{2} , and k 3 subscript 𝑘 3 k_{3} are positive analytic functions of the scaled radius (Vokrouhlický, 1998 , 1999 ) . In addition, Θ d = ρ ​ K ​ C ​ ω / ( ε ​ σ ​ T ⋆ 3 ) subscript Θ d 𝜌 𝐾 𝐶 𝜔 𝜀 𝜎 superscript subscript 𝑇 ⋆ 3 \Theta_{\textrm{d}}=\sqrt{\rho KC\omega}/(\varepsilon\sigma T_{\star}^{3}) , where σ 𝜎 \sigma is the Stefan-Boltzmann constant, and T ⋆ subscript 𝑇 ⋆ T_{\star} is the subsolar temperature, which is given by 4 ​ ε ​ σ ​ T ⋆ 4 = α ​ F 4 𝜀 𝜎 superscript subscript 𝑇 ⋆ 4 𝛼 𝐹 4\varepsilon\sigma T_{\star}^{4}=\alpha F .
+
+The seasonal component is expressed as
+
+𝐟 Y, s = κ ​ [ γ ¯ 1 ​ ( 𝐫 ^ ⋅ 𝐬 ^ ) + γ ¯ 2 ​ ( 𝐧 ^ × 𝐫 ^ ) ⋅ 𝐬 ^ ] ​ 𝐬 ^ , subscript 𝐟 Y, s 𝜅 delimited-[] subscript ¯ 𝛾 1 ⋅ ^ 𝐫 ^ 𝐬 ⋅ subscript ¯ 𝛾 2 ^ 𝐧 ^ 𝐫 ^ 𝐬 ^ 𝐬 \mathbf{f}_{\text{Y, s}}=\kappa[\bar{\gamma}_{1}(\hat{\mathbf{r}}\cdot\hat{\mathbf{s}})+\bar{\gamma}_{2}(\hat{\mathbf{n}}\times\hat{\mathbf{r}})\cdot\hat{\mathbf{s}}]\hat{\mathbf{s}},
+
+(9)
+
+where 𝐧 ^ ^ 𝐧 \hat{\mathbf{n}} is the unit vector normal to the orbital plane. The coefficients γ ¯ 1 , γ ¯ 2 subscript ¯ 𝛾 1 subscript ¯ 𝛾 2 \bar{\gamma}_{1},\bar{\gamma}_{2} have the same expressions as Eq. ( 8 ), but evaluated with
+Θ ¯ s = ρ ​ K ​ C ​ n / ( ε ​ σ ​ T ⋆ 3 ) subscript ¯ Θ s 𝜌 𝐾 𝐶 𝑛 𝜀 𝜎 superscript subscript 𝑇 ⋆ 3 \overline{\Theta}_{\textrm{s}}=\sqrt{\rho KCn}/(\varepsilon\sigma T_{\star}^{3}) , and with a scaled radius R s ′ = R / l s subscript superscript 𝑅 ′ s 𝑅 subscript 𝑙 s R^{\prime}_{\textrm{s}}=R/l_{\textrm{s}} , where l s = K / ( ρ ​ C ​ n ) subscript 𝑙 s 𝐾 𝜌 𝐶 𝑛 l_{\textrm{s}}=\sqrt{K/(\rho Cn)} is the penetration depth of the seasonal thermal wave.
+The average Yarkovsky drift d ​ a / d ​ t d 𝑎 d 𝑡 \text{d}a/\text{d}t is finally obtained by numerically averaging the instantaneous Yarkovsky drift of Eq. ( 5 ) over an orbital period.
+
+2.2.2 Modeling the orbital and physical parameters
+
+The orbital parameters in the analytical formulas of Eq. ( 5 ) are the semi-major axis a 𝑎 a and the eccentricity e 𝑒 e . The uncertainties on these parameters are usually small when the orbit is well determined, and they typically do not affect the results given by Eq. ( 5 ). We therefore fixed them to their nominal value.
+
+The other parameters in Eq. ( 5 ) are the diameter D 𝐷 D , the density ρ 𝜌 \rho , the obliquity γ 𝛾 \gamma , the rotation period P 𝑃 P , the heat capacity C 𝐶 C , the thermal conductivity K 𝐾 K , the emissivity ε 𝜀 \varepsilon , and the absorption coefficient α 𝛼 \alpha .
+The emissivity was fixed to ε = 0.984 𝜀 0.984 \varepsilon=0.984 , which corresponds to the average value measured on meteorites (Ostrowski & Bryson, 2019 ) .
+The heat capacity was fixed to a value of C = 800 𝐶 800 C=800 J kg -1 K -1 , which is appropriate for NEAs (Delbo’ et al., 2015 ) . However, changing this value in the range 500 − 1200 500 1200 500-1200 J kg -1 K -1 , which is thought to be valid for most of materials present on asteroids, produces very small changes in the predicted semi-major axis drift (Fenucci et al., 2021 , 2023 ) .
+Because we are interested in estimating the maximum semi-major axis drift that can be reached by a NEA, we assumed that the obliquity γ 𝛾 \gamma can be either 0 ∘ superscript 0 0^{\circ} or 180 ∘ superscript 180 180^{\circ} . For the same reason, we also fixed α = 1 𝛼 1 \alpha=1 .
+
+To obtain the values of the other physical parameters, we used the SsODNet service 6 6 6 https://ssp.imcce.fr/webservices/ssodnet/ (Berthier et al., 2023 ) through the Python rocks API 7 7 7 https://github.com/maxmahlke/rocks . The diameter D 𝐷 D , the rotation period P 𝑃 P , and the taxonomic class were retrieved through ssoCard , which provides a best estimate by averaging all the available measurements of a given parameter.
+When the values of D 𝐷 D or P 𝑃 P were provided, we assumed that they are Gaussian distributed with a mean value equal to the nominal value and a standard deviation equal to the error.
+On the other hand, the taxonomic complex gives only indirect information about the density. Table  19 reports all the taxonomic complexes found for NEAs in the SsODNet database. The grouping of the different taxonomic types (Tholen, 1984 ; Bus & Binzel, 2002 ; DeMeo et al., 2009 ) and complexes can be found in Berthier et al. ( 2023 ) . The density was assumed to be distributed according to a log-normal distribution, with values of μ 𝜇 \mu and σ 𝜎 \sigma provided by Table  19 . These values were obtained by a statistics on the density values extracted from the SsODNet database (see Appendix  A ).
+
+Whenever the diameter D 𝐷 D , the taxonomic complex, or the rotation period P 𝑃 P were lacking in the SsODNet database, we modeled them according to the properties and available models of the whole NEA population.
+The distribution of the measured rotation periods shows a dependency on the
+diameter (Pravec & Harris, 2000 ) , where objects rotating in less than about
+2.2 h are found only at sizes with diameters smaller than roughly 150 − - 200 m.
+Here we assumed that the rotation period varied with the diameter as
+
+P ​ ( D ) = { 5 ​ .6 ​  h ​ & ​ if  ​ D ≥ 200 ​  m , 5.6 ​  h × ( D 0.2 ​  km ) 2 ​ if  ​ D < 200 ​  m .
+​
+formulae-sequence 𝑃 𝐷 cases 5 otherwise .6  h & if  𝐷 200  m 5.6  h superscript 𝐷 0.2  km 2 if  𝐷 200  m
+
+P(D)=\cases{5}.6\text{ h}&\text{if }D\geq 200\text{ m},\\
+\displaystyle 5.6\text{ h}\times\bigg{(}\frac{D}{0.2\text{ km}}\bigg{)}^{2}\text{if }D<200\text{ m}.{}
+
+(10)
+
+Figure  1 shows the trend of the rotation period of Eq. ( 10 ) we adopted, superimposed on the distribution of rotation period measurements of NEAs extracted from the Asteroid Lightcurve Database (LCDB) (Warner et al., 2009 ) . Above the threshold of 200 meters of diameter, we used a constant rotation period of 5.6 h, corresponding to the median value of the measured rotation periods of asteroids larger than the threshold. At sizes smaller than 200 meters, asteroids may rotate very fast without being disrupted, and therefore, we assumed a trend that scales as D − 2 superscript 𝐷 2 D^{-2} , which is a better fit to the data than the D − 1 superscript 𝐷 1 D^{-1} trend that was previously suggested by Farinella et al. ( 1998 ) . The biases in the rotation period measurements for asteroids with diameters smaller than 200 m are unclear, and it is difficult to extrapolate a general trend for the whole population. However, we found this solution to be the best that can be done based upon the currently available observations.
+
+Figure 1: Distribution of the rotation period measurements of NEAs extracted from LCDB, together with the rotational disruption limit of 2.2 h and the dependence of P ​ ( D ) 𝑃 𝐷 P(D) on the diameter.
+
+For the diameter D 𝐷 D and the density ρ 𝜌 \rho , we used the model by Fenucci et al. ( 2021 , 2023 ) , which combines the orbital distribution model for NEAs by Granvik et al. ( 2018 ) and the albedo distribution model for NEAs by Morbidelli et al. ( 2020 ) . The model first produces a distribution of the visual albedo p V subscript 𝑝 𝑉 p_{V} that is later converted into a joined distribution ( D , ρ ) 𝐷 𝜌 (D,\rho) of the diameter and density. For this purpose, we also assumed that the absolute magnitude H 𝐻 H is Gaussian distributed, with a standard deviation given by the root mean square (RMS) error obtained by converting the visual magnitude measurements into absolute magnitude.
+When D 𝐷 D is given in the SsODNet database, but not the taxonomic complex (or when the taxonomic complex is given in the SsODNet database, but not the diameter D 𝐷 D ), we used the marginal distribution of ρ 𝜌 \rho (the marginal distribution of D 𝐷 D ) obtained by the same model.
+
+The thermal conductivity K 𝐾 K is related to the thermal inertia Γ Γ \Gamma by the relation
+
+Γ = ρ ​ K ​ C . Γ 𝜌 𝐾 𝐶 \Gamma=\sqrt{\rho KC}.
+
+(11)
+
+We assumed Γ Γ \Gamma to be Gaussian distributed with a mean value of 250 J m -2 K -1 s -1/2 (Delbo’ et al., 2007 ) and a standard deviation of 100 J m -2 K -1 s -1/2 , and the value of K 𝐾 K was then computed by inverting Eq. ( 11 ).
+
+Table  8 summarizes the physical parameters for the model of the Yarkovsky effect in Eq. ( 5 ) and the corresponding value or model we used to compute the predicted drift of the semi-major axis.
+
+Table 2: Physical parameters for the Yarkovsky effect model and the corresponding value or model.
+
+Parameter
+Value or model
+
+D 𝐷 D
+From SsODNet or from [1] model
+
+ρ 𝜌 \rho
+From SsODNet taxonomy or from [1] model
+
+P 𝑃 P
+From SsODNet or Eq. ( 10 )
+
+Γ Γ \Gamma
+
+250 ± 100 plus-or-minus 250 100 250\pm 100 J m -2 K -1 s -1/2
+
+C 𝐶 C
+
+800 800 800 J kg -1 K -1
+
+γ 𝛾 \gamma
+0 ∘ or 180 ∘
+
+α 𝛼 \alpha
+1
+
+ε 𝜀 \varepsilon
+0.984
+
+8 8 8 Reference [1] above refers to Fenucci et al. ( 2021 ) .
+
+2.3 Treatment of poor astrometry
+
+The fact that a high signal-to-noise ratio (S/N) detection of A 2 subscript 𝐴 2 A_{2} is found from orbit determination does not imply that it is due
+to a true dynamical effect.
+In fact, previous works (Farnocchia et al., 2013 ; Del Vigna et al., 2018 ) found that old
+and poorly measured astrometry or isolated tracklets that significantly
+increase the observational arc (see also Hu et al., 2023 ) may lead to
+erroneous detections of the Yarkovsky effect.
+To treat old astrometry, we adopted data weights at 10 arcsec for measurements taken before 1890 and at 5
+arcsec for those taken before 1950, so that very old observations were less
+significant in the orbit determination process.
+
+To ensure that a detection with an S/N higher than 3 is reliable and does not depend on short isolated tracklets, we adopted the following strategy.
+We defined an isolated tracklet as a set of observations such that 1) they were all taken from the same observatory, 2) the length of the arc was shorter than 15 days, and 3) they were separated by at least five years from the previous and the following observation sets.
+When an isolated tracklet was found, we removed it from the dataset of observations, and we repeated the process until a dataset without isolated tracklets was obtained.
+Then, we performed the 7-D OD with the dataset that did not contain isolated tracklets. When the S/N in A 2 subscript 𝐴 2 A_{2} was lower than 3, the detection strongly depends on the old isolated observations and may therefore not be reliable or possibly spurious. As a conservative choice, the detection was therefore discarded.
+On the contrary, if a signal with a large S/N in A 2 subscript 𝐴 2 A_{2} is found also with the smaller set of observations and with a possibly shorter observational arc, the signal is most likely true and due to dynamical effects rather than astrometric issues. In this case the detection is considered valid.
+
+Note that detections are more sensitive to isolated tracklets appearing at the beginning of the observational arc, as they extend the arc length, however they could be also affected by intra-arc isolated tracklets. In addition to this, some isolated tracklets may be known to be reliable. For example, some old observations may have been carefully remeasured from an experienced observer who examined the detection and confirmed its authenticity and the correctness of the astrometry (see Vokrouhlický et al., 2008 , for an example) , or they may be produced by modern surveys using more advanced technologies. To handle these cases, we introduce a list of exceptions to the rule described above, where the isolated tracklet is always included in the orbital fit. Regarding modern surveys, we assume that only tracklets from the Pan-STARRS survey (IAU codes F51 and F52) are always included in the orbital fit, as a conservative choice.
+
+2.4 Automated Yarkovsky effect detection
+
+To select candidates for Yarkovsky effect detection, we first discard all the NEAs with uncertainty in semi-major axis σ a subscript 𝜎 𝑎 \sigma_{a} larger than 10 − 5 superscript 10 5 10^{-5} au, since their orbit is not known with a sufficient accuracy to attempt for the detection. Here σ a subscript 𝜎 𝑎 \sigma_{a} refers to the uncertainty of the orbit obtained from 6-dimensional orbit determination (6-D OD), estimated at the weighted mean observational epoch.
+For the asteroids passing the first criterion, we compute the distribution of the predicted maximum Yarkovsky drift 9 9 9 Here we refer to the maximum because the obliquity is fixed at extreme values of 0 ∘ superscript 0 0^{\circ} or 180 ∘ superscript 180 180^{\circ} , that maximize the diurnal Yarkovsky effect. ( d ​ a / d ​ t ) max subscript d 𝑎 d 𝑡 (\text{d}a/\text{d}t)_{\max} that each of them can be subjected to. This is done with a Monte Carlo method by computing the expected Yarkovsky drift with the model of Sec.  2.2.1 , using 500 000 combinations of input parameters chosen from the parameter distributions described in Sec.  2.2.2 . Then, we determine the 95-th percentile of the distribution of | ( d ​ a / d ​ t ) max | subscript d 𝑎 d 𝑡 |(\text{d}a/\text{d}t)_{\max}| , i.e. the value Y M subscript 𝑌 𝑀 Y_{M} such that
+
+P ​ ( | ( d ​ a / d ​ t ) max | < Y M ) = 0.95 , 𝑃 subscript d 𝑎 d 𝑡 subscript 𝑌 𝑀 0.95 P(|(\text{d}a/\text{d}t)_{\max}|<Y_{M})=0.95,
+
+(12)
+
+where P ​ ( ⋅ ) 𝑃 ⋅ P(\,\cdot\,) denotes the probability. Values of semi-major axis drifts larger than Y M subscript 𝑌 𝑀 Y_{M} in absolute values are attained only in very unlikely combinations of the input parameters.
+By denoting with Δ ​ T Δ 𝑇 \Delta T the total length of the observational arc of the asteroid, if the condition
+
+σ a < Δ ​ T × Y M subscript 𝜎 𝑎 Δ 𝑇 subscript 𝑌 𝑀 \sigma_{a}<\Delta T\times Y_{M}
+
+(13)
+
+is fulfilled, the asteroid is considered a good candidate for Yarkovsky effect detection, hence the value of A 2 subscript 𝐴 2 A_{2} is fitted through a 7-dimensional orbit determination (7-D OD). If the signal-to-noise ratio S / N = | A 2 / σ A 2 | S N subscript 𝐴 2 subscript 𝜎 subscript 𝐴 2 \text{S}/\text{N}=|A_{2}/\sigma_{A_{2}}| is smaller than 3, then the detection is considered not statistically significant, and therefore discarded.
+
+To understand whether a detection is spurious or if the value of A 2 subscript 𝐴 2 A_{2} obtained from orbit determination could be actually caused by the Yarkovsky effect, we determine whether A 2 subscript 𝐴 2 A_{2} is statistically compatible with the physical properties of the given object or not. To this purpose, we convert A 2 subscript 𝐴 2 A_{2} and its uncertainty σ A 2 subscript 𝜎 subscript 𝐴 2 \sigma_{A_{2}} to semi-major axis drift values ( d ​ a / d ​ t ) fit subscript d 𝑎 d 𝑡 fit (\text{d}a/\text{d}t)_{\text{fit}} and σ ( d ​ a / d ​ t ) fit subscript 𝜎 subscript d 𝑎 d 𝑡 fit \sigma_{(\text{d}a/\text{d}t)_{\text{fit}}} respectively, by using Eq. ( 2 ).
+Then, we check if the value ( d ​ a / d ​ t ) fit subscript d 𝑎 d 𝑡 fit (\text{d}a/\text{d}t)_{\text{fit}} obtained from orbit determination fulfills the condition
+
+| ( d ​ a / d ​ t ) fit | − k ​ σ ( d ​ a / d ​ t ) fit < Y M , subscript d 𝑎 d 𝑡 fit 𝑘 subscript 𝜎 subscript d 𝑎 d 𝑡 fit subscript 𝑌 𝑀 |(\text{d}a/\text{d}t)_{\text{fit}}|-k\sigma_{(\text{d}a/\text{d}t)_{\text{fit}}}<Y_{M},
+
+(14)
+
+where k = 1.645 𝑘 1.645 k=1.645 gives the 5-th percentile of the measured Yarkovsky drift. If inequality of Eq. ( 14 ) is fulfilled, it means that semi-major axis drift values down to | ( d ​ a / d ​ t ) fit | − k ​ σ ( d ​ a / d ​ t ) fit subscript d 𝑎 d 𝑡 fit 𝑘 subscript 𝜎 subscript d 𝑎 d 𝑡 fit |(\text{d}a/\text{d}t)_{\text{fit}}|-k\sigma_{(\text{d}a/\text{d}t)_{\text{fit}}} are compatible with the predictions obtained with the Yarkovsky model. On the other hand, if inequality of Eq. ( 14 ) is not valid, the value detected from astrometry is not compatible with the Yarkovsky physical model, the detection is considered spurious and therefore discarded. Note that the criterion of Eq. ( 14 ) is adopted because the distribution of the expected maximum Yarkovsky drift is not Gaussian in general.
+Finally, for those detections fulfilling Eq. ( 14 ) we check the dependence on isolated tracklets by using the method described in Sec.  2.3 , and keep only those detections passing the test.
+
+3 Results and discussion
+
+3.1 Accepted detections
+
+We ran the above procedure on the NEOCC list of known NEAs on 7 August 2023, soon after the last monthly orbital update issued by the Minor Planet Center 10 10 10 https://www.minorplanetcenter.net/ (MPC). Optical observations are downloaded from the MPC, while radar observations are taken from the JPL Solar System Dynamics website 11 11 11 https://ssd.jpl.nasa.gov/sb/radar.html . Out of 32 396 NEAs, 5 308 were selected as candidates for a possible Yarkovsky effect detection. After the orbit determination process, we found 461 NEAs with S / N ≥ 3 S N 3 \text{S}/\text{N}\geq 3 , and 373 of them fulfilled also the condition of Eq. ( 14 ). Among them, 69 objects presented isolated tracklets, and 25 were found to be spurious detections. In conclusion, we found 348 positive Yarkovsky effect detections. A short list of detections with high S/N is shown in Table  20 , while the complete list of accepted detections in extended precision can be found at the CDS.
+Figure  2 shows the distribution of the RMS error of the normalized observational residuals of the accepted detections, obtained with 7-D OD (blue histogram). As a comparison, the red histogram shows the distribution of the RMS of normalized residuals of the same NEAs obtained with the 6-D OD. The median value decreases from 0.616 for the 6-D OD, to 0.548 for the 7-D OD. The distribution obtained with 7-D OD is skewed towards smaller values if compared to that obtained with 6-D OD, meaning that including the Yarkovsky effect in the orbital fit of these NEAs generally improves the quality of the fit of the accepted detections.
+
+Figure 2: Distribution of the RMS of the normalized residuals for the NEAs with a positive Yarkovsy effect detection. The blue (red) histogram represents the RMS of the normalized residuals obtained with (without) the Yarkovsky effect included in the dynamical model. The dashed vertical lines correspond to the median of the two distributions, where the numerical value is reported in the legend.
+
+Figure  3 shows the distribution of the S/N of the accepted Yarkovsky effect detections. About 110 objects have S/N between 3 and 4, and the presence of radar observations generally improves the S/N, even though they are not necessarily needed to obtain good detections. The asteroids with S / N > 40 S N 40 \text{S}/\text{N}>40 are (101955) Bennu, 1998 SD 9 , (99942) Apophis, (480883) 2001 YE 4 , (524522) 2002 VE 68 , (2340) Hathor, and 2002 BF 25 , which are not shown in Fig.  3 .
+
+Figure 3: Distribution of the S/N of the accepted Yarkovsky effect detections, obtained with equi-spaced bins of width equal to 1. NEAs with only optical observations are represented in the blue histogram, while the red histogram refers to NEAs observed also with radar.
+
+The Yarkovsky effect determinations can be used to extrapolate the ratio of retrograde-to-prograde rotators (R/P), because negative (positive) semi-major axis drift values are associated with retrograde (prograde) rotators. To this purpose, we randomly generate 10 000 values of A 2 subscript 𝐴 2 A_{2} , for each positive detections. In this process, we assumed A 2 subscript 𝐴 2 A_{2} to be a Gaussian random variable, with mean value equal to the nominal value and standard deviation equal to the 1- σ 𝜎 \sigma uncertainty of the detection. With this method, we obtained R / P = 2.976 R P 2.976 \text{R}/\text{P}=2.976 . Spin pole determinations of NEAs show that R / P = 2 − 0.7 + 1 R P subscript superscript 2 1 0.7 \text{R}/\text{P}=2^{+1}_{-0.7} (La Spina et al., 2004 ) , in good agreement from what NEA distribution models predict. Although the ratio R/P we found is still consistent with spin pole determinations, the discrepancy with the distribution models can possibly be explained by the biases in the orbital distribution of NEAs with a measured Yarkovsky effect (Farnocchia et al., 2013 ) .
+Another possible cause contributing to this discrepancy might be that the Yarkovsky detections are driven by cases with extreme obliquity, which may have a larger R/P ratio than the general NEA population.
+However, it is worth noting that the percentage of retrograde rotators found here is about 75%, which is lower than the 81% found in (Farnocchia et al., 2013 ) , and closer to the 69% value expected in the NEA population. This is an indication that the observation capabilities improved in the last 10 years, and the new generation surveys may help in making the sample of NEAs with measured Yarkovsky effect representative of the whole debiased NEA population. Note that a value of R / P = 2 − 0.7 + 0.8 R P subscript superscript 2 0.8 0.7 \text{R}/\text{P}=2^{+0.8}_{-0.7} consistent with observations was previously found in Tardioli et al. ( 2017 ) , by fitting the NEA obliquity distribution to the Yarkovsky effect determinations.
+
+Figure  4 shows the measured semi-major axis drifts | ( d ​ a / d ​ t ) fit | subscript d 𝑎 d 𝑡 fit |(\text{d}a/\text{d}t)_{\text{fit}}| as a function of the diameter D 𝐷 D . Error bars in the diameter were obtained by computing the 15-th and the 85-th percentile of the diameter distribution, using the model described in Sec.  2.2.2 . Analytical models of the Yarkovsky effect predict that d ​ a / d ​ t d 𝑎 d 𝑡 \text{d}a/\text{d}t scales with the diameter as D − 1 superscript 𝐷 1 D^{-1} . To verify that spurious detections are correctly discarded by our procedure, we fit the data about accepted detections with a function of the form α × D β 𝛼 superscript 𝐷 𝛽 \alpha\times D^{\beta} using the Orthogonal Distance Regression (ODR; Boggs et al., 1987 ) method. The best fit values computed by the ODR algorithm are α = ( 31.65 ± 2.42 ) × 10 − 5 𝛼 plus-or-minus 31.65 2.42 superscript 10 5 \alpha=(31.65\pm 2.42)\times 10^{-5} and β = − 0.97 ± 0.03 𝛽 plus-or-minus 0.97 0.03 \beta=-0.97\pm 0.03 . Note that the exponent β 𝛽 \beta is statistically compatible with the value of − 1 1 -1 predicted by Yarkovsky analytical models within 1- σ 𝜎 \sigma . The power law function computed with the nominal parameters is also shown in Fig.  4 . Detections with S / N ≥ 3 S N 3 \text{S}/\text{N}\geq 3 that are considered spurious are also shown in Fig.  4 with red points, and most of them are far off the best-fit power law computed from the accepted detections. This already shows that our method is able to appropriately find spurious detections.
+
+Figure 4: Distribution of the accepted Yarkovsky effect detections in the plane ( D , | ( d ​ a / d ​ t ) fit | ) 𝐷 subscript d 𝑎 d 𝑡 fit (D,|(\text{d}a/\text{d}t)_{\text{fit}}|) . Green points are NEAs for which an estimate of the diameter is available, while black points are those for which the physical model is used. The error bars in the diameter are represented by using the 15-th and 85-th percentile of the diameter distribution (see Sec.  2.2.2 ), which roughly correspond to the 1- σ 𝜎 \sigma uncertainty in the case the diameter is estimated. The error bars in the semi-major axis drift represent the 1- σ 𝜎 \sigma uncertainty obtained by the conversion of A 2 subscript 𝐴 2 A_{2} , that has been estimated with orbit determination. The dashed blue line represents the fit with a function of the form α × D β 𝛼 superscript 𝐷 𝛽 \alpha\times D^{\beta} . Red points are detections with S / N ≥ 3 S N 3 \text{S}/\text{N}\geq 3 that are considered spurious, hence rejected by our procedure.
+
+The dispersion from the best fit power law of Fig.  4 is explained by the differences in the physical properties of asteroids, that are able to slightly modify the magnitude of the semi-major axis drift. To verify this we retrieved taxonomic data from the SsODNet database about the accepted Yarkovsky effect detections, finding 116 NEAs with such information. A histogram showing the number of NEAs with measured Yarkovsky effect for each taxonomic complex is shown in Fig.  5 . As expected, the vast majority of the detections belong to the S-complex, however almost all the complexes (see Table  19 ) are represented in the Yarkovsky measurement sample. These facts indicate that our procedure is able to discriminate between positive and negative Yarkovsky effect detections from a statistical point of view.
+
+Figure 5: Taxonomy distribution of the accepted Yarkovsky effect detections. Data about the taxonomic complex were retrieved from the SsODNet database Berthier et al. ( 2023 ) .
+
+3.2 Notable rejections
+
+To further show the effectiveness of the algorithm introduced here, we highlight some notable cases among the identified spurious detections. In addition to the Yarkovsky effect, other nongravitational forces such as SRP can influence the dynamics of very small bodies. So far, SRP has been detected through orbit determination only on a short list of NEAs: 2009 BD (Micheli et al., 2012 ) , 2011 MD (Micheli et al., 2014 ) , 2012 LA (Micheli et al., 2013 ) , 2012 TC 4 , and 2015 TC 25 (Del Vigna et al., 2018 ) . All these objects do not appear in our list of accepted Yarkovsky effect detections, because the semi-major axis drift obtained by the 7-D OD is not compatible with what expected from the physical model. This issue is actually fixed when SRP is added to the dynamical model, and the area-to-mass ratio A / m 𝐴 𝑚 A/m of the object is added to the list of parameters to be estimated in the orbital fit.
+
+A similar result has been found for 2021 GM 1 , an NEA that is currently in the NEOCC Risk List 12 12 12 https://neo.ssa.esa.int/risk-list . The Yarkovsky effect detection of this object is rejected by our procedure, but a nongravitational effect is needed to better fit the observations. Adding SRP to the dynamical model, we fitted an area-to-mass ratio of 0.2564 ± 0.00257 plus-or-minus 0.2564 0.00257 0.2564\pm 0.00257 kg 2 t -1 (see Table  14 for the complete orbital solution), providing a new SRP detection that was not available in the literature 13 13 13 We note that this detection was however already present in the JPL SBDB since May 2021. . This shows that the procedure may also be helpful in finding asteroid candidates for detection of other nongravitational effects.
+
+Table 3: Orbital elements of 2021 GM 1 .
+
+Six-parameter solution
+
+Unit
+
+Semi-major axis ( a ) 𝑎 (a)
+
+0.968020575 ± 1.43 × 10 − 8 plus-or-minus 0.968020575 1.43 superscript 10 8 0.968020575\pm 1.43\times 10^{-8}
+au
+
+Eccentricity ( e ) 𝑒 (e)
+
+0.041997691 ± 1.58 × 10 − 8 plus-or-minus 0.041997691 1.58 superscript 10 8 0.041997691\pm 1.58\times 10^{-8}
+/
+
+Inclination ( i ) 𝑖 (i)
+
+1.598736270 ± 4.09 × 10 − 7 plus-or-minus 1.598736270 4.09 superscript 10 7 1.598736270\pm 4.09\times 10^{-7}
+deg
+
+Long. of Asc. Node ( Ω ) Ω (\Omega)
+
+193.321099298 ± 1.95 × 10 − 6 plus-or-minus 193.321099298 1.95 superscript 10 6 193.321099298\pm 1.95\times 10^{-6}
+deg
+
+Argument of Perihelion ( ω ) 𝜔 (\omega)
+
+207.383938594 ± 8.52 × 10 − 6 plus-or-minus 207.383938594 8.52 superscript 10 6 207.383938594\pm 8.52\times 10^{-6}
+deg
+
+Mean anomaly ( M ) 𝑀 (M)
+
+162.303893236 ± 1.00 × 10 − 5 plus-or-minus 162.303893236 1.00 superscript 10 5 162.303893236\pm 1.00\times 10^{-5}
+deg
+
+Normalized residuals RMS
+0.776 0.776 0.776
+/
+
+Seven-parameter solution
+
+Semi-major axis ( a ) 𝑎 (a)
+
+0.968020505 ± 1.38 × 10 − 8 plus-or-minus 0.968020505 1.38 superscript 10 8 0.968020505\pm 1.38\times 10^{-8}
+au
+
+Eccentricity ( e ) 𝑒 (e)
+
+0.041997755 ± 1.49 × 10 − 8 plus-or-minus 0.041997755 1.49 superscript 10 8 0.041997755\pm 1.49\times 10^{-8}
+/
+
+Inclination ( i ) 𝑖 (i)
+
+1.598740133 ± 5.18 × 10 − 7 plus-or-minus 1.598740133 5.18 superscript 10 7 1.598740133\pm 5.18\times 10^{-7}
+deg
+
+Long. of Asc. Node ( Ω ) Ω (\Omega)
+
+193.321107921 ± 2.15 × 10 − 6 plus-or-minus 193.321107921 2.15 superscript 10 6 193.321107921\pm 2.15\times 10^{-6}
+deg
+
+Argument of Perihelion ( ω ) 𝜔 (\omega)
+
+207.383858669 ± 1.14 × 10 − 5 plus-or-minus 207.383858669 1.14 superscript 10 5 207.383858669\pm 1.14\times 10^{-5}
+deg
+
+Mean anomaly ( M ) 𝑀 (M)
+
+162.303967843 ± 1.23 × 10 − 5 plus-or-minus 162.303967843 1.23 superscript 10 5 162.303967843\pm 1.23\times 10^{-5}
+deg
+
+Area-to-mass ( A / m ) 𝐴 𝑚 (A/m)
+
+0.2564 ± 0.0257 plus-or-minus 0.2564 0.0257 0.2564\pm 0.0257
+
+m 2 t -1
+
+Normalized residuals RMS
+0.622 0.622 0.622
+/
+
+14 14 14 Orbital elements refer to date 2021 − - 04 − - 14.660191 (MJD 59318.660191 TDT). Two solutions are shown: one determined with 6-D OD, and another one with 7-OD OD using SRP as additional force.
+
+Other interesting cases are 2006 RH 120 (Seligman et al., 2023 ) and (523599) 2003 RM (Farnocchia et al., 2023 ) . In addition to the radial component A 1 subscript 𝐴 1 A_{1} and the tangential component A 2 subscript 𝐴 2 A_{2} , it is possible to also fit a nongravitational out-of-plane force component A 3 subscript 𝐴 3 A_{3} for these two NEAs, showing a dynamical behavior similar to that of comets. In these two cases, the value of A 2 subscript 𝐴 2 A_{2} obtained by a 7-D OD only is not compatible with the Yarkovsky physical model (see also Table  22 ), while it is likely due to outgassing (Chesley et al., 2016 ; Taylor et al., 2024 ) . Still, these detections are recognized as spurious by our procedure.
+
+Another remarkable detection that was flagged as spurious is (433) Eros. This NEA was selected as a candidate for Yarkovsky effect detection because of its long observational arc of more than 100 years, and A 2 subscript 𝐴 2 A_{2} was fitted with a S/N of about 5. However, the detection was not statistically compatible with the prediction made by the Yarkovsky physical model, and therefore the detection is spurious. This detection needs to be necessarily discarded, because bad quality astrometric measurements performed before the 1950 cause an artificial nongravitational acceleration that is actually not expected. In fact, (433) Eros is known to have an obliquity of almost 90 ∘ superscript 90 90^{\circ} (Yeomans et al., 2000 ) , that minimizes the Yarvkosky effect, but the procedure is able to discard the detection even by assuming an obliquity of 0 ∘ superscript 0 0^{\circ} or 180 ∘ superscript 180 180^{\circ} (see Sec.  2.2.2 ).
+All these considerations provide evidences of the effectiveness of the algorithm introduced here, in both the selection of possible candidates for the Yarkovsky effect determination, and in the identification of spurious detections.
+
+The algorithm found 69 A 2 subscript 𝐴 2 A_{2} detections with S/N larger than 3 and fulfilling Eq. ( 14 ) that were affected by the presence of isolated tracklets in their dataset. Among them, 58 presented isolated tracklets at the beginning of the observational arc, and the complete list of these asteroids is reported in Table  23 . The table reports also the S/N of A 2 subscript 𝐴 2 A_{2} obtained without including the isolated tracklet in the orbital fit, following the procedure described in Sec.  2.3 , and 30 of them still present a signal in A 2 subscript 𝐴 2 A_{2} even with the shorter observational arc. These objects were therefore accepted as positive Yarkovsky effect detections. Regarding the list of exceptions for which we know that astrometry is reliable, up to now it includes: 2012 BB 124 and 2014 RO 17 , for which accurate measurements were performed by MM; 2015 LA 2 , 2018 KR, and 2016 UW 80 , that present isolated tracklets from F51; (152563) 1992 BF for which it is known that the tracklet has been accurately remeasured (Del Vigna et al., 2018 ) . While this list may increase in the future, it is not expected to grow to a point that can not be maintained manually.
+Other 11 objects presented intra-arc isolated tracklets, but the A 2 subscript 𝐴 2 A_{2} detection was affected only for 2005 TG 50 and 2011 XC, that were therefore considered as spurious. In addition, the S/N drops down also for 2009 OS 5 when observations from 2014 from Mauna Kea Observatory (IAU code 568) are excluded in the fit, however we considered them as reliable 15 15 15 These observations have program code equal to 2, corresponding to D. Tholen. and we therefore accepted this detection.
+Finally, among the detections that were not accepted, we note that the algorithm flagged (469219) Kamo’oalewa as spurious, in agreement with Hu et al. ( 2023 ) .
+
+3.3 Publication on the NEOCC portal
+
+The availability of a large number of reliable Yarkovsky effect detections opens possible future developments in other fields of asteroid research, such as physical properties determination (Rozitis & Green, 2014 ; Fenucci et al., 2021 , 2023 ) , long term dynamical studies (Fenucci & Novaković, 2021 ) , or population studies on NEAs (Tardioli et al., 2017 ) . To this end, it is important to continuously provide up-to-date data to the scientific community. The procedure described here has been now adopted by the ESA NEOCC to periodically update the Yarkovsky effect detections on NEAs, that are automatically posted on the NEOCC web portal 16 16 16 https://neo.ssa.esa.int/ and available through the HTTPS APIs 17 17 17 https://neo.ssa.esa.int/computer-access . The catalogues of observations and of known NEAs are continuously growing, and the algorithm is scheduled to run after every monthly orbital update issued by the MPC, so that old determinations are updated and possible new detections are added to the database.
+
+3.4 Comparison with the JPL SBDB
+
+We downloaded the list of determinations of A 2 subscript 𝐴 2 A_{2} from the JPL Small Body Database 18 18 18 https://ssd.jpl.nasa.gov/ (SBDB) maintained by the JPL SSD group on 8 August 2023. A total of 333 measurements, 308 of which with S / N ≥ 3 S N 3 \text{S}/\text{N}\geq 3 , were found.
+Differences in the number of detections with a good S/N are possibly due to different debiasing and weighting schemes of observations, different observational datasets and rejections, and timing errors handling. These differences become particularly significant when the S/N is close to the threshold of 3.
+Among the JPL detections, 13 objects have also a determination of the component A 1 subscript 𝐴 1 A_{1} , and 6 objects have a determination of both A 1 subscript 𝐴 1 A_{1} and A 3 subscript 𝐴 3 A_{3} . We did not make the comparison for these objects, because the results are obtained with different dynamical models.
+Of the remaining objects, 270 were found in our list of accepted Yarkovsky effect measurements. Figure  6 shows the scatter plot of the common A 2 subscript 𝐴 2 A_{2} determinations, together with their 1- σ 𝜎 \sigma uncertainty. We fitted the data with a linear function of the form α ​ | A 2 | + β 𝛼 subscript 𝐴 2 𝛽 \alpha|A_{2}|+\beta with the ODR algorithm, that gave an estimation of the parameters of α = 1.00 ± 0.0001 𝛼 plus-or-minus 1.00 0.0001 \alpha=1.00\pm 0.0001 and β = ( − 1.90 ± 0.97 ) × 10 − 16 𝛽 plus-or-minus 1.90 0.97 superscript 10 16 \beta=(-1.90\pm 0.97)\times 10^{-16} , meaning that our determinations and those of the JPL SBDB are statistically compatible, and no clear outlier can be recognized. This is certainly due to the fact that the orbit determination algorithms and the datasets used by the JPL SSD group are similar to those used here for these cases.
+
+Figure 6: Distribution of the common A 2 subscript 𝐴 2 A_{2} measurements found in this work and at the JPL SBDB. The blue dashed line is the diagonal.
+
+To make a quantitative comparison of the results for each asteroid, we computed the relative errors
+
+ε 1 = | A 2 − A 2 JPL | σ A 2 , ε 2 = | A 2 − A 2 JPL | σ A 2 JPL , formulae-sequence subscript 𝜀 1 subscript 𝐴 2 superscript subscript 𝐴 2 JPL subscript 𝜎 subscript 𝐴 2 subscript 𝜀 2 subscript 𝐴 2 superscript subscript 𝐴 2 JPL subscript 𝜎 subscript superscript 𝐴 JPL 2 \varepsilon_{1}=\frac{|A_{2}-A_{2}^{\text{JPL}}|}{\sigma_{A_{2}}},\quad\varepsilon_{2}=\frac{|A_{2}-A_{2}^{\text{JPL}}|}{\sigma_{A^{\text{JPL}}_{2}}},
+
+(15)
+
+where the superscript JPL denotes the value provided by the JPL SBDB. For the vast majority of the asteroids in common, the relative errors ε 1 , ε 2 subscript 𝜀 1 subscript 𝜀 2 \varepsilon_{1},\varepsilon_{2} were both smaller than 3, indicating that the results provided by us and by the JPL SBDB are all statistically comparable, even case by case. The only cases in which the relative errors are larger than 3 are (65717) 1993 BX 3 , 2003 AF 23 , (1685) Toro. However, also in these cases the values of ε 1 subscript 𝜀 1 \varepsilon_{1} and ε 2 subscript 𝜀 2 \varepsilon_{2} are only slightly larger than 3. We also performed a test by checking that
+
+χ = | A 2 − A 2 JPL | ( σ A 2 ) 2 + ( σ A 2 JPL ) 2 < 2 , 𝜒 subscript 𝐴 2 superscript subscript 𝐴 2 JPL superscript subscript 𝜎 subscript 𝐴 2 2 superscript subscript 𝜎 subscript superscript 𝐴 JPL 2 2 2 \chi=\frac{|A_{2}-A_{2}^{\text{JPL}}|}{\sqrt{(\sigma_{A_{2}})^{2}+(\sigma_{A^{\text{JPL}}_{2}})^{2}}}<2,
+
+(16)
+
+meaning that the hypothesis that the two distributions are not the same is rejected at 95% confidence level. For all the common asteroids with a Yarkovsky effect measurement we found χ < 2 𝜒 2 \chi<2 , with the only exceptions of 2003 AF 23 and (65717) 1993 BX 3 , that have χ = 2.23 𝜒 2.23 \chi=2.23 and χ = 2.18 𝜒 2.18 \chi=2.18 , respectively. However, the two measurements are still considered the same if the test is verified with a more relaxed confidence level of 90%. In addition, we found that the vast majority of the measurements have χ < 1 𝜒 1 \chi<1 , implying an excellent agreement between our results are those reported in the JPL SBDB.
+Table  21 reports the numerical values of the relative errors ε 1 subscript 𝜀 1 \varepsilon_{1} and ε 2 subscript 𝜀 2 \varepsilon_{2} , and of χ 𝜒 \chi for all the NEAs with χ > 1 𝜒 1 \chi>1 . The full table in extended precision, used to generate Fig.  6 , is available through the CDS.
+
+Asteroids with a determination of A 2 subscript 𝐴 2 A_{2} that are reported in the JPL SBDB, but are either discarded or not found by our procedure, are 54. Among them, 44 have S / N ≥ 3 S N 3 \textrm{S}/\textrm{N}\geq 3 and their list is shown in Table  22 , while the complete list in extended precision is available through the CDS.
+Notable cases are those of (65803) Didymos, (3200) Phaethon, and (25143) Itokawa.
+
+For asteroid (65803) Didymos the JPL SBDB reports an orbital solution with S/N = 16 absent 16 =16 in the A 2 subscript 𝐴 2 A_{2} parameter, while the value we obtained here is only of 2.57. The reasons for this discrepancy are probably due to the availability of some occultation observations took during the September 2022 campaign (Dunham et al., 2023 ) , the availability of data from the Double Asteroid Redirection Test (DART, Cheng et al., 2018 ) mission, and the inclusion of Gaia astrometry in the orbit computation. These high accuracy observations are not reported by the MPC, and therefore they were not considered in our data set.
+
+For (3200) Phaethon the JPL SBDB reports an orbital fit with a S/N in A 2 subscript 𝐴 2 A_{2} of 8.3. The Yarkovsky effect measurement for this object has been reported by Hanuš et al. ( 2018 ) , where the authors included also very precise Gaia astrometric observations taken between 2014 and 2016 in the dataset. After the publication of that work, occultation observations taken on 25 October 2019 permitted to further improve the orbit of (3200) Phaethon (Dunham et al., 2021 ) . However, both the Gaia astrometry and the occultations are currently not reported by the MPC, and we believe this being the reason we are not able to fit the A 2 subscript 𝐴 2 A_{2} parameter with such high accuracy.
+
+The last case is that of (25143) Itokawa, for which the JPL SBDB gives an orbital solution with S/N of 3.2 in the A 2 subscript 𝐴 2 A_{2} parameter. In this case, it is not easy to identify what may cause this discrepancy in the results, and the only noticeable difference that we could find is in the number of observations used in the orbital fit.
+For other objects, we also obtain a S/N larger than 3 as for the JPL SBDB, but they are discarded because the drift is too large to be explained by the Yarkovsky effect, and therefore Eq. ( 14 ) does not hold.
+
+3.5 Limitations of the procedure
+
+A possible limitation of the procedure may be due to the fact that the Yarkovsky effect modeling takes into account the orbital elements of the NEA at a certain epoch to compute the expected drift d ​ a / d ​ t d 𝑎 d 𝑡 \text{d}a/\text{d}t . However, this may have consequences if an object has a close encounter with a planet that is able to change its orbital elements. While this is certainly true, the changes induced in the 95-th percentile Y M subscript 𝑌 𝑀 Y_{M} are negligible because the distribution of the expected semi-major axis drift is mostly controlled by the uncertainties in the physical properties. To show this, we took into account the case of (99942) Apophis, for which we have an estimate of the diameter, a measurement of the rotation period, and we know that the spectral type is S. Therefore, the physical model of (99942) Apophis has certainly more constraints than the generic NEA. To show that changes in the orbital elements have a little influence on the results, we computed Y M subscript 𝑌 𝑀 Y_{M} with the orbital elements computed at the mean epoch, and with those obtained by propagating the nominal orbit to an epoch right after the close approach of 13 April 2029, that changes the semi-major axis by about 0.18 au. The value of Y M subscript 𝑌 𝑀 Y_{M} went from 22.45 × 10 − 4 22.45 superscript 10 4 22.45\times 10^{-4} au My -1 obtained before the close approach, to 22.90 × 10 − 4 22.90 superscript 10 4 22.90\times 10^{-4} au My -1 computed after the close approach. For the generic NEA we expect the change to be even smaller, because the distribution of the expected maximum semi-major axis drift is dominated by the uncertainties in the physical properties, rather than by the uncertainties in the orbital elements.
+
+From the orbit determination point of view, an effect that is not taken into account in the model described in Sec.  2.1 is that of timing errors in the astrometric observations. It has been shown that the astrometric errors are affected by time calibration errors made by observers. These calibration errors can be either random or systematic, and they are especially important when an object has a fast apparent motion (Farnocchia et al., 2022 ) . In turn, this may result in an erroneous estimation of the A 2 subscript 𝐴 2 A_{2} parameter, thus affecting the Yarkovsky effect detection. In this respect, the Aegis software used at the NEOCC is already able to treat timing errors by correcting the weights of the observations using the correlation with the right ascension and declination, with the method introduced in Farnocchia et al. ( 2022 ) . However, the information about the timing errors is communicated only in the new Astrometry Data Exchange Standard (ADES, Chesley et al., 2017 ) , which is not currently used to automatically compute asteroid orbits at the NEOCC (Faggioli et al., 2023 ) . The switch of the Aegis system to automatically work with observations in ADES format is planned for the future, and the procedure described here will be able to automatically take into account also timing errors in the orbit determination.
+
+Finally, the detection of a nongravitational force A 2 subscript 𝐴 2 A_{2} along the transverse direction does not necessarily mean that the Yarkovsky effect is responsible for it. In fact, other dynamical effects, such as outgassing or mass-shedding, may produce a transversal acceleration (Farnocchia et al., 2023 ) . The usage of a statistical model for the physical properties of NEAs seems to help identifying these outliers, as confirmed by the cases of (523599) 2003 RM and 2006 RH 120 that were flagged as spurious. Still, there may be cases in which the acceleration produced by such phenomena is small enough to result compatible with the acceleration produced by the Yarkovsky effect. In these cases, the detection of such acceleration is real, and it is not possible to make a clear distinction between the Yarkovsky effect and activity events, unless there are proofs of such phenomena obtained from detailed studies of the single object.
+
+4 Conclusions
+
+In this paper we introduced a procedure for the automated Yarkovsky effect detection on NEAs and for the identification of spurious detections. The procedure makes use of a statistical model to estimate the physical properties of an NEA, based on the most recent data and models about the NEA population. Physical properties are then used to estimate the expected maximum Yarkovsky semi-major axis drift. Candidates for detection are selected according to the current precision in the knowledge of the orbit, the observational arc, and the expected semi-major axis drift. Then, a 7-dimensional orbit determination of the candidates, that includes the estimation of a transversal nongravitational component, is performed.
+If the S/N of the A 2 subscript 𝐴 2 A_{2} detection is larger than 3, a statistical test to check the compatibility with the Yarkovsky effect physical model is carried out. Finally, the dependence of the detection on isolated tracklets is analyzed.
+
+Among the known NEAs, we identified 348 positive Yarkovsky effect detections. This procedure is now adopted by the ESA NEO Coordination Centre, and data are automatically uploaded on the web portal and updated at every monthly orbital update issued by the MPC. A comparison with the results obtained by the JPL SSD is also shown, and the measurements are generally in a very good agreement, being based on similar orbit determination methods and datasets.
+
+Acknowledgements.
+We thank Davide Farnocchia for the constructive comments on an early version of the manuscript, that permitted us to improve the quality of the work.
+
+References
+
+Berthier et al. (2023)
+
+Berthier, J., Carry, B., Mahlke, M., & Normand, J. 2023, A&A, 671,
+A151
+
+Boggs et al. (1987)
+
+Boggs, P. T., Byrd, R. H., & Schnabel, R. B. 1987, SIAM Journal on Scientific
+and Statistical Computing, 8, 1052
+
+Bottke et al. (2006)
+
+Bottke, W. F., J., Vokrouhlický, D., Rubincam, D. P., &
+Nesvorný, D. 2006, Annual Review of Earth and Planetary Sciences, 34,
+157
+
+Brozović et al. (2015)
+
+Brozović, M., Showalter, M. R., Jacobson, R. A., & Buie, M. W.
+2015, Icarus, 246, 317
+
+Bus & Binzel (2002)
+
+Bus, S. J. & Binzel, R. P. 2002, Icarus, 158, 146
+
+Carpino et al. (2003)
+
+Carpino, M., Milani, A., & Chesley, S. R. 2003, Icarus, 166, 248
+
+Carry (2012)
+
+Carry, B. 2012, Planet. Space Sci., 73, 98
+
+Cheng et al. (2023)
+
+Cheng, A. F., Agrusa, H. F., Barbee, B. W., et al. 2023, Nature, 616, 457
+
+Cheng et al. (2018)
+
+Cheng, A. F., Rivkin, A. S., Michel, P., et al. 2018, Planet. Space Sci., 157, 104
+
+Chesley et al. (2014)
+
+Chesley, S. R., Farnocchia, D., Nolan, M. C., et al. 2014, Icarus,
+235, 5
+
+Chesley et al. (2016)
+
+Chesley, S. R., Farnocchia, D., Pravec, P., & Vokrouhlický, D.
+2016, in Asteroids: New Observations, New Models, ed. S. R. Chesley,
+A. Morbidelli, R. Jedicke, & D. Farnocchia, Vol. 318, 250–258
+
+Chesley et al. (2017)
+
+Chesley, S. R., Hockney, G. M., & Holman, M. J. 2017, in AAS/Division
+for Planetary Sciences Meeting Abstracts, Vol. 49, AAS/Division for Planetary
+Sciences Meeting Abstracts #49, 112.14
+
+Chesley et al. (2003)
+
+Chesley, S. R., Ostro, S. J., Vokrouhlický, D., et al. 2003,
+Science, 302, 1739
+
+Conversi et al. (2021)
+
+Conversi, L., Koschny, D., Micheli, M., et al. 2021, in 7th IAA
+Planetary Defense Conference, 22
+
+Conversi et al. (2023)
+
+Conversi, L., Licandro, J., Delbo, M., et al. 2023, in 2nd NEO and
+Debris Detection Conference, 86
+
+Daly et al. (2023)
+
+Daly, R. T., Ernst, C. M., Barnouin, O. S., et al. 2023, Nature, 616, 443
+
+Del Vigna et al. (2018)
+
+Del Vigna, A., Faggioli, L., Milani, A., et al. 2018, A&A, 617, A61
+
+Delbo’ et al. (2007)
+
+Delbo’, M., dell’Oro, A., Harris, A. W., Mottola, S., & Mueller, M.
+2007, Icarus, 190, 236
+
+Delbo’ et al. (2015)
+
+Delbo’, M., Mueller, M., Emery, J. P., Rozitis, B., & Capria, M. T.
+2015, Asteroid Thermophysical Modeling (University of Arizona Press),
+107–128
+
+DeMeo et al. (2009)
+
+DeMeo, F. E., Binzel, R. P., Slivan, S. M., & Bus, S. J. 2009,
+Icarus, 202, 160
+
+Dunham et al. (2021)
+
+Dunham, D., Dunham, J., Buie, M., et al. 2021, in 7th IAA Planetary
+Defense Conference, 37
+
+Dunham et al. (2023)
+
+Dunham, D. D., Dunham, J. B., Venable, R., et al. 2023, in 8th IAA
+Planetary Defense Conference
+
+Faggioli et al. (2023)
+
+Faggioli, L., Fenucci, M., Gianotto, F., et al. 2023, in 2nd ESA NEO
+and Debris Detection Conference
+
+Farinella et al. (1998)
+
+Farinella, P., Vokrouhlický, D., & Hartmann, W. K. 1998, Icarus,
+132, 378
+
+Farnocchia & Chesley (2014)
+
+Farnocchia, D. & Chesley, S. R. 2014, Icarus, 229, 321
+
+Farnocchia et al. (2015)
+
+Farnocchia, D., Chesley, S. R., Chamberlin, A. B., & Tholen, D. J.
+2015, Icarus, 245, 94
+
+Farnocchia et al. (2013)
+
+Farnocchia, D., Chesley, S. R., Vokrouhlický, D., et al. 2013,
+Icarus, 224, 1
+
+Farnocchia et al. (2022)
+
+Farnocchia, D., Reddy, V., Bauer, J. M., et al. 2022, Planetary Science
+Journal, 3, 156
+
+Farnocchia et al. (2023)
+
+Farnocchia, D., Seligman, D. Z., Granvik, M., et al. 2023, Planetary
+Science Journal, 4, 29
+
+Fenucci & Novaković (2021)
+
+Fenucci, M. & Novaković, B. 2021, The Astronomical Journal, 162, 227
+
+Fenucci et al. (2023)
+
+Fenucci, M., Novaković, B., & Marčeta, D. 2023, A&A, 675,
+A134
+
+Fenucci et al. (2021)
+
+Fenucci, M., Novaković, B., Vokrouhlický, D., & Weryk, R. J.
+2021, Astronomy and Astrophysics, 647, A61
+
+Granvik et al. (2018)
+
+Granvik, M., Morbidelli, A., Jedicke, R., et al. 2018, Icarus, 312, 181
+
+Granvik et al. (2017)
+
+Granvik, M., Morbidelli, A., Vokrouhlický, D., et al. 2017, A&A,
+598, A52
+
+Greenberg et al. (2020)
+
+Greenberg, A. H., Margot, J.-L., Verma, A. K., Taylor, P. A., &
+Hodge, S. E. 2020, The astronomical Journal, 159, 92
+
+Hanuš et al. (2018)
+
+Hanuš, J., Vokrouhlický, D., Delbo’, M., et al. 2018, A&A,
+620, L8
+
+Hu et al. (2023)
+
+Hu, S., Li, B., Jiang, H., Bao, G., & Ji, J. 2023, AJ, 166, 178
+
+Ivezić et al. (2019)
+
+Ivezić, Ž., Kahn, S. M., Tyson, J. A., et al. 2019, ApJ,
+873, 111
+
+Jones et al. (2018)
+
+Jones, R. L., Slater, C. T., Moeyens, J., et al. 2018, Icarus, 303,
+181
+
+La Spina et al. (2004)
+
+La Spina, A., Paolicchi, P., Kryszczyńska, A., & Pravec, P. 2004,
+Nature, 428, 400
+
+Mainzer et al. (2021)
+
+Mainzer, A., Abell, P., Bauer, J., et al. 2021, in AAS/Division for
+Planetary Sciences Meeting Abstracts, Vol. 53, AAS/Division for Planetary
+Sciences Meeting Abstracts, 306.16
+
+Micheli et al. (2012)
+
+Micheli, M., Tholen, D. J., & Elliott, G. T. 2012, New A, 17, 446
+
+Micheli et al. (2013)
+
+Micheli, M., Tholen, D. J., & Elliott, G. T. 2013, Icarus, 226, 251
+
+Micheli et al. (2014)
+
+Micheli, M., Tholen, D. J., & Elliott, G. T. 2014, ApJ, 788, L1
+
+Milani & Gronchi (2009)
+
+Milani, A. & Gronchi, G. F. 2009, Theory of Orbit Determination (Cambridge
+University Press)
+
+Montenbruck & Gill (2000)
+
+Montenbruck, O. & Gill, E. 2000, Satellite Orbits: Models, Methods, and
+Applications, Physics and astronomy online library (Springer Berlin
+Heidelberg)
+
+Morbidelli et al. (2020)
+
+Morbidelli, A., Delbó, M., Granvik, M., et al. 2020, Icarus, 340,
+113631
+
+Murdoch et al. (2021)
+
+Murdoch, N., Drilleau, M., Sunday, C., et al. 2021, MNRAS, 503, 3460
+
+Nugent et al. (2012)
+
+Nugent, C. R., Margot, J. L., Chesley, S. R., & Vokrouhlický, D.
+2012, AJ, 144, 60
+
+Ostrowski & Bryson (2019)
+
+Ostrowski, D. & Bryson, K. 2019, Planetary and Space Science, 165, 148
+
+Park et al. (2021)
+
+Park, R. S., Folkner, W. M., Williams, J. G., & Boggs, D. H. 2021,
+AJ, 161, 105
+
+Pravec & Harris (2000)
+
+Pravec, P. & Harris, A. W. 2000, Icarus, 148, 12
+
+Rozitis & Green (2014)
+
+Rozitis, B. & Green, S. F. 2014, A&A, 568, A43
+
+Rozitis et al. (2014)
+
+Rozitis, B., Maclennan, E., & Emery, J. P. 2014, Nature, 512, 174
+
+Seligman et al. (2023)
+
+Seligman, D. Z., Farnocchia, D., Micheli, M., et al. 2023, Planetary
+Science Journal, 4, 35
+
+Spoto et al. (2014)
+
+Spoto, F., Milani, A., Farnocchia, D., et al. 2014, A&A, 572, A100
+
+Spoto et al. (2015)
+
+Spoto, F., Milani, A., & Knežević, Z. 2015, Icarus, 257, 275
+
+Tanga et al. (2022)
+
+Tanga, P., Pauwels, T., Mignard, F., et al. 2022, arXiv e-prints,
+arXiv:2206.05561
+
+Tardioli et al. (2017)
+
+Tardioli, C., Farnocchia, D., Rozitis, B., et al. 2017, A&A, 608, A61
+
+Taylor et al. (2024)
+
+Taylor, A. G., Farnocchia, D., Vokrouhlický, D., et al. 2024, Icarus, 408,
+115822
+
+Tholen (1984)
+
+Tholen, D. J. 1984, PhD thesis, University of Arizona
+
+Thomas et al. (2023)
+
+Thomas, C. A., Naidu, S. P., Scheirich, P., et al. 2023, Nature, 616, 448
+
+Vereš et al. (2017)
+
+Vereš, P., Farnocchia, D., Chesley, S. R., & Chamberlin, A. B.
+2017, Icarus, 296, 139
+
+Vokrouhlický (1998)
+
+Vokrouhlický, D. 1998, A&A, 338, 353
+
+Vokrouhlický (1999)
+
+Vokrouhlický, D. 1999, A&A, 344, 362
+
+Vokrouhlický et al. (2008)
+
+Vokrouhlický, D., Chesley, S. R., & Matson, R. D. 2008, AJ, 135,
+2336
+
+Vokrouhlický et al. (2015)
+
+Vokrouhlický, D., Farnocchia, D., Čapek, D., et al. 2015,
+Icarus, 252, 277
+
+Vokrouhlický et al. (2017)
+
+Vokrouhlický, D., Pravec, P., Ďurech, J., et al. 2017, AJ,
+153, 270
+
+Vokrouhlický et al. (2015)
+
+Vokrouhlický, D., Bottke, W. F., Chesley, S. R., Scheeres, D. J., &
+Statler, T. S. 2015, The Yarkovsky and YORP Effects (University of Arizona
+Press), 509–532
+
+Warner et al. (2009)
+
+Warner, B. D., Harris, A. W., & Pravec, P. 2009, Icarus, 202, 134
+
+Will (1993)
+
+Will, C. M. 1993, Theory and Experiment in Gravitational Physics
+
+Yeomans et al. (2000)
+
+Yeomans, D. K., Antreasian, P. G., Barriot, J. P., et al. 2000,
+Science, 289, 2085
+
+Appendix A Densities of asteroid complexes
+
+To determine values of the densities of asteroid complexes, we extracted data from the SsODNet database using the best value provided by the ssoCard . We selected only asteroids for which the taxonomic complex and the density were both determined, and we found a total of 386 objects. To determine the density distribution of a complex, we used the following procedure: 1) the density distribution of each asteroid is assumed to be log-normal; 2) a density sample for all the asteroids belonging to a given complex was randomly generated, obtaining a sample for the whole complex; 3) the sample for the whole complex was fitted with a log-normal distribution.
+
+Table 4: Taxonomic complexes included in the SsODNet database.
+
+Tax.
+Tot.
+# S/N > > 3
+#S/N > > 2
+#S/N > > 1.5
+
+μ 𝜇 \mu (kg m -3 )
+
+σ 𝜎 \sigma (kg m -3 )
+
+A
+2
+2
+2
+2
+N/A
+N/A
+
+B
+5
+3
+4
+4
+1290
+181
+
+C
+78
+30
+44
+72
+1757
+1088
+
+Ch
+106
+33
+53
+88
+1739
+1054
+
+D
+4
+1
+1
+1
+N/A
+N/A
+
+E
+5
+3
+3
+3
+2560
+270
+
+K
+3
+1
+2
+2
+N/A
+N/A
+
+L
+3
+0
+0
+2
+2674
+1551
+
+M
+27
+10
+12
+19
+3614
+1113
+
+P
+54
+14
+20
+40
+N/A
+N/A
+
+Q
+3
+3
+3
+3
+1915
+932
+
+R
+1
+0
+0
+1
+N/A
+N/A
+
+S
+80
+37
+44
+68
+2721
+1273
+
+U
+1
+1
+1
+1
+N/A
+N/A
+
+V
+5
+4
+4
+5
+1930
+1000
+
+X
+5
+1
+1
+4
+1427
+1494
+
+Z
+4
+0
+1
+3
+2225
+1804
+
+19 19 19 Columns report the name of the complex, the number of asteroids in SsODNet for which the density was determined, the number of determinations with S/N larger than 3, 2, and 1.5, and the values of the density assumed in this work. The values of μ 𝜇 \mu and σ 𝜎 \sigma for the log-normal distribution were obtained by fitting the available data. The flag N/A indicates the complexes for which the data were not enough to obtain a reasonable fit.
+
+Figure 7: Fit of the density distribution for the B − - , C − - , Ch − - , E − - , L − - , M − - , Q − - , S − - , X − - , and Z − - complexes. The histogram is obtained by generating log-normal distributions of asteroid density determinations of the corresponding complex, while the red curve is the best-fit log-normal distribution. Numerical values of the parameters μ 𝜇 \mu and σ 𝜎 \sigma of the best-fit distribution are shown in the title of each panel.
+
+Table  19 shows the list of asteroid complexes found in the SsODNet , together with the total number of density determinations, and the number of determinations with signal-to-noise ratio (S/N) larger than 3, 2, and 1.5. The sixth and seventh columns contain the value adopted in this work for each complex. The values for the C − - , Ch − - , M − - , Q − - , and S − - complexes were fitted by using only the data with S / N > 3 S N 3 \text{S}/\text{N}>3 . The values for the L − - , X − - , and Z − - complexes were obtained from the measurements with S / N > 1.5 S N 1.5 \text{S}/\text{N}>1.5 .
+The B − - complex showed two outliers with relatively high density (i.e. (2) Pallas and (426) Hippo), that we removed from the sample used for the density fit.
+The E − - complex also has a similar issue, because asteroids (44) Nysa and (3671) Dionysus show a density that is considered too small for these asteroid types, and therefore we removed them from the final fit.
+For the A − - , P − - , R − - , K − - , and U − - complexes it was not possible to reasonably fit the sample with a log-normal distribution, therefore we used the population model mentioned in Sec.  2.2.2 .
+Finally, the densities determined for asteroids in the V − - complex show a large variety of values, therefore we adopted the value reported by Carry ( 2012 ) . The log-normal fits obtained for the with the method described above for the B − - , C − - , Ch − - , E − - , L − - , M − - , Q − - , S − - , X − - , and Z − - complexes are all shown in Fig.  7
+
+Appendix B Additional tables
+
+Table 5: Results of the automated Yarkovsky effect determination procedure.
+
+Ast.
+H 𝐻 H
+RMS
+
+RMS 6
+
+A 2 subscript 𝐴 2 A_{2}
+σ ​ ( A 2 ) 𝜎 subscript 𝐴 2 \sigma(A_{2})
+d ​ a / d ​ t d 𝑎 𝑑 t \text{d}a/d\text{t}
+σ ​ ( d ​ a / d ​ t ) 𝜎 d 𝑎 𝑑 t \sigma(\text{d}a/d\text{t})
+Y M subscript 𝑌 𝑀 Y_{M}
+S/N
+Res.
+#OO
+#ReO
+
+#ReO 6
+
+#RaO
+#ReRa
+
+#ReRa 6
+
+D 15 subscript 𝐷 15 D_{15}
+D 50 subscript 𝐷 50 D_{50}
+D 85 subscript 𝐷 85 D_{85}
+P 𝑃 P
+Tax
+Δ ​ T Δ 𝑇 \Delta T
+
+101955
+20.6
+0.40
+0.45
+
+− - 4.52
+
+0.023
+
+− - 18.89
+
+0.009
+23.20
+191
+Acc.
+580
+8
+8
+29
+0
+3
+469
+488
+507
+4.29
+B
+18.6
+
+1998 SD 9
+
+23.9
+0.78
+6.84
+
+− - 28.98
+
+0.156
+
+− - 197.06
+
+1.063
+317.9
+185
+Acc.
+149
+4
+5
+1
+0
+0
+25
+35
+75
+/
+/
+19.9
+
+99942
+18.9
+0.30
+0.33
+
+− - 2.88
+
+0.023
+
+− - 13.25
+
+0.107
+28.10
+122
+Acc.
+9523
+18
+20
+50
+0
+5
+300
+340
+380
+27.38
+S
+17.1
+
+480883
+20.9
+0.47
+2.48
+
+− - 6.91
+
+0.073
+
+− - 50.44
+
+0.533
+116.11
+94
+Acc.
+430
+1
+5
+7
+0
+2
+103
+172
+287
+/
+V
+20.0
+
+2340
+20.4
+0.72
+0.75
+
+− - 2.99
+
+0.052
+
+− - 17.38
+
+0.304
+80.28
+57
+Acc.
+1369
+35
+78
+7
+0
+0
+134
+193
+312
+3.35
+Q
+45.1
+
+524522
+20.5
+0.46
+1.09
+
+− - 5.98
+
+0.105
+
+− - 35.91
+
+0.630
+42.57
+56
+Acc.
+606
+8
+21
+10
+0
+7
+112
+176
+337
+13.43
+/
+16.0
+
+2002 BF 25
+
+22.4
+0.45
+0.88
+16.67
+0.295
+71.90
+0.0001
+75.61
+56
+Acc.
+143
+0
+48
+4
+0
+0
+149
+152
+155
+/
+/
+20.0
+
+2012 UR 158
+
+20.6
+0.57
+0.63
+
+− - 771.30
+
+17.221
+
+− - 8147.57
+
+181.918
+63.39
+44
+Rej.
+161
+1
+15
+0
+0
+0
+320
+629
+938
+/
+/
+10.0
+
+523599
+19.7
+0.46
+1.12
+212.06
+5.103
+829.24
+19.957
+21.83
+41
+Rej.
+329
+4
+51
+0
+0
+0
+66
+200
+602
+/
+/
+15.2
+
+2000 EB 14
+
+23.2
+0.58
+1.04
+
+− - 27.00
+
+0.685
+
+− - 160.60
+
+4.0749
+214.11
+39
+Acc.
+83
+2
+27
+0
+0
+0
+38
+55
+97
+1.79
+/
+22.0
+
+483656
+23.7
+0.60
+1.25
+
+− - 14.01
+
+0.383
+
+− - 80.064
+
+2.1925
+267.66
+36
+Acc.
+207
+5
+41
+1
+0
+0
+28
+40
+84
+1.69
+/
+18.0
+
+2009 BD
+28.2
+0.44
+0.96
+
+− - 157.65
+
+4.955
+
+− - 667.46
+
+20.979
+285.39
+31
+Rej.
+197
+0
+1
+0
+0
+0
+2
+4
+8
+/
+/
+2.4
+
+20 20 20
+Columns are: Ast. = Designation of the asteroid;
+H 𝐻 H = Absolute magnitude;
+RMS = RMS of normalized residuals for 7-D OD;
+RMS 6 = RMS of normalized residuals for 6-D OD;
+A 2 subscript 𝐴 2 A_{2} = Transversal nongravitational component obtained with 7-D OD;
+σ ​ ( A 2 ) 𝜎 subscript 𝐴 2 \sigma(A_{2}) = Error in A 2 subscript 𝐴 2 A_{2} ;
+d ​ a / d ​ t d 𝑎 𝑑 t \text{d}a/d\text{t} = Semi-major axis drift obtained by converting A 2 subscript 𝐴 2 A_{2} ;
+σ ​ ( d ​ a / d ​ t ) 𝜎 d 𝑎 𝑑 t \sigma(\text{d}a/d\text{t}) = Error in the semi-major axis drift;
+Y M subscript 𝑌 𝑀 Y_{M} = 95-th percentile of the maximum expected Yarkovsky drift;
+S/N = Signal-to-noise ratio of the detection;
+Res. = Acceptance flag, can be only accepted (Acc.) or rejected (Rej.);
+#OO = Number of Optical Observations;
+#ReO = Number of rejected Optical Observation in the 7-D OD;
+#ReO 6 = Number of rejected Optical Observation in the 6-D OD;
+#RaO = Number of Radar Observations;
+#ReRa = Number of rejected Radar Observations in the 7-D OD;
+#ReRa 6 = Number of rejected Radar Observations in the 7-D OD;
+D 15 subscript 𝐷 15 D_{15} = 15-th percentile of the diameter distribution;
+D 50 subscript 𝐷 50 D_{50} = 50-th percentile of the diameter distribution;
+D 85 subscript 𝐷 85 D_{85} = 85-th percentile of the diameter distribution;
+P 𝑃 P = Rotation period;
+Tax = Taxonomic class;
+Δ ​ T Δ 𝑇 \Delta T = Length of the observational arc.
+The full list of results in extended precision is available at the CDS.
+The A 2 subscript 𝐴 2 A_{2} and σ ​ ( A 2 ) 𝜎 subscript 𝐴 2 \sigma(A_{2}) values are given in 10 − 14 superscript 10 14 10^{-14} au d -2 , while the values of the semi-major axis drifts d ​ a / d ​ t , σ ​ ( d ​ a / d ​ t ) d 𝑎 𝑑 t 𝜎 d 𝑎 𝑑 t \text{d}a/d\text{t},\sigma(\text{d}a/d\text{t}) and Y M subscript 𝑌 𝑀 Y_{M} are given in 10 − 4 superscript 10 4 10^{-4} au My -1 . The diameter percentiles D 15 , D 50 , subscript 𝐷 15 subscript 𝐷 50 D_{15},D_{50}, and D 85 subscript 𝐷 85 D_{85} are given in meters, the rotation period P 𝑃 P in hours, and the arc length Δ ​ T Δ 𝑇 \Delta T in years.
+
+Table 6: Values of ε 1 , ε 2 subscript 𝜀 1 subscript 𝜀 2 \varepsilon_{1},\varepsilon_{2} , and χ 𝜒 \chi for the asteroids with χ ≥ 1 𝜒 1 \chi\geq 1 .
+
+Ast.
+A 2 subscript 𝐴 2 A_{2}
+σ A 2 subscript 𝜎 subscript 𝐴 2 \sigma_{A_{2}}
+S/N
+A 2 JPL superscript subscript 𝐴 2 JPL A_{2}^{\text{JPL}}
+σ A 2 JPL superscript subscript 𝜎 subscript 𝐴 2 JPL \sigma_{A_{2}}^{\text{JPL}}
+
+S/N JPL JPL {}^{\text{JPL}}
+
+JPL Model
+ε 1 subscript 𝜀 1 \varepsilon_{1}
+ε 2 subscript 𝜀 2 \varepsilon_{2}
+χ 𝜒 \chi
+
+65717
+4.33
+0.99
+4.3
+7.74
+1.04
+7.4
+1
+3.42
+3.26
+2.36
+
+2003 AF 23
+
+− - 4.44
+
+0.32
+13.7
+
+− - 5.48
+
+0.34
+15.6
+1
+3.21
+2.96
+2.18
+
+2011 PU 1
+
+− - 44.44
+
+6.68
+6.6
+
+− - 30.30
+
+4.99
+6.0
+1
+2.11
+2.83
+1.69
+
+2062
+
+− - 1.40
+
+0.16
+8.3
+
+− - 1.06
+
+0.11
+9.2
+1
+2.04
+3.00
+1.69
+
+1998 KY 26
+
+− - 22.99
+
+3.96
+5.7
+
+− - 13.77
+
+5.66
+2.4
+3
+2.32
+1.62
+1.33
+
+4179
+
+− - 0.61
+
+0.06
+8.8
+
+− - 0.77
+
+0.09
+7.9
+2
+2.24
+1.60
+1.30
+
+2018 CW 2
+
+− - 49.22
+
+2.39
+20.5
+
+− - 55.01
+
+3.85
+14.2
+1
+2.41
+1.50
+1.27
+
+1685
+
+− - 0.44
+
+0.10
+4.3
+
+− - 0.30
+
+0.04
+6.5
+1
+1.39
+3.08
+1.27
+
+163000
+
+− - 3.48
+
+0.55
+6.2
+
+− - 2.46
+
+0.60
+4.0
+1
+1.84
+1.70
+1.25
+
+85990
+
+− - 3.15
+
+0.21
+14.4
+
+− - 3.56
+
+0.26
+13.4
+1
+1.87
+1.54
+1.19
+
+2018 GY
+
+− - 30.67
+
+4.18
+7.3
+
+− - 39.49
+
+6.32
+6.2
+1
+2.10
+1.39
+1.16
+
+306383
+
+− - 2.50
+
+0.44
+5.6
+
+− - 1.71
+
+0.54
+3.1
+1
+1.79
+1.47
+1.13
+
+2010 VK 139
+
+− - 14.71
+
+2.12
+6.9
+
+− - 9.81
+
+3.80
+2.5
+1
+2.30
+1.28
+1.12
+
+363599
+
+− - 6.37
+
+0.49
+12.8
+
+− - 5.51
+
+0.60
+9.1
+1
+1.72
+1.42
+1.09
+
+2005 VL 1
+
+− - 21.68
+
+2.33
+9.2
+
+− - 83.20
+
+56.12
+1.4
+3
+26.36
+1.09
+1.09
+
+524522
+
+− - 5.98
+
+0.10
+56.9
+
+− - 5.82
+
+1.12
+51.8
+1
+1.49
+1.40
+1.02
+
+21 21 21 Columns are:
+Ast = Designation of the asteroid;
+A 2 subscript 𝐴 2 A_{2} = Transversal nongravitational component estimated by NEOCC;
+σ A 2 subscript 𝜎 subscript 𝐴 2 \sigma_{A_{2}} = Error in A 2 subscript 𝐴 2 A_{2} estimated by NEOCC;
+S/N = Signal-to-noise ratio of the NEOCC detection;
+A 2 JPL superscript subscript 𝐴 2 JPL A_{2}^{\text{JPL}} = Transversal nongravitational component estimated by JPL;
+σ A 2 JPL superscript subscript 𝜎 subscript 𝐴 2 JPL \sigma_{A_{2}}^{\text{JPL}} = Error in A 2 subscript 𝐴 2 A_{2} estimated by JPL;
+S/N JPL JPL {}^{\text{JPL}} = Signal-to-noise ratio of the JPL detection;
+JPL Model = Dynamical model used by JPL (1 = A 2 subscript 𝐴 2 A_{2} ; 2 = A 1 subscript 𝐴 1 A_{1} and A 2 subscript 𝐴 2 A_{2} ; 3 = A 1 , A 2 subscript 𝐴 1 subscript 𝐴 2 A_{1},A_{2} and A 3 subscript 𝐴 3 A_{3} );
+ε 1 subscript 𝜀 1 \varepsilon_{1} = Relative error w.r.t. NEOCC;
+ε 2 subscript 𝜀 2 \varepsilon_{2} = Relative error w.r.t. JPL;
+χ 𝜒 \chi = Chi value.
+The full list in extended precision is available at the CDS.
+The A 2 subscript 𝐴 2 A_{2} and σ ​ ( A 2 ) 𝜎 subscript 𝐴 2 \sigma(A_{2}) values are given in 10 − 14 superscript 10 14 10^{-14} au d -2 .
+
+Table 7: Asteroids with measured Yarkovsky effect for the JPL SBDB, not identified or rejected by our procedure.
+
+Ast.
+d ​ a / d ​ t d 𝑎 𝑑 t \text{d}a/d\text{t}
+σ ​ ( d ​ a / d ​ t ) 𝜎 d 𝑎 𝑑 t \sigma(\text{d}a/d\text{t})
+S/N
+Y M subscript 𝑌 𝑀 Y_{M}
+d ​ a / d ​ t JPL d 𝑎 𝑑 superscript t JPL \text{d}a/d\text{t}^{\text{JPL}}
+σ ​ ( d ​ a / d ​ t JPL ) 𝜎 d 𝑎 𝑑 superscript t JPL \sigma(\text{d}a/d\text{t}^{\text{JPL}})
+S/N JPL JPL {}^{\text{JPL}}
+
+JPL Model
+
+523599
+829.24
+19.95
+41.5
+21.83
+1292.37
+22.09
+58.4
+1
+
+66391
+
+− - 3.12
+2.25
+1.384
+13.53
+
+− - 5.47
+0.29
+18.7
+1
+
+2006 CT
+
+− - 38.88
+2.08
+18.67
+94.22
+
+− - 38.51
+2.09
+18.39
+1
+
+65803
+16.41
+6.39
+2.57
+12.46
+
+− - 4.04
+0.25
+16.0
+1
+
+2011 CL 50
+
+1949.59
+138.59
+14.0
+340.71
+2023.44
+135.40
+14.9
+1
+
+2009 BD
+
+− - 667.46
+20.97
+31.8
+285.39
+
+− - 473.66
+34.58
+13.6
+2
+
+2004 JN 1
+
+− - 164.31
+11.51
+14.2
+123.80
+
+− - 159.28
+11.80
+13.4
+1
+
+2001 BB 16
+
+153.56
+11.37
+13.4
+133.76
+150.48
+12.25
+12.2
+1
+
+613995
+
+− - 95.23
+8.76
+10.8
+63.79
+
+− - 94.35
+9.00
+10.4
+1
+
+3200
+
+− - 6.90
+2.48
+2.78
+4.19
+
+− - 12.11
+1.44
+8.3
+1
+
+2006 RH 120
+
+− - 54628.00
+1438.9
+37.96
+1406.22
+
+− - 21205.10
+2664.47
+7.9
+3
+
+2013 GZ 7
+
+− - 24.48
+2.82
+8.67
+103.88
+
+− - 23.11
+2.97
+7.78
+1
+
+2000 AA 6
+
+71.40
+9.46
+7.5
+40.78
+76.07
+10.00
+7.6
+1
+
+87024
+9.41
+5.83
+1.61
+27.04
+9.33
+1.25
+7.4
+1
+
+2008 DB
+
+− - 588.54
+65.53
+8.9
+222.81
+
+− - 455.24
+62.16
+7.3
+1
+
+2012 UU 136
+
+40.45
+6.00
+6.73
+60.55
+40.58
+6.09
+6.65
+1
+
+2018 KC 2
+
+127.86
+18.24
+7.0
+97.81
+122.98
+18.69
+6.5
+1
+
+2009 EM 1
+
+− - 118.36
+14.56
+8.1
+62.99
+
+− - 122.27
+18.62
+6.5
+1
+
+162004
+20.48
+2.29
+8.9
+16.18
+18.31
+2.78
+6.5
+1
+
+2018 HG 2
+
+− - 186.27
+18.76
+9.9
+152.22
+
+− - 186.85
+29.04
+6.4
+1
+
+2015 XC 352
+
+− - 323.04
+49.74
+6.4
+218.19
+
+− - 332.22
+55.54
+5.9
+1
+
+337248
+
+− - 24.04
+4.13
+5.8
+11.33
+
+− - 23.73
+4.64
+5.1
+1
+
+2013 BA 74
+
+307.24
+0.71
+5.0
+145.09
+619.07
+124.18
+4.9
+1
+
+267759
+
+− - 11.43
+2.31
+4.94
+19.04
+
+− - 10.99
+2.31
+4.74
+1
+
+491007
+
+− - 42.92
+9.04
+4.74
+38.79
+
+− - 40.38
+9.16
+4.40
+1
+
+68950
+
+− - 2.02
+1.04
+1.93
+8.97
+
+− - 2.99
+0.68
+4.3
+1
+
+397326
+9.76
+2.05
+4.75
+18.84
+9.86
+2.26
+4.35
+1
+
+2012 TC 4
+
+− - 16.48
+16.32
+1.01
+1165.75
+
+− - 106.88
+26.05
+4.1
+2
+
+2004 FH
+50.16
+31.56
+1.58
+374.62
+85.37
+21.15
+4.0
+1
+
+65679
+
+− - 18.50
+4.38
+4.22
+17.96
+
+− - 19.71
+4.89
+4.02
+1
+
+153201
+
+− - 23.52
+4.22
+5.5
+15.80
+
+− - 18.59
+4.69
+3.9
+1
+
+5381
+
+− - 0.18
+2.94
+0.060
+12.23
+2.70
+0.69
+3.9
+1
+
+7482
+1.35
+3.96
+0.34
+8.15
+
+− - 2.22
+0.61
+3.6
+1
+
+526826
+
+− - 56.99
+19.35
+2.94
+74.76
+
+− - 66.69
+18.68
+3.5
+1
+
+163899
+
+− - 1.42
+2.51
+0.56
+4.93
+
+− - 6.94
+2.01
+3.4
+1
+
+5604
+
+− - 12.27
+3.90
+3.14
+16.03
+
+− - 14.00
+4.20
+3.33
+1
+
+2003 MS 2
+
+− - 22.11
+7.50
+2.94
+61.85
+
+− - 27.63
+8.36
+3.3
+1
+
+2021 QH 2
+
+407.83
+95.41
+4.2
+219.79
+354.44
+107.61
+3.2
+1
+
+2016 GE 1
+
+− - 394.54
+112.11
+3.5
+123.95
+
+− - 582.52
+177.24
+3.2
+1
+
+25143
+
+− - 7.84
+4.86
+1.61
+24.69
+
+− - 11.09
+3.38
+3.2
+1
+
+2014 QL 390
+
+− - 45.92
+16.27
+2.82
+52.65
+
+− - 51.76
+15.99
+3.2
+1
+
+138947
+
+− - 13.20
+4.61
+2.86
+21.90
+
+− - 18.10
+5.67
+3.1
+1
+
+369984
+
+− - 52.58
+26.60
+1.97
+23.11
+
+− - 11.65
+3.68
+3.1
+1
+
+22753
+
+− - 8.69
+3.345
+2.59
+19.28
+
+− - 10.35
+3.28
+3.1
+1
+
+483423
+
+− - 51.54
+18.22
+2.82
+88.76
+
+− - 58.96
+18.97
+3.1
+1
+
+396593
+12.29
+4.56
+2.69
+29.31
+14.89
+4.83
+3.0
+1
+
+417210
+
+− - 15.02
+5.23
+2.87
+54.46
+
+− - 16.46
+5.34
+3.0
+1
+
+22099
+3.19
+2.27
+1.40
+16.45
+5.02
+1.65
+3.0
+1
+
+22 22 22 Columns are:
+Ast = Designation of the asteroid;
+d ​ a / d ​ t d 𝑎 𝑑 t \text{d}a/d\text{t} = Semi-major axis drift computed by the NEOCC;
+σ ​ ( d ​ a / d ​ t ) 𝜎 d 𝑎 𝑑 t \sigma(\text{d}a/d\text{t}) = Uncertainty in the semi-major axis drift computed by the NEOCC;
+S/N = Signal-to-noise ratio of semi-major axis drift detection of NEOCC measurement;
+Y M subscript 𝑌 𝑀 Y_{M} = 95-th percentile of the expected maximum Yarkovsky semi-major axis drift;
+d ​ a / d ​ t JPL d 𝑎 𝑑 superscript t JPL \text{d}a/d\text{t}^{\text{JPL}} = Semi-major axis drift computed by JPL;
+σ ​ ( d ​ a / d ​ t JPL ) 𝜎 d 𝑎 𝑑 superscript t JPL \sigma(\text{d}a/d\text{t}^{\text{JPL}}) = Uncertainty in the semi-major axis drift computed by JPL;
+S/N JPL JPL {}^{\text{JPL}} = Signal-to-noise ratio of semi-major axis drift detection of JPL measurement;
+JPL Model = Dynamical model used by JPL (1 = A 2 subscript 𝐴 2 A_{2} ; 2 = A 1 subscript 𝐴 1 A_{1} and A 2 subscript 𝐴 2 A_{2} ; 3 = A 1 , A 2 subscript 𝐴 1 subscript 𝐴 2 A_{1},A_{2} and A 3 subscript 𝐴 3 A_{3} ).
+The full list in extended precision is available at the CDS.
+The values of d ​ a / d ​ t , σ ​ ( d ​ a / d ​ t ) d 𝑎 𝑑 t 𝜎 d 𝑎 𝑑 t \text{d}a/d\text{t},\sigma(\text{d}a/d\text{t}) and Y M subscript 𝑌 𝑀 Y_{M} are given in 10 − 4 superscript 10 4 10^{-4} au My -1 .
+
+Table 8: Asteroids with measured Yarkovsky drift with isolated tracklets at the beginning of the observational arc.
+
+Ast.
+Tracklet Initial Date
+Obs. Code
+Arc length
+Δ ​ t Δ 𝑡 \Delta t
+A 2 subscript 𝐴 2 A_{2}
+σ ​ ( A 2 ) 𝜎 subscript 𝐴 2 \sigma(A_{2})
+d ​ a / d ​ t d 𝑎 d 𝑡 \text{d}a/\text{d}t
+σ ​ ( d ​ a / d ​ t ) 𝜎 d 𝑎 d 𝑡 \sigma(\text{d}a/\text{d}t)
+S/N
+Except
+
+2007 TF 15
+
+2007-10-09
+G96
+1
+6.9
+
+− - 22.55
+
+2.11
+
+− - 91.13
+
+8.54
+10.67
+N
+
+326290
+1993-04-13
+691
+¡1
+5.0
+
+− - 3.17
+
+0.32
+
+− - 17.85
+
+1.83
+9.72
+N
+
+4179
+1934-02-14
+012
+4
+42.2
+
+− - 0.61
+
+0.06
+
+− - 2.72
+
+0.30
+8.81
+N
+
+175706
+1985-12-18
+675
+1
+10.2
+
+− - 1.20
+
+0.14
+
+− - 5.69
+
+0.67
+8.47
+N
+
+2062
+1955-12-17
+675
+¡1
+20.0
+
+− - 1.43
+
+0.17
+
+− - 6.42
+
+0.77
+8.27
+N
+
+481442
+2001-11-12
+645
+¡1
+5.0
+
+− - 5.64
+
+0.70
+
+− - 33.50
+
+4.19
+7.98
+N
+
+385186
+1986-12-29
+381
+¡1
+7.0
+1.18
+0.14
+4.80
+6.05
+7.93
+N
+
+350751
+1991-03-09
+261
+¡1
+10.7
+
+− - 5.20
+
+0.65
+
+− - 22.87
+
+2.89
+7.91
+N
+
+85953
+1971-03-26
+675
+¡1
+27.9
+
+− - 1.51
+
+0.19
+
+− - 14.82
+
+1.87
+7.89
+N
+
+152563
+1953-01-12
+261
+2
+39.0
+
+− - 2.96
+
+0.39
+
+− - 14.25
+
+1.92
+7.42
+Y
+
+66400
+1987-04-21
+675
+¡1
+12.1
+
+− - 2.33
+
+0.36
+
+− - 15.96
+
+2.47
+6.44
+N
+
+1994 GL
+1994-04-10
+691
+3
+25.9
+45.31
+7.16
+11.96
+9.35
+6.32
+N
+
+162361
+1991-01-15
+675
+¡1
+8.9
+2.89
+0.47
+15.80
+2.60
+6.06
+N
+
+2019 QU 2
+
+2004-08-12
+807
+¡1
+6.0
+
+− - 6.80
+
+1.25
+
+− - 63.26
+
+11.68
+5.41
+N
+
+446924
+1992-10-02
+261
+¡1
+10.0
+
+− - 3.37
+
+0.72
+
+− - 19.32
+
+4.15
+4.65
+N
+
+138404
+1982-07-20
+260
+¡1
+6.6
+2.09
+0.46
+9.26
+2.05
+4.50
+N
+
+234341
+1991-04-18
+260
+¡1
+8.8
+
+− - 3.28
+
+0.72
+
+− - 22.59
+
+5.01
+4.50
+N
+
+511684
+2005-12-03
+568
+¡1
+9.1
+10.02
+2.34
+62.68
+14.63
+4.28
+N
+
+283457
+1951-11-05
+261
+¡1
+39.7
+
+− - 7.05
+
+1.66
+
+− - 25.34
+
+5.99
+4.23
+N
+
+203471
+1994-01-08
+675
+1
+8.0
+
+− - 7.77
+
+1.86
+
+− - 41.49
+
+9.97
+4.16
+N
+
+85774
+1989-04-30
+260
+¡1
+9.4
+
+− - 0.53
+
+0.12
+
+− - 2.15
+
+0.52
+4.12
+N
+
+7350
+1963-10-15
+675
+¡1
+22.5
+
+− - 1.86
+
+0.49
+
+− - 8.03
+
+2.12
+3.77
+N
+
+592968
+2003-03-24
+644
+¡1
+12.0
+9.28
+2.47
+64.55
+17.23
+3.74
+N
+
+85770
+1990-10-12
+261
+¡1
+8.0
+
+− - 5.03
+
+1.36
+
+− - 24.26
+
+6.60
+3.67
+N
+
+162181
+1979-12-20
+413
+¡1
+19.4
+
+− - 1.90
+
+0.57
+
+− - 7.40
+
+2.24
+3.29
+N
+
+398188
+2001-07-02
+644
+¡1
+8.9
+
+− - 3.01
+
+0.91
+
+− - 14.87
+
+4.51
+3.29
+N
+
+2017 DN 109
+
+2010-05-02
+C51
+¡1
+6.7
+11.87
+3.66
+145.86
+45.02
+3.23
+N
+
+7341
+1981-10-23
+095
+¡1
+9.8
+
+− - 0.56
+
+0.17
+
+− - 2.38
+
+0.73
+3.23
+N
+
+138911
+1984-08-02
+260
+¡1
+8.1
+
+− - 2.49
+
+0.80
+
+− - 9.19
+
+2.96
+3.10
+N
+
+162080
+1981-03-03
+413
+1
+16.9
+
+− - 2.28
+
+0.74
+
+− - 11.76
+
+3.81
+3.08
+N
+
+474158
+1978-10-10
+260
+¡1
+19.8
+
+− - 10.39
+
+3.50
+
+− - 43.28
+
+14.60
+2.96
+N
+
+65679
+1954-11-20
+675
+¡1
+34.9
+
+− - 3.10
+
+1.04
+
+− - 14.84
+
+5.00
+2.96
+N
+
+2006CT
+1991-01-15
+691
+¡1
+13.6
+
+− - 7.58
+
+2.56
+
+− - 32.48
+
+10.99
+2.95
+N
+
+469219
+2004-03-17
+645
+¡1
+7.0
+
+− - 11.73
+
+4.50
+
+− - 50.33
+
+19.31
+2.60
+N
+
+2012 BB 124
+
+1976-08-27
+260
+¡1
+35.4
+6.64
+2.909
+27.48
+12.03
+2.28
+Y
+
+2012 GA 5
+
+2001-03-20
+645
+¡1
+10.9
+42.33
+19.68
+168.96
+78.59
+2.14
+N
+
+491007
+2000-04-28
+699
+¡1
+10.9
+
+− - 11.77
+
+5.89
+
+− - 93.69
+
+46.90
+1.99
+N
+
+267759
+1953-04-13
+261
+¡1
+44.7
+
+− - 3.03
+
+2.01
+
+− - 11.37
+
+7.55
+1.50
+N
+
+26310
+1951-07-08
+261
+¡1
+47.2
+
+− - 11.79
+
+7.99
+
+− - 43.89
+
+29.75
+1.47
+N
+
+358453
+1994-03-06
+691
+¡1
+13.0
+
+− - 6.09
+
+4.91
+
+− - 30.33
+
+24.44
+1.24
+N
+
+510190
+2002-01-09
+645
+¡1
+9.0
+7.242
+6.45
+30.12
+26.86
+1.12
+N
+
+5604
+1976-04-23
+413
+¡1
+8.9
+
+− - 0.85
+
+0.84
+
+− - 4.49
+
+4.44
+1.01
+N
+
+2018 KR
+2013-04-19
+F51
+¡1
+5.0
+
+− - 53.82
+
+52.94
+
+− - 254.06
+
+249.88
+1.01
+Y
+
+2013 GZ 7
+
+2003-03-31
+645
+¡1
+10.0
+
+− - 2.96
+
+3.43
+
+− - 11.03
+
+12.77
+0.86
+N
+
+2015 XW 261
+
+2009-01-16
+645
+¡1
+6.8
+32.78
+39.13
+159.35
+190.21
+0.83
+N
+
+2014 RQ 17
+
+1953-10-08
+261
+¡1
+60.9
+65.74
+80.30
+261.30
+319.14
+0.81
+Y
+
+403775
+2002-06-02
+644
+1
+7.9
+
+− - 2.77
+
+4.37
+
+− - 22.61
+
+35.67
+0.63
+N
+
+2012 DY 32
+
+2003-03-22
+644
+¡1
+8.1
+37.01
+76.56
+155.24
+321.12
+0.48
+N
+
+339492
+1983-10-26
+260
+¡1
+16.5
+1.83
+3.943
+6.85
+14.70
+0.46
+N
+
+2021 SP 4
+
+2005-09-28
+645
+¡1
+6.9
+
+− - 8.47
+
+24.1
+
+− - 35.54
+
+101.45
+0.35
+N
+
+2012 UU 136
+
+2002-11-08
+645
+¡1
+9.9
+
+− - 2.47
+
+7.10
+
+− - 10.20
+
+29.32
+0.34
+N
+
+2015 LA 2
+
+2010-05-16
+F51
+5
+5.0
+54.38
+171.79
+266.77
+842.74
+0.31
+Y
+
+2016 GL 2
+
+2009-04-02
+G96
+1
+7.0
+17.64
+94.08
+66.90
+356.78
+0.18
+N
+
+397326
+1953-03-09
+675
+¡1
+53.5
+9.77
+5.27
+3.68
+19.87
+0.18
+N
+
+375505
+1998-11-17
+645
+¡1
+9.9
+
+− - 4.98
+
+2.69
+
+− - 1.81
+
+9.80
+0.18
+N
+
+2016 UW 80
+
+2011-10-25
+F51
+¡1
+5.0
+
+− - 6.43
+
+579.31
+
+− - 260.58
+
+2347.70
+0.11
+Y
+
+465617
+2001-12-18
+645
+¡1
+7.2
+
+− - 6.65
+
+6.43
+
+− - 2.67
+
+25.89
+0.10
+N
+
+2005 TF 49
+
+1989-10-21
+260
+¡1
+15.9
+2.67
+3.77
+1.11
+15.70
+0.07
+N
+
+23 23 23 Columns are: Ast. = Designation of the asteroid;
+Tracklet Initial Date = Date of the first observation in the tracklet;
+Obs. Code = Observatory code;
+Arc length: Arc length of the isolate tracklet;
+Δ ​ t Δ 𝑡 \Delta t : Time passed between the isolated tracklet and the following available observation;
+A 2 subscript 𝐴 2 A_{2} = Value of A 2 subscript 𝐴 2 A_{2} obtained by excluding the isolated tracklet;
+σ ​ ( A 2 ) 𝜎 subscript 𝐴 2 \sigma(A_{2}) = Error in A 2 subscript 𝐴 2 A_{2} obtained by excluding the isolated tracklets;
+d ​ a / d ​ t d 𝑎 d 𝑡 \text{d}a/\text{d}t = Value of A 2 subscript 𝐴 2 A_{2} obtained by excluding the isolated tracklet;
+σ ​ ( d ​ a / d ​ t ) 𝜎 d 𝑎 d 𝑡 \sigma(\text{d}a/\text{d}t) = Error in A 2 subscript 𝐴 2 A_{2} obtained by excluding the isolated tracklets;
+S/N = Signal-to-noise obtained by excluding the isolated tracklets;
+Except = Flag to indicate that the tracklet is reliable. The arc length is given in days, the time Δ ​ t Δ 𝑡 \Delta t in years, the values of A 2 , σ ​ ( A 2 ) subscript 𝐴 2 𝜎 subscript 𝐴 2 A_{2},\sigma(A_{2}) in 10 − 14 superscript 10 14 10^{-14} au d -2 , and d ​ a / d ​ t , σ ​ ( d ​ a / d ​ t ) d 𝑎 d 𝑡 𝜎 d 𝑎 d 𝑡 \text{d}a/\text{d}t,\sigma(\text{d}a/\text{d}t) in 10 − 4 superscript 10 4 10^{-4} au My -1 .
+
+◄
+
+Feeling lucky?
+
+Conversion report
+Report an issue
+View original on arXiv ►
+
+Copyright
+Privacy Policy
+
+Generated on Tue Feb 27 18:47:11 2024 by L a T e XML

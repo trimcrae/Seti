@@ -1,0 +1,753 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products</title>
+<!--Generated on Thu Apr 30 04:51:13 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<meta name="keywords" lang="en" content="sky surveys (1464) — astronomy databases (83) — asteroids (72)">
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+    // Pre-apply spinout-banner dismissal here, before the banner paints, so it
+    // never flashes in only to be hidden later by the deferred arxiv-header.js.
+    // Key matches arxiv-header.js: "arxiv-banner-dismissed:" + data-banner-name.
+    if (localStorage.getItem('arxiv-banner-dismissed:spinout-nonprofit')) {
+      document.documentElement.setAttribute("data-banner-dismissed", "");
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css"><link rel="stylesheet" type="text/css" media="screen"
+  href="/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626"><style>
+  /* Banner pre-dismissal (set above before paint -> no flash-then-hide) and
+     reading-mode chrome hiding. */
+  html[data-banner-dismissed] .ds-announcement { display: none; }
+  html[data-reading-mode="enabled"] .ds-announcement,
+  html[data-reading-mode="enabled"] .ds-site-footer { display: none; }
+  /* Keep the announcement text dark on the Open-Blue band in both colour themes
+     (otherwise it inherits the paper's warm-wash text in dark mode and washes out). */
+  .ds-announcement-text { color: var(--arxiv-ink, #1c1a17); }
+</style>
+<script defer src="/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog><div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement"
+    data-banner-name="spinout-nonprofit">
+    <img class="ds-announcement-glyph" src="/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+    <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+    <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+    <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/"><img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/base/1.0.1/images/arxiv-logo-primary-light.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2604.27420v1">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2604.27420v1"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_abstract"><a href="#abstract1" title="In The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_title">Abstract</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S1" title="In The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">I </span>Introduction</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S2" title="In The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II </span>Brief summary of SNAPS</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S3" title="In The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III </span>Public access to SNAPS</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S4" title="In The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">IV </span>Future work</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_acknowledgements"><a href="#S4.acknowledgements1" title="In IV Future work ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_title">Acknowledgements</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_bibliography"><a href="#bib" title="In The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: CC BY 4.0
+  </a>
+  <div id="watermark-tr">
+arXiv:2604.27420v1 [astro-ph.EP] 30 Apr 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document ltx_authors_multiline">
+<h1 class="ltx_title ltx_title_document">The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/orcid=0000-0003-4580-3790" title="" class="ltx_ref orcid">David E. Trilling</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Department of Astronomy and Planetary Science, Northern Arizona University
+</span>
+<span class="ltx_contact ltx_role_affiliation">School of Informatics, Computing, and Cyber Systems, Northern Arizona University
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2604.27420v1/mailto:%5B">[</a>
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/orcid=0000-0002-0826-6204" title="" class="ltx_ref orcid">Michael Gowanlock</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">School of Informatics, Computing, and Cyber Systems, Northern Arizona University
+</span>
+<span class="ltx_contact ltx_role_affiliation">Department of Astronomy and Planetary Science, Northern Arizona University
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2604.27420v1/mailto:michael.gowanlock@nau.edu">michael.gowanlock@nau.edu</a>
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/orcid=0009-0006-2731-5522" title="" class="ltx_ref orcid">Revanth Munugala</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">School of Informatics, Computing, and Cyber Systems, Northern Arizona University
+</span>
+<span class="ltx_contact ltx_role_affiliation">Department of Astronomy and Planetary Science, Northern Arizona University
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2604.27420v1/mailto:rm2878@nau.edu">rm2878@nau.edu</a>
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/orcid=0000-0002-6676-1713" title="" class="ltx_ref orcid">Daniel R. Kramer</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">School of Informatics, Computing, and Cyber Systems, Northern Arizona University
+</span>
+<span class="ltx_contact ltx_role_affiliation">Department of Astronomy and Planetary Science, Northern Arizona University
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2604.27420v1/mailto:drkspace@gmail.com">drkspace@gmail.com</a>
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/orcid=0000-0002-6292-9056" title="" class="ltx_ref orcid">Maria Chernyavskaya</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Department of Astronomy and Planetary Science, Northern Arizona University
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2604.27420v1/mailto:mc3944@nau.edu">mc3944@nau.edu</a>
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Erin Clark
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Department of Astronomy and Planetary Science, Northern Arizona University
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2604.27420v1/mailto:emc635@nau.edu">emc635@nau.edu</a>
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Graceson Mule
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">School of Informatics, Computing, and Cyber Systems, Northern Arizona University
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2604.27420v1/mailto:gjm256@nau.edu">gjm256@nau.edu</a>
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Savannah Chappus
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">School of Informatics, Computing, and Cyber Systems, Northern Arizona University
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2604.27420v1/mailto:sjc497@nau.edu">sjc497@nau.edu</a>
+</span></span></span>
+</div>
+
+<div id="abstract1" class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">The Solar System Notification Alert Processing System, SNAPS,
+is a downstream broker that ingests moving object data from ZTF and LSST and serves these data and derived properties to the public.
+This document describes how users can access our SNAPS data and products. This is intended to be a living document that will be updated on the arXiv when significant improvements are made to our data access schemes, and will therefore always contain the most up to date information about interacting with our databases and infrastructure. This is version 1.0.</p>
+</div>
+<div class="ltx_keywords">sky surveys (1464) — astronomy databases (83) — asteroids (72)
+</div>
+<span id="id1" class="ltx_note ltx_note_frontmatter ltx_role_facilities"><sup class="ltx_note_mark">†</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">†</sup><span class="ltx_note_type">facilities: </span>ZTF, LSST</span></span></span><span id="id2" class="ltx_note ltx_note_frontmatter ltx_role_software"><sup class="ltx_note_mark">†</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">†</sup><span class="ltx_note_type">software: </span>astropy <cite class="ltx_cite ltx_citemacro_citep">(Astropy Collaboration<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib3" title="Astropy: A community Python package for astronomy" class="ltx_ref">2013</a>, <a href="#bib.bib2" title="The Astropy Project: Building an Open-science Project and Status of the v2.0 Core Package" class="ltx_ref">2018</a>, <a href="#bib.bib1" title="The Astropy Project: Sustaining and Growing a Community-oriented Open-source Project and the Latest Major Release (v5.0) of the Core Package" class="ltx_ref">2022</a>)</cite>, LSP-GPU <cite class="ltx_cite ltx_citemacro_citep">(Gowanlock<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib12" title="Fast period searches using the lomb–scargle algorithm on graphics processing units for large datasets and real-time applications" class="ltx_ref">2021</a>)</cite>, plotly <cite class="ltx_cite ltx_citemacro_citep">(Plotly Technologies Inc., <a href="#bib.bib13" title="Collaborative data science" class="ltx_ref">2015</a>)</cite>, SciPy <cite class="ltx_cite ltx_citemacro_citep">(Virtanen<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib14" title="SciPy 1.0: Fundamental Algorithms for Scientific Computing in Python" class="ltx_ref">2020</a>)</cite></span></span></span>
+<div id="p1" class="ltx_para">
+<p id="p1.1" class="ltx_p">show]david.trilling@nau.edu</p>
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">I </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.1" class="ltx_p">Astronomy is now a “big data” science, with peta-scale surveys collecting all-sky data that a large user base can access for a wide range of investigations. The arrival of the Legacy Survey of Space and Time (LSST), which will be carried out with the Vera C. Rubin Observatory in Chile, will be the largest-yet survey.
+This project will observe
+some 20,000 deg<sup id="S1.p1.1.1" class="ltx_sup">2</sup> many times over ten years and will produce a catalog of some 40 billion astronomical sources, including 5 million Solar System objects and around 500 million moving object observations
+<cite class="ltx_cite ltx_citemacro_citep">(LSST Science Collaboration<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib16" title="LSST Science Book, Version 2.0" class="ltx_ref">2009</a>; Ivezić<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib15" title="LSST: From Science Drivers to Reference Design and Anticipated Data Products" class="ltx_ref">2019</a>)</cite>.
+To carry out science with such large-scale surveys, comprehensive software infrastructure is required, and the LSST project has championed the concept of “brokers,” which ingest data from an alert stream and serve a subset of this data and derived products to users interested in specific topics.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.1" class="ltx_p">Here we present a description of the public-facing aspects of the Solar System Notification Alert Processing System (SNAPS).
+SNAPS is the only Solar System-dedicated broker in the LSST ecosystem. The architecture of SNAPS, as well as some early science and our first data release (SNAPShot1, or SS1), are presented in
+<cite class="ltx_cite ltx_citemacro_citet">Trilling<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib5" title="The Solar System Notification Alert Processing System (SNAPS): Design, Architecture, and First Data Release (SNAPShot1)" class="ltx_ref">2023</a>)</cite>.
+In this paper we briefly describe what SNAPS does and does not do (Section <a href="#S2" title="II Brief summary of SNAPS ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">II</span></a>), and then present details of our web service and interface (Section <a href="#S3" title="III Public access to SNAPS ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III</span></a>). In Section <a href="#S4" title="IV Future work ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">IV</span></a> we briefly describe the timelines and goals for future science and technical steps.</p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p id="S1.p3.1" class="ltx_p">The first version of this document will be submitted to the arXiv in April, 2026.
+Subsequent significant updates to SNAPS infrastructure will be described in future versions of this paper, which we will place on the arXiv to supersede earlier versions. Thus, the arXiv link and DOI associated with this document are intended to be the permanent reference to SNAPS, and SNAPS users are requested to cite either or both this paper and our SNAPS architecture paper
+<cite class="ltx_cite ltx_citemacro_citep">(Trilling<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib5" title="The Solar System Notification Alert Processing System (SNAPS): Design, Architecture, and First Data Release (SNAPShot1)" class="ltx_ref">2023</a>)</cite>. This document is paper version 1.0.</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">II </span>Brief summary of SNAPS </h2>
+
+<div id="S2.p1" class="ltx_para">
+<p id="S2.p1.1" class="ltx_p">SNAPS is purpose-built to provide a number of products and access to the potential user community, but, naturally, it cannot provide all things to all people. Here we briefly describe what SNAPS is and does, and what it does not do.</p>
+</div>
+<div id="S2.p2" class="ltx_para">
+<p id="S2.p2.1" class="ltx_p">SNAPS generally operates as a “downstream” broker. This means that rather than listening to the complete outgoing alert stream from LSST or similar surveys <cite class="ltx_cite ltx_citemacro_citep">(such as the Zwicky Transient Facility (ZTF), Bellm<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib6" title="The Zwicky Transient Facility: System Overview, Performance, and First Results" class="ltx_ref">2019</a>)</cite>, we instead listen to a re-broadcast of Solar System-only alerts that is distributed by the ANTARES broker
+<cite class="ltx_cite ltx_citemacro_citep">(Matheson<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib7" title="The ANTARES Astronomical Time-domain Event Broker" class="ltx_ref">2021</a>)</cite>. Therefore, SNAPS does not handle any sources that are not already designated as known moving objects (generally Solar System objects, but interstellar objects can also be present in the stream).</p>
+</div>
+<div id="S2.p3" class="ltx_para">
+<p id="S2.p3.1" class="ltx_p">The core SNAPS processing tasks are the following. (1) SNAPS ingests data — typically as alerts — from all-sky surveys such as ZTF and LSST. We store observational data (RA, Dec, time, magnitude), meta-data (elongation of the source, FWHM, etc.), and postage stamps (science image, template image, and difference image) for each observation. A user can retrieve these values for any individual measurement or set of measurements (e.g., all measurements for a given object). We ingest data for known asteroids and known comets (and interstellar objects). Data from each survey is separately stored in our database — there are separate ZTF and LSST tables/collections — though future work includes retrieving merged data records (example: a query for all data on a given object, from any survey).
+(2) SNAPS detects individual outliers, which are objects whose attributes have changed since its last observation. The most obvious example here is an asteroid that shows new signs of activity. The details of these detection algorithms will be presented in subsequent papers. (3) SNAPS detects population outliers, which are objects whose properties are intrinsically unusual. Several algorithms can be used to detect these outliers, as summarized in <cite class="ltx_cite ltx_citemacro_citet">Gowanlock<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib8" title="The Solar System Notification Alert Processing System (SNAPS): Asteroid Population Outlier Detection" class="ltx_ref">2024</a>)</cite>.
+(4) SNAPS serves these results to interested users in various ways, as described in this paper.</p>
+</div>
+<div id="S2.p4" class="ltx_para">
+<p id="S2.p4.1" class="ltx_p">What SNAPS does not do includes the following. (1) We do not carry out orbit linking to
+match new observations to previously known objects. We do not ingest any observations that are not associated with known objects.
+(Note that this limitation means that the first few observations of newly discovered objects likely will not be present in our database, though in principle these could be recovered after the fact.)
+We do not discover Solar System bodies.
+(2) We do not look for orbit changes of any kind.
+(3) We do not ingest or serve any data related to non-moving objects.</p>
+</div>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">III </span>Public access to SNAPS </h2>
+
+<div id="S3.p1" class="ltx_para">
+<p id="S3.p1.1" class="ltx_p">The two primary methods of interacting with our SNAPS database are through our web page and through our API.
+Generally, web and API access divide the use cases between “browsing” or investigating an individual object of interest, through our web page, or “bulk analysis” — for example, to study a group of objects — through the API.
+At the moment, our web page allows “browse”-level access, as is described here. In the near future, when our API is functional and public-facing, an updated version of this paper will be published in which that “bulk”-level analysis is described.</p>
+</div>
+<div id="S3.p2" class="ltx_para">
+<p id="S3.p2.1" class="ltx_p">The SNAPS webpage includes a user-friendly interface to browse our database catalog, observation data, and view postage stamps. This web portal can be found at <a href="https://snaps.nau.edu/" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://snaps.nau.edu/</a> . The webpage is supported by two backend databases: (1) An Oracle database to store user-specific structured data such as recent queries, favorites, among others. (2) A Mongo database that supports querying our ingested alerts from various catalogs, our data releases, and derived properties, among others records.</p>
+</div>
+<div id="S3.p3" class="ltx_para">
+<p id="S3.p3.1" class="ltx_p">The core functionality of our webpage is described as follows.</p>
+</div>
+<div id="S3.p4" class="ltx_para">
+<ul id="S3.I1" class="ltx_itemize">
+<li id="S3.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i1.p1" class="ltx_para">
+<p id="S3.I1.i1.p1.1" class="ltx_p">Users can create a free account, which enables storing “Favorites” and recent queries. Users who are not logged in are somewhat rate-limited to mitigate denial-of-service attacks and other malicious interactions.
+Users who are logged in have a more generous access privileges, but some protections still exist; “power users” can contact us to discuss further relief of these limitations.</p>
+</div>
+</li>
+<li id="S3.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i2.p1" class="ltx_para">
+<p id="S3.I1.i2.p1.1" class="ltx_p">Individual objects can be queried based on their number (example: asteroid 12345), their provisional designation
+(example: 1995 UW49), or their packed designation (example:
+J95U49W). The search bar has string completion to suggest objects in our database that begin with the input characters.</p>
+</div>
+</li>
+<li id="S3.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i3.p1" class="ltx_para">
+<p id="S3.I1.i3.p1.1" class="ltx_p">At present, users can query either the ZTF catalog or the LSST catalog. At present, the ZTF catalog is divided into numbered objects (collections referred to as SNAPShot1 or SNAPShot2) or “provisional” objects (those objects that have not yet been assigned a number).
+(Future work includes a “joint query” where observations and properties for a given asteroid that includes data from any/all surveys in our catalogs will be reported.)</p>
+</div>
+</li>
+<li id="S3.I1.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i4.p1" class="ltx_para">
+<p id="S3.I1.i4.p1.1" class="ltx_p">The search query returns all observations from that collection for that object:
+a unique identifier (ZTFid, ssObjectId if from LSST, etc.), time, magnitude, error, filter, and geometric values (example: heliocentric and geocentric distances and phase angle).
+For each observation, H (Solar System absolute magnitude) in the observed band is calculated using the HG system <cite class="ltx_cite ltx_citemacro_citep">(Bowell<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib17" title="Application of photometric models to asteroids." class="ltx_ref">1989</a>)</cite>.
+We also report orbital elements and other data from the Minor Planet Center (MPC).</p>
+</div>
+</li>
+<li id="S3.I1.i5" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i5.p1" class="ltx_para">
+<p id="S3.I1.i5.p1.1" class="ltx_p">In addition to this,
+for objects with more than 50 observations
+we also show derived data products
+(example: phase slope parameter G, lightcurve period and amplitude, and derived color in all relevant filter combinations).</p>
+</div>
+</li>
+<li id="S3.I1.i6" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i6.p1" class="ltx_para">
+<p id="S3.I1.i6.p1.1" class="ltx_p">Our webpage also includes a robust plot functionality to view observational records (absolute magnitude as a function of time), phased lightcurve (absolute magnitude as a function of phase), and phase curve (reduced magnitude as a function of phase angle) plots.
+The plot windows are interactive (through the <span id="S3.I1.i6.p1.1.1" class="ltx_text ltx_font_typewriter">plotly</span> technology), allowing zooming, downloading the plot as PNG, selecting/unselecting observations in any reported filter, and so on.</p>
+</div>
+</li>
+<li id="S3.I1.i7" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i7.p1" class="ltx_para">
+<p id="S3.I1.i7.p1.1" class="ltx_p">Our webpage also supports on-the-fly period finding using the Lomb-Scargle algorithm <cite class="ltx_cite ltx_citemacro_citep">(Lomb, <a href="#bib.bib10" title="Least-squares frequency analysis of unequally spaced data" class="ltx_ref">1976</a>; Scargle, <a href="#bib.bib11" title="Studies in astronomical time series analysis. ii-statistical aspects of spectral analysis of unevenly spaced data" class="ltx_ref">1982</a>)</cite> across a user-selected range of periods and date ranges. The result is a periodogram. Users can rephase the observed data to a peak period solution from the periodogram, or any other custom period. This task runs in the browser.</p>
+</div>
+</li>
+<li id="S3.I1.i8" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i8.p1" class="ltx_para">
+<p id="S3.I1.i8.p1.1" class="ltx_p">For users who are logged in, all recent queries are stored in our database and shown on the homepage
+(for example, to run the same query at a future time).</p>
+</div>
+</li>
+<li id="S3.I1.i9" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i9.p1" class="ltx_para">
+<p id="S3.I1.i9.p1.1" class="ltx_p">We also include a functionality for users to “favorite” an object and add notes regarding the observations.</p>
+</div>
+</li>
+<li id="S3.I1.i10" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i10.p1" class="ltx_para">
+<p id="S3.I1.i10.p1.1" class="ltx_p">We allow users to view the postage stamps for all observations with time stamps. We use JS9 to support showing the postage stamps in FITS format and allow downloads as well. Some in-browser interactivity is allowed through the JS9 interface. For all observations we serve three postage stamps: science, template, and difference images.</p>
+</div>
+</li>
+<li id="S3.I1.i11" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i11.p1" class="ltx_para">
+<p id="S3.I1.i11.p1.1" class="ltx_p">Lastly, our webpage lists
+some our publications and includes funding acknowledgments.
+We also have a contact form for users to communicate suggestions, queries, or requests, and to report any issues.</p>
+</div>
+</li>
+</ul>
+</div>
+<div id="S3.p5" class="ltx_para">
+<p id="S3.p5.1" class="ltx_p">As of this writing, our comet
+functionality is not fully mature. Users can query comets in the “Provisional/ZTF” query (LSST is not yet serving comet data),
+and magnitude as a function of time will be reported,
+but
+as of this writing no comets have more than 50 observations, so we do not serve any derived properties.</p>
+</div>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">IV </span>Future work </h2>
+
+<div id="S4.p1" class="ltx_para">
+<p id="S4.p1.1" class="ltx_p">There are two key feature upgrades that are coming in the near future.
+(1) We have an internal-only API that has limited functionality; in the near future we will make this public-facing so that external users can interact with our databases in “bulk query” mode. This will address several of the limitations described above. This paper will be updated when this external-facing API is functioning.
+(2) We will start to publish an outgoing Kafka stream that reports unusual objects. There are two categories of unusual, or outlier, asteroids: individual outliers, whose properties have changed compared historical observations (example: asteroids that start to show activity), and population outliers, which are asteroids whose properties are intrinsically different from those of other asteroids. The methodology for our population outlier detection pipeline is described in <cite class="ltx_cite ltx_citemacro_citet">Gowanlock<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib8" title="The Solar System Notification Alert Processing System (SNAPS): Asteroid Population Outlier Detection" class="ltx_ref">2024</a>)</cite>. We are currently developing the algorithmic methodology for detecting individual outliers.
+This paper will be updated when the Kafka stream is live.</p>
+</div>
+<div id="S4.p2" class="ltx_para">
+<p id="S4.p2.1" class="ltx_p">Alongside those future upgrades we will make several updates to the webpage as follows: (1) Allowing queries based on object properties rather than solely querying based on object identifiers. (2) Posting individual and population outlier rankings. Furthermore, in the future we will (3) implement cross-catalog queries.</p>
+</div>
+<div id="S4.p3" class="ltx_para">
+<p id="S4.p3.1" class="ltx_p">For the foreseeable future, ZTF will continue to operate an all-sky survey that will produce alerts. We will continue to ingest alerts from ZTF into our database.
+The LSST survey will begin in 2026, and alert stream production will probably ramp up as more and better template images become available. Within the first year of full-scale LSST operations, several million asteroids will be observed <cite class="ltx_cite ltx_citemacro_citep">(Kurlander<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib9" title="Predictions of the LSST Solar System Yield: Near-Earth Objects, Main Belt Asteroids, Jupiter Trojans, and Trans-Neptunian Objects" class="ltx_ref">2025</a>)</cite>, almost all of which will be new discoveries.</p>
+</div>
+<div id="S4.p4" class="ltx_para">
+<p id="S4.p4.1" class="ltx_p">Our team is working on a number of science and computer science projects that will be published in the near future. These include identifying a number of asteroids and asteroid populations of interest and the implementation of new algorithms to define the fidelity of asteroid period solutions.</p>
+</div>
+<div id="S4.acknowledgements1" class="ltx_acknowledgements">We acknowledge support from NASA award
+80NSSC25K7728,
+NSF awards 2042155 and 2206796, and DOE/LLNL award B657367.
+This work is supported by the Arizona Board of Regents and the Technology Research Initiative Research Fund (TRIF) Small Research Equipment Acquisition Program (SREAP).
+We thank NAU’s Chris Coffey for his exemplary leadership of our High Performance Computing facility. We thank Andrew McNeill (BGSU) for many useful discussions about the direction and utility of SNAPS.
+
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul id="bib.L1" class="ltx_biblist">
+<li id="bib.bib2" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Astropy Collaboration, A. M. Price-Whelan, B. M. Sipőcz, H. M. Günther, P. L. Lim, S. M. Crawford, S. Conseil, D. L. Shupe, M. W. Craig, N. Dencheva, A. Ginsburg, J. T. VanderPlas, L. D. Bradley, D. Pérez-Suárez, M. de Val-Borro, T. L. Aldcroft, K. L. Cruz, T. P. Robitaille, E. J. Tollerud, C. Ardelean, T. Babej, Y. P. Bach, M. Bachetti, A. V. Bakanov, S. P. Bamford, G. Barentsen, P. Barmby, A. Baumbach, K. L. Berry, F. Biscani, M. Boquien, K. A. Bostroem, L. G. Bouma, G. B. Brammer, E. M. Bray, H. Breytenbach, H. Buddelmeijer, D. J. Burke, G. Calderone, J. L. Cano Rodríguez, M. Cara, J. V. M. Cardoso, S. Cheedella, Y. Copin, L. Corrales, D. Crichton, D. D’Avella, C. Deil, É. Depagne, J. P. Dietrich, A. Donath, M. Droettboom, N. Earl, T. Erben, S. Fabbro, L. A. Ferreira, T. Finethy, R. T. Fox, L. H. Garrison, S. L. J. Gibbons, D. A. Goldstein, R. Gommers, J. P. Greco, P. Greenfield, A. M. Groener, F. Grollier, A. Hagen, P. Hirst, D. Homeier, A. J. Horton, G. Hosseinzadeh, L. Hu, J. S. Hunkeler, Ž. Ivezić, A. Jain, T. Jenness, G. Kanarek, S. Kendrew, N. S. Kern, W. E. Kerzendorf, A. Khvalko, J. King, D. Kirkby, A. M. Kulkarni, A. Kumar, A. Lee, D. Lenz, S. P. Littlefair, Z. Ma, D. M. Macleod, M. Mastropietro, C. McCully, S. Montagnac, B. M. Morris, M. Mueller, S. J. Mumford, D. Muna, N. A. Murphy, S. Nelson, G. H. Nguyen, J. P. Ninan, M. Nöthe, S. Ogaz, S. Oh, J. K. Parejko, N. Parley, S. Pascual, R. Patil, A. A. Patil, A. L. Plunkett, J. X. Prochaska, T. Rastogi, V. Reddy Janga, J. Sabater, P. Sakurikar, M. Seifert, L. E. Sherbert, H. Sherwood-Taylor, A. Y. Shih, J. Sick, M. T. Silbiger, S. Singanamalla, L. P. Singer, P. H. Sladen, K. A. Sooley, S. Sornarajah, O. Streicher, P. Teuben, S. W. Thomas, G. R. Tremblay, J. E. H. Turner, V. Terrón, M. H. van Kerkwijk, A. de la Vega, L. L. Watkins, B. A. Weaver, J. B. Whitmore, J. Woillez, V. Zabalza, and Astropy Contributors (2018)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Astropy Project: Building an Open-science Project and Status of the v2.0 Core Package</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">156</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. 123</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/aabc4f" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">1801.02634</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#id2" title="The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_title">The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products</span></a>.
+</span>
+</li>
+<li id="bib.bib1" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Astropy Collaboration, A. M. Price-Whelan, P. L. Lim, N. Earl, N. Starkman, L. Bradley, D. L. Shupe, A. A. Patil, L. Corrales, C. E. Brasseur, M. Nöthe, A. Donath, E. Tollerud, B. M. Morris, A. Ginsburg, E. Vaher, B. A. Weaver, J. Tocknell, W. Jamieson, M. H. van Kerkwijk, T. P. Robitaille, B. Merry, M. Bachetti, H. M. Günther, T. L. Aldcroft, J. A. Alvarado-Montes, A. M. Archibald, A. Bódi, S. Bapat, G. Barentsen, J. Bazán, M. Biswas, M. Boquien, D. J. Burke, D. Cara, M. Cara, K. E. Conroy, S. Conseil, M. W. Craig, R. M. Cross, K. L. Cruz, F. D’Eugenio, N. Dencheva, H. A. R. Devillepoix, J. P. Dietrich, A. D. Eigenbrot, T. Erben, L. Ferreira, D. Foreman-Mackey, R. Fox, N. Freij, S. Garg, R. Geda, L. Glattly, Y. Gondhalekar, K. D. Gordon, D. Grant, P. Greenfield, A. M. Groener, S. Guest, S. Gurovich, R. Handberg, A. Hart, Z. Hatfield-Dodds, D. Homeier, G. Hosseinzadeh, T. Jenness, C. K. Jones, P. Joseph, J. B. Kalmbach, E. Karamehmetoglu, M. Kałuszyński, M. S. P. Kelley, N. Kern, W. E. Kerzendorf, E. W. Koch, S. Kulumani, A. Lee, C. Ly, Z. Ma, C. MacBride, J. M. Maljaars, D. Muna, N. A. Murphy, H. Norman, R. O’Steen, K. A. Oman, C. Pacifici, S. Pascual, J. Pascual-Granado, R. R. Patil, G. I. Perren, T. E. Pickering, T. Rastogi, B. R. Roulston, D. F. Ryan, E. S. Rykoff, J. Sabater, P. Sakurikar, J. Salgado, A. Sanghi, N. Saunders, V. Savchenko, L. Schwardt, M. Seifert-Eckert, A. Y. Shih, A. S. Jain, G. Shukla, J. Sick, C. Simpson, S. Singanamalla, L. P. Singer, J. Singhal, M. Sinha, B. M. Sipőcz, L. R. Spitler, D. Stansby, O. Streicher, J. Šumak, J. D. Swinbank, D. S. Taranu, N. Tewary, G. R. Tremblay, M. de Val-Borro, S. J. Van Kooten, Z. Vasović, S. Verma, J. V. de Miranda Cardoso, P. K. G. Williams, T. J. Wilson, B. Winkel, W. M. Wood-Vasey, R. Xue, P. Yoachim, C. Zhang, A. Zonca, and Astropy Project Contributors (2022)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Astropy Project: Sustaining and Growing a Community-oriented Open-source Project and the Latest Major Release (v5.0) of the Core Package</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">935</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 167</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-4357/ac7c74" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2206.14220</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#id2" title="The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_title">The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products</span></a>.
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Astropy Collaboration, T. P. Robitaille, E. J. Tollerud, P. Greenfield, M. Droettboom, E. Bray, T. Aldcroft, M. Davis, A. Ginsburg, A. M. Price-Whelan, W. E. Kerzendorf, A. Conley, N. Crighton, K. Barbary, D. Muna, H. Ferguson, F. Grollier, M. M. Parikh, P. H. Nair, H. M. Unther, C. Deil, J. Woillez, S. Conseil, R. Kramer, J. E. H. Turner, L. Singer, R. Fox, B. A. Weaver, V. Zabalza, Z. I. Edwards, K. Azalee Bostroem, D. J. Burke, A. R. Casey, S. M. Crawford, N. Dencheva, J. Ely, T. Jenness, K. Labrie, P. L. Lim, F. Pierfederici, A. Pontzen, A. Ptak, B. Refsdal, M. Servillat, and O. Streicher (2013)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Astropy: A community Python package for astronomy</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">A&amp;A</span> <span class="ltx_text ltx_bib_volume">558</span>, <span class="ltx_text ltx_bib_pages"> pp. A33</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1051/0004-6361/201322068" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">1307.6212</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#id2" title="The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_title">The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products</span></a>.
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">E. C. Bellm, S. R. Kulkarni, M. J. Graham, R. Dekany, R. M. Smith, R. Riddle, F. J. Masci, G. Helou, T. A. Prince, S. M. Adams, C. Barbarino, T. Barlow, J. Bauer, R. Beck, J. Belicki, R. Biswas, N. Blagorodnova, D. Bodewits, B. Bolin, V. Brinnel, T. Brooke, B. Bue, M. Bulla, R. Burruss, S. B. Cenko, C. Chang, A. Connolly, M. Coughlin, J. Cromer, V. Cunningham, K. De, A. Delacroix, V. Desai, D. A. Duev, G. Eadie, T. L. Farnham, M. Feeney, U. Feindt, D. Flynn, A. Franckowiak, S. Frederick, C. Fremling, A. Gal-Yam, S. Gezari, M. Giomi, D. A. Goldstein, V. Z. Golkhou, A. Goobar, S. Groom, E. Hacopians, D. Hale, J. Henning, A. Y. Q. Ho, D. Hover, J. Howell, T. Hung, D. Huppenkothen, D. Imel, W. Ip, Ž. Ivezić, E. Jackson, L. Jones, M. Juric, M. M. Kasliwal, S. Kaspi, S. Kaye, M. S. P. Kelley, M. Kowalski, E. Kramer, T. Kupfer, W. Landry, R. R. Laher, C. Lee, H. W. Lin, Z. Lin, R. Lunnan, M. Giomi, A. Mahabal, P. Mao, A. A. Miller, S. Monkewitz, P. Murphy, C. Ngeow, J. Nordin, P. Nugent, E. Ofek, M. T. Patterson, B. Penprase, M. Porter, L. Rauch, U. Rebbapragada, D. Reiley, M. Rigault, H. Rodriguez, J. van Roestel, B. Rusholme, J. van Santen, S. Schulze, D. L. Shupe, L. P. Singer, M. T. Soumagnac, R. Stein, J. Surace, J. Sollerman, P. Szkody, F. Taddia, S. Terek, A. Van Sistine, S. van Velzen, W. T. Vestrand, R. Walters, C. Ward, Q. Ye, P. Yu, L. Yan, and J. Zolkower (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Zwicky Transient Facility: System Overview, Performance, and First Results</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">PASP</span> <span class="ltx_text ltx_bib_volume">131</span> (<span class="ltx_text ltx_bib_number">995</span>), <span class="ltx_text ltx_bib_pages"> pp. 018002</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1088/1538-3873/aaecbe" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">1902.01932</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p2.1" title="II Brief summary of SNAPS ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib17" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">E. Bowell, B. Hapke, D. Domingue, K. Lumme, J. Peltoniemi, and A. W. Harris (1989)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Application of photometric models to asteroids.</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Asteroids II</span>,  <span class="ltx_text ltx_bib_editor">R. P. Binzel, T. Gehrels, and M. S. Matthews (Eds.)</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 524–556</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.I1.i4.p1.1" title="In III Public access to SNAPS ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4th item</span></a>.
+</span>
+</li>
+<li id="bib.bib12" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Gowanlock, D. Kramer, D. E. Trilling, N. R. Butler, and B. Donnelly (2021)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Fast period searches using the lomb–scargle algorithm on graphics processing units for large datasets and real-time applications</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Astronomy and Computing</span> <span class="ltx_text ltx_bib_volume">36</span>, <span class="ltx_text ltx_bib_pages"> pp. 100472</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#id2" title="The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_title">The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products</span></a>.
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Gowanlock, D. E. Trilling, D. Kramer, M. Chernyavskaya, and A. McNeill (2024)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Solar System Notification Alert Processing System (SNAPS): Asteroid Population Outlier Detection</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">168</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 56</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/ad4da5" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2405.20176</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p3.1" title="II Brief summary of SNAPS ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>,
+<a href="#S4.p1.1" title="IV Future work ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§IV</span></a>.
+</span>
+</li>
+<li id="bib.bib15" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Ž. Ivezić, S. M. Kahn, J. A. Tyson, B. Abel, E. Acosta, R. Allsman, D. Alonso, Y. AlSayyad, S. F. Anderson, J. Andrew, J. R. P. Angel, G. Z. Angeli, R. Ansari, P. Antilogus, C. Araujo, R. Armstrong, K. T. Arndt, P. Astier, É. Aubourg, N. Auza, T. S. Axelrod, D. J. Bard, J. D. Barr, A. Barrau, J. G. Bartlett, A. E. Bauer, B. J. Bauman, S. Baumont, E. Bechtol, K. Bechtol, A. C. Becker, J. Becla, C. Beldica, S. Bellavia, F. B. Bianco, R. Biswas, G. Blanc, J. Blazek, R. D. Blandford, J. S. Bloom, J. Bogart, T. W. Bond, M. T. Booth, A. W. Borgland, K. Borne, J. F. Bosch, D. Boutigny, C. A. Brackett, A. Bradshaw, W. N. Brandt, M. E. Brown, J. S. Bullock, P. Burchat, D. L. Burke, G. Cagnoli, D. Calabrese, S. Callahan, A. L. Callen, J. L. Carlin, E. L. Carlson, S. Chandrasekharan, G. Charles-Emerson, S. Chesley, E. C. Cheu, H. Chiang, J. Chiang, C. Chirino, D. Chow, D. R. Ciardi, C. F. Claver, J. Cohen-Tanugi, J. J. Cockrum, R. Coles, A. J. Connolly, K. H. Cook, A. Cooray, K. R. Covey, C. Cribbs, W. Cui, R. Cutri, P. N. Daly, S. F. Daniel, F. Daruich, G. Daubard, G. Daues, W. Dawson, F. Delgado, A. Dellapenna, R. de Peyster, M. de Val-Borro, S. W. Digel, P. Doherty, R. Dubois, G. P. Dubois-Felsmann, J. Durech, F. Economou, T. Eifler, M. Eracleous, B. L. Emmons, A. Fausti Neto, H. Ferguson, E. Figueroa, M. Fisher-Levine, W. Focke, M. D. Foss, J. Frank, M. D. Freemon, E. Gangler, E. Gawiser, J. C. Geary, P. Gee, M. Geha, C. J. B. Gessner, R. R. Gibson, D. K. Gilmore, T. Glanzman, W. Glick, T. Goldina, D. A. Goldstein, I. Goodenow, M. L. Graham, W. J. Gressler, P. Gris, L. P. Guy, A. Guyonnet, G. Haller, R. Harris, P. A. Hascall, J. Haupt, F. Hernandez, S. Herrmann, E. Hileman, J. Hoblitt, J. A. Hodgson, C. Hogan, J. D. Howard, D. Huang, M. E. Huffer, P. Ingraham, W. R. Innes, S. H. Jacoby, B. Jain, F. Jammes, M. J. Jee, T. Jenness, G. Jernigan, D. Jevremović, K. Johns, A. S. Johnson, M. W. G. Johnson, R. L. Jones, C. Juramy-Gilles, M. Jurić, J. S. Kalirai, N. J. Kallivayalil, B. Kalmbach, J. P. Kantor, P. Karst, M. M. Kasliwal, H. Kelly, R. Kessler, V. Kinnison, D. Kirkby, L. Knox, I. V. Kotov, V. L. Krabbendam, K. S. Krughoff, P. Kubánek, J. Kuczewski, S. Kulkarni, J. Ku, N. R. Kurita, C. S. Lage, R. Lambert, T. Lange, J. B. Langton, L. Le Guillou, D. Levine, M. Liang, K. Lim, C. J. Lintott, K. E. Long, M. Lopez, P. J. Lotz, R. H. Lupton, N. B. Lust, L. A. MacArthur, A. Mahabal, R. Mandelbaum, T. W. Markiewicz, D. S. Marsh, P. J. Marshall, S. Marshall, M. May, R. McKercher, M. McQueen, J. Meyers, M. Migliore, M. Miller, and D. J. Mills (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">LSST: From Science Drivers to Reference Design and Anticipated Data Products</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">873</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 111</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-4357/ab042c" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">0805.2366</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="I Introduction ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. A. Kurlander, P. H. Bernardinelli, M. E. Schwamb, M. Jurić, J. Murtagh, C. O. Chandler, S. R. Merritt, D. Nesvorný, D. Vokrouhlický, R. L. Jones, G. Fedorets, S. Cornwall, M. J. Holman, S. Eggl, D. Oldag, M. West, J. Kubica, P. Yoachim, J. Moeyens, K. Kiker, and L. E. Buchanan (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Predictions of the LSST Solar System Yield: Near-Earth Objects, Main Belt Asteroids, Jupiter Trojans, and Trans-Neptunian Objects</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">170</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 99</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/add685" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2506.02487</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.p3.1" title="IV Future work ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§IV</span></a>.
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">N. R. Lomb (1976)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Least-squares frequency analysis of unequally spaced data</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Astrophysics and space science</span> <span class="ltx_text ltx_bib_volume">39</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 447–462</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.I1.i7.p1.1" title="In III Public access to SNAPS ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">7th item</span></a>.
+</span>
+</li>
+<li id="bib.bib16" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">LSST Science Collaboration, P. A. Abell, J. Allison, S. F. Anderson, J. R. Andrew, J. R. P. Angel, L. Armus, D. Arnett, S. J. Asztalos, T. S. Axelrod, S. Bailey, D. R. Ballantyne, J. R. Bankert, W. A. Barkhouse, J. D. Barr, L. F. Barrientos, A. J. Barth, J. G. Bartlett, A. C. Becker, J. Becla, T. C. Beers, J. P. Bernstein, R. Biswas, M. R. Blanton, J. S. Bloom, J. J. Bochanski, P. Boeshaar, K. D. Borne, M. Bradac, W. N. Brandt, C. R. Bridge, M. E. Brown, R. J. Brunner, J. S. Bullock, A. J. Burgasser, J. H. Burge, D. L. Burke, P. A. Cargile, S. Chandrasekharan, G. Chartas, S. R. Chesley, Y. Chu, D. Cinabro, M. W. Claire, C. F. Claver, D. Clowe, A. J. Connolly, K. H. Cook, J. Cooke, A. Cooray, K. R. Covey, C. S. Culliton, R. de Jong, W. H. de Vries, V. P. Debattista, F. Delgado, I. P. Dell’Antonio, S. Dhital, R. Di Stefano, M. Dickinson, B. Dilday, S. G. Djorgovski, G. Dobler, C. Donalek, G. Dubois-Felsmann, J. Durech, A. Eliasdottir, M. Eracleous, L. Eyer, E. E. Falco, X. Fan, C. D. Fassnacht, H. C. Ferguson, Y. R. Fernandez, B. D. Fields, D. Finkbeiner, E. E. Figueroa, D. B. Fox, H. Francke, J. S. Frank, J. Frieman, S. Fromenteau, M. Furqan, G. Galaz, A. Gal-Yam, P. Garnavich, E. Gawiser, J. Geary, P. Gee, R. R. Gibson, K. Gilmore, E. A. Grace, R. F. Green, W. J. Gressler, C. J. Grillmair, S. Habib, J. S. Haggerty, M. Hamuy, A. W. Harris, S. L. Hawley, A. F. Heavens, L. Hebb, T. J. Henry, E. Hileman, E. J. Hilton, K. Hoadley, J. B. Holberg, M. J. Holman, S. B. Howell, L. Infante, Z. Ivezic, S. H. Jacoby, B. Jain, R, Jedicke, M. J. Jee, J. Garrett Jernigan, S. W. Jha, K. V. Johnston, R. L. Jones, M. Juric, M. Kaasalainen, Styliani, Kafka, S. M. Kahn, N. A. Kaib, J. Kalirai, J. Kantor, M. M. Kasliwal, C. R. Keeton, R. Kessler, Z. Knezevic, A. Kowalski, V. L. Krabbendam, K. S. Krughoff, S. Kulkarni, S. Kuhlman, M. Lacy, S. Lepine, M. Liang, A. Lien, P. Lira, K. S. Long, S. Lorenz, J. M. Lotz, R. H. Lupton, J. Lutz, L. M. Macri, A. A. Mahabal, R. Mandelbaum, P. Marshall, M. May, P. M. McGehee, B. T. Meadows, A. Meert, A. Milani, C. J. Miller, M. Miller, D. Mills, D. Minniti, D. Monet, A. S. Mukadam, E. Nakar, D. R. Neill, J. A. Newman, S. Nikolaev, M. Nordby, P. O’Connor, M. Oguri, J. Oliver, S. S. Olivier, J. K. Olsen, K. Olsen, E. W. Olszewski, H. Oluseyi, N. D. Padilla, A. Parker, J. Pepper, J. R. Peterson, C. Petry, P. A. Pinto, J. L. Pizagno, B. Popescu, A. Prsa, V. Radcka, M. J. Raddick, A. Rasmussen, A. Rau, J. Rho, J. E. Rhoads, G. T. Richards, S. T. Ridgway, B. E. Robertson, R. Roskar, A. Saha, A. Sarajedini, E. Scannapieco, T. Schalk, R. Schindler, and S. Schmidt (2009)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">LSST Science Book, Version 2.0</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv:0912.0201</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.48550/arXiv.0912.0201" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">0912.0201</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="I Introduction ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">T. Matheson, C. Stubens, N. Wolf, C. Lee, G. Narayan, A. Saha, A. Scott, M. Soraisam, A. S. Bolton, B. Hauger, D. R. Silva, J. Kececioglu, C. Scheidegger, R. Snodgrass, P. D. Aleo, E. Evans-Jacquez, N. Singh, Z. Wang, S. Yang, and Z. Zhao (2021)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The ANTARES Astronomical Time-domain Event Broker</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">161</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. 107</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/abd703" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2011.12385</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p2.1" title="II Brief summary of SNAPS ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib13" class="ltx_bibitem ltx_bib_website">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Plotly Technologies Inc. (2015)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_place">Montreal, QC</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://plot.ly" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#id2" title="The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_title">The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products</span></a>.
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. D. Scargle (1982)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Studies in astronomical time series analysis. ii-statistical aspects of spectral analysis of unevenly spaced data</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Astrophysical Journal, Part 1, vol. 263, Dec. 15, 1982, p. 835-853.</span> <span class="ltx_text ltx_bib_volume">263</span>, <span class="ltx_text ltx_bib_pages"> pp. 835–853</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.I1.i7.p1.1" title="In III Public access to SNAPS ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">7th item</span></a>.
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">D. E. Trilling, M. Gowanlock, D. Kramer, A. McNeill, B. Donnelly, N. Butler, and J. Kececioglu (2023)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Solar System Notification Alert Processing System (SNAPS): Design, Architecture, and First Data Release (SNAPShot1)</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">165</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. 111</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/acac7f" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2302.01239</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="I Introduction ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>,
+<a href="#S1.p3.1" title="I Introduction ‣ The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib14" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">P. Virtanen, R. Gommers, T. E. Oliphant, M. Haberland, T. Reddy, D. Cournapeau, E. Burovski, P. Peterson, W. Weckesser, J. Bright, S. J. van der Walt, M. Brett, J. Wilson, K. J. Millman, N. Mayorov, A. R. J. Nelson, E. Jones, R. Kern, E. Larson, C. J. Carey, İ. Polat, Y. Feng, E. W. Moore, J. VanderPlas, D. Laxalde, J. Perktold, R. Cimrman, I. Henriksen, E. A. Quintero, C. R. Harris, A. M. Archibald, A. H. Ribeiro, F. Pedregosa, P. van Mulbregt, and SciPy 1.0 Contributors (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">SciPy 1.0: Fundamental Algorithms for Scientific Computing in Python</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Nature Methods</span> <span class="ltx_text ltx_bib_volume">17</span>, <span class="ltx_text ltx_bib_pages"> pp. 261–272</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1038/s41592-019-0686-2" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#id2" title="The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products" class="ltx_ref"><span class="ltx_text ltx_ref_title">The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products</span></a>.
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2604.27420v1/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer><footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation">
+        </a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International">
+        </a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences">
+        </a>
+      </div>
+    </div>
+  </div>
+</footer><div id="fixed-buttons-container">
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>

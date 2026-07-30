@@ -1,0 +1,624 @@
+[2302.11086] MEGASIM: Distribution and Detection of Earth Trojan Asteroids
+
+MEGASIM: Distribution and Detection of Earth Trojan Asteroids
+
+Travis Yeager
+
+Lawrence Livermore National Laboratory
+7000 East Ave, Livermore
+Livermore, CA 94550, USA
+
+Nathan Golovich
+
+Lawrence Livermore National Laboratory
+7000 East Ave, Livermore
+Livermore, CA 94550, USA
+
+Kerianne Pruett
+
+Lawrence Livermore National Laboratory
+7000 East Ave, Livermore
+Livermore, CA 94550, USA
+
+Abstract
+Using N-body simulation results from the MEGASIM dataset , we present spatial distributions of Earth Trojan Asteroids and assess the detectability of the population in current and next-generation ground-based astronomical surveys (Yeager & Golovich, 2022a ) . Our high-fidelity Earth Trojan Asteroid (ETA) distribution maps show never-before-seen high-resolution spatial features that evolve over timescales up to 1 Gyr. The simulation was synchronized to start times and timelines of two observational astronomy surveys, 1) the Vera C. Rubin Observatory’s Legacy Survey of Space and Time (LSST) and 2) the Zwicky Transient Facility (ZTF). We calculate u pper limits for the number of ETAs potentially observable with both the ZTF and LSST surveys . Due to the Yarkovsky Effect, we find no stable ETAs on billion year timescales likely to be detected by any ETA survey, as no C-type or S-type ETAs (with H < 22 𝐻 22 H<22 and H < 24 𝐻 24 H<24 , respectively) are likely to be stable on billion year timescales , and ETAs large enough to remain stable on billion year timescales are very rare relative to the rest of the ETA population. We find that a twilight ETA survey will not drastically increase the likelihood of individual ETA detection, but would provide orders of magnitude more observations of select ETA populations. The null detection to date from ZTF restricts the potential ETA population to hundreds of objects larger than 100 meters (at H ≈ 22 𝐻 22 H\approx 22 , Lifset et al., 2021 ) , while a null detection by LSST will further restrict th e ETA population to tens of objects larger than 100 meters .
+
+Trojan asteroids, Earth Trojans — methods: numerical, N-body Problem
+
+\savesymbol
+tablenum
+
+\restoresymbol SIXtablenum
+
+1 Introduction
+
+Trojan asteroids 1 1 1 The term ‘Trojan’ generally refers to objects co-orbiting the Sun with Jupiter; however, given the general nature of these minor bodies across the Solar System, we use the term ‘Trojan’ generically to refer to which planet they co-orbit the Sun with . are a class of co-orbiting objects that librate about the L4 or L5 Lagrangian points within a planet’s orbit. Mapping the distributions of possible Earth Trojan Asteroids (ETAs) is important to guide observational searches , as ETAs may answer pressing science questions about how our Solar System and Moon were formed . Librations of ETAs can carry an asteroid nearly the entire distance between the planet they are co-orbiting with, and its L3 Lagrange point on the far side of the orbit behind the Sun. In a rotating reference frame, the gravitational potential lines look like tadpoles , where these tadpole orbits occupy a half-toroid al region, which includes either the L4 or L5 point within . The region of the sky where ETAs potentially exist is difficult to observe due to the low Solar elongation. The geometry also tends to have small reflection angles, making observations even more difficult from Earth. However, synoptic surveys such as those carried out by the Zwicky Transient Facility (ZTF, Bellm et al., 2018 ) and the Vera C. Rubin Observatory (LSST Science Collaboration et al., 2009 ; Jones et al., 2020 ) could still overcome the difficult observing conditions using numerous observations at the periphery of the ETA regime. Twilight surveys, in particular, could be powerful probes into the population of ETAs of interest; ZTF has been carrying out a twilight survey for years (see e.g., Ye et al., 2020 ) , and there is current discussion on whether or not the Rubin Observatory’s Legacy Survey of Space and Time (LSST) will or will not have a dedicated twilight survey (Seaman et al., 2018 ) .
+
+1.1 Scientific Impact of ETAs
+
+There are several potential sourcing mechanisms for Trojan asteroids : 1) they may be formed in the early proto-planetary disk near a planet’s L4 or L5 Lagrange point (Montesinos et al., 2020 ) , 2) they may be captured debris produced from major planetary impacts , and 3) they may be sourced from perturbed populations of asteroids elsewhere in the Solar System ( either during planetary migration or from ejected asteroids from the main-asteroid belt ) . The first two mechanisms would have occurred early in the formation of the Solar System, and we consider these to be “primordial” in nature. For ETAs, primordial sourcing through the impact hypothesis may also explain lunar formation. The giant impact hypothesis has been proposed, suggesting that a Mars-sized proto-planet could have formed in a stable orbit among debris , at either Earth’s L4 or L5 Lagrange point , and collided with proto-Earth from a 1 AU orbit in the solar nebula to form the M oon (Belbruno & Gott, 2005 ) . It is hypothesized that a debris cloud from such a collision could have provided a primordial source of ETAs (Canup, 2004 ) . If found, such a population of asteroids would offer a unique lens into the evolution of the early Solar System and the Earth - Moon system. The existence of primordial ETAs would offer ideal low - Δ ​ v Δ 𝑣 \Delta v targets for rendezvous missions to study the early inner S olar S ystem , especially the Earth-Moon system (Malhotra, 2019 ) . NASA ’s Lucy mission will soon begin its 12-year journey to several families of Jupiter Trojans, which will begin to answer many of the scientific questions we have discussed (Zhou et al., 2020 ) . While the Lucy mission is focused on primordial Jupiter Trojans, it may shed light on how scientifically rich these objects are, validating that future Earth Trojan missions will be important in understanding our Solar System.
+
+1.2 Observational ETA S earches
+
+Observers have searched for ETAs with a few relatively small astronomical twilight surveys (Whiteley & Tholen, 1998 ; Connors et al., 2000 ; Markwardt et al., 2020 ; Lifset et al., 2021 ) . Markwardt et al. ( 2020 ) and Lifset et al. ( 2021 ) were able to use a null detection to place competitive upper limits on the ETA population, predicting an L4 ETA population ( N E ​ T subscript 𝑁 𝐸 𝑇 {N}_{ET} ) of N E ​ T < 1 subscript 𝑁 𝐸 𝑇 1 {N}_{ET}<1 for absolute magnitude H = 14 𝐻 14 H=14 , N E ​ T < 10 subscript 𝑁 𝐸 𝑇 10 {N}_{ET}<10 for H = 16 𝐻 16 H=16 , and N E ​ T < 938 subscript 𝑁 𝐸 𝑇 938 {N}_{ET}<938 for H = 22 𝐻 22 H=22 . Efforts have been proposed on how to best observe the ETA population utilizing Solar System exploration missions (Cambioni et al., 2018 ; Yoshikawa et al., 2018 ; Malhotra, 2019 ) , ground-based telescopes (Todd et al., 2012 , 2014 ; Seaman et al., 2018 ; Ye et al., 2020 ) , and a near-Earth object (NEO) Surveyor Mainzer et al. ( 2021 ) which is planned to launch this decade to search for potentially hazardous asteroids , including ETAs.
+
+Currently, there are two known ETAs: 2010 T ​ K 7 𝑇 subscript 𝐾 7 TK_{7} and 2020 X ​ L 5 𝑋 subscript 𝐿 5 XL_{5} (Connors et al., 2011 ; de la Fuente Marcos & de la Fuente
+Marcos, 2021 ) 2 2 2 Both known ETAs are at Earth’s L4 Lagrange point. None have been found at L5. . Both ETAs librate far from the Lagrange points (i.e., they are transient in nature), and will only be co-orbiting with Earth for a short period of time compared to the age of the Solar System. Additionally, both known ETAs are on tadpole orbits that librate about Earth’s L4 Lagrange point, traversing much of the distance between Earth and Earth’s L3 Lagrange point behind the Sun. The orbits of both ETAs are stable on the order of thousands of years, with 2020 X ​ L 5 𝑋 subscript 𝐿 5 XL_{5} being the more stable of the two. 2020 X ​ L 5 𝑋 subscript 𝐿 5 XL_{5} was shown to likely have been captured in the 15th century and should remain stable for ∼ similar-to \sim 4000 years (Santana-Ros et al., 2022 ) .
+
+1.3 Previous ETA S imulations
+
+We refer readers to our previous work in analyzing the MEGASIM results (described in more detail in § 2 ) for an in-depth analysis on lifetime and stability of ETAs, including a detailed literature review (Yeager & Golovich, 2022a ) . Numerous additional ETA detectability studies have been carried out using numerical simulations , to understand and constrain ETA populations for guiding observers ( e.g., Wiegert et al., 2000 ; Evans & Tabachnik, 2000 ; Morais & Morbidelli, 2002 ; Todd et al., 2012 ; Zhou et al., 2019 ; Lifset et al., 2021 ; Napier et al., 2022 ) , and have typically centered around the questions of sourcing, lifetimes, stability zones, and observability of the stable population. Wiegert et al. ( 2000 ) produced spatial maps of time-averaged ETA positions from simulations of two synthetic populations of Earth Trojans by injecting co-orbiting Earth asteroids uniformly within the region between the L2 and L3 points. When viewing these ETA orbits from Earth, the resulting spatial density peak is a few degrees displaced toward the Sun from the L4 and L5 Lagrange points. Evans & Tabachnik ( 2000 ) and Morais & Morbidelli ( 2002 ) found stable zones with inclination between 10° and 45° , with a wide range of ecliptic longitudes encapsulating the L4 and L5 points , but spanning tens of degrees to either side of L4 or L5. Todd et al. ( 2012 ) modeled albedo, size, and orbital distributions of ETAs in an effort to define an ‘optimal’ search strategy for ETA detection , and based on their simulations, suggest a twilight observing campaign to search the wide swath of area that the ETAs in their simulation cover. The only known asteroid at the time of these simulations , 2010 ​ T ​ K 7 2010 𝑇 subscript 𝐾 7 2010TK_{7} , would have appeared in such a survey (Todd et al., 2012 ) . While currently known ETAs exhibit orbital stability on the order of thousands of years, objects librating about the Earth’s L4 or L5 Lagrange points can be stable on the order of millions or billions of years (Yeager & Golovich, 2022a ) . An ETA’s ability to remain stable depends on several factors, e.g., spin rate, shape, size, albedo, density, and surface conductivity , of which play a role in non-gravitational forces such as the Yarkovsky Effect. Smaller ETAs experience larger effects from Solar radiation, thus driving them from the co-orbital regime more quickly. Simulations by (Zhou et al., 2019 ) find that only ETAs larger than ∼ similar-to \sim 100 meters remain stable for 1 Gyr. Lifset et al. ( 2021 ) placed upper limit constraints on the number of ETAs in L4, as described in § 1.2 .
+
+In this paper, we study the MEGASIM data to assess the observability of ETAs in ongoing and upcoming synoptic surveys. In § 2 , we give a brief summary of the simulation details, and we describe our method of determining the flux of individual asteroids in the simulation. In § 3 , we present spatial distributions and discuss translating our simulation output into observational surveys. In § 4 , we present our results regarding the observability of ETAs in two synoptic surveys. Finally, in § 5 , we offer conclusions of our analysis.
+
+2 MEGASIM
+
+The Multitudinous Earth Greek Asteroid Simulation (MEGASIM), announced first in Yeager & Golovich ( 2022b ) , resulted in 11.2 million ETA orbits initialized on trajectories that span beyond the expected ETA stability regime around the L4 Lagrange point. The orbits have now been carried out to a maximum of 4.5 billion years, allowing a study of the longevity of ETA orbits.
+
+2.1 Initialization and Parallelization
+
+The MEGASIM data set consists of two distinct simulations , one using the WHFast integrator (Wisdom & Holman, 1991 ; Rein & Tamayo, 2015 ) , and the other using the IAS15 (Rein & Spiegel, 2015 ) integrator (see Yeager & Golovich ( 2022a ) for additional detail on these data sets) . This work focuses on the WHFast data set , as the WHFast integrator is significantly faster than other symplectic integrators, enabling us to integrate to the full 4.5 billion year age of the Solar System. To achieve parallelization, the 11.2 million ETA trajectories were placed into batches of 500, resulting in 22,400 parallel simulated S olar S ystems that were integrated forward in time . Each simulated S olar System is initialized with the Sun and eight planets (i.e., Mercury, Venus, Earth-Moon, Mars, Jupiter, Saturn, Uranus, and Neptune ), with initial planetary positions gathered from the JPL HORIZONS system 3 3 3 https://ssd.jpl.nasa.gov/horizons/ at an epoch of JD2459145.61625984 (Giorgini et al., 1996 ) . We utilized the Catalyst, Quartz, and Ruby clusters managed by Livermore Computing at Lawrence Livermore National Laboratory 4 4 4 https://hpc.llnl.gov/hardware/platforms/ruby .
+
+Each batch of asteroids were initialized with six orbital parameters selected from a random distribution, as described below. Each model was then integrated forward with REBOUND 5 5 5 https://github.com/hannorein/rebound ( Rein & Liu , 2012 ) . The integration time step was set to one-day, and position and velocity information for each simulation was output every 1000 years. Each ETA orbit was initialized with a true longitude ( θ 𝜃 \theta ) randomly and uniformly distributed between Earth and L3 (on the side of Earth’s orbit containing L4). The argument of pericenter and longitude of ascending node w ere randomly assigned values between 0 and 2 ​ π 2 𝜋 2\pi , assuming a uniform distribution. The semi-major axis ( a 𝑎 a ), eccentricity ( e > 0 𝑒 0 e>0 ), and inclination ( i 𝑖 i ) were sampled from a three-dimensional Gaussian with mean ( μ 𝜇 \mu ) and covariance ( Σ Σ \Sigma ) given in Equation   1 .
+
+𝝁 = ( a ¯ e ¯ i ¯ ) = ( 1 ​ AU 0 0 ​ ° ) ​ 𝚺 = ( 0.025 ​ AU 0 0 0 0.075 0 0 0 15 ​ ° ) . 𝝁 matrix ¯ 𝑎 ¯ 𝑒 ¯ 𝑖 matrix 1 AU 0 0 ° 𝚺 matrix 0.025 AU 0 0 0 0.075 0 0 0 15 ° \boldsymbol{\mu}=\begin{pmatrix}\bar{a}\\
+\bar{e}\\
+\bar{i}\end{pmatrix}=\begin{pmatrix}1\,\text{{\color[rgb]{0,0,0}AU}}\\
+0\\
+0\degree{}\end{pmatrix}~{}\boldsymbol{\Sigma}=\begin{pmatrix}0.025\,\text{{\color[rgb]{0,0,0}AU}}&0&0\\
+0&0.075&0\\
+0&0&15\degree{}\end{pmatrix}.
+
+(1)
+
+2.2 Modeling ETA intrinsic properties
+
+Every ETA in the MEGASIM is assigned an albedo, asteroid type, diameter, and absolute magnitude ( H 𝐻 H ). The albedo of the ETAs are randomly sampled from the distribution curve of near-Earth asteroids ( NEAs ) determined by Wright et al. ( 2016 ) , with a functional form given by Equation   2 . Wright et al. ( 2016 ) fit two Rayleigh distributions to the NEA data to get the albedo distribution: one Rayleigh distribution with a dark peak at 0.030 (accounting for 25.3% of the NEAs observed by WISE), and one with a bright peak at 0.168 (for the remaining 74.7% of the NEAs).
+
+p ​ ( p v ) = exp ⁡ ( − p v 2 2 ​ d 2 ) ​ f D ​ p v d 2 + exp ⁡ ( − p v 2 2 ​ b 2 ) ​ p v b 2 ​ ( 1 − f D ) 𝑝 subscript 𝑝 𝑣 subscript superscript 𝑝 2 𝑣 2 superscript 𝑑 2 subscript 𝑓 𝐷 subscript 𝑝 𝑣 superscript 𝑑 2 subscript superscript 𝑝 2 𝑣 2 superscript 𝑏 2 subscript 𝑝 𝑣 superscript 𝑏 2 1 subscript 𝑓 𝐷 p(p_{v})={\exp}\left(\dfrac{-p^{2}_{v}}{2d^{2}}\right)\frac{f_{D}p_{v}}{d^{2}}+{\exp}\left(\dfrac{-p^{2}_{v}}{2b^{2}}\right)\,\frac{p_{v}}{b^{2}}\,(1-f_{D})
+
+(2)
+
+where p 𝑝 p is the probability density function, p v subscript 𝑝 𝑣 p_{v} is the asteroid albedo, f D = 0.253 subscript 𝑓 𝐷 0.253 f_{D}=0.253 is the dark fraction , b = 0.168 𝑏 0.168 b=0.168 is the bright peak, and d = 0.030 𝑑 0.030 d=0.030 is the dark peak .
+
+The ‘type’ of the asteroid is either an ‘S’ (siliceous) or ‘C’ (carbonaceous) type and is determined via a second level of random sampling after the albedo is determined. The two Rayleigh functions that produce Equation   2 correspond to an ‘S’ or ‘C’ type asteroid. The height of each function is used to weight the random sample that determines whether an ETA is of ‘S’ or ‘C’ type , and the ETA type determines the correction magnitude for the final apparent brightness calculation.
+
+The asteroid diameter ( D ast subscript 𝐷 ast D_{\text{ast}} ) is obtained from magnitude ( H 𝐻 H ) and albedo ( p v subscript 𝑝 𝑣 p_{v} ) using Equation   3 .
+
+D ​ ast = 1329000 p v × 10 − 0.2 ​ H 𝐷 ast 1329000 subscript 𝑝 𝑣 superscript 10 0.2 𝐻 D\textsubscript{ast}=\frac{1329000}{\sqrt{p_{v}}}\times 10^{-0.2H}
+
+(3)
+
+H 𝐻 H was randomly sampled from an extended version of the distribution presented in Granvik et al. ( 2018 ) , which covered 17 < H < 25 17 𝐻 25 17<H<25 with a break in the power law slope at H = 23 𝐻 23 H=23 . To sample from the distribution, the number of asteroids at a given absolute magnitude was approximated using two linear functions, but we extrapolated the distribution to H = 28 𝐻 28 H=28 .
+
+The apparent magnitude ( m V subscript 𝑚 𝑉 m_{V} ) of each ETA is obtained via Equation   4 .
+
+m V = H + 5 ​ log ⁡ ( ) 10 ​ ( R A ​ S ​ R A ​ E R 0 2 ) − 2.5 ​ log ⁡ ( ) 10 ​ ( q ​ ( α ) ) subscript 𝑚 𝑉 𝐻 5 subscript absent 10 subscript 𝑅 𝐴 𝑆 subscript 𝑅 𝐴 𝐸 superscript subscript 𝑅 0 2 2.5 subscript absent 10 𝑞 𝛼 \displaystyle m_{V}=H+5\log{}_{10}\left(\frac{R_{AS}R_{AE}}{R_{0}^{2}}\right)-2.5\log{}_{10}\left(q(\alpha)\right)
+
+(4)
+
+where R A ​ S subscript 𝑅 𝐴 𝑆 R_{AS} is the distance between the Sun and the asteroid, R A ​ E subscript 𝑅 𝐴 𝐸 R_{AE} is the distance between the asteroid and the center of Earth, R 0 subscript 𝑅 0 R_{0} is a conversion factor of 1 AU to meters (the unit used for all distances), and q ​ ( α ) 𝑞 𝛼 q(\alpha) is the phase integral of a diffuse reflecting sphere given in Equation   5 .
+
+q ​ ( α ) = 2 3 ​ ( ( 1 − α 180 ​ ° ) ​ cos ⁡ ( α ) + 1 π ​ sin ⁡ ( α ) ) 𝑞 𝛼 2 3 1 𝛼 180 ° 𝛼 1 𝜋 𝛼 \displaystyle q(\alpha)=\frac{2}{3}\left(\left(1-\frac{\alpha}{180\degree}\right)\cos{\alpha}+\frac{1}{\pi}\sin{\alpha}\right)
+
+(5)
+
+where α 𝛼 \alpha is the phase angle between the Sun , Asteroid , and Earth.
+
+The magnitude of the Sun ( M S ​ u ​ n subscript 𝑀 𝑆 𝑢 𝑛 M_{Sun} ) is chosen to be 4.80 for calculations in this paper, which corresponds to the magnitude of the Sun in Johnson V-band (Willmer, 2018 ) . Corrections from the Johnson V - band to both the LSST and ZTF filters are calculated by DeMeo et al. ( 2009 ) , Chance & Kurucz ( 2010 ) , and Chesley & Veres ( 2017 ) , the values of which are provided in Table   1 .
+
+Table 1: LSST Color Corrections
+
+Class
+V-u
+V-g
+V-r
+V-i
+V-z
+V-y
+
+C
+-1.614
+-0.302
+0.172
+0.291
+0.298
+0.303
+
+S
+-1.927
+-0.395
+0.255
+0.455
+0.401
+0.406
+
+Note. — Johnson V-band to LSST filter system color corrections.
+
+2.3 The LSST and ZTF Surveys
+
+We use the LSST v2.2 baseline and twilight OpSim runs 6 6 6 https://www.lsst.org/scientists/simulations/opsim (‘lsst_no_twilight_neo_v2.2’ and ‘twi_neo_repeat4_riz_v2.2_10yrs’, respectively), as well as all ZTF observations spanning dates 2018-03-17 to 2022-06-01 (LSST project, 2022 ; Bellm et al., 2018 ) , as the survey data for our analysis (see section 4 ). The number of observations in the LSST baseline OpSim was 2,259,570 and twilight 2,078,065. We filter down the ZTF data set to only include 30-second exposures taken by the Palomar P48 observing system, and we use both public survey data and private institutional partnership observational data. The resulting dataset consists of 706,459 30-second observations.
+
+2.4 Estimating Survey Losses
+
+To be considered a detection, one of two conditions must be satisfied: 1) three pairs of observations (at minimum) are required within a month-long rolling window, or 2) two observations are required within one hour of one another. These conditions are reasonable for orbit fitting between observations (e.g., Jedicke, 2006 ; Denneau et al., 2009 ) and are to be used by LSST (Jones et al., 2018 ) . Survey detections can be lost from non-ideal conditions such as observation linking, trailing losses from streaking across a detector (i.e., the CCD), and chip gaps between pixels on the detector. Loss of detection due to the gaps between CCD pixels is accounted for via random sampling. A ‘fill factor’, i.e., the ratio of total pixel area to total CCD area, is used to approximate the likelihood that an asteroid would fall between pixels. The fill factor for LSST is 0.877, and for ZTF is 0.875 (Jones et al., 2018 ; Bellm et al., 2018 )
+
+Table 2: Simulation Parameters
+
+Parameter
+Units
+LSST
+ZTF
+
+Exposure Time
+seconds
+30
+30
+
+Pixel Scale
+
+arcsec pixel − 1 superscript pixel 1 \text{pixel}^{-1}
+
+0.2
+1.0
+
+Read Noise
+
+e − superscript e \text{e}^{-} pixel − 1 superscript pixel 1 \text{pixel}^{-1}
+
+8.8
+8.0
+
+Dark Current
+
+e − superscript e \text{e}^{-} pixel − 1 superscript pixel 1 \text{pixel}^{-1} s − 1 superscript s 1 \text{s}^{-1}
+
+0.2
+1.0
+
+Gain
+
+e − superscript e \text{e}^{-} ADU − 1 superscript ADU 1 \text{ADU}^{-1}
+
+2.3
+6.2
+
+Aperture ∗
+
+meters
+6.423
+0.4165
+
+PSF FWHM
+arcsec
+0.87
+2.0
+
+Sky Brightness
+AB mag arcsec − 2 superscript arcsec 2 \text{arcsec}^{-2}
+
+u=22.8
+g=20.75
+
+g=22.3
+r=20.23
+
+r=21.2
+i=19.57
+
+i=20.5
+
+z=19.6
+
+Y=18.6
+
+Note. — ∗ Mean effective diameter of light collecting region. LSST is assumed to have a perfectly circular field-of-view, while ZTF is assumed to be a perfect square.
+
+To estimate trailing losses (i.e., the loss in flux from streaking over the detector) due to asteroid streaking over an exposure, we run an exposure time calculator using simulation parameter values from Table 2 , to determine the limiting magnitude for each survey filter (i.e., u-, g-, r-, i-, z-, and Y-band for LSST, and g-, r-, and i-band for ZTF), over the set of possible angular rates (75 angular rates equally spaced between 0.1 0.1 0.1 and 1.0 1.0 1.0 arcseconds per second). We assume that the LSST and ZTF surveys are operating in their traditional pipeline settings, in which observations are fit using a PSF (even though the ETA is streaking across the detector) 7 7 7 Worth noting is that you can get a significant increase in asteroid detectability by fitting images with a streak profile. . For both surveys, the detection limit is set to 5 ​ σ 5 𝜎 5\sigma , and the exposure time is 30 seconds. LSST baseline atmospheric throughput (with aerosols) 8 8 8 atmos_std.dat from https://github.com/lsst/throughputs is used for both the LSST and ZTF simulations. ZTF simulations use the Palomar ZTF total throughput data (i.e., filter + sensor) for the g-, r-, and i- bands 9 9 9 From http://svo2.cab.inta-csic.es/svo/theory/fps3 , and LSST simulations use total throughput for the u-, g-, r-, i-, z-, and Y-bands 10 10 10 ‘filter_ ∗ ∗ \ast .dat’ from https://github.com/lsst/throughputs . For LSST we assume a pixel scale of 0.2 arcseconds per second, read noise of 8.8 electrons per pixel, dark current of 0.2 electrons per pixel per second, gain of 2.3 photoelectrons per count, effective telescope diameter of 6.423 meters, and a point-spread function (PSF) full-width half-max (FWHM) of 0.87 arcseconds (all of which are publicly reported 11 11 11 https://www.lsst.org/scientists/keynumbers ). The corresponding values for ZTF are 1.0, 8.0, 1.0, 6.2, 0.4165, and 2.0, respectively (Dekany et al., 2020 ) . LSST sky brightness values are taken from the reported sky count numbers at the time of the simulations 12 12 12 https://smtn-002.lsst.io (values are occasionally updated). . ZTF sky brightness values are calculated by convolving the 50th percentile dark sky spectral energy distribution as a function of wavelength (from the Gemini Near-Infrared Instrument) with each ZTF passband (recalibrated using an AB magnitude zero-point), to determine the median magnitude of the sky brightness per filter 13 13 13 Note that we use the same dark sky values for the LSST twilight survey and baseline survey . We then determine whether our simulated asteroids would be detected by the given survey or not by cutting out any ETA whose observation falls above the limiting magnitude for that angular rate and filter combination.
+
+2.5 Translating MEGASIM Orbits to Survey Pointings
+
+Of the 11.2 million MEGASIM initialized orbits, only those stable for a minimum of 15,000 years ( ∼ similar-to \sim 368,287 ETA orbits) were propagated through the survey simulations. This propagation uses a maximum time step of 30 seconds, and is integrated to the exact time of each simulated LSST and ZTF observation time 14 14 14 The time of each simulated observation comes from OpSim for our simulated LSST surveys, and real observation times are taken for our simulated ZTF survey . If observation times are shorter than the 30 second timestep, then we integrate to the exact timestep of the exposure. To simulate how many MEGASIM ETAs could be detected in the LSST and ZTF surveys, we propagate the simulation forwards or backwards from t 0 subscript 𝑡 0 t_{0} =JD2459145.61625984 (the time that our surveys are initialized at) to the start date of the respective surveys; for LSST, forward propagation was done to sync with the start date of the LSST OpSim , and backward propagation was done to sync the Solar System with the beginning of the ZTF survey. The shifting of initialization resulted in on-sky errors of the order 10 − 6 superscript 10 6 10^{-6} ° in right ascension (R.A.) and 6 × 10 − 7 6 superscript 10 7 6\times 10^{-7} ° in declination (Dec.). A maximum error in pointing of 2.25 arcseconds in R.A. and Dec. occurred over the course of the entire simulation. Considering the effective field-of-view diameters of 1.75° for LSST and 3.4° for ZTF, the deviations between the simulated and true positions do not significantly affect results.
+
+Once the MEGASIM simulated Solar System reaches the timestamp of a given survey pointing, a check is done to determine which ETAs are at an R.A. and Dec. within the observations field-of-view. To simplify this check, a circle is used to approximate the field-of-view of LSST and a square for ZTF. The effective circle for LSST is taken to be of radius 1.75°, and for ZTF, the square has side lengths of 3.428° and an area of 47 sq degrees. ETAs found within a survey’s field-of-view are then cataloged. A further check is then done to determine if the ETA in the field-of-view is bright enough to be detected by the telescope. If the ETA apparent magnitude is brighter than the 5 σ 𝜎 \sigma sensitivity for that exposure, it is cataloged as a detection.
+
+2.6 Generating Detection Statistics
+
+To place statistical weights on ETA detections in the LSST and ZTF surveys, detections in each survey simulation were recalculated by assigning all ETAs a new magnitude ( H 𝐻 H ), diameter ( D ast subscript 𝐷 ast D_{\text{ast}} ), and albedo ( p v subscript 𝑝 𝑣 p_{v} ). New ETA properties are obtained via resampling the H 𝐻 H and p v subscript 𝑝 𝑣 p_{v} distributions laid out in § 2.2 , enabling ETA resampling and detection determination in post without needing to re-simulate all of the ETA trajectories. This resampling was completed 1000 times for each LSST Opsim and ZTF pointing. In each step of the resampling, a unique detection list was created following the procedure described above.
+
+3 Distributions of ETAs
+
+3.1 MEGASIM coordinates
+
+The Cartesian coordinates of the MEGASIM are aligned with aspects of the S olar S ystem as it was on t 0 subscript 𝑡 0 t_{0} =JD2459145.61625984. The X-axis is aligned with the vernal equinox at simulation time t 𝑡 t = t 0 subscript 𝑡 0 t_{0} , with both the X - and Y-axis in the plane of the ecliptic. The Z-axis is aligned with the ecliptic north pole. We define a rotating ecliptic spherical coordinate system centered on Earth. The Sun’s latitude and longitude are always at the origin in this rotating frame, and the idealized L4 point is at (0°, 60°). This simplifies the analysis by allowing us to simply stack parallel simulations with one another , while also satisf ying the goal of forecasting ETA observability .
+
+Figure 1: Stacked map of ETA positions from the WHFast integrated simulation (including all ETAs , with a point at every 100 kyr , up to 1 Gyr. The ecliptic coordinates are explained in Section 3.1 . The Sun is at the origin, the black dot is L4 at (0°,60°), and the red cross indicates the location of highest density, which is 7° offset from L4 Sun-ward . The bin counts are scaled to the bin with the highest density.
+
+3.2 Stacked D istribution M aps
+
+Figure   1 shows the number density of all ETA positions stacked in 100 kyr intervals , up to 1 Gyr. As ETAs are removed from the MEGASIM due to instability, they no longer contribute to these maps. Unstable orbits are more numerous , but offer significantly shorter trajectories than the few orbits that are stable on long timescales. Th is figure is presented in the ecliptic rotating coordinate system discussed above. The black circle is the L4 point (0°,60°), and the red cross is the bin with the highest number of ETAs. The peak density is 7° Sun-ward , offset from L4. The se results are largely consistent with a similar figure from Wiegert et al. ( 2000 ) , but with a much higher resolution. The stacked 2 D histograms reveal the large on-sky area over which ETAs can travel, but for the most part, ETAs are found within 10° of the ecliptic. There are several bands of higher and lower stability , which are more evident in later figures with different coordinates presented. Worth noting are the ridges and gaps above and below the ecliptic plane at longitudes between ∼ similar-to \sim 20° and ∼ similar-to \sim 50°, as well as wings that flare away from the ecliptic at longitudes beyond L4 , as these features have not been resolved in previous simulations .
+
+Figure 2: A difference map produced by weighting ETA trajectories by apparent magnitude, binning into a 2 D histogram, normalizing all bins such that the heights exist in the range of 0 to 1 , then subtracting off the bin heights from Figure   1 . The yellow shades indicate where ETA apparent magnitude weighting is positive, green is near zero, and purple is negative. The black circle is the L4 point, and the red cross shows the location of the highest deviation from the density plot in Figure   1 . The peak of the flux-weighted density map is located 6.5° Sun-ward from L4.
+
+Weighting the stacked ETA trajectories from Figure   1 by their apparent magnitude has only a minor effect in determining where they may be observed. If the ETA on-sky positions are weighted by their flux, the location of the peak density is only shifted by about 0.5°. One - dimensional cuts on ecliptic longitude and latitude of Figure   1 are shown in Figure   3 . The notable features are a steep fall off as the ecliptic latitude increases , a local minimum at ∼ similar-to \sim 40° , and local maximum ∼ similar-to \sim 35° ecliptic longitude. In Figure   2 we show the difference obtained from the ETA trajectories by weighting observations by brightness (i.e., apparent magnitude) , binning data into a 2D histogram , and renormalizing bin values into the range of 0 to 1 and taking the difference (see Figure   1 ) . ETAs interior to L4 are generally fainter than the density map would suggest (hence the blue patch interior to the L4 point). This is due to the majority of ETAs in this portion of the sky existing at fairly far distances from Earth, resulting in lower apparent magnitude. Those found in the region exterior to L4 from the Sun tend to be close to their nearest approach to Earth on their trajectory. The phase angle in the brightest region does result in a reduction of apparent magnitude, but the effect is sub-dominate to the proximity effect with Earth. For observing considerations, the region behind L4 is much easier to observe due to the greater solar elongation ( compared to trying to observe the generally fainter ETAs interior on the sky to L4 ) .
+
+Figure 3: One degree slices of figure   1 in both latitude and longitude. The y-ax e s are the percent of ETA trajectories found for a given one degree thick cross section in figure   1 .
+
+Figure   4 shows the projected density of stacked ETA positions in the ecliptic plane , and reveals that ETA trajectories extend into the S olar S ystem as far as the orbit of Venus , span ning the full range of longitudes from Earth to L3. As one would expect, the highest ETA densities are found around L4, but slightly counterclockwise from L4, which agrees with the location indicated in Figure   1 . Measuring an angle counter-clockwise from Earth (the blue dot at the top of Figure   4 ) , the highest density of ETAs is located about 5° from L4, towards the Earth. ETA density around the peak remains within 10% of the peak as close as 45° out to about 80° from Earth. From 90° to 105°, there is a region of reduced ETA density before another local maximum in ETA density found near 115-120° from Earth.
+
+Figure 4: A top-down view of the S olar S ystem. The Sun is at (0,0), and the concentric black circles starting nearest the Sun indicate the approximate orbits of Mercury, Venus, Earth, and Mars. Radial dashed lines are provided for angular reference at 30°, 45°, 60°, 75°, 90°, 105°, 120°, 135°, and 150° measured counter-clockwise from the location of Earth in the figure. Binning is done following the same process as Figure   1
+
+3.3 Distribution of B illion Y ear S table ETAs
+
+Figure   5 shows single snapshots in time , for only those ETAs that have survived at least 1 Gyr of the MEGASIM integration. The top panels are the initial positions of all billion year (Gyr) stable ETAs, and the bottom panels are 100 Myr after the initial positions . To state the most obvious first, Gyr-stable ETAs are of low inclination and do not extend beyond 10°ecliptic latitude. The spatial distribution, unsurprisingly, does not span far from that of Earth’s orbit. The same density ridges and gaps seen in Figure   4 persist in the Gyr stable orbits. The tail of the ETA distribution is within the drawn circular Earth orbit at 100 Myr, shown in the bottom right panel of Figure   5 . Other snapshots in time reveal the distribution of ETAs oscillates in and outside of the drawn circular orbit of Earth , at a frequency higher than the simulation output of 1000 years. This indicates that there is a bulk forcing of the ETA population throughout their libration trajectories i.e., all ETAs are moving together as a relatively cohesive unit, and that distribution wobbles around together with a wave like pattern, as they move with Earth in its orbit) .
+
+4 Results: The D etection Prediction of ETAs in ZTF and LSST S urveys
+
+4.1 Detection S tatistics and C umulative C ounts
+
+Figure   6 shows the percentage of ETAs by filter type, split between the ZTF survey (blue), LSST twilight survey (yellow), and LSST baseline survey (green). The r-band filter for LSST and g-band filter for ZTF are the most successful at detecting ETAs , and ZTF’s g-band detects more ETAs than LSST’s g-band. Of the 706,459 ZTF pointings used , 38.57% ( 272,541) were in g-band, 56.99% ( 402,632) in r-band, and 4.43% ( 31,286) in i-band. For the LSST baseline OpSim results , 18.67% ( 387,928), 21.71% ( 451,222), 22.66% ( 470,990), 19.61% ( 407,434), 10.96% ( 227,705), and 6.39% ( 132,786) pointings were in the u-, g-, r-, i-, z-, and y-bands, respectively (and the twilight simulation follows roughly the same distribution) . The ratio of the number of g-band and r-band observations by LSST are of unity but g-band provides an order of magnitude fewer detections than ZTF.
+
+Figure 5: The distributions of only those ETAs that survive at least 1 Gyr of the simulation. The top panels represent the initial positions of all ETAs that are stable for at least 1 Gyr, while the bottom panels show 100 Myr after those initial positions . In each panel, the black dot is the approximate location of L4, the red cross is the bin with the highest Gyr ETA density, and the circles are at the semi-major axis distances of Mercury, Venus, Earth, and Mars. The location of the highest Gyr ETA density oscillates between 45°-70° latitude on-sky and in the X-Y plane, travels as close as 45° leading Earth to as far as 90°.
+
+Figure 6: Detected ETAs by survey and filter type. Bins are normalized to the total propagated 1 Myr stable ETA trajectories (368,287 ETAs ).
+
+The cumulative number of ETA detections for ZTF and the LSST OpSim results are provided in Figure   8 , and the cumulative percent of the ETA population that is detected over the survey time are shown in Figure   7 . The rate ZTF detects ETAs is roughly the same as the baseline LSST OpSim result . The simulated t wilight LSST survey captures approximately four times the number of ETA detections as the LSST baseline or ZTF.
+
+In Figure   9 , we show the relative detection rate for each survey by month. Variations occur in the detection rate of ETAs as the time a telescope can be on target toward L4 varies over the year Whiteley & Tholen ( 1998 ) . Beyond the variable detection rate, ZTF finds the most ETAs between approximately June and December (with nearly the same number of ETAs detected between August and November ) , whereas LSST makes the most ETA detections from approximately January to June (with the most ETAs detected in the month of April) . These differences are due to the different hemispheres of each observatory, which changes the time of year L4 is visible.
+
+The number of distinct detections per asteroid , per survey , is shown in Figure   10 . There is a stark difference between the two LSST surveys. This is because the twilight survey observes lower Solar elongations nightly, which is capable of recovering the same asteroid thousands of times as it slowly librates through the twilight survey footprint. The ZTF survey also has a twilight survey, which explains the few instances of an ETA being detected thousands of times; however, it is far less sensitive, so this only works for a few bright ETAs. The baseline LSST survey recovers many asteroids numerous times (as many as 2000 times, which is far more than typical NEAs are recovered) , but not nearly as many as the LSST OpSim twilight survey results . Jones et al. ( 2018 ) estimate that typical NEOs are recovered ∼ similar-to \sim 100 times.
+
+Figure 7: The cumulative percentage of unique ETA s detect ed (from a population of 368,287 ETAs) made by each survey for the fiducial simulation.
+
+Figure 8: The cumulative number of ETA detections made by each survey for the fiducial simulation.
+
+Figure 9: The normalized number of detections by month , made by each survey.
+
+Figure 10: Asteroid recovery by each survey.
+
+Figure   11 shows the distribution of H 𝐻 H for unique detected ETAs. Unique detections by ZTF are few and do not occur for H > 20.5 𝐻 20.5 H>20.5 . For LSST, there is very little difference in the distribution of H 𝐻 H when comparing the baseline and twilight OpSim surveys. LSST makes the bulk of detections in the range 21 < H < 25 21 𝐻 25 21<H<25 , though some detections are made up to H < 27.5 𝐻 27.5 H<27.5 . This suggests that ETAs come close enough to Earth to be detected by LSST at extremely faint magnitudes, which is a statement of the Rubin Observatory’s sensitivity and observing pattern .
+
+Figure 11: Detected ETA percentage as a function of H 𝐻 H . Bins are normalized to the total propagated 1 Myr stable ETA trajectories (368,287 ETAs ).
+
+The apparent magnitudes (irrespective of filter) of the ETAs detected by LSST baseline, LSST twilight , and ZTF surveys are provided in Figure   12 . ZTF cannot detect any ETAs beyond an apparent magnitude ( m a ​ p ​ p subscript 𝑚 𝑎 𝑝 𝑝 m_{app} ) of 21, while most LSST observations are at apparent magnitudes between H = 𝐻 absent H= 21 and H = 𝐻 absent H= 23. Detections of ETAs quickly fall off after an apparent magnitude of H = 𝐻 absent H= 23 but are still possible by LSST out to H = 𝐻 absent H= 24.3. The LSST twilight survey is unsurprisingly much more successful at repeatedly detecting ETAs at m a ​ p ​ p > 21 subscript 𝑚 𝑎 𝑝 𝑝 21 m_{app}>21 . The LSST baseline and twilight are similar in detections of unique ETAs, but twilight produces more than an order of magnitude more repeat detections.
+
+Figure 12: Total number of ETA detections , as a function of apparent magnitude, per survey.
+
+Figure   13 shows that the proper motions of detected ETAs peak s at 0.05 arcseconds per second, with an extremely sharp fall-off tail reaching 0.2 arcseconds per second . The LSST baseline made the fastest ETA detection , at 0.3 arcseconds per second . However , the LSST twilight survey’s overall proper motion distribution is very similar to that of the baseline survey . The on-sky speed is typical of ETAs at their closest approach to Earth. ZTF, with a larger field - of - view, still failed to capture any ETAs moving faster than 0.10 arcseconds per second . This speaks more to the apparent magnitude limit of ZTF than LSST; if ZTF could make more detections, a similar ly small fraction would be expected up to proper motions of 0.3 arcseconds per second .
+
+Figure 13: Total ETA detections , as a function of ETA proper motion , per survey.
+
+Figure   14 shows the distance an ETA is from Earth at the time of detection. ZTF can make ETA detections out to 1.7 AU, the practical limit due to the angle of S olar elongation becoming too small. As seen in the X-Y map of ETA trajectories in Figure   4 , ETAs travel out to L3 ( behind the Sun as viewed from Earth ) , though detections cannot be made from Earth beyond a distance of 1.75 AU, as the line of sight is too near the Sun and neither LSST nor ZTF point at solar elongations less than 36°. ZTF detects ∼ similar-to \sim 5-10x fewer ETAs , at all distances , compared to LSST’s baseline and twilight survey s . The LSST baseline is nearly 1:1 with the twilight survey for ETA detections at 0.75 AU and closer. However, a significant deviation in detections occurs beyond 0.75 AU , where the LSST twilight survey becomes much more successful at detecting ETAs. The ZTF survey probes a few degrees closer to the Sun than the LSST twilight survey , allowing a few more detect ions at distances out to 1.75 AU .
+
+Figure 14: All detected ETAs , as a function of distance from the Earth ( in units of AU), per survey .
+
+Figure 15: 2 D histograms of detected ETA distributions. Values are binned into a 50x50 grid . The three columns from left to right are for ZTF, LSST twilight, and LSST baseline surveys. The three rows are:
+1) X vs. Y; top-down view of the S olar S ystem with the Sun at (0,0) and from the left to right in the grey circles are the approximate orbits of Mars, Earth, Venus, and Mercury. The frame is such that the position of Earth is fixed to the point (-1,0). The markers for the other planets are not their true position , but denote the orbits.
+2) Latitude vs. longitude; this is an on-sky coordinate system viewed from Earth, the same as used in Figure   1 . The Sun is fixed at (0°,0°), and L4 is at (0°,60°), denoted by a red dot.
+3) R.A. vs. Dec.
+
+Figure   15 shows three different views (one in each row) of the ETA detection distributions for the three surveys (one in each column). The top row shows the distribution of ETA detections viewed from the pole of the Solar System. The middle row shows the distribution as viewed from Earth, where (0 ° ,0 ° ) is the position of the Sun and (0 ° ,60 ° ) is the L4 point. The bottom row shows the R.A. and Dec. of the ETA detections. All three surveys can detect ETAs within similar X-Y bounds, as seen in the top row of the figure. The detections made by ZTF all occur closer to the orbit of Earth, with approximately an even number of observations made over all distances from Earth. This is due to ZTF only picking up a few relatively bright ETAs , but observing them repeatedly over a large libration about L4. Comparing the LSST baseline and twilight results, a stark difference is seen in the X-Y detection distribution , as the twilight survey successfully detects many more ETAs at solar elongations of 30-35 ° ( which correspond to distances of 0.75 AU to 1.7 AU away from Earth . The increased bright region in the middle column of the first two rows of Figure   15 corresponds to the increased number of twilight detections between 0.75 and 1.50 AU in Figure   14 . The ability for a survey to make more observations at solar elongations within L4 significantly increases detections of ETAs. The R.A. and Dec. distribution follows the ecliptic but also re-highlights that ZTF observes ETAs between June and December, and LSST, because of its southern latitude, observes the L4 ETAs from January to late June.
+
+Figure 16: The fraction of simulated ETAs detected in each survey. In green is the LSST v2.2 baseline, orange is the LSST twilight, and blue is ZTF. The gray line represents the median ETA absolute magnitude distribution, with a 68% CI shown as error bars. The 68% CI fractional survey completeness is shown by the dotted lines. The fainter end of these distributions will weaken due to streaking.
+
+4.2 D etectable F raction of the ETA P opulation by LSST and ZTF
+
+The fraction of ETAs detected per survey was determined for 1000 bootstrap samples of the respective ETA populations. In Figure   16 , the survey completeness for ETA detections as a function of H 𝐻 H is shown. The gray line represents the median simulated ETA H 𝐻 H distribution, with the 68% confidence interval (CI) shown as error bars. The median survey completeness is shown as solid color lines. The 68% confidence intervals are shown as dotted lines. Low number statistics at the bright end of the H 𝐻 H distribution tend to cause an all-or-nothing detection of ETAs ( resulting in wide error bars between 0 and 1) for the survey completeness 15 15 15 Larger asteroids correspond to lower magnitudes, but larger asteroids are more rare, meaning you aren’t always likely to get a larger asteroid in the resample. If you do get a large asteroid you will almost certainly detect it, but if you don’t then you are unlikely to get that detection. This leads to this ‘all-or-nothing’ error profile, but reflects the rarity of large asteroids, rather than defects in the observational surveys. . The upper left panel illustrates that the median number of detected ETAs for each survey is zero for H < 18 𝐻 18 H<18 , due to the fact that brighter ETAs are very rare. However, this does not suggest that LSST and ZTF would fail to detect such bright ETAs , but rather that the occurrence of a bright ETA within the survey footprint is rare in our bootstrap sampling procedure. As the simulation time progresses, the low number statistics become more prominent for smaller and smaller (originally more numerous) ETAs. In the bottom right panel, no ETAs with H < 19 𝐻 19 H<19 are present in any of the bootstrapped populations.
+
+The subpanels of Figure   16 show the fractional completeness for a series of different stability subgroups of ETAs that were selected by their lifetime in the MEGASIM. ETAs were removed from the MEGASIM if they crossed the plane perpendicular to the ecliptic that intersects the Earth and L3. In the MEGASIM, only gravitational forces were used to compute the motion of the ETAs. Additional forces, such as thermal effects like the Yarkovsky effect, would, in reality, further reduce the number of ETA trajectories that remain on long timescales ( especially for smaller asteroids ) . For orbits that persist on Myr timescales, additional forces are negligible. If an orbit persists on the order of 1 Gyr, ETAs with smaller diameters ( ∼ 100 similar-to absent 100 \sim 100 meters) will be pushed out of their tadpole -shaped stability regime s Zhou et al. ( 2019 ) . The corresponding absolute magnitude for 140 meter asteroids is approximately H = 20.1 𝐻 20.1 H=20.1 and H = 22.2 𝐻 22.2 H=22.2 , for C-type and S-type ETAs , respectively . In the lower right panel of Figure   16 , the only detections that remain are fainter than these limits.
+
+4.3 Estimating the U pper L imit of the ETA P opulation
+
+Figure   17 is the cumulative upper limit for the ETA population determined via the fractional completeness curve. Following the method of Markwardt et al. ( 2020 ) , we determine the upper limit population allowable assuming a null detection of ETAs in each survey. We assume a null detection for ZTF, meaning we do not believe ZTF has detected any ETAs. Borrowed from the aforementioned method, we also consider a null detection for LSST, where the simulated detection is considered within 3 σ 𝜎 \sigma (standard deviations) of the simulation results (which happens out to H=19 for the twilight survey, and H=20 for the baseline survey). We calculate the upper limit using Equation   6 , where U ​ ( H ) 𝑈 𝐻 U(H) is the upper limit at a given absolute magnitude, f ​ ( H ) 𝑓 𝐻 f(H) is the fraction of ETAs detected at a given absolute magnitude, and the 3 in the numerator implies the upper limit is within 3 σ 𝜎 \sigma of the null detection.
+
+U ​ ( H ) = 3 f ​ ( H ) 𝑈 𝐻 3 𝑓 𝐻 U(H)=\frac{3}{f(H)}
+
+(6)
+
+Figure   16 shows U ​ ( H ) 𝑈 𝐻 U\left(H\right) for the same four stability regimes shown previously. In Figure   16 , there are portions of the completeness curves that are zero, which results in infinite error bars. To handle this, undefined lower or upper error bars resulting from divi ding by zero are replaced by -3 or +3, respectively.
+
+4.4 The Yarkovsky Effect and ETA Detections
+
+In the MEGASIM, only gravitational forces were used to propagate the ETA orbits. Here we estimate the number of gravitationally stable ETAs that may be driven unstable by non-gravitational effects. The dominant additional force to consider is the Yarkovsky Effect (e.g., Chesley et al., 2003 ) , which causes asteroids to rotate and increase their semi-major axis due to Solar radiation pressure. Simulations of ETA orbits with the Yarkovsky Effect included were done by Zhou et al. ( 2019 ) . The Yarkovsky Effect’s strength depends on the shape, albedo distribution, surface conductivity, spin, and density of a given asteroid. The additional force from the Yarkovsky Effect was found to remove ETAs within 1 Gyr , for ETAs with diameters smaller than 130 m eter or 90 m eter, for prograde and retrograde rotation, respectively (Zhou et al., 2019 ) .
+
+To estimate the changes to our survey completeness curves that the Yarkovsky Effect would impose, a cut-off on the simulated ETA population was made using both the lifetime and diameter of a given ETA. To estimate the removal rate of gravitationally stable ETAs via the Yarkovsky Effect in the MEGASIM, we use an ETA diameter cutoff ( D unstable subscript 𝐷 unstable D_{\text{unstable}} ) provided by Equation   7 .
+
+D unstable = l ​ i ​ f ​ e ​ t ​ i ​ m ​ e 100 ​ m 1 ​ G ​ y ​ r subscript 𝐷 unstable 𝑙 𝑖 𝑓 𝑒 𝑡 𝑖 𝑚 subscript 𝑒 100 𝑚 1 𝐺 𝑦 𝑟 D_{\text{unstable}}=\frac{lifetime_{100m}}{1\,\,Gyr}
+
+(7)
+
+where l ​ i ​ f ​ e ​ t ​ i ​ m ​ e 100 ​ m 𝑙 𝑖 𝑓 𝑒 𝑡 𝑖 𝑚 subscript 𝑒 100 𝑚 lifetime_{100m} is the time a 100 meter diameter ETA remained bound to L4 in the MEGASIM for one Gyr. Equation   7 is a simple approximation for the ETA diameter cutoff, given the results of Zhou et al. ( 2019 ) , who estimate that ETAs of diameter 100m (on average, given prograde and retrograde spins) will be driven unstable, and removed from the gravitational potential well (thus no longer being Earth Trojan asteroids) by 1 Gyr. We assume this linear approximation to estimate the number of smaller ETAs affected on shorter time scales . If an ETA is bigger than this D unstable subscript 𝐷 unstable D_{\text{unstable}} cutoff, it remains stable, while an ETA with a smaller diameter is assumed to be removed from the population, and therefore, not detectable .
+
+In a few percent of the resampled runs , some ETAs with lifetimes greater than 750 Myr should have been removed due to the Yarkovsky Effect . However, t he number of ETAs detected in the resamples , within a confidence interval of 68% , were essentially unaffected by the Yarkovsky effect , as it is not strong enough to drastically change our estimated survey detections at these timescales . This is due to the fact that our detected ETAs are either too large (i.e., the diameter of ETAs just large enough to be detected by LSST are also just above the diameter for which the Yarkovsky effect will produce orbital instability) , or have not been around long enough for the Yarkovsky Effect to manifest instability (i.e. Gyr timescales). ZTF is not included because there are no timescales where ZTF detections remain stable after this procedure. We reiterate that this is due to small number statistics in our bootstrap populations throughout the detection efficiency analysis above.
+
+5 Conclusion
+
+Figure 17: Cumulative upper limit on ETA populations for the three surveys. The dotted lines show the 68% CI.
+
+The work presented here can be categorized into three areas. 1) The spatial distributions of MEGASIM ETA trajectories, 2) the detectability of MEGASIM ETAs by LSST and ZTF, and 3) an upper limit of an actual ETA population assuming a null detection.
+
+5.1 ETA S patial D istributions
+
+When viewing L4 ETAs from Earth, the highest on-sky concentration is found 6.5° closer to the Sun than the L4 Lagrange point. 30% of ETA trajectories are found within 45-60° S olar elongation and another 30% are found beyond 60°. 70% of all ETAs exist within 5° of the ecliptic plane across all longitudes. Detection of ETAs from the ground is challenging inside L4 , and d etections cannot be made at all times of the year due to the Earth’s axial tilt (Whiteley & Tholen, 1998 ) . O bservations require longer exposure times due to higher sky brightness at twilight , and higher airmass than typical observations at opposition.
+
+The distribution of ETAs as viewed looking down the pole of the ecliptic plane shows a toroidal volume that tapers near the Earth and L3 Lagrange point. ETAs can librate in as far as the orbit of Venus , and out as far as 1.3 AU, especially if they are only stable for short periods of time. ETAs that are stable longer mostly stay within 0.98 - 1.02 AU of the Sun , and i n the ecliptic plane, the highest density of ETAs oscillates over a considerable distance. High densities occur along a ridge spanning 45° leading Earth’s orbit to 90° , with the peak within a few degrees of the L4 point ( if averaged over time ) . ETAs have long libration periods (decades to millennia), so the time it takes to oscillate from behind the Sun to closer toward the Earth could fall completely outside of the survey observation window, meaning that modern surveys for observing the ETA population may not be feasible. .
+
+As the lifetime of ETAs increases, the region that surviving ETAs traverse tightens onto the Earth’s orbit. ETAs that are stable over long periods of time do not approach Earth or L3 as closely , and remain in a tighter bunch around L4. This is one reason for fewer detections of longer-term stable ETAs in Figure 16 , even for ZTF and the LSST twilight survey, which are notionally designed for such low Solar elongation observations.
+
+The on-sky location where ETAs are brightest does not correlate to the most likely position on the sky. The brightest on-sky areas are found at S olar elongations outside of L4 , at angles of 60° to 75°. The brightest location is on the ecliptic, but elevated brightness regions spread beyond L4 to latitudes of ± 20 plus-or-minus 20 \pm 20 . This is apparent in Figure   2 as a flaring yellow regime to the right of L4, and is due to the improved observing geometry.
+
+5.2 Ability of LSST and ZTF to D etect ETAs
+
+Due to the latitude that the telescopes for ZTF and LSST are located, the time of year in which each can detect L4 ETAs differs (see Figure   9 ). ZTF finds most ETAs from June to December , and LSST from January to June. In our simulations, ZTF was unsuccessful at detecting the vast majority of the ETA population , due to limited photometric sensitivity ( H < 19 𝐻 19 H<19 for most detections). Of the ZTF detections, only 4 unique ETAs were observed. Though, due to the field - of - view of the ZTF telescope , repeat detections are on the order of thousands, which indicates that any detected ETA by ZTF would be very well characterized and tracked.
+
+Both the LSST baseline and twilight survey recovered the same number of unique ETAs, 188. However, t he twilight survey was able to make several thousand repeat detections, with 4 of the asteroids observed over 10,000 times. These results show that a twilight survey will not increase the likelihood of individual ETA detections drastically compared to the baseline survey. Though, a twilight survey would provide us with several orders of magnitude more observations of select ETAs. Observing asteroids on the order of thousands to tens of thousands of times is unprecedented and would be useful for constraining characteriz ation of individual asteroids.
+
+5.3 The P ossible ETA P opulation
+
+ZTF did not have a statistically significant number of detections to provide meaningful constraints on the upper limit of the ETA population , for any size range. That is, at magnitude H < 𝐻 absent H< 18, the probability that an ETA exists become so low that ZTF’s observing cadence will not detect the ETA frequently enough to count as an observed ETA. However, both the LSST baseline and twilight surveys provided enough detections to estimate an upper limit for ETAs , of Myr up to Gyr stability times. Due to the Yarkovsky Effect, C-type and S-type ETAs of absolute magnitudes greater than H = 22 𝐻 22 H=22 and H = 24 𝐻 24 H=24 , respectively, will be driven unstable within 1 Gyr. The rarity of ETAs greater than 100 m eters in diameter , paired with the fact that smaller asteroids will be driven unstable, our results indicate that a null detection by LSST will mean that there are no remaining Gyr-stable or primordial ETA populations. On the other hand, the existing ETA discoveries are indicative of a small and transient population. A null detection in LSST will restrict that population to tens of objects larger than 100 meters.
+
+Acknowledgements
+
+We would like to thank Bryce Bolin for compiling the ZTF pointings information and helping us decipher the catalog for our purposes here. We thank Michael Schneider for valuable discussions and Alexx Perloff for his help on validating code .
+
+Computing support for this work came from the Lawrence Livermore National Laboratory Institutional Computing Grand Challenge program. This work was performed under the auspices of the U.S. Department of Energy by Lawrence Livermore National Laboratory under Contract DE-AC52-07NA27344 and was supported by the LLNL-LDRD Program under Projects 20-ERD-025, 23-ERD-044, and 22-ERD-054.
+
+This material is based upon work supported in part by the National Science Foundation through Cooperative Agreement AST-1258333 and Cooperative Support Agreement AST-1202910 , managed by the Association of Universities for Research in Astronomy (AURA), and the Department of Energy under Contract No. DE-AC02-76SF00515 with the SLAC National Accelerator Laboratory managed by Stanford University. Additional Rubin Observatory funding comes from private donations, grants to universities, and in-kind support from LSSTC Institutional Members.
+
+This work was based on observations obtained with the Samuel Oschin Telescope 48-inch and the 60-inch Telescope at the Palomar Observatory as part of the Zwicky Transient Facility project. ZTF-II is supported by the National Science Foundation under Grant No. AST-2034437 and a collaboration including Caltech, IPAC, the Weizmann Institute for Science, the Oskar Klein Center at Stockholm University, the University of Maryland/Joint Space-Sciences Institute, Deutsches Elektronen-Synchrotron and Humboldt University, Lawrence Livermore National Laboratory, TANGO/NTHU, Taiwan, the University of Wisconsin at Milwaukee, Trinity College, Dublin, and IN2P3, France. Operations are conducted by COO, IPAC, and the University of Washington.
+
+References
+
+Belbruno & Gott (2005)
+
+Belbruno, E., & Gott, J. Richard, I. 2005, AJ, 129, 1724,
+doi:  10.1086/427539
+
+Bellm et al. (2018)
+
+Bellm, E. C., Kulkarni, S. R., Graham, M. J., et al. 2018, Publications of
+the Astronomical Society of the Pacific, 131, 018002
+
+Cambioni et al. (2018)
+
+Cambioni, S., Malhotra, R., Hergenrother, C. W., et al. 2018, in Lunar
+and Planetary Science Conference, Lunar and Planetary Science Conference,
+1149
+
+Canup (2004)
+
+Canup, R. M. 2004, Icarus, 168, 433,
+doi:  https://doi.org/10.1016/j.icarus.2003.09.028
+
+Chance & Kurucz (2010)
+
+Chance, K., & Kurucz, R. L. 2010, Journal of quantitative spectroscopy and
+radiative transfer, 111, 1289
+
+Chesley & Veres (2017)
+
+Chesley, S. R., & Veres, P. 2017, arXiv preprint arXiv:1705.06209
+
+Chesley et al. (2003)
+
+Chesley, S. R., Ostro, S. J., Vokrouhlický, D., et al. 2003,
+Science, 302, 1739, doi:  10.1126/science.1091452
+
+Connors et al. (2000)
+
+Connors, M., Veillet, C., Wiegert, P., Innanen, K., & Mikkola, S.
+2000, in AAS/Division for Planetary Sciences Meeting Abstracts, Vol. 32,
+AAS/Division for Planetary Sciences Meeting Abstracts #32, 14.07
+
+Connors et al. (2011)
+
+Connors, M., Wiegert, P., & Veillet, C. 2011, Nature, 475, 481,
+doi:  10.1038/nature10233
+
+de la Fuente Marcos & de la Fuente
+Marcos (2021)
+
+de la Fuente Marcos, C., & de la Fuente Marcos, R. 2021, Research Notes of
+the American Astronomical Society, 5, 29, doi:  10.3847/2515-5172/abe6ad
+
+Dekany et al. (2020)
+
+Dekany, R., Smith, R. M., Riddle, R., et al. 2020, PASP, 132, 038001,
+doi:  10.1088/1538-3873/ab4ca2
+
+DeMeo et al. (2009)
+
+DeMeo, F. E., Binzel, R. P., Slivan, S. M., & Bus, S. J. 2009, Icarus, 202,
+160, doi:  https://doi.org/10.1016/j.icarus.2009.02.005
+
+Denneau et al. (2009)
+
+Denneau, L., Jedicke, R., Granvik, M., et al. 2009, in Advanced Maui Optical
+and Space Surveillance Technologies Conference
+
+Evans & Tabachnik (2000)
+
+Evans, N. W., & Tabachnik, S. A. 2000, Monthly Notices of the Royal
+Astronomical Society, 319, 80, doi:  10.1046/j.1365-8711.2000.03761.x
+
+Giorgini et al. (1996)
+
+Giorgini, J. D., Yeomans, D. K., Chamberlin, A. B., et al. 1996, in
+AAS/Division for Planetary Sciences Meeting Abstracts, Vol. 28, AAS/Division
+for Planetary Sciences Meeting Abstracts #28, 25.04
+
+Granvik et al. (2018)
+
+Granvik, M., Morbidelli, A., Jedicke, R., et al. 2018, Icarus, 312, 181,
+doi:  https://doi.org/10.1016/j.icarus.2018.04.018
+
+Jedicke (2006)
+
+Jedicke, R. 2006, in The Advanced Maui Optical and Space Surveillance
+Technologies Conference, E41
+
+Jones et al. (2018)
+
+Jones, R. L., Slater, C. T., Moeyens, J., et al. 2018, Icarus, 303,
+181, doi:  10.1016/j.icarus.2017.11.033
+
+Jones et al. (2020)
+
+Jones, R. L., Bannister, M. T., Bolin, B. T., et al. 2020, arXiv preprint
+arXiv:2009.07653
+
+Lifset et al. (2021)
+
+Lifset, N., Golovich, N., Green, E., Armstrong, R., & Yeager, T.
+2021, AJ, 161, 282, doi:  10.3847/1538-3881/abf7af
+
+LSST project (2022)
+
+LSST project. 2022, Opsim Run Select
+
+LSST Science Collaboration et al. (2009)
+
+LSST Science Collaboration, Abell, P. A., Allison, J., et al. 2009,
+arXiv e-prints, arXiv:0912.0201.
+
+https://arxiv.org/abs/0912.0201
+
+Mainzer et al. (2021)
+
+Mainzer, A., Abell, P., Bauer, J., et al. 2021, in AAS/Division for
+Planetary Sciences Meeting Abstracts, Vol. 53, AAS/Division for Planetary
+Sciences Meeting Abstracts, 306.16
+
+Malhotra (2019)
+
+Malhotra, R. 2019, Nature Astronomy, 3, 193,
+doi:  10.1038/s41550-019-0697-z
+
+Markwardt et al. (2020)
+
+Markwardt, L., Gerdes, D. W., Malhotra, R., et al. 2020, MNRAS, 492,
+6105, doi:  10.1093/mnras/staa232
+
+Montesinos et al. (2020)
+
+Montesinos, M., Garrido-Deutelmoser, J., Olofsson, J., et al. 2020,
+A&A, 642, A224, doi:  10.1051/0004-6361/202038758
+
+Morais & Morbidelli (2002)
+
+Morais, M., & Morbidelli, A. 2002, Icarus, 160, 1,
+doi:  https://doi.org/10.1006/icar.2002.6937
+
+Napier et al. (2022)
+
+Napier, K. J., Markwardt, L., Adams, F. C., Gerdes, D. W., & Wen
+Lin, H. 2022, Planetary Science Journal, 3, 121, doi:  10.3847/PSJ/ac6958
+
+Rein & Liu (2012)
+
+Rein, H., & Liu, S. F. 2012, A&A, 537, A128,
+doi:  10.1051/0004-6361/201118085
+
+Rein & Spiegel (2015)
+
+Rein, H., & Spiegel, D. S. 2015, MNRAS, 446, 1424,
+doi:  10.1093/mnras/stu2164
+
+Rein & Tamayo (2015)
+
+Rein, H., & Tamayo, D. 2015, MNRAS, 452, 376,
+doi:  10.1093/mnras/stv1257
+
+Santana-Ros et al. (2022)
+
+Santana-Ros, T., Micheli, M., Faggioli, L., et al. 2022, Nature
+Communications, 13, 447, doi:  10.1038/s41467-022-27988-4
+
+Seaman et al. (2018)
+
+Seaman, R., Abell, P., Christensen, E., et al. 2018, arXiv e-prints,
+arXiv:1812.00466.
+
+https://arxiv.org/abs/1812.00466
+
+Todd et al. (2012)
+
+Todd, M., Tanga, P., Coward, D. M., & Zadnik, M. G. 2012, MNRAS, 420,
+L28, doi:  10.1111/j.1745-3933.2011.01186.x
+
+Todd et al. (2014)
+
+—. 2014, MNRAS, 437, 4019, doi:  10.1093/mnras/stt2223
+
+Whiteley & Tholen (1998)
+
+Whiteley, R. J., & Tholen, D. J. 1998, Icarus, 136, 154,
+doi:  10.1006/icar.1998.5995
+
+Whiteley & Tholen (1998)
+
+Whiteley, R. J., & Tholen, D. J. 1998, Icarus, 136, 154,
+doi:  https://doi.org/10.1006/icar.1998.5995
+
+Wiegert et al. (2000)
+
+Wiegert, P., Innanen, K., & Mikkola, S. 2000, Icarus, 145, 33,
+doi:  10.1006/icar.2000.6339
+
+Willmer (2018)
+
+Willmer, C. N. A. 2018, The Astrophysical Journal Supplement Series, 236, 47,
+doi:  10.3847/1538-4365/aabfdf
+
+Wisdom & Holman (1991)
+
+Wisdom, J., & Holman, M. 1991, The Astronomical Journal, 102, 1528,
+doi:  10.1086/115978
+
+Wright et al. (2016)
+
+Wright, E. L., Mainzer, A., Masiero, J., Grav, T., & Bauer, J. 2016, The
+Astronomical Journal, 152, 79, doi:  10.3847/0004-6256/152/4/79
+
+Ye et al. (2020)
+
+Ye, Q., Masci, F. J., Ip, W.-H., et al. 2020, AJ, 159, 70,
+doi:  10.3847/1538-3881/ab629c
+
+Yeager & Golovich (2022a)
+
+Yeager, T., & Golovich, N. 2022a, The Astrophysical Journal, 938,
+9, doi:  10.3847/1538-4357/ac8e63
+
+Yeager & Golovich (2022b)
+
+—. 2022b, Research Notes of the AAS, 6, 68,
+doi:  10.3847/2515-5172/ac62da
+
+Yoshikawa et al. (2018)
+
+Yoshikawa, M., Tsuda, Y., Watanabe, S., et al. 2018, in Lunar and
+Planetary Science Conference, Lunar and Planetary Science Conference, 1771
+
+Zhou et al. (2019)
+
+Zhou, L., Xu, Y.-B., Zhou, L.-Y., Dvorak, R., & Li, J. 2019, A&A,
+622, A97, doi:  10.1051/0004-6361/201834026
+
+Zhou et al. (2020)
+
+Zhou, L., Zhou, L.-Y., Dvorak, R., & Li, J. 2020, A&A, 633, A153,
+doi:  10.1051/0004-6361/201936332
+
+◄
+
+Feeling lucky?
+
+Conversion report
+Report an issue
+View original on arXiv ►
+
+Copyright
+Privacy Policy
+
+Generated on Thu Feb 29 23:43:11 2024 by L a T e XML

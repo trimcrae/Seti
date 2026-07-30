@@ -1,0 +1,442 @@
+The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products
+
+Report GitHub Issue
+×
+
+Title:
+
+Content selection saved. Describe the issue below:
+
+Description:
+
+Submit without GitHub
+Submit in GitHub
+
+arXiv is now an independent nonprofit!
+Learn more
+×
+
+Back to arXiv
+
+Why HTML?
+
+Report Issue
+
+Back to Abstract
+
+Download PDF
+
+Abstract
+I Introduction
+II Brief summary of SNAPS
+III Public access to SNAPS
+
+IV Future work
+
+Acknowledgements
+
+References
+
+License: CC BY 4.0
+
+arXiv:2604.27420v1 [astro-ph.EP] 30 Apr 2026
+
+The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products
+
+David E. Trilling
+
+Department of Astronomy and Planetary Science, Northern Arizona University
+
+School of Informatics, Computing, and Cyber Systems, Northern Arizona University
+
+[
+
+Michael Gowanlock
+
+School of Informatics, Computing, and Cyber Systems, Northern Arizona University
+
+Department of Astronomy and Planetary Science, Northern Arizona University
+
+michael.gowanlock@nau.edu
+
+Revanth Munugala
+
+School of Informatics, Computing, and Cyber Systems, Northern Arizona University
+
+Department of Astronomy and Planetary Science, Northern Arizona University
+
+rm2878@nau.edu
+
+Daniel R. Kramer
+
+School of Informatics, Computing, and Cyber Systems, Northern Arizona University
+
+Department of Astronomy and Planetary Science, Northern Arizona University
+
+drkspace@gmail.com
+
+Maria Chernyavskaya
+
+Department of Astronomy and Planetary Science, Northern Arizona University
+
+mc3944@nau.edu
+
+Erin Clark
+
+Department of Astronomy and Planetary Science, Northern Arizona University
+
+emc635@nau.edu
+
+Graceson Mule
+
+School of Informatics, Computing, and Cyber Systems, Northern Arizona University
+
+gjm256@nau.edu
+
+Savannah Chappus
+
+School of Informatics, Computing, and Cyber Systems, Northern Arizona University
+
+sjc497@nau.edu
+
+Abstract
+The Solar System Notification Alert Processing System, SNAPS,
+is a downstream broker that ingests moving object data from ZTF and LSST and serves these data and derived properties to the public.
+This document describes how users can access our SNAPS data and products. This is intended to be a living document that will be updated on the arXiv when significant improvements are made to our data access schemes, and will therefore always contain the most up to date information about interacting with our databases and infrastructure. This is version 1.0.
+
+sky surveys (1464) — astronomy databases (83) — asteroids (72)
+
+† † facilities: ZTF, LSST † † software: astropy  (Astropy Collaboration et al. , 2013 , 2018 , 2022 ) , LSP-GPU  (Gowanlock et al. , 2021 ) , plotly  (Plotly Technologies Inc., 2015 ) , SciPy  (Virtanen et al. , 2020 )
+
+show]david.trilling@nau.edu
+
+I Introduction
+
+Astronomy is now a “big data” science, with peta-scale surveys collecting all-sky data that a large user base can access for a wide range of investigations. The arrival of the Legacy Survey of Space and Time (LSST), which will be carried out with the Vera C. Rubin Observatory in Chile, will be the largest-yet survey.
+This project will observe
+some 20,000 deg 2 many times over ten years and will produce a catalog of some 40 billion astronomical sources, including 5 million Solar System objects and around 500 million moving object observations
+(LSST Science Collaboration et al. , 2009 ; Ivezić et al. , 2019 ) .
+To carry out science with such large-scale surveys, comprehensive software infrastructure is required, and the LSST project has championed the concept of “brokers,” which ingest data from an alert stream and serve a subset of this data and derived products to users interested in specific topics.
+
+Here we present a description of the public-facing aspects of the Solar System Notification Alert Processing System (SNAPS).
+SNAPS is the only Solar System-dedicated broker in the LSST ecosystem. The architecture of SNAPS, as well as some early science and our first data release (SNAPShot1, or SS1), are presented in
+Trilling et al. ( 2023 ) .
+In this paper we briefly describe what SNAPS does and does not do (Section  II ), and then present details of our web service and interface (Section  III ). In Section  IV we briefly describe the timelines and goals for future science and technical steps.
+
+The first version of this document will be submitted to the arXiv in April, 2026.
+Subsequent significant updates to SNAPS infrastructure will be described in future versions of this paper, which we will place on the arXiv to supersede earlier versions. Thus, the arXiv link and DOI associated with this document are intended to be the permanent reference to SNAPS, and SNAPS users are requested to cite either or both this paper and our SNAPS architecture paper
+(Trilling et al. , 2023 ) . This document is paper version 1.0.
+
+II Brief summary of SNAPS
+
+SNAPS is purpose-built to provide a number of products and access to the potential user community, but, naturally, it cannot provide all things to all people. Here we briefly describe what SNAPS is and does, and what it does not do.
+
+SNAPS generally operates as a “downstream” broker. This means that rather than listening to the complete outgoing alert stream from LSST or similar surveys (such as the Zwicky Transient Facility (ZTF), Bellm et al. , 2019 ) , we instead listen to a re-broadcast of Solar System-only alerts that is distributed by the ANTARES broker
+(Matheson et al. , 2021 ) . Therefore, SNAPS does not handle any sources that are not already designated as known moving objects (generally Solar System objects, but interstellar objects can also be present in the stream).
+
+The core SNAPS processing tasks are the following. (1) SNAPS ingests data — typically as alerts — from all-sky surveys such as ZTF and LSST. We store observational data (RA, Dec, time, magnitude), meta-data (elongation of the source, FWHM, etc.), and postage stamps (science image, template image, and difference image) for each observation. A user can retrieve these values for any individual measurement or set of measurements (e.g., all measurements for a given object). We ingest data for known asteroids and known comets (and interstellar objects). Data from each survey is separately stored in our database — there are separate ZTF and LSST tables/collections — though future work includes retrieving merged data records (example: a query for all data on a given object, from any survey).
+(2) SNAPS detects individual outliers, which are objects whose attributes have changed since its last observation. The most obvious example here is an asteroid that shows new signs of activity. The details of these detection algorithms will be presented in subsequent papers. (3) SNAPS detects population outliers, which are objects whose properties are intrinsically unusual. Several algorithms can be used to detect these outliers, as summarized in Gowanlock et al. ( 2024 ) .
+(4) SNAPS serves these results to interested users in various ways, as described in this paper.
+
+What SNAPS does not do includes the following. (1) We do not carry out orbit linking to
+match new observations to previously known objects. We do not ingest any observations that are not associated with known objects.
+(Note that this limitation means that the first few observations of newly discovered objects likely will not be present in our database, though in principle these could be recovered after the fact.)
+We do not discover Solar System bodies.
+(2) We do not look for orbit changes of any kind.
+(3) We do not ingest or serve any data related to non-moving objects.
+
+III Public access to SNAPS
+
+The two primary methods of interacting with our SNAPS database are through our web page and through our API.
+Generally, web and API access divide the use cases between “browsing” or investigating an individual object of interest, through our web page, or “bulk analysis” — for example, to study a group of objects — through the API.
+At the moment, our web page allows “browse”-level access, as is described here. In the near future, when our API is functional and public-facing, an updated version of this paper will be published in which that “bulk”-level analysis is described.
+
+The SNAPS webpage includes a user-friendly interface to browse our database catalog, observation data, and view postage stamps. This web portal can be found at https://snaps.nau.edu/ . The webpage is supported by two backend databases: (1) An Oracle database to store user-specific structured data such as recent queries, favorites, among others. (2) A Mongo database that supports querying our ingested alerts from various catalogs, our data releases, and derived properties, among others records.
+
+The core functionality of our webpage is described as follows.
+
+•
+
+Users can create a free account, which enables storing “Favorites” and recent queries. Users who are not logged in are somewhat rate-limited to mitigate denial-of-service attacks and other malicious interactions.
+Users who are logged in have a more generous access privileges, but some protections still exist; “power users” can contact us to discuss further relief of these limitations.
+
+•
+
+Individual objects can be queried based on their number (example: asteroid 12345), their provisional designation
+(example: 1995 UW49), or their packed designation (example:
+J95U49W). The search bar has string completion to suggest objects in our database that begin with the input characters.
+
+•
+
+At present, users can query either the ZTF catalog or the LSST catalog. At present, the ZTF catalog is divided into numbered objects (collections referred to as SNAPShot1 or SNAPShot2) or “provisional” objects (those objects that have not yet been assigned a number).
+(Future work includes a “joint query” where observations and properties for a given asteroid that includes data from any/all surveys in our catalogs will be reported.)
+
+•
+
+The search query returns all observations from that collection for that object:
+a unique identifier (ZTFid, ssObjectId if from LSST, etc.), time, magnitude, error, filter, and geometric values (example: heliocentric and geocentric distances and phase angle).
+For each observation, H (Solar System absolute magnitude) in the observed band is calculated using the HG system (Bowell et al. , 1989 ) .
+We also report orbital elements and other data from the Minor Planet Center (MPC).
+
+•
+
+In addition to this,
+for objects with more than 50 observations
+we also show derived data products
+(example: phase slope parameter G, lightcurve period and amplitude, and derived color in all relevant filter combinations).
+
+•
+
+Our webpage also includes a robust plot functionality to view observational records (absolute magnitude as a function of time), phased lightcurve (absolute magnitude as a function of phase), and phase curve (reduced magnitude as a function of phase angle) plots.
+The plot windows are interactive (through the plotly technology), allowing zooming, downloading the plot as PNG, selecting/unselecting observations in any reported filter, and so on.
+
+•
+
+Our webpage also supports on-the-fly period finding using the Lomb-Scargle algorithm  (Lomb, 1976 ; Scargle, 1982 ) across a user-selected range of periods and date ranges. The result is a periodogram. Users can rephase the observed data to a peak period solution from the periodogram, or any other custom period. This task runs in the browser.
+
+•
+
+For users who are logged in, all recent queries are stored in our database and shown on the homepage
+(for example, to run the same query at a future time).
+
+•
+
+We also include a functionality for users to “favorite” an object and add notes regarding the observations.
+
+•
+
+We allow users to view the postage stamps for all observations with time stamps. We use JS9 to support showing the postage stamps in FITS format and allow downloads as well. Some in-browser interactivity is allowed through the JS9 interface. For all observations we serve three postage stamps: science, template, and difference images.
+
+•
+
+Lastly, our webpage lists
+some our publications and includes funding acknowledgments.
+We also have a contact form for users to communicate suggestions, queries, or requests, and to report any issues.
+
+As of this writing, our comet
+functionality is not fully mature. Users can query comets in the “Provisional/ZTF” query (LSST is not yet serving comet data),
+and magnitude as a function of time will be reported,
+but
+as of this writing no comets have more than 50 observations, so we do not serve any derived properties.
+
+IV Future work
+
+There are two key feature upgrades that are coming in the near future.
+(1) We have an internal-only API that has limited functionality; in the near future we will make this public-facing so that external users can interact with our databases in “bulk query” mode. This will address several of the limitations described above. This paper will be updated when this external-facing API is functioning.
+(2) We will start to publish an outgoing Kafka stream that reports unusual objects. There are two categories of unusual, or outlier, asteroids: individual outliers, whose properties have changed compared historical observations (example: asteroids that start to show activity), and population outliers, which are asteroids whose properties are intrinsically different from those of other asteroids. The methodology for our population outlier detection pipeline is described in Gowanlock et al. ( 2024 ) . We are currently developing the algorithmic methodology for detecting individual outliers.
+This paper will be updated when the Kafka stream is live.
+
+Alongside those future upgrades we will make several updates to the webpage as follows: (1) Allowing queries based on object properties rather than solely querying based on object identifiers. (2) Posting individual and population outlier rankings. Furthermore, in the future we will (3) implement cross-catalog queries.
+
+For the foreseeable future, ZTF will continue to operate an all-sky survey that will produce alerts. We will continue to ingest alerts from ZTF into our database.
+The LSST survey will begin in 2026, and alert stream production will probably ramp up as more and better template images become available. Within the first year of full-scale LSST operations, several million asteroids will be observed (Kurlander et al. , 2025 ) , almost all of which will be new discoveries.
+
+Our team is working on a number of science and computer science projects that will be published in the near future. These include identifying a number of asteroids and asteroid populations of interest and the implementation of new algorithms to define the fidelity of asteroid period solutions.
+
+We acknowledge support from NASA award
+80NSSC25K7728,
+NSF awards 2042155 and 2206796, and DOE/LLNL award B657367.
+This work is supported by the Arizona Board of Regents and the Technology Research Initiative Research Fund (TRIF) Small Research Equipment Acquisition Program (SREAP).
+We thank NAU’s Chris Coffey for his exemplary leadership of our High Performance Computing facility. We thank Andrew McNeill (BGSU) for many useful discussions about the direction and utility of SNAPS.
+
+References
+
+Astropy Collaboration, A. M. Price-Whelan, B. M. Sipőcz, H. M. Günther, P. L. Lim, S. M. Crawford, S. Conseil, D. L. Shupe, M. W. Craig, N. Dencheva, A. Ginsburg, J. T. VanderPlas, L. D. Bradley, D. Pérez-Suárez, M. de Val-Borro, T. L. Aldcroft, K. L. Cruz, T. P. Robitaille, E. J. Tollerud, C. Ardelean, T. Babej, Y. P. Bach, M. Bachetti, A. V. Bakanov, S. P. Bamford, G. Barentsen, P. Barmby, A. Baumbach, K. L. Berry, F. Biscani, M. Boquien, K. A. Bostroem, L. G. Bouma, G. B. Brammer, E. M. Bray, H. Breytenbach, H. Buddelmeijer, D. J. Burke, G. Calderone, J. L. Cano Rodríguez, M. Cara, J. V. M. Cardoso, S. Cheedella, Y. Copin, L. Corrales, D. Crichton, D. D’Avella, C. Deil, É. Depagne, J. P. Dietrich, A. Donath, M. Droettboom, N. Earl, T. Erben, S. Fabbro, L. A. Ferreira, T. Finethy, R. T. Fox, L. H. Garrison, S. L. J. Gibbons, D. A. Goldstein, R. Gommers, J. P. Greco, P. Greenfield, A. M. Groener, F. Grollier, A. Hagen, P. Hirst, D. Homeier, A. J. Horton, G. Hosseinzadeh, L. Hu, J. S. Hunkeler, Ž. Ivezić, A. Jain, T. Jenness, G. Kanarek, S. Kendrew, N. S. Kern, W. E. Kerzendorf, A. Khvalko, J. King, D. Kirkby, A. M. Kulkarni, A. Kumar, A. Lee, D. Lenz, S. P. Littlefair, Z. Ma, D. M. Macleod, M. Mastropietro, C. McCully, S. Montagnac, B. M. Morris, M. Mueller, S. J. Mumford, D. Muna, N. A. Murphy, S. Nelson, G. H. Nguyen, J. P. Ninan, M. Nöthe, S. Ogaz, S. Oh, J. K. Parejko, N. Parley, S. Pascual, R. Patil, A. A. Patil, A. L. Plunkett, J. X. Prochaska, T. Rastogi, V. Reddy Janga, J. Sabater, P. Sakurikar, M. Seifert, L. E. Sherbert, H. Sherwood-Taylor, A. Y. Shih, J. Sick, M. T. Silbiger, S. Singanamalla, L. P. Singer, P. H. Sladen, K. A. Sooley, S. Sornarajah, O. Streicher, P. Teuben, S. W. Thomas, G. R. Tremblay, J. E. H. Turner, V. Terrón, M. H. van Kerkwijk, A. de la Vega, L. L. Watkins, B. A. Weaver, J. B. Whitmore, J. Woillez, V. Zabalza, and Astropy Contributors (2018)
+The Astropy Project: Building an Open-science Project and Status of the v2.0 Core Package .
+
+AJ 156 ( 3 ), pp. 123 .
+
+External Links: Document ,
+1801.02634
+
+Cited by: The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products .
+
+Astropy Collaboration, A. M. Price-Whelan, P. L. Lim, N. Earl, N. Starkman, L. Bradley, D. L. Shupe, A. A. Patil, L. Corrales, C. E. Brasseur, M. Nöthe, A. Donath, E. Tollerud, B. M. Morris, A. Ginsburg, E. Vaher, B. A. Weaver, J. Tocknell, W. Jamieson, M. H. van Kerkwijk, T. P. Robitaille, B. Merry, M. Bachetti, H. M. Günther, T. L. Aldcroft, J. A. Alvarado-Montes, A. M. Archibald, A. Bódi, S. Bapat, G. Barentsen, J. Bazán, M. Biswas, M. Boquien, D. J. Burke, D. Cara, M. Cara, K. E. Conroy, S. Conseil, M. W. Craig, R. M. Cross, K. L. Cruz, F. D’Eugenio, N. Dencheva, H. A. R. Devillepoix, J. P. Dietrich, A. D. Eigenbrot, T. Erben, L. Ferreira, D. Foreman-Mackey, R. Fox, N. Freij, S. Garg, R. Geda, L. Glattly, Y. Gondhalekar, K. D. Gordon, D. Grant, P. Greenfield, A. M. Groener, S. Guest, S. Gurovich, R. Handberg, A. Hart, Z. Hatfield-Dodds, D. Homeier, G. Hosseinzadeh, T. Jenness, C. K. Jones, P. Joseph, J. B. Kalmbach, E. Karamehmetoglu, M. Kałuszyński, M. S. P. Kelley, N. Kern, W. E. Kerzendorf, E. W. Koch, S. Kulumani, A. Lee, C. Ly, Z. Ma, C. MacBride, J. M. Maljaars, D. Muna, N. A. Murphy, H. Norman, R. O’Steen, K. A. Oman, C. Pacifici, S. Pascual, J. Pascual-Granado, R. R. Patil, G. I. Perren, T. E. Pickering, T. Rastogi, B. R. Roulston, D. F. Ryan, E. S. Rykoff, J. Sabater, P. Sakurikar, J. Salgado, A. Sanghi, N. Saunders, V. Savchenko, L. Schwardt, M. Seifert-Eckert, A. Y. Shih, A. S. Jain, G. Shukla, J. Sick, C. Simpson, S. Singanamalla, L. P. Singer, J. Singhal, M. Sinha, B. M. Sipőcz, L. R. Spitler, D. Stansby, O. Streicher, J. Šumak, J. D. Swinbank, D. S. Taranu, N. Tewary, G. R. Tremblay, M. de Val-Borro, S. J. Van Kooten, Z. Vasović, S. Verma, J. V. de Miranda Cardoso, P. K. G. Williams, T. J. Wilson, B. Winkel, W. M. Wood-Vasey, R. Xue, P. Yoachim, C. Zhang, A. Zonca, and Astropy Project Contributors (2022)
+The Astropy Project: Sustaining and Growing a Community-oriented Open-source Project and the Latest Major Release (v5.0) of the Core Package .
+
+ApJ 935 ( 2 ), pp. 167 .
+
+External Links: Document ,
+2206.14220
+
+Cited by: The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products .
+
+Astropy Collaboration, T. P. Robitaille, E. J. Tollerud, P. Greenfield, M. Droettboom, E. Bray, T. Aldcroft, M. Davis, A. Ginsburg, A. M. Price-Whelan, W. E. Kerzendorf, A. Conley, N. Crighton, K. Barbary, D. Muna, H. Ferguson, F. Grollier, M. M. Parikh, P. H. Nair, H. M. Unther, C. Deil, J. Woillez, S. Conseil, R. Kramer, J. E. H. Turner, L. Singer, R. Fox, B. A. Weaver, V. Zabalza, Z. I. Edwards, K. Azalee Bostroem, D. J. Burke, A. R. Casey, S. M. Crawford, N. Dencheva, J. Ely, T. Jenness, K. Labrie, P. L. Lim, F. Pierfederici, A. Pontzen, A. Ptak, B. Refsdal, M. Servillat, and O. Streicher (2013)
+Astropy: A community Python package for astronomy .
+
+A&A 558 , pp. A33 .
+
+External Links: Document ,
+1307.6212
+
+Cited by: The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products .
+
+E. C. Bellm, S. R. Kulkarni, M. J. Graham, R. Dekany, R. M. Smith, R. Riddle, F. J. Masci, G. Helou, T. A. Prince, S. M. Adams, C. Barbarino, T. Barlow, J. Bauer, R. Beck, J. Belicki, R. Biswas, N. Blagorodnova, D. Bodewits, B. Bolin, V. Brinnel, T. Brooke, B. Bue, M. Bulla, R. Burruss, S. B. Cenko, C. Chang, A. Connolly, M. Coughlin, J. Cromer, V. Cunningham, K. De, A. Delacroix, V. Desai, D. A. Duev, G. Eadie, T. L. Farnham, M. Feeney, U. Feindt, D. Flynn, A. Franckowiak, S. Frederick, C. Fremling, A. Gal-Yam, S. Gezari, M. Giomi, D. A. Goldstein, V. Z. Golkhou, A. Goobar, S. Groom, E. Hacopians, D. Hale, J. Henning, A. Y. Q. Ho, D. Hover, J. Howell, T. Hung, D. Huppenkothen, D. Imel, W. Ip, Ž. Ivezić, E. Jackson, L. Jones, M. Juric, M. M. Kasliwal, S. Kaspi, S. Kaye, M. S. P. Kelley, M. Kowalski, E. Kramer, T. Kupfer, W. Landry, R. R. Laher, C. Lee, H. W. Lin, Z. Lin, R. Lunnan, M. Giomi, A. Mahabal, P. Mao, A. A. Miller, S. Monkewitz, P. Murphy, C. Ngeow, J. Nordin, P. Nugent, E. Ofek, M. T. Patterson, B. Penprase, M. Porter, L. Rauch, U. Rebbapragada, D. Reiley, M. Rigault, H. Rodriguez, J. van Roestel, B. Rusholme, J. van Santen, S. Schulze, D. L. Shupe, L. P. Singer, M. T. Soumagnac, R. Stein, J. Surace, J. Sollerman, P. Szkody, F. Taddia, S. Terek, A. Van Sistine, S. van Velzen, W. T. Vestrand, R. Walters, C. Ward, Q. Ye, P. Yu, L. Yan, and J. Zolkower (2019)
+The Zwicky Transient Facility: System Overview, Performance, and First Results .
+
+PASP 131 ( 995 ), pp. 018002 .
+
+External Links: Document ,
+1902.01932
+
+Cited by: §II .
+
+E. Bowell, B. Hapke, D. Domingue, K. Lumme, J. Peltoniemi, and A. W. Harris (1989)
+Application of photometric models to asteroids. .
+
+In Asteroids II , R. P. Binzel, T. Gehrels, and M. S. Matthews (Eds.) ,
+
+pp. 524–556 .
+
+Cited by: 4th item .
+
+M. Gowanlock, D. Kramer, D. E. Trilling, N. R. Butler, and B. Donnelly (2021)
+Fast period searches using the lomb–scargle algorithm on graphics processing units for large datasets and real-time applications .
+
+Astronomy and Computing 36 , pp. 100472 .
+
+Cited by: The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products .
+
+M. Gowanlock, D. E. Trilling, D. Kramer, M. Chernyavskaya, and A. McNeill (2024)
+The Solar System Notification Alert Processing System (SNAPS): Asteroid Population Outlier Detection .
+
+AJ 168 ( 2 ), pp. 56 .
+
+External Links: Document ,
+2405.20176
+
+Cited by: §II ,
+§IV .
+
+Ž. Ivezić, S. M. Kahn, J. A. Tyson, B. Abel, E. Acosta, R. Allsman, D. Alonso, Y. AlSayyad, S. F. Anderson, J. Andrew, J. R. P. Angel, G. Z. Angeli, R. Ansari, P. Antilogus, C. Araujo, R. Armstrong, K. T. Arndt, P. Astier, É. Aubourg, N. Auza, T. S. Axelrod, D. J. Bard, J. D. Barr, A. Barrau, J. G. Bartlett, A. E. Bauer, B. J. Bauman, S. Baumont, E. Bechtol, K. Bechtol, A. C. Becker, J. Becla, C. Beldica, S. Bellavia, F. B. Bianco, R. Biswas, G. Blanc, J. Blazek, R. D. Blandford, J. S. Bloom, J. Bogart, T. W. Bond, M. T. Booth, A. W. Borgland, K. Borne, J. F. Bosch, D. Boutigny, C. A. Brackett, A. Bradshaw, W. N. Brandt, M. E. Brown, J. S. Bullock, P. Burchat, D. L. Burke, G. Cagnoli, D. Calabrese, S. Callahan, A. L. Callen, J. L. Carlin, E. L. Carlson, S. Chandrasekharan, G. Charles-Emerson, S. Chesley, E. C. Cheu, H. Chiang, J. Chiang, C. Chirino, D. Chow, D. R. Ciardi, C. F. Claver, J. Cohen-Tanugi, J. J. Cockrum, R. Coles, A. J. Connolly, K. H. Cook, A. Cooray, K. R. Covey, C. Cribbs, W. Cui, R. Cutri, P. N. Daly, S. F. Daniel, F. Daruich, G. Daubard, G. Daues, W. Dawson, F. Delgado, A. Dellapenna, R. de Peyster, M. de Val-Borro, S. W. Digel, P. Doherty, R. Dubois, G. P. Dubois-Felsmann, J. Durech, F. Economou, T. Eifler, M. Eracleous, B. L. Emmons, A. Fausti Neto, H. Ferguson, E. Figueroa, M. Fisher-Levine, W. Focke, M. D. Foss, J. Frank, M. D. Freemon, E. Gangler, E. Gawiser, J. C. Geary, P. Gee, M. Geha, C. J. B. Gessner, R. R. Gibson, D. K. Gilmore, T. Glanzman, W. Glick, T. Goldina, D. A. Goldstein, I. Goodenow, M. L. Graham, W. J. Gressler, P. Gris, L. P. Guy, A. Guyonnet, G. Haller, R. Harris, P. A. Hascall, J. Haupt, F. Hernandez, S. Herrmann, E. Hileman, J. Hoblitt, J. A. Hodgson, C. Hogan, J. D. Howard, D. Huang, M. E. Huffer, P. Ingraham, W. R. Innes, S. H. Jacoby, B. Jain, F. Jammes, M. J. Jee, T. Jenness, G. Jernigan, D. Jevremović, K. Johns, A. S. Johnson, M. W. G. Johnson, R. L. Jones, C. Juramy-Gilles, M. Jurić, J. S. Kalirai, N. J. Kallivayalil, B. Kalmbach, J. P. Kantor, P. Karst, M. M. Kasliwal, H. Kelly, R. Kessler, V. Kinnison, D. Kirkby, L. Knox, I. V. Kotov, V. L. Krabbendam, K. S. Krughoff, P. Kubánek, J. Kuczewski, S. Kulkarni, J. Ku, N. R. Kurita, C. S. Lage, R. Lambert, T. Lange, J. B. Langton, L. Le Guillou, D. Levine, M. Liang, K. Lim, C. J. Lintott, K. E. Long, M. Lopez, P. J. Lotz, R. H. Lupton, N. B. Lust, L. A. MacArthur, A. Mahabal, R. Mandelbaum, T. W. Markiewicz, D. S. Marsh, P. J. Marshall, S. Marshall, M. May, R. McKercher, M. McQueen, J. Meyers, M. Migliore, M. Miller, and D. J. Mills (2019)
+LSST: From Science Drivers to Reference Design and Anticipated Data Products .
+
+ApJ 873 ( 2 ), pp. 111 .
+
+External Links: Document ,
+0805.2366
+
+Cited by: §I .
+
+J. A. Kurlander, P. H. Bernardinelli, M. E. Schwamb, M. Jurić, J. Murtagh, C. O. Chandler, S. R. Merritt, D. Nesvorný, D. Vokrouhlický, R. L. Jones, G. Fedorets, S. Cornwall, M. J. Holman, S. Eggl, D. Oldag, M. West, J. Kubica, P. Yoachim, J. Moeyens, K. Kiker, and L. E. Buchanan (2025)
+Predictions of the LSST Solar System Yield: Near-Earth Objects, Main Belt Asteroids, Jupiter Trojans, and Trans-Neptunian Objects .
+
+AJ 170 ( 2 ), pp. 99 .
+
+External Links: Document ,
+2506.02487
+
+Cited by: §IV .
+
+N. R. Lomb (1976)
+Least-squares frequency analysis of unequally spaced data .
+
+Astrophysics and space science 39 ( 2 ), pp. 447–462 .
+
+Cited by: 7th item .
+
+LSST Science Collaboration, P. A. Abell, J. Allison, S. F. Anderson, J. R. Andrew, J. R. P. Angel, L. Armus, D. Arnett, S. J. Asztalos, T. S. Axelrod, S. Bailey, D. R. Ballantyne, J. R. Bankert, W. A. Barkhouse, J. D. Barr, L. F. Barrientos, A. J. Barth, J. G. Bartlett, A. C. Becker, J. Becla, T. C. Beers, J. P. Bernstein, R. Biswas, M. R. Blanton, J. S. Bloom, J. J. Bochanski, P. Boeshaar, K. D. Borne, M. Bradac, W. N. Brandt, C. R. Bridge, M. E. Brown, R. J. Brunner, J. S. Bullock, A. J. Burgasser, J. H. Burge, D. L. Burke, P. A. Cargile, S. Chandrasekharan, G. Chartas, S. R. Chesley, Y. Chu, D. Cinabro, M. W. Claire, C. F. Claver, D. Clowe, A. J. Connolly, K. H. Cook, J. Cooke, A. Cooray, K. R. Covey, C. S. Culliton, R. de Jong, W. H. de Vries, V. P. Debattista, F. Delgado, I. P. Dell’Antonio, S. Dhital, R. Di Stefano, M. Dickinson, B. Dilday, S. G. Djorgovski, G. Dobler, C. Donalek, G. Dubois-Felsmann, J. Durech, A. Eliasdottir, M. Eracleous, L. Eyer, E. E. Falco, X. Fan, C. D. Fassnacht, H. C. Ferguson, Y. R. Fernandez, B. D. Fields, D. Finkbeiner, E. E. Figueroa, D. B. Fox, H. Francke, J. S. Frank, J. Frieman, S. Fromenteau, M. Furqan, G. Galaz, A. Gal-Yam, P. Garnavich, E. Gawiser, J. Geary, P. Gee, R. R. Gibson, K. Gilmore, E. A. Grace, R. F. Green, W. J. Gressler, C. J. Grillmair, S. Habib, J. S. Haggerty, M. Hamuy, A. W. Harris, S. L. Hawley, A. F. Heavens, L. Hebb, T. J. Henry, E. Hileman, E. J. Hilton, K. Hoadley, J. B. Holberg, M. J. Holman, S. B. Howell, L. Infante, Z. Ivezic, S. H. Jacoby, B. Jain, R, Jedicke, M. J. Jee, J. Garrett Jernigan, S. W. Jha, K. V. Johnston, R. L. Jones, M. Juric, M. Kaasalainen, Styliani, Kafka, S. M. Kahn, N. A. Kaib, J. Kalirai, J. Kantor, M. M. Kasliwal, C. R. Keeton, R. Kessler, Z. Knezevic, A. Kowalski, V. L. Krabbendam, K. S. Krughoff, S. Kulkarni, S. Kuhlman, M. Lacy, S. Lepine, M. Liang, A. Lien, P. Lira, K. S. Long, S. Lorenz, J. M. Lotz, R. H. Lupton, J. Lutz, L. M. Macri, A. A. Mahabal, R. Mandelbaum, P. Marshall, M. May, P. M. McGehee, B. T. Meadows, A. Meert, A. Milani, C. J. Miller, M. Miller, D. Mills, D. Minniti, D. Monet, A. S. Mukadam, E. Nakar, D. R. Neill, J. A. Newman, S. Nikolaev, M. Nordby, P. O’Connor, M. Oguri, J. Oliver, S. S. Olivier, J. K. Olsen, K. Olsen, E. W. Olszewski, H. Oluseyi, N. D. Padilla, A. Parker, J. Pepper, J. R. Peterson, C. Petry, P. A. Pinto, J. L. Pizagno, B. Popescu, A. Prsa, V. Radcka, M. J. Raddick, A. Rasmussen, A. Rau, J. Rho, J. E. Rhoads, G. T. Richards, S. T. Ridgway, B. E. Robertson, R. Roskar, A. Saha, A. Sarajedini, E. Scannapieco, T. Schalk, R. Schindler, and S. Schmidt (2009)
+LSST Science Book, Version 2.0 .
+
+arXiv e-prints , pp. arXiv:0912.0201 .
+
+External Links: Document ,
+0912.0201
+
+Cited by: §I .
+
+T. Matheson, C. Stubens, N. Wolf, C. Lee, G. Narayan, A. Saha, A. Scott, M. Soraisam, A. S. Bolton, B. Hauger, D. R. Silva, J. Kececioglu, C. Scheidegger, R. Snodgrass, P. D. Aleo, E. Evans-Jacquez, N. Singh, Z. Wang, S. Yang, and Z. Zhao (2021)
+The ANTARES Astronomical Time-domain Event Broker .
+
+AJ 161 ( 3 ), pp. 107 .
+
+External Links: Document ,
+2011.12385
+
+Cited by: §II .
+
+Plotly Technologies Inc. (2015)
+Montreal, QC .
+
+External Links: Link
+
+Cited by: The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products .
+
+J. D. Scargle (1982)
+Studies in astronomical time series analysis. ii-statistical aspects of spectral analysis of unevenly spaced data .
+
+Astrophysical Journal, Part 1, vol. 263, Dec. 15, 1982, p. 835-853. 263 , pp. 835–853 .
+
+Cited by: 7th item .
+
+D. E. Trilling, M. Gowanlock, D. Kramer, A. McNeill, B. Donnelly, N. Butler, and J. Kececioglu (2023)
+The Solar System Notification Alert Processing System (SNAPS): Design, Architecture, and First Data Release (SNAPShot1) .
+
+AJ 165 ( 3 ), pp. 111 .
+
+External Links: Document ,
+2302.01239
+
+Cited by: §I ,
+§I .
+
+P. Virtanen, R. Gommers, T. E. Oliphant, M. Haberland, T. Reddy, D. Cournapeau, E. Burovski, P. Peterson, W. Weckesser, J. Bright, S. J. van der Walt, M. Brett, J. Wilson, K. J. Millman, N. Mayorov, A. R. J. Nelson, E. Jones, R. Kern, E. Larson, C. J. Carey, İ. Polat, Y. Feng, E. W. Moore, J. VanderPlas, D. Laxalde, J. Perktold, R. Cimrman, I. Henriksen, E. A. Quintero, C. R. Harris, A. M. Archibald, A. H. Ribeiro, F. Pedregosa, P. van Mulbregt, and SciPy 1.0 Contributors (2020)
+SciPy 1.0: Fundamental Algorithms for Scientific Computing in Python .
+
+Nature Methods 17 , pp. 261–272 .
+
+External Links: Document
+
+Cited by: The Solar System Notification Alert Processing System (SNAPS): Public access to SNAPS data and products .
+
+Experimental support, please
+view the build logs
+for errors. Generated by
+
+L
+A
+T
+E
+
+xml
+
+.
+
+Instructions for reporting errors
+We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+methods listed below:
+
+Click the "Report Issue" (
+
+) button, located in the page header.
+
+Tip: You can select the relevant text first, to include it in your report.
+Our team has already identified the following issues . We appreciate your time reviewing and reporting rendering errors we
+may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+all.
+Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a list of packages that need conversion , and welcome developer contributions .
+
+We gratefully acknowledge support from
+our major funders ,
+member institutions , ,
+and all contributors.
+
+About
+·
+Help
+·
+Contact
+·
+Subscribe
+·
+Copyright
+·
+Privacy
+·
+Accessibility
+·
+Operational Status (opens in new tab)
+
+Major funding support from

@@ -1370,12 +1370,12 @@ def test_footprint_binning_propagates_proper_motion():
                                pmra=3600.0 * 2.0)])
     rows_old = [{"rab": 150, "decb": -31, "night": 61500, "n": 10}]
     rows_new = [{"rab": 151, "decb": -31, "night": 61500, "n": 10}]
-    at_2016, _ = _trials_from_footprint(rows_old, tg, 1.0, 2016.0)
-    at_2026, _ = _trials_from_footprint(rows_new, tg, 1.0, 2026.5)
+    at_2016, _, _ = _trials_from_footprint(rows_old, tg, 1.0, 2016.0)
+    at_2026, _, _ = _trials_from_footprint(rows_new, tg, 1.0, 2026.5)
     assert at_2016 == {("fast", "n61500")}
     assert at_2026 == {("fast", "n61500")}
     # ... and the un-propagated bin is NOT where the star is in 2026.
-    wrong, _ = _trials_from_footprint(rows_old, tg, 1.0, 2026.5)
+    wrong, _, _ = _trials_from_footprint(rows_old, tg, 1.0, 2026.5)
     assert wrong == set()
 
 
@@ -1427,3 +1427,53 @@ def test_threshold_dataclass_defaults_mirror_the_shipped_config():
                   "max_sep_sigma", "max_grey_z", "baseline_rel_err",
                   "missing_pm_penalty_arcsec"):
         assert getattr(bare, field) == getattr(from_config, field), field
+
+
+def test_a_silent_redder_band_excludes_the_grey_hypothesis():
+    """The fix for the discriminant that never fired.
+
+    Every event in the first correct live run was single-band (22 of 22), so the
+    two-band achromaticity test never ran.  But a grey event has equal
+    FRACTIONAL amplitude in every band, so on a red star it is brighter in
+    absolute flux in the REDDER band — and a redder band that was observed the
+    same night and stayed silent contradicts greyness.  That is a flare.
+    """
+    # Red star: g = 18, r = 17.  Detected in g only; r was observed and silent.
+    tg = _targets(_target(mag_g=18.0, mag_r=17.0))
+    F_g = P.ab_to_njy(18.0)
+    a = 0.10
+    g_alert = _alert(band="g", dflux=a * F_g, dflux_err=a * F_g / 30.0,
+                     template_flux=F_g)
+    v = screen_alerts([g_alert], tg, Thresholds(),
+                      observed_bands={("4242", night_id(MJD_2026)): {"g", "r"}},
+                      band_limits={"r": 500.0})
+    assert v.events == []
+    assert v.rejected[0]["reason"] == "chromatic"
+    assert "nondetection" in v.rejected[0]["detail"]
+
+
+def test_a_silent_band_says_nothing_when_grey_predicts_no_detection():
+    """Silence below the detection limit is untestable, not a pass."""
+    tg = _targets(_target(mag_g=18.0, mag_r=17.0))
+    F_g = P.ab_to_njy(18.0)
+    tiny = 1e-5                       # a grey event far too faint to see in r
+    a = _alert(band="g", dflux=tiny * F_g, dflux_err=tiny * F_g / 30.0,
+               template_flux=F_g)
+    v = screen_alerts([a], tg, Thresholds(),
+                      observed_bands={("4242", night_id(MJD_2026)): {"g", "r"}},
+                      band_limits={"r": 1e9})
+    assert len(v.events) == 1
+    assert not v.events[0].grey_tested
+    assert any("nondetection_untestable" in r for r in v.events[0].reasons)
+
+
+def test_one_sided_test_needs_the_other_band_to_have_been_observed():
+    """A band that was never looked at cannot be silent about anything."""
+    tg = _targets(_target(mag_g=18.0, mag_r=17.0))
+    F_g = P.ab_to_njy(18.0)
+    a = _alert(band="g", dflux=0.10 * F_g, dflux_err=0.10 * F_g / 30.0,
+               template_flux=F_g)
+    v = screen_alerts([a], tg, Thresholds(),
+                      observed_bands={("4242", night_id(MJD_2026)): {"g"}},
+                      band_limits={"r": 500.0})
+    assert len(v.events) == 1 and not v.events[0].grey_tested

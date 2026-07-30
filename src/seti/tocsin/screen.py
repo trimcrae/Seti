@@ -48,6 +48,7 @@ from .photometry import (
     ab_to_njy,
     blackbody_colour_temperature,
     fractional_amplitude,
+    grey_excluded_by_nondetection,
     greyness_z,
 )
 from .schema import NormalizedAlert, validate
@@ -86,6 +87,9 @@ class Thresholds:
     max_grey_z: float = 3.0
     baseline_rel_err: float = 0.03
     missing_pm_penalty_arcsec: float = 2.0
+    # How far above a band's detection limit the grey hypothesis must predict
+    # before that band's silence counts as evidence.  Below it, untestable.
+    nondetection_margin: float = 3.0
 
 
 @dataclass
@@ -199,7 +203,9 @@ def _per_alert_flags(alert: NormalizedAlert, th: Thresholds) -> str | None:
 
 
 def screen_alerts(alerts: list[NormalizedAlert], targets, th: Thresholds | None = None,
-                  epoch_jyear: float | None = None) -> ScreenVerdict:
+                  epoch_jyear: float | None = None,
+                  observed_bands: dict | None = None,
+                  band_limits: dict | None = None) -> ScreenVerdict:
     """Screen a batch of normalised alerts against the nearby-star target list.
 
     ``targets`` is a DataFrame-like with at least ``source_id, ra, dec`` and,
@@ -329,6 +335,39 @@ def screen_alerts(alerts: list[NormalizedAlert], targets, th: Thresholds | None 
                 grey_z = greyness_z(ab.a, ab.a_err, ar.a, ar.a_err)
                 grey_tested = np.isfinite(grey_z)
                 chromatic = grey_tested and abs(grey_z) > th.max_grey_z
+        # ONE-SIDED COLOUR TEST.  Nearly every event is single-band (22 of 22 in
+        # the first correct live run), so the two-band test almost never fires.
+        # A band that was observed the same night and stayed silent is still
+        # evidence: a grey event has equal FRACTIONAL amplitude in every band, so
+        # on a red star it is brighter in absolute flux in the redder band, and
+        # its absence there contradicts greyness.
+        grey_excl = None
+        if not grey_tested and len(bands_sorted) == 1 and observed_bands:
+            seen_bands = set(observed_bands.get((tid, night), ()) or ())
+            det_band = bands_sorted[0]
+            r0 = by_band[det_band]
+            for other in sorted(seen_bands - {det_band}):
+                base_o, _e, _src = _baseline_flux(r0["alert"], row, other,
+                                                  th.baseline_rel_err)
+                lim_o = (band_limits or {}).get(other)
+                gx = grey_excluded_by_nondetection(
+                    r0["amp"].a, base_o, lim_o, other,
+                    margin=th.nondetection_margin)
+                if gx.tested:
+                    grey_excl = gx
+                    break
+                if grey_excl is None:
+                    # Remember why it was untestable, so the event records that
+                    # the test was attempted rather than silently skipped.
+                    grey_excl = gx
+        if grey_excl is not None and grey_excl.excluded:
+            for r in by_band.values():
+                v.reject(r["alert"], "chromatic",
+                         detail=f"grey_excluded_by_{grey_excl.other_band}_nondetection",
+                         predicted_njy=round(grey_excl.predicted_flux_njy, 1),
+                         limit_njy=round(grey_excl.limit_flux_njy, 1))
+            continue
+
         ct = float("nan")
         if next(iter(polarity)) == "flash" and len(bands_sorted) >= 2:
             fit = blackbody_colour_temperature(
@@ -353,6 +392,10 @@ def screen_alerts(alerts: list[NormalizedAlert], targets, th: Thresholds | None 
                            else "greyness_untestable")
         if sa.reliability is None:
             reasons.append("reliability_unavailable")
+        if grey_excl is not None and grey_excl.tested and not grey_excl.excluded:
+            reasons.append(f"grey_survives_{grey_excl.other_band}_nondetection")
+        elif grey_excl is not None:
+            reasons.append(f"nondetection_untestable_{grey_excl.reason}")
         if np.isnan(ct) and sa.polarity == "flash":
             reasons.append("colour_temperature_untestable")
         per_band = {
@@ -372,7 +415,8 @@ def screen_alerts(alerts: list[NormalizedAlert], targets, th: Thresholds | None 
             dflux_err_njy=float(sa.dflux_err_njy), strongest_band=sa.band,
             a=float(strongest["amp"].a), a_err=float(strongest["amp"].a_err),
             sep_arcsec=strongest["sep"], sep_sigma=strongest["sig"],
-            grey_z=float(grey_z), grey_tested=bool(grey_tested),
+            grey_z=float(grey_z),
+            grey_tested=bool(grey_tested or (grey_excl is not None and grey_excl.tested)),
             colour_temp_k=float(ct), verdict="kept",
             alert_ids=[by_band[b]["alert"].alert_id for b in bands_sorted],
             per_band=per_band, reasons=reasons))

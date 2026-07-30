@@ -85,6 +85,11 @@ acquire:
   # pointed, so a 1-degree sky bin holding any detection on night N was observed
   # on night N.  Aggregated server-side with GROUP BY, so a night's footprint is
   # one small result rather than millions of rows.
+  # Wall-clock budget for one dispatch, well short of the workflow's
+  # timeout-minutes.  A cancelled job discards EVERYTHING — the commit step never
+  # runs, so chunks that already succeeded are lost too.  Yielding voluntarily
+  # keeps the watermark committed and lets the next dispatch resume.
+  max_run_seconds: 5400.0
   use_footprint_denominator: true
   footprint_bin_deg: 1.0
   maxrec: 2000000

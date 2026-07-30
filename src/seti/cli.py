@@ -694,7 +694,8 @@ def _cmd_tocsin_targets(args, cfg):
 def _cmd_tocsin_screen(args, cfg):
     from .tocsin.run import screen
 
-    screen(cfg, chunks=args.chunks, lookback_nights=args.lookback_nights,
+    screen(cfg, chunks=args.chunks, max_run_seconds=args.max_run_seconds,
+           lookback_nights=args.lookback_nights,
            mjd_lo=args.mjd_lo, mjd_hi=args.mjd_hi,
            targets_path=args.targets, out_dir=args.out_dir,
            use_gaia_join=not args.no_gaia_join)
@@ -1186,6 +1187,10 @@ def main(argv=None):
                             "persistent cross-night ledger")
     p.add_argument("--lookback-nights", type=float, default=None,
                    help="window to pull, in nights (default from config)")
+    p.add_argument("--max-run-seconds", type=float, default=None,
+                   help="wall-clock budget for the whole dispatch; the chunk "
+                        "loop yields before the CI job timeout so the ledger is "
+                        "always committed (default from config)")
     p.add_argument("--chunks", type=int, default=1,
                    help="walk this many consecutive windows in one run; stops "
                         "early once the watermark reaches the broker's frontier "

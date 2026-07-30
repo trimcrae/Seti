@@ -1015,10 +1015,18 @@ def calibrate(cfg=None, out_dir: str | Path | None = None) -> dict:
     # one input that is neither measured nor bounded for most objects, so the
     # result is reported across the plausible range rather than at a point: if the
     # conclusion flips between them, it is a statement about density.
+    # ASTEROIDS AND COMETS SEPARATELY, because they are bound by different physics.
+    # A comet accelerates by shedding mass, so it is not subject to the radiation
+    # momentum budget at all and exceeds it by orders of magnitude; an asteroid
+    # accelerates by re-radiating sunlight, so it is.  Reporting them together gave
+    # a headline of "92 objects above the hard ceiling", which reads as the gate
+    # failing when every one of those 92 was a periodic comet -- i.e. the gate
+    # separating the two populations exactly as designed.
     rec["epsilon"] = {}
-    for label, rho in (("rho_2000", 2000.0), ("rho_1000_generous", 1000.0)):
-        rec["epsilon"][label] = summarise_epsilon(fetched["rows"],
-                                                  rho_kg_m3=rho).as_dict()
+    for kind in ("asteroid", "comet"):
+        for label, rho in (("rho_2000", 2000.0), ("rho_1000_generous", 1000.0)):
+            rec["epsilon"][f"{kind}_{label}"] = summarise_epsilon(
+                fetched["rows"], rho_kg_m3=rho, kind=kind).as_dict()
     checkpoint()
 
     # And the unit check, against the mirror's own twelve objects.
@@ -1033,15 +1041,20 @@ def calibrate(cfg=None, out_dir: str | Path | None = None) -> dict:
                                  "error": f"{type(exc).__name__}: {exc}"[:400]}
     checkpoint()
 
-    eps = rec["epsilon"]["rho_2000"]
+    eps = rec["epsilon"]["asteroid_rho_2000"]
+    com = rec["epsilon"]["comet_rho_2000"]
     if eps.get("ok"):
         rec["verdict"] = "OK"
         rec["headline"] = (
-            f"realised thermal-recoil efficiency measured on {eps['n']} objects "
-            f"with a fitted A2: median {eps['quantiles'].get('p50'):.3g}, "
-            f"99th percentile {eps['quantiles'].get('p99'):.3g}, "
+            f"ASTEROIDS with a fitted A2 (n={eps['n']}): realised thermal-recoil "
+            f"efficiency median {eps['quantiles'].get('p50'):.3g}, "
+            f"p99 {eps['quantiles'].get('p99'):.3g}, "
             f"max {eps['quantiles'].get('max'):.3g}; "
-            f"{eps['n_above_hard_1.0']} above the hard ceiling")
+            f"{eps['n_above_hard_1.0']} above the hard ceiling.  "
+            f"COMETS (n={com.get('n', 0)}): "
+            f"{com.get('n_above_hard_1.0', 0)} above it -- which is the ceiling "
+            f"working, since a comet accelerates by shedding mass and is not bound "
+            f"by the radiation budget at all.")
     checkpoint()
     print(f"[loom] calibrate verdict={rec['verdict']} "
           f"n_sbdb={fetched['n_rows']} "

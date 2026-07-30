@@ -1144,6 +1144,52 @@ def test_summarise_epsilon_lists_exceedances_rather_than_counting_them():
     assert out["quantiles"]["p50"] < 0.1
 
 
+def test_comets_are_separated_from_asteroids():
+    """The split is the result, not a refinement.
+
+    A comet accelerates by shedding mass, so it is not bound by the radiation
+    momentum budget and exceeds it by orders of magnitude. Mixing the populations
+    turned the ceiling's single best validation — that it separates them cleanly —
+    into a headline reading "92 objects above the hard ceiling", when every one of
+    those 92 was a periodic comet.
+    """
+    from seti.loom import calibrate
+
+    assert calibrate.is_comet({"full_name": "90P/Gehrels 1"})
+    assert calibrate.is_comet({"full_name": "75D/Kohoutek"})
+    assert calibrate.is_comet({"full_name": "C/2014 UN271"})
+    assert calibrate.is_comet({"full_name": "x", "class": "JFc"})
+    assert not calibrate.is_comet({"full_name": "(69230) Hermes", "class": "AMO"})
+    assert not calibrate.is_comet({"full_name": "101955 Bennu", "class": "APO"})
+
+    rows = [{"full_name": f"({i}) Rock", "class": "MBA", "A2": 1e-14,
+             "H": 18.0, "diameter": 1.0} for i in range(30)]
+    rows += [{"full_name": f"{i}P/Comet", "A2": 1e-7, "H": 14.0,
+              "diameter": 5.0} for i in range(30, 45)]
+    ast = calibrate.summarise_epsilon(rows, kind="asteroid").as_dict()
+    com = calibrate.summarise_epsilon(rows, kind="comet").as_dict()
+    assert ast["n"] == 30 and ast["n_above_hard_1.0"] == 0
+    assert com["n"] == 15 and com["n_above_hard_1.0"] == 15
+    assert ast["n_comets_in_source"] == 15
+
+
+def test_jpl_numbered_objects_match_on_their_provisional_designation():
+    """JPL's ``pdes`` for a numbered object is its number, not "1937 UB".
+
+    A designation-only match therefore missed 9 of the 12 mirror objects in the
+    first live calibration. ``full_name`` carries both forms.
+    """
+    from seti.loom import calibrate
+
+    jpl = [{"pdes": "69230", "full_name": "69230 Hermes (1937 UB)",
+            "A2": -1.189e-14}]
+    mirror = [{"unpacked_primary_provisional_designation": "1937 UB",
+               "yarkovsky": -1.189e-14 / 1e-10}]
+    out = calibrate.verify_yarkovsky_unit(mirror * 3, jpl)
+    assert out["n_matched"] == 3
+    assert out["implied_unit_au_day2"] == pytest.approx(1e-10, rel=1e-6)
+
+
 def test_summarise_epsilon_degrades_on_a_thin_sample():
     from seti.loom import calibrate
 

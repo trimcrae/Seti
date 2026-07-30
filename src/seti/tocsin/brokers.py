@@ -656,17 +656,15 @@ def normalize_alerce_rows(rows: list[dict]) -> list[NormalizedAlert]:
             ra=_f(r, "ra") or float("nan"),
             dec=_f(r, "dec") or float("nan"),
             dflux_njy=flux, dflux_err_njy=ferr, broker="alerce-lsst",
-            # UNITS: Rubin's `raErr`/`decErr` are taken as milliarcsec here.
-            # If that is wrong and they are already arcsec, dividing by 1000
-            # drives them below the 0.05" floor in `pos_err_arcsec`, so the
-            # funnel falls back to the floor and the separation cut is governed
-            # by `max_sep_arcsec` instead --- conservative.  The opposite mistake
-            # (reading mas as arcsec) would inflate errors ~1000x and silently
-            # DISABLE the astrometric-offset rejection, so this direction is the
-            # safe one to be wrong in.  `diagnostics.sample_lsst_detection`
-            # records real values so the assumption can be settled.
-            ra_err_arcsec=None if ra_err is None else ra_err / 1000.0,
-            dec_err_arcsec=None if dec_err is None else dec_err / 1000.0,
+            # UNITS: DEGREES.  Settled by measurement rather than argued ---
+            # `diagnostics.sample_lsst_detection` returned raerr = 4.27e-05,
+            # which is 0.154" as degrees and physically absurd read any other
+            # way.  The earlier milliarcsec guess drove every value below the
+            # 0.05" floor in `pos_err_arcsec`, which pinned every source to the
+            # floor and inflated sep_sigma about threefold --- over-rejecting
+            # genuine matches as astrometric offsets.
+            ra_err_arcsec=None if ra_err is None else ra_err * 3600.0,
+            dec_err_arcsec=None if dec_err is None else dec_err * 3600.0,
             template_flux_njy=_f(r, "templateflux"),
             template_flux_err_njy=_f(r, "templatefluxerr"),
             science_flux_njy=_f(r, "scienceflux"),
@@ -905,10 +903,10 @@ def normalize_lasair_diasources(payload: dict, min_reliability: float | None = N
             dec=(_f(s, "decl") if s.get("decl") is not None else _f(s, "dec"))
             or float("nan"),
             dflux_njy=flux, dflux_err_njy=ferr, broker="lasair-lsst",
-            # Lasair reports raErr/decErr in mas for diaSources (SDM units);
-            # convert to arcsec, the unit the funnel works in.
-            ra_err_arcsec=None if ra_err is None else ra_err / 1000.0,
-            dec_err_arcsec=None if dec_err is None else dec_err / 1000.0,
+            # Same SDM units as the ALeRCE path: raErr/decErr are DEGREES
+            # (measured, see normalize_alerce_rows).
+            ra_err_arcsec=None if ra_err is None else ra_err * 3600.0,
+            dec_err_arcsec=None if dec_err is None else dec_err * 3600.0,
             template_flux_njy=_f(s, "templateFlux"),
             template_flux_err_njy=_f(s, "templateFluxErr"),
             science_flux_njy=_f(s, "scienceFlux"),

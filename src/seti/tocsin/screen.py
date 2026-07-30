@@ -71,12 +71,15 @@ BAND_ORDER = ("u", "g", "r", "i", "z", "y")
 class Thresholds:
     """Every screening threshold in one place (loaded from ``config/tocsin.yaml``)."""
 
+    # These defaults MUST mirror config/tocsin.yaml.  Two sources of truth
+    # drifting apart is precisely how the Gaia column-name bug silently disabled
+    # the greyness test, so they are pinned together by a test.
     min_abs_snr: float = 6.0
-    min_reliability: float = 0.5
+    min_reliability: float = 0.0        # the stream is already cut at 0.5 upstream
     require_reliability: bool = False
     max_dipole_significance: float = 3.0
     max_extendedness: float = 0.5
-    max_trail_arcsec: float = 0.5
+    max_trail_arcsec: float = 5.0       # backstop only; see config for why
     max_sep_sigma: float = 3.0
     max_sep_arcsec: float = 1.0
     match_radius_arcsec: float = 1.5
@@ -175,6 +178,17 @@ def _per_alert_flags(alert: NormalizedAlert, th: Thresholds) -> str | None:
     if (alert.extendedness is not None and np.isfinite(alert.extendedness)
             and alert.extendedness > th.max_extendedness):
         return "extended"
+    # Rubin's own trail flag is the trustworthy signal.  The fitted
+    # `trailLength` is NOT: a probe sample showed 1.38" on an ordinary,
+    # unflagged, point-like star (extendedness 0.02), so the fit returns
+    # non-trivial lengths for sources that are not trailed at all.  A tight cut
+    # on the bare length would therefore throw away real events.  The bare
+    # length is kept only as a backstop at a deliberately loose threshold; the
+    # primary mover defences are the `sid` filter (which excludes known
+    # solar-system objects) and Rubin's own upstream deletion of trails longer
+    # than 10 deg/day.
+    if alert.raw.get("trail_flag") is True:
+        return "trailed"
     if (alert.trail_length_arcsec is not None
             and np.isfinite(alert.trail_length_arcsec)
             and alert.trail_length_arcsec > th.max_trail_arcsec):

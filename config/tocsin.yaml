@@ -110,9 +110,15 @@ screen:
   require_reliability: false
   max_dipole_significance: 3.0
   max_extendedness: 0.5
-  # Rubin deletes trails longer than 10 deg/day upstream; this catches the slow
-  # residue.  A trailed source at a stellar position is a mover, not the star.
-  max_trail_arcsec: 0.5
+  # Backstop only, and deliberately LOOSE.  A probe sample showed trailLength =
+  # 1.38" on an ordinary unflagged point-like star, so the fitted length is not
+  # a clean trail indicator and a tight cut here would discard real events.
+  # Rubin's `trail_flag` is used as the trustworthy signal instead, and the
+  # primary mover defences are the sid filter (known solar-system objects) and
+  # Rubin's upstream deletion of trails longer than 10 deg/day (~12.5" per
+  # 30 s visit).  NEEDS CALIBRATION against the observed trailLength
+  # distribution before being tightened.
+  max_trail_arcsec: 5.0
   # Association to the proper-motion-propagated stellar position.
   match_radius_arcsec: 1.5
   max_sep_arcsec: 1.0

@@ -43,6 +43,7 @@ from ..tocsin.brokers import ALERCE_TAP
 from .acquire import AlerceSSO
 from .calibrate import fetch_sbdb, summarise_epsilon, verify_yarkovsky_unit
 from .control import control_index, normalise_designation, validate
+from .litcheck import check_objects
 from .nongrav import anomaly_ratio, calibration_table, ceiling_ratio, fit_envelope
 from .replication import replication_tests
 from .residuals import (
@@ -1059,6 +1060,59 @@ def calibrate(cfg=None, out_dir: str | Path | None = None) -> dict:
     print(f"[loom] calibrate verdict={rec['verdict']} "
           f"n_sbdb={fetched['n_rows']} "
           f"unit={rec.get('yarkovsky_unit', {}).get('verdict')}")
+    return rec
+
+
+def litcheck(cfg=None, out_dir: str | Path | None = None,
+             names: list[str] | None = None) -> dict:
+    """Are the flagged exceedances already explained in the literature?  Runner-only.
+
+    The step that decides whether the vetted exceedances mean anything.  They are
+    "unexplained" only relative to a seven-object list from 2023, and that
+    population has since been extended — so an object already catalogued as a dark
+    comet is explained by hidden outgassing and is not a lead.
+
+    Reads the survivors from ``calibration.json`` unless ``names`` is given, and
+    writes ``litcheck.json`` after every query so a job timeout leaves the answers
+    already obtained on disk.
+    """
+    conf = load_loom_config(cfg)
+    root = Path(cfg.root) if cfg is not None else _repo_root()
+    out = Path(out_dir) if out_dir else root / conf["report"]["results_dir"]
+    rec: dict = {"checked_at_utc": _utc(), "verdict": "NOT_RUN"}
+
+    if names is None:
+        path = out / "calibration.json"
+        if not path.exists():
+            rec["verdict"] = "NO_CALIBRATION"
+            rec["note"] = f"{path} does not exist; run loom-calibrate first"
+            _write_json(out / "litcheck.json", rec)
+            print(f"[loom] litcheck verdict={rec['verdict']}")
+            return rec
+        cal = json.loads(path.read_text())
+        names = [s["name"] for s in
+                 (cal.get("epsilon", {}).get("asteroid_rho_2000", {})
+                  .get("survivors") or [])]
+    rec["objects_checked"] = list(names)
+    if not names:
+        rec["verdict"] = "NOTHING_TO_CHECK"
+        _write_json(out / "litcheck.json", rec)
+        print("[loom] litcheck verdict=NOTHING_TO_CHECK")
+        return rec
+
+    progress: dict = {}
+    rec["progress"] = progress
+
+    def _record(key, value):
+        progress[key] = {k: v for k, v in value.items() if k != "text"}
+        _write_json(out / "litcheck.json", rec)
+
+    result = check_objects(names, on_result=_record)
+    rec.update(result)
+    rec["verdict"] = result["verdict"]
+    _write_json(out / "litcheck.json", rec)
+    print(f"[loom] litcheck verdict={rec['verdict']} "
+          f"explained={result['n_explained']}/{result['n_objects']}")
     return rec
 
 

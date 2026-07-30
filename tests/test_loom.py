@@ -28,6 +28,7 @@ fact that scanning for a best breakpoint finds structure in pure noise every tim
 from __future__ import annotations
 
 import math
+import re
 
 import numpy as np
 import pytest
@@ -1699,3 +1700,67 @@ def test_covariate_labels_stratify_on_detectability():
     labels = screen.covariate_labels(recs)
     assert labels.size == len(recs)
     assert len(set(labels.tolist())) > 8
+
+
+# ---------------------------------------------------------------------------
+# Is a flagged object already explained?
+# ---------------------------------------------------------------------------
+def test_designation_matching_is_boundary_anchored():
+    """A substring search would find "2006 VC" inside "2006 VCs" and inside prose.
+
+    Every exceedance is four to nine characters of very common text, so a loose
+    match against a PDF would declare any of them explained by accident — the most
+    expensive possible error, since it discards a real lead silently.
+    """
+    from seti.loom import litcheck
+
+    text = ("we report 2005 UY6 and also 2005UY6 among the dark comets; "
+            "separately 2006 VCs are common and (452639) appears once")
+    hits = litcheck.find_in_text(text, "452639 (2005 UY6)", "src")
+    assert len(hits) >= 2
+    assert {h["matched"] for h in hits} >= {"2005 UY6", "2005UY6"}
+    # "2006 VCs" must NOT match the object "2006 VC".
+    assert litcheck.find_in_text(text, "428209 (2006 VC)", "src") == []
+    # Every hit carries context, because a count cannot be checked by a reader.
+    assert all(h["context"] for h in hits)
+
+
+def test_permanent_number_needs_to_look_like_a_number():
+    """A bare six-digit run in a PDF is not a designation."""
+    from seti.loom import litcheck
+
+    assert litcheck.find_in_text("the value 139359 was tabulated", "139359 (2001 ME1)",
+                                 "src") == []
+    assert litcheck.find_in_text("object (139359) shows drift", "139359 (2001 ME1)",
+                                 "src")
+
+
+def test_litcheck_papers_cover_the_dark_comet_population():
+    from seti.loom import litcheck
+
+    ids = [p[0] for p in litcheck.DARK_COMET_PAPERS]
+    # The original seven-object paper and the follow-ups that extended it.
+    assert "2212.08115" in ids
+    assert len(ids) >= 6
+    assert all(re.match(r"^\d{4}\.\d{4,5}$", i) for i in ids)
+
+
+def test_not_found_is_not_called_unexplained():
+    """The verdict must describe the search, not the object.
+
+    "Not found by these searches" is a statement about what was searched as much
+    as about the object, and the searched set is reported alongside so the claim
+    can be judged rather than taken.
+    """
+    from seti.loom.litcheck import ObjectCheck
+
+    chk = ObjectCheck(name="(2012 UR158)")
+    chk.searched.append("2212.08115 (50000 chars)")
+    d = chk.as_dict()
+    assert d["verdict"] == "NOT_FOUND_IN_SEARCHED_LITERATURE"
+    assert d["explained_in_literature"] is False
+    assert d["searched"]
+
+    chk.hits.append({"source": "arXiv:2212.08115", "matched": "2012 UR158",
+                     "context": "..."})
+    assert chk.as_dict()["verdict"] == "EXPLAINED_IN_LITERATURE"

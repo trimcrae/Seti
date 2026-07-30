@@ -1,0 +1,1162 @@
+A Cost-Effective Search for Extraterrestrial Probes in the Solar System
+
+1 Introduction
+
+2 Filtering out the noise
+
+2.1 Going back in time: using pre-Sputnik images
+2.2 Observations with Space-Borne Telescopes
+2.3 Color-coded Clues of Ancient Space Debris
+2.4 Using Earth’s Shadow as a Filter
+
+3 Searches for ZTF transients in Earth’s Shadow
+
+3.1 Examination of transient alerts (Sample A)
+
+3.1.1 Exploiting the Earth’s Shadow
+3.1.2 Classifying detections
+3.1.3 Analysis of candidate clustered transients
+
+3.2 Automated transient survey (sets B–C)
+
+4 Discussion
+5 Data availability
+6 Acknowledgments
+
+A Cost-Effective Search for Extraterrestrial Probes in the Solar System
+
+Beatriz Villarroel, 1 Wesley A. Watters, 2 Alina Streblyanska, 3 Enrique Solano, 4
+Stefan Geier, 3,5
+E-mail: beatriz.villarroel@su.se
+  
+Lars Mattsson 1
+1 Nordita, KTH Royal Institute of Technology and Stockholm University, Hannes Alfvéns väg 12, SE-106 91 Stockholm, Sweden
+2 Whitin Observatory, Dept. Physics & Astronomy, Wellesley College, 106 Central Street Wellesley, MA 02481, USA
+3 Instituto de Astrofísica de Canarias, Vía Láctea, 38205 La Laguna, Tenerife, Spain
+4 Departamento de Astrofísica, Centro de Astrobiología (CSIC/INTA), P.O. Box 78, E-28691 Villanueva de la Cañada, Spain; esm@cab.inta-csic.es
+5 GRANTECAN: Cuesta de San José s/n, 38712 Breña Baja, La Palma, Spain
+
+(Accepted XXX. Received YYY; in original form ZZZ)
+
+Abstract
+For centuries, astronomers have discussed the possibility of inhabited worlds — from Herschel’s 18th-century observations suggesting Mars may host life, to the systematic search for technosignatures that began in the 1960s using radio telescopes. Searching for artifacts in the solar system has received relatively little formal scientific interest and has faced significant technical and social challenges. Automated surveys and new observational techniques developed over the past decade now enable astronomers to survey parts of the sky for anomalous objects.
+We briefly describe four methods for detecting extraterrestrial artifacts and probes within the Solar System and then focus on demonstrating one of these. The first makes use of pre-Sputnik images to search for flashes from glinting objects. The second method makes use of space-borne telescopes to search for artificial objects. A third approach involves examining the reflectance spectra of objects in Earth orbit, in search of the characteristic reddening that may imply long-term exposure of metallic surfaces to space weathering. We focus here on a fourth approach, which involves using Earth’s shadow as a filter when searching for optically luminous objects in near-Earth space. We demonstrate a proof-of-concept of this method by conducting two searches for transients in images acquired by the Zwicky Transient Facility (ZTF), which has generated many repeated 30-second exposures of the same fields.
+In this way, we identified previously uncatalogued events at short angular separations from the center of the shadow, motivating more extensive searches using this technique. We conclude that the Earth’s shadow presents a new and exciting search domain for near-Earth SETI.
+
+keywords:
+extraterrestrial intelligence – transients – surveys – minor planets, asteroids, general
+
+† † pubyear: 2025 † † pagerange: A Cost-Effective Search for Extraterrestrial Probes in the Solar System – A Cost-Effective Search for Extraterrestrial Probes in the Solar System
+
+1 Introduction
+
+Searches for Extraterrestrial Intelligence (SETI) using optical and radio telescopes have been going on for sixty years. This work has demonstrated remarkable technical advances alongside the development of creative search strategies and frameworks for discovery and rigorous evidential standards. Ever since astronomers understood that our own radio transmissions could be received by extraterrestrial astronomers (Cocconi & Morrison, 1959 ) , radio observations have been running episodically, such as at the Green Bank telescope and Allen Telescope Array in California (United States). Despite this progress, no confirmed signal of extraterrestrial (ET) origin has been detected. Several research groups have made major contributions to radio searches: the SETI institute (e.g., Tarter, 2001 ) have been engaged for decades. The Five-hundred-meter Aperture Spherical radio Telescope (FAST) in China has recently joined the search (Li et al., 2020 ) . In 2015, the Breakthrough Listen program launched their effort to perform the most systematic and comprehensive radio search to date, observing 1 million stars, the galactic plane, and over 100 galaxies for radio signals. Their work has led to firm upper limits on radio emitters. For example, Enriquez et al. ( 2017 ) conducted searches for artificial signals in the 1.1–1.9 GHz range, operating at powers higher than ∼ 10 13 \sim 10^{13} W, concluding that less than < 0.1 <0.1 % of all systems within 50 pc have radio transmitters this powerful. It should be noted that these limits apply to continuously transmitting and omnidirectional or Earth-directed transmitters. Garrett & Siemion ( 2022 ) identified 143,000 galaxies that apparently also show no artificial radio signals, placing limits on the luminous end of the SETI luminosity function. Subsequent work by Price et al. ( 2020 ) searched for radio transmitters in the 1.10–3.45 GHz range, finding no transmitters stronger than ∼ 10 12 \sim 10^{12} W. Again, these limits apply under the assumption of continuous and omnidirectional or Earth-directed transmission. Other notable efforts include SETI Italia (Montebugnoli et al., 2001 ) and searches conducted using the Russian RATAN-600 telescope (Bursov et al., 2016 ) . Sixty years of radio searches have so far not yielded a candidate signal that satisfies agreed criteria for a detection of interest.
+
+The lack of a clear discovery from radio searches has motivated searches for optical lasers, as they provide more privacy and higher bit rate than radio communication. Lasers used by extraterrestrial civilizations could have long-lived (continuous over minutes or hours or even longer) beams or emit short pulses, where the latter are much more energy efficient. These may also rotate or stay fixed with respect to the observer. One method to detect such a laser is to search for repeated, short pulses (PANOSETI; Wright et al., 2018 ; Maire et al., 2020 ) . An all-sky all-the-time search has been conducted by LaserSETI for the past 10 years 1 1 1 http://www.laserseti.net (Gillum, 2023 ) , where a network of small cameras survey the sky from different positions in search of a laser flash. Another tested method relies on examining the spectra of stars. A powerful laser source that transits its host star is expected to leave a monochromatic emission line in stellar spectra (Tellis & Marcy, 2017 ) . For example, a 60 Megawatt laser with a 10 meter aperture laser beam at a distance of ∼ \sim 30 pc, is detectable in the spectra of a host star above the continuum level—even when the laser pulse is as short as a second (e.g., Marcy et al., 2022b ) . Only limited parts of the entire parameter space have been sampled so far, and no candidate laser source has been identified up to now (Stone et al., 2005 ; Howard et al., 2007 ; Reines & Marcy, 2002 ; Marcy, 2021 ; Marcy et al., 2022b , c , a ) .
+
+In contrast, there have been few searches for extraterrestrial artifacts and probes in our Solar System. But this possibility was well understood since the early 1960s after interstellar spaceflight became realistic, raising the idea that ET civilizations might intentionally send probes (or unintentionally send other artifacts) to our immediate neighborhood (Bracewell, 1973 ) . Carl Sagan suggested that an advanced extraterrestrial civilisation might send relativistic probes to our Solar System (Sagan, 1963 ) and that the Earth might have been visited as many as ∼ 10 4 \sim 10^{4} times. Indeed, while relativistic probes are extremely energy-demanding, it is not unimaginable that other civilisations have attempted sending probes similar to Voyager or Pioneer to other star systems, or even a simpler “message-in-a-bottle” style of artifact. In 2011, Voyager left the Solar System, and even with its non-relativistic, humble velocity, it is estimated to reach the distance of the closest star in about 77,000 years. These types of probes are far cheaper and more energy efficient for transmitting information to another civilisation (Rose & Wright, 2004 ) , although they are arguably far more difficult to discover (Haqq-Misra & Kopparapu, 2012 ) . In California, the 100 million dollar Breakthrough Starshot project was investigating new propulsion technologies to launch a probe with relativistic speed to the closest star (see e.g. Lubin ( 2016 ) ). Had they succeeded, the probe could reach the closest star in as little as twenty years. Sadly, the project was canceled.
+
+An ET civilization may configure interstellar probes to land on the surfaces of planets (Carlotto & Stein, 1990 ; Arkhipov & Graham, 1996 ; Davies & Wagner, 2013 ) , or asteroids (Papagiannis, 1978 ; Benford, 2019 ) , or else to park in a stable orbit around planets like Earth for millions of years (Villarroel et al., 2022c ) . Some probes may be intact, while others could have been around for hundreds of thousands of years and disintegrated over time. It has been speculated that thousands, millions, or even more probes might be spread throughout the galaxy, as part of a network of robotic spacecraft (Schwartz & Townes, 1961 ; Freitas, 1980 , 1981 ; Zuckerman, 1985 ; Hippke, 2018 , 2020 ; Gertz & Marcy, 2022 ) , some of which may communicate using lasers. In the early 1980s, searches for ET probes nearby the Earth were conducted with optical telescopes (Freitas & Valdes, 1980 ; Valdes & Freitas, 1983 ) , without yielding positive results. One study has been carried out using photographic plate material from the 1950s (Villarroel et al., 2022a ) , yielding two statistically significant preliminary candidates. The search for nearby probes and artifacts turned out to be the least-traveled path in SETI research, due to the heavy requirements of such searches, often based on astronomically expensive space missions.
+
+There is an evident need for new, rigorous, and verifiable observations in the search for ET artefacts (Shostak, 2020 ) . The recent efforts within academic institutions to investigate Unidentified Aerial Phenomena (UAP), although not necessarily related to ET technology, have brought the search closer to home (in Earth’s atmosphere) through efforts like the Galileo project (Loeb & Laukien, 2023 ; Watters et al., 2023 ; Domine et al., 2025 ) , UAPx (Szydagis et al., 2025 ) , and IFEX (Interdisziplinären Forschungszentrum für Extraterrestrik; Kayal ( 2022 ); Kayal et al. ( 2023 ) ).
+
+The search for ET probes exclusively outside the Earth at geosynchronous orbits and beyond is motivated by a desire to avoid detecting national security assets and minimize false positives. As mentioned above, the possibility that ET probes or artifacts are present in the Solar System is based on reasonable extrapolation from conservative estimates of spacefaring capabilities of advanced civilizations (Sagan, 1963 ; Knuth, 2024 ) , and indeed from the examples of our own Voyager and Pioneer probes. Moreover, a handful of curious astronomical observations are at least somewhat suggestive that we should search closer to home, such as observation of the asteroid VG 1991 (Steel, 1995 ) , the elongated object ‘Oumuamua (Bialy & Loeb, 2018 ) , and the finding of multiple transients in small regions of the sky (Villarroel et al., 2021 , 2022a ; Solano et al., 2024 ) . The most impressive case to date is arguably that of three bright “stars” appearing and vanishing within 50 minutes (Solano et al., 2024 ) . The goal of finding ET artifacts and probes can be achieved through dedicated searches for specular reflections from the surfaces of artificial objects (Lacki, 2019 ; Villarroel et al., 2022b ) as well as intrinsic optical emissions.
+
+In this paper, we present search methods that permit us to filter out human-made satellites and other background noise, together with preliminary, proof-of-concept searches using telescopic images acquired in the past 8 years, using the Earth’s shadow as a filter.
+
+2 Filtering out the noise
+
+The greatest challenge when searching for ET probes and artifacts in interplanetary space using modern instruments is that our skies are polluted with thousands of satellites and millions of reflective pieces of space debris, even as more and more satellites are being launched into orbit. This contamination is an especially challenging problem for anyone wishing to search for non-anthropogenic objects. Below we present several solutions to separate the many glints and emissions caused by human-made objects from potential ET artifacts and potential ET probes and artifacts, and then we describe a demonstration of one of these.
+
+2.1 Going back in time: using pre-Sputnik images
+
+A promising avenue is to examine digitized pre-Sputnik astronomical images captured by Palomar, Carte du Ciel, Harvard, and Lick observatories. These images, many of which date back to the early 1950s and earlier, can be analyzed for both anomalous events in the sky that occurred prior to the proliferation of satellites and space debris, and to search for typical signs of artificial satellites and space debris (Villarroel et al., 2022c ) . Discoveries made through this process might be usefully compared to the records of anomalous celestial observations made by astronomers before 1850, including those by Cassini and Messier as documented by Vallee & Aubeck ( 2010 ) , adding to their interest and value.
+
+Previously, Villarroel et al. ( 2022c ) discussed a straightforward search method for specular reflections from artificial objects in geosynchronous orbits: multiple transients that are aligned as the object moves and rotates. The paper proposed that any alignments with more than four transients are particularly noteworthy and warrant further investigation to distinguish them from plate defects with atypical shapes (i.e., not point-like or extended due to movement). Although a few preliminary candidates have been identified (Villarroel et al., 2022a ) , the origin of these transients remains unknown. The events might be caused by an entirely different and unanticipated phenomenon than what the given paper tested (solar reflections from artificial objects in geosynchronous orbits), e.g. atmospheric or exoatmospheric, in which multiple stationary light sources appear and disappear from the field. A recent discovery of a bright triple transient event in Palomar plates on the 19th of July 1952 is particularly puzzling and convincing (Solano et al., 2024 ) .
+
+The Vanishing & Appearing Sources during a Century of Observations (VASCO) project is currently planning a new generation of its citizen science project, which will search for glinting satellites instead of “vanishing stars” (Villarroel et al., 2022b ) .
+
+2.2 Observations with Space-Borne Telescopes
+
+An additional uncontaminated search approach involves examining a search volume that resides beyond the orbits of satellites and therefore beyond geosynchronous orbit. This approach can be achieved by using existing space telescopes, such as Kepler, or the Transiting Exoplanet Survey Satellite (TESS), and analyzing their existing datasets in search of anomalous objects.
+
+TESS, for example, uses four wide-field cameras all pointed at the same field, making it an ideal tool for searching for rare events involving multiple or “simultaneous” transients, as reported in studies by Villarroel et al. ( 2021 , 2022b ) and Solano et al. ( 2024 ) . However, it is worth noting that events fainter than approximately 12 magnitudes may not be detectable by the telescope, which utilizes small mirrors.
+
+While this experiment may not be able to detect any ET technological objects in orbit around the Earth, it does permit the search for objects farther out in the solar system.
+
+2.3 Color-coded Clues of Ancient Space Debris
+
+Those who wish to examine Earth orbits in modern-day data for dead artifacts without intrinsic emission will face a significant challenge: the view is spoiled by millions of human objects. Other projects, such as the Galileo project, tackle this challenge by searching for signs of interstellar meteors similar to ’Oumuamua in image data – and even by exploring the ocean depths for potential artifacts following fireball events with potential hyperbolic atmospheric entry velocities (Loeb et al., 2024 ) .
+
+An object that has resided in Earth’s orbit for a long period of time will have been exposed to dust particles, cosmic rays, and micrometeorites, leading to a reduction in its reflectivity and causing a reddening of the object (e.g., Hapke, 2001 ; Pearce et al., 2020 ) . We can leverage this phenomenon to obtain the reflection spectra of the top 5% most reddened artificial objects in Earth’s orbit without a known “owner”, meaning objects that are not listed by the USSTRATCOM. Of course, military satellites will not be in USSTRATCOM, which comprise a significant fraction. Nevertheless, solar reflectance spectra from an object will contain both the solar spectrum and a pattern of absorption features that are characteristic of the surface materials (Vasile et al., 2024 ) . Therefore, spectra from the most reddened population, showing unusual absorption or emission lines that suggest an unknown material, could indicate strong candidates for ET artifacts.
+
+2.4 Using Earth’s Shadow as a Filter
+
+The Earth’s shadow is an ideal uncontaminated search space. Every night, the Earth casts a shadow cone where direct sunlight cannot reflect from satellites or space debris (although there is still a possibility of reflection from the much fainter Moonlight). The size of this shadow varies throughout the year, but the base has an average radius of around 8 − 9 8-9 degrees for objects at geosynchronous orbits (GSO; approximately 35,700 km) (Nir, 2024 ) . With typical velocities of artificial objects at GSO, which move at approximately 15 arcsec per second, a brief flash caused by intrinsic emission lasting only 0.2 − 0.5 0.2-0.5 seconds can produce a point source, with its magnitude depending on the strength of its intrinsic emission.
+
+The Earth’s shadow is much larger at Low Earth Orbit (LEO), and objects emitting flashes move so quickly that they are likely to create long streaks as they rotate in most long-exposure imagery, rather than short flashes. Also, objects with continuous, longer-lasting emission further out than LEO might produce long streaks. It is therefore interesting to search for elongated streaks that occur within the shadow of the Earth and yet are well outside the atmosphere, in this way excluding aircraft and meteors. Such streaks are unlikely to be human satellites, which typically do not carry intrinsic optical light sources. The rare exceptions are largely confined to LEO and include (i) lasers used for communication (usually NIR) or laser ranging and atmospheric LIDAR; (ii) LEDs for optical self-identification; (iii) short-range LEDs used for optical tracking and formation flying; and (iv) spacecraft propulsion (e.g., rocket burns). At the distance of the Moon, an orbiting object will move at angular velocities of roughly ∼ 0.5 \sim 0.5 arcsec sec -1 . At a few times the distance of the Moon, we might search instead for streaks inside the shadow (which narrows down further as one moves away from Earth) indicating angular velocities < 0.1 <0.1 arcsec sec -1 . Determining the distance to streaking objects will require triangulation, as envisaged for the ExoProbe experiment 2 2 2 https://thedebrief.org/a-new-era-of-optical-seti-the-search-for-artificial-objects-of-non-human-origin/ (Villarroel & Marcy, 2023 ) .
+
+The shadow of the Earth consists of the penumbra and umbra or “full shadow”; the latter is depicted in Figure 1 . The full shadow consists of a dark core (the “dark full shadow” or DFS) and an outer fringe of light refracted by the Earth’s atmosphere, which can produce satellite glints and which measures γ ∼ 2 ∘ \gamma\sim 2^{\circ} . Assuming r orb = 35 , 786 r_{\rm orb}=35,786 km for geosynchronous orbit, the largest fractional change in observer position with respect to this altitude is Δ ​ R / R ∼ R ⊕ / r orb ≈ 0.18 \Delta R/R\sim R_{\oplus}/r_{\rm orb}\approx 0.18 , which is hence also the largest fractional change in apparent angular size of the refraction fringe ( γ ′ \gamma^{\prime} ) and DFS radius ( ϱ \varrho ) as a function of position on the Earth’s night side. At the geocenter, the total umbra radius is ϱ + γ = ∼ 8 \varrho+\gamma=\sim 8 to 9 ∘ 9^{\circ} ; from Earth’s surface below the antisolar point (Figure 1 a), ϱ + γ ≈ 10 ∘ \varrho+\gamma\approx 10^{\circ} . A “safe” shadow radius (for avoiding satellite glints) is therefore below 8 ∘ − 2 ∘ = 6 ∘ 8^{\circ}-2^{\circ}=6^{\circ} . Alternatively, this could be calculated as a function of position φ \varphi to maximize the search radius. In this initial study, in most cases we applied a cutoff of ρ < 6 ∘ < ϱ \rho<6^{\circ}<\varrho for the radial angular separation ( ρ \rho ) from the shadow center when we filtered detections.
+
+Figure 1: Earth’s umbra out to an orbit radius r orb r_{\rm orb} (not to scale). The Sun
+is in the direction of the bottom of the page. The lightest shading marks the “refraction fringe” into which sunlight is refracted by the atmosphere (angular size γ \gamma ). Intermediate shading is used to mark the “dark full shadow” (DFS). The darkest shading highlights the shadow volume visible to an observer on the Earth’s surface (this shading implies nothing about darkness in this volume, which is the same as the DFS). DFS radius is given by ϱ \varrho ; parallax of the shadow center with respect to the antisolar point is ϑ \vartheta ; angular separation of the observer from the geocenter-antisolar axis is φ \varphi . (a) Shows the shadow geometry for an observer on the Earth’s surface beneath the antisolar point (the “subantisolar point” or SAP), and (b) shows the shadow geometry for an observer at an arbitrary position on Earth’s surface, with angular separation φ \varphi from the SAP.
+
+At distances far enough from Earth, such as those greater than or equal to 0.01 astronomical units (au), any detectable flashes will occur from beyond the Earth’s shadow cone. Since very few human-made objects are located at these distances and their positions are well documented, there is a negligible risk of mistakenly identifying them as extraterrestrial artifacts or probes.
+
+Previous work has used the Earth’s shadow to search for real astrophysical transients lasting only a few seconds (Richmond et al., 2020 ; Arimatsu et al., 2021 ; Nir et al., 2021a ) , but no significant findings have been reported thus far. Our objective, however, is to identify extraterrestrial artifacts moving in Earth’s orbits and beyond.
+
+Conducting searches in the Earth’s shadow with a ground-based telescope permits the identification of candidates for active (self-luminous) extraterrestrial technological objects that are moving outside of the Earth’s atmosphere, while a definitive identification will require follow-up triangulation and spectroscopic analysis for repeating or new events. We note that this approach may not be effective for detecting old or defunct ET artifacts in orbit around the Earth. This means that objects similar to those posited in Villarroel et al. ( 2022a ) might not be detected; only objects with an intrinsic emission could be detected in this way. We note that the only intrinsic emission from known human objects are mainly from lasers designed for communications and from spacecraft propulsion systems (e.g., rocket thrusters); no other type of intrinsic emission from satellites is widely known.
+
+3 Searches for ZTF transients in Earth’s Shadow
+
+The Zwicky Transient Facility (ZTF; Bellm et al., 2019 ; Graham et al., 2019 ) is an untargeted wide-field transient survey observing transient events ranging from Solar System objects to powerful extragalactic events with the help of its systematic data acquisition system. The ZTF uses the 1.2m Samuel Oschin telescope at Palomar Observatory in California and reaches a limiting magnitude of r ∼ 20.5 r\sim 20.5 .
+
+The analyses in this section concern three sample sets of ZTF images. These are labeled as samples A, B, and C. Sample set A is defined and discussed in Section 3.1 . The much larger sample sets B and C are described in Section 3.2 . See Table 1 for the definitions of each sample.
+
+Table 1: Definitions of ZTF image samples.
+
+Sample
+
+Definition
+
+N N (images)
+
+Purpose
+
+A
+
+Based on transient survey (courtesy of Igor Andreoni) and culled to include only images residing within 8 ∘ of the center of Earth’s shadow ( ρ < 8 ∘ ) (\rho<8^{\circ})
+
+678
+
+Demonstrating manual inspection method
+
+B
+
+( b > 20 ∘ ) ∧ ( ρ < 6.5 ∘ ) (b>20^{\circ})\land(\rho<6.5^{\circ})
+
+224,168
+
+Demonstrating automated method in largely uncrowded fields (avoiding low galactic latitudes ( β \beta )); located confidently within shadow ( ρ < 6 \rho<6 )
+
+C
+
+β > 84 ∘ \beta>84^{\circ}
+
+326,823
+
+Control sample (ecliptic pole; ecliptic latitude ( β \beta ) exceeds 84 ∘ 84^{\circ} ; all fields well outside the shadow)
+
+3.1 Examination of transient alerts (Sample A)
+
+For sample A, we selected transient alerts from a public ZTF transient survey (courtesy of Igor Andreoni). The data set we searched spans from July 1, 2019, when real / bogus deep learning classification became available (Duev et al., 2019 ) , until August 1, 2022. The data set excluded from the search those ZTF fields close to the Galactic plane to reduce contamination from M-dwarf stellar flares and other types of fast transients from astrophysical sources within the Milky Way. To achieve this, we ignored those fields with a Galactic extinction higher than E(B - V) = 0.3 mag at the central coordinates of the fields (using the Planck Collaboration ( 2014 ) dust maps) following Andreoni et al. ( 2020 ) .
+
+One-off transients are, in principle, only visible in a single image before vanishing. This limits us to transients that, when bright and detectable (brighter than ∼ \sim 20.5 mag), persist for a shorter time than the sum of the exposure time and the time difference with subsequent or previous images (this adds up to ∼ \sim 30 seconds, since the subsequent image is captured in immediate succession).
+
+Each alert included in the sample has at least 5 other alerts in the same image (i.e., same field, same JD) which were also detected only once during the ZTF survey, to focus on multiple transients. All sources within 1.5 arcseconds from a catalogued object were discarded. Also, all sources within 10 arcseconds from catalogued asteroids were removed. We obtained 11,029 transient alerts to examine closer.
+
+3.1.1 Exploiting the Earth’s Shadow
+
+We use the Julian Date and the J2000 coordinates of each transient, as well as the software library earthshadow published by Guy Nir published (Nir, 2024 ) , in order to select only events that were observed in the shadow of the Earth at the altitude of geosynchronous orbits ( ρ < 8.5 ∘ \rho<8.5^{\circ} for Sample A; we use the stricter bounds of the DFS when filtering sets B and C: i.e., ρ < 6 ∘ \rho<6^{\circ} ).
+
+Out of the sample of 11029 candidates, 262 (2.4%) of the examples are in the Earth’s shadow, which excludes any specular reflections for these particular cases. We show the distributions of the candidate “shadow transients” over the sky in Figure 2 .
+
+Figure 2: Distribution on the sky. The distribution of the Sample A transient candidates on the sky in Galactic coordinates. Upper panel (a) all one-off transient candidates, (b) one-off transient candidates in the shadow.
+
+3.1.2 Classifying detections
+
+This exercise permitted us to quickly identify a set of classes of note: (1) images affected by a difference in depth (different magnitude limit) or other observational issues; (2) two images showing how a short transient is first visible in one image, and then another transient is seen in a second, later image (in nearly all cases of this kind, the transient is first seen in the eastern part of the image, and later in the western, which suggests a moving object); (3) images showing the synchronized movement of multiple objects moving from the east to west; (4) events that have been, in a preliminary sense, identified as candidate multiple transients. Category 1 objects are irrelevant to us. Category 2 objects are assigned a low priority as they are unlikely to be multiple transients, as indicated by their east-to-west movement. For Category 3, We find 29 cases of multiple objects moving throughout the field (from east to west), that we assume to be asteroids. Finally, in Category 4, we find 39 candidates of preliminary interest. However, examining them against the JPL Small-body Identification tool and a generous crossmatch radius of 30 arcseconds, identifies the majority of these as catalogued asteroids.
+
+Two interesting candidates remain from Category 4. The first is the case of a possible transient appearing next to a moving asteroid, creating the impression of a “triple transient,” shown in Figure 3 . The detections in the two left-most circles correspond to 2001 VC136, a ∼ \sim 19.6 mag asteroid. The detections in the two right-most circles appear only once, although the lower turns out to be a spurious detection (two bright pixels, non-psf).
+
+The second candidate is a good example of an uncatalogued object that could be interesting if more information were available. Figure 4 shows a ∼ \sim 17 magnitude object or objects that have no match when queried using the JPL Horizons database in April 2025. The astrometric measurements are tabulated in Table 3 . This object (or set of objects) occurs within ∼ \sim 0.07 arcseconds s − 1 s^{-1} of the ecliptic, suggesting that it may be an asteroid. On the other hand, if this sequence represents multiple images of the same object, then its apparent motion in right ascension is about 6 × \times times greater than of typical main belt asteroids, suggesting it is closer to the Earth. The entire track spans 430 arcseconds during 100 minutes. The second set of images and positions ((b) and (c) in Table 3 ) were both acquired in the g band, and differ in maximum raw intensity above background by only 5%. Using these two positions, we predicted the expected location 71 minutes after the position in (c), assuming a linear path and constant angular speed (R.A. (J2000) = 145.163329 ∘ , Dec. (J2000) = 15.608823 ∘ ) in the same field (570), filter ( g g ), sensor (c02), and and quadrant (q3) with timestamp 20210211359132 : no object was visible because it was projected to reside in the seam gap between CCDs. We also searched the neighboring sensor+quadrant in r r band images 136 minutes after (c), although the object was still projected to reside in the gap between quadrants and was not visible. The image for (b) also appears somewhat streaked in the approximate direction of motion (East-West), although other objects in the scene (including stars) also appear to exhibit an elongation (if less pronounced) in the same orientation, suggesting an effect of inaccuracies in tracking.
+
+Figure 3: Asteroid 2001 VC136. A complex candidate, including asteroid 2001 VC136 and a transient was found inside a box measuring 10 × \times 10 arcmin and centered at R.A. (J2000)=6.3634206 deg. and Dec.(J2000)=
+2.4341476, J.D.=2458760.7977431. See Table 2 for astrometric measurements and Table 9 for data product filenames. The lower-most object (right), not visible on the left, is a spurious detection (non-psf).
+
+Figure 4: Near-Earth object or triple transient? The object(s) of interest can be found within a 1000 arcsecond box centered at R.A. (J2000)= 145.2448564 and Dec.(J2000)= 15.6224391, J.D.= 2459256.8096296; see Table 2 for astrometric coordinates. A luminous object is seen streaking through the upper-left corner of the third image (lower left), possibly a meteor or aircraft. A fourth image in the g g band with no object detected is added to the sequence (lower right), to show the deviation from a straight path. See Table 3 for astrometric measurements and Table 9 for data product filenames.
+
+Table 2: Astrometric measurements of the three transient candidates shown in Figure 3 . Objects 1 and 2 were determined to be asteroid 2001 VC136.
+Coordinates (R.A., Dec.) are given in J2000 for each detection, along with the Julian Date (J.D.) and UTC observation time. All observations were taken in the ZTF r -band. Missing coordinate values are indicated as N.A. ZTF data product filenames are listed in Table 9 .
+
+Asteroid 2001 VC136; see Figure 3
+
+Object 1
+Band
+R.A. (J2000)
+Dec. (J2000)
+J.D.
+Observation time
+
+(a) left
+r
+6.3636953
+2.4339307
+2458760.7977431
+2019-10-04 at 07:56:45.26
+
+(b) right
+r
+6.3529988
+2.4294331
+2458760.8510417
+2019-10-04 at 08:25:30.89
+
+Object 2
+Band
+R.A. (J2000)
+Dec. (J2000)
+J.D.
+Observation time
+
+(a) left
+r
+N.A.
+N.A.
+2458760.7977431
+2019-10-04 at 07:56:45.26
+
+(b) right
+r
+6.3355465
+2.4229677
+2458760.8510417
+2019-10-04 at 08:25:30.89
+
+Object 3
+Band
+R.A. (J2000)
+Dec. (J2000)
+J.D.
+Observation time
+
+(a) left
+r
+N.A.
+N.A.
+2458760.7977431
+2019-10-04 at 07:56:45.26
+
+(b) right
+r
+6.3406132
+2.4030027-
+2458760.8510417
+2019-10-04 at 08:25:30.90
+
+Table 3: Astrometric measurements of the uncatalogued object(s) shown in Figure 4 . Coordinates (R.A., Dec.) are given in J2000 for each detection, along with the Julian Date (J.D.) and UTC observation time. Observations were taken on 2021 February 11 in the ZTF r and g -bands. ZTF data product filenames are listed in Table 9 .
+
+Uncatalogued object(s) (Figure 4 )
+
+Object
+Band
+R.A. (J2000)
+Dec. (J2000)
+J.D.
+Observation time
+
+(a) upper left
+r
+145.3668218
+15.6441562
+2459256.7390625
+2021-02-11 at 05:44:16.26
+
+(b) upper right
+g
+145.3011827
+15.6335293
+2459256.7789352
+2021-02-11 at 06:41:40.693
+
+(c) lower left
+g
+145.2448868
+15.6220271
+2459256.8096296
+2021-02-11 at 07:25:52.616
+
+3.1.3 Analysis of candidate clustered transients
+
+We performed an additional analysis by examining candidates that, in addition to appearing in images with > 5 >5 transients in the same field, two of these are within 10 arcminutes of each other. We found 85 cases of such clustered candidate transients. We then retrieved the images from the same day from the IRSA Gator’s image survey for ZTF. 3 3 3 https://irsa.ipac.caltech.edu/applications/Gator/ We found that 23 of these cases have no transients at all visible in the image and 44 cases appear to be just an asteroid moving between two images. (Note this is hard to distinguish from the case of two transients happening close to each other (a double transient), which would look similar.) Two images have single transient candidates, and 7 show several probable asteroids moving in the same field.
+
+Finally, we also conducted an investigation of the closest 10 arcminute field near each of the 262 transient candidates in the shadow. In this way, we found interesting cases of multiple asteroids moving together and one possible solitary transient.
+
+We note that, with only 2 or 3 exposures of 30 seconds on each field every day, it is difficult or unlikely to find multiple transients if they happen over half an hour.
+We also note that the hypothetical case of a double transient might be indistinguishable from an asteroid if they appear in only two images, and might only be distinguished by the fact that asteroids move always from east to west.
+
+Groups or clusters of objects moving in similar ways through a scene are unusual and potentially of interest for a study like the one proposed here. The greatest likelihood is that these represent (1) clusters of asteroids or (2) clusters of terrestrial spacecraft or spacecraft components in heliocentric orbit. Alternatively, such detections could represent (3) clusters of artificial objects of extraterrestrial origin in heliocentric orbit or moving in formation. Reflectance spectra are likely essential for distinguishing these cases if the inferred kinematics are prosaic.
+
+The first two clusters were observed crossing a region 10 by 10 arcminutes in size, at angular velocities of ∼ \sim 1 arcsecond per minute. We show two examples of fields with multiple asteroids moving from east to west (see Figures 5 and 6 ). Figure 5 shows four objects moving in two frames, each with a normal 30s ZTF exposure, while Figure 6 shows two objects moving across four frames. The individual coordinates for the two examples can be found in Tables 4 and 5 . The five other cases (of the 7 earlier mentioned) were observed on 2019-07-29, 2019-09-23, 2019-10-04, 2020-10-08, and 2021-09-02. All told, each of the seven cases were found to involve multiple asteroids moving in tandem (similar angular speeds) from east to west. In some cases, the displacements are of comparable size during the same time interval, but the direction of the motion is not exactly the same for each object in a given image, suggesting that the observation records a crossing of orbits of comparable radius.
+
+We investigated whether any of these objects are found in the JPL Horizon databases. Indeed, both cases illustrated in Figures 5 and 6 are catalogued asteroids. Every single case of multiple asteroids that we have found in Sample A are of previously identified asteroids.
+
+Figure 5: Example with multiple asteroids. From uppermost to lowermost in each image, these objects are the catalogued asteroids 237629 (2001 RZ128), 34921 (4801 P-L), 468722 (2010 GF35), and 408570 (2013 LO5), respectively; they are shown here moving between these image, captured 34 min apart. Both images are r r band images and were observed on 2021-03-19. See Table 4 for astrometric parameters, and Table 9 for ZTF data product filenames.
+
+Figure 6: Example with multiple asteroids. These objects were captured within 3 ∘ 3^{\circ} of the Earth shadow center. The two upper images are g g band and the two lower images are r r band. The uppermost and lowermost objects within each image have been identified as the asteroids 239154 (2006 KX9) and 728206 (2010 LF127), respectively. See Table 5 for astrometric measurements. ZTF data product filenames are listed in Table 9 .
+
+Table 4: Astrometric measurements of three moving objects identified in Figure 5 . Coordinates (R.A., Dec.) are given in J2000 for each detection, along with the Julian Date (J.D.) and UTC observation time. All observations were made on 2021 March 19 in the SDSS r -band. ZTF data product filenames are listed in Table 9 . Objects 1 to 4 have been identified as asteroids 237629 (2001 RZ128), 34921 (4801 P-L), 468722 (2010 GF35), and 408570 (2013 LO5), respectively.
+
+Example case 1
+
+Object 1
+Band
+R.A. (J2000)
+Dec. (J2000)
+J.D.
+Observation time
+
+(a) left
+r
+182.2828716
+2.3212253
+2459292.8540046
+2021-03-19 at 08:29:46.685
+
+(b) right
+r
+182.2779462
+2.3223948
+2459292.8789236
+2021-03-19 at 09:05:40.534
+
+Object 2
+
+(a) left
+r
+182.3511210
+2.2971117
+2459292.8540046
+2021-03-19 at 08:29:46.685
+
+(b) right
+r
+182.3466646
+2.2992191
+2459292.8789236
+2021-03-19 at 09:05:40.534
+
+Object 3
+
+(a) left
+r
+182.3091393
+2.2621854
+2459292.8540046
+2021-03-19 at 08:29:46.685
+
+(b) right
+r
+182.3049176
+2.2656986
+2459292.8789236
+2021-03-19 at 09:05:40.534
+
+Object 4
+
+(a) left
+r
+182.2933499
+2.204017
+2459292.8540046
+2021-03-19 at 08:29:46.685
+
+(b) right
+r
+182.2885649
+2.209137
+2459292.8789236
+2021-03-19 at 09:05:40.534
+
+Table 5: Astrometric measurements of two moving objects shown in Figure 6 . Coordinates (R.A., Dec.) are given in J2000 for each detection, along with the Julian Date (J.D.) and UTC observation time. All observations were made on 2019 July 29 in the SDSS g - and r -bands. ZTF data product filenames are listed in Table 9 . Objects 1 and 2 have been identified as the asteroids 239154 (2006 KX9) and 728206 (2010 LF127), respectively.
+
+Example case 2
+
+Object 1
+Band
+R.A. (J2000)
+Dec. (J2000)
+J.D.
+Observation time
+
+(a) upper left
+g
+309.9298057
+-26.9091492
+2458693.8131481
+2019-07-29 at 07:30:56.985
+
+(b) upper right
+g
+309.9258638
+-26.9105563
+2458693.8291319
+2019-07-29 at 07:53:57.595
+
+(c) lower left
+r
+309.9234980
+-26.9112611
+2458693.8384954
+2019-07-29 at 08:07:27.393
+
+(d) lower right
+r
+309.9232354
+-26.9114958
+2458693.8393981
+2019-07-29 at 08:08:45.309
+
+Object 2
+
+(a) upper left
+g
+309.9284917
+-26.9187663
+2458693.8131481
+2019-07-29 at 07:30:56.985
+
+(b) upper right
+g
+309.9253378
+-26.9234575
+2458693.8291319
+2019-07-29 at 07:53:57.595
+
+(c) lower left
+r
+309.9234978
+-26.9262724
+2458693.8384954
+2019-07-29 at 08:07:27.393
+
+(d) lower right
+r
+309.9232349
+-26.9265072
+2458693.8393981
+2019-07-29 at 08:08:45.309
+
+The searches described in this section for ZTF transients with durations shorter than 30 seconds in the Earth’s shadow resulted in only one detection of significant interest, which may represent an uncatalogued asteroid (see Table 3 and Figure 4 ). This work illustrates a manual approach to evaluating in-shadow candidate transients (in this case identified by a 3rd party automated search) as candidate exotic objects, including artifacts of ET origin. In the next section, we demonstrate a relatively exhaustive and automated search using image processing techniques to search for non-catalogue (“unmatched”) objects in the Earth’s shadow.
+
+3.2 Automated transient survey (sets B–C)
+
+Sample sets B and C, which are derived from the set of all publicly-accessible ZTF images predating 2024-04-15, are defined in Table 1 . Sample B was confined to the Earth’s shadow and designed to avoid glinting satellites. In particular, sample B is confined to an area within 6.5 ∘ of the center of Earth’s shadow (i.e., ρ < 6.5 ∘ \rho<6.5^{\circ} , for search radius ρ \rho from the shadow center), avoiding the most crowded fields at low galactic latitudes ( b > 20 ∘ b>20^{\circ} ). Sample C is a control sample, residing completely outside of the Earth’s shadow, encompassing a 6 ∘ radius from the north ecliptic pole, where few to no minor bodies are expected ( β > 84 ∘ \beta>84^{\circ} ).
+
+The goal of our search was to identify nonastrophysical transients unrelated to satellite glints. Of special interest were luminous objects that are (i) markedly streaking; (ii) point sources that cannot be identified as planetesimals in heliocentric orbit, (iii) clustered transients, and especially (iv) trains of point sources, as of flashing, luminous objects or of metallic glinting objects from beyond geosynchronous altitudes. The prospect of detecting objects that meet one of these descriptions can be used to motivate triangulation for estimating range, in order to determine whether an object of interest resides within Earth’s atmosphere and, if not, in order to estimate its orbital parameters. This could permit detailed follow-up observations and further characterization.
+
+We detected transient candidates using the segmentation method in the photutils library (Bradley et al., 2024 ) . For each ZTF FITS image in the sample, the following procedure was carried out using a software package called NEOrion that was developed in-house. 4 4 4 Neorion is an ancient Greek word for “shipyard”; Orion was a hunter; NEOs are Near Earth Objects.
+
+1.
+
+Detection: A detection threshold of 3 σ \sigma was applied above an adaptive (spatially varying) estimate of the background, essential for nonflat fields. The minimum area for segment detection was 9 connected pixels.
+
+2.
+
+Characterization: We calculated and stored parameters related to
+intensity and morphology, to identify artifacts (e.g., cosmic ray tracks) and to identify objects exhibiting specific features (e.g., elongation/streaking).
+
+•
+
+S/N ( q q ): ℱ / ( σ ​ A ) \mathcal{F}/(\sigma A) , where ℱ \mathcal{F} is the integrated flux and σ \sigma is the standard deviation of image intensities for a 3-sigma clipped copy of the image.
+
+•
+
+Orientation ( ψ \psi ): Angle of semimajor axis orientation ( ± 90 ∘ \pm 90^{\circ} ), where 0 ∘ 0^{\circ} corresponds to horizontal.
+
+•
+
+Length (semimajor deviation, σ a \sigma_{a} ): one-sigma standard deviation along the semi-major axis of a 2D Gaussian w/same 2nd-order moments as the source.
+
+•
+
+Width (semiminor deviation, σ b \sigma_{b} ): one-sigma standard deviation along the semi-minor axis of a 2D Gaussian w/same 2nd-order moments as the source.
+
+•
+
+Elongation ( η \eta ): σ a / σ b \sigma_{a}/\sigma_{b}
+
+•
+
+Ellipticity ( ε \varepsilon ): ( σ a − σ b ) / σ a (\sigma_{a}-\sigma_{b})/\sigma_{a} ; near zero for radially-symmetric objects
+
+•
+
+Area ( A A ): Area of the segment in pixels.
+
+•
+
+Equivalent radius ( R R ): Radius of a circle of area A A .
+
+•
+
+Gini coefficient ( G G ): Gini coefficient of intensities in the segment. This is near 0 for uniform illumination and near 1 if brightness is concentrated in a few pixels.
+
+•
+
+Maximum intensity ( p p ): Maximum intensity of pixels inside the segment. (The Gini coefficient has applications studies of galaxy morphology: see e.g., Lisker ( 2008 ) .)
+
+•
+
+Taper ( Υ \Upsilon ): We define the “taper” as the ratio of the FWHM of the minor axis of the segment ( ∼ 2.35 × σ b \sim 2.35\times\sigma_{b} ) to the “seeing FWHM” reported in the FITS meta data. For point sources and straight-line streaking point sources, Υ ∼ 1 \Upsilon\sim 1 .
+
+For all detections, we also tabulated d edge d_{\rm edge} , the distance in pixels from the edge of the field, where many linear artifacts tend to reside.
+
+3.
+
+Labeling unmatched objects : object centroids were estimated and then
+the angular distances calculated to the nearest object in the Pan-STARRS (Panoramic Survey Telescope and Rapid Response System, catalog PS1 DR2; Kaiser et al. ( 2002 ); Flewelling et al. ( 2020 ) ) and SDSS (Sloan Digital Sky Survey; citeyork2000sloan) catalogs residing in the field-of-view ( d cat d_{\rm cat} ). As discussed later, a threshold is applied to d cat d_{\rm cat} to identify “unmatched” objects.
+
+4.
+
+Counting revisits : We tallied the number of times ZTF captured an
+image (of each filter type) that overlapped the position of each unmatched detection ( n r , n g , n b n_{\rm r},n_{\rm g},n_{\rm b} ). This was used later to filter out transient detections whose positions were captured only a few times. For example, the celestial coordinates of an unmatched detection having n g = 7 n_{\rm g}=7 was captured 7 times by the g filter. A detection with a low revisit count may simply be a variable astronomical source that happened to dim below the detection threshold. A detection with a high revisit count and no proximate neighbors is more likely to be a genuine transient.
+
+5.
+
+Computing nearest neighbor distances : We computed the nearest
+neighbor distance between each unmatched detection and all of the others ( d nn d_{\rm nn} ). This was used later to filter out false positives: i.e., objects that could not be matched to catalog objects, but which appeared in multiple images at the same (or very proximate) location: these are likely to be slow-moving or unmapped/uncataloged sources. An undesirable consequence is that tightly-clustered transients are eliminated in this way.
+
+6.
+
+Filtering : For ZTF samples B and C, we filtered the unmatched detections
+to create several subsets. The goal of the first filter pass (producing set I) was to identify all valid detections. The goal of the second filter pass (producing set II) was to remove likely artifacts like sensor noise and cosmic ray tracks. The third filter pass (set III) preserved bright, isolated objects. The fourth filter pass was used to identify elongated (streaking) objects. The conditions used to define each subset are defined in Tables 6 and 7 . Note that c 7 c_{7} is not used in the definition of subsets for the control sample C. In our discussion of results, we refer to the specific subset of detections obtained using a specific method from a specific ZTF sample as follows: sample/subset . For example, subset II of ZTF sample C is denoted “C/II”. Note that we have also disregarded all images with INFOBITS ≥ 33554432 \geq 33554432 , which ZTF has used to mark invalid data products.
+
+Table 6: Conditions used to filter unmatched detections from ZTF samples B and C into subsets; see also Table 7 .
+
+Condition
+Definition
+
+Purpose
+
+c 1 c_{1}
+p < 3 × 10 4 p<3\times 10^{4}
+
+not saturated
+
+c 2 c_{2}
+
+d nn > 10 d_{\rm nn}>10 as
+
+separation from nearest unmatched detection
+
+c 3 c_{3}
+
+d cat > 5 d_{\rm cat}>5 as
+
+separation from nearest catalog objects
+
+c 3 ′ c_{3}^{\prime}
+
+d cat > 20 d_{\rm cat}>20 as
+
+highly separated from nearest catalog objects
+
+c 4 c_{4}
+
+d edge > 20 d_{\rm edge}>20 pix
+
+at least 20 pixels from edge
+
+c 5 c_{5}
+( n r > 3 ) ∨ ( n g > 3 ) ∨ ( n b > 3 ) (n_{\rm r}>3)\lor(n_{\rm g}>3)\lor(n_{\rm b}>3)
+
+location visited at least 10 times
+
+c 6 c_{6}
+q > 5 q>5
+
+high S/N
+
+c 6 ′ c_{6}^{\prime}
+q > 10 q>10
+
+very high S/N
+
+c 7 c_{7}
+ρ < 6 ∘ \rho<6^{\circ}
+
+within dark full shadow (DFS)
+
+c 8 c_{8}
+( ε < 0.15 ) ∨ ( ( | ψ | > 5 ∘ ) ∧ ( | ψ | < 85 ∘ ) ) (\varepsilon<0.15)\lor((|\psi|>5^{\circ})\land(|\psi|<85^{\circ}))
+
+not a vertically- or horizontally-oriented elongated object (typical of many artifacts caused by telescope exposure and tracking errors)
+
+c 9 c_{9}
+G > 0.1 G>0.1
+
+removes uniform-intensity artifacts
+
+c 9 ′ c_{9}^{\prime}
+G > 0.2 G>0.2
+
+removes uniform-intensity artifacts
+
+c 9 ′′ c_{9}^{\prime\prime}
+G > 0.5 G>0.5
+
+removes uniform-intensity artifacts
+
+c 10 c_{10}
+10 < A < 1000 10<A<1000
+
+removes tiny and very large objects
+
+c 11 c_{11}
+η > 10 \eta>10
+
+elongated objects (aspect ratio larger than 10)
+
+c 12 c_{12}
+0.3 < Υ < 1.3 0.3<\Upsilon<1.3
+
+removes cosmic rays and uniform-intensity artifacts
+
+c 12 ′ c_{12}^{\prime}
+0.3 < Υ < 1 0.3<\Upsilon<1
+
+removes cosmic rays and uniform-intensity artifacts
+
+Table 7: Definitions of subsets of unmatched detections.
+
+Subset
+Definition
+
+N N detections (Sample B)
+Description
+
+I
+c 3 ∧ c 5 ∧ c 7 c_{3}\land c_{5}\land c_{7}
+3,734,423
+All valid dections
+
+II
+c 1 ∧ c 3 ∧ c 4 ∧ c 5 ∧ c 7 ∧ c 6 ∧ c 8 ∧ c 9 ∧ c 10 ∧ c 12 c_{1}\land c_{3}\land c_{4}\land c_{5}\land c_{7}\land c_{6}\land c_{8}\land c_{9}\land c_{10}\land c_{12}
+614,556
+Most artifacts removed
+
+III
+c 1 ∧ c 2 ∧ c 3 ′ ∧ c 4 ∧ c 5 ∧ c 6 ′ ∧ c 7 ∧ c 8 ∧ c 9 ′ ∧ c 10 ∧ ∧ c 12 ′ c_{1}\land c_{2}\land c_{3}^{\prime}\land c_{4}\land c_{5}\land c_{6}^{\prime}\land c_{7}\land c_{8}\land c_{9}^{\prime}\land c_{10}\land\land c_{12}^{\prime}
+16,693
+Bright and isolated
+
+IV
+c 1 ∧ c 2 ∧ c 4 ∧ c 5 ∧ c 6 ∧ c 7 ∧ c 8 ∧ c 11 ∧ c 12 ′ c_{1}\land c_{2}\land c_{4}\land c_{5}\land c_{6}\land c_{7}\land c_{8}\land c_{11}\land c_{12}^{\prime}
+5,940
+Bright and elongated
+
+Figure 7: Examples of streaks found near the shadow center, from B/IV. The box sizes in the upper panels are (a) 46.3 × \times 31.9 arcmin, and (b) 25.2 arcmin × \times 16.6; in the lower panels: (c) 1.7 × \times 1.4 arcmin and (d) 2.6 × \times 3.8 arcmin. The first three images (a) through (c) are believed to be observations of real objects, while the fourth (d) is likely a cosmic ray due to the narrowness (FHWM of ∼ \sim 1 arcsecond) and uniform width of the track in spite of brightness fluctuations. Given the 30 second exposure time and assuming that the objects are gravitationally bound to Earth, the object in (a) is moving at angular speeds consistent with orbits lower than < < 14,000 km, while object (b) corresponds to ∼ \sim 20,000 km altitude. Both objects are instead probably meteors (see text). (c) This uncatalogued object (not in MPC database as of April 2025) was 4.5 ∘ from the shadow center, and is probably an unknown heliocentric asteroid. If instead this were in a circular geocentric orbit, the streak length implies an altitude of almost 200,000 km, where the shadow radius is only about 2 ∘ . Refer to Table 9 for the ZTF data product filenames.
+
+Figure 8: Examples of flash trains caused by satellite glints near the ecliptic pole. The box sizes for the upper panels are (a) 8.6 × \times 5.7 arcmin, and (b) 8 arcmin × \times 4.6; for the lower panels: (c) 7.5 × \times 3.9 arcmin, and (d) 21.2 × \times 12.4 arcmin. Given the 30 second exposure time and assuming that the objects are gravitationally bound to Earth, these objects are moving at angular speeds consistent with medium Earth orbits to geosynchronous orbits. Refer to Table 9 for the ZTF data product filenames.
+
+For the present proof-of-concept study, we manually reviewed the detections to determine what kinds of objects do and do not appear in these samples, rather than produce an exhaustive catalogue of the results. For example, in Figure 7 we present a few examples from B/IV of streaking objects. Streaks resembling these may belong to one of several categories: (i) meteors; (ii) high-altitude aircraft lights; (iii) near-Earth asteroids located beyond the shadow cone; or (iv) light-emitting objects above the atmosphere and moving within the shadow cone. The estimated angular speeds based on streak length, exposure time (30 seconds), and the assumption of continuous emission, can be used to estimate altitude in the case of objects in circular orbits around Earth. This can be used estimate whether, granting these assumptions, they reside in the shadow cone. Confident assignment to (iv) is impossible, however, without estimating a parallax, which is a primary objective of planned future searches using ExoProbe (Villarroel & Marcy, 2023 ) .
+
+“Flash trains” are linear alignments of point source flashes, sometimes with intermediate streaking, commonly associated with satellites but also conceivably produced by pulsing light sources. NEOrion found no flash trains in Sample B (in shadow). By contrast, flash trains were readily found in Sample C (near the ecliptic pole); we show typical examples in Figure 8 . These exhibit angular speeds consistent with altitudes typical of Medium Earth Orbit (MEO) to geosynchronous orbit (GSO).
+
+NEOrion was also able to find clusters of previously catalogued minor bodies, demonstrating the ability to find clusters of transient candidates in single images. Manual follow-up inspection was required to find displaced images of the same objects in time-adjacent images, in order to recognize them as planetesimals. For example, we found four previously catalogued minor bodies in a single ZTF image; these are listed in Table 8 .
+To find multiple transient candidates similar to those presented in Villarroel et al. ( 2021 ); Solano et al. ( 2024 ) , however, one needs to search for clusters of transients in time-adjacent images corresponding to approximately one hour of total exposure time. We have so far not automated this follow-up confirmation process but have plans to do so in future: that is, to download temporally adjacent images of the same field and then search for comparably bright objects that have been displaced in a westward direction. This enhancement would also permit us to search for candidate transients that are clustered in time.
+
+Table 8: Cluster of previously catalogued minor bodies detected using the automated search in the shadow, Sample B (all objects were found within 5.7 ∘ of the Earth shadow center). All were found in ztf_20230917395197_000445_zr_c04_o_q4_sciimg.fits , captured at 2023-09-17T09:29:06.489 (J.D. 2460204.8951968). Displaced images of these objects were found in temporally adjacent scenes.
+
+Cluster of four catalogued minor bodies
+
+R.A. (J2000)
+Dec. (J2000)
+Object ID
+
+345.58864
+-5.91241
+6459 Hidesan (1992 UY5)
+
+345.19842
+-5.78249
+18555 Courant (1997 CN4)
+
+345.50169
+-5.55202
+29453 (1997 RU6)
+
+345.68042
+-5.62310
+625124 1997 GK23)
+
+Table 9: Table of filenames used in figure components, with distance from center of detected objects to center of Earth shadow.
+
+Figure
+Component
+
+Shadow center distance
+
+FITS filename
+
+3
+(a) left
+
+4.6 ∘ 4.6^{\circ}
+
+ztf_20191004297708_000447_zr_c02_o_q1_sciimg
+
+(b) right
+
+3.0 ∘ 3.0^{\circ}
+
+ztf_20191004351042_000447_zg_c02_o_q1_sciimg
+
+4
+(a) upper left
+
+5.9 ∘ 5.9^{\circ}
+
+ztf_20210211239062_000570_zr_c02_o_q3_sciimg
+
+(b) upper right
+
+4.8 ∘ 4.8^{\circ}
+
+ztf_20210211278912_000570_zg_c02_o_q3_sciimg
+
+(c) lower left
+
+4.3 ∘ 4.3^{\circ}
+
+ztf_20210211309618_000570_zg_c02_o_q3_sciimg
+
+(d) lower right
+
+4.5 ∘ 4.5^{\circ}
+
+ztf_20210211359132_000570_zg_c02_o_q3_sciimg
+
+5
+(a) left
+
+7.5 ∘ 7.5^{\circ}
+
+ztf_20210319353982_000473_zr_c04_o_q2_sciimg
+
+(b) right
+
+8.2 ∘ 8.2^{\circ}
+
+ztf_20210319378912_000473_zr_c04_o_q2_sciimg
+
+6
+(a) upper left
+
+1.0 ∘
+
+ztf_20190729312951_000287_zg_c02_o_q2_sciimg
+
+(b) upper right
+
+1.6 ∘
+
+ztf_20190729329120_000287_zg_c02_o_q2_sciimg
+
+(c) lower left
+
+2.1 ∘
+
+ztf_20190729338495_000287_zr_c02_o_q2_sciimg
+
+(d) lower right
+
+2.8 ∘
+
+ztf_20190729339398_000287_zr_c02_o_q2_sciimg
+
+7
+(a) upper left
+
+4.9 ∘
+
+ztf_20190210285995_000467_zr_c09_o_q1_sciimg
+
+(b) upper right
+
+4.4 ∘
+
+ztf_20191027260613_000504_zr_c16_o_q4_sciimg
+
+(c) lower left
+
+4.5 ∘
+
+ztf_20191011385475_001494_zg_c03_o_q4_sciimg
+
+(d) lower right
+
+3.3 ∘
+
+ztf_20180912341435_000394_zi_c02_o_q1_sciimg
+
+8
+(a) upper left
+
+79.4 ∘
+
+ztf_20190326382303_000825_zg_c10_o_q2_sciimg
+
+(b) upper right
+
+85.2 ∘
+
+ztf_20190326515729_000825_zr_c09_o_q2_sciimg
+
+(c) lower left
+
+85.8 ∘
+
+ztf_20190408450498_000826_zr_c11_o_q1_sciimg
+
+(d) lower right
+
+81.8 ∘
+
+ztf_20190411421551_000825_zr_c09_o_q3_sciimg
+
+4 Discussion
+
+In this paper, we described techniques that can be used to search for extraterrestrial artifacts in the Solar System near Earth. We discussed the utilization of pre-Sputnik images, space-borne telescopes, the analysis of reflectance spectra of space debris, and using the Earth’s shadow as a filter to facilitate the detection of such objects. Previous studies (Villarroel et al., 2022b ) have employed pre-Sputnik images to identify transients, yielding intriguing results. In the present work, we focused on the Earth shadow filter, evaluating the effectiveness of the methods for detecting fast transients and flash trains using existing data from the Zwicky Transient Facility (ZTF).
+
+Our first analysis focused on Sample A of 678 images, encompassing a small subset ( N N = 262) of candidate transients in Earth’s shadow from a total of 11,029 one-off candidate transients with clear PSFs observed in single ZTF images (shared by Igor Andreoni). These candidates were constrained to durations shorter than 30 seconds, as given by the time difference between the previous or subsequent image captures (i.e., taken immediately before or after the given exposure). Among these cases, manual follow-up inspection has revealed at best several fast transients. Of special note is an uncatalogued object or set of objects shown in Figure 4 and described in Table 3 . Although the objects are located within a few degrees of the ecliptic, they do not appear in JPL’s list of small bodies in the Solar system or the Minor Planet Center catalog as of April 2025. Moreover, if either pair of three detections represent an asteroid, then it moves across the sky at about 4 arcseconds per minute, which is several times faster than a main belt asteroid at opposition.
+
+This leaves two possible interpretations. First, this case may be similar to the multiple clustered transient cases of unknown origin presented in (Villarroel et al., 2021 ; Solano et al., 2024 ) . A second possibility is that these detections represent a single object in motion (e.g., a remote-controlled human spacecraft or asteroid). This is a good illustration of why triangulation is necessary to disambiguate events of this kind.
+
+We estimated the detection rate of one-off candidate transients. According to the IPAC server, a total exposure time of 6,415,320 seconds (approximately 1800 hours) resulted in the identification of 11,029 candidate transients. Of this, only 2.4%—about 43 hours—was spent in the Earth’s shadow, during which the observations covered 67,492 square degrees (including overlapping fields). During this interval, we detected one candidate case for multiple transients in Figure 4 , corresponding to a rate of ∼ 3 × 10 − 7 \sim 3\times 10^{-7} cases per hour per square degree, or ∼ 0.01 \sim 0.01 cases per hour across the whole sky. This estimate is based on a single event and should be interpreted with caution due to small-number statistics.
+
+This is a factor of 10 6 10^{6} less than the number of fast flashes coming from reflections of space debris that has been measured previously (Nir et al., 2021b ; Corbett et al., 2020 ) . The multiple transient cases in Villarroel et al. ( 2021 ) were estimated to occur at a rate of ∼ 0.07 \sim 0.07 transients hour -1 sky -1 and ∼ 0.27 \sim 0.27 transients hour -1 sky -1 in Villarroel et al. ( 2022b ) .
+
+This small detection rate is not unexpected if the multiple transient candidates are attributed to solar reflections from artificial objects in geosynchronous orbits around the Earth, as suggested in Villarroel et al. ( 2021 ) and Villarroel et al. ( 2022b ) . Further, the independent automated transient survey (sets B-C) carried out in Section 3.2 (see total detections listed in Table 7 ) suggests that there might be many more transients than were covered by the candidate transient alerts described in Section 3.1 .
+
+Nevertheless, severe methodological limitations affect the detection rate. Multiple transients were observed in images with 50 minutes of exposure in previous studies (Villarroel et al., 2021 ; Solano et al., 2024 ) , whereas ZTF images typically only able to capture one-off transients, often in sets containing a few consecutive 30-second exposures of the same field. Unfortunately, the time spent on exposure per field is typically only 2–3 minutes before the telescope moves to a very different part of the sky, which makes it difficult to capture a process that could be spread out over an hour or more. Therefore, the likelihood of observing multiple transients with the ZTF is not high. The previous findings of multiple transients in the Palomar survey used approximately 50 minutes – 1 hour of exposure (Villarroel et al., 2021 ; Solano et al., 2024 ) . To obtain a reasonable chance of detection in ZTF, but also of distinguishing between the effects of “multiple transients” versus the movement of an asteroid, an equally long time window would need to be necessary, resulting in hundreds of consecutive exposures of 30 seconds each—a condition not met in this study.
+
+The automated survey of Samples B–C using NEOrion made possible the detection and study of many other interesting objects. We detected thousands of point sources of interest (as potential flashes), but also many streaks, which could form the focus of a follow-up study. The streaks shown in Figure 7 are within several degrees of the shadow center (Table 9 ). Streaks that cross the entire image, such as the one in the upper left of Figure 7 , are probably meteors. The example shown in the upper right is contained entirely within a single image frame. The most likely explanation is a meteor striking the atmosphere at a steep angle. The FWHM of the cross-section is consistent with stellar psfs in the scene, suggesting an envelope of ionized gas measuring less than 0.5 m in diameter if located in the upper atmosphere. Alternatively, this could be a luminous object in Earth’s shadow orbiting at an elevation of approximately 20,000 km. Without an estimate of the parallax, we cannot say for sure whether the estimated distance based on the angular speeds matches expectations consistent with the more prosaic explanation. With the help of instantaneous spectra as described by e.g. Marcy et al. ( 2022b ) , we could determine whether the luminosity derives from reflection or emission (and if so, what kind).
+
+The methodological limitations of this study will be mitigated by the new ExoProbe project, see Villarroel & Marcy ( 2023 ) . The project aims to build a network of telescopes with high-resolution Complementary Metal Oxide Semiconductor (CMOS) cameras to search for ET artifacts and probes in the inner Solar System, in search of short flashes (subsecond – second) associated with technological objects of potential extraterrestrial origin. A series of short exposure images (1s) will be taken at multiple telescopes simultaneously during an hour at a time, searching for any flash that appears in several telescopes, so that we instantly obtain a parallax (and hence the location) of such short transients. The parallax information is absolutely essential in order to estimate true distance. This will tell us whether objects like those in Figures 4 , 7 and 8 are at the distances indicated by the angular speeds. The ExoProbe project enables us to search for, locate, and instantly validate and verify the results of such detections.
+
+Searches within the Earth’s shadow offer an exciting opportunity as they filter out solar reflections from most human-made objects. In the ExoProbe project, we will also search for elongated streaks in the shadow.
+With the exceptions discussed earlier, human satellites are not expected to emit any intrinsic light in the optical band. Therefore, one of the most effective methods for identifying an ET artifact or probe is by thoroughly exploring the shadow in searches for pulsing and continuous light. Long-term follow-up study of any such objects may be necessary to rule out prosaic explanations like those earlier mentioned. The significance of any discovery will be further enhanced if any of the objects exhibit unusual spectra or unusual motion.
+
+Studies that make use of instruments with significantly higher time resolution and a ranging capability, such as the new ExoProbe instruments that will search in Earth’s shadow, are necessary to find and convincingly identify technological objects of ET origin in near-Earth space.
+
+5 Data availability
+
+The ZTF image data underlying this article are publicly available from the IPAC Infrared Science Archive at https://irsa.ipac.caltech.edu .
+
+6 Acknowledgments
+
+B.V. wishes to thank Geoff Marcy, Igor Andreoni and Guy Nir for kind and helpful discussions and suggestions doing the course of this work. The paper has further profited from helpful discussions with Peter McCullough, Kevin Krisciunas, Axel Brandenburg and Rudolf Bär.
+
+ExoProbe is supported by an anonymous donor, to whom we are deeply grateful.
+
+B.V. is also funded by the Swedish Research Council (Vetenskapsrådet, grant no. 2024-04708) and supported by the The L’Oréal - UNESCO For Women in Science International Rising Talents prize.
+
+This work makes use of observations from the Zwicky Transient Facility project. ZTF is supported by the National Science Foundation under Grant No. AST-2034437 and a collaboration including Caltech, IPAC, the Weizmann Institute for Science, the Oskar Klein Center at Stockholm University, the University of Maryland, the University of Washington, Deutsches Elektronen-Synchrotron, the University of Wisconsin, Trinity College Dublin, Lawrence Livermore National Laboratories, IN2P3, the University of Warwick, Ruhr University Bochum, and Northwestern University.
+
+References
+
+Andreoni et al. (2020)
+
+Andreoni I., Kool E. C., Sagues-Carracedo A., et al., 2020, The Astrophysical Journal , 904, 155
+
+Arimatsu et al. (2021)
+
+Arimatsu K., Tsumura K., Usui F., Ootsubo T., Watanabe J.-i., 2021, The Astronomical Journal, 161, 135
+
+Arkhipov & Graham (1996)
+
+Arkhipov A. V., Graham P. B., 1996, in Proc. SPIE. pp 150–161
+
+Bellm et al. (2019)
+
+Bellm E. C., Kulkarni S. R., Graham M. J., et al., 2019, Publications of the Astronomical Society of the Pacific , 131, 018002
+
+Benford (2019)
+
+Benford J., 2019, AJ , 158, 150
+
+Bialy & Loeb (2018)
+
+Bialy S., Loeb A., 2018, The Astrophysical Journal Letters , 868, L1
+
+Bracewell (1973)
+
+Bracewell R., 1973, Astronautics and Aeronautics, 11, 58
+
+Bradley et al. (2024)
+
+Bradley L., et al., 2024, astropy/photutils: 2.0.2, doi:10.5281/zenodo.13989456 , https://doi.org/10.5281/zenodo.13989456
+
+Bursov et al. (2016)
+
+Bursov N. N., Filippova L. N., Fillipov V. V., et al., 2016, Technosignature Prospects with RATAN‐600, Slides presented at IAA SETI Permanent Committee meeting
+
+Carlotto & Stein (1990)
+
+Carlotto M. J., Stein M. C., 1990, Journal of the British Interplanetary Society, 43, 209
+
+Cocconi & Morrison (1959)
+
+Cocconi G., Morrison P., 1959, Nature , 184, 844
+
+Corbett et al. (2020)
+
+Corbett H., Law N. M., Soto A. V., et al., 2020, The Astrophysical Journal Letters , 903, L27
+
+Davies & Wagner (2013)
+
+Davies P. C. W., Wagner R. V., 2013, Acta Astronautica , 89, 261
+
+Domine et al. (2025)
+
+Domine L., et al., 2025, Sensors , 25, 783
+
+Duev et al. (2019)
+
+Duev D. A., Mahabal A., Masci F. J., et al., 2019, Monthly Notices of the Royal Astronomical Society , 489, 3582
+
+Enriquez et al. (2017)
+
+Enriquez J. E., Siemion A. P. V., Foster G., et al., 2017, The Astrophysical Journal , 849, 104
+
+Flewelling et al. (2020)
+
+Flewelling H. e., et al., 2020, The Astrophysical Journal Supplement Series, 251, 7
+
+Freitas (1980)
+
+Freitas R. A. J., 1980, Journal of the British Interplanetary Society, 33, 95
+
+Freitas (1981)
+
+Freitas R. A. J., 1981, Cosmic Search, 3, 16
+
+Freitas & Valdes (1980)
+
+Freitas R. A., Valdes F., 1980, Icarus , 42, 442
+
+Garrett & Siemion (2022)
+
+Garrett M. A., Siemion A. P. V., 2022, Monthly Notices of the Royal Astronomical Society , 519, 4581
+
+Gertz & Marcy (2022)
+
+Gertz J., Marcy G., 2022, Journal of the British Interplanetary Society, 75, 142
+
+Gillum (2023)
+
+Gillum E., 2023, Personal Communication, Cited with permission
+
+Graham et al. (2019)
+
+Graham M. J., Kulkarni S. R., Bellm E. C., et al., 2019, Publications of the Astronomical Society of the Pacific , 131, 078001
+
+Hapke (2001)
+
+Hapke B., 2001, Journal of Geophysical Research: Planets , 106, 10039
+
+Haqq-Misra & Kopparapu (2012)
+
+Haqq-Misra J., Kopparapu R. K., 2012, Acta Astronautica, 72, 15
+
+Hippke (2018)
+
+Hippke M., 2018, Journal of Astrophysics and Astronomy , 39, 73
+
+Hippke (2020)
+
+Hippke M., 2020, The Astronomical Journal , 159, 85
+
+Howard et al. (2007)
+
+Howard A., Horowitz P., Mead C., et al., 2007, Acta Astronautica , 61, 78
+
+Kaiser et al. (2002)
+
+Kaiser N., et al., 2002, in Survey and Other Telescope Technologies and Discoveries. pp 154–164
+
+Kayal (2022)
+
+Kayal H., 2022, in Andresen J., Torres O., eds, , Extraterrestrial Intelligence: Academic and Societal ImplicationsĊambridge Scholars Publishing, pp 87–111
+
+Kayal et al. (2023)
+
+Kayal H., Greiner T., Kaiser T., Oehme S., 2023, in AIAA AVIATION 2023 Forum. p. 4100
+
+Knuth (2024)
+
+Knuth K. H., 2024, in Proceedings of the Kavli–IAU Symposium 387.
+
+Lacki (2019)
+
+Lacki B. C., 2019, A Shiny New Method for SETI: Specular Reflections From Interplanetary Artifacts, arXiv:1903.05839, doi:10.1088/1538-3873/ab1304 , https://arxiv.org/abs/1903.05839
+
+Li et al. (2020)
+
+Li D., Gajjar V., Wang P., et al., 2020, Research in Astronomy and Astrophysics , 20, 78
+
+Lisker (2008)
+
+Lisker T., 2008, The Astrophysical Journal Supplement Series, 179, 319
+
+Loeb & Laukien (2023)
+
+Loeb A. A., Laukien F. H., 2023, Journal of Astronomical Instrumentation , 12, 2340003
+
+Loeb et al. (2024)
+
+Loeb A., et al., 2024, Chemical Geology , 670, 122415
+
+Lubin (2016)
+
+Lubin P., 2016, Journal of the British Interplanetary Society , 69, 40
+
+Maire et al. (2020)
+
+Maire J., et al., 2020, in X-Ray, Optical, and Infrared Detectors for Astronomy IX. pp 670–682
+
+Marcy (2021)
+
+Marcy G. W., 2021, Monthly Notices of the Royal Astronomical Society , 505, 3537
+
+Marcy et al. (2022a)
+
+Marcy G. W., et al., 2022a, Optical Technosignature Survey—All-Sky Pilot Program, Manuscript accepted by MNRAS —final citation details not yet assigned
+
+Marcy et al. (2022b)
+
+Marcy G. W., Tellis N. K., Wishnow E. H., 2022b, Monthly Notices of the Royal Astronomical Society , 509, 3798
+
+Marcy et al. (2022c)
+
+Marcy G. W., Tellis N. K., Wishnow E. H., 2022c, Monthly Notices of the Royal Astronomical Society , 515, 3898
+
+Montebugnoli et al. (2001)
+
+Montebugnoli S., et al., 2001, in Ehrenfreund P., Angerer O., Battrick B., eds, Proceedings of the First European Workshop on Exo/Astro-Biology. ESA SP-496.
+pp 281–284
+
+Nir (2024)
+
+Nir G., 2024, Earthshadow: Python Tools for Astronomical Shadow-Tracking, https://github.com/guynir42/earthshadow
+
+Nir et al. (2021a)
+
+Nir G., et al., 2021a, Publications of the Astronomical Society of the Pacific , 133, 075002
+
+Nir et al. (2021b)
+
+Nir G., Ofek E. O., Ben-Ami S., Segev N., Polishook D., Manulis I., 2021b, Monthly Notices of the Royal Astronomical Society, 505, 2477
+
+Papagiannis (1978)
+
+Papagiannis M. D., 1978, Quarterly Journal of the Royal Astronomical Society, 19, 277
+
+Pearce et al. (2020)
+
+Pearce E. C., Weiner B., Krantz H., 2020, Journal of Space Safety Engineering, 7, 376
+
+Planck Collaboration (2014)
+
+Planck Collaboration 2014, Astronomy & Astrophysics , 571, A16
+
+Price et al. (2020)
+
+Price D. C., Enriquez J. E., Brzycki B., et al., 2020, The Astronomical Journal , 159, 86
+
+Reines & Marcy (2002)
+
+Reines A. E., Marcy G. W., 2002, Publications of the Astronomical Society of the Pacific , 114, 416
+
+Richmond et al. (2020)
+
+Richmond M. W., Tanaka M., Morokuma T., et al., 2020, Publications of the Astronomical Society of Japan , 72, 3
+
+Rose & Wright (2004)
+
+Rose C., Wright G., 2004, Nature , 431, 47
+
+Sagan (1963)
+
+Sagan C., 1963, Planetary and Space Science , 11, 485
+
+Schwartz & Townes (1961)
+
+Schwartz R. N., Townes C. H., 1961, Nature , 190, 205
+
+Shostak (2020)
+
+Shostak S., 2020, International Journal of Astrobiology , 19, 456
+
+Solano et al. (2024)
+
+Solano E., Marcy G. W., Villarroel B., Geier S., Streblyanska A., Lombardi G., Bär R. E., Andruk V. N., 2024, MNRAS , 527, 6312
+
+Steel (1995)
+
+Steel D., 1995, The Observatory, 115, 78
+
+Stone et al. (2005)
+
+Stone R. P. S., Wright S. A., Drake F., Muñoz M., Treffers R., Werthimer D., 2005, Astrobiology , 5, 604
+
+Szydagis et al. (2025)
+
+Szydagis M., Knuth K. H., Kugielsky B., Levy C., 2025, Progress in Aerospace Sciences , p. 101099
+
+Tarter (2001)
+
+Tarter J., 2001, Annual Review of Astronomy and Astrophysics , 39, 511
+
+Tellis & Marcy (2017)
+
+Tellis N. K., Marcy G. W., 2017, The Astronomical Journal , 153, 251
+
+Valdes & Freitas (1983)
+
+Valdes F., Freitas R. A., 1983, Icarus , 53, 453
+
+Vallee & Aubeck (2010)
+
+Vallee J., Aubeck C., 2010, Wonders in the sky: Unexplained aerial objects from antiquity to modern times.
+Penguin
+
+Vasile et al. (2024)
+
+Vasile M., Walker L., Campbell A., Marto S., Murray P., Marshall S., Savitski V., 2024, Scientific Reports, 14, 1570
+
+Villarroel & Marcy (2023)
+
+Villarroel B., Marcy G., 2023, A New Era of Optical SETI: The Search for Artificial Objects of Non-Human Origin, The Debrief, February 2023
+
+Villarroel et al. (2021)
+
+Villarroel B., et al., 2021, Scientific Reports , 11, 12794
+
+Villarroel et al. (2022a)
+
+Villarroel B., Solano E., Guergouri H., et al., 2022a, Is There a Background Population of High-Albedo Objects in Geosynchronous Orbits around Earth?, arXiv:2204.06091, doi:10.48550/arXiv.2204.06091 , https://arxiv.org/abs/2204.06091
+
+Villarroel et al. (2022b)
+
+Villarroel B., et al., 2022b, Universe , 8, 561
+
+Villarroel et al. (2022c)
+
+Villarroel B., Mattsson L., Guergouri H., Solano E., Geier S., Dom O. N., Ward M. J., 2022c, Acta Astronautica , 194, 106
+
+Watters et al. (2023)
+
+Watters W. A., Loeb A., Laukien F., Cloete R., Delacroix A., Dobroshinsky S., et al., 2023, Journal of Astronomical Instrumentation , 12, 2340006
+
+Wright et al. (2018)
+
+Wright S. A., Horowitz P., Maire J., Werthimer D., Antonio F., Aronson M. e. a., 2018, in Proc. SPIE 10702, *Ground-based and Airborne Instrumentation for Astronomy VII*. , doi:10.1117/12.2314268 , https://doi.org/10.1117/12.2314268
+
+Zuckerman (1985)
+
+Zuckerman B., 1985, Acta Astronautica , 12, 127
+
+Generated on Sun Oct 19 14:54:30 2025 by L a T e XML

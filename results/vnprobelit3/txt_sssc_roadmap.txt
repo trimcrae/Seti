@@ -1,0 +1,399 @@
+[1802.01783] Large Synoptic Survey Telescope Solar System Science Roadmap
+
+Large Synoptic Survey Telescope Solar System Science Roadmap
+
+Megan E. Schwamb
+
+Gemini Observatory, Northern Operations Center, 670 North A’ohoku Place, Hilo, HI 96720, USA
+
+R. Lynne Jones
+
+Department of Astronomy, University of Washington, 3910 15th Ave NE, Seattle, WA 98195, USA
+
+Steven R. Chesley
+
+Jet Propulsion Laboratory, California Institute of Technology, 4800 Oak Grove Drive, Pasadena, CA, 91109, USA
+
+Alan Fitzsimmons
+
+Astrophysics Research Centre, School of Mathematics and Physics, Queen’s University Belfast, Belfast BT7 1NN, UK
+
+Wesley C. Fraser
+
+Astrophysics Research Centre, School of Mathematics and Physics, Queen’s University Belfast, Belfast BT7 1NN, UK
+
+Matthew J. Holman
+
+Harvard-Smithsonian Center for Astrophysics, 60 Garden St., MS 51, Cambridge, MA 02138, USA
+
+Henry Hsieh
+
+Planetary Science Institute, 1700 East Fort Lowell Road, Suite 106, Tucson, AZ 85719, USA
+
+Darin Ragozzine
+
+Brigham Young University, Department of Physics and Astronomy, N283 ESC, Provo, UT 84602, USA
+
+Cristina A. Thomas
+
+Planetary Science Institute, 1700 East Fort Lowell Road, Suite 106, Tucson, AZ 85719, USA
+
+Department of Physics and Astronomy, Northern Arizona University, P.O. Box 6010, Flagstaff, AZ 86011, USA
+
+David E. Trilling
+
+Department of Physics and Astronomy, Northern Arizona University, P.O. Box 6010, Flagstaff, AZ 86011, USA
+
+Michael E. Brown
+
+Division of Geological and Planetary Sciences, California Institute of Technology, Pasadena, CA 91125, USA
+
+Michele T. Bannister
+
+Astrophysics Research Centre, School of Mathematics and Physics, Queen’s University Belfast, Belfast BT7 1NN, UK
+
+Dennis Bodewits
+
+Department of Astronomy, University of Maryland, College Park, MD 20742-2421, USA
+
+Miguel de Val-Borro
+
+NASA Goddard Space Flight Center, Astrochemistry Laboratory, 8800 Greenbelt Road, Greenbelt, MD 20771, USA
+
+Department of Physics, Catholic University of America, Washington, DC 20064, USA
+
+David Gerdes
+
+Department of Physics, University of Michigan, Ann Arbor, MI 48109, USA
+
+Mikael Granvik
+
+Department of Physics, University of Helsinki, P.O. Box 64, 00014 University of Helsinki, Finland
+
+Michael S. P. Kelley
+
+Department of Astronomy, University of Maryland, College Park, MD 20742-2421, USA
+
+Matthew M. Knight
+
+Department of Astronomy, University of Maryland, College Park, MD 20742-2421, USA
+
+Robert L. Seaman
+
+Lunar and Planetary Laboratory, University of Arizona, 1629 E. University Blvd., Tucson, AZ 85721, USA
+
+Quan-Zhi Ye
+
+Division of Physics, Mathematics and Astronomy, California Institute of Technology, Pasadena, CA 91125, USA
+
+Infrared Processing and Analysis Center, California Institute of Technology, Pasadena, CA 91125, USA
+
+Leslie A. Young
+
+Southwest Research Institute, 1050 Walnut St., Suite 300, Boulder CO, 80302, USA
+Megan E. Schwamb
+mschwamb.astro@gmail.com
+
+Abstract
+The Large Synoptic Survey Telescope (LSST) is uniquely equipped to search for Solar System bodies due to its unprecedented combination of depth and wide field coverage. Over a ten-year period starting in 2022, LSST will generate the largest catalog of Solar System objects to date. The main goal of the LSST Solar System Science Collaboration (SSSC) is to facilitate the efforts of the planetary community to study the planets and small body populations residing within our Solar System using LSST data. To prepare for future survey cadence decisions and ensure that interesting and novel Solar System science is achievable with LSST, the SSSC has identified and prioritized key Solar System research areas for investigation with LSST in this roadmap. The ranked science priorities highlighted in this living document will inform LSST survey cadence decisions and aid in identifying software tools and pipelines needed to be developed by the planetary community as added value products and resources before the planned start of LSST science operations.
+
+editorials, notices — miscellaneous — catalogs — surveys
+
+\published
+- Version 1.0
+
+1 Introduction
+
+Taking an inventory of the Solar System is one of the four key themes defining the science-driven requirements for the Large Synoptic Survey Telescope 1 1 1 LSST Science Requirements Document: https://www.lsst.org/scientists/publications/science-requirements-document (LSST; Ivezic et al., 2008 ) . First light is expected in 2020, with full LSST science operations planned to commence in 2022. Objects brighter than approximately 16th magnitude will saturate in LSST observations, including all of the known Solar System’s planets. Thus, the bulk of LSST’s Solar System science will be derived from small body detections and observations. LSST will image and monitor millions of Solar System bodies. Over its 10-year lifespan, LSST is expected to catalog over 5 million Main Belt asteroids, almost 300,000 Jupiter Trojans, over 100,000 Near Earth Objects (NEOs), over 40,000 Kuiper belt objects (KBOs), tens of interstellar objects, and over 10,000 comets (LSST Science Collaboration et al., 2009 ; Solontoi et al., 2010 ; Cook et al., 2016 ; Engelhardt et al., 2017 ; Trilling et al., 2017 ) . Many of these objects will receive hundreds of observations in multiple bandpasses. LSST will report detections of moving objects in various filters ( ugrizy ) between approximately 16 and 24.5 magnitudes (in r band) over its observing footprint (covering ∼ similar-to \sim 18,000 square degrees in the Wide-Fast-Deep survey), link these detections into orbits, and provide metadata on observing conditions.
+
+It will be up to the planetary community to apply a wide variety of methods to synthesize and combine this information in order to fully leverage the LSST dataset for Solar System science. These goals include probing planetary formation and evolution and placing the Solar System in context with other planetary systems. This requires an understanding of the current status of our Solar System – the orbital and size distributions of small bodies (including asteroids, comets, planetary satellites, KBOs, and inner Oort cloud objects) and their physical properties (e.g., chemical composition, physical shape, mass, rotation rate, binarity, density, porosity, and mass loss rates). The LSST Solar System Science Collaboration (SSSC) 2 2 2 SSSC website: http://www.lsstsssc.org aims to prepare methods and tools to analyze LSST data for Solar System science, as well as develop optimum survey strategies for discovering moving objects throughout the Solar System with LSST.
+
+We present a science roadmap that outlines the SSSC’s ranked science priorities achievable with LSST during its planned baseline operations, expected to be 10 years. The list outlined here is not exhaustive but represents the most important Solar System-based research goals in the LSST era, based on the input from dedicated topical working groups. Crucial decisions about the LSST Wide-Fast-Deep survey cadence, special ancillary surveys that would maximize LSST science (mini-surveys), and target fields with deeper coverage and more frequent temporal sampling than the Wide-Fast-Deep survey (deep drilling fields) will be made over the next several years. This document serves as a guide for making these future cadence decisions. This roadmap will also help identify research areas where preparatory software tools and pipelines will need to be developed by the SSSC and broader community to produce data products beyond what the LSST project will provide through annual and nightly data releases. We expect this roadmap to be a living document that will be updated periodically as needed before LSST science operations commence.
+
+2 What will LSST provide?
+
+The LSST project will deliver a Moving Object Processing System (MOPS) capable of identifying the bulk of transient moving Solar System bodies within LSST imaging data. An estimate of the predicted number of Solar System objects detected by LSST is detailed in the LSST Science Book (LSST Science Collaboration et al., 2009 ) . The LSST Wide-Fast-Deep survey, with a proposed Northern Ecliptic Spur mini-survey, would detect on the order of 100,000 NEOs, 5.5 million Main Belt asteroids, 280,000 Jupiter Trojans, and 40,000 KBOs with between 200-350 observations per object (for bright objects) in various filters. Solontoi et al. ( 2010 ) estimate that LSST will discover approximately 10,000 comets, with 50 observations or more per object in various filters. Cook et al. ( 2016 ) , Engelhardt et al. ( 2017 ) , and Trilling et al. ( 2017 ) estimate that at least one interstellar object (like ‘Oumuamua; Meech et al., 2017 ) is expected to be discovered by LSST annually. Additionally, detailed estimates of LSST NEO detection rates can be found in Grav et al. ( 2016 ) , Vereš & Chesley ( 2017 ) , and Jones et al. ( 2017 ) .
+
+LSST’s basic capabilities will produce orbital distributions for large populations of Solar System objects, which can be de-biased using either the nominal completeness function or a user-supplied ‘truth’ population (through the metadata on observing history), with precision photometry in multiple bandpasses and accurate astrometry. Beyond detection and orbit characterization, there will be multi-band photometry for each moving object detected, although in the wide-survey, objects will be measured in different filters at different times (with a variety of times between measurements that could vary from a few minutes to many days or months). There will be sparse light curves and photometric variability information, including an upper limit on an object’s brightness when LSST does not detect a source, although these light curves will have variable time sampling. The catalogs will include measurements of the point-spread-function (PSF) of each source and a measurement of the deviation from the stellar PSF. There will also be tools to retrieve cutout images of each source to enable searches for outbursts, brightening events, and cometary activity and to perform trailed photometry (using a non-circular photometric aperture matched to the object’s on-sky motion during the exposure) and forced photometry (performing photometry at a fixed/predicted position rather than fitting a centroid). Additionally, markers of comet-like activity or disruption events (including measures of source extendedness) will also be reported in a nightly public alert stream.
+
+3 Overview of LSST Data Products and Data Access Services
+
+An overview of LSST Data Management is provided in Jurić et al. ( 2015 ) . The summary below describes what LSST will provide for Solar System science. The LSST Data Products Definition Document 3 3 3 LSST Data Products Definition Document (DPDD): https://docushare.lsstcorp.org/docushare/dsweb/Get/LSE-163/LSE-163_DataProductsDefinitionDocumentDPDD.pdf (DPDD) is the authoritative source; here we provide a brief overview and interpretation of that document in the context of detecting and cataloging the small body populations residing within the Solar System.
+
+LSST is expected to image the sky with a cadence 4 4 4 More about the observing footprint and plan can be found in the Operations Simulations documentation (OpSim; Delgado et al., 2014 ) at https://www.lsst.org/scientists/simulations/opsim and simulations of the observing history can be found at https://www.lsst.org/scientists/simulations/opsim/opsim-survey-data . generally appropriate for detecting small moving objects in the Solar System in ugrizy filters over the Southern hemisphere. A proposed mini-survey would extend the LSST Wide-Fast-Deep survey coverage to the ecliptic plane + 10 degrees in the Northern hemisphere; this ‘Northern Ecliptic Spur’ may only be imaged in griz . The observing cadence is not fully set and may be revised based on feedback from the science collaborations and the broader community. We refer the reader to the LSST Observing Strategy White Paper (LSST Science Collaboration et al., 2017 ) for more information.
+
+The LSST project will create difference images where the LSST observations in each visit are subtracted from a template image to detect moving objects (plus transient and variable sources). Transient sources that are detected at 5-sigma or more above the sky background in the difference images will be identified and referred to as diaSources 5 5 5 Current LSST Database Schema for DiaSources: https://lsst-web.ncsa.illinois.edu/schema/index.php?sVer=baseline&t=DiaSource in the LSST Database Schema, where DIA refers to Difference Image Analysis. Within 60 seconds of each observation, diaSources will be made public via a real-time stream of observation reports (alerts). These public alerts will include transients and variables and will not include linking between different visits, but known moving objects (as well as known variable sources) will be identified with coincident detections in the alerts. The alert information will include astrometry, photometry, and PSF shape information including trailing and direction of motion (to identify very fast moving Near-Earth objects [NEOs], even if unknown) and identification of non-stellar PSFs (to identify outbursts or cometary activity).
+
+Solar System bodies located at distances closer than ∼ similar-to \sim 200 au will have sufficient on-sky motion between visits taken in a single night to be identified as moving objects by MOPS. MOPS identifies moving objects from the catalogs of diaSources. MOPS will link diaSources from each visit within one night into tracklets (potential linkages in the same night using linear extrapolation). Between nights, MOPS links tracklets into tracks (potential linkages over three nights using a quadratic fit). Only a track that can be fit to a heliocentric orbit with reasonable residuals is considered to be a reportable detection of a moving Solar System object (called an SSObject 6 6 6 Current LSST Database Schema for SSObjects: https://lsst-web.ncsa.illinois.edu/schema/index.php?sVer=baseline&t=SSObject in the LSST database schema). All linked tracks and SSObjects will be reported daily to the Minor Planet Center 7 7 7 https://www.minorplanetcenter.net . Additionally, MOPS will link additional diaSources with previously known or newly discovered SSObjects to extend the orbital arc for each moving object (as new images are taken or as new objects are discovered).
+
+The LSST project will provide access to the associated metadata stored with SSObjects as well as the observations themselves (called Sources 8 8 8 Current LSST Database Schema for Sources: https://lsst-web.ncsa.illinois.edu/schema/index.php?sVer=baseline&t=Source when measured in images or diaSources when measured in difference images) in an online searchable database; this information will be available in yearly data releases as well as a daily database kept up to date with daily moving object processing. The yearly data releases will provide measurements of each moving object detected with absolute astrometry accurate to better than 0.05 ′′ and relative astrometry precise to 0.01 ′′ over spatial scales of a few tens of arcminutes; absolute photometry will be accurate to 10 mmag for bright ( r < < 20) sources and relative photometry precise to 5 mmag for observations over spatial scales small relative to the visible sky in griz (7 mmag in uy ).
+
+Through a Science User Interface 9 9 9 LSST Science User Interface & \& Science User Tools Conceptual Design: https://docushare.lsst.org/docushare/dsweb/Get/Rendition-22538 (SUI), users will have access to LSST catalog and image query tools. Users will be able to access metadata on observing conditions, such as the telescope pointing history, seeing history, cloud conditions, and estimated 5-sigma limiting magnitudes in the difference images for each visit. Through the SUI, users will be able to access catalog entries or postage stamps associated with each diaSource and/or Source for a particular SSObject as requested, as well as receive postage stamps from LSST images which match a user-defined orbit or user-defined RA (right ascension)/Dec(declination)/time regions. Some computing resources through data centers will be available for extended analysis of catalogs or images where the analysis routines are written by users and interface with application programming interfaces (APIs) provided by the LSST project.
+
+4 Science Priorities of the SSSC
+
+In the following section, we briefly outline the ranked LSST science priorities as determined by the SSSC membership. We divide the small body populations of the Solar System in four broad categories based on location and similar discovery challenges:
+
+•
+
+Active Objects - broadly consisting of all categories of activity in the small body populations (i.e., objects exhibiting some type of mass loss): short period comets, long period comets, Main Belt comets, impact-disrupted or rotationally-generated active asteroids, etc.
+
+•
+
+Near Earth Objects (NEOs) and Interstellar Objects- broadly consisting of objects on orbits inward of or diffusing inward from the asteroid belt and objects on unbound orbits passing through the Solar System, like ‘Oumuamua (Meech et al., 2017 ) .
+
+•
+
+Inner Solar System - broadly consisting of Main Belt asteroids, Hildas, Mars/Jupiter Trojans, and Mars/Jupiter satellites.
+
+•
+
+Outer Solar System - broadly consisting of Kuiper belt objects (KBOs), Centaurs, inner Oort cloud (Sedna-like objects), Oort cloud objects, Saturn/Uranus/Neptune Trojans, and Saturn/Uranus/Neptune satellites.
+
+For each of these core small body populations, the SSSC has a list of science goals to achieve with LSST, ranked from highest priority to lowest.
+
+4.1 Active Objects
+
+1.
+
+Discovery and orbital classification of large numbers of active objects to understand and model the onset and termination of activity in the different Solar System small body populations and to explore correlations between physical/orbital characteristics and transient activity.
+
+2.
+
+Discovery/frequency/population estimates of coma and/or dust tail-bearing bodies in the Solar System small body populations including Main-belt comets, NEOs, collisionally impacted asteroids, Centaurs, KBOs, short and long period comets, and interstellar objects to better probe the drivers of such activity and measure the size of these reservoirs.
+
+3.
+
+Detection/frequency/population estimates of anomalous outbursts and rapid brightening/splitting events above the expected brightness evolution of objects in the Solar System small body populations to better probe the drivers of such activity and the size of these reservoirs.
+
+4.
+
+Characterization of the changes in color, morphology, brightness, rotation, shape, and other observable properties of active objects over time (including changes from pre-activity/outburst properties) and at different epochs in the orbits of these bodies to probe surface changes and better explore the various drivers of such activity and their evolution.
+
+5.
+
+Determination of rotational light curves for a large sample of active objects to study physical properties of active objects, including the spin angular momentum distribution, shape distribution, and binary frequency.
+
+6.
+
+Detection and characterization of the non-gravitational forces (including jet-driven and collisional accelerations) acting on active bodies to compute better original and future orbits (especially important for identifying dynamically new or long period comets) and estimate rotation poles and seasonal states of active body nuclei.
+
+4.2 Near-Earth Objects (NEOs) and Interstellar Objects
+
+1.
+
+Compilation of an NEO catalog with high completeness and adequate orbit quality.
+
+2.
+
+Color measurements and broad phase coverage of NEOs, including distinguishing NEOs of cometary origin through color measurements and probing the color distribution of ten-meter scale objects.
+
+3.
+
+Timely advance notice of close approaches or potential impacts to facilitate time critical characterization efforts including radar, spectroscopic, and light curve observations.
+
+4.
+
+Measurement of the orbital, absolute magnitude, and taxonomy distributions within the NEO population, enabling the identification of correlations between taxonomy and orbital properties for all NEOs and the determination of the orbital distribution of ten-meter scale objects.
+
+5.
+
+Determination of the long-term impact flux of NEOs as a function of size, for ≥ \geq 140 m bodies in particular.
+
+6.
+
+Discovery/frequency/population estimates of interstellar objects on unbound orbits passing through the Solar System as a potential probe of planet formation and planetesimal ejection rates in the local solar neighborhood.
+
+7.
+
+Determination of rotational light curves for a large sample of NEOs to study physical properties of NEOs, including the spin angular momentum distribution, shape distribution, and binary frequency.
+
+8.
+
+Detection and characterization of the non-gravitational forces (including the Yarkovsky effect, solar radiation pressure, outgassing, collisions) acting on NEOs to explore and better understand how NEO orbits evolve over time.
+
+9.
+
+Measurement of the absolute magnitude distribution of temporarily-captured objects (NEOs that are temporarily captured by the gravity-well formed by the Earth and Moon) in order to compare to model predictions and to probe the low end of the asteroid size/absolute magnitude distribution.
+
+10.
+
+Investigation of the possible NEO disruption mechanisms active at small perihelion distances to probe NEO internal structure and test dynamical models.
+
+4.3 Inner Solar System
+
+1.
+
+Discovery and orbital classification of large numbers of asteroids and Mars/Jupiter Trojans to probe their orbital and absolute magnitude distributions and to measure the size frequency distributions of different taxonomic classes.
+
+2.
+
+Measurement of high quality astrometry for new and previously known asteroids, Mars/Jupiter Trojans, and Jupiter irregular satellites to refine orbits and improve ephemerides for stellar occultation predictions.
+
+3.
+
+Detection of impacts of small asteroids onto large ones and detection of asteroid disruption by impact to probe the current collisional environment within the asteroid belt, study dust dynamics, constrain asteroid internal structure, and explore space weathering processes through comparison of surfaces before and after detected impacts.
+
+4.
+
+Determination of colors and compositions for a large sample of asteroids, specifically including Jupiter’s irregular satellites, Mars/Jupiter Trojans, Hildas, Cybeles, and Phobos and Deimos to identify correlations with dynamical and taxonomic information with implications for understanding the formation of the inner solar system (e.g., chemical distribution in the primordial disk; collisional family parent bodies and formation events).
+
+5.
+
+Investigation of the hydration of C-complex objects and Main Belt asteroids to explore the compositional evolution of the inner solar system and test giant planet migration models.
+
+6.
+
+Determination of rotational light curves for a large sample of asteroids in different taxonomic classes to study physical properties of asteroids, including the spin angular momentum distribution, shape distribution, and binary frequency.
+
+7.
+
+Improved characterization of newly discovered and previously known asteroid families, clusters, and pairs to study genetic relationships and homogeneity of collisional families at small sizes.
+
+8.
+
+Measurement of asteroid masses and bulk densities from mutual gravitational interactions to probe asteroid internal structures and test planet formation models.
+
+9.
+
+Detection and frequency of rotational fission within the non-NEO asteroid populations to probe internal structure and test dynamical models.
+
+4.4 Outer Solar System
+
+1.
+
+Discovery and orbital classification of large numbers of outer Solar System objects over a wide range of sizes (H > > 9) and orbits to characterize the size-frequency-orbit distribution of KBOs and to probe the formation and evolution of the outer solar system (e.g., comet/Centaur pathways, collisional evolution, Neptune migration, etc.).
+
+2.
+
+Discovery and orbital classification of objects on unusual or extreme orbits, especially inner Oort cloud objects (i.e. Sedna-like objects) with high perihelia ( q 𝑞 q > > 40 au) and objects with very high inclination ( i 𝑖 i > > 40 deg), to place constraints on proposed origin scenarios (e.g., the putative Planet 9; Trujillo & Sheppard, 2014 ; Batygin & Brown, 2016 ; Brown & Batygin, 2016 ; Sheppard & Trujillo, 2016 ; Brown, 2017 ) .
+
+3.
+
+Determination of colors for large numbers of objects to identify correlations with dynamical information with implications for understanding the formation of the outer solar system (e.g., chemical distribution in the primordial disk; collisional families).
+
+4.
+
+Determination of rotational light curves for large numbers of objects from different dynamical classes to study physical properties of KBOs, including spin angular momentum distribution and binary frequency.
+
+5.
+
+Discovery and orbital classification of large numbers of objects in resonance with the giant planets, especially the libration islands of high-order resonances of Neptune, to constrain models of Neptune migration.
+
+6.
+
+Discovery and clear characterization (e.g., PSF shape) of binaries and multiple systems wide enough to be resolved or partially resolved.
+
+7.
+
+Measurement of acccurate and precise astrometry for known and new distant Solar System bodies to enable stellar occultation observations.
+
+5 Community Software Development
+
+Given the unprecedented scale of the LSST survey, tools that can conduct rapid automated analyses of the large quantities of data produced on a nightly basis will be essential for taking full advantage of LSST’s scientific potential. Furthermore, a collaborative approach will almost certainly be required within the planetary community to ensure that the broad range of analysis tools and software pipelines that will be required are available and ready to be implemented by the time LSST begins full science operations. In this Section, we briefly describe the status of the SSSC’s community software and infrastructure development.
+
+One of the key objectives of the software development process being undertaken by the SSSC is the identification of common software and analysis needs among the planetary community based on the list of scientific priorities detailed in Section 4 in order to organize a coordinated effort that best maximizes available resources and effort. In some cases, this development will involve the adaptation or automation of existing software pipelines, while in other cases, entirely new tools will need to be developed. LSST will provide some computational resources for the analysis of LSST images and associated data products with user-added software. To make the most of these limited computational resources, it will be in the planetary community’s interest to aggregate the various community developed tools that require access to LSST image data and apply them to each image of a moving object detection at the same time. This will require image data to be retrieved only once, minimizing the computational draw on the LSST servers. A key goal of the SSSC’s software development effort is to create an overarching database that will store all user-derived values and output associated with LSST moving object discoveries produced by SSSC analysis tools. To facilitate SSSC investigations that take full advantage of the diverse higher-level data products that are expected to be generated from LSST observations, we are planning for this database to be fully accessible through APIs and a web-based query form.
+
+6 Future Work
+
+This science roadmap serves as a starting point towards maximizing LSST’s potential for Solar System science. The extent to which the above science priorities will be achieved is directly related to the final survey strategy and cadence selected. The next step for the SSSC will be to generate quantifiable success metrics for each of the above science priorities that can be tested against the various LSST Wide-Fast-Deep survey observing strategies and their associated simulated observing histories. Additionally, one of the next steps for the SSSC will be to identify which of the above science goals would be significantly enhanced by or would be only achievable through a specially designed mini-survey (such as the proposed ‘Northern Ecliptic Spur’) or deep drilling field. Further actions include identifying and beginning development on user-added community software tools and pipelines needed beyond what the LSST project will provide in order to carry out the desired science goals in this roadmap.
+
+Acknowledgements
+
+The authors thank the Large Synoptic Survey Telescope (LSST) Project Science Team and the LSST Corporation for their support of LSST Solar System Science Collaboration’s (SSSC) efforts. This work was supported in part by a LSST Corporation Enabling Science grant. MES was supported by Gemini Observatory, which is operated by the Association of Universities for Research in Astronomy, Inc., under a cooperative agreement with the National Science Foundation on behalf of the Gemini partnership: the National Science Foundation (United States), the National Research Council (Canada), CONICYT (Chile), Ministerio de Ciencia, Tecnología e Innovación Productiva (Argentina), and Ministério da Ciência, Tecnologia e Inovação (Brazil). This manuscript was prepared using the AASTex latex classfile and template package from America Astronomical Society (AAS) Journals http://journals.aas.org/authors/aastex/aasguide.html . This work has made use of NASA’s Astrophysics Data System Bibliographic Services. The authors thank Amy Barr and Bryce Bolin for constructive comments on the manuscript.
+
+References
+
+Batygin & Brown (2016)
+
+Batygin, K., & Brown, M. E. 2016, AJ, 151, 22
+
+Brown (2017)
+
+Brown, M. E. 2017, AJ, 154, 65
+
+Brown & Batygin (2016)
+
+Brown, M. E., & Batygin, K. 2016, ApJ, 824, L23
+
+Cook et al. (2016)
+
+Cook, N. V., Ragozzine, D., Granvik, M., & Stephens, D. C. 2016, ApJ,
+825, 51
+
+Delgado et al. (2014)
+
+Delgado, F., Saha, A., Chandrasekharan, S., et al. 2014, in Proc. SPIE,
+Vol. 9150, Modeling, Systems Engineering, and Project Management for
+Astronomy VI, 915015
+
+Engelhardt et al. (2017)
+
+Engelhardt, T., Jedicke, R., Vereš, P., et al. 2017, AJ, 153, 133
+
+Grav et al. (2016)
+
+Grav, T., Mainzer, A. K., & Spahr, T. 2016, AJ, 151, 172
+
+Ivezic et al. (2008)
+
+Ivezic, Z., Tyson, J. A., Abel, B., et al. 2008, ArXiv e-prints,
+arXiv:0805.2366
+
+Jones et al. (2017)
+
+Jones, R. L., Slater, C. T., Moeyens, J., et al. 2017, ArXiv e-prints,
+arXiv:1711.10621
+
+Jurić et al. (2015)
+
+Jurić, M., Kantor, J., Lim, K., et al. 2015, ArXiv e-prints,
+arXiv:1512.07914
+
+LSST Science Collaboration et al. (2009)
+
+LSST Science Collaboration, Abell, P. A., Allison, J., et al. 2009,
+ArXiv e-prints, arXiv:0912.0201
+
+LSST Science Collaboration et al. (2017)
+
+LSST Science Collaboration, Marshall, P., Anguita, T., et al. 2017,
+ArXiv e-prints, arXiv:1708.04058
+
+Meech et al. (2017)
+
+Meech, K. J., Weryk, R., Micheli, M., et al. 2017, Nature, 552, 378
+
+Sheppard & Trujillo (2016)
+
+Sheppard, S. S., & Trujillo, C. 2016, AJ, 152, 221
+
+Solontoi et al. (2010)
+
+Solontoi, M., Ivezić, Ž., West, A. A., et al. 2010, Icarus,
+205, 605
+
+Trilling et al. (2017)
+
+Trilling, D. E., Robinson, T., Roegge, A., et al. 2017, ApJ, 850, L38
+
+Trujillo & Sheppard (2014)
+
+Trujillo, C. A., & Sheppard, S. S. 2014, Nature, 507, 471
+
+Vereš & Chesley (2017)
+
+Vereš, P., & Chesley, S. R. 2017, AJ, 154, 13
+
+◄
+
+Feeling lucky?
+
+Conversion report
+Report an issue
+View original on arXiv ►
+
+Copyright
+Privacy Policy
+
+Generated on Sat Mar 2 22:12:19 2024 by L a T e XML

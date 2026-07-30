@@ -1,0 +1,939 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Predictions of the LSST Solar System (non-)Yield</title>
+<!--Generated on Tue Mar 31 20:17:27 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<meta name="keywords" lang="en" content="Small Solar System bodies1469 — ">
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+    // Pre-apply spinout-banner dismissal here, before the banner paints, so it
+    // never flashes in only to be hidden later by the deferred arxiv-header.js.
+    // Key matches arxiv-header.js: "arxiv-banner-dismissed:" + data-banner-name.
+    if (localStorage.getItem('arxiv-banner-dismissed:spinout-nonprofit')) {
+      document.documentElement.setAttribute("data-banner-dismissed", "");
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css"><link rel="stylesheet" type="text/css" media="screen"
+  href="/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626"><style>
+  /* Banner pre-dismissal (set above before paint -> no flash-then-hide) and
+     reading-mode chrome hiding. */
+  html[data-banner-dismissed] .ds-announcement { display: none; }
+  html[data-reading-mode="enabled"] .ds-announcement,
+  html[data-reading-mode="enabled"] .ds-site-footer { display: none; }
+  /* Keep the announcement text dark on the Open-Blue band in both colour themes
+     (otherwise it inherits the paper's warm-wash text in dark mode and washes out). */
+  .ds-announcement-text { color: var(--arxiv-ink, #1c1a17); }
+</style>
+<script defer src="/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog><div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement"
+    data-banner-name="spinout-nonprofit">
+    <img class="ds-announcement-glyph" src="/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+    <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+    <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+    <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/"><img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/base/1.0.1/images/arxiv-logo-primary-light.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2604.00206v1">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2604.00206v1"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_abstract"><a href="#abstract1" title="In Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title">Abstract</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S1" title="In Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">I </span>Introduction</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S2" title="In Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II </span>Survey Description and Detection Framework</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S3" title="In Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III </span>The Non-Yield Catalogue</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection">
+<a href="#S3.SS1" title="In III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.1 </span>Geometric Non-Yield</span></a>
+<ol class="ltx_toclist ltx_toclist_subsection">
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="#S3.SS1.SSS1" title="In III.1 Geometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.1.1 </span>The Counter-Earth Population (L3)</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="#S3.SS1.SSS2" title="In III.1 Geometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.1.2 </span>The Sun</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_subsection">
+<a href="#S3.SS2" title="In III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.2 </span>Photometric Non-Yield</span></a>
+<ol class="ltx_toclist ltx_toclist_subsection">
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="#S3.SS2.SSS1" title="In III.2 Photometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.2.1 </span>Bright-Limit Exceedance</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="#S3.SS2.SSS2" title="In III.2 Photometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.2.2 </span>The Death Star</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_subsection">
+<a href="#S3.SS3" title="In III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.3 </span>Kinematic Non-Yield</span></a>
+<ol class="ltx_toclist ltx_toclist_subsection">
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="#S3.SS3.SSS1" title="In III.3 Kinematic Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.3.1 </span>The Zero-Velocity Population</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_subsection">
+<a href="#S3.SS4" title="In III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.4 </span>Temporal Non-Yield</span></a>
+<ol class="ltx_toclist ltx_toclist_subsection">
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="#S3.SS4.SSS1" title="In III.4 Temporal Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.4.1 </span>The Scheduled-Downtime Population</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="#S3.SS4.SSS2" title="In III.4 Temporal Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.4.2 </span>Terminal-Epoch Population</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_subsection">
+<a href="#S3.SS5" title="In III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.5 </span>Pipeline and Computational Non-Yield</span></a>
+<ol class="ltx_toclist ltx_toclist_subsection">
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="#S3.SS5.SSS1" title="In III.5 Pipeline and Computational Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.5.1 </span>The Chip-Gap Population</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="#S3.SS5.SSS2" title="In III.5 Pipeline and Computational Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.5.2 </span>Compute-Budget Exceedance</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="#S3.SS5.SSS3" title="In III.5 Pipeline and Computational Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.5.3 </span>Classified Satellite Coincidence</span></a></li>
+</ol>
+</li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S4" title="In Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">IV </span>Conclusion</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_acknowledgements"><a href="#S4.acknowledgements1" title="In IV Conclusion ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title">Acknowledgements</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_bibliography"><a href="#bib" title="In Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: CC BY 4.0
+  </a>
+  <div id="watermark-tr">
+arXiv:2604.00206v1 [astro-ph.EP] 31 Mar 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document ltx_authors_multiline">
+<h1 class="ltx_title ltx_title_document">Predictions of the LSST Solar System (non-)Yield</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0000-0001-9505-1131" title="" class="ltx_ref orcid">Joseph Murtagh</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Department of Astronomy and the DIRAC Institute, University of Washington, 3910 15th Avenue NE, Seattle, WA 98195, USA
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2604.00206v1/mailto:%5B">[</a>
+</span>Joseph Murtagh</span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0009-0005-9428-9590" title="" class="ltx_ref orcid">Ian Chow</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Department of Astronomy and the DIRAC Institute, University of Washington, 3910 15th Avenue NE, Seattle, WA 98195, USA
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2604.00206v1/mailto:chowian@uw.edu">chowian@uw.edu</a>
+</span></span></span>
+</div>
+
+<div id="abstract1" class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">We present predictions for solar system objects the Vera C. Rubin Observatory Legacy Survey of Space and Time (LSST) will not detect over its ten-year baseline survey. Employing state-of-the-art synthetic population models and the <span class="ltx_text ltx_font_typewriter">Sorcha</span> survey simulator, we identify non-yield populations spanning geometric, photometric, kinematic, temporal, and computational failure modes. Notable subpopulations include objects whose peak brightness coincides exclusively with scheduled telescope downtime, objects whose detections fall within Rubin focal plane chip gaps, and objects whose orbital arcs expire before linking jobs are dispatched from the compute queue. We additionally characterise the non-yield arising from the Death Star (DS-1; <math class="ltx_Math" alttext="D\approx 160" display="inline" intent=":literal"><semantics><mrow><mi>D</mi><mo>≈</mo><mn>160</mn></mrow><annotation encoding="application/x-tex">D\approx 160</annotation></semantics></math> km), whose orbital mechanics (when constrained by the well-established Endor engagement geometry <cite class="ltx_cite ltx_citemacro_citep">(Lucas, <a href="#bib.bib15" title="Star wars: episode vi – return of the jedi" class="ltx_ref">1983</a>)</cite>) place it at a maximum heliocentric distance of <math class="ltx_Math" alttext="27.5" display="inline" intent=":literal"><semantics><mn>27.5</mn><annotation encoding="application/x-tex">27.5</annotation></semantics></math> au and an apparent magnitude of <math class="ltx_Math" alttext="m_{r}\approx 19" display="inline" intent=":literal"><semantics><mrow><msub><mi>m</mi><mi>r</mi></msub><mo>≈</mo><mn>19</mn></mrow><annotation encoding="application/x-tex">m_{r}\approx 19</annotation></semantics></math>-23, squarely within the LSST operational photometric window. Its absence from the LSST alert stream is interpreted as confirmation of its destruction at the Battle of Endor. The failure to detect the Sun within the LSST should be a stark warning to the community of the LSST’s inability to catalogue the solar system (by mass).</p>
+</div>
+<div class="ltx_keywords">
+<span id="id3.id1" class="ltx_ERROR undefined">\uat</span>Small Solar System bodies1469 — <span id="id4.id2" class="ltx_ERROR undefined">\uat</span>Wide-field telescopes1800
+</div>
+<div id="p1" class="ltx_para">
+<p id="p1.1" class="ltx_p">show]murtagh@uw.edu</p>
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">I </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.3" class="ltx_p">The Vera C. Rubin Observatory Legacy Survey of Space and Time <cite class="ltx_cite ltx_citemacro_citep">(LSST; Ivezić<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib9" title="LSST: From Science Drivers to Reference Design and Anticipated Data Products" class="ltx_ref">2019</a>)</cite> represents the most ambitious wide-field optical all-sky survey of the solar system yet attempted. Over a ten-year baseline, the 8.4m Simonyi Survey Telescope will image approximately 18,000 deg<sup id="S1.p1.3.1" class="ltx_sup">2</sup> of southern sky to a single-visit depth of <math id="S1.p1.2.m2" class="ltx_Math" alttext="m_{r}\sim 24.5" display="inline" intent=":literal"><semantics><mrow><msub><mi>m</mi><mi>r</mi></msub><mo>∼</mo><mn>24.5</mn></mrow><annotation encoding="application/x-tex">m_{r}\sim 24.5</annotation></semantics></math>, generating an expected catalogue of <math id="S1.p1.3.m3" class="ltx_Math" alttext="\gtrsim" display="inline" intent=":literal"><semantics><mo>≳</mo><annotation encoding="application/x-tex">\gtrsim</annotation></semantics></math>1 solar system object(s) from near-Earth asteroids to trans-Neptunian objects <cite class="ltx_cite ltx_citemacro_citep">(Jones<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib1" title="Solar System Science with LSST" class="ltx_ref">2009</a>)</cite>.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.1" class="ltx_p">The community has invested considerable effort in predicting what the LSST <span id="S1.p2.1.1" class="ltx_text ltx_font_italic">will</span> find <cite class="ltx_cite ltx_citemacro_citep">(e.g. Dorsey<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib6" title="The Visibility of the Ōtautahi─Oxford Interstellar Object Population Model in LSST" class="ltx_ref">2025</a>; Kurlander<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib4" title="Predictions of the LSST Solar System Yield: Near-Earth Objects, Main Belt Asteroids, Jupiter Trojans, and Trans-Neptunian Objects" class="ltx_ref">2025</a>; Murtagh<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib2" title="Predictions of the LSST Solar System Yield: Discovery Rates and Characterizations of Centaurs" class="ltx_ref">2025</a>, <a href="#bib.bib3" title="Predictions of the LSST Solar System Yield: Neptune Trojans" class="ltx_ref">2026</a>; Chow<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib5" title="Predictions of Imminent Earth Impactors Discovered by LSST" class="ltx_ref">2026</a>)</cite>. The present work takes a complementary view. We argue that the non-yield — that is, the population of objects the LSST will definitively <span id="S1.p2.1.2" class="ltx_text ltx_font_italic">not</span> detect — is an equally important and considerably under-characterised survey product. A complete census of the solar system requires knowledge not only of what a survey finds, but of what it cannot find, and why.</p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p id="S1.p3.1" class="ltx_p">This framing is not without precedent. Survey completeness analyses routinely quantify objects missed due to geometric, photometric, and temporal biases <cite class="ltx_cite ltx_citemacro_citep">(e.g. Vereš and Chesley, <a href="#bib.bib7" title="High-fidelity Simulations of the Near-Earth Object Search Performance of the Large Synoptic Survey Telescope" class="ltx_ref">2017</a>)</cite>. We consider these obvious, and instead extend this tradition by investigating failure modes that have received comparatively little attention: failures arising from the unique orbit configurations, compute cluster scheduling policy, relativistic constraints on the orbital velocity of a spherical weapons platform, and the fundamental orientation of the telescope relative to the nearest star.</p>
+</div>
+<div id="S1.p4" class="ltx_para">
+<p id="S1.p4.1" class="ltx_p">Throughout this work we assume a standard flat <math id="S1.p4.1.m1" class="ltx_Math" alttext="\Lambda" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Λ</mi><annotation encoding="application/x-tex">\Lambda</annotation></semantics></math>CDM cosmology, which has no bearing on any result but is the kind of thing one writes in an introduction.</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">II </span>Survey Description and Detection Framework</h2>
+
+<div id="S2.p1" class="ltx_para">
+<p id="S2.p1.1" class="ltx_p">Moving object detection is performed through the Solar System Processing (SSP) pipeline, which differences image pairs separated in time and constructs tracklets from this data. An object is considered “detected” once it is linked into a valid orbit and reported to the Minor Planet Center (MPC). The effective photometric window is approximately <math id="S2.p1.1.m1" class="ltx_Math" alttext="16\lesssim m_{r}\lesssim 24.5" display="inline" intent=":literal"><semantics><mrow><mn>16</mn><mo>≲</mo><msub><mi>m</mi><mi>r</mi></msub><mo>≲</mo><mn>24.5</mn></mrow><annotation encoding="application/x-tex">16\lesssim m_{r}\lesssim 24.5</annotation></semantics></math>, set by saturation, detection limits, and whether the object happens to be observed at the right time. Objects outside this range are treated as non-yield.</p>
+</div>
+<div id="S2.p2" class="ltx_para">
+<p id="S2.p2.1" class="ltx_p">Observations of any of our synthetic populations are definitely really totally simulated using the survey simulator <span id="S2.p2.1.1" class="ltx_text ltx_font_typewriter">Sorcha</span> <cite class="ltx_cite ltx_citemacro_citep">(Merritt<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib10" title="Sorcha: A Solar System Survey Simulator for the Legacy Survey of Space and Time" class="ltx_ref">2025</a>)</cite> with the v5.0.0 cadence simulation from the SCOC 2024 baseline.</p>
+</div>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">III </span>The Non-Yield Catalogue</h2>
+
+<div id="S3.p1" class="ltx_para">
+<p id="S3.p1.1" class="ltx_p">We present the non-yield catalogue of detections <math id="S3.p1.1.m1" class="ltx_Math" alttext="N" display="inline" intent=":literal"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math> in order of increasing abstraction. Table <a href="#S4.T1" title="Table 1 ‣ IV Conclusion ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a> summarises all populations and their estimated non-yields.</p>
+</div>
+<section id="S3.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">III.1 </span>Geometric Non-Yield</h3>
+
+<section id="S3.SS1.SSS1" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">III.1.1 </span>The Counter-Earth Population (L3)</h4>
+
+<div id="S3.SS1.SSS1.p1" class="ltx_para">
+<p id="S3.SS1.SSS1.p1.1" class="ltx_p">The Sun-Earth Lagrange point L3 lies along the Sun-Earth line at 1 au, diametrically opposite to Earth. <cite class="ltx_cite ltx_citemacro_cite">Philolaus (<a href="#bib.bib11" title="" class="ltx_ref">c. 400BC</a>)</cite> predicted a body at this location as shown in Figure <a href="#S3.F1" title="Figure 1 ‣ III.1.1 The Counter-Earth Population (L3) ‣ III.1 Geometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>, which he termed the <span id="S3.SS1.SSS1.p1.1.1" class="ltx_text ltx_font_italic">Antichthon</span> (counter-Earth), on the grounds that ten celestial bodies was a more satisfying number than nine. This prediction went observationally untested for approximately 2,400 years, until the separation of NASA’s STEREO spacecraft from Earth provided a direct view of the L3 region during the early phase of the mission <cite class="ltx_cite ltx_citemacro_citep">(Kaiser<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib12" title="The STEREO Mission: An Introduction" class="ltx_ref">2008</a>)</cite>. No body was found. The Antichthon hypothesis has been falsified.</p>
+</div>
+<div id="S3.SS1.SSS1.p2" class="ltx_para">
+<p id="S3.SS1.SSS1.p2.2" class="ltx_p">The LSST will (probably) not change this conclusion. The LSST cannot observe L3 directly, as it lies permanently behind the Sun as seen from Cerro Pachón (and most other ground locations). Objects genuinely displaced to L3 would drift into geometrically accessible sky on the Lyapunov instability timescale of <math id="S3.SS1.SSS1.p2.1.m1" class="ltx_Math" alttext="\tau_{\rm L3}\sim 10^{2}-10^{3}" display="inline" intent=":literal"><semantics><mrow><msub><mi>τ</mi><mi>L3</mi></msub><mo>∼</mo><mrow><msup><mn>10</mn><mn>2</mn></msup><mo>−</mo><msup><mn>10</mn><mn>3</mn></msup></mrow></mrow><annotation encoding="application/x-tex">\tau_{\rm L3}\sim 10^{2}-10^{3}</annotation></semantics></math> yr <cite class="ltx_cite ltx_citemacro_citep">(Murray and Dermott, <a href="#bib.bib13" title="Solar System Dynamics" class="ltx_ref">1999</a>)</cite>, driven primarily by perturbations dynamics of the Sun-Earth three-body problem <cite class="ltx_cite ltx_citemacro_citep">(Liu, <a href="#bib.bib14" title="The three-body problem" class="ltx_ref">2014</a>)</cite>. This timescale exceeds the ten-year survey baseline, so objects at or near L3 today remain unobservable throughout the mission. The non-yield is <math id="S3.SS1.SSS1.p2.2.m2" class="ltx_Math" alttext="N_{\rm Antichthon}=0\pm 0" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>Antichthon</mi></msub><mo>=</mo><mrow><mn>0</mn><mo>±</mo><mn>0</mn></mrow></mrow><annotation encoding="application/x-tex">N_{\rm Antichthon}=0\pm 0</annotation></semantics></math>, drawn from a population we already know does not exist.</p>
+</div>
+<figure id="S3.F1" class="ltx_figure"><img src="2604.00206v1/antichthon.png" id="S3.F1.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="598" height="404" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>Orbit configuration of Antichthon as we like to believe Philolaus mind-mapped it. Earth (or, Terra) is on the right, whilst Antichthon is on the left, or counter to Earth. Both orbit anticlockwise around the Sun at the centre. Red lines denote the Lagrange points of the Earth(Terra)-Sun system. Of course, this renders Antichthon unobservable at any stage of Earth’s orbit.</figcaption>
+</figure>
+</section>
+<section id="S3.SS1.SSS2" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">III.1.2 </span>The Sun</h4>
+
+<div id="S3.SS1.SSS2.p1" class="ltx_para">
+<p id="S3.SS1.SSS2.p1.1" class="ltx_p">The Sun is an object within the solar system and so is therefore, definitionally speaking, a solar system object. We address its detectability here.</p>
+</div>
+<div id="S3.SS1.SSS2.p2" class="ltx_para">
+<p id="S3.SS1.SSS2.p2.2" class="ltx_p">The Sun has an absolute magnitude <math id="S3.SS1.SSS2.p2.1.m1" class="ltx_Math" alttext="M\approx-26.7" display="inline" intent=":literal"><semantics><mrow><mi>M</mi><mo>≈</mo><mrow><mo>−</mo><mn>26.7</mn></mrow></mrow><annotation encoding="application/x-tex">M\approx-26.7</annotation></semantics></math>, exceeding the LSST bright limit by approximately 43 magnitudes — the largest margin by which any solar system object fails to fall within the survey’s operational photometric window. In this sense, the Sun’s non-yield of <math id="S3.SS1.SSS2.p2.2.m2" class="ltx_Math" alttext="N_{\mathrm{Sun}}=0\pm 0" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>Sun</mi></msub><mo>=</mo><mrow><mn>0</mn><mo>±</mo><mn>0</mn></mrow></mrow><annotation encoding="application/x-tex">N_{\mathrm{Sun}}=0\pm 0</annotation></semantics></math> is the most extreme non-detection in the catalogue.</p>
+</div>
+<div id="S3.SS1.SSS2.p3" class="ltx_para">
+<p id="S3.SS1.SSS2.p3.1" class="ltx_p">The heliocentric orbital elements of the Sun present an additional complication. The semi-major axis is zero by definition, the eccentricity is undefined, and all angular elements are degenerate. The Sun cannot be submitted to the MPC as a minor planet (not for lack of the authors’ attempts). This is not a pipeline limitation but an ontological one, and we do not expect it to be resolved in the forthcoming data releases.</p>
+</div>
+<div id="S3.SS1.SSS2.p4" class="ltx_para">
+<p id="S3.SS1.SSS2.p4.3" class="ltx_p">Detection efficiency at <math id="S3.SS1.SSS2.p4.1.m1" class="ltx_Math" alttext="r_{\mathrm{H}}=0" display="inline" intent=":literal"><semantics><mrow><msub><mi>r</mi><mi mathvariant="normal">H</mi></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">r_{\mathrm{H}}=0</annotation></semantics></math> au is <math id="S3.SS1.SSS2.p4.2.m2" class="ltx_Math" alttext="\epsilon=0.000\pm 0.000" display="inline" intent=":literal"><semantics><mrow><mi>ϵ</mi><mo>=</mo><mrow><mn>0.000</mn><mo>±</mo><mn>0.000</mn></mrow></mrow><annotation encoding="application/x-tex">\epsilon=0.000\pm 0.000</annotation></semantics></math>. Efficiency formally rises for <math id="S3.SS1.SSS2.p4.3.m3" class="ltx_Math" alttext="r_{\mathrm{H}}&gt;0" display="inline" intent=":literal"><semantics><mrow><msub><mi>r</mi><mi mathvariant="normal">H</mi></msub><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">r_{\mathrm{H}}&gt;0</annotation></semantics></math> au, which may be of interest to stellar astronomers but is outside the scope of this survey. We ran the numbers and burnt a few CPU hours to compute that the LSST would need to be pointed directly at the Sun to resolve this non-detection. This option was never considered even briefly, and has been rejected.<span id="footnote1" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_tag ltx_tag_note">1</span>The telescope is worth <math id="footnote1.m1" class="ltx_Math" alttext="\gtrsim\mathdollar 800" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>≳</mo><mrow><mi mathvariant="normal">$</mi><mo lspace="0em" rspace="0em">​</mo><mn>800</mn></mrow></mrow><annotation encoding="application/x-tex">\gtrsim\mathdollar 800</annotation></semantics></math> million.</span></span></span></p>
+</div>
+<div id="S3.SS1.SSS2.p5" class="ltx_para">
+<p id="S3.SS1.SSS2.p5.1" class="ltx_p">The Sun constitutes 99.86% of the total mass of the solar system. The LSST catalogue will contain 0.000% of the Sun. On these grounds alone, LSST’s coverage of the solar system is incomplete at a level that should concern any referee, and the LSST Solar System Science Collaboration should address it.</p>
+</div>
+</section>
+</section>
+<section id="S3.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">III.2 </span>Photometric Non-Yield</h3>
+
+<section id="S3.SS2.SSS1" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">III.2.1 </span>Bright-Limit Exceedance</h4>
+
+<div id="S3.SS2.SSS1.p1" class="ltx_para">
+<p id="S3.SS2.SSS1.p1.2" class="ltx_p">The LSST detector saturates at approximately <math id="S3.SS2.SSS1.p1.1.m1" class="ltx_Math" alttext="m_{r}\sim 16" display="inline" intent=":literal"><semantics><mrow><msub><mi>m</mi><mi>r</mi></msub><mo>∼</mo><mn>16</mn></mrow><annotation encoding="application/x-tex">m_{r}\sim 16</annotation></semantics></math>. The distinction between “a very active comet” and “something that is on fire” has never been formally established in the minor planet taxonomy. An object in the latter category would produce an alert packet whose postage stamp image morphology is adequately characterised by reference to 16th-century comet photometry (see Figure <a href="#S3.F2" title="Figure 2 ‣ III.2.1 Bright-Limit Exceedance ‣ III.2 Photometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>), rather than by the analytic PSF model the pipeline was designed to fit. Whether this constitutes a detection failure or a pipeline design requirement is a question we leave to the SSP team. We report <math id="S3.SS2.SSS1.p1.2.m2" class="ltx_Math" alttext="N_{\rm emit}=0\pm\mathrm{ALargeNumber}" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>emit</mi></msub><mo>=</mo><mrow><mn>0</mn><mo>±</mo><mi>ALargeNumber</mi></mrow></mrow><annotation encoding="application/x-tex">N_{\rm emit}=0\pm\mathrm{ALargeNumber}</annotation></semantics></math>, where the central value follows from the non-existence of the relevant population, and the uncertainty reflects our incomplete knowledge of what is currently on fire in the outer solar system. Surely JWST will resolve this in future studies.</p>
+</div>
+<figure id="S3.F2" class="ltx_figure"><img src="2604.00206v1/x1.png" id="S3.F2.g1" class="ltx_graphics ltx_centering ltx_img_portrait" width="747" height="1241" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>Postage stamp cutouts of comets <cite class="ltx_cite ltx_citemacro_citep">(Anglo-Saxon Needleworkers, <a href="#bib.bib18" title="Bayeux tapestry" class="ltx_ref">1070</a>; Hans Burgkmair the Younger, <a href="#bib.bib17" title="The augsburg book of miraculous signs" class="ltx_ref">1552</a>)</cite>. Clearly visible in both are flames, indicating a level of emissivity not accounted for in modern cometary photometry. White/grey horizontal bars would show the pixel (pigment? stitch?) scale were that known. Images are oriented such that North is up and East is left as shown by green arrows, at least we assume. Marked as a red arrow is the anti-velocity direction, and not marked is the anti-solar direction (comets don’t orbit the Sun until the <math id="S3.F2.2.m1" class="ltx_Math" alttext="\sim 17^{\mathrm{th}}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><msup><mn>17</mn><mi>th</mi></msup></mrow><annotation encoding="application/x-tex">\sim 17^{\mathrm{th}}</annotation></semantics></math> century).</figcaption>
+</figure>
+</section>
+<section id="S3.SS2.SSS2" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">III.2.2 </span>The Death Star</h4>
+
+<div id="S3.SS2.SSS2.p1" class="ltx_para">
+<p id="S3.SS2.SSS2.p1.2" class="ltx_p">The Death Star (DS-1 Orbital Battle Station; <math id="S3.SS2.SSS2.p1.1.m1" class="ltx_Math" alttext="D\approx 160" display="inline" intent=":literal"><semantics><mrow><mi>D</mi><mo>≈</mo><mn>160</mn></mrow><annotation encoding="application/x-tex">D\approx 160</annotation></semantics></math> km) is the most extensively modelled artificial solar system body in the non-yield literature. Its orbital mechanics are constrained by the Endor engagement recorded in <cite class="ltx_cite ltx_citemacro_citet">Lucas (<a href="#bib.bib15" title="Star wars: episode vi – return of the jedi" class="ltx_ref">1983</a>)</cite>, in which the station operated from geosynchronous orbit above the target body<span id="footnote2" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_tag ltx_tag_note">2</span>See <a href="https://scifi.stackexchange.com/questions/270902/how-did-the-death-star-2-stay-in-orbit-above-endor-when-it-did-not-have-function" title="" class="ltx_ref ltx_href">important community discussion</a>.</span></span></span>. Requiring that the orbital velocity not exceed the speed of light <math id="S3.SS2.SSS2.p1.2.m2" class="ltx_Math" alttext="c" display="inline" intent=":literal"><semantics><mi>c</mi><annotation encoding="application/x-tex">c</annotation></semantics></math> places a hard upper bound on the semi-major axis:</p>
+<table id="S3.E1" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S3.E1.m1" class="ltx_Math" alttext="a_{\rm max}=\frac{cT_{\oplus}}{2\pi}\approx 27.5~{\rm au}," display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>a</mi><mi>max</mi></msub><mo>=</mo><mfrac><mrow><mi>c</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>T</mi><mo>⊕</mo></msub></mrow><mrow><mn>2</mn><mo lspace="0em" rspace="0em">​</mo><mi>π</mi></mrow></mfrac><mo>≈</mo><mrow><mn>27.5</mn><mo lspace="0.330em" rspace="0em">​</mo><mi>au</mi></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">a_{\rm max}=\frac{cT_{\oplus}}{2\pi}\approx 27.5~{\rm au},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(1)</span></td>
+</tr></tbody>
+</table>
+<p id="S3.SS2.SSS2.p1.3" class="ltx_p">where <math id="S3.SS2.SSS2.p1.3.m1" class="ltx_Math" alttext="T_{\oplus}=86{,}400" display="inline" intent=":literal"><semantics><mrow><msub><mi>T</mi><mo>⊕</mo></msub><mo>=</mo><mrow><mn>86</mn><mo>,</mo><mn>400</mn></mrow></mrow><annotation encoding="application/x-tex">T_{\oplus}=86{,}400</annotation></semantics></math> s is Earth’s sidereal rotation period. The Death Star, if operational and targeting Earth, is constrained to reside inward of the orbit of Neptune.</p>
+</div>
+<div id="S3.SS2.SSS2.p2" class="ltx_para">
+<p id="S3.SS2.SSS2.p2.7" class="ltx_p">Bracketing the full range of known solar system albedos — <math id="S3.SS2.SSS2.p2.1.m1" class="ltx_Math" alttext="p_{v}=0.04" display="inline" intent=":literal"><semantics><mrow><msub><mi>p</mi><mi>v</mi></msub><mo>=</mo><mn>0.04</mn></mrow><annotation encoding="application/x-tex">p_{v}=0.04</annotation></semantics></math> (carbonaceous, dark, ominous; <math id="S3.SS2.SSS2.p2.2.m2" class="ltx_Math" alttext="H=8.1" display="inline" intent=":literal"><semantics><mrow><mi>H</mi><mo>=</mo><mn>8.1</mn></mrow><annotation encoding="application/x-tex">H=8.1</annotation></semantics></math>) to <math id="S3.SS2.SSS2.p2.3.m3" class="ltx_Math" alttext="p_{v}=0.96" display="inline" intent=":literal"><semantics><mrow><msub><mi>p</mi><mi>v</mi></msub><mo>=</mo><mn>0.96</mn></mrow><annotation encoding="application/x-tex">p_{v}=0.96</annotation></semantics></math> (Eris-like, bright, disco-like; <math id="S3.SS2.SSS2.p2.4.m4" class="ltx_Math" alttext="H=4.6" display="inline" intent=":literal"><semantics><mrow><mi>H</mi><mo>=</mo><mn>4.6</mn></mrow><annotation encoding="application/x-tex">H=4.6</annotation></semantics></math>) — the Death Star at <math id="S3.SS2.SSS2.p2.5.m5" class="ltx_Math" alttext="a=a_{\rm max}" display="inline" intent=":literal"><semantics><mrow><mi>a</mi><mo>=</mo><msub><mi>a</mi><mi>max</mi></msub></mrow><annotation encoding="application/x-tex">a=a_{\rm max}</annotation></semantics></math> would have an apparent magnitude of <math id="S3.SS2.SSS2.p2.6.m6" class="ltx_Math" alttext="m_{r}\approx 22.4" display="inline" intent=":literal"><semantics><mrow><msub><mi>m</mi><mi>r</mi></msub><mo>≈</mo><mn>22.4</mn></mrow><annotation encoding="application/x-tex">m_{r}\approx 22.4</annotation></semantics></math>–<math id="S3.SS2.SSS2.p2.7.m7" class="ltx_Math" alttext="18.9" display="inline" intent=":literal"><semantics><mn>18.9</mn><annotation encoding="application/x-tex">18.9</annotation></semantics></math>, well within the LSST photometric window for all physically reasonable albedo assumptions. This result is illustrated in Figure <a href="#S3.F3" title="Figure 3 ‣ III.2.2 The Death Star ‣ III.2 Photometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>.</p>
+</div>
+<div id="S3.SS2.SSS2.p3" class="ltx_para">
+<p id="S3.SS2.SSS2.p3.2" class="ltx_p">The Death Star has not been detected in the LSST alert stream at time of writing…<math id="S3.SS2.SSS2.p3.1.m1" class="ltx_Math" alttext="yet" display="inline" intent=":literal"><semantics><mrow><mi>y</mi><mo lspace="0em" rspace="0em">​</mo><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi></mrow><annotation encoding="application/x-tex">yet</annotation></semantics></math>. This admits two interpretations. The first is that it was destroyed at the Battle of Endor <cite class="ltx_cite ltx_citemacro_citep">(Lucas, <a href="#bib.bib15" title="Star wars: episode vi – return of the jedi" class="ltx_ref">1983</a>)</cite>, giving <math id="S3.SS2.SSS2.p3.2.m2" class="ltx_Math" alttext="N_{\rm DS}=0\pm 1" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>DS</mi></msub><mo>=</mo><mrow><mn>0</mn><mo>±</mo><mn>1</mn></mrow></mrow><annotation encoding="application/x-tex">N_{\rm DS}=0\pm 1</annotation></semantics></math> and constituting the only non-detection in this catalogue whose primary failure mode is an unambiguously anthropically good outcome. The second interpretation, that it is operational, present within 27.5 au, and simply not yet identified, we flag as an unresolved anomaly and refer to the relevant planetary defence authorities. We strongly favour the first interpretation.</p>
+</div>
+<figure id="S3.F3" class="ltx_figure"><img src="2604.00206v1/x2.png" id="S3.F3.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="330" height="201" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>Apparent <math id="S3.F3.10.m1" class="ltx_Math" alttext="r" display="inline" intent=":literal"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math>-band magnitude of the Death Star (DS-1; <math id="S3.F3.11.m2" class="ltx_Math" alttext="D=160" display="inline" intent=":literal"><semantics><mrow><mi>D</mi><mo>=</mo><mn>160</mn></mrow><annotation encoding="application/x-tex">D=160</annotation></semantics></math> km) as a function of heliocentric distance, for geometric albedos <math id="S3.F3.12.m3" class="ltx_Math" alttext="p_{v}=0.04" display="inline" intent=":literal"><semantics><mrow><msub><mi>p</mi><mi>v</mi></msub><mo>=</mo><mn>0.04</mn></mrow><annotation encoding="application/x-tex">p_{v}=0.04</annotation></semantics></math> (orange; <math id="S3.F3.13.m4" class="ltx_Math" alttext="H=8.1" display="inline" intent=":literal"><semantics><mrow><mi>H</mi><mo>=</mo><mn>8.1</mn></mrow><annotation encoding="application/x-tex">H=8.1</annotation></semantics></math>, characteristic of a carbonaceous surface) and <math id="S3.F3.14.m5" class="ltx_Math" alttext="p_{v}=0.96" display="inline" intent=":literal"><semantics><mrow><msub><mi>p</mi><mi>v</mi></msub><mo>=</mo><mn>0.96</mn></mrow><annotation encoding="application/x-tex">p_{v}=0.96</annotation></semantics></math> (red; <math id="S3.F3.15.m6" class="ltx_Math" alttext="H=4.6" display="inline" intent=":literal"><semantics><mrow><mi>H</mi><mo>=</mo><mn>4.6</mn></mrow><annotation encoding="application/x-tex">H=4.6</annotation></semantics></math>, characteristic of Eris). The LSST single-visit detection limit (<math id="S3.F3.16.m7" class="ltx_Math" alttext="m_{r}\sim 24.5" display="inline" intent=":literal"><semantics><mrow><msub><mi>m</mi><mi>r</mi></msub><mo>∼</mo><mn>24.5</mn></mrow><annotation encoding="application/x-tex">m_{r}\sim 24.5</annotation></semantics></math>) is shown as a dashed horizontal line. The vertical line marks the relativistic upper bound on the semi-major axis (<math id="S3.F3.17.m8" class="ltx_Math" alttext="a_{\rm max}\approx 27.5" display="inline" intent=":literal"><semantics><mrow><msub><mi>a</mi><mi>max</mi></msub><mo>≈</mo><mn>27.5</mn></mrow><annotation encoding="application/x-tex">a_{\rm max}\approx 27.5</annotation></semantics></math> au) derived from the Endor geosynchronous engagement constraint <cite class="ltx_cite ltx_citemacro_citep">(Lucas, <a href="#bib.bib15" title="Star wars: episode vi – return of the jedi" class="ltx_ref">1983</a>)</cite>. Planet positions along the x-axis are shown for scale. At <math id="S3.F3.18.m9" class="ltx_Math" alttext="a_{\rm max}" display="inline" intent=":literal"><semantics><msub><mi>a</mi><mi>max</mi></msub><annotation encoding="application/x-tex">a_{\rm max}</annotation></semantics></math>, the Death Star falls within the LSST photometric window for all physically reasonable albedo assumptions, yet is undetected. The preferred interpretation is its destruction. The alternative is left as an exercise for the reader’s threat model.</figcaption>
+</figure>
+</section>
+</section>
+<section id="S3.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">III.3 </span>Kinematic Non-Yield</h3>
+
+<section id="S3.SS3.SSS1" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">III.3.1 </span>The Zero-Velocity Population</h4>
+
+<div id="S3.SS3.SSS1.p1" class="ltx_para">
+<p id="S3.SS3.SSS1.p1.1" class="ltx_p">The LSST moving object pipeline detects sources that exhibit measurable sky-plane motion between the two images of a visit pair. The telescope tracks at the sidereal rate, so the image is registered to the stellar background. Any source that does not move relative to that background (whether because it has no apparent angular motion, or because it happens to move at exactly the sidereal rate) produces no residual in the difference image and is indistinguishable from a star. It is, for all practical purposes, a star. The pipeline does not look for solar system objects among the stars and the stars do not volunteer that information.</p>
+</div>
+<div id="S3.SS3.SSS1.p2" class="ltx_para">
+<p id="S3.SS3.SSS1.p2.2" class="ltx_p">The detection efficiency for this population with on-sky motion <math id="S3.SS3.SSS1.p2.1.m1" class="ltx_Math" alttext="\dot{\theta}" display="inline" intent=":literal"><semantics><mover accent="true"><mi>θ</mi><mo>˙</mo></mover><annotation encoding="application/x-tex">\dot{\theta}</annotation></semantics></math> is <math id="S3.SS3.SSS1.p2.2.m2" class="ltx_Math" alttext="\epsilon(\dot{\theta}=0)=0" display="inline" intent=":literal"><semantics><mrow><mrow><mi>ϵ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mover accent="true"><mi>θ</mi><mo>˙</mo></mover><mo>=</mo><mn>0</mn></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\epsilon(\dot{\theta}=0)=0</annotation></semantics></math>. We cannot determine how many solar system objects are currently hiding in the stellar catalogue, presumably due to fear of being observed by us. We cannot in principle determine this from the LSST data alone, since any such object would appear in neither the difference images nor the moving object catalogue. It has been suggested to us that Gaia’s astrometric baseline would reveal these objects via anomalous proper motions over multi-year baselines. This is true. It would however, not be an LSST result, and we would receive no credit for it, therefore it is an argument not worth pursuing.</p>
+</div>
+<div id="S3.SS3.SSS1.p3" class="ltx_para">
+<p id="S3.SS3.SSS1.p3.1" class="ltx_p">The non-yield is therefore <math id="S3.SS3.SSS1.p3.1.m1" class="ltx_Math" alttext="N_{\rm zero}=\mathrm{Don^{\prime}tCare}\pm\mathrm{Whatever}" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>zero</mi></msub><mo>=</mo><mrow><mrow><msup><mi>Don</mi><mo>′</mo></msup><mo lspace="0em" rspace="0em">​</mo><mi>tCare</mi></mrow><mo>±</mo><mi>Whatever</mi></mrow></mrow><annotation encoding="application/x-tex">N_{\rm zero}=\mathrm{Don^{\prime}tCare}\pm\mathrm{Whatever}</annotation></semantics></math>, with uncertainty arising principally from not knowing how many things are pretending to be stars.</p>
+</div>
+</section>
+</section>
+<section id="S3.SS4" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">III.4 </span>Temporal Non-Yield</h3>
+
+<section id="S3.SS4.SSS1" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">III.4.1 </span>The Scheduled-Downtime Population</h4>
+
+<div id="S3.SS4.SSS1.p1" class="ltx_para">
+<p id="S3.SS4.SSS1.p1.1" class="ltx_p">The LSST operations include planned downtime for mirror recoating, instrumental maintenance, software updates, and so on and so forth. We identify the subset of synthetic objects for which the global minimum of <math id="S3.SS4.SSS1.p1.1.m1" class="ltx_Math" alttext="m(t)" display="inline" intent=":literal"><semantics><mrow><mi>m</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">m(t)</annotation></semantics></math>, that is, the moment of peak brightness, when the object is most detectable, falls exclusively within these planned downtime windows. These objects would be bright enough to detect, at the right location on sky, for a telescope that happened to be open, however at this time the LSST is not open. The objects wait, the maintenance proceeds, and then the objects subsequently fade below the detection threshold before survey operations resume. We dub this the “Toy Story” effect.</p>
+</div>
+<div id="S3.SS4.SSS1.p2" class="ltx_para">
+<p id="S3.SS4.SSS1.p2.1" class="ltx_p">We find <math id="S3.SS4.SSS1.p2.1.m1" class="ltx_Math" alttext="N_{\rm down}=0\pm 0" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>down</mi></msub><mo>=</mo><mrow><mn>0</mn><mo>±</mo><mn>0</mn></mrow></mrow><annotation encoding="application/x-tex">N_{\rm down}=0\pm 0</annotation></semantics></math>. This result is entirely a consequence of orbital geometry and survey scheduling; the objects have no knowledge of or interest in the telescope’s operational status. The objects are rocks with no preferences for survey cadence optimisation.</p>
+</div>
+</section>
+<section id="S3.SS4.SSS2" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">III.4.2 </span>Terminal-Epoch Population</h4>
+
+<div id="S3.SS4.SSS2.p1" class="ltx_para">
+<p id="S3.SS4.SSS2.p1.3" class="ltx_p">Objects that achieve detectability only after the nominal survey end date constitute a non-yield by construction. The population is formally infinite: for any survey end date <math id="S3.SS4.SSS2.p1.1.m1" class="ltx_Math" alttext="T_{\rm end}" display="inline" intent=":literal"><semantics><msub><mi>T</mi><mi>end</mi></msub><annotation encoding="application/x-tex">T_{\rm end}</annotation></semantics></math>, the set of objects whose orbital evolution brings them to a detectable apparition only at <math id="S3.SS4.SSS2.p1.2.m2" class="ltx_Math" alttext="t&gt;T_{\rm end}" display="inline" intent=":literal"><semantics><mrow><mi>t</mi><mo>&gt;</mo><msub><mi>T</mi><mi>end</mi></msub></mrow><annotation encoding="application/x-tex">t&gt;T_{\rm end}</annotation></semantics></math> is unbounded. The solar system does not end when the survey does (unless that Death Star turns out to be real). We find <math id="S3.SS4.SSS2.p1.3.m3" class="ltx_Math" alttext="N_{\rm term}=\infty" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>term</mi></msub><mo>=</mo><mi mathvariant="normal">∞</mi></mrow><annotation encoding="application/x-tex">N_{\rm term}=\infty</annotation></semantics></math> and recommend this be included in the LSST final data release headline statistics.</p>
+</div>
+<div id="S3.SS4.SSS2.p2" class="ltx_para">
+<p id="S3.SS4.SSS2.p2.3" class="ltx_p">We note that the precise value of <math id="S3.SS4.SSS2.p2.1.m1" class="ltx_Math" alttext="T_{\rm end}" display="inline" intent=":literal"><semantics><msub><mi>T</mi><mi>end</mi></msub><annotation encoding="application/x-tex">T_{\rm end}</annotation></semantics></math> is itself subject to uncertainty, reflecting the genuine operational complexity of commissioning and sustaining a flagship-class survey facility. We offer no prediction of this parameter, acknowledge the considerable skill, effort, and dedication of all those working toward survey completion, and note only that larger values of <math id="S3.SS4.SSS2.p2.2.m2" class="ltx_Math" alttext="T_{\rm end}" display="inline" intent=":literal"><semantics><msub><mi>T</mi><mi>end</mi></msub><annotation encoding="application/x-tex">T_{\rm end}</annotation></semantics></math> reduce <math id="S3.SS4.SSS2.p2.3.m3" class="ltx_Math" alttext="N_{\rm term}" display="inline" intent=":literal"><semantics><msub><mi>N</mi><mi>term</mi></msub><annotation encoding="application/x-tex">N_{\rm term}</annotation></semantics></math> monotonically. This finding is presented as motivation, if any were needed.</p>
+</div>
+</section>
+</section>
+<section id="S3.SS5" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">III.5 </span>Pipeline and Computational Non-Yield</h3>
+
+<section id="S3.SS5.SSS1" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">III.5.1 </span>The Chip-Gap Population</h4>
+
+<div id="S3.SS5.SSS1.p1" class="ltx_para">
+<p id="S3.SS5.SSS1.p1.3" class="ltx_p">The Rubin LSSTCam focal plane consists of 189 science CCDs with physical gaps between sensors of approximately 60 <sup id="S3.SS5.SSS1.p1.3.1" class="ltx_sup"><span id="S3.SS5.SSS1.p1.3.1.1" class="ltx_text ltx_font_italic">′′</span></sup>. We inject <math id="S3.SS5.SSS1.p1.2.m2" class="ltx_Math" alttext="10^{6}" display="inline" intent=":literal"><semantics><msup><mn>10</mn><mn>6</mn></msup><annotation encoding="application/x-tex">10^{6}</annotation></semantics></math> synthetic objects into the survey simulator and examine which objects have every single detection fall within a chip gap across all visits over the ten-year baseline. The expected yield for this population is <math id="S3.SS5.SSS1.p1.3.m3" class="ltx_Math" alttext="N_{\rm gap}=0\pm 0" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>gap</mi></msub><mo>=</mo><mrow><mn>0</mn><mo>±</mo><mn>0</mn></mrow></mrow><annotation encoding="application/x-tex">N_{\rm gap}=0\pm 0</annotation></semantics></math>. This result does not require a simulation to understand, but the simulation is important for confirming that the universe is under no obligation to be fair, and it helped warm the authors office up. Figure <a href="#S3.F4" title="Figure 4 ‣ III.5.1 The Chip-Gap Population ‣ III.5 Pipeline and Computational Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a> shows the Rubin focal plane with the sky-plane trajectories of representative unlucky objects overlaid.</p>
+</div>
+<figure id="S3.F4" class="ltx_figure"><img src="2604.00206v1/x3.png" id="S3.F4.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="660" height="220" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 4: </span>Example observations of objects that only align with chip gaps within the LSSTCam footprint. Red dashed lines represent their orbit path, and black crosses are their observations. The right panel represents a rare case of ‘snakes and ladders’ class object that should be paid no mind.</figcaption>
+</figure>
+</section>
+<section id="S3.SS5.SSS2" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">III.5.2 </span>Compute-Budget Exceedance</h4>
+
+<div id="S3.SS5.SSS2.p1" class="ltx_para">
+<p id="S3.SS5.SSS2.p1.3" class="ltx_p">The LSST moving object linking pipeline operates under a finite compute budget. Two timescales compete: the arc-expiry timescale <math id="S3.SS5.SSS2.p1.1.m1" class="ltx_Math" alttext="\tau_{\rm arc}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>arc</mi></msub><annotation encoding="application/x-tex">\tau_{\rm arc}</annotation></semantics></math>, after which an object’s positional uncertainty has grown too large for reliable recovery, and the queue-drain timescale <math id="S3.SS5.SSS2.p1.2.m2" class="ltx_Math" alttext="\tau_{\rm queue}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>queue</mi></msub><annotation encoding="application/x-tex">\tau_{\rm queue}</annotation></semantics></math>, the expected wait between job submission and execution on the supporting high-performance computing facility. The condition for a compute-budget non-detection is <math id="S3.SS5.SSS2.p1.3.m3" class="ltx_Math" alttext="\tau_{\rm arc}&lt;\tau_{\rm queue}" display="inline" intent=":literal"><semantics><mrow><msub><mi>τ</mi><mi>arc</mi></msub><mo>&lt;</mo><msub><mi>τ</mi><mi>queue</mi></msub></mrow><annotation encoding="application/x-tex">\tau_{\rm arc}&lt;\tau_{\rm queue}</annotation></semantics></math>, i.e., the object is formally lost before the computer gets around to looking for it.</p>
+</div>
+<div id="S3.SS5.SSS2.p2" class="ltx_para">
+<p id="S3.SS5.SSS2.p2.2" class="ltx_p">We estimate <math id="S3.SS5.SSS2.p2.1.m1" class="ltx_Math" alttext="\tau_{\rm queue}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>queue</mi></msub><annotation encoding="application/x-tex">\tau_{\rm queue}</annotation></semantics></math> from documented job wait time distributions at national computing facilities, where typical wait times in the regular queue range from several hours to days depending on cluster utilisation <cite class="ltx_cite ltx_citemacro_citep">(e.g. NERSC, <a href="#bib.bib19" title="Queue wait times and system status" class="ltx_ref">2026</a>)</cite>, with excursions toward the upper end routinely documented in the weeks preceding major data releases. These objects have valid tracklets. The tracklets are in a queue. The queue is occupied by someone’s degenerate MCMC exoplanet atmosphere retrieval/3D thermonuclear radiative transfer code. We find <math id="S3.SS5.SSS2.p2.2.m2" class="ltx_Math" alttext="N_{\rm compute}=0\pm 0" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>compute</mi></msub><mo>=</mo><mrow><mn>0</mn><mo>±</mo><mn>0</mn></mrow></mrow><annotation encoding="application/x-tex">N_{\rm compute}=0\pm 0</annotation></semantics></math>, and note that this is the only failure mode in the non-yield catalogue attributable to the Slurm etiquette of a third party. You know who you are.</p>
+</div>
+</section>
+<section id="S3.SS5.SSS3" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">III.5.3 </span>Classified Satellite Coincidence</h4>
+
+<div id="S3.SS5.SSS3.p1" class="ltx_para">
+<p id="S3.SS5.SSS3.p1.2" class="ltx_p">The LSST alert packets are filtered to remove detections coinciding with the orbits of classified Earth-observing satellites before distribution to the community. The sky density of classified satellite orbits is <span id="S3.SS5.SSS3.p1.2.1" class="ltx_text" style="--ltx-bg-color:#000000;">[REDACTED]</span>. The estimated non-yield from this filtering process is <math id="S3.SS5.SSS3.p1.1.m1" class="ltx_Math" alttext="N_{\rm classified}=" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>classified</mi></msub><mo>=</mo><mi></mi></mrow><annotation encoding="application/x-tex">N_{\rm classified}=</annotation></semantics></math> <span id="S3.SS5.SSS3.p1.2.2" class="ltx_text" style="--ltx-bg-color:#000000;">[REDACTED]</span> <math id="S3.SS5.SSS3.p1.2.m2" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> <span id="S3.SS5.SSS3.p1.2.3" class="ltx_text" style="--ltx-bg-color:#000000;">[REDACTED]</span>.</p>
+</div>
+<div id="S3.SS5.SSS3.p2" class="ltx_para">
+<p id="S3.SS5.SSS3.p2.1" class="ltx_p">We can neither confirm nor deny that this population constitutes a significant contribution to the total non-yield. We note, however, that this sentence is identical regardless of whether the answer is yes or no, which we invite the reader to interpret as they see fit.</p>
+</div>
+</section>
+</section>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">IV </span>Conclusion</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p id="S4.p1.1" class="ltx_p">We have presented comprehensive predictions for the solar system objects LSST will not detect. Our primary results are:</p>
+</div>
+<div id="S4.p2" class="ltx_para">
+<ol id="S4.I1" class="ltx_enumerate">
+<li id="S4.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="S4.I1.i1.p1" class="ltx_para">
+<p id="S4.I1.i1.p1.1" class="ltx_p">LSST will fail to detect nearly all of our synthetic objects across all modelled populations, constituting a lower bound on the non-yield.</p>
+</div>
+</li>
+<li id="S4.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="S4.I1.i2.p1" class="ltx_para">
+<p id="S4.I1.i2.p1.1" class="ltx_p">The Sun represents the most extreme photometric non-detection, comprising 99.86% of solar system mass absent from the LSST catalogue.</p>
+</div>
+</li>
+<li id="S4.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span> 
+<div id="S4.I1.i3.p1" class="ltx_para">
+<p id="S4.I1.i3.p1.1" class="ltx_p">The Antichthon, predicted by Philolaus of Croton in approximately 400 BCE, was ruled out by the STEREO mission approximately two decades before LSST first light. The 2,400-year open question has been closed. The LSST arrived too late and will not re-close it.</p>
+</div>
+</li>
+<li id="S4.I1.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">4.</span> 
+<div id="S4.I1.i4.p1" class="ltx_para">
+<p id="S4.I1.i4.p1.1" class="ltx_p">The terminal-epoch population is formally infinite. We recommend this be stated in the survey summary.</p>
+</div>
+</li>
+<li id="S4.I1.i5" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">5.</span> 
+<div id="S4.I1.i5.p1" class="ltx_para">
+<p id="S4.I1.i5.p1.3" class="ltx_p">The Death Star, if extant and targeting Earth, would be detectable by the LSST at <math id="S4.I1.i5.p1.1.m1" class="ltx_Math" alttext="m_{r}\approx 19" display="inline" intent=":literal"><semantics><mrow><msub><mi>m</mi><mi>r</mi></msub><mo>≈</mo><mn>19</mn></mrow><annotation encoding="application/x-tex">m_{r}\approx 19</annotation></semantics></math>–<math id="S4.I1.i5.p1.2.m2" class="ltx_Math" alttext="22" display="inline" intent=":literal"><semantics><mn>22</mn><annotation encoding="application/x-tex">22</annotation></semantics></math> mag at its maximum allowed heliocentric distance of <math id="S4.I1.i5.p1.3.m3" class="ltx_Math" alttext="27.5" display="inline" intent=":literal"><semantics><mn>27.5</mn><annotation encoding="application/x-tex">27.5</annotation></semantics></math> au. Its non-detection is interpreted as confirmation of its destruction at the Battle of Endor, and is the only entry in the non-yield catalogue whose primary failure mode constitutes good news. The authors acknowledge that the alternative interpretation would constitute considerably more urgent news.</p>
+</div>
+</li>
+<li id="S4.I1.i6" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">6.</span> 
+<div id="S4.I1.i6.p1" class="ltx_para">
+<p id="S4.I1.i6.p1.1" class="ltx_p">The non-yield from the classified satellite coincidence population is <span id="S4.I1.i6.p1.1.1" class="ltx_text" style="--ltx-bg-color:#000000;">[REDACTED]</span>.</p>
+</div>
+</li>
+</ol>
+</div>
+<div id="S4.p3" class="ltx_para">
+<p id="S4.p3.1" class="ltx_p">A lot of fuss has been made about how revolutionary the LSST will be for solar system science, and whilst we agree this is true for many objects, it is also important to temper our expectations. This work has shown many of the shortcomings of the LSST as a true all-solar system survey, and should be used as a vehicle to launch the LSST 2: Electric Boogaloo: No Rock Left Behind.</p>
+</div>
+<figure id="S4.T1" class="ltx_table">
+
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 1: </span>Summary of LSST Solar System Non-Yield by Population </figcaption><div class="ltx_flex_figure">
+<div class="ltx_flex_cell ltx_flex_size_1">
+<table id="S4.T1.12" class="ltx_tabular ltx_centering ltx_figure_panel ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S4.T1.4.4" class="ltx_tr">
+<th id="S4.T1.4.4.5" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">Section</th>
+<th id="S4.T1.4.4.6" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">Population</th>
+<th id="S4.T1.4.4.7" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">Category</th>
+<th id="S4.T1.2.2.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">
+<math id="S4.T1.1.1.1.m1" class="ltx_Math" alttext="N_{\mathrm{syn}}" display="inline" intent=":literal"><semantics><msub><mi>N</mi><mi>syn</mi></msub><annotation encoding="application/x-tex">N_{\mathrm{syn}}</annotation></semantics></math><sup id="S4.T1.2.2.2.1" class="ltx_sup"><span id="S4.T1.2.2.2.1.1" class="ltx_text ltx_font_italic">a</span></sup>
+</th>
+<th id="S4.T1.4.4.4" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">
+<math id="S4.T1.3.3.3.m1" class="ltx_Math" alttext="N_{\mathrm{det}}" display="inline" intent=":literal"><semantics><msub><mi>N</mi><mi>det</mi></msub><annotation encoding="application/x-tex">N_{\mathrm{det}}</annotation></semantics></math><sup id="S4.T1.4.4.4.1" class="ltx_sup"><span id="S4.T1.4.4.4.1.1" class="ltx_text ltx_font_italic">b</span></sup>
+</th>
+<th id="S4.T1.4.4.8" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">Primary failure mode</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S4.T1.12.13.1" class="ltx_tr">
+<td id="S4.T1.12.13.1.1" class="ltx_td ltx_align_left ltx_border_t"><a href="#S3.SS1.SSS1" title="III.1.1 The Counter-Earth Population (L3) ‣ III.1 Geometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.1.1</span></a></td>
+<td id="S4.T1.12.13.1.2" class="ltx_td ltx_align_left ltx_border_t">Counter-Earth (L3)</td>
+<td id="S4.T1.12.13.1.3" class="ltx_td ltx_align_center ltx_border_t">Geometric</td>
+<td id="S4.T1.12.13.1.4" class="ltx_td ltx_align_center ltx_border_t">0</td>
+<td id="S4.T1.12.13.1.5" class="ltx_td ltx_align_center ltx_border_t">0</td>
+<td id="S4.T1.12.13.1.6" class="ltx_td ltx_align_left ltx_border_t">Hiding behind the Sun; also doesn’t exist</td>
+</tr>
+<tr id="S4.T1.12.14.2" class="ltx_tr">
+<td id="S4.T1.12.14.2.1" class="ltx_td ltx_align_left"><a href="#S3.SS1.SSS2" title="III.1.2 The Sun ‣ III.1 Geometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.1.2</span></a></td>
+<td id="S4.T1.12.14.2.2" class="ltx_td ltx_align_left">The Sun</td>
+<td id="S4.T1.12.14.2.3" class="ltx_td ltx_align_center">Geometric</td>
+<td id="S4.T1.12.14.2.4" class="ltx_td ltx_align_center">1</td>
+<td id="S4.T1.12.14.2.5" class="ltx_td ltx_align_center">0</td>
+<td id="S4.T1.12.14.2.6" class="ltx_td ltx_align_left">It’s the Sun</td>
+</tr>
+<tr id="S4.T1.12.15.3" class="ltx_tr">
+<td id="S4.T1.12.15.3.1" class="ltx_td ltx_align_left"><a href="#S3.SS2.SSS1" title="III.2.1 Bright-Limit Exceedance ‣ III.2 Photometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.2.1</span></a></td>
+<td id="S4.T1.12.15.3.2" class="ltx_td ltx_align_left">Emissive bright-limit</td>
+<td id="S4.T1.12.15.3.3" class="ltx_td ltx_align_center">Photometric</td>
+<td id="S4.T1.12.15.3.4" class="ltx_td ltx_align_center">Unknown</td>
+<td id="S4.T1.12.15.3.5" class="ltx_td ltx_align_center">0</td>
+<td id="S4.T1.12.15.3.6" class="ltx_td ltx_align_left">On fire</td>
+</tr>
+<tr id="S4.T1.5.5" class="ltx_tr">
+<td id="S4.T1.5.5.2" class="ltx_td ltx_align_left"><a href="#S3.SS2.SSS2" title="III.2.2 The Death Star ‣ III.2 Photometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.2.2</span></a></td>
+<td id="S4.T1.5.5.3" class="ltx_td ltx_align_left">Death Star (DS-1)</td>
+<td id="S4.T1.5.5.4" class="ltx_td ltx_align_center">Photometric</td>
+<td id="S4.T1.5.5.5" class="ltx_td ltx_align_center">1</td>
+<td id="S4.T1.5.5.1" class="ltx_td ltx_align_center">0 <math id="S4.T1.5.5.1.m1" class="ltx_Math" alttext="\pm 1" display="inline" intent=":literal"><semantics><mrow><mo>±</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\pm 1</annotation></semantics></math>
+</td>
+<td id="S4.T1.5.5.6" class="ltx_td ltx_align_left">Confirmed (hopefully) destroyed (Battle of Endor)</td>
+</tr>
+<tr id="S4.T1.12.16.4" class="ltx_tr">
+<td id="S4.T1.12.16.4.1" class="ltx_td ltx_align_left"><a href="#S3.SS3.SSS1" title="III.3.1 The Zero-Velocity Population ‣ III.3 Kinematic Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.3.1</span></a></td>
+<td id="S4.T1.12.16.4.2" class="ltx_td ltx_align_left">Zero-velocity</td>
+<td id="S4.T1.12.16.4.3" class="ltx_td ltx_align_center">Kinematic</td>
+<td id="S4.T1.12.16.4.4" class="ltx_td ltx_align_center">?</td>
+<td id="S4.T1.12.16.4.5" class="ltx_td ltx_align_center">0</td>
+<td id="S4.T1.12.16.4.6" class="ltx_td ltx_align_left"><a href="https://www.youtube.com/watch?v=NOs116aoyo0" title="" class="ltx_ref ltx_href">Don’t move. He can’t see us if we don’t move.</a></td>
+</tr>
+<tr id="S4.T1.6.6" class="ltx_tr">
+<td id="S4.T1.6.6.2" class="ltx_td ltx_align_left"><a href="#S3.SS4.SSS1" title="III.4.1 The Scheduled-Downtime Population ‣ III.4 Temporal Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.4.1</span></a></td>
+<td id="S4.T1.6.6.3" class="ltx_td ltx_align_left">Scheduled downtime</td>
+<td id="S4.T1.6.6.4" class="ltx_td ltx_align_center">Temporal</td>
+<td id="S4.T1.6.6.1" class="ltx_td ltx_align_center"><math id="S4.T1.6.6.1.m1" class="ltx_Math" alttext="10^{9}" display="inline" intent=":literal"><semantics><msup><mn>10</mn><mn>9</mn></msup><annotation encoding="application/x-tex">10^{9}</annotation></semantics></math></td>
+<td id="S4.T1.6.6.5" class="ltx_td ltx_align_center">0</td>
+<td id="S4.T1.6.6.6" class="ltx_td ltx_align_left">The “Toy Story” effect</td>
+</tr>
+<tr id="S4.T1.8.8" class="ltx_tr">
+<td id="S4.T1.8.8.3" class="ltx_td ltx_align_left"><a href="#S3.SS4.SSS2" title="III.4.2 Terminal-Epoch Population ‣ III.4 Temporal Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.4.2</span></a></td>
+<td id="S4.T1.8.8.4" class="ltx_td ltx_align_left">Terminal epoch</td>
+<td id="S4.T1.8.8.5" class="ltx_td ltx_align_center">Temporal</td>
+<td id="S4.T1.7.7.1" class="ltx_td ltx_align_center"><math id="S4.T1.7.7.1.m1" class="ltx_Math" alttext="\infty" display="inline" intent=":literal"><semantics><mi mathvariant="normal">∞</mi><annotation encoding="application/x-tex">\infty</annotation></semantics></math></td>
+<td id="S4.T1.8.8.2" class="ltx_td ltx_align_center"><math id="S4.T1.8.8.2.m1" class="ltx_Math" alttext="\infty" display="inline" intent=":literal"><semantics><mi mathvariant="normal">∞</mi><annotation encoding="application/x-tex">\infty</annotation></semantics></math></td>
+<td id="S4.T1.8.8.6" class="ltx_td ltx_align_left">Survey ends first</td>
+</tr>
+<tr id="S4.T1.9.9" class="ltx_tr">
+<td id="S4.T1.9.9.2" class="ltx_td ltx_align_left"><a href="#S3.SS5.SSS1" title="III.5.1 The Chip-Gap Population ‣ III.5 Pipeline and Computational Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.5.1</span></a></td>
+<td id="S4.T1.9.9.3" class="ltx_td ltx_align_left">Chip-gap</td>
+<td id="S4.T1.9.9.4" class="ltx_td ltx_align_center">Pipeline</td>
+<td id="S4.T1.9.9.1" class="ltx_td ltx_align_center"><math id="S4.T1.9.9.1.m1" class="ltx_Math" alttext="10^{9}" display="inline" intent=":literal"><semantics><msup><mn>10</mn><mn>9</mn></msup><annotation encoding="application/x-tex">10^{9}</annotation></semantics></math></td>
+<td id="S4.T1.9.9.5" class="ltx_td ltx_align_center">0</td>
+<td id="S4.T1.9.9.6" class="ltx_td ltx_align_left">Cozy in a chip gap</td>
+</tr>
+<tr id="S4.T1.10.10" class="ltx_tr">
+<td id="S4.T1.10.10.2" class="ltx_td ltx_align_left"><a href="#S3.SS5.SSS2" title="III.5.2 Compute-Budget Exceedance ‣ III.5 Pipeline and Computational Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.5.2</span></a></td>
+<td id="S4.T1.10.10.3" class="ltx_td ltx_align_left">Compute-budget</td>
+<td id="S4.T1.10.10.4" class="ltx_td ltx_align_center">Pipeline</td>
+<td id="S4.T1.10.10.1" class="ltx_td ltx_align_center"><math id="S4.T1.10.10.1.m1" class="ltx_Math" alttext="10^{9}" display="inline" intent=":literal"><semantics><msup><mn>10</mn><mn>9</mn></msup><annotation encoding="application/x-tex">10^{9}</annotation></semantics></math></td>
+<td id="S4.T1.10.10.5" class="ltx_td ltx_align_center">0</td>
+<td id="S4.T1.10.10.6" class="ltx_td ltx_align_left">Bad Slurm etiquette (third party)</td>
+</tr>
+<tr id="S4.T1.12.17.5" class="ltx_tr">
+<td id="S4.T1.12.17.5.1" class="ltx_td ltx_align_left"><a href="#S3.SS5.SSS3" title="III.5.3 Classified Satellite Coincidence ‣ III.5 Pipeline and Computational Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.5.3</span></a></td>
+<td id="S4.T1.12.17.5.2" class="ltx_td ltx_align_left">Government satellites</td>
+<td id="S4.T1.12.17.5.3" class="ltx_td ltx_align_center">Pipeline</td>
+<td id="S4.T1.12.17.5.4" class="ltx_td ltx_align_center"><span id="S4.T1.12.17.5.4.1" class="ltx_text" style="--ltx-bg-color:#000000;">[REDACTED]</span></td>
+<td id="S4.T1.12.17.5.5" class="ltx_td ltx_align_center"><span id="S4.T1.12.17.5.5.1" class="ltx_text" style="--ltx-bg-color:#000000;">[REDACTED]</span></td>
+<td id="S4.T1.12.17.5.6" class="ltx_td ltx_align_left"><span id="S4.T1.12.17.5.6.1" class="ltx_text" style="--ltx-bg-color:#000000;">[REDACTED]</span></td>
+</tr>
+<tr id="S4.T1.12.12" class="ltx_tr">
+<td id="S4.T1.12.12.3" class="ltx_td ltx_border_b ltx_border_t"></td>
+<td id="S4.T1.12.12.4" class="ltx_td ltx_align_left ltx_border_b ltx_border_t">Total</td>
+<td id="S4.T1.12.12.5" class="ltx_td ltx_border_b ltx_border_t"></td>
+<td id="S4.T1.11.11.1" class="ltx_td ltx_align_center ltx_border_b ltx_border_t"><math id="S4.T1.11.11.1.m1" class="ltx_Math" alttext="\infty" display="inline" intent=":literal"><semantics><mi mathvariant="normal">∞</mi><annotation encoding="application/x-tex">\infty</annotation></semantics></math></td>
+<td id="S4.T1.12.12.2" class="ltx_td ltx_align_center ltx_border_b ltx_border_t">0–<math id="S4.T1.12.12.2.m1" class="ltx_Math" alttext="\infty" display="inline" intent=":literal"><semantics><mi mathvariant="normal">∞</mi><annotation encoding="application/x-tex">\infty</annotation></semantics></math>
+</td>
+<td id="S4.T1.12.12.6" class="ltx_td ltx_border_b ltx_border_t"></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="ltx_flex_break"></div>
+<div class="ltx_flex_cell ltx_flex_size_1">
+<p id="S4.T1.14.2" class="ltx_p ltx_figure_panel ltx_minipage ltx_align_center ltx_align_middle" style="width:433.6pt;"><sup id="S4.T1.14.2.2" class="ltx_sup"><span id="S4.T1.14.2.2.1" class="ltx_text ltx_font_italic" style="font-size:90%;">a</span></sup><span id="S4.T1.14.2.1" class="ltx_text" style="font-size:90%;"> Number of simulated objects 
+<br class="ltx_break"><sup id="S4.T1.14.2.1.1" class="ltx_sup"><span id="S4.T1.14.2.1.1.1" class="ltx_text ltx_font_italic">b</span></sup> Number of non-detected objects 
+<br class="ltx_break">
+<span id="S4.T1.14.2.1.2" class="ltx_text ltx_font_italic">Note.</span> We don’t know how many objects are on fire in the solar system because no one will give us JWST time to look. We also don’t know how many zero-velocity objects there are to model, but we also don’t care because it’s Gaia’s problem not ours. The terminal-epoch population is formally infinite and is excluded from the total. The classified satellite column entries are classified.</span></p>
+</div>
+</div>
+</figure>
+<div id="S4.acknowledgements1" class="ltx_acknowledgements">We thank the Sun for its continued operation throughout the survey period. Any interruption would affect these figures significantly and would also affect everything else.
+
+</div>
+<div id="S4.p4" class="ltx_para">
+<span id="S4.p4.1" class="ltx_ERROR undefined">{contribution}</span>
+<p id="S4.p4.2" class="ltx_p">All authors contributed equally to this, but some more equally than others.</p>
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul id="bib.L1" class="ltx_biblist">
+<li id="bib.bib18" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Anglo-Saxon Needleworkers (1070)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Bayeux tapestry</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">Romanesque embroidery illustrating the Norman Conquest (1066)Musée de la Tapisserie de Bayeux, France</span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.F2" title="In III.2.1 Bright-Limit Exceedance ‣ III.2 Photometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Figure 2</span></a>.
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">I. Chow, M. Jurić, R. L. Jones, K. Kiker, J. Moeyens, P. G. Brown, A. N. Heinze, and J. A. Kurlander (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Predictions of Imminent Earth Impactors Discovered by LSST</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv:2603.05587</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.48550/arXiv.2603.05587" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2603.05587</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="I Introduction ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">R. C. Dorsey, M. J. Hopkins, M. T. Bannister, S. M. Lawler, C. Lintott, A. H. Parker, and J. C. Forbes (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Visibility of the Ōtautahi─Oxford Interstellar Object Population Model in LSST</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal"><span id="bib.bib6.1.1.1" class="ltx_ERROR undefined">\psj</span></span> <span class="ltx_text ltx_bib_volume">6</span> (<span class="ltx_text ltx_bib_number">9</span>), <span class="ltx_text ltx_bib_pages"> pp. 214</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/PSJ/adf8ca" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2502.16741</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="I Introduction ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib17" class="ltx_bibitem ltx_bib_book">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Hans Burgkmair the Younger (1552)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The augsburg book of miraculous signs</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">Facsimile edition of the 16th-century manuscript</span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.F2" title="In III.2.1 Bright-Limit Exceedance ‣ III.2 Photometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Figure 2</span></a>.
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Ž. Ivezić, S. M. Kahn, J. A. Tyson, B. Abel, E. Acosta, R. Allsman, D. Alonso, Y. AlSayyad, S. F. Anderson, J. Andrew, J. R. P. Angel, G. Z. Angeli, R. Ansari, P. Antilogus, C. Araujo, R. Armstrong, K. T. Arndt, P. Astier, É. Aubourg, N. Auza, T. S. Axelrod, D. J. Bard, J. D. Barr, A. Barrau, J. G. Bartlett, A. E. Bauer, B. J. Bauman, S. Baumont, E. Bechtol, K. Bechtol, A. C. Becker, J. Becla, C. Beldica, S. Bellavia, F. B. Bianco, R. Biswas, G. Blanc, J. Blazek, R. D. Blandford, J. S. Bloom, J. Bogart, T. W. Bond, M. T. Booth, A. W. Borgland, K. Borne, J. F. Bosch, D. Boutigny, C. A. Brackett, A. Bradshaw, W. N. Brandt, M. E. Brown, J. S. Bullock, P. Burchat, D. L. Burke, G. Cagnoli, D. Calabrese, S. Callahan, A. L. Callen, J. L. Carlin, E. L. Carlson, S. Chandrasekharan, G. Charles-Emerson, S. Chesley, E. C. Cheu, H. Chiang, J. Chiang, C. Chirino, D. Chow, D. R. Ciardi, C. F. Claver, J. Cohen-Tanugi, J. J. Cockrum, R. Coles, A. J. Connolly, K. H. Cook, A. Cooray, K. R. Covey, C. Cribbs, W. Cui, R. Cutri, P. N. Daly, S. F. Daniel, F. Daruich, G. Daubard, G. Daues, W. Dawson, F. Delgado, A. Dellapenna, R. de Peyster, M. de Val-Borro, S. W. Digel, P. Doherty, R. Dubois, G. P. Dubois-Felsmann, J. Durech, F. Economou, T. Eifler, M. Eracleous, B. L. Emmons, A. Fausti Neto, H. Ferguson, E. Figueroa, M. Fisher-Levine, W. Focke, M. D. Foss, J. Frank, M. D. Freemon, E. Gangler, E. Gawiser, J. C. Geary, P. Gee, M. Geha, C. J. B. Gessner, R. R. Gibson, D. K. Gilmore, T. Glanzman, W. Glick, T. Goldina, D. A. Goldstein, I. Goodenow, M. L. Graham, W. J. Gressler, P. Gris, L. P. Guy, A. Guyonnet, G. Haller, R. Harris, P. A. Hascall, J. Haupt, F. Hernandez, S. Herrmann, E. Hileman, J. Hoblitt, J. A. Hodgson, C. Hogan, J. D. Howard, D. Huang, M. E. Huffer, P. Ingraham, W. R. Innes, S. H. Jacoby, B. Jain, F. Jammes, M. J. Jee, T. Jenness, G. Jernigan, D. Jevremović, K. Johns, A. S. Johnson, M. W. G. Johnson, R. L. Jones, C. Juramy-Gilles, M. Jurić, J. S. Kalirai, N. J. Kallivayalil, B. Kalmbach, J. P. Kantor, P. Karst, M. M. Kasliwal, H. Kelly, R. Kessler, V. Kinnison, D. Kirkby, L. Knox, I. V. Kotov, V. L. Krabbendam, K. S. Krughoff, P. Kubánek, J. Kuczewski, S. Kulkarni, J. Ku, N. R. Kurita, C. S. Lage, R. Lambert, T. Lange, J. B. Langton, L. Le Guillou, D. Levine, M. Liang, K. Lim, C. J. Lintott, K. E. Long, M. Lopez, P. J. Lotz, R. H. Lupton, N. B. Lust, L. A. MacArthur, A. Mahabal, R. Mandelbaum, T. W. Markiewicz, D. S. Marsh, P. J. Marshall, S. Marshall, M. May, R. McKercher, M. McQueen, J. Meyers, M. Migliore, M. Miller, D. J. Mills, C. Miraval, J. Moeyens, F. E. Moolekamp, D. G. Monet, M. Moniez, S. Monkewitz, C. Montgomery, C. B. Morrison, F. Mueller, G. P. Muller, F. Muñoz Arancibia, D. R. Neill, S. P. Newbry, J. Nief, A. Nomerotski, M. Nordby, P. O’Connor, J. Oliver, S. S. Olivier, K. Olsen, W. O’Mullane, S. Ortiz, S. Osier, R. E. Owen, R. Pain, P. E. Palecek, J. K. Parejko, J. B. Parsons, N. M. Pease, J. M. Peterson, J. R. Peterson, D. L. Petravick, M. E. Libby Petrick, C. E. Petry, F. Pierfederici, S. Pietrowicz, R. Pike, P. A. Pinto, R. Plante, S. Plate, J. P. Plutchak, P. A. Price, M. Prouza, V. Radeka, J. Rajagopal, A. P. Rasmussen, N. Regnault, K. A. Reil, D. J. Reiss, M. A. Reuter, S. T. Ridgway, V. J. Riot, S. Ritz, S. Robinson, W. Roby, A. Roodman, W. Rosing, C. Roucelle, M. R. Rumore, S. Russo, A. Saha, B. Sassolas, T. L. Schalk, P. Schellart, R. H. Schindler, S. Schmidt, D. P. Schneider, M. D. Schneider, W. Schoening, G. Schumacher, M. E. Schwamb, J. Sebag, B. Selvy, G. H. Sembroski, L. G. Seppala, A. Serio, E. Serrano, R. A. Shaw, I. Shipsey, J. Sick, N. Silvestri, C. T. Slater, J. A. Smith, R. C. Smith, S. Sobhani, C. Soldahl, L. Storrie-Lombardi, E. Stover, M. A. Strauss, R. A. Street, C. W. Stubbs, I. S. Sullivan, D. Sweeney, J. D. Swinbank, A. Szalay, P. Takacs, S. A. Tether, J. J. Thaler, J. G. Thayer, S. Thomas, A. J. Thornton, V. Thukral, J. Tice, D. E. Trilling, M. Turri, R. Van Berg, D. Vanden Berk, K. Vetter, F. Virieux, T. Vucina, W. Wahl, L. Walkowicz, B. Walsh, C. W. Walter, D. L. Wang, S. Wang, M. Warner, O. Wiecha, B. Willman, S. E. Winters, D. Wittman, S. C. Wolff, W. M. Wood-Vasey, X. Wu, B. Xin, P. Yoachim, and H. Zhan (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">LSST: From Science Drivers to Reference Design and Anticipated Data Products</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">873</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 111</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-4357/ab042c" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">0805.2366</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.3" title="I Introduction ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib1" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">R. L. Jones, S. R. Chesley, A. J. Connolly, A. W. Harris, Z. Ivezic, Z. Knezevic, J. Kubica, A. Milani, and D. E. Trilling (2009)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Solar System Science with LSST</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Earth Moon and Planets</span> <span class="ltx_text ltx_bib_volume">105</span> (<span class="ltx_text ltx_bib_number">2-4</span>), <span class="ltx_text ltx_bib_pages"> pp. 101–105</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1007/s11038-009-9305-z" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.3" title="I Introduction ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib12" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. L. Kaiser, T. A. Kucera, J. M. Davila, O. C. St. Cyr, M. Guhathakurta, and E. Christian (2008)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The STEREO Mission: An Introduction</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Space Sci. Rev.</span> <span class="ltx_text ltx_bib_volume">136</span> (<span class="ltx_text ltx_bib_number">1-4</span>), <span class="ltx_text ltx_bib_pages"> pp. 5–16</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1007/s11214-007-9277-0" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS1.SSS1.p1.1" title="III.1.1 The Counter-Earth Population (L3) ‣ III.1 Geometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.1.1</span></a>.
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. A. Kurlander, P. H. Bernardinelli, M. E. Schwamb, M. Jurić, J. Murtagh, and C. O. Chandeler (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Predictions of the LSST Solar System Yield: Near-Earth Objects, Main Belt Asteroids, Jupiter Trojans, and Trans-Neptunian Objects</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">170</span>, <span class="ltx_text ltx_bib_pages"> pp. 99</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/add685" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="I Introduction ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib14" class="ltx_bibitem ltx_bib_book">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">C. Liu (2014)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The three-body problem</span>.
+</span>
+<span class="ltx_bibblock"> <span class="ltx_text ltx_bib_publisher">Tor Books</span>, <span class="ltx_text ltx_bib_place">New York, NY</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS1.SSS1.p2.2" title="III.1.1 The Counter-Earth Population (L3) ‣ III.1 Geometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.1.1</span></a>.
+</span>
+</li>
+<li id="bib.bib15" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">G. Lucas (1983)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Star wars: episode vi – return of the jedi</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">Film, directed by Richard Marquand</span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.F3" title="In III.2.2 The Death Star ‣ III.2 Photometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Figure 3</span></a>,
+<a href="#S3.SS2.SSS2.p1.2" title="III.2.2 The Death Star ‣ III.2 Photometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.2.2</span></a>,
+<a href="#S3.SS2.SSS2.p3.2" title="III.2.2 The Death Star ‣ III.2 Photometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">S. R. Merritt, G. Fedorets, M. E. Schwamb, S. Cornwall, P. H. Bernardinelli, and M. Jurić (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Sorcha: A Solar System Survey Simulator for the Legacy Survey of Space and Time</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">170</span>, <span class="ltx_text ltx_bib_pages"> pp. 100</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/add3ec" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p2.1" title="II Survey Description and Detection Framework ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib13" class="ltx_bibitem ltx_bib_book">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">C. D. Murray and S. F. Dermott (1999)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Solar System Dynamics</span>.
+</span>
+<span class="ltx_bibblock"> <span class="ltx_text ltx_bib_publisher">Cambridge University Press</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1017/CBO9781139174817" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS1.SSS1.p2.2" title="III.1.1 The Counter-Earth Population (L3) ‣ III.1 Geometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.1.1</span></a>.
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Murtagh, M. E. Schwamb, P. H. Bernardinelli, H. W. Lin, J. A. Kurlander, S. R. Merritt, S. Cornwall, M. Jurić, G. Fedorets, M. J. Holman, S. Eggl, R. L. Jones, P. Yoachim, J. Moeyens, J. Kubica, D. Oldag, M. West, and C. O. Chandler (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Predictions of the LSST Solar System Yield: Neptune Trojans</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">171</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 90</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/ae27bd" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2512.03892</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="I Introduction ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Murtagh, M. E. Schwamb, S. R. Merritt, P. H. Bernardinelli, J. A. Kurlander, S. Cornwall, M. Jurić, and G. Fedorets (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Predictions of the LSST Solar System Yield: Discovery Rates and Characterizations of Centaurs</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">170</span>, <span class="ltx_text ltx_bib_pages"> pp. 98</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/ade1db" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="I Introduction ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib19" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">NERSC (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Queue wait times and system status</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note"><a href="https://www.nersc.gov/users/status/queue-wait-times" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.nersc.gov/users/status/queue-wait-times</a>accessed 2026</span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS5.SSS2.p2.2" title="III.5.2 Compute-Budget Exceedance ‣ III.5 Pipeline and Computational Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.5.2</span></a>.
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Philolaus (c. 400BC)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Papyrus scroll</span> <span class="ltx_text ltx_bib_volume">1</span>, <span class="ltx_text ltx_bib_pages"> pp. 1</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS1.SSS1.p1.1" title="III.1.1 The Counter-Earth Population (L3) ‣ III.1 Geometric Non-Yield ‣ III The Non-Yield Catalogue ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.1.1</span></a>.
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">P. Vereš and S. R. Chesley (2017)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">High-fidelity Simulations of the Near-Earth Object Search Performance of the Large Synoptic Survey Telescope</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">154</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 12</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/aa73d1" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">1706.09398</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3.1" title="I Introduction ‣ Predictions of the LSST Solar System (non-)Yield" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2604.00206v1/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer><footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation">
+        </a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International">
+        </a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences">
+        </a>
+      </div>
+    </div>
+  </div>
+</footer><div id="fixed-buttons-container">
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>

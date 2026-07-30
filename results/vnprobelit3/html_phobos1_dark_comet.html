@@ -1,0 +1,1557 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?</title>
+<!--Generated on Tue Jun  2 07:58:33 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+    // Pre-apply spinout-banner dismissal here, before the banner paints, so it
+    // never flashes in only to be hidden later by the deferred arxiv-header.js.
+    // Key matches arxiv-header.js: "arxiv-banner-dismissed:" + data-banner-name.
+    if (localStorage.getItem('arxiv-banner-dismissed:spinout-nonprofit')) {
+      document.documentElement.setAttribute("data-banner-dismissed", "");
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css"><link rel="stylesheet" type="text/css" media="screen"
+  href="/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626"><style>
+  /* Banner pre-dismissal (set above before paint -> no flash-then-hide) and
+     reading-mode chrome hiding. */
+  html[data-banner-dismissed] .ds-announcement { display: none; }
+  html[data-reading-mode="enabled"] .ds-announcement,
+  html[data-reading-mode="enabled"] .ds-site-footer { display: none; }
+  /* Keep the announcement text dark on the Open-Blue band in both colour themes
+     (otherwise it inherits the paper's warm-wash text in dark mode and washes out). */
+  .ds-announcement-text { color: var(--arxiv-ink, #1c1a17); }
+</style>
+<script defer src="/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog><div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement"
+    data-banner-name="spinout-nonprofit">
+    <img class="ds-announcement-glyph" src="/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+    <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+    <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+    <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/"><img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/base/1.0.1/images/arxiv-logo-primary-light.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2606.01288v2">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2606.01288v2"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_abstract"><a href="#abstract1" title="In Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_title">Abstract</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S1" title="In Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">I </span>Introduction</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S2" title="In Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II </span>Supporting Evidence</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS1" title="In II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.1 </span>Comparison of Orbital Elements</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS2" title="In II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.2 </span>Visual Comparison of Orbits</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS3" title="In II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.3 </span>Comparison of Diameter</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS4" title="In II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.4 </span>Comparison of Brightness</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS5" title="In II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.5 </span>Light Curve</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS6" title="In II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.6 </span>Implications</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S3" title="In Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III </span>Possible Scenario</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S4" title="In Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">IV </span>Discussion</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S5" title="In Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">V </span>Conclusion</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S6" title="In Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">VI </span>Acknowledgments</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_bibliography"><a href="#bib" title="In Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: arXiv.org perpetual non-exclusive license
+  </a>
+  <div id="watermark-tr">
+arXiv:2606.01288v2 [astro-ph.EP] 02 Jun 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document ltx_authors_multiline">
+<h1 class="ltx_title ltx_title_document">Is the Dark Comet 1998 KY<sub id="id6.id1" class="ltx_sub"><span id="id6.id1.1" class="ltx_text ltx_font_italic">26</span></sub> the Spacecraft Phobos 1?</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/orcid=0000-0003-1116-576X,sname=%E2%80%99Hibberd%E2%80%99" title="" class="ltx_ref orcid">Adam Hibberd</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">i4is
+</span>
+<span class="ltx_contact ltx_role_affiliation">Initiative for Interstellar Studies, 27/29 South Lambeth Road London, SW8 1SZ United Kingdom
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2606.01288v2/mailto:%5B">[</a>
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Adam Crowl
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">i4is
+</span>
+<span class="ltx_contact ltx_role_affiliation">Initiative for Interstellar Studies, 27/29 South Lambeth Road London, SW8 1SZ United Kingdom
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2606.01288v2/mailto:%5B">[</a>
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/orcid=0009-0007-3343-2001,sname=%E2%80%99G%C3%B3mez%20de%20Olea%20B.%E2%80%99" title="" class="ltx_ref orcid">Carlos Gómez de Olea Ballester</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">TUM
+</span>
+<span class="ltx_contact ltx_role_affiliation">Initiative for Interstellar Studies, 27/29 South Lambeth Road London, SW8 1SZ United Kingdom
+</span>
+<span class="ltx_contact ltx_role_affiliation">Technical University of Munich (TUM), Arcisstraße 21, 80333 Munich, Germany
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2606.01288v2/mailto:%5B">[</a>
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/orcid=0000-0003-4330-287X,sname=%E2%80%99Loeb%E2%80%99" title="" class="ltx_ref orcid">Abraham Loeb</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Astronomy Department, Harvard University, 60 Garden Street, Cambridge MA 02138 USA
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2606.01288v2/mailto:%5B">[</a>
+</span></span></span>
+</div>
+
+<div id="abstract1" class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">Since the discovery of new kinds of celestial bodies known as <span class="ltx_text ltx_font_italic">dark comets</span>, scientists have speculated about their ontology. A curious hybrid of comet and asteroid, these objects show significant non-gravitational accelerations (NGAs) yet exhibit absolutely no signs of cometary outgassing in the form of a coma or tail. The planned rendezvous of the Hayabusa2 spacecraft with 1998 KY<sub class="ltx_sub"><span class="ltx_text ltx_font_italic">26</span></sub> in July 2031 elevates the question of this so-called dark comet’s nature beyond a purely research exercise, as the true nature of the object may have practical implications for the scientific return of the mission. This study examines the hypothesis that 1998 KY<sub class="ltx_sub"><span class="ltx_text ltx_font_italic">26</span></sub> may be of technogenic origin, in fact a relic of a historical Russian mission to Mars, the Phobos 1 probe, which suffered a failure 2 months after the launch in July 1988, due to upload of a faulty command. We find that two propulsive <math class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>Vs combined at 1.9 <math class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math>, the first just after loss of mission and the second in May 1996, allow the orbits and phases of the two bodies to align, with an arbitrarily low <span class="ltx_text ltx_font_italic">Mahalanobis distance</span> using the covariance of the dark comet in 6D phase space. There is also evidence that 1.9 <math class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math> was within the performance envelope of Phobos 1, which had a powerful nitric acid and amine-based autonomous thruster for Mars Orbital Insertion (MOI).</p>
+</div>
+<div id="p1" class="ltx_para">
+<p id="p1.1" class="ltx_p">show]adam.hibberd@i4is.org</p>
+</div>
+<div id="p2" class="ltx_para">
+<p id="p2.1" class="ltx_p">show]adam.crowl@i4is.org</p>
+</div>
+<div id="p3" class="ltx_para">
+<p id="p3.1" class="ltx_p">show]carlos.olea@tum.de
+
+
+show]aloeb@cfa.harvard</p>
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">I </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.3" class="ltx_p">Ever since <cite class="ltx_cite ltx_citemacro_cite">Seligman<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib61" title="Dark Comets? Unexpectedly Large Nongravitational Accelerations on a Sample of Small Asteroids" class="ltx_ref">2023</a>)</cite> identified the existence of celestial bodies with orbits perturbed by significant non-gravitational accelerations (NGAs) - (A<sub id="S1.p1.3.1" class="ltx_sub">1</sub>, A<sub id="S1.p1.3.2" class="ltx_sub">2</sub>, A<sub id="S1.p1.3.3" class="ltx_sub">3</sub>), radial, transverse and perpendicular to the orbital plane respectively <cite class="ltx_cite ltx_citemacro_citep">(Marsden<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib65" title="Comets and nongravitational forces. V" class="ltx_ref">1973</a>)</cite>, yet exhibiting no signs of outgassing; the existence and nature of these objects have been the subject of hot debate. Several further such objects were quickly discovered and presented in <cite class="ltx_cite ltx_citemacro_cite">Seligman<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib59" title="Two distinct populations of dark comets delineated by orbits and sizes" class="ltx_ref">2024</a>)</cite> which helpfully delineated them into two distinct populations, the <span id="S1.p1.3.4" class="ltx_text ltx_font_italic">Outer Population</span> (those with Jupiter Family Comet (JFC) orbits, and the <span id="S1.p1.3.5" class="ltx_text ltx_font_italic">Inner Population</span> (with lower semi-major axes and eccentricities).
+<br class="ltx_break"></p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.1" class="ltx_p">So what IS the source of these anomalous NGAs? In an attempt to narrow the limits on dust ejection, the Japanese Aerospace Exploration Agency (JAXA) will be conducting an analysis into one dark comet, 1998 KY<sub id="S1.p2.1.1" class="ltx_sub"><span id="S1.p2.1.1.1" class="ltx_text ltx_font_italic">26</span></sub> by sending their <span id="S1.p2.1.2" class="ltx_text ltx_font_italic">Hayabusa2</span> spacecraft to rendezvous <cite class="ltx_cite ltx_citemacro_citep">(Hirabayashi<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib70" title="Hayabusa2 extended mission: new voyage to rendezvous with a small asteroid rotating with a short period" class="ltx_ref">2021</a>)</cite> with it in 2031. The instrumentation should hopefully be able to detect low levels of dust particle generation possibly sufficient to ascertain whether the rocket effect can indeed be the cause of the non-gravitational acceleration, but more importantly we will finally know what the object actually looks like.
+<br class="ltx_break"></p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p id="S1.p3.5" class="ltx_p">Dark comet 1998 KY<sub id="S1.p3.5.1" class="ltx_sub"><span id="S1.p3.5.1.1" class="ltx_text ltx_font_italic">26</span></sub> has been studied extensively in the scientific literature <cite class="ltx_cite ltx_citemacro_citep">(Ostro<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib94" title="Radar and optical observations of asteroid 1998 ky26" class="ltx_ref">1999</a>; Santana-Ros<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib95" title="Hayabusa2# mission target 1998 ky26 preview: a small optically bright rapid rotator" class="ltx_ref">2025b</a>; Bolin<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib96" title="Keck and gemini characterization of hayabusa2# rendezvous target 1998 ky26" class="ltx_ref">2025</a>; Beniyama<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib97" title="Size constraint on hayabusa2 extended mission rendezvous target 1998 ky26 via vlt/visir nondetection" class="ltx_ref">2025</a>; Ostro<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib98" title="1998 ky26" class="ltx_ref">1998</a>; Pravec and Sarounova, <a href="#bib.bib99" title="1998 ky26" class="ltx_ref">1998</a>; Tholen, <a href="#bib.bib100" title="Recovery of 1998 ky26: implications for detecting the yarkovsky effect" class="ltx_ref">2003</a>; Hicks<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib101" title="Close encounters: observations of the earth-crossing asteroids 1998 ky26 and 1998 ml14." class="ltx_ref">1998</a>; Farnocchia<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib93" title="Radiation forces and trajectory of hayabusa2♯ target 1998 ky26" class="ltx_ref">2025</a>)</cite>. In summary, it is a small (<math id="S1.p3.2.m2" class="ltx_Math" alttext="\sim{11}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>11</mn></mrow><annotation encoding="application/x-tex">\sim{11}</annotation></semantics></math> <math id="S1.p3.3.m3.1.1.m1" class="ltx_markedasmath" alttext="\mathrm{m}" display="inline" intent=":literal"><semantics><mi mathvariant="normal">m</mi><annotation encoding="application/x-tex">\mathrm{m}</annotation></semantics></math>), extremely rapidly rotating (rotation period <math id="S1.p3.4.m4" class="ltx_Math" alttext="\sim{5.3}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>5.3</mn></mrow><annotation encoding="application/x-tex">\sim{5.3}</annotation></semantics></math> min) object with an unusally high albedo (<math id="S1.p3.5.m5" class="ltx_Math" alttext="\sim{0.52}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>0.52</mn></mrow><annotation encoding="application/x-tex">\sim{0.52}</annotation></semantics></math>).
+<br class="ltx_break"></p>
+</div>
+<div id="S1.p4" class="ltx_para">
+<p id="S1.p4.1" class="ltx_p">Ongoing investigations and previous research by authors of this paper (e.g. <cite class="ltx_cite ltx_citemacro_cite">Loeb and Cloete (<a href="#bib.bib110" title="Is the” dark comet” 2005 vl1 the venera 2 spacecraft?" class="ltx_ref">2025</a>)</cite>), suggest that dark comets could actually be derelict spacecraft missions, and the NGAs could be the result of solar radiation pressure.
+<br class="ltx_break"></p>
+</div>
+<div id="S1.p5" class="ltx_para">
+<p id="S1.p5.1" class="ltx_p">The report herein addresses the possible nature of 1998 KY<sub id="S1.p5.1.1" class="ltx_sub"><span id="S1.p5.1.1.1" class="ltx_text ltx_font_italic">26</span></sub> and proposes a technogenic (man-made) origin for this object, specifically the Russian Phobos 1 failed mission to Mars, launched 07/07/1988 <cite class="ltx_cite ltx_citemacro_citep">(Astronautix.com, <a href="#bib.bib102" title="Fobos 1F" class="ltx_ref">2026</a>)</cite>. For a description and history of these probes, the most massive interplanetary spacecraft ever launched, go to <cite class="ltx_cite ltx_citemacro_cite">Sagdeev and Zakharov (<a href="#bib.bib103" title="A brief history of the expedition to phobos" class="ltx_ref">1990</a>)</cite>.
+<br class="ltx_break"></p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">II </span>Supporting Evidence</h2>
+
+<div id="S2.p1" class="ltx_para">
+<p id="S2.p1.1" class="ltx_p">A comprehensive computation of all interplanetary missions since the start of the space age was conducted by repeatedly executing Optimum Interplanetary Trajectory Software - OITS <cite class="ltx_cite ltx_citemacro_citep">(Hibberd, <a href="#bib.bib30" title="Github repository for oits." class="ltx_ref">2017</a>, <a href="#bib.bib28" title="Intermediate Points for Missions to Interstellar Objects Using Optimum Interplanetary Trajectory Software" class="ltx_ref">2022</a>; Hibberd<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib39" title="Sending a spacecraft to interstellar comet 2I/Borisov" class="ltx_ref">2021</a>)</cite> - with different mission-specific input parameters. Developed by Adam Hibberd, OITS has been exploited for research into missions to interstellar objects, but also to celestial bodies belonging to our own Solar System <cite class="ltx_cite ltx_citemacro_citep">(Hein<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib35" title="Project Lyra: Sending a spacecraft to 1I/’Oumuamua (former A/2017 U1), the interstellar asteroid" class="ltx_ref">2019</a>, <a href="#bib.bib36" title="Interstellar Now! Missions to Explore Nearby Interstellar Objects" class="ltx_ref">2022</a>; Hibberd<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib37" title="Project Lyra: Catching 1I/’Oumuamua - Mission opportunities after 2024" class="ltx_ref">2020</a>; Hibberd and Hein, <a href="#bib.bib38" title="Project Lyra: Catching 1I/’Oumuamua-Using Nuclear Thermal Rockets" class="ltx_ref">2021</a>; Hibberd, <a href="#bib.bib40" title="Project Lyra: Another possible trajectory to 1I/’Oumuamua" class="ltx_ref">2023a</a>, <a href="#bib.bib41" title="Project Lyra: The Way to Go and the Launcher to Get There" class="ltx_ref">b</a>)</cite>. Thus an accurate determination of the trajectory profile for each historical mission could be established. The trajectory of 1998 KY<sub id="S2.p1.1.1" class="ltx_sub"><span id="S2.p1.1.1.1" class="ltx_text ltx_font_italic">26</span></sub> could then be compared in various ways with each of these missions in turn to establish any similarities.</p>
+</div>
+<section id="S2.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.1 </span>Comparison of Orbital Elements</h3>
+
+<div id="S2.SS1.p1" class="ltx_para">
+<p id="S2.SS1.p1.1" class="ltx_p">The osculating orbital elements of 1998 KY<sub id="S2.SS1.p1.1.1" class="ltx_sub"><span id="S2.SS1.p1.1.1.1" class="ltx_text ltx_font_italic">26</span></sub> as of 01/01/2001 are shown in Table <a href="#S2.T1" title="Table 1 ‣ II.1 Comparison of Orbital Elements ‣ II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a> - refer to row 8.
+<br class="ltx_break"></p>
+</div>
+<div id="S2.SS1.p2" class="ltx_para">
+<p id="S2.SS1.p2.7" class="ltx_p">Observe that the perihelion, <math id="S2.SS1.p2.1.m1" class="ltx_Math" alttext="q=0.984" display="inline" intent=":literal"><semantics><mrow><mi>q</mi><mo>=</mo><mn>0.984</mn></mrow><annotation encoding="application/x-tex">q=0.984</annotation></semantics></math> <math id="S2.SS1.p2.2.m2.1.1.m1" class="ltx_markedasmath" alttext="\mathrm{a}\mathrm{u}" display="inline" intent=":literal"><semantics><mi>au</mi><annotation encoding="application/x-tex">\mathrm{a}\mathrm{u}</annotation></semantics></math> is close to Earth’s orbit and the aphelion <math id="S2.SS1.p2.3.m3" class="ltx_Math" alttext="Q=1.482" display="inline" intent=":literal"><semantics><mrow><mi>Q</mi><mo>=</mo><mn>1.482</mn></mrow><annotation encoding="application/x-tex">Q=1.482</annotation></semantics></math> <math id="S2.SS1.p2.4.m4.1.1.m1" class="ltx_markedasmath" alttext="\mathrm{a}\mathrm{u}" display="inline" intent=":literal"><semantics><mi>au</mi><annotation encoding="application/x-tex">\mathrm{a}\mathrm{u}</annotation></semantics></math>, is around the orbit of Mars. Furthermore the orbital plane is close to the ecliptic with an inclination of 1.48 <sup id="S2.SS1.p2.7.1" class="ltx_sup"><span id="S2.SS1.p2.7.1.1" class="ltx_text ltx_font_italic">∘</span></sup>, slightly less than that of the orbit of Mars (<math id="S2.SS1.p2.6.m6" class="ltx_Math" alttext="\sim{1.9}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>1.9</mn></mrow><annotation encoding="application/x-tex">\sim{1.9}</annotation></semantics></math> <sup id="S2.SS1.p2.7.2" class="ltx_sup"><span id="S2.SS1.p2.7.2.1" class="ltx_text ltx_font_italic">∘</span></sup>). This has similarities to a trajectory a mission planner might design to reach Mars, thus clearly it would be most pertinent to compare its orbit with previous Mars missions.
+<br class="ltx_break"></p>
+</div>
+<div id="S2.SS1.p3" class="ltx_para">
+<p id="S2.SS1.p3.1" class="ltx_p">Since there are 5 orbital parameters needed to specify an orbit’s shape, size and orientation, we must find a way of comparing one orbit with another in order to determine the ’net orbital difference’.
+<br class="ltx_break"></p>
+</div>
+<div id="S2.SS1.p4" class="ltx_para">
+<p id="S2.SS1.p4.1" class="ltx_p">To this end, we adopt the so-called non-singular orbital parameters defined as follows:</p>
+</div>
+<div id="S2.SS1.p5" class="ltx_para">
+<table id="S6.EGx1" class="ltx_equationgroup ltx_eqn_align ltx_eqn_table">
+
+<tbody id="S2.E1"><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math id="S2.E1.m1" class="ltx_Math" alttext="\displaystyle e1=a,~~e2=ecos\left(\Omega+\omega\right),~~e3=ecos\left(\Omega+\omega\right),~~e4=esin\left(\Omega+\omega\right),~~e5=sin\left(\frac{i}{2}\right)cos(\Omega),~~e6=sin\left(\frac{i}{2}\right)sin(\Omega)" display="inline" intent=":literal"><semantics><mrow><mrow><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mn>1</mn></mrow><mo>=</mo><mi>a</mi></mrow><mo rspace="0.827em">,</mo><mrow><mrow><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mn>2</mn></mrow><mo>=</mo><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mi>c</mi><mo lspace="0em" rspace="0em">​</mo><mi>o</mi><mo lspace="0em" rspace="0em">​</mo><mi>s</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo>(</mo><mrow><mi mathvariant="normal">Ω</mi><mo>+</mo><mi>ω</mi></mrow><mo>)</mo></mrow></mrow></mrow><mo rspace="0.827em">,</mo><mrow><mrow><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mn>3</mn></mrow><mo>=</mo><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mi>c</mi><mo lspace="0em" rspace="0em">​</mo><mi>o</mi><mo lspace="0em" rspace="0em">​</mo><mi>s</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo>(</mo><mrow><mi mathvariant="normal">Ω</mi><mo>+</mo><mi>ω</mi></mrow><mo>)</mo></mrow></mrow></mrow><mo rspace="0.827em">,</mo><mrow><mrow><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mn>4</mn></mrow><mo>=</mo><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mi>s</mi><mo lspace="0em" rspace="0em">​</mo><mi>i</mi><mo lspace="0em" rspace="0em">​</mo><mi>n</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo>(</mo><mrow><mi mathvariant="normal">Ω</mi><mo>+</mo><mi>ω</mi></mrow><mo>)</mo></mrow></mrow></mrow><mo rspace="0.827em">,</mo><mrow><mrow><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mn>5</mn></mrow><mo>=</mo><mrow><mi>s</mi><mo lspace="0em" rspace="0em">​</mo><mi>i</mi><mo lspace="0em" rspace="0em">​</mo><mi>n</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo>(</mo><mstyle displaystyle="true"><mfrac><mi>i</mi><mn>2</mn></mfrac></mstyle><mo>)</mo></mrow><mo lspace="0em" rspace="0em">​</mo><mi>c</mi><mo lspace="0em" rspace="0em">​</mo><mi>o</mi><mo lspace="0em" rspace="0em">​</mo><mi>s</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi mathvariant="normal">Ω</mi><mo stretchy="false">)</mo></mrow></mrow></mrow><mo rspace="0.827em">,</mo><mrow><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mn>6</mn></mrow><mo>=</mo><mrow><mi>s</mi><mo lspace="0em" rspace="0em">​</mo><mi>i</mi><mo lspace="0em" rspace="0em">​</mo><mi>n</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo>(</mo><mstyle displaystyle="true"><mfrac><mi>i</mi><mn>2</mn></mfrac></mstyle><mo>)</mo></mrow><mo lspace="0em" rspace="0em">​</mo><mi>s</mi><mo lspace="0em" rspace="0em">​</mo><mi>i</mi><mo lspace="0em" rspace="0em">​</mo><mi>n</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi mathvariant="normal">Ω</mi><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex">\displaystyle e1=a,~~e2=ecos\left(\Omega+\omega\right),~~e3=ecos\left(\Omega+\omega\right),~~e4=esin\left(\Omega+\omega\right),~~e5=sin\left(\frac{i}{2}\right)cos(\Omega),~~e6=sin\left(\frac{i}{2}\right)sin(\Omega)</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(1)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S2.SS1.p6" class="ltx_para">
+<p id="S2.SS1.p6.2" class="ltx_p">where the usual symbols are employed for the Keplerian orbital parameters. Thus for each comparison between 1998 KY<sub id="S2.SS1.p6.2.1" class="ltx_sub"><span id="S2.SS1.p6.2.1.1" class="ltx_text ltx_font_italic">26</span></sub> and a mission, the net orbital difference can be taken as the norm (or ’root sum square’) of the difference in the 6 non-singular components, <math id="S2.SS1.p6.2.m2" class="ltx_Math" alttext="e1,~e2,~e3,~e4,~e5,~e6" display="inline" intent=":literal"><semantics><mrow><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mn>1</mn></mrow><mo rspace="0.497em">,</mo><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mn>2</mn></mrow><mo rspace="0.497em">,</mo><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mn>3</mn></mrow><mo rspace="0.497em">,</mo><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mn>4</mn></mrow><mo rspace="0.497em">,</mo><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mn>5</mn></mrow><mo rspace="0.497em">,</mo><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mn>6</mn></mrow></mrow><annotation encoding="application/x-tex">e1,~e2,~e3,~e4,~e5,~e6</annotation></semantics></math>.
+<br class="ltx_break"></p>
+</div>
+<div id="S2.SS1.p7" class="ltx_para">
+<p id="S2.SS1.p7.1" class="ltx_p">Figure <a href="#S2.F1" title="Figure 1 ‣ II.1 Comparison of Orbital Elements ‣ II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a> represents the results of this analysis.
+<br class="ltx_break"></p>
+</div>
+<figure id="S2.T1" class="ltx_table">
+<table id="S2.T1.17" class="ltx_tabular ltx_centering ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr id="S2.T1.4.4" class="ltx_tr">
+<td id="S2.T1.4.4.5" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T1.4.4.5.1" class="ltx_text ltx_font_bold">Number</span></td>
+<td id="S2.T1.4.4.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T1.4.4.6.1" class="ltx_text ltx_font_bold">Designation</span></td>
+<td id="S2.T1.4.4.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T1.4.4.7.1" class="ltx_text ltx_font_bold">Discovery</span></td>
+<td id="S2.T1.4.4.8" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T1.4.4.8.1" class="ltx_text ltx_font_bold">H (mag)</span></td>
+<td id="S2.T1.1.1.1" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T1.1.1.1.1" class="ltx_text ltx_font_bold">a (<math id="S2.T1.1.1.1.1.m1" class="ltx_Math" alttext="\mathrm{a}\mathrm{u}" display="inline" intent=":literal"><semantics><mi>au</mi><annotation encoding="application/x-tex">\mathrm{a}\mathrm{u}</annotation></semantics></math>)</span></td>
+<td id="S2.T1.2.2.2" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T1.2.2.2.1" class="ltx_text ltx_font_bold">q (<math id="S2.T1.2.2.2.1.m1" class="ltx_Math" alttext="\mathrm{a}\mathrm{u}" display="inline" intent=":literal"><semantics><mi>au</mi><annotation encoding="application/x-tex">\mathrm{a}\mathrm{u}</annotation></semantics></math>)</span></td>
+<td id="S2.T1.4.4.9" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T1.4.4.9.1" class="ltx_text ltx_font_bold">e</span></td>
+<td id="S2.T1.4.4.10" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T1.4.4.10.1" class="ltx_text ltx_font_bold">i (deg)</span></td>
+<td id="S2.T1.3.3.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">
+<math id="S2.T1.3.3.3.m1" class="ltx_Math" alttext="\Omega" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Ω</mi><annotation encoding="application/x-tex">\Omega</annotation></semantics></math><span id="S2.T1.3.3.3.1" class="ltx_text ltx_font_bold"> (deg)</span>
+</td>
+<td id="S2.T1.4.4.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">
+<math id="S2.T1.4.4.4.m1" class="ltx_Math" alttext="\omega" display="inline" intent=":literal"><semantics><mi>ω</mi><annotation encoding="application/x-tex">\omega</annotation></semantics></math><span id="S2.T1.4.4.4.1" class="ltx_text ltx_font_bold"> (deg)</span>
+</td>
+</tr>
+<tr id="S2.T1.5.5" class="ltx_tr">
+<td id="S2.T1.5.5.2" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T1.5.5.2.1" class="ltx_text ltx_font_bold">1</span></td>
+<td id="S2.T1.5.5.1" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T1.5.5.1.1" class="ltx_text ltx_font_bold">2001 ME<sub id="S2.T1.5.5.1.1.1" class="ltx_sub"><span id="S2.T1.5.5.1.1.1.1" class="ltx_text ltx_font_medium">1</span></sub></span></td>
+<td id="S2.T1.5.5.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">25/05/2001</td>
+<td id="S2.T1.5.5.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">16.53</td>
+<td id="S2.T1.5.5.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">2.648</td>
+<td id="S2.T1.5.5.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.353</td>
+<td id="S2.T1.5.5.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.867</td>
+<td id="S2.T1.5.5.8" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">5.811</td>
+<td id="S2.T1.5.5.9" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">86.212</td>
+<td id="S2.T1.5.5.10" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">300.523</td>
+</tr>
+<tr id="S2.T1.6.6" class="ltx_tr">
+<td id="S2.T1.6.6.2" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T1.6.6.2.1" class="ltx_text ltx_font_bold">2</span></td>
+<td id="S2.T1.6.6.1" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T1.6.6.1.1" class="ltx_text ltx_font_bold">2005 UY<sub id="S2.T1.6.6.1.1.1" class="ltx_sub"><span id="S2.T1.6.6.1.1.1.1" class="ltx_text ltx_font_medium">6</span></sub></span></td>
+<td id="S2.T1.6.6.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">29/10/2005</td>
+<td id="S2.T1.6.6.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">18.14</td>
+<td id="S2.T1.6.6.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">2.257</td>
+<td id="S2.T1.6.6.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.294</td>
+<td id="S2.T1.6.6.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.870</td>
+<td id="S2.T1.6.6.8" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">12.153</td>
+<td id="S2.T1.6.6.9" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">343.600</td>
+<td id="S2.T1.6.6.10" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">180.776</td>
+</tr>
+<tr id="S2.T1.7.7" class="ltx_tr">
+<td id="S2.T1.7.7.2" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T1.7.7.2.1" class="ltx_text ltx_font_bold">3</span></td>
+<td id="S2.T1.7.7.1" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T1.7.7.1.1" class="ltx_text ltx_font_bold">1998 FR<sub id="S2.T1.7.7.1.1.1" class="ltx_sub"><span id="S2.T1.7.7.1.1.1.1" class="ltx_text ltx_font_medium ltx_font_italic">11</span></sub></span></td>
+<td id="S2.T1.7.7.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">24/03/1998</td>
+<td id="S2.T1.7.7.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">16.42</td>
+<td id="S2.T1.7.7.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">2.812</td>
+<td id="S2.T1.7.7.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.827</td>
+<td id="S2.T1.7.7.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.706</td>
+<td id="S2.T1.7.7.8" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">6.660</td>
+<td id="S2.T1.7.7.9" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">129.909</td>
+<td id="S2.T1.7.7.10" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">158.522</td>
+</tr>
+<tr id="S2.T1.8.8" class="ltx_tr">
+<td id="S2.T1.8.8.2" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T1.8.8.2.1" class="ltx_text ltx_font_bold">4</span></td>
+<td id="S2.T1.8.8.1" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T1.8.8.1.1" class="ltx_text ltx_font_bold">2012 UR<sub id="S2.T1.8.8.1.1.1" class="ltx_sub"><span id="S2.T1.8.8.1.1.1.1" class="ltx_text ltx_font_medium ltx_font_italic">158</span></sub></span></td>
+<td id="S2.T1.8.8.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">22/10/2012</td>
+<td id="S2.T1.8.8.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">20.7</td>
+<td id="S2.T1.8.8.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">2.239</td>
+<td id="S2.T1.8.8.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.324</td>
+<td id="S2.T1.8.8.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.855</td>
+<td id="S2.T1.8.8.8" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">3.220</td>
+<td id="S2.T1.8.8.9" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">287.738</td>
+<td id="S2.T1.8.8.10" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">238.091</td>
+</tr>
+<tr id="S2.T1.17.18.1" class="ltx_tr">
+<td id="S2.T1.17.18.1.1" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T1.17.18.1.1.1" class="ltx_text ltx_font_bold">5</span></td>
+<td id="S2.T1.17.18.1.2" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T1.17.18.1.2.1" class="ltx_text ltx_font_bold">2003 RM</span></td>
+<td id="S2.T1.17.18.1.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">02/09/2003</td>
+<td id="S2.T1.17.18.1.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">19.8</td>
+<td id="S2.T1.17.18.1.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">2.921</td>
+<td id="S2.T1.17.18.1.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1.165</td>
+<td id="S2.T1.17.18.1.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.601</td>
+<td id="S2.T1.17.18.1.8" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">10.854</td>
+<td id="S2.T1.17.18.1.9" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">336.702</td>
+<td id="S2.T1.17.18.1.10" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">324.518</td>
+</tr>
+<tr id="S2.T1.9.9" class="ltx_tr">
+<td id="S2.T1.9.9.2" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_tt"><span id="S2.T1.9.9.2.1" class="ltx_text ltx_font_bold">6</span></td>
+<td id="S2.T1.9.9.1" class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">2005 VL<sub id="S2.T1.9.9.1.1" class="ltx_sub">1</sub>
+</td>
+<td id="S2.T1.9.9.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">04/11/2005</td>
+<td id="S2.T1.9.9.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">26.45</td>
+<td id="S2.T1.9.9.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">0.892</td>
+<td id="S2.T1.9.9.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">0.691</td>
+<td id="S2.T1.9.9.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">0.225</td>
+<td id="S2.T1.9.9.8" class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">0.247</td>
+<td id="S2.T1.9.9.9" class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">39.812</td>
+<td id="S2.T1.9.9.10" class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">226.461</td>
+</tr>
+<tr id="S2.T1.10.10" class="ltx_tr">
+<td id="S2.T1.10.10.2" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T1.10.10.2.1" class="ltx_text ltx_font_bold">7</span></td>
+<td id="S2.T1.10.10.1" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">2010 RF<sub id="S2.T1.10.10.1.1" class="ltx_sub"><span id="S2.T1.10.10.1.1.1" class="ltx_text ltx_font_italic">12</span></sub>
+</td>
+<td id="S2.T1.10.10.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">01/09/2010</td>
+<td id="S2.T1.10.10.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">28.42</td>
+<td id="S2.T1.10.10.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1.061</td>
+<td id="S2.T1.10.10.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.861</td>
+<td id="S2.T1.10.10.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.188</td>
+<td id="S2.T1.10.10.8" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.883</td>
+<td id="S2.T1.10.10.9" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">163.838</td>
+<td id="S2.T1.10.10.10" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">267.583</td>
+</tr>
+<tr id="S2.T1.11.11" class="ltx_tr">
+<td id="S2.T1.11.11.2" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T1.11.11.2.1" class="ltx_text ltx_font_bold">8</span></td>
+<td id="S2.T1.11.11.1" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1998 KY<sub id="S2.T1.11.11.1.1" class="ltx_sub"><span id="S2.T1.11.11.1.1.1" class="ltx_text ltx_font_italic">26</span></sub>
+</td>
+<td id="S2.T1.11.11.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">28/05/1998</td>
+<td id="S2.T1.11.11.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">25.6</td>
+<td id="S2.T1.11.11.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1.233</td>
+<td id="S2.T1.11.11.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.984</td>
+<td id="S2.T1.11.11.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.202</td>
+<td id="S2.T1.11.11.8" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1.481</td>
+<td id="S2.T1.11.11.9" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">84.365</td>
+<td id="S2.T1.11.11.10" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">209.372</td>
+</tr>
+<tr id="S2.T1.12.12" class="ltx_tr">
+<td id="S2.T1.12.12.2" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T1.12.12.2.1" class="ltx_text ltx_font_bold">9</span></td>
+<td id="S2.T1.12.12.1" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">2016 NJ<sub id="S2.T1.12.12.1.1" class="ltx_sub"><span id="S2.T1.12.12.1.1.1" class="ltx_text ltx_font_italic">33</span></sub>
+</td>
+<td id="S2.T1.12.12.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">28/05/2016</td>
+<td id="S2.T1.12.12.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">25.49</td>
+<td id="S2.T1.12.12.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1.312</td>
+<td id="S2.T1.12.12.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1.038</td>
+<td id="S2.T1.12.12.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.208</td>
+<td id="S2.T1.12.12.8" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">6.640</td>
+<td id="S2.T1.12.12.9" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">279.682</td>
+<td id="S2.T1.12.12.10" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">24.070</td>
+</tr>
+<tr id="S2.T1.13.13" class="ltx_tr">
+<td id="S2.T1.13.13.2" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T1.13.13.2.1" class="ltx_text ltx_font_bold">10</span></td>
+<td id="S2.T1.13.13.1" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">2010 VL<sub id="S2.T1.13.13.1.1" class="ltx_sub"><span id="S2.T1.13.13.1.1.1" class="ltx_text ltx_font_italic">65</span></sub>
+</td>
+<td id="S2.T1.13.13.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">04/11/2010</td>
+<td id="S2.T1.13.13.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">29.22</td>
+<td id="S2.T1.13.13.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1.069</td>
+<td id="S2.T1.13.13.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.915</td>
+<td id="S2.T1.13.13.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.144</td>
+<td id="S2.T1.13.13.8" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">4.713</td>
+<td id="S2.T1.13.13.9" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">223.635</td>
+<td id="S2.T1.13.13.10" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">252.126</td>
+</tr>
+<tr id="S2.T1.14.14" class="ltx_tr">
+<td id="S2.T1.14.14.2" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T1.14.14.2.1" class="ltx_text ltx_font_bold">11</span></td>
+<td id="S2.T1.14.14.1" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">2013 BA<sub id="S2.T1.14.14.1.1" class="ltx_sub"><span id="S2.T1.14.14.1.1.1" class="ltx_text ltx_font_italic">74</span></sub>
+</td>
+<td id="S2.T1.14.14.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">31/01/2013</td>
+<td id="S2.T1.14.14.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">25.4</td>
+<td id="S2.T1.14.14.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1.759</td>
+<td id="S2.T1.14.14.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.976</td>
+<td id="S2.T1.14.14.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.445</td>
+<td id="S2.T1.14.14.8" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">5.302</td>
+<td id="S2.T1.14.14.9" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">310.753</td>
+<td id="S2.T1.14.14.10" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">202.871</td>
+</tr>
+<tr id="S2.T1.15.15" class="ltx_tr">
+<td id="S2.T1.15.15.2" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T1.15.15.2.1" class="ltx_text ltx_font_bold">12</span></td>
+<td id="S2.T1.15.15.1" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">2006 RH<sub id="S2.T1.15.15.1.1" class="ltx_sub"><span id="S2.T1.15.15.1.1.1" class="ltx_text ltx_font_italic">120</span></sub>
+</td>
+<td id="S2.T1.15.15.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">14/09/2006</td>
+<td id="S2.T1.15.15.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">29.5</td>
+<td id="S2.T1.15.15.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.996</td>
+<td id="S2.T1.15.15.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.960</td>
+<td id="S2.T1.15.15.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.036</td>
+<td id="S2.T1.15.15.8" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.283</td>
+<td id="S2.T1.15.15.9" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">49.644</td>
+<td id="S2.T1.15.15.10" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">121.622</td>
+</tr>
+<tr id="S2.T1.16.16" class="ltx_tr">
+<td id="S2.T1.16.16.2" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T1.16.16.2.1" class="ltx_text ltx_font_bold">13</span></td>
+<td id="S2.T1.16.16.1" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">2016 GW<sub id="S2.T1.16.16.1.1" class="ltx_sub"><span id="S2.T1.16.16.1.1.1" class="ltx_text ltx_font_italic">221</span></sub>
+</td>
+<td id="S2.T1.16.16.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">14/04/2016</td>
+<td id="S2.T1.16.16.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">24.76</td>
+<td id="S2.T1.16.16.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.827</td>
+<td id="S2.T1.16.16.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.605</td>
+<td id="S2.T1.16.16.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.268</td>
+<td id="S2.T1.16.16.8" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">3.652</td>
+<td id="S2.T1.16.16.9" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">33.877</td>
+<td id="S2.T1.16.16.10" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">8.224</td>
+</tr>
+<tr id="S2.T1.17.17" class="ltx_tr">
+<td id="S2.T1.17.17.2" class="ltx_td ltx_align_center ltx_border_b ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T1.17.17.2.1" class="ltx_text ltx_font_bold">14</span></td>
+<td id="S2.T1.17.17.1" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">2013 XY<sub id="S2.T1.17.17.1.1" class="ltx_sub"><span id="S2.T1.17.17.1.1.1" class="ltx_text ltx_font_italic">20</span></sub>
+</td>
+<td id="S2.T1.17.17.3" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">26/11/2013</td>
+<td id="S2.T1.17.17.4" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">25.65</td>
+<td id="S2.T1.17.17.5" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">1.131</td>
+<td id="S2.T1.17.17.6" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">1.010</td>
+<td id="S2.T1.17.17.7" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">0.106</td>
+<td id="S2.T1.17.17.8" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">2.863</td>
+<td id="S2.T1.17.17.9" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">78.634</td>
+<td id="S2.T1.17.17.10" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">18.187</td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 1: </span>The dark comets as listed in <cite class="ltx_cite ltx_citemacro_cite">Seligman<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib59" title="Two distinct populations of dark comets delineated by orbits and sizes" class="ltx_ref">2024</a>)</cite>, with magnitudes (extracted from therein) and osculating orbital elements as of 01/01/2001 taken from NASA JPL Horizons. The dark comets above the double horizontal bar and in bold are outer population and below are inner population</figcaption>
+</figure>
+<figure id="S2.F1" class="ltx_figure"><img src="2606.01288v2/1998KY26_orb_diff2.jpg" id="S2.F1.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="429" height="311" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>Magnitude vector difference in non-singular orbital parameters between 1998 KY<sub id="S2.F1.4.1" class="ltx_sub"><span id="S2.F1.4.1.1" class="ltx_text ltx_font_italic">26</span></sub> and 31 historical Mars missions.</figcaption>
+</figure>
+<div id="S2.SS1.p8" class="ltx_para">
+<p id="S2.SS1.p8.1" class="ltx_p">We find the smallest discrepancy to be the Russian Mars mission ’Phobos 2’, with the ’Phobos 1’ mission following on close behind. Since Phobos 2 made it successfully to a Mars rendezvous, that would rule out this probe, whereas Phobos 1 was lost on an interplanetary trajectory after a faulty command was uploaded to it on 02/09/1988. 
+<br class="ltx_break"></p>
+</div>
+<figure id="S2.F2" class="ltx_figure"><img src="2606.01288v2/1998KY26_PHOBOS.jpg" id="S2.F2.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="429" height="280" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>Comparison of the orbital discrepancy between 1998 KY<sub id="S2.F2.4.1" class="ltx_sub"><span id="S2.F2.4.1.1" class="ltx_text ltx_font_italic">26</span></sub> and Phobos 1 as a dependency on possible arrival date at Mars, showing a minimum over a long period of arrival dates with the date adopted here 24/01/1988 a plausible assumption.</figcaption>
+</figure>
+<div id="S2.SS1.p9" class="ltx_para">
+<p id="S2.SS1.p9.1" class="ltx_p">Note that in order to properly ascertain the orbit of Phobos 1 (launched 07/07/1988), we need a reasonable notion of its planned arrival date, and there is some uncertainty over this. An arrival date of 24/01/1989 is adopted here, a few days before its twin and immediate successor Phobos 2 is known to have reached Mars. Refer Figure <a href="#S2.F2" title="Figure 2 ‣ II.1 Comparison of Orbital Elements ‣ II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> which goes into further analysis of this.</p>
+</div>
+<figure id="S2.T2" class="ltx_table">
+<table id="S2.T2.6" class="ltx_tabular ltx_centering ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr id="S2.T2.1.1" class="ltx_tr">
+<td id="S2.T2.1.1.2" class="ltx_td ltx_border_l ltx_border_r ltx_border_t"></td>
+<td id="S2.T2.1.1.3" class="ltx_td ltx_border_r ltx_border_t"></td>
+<td id="S2.T2.1.1.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T2.1.1.4.1" class="ltx_text ltx_font_bold">Arrival</span></td>
+<td id="S2.T2.1.1.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T2.1.1.5.1" class="ltx_text ltx_font_bold">Departure</span></td>
+<td id="S2.T2.1.1.1" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">
+<math id="S2.T2.1.1.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math><span id="S2.T2.1.1.1.1" class="ltx_text ltx_font_bold">V at</span>
+</td>
+<td id="S2.T2.1.1.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><span id="S2.T2.1.1.6.1" class="ltx_text ltx_font_bold">Cumulative</span></td>
+</tr>
+<tr id="S2.T2.2.2" class="ltx_tr">
+<td id="S2.T2.2.2.2" class="ltx_td ltx_align_center ltx_border_l ltx_border_r"><span id="S2.T2.2.2.2.1" class="ltx_text ltx_font_bold">Planet</span></td>
+<td id="S2.T2.2.2.3" class="ltx_td ltx_align_center ltx_border_r"><span id="S2.T2.2.2.3.1" class="ltx_text ltx_font_bold">Date</span></td>
+<td id="S2.T2.2.2.4" class="ltx_td ltx_align_center ltx_border_r"><span id="S2.T2.2.2.4.1" class="ltx_text ltx_font_bold">Velocity</span></td>
+<td id="S2.T2.2.2.5" class="ltx_td ltx_align_center ltx_border_r"><span id="S2.T2.2.2.5.1" class="ltx_text ltx_font_bold">Velocity</span></td>
+<td id="S2.T2.2.2.6" class="ltx_td ltx_align_center ltx_border_r"><span id="S2.T2.2.2.6.1" class="ltx_text ltx_font_bold">Encounter</span></td>
+<td id="S2.T2.2.2.1" class="ltx_td ltx_align_center ltx_border_r">
+<math id="S2.T2.2.2.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math><span id="S2.T2.2.2.1.1" class="ltx_text ltx_font_bold">V</span>
+</td>
+</tr>
+<tr id="S2.T2.6.6" class="ltx_tr">
+<td id="S2.T2.6.6.5" class="ltx_td ltx_border_l ltx_border_r"></td>
+<td id="S2.T2.6.6.6" class="ltx_td ltx_border_r"></td>
+<td id="S2.T2.3.3.1" class="ltx_td ltx_align_center ltx_border_r"><math id="S2.T2.3.3.1.m1" class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math></td>
+<td id="S2.T2.4.4.2" class="ltx_td ltx_align_center ltx_border_r"><math id="S2.T2.4.4.2.m1" class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math></td>
+<td id="S2.T2.5.5.3" class="ltx_td ltx_align_center ltx_border_r"><math id="S2.T2.5.5.3.m1" class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math></td>
+<td id="S2.T2.6.6.4" class="ltx_td ltx_align_center ltx_border_r"><math id="S2.T2.6.6.4.m1" class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math></td>
+</tr>
+<tr id="S2.T2.6.7.1" class="ltx_tr">
+<td id="S2.T2.6.7.1.1" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T2.6.7.1.1.1" class="ltx_text ltx_font_bold">Earth</span></td>
+<td id="S2.T2.6.7.1.2" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1988 JUL 07</td>
+<td id="S2.T2.6.7.1.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.0000</td>
+<td id="S2.T2.6.7.1.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">3.4107</td>
+<td id="S2.T2.6.7.1.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">3.4107</td>
+<td id="S2.T2.6.7.1.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">3.4107</td>
+</tr>
+<tr id="S2.T2.6.8.2" class="ltx_tr">
+<td id="S2.T2.6.8.2.1" class="ltx_td ltx_align_center ltx_border_b ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T2.6.8.2.1.1" class="ltx_text ltx_font_bold">Mars</span></td>
+<td id="S2.T2.6.8.2.2" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">1989 JAN 24</td>
+<td id="S2.T2.6.8.2.3" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">2.6349</td>
+<td id="S2.T2.6.8.2.4" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">0.0000</td>
+<td id="S2.T2.6.8.2.5" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">0.9881</td>
+<td id="S2.T2.6.8.2.6" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">4.3987</td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 2: </span>Table of Velocities as Calculated by OITS for the ’Nominal’ Phobos 1 Mission</figcaption>
+</figure>
+<figure id="S2.T3" class="ltx_table">
+<table id="S2.T3.6" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S2.T3.1.1" class="ltx_tr">
+<th id="S2.T3.1.1.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_th_row ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T3.1.1.2.1" class="ltx_text ltx_font_bold">Orbital Parameter</span></th>
+<th id="S2.T3.1.1.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_th_row ltx_border_r ltx_border_t"><span id="S2.T3.1.1.3.1" class="ltx_text ltx_font_bold">Units</span></th>
+<th id="S2.T3.1.1.4" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r ltx_border_t"><span id="S2.T3.1.1.4.1" class="ltx_text ltx_font_bold">Phobos 1</span></th>
+<th id="S2.T3.1.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r ltx_border_t"><span id="S2.T3.1.1.1.1" class="ltx_text ltx_font_bold">1998 KY<sub id="S2.T3.1.1.1.1.1" class="ltx_sub"><span id="S2.T3.1.1.1.1.1.1" class="ltx_text ltx_font_medium ltx_font_italic">26</span></sub></span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S2.T3.6.7.1" class="ltx_tr">
+<th id="S2.T3.6.7.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T3.6.7.1.1.1" class="ltx_text ltx_font_bold">Semi-major Axis, a</span></th>
+<th id="S2.T3.6.7.1.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t">au</th>
+<td id="S2.T3.6.7.1.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1.302</td>
+<td id="S2.T3.6.7.1.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1.233</td>
+</tr>
+<tr id="S2.T3.6.8.2" class="ltx_tr">
+<th id="S2.T3.6.8.2.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T3.6.8.2.1.1" class="ltx_text ltx_font_bold">Eccentricity, e</span></th>
+<th id="S2.T3.6.8.2.2" class="ltx_td ltx_th ltx_th_row ltx_border_r ltx_border_t"></th>
+<td id="S2.T3.6.8.2.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.219</td>
+<td id="S2.T3.6.8.2.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.202</td>
+</tr>
+<tr id="S2.T3.6.9.3" class="ltx_tr">
+<th id="S2.T3.6.9.3.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T3.6.9.3.1.1" class="ltx_text ltx_font_bold">Perihelion, q</span></th>
+<th id="S2.T3.6.9.3.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t">au</th>
+<td id="S2.T3.6.9.3.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1.0166</td>
+<td id="S2.T3.6.9.3.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0.984</td>
+</tr>
+<tr id="S2.T3.2.2" class="ltx_tr">
+<th id="S2.T3.2.2.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T3.2.2.2.1" class="ltx_text ltx_font_bold">Inclination, i</span></th>
+<th id="S2.T3.2.2.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t"><sup id="S2.T3.2.2.1.1" class="ltx_sup"><span id="S2.T3.2.2.1.1.1" class="ltx_text ltx_font_italic">∘</span></sup></th>
+<td id="S2.T3.2.2.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1.36</td>
+<td id="S2.T3.2.2.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1.481</td>
+</tr>
+<tr id="S2.T3.4.4" class="ltx_tr">
+<th id="S2.T3.3.3.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T3.3.3.1.1" class="ltx_text ltx_font_bold">LOAN, <math id="S2.T3.3.3.1.1.m1" class="ltx_Math" alttext="\Omega" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Ω</mi><annotation encoding="application/x-tex">\Omega</annotation></semantics></math></span></th>
+<th id="S2.T3.4.4.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t"><sup id="S2.T3.4.4.2.1" class="ltx_sup"><span id="S2.T3.4.4.2.1.1" class="ltx_text ltx_font_italic">∘</span></sup></th>
+<td id="S2.T3.4.4.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">-74.68</td>
+<td id="S2.T3.4.4.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">84.365</td>
+</tr>
+<tr id="S2.T3.6.6" class="ltx_tr">
+<th id="S2.T3.5.5.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_b ltx_border_l ltx_border_r ltx_border_t"><span id="S2.T3.5.5.1.1" class="ltx_text ltx_font_bold">AOP, <math id="S2.T3.5.5.1.1.m1" class="ltx_Math" alttext="\omega" display="inline" intent=":literal"><semantics><mi>ω</mi><annotation encoding="application/x-tex">\omega</annotation></semantics></math></span></th>
+<th id="S2.T3.6.6.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_b ltx_border_r ltx_border_t"><sup id="S2.T3.6.6.2.1" class="ltx_sup"><span id="S2.T3.6.6.2.1.1" class="ltx_text ltx_font_italic">∘</span></sup></th>
+<td id="S2.T3.6.6.3" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">368.31</td>
+<td id="S2.T3.6.6.4" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">209.372</td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 3: </span>Orbital elements of Phobos 1 in Comparison to 1998 KY<sub id="S2.T3.10.1" class="ltx_sub"><span id="S2.T3.10.1.1" class="ltx_text ltx_font_italic">26</span></sub></figcaption>
+</figure>
+</section>
+<section id="S2.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.2 </span>Visual Comparison of Orbits</h3>
+
+<div id="S2.SS2.p1" class="ltx_para">
+<p id="S2.SS2.p1.1" class="ltx_p">The orbits of Phobos 1 and 1998 KY<sub id="S2.SS2.p1.1.1" class="ltx_sub"><span id="S2.SS2.p1.1.1.1" class="ltx_text ltx_font_italic">26</span></sub> as of the launch of the mission are depicted in Figure <a href="#S2.F3" title="Figure 3 ‣ II.2 Visual Comparison of Orbits ‣ II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>. Observe there is an obvious similarity between these two orbits, albeit the locations of the two objects are separated by a significant difference in ecliptic longitude, and there is a noticeable discrepancy in semi-major axis, a.</p>
+</div>
+<figure id="S2.F3" class="ltx_figure"><img src="2606.01288v2/1998KY26+Phobos1_Orbits.jpg" id="S2.F3.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="429" height="311" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>2D view of the orbits of 1998 KY<sub id="S2.F3.4.1" class="ltx_sub"><span id="S2.F3.4.1.1" class="ltx_text ltx_font_italic">26</span></sub> and the Phobos 1 probe at the time of launch, showing a striking similarity between the two orbits.</figcaption>
+</figure>
+</section>
+<section id="S2.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.3 </span>Comparison of Diameter</h3>
+
+<div id="S2.SS3.p1" class="ltx_para">
+<p id="S2.SS3.p1.4" class="ltx_p">Assuming a span for each solar panel of <math id="S2.SS3.p1.1.m1" class="ltx_Math" alttext="\sim{5}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">\sim{5}</annotation></semantics></math> m, that would give the overall diameter of <math id="S2.SS3.p1.2.m2" class="ltx_Math" alttext="\sim{10}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">\sim{10}</annotation></semantics></math> m. From <cite class="ltx_cite ltx_citemacro_cite">Santana-Ros<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib95" title="Hayabusa2# mission target 1998 ky26 preview: a small optically bright rapid rotator" class="ltx_ref">2025b</a>)</cite>, 1998 KY<sub id="S2.SS3.p1.4.1" class="ltx_sub"><span id="S2.SS3.p1.4.1.1" class="ltx_text ltx_font_italic">26</span></sub> has a diameter of <math id="S2.SS3.p1.4.m4" class="ltx_Math" alttext="11\pm 2" display="inline" intent=":literal"><semantics><mrow><mn>11</mn><mo>±</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">11\pm 2</annotation></semantics></math> m.</p>
+</div>
+</section>
+<section id="S2.SS4" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.4 </span>Comparison of Brightness</h3>
+
+<div id="S2.SS4.p1" class="ltx_para">
+<p id="S2.SS4.p1.1" class="ltx_p">The absolute magnitude of 1998 KY<sub id="S2.SS4.p1.1.1" class="ltx_sub"><span id="S2.SS4.p1.1.1.1" class="ltx_text ltx_font_italic">26</span></sub> from Table <a href="#S2.T1" title="Table 1 ‣ II.1 Comparison of Orbital Elements ‣ II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a> is 25.6 and taken from <cite class="ltx_cite ltx_citemacro_cite">Seligman<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib59" title="Two distinct populations of dark comets delineated by orbits and sizes" class="ltx_ref">2024</a>)</cite>. Assuming a highly reflective albedo for the Phobos probes of 1, with the diameter adopted in Section <a href="#S2.SS3" title="II.3 Comparison of Diameter ‣ II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">II.3</span></a>, we get a calculated absolute magnitude of 25.5, which is in close agreement.</p>
+</div>
+</section>
+<section id="S2.SS5" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.5 </span>Light Curve</h3>
+
+<div id="S2.SS5.p1" class="ltx_para">
+<p id="S2.SS5.p1.1" class="ltx_p">The light curve for the short period after discovery in 1998, is given in Figure <a href="#S2.F4" title="Figure 4 ‣ II.5 Light Curve ‣ II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>. Observe there are fluctuations in apparent magnitude of <math id="S2.SS5.p1.1.m1" class="ltx_Math" alttext="\sim{2.0}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>2.0</mn></mrow><annotation encoding="application/x-tex">\sim{2.0}</annotation></semantics></math>. This is a huge amplitude and very suggestive of a rapidly spinning elongated object.
+<br class="ltx_break"></p>
+</div>
+<div id="S2.SS5.p2" class="ltx_para">
+<p id="S2.SS5.p2.2" class="ltx_p">For a projected aspect ratio <math id="S2.SS5.p2.1.m1" class="ltx_Math" alttext="a/b" display="inline" intent=":literal"><semantics><mrow><mi>a</mi><mo>/</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">a/b</annotation></semantics></math>, this is related to fluctuations in apparent magnitude, <math id="S2.SS5.p2.2.m2" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>M, by:</p>
+<table id="S2.E2" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E2.m1" class="ltx_Math" alttext="\Delta M=2.5~log_{10}\left(\frac{a}{b}\right)" display="block" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>M</mi></mrow><mo>=</mo><mrow><mn>2.5</mn><mo lspace="0.330em" rspace="0em">​</mo><mi>l</mi><mo lspace="0em" rspace="0em">​</mo><mi>o</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>g</mi><mn>10</mn></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo>(</mo><mfrac><mi>a</mi><mi>b</mi></mfrac><mo>)</mo></mrow></mrow></mrow><annotation encoding="application/x-tex">\Delta M=2.5~log_{10}\left(\frac{a}{b}\right)</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(2)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS5.p2.3" class="ltx_p">This can be rearranged as follows:</p>
+<table id="S2.E3" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E3.m1" class="ltx_Math" alttext="\left(\frac{a}{b}\right)=10^{\frac{\Delta M}{2.5}}" display="block" intent=":literal"><semantics><mrow><mrow><mo>(</mo><mfrac><mi>a</mi><mi>b</mi></mfrac><mo>)</mo></mrow><mo>=</mo><msup><mn>10</mn><mfrac><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>M</mi></mrow><mn>2.5</mn></mfrac></msup></mrow><annotation encoding="application/x-tex">\left(\frac{a}{b}\right)=10^{\frac{\Delta M}{2.5}}</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(3)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS5.p2.4" class="ltx_p">This leads to an aspect ratio of approximately 6.3:1, representing a very elongated object such as possibly the Phobos 1 probe (which had extended solar panels).</p>
+</div>
+<figure id="S2.F4" class="ltx_figure"><img src="2606.01288v2/1998KY26_MAG.jpg" id="S2.F4.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="429" height="213" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 4: </span>Light Curve of 1998 KY<sub id="S2.F4.4.1" class="ltx_sub"><span id="S2.F4.4.1.1" class="ltx_text ltx_font_italic">26</span></sub> just after discovery. </figcaption>
+</figure>
+</section>
+<section id="S2.SS6" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.6 </span>Implications</h3>
+
+<div id="S2.SS6.p1" class="ltx_para">
+<p id="S2.SS6.p1.5" class="ltx_p">The combination of high albedo from <cite class="ltx_cite ltx_citemacro_cite">Santana-Ros<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib95" title="Hayabusa2# mission target 1998 ky26 preview: a small optically bright rapid rotator" class="ltx_ref">2025b</a>)</cite> of 0.52 <math id="S2.SS6.p1.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 0.08, the diameter of 11 <math id="S2.SS6.p1.2.m2" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 2 <math id="S2.SS6.p1.3.m3" class="ltx_Math" alttext="\mathrm{m}" display="inline" intent=":literal"><semantics><mi mathvariant="normal">m</mi><annotation encoding="application/x-tex">\mathrm{m}</annotation></semantics></math>, and low spin period of 5.3516 <math id="S2.SS6.p1.4.m4" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 0.0001 <math id="S2.SS6.p1.5.m5" class="ltx_Math" alttext="\mathrm{m}\mathrm{i}\mathrm{n}\mathrm{s}" display="inline" intent=":literal"><semantics><mi>mins</mi><annotation encoding="application/x-tex">\mathrm{m}\mathrm{i}\mathrm{n}\mathrm{s}</annotation></semantics></math>, all suggest a small, tough, monolithic object, such as the Phobos 1 probe.</p>
+</div>
+</section>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">III </span>Possible Scenario</h2>
+
+<div id="S3.p1" class="ltx_para">
+<p id="S3.p1.1" class="ltx_p">The details of the Phobos 1 mission, as generated by OITS are provided in Table <a href="#S2.T2" title="Table 2 ‣ II.1 Comparison of Orbital Elements ‣ II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>, and a comparison of the orbital parameters between Phobos 1 and 1998 KY<sub id="S3.p1.1.1" class="ltx_sub"><span id="S3.p1.1.1.1" class="ltx_text ltx_font_italic">26</span></sub>, is given in Table <a href="#S2.T3" title="Table 3 ‣ II.1 Comparison of Orbital Elements ‣ II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>.
+<br class="ltx_break"></p>
+</div>
+<div id="S3.p2" class="ltx_para">
+<p id="S3.p2.1" class="ltx_p">As a historical perspective, following a request from the Moscow ’Space Research Centre’, the ’European Southern Observatory’ (ESO) attempted to observe the Phobos 1 probe 20 days after mission failure <cite class="ltx_cite ltx_citemacro_citep">(ESO, <a href="#bib.bib81" title="Where is phobos i?" class="ltx_ref">1988</a>)</cite>. The result was negative in that the probe was not visible at the predicted coordinates, however referring to the article, they suggest this was due to ’a faulty rocket fire after contact was lost?’.
+<br class="ltx_break"></p>
+</div>
+<div id="S3.p3" class="ltx_para">
+<p id="S3.p3.4" class="ltx_p">Let us pursue this hypothesis and model the suspected thrust as an impulsive change in velocity (<math id="S3.p3.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V) some time between loss of mission and the non-observation of the probe by ESO on 22/09/1988, a period encompassing 20 days. This impulsive <math id="S3.p3.2.m2" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V would be insufficient to align the orbits of the two bodies since, as is apparent from Figure <a href="#S2.F3" title="Figure 3 ‣ II.2 Visual Comparison of Orbits ‣ II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>, there was a large discrepancy in heliocentric longitude (or alternatively mean anomaly) between the two objects at launch, and therefore at the time of mission loss. Consequently the next simplest scenario can be applied with the assumption that there is a further, second <math id="S3.p3.3.m3" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V, some time before 1998 KY<sub id="S3.p3.4.1" class="ltx_sub"><span id="S3.p3.4.1.1" class="ltx_text ltx_font_italic">26</span></sub> was discovered.
+<br class="ltx_break"></p>
+</div>
+<div id="S3.p4" class="ltx_para">
+<p id="S3.p4.5" class="ltx_p">To this end some REBOUND <cite class="ltx_cite ltx_citemacro_citep">(Rein and Liu, <a href="#bib.bib66" title="REBOUND: an open-source multi-purpose N-body code for collisional dynamics" class="ltx_ref">2012</a>)</cite> N-body integration software was developed. First, the state vector of the probe while it was en route to Mars (specifically on 02/09/1988, the day of loss of mission), was supplied by examination of OITS trajectory results. The REBOUND simulation was intialized at this point. The state vectors of the Sun, the Moon and all the planets were then extracted at this time by executing the NASA SPICE <cite class="ltx_cite ltx_citemacro_citep">(Acton, <a href="#bib.bib68" title="Ancillary data services of nasa’s navigation and ancillary information facility" class="ltx_ref">1996</a>; Acton<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib69" title="A look towards the future in the handling of space science mission geometry" class="ltx_ref">2018</a>)</cite> command <span id="S3.p4.5.1" class="ltx_text ltx_font_italic">spkezr_c</span> with the binary SPICE kernel file <span id="S3.p4.5.2" class="ltx_text ltx_font_italic">de430.bsp</span> providing the necessary data. The command line argument to this software included the path of a file containing 8 numbers, as follows:</p>
+<ol id="S3.I1" class="ltx_enumerate">
+<li id="S3.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="S3.I1.i1.p1" class="ltx_para">
+<p id="S3.I1.i1.p1.3" class="ltx_p">The first <math id="S3.I1.i1.p1.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V component x in ’ECLIPJ2000’, <math id="S3.I1.i1.p1.2.m2" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V1<sub id="S3.I1.i1.p1.3.1" class="ltx_sub"><span id="S3.I1.i1.p1.3.1.1" class="ltx_text ltx_font_italic">x</span></sub></p>
+</div>
+</li>
+<li id="S3.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="S3.I1.i2.p1" class="ltx_para">
+<p id="S3.I1.i2.p1.3" class="ltx_p">The first <math id="S3.I1.i2.p1.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V component y in ’ECLIPJ2000’, <math id="S3.I1.i2.p1.2.m2" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V1<sub id="S3.I1.i2.p1.3.1" class="ltx_sub"><span id="S3.I1.i2.p1.3.1.1" class="ltx_text ltx_font_italic">y</span></sub></p>
+</div>
+</li>
+<li id="S3.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span> 
+<div id="S3.I1.i3.p1" class="ltx_para">
+<p id="S3.I1.i3.p1.3" class="ltx_p">The first <math id="S3.I1.i3.p1.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V component z in ’ECLIPJ2000’, <math id="S3.I1.i3.p1.2.m2" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V1<sub id="S3.I1.i3.p1.3.1" class="ltx_sub"><span id="S3.I1.i3.p1.3.1.1" class="ltx_text ltx_font_italic">z</span></sub></p>
+</div>
+</li>
+<li id="S3.I1.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">4.</span> 
+<div id="S3.I1.i4.p1" class="ltx_para">
+<p id="S3.I1.i4.p1.1" class="ltx_p">The time in days to first <math id="S3.I1.i4.p1.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V1</p>
+</div>
+</li>
+<li id="S3.I1.i5" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">5.</span> 
+<div id="S3.I1.i5.p1" class="ltx_para">
+<p id="S3.I1.i5.p1.3" class="ltx_p">The second <math id="S3.I1.i5.p1.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V component x in ’ECLIPJ2000’, <math id="S3.I1.i5.p1.2.m2" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V2<sub id="S3.I1.i5.p1.3.1" class="ltx_sub"><span id="S3.I1.i5.p1.3.1.1" class="ltx_text ltx_font_italic">x</span></sub></p>
+</div>
+</li>
+<li id="S3.I1.i6" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">6.</span> 
+<div id="S3.I1.i6.p1" class="ltx_para">
+<p id="S3.I1.i6.p1.3" class="ltx_p">The second <math id="S3.I1.i6.p1.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V component y in ’ECLIPJ2000’, <math id="S3.I1.i6.p1.2.m2" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V2<sub id="S3.I1.i6.p1.3.1" class="ltx_sub"><span id="S3.I1.i6.p1.3.1.1" class="ltx_text ltx_font_italic">y</span></sub></p>
+</div>
+</li>
+<li id="S3.I1.i7" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">7.</span> 
+<div id="S3.I1.i7.p1" class="ltx_para">
+<p id="S3.I1.i7.p1.3" class="ltx_p">The second <math id="S3.I1.i7.p1.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V component z in ’ECLIPJ2000’, <math id="S3.I1.i7.p1.2.m2" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V2<sub id="S3.I1.i7.p1.3.1" class="ltx_sub"><span id="S3.I1.i7.p1.3.1.1" class="ltx_text ltx_font_italic">z</span></sub></p>
+</div>
+</li>
+<li id="S3.I1.i8" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">8.</span> 
+<div id="S3.I1.i8.p1" class="ltx_para">
+<p id="S3.I1.i8.p1.1" class="ltx_p">The time in days between first and second <math id="S3.I1.i8.p1.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V</p>
+</div>
+</li>
+</ol>
+<p id="S3.p4.4" class="ltx_p">There were two outputs of this software - first the mean square <span id="S3.p4.4.1" class="ltx_text ltx_font_italic">Mahalanobis Distance</span> <cite class="ltx_cite ltx_citemacro_citep">(Mahalanobis, <a href="#bib.bib105" title="On the generalized distance in statistics" class="ltx_ref">1936</a>)</cite> between the spacecraft and 1998 KY<sub id="S3.p4.4.2" class="ltx_sub"><span id="S3.p4.4.2.1" class="ltx_text ltx_font_italic">26</span></sub> as of the epoch 07/04/2000 08:13:52. The reference state vector and covariance matrix (used to derive the Mahalanobis distance) were taken from <span id="S3.p4.4.3" class="ltx_text ltx_font_italic">find_orb</span> <cite class="ltx_cite ltx_citemacro_citep">(Gray, <a href="#bib.bib104" title="Find_orb: orbit determination software" class="ltx_ref">2025</a>)</cite> at this epoch time. The second output was the sum of the magnitudes of the two <math id="S3.p4.2.m2" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>Vs with 1.9 <math id="S3.p4.3.m3" class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math> subtracted. This was to impose a constraint on the total magnitude of <math id="S3.p4.4.m4" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V, to align it with a reasonable level expected from the probe.
+<br class="ltx_break"></p>
+</div>
+<div id="S3.p5" class="ltx_para">
+<p id="S3.p5.1" class="ltx_p">Two optimization paradigms were utilized, first Global Non-Linear Programming (NLP) software in the form of NOMAD <cite class="ltx_cite ltx_citemacro_citep">(Le Digabel, <a href="#bib.bib31" title="Algorithm 909: NOMAD: Nonlinear optimization with the MADS algorithm" class="ltx_ref">2011</a>)</cite>, followed then by Covariance Matrix Adaptation Evolutionary Strategy (CMA-ES) <cite class="ltx_cite ltx_citemacro_citep">(Hansen and Ostermeier, <a href="#bib.bib106" title="Completely derandomized self-adaptation in evolution strategies" class="ltx_ref">2001</a>)</cite> as implemented by <cite class="ltx_cite ltx_citemacro_cite">Hansen<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib107" title="CMA-es/pycma on github" class="ltx_ref">2025</a>)</cite>. For an attempt to explain the logic behind CMA-ES intuitively, go to <cite class="ltx_cite ltx_citemacro_cite">Hansen (<a href="#bib.bib108" title="The cma evolution strategy: a tutorial" class="ltx_ref">2023</a>)</cite>.
+<br class="ltx_break"></p>
+</div>
+<div id="S3.p6" class="ltx_para">
+<p id="S3.p6.1" class="ltx_p">The workflow adopted was to first try and hone the independent variables listed above to around a global minimum (NOMAD), following this up by a more structured evolutionary strategy to find the precise minimum using CMA-ES. This combined effort proved very fruitful.
+<br class="ltx_break"></p>
+</div>
+<div id="S3.p7" class="ltx_para">
+<p id="S3.p7.1" class="ltx_p">In the early stages of this workflow, a scaled displacement in 6D phase space was calculated by the software, and output to the optimizers as an objective to minimize, like so:</p>
+<table id="S3.E4" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S3.E4.m1" class="ltx_Math" alttext="D=\sqrt{\left(\frac{DX}{AU}\right)^{2}+\left(\frac{DV}{AU/day/0.017}\right)^{2}}" display="block" intent=":literal"><semantics><mrow><mi>D</mi><mo>=</mo><msqrt><mrow><msup><mrow><mo>(</mo><mfrac><mrow><mi>D</mi><mo lspace="0em" rspace="0em">​</mo><mi>X</mi></mrow><mrow><mi>A</mi><mo lspace="0em" rspace="0em">​</mo><mi>U</mi></mrow></mfrac><mo>)</mo></mrow><mn>2</mn></msup><mo>+</mo><msup><mrow><mo>(</mo><mfrac><mrow><mi>D</mi><mo lspace="0em" rspace="0em">​</mo><mi>V</mi></mrow><mrow><mrow><mrow><mrow><mi>A</mi><mo lspace="0em" rspace="0em">​</mo><mi>U</mi></mrow><mo>/</mo><mi>d</mi></mrow><mo lspace="0em" rspace="0em">​</mo><mi>a</mi><mo lspace="0em" rspace="0em">​</mo><mi>y</mi></mrow><mo>/</mo><mn>0.017</mn></mrow></mfrac><mo>)</mo></mrow><mn>2</mn></msup></mrow></msqrt></mrow><annotation encoding="application/x-tex">D=\sqrt{\left(\frac{DX}{AU}\right)^{2}+\left(\frac{DV}{AU/day/0.017}\right)^{2}}</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(4)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S3.p8" class="ltx_para">
+<p id="S3.p8.3" class="ltx_p">where in the above, <math id="S3.p8.1.m1" class="ltx_Math" alttext="DX" display="inline" intent=":literal"><semantics><mrow><mi>D</mi><mo lspace="0em" rspace="0em">​</mo><mi>X</mi></mrow><annotation encoding="application/x-tex">DX</annotation></semantics></math> and <math id="S3.p8.2.m2" class="ltx_Math" alttext="DV" display="inline" intent=":literal"><semantics><mrow><mi>D</mi><mo lspace="0em" rspace="0em">​</mo><mi>V</mi></mrow><annotation encoding="application/x-tex">DV</annotation></semantics></math> are respectively the distance and velocity difference between the probe and 1998 KY<sub id="S3.p8.3.1" class="ltx_sub"><span id="S3.p8.3.1.1" class="ltx_text ltx_font_italic">26</span></sub>, with the 0.017 figure as a convenient scaling factor. This produced good convergence with a combination of NOMAD followed by CMA-ES.
+<br class="ltx_break"></p>
+</div>
+<div id="S3.p9" class="ltx_para">
+<p id="S3.p9.5" class="ltx_p">However, with the Mahalanobis distance, <math id="S3.p9.1.m1" class="ltx_Math" alttext="MD2" display="inline" intent=":literal"><semantics><mrow><mi>M</mi><mo lspace="0em" rspace="0em">​</mo><mi>D</mi><mo lspace="0em" rspace="0em">​</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">MD2</annotation></semantics></math>, as the objective, this only reduced to an acceptable level when a 9<sup id="S3.p9.5.1" class="ltx_sup"><span id="S3.p9.5.1.1" class="ltx_text ltx_font_italic">th</span></sup> optimizable parameter, <math id="S3.p9.3.m3" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>T, was added to the 8 enumerated above. The optimal magnitude of this <math id="S3.p9.4.m4" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>T was minimal at only <math id="S3.p9.5.m5" class="ltx_Math" alttext="\sim{2}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">\sim{2}</annotation></semantics></math> hours, and might be attributed to a slight error in phase between the two objects, possibly originating from an error in the time-stamp generated by OITS, or other unknown causes.
+<br class="ltx_break"></p>
+</div>
+<div id="S3.p10" class="ltx_para">
+<p id="S3.p10.3" class="ltx_p">The final solution is provided in Table <a href="#S3.T4" title="Table 4 ‣ III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>. It is interesting to note that, as already indicated, the total <math id="S3.p10.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V was constrained to 1.9 <math id="S3.p10.2.m2" class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math>, and furthermore no additional optimal solutions with tighter <math id="S3.p10.3.m3" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V constraints were forthcoming. It should also be affirmed that, by the nature of global optimization, this is NOT a non-existence proof.
+<br class="ltx_break"></p>
+</div>
+<div id="S3.p11" class="ltx_para">
+<p id="S3.p11.4" class="ltx_p">It is now necessary to compare this level of <math id="S3.p11.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V with the total available to the Phobos 1 probe, since the mission was lost very early on, and nearly all allocated propellant would have been present. From <cite class="ltx_cite ltx_citemacro_cite">Astronautix.com (<a href="#bib.bib102" title="Fobos 1F" class="ltx_ref">2026</a>)</cite>, the propulsion system exploited for Mars Orbital Insertion (MOI) was a combination of nitric acid and an amine-based propellant. Such a propulsion system has huge momentum change capability. Let us adopt a specific impulse of I<sub id="S3.p11.4.1" class="ltx_sub"><span id="S3.p11.4.1.1" class="ltx_text ltx_font_italic">sp</span></sub> <math id="S3.p11.3.m3" class="ltx_Math" alttext="\sim{315}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>315</mn></mrow><annotation encoding="application/x-tex">\sim{315}</annotation></semantics></math> <math id="S3.p11.4.m4" class="ltx_Math" alttext="\mathrm{s}\mathrm{e}\mathrm{c}\mathrm{s}" display="inline" intent=":literal"><semantics><mi>secs</mi><annotation encoding="application/x-tex">\mathrm{s}\mathrm{e}\mathrm{c}\mathrm{s}</annotation></semantics></math>, and exploit the famous Tsiolkovsky rocket equation:</p>
+<table id="S3.E5" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S3.E5.m1" class="ltx_Math" alttext="\frac{M_{f}}{M_{0}}=exp\left(-\frac{\Delta V}{gI_{sp}}\right)" display="block" intent=":literal"><semantics><mrow><mfrac><msub><mi>M</mi><mi>f</mi></msub><msub><mi>M</mi><mn>0</mn></msub></mfrac><mo>=</mo><mrow><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mi>x</mi><mo lspace="0em" rspace="0em">​</mo><mi>p</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo>(</mo><mrow><mo>−</mo><mfrac><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>V</mi></mrow><mrow><mi>g</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>I</mi><mrow><mi>s</mi><mo lspace="0em" rspace="0em">​</mo><mi>p</mi></mrow></msub></mrow></mfrac></mrow><mo>)</mo></mrow></mrow></mrow><annotation encoding="application/x-tex">\frac{M_{f}}{M_{0}}=exp\left(-\frac{\Delta V}{gI_{sp}}\right)</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(5)</span></td>
+</tr></tbody>
+</table>
+<p id="S3.p11.6" class="ltx_p">This leads to a propellant mass fraction of 1-<math id="S3.p11.5.m1" class="ltx_Math" alttext="M_{f}/M_{0}" display="inline" intent=":literal"><semantics><mrow><msub><mi>M</mi><mi>f</mi></msub><mo>/</mo><msub><mi>M</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">M_{f}/M_{0}</annotation></semantics></math> <math id="S3.p11.6.m2" class="ltx_Math" alttext="\sim{46}\%" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mrow><mn>46</mn><mo>%</mo></mrow></mrow><annotation encoding="application/x-tex">\sim{46}\%</annotation></semantics></math>.
+<br class="ltx_break"></p>
+</div>
+<div id="S3.p12" class="ltx_para">
+<p id="S3.p12.4" class="ltx_p">From <cite class="ltx_cite ltx_citemacro_cite">Sagdeev and Zakharov (<a href="#bib.bib103" title="A brief history of the expedition to phobos" class="ltx_ref">1990</a>)</cite>, the autonomous thruster for MOI was 3600 kg compared to the overall mass of the probe of 6200 kg. This represents a mass fraction of at most <math id="S3.p12.1.m1" class="ltx_Math" alttext="\sim{58}\%" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mrow><mn>58</mn><mo>%</mo></mrow></mrow><annotation encoding="application/x-tex">\sim{58}\%</annotation></semantics></math>, disregarding the structural mass of the autonomous thruster. In conclusion, <math id="S3.p12.2.m2" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V = 1.9 <math id="S3.p12.3.m3" class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math> would seem to be within the propulsion envelope of the Phobos 1 probe, adding plausibility to the association with 1998 KY<sub id="S3.p12.4.1" class="ltx_sub"><span id="S3.p12.4.1.1" class="ltx_text ltx_font_italic">26</span></sub>.
+<br class="ltx_break"></p>
+</div>
+<div id="S3.p13" class="ltx_para">
+<p id="S3.p13.1" class="ltx_p">Attention is now drawn to the orbital path followed by the Phobos 1 probe according to the solution summarised in Table <a href="#S3.T4" title="Table 4 ‣ III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a> - refer Figure <a href="#S3.F5" title="Figure 5 ‣ III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a> for the 3D perspective and the plan view is provided in Figure <a href="#S3.F6" title="Figure 6 ‣ III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">6</span></a>. The displacement between the positions of the two bodies is shown in Figure <a href="#S3.F7" title="Figure 7 ‣ III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">7</span></a>.
+<br class="ltx_break"></p>
+</div>
+<div id="S3.p14" class="ltx_para">
+<p id="S3.p14.1" class="ltx_p">An animation by Tony Dunn of this orbital path is available <cite class="ltx_cite ltx_citemacro_citep">(Dunn, <a href="#bib.bib111" title="OrbitSimulator.com" class="ltx_ref">2026</a>)</cite>.</p>
+</div>
+<figure id="S3.T4" class="ltx_table">
+<table id="S3.T4.21" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr id="S3.T4.21.22.1" class="ltx_tr">
+<th id="S3.T4.21.22.1.1" class="ltx_td ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t"></th>
+<th id="S3.T4.21.22.1.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t"><span id="S3.T4.21.22.1.2.1" class="ltx_text ltx_font_bold">Optimized</span></th>
+<th id="S3.T4.21.22.1.3" class="ltx_td ltx_th ltx_th_row ltx_border_r ltx_border_t"></th>
+<td id="S3.T4.21.22.1.4" class="ltx_td ltx_border_t"></td>
+<td id="S3.T4.21.22.1.5" class="ltx_td ltx_border_t"></td>
+<td id="S3.T4.21.22.1.6" class="ltx_td ltx_border_r ltx_border_t"></td>
+</tr>
+<tr id="S3.T4.21.23.2" class="ltx_tr">
+<th id="S3.T4.21.23.2.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r"><span id="S3.T4.21.23.2.1.1" class="ltx_text ltx_font_bold">Parameter</span></th>
+<th id="S3.T4.21.23.2.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r"><span id="S3.T4.21.23.2.2.1" class="ltx_text ltx_font_bold">Parameter</span></th>
+<th id="S3.T4.21.23.2.3" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r"><span id="S3.T4.21.23.2.3.1" class="ltx_text ltx_font_bold">Units</span></th>
+<td id="S3.T4.21.23.2.4" class="ltx_td ltx_align_center"><span id="S3.T4.21.23.2.4.1" class="ltx_text ltx_font_bold">Notes:</span></td>
+<td id="S3.T4.21.23.2.5" class="ltx_td"></td>
+<td id="S3.T4.21.23.2.6" class="ltx_td ltx_border_r"></td>
+</tr>
+<tr id="S3.T4.3.3" class="ltx_tr">
+<th id="S3.T4.2.2.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t">
+<math id="S3.T4.1.1.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V1<sub id="S3.T4.2.2.2.1" class="ltx_sub"><span id="S3.T4.2.2.2.1.1" class="ltx_text ltx_font_italic">x</span></sub>
+</th>
+<th id="S3.T4.3.3.4" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t">-0.579</th>
+<th id="S3.T4.3.3.3" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t"><math id="S3.T4.3.3.3.m1" class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math></th>
+<td id="S3.T4.3.3.5" class="ltx_td ltx_border_t"></td>
+<td id="S3.T4.3.3.6" class="ltx_td ltx_border_t"></td>
+<td id="S3.T4.3.3.7" class="ltx_td ltx_border_r ltx_border_t"></td>
+</tr>
+<tr id="S3.T4.6.6" class="ltx_tr">
+<th id="S3.T4.5.5.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t">
+<math id="S3.T4.4.4.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V1<sub id="S3.T4.5.5.2.1" class="ltx_sub"><span id="S3.T4.5.5.2.1.1" class="ltx_text ltx_font_italic">y</span></sub>
+</th>
+<th id="S3.T4.6.6.4" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t">-0.049</th>
+<th id="S3.T4.6.6.3" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t"><math id="S3.T4.6.6.3.m1" class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math></th>
+<td id="S3.T4.6.6.5" class="ltx_td ltx_align_center">mag:</td>
+<td id="S3.T4.6.6.6" class="ltx_td ltx_align_center">0.612096</td>
+<td id="S3.T4.6.6.7" class="ltx_td ltx_align_center ltx_border_r">km/s</td>
+</tr>
+<tr id="S3.T4.9.9" class="ltx_tr">
+<th id="S3.T4.8.8.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t">
+<math id="S3.T4.7.7.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V1<sub id="S3.T4.8.8.2.1" class="ltx_sub"><span id="S3.T4.8.8.2.1.1" class="ltx_text ltx_font_italic">z</span></sub>
+</th>
+<th id="S3.T4.9.9.4" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t">0.191</th>
+<th id="S3.T4.9.9.3" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t"><math id="S3.T4.9.9.3.m1" class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math></th>
+<td id="S3.T4.9.9.5" class="ltx_td"></td>
+<td id="S3.T4.9.9.6" class="ltx_td"></td>
+<td id="S3.T4.9.9.7" class="ltx_td ltx_border_r"></td>
+</tr>
+<tr id="S3.T4.10.10" class="ltx_tr">
+<th id="S3.T4.10.10.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t">Time <math id="S3.T4.10.10.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V1</th>
+<th id="S3.T4.10.10.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t">0.826</th>
+<th id="S3.T4.10.10.3" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t">days</th>
+<td id="S3.T4.10.10.4" class="ltx_td ltx_align_center ltx_border_t">Date:</td>
+<td id="S3.T4.10.10.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t" colspan="2">1988 SEP 02 19:49:43</td>
+</tr>
+<tr id="S3.T4.13.13" class="ltx_tr">
+<th id="S3.T4.12.12.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t">
+<math id="S3.T4.11.11.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V2<sub id="S3.T4.12.12.2.1" class="ltx_sub"><span id="S3.T4.12.12.2.1.1" class="ltx_text ltx_font_italic">x</span></sub>
+</th>
+<th id="S3.T4.13.13.4" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t">0.010</th>
+<th id="S3.T4.13.13.3" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t"><math id="S3.T4.13.13.3.m1" class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math></th>
+<td id="S3.T4.13.13.5" class="ltx_td ltx_border_t"></td>
+<td id="S3.T4.13.13.6" class="ltx_td ltx_border_t"></td>
+<td id="S3.T4.13.13.7" class="ltx_td ltx_border_r ltx_border_t"></td>
+</tr>
+<tr id="S3.T4.16.16" class="ltx_tr">
+<th id="S3.T4.15.15.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t">
+<math id="S3.T4.14.14.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V2<sub id="S3.T4.15.15.2.1" class="ltx_sub"><span id="S3.T4.15.15.2.1.1" class="ltx_text ltx_font_italic">y</span></sub>
+</th>
+<th id="S3.T4.16.16.4" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t">0.835</th>
+<th id="S3.T4.16.16.3" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t"><math id="S3.T4.16.16.3.m1" class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math></th>
+<td id="S3.T4.16.16.5" class="ltx_td ltx_align_center">mag:</td>
+<td id="S3.T4.16.16.6" class="ltx_td ltx_align_center">1.279599</td>
+<td id="S3.T4.16.16.7" class="ltx_td ltx_align_center ltx_border_r">km/s</td>
+</tr>
+<tr id="S3.T4.19.19" class="ltx_tr">
+<th id="S3.T4.18.18.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t">
+<math id="S3.T4.17.17.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V2<sub id="S3.T4.18.18.2.1" class="ltx_sub"><span id="S3.T4.18.18.2.1.1" class="ltx_text ltx_font_italic">z</span></sub>
+</th>
+<th id="S3.T4.19.19.4" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t">0.970</th>
+<th id="S3.T4.19.19.3" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t"><math id="S3.T4.19.19.3.m1" class="ltx_Math" alttext="\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}" display="inline" intent=":literal"><semantics><mrow><mi>km</mi><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">s</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathrm{k}\mathrm{m}\,\mathrm{s}^{-1}</annotation></semantics></math></th>
+<td id="S3.T4.19.19.5" class="ltx_td"></td>
+<td id="S3.T4.19.19.6" class="ltx_td"></td>
+<td id="S3.T4.19.19.7" class="ltx_td ltx_border_r"></td>
+</tr>
+<tr id="S3.T4.20.20" class="ltx_tr">
+<th id="S3.T4.20.20.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t">Time <math id="S3.T4.20.20.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V2</th>
+<th id="S3.T4.20.20.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t">2815.628</th>
+<th id="S3.T4.20.20.3" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t">days</th>
+<td id="S3.T4.20.20.4" class="ltx_td ltx_align_center ltx_border_t">Date:</td>
+<td id="S3.T4.20.20.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t" colspan="2">1996 MAY 19 10:54:16</td>
+</tr>
+<tr id="S3.T4.21.21" class="ltx_tr">
+<th id="S3.T4.21.21.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_b ltx_border_l ltx_border_r ltx_border_t">
+<math id="S3.T4.21.21.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>T</th>
+<th id="S3.T4.21.21.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_b ltx_border_r ltx_border_t">2.010</th>
+<th id="S3.T4.21.21.3" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_b ltx_border_r ltx_border_t">hours</th>
+<td id="S3.T4.21.21.4" class="ltx_td ltx_border_b ltx_border_t"></td>
+<td id="S3.T4.21.21.5" class="ltx_td ltx_border_b ltx_border_t"></td>
+<td id="S3.T4.21.21.6" class="ltx_td ltx_border_b ltx_border_r ltx_border_t"></td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 4: </span>Optimal Solution found by NOMAD and then CMA-ES, ultimately attaining an insignifcantly small square Mahalanobis distance</figcaption>
+</figure>
+<figure id="S3.F5" class="ltx_figure"><img src="2606.01288v2/Phobos1_Solution_TRAJ.jpg" id="S3.F5.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="429" height="252" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 5: </span>Solution trajectory followed by the Phobos 1 probe (blue line) compared to that of 1998 KY<sub id="S3.F5.4.1" class="ltx_sub"><span id="S3.F5.4.1.1" class="ltx_text ltx_font_italic">26</span></sub> retrodicted by NASA Horizons, SPICE (red dashed line)</figcaption>
+</figure>
+<figure id="S3.F6" class="ltx_figure"><img src="2606.01288v2/Phobos1_Solution_Plan.jpg" id="S3.F6.g1" class="ltx_graphics ltx_centering ltx_img_square" width="429" height="513" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 6: </span>Solution trajectory (plan view) followed by the Phobos 1 probe (blue line) compared to that of 1998 KY<sub id="S3.F6.4.1" class="ltx_sub"><span id="S3.F6.4.1.1" class="ltx_text ltx_font_italic">26</span></sub> retrodicted by NASA Horizons, SPICE (red dashed line)</figcaption>
+</figure>
+<figure id="S3.F7" class="ltx_figure"><img src="2606.01288v2/Phobos1_Solution_DR_DC.jpg" id="S3.F7.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="429" height="252" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 7: </span>Displacement between the Phobos 1 probe and 1998 KY<sub id="S3.F7.4.1" class="ltx_sub"><span id="S3.F7.4.1.1" class="ltx_text ltx_font_italic">26</span></sub></figcaption>
+</figure>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">IV </span>Discussion</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p id="S4.p1.1" class="ltx_p">To be clear, this research cannot unequivocally identify that 1998 KY<sub id="S4.p1.1.1" class="ltx_sub"><span id="S4.p1.1.1.1" class="ltx_text ltx_font_italic">26</span></sub> is really the Phobos 1 probe, it analyses the evidence in support of this conclusion, which is quite compelling. We have found:</p>
+<ol id="S4.I1" class="ltx_enumerate">
+<li id="S4.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="S4.I1.i1.p1" class="ltx_para">
+<p id="S4.I1.i1.p1.1" class="ltx_p">The Phobos 1 and 1998 KY<sub id="S4.I1.i1.p1.1.1" class="ltx_sub"><span id="S4.I1.i1.p1.1.1.1" class="ltx_text ltx_font_italic">26</span></sub> orbits are visually similar</p>
+</div>
+</li>
+<li id="S4.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="S4.I1.i2.p1" class="ltx_para">
+<p id="S4.I1.i2.p1.1" class="ltx_p">The difference between these orbits is compatible energetically with the overall <math id="S4.I1.i2.p1.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V envelope available to Phobos 1</p>
+</div>
+</li>
+<li id="S4.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span> 
+<div id="S4.I1.i3.p1" class="ltx_para">
+<p id="S4.I1.i3.p1.1" class="ltx_p">The 2 orbits converge and are statistically compatible, given the uncertainty in the orbit of 1998 KY<sub id="S4.I1.i3.p1.1.1" class="ltx_sub"><span id="S4.I1.i3.p1.1.1.1" class="ltx_text ltx_font_italic">26</span></sub>, which is tightly constrained due to the existence of over 230 observations of this dark comet</p>
+</div>
+</li>
+<li id="S4.I1.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">4.</span> 
+<div id="S4.I1.i4.p1" class="ltx_para">
+<p id="S4.I1.i4.p1.1" class="ltx_p">There is a historical record in support of the hypothesis that a propulsive <math id="S4.I1.i4.p1.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V was delivered shortly after loss of mission</p>
+</div>
+</li>
+<li id="S4.I1.i5" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">5.</span> 
+<div id="S4.I1.i5.p1" class="ltx_para">
+<p id="S4.I1.i5.p1.1" class="ltx_p">The Phobos 1 mission was lost early on in the probe’s transit to Mars enabling a large <math id="S4.I1.i5.p1.1.m1" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>V capability</p>
+</div>
+</li>
+<li id="S4.I1.i6" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">6.</span> 
+<div id="S4.I1.i6.p1" class="ltx_para">
+<p id="S4.I1.i6.p1.1" class="ltx_p">There is supportive observational data of the dark comet, i.e. size, albedo and spin</p>
+</div>
+</li>
+<li id="S4.I1.i7" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">7.</span> 
+<div id="S4.I1.i7.p1" class="ltx_para">
+<p id="S4.I1.i7.p1.1" class="ltx_p">The object appears to be quite elongated from changes in its apparent magnitude</p>
+</div>
+</li>
+</ol>
+</div>
+<div id="S4.p2" class="ltx_para">
+<p id="S4.p2.1" class="ltx_p">This can be compared to the evidence to the contrary:</p>
+<ol id="S4.I2" class="ltx_enumerate">
+<li id="S4.I2.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="S4.I2.i1.p1" class="ltx_para">
+<p id="S4.I2.i1.p1.1" class="ltx_p">it is generally assumed by the scientific community that this is a natural body</p>
+</div>
+</li>
+<li id="S4.I2.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="S4.I2.i2.p1" class="ltx_para">
+<p id="S4.I2.i2.p1.1" class="ltx_p">there are AI-assisted (SAGE) reconstructions of the object based on optical and RADAR data, which suggest it is an asteroid with a random asteroid-type shape, though with apparent ’concavities’ <cite class="ltx_cite ltx_citemacro_citep">(Santana-Ros<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib82" title="Hayabusa2 extended mission target asteroid 1998 ky_26 is smaller and rotating faster than previously known" class="ltx_ref">2025a</a>)</cite></p>
+</div>
+</li>
+</ol>
+</div>
+<div id="S4.p3" class="ltx_para">
+<p id="S4.p3.1" class="ltx_p">So to the question: ’is 1998 KY<sub id="S4.p3.1.1" class="ltx_sub"><span id="S4.p3.1.1.1" class="ltx_text ltx_font_italic">26</span></sub> the Phobos 1 probe?’ there is plenty of supporting evidence, yet the JAXA Hayabusa2 mission to this object in 2031 will effectively ’put the cat amongst the pigeons’.</p>
+</div>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">V </span>Conclusion</h2>
+
+<div id="S5.p1" class="ltx_para">
+<p id="S5.p1.2" class="ltx_p">This paper identified several independent lines of evidence that motivate further consideration of the possibility that the dark comet 1998 KY<sub id="S5.p1.2.1" class="ltx_sub"><span id="S5.p1.2.1.1" class="ltx_text ltx_font_italic">26</span></sub> is in fact technogenic, specifically the Russian Phobos 1 probe to Mars. It suggests a particular historical path through which the trajectories of the probe and the dark comet could evolve to become effectively statistically indistinguishable. In anticipation of the Hayabusa2 observations in 2031, which will be decisive in resolving the origin of this object, we encourage further observational, dynamical, and theoretical studies aimed at more tightly constraining the nature and properties of 1998 KY<sub id="S5.p1.2.2" class="ltx_sub"><span id="S5.p1.2.2.1" class="ltx_text ltx_font_italic">26</span></sub>.</p>
+</div>
+</section>
+<section id="S6" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">VI </span>Acknowledgments</h2>
+
+<div id="S6.p1" class="ltx_para">
+<p id="S6.p1.1" class="ltx_p">AI (ChatGPT) was used to assist the research. Thanks to John I. Davies (i4is) who provided various important insights also. The orbit simulation <cite class="ltx_cite ltx_citemacro_citep">(Dunn, <a href="#bib.bib111" title="OrbitSimulator.com" class="ltx_ref">2026</a>)</cite> was created by Tony Dunn.</p>
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul id="bib.L1" class="ltx_biblist">
+<li id="bib.bib69" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">C. Acton, N. Bachman, B. Semenov, and E. Wright (2018)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A look towards the future in the handling of space science mission geometry</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Planetary and Space Science</span> <span class="ltx_text ltx_bib_volume">150</span>, <span class="ltx_text ltx_bib_pages"> pp. 9–12</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">Enabling Open and Interoperable Access to Planetary Science and Heliophysics Databases and Tools</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 0032-0633</span>,
+<a href="https://dx.doi.org/https%3A//doi.org/10.1016/j.pss.2017.02.013" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://www.sciencedirect.com/science/article/pii/S0032063316303129" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p4.5" title="III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III</span></a>.
+</span>
+</li>
+<li id="bib.bib68" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">C. H. Acton (1996)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Ancillary data services of nasa’s navigation and ancillary information facility</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Planetary and Space Science</span> <span class="ltx_text ltx_bib_volume">44</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 65–70</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">Planetary data system</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 0032-0633</span>,
+<a href="https://dx.doi.org/https%3A//doi.org/10.1016/0032-0633%2895%2900107-7" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://www.sciencedirect.com/science/article/pii/0032063395001077" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p4.5" title="III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III</span></a>.
+</span>
+</li>
+<li id="bib.bib102" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Astronautix.com (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Fobos 1F</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://www.astronautix.com/f/fobos1f.html#:~:text=Phobos%201%20%2D%20.,September%201988%20failed%20to%20occur." title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p5.1" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>,
+<a href="#S3.p11.4" title="III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III</span></a>.
+</span>
+</li>
+<li id="bib.bib97" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Beniyama, T. G. Müller, M. Delbo, E. Pantin, O. R. Hainaut, M. Micheli, and M. Marsset (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Size constraint on hayabusa2 extended mission rendezvous target 1998 ky26 via vlt/visir nondetection</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astronomical Journal</span> <span class="ltx_text ltx_bib_volume">169</span> (<span class="ltx_text ltx_bib_number">5</span>), <span class="ltx_text ltx_bib_pages"> pp. 264</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3.5" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib96" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. T. Bolin, C. Fremling, M. Belyakov, J. Beniyama, M. Delbo, R. Jedicke, I. Wong, L. Abron, K. S. Noll, and A. W. Stephens (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Keck and gemini characterization of hayabusa2# rendezvous target 1998 ky26</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astronomical Journal</span> <span class="ltx_text ltx_bib_volume">169</span> (<span class="ltx_text ltx_bib_number">6</span>), <span class="ltx_text ltx_bib_pages"> pp. 303</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3.5" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib111" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">T. Dunn (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">OrbitSimulator.com</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note"><a href="http://orbitsimulator.com/BA/adam_phobos1_f.mp4" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://orbitsimulator.com/BA/adam_phobos1_f.mp4</a>Accessed: 2026-06-02</span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p14.1" title="III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III</span></a>,
+<a href="#S6.p1.1" title="VI Acknowledgments ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§VI</span></a>.
+</span>
+</li>
+<li id="bib.bib81" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">ESO (1988)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Where is phobos i?</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://www.eso.org/sci/publications/messenger/archive/no.54-dec88/messenger-no54-12-12.pdf" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p2.1" title="III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III</span></a>.
+</span>
+</li>
+<li id="bib.bib93" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">D. Farnocchia, D. Vokrouhlickỳ, T. Santana-Ros, P. Bartczak, M. Micheli, and S. R. Chesley (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Radiation forces and trajectory of hayabusa2♯ target 1998 ky26</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astrophysical Journal Letters</span> <span class="ltx_text ltx_bib_volume">993</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. L9</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3.5" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib104" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. Gray (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Find_orb: orbit determination software</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note"><a href="https://www.projectpluto.com/find_orb.htm" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.projectpluto.com/find_orb.htm</a>Accessed: 2026-05-28</span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p4.4" title="III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III</span></a>.
+</span>
+</li>
+<li id="bib.bib107" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">N. Hansen, Y. Akimoto, and P. Baudis (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">CMA-es/pycma on github</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note"><a href="https://github.com/CMA-ES/pycma" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://github.com/CMA-ES/pycma</a>Accessed: 2026-05-28</span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p5.1" title="III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III</span></a>.
+</span>
+</li>
+<li id="bib.bib106" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">N. Hansen and A. Ostermeier (2001)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Completely derandomized self-adaptation in evolution strategies</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Evolutionary Computation</span> <span class="ltx_text ltx_bib_volume">9</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 159–195</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p5.1" title="III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III</span></a>.
+</span>
+</li>
+<li id="bib.bib108" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">N. Hansen (2023)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The cma evolution strategy: a tutorial</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">1604.00772</span>,
+<a href="https://arxiv.org/abs/1604.00772" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p5.1" title="III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III</span></a>.
+</span>
+</li>
+<li id="bib.bib36" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. M. Hein, T. M. Eubanks, M. Lingam, A. Hibberd, D. Fries, J. Schneider, P. Kervella, R. Kennedy, N. Perakis, and B. Dachwald (2022)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Interstellar Now! Missions to Explore Nearby Interstellar Objects</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Adv. Space Res.</span> <span class="ltx_text ltx_bib_volume">69</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 402–414</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1016/j.asr.2021.06.052" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p1.1" title="II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib35" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. M. Hein, N. Perakis, T. M. Eubanks, A. Hibberd, A. Crowl, K. Hayward, R. G. Kennedy, and R. Osborne (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Project Lyra: Sending a spacecraft to 1I/’Oumuamua (former A/2017 U1), the interstellar asteroid</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Acta Astronaut.</span> <span class="ltx_text ltx_bib_volume">161</span>, <span class="ltx_text ltx_bib_pages"> pp. 552–561</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1016/j.actaastro.2018.12.042" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p1.1" title="II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib37" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Hibberd, A. M. Hein, and T. M. Eubanks (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Project Lyra: Catching 1I/’Oumuamua - Mission opportunities after 2024</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Acta Astronautica</span> <span class="ltx_text ltx_bib_volume">170</span>, <span class="ltx_text ltx_bib_pages"> pp. 136–144</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1016/j.actaastro.2020.01.018" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">1902.04935</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p1.1" title="II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib38" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Hibberd and A. M. Hein (2021)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Project Lyra: Catching 1I/’Oumuamua-Using Nuclear Thermal Rockets</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Acta Astronaut.</span> <span class="ltx_text ltx_bib_volume">179</span>, <span class="ltx_text ltx_bib_pages"> pp. 594–603</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1016/j.actaastro.2020.11.038" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2008.05435</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p1.1" title="II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib39" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Hibberd, N. Perakis, and A. M. Hein (2021)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Sending a spacecraft to interstellar comet 2I/Borisov</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Acta Astronaut.</span> <span class="ltx_text ltx_bib_volume">189</span>, <span class="ltx_text ltx_bib_pages"> pp. 584–592</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1016/j.actaastro.2021.09.006" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p1.1" title="II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib30" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Hibberd (2017)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Github repository for oits.</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://github.com/AdamHibberd/Optimum_Interplanetary_Trajectory" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p1.1" title="II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib28" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Hibberd (2022)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Intermediate Points for Missions to Interstellar Objects Using Optimum Interplanetary Trajectory Software</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv:2205.10220</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">2205.10220</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p1.1" title="II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib40" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Hibberd (2023a)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Project Lyra: Another possible trajectory to 1I/’Oumuamua</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Acta Astronaut.</span> <span class="ltx_text ltx_bib_volume">211</span>, <span class="ltx_text ltx_bib_pages"> pp. 431–434</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1016/j.actaastro.2023.06.029" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p1.1" title="II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib41" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Hibberd (2023b)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Project Lyra: The Way to Go and the Launcher to Get There</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv:2305.03065</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.48550/arXiv.2305.03065" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2305.03065</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p1.1" title="II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib101" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Hicks, P. Weissman, D. Rabinowitz, A. Chamberlin, B. Buratti, and C. Lee (1998)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Close encounters: observations of the earth-crossing asteroids 1998 ky26 and 1998 ml14.</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">AAS/Division for Planetary Sciences Meeting Abstracts# 30</span>,
+</span>
+<span class="ltx_bibblock">Vol. <span class="ltx_text ltx_bib_volume">30</span>, <span class="ltx_text ltx_bib_pages"> pp. 10–06</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3.5" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib70" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Hirabayashi, Y. Mimasu, N. Sakatani, S. Watanabe, Y. Tsuda, T. Saiki, S. Kikuchi, T. Kouyama, M. Yoshikawa, S. Tanaka, S. Nakazawa, Y. Takei, F. Terui, H. Takeuchi, A. Fujii, T. Iwata, K. Tsumura, S. Matsuura, Y. Shimaki, S. Urakawa, Y. Ishibashi, S. Hasegawa, M. Ishiguro, D. Kuroda, S. Okumura, S. Sugita, T. Okada, S. Kameda, S. Kamata, A. Higuchi, H. Senshu, H. Noda, K. Matsumoto, R. Suetsugu, T. Hirai, K. Kitazato, D. Farnocchia, S.P. Naidu, D.J. Tholen, C.W. Hergenrother, R.J. Whiteley, N.A. Moskovitz, and P.A. Abell (2021)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Hayabusa2 extended mission: new voyage to rendezvous with a small asteroid rotating with a short period</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Advances in Space Research</span> <span class="ltx_text ltx_bib_volume">68</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. 1533–1555</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 0273-1177</span>,
+<a href="https://dx.doi.org/https%3A//doi.org/10.1016/j.asr.2021.03.030" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://www.sciencedirect.com/science/article/pii/S0273117721002556" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib31" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">S. Le Digabel (2011)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Algorithm 909: NOMAD: Nonlinear optimization with the MADS algorithm</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ACM Transactions on Mathematical Software (TOMS)</span> <span class="ltx_text ltx_bib_volume">37</span> (<span class="ltx_text ltx_bib_number">4</span>), <span class="ltx_text ltx_bib_pages"> pp. 44</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p5.1" title="III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III</span></a>.
+</span>
+</li>
+<li id="bib.bib110" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Loeb and R. Cloete (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Is the” dark comet” 2005 vl1 the venera 2 spacecraft?</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2503.03552</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p4.1" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib105" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">P. C. Mahalanobis (1936)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">On the generalized distance in statistics</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Proceedings of the National Institute of Sciences of India</span> <span class="ltx_text ltx_bib_volume">2</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 49–55</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p4.4" title="III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III</span></a>.
+</span>
+</li>
+<li id="bib.bib65" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. G. Marsden, Z. Sekanina, and D. K. Yeomans (1973)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Comets and nongravitational forces. V</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">78</span>, <span class="ltx_text ltx_bib_pages"> pp. 211</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1086/111402" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.3" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib98" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">S. Ostro, L. Benner, J. Giorgini, K. Rosema, and D. Yeomans (1998)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">1998 ky26</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">International Astronomical Union Circular</span> <span class="ltx_text ltx_bib_volume">6935</span>, <span class="ltx_text ltx_bib_pages"> pp. 2</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3.5" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib94" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">S. J. Ostro, P. Pravec, L. A. Benner, R. S. Hudson, L. Sarounova, M. D. Hicks, D. L. Rabinowitz, J. V. Scotti, D. J. Tholen, M. Wolf, <span class="ltx_text ltx_bib_etal">et al.</span> (1999)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Radar and optical observations of asteroid 1998 ky26</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Science</span> <span class="ltx_text ltx_bib_volume">285</span> (<span class="ltx_text ltx_bib_number">5427</span>), <span class="ltx_text ltx_bib_pages"> pp. 557–559</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3.5" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib99" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">P. Pravec and L. Sarounova (1998)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">1998 ky26</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">International Astronomical Union Circular</span> <span class="ltx_text ltx_bib_volume">6941</span>, <span class="ltx_text ltx_bib_pages"> pp. 2</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3.5" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib66" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">H. Rein and S. -F. Liu (2012)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">REBOUND: an open-source multi-purpose N-body code for collisional dynamics</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">A&amp;A</span> <span class="ltx_text ltx_bib_volume">537</span>, <span class="ltx_text ltx_bib_pages"> pp. A128</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1051/0004-6361/201118085" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">1110.4876</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.p4.5" title="III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III</span></a>.
+</span>
+</li>
+<li id="bib.bib103" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">R. Sagdeev and A. Zakharov (1990)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A brief history of the expedition to phobos</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Sov. Astron. Lett</span> <span class="ltx_text ltx_bib_volume">16</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 125–128</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p5.1" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>,
+<a href="#S3.p12.4" title="III Possible Scenario ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III</span></a>.
+</span>
+</li>
+<li id="bib.bib82" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">T. Santana-Ros, P. Bartczak, K. Muinonen, A. Rożek, T. Müller, M. Hirabayashi, D. Farnocchia, M. Micheli, R. E. Cannon, M. Brozović, O. Hainaut, D. Oszkiewicz, A. K. Virkki, L. A. M. Benner, A. C. Bagatin, P. G. Benavidez, A. Cabrera-Lavers, C. E. Martínez-Vázquez, and K. Vivas (2025a)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Hayabusa2 extended mission target asteroid 1998 ky_26 is smaller and rotating faster than previously known</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Nature Communications</span> <span class="ltx_text ltx_bib_volume">16</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1038/s41467-025-63697-4" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://www.nature.com/articles/s41467-025-63697-4" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.I2.i2.p1.1" title="In IV Discussion ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">item 2</span></a>.
+</span>
+</li>
+<li id="bib.bib95" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">T. Santana-Ros, P. Bartczak, K. Muinonen, A. Rozek, T. Müller, M. Hirabayashi, D. Farnocchia, M. Micheli, R. Cannon, M. Brozovic, <span class="ltx_text ltx_bib_etal">et al.</span> (2025b)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Hayabusa2# mission target 1998 ky26 preview: a small optically bright rapid rotator</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Research Square</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/https%3A//doi.org/10.21203/rs.3.rs-5821856/v1" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3.5" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>,
+<a href="#S2.SS3.p1.4" title="II.3 Comparison of Diameter ‣ II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II.3</span></a>,
+<a href="#S2.SS6.p1.5" title="II.6 Implications ‣ II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II.6</span></a>.
+</span>
+</li>
+<li id="bib.bib61" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">D. Z. Seligman, D. Farnocchia, M. Micheli, D. Vokrouhlický, A. G. Taylor, S. R. Chesley, J. B. Bergner, P. Vereš, O. R. Hainaut, K. J. Meech, M. Devogele, P. Pravec, R. Matson, S. Deen, D. J. Tholen, R. Weryk, E. G. Rivera-Valentín, and B. N. L. Sharkey (2023)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Dark Comets? Unexpectedly Large Nongravitational Accelerations on a Sample of Small Asteroids</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Asteroids, Comets, Meteors Conference</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_series">LPI Contributions</span>, Vol. <span class="ltx_text ltx_bib_volume">2851</span>, <span class="ltx_text ltx_bib_pages"> pp. 2036</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.3" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+<li id="bib.bib59" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">D. Z. Seligman, D. Farnocchia, M. Micheli, O. R. Hainaut, H. H. Hsieh, A. D. Feinstein, S. R. Chesley, A. G. Taylor, J. Masiero, and K. J. Meech (2024)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Two distinct populations of dark comets delineated by orbits and sizes</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Proceedings of the National Academy of Sciences</span> <span class="ltx_text ltx_bib_volume">121</span> (<span class="ltx_text ltx_bib_number">51</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1091-6490</span>,
+<a href="http://dx.doi.org/10.1073/pnas.2406424121" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<a href="https://dx.doi.org/10.1073/pnas.2406424121" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.3" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>,
+<a href="#S2.SS4.p1.1" title="II.4 Comparison of Brightness ‣ II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II.4</span></a>,
+<a href="#S2.T1" title="In II.1 Comparison of Orbital Elements ‣ II Supporting Evidence ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 1</span></a>.
+</span>
+</li>
+<li id="bib.bib100" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">D. Tholen (2003)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Recovery of 1998 ky26: implications for detecting the yarkovsky effect</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">AAS/Division for Planetary Sciences Meeting Abstracts# 35</span>,
+</span>
+<span class="ltx_bibblock">Vol. <span class="ltx_text ltx_bib_volume">35</span>, <span class="ltx_text ltx_bib_pages"> pp. 31–05</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3.5" title="I Introduction ‣ Is the Dark Comet 1998 KY26 the Spacecraft Phobos 1?" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I</span></a>.
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2606.01288v2/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer><footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation">
+        </a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International">
+        </a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences">
+        </a>
+      </div>
+    </div>
+  </div>
+</footer><div id="fixed-buttons-container">
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>

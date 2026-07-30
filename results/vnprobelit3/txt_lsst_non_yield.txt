@@ -1,0 +1,528 @@
+Predictions of the LSST Solar System (non-)Yield
+
+Report GitHub Issue
+×
+
+Title:
+
+Content selection saved. Describe the issue below:
+
+Description:
+
+Submit without GitHub
+Submit in GitHub
+
+arXiv is now an independent nonprofit!
+Learn more
+×
+
+Back to arXiv
+
+Why HTML?
+
+Report Issue
+
+Back to Abstract
+
+Download PDF
+
+Abstract
+I Introduction
+II Survey Description and Detection Framework
+
+III The Non-Yield Catalogue
+
+III.1 Geometric Non-Yield
+
+III.1.1 The Counter-Earth Population (L3)
+III.1.2 The Sun
+
+III.2 Photometric Non-Yield
+
+III.2.1 Bright-Limit Exceedance
+III.2.2 The Death Star
+
+III.3 Kinematic Non-Yield
+
+III.3.1 The Zero-Velocity Population
+
+III.4 Temporal Non-Yield
+
+III.4.1 The Scheduled-Downtime Population
+III.4.2 Terminal-Epoch Population
+
+III.5 Pipeline and Computational Non-Yield
+
+III.5.1 The Chip-Gap Population
+III.5.2 Compute-Budget Exceedance
+III.5.3 Classified Satellite Coincidence
+
+IV Conclusion
+
+Acknowledgements
+
+References
+
+License: CC BY 4.0
+
+arXiv:2604.00206v1 [astro-ph.EP] 31 Mar 2026
+
+Predictions of the LSST Solar System (non-)Yield
+
+Joseph Murtagh
+
+Department of Astronomy and the DIRAC Institute, University of Washington, 3910 15th Avenue NE, Seattle, WA 98195, USA
+
+[
+Joseph Murtagh
+
+Ian Chow
+
+Department of Astronomy and the DIRAC Institute, University of Washington, 3910 15th Avenue NE, Seattle, WA 98195, USA
+
+chowian@uw.edu
+
+Abstract
+We present predictions for solar system objects the Vera C. Rubin Observatory Legacy Survey of Space and Time (LSST) will not detect over its ten-year baseline survey. Employing state-of-the-art synthetic population models and the Sorcha survey simulator, we identify non-yield populations spanning geometric, photometric, kinematic, temporal, and computational failure modes. Notable subpopulations include objects whose peak brightness coincides exclusively with scheduled telescope downtime, objects whose detections fall within Rubin focal plane chip gaps, and objects whose orbital arcs expire before linking jobs are dispatched from the compute queue. We additionally characterise the non-yield arising from the Death Star (DS-1; D ≈ 160 D\approx 160  km), whose orbital mechanics (when constrained by the well-established Endor engagement geometry (Lucas, 1983 ) ) place it at a maximum heliocentric distance of 27.5 27.5  au and an apparent magnitude of m r ≈ 19 m_{r}\approx 19 -23, squarely within the LSST operational photometric window. Its absence from the LSST alert stream is interpreted as confirmation of its destruction at the Battle of Endor. The failure to detect the Sun within the LSST should be a stark warning to the community of the LSST’s inability to catalogue the solar system (by mass).
+
+\uat Small Solar System bodies1469 — \uat Wide-field telescopes1800
+
+show]murtagh@uw.edu
+
+I Introduction
+
+The Vera C. Rubin Observatory Legacy Survey of Space and Time (LSST; Ivezić et al. , 2019 ) represents the most ambitious wide-field optical all-sky survey of the solar system yet attempted. Over a ten-year baseline, the 8.4m Simonyi Survey Telescope will image approximately 18,000 deg 2 of southern sky to a single-visit depth of m r ∼ 24.5 m_{r}\sim 24.5 , generating an expected catalogue of ≳ \gtrsim 1 solar system object(s) from near-Earth asteroids to trans-Neptunian objects (Jones et al. , 2009 ) .
+
+The community has invested considerable effort in predicting what the LSST will find (e.g. Dorsey et al. , 2025 ; Kurlander et al. , 2025 ; Murtagh et al. , 2025 , 2026 ; Chow et al. , 2026 ) . The present work takes a complementary view. We argue that the non-yield — that is, the population of objects the LSST will definitively not detect — is an equally important and considerably under-characterised survey product. A complete census of the solar system requires knowledge not only of what a survey finds, but of what it cannot find, and why.
+
+This framing is not without precedent. Survey completeness analyses routinely quantify objects missed due to geometric, photometric, and temporal biases (e.g. Vereš and Chesley, 2017 ) . We consider these obvious, and instead extend this tradition by investigating failure modes that have received comparatively little attention: failures arising from the unique orbit configurations, compute cluster scheduling policy, relativistic constraints on the orbital velocity of a spherical weapons platform, and the fundamental orientation of the telescope relative to the nearest star.
+
+Throughout this work we assume a standard flat Λ \Lambda CDM cosmology, which has no bearing on any result but is the kind of thing one writes in an introduction.
+
+II Survey Description and Detection Framework
+
+Moving object detection is performed through the Solar System Processing (SSP) pipeline, which differences image pairs separated in time and constructs tracklets from this data. An object is considered “detected” once it is linked into a valid orbit and reported to the Minor Planet Center (MPC). The effective photometric window is approximately 16 ≲ m r ≲ 24.5 16\lesssim m_{r}\lesssim 24.5 , set by saturation, detection limits, and whether the object happens to be observed at the right time. Objects outside this range are treated as non-yield.
+
+Observations of any of our synthetic populations are definitely really totally simulated using the survey simulator Sorcha (Merritt et al. , 2025 ) with the v5.0.0 cadence simulation from the SCOC 2024 baseline.
+
+III The Non-Yield Catalogue
+
+We present the non-yield catalogue of detections N N in order of increasing abstraction. Table  1 summarises all populations and their estimated non-yields.
+
+III.1 Geometric Non-Yield
+
+III.1.1 The Counter-Earth Population (L3)
+
+The Sun-Earth Lagrange point L3 lies along the Sun-Earth line at 1 au, diametrically opposite to Earth. Philolaus ( c. 400BC ) predicted a body at this location as shown in Figure  1 , which he termed the Antichthon (counter-Earth), on the grounds that ten celestial bodies was a more satisfying number than nine. This prediction went observationally untested for approximately 2,400 years, until the separation of NASA’s STEREO spacecraft from Earth provided a direct view of the L3 region during the early phase of the mission (Kaiser et al. , 2008 ) . No body was found. The Antichthon hypothesis has been falsified.
+
+The LSST will (probably) not change this conclusion. The LSST cannot observe L3 directly, as it lies permanently behind the Sun as seen from Cerro Pachón (and most other ground locations). Objects genuinely displaced to L3 would drift into geometrically accessible sky on the Lyapunov instability timescale of τ L3 ∼ 10 2 − 10 3 \tau_{\rm L3}\sim 10^{2}-10^{3}  yr (Murray and Dermott, 1999 ) , driven primarily by perturbations dynamics of the Sun-Earth three-body problem (Liu, 2014 ) . This timescale exceeds the ten-year survey baseline, so objects at or near L3 today remain unobservable throughout the mission. The non-yield is N Antichthon = 0 ± 0 N_{\rm Antichthon}=0\pm 0 , drawn from a population we already know does not exist.
+
+Figure 1: Orbit configuration of Antichthon as we like to believe Philolaus mind-mapped it. Earth (or, Terra) is on the right, whilst Antichthon is on the left, or counter to Earth. Both orbit anticlockwise around the Sun at the centre. Red lines denote the Lagrange points of the Earth(Terra)-Sun system. Of course, this renders Antichthon unobservable at any stage of Earth’s orbit.
+
+III.1.2 The Sun
+
+The Sun is an object within the solar system and so is therefore, definitionally speaking, a solar system object. We address its detectability here.
+
+The Sun has an absolute magnitude M ≈ − 26.7 M\approx-26.7 , exceeding the LSST bright limit by approximately 43 magnitudes — the largest margin by which any solar system object fails to fall within the survey’s operational photometric window. In this sense, the Sun’s non-yield of N Sun = 0 ± 0 N_{\mathrm{Sun}}=0\pm 0 is the most extreme non-detection in the catalogue.
+
+The heliocentric orbital elements of the Sun present an additional complication. The semi-major axis is zero by definition, the eccentricity is undefined, and all angular elements are degenerate. The Sun cannot be submitted to the MPC as a minor planet (not for lack of the authors’ attempts). This is not a pipeline limitation but an ontological one, and we do not expect it to be resolved in the forthcoming data releases.
+
+Detection efficiency at r H = 0 r_{\mathrm{H}}=0  au is ϵ = 0.000 ± 0.000 \epsilon=0.000\pm 0.000 . Efficiency formally rises for r H > 0 r_{\mathrm{H}}>0  au, which may be of interest to stellar astronomers but is outside the scope of this survey. We ran the numbers and burnt a few CPU hours to compute that the LSST would need to be pointed directly at the Sun to resolve this non-detection. This option was never considered even briefly, and has been rejected. 1 1 1 The telescope is worth ≳ $ ​ 800 \gtrsim\mathdollar 800  million.
+
+The Sun constitutes 99.86% of the total mass of the solar system. The LSST catalogue will contain 0.000% of the Sun. On these grounds alone, LSST’s coverage of the solar system is incomplete at a level that should concern any referee, and the LSST Solar System Science Collaboration should address it.
+
+III.2 Photometric Non-Yield
+
+III.2.1 Bright-Limit Exceedance
+
+The LSST detector saturates at approximately m r ∼ 16 m_{r}\sim 16 . The distinction between “a very active comet” and “something that is on fire” has never been formally established in the minor planet taxonomy. An object in the latter category would produce an alert packet whose postage stamp image morphology is adequately characterised by reference to 16th-century comet photometry (see Figure  2 ), rather than by the analytic PSF model the pipeline was designed to fit. Whether this constitutes a detection failure or a pipeline design requirement is a question we leave to the SSP team. We report N emit = 0 ± ALargeNumber N_{\rm emit}=0\pm\mathrm{ALargeNumber} , where the central value follows from the non-existence of the relevant population, and the uncertainty reflects our incomplete knowledge of what is currently on fire in the outer solar system. Surely JWST will resolve this in future studies.
+
+Figure 2: Postage stamp cutouts of comets (Anglo-Saxon Needleworkers, 1070 ; Hans Burgkmair the Younger, 1552 ) . Clearly visible in both are flames, indicating a level of emissivity not accounted for in modern cometary photometry. White/grey horizontal bars would show the pixel (pigment? stitch?) scale were that known. Images are oriented such that North is up and East is left as shown by green arrows, at least we assume. Marked as a red arrow is the anti-velocity direction, and not marked is the anti-solar direction (comets don’t orbit the Sun until the ∼ 17 th \sim 17^{\mathrm{th}}  century).
+
+III.2.2 The Death Star
+
+The Death Star (DS-1 Orbital Battle Station; D ≈ 160 D\approx 160  km) is the most extensively modelled artificial solar system body in the non-yield literature. Its orbital mechanics are constrained by the Endor engagement recorded in Lucas ( 1983 ) , in which the station operated from geosynchronous orbit above the target body 2 2 2 See important community discussion . . Requiring that the orbital velocity not exceed the speed of light c c places a hard upper bound on the semi-major axis:
+
+a max = c ​ T ⊕ 2 ​ π ≈ 27.5 ​ au , a_{\rm max}=\frac{cT_{\oplus}}{2\pi}\approx 27.5~{\rm au},
+
+(1)
+
+where T ⊕ = 86 , 400 T_{\oplus}=86{,}400  s is Earth’s sidereal rotation period. The Death Star, if operational and targeting Earth, is constrained to reside inward of the orbit of Neptune.
+
+Bracketing the full range of known solar system albedos — p v = 0.04 p_{v}=0.04 (carbonaceous, dark, ominous; H = 8.1 H=8.1 ) to p v = 0.96 p_{v}=0.96 (Eris-like, bright, disco-like; H = 4.6 H=4.6 ) — the Death Star at a = a max a=a_{\rm max} would have an apparent magnitude of m r ≈ 22.4 m_{r}\approx 22.4 – 18.9 18.9 , well within the LSST photometric window for all physically reasonable albedo assumptions. This result is illustrated in Figure  3 .
+
+The Death Star has not been detected in the LSST alert stream at time of writing… y ​ e ​ t yet . This admits two interpretations. The first is that it was destroyed at the Battle of Endor (Lucas, 1983 ) , giving N DS = 0 ± 1 N_{\rm DS}=0\pm 1 and constituting the only non-detection in this catalogue whose primary failure mode is an unambiguously anthropically good outcome. The second interpretation, that it is operational, present within 27.5 au, and simply not yet identified, we flag as an unresolved anomaly and refer to the relevant planetary defence authorities. We strongly favour the first interpretation.
+
+Figure 3: Apparent r r -band magnitude of the Death Star (DS-1; D = 160 D=160  km) as a function of heliocentric distance, for geometric albedos p v = 0.04 p_{v}=0.04 (orange; H = 8.1 H=8.1 , characteristic of a carbonaceous surface) and p v = 0.96 p_{v}=0.96 (red; H = 4.6 H=4.6 , characteristic of Eris). The LSST single-visit detection limit ( m r ∼ 24.5 m_{r}\sim 24.5 ) is shown as a dashed horizontal line. The vertical line marks the relativistic upper bound on the semi-major axis ( a max ≈ 27.5 a_{\rm max}\approx 27.5  au) derived from the Endor geosynchronous engagement constraint (Lucas, 1983 ) . Planet positions along the x-axis are shown for scale. At a max a_{\rm max} , the Death Star falls within the LSST photometric window for all physically reasonable albedo assumptions, yet is undetected. The preferred interpretation is its destruction. The alternative is left as an exercise for the reader’s threat model.
+
+III.3 Kinematic Non-Yield
+
+III.3.1 The Zero-Velocity Population
+
+The LSST moving object pipeline detects sources that exhibit measurable sky-plane motion between the two images of a visit pair. The telescope tracks at the sidereal rate, so the image is registered to the stellar background. Any source that does not move relative to that background (whether because it has no apparent angular motion, or because it happens to move at exactly the sidereal rate) produces no residual in the difference image and is indistinguishable from a star. It is, for all practical purposes, a star. The pipeline does not look for solar system objects among the stars and the stars do not volunteer that information.
+
+The detection efficiency for this population with on-sky motion θ ˙ \dot{\theta} is ϵ ​ ( θ ˙ = 0 ) = 0 \epsilon(\dot{\theta}=0)=0 . We cannot determine how many solar system objects are currently hiding in the stellar catalogue, presumably due to fear of being observed by us. We cannot in principle determine this from the LSST data alone, since any such object would appear in neither the difference images nor the moving object catalogue. It has been suggested to us that Gaia’s astrometric baseline would reveal these objects via anomalous proper motions over multi-year baselines. This is true. It would however, not be an LSST result, and we would receive no credit for it, therefore it is an argument not worth pursuing.
+
+The non-yield is therefore N zero = Don ′ ​ tCare ± Whatever N_{\rm zero}=\mathrm{Don^{\prime}tCare}\pm\mathrm{Whatever} , with uncertainty arising principally from not knowing how many things are pretending to be stars.
+
+III.4 Temporal Non-Yield
+
+III.4.1 The Scheduled-Downtime Population
+
+The LSST operations include planned downtime for mirror recoating, instrumental maintenance, software updates, and so on and so forth. We identify the subset of synthetic objects for which the global minimum of m ​ ( t ) m(t) , that is, the moment of peak brightness, when the object is most detectable, falls exclusively within these planned downtime windows. These objects would be bright enough to detect, at the right location on sky, for a telescope that happened to be open, however at this time the LSST is not open. The objects wait, the maintenance proceeds, and then the objects subsequently fade below the detection threshold before survey operations resume. We dub this the “Toy Story” effect.
+
+We find N down = 0 ± 0 N_{\rm down}=0\pm 0 . This result is entirely a consequence of orbital geometry and survey scheduling; the objects have no knowledge of or interest in the telescope’s operational status. The objects are rocks with no preferences for survey cadence optimisation.
+
+III.4.2 Terminal-Epoch Population
+
+Objects that achieve detectability only after the nominal survey end date constitute a non-yield by construction. The population is formally infinite: for any survey end date T end T_{\rm end} , the set of objects whose orbital evolution brings them to a detectable apparition only at t > T end t>T_{\rm end} is unbounded. The solar system does not end when the survey does (unless that Death Star turns out to be real). We find N term = ∞ N_{\rm term}=\infty and recommend this be included in the LSST final data release headline statistics.
+
+We note that the precise value of T end T_{\rm end} is itself subject to uncertainty, reflecting the genuine operational complexity of commissioning and sustaining a flagship-class survey facility. We offer no prediction of this parameter, acknowledge the considerable skill, effort, and dedication of all those working toward survey completion, and note only that larger values of T end T_{\rm end} reduce N term N_{\rm term} monotonically. This finding is presented as motivation, if any were needed.
+
+III.5 Pipeline and Computational Non-Yield
+
+III.5.1 The Chip-Gap Population
+
+The Rubin LSSTCam focal plane consists of 189 science CCDs with physical gaps between sensors of approximately 60  ′′ . We inject 10 6 10^{6} synthetic objects into the survey simulator and examine which objects have every single detection fall within a chip gap across all visits over the ten-year baseline. The expected yield for this population is N gap = 0 ± 0 N_{\rm gap}=0\pm 0 . This result does not require a simulation to understand, but the simulation is important for confirming that the universe is under no obligation to be fair, and it helped warm the authors office up. Figure  4 shows the Rubin focal plane with the sky-plane trajectories of representative unlucky objects overlaid.
+
+Figure 4: Example observations of objects that only align with chip gaps within the LSSTCam footprint. Red dashed lines represent their orbit path, and black crosses are their observations. The right panel represents a rare case of ‘snakes and ladders’ class object that should be paid no mind.
+
+III.5.2 Compute-Budget Exceedance
+
+The LSST moving object linking pipeline operates under a finite compute budget. Two timescales compete: the arc-expiry timescale τ arc \tau_{\rm arc} , after which an object’s positional uncertainty has grown too large for reliable recovery, and the queue-drain timescale τ queue \tau_{\rm queue} , the expected wait between job submission and execution on the supporting high-performance computing facility. The condition for a compute-budget non-detection is τ arc < τ queue \tau_{\rm arc}<\tau_{\rm queue} , i.e., the object is formally lost before the computer gets around to looking for it.
+
+We estimate τ queue \tau_{\rm queue} from documented job wait time distributions at national computing facilities, where typical wait times in the regular queue range from several hours to days depending on cluster utilisation (e.g. NERSC, 2026 ) , with excursions toward the upper end routinely documented in the weeks preceding major data releases. These objects have valid tracklets. The tracklets are in a queue. The queue is occupied by someone’s degenerate MCMC exoplanet atmosphere retrieval/3D thermonuclear radiative transfer code. We find N compute = 0 ± 0 N_{\rm compute}=0\pm 0 , and note that this is the only failure mode in the non-yield catalogue attributable to the Slurm etiquette of a third party. You know who you are.
+
+III.5.3 Classified Satellite Coincidence
+
+The LSST alert packets are filtered to remove detections coinciding with the orbits of classified Earth-observing satellites before distribution to the community. The sky density of classified satellite orbits is [REDACTED] . The estimated non-yield from this filtering process is N classified = N_{\rm classified}= [REDACTED] ± \pm [REDACTED] .
+
+We can neither confirm nor deny that this population constitutes a significant contribution to the total non-yield. We note, however, that this sentence is identical regardless of whether the answer is yes or no, which we invite the reader to interpret as they see fit.
+
+IV Conclusion
+
+We have presented comprehensive predictions for the solar system objects LSST will not detect. Our primary results are:
+
+1.
+
+LSST will fail to detect nearly all of our synthetic objects across all modelled populations, constituting a lower bound on the non-yield.
+
+2.
+
+The Sun represents the most extreme photometric non-detection, comprising 99.86% of solar system mass absent from the LSST catalogue.
+
+3.
+
+The Antichthon, predicted by Philolaus of Croton in approximately 400 BCE, was ruled out by the STEREO mission approximately two decades before LSST first light. The 2,400-year open question has been closed. The LSST arrived too late and will not re-close it.
+
+4.
+
+The terminal-epoch population is formally infinite. We recommend this be stated in the survey summary.
+
+5.
+
+The Death Star, if extant and targeting Earth, would be detectable by the LSST at m r ≈ 19 m_{r}\approx 19 – 22 22  mag at its maximum allowed heliocentric distance of 27.5 27.5  au. Its non-detection is interpreted as confirmation of its destruction at the Battle of Endor, and is the only entry in the non-yield catalogue whose primary failure mode constitutes good news. The authors acknowledge that the alternative interpretation would constitute considerably more urgent news.
+
+6.
+
+The non-yield from the classified satellite coincidence population is [REDACTED] .
+
+A lot of fuss has been made about how revolutionary the LSST will be for solar system science, and whilst we agree this is true for many objects, it is also important to temper our expectations. This work has shown many of the shortcomings of the LSST as a true all-solar system survey, and should be used as a vehicle to launch the LSST 2: Electric Boogaloo: No Rock Left Behind.
+
+Table 1: Summary of LSST Solar System Non-Yield by Population
+
+Section
+Population
+Category
+
+N syn N_{\mathrm{syn}} a
+
+N det N_{\mathrm{det}} b
+
+Primary failure mode
+
+III.1.1
+Counter-Earth (L3)
+Geometric
+0
+0
+Hiding behind the Sun; also doesn’t exist
+
+III.1.2
+The Sun
+Geometric
+1
+0
+It’s the Sun
+
+III.2.1
+Emissive bright-limit
+Photometric
+Unknown
+0
+On fire
+
+III.2.2
+Death Star (DS-1)
+Photometric
+1
+0 ± 1 \pm 1
+
+Confirmed (hopefully) destroyed (Battle of Endor)
+
+III.3.1
+Zero-velocity
+Kinematic
+?
+0
+Don’t move. He can’t see us if we don’t move.
+
+III.4.1
+Scheduled downtime
+Temporal
+10 9 10^{9}
+0
+The “Toy Story” effect
+
+III.4.2
+Terminal epoch
+Temporal
+∞ \infty
+∞ \infty
+Survey ends first
+
+III.5.1
+Chip-gap
+Pipeline
+10 9 10^{9}
+0
+Cozy in a chip gap
+
+III.5.2
+Compute-budget
+Pipeline
+10 9 10^{9}
+0
+Bad Slurm etiquette (third party)
+
+III.5.3
+Government satellites
+Pipeline
+[REDACTED]
+[REDACTED]
+[REDACTED]
+
+Total
+
+∞ \infty
+0– ∞ \infty
+
+a Number of simulated objects
+b Number of non-detected objects
+
+Note. We don’t know how many objects are on fire in the solar system because no one will give us JWST time to look. We also don’t know how many zero-velocity objects there are to model, but we also don’t care because it’s Gaia’s problem not ours. The terminal-epoch population is formally infinite and is excluded from the total. The classified satellite column entries are classified.
+
+We thank the Sun for its continued operation throughout the survey period. Any interruption would affect these figures significantly and would also affect everything else.
+
+{contribution}
+All authors contributed equally to this, but some more equally than others.
+
+References
+
+Anglo-Saxon Needleworkers (1070)
+Bayeux tapestry .
+
+Note: Romanesque embroidery illustrating the Norman Conquest (1066)Musée de la Tapisserie de Bayeux, France
+
+Cited by: Figure 2 .
+
+I. Chow, M. Jurić, R. L. Jones, K. Kiker, J. Moeyens, P. G. Brown, A. N. Heinze, and J. A. Kurlander (2026)
+Predictions of Imminent Earth Impactors Discovered by LSST .
+
+arXiv e-prints , pp. arXiv:2603.05587 .
+
+External Links: Document ,
+2603.05587
+
+Cited by: §I .
+
+R. C. Dorsey, M. J. Hopkins, M. T. Bannister, S. M. Lawler, C. Lintott, A. H. Parker, and J. C. Forbes (2025)
+The Visibility of the Ōtautahi─Oxford Interstellar Object Population Model in LSST .
+
+\psj 6 ( 9 ), pp. 214 .
+
+External Links: Document ,
+2502.16741
+
+Cited by: §I .
+
+Hans Burgkmair the Younger (1552)
+The augsburg book of miraculous signs .
+
+Note: Facsimile edition of the 16th-century manuscript
+
+Cited by: Figure 2 .
+
+Ž. Ivezić, S. M. Kahn, J. A. Tyson, B. Abel, E. Acosta, R. Allsman, D. Alonso, Y. AlSayyad, S. F. Anderson, J. Andrew, J. R. P. Angel, G. Z. Angeli, R. Ansari, P. Antilogus, C. Araujo, R. Armstrong, K. T. Arndt, P. Astier, É. Aubourg, N. Auza, T. S. Axelrod, D. J. Bard, J. D. Barr, A. Barrau, J. G. Bartlett, A. E. Bauer, B. J. Bauman, S. Baumont, E. Bechtol, K. Bechtol, A. C. Becker, J. Becla, C. Beldica, S. Bellavia, F. B. Bianco, R. Biswas, G. Blanc, J. Blazek, R. D. Blandford, J. S. Bloom, J. Bogart, T. W. Bond, M. T. Booth, A. W. Borgland, K. Borne, J. F. Bosch, D. Boutigny, C. A. Brackett, A. Bradshaw, W. N. Brandt, M. E. Brown, J. S. Bullock, P. Burchat, D. L. Burke, G. Cagnoli, D. Calabrese, S. Callahan, A. L. Callen, J. L. Carlin, E. L. Carlson, S. Chandrasekharan, G. Charles-Emerson, S. Chesley, E. C. Cheu, H. Chiang, J. Chiang, C. Chirino, D. Chow, D. R. Ciardi, C. F. Claver, J. Cohen-Tanugi, J. J. Cockrum, R. Coles, A. J. Connolly, K. H. Cook, A. Cooray, K. R. Covey, C. Cribbs, W. Cui, R. Cutri, P. N. Daly, S. F. Daniel, F. Daruich, G. Daubard, G. Daues, W. Dawson, F. Delgado, A. Dellapenna, R. de Peyster, M. de Val-Borro, S. W. Digel, P. Doherty, R. Dubois, G. P. Dubois-Felsmann, J. Durech, F. Economou, T. Eifler, M. Eracleous, B. L. Emmons, A. Fausti Neto, H. Ferguson, E. Figueroa, M. Fisher-Levine, W. Focke, M. D. Foss, J. Frank, M. D. Freemon, E. Gangler, E. Gawiser, J. C. Geary, P. Gee, M. Geha, C. J. B. Gessner, R. R. Gibson, D. K. Gilmore, T. Glanzman, W. Glick, T. Goldina, D. A. Goldstein, I. Goodenow, M. L. Graham, W. J. Gressler, P. Gris, L. P. Guy, A. Guyonnet, G. Haller, R. Harris, P. A. Hascall, J. Haupt, F. Hernandez, S. Herrmann, E. Hileman, J. Hoblitt, J. A. Hodgson, C. Hogan, J. D. Howard, D. Huang, M. E. Huffer, P. Ingraham, W. R. Innes, S. H. Jacoby, B. Jain, F. Jammes, M. J. Jee, T. Jenness, G. Jernigan, D. Jevremović, K. Johns, A. S. Johnson, M. W. G. Johnson, R. L. Jones, C. Juramy-Gilles, M. Jurić, J. S. Kalirai, N. J. Kallivayalil, B. Kalmbach, J. P. Kantor, P. Karst, M. M. Kasliwal, H. Kelly, R. Kessler, V. Kinnison, D. Kirkby, L. Knox, I. V. Kotov, V. L. Krabbendam, K. S. Krughoff, P. Kubánek, J. Kuczewski, S. Kulkarni, J. Ku, N. R. Kurita, C. S. Lage, R. Lambert, T. Lange, J. B. Langton, L. Le Guillou, D. Levine, M. Liang, K. Lim, C. J. Lintott, K. E. Long, M. Lopez, P. J. Lotz, R. H. Lupton, N. B. Lust, L. A. MacArthur, A. Mahabal, R. Mandelbaum, T. W. Markiewicz, D. S. Marsh, P. J. Marshall, S. Marshall, M. May, R. McKercher, M. McQueen, J. Meyers, M. Migliore, M. Miller, D. J. Mills, C. Miraval, J. Moeyens, F. E. Moolekamp, D. G. Monet, M. Moniez, S. Monkewitz, C. Montgomery, C. B. Morrison, F. Mueller, G. P. Muller, F. Muñoz Arancibia, D. R. Neill, S. P. Newbry, J. Nief, A. Nomerotski, M. Nordby, P. O’Connor, J. Oliver, S. S. Olivier, K. Olsen, W. O’Mullane, S. Ortiz, S. Osier, R. E. Owen, R. Pain, P. E. Palecek, J. K. Parejko, J. B. Parsons, N. M. Pease, J. M. Peterson, J. R. Peterson, D. L. Petravick, M. E. Libby Petrick, C. E. Petry, F. Pierfederici, S. Pietrowicz, R. Pike, P. A. Pinto, R. Plante, S. Plate, J. P. Plutchak, P. A. Price, M. Prouza, V. Radeka, J. Rajagopal, A. P. Rasmussen, N. Regnault, K. A. Reil, D. J. Reiss, M. A. Reuter, S. T. Ridgway, V. J. Riot, S. Ritz, S. Robinson, W. Roby, A. Roodman, W. Rosing, C. Roucelle, M. R. Rumore, S. Russo, A. Saha, B. Sassolas, T. L. Schalk, P. Schellart, R. H. Schindler, S. Schmidt, D. P. Schneider, M. D. Schneider, W. Schoening, G. Schumacher, M. E. Schwamb, J. Sebag, B. Selvy, G. H. Sembroski, L. G. Seppala, A. Serio, E. Serrano, R. A. Shaw, I. Shipsey, J. Sick, N. Silvestri, C. T. Slater, J. A. Smith, R. C. Smith, S. Sobhani, C. Soldahl, L. Storrie-Lombardi, E. Stover, M. A. Strauss, R. A. Street, C. W. Stubbs, I. S. Sullivan, D. Sweeney, J. D. Swinbank, A. Szalay, P. Takacs, S. A. Tether, J. J. Thaler, J. G. Thayer, S. Thomas, A. J. Thornton, V. Thukral, J. Tice, D. E. Trilling, M. Turri, R. Van Berg, D. Vanden Berk, K. Vetter, F. Virieux, T. Vucina, W. Wahl, L. Walkowicz, B. Walsh, C. W. Walter, D. L. Wang, S. Wang, M. Warner, O. Wiecha, B. Willman, S. E. Winters, D. Wittman, S. C. Wolff, W. M. Wood-Vasey, X. Wu, B. Xin, P. Yoachim, and H. Zhan (2019)
+LSST: From Science Drivers to Reference Design and Anticipated Data Products .
+
+ApJ 873 ( 2 ), pp. 111 .
+
+External Links: Document ,
+0805.2366
+
+Cited by: §I .
+
+R. L. Jones, S. R. Chesley, A. J. Connolly, A. W. Harris, Z. Ivezic, Z. Knezevic, J. Kubica, A. Milani, and D. E. Trilling (2009)
+Solar System Science with LSST .
+
+Earth Moon and Planets 105 ( 2-4 ), pp. 101–105 .
+
+External Links: Document
+
+Cited by: §I .
+
+M. L. Kaiser, T. A. Kucera, J. M. Davila, O. C. St. Cyr, M. Guhathakurta, and E. Christian (2008)
+The STEREO Mission: An Introduction .
+
+Space Sci. Rev. 136 ( 1-4 ), pp. 5–16 .
+
+External Links: Document
+
+Cited by: §III.1.1 .
+
+J. A. Kurlander, P. H. Bernardinelli, M. E. Schwamb, M. Jurić, J. Murtagh, and C. O. Chandeler (2025)
+Predictions of the LSST Solar System Yield: Near-Earth Objects, Main Belt Asteroids, Jupiter Trojans, and Trans-Neptunian Objects .
+
+AJ 170 , pp. 99 .
+
+External Links: Document
+
+Cited by: §I .
+
+C. Liu (2014)
+The three-body problem .
+
+Tor Books , New York, NY .
+
+Cited by: §III.1.1 .
+
+G. Lucas (1983)
+Star wars: episode vi – return of the jedi .
+
+Note: Film, directed by Richard Marquand
+
+Cited by: Figure 3 ,
+§III.2.2 ,
+§III.2.2 .
+
+S. R. Merritt, G. Fedorets, M. E. Schwamb, S. Cornwall, P. H. Bernardinelli, and M. Jurić (2025)
+Sorcha: A Solar System Survey Simulator for the Legacy Survey of Space and Time .
+
+AJ 170 , pp. 100 .
+
+External Links: Document
+
+Cited by: §II .
+
+C. D. Murray and S. F. Dermott (1999)
+Solar System Dynamics .
+
+Cambridge University Press .
+
+External Links: Document
+
+Cited by: §III.1.1 .
+
+J. Murtagh, M. E. Schwamb, P. H. Bernardinelli, H. W. Lin, J. A. Kurlander, S. R. Merritt, S. Cornwall, M. Jurić, G. Fedorets, M. J. Holman, S. Eggl, R. L. Jones, P. Yoachim, J. Moeyens, J. Kubica, D. Oldag, M. West, and C. O. Chandler (2026)
+Predictions of the LSST Solar System Yield: Neptune Trojans .
+
+AJ 171 ( 2 ), pp. 90 .
+
+External Links: Document ,
+2512.03892
+
+Cited by: §I .
+
+J. Murtagh, M. E. Schwamb, S. R. Merritt, P. H. Bernardinelli, J. A. Kurlander, S. Cornwall, M. Jurić, and G. Fedorets (2025)
+Predictions of the LSST Solar System Yield: Discovery Rates and Characterizations of Centaurs .
+
+AJ 170 , pp. 98 .
+
+External Links: Document
+
+Cited by: §I .
+
+NERSC (2026)
+Queue wait times and system status .
+
+Note: https://www.nersc.gov/users/status/queue-wait-times accessed 2026
+
+Cited by: §III.5.2 .
+
+Philolaus (c. 400BC)
+Papyrus scroll 1 , pp. 1 .
+
+Cited by: §III.1.1 .
+
+P. Vereš and S. R. Chesley (2017)
+High-fidelity Simulations of the Near-Earth Object Search Performance of the Large Synoptic Survey Telescope .
+
+AJ 154 ( 1 ), pp. 12 .
+
+External Links: Document ,
+1706.09398
+
+Cited by: §I .
+
+Experimental support, please
+view the build logs
+for errors. Generated by
+
+L
+A
+T
+E
+
+xml
+
+.
+
+Instructions for reporting errors
+We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+methods listed below:
+
+Click the "Report Issue" (
+
+) button, located in the page header.
+
+Tip: You can select the relevant text first, to include it in your report.
+Our team has already identified the following issues . We appreciate your time reviewing and reporting rendering errors we
+may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+all.
+Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a list of packages that need conversion , and welcome developer contributions .
+
+We gratefully acknowledge support from
+our major funders ,
+member institutions , ,
+and all contributors.
+
+About
+·
+Help
+·
+Contact
+·
+Subscribe
+·
+Copyright
+·
+Privacy
+·
+Accessibility
+·
+Operational Status (opens in new tab)
+
+Major funding support from

@@ -239,6 +239,10 @@ class Ledger:
     n_targets_screened: int = 0       # union of targets ever in footprint
     n_alerts_seen: int = 0
     n_events_kept: int = 0
+    # High-water mark: the newest epoch already screened.  The next run starts
+    # here, which is what makes coverage gapless AND non-overlapping regardless
+    # of how far the broker's mirror lags behind the wall clock.
+    last_mjd_screened: float = float("nan")
     targets: dict[str, dict] = field(default_factory=dict)
     rate_per_visit: float = float("nan")
     fdr_threshold: float = float("nan")
@@ -274,12 +278,22 @@ class Ledger:
                   visit_history: dict[str, list[float]] | None = None,
                   target_positions: dict[str, tuple[float, float]] | None = None,
                   ) -> None:
-        """Fold one night's screening into the running state.
+        """Fold **one observing night** into the running state.
 
-        ``target_visits`` is the night's trial count (targets in footprint times
-        visits each).  ``visit_history`` maps target id -> visit MJDs measured
-        from forced photometry; where a target is absent from it, its
+        ``target_visits`` is that night's trial count (distinct star-nights
+        actually observed).  ``visit_history`` maps target id -> visit MJDs
+        measured from forced photometry; where a target is absent from it, its
         denominator stays approximate and it cannot reach candidate tier.
+
+        THE UNIT MUST BE ONE NIGHT, NOT ONE RUN.  The screen pulls a window of
+        two nights so a missed cron firing is recovered, and it runs daily --- so
+        consecutive runs overlap.  Folding a whole window under a single label
+        would add the overlapping night's trials twice, which inflates the
+        denominator, *deflates* the ensemble event rate, and therefore makes
+        every per-target binomial p-value too small.  That error is
+        anti-conservative: it manufactures significance.  Events are already
+        de-duplicated by star-night; the trial count is made safe the same way,
+        by keying on the night and ignoring a night already recorded.
         """
         if night and night not in self.nights:
             self.nights.append(night)

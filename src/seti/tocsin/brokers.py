@@ -343,6 +343,29 @@ class AlerceTAP:
             "WHERE g.parallax > 10.0 AND x.dist < 1.5", maxrec=5)
         return out
 
+    def max_available_mjd(self) -> float | None:
+        """Newest LSST detection epoch the service actually holds.
+
+        ALeRCE's TAP mirror is **not** live: measured lag was 15.6 days on
+        2026-07-30.  A screen that always asks for "the last two nights" would
+        therefore return nothing every single night, forever, and look like a
+        clean null.  The window is anchored to this value instead of to the
+        wall clock.
+        """
+        rows = self.query(
+            "SELECT MAX(d.mjd) AS mjd_max FROM alerce_tap.detection AS d "
+            "JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
+            "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id",
+            maxrec=5, retries=2)
+        if not rows:
+            return None
+        v = rows[0].get("mjd_max")
+        try:
+            v = float(v)
+        except (TypeError, ValueError):
+            return None
+        return v if v == v else None
+
     # -- stage A: the night's detections on nearby stars -------------------
     def night_detections(self, mjd_lo: float, mjd_hi: float,
                          parallax_min_mas: float | None = 10.0,
@@ -395,8 +418,13 @@ class AlerceTAP:
                          "ON g.oid_catalog = x.oid_catalog")
             where.append(f"x.dist < {float(xmatch_max_arcsec)}")
             where.append(f"g.parallax > {float(parallax_min_mas)}")
-            sel += ["g.oid_catalog AS gaia_source_id", "g.parallax",
-                    "x.dist AS xmatch_dist"]
+            # NOT `g.oid_catalog`: the service declares it integer but stores
+            # string ids for some catalogues (AllWISE), so SELECTing it fails
+            # VOTable serialisation with "required argument is not an integer".
+            # It is fine in the JOIN condition, which is where it is needed --- and
+            # the authoritative star association is this repository's own
+            # proper-motion-propagated match anyway, not the broker's id.
+            sel += ["g.parallax", "x.dist AS xmatch_dist"]
         if extra_where:
             where.append(f"({extra_where})")
         adql = ("SELECT " + ", ".join(sel) + " FROM alerce_tap.detection AS d "
@@ -447,7 +475,7 @@ class AlerceTAP:
                          "ON g.oid_catalog = x.oid_catalog")
             where.append(f"x.dist < {float(xmatch_max_arcsec)}")
             where.append(f"g.parallax > {float(parallax_min_mas)}")
-            sel.append("g.oid_catalog AS gaia_source_id")
+            # See night_detections: `g.oid_catalog` cannot be SELECTed.
         adql = ("SELECT " + ", ".join(sel) +
                 " FROM alerce_tap.forced_photometry AS fp " + " ".join(joins) +
                 " WHERE " + " AND ".join(where))

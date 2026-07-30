@@ -61,7 +61,8 @@ DEFAULTS: dict = {
     "acquire": {"primary_broker": "alerce_tap", "alerce_tap_url": ALERCE_TAP,
                 "lookback_nights": 2.0, "parallax_min_mas": 10.0,
                 "xmatch_max_arcsec": 1.5, "maxrec": 2000000, "timeout_s": 900,
-                "gaia_catid": 1, "sid_diaobject": None,
+                "gaia_catid": 1, "sid_diaobject": 1,
+                "max_nights_per_run": 7.0,
                 "audit_without_gaia_join_every_n_runs": 14},
     "screen": {"min_abs_snr": 6.0, "min_reliability": 0.0,
                "require_reliability": False, "max_dipole_significance": 3.0,
@@ -118,6 +119,16 @@ def _sid(aconf: dict) -> int | None:
     """
     v = aconf.get("sid_diaobject")
     return None if v is None else int(v)
+
+
+def _frontier_mjd(aconf: dict) -> float | None:
+    """Newest LSST epoch the broker holds, or None if it cannot be determined."""
+    try:
+        tap = AlerceTAP(aconf["alerce_tap_url"], timeout=float(aconf["timeout_s"]))
+        return tap.max_available_mjd()
+    except Exception as exc:                              # noqa: BLE001
+        print(f"[tocsin] frontier query failed ({exc!r}); falling back to now")
+        return None
 
 
 def _now_mjd() -> float:
@@ -364,7 +375,7 @@ def _thresholds(conf: dict) -> Thresholds:
 
 
 def _visit_history_from_forced(rows, targets, th: Thresholds, epoch_jyear: float
-                               ) -> tuple[dict[str, list[float]], int, dict]:
+                               ) -> tuple[dict[str, list[float]], dict[str, int], dict]:
     """Map forced-photometry rows onto targets and count the night's trials.
 
     The association uses the *same* proper-motion-propagated matcher as the
@@ -374,13 +385,13 @@ def _visit_history_from_forced(rows, targets, th: Thresholds, epoch_jyear: float
     """
     stats = {"forced_rows": len(rows), "forced_matched": 0}
     if not rows or targets is None or len(targets) == 0:
-        return {}, 0, stats
+        return {}, {}, stats
     fra = np.array([float(r.get("ra", np.nan)) for r in rows])
     fdec = np.array([float(r.get("dec", np.nan)) for r in rows])
     fmjd = np.array([float(r.get("mjd", np.nan)) for r in rows])
     ok = np.isfinite(fra) & np.isfinite(fdec) & np.isfinite(fmjd)
     if not np.any(ok):
-        return {}, 0, stats
+        return {}, {}, stats
     t_ra = np.asarray(targets["ra"], dtype=float)
     t_dec = np.asarray(targets["dec"], dtype=float)
     pmra = np.asarray(targets["pmra"], dtype=float) if "pmra" in targets else np.zeros(t_ra.size)
@@ -408,7 +419,13 @@ def _visit_history_from_forced(rows, targets, th: Thresholds, epoch_jyear: float
         star_nights.add((tid, night_of(mj)))
     stats["forced_matched"] = int(m.alert_index.size)
     stats["tracked_targets"] = len(hist)
-    return ({k: sorted(set(v)) for k, v in hist.items()}, len(star_nights), stats)
+    # Trials, broken out PER NIGHT so overlapping run windows cannot double-count
+    # them (see `Ledger.add_night`).
+    trials: dict[str, int] = {}
+    for _tid, n in star_nights:
+        key = f"n{n}"
+        trials[key] = trials.get(key, 0) + 1
+    return ({k: sorted(set(v)) for k, v in hist.items()}, trials, stats)
 
 
 def screen_night(cfg=None, lookback_nights: float | None = None,
@@ -423,16 +440,51 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
     th = _thresholds(conf)
     aconf = conf["acquire"]
 
-    hi = float(mjd_hi) if mjd_hi is not None else _now_mjd()
-    lo = (float(mjd_lo) if mjd_lo is not None
-          else hi - float(lookback_nights if lookback_nights is not None
-                          else aconf["lookback_nights"]))
+    lconf_path = root / conf["ledger"]["path"]
+    led_peek = Ledger.load(lconf_path)
+    explicit_window = mjd_lo is not None or mjd_hi is not None
+    max_nights = float(aconf.get("max_nights_per_run", 7.0))
+    look = float(lookback_nights if lookback_nights is not None
+                 else aconf["lookback_nights"])
+
+    if explicit_window:
+        hi = float(mjd_hi) if mjd_hi is not None else _now_mjd()
+        lo = float(mjd_lo) if mjd_lo is not None else hi - look
+        frontier = None
+    else:
+        # Anchor to what the broker ACTUALLY holds, not to the wall clock.
+        # ALeRCE's TAP mirror lagged 15.6 days when measured on 2026-07-30, so a
+        # window of "the last two nights" would return nothing every night
+        # forever --- and an empty result is indistinguishable from a real null.
+        frontier = _frontier_mjd(aconf)
+        hi_cap = frontier if frontier is not None else _now_mjd()
+        # `_finite`, not `float(...)`: the watermark is written as JSON null
+        # when unset (NaN is not valid JSON), so it comes back as None and
+        # `float(None)` would raise on the second run of any live ledger.
+        wm = _finite(led_peek.last_mjd_screened)
+        lo = wm if wm is not None else hi_cap - look
+        # Cap the chunk so the first run against a 262-night backlog does not
+        # try to pull all of it in one job.
+        hi = min(hi_cap, lo + max_nights)
     summary: dict = {
         "run_at_utc": _utc(), "mjd_lo": round(lo, 5), "mjd_hi": round(hi, 5),
+        "broker_frontier_mjd": (round(frontier, 5) if frontier is not None else None),
+        "broker_lag_days": (round(_now_mjd() - frontier, 2)
+                            if frontier is not None else None),
+        "explicit_window": explicit_window,
         "nights": sorted({night_of(lo), night_of(hi)}),
         "use_gaia_join": bool(use_gaia_join), "verdict": "NOT_RUN", "counts": {},
         "notes": [],
     }
+
+    if hi <= lo:
+        summary["verdict"] = "NO_NEW_DATA"
+        summary["notes"].append(
+            "the watermark has caught up with the broker's newest epoch; "
+            "nothing to screen until the mirror advances")
+        _write_json(out / "summary.json", summary)
+        print(f"[tocsin] NO_NEW_DATA (watermark {lo:.3f} >= frontier {hi:.3f})")
+        return summary
 
     tpath = (Path(targets_path) if targets_path
              else root / ".cache" / "tocsin" / "targets.parquet")
@@ -478,13 +530,14 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
             xmatch_max_arcsec=float(aconf["xmatch_max_arcsec"]),
             gaia_catid=int(aconf.get("gaia_catid", 1)),
             sid_diaobject=_sid(aconf))
-        hist, star_nights, fstats = _visit_history_from_forced(
+        hist, trials_by_night, fstats = _visit_history_from_forced(
             fp.rows, targets, th, epoch_jyear)
         summary["counts"].update(fstats)
-        summary["counts"]["target_nights_screened"] = star_nights
+        summary["counts"]["target_nights_screened"] = sum(trials_by_night.values())
+        summary["trials_by_night"] = trials_by_night
         summary["denominator"] = "forced_photometry_exact"
     except BrokerError as exc:
-        hist, star_nights = {}, 0
+        hist, trials_by_night = {}, {}
         summary["denominator"] = "unavailable"
         summary["notes"].append(f"forced_photometry_failed: {str(exc)[:300]}")
 
@@ -499,11 +552,26 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
     led = Ledger.load(ledger_path)
     if not led.opened_utc:
         led.opened_utc = _utc()
-    night_label = f"n{night_of(lo)}-n{night_of(hi)}"
-    led.add_night(night_label, verdict.events, target_visits=star_nights,
-                  targets_in_footprint=len(hist) or len(targets),
-                  alerts_seen=len(alerts), visit_history=hist,
-                  target_positions=verdict.target_positions)
+    # Fold NIGHT BY NIGHT.  The run window spans two nights and consecutive runs
+    # overlap; only a per-night key keeps the cumulative trial count honest.
+    events_by_night: dict[str, list] = {}
+    for ev in verdict.events:
+        events_by_night.setdefault(ev.night, []).append(ev)
+    all_nights = sorted(set(trials_by_night) | set(events_by_night)
+                        | {f"n{n}" for n in range(night_of(lo), night_of(hi) + 1)})
+    first = True
+    for night in all_nights:
+        led.add_night(night, events_by_night.get(night, []),
+                      target_visits=trials_by_night.get(night, 0),
+                      targets_in_footprint=len(hist) or len(targets),
+                      # Alerts pulled are a per-window quantity, not per-night;
+                      # attribute them once so the running total stays a count
+                      # of alerts actually seen.
+                      alerts_seen=len(alerts) if first else 0,
+                      visit_history=hist if first else None,
+                      target_positions=verdict.target_positions)
+        first = False
+    summary["nights_folded"] = all_nights
     led.updated_utc = _utc()
     stats = led.assess(alpha_fdr=float(lconf["alpha_fdr"]),
                        min_visits_for_rate=int(lconf["min_visits_for_rate"]),
@@ -513,7 +581,15 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
                        max_grey_z=float(conf["screen"]["max_grey_z"]))
     led.save(ledger_path)
 
+    if not explicit_window:
+        # Only an auto-derived window advances the watermark: a manual re-run of
+        # an old window must not make the screen skip forward over data it has
+        # not actually looked at.
+        led.last_mjd_screened = float(hi)
+        led.save(ledger_path)
     summary["ledger"] = stats
+    _wm = _finite(led.last_mjd_screened)
+    summary["watermark_mjd"] = None if _wm is None else round(_wm, 5)
     summary["verdict"] = "OK" if det.rows else "NO_DETECTIONS_IN_WINDOW"
     _write_events(out, verdict, conf)
     _write_watchlist(out, led, conf)

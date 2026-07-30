@@ -540,6 +540,28 @@ def test_ledger_accumulates_trials_across_nights():
     assert led.n_target_visits == 2200
 
 
+def test_overlapping_run_windows_do_not_double_count_trials():
+    """Anti-conservative bug: a re-seen night must not add its trials again.
+
+    The screen pulls a 2-night window and runs daily, so consecutive runs
+    overlap by a night.  Counting that night's trials twice inflates the
+    denominator, deflates the ensemble rate, and makes every per-target
+    binomial p-value too SMALL --- i.e. it manufactures significance.
+    """
+    led = L.Ledger()
+    led.add_night("n61500", [], target_visits=1000, targets_in_footprint=900,
+                  alerts_seen=5000)
+    led.add_night("n61501", [], target_visits=1100, targets_in_footprint=900,
+                  alerts_seen=5100)
+    # Tomorrow's run re-covers n61501 and adds n61502.
+    led.add_night("n61501", [], target_visits=1100, targets_in_footprint=900,
+                  alerts_seen=5100)
+    led.add_night("n61502", [], target_visits=1200, targets_in_footprint=900,
+                  alerts_seen=5200)
+    assert led.n_target_visits == 1000 + 1100 + 1200
+    assert led.nights == ["n61500", "n61501", "n61502"]
+
+
 def test_ledger_deduplicates_identical_events():
     led = L.Ledger()
     ev = _event()
@@ -832,13 +854,21 @@ def test_lasair_without_a_token_fails_loudly():
 # ---------------------------------------------------------------------------
 # run --- config and honest verdicts
 # ---------------------------------------------------------------------------
-def test_shipped_config_leaves_the_sid_filter_off_until_it_is_measured():
-    """The safe default: an unverified filter must not be able to empty a night."""
+def test_shipped_config_carries_the_measured_broker_encodings():
+    """These are measurements from the live probe, not guesses --- pin them.
+
+    Probe of 2026-07-30 (`results/tocsin/probe.json`):
+      * `object_sid_tid` -> sid=0/tid=0 is ZTF, sid=1/tid=1 is LSST diaObject,
+        sid=2/tid=1 is LSST ssObject.  So sid=1 selects LSST and excludes known
+        solar-system objects.
+      * `xmatch_catid`   -> catid 1 is Gaia DR3, catid 0 is AllWISE.
+    """
     from seti.tocsin.run import _sid, load_tocsin_config
     conf = load_tocsin_config()
-    assert _sid(conf["acquire"]) is None
-    # ... and a measured value is applied verbatim when set.
-    assert _sid({"sid_diaobject": 2}) == 2
+    assert _sid(conf["acquire"]) == 1
+    assert int(conf["acquire"]["gaia_catid"]) == 1
+    # None still drops the clause, which is what kept the first runs safe.
+    assert _sid({"sid_diaobject": None}) is None
 
 
 def test_config_defaults_are_complete_and_overridable():
@@ -913,6 +943,9 @@ def test_nightly_screen_end_to_end_against_a_stubbed_broker(tmp_path, monkeypatc
     assert s["counts"]["events_kept"] == 1          # one star-NIGHT, two bands
     assert s["denominator"] == "forced_photometry_exact"
     assert s["counts"]["target_nights_screened"] == 1
+    # Trials are attributed per night, so a later overlapping run cannot
+    # double-count them.
+    assert s["trials_by_night"] == {"n61499": 1}
 
     led = L.Ledger.load(tmp_path / "results" / "tocsin" / "ledger.json")
     rec = led.targets["777"]
@@ -931,6 +964,130 @@ def test_nightly_screen_end_to_end_against_a_stubbed_broker(tmp_path, monkeypatc
         assert (out / name).exists(), name
     json.loads((out / "summary.json").read_text())
     assert len(pd.read_csv(out / "watchlist.csv")) == 1
+
+
+def _stub_tap_factory(frontier, seen):
+    """A stubbed AlerceTAP that records the window it was asked for."""
+    from seti.tocsin.brokers import BrokerResult
+
+    class _Stub:
+        def __init__(self, *a, **kw):
+            pass
+
+        def max_available_mjd(self):
+            return frontier
+
+        def night_detections(self, lo, hi, **kw):
+            seen.append((lo, hi))
+            return BrokerResult(rows=[], reached=True,
+                                verdict="NO_DETECTIONS_IN_WINDOW")
+
+        def forced_photometry_night(self, lo, hi, **kw):
+            return BrokerResult(rows=[], reached=True, verdict="OK")
+
+    return _Stub
+
+
+def test_window_is_anchored_to_the_broker_not_to_the_wall_clock(tmp_path, monkeypatch):
+    """Regression: the broker's TAP mirror lags ~2 weeks behind real time.
+
+    Asking for "the last two nights" against a mirror that is 15.6 days behind
+    returns nothing every night, forever — and an empty result is
+    indistinguishable from a genuine null.  The window must start from the
+    newest epoch the broker actually holds.
+    """
+    from seti.tocsin import run as R
+
+    frontier = 61235.4
+    seen: list[tuple[float, float]] = []
+    monkeypatch.setattr(R, "AlerceTAP", _stub_tap_factory(frontier, seen))
+    tpath = tmp_path / "targets.parquet"
+    pd.DataFrame([_target(source_id="777")]).to_parquet(tpath)
+
+    class _Cfg:
+        root = tmp_path
+    R.screen_night(_Cfg(), targets_path=tpath, out_dir=tmp_path / "res")
+
+    assert seen, "no query was issued"
+    lo, hi = seen[0]
+    assert hi <= frontier + 1e-6
+    # ... and nowhere near the (much later) wall clock.
+    assert lo > frontier - 30.0
+
+
+def test_the_watermark_advances_and_does_not_re_screen(tmp_path, monkeypatch):
+    """Consecutive runs must be gapless AND non-overlapping."""
+    from seti.tocsin import run as R
+
+    frontier = 61235.4
+    seen: list[tuple[float, float]] = []
+    monkeypatch.setattr(R, "AlerceTAP", _stub_tap_factory(frontier, seen))
+    tpath = tmp_path / "targets.parquet"
+    pd.DataFrame([_target(source_id="777")]).to_parquet(tpath)
+
+    class _Cfg:
+        root = tmp_path
+    (tmp_path / "config").mkdir(exist_ok=True)
+    (tmp_path / "config" / "tocsin.yaml").write_text(
+        "acquire:\n  max_nights_per_run: 3.0\nledger:\n"
+        "  path: results/tocsin/ledger.json\n")
+
+    # Start well behind the frontier so the CHUNK CAP is the binding constraint
+    # (this is the backfill case: ~262 nights of LSST data already exist).
+    led = L.Ledger()
+    led.last_mjd_screened = frontier - 10.0
+    led.save(tmp_path / "results" / "tocsin" / "ledger.json")
+
+    s1 = R.screen_night(_Cfg(), targets_path=tpath, out_dir=tmp_path / "res")
+    s2 = R.screen_night(_Cfg(), targets_path=tpath, out_dir=tmp_path / "res")
+    assert len(seen) == 2
+    (lo1, hi1), (lo2, hi2) = seen
+    assert lo1 == pytest.approx(frontier - 10.0)
+    assert hi1 - lo1 == pytest.approx(3.0)      # chunk cap respected
+    assert lo2 == pytest.approx(hi1)            # gapless, and no overlap
+    assert hi2 - lo2 == pytest.approx(3.0)
+    assert s1["watermark_mjd"] == pytest.approx(hi1)
+    assert s2["watermark_mjd"] == pytest.approx(hi2)
+
+
+def test_a_caught_up_watermark_reports_no_new_data(tmp_path, monkeypatch):
+    """Reaching the frontier is a distinct verdict, not an empty candidate table."""
+    from seti.tocsin import run as R
+
+    frontier = 61235.4
+    seen: list[tuple[float, float]] = []
+    monkeypatch.setattr(R, "AlerceTAP", _stub_tap_factory(frontier, seen))
+    tpath = tmp_path / "targets.parquet"
+    pd.DataFrame([_target(source_id="777")]).to_parquet(tpath)
+
+    class _Cfg:
+        root = tmp_path
+    led = L.Ledger()
+    led.last_mjd_screened = frontier
+    led.save(tmp_path / "results" / "tocsin" / "ledger.json")
+
+    s = R.screen_night(_Cfg(), targets_path=tpath, out_dir=tmp_path / "res")
+    assert s["verdict"] == "NO_NEW_DATA"
+    assert seen == []                           # no pointless broker call
+
+
+def test_an_explicit_window_does_not_move_the_watermark(tmp_path, monkeypatch):
+    """A manual re-run of an old window must not skip forward over unseen data."""
+    from seti.tocsin import run as R
+
+    seen: list[tuple[float, float]] = []
+    monkeypatch.setattr(R, "AlerceTAP", _stub_tap_factory(61235.4, seen))
+    tpath = tmp_path / "targets.parquet"
+    pd.DataFrame([_target(source_id="777")]).to_parquet(tpath)
+
+    class _Cfg:
+        root = tmp_path
+    s = R.screen_night(_Cfg(), targets_path=tpath, out_dir=tmp_path / "res",
+                       mjd_lo=61000.0, mjd_hi=61001.0)
+    assert s["explicit_window"] is True
+    assert seen[0] == (61000.0, 61001.0)
+    led = L.Ledger.load(tmp_path / "results" / "tocsin" / "ledger.json")
+    assert L._finite(led.last_mjd_screened) is None
 
 
 def test_screen_night_reports_an_unreachable_broker_as_such(tmp_path, monkeypatch):

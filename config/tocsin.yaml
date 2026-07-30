@@ -45,6 +45,8 @@ acquire:
   xmatch_max_arcsec: 1.5
   # ALeRCE cross-match catalogue id for Gaia DR3.  Measured by the probe
   # (`diagnostics.xmatch_catid`), not assumed.
+  # MEASURED by the probe on 2026-07-30: catid 1 = Gaia DR3 (2.58M rows),
+  # catid 0 = AllWISE (849k).
   gaia_catid: 1
   # ALeRCE `sid` value selecting diaObject-associated (i.e. NOT known
   # solar-system) detections.  `null` drops the filter entirely, which is the
@@ -53,7 +55,23 @@ acquire:
   # an optimisation and a solar-system exclusion, and a wrong guess here would
   # silently return an empty night rather than an error.  Set it to the measured
   # value once `diagnostics.sample_detection` / `object_sid_tid` confirm it.
-  sid_diaobject: null
+  # MEASURED by the probe on 2026-07-30 (`diagnostics.object_sid_tid`):
+  #   sid=0, tid=0 -> ZTF          (9.09M objects)
+  #   sid=1, tid=1 -> LSST diaObject (5.16M)
+  #   sid=2, tid=1 -> LSST ssObject  (131k, known solar-system)
+  # So sid=1 is correct, and it excludes ~300k solar-system detections per
+  # 30 days without touching anything else.
+  sid_diaobject: 1
+  # The broker's TAP mirror is NOT live: measured lag was 15.6 days on
+  # 2026-07-30 (newest LSST epoch MJD 61235.4 against a wall clock of 61251.1).
+  # The screen therefore anchors its window to the newest epoch the broker
+  # actually holds and advances a watermark, rather than asking for "the last
+  # two nights" and receiving nothing every night forever.
+  #
+  # Nights per run.  LSST detections in ALeRCE already span MJD 60973 -> 61235
+  # (~262 nights), so the first runs are a BACKFILL of real archival data, not a
+  # wait for new sky.  This caps how much one job chews through.
+  max_nights_per_run: 7.0
   maxrec: 2000000
   timeout_s: 900
   # Periodically re-run with the Gaia join disabled to MEASURE what the cheap

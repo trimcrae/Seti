@@ -747,6 +747,12 @@ def _cmd_loom_calibrate(args, cfg):
     calibrate(cfg, out_dir=args.out_dir)
 
 
+def _cmd_loom_litcheck(args, cfg):
+    from .loom.run import litcheck
+
+    litcheck(cfg, out_dir=args.out_dir, names=args.name or None)
+
+
 def _cmd_vigil_probe(args, cfg):
     from .vigil.run import vigil_probe
 
@@ -1325,6 +1331,19 @@ def main(argv=None):
                             "channel depends on it")
     p.add_argument("--out-dir", default=None)
     p.set_defaults(func=_cmd_loom_calibrate)
+
+    p = sub.add_parser("loom-litcheck",
+                       help="LOOM (runner-only): ask whether the flagged "
+                            "exceedances are ALREADY EXPLAINED in the literature. "
+                            "They are 'unexplained' only relative to a "
+                            "seven-object list from 2023, and that population has "
+                            "since been extended — so this is the step that "
+                            "decides whether any of them is a lead at all")
+    p.add_argument("--out-dir", default=None)
+    p.add_argument("--name", action="append", default=[],
+                   help="object to check (repeatable); default is the survivors "
+                        "recorded in calibration.json")
+    p.set_defaults(func=_cmd_loom_litcheck)
 
     p = sub.add_parser("knell-vet",
                        help="KNELL stage 2: aggregate every field's candidates "

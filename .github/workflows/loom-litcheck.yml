@@ -1,0 +1,132 @@
+name: loom-litcheck
+
+# Is a flagged object ALREADY EXPLAINED?  (docs/loom.md §2.3)
+#
+# The step that decides whether LOOM's vetted exceedances mean anything.  Six
+# asteroids sit above the radiation momentum ceiling with good orbits and
+# significant A2 -- but "unexplained" means only "not in a SEVEN-OBJECT LIST"
+# (Seligman et al. 2023), and that population has since been extended: Farnocchia
+# & Seligman 2024 (PNAS) found two distinct classes of dark comet.  An object
+# already catalogued there is explained by hidden outgassing and is not a lead.
+#
+# Two searches, because either alone misses:
+#   * the dark-comet papers are fetched and searched IN FULL, since object
+#     designations live in tables and are invisible to abstract-level search;
+#   * every designation is searched across arXiv, which catches papers outside
+#     the fixed list.
+#
+# Matching is deliberately strict and every hit is returned WITH CONTEXT.  A
+# designation like "2006 VC" is four characters of very common text, and a loose
+# substring match against a PDF would declare a real lead "already explained" and
+# discard it silently -- the most expensive error available here.
+#
+# CREDENTIALS: none.  arXiv is public; it is simply unreachable from the sandbox.
+
+on:
+  workflow_dispatch:
+    inputs:
+      names:
+        description: >-
+          Comma-separated object designations to check.  Blank uses the survivors
+          recorded in results/loom/calibration.json.
+        required: false
+        default: ""
+      out_dir:
+        description: "Override the results directory (blank = results/loom)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  litcheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          # Designation tables are in the PDFs when arXiv serves no HTML.
+          pip install pypdf
+
+      - name: Check the flagged objects against the literature
+        run: |
+          args=""
+          if [ -n "${{ github.event.inputs.out_dir }}" ]; then
+            args="$args --out-dir ${{ github.event.inputs.out_dir }}"
+          fi
+          if [ -n "${{ github.event.inputs.names }}" ]; then
+            IFS=',' read -ra NAMES <<< "${{ github.event.inputs.names }}"
+            for n in "${NAMES[@]}"; do
+              args="$args --name \"$(echo "$n" | sed 's/^ *//;s/ *$//')\""
+            done
+          fi
+          echo "loom-litcheck$args"
+          eval python -m seti.cli loom-litcheck $args
+
+      - name: Show what the literature says
+        if: always()
+        run: |
+          [ -f results/loom/litcheck.json ] && python - <<'PY'
+          import json, pathlib
+          rec = json.loads(pathlib.Path("results/loom/litcheck.json").read_text())
+          print("verdict:", rec.get("verdict"))
+          print("checked:", rec.get("objects_checked"))
+          print("explained:", rec.get("n_explained"), "of", rec.get("n_objects"))
+
+          print("\n=== papers read ===")
+          for pid, p in (rec.get("papers") or {}).items():
+              print(f"  arXiv:{pid} [{p.get('source')}] {p.get('n_chars')} chars "
+                    f"-- {p.get('label','')[:60]}")
+              if not p.get("n_chars"):
+                  print(f"     attempts: {p.get('attempts')}")
+
+          print("\n=== per object ===")
+          for name, o in (rec.get("objects") or {}).items():
+              print(f"\n  {name}: {o['verdict']} ({o['n_hits']} hits)")
+              for h in o.get("hits", [])[:4]:
+                  print(f"     [{h['source']}] matched {h['matched']!r}")
+                  print(f"       ...{h['context'][:220]}...")
+              if not o.get("hits"):
+                  print(f"     searched: {len(o.get('searched', []))} sources")
+              for e in o.get("errors", [])[:3]:
+                  print(f"     ERROR {e[:160]}")
+
+          print("\nNOTE: NOT_FOUND_IN_SEARCHED_LITERATURE is a statement about the")
+          print("searches as much as about the object. The searched set is listed")
+          print("above so the claim can be judged rather than taken.")
+          PY
+
+      - name: Commit the literature check
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # ONE PATHSPEC AT A TIME: `git add` with several is atomic, so a single
+          # unmatched glob stages NOTHING and `|| true` swallows it.
+          git add -f -- results/loom/litcheck.json || echo "no litcheck.json"
+          echo "=== staged ==="
+          git diff --cached --name-only
+          if git diff --cached --quiet; then
+            echo "No litcheck changes to commit."
+          else
+            git commit -m "loom: literature check on the flagged exceedances"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: loom-litcheck
+          path: results/loom/

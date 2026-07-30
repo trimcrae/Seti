@@ -230,6 +230,8 @@ Inherited discipline from `docs/channel-brief.md` §4, plus what is specific her
 | **Solar-system objects** | ~400 alerts/visit, up to ~5,000 near the ecliptic | `sid = 1` excludes SSO-associated alerts server-side; `trailLength` and `extendedness` catch the unassociated residue (Rubin already deletes trails >10 °/day upstream) |
 | **Cosmic rays** | Single-visit, single-band, unrepeatable | `pixelFlags_cr*` are fatal; recurrence finishes the job |
 | **Un-propagated proper motion** | Produces a **clean null**, the most dangerous failure mode — it looks like a result | Positions are propagated to the alert epoch before matching, and the failure is a regression test (`test_match_fails_without_proper_motion_propagation`) |
+| **Deep-drilling fields** | *Found the hard way.* A DDF is deeper, revisited far more often (34–48 nights against 7 elsewhere) and subtracts differently, so its true per-star-night alert rate is genuinely higher — measured at 0.006–0.027 against an all-sky 1.57×10⁻³. Testing a DDF star against the all-sky rate does not detect anything, it rediscovers the observing strategy | The binomial null is **stratified by 1° sky bin**: each target is tested against the more conservative of the all-sky and its own bin's rate |
+| **Low-amplitude variable stars** | *Also found the hard way.* The dominant astrophysical population at \|a\| ≲ 3%, and the first three candidates were all of them | **Single-mechanism coherence**: a reflector flashes, a grey occulter dips. A star doing both across nights is varying intrinsically, and caps at `interest` |
 | **Misassociation by the broker's cross-match** | ALeRCE matches to Gaia at the *catalogue* epoch, so the highest-PM nearby dwarfs — this channel's best targets — are the ones it can orphan | The server-side Gaia join is a *cheap* cut, never the authoritative association; the repository's own PM-propagated match decides. Periodic audit runs with the join disabled measure what it loses |
 
 ### 4.1 The completeness limitation that is not ours to fix
@@ -309,11 +311,40 @@ would silently corrupt every colour in the channel.
 | tier | meaning |
 |---|---|
 | `watch` | one event; not yet testable |
-| `interest` | a grey-confirmed single event, or ≥2 events |
-| `candidate` | ≥2 events, ≥1 grey-confirmed, FDR-significant against the cumulative trial count, exact visit denominator, duty cycle below threshold |
+| `interest` | a grey-confirmed single event, or ≥2 events, or a repeater rejected by one of the coherence rules below |
+| `candidate` | ≥2 events, ≥1 grey-confirmed, FDR-significant against the **stratified** null, exact visit denominator, duty cycle below threshold, and **single polarity** |
 | `alarm` | a candidate whose event epochs also beat the cadence-matched timing null |
 
 A tier is a statement about *evidence*, not a ranking of excitement.
+
+## 6.1 First full walk: 263 nights, and why zero candidates is the right answer
+
+The complete backlog (MJD 60973 → 61235, the broker's whole LSST holding) gives:
+
+```
+263 nights · 55,424 star-night trials · 87 events · 42 targets with events
+all-sky rate 1.57e-03 per star-night · 1,927 sky bins with trials
+tiers: 25 watch · 13 interest · 0 candidate · 4 none
+```
+
+Three targets *did* reach candidate tier before the last two discriminators were
+added, and both discriminators came from examining them rather than from theory:
+
+1. The first two were both in **COSMOS** — a deep-drilling field where the local
+   alert rate is 4–75× the all-sky value. Stratifying the null moved their
+   p-values from 1.3×10⁻³ and 2.7×10⁻⁷ to 0.035 and 0.003.
+2. All three showed **both polarities across nights** — flash on some, dip on
+   others. That is intrinsic variability, not a reflector and not an occulter.
+
+The four `none` targets are duty-cycle rejections: stars alerting on most of
+their visits, which is a subtraction residual rather than an event. The
+highest-multiplicity target in the whole walk (7 events in 7 visits, duty 1.0)
+is one of them.
+
+So the honest summary of the first walk is: **the funnel works, every
+discriminator fires on real data, and nothing survives.** Per the charter that is
+a reason to keep accumulating and to keep sharpening the question — not a result
+to write up.
 
 ## 7. Status
 

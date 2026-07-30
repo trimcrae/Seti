@@ -231,8 +231,37 @@ Inherited discipline from `docs/channel-brief.md` §4, plus what is specific her
 | **Cosmic rays** | Single-visit, single-band, unrepeatable | `pixelFlags_cr*` are fatal; recurrence finishes the job |
 | **Un-propagated proper motion** | Produces a **clean null**, the most dangerous failure mode — it looks like a result | Positions are propagated to the alert epoch before matching, and the failure is a regression test (`test_match_fails_without_proper_motion_propagation`) |
 | **Deep-drilling fields** | *Found the hard way.* A DDF is deeper, revisited far more often (34–48 nights against 7 elsewhere) and subtracts differently, so its true per-star-night alert rate is genuinely higher — measured at 0.006–0.027 against an all-sky 1.57×10⁻³. Testing a DDF star against the all-sky rate does not detect anything, it rediscovers the observing strategy | The binomial null is **stratified by 1° sky bin**: each target is tested against the more conservative of the all-sky and its own bin's rate |
-| **Low-amplitude variable stars** | *Also found the hard way.* The dominant astrophysical population at \|a\| ≲ 3%, and the first three candidates were all of them | **Single-mechanism coherence**: a reflector flashes, a grey occulter dips. A star doing both across nights is varying intrinsically, and caps at `interest` |
+| **Low-amplitude variable stars** | *Also found the hard way.* The dominant astrophysical population at \|a\| ≲ 3%, and the first three candidates were all of them | Mixed polarity across nights demands **grey confirmation in each polarity independently** — see §4.2. A variable's excursions are one continuous *chromatic* variation; an engineered occulter-plus-reflector is grey both ways |
 | **Misassociation by the broker's cross-match** | ALeRCE matches to Gaia at the *catalogue* epoch, so the highest-PM nearby dwarfs — this channel's best targets — are the ones it can orphan | The server-side Gaia join is a *cheap* cut, never the authoritative association; the repository's own PM-propagated match decides. Periodic audit runs with the join disabled measure what it loses |
+
+### 4.2 Mixed polarity: a harder test, not a veto
+
+The three candidates from the first full walk all showed **both** polarities
+across nights — flash on some, dip on others. The first response was to bar
+mixed-polarity targets from candidate tier outright. That was wrong, and wrong in
+the expensive direction.
+
+A megastructure is the same hypothesis this repository already chases from two
+sides: `dimming` (it occults) and `glint` (it reflects). A real structure in orbit
+should do **both** — occult when it transits, glint when specular geometry aligns.
+Mixed polarity is arguably the signature rather than the disqualifier, and a
+blanket veto would discard the most interesting class in the channel.
+
+What actually separates the two is **colour, not sign**. A variable star crosses
+its own template mean, so its flashes and dips are one continuous *chromatic*
+variation — pulsators change temperature with brightness, spots are cool. An
+engineered occulter-plus-reflector is grey in *both* directions.
+
+So mixed polarity is admitted, on stronger evidence: grey confirmation is
+required **independently in each polarity**. A more exotic claim carries a
+heavier burden, which is the right direction for the requirement to run.
+
+Checked against the three real candidates: each had a grey-confirmed flash but a
+single-band, untested dip, so all three are still rejected — while a genuine
+dual-mode object remains reachable. The ledger also reports
+`polarity_amplitude_ratio` for information, since a variable oscillating about
+its mean has roughly balanced excursions (measured: 1.8, 2.0, 20.1) whereas an
+occulter and a glint have no reason to match.
 
 ### 4.1 The completeness limitation that is not ours to fix
 
@@ -312,7 +341,7 @@ would silently corrupt every colour in the channel.
 |---|---|
 | `watch` | one event; not yet testable |
 | `interest` | a grey-confirmed single event, or ≥2 events, or a repeater rejected by one of the coherence rules below |
-| `candidate` | ≥2 events, ≥1 grey-confirmed, FDR-significant against the **stratified** null, exact visit denominator, duty cycle below threshold, and **single polarity** |
+| `candidate` | ≥2 events, ≥1 grey-confirmed, FDR-significant against the **stratified** null, exact visit denominator, duty cycle below threshold, and — if mixed-polarity — grey-confirmed in **each** polarity (§4.2) |
 | `alarm` | a candidate whose event epochs also beat the cadence-matched timing null |
 
 A tier is a statement about *evidence*, not a ranking of excitement.
@@ -334,7 +363,9 @@ added, and both discriminators came from examining them rather than from theory:
    alert rate is 4–75× the all-sky value. Stratifying the null moved their
    p-values from 1.3×10⁻³ and 2.7×10⁻⁷ to 0.035 and 0.003.
 2. All three showed **both polarities across nights** — flash on some, dip on
-   others. That is intrinsic variability, not a reflector and not an occulter.
+   others — with the flash grey-confirmed but the dip single-band and untested.
+   Under §4.2 that is consistent with intrinsic variability and insufficient for
+   a dual-mode claim.
 
 The four `none` targets are duty-cycle rejections: stars alerting on most of
 their visits, which is a subtraction residual rather than an event. The

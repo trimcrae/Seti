@@ -78,7 +78,7 @@ DEFAULTS: dict = {
     "ledger": {"path": "results/tocsin/ledger.json", "alpha_fdr": 0.05,
                "min_visits_for_rate": 5, "max_duty_cycle": 0.2,
                "n_null_timing": 2000, "timing_alpha": 0.01,
-               "require_single_polarity": True},
+               "mixed_polarity_requires_grey_both": True},
     "report": {"results_dir": "results/tocsin", "max_candidate_rows": 2000},
 }
 
@@ -878,8 +878,8 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
                        n_null_timing=int(lconf["n_null_timing"]),
                        timing_alpha=float(lconf["timing_alpha"]),
                        max_grey_z=float(conf["screen"]["max_grey_z"]),
-                       require_single_polarity=bool(
-                           lconf.get("require_single_polarity", True)))
+                       mixed_polarity_requires_grey_both=bool(
+                           lconf.get("mixed_polarity_requires_grey_both", True)))
     led.save(ledger_path)
 
     if not explicit_window:
@@ -970,8 +970,8 @@ def assess_only(cfg=None, out_dir: str | Path | None = None) -> dict:
                        n_null_timing=int(lconf["n_null_timing"]),
                        timing_alpha=float(lconf["timing_alpha"]),
                        max_grey_z=float(conf["screen"]["max_grey_z"]),
-                       require_single_polarity=bool(
-                           lconf.get("require_single_polarity", True)))
+                       mixed_polarity_requires_grey_both=bool(
+                           lconf.get("mixed_polarity_requires_grey_both", True)))
     led.updated_utc = _utc()
     led.save(path)
     _write_watchlist(out, led, conf)

@@ -1776,39 +1776,63 @@ def test_bin_trials_survive_the_night_dedup_guard(tmp_path, monkeypatch):
     assert led.targets["777"].get("local_rate") is not None
 
 
-def test_mixed_polarity_across_nights_cannot_reach_candidate():
-    """Single-mechanism coherence: a reflector flashes, an occulter dips.
+def test_mixed_polarity_needs_grey_confirmation_in_both_polarities():
+    """Mixed polarity is a HARDER test, not a veto.
 
-    A star doing both on different nights is varying intrinsically — the
-    dominant astrophysical population at these amplitudes, and 3 of 3 of the
-    first candidates the channel promoted on real Rubin data (|a| <= 3%, one at
-    0.013%).  Such targets cap at `interest` and carry a note; they are flagged
-    rather than discarded, because this deliberately forgoes a hypothetical
-    object that both occults and glints.
+    An earlier version of this rule barred mixed-polarity targets from candidate
+    tier outright.  That was wrong in the expensive direction: a megastructure is
+    the same hypothesis this repo chases from two sides — it occults AND it
+    reflects — so a real structure in orbit should show both, and a veto would
+    discard the most interesting class in the channel.
+
+    What separates it from a variable star is COLOUR, not sign.  A variable
+    crosses its own template mean, so its excursions are one continuous
+    chromatic variation; an engineered occulter-plus-reflector is grey in both
+    directions.  So mixed polarity is admitted only on grey confirmation in each
+    polarity independently.
     """
-    def _build(polarities):
+    def _build(specs):
         led = L.Ledger()
         led.n_target_visits, led.n_events_kept = 200000, 200
         evs = [_event(night=f"n{61500 + 30 * i}", mjd=61500.2 + 30 * i,
-                      polarity=pol) for i, pol in enumerate(polarities)]
+                      polarity=pol, grey=grey, grey_z=(0.4 if grey else float("nan")))
+               for i, (pol, grey) in enumerate(specs)]
         led.add_night("n61500", evs, target_visits=0, targets_in_footprint=0,
                       alerts_seen=0)
-        led.apply_visit_history(
-            {"4242": [61500.0 + i for i in range(60)]})
+        led.apply_visit_history({"4242": [61500.0 + i for i in range(60)]})
         return led
 
-    same = _build(["flash", "flash"])
+    # Single polarity, grey-confirmed: promotes, as before.
+    same = _build([("flash", True), ("flash", True)])
     same.assess()
     assert same.targets["4242"]["tier"] in ("candidate", "alarm")
-    assert same.targets["4242"]["polarities"] == ["flash"]
 
-    mixed = _build(["flash", "dip"])
-    mixed.assess()
-    rec = mixed.targets["4242"]
+    # Mixed, but only the flash is colour-tested — the shape all three real
+    # candidates had.  Rejected.
+    half = _build([("flash", True), ("dip", False)])
+    half.assess()
+    rec = half.targets["4242"]
     assert rec["tier"] == "interest"
-    assert rec["polarities"] == ["dip", "flash"]
-    assert any("mixed_polarity" in n for n in rec["notes"])
+    assert rec["grey_confirmed_polarities"] == ["flash"]
+    assert any("mixed_polarity_without_grey" in n for n in rec["notes"])
 
-    # The trade is reversible: switching the requirement off restores promotion.
-    mixed.assess(require_single_polarity=False)
-    assert mixed.targets["4242"]["tier"] in ("candidate", "alarm")
+    # Mixed AND grey-confirmed in both: a genuine dual-mode object stays
+    # reachable.  This is the case the earlier veto would have thrown away.
+    both = _build([("flash", True), ("dip", True)])
+    both.assess()
+    rec = both.targets["4242"]
+    assert rec["tier"] in ("candidate", "alarm")
+    assert rec["grey_confirmed_polarities"] == ["dip", "flash"]
+
+
+def test_polarity_amplitude_ratio_is_reported():
+    """Informational: a variable oscillating about its mean has balanced
+    excursions; an occulter and a glint have no reason to match."""
+    led = L.Ledger()
+    evs = [_event(night="n61500", mjd=61500.2, polarity="flash"),
+           _event(night="n61530", mjd=61530.2, polarity="dip")]
+    evs[1].a = -0.5                      # ten times the flash amplitude
+    led.add_night("n61500", evs, target_visits=10, targets_in_footprint=5,
+                  alerts_seen=10)
+    led.assess()
+    assert led.targets["4242"]["polarity_amplitude_ratio"] == pytest.approx(5.0)

@@ -252,6 +252,32 @@ BENNU_A2 = 4.62e-14
 MAX_DEL_VIGNA_R = 2.0
 
 
+# Semimajor axis of Jupiter, for the Tisserand parameter.
+JUPITER_A_AU = 5.2044
+
+
+def tisserand_j(a_au, e, i_deg) -> float:
+    """Tisserand parameter with respect to Jupiter.
+
+    THE discriminator this analysis was missing.  ``T_J < 3`` is comet-like
+    dynamics — the object is on a Jupiter-crossing or Jupiter-coupled orbit, which
+    is where dark comets live and which makes hidden outgassing the natural
+    reading.  ``T_J > 3`` is asteroidal dynamics, and an unexplained acceleration
+    on such an orbit is harder to attribute to a volatile reservoir that should
+    have been depleted long ago.
+
+    It is computed from ``a``, ``e`` and ``i`` alone — all three measured to many
+    digits for any multi-apparition object — so unlike epsilon it depends on no
+    assumed density and no assumed albedo.
+    """
+    a, ecc, inc = _f(a_au), _f(e), _f(i_deg)
+    if not (math.isfinite(a) and math.isfinite(ecc) and math.isfinite(inc)) or a <= 0:
+        return float("nan")
+    return (JUPITER_A_AU / a
+            + 2.0 * math.cos(math.radians(inc))
+            * math.sqrt((a / JUPITER_A_AU) * (1.0 - ecc * ecc)))
+
+
 def del_vigna_ratio(a2_au_day2, diameter_metres) -> float:
     """``|A2|`` over the Bennu-scaled Yarkovsky expectation for that size."""
     d = _f(diameter_metres)
@@ -456,6 +482,23 @@ def summarise_epsilon(rows: list[dict], rho_kg_m3: float = RHO_TYPICAL_KG_M3,
          "epsilon_effective": float(eps[i]),
          "diameter_measured": bool(math.isfinite(_f(dkm[i]))),
          "known_as": annotate(names[i]),
+         # Dynamical and non-gravitational context, so an exceedance can be read
+         # without going back to the source table.  `tisserand_j` is the one
+         # discriminator here that depends on NO assumed density and NO assumed
+         # albedo: below 3 is comet-like dynamics and hidden outgassing is the
+         # natural reading; above 3 is asteroidal and harder to explain away.
+         "a_au": _f(kept[i].get("a")), "e": _f(kept[i].get("e")),
+         "i_deg": _f(kept[i].get("i")),
+         "tisserand_j": tisserand_j(kept[i].get("a"), kept[i].get("e"),
+                                    kept[i].get("i")),
+         "comet_like_dynamics": (tisserand_j(kept[i].get("a"), kept[i].get("e"),
+                                             kept[i].get("i")) < 3.0
+                                 if math.isfinite(tisserand_j(
+                                     kept[i].get("a"), kept[i].get("e"),
+                                     kept[i].get("i"))) else None),
+         "A1_au_day2": _f(kept[i].get("A1")), "A3_au_day2": _f(kept[i].get("A3")),
+         "albedo": _f(kept[i].get("albedo")),
+         "del_vigna_R": del_vigna_ratio(a2[i], d[i]),
          **vet_exceedance(kept[i])}
         for i in idx if eps[i] > 0.1]
     above_hard = [x for x in out.exceedances if x["epsilon_effective"] > 1.0]

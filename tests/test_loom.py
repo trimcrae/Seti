@@ -1814,3 +1814,23 @@ def test_density_grid_shows_where_a_verdict_actually_rests():
     # An object genuinely below the ceiling everywhere is reported as such.
     ordinary = calibrate.sensitivity_grid(1e-15, 18.0, diameter_metres=1000.0)
     assert ordinary["robust_below_ceiling"]
+
+
+def test_tisserand_separates_comet_like_from_asteroidal_dynamics():
+    """The one discriminator here that assumes no density and no albedo.
+
+    T_J < 3 is comet-like dynamics, where hidden outgassing is the natural
+    reading of an unexplained acceleration; T_J > 3 is asteroidal, where a
+    volatile reservoir should long since have been depleted. It comes from a, e
+    and i alone, all measured to many digits for a multi-apparition object.
+    """
+    from seti.loom import calibrate
+
+    # 1P/Halley: a = 17.8, e = 0.967, i = 162 deg -- emphatically comet-like.
+    assert calibrate.tisserand_j(17.8, 0.967, 162.0) < 3.0
+    # (1) Ceres: a = 2.77, e = 0.076, i = 10.6 deg -- asteroidal.
+    assert calibrate.tisserand_j(2.77, 0.076, 10.6) > 3.0
+    # Jupiter-family comet boundary sits at 3 by construction.
+    assert calibrate.tisserand_j(3.0, 0.0, 0.0) == pytest.approx(
+        calibrate.JUPITER_A_AU / 3.0 + 2 * math.sqrt(3.0 / calibrate.JUPITER_A_AU))
+    assert math.isnan(calibrate.tisserand_j(None, 0.1, 5.0))

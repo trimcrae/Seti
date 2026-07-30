@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta property="og:title" content="DP0.3 Data Products" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://dp0-3.lsst.io/data-products-dp0-3/index.html" />
+<meta property="og:site_name" content="Rubin Observatory DP0.3" />
+<meta property="og:description" content="The Simulated Data Set: Information about the simulated data set which is being used for DP0.3. The DP0.3 Simulation- Observing strategy, Simulated objects and detections, Truth data, Known issues...." />
+<meta name="description" content="The Simulated Data Set: Information about the simulated data set which is being used for DP0.3. The DP0.3 Simulation- Observing strategy, Simulated objects and detections, Truth data, Known issues...." />
+
+    <title>DP0.3 Data Products &#8212; Rubin Observatory DP0.3</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../_static/styles/bootstrap.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+
+  
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="icon" sizes="32x32" type="image/png" href="../_static/rubin-favicon-transparent-32px.png?v=6c2acf7e" />
+    <link rel="icon" sizes="16x16" type="image/svg" href="../_static/rubin-favicon.svg?v=cf539499" />
+    <link rel="stylesheet" type="text/css" href="../_static/rubin-pydata-theme.css?v=da1c904e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94">
+
+    <script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=e9564245"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'data-products-dp0-3/index';</script>
+    <link rel="canonical" href="https://dp0-3.lsst.io/data-products-dp0-3/index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The DP0.3 Simulation" href="data-simulation-dp0-3.html" />
+    <link rel="prev" title="Vera C. Rubin Observatory Documentation for Data Preview 0.3 (DP0.3)" href="../index.html" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  <!-- Source Sans Pro 400 regular+italic and 700 regular from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../index.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../_static/rubin-titlebar-imagotype-light.svg" class="logo__image only-light" alt="Logo image">
+    <img src="../_static/rubin-titlebar-imagotype-dark.svg" class="logo__image only-dark" alt="Logo image">
+  
+  
+    <p class="title logo__title">Rubin Observatory DP0.3</p>
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        DP0.3 Data Products
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../tutorials-dp0-3/index.html">
+                        DP0.3 Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../project/index.html">
+                        DP0.3 Documentation Project Information
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://www.lsst.io">
+                    Rubin docs
+                  </a>
+                </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+        <div class="navbar-end-item navbar-persistent--container">
+          
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+        </div>
+      
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/lsst/dp0-3_lsst_io" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+
+
+  
+  
+    <div class="navbar-persistent--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+    </div>
+  
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+  </label>
+  
+
+</div>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        DP0.3 Data Products
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../tutorials-dp0-3/index.html">
+                        DP0.3 Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../project/index.html">
+                        DP0.3 Documentation Project Information
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://www.lsst.io">
+                    Rubin docs
+                  </a>
+                </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/lsst/dp0-3_lsst_io" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+  <div class="sidebar-start-items sidebar-primary__section">
+    <div class="sidebar-start-items__item"><nav class="bd-links" id="bd-docs-nav" aria-label="Section navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">
+    Section Navigation
+  </p>
+  <div class="bd-toc-item navbar-nav">
+    <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="data-simulation-dp0-3.html">The DP0.3 Simulation</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="table-access-and-queries.html">DP0.3 Table Access and Queries</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="solar-system-processing-pipeline.html">The Solar System Processing (SSP) Pipeline</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="heliolinc3d-tracklet-linking-orbit-fitting.html">The HelioLinC3D Tracklet Linking and Orbit Fitting Software Package</a></li>
+</ul>
+
+  </div>
+</nav>
+    </div>
+  </div>
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+  
+  <div id="rtd-footer-container"></div>
+
+      </div>
+      <main id="main-content" class="bd-main">
+        
+        
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+            </div>
+            
+            
+            <article class="bd-article" role="main">
+              
+  <span class="target" id="data-products-dp0-3-data-products"></span><section id="dp0-3-data-products">
+<h1>DP0.3 Data Products<a class="headerlink" href="#dp0-3-data-products" title="Link to this heading">#</a></h1>
+<section id="the-simulated-data-set">
+<span id="dp0-3-data-products-introduction"></span><h2>The Simulated Data Set<a class="headerlink" href="#the-simulated-data-set" title="Link to this heading">#</a></h2>
+<p>Information about the simulated data set which is being used for DP0.3.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="data-simulation-dp0-3.html">The DP0.3 Simulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data-simulation-dp0-3.html#observing-strategy">Observing strategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-simulation-dp0-3.html#simulated-objects-and-detections">Simulated objects and detections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-simulation-dp0-3.html#truth-data">Truth data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-simulation-dp0-3.html#known-issues">Known issues</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="dp0-3-data-products-definition-document-dpdd">
+<span id="dp0-3-data-products-dpdd"></span><h2>DP0.3 Data Products Definition Document (DPDD)<a class="headerlink" href="#dp0-3-data-products-definition-document-dpdd" title="Link to this heading">#</a></h2>
+<p>Future data previews and Operations-era LSST data releases will produce images and catalogs that more closely
+resemble the plan laid out in the <a class="reference external" href="https://ls.st/dpdd/">Data Products Definition Document</a> (DPDD).
+Several of the future data products that are listed in the DPDD are not available for DP0
+(e.g., columns in the planned moving object tables in Section 3.3.3 of the DPDD).</p>
+<p>In the future, for real LSST survey data, the tables that DP0.3 is meant to emulate will be Prompt products
+that are updated nightly (<code class="docutils literal notranslate"><span class="pre">DiaSource</span></code> and <code class="docutils literal notranslate"><span class="pre">SSObject</span></code>)
+or products of the moving object pipeline that are updated daily (<code class="docutils literal notranslate"><span class="pre">SSSource</span></code> and <code class="docutils literal notranslate"><span class="pre">MPCORB</span></code>).
+However, for DP0.3 these data products are static, created as they would be after 1 year of LSST, and at the end of the 10-year survey.</p>
+<p>The DP0.3 solar system simulation is completely distinct from the <a class="reference external" href="https://arxiv.org/abs/2010.05926">DESC DC2</a> simulated data set used for DP0.2.
+The two simulations use different observing strategy simulations, different object truth simulations, and cover different areas.
+There is no way to, for instance, see a DP0.3 simulated asteroid detection in a DESC DC2 simulated image.</p>
+<p>Due to time constraints, DP0.3 does not contain u- or y-band detections. This decision was made in part because the majority of objects will have very low signal-to-noise ratio in u and y, and object discoverability is driven by the gri bands. Also, <a class="reference internal" href="table-access-and-queries.html#unpopulated-columns"><span class="std std-ref">a subset of DP0.3 columns</span></a> are unpopulated at present.</p>
+<section id="schema-browser">
+<span id="dp0-3-data-products-dpdd-schema-browser"></span><h3>Schema browser<a class="headerlink" href="#schema-browser" title="Link to this heading">#</a></h3>
+<p>A  <a class="reference external" href="https://sdm-schemas.lsst.io/dp03.html">schema browser</a> for the four DP0.3 solar system tables (<code class="docutils literal notranslate"><span class="pre">DiaSource</span></code>, <code class="docutils literal notranslate"><span class="pre">SSSource</span></code>, <code class="docutils literal notranslate"><span class="pre">SSObject</span></code>, <code class="docutils literal notranslate"><span class="pre">MPCORB</span></code>) is available. Note that the 1-year and 10-year versions of each DP0.3 table have the same schema in the sense that all column names and descriptions are identical for the 1-year and 10-year versions.</p>
+<p>The <a class="reference external" href="https://data.lsst.cloud">RSP Portal aspect</a> includes lists of column names and their descriptions for DP0.3 tables, and so can also be used as a schema browser.</p>
+</section>
+<section id="catalogs">
+<span id="dp0-3-data-products-dpdd-catalogs"></span><h3>Catalogs<a class="headerlink" href="#catalogs" title="Link to this heading">#</a></h3>
+<table class="table" id="id9">
+<caption><span class="caption-text">Catalog data available for DP0.3.</span><a class="headerlink" href="#id9" title="Link to this table">#</a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 40.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>TAP Name</p></th>
+<th class="head"><p>Link to Table</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>DiaSource</p></td>
+<td><p><a class="reference external" href="https://data.lsst.cloud/portal/app/?api=tap&amp;service=https://data.lsst.cloud/api/ssotap&amp;schema=dp03_catalogs_1yr&amp;table=dp03_catalogs_1yr.DiaSource">1-yr</a>, <a class="reference external" href="https://data.lsst.cloud/portal/app/?api=tap&amp;service=https://data.lsst.cloud/api/ssotap&amp;schema=dp03_catalogs_10yr&amp;table=dp03_catalogs_10yr.DiaSource">10-yr</a></p></td>
+<td><p>Astrometric and photometric measurements for solar system objects detected in difference images (19 columns).</p></td>
+</tr>
+<tr class="row-odd"><td><p>SSSource</p></td>
+<td><p><a class="reference external" href="https://data.lsst.cloud/portal/app/?api=tap&amp;service=https://data.lsst.cloud/api/ssotap&amp;schema=dp03_catalogs_1yr&amp;table=dp03_catalogs_1yr.SSSource">1-yr</a>, <a class="reference external" href="https://data.lsst.cloud/portal/app/?api=tap&amp;service=https://data.lsst.cloud/api/ssotap&amp;schema=dp03_catalogs_10yr&amp;table=dp03_catalogs_10yr.SSSource">10-yr</a></p></td>
+<td><p>Single-epoch solar system source information corresponding to a specific difference image detection (29 columns).</p></td>
+</tr>
+<tr class="row-even"><td><p>SSObject</p></td>
+<td><p><a class="reference external" href="https://data.lsst.cloud/portal/app/?api=tap&amp;service=https://data.lsst.cloud/api/ssotap&amp;schema=dp03_catalogs_1yr&amp;table=dp03_catalogs_1yr.SSObject">1-yr</a>, <a class="reference external" href="https://data.lsst.cloud/portal/app/?api=tap&amp;service=https://data.lsst.cloud/api/ssotap&amp;schema=dp03_catalogs_10yr&amp;table=dp03_catalogs_10yr.SSObject">10-yr</a></p></td>
+<td><p>Table of linked solar system objects (groupings of difference image detections; 55 columns).</p></td>
+</tr>
+<tr class="row-odd"><td><p>MPCORB</p></td>
+<td><p><a class="reference external" href="https://data.lsst.cloud/portal/app/?api=tap&amp;service=https://data.lsst.cloud/api/ssotap&amp;schema=dp03_catalogs_1yr&amp;table=dp03_catalogs_1yr.MPCORB">1-yr</a>, <a class="reference external" href="https://data.lsst.cloud/portal/app/?api=tap&amp;service=https://data.lsst.cloud/api/ssotap&amp;schema=dp03_catalogs_10yr&amp;table=dp03_catalogs_10yr.MPCORB">10-yr</a></p></td>
+<td><p>MPC-style information for injected solar system objects (27 columns).</p></td>
+</tr>
+</tbody>
+</table>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiaSource</span></code>:
+This table is the first to be generated in real time, as it is updated during the night by the Prompt Processing pipeline.
+<em>In the future</em>, with real data, the <code class="docutils literal notranslate"><span class="pre">DiaSource</span></code> table will contain measurements for <em>all</em> sources detected with a
+signal-to-noise ratio of at least 5 in a difference image.
+<em>For DP0.3</em>, the <code class="docutils literal notranslate"><span class="pre">DiaSource</span></code> table only contains the simulated detections of moving objects (no static-sky time-domain
+objects, and no artifacts).</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">SSSource</span></code>:
+This table contains the 2-d (sky) coordinates and 3-d distances and velocities for every <code class="docutils literal notranslate"><span class="pre">SSObject</span></code> at the time of every LSST
+observation of that <code class="docutils literal notranslate"><span class="pre">SSObject</span></code>.
+The <code class="docutils literal notranslate"><span class="pre">SSSource</span></code> and <code class="docutils literal notranslate"><span class="pre">DiaSource</span></code> tables are 1:1, as they each contain data per observation,
+whereas <code class="docutils literal notranslate"><span class="pre">SSObject</span></code> and <code class="docutils literal notranslate"><span class="pre">MPCORB</span></code> contain data per object.</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">SSObject</span></code>:
+During Rubin Operations, Prompt Processing will occur during the night, detecting sources in difference images
+(<code class="docutils literal notranslate"><span class="pre">DiaSources</span></code>) and associating them into static-sky transients and variables (<code class="docutils literal notranslate"><span class="pre">DiaObjects</span></code>, not included in DP0.3).
+The Solar System Processing which occurs in the daytime links together the <code class="docutils literal notranslate"><span class="pre">DiaSources</span></code>
+for moving objects into <code class="docutils literal notranslate"><span class="pre">SSObjects</span></code>, and measures properties such as phase curve fits and absolute magnitudes,
+which are stored in the <code class="docutils literal notranslate"><span class="pre">SSObject</span></code> table.</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">MPCORB</span></code>:
+During Rubin Operations, Solar System Processing will occur in the daytime, after a night of observing.
+It will link together the difference-image detections of moving objects and report discoveries to the Minor Planet Center (MPC),
+as well as compute derived properties (magnitudes, phase curve fits, coordinates in various systems).
+The MPC will calculate the orbital parameters and these results will be passed back to Rubin, and stored and made available to
+users as the MPCORB table (the other derived properties are stored in the other three tables described above).</p>
+<p>Note that the 1-year and 10-year versions of each DP0.3 table have the same <span class="xref std std-doc">schema</span>.</p>
+</section>
+<section id="table-access-and-queries">
+<span id="dp0-3-data-products-dpdd-access"></span><h3>Table access and queries<a class="headerlink" href="#table-access-and-queries" title="Link to this heading">#</a></h3>
+<p>For information and advice about accessing and querying the DP0.3 tables, please see the <a class="reference internal" href="table-access-and-queries.html"><span class="doc">table access and queries page</span></a>.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="table-access-and-queries.html">DP0.3 Table Access and Queries</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="table-access-and-queries.html#table-sizes">Table sizes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="table-access-and-queries.html#column-summary-values">Column summary values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="table-access-and-queries.html#semi-major-axis">Semi-Major Axis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="table-access-and-queries.html#unpopulated-columns">Unpopulated columns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="table-access-and-queries.html#table-joins">Table joins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="table-access-and-queries.html#query-a-list-of-objects">Query a list of objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="table-access-and-queries.html#non-random-subsets">Non-random subsets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="table-access-and-queries.html#random-subsets">Random subsets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="table-access-and-queries.html#flagged-rows">Flagged rows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="table-access-and-queries.html#truth-data">Truth data</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="the-solar-system-processing-ssp-pipeline">
+<span id="dp0-3-data-products-processing-pipeline"></span><h3>The Solar System Processing (SSP) pipeline<a class="headerlink" href="#the-solar-system-processing-ssp-pipeline" title="Link to this heading">#</a></h3>
+<p>For more information about the pipelines and processing that will be used to create the tables listed above but with real data, please see the <a class="reference internal" href="solar-system-processing-pipeline.html"><span class="doc">Solar System Processing pipeline page</span></a>.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="solar-system-processing-pipeline.html">The Solar System Processing (SSP) Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="solar-system-processing-pipeline.html#solar-system-prompt-processing">Solar System Prompt Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solar-system-processing-pipeline.html#solar-system-data-release-processing">Solar System Data Release Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solar-system-processing-pipeline.html#more-information">More information</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="the-heliolinc3d-tracklet-linking-and-orbit-fitting-software-package">
+<span id="dp0-3-moving-object-linking-software"></span><h3>The HelioLinC3D Tracklet Linking and Orbit Fitting software package<a class="headerlink" href="#the-heliolinc3d-tracklet-linking-and-orbit-fitting-software-package" title="Link to this heading">#</a></h3>
+<p>For more information about the software package that will be used for moving object tracklet linking and orbit fitting during operations, please see the <a class="reference internal" href="heliolinc3d-tracklet-linking-orbit-fitting.html"><span class="doc">HelioLinC3D Tracklet Linking and Orbit Fitting software package page</span></a>.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="heliolinc3d-tracklet-linking-orbit-fitting.html">The HelioLinC3D Tracklet Linking and Orbit Fitting Software Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="heliolinc3d-tracklet-linking-orbit-fitting.html#small-body-tracklet-linking-and-orbit-fitting">Small Body Tracklet Linking and Orbit Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heliolinc3d-tracklet-linking-orbit-fitting.html#more-information">More information</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+</section>
+
+
+            </article>
+            
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+  <a class='left-prev' id="prev-link" href="../index.html" title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+          <p class="prev-next-subtitle">previous</p>
+          <p class="prev-next-title">Vera C. Rubin Observatory Documentation for Data Preview 0.3 (DP0.3)</p>
+      </div>
+  </a>
+  <a class='right-next' id="next-link" href="data-simulation-dp0-3.html" title="next page">
+  <div class="prev-next-info">
+      <p class="prev-next-subtitle">next</p>
+      <p class="prev-next-title">The DP0.3 Simulation</p>
+  </div>
+  <i class="fa-solid fa-angle-right"></i>
+  </a>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+<div class="tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+</div>
+<nav id="bd-toc-nav" class="page-toc">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#the-simulated-data-set">
+   The Simulated Data Set
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#dp0-3-data-products-definition-document-dpdd">
+   DP0.3 Data Products Definition Document (DPDD)
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#schema-browser">
+     Schema browser
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#catalogs">
+     Catalogs
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#table-access-and-queries">
+     Table access and queries
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#the-solar-system-processing-ssp-pipeline">
+     The Solar System Processing (SSP) pipeline
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#the-heliolinc3d-tracklet-linking-and-orbit-fitting-software-package">
+     The HelioLinC3D Tracklet Linking and Orbit Fitting software package
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+</nav>
+</div>
+
+<div class="toc-item">
+  
+<div id="searchbox"></div>
+</div>
+
+<div class="toc-item">
+  
+
+<div class="tocsection editthispage">
+    <a href="https://github.com/lsst/dp0-3_lsst_io/edit/main/./data-products-dp0-3/index.rst">
+        <i class="fa-solid fa-pencil"></i> Edit this page
+    </a>
+</div>
+
+</div>
+
+<div class="toc-item">
+  
+</div>
+
+            </div>
+          
+          
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+          </div>
+        </footer>
+        
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94"></script>
+
+  <footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
+    &copy; Copyright 2015-2022 Association of Universities for Research in Astronomy, Inc. (AURA).<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="theme-version">
+    Built with the
+    <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">
+        PyData Sphinx Theme
+    </a>
+    0.12.0.
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+<p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.2.6.<br>
+</p>
+
+  </div>
+  
+</div>
+  </footer>
+  </body>
+</html>

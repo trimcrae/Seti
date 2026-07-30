@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+<!-- Begin Jekyll SEO tag v2.9.0 -->
+<title>Data Preview 0.3</title>
+<meta name="generator" content="Jekyll v4.4.1" />
+<meta property="og:title" content="Data Preview 0.3" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Data Preview 0.3" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","headline":"Data Preview 0.3","url":"/dp03.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+<link rel="shortcut icon" href="https://www.lsst.org/sites/default/files/Rubin%20favicon%2032px.png" type="image/png">
+<link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#157878">
+<link rel="stylesheet" href="./assets/css/main.css">
+
+    <!-- DataTables setup -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
+    <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        var tables = [];
+        var isPaginationEnabled = $('#toggle-pagination').is(':checked');
+
+        $('table.schema-table').each(function() {
+            var table = $(this);
+            var tableName = table.closest('section').find('h2').text().trim();
+            var dataTable = table.DataTable({
+                "pageLength": isPaginationEnabled ? 10 : -1, // Set the default number of entries to show based on checkbox state
+                "order": [[5, 'asc'], [0, 'asc']], // Sort by TAP Column Index and then by Column Name
+                dom: isPaginationEnabled ? 'Bfrtipl' : 'Bfrti', // Add the buttons to the DataTable and conditionally include pagination UI elements
+                buttons: [
+                    {
+                        extend: 'csvHtml5',
+                        filename: function() {
+                            return tableName;
+                        }
+                    }
+                ]
+            });
+            tables.push(dataTable);
+        });
+
+        $('#toggle-pagination').change(function() {
+            var isChecked = $(this).is(':checked');
+            tables.forEach(function(dataTable) {
+                var table = dataTable.table().node();
+                $(table).DataTable().destroy(); // Destroy the existing DataTable instance
+                $(table).DataTable({
+                    "pageLength": isChecked ? 10 : -1, // Set the default number of entries to show based on checkbox state
+                    "order": [[5, 'asc'], [0, 'asc']], // Sort by TAP Column Index and then by Column Name
+                    dom: isChecked ? 'Bfrtipl' : 'Bfrti', // Add the buttons to the DataTable and conditionally include pagination UI elements
+                    buttons: [
+                        {
+                            extend: 'csvHtml5',
+                            filename: function() {
+                                return $(table).closest('section').find('h2').text().trim();
+                            }
+                        }
+                    ]
+                });
+            });
+        });
+    });
+    </script>
+  </head>
+  <body>
+    <p></p>
+    <div id="container">
+      <nav id="sidebar">
+        <a href="https://rubinobservatory.org/" target="_blank">
+  <img id="logo" src="./assets/images/rubinobs.png" alt="Rubin Observatory Logo"/>
+</a>
+
+        <ul>
+          <li><b>Updated:</b> July 28, 2026</li>
+        </ul>
+        <label title="Enables table pagination of schema data when checked" style="margin: 20px;">
+          <input type="checkbox" id="toggle-pagination"> Paginate Tables
+        </label>
+        <ul>
+          <li><a href=".">Schema Browser</a></li>
+          <ul>
+            <li><a href="">Data Preview 0.3</a></li>
+            <ul>
+              <li><a href="#SSObject">SSObject</a></li>
+              <li><a href="#MPCORB">MPCORB</a></li>
+              <li><a href="#DiaSource">DiaSource</a></li>
+              <li><a href="#SSSource">SSSource</a></li>
+            </ul>
+          </ul>
+        </ul>
+        <ul>
+          <li><a href="./CHANGES.html">Release Notes</a></li>
+        </ul>
+        <ul>
+          <li><a href="/v">Change version</a></li>
+        </ul>
+      </nav>
+      <div id="content">
+        <main class="main-content">
+          <h1>Data Preview 0.3</h1>
+          <p>(Note: DP0.3 has two essentially identical schemas on TAP, <code class="language-plaintext highlighter-rouge">dp03_catalogs_10yr</code>,
+for a ten-year version of the SSO detection simulation, and <code class="language-plaintext highlighter-rouge">dp03_catalogs_1yr</code>,
+for a one-year version.
+Because they are intended to be identical, only the ten-year version is displayed
+here in the schema browser.)</p>
+
+          <hr style="margin-top: 20px; margin-bottom: 10px" />
+          <section id="SSObject">
+            <h2><a href="#SSObject">SSObject</a></h2>
+            <p>LSST-computed per-object quantities. 1:1 relationship with MPCORB. Recomputed daily, upon MPCORB ingestion.</p>
+            
+            <table class="schema-table">
+              <thead>
+                <tr>
+                  <th title="Name of the column in the schema">Column Name</th>
+                  <th title="Data type of the column">Data Type</th>
+                  <th title="Measurement unit of the column in IVOA units">Unit</th>
+                  <th title="Description of the column">Description</th>
+                  <th title="IVOA Unified Content Descriptor (UCD) of the column">UCD</th>
+                  <th title="Column ordering in TAP_SCHEMA">Order</th>
+                  <th title="Set to 1 for columns which are considered core content">Principal</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                <tr id="SSObject.ssObjectId">
+                  <td class="column-name">
+                    <a href="#SSObject.ssObjectId">ssObjectId</a>
+                  </td>
+                  <td>long</td>
+                  <td></td>
+                  <td>Unique identifier.
+                  </td>
+                  <td>meta.id;meta.main;src</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.discoverySubmissionDate">
+                  <td class="column-name">
+                    <a href="#SSObject.discoverySubmissionDate">discoverySubmissionDate</a>
+                  </td>
+                  <td>double</td>
+                  <td>d</td>
+                  <td>The date the LSST first linked and submitted the discovery observations to the MPC. May be NULL if not an LSST discovery. The date format will follow general LSST conventions (MJD TAI, at the moment).
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.firstObservationDate">
+                  <td class="column-name">
+                    <a href="#SSObject.firstObservationDate">firstObservationDate</a>
+                  </td>
+                  <td>double</td>
+                  <td>d</td>
+                  <td>The time of the first LSST observation of this object (could be precovered)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.arc">
+                  <td class="column-name">
+                    <a href="#SSObject.arc">arc</a>
+                  </td>
+                  <td>float</td>
+                  <td>d</td>
+                  <td>Arc of LSST observations
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.numObs">
+                  <td class="column-name">
+                    <a href="#SSObject.numObs">numObs</a>
+                  </td>
+                  <td>int</td>
+                  <td></td>
+                  <td>Number of LSST observations of this object
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.MOID">
+                  <td class="column-name">
+                    <a href="#SSObject.MOID">MOID</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Minimum orbit intersection distance to Earth
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.MOIDTrueAnomaly">
+                  <td class="column-name">
+                    <a href="#SSObject.MOIDTrueAnomaly">MOIDTrueAnomaly</a>
+                  </td>
+                  <td>float</td>
+                  <td>deg</td>
+                  <td>True anomaly of the MOID point
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.MOIDEclipticLongitude">
+                  <td class="column-name">
+                    <a href="#SSObject.MOIDEclipticLongitude">MOIDEclipticLongitude</a>
+                  </td>
+                  <td>float</td>
+                  <td>deg</td>
+                  <td>Ecliptic longitude of the MOID point
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.MOIDDeltaV">
+                  <td class="column-name">
+                    <a href="#SSObject.MOIDDeltaV">MOIDDeltaV</a>
+                  </td>
+                  <td>float</td>
+                  <td>km/s</td>
+                  <td>DeltaV at the MOID point
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.u_H">
+                  <td class="column-name">
+                    <a href="#SSObject.u_H">u_H</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Best fit absolute magnitude (u band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.u_G12">
+                  <td class="column-name">
+                    <a href="#SSObject.u_G12">u_G12</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Best fit G12 slope parameter (u band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.u_HErr">
+                  <td class="column-name">
+                    <a href="#SSObject.u_HErr">u_HErr</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Uncertainty of H (u band)
+                  </td>
+                  <td>stat.error</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.u_G12Err">
+                  <td class="column-name">
+                    <a href="#SSObject.u_G12Err">u_G12Err</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Uncertainty of G12 (u band)
+                  </td>
+                  <td>stat.error</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.u_H_uG12_Cov">
+                  <td class="column-name">
+                    <a href="#SSObject.u_H_uG12_Cov">u_H_uG12_Cov</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag**2</td>
+                  <td>H-G12 covariance (u band)
+                  </td>
+                  <td>stat.covariance</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.u_Chi2">
+                  <td class="column-name">
+                    <a href="#SSObject.u_Chi2">u_Chi2</a>
+                  </td>
+                  <td>float</td>
+                  <td></td>
+                  <td>Chi^2 statistic of the phase curve fit (u band)
+                  </td>
+                  <td>stat.fit.chi2</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.u_Ndata">
+                  <td class="column-name">
+                    <a href="#SSObject.u_Ndata">u_Ndata</a>
+                  </td>
+                  <td>int</td>
+                  <td></td>
+                  <td>The number of data points used to fit the phase curve (u band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.g_H">
+                  <td class="column-name">
+                    <a href="#SSObject.g_H">g_H</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Best fit absolute magnitude (g band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.g_G12">
+                  <td class="column-name">
+                    <a href="#SSObject.g_G12">g_G12</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Best fit G12 slope parameter (g band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.g_HErr">
+                  <td class="column-name">
+                    <a href="#SSObject.g_HErr">g_HErr</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Uncertainty of H (g band)
+                  </td>
+                  <td>stat.error</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.g_G12Err">
+                  <td class="column-name">
+                    <a href="#SSObject.g_G12Err">g_G12Err</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Uncertainty of G12 (g band)
+                  </td>
+                  <td>stat.error</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.g_H_gG12_Cov">
+                  <td class="column-name">
+                    <a href="#SSObject.g_H_gG12_Cov">g_H_gG12_Cov</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag**2</td>
+                  <td>H-G12 covariance (g band)
+                  </td>
+                  <td>stat.covariance</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.g_Chi2">
+                  <td class="column-name">
+                    <a href="#SSObject.g_Chi2">g_Chi2</a>
+                  </td>
+                  <td>float</td>
+                  <td></td>
+                  <td>Chi^2 statistic of the phase curve fit (g band)
+                  </td>
+                  <td>stat.fit.chi2</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.g_Ndata">
+                  <td class="column-name">
+                    <a href="#SSObject.g_Ndata">g_Ndata</a>
+                  </td>
+                  <td>int</td>
+                  <td></td>
+                  <td>The number of data points used to fit the phase curve (g band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.r_H">
+                  <td class="column-name">
+                    <a href="#SSObject.r_H">r_H</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Best fit absolute magnitude (r band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.r_G12">
+                  <td class="column-name">
+                    <a href="#SSObject.r_G12">r_G12</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Best fit G12 slope parameter (r band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.r_HErr">
+                  <td class="column-name">
+                    <a href="#SSObject.r_HErr">r_HErr</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Uncertainty of H (r band)
+                  </td>
+                  <td>stat.error</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.r_G12Err">
+                  <td class="column-name">
+                    <a href="#SSObject.r_G12Err">r_G12Err</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Uncertainty of G12 (r band)
+                  </td>
+                  <td>stat.error</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.r_H_rG12_Cov">
+                  <td class="column-name">
+                    <a href="#SSObject.r_H_rG12_Cov">r_H_rG12_Cov</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag**2</td>
+                  <td>H-G12 covariance (r band)
+                  </td>
+                  <td>stat.covariance</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.r_Chi2">
+                  <td class="column-name">
+                    <a href="#SSObject.r_Chi2">r_Chi2</a>
+                  </td>
+                  <td>float</td>
+                  <td></td>
+                  <td>Chi^2 statistic of the phase curve fit (r band)
+                  </td>
+                  <td>stat.fit.chi2</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.r_Ndata">
+                  <td class="column-name">
+                    <a href="#SSObject.r_Ndata">r_Ndata</a>
+                  </td>
+                  <td>int</td>
+                  <td></td>
+                  <td>The number of data points used to fit the phase curve (r band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.i_H">
+                  <td class="column-name">
+                    <a href="#SSObject.i_H">i_H</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Best fit absolute magnitude (i band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.i_G12">
+                  <td class="column-name">
+                    <a href="#SSObject.i_G12">i_G12</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Best fit G12 slope parameter (i band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.i_HErr">
+                  <td class="column-name">
+                    <a href="#SSObject.i_HErr">i_HErr</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Uncertainty of H (i band)
+                  </td>
+                  <td>stat.error</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.i_G12Err">
+                  <td class="column-name">
+                    <a href="#SSObject.i_G12Err">i_G12Err</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Uncertainty of G12 (i band)
+                  </td>
+                  <td>stat.error</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.i_H_iG12_Cov">
+                  <td class="column-name">
+                    <a href="#SSObject.i_H_iG12_Cov">i_H_iG12_Cov</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag**2</td>
+                  <td>H-G12 covariance (i band)
+                  </td>
+                  <td>stat.covariance</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.i_Chi2">
+                  <td class="column-name">
+                    <a href="#SSObject.i_Chi2">i_Chi2</a>
+                  </td>
+                  <td>float</td>
+                  <td></td>
+                  <td>Chi^2 statistic of the phase curve fit (i band)
+                  </td>
+                  <td>stat.fit.chi2</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.i_Ndata">
+                  <td class="column-name">
+                    <a href="#SSObject.i_Ndata">i_Ndata</a>
+                  </td>
+                  <td>int</td>
+                  <td></td>
+                  <td>The number of data points used to fit the phase curve (i band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.z_H">
+                  <td class="column-name">
+                    <a href="#SSObject.z_H">z_H</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Best fit absolute magnitude (z band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.z_G12">
+                  <td class="column-name">
+                    <a href="#SSObject.z_G12">z_G12</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Best fit G12 slope parameter (z band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.z_HErr">
+                  <td class="column-name">
+                    <a href="#SSObject.z_HErr">z_HErr</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Uncertainty of H (z band)
+                  </td>
+                  <td>stat.error</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.z_G12Err">
+                  <td class="column-name">
+                    <a href="#SSObject.z_G12Err">z_G12Err</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Uncertainty of G12 (z band)
+                  </td>
+                  <td>stat.error</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.z_H_zG12_Cov">
+                  <td class="column-name">
+                    <a href="#SSObject.z_H_zG12_Cov">z_H_zG12_Cov</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag**2</td>
+                  <td>H-G12 covariance (z band)
+                  </td>
+                  <td>stat.covariance</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.z_Chi2">
+                  <td class="column-name">
+                    <a href="#SSObject.z_Chi2">z_Chi2</a>
+                  </td>
+                  <td>float</td>
+                  <td></td>
+                  <td>Chi^2 statistic of the phase curve fit (z band)
+                  </td>
+                  <td>stat.fit.chi2</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.z_Ndata">
+                  <td class="column-name">
+                    <a href="#SSObject.z_Ndata">z_Ndata</a>
+                  </td>
+                  <td>int</td>
+                  <td></td>
+                  <td>The number of data points used to fit the phase curve (z band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.y_H">
+                  <td class="column-name">
+                    <a href="#SSObject.y_H">y_H</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Best fit absolute magnitude (y band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.y_G12">
+                  <td class="column-name">
+                    <a href="#SSObject.y_G12">y_G12</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Best fit G12 slope parameter (y band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.y_HErr">
+                  <td class="column-name">
+                    <a href="#SSObject.y_HErr">y_HErr</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Uncertainty of H (y band)
+                  </td>
+                  <td>stat.error</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.y_G12Err">
+                  <td class="column-name">
+                    <a href="#SSObject.y_G12Err">y_G12Err</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Uncertainty of G12 (y band)
+                  </td>
+                  <td>stat.error</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.y_H_yG12_Cov">
+                  <td class="column-name">
+                    <a href="#SSObject.y_H_yG12_Cov">y_H_yG12_Cov</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag**2</td>
+                  <td>H-G12 covariance (y band)
+                  </td>
+                  <td>stat.covariance</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.y_Chi2">
+                  <td class="column-name">
+                    <a href="#SSObject.y_Chi2">y_Chi2</a>
+                  </td>
+                  <td>float</td>
+                  <td></td>
+                  <td>Chi^2 statistic of the phase curve fit (y band)
+                  </td>
+                  <td>stat.fit.chi2</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.y_Ndata">
+                  <td class="column-name">
+                    <a href="#SSObject.y_Ndata">y_Ndata</a>
+                  </td>
+                  <td>int</td>
+                  <td></td>
+                  <td>The number of data points used to fit the phase curve (y band)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.maxExtendedness">
+                  <td class="column-name">
+                    <a href="#SSObject.maxExtendedness">maxExtendedness</a>
+                  </td>
+                  <td>float</td>
+                  <td></td>
+                  <td>maximum `extendedness` value from the DIASource
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.minExtendedness">
+                  <td class="column-name">
+                    <a href="#SSObject.minExtendedness">minExtendedness</a>
+                  </td>
+                  <td>float</td>
+                  <td></td>
+                  <td>minimum `extendedness` value from the DIASource
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.medianExtendedness">
+                  <td class="column-name">
+                    <a href="#SSObject.medianExtendedness">medianExtendedness</a>
+                  </td>
+                  <td>float</td>
+                  <td></td>
+                  <td>median `extendedness` value from the DIASource
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSObject.flags">
+                  <td class="column-name">
+                    <a href="#SSObject.flags">flags</a>
+                  </td>
+                  <td>long</td>
+                  <td></td>
+                  <td>Flags, bitwise OR tbd.
+                  </td>
+                  <td>meta.code</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <hr style="margin-top: 20px; margin-bottom: 10px" />
+          <section id="MPCORB">
+            <h2><a href="#MPCORB">MPCORB</a></h2>
+            <p>The orbit catalog produced by the Minor Planet Center. Ingested daily. O(10M) rows by survey end. The columns are described at https://minorplanetcenter.net//iau/info/MPOrbitFormat.html</p>
+            
+            <table class="schema-table">
+              <thead>
+                <tr>
+                  <th title="Name of the column in the schema">Column Name</th>
+                  <th title="Data type of the column">Data Type</th>
+                  <th title="Measurement unit of the column in IVOA units">Unit</th>
+                  <th title="Description of the column">Description</th>
+                  <th title="IVOA Unified Content Descriptor (UCD) of the column">UCD</th>
+                  <th title="Column ordering in TAP_SCHEMA">Order</th>
+                  <th title="Set to 1 for columns which are considered core content">Principal</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                <tr id="MPCORB.mpcDesignation">
+                  <td class="column-name">
+                    <a href="#MPCORB.mpcDesignation">mpcDesignation</a>
+                  </td>
+                  <td>char</td>
+                  <td></td>
+                  <td>MPCORB: Number or provisional designation (in packed form)
+                  </td>
+                  <td>meta.id;src</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.mpcNumber">
+                  <td class="column-name">
+                    <a href="#MPCORB.mpcNumber">mpcNumber</a>
+                  </td>
+                  <td>int</td>
+                  <td></td>
+                  <td>MPC number (if the asteroid has been numbered; NULL otherwise). Provided for convenience.
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.ssObjectId">
+                  <td class="column-name">
+                    <a href="#MPCORB.ssObjectId">ssObjectId</a>
+                  </td>
+                  <td>long</td>
+                  <td></td>
+                  <td>LSST unique identifier (if observed by LSST)
+                  </td>
+                  <td>meta.id;src</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.mpcH">
+                  <td class="column-name">
+                    <a href="#MPCORB.mpcH">mpcH</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>MPCORB: Absolute magnitude, H
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.mpcG">
+                  <td class="column-name">
+                    <a href="#MPCORB.mpcG">mpcG</a>
+                  </td>
+                  <td>float</td>
+                  <td></td>
+                  <td>MPCORB: Slope parameter, G
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.epoch">
+                  <td class="column-name">
+                    <a href="#MPCORB.epoch">epoch</a>
+                  </td>
+                  <td>double</td>
+                  <td>d</td>
+                  <td>MPCORB: Epoch (in MJD, .0 TT)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.tperi">
+                  <td class="column-name">
+                    <a href="#MPCORB.tperi">tperi</a>
+                  </td>
+                  <td>double</td>
+                  <td>d</td>
+                  <td>MPCORB: MJD of pericentric passage
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.peri">
+                  <td class="column-name">
+                    <a href="#MPCORB.peri">peri</a>
+                  </td>
+                  <td>double</td>
+                  <td>deg</td>
+                  <td>MPCORB: Argument of perihelion, J2000.0 (degrees)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.node">
+                  <td class="column-name">
+                    <a href="#MPCORB.node">node</a>
+                  </td>
+                  <td>double</td>
+                  <td>deg</td>
+                  <td>MPCORB: Longitude of the ascending node, J2000.0 (degrees)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.incl">
+                  <td class="column-name">
+                    <a href="#MPCORB.incl">incl</a>
+                  </td>
+                  <td>double</td>
+                  <td>deg</td>
+                  <td>MPCORB: Inclination to the ecliptic, J2000.0 (degrees)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.e">
+                  <td class="column-name">
+                    <a href="#MPCORB.e">e</a>
+                  </td>
+                  <td>double</td>
+                  <td></td>
+                  <td>MPCORB: Orbital eccentricity
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.n">
+                  <td class="column-name">
+                    <a href="#MPCORB.n">n</a>
+                  </td>
+                  <td>double</td>
+                  <td>deg/d</td>
+                  <td>MPCORB: Mean daily motion (degrees per day)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.q">
+                  <td class="column-name">
+                    <a href="#MPCORB.q">q</a>
+                  </td>
+                  <td>double</td>
+                  <td>AU</td>
+                  <td>MPCORB: Perihelion distance (AU)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.uncertaintyParameter">
+                  <td class="column-name">
+                    <a href="#MPCORB.uncertaintyParameter">uncertaintyParameter</a>
+                  </td>
+                  <td>char</td>
+                  <td></td>
+                  <td>MPCORB: Uncertainty parameter, U
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.reference">
+                  <td class="column-name">
+                    <a href="#MPCORB.reference">reference</a>
+                  </td>
+                  <td>char</td>
+                  <td></td>
+                  <td>MPCORB: Reference
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.nobs">
+                  <td class="column-name">
+                    <a href="#MPCORB.nobs">nobs</a>
+                  </td>
+                  <td>int</td>
+                  <td></td>
+                  <td>MPCORB: Number of observations
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.nopp">
+                  <td class="column-name">
+                    <a href="#MPCORB.nopp">nopp</a>
+                  </td>
+                  <td>int</td>
+                  <td></td>
+                  <td>MPCORB: Number of oppositions
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.arc">
+                  <td class="column-name">
+                    <a href="#MPCORB.arc">arc</a>
+                  </td>
+                  <td>float</td>
+                  <td>d</td>
+                  <td>MPCORB: Arc (days), for single-opposition objects
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.arcStart">
+                  <td class="column-name">
+                    <a href="#MPCORB.arcStart">arcStart</a>
+                  </td>
+                  <td>timestamp</td>
+                  <td></td>
+                  <td>MPCORB: Year of first observation (for multi-opposition objects)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.arcEnd">
+                  <td class="column-name">
+                    <a href="#MPCORB.arcEnd">arcEnd</a>
+                  </td>
+                  <td>timestamp</td>
+                  <td></td>
+                  <td>MPCORB: Year of last observation (for multi-opposition objects)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.rms">
+                  <td class="column-name">
+                    <a href="#MPCORB.rms">rms</a>
+                  </td>
+                  <td>float</td>
+                  <td>arcsec</td>
+                  <td>MPCORB: r.m.s residual (&quot;)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.pertsShort">
+                  <td class="column-name">
+                    <a href="#MPCORB.pertsShort">pertsShort</a>
+                  </td>
+                  <td>char</td>
+                  <td></td>
+                  <td>MPCORB: Coarse indicator of perturbers (blank if unperturbed one-opposition object)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.pertsLong">
+                  <td class="column-name">
+                    <a href="#MPCORB.pertsLong">pertsLong</a>
+                  </td>
+                  <td>char</td>
+                  <td></td>
+                  <td>MPCORB: Precise indicator of perturbers (blank if unperturbed one-opposition object)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.computer">
+                  <td class="column-name">
+                    <a href="#MPCORB.computer">computer</a>
+                  </td>
+                  <td>char</td>
+                  <td></td>
+                  <td>MPCORB: Computer name
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.flags">
+                  <td class="column-name">
+                    <a href="#MPCORB.flags">flags</a>
+                  </td>
+                  <td>int</td>
+                  <td></td>
+                  <td>MPCORB: 4-hexdigit flags. See https://minorplanetcenter.net//iau/info/MPOrbitFormat.html for details
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.fullDesignation">
+                  <td class="column-name">
+                    <a href="#MPCORB.fullDesignation">fullDesignation</a>
+                  </td>
+                  <td>char</td>
+                  <td></td>
+                  <td>MPCORB: Readable designation
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="MPCORB.lastIncludedObservation">
+                  <td class="column-name">
+                    <a href="#MPCORB.lastIncludedObservation">lastIncludedObservation</a>
+                  </td>
+                  <td>float</td>
+                  <td>d</td>
+                  <td>MPCORB: Date of last observation included in orbit solution
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <hr style="margin-top: 20px; margin-bottom: 10px" />
+          <section id="DiaSource">
+            <h2><a href="#DiaSource">DiaSource</a></h2>
+            <p>Table to store 'difference image sources' - sources detected at SNR >=5 on difference images.</p>
+            
+            <details class="index-details">
+              <summary>Indexes</summary>
+              
+              <table style="margin-top: 10px;">
+                <thead>
+                  <tr>
+                    <th title="Columns included in the index">Columns</th>
+                    <th title="Description of the index">Description</th>
+                    <th title="Unique name of the index in the YAML schema file">Reference Name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  
+                  <tr>
+                    <td>
+                    
+                      
+                    <a href="#DiaSource.ccdVisitId">ccdVisitId</a>
+                    <td></td>
+                    <td>IDX_DiaSource_ccdVisitId</td>
+                  </tr>
+                  
+                  <tr>
+                    <td>
+                    
+                      
+                    <a href="#DiaSource.diaObjectId">diaObjectId</a>
+                    <td></td>
+                    <td>IDX_DiaSource_diaObjectId</td>
+                  </tr>
+                  
+                  <tr>
+                    <td>
+                    
+                      
+                    <a href="#DiaSource.ssObjectId">ssObjectId</a>
+                    <td></td>
+                    <td>IDX_DiaSource_ssObjectId</td>
+                  </tr>
+                  
+                </tbody>
+              </table>
+            </details>
+            
+            <table class="schema-table">
+              <thead>
+                <tr>
+                  <th title="Name of the column in the schema">Column Name</th>
+                  <th title="Data type of the column">Data Type</th>
+                  <th title="Measurement unit of the column in IVOA units">Unit</th>
+                  <th title="Description of the column">Description</th>
+                  <th title="IVOA Unified Content Descriptor (UCD) of the column">UCD</th>
+                  <th title="Column ordering in TAP_SCHEMA">Order</th>
+                  <th title="Set to 1 for columns which are considered core content">Principal</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                <tr id="DiaSource.diaSourceId">
+                  <td class="column-name">
+                    <a href="#DiaSource.diaSourceId">diaSourceId</a>
+                  </td>
+                  <td>long</td>
+                  <td></td>
+                  <td>Unique id.
+                  </td>
+                  <td>meta.id;meta.main;src</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.ccdVisitId">
+                  <td class="column-name">
+                    <a href="#DiaSource.ccdVisitId">ccdVisitId</a>
+                  </td>
+                  <td>int</td>
+                  <td></td>
+                  <td>Id of the ccdVisit where this diaSource was measured. Note that we are allowing a diaSource to belong to multiple amplifiers, but it may not span multiple ccds.
+                  </td>
+                  <td>meta.id;obs.image</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.diaObjectId">
+                  <td class="column-name">
+                    <a href="#DiaSource.diaObjectId">diaObjectId</a>
+                  </td>
+                  <td>long</td>
+                  <td></td>
+                  <td>Id of the diaObject this source was associated with, if any. If not, it is set to NULL (each diaSource will be associated with either a diaObject or ssObject).
+                  </td>
+                  <td>meta.id;src</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.ssObjectId">
+                  <td class="column-name">
+                    <a href="#DiaSource.ssObjectId">ssObjectId</a>
+                  </td>
+                  <td>long</td>
+                  <td></td>
+                  <td>Id of the ssObject this source was associated with, if any. If not, it is set to NULL (each diaSource will be associated with either a diaObject or ssObject).
+                  </td>
+                  <td>meta.id;src</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.nameTrue">
+                  <td class="column-name">
+                    <a href="#DiaSource.nameTrue">nameTrue</a>
+                  </td>
+                  <td>char</td>
+                  <td></td>
+                  <td>MPC or simulation designation of the moving object
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.ssObjectReassocTime">
+                  <td class="column-name">
+                    <a href="#DiaSource.ssObjectReassocTime">ssObjectReassocTime</a>
+                  </td>
+                  <td>double</td>
+                  <td>d</td>
+                  <td>Time (MJD) when this diaSource was reassociated from diaObject to ssObject (if such reassociation happens, otherwise NULL).
+                  </td>
+                  <td>time.processing</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.midPointMjdTai">
+                  <td class="column-name">
+                    <a href="#DiaSource.midPointMjdTai">midPointMjdTai</a>
+                  </td>
+                  <td>double</td>
+                  <td>d</td>
+                  <td>Effective mid-exposure time for this diaSource.
+                  </td>
+                  <td>time.epoch</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.ra">
+                  <td class="column-name">
+                    <a href="#DiaSource.ra">ra</a>
+                  </td>
+                  <td>double</td>
+                  <td>deg</td>
+                  <td>RA-coordinate of the center of this diaSource.
+                  </td>
+                  <td>pos.eq.ra</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.raErr">
+                  <td class="column-name">
+                    <a href="#DiaSource.raErr">raErr</a>
+                  </td>
+                  <td>float</td>
+                  <td>deg</td>
+                  <td>Uncertainty of ra.
+                  </td>
+                  <td>stat.error;pos.eq.ra</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.dec">
+                  <td class="column-name">
+                    <a href="#DiaSource.dec">dec</a>
+                  </td>
+                  <td>double</td>
+                  <td>deg</td>
+                  <td>Dec-coordinate of the center of this diaSource.
+                  </td>
+                  <td>pos.eq.dec</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.decErr">
+                  <td class="column-name">
+                    <a href="#DiaSource.decErr">decErr</a>
+                  </td>
+                  <td>float</td>
+                  <td>deg</td>
+                  <td>Uncertainty of dec.
+                  </td>
+                  <td>stat.error;pos.eq.dec</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.ra_dec_Cov">
+                  <td class="column-name">
+                    <a href="#DiaSource.ra_dec_Cov">ra_dec_Cov</a>
+                  </td>
+                  <td>float</td>
+                  <td>deg**2</td>
+                  <td>Covariance between ra and dec.
+                  </td>
+                  <td>stat.covariance</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.snr">
+                  <td class="column-name">
+                    <a href="#DiaSource.snr">snr</a>
+                  </td>
+                  <td>float</td>
+                  <td></td>
+                  <td>The signal-to-noise ratio at which this source was detected in the difference image.
+                  </td>
+                  <td>stat.snr</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.band">
+                  <td class="column-name">
+                    <a href="#DiaSource.band">band</a>
+                  </td>
+                  <td>char</td>
+                  <td></td>
+                  <td>Name of the band used to take the exposure where this source was measured
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.mag">
+                  <td class="column-name">
+                    <a href="#DiaSource.mag">mag</a>
+                  </td>
+                  <td>float</td>
+                  <td></td>
+                  <td>Magnitude. This is a placeholder and should be replaced by flux.
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.magErr">
+                  <td class="column-name">
+                    <a href="#DiaSource.magErr">magErr</a>
+                  </td>
+                  <td>float</td>
+                  <td></td>
+                  <td>Magnitude error. This is a placeholder and should be replaced by flux error.
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.magTrueVband">
+                  <td class="column-name">
+                    <a href="#DiaSource.magTrueVband">magTrueVband</a>
+                  </td>
+                  <td>float</td>
+                  <td></td>
+                  <td>True (noiseless) V-band magnitude of the simulated diaSource
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.raTrue">
+                  <td class="column-name">
+                    <a href="#DiaSource.raTrue">raTrue</a>
+                  </td>
+                  <td>double</td>
+                  <td></td>
+                  <td>True (noiseless) right ascension of the simulated diaSource
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="DiaSource.decTrue">
+                  <td class="column-name">
+                    <a href="#DiaSource.decTrue">decTrue</a>
+                  </td>
+                  <td>double</td>
+                  <td></td>
+                  <td>True (noiseless) declination of the simulated diaSource
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <hr style="margin-top: 20px; margin-bottom: 10px" />
+          <section id="SSSource">
+            <h2><a href="#SSSource">SSSource</a></h2>
+            <p>LSST-computed per-source quantities. 1:1 relationship with DiaSource. Recomputed daily, upon MPCORB ingestion.</p>
+            
+            <table class="schema-table">
+              <thead>
+                <tr>
+                  <th title="Name of the column in the schema">Column Name</th>
+                  <th title="Data type of the column">Data Type</th>
+                  <th title="Measurement unit of the column in IVOA units">Unit</th>
+                  <th title="Description of the column">Description</th>
+                  <th title="IVOA Unified Content Descriptor (UCD) of the column">UCD</th>
+                  <th title="Column ordering in TAP_SCHEMA">Order</th>
+                  <th title="Set to 1 for columns which are considered core content">Principal</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                <tr id="SSSource.ssObjectId">
+                  <td class="column-name">
+                    <a href="#SSSource.ssObjectId">ssObjectId</a>
+                  </td>
+                  <td>long</td>
+                  <td></td>
+                  <td>Unique identifier of the object.
+                  </td>
+                  <td>meta.id;src</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.diaSourceId">
+                  <td class="column-name">
+                    <a href="#SSSource.diaSourceId">diaSourceId</a>
+                  </td>
+                  <td>long</td>
+                  <td></td>
+                  <td>Unique identifier of the observation
+                  </td>
+                  <td>meta.id;meta.main;src</td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.mpcUniqueId">
+                  <td class="column-name">
+                    <a href="#SSSource.mpcUniqueId">mpcUniqueId</a>
+                  </td>
+                  <td>long</td>
+                  <td></td>
+                  <td>MPC unique identifier of the observation
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.eclipticLambda">
+                  <td class="column-name">
+                    <a href="#SSSource.eclipticLambda">eclipticLambda</a>
+                  </td>
+                  <td>double</td>
+                  <td>deg</td>
+                  <td>Ecliptic longitude
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.eclipticBeta">
+                  <td class="column-name">
+                    <a href="#SSSource.eclipticBeta">eclipticBeta</a>
+                  </td>
+                  <td>double</td>
+                  <td>deg</td>
+                  <td>Ecliptic latitude
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.galacticL">
+                  <td class="column-name">
+                    <a href="#SSSource.galacticL">galacticL</a>
+                  </td>
+                  <td>double</td>
+                  <td>deg</td>
+                  <td>Galactic longitude
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.galacticB">
+                  <td class="column-name">
+                    <a href="#SSSource.galacticB">galacticB</a>
+                  </td>
+                  <td>double</td>
+                  <td>deg</td>
+                  <td>Galactic latitute
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.phaseAngle">
+                  <td class="column-name">
+                    <a href="#SSSource.phaseAngle">phaseAngle</a>
+                  </td>
+                  <td>float</td>
+                  <td>deg</td>
+                  <td>Phase angle
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.heliocentricDist">
+                  <td class="column-name">
+                    <a href="#SSSource.heliocentricDist">heliocentricDist</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Heliocentric distance
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.topocentricDist">
+                  <td class="column-name">
+                    <a href="#SSSource.topocentricDist">topocentricDist</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Topocentric distace
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.predictedMagnitude">
+                  <td class="column-name">
+                    <a href="#SSSource.predictedMagnitude">predictedMagnitude</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Predicted magnitude
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.predictedMagnitudeErr">
+                  <td class="column-name">
+                    <a href="#SSSource.predictedMagnitudeErr">predictedMagnitudeErr</a>
+                  </td>
+                  <td>float</td>
+                  <td>mag</td>
+                  <td>Prediction uncertainty (1-sigma)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.residualRa">
+                  <td class="column-name">
+                    <a href="#SSSource.residualRa">residualRa</a>
+                  </td>
+                  <td>double</td>
+                  <td>deg</td>
+                  <td>Residual R.A. vs. ephemeris
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.residualDec">
+                  <td class="column-name">
+                    <a href="#SSSource.residualDec">residualDec</a>
+                  </td>
+                  <td>double</td>
+                  <td>deg</td>
+                  <td>Residual Dec vs. ephemeris
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.predictedRaErr">
+                  <td class="column-name">
+                    <a href="#SSSource.predictedRaErr">predictedRaErr</a>
+                  </td>
+                  <td>float</td>
+                  <td>deg</td>
+                  <td>Predicted R.A. uncertainty
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.predictedDecErr">
+                  <td class="column-name">
+                    <a href="#SSSource.predictedDecErr">predictedDecErr</a>
+                  </td>
+                  <td>float</td>
+                  <td>deg</td>
+                  <td>Predicted Dec uncertainty
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.predictedRaDecCov">
+                  <td class="column-name">
+                    <a href="#SSSource.predictedRaDecCov">predictedRaDecCov</a>
+                  </td>
+                  <td>float</td>
+                  <td>deg**2</td>
+                  <td>Predicted R.A./Dec covariance
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.heliocentricX">
+                  <td class="column-name">
+                    <a href="#SSSource.heliocentricX">heliocentricX</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Cartesian heliocentric X coordinate (at the emit time)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.heliocentricY">
+                  <td class="column-name">
+                    <a href="#SSSource.heliocentricY">heliocentricY</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Cartesian heliocentric Y coordinate (at the emit time)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.heliocentricZ">
+                  <td class="column-name">
+                    <a href="#SSSource.heliocentricZ">heliocentricZ</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Cartesian heliocentric Z coordinate (at the emit time)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.heliocentricVX">
+                  <td class="column-name">
+                    <a href="#SSSource.heliocentricVX">heliocentricVX</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Cartesian heliocentric X velocity (at the emit time)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.heliocentricVY">
+                  <td class="column-name">
+                    <a href="#SSSource.heliocentricVY">heliocentricVY</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Cartesian heliocentric Y velocity (at the emit time)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.heliocentricVZ">
+                  <td class="column-name">
+                    <a href="#SSSource.heliocentricVZ">heliocentricVZ</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Cartesian heliocentric Z velocity (at the emit time)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.topocentricX">
+                  <td class="column-name">
+                    <a href="#SSSource.topocentricX">topocentricX</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Cartesian topocentric X coordinate (at the emit time)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.topocentricY">
+                  <td class="column-name">
+                    <a href="#SSSource.topocentricY">topocentricY</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Cartesian topocentric Y coordinate (at the emit time)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.topocentricZ">
+                  <td class="column-name">
+                    <a href="#SSSource.topocentricZ">topocentricZ</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Cartesian topocentric Z coordinate (at the emit time)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.topocentricVX">
+                  <td class="column-name">
+                    <a href="#SSSource.topocentricVX">topocentricVX</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Cartesian topocentric X velocity (at the emit time)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.topocentricVY">
+                  <td class="column-name">
+                    <a href="#SSSource.topocentricVY">topocentricVY</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Cartesian topocentric Y velocity (at the emit time)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+                <tr id="SSSource.topocentricVZ">
+                  <td class="column-name">
+                    <a href="#SSSource.topocentricVZ">topocentricVZ</a>
+                  </td>
+                  <td>float</td>
+                  <td>AU</td>
+                  <td>Cartesian topocentric Z velocity (at the emit time)
+                  </td>
+                  <td></td>
+                  <td style="text-align: center;"></td>
+                  <td style="text-align: center;"></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <hr/>
+<!--<span class="site-footer-owner">-->
+<p>
+    <a href="https://github.com/lsst/sdm_schemas">SDM Schemas</a> is maintained by
+    <a href="https://rubinobservatory.org/">Rubin Observatory</a>.
+</p>
+
+
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<head>
+
+<title>IAU Minor Planet Center</title>
+
+<!-- the meta tag below scales the web page to the users device  -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+
+<!-- jquery and jquery ui linked to google for the moment
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+-->
+<!-- local jquery fils -->
+<link rel="stylesheet" href="/static/global/jquery-ui-1.12.1.custom/jquery-ui.min.css">
+<script src="/static/global/js/jquery-3.4.1.min.js"></script>
+<script src="/static/global/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
+
+<!-- includes meta, css and js
+{include "head.inc"}
+not included the above in case of jquery conflict
+Below is a slect list of css/js/meta from head.inc -->
+
+  <meta name="description" content="We are the official body that deals with
+      astrometric observations and orbits of minor planets (asteroids) and comets.">
+
+  <meta name="keywords" content="astrometry, observations, orbits,
+      minor planets, asteroids, comets, near earth objects, 
+      potentially hazardous asteroids">
+
+  <meta http-equiv="content-type" content="text/html;charset=UTF-8">
+
+  <link rel="stylesheet" type="text/css" href="/stylesheets/mpc.css">
+  <link rel="stylesheet" type="text/css" href="/stylesheets/table-sorter.css">
+  <link media="all" rel="stylesheet" href="/css/all.css">
+  <link rel="icon" type="image/png" href="/iau/figs/MPClogo16.png">
+
+  <script type="text/javascript" src="/js/jquery.tablesorter.js"></script>
+  <script type="text/javascript" src="/js/webtrends.js"></script>
+  <script type="text/javascript" src="/js/track_pdfs.js"></script>
+  <link href='https://fonts.googleapis.com/css?family=Arvo:400,700,400italic,700italic|PT+Sans:400,700,400italic,700italic|PT+Sans+Narrow:400,700' rel='stylesheet' type='text/css'>
+
+  <!-- Django global JS/CSS -->
+  <link rel="stylesheet" type="text/css" href="/static/global/css/global.css">
+  <script src="/static/global/js/global.js"></script>
+
+  <!-- Font awesome JS/CSS links -->
+  <link rel="stylesheet" type="text/css" href="/static/global/fontawesome-free-5.15.1-web/css/all.min.css">
+  <!--  <script src="/static/global/fontawesome-free-5.15.1-web/js/all.min.js"></script> -->
+  <!--  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> -->
+  
+  <!-- block specific css/js for particular Django app BEGINNING-->
+  
+  
+  <link rel="stylesheet" type="text/css" href="/static/documentation/css/documentation.css">
+  <script src="/static/documentation/js/documentation.js"></script>
+
+
+</head>
+
+<!-- Menu and navigation --> 
+<body>
+  <!-- wrapper -->
+  <div id="wrapper">
+    <div class="w1">
+      <!-- header -->
+      <header id="header">
+        <div class="holder">
+          <!-- logo -->
+          <h1 class="logo"><a href="/">The International Astronomical Union Minor Planet Center</a></h1>
+          <div class="area">
+            <!-- Top-right navbar -->
+            <nav class="top-nav">
+              <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+		            <li><a href="/mpcops/contact/">Contact</a></li>
+                <li><a href="https://mpc-service.atlassian.net/servicedesk/customer/portals">Helpdesk</a></li>
+              </ul>
+            </nav>
+            <!-- website search form -->
+            <div class="form-holder">
+              <form class="search-form" method="get" action="https://www.google.com/search">
+                <fieldset>
+                  <input type="hidden" name="sitesearch" value="minorplanetcenter.net">
+                  <input type="text" onfocus="if(this.value==this.defaultValue)this.value='';" onblur="if(this.value=='')this.value=this.defaultValue;" id="search" name="q" value="Search MPC">
+                </fieldset>
+              </form>
+            </div>
+          </div>
+        </div>
+        <nav class="nav-holder">
+          <!-- main navigation -->
+          <ul id="nav">
+            <li>
+              <a href="/iau/mpc.html"><span>OBSERVERS</span></a>
+              <ul>
+                <li><a href="/iau/MPEph/MPEph.html">Ephemeris Service</a></li>
+
+                <li><div class="nested" style="color: black; padding: 4px 0 4px 0;">MPECs</div>
+                  <ul>
+                    <li><a href="/mpec/RecentMPECs.html">Recent</a></li>
+                    <li><a href="/mpcops/mpecs/">Search</a></li>
+                  </ul>
+                </li>
+
+                <li><a href="/iau/NEO/toconfirm_tabular.html">NEO Confirmation</a></li>
+                <li><a href="/iau/NEO/pccp_tabular.html">Possible Comet Confirmation</a></li>
+                <li><a href="/mpcops/submissions/cometary/">Report Cometary Activity</a></li>
+                <li><a href="/db_search">Orbits/Observations Database</a></li>				
+                <li><a href="https://data.minorplanetcenter.net/explorer">MPC Explorer</a></li>
+
+                <li><a href="/iau/Ephemerides/EphemOrbEls.html" class="nested">Orbital Elements</a>
+                  <ul>
+                    <li><a href="/iau/MPCORB.html">MPCORB</a></li>
+                    <li><a href="/iau/ECS/MPCAT/MPCAT.html">MPCAT</a></li>
+                    <li><a href="/iau/ECS/MPCUPDATE/MPCUPDATE.html">MPCUPDATE</a></li>
+                    <li><a href="/iau/Ephemerides/SoftwareEls.html">Orbital Elements for Software</a></li>
+                  </ul>                
+                </li>
+
+                <li><a href="/iau/services/MPCServices.html">Publications Overview</a></li>
+                <li><a href="/iau/ECS/MPCArchive/MPCArchive_TBL.html">Publications Archive</a></li>              
+
+                <li><a href="/iau/NEO/TheNEOPage.html" class="nested">NEO Services</a>
+                  <ul>
+                    <li><a href="/iau/NEO/toconfirm_tabular.html">Confirmation</a></li>
+                    <li><a href="/iau/NEO/PossNEO.html">Ratings</a></li>
+                    <li><a href="/cgi-bin/neaobs.cgi">Observation Planning Aid</a></li>
+                    <li><a href="/neocp_followup_report/">NEOCP Followup Report Form</a></li>
+                    <li><a href="/neocp_followup_reports/">NEOCP Followup Reports</a></li>
+                    <li><a href="/neocp_obs">NEOCP Recent Observations</a></li>
+                    <li><a href="/mpcops/neocp/neocp_plots/">NEOCP Plots</a></li>
+                    <li><a href="/cgi-bin/cgipy/neocp_info/">Current NEOCP Objects</a></li>
+                    <li><a href="/mpcops/neocp/neocp_prev_des/">Previous NEOCP Objects</a></li>
+                    <li><a href="/iau/recovery/recovery.html">NEO Recovery</a></li>
+                  </ul>
+                </li>
+
+                <li><div class="nested" style="color: black; padding: 4px 0 4px 0;">Observations</div>
+                  <ul>
+                    <li><a href="/wamo/">WAMO</a></li>
+                  </ul>
+                </li>
+
+                <li><a href="/mpcops/orbits/" class="nested">Orbits</a>
+                  <ul>
+                    <li><a href="https://data.minorplanetcenter.net/comparison/index.html">Orbit Comparison Tool</a></li>
+                    <li><a href="/mpcops/orbits/no-orbits-astrometry/">Request for archival astrometry</a></li>
+                  </ul>
+                </li>
+
+                <li><a href="/iau/services/WebCSAccess.html" class="nested">Other Observer Services</a>
+                  <ul>
+                    <li><a href="/whatsup">Observing Target List</a></li>
+                    <li><a href="/iau/lists/Customize.html">Observing List Customizer</a></li>
+                    <li><a href="/iau/NatSats/NaturalSatellites.html">Natural Satellite Ephemerides</a></li>
+                    <li><a href="/iau/MPEph/NewObjEphems.html">New Object Ephemerides</a></li>
+                    <li><a href="/cgi-bin/checkmp.cgi">MPChecker</a></li>
+                    <li><a href="/iau/delays/neocp_delay.html">Processing Times</a></li>
+                    <li><a href="/pointings">Submitting Pointing Information</a></li>
+                    <li><a href="/mpcops/pointings/sky_coverage/">Search the Pointing Database</a></li>
+                  </ul>
+                </li>
+		
+                <li><div class="nested" style="color: black; padding: 4px 0 4px 0;">Identifications</div>
+                  <ul>
+                    <li><a href="/mpcops/documentation/identifications/">Documentation</a></li>
+                    <li><a href="/mpcops/documentation/identifications/submission-format/">Submission Format</a></li>
+                    <li><a href="/mpcops/submissions/identifications/">Submit</a></li>
+                  </ul>
+                </li>
+
+                <li><a href="/iau/ECS/MPCAT-OBS/MPCAT-OBS.html">MPCAT-OBS</a></li>
+                <li><a href="/iau/SkyCoverage.html">Sky Coverage</a></li>
+                <li><a href="/iau/MPC_Documentation.html" class="nested">Documentation</a>
+                  <ul>
+                    <li><a href="/iau/info/TechInfo.html">MPC Submission Info</a></li>
+                    <li><a href="/iau/info/Astrometry.html">Astrometry Guide</a></li>
+                    <li><a href="/mpcops/documentation/artificial-satellites/">Artificial Satellites</a></li>
+                    <li><a href="/submit_action_code">Submit Action Code</a></li>		    
+                    <li><a href="/mpcops/documentation/">Other</a></li>		    
+                    <!-- <li><a href="/iau/WhatsNew.html">What's New</a></li> -->
+                  </ul>                
+                </li>
+                <li><a href="/iau/lists/Lists.html" class="nested">Lists and Plots</a>
+                  <ul>
+                    <li><a href="/iau/lists/MPLists.html">Minor Planets</a></li>
+                      <!--<ul>
+                        <li><a href="/iau/lists/t_atens.html">Atens</a></li>
+                        <li><a href="/iau/lists/t_apollos.html">Apollos</a></li>
+                        <li><a href="/iau/lists/t_amors.html">Amors</a></li>
+                        <li><a href="/iau/lists/t_centaurs.html">Centaurs and Scattered Disk Objects</a></li>
+                        <li><a href="/iau/lists/t_tnos.html">Transneptunian Objects</a></li>
+                        <li><a href="/iau/lists/t_others.html">Other Unusual Objects</a></li>
+                        <li><a href="/iau/lists/t_dangerous.html">Potentially Hazardous Asteroids</a></li>
+                      </ul>-->
+                    <li><a href="/iau/lists/CometLists.html">Comets</a></li>
+                      <!--<ul>
+                        <li><a href="/iau/lists/LastCometObs.html">Date of Last Observation</a></li>
+                        <li><a href="/iau/lists/LastYear.html">Designations from the Past Year</a></li>
+                        <li><a href="http://www.icq.eps.harvard.edu/CometMags.html">Comet Magnitude Estimates</a></li>
+                        <li><a href="/iau/lists/ClosestComets.html">Closest Approaches</a></li>
+                        <li><a href="/iau/lists/PeriodicCodes.html">Periodic Comets</a></li>
+                      </ul>-->
+                    <li><a href="/iau/lists/ObsCodesF.html">Observatory Codes</a></li>		    
+                    <li><a href="/iau/Animations/Animations.html">Animations</a></li>
+                  </ul>                
+                </li>
+                <li><a href='/mpc/summary'>Summary of Latest Data</a></li>
+                <li><a href='/deprecated-pages.html'>Deprecated Webpages</a></li>		
+              </ul>
+            </li>
+            <li><a href="/data"><span>DATA</span></a></li>
+	    
+            <li><a href="https://buttondown.com/MPC_newsletter"><span>NEWSLETTER</span></a></li>
+	    
+            <li><a href="/iau/MPCStatus.html"><span style="color:Green">STATUS</a></li>
+
+	          <li><a href="/mpcops/documentation/"><span>DOCUMENTATION</span></a>
+
+            <li><a href="/"><span>EXTERNAL</span></a>
+              <ul id="external">
+                <li><a href="https://mpcmug.astro.umd.edu/" target="_blank">MPC User Group (MUG)</a></li>
+                <li><a href="http://iawn.net/" target="_blank">IAWN</a></li>
+                <li><a href="https://sbnmpc.astro.umd.edu/" target="_blank">SBN Annex</a></li>
+                <li><a href="https://www.wgsbn-iau.org/" target="_blank">WGSBN</a></li>
+                <li><a href='http://alcdef.org'>Light Curve Database</a></li>
+              </ul>
+	          </li>
+          </ul>
+        </nav>
+      </header>
+
+    <script type="text/javascript">
+      // After the page loads, we style each top-level menu bar item based on the word length.
+      document.addEventListener('DOMContentLoaded', function () {
+      const listItems = document.querySelectorAll('#nav li ');
+      function getDirectTextContent(element) {
+        /*
+        Get the menu bar item's text with leading- and trailing-whitespace removed.
+
+        The forEach accounts for multiple child nodes of the li (list item).
+        */
+        let directTextContent = '';
+        element.childNodes.forEach(node => {
+          if (node.textContent.trim().includes('OBSERVERS') || node.textContent.trim().includes('DATA') || node.textContent.trim().includes('NEWSLETTER') || node.textContent.trim().includes('STATUS') || node.textContent.trim().includes('DOCUMENTATION') || node.textContent.trim().includes('EXTERNAL')){
+              directTextContent += node.textContent.trim();
+          }
+        });
+        return directTextContent;
+      }
+
+      listItems.forEach(function (li) {
+        const directText = getDirectTextContent(li);
+        const textLength = directText.length;
+
+        // Apply class based on length
+        // This is used to style each menu item based on the word length.
+        if (textLength <= 5) {
+          li.classList.add('short-word');
+        } else if (textLength <= 10) {
+          li.classList.add('medium-word');
+        } else {
+          li.classList.add('long-word');
+        }
+      });
+      });
+    </script>
+
+    <!-- main -->
+    <div id="main">
+
+<!-- body tag included in the above -->
+
+<!-- BEGIN - specific div for django web pages -->
+<div class="django">
+  
+  <h1>
+  MPC Documentation
+</h1>
+
+  <p>
+<div style="margin: 1rem 0; padding: 1rem 1.25rem; border-left: 6px solid #1f6feb; background: #f0f6ff;">
+  <p>
+  <strong>Documentation Notice:</strong>
+  The content of this page has been migrated to 
+  <a href="https://docs.minorplanetcenter.net">https://docs.minorplanetcenter.net</a>.
+  Beginning May 1, 2026, this page will automatically redirect to the new documentation.
+  For more information, please read our 
+  <a href="https://minorplanetcenter.net/media/newsletters/MPC_Newsletter_Feb2026.pdf">February 2026 Newsletter</a>.
+  </p>
+</div>
+
+ <h2>Content</h2>
+
+
+<br>
+<ul>
+  <li> <a href="#FAQs"><strong>Frequently Asked Questions (FAQs)</strong></a></li>
+  <li> <a href="#subscription"><strong>Subscription to MPC Notification Services</strong></li>
+  <li><strong>APIs</strong></li>
+  <ul>
+    <li><a href="#apis">MPC APIs</a></li>
+  </ul>
+  <li> <strong>Replicated PostgreSQL tables</strong></li>
+  <ul>
+    <li> <a href="#replicatedtables">MPC's replicated postgreSQL tables</a></li>
+  </ul>
+  <li> <strong>Observations</strong></li>
+  <ul>
+    <li> <a href="#astrometryguide">MPC Guide to minor planet astrometry</a></li> 
+    <li> <a href="#apis">Observations API</a></li>
+    <li> <a href="#negativeobservations">Negative observations protocol</a></li> 
+    <li> <a href="#sarc"> Singletons and archival observations</a></li>
+  </ul>
+  <li> <strong>ADES</strong></li>
+  <ul>
+    <li> <a href="#usefulists">Valid ADES values</a></li>
+    <li> <a href="#ades">ADES related documentation</a></li> 
+  </ul>
+  <li> <strong> Designation System </strong></li>
+  <ul>
+    <li> <a href="#designations">Minor Planet Designations</a></li>
+    <li> <a href="https://www.minorplanetcenter.net/iau/lists/CometResolution.html">Cometary Designations</a></li>
+  </ul>
+  <li> <strong> Program codes and observatory codes </strong></li>
+  <ul>
+    <li> <a href="#programcodes">A new approach for program codes</a></li>
+    <li><a href="#usefulists">List of program codes</a></li>
+    <li> <a href="#usefulists">List of observatory codes</a></li>
+    <li> <a href="https://minorplanetcenter.net/iau/info/Astrometry.html#HowObsCode">How do I obtain an observatory code?</a></li>
+    <li> <a href="#apis">Observatory codes API</a></li>
+  </ul>  
+  <li> <strong>Orbits</strong></li>
+    <ul>
+      <li> <a href="#apis">Orbits API</a></li>
+      <li> <a href="#orbitalelements">Orbital elements</a></li> 
+      <li> <a href="#orbitalelements">MPC_ORB JSON</a></li> 
+      <li> <a href="#orbitandobjecttype">Orbit and Object Types</a></li>
+    </ul>
+  <li> <strong>Identifications</strong></li>
+    <ul>
+      <li> <a href="#identifications">Identifications</a></li> 
+    </ul>
+  <li> <strong>Others</strong></li>
+    <ul>
+      <li> <a href="#artificialsatellites">Artificial Satellites</a></li> 
+      <li> <a href="#designations">Designations</a></li>
+      <li> <a href="#edgarwilson">Edgar Wilson Award</a></li>
+    </ul>
+</ul>
+<br>
+
+<hr>
+
+<h2 id="FAQs">Frequently Asked Questions (FAQs)</h2>
+<p>
+<ul>
+  <li>
+    <a href="/mpcops/documentation/faqs/">List of FAQs</a>
+  </li>
+</ul>
+</p>
+
+<br>
+
+<h2 id="astrometryguide">MPC Guide to minor planet astrometry</h2>
+<p>
+<ul>
+  <li>
+    <a href="https://minorplanetcenter.net/iau/info/Astrometry.html">How do I begin</a>?
+  </li>
+  <li>
+    <a href="https://minorplanetcenter.net/iau/info/Astrometry.html">How do I report observations to the Minor Planet Center</a>?
+  </li>
+  <li>
+    <a href="https://minorplanetcenter.net/iau/info/Astrometry.html#HowObsCode">How do I get an observatory code</a>?
+  <li>
+    <a href="/mpcops/documentation/tycho-tracker/">How do I submit my astrometry to the MPC using Tycho Tracker</a>?
+  </li>
+</ul>
+</p>
+
+<br>
+
+<h2 id="apis">MPC APIs</h2>
+<p>
+  <ul>
+    <li>
+      <h3> Where Are My Observations (WAMO)</h3>
+      <a href="/mpcops/documentation/wamo-api/">WAMO API</a> documentation.
+    </li>
+    <br>
+    <li>
+      <h3>Submission Status</h3>
+      <a href="/mpcops/documentation/submission-status-api/">Submission Status API</a> documentation.
+    </li>
+    <br>
+    <li>
+      <h3> Designation Identifier</h3>
+      <a href="/mpcops/documentation/designation-identifier-api/">Designation Identifier API</a> documentation.
+    </li>
+    <br>
+    <li>
+      <h3> Observations </h3>
+      <a href="/mpcops/documentation/observations-api/">Observations API</a> documentation.
+    </li>
+    <br>
+    <li>
+      <h3> NEOCP Observations </h3>
+      <a href="/mpcops/documentation/neocp-observations-api/">NEOCP Observations API</a> documentation.
+    </li>
+    <br>
+    <li>
+      <h3> Near-Duplicate Observations </h3>
+      <a href="/mpcops/documentation/cnd-api/">Check Near-Duplicates (CND) API</a> documentation.
+    </li>
+    <br>
+    <li>
+      <h3> Orbits </h3>
+      <a href="/mpcops/documentation/orbits-api/">Orbits API</a> documentation.
+    </li>
+    <br>
+    <li>
+      <h3> Observatory Codes </h3>
+      <a href="/mpcops/documentation/obscodes-api/">Observatory Codes API</a> documentation.
+    </li>
+    <br>
+    <li>
+      <h3> MPECs </h3>
+      <a href="https://docs.minorplanetcenter.net/mpc-ops-docs/apis/mpecs/">MPECs API</a> documentation.
+    </li>
+    <br>
+    <li>
+      <h3> Action Codes </h3>
+      <a href="/mpcops/documentation/action-codes-api/">Action Codes API</a> documentation.
+    </li>
+    <br>
+    <li>
+      <h3> Lists of Objects </h3>
+      <a href="/mpcops/documentation/list-api/">List API</a> documentation.
+    </li>
+    <li>
+      <h3> Magnitude Bands </h3>
+      <a href="/mpcops/documentation/mag-band-api/"Magnitude Band API</a> documentation.
+    </li>
+  </ul>
+</p>
+
+<br>
+
+<h2 id="replicatedtables">MPC's replicated postgreSQL tables</h2>
+<p>
+  <ul>
+    <li>
+      <a href="/mpcops/documentation/replicated-tables-info-general/">Introduction and examples</a>
+    </li>
+    <li>
+      <a href="/mpcops/documentation/replicated-tables-schema/">Schema</a>
+    </li>
+  </ul>
+</p>
+
+<br>
+
+<h2 id="ades">ADES related documentation</h2>
+<p>
+  <ul>
+    <li>
+      <a href="/mpcops/documentation/ades/">Introduction</a>
+    </li>
+    <li>
+      <a href="/mpcops/documentation/valid-ades-values">Valid ADES values</a>
+    </li>
+    <li>
+      <a href="https://github.com/IAU-ADES/ADES-Master/">GitHub repository</a>
+    </li>
+    <li>
+      <a href="https://github.com/IAU-ADES/ADES-Master/blob/master/ADES_Description.pdf">Official format description</a>
+    </li>
+  </ul>
+</p>
+
+<br>
+
+<h2 id="usefulists">Useful lists</h2>
+<p>
+  <ul>
+    <li>
+      <a href="/mpcops/documentation/valid-ades-values">Valid ADES values</a>
+    </li>
+    <li>
+      <a href="/mpcops/documentation/program-codes/">Program Codes</a>
+    </li>
+    <li>
+      <a href="https://minorplanetcenter.net/iau/lists/ObsCodesF.html">Observatory codes</a>
+    </li>
+  </ul>
+</p>
+
+<br>
+<h2 id="programcodes">Program codes and observatory codes</h2>
+<p>
+  <ul>
+    <li>
+      <a href="/mpcops/documentation/program-codes-policy/">Program Codes policy</a>
+    </li>
+    <li>
+      <a href="/mpcops/documentation/program-codes/">Program Codes</a>
+    </li>
+    <li>
+      <a href="https://minorplanetcenter.net/iau/lists/ObsCodesF.html">Observatory codes</a>
+    </li>
+  </ul>
+</p>
+<br>
+
+<h2 id="sarc">Singletons and archival observations</h2>
+<p>
+  <ul>
+    <li>
+      <a href="/mpcops/documentation/sarc/">Singletons and archival observations committee (SARC)</a>
+    </li>
+  </ul>
+</p>
+<br>
+
+<h2 id="negativeobservations">Negative observations protocol</h2>
+<p>
+  <ul>
+    <li>
+      <a href="/mpcops/documentation/negative-observations/">Protocol for Negative Observations for Virtual Impactors</a>
+    </li>
+  </ul>
+</p>
+
+<br>
+
+<h2 id="orbitalelements">Orbital elements</h2>
+<p>
+  <ul>
+    <li>
+      <a href="/mpcops/documentation/mpc-orb-json/">MPC_ORB JSON</a>
+    </li>
+    <li>
+      <a href="/mpcops/documentation/ele220/">Orbital elements in the <i>ele220</i> format</a>
+    </li>
+    <li>
+      <a href="https://minorplanetcenter.net/iau/info/MPOrbitFormat.html">Standard export format for minor-planet orbits</a>
+    </li>
+  </ul>
+</p>
+
+<br>
+
+<h2 id="orbitandobjecttype">Orbit and Object Types</h2>
+<p>
+  Below are links to how the MPC categorizes orbit types and object types.
+<ul>
+  <li>
+    <a href="/mpcops/documentation/orbit-types/">Orbit Type Definition</a>
+  </li>
+  <li>
+    <a href="/mpcops/documentation/object-types/">Object Type Definition</a>
+  </li>
+</ul>
+</p>
+
+<br>
+
+<h2 id="identifications">Identifications</h2>
+<p>
+<ul>
+  <li>
+    <a href="/mpcops/documentation/identifications/">Identifications</a>
+  </li>
+  <ul>
+    <li>
+      <a href="/mpcops/documentation/identifications/submission-format/">Submission Format</a>
+    </li>
+    <li>
+      <a href="/mpcops/submissions/identifications/">Submit Identifications</a>
+    </li>
+    <li>
+      <a href="/mpcops/documentation/identifications/additional/">MPC criteria for accepting or rejecting identifications</a>
+    </li>
+  </ul>
+</ul>
+</p>
+
+<br>
+
+<h2 id="artificialsatellites">Artificial Satellites</h2>
+<p>
+<ul>
+  <li>
+    <a href="/mpcops/documentation/artificial-satellites/#mpc-artsat-obs-policy">MPC Policy on Disposition and Distribution of Observations on Artificial
+	Satellites</a>
+  </li>
+  <li>
+    <a href="/mpcops/documentation/artificial-satellites/#neocp-artsats">Artificial Satellites on the NEOCP</a>
+  </li>
+</ul>
+</p>
+
+<br>
+<h2 id="subscription">Subscription to MPC Notification Services</h2>
+<p>
+<ul>
+  <li>To subscribe to receive Minor Planet Electronic Circulars
+    (MPECs) or join the MPC Announcement Email List/Group please use
+    this <a href="https://mpc-service.atlassian.net/servicedesk/customer/portal/18">link.</a>
+  </li>
+</ul>
+</p>
+
+<br>
+
+
+<h2 id="designations"> Different designations that the MPC can assign to minor planets, comets, and natural satellites </h2>
+<p>
+<h3> Minor Planets </h3>
+<p>
+<ul>
+  <li>
+    <a href="/mpcops/documentation/provisional-designation-definition/">Provisional designation definition for minor planets</a>
+  </li>
+</ul>
+</p>
+
+<br>
+
+<h2 id="edgarwilson"> Edgar Wilson Award </h2>
+<p>
+<ul>
+  <li>
+    <a href="/mpcops/documentation/edgar-wilson-award-information/">Award Information</a>
+  </li>
+  <li>
+    <a href="/mpcops/documentation/edgar-wilson-award-winners/">Award Winners</a>
+  </li>
+</ul>
+</p>
+
+
+</p>
+
+  <div></div>
+  
+<!-- END - specific div for django web pages -->
+</div>
+<!-- Footer - ends the body tag-->
+      </div>
+    </div>
+  </div>
+
+  <!-- footer -->
+  <footer id="footer">
+    <div class="holder">
+      <nav class="nav">
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/about">About</a></li>
+	  <!-- Contact link changed to Jira and name changed to helpdesk.
+	       Should be consistent with top right of banner -->
+          <li><a href="https://mpc-service.atlassian.net/servicedesk/customer/portals">Helpdesk</a></li>
+<!-- PP REMOVED 28 Feb 2023 - does not work MPC does not have one          <li><a href="https://www.cfa.harvard.edu/content/privacy-statement">Privacy</a></li> -->
+        </ul>
+      </nav>
+
+      <a href="https://www.cfa.harvard.edu">
+      <img src="/images/CfA_Logo_Vertical_CMYK.png" width="110" height="47"></a>
+      <p>
+      <p>
+      <p>
+      <div class="copy">The Minor Planet Center is hosted by the Center for Astrophysics | Harvard &amp; Smithsonian.<center>The Minor Planet Center is funded by NASA.</center></div>
+  </footer>
+
+<script type="text/javascript">
+  $(window).on('load', (function() {
+    $("table").tablesorter();
+  }));
+</script>
+
+<script type="text/javascript">
+//<![CDATA[
+var _tag=new WebTrends();
+_tag.dcsGetId();
+//]]>
+</script>
+
+<script type="text/javascript">
+//<![CDATA[
+_tag.dcsCustom=function(){
+// Add custom parameters here.
+//_tag.DCSext.param_name=param_value;
+}
+_tag.dcsCollect();
+//]]>
+</script>
+
+<noscript>
+<div><img alt="DCSIMG" id="DCSIMG" width="1" height="1" src="//logs1.smithsonian.museum/dcsa7yzrmbdzpxzrosrn4tyep_5i1d/njs.gif?dcsuri=/nojavascript&amp;WT.js=No&amp;WT.tv=9.4.0&amp;dcssip=www.minorplanetcenter.net"/></div>
+</noscript>
+</body>
+
+
+<!-- block specific css/js for particular Django app ENDING -->
+
+
+
+</html>

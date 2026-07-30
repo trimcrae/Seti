@@ -1477,3 +1477,69 @@ def test_one_sided_test_needs_the_other_band_to_have_been_observed():
                       observed_bands={("4242", night_id(MJD_2026)): {"g"}},
                       band_limits={"r": 500.0})
     assert len(v.events) == 1 and not v.events[0].grey_tested
+
+
+def test_colour_reach_counts_events_the_test_rejected(tmp_path, monkeypatch):
+    """Regression: the metric measured survivors and hid its own success.
+
+    A live window rejected five flares by redder-band non-detection while the
+    summary said "the achromaticity discriminant did not run at all" — because
+    rejected events are not in `verdict.events`, so counting only survivors
+    reported zero reach for a test that had just done its job.
+    """
+    from seti.tocsin import run as R
+    from seti.tocsin.brokers import BrokerResult
+
+    F_g = P.ab_to_njy(18.0)
+    tpath = tmp_path / "targets.parquet"
+    pd.DataFrame([_target(source_id="777", ra=150.2, dec=-30.4,
+                          mag_g=18.0, mag_r=17.0)]).to_parquet(tpath)
+
+    class _Stub:
+        def __init__(self, *a, **kw):
+            pass
+
+        def max_available_mjd(self):
+            return 61501.0
+
+        def night_detections(self, lo, hi, **kw):
+            rows = [{
+                "measurement_id": "m1", "oid": "o1", "sid": 1, "mjd": 61500.5,
+                "ra": 150.2, "dec": -30.4, "band": 1,
+                "psfflux": 0.10 * F_g, "psffluxerr": 0.10 * F_g / 30.0,
+                "snr": 30.0, "reliability": 0.95, "templateflux": F_g,
+                "templatefluxerr": F_g * 0.01, "extendedness": 0.0,
+                "isdipole": False}]
+            # Unrelated r-band detections elsewhere on the sky.  They match no
+            # target, but they are what the r-band detection limit is measured
+            # from — exactly as in the live run, where limits came from 21-168
+            # detections per band.
+            rows += [{
+                "measurement_id": f"r{i}", "oid": f"or{i}", "sid": 1,
+                "mjd": 61500.5, "ra": 10.0 + 0.01 * i, "dec": 5.0, "band": 2,
+                "psfflux": 3000.0, "psffluxerr": 300.0, "snr": 10.0,
+                "reliability": 0.9, "extendedness": 0.0, "isdipole": False}
+                for i in range(5)]
+            return BrokerResult(rows=rows, reached=True, verdict="OK",
+                                notes=["adql=stub"])
+
+        def forced_photometry_night(self, lo, hi, **kw):
+            return BrokerResult(rows=[], reached=True, verdict="OK")
+
+        def footprint_bins(self, lo, hi, **kw):
+            # Both g and r observed in that bin that night; only g alerted.
+            return BrokerResult(rows=[
+                {"rab": 150, "decb": -31, "night": 61499, "band": 1, "n": 30},
+                {"rab": 150, "decb": -31, "night": 61499, "band": 2, "n": 30}],
+                reached=True, verdict="OK")
+
+    monkeypatch.setattr(R, "AlerceTAP", _Stub)
+
+    class _Cfg:
+        root = tmp_path
+    s = R.screen_night(_Cfg(), targets_path=tpath, out_dir=tmp_path / "res")
+
+    assert s["counts"].get("rejected_chromatic") == 1
+    assert s["colour_rejected_chromatic"] == 1
+    assert s["greyness_tested_fraction"] == 1.0
+    assert not any("did not run at all" in n for n in s["notes"])

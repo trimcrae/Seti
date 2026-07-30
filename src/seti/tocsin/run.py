@@ -675,9 +675,17 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
         grey_tested += int(bool(ev.grey_tested))
     summary["baseline_sources"] = base_src
     summary["bands_per_event"] = bands_hist
+    # The colour test's reach must count the events it REJECTED, not only the
+    # survivors.  Counting survivors alone reported "the discriminant did not
+    # run at all" in a window where it had just killed five flares — the metric
+    # was measuring the wrong population and hiding its own success.
+    n_chromatic = int(verdict.counts.get("rejected_chromatic", 0))
+    n_considered = len(verdict.events) + n_chromatic
+    summary["colour_tested"] = grey_tested + n_chromatic
+    summary["colour_rejected_chromatic"] = n_chromatic
     summary["greyness_tested_fraction"] = (
-        round(grey_tested / len(verdict.events), 4) if verdict.events else None)
-    if verdict.events and grey_tested == 0:
+        round((grey_tested + n_chromatic) / n_considered, 4) if n_considered else None)
+    if n_considered and (grey_tested + n_chromatic) == 0:
         summary["notes"].append(
             "NO event could be colour-tested: the achromaticity discriminant "
             "did not run at all this window")

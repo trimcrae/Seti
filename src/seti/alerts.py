@@ -298,12 +298,18 @@ def loom_alerts(root: Path) -> list[Alert]:
 
 
 def health_alerts(root: Path, now: datetime | None = None) -> list[Alert]:
-    """Has a channel gone quiet?
+    """Has something gone quiet -- the channel, or the data reaching it?
 
     Silence is the failure mode this repository is worst placed to notice: a
     broken cron and a sky with nothing in it produce the same empty directory,
     and the second is a result while the first is a bug.  The watchdog catches
     runs that FAIL; nothing else catches runs that stop happening.
+
+    Three distinct questions, in the order they can fail:
+      * did the channel run at all (result age, read from the run stamp);
+      * did it run on anything new (data frontier vs the wall clock) -- a
+        channel re-screening a frozen mirror passes every other check;
+      * did it reach the broker at all (an explicit NO_DATA_REACHED verdict).
     """
     now = now or datetime.now(timezone.utc)
     out: list[Alert] = []

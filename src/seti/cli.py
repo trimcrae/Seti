@@ -701,6 +701,13 @@ def _cmd_tocsin_screen(args, cfg):
            use_gaia_join=not args.no_gaia_join)
 
 
+def _cmd_tocsin_population(args, cfg):
+    from .tocsin.run import population
+
+    population(cfg, out_dir=args.out_dir, targets_path=args.targets,
+               n_null=args.n_null)
+
+
 def _cmd_tocsin_assess(args, cfg):
     from .tocsin.run import assess_only
 
@@ -1205,6 +1212,19 @@ def main(argv=None):
                         "the catalogue epoch, so it can orphan exactly the "
                         "high-proper-motion dwarfs this channel wants)")
     p.set_defaults(func=_cmd_tocsin_screen)
+
+    p = sub.add_parser("tocsin-population",
+                       help="TOCSIN stage 4 (offline): population-level "
+                            "structure tests on the accumulated ledger — "
+                            "over-clustering in phase space, a gradient in the "
+                            "event rate, and a sharp edge — each against a null "
+                            "of matched random subsets of the SAME screened "
+                            "population. Immune to the per-object contamination "
+                            "that killed the first candidates")
+    p.add_argument("--out-dir", default=None)
+    p.add_argument("--targets", default=None)
+    p.add_argument("--n-null", type=int, default=None)
+    p.set_defaults(func=_cmd_tocsin_population)
 
     p = sub.add_parser("tocsin-assess",
                        help="TOCSIN stage 3 (offline): recompute the ensemble "

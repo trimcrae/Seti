@@ -139,6 +139,18 @@ jobs:
         if: always()
         run: python -m seti.cli tocsin-assess || echo "assess skipped (no ledger yet)"
 
+      # POPULATION-LEVEL TESTS.  Every per-target test asks "is this star
+      # special?", and that question died three times on real data -- twice on a
+      # deep-drilling field, three times on variable stars.  This stage asks the
+      # question immune to per-object contamination: is the event RATE structured
+      # across the screened population?  Contaminants trace the ordinary
+      # distribution of observed stars, so they can raise the rate everywhere but
+      # cannot manufacture a gradient, an edge, or phase-space over-clustering.
+      # Offline; needs the cached Gaia list to rebuild the parent.
+      - name: Population-level structure tests (offline)
+        if: always()
+        run: python -m seti.cli tocsin-population || echo "population stage skipped"
+
       - name: Summarise the night
         if: always()
         run: |
@@ -178,6 +190,7 @@ jobs:
           git add -f -- results/tocsin/summary.json || echo "no summary.json"
           git add -f -- results/tocsin/watchlist.csv || echo "no watchlist.csv"
           git add -f -- results/tocsin/assessment.json || echo "no assessment.json"
+          git add -f -- results/tocsin/population.json || echo "no population.json"
           git add -f -- results/tocsin/events_latest.csv || echo "no events table"
           git add -f -- results/tocsin/rejected_latest.csv || echo "no rejected table"
           echo "=== staged ==="

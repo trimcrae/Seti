@@ -1836,3 +1836,160 @@ def test_polarity_amplitude_ratio_is_reported():
                   alerts_seen=10)
     led.assess()
     assert led.targets["4242"]["polarity_amplitude_ratio"] == pytest.approx(5.0)
+
+
+# ---------------------------------------------------------------------------
+# population-level tests (seti.tocsin.population)
+# ---------------------------------------------------------------------------
+def _parent(n=400, seed=7):
+    """A screened-target parent population with the confounders that matter."""
+    rng = np.random.default_rng(seed)
+    rows = []
+    for i in range(n):
+        rows.append({
+            "target_id": str(i),
+            "ra": float(rng.uniform(0, 360)),
+            "dec": float(rng.uniform(-70, 10)),
+            "parallax": float(rng.uniform(10, 40)),
+            "n_visits": int(rng.integers(3, 50)),
+            "local_rate": float(rng.uniform(1e-4, 3e-2)),
+            "phot_g_mean_mag": float(rng.uniform(12, 20)),
+            "bp_rp": float(rng.uniform(0.5, 3.5)),
+        })
+    return rows
+
+
+def test_population_tests_return_no_structure_on_a_random_subset():
+    """The false-positive check: a random subset must not look structured."""
+    from seti.tocsin.population import population_tests
+
+    rows = _parent()
+    rng = np.random.default_rng(11)
+    mask = np.zeros(len(rows), bool)
+    mask[rng.choice(len(rows), size=30, replace=False)] = True
+    out = population_tests(rows, mask, n_null=2000)
+    assert out["verdict"] == "NO_STRUCTURE"
+    assert out["n_tests_usable"] >= 3
+    assert out["p_min"] > out["bonferroni_threshold"]
+
+
+def test_population_clustering_recovers_an_injected_overdensity():
+    """A population spreading from an origin over-clusters in phase space."""
+    from seti.tocsin.population import population_tests
+
+    rows = _parent()
+    # Put the anomalies in one small volume: same sky patch, same distance.
+    for i in range(24):
+        rows[i]["ra"] = 150.0 + 0.2 * (i % 5)
+        rows[i]["dec"] = -30.0 + 0.2 * (i // 5)
+        rows[i]["parallax"] = 25.0
+    mask = np.zeros(len(rows), bool)
+    mask[:24] = True
+    out = population_tests(rows, mask, n_null=300)
+    clus = next(t for t in out["tests"] if t["name"] == "phase_space_clustering")
+    assert clus["ok"]
+    assert clus["p_value"] < 0.02, clus
+
+
+def test_population_gradient_recovers_an_injected_radial_trend():
+    """A rate that rises with distance is the Cirkovic/Wright class of claim."""
+    from seti.tocsin.population import population_tests
+
+    rows = _parent(n=600, seed=3)
+    plx = np.array([r["parallax"] for r in rows])
+    dist = 1000.0 / plx
+    # Probability of being an anomaly rises steeply with distance.
+    rng = np.random.default_rng(5)
+    p = (dist - dist.min()) / (dist.max() - dist.min())
+    mask = rng.random(len(rows)) < (0.02 + 0.35 * p)
+    out = population_tests(rows, mask, n_null=300)
+    grad = next(t for t in out["tests"] if t["name"] == "gradient_distance_pc")
+    assert grad["ok"]
+    assert grad["p_value"] < 0.05, grad
+
+
+def test_matched_null_holds_the_confounders_constant():
+    """The load-bearing defence: the null must reproduce the anomalies' strata.
+
+    Without stratified draws, any statistic correlated with visit count fires on
+    the survey footprint rather than on astrophysics.
+    """
+    from seti.tocsin.population import _finite_cols, _strata_labels, matched_draws
+
+    rows = _parent(n=300, seed=9)
+    # Anomalies drawn ONLY from the most-visited stars — the deep-drilling shape.
+    nv = np.array([r["n_visits"] for r in rows])
+    mask = nv >= np.quantile(nv, 0.8)
+    labels = _strata_labels(_finite_cols(rows, ("n_visits",)), 3)
+    draws = matched_draws(labels, mask, 50, np.random.default_rng(1))
+    # Every draw must have the same per-stratum counts as the observed mask.
+    for lab in np.unique(labels):
+        want = int((mask & (labels == lab)).sum())
+        for d in range(draws.shape[0]):
+            assert int((draws[d] & (labels == lab)).sum()) == want
+
+
+def test_too_few_randomisations_is_reported_not_believed():
+    """A p-value at the randomisation floor must not clear a Bonferroni threshold
+    that sits below that floor — the claim would be an artefact of draw count."""
+    from seti.tocsin.population import population_tests
+
+    rows = _parent()
+    rng = np.random.default_rng(11)
+    mask = np.zeros(len(rows), bool)
+    mask[rng.choice(len(rows), size=30, replace=False)] = True
+    out = population_tests(rows, mask, n_null=200)
+    assert out["verdict"] == "INSUFFICIENT_RESOLUTION"
+    assert out["p_resolution_floor"] > 0.2 * out["bonferroni_threshold"]
+    assert "raise" in out["note"]
+
+
+def test_population_tests_degrade_when_the_population_is_too_small():
+    from seti.tocsin.population import population_tests
+
+    out = population_tests(_parent(n=20), np.ones(20, bool), n_null=50)
+    assert out["verdict"] == "INSUFFICIENT_POPULATION"
+    assert "matched null" in out["note"]
+
+
+def test_parent_population_is_rebuilt_exactly_from_the_footprint(tmp_path):
+    """The ledger stores only event-bearing targets, so the parent is rebuilt.
+
+    It can be rebuilt exactly: every target in a 1-degree bin shares that bin's
+    observed nights, so nights-per-target = bin_trials[bin] / targets-in-bin.
+    Targets in bins with no trials were never screened and must be excluded —
+    including them would dilute the parent with stars nobody looked at.
+    """
+    from seti.tocsin.population import build_parent_population
+
+    tg = pd.DataFrame([
+        _target(source_id="a", ra=150.2, dec=-30.4),   # screened bin, has events
+        _target(source_id="b", ra=150.6, dec=-30.8),   # screened bin, quiet
+        _target(source_id="c", ra=150.4, dec=-30.1),   # screened bin, quiet
+        _target(source_id="d", ra=200.0, dec=-10.0),   # bin never observed
+    ])
+    bin_trials = {L.bin_key(150.2, -30.4): 30}         # 3 targets x 10 nights
+    events = {"a": {"n_events": 2, "n_visits": 10, "local_rate": 0.02}}
+    rows, mask = build_parent_population(tg, bin_trials, event_targets=events)
+
+    ids = [r["target_id"] for r in rows]
+    assert ids == ["a", "b", "c"], "unscreened bin must be excluded"
+    assert mask.tolist() == [True, False, False]
+    assert all(r["n_visits"] == 10 for r in rows)      # 30 trials / 3 targets
+    # local_rate must be filled for the quiet targets too, else the covariate
+    # would be perfectly correlated with being an anomaly.
+    assert all(math.isfinite(r["local_rate"]) for r in rows)
+
+
+def test_population_stage_degrades_without_bin_trials(tmp_path):
+    from seti.tocsin.run import population
+
+    class _Cfg:
+        root = tmp_path
+    (tmp_path / "results" / "tocsin").mkdir(parents=True)
+    L.Ledger().save(tmp_path / "results" / "tocsin" / "ledger.json")
+    tp = tmp_path / "t.parquet"
+    pd.DataFrame([_target(source_id="a")]).to_parquet(tp)
+    rec = population(_Cfg(), out_dir=tmp_path / "res", targets_path=tp)
+    assert rec["verdict"] == "NO_BIN_TRIALS"
+    assert "reconstructed" in rec["note"]

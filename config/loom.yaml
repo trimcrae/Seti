@@ -249,6 +249,15 @@ assess:
   # finds an improvement in pure noise every time, so an uncalibrated
   # delta-chi-squared would flag most objects.
   breakpoint_n_null: 500
+  # Rank correlation between the anomaly score and any observation-quality
+  # covariate (arc length, opposition count, detection count, normalized_rms)
+  # above which the population result is NOT interpretable.  0.3 shares ~9% of the
+  # rank variance.  Set after the first working run reached 0.475 against detection
+  # count -- 23% of the variance -- and slipped under a 0.5 threshold, which is
+  # exactly the "ranks objects by how well they were observed" failure this channel
+  # exists to avoid.  Absolute magnitude is reported but NOT gated: the momentum
+  # ceiling is a function of H by construction.
+  max_quality_correlation: 0.3
 
 report:
   results_dir: results/loom

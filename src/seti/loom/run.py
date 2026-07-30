@@ -41,7 +41,7 @@ import pandas as pd
 
 from ..tocsin.brokers import ALERCE_TAP
 from .acquire import AlerceSSO
-from .control import validate
+from .control import control_index, normalise_designation, validate
 from .nongrav import anomaly_ratio, calibration_table, ceiling_ratio, fit_envelope
 from .replication import replication_tests
 from .residuals import (
@@ -110,6 +110,11 @@ DEFAULTS: dict = {
         "empirical_envelope_min_per_bin": 200,
         "collisional_slope": 0.5,
         "breakpoint_n_null": 500,
+        # Rank correlation between the anomaly score and any observation-quality
+        # covariate above which the population result is not interpretable.  0.3
+        # shares ~9% of the rank variance; the first working run reached 0.475
+        # against detection count -- 23% -- and slipped under a 0.5 threshold.
+        "max_quality_correlation": 0.3,
     },
     "report": {"results_dir": "results/loom", "max_rows_written": 200_000},
 }
@@ -416,7 +421,19 @@ def screen(cfg=None, out_dir: str | Path | None = None,
     # a survey detects is not affordable and is not necessary.
     shortlist = _shortlist(summaries, timing.dt_seconds,
                            int(aconf["shortlist_size"]))
+    # FORCE THE POSITIVE CONTROLS IN, whatever their ranking.  The first working
+    # run had 2020 SO (the 1966 Surveyor 2 Centaur) and 2007 VN84 (the Rosetta
+    # spacecraft) in the parent population and measured neither, because neither
+    # ranked into the top 2000 by offset -- so the one falsifiable check the channel
+    # has went unexercised.  A control you do not measure is not a control.
+    forced = _control_keys(summaries, by_key)
+    n_forced = 0
+    for key in forced:
+        if key not in shortlist:
+            shortlist.append(key)
+            n_forced += 1
     rec["n_shortlist"] = len(shortlist)
+    rec["n_controls_forced_into_shortlist"] = n_forced
     checkpoint()
 
     # BATCHED, not one query per object.  The first live run spent 1.4 s per object
@@ -533,6 +550,27 @@ def _none_or_float(v):
 
 def _none_or_int(v):
     return None if v is None else int(v)
+
+
+def _control_keys(summaries: list[dict], by_key: dict) -> list:
+    """Keys of every positive-control object that has a residual aggregate.
+
+    Matched on the screened record's designation, which is the *unpacked* form —
+    the detections carry the packed form, and matching that against a control list
+    written as "2020 SO" finds nothing.
+    """
+    idx = control_index()
+    out: list = []
+    for s in summaries:
+        key = s.get("ssobjectid")
+        if key is None:
+            continue
+        rec = by_key.get(str(key))
+        if rec is None or not rec.designation:
+            continue
+        if normalise_designation(rec.designation) in idx:
+            out.append(key)
+    return out
 
 
 def _shortlist(summaries: list[dict], dt_seconds: float, size: int) -> list:
@@ -652,23 +690,45 @@ def analyse_series(rows: list[dict], th: Thresholds, n_null: int = 500) -> dict:
     # `assign_tier` reads as "this veto could not be evaluated" rather than "passed".
     out["timing_correlation"] = per_object_rate_correlation(along, rate)
 
-    # LSST per-epoch astrometric precision 10 mas with a 3-7 mas systematic floor
-    # to be added in quadrature; the empirical scatter is the honest floor.
+    # THE PER-POINT UNCERTAINTY, and it must not be the standard error of the mean.
+    #
+    # The first working run used `scatter / sqrt(n)` here.  That is the uncertainty
+    # on the MEAN, not on a single epoch, so for an object with 25 detections it
+    # understated the per-point error five-fold, inflating every acceleration
+    # signal-to-noise by five and every delta-chi-squared by twenty-five.  It
+    # promoted 150 objects to `interest` and put two population statistics at the
+    # randomisation floor.  It also injected an explicit n-dependence into the
+    # selection, which is precisely the "ranks objects by how well they were
+    # observed" failure the channel is built to avoid.
+    #
+    # The honest estimate is two-pass: fit with the instrumental floor, then take
+    # the RMS of the residuals ABOUT THE FITTED MODEL -- not about the mean, which
+    # would absorb the very trend being measured -- and refit with that.  Anything
+    # the model does not explain is error, whatever its origin, and unmodelled
+    # perturbers and photocentre wobble are real contributors no formal error
+    # carries.
     spec = math.sqrt(0.010 ** 2 + 0.007 ** 2)
-    resid_scatter = float(np.nanstd(along[good])) if good.sum() > 2 else spec
-    sigma_arcsec = max(spec, resid_scatter / max(math.sqrt(float(good.sum())), 1.0))
-    out["sigma_arcsec_used"] = sigma_arcsec
-    out["residual_scatter_arcsec"] = resid_scatter
-
-    # Zero-filled geometry propagates as NaN, never as a zero displacement: the
-    # arcsec-to-km conversion is proportional to the range, and `toporange` goes
-    # down to ~1e-8 au on rows where the geometry was not computed, so a naive
-    # conversion turns a real angular residual into a clean null.
     topo_use = usable_range(topo)
     helio_use = usable_range(helio)
     out["n_with_usable_geometry"] = int(np.isfinite(topo_use).sum())
     along_km = arcsec_to_km(along, topo_use)
-    sigma_km = np.abs(arcsec_to_km(np.full_like(along, sigma_arcsec), topo_use))
+
+    sigma_km = np.abs(arcsec_to_km(np.full_like(along, spec), topo_use))
+    first = drift_fit(mjd, along_km, sigma_km)
+    sigma_arcsec = spec
+    if first.get("verdict") == "OK" and math.isfinite(_f(first.get("chi2_reduced_quadratic"))):
+        # sqrt(reduced chi-squared) is exactly the factor by which the assumed
+        # error is too small, given the fitted model.  Never allowed below the
+        # instrumental floor: an object whose residuals happen to sit inside the
+        # spec has not been measured better than the instrument can measure.
+        scale = max(math.sqrt(max(_f(first["chi2_reduced_quadratic"]), 0.0)), 1.0)
+        sigma_arcsec = spec * scale
+        sigma_km = sigma_km * scale
+        out["sigma_inflation_from_fit"] = scale
+    out["sigma_arcsec_used"] = sigma_arcsec
+    out["residual_scatter_arcsec"] = (float(np.nanstd(along[good]))
+                                      if good.sum() > 2 else float("nan"))
+
     out["drift"] = drift_fit(mjd, along_km, sigma_km)
     out["law"] = law_discrimination(mjd, along_km, sigma_km, helio_use)
     out["breakpoint"] = breakpoint_scan(mjd, along_km, sigma_km, n_null=n_null)
@@ -814,10 +874,12 @@ def assess(cfg=None, out_dir: str | Path | None = None) -> dict:
         score, quality,
         gate_keys=[k for k in quality if k != "h"])
     qi = rec["quality_independence"]
-    if qi.get("verdict") == "OK" and qi.get("max_abs_correlation", 0.0) > 0.5:
+    qthresh = float(conf["assess"]["max_quality_correlation"])
+    if qi.get("verdict") == "OK" and qi.get("max_abs_correlation", 0.0) > qthresh:
         rec["quality_independence"]["warning"] = (
             f"the anomaly score correlates with {qi['max_correlated_with']} at "
-            f"rho={qi['max_abs_correlation']:.2f}; the channel is partly ranking "
+            f"rho={qi['max_abs_correlation']:.2f} (threshold {qthresh}); "
+            f"the channel is partly ranking "
             f"objects by observation quality and no population structure found "
             f"below is interpretable until that is removed")
 

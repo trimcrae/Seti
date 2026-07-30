@@ -317,6 +317,18 @@ class Ledger:
                 self.n_events_kept += 1
             mjds = [e["mjd"] for e in rec["events"]]
             rec["first_mjd"], rec["last_mjd"] = min(mjds), max(mjds)
+        self.apply_visit_history(visit_history)
+
+    def apply_visit_history(self, visit_history: dict | None) -> None:
+        """Merge visit epochs into whichever target records now exist.
+
+        Kept separate from :meth:`add_night` and called AFTER every night has
+        been folded.  Applying it during the first night's fold silently lost
+        the history of any target whose record is created by a LATER night —
+        which is most of them, since a record only comes into existence when
+        that target's event is folded.  The symptom was `visits_exact` staying
+        False, and therefore candidate tier being unreachable.
+        """
         for tid, mjds in (visit_history or {}).items():
             rec = self.targets.get(tid)
             if rec is None:

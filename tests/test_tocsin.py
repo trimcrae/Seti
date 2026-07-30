@@ -1030,7 +1030,10 @@ def test_nightly_screen_end_to_end_against_a_stubbed_broker(tmp_path, monkeypatc
     class _Cfg:
         root = tmp_path
     (tmp_path / "config").mkdir(exist_ok=True)
+    # Forced photometry is off by default (3151 s and a timeout on the live
+    # service); this test opts it back in so that path stays covered.
     (tmp_path / "config" / "tocsin.yaml").write_text(
+        "acquire:\n  use_forced_photometry: true\n"
         "ledger:\n  path: results/tocsin/ledger.json\n")
 
     out = tmp_path / "results" / "tocsin"
@@ -1597,3 +1600,67 @@ def test_tap_session_applies_a_real_timeout():
                            return_value="ok") as base:
         sess.request("GET", "http://example.invalid", timeout=1.0)
     assert base.call_args.kwargs.get("timeout") == 1.0
+
+
+def test_footprint_supplies_the_visit_history_so_candidate_stays_reachable(
+        tmp_path, monkeypatch):
+    """Load-bearing: `visits_exact` gates candidate tier.
+
+    Forced photometry is off (3151 s and a timeout on the live service), so the
+    visit history must come from the footprint instead.  Without it every target
+    would be stuck at `denominator_approximate` and NOTHING could ever be
+    promoted — trading a 52-minute stall for a permanently inert screen.
+    """
+    from seti.tocsin import run as R
+    from seti.tocsin.brokers import BrokerResult
+
+    tpath = tmp_path / "targets.parquet"
+    pd.DataFrame([_target(source_id="777", ra=150.2, dec=-30.4)]).to_parquet(tpath)
+
+    class _Stub:
+        def __init__(self, *a, **kw):
+            pass
+
+        def max_available_mjd(self):
+            return 61501.0
+
+        def night_detections(self, lo, hi, **kw):
+            # One event, so the ledger creates a record for this target at all
+            # (it deliberately stores only targets that have produced events —
+            # otherwise 254k targets x nights would explode the file).
+            return BrokerResult(rows=[{
+                "measurement_id": "m1", "oid": "o1", "sid": 1, "mjd": 61500.5,
+                "ra": 150.2, "dec": -30.4, "band": 1, "psfflux": 900.0,
+                "psffluxerr": 27.0, "snr": 33.0, "reliability": 0.95,
+                "templateflux": 9000.0, "templatefluxerr": 90.0,
+                "extendedness": 0.0, "isdipole": False}],
+                reached=True, verdict="OK", notes=["adql=stub"])
+
+        def forced_photometry_night(self, lo, hi, **kw):
+            raise AssertionError("forced photometry must not be queried")
+
+        def footprint_bins(self, lo, hi, **kw):
+            return BrokerResult(rows=[
+                {"rab": 150, "decb": -31, "night": 61499, "band": 1, "n": 40},
+                {"rab": 150, "decb": -31, "night": 61500, "band": 2, "n": 40}],
+                reached=True, verdict="OK")
+
+    monkeypatch.setattr(R, "AlerceTAP", _Stub)
+
+    class _Cfg:
+        root = tmp_path
+    R.screen_night(_Cfg(), targets_path=tpath, out_dir=tmp_path / "res")
+
+    led = L.Ledger.load(tmp_path / "results" / "tocsin" / "ledger.json")
+    rec = led.targets.get("777")
+    assert rec is not None, "the footprint should have recorded this target's visits"
+    assert rec["visits_exact"] is True
+    assert rec["n_visits"] == 2                       # two observed nights
+    assert "denominator_approximate" not in rec.get("notes", [])
+
+
+def test_footprint_epochs_land_inside_the_night_they_represent():
+    """The representative epoch must bin back to its own night, or the timing
+    null would resample the wrong nights."""
+    for n in (61499, 61500, 61735):
+        assert L.night_of(n + 1.1666667) == n

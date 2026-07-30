@@ -265,8 +265,9 @@ def validate(rows: list[dict], score_key: str, flagged_key: str = "flagged",
             continue
         seen.add(key)
         v = _f(r.get(score_key))
+        measured = math.isfinite(v)
         pct = (float(sum(1 for x in values if x <= v)) / n * 100.0
-               if n and math.isfinite(v) else float("nan"))
+               if n and measured else float("nan"))
         found.append({
             "designation": hit["designation"],
             "control_set": hit["control_set"],
@@ -274,6 +275,14 @@ def validate(rows: list[dict], score_key: str, flagged_key: str = "flagged",
             "confidence": hit.get("confidence", "n/a"),
             "score": v,
             "percentile": pct,
+            # THREE states, not two.  An object that is in the sample but was never
+            # measured -- no acceleration measurement, or never shortlisted for a
+            # residual pull -- has not been missed by the screen; it has not been
+            # shown to the screen.  Conflating the two made the first working run
+            # report SCREEN_INSENSITIVE over 2020 SO and the Rosetta spacecraft
+            # purely because neither was in the shortlist, which says nothing at all
+            # about sensitivity and would have discredited a working screen.
+            "measured": measured,
             "flagged": bool(r.get(flagged_key)),
             "expected_amr_m2_kg": hit.get("amr_m2_kg"),
         })
@@ -288,11 +297,15 @@ def validate(rows: list[dict], score_key: str, flagged_key: str = "flagged",
            and c["confidence"] != "disputed"]
     ng = [c for c in found if c["control_set"] == "nongrav_detected"]
     dc = [c for c in found if c["control_set"] == "dark_comet"]
+    art_measured = [c for c in art if c["measured"]]
     out["n_artificial_present"] = len(art)
+    out["n_artificial_measured"] = len(art_measured)
     out["n_artificial_flagged"] = sum(1 for c in art if c["flagged"])
     out["n_nongrav_present"] = len(ng)
+    out["n_nongrav_measured"] = sum(1 for c in ng if c["measured"])
     out["n_nongrav_flagged"] = sum(1 for c in ng if c["flagged"])
     out["n_dark_comet_present"] = len(dc)
+    out["n_dark_comet_measured"] = sum(1 for c in dc if c["measured"])
     out["n_dark_comet_flagged"] = sum(1 for c in dc if c["flagged"])
 
     if not art:
@@ -302,16 +315,30 @@ def validate(rows: list[dict], score_key: str, flagged_key: str = "flagged",
                        "neighbourhood, or predate the survey.  The control is "
                        "unexercised, NOT passed; sensitivity to the artificiality "
                        "discriminant is untested until one appears.")
-    elif out["n_artificial_flagged"] == len(art):
+    elif not art_measured:
+        out["verdict"] = "CONTROLS_PRESENT_BUT_NOT_MEASURED"
+        out["note"] = (
+            f"{len(art)} known artificial object(s) are in the sample "
+            f"({', '.join(c['designation'] for c in art)}) but none carries a "
+            f"score: they were never shortlisted for a residual pull, or have no "
+            f"usable acceleration measurement.  This says NOTHING about the "
+            f"screen's sensitivity -- the control has not been exercised.  It is "
+            f"also an instruction: a positive control that is present and not "
+            f"measured is a wasted one, and it should be forced into the "
+            f"shortlist.")
+    elif sum(1 for c in art_measured if c["flagged"]) == len(art_measured):
         out["verdict"] = "SCREEN_VALIDATED"
-        out["note"] = (f"all {len(art)} known artificial objects in the sample were "
-                       f"recovered by the screen")
+        out["note"] = (f"all {len(art_measured)} measured artificial objects in the "
+                       f"sample were recovered by the screen"
+                       + (f" ({len(art) - len(art_measured)} more are present but "
+                          f"unmeasured)" if len(art) > len(art_measured) else ""))
     else:
+        missed = len(art_measured) - sum(1 for c in art_measured if c["flagged"])
         out["verdict"] = "SCREEN_INSENSITIVE"
-        out["note"] = (f"{len(art) - out['n_artificial_flagged']} of {len(art)} known "
-                       f"artificial objects in the sample were NOT flagged; the "
-                       f"screen is missing the signal it is built to find and no "
-                       f"null from it is interpretable")
+        out["note"] = (f"{missed} of {len(art_measured)} MEASURED artificial objects "
+                       f"were not flagged; the screen was shown the signal it is "
+                       f"built to find and did not return it, so no null from it is "
+                       f"interpretable")
     return out
 
 

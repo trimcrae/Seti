@@ -995,12 +995,45 @@ def test_control_validation_recovers_a_planted_artificial_object():
 
 
 def test_control_validation_reports_an_insensitive_screen():
-    """A present artificial object that was not flagged invalidates any null."""
+    """A MEASURED artificial object that was not flagged invalidates any null."""
     rows = [{"designation": f"FILLER {i}", "score": 0.01 * i, "flagged": False}
             for i in range(100)]
     rows.append({"designation": "2020 SO", "score": 0.02, "flagged": False})
     out = control.validate(rows, score_key="score")
     assert out["verdict"] == "SCREEN_INSENSITIVE"
+    assert out["n_artificial_measured"] == 1
+
+
+def test_unmeasured_control_is_not_an_insensitive_screen():
+    """The distinction that would have discredited a working screen.
+
+    An object present in the sample but never scored — not shortlisted, or with no
+    usable acceleration — has not been *missed* by the screen; it has not been
+    *shown* to it. The first working run reported SCREEN_INSENSITIVE over 2020 SO
+    and the Rosetta spacecraft purely because neither ranked into the shortlist,
+    which says nothing whatever about sensitivity.
+    """
+    rows = [{"designation": f"FILLER {i}", "score": 0.01 * i, "flagged": False}
+            for i in range(100)]
+    rows.append({"designation": "2020 SO", "score": None, "flagged": False})
+    rows.append({"designation": "2007 VN84", "score": float("nan"), "flagged": False})
+    out = control.validate(rows, score_key="score")
+    assert out["verdict"] == "CONTROLS_PRESENT_BUT_NOT_MEASURED"
+    assert out["n_artificial_present"] == 2
+    assert out["n_artificial_measured"] == 0
+    assert "NOTHING about the screen's sensitivity" in out["note"]
+    # And it names them, because the fix is to force them into the shortlist.
+    assert "2020 SO" in out["note"]
+
+
+def test_a_measured_control_still_validates_alongside_an_unmeasured_one():
+    rows = [{"designation": f"FILLER {i}", "score": 0.01 * i, "flagged": False}
+            for i in range(100)]
+    rows.append({"designation": "J002E3", "score": 99.0, "flagged": True})
+    rows.append({"designation": "2020 SO", "score": None, "flagged": False})
+    out = control.validate(rows, score_key="score")
+    assert out["verdict"] == "SCREEN_VALIDATED"
+    assert "1 more are present but unmeasured" in out["note"]
 
 
 def test_no_controls_present_is_unexercised_not_passed():
@@ -1212,6 +1245,67 @@ def test_analyse_series_uses_the_reconstruction_when_columns_are_null():
     # be NaN rather than a confident zero correlation.
     assert not np.isfinite(out["timing_correlation"])
     assert out["geometry"]["power_ratio"] > 10.0
+
+
+def test_per_point_sigma_is_not_the_standard_error_of_the_mean():
+    """The systematic that promoted 150 objects in the first working run.
+
+    ``scatter / sqrt(n)`` is the uncertainty on the *mean*, not on a single epoch.
+    Using it as the per-point error understates it by sqrt(n) — five-fold for 25
+    detections — which inflates every acceleration signal-to-noise by five and
+    every delta-chi-squared by twenty-five.
+
+    This series has scatter and NO acceleration. It must come back insignificant.
+    With the standard-error-of-the-mean bug it does not, and neither does most of
+    the catalogue.
+    """
+    from seti.loom.run import analyse_series
+
+    th = screen.Thresholds()
+    rng = np.random.default_rng(4242)
+    rows = []
+    for night in range(20):
+        for k in (0, 1):
+            t = 60000.0 + 40.0 * night + k * (30.0 / 1440.0)
+            ra_p = 10.0 + 0.2 * (t - 60000.0)
+            # Pure scatter about zero: 0.2 arcsec, twenty times the instrumental
+            # floor, which is what a real orbit-fit residual looks like.
+            lag = float(rng.normal(0.0, 0.2))
+            rows.append({
+                "mjd": t, "ra": ra_p + lag / 3600.0, "dec": 5.0,
+                "ephra": ra_p, "ephdec": 5.0, "ephoffset": abs(lag),
+                "ephoffsetalongtrack": None, "ephoffsetcrosstrack": None,
+                "ephrate": 0.0, "heliorange": 2.5, "toporange": 1.8,
+            })
+    out = analyse_series(rows, th, n_null=100)
+    assert out["verdict"] == "OK", out
+    # The fit must inflate the assumed error to match the real scatter...
+    assert out["sigma_inflation_from_fit"] > 5.0
+    assert out["sigma_arcsec_used"] > 0.05
+    # ...and having done so, report no significant acceleration.
+    assert out["drift"]["accel_snr"] < th.min_accel_snr, out["drift"]
+    assert out["drift"]["chi2_reduced_quadratic"] == pytest.approx(1.0, abs=0.5)
+
+
+def test_sigma_never_falls_below_the_instrumental_floor():
+    """An object whose residuals sit inside the spec was not measured better than it."""
+    from seti.loom.run import analyse_series
+
+    th = screen.Thresholds()
+    rows = []
+    for night in range(12):
+        for k in (0, 1):
+            t = 60000.0 + 40.0 * night + k * (30.0 / 1440.0)
+            ra_p = 10.0 + 0.2 * (t - 60000.0)
+            rows.append({
+                "mjd": t, "ra": ra_p, "dec": 5.0, "ephra": ra_p, "ephdec": 5.0,
+                "ephoffset": 0.0, "ephoffsetalongtrack": None,
+                "ephoffsetcrosstrack": None, "ephrate": 0.0,
+                "heliorange": 2.5, "toporange": 1.8,
+            })
+    out = analyse_series(rows, th, n_null=100)
+    spec = math.sqrt(0.010 ** 2 + 0.007 ** 2)
+    assert out["sigma_arcsec_used"] >= spec
 
 
 def test_analyse_series_refuses_a_reconstruction_that_disagrees():

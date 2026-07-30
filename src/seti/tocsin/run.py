@@ -65,6 +65,7 @@ DEFAULTS: dict = {
                 "xmatch_max_arcsec": 1.5, "maxrec": 2000000, "timeout_s": 900,
                 "gaia_catid": 1, "sid_diaobject": 1,
                 "max_nights_per_run": 14.0, "backfill_start_mjd": 60973.0,
+                "use_forced_photometry": False,
                 "use_footprint_denominator": True, "footprint_bin_deg": 1.0,
                 "max_run_seconds": 5400.0,
                 "audit_without_gaia_join_every_n_runs": 14},
@@ -711,20 +712,33 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
             "NO event could be colour-tested: the achromaticity discriminant "
             "did not run at all this window")
 
-    # The denominator: forced photometry on every tracked nearby star tonight.
+    # Forced photometry: OPT-IN, and off by default.  Measured on the live
+    # service it took 3151 s and then timed out, while covering 0-0.08% of
+    # screened star-nights — the footprint query answers the same question in
+    # 5 s and covers all of them.  One stalled forced-photometry call had
+    # already burned a 180-minute job to cancellation.  The code path is kept
+    # because the epoch-level history it returns is strictly richer than the
+    # night-level history the footprint gives; it is simply not worth its cost
+    # against this broker today.
     _t2 = time.monotonic()
-    try:
-        fp = tap.forced_photometry_night(
-            lo, hi, parallax_min_mas=plx,
-            xmatch_max_arcsec=float(aconf["xmatch_max_arcsec"]),
-            gaia_catid=int(aconf.get("gaia_catid", 1)),
-            sid_diaobject=_sid(aconf))
-        hist, forced_pairs, fstats = _visit_history_from_forced(
-            fp.rows, targets, th, epoch_jyear)
-        summary["counts"].update(fstats)
-    except BrokerError as exc:
-        hist, forced_pairs = {}, set()
-        summary["notes"].append(f"forced_photometry_failed: {str(exc)[:300]}")
+    hist, forced_pairs = {}, set()
+    if not bool(aconf.get("use_forced_photometry", False)):
+        summary["notes"].append(
+            "forced photometry skipped (use_forced_photometry=false): measured "
+            "at 3151 s and 0-0.08% coverage against a 5 s footprint query")
+    else:
+        try:
+            fp = tap.forced_photometry_night(
+                lo, hi, parallax_min_mas=plx,
+                xmatch_max_arcsec=float(aconf["xmatch_max_arcsec"]),
+                gaia_catid=int(aconf.get("gaia_catid", 1)),
+                sid_diaobject=_sid(aconf))
+            hist, forced_pairs, fstats = _visit_history_from_forced(
+                fp.rows, targets, th, epoch_jyear)
+            summary["counts"].update(fstats)
+        except BrokerError as exc:
+            hist, forced_pairs = {}, set()
+            summary["notes"].append(f"forced_photometry_failed: {str(exc)[:300]}")
     timings["forced_photometry"] = round(time.monotonic() - _t2, 1)
 
     # THE DENOMINATOR.  A star-night that produced a detection was, by
@@ -777,10 +791,28 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
             "the ensemble rate is therefore an UPPER bound and promotion is "
             "correspondingly conservative")
 
-    # Merge the forced history the events themselves carried (if any broker
-    # supplied it) with the bulk history.
+    # THE VISIT HISTORY, from the footprint.  `Ledger._set_tier` requires
+    # `visits_exact` before a target can reach candidate tier, and that flag is
+    # set from this history — so without it nothing could EVER be promoted, and
+    # switching forced photometry off would have traded a 52-minute stall for a
+    # permanently inert screen.
+    #
+    # The footprint knows which NIGHTS each target's sky bin was observed, which
+    # is exactly the unit the ledger counts in: events are star-nights, trials
+    # are star-nights, and the timing null resamples nights.  One representative
+    # epoch per observed night is therefore a complete history at the resolution
+    # that matters.  (Forced photometry, when enabled, gives true per-visit
+    # epochs and is merged on top.)
+    for tid, night in footprint_pairs:
+        try:
+            n = int(str(night).lstrip("n"))
+        except (TypeError, ValueError):
+            continue
+        # Any epoch inside the night works; night_of(n + 1.1667) == n.
+        hist.setdefault(tid, []).append(round(n + 1.1666667, 6))
     for tid, mjds in verdict.visit_history.items():
         hist.setdefault(tid, []).extend(mjds)
+    for tid in list(hist):
         hist[tid] = sorted(set(hist[tid]))
 
     lconf = conf["ledger"]
@@ -804,9 +836,12 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
                       # attribute them once so the running total stays a count
                       # of alerts actually seen.
                       alerts_seen=len(alerts) if first else 0,
-                      visit_history=hist if first else None,
+                      visit_history=None,
                       target_positions=verdict.target_positions)
         first = False
+    # AFTER every night is folded, so targets whose record is created by a later
+    # night still receive their visit history.
+    led.apply_visit_history(hist)
     summary["nights_folded"] = all_nights
     led.updated_utc = _utc()
     stats = led.assess(alpha_fdr=float(lconf["alpha_fdr"]),

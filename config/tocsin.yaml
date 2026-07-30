@@ -90,6 +90,14 @@ acquire:
   # runs, so chunks that already succeeded are lost too.  Yielding voluntarily
   # keeps the watermark committed and lets the next dispatch resume.
   max_run_seconds: 5400.0
+  # Forced photometry: OFF.  Measured on the live service at 3151 s followed by
+  # a ReadTimeout, covering 0-0.08% of screened star-nights, while the footprint
+  # query answers the same question in 5 s with full coverage.  One stalled call
+  # burned a 180-minute job to cancellation.  Turn on only if the broker's
+  # forced-photometry table becomes both populated and fast; the epoch-level
+  # history it returns is strictly richer than the night-level history the
+  # footprint provides.
+  use_forced_photometry: false
   use_footprint_denominator: true
   footprint_bin_deg: 1.0
   maxrec: 2000000

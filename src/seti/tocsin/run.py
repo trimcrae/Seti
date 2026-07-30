@@ -78,7 +78,8 @@ DEFAULTS: dict = {
     "ledger": {"path": "results/tocsin/ledger.json", "alpha_fdr": 0.05,
                "min_visits_for_rate": 5, "max_duty_cycle": 0.2,
                "n_null_timing": 2000, "timing_alpha": 0.01,
-               "mixed_polarity_requires_grey_both": True},
+               "mixed_polarity_requires_grey_both": True,
+               "population_n_null": 2000, "population_seed": 20260730},
     "report": {"results_dir": "results/tocsin", "max_candidate_rows": 2000},
 }
 
@@ -954,6 +955,60 @@ def _write_watchlist(out: Path, led: Ledger, conf: dict) -> None:
         df["_o"] = df["tier"].map(lambda t: order.get(t, 9))
         df = df.sort_values(["_o", "p_binomial"], na_position="last").drop(columns="_o")
     df.to_csv(out / "watchlist.csv", index=False)
+
+
+def population(cfg=None, out_dir: str | Path | None = None,
+               targets_path: str | Path | None = None,
+               n_null: int | None = None) -> dict:
+    """Population-level structure tests on the accumulated ledger.  Offline.
+
+    Every per-target test in this channel asks "is this star special?", and that
+    question died three times on real data (a deep-drilling field, then three
+    variable stars).  This stage asks the question that is immune to per-object
+    contamination: is the event RATE structured across the screened population in
+    a way contaminants cannot produce?  See `seti.tocsin.population`.
+
+    Needs the Gaia target list to rebuild the parent, which the workflow already
+    caches, and the ledger's per-bin trial counts to know which targets were
+    actually screened.
+    """
+    from .population import build_parent_population, population_tests
+
+    conf = load_tocsin_config(cfg)
+    root = Path(cfg.root) if cfg is not None else _repo_root()
+    out = Path(out_dir) if out_dir else root / conf["report"]["results_dir"]
+    lconf = conf["ledger"]
+    led = Ledger.load(root / lconf["path"])
+    tpath = (Path(targets_path) if targets_path
+             else root / ".cache" / "tocsin" / "targets.parquet")
+    targets = load_targets(tpath)
+    rec: dict = {"run_at_utc": _utc(),
+                 "n_bins_with_trials": len(led.bin_trials or {})}
+    if targets is None or not len(targets):
+        rec["verdict"] = "NO_TARGET_LIST"
+        rec["note"] = f"target list missing at {tpath}; run tocsin-targets"
+        _write_json(out / "population.json", rec)
+        return rec
+    if not led.bin_trials:
+        rec["verdict"] = "NO_BIN_TRIALS"
+        rec["note"] = ("the ledger carries no per-bin trial counts, so the "
+                       "screened parent cannot be reconstructed; walk at least "
+                       "one window with the footprint denominator enabled")
+        _write_json(out / "population.json", rec)
+        return rec
+    rows, mask = build_parent_population(
+        targets, led.bin_trials,
+        bin_deg=float(conf["acquire"].get("footprint_bin_deg", 1.0)),
+        event_targets=led.targets)
+    nn = int(n_null if n_null is not None else lconf.get("population_n_null", 2000))
+    rec.update(population_tests(rows, mask,
+                                n_null=nn,
+                                seed=int(lconf.get("population_seed", 20260730))))
+    _write_json(out / "population.json", rec)
+    print(f"[tocsin] population: {rec.get('verdict')} "
+          f"parent={rec.get('n_parent')} anomalies={rec.get('n_anomaly')} "
+          f"p_min={rec.get('p_min')}")
+    return rec
 
 
 def assess_only(cfg=None, out_dir: str | Path | None = None) -> dict:

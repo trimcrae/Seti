@@ -27,6 +27,15 @@ Two design points that are load-bearing rather than decorative:
   forever, and inside a month the apparatus has a working detector and a human
   who ignores it. A consumed alert is still reported as *active* — dedup must
   not make a live condition look resolved.
+* **A separate check for the DATA stopping, not just the channel.** Both Rubin
+  channels read through ALeRCE's mirror, which lags ~16 d (frontier MJD 61235 =
+  2026-07-14 on 2026-07-30). If ALeRCE stops ingesting LSST, both channels keep
+  running on schedule, keep writing a fresh run stamp, keep committing, and keep
+  reporting a clean null — every liveness check stays green while we have
+  silently stopped tracking Rubin. `health_alerts` therefore compares the wall
+  clock to each channel's reported frontier and fires past 30 d (≈2× the
+  measured lag). A clean null from a screen no longer being shown data is the
+  most misleading thing this apparatus can produce.
 * **Staleness is read from the timestamp INSIDE each result file**, never from
   its mtime. A runner clones the repository fresh, so every mtime is the
   checkout time and a channel dead for a year looks thirty seconds old. An

@@ -1,0 +1,561 @@
+What ZTF Saw Where Rubin Looked: Anomaly Hunting in DR23
+
+1 Introduction
+2 Data
+3 Methods
+
+4 Results
+
+4.1 New variables
+
+4.1.1 SNAD273
+4.1.2 SNAD274
+4.1.3 SNAD276
+4.1.4 SNAD277
+4.1.5 SNAD278
+4.1.6 SNAD279
+
+4.2 Classification and determination of light curve parameters of known variables
+
+4.2.1 452216400002679
+4.2.2 258207200007316
+4.2.3 258208100007880
+4.2.4 258208100012201
+4.2.5 359205100018012
+4.2.6 359205200019829
+
+5 Conclusions
+
+What ZTF Saw Where Rubin Looked: Anomaly Hunting in DR23
+
+Maria V. Pruzhinskaya
+
+Sternberg astronomical institute, Lomonosov Moscow State University, Universitetsky pr. 13, Moscow, 119234, Russia
+
+pruzhinskaya@gmail.com
+
+Anastasia D. Lavrukhina
+
+Sternberg astronomical institute, Lomonosov Moscow State University, Universitetsky pr. 13, Moscow, 119234, Russia
+
+lavrukhina.ad@gmail.com
+
+Timofey A. Semenikhin
+
+Lomonosov Moscow State University, Faculty of Physics, Leninskie Gory, 1-2, Moscow, 119991, Russia
+
+Sternberg astronomical institute, Lomonosov Moscow State University, Universitetsky pr. 13, Moscow, 119234, Russia
+
+ofmafowo@gmail.com
+
+Alina A. Volnova
+
+Space Research Institute of the Russian Academy of Sciences (IKI), 84/32 Profsoyuznaya Street, Moscow, 117997, Russia
+
+alinusss@gmail.com
+
+Sreevarsha Sreejith
+
+Physics Department, University of Surrey, Stag Hill campus, Guildford, GU2 7XH, UK.
+
+sreevarshasree@gmail.com
+
+Vadim V. Krushinsky
+
+Laboratory of Astrochemical Research, Ural Federal University, Ekaterinburg, ul. Mira d. 19, Yekaterinburg, 620002, Russia
+
+krussh@gmail.com
+
+Emmanuel Gangler
+
+Université Clermont Auvergne, CNRS/IN2P3, LPC, F-63000 Clermont-Ferrand, France
+
+Emmanuel.Gangler@clermont.in2p3.fr
+
+Emille E. O. Ishida
+
+Université Clermont Auvergne, CNRS/IN2P3, LPC, F-63000 Clermont-Ferrand, France
+
+emille.ishida@clermont.in2p3.fr
+
+Matwey V. Kornilov
+
+Sternberg astronomical institute, Lomonosov Moscow State University, Universitetsky pr. 13, Moscow, 119234, Russia
+
+National Research University Higher School of Economics, 21/4 Staraya Basmannaya Ulitsa, Moscow, 105066, Russia
+
+kornilov@physics.msu.ru
+
+Konstantin L. Malanchev
+
+The McWilliams Center for Cosmology & Astrophysics, Department of Physics, Carnegie Mellon University,
+Pittsburgh, PA 15213, USA
+
+kmalanch@andrew.cmu.edu
+
+Abstract
+We present results from the SNAD VIII Workshop, during which we conducted the first systematic anomaly search in the ZTF fields also observed by LSSTComCam during Rubin Scientific Pipeline commissioning. Using the PineForest active anomaly detection algorithm, we analysed four selected fields (two galactic and two extragalactic) and visually inspected 400 candidates. As a result, we discovered six previously uncatalogued variable stars, including RS CVn, BY Draconis, ellipsoidal, and solar-type variables, and refined classifications and periods for six known objects. These results demonstrate the effectiveness of the SNAD anomaly detection pipeline and provide a preview of the discovery potential in the upcoming LSST data.
+
+\uat Time domain astronomy2109 — \uat Supernovae1668 — \uat Time series analysis1916 — \uat Transient detection1957
+
+† † facilities: ZTF  (ZTF Team, 2025 ) † † software: Source Extractor (E. Bertin & S. Arnouts, 1996 ) , astropy   (Astropy Collaboration et al., 2013 , 2018 , 2022 ) , NumPy   (S. van der Walt et al., 2011 ) , Matplotlib   (J. D. Hunter, 2007 ) , pandas   (T. pandas development team, 2020 ; Wes McKinney, 2010 ) .
+
+1 Introduction
+
+The advent of large astronomical data sets, which took place in the last few decades, changed significantly how researchers interact with the data. In all areas of observational astronomy, communities were obliged to adapt to unprecedented volumes of photometric observations. It is safe to say that one of the areas most impacted by this new paradigm was the discovery of new, and sometimes unpredicted, astrophysical phenomena. Serendipitous discovery has became more unlikely with each new survey, which boosted the use of automatic machine learning techniques. The situation is even more drastic when we take into account expected data of the Legacy Survey of Space and time from the Vera C. Rubin Observatory  (LSST Science Collaboration et al., 2009 ) .
+
+In order to enable systematic search for unpredicted, scientifically interesting, phenomena in large data sets, the SNAD team 1 1 1 https://snad.space/ (A. A. Volnova et al., 2024 ) has been developing a series user-friendly anomaly detection (AD) tools (K. Malanchev et al., 2023 ; M. V. Kornilov et al., 2025 ) whose goal is to enable seamless interaction between the expert and the machine, and thus optimize the search for novelty in astronomical data. The pipeline has already proven to be successful in scrutinizing data from the Zwicky Transient Facility 2 2 2 https://www.ztf.caltech.edu/ (ZTF; E. C. Bellm et al. 2019 ) under a series of different circumstances, including searches for supernovae (P. D. Aleo et al., 2022 ; M. V. Pruzhinskaya et al., 2023 ) and stellar flares (A. S. Voloshina et al., 2024 ) , as well as the identification of artifacts in astronomical data (T. A. Semenikhin et al., 2025 ; S. Sreejith et al., 2025 ) . We start now to redirect this experience towards a new paradigm.
+
+In this work, we present results from the first systematic anomaly search in fields observed by both, ZTF and the LSST commissioning camera (LSSTComCam, L. P. Guy et al. 2025 ).
+We applied the SNAD pipeline to ZTF Data Release 23 (DR23) light curve data, limited to regions targeted during the on-sky campaign of the LSSTComCam dedicated to the commissioning of its Science Pipelines. Recent reports already presented result from variability search within LSST proprietary data covering the same area (K. Malanchev et al., 2025 ; J. L. Carlin et al., 2025 ; Y. Choi et al., 2025 ) , however, to our knowledge, a similar AD search was never specifically targeted to these fields.
+
+LSSTComCam is the Rubin Observatory’s engineering camera, used for testing and validating the observatory systems prior to the installation of the full LSST Camera (A. Roodman et al., 2024 ; T. Lange et al., 2024 ) . Its focal plane consists of a single raft with a 3 × 3 3 3 3\times 3 3 × 3 mosaic of 4 ⁢ K × 4 ⁢ K 4 K 4 K 4\mathrm{K}\times 4\mathrm{K} 4 roman_K × 4 roman_K ITL science sensors, totaling 144 million pixels. It shares the same plate scale as the LSSTCam (0.2 arcsec/pixel) and covers a field of view of 40 × 40 40 40 40\times 40 40 × 40 arcmin. Observations with LSSTComCam were conducted at the end of 2024. For the Science Pipelines commissioning campaign, seven target fields were selected 3 3 3 https://sitcomtn-149.lsst.io/ . These fields cover a total area of approximately 15 square degrees. The photometric data from 1791 LSSTComCam exposures formed the Rubin Data Preview 1 (DP1) dataset  (NSF-DOE Vera C. Rubin Observatory, 2025 ) . Among the seven LSSTComCam target fields, four overlap with the ZTF footprint (see Table  1 ). Figure  1 shows the spatial footprint of these selected fields overlaid on ZTF coverage.
+
+In what follows, data selection is described in Section 2 ; the algorithm used for anomaly search is given in Section 3 ; a summary of our findings is shown in Section 4 and our conclusions are discussed in Section 5 .
+
+Table 1 : Coordinates, radii and names of selected LSSTComCam fields. N is number of ZTF objects within the footprint of these fields.
+
+Field Code
+Field Name
+RA (deg)
+Dec (deg)
+Radius (deg)
+N
+
+Rubin SV 38 7
+Low Ecliptic Latitude Field
+37.86
++ 6.98 6.98 +6.98 + 6.98
+0.7
+6758
+
+ECDFS
+Extended Chandra Deep Field South
+53.13
+− 28.10 28.10 -28.10 - 28.10
+0.6
+546
+
+Rubin SV 95 − 25 25 -25 - 25
+
+Low Galactic Latitude Field
+95.00
+− 25.00 25.00 -25.00 - 25.00
+0.5
+10649
+
+Seagull
+Seagull Nebula
+106.23
+− 10.51 10.51 -10.51 - 10.51
+0.5
+24480
+
+2 Data
+
+We used data from the latest ZTF data release (DR23), covering the time range of 58178 ≤ MJD ≤ 60125 58178 MJD 60125 58178\leq\mathrm{MJD}\leq 60125 58178 ≤ roman_MJD ≤ 60125 , which corresponds to March 2018 through June 2023  (E. C. Bellm et al., 2019 ) . From this dataset, we selected only z ⁢ r 𝑧 𝑟 zr italic_z italic_r -band light curves that satisfy the quality flag criterion catflags = 0 , holding at least 100 detections and overlapping with Rubin commissionning fields.
+
+Feature extraction from ZTF light curves was performed using the light-curve 4 4 4 https://github.com/light-curve/light-curve-python package, a time-series feature extraction tool developed as part of the SNAD pipeline  (K. L. Malanchev et al., 2021 ; A. Lavrukhina & K. Malanchev, 2023 ) . The resulting dataset contains 47 statistical features per object; the full list of features and the feature-extracted dataset are available on-line 5 5 5 https://snad.space/features/ .
+
+LSSTComCam covers a significantly smaller area than a single ZTF observation field of view of 47 square degrees. Therefore, from the ZTF fields overlapping with a corresponding LSSTComCam target field, we extracted objects likely to also be observed by Rubin. However, the employed LSSTComCam observation strategy involved a complex pattern of random translational and rotational dithers around each field’s nominal pointing center, making the exact footprint non-trivial to define.
+
+Figure 1 : Spatial footprint of the four LSSTComCam target fields (circles) overlaid on ZTF sky coverage. Above each circle, the FIELDID of the corresponding overlapping ZTF field is shown. In the legend, the number in parentheses indicates how many ZTF objects fall within the respective LSSTComCam target field. The background grid outlines the ZTF observed fields. Each is colour-coded according to the number of ZTF objects in it.
+
+Since LSSTComCam coverage maps are not publicly available in a machine-readable form, we used Fig. 3 of L. P. Guy et al. ( 2025 ) for the region selection.
+We applied a percentile-based intensity thresholding to identify dark regions corresponding to observational coverage in this figure, with the percentile threshold manually selected for each image to optimize region detection. A distance transform algorithm was then used to determine the maximum inscribed circle within the primary observation region, and to estimate the radius of the corresponding field (Fig.  2 ).
+
+Figure 2 : Cumulative imaging depth expressed in terms of the S / N = 5 𝑆 𝑁 5 S/N=5 italic_S / italic_N = 5 limiting magnitude for
+unresolved sources for four LSSTComCam fields. We additionally specify a selected radius and corresponding area for each field.
+
+The radius of each LSSTComCam target field and the number of ZTF objects within the footprint of these fields is given in Table  1 .
+
+3 Methods
+
+We applied the PineForest algorithm, implemented in the coniferest library  (M. V. Kornilov et al., 2025 ) , to independently explore potential outliers in each of the four fields.
+
+PineForest is an active AD framework developed by the SNAD team. It is based upon the well-known Isolation Forest algorithm  (F. T. Liu et al., 2008 ) , which adapts the decision tree method  (L. Breiman, 2001 ; W.-Y. Loh, 2014 ; E. B. Hunt et al., 1966 ) for outlier detection by exploiting the idea that anomalies tend to be more easily isolated in feature space. PineForest allows the personalization of the structure of the forest by selecting only random trees that agree with the anomaly definition informed by the user.
+
+For each field, we conducted two PineForest sessions with a labelling budget of 50, retraining the model between iterations to incorporate expert feedback and refine the anomaly ranking.
+
+Our main findings are summarized in the next sections.
+
+4 Results
+
+We analysed, two extragalactic (Rubin SV 387 and ECDFS) and two galactic (Rubin SV 95 − - - 25 and Seagull) fields. All of which contain a certain amount of artifacts and spurious data.
+
+The galactic fields include a wide range of variable stars, such as eclipsing binaries (EB), RR Lyrae, RS CVn systems, long-period variables (LPV), cataclysmic variables (CV), and other known and unknown variable objects.
+Additionally, the Seagull field, located within a nebula, also contains a dozen young stellar object (YSO) candidates, consistent with previous studies showing that YSOs preferentially reside in star-forming regions and molecular clouds (e.g., C. J. Lada & E. A. Lada 2003 ; N. J. Evans et al. 2009 ).
+
+The extragalactic fields contain several extended sources. In these fields, we primarily found active galactic nuclei (AGN), including quasars (QSO) and one blazar candidate (ZTF OID 452216400005600), one possible supernova (AT 2022zgk), and three known asteroids (Patsy, 2003 SN65, and 2015 GZ65). A small number of stellar variables, such as RS CVn stars and EB, are also present in the extragalactic fields.
+
+Below, we present newly identified variable stars, as well as known variables for which we refined the classification and measured periods. The periods were initially estimated using values provided in the SNAD ZTF Viewer 6 6 6 https://ztf.snad.space/ (K. Malanchev et al., 2023 ) . It uses a period corresponding to the highest Lomb-Scargle periodogram peak (N. R. Lomb, 1976 ; J. D. Scargle, 1982 ) . These preliminary estimates were subsequently fine-tuned using the Variability Search Toolkit (VaST; K. V. Sokolovsky & A. A. Lebedev 2018 ). VaST employs methods developed by J. Lafler & T. D. Kinman ( 1965 ) and T. J. Deeming ( 1975 ) .
+
+4.1 New variables
+
+All objects presented below are new variables that are not listed in the Gaia DR3 Variability Catalog  (Gaia Collaboration et al., 2023 ) or other known catalogs of variable stars, including the General Catalog of Variable Stars (GCVS, N. N. Samus’ et al., 2003 , 2017 ) , the International Variable Star Index (AAVSO VXS, C. L. Watson et al., 2006 ) , the Large-amplitude variables in Gaia DR2  (N. Mowlavi et al., 2021 ) or the Stellar variability catalog from Gaia DR3 (J. Maíz Apellániz et al., 2023 ) .
+
+Each of these objects has been added to the SNAD Catalog 7 7 7 https://snad.space/catalog/ and assigned a SNAD name.
+
+4.1.1 SNAD273
+
+The star ZTF OID 452216100008087 (Gaia DR3 19492077713298944) is located at equatorial coordinates α = 02 h ⁢  30 m ⁢  24.828 s 𝛼 superscript 02 h superscript 30 m superscript 24.828 s \alpha=\mathrm{02^{h}\,30^{m}\,24.828^{s}} italic_α = 02 start_POSTSUPERSCRIPT roman_h end_POSTSUPERSCRIPT 30 start_POSTSUPERSCRIPT roman_m end_POSTSUPERSCRIPT 24.828 start_POSTSUPERSCRIPT roman_s end_POSTSUPERSCRIPT , δ = + 07 ∘ ⁢  28 ′ ⁢  8.44 ′′ 𝛿 superscript 07 superscript 28 ′ superscript 8.44 ′′ \delta=+07^{\circ}\,28^{\prime}\,8.44^{\prime\prime} italic_δ = + 07 start_POSTSUPERSCRIPT ∘ end_POSTSUPERSCRIPT 28 start_POSTSUPERSCRIPT ′ end_POSTSUPERSCRIPT 8.44 start_POSTSUPERSCRIPT ′ ′ end_POSTSUPERSCRIPT .
+
+The field is extragalactic, but the object is classified as a star by different surveys (e.g., R. Ahumada et al. 2020 ; K. J. Duncan 2022 ). Gaia data suggest that it is a main-sequence star, with a photogeometric distance of 959 − 70 + 87 subscript superscript 959 87 70 959^{+87}_{-70} 959 start_POSTSUPERSCRIPT + 87 end_POSTSUPERSCRIPT start_POSTSUBSCRIPT - 70 end_POSTSUBSCRIPT  pc  (C. A. L. Bailer-Jones et al., 2021 ) .
+
+The ZTF light curve (Fig.  3(a) ), as well as Pan-STARRS1 DR2 photometry (K. C. Chambers et al., 2016 ; H. A. Flewelling et al., 2020 ) , reveal low-amplitude, non-periodic variability consistent with solar-type activity.
+
+4.1.2 SNAD274
+
+The star ZTF OID 359205200010128 (Gaia DR3 3046542589365461376) is located at α = 07 h ⁢  04 m ⁢  34.577 s 𝛼 superscript 07 h superscript 04 m superscript 34.577 s \alpha=\mathrm{07^{h}\,04^{m}\,34.577^{s}} italic_α = 07 start_POSTSUPERSCRIPT roman_h end_POSTSUPERSCRIPT 04 start_POSTSUPERSCRIPT roman_m end_POSTSUPERSCRIPT 34.577 start_POSTSUPERSCRIPT roman_s end_POSTSUPERSCRIPT , δ = − 10 ∘ ⁢  18 ′ ⁢  10.01 ′′ 𝛿 superscript 10 superscript 18 ′ superscript 10.01 ′′ \delta=-10^{\circ}\,18^{\prime}\,10.01^{\prime\prime} italic_δ = - 10 start_POSTSUPERSCRIPT ∘ end_POSTSUPERSCRIPT 18 start_POSTSUPERSCRIPT ′ end_POSTSUPERSCRIPT 10.01 start_POSTSUPERSCRIPT ′ ′ end_POSTSUPERSCRIPT . The photogeometric distance is estimated to be 1313 − 108 + 151 subscript superscript 1313 151 108 1313^{+151}_{-108} 1313 start_POSTSUPERSCRIPT + 151 end_POSTSUPERSCRIPT start_POSTSUBSCRIPT - 108 end_POSTSUBSCRIPT  pc  (C. A. L. Bailer-Jones et al., 2021 ) . According to Gaia data, the star lies above the main sequence, suggesting it could be a rotating ellipsoidal variable (ELL).
+
+The ZTF folded light curve is shown in Fig.  3(b) . The estimated period is P = 15.2395 𝑃 15.2395 P=15.2395 italic_P = 15.2395 days.
+
+4.1.3 SNAD276
+
+The ZTF OID 359205200015003 8 8 8 This object was also independently found using a different approach, Signature Anomaly Detection  (E. Gangler et al., 2025 ) . (Gaia DR3 3046517850352071040) is located at α = 07 h ⁢  04 m ⁢  38.191 s 𝛼 superscript 07 h superscript 04 m superscript 38.191 s \alpha=\mathrm{07^{h}\,04^{m}\,38.191^{s}} italic_α = 07 start_POSTSUPERSCRIPT roman_h end_POSTSUPERSCRIPT 04 start_POSTSUPERSCRIPT roman_m end_POSTSUPERSCRIPT 38.191 start_POSTSUPERSCRIPT roman_s end_POSTSUPERSCRIPT , δ = − 10 ∘ ⁢  31 ′ ⁢  58.69 ′′ 𝛿 superscript 10 superscript 31 ′ superscript 58.69 ′′ \delta=-10^{\circ}\,31^{\prime}\,58.69^{\prime\prime} italic_δ = - 10 start_POSTSUPERSCRIPT ∘ end_POSTSUPERSCRIPT 31 start_POSTSUPERSCRIPT ′ end_POSTSUPERSCRIPT 58.69 start_POSTSUPERSCRIPT ′ ′ end_POSTSUPERSCRIPT . The photogeometric distance is estimated to be 970 − 147 + 242 subscript superscript 970 242 147 970^{+242}_{-147} 970 start_POSTSUPERSCRIPT + 242 end_POSTSUPERSCRIPT start_POSTSUBSCRIPT - 147 end_POSTSUBSCRIPT  pc  (C. A. L. Bailer-Jones et al., 2021 ) .
+
+The ZTF folded light curve is shown in Fig.  3(c) . The estimated period is P = 6.34625 𝑃 6.34625 P=6.34625 italic_P = 6.34625 days. The presence of outlier points in the light curve may indicate chromospheric activity, which is also typical for RS CVn-type stars.
+
+4.1.4 SNAD277
+
+The ZTF OID 359205200019542 (Gaia DR3 3046510501666004224) is located at α = 07 h ⁢  04 m ⁢  37.973 s 𝛼 superscript 07 h superscript 04 m superscript 37.973 s \alpha=\mathrm{07^{h}\,04^{m}\,37.973^{s}} italic_α = 07 start_POSTSUPERSCRIPT roman_h end_POSTSUPERSCRIPT 04 start_POSTSUPERSCRIPT roman_m end_POSTSUPERSCRIPT 37.973 start_POSTSUPERSCRIPT roman_s end_POSTSUPERSCRIPT , δ = − 10 ∘ ⁢  43 ′ ⁢  37.78 ′′ 𝛿 superscript 10 superscript 43 ′ superscript 37.78 ′′ \delta=-10^{\circ}\,43^{\prime}\,37.78^{\prime\prime} italic_δ = - 10 start_POSTSUPERSCRIPT ∘ end_POSTSUPERSCRIPT 43 start_POSTSUPERSCRIPT ′ end_POSTSUPERSCRIPT 37.78 start_POSTSUPERSCRIPT ′ ′ end_POSTSUPERSCRIPT . The photogeometric distance is estimated to be 870 − 78 + 66 subscript superscript 870 66 78 870^{+66}_{-78} 870 start_POSTSUPERSCRIPT + 66 end_POSTSUPERSCRIPT start_POSTSUBSCRIPT - 78 end_POSTSUBSCRIPT  pc  (C. A. L. Bailer-Jones et al., 2021 ) . Based on Gaia data, the object is consistent with a main-sequence star.
+
+Similar to SNAD273, this object shows signs of solar-type variability (see Fig.  3(d) ).
+
+4.1.5 SNAD278
+
+The ZTD OID 359205300002062 (Gaia DR3 3046437074905139072) is located at α = 07 h ⁢  04 m ⁢  41.726 s 𝛼 superscript 07 h superscript 04 m superscript 41.726 s \alpha=\mathrm{07^{h}\,04^{m}\,41.726^{s}} italic_α = 07 start_POSTSUPERSCRIPT roman_h end_POSTSUPERSCRIPT 04 start_POSTSUPERSCRIPT roman_m end_POSTSUPERSCRIPT 41.726 start_POSTSUPERSCRIPT roman_s end_POSTSUPERSCRIPT , δ = − 10 ∘ ⁢  54 ′ ⁢  26.14 ′′ 𝛿 superscript 10 superscript 54 ′ superscript 26.14 ′′ \delta=-10^{\circ}\,54^{\prime}\,26.14^{\prime\prime} italic_δ = - 10 start_POSTSUPERSCRIPT ∘ end_POSTSUPERSCRIPT 54 start_POSTSUPERSCRIPT ′ end_POSTSUPERSCRIPT 26.14 start_POSTSUPERSCRIPT ′ ′ end_POSTSUPERSCRIPT . The photogeometric distance is estimated to be 1373 − 206 + 307 subscript superscript 1373 307 206 1373^{+307}_{-206} 1373 start_POSTSUPERSCRIPT + 307 end_POSTSUPERSCRIPT start_POSTSUBSCRIPT - 206 end_POSTSUBSCRIPT  pc  (C. A. L. Bailer-Jones et al., 2021 ) .
+
+The ZTF folded light curve is shown in Fig.  3(e) . Based on its photometric properties, specifically, the presence of a distortion wave, an amplitude of ∼ similar-to \sim ∼ 0.6 mag in the z ⁢ r 𝑧 𝑟 zr italic_z italic_r -band, and flares, we tentatively classify this object as an RS CVn-type variable. The estimated period is P = 2.03916 𝑃 2.03916 P=2.03916 italic_P = 2.03916 days.
+
+4.1.6 SNAD279
+
+The star ZTF OID 359205300031896 (Gaia DR3 3046431916644875136) is located at α = 07 h ⁢  04 m ⁢  45.173 s 𝛼 superscript 07 h superscript 04 m superscript 45.173 s \alpha=\mathrm{07^{h}\,04^{m}\,45.173^{s}} italic_α = 07 start_POSTSUPERSCRIPT roman_h end_POSTSUPERSCRIPT 04 start_POSTSUPERSCRIPT roman_m end_POSTSUPERSCRIPT 45.173 start_POSTSUPERSCRIPT roman_s end_POSTSUPERSCRIPT , δ = − 10 ∘ ⁢  59 ′ ⁢  50.28 ′′ 𝛿 superscript 10 superscript 59 ′ superscript 50.28 ′′ \delta=-10^{\circ}\,59^{\prime}\,50.28^{\prime\prime} italic_δ = - 10 start_POSTSUPERSCRIPT ∘ end_POSTSUPERSCRIPT 59 start_POSTSUPERSCRIPT ′ end_POSTSUPERSCRIPT 50.28 start_POSTSUPERSCRIPT ′ ′ end_POSTSUPERSCRIPT . The photogeometric distance is estimated to be 1246 − 143 + 175 subscript superscript 1246 175 143 1246^{+175}_{-143} 1246 start_POSTSUPERSCRIPT + 175 end_POSTSUPERSCRIPT start_POSTSUBSCRIPT - 143 end_POSTSUBSCRIPT  pc  (C. A. L. Bailer-Jones et al., 2021 ) . According to E. L. Hunt & S. Reffert 2024 , it is a member of open cluster Theia 1654.
+
+The ZTF folded light curve is shown in Fig.  3(f) . Based on its photometric properties, we also interpret the observed brightness modulation as likely caused by stellar spots and rotation, BY Draconis type (BY). The estimated period is P = 7.11703 𝑃 7.11703 P=7.11703 italic_P = 7.11703 days.
+
+(a)
+
+(b)
+
+(c)
+
+(d)
+
+(e)
+
+(f)
+
+Figure 3 : Light curves of eight new ZTF variable stars discovered in LSSTComCam target fields during the SNAD-VIII Workshop. For periodic variables, folded light curves are shown along with the corresponding periods:
+( 3(a) ) 452216100008087 (see Section  4.1.1 ),
+( 3(b) ) 359205200010128 (see Section  4.1.2 ),
+( 3(c) ) 359205200015003 (see Section  4.1.3 ),
+( 3(d) ) 359205200019542 (see Section  4.1.4 ),
+( 3(e) ) 359205300002062 (see Section  4.1.5 ),
+( 3(f) ) 359205300031896 (see Section  4.1.6 ).
+
+4.2 Classification and determination of light curve parameters of known variables
+
+In this section, we focus on variable objects that have been previously catalogued as variables, mainly using machine learning techniques.
+For these sources, our newly acquired data allowed us to determine their periods and refine or clarify their variability classifications.
+This visual re-evaluation provides improved or more precise parameters for known variables, supporting their further study and contributing to the reliability of variable star catalogues.
+
+4.2.1 452216400002679
+
+The star ZTF OID 452216400002679 (Gaia DR3 19359689641429888) is classified as eclipsing binary (EB) system by Gaia Collaboration ( 2022 ) .
+Based on ZTF DR23 data, we revised the period to 1.10166 1.10166 1.10166 1.10166 days, correcting the inaccurate value of 0.54928 0.54928 0.54928 0.54928 days previously reported by Gaia Collaboration ( 2022 ) . The updated folded light curve is shown in Fig.  4(a) .
+
+4.2.2 258207200007316
+
+The star ZTF OID 258207200007316 (Gaia DR3 2912319917858743808) is classified as an RS CVn-type variable by  Gaia Collaboration ( 2022 ) , although no period is provided there.
+
+According to Gaia DR3 and EDR3 data, this object is a late G- to early K-type main-sequence star, with an effective temperature of T eff = 5212 − 21 + 23 subscript 𝑇 eff subscript superscript 5212 23 21 T_{\mathrm{eff}}=5212^{+23}_{-21} italic_T start_POSTSUBSCRIPT roman_eff end_POSTSUBSCRIPT = 5212 start_POSTSUPERSCRIPT + 23 end_POSTSUPERSCRIPT start_POSTSUBSCRIPT - 21 end_POSTSUBSCRIPT  K, surface gravity log ⁡ g = 4.11 ± 0.01 𝑔 plus-or-minus 4.11 0.01 \log g=4.11\pm 0.01 roman_log italic_g = 4.11 ± 0.01 , and moderate metallicity [ Fe / H ] = − 0.37 ± 0.03 delimited-[] Fe H plus-or-minus 0.37 0.03 [\mathrm{Fe}/\mathrm{H}]=-0.37\pm 0.03 [ roman_Fe / roman_H ] = - 0.37 ± 0.03 .
+
+Based on its ZTF light curve, we identify clear photometric variability with a well-defined period of 15.9665 15.9665 15.9665 15.9665 days (see folded light curve in Fig.  4(b) ). The absence of signatures indicating binarity or other types of variability suggests that the modulation is most likely due to rotational modulation from stellar spots. We therefore classify this object as a rotational variable (ROT), which with high probability belongs to the BY type.
+
+4.2.3 258208100007880
+
+The star ZTF OID 258208100007880 (Gaia DR3 2912353727841154688, ATO J094.6486 − - - 24.8319) is classified as a close binary in the Atlas survey  (A. N. Heinze et al., 2018 ) and as VAR by AAVSO VSX 9 9 9 https://vsx.aavso.org/index.php?view=detail.top&oid=4468280 . Based on ZTF DR23 data, we revised the period to 0.690844 0.690844 0.690844 0.690844 days and classified the source as EB. The updated folded light curve is shown in Fig.  4(c) .
+
+4.2.4 258208100012201
+
+The star ZTF OID 258208100012201 (Gaia DR3 2912282809341518336, ATO J094.9103-25.1659) is classified as irregular variable star with P = 18.928 𝑃 18.928 P=18.928 italic_P = 18.928 days by A. N. Heinze et al. ( 2018 ) and long periodic variable by Gaia Collaboration ( 2022 ) .
+
+Based on this period and the shape of the ZTF folded light curve (Fig.  4(d) ), we suggest that the star is likely an ellipsoidal variable in a close binary system, which warrants a revision of its previous classification as an irregular variable.
+
+4.2.5 359205100018012
+
+The star ZTF OID 359205100018012 (Gaia DR3 3046550595183360000, ZTF J070713.15 − - - 103751.6) is classified as a semiregular variable by X. Chen et al. ( 2020 ) .
+
+The ZTF light curve is shown in Fig.  4(e) . Its blue color and the morphology of the light curve are consistent with a dwarf nova, yet the variability amplitude is significantly lower than typically observed for that class.
+Given its photometric properties, we also consider the possibility that it may be eruptive irregular variable of the γ 𝛾 \gamma italic_γ Cassiopeiae type (GCAS).
+
+Interestingly, this object was also flagged as an anomaly by an Isolation Forest algorithm in the variability-based anomaly search by H.-S. Chan et al. ( 2022 ) .
+
+4.2.6 359205200019829
+
+The star ZTF OID 359205200019829 (GDS_J0704458 − - - 104418, ATO J106.1908 − - - 10.7383) is classified as ROT in T. Jayasinghe et al. ( 2018 ) and as a sinusoidal variable (NSINE) by A. N. Heinze et al. ( 2018 ) ; however, no period was previously reported. We determined its period to be 6.20526 6.20526 6.20526 6.20526 days (Fig.  4(f) ). The smooth, low-amplitude, sinusoidal shape of the folded light curve supports its classification as a rotational variable. This interpretation is further supported by the physical parameters from Gaia: T eff = 5485 − 111 + 84 subscript 𝑇 eff subscript superscript 5485 84 111 T_{\mathrm{eff}}=5485^{+84}_{-111} italic_T start_POSTSUBSCRIPT roman_eff end_POSTSUBSCRIPT = 5485 start_POSTSUPERSCRIPT + 84 end_POSTSUPERSCRIPT start_POSTSUBSCRIPT - 111 end_POSTSUBSCRIPT  K, log ⁡ g = 4.57 ± 0.02 𝑔 plus-or-minus 4.57 0.02 \log g=4.57\pm 0.02 roman_log italic_g = 4.57 ± 0.02 , and [ Fe / H ] = − 0.67 − 0.10 + 0.11 delimited-[] Fe H subscript superscript 0.67 0.11 0.10 [\mathrm{Fe}/\mathrm{H}]=-0.67^{+0.11}_{-0.10} [ roman_Fe / roman_H ] = - 0.67 start_POSTSUPERSCRIPT + 0.11 end_POSTSUPERSCRIPT start_POSTSUBSCRIPT - 0.10 end_POSTSUBSCRIPT . Together, these characteristics are consistent with a BY variable, where the observed brightness changes are caused by star spots modulated by stellar rotation.
+
+(a)
+
+(b)
+
+(c)
+
+(d)
+
+(e)
+
+(f)
+
+Figure 4 : Light curves of catalogued variables for which we refine the classification and/or determine the period:
+( 4(a) ) 452216400002679 (see Section  4.2.1 ),
+( 4(b) ) 258207200007316 (see Section  4.2.2 ),
+( 4(c) ) 258208100007880 (see Section  4.2.3 ),
+( 4(d) ) 258208100012201 (see Section  4.2.4 ),
+( 4(e) ) 359205100018012 (see Section  4.2.5 ),
+( 4(f) ) 359205200019829 (see Section  4.2.6 ).
+
+5 Conclusions
+
+In this work, we presented the results of the SNAD-VIII Workshop, during which we applied the SNAD pipeline to search for anomalous light curves in the Zwicky Transient Facility Data Release 23, focusing on regions of the sky that overlap with the Vera C. Rubin Observatory’s LSSTComCam target fields.
+
+We ran the PineForest active anomaly detection algorithm on four LSSTComCam fields: two galactic (Rubin SV 95 − - - 25 and Seagull) and two extragalactic (Rubin SV 387 and ECDFS). In total, we visually inspected 400 ZTF light curves identified as anomalous by the algorithm (1 % of the total number of objects).
+
+As a result, we discovered six previously uncatalogued variable stars, including two showing solar-type variability, two RS CVn candidates, one ellipsoidal variable, and one BY Draconis-type star. These objects have been added to the SNAD catalog and assigned internal identifiers. In addition to the new discoveries, we also refined the classification and measured accurate periods for six known variable stars.
+
+Our findings show that in ZTF DR23, anomaly detection reveal new and interesting variables. With LSST’s deeper and richer data, we expect to discover many more rare and unusual objects using similar techniques.
+
+This work is a result from the SNAD VIII Workshop 10 10 10 https://snad.space/2025/ , which took place in Yerevan, Armenia, from 29 June to 5 July 2025. We acknowledge the support of SberCloud 11 11 11 https://cloud.ru/ for providing computational resources for the development of this work, and in particular thank Albert Yefimov. We deeply thank Areg Mickaelian and all the staff of the Byurakan Astrophysical Observatory who kindly welcome our team during our stay in Yerevan. We thank Alexandra Zubareva for assistance with the classification of variable stars. M. Pruzhinskaya and E.E.O. Ishida warmly thank Katyusha and Misha for their generous hospitality during our time in Armenia. M. Pruzhinskaya, T. Semenikhin, A. Lavrukhina, M. Kornilov acknowledge support from a Russian Science Foundation grant 24-22-00233, https://rscf.ru/en/project/24-22-00233/. The work of V. Krushinsky was supported by a project of youth scientific laboratory, topic FEUZ-2025-0003. E. E. O. Ishida acknowledges support from the 2024 CNRS International Emerging Actions (IEA). Support was provided by Schmidt Sciences, LLC. for K. Malanchev.
+
+References
+
+R. Ahumada et al. (2020)
+
+Ahumada, R., Allende Prieto, C., Almeida, A., et al. 2020, \bibinfo titleThe 16th Data Release of the Sloan Digital Sky Surveys: First Release from the APOGEE-2 Southern Survey and Full Release of eBOSS Spectra, ApJS, 249, 3, doi:  10.3847/1538-4365/ab929e
+
+P. D. Aleo et al. (2022)
+
+Aleo, P. D., Malanchev, K. L., Pruzhinskaya, M. V., et al. 2022, \bibinfo titleSNAD transient miner: Finding missed transient events in ZTF DR4 using k-D trees, New A, 96, 101846, doi:  10.1016/j.newast.2022.101846
+
+Astropy Collaboration et al. (2013)
+
+Astropy Collaboration, Robitaille, T. P., Tollerud, E. J., et al. 2013, \bibinfo titleAstropy: A community Python package for astronomy, A&A, 558, A33, doi:  10.1051/0004-6361/201322068
+
+Astropy Collaboration et al. (2018)
+
+Astropy Collaboration, Price-Whelan, A. M., Sipőcz, B. M., et al. 2018, \bibinfo titleThe Astropy Project: Building an Open-science Project and Status of the v2.0 Core Package, AJ, 156, 123, doi:  10.3847/1538-3881/aabc4f
+
+Astropy Collaboration et al. (2022)
+
+Astropy Collaboration, Price-Whelan, A. M., Lim, P. L., et al. 2022, \bibinfo titleThe Astropy Project: Sustaining and Growing a Community-oriented Open-source Project and the Latest Major Release (v5.0) of the Core Package, ApJ, 935, 167, doi:  10.3847/1538-4357/ac7c74
+
+C. A. L. Bailer-Jones et al. (2021)
+
+Bailer-Jones, C. A. L., Rybizki, J., Fouesneau, M., Demleitner, M., & Andrae, R. 2021, \bibinfo titleEstimating Distances from Parallaxes. V. Geometric and Photogeometric Distances to 1.47 Billion Stars in Gaia Early Data Release 3, AJ, 161, 147, doi:  10.3847/1538-3881/abd806
+
+E. C. Bellm et al. (2019)
+
+Bellm, E. C., Kulkarni, S. R., Graham, M. J., et al. 2019, \bibinfo titleThe Zwicky Transient Facility: System Overview, Performance, and First Results, PASP, 131, 018002, doi:  10.1088/1538-3873/aaecbe
+
+E. Bertin & S. Arnouts (1996)
+
+Bertin, E., & Arnouts, S. 1996, \bibinfo titleSExtractor: Software for source extraction., A&AS, 117, 393, doi:  10.1051/aas:1996164
+
+L. Breiman (2001)
+
+Breiman, L. 2001, \bibinfo titleRandom forests, Machine learning, 45, 5
+
+J. L. Carlin et al. (2025)
+
+Carlin, J. L., Ferguson, P. S., Vivas, A. K., Caplar, N., & Malanchev, K. 2025, \bibinfo titleAn outer-disk SX Phe variable star in Rubin Data Preview 1, arXiv e-prints, arXiv:2507.00192, doi:  10.48550/arXiv.2507.00192
+
+K. C. Chambers et al. (2016)
+
+Chambers, K. C., Magnier, E. A., Metcalfe, N., et al. 2016, \bibinfo titleThe Pan-STARRS1 Surveys, arXiv e-prints, arXiv:1612.05560, doi:  10.48550/arXiv.1612.05560
+
+H.-S. Chan et al. (2022)
+
+Chan, H.-S., Villar, V. A., Cheung, S.-H., et al. 2022, \bibinfo titleSearching for Anomalies in the ZTF Catalog of Periodic Variable Stars, ApJ, 932, 118, doi:  10.3847/1538-4357/ac69d4
+
+X. Chen et al. (2020)
+
+Chen, X., Wang, S., Deng, L., et al. 2020, \bibinfo titleThe Zwicky Transient Facility Catalog of Periodic Variable Stars, ApJS, 249, 18, doi:  10.3847/1538-4365/ab9cae
+
+Y. Choi et al. (2025)
+
+Choi, Y., Olsen, K. A. G., Carlin, J. L., et al. 2025, \bibinfo title47 Tuc in Rubin Data Preview 1: Exploring Early LSST Data and Science Potential, arXiv e-prints, arXiv:2507.01343, doi:  10.48550/arXiv.2507.01343
+
+T. J. Deeming (1975)
+
+Deeming, T. J. 1975, \bibinfo titleFourier Analysis with Unequally-Spaced Data, Ap&SS, 36, 137, doi:  10.1007/BF00681947
+
+K. J. Duncan (2022)
+
+Duncan, K. J. 2022, \bibinfo titleAll-purpose, all-sky photometric redshifts for the Legacy Imaging Surveys Data Release 8, MNRAS, 512, 3662, doi:  10.1093/mnras/stac608
+
+N. J. Evans et al. (2009)
+
+Evans, II, N. J., Dunham, M. M., Jørgensen, J. K., et al. 2009, \bibinfo titleThe Spitzer c2d Legacy Results: Star-Formation Rates and Efficiencies; Evolution and Lifetimes, ApJS, 181, 321, doi:  10.1088/0067-0049/181/2/321
+
+H. A. Flewelling et al. (2020)
+
+Flewelling, H. A., Magnier, E. A., Chambers, K. C., et al. 2020, \bibinfo titleThe Pan-STARRS1 Database and Data Products, ApJS, 251, 7, doi:  10.3847/1538-4365/abb82d
+
+Gaia Collaboration (2022)
+
+Gaia Collaboration. 2022, VizieR Online Data Catalog: Gaia DR3 Part 4. Variability (Gaia Collaboration, 2022),, VizieR On-line Data Catalog: I/358. Originally published in: 2023A&A…674A…1G
+
+Gaia Collaboration et al. (2023)
+
+Gaia Collaboration, Vallenari, A., Brown, A. G. A., et al. 2023, \bibinfo titleGaia Data Release 3. Summary of the content and survey properties, A&A, 674, A1, doi:  10.1051/0004-6361/202243940
+
+E. Gangler et al. (2025)
+
+Gangler, E., Ishida, E. E. O., Kornilov, M. V., et al. 2025, \bibinfo titleSignatures to help interpretability of anomalies, arXiv e-prints, arXiv:2506.16314, doi:  10.48550/arXiv.2506.16314
+
+L. P. Guy et al. (2025)
+
+Guy, L. P., Bechtol, K., Bellm, E., et al. 2025, Rubin Observatory Plans for an Early Science Program, doi:  10.5281/zenodo.15558559
+
+A. N. Heinze et al. (2018)
+
+Heinze, A. N., Tonry, J. L., Denneau, L., et al. 2018, \bibinfo titleA First Catalog of Variable Stars Measured by the Asteroid Terrestrial-impact Last Alert System (ATLAS), AJ, 156, 241, doi:  10.3847/1538-3881/aae47f
+
+E. B. Hunt et al. (1966)
+
+Hunt, E. B., Marin, J., & Stone, P. J. 1966, \bibinfo titleExperiments in induction., Academic press
+
+E. L. Hunt & S. Reffert (2024)
+
+Hunt, E. L., & Reffert, S. 2024, VizieR Online Data Catalog: Improving the open cluster census. III. (Hunt+, 2024),, VizieR On-line Data Catalog: J/A+A/686/A42. Originally published in: 2024A&A…686A..42H
+
+J. D. Hunter (2007)
+
+Hunter, J. D. 2007, \bibinfo titleMatplotlib: A 2D Graphics Environment, Computing in Science and Engineering, 9, 90, doi:  10.1109/MCSE.2007.55
+
+T. Jayasinghe et al. (2018)
+
+Jayasinghe, T., Kochanek, C. S., Stanek, K. Z., et al. 2018, \bibinfo titleThe ASAS-SN catalogue of variable stars I: The Serendipitous Survey, MNRAS, 477, 3145, doi:  10.1093/mnras/sty838
+
+M. V. Kornilov et al. (2025)
+
+Kornilov, M. V., Korolev, V. S., Malanchev, K. L., et al. 2025, \bibinfo titleConiferest: A complete active anomaly detection framework, Astronomy and Computing, 52, 100960, doi:  10.1016/j.ascom.2025.100960
+
+C. J. Lada & E. A. Lada (2003)
+
+Lada, C. J., & Lada, E. A. 2003, \bibinfo titleEmbedded Clusters in Molecular Clouds, ARA&A, 41, 57, doi:  10.1146/annurev.astro.41.011802.094844
+
+J. Lafler & T. D. Kinman (1965)
+
+Lafler, J., & Kinman, T. D. 1965, \bibinfo titleAn RR Lyrae Star Survey with Ihe Lick 20-INCH Astrograph II. The Calculation of RR Lyrae Periods by Electronic Computer., ApJS, 11, 216, doi:  10.1086/190116
+
+T. Lange et al. (2024)
+
+Lange, T., Nordby, M., Pollek, H., et al. 2024, \bibinfo titleIntegrating the LSST Camera, in Proc. SPIE Int. Soc. Opt. Eng., Vol. 13096 (Yokohama, Japan: SPIE), 130961O, doi:  10.1117/12.3019302
+
+A. Lavrukhina & K. Malanchev (2023)
+
+Lavrukhina, A., & Malanchev, K. 2023, \bibinfo titlePerformant feature extraction for photometric time series, Memorie della Società Astronomica Italiana Journal of the Italian Astronomical Society, 102
+
+F. T. Liu et al. (2008)
+
+Liu, F. T., Ting, K. M., & Zhou, Z.-H. 2008, \bibinfo titleIsolation Forest, in 2008 Eighth IEEE International Conference on Data Mining, 413–422, doi:  10.1109/ICDM.2008.17
+
+W.-Y. Loh (2014)
+
+Loh, W.-Y. 2014, \bibinfo titleFifty years of classification and regression trees, International Statistical Review, 82, 329
+
+N. R. Lomb (1976)
+
+Lomb, N. R. 1976, \bibinfo titleLeast-Squares Frequency Analysis of Unequally Spaced Data, Ap&SS, 39, 447, doi:  10.1007/BF00648343
+
+LSST Science Collaboration et al. (2009)
+
+LSST Science Collaboration, Abell, P. A., Allison, J., et al. 2009, \bibinfo titleLSST Science Book, Version 2.0, arXiv e-prints, arXiv:0912.0201, doi:  10.48550/arXiv.0912.0201
+
+J. Maíz Apellániz et al. (2023)
+
+Maíz Apellániz, J., Holgado, G., Pantaleoni González, M., & Caballero, J. A. 2023, \bibinfo titleStellar variability in Gaia DR3. I. Three-band photometric dispersions for 145 million sources, A&A, 677, A137, doi:  10.1051/0004-6361/202346759
+
+K. Malanchev et al. (2023)
+
+Malanchev, K., Kornilov, M. V., Pruzhinskaya, M. V., et al. 2023, \bibinfo titleThe SNAD Viewer: Everything You Want to Know about Your Favorite ZTF Object, PASP, 135, 024503, doi:  10.1088/1538-3873/acb292
+
+K. Malanchev et al. (2025)
+
+Malanchev, K., DeLucchi, M., Caplar, N., et al. 2025, \bibinfo titleVariability-finding in Rubin Data Preview 1 with LSDB, arXiv e-prints, arXiv:2506.23955, doi:  10.48550/arXiv.2506.23955
+
+K. L. Malanchev et al. (2021)
+
+Malanchev, K. L., Pruzhinskaya, M. V., Korolev, V. S., et al. 2021, \bibinfo titleAnomaly detection in the Zwicky Transient Facility DR3, MNRAS, 502, 5147, doi:  10.1093/mnras/stab316
+
+N. Mowlavi et al. (2021)
+
+Mowlavi, N., Rimoldini, L., Evans, D. W., et al. 2021, VizieR Online Data Catalog: Large-amplitude variables in Gaia DR2 (Mowlavi+, 2021),, VizieR On-line Data Catalog: J/A+A/648/A44. Originally published in: 2021A&A…648A..44M doi:  10.26093/cds/vizier.36480044
+
+NSF-DOE Vera C. Rubin Observatory (2025)
+
+NSF-DOE Vera C. Rubin Observatory. 2025, The Vera C. Rubin Observatory Data Preview 1, Technical Note RTN-095, Vera C. Rubin Observatory, doi:  10.71929/rubin/2570536
+
+T. pandas development team (2020)
+
+pandas development team, T. 2020, pandas-dev/pandas: Pandas, latest Zenodo, doi:  10.5281/zenodo.3509134
+
+M. V. Pruzhinskaya et al. (2023)
+
+Pruzhinskaya, M. V., Ishida, E. E. O., Novinskaya, A. K., et al. 2023, \bibinfo titleSupernova search with active learning in ZTF DR3, A&A, 672, A111, doi:  10.1051/0004-6361/202245172
+
+A. Roodman et al. (2024)
+
+Roodman, A., Rasmussen, A., Bradshaw, A., et al. 2024, \bibinfo titleLSST camera verification testing and characterization, in Society of Photo-Optical Instrumentation Engineers (SPIE) Conference Series, Vol. 13096, Ground-based and Airborne Instrumentation for Astronomy X, ed. J. J. Bryant, K. Motohara, & J. R. D. Vernet, 130961S, doi:  10.1117/12.3019698
+
+N. N. Samus’ et al. (2017)
+
+Samus’, N. N., Kazarovets, E. V., Durlevich, O. V., Kireeva, N. N., & Pastukhova, E. N. 2017, \bibinfo titleGeneral catalogue of variable stars: Version GCVS 5.1, Astronomy Reports, 61, 80, doi:  10.1134/S1063772917010085
+
+N. N. Samus’ et al. (2003)
+
+Samus’, N. N., Goranskii, V. P., Durlevich, O. V., et al. 2003, \bibinfo titleAn Electronic Version of the Second Volume of the General Catalogue of Variable Stars with Improved Coordinates, Astronomy Letters, 29, 468, doi:  10.1134/1.1589864
+
+J. D. Scargle (1982)
+
+Scargle, J. D. 1982, \bibinfo titleStudies in astronomical time series analysis. II. Statistical aspects of spectral analysis of unevenly spaced data., ApJ, 263, 835, doi:  10.1086/160554
+
+T. A. Semenikhin et al. (2025)
+
+Semenikhin, T. A., Kornilov, M. V., Pruzhinskaya, M. V., et al. 2025, \bibinfo titleReal-bogus scores for active anomaly detection, Astronomy and Computing, 51, 100919, doi:  10.1016/j.ascom.2024.100919
+
+K. V. Sokolovsky & A. A. Lebedev (2018)
+
+Sokolovsky, K. V., & Lebedev, A. A. 2018, \bibinfo titleVaST: A variability search toolkit, Astronomy and Computing, 22, 28, doi:  10.1016/j.ascom.2017.12.001
+
+S. Sreejith et al. (2025)
+
+Sreejith, S., Pruzhinskaya, M. V., Volnova, A. A., et al. 2025, \bibinfo titleDataset of artefacts for machine learning applications in astronomy, arXiv e-prints, arXiv:2504.08053, doi:  10.48550/arXiv.2504.08053
+
+S. van der Walt et al. (2011)
+
+van der Walt, S., Colbert, S. C., & Varoquaux, G. 2011, \bibinfo titleThe NumPy Array: A Structure for Efficient Numerical Computation, Computing in Science and Engineering, 13, 22, doi:  10.1109/MCSE.2011.37
+
+A. A. Volnova et al. (2024)
+
+Volnova, A. A., Aleo, P. D., Lavrukhina, A., et al. 2024, \bibinfo titleExploring the Universe with SNAD: Anomaly Detection in Astronomy, in Data Analytics and Management in Data Intensive Domains, ed. J. Baixeries, D. I. Ignatov, S. O. Kuznetsov, & S. Stupnikov (Cham: Springer Nature Switzerland), 195–208
+
+A. S. Voloshina et al. (2024)
+
+Voloshina, A. S., Lavrukhina, A. D., Pruzhinskaya, M. V., et al. 2024, \bibinfo titleSNAD catalogue of M-dwarf flares from the Zwicky Transient Facility, Monthly Notices of the Royal Astronomical Society, 533, 4309, doi:  10.1093/mnras/stae2031
+
+C. L. Watson et al. (2006)
+
+Watson, C. L., Henden, A. A., & Price, A. 2006, \bibinfo titleThe International Variable Star Index (VSX), Society for Astronomical Sciences Annual Symposium, 25, 47
+
+Wes McKinney (2010)
+
+Wes McKinney. 2010, \bibinfo titleData Structures for Statistical Computing in Python, in Proceedings of the 9th Python in Science Conference, ed. Stéfan van der Walt & Jarrod Millman, 56 – 61, doi:  10.25080/Majora-92bf1922-00a
+
+ZTF Team (2025)
+
+ZTF Team. 2025, ZTF Objects Table, IPAC, doi:  10.26131/IRSA597
+
+Generated on Tue Jul 8 17:46:23 2025 by L a T e XML

@@ -79,6 +79,11 @@ SBDB_OPTIONAL_FIELDS: tuple[str, ...] = (
 
 SBDB_FIELDS = ",".join((*SBDB_CORE_FIELDS, *SBDB_OPTIONAL_FIELDS))
 
+# Every spelling the A2 uncertainty might arrive under.  Read in order until one
+# is present, because which one the API serves is discovered at run time and must
+# not be re-guessed downstream.  MEASURED 2026-07-30: `A2_sigma`.
+A2_SIGMA_KEYS: tuple[str, ...] = ("A2_sigma", "sigma_A2", "sigma_a2", "a2_sigma")
+
 # The API reports a bad field by name: {"code":"400","message":"invalid field
 # specified: 'sigma_a2'"}.  That is enough to repair the request automatically.
 _INVALID_FIELD = re.compile(r"invalid field specified:\s*'([^']+)'")
@@ -244,7 +249,16 @@ def vet_exceedance(row: dict) -> dict:
     """
     reasons: list[str] = []
     a2 = _f(row.get("A2"))
-    sigma = _f(row.get("sigma_a2"))
+    # Whichever spelling the API actually served.  The request discovers this at
+    # run time (measured 2026-07-30: `A2_sigma`), so reading a single hard-coded
+    # key here reintroduces exactly the guess the self-repairing request removed --
+    # and it did: every object came back with no signal-to-noise and was rejected
+    # as `no_a2_uncertainty` while the value sat in the row under another name.
+    sigma = float("nan")
+    for key in A2_SIGMA_KEYS:
+        sigma = _f(row.get(key))
+        if math.isfinite(sigma):
+            break
     snr = abs(a2) / sigma if (math.isfinite(a2) and math.isfinite(sigma)
                               and sigma > 0) else float("nan")
     if not math.isfinite(sigma) or sigma <= 0:

@@ -111,14 +111,34 @@ That has three consequences the code enforces:
    few weeks by construction. Promotion uses Benjamini–Hochberg across all
    targets ever screened (FDR, not Bonferroni: at 10⁵ targets Bonferroni would
    reject a genuine repeater along with the noise).
-2. **A real denominator.** Alerts exist only where there was a *detection*, so
-   the stream cannot say how many times a star was looked at and showed nothing.
-   The visit count comes from **forced photometry** (`prvDiaForcedSources`;
-   ALeRCE's `forced_photometry` table), measured at the position on every
-   overlapping visit regardless of detection. The trial space is therefore the
-   **tracked** sample — nearby stars that have a Rubin `diaObject` — which is a
-   well-defined population; where forced photometry is missing, the denominator
-   is marked approximate and the target is capped below candidate tier.
+2. **A real denominator — and it is not forced photometry.** Alerts exist only
+   where there was a *detection*, so the stream cannot say how many times a star
+   was looked at and showed nothing. Forced photometry (`prvDiaForcedSources`)
+   is the textbook answer, and it is what this channel was built on — until
+   measurement contradicted it. The first real backfill returned
+   **forced-photometry coverage of 0%** of screened star-nights. With no
+   non-detection information the denominator collapses onto the numerator, the
+   ensemble rate pins at exactly 1.0, and `P(X ≥ k | p = 1)` is 1 for every k:
+   **no target could ever be promoted**, and the channel would have stayed
+   inert while looking healthy — committing tidy summaries and accumulating a
+   ledger forever.
+
+   The denominator now comes from the **observed footprint**. Detections trace
+   where the camera pointed, so a 1° sky bin holding any detection on night *N*
+   was observed on night *N*, and a catalogued star in that bin was screened on
+   night *N* whether or not it alerted. That is a real rate over *all* targets,
+   not just those the broker happened to give a `diaObject` — which is closer to
+   the trial space this channel wanted in the first place. It is aggregated
+   server-side with `GROUP BY`, so a night's footprint costs one small result
+   rather than millions of rows.
+
+   Deliberately conservative: a target counts only if its **own** bin was
+   observed, with no neighbour dilation. Stars at field edges in empty bins are
+   missed, which under-counts trials, over-estimates the rate, and enlarges
+   every p-value. For a search, erring toward fewer detections is the right
+   direction. Forced photometry is still used where present and the three
+   sources (forced, footprint, detection) are unioned; the summary reports the
+   coverage fraction of each, so a window whose denominator is weak says so.
 3. **A cadence-matched null.** The LSST cadence has strong structure (in-night
    pairs ~33 min apart, ~3–4 day revisits, seasonal gaps, the lunar cycle), so
    *every* event spacing is commensurate with it. The timing test therefore

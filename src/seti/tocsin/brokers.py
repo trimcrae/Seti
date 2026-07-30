@@ -341,10 +341,8 @@ class AlerceTAP:
             "SELECT FLOOR(d.ra / 1.0) AS rab, FLOOR(d.dec / 1.0) AS decb, "
             "FLOOR(d.mjd - 0.6666666666) AS night, COUNT(*) AS n "
             "FROM alerce_tap.detection AS d "
-            "JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
-            "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id "
             f"WHERE d.sid = 1 AND d.mjd >= {float(now_mjd) - 30} "
-            f"AND d.mjd < {float(now_mjd) - 28} "
+            f"AND d.mjd < {float(now_mjd) - 29} "
             "GROUP BY FLOOR(d.ra / 1.0), FLOOR(d.dec / 1.0), "
             "FLOOR(d.mjd - 0.6666666666)", maxrec=20)
 
@@ -515,11 +513,20 @@ class AlerceTAP:
         where = [f"d.mjd >= {float(mjd_lo)}", f"d.mjd < {float(mjd_hi)}"]
         if sid_diaobject is not None:
             where.insert(0, f"d.sid = {int(sid_diaobject)}")
+        # The join to `lsst_detection` is DELIBERATELY absent here.  The probe
+        # measured sid=1/tid=1 as LSST diaObject and sid=0/tid=0 as ZTF, so
+        # `sid = 1` already restricts to LSST on its own — and this query
+        # aggregates over the whole night's detections, where an unnecessary
+        # join to a second large table is the difference between a footprint
+        # that costs seconds and one that costs the job's timeout.  The join is
+        # kept only when the sid filter is off and cannot do the work.
+        src = "alerce_tap.detection AS d"
+        if sid_diaobject is None:
+            src += (" JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
+                    "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id")
         adql = (
             f"SELECT {ra_e} AS rab, {dec_e} AS decb, {night_e} AS night, "
-            "COUNT(*) AS n FROM alerce_tap.detection AS d "
-            "JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
-            "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id "
+            f"COUNT(*) AS n FROM {src} "
             "WHERE " + " AND ".join(where) +
             f" GROUP BY {ra_e}, {dec_e}, {night_e}"
         )

@@ -1,7 +1,588 @@
 {
  "alerce": {
+  "diagnostics": {
+   "count_detection_last_120d": {
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61131.06352677611",
+    "data": [
+     {
+      "n": 10468656
+     }
+    ],
+    "rows": 1
+   },
+   "count_detection_last_1d": {
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61250.06352677611",
+    "data": [
+     {
+      "n": 0
+     }
+    ],
+    "rows": 1
+   },
+   "count_detection_last_30d": {
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61221.06352677611",
+    "data": [
+     {
+      "n": 3777169
+     }
+    ],
+    "rows": 1
+   },
+   "count_detection_last_3d": {
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61248.06352677611",
+    "data": [
+     {
+      "n": 0
+     }
+    ],
+    "rows": 1
+   },
+   "count_detection_last_7d": {
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection WHERE mjd >= 61244.06352677611",
+    "data": [
+     {
+      "n": 0
+     }
+    ],
+    "rows": 1
+   },
+   "count_lsst_join_last_30d": {
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.mjd >= 61221.06352677611",
+    "data": [
+     {
+      "n": 3777169
+     }
+    ],
+    "rows": 1
+   },
+   "count_lsst_join_sid1_last_30d": {
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.sid = 1 AND d.mjd >= 61221.06352677611",
+    "data": [
+     {
+      "n": 3477180
+     }
+    ],
+    "rows": 1
+   },
+   "join_gaia_any": {
+    "adql": "SELECT d.oid, d.mjd, g.oid_catalog, g.parallax, x.dist FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id JOIN alerce_tap.xmatch AS x ON x.oid = d.oid AND x.sid = d.sid AND x.catid = 1 JOIN alerce_tap.gaiadr3_source AS g ON g.oid_catalog = x.oid_catalog",
+    "error": "BrokerError: TAP query failed after 2 attempts: Field 'oid_catalog', value \"'4121251025822428928'\": required argument is not an integer"
+   },
+   "join_gaia_nearby_any": {
+    "adql": "SELECT d.oid, d.mjd, g.parallax, x.dist FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id JOIN alerce_tap.xmatch AS x ON x.oid = d.oid AND x.sid = d.sid AND x.catid = 1 JOIN alerce_tap.gaiadr3_source AS g ON g.oid_catalog = x.oid_catalog WHERE g.parallax > 10.0 AND x.dist < 1.5",
+    "data": [
+     {
+      "dist": 1.424301028251648,
+      "mjd": 61090.10343626949,
+      "oid": 313853497407176716,
+      "parallax": 11.908363409151889
+     },
+     {
+      "dist": 1.424301028251648,
+      "mjd": 61090.10386545979,
+      "oid": 313853497407176716,
+      "parallax": 11.908363409151889
+     },
+     {
+      "dist": 1.1859803199768066,
+      "mjd": 61091.244545365626,
+      "oid": 170028527274950697,
+      "parallax": 20.31960975316586
+     },
+     {
+      "dist": 1.424301028251648,
+      "mjd": 61090.104298484046,
+      "oid": 313853497407176716,
+      "parallax": 11.908363409151889
+     },
+     {
+      "dist": 1.424301028251648,
+      "mjd": 61090.10472905353,
+      "oid": 313853497407176716,
+      "parallax": 11.908363409151889
+     }
+    ],
+    "rows": 5
+   },
+   "mjd_range_detection": {
+    "adql": "SELECT MIN(mjd) AS mjd_min, MAX(mjd) AS mjd_max FROM alerce_tap.detection",
+    "data": [
+     {
+      "mjd_max": 61235.41918367943,
+      "mjd_min": 58242.14793979982
+     }
+    ],
+    "rows": 1
+   },
+   "mjd_range_lsst_join": {
+    "adql": "SELECT MIN(d.mjd) AS mjd_min, MAX(d.mjd) AS mjd_max FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id",
+    "data": [
+     {
+      "mjd_max": 61235.41918367943,
+      "mjd_min": 60973.130267187604
+     }
+    ],
+    "rows": 1
+   },
+   "mjd_range_object": {
+    "adql": "SELECT MIN(firstmjd) AS first_min, MAX(lastmjd) AS last_max FROM alerce_tap.object",
+    "data": [
+     {
+      "first_min": 58242.14793979982,
+      "last_max": 61235.41918367943
+     }
+    ],
+    "rows": 1
+   },
+   "object_sid_tid": {
+    "adql": "SELECT sid, tid, COUNT(*) AS n FROM alerce_tap.object GROUP BY sid, tid",
+    "data": [
+     {
+      "n": 9093519,
+      "sid": 0,
+      "tid": 0
+     },
+     {
+      "n": 5164217,
+      "sid": 1,
+      "tid": 1
+     },
+     {
+      "n": 130909,
+      "sid": 2,
+      "tid": 1
+     }
+    ],
+    "rows": 3
+   },
+   "sample_detection": {
+    "adql": "SELECT oid, sid, measurement_id, mjd, ra, dec, band FROM alerce_tap.detection",
+    "data": [
+     {
+      "band": 2,
+      "dec": 31.5485036,
+      "measurement_id": 3323321362715015013,
+      "mjd": 61077.3213657001,
+      "oid": 36029005848402626,
+      "ra": 117.1070729,
+      "sid": 0
+     },
+     {
+      "band": 2,
+      "dec": -14.5021343,
+      "measurement_id": 3325561071815015008,
+      "mjd": 61079.56107639987,
+      "oid": 36028949633852392,
+      "ra": 271.0526767,
+      "sid": 0
+     },
+     {
+      "band": 2,
+      "dec": 1.8834297,
+      "measurement_id": 3331504930815015014,
+      "mjd": 61085.50493060006,
+      "oid": 36028941604423954,
+      "ra": 246.1674118,
+      "sid": 0
+     },
+     {
+      "band": 2,
+      "dec": -12.3989377,
+      "measurement_id": 3325572800015015013,
+      "mjd": 61079.572800899856,
+      "oid": 36028941606822283,
+      "ra": 283.8182168,
+      "sid": 0
+     },
+     {
+      "band": 2,
+      "dec": -27.6126498,
+      "measurement_id": 3323315151015015167,
+      "mjd": 61077.31515049981,
+      "oid": 36028965691887055,
+      "ra": 146.5890893,
+      "sid": 0
+     }
+    ],
+    "rows": 5
+   },
+   "sample_forced_photometry": {
+    "adql": "SELECT oid, sid, mjd, ra, dec, band FROM alerce_tap.forced_photometry",
+    "data": [
+     {
+      "band": 2,
+      "dec": -27.786022945922667,
+      "mjd": 61088.09701527665,
+      "oid": 314011740708274248,
+      "ra": 53.58854574644008,
+      "sid": 1
+     },
+     {
+      "band": 2,
+      "dec": -27.218522494664885,
+      "mjd": 61088.09701527665,
+      "oid": 313695088824287275,
+      "ra": 52.734765659920775,
+      "sid": 1
+     },
+     {
+      "band": 2,
+      "dec": -29.247580248503745,
+      "mjd": 61088.09701527665,
+      "oid": 314002968593039559,
+      "ra": 53.55205761555121,
+      "sid": 1
+     },
+     {
+      "band": 2,
+      "dec": -28.091141023306058,
+      "mjd": 61088.09701527665,
+      "oid": 313950161075699796,
+      "ra": 53.89484780797894,
+      "sid": 1
+     },
+     {
+      "band": 2,
+      "dec": -29.258350827953084,
+      "mjd": 61088.09701527665,
+      "oid": 314002968191434874,
+      "ra": 53.09527429319476,
+      "sid": 1
+     }
+    ],
+    "rows": 5
+   },
+   "sample_lsst_detection": {
+    "adql": "SELECT oid, sid, measurement_id, psfflux, snr, reliability FROM alerce_tap.lsst_detection",
+    "data": [
+     {
+      "measurement_id": 170028489858613355,
+      "oid": 313761042377212034,
+      "psfflux": -925.1854858398438,
+      "reliability": 0.33199822902679443,
+      "sid": 1,
+      "snr": 6.804586410522461
+     },
+     {
+      "measurement_id": 170028489844981830,
+      "oid": 170028489844981830,
+      "psfflux": 669.1904296875,
+      "reliability": 0.10140680521726608,
+      "sid": 1,
+      "snr": 5.279234886169434
+     },
+     {
+      "measurement_id": 170028489865429017,
+      "oid": 170028485672173579,
+      "psfflux": -1314.09375,
+      "reliability": 0.19890598952770233,
+      "sid": 1,
+      "snr": 6.114821910858154
+     },
+     {
+      "measurement_id": 170028489865429116,
+      "oid": 313893023232557192,
+      "psfflux": -1364.37841796875,
+      "reliability": 0.3166760206222534,
+      "sid": 1,
+      "snr": 9.82197093963623
+     },
+     {
+      "measurement_id": 170028489883779130,
+      "oid": 170028489883779130,
+      "psfflux": 713.693603515625,
+      "reliability": 0.12223352491855621,
+      "sid": 1,
+      "snr": 5.040578842163086
+     }
+    ],
+    "rows": 5
+   },
+   "sample_object": {
+    "adql": "SELECT oid, sid, tid, meanra, meandec, firstmjd, lastmjd, n_det FROM alerce_tap.object",
+    "data": [
+     {
+      "firstmjd": 61211.24574193478,
+      "lastmjd": 61211.24574193478,
+      "meandec": -16.32490989955721,
+      "meanra": 259.66537719564246,
+      "n_det": 1,
+      "oid": 170560701542174278,
+      "sid": 1,
+      "tid": 1
+     },
+     {
+      "firstmjd": 61085.564919000026,
+      "lastmjd": 61085.564919000026,
+      "meandec": -11.0020358,
+      "meanra": 287.7316538,
+      "n_det": 1,
+      "oid": 36028989785076105,
+      "sid": 0,
+      "tid": 0
+     },
+     {
+      "firstmjd": 61095.205544000026,
+      "lastmjd": 61095.205544000026,
+      "meandec": 23.3720735,
+      "meanra": 120.62533,
+      "n_det": 1,
+      "oid": 36029005849456088,
+      "sid": 0,
+      "tid": 0
+     },
+     {
+      "firstmjd": 61066.26581020001,
+      "lastmjd": 61096.168310199864,
+      "meandec": -27.0565424,
+      "meanra": 96.21673630000038,
+      "n_det": 2,
+      "oid": 36028949623545182,
+      "sid": 0,
+      "tid": 0
+     },
+     {
+      "firstmjd": 61095.049524300935,
+      "lastmjd": 61095.049524300935,
+      "meandec": -49.00337190602945,
+      "meanra": 61.23328828780907,
+      "n_det": 1,
+      "oid": 170050474944757806,
+      "sid": 1,
+      "tid": 1
+     }
+    ],
+    "rows": 5
+   },
+   "sample_xmatch": {
+    "adql": "SELECT oid, sid, catid, dist, oid_catalog FROM alerce_tap.xmatch",
+    "data": [
+     {
+      "catid": 0,
+      "dist": 0.436880499124527,
+      "oid": 170046086508970044,
+      "oid_catalog": "0610m470_ac51-019090",
+      "sid": 1
+     },
+     {
+      "catid": 0,
+      "dist": 0.23118160665035248,
+      "oid": 313980949409300549,
+      "oid_catalog": "1512p015_ac51-018344",
+      "sid": 1
+     },
+     {
+      "catid": 0,
+      "dist": 1.3969471454620361,
+      "oid": 170028491815256076,
+      "oid_catalog": "0629m485_ac51-008271",
+      "sid": 1
+     },
+     {
+      "catid": 0,
+      "dist": 0.29628369212150574,
+      "oid": 36028949625486954,
+      "oid_catalog": "1216m197_ac51-064362",
+      "sid": 0
+     },
+     {
+      "catid": 0,
+      "dist": 1.1117781400680542,
+      "oid": 170028491590860819,
+      "oid_catalog": "0629m485_ac51-043002",
+      "sid": 1
+     }
+    ],
+    "rows": 5
+   },
+   "tables": {
+    "adql": "SELECT table_name FROM TAP_SCHEMA.tables",
+    "data": [
+     {
+      "table_name": "tap_schema.schemas"
+     },
+     {
+      "table_name": "tap_schema.tables"
+     },
+     {
+      "table_name": "tap_schema.columns"
+     },
+     {
+      "table_name": "tap_schema.keys"
+     },
+     {
+      "table_name": "tap_schema.key_columns"
+     },
+     {
+      "table_name": "tap_schema.groups"
+     },
+     {
+      "table_name": "alerce_tap.object"
+     },
+     {
+      "table_name": "alerce_tap.ztf_object"
+     },
+     {
+      "table_name": "alerce_tap.lsst_dia_object"
+     },
+     {
+      "table_name": "alerce_tap.lsst_ss_object"
+     },
+     {
+      "table_name": "alerce_tap.lsst_mpc_orbits"
+     },
+     {
+      "table_name": "alerce_tap.detection"
+     },
+     {
+      "table_name": "alerce_tap.ztf_detection"
+     },
+     {
+      "table_name": "alerce_tap.lsst_detection"
+     },
+     {
+      "table_name": "alerce_tap.lsst_ss_detection"
+     },
+     {
+      "table_name": "alerce_tap.forced_photometry"
+     },
+     {
+      "table_name": "alerce_tap.ztf_forced_photometry"
+     },
+     {
+      "table_name": "alerce_tap.lsst_forced_photometry"
+     },
+     {
+      "table_name": "alerce_tap.ztf_non_detection"
+     },
+     {
+      "table_name": "alerce_tap.ztf_ss"
+     },
+     {
+      "table_name": "alerce_tap.ztf_ps1"
+     },
+     {
+      "table_name": "alerce_tap.ztf_gaia"
+     },
+     {
+      "table_name": "alerce_tap.ztf_dataquality"
+     },
+     {
+      "table_name": "alerce_tap.ztf_reference"
+     },
+     {
+      "table_name": "alerce_tap.magstat"
+     },
+     {
+      "table_name": "alerce_tap.classifier"
+     },
+     {
+      "table_name": "alerce_tap.taxonomy"
+     },
+     {
+      "table_name": "alerce_tap.probability"
+     },
+     {
+      "table_name": "alerce_tap.feature"
+     },
+     {
+      "table_name": "alerce_tap.feature_name_lut"
+     },
+     {
+      "table_name": "alerce_tap.feature_version_lut"
+     },
+     {
+      "table_name": "alerce_tap.sid_lut"
+     },
+     {
+      "table_name": "alerce_tap.band"
+     },
+     {
+      "table_name": "alerce_tap.xmatch"
+     },
+     {
+      "table_name": "alerce_tap.catalog_id_lut"
+     },
+     {
+      "table_name": "alerce_tap.allwise"
+     },
+     {
+      "table_name": "alerce_tap.gaiadr3_source"
+     },
+     {
+      "table_name": "ztf.object"
+     },
+     {
+      "table_name": "ztf.detection"
+     },
+     {
+      "table_name": "ztf.forced_photometry"
+     },
+     {
+      "table_name": "ztf.non_detection"
+     },
+     {
+      "table_name": "ztf.magstat"
+     },
+     {
+      "table_name": "ztf.probability"
+     },
+     {
+      "table_name": "ztf.xmatch"
+     },
+     {
+      "table_name": "ztf.allwise"
+     },
+     {
+      "table_name": "ztf.gaia_ztf"
+     },
+     {
+      "table_name": "ztf.ss_ztf"
+     },
+     {
+      "table_name": "ztf.ps1_ztf"
+     },
+     {
+      "table_name": "ztf.reference"
+     },
+     {
+      "table_name": "ztf.dataquality"
+     },
+     {
+      "table_name": "ztf.taxonomy"
+     },
+     {
+      "table_name": "ztf.feature_version"
+     },
+     {
+      "table_name": "ztf.feature"
+     }
+    ],
+    "rows": 53
+   },
+   "xmatch_catid": {
+    "adql": "SELECT catid, COUNT(*) AS n FROM alerce_tap.xmatch GROUP BY catid",
+    "data": [
+     {
+      "catid": -999,
+      "n": 1486
+     },
+     {
+      "catid": 0,
+      "n": 849049
+     },
+     {
+      "catid": 1,
+      "n": 2576431
+     }
+    ],
+    "rows": 3
+   }
+  },
   "forced_photometry": {
-   "error": "BrokerError: TAP query failed after 4 attempts: Field query: No such field known: column 'source_id' could not be located in table metadata"
+   "columns": [],
+   "rows": 0,
+   "verdict": "NO_FORCED_PHOTOMETRY_IN_WINDOW"
   },
   "reached": true,
   "schema": {
@@ -310,17 +891,91 @@
    ]
   },
   "url": "https://tap.alerce.online/tap",
-  "with_gaia_join": {
-   "error": "BrokerError: TAP query failed after 4 attempts: Field query: No such field known: column 'source_id' could not be located in table metadata"
+  "wide_window_30d": {
+   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.snr, ld.reliability, ld.isnegative, ld.isdipole, ld.extendedness FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.mjd >= 61221.064385933576 AND d.mjd < 61251.064385933576",
+   "columns": [
+    "band",
+    "dec",
+    "extendedness",
+    "isdipole",
+    "isnegative",
+    "measurement_id",
+    "mjd",
+    "oid",
+    "psfflux",
+    "psffluxerr",
+    "ra",
+    "reliability",
+    "sid",
+    "snr"
+   ],
+   "rows": 20,
+   "sample": [
+    {
+     "band": 2,
+     "dec": -25.21341919531169,
+     "extendedness": null,
+     "isdipole": true,
+     "isnegative": false,
+     "measurement_id": 170644227525972376,
+     "mjd": 61230.23236455001,
+     "oid": 170644227525972376,
+     "psfflux": -9643.55859375,
+     "psffluxerr": 446.9488830566406,
+     "ra": 286.2755440186596,
+     "reliability": 0.8315733671188354,
+     "sid": 1,
+     "snr": 9.988719940185547
+    },
+    {
+     "band": 2,
+     "dec": -25.278806400390902,
+     "extendedness": null,
+     "isdipole": false,
+     "isnegative": true,
+     "measurement_id": 170644227525973015,
+     "mjd": 61230.23236455001,
+     "oid": 170644227525973015,
+     "psfflux": -1271.4111328125,
+     "psffluxerr": 256.0462341308594,
+     "ra": 286.24525683849646,
+     "reliability": 0.5040070414543152,
+     "sid": 1,
+     "snr": 5.7950439453125
+    }
+   ],
+   "verdict": "OK"
   },
-  "without_gaia_join": {
-   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.snr, ld.reliability, ld.isnegative, ld.isdipole, ld.extendedness FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.sid = 1 AND d.mjd >= 61248.04948728625 AND d.mjd < 61251.04948728625 AND (ld.snr > 6.0 OR ld.snr < -6.0)",
+  "with_gaia_join": {
+   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.snr, ld.reliability, ld.isnegative, ld.isdipole, ld.extendedness, g.oid_catalog AS gaia_source_id, g.parallax, x.dist AS xmatch_dist FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id JOIN alerce_tap.xmatch AS x ON x.oid = d.oid AND x.sid = d.sid AND x.catid = 1 JOIN alerce_tap.gaiadr3_source AS g ON g.oid_catalog = x.oid_catalog WHERE d.sid = 1 AND d.mjd >= 61248.064385933576 AND d.mjd < 61251.064385933576 AND (ld.snr > 6.0 OR ld.snr < -6.0) AND x.dist < 1.5 AND g.parallax > 10.0",
    "columns": [],
    "rows": 0,
+   "sample": [],
+   "verdict": "NO_DETECTIONS_IN_WINDOW"
+  },
+  "without_gaia_join": {
+   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.snr, ld.reliability, ld.isnegative, ld.isdipole, ld.extendedness FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.sid = 1 AND d.mjd >= 61248.064385933576 AND d.mjd < 61251.064385933576 AND (ld.snr > 6.0 OR ld.snr < -6.0)",
+   "columns": [],
+   "rows": 0,
+   "sample": [],
+   "verdict": "NO_DETECTIONS_IN_WINDOW"
+  },
+  "without_sid_filter": {
+   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.snr, ld.reliability, ld.isnegative, ld.isdipole, ld.extendedness FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.mjd >= 61248.064385933576 AND d.mjd < 61251.064385933576 AND (ld.snr > 6.0 OR ld.snr < -6.0)",
+   "columns": [],
+   "rows": 0,
+   "sample": [],
+   "verdict": "NO_DETECTIONS_IN_WINDOW"
+  },
+  "without_snr_cut": {
+   "adql": "adql=SELECT d.oid, d.sid, d.measurement_id, d.mjd, d.ra, d.dec, d.band, ld.psfflux, ld.psffluxerr, ld.snr, ld.reliability, ld.isnegative, ld.isdipole, ld.extendedness FROM alerce_tap.detection AS d JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id WHERE d.mjd >= 61248.064385933576 AND d.mjd < 61251.064385933576",
+   "columns": [],
+   "rows": 0,
+   "sample": [],
    "verdict": "NO_DETECTIONS_IN_WINDOW"
   }
  },
- "now_mjd": 61251.04947,
- "probed_at_utc": "2026-07-30T01:11:13Z",
+ "now_mjd": 61251.0635,
+ "probed_at_utc": "2026-07-30T01:31:26Z",
  "verdict": "OK"
 }

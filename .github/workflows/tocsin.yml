@@ -1,0 +1,190 @@
+name: tocsin
+
+# TOCSIN --- the nightly alarm bell on the Rubin/LSST alert stream (docs/tocsin.md).
+#
+#   targets (cached) ──▶ screen the night ──▶ ledger.assess ──▶ commit-back
+#
+# Signature S30: an unclassified transient on a catalogued nearby dwarf,
+# screened in BOTH difference-image polarities (flash and dip).
+#
+# THE GOVERNING METHODOLOGY (docs/tocsin.md §3).  The observable is not one
+# flash --- a single achromatic flash is indistinguishable from a cosmic ray, a
+# satellite glint or an unflagged subtraction residual.  It is COHERENCE ACROSS
+# NIGHTS at a fixed catalogued position, and that is a property of accumulated
+# state, not of any night's alerts.  So the artefact this workflow maintains is
+# results/tocsin/ledger.json, and the three disciplines that make a recurring
+# screen honest are enforced there:
+#   * significance is quoted against the CUMULATIVE target x night trial count,
+#     never against tonight's (a screen that forgets its history manufactures a
+#     3-sigma event every few weeks by construction);
+#   * the denominator is measured from FORCED PHOTOMETRY, which exists whether
+#     or not anything was detected --- the alert stream alone cannot say how
+#     many times a star was looked at and showed nothing;
+#   * the timing null is drawn from each star's OWN visited nights, so the
+#     survey's ~3-4 day revisit cadence cannot read as a beacon.
+#
+# CREDENTIALS: none.  The primary path is ALeRCE's public TAP service.  Lasair
+# would need a token and allows 100 calls/hour; Fink has no whole-night endpoint
+# and its bulk path requires a human to submit a web form.  Neither can carry an
+# unattended cron.  A LASAIR_TOKEN secret, if ever set, only adds optional deep
+# per-object vetting; the channel never depends on it.
+#
+# Scheduled runs fire from the DEFAULT BRANCH (GitHub only schedules there) and
+# commit back to whatever ref they ran on, exactly like watchdog.yml.
+
+on:
+  schedule:
+    # 14:10 UTC = 10:10 EDT, a few hours after a Chilean night ends, so the
+    # brokers have finished ingesting it.  Offset from the hour to avoid the
+    # scheduler's :00 pile-up.
+    - cron: "10 14 * * *"
+  workflow_dispatch:
+    inputs:
+      lookback_nights:
+        description: >-
+          Window to pull, in nights.  Default 2 covers a missed firing; the
+          ledger de-duplicates by (target, night), so overlap is harmless.
+        required: false
+        default: "2"
+      mjd_lo:
+        description: "Explicit MJD window start (blank = now - lookback)"
+        required: false
+        default: ""
+      mjd_hi:
+        description: "Explicit MJD window end (blank = now)"
+        required: false
+        default: ""
+      rebuild_targets:
+        description: "Force a fresh Gaia nearby-star pull, ignoring the cache"
+        required: false
+        default: "false"
+      no_gaia_join:
+        description: >-
+          AUDIT MODE.  Disable the broker-side Gaia parallax pre-cut in order to
+          MEASURE what it loses: ALeRCE cross-matches at the catalogue epoch, so
+          it can orphan exactly the high-proper-motion nearby dwarfs this
+          channel most wants.  Expensive --- run periodically, not nightly.
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  # The ledger is a single mutable file committed back to the branch; two
+  # concurrent nights would race each other's commits and lose one.
+  group: tocsin-ledger
+  cancel-in-progress: false
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      # The Gaia target list is ~10^5 rows and changes only when the target
+      # config changes, so it is cached rather than committed (too large for the
+      # repository) and rather than re-pulled nightly (needless Gaia load).
+      - name: Restore the nearby-star target list
+        id: targets-cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/tocsin
+          key: tocsin-targets-${{ hashFiles('config/tocsin.yaml') }}-v1
+
+      - name: Build the Gaia DR3 nearby-star target list
+        if: steps.targets-cache.outputs.cache-hit != 'true' || github.event.inputs.rebuild_targets == 'true'
+        run: python -m seti.cli tocsin-targets
+
+      - name: Screen the night
+        env:
+          LASAIR_TOKEN: ${{ secrets.LASAIR_TOKEN }}
+        run: |
+          args=""
+          if [ -n "${{ github.event.inputs.lookback_nights }}" ]; then
+            args="$args --lookback-nights ${{ github.event.inputs.lookback_nights }}"
+          fi
+          if [ -n "${{ github.event.inputs.mjd_lo }}" ]; then
+            args="$args --mjd-lo ${{ github.event.inputs.mjd_lo }}"
+          fi
+          if [ -n "${{ github.event.inputs.mjd_hi }}" ]; then
+            args="$args --mjd-hi ${{ github.event.inputs.mjd_hi }}"
+          fi
+          if [ "${{ github.event.inputs.no_gaia_join }}" = "true" ]; then
+            args="$args --no-gaia-join"
+          fi
+          echo "tocsin-screen$args"
+          python -m seti.cli tocsin-screen $args
+
+      - name: Re-assess the whole ledger (offline)
+        if: always()
+        run: python -m seti.cli tocsin-assess || echo "assess skipped (no ledger yet)"
+
+      - name: Summarise the night
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/tocsin/summary.json")
+          if not p.exists():
+              print("no summary.json --- the screen did not reach the report stage")
+              raise SystemExit(0)
+          s = json.loads(p.read_text())
+          print("verdict:", s.get("verdict"))
+          print("window MJD:", s.get("mjd_lo"), "->", s.get("mjd_hi"))
+          print("denominator:", s.get("denominator"))
+          counts = s.get("counts", {})
+          for k in sorted(counts):
+              print(f"  {k}: {counts[k]}")
+          led = s.get("ledger", {})
+          print("cumulative target-nights screened:",
+                led.get("cumulative_target_visits"))
+          print("ensemble rate per target-night:",
+                led.get("ensemble_rate_per_target_visit"))
+          print("tiers:", led.get("tier_counts"))
+          for n in s.get("notes", []):
+              print("note:", n)
+          PY
+
+      - name: Commit the ledger and the night's tables
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # ONE PATHSPEC AT A TIME.  `git add` with several pathspecs is atomic:
+          # one unmatched glob stages NOTHING, `|| true` swallows the failure,
+          # and the run's results are silently discarded.  This has cost this
+          # repository whole runs (see knell.yml).
+          git add -f -- results/tocsin/ledger.json || echo "no ledger.json"
+          git add -f -- results/tocsin/summary.json || echo "no summary.json"
+          git add -f -- results/tocsin/watchlist.csv || echo "no watchlist.csv"
+          git add -f -- results/tocsin/assessment.json || echo "no assessment.json"
+          git add -f -- results/tocsin/events_latest.csv || echo "no events table"
+          git add -f -- results/tocsin/rejected_latest.csv || echo "no rejected table"
+          echo "=== staged ==="
+          git diff --cached --name-only
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "tocsin: nightly Rubin alert screen — S30 flash/dip, cross-night ledger"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tocsin-night
+          path: results/tocsin/

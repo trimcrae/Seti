@@ -1,0 +1,113 @@
+# TOCSIN channel --- every selection / rejection threshold in one place.
+#
+# Signature S30 (docs/necrosignatures.md): "an unclassified blackbody transient
+# on a catalogued nearby dwarf, matching neither flare, nova, nor microlensing",
+# screened nightly on the Rubin/LSST alert stream, in BOTH flux polarities
+# (flash and dip).  See docs/tocsin.md for the claim and the novelty position.
+#
+# THE GOVERNING METHODOLOGY (docs/tocsin.md §3): the observable is not one
+# flash, it is COHERENCE ACROSS NIGHTS at a fixed catalogued position.  A single
+# achromatic flash is indistinguishable from a cosmic ray, a satellite glint or
+# an unflagged subtraction residual; what none of those do is come back to the
+# same star.  So every threshold below is a *per-event* gate whose only job is to
+# feed a clean ensemble to the cross-night ledger, and the promotion decision is
+# made there, against the CUMULATIVE trial count.
+
+target:
+  # Distance limit for the anchored star list.  100 pc keeps the trial count at
+  # ~10^5 (so a per-target p-value is interpretable), keeps Gaia astrometry
+  # excellent, and is where a reflector of a given size subtends the most flux.
+  d_max_pc: 100.0
+  parallax_over_error_min: 10.0
+  n_parallax_shells: 6
+  # Rubin main-survey footprint.  Targets outside it can never alert and would
+  # only inflate the denominator.
+  dec_min: -90.0
+  dec_max: 15.0
+  g_max: 21.0
+  # Gaia DR3 reference epoch for ra/dec; propagation to the alert epoch is
+  # mandatory, not optional (see targets.py).
+  gaia_epoch: 2016.0
+
+acquire:
+  # ALeRCE TAP: public, no credentials, indexed on mjd/ra/dec.  This is the only
+  # broker path that supports an unattended nightly cron (see brokers.py).
+  primary_broker: alerce_tap
+  alerce_tap_url: "https://tap.alerce.online/tap"
+  fink_lsst_url: "https://api.lsst.fink-portal.org"
+  lasair_endpoint: "https://api.lasair.lsst.ac.uk/api"
+  # Nights to pull per run.  >1 covers a missed cron firing; the ledger
+  # de-duplicates by (target, night) so overlap is harmless.
+  lookback_nights: 2.0
+  # Server-side Gaia parallax pre-cut, in mas.  Matches target.d_max_pc; it is
+  # what makes a night affordable (millions of rows -> thousands).
+  parallax_min_mas: 10.0
+  xmatch_max_arcsec: 1.5
+  maxrec: 2000000
+  timeout_s: 900
+  # Periodically re-run with the Gaia join disabled to MEASURE what the cheap
+  # server-side cut loses: ALeRCE cross-matches at the catalogue epoch, so the
+  # highest-proper-motion nearby dwarfs --- this channel's best targets --- are
+  # exactly the ones it can mis-associate.
+  audit_without_gaia_join_every_n_runs: 14
+
+screen:
+  # Difference-image significance.  The stream is already cut at reliability
+  # 0.5 upstream; this is our own floor on |dF|/sigma_dF.
+  min_abs_snr: 6.0
+  # DELIBERATELY 0: Rubin's production pipeline already applies
+  # `minReliability: 0.5` before an alert is issued, and DMTN-337 measures the
+  # true-positive rate of that model on VARIABLE STARS at 3.5% (v0.1, DP1) --- it
+  # scores stellar point-source-on-point-source subtractions characteristically
+  # low, which is precisely this channel's signal.  Cutting again here would
+  # compound a completeness loss we did not choose and cannot undo.  The
+  # incompleteness is reported, not deepened.
+  min_reliability: 0.0
+  require_reliability: false
+  max_dipole_significance: 3.0
+  max_extendedness: 0.5
+  # Rubin deletes trails longer than 10 deg/day upstream; this catches the slow
+  # residue.  A trailed source at a stellar position is a mover, not the star.
+  max_trail_arcsec: 0.5
+  # Association to the proper-motion-propagated stellar position.
+  match_radius_arcsec: 1.5
+  max_sep_arcsec: 1.0
+  max_sep_sigma: 3.0
+  # Band-to-band fractional-amplitude difference, in sigma.  |z| <= 3 is grey.
+  # The LSST baseline takes intra-night pairs in DIFFERENT filters (u+g, u+r,
+  # g+r, r+i, i+z, z+y; only y+y repeats a filter), ~33 min apart, so a colour
+  # is the DEFAULT product for any event lasting more than half an hour --- the
+  # test the ZTF glint channel could almost never apply.
+  max_grey_z: 3.0
+  # Relative error assigned to a Gaia-GSPC-derived baseline flux, covering the
+  # SDSS-vs-LSST passband mismatch.  Not used when Rubin's own `templateFlux` is
+  # available, which is the preferred path and carries no transformation error.
+  baseline_rel_err: 0.03
+  missing_pm_penalty_arcsec: 2.0
+
+ledger:
+  path: "results/tocsin/ledger.json"
+  # Benjamini-Hochberg across all targets ever screened.  FDR rather than
+  # Bonferroni: at 10^5 targets Bonferroni would reject a real repeater along
+  # with the noise.
+  alpha_fdr: 0.05
+  # A star needs this many *visited nights* before its binomial p-value means
+  # anything; below it the denominator is too small to distinguish rates.
+  min_visits_for_rate: 5
+  # Duty cycle = events / visited nights.  A star that alerts on a large
+  # fraction of its visits is a subtraction residual --- a proper-motion dipole
+  # or a template defect --- not a beacon.  This single test is the main defence
+  # against the dominant systematic for a high-proper-motion sample.
+  max_duty_cycle: 0.2
+  # Randomisations for the cadence-matched timing null.  The smallest resolvable
+  # p-value is 1/(n_null+1), so it is quoted as an inequality when zero
+  # randomisations beat the data.
+  n_null_timing: 2000
+  timing_alpha: 0.01
+
+report:
+  results_dir: "results/tocsin"
+  # Cap on rows written per nightly candidate table, so a pathological night
+  # (bad template, new field) cannot commit a huge file.  Truncation is always
+  # recorded in summary.json rather than applied silently.
+  max_candidate_rows: 2000

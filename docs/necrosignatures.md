@@ -210,6 +210,21 @@ Organised by *what the residue physically is*, not by wavelength.
 ### VII. Event residue — the moment of the filter
 * **S30 "Singularity flash"** — an unclassified blackbody transient on a
   catalogued nearby dwarf, matching neither flare, nova, nor microlensing.
+  → **TOCSIN** — *built 2026-07-30 (`docs/tocsin.md`).* The only signature in
+  this taxonomy that needs a **live stream** rather than an archive, and it was
+  unreachable until Rubin alerts went world-public on 2026-02-24. Its unique
+  property is that the observable is **not the flash**: a single achromatic
+  flash is indistinguishable from a cosmic ray, a satellite glint or an
+  unflagged subtraction residual, and what none of those do is come back to the
+  same catalogued star. So the signature is really **cross-night recurrence at a
+  fixed position**, which no broker filter can see — a broker gives you a filter,
+  not a memory — and the channel's actual instrument is a persistent ledger with
+  cumulative trial accounting, a forced-photometry denominator, and a
+  cadence-matched timing null. Screened in both flux polarities: the negative
+  branch is the *grey* variant of Gallay, Davenport & Croft's ZTF dipper screen
+  (arXiv:2506.14744), which uses no colour and no recurrence. The positive branch
+  finally executes Lacki's specular-glint proposal (arXiv:1903.05839, PASP 2019),
+  uncited-into-action for seven years.
 * **S31 Vanished radio sources** with stellar counterparts (NVSS/FIRST→VLASS).
   → **SHROUD**
 * **S32 Clocks that stopped** — periodicity that ceased. Eclipsing binaries do

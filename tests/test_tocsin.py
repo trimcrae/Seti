@@ -1,0 +1,763 @@
+"""Offline tests for the TOCSIN channel (Rubin/LSST nightly alert screen).
+
+Runs with no network, per ``docs/channel-brief.md`` §5.  The suite is organised
+around the four requirements that document imposes:
+
+* **recover an injected signal** --- a grey flash and a grey dip on a target star
+  are found, with achromaticity confirmed;
+* **return a clean null on the dominant confounder** --- an M-dwarf flare (blue),
+  a subtraction dipole, a satellite glint trail, a mover and a reddened dip are
+  each rejected, by name;
+* **degrade honestly** --- an unreachable broker, an absent target list, a
+  missing baseline flux and a missing visit history each produce an explicit
+  verdict or an ``untestable`` marker, never a silent pass;
+* **cover every rejection rule** with a case that trips it.
+
+Two tests are load-bearing regressions rather than unit checks, and should not be
+weakened:  :func:`test_match_fails_without_proper_motion_propagation` (the bug
+class that has already cost this repository a whole run in another channel) and
+:func:`test_timing_null_is_cadence_matched` (without which the survey's own
+revisit cadence reads as a periodic beacon).
+"""
+
+from __future__ import annotations
+
+import json
+import math
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from seti.tocsin import ledger as L
+from seti.tocsin import photometry as P
+from seti.tocsin import targets as T
+from seti.tocsin.brokers import (
+    AlerceTAP,
+    BrokerError,
+    LasairLSST,
+    normalize_alerce_rows,
+    normalize_lasair_diasources,
+)
+from seti.tocsin.schema import NormalizedAlert, night_id, validate
+from seti.tocsin.screen import Thresholds, screen_alerts
+
+# ---------------------------------------------------------------------------
+# helpers
+# ---------------------------------------------------------------------------
+GAIA_EPOCH = T.GAIA_EPOCH
+MJD_2026 = 61500.0          # ~mid-2026, inside the live LSST survey
+
+
+def _target(source_id="4242", ra=150.0, dec=-30.0, pmra=0.0, pmdec=0.0,
+            mag_g=18.0, mag_r=17.0, **kw):
+    row = {
+        "source_id": source_id, "ra": ra, "dec": dec,
+        "ra_error": 0.02, "dec_error": 0.02,
+        "pmra": pmra, "pmdec": pmdec, "pmra_error": 0.03, "pmdec_error": 0.03,
+        "parallax": 20.0, "phot_g_mean_mag": 15.0, "bp_rp": 2.5,
+        "mag_u_sdss": mag_g + 1.5, "mag_g_sdss": mag_g, "mag_r_sdss": mag_r,
+        "mag_i_sdss": mag_r - 0.4, "mag_z_sdss": mag_r - 0.6,
+        "mag_y_ps1": mag_r - 0.7,
+    }
+    row.update(kw)
+    return row
+
+
+def _targets(*rows):
+    return pd.DataFrame(list(rows) or [_target()])
+
+
+def _alert(band="g", dflux=500.0, dflux_err=20.0, mjd=MJD_2026, ra=150.0,
+           dec=-30.0, template_flux=1000.0, **kw):
+    kw.setdefault("alert_id", f"a-{band}-{mjd}")
+    kw.setdefault("object_id", "obj1")
+    return NormalizedAlert(
+        mjd=mjd, band=band, ra=ra, dec=dec, dflux_njy=dflux,
+        dflux_err_njy=dflux_err, template_flux_njy=template_flux,
+        ra_err_arcsec=0.02, dec_err_arcsec=0.02, snr=dflux / dflux_err,
+        reliability=0.9, extendedness=0.0, **kw)
+
+
+# ---------------------------------------------------------------------------
+# photometry
+# ---------------------------------------------------------------------------
+def test_ab_zeropoint_matches_rubin_convention():
+    # 3631 Jy is AB zero; Rubin/Lasair use mag = 31.4 - 2.5 log10(F/nJy).
+    assert P.njy_to_ab(3.631e12) == pytest.approx(0.0, abs=1e-3)
+    assert P.njy_to_ab(3631.0) == pytest.approx(22.5, abs=1e-3)
+    assert P.ab_to_njy(P.njy_to_ab(1234.0)) == pytest.approx(1234.0, rel=1e-9)
+
+
+def test_negative_flux_has_no_magnitude():
+    # The dip mode lives at negative flux; it must not silently become bright.
+    assert math.isnan(P.njy_to_ab(-500.0))
+    assert math.isnan(P.njy_to_ab(0.0))
+
+
+def test_fractional_amplitude_and_error_propagation():
+    amp = P.fractional_amplitude(100.0, 10.0, 1000.0, 30.0)
+    assert amp.testable
+    assert amp.a == pytest.approx(0.1)
+    # relative error = hypot(10/100, 30/1000) = hypot(0.1, 0.03)
+    assert amp.a_err == pytest.approx(0.1 * math.hypot(0.1, 0.03))
+
+
+def test_missing_baseline_is_untestable_not_a_pass():
+    for base in (None, 0.0, -5.0, float("nan")):
+        amp = P.fractional_amplitude(100.0, 10.0, base)
+        assert not amp.testable
+        assert math.isnan(amp.a)
+        assert amp.reason
+
+
+def test_greyness_z_separates_grey_from_blue():
+    # Grey: equal fractional amplitude in both bands.
+    assert abs(P.greyness_z(0.50, 0.01, 0.50, 0.01)) < 1.0
+    # Flare-like: much larger amplitude in the bluer band.
+    assert P.greyness_z(0.50, 0.01, 0.05, 0.01) > 10.0
+
+
+def test_reflection_predicts_unit_amplitude_ratio():
+    # A reflector returns the stellar spectrum, so a_blue/a_red is exactly 1
+    # whatever the star's temperature.  This identity is the channel's premise.
+    for t_star in (3000.0, 5800.0, 9000.0):
+        assert P.predicted_amplitude_ratio("g", "r", t_star, t_star) == \
+            pytest.approx(1.0, rel=1e-9)
+
+
+def test_flare_on_m_dwarf_predicts_large_amplitude_ratio():
+    # A 9000 K flare continuum on a 3200 K dwarf gives a_g/a_r ~ 3.7 from the
+    # blackbody ratio alone (real flares are bluer still, because of line
+    # emission this model does not include).  Pinned as an inequality plus a
+    # value check so a units or wavelength regression cannot pass quietly.
+    ratio = P.predicted_amplitude_ratio("g", "r", 9000.0, 3200.0)
+    assert ratio > 3.0
+    assert ratio == pytest.approx(3.69, rel=0.02)
+
+
+def test_colour_temperature_recovers_an_injected_blackbody():
+    bands = ["g", "r", "i"]
+    t_true = 9000.0
+    flux = [1e4 * P.planck_nu(P.LSST_BAND_WL_UM[b], t_true) / 1e-20 for b in bands]
+    fit = P.blackbody_colour_temperature(bands, flux, [f * 0.01 for f in flux])
+    assert fit.ok
+    assert fit.temp_k == pytest.approx(t_true, rel=0.15)
+    assert fit.n_bands == 3
+
+
+def test_colour_temperature_refuses_impossible_inputs():
+    assert not P.blackbody_colour_temperature(["g"], [10.0], [1.0]).ok
+    # A dip carries no emission temperature.
+    bad = P.blackbody_colour_temperature(["g", "r"], [-10.0, -20.0], [1.0, 1.0])
+    assert not bad.ok
+    assert "negative_flux" in bad.reason
+
+
+def test_two_band_colour_temperature_declares_zero_degrees_of_freedom():
+    fit = P.blackbody_colour_temperature(["g", "r"], [100.0, 200.0], [1.0, 2.0])
+    assert fit.ok and fit.reason == "two_band_zero_dof"
+
+
+# ---------------------------------------------------------------------------
+# targets and matching
+# ---------------------------------------------------------------------------
+def test_proper_motion_propagation_moves_a_high_pm_star():
+    # 1000 mas/yr for 10 yr = 10 arcsec.
+    ra1, dec1 = T.propagate_pm(150.0, 0.0, 1000.0, 0.0, 2016.0, 2026.0)
+    assert (ra1 - 150.0) * 3600.0 == pytest.approx(10.0, rel=1e-6)
+    _, dec2 = T.propagate_pm(150.0, 0.0, 0.0, 1000.0, 2016.0, 2026.0)
+    assert (dec2 - 0.0) * 3600.0 == pytest.approx(10.0, rel=1e-6)
+
+
+def test_proper_motion_includes_cos_dec_convention():
+    # pmra is mu_alpha* (already includes cos dec), so at dec=60 the RA shift
+    # is doubled relative to the equator.
+    ra_eq, _ = T.propagate_pm(10.0, 0.0, 3600.0, 0.0, 2016.0, 2017.0)
+    ra_hi, _ = T.propagate_pm(10.0, 60.0, 3600.0, 0.0, 2016.0, 2017.0)
+    assert (ra_hi - 10.0) == pytest.approx(2.0 * (ra_eq - 10.0), rel=1e-6)
+
+
+def test_match_fails_without_proper_motion_propagation():
+    """Load-bearing regression: an un-propagated match returns a clean NULL.
+
+    A nearby star with 1 arcsec/yr has moved 10 arcsec by 2026.  Matching the
+    2026 alert against the 2016 catalogue position finds nothing --- and a null
+    is far more dangerous than an exception, because it looks like a result.
+    """
+    ra0, dec0, pm = 150.0, -30.0, 1000.0
+    ra_now, dec_now = T.propagate_pm(ra0, dec0, pm, 0.0, 2016.0, 2026.0)
+    un = T.match_alerts_to_targets([ra_now], [dec_now], [ra0], [dec0],
+                                   radius_arcsec=1.5)
+    assert un.alert_index.size == 0          # the bug this test exists to catch
+    good = T.match_alerts_to_targets([ra_now], [dec_now], [ra_now], [dec_now],
+                                     radius_arcsec=1.5)
+    assert good.alert_index.size == 1
+
+
+def test_match_handles_ra_wraparound():
+    m = T.match_alerts_to_targets([0.0001], [10.0], [359.9999], [10.0],
+                                  radius_arcsec=5.0)
+    assert m.alert_index.size == 1
+    assert m.sep_arcsec[0] < 5.0
+
+
+def test_match_keeps_only_the_nearest_target_per_alert():
+    # Two targets inside the radius; an alert may consume only one trial.
+    m = T.match_alerts_to_targets([150.0], [-30.0],
+                                  [150.0, 150.00005], [-30.0, -30.0],
+                                  radius_arcsec=5.0)
+    assert m.alert_index.size == 1
+    assert m.target_index[0] == 0
+
+
+def test_missing_proper_motion_widens_the_error_not_the_sample():
+    sig = T.position_uncertainty_arcsec([np.nan], [np.nan], dt_yr=10.0,
+                                        pm_missing=np.array([True]),
+                                        missing_pm_penalty_arcsec=2.0)
+    assert sig[0] == pytest.approx(2.0)
+
+
+def test_parallax_shells_cover_the_distance_limit():
+    shells = T.parallax_shells(100.0, 6)
+    assert len(shells) == 6
+    assert min(lo for lo, _ in shells) == pytest.approx(10.0)
+    for lo, hi in shells:
+        assert hi > lo
+
+
+def test_target_adql_has_the_quality_and_footprint_cuts():
+    q = T.build_target_adql(10.0, 20.0, dec_max=15.0)
+    assert "gaiadr3.gaia_source" in q
+    assert "synthetic_photometry_gspc" in q
+    assert "parallax_over_error" in q
+    assert "BETWEEN -90.0 AND 15.0" in q
+
+
+# ---------------------------------------------------------------------------
+# schema
+# ---------------------------------------------------------------------------
+def test_a_chilean_night_carries_one_label_across_utc_midnight():
+    # 23:00 UTC and 02:00 UTC the next calendar day are the same observing night
+    # at Cerro Pachon; a UTC-date split would cut the in-night filter pair apart.
+    evening = 61500.0 + 23.0 / 24.0
+    after_midnight = 61501.0 + 2.0 / 24.0
+    assert night_id(evening) == night_id(after_midnight)
+    # ... and the following night is a different label.
+    assert night_id(evening) != night_id(evening + 1.0)
+
+
+def test_validate_names_every_structural_problem():
+    bad = NormalizedAlert(alert_id="x", object_id="o", mjd=float("nan"),
+                          band="q", ra=1.0, dec=2.0, dflux_njy=0.0,
+                          dflux_err_njy=-1.0)
+    problems = validate(bad)
+    assert "missing_mjd" in problems
+    assert "unknown_band_q" in problems
+    assert "nonpositive_flux_error" in problems
+    assert "zero_difference_flux" in problems
+    assert validate(_alert()) == []
+
+
+def test_polarity_follows_the_sign_of_the_difference_flux():
+    assert _alert(dflux=+500.0).polarity == "flash"
+    assert _alert(dflux=-500.0).polarity == "dip"
+
+
+def test_missing_astrometric_errors_fall_back_to_a_floor_not_to_zero():
+    a = _alert()
+    a.ra_err_arcsec = None
+    a.dec_err_arcsec = None
+    assert a.pos_err_arcsec == pytest.approx(0.05)
+
+
+# ---------------------------------------------------------------------------
+# screen --- injected signal
+# ---------------------------------------------------------------------------
+def test_injected_grey_flash_is_recovered_and_confirmed_achromatic():
+    tg = _targets(_target())
+    # Equal fractional amplitude in g and r == the reflection hypothesis.
+    alerts = [_alert(band="g", dflux=100.0, dflux_err=3.0, template_flux=1000.0),
+              _alert(band="r", dflux=500.0, dflux_err=15.0, template_flux=5000.0,
+                     mjd=MJD_2026 + 33.0 / 1440.0)]
+    v = screen_alerts(alerts, tg, Thresholds())
+    assert len(v.events) == 1                 # one star-NIGHT, not one per band
+    ev = v.events[0]
+    assert ev.polarity == "flash"
+    assert ev.grey_tested and abs(ev.grey_z) < 3.0
+    assert set(ev.bands) == {"g", "r"}
+    assert ev.per_band["g"]["baseline_source"] == "rubin_template"
+
+
+def test_injected_grey_dip_is_recovered():
+    tg = _targets(_target())
+    alerts = [_alert(band="g", dflux=-100.0, dflux_err=3.0, template_flux=1000.0),
+              _alert(band="r", dflux=-500.0, dflux_err=15.0, template_flux=5000.0,
+                     mjd=MJD_2026 + 33.0 / 1440.0)]
+    v = screen_alerts(alerts, tg, Thresholds())
+    assert len(v.events) == 1
+    assert v.events[0].polarity == "dip"
+    assert v.events[0].grey_tested and abs(v.events[0].grey_z) < 3.0
+
+
+def test_two_bands_in_one_night_are_one_event_not_two():
+    # The multiplicity that feeds the binomial p-value must count star-nights.
+    tg = _targets(_target())
+    alerts = [_alert(band="g", dflux=100.0, dflux_err=3.0, template_flux=1000.0),
+              _alert(band="r", dflux=500.0, dflux_err=15.0, template_flux=5000.0)]
+    assert len(screen_alerts(alerts, tg, Thresholds()).events) == 1
+
+
+# ---------------------------------------------------------------------------
+# screen --- confounders, each rejected by name
+# ---------------------------------------------------------------------------
+def test_m_dwarf_flare_is_rejected_as_chromatic():
+    """The dominant astrophysical confounder: flares are blue, reflections are not."""
+    tg = _targets(_target())
+    # Red star (F*_g=1000, F*_r=10000); flare adds equal FLUX in both bands,
+    # so the fractional amplitude is ~10x larger in g.
+    alerts = [_alert(band="g", dflux=500.0, dflux_err=5.0, template_flux=1000.0),
+              _alert(band="r", dflux=500.0, dflux_err=5.0, template_flux=10000.0)]
+    v = screen_alerts(alerts, tg, Thresholds())
+    assert v.events == []
+    assert any(r["reason"] == "chromatic" for r in v.rejected)
+
+
+def test_subtraction_dipole_is_rejected():
+    tg = _targets(_target())
+    a = _alert()
+    a.is_dipole = True
+    v = screen_alerts([a], tg, Thresholds())
+    assert v.events == []
+    assert v.rejected[0]["reason"] == "dipole"
+
+
+def test_satellite_glint_trail_is_rejected():
+    """A satellite glint is a brief achromatic reflection --- an exact mimic."""
+    tg = _targets(_target())
+    a = _alert()
+    a.glint_trail = True
+    v = screen_alerts([a], tg, Thresholds())
+    assert v.events == []
+    assert v.rejected[0]["reason"] == "glint_trail"
+
+
+def test_moving_and_extended_and_flagged_sources_are_rejected():
+    tg = _targets(_target())
+    for field, value, reason in (
+        ("extendedness", 0.9, "extended"),
+        ("trail_length_arcsec", 2.0, "trailed"),
+        ("ss_object_id", "asteroid-1", "solar_system"),
+        ("pixel_flag_bad", True, "bad_pixels"),
+    ):
+        a = _alert()
+        setattr(a, field, value)
+        v = screen_alerts([a], tg, Thresholds())
+        assert v.events == [], f"{reason} should have been rejected"
+        assert v.rejected[0]["reason"] == reason
+
+
+def test_low_significance_is_rejected():
+    tg = _targets(_target())
+    a = _alert(dflux=10.0, dflux_err=10.0)
+    a.snr = 1.0
+    v = screen_alerts([a], tg, Thresholds())
+    assert v.rejected[0]["reason"] == "low_significance"
+
+
+def test_astrometrically_offset_event_is_rejected():
+    tg = _targets(_target(ra=150.0, dec=-30.0))
+    # 0.8 arcsec away, with 0.02 arcsec errors: inside the match radius but far
+    # outside the astrometric tolerance.
+    v = screen_alerts([_alert(ra=150.0 + 0.8 / 3600.0)], tg, Thresholds())
+    assert v.events == []
+    assert v.rejected[0]["reason"] == "astrometric_offset"
+
+
+def test_mixed_polarity_in_one_night_is_rejected_as_a_subtraction_artefact():
+    tg = _targets(_target())
+    alerts = [_alert(band="g", dflux=+300.0), _alert(band="r", dflux=-300.0)]
+    v = screen_alerts(alerts, tg, Thresholds())
+    assert v.events == []
+    assert any(r["reason"] == "mixed_polarity_same_night" for r in v.rejected)
+
+
+def test_high_proper_motion_star_still_matches_after_propagation():
+    ra0, dec0, pm = 150.0, -30.0, 900.0
+    tg = _targets(_target(ra=ra0, dec=dec0, pmra=pm))
+    epoch = 2026.5
+    ra_now, dec_now = T.propagate_pm(ra0, dec0, pm, 0.0, GAIA_EPOCH, epoch)
+    v = screen_alerts([_alert(ra=float(ra_now), dec=float(dec_now))], tg,
+                      Thresholds(), epoch_jyear=epoch)
+    assert len(v.events) == 1
+
+
+# ---------------------------------------------------------------------------
+# screen --- honest degradation
+# ---------------------------------------------------------------------------
+def test_single_band_event_is_kept_but_marked_untested():
+    tg = _targets(_target())
+    v = screen_alerts([_alert(band="g")], tg, Thresholds())
+    assert len(v.events) == 1
+    ev = v.events[0]
+    assert not ev.grey_tested
+    assert "greyness_untested_single_band" in ev.reasons
+
+
+def test_absent_baseline_flux_marks_the_amplitude_untestable():
+    tg = _targets(_target())
+    tg = tg.drop(columns=[c for c in tg.columns if c.startswith("mag_")])
+    a = _alert()
+    a.template_flux_njy = None
+    v = screen_alerts([a], tg, Thresholds())
+    assert len(v.events) == 1
+    assert any("amplitude_" in r for r in v.events[0].reasons)
+    assert math.isnan(v.events[0].a)
+
+
+def test_gaia_synthetic_photometry_is_the_documented_fallback():
+    tg = _targets(_target(mag_g=20.0, mag_r=19.0))
+    a = _alert(band="g")
+    a.template_flux_njy = None
+    v = screen_alerts([a], tg, Thresholds())
+    assert v.events[0].per_band["g"]["baseline_source"] == "gaia_gspc_synthetic"
+
+
+def test_empty_inputs_degrade_with_a_named_note():
+    assert "no_alerts_in" in screen_alerts([], _targets(), Thresholds()).notes
+    assert "no_targets" in screen_alerts([_alert()], pd.DataFrame(), Thresholds()).notes
+
+
+def test_malformed_alerts_are_counted_not_crashed_on():
+    tg = _targets(_target())
+    bad = _alert()
+    bad.band = "q"
+    v = screen_alerts([bad], tg, Thresholds())
+    assert v.counts.get("rejected_malformed") == 1
+
+
+def test_funnel_counts_are_recorded_at_every_stage():
+    tg = _targets(_target())
+    v = screen_alerts([_alert()], tg, Thresholds())
+    for key in ("alerts_in", "structurally_valid", "quality_passed",
+                "positionally_matched", "events_kept"):
+        assert key in v.counts
+
+
+# ---------------------------------------------------------------------------
+# ledger --- statistics
+# ---------------------------------------------------------------------------
+def test_binomial_tail_is_correct():
+    assert L.binomial_sf(1, 1, 0.25) == pytest.approx(0.25)
+    assert L.binomial_sf(2, 2, 0.5) == pytest.approx(0.25)
+    assert L.binomial_sf(1, 10, 0.1) == pytest.approx(1 - 0.9 ** 10, rel=1e-9)
+
+
+def test_binomial_returns_no_evidence_for_a_degenerate_denominator():
+    # A missing visit history must never look like significance.
+    assert L.binomial_sf(3, 0, 0.01) == 1.0
+    assert L.binomial_sf(3, 2, 0.01) == 1.0
+    assert L.binomial_sf(1, 10, 0.0) == 1.0
+
+
+def test_benjamini_hochberg_controls_the_false_discovery_rate():
+    reject, thresh = L.benjamini_hochberg([1e-8, 0.02, 0.4, 0.9], alpha=0.05)
+    assert reject[0] and not reject[2] and not reject[3]
+    assert thresh <= 0.05
+
+
+def test_timing_needs_three_events():
+    p = L.timing_structure([1.0, 2.0], list(np.arange(0.0, 30.0)))[2]
+    assert p == 1.0          # two points are always "periodic"
+
+
+def test_timing_structure_finds_an_injected_period():
+    visits = list(np.arange(0.0, 200.0, 1.0))
+    events = [10.0, 30.0, 50.0, 70.0, 90.0]        # exactly 20 d apart
+    period, r, p = L.timing_structure(events, visits, n_null=400)
+    assert r > 0.99
+    assert p < 0.05
+
+
+def test_timing_null_is_cadence_matched():
+    """Load-bearing: the survey's own cadence must not read as a beacon.
+
+    Visits happen only every 4th day, so *every* possible event spacing is a
+    multiple of 4 days and every event set is exactly commensurate with a 4-day
+    period.  Against a uniform-time null that structure is wildly significant.
+    Drawing the null from the star's own visit epochs cancels it exactly, so
+    irregularly spaced events score as the noise they are.
+    """
+    visits = list(np.arange(0.0, 400.0, 4.0))
+    events = [8.0, 36.0, 84.0, 180.0, 292.0]       # irregular, all on the cadence
+    p = L.timing_structure(events, visits, n_null=600)[2]
+    assert p > 0.05, "cadence alias leaked through as a timing detection"
+
+
+def test_evenly_spaced_events_beat_the_cadence_matched_null():
+    """The other side of the same test: real regularity must still be findable.
+
+    Same coarse 4-day cadence, but the events are exactly evenly spaced.  The
+    null (random draws from the same visits) rarely achieves that, so this is a
+    genuine detection rather than a sampling artefact.
+    """
+    visits = list(np.arange(0.0, 400.0, 4.0))
+    events = [8.0, 40.0, 72.0, 104.0, 136.0]       # every 32 d exactly
+    period, r, p = L.timing_structure(events, visits, n_null=600)
+    assert r > 0.99
+    assert p < 0.05
+
+
+def test_timing_p_value_respects_its_own_resolution():
+    visits = list(np.arange(0.0, 200.0, 1.0))
+    p = L.timing_structure([10.0, 30.0, 50.0, 70.0], visits, n_null=99)[2]
+    assert p >= 1.0 / 100.0     # add-one estimator, never a bare zero
+
+
+# ---------------------------------------------------------------------------
+# ledger --- accumulation and promotion
+# ---------------------------------------------------------------------------
+def _event(tid="4242", night="n61500", mjd=61500.2, grey_z=0.4, grey=True,
+           polarity="flash"):
+    return L.Event(target_id=tid, night=night, mjd=mjd, polarity=polarity,
+                   bands=["g", "r"], dflux_njy=500.0, dflux_err_njy=10.0,
+                   strongest_band="r", a=0.1, a_err=0.005, sep_arcsec=0.05,
+                   sep_sigma=1.0, grey_z=grey_z, grey_tested=grey,
+                   colour_temp_k=3300.0, alert_ids=["a1", "a2"])
+
+
+def test_ledger_accumulates_trials_across_nights():
+    led = L.Ledger()
+    led.add_night("n1", [_event(night="n1", mjd=61500.2)], target_visits=1000,
+                  targets_in_footprint=900, alerts_seen=5000)
+    led.add_night("n2", [_event(night="n2", mjd=61505.2)], target_visits=1200,
+                  targets_in_footprint=900, alerts_seen=5200)
+    assert led.n_target_visits == 2200
+    assert led.n_events_kept == 2
+    # Re-folding a night already recorded must not double-count its trials.
+    led.add_night("n2", [], target_visits=1200, targets_in_footprint=900,
+                  alerts_seen=5200)
+    assert led.n_target_visits == 2200
+
+
+def test_ledger_deduplicates_identical_events():
+    led = L.Ledger()
+    ev = _event()
+    led.add_night("n1", [ev, ev], target_visits=10, targets_in_footprint=5,
+                  alerts_seen=10)
+    assert led.targets["4242"]["n_events"] == 1
+
+
+def test_visit_history_is_counted_in_nights_not_epochs():
+    """The denominator must count the same unit the numerator does."""
+    led = L.Ledger()
+    led.add_night("n1", [_event()], target_visits=10, targets_in_footprint=5,
+                  alerts_seen=10,
+                  # Two epochs 33 min apart == ONE observing night.
+                  visit_history={"4242": [61500.1, 61500.1 + 33.0 / 1440.0,
+                                          61504.1, 61508.1]})
+    assert led.targets["4242"]["n_visits"] == 3
+    assert led.targets["4242"]["visits_exact"]
+
+
+def test_approximate_denominator_cannot_reach_candidate_tier():
+    led = L.Ledger()
+    evs = [_event(night="n1", mjd=61500.2), _event(night="n2", mjd=61510.2)]
+    led.add_night("n1", evs, target_visits=100, targets_in_footprint=50,
+                  alerts_seen=100)                       # no visit_history
+    led.assess()
+    rec = led.targets["4242"]
+    assert rec["tier"] in ("watch", "interest")
+    assert "denominator_approximate" in rec["notes"]
+
+
+def test_high_duty_cycle_star_is_rejected_as_a_subtraction_residual():
+    """A proper-motion dipole alerts at every visit; a beacon does not."""
+    led = L.Ledger()
+    evs = [_event(night=f"n{i}", mjd=61500.0 + i) for i in range(8)]
+    led.add_night("n1", evs, target_visits=10, targets_in_footprint=5,
+                  alerts_seen=50,
+                  visit_history={"4242": [61500.0 + i for i in range(10)]})
+    led.assess(max_duty_cycle=0.2)
+    rec = led.targets["4242"]
+    assert rec["tier"] == "none"
+    assert "rejected_high_duty_cycle" in rec["notes"]
+
+
+def test_repeated_grey_events_on_a_quiet_star_reach_candidate_tier():
+    led = L.Ledger()
+    # A rare repeater: 2 events in 60 visited nights, against an ensemble rate
+    # set by many quiet targets.
+    led.n_target_visits = 200000
+    led.n_events_kept = 200                    # ensemble rate = 1e-3 per visit
+    evs = [_event(night="n1", mjd=61500.2), _event(night="n2", mjd=61530.2)]
+    led.add_night("n1", evs, target_visits=0, targets_in_footprint=0,
+                  alerts_seen=0,
+                  visit_history={"4242": [61500.0 + 1.0 * i for i in range(60)]})
+    led.assess(alpha_fdr=0.05, min_visits_for_rate=5)
+    rec = led.targets["4242"]
+    assert rec["visits_exact"]
+    assert rec["p_binomial"] < 0.01
+    assert rec["tier"] in ("candidate", "alarm")
+
+
+def test_a_single_event_is_only_a_watch():
+    led = L.Ledger()
+    led.n_target_visits, led.n_events_kept = 100000, 100
+    led.add_night("n1", [_event(grey=False)], target_visits=0,
+                  targets_in_footprint=0, alerts_seen=0,
+                  visit_history={"4242": [61500.0 + i for i in range(40)]})
+    led.assess()
+    assert led.targets["4242"]["tier"] == "watch"
+
+
+def test_ledger_round_trips_through_json_without_nan(tmp_path):
+    led = L.Ledger()
+    led.add_night("n1", [_event(grey_z=float("nan"), grey=False)],
+                  target_visits=10, targets_in_footprint=5, alerts_seen=10)
+    led.assess()
+    p = tmp_path / "ledger.json"
+    led.save(p)
+    raw = p.read_text()
+    assert "NaN" not in raw and "Infinity" not in raw
+    json.loads(raw)                                   # strict parse must succeed
+    back = L.Ledger.load(p)
+    assert back.n_events_kept == led.n_events_kept
+    assert back.version == L.LEDGER_VERSION
+
+
+def test_assess_survives_a_json_round_trip(tmp_path):
+    """Regression: NaN is written as JSON null, so every re-read value may be None.
+
+    ``float(None)`` raises, so an ``assess`` after a reload used to crash on any
+    event whose greyness was untestable --- i.e. on every single-band event.
+    """
+    led = L.Ledger()
+    led.add_night("n1", [_event(grey_z=float("nan"), grey=False)],
+                  target_visits=10, targets_in_footprint=5, alerts_seen=10)
+    led.assess()
+    p = tmp_path / "ledger.json"
+    led.save(p)
+    reloaded = L.Ledger.load(p)
+    assert reloaded.targets["4242"]["events"][0]["grey_z"] is None
+    reloaded.assess()                       # must not raise
+    assert reloaded.targets["4242"]["tier"] in L.TIERS
+
+
+def test_a_perfectly_grey_event_is_not_discarded_by_a_truthiness_test(tmp_path):
+    """Regression: ``grey_z == 0.0`` is the BEST possible event, not a missing one."""
+    led = L.Ledger()
+    led.n_target_visits, led.n_events_kept = 200000, 200
+    evs = [_event(night="n1", mjd=61500.2, grey_z=0.0),
+           _event(night="n2", mjd=61530.2, grey_z=0.0)]
+    led.add_night("n1", evs, target_visits=0, targets_in_footprint=0,
+                  alerts_seen=0,
+                  visit_history={"4242": [61500.0 + i for i in range(60)]})
+    led.assess()
+    assert led.targets["4242"]["tier"] in ("candidate", "alarm")
+
+
+def test_loading_an_absent_ledger_starts_a_fresh_one(tmp_path):
+    led = L.Ledger.load(tmp_path / "nope.json")
+    assert led.n_target_visits == 0 and led.targets == {}
+
+
+def test_summary_reports_the_cumulative_trial_count():
+    led = L.Ledger()
+    led.add_night("n1", [_event()], target_visits=1234, targets_in_footprint=99,
+                  alerts_seen=10)
+    s = led.assess()
+    assert s["cumulative_target_visits"] == 1234
+    assert "tier_counts" in s and "ensemble_rate_per_target_visit" in s
+
+
+# ---------------------------------------------------------------------------
+# brokers (no network)
+# ---------------------------------------------------------------------------
+def test_alerce_band_integer_mapping_puts_u_at_six():
+    """u = 6, not 0.  Getting this wrong silently relabels every u detection."""
+    rows = [{"measurement_id": "1", "oid": "o", "mjd": 61500.0, "band": 6,
+             "ra": 10.0, "dec": -20.0, "psfflux": 100.0, "psffluxerr": 5.0}]
+    assert normalize_alerce_rows(rows)[0].band == "u"
+    rows[0]["band"] = 1
+    assert normalize_alerce_rows(rows)[0].band == "g"
+
+
+def test_alerce_normalisation_tolerates_absent_optional_columns():
+    rows = [{"measurement_id": "1", "oid": "o", "mjd": 61500.0, "band": 2,
+             "ra": 10.0, "dec": -20.0, "psfflux": -100.0, "psffluxerr": 5.0}]
+    a = normalize_alerce_rows(rows)[0]
+    assert a.polarity == "dip"
+    assert a.reliability is None and a.is_dipole is None
+    assert a.template_flux_njy is None
+    assert validate(a) == []
+
+
+def test_alerce_normalisation_flags_bad_pixels():
+    rows = [{"measurement_id": "1", "oid": "o", "mjd": 61500.0, "band": 2,
+             "ra": 10.0, "dec": -20.0, "psfflux": 100.0, "psffluxerr": 5.0,
+             "pixelflags_crcenter": True}]
+    assert normalize_alerce_rows(rows)[0].pixel_flag_bad is True
+
+
+def test_alerce_adql_carries_the_reductions_that_make_a_night_affordable():
+    tap = AlerceTAP()
+    captured = {}
+    tap.query = lambda adql, maxrec=None: captured.setdefault("adql", adql) and []
+    tap.night_detections(61500.0, 61501.0, parallax_min_mas=10.0)
+    adql = captured["adql"]
+    assert "alerce_tap.detection" in adql and "alerce_tap.lsst_detection" in adql
+    assert "d.sid = 1" in adql               # excludes known solar-system objects
+    assert "g.parallax > 10.0" in adql       # the nearby-star server-side cut
+    assert "d.mjd >= 61500.0" in adql and "d.mjd < 61501.0" in adql
+
+
+def test_alerce_forced_photometry_query_is_the_denominator_not_the_numerator():
+    tap = AlerceTAP()
+    captured = {}
+    tap.query = lambda adql, maxrec=None: captured.setdefault("adql", adql) and []
+    tap.forced_photometry_night(61500.0, 61501.0, parallax_min_mas=10.0)
+    assert "alerce_tap.forced_photometry" in captured["adql"]
+    assert "fp.ra" in captured["adql"] and "fp.dec" in captured["adql"]
+
+
+def test_lasair_normalisation_maps_the_vetting_fields():
+    payload = {"diaObjectId": "170081276982722562", "diaSourcesList": [{
+        "diaSourceId": "9", "midpointMjdTai": 61500.3, "band": "r",
+        "ra": 10.0, "decl": -20.0, "raErr": 20.0, "decErr": 20.0,
+        "psfFlux": 800.0, "psfFluxErr": 20.0, "templateFlux": 8000.0,
+        "templateFluxErr": 40.0, "snr": 40.0, "reliability": 0.93,
+        "isDipole": False, "isNegative": False, "extendedness": 0.0,
+        "trailLength": 0.0, "glint_trail": False}]}
+    a = normalize_lasair_diasources(payload)[0]
+    assert a.dec == -20.0                     # Lasair spells it `decl`
+    assert a.ra_err_arcsec == pytest.approx(0.02)   # mas -> arcsec
+    assert a.template_flux_njy == 8000.0
+    assert a.broker == "lasair-lsst"
+
+
+def test_lasair_without_a_token_fails_loudly():
+    with pytest.raises(BrokerError) as exc:
+        LasairLSST(token="")._post("query", {})
+    assert "LASAIR_TOKEN" in str(exc.value)
+
+
+# ---------------------------------------------------------------------------
+# run --- config and honest verdicts
+# ---------------------------------------------------------------------------
+def test_config_defaults_are_complete_and_overridable():
+    from seti.tocsin.run import DEFAULTS, load_tocsin_config
+    conf = load_tocsin_config()
+    for section in DEFAULTS:
+        assert section in conf
+    # The shipped config must keep the deliberate no-extra-reliability-cut.
+    assert float(conf["screen"]["min_reliability"]) == 0.0
+
+
+def test_screen_night_without_a_target_list_says_so(tmp_path):
+    from seti.tocsin.run import screen_night
+    out = tmp_path / "res"
+    s = screen_night(targets_path=tmp_path / "absent.parquet", out_dir=out,
+                     mjd_lo=61500.0, mjd_hi=61501.0)
+    assert s["verdict"] == "NO_TARGET_LIST"
+    assert json.loads((out / "summary.json").read_text())["verdict"] == "NO_TARGET_LIST"

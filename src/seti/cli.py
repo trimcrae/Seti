@@ -678,6 +678,34 @@ def _cmd_knell_cross(args, cfg):
                 max_targets=args.max_targets, seed=args.seed)
 
 
+def _cmd_tocsin_probe(args, cfg):
+    from .tocsin.run import probe
+
+    probe(cfg, out_dir=args.out_dir)
+
+
+def _cmd_tocsin_targets(args, cfg):
+    from .tocsin.run import build_targets
+
+    rec = build_targets(cfg, out_path=args.out)
+    print(f"[tocsin] targets verdict={rec['verdict']} n={rec['n_targets']}")
+
+
+def _cmd_tocsin_screen(args, cfg):
+    from .tocsin.run import screen_night
+
+    screen_night(cfg, lookback_nights=args.lookback_nights,
+                 mjd_lo=args.mjd_lo, mjd_hi=args.mjd_hi,
+                 targets_path=args.targets, out_dir=args.out_dir,
+                 use_gaia_join=not args.no_gaia_join)
+
+
+def _cmd_tocsin_assess(args, cfg):
+    from .tocsin.run import assess_only
+
+    assess_only(cfg, out_dir=args.out_dir)
+
+
 def _cmd_vigil_probe(args, cfg):
     from .vigil.run import vigil_probe
 
@@ -1130,6 +1158,52 @@ def main(argv=None):
     p.add_argument("--seed", type=int, default=20260726,
                    help="RNG seed for the permutation nulls and the injections")
     p.set_defaults(func=_cmd_knell_sweep)
+
+    p = sub.add_parser("tocsin-probe",
+                       help="TOCSIN stage 0: confirm the Rubin alert brokers are "
+                            "reachable from the runner and record the LIVE TAP "
+                            "schema verbatim. Every ADQL column name in the "
+                            "channel is inferred from the brokers' published "
+                            "source rather than from a live query, so this must "
+                            "succeed before any science claim")
+    p.add_argument("--out-dir", default=None)
+    p.set_defaults(func=_cmd_tocsin_probe)
+
+    p = sub.add_parser("tocsin-targets",
+                       help="TOCSIN stage 1: build the Gaia DR3 nearby-star "
+                            "target list in equal-volume parallax shells, with "
+                            "GSPC synthetic photometry as the fallback baseline "
+                            "flux")
+    p.add_argument("--out", default=None)
+    p.set_defaults(func=_cmd_tocsin_targets)
+
+    p = sub.add_parser("tocsin-screen",
+                       help="TOCSIN stage 2 (the nightly screen): pull the "
+                            "night's LSST difference-image detections on "
+                            "catalogued nearby stars, run the achromaticity / "
+                            "dipole / mover / glint funnel in BOTH flux "
+                            "polarities, and fold the survivors into the "
+                            "persistent cross-night ledger")
+    p.add_argument("--lookback-nights", type=float, default=None,
+                   help="window to pull, in nights (default from config)")
+    p.add_argument("--mjd-lo", type=float, default=None)
+    p.add_argument("--mjd-hi", type=float, default=None)
+    p.add_argument("--targets", default=None)
+    p.add_argument("--out-dir", default=None)
+    p.add_argument("--no-gaia-join", action="store_true",
+                   help="audit mode: disable the broker-side Gaia parallax "
+                        "pre-cut to MEASURE what it loses (it cross-matches at "
+                        "the catalogue epoch, so it can orphan exactly the "
+                        "high-proper-motion dwarfs this channel wants)")
+    p.set_defaults(func=_cmd_tocsin_screen)
+
+    p = sub.add_parser("tocsin-assess",
+                       help="TOCSIN stage 3 (offline): recompute the ensemble "
+                            "rate, the trial-corrected per-target p-values and "
+                            "the promotion tiers over the whole accumulated "
+                            "ledger, without touching the network")
+    p.add_argument("--out-dir", default=None)
+    p.set_defaults(func=_cmd_tocsin_assess)
 
     p = sub.add_parser("knell-vet",
                        help="KNELL stage 2: aggregate every field's candidates "

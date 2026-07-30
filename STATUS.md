@@ -3,7 +3,80 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-07-21.
+next. Last updated: 2026-07-30.
+
+### New channel: TOCSIN — nightly Rubin/LSST alert screen (`tocsin/`), 2026-07-30
+
+**The first standing, recurring search this repository has had.** Every other
+channel is a one-shot sweep of an archive; TOCSIN watches tonight's sky and
+accumulates. Rubin alerts went world-public on 2026-02-24 and the survey proper
+began 2026-06-30, and **as of 2026-07-30 no published SETI screen of real Rubin
+alerts exists** — that window is the scarcest asset here.
+
+**Signature.** S30 of `docs/necrosignatures.md` ("an unclassified blackbody
+transient on a catalogued nearby dwarf, matching neither flare, nova, nor
+microlensing") — the only event-residue signature in the taxonomy that needs a
+*live* stream rather than an archive, and the one that was never built. Screened
+in **both** difference-image polarities: `flash` (positive — S30 plus the
+specular-glint reading, since a flat reflector returns the stellar spectrum and
+is therefore grey where a flare is blue) and `dip` (negative — brief *grey*
+occultation, the short-timescale end the ZTF `dimming` channel could not reach).
+
+**The novel axis, and the honest narrowing** (prior-art sweep run on the runner:
+65 arXiv + 31 OpenAlex queries, 37 full texts, citing-sets of 11 proposal papers;
+evidence under `results/alertlit{,2,3}/`, every ID verified before citation):
+- **Unoccupied:** cross-night *recurrence* of achromatic alert-stream events at a
+  fixed position on a quiescent star. No prior art in any survey.
+- **Proposed, never executed:** specular glint. Lacki 2019 (arXiv:1903.05839)
+  computes LSST's reach; **12 citing works in 7 years, zero executions**. Rogers
+  et al. (arXiv:2401.08763) explicitly flag it as the opportune extension.
+- **DO NOT CLAIM AS NEW:** negative-flux alert screening. Gallay, Davenport &
+  Croft (arXiv:2506.14744, AJ 2025) already do it on ZTF. Full-text grep: zero
+  occurrences of `achromatic`, `colour`, `recurr`, `repeat` — their discriminant
+  is single-band amplitude. Our dip mode is *the grey and recurrent variant*, an
+  extension, on a new instrument.
+- **Cite and differentiate:** Kovačević et al. (arXiv:2606.00574) simulate
+  achromatic coherent variability in LSST colour space (simulation only, no
+  data, periodic signals not events); AHA (arXiv:2602.12955) now occupies generic
+  ML anomaly detection on alert streams, which this channel deliberately avoids.
+- The Rubin TVS Roadmap's four planned technosignature families
+  (arXiv:2208.04499) include **none** of glint, achromaticity or negative flux.
+
+**Why a recurring screen can be honest.** Three disciplines, all unit-tested:
+(1) significance is quoted against the **cumulative** target×night trial count
+(BH-FDR across all targets ever screened) — a screen that forgets its history
+manufactures a 3σ event every few weeks by construction; (2) the denominator is
+measured from **forced photometry**, which exists whether or not anything was
+detected, so the trial space is the well-defined *tracked* sample rather than an
+assumption; (3) the timing null resamples each star's **own visited nights**, so
+the ~3–4 day revisit cadence cannot read as a beacon.
+
+**Why Rubin makes the discriminant work where ZTF's glint channel died (0/15,
+all chromatic flares):** the LSST baseline takes intra-night pairs in *different*
+filters ~33 min apart, so a colour is the **default** data product; and
+`diaSource.templateFlux` supplies the quiescent flux in the same band and system,
+so `dF/F*` carries no cross-survey passband error.
+
+**Data path — no credentials.** ALeRCE's public IVOA TAP service
+(`tap.alerce.online/tap`) is the only broker path that supports an unattended
+cron: full ADQL, indexed on `mjd`/`ra`/`dec`, whole-night queries, plus the bulk
+forced-photometry table. Lasair needs a token and allows 100 calls/h; Fink has no
+whole-night endpoint and its bulk path requires a human web form.
+
+**Known, unfixable-by-us incompleteness (must be quoted in any result):** Rubin
+applies `minReliability: 0.5` *before* issuing an alert, and DMTN-337 measures
+that model's true-positive rate on **variable stars at 3.5%** (v0.1/DP1); v0.3
+still scores Gaia variables low. Our signal is a stellar point-source event, so
+the stream is biased against it by someone else's classifier. The channel
+therefore applies **no additional reliability cut**, and a null here is weak
+evidence about the sky and strong evidence only about the alert stream.
+
+**State: built and offline-tested (66 tests), not yet run on data.** Next
+decisive action: dispatch `tocsin-probe.yml`. Every ADQL column name was inferred
+from the brokers' published source, not from a live query (no sandbox egress) —
+the probe records the *live* TAP schema so a later change shows as a diff rather
+than an unexplained null. Then let `tocsin.yml` accumulate; the ledger is
+worthless on night 1 and gains power monotonically.
 
 ### New: 5-channel fan-out searching for life originating on LHS 1140 b (2026-07-21)
 

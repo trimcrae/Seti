@@ -1,0 +1,241 @@
+# TOCSIN — the nightly alarm bell on the Rubin/LSST alert stream
+
+*A tocsin is the bell rung to raise an alarm.* KNELL looks for clocks that
+already stopped; TOCSIN watches the sky **tonight**.
+
+---
+
+## 1. The claim
+
+Screen the world-public Rubin/LSST alert stream, every night, for
+**difference-image events at the positions of catalogued nearby stars that are
+achromatic, unresolved, non-moving, and — decisively — that recur across
+nights**, in both flux polarities:
+
+* **flash** (positive difference flux) — signature **S30** of
+  `docs/necrosignatures.md` ("an unclassified blackbody transient on a
+  catalogued nearby dwarf, matching neither flare, nova, nor microlensing"),
+  together with its specular reading: a flat reflector returns the *stellar*
+  spectrum, so an artificial glint is grey, whereas a stellar flare is blue.
+* **dip** (negative difference flux) — brief **grey** occultations, the
+  short-timescale end that the ZTF `dimming` channel could not reach (it
+  exhausted at a 1.6–7.4 % systematics floor).
+
+The deliverable is a **detection**, not a rate. Per the charter, a clean null
+changes the question rather than becoming a paper.
+
+## 2. Novelty position — stated honestly, and narrowed where it must be
+
+A dedicated prior-art sweep was run on the runner (65 arXiv + 31 OpenAlex
+queries, then full text of 37 papers and the citing-sets of 11 proposal papers;
+raw evidence committed under `results/alertlit/`, `results/alertlit2/`,
+`results/alertlit3/`, every arXiv ID verified against the arXiv API before
+citation). What it establishes:
+
+**Unoccupied — the axis this channel is built on.**
+*Cross-night recurrence of achromatic alert-stream events at a fixed position on
+a quiescent star.* No prior art in any survey. Searches for "repeating" +
+"technosignature" return radio work only; the sole recurrence-at-a-position SETI
+logic in the literature is Villarroel et al.'s *spatial alignment within a single
+photographic plate* (arXiv:2110.15217, and the PASP 2025 multiple-transient
+paper), not cross-night repetition in a modern stream.
+
+**Proposed but never executed — what the flash mode finally does.**
+Lacki 2019 (arXiv:1903.05839, *A Shiny New Method for SETI: Specular Reflections
+from Interplanetary Artifacts*, PASP) computes the per-exposure reach of
+Pan-STARRS1, **LSST** and Evryscope for specular glints. In seven years it has
+twelve citing works and **not one executes a glint search**. Jaiswal 2023
+(arXiv:2306.07859) and Kopparapu et al. (arXiv:2405.04560) likewise propose
+without executing. Rogers, Lintott, Croft, Schwamb & Davenport
+(arXiv:2401.08763) explicitly flag Lacki's glints as the opportune extension of
+LSST anomaly detection — and do not do it.
+
+**Partly occupied — the dip mode is an *extension*, not a new channel.**
+Gallay, Davenport & Croft, *Technosignature Searches with Real-time Alert
+Brokers* (arXiv:2506.14744, AJ 2025, 170, 95) **already screen negative-flux
+alerts**: they use ZTF's `isdiffpos` flag, require every alert-packet magnitude
+to be fainter than the reference magnitude, and funnel ~10⁶ alerts/night to ~20
+to ~5 dipper candidates, framed as artificial-occultation follow-up. This
+channel must not claim negative-flux screening as new. What their screen does
+*not* contain — verified by grepping the full text — is any use of **colour**
+(`achromatic`: 0 hits, `colour`: 0, `glint`: 0) or of **recurrence** (`recurr`:
+0, `repeat`: 0). Their discriminant is single-band amplitude with K–S/χ² tests.
+TOCSIN's dip mode is therefore positioned as *the grey and recurrent variant of
+an existing search*, on a new instrument.
+
+**Adjacent, and to be differentiated from, not claimed.**
+Kovačević et al. (arXiv:2606.00574, IAU S404, May 2026) simulate achromatic
+coherent variability against chromatic natural variability using cross-band
+correlation indices in LSST *ugrizy* colour space. It is **simulation only** (500
+synthetic light curves, no data, no alerts) and targets *stable periodic*
+signals rather than transient events — but it means "achromaticity as an LSST
+discriminant" is no longer a blank page, and any write-up must cite it.
+Similarly, *Anomaly Hunter for Alerts* (arXiv:2602.12955, Iskandarli, Lintott,
+Croft, Stevance & Weston, Feb 2026) applies unsupervised autoencoders to the ZTF
+alert stream via Lasair and explicitly frames it as a technosignature
+opportunity — so **generic ML anomaly detection on alerts is now occupied**, and
+this channel deliberately does not do it.
+
+**What the community has already claimed as planned.** The Rubin LSST TVS
+Roadmap (arXiv:2208.04499, Hambleton et al., PASP 2023) names four
+technosignature families: unnatural orbit alterations of solar-system objects;
+unnatural flux patterns of normal variability; spatial correlations of events;
+spatial over-densities. **Glint, achromaticity and negative-flux screening
+appear in none of them.** Headline scarcity: `abs:"technosignature" AND
+abs:"LSST"` returns five papers in all of arXiv; adding `abs:"broker"` returns
+one.
+
+**The scarce asset.** LSST began its survey on 30 June 2026; the first
+world-public alerts flowed on 24 February 2026. As of 30 July 2026 **no
+published SETI screen of real Rubin alerts exists.**
+
+**The standing risk.** Davenport, Croft and Lintott author arXiv:2506.14744,
+arXiv:2602.12955, arXiv:2401.08763 and arXiv:2508.16825, all on Lasair/ZTF.
+This channel sits in their path. Its defensibility rests on the *specific
+discriminant* — grey + recurrent + trial-corrected — and on being on Rubin
+first, not on privileged access to data anyone can read.
+
+## 3. The governing methodology
+
+**The observable is coherence, not brightness.** A single achromatic flash is
+indistinguishable from a cosmic ray, a satellite glint or an unflagged
+subtraction residual. What none of those do is come back to the same catalogued
+star. So the per-event funnel exists only to feed a clean ensemble to a
+**persistent cross-night ledger**, and the promotion decision is made there.
+
+That has three consequences the code enforces:
+
+1. **Cumulative trials.** Significance is quoted against the running total of
+   `target × night` screenings since the ledger opened, never against tonight's.
+   A nightly screen that forgets its own history manufactures a 3σ event every
+   few weeks by construction. Promotion uses Benjamini–Hochberg across all
+   targets ever screened (FDR, not Bonferroni: at 10⁵ targets Bonferroni would
+   reject a genuine repeater along with the noise).
+2. **A real denominator.** Alerts exist only where there was a *detection*, so
+   the stream cannot say how many times a star was looked at and showed nothing.
+   The visit count comes from **forced photometry** (`prvDiaForcedSources`;
+   ALeRCE's `forced_photometry` table), measured at the position on every
+   overlapping visit regardless of detection. The trial space is therefore the
+   **tracked** sample — nearby stars that have a Rubin `diaObject` — which is a
+   well-defined population; where forced photometry is missing, the denominator
+   is marked approximate and the target is capped below candidate tier.
+3. **A cadence-matched null.** The LSST cadence has strong structure (in-night
+   pairs ~33 min apart, ~3–4 day revisits, seasonal gaps, the lunar cycle), so
+   *every* event spacing is commensurate with it. The timing test therefore
+   draws its null by resampling the star's **own visited nights**: a "period"
+   that is really the survey's revisit cadence scores identically under the null
+   and cancels. This is the same discipline KNELL applies with
+   injection-measured efficiency, and it is unit-tested from both sides
+   (`test_timing_null_is_cadence_matched`,
+   `test_evenly_spaced_events_beat_the_cadence_matched_null`).
+
+**The event unit is the star-night**, not the star-band and not the alert. A grey
+flash seen in the night's *g* and *r* visits is one event measured twice — the
+second band is the colour measurement, not a second occurrence. Numerator and
+denominator both count star-nights.
+
+### 3.1 The achromaticity test, and why Rubin makes it possible
+
+For an event of difference flux `dF` on a star of quiescent flux `F*`, the
+**fractional amplitude** `a_b = dF_b / F*_b` has a band-to-band equality that
+separates the hypotheses:
+
+| hypothesis | expectation |
+|---|---|
+| specular reflection | `a` equal in all bands; difference-flux colour temperature = the **star's** temperature |
+| stellar flare | `a` larger in the blue; colour temperature ~9000–10⁴ K whatever the host |
+| grey occulter | `a` equal in all bands, negative |
+| line-of-sight dust | `a` negative and *reddened* — never equal |
+
+One statistic (`greyness_z`) therefore carries flare rejection for flashes and
+dust rejection for dips. For a 9000 K flare continuum on a 3200 K dwarf the
+predicted contrast is `a_g/a_r ≈ 3.7` from the blackbody ratio alone (real flares
+are bluer still, from line emission the model omits) — a firm discriminant at
+Rubin's photometric precision, though not the order-of-magnitude effect it is
+sometimes loosely described as.
+
+Two Rubin properties make this work where ZTF failed. First, **the LSST baseline
+takes intra-night visit pairs in *different* filters** (u+g, u+r, g+r, r+i, i+z,
+z+y; only y+y repeats a filter), ~33 minutes apart — so a colour is the *default*
+data product for any event lasting more than half an hour. The ZTF glint channel
+died precisely because it could seldom test achromaticity; when it could, it
+killed all 15 candidates as chromatic M-dwarf flares. Second,
+`diaSource.templateFlux` gives Rubin's own forced PSF flux on the coadd template
+— the quiescent flux, in the same band, same system, same pixels — so `dF/F*` is
+a ratio of two Rubin measurements with **no cross-survey passband transformation
+error at all**. Gaia DR3 synthetic photometry (GSPC, SDSS *ugriz* + PS1 *y*) is
+the documented fallback and carries an explicit passband-mismatch systematic;
+the channel never claims greyness tighter than it.
+
+Events detected in a single band cannot be colour-tested at all. They are kept
+and marked `greyness_untested_single_band`, and the only route by which they can
+be promoted is recurrence — which is the design working as intended.
+
+## 4. Contamination ledger
+
+Inherited discipline from `docs/channel-brief.md` §4, plus what is specific here.
+
+| confounder | why it matters | test |
+|---|---|---|
+| **Stellar flares** | The dominant astrophysical event on nearby M dwarfs by orders of magnitude | Achromaticity: flares are blue. Rejected as `chromatic` |
+| **Satellite glints** | *An exact mimic*: a brief achromatic specular reflection. ~73,000 glint events pollute 3.6 % of ZTF science images (arXiv:2202.05719, arXiv:2310.17322); see also arXiv:2011.02495, arXiv:2011.03497, arXiv:2411.03258, arXiv:2403.04942 | Rubin's own `glint_trail` flag and `pixelFlags_streak` are fatal. Untrailed point glints survive that — and are killed by **recurrence**: a satellite does not return to the same catalogued star on many nights. This is the single strongest argument for the ledger |
+| **Proper-motion subtraction dipoles** | *The* systematic for a nearby-star sample: high-PM stars are exactly the ones whose template position is wrong, so they subtract badly and alert spuriously | `isDipole` is fatal; unflagged dipoles are caught by the **duty-cycle** test — a subtraction failure repeats at *every* visit, an event does not. Mixed polarity in one night is rejected outright |
+| **Solar-system objects** | ~400 alerts/visit, up to ~5,000 near the ecliptic | `sid = 1` excludes SSO-associated alerts server-side; `trailLength` and `extendedness` catch the unassociated residue (Rubin already deletes trails >10 °/day upstream) |
+| **Cosmic rays** | Single-visit, single-band, unrepeatable | `pixelFlags_cr*` are fatal; recurrence finishes the job |
+| **Un-propagated proper motion** | Produces a **clean null**, the most dangerous failure mode — it looks like a result | Positions are propagated to the alert epoch before matching, and the failure is a regression test (`test_match_fails_without_proper_motion_propagation`) |
+| **Misassociation by the broker's cross-match** | ALeRCE matches to Gaia at the *catalogue* epoch, so the highest-PM nearby dwarfs — this channel's best targets — are the ones it can orphan | The server-side Gaia join is a *cheap* cut, never the authoritative association; the repository's own PM-propagated match decides. Periodic audit runs with the join disabled measure what it loses |
+
+### 4.1 The completeness limitation that is not ours to fix
+
+Rubin's production pipeline applies `minReliability: 0.5` **before an alert is
+issued**. DMTN-337 measures that model's true-positive rate on **variable stars**
+at **3.5 %** (v0.1, on DP1) — it scores stellar point-source-on-point-source
+subtractions characteristically low, and v0.3 still does. This channel's signal
+*is* a stellar point-source event, so the alert stream is systematically biased
+against it, by an amount set by someone else's classifier and not recoverable
+downstream (sub-threshold sources are never alerted at all).
+
+Two consequences, both binding: the channel applies **no additional reliability
+cut** (`min_reliability: 0.0` in `config/tocsin.yaml`) so as not to compound a
+loss it did not choose; and **any result must quote this incompleteness**. It
+also means a null here is weak evidence about the sky and strong evidence only
+about the alert stream — one more reason the deliverable is a detection.
+
+## 5. Data path
+
+| stage | source | why |
+|---|---|---|
+| target list | Gaia DR3 via `astroquery.gaia`, in equal-volume parallax shells | *d* < 100 pc keeps trials at ~10⁵ (so a per-target p-value is interpretable) and Gaia astrometry excellent |
+| nightly detections | **ALeRCE TAP** (`https://tap.alerce.online/tap`), public ADQL, **no credentials** | The only broker path that supports an unattended cron: one ADQL statement answers "every detection from night X", indexed on `mjd`/`ra`/`dec` |
+| denominator | ALeRCE `forced_photometry`, same Gaia pre-cut | Bulk, so the visit history costs one query rather than one call per object |
+| deep vetting (optional) | Lasair-LSST `/api/object/?lite=False` | Full per-epoch `diaSources`; needs a free token, 100 calls/hour at the registered tier |
+| enrichment (optional) | Fink `/api/v1/objects` | Uniquely rich cross-match: SIMBAD, **VSX**, **GCVS**, Gaia DR3 variability flags — the cheapest way to ask "is this star already a catalogued variable?" |
+
+Rubin *alerts* are world-public; Rubin *data releases* (coadd catalogues, images)
+are data-rights restricted. That is why baseline photometry comes from
+`templateFlux` inside the alert or from Gaia, never from a Rubin catalogue query.
+
+Fluxes are **nanojansky and signed**; times are **MJD TAI**; `mag = 31.4 −
+2.5 log₁₀(F/nJy)`. ALeRCE encodes the band as an integer with **u = 6, not 0**,
+and lower-cases every ADQL column name — both are unit-tested, because either
+would silently corrupt every colour in the channel.
+
+## 6. Promotion tiers
+
+| tier | meaning |
+|---|---|
+| `watch` | one event; not yet testable |
+| `interest` | a grey-confirmed single event, or ≥2 events |
+| `candidate` | ≥2 events, ≥1 grey-confirmed, FDR-significant against the cumulative trial count, exact visit denominator, duty cycle below threshold |
+| `alarm` | a candidate whose event epochs also beat the cadence-matched timing null |
+
+A tier is a statement about *evidence*, not a ranking of excitement.
+
+## 7. Status
+
+Built and unit-tested offline (66 tests). The probe workflow must succeed on the
+runner before any science claim: every ADQL column name is inferred from the
+brokers' published source rather than from a live query — the best that can be
+done from a sandbox with no egress, and not the same as verified. The probe
+commits the live TAP schema so a later change appears as a diff in version
+control rather than as an unexplained null.

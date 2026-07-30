@@ -103,8 +103,16 @@ of magnitude and flags the whole catalogue). `srp` is in **m²/ton**. `a1/a2/a3`
 are *also* labelled m²/ton, which is dimensionally wrong for Marsden
 accelerations, so those three are treated as unit-unverified and unused.
 
-**State: built, offline-tested (86 tests), RUN against live data 2026-07-30 —
-and the honest verdict is "not yet", not a null.** Full account in `docs/loom.md`
+**State: built, offline-tested (86 tests), FOUR live runs on 2026-07-30, final
+state clean and self-consistent — and the honest verdict is "not yet", not a
+null.**  Final run: 66,686 orbits quality-gated, 2,759 eligible (>=12
+solar-system detections), **all 2,759 screened** with no top-N selection,
+`shortlist_in_parent_fraction` 1.0, 0 spurious controls forced, 1,875 s.
+Funnel: **0 candidate, 0 interest, 0 watch, 7 ordinary, 66,679 untestable**;
+controls `NO_CONTROLS_PRESENT` (0 matched); replication
+`INSUFFICIENT_POPULATION`.  Every one of the 2,759 residual series is
+untestable on the acceleration axis because the baseline is two weeks — the 7
+`ordinary` are the Path A objects, which need no survey baseline. Full account in `docs/loom.md`
 §2.1-2.2. The funnel is now sound: 66,686 orbits pass the quality cuts, 2,759 have
 >=12 solar-system detections, shortlist and parent are the same population
 (fraction 1.0), the join is 1:1, 2,287 objects analysed in 20 batched queries in

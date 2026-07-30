@@ -1,0 +1,626 @@
+Strong Nongravitational Accelerations and the Potential for Misidentification of Near-Earth Objects
+
+1 Introduction
+2 Dark Comet Test Cases
+3 Synthetic Population
+4 Application to NEO Population
+
+5 MPC Linking Algorithm Fidelity
+
+5.1 Orbit Attribution
+5.2 Orbit Identification
+
+6 Search for Unlinked NEOs
+
+6.1 Constants of Motion Under the Action of Nongravitational Accelerations
+6.2 Search Algorithms for Unlinked Pairs
+
+7 Discussion
+A Supplemental Material
+
+Strong Nongravitational Accelerations and the Potential for Misidentification of Near-Earth Objects
+
+Aster G. Taylor
+
+Fannie and John Hertz Foundation Fellow
+
+Dept. of Astronomy, University of Michigan, Ann Arbor, MI, 48109, USA
+
+Darryl Z. Seligman
+
+NSF Astronomy and Astrophysics Postdoctoral Fellow
+
+Dept. of Physics and Astronomy, Michigan State University, East Lansing, MI 48824, USA
+
+Dept. of Astronomy and Carl Sagan Institute, Cornell University, 122 Sciences Drive, Ithaca, NY, 14853, USA
+
+Matthew J. Holman
+
+Harvard-Smithsonian Center for Astrophysics, Minor Planet Center, 60 Garden St., Cambridge, MA, 02138, USA
+
+Peter Vereš
+
+Harvard-Smithsonian Center for Astrophysics, Minor Planet Center, 60 Garden St., Cambridge, MA, 02138, USA
+
+Davide Farnocchia
+
+Jet Propulsion Laboratory, California Institute of Technology, 4800 Oak Grove Dr., Pasadena, CA, 91109, USA
+
+Nikole Lewis
+
+Dept. of Astronomy and Carl Sagan Institute, Cornell University, 122 Sciences Drive, Ithaca, NY, 14853, USA
+
+Marco Micheli
+
+ESA NEO Coordination Centre, Largo Galileo Galilei 1, I-00044 Frascati (RM), Italy
+
+Jason T. Wright
+
+Dept. of Astronomy & Astrophysics, The Pennsylvania State University, University Park, PA, 16802, USA
+
+Center for Exoplanets and Habitable Worlds, The Pennsylvania State University, University Park, PA, 16802, USA
+
+Penn State Extraterrestrial Intelligence Center, The Pennsylvania State University, University Park, PA, 16802, USA
+Aster G. Taylor
+agtaylor@umich.edu
+
+Abstract
+Nongravitational accelerations in the absence of observed activity have recently been identified on NEOs, opening the question of the prevalence of anisotropic mass-loss in the near-Earth environment. Motivated by the necessity of nongravitational accelerations to identify 2010 VL 65 and 2021 UA 12 as a single object, we investigate the problem of linking separate apparitions in the presence of nongravitational perturbations. We find that nongravitational accelerations on the order of \qty e-9/^2 can lead to a change in plane-of-sky positions of ∼ \qty ⁢ e ⁢ 3 ⁢ a ⁢ r ⁢ c ⁢ s ⁢ e ⁢ c similar-to absent \qty 𝑒 3 𝑎 𝑟 𝑐 𝑠 𝑒 𝑐 \sim\qty{e3}{arcsec} ∼ italic_e 3 italic_a italic_r italic_c italic_s italic_e italic_c between apparitions. Moreover, we inject synthetic tracklets of hypothetical nongravitationally-accelerating NEOs into the Minor Planet Center orbit identification algorithms. We find that at large nongravitational accelerations ( | A i | ≥ \qty ⁢ e − 8 ⁢ \per 2 subscript 𝐴 𝑖 \qty 𝑒 8 superscript \per 2 |A_{i}|\geq\qty{e-8}{\per^{2}} | italic_A start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT | ≥ italic_e - 8 start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT ) these algorithms fail to link a significant fraction of these tracklets. We further show that if orbits can be determined for both apparitions, the tracklets will be linked regardless of nongravitational accelerations, although they may be linked to multiple objects. In order to aid in the identification and linkage of nongravitationally accelerating objects, we propose and test a new methodology to search for unlinked pairs. When applied to the current census of NEOs, we recover the previously identified case but identify no new linkages. We conclude that current linking algorithms are generally robust to nongravitational accelerations, but objects with large nongravitational accelerations may potentially be missed. While current algorithms are well-positioned for the anticipated increase in the census population from future survey missions, it may be possible to find objects with large nongravitational accelerations hidden in isolated tracklet pairs.
+
+Asteroids (72) — Celestial mechanics (211) — Comets (280) — Near-Earth Objects (1092)
+
+\savesymbol
+tablenum
+\restoresymbol SIXtablenum
+
+1 Introduction
+
+It has recently become evident that there exists a continuum of activity in small bodies in the solar system between the traditional definitions of comets and asteroids. Active asteroids (Jewitt, 2012 ; Hsieh, 2017 ; Jewitt & Hsieh, 2022 ) and main belt comets (Elst et al., 1996 ; Boehnhardt et al., 1996 ; Toth, 2000 ; Hsieh et al., 2004 ; Hsieh & Jewitt, 2006 ) are objects on classically asteroid-like orbits that display visible activity in the form of faint comae. There also exist objects on cometary trajectories that appear inactive, such as “Manx comets” (Meech et al., 2016 ) and Damocloids (Asher et al., 1994 ; Jewitt, 2005 ) . These intermediate objects could provide critical insights into our understanding of processes such as volatile and organic delivery to terrestrial planets (Chyba, 1990 ; Owen & Bar-Nun, 1995 ; Albarède, 2009 ) , cometary fading (Wang & Brasser, 2014 ; Brasser & Wang, 2015 ) , and the depletion of volatiles or mantling on small bodies (Podolak & Herman, 1985 ; Prialnik & Bar-Nun, 1988 ) .
+
+1I/‘Oumuamua was the first interstellar object discovered traversing the inner solar system based on its hyperbolic trajectory (Williams et al., 2017 ) . It exhibited significant nongravitational acceleration in the radial direction of A 1 ∼ \qty 2.5 e − 7 / 2 A_{1}\sim\qty{2.5e-7}{/^{2}} italic_A start_POSTSUBSCRIPT 1 end_POSTSUBSCRIPT ∼ 2.5 italic_e - 7 / start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT (Micheli et al., 2018 ) . However, deep optical imaging of the object displayed no dust coma (Meech et al., 2017 ; Jewitt et al., 2017 ) or detection of carbon-based species outgassing (Ye et al., 2017 ; Trilling et al., 2018 ) . It is still unclear what mechanism is responsible for ‘Oumuamua’s nongravitational acceleration, although Micheli et al. ( 2018 ) concluded that for realistic densities and geometries, outgassing with little or no associated dust production was the most likely cause. While its provenance remains unknown, Bergner & Seligman ( 2023 ) proposed that radiolytic production of H 2 from H 2 O ice may be responsible for the acceleration. For recent reviews, see Fitzsimmons et al. ( 2023 ); Jewitt & Seligman ( 2023 ); Seligman & Moro-Martín ( 2023 ) .
+
+Chesley et al. ( 2016 ) , Farnocchia et al. ( 2023 ) , and Seligman et al. ( 2023 ) identified 7 near-Earth objects (NEOs) that also exhibited significant nongravitational accelerations and no associated dust coma (the “dark comets”). Moreover, these accelerations were inconsistent with the typical causes of nongravitational acceleration on asteroids, such as the Yarkovsky effect (Vokrouhlický et al., 2015 ) or radiation pressure (Vokrouhlický & Milani, 2000 ) . Therefore, it was hypothesized that these objects were also outgassing with little dust production (at least when observed), similar to ‘Oumuamua and potentially due to seasonal effects (Taylor et al., 2024a ) .
+
+A case of particular relevance in this context is that of 2010 VL 65 . 1 1 1 https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=2010vl65 Seligman et al. ( 2023 ) reported that the orbit of 2010 VL 65 could be readily linked with that of 2021 UA 12 , 2 2 2 https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=2021ua12 but only if an out-of-plane nongravitational acceleration of A 3 ∼ \qty 9 e − 10 / 2 A_{3}\sim\qty{9e-10}{/^{2}} italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT ∼ 9 italic_e - 10 / start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT was included in the fit.
+
+These examples show that compositional assumptions and/or the absence of observed activity cannot rule out nongravitational accelerations on objects in the near-Earth environment. Instead, astrometric orbit fitting is necessary to identify nongravitational accelerations for these objects. This methodology requires data over long arcs and several apparitions. If only gravity-only orbits are considered, nongravitational accelerations may disrupt these data arcs by causing objects to be incorrectly identified across apparitions, thereby obscuring nongravitational accelerations in the near-Earth environment.
+
+Motivated by the case of 2010 VL 65 , we demonstrate that a sufficiently large nongravitational acceleration causes the on-sky position of an object to shift between apparitions in comparison to a gravity-only orbit. We quantify this change in on-sky position from nongravitational perturbations for dark comet test cases in Sec. 2 , a synthetic population of asteroids in Sec. 3 , and for the currently-known NEOs in Sec. 4 . This effect could plausibly lead to linkage failures, which would cause a single object to be falsely identified as distinct objects across apparitions. Therefore, in Sec. 5 , we assess the accuracy of the current Minor Planet Center (MPC) linking algorithms. Informed by these results, in Sec. 6 we search for unlinked pairs in the current census of NEOs. We discuss our results and their broader ramifications in Sec. 7 .
+
+2 Dark Comet Test Cases
+
+In this section, we present ephemerides of two dark comets (1998 KY 26 and 2003 RM) under the influence of nongravitational perturbations. These objects are representative members of two distinct populations — 2003 RM is large ( R N ∼ \qty ⁢ 230 ⁢ m similar-to subscript 𝑅 𝑁 \qty 230 𝑚 R_{N}\sim\qty{230}{m} italic_R start_POSTSUBSCRIPT italic_N end_POSTSUBSCRIPT ∼ 230 italic_m ) and is on an orbit with a ∼ \qty ⁢ 3 ⁢ a ⁢ u similar-to 𝑎 \qty 3 𝑎 𝑢 a\sim\qty{3}{au} italic_a ∼ 3 italic_a italic_u and e ∼ 0.6 similar-to 𝑒 0.6 e\sim 0.6 italic_e ∼ 0.6 , while 1998 KY 26 has R N ∼ \qty ⁢ 15 ⁢ m similar-to subscript 𝑅 𝑁 \qty 15 𝑚 R_{N}\sim\qty{15}{m} italic_R start_POSTSUBSCRIPT italic_N end_POSTSUBSCRIPT ∼ 15 italic_m , a ∼ \qty ⁢ 1.2 ⁢ a ⁢ u similar-to 𝑎 \qty 1.2 𝑎 𝑢 a\sim\qty{1.2}{au} italic_a ∼ 1.2 italic_a italic_u , and e ∼ 0.2 similar-to 𝑒 0.2 e\sim 0.2 italic_e ∼ 0.2 .
+
+We use the ASSIST code (Holman et al., 2023 ) , which is an extension of the REBOUND N-body code (Rein & Liu, 2012 ) and the REBOUNDx library (Tamayo et al., 2020 ) . ASSIST integrates test particles with the IAS15 integrator (Rein & Spiegel, 2015 ) , using precomputed positions of the Sun, Moon, planets, and 16 massive asteroids with the JPL DE441 ephemeris (Park et al., 2021 ; Farnocchia, 2021 ) . As a result, ASSIST is significantly more efficient than a classic N-body integrator at the precision needed for ephemerides, at least in a solar system context.
+
+The ASSIST package can incorporate nongravitational accelerations using the Marsden et al. ( 1973 ) formulation, which we implement in this paper. Specifically, the nongravitational acceleration takes the form
+
+𝒂 NG = ( A 1 ⁢ 𝐫 ^ + A 2 ⁢ 𝐭 ^ + A 3 ⁢ 𝐧 ^ ) ⁢ g ⁢ ( r ) . subscript 𝒂 NG subscript 𝐴 1 ^ 𝐫 subscript 𝐴 2 ^ 𝐭 subscript 𝐴 3 ^ 𝐧 𝑔 𝑟 \boldsymbol{a}_{\rm NG}=\left(A_{1}\hat{\mathbf{r}}+A_{2}\hat{\mathbf{t}}+A_{3%
+}\hat{\mathbf{n}}\right)\,g(r)\,. bold_italic_a start_POSTSUBSCRIPT roman_NG end_POSTSUBSCRIPT = ( italic_A start_POSTSUBSCRIPT 1 end_POSTSUBSCRIPT over^ start_ARG bold_r end_ARG + italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT over^ start_ARG bold_t end_ARG + italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT over^ start_ARG bold_n end_ARG ) italic_g ( italic_r ) .
+
+(1)
+
+In Eq. ( 1 ), the g ⁢ ( r ) 𝑔 𝑟 g(r) italic_g ( italic_r ) function captures the dependence of the H 2 O activity on the heliocentric distance r 𝑟 r italic_r . We set g ⁢ ( r ) = ( r 0 / r ) 2 𝑔 𝑟 superscript subscript 𝑟 0 𝑟 2 g(r)=(r_{0}/r)^{2} italic_g ( italic_r ) = ( italic_r start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT / italic_r ) start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT , where r 0 = \qty ⁢ 1 ⁢ a ⁢ u subscript 𝑟 0 \qty 1 𝑎 𝑢 r_{0}=\qty{1}{au} italic_r start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT = 1 italic_a italic_u . The unit vectors 𝐫 ^ ^ 𝐫 \hat{\mathbf{r}} over^ start_ARG bold_r end_ARG , 𝐭 ^ ^ 𝐭 \hat{\mathbf{t}} over^ start_ARG bold_t end_ARG , and 𝐧 ^ ^ 𝐧 \hat{\mathbf{n}} over^ start_ARG bold_n end_ARG correspond to the radial, transverse, and out-of-plane directions with respect to the object’s Keplerian orbit. The free parameters A 1 subscript 𝐴 1 A_{1} italic_A start_POSTSUBSCRIPT 1 end_POSTSUBSCRIPT , A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT , and A 3 subscript 𝐴 3 A_{3} italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT provide the magnitude of the corresponding nongravitational acceleration component.
+
+We integrate the trajectories of 2003 RM and 1998 KY 26 with a range of nongravitational accelerations in order to quantify the change in on-sky position. These simulations are initialized on 2000 January 1 and integrated for \qty 50yr. For each object, we add a nongravitational acceleration in the form of Eq. ( 1 ). We consider each component direction separately and a range of nongravitational acceleration magnitudes. For each nongravitational acceleration and direction, we calculate the change in the on-sky position Δ ⁢ Θ Δ Θ \Delta\Theta roman_Δ roman_Θ relative to the trajectory with the same initial conditions and gravity-only motion. The position change Δ ⁢ Θ Δ Θ \Delta\Theta roman_Δ roman_Θ is defined to be the offset angle between the on-sky positions of each trajectory. If the geocentric direction vector is 𝒏 GO subscript 𝒏 GO \boldsymbol{n}_{\rm GO} bold_italic_n start_POSTSUBSCRIPT roman_GO end_POSTSUBSCRIPT on a gravity-only trajectory and 𝒏 NG subscript 𝒏 NG \boldsymbol{n}_{\rm NG} bold_italic_n start_POSTSUBSCRIPT roman_NG end_POSTSUBSCRIPT on a nongravitationally-accelerating trajectory, then the difference in on-sky position is
+
+Δ ⁢ Θ = cos − 1 ⁡ ( 𝒏 0 ⋅ 𝒏 NG ) . Δ Θ superscript 1 ⋅ subscript 𝒏 0 subscript 𝒏 NG \Delta\Theta=\cos^{-1}\left(\boldsymbol{n}_{0}\cdot\boldsymbol{n}_{\rm NG}%
+\right)\,. roman_Δ roman_Θ = roman_cos start_POSTSUPERSCRIPT - 1 end_POSTSUPERSCRIPT ( bold_italic_n start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT ⋅ bold_italic_n start_POSTSUBSCRIPT roman_NG end_POSTSUBSCRIPT ) .
+
+(2)
+
+Larger values of the Δ ⁢ Θ Δ Θ \Delta\Theta roman_Δ roman_Θ parameter correspond to larger discrepancies between the predicted (gravity-only) and perturbed on-sky position of the object. This could lead to misidentification of objects across apparitions — a new observation may be categorized as a previously unidentified object rather than as an apparition of an already-known object.
+
+Figure 1: The change in the on-sky position (as seen from Earth) of 2003 RM (top) and 1998 KY 26 (bottom) as a function of time for the three nongravitational acceleration components. The magnitude of the nongravitational acceleration is set to | A i | = \qty e − 10 / 2 |A_{i}|=\qty{e-10}{/^{2}} | italic_A start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT | = italic_e - 10 / start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT and we show the radial A 1 subscript 𝐴 1 A_{1} italic_A start_POSTSUBSCRIPT 1 end_POSTSUBSCRIPT (red), transverse A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT (blue), and out-of-plane A 3 subscript 𝐴 3 A_{3} italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT components (purple). Since the ephemerides are linear in the nongravitational acceleration magnitude, stronger accelerations have the same functional form. The nongravitational accelerations are of the form given in Eq. ( 1 ), and the position change Δ ⁢ Θ Δ Θ \Delta\Theta roman_Δ roman_Θ between the perturbed and unperturbed orbits is calculated using Eq. ( 2 ).
+
+Figure 2: The median change in the on-sky position Δ ⁢ Θ Δ Θ \Delta\Theta roman_Δ roman_Θ after \qty 10yr of integration as a function of the transverse nongravitational acceleration magnitude A 2 , semimajor axis, and eccentricity. Each grid cell shows the median position change of all objects in a given bin. The white contour corresponds to Δ ⁢ Θ = 10 3 Δ Θ superscript 10 3 \Delta\Theta=10^{3} roman_Δ roman_Θ = 10 start_POSTSUPERSCRIPT 3 end_POSTSUPERSCRIPT arcsec.
+
+In Fig. 1 , we show the on-sky position change for all three nongravitational acceleration directions for 2003 RM and 1998 KY 26 . We only show the orbits for a nongravitational acceleration magnitude | A i | = \qty e − 10 / 2 |A_{i}|=\qty{e-10}{/^{2}} | italic_A start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT | = italic_e - 10 / start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT , but the small nongravitational acceleration magnitudes means that Δ ⁢ Θ Δ Θ \Delta\Theta roman_Δ roman_Θ is a linear function of acceleration magnitude (Farnocchia et al., 2015 ) . This is only the case if the nongravitational acceleration is small compared to the gravitational acceleration due to the Sun, which takes the form of A 1 = \qty − 3 e − 4 / 2 A_{1}=\qty{-3e-4}{/^{2}} italic_A start_POSTSUBSCRIPT 1 end_POSTSUBSCRIPT = - 3 italic_e - 4 / start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT at 1 au. In addition, if an object has a close encounter with a planet, then the ephemerides will no longer be linear. Due to the dynamically chaotic environment, position differences from nongravitational accelerations will lead to significant differences in the trajectories.
+
+It is evident that the nongravitational accelerations can drive significant changes in the on-sky position of both objects — Δ ⁢ Θ ≳ \qty ⁢ 10 ⁢ a ⁢ r ⁢ c ⁢ s ⁢ e ⁢ c greater-than-or-equivalent-to Δ Θ \qty 10 𝑎 𝑟 𝑐 𝑠 𝑒 𝑐 \Delta\Theta\gtrsim\qty{10}{arcsec} roman_Δ roman_Θ ≳ 10 italic_a italic_r italic_c italic_s italic_e italic_c — over timescales comparable to the orbital period and apparition timescale. Moreover, the transverse nongravitational acceleration A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT is far more efficient at modulating the sky position than the other component directions. This is consistent with expectations — A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT causes residuals to grow quadratically in time, A 1 subscript 𝐴 1 A_{1} italic_A start_POSTSUBSCRIPT 1 end_POSTSUBSCRIPT causes residuals to grow linearly in time, and A 3 subscript 𝐴 3 A_{3} italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT is not cumulative.
+
+Note that the on-sky position changes shown in Fig. 1 vary periodically in time in addition to the expected growth. The position change peaks during close approaches to Earth, since Δ ⁢ Θ ∝ d − 2 proportional-to Δ Θ superscript 𝑑 2 \Delta\Theta\propto d^{-2} roman_Δ roman_Θ ∝ italic_d start_POSTSUPERSCRIPT - 2 end_POSTSUPERSCRIPT , where d 𝑑 d italic_d is the distance between the observer and the object. The object is brightest and most likely to be observed during these close approaches. In addition, smaller objects are dimmer and are more likely to be observed only during close approaches, when the on-sky position changes are more significant.
+
+3 Synthetic Population
+
+In this section, we generalize the results from Sec. 2 to arbitrary orbits and accelerations. We repeat our ephemerides analysis on a synthetic population that spans the orbits of NEOs.
+
+This synthetic population consists of ⁢ 10 5 E5 {10}^{5} start_ARG end_ARG start_ARG ⁢ end_ARG start_ARG power start_ARG 10 end_ARG start_ARG 5 end_ARG end_ARG objects with orbital elements drawn from uniform distributions. Specifically, objects in the population are drawn with semimajor axis a ∈ [ 0.5 , 4.2 ) ⁢ \unit 𝑎 0.5 4.2 \unit a\in[0.5,4.2)\,\unit{} italic_a ∈ [ 0.5 , 4.2 ) , eccentricity e ∈ [ 0 , 1 ) 𝑒 0 1 e\in[0,1) italic_e ∈ [ 0 , 1 ) , inclination i ∈ [ 0 , 15 ) ⁢ \unit 𝑖 0 15 \unit i\in[0,15)\unit{} italic_i ∈ [ 0 , 15 ) , argument of perihelion ω ∈ [ 0 , 360 ) ⁢ \unit 𝜔 0 360 \unit \omega\in[0,360)\unit{} italic_ω ∈ [ 0 , 360 ) , longitude of ascending node Ω ∈ [ 0 , 360 ) ⁢ \unit Ω 0 360 \unit \Omega\in[0,360)\unit{} roman_Ω ∈ [ 0 , 360 ) , and true anomaly at epoch f 0 ∈ [ 0 , 360 ) ⁢ \unit subscript 𝑓 0 0 360 \unit f_{0}\in[0,360)\unit{} italic_f start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT ∈ [ 0 , 360 ) . We then add nongravitational accelerations to each object and calculate the change in on-sky position relative to gravity-only orbits. We consider each of the nongravitational acceleration directions and with magnitudes logarithmic-uniformly sampled from | A i | ∈ [ ⁢ 10 − 12 , ⁢ 10 − 7 ] \unit / 2 |A_{i}|\in[${10}^{-12}$,${10}^{-7}$]\,\unit{/^{2}} | italic_A start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT | ∈ [ start_ARG end_ARG start_ARG ⁢ end_ARG start_ARG power start_ARG 10 end_ARG start_ARG - 12 end_ARG end_ARG , start_ARG end_ARG start_ARG ⁢ end_ARG start_ARG power start_ARG 10 end_ARG start_ARG - 7 end_ARG end_ARG ] / start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT . After integrating for 1 and 10 \unit yr, we calculate the on-sky position changes.
+
+In Fig. 2 , we show the median position changes after \qty 10yr of integration time under a transverse nongravitational acceleration versus semimajor axis and eccentricity. This component is shown because it produces the largest on-sky position changes (see Sec. 2 ). Analogous calculations for (i) the radial and out-of-plane directions and (ii) shorter integration times are shown in Figs. 6 – 10 . While A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT generates the largest position change, it is evident from Figs. 6 – 10 that radial and out-of-plane accelerations can also drive significant position changes in some cases, even over shorter \qty 1yr timescales.
+
+Figure 3: The fraction of NEOs that would exhibit a given change in sky position (or larger) over an approximate apparition period as a function of nongravitational acceleration magnitude and direction. The ephemerides are calculated for | A i | = \qty e − 10 / 2 |A_{i}|=\qty{e-10}{/^{2}} | italic_A start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT | = italic_e - 10 / start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT and linearly scaled for other nongravitational acceleration magnitudes.
+
+4 Application to NEO Population
+
+In this section, we perform the same calculation as in Secs. 2 and 3 for all currently-known NEOs. For each NEO in the JPL Small-Body Database 3 3 3 https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html , we calculate the on-sky position change for a general nongravitational acceleration. Each NEO is given a nongravitational acceleration with a magnitude of | A i | = \qty e − 10 / 2 |A_{i}|=\qty{e-10}{/^{2}} | italic_A start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT | = italic_e - 10 / start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT in each component direction. Each object is initialized at its orbital position when it was first discovered, and then integrated for an approximate apparition period. The apparition period is assumed to be approximately the larger of (i) the object’s orbital period or (ii) the maximum gap between subsequent observations. The observational times are obtained from the MPC Small Bodies Database. 4 4 4 https://www.minorplanetcenter.net/data
+
+After a single apparition period, we calculate the distance between the object’s on-sky position with and without nongravitational accelerations. For a set nongravitational acceleration magnitude and direction, we calculate the fraction of all NEOS with corresponding on-sky position changes greater than a specified cutoff after an apparition. Although the integration is only performed for a single nongravitational acceleration magnitude, we scale the ephemerides by the nongravitational acceleration magnitude, since we assume that the ephemerides are linear (Sec. 2 ). We show these fractions in Fig. 3 .
+
+Relatively weak nongravitational accelerations ( | A 2 | ∼ \qty e − 9 / 2 |A_{2}|\sim\qty{e-9}{/^{2}} | italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT | ∼ italic_e - 9 / start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT ) can produce degree-scale on-sky position changes in ≳ 1 % greater-than-or-equivalent-to absent percent 1 \gtrsim 1\% ≳ 1 % of NEOs (Fig. 3 ). This result should not be interpreted to mean that nongravitational accelerations exist on the calculated fraction of NEOs. Instead, these calculations are intended to suggest that NEOs with sufficiently strong nongravitational accelerations may have large changes in on-sky position.
+
+Table 1: Linkage Fraction. The fraction of synthetic tracklets (relative to gravity-only tracklets) that are successfully linked by the MPC linkage algorithm for a given nongravitational acceleration magnitude and direction.
+
+| A i | subscript 𝐴 𝑖 |A_{i}| | italic_A start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT | [ \unit /^2]
+Radial
+Transverse
+Normal
+
+10 − 12 superscript 10 12 10^{-12} 10 start_POSTSUPERSCRIPT - 12 end_POSTSUPERSCRIPT
+0.9974
+0.9947
+1.0
+
+10 − 11 superscript 10 11 10^{-11} 10 start_POSTSUPERSCRIPT - 11 end_POSTSUPERSCRIPT
+0.9974
+0.9921
+1.0026
+
+10 − 10 superscript 10 10 10^{-10} 10 start_POSTSUPERSCRIPT - 10 end_POSTSUPERSCRIPT
+0.9921
+0.9815
+0.9974
+
+10 − 9 superscript 10 9 10^{-9} 10 start_POSTSUPERSCRIPT - 9 end_POSTSUPERSCRIPT
+0.9868
+0.9288
+1.0106
+
+10 − 8 superscript 10 8 10^{-8} 10 start_POSTSUPERSCRIPT - 8 end_POSTSUPERSCRIPT
+0.9525
+0.3826
+0.9736
+
+10 − 7 superscript 10 7 10^{-7} 10 start_POSTSUPERSCRIPT - 7 end_POSTSUPERSCRIPT
+0.7467
+0.0106
+0.2876
+
+5 MPC Linking Algorithm Fidelity
+
+In this section, we present a preliminary proof-of-concept assessment of the fidelity of the MPC linking algorithm for NEOs with significant nongravitational accelerations. While the MPC also relies on user-reported linkages, the algorithms used by observers are varied and not publicly available. As a result, we only assess the fidelity of the MPC’s internal orbit fitting and linkage pipeline. A detailed assessment of linking algorithm capabilities — considering a comprehensive variety of nongravitational accelerations, orbits, apparition spacing, and observation spacing — is warranted but is outside of the scope of this paper.
+
+The algorithm to link observations across apparitions has two principle components — attribution and identification. In the attribution process, novel astrometric observations are directly attributed to previously-known orbits. If the attribution process fails, it is still possible to link apparitions through the identification process. Once sufficient observations are made in the new apparition, a second orbit can be calculated and identified as an extension of a known orbit. We consider both of these processes independently, but note that both are used to link objects.
+
+5.1 Orbit Attribution
+
+The internal MPC attribution algorithm has two components — checkid and s9m . The checkid algorithm takes the orbits of currently-known objects and performs a simple Keplerian advance to the date of the new data. It then calculates (i) the offset of the data from the predicted on-sky position and (ii) the change in the mean anomaly required to correct this offset. The s9m algorithm first reduces a given tracklet to the first and last observations contained within it. The position of the reduced tracklet is then compared to the predicted positions of the orbits of all previously identified objects. In contrast to checkid , the s9m algorithm propagates the fully perturbed orbits to the tracklet observations, although nongravitational accelerations are not included. An object with a planetary close encounter between apparitions would be linked by s9m , but not checkid . A linkage is made if (i) a previously identified orbit is within the search radius of 2 arcsec and (ii) the on-sky velocity vectors of both objects are aligned.
+
+We assess the linkage fidelity of both of these algorithms for objects with a range of nongravitational acceleration magnitudes and directions. The sample contains 1000 1000 1000 1000 currently-known NEOs that have multiple apparitions separated by less than \qty 15yr. 5 5 5 The second criteria is imposed for the sake of computational efficiency. For each object, we generate synthetic observations across an apparition, which is assumed to be the maximum separation between observations in current data. We first generate a short data arc, which consists of 2 observations separated by \qty 1 on the 1st, 6th and 12th nights (6 total). The position of the object at the first observation time is obtained from the JPL Solar Systems Dynamics’ Horizons System 6 6 6 https://ssd.jpl.nasa.gov/horizons/ . The positions at all other times are generated by numerical integration with ASSIST . We generate a tracklet at the subsequent apparition, which consists of 2 observations separated by \qty 1 for 2 nights, for a total of 4 observations. While such evenly-spaced observations are unrealistic, the observation spacing is kept constant for all objects. Therefore, the (generally dominant; Milani & Gronchi 2010 ) errors from observation spacing are roughly constant for the different trajectories.
+
+For each NEO, we generate tracklets with (i) a gravity-only orbit and (ii) logarithmically-spaced nongravitational accelerations in each component direction and magnitudes ranging from \qty e-12/^2 to \qty e-7/^2 (19 total tracklets for each object). Each synthetic observation accounts for the light travel time and reports the geocentric right ascension, declination, and apparent magnitude. Object apparent magnitudes are computed following the magnitude law for asteroids 7 7 7 Minor Planet Circular 10193 (not shown) with the absolute magnitude H 𝐻 H italic_H given by the JPL Small-Body Database and slope G = 0.15 𝐺 0.15 G=0.15 italic_G = 0.15 , typical for asteroids.
+
+We assess the fidelity with which the current MPC pipeline can link these synthetic tracklets to prior short-arc observations as a function of magnitude and direction of nongravitational acceleration. Due to the relatively sparse synthetic data, only N GO = 379 subscript 𝑁 GO 379 N_{\rm GO}=$379$ italic_N start_POSTSUBSCRIPT roman_GO end_POSTSUBSCRIPT = 379 of the 1000 1000 1000 1000 gravity-only tracklets are successfully linked to their original objects by either checkid or s9m . We calculate the number of tracklets N NG subscript 𝑁 NG N_{\rm NG} italic_N start_POSTSUBSCRIPT roman_NG end_POSTSUBSCRIPT that are successfully linked to prior short-arc data for each nongravitational acceleration magnitude and direction. In Table 1 , we report N NG / N GO subscript 𝑁 NG subscript 𝑁 GO N_{\rm NG}/N_{\rm GO} italic_N start_POSTSUBSCRIPT roman_NG end_POSTSUBSCRIPT / italic_N start_POSTSUBSCRIPT roman_GO end_POSTSUBSCRIPT , the fraction of nongravitationally-accelerating tracklets that are successfully linked across apparitions, relative to gravity-only trajectories.
+
+The linkage fraction is greater than 1 for some out-of-plane nongravitational accelerations. This occurs because fitting an orbit to a tracklet is a slightly random process that depends on the precise on-sky position. At low acceleration magnitudes, out-of-plane nongravitational accelerations produce small changes in the on-sky position of a tracklet. These variations are not sufficient to cause a linkage failure but will induce small random variations in the orbit fitting to the tracklet. A few objects whose gravity-only tracklets failed orbit fits will be successfully fit and linked once nongravitational accelerations are included, leading to fractions that are slightly greater than 1. This does not indicate that nongravitational accelerations improve the linkage process, but that the linkage process is inherently stochastic.
+
+Successful linkage fractions significantly decrease in the presence of nongravitational accelerations with magnitudes larger than those identified for dark comets ( ≳ \qty e − 9 / 2 \gtrsim\qty{e-9}{/^{2}} ≳ italic_e - 9 / start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT ). Transverse nongravitational accelerations cause the sharpest decline in linkage fraction, and only ∼ 90 % similar-to absent percent 90 \sim 90\% ∼ 90 % of tracklets with a transverse acceleration magnitude of A 2 ∼ \qty e − 9 / 2 A_{2}\sim\qty{e-9}{/^{2}} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT ∼ italic_e - 9 / start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT are successfully linked. At a nongravitational acceleration magnitude of A 2 ∼ \qty e − 7 / 2 A_{2}\sim\qty{e-7}{/^{2}} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT ∼ italic_e - 7 / start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT , the linked fraction drops to ∼ 1 % similar-to absent percent 1 \sim 1\% ∼ 1 % .
+
+While there is no known mechanism to produce such large transverse nongravitational accelerations (besides cometary outgassing), these results show that objects with these accelerations would be difficult to link and detect. However, radial nongravitational accelerations of this magnitude are known to exist and cause linkage failures in ∼ 25 % similar-to absent percent 25 \sim 25\% ∼ 25 % of the considered objects. Therefore, it is possible that hypothetical NEOs with large nongravitational accelerations would not be correctly attributed across apparitions.
+
+5.2 Orbit Identification
+
+It is still possible to link apparitions via orbit identification if attribution fails. If a sufficient number of observations are obtained during a new apparition, an independent orbit can be computed. These newly computed orbital elements are then compared to previously known orbits. If the two sets of orbital elements are within 3 ⁢ σ 3 𝜎 3\sigma 3 italic_σ of each other, then the apparitions are linked. In this subsection, we test the fidelity of this process in the presence of nongravitational accelerations. Specifically, we test if nongravitational accelerations can cause a previously-successful linkage to fail.
+
+We construct a sample of 214 NEOs that were successfully recovered across multiple apparitions from the MPC dataset. For each object, we identify the first apparition and record the times of each subsequent observation. We then calculate synthetic trajectories with a range of nongravitational accelerations and record the geocentric right ascension and declination at each observation time. Orbits are then individually determined for both the first and second apparition and the two sets of orbital elements are compared. The two apparitions are considered successfully linked if the two sets of orbital elements are separated by < 3 ⁢ σ absent 3 𝜎 <3\sigma < 3 italic_σ .
+
+The fraction of orbits that are successfully linked (generally ∼ 80 % similar-to absent percent 80 \sim 80\% ∼ 80 % ) is independent of the magnitude of the nongravitational acceleration, so nongravitational accelerations do not induce a linkage failure. However, nongravitational accelerations cause issues in the orbit identification process. For sufficiently large nongravitational accelerations (generally A ∼ \qty e − 6 / 2 A\sim\qty{e-6}{/^{2}} italic_A ∼ italic_e - 6 / start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT ), the initial orbit determination will consistently fail, especially for long-arc data. This will prevent accurate linkage, since short-arc data will still be consistent with a gravity-only orbit.
+
+Moreover, the perturbations from nongravitational accelerations within each apparition tend to increase the uncertainty in the orbital elements calculated. In fact, the uncertainties for nongravitationally-accelerating orbits can be larger than the uncertainties for a gravity-only orbit by an order of magnitude or more. Since the orbit identification process uses a 3 ⁢ σ 3 𝜎 3\sigma 3 italic_σ criteria, these large uncertainties increase the probability of a correct linkage. However, in this test we only compare the apparitions of already-linked known objects, and ignore extraneous linkages to alternate objects. In a realistic scenario, an orbit fit to a new apparition will be compared to all previously identified orbits. In this case, the larger uncertainties make it more likely that more than one previously-known object will be linked to the new apparition, confusing the identification.
+
+Even once a multiple linkage occurs, more observations will continue to refine the orbital parameter estimates. As the uncertainty shrinks, possible linkages will be pruned away until only one remains. However, the nongravitational accelerations will have modified the orbital parameters between apparitions. If the uncertainties shrink quickly, then it is possible that a multiply-linked object will become unlinked and registered as new object. This is likely what occurred for 2010 VL 65 . While false linkages to a large number of objects are possible, objects with the large nongravitational accelerations necessary to produce this effect will be rare and are unlikely to dramatically affect the NEO census.
+
+6 Search for Unlinked NEOs
+
+In this section, we search for unlinked pairs within the current census of NEOs. We consider the (i) orbital angular momentum, (ii) orbital elements, and (iii) novel constants of motion (derived in Sec. 6.1 ) as metrics to link pairs of NEOs. While these metrics do not identify any unlinked pairs in the current NEO population, they may be useful for linking objects with nongravitational accelerations in future observations or between isolated tracklets.
+
+6.1 Constants of Motion Under the Action of Nongravitational Accelerations
+
+In this subsection, we derive quantities that are conserved under the action of nongravitational acceleration for a two-body system. These quantities provide a potentially useful metric for identifying unlinked pairs in the NEO population.
+
+Consider an orbit characterized by the Keplerian orbital element set 𝒙 = [ a , e , i , Ω , ω , M 0 ] 𝒙 𝑎 𝑒 𝑖 Ω 𝜔 subscript 𝑀 0 \boldsymbol{x}=[a,e,i,\Omega,\omega,M_{0}] bold_italic_x = [ italic_a , italic_e , italic_i , roman_Ω , italic_ω , italic_M start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT ] . Under the action of nongravitational accelerations, these will have an orbit-averaged rate of change 𝒙 ˙ ˙ 𝒙 \dot{\boldsymbol{x}} over˙ start_ARG bold_italic_x end_ARG . We wish to find a scalar function F ⁢ ( 𝒙 ) 𝐹 𝒙 F(\boldsymbol{x}) italic_F ( bold_italic_x ) that is constant over the trajectories defined by 𝒙 ˙ ˙ 𝒙 \dot{\boldsymbol{x}} over˙ start_ARG bold_italic_x end_ARG . Equivalently, the trajectories must be isosurfaces of F 𝐹 F italic_F , or 𝒙 ˙ ⋅ ∇ F = 0 ⋅ ˙ 𝒙 ∇ 𝐹 0 \dot{\boldsymbol{x}}\cdot\nabla F=0 over˙ start_ARG bold_italic_x end_ARG ⋅ ∇ italic_F = 0 .
+
+The rate of change of this phase-space position is given by
+
+𝒙 ˙ = h ⁢ r 0 2 μ ⁢ a 2 ⁢ η ⁢ [ 2 ⁢ A 2 ⁢ a / η 2 A 2 ⁢ ( 1 − η ) / e − A 3 ⁢ cos ⁡ ω ⁢ ( 1 − η ) / ( e ⁢ η ) − A 3 ⁢ csc ⁡ i ⁢ sin ⁡ ω ⁢ ( 1 − η ) / ( e ⁢ η ) A 3 ⁢ cot ⁡ i ⁢ sin ⁡ ω ⁢ ( 1 − η ) / ( e ⁢ η ) − 2 ⁢ A 1 . ] . ˙ 𝒙 ℎ superscript subscript 𝑟 0 2 𝜇 superscript 𝑎 2 𝜂 matrix 2 subscript 𝐴 2 𝑎 superscript 𝜂 2 subscript 𝐴 2 1 𝜂 𝑒 subscript 𝐴 3 𝜔 1 𝜂 𝑒 𝜂 subscript 𝐴 3 𝑖 𝜔 1 𝜂 𝑒 𝜂 subscript 𝐴 3 𝑖 𝜔 1 𝜂 𝑒 𝜂 2 subscript 𝐴 1 \dot{\boldsymbol{x}}=\frac{hr_{0}^{2}}{\mu a^{2}\eta}\begin{bmatrix}2A_{2}a/%
+\eta^{2}\\
+A_{2}(1-\eta)/e\\
+-A_{3}\cos\omega(1-\eta)/(e\eta)\\
+-A_{3}\csc i\sin\omega(1-\eta)/(e\eta)\\
+A_{3}\cot i\sin\omega(1-\eta)/(e\eta)\\
+-2A_{1}\,.\end{bmatrix}\,. over˙ start_ARG bold_italic_x end_ARG = divide start_ARG italic_h italic_r start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT end_ARG start_ARG italic_μ italic_a start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT italic_η end_ARG [ start_ARG start_ROW start_CELL 2 italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT italic_a / italic_η start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT end_CELL end_ROW start_ROW start_CELL italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT ( 1 - italic_η ) / italic_e end_CELL end_ROW start_ROW start_CELL - italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT roman_cos italic_ω ( 1 - italic_η ) / ( italic_e italic_η ) end_CELL end_ROW start_ROW start_CELL - italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT roman_csc italic_i roman_sin italic_ω ( 1 - italic_η ) / ( italic_e italic_η ) end_CELL end_ROW start_ROW start_CELL italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT roman_cot italic_i roman_sin italic_ω ( 1 - italic_η ) / ( italic_e italic_η ) end_CELL end_ROW start_ROW start_CELL - 2 italic_A start_POSTSUBSCRIPT 1 end_POSTSUBSCRIPT . end_CELL end_ROW end_ARG ] .
+
+(3)
+
+The quantity η 𝜂 \eta italic_η is defined to be η = 1 − e 2 𝜂 1 superscript 𝑒 2 \eta=\sqrt{1-e^{2}} italic_η = square-root start_ARG 1 - italic_e start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT end_ARG . Eq. ( 3 ) is derived by averaging the Gauss planetary equations (Murray & Dermott, 2000 ) over a single orbital period, assuming that the parameters do not change significantly over the period, or equivalently that the nongravitational acceleration magnitude is small. We additionally assume that the radial dependence of the nongravitational acceleration g ⁢ ( r ) ∝ r − 2 proportional-to 𝑔 𝑟 superscript 𝑟 2 g(r)\propto r^{-2} italic_g ( italic_r ) ∝ italic_r start_POSTSUPERSCRIPT - 2 end_POSTSUPERSCRIPT , although analogous equations can be derived for a generic radial dependence. A derivation of these equations can be found in Appendix A.3 of Taylor et al. ( 2024a ) .
+
+Our requirement that 𝒙 ˙ ⋅ ∇ F = 0 ⋅ ˙ 𝒙 ∇ 𝐹 0 \dot{\boldsymbol{x}}\cdot\nabla F=0 over˙ start_ARG bold_italic_x end_ARG ⋅ ∇ italic_F = 0 becomes
+
+0 = 2 ⁢ a η 2 ⁢ A 2 ⁢ ∂ F ∂ a + 1 − η e ⁢ A 2 ⁢ ∂ F ∂ e − 1 − η e ⁢ η ⁢ cos ⁡ ω ⁢ A 3 ⁢ ∂ F ∂ i − 1 − η e ⁢ η ⁢ sin ⁡ ω sin ⁡ i ⁢ A 3 ⁢ ∂ F ∂ Ω + 1 − η e ⁢ η ⁢ cot ⁡ i ⁢ sin ⁡ ω ⁢ A 3 ⁢ ∂ F ∂ ω − 2 ⁢ A 1 ⁢ ∂ F ∂ M 0 . 0 2 𝑎 superscript 𝜂 2 subscript 𝐴 2 𝐹 𝑎 1 𝜂 𝑒 subscript 𝐴 2 𝐹 𝑒 1 𝜂 𝑒 𝜂 𝜔 subscript 𝐴 3 𝐹 𝑖 1 𝜂 𝑒 𝜂 𝜔 𝑖 subscript 𝐴 3 𝐹 Ω 1 𝜂 𝑒 𝜂 𝑖 𝜔 subscript 𝐴 3 𝐹 𝜔 2 subscript 𝐴 1 𝐹 subscript 𝑀 0 \begin{split}0=&\frac{2a}{\eta^{2}}A_{2}\frac{\partial F}{\partial a}+\frac{1-%
+\eta}{e}A_{2}\frac{\partial F}{\partial e}\\
+&-\frac{1-\eta}{e\eta}\cos\omega A_{3}\frac{\partial F}{\partial i}-\frac{1-%
+\eta}{e\eta}\frac{\sin\omega}{\sin i}A_{3}\frac{\partial F}{\partial\Omega}\\
+&+\frac{1-\eta}{e\eta}\cot i\sin\omega A_{3}\frac{\partial F}{\partial\omega}-%
+2A_{1}\frac{\partial F}{\partial M_{0}}\,.\end{split} start_ROW start_CELL 0 = end_CELL start_CELL divide start_ARG 2 italic_a end_ARG start_ARG italic_η start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT end_ARG italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT divide start_ARG ∂ italic_F end_ARG start_ARG ∂ italic_a end_ARG + divide start_ARG 1 - italic_η end_ARG start_ARG italic_e end_ARG italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT divide start_ARG ∂ italic_F end_ARG start_ARG ∂ italic_e end_ARG end_CELL end_ROW start_ROW start_CELL end_CELL start_CELL - divide start_ARG 1 - italic_η end_ARG start_ARG italic_e italic_η end_ARG roman_cos italic_ω italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT divide start_ARG ∂ italic_F end_ARG start_ARG ∂ italic_i end_ARG - divide start_ARG 1 - italic_η end_ARG start_ARG italic_e italic_η end_ARG divide start_ARG roman_sin italic_ω end_ARG start_ARG roman_sin italic_i end_ARG italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT divide start_ARG ∂ italic_F end_ARG start_ARG ∂ roman_Ω end_ARG end_CELL end_ROW start_ROW start_CELL end_CELL start_CELL + divide start_ARG 1 - italic_η end_ARG start_ARG italic_e italic_η end_ARG roman_cot italic_i roman_sin italic_ω italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT divide start_ARG ∂ italic_F end_ARG start_ARG ∂ italic_ω end_ARG - 2 italic_A start_POSTSUBSCRIPT 1 end_POSTSUBSCRIPT divide start_ARG ∂ italic_F end_ARG start_ARG ∂ italic_M start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT end_ARG . end_CELL end_ROW
+
+(4)
+
+We require that Eq. 4 is satisfied for any orbital parameters and that F 𝐹 F italic_F does not depend on A 1 subscript 𝐴 1 A_{1} italic_A start_POSTSUBSCRIPT 1 end_POSTSUBSCRIPT , A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT , or A 3 subscript 𝐴 3 A_{3} italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT . In order to ensure that Eq. ( 4 ) holds for all values of A i subscript 𝐴 𝑖 A_{i} italic_A start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT , we can divide F 𝐹 F italic_F into several functions U 𝑈 U italic_U , V 𝑉 V italic_V , and W 𝑊 W italic_W such that
+
+0 = 0 absent \displaystyle 0= 0 =
+2 ⁢ a η 2 ⁢ A 2 ⁢ ∂ U ∂ a + 1 − η e ⁢ A 2 ⁢ ∂ U ∂ e , 2 𝑎 superscript 𝜂 2 subscript 𝐴 2 𝑈 𝑎 1 𝜂 𝑒 subscript 𝐴 2 𝑈 𝑒 \displaystyle\frac{2a}{\eta^{2}}A_{2}\frac{\partial U}{\partial a}+\frac{1-%
+\eta}{e}A_{2}\frac{\partial U}{\partial e}\,, divide start_ARG 2 italic_a end_ARG start_ARG italic_η start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT end_ARG italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT divide start_ARG ∂ italic_U end_ARG start_ARG ∂ italic_a end_ARG + divide start_ARG 1 - italic_η end_ARG start_ARG italic_e end_ARG italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT divide start_ARG ∂ italic_U end_ARG start_ARG ∂ italic_e end_ARG ,
+
+(5a)
+
+0 = − 1 − η e ⁢ η 2 ⁢ cos ⁡ ω ⁢ A 3 ⁢ ∂ V ∂ i − 1 − η e ⁢ η ⁢ sin ⁡ ω sin ⁡ i ⁢ A 3 ⁢ ∂ V ∂ Ω + 1 − η e ⁢ η ⁢ cot ⁡ i ⁢ sin ⁡ ω ⁢ A 3 ⁢ ∂ V ∂ ω ⁢ , and 0 1 𝜂 𝑒 superscript 𝜂 2 𝜔 subscript 𝐴 3 𝑉 𝑖 1 𝜂 𝑒 𝜂 𝜔 𝑖 subscript 𝐴 3 𝑉 Ω 1 𝜂 𝑒 𝜂 𝑖 𝜔 subscript 𝐴 3 𝑉 𝜔 , and \displaystyle\begin{split}0=&-\frac{1-\eta}{e\eta^{2}}\cos\omega A_{3}\frac{%
+\partial V}{\partial i}-\frac{1-\eta}{e\eta}\frac{\sin\omega}{\sin i}A_{3}%
+\frac{\partial V}{\partial\Omega}\\
+&+\frac{1-\eta}{e\eta}\cot i\sin\omega A_{3}\frac{\partial V}{\partial\omega}%
+\,\text{, and}\end{split} start_ROW start_CELL 0 = end_CELL start_CELL - divide start_ARG 1 - italic_η end_ARG start_ARG italic_e italic_η start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT end_ARG roman_cos italic_ω italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT divide start_ARG ∂ italic_V end_ARG start_ARG ∂ italic_i end_ARG - divide start_ARG 1 - italic_η end_ARG start_ARG italic_e italic_η end_ARG divide start_ARG roman_sin italic_ω end_ARG start_ARG roman_sin italic_i end_ARG italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT divide start_ARG ∂ italic_V end_ARG start_ARG ∂ roman_Ω end_ARG end_CELL end_ROW start_ROW start_CELL end_CELL start_CELL + divide start_ARG 1 - italic_η end_ARG start_ARG italic_e italic_η end_ARG roman_cot italic_i roman_sin italic_ω italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT divide start_ARG ∂ italic_V end_ARG start_ARG ∂ italic_ω end_ARG , and end_CELL end_ROW
+
+(5b)
+
+0 = 0 absent \displaystyle 0= 0 =
+− 2 ⁢ A 1 ⁢ ∂ W ∂ M 0 . 2 subscript 𝐴 1 𝑊 subscript 𝑀 0 \displaystyle-2A_{1}\frac{\partial W}{\partial M_{0}}\,. - 2 italic_A start_POSTSUBSCRIPT 1 end_POSTSUBSCRIPT divide start_ARG ∂ italic_W end_ARG start_ARG ∂ italic_M start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT end_ARG .
+
+(5c)
+
+We will solve each in turn.
+
+Eq. ( 5a ) can be solved by separation of variables to find that
+
+U ⁢ ( a , e ) = ln ⁡ [ ( η − 1 ) 2 a ⁢ η 2 ] . 𝑈 𝑎 𝑒 superscript 𝜂 1 2 𝑎 superscript 𝜂 2 U(a,e)=\ln\left[\frac{(\eta-1)^{2}}{a\eta^{2}}\right]\,. italic_U ( italic_a , italic_e ) = roman_ln [ divide start_ARG ( italic_η - 1 ) start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT end_ARG start_ARG italic_a italic_η start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT end_ARG ] .
+
+(6)
+
+Note that any arbitrary differentiable function 𝐜 1 ⁢ ( U ) subscript 𝐜 1 𝑈 \mathbf{c}_{1}(U) bold_c start_POSTSUBSCRIPT 1 end_POSTSUBSCRIPT ( italic_U ) is also a constant of motion.
+
+Dividing Eq. ( 5b ) by ( 1 − η ) ⁢ A 3 / ( e ⁢ η 2 ) 1 𝜂 subscript 𝐴 3 𝑒 superscript 𝜂 2 (1-\eta)A_{3}/(e\eta^{2}) ( 1 - italic_η ) italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT / ( italic_e italic_η start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT ) , we are left with the equation
+
+0 = cos ⁡ ω ⁢ ∂ V ∂ i + sin ⁡ ω ⁢ csc ⁡ i ⁢ ∂ V ∂ Ω − cot ⁡ i ⁢ sin ⁡ ω ⁢ ∂ V ∂ ω . 0 𝜔 𝑉 𝑖 𝜔 𝑖 𝑉 Ω 𝑖 𝜔 𝑉 𝜔 0=\cos\omega\frac{\partial V}{\partial i}+\sin\omega\csc i\frac{\partial V}{%
+\partial\Omega}-\cot i\sin\omega\frac{\partial V}{\partial\omega}\,. 0 = roman_cos italic_ω divide start_ARG ∂ italic_V end_ARG start_ARG ∂ italic_i end_ARG + roman_sin italic_ω roman_csc italic_i divide start_ARG ∂ italic_V end_ARG start_ARG ∂ roman_Ω end_ARG - roman_cot italic_i roman_sin italic_ω divide start_ARG ∂ italic_V end_ARG start_ARG ∂ italic_ω end_ARG .
+
+(7)
+
+This equation is not immediately separable. However, none of the terms depend on Ω Ω \Omega roman_Ω . As a result, we separate V ⁢ ( i , Ω , ω ) = G ⁢ ( i , ω ) ⁢ K ⁢ ( Ω ) 𝑉 𝑖 Ω 𝜔 𝐺 𝑖 𝜔 𝐾 Ω V(i,\Omega,\omega)=G(i,\omega)K(\Omega) italic_V ( italic_i , roman_Ω , italic_ω ) = italic_G ( italic_i , italic_ω ) italic_K ( roman_Ω ) . For a constant λ 𝜆 \lambda italic_λ , we find that
+
+K ⁢ ( Ω ) = 𝐾 Ω absent \displaystyle K(\Omega)= italic_K ( roman_Ω ) =
+exp ⁡ ( − λ ⁢ Ω ) 𝜆 Ω \displaystyle\exp(-\lambda\Omega)\, roman_exp ( - italic_λ roman_Ω )
+
+(8a)
+
+λ ⁢ G ⁢ ( i , ω ) = 𝜆 𝐺 𝑖 𝜔 absent \displaystyle\lambda G(i,\omega)= italic_λ italic_G ( italic_i , italic_ω ) =
+sin ⁡ i ⁢ cot ⁡ ω ⁢ ∂ G ∂ i − cos ⁡ i ⁢ ∂ G ∂ ω . 𝑖 𝜔 𝐺 𝑖 𝑖 𝐺 𝜔 \displaystyle\sin i\cot\omega\frac{\partial G}{\partial i}-\cos i\frac{%
+\partial G}{\partial\omega}\,. roman_sin italic_i roman_cot italic_ω divide start_ARG ∂ italic_G end_ARG start_ARG ∂ italic_i end_ARG - roman_cos italic_i divide start_ARG ∂ italic_G end_ARG start_ARG ∂ italic_ω end_ARG .
+
+(8b)
+
+Eq. ( 8b ) can further be solved to find that
+
+G ⁢ ( i , ω ) = 𝐜 2 ⁢ ( 2 ⁢ sin ⁡ i ⁢ sin ⁡ ω ) × exp ⁡ ( − λ ⁢ arctan ⁡ ( cos ⁡ i ⁢ tan ⁡ ω ) ) , 𝐺 𝑖 𝜔 subscript 𝐜 2 2 𝑖 𝜔 𝜆 𝑖 𝜔 \begin{split}G(i,\omega)=&\mathbf{c}_{2}(2\sin i\sin\omega)\\
+\times&\exp(-\lambda\arctan(\cos i\tan\omega))\,,\end{split} start_ROW start_CELL italic_G ( italic_i , italic_ω ) = end_CELL start_CELL bold_c start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT ( 2 roman_sin italic_i roman_sin italic_ω ) end_CELL end_ROW start_ROW start_CELL × end_CELL start_CELL roman_exp ( - italic_λ roman_arctan ( roman_cos italic_i roman_tan italic_ω ) ) , end_CELL end_ROW
+
+(9)
+
+where 𝐜 2 subscript 𝐜 2 \mathbf{c}_{2} bold_c start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT is an arbitrary differentiable function. We select 𝐜 2 ⁢ ( x ) = exp ⁡ ( x ) subscript 𝐜 2 𝑥 𝑥 \mathbf{c}_{2}(x)=\exp(x) bold_c start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT ( italic_x ) = roman_exp ( italic_x ) , set λ = − 1 𝜆 1 \lambda=-1 italic_λ = - 1 , and note that V ⁢ ( i , Ω , ω ) = 𝐜 3 ⁢ ( K ⁢ ( Ω ) ⁢ G ⁢ ( i , ω ) ) 𝑉 𝑖 Ω 𝜔 subscript 𝐜 3 𝐾 Ω 𝐺 𝑖 𝜔 V(i,\Omega,\omega)=\mathbf{c}_{3}(K(\Omega)G(i,\omega)) italic_V ( italic_i , roman_Ω , italic_ω ) = bold_c start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT ( italic_K ( roman_Ω ) italic_G ( italic_i , italic_ω ) ) . Taking 𝐜 3 ⁢ ( x ) = ln ⁡ ( x ) subscript 𝐜 3 𝑥 𝑥 \mathbf{c}_{3}(x)=\ln(x) bold_c start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT ( italic_x ) = roman_ln ( italic_x ) , we find that
+
+V ⁢ ( i , Ω , ω ) = 2 ⁢ sin ⁡ i ⁢ sin ⁡ ω + arctan ⁡ ( cos ⁡ i ⁢ tan ⁡ ω ) + Ω . 𝑉 𝑖 Ω 𝜔 2 𝑖 𝜔 𝑖 𝜔 Ω V(i,\Omega,\omega)=2\sin i\sin\omega+\arctan(\cos i\tan\omega)+\Omega\,. italic_V ( italic_i , roman_Ω , italic_ω ) = 2 roman_sin italic_i roman_sin italic_ω + roman_arctan ( roman_cos italic_i roman_tan italic_ω ) + roman_Ω .
+
+(10)
+
+The motion of a given object in orbital parameter space is constrained to follow isosurfaces of Eqs. ( 6 ) and ( 10 ). Isosurfaces of the U 𝑈 U italic_U parameter are 1-dimensional curves that will be followed precisely. However, isosurfaces of the V 𝑉 V italic_V parameter are 2-dimensional manifolds, so the phase-space trajectory is not immediately given.
+
+The solution to Eq. ( 5c ) is trivial — W ⁢ ( M 0 ) = c 𝑊 subscript 𝑀 0 𝑐 W(M_{0})=c italic_W ( italic_M start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT ) = italic_c , where c 𝑐 c italic_c is a constant. This implies that no constant of motion can be constructed that depends on the mean anomaly at epoch M 0 subscript 𝑀 0 M_{0} italic_M start_POSTSUBSCRIPT 0 end_POSTSUBSCRIPT .
+
+It is hypothetically possible to define another (linearly independent) scalar function Q ⁢ ( i , Ω , ω ) 𝑄 𝑖 Ω 𝜔 Q(i,\Omega,\omega) italic_Q ( italic_i , roman_Ω , italic_ω ) that is also a constant under nongravitational accelerations, which would provide the trajectory. However, if such a function exists, it must be the case that 𝒙 ˙ ⋅ ∇ Q = 0 ⋅ ˙ 𝒙 ∇ 𝑄 0 \dot{\boldsymbol{x}}\cdot\nabla Q=0 over˙ start_ARG bold_italic_x end_ARG ⋅ ∇ italic_Q = 0 . Since ∇ V ∇ 𝑉 \nabla V ∇ italic_V and ∇ Q ∇ 𝑄 \nabla Q ∇ italic_Q are both orthogonal to 𝒙 ˙ ˙ 𝒙 \dot{\boldsymbol{x}} over˙ start_ARG bold_italic_x end_ARG , if Q 𝑄 Q italic_Q exists we must be able to define Q 𝑄 Q italic_Q and V 𝑉 V italic_V such that ∇ V × ∇ Q = 𝒙 ˙ ∇ 𝑉 ∇ 𝑄 ˙ 𝒙 \nabla V\times\nabla Q=\dot{\boldsymbol{x}} ∇ italic_V × ∇ italic_Q = over˙ start_ARG bold_italic_x end_ARG . However, it can be shown that ∇ ⋅ ( ∇ V × ∇ Q ) = 0 ⋅ ∇ ∇ 𝑉 ∇ 𝑄 0 \nabla\cdot(\nabla V\times\nabla Q)=0 ∇ ⋅ ( ∇ italic_V × ∇ italic_Q ) = 0 for all V , Q 𝑉 𝑄 V,Q italic_V , italic_Q , while ∇ ⋅ 𝒙 ˙ = − cot ⁡ i ⁢ cos ⁡ ω ≠ 0 ⋅ ∇ ˙ 𝒙 𝑖 𝜔 0 \nabla\cdot\dot{\boldsymbol{x}}=-\cot i\cos\omega\neq 0 ∇ ⋅ over˙ start_ARG bold_italic_x end_ARG = - roman_cot italic_i roman_cos italic_ω ≠ 0 . Therefore, while we have found a function V 𝑉 V italic_V , no scalar function Q 𝑄 Q italic_Q exists. 8 8 8 It is possible to construct a scalar pseudodensity function ρ 𝜌 \rho italic_ρ such that ∇ ⋅ ( ρ ⁢ 𝒙 ˙ ) = 0 ⋅ ∇ 𝜌 ˙ 𝒙 0 \nabla\cdot(\rho\,\dot{\boldsymbol{x}})=0 ∇ ⋅ ( italic_ρ over˙ start_ARG bold_italic_x end_ARG ) = 0 . Such a function enables the construction of V 𝑉 V italic_V and Q 𝑄 Q italic_Q such that ∇ V × ∇ Q = ρ ⁢ 𝒙 ˙ ∇ 𝑉 ∇ 𝑄 𝜌 ˙ 𝒙 \nabla V\times\nabla Q=\rho\,\dot{\boldsymbol{x}} ∇ italic_V × ∇ italic_Q = italic_ρ over˙ start_ARG bold_italic_x end_ARG . However, there is no closed-form expression for ρ 𝜌 \rho italic_ρ , so it cannot be used to construct useful constants of motion.
+
+The value of the U 𝑈 U italic_U and V 𝑉 V italic_V parameters are shown in Fig. 4 . For the U 𝑈 U italic_U parameter, the contours of motion are also shown.
+
+In order to verify that these quantities are conserved, we numerically integrated test particles using REBOUNDx (Tamayo et al., 2020 ) for a variety of orbital parameters and calculated the value of the U 𝑈 U italic_U and V 𝑉 V italic_V parameters over time. For nongravitational accelerations small enough that the orbit-averaged equations of motion hold, 9 9 9 This is typically the case when | A | ≲ \qty e − 6 / 2 |A|\lesssim\qty{e-6}{/^{2}} | italic_A | ≲ italic_e - 6 / start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT for NEOs, although there is a weak dependence on the orbital period. the U 𝑈 U italic_U and V 𝑉 V italic_V parameters are conserved to machine precision. In the presence of the planets, however, the orbital elements can be subjected to periodic oscillation due to secular perturbations. As a result, a single object may exhibit oscillations in these parameters, although these oscillations are only of magnitude ⁢ 10 − 4 E-4 {10}^{-4} start_ARG end_ARG start_ARG ⁢ end_ARG start_ARG power start_ARG 10 end_ARG start_ARG - 4 end_ARG end_ARG .
+
+Figure 4: The U 𝑈 U italic_U parameter(Eq. 6 ) over a range of ( a , e 𝑎 𝑒 a,e italic_a , italic_e ) values and the V 𝑉 V italic_V parameter (Eq. 10 ) over a range of ( i , ω 𝑖 𝜔 i,\omega italic_i , italic_ω ) values (we set Ω = 0 Ω 0 \Omega=0 roman_Ω = 0 ). Contours are shown for both functions. For the U 𝑈 U italic_U parameter, the contours trace the phase-space trajectories of these objects, which is not the case for the V 𝑉 V italic_V parameter. In the top panel, the arrows indicate the direction of motion for positive A 2 subscript 𝐴 2 A_{2} italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT . The contours shown in the bottom panel are not equivalent to the phase-space trajectories.
+
+Figure 5: Histograms of the nearest-neighbor distance in orbital angular momentum (top), orbital elements (middle), and the constants of motion given by Eq. ( 6 ) and Eq. ( 10 ) (bottom).
+
+6.2 Search Algorithms for Unlinked Pairs
+
+In this subsection, we use the constants of motion derived in Sec. 6.1 , the orbital angular momentum, and the orbital elements to search for unlinked pairs in the current census of NEOs. Specifically, we calculate each quantity for each object in the MPC population of currently known NEOs described in Sec. 4 . For each quantity, we construct a k 𝑘 k italic_k -d tree for the data and extract the nearest neighbor in the N 𝑁 N italic_N -dimensional parameter space. In Fig. 5 , we show histograms of the distance to the nearest neighbor for each NEO in the total population.
+
+We then obtained the closest 0.1% of nearest-neighbor pairs for each parameter set. We used a least-squares fitting method to determine if these objects could be linked by a nongravitational acceleration (see Farnocchia et al. 2015 for a more thorough description of the orbit-fitting algorithm). This methodology was able to recover the previously identified case for 2010 VL 65 and 2021 UA 12 , which was identified as a pair by all comparison metrics. Although we recovered many potential pairs of unlinked objects, orbital fitting through object pairs did not recover a single linkage, even when accounting for possible nongravitational accelerations. We therefore conclude that each of these pairs are two distinct objects, with the exception of the previously-identified 2010 VL 65 .
+
+We also tested the accuracy of this methodology for finding linked pairs. We added clones of each object in the current population of NEOs with varying levels of nongravitational acceleration and integrated for one orbital period. We assume that the nongravitational accelerations are sufficiently small that the change in orbital parameters is in the linear regime. We then calculated the fraction of the cloned objects that are the nearest neighbor of the original object in the k 𝑘 k italic_k -d tree. For sufficiently large nongravitational accelerations, the cloned objects are distinct enough from the original that nearest-neighbor searches will not correctly match these objects. We find that the accuracy of these methods scales with the dimensionality of the parameter under consideration — higher dimensions improves identification of the objects. Regardless, at a magnitude of \qty e-6/^2, only 88% of cloned objects are linked by comparing orbital parameters. Therefore, more than 1 in 10 clones are nearer to another object than their original. For an acceleration with magnitude \qty e-7/^2, 99% of cloned objects are correctly identified. Our search for pairs by orbital parameter implies that there are few, if any, unlinked pairs of NEOs with nongravitational accelerations below this magnitude. However, the assumption of linearity begins to break down for nongravitational accelerations of order \qty e-6/^2 (when the acceleration is greater than 1% of the solar acceleration). As a result, hypothetical objects with stronger nongravitational accelerations would not be identified with the methodology presented in this section, although such objects are expected to be rare.
+
+7 Discussion
+
+In this paper, we demonstrated that nongravitational accelerations can significantly alter the on-sky positions of small bodies. Specifically, we showed that accelerations with magnitudes comparable to or greater than those measured on the the currently-known dark comets produce on-sky position changes of Δ ⁢ Θ ∼ \qty ⁢ e ⁢ 3 ⁢ a ⁢ r ⁢ c ⁢ s ⁢ e ⁢ c similar-to Δ Θ \qty 𝑒 3 𝑎 𝑟 𝑐 𝑠 𝑒 𝑐 \Delta\Theta\sim\qty{e3}{arcsec} roman_Δ roman_Θ ∼ italic_e 3 italic_a italic_r italic_c italic_s italic_e italic_c over 1–10 \unit yr apparition timescales. However, we showed that the algorithms currently in use for fitting orbits and linking objects across apparitions are generally robust in the presence of nongravitational accelerations of reasonable magnitude, although objects with large nongravitational accelerations ( | A i | ≳ \qty ⁢ e − 8 ⁢ \per 2 greater-than-or-equivalent-to subscript 𝐴 𝑖 \qty 𝑒 8 superscript \per 2 |A_{i}|\gtrsim\qty{e-8}{\per^{2}} | italic_A start_POSTSUBSCRIPT italic_i end_POSTSUBSCRIPT | ≳ italic_e - 8 start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT ) may be missed. While these acceleration magnitudes are expected to be rare, our results show that NEOs with such a nongravitational acceleration would be difficult to identify. Therefore, this population is not necessarily well-characterized, and may be more common than currently anticipated.
+
+Notably, ∼ 73 % similar-to absent percent 73 \sim 73\% ∼ 73 % of NEOs in the MPC database have data arcs that are less than a year, and ∼ 55 % similar-to absent percent 55 \sim 55\% ∼ 55 % have data arcs shorter than a month. In Sec. 3 , we demonstrated that for nongravitational accelerations stronger than the dark comets’ by an order of magnitude, ∼ similar-to \sim ∼ 10% of NEOs are offset from their predicted on-sky location by more than a degree. Note that this difference is in comparison to a precisely known gravity-only orbit, while actual astrometric positions will include nongravitational accelerations. As a result, the calculated orbits will have errors that may compensate for the residual from nongravitational acceleration, weakening the linkage error.
+
+In Sec. 5 , we investigated the fidelity of the linking algorithm currently in use at the MPC. This process has two principal steps — attribution and identification. In the attribution step, new observations are compared to the expected locations of previously-known objects. If the objects are sufficiently close, then the new observations are attributed to the prior object. We determined that transverse nongravitational accelerations an order of magnitude larger than those of the dark comets could lead to an attribution failure rate of ∼ 10 % similar-to absent percent 10 \sim 10\% ∼ 10 % . However, there are several caveats to this assessment. Our sample is restricted to objects with long data arcs observed across at least one apparition, and only ∼ 30 % similar-to absent percent 30 \sim 30\% ∼ 30 % of objects could be successfully linked even in the absence of nongravitational accelerations. In addition, objects with transverse nongravitational accelerations with magnitudes | A 2 | ≥ \qty ⁢ e − 8 ⁢ \per 2 subscript 𝐴 2 \qty 𝑒 8 superscript \per 2 |A_{2}|\geq\qty{e-8}{\per^{2}} | italic_A start_POSTSUBSCRIPT 2 end_POSTSUBSCRIPT | ≥ italic_e - 8 start_POSTSUPERSCRIPT 2 end_POSTSUPERSCRIPT are hypothetical with no known production mechanism. However, radial nongravitational accelerations of magnitude | A 1 | ≃ \qty ⁢ e − 7 ⁢ \per similar-to-or-equals subscript 𝐴 1 \qty 𝑒 7 \per |A_{1}|\simeq\qty{e-7}{\per} | italic_A start_POSTSUBSCRIPT 1 end_POSTSUBSCRIPT | ≃ italic_e - 7 , which are possible on comets, can cause linkage failure for ∼ 25 % similar-to absent percent 25 \sim 25\% ∼ 25 % of considered objects.
+
+Even if an object is not correctly attributed, a linkage can still be made by the orbit identification process. Further observations are collected until a second orbit can be calculated. If these orbital elements are within 3 ⁢ σ 3 𝜎 3\sigma 3 italic_σ of a previously-known orbit, then a linkage is made. We found that the orbit identification process is robust to nongravitational accelerations, as it begins to fail only when gravity-only orbits cannot be calculated for the object’s trajectory. In the presence of nongravitational accelerations, however, successful orbit identification is primarily driven not by the similarity in orbital parameters but the large magnitudes of the uncertainties, which are significantly increased by nongravitational perturbations. As a result, many objects may fall within the 3 ⁢ σ 3 𝜎 3\sigma 3 italic_σ cutoff and be linked to the new apparition, confusing the identification. This complication will likely be exacerbated as the census of solar system small bodies expands. Further investigation is required to determine the significance and prevalence of these issues.
+
+In addition to the on-sky position changes induced by nongravitational accelerations, trajectories will have aleatory uncertainties as the result of short data arcs (Milani & Gronchi, 2010 ) . Such aleatory uncertainties in the ephemerides can often be larger than the uncertainties induced by nongravitational accelerations, contributing to the problem of linking observations. In this work, we compare successful linkages between gravity-only and nongravitationally accelerating trajectories, keeping observation times and data arcs constant. Therefore, our results control for these aleatory effects and depend only on the nongravitational accelerations. While a full investigation of the combined effects of aleatory and epistemic errors in linking is worthwhile, it is beyond the scope of this work.
+
+We also searched for unlinked object pairs using three metrics that should be approximately conserved across apparitions (Sec. 6 ). Although we successfully recovered previously linked objects, we did not identify any new unlinked pairs. However, a more rigorous search is warranted, given that larger nongravitational accelerations may cause our pair-identification metrics to fail.
+
+These NEO-pair metrics may be used to identify smaller-magnitude nongravitational accelerations with future observations. Forthcoming observatories such as the the Vera C. Rubin Observatory Legacy Survey of Space and Time (LSST, Schwamb et al. 2023 ) and NEO Surveyor (Mainzer et al., 2015 ; Wright et al., 2021 ; Mainzer et al., 2022 ) will expand the census of these objects. With an increased population of NEOs, it may be important to account for nongravitational accelerations when linking objects across apparitions. Moreover, these surveys will also discover smaller objects, which exhibit stronger nongravitational accelerations per unit mass-loss rate than large objects. In addition, smaller objects are dimmer and are more likely to be observed only during close approaches, when the on-sky position changes are more significant. Therefore, accounting for such nongravitational accelerations may modify the census of NEOs produced by these surveys and identify more volatile-rich bodies in the near-Earth environment. It may also be possible to identify large nongravitational accelerations by mining the Isolated Tracklet File for unlinked observations using the methods discussed in Sec. 6 .
+
+A larger population of hydrated small bodies in the near-Earth environment could have ramifications for current theories of terrestrial volatile delivery. The Earth’s water content is generally expected to have been delivered, at least in part, by hydrated small bodies from the outer solar system instead of accretion in situ (Walsh et al., 2011 ; Raymond et al., 2014 ; O’Brien et al., 2014 ) . The Earth’s isotopic deuterium to hydrogen ratio (D/H; amongst other isotopic ratios) is significantly higher than the protosolar nebula, but significantly lower than the long-period or Jupiter-family comets that were once thought to be the source of Earth’s oceans (Owen & Bar-Nun, 1995 ; Meech & Raymond, 2020 ) . While MBCs match the D/H ratio relatively well (Alexander et al., 2012 ; Marty, 2012 ; Hallis et al., 2015 ) , the origins of terrestrial water remain uncertain. For a more detailed review of the origins of Earth’s water, see Meech & Raymond ( 2020 ) . If the NEO population contains more hydrated objects than anticipated, as suggested by the dark comets, these objects may have contributed to this delivery process. The likely origin of the dark comets in the inner main belt further suggests that volatiles may be common in the near-Earth environment (Taylor et al., 2024b ) . Our results imply that it is possible (but unlikely) that more volatile-rich NEOs may exist, but remain undetected due to failures in linkage algorithms.
+
+Moreover, if the future census multiply-counts objects and fails to account for nongravitational accelerations, then orbit predictions and Earth-impact probabilities may be flawed. Since NEOs are the primary source of Earth impactors (Strom et al., 2005 ) , accounting for nongravitational accelerations may be necessary to fully understand the near-Earth environment and possible future impacts. Specifically, it is possible that undetected nongravitational accelerations could cause a seemingly-innocuous NEO to become an Earth impactor. Therefore, our results may have significant implications for both planetary defense and volatile delivery for terrestrial planets. In the context of the upcoming expansion of the census of known NEOs, correctly accounting for nongravitational accelerations may be critical for accurate orbital predictions.
+
+Our results require significant future work to further characterize the issues discussed here. Since the MPC relies heavily on observers to fit orbits and link objects, a survey of the accuracy of current and future linkage methodologies (i.e., HelioLinC; Holman et al. 2018 ) is warranted. The tests of the MPC linkage algorithms presented here are limited in scope and only intended to probe a variety of possible issues. Further quantification of the prevalence and severity of possible linking problems is necessary to clarify this issue. Although the MPC’s current algorithms appear robust, the future inclusion of nongravitational accelerations in NEO linkage algorithms may overcome these problems and provide a more complete understanding of nongravitational accelerations in the near-Earth environment.
+
+Acknowledgements
+
+We thank the anonymous reviewer for their helpful comments. We thank Paul Abell, Adina Feinstein, Linda Glaser, Megan Mansfield, Luis Salazar Manzano, Robert Jedicke, Ken Chambers, Karen Meech, W. Garrett Levine, Jonathan Lunine, Samantha Trumbo, and Jonathan Williams for useful discussions. A.G.T. acknowledges support by the Fannie and John Hertz Foundation and the University of Michigan’s Rackham Merit Fellowship Program. D.Z.S. is supported by an NSF Astronomy and Astrophysics Postdoctoral Fellowship under award AST-2303553. This research award is partially funded by a generous gift of Charles Simonyi to the NSF Division of Astronomical Sciences. The award is made in recognition of significant contributions to Rubin Observatory’s Legacy Survey of Space and Time. Part of this research was carried out at the Jet Propulsion Laboratory, California Institute of Technology, under a contract with the National Aeronautics and Space Administration (80NM0018D0004). The Center for Exoplanets and Habitable Worlds and the Penn State Extraterrestrial Intelligence Center are supported by Penn State and its Eberly College of Science.
+
+This paper made use of the Julia programming language (Bezanson et al., 2017 ) , the plotting package Makie (Danisch & Krumbiegel, 2021 ) , the N-body code REBOUND (Rein & Liu, 2012 ) , and the ephemerides-quality integrator ASSIST (Holman et al., 2023 ) . This research has made use of data and/or services provided by the International Astronomical Union’s Minor Planet Center.
+
+References
+
+Albarède (2009)
+
+Albarède, F. 2009, Nature, 461, 1227, doi:  10.1038/nature08477
+
+Alexander et al. (2012)
+
+Alexander, C. M. O., Bowden, R., Fogel, M. L., et al. 2012, Science, 337, 721, doi:  10.1126/science.1223474
+
+Asher et al. (1994)
+
+Asher, D. J., Bailey, M. E., Hahn, G., & Steel, D. I. 1994, MNRAS, 267, 26, doi:  10.1093/mnras/267.1.26
+
+Bergner & Seligman (2023)
+
+Bergner, J. B., & Seligman, D. Z. 2023, Nature, 615, 610, doi:  10.1038/s41586-022-05687-w
+
+Bezanson et al. (2017)
+
+Bezanson, J., Edelman, A., Karpinski, S., & Shah, V. B. 2017, SIAM review, 59, 65.
+
+https://doi.org/10.1137/141000671
+
+Boehnhardt et al. (1996)
+
+Boehnhardt, H., Schulz, R., Tozzi, G. P., Rauer, H., & Sekanina, Z. 1996, IAU Circ., 6495, 2
+
+Brasser & Wang (2015)
+
+Brasser, R., & Wang, J. H. 2015, A&A, 573, A102, doi:  10.1051/0004-6361/201423687
+
+Chesley et al. (2016)
+
+Chesley, S. R., Farnocchia, D., Pravec, P., & Vokrouhlický, D. 2016, in Asteroids: New Observations, New Models, ed. S. R. Chesley, A. Morbidelli, R. Jedicke, & D. Farnocchia, Vol. 318, 250–258, doi:  10.1017/S1743921315008790
+
+Chyba (1990)
+
+Chyba, C. F. 1990, Nature, 343, 129, doi:  10.1038/343129a0
+
+Danisch & Krumbiegel (2021)
+
+Danisch, S., & Krumbiegel, J. 2021, Journal of Open Source Software, 6, 3349, doi:  10.21105/joss.03349
+
+Elst et al. (1996)
+
+Elst, E. W., Pizarro, O., Pollas, C., et al. 1996, IAU Circ., 6456, 1
+
+Farnocchia (2021)
+
+Farnocchia, D. 2021, Small-Body Perturber Files SB441-N16 and SB441-N343, Memorandum, Jet Propulsion Laboratory.
+
+https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/SB441_IOM392R-21-005_perturbers.pdf
+
+Farnocchia et al. (2015)
+
+Farnocchia, D., Chesley, S. R., Milani, A., Gronchi, G. F., & Chodas, P. W. 2015, in Asteroids IV (University of Arizona Press), 815–834, doi:  10.2458/azu_uapress_9780816532131-ch041
+
+Farnocchia et al. (2023)
+
+Farnocchia, D., Seligman, D. Z., Granvik, M., et al. 2023, \psj , 4, 29, doi:  10.3847/PSJ/acb25b
+
+Fitzsimmons et al. (2023)
+
+Fitzsimmons, A., Meech, K., Matrà, L., & Pfalzner, S. 2023, arXiv e-prints, arXiv:2303.17980, doi:  10.48550/arXiv.2303.17980
+
+Hallis et al. (2015)
+
+Hallis, L. J., Huss, G. R., Nagashima, K., et al. 2015, Science, 350, 795, doi:  10.1126/science.aac4834
+
+Holman et al. (2023)
+
+Holman, M. J., Akmal, A., Farnocchia, D., et al. 2023, \psj , 4, 69, doi:  10.3847/PSJ/acc9a9
+
+Holman et al. (2018)
+
+Holman, M. J., Payne, M. J., Blankley, P., Janssen, R., & Kuindersma, S. 2018, AJ, 156, 135, doi:  10.3847/1538-3881/aad69a
+
+Hsieh (2017)
+
+Hsieh, H. H. 2017, Philosophical Transactions of the Royal Society of London Series A, 375, 20160259, doi:  10.1098/rsta.2016.0259
+
+Hsieh & Jewitt (2006)
+
+Hsieh, H. H., & Jewitt, D. 2006, Science, 312, 561, doi:  10.1126/science.1125150
+
+Hsieh et al. (2004)
+
+Hsieh, H. H., Jewitt, D. C., & Fernández, Y. R. 2004, AJ, 127, 2997, doi:  10.1086/383208
+
+Jewitt (2005)
+
+Jewitt, D. 2005, AJ, 129, 530, doi:  10.1086/426328
+
+Jewitt (2012)
+
+—. 2012, AJ, 143, 66, doi:  10.1088/0004-6256/143/3/66
+
+Jewitt & Hsieh (2022)
+
+Jewitt, D., & Hsieh, H. H. 2022, arXiv e-prints, arXiv:2203.01397.
+
+https://arxiv.org/abs/2203.01397
+
+Jewitt et al. (2017)
+
+Jewitt, D., Luu, J., Rajagopal, J., et al. 2017, ApJL, 850, L36, doi:  10.3847/2041-8213/aa9b2f
+
+Jewitt & Seligman (2023)
+
+Jewitt, D., & Seligman, D. Z. 2023, ARA&A, 61, 197, doi:  10.1146/annurev-astro-071221-054221
+
+Mainzer et al. (2022)
+
+Mainzer, A., Masiero, J., Wright, E., et al. 2022, in AAS/Division for Planetary Sciences Meeting Abstracts, Vol. 54, AAS/Division for Planetary Sciences Meeting Abstracts, 409.02
+
+Mainzer et al. (2015)
+
+Mainzer, A. K., Wright, E. L., Bauer, J., et al. 2015, in AAS/Division for Planetary Sciences Meeting Abstracts, Vol. 47, AAS/Division for Planetary Sciences Meeting Abstracts #47, 308.01
+
+Marsden et al. (1973)
+
+Marsden, B. G., Sekanina, Z., & Yeomans, D. K. 1973, AJ, 78, 211, doi:  10.1086/111402
+
+Marty (2012)
+
+Marty, B. 2012, Earth and Planetary Science Letters, 313, 56, doi:  10.1016/j.epsl.2011.10.040
+
+Meech & Raymond (2020)
+
+Meech, K., & Raymond, S. N. 2020, in Planetary Astrobiology, ed. V. S. Meadows, G. N. Arney, B. E. Schmidt, & D. J. Des Marais (University of Arizona Press), 325, doi:  10.2458/azu_uapress_9780816540068
+
+Meech et al. (2016)
+
+Meech, K. J., Yang, B., Kleyna, J., et al. 2016, Science Advances, 2, e1600038, doi:  10.1126/sciadv.1600038
+
+Meech et al. (2017)
+
+Meech, K. J., Weryk, R., Micheli, M., et al. 2017, Nature, 552, 378, doi:  10.1038/nature25020
+
+Micheli et al. (2018)
+
+Micheli, M., Farnocchia, D., Meech, K. J., et al. 2018, Nature, 559, 223, doi:  10.1038/s41586-018-0254-4
+
+Milani & Gronchi (2010)
+
+Milani, A., & Gronchi, G. F. 2010, Theory of Orbital Determination (Cambridge University Press)
+
+Murray & Dermott (2000)
+
+Murray, C. D., & Dermott, S. F. 2000, Solar System Dynamics (Cambridge University Press), doi:  10.1017/CBO9781139174817
+
+O’Brien et al. (2014)
+
+O’Brien, D. P., Walsh, K. J., Morbidelli, A., Raymond, S. N., & Mandell, A. M. 2014, Icarus, 239, 74, doi:  10.1016/j.icarus.2014.05.009
+
+Owen & Bar-Nun (1995)
+
+Owen, T., & Bar-Nun, A. 1995, Icarus, 116, 215, doi:  10.1006/icar.1995.1122
+
+Park et al. (2021)
+
+Park, R. S., Folkner, W. M., Williams, J. G., & Boggs, D. H. 2021, AJ, 161, 105, doi:  10.3847/1538-3881/abd414
+
+Podolak & Herman (1985)
+
+Podolak, M., & Herman, G. 1985, Icarus, 61, 267, doi:  10.1016/0019-1035(85)90108-3
+
+Prialnik & Bar-Nun (1988)
+
+Prialnik, D., & Bar-Nun, A. 1988, Icarus, 74, 272, doi:  10.1016/0019-1035(88)90042-5
+
+Raymond et al. (2014)
+
+Raymond, S. N., Kokubo, E., Morbidelli, A., Morishima, R., & Walsh, K. J. 2014, in Protostars and Planets VI, ed. H. Beuther, R. S. Klessen, C. P. Dullemond, & T. Henning, 595–618, doi:  10.2458/azu_uapress_9780816531240-ch026
+
+Rein & Liu (2012)
+
+Rein, H., & Liu, S. F. 2012, A&A, 537, A128, doi:  10.1051/0004-6361/201118085
+
+Rein & Spiegel (2015)
+
+Rein, H., & Spiegel, D. S. 2015, MNRAS, 446, 1424, doi:  10.1093/mnras/stu2164
+
+Schwamb et al. (2023)
+
+Schwamb, M. E., Jones, R. L., Yoachim, P., et al. 2023, ApJS, 266, 22, doi:  10.3847/1538-4365/acc173
+
+Seligman & Moro-Martín (2023)
+
+Seligman, D. Z., & Moro-Martín, A. 2023, arXiv e-prints, arXiv:2304.00568, doi:  10.48550/arXiv.2304.00568
+
+Seligman et al. (2023)
+
+Seligman, D. Z., Farnocchia, D., Micheli, M., et al. 2023, \psj , 4, 35, doi:  10.3847/PSJ/acb697
+
+Strom et al. (2005)
+
+Strom, R. G., Malhotra, R., Ito, T., Yoshida, F., & Kring, D. A. 2005, Science, 309, 1847, doi:  10.1126/science.1113544
+
+Tamayo et al. (2020)
+
+Tamayo, D., Rein, H., Shi, P., & Hernandez, D. M. 2020, MNRAS, 491, 2885, doi:  10.1093/mnras/stz2870
+
+Taylor et al. (2024a)
+
+Taylor, A. G., Farnocchia, D., Vokrouhlický, D., et al. 2024a, Icarus, 408, 115822, doi:  10.1016/j.icarus.2023.115822
+
+Taylor et al. (2024b)
+
+Taylor, A. G., Steckloff, J. K., Seligman, D. Z., et al. 2024b, Icarus, 420, 116207, doi:  10.1016/j.icarus.2024.116207
+
+Toth (2000)
+
+Toth, I. 2000, A&A, 360, 375
+
+Trilling et al. (2018)
+
+Trilling, D. E., Mommert, M., Hora, J. L., et al. 2018, AJ, 156, 261, doi:  10.3847/1538-3881/aae88f
+
+Vokrouhlický et al. (2015)
+
+Vokrouhlický, D., Bottke, W. F., Chesley, S. R., Scheeres, D. J., & Statler, T. S. 2015, in Asteroids IV, 509–531, doi:  10.2458/azu_uapress_9780816532131-ch027
+
+Vokrouhlický & Milani (2000)
+
+Vokrouhlický, D., & Milani, A. 2000, A&A, 362, 746
+
+Walsh et al. (2011)
+
+Walsh, K. J., Morbidelli, A., Raymond, S. N., O’Brien, D. P., & Mandell, A. M. 2011, Nature, 475, 206, doi:  10.1038/nature10201
+
+Wang & Brasser (2014)
+
+Wang, J. H., & Brasser, R. 2014, A&A, 563, A122, doi:  10.1051/0004-6361/201322508
+
+Williams et al. (2017)
+
+Williams, G. V., Sato, H., Sarneczky, K., et al. 2017, Central Bureau Electronic Telegrams, 4450, 1
+
+Wright et al. (2021)
+
+Wright, E. L., Masiero, J., & Mainzer, A. 2021, in 7th IAA Planetary Defense Conference, 242
+
+Ye et al. (2017)
+
+Ye, Q.-Z., Zhang, Q., Kelley, M. S. P., & Brown, P. G. 2017, ApJ, 851, L5, doi:  10.3847/2041-8213/aa9a34
+
+\restartappendixnumbering
+
+Appendix A Supplemental Material
+
+In this appendix, we show the on-sky position changes for the synthetic population described in Sec. 3 for a range of integration times and nongravitational acceleration directions.
+
+Figure 6: Similar to Fig. 2 , but with radial A 1 acceleration instead of transverse A 2 acceleration. The contour is at \qty e3arcsec.
+
+Figure 7: Similar to Fig. 2 , but with out-of-plane A 3 subscript 𝐴 3 A_{3} italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT acceleration instead of transverse A 2 acceleration.
+
+Figure 8: Similar to Fig. 2 , but with radial A 1 acceleration and an apparition difference of 1 yr. The contour is at \qty e3arcsec.
+
+Figure 9: Similar to Fig. 2 , but an apparition difference of 1 yr. The contour is at \qty e3arcsec.
+
+Figure 10: Similar to Fig. 2 , but with out-of-plane A 3 subscript 𝐴 3 A_{3} italic_A start_POSTSUBSCRIPT 3 end_POSTSUBSCRIPT acceleration and an apparition difference of \qty 1yr.
+
+Generated on Fri Oct 11 19:21:26 2024 by L a T e XML

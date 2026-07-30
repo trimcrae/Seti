@@ -1,0 +1,1363 @@
+Search for L4 Earth Trojan asteroids with the 2.5-meter Wide Field Survey Telescope
+
+Report GitHub Issue
+×
+
+Title:
+
+Content selection saved. Describe the issue below:
+
+Description:
+
+Submit without GitHub
+Submit in GitHub
+
+arXiv is now an independent nonprofit!
+Learn more
+×
+
+Back to arXiv
+
+Why HTML?
+
+Report Issue
+
+Back to Abstract
+
+Download PDF
+
+Abstract
+1 Introduction
+
+2 Data
+
+2.1 WFST Observations
+2.2 Data Reduction
+
+3 Methods
+
+3.1 Upper Limit Calculation
+3.2 ETA Simulation
+
+4 Results
+
+4.1 Detections
+4.2 L4 ETA Upper Limit
+
+5 Discussion
+
+Acknowledgements
+
+References
+
+License: arXiv.org perpetual non-exclusive license
+
+arXiv:2606.31751v1 [astro-ph.EP] 30 Jun 2026
+
+1 1 institutetext: Department of Astronomy, University of Science and Technology of China, Hefei 230026, China
+2 2 institutetext: School of Astronomy and Space Science, University of Science and Technology of China, Hefei 230026, China
+3 3 institutetext: Institute of Deep Space Sciences, Deep Space Exploration Laboratory, Hefei 230026, China
+4 4 institutetext: Purple Mountain Observatory, Chinese Academy of Sciences, Nanjing 210023, China
+5 5 institutetext: College of Physics, Guizhou University, Guiyang, Guizhou 550025, China
+6 6 institutetext: State Key Laboratory of Particle Detection and Electronics, University of Science and Technology of China, Hefei 230026, China
+7 7 institutetext: National Optical Astronomy Observatory (NSF’s National Optical-Infrared Astronomy Research Laboratory) 950 N Cherry Ave. Tucson Arizona 85726, USA
+8 8 institutetext: Institute of Optics and Electronics, Chinese Academy of Sciences, Chengdu 610209, China
+
+Search for L4 Earth Trojan asteroids with the 2.5-meter Wide Field Survey Telescope
+
+Junqiang Lu \corrauth ljq1999@mail.ustc.edu.cn
+
+Lulu Fan \corrauth llfan@ustc.edu.cn
+
+Shaohan Wang
+
+Minxuan Cai
+
+Bingxue Fu
+
+Xu Kong
+
+Haibin Zhao
+
+Bin Li
+
+Qingfeng Zhu
+
+Zhen Wan
+
+Feng Li
+
+Ming Liang
+
+Binyang Liu
+
+Zheng Lou
+
+Jinlong Tang
+
+Hairen Wang
+
+Jian Wang
+
+Yongquan Xue
+
+Hongfei Zhang
+
+Abstract
+Context. Earth Trojan asteroids (ETAs) are a mysterious population, and dynamically stable ETAs—if primordial—could be ”living fossils” of the early solar system. To date, there are only two known ETAs, but both are temporary ETAs.
+Aims. The aim of our survey is to discover new temporary or stable ETAs; in the absence of detections, we derive upper limits on the population of stable ETAs.
+Methods. We conducted the largest wide-area survey of the Earth’s L4 Lagrange point region so far using the Wide Field Survey Telescope, covering about 236.74 deg 2 , corresponding to 33.24% of the probability coverage for sky regions where dynamically stable L4 ETAs are likely to reside.
+Results. No new ETAs were detected in our survey. We place a cumulative upper limit of N ​ ( H < 19.1 ) ≲ 19 N(H<19.1)\lesssim 19 on the stable population of objects larger than ∼ \sim 520 m (for an assumed albedo of 0.15). This represents the most stringent constraint on the ETA population to date.
+
+Key Words.:
+
+Minor planets, asteroids: general –
+Methods: observational –
+Surveys –
+Planets and satellites: individual: Earth –
+
+\nolinenumbers
+
+1 Introduction
+
+Earth Trojan asteroids (ETAs) are a poorly understood population of small bodies trapped in the 1:1 mean-motion resonance with Earth, residing near the L4 or L5 Lagrange points.
+Some ETAs may be primordial remnants from the protoplanetary disk, potentially as old as the Solar System itself (Ćuk et al. , 2012 ) . As such, they could serve as “living fossils,” offering valuable insights into the formation and early evolution of our planetary system.
+Notably, the leading hypothesis for the origin of the Moon invokes a giant impact between the proto-Earth and a Mars-sized body, Theia, which may have originated as an ETA (Belbruno and Gott Iii, 2005 ) .
+Furthermore, the ETA population has been proposed to explain the observed asymmetry in crater distribution between the Moon’s leading and trailing hemispheres (Ito and Malhotra, 2010 ) .
+Due to their low relative velocities with respect to Earth (Malhotra, 2019 ) , ETAs represent favorable targets for future space missions.
+Additionally, as members of the near-Earth object (NEO) population, some ETAs may pose long-term impact hazards to terrestrial life and infrastructure.
+Consequently, systematic discovery and monitoring efforts are both scientifically valuable and relevant to planetary defense.
+
+Numerical simulations and analytical studies have been used to explore the dynamical properties of ETAs.
+Tabachnik and Evans ( 2000 ) identified two stable regions for ETAs: one at low inclinations and another at moderate inclinations.
+Dvorak et al. ( 2012 ) obtained similar results with slightly different inclination ranges and discovered an additional small, U-shaped stable window near i ≈ 50 ∘ i\approx 50^{\circ} .
+Marzari and Scholl ( 2013 ) investigated the effects of the Earth–Moon tidal forces and the Yarkovsky effect on ETAs, finding that they can survive for timescales of ∼ 10 9 \sim 10^{9} yr, although their orbital evolution is chaotic.
+Zhou et al. ( 2019 ) presented detailed dynamical maps in the ( a 0 , i 0 ) (a_{0},i_{0}) plane and ruled out the existence of small primordial ETAs.
+Using large-scale numerical integrations, Yeager and Golovich ( 2022 ) constructed synthetic ETA populations and predicted complete depletion by 2.33 Gyr.
+In a follow-up study, Yeager et al. ( 2024 ) used the same datasets to assess the detectability of ETAs under the observational strategies of the Zwicky Transient Facility and the Vera C. Rubin Observatory’s Legacy Survey of Space and Time.
+
+Observational searches for ETAs have so far yielded stringent upper limits but few detections.
+On 1994 May 5–7 and July 6–8 UT, Whiteley and Tholen ( 1998 ) used the University of Hawaii 2.24-m telescope to cover 0.35 deg 2 around the L5 point and found no ETA candidates, deriving the first crude upper limit of ∼ \sim 3 objects per square degree.
+Cambioni et al. ( 2018 ) conducted an L4 survey using the OSIRIS-REx spacecraft during its cruise to asteroid Bennu, covering nine 4 ∘ × 4 ∘ 4^{\circ}\times 4^{\circ} fields and establishing an upper limit of 73 ± 23 73\pm 23 ETAs at absolute magnitude H = 20.5 H=20.5 .
+Yoshikawa et al. ( 2018 ) searched for ETAs near L5 with the Hayabusa2 spacecraft en route to asteroid Ryugu but reported no candidates and provided no quantitative upper limit.
+Markwardt et al. ( 2020 ) used the Dark Energy Camera (DECam) to cover 24 deg 2 near L5, setting a more stringent upper limit.
+Lifset et al. ( 2021 ) employed DECam to survey 5.72 deg 2 near L4—covering a smaller area than Markwardt et al. ( 2020 ) but reaching deeper limiting magnitudes—and derived updated upper limits on the ETA population by incorporating modern asteroid population models and extensive numerical simulations.
+Despite these dedicated searches yielding null results, two ETAs have been serendipitously discovered:
+(706765) 2010 TK 7 (Connors et al. , 2011 ) and (614689) 2020 XL 5 (Hui et al. , 2021 ) .
+Both objects librate around the L4 Lagrange point; however, dynamical analyses indicate that they are transient co-orbitals, with estimated residence times in the Trojan configuration of only a few thousand to tens of thousands of years—far shorter than the age of the Solar System.
+
+2 Data
+
+2.1 WFST Observations
+
+The Wide Field Survey Telescope (Wang et al. , 2023 , WFST) is a 2.5-m telescope located in Lenghu, Qinghai Province, northwestern China, jointly developed by the University of Science and Technology of China and the Purple Mountain Observatory.
+It features a circular field of view with a diameter of 3 ∘ , a camera composed of nine 9.2 ​ K × 9.2 ​ K 9.2\,\mathrm{K}\times 9.2\,\mathrm{K} CCD detectors, and six broadband filters ( u u , g g , r r , i i , z z , w w ). 1 1 1 wfst.ustc.edu.cn/
+WFST is expected to be a powerful facility for time-domain astronomy, with discovery potential for a wide range of transients and moving objects. Key science targets include tidal disruption events (Lin et al. , 2022 ) , active galactic nuclei (Su et al. , 2024 ) , kilonovae (Liu et al. , 2023 ) , Type Ia supernovae (Hu et al. , 2022 ) , globular clusters (Wan et al. , 2025 ) , variable stars (Lin et al. , 2025 ) , and asteroids (Lu et al. , 2025 ; Wang et al. , 2025 ) .
+
+Figure 1 : Sky coverage of the WFST L4 ETAs survey. The color scale indicates the number of usable exposures per sky position (in equatorial coordinates).
+Each pointing exhibits small gaps between the nine CCDs, and the four corners of the CCD array are truncated due to being outside the effective imaging area.
+Due to an error in the observing plan provided for the night of 2025 September 22, only 20 of the 32 intended pointings were executed; among these, 12 were repeated six times instead of the nominal three.
+Observations on 2025 September 22 and 25 were conducted under good weather conditions, yielding fully usable data. In contrast, poor weather on 2025 September 23 and 29 resulted in partial data loss for those nights.
+
+Table 1 : WFST pointings in the L4 ETAs survey.
+
+Group
+Target
+R.A.
+Dec.
+
+1
+p1
+119.03404°
+24.58216°
+
+1
+p9
+118.51207°
+22.12851°
+
+1
+p17
+118.00799°
+19.67325°
+
+1
+p25
+117.51913°
+17.21663°
+
+1
+p2
+121.71572°
+24.07934°
+
+1
+p10
+121.15228°
+21.63383°
+
+1
+p18
+120.60762°
+19.18649°
+
+1
+p26
+120.07893°
+16.73759°
+
+2
+p3
+124.37726°
+23.53707°
+
+2
+p11
+123.77429°
+21.10008°
+
+2
+p19
+123.19082°
+18.66102°
+
+2
+p27
+122.62390°
+16.22022°
+
+2
+p4
+127.01793°
+22.95683°
+
+2
+p12
+126.37743°
+20.52864°
+
+2
+p20
+125.75696°
+18.09816°
+
+2
+p28
+125.15348°
+15.66576°
+
+3
+p5
+129.63718°
+22.34015°
+
+3
+p13
+128.96118°
+19.92096°
+
+3
+p21
+128.30557°
+17.49929°
+
+3
+p29
+127.66723°
+15.07552°
+
+3
+p6
+132.23467°
+21.68861°
+
+3
+p14
+131.52522°
+19.27855°
+
+3
+p22
+130.83636°
+16.86583°
+
+3
+p30
+130.16489°
+14.45086°
+
+4
+p7
+134.81023°
+21.00383°
+
+4
+p15
+134.06938°
+18.60295°
+
+4
+p23
+133.34916°
+16.19925°
+
+4
+p31
+132.64630°
+13.79319°
+
+4
+p8
+137.36386°
+20.28748°
+
+4
+p16
+136.59365°
+17.89575°
+
+4
+p24
+135.84396°
+15.50108°
+
+4
+p32
+135.11146°
+13.10394°
+
+Table 2 : WFST L4 ETAs survey observing windows.
+
+Day
+Start Time
+End Time
+
+(UTC)
+(UTC)
+
+1
+2025-09-22 21:21:36
+2025-09-22 22:36:28
+
+2
+2025-09-23 21:18:37
+2025-09-23 22:33:38
+
+3
+2025-09-25 21:25:42
+2025-09-25 22:40:31
+
+4
+2025-09-29 21:28:04
+2025-09-29 22:54:47
+
+To schedule our survey for ETAs, we calculated the observability of the L4 point for WFST and found that the optimal observing window occurs between September and November each year, shortly before sunrise, due to favorable observing geometry.
+To avoid trailing of ETAs on the images, we set the exposure time to 30 s; for a typical proper motion of 1 ∘  day -1 , an ETA moves approximately 1.25 ′′ during a 30 s exposure—comparable to the seeing.
+All exposures were taken in the r r band, as asteroids are brighter in r r than in any other filter except w w , based on limiting magnitudes (Lei et al. , 2023 ) and color corrections (Wang et al. , 2025 ) . The w w band was not used because template images in this filter were unavailable for image subtraction.
+
+We defined a rectangular region centered on the L4 point as of 2025 September 25, spanning 20 ∘ in ecliptic longitude and 10 ∘ in ecliptic latitude, and allocated 32 ( 4 × 8 4\times 8 ) pointings to cover the “L4 cloud” (see Fig. 1 and Table 1 ). This region was chosen because stable ETAs can exhibit large libration amplitudes and low orbital inclinations (Yeager et al. , 2024 ) . To date, this constitutes the largest dedicated ETAs survey, enabled by WFST’s wide field of view.
+
+We conducted four observing sessions as listed in Table 2 .
+The right ascension and declination of the 32 pointings were kept fixed throughout the campaign.
+Although the L4 Lagrange point drifted by several degrees in ecliptic longitude over the observing window, our 20 × ∘ 10 ∘ {}^{\circ}\times 10^{\circ} survey area is sufficiently large to encompass the entire drift trajectory of the L4 region during this period.
+Each session cycled through all 32 pointings three times, requiring approximately 80 minutes (including overheads) before nautical dawn.
+This cadence satisfies the requirements of both the MOPS-like “single-night” algorithm (Denneau et al. , 2013 ) and the multi-night HelioLinC algorithm (Holman et al. , 2018 ) , thereby maximizing the recovery efficiency of moving objects.
+Due to altitude constraints near the horizon, we divided the 32 pointings into four groups.
+Observations were carried out by cycling through Group 1 three times, followed by Group 2, and so on for all groups.
+
+The spatial footprint of our L4 ETAs survey is illustrated in Fig. 1 . The WFST focal plane comprises nine CCDs, which inherently introduce narrow inter-chip gaps. Excluding these gaps, the effective imaging area of each individual exposure is approximately octagonal, as the four corners of the CCD array lie outside the usable field of view and are thus truncated. Owing to a scheduling error during the observing run on 2025 September 22, only 20 of the 32 intended pointings were successfully executed. Of these, 12 fields were observed six times each instead of the nominal three visits. Observations conducted on 2025 September 22 and 25 were carried out under favorable weather conditions, yielding fully usable datasets. In contrast, poor weather on the nights of 2025 September 23 and 29 both degraded the limiting magnitudes and resulted in partial data loss. Specifically, for certain pointings on these nights, only a subset of the FITS files met the quality criteria of the WFST Data Reduction Pipeline (Cai et al. , 2025 ) . Given the strict visit-time requirements outlined in Section 2.2 , this data incompleteness subsequently reduced the effective sky coverage available for asteroid searches.
+
+2.2 Data Reduction
+
+The exposures were processed by the WFST Data Reduction Pipeline (Cai et al. , 2025 ) .
+Each exposure was divided into 36 4.6 ​ K × 4.6 ​ K 4.6\mathrm{K}\times 4.6\mathrm{K} FITS image files, each representing a quadrant of a CCD.
+In addition to science images and source catalogs, difference images and associated catalogs in AVRO format are also produced.
+Both the science catalogs and the AVRO files are then used as input to the Heliocentric-orbiting Objects Processing System (Wang et al. , 2025 , HOPS) for asteroid detection with WFST. We adopted a wide proper motion range of 0.02 0.02 – 1.5 ∘ ​ day − 1 1.5^{\circ}\,\mathrm{day}^{-1} to search for unknown solar system objects, not limited to ETAs. Following Markwardt et al. ( 2020 ) , we assume that stable ETAs exhibit motions between 0.75 0.75 and 1.25 ∘ ​ day − 1 1.25^{\circ}\,\mathrm{day}^{-1} , a range that lies entirely within our adopted search interval.
+
+For a blind search using HOPS, the single-night mode requires at least three observations on a given night, whereas the multi-night mode requires at least two observations per night over at least three nights within a 14-day window. Consequently, only regions with ≥ 3 \geq 3 exposures per night—as shown in Fig. 1 —are suitable for an L4 ETA search in single-night mode. Although we also executed HOPS in multi-night mode, no new ETAs were identified. All detections corresponded to known asteroids, with one exception: an unknown candidate detected twice on September 23, which was subsequently identified as the known comet C/2022 QE78. This comet was also detected in single-night mode on September 25 and 29; it was not detected on September 22 because it did not fall within the observed regions. To derive a conservative upper limit on the L4 ETA population and for simplicity, we restrict our analysis to the results obtained from the single-night mode.
+
+3 Methods
+
+3.1 Upper Limit Calculation
+
+The non-detection of ETAs in our survey can be modeled as a Poisson process.
+Following the single-pipeline counting experiment described in Section 2 of Sutton ( 2009 ) , the 95% confidence upper limit on the number of ETAs is given by 2 2 2 In Section 2 of Sutton ( 2009 ) , the 90% confidence upper limit for zero observed events is given as 2.30 / ϵ 2.30/\epsilon . The 95% version follows from the same Poisson logic, where the constant is − ln ⁡ ( 0.05 ) ≈ 2.997 -\ln(0.05)\approx 2.997 , commonly rounded to 3. Equation 1 is therefore a direct extension of Sutton’s single-pipeline case to the 95% confidence level. :
+
+U ​ ( H ) = 3 ϵ ​ ( H ) , U(H)=\frac{3}{\epsilon(H)},
+
+(1)
+
+where ϵ ​ ( H ) \epsilon(H) is the total detection efficiency for an ETA of absolute magnitude H H .
+This efficiency accounts for both the spatial coverage of our survey and the pipeline’s recovery rate.
+
+Let C C denote the coverage percentage of the stable L4 ETA by our observations (i.e., the 2-D spatial completeness),
+and let R ​ ( H ) R(H) be the recovery rate—the probability that our detection pipeline identifies an ETA of absolute magnitude H H within the observed fields.
+Assuming these factors are independent, the total detection efficiency is:
+
+ϵ ​ ( H ) = R ​ ( H ) ⋅ C . \epsilon(H)=R(H)\cdot C.
+
+(2)
+
+Substituting into Equation (1), the 95% confidence upper limit becomes:
+
+U ​ ( H ) = 3 R ​ ( H ) ⋅ C . U(H)=\frac{3}{R(H)\cdot C}.
+
+(3)
+
+We estimate the recovery rate R ​ ( V ) R(V) using a catalog-based approach:
+the ratio of known asteroids recovered by our blind detection pipeline to those whose ephemerides fall within our survey footprint and satisfy our blind search constraints.
+Ephemerides are computed using the Python package ALEPH (Peña Zamudio and Fuentes, 2021 ) and the MPCORB.DAT 3 3 3 www.minorplanetcenter.net/data file from the Minor Planet Center.
+
+Although injection-recovery simulations are the standard method for quantifying detection efficiency, they are currently impractical for our pipeline due to computational and implementation constraints.
+Nevertheless, as detailed in Section 4 , we demonstrate that our catalog-based estimate is both reasonable and applicable for ETA population studies.
+
+Since R ​ ( V ) R(V) depends on apparent magnitude while our population model requires R ​ ( H ) R(H) as a function of absolute magnitude H H , we convert between V V and H H using the standard asteroid photometric relation:
+
+V = H + 5 ​ log 10 ⁡ ( r ​ Δ ) − 2.5 ​ log 10 ⁡ [ ϕ ​ ( α ) ] + δ , V=H+5\log_{10}(r\Delta)-2.5\log_{10}[\phi(\alpha)]+\delta,
+
+(4)
+
+where r r and Δ \Delta are the heliocentric and geocentric distances (in au), α \alpha is the phase angle, ϕ ​ ( α ) \phi(\alpha) is the phase function, and δ \delta represents rotational lightcurve variations.
+For population-level efficiency estimates, we neglect δ \delta under the assumption that rotation phases are randomly distributed, causing ⟨ δ ⟩ ≈ 0 \langle\delta\rangle\approx 0 .
+
+We adopt the two-parameter H H – G G magnitude system of Bowell et al. ( 1989 ) with G = 0.15 G=0.15 to compute ϕ ​ ( α ) \phi(\alpha) .
+For an idealized survey near the L4/L5 points covering a small sky area, we approximate r ≈ Δ ≈ 1 r\approx\Delta\approx 1 au and α ≈ 60 ∘ \alpha\approx 60^{\circ} , yielding:
+
+V ≈ H + 2.15 . V\approx H+2.15.
+
+(5)
+
+Under this approximation, the absolute-magnitude-dependent recovery rate is obtained via:
+
+R ​ ( H ) = R ​ ( V = H + 2.15 ) . R(H)=R(V=H+2.15).
+
+(6)
+
+Figure 2 :
+Geocentric distance Δ \Delta , phase angle α \alpha , and apparent-minus-absolute magnitude ( V − H V-H ) for an ETA with heliocentric distance r = 1 r=1 au, computed across our L4 survey field.
+The colored region indicates sky areas with at least three usable exposures on at least one of the four observing nights.
+Coordinates ( λ , β ) (\lambda,\beta) are geocentric ecliptic longitude and latitude in a Sun–Earth co-rotating frame, where the L4 point is stationary at ( − 60 ∘ , 0 ∘ ) (-60^{\circ},0^{\circ}) and the Sun is fixed at ( 0 ∘ , 0 ∘ ) (0^{\circ},0^{\circ}) .
+
+For surveys covering extended regions around L4 or L5, the simplified assumptions ( r = Δ = 1 r=\Delta=1 au, α = 60 ∘ \alpha=60^{\circ} ) introduce significant errors due to variations in viewing geometry.
+Instead, we fix only the heliocentric distance at r = 1 r=1 au and compute Δ \Delta and α \alpha individually for each sky position within the survey footprint.
+
+Figure 2 illustrates the spatial variation of Δ \Delta , α \alpha , and V − H V-H across our L4 survey area.
+Smaller Δ \Delta and α \alpha enhance detectability (yielding brighter apparent magnitudes), but Δ \Delta dominates the variation in V − H V-H over our field.
+Critically, V − H V-H varies by up to ∼ \sim 1 mag, highlighting the necessity of a spatially resolved detection efficiency model for wide-area ETA surveys.
+
+Since detections in different sky regions are independent, the total detection efficiency ϵ ​ ( H ) \epsilon(H) is obtained by integrating the local recovery probability weighted by the underlying ETA spatial density:
+
+ϵ ​ ( H ) = ∬ R ​ ( V ​ ( H , λ , β ) ) ​ D ​ ( λ , β ) ​ cos ⁡ β ​ d ​ λ ​ d ​ β , \epsilon(H)=\iint R\big(V(H,\lambda,\beta)\big)\,D(\lambda,\beta)\cos\beta\;\mathrm{d}\lambda\,\mathrm{d}\beta,
+
+(7)
+
+where D ​ ( λ , β ) D(\lambda,\beta) is the normalized probability density of stable L4 ETAs (i.e., the dynamical model from numerical simulations), and the factor cos ⁡ β \cos\beta accounts for spherical geometry on the celestial sphere.
+The total spatial completeness C C is then:
+
+C = ∬ D ​ ( λ , β ) ​ cos ⁡ β ​ d ​ λ ​ d ​ β . C=\iint D(\lambda,\beta)\cos\beta\;\mathrm{d}\lambda\,\mathrm{d}\beta.
+
+(8)
+
+For a multi-night survey comprising K K observing epochs, the total recovery probability at each sky position is given by the complement of failing to detect the object on all nights:
+
+R ​ ( V ​ ( H , λ , β ) ) = 1 − ∏ k = 1 K [ 1 − R k ​ ( V ​ ( H , λ , β ) ) ] , R\big(V(H,\lambda,\beta)\big)=1-\prod_{k=1}^{K}\left[1-R_{k}\big(V(H,\lambda,\beta)\big)\right],
+
+(9)
+
+where R k R_{k} denotes the single-night recovery rate on the k k -th epoch, and detections across epochs are assumed statistically independent. In this work, we apply the formalism to a four-night survey, so K = 4 K=4 .
+
+In practice, we discretize the ( λ , β ) (\lambda,\beta) plane into a grid and approximate the integral in Equation ( 7 ) as a sum:
+
+ϵ ​ ( H ) = ∑ n = 1 N ( 1 − ∏ k = 1 K [ 1 − R k ​ ( V n ​ ( H ) ) ] ) ​ D n ​ S n , \epsilon(H)=\sum_{n=1}^{N}\left(1-\prod_{k=1}^{K}\left[1-R_{k}\big(V_{n}(H)\big)\right]\right)D_{n}\,S_{n},
+
+(10)
+
+where S n S_{n} is the solid angle subtended by the n n -th grid cell, D n = D ​ ( λ n , β n ) D_{n}=D(\lambda_{n},\beta_{n}) is the spatial probability density at that cell, and V n ​ ( H ) = V ​ ( H , λ n , β n ) V_{n}(H)=V(H,\lambda_{n},\beta_{n}) is the apparent magnitude corresponding to absolute magnitude H H at position ( λ n , β n ) (\lambda_{n},\beta_{n}) .
+
+Finally, we clarify that our goal is not to derive a spatially resolved recovery rate R k ​ ( V ) R_{k}(V) . Rather, we treat R k ​ ( V ) R_{k}(V) as a simple function that depends solely on V V for each night k k . In other words, for a given night, we assume R k ​ ( V ) R_{k}(V) is uniform across all surveyed regions. However, R k ​ ( H ) R_{k}(H) is spatially resolved, as we aim to account for the spatial variation of V − H V-H in a wide-field survey. A spatially resolved R k ​ ( V ) R_{k}(V) is unnecessary for both injection-recovery simulations and catalog-based estimates. In the former case, implementing such resolution would be prohibitively tedious, especially for large-field surveys, as it would require a substantial increase in the number of simulations. In the latter case, the lack of asteroids in certain regions would render recovery rate estimates infeasible. Since our objective is merely to obtain a reference recovery rate to estimate the upper limit on the ETA population, we adopt the catalog-based approach to compute an averaged R k ​ ( V ) R_{k}(V) per night, which then provides an estimate of the ETA population.
+
+3.2 ETA Simulation
+
+We performed a series of simulations to investigate the spatial distribution of stable L4 ETAs.
+These simulations were carried out using the N-body integration package REBOUND (Rein and Liu, 2012 ) , with the Sun and all eight planets included in the model.
+First, we initialized 10 million test particles and integrated their orbits for 10 kyr using the IAS15 integrator (Rein and Spiegel, 2015 ) .
+The semimajor axes, eccentricities, and inclinations were randomly sampled from normal distributions—with means of 1 au, 0, and 0 ∘ 0^{\circ} , and standard deviations of 0.0667 au, 0.0667 (absolute values enforced), and 10 ∘ 10^{\circ} , respectively—while all angular orbital elements were drawn uniformly from [ 0 , 2 ​ π ) [0,2\pi) .
+This initial distribution matches that of Lifset et al. ( 2021 ) .
+During the integration, any particle that ventured beyond the half-space on the Earth-leading side was removed.
+At the end of this phase, 93 795 particles survived.
+
+We compared the orbital element distributions of the survivors with those of the initial ensemble and found no significant differences except in the semimajor axis.
+The surviving particles exhibit a tight clustering near 1.0 au, with a standard deviation of only 0.0013 au—much less than the initial spread of 0.0667 au; none deviate from 1.0 au by more than 0.0029 au.
+Even particles that survived only 100 yr show deviations smaller than 0.0065 au from 1.0 au.
+We also examined the two known ETAs, (706765) 2010 TK 7 and (614689) 2020 XL 5 , as listed in the Minor Planet Center (MPC) database; both lie within 1 ​ σ 1\sigma of 1.0 au.
+Together, these results indicate that—even for temporary ETAs—the semimajor axis is highly constrained, while other orbital elements are comparatively permissive.
+
+Figure 3 :
+Surface probability density of stable L4 ETAs, expressed as
+D ​ ( λ , β ) = d ​ P / d ​ Ω D(\lambda,\beta)=\mathrm{d}P/\mathrm{d}\Omega ,
+where P P is the total probability of finding an ETA and Ω \Omega denotes solid angle on the sky.
+The color scale shows log 10 ⁡ ( D ​ ( λ , β ) ) \log_{10}\!\big(D(\lambda,\beta)\big) ,
+with D ​ ( λ , β ) D(\lambda,\beta) normalized such that ∬ D ​ ( λ , β ) ​ cos ⁡ β ​ d ​ λ ​ d ​ β = 1 \iint D(\lambda,\beta)\cos\beta\,\mathrm{d}\lambda\,\mathrm{d}\beta=1 .
+This D ​ ( λ , β ) D(\lambda,\beta) is the spatial probability density used in Equation ( 7 ).
+The black dot marks the L4 Lagrange point at ( − 60 ∘ , 0 ∘ ) (-60^{\circ},0^{\circ}) .
+The four rectangles roughly indicate the sky coverage for each of the four observing nights.
+The positions of the two known L4 ETAs are also marked:
+(706765) 2010 TK 7 is shown with “ × \times ” symbols and (614689) 2020 XL 5 with “ + + ” symbols.
+Their colors correspond to the same four nights as the rectangles, illustrating the motion of these objects over the survey period.
+
+We then divided the 93 795 survivors into 100 subsets and propagated their orbits for 10 Myr in parallel using the REBOUND WHFast integrator (Rein and Tamayo, 2015 ) , with 17th-order symplectic correctors (Wisdom and Holman, 1991 ) , following the setup of Yeager and Golovich ( 2022 ) .
+This switch from IAS15 was necessary because preliminary tests showed that IAS15 would be computationally prohibitive for such long integrations.
+We defined 2 15 = 32 768 2^{15}=32\,768 uniformly spaced checkpoints and, at each one, checked whether a particle had crossed the L 3 point or the Earth.
+After 10 Myr, 57 261 particles remained and were classified as stable L4 ETAs.
+We computed their geocentric ecliptic coordinates in the Sun–Earth co-rotating frame as defined in Fig. 2 .
+The resulting spatial distribution (Fig. 3 ) consists of two components: a high-density, horizontally oriented “wizard hat” and a more diffuse “top hat” background.
+We interpret these as corresponding to the two ETA populations with distinct inclination ranges mentioned in Section 1 .
+Indeed, the inclination distribution of the 10 Myr ETAs exhibits a clear gap near 20 ∘ 20^{\circ} , separating the population into low- and high-inclination groups.
+Furthermore, when comparing the 93 795 10 kyr survivors with the 57 261 10 Myr ETAs, we find that the standard deviation of the semimajor axis remains essentially unchanged, whereas that of the eccentricity decreases by approximately 25%. This dynamical filtering may be attributed to secular resonances.
+
+4 Results
+
+4.1 Detections
+
+Our survey detected thousands of solar system objects, ranging from NEOs to comets. Table 3 summarizes the daily detections by dynamical class. Since many objects were observed on multiple nights, we also report the number of unique objects (de-duplicated across epochs) in the final row. Several unknown asteroid candidates appear in our results, but these are either artifacts or comets (comet orbits are not included in our identification process). Thus, no new solar system objects were found.
+
+We also examined the two known ETAs. During our survey, asteroid (706765) 2010 TK 7 was predicted to have an apparent magnitude of V ∼ 21.6 V\sim 21.6 mag, which is not too faint to be detectable. However, it is located near ( − 87 ∘ , − 59 ∘ ) (-87^{\circ},-59^{\circ}) (September 25) in Fig. 3 , a very rare region where stable ETAs would reside. Most importantly, it lies in the southern sky, where the altitude is too low for our observations. Asteroid (614689) 2020 XL 5 is located near ( − 68 ∘ , − 14 ∘ ) (-68^{\circ},-14^{\circ}) (September 25) in Fig. 3 , also outside our survey region. Moreover, its V-band magnitude was ∼ 23.3 \sim 23.3 mag, too faint to be recovered by this survey even if it had been within the surveyed area.
+
+Table 3 : Orbit type of detected solar system objects
+
+Date
+Aten
+Apollo
+Amor
+MC
+Hungaria
+Phocaea
+MBA
+Hilda
+DO
+Comet
+Total
+
+2025-09-22
+0
+3
+6
+14
+16
+21
+2661
+13
+2
+2
+2738
+
+2025-09-23
+0
+2
+2
+5
+8
+10
+1370
+7
+0
+2
+1406
+
+2025-09-25
+2
+3
+6
+23
+22
+29
+3648
+11
+1
+3
+3748
+
+2025-09-29
+1
+1
+1
+11
+5
+9
+1553
+5
+0
+1
+1587
+
+Total
+3
+9
+15
+53
+51
+69
+9232
+36
+3
+8
+9479
+
+Unique
+3
+7
+8
+35
+33
+38
+5395
+22
+2
+4
+5547
+
+Note: MC = Mars-crosser, MBA = Main Belt Asteroid, DO = Distant object
+
+To assess potential biases in our recovery efficiency, we examined the dependence of the catalog-based recovery rate R k ​ ( V ) R_{k}(V) on apparent sky motion. We find no significant correlation between recovery rate and proper motion across our search range, which encompasses the expected motion of stable ETAs ( 0.75 0.75 – 1.25 ∘ ​ day − 1 1.25^{\circ}\,\mathrm{day}^{-1} ). This is further demonstrated by our successful recovery of fast-moving known asteroids. Table 4 lists cataloged objects in our AVRO data with proper motion exceeding 0.65 ∘ ​ day − 1 0.65^{\circ}\,\mathrm{day}^{-1} . Of the 15 entries, 12 were successfully recovered by our blind search pipeline. The three unrecovered cases correspond to objects that yielded only two detections in a single night—insufficient to satisfy the minimum three-detection requirement for tracklet formation. Notably, several recovered objects exhibit motions ≳ 1 ∘ ​ day − 1 \gtrsim 1^{\circ}\,\mathrm{day}^{-1} , comparable to or exceeding typical stable ETA rates. Furthermore, if we restrict our analysis to objects with three or more detections on a single night in the AVRO data, all objects not recovered by our blind search exhibit proper motions below 0.6 ∘ ​ day − 1 0.6^{\circ}\,\mathrm{day}^{-1} . This suggests that our blind search may be more sensitive to fast-moving objects.
+
+These results confirm that our pipeline is capable of detecting and linking fast-moving asteroids, and that the recovery efficiency is not suppressed at high proper motions. Consequently, the catalog-based R k ​ ( V ) R_{k}(V) defined in Section 3.1 remains applicable for ETA population estimates.
+
+Table 4 : Solar system objects with proper motion ¿ 0.65 deg/day in our AVRO data
+
+Designation
+MJD
+R.A.
+Dec.
+V
+Type
+N_det
+PM
+Found
+
+deg
+deg
+mag
+
+deg/day
+
+(615555)
+60940.901609
+122.506667
+21.07854
+22.35
+MC
+4
+0.672
+True
+
+(89355)
+60943.933530
+132.592881
+16.84339
+20.00
+Amor
+3
+0.674
+True
+
+(468583)
+60940.907106
+121.714833
+16.02130
+20.55
+Apollo
+6
+0.684
+True
+
+(131702)
+60941.928206
+133.197435
+18.09701
+19.14
+MC
+2
+0.688
+False
+
+(131702)
+60943.932986
+134.412363
+17.31660
+19.12
+MC
+2
+0.689
+False
+
+(345722)
+60947.936713
+134.591356
+16.13681
+20.17
+Aten
+6
+0.691
+True
+
+(162741)
+60943.906157
+125.269461
+23.20511
+20.90
+Amor
+3
+0.697
+True
+
+(131702)
+60947.938924
+136.820715
+15.70592
+19.08
+MC
+3
+0.700
+True
+
+(162741)
+60940.905486
+122.959868
+23.25006
+20.88
+Amor
+6
+0.708
+True
+
+1994 WZ2
+60947.925775
+132.146536
+16.85806
+21.32
+MC
+3
+0.723
+True
+
+(217807)
+60941.888646
+117.655879
+23.10759
+20.87
+Amor
+3
+0.896
+True
+
+(507847)
+60940.918634
+127.831080
+22.67971
+20.85
+Amor
+6
+0.960
+True
+
+(507847)
+60943.919294
+130.919367
+22.15303
+20.82
+Amor
+6
+0.970
+True
+
+(140158)
+60941.889201
+116.937270
+18.87826
+21.37
+Apollo
+2
+1.093
+False
+
+(862524)
+60940.901609
+120.945149
+22.69763
+21.40
+Apollo
+3
+1.127
+True
+
+Note: N_det = Number of detection, PM = Proper Motion, MC = Mars-crosser
+
+4.2 L4 ETA Upper Limit
+
+The recovery rates for each night are shown in Fig. 4 . Error bars in Fig. 4 represent 95% Wilson score confidence intervals for the binomial recovery proportion (Wilson, 1927 ) . Due to poor observing conditions, the recovery rate R k ​ ( V ) R_{k}(V) on 2025 September 23 and 29 falls below 50% for V ≳ 20 V\gtrsim 20 . In contrast, on September 22 and 25, the total recovery rate remains above 50% up to V ≲ 21.5 V\lesssim 21.5 . For V < 18 V<18 , the recovery rate exhibits large fluctuations due to the small number of cataloged asteroids in this brightness range; the detection or non-detection of a single object can cause R k ​ ( V ) R_{k}(V) to vary abruptly between 0 and 1.
+
+Figure 4 : Recovery rate R k ​ ( V ) R_{k}(V) of our L4 survey on each of the four nights. The red dashed line shows the recovery rate derived from AVRO data, the blue dotted line from the science catalog, and the black solid line the combined total recovery rate. Error bars are 95% Wilson confidence intervals.
+
+The effective sky area available for ETAs analysis was 106.28, 134.66, 168.76, and 120.22 deg 2 on the four nights, respectively. For each night, we computed the fractional coverage as the integral of the long-term orbital stability probability density (see Fig. 3 ) over the observed footprint, yielding values of 15.68%, 19.66%, 24.66%, and 16.59%, respectively. Accounting for overlapping regions between nights, the total unique surveyed area is 236.74 deg 2 , corresponding to a cumulative probability coverage fraction of 33.24%. This represents the largest dedicated survey for ETAs to date.
+
+In this work, we defined a sky grid covering longitude from − 45 ∘ -45^{\circ} to − 75 ∘ -75^{\circ} and latitude from − 6 ∘ -6^{\circ} to 6 ∘ 6^{\circ} , with a resolution of l = 1 / 180 ∘ l=1/180^{\circ} in both dimensions, resulting in a 5400 × 2160 5400\times 2160 grid that encompasses our survey area (regions not usable or not covered are shown in white in Fig. 2 ). For each grid cell, the solid angle is given by S n = l 2 ​ cos ⁡ β = ( cos ⁡ β ) / 180 2 ​ deg 2 S_{n}=l^{2}\cos\beta=(\cos\beta)/180^{2}\deg^{2} . Using bilinear interpolation, we derived the probability density D n D_{n} (normalized to deg − 2 \deg^{-2} ) for each grid cell, as displayed in Fig. 3 . For the missing values on the left side of Fig. 4 , we applied linear interpolation to obtain R k ​ ( V ) R_{k}(V) . In the subsequent calculations, we employed only the total recovery rate, rather than the AVRO or science catalog recovery rates.
+
+Now, we can compute the upper limit U ​ ( H ) U(H) using Equations ( 10 ) and ( 1 ), as shown in Fig. 5 . In this work, we assume an albedo of 0.15 0.15 to convert H H to size, and the corresponding size scale is also shown in Fig. 5 . The integration in Equation ( 10 ) effectively smooths the U ​ ( H ) U(H) curve despite the noisy behavior of R k ​ ( V ) R_{k}(V) at bright magnitudes (cf. Fig. 4 ), enabling a high-resolution estimate of the population upper limit. For H < 19.4 H<19.4 , our results yield U ​ ( H ) ≲ 20 U(H)\lesssim 20 .
+
+Figure 5 : Differential upper limit U ​ ( H ) U(H) on the population of L4 ETAs, expressed as the maximum number per unit absolute magnitude, computed directly from our survey data using Equations ( 1 ) and ( 10 ). The flat segment at bright magnitudes ( H ≲ 19.5 H\lesssim 19.5 ) is limited by geometric coverage, while the steep decline at faint magnitudes ( H ≳ 20.5 H\gtrsim 20.5 ) is driven by the survey’s limiting magnitude.
+
+5 Discussion
+
+We follow Lifset et al. ( 2021 ) ’s approach to calculate the cumulative upper limit N ( < H ) N(<H) of the ETA population. We compute the spatial probability distribution using the simulation method described in Section 3.2 to avoid overestimating the effective observational coverage. The cumulative upper limit N ( < H ) N(<H) is modeled as a broken power law:
+
+N ( < H ) = A ⋅ 10 α ​ H , N(<H)=A\cdot 10^{\alpha H},
+
+(11)
+
+where the slope α \alpha adopts values from the NEO size–frequency distribution model of Schunová-Lilly et al. ( 2017 ) : α = 0.48 ± 0.02 \alpha=0.48\pm 0.02 for 13 < H < 16 13<H<16 , α = 0.33 ± 0.01 \alpha=0.33\pm 0.01 for 16 < H < 22 16<H<22 , and α = 0.62 ± 0.03 \alpha=0.62\pm 0.03 for H > 22 H>22 .
+
+Differentiating both sides of Equation ( 11 ) with respect to H H yields the differential upper limit:
+
+U ​ ( H ) = d ​ N d ​ H = A ⋅ α ⋅ ln ⁡ ( 10 ) ⋅ 10 α ​ H . U(H)=\frac{dN}{dH}=A\cdot\alpha\cdot\ln(10)\cdot 10^{\alpha H}.
+
+(12)
+
+Rearranging this expression gives:
+
+A = U ​ ( H ) α ⋅ ln ⁡ ( 10 ) ⋅ 10 α ​ H . A=\frac{U(H)}{\alpha\cdot\ln(10)\cdot 10^{\alpha H}}.
+
+(13)
+
+To obtain the tightest possible cumulative upper limit, we minimize A A by evaluating Equation ( 13 ) across the range 16 < H < 22 16<H<22 . The minimum occurs at H = 19.1 H=19.1 , where U ​ ( H ) ≈ 14.5 U(H)\approx 14.5 and N ( < H ) ≈ 19.1 N(<H)\approx 19.1 .
+
+We compare our results with previous surveys in Fig. 6 , assuming that the L4 and L5 regions are symmetric. For reference, our best-fit broken-power-law model yields N ​ ( H < 16 ) = 1.81 N(H<16)=1.81 and N ​ ( H < 22 ) = 173 N(H<22)=173 . This represents the most stringent upper limit on the ETA population to date.
+
+Figure 6 : Cumulative upper limits on the L4/L5 ETA population from this work and previous surveys. The blue line and diamond show the result of Whiteley and Tholen ( 1998 ) , gold line and square show the result of Markwardt et al. ( 2020 ) , green line and triangle show the result of Lifset et al. ( 2021 ) , and red line and circle show the result of this work (with N ​ ( H < 19.1 ) ≈ 19 N(H<19.1)\approx 19 ). Results from Cambioni et al. ( 2018 ) and Yoshikawa et al. ( 2018 ) are not plotted due to insufficient observational details, but their limits are weaker than that of Markwardt et al. ( 2020 ) .
+
+Current research on ETAs typically assumes that the L4 and L5 regions are symmetric. This assumption is not problematic, given that the paucity of detected ETAs precludes statistically conclusive results. Nevertheless, the two known ETAs are both located near L4. This raises the question of whether this observational bias is merely a coincidence or whether it hints at hidden clues regarding the evolutionary history of our Solar System. Notably, the number of L4 Jupiter Trojans exceeds that of L5 Jupiter Trojans, even after accounting for possible selection effects and faint completeness limits (Szabo et al. , 2007 ) . This asymmetry suggests that Jupiter may have experienced a dynamical event—such as a scattering encounter with an ice giant (Nesvorný et al. , 2013 ) , rapid inward migration (Pirani et al. , 2019 ) , or rapid outward migration (Li et al. , 2023 ) . Therefore, obtaining more comprehensive information on both L4 and L5 ETAs is valuable for understanding the dynamical history of the Earth and the broader Solar System.
+
+As in previous ETA surveys, no stable ETAs were discovered in this work. One possible explanation is that, for ground-based telescopes, the observational windows for the L4 and L5 regions are limited to specific months or weeks, and observations must be carried out shortly after sunset or before sunrise at low altitudes—for instance, during twilight—which is far from ideal for fully utilizing a telescope’s capabilities. For regions very close to the Sun, the altitude and observing window become too poor to yield useful data. Another possibility is that stable ETAs are both rare and small, or that none have survived to the present day. Dynamical studies incorporating the Yarkovsky effect suggest that small primordial ETAs are unlikely to have survived to the present day (Zhou et al. , 2019 ) . Our wide-area survey places a cumulative upper limit of N ​ ( H < 21.3 ) ≲ 100 N(H<21.3)\lesssim 100 on the population of large stable ETAs. Thus, the primordial ETA population is likely extremely scarce, if it exists at all. However, many temporary ETAs may still await discovery, as they could be spread over a wider region around the Lagrange points and exhibit a broader proper motion distribution.
+
+If any primordial ETAs do exist, they likely reside in sky regions close to the Sun, where ground-based observations are severely constrained by low solar elongation, bright twilight conditions, and short observing windows near the horizon. Furthermore, the physical properties of ETAs remain poorly constrained; should their size–frequency distribution differ significantly from that of NEOs, current population estimates could be substantial underestimates.
+
+To further constrain the ETA population, dedicated future surveys will be essential—particularly the Vera C. Rubin Observatory’s Legacy Survey of Space and Time (Jones et al. , 2018 ) and space-based missions such as NASA’s NEO Surveyor (Mainzer et al. , 2023 ) . The former achieves a deep limiting magnitude and simultaneously covers a large sky area, both of which are advantageous for discovering new ETAs. The latter, situated at the Earth–Sun L1 point, suffers no observing window constraints, is unaffected by adverse weather, and provides infrared observing capabilities that are more sensitive to asteroids—offering numerous advantages over ground-based telescopes for ETA discovery.
+
+Acknowledgements. This work is supported by National Key Research and Development Program of China (2023YFA1608100). The authors gratefully acknowledge the support provided by the National Natural Science Foundation of China (NSFC, Grant No. 12233008), the CAS Project for Young Scientists in Basic Research (No. YSBR-092), Guizhou Provincial Major Scientific and Technological Programs XKBF (2025)010 and XKBF (2025)011, Cyrus Chun Ying Tang Foundations and the 111 Project for “Observational and Theoretical Research on Dark Matter and Dark Energy” (B23042).
+
+References
+
+E. Belbruno and J. R. Gott Iii (2005)
+Where did the moon come from? .
+
+AJ 129 ( 3 ), pp. 1724–1745 .
+
+External Links: ISSN 0004-6256, 1538-3881 ,
+Document
+
+Cited by: §1 .
+
+E. Bowell, B. Hapke, D. Domingue, K. Lumme, J. Peltoniemi, and A. W. Harris (1989)
+Application of photometric models to asteroids. .
+
+University of Arizona Press , Tucson, AZ .
+
+Cited by: §3.1 .
+
+M. Cai, Z. Xu, L. Fan, Z. Wan, X. Kong, W. Hu, J. Jiang, L. Hu, Q. Zhu, G. Li, J. Lin, M. Fang, Y. Xue, X. Zhen, and T. Wang (2025)
+The 2.5-meter wide field survey telescope real-time data processing pipeline I: From raw data to alert distribution .
+
+arXiv .
+
+External Links: 2501.15018 ,
+Document
+
+Cited by: §2.1 ,
+§2.2 .
+
+S. Cambioni, R. Malhotra, C. W. Hergenrother, B. Rizk, J. N. Kidd, C. Drouet d’Aubigny, S. R. Chesley, F. Shelly, E. Christensen, D. Farnocchia, and D. S. Lauretta (2018)
+An upper limit on earth’s trojan asteroid population from OSIRIS-rex .
+
+In 49th Annual Lunar and Planetary Science Conference ,
+
+pp. 1149 .
+
+Cited by: §1 ,
+Figure 6 ,
+Figure 6 .
+
+M. Connors, P. Wiegert, and C. Veillet (2011)
+Earth’s trojan asteroid .
+
+Nature 475 ( 7357 ), pp. 481–483 .
+
+External Links: ISSN 1476-4687 ,
+Document
+
+Cited by: §1 .
+
+M. Ćuk, D. P. Hamilton, and M. J. Holman (2012)
+Long-term stability of horseshoe orbits: Long-term stability of horseshoe orbits .
+
+MNRAS 426 ( 4 ), pp. 3051–3056 .
+
+External Links: ISSN 00358711 ,
+Document
+
+Cited by: §1 .
+
+L. Denneau, R. Jedicke, T. Grav, M. Granvik, J. Kubica, A. Milani, P. Vereš, R. Wainscoat, D. Chang, F. Pierfederici, N. Kaiser, K. C. Chambers, J. N. Heasley, E. A. Magnier, P. A. Price, J. Myers, J. Kleyna, H. Hsieh, D. Farnocchia, C. Waters, W. H. Sweeney, D. Green, B. Bolin, W. S. Burgett, J. S. Morgan, J. L. Tonry, K. W. Hodapp, S. Chastel, S. Chesley, A. Fitzsimmons, M. Holman, T. Spahr, D. Tholen, G. V. Williams, S. Abe, J. D. Armstrong, T. H. Bressi, R. Holmes, T. Lister, R. S. McMillan, M. Micheli, E. V. Ryan, W. H. Ryan, and J. V. Scotti (2013)
+The pan-STARRS moving object processing system .
+
+PASP 125 ( 926 ), pp. 357–395 .
+
+External Links: ISSN 00046280, 15383873 ,
+Document
+
+Cited by: §2.1 .
+
+R. Dvorak, C. Lhotka, and L. Zhou (2012)
+The orbit of 2010 TK7: possible regions of stability for other earth trojan asteroids .
+
+A&A 541 , pp. A127 .
+
+External Links: ISSN 0004-6361 ,
+Document
+
+Cited by: §1 .
+
+M. J. Holman, M. J. Payne, P. Blankley, R. Janssen, and S. Kuindersma (2018)
+HelioLinC: a novel approach to the minor planet linking problem .
+
+AJ 156 ( 3 ), pp. 135 .
+
+External Links: ISSN 1538-3881 ,
+Document
+
+Cited by: §2.1 .
+
+M. Hu, L. Hu, J. Jiang, L. Xiao, L. Fan, J. Wei, and X. Wu (2022)
+Prospects of searching for type ia supernovae with 2.5-m wide field survey telescope .
+
+Universe 9 ( 1 ), pp. 7 .
+
+External Links: ISSN 2218-1997 ,
+Document
+
+Cited by: §2.1 .
+
+M. Hui, P. A. Wiegert, D. J. Tholen, and D. Föhring (2021)
+The second earth trojan 2020 XL5 .
+
+ApJL 922 ( 2 ), pp. L25 .
+
+External Links: ISSN 2041-8205 ,
+Document
+
+Cited by: §1 .
+
+T. Ito and R. Malhotra (2010)
+Asymmetric impacting on the moon and its dependence on debiased NEA models .
+
+In AGU Fall Meeting Abstracts ,
+
+Vol. 2010 , pp. P53C–1537 .
+
+Cited by: §1 .
+
+R. L. Jones, C. T. Slater, J. Moeyens, L. Allen, T. Axelrod, K. Cook, Ž. Ivezić, M. Jurić, J. Myers, and C. E. Petry (2018)
+The large synoptic survey telescope as a near-earth object discovery machine .
+
+Icarus 303 , pp. 181–202 .
+
+External Links: ISSN 0019-1035 ,
+Document
+
+Cited by: §5 .
+
+L. Lei, Q. Zhu, X. Kong, T. Wang, X. Zheng, D. Shi, L. Fan, and W. Liu (2023)
+Limiting magnitudes of the wide field survey telescope (WFST) .
+
+RAA 23 ( 3 ), pp. 035013 .
+
+External Links: ISSN 1674-4527 ,
+Document
+
+Cited by: §2.1 .
+
+J. Li, Z. J. Xia, F. Yoshida, N. Georgakarakos, and X. Li (2023)
+Asymmetry in the number of L4 and L5 jupiter trojans driven by jumping jupiter .
+
+A&A 669 , pp. A68 .
+
+External Links: ISSN 0004-6361, 1432-0746 ,
+Document
+
+Cited by: §5 .
+
+N. Lifset, N. Golovich, E. Green, R. Armstrong, and T. Yeager (2021)
+A search for L4 earth trojan asteroids using a novel track-before-detect multiepoch pipeline .
+
+AJ 161 ( 6 ), pp. 282 .
+
+External Links: ISSN 1538-3881 ,
+Document
+
+Cited by: §1 ,
+§3.2 ,
+Figure 6 ,
+Figure 6 ,
+§5 .
+
+J. Lin, T. Wang, M. Cai, Z. Wan, X. Li, L. Fan, Q. Zhu, J. Jiang, N. Jiang, X. Kong, Z. Lin, J. Zhu, Z. Liu, J. Gao, B. Li, F. Li, M. Liang, H. Liu, W. Liu, W. Luo, J. Tang, H. Wang, J. Wang, Y. Xue, D. Yao, H. Zhang, X. Zhang, W. Zhao, and X. Zheng (2025)
+Minute-cadence observations of the galactic plane with the wide field survey telescope (WFST): Overview, methodology, and early results .
+
+ApJS 278 ( 1 ), pp. 29 .
+
+External Links: ISSN 0067-0049, 1538-4365 ,
+Document
+
+Cited by: §2.1 .
+
+Z. Lin, N. Jiang, and X. Kong (2022)
+The prospects of finding tidal disruption events with 2.5-m wide-field survey telescope based on mock observations .
+
+MNRAS 513 ( 2 ), pp. 2422–2436 .
+
+External Links: ISSN 0035-8711, 1365-2966 ,
+Document
+
+Cited by: §2.1 .
+
+Z. Liu, Z. Lin, J. Yu, H. Wang, G. Mourani, W. Zhao, and Z. Dai (2023)
+Target-of-opportunity observation detectability of kilonovae with WFST .
+
+ApJ 947 ( 2 ), pp. 59 .
+
+External Links: ISSN 0004-637X ,
+Document
+
+Cited by: §2.1 .
+
+J. Lu, L. Fan, M. Cai, S. Wang, B. Fu, X. Kong, and Q. Zhu (2025)
+Search capability for near-earth objects with the wide field survey telescope .
+
+PASP 137 ( 2 ), pp. 024401 .
+
+External Links: ISSN 1538-3873 ,
+Document
+
+Cited by: §2.1 .
+
+A. K. Mainzer, J. R. Masiero, P. A. Abell, J. M. Bauer, W. Bottke, B. J. Buratti, S. J. Carey, D. Cotto-Figueroa, R. M. Cutri, D. Dahlen, P. R. M. Eisenhardt, Y. R. Fernandez, R. Furfaro, T. Grav, T. L. Hoffman, M. S. Kelley, Y. Kim, J. D. Kirkpatrick, C. R. Lawler, E. Lilly, X. Liu, F. Marocco, K. A. Marsh, F. J. Masci, C. W. McMurtry, M. Pourrahmani, L. Reinhart, M. E. Ressler, A. Satpathy, C. A. Schambeau, S. Sonnett, T. B. Spahr, J. A. Surace, M. Vaquero, E. L. Wright, G. R. Zengilowski, and NEO Surveyor Mission Team (2023)
+The near-earth object surveyor mission .
+
+PSJ 4 ( 12 ), pp. 224 .
+
+External Links: ISSN 2632-3338 ,
+Document
+
+Cited by: §5 .
+
+R. Malhotra (2019)
+The case for a deep search for earth’s trojan asteroids .
+
+Nat. Astron. 3 ( 3 ), pp. 193–194 .
+
+External Links: ISSN 2397-3366 ,
+Document
+
+Cited by: §1 .
+
+L. Markwardt, D. W. Gerdes, R. Malhotra, J. C. Becker, S. J. Hamilton, and F. C. Adams (2020)
+Search for L5 earth trojans with decam .
+
+MNRAS 492 ( 4 ), pp. 6105–6119 .
+
+External Links: ISSN 0035-8711 ,
+Document
+
+Cited by: §1 ,
+§2.2 ,
+Figure 6 ,
+Figure 6 .
+
+F. Marzari and H. Scholl (2013)
+Long term stability of earth trojans .
+
+Celest. Mech. Dyn. Astron. 117 ( 1 ), pp. 91–100 .
+
+External Links: ISSN 0923-2958, 1572-9478 ,
+Document
+
+Cited by: §1 .
+
+D. Nesvorný, D. Vokrouhlický, and A. Morbidelli (2013)
+Capture of trojans by jumping jupiter .
+
+ApJ 768 ( 1 ), pp. 45 .
+
+External Links: ISSN 0004-637X, 1538-4357 ,
+Document
+
+Cited by: §5 .
+
+J. Peña Zamudio and C. Fuentes (2021)
+ALEPH: Fast accurate ephemeris of asteroids .
+
+In AAS/Division for Planetary Sciences Meeting Abstracts #53 ,
+
+Vol. 53 , pp. 306.03 .
+
+Cited by: §3.1 .
+
+S. Pirani, A. Johansen, B. Bitsch, A. J. Mustill, and D. Turrini (2019)
+Consequences of planetary migration on the minor bodies of the early solar system .
+
+A&A 623 , pp. A169 .
+
+External Links: ISSN 0004-6361, 1432-0746 ,
+Document
+
+Cited by: §5 .
+
+H. Rein and S.-F. Liu (2012)
+REBOUND: an open-source multi-purpose N -body code for collisional dynamics .
+
+A&A 537 , pp. A128 .
+
+External Links: ISSN 0004-6361, 1432-0746 ,
+Document
+
+Cited by: §3.2 .
+
+H. Rein and D. S. Spiegel (2015)
+Ias15: a fast, adaptive, high-order integrator for gravitational dynamics, accurate to machine precision over a billion orbits .
+
+MNRAS 446 ( 2 ), pp. 1424–1437 .
+
+External Links: ISSN 1365-2966, 0035-8711 ,
+Document
+
+Cited by: §3.2 .
+
+H. Rein and D. Tamayo (2015)
+Whfast: a fast and unbiased implementation of a symplectic wisdom–holman integrator for long-term gravitational simulations .
+
+MNRAS 452 ( 1 ), pp. 376–388 .
+
+External Links: ISSN 0035-8711, 1365-2966 ,
+Document
+
+Cited by: §3.2 .
+
+E. Schunová-Lilly, R. Jedicke, P. Vereš, L. Denneau, and R. J. Wainscoat (2017)
+The size-frequency distribution of H > > 13 neos and ARM target candidates detected by pan-STARRS1 .
+
+Icarus 284 , pp. 114–125 .
+
+External Links: ISSN 00191035 ,
+Document
+
+Cited by: §5 .
+
+Z. Su, Z. Cai, J. Wang, T. Wang, Y. Xue, M. Cai, L. Fan, H. Guo, Z. He, Z. He, X. Hu, J. Jiang, N. Jiang, W. Kang, L. Lei, G. Liu, T. Liu, Z. Liu, Z. Sheng, M. Sun, and W. Zhao (2024)
+Could the interband lag of active galactic nucleus vary randomly? .
+
+ApJ 976 ( 2 ), pp. 155 .
+
+External Links: ISSN 0004-637X, 1538-4357 ,
+Document
+
+Cited by: §2.1 .
+
+P. J. Sutton (2009)
+Upper limits from counting experiments with multiple pipelines .
+
+Classical and Quantum Gravity 26 , pp. 245007 .
+
+External Links: ISSN 0264-9381 ,
+Document
+
+Cited by: §3.1 ,
+footnote 2 .
+
+G. M. Szabo, Z. Ivezic, M. Juric, and R. Lupton (2007)
+The properties of jovian trojan asteroids listed in SDSS moving object catalogue 3 .
+
+MNRAS 377 ( 4 ), pp. 1393–1406 .
+
+External Links: ISSN 0035-8711, 1365-2966 ,
+Document
+
+Cited by: §5 .
+
+S. A. Tabachnik and N. W. Evans (2000)
+Asteroids in the inner solar system - I. Existence .
+
+MNRAS 319 , pp. 63–79 .
+
+External Links: ISSN 0035-8711 ,
+Document
+
+Cited by: §1 .
+
+Z. Wan, L. Fan, X. Li, X. Kong, T. Wang, Q. Zhu, J. Jiang, M. Cai, Z. Xu, X. Zheng, J. Cheng, F. Li, M. Liang, H. Liu, W. Luo, J. Tang, H. Wang, J. Wang, Y. Xue, D. Yao, H. Zhang, and W. Zhao (2025)
+Tidal structures of six globular clusters from the wide field survey telescope (WFST) pilot survey .
+
+MNRAS 540 ( 4 ), pp. 2863–2876 .
+
+External Links: ISSN 0035-8711, 1365-2966 ,
+Document
+
+Cited by: §2.1 .
+
+S. Wang, B. Fu, J. Lu, L. Fan, M. Cai, Z. Xu, X. Kong, H. Zhao, B. Li, Y. Liu, Q. Zhu, X. Zhou, Z. Wan, J. Cheng, J. Jiang, F. Li, M. Liang, H. Liu, W. Luo, Z. Lou, H. Wang, J. Wang, T. Wang, Y. Xue, H. Zhang, and W. Zhao (2025)
+A heliocentric-orbiting objects processing system (HOPS) for the wide field survey telescope: Architecture, processing workflow, and preliminary results .
+
+AJ 169 ( 5 ), pp. 272 .
+
+External Links: ISSN 1538-3881 ,
+Document
+
+Cited by: §2.1 ,
+§2.1 ,
+§2.2 .
+
+T. Wang, G. Liu, Z. Cai, J. Geng, M. Fang, H. He, J. Jiang, N. Jiang, X. Kong, B. Li, Y. Li, W. Luo, Z. Pan, X. Wu, J. Yang, J. Yu, X. Zheng, Q. Zhu, Y. Cai, Y. Chen, Z. Chen, Z. Dai, L. Fan, Y. Fan, W. Fang, Z. He, L. Hu, M. Hu, Z. Jin, Z. Jiang, G. Li, F. Li, X. Li, R. Liang, Z. Lin, Q. Liu, W. Liu, Z. Liu, W. Liu, Y. Liu, Z. Lou, H. Qu, Z. Sheng, J. Shi, Y. Shu, Z. Su, T. Sun, H. Wang, H. Wang, J. Wang, J. Wang, D. Wei, J. Wei, Y. Xue, J. Yan, C. Yang, Y. Yuan, Y. Yuan, H. Zhang, M. Zhang, H. Zhao, and W. Zhao (2023)
+Sciences with the 2.5-meter wide field survey telescope (WFST) .
+
+Sci. China Phys. Mech. Astron. 66 ( 10 ), pp. 109512 .
+
+External Links: 2306.07590 ,
+ISSN 1674-7348, 1869-1927 ,
+Document
+
+Cited by: §2.1 .
+
+R. J. Whiteley and D. J. Tholen (1998)
+A CCD search for lagrangian asteroids of the earth–sun system .
+
+Icarus 136 ( 1 ), pp. 154–167 .
+
+External Links: ISSN 0019-1035 ,
+Document
+
+Cited by: §1 ,
+Figure 6 ,
+Figure 6 .
+
+E. B. Wilson (1927)
+Probable inference, the law of succession, and statistical inference .
+
+Journal of the American Statistical Association 22 ( 158 ), pp. 209–212 .
+
+External Links: ISSN 0162-1459 ,
+Document
+
+Cited by: §4.2 .
+
+J. Wisdom and M. Holman (1991)
+Symplectic maps for the n-body problem .
+
+AJ 102 , pp. 1528 .
+
+External Links: ISSN 00046256 ,
+Document
+
+Cited by: §3.2 .
+
+T. Yeager, N. Golovich, and K. Pruett (2024)
+MEGASIM: Distribution and detection of earth trojan asteroids .
+
+ApJ 961 ( 2 ), pp. 250 .
+
+External Links: ISSN 0004-637X ,
+Document
+
+Cited by: §1 ,
+§2.1 .
+
+T. Yeager and N. Golovich (2022)
+MEGASIM: Lifetimes and resonances of earth trojan asteroids—the death of primordial etas? .
+
+ApJ 938 ( 1 ), pp. 9 .
+
+External Links: ISSN 0004-637X, 1538-4357 ,
+Document
+
+Cited by: §1 ,
+§3.2 .
+
+M. Yoshikawa, Y. Tsuda, S. Watanabe, S. Tanaka, S. Nakazawa, F. Terui, T. Saiki, and Hayabusa2 Project Team (2018)
+Mission status of hayabusa2 .
+
+In 49th Annual Lunar and Planetary Science Conference ,
+
+pp. 1771 .
+
+Cited by: §1 ,
+Figure 6 ,
+Figure 6 .
+
+L. Zhou, Y. Xu, L. Zhou, R. Dvorak, and J. Li (2019)
+Orbital stability of earth trojans .
+
+A&A 622 , pp. A97 .
+
+External Links: ISSN 0004-6361, 1432-0746 ,
+Document
+
+Cited by: §1 ,
+§5 .
+
+Experimental support, please
+view the build logs
+for errors. Generated by
+
+L
+A
+T
+E
+
+xml
+
+.
+
+Instructions for reporting errors
+We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+methods listed below:
+
+Click the "Report Issue" (
+
+) button, located in the page header.
+
+Tip: You can select the relevant text first, to include it in your report.
+Our team has already identified the following issues . We appreciate your time reviewing and reporting rendering errors we
+may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+all.
+Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a list of packages that need conversion , and welcome developer contributions .
+
+We gratefully acknowledge support from
+our major funders ,
+member institutions , ,
+and all contributors.
+
+About
+·
+Help
+·
+Contact
+·
+Subscribe
+·
+Copyright
+·
+Privacy
+·
+Accessibility
+·
+Operational Status (opens in new tab)
+
+Major funding support from

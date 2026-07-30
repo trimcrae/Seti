@@ -124,11 +124,22 @@ acquire:
   # Window for the per-detection residual pull, anchored to the broker frontier
   # rather than the wall clock: ALeRCE's LSST mirror lags (15.6 days measured on
   # 2026-07-30), so "the last two nights" would be empty every night forever.
-  residual_window_days: 365.0
-  min_detections_for_summary: 6
+  # 900 days covers the whole span the mirror holds, which is what the
+  # multi-apparition tests (law discrimination, apparition trend) need.
+  residual_window_days: 900.0
+  # RAISED from 6 after the first live run: 273 of 400 shortlisted objects failed
+  # the drift fit for want of usable epochs rather than for want of signal, because
+  # the along-track rotation needs several detections with a determinable track
+  # direction.  A shortlist of large-offset four-epoch objects cannot be fitted.
+  min_detections_for_summary: 12
   # Full time-series pulls are expensive; the bulk aggregate query builds the
   # shortlist and only the shortlist gets one.  Same two-stage shape as TOCSIN.
-  shortlist_size: 400
+  # Raised from 400 because batching (below) made each object ~20x cheaper.
+  shortlist_size: 2000
+  # Objects per residual query.  The first live run issued one query per object at
+  # ~1.4 s each and spent its whole budget on 400 objects; batching turns that into
+  # one query per 100 objects, split by ssobjectid locally at no cost.
+  residual_batch_size: 100
   # Voluntary yield.  A cancelled GitHub Actions job never runs its commit step,
   # so a run that overshoots loses everything it learned.  90 minutes inside a
   # 180-minute job.

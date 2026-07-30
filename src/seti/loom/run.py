@@ -65,7 +65,10 @@ DEFAULTS: dict = {
         "alerce_tap_url": ALERCE_TAP,
         "timeout_s": 900,
         "maxrec": 2_000_000,
-        "sid_ssobject": None,
+        # MEASURED 2026-07-30: solar-system `detection` rows carry sid = 2.  This
+        # was `null` (clause dropped) until the probe settled it, because a wrong
+        # guess returns an empty result rather than an error.
+        "sid_ssobject": 2,
         "join_on": "measurement_id",
         "nearest_only": True,
         # Quality cuts on the parent population.  These are the cuts Del Vigna
@@ -77,9 +80,16 @@ DEFAULTS: dict = {
         "min_arc_days": 180.0,
         "require_nongrav": False,
         # Residual path.
-        "residual_window_days": 365.0,
-        "min_detections_for_summary": 6,
-        "shortlist_size": 400,
+        "residual_window_days": 900.0,
+        # Raised from 6: the along-track rotation needs several epochs, and the
+        # first live run failed the drift fit on 273 of 400 objects for want of
+        # epochs rather than for want of signal.
+        "min_detections_for_summary": 12,
+        "shortlist_size": 2000,
+        # Objects per residual query.  The first live run used one query per object
+        # at 1.4 s each; batching turns 400 queries into 20 and the wall-clock
+        # budget then buys an order of magnitude more objects.
+        "residual_batch_size": 100,
         "max_run_seconds": 5400.0,
     },
     "screen": {
@@ -351,11 +361,20 @@ def screen(cfg=None, out_dir: str | Path | None = None,
     summaries = []
     if not out_of_time():
         t = time.time()
+        # The SAME quality cuts as the parent-population query, applied inside the
+        # aggregate.  Without this the shortlist is drawn from a different
+        # population than the screen, and the expensive per-object stage is spent
+        # outside it -- 370 of 400 objects in the first live run.
         summary = sso.object_residual_summary(
             mjd_lo=mjd_lo, mjd_hi=mjd_hi,
             min_detections=int(aconf["min_detections_for_summary"]),
             join_on=str(aconf["join_on"]),
-            nearest_only=bool(aconf["nearest_only"]))
+            nearest_only=bool(aconf["nearest_only"]),
+            require_orbit=True,
+            h_max=_none_or_float(aconf["h_max"]),
+            normalized_rms_max=_none_or_float(aconf["normalized_rms_max"]),
+            min_oppositions=_none_or_int(aconf["min_oppositions"]),
+            min_arc_days=_none_or_float(aconf["min_arc_days"]))
         rec["timings"]["residual_summary_s"] = round(time.time() - t, 1)
         rec["residual_summary_verdict"] = summary.verdict
         summaries = summary.rows
@@ -383,7 +402,7 @@ def screen(cfg=None, out_dir: str | Path | None = None,
          else _f(s.get("mean_offset")) for s in summaries],
         [_fz(s.get("mean_ephrate")) for s in summaries])
     rec["common_timing"] = timing.as_dict()
-    if timing.reason == "ephrate_identically_zero":
+    if not timing.ok:
         rec["notes"].append(
             "the common timing offset could NOT be fitted: ephrate is zero-filled "
             "for every solar-system detection in this mirror, so the sample's "
@@ -400,33 +419,62 @@ def screen(cfg=None, out_dir: str | Path | None = None,
     rec["n_shortlist"] = len(shortlist)
     checkpoint()
 
+    # BATCHED, not one query per object.  The first live run spent 1.4 s per object
+    # on 400 separate queries; the same rows come back in one query per batch, so
+    # the wall-clock budget buys an order of magnitude more objects.  The rows are
+    # then split by `ssobjectid` locally, which costs nothing.
     residual_tests: dict = {}
-    n_done = 0
-    for key in shortlist:
+    n_done, n_batches = 0, 0
+    batch_size = int(aconf["residual_batch_size"])
+    for start in range(0, len(shortlist), batch_size):
         if out_of_time():
             rec["notes"].append(
                 f"residual time series stopped after {n_done}/{len(shortlist)} "
                 f"shortlisted objects: wall-clock budget reached.  The remainder "
                 f"are NOT screened and must not be counted as trials.")
             break
+        batch = shortlist[start:start + batch_size]
         series = sso.residual_detections(
-            mjd_lo=mjd_lo, mjd_hi=mjd_hi, ss_keys=[key],
+            mjd_lo=mjd_lo, mjd_hi=mjd_hi, ss_keys=batch,
             join_on=str(aconf["join_on"]),
             sid_ssobject=_none_or_int(aconf["sid_ssobject"]),
             nearest_only=bool(aconf["nearest_only"]))
-        if series.rows:
-            r = by_key.get(str(key))
-            tests = analyse_series(series.rows, th,
+        n_batches += 1
+        by_object: dict[str, list[dict]] = {}
+        for row in series.rows:
+            by_object.setdefault(str(row.get("ssobjectid", "") or ""), []).append(row)
+        for key in batch:
+            rows_for = by_object.get(str(key)) or []
+            if not rows_for:
+                continue
+            tests = analyse_series(rows_for, th,
                                    n_null=int(conf["assess"]["breakpoint_n_null"]))
             residual_tests[str(key)] = tests
+            r = by_key.get(str(key))
             if r is not None:
                 _apply_series(r, tests, th)
                 assign_tier(r, th)
-        n_done += 1
-        if n_done % 25 == 0:
-            rec["n_residual_series_done"] = n_done
-            checkpoint()
+            n_done += 1
+        rec["n_residual_series_done"] = n_done
+        rec["n_residual_batches"] = n_batches
+        checkpoint()
     rec["n_residual_series_done"] = n_done
+    rec["n_residual_batches"] = n_batches
+    # How many of the analysed objects actually reached a screened record?  The
+    # first live run scored 30 of 400 here and reported a clean null on the other
+    # 370 without ever testing them; anything well below 1.0 means the shortlist and
+    # the parent population have drifted apart again.
+    rec["shortlist_in_parent_fraction"] = (
+        float(sum(1 for k in residual_tests if str(k) in by_key)) / len(residual_tests)
+        if residual_tests else None)
+    if (rec["shortlist_in_parent_fraction"] is not None
+            and rec["shortlist_in_parent_fraction"] < 0.9):
+        rec["notes"].append(
+            f"only {rec['shortlist_in_parent_fraction']:.1%} of the analysed "
+            f"objects have a row in the screened parent population, so the rest "
+            f"were measured and DISCARDED.  The shortlist query and the parent "
+            f"query are selecting different populations -- fix that before reading "
+            f"any funnel below as a result.")
 
     # The photometric axis.  Pulled for the shortlist only, and only after the
     # dynamical work is done, because it is an *independent* test rather than part

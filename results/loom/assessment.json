@@ -1,5 +1,5 @@
 {
- "assessed_at_utc": "2026-07-30T13:13:43Z",
+ "assessed_at_utc": "2026-07-30T13:39:16Z",
  "controls": {
   "controls_found": [
    {
@@ -121,8 +121,8 @@
   "n_dark_comet_present": 6,
   "n_nongrav_flagged": 0,
   "n_nongrav_present": 2,
-  "n_sample": 66857,
-  "n_scored": 7,
+  "n_sample": 66686,
+  "n_scored": 157,
   "note": "2 of 2 known artificial objects in the sample were NOT flagged; the screen is missing the signal it is built to find and no null from it is interpretable",
   "score_key": "score",
   "verdict": "SCREEN_INSENSITIVE"
@@ -136,40 +136,144 @@
   "quantile": 0.999,
   "reason": "only 12 objects with both H and a value"
  },
- "n_anomalous": 0,
- "n_objects": 66857,
+ "n_anomalous": 150,
+ "n_objects": 66686,
  "quality_independence": {
-  "correlations": {},
+  "correlations": {
+   "arc_days": 0.23089637122532392,
+   "h": -0.45110984315209096,
+   "n_detections": -0.475331650531199,
+   "n_opp": 0.2959922847450059,
+   "normalized_rms": 0.1819596995764052
+  },
   "gated_on": [
    "arc_days",
    "n_detections",
    "n_opp",
    "normalized_rms"
   ],
-  "n": 7,
+  "max_abs_correlation": 0.475331650531199,
+  "max_correlated_with": "n_detections",
+  "n": 157,
   "reported_only": [
    "h"
   ],
-  "verdict": "TOO_FEW_OBJECTS"
+  "verdict": "OK"
  },
  "replication": {
+  "bonferroni_threshold": 0.0125,
   "linkage_duplicates": {
    "groups": [],
-   "n_anomalous": 0,
+   "n_anomalous": 150,
    "n_collapsed": 0,
-   "n_groups": 0
+   "n_groups": 0,
+   "note": "orbital elements matched within (a, e, i) tolerances with disjoint observation epochs: consistent with one accelerating object entered under several designations, not with a family"
   },
-  "n_anomaly": 0,
-  "n_anomaly_raw": 0,
+  "n_anomaly": 150,
+  "n_anomaly_raw": 150,
+  "n_gates_usable": 4,
   "n_null": 2000,
-  "n_parent": 66857,
-  "note": "replication tests need a parent of >=200 screened objects and >=5 anomalies; below that the matched null cannot be populated and any p-value would be noise",
-  "tests": [],
-  "verdict": "INSUFFICIENT_POPULATION"
+  "n_parent": 66686,
+  "p_min": 0.0004997501249375312,
+  "p_resolution_floor": 0.0004997501249375312,
+  "tests": [
+   {
+    "is_gate": true,
+    "n": 150,
+    "name": "element_clustering",
+    "null_median": 0.20173018312066865,
+    "ok": true,
+    "p_value": 0.0034982508745627187,
+    "reason": "",
+    "space": "standardised (a, e, sin i)",
+    "statistic": 0.16750357242694025,
+    "z": -2.6006632040352415
+   },
+   {
+    "is_gate": true,
+    "isotropic_expectation": 0.3333333333333333,
+    "n": 150,
+    "name": "pole_coherence",
+    "null_median": 0.9716604537915414,
+    "ok": true,
+    "p_value": 0.0004997501249375312,
+    "reason": "",
+    "statistic": 0.9824341952567861,
+    "statistic_is": "largest_eigenvalue_of_orientation_tensor",
+    "z": 3.8897859208012835
+   },
+   {
+    "caveat": "matched on H, arc length and observation count but NOT on inclination-dependent linking efficiency; a positive result is evidence about selection until that efficiency is measured",
+    "is_gate": true,
+    "isotropic_expectation": 0.7853981633974483,
+    "n": 150,
+    "name": "inclination_isotropy",
+    "null_median": 0.145986898953678,
+    "ok": true,
+    "p_value": 0.0004997501249375312,
+    "reason": "",
+    "retrograde_fraction": 0.0,
+    "statistic": 0.16964391223805597,
+    "z": 3.6325398583057145
+   },
+   {
+    "is_gate": true,
+    "n": 150,
+    "n_within_width": 6,
+    "name": "resonance_concentration",
+    "null_median_au": 0.10437446145379947,
+    "ok": true,
+    "p_value": 0.20689655172413793,
+    "reason": "",
+    "resonance_width_au": 0.02,
+    "resonances": {
+     "1:1": 5.2044,
+     "2:1": 3.2786,
+     "3:1": 2.502,
+     "3:2": 3.9717,
+     "4:1": 2.0654,
+     "4:3": 4.2961,
+     "5:2": 2.8254,
+     "5:3": 3.7023,
+     "7:3": 2.9584
+    },
+    "statistic": 0.09917086835568678,
+    "z": -0.8574963128477936
+   },
+   {
+    "is_gate": true,
+    "n": 0,
+    "name": "photometric_homogeneity",
+    "ok": false,
+    "p_value": null,
+    "reason": "fewer_than_two_usable_photometric_columns",
+    "statistic": null,
+    "z": null
+   },
+   {
+    "H_iqr": 1.4222499999999982,
+    "H_median": 17.048000000000002,
+    "collisional_reference_slope": 0.5,
+    "cumulative_H_slope": 0.34993342318234927,
+    "intercept": -4.142068495250639,
+    "interpretation": "shallow slope / narrow spread is what a built-to-spec population looks like; steep is fragmentation",
+    "is_gate": false,
+    "n": 150,
+    "name": "size_distribution",
+    "ok": true,
+    "p_value": null,
+    "reason": "",
+    "slope_ratio_to_collisional": 0.6998668463646985,
+    "statistic": 0.34993342318234927,
+    "z": null
+   }
+  ],
+  "verdict": "REPLICATION_STRUCTURE_DETECTED"
  },
  "tiers": {
+  "interest": 150,
   "ordinary": 7,
-  "untestable": 66850
+  "untestable": 66529
  },
- "verdict": "INSUFFICIENT_POPULATION"
+ "verdict": "STRUCTURE_FOUND_BUT_SCREEN_FAILS_ITS_POSITIVE_CONTROL"
 }

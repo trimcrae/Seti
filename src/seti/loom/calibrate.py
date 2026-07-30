@@ -233,6 +233,70 @@ def annotate(name: str) -> str:
     return ""
 
 
+# Bulk density is the one input the ceiling cannot measure and cannot avoid, and
+# calling any single value "generous" hides how much work it is doing.  Measured
+# asteroid densities run ~1200-1900 kg/m^3 for rubble piles, ~1300 for C-types and
+# ~2700 for S-types.  1000 is therefore NOT a neutral or conservative default --
+# it is the extreme low end, chosen to make an exceedance hard to claim, and an
+# object that falls below the ceiling only at 1000 has not been ruled out.  It has
+# been ruled out under an assumption almost no asteroid satisfies.
+DENSITY_GRID_KG_M3: tuple[float, ...] = (1000.0, 1500.0, 2000.0, 2500.0, 3000.0)
+ALBEDO_GRID: tuple[float, ...] = (0.05, 0.14, 0.25)
+
+# Del Vigna et al. (2018) second reliability condition: the measured A2 compared
+# with a Bennu-scaled expectation for the object's size (Yarkovsky goes as 1/D).
+# R <= 2 is a reliable Yarkovsky detection; far above it, the fit is either
+# spurious or the object is not doing Yarkovsky.
+BENNU_D_M = 490.0
+BENNU_A2 = 4.62e-14
+MAX_DEL_VIGNA_R = 2.0
+
+
+def del_vigna_ratio(a2_au_day2, diameter_metres) -> float:
+    """``|A2|`` over the Bennu-scaled Yarkovsky expectation for that size."""
+    d = _f(diameter_metres)
+    if not math.isfinite(d) or d <= 0:
+        return float("nan")
+    return abs(_f(a2_au_day2)) / (BENNU_A2 * (BENNU_D_M / d))
+
+
+def sensitivity_grid(a2_au_day2, h, diameter_metres=None,
+                     densities=DENSITY_GRID_KG_M3,
+                     albedos=ALBEDO_GRID) -> dict:
+    """How the exceedance verdict moves across the assumptions it rests on.
+
+    An object is above the ceiling or not *given a density and a size*, and for
+    most objects neither is measured.  Reporting one number hides that; reporting
+    the grid makes the dependence checkable, and makes it obvious when a
+    conclusion rests on the corner of the grid rather than on the object.
+    """
+    out: dict = {"del_vigna_R": float("nan"),
+                 "max_del_vigna_R_for_reliable": MAX_DEL_VIGNA_R,
+                 "diameter_measured": diameter_metres is not None,
+                 "grid": []}
+    sizes = ([(None, _f(diameter_metres))] if diameter_metres is not None
+             else [(a, float(diameter_m_from_h(h, albedo=a))) for a in albedos])
+    for albedo, d in sizes:
+        for rho in densities:
+            out["grid"].append({
+                "albedo": albedo, "rho_kg_m3": float(rho),
+                "diameter_m": float(d),
+                "epsilon": float(epsilon_effective(a2_au_day2, d, rho_kg_m3=rho)),
+            })
+    eps = [g["epsilon"] for g in out["grid"] if math.isfinite(g["epsilon"])]
+    if eps:
+        out["epsilon_min"] = min(eps)
+        out["epsilon_max"] = max(eps)
+        out["fraction_of_grid_above_ceiling"] = (
+            sum(1 for v in eps if v > 1.0) / len(eps))
+        out["robust_above_ceiling"] = min(eps) > 1.0
+        out["robust_below_ceiling"] = max(eps) <= 1.0
+    d_ref = (_f(diameter_metres) if diameter_metres is not None
+             else float(diameter_m_from_h(h, albedo=0.14)))
+    out["del_vigna_R"] = del_vigna_ratio(a2_au_day2, d_ref)
+    return out
+
+
 def vet_exceedance(row: dict) -> dict:
     """Is this object's fitted ``A2`` reliable enough to be worth anything?
 

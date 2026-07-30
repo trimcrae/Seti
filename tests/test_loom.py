@@ -1787,3 +1787,30 @@ def test_not_found_is_not_called_unexplained():
     chk.hits.append({"source": "arXiv:2212.08115", "matched": "2012 UR158",
                      "context": "..."})
     assert chk.as_dict()["verdict"] == "EXPLAINED_IN_LITERATURE"
+
+
+def test_density_grid_shows_where_a_verdict_actually_rests():
+    """One epsilon hides the assumption it rests on; the grid does not.
+
+    Density is the one input the ceiling cannot measure and cannot avoid.
+    Measured asteroid densities run ~1200-3000 kg/m^3, so 1000 is the extreme low
+    end, not a neutral default — and an object that drops below the ceiling ONLY
+    at 1000 has not been ruled out. This is the check that caught me calling a
+    real exceedance "not robust" on the corner of the grid.
+    """
+    from seti.loom import calibrate
+
+    # 875163 (1998 SH2): measured diameter, so only density varies.
+    g = calibrate.sensitivity_grid(-7e-13, 20.88, diameter_metres=383.0)
+    assert g["diameter_measured"] is True
+    assert g["epsilon_min"] < 1.0 < g["epsilon_max"]
+    assert not g["robust_below_ceiling"]      # NOT ruled out
+    assert not g["robust_above_ceiling"]      # but not established either
+    # Above the ceiling for every density except the extreme low end.
+    above = [x["epsilon"] for x in g["grid"] if x["rho_kg_m3"] >= 1500]
+    assert all(v > 1.0 for v in above)
+    assert g["del_vigna_R"] > calibrate.MAX_DEL_VIGNA_R
+
+    # An object genuinely below the ceiling everywhere is reported as such.
+    ordinary = calibrate.sensitivity_grid(1e-15, 18.0, diameter_metres=1000.0)
+    assert ordinary["robust_below_ceiling"]

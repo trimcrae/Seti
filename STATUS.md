@@ -166,9 +166,34 @@ follow-up — including both of the strongest:
 | 875163 (1998 SH2) | 1.6 | **0.79** | 14.3 | not found |
 | 428209 (2006 VC) | 1.3 | **0.65** | 3.8 | not found |
 
-The two not in the literature are the two weakest, and **both fall BELOW the
-ceiling under a generous density** (rho = 1000) — so neither is robust to the one
-assumption the ceiling cannot avoid. Nothing survives.
+**THE TWO NOT IN THE LITERATURE WERE NOT FAIRLY RULED OUT — correction.** The
+first write-up said both "fall below the ceiling under a generous density
+(rho = 1000)" and called them not robust. That inverted the burden. Measured
+asteroid densities run ~1200-1900 for rubble piles, ~1300 for C-types, ~2700 for
+S-types: **rho = 1000 is the extreme low end, not a neutral default.** It is
+chosen to make an exceedance hard to claim, so an object that drops below the
+ceiling *only* there has been ruled out under an assumption almost no asteroid
+satisfies.
+
+The sensitivity grid (`calibrate.sensitivity_grid`, now in the code and tested):
+
+| object | D | eps at rho = 1000 / 1500 / 2000 / 2500 / 3000 | Del Vigna R |
+|---|---|---|---|
+| 875163 (1998 SH2) | **383 m measured** | 0.79 / **1.18 / 1.58 / 1.97 / 2.37** | **11.8** |
+| 428209 (2006 VC) | from H, albedo 0.05-0.25 | 0.49-1.09 / ... / 0.98-2.18 / ... / 1.46-3.27 | 9.8 |
+
+**875163 (1998 SH2) is above the hard ceiling at every density except the extreme
+low end**, has a *measured* diameter so the size is not assumed, S/N 14.3, a
+27-year arc, 394 observations, condition code 0, and a Del Vigna R of 11.8 —
+nearly six times the R <= 2 that marks a reliable Yarkovsky detection. It is not
+ruled out. It is the one genuinely open object in this channel.
+
+**428209 (2006 VC)** has no measured diameter and S/N 3.8, and spans 0.49-3.27
+across the plausible grid. Genuinely unresolved in both directions.
+
+Neither is a technosignature claim: an inactive body above the radiation ceiling
+is what a dark comet looks like, and the dark-comet population is demonstrably
+not fully catalogued — four of these six were only published in Dec 2024.
 
 **Why this is a good outcome.** The ceiling independently rediscovered four
 members of the published dark-comet population from H and A2 alone, with no

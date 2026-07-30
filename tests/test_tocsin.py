@@ -1723,3 +1723,54 @@ def test_assess_clears_stale_verdict_notes():
                   visit_history={"4242": [61500.0 + i for i in range(20)]})
     led.assess()                                   # now the denominator is exact
     assert "denominator_approximate" not in led.targets["4242"]["notes"]
+
+
+def test_bin_trials_survive_the_night_dedup_guard(tmp_path, monkeypatch):
+    """Regression: the stratified null silently fell back to the all-sky rate.
+
+    `bin_trials` was handed to the FIRST night folded, but the ledger only
+    accepts per-night totals for nights it has not seen — so on any run whose
+    first night was already recorded, the whole dict was discarded.  Every
+    `local_rate` came back None and the stratification did nothing, which is
+    exactly how four spurious deep-drilling candidates reappeared.
+    """
+    from seti.tocsin import run as R
+    from seti.tocsin.brokers import BrokerResult
+
+    tpath = tmp_path / "targets.parquet"
+    pd.DataFrame([_target(source_id="777", ra=150.2, dec=-30.4)]).to_parquet(tpath)
+
+    class _Stub:
+        def __init__(self, *a, **kw):
+            pass
+
+        def max_available_mjd(self):
+            return 61501.0
+
+        def night_detections(self, lo, hi, **kw):
+            return BrokerResult(rows=[{
+                "measurement_id": "m1", "oid": "o1", "sid": 1, "mjd": 61500.5,
+                "ra": 150.2, "dec": -30.4, "band": 1, "psfflux": 900.0,
+                "psffluxerr": 27.0, "snr": 33.0, "reliability": 0.95,
+                "templateflux": 9000.0, "templatefluxerr": 90.0,
+                "extendedness": 0.0, "isdipole": False}],
+                reached=True, verdict="OK", notes=["adql=stub"])
+
+        def forced_photometry_night(self, lo, hi, **kw):
+            return BrokerResult(rows=[], reached=True, verdict="OK")
+
+        def footprint_bins(self, lo, hi, **kw):
+            return BrokerResult(rows=[
+                {"rab": 150, "decb": -31, "night": 61499, "band": 1, "n": 40}],
+                reached=True, verdict="OK")
+
+    monkeypatch.setattr(R, "AlerceTAP", _Stub)
+
+    class _Cfg:
+        root = tmp_path
+    R.screen_night(_Cfg(), targets_path=tpath, out_dir=tmp_path / "res")
+
+    led = L.Ledger.load(tmp_path / "results" / "tocsin" / "ledger.json")
+    assert led.bin_trials, "no per-bin trials were recorded at all"
+    assert L.bin_key(150.2, -30.4) in led.bin_trials
+    assert led.targets["777"].get("local_rate") is not None

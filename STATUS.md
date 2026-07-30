@@ -132,8 +132,51 @@ so the two-band colour test was dormant (hence the one-sided non-detection test,
 so a window in which the test had just killed five flares reported "the
 discriminant did not run at all", concealing its own success.
 
-*Next decisive action:* let `tocsin.yml` walk the backlog. Do not read anything
-into early nights — a single grey flash can never exceed `interest` by design.
+**FULL BACKLOG WALKED (2026-07-30).** All 262 nights the broker holds
+(MJD 60973 → 61235), watermark at the frontier, nightly cron now the steady state:
+
+```
+263 nights · 55,424 star-night trials · 87 events · 42 targets with events
+all-sky rate 1.57e-03/star-night · 1,927 sky bins · FDR threshold 0.0136
+tiers: 25 watch · 13 interest · 0 candidate · 4 none
+```
+
+**Three candidates appeared and all three were killed by contamination tracing —
+and both killing discriminators came from examining them, not from theory:**
+
+1. **Deep-drilling fields.** The first two sat in COSMOS, where the *local* alert
+   rate is 4–75× the all-sky value (a DDF is deeper, revisited 34–48 nights
+   against 7 elsewhere, and subtracts differently). Testing a DDF star against
+   the all-sky rate does not detect anything, it rediscovers the observing
+   strategy. The null is now **stratified by 1° sky bin**; their p-values moved
+   from 1.3e-03 and 2.7e-07 to 0.035 and 0.003.
+2. **Low-amplitude variable stars.** All three showed **both polarities across
+   nights** — flash on some, dip on others. A reflector flashes; a grey occulter
+   dips; something doing both is varying intrinsically. Requiring
+   **single-mechanism coherence** takes the walk to zero candidates. This
+   knowingly forgoes a hypothetical dual-mode object, so mixed-polarity targets
+   are held at `interest` with a note and the rule is config-switchable.
+
+The 4 `none` targets are duty-cycle rejections — stars alerting on most of their
+visits, i.e. subtraction residuals. The highest-multiplicity target in the walk
+(7 events in 7 visits, duty 1.0) is one of them.
+
+**Honest summary: the funnel works, every discriminator fires on real data, and
+nothing survives.** Per the charter that is a reason to keep accumulating and to
+sharpen the question — not a result to write up.
+
+**Operational lessons worth not relearning.** (a) `forced_photometry` on this
+broker takes 3151 s and then times out for 0–0.08% coverage; the footprint query
+answers the same question in 5 s, so forced photometry is off and the visit
+history is footprint-derived. (b) Three separate bugs had the same shape — state
+handed to one arbitrary night of a multi-night fold and silently dropped (visit
+history, bin trials, and the alerts counter). Anything accumulated per-window
+must be keyed by night. (c) The tests passed through all three, because they
+exercised single-night folds where that path never runs.
+
+*Next decisive actions:* wire the Fink cross-match (SIMBAD/VSX/GCVS) so known
+variables are labelled at ingest rather than diagnosed by hand; calibrate
+`max_trail_arcsec` against a real `trailLength` distribution.
 
 ### New: 5-channel fan-out searching for life originating on LHS 1140 b (2026-07-21)
 

@@ -166,6 +166,43 @@ follow-up — including both of the strongest:
 | 875163 (1998 SH2) | 1.6 | **0.79** | 14.3 | not found |
 | 428209 (2006 VC) | 1.3 | **0.65** | 3.8 | not found |
 
+**TISSERAND REVERSES THE RANKING (2026-07-30).** The one discriminator that
+assumes no density and no albedo — T_J from a, e, i alone — was computed for all
+eleven exceedances, and it changes which object is interesting:
+
+| object | T_J | e | albedo | in literature? |
+|---|---|---|---|---|
+| 139359 (2001 ME1) | 2.67 | 0.87 | — | yes |
+| 883607 (2016 TA56) | 2.69 | 0.78 | — | no (failed vetting) |
+| 152667 (1998 FR11) | 2.89 | 0.71 | — | yes |
+| **875163 (1998 SH2)** | **2.91** | **0.71** | **0.058** | **no** |
+| 457175 (2008 GO98) | 2.93 | 0.28 | — | 362P, active |
+| 452639 (2005 UY6) | 2.94 | 0.87 | 0.018 | yes |
+| 523599 (2003 RM) | 2.95 | 0.61 | — | yes (dark comet) |
+| (2012 UR158) | 3.00 | 0.86 | 0.023 | yes |
+| **428209 (2006 VC)** | **3.72** | **0.49** | — | **no** |
+| (2006 RH120) | 5.93 | 0.02 | — | yes (dark comet) |
+
+**875163 (1998 SH2) is now largely explained.** T_J = 2.91, e = 0.71 and a
+*measured* albedo of 0.058 make it dynamically and photometrically
+indistinguishable from the confirmed dark comets beside it (2003 RM at 2.95,
+1998 FR11 at 2.89, 2001 ME1 at 2.67, all dark). The natural reading is an
+uncatalogued member of that population. My earlier "one genuinely open object"
+call does not survive this.
+
+**428209 (2006 VC) is the standout instead**: T_J = 3.72, a = 1.94, e = 0.49 —
+the only literature-unmatched exceedance with **asteroidal** dynamics, where a
+volatile reservoir should long since have been depleted. Its Del Vigna R is 5.8
+to 16.4 across every plausible albedo, and R depends only on diameter, so the
+density assumption that made its epsilon ambiguous does not touch it.
+
+**But the control set undercuts the discriminator, and that has to be said:**
+2006 RH120 is a CONFIRMED Seligman dark comet with T_J = 5.93 — more asteroidal
+than 2006 VC. So T_J > 3 demonstrably does not exclude dark-comet status, and
+2006 VC's asteroidal orbit makes it unusual, not unexplained. Its remaining
+weaknesses are real: A2 signal-to-noise 3.8 (the base rate says most nominal
+S/N > 3 Yarkovsky detections are spurious) and no measured diameter.
+
 **THE TWO NOT IN THE LITERATURE WERE NOT FAIRLY RULED OUT — correction.** The
 first write-up said both "fall below the ceiling under a generous density
 (rho = 1000)" and called them not robust. That inverted the burden. Measured

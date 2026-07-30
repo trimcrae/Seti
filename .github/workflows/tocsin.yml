@@ -54,6 +54,14 @@ on:
         description: "Explicit MJD window end (blank = now)"
         required: false
         default: ""
+      chunks:
+        description: >-
+          Walk this many consecutive windows in one run.  The broker already
+          holds ~262 nights of LSST data, so the early runs are a BACKFILL;
+          raising this walks more of it per dispatch.  Stops early once the
+          watermark reaches the broker's frontier.
+        required: false
+        default: "1"
       rebuild_targets:
         description: "Force a fresh Gaia nearby-star pull, ignoring the cache"
         required: false
@@ -109,6 +117,9 @@ jobs:
           LASAIR_TOKEN: ${{ secrets.LASAIR_TOKEN }}
         run: |
           args=""
+          if [ -n "${{ github.event.inputs.chunks }}" ]; then
+            args="$args --chunks ${{ github.event.inputs.chunks }}"
+          fi
           if [ -n "${{ github.event.inputs.lookback_nights }}" ]; then
             args="$args --lookback-nights ${{ github.event.inputs.lookback_nights }}"
           fi

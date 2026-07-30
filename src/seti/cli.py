@@ -692,12 +692,12 @@ def _cmd_tocsin_targets(args, cfg):
 
 
 def _cmd_tocsin_screen(args, cfg):
-    from .tocsin.run import screen_night
+    from .tocsin.run import screen
 
-    screen_night(cfg, lookback_nights=args.lookback_nights,
-                 mjd_lo=args.mjd_lo, mjd_hi=args.mjd_hi,
-                 targets_path=args.targets, out_dir=args.out_dir,
-                 use_gaia_join=not args.no_gaia_join)
+    screen(cfg, chunks=args.chunks, lookback_nights=args.lookback_nights,
+           mjd_lo=args.mjd_lo, mjd_hi=args.mjd_hi,
+           targets_path=args.targets, out_dir=args.out_dir,
+           use_gaia_join=not args.no_gaia_join)
 
 
 def _cmd_tocsin_assess(args, cfg):
@@ -1186,6 +1186,10 @@ def main(argv=None):
                             "persistent cross-night ledger")
     p.add_argument("--lookback-nights", type=float, default=None,
                    help="window to pull, in nights (default from config)")
+    p.add_argument("--chunks", type=int, default=1,
+                   help="walk this many consecutive windows in one run; stops "
+                        "early once the watermark reaches the broker's frontier "
+                        "(use to backfill the ~262 nights already available)")
     p.add_argument("--mjd-lo", type=float, default=None)
     p.add_argument("--mjd-hi", type=float, default=None)
     p.add_argument("--targets", default=None)

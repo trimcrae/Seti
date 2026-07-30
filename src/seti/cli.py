@@ -753,6 +753,38 @@ def _cmd_loom_litcheck(args, cfg):
     litcheck(cfg, out_dir=args.out_dir, names=args.name or None)
 
 
+def _cmd_alert_check(args, cfg):
+    import os as _os
+    from pathlib import Path as _Path
+
+    from .alerts import check, issue_body, issue_labels, issue_title
+
+    root = _Path(cfg.root) if cfg is not None else _Path.cwd()
+    rep = check(root, record=not args.dry_run)
+    print(f"[alerts] active={rep['n_active']} new={rep['n_new']} "
+          f"by_severity={rep['by_severity']}")
+    for a in rep["new"]:
+        print(f"  [{a['severity']}] {a['title']}")
+    title = issue_title(rep["new"])
+    if args.write_issue and rep["new"]:
+        _Path(args.write_issue).write_text(
+            issue_body(rep["new"], repo_url=args.repo_url or ""))
+        _Path(args.write_issue + ".title").write_text(title)
+    # Hand the workflow its decision as step outputs rather than making it
+    # re-parse the report: the shell quoting around a title containing
+    # parentheses and quotes is exactly where these steps break silently.
+    gh_out = _os.environ.get("GITHUB_OUTPUT")
+    if gh_out:
+        with open(gh_out, "a", encoding="utf-8") as fh:
+            fh.write(f"alert={'true' if rep['new'] else 'false'}\n")
+            fh.write(f"n_new={rep['n_new']}\n")
+            fh.write(f"title={title}\n")
+            fh.write(f"labels={','.join(issue_labels(rep['new']))}\n")
+    # A non-zero exit is how a caller without step outputs decides.
+    if args.exit_code and rep["new"]:
+        raise SystemExit(2)
+
+
 def _cmd_vigil_probe(args, cfg):
     from .vigil.run import vigil_probe
 
@@ -1344,6 +1376,21 @@ def main(argv=None):
                    help="object to check (repeatable); default is the survivors "
                         "recorded in calibration.json")
     p.set_defaults(func=_cmd_loom_litcheck)
+
+    p = sub.add_parser("alert-check",
+                       help="Decide whether anything in results/ needs human "
+                            "eyes: a promoted candidate, a positive control the "
+                            "screen failed, a channel that has gone quiet, or a "
+                            "capability coming online. Deduplicated by a stable "
+                            "key so the same finding never notifies twice")
+    p.add_argument("--dry-run", action="store_true",
+                   help="evaluate without consuming the alerts")
+    p.add_argument("--write-issue", default=None,
+                   help="write issue markdown to this path when anything is new")
+    p.add_argument("--repo-url", default=None)
+    p.add_argument("--exit-code", action="store_true",
+                   help="exit 2 when there are new alerts (drives the workflow)")
+    p.set_defaults(func=_cmd_alert_check)
 
     p = sub.add_parser("knell-vet",
                        help="KNELL stage 2: aggregate every field's candidates "

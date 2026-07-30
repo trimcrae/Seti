@@ -1,0 +1,221 @@
+name: alerts
+
+# THE NOTIFIER --- the part that decides a human has to look, and makes GitHub
+# say so out loud (docs/alerts.md).
+#
+# The channels already run unattended and commit their results back.  That is
+# the easy half.  The hard half is that this repository has two failure modes
+# that are invisible from inside it:
+#
+#   1. A SCREEN THAT REPORTS EVERY WEEK IS A SCREEN NOBODY READS.  If the
+#      notification fires on ordinary output it is trained into noise inside a
+#      month, and then the apparatus has a working detector and a human who
+#      ignores it.  So every alert carries a stable key, results/alerts/state.json
+#      remembers the keys already raised, and only NEW keys notify.
+#   2. A SCREEN THAT HAS SILENTLY DIED LOOKS EXACTLY LIKE A SKY WITH NOTHING IN
+#      IT.  Both produce an unchanging results directory.  watchdog.yml catches
+#      runs that FAIL; nothing catches runs that stop happening.  Hence the daily
+#      heartbeat below: it runs whether or not any channel did, and alerts on the
+#      AGE OF THE RESULTS rather than on their content.
+#
+# WHY THE AGE IS READ OUT OF THE FILE AND NOT FROM ITS MTIME.  A runner clones
+# the repository fresh, so every file's mtime is the checkout time; a channel
+# dead for a year would look thirty seconds old.  seti.alerts reads the
+# run_at_utc / screened_at_utc / calibrated_at_utc stamp each channel writes
+# INSIDE its result file.  This is the difference between a staleness check and
+# a staleness check that can never fire.
+#
+# WHY AN ISSUE, ASSIGNED, AND NOT JUST A COMMIT.  Email on a push depends on the
+# recipient's watch settings, which this repository cannot set.  An issue
+# ASSIGNED to a user notifies that user regardless of watch settings, which makes
+# assignment --- not the issue itself --- the mechanism that actually reaches an
+# inbox.
+#
+# ORDER OF OPERATIONS IS DELIBERATE.  The alerts are evaluated in --dry-run mode
+# first, the issue is opened, and only then is the state recorded and committed.
+# A crash between the two produces a duplicate notification; the reverse order
+# produces a LOST one.  Duplicated is recoverable, lost is not.
+#
+# CREDENTIALS: none beyond the automatic GITHUB_TOKEN.
+
+on:
+  # Fire as soon as a channel finishes, so a promotion is not sitting unread
+  # until the next day.  workflow_run only triggers for workflow files on the
+  # default branch, and the run itself executes on the default branch.
+  # NOT loom-calibrate: that chains into loom-litcheck, and waking on the
+  # calibration would evaluate the exceedances BEFORE the literature check that
+  # explains most of them -- notifying about objects already published. Waking
+  # on litcheck instead gives the whole chain calibrate -> litcheck -> alert.
+  # If litcheck fails, watchdog retries it and the daily heartbeat below catches
+  # the result within a day.
+  workflow_run:
+    workflows: ["tocsin", "loom", "loom-litcheck"]
+    types: [completed]
+  schedule:
+    # 17:05 UTC = 13:05 EDT.  After tocsin (14:10), loom (15:40) and
+    # loom-calibrate (16:20) have all had time to finish and push, and offset
+    # from the hour to avoid the scheduler's :00 pile-up.  This firing is the
+    # heartbeat: it is the ONLY thing that runs when a channel has stopped
+    # running, and so the only thing that can notice.
+    - cron: "5 17 * * *"
+  workflow_dispatch:
+    inputs:
+      rearm:
+        description: >-
+          Clear the deduplication state before checking, so already-reported
+          findings notify again. Use after changing thresholds.
+        required: false
+        default: "false"
+      no_issue:
+        description: "Evaluate and commit state, but do not open an issue"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  # state.json is a single mutable file committed back to the default branch.
+  # Two concurrent checks race each other's commits, and the loser's alerts are
+  # silently un-recorded --- which means they notify a second time.
+  group: seti-alerts
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # workflow_run hands us the default branch at EVENT time, which can
+          # predate the commit the triggering run just pushed --- i.e. exactly
+          # the results we were woken up to look at.
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+      - name: Fetch the results the triggering run just pushed
+        run: |
+          git pull --ff-only origin ${{ github.event.repository.default_branch }} || true
+          git log --oneline -3
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Re-arm (clear deduplication state)
+        if: github.event.inputs.rearm == 'true'
+        run: rm -f results/alerts/state.json
+
+      # PASS 1 --- evaluate WITHOUT consuming.  If this step or the issue step
+      # dies, nothing has been marked as seen and the next run re-raises it.
+      - name: Evaluate alerts
+        id: alerts
+        run: |
+          python -m seti.cli alert-check \
+            --dry-run \
+            --write-issue "$RUNNER_TEMP/alert.md" \
+            --repo-url "${{ github.server_url }}/${{ github.repository }}"
+
+      - name: Ensure the labels exist
+        if: steps.alerts.outputs.alert == 'true' && github.event.inputs.no_issue != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # `gh issue create --label` FAILS on a label that does not exist, and
+          # that failure would swallow the whole notification.
+          gh label create candidate -c "#B60205" -d "A channel promoted something" 2>/dev/null || true
+          gh label create health    -c "#FBCA04" -d "The pipeline is broken in a way that produces no error" 2>/dev/null || true
+          gh label create milestone -c "#0E8A16" -d "A capability came online" 2>/dev/null || true
+          gh label create tocsin    -c "#1D76DB" -d "Rubin stellar alert screen" 2>/dev/null || true
+          gh label create loom      -c "#5319E7" -d "Solar-system artefact screen" 2>/dev/null || true
+
+      - name: Open an issue and assign it
+        id: issue
+        if: steps.alerts.outputs.alert == 'true' && github.event.inputs.no_issue != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Through the environment, NOT through ${{ }} interpolation into the
+          # shell: the title is generated from object designations and verdicts,
+          # and one quote in it would turn this into a broken command rather
+          # than a notification.
+          TITLE: ${{ steps.alerts.outputs.title }}
+          LABELS: ${{ steps.alerts.outputs.labels }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          # ASSIGNMENT is the part that reaches an inbox: GitHub emails an
+          # assignee regardless of their watch settings on the repository.
+          url=$(gh issue create \
+            --title "$TITLE" \
+            --body-file "$RUNNER_TEMP/alert.md" \
+            --label "$LABELS" \
+            --assignee "$OWNER")
+          echo "opened $url"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      # PASS 2 --- now that the human has actually been told, consume the alerts
+      # so the same finding never notifies twice.
+      #
+      # THE GUARD MATTERS.  This must NOT run when there were new alerts and the
+      # issue step did not succeed: recording them then marks as "already
+      # reported" something nobody was ever shown, and the alert is lost
+      # permanently rather than repeated. Repeating is recoverable; losing is
+      # not. When it is skipped, the next run re-raises everything.
+      - name: Record what was raised
+        if: >-
+          always() &&
+          (steps.alerts.outputs.alert != 'true' ||
+           steps.issue.conclusion == 'success' ||
+           github.event.inputs.no_issue == 'true')
+        run: |
+          python -m seti.cli alert-check \
+            --repo-url "${{ github.server_url }}/${{ github.repository }}"
+
+      - name: Commit the alert state
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # ONE PATHSPEC AT A TIME: `git add` with several pathspecs is atomic,
+          # so one unmatched glob stages NOTHING and `|| true` hides it.
+          git add -f -- results/alerts/state.json || echo "no state.json"
+          git add -f -- results/alerts/latest.json || echo "no latest.json"
+          if git diff --cached --quiet; then
+            echo "No alert-state changes to commit."
+          else
+            git commit -m "alerts: record raised alerts and current state"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.event.repository.default_branch }} || true
+            git push origin HEAD:${{ github.event.repository.default_branch }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.event.repository.default_branch }}; \
+                git push origin HEAD:${{ github.event.repository.default_branch }}; }
+          fi
+
+      - name: Report
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/alerts/latest.json")
+          if not p.exists():
+              print("no latest.json --- the check did not complete")
+              raise SystemExit(0)
+          r = json.loads(p.read_text())
+          print("checked at:", r.get("checked_at_utc"))
+          print("active:", r.get("n_active"), " new:", r.get("n_new"))
+          print("by severity:", r.get("by_severity"))
+          for a in r.get("active", []):
+              flag = "NEW " if a in r.get("new", []) else "    "
+              print(f"  {flag}[{a['severity']}] {a['title']}")
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: alerts
+          path: results/alerts/

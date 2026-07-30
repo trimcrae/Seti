@@ -34,6 +34,19 @@ decisive actions live in **[STATUS.md](STATUS.md)**.
 | **Rubin nightly alert screen** | **Cross-night recurrence of *achromatic* difference-image events on catalogued nearby stars** — flash (specular/S30) and dip (grey occultation) in one funnel, on the world-public LSST stream. Recurrence at a fixed position is the axis no published alert-stream search uses | `seti.tocsin` | `tocsin.yml` (nightly cron), `tocsin-probe.yml` |
 | **Von Neumann probes in the solar system** | **Cross-object *structure* in Rubin's per-detection ephemeris residuals** — `ssSource.ephOffset*` for every known minor planet, gated by the radiation momentum ceiling (a theorem, not a fit) and decided on the *population*: element clustering, orbital-pole coherence, resonance concentration, photometric homogeneity. Self-replication predicts a population, not one weird asteroid. The only channel here with a **real positive control** (J002E3, WT1190F, 2020 SO) | `seti.loom` | `loom.yml` (weekly cron), `loom-probe.yml` |
 
+## Unattended operation
+
+The two Rubin channels run on GitHub's scheduler with no model in the loop —
+`tocsin` nightly at 10:10 ET, `loom` weekly Monday 11:40 ET, `loom-calibrate`
+monthly, each committing its results back to `main`. `alerts.yml` decides
+whether any of it needs human eyes and opens a GitHub issue **assigned to the
+repository owner** when it does; assignment, not the issue, is what reaches an
+inbox regardless of watch settings. A daily heartbeat alerts on results that
+have gone stale, because a screen that has silently died and a sky with nothing
+in it produce the same unchanging directory. Every alert is deduplicated by a
+stable key, so a finding notifies once rather than every week forever.
+See [docs/alerts.md](docs/alerts.md).
+
 ## How work happens
 
 The sandbox where code is developed has **no archive egress**; every funnel is

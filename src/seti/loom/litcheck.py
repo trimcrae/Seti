@@ -67,10 +67,19 @@ def designation_patterns(name: str) -> list[re.Pattern]:
             seen.add(regex)
             pats.append(re.compile(regex, re.IGNORECASE))
 
-    # Provisional designations: YYYY LLnnn, with optional space/tilde/nbsp.
-    for m in re.finditer(r"\b((?:1[89]|20)\d{2})[\s~ ]*([A-Z]{2}\d*)\b", name):
-        year, tail = m.group(1), m.group(2)
-        add(rf"\b{year}[\s~ ]*{tail}\b")
+    # Provisional designations: YYYY LLnnn.  The separator is optional EVERYWHERE,
+    # including between the letter pair and the trailing number, because the papers
+    # render the order subscript in LaTeX and it reaches a PDF or an HTML dump as
+    # "2001 ME 1" rather than "2001 ME1".  Requiring the digits to sit adjacent to
+    # the letters missed exactly that form -- and the two objects the first live
+    # search DID find were matched by their PERMANENT NUMBER, so an unnumbered
+    # object would have been silently declared absent from a paper it appears in.
+    # That is the false negative this whole module is built to avoid.
+    _SEP = r"[\s~\u00a0]*"
+    for m in re.finditer(r"\b((?:1[89]|20)\d{2})[\s~\u00a0]*([A-Z]{2})(\d*)\b", name):
+        year, letters, digits = m.group(1), m.group(2), m.group(3)
+        add(rf"\b{year}{_SEP}{letters}{_SEP}{digits}\b" if digits
+            else rf"\b{year}{_SEP}{letters}\b")
     # Permanent numbers, ONLY parenthesised.  A bare run of digits in a PDF is a
     # page number, a count, a year or a table entry far more often than it is a
     # designation, and the cost of a false match here is the worst available: it

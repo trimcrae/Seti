@@ -1725,6 +1725,29 @@ def test_designation_matching_is_boundary_anchored():
     assert all(h["context"] for h in hits)
 
 
+def test_latex_subscript_rendering_still_matches():
+    """The papers write "2001 ME 1", not "2001 ME1".
+
+    LaTeX renders the order as a subscript and it reaches a PDF or HTML dump with
+    a space in it. Requiring the digits adjacent to the letters missed exactly
+    that form — and the two objects the first live search found were matched by
+    their PERMANENT NUMBER, so an unnumbered object would have been silently
+    declared absent from a paper it appears in.
+    """
+    from seti.loom import litcheck
+
+    assert litcheck.find_in_text("(139359) 2001 ME 1 2015-Mar-30 DECam",
+                                 "139359 (2001 ME1)", "src")
+    # The case that matters: no permanent number, so the provisional form is the
+    # only key there is.
+    assert litcheck.find_in_text("we observed 2012 UR 158 in the sample",
+                                 "(2012 UR158)", "src")
+    # Loosening the separator must not loosen the boundary: a different object
+    # with a longer order number is still a different object.
+    assert litcheck.find_in_text("2012 UR 1580 elsewhere", "(2012 UR158)",
+                                 "src") == []
+
+
 def test_permanent_number_needs_to_look_like_a_number():
     """A bare six-digit run in a PDF is not a designation."""
     from seti.loom import litcheck

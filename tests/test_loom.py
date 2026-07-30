@@ -1200,15 +1200,15 @@ def test_exceedances_are_vetted_for_fit_reliability():
     """
     from seti.loom import calibrate
 
-    clean = {"A2": -1e-12, "sigma_a2": 1e-13, "rms": 0.4, "data_arc": 9000.0,
+    clean = {"A2": -1e-12, "A2_sigma": 1e-13, "rms": 0.4, "data_arc": 9000.0,
              "n_obs_used": 800, "condition_code": 0}
     v = calibrate.vet_exceedance(clean)
     assert v["reliable"] and not v["fails"]
     assert v["a2_snr"] == pytest.approx(10.0)
 
     # Each gate trips on its own, and says which.
-    for change, marker in (({"sigma_a2": None}, "no_a2_uncertainty"),
-                           ({"sigma_a2": 1e-12}, "a2_snr"),
+    for change, marker in (({"A2_sigma": None}, "no_a2_uncertainty"),
+                           ({"A2_sigma": 1e-12}, "a2_snr"),
                            ({"rms": 2.0}, "orbit_rms"),
                            ({"data_arc": 300.0}, "arc_"),
                            ({"n_obs_used": 20}, "only_20_observations"),
@@ -1223,7 +1223,7 @@ def test_survivors_are_above_the_ceiling_unexplained_and_reliably_fitted():
     """All three conditions, or it is not a survivor."""
     from seti.loom import calibrate
 
-    good_fit = {"sigma_a2": 1e-13, "rms": 0.4, "data_arc": 9000.0,
+    good_fit = {"A2_sigma": 1e-13, "rms": 0.4, "data_arc": 9000.0,
                 "n_obs_used": 800, "condition_code": 0}
     rows = [{"full_name": f"({i}) Rock", "class": "MBA", "A2": 1e-14,
              "H": 18.0, "diameter": 1.0, **good_fit} for i in range(30)]
@@ -1312,6 +1312,16 @@ def test_invalid_field_regex_repairs_the_request():
     # is right is exactly what is not known.
     assert sum(1 for f in calibrate.SBDB_OPTIONAL_FIELDS
                if "A2" in f or "a2" in f) >= 3
+    # And the vetting must read whichever spelling arrived, not a hard-coded one:
+    # doing that reintroduced the guess the self-repairing request had removed, and
+    # every object was rejected as `no_a2_uncertainty` while the value sat in the
+    # row under another key.  MEASURED 2026-07-30: the API serves `A2_sigma`.
+    assert "A2_sigma" in calibrate.A2_SIGMA_KEYS
+    for spelling in calibrate.A2_SIGMA_KEYS:
+        v = calibrate.vet_exceedance({"A2": -1e-12, spelling: 1e-13, "rms": 0.4,
+                                      "data_arc": 9000.0, "n_obs_used": 800,
+                                      "condition_code": 0})
+        assert v["a2_snr"] == pytest.approx(10.0), spelling
 
 
 def test_calibrate_module_imports_without_network():

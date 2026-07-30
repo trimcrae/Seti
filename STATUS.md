@@ -71,12 +71,42 @@ the stream is biased against it by someone else's classifier. The channel
 therefore applies **no additional reliability cut**, and a null here is weak
 evidence about the sky and strong evidence only about the alert stream.
 
-**State: built and offline-tested (66 tests), not yet run on data.** Next
-decisive action: dispatch `tocsin-probe.yml`. Every ADQL column name was inferred
-from the brokers' published source, not from a live query (no sandbox egress) —
-the probe records the *live* TAP schema so a later change shows as a diff rather
-than an unexplained null. Then let `tocsin.yml` accumulate; the ledger is
-worthless on night 1 and gains power monotonically.
+**State: built, offline-tested (80 tests), and probed against the live service.**
+`results/tocsin/probe.json` holds the measurement record. The probe earned its
+keep — it caught three bugs that would each have produced a *confident null*
+rather than an error, which is the failure mode this repository fears most:
+
+1. `gaiadr3_source` has **no `source_id`**; the join key is `oid_catalog` on both
+   sides. This broke the nearby-star pre-cut *and* the forced-photometry
+   denominator — numerator and denominator of the recurrence statistic.
+2. `oid_catalog` **cannot be SELECTed** (declared integer, but AllWISE ids are
+   strings → VOTable serialisation error). Fine in a JOIN, which is all we need.
+3. **The empty window was not a query bug at all**: ALeRCE's TAP mirror lags
+   **15.6 days** (newest LSST epoch MJD 61235.4 vs wall clock 61251.1). Asking
+   for "the last two nights" would have returned nothing every night forever.
+   The screen now anchors to the broker's own frontier and advances a
+   **watermark**, so coverage is gapless and non-overlapping whatever the lag does.
+
+**The finding that changes the schedule: there is a 262-night backlog.** LSST
+detections in ALeRCE already span MJD 60973 → 61235, so the first runs are a
+*backfill of real archival data* rather than a wait for new sky — the recurrence
+statistics that need many nights are days away, not months.
+
+**Measured, no longer guessed:** `sid=0/tid=0` = ZTF, `sid=1/tid=1` = LSST
+diaObject (5.16M), `sid=2/tid=1` = LSST ssObject (131k) — so `sid=1` is correct
+and drops ~300k solar-system detections per 30 days; `catid=1` = Gaia DR3,
+`catid=0` = AllWISE. The Gaia join returns real nearby stars (parallax ~12 mas at
+~1.4″). All now live in `config/tocsin.yaml`, not in code.
+
+**Two statistics bugs fixed before any data was screened**, both found by tests
+rather than by inspection: the duty-cycle cut was rejecting every *first-night*
+detection (one visit, one event → duty cycle 1.0 by arithmetic), and overlapping
+run windows were double-counting trials, which deflates the ensemble rate and
+makes every p-value **too small** — anti-conservative, i.e. it manufactures
+significance. The ledger now folds night by night.
+
+*Next decisive action:* let `tocsin.yml` walk the backlog. Do not read anything
+into early nights — a single grey flash can never exceed `interest` by design.
 
 ### New: 5-channel fan-out searching for life originating on LHS 1140 b (2026-07-21)
 

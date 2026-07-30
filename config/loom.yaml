@@ -1,0 +1,192 @@
+# LOOM channel --- a population search for self-replicating probes among
+# solar-system objects, on the Rubin/LSST alert stream.
+#
+# Every selection number lives here.  See docs/loom.md for the claim, the novelty
+# position, and what each test can and cannot decide.
+#
+# THE GOVERNING ARGUMENT.  A von Neumann probe is defined by self-replication, so
+# the observable is not one anomalous object -- a single unexplained acceleration
+# has a dozen mundane readings -- it is a POPULATION SHARING AN ORIGIN.  The
+# per-object thresholds below exist only to feed a clean ensemble to the
+# population-structure tests, and the decision is made there.
+#
+# THE GATE IS A THEOREM.  Yarkovsky acceleration is recoil from re-radiating
+# absorbed sunlight, so the thermal photons cannot carry more momentum than the
+# intercepted beam:  |a| <= epsilon * (Phi_1au/c) * (A/m) * (1au/r)^2, with
+# Phi_1au/c = 4.5398e-6 N/m^2.  This holds whatever the object's spin, obliquity,
+# thermal inertia or roughness -- none of which are known for almost any object in
+# the sample, which is exactly why a thermophysical model would not do.
+#
+# WHAT IS NOT NOVEL, STATED UP FRONT.  "Inactive small body with an acceleration
+# above Yarkovsky expectations" is Seligman et al. 2023's dark comets (1998 KY26,
+# 2005 VL1, 2016 NJ33, 2010 VL65, 2006 RH120, 2010 RF12, 2003 RM), explained by
+# hidden outgassing.  A magnitude cut rediscovers them.  Promotion to `candidate`
+# therefore REQUIRES an artificiality channel -- an anomalous area-to-mass ratio,
+# or an acceleration independent of heliocentric distance -- never magnitude alone.
+
+acquire:
+  # Same public IVOA TAP service TOCSIN uses: no credentials, full ADQL.
+  alerce_tap_url: "https://tap.alerce.online/tap"
+  timeout_s: 900
+  maxrec: 2000000
+
+  # ALeRCE `sid` for solar-system rows.  TOCSIN MEASURED sid=1 -> LSST diaObject
+  # and sid=0 -> ZTF on 2026-07-30; the ssObject value is NOT measured, so `null`
+  # drops the clause entirely.  That is the safe default: a wrong guess here would
+  # return an empty result rather than an error, which is the failure mode that
+  # cost TOCSIN a week.
+  sid_ssobject: null
+
+  # Which key joins lsst_ss_detection to the generic detection table (for the
+  # epoch, which ssSource does not carry).  `measurement_id` joins
+  # detection.measurement_id to lsst_ss_detection.diasourceid; `oid` joins on the
+  # object id.  A probe question -- loom-probe tries both and reports which
+  # returns rows.
+  join_on: measurement_id
+
+  # Keep only the source nearest the prediction (diadistancerank = 1).  Without
+  # it a crowded field contributes several candidate associations per prediction
+  # and the residual distribution grows a tail made entirely of mis-associations.
+  nearest_only: true
+
+  # --- parent-population quality cuts ---------------------------------------
+  # These are QUALITY cuts, not signal cuts.  A blind search for non-gravitational
+  # signal in minor-planet astrometry returns a MAJORITY of spurious detections at
+  # nominal S/N > 3, and short arcs with inflated fit residuals are the usual
+  # cause; Del Vigna et al. (2018) require both S/N >= 3 and agreement with a
+  # size-scaled expectation before calling a detection reliable.  An object whose
+  # orbit is badly determined can contribute neither a detection nor a trial.
+  h_max: 26.0
+  # `normalized_rms` is the chi-like unitless fit residual: ~1 means residuals
+  # match assigned weights.  Above ~1.5 the reported uncertainties (including
+  # yarkovsky_unc) are underestimated and any S/N built on them is overstated.
+  normalized_rms_max: 1.5
+  min_oppositions: 2
+  min_arc_days: 180.0
+  # Restricting to objects with a fitted non-gravitational solution is OFF: that
+  # subset was chosen by whoever thought an object worth fitting, so it is not a
+  # population a rate can be computed against.
+  require_nongrav: false
+
+  # --- residual path ---------------------------------------------------------
+  # Window for the per-detection residual pull, anchored to the broker frontier
+  # rather than the wall clock: ALeRCE's LSST mirror lags (15.6 days measured on
+  # 2026-07-30), so "the last two nights" would be empty every night forever.
+  residual_window_days: 365.0
+  min_detections_for_summary: 6
+  # Full time-series pulls are expensive; the bulk aggregate query builds the
+  # shortlist and only the shortlist gets one.  Same two-stage shape as TOCSIN.
+  shortlist_size: 400
+  # Voluntary yield.  A cancelled GitHub Actions job never runs its commit step,
+  # so a run that overshoots loses everything it learned.  90 minutes inside a
+  # 180-minute job.
+  max_run_seconds: 5400.0
+
+screen:
+  # --- momentum-ceiling assumptions -----------------------------------------
+  # Chosen to make the ceiling GENEROUS, so exceeding it is a statement about the
+  # object and not about the assumptions: a low density and a high albedo both
+  # shrink the implied mass per unit area and so raise the permitted acceleration.
+  albedo_generous: 0.25
+  rho_generous_kg_m3: 1000.0
+  # A middling pair, reported alongside for context.
+  albedo_typical: 0.15
+  rho_typical_kg_m3: 2000.0
+  # Floor density for the area-to-mass test: already at the bottom of the measured
+  # rubble-pile range, so an AMR ratio above 1 is not an argument about porosity.
+  rho_min_kg_m3: 500.0
+
+  # CALIBRATED, not assumed.  Realised thermal-recoil efficiency measured on three
+  # objects with independently published A2:
+  #   Bennu     (D=490 m, rho=1190): A2 4.62e-14 vs ceiling 5.83e-13 -> eps 0.079
+  #   2005 ES70 (D=60 m,  rho=1500): A2 1.28e-13 vs ceiling 3.78e-12 -> eps 0.034
+  #   2009 BD   (D=4 m,   rho=1500): A2 1.14e-12 vs ceiling 5.66e-11 -> eps 0.020
+  # So 0.1 is already a generous envelope for real Yarkovsky; 1.0 means every
+  # absorbed photon's momentum re-emitted in one direction (unreachable); 2.0 is
+  # perfect specular reflection, the limit for ANY radiation-driven process.
+  # seti.loom.nongrav.calibration_table() recomputes this and the tests check it.
+  epsilon_realistic: 0.1
+  epsilon_hard: 1.0
+  epsilon_inviolable: 2.0
+
+  # --- orbit-fit quality ----------------------------------------------------
+  min_snr_a2: 3.0
+  max_normalized_rms: 1.5
+  min_arc_days: 180.0
+  min_oppositions: 2
+
+  # --- area-to-mass ratio: the cleanest artificiality discriminant ----------
+  # Natural small-NEA locus ~3e-4 m^2/kg (2009 BD: 2.97e-4; 2011 MD: 2.3-3.9e-4).
+  # Identified artificial objects: J002E3 7.9e-3, WT1190F 1.18e-2 -- 20-40x above,
+  # implying rho*D ~ 130-190 kg/m^2, i.e. rho <~ 100 kg/m^3 for a metre-scale
+  # body.  This floor is a REPORTING LABEL only; the gate is AMR against the
+  # object's own size, which is strictly stronger.
+  amr_artificial_floor: 0.001
+  min_amr_ceiling_ratio: 1.0
+
+  # --- residual path --------------------------------------------------------
+  min_detections_for_drift: 8
+  # Below this the fitted quadratic coefficient is fitting noise.
+  min_accel_snr: 5.0
+  # A clock or shutter error dt produces an along-track offset of exactly
+  # rate * dt -- linear in ephrate, identical for every object, and perfectly
+  # degenerate with acceleration in any single object.  Both quantities are
+  # columns in the same table, so the test is free: an object whose residual
+  # correlates this strongly with its own predicted rate is a timing artefact.
+  max_timing_correlation: 0.5
+  # Delta chi-squared for preferring one heliocentric-distance law over the next.
+  # 9 is 3 sigma for one degree of freedom.
+  min_delta_chi2_law: 9.0
+  # Star-catalogue bias is coherent with SKY POSITION, not with the object
+  # (inter-catalogue position differences of tens of mas, up to 175 mas).  If this
+  # much of the residual field is explained by where on the sky it was measured,
+  # it is an astrometric reference problem and no object in it is a candidate.
+  max_sky_variance_explained: 0.3
+
+  # AMPLITUDE IS NOT THE DISCRIMINANT, and this is the channel's tightest
+  # constraint.  `ephOffset` is Rubin's position (astrometric precision ~10 mas)
+  # minus a prediction from an MPC orbit fitted to decades of heterogeneous
+  # historical astrometry whose star-catalogue biases reach 175 mas, so residuals
+  # of 0.1-1 arcsec are routine and carry no information.  What carries information
+  # is the residual's GEOMETRY and its TIME BEHAVIOUR:
+  #
+  #   - a transverse force displaces an object ALONG its track, whereas
+  #     star-catalogue bias and mis-association have no directional preference, so
+  #     an isotropic residual is not an acceleration whatever its size;
+  min_along_cross_power_ratio: 3.0
+  #   - an acceleration ACCUMULATES, so each apparition's mean offset exceeds the
+  #     last with a consistent sign, whereas an orbit-fit error wanders.  Required
+  #     where three or more apparitions exist; silent where they do not.
+  min_apparition_spearman: 0.8
+  # Resolved extent is a coma: the outgassing explanation showing itself directly,
+  # and the cheapest available rejection of a dark comet.  From ssObject's
+  # per-object extendedness.
+  max_extendedness: 0.5
+
+  # --- population tests -----------------------------------------------------
+  # n_null must resolve p well below the Bonferroni threshold for the number of
+  # gates, or the randomisation floor swamps the correction; replication_tests
+  # refuses to report a detection when it does not (INSUFFICIENT_RESOLUTION).
+  population_n_null: 2000
+  population_seed: 20260730
+
+assess:
+  # The empirical envelope is a CROSS-CHECK on the momentum ceiling, not the gate.
+  # A survey-wide calibration error in H, or a units error in the offset columns,
+  # moves the empirical envelope and leaves the ceiling alone -- so a disagreement
+  # between the two is diagnostic, and is reported rather than reconciled.
+  empirical_envelope_quantile: 0.999
+  empirical_envelope_min_per_bin: 200
+  # Cumulative-H slope of a Dohnanyi-like collisional family; manufactured objects
+  # are built to a specification so their size distribution is narrower.  REPORTED
+  # only, never gated -- the anomalous set is selected by a size-dependent
+  # envelope, so its size distribution is already shaped by that selection.
+  collisional_slope: 0.5
+  # Monte-Carlo null for the breakpoint scan.  Scanning for the best breakpoint
+  # finds an improvement in pure noise every time, so an uncalibrated
+  # delta-chi-squared would flag most objects.
+  breakpoint_n_null: 500
+
+report:
+  results_dir: results/loom
+  max_rows_written: 200000

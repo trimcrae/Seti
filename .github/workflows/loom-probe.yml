@@ -1,0 +1,129 @@
+name: loom-probe
+
+# LOOM stage 0 --- the go/no-go measurement (docs/loom.md §7).
+#
+# WHY THIS EXISTS AS A SEPARATE WORKFLOW, AND WHY IT MUST RUN FIRST.
+#
+# The column NAMES for alerce_tap.lsst_ss_detection and lsst_mpc_orbits were
+# verified byte-for-byte against the upstream LSST alert-packet v11.1 Avro
+# schemas.  What could NOT be verified from outside the runner is whether those
+# columns are POPULATED, and that decides the channel's architecture:
+#
+#   * every field of the non-gravitational block (yarkovsky, srp, a1, a2, a3, dt)
+#     is nullable with `default: null`, and MPC fits those terms for only a small
+#     minority of objects --- measured against JPL's SBDB on 2026-07-30, just
+#     589 asteroids have a fitted A2, 22 have A1 and 11 have A3, out of
+#     1,553,300.  If the mirror is no better, Path A cannot support a population
+#     statistic and the channel runs on per-detection residuals alone.  It can:
+#     ephOffset* is delivered for EVERY detection of EVERY known object.
+#   * the angular unit of the ephoffset* columns is not stated in the Avro
+#     schema (the LSST science data model says arcsec, UCD stat.fit.omc).  The
+#     measured distribution settles it: ~0.1 for arcsec, ~1e2 for mas, ~1e-6 for
+#     radians.
+#   * lsst_ss_detection carries no epoch, so the join to alerce_tap.detection is
+#     required and its key is not derivable from the column list.  Both candidate
+#     joins are tried here.
+#   * lsst_ss_object's ALeRCE spellings are NOT verified (the science model uses
+#     camelCase: g_H, MOIDEarth, tisserand_J), so the probe asks TAP_SCHEMA for
+#     the real list rather than guessing and taking the whole photometric axis
+#     down with an ADQL error.
+#
+# The probe commits its record verbatim, so a later schema change appears as a
+# DIFF IN VERSION CONTROL rather than as an unexplained null months afterwards.
+#
+# CREDENTIALS: none.  ALeRCE TAP is a public IVOA service.
+
+on:
+  workflow_dispatch:
+    inputs:
+      out_dir:
+        description: "Override the results directory (blank = results/loom)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Probe the solar-system tables and record the live schema
+        run: |
+          if [ -n "${{ github.event.inputs.out_dir }}" ]; then
+            python -m seti.cli loom-probe --out-dir "${{ github.event.inputs.out_dir }}"
+          else
+            python -m seti.cli loom-probe
+          fi
+      - name: Show the verdict --- especially the null fractions
+        if: always()
+        run: |
+          [ -f results/loom/probe.json ] && python - <<'PY'
+          import json, pathlib
+          rec = json.loads(pathlib.Path("results/loom/probe.json").read_text())
+          al = rec.get("alerce", {})
+          print("verdict:", rec.get("verdict"), "| reached:", al.get("reached"),
+                "| frontier_mjd:", al.get("frontier_mjd"))
+          print("\n=== schema tables ===")
+          for t, cols in sorted((al.get("schema") or {}).items()):
+              print(f"  {t}: {len(cols)} columns")
+          print("\n=== NULL FRACTIONS (the go/no-go) ===")
+          for name, d in sorted((al.get("null_fractions") or {}).items()):
+              if "error" in d:
+                  print(f"  {name}: ERROR {d['error'][:200]}")
+                  continue
+              rows = d.get("rows") or [{}]
+              r = rows[0]
+              tot, pres = r.get("n_total"), r.get("n_present")
+              frac = (float(pres) / float(tot)) if tot else float("nan")
+              print(f"  {name}: {pres}/{tot} populated ({frac:.4%})  "
+                    f"range [{r.get('v_min')}, {r.get('v_max')}]  "
+                    f"mean {r.get('v_mean')}")
+          print("\n=== diagnostics ===")
+          for name, d in (al.get("diagnostics") or {}).items():
+              if "error" in d:
+                  print(f"  {name}: ERROR {d['error'][:220]}")
+              else:
+                  print(f"  {name}: rows={d.get('rows')} "
+                        f"{json.dumps(d.get('data', []), default=str)[:400]}")
+          print("\n=== momentum-ceiling calibration ===")
+          for r in rec.get("momentum_ceiling_calibration", []):
+              print(f"  {r['name']}: A2={r['a2_au_day2']:.3g} "
+                    f"ceiling={r['ceiling_a2_hard']:.3g} "
+                    f"eps_eff={r['epsilon_effective']:.3f}")
+          PY
+      - name: Commit the probe record
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # ONE PATHSPEC AT A TIME: `git add` with several pathspecs is atomic,
+          # so a single unmatched glob stages NOTHING and `|| true` swallows it.
+          git add -f -- results/loom/probe.json || echo "no probe.json"
+          echo "=== staged ==="
+          git diff --cached --name-only
+          if git diff --cached --quiet; then
+            echo "No probe changes to commit."
+          else
+            git commit -m "loom: solar-system table schema + non-gravitational null fractions"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: loom-probe
+          path: results/loom/

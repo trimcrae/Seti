@@ -366,7 +366,8 @@ class Ledger:
     # -- assessment --------------------------------------------------------
     def assess(self, alpha_fdr: float = 0.05, min_visits_for_rate: int = 5,
                max_duty_cycle: float = 0.2, n_null_timing: int = 2000,
-               timing_alpha: float = 0.01, max_grey_z: float = 3.0) -> dict:
+               timing_alpha: float = 0.01, max_grey_z: float = 3.0,
+               require_single_polarity: bool = True) -> dict:
         """Recompute rates, p-values and tiers over the whole accumulated state.
 
         The ensemble event rate per target-visit is the null hypothesis every
@@ -450,12 +451,14 @@ class Ledger:
         for tid, rej in zip(ids, reject, strict=True):
             self._set_tier(self.targets[tid], bool(rej), max_duty_cycle,
                            timing_alpha, max_grey_z,
-                           min_visits_for_duty=min_visits_for_rate)
+                           min_visits_for_duty=min_visits_for_rate,
+                           require_single_polarity=require_single_polarity)
         return self.summary()
 
     def _set_tier(self, rec: dict, fdr_reject: bool, max_duty_cycle: float,
                   timing_alpha: float, max_grey_z: float = 3.0,
-                  min_visits_for_duty: int = 5) -> None:
+                  min_visits_for_duty: int = 5,
+                  require_single_polarity: bool = True) -> None:
         events = rec["events"]
         k = len(events)
         grey_ok = [e for e in events
@@ -481,12 +484,29 @@ class Ledger:
             return
         if np.isfinite(duty) and duty > max_duty_cycle and n_visits < int(min_visits_for_duty):
             _note(rec, "duty_cycle_not_yet_testable")
+        # SINGLE-MECHANISM COHERENCE.  A specular reflector FLASHES; a grey
+        # occulter DIPS.  A star that does both on different nights is varying
+        # intrinsically --- the dominant astrophysical population at these
+        # amplitudes, and 3 of 3 of the first candidates the channel promoted
+        # (all |a| <= 3%, one at 0.013%).
+        #
+        # This deliberately forgoes a hypothetical dual-mode object --- a structure
+        # that both occults and glints --- in exchange for rejecting the confounder
+        # that actually dominates.  Mixed-polarity targets are kept at `interest`
+        # and flagged rather than discarded, so the trade is reversible.
+        polarities = {e.get("polarity") for e in events}
+        mixed_polarity = len(polarities) > 1
+        rec["polarities"] = sorted(pol for pol in polarities if pol)
+        if mixed_polarity:
+            _note(rec, "mixed_polarity_across_nights_indicates_variable_star")
+
         tier = "none"
         if k >= 1:
             tier = "watch"
         if grey_ok or k >= 2:
             tier = "interest"
-        if k >= 2 and grey_ok and fdr_reject and rec["visits_exact"]:
+        if k >= 2 and grey_ok and fdr_reject and rec["visits_exact"] \
+                and not (require_single_polarity and mixed_polarity):
             tier = "candidate"
         if tier == "candidate" and float(rec.get("p_timing", 1.0)) <= timing_alpha:
             tier = "alarm"

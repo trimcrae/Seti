@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import json
 import math
+import time
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -37,6 +38,7 @@ import numpy as np
 import pandas as pd
 
 from .brokers import (
+    ALERCE_BAND,
     ALERCE_SID_DIAOBJECT,
     ALERCE_TAP,
     AlerceTAP,
@@ -376,7 +378,7 @@ def _thresholds(conf: dict) -> Thresholds:
 
 
 def _trials_from_footprint(rows, targets, bin_deg: float, epoch_jyear: float
-                           ) -> tuple[set, dict]:
+                           ) -> tuple[set, dict, dict]:
     """Star-nights on which a target's own sky bin was observed.
 
     This is the denominator that does not depend on the broker populating forced
@@ -388,17 +390,25 @@ def _trials_from_footprint(rows, targets, bin_deg: float, epoch_jyear: float
     """
     stats = {"footprint_bins": len(rows or [])}
     if not rows or targets is None or len(targets) == 0:
-        return set(), stats
+        return set(), stats, {}
     observed = set()
     nights = set()
+    bands_by_bin: dict = {}
     for r in rows:
         try:
-            observed.add((int(r["rab"]), int(r["decb"]), int(r["night"])))
+            key = (int(r["rab"]), int(r["decb"]), int(r["night"]))
+            observed.add(key)
             nights.add(int(r["night"]))
         except (KeyError, TypeError, ValueError):
             continue
+        b = r.get("band")
+        if b is not None:
+            try:
+                bands_by_bin.setdefault(key, set()).add(ALERCE_BAND.get(int(b), ""))
+            except (TypeError, ValueError):
+                pass
     if not observed:
-        return set(), stats
+        return set(), stats, {}
     t_ra = np.asarray(targets["ra"], dtype=float)
     t_dec = np.asarray(targets["dec"], dtype=float)
     pmra = np.asarray(targets["pmra"], dtype=float) if "pmra" in targets else np.zeros(t_ra.size)
@@ -410,6 +420,7 @@ def _trials_from_footprint(rows, targets, bin_deg: float, epoch_jyear: float
     ids = (np.asarray(targets["source_id"]).astype(str) if "source_id" in targets
            else np.arange(t_ra.size).astype(str))
     pairs = set()
+    bands_by_pair: dict = {}
     for night in sorted(nights):
         # Vectorised membership: build this night's observed-bin set once.
         bins_tonight = {(a, b) for a, b, n in observed if n == night}
@@ -418,11 +429,16 @@ def _trials_from_footprint(rows, targets, bin_deg: float, epoch_jyear: float
         hit = np.fromiter(((int(a), int(b)) in bins_tonight
                            for a, b in zip(rab, decb, strict=True)),
                           dtype=bool, count=rab.size)
-        for tid in ids[hit]:
-            pairs.add((str(tid), f"n{night}"))
+        for idx in np.nonzero(hit)[0]:
+            tid = str(ids[idx])
+            pair = (tid, f"n{night}")
+            pairs.add(pair)
+            seen = bands_by_bin.get((int(rab[idx]), int(decb[idx]), night))
+            if seen:
+                bands_by_pair.setdefault(pair, set()).update(b for b in seen if b)
     stats["footprint_nights"] = len(nights)
     stats["footprint_star_nights"] = len(pairs)
-    return pairs, stats
+    return pairs, stats, bands_by_pair
 
 
 def _visit_history_from_forced(rows, targets, th: Thresholds, epoch_jyear: float
@@ -577,6 +593,9 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
     tap = AlerceTAP(aconf["alerce_tap_url"], timeout=float(aconf["timeout_s"]),
                     maxrec=int(aconf["maxrec"]))
     plx = float(aconf["parallax_min_mas"]) if use_gaia_join else None
+    _t0 = time.monotonic()
+    timings: dict[str, float] = {}
+    summary["timings_s"] = timings
     try:
         det = tap.night_detections(
             lo, hi, parallax_min_mas=plx,
@@ -590,14 +609,49 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
         _write_json(out / "summary.json", summary)
         print(f"[tocsin] {summary['verdict']}: {summary['error']}")
         return summary
+    timings["night_detections"] = round(time.monotonic() - _t0, 1)
     summary["counts"]["detections_pulled"] = len(det.rows)
     summary["notes"].extend(n for n in det.notes if not n.startswith("adql="))
 
     alerts = normalize_alerce_rows(det.rows)
     summary["counts"]["normalised"] = len(alerts)
 
+    # Per-band effective alert threshold, measured from this window's OWN
+    # detections rather than assumed: the median flux error in a band times the
+    # stream's ~5-sigma detection threshold.  Used only to decide whether a
+    # silent band's silence is informative.
+    band_limits: dict[str, float] = {}
+    errs: dict[str, list[float]] = {}
+    for a in alerts:
+        if a.band and a.dflux_err_njy and np.isfinite(a.dflux_err_njy):
+            errs.setdefault(a.band, []).append(float(a.dflux_err_njy))
+    for b, vals in errs.items():
+        band_limits[b] = 5.0 * float(np.median(vals))
+    summary["band_detection_limits_njy"] = {
+        b: round(v, 1) for b, v in sorted(band_limits.items())}
+    summary["band_limit_n"] = {b: len(v) for b, v in sorted(errs.items())}
+
     epoch_jyear = 2000.0 + ((lo + hi) / 2.0 - 51544.5) / 365.25
-    verdict = screen_alerts(alerts, targets, th, epoch_jyear=epoch_jyear)
+
+    # The footprint denominator: which targets were LOOKED AT each night,
+    # independent of whether the broker populated forced photometry for them.
+    footprint_pairs: set = set()
+    observed_bands: dict = {}
+    if bool(aconf.get("use_footprint_denominator", True)):
+        _t1 = time.monotonic()
+        try:
+            fb = tap.footprint_bins(lo, hi, bin_deg=float(aconf.get("footprint_bin_deg", 1.0)),
+                                    sid_diaobject=_sid(aconf))
+            footprint_pairs, fpstats, observed_bands = _trials_from_footprint(
+                fb.rows, targets, float(aconf.get("footprint_bin_deg", 1.0)),
+                epoch_jyear)
+            summary["counts"].update(fpstats)
+        except BrokerError as exc:
+            summary["notes"].append(f"footprint_query_failed: {str(exc)[:300]}")
+        timings["footprint"] = round(time.monotonic() - _t1, 1)
+
+    verdict = screen_alerts(alerts, targets, th, epoch_jyear=epoch_jyear,
+                            observed_bands=observed_bands, band_limits=band_limits)
     summary["counts"].update(verdict.counts)
     summary["notes"].extend(verdict.notes)
 
@@ -629,6 +683,7 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
             "did not run at all this window")
 
     # The denominator: forced photometry on every tracked nearby star tonight.
+    _t2 = time.monotonic()
     try:
         fp = tap.forced_photometry_night(
             lo, hi, parallax_min_mas=plx,
@@ -641,20 +696,7 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
     except BrokerError as exc:
         hist, forced_pairs = {}, set()
         summary["notes"].append(f"forced_photometry_failed: {str(exc)[:300]}")
-
-    # The footprint denominator: which targets were LOOKED AT each night,
-    # independent of whether the broker populated forced photometry for them.
-    footprint_pairs: set = set()
-    if bool(aconf.get("use_footprint_denominator", True)):
-        try:
-            fb = tap.footprint_bins(lo, hi, bin_deg=float(aconf.get("footprint_bin_deg", 1.0)),
-                                    sid_diaobject=_sid(aconf))
-            footprint_pairs, fpstats = _trials_from_footprint(
-                fb.rows, targets, float(aconf.get("footprint_bin_deg", 1.0)),
-                epoch_jyear)
-            summary["counts"].update(fpstats)
-        except BrokerError as exc:
-            summary["notes"].append(f"footprint_query_failed: {str(exc)[:300]}")
+    timings["forced_photometry"] = round(time.monotonic() - _t2, 1)
 
     # THE DENOMINATOR.  A star-night that produced a detection was, by
     # definition, a star-night that was observed --- so it is a trial whether or
@@ -758,7 +800,9 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
     summary["verdict"] = "OK" if det.rows else "NO_DETECTIONS_IN_WINDOW"
     _write_events(out, verdict, conf)
     _write_watchlist(out, led, conf)
+    timings["total"] = round(time.monotonic() - _t0, 1)
     _write_json(out / "summary.json", summary)
+    print(f"[tocsin] timings(s): {timings}")
     print(f"[tocsin] {summary['verdict']}: {len(alerts)} alerts, "
           f"{len(verdict.events)} events, tiers={stats['tier_counts']}")
     return summary

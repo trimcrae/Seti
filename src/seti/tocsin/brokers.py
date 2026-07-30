@@ -524,11 +524,14 @@ class AlerceTAP:
         if sid_diaobject is None:
             src += (" JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
                     "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id")
+        # Grouped by BAND as well as bin and night.  That extra column is what
+        # makes the one-sided colour test possible: to use a band's silence as
+        # evidence, you must first know that band was actually observed.
         adql = (
             f"SELECT {ra_e} AS rab, {dec_e} AS decb, {night_e} AS night, "
-            f"COUNT(*) AS n FROM {src} "
+            f"d.band AS band, COUNT(*) AS n FROM {src} "
             "WHERE " + " AND ".join(where) +
-            f" GROUP BY {ra_e}, {dec_e}, {night_e}"
+            f" GROUP BY {ra_e}, {dec_e}, {night_e}, d.band"
         )
         res.rows = self.query(adql, maxrec=maxrec or 500000)
         res.reached = True

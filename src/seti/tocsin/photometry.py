@@ -263,3 +263,63 @@ def blackbody_colour_temperature(bands: list[str], dflux_njy: list[float],
     reason = "two_band_zero_dof" if len(bands_k) == 2 else ""
     return ColourTemperature(best, t_lo, t_hi, c_min, len(bands_k),
                              tuple(bands_k), True, reason)
+
+
+# ---------------------------------------------------------------------------
+# One-sided colour test from a non-detection
+# ---------------------------------------------------------------------------
+@dataclass(frozen=True)
+class GreyExclusion:
+    """Whether a *non-detection* in another band rules out a grey event.
+
+    Almost every event in the live stream is single-band, so the two-band
+    achromaticity test seldom fires (0 of 22 events in the first correct run).
+    That does not make the colour information unavailable --- it makes it
+    one-sided.
+
+    The physics: a grey event has the same *fractional* amplitude in every band,
+    so on a red star it is BRIGHTER in absolute flux in the redder band.  If the
+    event is seen in *g* while *r* was observed the same night and stayed silent,
+    the grey hypothesis predicted a redder-band signal that did not appear ---
+    which is evidence against greyness, and consistent with a flare.
+
+    ``excluded`` is True only when the predicted flux exceeds the band's
+    detection limit by ``margin``, so a marginal prediction is reported as
+    untestable rather than counted either way.
+    """
+
+    excluded: bool
+    tested: bool
+    predicted_flux_njy: float
+    limit_flux_njy: float
+    other_band: str
+    reason: str = ""
+
+
+def grey_excluded_by_nondetection(a_obs: float, base_flux_other_njy: float | None,
+                                  limit_flux_other_njy: float | None,
+                                  other_band: str, margin: float = 3.0
+                                  ) -> GreyExclusion:
+    """Test the grey hypothesis against a silent band observed the same night.
+
+    ``a_obs`` is the fractional amplitude measured in the detected band;
+    ``base_flux_other_njy`` the star's quiescent flux in the silent band;
+    ``limit_flux_other_njy`` that band's effective alert threshold.
+    """
+    nan = float("nan")
+    if not np.isfinite(a_obs):
+        return GreyExclusion(False, False, nan, nan, other_band, "amplitude_untestable")
+    if base_flux_other_njy is None or not np.isfinite(base_flux_other_njy) \
+            or base_flux_other_njy <= 0:
+        return GreyExclusion(False, False, nan, nan, other_band, "no_baseline_other_band")
+    if limit_flux_other_njy is None or not np.isfinite(limit_flux_other_njy) \
+            or limit_flux_other_njy <= 0:
+        return GreyExclusion(False, False, nan, nan, other_band, "no_limit_other_band")
+    predicted = abs(float(a_obs)) * float(base_flux_other_njy)
+    limit = float(limit_flux_other_njy)
+    if predicted <= margin * limit:
+        # The grey hypothesis does not predict a detectable signal there, so the
+        # silence says nothing.  Untestable, not "passed".
+        return GreyExclusion(False, False, predicted, limit, other_band,
+                             "prediction_below_detection_limit")
+    return GreyExclusion(True, True, predicted, limit, other_band, "")

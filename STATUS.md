@@ -5,6 +5,126 @@ vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
 next. Last updated: 2026-07-30.
 
+### New channel: LOOM — von Neumann probe *population* search in Rubin SSO alerts (`loom/`), 2026-07-30
+
+**The question this repository has not asked: is there a *population* of
+artificial objects already in the solar system?** A von Neumann probe is defined
+by self-replication, so the observable is not one anomalous object — it is a
+population sharing an origin. LOOM screens solar-system objects one at a time and
+**decides on the set**, against a null of matched random subsets of the same
+screened sample.
+
+**The observable, and why it is new.** `ssSource.ephOffset*` — the
+observed-minus-predicted ephemeris offset, decomposed into along-track and
+cross-track (arcsec, UCD `stat.fit.omc`), delivered **per detection for every
+known minor planet**. Verified against the upstream LSST `v11_1.ssSource` and
+`v11_1.mpc_orbits` Avro schemas; ALeRCE exposes the fields verbatim, lower-cased,
+in schema order. These fields first appear in alert schema v10.0 (2025-11-24) and
+went world-public 2026-02-24 — a five-month-old public data product that no Rubin
+roadmap claims and no broker ingests.
+
+**Prior-art position** (sweep on the runner: 178 arXiv queries across 8 angles, 108
+IDs verified against real titles before citation, term-occupancy counted over 34
+full texts; evidence under `results/vnprobelit{,2,3,4,5}/`):
+- **Unoccupied:** `ephOffset` as a population observable
+  (`abs:"ephemeris" AND abs:"offset" AND abs:"alert"` → **0 results**;
+  `abs:"astrometric residuals" AND abs:"anomalous"` → **0**). The phrase
+  "ephemeris residual" appears **zero times** in SNAPS, Fink-SSO, AHA, Lazio's
+  2026 review, Davenport et al. or Ellery.
+- **Unoccupied:** the replication axis, in any dataset. `abs:"self-replicating"
+  AND abs:"solar system" AND abs:"technosignature"` → **0**. The only paper on
+  self-replicating-probe technosignatures (Ellery, arXiv:2510.00082) is theory —
+  69 mentions of "self-replicating", 139 of "lunar", **zero** of
+  "non-gravitational", "Yarkovsky", "ephemeris residual" or "LSST".
+- **Unoccupied:** SFD/albedo homogeneity as an *artificiality* discriminant
+  (`abs:"manufactured" AND abs:"population" AND abs:"asteroid"` → **0**).
+- **OCCUPIED IN FLIGHT — do not lead with it:** single-object anomalous
+  acceleration. Lazio's *Solar System Technosignatures* review (arXiv:2606.13797)
+  names the signature explicitly and cites **Lazio & Mahabal 2026, *On Anomalous
+  Asteroid Accelerations*, Acta Astronautica, submitted** — not on arXiv, right
+  authors, same observable.
+- **ALREADY NULLED IN-HOUSE:** the catalogue-scale single-object version is
+  `results/derelict/` — an `A1` census over 1,553,263 asteroids + 4,069 comets,
+  verdict `ALL_SURVIVORS_EXPLAINED`. Per `CLAUDE.md` a clean null moves the
+  *question*, which is exactly what LOOM does.
+- **DO NOT CLAIM:** population photometric outlier detection on minor planets.
+  SNAPS (arXiv:2302.01239, 2405.20176, 2604.27420) already does it at Rubin scale
+  over 15 features — none a dynamical residual. The defensible claim is only that
+  nobody reads them as technosignatures or fuses them with residuals.
+
+**The gate is a theorem, not a fit.** Yarkovsky is recoil from re-radiated
+sunlight, so thermal photons cannot carry more momentum than the intercepted beam:
+`|a| ≤ ε·(Φ_1au/c)·(A/m)·(1au/r)²`. This holds whatever an object's spin,
+obliquity, albedo or thermal inertia — none of which are known for almost any
+object in the sample, which is why a thermophysical model would not do. Calibrated
+on three objects with published `A2`: **ε_eff = 0.079 (Bennu), 0.034 (2005 ES70),
+0.020 (2009 BD)** — so ε=0.1 is already generous, ε=1 unreachable, ε=2 the
+specular limit for any radiation-driven process. Pinned by
+`test_momentum_ceiling_matches_measured_objects`.
+
+**Amplitude is NOT the discriminant** — the channel's tightest constraint.
+`ephOffset` is Rubin's ~10 mas position minus an MPC prediction fitted to decades
+of heterogeneous astrometry with star-catalogue biases up to **175 mas**, so
+0.1–1″ residuals are routine and carry no information. The channel keys on
+**geometry** (a transverse force displaces along-track; catalogue bias and
+mis-association are isotropic), **time structure** (monotone growth across
+apparitions; which heliocentric-distance law the drift follows), and
+**independence from orbit quality** (a blind Yarkovsky search returns a *majority*
+of spurious detections at nominal S/N>3).
+
+**Promotion requires an artificiality channel, never magnitude alone.** Large
+acceleration in an inactive body is Seligman et al. 2023's dark comets, already
+explained by outgassing. Area-to-mass ratio is where outgassing and engineering
+part company — mass loss raises acceleration but does not turn a rock into a thin
+shell. Natural small-NEA locus ~3e-4 m²/kg; **J002E3 7.9e-3, WT1190F 1.18e-2**,
+implying ρ·D ≈ 130–190 kg/m², i.e. ρ ≲ 100 kg/m³ for a metre-scale body.
+
+**The one thing no other channel here has: a positive control.** `J002E3` (Apollo
+12 S-IVB), `WT1190F`, `2020 SO` (1966 Surveyor 2 Centaur, confirmed by 301
+stainless-steel NIR spectroscopy) and `2007 VN84` (Rosetta) are **real artificial
+objects that a survey catalogued as minor planets**, identified by exactly this
+observable. If the screen does not recover them it does not work — a falsifiable
+statement about the pipeline, from real data. `control.validate` reports
+`NO_CONTROLS_PRESENT` as **unexercised, not passed**, which is the expected
+outcome until the survey catalogues a new one.
+
+**Mis-linkage is collapsed before any statistic runs.** `|A_i| ≳ 1e-8 au/day²`
+breaks MPC linking outright and tracklets can attach to *multiple* designations —
+so one accelerating object can enter the catalogue several times with
+near-identical elements and disjoint epochs, which is precisely what this channel
+would otherwise call a family. The separator is epoch overlap; real family members
+are observed contemporaneously. DERELICT's survivor base rate for this failure
+mode was 100%.
+
+**Two unit traps, both guarded by regression tests.**
+`lsst_mpc_orbits.yarkovsky` is in **1e-10 au/day²** (Bennu's `A2 = -4.62e-14`
+appears as `-4.6e-4`; reading it raw overstates every acceleration by ten orders
+of magnitude and flags the whole catalogue). `srp` is in **m²/ton**. `a1/a2/a3`
+are *also* labelled m²/ton, which is dimensionally wrong for Marsden
+accelerations, so those three are treated as unit-unverified and unused.
+
+**State: built, offline-tested (64 tests), probe dispatched 2026-07-30.** The
+probe is a **go/no-go**, not a formality: measured against JPL's SBDB the same
+day, only **589** asteroids of 1,553,300 have a fitted `A2` (22 have `A1`, 11 have
+`A3`), so if ALeRCE's mirror is no better then Path A (fitted non-grav terms)
+cannot support a population statistic and the channel runs on per-detection
+residuals alone — which it can, and which is the unbiased path anyway. The probe
+also settles the `ephoffset*` angular unit from its measured distribution, which of
+two candidate joins reaches `detection` for the epoch, and `ssObject`'s real
+column names (asked, not guessed).
+
+**Next actions.** (1) Read `results/loom/probe.json` and set `sid_ssobject`,
+`join_on` and the Path A/Path B split from what it measured. (2) Dispatch
+`loom-screen`. (3) Calibrate `a1/a2/a3` units against objects with published JPL
+solutions before using those columns at all. (4) Re-run the vnprobelit sweep's
+suggestion of reading the Del Vigna / Greenberg per-object `A2` tables on the
+runner, which would turn ε_eff from a 3-object argument into a ~250-object
+measured distribution.
+
+Docs: `docs/loom.md`. Config: `config/loom.yaml`. Workflows: `loom-probe.yml`
+(dispatch), `loom.yml` (weekly, 11:40 ET Mondays — offset from TOCSIN so the two
+do not hit the same TAP service concurrently).
+
 ### New channel: TOCSIN — nightly Rubin/LSST alert screen (`tocsin/`), 2026-07-30
 
 **The first standing, recurring search this repository has had.** Every other

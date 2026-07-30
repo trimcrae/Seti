@@ -1,0 +1,2181 @@
+Draft version July 23, 2024
+Typeset using LATEX twocolumn style in AASTeX631
+The Solar System Notification Alert Processing System (SNAPS): Asteroid Population Outlier
+Detection
+Michael Gowanlock
+ ,1, 2 David E. Trilling
+ ,2, 1 Daniel Kramer
+ ,1, 2 Maria Chernyavskaya
+ ,2 and
+Andrew McNeill3
+1School of Informatics, Computing, and Cyber Systems
+Northern Arizona University
+P.O. Box 5693
+Flagstaff, AZ 86011, USA
+2Department of Astronomy and Planetary Science
+Northern Arizona University
+P.O. Box 6010
+Flagstaff, AZ 86011, USA
+3Department of Physics
+Lehigh University
+16 Memorial Drive East
+Bethlehem, PA 18015, USA
+ABSTRACT
+The Solar System Notification Alert Processing System (SNAPS) is a ZTF and Rubin Observatory
+alert broker that will send alerts to the community regarding interesting events in the Solar System.
+SNAPS is actively monitoring Solar System objects and one of its functions is to compare objects
+(primarily main belt asteroids) to one another to find those that are outliers relative to the population.
+In this paper, we use the SNAPShot1 dataset which contains 31,693 objects from ZTF and derive
+outlier scores for each of these objects. SNAPS employs an unsupervised approach; consequently, to
+derive outlier rankings for each object, we propose four different outlier metrics such that we can
+explore variants of outlier scores and add confidence to outlier rankings. We also provide outlier scores
+for each object in each permutation of 15 feature spaces, between 2 and 15 features, which yields 32,752
+total feature spaces. We show that we can derive population outlier rankings each month at Rubin
+Observatory scale using 4 ×Nvidia A100 GPUs, and present several avenues of scientific investigation
+that can be explored using population outlier detection.
+Keywords: Asteroids (72) — Small Solar System bodies (1469) — Sky surveys (1464) — Astroinfor-
+matics (78) — GPU computing (1969)
+1. INTRODUCTION
+The Rubin Observatory’s Legacy Survey of Space and
+Time (LSST; Ivezi´ c et al. 2019) will have an major im-
+pact on time-domain astronomy. To prepare for this
+large all-sky survey, many researchers have been de-
+signing data processing pipelines (van Roestel et al.
+2021; Coughlin et al. 2021) for precursor surveys, such
+as the Zwicky Transient Facility (ZTF; Bellm et al.
+Corresponding author: Michael Gowanlock
+michael.gowanlock@nau.edu
+2018). While ZTF generates roughly a tenth of the
+LSST data volume, it and other LSST precursor sur-
+veys such as the Asteroid Terrestrial-impact Last Alert
+System (ATLAS; Tonry et al. 2018), Automated Sur-
+vey for SuperNovae (ASAS-SN; Shappee et al. 2014),
+and the Catalina Real-Time Transient Survey (CRTS;
+Drake et al. 2014) are instrumental for ensuring that the
+necessary preparations have been made to maximize the
+scientific return of LSST. Several alert brokers are cur-
+rently being developed to prepare for LSST including
+Fink (M¨ oller et al. 2020), ALeRCE (F¨ orster et al. 2021;
+arXiv:2405.20176v2 [astro-ph.EP] 21 Jul 2024
+2 Gowanlock et al.
+S´ anchez-S´ aez et al. 2021), ANTARES (Matheson et al.
+2021), Lasair (Smith et al. 2019), among others 1.
+Recent LSST preparation efforts have focused on clas-
+sifying astrophysical sources (Soraisam et al. 2020). In
+the context of Solar System science, the vast majority
+of objects are asteroids, and so classification is less im-
+portant in this context (e.g., classifying an asteroid vs.
+comet is not very illuminating). Instead, a major focus
+of the Solar System community is to detect interesting
+transient events in addition to detecting asteroids that
+are different relative to the population.
+In this paper, we present our population outlier de-
+tection software infrastructure for the Solar System No-
+tification Alert Processing System ( SNAPS). Trilling
+et al. (2023) presented the first SNAPS data release
+(SNAPShot1), which contains 31,693 asteroids from ZTF.
+Each asteroid has been observed at least 51 times and
+has been assigned a rotation period and light curve am-
+plitude among other derived properties. Beyond Solar
+System science, ZTF has been similarly used for deriving
+the rotation periods of fully convective stars (Lu et al.
+2022). It is clear that the time-domain capabilities of
+new observatories are revolutionizing our understanding
+of the Solar System and beyond.
+At present, SNAPS is operating as a downstream
+broker from ANTARES (Matheson et al. 2021), and
+will continue to do so in the LSST era (more detail on
+SNAPS can be found in Trilling et al. 2023). Population
+outlier detection refers to detecting asteroids that have
+interesting properties relative to the other asteroids in
+the database. Because we have few examples of outlying
+objects in the Solar System, we use an unsupervised ma-
+chine learning approach that detects interesting objects
+without the use of binary classification labels (i.e., inlier
+vs. outlier). Our approach ranks the objects by assign-
+ing them an outlier score, and this will allow users of
+SNAPS to customize the number of objects that they
+may want to investigate further; for instance, a user may
+find an interesting object and then use telescopic follow-
+up observations for additional analysis. Furthermore,
+we use an ensemble of algorithms and outlier detection
+metrics to guide the search for outliers, as the methods
+may disagree on which objects have the highest outlier
+scores.
+The paper is organized as follows. Section 2 de-
+scribes the datasets used throughout the paper. Sec-
+tion 3 presents the population outlier detection system.
+Section 4 highlights key results by deriving population
+1 For an update-to-date list of LSST alert brokers, see the following
+URL: https://www.lsst.org/scientists/alert-brokers.
+outlier scores for objects in our ZTF catalog, in addition
+to showing system performance using this catalog, and
+expected performance at LSST scale. Section 5 shows
+example avenues of scientific investigation that can be
+carried out using the system. Finally, Section 6 discusses
+population outlier detection in the time-domain era of
+astronomy and future work directions.
+2. DATASETS
+In this section, we describe the datasets used in our
+evaluation, including SNAPShot1 (Trilling et al. 2023),
+which is a ZTF dataset. We also outline a synthetic
+dataset that is used to assess the performance of the
+system at LSST scale.
+2.1. SNAPShot1
+The first SNAPS data release is SNAPShot1, and
+a detailed description of this data release is outlined
+in Trilling et al. (2023). This data release contains
+|D| = 31 , 693 ZTF asteroids that have at least 51 ob-
+servations, such that properties can be derived, includ-
+ing light curve properties, such as rotation periods and
+amplitudes. When we describe the data normalization
+procedure in the next section, we will summarize the
+properties of each asteroid.
+SNAPShot1 includes data from the NEOWISE cata-
+log (Mainzer et al. 2019), and we used theNEOWISE DIAM
+and NEOWISE VALBEDO features as those properties may
+be useful for detecting outliers. However, some of the
+ZTF objects were not included in the NEOWISE cata-
+log; consequently, in cases where values were undefined
+(using NaN values), we replaced those values with the
+mean of the distribution. This ensures that those ob-
+jects with undefined values are considered typical, and
+therefore, will not be ranked as an outlier based on the
+NEOWISE DIAM and NEOWISE VALBEDO properties.
+2.2. LSST Synthetic Dataset ( LSST5M)
+The LSST catalog will contain roughly 5 million as-
+teroids at the end of the 10 year survey. To examine the
+performance of the system at LSST scale, we generate a
+synthetic dataset with 5 million objects with the same
+d = 15 dimensions used for SNAPShot1 described in Ta-
+ble 1 and denote this dataset as LSST5M. We replicate
+the features of each object in SNAPShot1 and then add
+noise to the values of each feature. The noise added to
+each feature is drawn from a Gaussian distribution us-
+ing µ = 0 where the standard deviation, σ, is that of
+each feature in SNAPShot1 (as shown in Table 1). While
+we do not expect that this dataset will be exceedingly
+AASTeX v6.3.1 Sample article 3
+T able 1.Features used for outlier detection in SNAPShot1. The table shows each feature and description. The text describes that NEOWISE DIAM
+and NEOWISE VALBEDO do not provide values for all ZTF objects; therefore, those objects that are missing values, are replaced by the mean of
+the distribution of those features. The mean and standard deviation ( µ, σ) of the features before normalization are shown as they are used to
+generate a synthetic dataset to assess population outlier detection at LSST scale.
+Feature Description NaN to Mean Derived µ σ
+G BR The Bowell G value in the r filter (Bowell et al. 1989) ✓ 0.226 0.234
+H BR The absolute magnitude of the object, in the Bowell HG system, in the r filter ✓ 14.108 1.877
+G BG The Bowell G value in the g filter ✓ 0.216 0.255
+H BG The absolute magnitude of the object, in the Bowell HG system, in the g filter ✓ 14.685 1.902
+LCAMP The amplitude of the light curve ✓ 0.322 0.300
+ROTPER The rotation period (in hours) of the object ✓ 101.150 643.548
+GRCOLOR The g − r color of the object ✓ 0.596 0.146
+SIGGRCOLOR The 1σ error of the g − r color ✓ 0.008 0.006
+PERIPOWER The normalized Lomb-Scargle Periodogram power of the rotation period ✓ 0.514 0.289
+NEOWISE DIAM The diameter of the object calculated by the NEOWise Survey ✓ 8.263 15.675
+NEOWISE V ALBEDO The albedo in the V-band, calculated by the NEOWise Survey ✓ 0.196 0.185
+MPC A The object’s semi-major axis in AU 2.698 1.837
+MPC E The object’s eccentricity 0.144 0.100
+MPC I The object’s inclination in degrees 9.660 8.917
+HA VG The object’s average absolute magnitude ✓ 14.045 1.830
+representative of the LSST catalog, it is sufficient for
+testing the performance of population outlier detection
+with SNAPS at LSST scale (see Section 4.5).
+3. FINDING OUTLYING ASTEROIDS: AN
+UNSUPER VISED APPROACH
+The two major categories of machine learning are su-
+pervised and unsupervised learning (Zhou et al. 2017).
+Supervised learning takes as input feature vectors with
+class labels and attempts to learn the function that max-
+imizes classifying objects with the correct class label. In
+contrast, unsupervised learning does not use class labels
+and instead attempts to identify patterns in data.
+Other time-domain alert brokers will classify sources
+outside of the Solar System, such as Fink (M¨ oller et al.
+2020), ALeRCE (F¨ orster et al. 2021; S´ anchez-S´ aez et al.
+2021), and ANTARES (Matheson et al. 2021). Regard-
+ing the Solar System, the alert broker Fink (M¨ oller et al.
+2020) has been used to identify new candidate Solar Sys-
+tem objects (Le Montagner et al. 2023), and they also
+design a new phase function model that corrects for the
+geometric properties of asteroids, including spin coor-
+dinates, to better characterize sparse photometry from
+ZTF (Carry et al. 2024). Unlike much of the prior work,
+source classification is not the target of our alert broker;
+rather, we are interested in identifying objects exhibit-
+ing interesting behavior either relative to its prior ob-
+servational record, or as compared to the greater popu-
+lation of objects. Here, we refer to the former as real-
+time and the latter as population outlier detection, re-
+spectively. Since there are very few known examples of
+small bodies exhibiting interesting/transient behavior,
+we are focused on unsupervised approaches to outlier
+detection, as we do not have sufficient examples of out-
+lier activity needed to train supervised approaches. Fur-
+thermore, since LSST is expected to detect many new
+objects which may exhibit exotic properties for which
+we have no known examples, we do not want to inad-
+vertently exclude these objects from being detected as
+outliers, which may occur if a supervised approach is
+used.
+3.1. Terminology
+Because this paper includes material from several
+fields of computer science and astronomy, we outline ter-
+minology that is used throughout the paper as follows.
+• Feature vector/point: A feature vector is a set of
+numerical attributes that define an object, e.g.,
+an asteroid (example properties include color, ro-
+tation period, and albedo). Because these feature
+vectors occupy a position in a d dimensional fea-
+ture space, they are also called points. Through-
+out this paper, we refer to asteroid properties as
+feature vectors and points.
+• Dataset/database: A collection of feature vectors
+denoted as D. The cardinality of the set (number
+of objects/asteroids) is denoted as |D|.
+• Feature space: The space encompassing all of the
+feature vectors (or points) in the dataset, D.
+4 Gowanlock et al.
+• Dimensionality: The number of features included
+in each feature vector ( d). We examine d ≤ 15.
+• Self-join: Performing a search on all feature vec-
+tors within a dataset ( D) as compared to each
+other.
+• Distance Similarity Search: This is also known as
+a range query or a radius search, where a search
+is conducted around a query point using a radius
+ϵ and all neighbors that are found within ϵ are
+returned. A distance similarity self-join performs
+distance similarity searches on all points in the
+dataset, D.
+• k-Nearest Neighbor Search: Finding the closest k
+points within the feature space from a given query
+point. A kNN self-join performs k-nearest neigh-
+bor searches on all points in a dataset, D.
+• Multi-GPU Speedup: A performance measure that
+describes the scalability of a GPU algorithm that
+uses multiple GPUs. It is the ratio of the time to
+compute on one GPU (T1) to TnGP U, where TnGP U
+is the time to compute on nGP U GPUs. In this
+paper we evaluate up to nGP U = 4 and so the
+maximum possible speedup is 4 ×.
+• Multi-GPU Parallel Efficiency: A performance
+measure that describes how well a resource is uti-
+lized (the GPU in this context). It is the multi-
+GPU speedup above divided by nGP U, and the
+maximum value is 1.0 (or 100%).
+3.2. Background and GPU-Accelerated Outlier
+Detection Algorithms
+Many of the pioneering efforts on outlier detection use
+an intuitive notion of an outlier, which defines an out-
+lier as having a large fraction of the dataset exterior to
+a search distance around a given point (Knorr & Ng
+1997). Subsequent efforts have focused on the notion
+of neighbors around a point, where the definition of an
+outlier is a function of the properties of its closest neigh-
+bors (Campos et al. 2016). This second class of algo-
+rithms that use k nearest neighbors have been shown to
+outperform other unsupervised learning methods (Cam-
+pos et al. 2016). Given these two major approaches to
+outlier detection, we select two methods as follows: (1)
+the Distance Similarity Self-Join ( DSSJ), and (2) the
+k-Nearest Neighbor Self-Join ( kNNSJ).
+The DSSJ operation performs distance similarity
+searches on all feature vectors (or points) within a
+dataset. Each distance similarity search returns all
+points within a search distance, ϵ, of a point. Thus, the
+“self-join” refers to searching all points within a dataset
+as compared to each other. The k-Nearest Neighbor
+Self-Join ( kNNSJ) finds the k nearest neighbors of all
+points in a dataset. Compared to DSSJ, which uses a
+fixed search radius ϵ, the kNN algorithm employs vary-
+ing search radii for each point in the dataset to find at
+least k neighbors per point. For example, in a densely
+populated region of the data space, the search radius
+will be small such that it finds at least k neighbors,
+whereas in a sparsely populated region, the search ra-
+dius will need to be larger. An example of the DSSJ
+and kNNSJ approaches is outlined in Figure 1.
+The typical approach for selecting parameters for an
+outlier detection algorithm (e.g., k in the kNNSJ ap-
+proach) is to use the Receiver Operating Characteristic
+(ROC) (Campos et al. 2016). However, ROC requires a
+set of labels that define inliers and outliers. Because we
+do not have a labeled set of outliers, we elect to use a
+different approach. We select a search radius ϵ for DSSJ
+and the number of neighbors k for kNNSJ by reaching
+a trade-off between overfitting to the local data density
+or underfitting to the global data density of each feature
+space. While this computation adds additional complex-
+ity to the detection of outliers across all of the feature
+spaces, it ensures that we are not arbitrarily selecting
+parameters ϵ or k.
+3.3. Population Outlier Detection and Accelerating
+Scientific Discovery
+One facet of population outlier detection is the exami-
+nation of multi-dimensional feature spaces. The features
+must be normalized to ensure that some properties are
+not given more weight than others. Otherwise, some
+features may dominate the feature space, and obfuscate
+other features from contributing to the degree that an
+object is considered an outlier. Therefore, we normal-
+ized all features to be in the range [0, 1]. We used all of
+the SNAPShot1 features outlined in Table 1, where the
+non-normalized mean and standard deviation values are
+reported.
+To address a wide range of science cases, and to accel-
+erate the scientific discovery process, we assign objects
+an outlier ranking across all permutations of the 15 fea-
+ture spaces (Table 1 shows each feature), where the di-
+mensionality d ≥ 2. In this context, population outlier
+detection serves two purposes: (1) to filter those objects
+that are likely to be outliers from the typical popula-
+tion of asteroids; and, (2) to accelerate the scientific dis-
+covery process by providing additional information that
+may be of interest to a researcher.
+Regarding (2) above, the notion of accelerating the
+scientific discovery process by augmenting a human re-
+AASTeX v6.3.1 Sample article 5
+(a) (b)
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+Figure 1. Illustrative example of a d = 2 feature space comparing outlier detection approaches for (a) DSSJ with ϵ = 0.67; (b)
+graph representation of kNNSJ with k = 3. (a) The points are shown as black dots, where a fixed radius is drawn around each
+point. (b) The kNN graph is shown where a directed edge between two nodes denotes the k = 3 neighbors for each point. Since
+k = 3 and there are 10 points, there are a total of 30 directed edges. Colors are used to improve readability in both subfigures.
+The DSSJ and kNNSJ approaches will be described in greater detail in Sections 3.5–3.7.
+searcher with machine support has been described in
+other works which address providing multiple data vari-
+ants to a user or guiding the scientific discovery pro-
+cess through data prioritization (Wagstaff et al. 2013;
+Pankratius et al. 2016). Population outlier detection
+across numerous multidimensional feature spaces pro-
+vides both data prioritization and variant exploration.
+To enable the permutation approach described above,
+SNAPS will provide information regarding each per-
+mutation of the d = 15 features/dimensions where
+d ≥ 2. Therefore, the total number of feature spaces
+in SNAPShot1 is as follows:
+15X
+i=2
+15
+i
+
+= 32, 752. (1)
+Below we describe the methods used for outlier detec-
+tion and how we rank each object within each feature
+space.
+3.4. Outlier Detection Methods and Object Ranking
+We present two outlier detection methods each of
+which have two different metrics, where each outputs
+a ranked list of outlier objects. The ranked list method
+allows us to compare the rankings between outlier de-
+tection approaches. Because the different outlier detec-
+tion methods are likely to return different rankings for
+each object, this allows us to have several outlier de-
+tection criteria that can be used to determine whether
+a given object should be investigated in greater detail.
+This may include telescopic follow-up to obtain addi-
+tional information about an object. This approach al-
+lows SNAPS users to determine their own thresholds
+for decision making.
+We let the list of ranked objects for a given method
+be denoted as R where the rank of object i is denoted as
+ri ∈ R where i = 1, . . . ,|D|. Object i with the minimum
+ranking value ri ∈ R, argmin( ri ∈ R), has the greatest
+probability of being an outlier, whereas the object with
+the maximum value, argmax( ri ∈ R) is considered the
+most typical object in the feature space. We highlight
+that some of the outlier detection methods yield ties
+between objects, where two or more objects may be as-
+signed the same outlier score, whereas other methods
+may not produce ties between object rankings.
+3.5. Distance Similarity Self-Join (DSSJ)
+The DSSJ method finds all points within a search
+radius, ϵ, around each point in a dataset. Intuitively,
+points having a significant number of points within ϵ
+are considered typical, and those with few points within
+ϵ will be considered outliers.
+3.5.1. Ranking Metrics
+We outline two ranking metrics for DSSJ as follows.
+One metric is distance-oblivious where all points within
+the search radius, ϵ, of a query point are considered
+equal, and thus their distances to the query point are not
+included in the ranking. The other metric is distance-
+aware where the distances of points to the query point
+within the search radius ϵ are considered in the ranking
+6 Gowanlock et al.
+calculation. These two metrics yield different rankings
+for the DSSJ method.
+1. Distance-oblivious: The ranking function, R, is
+simply a ranking from the fewest to the great-
+est number of neighbors each point has within the
+search distance ϵ.
+2. Distance-aware: The ranking function, R, is a
+ranking from the largest mean distance between
+an object and its points within ϵ and the smallest
+mean distance. Intuitively, if a given point has its
+neighbors at large distances, then this implies that
+it is an outlier.
+3.5.2. Overfitting vs. Underfitting: On The Selection of
+The Search Radius ϵ
+The selection of ϵ will directly impact the outlier rank-
+ing of each object in the dataset. Consider two extremes:
+(1) when ϵ ≈ 0, there will be few (if any) neighbors found
+within ϵ around a given point/feature vector; and, (2)
+as ϵ → ∞each feature vector will find all other feature
+vectors in the feature space. Both of these cases are im-
+practical for finding outliers. The search radius ϵ must
+not be too small such that too few neighbors are found,
+while not being too large such that too many neighbors
+are found.
+Considering the extreme cases above, a small value of
+ϵ implies that the local density of a feature vector deter-
+mines whether it is an outlier, whereas a large value of
+ϵ implies that the global density makes this determina-
+tion. Thus, in the former case, the data will be overfit to
+the local density, and in the latter case, the data will be
+underfit. Here, we provide a simple solution for select-
+ing ϵ, which considers the pragmatic nature of finding
+outlying objects in the context of large-scale astronomi-
+cal surveys, by reaching a trade-off between underfitting
+and overfitting.
+Consider two ranked lists RA and RB, and n which
+refers to some top fraction of the outliers in each list.
+In this paper we set n = 0.01|D| (1% of the dataset). If
+the top-n outlying objects in RA and RB are permuted
+and a given object in RA has a similar position in RB,
+then the object has been found to be an outlier in both
+ranked lists. Likewise, objects that are not within the
+top-n objects in both lists are inliers, and are thus typ-
+ical objects in the dataset.
+Given the above, we compare the similarity of two
+ranked lists of outliers, RA and RB, by counting the to-
+tal fraction, f ∈ [0, 1], of feature vectors belonging in the
+top-n in both lists, or more formally their intersection:
+f = |RA ∩ RB| ·n−1, (2)
+where ri ∈ RA < nand ri ∈ RB < n.
+To reach a trade-off between underfitting and overfit-
+ting, we search a grid of evenly spacedϵ values, G, where
+each value of ϵ is denoted as ϵj where j = 1, 2, . . . ,|G|,
+and ϵj ∈ [ϵmin, ϵmax]. ϵmin and ϵmax refer to the
+minimum and maximum values of ϵ searched respec-
+tively, and their selection will be described later in Sec-
+tion 3.5.3.
+For each value of ϵj, we derive a corresponding rank-
+ing of outliers, denoted as Rj, where R1 corresponds to
+the ranking given by ϵmin and R|G| corresponds to the
+ranking given by ϵmax.
+ϵmin refers to a small search radius, and thus would
+produce a ranked list that overfits the data. Likewise,
+ϵmax refers to a large search radius that would underfit
+the data. To find a good value of ϵj ∈ [ϵmin, ϵmax], we
+compute the similarity (using Equation 2) between R1
+and Rj, and the similarity between R|G| and Rj. These
+two sets of similarity values, corresponding to those gen-
+erated as compared to R1 and R|G| are denoted as U min
+and U max, respectively, where |U min| = |U max| = |G|.
+Finally, the selected value of ϵ is given by the value
+of j that minimizes the difference in similarity values,
+which is described below:
+ϵselect = ϵargmin(|U min
+j −U max
+j |). (3)
+Illustrative Example: To better illustrate these con-
+cepts, consider the following concrete example that com-
+putes U min and U max with |G| = 3 (i.e., for illustra-
+tive purposes we only consider computing the fraction
+of points that match for 3 values of ϵ). Here, |G| = 3 im-
+plies that j = 1, 2, 3, and that ϵmin = ϵ1 and ϵmax = ϵ3.
+The set of top- n outlying points found by ϵ1, ϵ2 and
+ϵ3 are as follows, where we set n = 10. We color code
+the points that are common between sets.
+ϵ1 = ϵmin = {1, 2, 3, 4, 5, 16, 17, 18, 19, 20}.
+ϵ2 = {1, 2, 3, 4, 8, 9, 10, 100, 101, 102}.
+ϵ3 = ϵmax = {1, 2, 8, 9, 10, 11, 12, 13, 14, 15}.
+Using Equation 2 we compute U min and U max which
+compares the similarity between the top- n points found
+by ϵmin and ϵmax, respectively. Specifically, U min is
+computed by comparing ϵ1 to those found by ϵ1 (itself),
+ϵ2, and ϵ3. U max is computed by comparing ϵ3 to ϵ1, ϵ2,
+and ϵ3 (itself). We highlight that because we compare
+the same set to itself, this guarantees that there is a 1.0
+match fraction in U min and U max.
+Using the example values above and Equation 2 we
+compute U min and U max as follows:
+U min = {10/10, 4/10, 2/10} = {1.0, 0.4, 0.2}.
+U max = {2/10, 5/10, 10/10} = {0.2, 0.5, 1.0}.
+Observe that because we compare the smallest value
+of ϵ to increasingly larger values of ϵ, the match fraction
+AASTeX v6.3.1 Sample article 7
+declines. And similarly because we compare the largest
+value of ϵ to increasingly larger values of ϵ, the match
+fraction increases. This produces an intermediate value
+of ϵ that will be selected that reaches a trade-off between
+the smallest and largest ϵ values.
+Figure 2 shows a plot of this selection procedure on
+one of the feature spaces, where (a) shows the number
+of neighbors metric, and (b) shows the mean distance
+metric (as defined in Section 3.5.1). The plot shows
+how similar the rankings are between the ϵ value on
+the horizontal axis as compared to the smallest ( U min)
+and largest ( U max) ϵ values, which are those that are
+expected to overfit and underfit the data. Thus, as ϵ in-
+creases, the fraction match for U min decreases, whereas
+it increases for U max. A trade-off for ϵselect is reached
+where ϵmin < ϵselect < ϵmax. Note that ϵ is evenly sam-
+pled on the horizontal axis, which is somewhat mislead-
+ing. While the axis shows linear increases in ϵ, this leads
+to a non-linear increase in the search volume which is a
+function of the data dimensionality. Thus, it is similar
+to a logarithmic sampling of the search volume on the
+horizontal axis. However, fine-grained sampling is un-
+necessary at high values of ϵ, as a large value of ϵselect
+is unlikely to minimize the difference between U min
+j and
+U max
+j (Equation 3). We will examine this in more detail
+when we show the distribution of ϵselect values across all
+feature spaces in Section 4.2.
+In this section, we omitted how ϵmin and ϵmax are
+selected. In what follows, we describe how we select
+these values.
+3.5.3. Selection and Computation of the ϵ Search Grid
+A major challenge of using DSSJ for outlier detection
+is that the values of ϵmin and ϵmax vary for each fea-
+ture space. For instance, with lower dimensional data,
+the search radius needed to find an average number of
+neighbors per point is smaller than for high dimensional
+data, as the total volume of the feature space increases
+exponentially with the number of dimensions. Further-
+more, since the data in the feature spaces are unlikely to
+follow any well-defined data distributions, the values of
+ϵ need to be found numerically as they cannot be found
+analytically.
+To address this, we define selectivity which is the mean
+number of neighbors within ϵ found in a dataset for
+DSSJ (Gallet & Gowanlock 2021). The definition is as
+follows: s = (|A| − |D|) · |D|−1 where |D| is the number
+of feature vectors and |A| is the total result set size (the
+total number of pairs of points within ϵ of each other)
+of the self-join operation. Thus, it computes the mean
+number of neighbors within ϵ in a dataset, excluding
+a point/feature vector finding itself. When processing
+0.0360 0.0630 0.0899 0.1168 0.1438 0.1707
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Fraction Match (Number of Neighbors)
+Umin : = 0.0360
+Umax : = 0.1707
+select: 0.1256
+(a)
+0.0360 0.0630 0.0899 0.1168 0.1438 0.1707
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Fraction Match (Mean Distance)
+Umin : = 0.0360
+Umax : = 0.1707
+select: 0.0716
+(b)
+Figure 2. Example plots showing computing the best value
+of ϵ on an example d = 5 feature space, which are the first
+five features in Table 1. U min (U max) refers to the fraction
+(f ) of the top- n objects that are in both ranked lists for
+ϵ = 0 .0360 ( ϵ = 0 .1707) and the ϵ values on the horizontal
+axis. The value of ϵselect is shown as the vertical dotted line
+for (a) the number of neighbors metric (distance-oblivious),
+and (b) the mean distance metric (distance-aware).
+SNAPShot1, we set smin ≈ 0.001|D| and smax ≈ 0.15|D|,
+corresponding to a minimum and maximum selectivity
+of 0.1% and 15% of the dataset. The results of DSSJ us-
+ing these two selectivity values will overfit and underfit
+the data respectively.
+To find the values ofϵmin and ϵmax that yield the min-
+imum and maximum selectivity values described above,
+we use the method outlined in Gowanlock (2021) which
+was utilized to select a search distanceϵ that finds on av-
+erage at least k neighbors for each point in a dataset for
+the k-nearest neighbor self-join algorithm. The method
+is lightweight as it samples the dataset to first estimate
+the mean distance between points in a dataset ( ϵmean),
+which is used as the upper bound on a practical search
+8 Gowanlock et al.
+q ϵ1 ϵ2 ϵ3
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+Figure 3. Illustration of several result sets for query point
+q in a d = 2 feature space, where data points are shown as
+black dots and q is shown as the red dot. Three evenly spaced
+search distances are shown ( ϵ1, ϵ2, ϵ3), which are illustrated
+as circles centered on query point q. The result sets ( A)
+are as follows: A(ϵ1) = {2, 3, 6}; A(ϵ2) = {1, 4, 5} ∪A(ϵ1);
+A(ϵ3) = {7, 8}∪ A(ϵ1)∪A(ϵ2). Points 9 and 10 are not within
+any of the result sets. Thus, the result sets for ϵ1 and ϵ2 can
+be directly derived from that of ϵ3.
+radius to find ϵmax (or ϵmin). Then, the distances be-
+tween a sample of points and points within the dataset
+are computed to create a histogram of distances between
+points. Using this histogram, a cumulative distance dis-
+tribution histogram is computed which yields the re-
+lationship between a search distance and the average
+number of neighbors that will be found per point in the
+dataset. We use this histogram to select the search radii
+ϵmin and ϵmax. We refer the reader to Gowanlock (2021)
+for further detail.
+After ϵmin and ϵmax are found, the ϵ grid G is com-
+puted, which is used to derive the rankings for all feature
+vectors in the feature space and a value of ϵ is selected
+that reaches a trade-off between overfitting and underfit-
+ting (Section 3.5.2). We use a computationally efficient
+approach to compute the result sets (A) for each ϵj ∈ G.
+Consider that the result set A for ϵmax contains all of
+the neighbors for lower values of ϵ as well. Thus, we
+execute DSSJ once for ϵmax and use this result set to
+derive the result sets for all ϵj ∈ G. Figure 3 shows an
+example of three search radii (ϵ1, ϵ2, ϵ3), where ϵ1 = ϵmin
+and ϵ3 = ϵmax. The figure shows that all result sets for
+ϵj < ϵmax can be derived from ϵmax. Thus, indepen-
+dently executing DSSJ for all ϵj ∈ G is unnecessary
+(and would be very computationally expensive), as the
+result set for ϵmax can be filtered to compute the result
+sets for smaller search distances.
+3.6. k-Nearest Neighbor Self-Join
+Intuitively, the kNNSJ algorithm can be employed
+for unsupervised outlier detection where an outlier is
+characterized as having a significant number of its kNN
+located at large distances.
+3.6.1. Ranking Metrics
+Similarly to DSSJ, the kNNSJ algorithm has two
+ranking metrics outlined as follows, where one metric
+is distance-oblivious and one is distance-aware. This
+yields two different rankings for the kNNSJ method.
+1. Distance-oblivious: The ranking function R is sim-
+ply an in-degree ranking of the kNN graph (Hau-
+tamaki et al. 2004), which is also known as its
+reverse nearest neighbors. The in-degree refers to
+the number of occurrences that a point is found
+within another point’s set of kNN. The fewer the
+number of occurrences, the more likely the point
+is an outlier.
+2. Distance-aware: The ranking function is a ranking
+of mean distances between a point and its kNN.
+Intuitively, if a given point has its k neighbors at
+large distances, then this implies that it is an out-
+lier.
+3.6.2. On The Selection of k and the kNN Search Grid
+For brevity we briefly provide an overview of the pro-
+cedure for kNNSJ because the method is analogous to
+that of DSSJ. We highlight similarities and key differ-
+ences between outlier detection with kNNSJ compared
+to DSSJ.
+Similarly to DSSJ, the detection of outliers with the
+kNNSJ algorithm is dependent on the value of k. Un-
+like the DSSJ algorithm, it is more straightforward to
+detect outliers with the kNNSJ algorithm because we
+do not need to perform a search to find ϵmin and ϵmax.
+A low value of k will overfit the data and a large value
+of k will underfit the data. We reach a trade-off using
+an analogous method to DSSJ which searches a grid
+of k values where similarity is measured as compared
+to kmin and kmax, and the value of k which reaches
+a trade-off between under- and overfitting is selected.
+Likewise, we use a computationally efficient approach to
+compute the grid of k values, denoted as kj ∈ G where
+j = 1, 2, . . . ,|G|. For each value of kj, we compute the
+k neighbors for kmax, which contain the neighbors for
+all kj < kmax. When processing SNAPShot1, we set
+kmin = 2 and kmax = 4096.
+Figure 4 shows a plot of this selection procedure on
+one of the feature spaces, where (a) shows the in-degree
+metric, and (b) shows the mean distance metric (as de-
+fined in Section 3.6.1). The plot shows how similar
+AASTeX v6.3.1 Sample article 9
+the rankings are between the k value on the horizon-
+tal axis as compared to the smallest and largest values
+of k (kmin = 2 and kmax = 4096), which are those that
+are expected to overfit and underfit the data. Thus,
+as k increases, the fraction match for U min decreases,
+whereas it increases for U max. A trade-off for kselect is
+reached where kmin < kselect < kmax. Note that k is
+unevenly sampled on the horizontal axis. This is be-
+cause it is unlikely that kselect will be large, so we do
+not perform a fine-grained sampling at larger values of
+k. Furthermore, we find that kselect is typically bound
+to a particular range of k values for the in-degree and
+mean distance metrics, and so we finely sample those
+regions. We will show the distribution of kselect across
+all feature spaces in Section 4.2.
+3.7. Summary: Comparison of Outlier Approaches
+The DSSJ and kNNSJ methods each have two met-
+rics which yield four total outlier detection rankings for
+each object (Sections 3.5.1 and 3.6.1). We briefly com-
+pare and contrast these methods; however, their charac-
+teristics will be better understood with an example on
+real-world data that we will show in Section 4.4.
+Figure 1 shows an illustrative example of (a) DSSJ
+and (b) kNNSJ, where the positions of the points are
+identical in both subfigures. Table 2 shows the corre-
+sponding metric values and the resulting rankings for
+each. Observe that the rankings for each method vary.
+Only point 10 has the same rank (0) across the four
+methods, because it has no neighbors within ϵ and it
+has an in-degree value of 0. Furthermore, the DSSJ
+number of neighbors metric and the kNNSJ in-degree
+metric have numerous rankings that are the same be-
+tween points because the values are non-negative inte-
+gers. In contrast, the DSSJ mean distance and kNN
+mean distance to k neighbors metrics are real numbers
+so the probability that two values are the same is low,
+and therefore it is unlikely that two points will share the
+same rank. The only exception is when no neighbors are
+found within the search radius ϵ for the DSSJ mean dis-
+tance metric (e.g., point 10 in Figure 1), in which case
+it will be assigned a rank of 0. From this example it
+appears that there is little consensus among the outlier
+detection techniques; however, this is primarily because
+there are only 10 points in the example. On real-world
+data there is much more consensus between the four
+rankings, and this will be discussed in greater detail in
+Section 4.4.
+2 820 1639 2458 3277 4096
+k
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Fraction Match (In-Degree)
+Umin
+Umax
+kselect = 640
+(a)
+2 820 1639 2458 3277 4096
+k
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Fraction Match (Mean Distance)
+ Umin
+Umax
+kselect = 192
+(b)
+Figure 4. Example plots showing the computation of the
+best value of k using kmin = 2 and kmax = 4096 on the same
+feature space shown in Figure 2. U min (U max) refers to the
+fraction (f ) of the top-n objects that are in both ranked lists
+for k = 2 ( k = 4096) and the k values on the horizontal
+axis. The value of kselect is shown as the vertical dotted line
+for (a) the in-degree metric (distance-oblivious), and (b) the
+mean distance to each point’s k neighbors (distance-aware).
+3.8. High-Level Population Outlier Detection System
+Description and Optimizations
+In the prior sections, we discussed the outlier detec-
+tion methods. Here, we describe the GPU-accelerated
+implementations that are used in the system, and the
+integration of the constituent components of the sys-
+tem. The implementation uses shared libraries written
+in C/C++/CUDA using Python (NumPy) interfaces.
+3.8.1. GPU-Accelerated Implementations
+We employ two state-of-the-art DSSJ and kNNSJ al-
+gorithms both of which use GPU acceleration. Gowan-
+lock & Karsin (2019) proposed a DSSJ algorithm for
+moderate to high-dimensional data. To enable search-
+10 Gowanlock et al.
+T able 2.The metric values (rankings) for the example shown in Figure 1. A ranking of 0 indicates the
+most outlying object.
+Point DSSJ Num. Neighbors DSSJ Mean Distance kNN In-Degree kNN Mean Distance to k Neighbors
+1 2 (2) 0.6185 (1) 5 (4) 0.7197 (5)
+2 2 (2) 0.6117 (3) 6 (5) 0.6435 (7)
+3 4 (3) 0.5541 (5) 6 (5) 0.5254 (8)
+4 2 (2) 0.5196 (7) 3 (3) 0.6537 (6)
+5 2 (2) 0.5224 (6) 2 (2) 0.7209 (4)
+6 2 (2) 0.3864 (9) 3 (3) 0.4933 (9)
+7 2 (2) 0.6149 (2) 2 (2) 0.7768 (3)
+8 1 (1) 0.4562 (8) 2 (2) 0.9133 (2)
+9 1 (1) 0.5758 (4) 1 (1) 1.0334 (1)
+10 0 (0) 0.0000 (0) 0 (0) 1.4839 (0)
+ing in high dimensional feature spaces and avoid the
+curse of dimensionality problem2 where index searches
+become increasingly exhaustive, Gowanlock & Karsin
+(2019) proposed indexing the data in c dimensions,
+where c < d. Thus, a representation of the data in c
+dimensions avoids exhaustive index searches in high di-
+mensions. We configure our software to index in c = d
+dimensions when d ≤ 6, and c = 6 when d > 6. For
+example, when we process the feature space with the
+greatest dimensionality ( d = 15), we only index c = 6
+dimensions.
+Several optimizations were subsequently made to the
+algorithm outlined in Gowanlock & Karsin (2019),
+including exploiting instruction level parallelism and
+changing the order in which query points are processed
+to decrease load imbalance in the GPU kernel as outlined
+by Gowanlock et al. (2023). This optimized algorithm
+is employed in our software 3.
+Gowanlock (2021) describes a hybrid CPU+GPU
+kNNSJ algorithm for low-dimensional data, where d ≲
+8. The algorithm distributes query points to either the
+CPU or GPU based on the expected amount of work
+required of each query point. In short, query points in
+low density regions are assigned to the CPU and those in
+high density regions are assigned to the GPU. Because
+query points in high density regions require a significant
+number of distance calculations to refine the candidate
+set (those points returned by an index but that need
+to be refined using distance calculations), it is prefer-
+able to assign these queries to the GPU instead of the
+CPU because the former architecture has much higher
+throughput for this operation. The other facet of dis-
+2 See Zimek et al. (2012) for an overview of the curse of dimen-
+sionality problem.
+3 https://github.com/mgowanlock/gpu self join
+tance calculation complexity is the data dimensionality,
+d. For moderate to high dimensional data, the GPU sig-
+nificantly outperforms the CPU, and so there are cases
+where the CPU+GPU algorithm yields an insignificant
+performance gain over a GPU-only approach. Conse-
+quently, because the data we are using has d = 15 di-
+mensions, it is preferable to use the GPU-only version
+of the algorithm proposed by Gowanlock (2021). While
+not shown in that paper, the same method described for
+the DSSJ above is employed which indexes the data in
+c < ddimensions to allow for kNN searches in high di-
+mensions. We use the publicly available source code of
+this algorithm4.
+3.8.2. Computational Optimizations
+We describe several optimizations that are used to im-
+prove the performance of the system. These methods are
+presented independently from the results, but they will
+be of particular interest when interpreting the results.
+Thus, the reader may wish to read Section 4 and then
+return to this section later.
+Multiprocessing Each F eature Space:As described
+in Section 3.3, there are 32,752 total feature spaces
+across d = 2 − 15 dimensions. We use the multipro-
+cessing library in Python to offload the processing of
+each of these feature spaces. Thus, each feature space
+is computed independently and concurrently with the
+others.
+Oversubscription of GPU Resources: It is well
+known that there is overhead when communicating be-
+tween the host (which contains the CPU and main mem-
+ory) and the GPU (Capodieci et al. 2017). For instance,
+the kNNSJ and DSSJ methods will need to transfer
+4 https://github.com/mgowanlock/hybrid k nearest neighbor
+self join
+AASTeX v6.3.1 Sample article 11
+their respective result sets from the GPU back to main
+memory. During this time, the GPU will not have any-
+thing to compute and so the resource will be under-
+utilized. Underutilizing the GPU will significantly in-
+crease the total time needed to compute all of the feature
+spaces.
+To address the underutilization problem, we oversub-
+scribe the GPU and assign a maximum of o processes to
+the GPU at a given time. Therefore, when one processes
+finishes computing its task (a GPU kernel invocation)
+and starts transferring its results back to the host, an-
+other process can start executing its GPU kernel. The
+oversubscription value, o, cannot be too large, other-
+wise GPU global memory capacity will be exceeded, and
+on our platform the global memory of a single GPU is
+40 GiB. This will be described in greater detail in Sec-
+tion 4.3.
+Multi-GPU Scalability: Because the feature spaces
+are independent, it is straightforward to assign a feature
+space to a given GPU, where either theDSSJ or kNNSJ
+algorithms are executed on the feature space. Thus, our
+system exploits the four GPUs on our hardware plat-
+form (the platform is described in additional detail in
+Section 4.1). Because the feature spaces are of varying
+dimensionality, the amount of work needed to compute
+each feature space varies. We schedule the computation
+of feature spaces to GPUs using dynamic scheduling,
+where the least loaded GPU is assigned the next feature
+space. This yields good load balancing across the four
+GPUs. We describe multi-GPU scalability in greater
+detail Section 4.3.
+Nested Parallelism of T asks Across the CPU and
+GPU: Recall from Sections 3.5.3 and 3.6.2 that we re-
+quire finding a good value of ϵ and k for DSSJ and
+kNNSJ, respectively, such that we do not arbitrarily
+select a value for these parameters that underfits or over-
+fits the data. We use the result set for ϵmax and kmax
+to derive all result sets for lower values of ϵj and kj,
+respectively. The GPU computes these result sets, and
+transfers them back to the host, where we then com-
+pute the result sets for the smaller values of ϵj < ϵmax
+and kj < kmax in parallel on the CPU. This allows the
+CPU to contribute to the overall computation instead
+of simply orchestrating data transfers to/from the GPU
+and performing other minor host-oriented tasks that are
+required for GPU computation.
+4. RESULTS
+4.1. Experimental Methodology
+Our platform consists of 2x Intel(R) Xeon(R) Plat-
+inum 8358 CPUs (64 total physical cores) with a base
+clock speed of 2.60 GHz and 512 GiB of main mem-
+ory. The platform is equipped with 4 × Nvidia A100
+GPUs, each of which has 40 GiB of global memory. The
+source code uses the following programming languages:
+Python, C/C++, and CUDA. All host C/C++ code is
+compiled with the O3 compiler optimization flag, and
+all CUDA code was compiled with CUDA v11.7. The
+C/C++ and CUDA code uses 32-bit floating point pre-
+cision. All performance related experiments use an av-
+erage of three time trials; however, the variance in the
+time measurements is insignificant, and error bars on
+these plots would be too small to observe so we do not
+report this information.
+The platform is located within our institution’s com-
+puter cluster, Monsoon, and we ensure that our exper-
+iments are carried out without interference from other
+users running on the node. The population outlier de-
+tection pipeline requires storing output (i.e., writing the
+rankings for each feature space to disk and diagnostic
+plots), and this occurs over the network where files are
+written to a parallel filesystem. We include this and all
+other overheads in the end-to-end response time such
+that we accurately capture the performance of the sys-
+tem.
+For convenience, Table 3 summarizes the parameters
+used throughout the evaluation, which were defined in
+prior sections. Some parameters will be varied in the sec-
+tions that evaluate the performance of the algorithms.
+4.2. Distribution of the Selected Values of ϵ and k
+We begin by examining the selected values of ϵ for
+the DSSJ algorithm. Figure 2 showed selecting a good
+value of ϵ on a single feature space by reaching a trade-off
+between underfitting and overfitting the data. Here, we
+present the distribution of ϵselect values across all 32,752
+feature spaces for the number of neighbors and mean
+distance metrics. In other words, we show the resulting
+ϵselect values from an analogous analysis to that shown
+in Figure 2, but summarized across all feature spaces.
+Note that it is not possible to show the distribution
+using the ϵselect values because the range [ ϵmin, ϵmax]
+varies across each individual feature space. Thus, we
+show the index j of the selected value of ϵj ∈ G, denoted
+as arg( ϵselect). For example, in Figure 2(a), instead of
+reporting ϵselect = 0.1256, we report arg( ϵselect)= 15.
+Figures 5 and 6 plot arg( ϵselect) as a function of the
+dimensionality of the feature spaces for the number
+of neighbors and mean distance metrics, respectively.
+Across all feature spaces, we find thatϵselect is not found
+towards the extremes of the distribution of ϵselect values
+12 Gowanlock et al.
+T able 3.Parameters used throughout the evaluation. The values of the parameters are given in parentheses where applicable.
+Parameter Description
+n (0.01|D|) The number of points considered when computing the similarity between two ranked lists.
+1% of the dataset is used as we are interested in selecting those objects that are outliers.
+G The grid of ϵ or k values that are searched for DSSJ and kNNSJ, respectively.
+smin(≈ 0.001|D|) The minimum selectivity used when defining the ϵ grid.
+smax(≈ 0.15|D|) The maximum selectivity used when defining the ϵ grid.
+ϵselect The selected value of ϵ that reaches a trade-off between underfitting and overfitting a feature space.
+kmin(2) The minimum value of k used when defining the grid of k values.
+kmax(4096) The maximum value of k used when defining the grid of k values.
+kselect The selected value of k that reaches a trade-off between underfitting and overfitting a feature space.
+o The oversubscription factor, which is the maximum number of processes that are assigned to one GPU at a time.
+for either metric, indicating that the range of selectiv-
+ity parameters given by smin and smax do not need to
+be expanded to find a suitable ϵselect for each feature
+space. Comparing Figures 5 and 6, on average, the for-
+mer requires selecting a larger ϵselect than the latter. We
+attribute this to the difference in ranking functions. The
+ranking function for the number of neighbors metric al-
+lows two or more points to share the same rank if they
+have the same number of neighbors within ϵ. Thus a
+larger ϵ allows for the rankings to be more differentiated
+(i.e., fewer points have the same rank asϵ increases), and
+so the under/overfitting trade-off is reached at a larger
+value of ϵ. In contrast, the mean distance metric will
+not have two (or more) points with the same rank, as
+the probability of two points having the same mean dis-
+tance to its neighbors is unlikely. This also explains why
+the distribution of arg( ϵselect) is clustered in Figure 5,
+whereas the distribution is more diffuse in Figure 6.
+We examine the distribution of the selected values of
+k for the kNNSJ algorithm. Figures 7 and 8 plot kselect
+as a function of the dimensionality of the feature spaces
+for the in-degree and mean distance metrics, respec-
+tively. The range of k values considered using the un-
+der/overfitting methodology is given by kmin and kmax,
+which yields the range [2, 4096]. For both metrics, the
+selected values of k are well below kmax = 4096, and at
+most kselect is found within the first ∼ 25% of the dis-
+tribution at kselect ≲ 1000. We observe similar trends
+between the in-degree metric (Figure 7) and the number
+of neighbors metric for DSSJ (Figure 5) where the dis-
+tribution of kselect is clustered, and this is due to points
+having the same rank if they have the same in-degree.
+4.3. Performance Results
+We report the performance of the system by exam-
+ining two metrics: (1) how performance varies as a
+function of oversubscription (Section 3.8.2), and (2)
+2 3 4 5 6 7 8 9 10 11 12 13 14 15
+Dimensionality (d)
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20arg(ϵselect): Num. Neighbors
+0 1000 2000 3000 4000 5000
+Counts
+Figure 5. The distribution of ϵselect values for the num-
+ber of neighbors metric across all 32,752 feature spaces (Sec-
+tion 3.3). Because the ϵ values can vary significantly between
+feature spaces, where ϵ tends to increase with dimensionality,
+we show the index j of the selected value of ϵj ∈ G, denoted
+as arg(ϵselect).
+how performance varies as a function of the number of
+GPUs (Section 3.8.2). As outlined in Table 3, we use
+smax ≈ 0.15|D| for DSSJ and kmax = 4096 for kNNSJ.
+These values largely dictate the amount of work com-
+puted, and these values constitute a large fraction of
+the size of the SNAPShot1 datasets, which only contains
+|D| = 31, 693 objects. Thus, we selected these parame-
+ters conservatively to show the worst-case performance
+of the system, as it is clear from Figures 5–8 that ϵselect
+and kselect are found well below ϵmax and kmax, respec-
+tively.
+AASTeX v6.3.1 Sample article 13
+2 3 4 5 6 7 8 9 10 11 12 13 14 15
+Dimensionality (d)
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20arg(ϵselect): Mean Distance
+0 200 400 600 800 1000 1200 1400
+Counts
+Figure 6. The same as Figure 5, but for the mean distance
+metric.
+2 3 4 5 6 7 8 9 10 11 12 13 14 15
+Dimensionality (d)
+0
+100
+200
+300
+400
+500
+600
+700
+800
+900kselect: In-Degree
+0 500 1000 1500 2000 2500
+Counts
+Figure 7.The distribution of kselect values for the in-degree
+metric across all 32,752 feature spaces (Section 3.3). To im-
+prove readability, the vertical axis is truncated and does not
+show all kselect values which are mostly zeros. The plot shows
+99.5% of the kselect values across all feature spaces.
+Recall that the oversubscription factor refers to the
+maximum number of processes that can be assigned to
+one GPU at a time. Because using the GPU requires
+data transfers between the host, and other host-side
+tasks be performed before and after the main GPU ker-
+2 3 4 5 6 7 8 9 10 11 12 13 14 15
+Dimensionality (d)
+0
+100
+200
+300
+400
+500
+600
+700
+800
+900kselect: Mean Distance to k Neighbors
+0 500 1000 1500 2000 2500 3000 3500
+Counts
+Figure 8. The same as Figure 7, but for the mean distance
+to k neighbors metric. The plot shows 98.5% of the kselect
+values across all feature spaces.
+1 2 4 8 12 16
+Oversubscription Factor (o)
+0
+2
+4
+6
+8
+10
+12
+14Time (h)
+Figure 9. The response time (h) to compute ϵselect and the
+corresponding rankings for both DSSJ metrics as a function
+of the oversubscription (o) factor using 1 GPU. This includes
+the total time to find ϵselect for both outlier detection met-
+rics, and compute the rankings for all |D| = 32, 752 feature
+spaces.
+nels are executed, it is beneficial to allow multiple pro-
+cesses concurrently access the GPU (and associated host
+side functionality). For instance, this allows PCIe data
+transfers to be overlapped with GPU computation, thus
+mitigating this data transfer cost.
+14 Gowanlock et al.
+Figure 9 plots the response time (h) using 1 GPU as
+a function of the oversubcription factor (o) to find ϵ and
+compute the outlier rankings for DSSJ. From the figure
+we find that with o = 1 (a maximum of a single process
+concurrently accessing the GPU), the response time is
+12.65 h. However, if we use o = 8 the response time is
+2.64 h, which is 379% faster than when no oversubscrip-
+tion is used ( o = 1). This demonstrates that the GPU
+is underutilized when o = 1. Furthermore, we find that
+selecting o = 8 − 12 achieves similar performance, but
+when o = 16 the response time begins to increase.
+We find that using more than one GPU forDSSJ does
+not improve performance. This is because there are sig-
+nificant host-side (CPU/main memory) tasks that are
+computed before the GPU kernel is executed and af-
+ter the GPU returns the results to the host. Thus,
+the limiting factor for computing DSSJ is not insuffi-
+cient GPU resources, rather it is due to memory pres-
+sure and contention, which delays the execution of GPU
+kernels. This is largely a result of using Python as the
+“glue” programming language, where the bottleneck is
+not computation, but processing minor tasks in Python
+that require formatting the data needed for the C/C++
+libraries and transferring results back to Python for fur-
+ther analysis.
+We present the performance results for kNNSJ. The
+kNNSJ algorithm is more computationally expensive
+than DSSJ, as the search radius needed to find at least
+k neighbors will vary for each point in the dataset. For
+this reason, compared to DSSJ the kNNSJ algorithm
+achieves performance gains when multiple GPUs are
+used.
+Figure 10(a) plots the response time (h) for kNNSJ
+as a function of the oversubcription factor ( o) using 4
+GPUs. For the kNNSJ algorithm, we find that over-
+subscription significantly improves performance over not
+using oversubscription where using o = 5 is 83% faster
+than not using oversubscription ( o = 1).
+Figure 10(b) shows the response time (h) as a function
+of the number of GPUs where we set o = 5 (the value of
+o that achieved the best performance in panel (a)). The
+speedup for 2–4 GPUs is as follows: 1.81 ×, 2.25×, and
+2.47×. We find that multi-GPU scalability is limited: a
+respectable performance gain is observed with 2 GPUs,
+but poor scalability is observed with 3 and 4 GPUs. This
+is due to the same reasons described above for DSSJ
+where host-side tasks limit multi-GPU scalability.
+As we will show in Section 4.5, multi-GPU perfor-
+mance is much better when examining the much larger
+LSST5M dataset.
+1 2 3 4 5 6 7
+Oversubscription Factor (o)
+0
+1
+2
+3
+4
+5
+6Time (h)
+(a)
+1 2 3 4
+Number of GPUs
+0
+1
+2
+3
+4
+5
+6
+7
+8Time (h)
+(b)
+Figure 10. Performance results for kNNSJ showing the to-
+tal time to find kselect for both outlier detection metrics, and
+compute the rankings for all |D| = 32 , 752 feature spaces.
+(a) The response time (h) to compute kselect and the cor-
+responding rankings for both kNNSJ metrics as a function
+of the oversubscription ( o) factor with 4 GPUs. (b) The
+response time as a function of the number of GPUs, demon-
+strating the scalability when o = 5.
+4.4. Visualization and Comparison of Outlier
+Detection Methods
+In this section, we show example visualizations of fea-
+ture spaces and the detection of outliers. The visualiza-
+tions illustrate the importance of using an ensemble of
+algorithms for outlier detection, as they all yield differ-
+ent outlier rankings which make some methods more or
+AASTeX v6.3.1 Sample article 15
+less suitable for a given scientific investigation. Because
+it is difficult to visualize feature spaces in more than 3
+dimensions, we limit the visualizations to d ≤ 3.
+Figure 11 shows a d = 2 feature space (rotation period
+vs. g − r color) for the DSSJ method in panels (a)–(b)
+and the kNNSJ method in (c)–(d). In the figure, we ar-
+bitrarily denote 1% of the points as outliers; in practice
+a user can select any percentage of points to be outliers.
+Furthermore, Figure 12 shows histograms of the metric
+values that are used to compute the outlier rankings for
+the corresponding plots in Figure 11. This information
+is helpful for understanding why outliers are selected in
+each case. We make the following observations.
+• Figure 11(a) ( DSSJ: number of neighbors met-
+ric) clearly finds points in the underdense regions
+of the feature space, but they are interspersed
+with other points that are considered inliers in
+this space. Had a larger outlier threshold been se-
+lected, more points in the sparse regions would be
+selected as outliers. This is because the method
+allows for two or more points to share the same
+rank. In this case, > 1% of the points have a rank
+of 0 (they have no neighbors), but only the first
+1% of these points are considered outliers. Fig-
+ure 12(a) shows this more clearly, where there are
+a large number of points ( > 1% of the total frac-
+tion of points) that do not have any neighbors, but
+not all of these points are classified as outliers. An
+example point of this type can be clearly observed
+at (x, y) ≈(0, 0) in Figure 11(a).
+• Figure 11(b) (DSSJ: mean distance metric) is very
+similar to that of Figure 11(a), except that some
+points tend to swap outlier/inlier classifications.
+• Figure 11(c) (kNNSJ: in-degree metric) clearly se-
+lects outliers that are clustered together as shown
+at a rotation period ≲ 500 h. This is expected
+as points located in a similar region of a feature
+space are likely to have a similar in-degree number
+(recall that the in-degree, or reverse nearest neigh-
+bors refers to the number of instances that a point
+is considered a neighbor of another point in its set
+of kNN). Counterintuitively, the outliers selected
+by this metric are clustered at a rotation period
+≲ 500 h, and thus appear to be inliers. However,
+the reason they are not inliers is because the inly-
+ing points in this region have few of these outlying
+points in their set of k nearest neighbors. Inter-
+estingly, this metric finds outliers that are largely
+different than both of the DSSJ methods in Fig-
+ure 11(a)–(b).
+• Figure 11(d) ( kNNSJ: mean distance to k neigh-
+bors metric) is interesting to compare with the
+two DSSJ methods in Figure 11(a)–(b). With this
+method, the outlying points at a rotation period
+≳2200 h and ≲4500 h are all outliers, and are not
+interspersed with inliers as shown in Figure 11(a)–
+(b). The reason the outliers are all selected in
+this region is because the kNN algorithm requires
+each point to find k neighbors which decreases the
+stochastic variance in this set of k points. There-
+fore, the outliers will be selected in regions where
+there are similarly low densities. In contrast the
+DSSJ methods do not require finding a minimum
+number of neighbors and so the set of neighbors
+found within ϵ of each point will have greater vari-
+ation compared to each other, and therefore DSSJ
+is more susceptible to stochastic variation in local
+density.
+In summary, each of the outlier detection methods se-
+lects outliers based on different criteria. Thus, it may
+be useful for the user to select the outlier method that
+best suits their science case; for instance, from Figure 11
+a user may want to find asteroids that are fast rotators
+(short rotation periods) that have an unusual color. In
+this case, the kNN algorithm with the in-degree metric
+would be best. Another option is to limit outliers to
+those that have low rankings in multiple outlier detec-
+tion methods which can be computed by averaging the
+outlier scores across methods.
+Figure 13 shows a scatter plot of outliers detected in
+a d = 3 feature space (light curve amplitude, rotation
+period, and g − r color). Many observations are simi-
+lar to that of Figure 11 as described above. To better
+understand the assigned outlier labels in Figure 13, for
+the interested reader, Appendix A presents a compari-
+son of rankings for this feature space. It is informative
+for understanding the nuances of the four outlier detec-
+tion metrics, and illustrates why using an ensemble of
+methods/metrics are needed to identify outliers. With
+a single method, we may inadvertently omit detecting
+interesting Solar System objects, and our approach mit-
+igates this potential drawback.
+4.5. Viability of Population Outlier Detection at LSST
+Scale
+LSST will observe roughly 5 million asteroids over the
+10 year survey; therefore, the response time and scala-
+bility measurements reported in the prior sections will
+not directly reflect the expected performance of the sys-
+tem when it is deployed on the LSST data stream. In
+16 Gowanlock et al.
+0 1000 2000 3000 4000 5000
+Rotation Period (h)
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+g-r Color
+Inliers
+Outliers
+(a) DSSJ: Number of Neighbors Metric
+0 1000 2000 3000 4000 5000
+Rotation Period (h)
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+g-r Color
+Inliers
+Outliers (b) DSSJ: Mean Distance Metric
+0 1000 2000 3000 4000 5000
+Rotation Period (h)
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+g-r Color
+Inliers
+Outliers
+(c) kNNSJ: In-Degree Metric
+0 1000 2000 3000 4000 5000
+Rotation Period (h)
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+g-r Color
+Inliers
+Outliers (d) kNNSJ: Mean Distance to k Neighbors Metric
+Figure 11. Comparison of the four outlier detection methods on an example d = 2 feature space, showing the rotation period
+as a function of g − r color. (a)–(b) show the two metrics for DSSJ, and (c)–(d) show the two metrics for kNNSJ. The points
+that fall within the top 1% of the ranked list of outliers are shown as solid red points in each plot. The inliers (99%) are shown
+as the translucent blue points.
+this section, we report the performance of SNAPS pop-
+ulation outlier detection on the LSST5M dataset which is
+representative of the LSST dataset at the end of the 10
+year survey (Section 2.2).
+In this experiment, for DSSJ we set smin = 32 and
+smax = 256 and for kNNSJ we set kmin = 2 and
+kmax = 256. These maximum values are significantly
+lower than those used for SNAPShot1; recall that in Sec-
+tion 4.3, we selected large values of smax and kmax using
+SNAPShot1 to report the conservative (worst-case) per-
+formance. SNAPShot1 has significant variations in the
+data densities of each feature space because it only con-
+tains 31,693 objects and therefore, the feature spaces
+are poorly sampled. The 5 million objects detected by
+LSST will reduce the degree of sparsity in the feature
+spaces which will reduce the variance in the feature space
+data densities. This implies that smaller smax values for
+DSSJ and kmax neighbors for kNNSJ will be needed
+to adequately sample the feature spaces when operat-
+ing SNAPS at LSST scale. Furthermore, as observed
+in Figures 5–8, ϵselect and kselect are generally closer to
+smaller values of ϵ and k rather than larger values, so us-
+ing smaller ϵselect and kselect parameter values at LSST
+scale should still yield good sets of outlier rankings.
+Due to the excessive execution times required of this
+experiment, we only report the time to compute the first
+5% of the 32,752 feature spaces and then extrapolate
+this time to the expected response time when comput-
+ing all of the feature spaces. These results are reported
+in Table 4. We achieve a multi-GPU speedup (using
+AASTeX v6.3.1 Sample article 17
+0 500 1000 1500 2000
+Number of Neighbors
+0
+250
+500
+750
+1000
+1250
+1500
+1750
+2000Counts
+(a) DSSJ: Number of Neighbors Metric
+0.000 0.002 0.004 0.006
+Mean Distance
+0
+1000
+2000
+3000
+4000
+5000Counts (b) DSSJ: Mean Distance Metric
+0 200 400 600 800 1000
+In-Degree
+0
+20
+40
+60
+80
+100
+120
+140
+160Counts
+(c) kNNSJ: In-degree Metric
+0.00 0.01 0.02 0.03 0.04
+Mean Distance to k Neighbors
+0
+2000
+4000
+6000
+8000
+10000Counts (d) kNNSJ: Mean Distance to k Neighbors Metric
+Figure 12. Histograms of the distribution of metric values for the corresponding plots in Figure 11. The red shaded regions
+are illustrative examples of where outliers are found in the respective distributions. The the mean distance metric for DSSJ (b)
+yields two regions where outliers are found. Points with no neighbors within their search radius will yield a mean distance of 0
+and so all points that do not have any neighbors are assigned a rank of 0. And those points that have large mean distances to
+their neighbors will also be outliers.
+4 GPUs over 1 GPU) of 3.68 × and 3.95 × on DSSJ
+and kNNSJ, respectively. Consequently, we achieve a
+very high ≥ 92% parallel efficiency, where the paral-
+lel efficiency is the speedup divided by the number of
+GPUs. Recall that on SNAPShot1 (Section 4.3), multi-
+GPU performance was poor because the ratio of GPU to
+CPU (host-side) work was low. However, with 5 million
+data points, there is significantly more work to com-
+pute on the GPU and so the abovementioned ratio is
+much higher, leading to greater multi-GPU scalability.
+Extrapolating the results in Table 4 to all 32,752 fea-
+ture spaces, we can compute population outliers for both
+DSSJ and kNNSJ at LSST scale in roughly 12 days us-
+ing 4 GPUs. This will allow SNAPS to provide users
+updated population outlier detection rankings once per
+month over the 10 year survey.
+We highlight several caveats to this analysis. This
+level of performance is an estimate, as we only computed
+5% of the feature spaces, estimated selectivity and k
+nearest neighbor parameter values, estimated the total
+number of asteroids detected by LSST at the end of the
+survey, and used a synthetic ZTF-like dataset which may
+not be representative of the LSST catalog. Furthermore,
+we anticipate that the GPUs SNAPS will use to compute
+population outlier scores will be upgraded over the next
+∼10 years, which will decrease the computation time
+needed for this task. Despite these estimates, we believe
+that SNAPS population outlier detection will scale to
+18 Gowanlock et al.
+Amplitude
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+1.4
+Rotation Period (h)
+0
+1000
+2000
+3000
+4000
+5000
+g-r Color
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+Inliers
+Outliers
+(a) DSSJ: Number of Neighbors Metric
+Amplitude
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+1.4
+Rotation Period (h)
+0
+1000
+2000
+3000
+4000
+5000
+g-r Color
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+Inliers
+Outliers (b) DSSJ: Mean Distance Metric
+Amplitude
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+1.4
+Rotation Period (h)
+0
+1000
+2000
+3000
+4000
+5000
+g-r Color
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+Inliers
+Outliers
+(c) kNNSJ: In-Degree Metric
+Amplitude
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+1.4
+Rotation Period (h)
+0
+1000
+2000
+3000
+4000
+5000
+g-r Color
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+Inliers
+Outliers (d) kNNSJ: Mean Distance to k Neighbors Metric
+Figure 13. The same as Figure 11, but for a d = 3 feature space (light curve amplitude, rotation period, and g − r color).
+LSST data volumes even if some of these assumptions
+change during the 10 year survey.
+5. EXAMPLE A VENUES OF SCIENTIFIC
+INVESTIGATION
+One of the science goals of SNAPS is to map “edge
+cases” within the asteroid population that reveal un-
+usual physical properties that in turn suggest constraints
+on the origin and evolution of our Solar System. In this
+section, we suggest various scientific investigations that
+can be carried out using population outlier detection
+and multi-dimensional feature space exploration.
+5.1. Outliers in a Single Dimension
+The simplest outlier detection scheme is one that ex-
+amines just a single dimension. (1) There are five objects
+in SNAPShot1 with H <5, which corresponds to diam-
+eters larger than around 300 km. These rare objects —
+some 0.02% of SNAPShot1— turn out to be dwarf plan-
+ets and large trans-Neptunian objects in the outer So-
+lar System, and not main belt asteroids. These objects
+have different compositions and histories and therefore
+require different analysis than the rest of the sample.
+(2) Some objects in SNAPShot1 have a derived rota-
+tion period of exactly 5000 hours, which is the max-
+imum period searched. These solutions are likely in-
+correct, and probably represent objects with very low
+lightcurve amplitudes where no true periodic signal can
+be identified. Leaving these likely-false solutions aside,
+there are 550 objects (1.7% of SNAPShot1) with peri-
+ods >1000 hours and <5000 hours. This population was
+AASTeX v6.3.1 Sample article 19
+T able 4. The response time and multi-GPU speedup for DSSJ and kNNSJ on
+LSST5M. The same permutations of the SNAPShot1 d = 15 feature space are employed.
+The response times refer to computing 5% of the 32,752 feature spaces for both 1 and
+4 GPUs. The speedup of using 4 GPUs over 1 GPU is reported. The oversubscription
+factor for DSSJ and kNNSJ is o = 5.
+Algorithm Response Time (h) 1xGPU Response Time (h) 4xGPUs GPU Speedup
+DSSJ 10.83 2.94 3.68
+kNNSJ 45.58 11.55 3.95
+Total Time 56.41 14.49
+first identified in Erasmus et al. (2021), who identified
+YORP, which alters the rotation state of an asymmetric
+object due to thermal torques (Rubincam 2000; Bot-
+tke et al. 2006), as the most likely origin mechanism
+for these very long periods. This serves as an existence
+proof for YORP creating slow rotation rates, and puts
+strong constraints on the initial distribution of rotation
+rates in the asteroid belt, and the collision rate in the
+main belt. These constraints in turn constrain impor-
+tant details about the formation and evolution of the
+Solar System.
+The amplitude of a lightcurve indicates the shape of
+the asteroid, through ∆mag = 2 .5 log a
+b , where a and b
+are the major and minor axis lengths of the ellipsoidal
+asteroid shape. There are 160 objects in SNAPShot1
+that have lightcurve amplitudes >1 magnitude, which
+implies very elongated asteroids where the long side is
+at least 2.5 × longer than the small side. Elongated as-
+teroids are interesting because they may require internal
+strength (McNeill et al. 2018). The existence of these
+very elongated objects — present at the level of 0.5% in
+SNAPShot1— demands that asteroid evolution models
+explain the creation and persistence of such objects.
+5.2. Outliers in Multiple Dimensions
+Figure 11 shows outlier sets for our four methods, in
+two dimensions. Most of the outlying points clearly have
+either the most extreme rotation periods or colors, which
+could be identified through a one-dimensional search.
+However, there are some objects that are neither ex-
+treme in period nor color — for example, objects near
+{500,0.38} — that are identified in all four methods as
+outliers. Neither this period or color is extreme, but
+this combination of properties places these objects in
+the outermost envelope of the distribution of objects in
+period-color space. Thus, outliers can help define de-
+tails of the multi-dimensional distributions. The exis-
+tence of objects near {500, 0.38 } may indicate some-
+thing about the internal structure and strength of those
+objects. Figure 13 adds amplitude to create a three-
+dimensional space, again helping to define the envelope
+of the distributions of these properties.
+Figures 14 and 15 show outliers in the parameter space
+of lightcurve amplitude, rotation period, and HA VG (a
+proxy for size). We then separate S- and C-type as-
+teroids using g − r = 0 .563 as the boundary between
+the two taxonomic types (the boundary can be ob-
+served in Figure 4 in Trilling et al. 2023). The out-
+liers are roughly equally divided between C- and S-type
+asteroids, suggesting that, to the degree that composi-
+tion and internal properties correspond to asteroid color,
+unusual properties in this multi-dimensional space are
+not biased in favor of a particular asteroid composition.
+These figures show a group of objects that are particu-
+larly unusual, with very long periods (2000–4000 h) and
+relatively small amplitudes (0.2 mag) and unremarkable
+H magnitudes (around 15, so a few km in diameter).
+This three-dimensional outlier detection scheme reveals
+this population of very slowly rotating asteroids that
+are nearly round (low amplitude) and have sizes around
+3 km, more or less. Asteroid dynamical models must
+include a mechanism for the existence of these bodies.
+Figure 16 shows this same parameter space (ampli-
+tude, rotation period, HA VG), though with a differ-
+ent color coding to emphasize a particular subset of
+outliers: objects with amplitudes ≥1 mag and periods
+≥500 hours. These are objects that are quite elongated
+and slowly rotating, in both cases showing unusual prop-
+erties. In general, the maximum amplitude that a single
+elongated body can have is around 0.9 mag (Strauss
+et al. 2023). Amplitudes greater than this probably
+indicate binary or contact binary systems. Our pop-
+ulation outlier detection approaches may be detecting
+binary asteroids in the main belt — and, intriguingly,
+slowly rotating binaries, which implies a relatively small
+amount of angular momentum. The origin and evolu-
+tion of these bodies is an interesting question and may
+provide further clues to the overall evolutionary history
+of the asteroid belt. Furthermore, within this group, the
+ratio of C:S asteroids is 12:5, which may not be statisti-
+20 Gowanlock et al.
+Amplitude (mag)
+0.0 0.2 0.4 0.6 0.8 1.0 1.2
+1.4
+Rotation Period (h)
+0
+1000
+2000
+3000
+4000
+5000
+HA VG (mag)
+0
+5
+10
+15
+20
+Inliers: g-r color ≤ 0.563
+Inliers: g-r color > 0.563
+Outliers: g-r color ≤ 0.563
+Outliers: g-r color > 0.563
+Figure 14. Outliers detected using the kNNSJ: Mean Dis-
+tance to k Neighbors Metric rankings in the light curve am-
+plitude, rotation period, and HA VG feature space. The in-
+liers (99% of the objects) are plotted as translucent circles
+and the outliers with “x” markers (1% of the objects). Red
+and blue markers denote C-type ( g − r color ≤ 0.563) and
+S-type (g − r color > 0.563) asteroids, respectively. Two di-
+mensional slices through this space are shown in Figure 15.
+cally significant but is at least suggestive that the mech-
+anism of creating such unusual asteroids may depend on
+composition. The sizes are 1–10 km (H is estimated to
+be 12.5–17.5), potentially a key clue to the evolution of
+these bodies.
+There are many other examples of multi-dimensional
+investigations that can probe the properties of aster-
+oids. As an example of another extended science case,
+our team is identifying outliers in minimum required
+strength in a space that is defined by a number of aster-
+oid physical properties (Chernyavskaya et al., in prep.).
+In summary, the various techniques presented here to
+characterize large datasets are powerful tools that pro-
+vide evidence that would not otherwise be available and
+allow us to carry out experiments about the formation
+and evolution of the Solar System.
+6. DISCUSSION & CONCLUSIONS
+This paper has presented the population outlier de-
+tection functionality of the SNAPS alert broker. We
+summarize our contributions as follows:
+• We have constructed an asteroid outlier detection
+system that is demonstrated on the first SNAPS
+data release, SNAPShot1, which employs state-of-
+the-art GPU algorithms. We showed that the sys-
+0.0 0.5 1.0 1.5
+Amplitude (mag)
+0
+1000
+2000
+3000
+4000
+5000
+Rotation Period (h)
+0.0 0.5 1.0 1.5
+Amplitude (mag)
+0
+5
+10
+15
+20
+HA VG (mag)
+Outliers: g-r color ≤ 0.563
+Outliers: g-r color > 0.563
+0 1000 2000 3000 4000 5000
+Rotation Period (h)
+0
+5
+10
+15
+20
+HA VG (mag)
+Figure 15. The same as Figure 14, except that only the
+outliers are shown. The panels ordered from top to bottom
+are as follows: rotation period as a function of amplitude,
+HA VG as a function of amplitude, and HA VG as a function
+of rotation period. Outliers in this space are equally divided
+between C-type and S-type asteroids, indicating that com-
+position is not a significant driver of unusual behaviors in
+these three dimensions.
+AASTeX v6.3.1 Sample article 21
+Amplitude (mag)
+0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4
+Rotation Period (h)0
+1000
+2000
+3000
+4000
+5000
+HA VG (mag)
+0
+5
+10
+15
+20
+Inliers
+Outliers
+Amp. ≥ 1.0 mag
+and Period ≥ 500 h
+Figure 16. Outliers detected using the DSSJ: Number of Neighbors Metric in the light curve amplitude, rotation period, and
+HA VG feature space. The inliers (99% of the objects) are plotted as translucent circles and the outliers are plotted with “x”
+markers (1% of the objects). We highlight with cyan diamond markers objects with a lightcurve amplitude ≥ 1 mag and rotation
+period of ≥ 500 h. There are only 14 objects with these properties and our method is able to detect all of these as outliers
+denoted by the 14 diamond markers imposed behind the “x” markers.
+tem provides outlier detection capabilities in addi-
+tion to feature space exploration and data prioriti-
+zation which will help researchers rapidly identify
+objects of interest that may warrant further inves-
+tigation.
+• We utilize a feature space permutation approach
+that allows users to select objects of interest based
+on ZTF measurements, adjacent catalogs, and de-
+rived properties. We show that this approach can
+assist in data exploration, prioritization, and visu-
+alization activities to accelerate the scientific dis-
+covery process.
+• We demonstrate that the outlier detection system
+is currently able to scale to the ZTF data rate.
+Through measurements on a synthetic dataset, we
+expect that the system will be able to derive pop-
+22 Gowanlock et al.
+ulation outliers at LSST scale and will be able
+to provide outlier detection rankings roughly once
+per month. The monthly data will be archived and
+made publicly available on our website to enable
+tracking how objects evolve over time relative to
+the population of objects.
+• We highlight several preliminary scientific results,
+and example avenues of scientific investigation
+that will be enabled by SNAPS population outlier
+detection capabilities.
+We demonstrate the grasp of these approaches with a
+few example science cases, of the countless investigations
+that are possible. As described above, our calculated
+outlier lists will be published on our SNAPS web page
+and updated monthly, allowing all users to pursue their
+own experiments with our large and growing catalog.
+It is clear that deriving outlier rankings across all fea-
+ture spaces is computationally expensive. There are sev-
+eral methods that could be employed to reduce this com-
+putational cost. For example, while we derived outliers
+for 15 features in SNAPShot1, we are aware that some
+of these features are redundant or correlated, and so we
+could reduce the total number of feature spaces that we
+provide to users by eliminating some of these feature
+spaces. However, the SNAPS team will aim to provide
+outlier rankings for at least all permutations of d = 15
+features; however, these features will change slightly
+when we begin receiving data from the Rubin Obser-
+vatory. At present, we believe that providing d = 15
+features should provide a reasonable level outlier detec-
+tion and data space exploration for the community.
+We showed that population outlier detection with
+SNAPS is expected to scale to LSST data volumes as-
+suming that the current functionality is sufficient for the
+LSST era. We predict that the community will desire
+additional functionality, such as providing binary clas-
+sification labels (inlier vs. outlier) instead of only using
+ranked lists of objects. The SNAPS team intends to
+add this functionality to the system in the future.
+A distinct but complimentary service that SNAPS
+could provide to the community is clustering each of
+the feature spaces. This task is similar to the outlier de-
+tection methods described here, as clustering typically
+relies on similarity searches (finding nearby points in a
+feature space). This would allow for the automated de-
+tection of groups of objects that may be of interest. A
+canonical example would be to derive asteroid families as
+a function of orbital elements (Parker et al. 2008) while
+also examining additional features/dimensions that may
+be less obvious to explore.
+We identified that one bottleneck in the system is us-
+ing Python to invoke the GPU algorithms for each fea-
+ture space. Since we process multiple feature spaces con-
+currently, this yields non-negligible memory pressure,
+which impacts the rate at which we can process a given
+feature space on a GPU. Thus, future work includes run-
+ning a single process that executes all of the feature
+spaces on the GPU for DSSJ and kNNSJ. By under-
+taking this research direction, we anticipate that there
+will be interesting opportunities for data reuse, such as
+providing the set of k nearest neighbors from kNNSJ
+to DSSJ for its computation, thus potentially eliminat-
+ing a significant fraction of the total DSSJ cost. An-
+other direction that can be undertaken to improve per-
+formance is to leverage the tensor cores on many modern
+GPUs to perform Euclidean distance calculations (Gal-
+let & Gowanlock 2022). These and other algorithmic
+advances are critical for reaching LSST scale while ex-
+panding the services offered by SNAPS, as many of the
+computational bottlenecks identified in this paper can-
+not be solved by hardware advances alone over the next
+≳10 years.
+At present, other alert broker teams are preparing for
+LSST by developing software infrastructure to classify
+objects. We welcome collaboration with other teams
+that anticipate requiring the population outlier detec-
+tion methods described here for their respective science
+domains.
+ACKNOWLEDGMENTS
+We thank the anonymous referee for a very thorough
+review of the manuscript which significantly strength-
+ened the paper. MG is supported by the National Sci-
+ence Foundation under Grant No. 2042155. DET, MG,
+and MC are supported by the National Science Founda-
+tion under Grant No. 2206796. This work is supported
+by the Arizona Board of Regents and the Technology Re-
+search Initiative Research Fund (TRIF) Small Research
+Equipment Acquisition Program (SREAP).
+ZTF is a public-private partnership, with equal sup-
+port from the ZTF Partnership and from the U.S. Na-
+tional Science Foundation through the Mid-Scale In-
+novations Program (MSIP). The ZTF partnership is a
+consortium of the following universities and institutions
+(listed in descending longitude): TANGO Consortium
+of Taiwan; Weizmann Institute of Sciences, Israel; Oskar
+Klein Center, Stockholm University, Sweden; Deutsches
+Elektronen-Synchrotron & Humboldt University, Ger-
+many; Ruhr University, Germany; Institut national de
+physique nucl´ eaire et de physique des particules, France;
+University of Warwick, UK; Trinity College, Dublin,
+Ireland; University of Maryland, College Park, USA;
+AASTeX v6.3.1 Sample article 23
+Northwestern University, Evanston, USA; University of
+Wisconsin, Milwaukee, USA; Lawrence Livermore Na-
+tional Laboratory, USA; IPAC, Caltech, USA; Caltech,
+USA.
+Software: NumPy (Harris et al. 2020) and pan-
+das (pandas development team 2020).
+REFERENCES
+Bellm, E. C., Kulkarni, S. R., Graham, M. J., et al. 2018,
+Publications of the Astronomical Society of the Pacific,
+131, 018002, doi: 10.1088/1538-3873/aaecbe
+Bottke, William F., J., Vokrouhlick´ y, D., Rubincam, D. P.,
+& Nesvorn´ y, D. 2006, Annual Review of Earth and
+Planetary Sciences, 34, 157,
+doi: 10.1146/annurev.earth.34.031405.125154
+Bowell, E., Hapke, B., Domingue, D., et al. 1989, Asteroids
+II, 524
+Campos, G. O., Zimek, A., Sander, J., et al. 2016, Data
+mining and knowledge discovery, 30, 891,
+doi: 10.1007/s10618-015-0444-8
+Capodieci, N., Cavicchioli, R., Valente, P., & Bertogna, M.
+2017, in Proceedings of the 25th International Conference
+on Real-Time Networks and Systems, 48–57,
+doi: 10.1145/3139258.3139270
+Carry, B., Peloton, J., Le Montagner, R., et al. 2024,
+Astronomy & Astrophysics, 687, A38.
+doi: 10.1051/0004-6361/202449789
+Coughlin, M. W., Burdge, K., Duev, D. A., et al. 2021,
+Monthly Notices of the Royal Astronomical Society, 505,
+2954, doi: 10.1093/mnras/stab1502
+Drake, A. J., Graham, M. J., Djorgovski, S. G., et al. 2014,
+The Astrophysical Journal Supplement Series, 213, 9,
+doi: 10.1088/0067-0049/213/1/9
+Erasmus, N., Kramer, D., McNeill, A., et al. 2021,
+MNRAS, 506, 3872, doi: 10.1093/mnras/stab1888
+F¨ orster, F., Cabrera-Vives, G., Castillo-Navarrete, E., et al.
+2021, The Astronomical Journal, 161, 242,
+doi: 10.3847/1538-3881/abe9bc
+Gallet, B., & Gowanlock, M. 2021, Data Science and
+Engineering, 6, 39,
+doi: https://doi.org/10.1007/s41019-020-00145-x
+Gallet, B., & Gowanlock, M. 2022, in 2022 IEEE 29th
+International Conference on High Performance
+Computing, Data, and Analytics (HiPC), IEEE, 135–144,
+doi: 10.1109/HiPC56025.2022.00029
+Gowanlock, M. 2021, Journal of Parallel and Distributed
+Computing, 149, 119,
+doi: https://doi.org/10.1016/j.jpdc.2020.11.004
+Gowanlock, M., Gallet, B., & Donnelly, B. 2023, in
+Computational Science – ICCS 2023, ed. J. Mikyˇ ska,
+C. de Mulatier, M. Paszynski, V. V. Krzhizhanovskaya,
+J. J. Dongarra, & P. M. Sloot (Cham: Springer Nature
+Switzerland), 357–364
+Gowanlock, M., & Karsin, B. 2019, in Proceedings of the
+15th International Workshop on Data Management on
+New Hardware, DaMoN’19 (Association for Computing
+Machinery), doi: 10.1145/3329785.3329920
+Harris, C. R., Millman, K. J., van der Walt, S. J., et al.
+2020, Nature, 585, 357, doi: 10.1038/s41586-020-2649-2
+Hautamaki, V., Karkkainen, I., & Franti, P. 2004, in
+Proceedings of the 17th International Conference on
+Pattern Recognition, 2004. ICPR 2004., Vol. 3, IEEE,
+430–433, doi: 10.1109/ICPR.2004.1334558
+Ivezi´ c,ˇZ., Kahn, S. M., Tyson, J. A., et al. 2019, The
+Astrophysical Journal, 873, 111,
+doi: 10.3847/1538-4357/ab042c
+Knorr, E. M., & Ng, R. T. 1997, in KDD, Vol. 97, 219–222
+Le Montagner, R., Peloton, J., Carry, B., et al. 2023,
+Astronomy & Astrophysics, 680, A17.
+doi: 10.1051/0004-6361/202346905
+Lu, Y. L., Curtis, J. L., Angus, R., David, T. J., & Hattori,
+S. 2022, The Astronomical Journal, 164, 251,
+doi: 10.3847/1538-3881/ac9bee
+Mainzer, A., Bauer, J., Cutri, R., et al. 2019, NEOWISE
+Diameters and Albedos V2.0, Tech. rep.,
+doi: 10.26033/18S3-2Z54
+Matheson, T., Stubens, C., Wolf, N., et al. 2021, The
+Astronomical Journal, 161, 107,
+doi: 10.3847/1538-3881/abd703
+McNeill, A., Fitzsimmons, A., Jedicke, R., et al. 2018, The
+Astronomical Journal, 156, 282,
+doi: 10.3847/1538-3881/aaeb8c
+M¨ oller, A., Peloton, J., Ishida, E. E. O., et al. 2020,
+Monthly Notices of the Royal Astronomical Society, 501,
+3272, doi: 10.1093/mnras/staa3602
+pandas development team, T. 2020, pandas-dev/pandas:
+Pandas, latest, Zenodo, doi: 10.5281/zenodo.3509134
+Pankratius, V., Li, J., Gowanlock, M., et al. 2016, IEEE
+Intelligent Systems, 31, 3, doi: 10.1109/MIS.2016.60
+Parker, A., Ivezi´ c,ˇZ., Juri´ c, M., et al. 2008, Icarus, 198,
+138, doi: 10.1016/j.icarus.2008.07.002
+24 Gowanlock et al.
+Rubincam, D. P. 2000, Icarus, 148, 2,
+doi: 10.1006/icar.2000.6485
+S´ anchez-S´ aez, P., Reyes, I., Valenzuela, C., et al. 2021, AJ,
+161, 141, doi: 10.3847/1538-3881/abd5c1
+Shappee, B. J., Prieto, J. L., Grupe, D., et al. 2014, The
+Astrophysical Journal, 788, 48,
+doi: 10.1088/0004-637X/788/1/48
+Smith, K. W., Williams, R. D., Young, D. R., et al. 2019,
+Research Notes of the AAS, 3, 26,
+doi: 10.3847/2515-5172/ab020f
+Soraisam, M. D., Saha, A., Matheson, T., et al. 2020, The
+Astrophysical Journal, 892, 112,
+doi: 10.3847/1538-4357/ab7b61
+Strauss, R., Trilling, D. E., Bernardinelli, P. H., et al. 2023,
+arXiv e-prints, arXiv:2309.04034,
+doi: 10.48550/arXiv.2309.04034
+Tonry, J. L., Denneau, L., Heinze, A. N., et al. 2018,
+Publications of the Astronomical Society of the Pacific,
+130, 064505, doi: 10.1088/1538-3873/aabadf
+Trilling, D. E., Gowanlock, M., Kramer, D., et al. 2023,
+The Astronomical Journal, 165, 111,
+doi: 10.3847/1538-3881/acac7f
+van Roestel, J., Duev, D. A., Mahabal, A. A., et al. 2021,
+The Astronomical Journal, 161, 267,
+doi: 10.3847/1538-3881/abe853
+Wagstaff, K. L., Lanza, N. L., Thompson, D. R., Dietterich,
+T. G., & Gilmore, M. S. 2013, in Twenty-Seventh AAAI
+Conference on Artificial Intelligence,
+doi: 10.1609/aaai.v27i1.8561
+Zhou, L., Pan, S., Wang, J., & Vasilakos, A. V. 2017,
+Neurocomputing, 237, 350,
+doi: 10.1016/j.neucom.2017.01.026
+Zimek, A., Schubert, E., & Kriegel, H.-P. 2012, Statistical
+Analysis and Data Mining: The ASA Data Science
+Journal, 5, 363, doi: 10.1002/sam.11161
+AASTeX v6.3.1 Sample article 25
+APPENDIX
+A. COMPARISON OF RANKINGS BETWEEN OUTLIER DETECTION METHODS
+From Figure 13 we observed that there may be minimal overlap between those points that are selected as outliers
+between the outlier detection metrics. Figure 17 shows another perspective on the comparison of rankings that were
+shown in Figure 13, where we plot the rankings for each object as a scatterplot. Figure 17 shows the following subplots:
+(a) shows a ranking comparison for the two DSSJ metrics, (b) shows a comparison for the two kNNSJ metrics, (c)
+shows a comparison of the two distance-oblivious metrics, and (d) shows a comparison between the two distance-aware
+metrics. Recall that in all figures, the outliers are those with a low rank value.
+Figure 17(a) shows a comparison of DSSJ metrics where we observe that many of the points that have few neighbors
+(with a rank ≳ 0) have a large range of possible ranks using the mean distance metric. This shows that a large mean
+distance to neighboring points may be achieved when there are few or many points within the search radius ϵ of a
+given point.
+Figure 17(b) shows a comparison of kNNSJ metrics. Here we find that there are consistencies between outlier scores
+for both metrics when the rankings are ≳ 0. Interestingly, there is an overabundance of in-degree rankings with values
+between ∼ 500 − 700, although these points will not be considered outliers in this feature space.
+Figure 17(c) compares the rankings derived by the distance-oblivious metrics for DSSJ and kNNSJ. We find that
+there is little correlation between these the rankings of these two methods. This is because it is possible to have a low
+in-degree value in the kNN graph, but yet have several neighbors found within the search radius ϵ. Despite this, there
+are still numerous points that have ranks near 0 in both metrics which would indicate that they are outliers using both
+metrics.
+Figure 17(d) compares the rankings derived by the distance-aware metrics for DSSJ and kNNSJ. We clearly observe
+that there is a deficit of points assigned a low mean distance rank and a high ( ≳ 10000) mean distance to k neighbors
+rank. Compared to the other plots, the rankings appear to be the most correlated, although there are still major
+differences in the assigned rankings.
+26 Gowanlock et al.
+0 1000 2000 3000 4000 5000
+DSSJ: Ranking Num. Neighbors
+0
+5000
+10000
+15000
+20000
+25000
+30000
+35000DSSJ: Ranking Mean Distance
+(a) DSSJ: Ranking Comparison
+0 200 400 600 800 1000
+KNNSJ: Ranking In-Degree
+0
+5000
+10000
+15000
+20000
+25000
+30000
+35000KNNSJ: Ranking Mean Distance to k Neighbors (b) kNNSJ: Ranking Comparison
+0 1000 2000 3000 4000 5000
+DSSJ: Ranking Num. Neighbors
+0
+200
+400
+600
+800
+1000KNNSJ: Ranking In-Degree
+(c) DSSJ vs. kNNSJ: Distance-Oblivious Comparison
+0 5000 10000 15000 20000 25000 30000 35000
+DSSJ: Ranking Mean Distance
+0
+5000
+10000
+15000
+20000
+25000
+30000
+35000KNNSJ: Ranking Mean Distance to k Neighbors (d) DSSJ vs. kNNSJ: Distance-Aware Comparison
+Figure 17. Scatterplots showing a comparison of rankings for the same d = 3 feature space shown in Figure 13. (a) Ranking
+comparison for the two DSSJ metrics. (b) Ranking comparison for the two kNNSJ metrics. (c) Comparison of the two distance-
+oblivious metrics. (d) Comparison of the two distance-aware metrics. Note that across all figures, the distance-oblivious metrics
+(DSSJ: Number of Neighbors and kNNSJ: In-degree) have numerous points that share the same rank, and so they have a smaller
+range of possible rank values compared to the distance-aware metrics ( DSSJ: Mean Distance and kNNSJ: Mean Distance to k
+Neighbors).

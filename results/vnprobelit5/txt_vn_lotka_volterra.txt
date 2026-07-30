@@ -1,0 +1,566 @@
+Lotka-Volterra Models for Extraterrestrial Self-Replicating Probes
+Yifan Chen, 1 Jiayi Ni, 1 and Yen Chin Ong 1, 2,∗
+1Center for Gravitation and Cosmology, College of Physical Science and Technology, Yangzhou University,
+180 Siwangting Road, Yangzhou City, Jiangsu Province 225002, China
+2Shanghai Frontier Science Center for Gravitational Wave Detection,
+School of Aeronautics and Astronautics, Shanghai Jiao Tong University, Shanghai 200240, China
+A suﬃciently advanced extraterrestrial civilization can send out a swarm of self-replicating probes
+for space exploration. Given the fast-growing number of such a probe, even if there is only one
+extraterrestrial civilization sending out such probes in the Milky Way galaxy, we should still expect
+to see them. The fact that we do not consists part of the Fermi paradox. The suggestion that
+self-replicating probes will eventually mutate to consume their progenitors and therefore signiﬁcantly
+reduce the number of total probes has been investigated and dismissed in the literature. In this work,
+we re-visit this question with a more realistic Lotka-Volterra model, and show that mutated probes
+would drive the progenitor probes into “extinction”, thereby replacing them to spread throughout the
+galaxy. Thus, the eﬃciency of mutated probes in reducing the total number of self-replicating probes
+is even less than previously thought. As part of the analysis, we also suggest that, somewhat counter-
+intuitively, in designing self-replicating probes, one should not program them to stop replicating
+when suﬃcient mutation causes the probes to fail to recognize the progenitor probes as “self”.
+I. INTRODUCTION: FERMI PARADOX AND
+SELF-REPLICATING PROBES
+While it is still unclear how widespread intelligent life
+is across the Universe, a recent optimistic Monte Carlo es-
+timate gives about 42000 communicating extraterrestrial
+intelligent civilizations in our Milky Way galaxy [ 1] alone.
+If there are so many extraterrestrial civilizations, why
+haven’t we found any of them? This is the famous Fermi
+paradox [2–4], or “the Great Silence” [ 5]. There are of
+course no shortage of possible explanations (assuming the
+emergence of life is not rare [ 6]), such as: they may not
+keen on communicating (perhaps for fear of attracting
+unwanted attention from hostile species [ 7]); civilizations
+generally tend to annihilate themselves in one way or an-
+other [8]; we are not considered technologically advanced
+or interesting enough to be communicated with and are
+deliberately isolated [ 9], just to name a few. All the dif-
+ferent scenarios we can think of concerning the Fermi
+paradox is of course necessarily anthropocentric – we do
+not know how an alien species might think.
+However, the lack of any conﬁrmed signal from deep
+space is not the only puzzling aspect of the mystery. We
+expect that any suﬃciently advanced civilization would
+be able to design and manufacture self-replicating probes
+[10–15] (SRPs, also known as “replicators” or von Neu-
+mann probes [ 16]), perhaps even “nanobots” that can
+be launced en masse into interstellar space to explore
+the Universe. It has been argued that small-scale, par-
+tially self-replicating probes are feasible near-term even
+to us [17]. In addition to pure exploration, SRPs can be
+used for conquest – obliterating every other civilizations
+(viewed as competitors or potential threats) and taking
+over their resources [18]. SRPs make the Fermi paradox
+∗Electronic address: ycong@yzu.edu.cn
+a lot worse, since the fact that such a replication pro-
+cess (assuming virtually unlimited resources) would be
+exponential, means that even if there is only one single
+civilization that is doing this (conservative estimate gives
+O(1) to O(102) advanced civilizations in the Milky Way
+[19, 20]), their probes should have spread throughout the
+galaxy in a reasonable amount of time (between O(106)
+toO(109) years) [12, 21]. Given how young we are on the
+galactic stage, we should have been surrounded by SRPs.
+The fact that we do not requires some explanations.
+One possibility is that SRPs would eventually “mutate”
+[22, 23]. While minor mistakes in the replicating process
+would only create sub-variant probes, a bigger error might
+lead to a new population of SRPs that can no longer rec-
+ognize the progenitor probe as “self” (as opposed to being
+“foreign”), and instead treat it as resource to be consumed.
+We will refer to such mutated SRPs as “predators”, while
+the rest as “preys”. This comparison with biological
+system is not entirely an analogy, since SRPs could be
+partially biological in the sense that they are artiﬁcial
+proteomic or molecular machines [ 24, 25]. The idea is
+that predation might reduce the total number of SRPs
+and thus explains why we have not detected them. In
+[23], the author investigated this scenario by modeling the
+spread of the SRPs from one star system to another with
+minimal spanning trees, and the dynamics between the
+predator and prey SRPs with the Lotka-Volterra model.
+The conclusion reached was that this scenario cannot suf-
+ﬁciently reduce the prey SRPs, and therefore the Fermi
+paradox remains unsolved.
+As we will explain in the next section, there are some
+shortcomings in the assumptions in [23], and the modeling
+of predator-prey system with Lotka-Volterra equations
+require some care in what kind of terms should be in-
+cluded. We then propose a more realistic equation to
+study the species interaction. Our model makes it clear
+why predator SRPs cannot resolve the Fermi paradox.
+arXiv:2209.14244v2 [math.DS] 29 Sep 2022
+2
+II. LOTKA-VOLTERRA MODELS FOR
+REPLICATORS
+Aside from the migration eﬀect from one star system
+to another, the Lotka-Volterra model assumed in [ 23] is
+essentially the standard “plain vanilla” form 1:
+
+
+
+dx
+dt =αx−βxy,
+dy
+dt =δxy−γy,
+where x = x(t),y = y(t) denote the number of preys
+and predators, respectively. The coeﬃcients α,β,δ,γ are
+assumed to be positive. They govern the growth rate
+of preys, the reduction in the prey population due to
+predation, the increase in the predator population due
+to predation, and the natural death rate of the predator
+species, respectively. One may ask why the natural death
+rate of the prey species is not included. The reason is
+straightforward: we could add such a term −α′x (where
+α′ > 0), but in a healthy population, the growth rate
+should be larger than the death rate anyway, so the overall
+eﬀect is (α−α′)x, where α−α′ > 0. So it is easier to
+absorb α′ and just deal with α. As the coeﬃcients are
+unknown, we are only interested in the qualitative features.
+The units for time t is therefore left unspeciﬁed.
+The behavior of this ODE system is well-known: the
+two species are locked into oscillatory cycles, an example is
+shown in Fig.(1). As the number of predators increase, the
+prey population dwindles, and as the preys are reduced,
+the predators run out of food and they themselves start to
+die oﬀ. The prey population then recovers and the cycle
+renews. In the associated phase diagram, the only ﬁxed
+point is a center (Fig.(2)). While this model is rather
+simpliﬁed and suﬀers from some problems (such as the
+“attofox” problem [ 26] – the number of the species can
+get very small, which in the real world could have led to
+extinction rather than a recovery later on). However, as a
+ﬁrst approximation, the crude Lotka-Volterra model does
+give a sensible description.
+However, precisely because the population number oscil-
+lates, it is diﬃcult to conclude whether the predator-prey
+scenario suﬃciently reduces the number of total probes. It
+could be that we are near the “valleys” of the population
+number, when both predator and prey are relatively low
+in numbers. This is why the analysis in [ 23] needs to be
+so thorough as to considering migration eﬀect. Intuitively
+this amounts to taking the observer (us) into account:
+what is the probability that at the corner of the galaxy,
+we see very few SRPs, given the oscillatory populations?
+It is remarkable that the result turns out to be inadequate
+to explain Fermi paradox.
+1 A ﬁnite capacity term, K >0, can be included, as was done in
+[23], so that αx becomes αx(1 −x/K), but since K is assumed
+to be very large anyway, we need not include it in our analysis.
+FIG. 1: The oscillatory number of the predator ( y, the upper curve in
+red) and prey ( x, the lower curve in blue) populations in the “plain-
+vanilla” predator-prey model. Here we use α = 1,β = 0.5,γ = 0.2,δ =
+0.1. The initial conditions are x(0) =y(0) = 3.
+FIG. 2: The phase diagram of the “plain-vanilla” predator-prey model
+with α = 1,β = 0.5,γ = 0.2,δ = 0.1. There exists a center surrounded
+by closed orbits.
+In this work, we shall re-consider the application of
+the “plain vanilla” Lotka-Volterra equation. This requires
+some thoughts on the design of SRPs and how mutation
+might aﬀect them. Assuming that errors are accumulated
+as the probes self-replicate (just like biological cell divi-
+sion, there might be programs in place to correct these
+errors, but errors are unavoidable), the new generations
+of SRPs would be expected to eventually be diﬀerent
+from the original population in one way or another. In
+order to prevent the probes from consuming each other,
+the extraterrestrial engineers should design SRPs to still
+recognize mutated probes as self. Hence a probe can only
+become predatory when the self-recognition feature breaks
+down due to a new mutation and no longer recognizes
+other variants as self.
+Just like in [ 23], we will assume that the prey probes
+do not consume the predators. This assumption is not
+necessary. A predator is deﬁned to be the population that
+beneﬁts from the inter-species interaction and similarly
+the prey is the one that suﬀers. Therefore, the progenitor
+probe can prey on the predator probes, with some coeﬃ-
+cient +β′xy added into the Lotka-Volterra equation for
+3
+dx/ dt, but the overall coeﬃcient β′−β remains negative
+by deﬁnition of being a prey. Thus it is more convenient
+to just re-deﬁne−β′ +β↦→β, or equivalently assuming
+β′ = 0.
+With the above, the distinction between predator and
+prey, as in Eq.(1), can be made. In [ 23], the author
+mentioned the possibility of an “omnivorous” predator
+species that also consumes each other, and conclude that
+this should not aﬀect the conclusion. Indeed, omnivo-
+rous predators are also replicating while consuming, so
+this makes sense. Thus, we can assume without loss of
+generality that predator species would recognize them-
+selves and not become omnivorous. On the other hand,
+to replicate is the main purpose of SRPs. It is unlikely
+that the mutation into predator would also mutate the
+probes in so speciﬁc a way to make the predator probes
+exclusively consuming the prey probes. (In fact, as we
+will see, extraterrestrial engineers should try their best
+to program SRPs to prevent exclusive predation behavior
+from arising.) In other words, the Lotka-Volterra equation
+should include also the resource term for the predators .
+Unlike, say, foxes and rabbits in a typical ecosystem, in
+which the predators only eat the preys and would die
+oﬀ without the latter, SRPs dynamics would be quite
+diﬀerent due to both species have access to environmental
+resources. This crucial term, missing in [ 23], makes all
+the diﬀerence.
+A more realistic model should therefore be (we use
+Latin coeﬃcients in place of Greek ones for the newly
+considered terms):
+
+
+
+dx
+dt =αx−βxy−Bx, α>B,
+dy
+dt =δxy−γy +Ay +Bx, A>γ,
+(1)
+where A,B >0. Here A is the coeﬃcient of the resource
+term for the predator population. We expect that the
+magnitude of α is comparable to A, but they may not be
+identical after the mutation (the result below holds as long
+as A>γ ). We have also included the mutation eﬀect via
+the coeﬃcientB, where preys are converted into predators
+with some ﬁxed rate 2. The magnitude of B should be
+much smaller than the other terms. The condition A>γ
+is simply the statement that the natural death rate is
+smaller than the growth rate of the population.
+To solve for the ﬁxed points, we solve the equations
+x[(α−B)−βy] = 0
+y[δx + (A−γ)] +Bx = 0. (2)
+2 This is akin to how the infected population is “converted” into
+the recovered population in a contagious illness “SIR” model
+[27], such as the Kermack-McKendrick model [ 28]. Note that
+mutation need not necessarily occurs during replication, but also
+when other processes are taking place.
+FIG. 3: The phase diagram of the improved predator-prey model. Here
+we use α = 1,β = 0.5,γ = 0.2,δ = 0.1,B = 0.01,A = 0.95. The origin
+– the only ﬁxed point – is an unstable node (repeller). We observe that
+x(t)→ 0, i.e. the progenitor probes are driven into extinction.
+This yields one trivial ﬁxed point (0 , 0), as well as one
+nontrivial ﬁxed point:
+(x,y ) = (x∗,y∗) :=
+((B−α)(A−γ)
+Bβ +δ(α−B),α−B
+β
+)
+. (3)
+We note that the nontrivial ﬁxed point is irrelevant be-
+cause x∗ < 0.
+The Jacobian associated to the dynamical system is
+J =
+[
+(α−B)−βy −βx
+δy +B δx −γ +A
+]
+. (4)
+The origin (0, 0) is the only ﬁxed point, and since J|(0,0)
+is a lower triangular matrix, its eigenvalues areα−B >0,
+and A−γ > 0. The trivial ﬁxed point is therefore an
+unstable node that repels all nearby trajectories in the
+phase space (Fig.(3)). The result is that the prey quickly
+becomes extinct, while the predator population eventually
+grows exponentially (or tend to a constant if a ﬁnite
+capacity is assumed, ` a la the logistic model), as shown
+in the top plot of Fig.(4). The predator growth rate is
+comparable to the progenitor probe in the scenario in
+which no mutation occurs; see the bottom comparison
+plots of Fig.(4). We remark that the conversion termBx is
+not crucial, the major inﬂuence is due to the resource term.
+Even if we take B = 0 in the model (which corresponds
+to the mutation being an one-oﬀ event), the repelling
+behavior persists.
+From our discussion above, it seems that we do not
+have to discuss the A = 0 case (which is excluded with
+our assumption that A > γ >0). However, this case
+will provide some insights into how to design SRPs in the
+Discussion section and thus is worth some investigations.
+ForA = 0, the trivial ﬁxed point (0, 0) is a saddle node.
+More crucially, the nontrivial ﬁxed point is now relevant
+as x∗,y∗ > 0. Though the system does not quite reduce
+to the “plain vanilla” Lotka-Volterra form (due to the
+Bx term in the dy/ dt equation), for small enough B, we
+still have oscillatory behaviors not too diﬀerent from the
+4
+FIG. 4: T op: The number of the predator ( y, the upper curve in
+red) and prey (x, the lower curve in blue) populations in the improved
+predator-prey model, with α = 1,β = 0.5,γ = 0.2,δ = 0.1, B =
+0.01,A = 0.95. The initial conditions are x(0) =y(0) = 300. Bottom:
+The subsequent exponential growth ofy(t) is comparable to the case of
+single-species probe without mutation (dashed).
+“plain vanilla” Lotka-Volterra equation, which requires a
+careful analysis of [ 23]. This is not surprising since the
+term Bx can be seen as a perturbation away from the
+“plain vanilla” model. As B gets larger, the nontrivial
+ﬁxed point becomes an attractor. To see this, we note
+that the eigenvalues of J|(x∗,y∗)(A = 0) are
+λ1,2 =−γβB±
+√
+γ2β2B2 +γf (α,β,δ,B )
+2(Bβ + (α−B)δ) , (5)
+where it can be shown that
+f(α,β,δ,B ) =− 8Bβδ (B−α)2 + 4B2β2(B−α)
++ 4δ2(B−α)3. (6)
+Each of the terms in f(α,β,δ,B ) are negative, so
+f(α,β,δ,B )< 0. Consequently we see that indeed for γ
+small enough, λ1,2 are complex, whereas for large enough
+γ, both λ1,2 < 0 so we have an attractor of the stable
+node type. For intermediate values of γ, we would obtain
+a stable spiral attractor instead. An example is provided
+in Fig.(5) with α = 1,β = 1,γ = 5,δ = 1,B = 0.5, with
+eigenvaluesλ1,2≈− 1.25± 0.9682i. For the parameter
+values α = 1,β = 0.5,δ = 0.1,B = 0.01 that we use
+in Fig.(3) and Fig.(4), γ needs to be of order O(103) in
+order to exhibit an attractor behavior. An example with
+FIG. 5: The phase diagram of the predator-prey model with a “defec-
+tive” predator. Here we use α = 1,β = 1,γ = 5,δ = 1, B = 0.5,A = 0.
+The system has a nontrivial ﬁxed point marked with the red dot at
+(x∗,y ∗) = (2.5, 0.5). In this case the trajectories are stable spirals, but
+this is not necessarily the case in general; see Fig.(6).
+FIG. 6: The phase diagram of the predator-prey model with a “de-
+fective” predator. Here we use α = 1,β = 0.5,γ = 5000,δ = 0.1,
+B = 0.01,A = 0. The system has a nontrivial ﬁxed point marked with
+a red dot at ( x∗,y ∗)≈ (47596.15, 1.98), which is a stable node. The
+trajectories ﬂow towards an attractor curve that leads to the stable
+node.
+γ = 5000 that gives rise to a stable node is given in Fig.(6).
+Note that since the system is nonlinear, eigenvalue analy-
+sis for linear stability need not quantitatively yield the
+correct result for when exactly the center transits into
+spirals.
+For our purpose, we note that since γ governs the
+predator population “death rate”, this means that the
+attractor case corresponds to the predator probes being
+“defective”, i.e., easily mulfunctioned. This could happen
+as part of the programming. We will return to this issue
+in the Discussion. (The possibility that SRPs eventually
+mutate so much they cease to replicate was also discussed
+in [29]) Note that the case of A̸= 0 but A<γ is similar.
+5
+III. DISCUSSION: HOW (NOT) TO BUILD
+REPLICATORS
+In this work we have shown that in a more realistic
+Lotka-Volterra model, a predatory SRP would drive its
+progenitor species towards extinction. In other words,
+the original SRPs would be replaced by the mutated
+version. Presumably this process will happen again and
+again since mutation would eventually give rise to new
+predators. The growth rate of the SRPs is therefore still
+exponential. This makes it clear that the Fermi paradox
+cannot be resolved.
+This analysis also suggests a somewhat counter-intuitive
+way to program SRPs if we ever could use it to explore
+the Galaxy. We might be tempted to think that we
+should design them to stop foraging as soon as their
+self-recognition program becomes suﬃciently faulty. For
+example, “self” can be deﬁned as a neighborhood in the
+parameter space, so that a small mutation is still accept-
+able. A “kill” code that renders the probe unable to
+forage or/and inactive can be designed to switch on when
+a newly constructed probe mutates outside the acceptable
+margin. This mimics a biological scenario: a cell which
+has an error in its DNA that cannot be repaired may
+undergo self-destruction (apoptosis), though this does not
+always work, which could lead to cancer. This parallels
+the runaways production of predator probes in our case.
+It is possible that after mutation the kill code is not as
+eﬀective as to render the probe immediately inactive, but
+still the code could increase the “death rate” of the probe.
+Such a design, however, can be risky. If consuming
+resources is coupled with self-recognition, the two behav-
+iors are not independent, which conceivably increases the
+chance that a mutation might aﬀect both. A biological
+analogy is the mutation of a virus – when a virus mutates
+into a new variant that is more eﬀective at spreading,
+its virulence may increase (or decrease) if this is cou-
+pled with transmissibility (which can either happen via a
+pleiotropic side eﬀect or through genetic linkage), which
+is of course one current concern for COVID-19 [ 30]. For
+our case, a coupling between self-recognition and foraging
+behavior might not only cause a predator behavior in
+the ﬁrst place, but also conceivably makes the predator
+solely feeds on the progenitor probes ( A = 0). In other
+words, such a design may increase the chance that an al-
+most plain-vanilla predator-prey model emerges, at which
+point the growth rate of the probe population ceases to
+be exponential, and instead locked into oscillatory cycles,
+or tend to an attractor (if the predator is prey-speciﬁc
+and defective in the sense that its “death rate” is high).
+The best strategy is not to program anything, so that
+foraging and self-recognition stay as independent systems.
+If predation behavior occurs by chance, it is less likely
+to be progenitor-speciﬁc. The predator probes would
+then out-compete the progenitors and grow exponentially
+– which is the wanted behavior for SRPs. The risk of
+constructing SRPs is of course well-known and should
+be taken into account very carefully by any ambitious
+civilization [31].
+In any case, it does seem that based on our work and
+that of [ 23], mutated probes cannot explain the Fermi
+paradox. Instead, one is faced with the possibility that the
+lack of SRPs might indicate that highly advanced extrater-
+restrial civilizations do not exist [ 32]. Another possibility
+is that the probes are around, we just have not detected
+them [ 12, 33]. In fact, can we recognize a suﬃciently
+advanced SRP technology if we see it? Of course, if SRPs
+do exist, their “ecosystem” might be very complicated
+depending on how they are programmed. Perhaps they
+are almost biological in the sense that mutation can lead
+to natural selection and vastly improved probes of many
+diﬀerent species can evolve throughout the generations.
+One also has to take into account that there are more
+than one extraterrestrial civilizations that are launching
+SRPs, which would treat each other as resources to be
+consumed. We can even entertain the science ﬁction possi-
+bility that an extraterrestrial civilization would anticipate
+rival probes in advance and program their SRPs to be
+able to evade enemies and/or defend themselves; or more
+interestingly, establish contact and collaborate.
+Lastly, let us also mention the possibility of “infor-
+mation panspermia” ﬁrst introduced by Gurzadyan [ 34].
+This is the idea that information regarding the genomic
+sequence of an organism can be compressed by certain
+algorithm to be spread through the galaxy, either by
+transmitting (with the hope that some advanced civiliza-
+tion can download it) or by utilizing the SRPs, either
+by transmitting through the SRP network once it is es-
+tablished, or directly programmed into the SRPs. In the
+latter scenario, we can even envision that the probes from
+a suﬃciently advanced civilization can “seed” life across
+the galaxy when they detected a suitable environment
+(hence conceivably re-creating even an ecosystem instead
+of just a single species), or even “terraforming” a tar-
+geted planet. Indeed, instead of ﬂeets of spaceships, it
+is much more convenient to colonize the galaxy in this
+way. Though mutation to the SRPs would not aﬀect its
+spread as is evident in the above analysis, it is possible
+that the mutation could also lead to certain corruptions
+of the genetic information. Depending on the degree of
+the corruption (and the eﬃciency of the error correction
+codes), this could either render the mutated probe unable
+to perform their panspermia function, or just cause the
+life seeded in this way to be genetic variations of the
+original species. If the latter scenario happens, it would
+be evolution in action on the galactic scale.
+All these considerations, albeit some are highly specu-
+lative, imply that simple models based on Lotka-Volterra
+equations are unlikely to tell the whole story with re-
+gards to the Fermi paradox. Nevertheless, lacking any
+knowledge about the technology and the psychology of
+extraterrestrial species, we should always start from un-
+derstanding the simplest models.
+6
+Acknowledgments
+YCO thanks the National Natural Science Foundation
+of China (No.11922508) for funding support. YCO thanks
+Brett McInnes for useful discussions.
+Data Availability Statement
+Data sharing not applicable to this article as no datasets
+were generated or analysed during the current study.
+Conﬂict of interest
+There is no conﬂict of interest.
+[1] Wenjie Song, He Gao, “The Number of Possible CETIs
+Within Our Galaxy and the Communication Proba-
+bility Among These CETIs”, ApJ 928 (2022) 142,
+[arXiv:2204.05479 [astro-ph.EP]].
+[2] Stephen Webb, If the Universe Is Teeming with Aliens
+... Where Is Everybody? Seventy-Five Solutions to the
+Fermi Paradox and the Problem of Extraterrestrial Life ,
+Springer Cham, 2015.
+[3] Milan M. ´Cirkovi´ c, “Fermi’s Paradox - The Last Challenge
+for Copernicanism?”, Serbian Astron. Jour. 178 (2009)
+1, [arXiv:0907.3432 [astro-ph.EP]].
+[4] Adrian Kent , “Too Damned Quiet?”, [arXiv:1104.0624
+[physics.pop-ph]].
+[5] Glen David Brin, “The ‘Great Silence’: the Controversy
+Concerning Extraterrestiral Intelligent Life”, Quart. Jour.
+Royal Astron. Soc. 24 (1983) 283.
+[6] Aditya Chopra, Charles H. Lineweaver, “The Case for a
+Gaian Bottleneck: The Biology of Habitability”, Astrobi-
+ology 16 (2016) 7.
+[7] Chao Yu, “The Dark Forest Rule: One Solution to the
+Fermi Paradox”, JBIS 68 (2015) 142.
+[8] Adam Stevens, Duncan Forgan, Jack O’Malley-James,
+“Observational Signatures of Self-Destructive Civilisa-
+tions”, Inter. Jour. Astrobiology 15(4) (2015) 333,
+[arXiv:1507.08530 [astro-ph.EP]].
+[9] John A. Ball, “The Zoo Hypothesis”, Icarus 19 (1973)
+347.
+[10] Carl Sagan, William I. Newman, “The Solipsist Approach
+to Extraterrestrial Intelligence”, Quart. Jour. Royal As-
+tron. Soc. 24 (1983) 113.
+[11] Stuart Armstrong, Anders Sandberg, “Eternity in Six
+Hours: Intergalactic Spreading of Intelligent Life and
+Sharpening the Fermi Paradox”, Acta Astronautica 89
+(2013) 1.
+[12] Keith B. Wiley, “The Fermi Paradox, Self-Replicating
+Probes, and the Interstellar Transportation Bandwidth”,
+[arXiv:1111.6131 [physics.pop-ph]].
+[13] Martin T. Barlow, “Galactic Exploration by Directed
+Self-Replicating Probes, and Its Implications for the
+Fermi Paradox”, Inter. Jour. Astrobiology 12 (2013) 63,
+[arXiv:1206.0953 [physics.pop-ph]].
+[14] Zaza Osmanov, “On the Interstellar von Neumann Micro
+Self-Reproducing Probes”, Inter. Jour. Astrobiology 19
+(2020) 220, [arXiv:1909.05078 [physics.pop-ph]].
+[15] Emir Haliki, “Dyson Swarms of von Neumann Probes:
+Prospects and Predictions”, Inter. Jour. Astrobiology 19
+(2020) 474.
+[16] John von Neumann, Theory of Self-Reproducing Au-
+tomata, Urbana: University of Illinois Press, 1st Edn.,
+1966, p. 388.
+[17] Olivia Borgue, Andreas M. Hein, “Near-Term Self-
+replicating Probes – A Concept Design”, Acta Astronau-
+tica 187 (2021) 546, [arXiv:2005.12303 [physics.pop-ph]].
+[18] Stuart Armstrong, Anders Sandberg, “Hunters in the
+Dark: Game Theory Analysis of the Deadly Probes Sce-
+nario”, in poster presented at the National Astronomy
+Meeting of the Royal Astronomical Society (NAM2013).
+[19] Steven G. Wallenhorst, “The Drake Equation Reexam-
+ined”, Quart. Jour. Royal Astron. Soc. 22 (1981) 380.
+[20] Tom Westby, Christopher J. Conselice, “The Astrobi-
+ological Copernican Weak and Strong Limits for Ex-
+traterrestrial Intelligent Life”, ApJ 896 (2020) 58,
+[arXiv:2004.03968 [astro-ph.EP]].
+[21] Eric M. Jones, “Discrete Calculations of Interstellar Mi-
+gration and Settlement”, Icarus 46 (1981) 328.
+[22] Christopher F. Chyba, Kevin P. Hand, “Astrobiology:
+The Study of the Living Universe”, Annu. Rev. Astron.
+Astrophys. 43 (2005) 31.
+[23] Duncan H. Forgan, “Predator-Prey Behaviour in Self-
+Replicating Interstellar Probes”, Inter. Jour. Astrobiology
+18 (2019) 552, [arXiv:1903.00770 [physics.pop-ph]].
+[24] Eric Drexler, “Molecular Engineering: An Ap-
+proach to the Development of General Capabili-
+ties for Molecular Manipulation”, Proc. Natl. Acad.
+Sci. USA 78 (1981) 5275, accessed online at
+http://www.imm.org/publications/pnas/.
+[25] Alex Ellery, “How to Build a Biological Machine Using En-
+gineering Materials and Methods”, Biomimetics 5 (2020)
+35.
+[26] Denis Mollison, “Dependence of Epidemic and Population
+Velocities on Basic Parameters”, Math. Biosciences 107
+(1991) 255.
+[27] Herbert W. Hethcote, “The Mathematics of Infectious
+Diseases”, SIAM Review 42 (2000) 599.
+[28] William Ogilvy Kermack, A. G. McKendrick, “A Contri-
+bution to the Mathematical Theory of Epidemics”, Proc.
+Roy. Soc. Lond. A 115 (1927) 700.
+[29] Axel Kowald, “Why Is There No von Neumann Probe
+on Ceres? Error Catastrophe Can Explain the Fermi-
+Hart Paradox”, JBIS 68 (2015) 383, [arXiv:1605.02169
+[physics.pop-ph]].
+[30] Sarah P. Otto et al., “The Origins and Potential Future of
+SARS-CoV-2 Variants of Concern in the Evolving COVID-
+19 Pandemic”, Current Biology 31 (2021) R918.
+7
+[31] Chris Phoenix, Eric Drexler, “Safe Exponential Manufac-
+turing”, Nanotechnology 15 (2004) 869.
+[32] Alex Ellery, “Self-Replicating Probes Are Imminent – Im-
+plications for SETI”, Inter. Jour. Astrobiology 21 (2022)
+212.
+[33] Robert A. Freitas, “Extraterrestrial Intelligence in the
+Solar System: Resolving the Fermi Paradox”, JBIS 36
+(1983) 496.
+[34] Vahe G. Gurzadyan, “Kolmogorov Complexity, String In-
+formation, Panspermia and the Fermi Paradox”, Observa-
+tory 125 (2005) 352, [arXiv:physics/0508010 [physics.gen-
+ph]].

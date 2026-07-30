@@ -375,7 +375,7 @@ def _thresholds(conf: dict) -> Thresholds:
 
 
 def _visit_history_from_forced(rows, targets, th: Thresholds, epoch_jyear: float
-                               ) -> tuple[dict[str, list[float]], dict[str, int], dict]:
+                               ) -> tuple[dict[str, list[float]], set, dict]:
     """Map forced-photometry rows onto targets and count the night's trials.
 
     The association uses the *same* proper-motion-propagated matcher as the
@@ -385,13 +385,13 @@ def _visit_history_from_forced(rows, targets, th: Thresholds, epoch_jyear: float
     """
     stats = {"forced_rows": len(rows), "forced_matched": 0}
     if not rows or targets is None or len(targets) == 0:
-        return {}, {}, stats
+        return {}, set(), stats
     fra = np.array([float(r.get("ra", np.nan)) for r in rows])
     fdec = np.array([float(r.get("dec", np.nan)) for r in rows])
     fmjd = np.array([float(r.get("mjd", np.nan)) for r in rows])
     ok = np.isfinite(fra) & np.isfinite(fdec) & np.isfinite(fmjd)
     if not np.any(ok):
-        return {}, {}, stats
+        return {}, set(), stats
     t_ra = np.asarray(targets["ra"], dtype=float)
     t_dec = np.asarray(targets["dec"], dtype=float)
     pmra = np.asarray(targets["pmra"], dtype=float) if "pmra" in targets else np.zeros(t_ra.size)
@@ -419,13 +419,11 @@ def _visit_history_from_forced(rows, targets, th: Thresholds, epoch_jyear: float
         star_nights.add((tid, night_of(mj)))
     stats["forced_matched"] = int(m.alert_index.size)
     stats["tracked_targets"] = len(hist)
-    # Trials, broken out PER NIGHT so overlapping run windows cannot double-count
-    # them (see `Ledger.add_night`).
-    trials: dict[str, int] = {}
-    for _tid, n in star_nights:
-        key = f"n{n}"
-        trials[key] = trials.get(key, 0) + 1
-    return ({k: sorted(set(v)) for k, v in hist.items()}, trials, stats)
+    # Return the (target, night) PAIRS, not a per-night count: the caller has to
+    # union these with the star-nights that produced detections, and that union
+    # cannot be taken on counts alone.
+    pairs = {(tid, f"n{n}") for tid, n in star_nights}
+    return ({k: sorted(set(v)) for k, v in hist.items()}, pairs, stats)
 
 
 def screen_night(cfg=None, lookback_nights: float | None = None,
@@ -530,16 +528,52 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
             xmatch_max_arcsec=float(aconf["xmatch_max_arcsec"]),
             gaia_catid=int(aconf.get("gaia_catid", 1)),
             sid_diaobject=_sid(aconf))
-        hist, trials_by_night, fstats = _visit_history_from_forced(
+        hist, forced_pairs, fstats = _visit_history_from_forced(
             fp.rows, targets, th, epoch_jyear)
         summary["counts"].update(fstats)
-        summary["counts"]["target_nights_screened"] = sum(trials_by_night.values())
-        summary["trials_by_night"] = trials_by_night
-        summary["denominator"] = "forced_photometry_exact"
     except BrokerError as exc:
-        hist, trials_by_night = {}, {}
-        summary["denominator"] = "unavailable"
+        hist, forced_pairs = {}, set()
         summary["notes"].append(f"forced_photometry_failed: {str(exc)[:300]}")
+
+    # THE DENOMINATOR.  A star-night that produced a detection was, by
+    # definition, a star-night that was observed --- so it is a trial whether or
+    # not forced photometry happens to cover it.  Taking the union is not a
+    # patch: without it the numerator and the denominator are measured over
+    # different populations and their ratio is not a rate at all.  The first
+    # live run made that concrete: 62 events against 8 forced star-nights gave
+    # an "event rate" of 7.75 per star-night.
+    #
+    # The union guarantees trials >= events.  What it does NOT do is manufacture
+    # non-detection information: a trial known only from a detection contributes
+    # nothing but itself, so a screen whose forced-photometry coverage is poor
+    # simply reports a rate near 1 and promotes nobody --- which is the correct,
+    # conservative behaviour, and is reported rather than hidden.
+    event_pairs = {(ev.target_id, ev.night) for ev in verdict.events}
+    all_pairs = set(forced_pairs) | event_pairs
+    trials_by_night: dict[str, int] = {}
+    for _tid, night in all_pairs:
+        trials_by_night[night] = trials_by_night.get(night, 0) + 1
+    n_forced = len(forced_pairs)
+    n_total = len(all_pairs)
+    summary["counts"]["target_nights_screened"] = n_total
+    summary["counts"]["target_nights_with_forced_photometry"] = n_forced
+    summary["counts"]["target_nights_detection_only"] = n_total - n_forced
+    summary["trials_by_night"] = trials_by_night
+    frac = (n_forced / n_total) if n_total else 0.0
+    summary["forced_coverage_fraction"] = round(frac, 4)
+    if n_total == 0:
+        summary["denominator"] = "unavailable"
+    elif frac >= 0.9:
+        summary["denominator"] = "forced_photometry_exact"
+    else:
+        # Most trials carry no non-detection information, so the rate is an
+        # upper bound on the true rate and every p-value derived from it is
+        # conservative.  Say so in the committed artefact.
+        summary["denominator"] = "detection_dominated_lower_bound"
+        summary["notes"].append(
+            f"forced photometry covers only {frac:.1%} of screened star-nights; "
+            "the ensemble rate is therefore an UPPER bound and promotion is "
+            "correspondingly conservative")
 
     # Merge the forced history the events themselves carried (if any broker
     # supplied it) with the bulk history.

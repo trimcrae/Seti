@@ -344,7 +344,26 @@ class Ledger:
         """
         if self.n_target_visits > 0:
             self.rate_per_visit = self.n_events_kept / self.n_target_visits
-        rate = self.rate_per_visit
+        else:
+            # May be None after a JSON round-trip (NaN is written as null).
+            self.rate_per_visit = _finite(self.rate_per_visit) or float("nan")
+        # A per-star-night event PROBABILITY cannot exceed 1.  If it does, the
+        # numerator and the denominator were measured over different
+        # populations and the quotient is not a rate --- publishing it would put
+        # a meaningless number into a committed artefact and, worse, invite a
+        # reader to treat it as one.  The first live run produced 7.75 this way.
+        # Refuse it explicitly rather than letting it flow into p-values.
+        _rate = _finite(self.rate_per_visit)
+        if _rate is not None and _rate > 1.0:
+            _note_list(self.notes,
+                       f"INVALID ensemble rate {self.rate_per_visit:.3g} > 1: "
+                       f"{self.n_events_kept} events against "
+                       f"{self.n_target_visits} star-night trials — the "
+                       "denominator does not cover the numerator's population, "
+                       "so no per-target p-value is computed")
+            self.rate_per_visit = float("nan")
+            _rate = None
+        rate = _rate if _rate is not None else float("nan")
         ids, pvals = [], []
         for tid, rec in self.targets.items():
             k = int(rec["n_events"])
@@ -457,6 +476,11 @@ def _one_epoch_per_night(mjds) -> list[float]:
     for m in mjds or []:
         by_night.setdefault(night_of(m), []).append(float(m))
     return sorted(float(np.median(v)) for v in by_night.values())
+
+
+def _note_list(notes: list, text: str) -> None:
+    if text not in notes:
+        notes.append(text)
 
 
 def _note(rec: dict, text: str) -> None:

@@ -562,6 +562,23 @@ def test_overlapping_run_windows_do_not_double_count_trials():
     assert led.nights == ["n61500", "n61501", "n61502"]
 
 
+def test_an_impossible_rate_is_refused_rather_than_published():
+    """Regression from the first live run: 62 events against 8 star-nights.
+
+    A per-star-night event *probability* cannot exceed 1.  When it does, the
+    numerator and denominator were measured over different populations and the
+    quotient is not a rate.  Publishing 7.75 into a committed artefact invites a
+    reader to treat it as one.
+    """
+    led = L.Ledger()
+    led.n_target_visits = 8
+    led.n_events_kept = 62
+    stats = led.assess()
+    assert stats["ensemble_rate_per_target_visit"] is None or \
+        math.isnan(stats["ensemble_rate_per_target_visit"])
+    assert any("INVALID ensemble rate" in n for n in led.notes)
+
+
 def test_ledger_deduplicates_identical_events():
     led = L.Ledger()
     ev = _event()
@@ -969,6 +986,8 @@ def test_nightly_screen_end_to_end_against_a_stubbed_broker(tmp_path, monkeypatc
     # Trials are attributed per night, so a later overlapping run cannot
     # double-count them.
     assert s["trials_by_night"] == {"n61499": 1}
+    # The denominator must always cover the numerator.
+    assert s["counts"]["target_nights_screened"] >= s["counts"]["events_kept"]
 
     led = L.Ledger.load(tmp_path / "results" / "tocsin" / "ledger.json")
     rec = led.targets["777"]
@@ -1111,6 +1130,58 @@ def test_an_explicit_window_does_not_move_the_watermark(tmp_path, monkeypatch):
     assert seen[0] == (61000.0, 61001.0)
     led = L.Ledger.load(tmp_path / "results" / "tocsin" / "ledger.json")
     assert L._finite(led.last_mjd_screened) is None
+
+
+def test_detections_without_forced_photometry_still_count_as_trials(tmp_path,
+                                                                    monkeypatch):
+    """A star-night that produced a detection was, by definition, observed.
+
+    The first live run returned 62 events against only 8 forced-photometry
+    star-nights, giving an "event rate" of 7.75 per star-night.  The union makes
+    trials >= events by construction, and the poor forced coverage is reported
+    rather than hidden — a rate near 1 promotes nobody, which is correct.
+    """
+    from seti.tocsin import run as R
+    from seti.tocsin.brokers import BrokerResult
+
+    ra, dec = 150.0, -30.0
+    tpath = tmp_path / "targets.parquet"
+    pd.DataFrame([_target(source_id="777", ra=ra, dec=dec)]).to_parquet(tpath)
+
+    class _Stub:
+        def __init__(self, *a, **kw):
+            pass
+
+        def max_available_mjd(self):
+            return 61501.0
+
+        def night_detections(self, lo, hi, **kw):
+            return BrokerResult(rows=[{
+                "measurement_id": "m1", "oid": "o1", "sid": 1, "mjd": 61500.5,
+                "ra": ra, "dec": dec, "band": 1, "psfflux": 900.0,
+                "psffluxerr": 27.0, "snr": 33.0, "reliability": 0.95,
+                "templateflux": 9000.0, "templatefluxerr": 90.0,
+                "extendedness": 0.0, "isdipole": False}],
+                reached=True, verdict="OK", notes=["adql=stub"])
+
+        def forced_photometry_night(self, lo, hi, **kw):
+            return BrokerResult(rows=[], reached=True, verdict="OK")
+
+    monkeypatch.setattr(R, "AlerceTAP", _Stub)
+
+    class _Cfg:
+        root = tmp_path
+    s = R.screen_night(_Cfg(), targets_path=tpath, out_dir=tmp_path / "res")
+
+    assert s["counts"]["events_kept"] == 1
+    assert s["counts"]["target_nights_screened"] == 1        # from the detection
+    assert s["counts"]["target_nights_with_forced_photometry"] == 0
+    assert s["denominator"] == "detection_dominated_lower_bound"
+    assert any("upper bound" in n.lower() or "UPPER bound" in n for n in s["notes"])
+    # The rate is now a legal probability, and nobody is promoted on it.
+    rate = s["ledger"]["ensemble_rate_per_target_visit"]
+    assert rate is None or 0.0 <= rate <= 1.0
+    assert s["ledger"]["tier_counts"]["candidate"] == 0
 
 
 def test_screen_night_reports_an_unreachable_broker_as_such(tmp_path, monkeypatch):

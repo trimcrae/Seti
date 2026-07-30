@@ -76,18 +76,34 @@ jobs:
           print("\n=== schema tables ===")
           for t, cols in sorted((al.get("schema") or {}).items()):
               print(f"  {t}: {len(cols)} columns")
-          print("\n=== NULL FRACTIONS (the go/no-go) ===")
+          print("\n=== POPULATED? non-null AND NON-ZERO (the go/no-go) ===")
+          print("    zero is this mirror's 'missing' and it is not NULL, so the")
+          print("    non-zero count is the only one that is evidence of anything")
           for name, d in sorted((al.get("null_fractions") or {}).items()):
-              if "error" in d:
+              if name.startswith("ephoffset_hist"):
+                  continue
+              if "error" in d and "rows" not in d:
                   print(f"  {name}: ERROR {d['error'][:200]}")
                   continue
-              rows = d.get("rows") or [{}]
-              r = rows[0]
-              tot, pres = r.get("n_total"), r.get("n_present")
-              frac = (float(pres) / float(tot)) if tot else float("nan")
-              print(f"  {name}: {pres}/{tot} populated ({frac:.4%})  "
+              r = (d.get("rows") or [{}])[0]
+              tot, nn, nz = r.get("n_total"), r.get("n_nonnull"), d.get("n_nonzero")
+              frac = (float(nz) / float(tot)) if (tot and nz is not None) else float("nan")
+              print(f"  {name}: nonnull={nn}/{tot} nonzero={nz} ({frac:.4%})  "
                     f"range [{r.get('v_min')}, {r.get('v_max')}]  "
                     f"mean {r.get('v_mean')}")
+              if "nonzero_error" in d:
+                  print(f"      nonzero query failed: {d['nonzero_error'][:160]}")
+          print("\n=== ephoffset histogram: is 1 arcsec the association radius? ===")
+          print("    if nothing sits above 1 arcsec then the channel is BLIND to")
+          print("    larger residuals by construction -- the most anomalous objects")
+          print("    fail to associate and never enter the table at all")
+          for name, d in sorted((al.get("null_fractions") or {}).items()):
+              if not name.startswith("ephoffset_hist"):
+                  continue
+              if "error" in d:
+                  print(f"  {name}: ERROR {d['error'][:160]}")
+                  continue
+              print(f"  {name}: n={(d.get('rows') or [{}])[0].get('n')}")
           print("\n=== diagnostics ===")
           for name, d in (al.get("diagnostics") or {}).items():
               if "error" in d:

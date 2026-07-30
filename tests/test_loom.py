@@ -27,6 +27,8 @@ fact that scanning for a best breakpoint finds structure in pure noise every tim
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 
@@ -264,6 +266,67 @@ def test_offset_reconstruction_recovers_a_planted_along_track_lag():
     assert np.allclose(along[ok], lag[ok], atol=1e-6)
     assert np.allclose(cross[ok], 0.0, atol=1e-6)
     assert np.allclose(total[ok], np.abs(lag[ok]), atol=1e-6)
+
+
+def test_decompose_prefers_the_populated_offset_columns():
+    """Only the ROTATION is missing from the mirror, not the offset.
+
+    ``ephoffsetra``/``ephoffsetdec`` are populated and reproduce ``ephoffset`` in
+    quadrature exactly, so the survey's own vector is used and only the track
+    direction is supplied locally.  Live values from the probe are used here so the
+    test pins the real convention, including the ``cos(dec)`` factor.
+    """
+    # From results/loom/probe.json, object 20607267131895873:
+    ra, dec = 343.3283011488288, -9.052129833289747
+    eph_ra, eph_dec = 343.3282983988296, -9.052121867015174
+    off_ra, off_dec = 0.009776698706026312, -0.02867858846400395
+    total_col = 0.030299261212348938
+    # The columns reproduce ephoffset in quadrature.
+    assert math.hypot(off_ra, off_dec) == pytest.approx(total_col, rel=1e-6)
+    # And differencing the positions reproduces the columns, which is what makes
+    # the fallback trustworthy.
+    dx, dy = residuals.offset_from_positions([ra], [dec], [eph_ra], [eph_dec])
+    assert float(dx[0]) == pytest.approx(off_ra, abs=2e-4)
+    assert float(dy[0]) == pytest.approx(off_dec, abs=2e-4)
+
+    # With two epochs the rotation runs and the total is preserved.
+    mjd = np.array([61211.4335, 61211.4335 + 30.0 / 1440.0])
+    along, cross, total = residuals.decompose_offset(
+        mjd, np.array([ra, ra + 0.01]), np.array([dec, dec]),
+        np.array([eph_ra, eph_ra + 0.01]), np.array([eph_dec, eph_dec]),
+        off_ra=np.array([off_ra, off_ra]), off_dec=np.array([off_dec, off_dec]))
+    assert float(total[0]) == pytest.approx(total_col, rel=1e-6)
+    assert math.hypot(float(along[0]), float(cross[0])) == pytest.approx(
+        total_col, rel=1e-6)
+
+
+def test_zero_filled_range_does_not_become_a_zero_displacement():
+    """``toporange`` goes down to ~1e-8 au where the geometry was not computed.
+
+    The arcsec-to-km conversion is proportional to the range, so a zero-filled
+    range would turn a real angular residual into a zero physical displacement —
+    a clean null on an object that was never measured.
+    """
+    km = residuals.arcsec_to_km([0.5, 0.5, 0.5], [2.66, 1.38e-08, None])
+    assert math.isfinite(float(km[0])) and float(km[0]) > 0
+    assert not math.isfinite(float(km[1]))
+    assert not math.isfinite(float(km[2]))
+    # And the floor is above any physically possible topocentric range.
+    assert residuals.MIN_PHYSICAL_RANGE_AU > 0.002
+
+
+def test_unpacked_designation_is_preferred_for_control_matching():
+    """The detections carry packed designations; the control set is unpacked.
+
+    Matching "J97L01J" against a control list written as "2020 SO" finds nothing,
+    silently — which would report NO_CONTROLS_PRESENT for an object that was there.
+    """
+    th = screen.Thresholds()
+    rec = screen.screen_orbit_row(
+        _orbit_row(designation="K20Sa0O",
+                   unpacked_primary_provisional_designation="2020 SO"), th)
+    assert rec.designation == "2020 SO"
+    assert control.normalise_designation(rec.designation) in control.control_index()
 
 
 def test_offset_reconstruction_puts_a_perpendicular_offset_in_cross_track():

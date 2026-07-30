@@ -178,31 +178,77 @@ def track_direction(mjd, ra_deg, dec_deg, max_gap_days: float = 0.5):
     return ex, ey
 
 
+def rotate_to_track(dx, dy, ex, ey):
+    """Rotate a sky-plane offset into (along-track, cross-track).
+
+    Cross-track is the perpendicular in the sky plane, ``(ex, ey) -> (-ey, ex)``.
+    """
+    dx = np.asarray(dx, dtype=float)
+    dy = np.asarray(dy, dtype=float)
+    along = dx * ex + dy * ey
+    cross = dx * (-ey) + dy * ex
+    return along, cross
+
+
 def decompose_offset(mjd, ra_obs, dec_obs, eph_ra, eph_dec,
-                     max_gap_days: float = 0.5):
+                     off_ra=None, off_dec=None, max_gap_days: float = 0.5):
     """Along-track and cross-track components of the O-C offset, in arcsec.
 
-    The reconstruction the mirror's NULL columns force.  Returns
-    ``(along, cross, total)``; ``total`` is returned so a caller can check it
-    against the alert's own ``ephoffset`` column, which is populated — that
-    agreement is a free validation that the reconstruction is right, and a
-    disagreement means the frame or the sign convention is wrong and nothing
-    downstream should be believed.
+    Only the *rotation* is missing from the mirror, not the offset.  Measured
+    2026-07-30: ``ephoffsetalongtrack``/``ephoffsetcrosstrack`` are NULL for all
+    961,558 rows, but ``ephoffsetra`` and ``ephoffsetdec`` **are** populated and
+    reproduce ``ephoffset`` in quadrature to the last digit — so the survey's own
+    offset vector is available and all that has to be supplied locally is the
+    direction of motion to project it onto.
+
+    ``off_ra``/``off_dec`` are those columns and are used when given.  They are
+    preferred over differencing the positions because they are the survey's own
+    numbers, computed at full precision before any rounding into the table, and
+    they already carry the ``cos(dec)`` factor.  When absent the offset is
+    recomputed from the positions, which was verified against the columns to
+    better than a milliarcsecond on live rows.
+
+    Returns ``(along, cross, total)``.  ``total`` exists so a caller can check it
+    against ``ephoffset``: agreement validates the whole chain, and a disagreement
+    means the sign or frame convention is wrong and nothing downstream should be
+    believed.
     """
-    dx, dy = offset_from_positions(ra_obs, dec_obs, eph_ra, eph_dec)
+    if off_ra is not None and off_dec is not None:
+        dx = np.asarray(off_ra, dtype=float)
+        dy = np.asarray(off_dec, dtype=float)
+        if not np.any(np.isfinite(dx)) or not np.any(np.isfinite(dy)):
+            dx, dy = offset_from_positions(ra_obs, dec_obs, eph_ra, eph_dec)
+    else:
+        dx, dy = offset_from_positions(ra_obs, dec_obs, eph_ra, eph_dec)
     ex, ey = track_direction(mjd, ra_obs, dec_obs, max_gap_days=max_gap_days)
-    along = dx * ex + dy * ey
-    # Cross-track is the perpendicular in the sky plane: rotate the unit vector
-    # by 90 degrees, (ex, ey) -> (-ey, ex).
-    cross = dx * (-ey) + dy * ex
-    total = np.hypot(dx, dy)
-    return along, cross, total
+    along, cross = rotate_to_track(dx, dy, ex, ey)
+    return along, cross, np.hypot(dx, dy)
+
+
+# A real solar-system object cannot be this close.  0.005 au is 750,000 km, twice
+# the lunar distance, so anything below it is the mirror's zero-fill rather than a
+# measurement -- `toporange` and `heliorange` both go down to ~1e-8 au on rows where
+# the geometry was not computed.  This floor matters because the arcsec-to-km
+# conversion is PROPORTIONAL to the range: a zero-filled range silently converts a
+# real angular residual into a zero physical displacement, which reads as a clean
+# null on an object that was never measured.
+MIN_PHYSICAL_RANGE_AU = 0.005
+
+
+def usable_range(range_au, min_au: float = MIN_PHYSICAL_RANGE_AU) -> np.ndarray:
+    """Range in au with the mirror's zero-fill replaced by NaN."""
+    d = np.asarray(range_au, dtype=float)
+    return np.where(np.isfinite(d) & (d >= float(min_au)), d, np.nan)
 
 
 def arcsec_to_km(offset_arcsec, toporange_au) -> np.ndarray:
-    """Angular offset to physical along-track displacement (km)."""
+    """Angular offset to physical along-track displacement (km).
+
+    The range is passed through :func:`usable_range` first, so a zero-filled
+    geometry propagates as NaN rather than collapsing the signal to zero.
+    """
     th = np.asarray(offset_arcsec, dtype=float)
-    d = np.asarray(toporange_au, dtype=float)
+    d = usable_range(toporange_au)
     with np.errstate(divide="ignore", invalid="ignore"):
         return th / ARCSEC_PER_RAD * d * AU_KM
 

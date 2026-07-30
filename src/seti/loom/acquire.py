@@ -350,16 +350,28 @@ class AlerceSSO:
         out: dict = {}
 
         def measure(label: str, table: str, col: str) -> None:
+            # TWO queries, not one with SUM(CASE WHEN ...).  The service infers a
+            # 16-bit type from the literal `1` inside the CASE and then fails
+            # VOTable serialisation for any count above 32767 --
+            # "Field 'n_nonzero', value '961558': 'h' format requires ..." -- which
+            # silently lost the non-zero count for every column that actually had
+            # one.  COUNT(*) with a WHERE clause returns a proper integer.
             adql = (f"SELECT COUNT(*) AS n_total, COUNT({col}) AS n_nonnull, "
-                    f"SUM(CASE WHEN {col} <> 0 THEN 1 ELSE 0 END) AS n_nonzero, "
                     f"MIN({col}) AS v_min, MAX({col}) AS v_max, "
                     f"AVG({col}) AS v_mean FROM {table}")
+            entry: dict = {"adql": adql}
             try:
-                rows = self.query(adql, maxrec=5, retries=2)
-                out[label] = {"rows": rows, "adql": adql}
+                entry["rows"] = self.query(adql, maxrec=5, retries=2)
             except Exception as exc:                          # noqa: BLE001
-                out[label] = {"error": f"{type(exc).__name__}: {exc}"[:400],
-                              "adql": adql}
+                entry["error"] = f"{type(exc).__name__}: {exc}"[:400]
+            adql_nz = f"SELECT COUNT(*) AS n_nonzero FROM {table} WHERE {col} <> 0"
+            try:
+                rows_nz = self.query(adql_nz, maxrec=5, retries=2)
+                entry["n_nonzero"] = (rows_nz or [{}])[0].get("n_nonzero")
+            except Exception as exc:                          # noqa: BLE001
+                entry["nonzero_error"] = f"{type(exc).__name__}: {exc}"[:300]
+            entry["adql_nonzero"] = adql_nz
+            out[label] = entry
 
         for col in (*CRITICAL_NULLABLE, "a", "e", "i", "h", "arc_length_total",
                     "nopp", "normalized_rms", "u_param"):

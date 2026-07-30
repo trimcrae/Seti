@@ -6,28 +6,43 @@
 #
 #   1. `lsst_ss_detection` (961,558 rows) has NO `diasourceid`; the per-detection
 #      key is `measurement_id`.  See `join_on` below.
-#   2. `ephoffsetalongtrack` and `ephoffsetcrosstrack` are NULL for ALL 961,558
-#      rows, and `ephrate`/`ephratera`/`ephratedec` are identically zero.  Only the
-#      scalar `ephoffset` is populated -- 100%, mean 0.085, max 0.99997.  So the
-#      along/cross split, which is the channel's central discriminant, is
-#      RECONSTRUCTED from d.ra/d.dec minus ephra/ephdec projected onto the object's
-#      own track direction (residuals.decompose_offset), and validated against the
-#      populated `ephoffset` magnitude.
-#   3. `ephoffset` max = 0.99997 arcsec over 961,558 rows is almost certainly the
-#      source-association radius, not a coincidence.  If so the channel is BLIND to
-#      residuals above ~1 arcsec by construction -- a sensitivity ceiling that must
-#      be stated in any result, since a large enough anomaly simply fails to
-#      associate and never appears.  loom-probe now histograms `ephoffset` to
-#      confirm.
+#   2. ONLY THE ROTATION IS MISSING, NOT THE OFFSET.  `ephoffsetalongtrack` and
+#      `ephoffsetcrosstrack` are NULL for ALL 961,558 rows, and
+#      `ephrate`/`ephratera`/`ephratedec`/`ephvmag` are identically zero -- BUT
+#      `ephoffsetra` and `ephoffsetdec` ARE populated and reproduce `ephoffset` in
+#      quadrature to the last digit.  So the survey's own offset vector is there in
+#      arcsec (cos(dec) already applied) and only the direction of motion has to be
+#      supplied locally, from the object's own neighbouring detections rather than
+#      from the state vectors -- the schema does not state their frame and a
+#      23.4-degree error would rotate along-track into cross-track.
+#   3. THE 1-ARCSEC ASSOCIATION RADIUS IS CONFIRMED.  Histogram over all 961,558
+#      rows: 886,817 below 0.2", 58,236 in 0.2-0.5, 14,313 in 0.5-0.9, 2,007 in
+#      0.9-0.99, 185 in 0.99-1.0, and ZERO at or above 1.0.  So the channel is
+#      BLIND to residuals above 1 arcsec by construction -- a large enough anomaly
+#      fails to associate and never enters the table.  The bias removes the MOST
+#      anomalous objects, so a null here is weak evidence about the solar system and
+#      strong evidence only about sub-arcsecond structure.  Must be quoted in any
+#      result.  (`toporange`/`heliorange` are also zero-filled on some rows, down to
+#      ~1e-8 au; since the arcsec-to-km conversion is proportional to range, that
+#      would turn a real residual into a zero displacement -- floored at 0.005 au by
+#      residuals.usable_range.)
 #   4. ZERO IS THIS MIRROR'S "MISSING", AND IT IS NOT NULL.  `srp`, `a1`, `a2`,
 #      `a3`, `dt` are non-NULL for 1812 of 130,909 orbit rows and every one of those
-#      values is EXACTLY 0.0 -- fill, not measurement.  Only 1822 rows have a
-#      genuine `yarkovsky`, and only **7** reach |A2| > 3 sigma.  So the
-#      area-to-mass-ratio channel is unavailable today and Path A is 7 objects:
-#      the channel runs on per-detection residuals, which is the unbiased path
-#      anyway.  Every read of these columns goes through `screen._fz`, which treats
+#      values is EXACTLY 0.0 -- fill, not measurement.  `yarkovsky` is non-NULL for
+#      1822 rows and NON-ZERO for only **12**; **7** reach |A2| > 3 sigma.  So the
+#      area-to-mass-ratio channel -- the strongest artificiality discriminant, and
+#      the one thing outgassing does not reproduce -- is unavailable today, Path A is
+#      7 objects, and the channel runs on per-detection residuals, which is the
+#      unbiased path anyway.  Every read goes through `screen._fz`, which treats
 #      exact zero as missing, because a "measured zero" non-gravitational term is
 #      the strongest possible statement that an object is ordinary.
+#
+#   Confirmed working: the corrected join is exactly 1:1, all 130,909 orbit rows
+#   have detections (so H and fit quality are available for the residual path), and
+#   the broker frontier is MJD 61235.4.  Also: the timing veto is UNTESTABLE while
+#   `ephrate` is zero-filled -- a shutter or clock offset is indistinguishable from a
+#   real along-track acceleration -- and `orbit_type_int` is -1 on every row sampled,
+#   so the dynamical-class label is unusable.
 #
 #   Also: `lsst_ss_object` exists with 81 columns and 0 rows, so the photometric
 #   axis is present in the schema and empty in the data -- reported as EMPTY, never

@@ -239,9 +239,15 @@ def screen_orbit_row(row: dict, th: Thresholds,
     they can be wrong.  Reading ``yarkovsky`` as au/day^2 would overstate every
     acceleration by ten orders of magnitude and flag the entire catalogue.
     """
+    # Prefer the UNPACKED designation.  Measured 2026-07-30: `lsst_ss_detection`
+    # carries the packed form ("J97L01J", "K16Cd3G") while `lsst_mpc_orbits` carries
+    # both, and the control set is written in unpacked form ("2020 SO").  Matching
+    # the packed string against it finds nothing, silently, which would make the
+    # positive control report NO_CONTROLS_PRESENT for an object that was right there.
+    desig = (row.get("unpacked_primary_provisional_designation")
+             or row.get("designation"))
     rec = ObjectRecord(key=str(row.get(key_column, "") or ""),
-                       designation=(str(row["designation"])
-                                    if row.get("designation") else None),
+                       designation=str(desig) if desig else None,
                        path="mpc_orbits")
     rec.h = _fz(row.get("h"))
     rec.a, rec.e, rec.i = _fz(row.get("a")), _f(row.get("e")), _f(row.get("i"))

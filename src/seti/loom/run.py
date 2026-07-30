@@ -56,6 +56,7 @@ from .residuals import (
     per_object_rate_correlation,
     quality_independence,
     sky_coherence,
+    usable_range,
 )
 from .screen import Thresholds, assign_tier, screen_orbits
 
@@ -557,8 +558,18 @@ def analyse_series(rows: list[dict], th: Thresholds, n_null: int = 500) -> dict:
     if not np.any(np.isfinite(along)):
         eph_ra = np.array([_f(r.get("ephra")) for r in rows])
         eph_dec = np.array([_f(r.get("ephdec")) for r in rows])
-        along, cross, total = decompose_offset(mjd, ra, dec, eph_ra, eph_dec)
-        out["decomposition"] = "reconstructed_from_positions_and_track"
+        # `ephoffsetra`/`ephoffsetdec` ARE populated (measured 2026-07-30) and
+        # reproduce `ephoffset` in quadrature exactly, so only the ROTATION is
+        # missing, not the offset.  Use the survey's own vector where it exists and
+        # fall back to differencing the positions, which was verified against those
+        # columns to better than a milliarcsecond on live rows.
+        off_ra = np.array([_f(r.get("ephoffsetra")) for r in rows])
+        off_dec = np.array([_f(r.get("ephoffsetdec")) for r in rows])
+        used_cols = bool(np.any(np.isfinite(off_ra)) and np.any(np.isfinite(off_dec)))
+        along, cross, total = decompose_offset(mjd, ra, dec, eph_ra, eph_dec,
+                                               off_ra=off_ra, off_dec=off_dec)
+        out["decomposition"] = ("rotated_from_ephoffset_ra_dec" if used_cols
+                                else "reconstructed_from_positions_and_track")
         # Free validation: the reconstructed magnitude must agree with the alert's
         # own `ephoffset`, which IS populated.  A disagreement means the frame or
         # the sign convention is wrong and nothing downstream should be believed.
@@ -601,11 +612,17 @@ def analyse_series(rows: list[dict], th: Thresholds, n_null: int = 500) -> dict:
     out["sigma_arcsec_used"] = sigma_arcsec
     out["residual_scatter_arcsec"] = resid_scatter
 
-    topo_use = np.where(np.isfinite(topo) & (topo > 0), topo, np.nan)
+    # Zero-filled geometry propagates as NaN, never as a zero displacement: the
+    # arcsec-to-km conversion is proportional to the range, and `toporange` goes
+    # down to ~1e-8 au on rows where the geometry was not computed, so a naive
+    # conversion turns a real angular residual into a clean null.
+    topo_use = usable_range(topo)
+    helio_use = usable_range(helio)
+    out["n_with_usable_geometry"] = int(np.isfinite(topo_use).sum())
     along_km = arcsec_to_km(along, topo_use)
     sigma_km = np.abs(arcsec_to_km(np.full_like(along, sigma_arcsec), topo_use))
     out["drift"] = drift_fit(mjd, along_km, sigma_km)
-    out["law"] = law_discrimination(mjd, along_km, sigma_km, helio)
+    out["law"] = law_discrimination(mjd, along_km, sigma_km, helio_use)
     out["breakpoint"] = breakpoint_scan(mjd, along_km, sigma_km, n_null=n_null)
     out["sky_along"] = sky_coherence(ra, dec, along)
     out["sky_cross"] = sky_coherence(ra, dec, cross)

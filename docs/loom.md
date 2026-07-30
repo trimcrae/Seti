@@ -99,64 +99,113 @@ N×M cartesian join and its scatter is an artefact of the join. It is retained
 as `join_on: object`, labelled diagnostic-only, and `_join_clause` raises on
 anything else. Confirmed alongside: solar-system `detection` rows carry `sid = 2`.
 
-**2. The along-track/cross-track decomposition is entirely NULL.**
-`ephoffsetalongtrack` and `ephoffsetcrosstrack` are NULL for **all 961,558**
-solar-system detections, and `ephrate`/`ephratera`/`ephratedec` are identically
-zero. Only the scalar `ephoffset` is populated — 100%, mean **0.085″**, which is
-exactly the ~0.1″ a well-observed minor planet should show and settles the unit
-question in favour of arcsec.
+**2. Only the *rotation* is missing, not the offset.** `ephoffsetalongtrack` and
+`ephoffsetcrosstrack` are NULL for **all 961,558** solar-system detections, and
+`ephrate`/`ephratera`/`ephratedec`/`ephvmag` are identically zero. But
+`ephoffsetra` and `ephoffsetdec` **are** populated, and they reproduce `ephoffset`
+in quadrature to the last digit — on object 20607267131895873,
+`hypot(0.009776699, −0.028678588) = 0.030299261` against `ephoffset =
+0.030299261`. So the survey's own offset *vector* is available in arcsec (with the
+`cos(dec)` factor already applied, as documented), and the only thing that has to
+be supplied locally is the direction of motion to project it onto.
 
-Since the along/cross split is the channel's central discriminant (§3.2), it is
-**reconstructed**: `residuals.decompose_offset` takes the observed position from
-`detection`, the predicted position from `ephra`/`ephdec`, and the direction of
-motion from the object's own track between neighbouring epochs. The track
-direction comes from the object's own detections rather than from the (populated)
-state vectors deliberately: the alert schema does not state whether those vectors
-are ecliptic or equatorial, and a 23.4° frame error would rotate along-track into
+`residuals.decompose_offset` does that rotation. The track direction comes from the
+object's own neighbouring detections rather than from the (populated) state
+vectors, deliberately: the alert schema does not state whether those vectors are
+ecliptic or equatorial, and a 23.4° frame error would rotate along-track into
 cross-track and destroy the exact quantity being measured. Two detections half an
-hour apart define the track with no frame assumption at all.
+hour apart define the track with no frame assumption at all. Differencing the raw
+positions is kept as a fallback and was verified against the offset columns to
+better than a milliarcsecond on live rows.
 
-The reconstruction is **validated for free**: its magnitude must agree with the
-populated `ephoffset` column, and `analyse_series` returns
+The chain is **validated for free**: the reconstructed magnitude must agree with
+`ephoffset`, and `analyse_series` returns
 `RECONSTRUCTION_DISAGREES_WITH_EPHOFFSET` and stops if it does not. An object
 observed only once per night has no measurable track direction and is reported
 untestable on that axis rather than assigned an arbitrary one.
 
-**3. `ephoffset` appears to be truncated at the association radius.** Its maximum
-over 961,558 rows is **0.99997″**. That is either a remarkable coincidence or a 1″
-source-matching radius — and if it is the radius, the channel is **blind to
-residuals above ~1″ by construction**, because a large enough anomaly simply fails
-to associate with its prediction and never appears in the table at all. This is a
-hard sensitivity ceiling and it must be quoted in any result from this channel.
-The probe now histograms `ephoffset` across the boundary to settle it. Note the
-direction of the bias: it removes the *most* anomalous objects, so a null here is
-weak evidence about the solar system and strong evidence only about sub-arcsecond
-residual structure.
+**3. The 1″ association radius is confirmed, and it is a hard ceiling.** The
+`ephoffset` histogram over all 961,558 rows:
+
+| `ephoffset` (arcsec) | detections |
+|---|---|
+| 0.0 – 0.2 | 886,817 (92.2%) |
+| 0.2 – 0.5 | 58,236 |
+| 0.5 – 0.9 | 14,313 |
+| 0.9 – 0.99 | 2,007 |
+| 0.99 – 1.0 | 185 |
+| **≥ 1.0** | **0** |
+
+Nothing at all above 1.0″. That is the source-association radius, not a
+coincidence, and it means **the channel is blind to residuals above 1″ by
+construction**: a large enough anomaly fails to associate with its prediction and
+never enters the table. The direction of the bias is the worst possible one — it
+removes the *most* anomalous objects — so a null from this channel is weak
+evidence about the solar system and strong evidence only about **sub-arcsecond
+residual structure**. Any result must say so. (What partly rescues it: an
+acceleration builds up, so an object crossing the 1″ boundary mid-arc shows a
+*truncated* series, and the disappearance of a previously-tracked object is itself
+a detectable signature — a lead worth following rather than a limitation to
+accept.)
+
+Two more zero-fill traps found the same way: `toporange` and `heliorange` go down
+to ~1e-8 au on rows where the geometry was not computed. The arcsec-to-km
+conversion is *proportional* to the range, so a zero-filled range would turn a
+real angular residual into a zero physical displacement — a clean null on an object
+that was never measured. `residuals.usable_range` floors both at 0.005 au (twice
+the lunar distance, below anything physically possible) and propagates NaN.
 
 **4. Zero is this mirror's "missing", and zero is not NULL.** `srp`, `a1`, `a2`,
 `a3` and `dt` are non-NULL for 1812 of 130,909 orbit rows and **every one of those
-values is exactly 0.0** — fill, not measurement. The same pattern appears in `a`,
-`mean_motion`, `period`, `not_normalized_rms` and `arc_length_total` on rows where
-the quantity was not determined. `COUNT(col)` counts a zero as present, so the
-first null-fraction query reported these columns as populated; the probe now counts
-non-NULL *and* non-zero separately, and every read goes through `screen._fz`, which
-treats exact zero as missing. This matters because a *measured* non-gravitational
-term of zero is the strongest possible statement that an object is ordinary,
-whereas an absent one means untestable — and the whole channel is built on not
-confusing those two.
+values is exactly 0.0** — fill, not measurement. `yarkovsky` is non-NULL for 1822
+rows but **non-zero for only 12**. The same pattern appears in `a`, `mean_motion`,
+`period`, `not_normalized_rms`, `arc_length_total`, `u_param` (non-zero for 2,431
+of 130,909) and `ephvmag` (non-NULL for 456,282, non-zero for **none**).
 
-**The consequences for the architecture, stated plainly.** Only **1822** orbit rows
-carry a genuine `yarkovsky`, and only **7** reach |A2| > 3σ. The `srp` column —
-the area-to-mass ratio, which §3.5 identifies as the single strongest artificiality
-discriminant and the one that separates engineering from outgassing — is
-**unavailable in this mirror today**. So:
+`COUNT(col)` counts a zero as present, so the first null-fraction query reported
+these columns as populated. Every read now goes through `screen._fz`, which treats
+exact zero as missing. This matters because a *measured* non-gravitational term of
+zero is the strongest possible statement that an object is ordinary, whereas an
+absent one means untestable — and the whole channel is built on not confusing those
+two.
+
+*A bug of mine, found the same way and worth recording:* the fix,
+`SUM(CASE WHEN col <> 0 THEN 1 ELSE 0 END)`, made the service infer a 16-bit type
+from the literal `1` and then fail VOTable serialisation for every count above
+32767 — `Field 'n_nonzero', value '961558': 'h' format requires …`. So the non-zero
+count was lost for exactly the columns that had one. It is now a separate
+`COUNT(*) … WHERE col <> 0` query, which returns a proper integer.
+
+**The consequences for the architecture, stated plainly.** **12** orbit rows carry a
+genuine `yarkovsky`, and **7** reach |A2| > 3σ. The `srp` column — the
+area-to-mass ratio, which §3.5 identifies as the single strongest artificiality
+discriminant and the one thing outgassing does not reproduce — is **entirely
+zero-filled**. So:
 
 - **Path A is 7 objects.** It is a cross-check, not a search. This is the outcome
   the design anticipated and the reason the parent-population query does not
   default to `require_nongrav`.
 - **Path B is the channel**: per-detection `ephoffset` structure over 961,558
-  detections, on the reconstructed decomposition. It is also the unbiased path,
-  since it does not inherit MPC's choice of which objects were worth fitting.
+  detections, on the rotated `ephoffsetra`/`ephoffsetdec` vector. It is also the
+  unbiased path, since it does not inherit MPC's choice of which objects were worth
+  fitting. All 130,909 orbit rows have detections, so `H` and the fit quality are
+  available for every object in it, and there are many objects with ≥8 detections.
+- **The timing veto is currently untestable.** `ephrate` is zero-filled, so
+  `fit_common_timing` cannot run and a shutter or clock offset is *indistinguishable*
+  from a real along-track acceleration in this mirror. The run records that
+  explicitly rather than leaving it implicit in a NaN.
+- **Designations differ in form between the tables.** `lsst_ss_detection` carries
+  the packed form (`J97L01J`, `K16Cd3G`); `lsst_mpc_orbits` carries both. The
+  control set is written unpacked (`2020 SO`), so matching the packed string
+  against it would find nothing — silently — and report `NO_CONTROLS_PRESENT` for an
+  object that was right there. The screen now takes
+  `unpacked_primary_provisional_designation`.
+- **`orbit_type_int` is −1 on every row sampled**, so the dynamical-class label is
+  unusable and population membership has to be inferred from the elements.
+
+Confirmed working, for the record: the corrected join is **exactly 1:1**
+(`join_cardinality` returns no `measurement_id` matching more than one detection
+row), and the broker frontier is MJD **61235.4**.
 - **The photometric axis is present in the schema and empty in the data.**
   `lsst_ss_object` exists with 81 columns (real names measured: `g_h`, `g_g12`,
   `g_chi2`, `g_slope_fit_failed`, `extendednessmedian`, `tisserand_j`, keyed on

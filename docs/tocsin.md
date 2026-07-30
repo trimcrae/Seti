@@ -215,6 +215,43 @@ Rubin *alerts* are world-public; Rubin *data releases* (coadd catalogues, images
 are data-rights restricted. That is why baseline photometry comes from
 `templateFlux` inside the alert or from Gaia, never from a Rubin catalogue query.
 
+### 5.1 What the live probe measured (2026-07-30, `results/tocsin/probe.json`)
+
+Every ADQL column name in this channel was inferred from the brokers' published
+source, because the sandbox it was written in has no egress. The probe exists to
+replace inference with measurement, and it changed three things:
+
+* **The broker's mirror is not live.** Newest LSST epoch MJD 61235.4 against a
+  wall clock of 61251.1 — a **15.6-day lag**. A screen asking for "the last two
+  nights" would therefore return nothing *every night, forever*, and an empty
+  result is indistinguishable from a real null. The window is now anchored to
+  the newest epoch the broker actually holds, and a **watermark** in the ledger
+  advances through the data, which makes coverage gapless and non-overlapping
+  whatever the lag does next.
+* **There is a 262-night backlog.** LSST detections span MJD 60973 → 61235
+  already. The first runs are a *backfill of real archival data*, not a wait for
+  new sky — so the recurrence statistics that need many nights become available
+  in days. `max_nights_per_run` caps one job's bite.
+* **The encodings, measured rather than assumed.** `sid=0/tid=0` is ZTF;
+  `sid=1/tid=1` is LSST diaObject (5.16M); `sid=2/tid=1` is LSST ssObject
+  (131k). So `sid=1` is right and drops ~300k solar-system detections per 30
+  days. `catid=1` is Gaia DR3, `catid=0` AllWISE. The Gaia join returns real
+  nearby stars (parallax ~12 mas at ~1.4″).
+
+Two schema traps the probe caught, both of which would have produced confident
+nulls rather than errors: `gaiadr3_source` has **no `source_id`** (the join key
+is `oid_catalog` on both sides), and `oid_catalog` **cannot be SELECTed** at all
+— the service declares it integer while AllWISE ids are strings, so it fails
+VOTable serialisation. It is fine in a JOIN condition, which is the only place
+this channel needs it.
+
+One observation to confirm rather than rely on: an unfiltered sample of
+`lsst_detection` contained `reliability` values of 0.10 and 0.33, i.e. **below**
+the 0.5 cut Rubin's production pipeline applies before issuing alerts. If that
+holds for current data it materially softens the completeness limitation in
+§4.1. But the sample was not time-filtered and the mirror reaches back into the
+commissioning era, so this is not yet established and nothing here depends on it.
+
 Fluxes are **nanojansky and signed**; times are **MJD TAI**; `mag = 31.4 −
 2.5 log₁₀(F/nJy)`. ALeRCE encodes the band as an integer with **u = 6, not 0**,
 and lower-cases every ADQL column name — both are unit-tested, because either
@@ -233,9 +270,24 @@ A tier is a statement about *evidence*, not a ranking of excitement.
 
 ## 7. Status
 
-Built and unit-tested offline (66 tests). The probe workflow must succeed on the
-runner before any science claim: every ADQL column name is inferred from the
-brokers' published source rather than from a live query — the best that can be
-done from a sandbox with no egress, and not the same as verified. The probe
-commits the live TAP schema so a later change appears as a diff in version
-control rather than as an unexplained null.
+Built and offline-tested (80 tests). The probe has run against the live service
+and its record is committed at `results/tocsin/probe.json`; §5.1 lists what it
+measured and the three bugs it caught. The schema dump is committed verbatim so
+a later broker change appears as a diff in version control rather than as an
+unexplained null.
+
+The next thing that matters is **accumulation**. The ledger is worthless on
+night one and gains power monotonically: a single grey flash can never exceed
+`interest`, because only repetition at a fixed position separates the signal
+from a cosmic ray, a satellite glint, or an unflagged subtraction residual. With
+262 nights of backlog to walk through, that is a matter of days rather than
+months.
+
+Two known gaps, neither blocking:
+
+* the Fink enrichment layer (SIMBAD/VSX/GCVS "is this already a catalogued
+  variable?") is designed and documented but not yet wired in — it is a
+  shortlist-time query, so it costs nothing until there is a shortlist;
+* the Lasair deep-vetting path is implemented but untested against the live
+  service, because it needs a token nobody has registered for yet. Nothing in
+  the channel depends on it.

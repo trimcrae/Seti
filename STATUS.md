@@ -166,6 +166,28 @@ follow-up — including both of the strongest:
 | 875163 (1998 SH2) | 1.6 | **0.79** | 14.3 | not found |
 | 428209 (2006 VC) | 1.3 | **0.65** | 3.8 | not found |
 
+**LITERATURE CHECK WIDENED TO 116 PAPERS — the answer did not move.** The first
+check rested on eight hand-picked papers, which tests my reading list rather than
+the field. `loom-litcheck` now BUILDS its corpus: eight topic queries across the
+non-gravitational literature (Yarkovsky, nongravitational acceleration, dark
+comets, active asteroids, main-belt comets, NEA orbit determination), every
+returned paper full-texted. **116 papers, 8.3 million characters, 100% fetch
+success** (90 PDF, 26 HTML) — no silent gaps in the corpus.
+
+Result unchanged: **4 of 6 explained, all in arXiv:2412.07603** — (2012 UR158),
+452639 (2005 UY6), 152667 (1998 FR11), 139359 (2001 ME1). Widening the search
+14-fold found nothing new, which upgrades the remaining claim from "not in eight
+papers I chose" to "not in 116 papers spanning the field".
+
+**Still not found: 428209 (2006 VC) and 875163 (1998 SH2).**
+
+**What that claim still does NOT cover, and it matters:** arXiv only — no ADS, no
+journals without preprints, no MPECs or MPC circulars; the corpus is
+relevance-ranked at 20 results per query, so it is a slice of the field rather
+than the field; and JPL fitted an A2 for both objects, which is itself a
+deliberate act by an orbit-determination pipeline. Neither object is *unexamined*.
+"Not found in 116 searched papers" is the honest ceiling on the claim.
+
 **TISSERAND REVERSES THE RANKING (2026-07-30).** The one discriminator that
 assumes no density and no albedo — T_J from a, e, i alone — was computed for all
 eleven exceedances, and it changes which object is interesting:

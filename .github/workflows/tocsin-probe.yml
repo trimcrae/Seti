@@ -1,0 +1,94 @@
+name: tocsin-probe
+
+# TOCSIN stage 0 --- the reachability and schema record (docs/tocsin.md §7).
+#
+# WHY THIS EXISTS AS A SEPARATE WORKFLOW.  Every ADQL column name in
+# src/seti/tocsin/brokers.py was inferred from the brokers' *published source*,
+# not from a live query: the sandbox where this channel was written has no
+# egress to any broker (docs/channel-brief.md §0).  Inference is the best that
+# can be done there, and it is not the same as verified.  So before any science
+# claim, this job:
+#
+#   * asks ALeRCE's public TAP service for its LIVE schema and commits it
+#     verbatim, so a later broker change appears as a DIFF IN VERSION CONTROL
+#     rather than as an unexplained null months afterwards;
+#   * runs a tiny live slice of the real night query in both variants (with and
+#     without the Gaia parallax join), because TAP_SCHEMA can list a column that
+#     no row actually populates;
+#   * runs the forced-photometry query, which is the ledger's denominator --- the
+#     one piece without which the recurrence statistic has no meaning.
+#
+# It needs no credentials of any kind: ALeRCE TAP is public.
+
+on:
+  workflow_dispatch:
+    inputs:
+      out_dir:
+        description: "Override the results directory (blank = results/tocsin)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Probe the brokers and record the live schema
+        run: |
+          if [ -n "${{ github.event.inputs.out_dir }}" ]; then
+            python -m seti.cli tocsin-probe --out-dir "${{ github.event.inputs.out_dir }}"
+          else
+            python -m seti.cli tocsin-probe
+          fi
+      - name: Show the verdict
+        if: always()
+        run: |
+          [ -f results/tocsin/probe.json ] && python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/tocsin/probe.json")
+          rec = json.loads(p.read_text())
+          print("verdict:", rec.get("verdict"))
+          al = rec.get("alerce", {})
+          print("alerce reached:", al.get("reached"))
+          for k in ("with_gaia_join", "without_gaia_join", "forced_photometry"):
+              print(f"  {k}: {json.dumps(al.get(k, {}))[:400]}")
+          print("tables:", sorted((al.get("schema") or {}).keys()))
+          PY
+      - name: Commit the probe record
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # ONE PATHSPEC AT A TIME: `git add` with several pathspecs is atomic,
+          # so a single unmatched glob stages NOTHING and `|| true` swallows it.
+          # This has cost this repository whole runs (see knell.yml).
+          git add -f -- results/tocsin/probe.json || echo "no probe.json"
+          echo "=== staged ==="
+          git diff --cached --name-only
+          if git diff --cached --quiet; then
+            echo "No probe changes to commit."
+          else
+            git commit -m "tocsin: broker reachability + live ALeRCE TAP schema record"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tocsin-probe
+          path: results/tocsin/

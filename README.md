@@ -31,6 +31,7 @@ decisive actions live in **[STATUS.md](STATUS.md)**.
 | Narrow emission lines | Blind laser-line search in **SDSS-DR17 / DESI-DR1** spectra via SPARCL | `seti.spectra` | `spectra.yml`, `spectra-confirm.yml` |
 | Narrow absorption lines | **Absorption-mode** analogue (engineered monochromatic absorber) — no published blind search | `seti.spectra.absorb` | `spectra.yml` (`mode: absorption`) |
 | Gaia XP anomalies | Spectral shapes no normal-stellar model reconstructs, in ~220M BP/RP spectra | `seti.xp` | `xp.yml` |
+| **Rubin nightly alert screen** | **Cross-night recurrence of *achromatic* difference-image events on catalogued nearby stars** — flash (specular/S30) and dip (grey occultation) in one funnel, on the world-public LSST stream. Recurrence at a fixed position is the axis no published alert-stream search uses | `seti.tocsin` | `tocsin.yml` (nightly cron), `tocsin-probe.yml` |
 
 ## How work happens
 

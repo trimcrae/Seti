@@ -1,0 +1,1797 @@
+{
+ "alerce": {
+  "diagnostics": {
+   "count_orbits": {
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.lsst_mpc_orbits",
+    "data": [
+     {
+      "n": 130909
+     }
+    ],
+    "rows": 1
+   },
+   "count_orbits_nongrav_snr3": {
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.lsst_mpc_orbits WHERE yarkovsky IS NOT NULL AND yarkovsky_unc > 0 AND ABS(yarkovsky) > 3 * yarkovsky_unc",
+    "data": [
+     {
+      "n": 7
+     }
+    ],
+    "rows": 1
+   },
+   "count_orbits_with_srp": {
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.lsst_mpc_orbits WHERE srp IS NOT NULL",
+    "data": [
+     {
+      "n": 1812
+     }
+    ],
+    "rows": 1
+   },
+   "count_orbits_with_yarkovsky": {
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.lsst_mpc_orbits WHERE yarkovsky IS NOT NULL",
+    "data": [
+     {
+      "n": 1822
+     }
+    ],
+    "rows": 1
+   },
+   "count_ss_detection": {
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.lsst_ss_detection",
+    "data": [
+     {
+      "n": 961558
+     }
+    ],
+    "rows": 1
+   },
+   "count_ss_object": {
+    "adql": "SELECT COUNT(*) AS n FROM alerce_tap.lsst_ss_object",
+    "data": [
+     {
+      "n": 0
+     }
+    ],
+    "rows": 1
+   },
+   "group_by_ssobjectid": {
+    "adql": "SELECT ss.ssobjectid, COUNT(*) AS n, AVG(ss.ephoffsetalongtrack) AS mean_along FROM alerce_tap.lsst_ss_detection AS ss GROUP BY ss.ssobjectid",
+    "data": [
+     {
+      "mean_along": null,
+      "n": 1,
+      "ssobjectid": 20607267131895873
+     },
+     {
+      "mean_along": null,
+      "n": 5,
+      "ssobjectid": 20608375535448129
+     },
+     {
+      "mean_along": null,
+      "n": 1,
+      "ssobjectid": 20609474996744257
+     },
+     {
+      "mean_along": null,
+      "n": 1,
+      "ssobjectid": 20610552999981122
+     },
+     {
+      "mean_along": null,
+      "n": 1,
+      "ssobjectid": 20610557043290177
+     },
+     {
+      "mean_along": null,
+      "n": 2,
+      "ssobjectid": 20610557328502849
+     },
+     {
+      "mean_along": null,
+      "n": 5,
+      "ssobjectid": 20610565616447554
+     },
+     {
+      "mean_along": null,
+      "n": 1,
+      "ssobjectid": 20610565767442498
+     },
+     {
+      "mean_along": null,
+      "n": 1,
+      "ssobjectid": 20610587393273922
+     },
+     {
+      "mean_along": null,
+      "n": 3,
+      "ssobjectid": 20882132422373447
+     },
+     {
+      "mean_along": null,
+      "n": 2,
+      "ssobjectid": 20882141079416901
+     },
+     {
+      "mean_along": null,
+      "n": 17,
+      "ssobjectid": 20882144988508234
+     },
+     {
+      "mean_along": null,
+      "n": 2,
+      "ssobjectid": 20882144988508237
+     },
+     {
+      "mean_along": null,
+      "n": 1,
+      "ssobjectid": 20882149535133761
+     },
+     {
+      "mean_along": null,
+      "n": 1,
+      "ssobjectid": 20882149635797057
+     },
+     {
+      "mean_along": null,
+      "n": 3,
+      "ssobjectid": 20882153561665606
+     },
+     {
+      "mean_along": null,
+      "n": 2,
+      "ssobjectid": 20882153645551683
+     },
+     {
+      "mean_along": null,
+      "n": 2,
+      "ssobjectid": 20882153863655496
+     },
+     {
+      "mean_along": null,
+      "n": 1,
+      "ssobjectid": 20882157923741765
+     },
+     {
+      "mean_along": null,
+      "n": 5,
+      "ssobjectid": 20882157940518989
+     }
+    ],
+    "rows": 20
+   },
+   "join_ss_detection_on_measurement_id": {
+    "adql": "SELECT d.oid, d.sid, d.mjd, d.ra, d.dec, d.band, ss.ssobjectid, ss.designation, ss.ephoffsetalongtrack FROM alerce_tap.lsst_ss_detection AS ss JOIN alerce_tap.detection AS d ON d.measurement_id = ss.diasourceid",
+    "error": "BrokerError: TAP query failed after 2 attempts: Field query: No such field known: column 'diasourceid' could not be located in table metadata"
+   },
+   "join_ss_detection_on_oid": {
+    "adql": "SELECT d.oid, d.sid, d.mjd, ss.ssobjectid, ss.ephoffsetalongtrack FROM alerce_tap.lsst_ss_detection AS ss JOIN alerce_tap.detection AS d ON d.oid = ss.ssobjectid",
+    "data": [
+     {
+      "ephoffsetalongtrack": null,
+      "mjd": 61094.17076685547,
+      "oid": 20892057940799818,
+      "sid": 2,
+      "ssobjectid": 20892057940799818
+     },
+     {
+      "ephoffsetalongtrack": null,
+      "mjd": 61094.171229547865,
+      "oid": 20892057940799818,
+      "sid": 2,
+      "ssobjectid": 20892057940799818
+     },
+     {
+      "ephoffsetalongtrack": null,
+      "mjd": 61094.17173853671,
+      "oid": 20892057940799818,
+      "sid": 2,
+      "ssobjectid": 20892057940799818
+     },
+     {
+      "ephoffsetalongtrack": null,
+      "mjd": 61094.17220403766,
+      "oid": 20892057940799818,
+      "sid": 2,
+      "ssobjectid": 20892057940799818
+     },
+     {
+      "ephoffsetalongtrack": null,
+      "mjd": 61094.17270278622,
+      "oid": 20892057940799818,
+      "sid": 2,
+      "ssobjectid": 20892057940799818
+     },
+     {
+      "ephoffsetalongtrack": null,
+      "mjd": 61094.17394839073,
+      "oid": 20892057940799818,
+      "sid": 2,
+      "ssobjectid": 20892057940799818
+     },
+     {
+      "ephoffsetalongtrack": null,
+      "mjd": 61094.17441096142,
+      "oid": 20892057940799818,
+      "sid": 2,
+      "ssobjectid": 20892057940799818
+     },
+     {
+      "ephoffsetalongtrack": null,
+      "mjd": 61094.17487627909,
+      "oid": 20892057940799818,
+      "sid": 2,
+      "ssobjectid": 20892057940799818
+     },
+     {
+      "ephoffsetalongtrack": null,
+      "mjd": 61094.17729944256,
+      "oid": 20892057940799818,
+      "sid": 2,
+      "ssobjectid": 20892057940799818
+     },
+     {
+      "ephoffsetalongtrack": null,
+      "mjd": 61094.1777676326,
+      "oid": 20892057940799818,
+      "sid": 2,
+      "ssobjectid": 20892057940799818
+     }
+    ],
+    "rows": 10
+   },
+   "orbits_epoch_range": {
+    "adql": "SELECT MIN(epoch_mjd) AS lo, MAX(epoch_mjd) AS hi, MIN(arc_length_total) AS arc_lo, MAX(arc_length_total) AS arc_hi FROM alerce_tap.lsst_mpc_orbits",
+    "data": [
+     {
+      "arc_hi": 59535.75,
+      "arc_lo": 0.0,
+      "hi": 61200.0,
+      "lo": 59000.0
+     }
+    ],
+    "rows": 1
+   },
+   "orbits_has_designation": {
+    "adql": "SELECT designation FROM alerce_tap.lsst_mpc_orbits",
+    "data": [
+     {
+      "designation": "2024 RU193"
+     },
+     {
+      "designation": "2007 EM200"
+     },
+     {
+      "designation": "2002 TR239"
+     },
+     {
+      "designation": "2015 AS84"
+     },
+     {
+      "designation": "2015 RA355"
+     }
+    ],
+    "rows": 5
+   },
+   "orbits_has_mpc_orb_jsonb": {
+    "adql": "SELECT mpc_orb_jsonb FROM alerce_tap.lsst_mpc_orbits",
+    "data": [
+     {
+      "mpc_orb_jsonb": "{\"CAR\": {\"covariance\": {\"cov00\": 0.00000000152929767735308, \"cov01\": 0.0000000004694695673423171, \"cov02\": 0.0000000005547600515664895, \"cov03\": 0.000000000001315210603102021, \"cov04\": -0.000000000006462313177810918, \"cov05\": 0.0000000000006442458659643562, \"cov06\": null, \"cov07\": null, \"cov08\": null, \"cov09\": null, \"cov11\": 0.0000000001452847201501044, \"cov12\": 0.0000000001702691945676606, \"cov13\": -0.000000000000005633260413444288, \"cov14\": -0.000000000002147188053501375, \"cov15\": 0.00000000000005367606293274671, \"cov16\": null, \"cov17\": null, \"cov18\": null, \"cov19\": null, \"cov22\": 0.0000000002013755687357581, \"cov23\": 0.0000000000004933992431325792, \"cov24\": -0.000000000002337567659618398, \"cov25\": 0.0000000000002418590488968551, \"cov26\": null, \"cov27\": null, \"cov28\": null, \"cov29\": null, \"cov33\": 0.0000000000001634116697445508, \"cov34\": 0.00000000000006008985695827094, \"cov35\": 0.00000000000005770228419089879, \"cov36\": null, \"cov37\": null, \"cov38\": null, \"cov39\": null, \"cov44\": 0.0000000000000540084538972309, \"cov45\": 0.00000000000002040755104074211, \"cov46\": null, \"cov47\": null, \"cov48\": null, \"cov49\": null, \"cov55\": 0.00000000000002053570867943438, \"cov56\": null, \"cov57\": null, \"cov58\": null, \"cov59\": null, \"cov66\": null, \"cov67\": null, \"cov68\": null, \"cov69\": null, \"cov77\": null, \"cov78\": null, \"cov79\": null, \"cov88\": null, \"cov89\": null, \"cov99\": null}, \"eigenvalues\": [0.00000000917383, 0.00000000945202, 0.0000001436, 0.000000341172, 0.0000011282, 0.0000432988], \"coefficient_names\": [\"x\", \"y\", \"z\", \"vx\", \"vy\", \"vz\"], \"coefficient_values\": [1.92331779812581, 0.708585714199995, 0.386806904873339, -0.00330148575624794, 0.0118401920160055, 0.000687819190803009], \"non_grav_uncertainty\": {}, \"coefficient_uncertainties\": [0.0000391062, 0.0000120534, 0.0000141907, 0.000000404242, 0.000000232397, 0.000000143303]}, \"COM\": {\"covariance\": {\"cov00\": 0.000000004635489924622395, \"cov01\": -0.000000002146719430705919, \"cov02\": 0.000000004040442425949246, \"cov03\": -0.00000006443829323441656, \"cov04\": 0.0000005024543270039604, \"cov05\": 0.0000006806115451835428, \"cov06\": null, \"cov07\": null, \"cov08\": null, \"cov09\": null, \"cov11\": 0.000000001209775928823379, \"cov12\": 0.0000000009952277295168522, \"cov13\": 0.00000004591610108124382, \"cov14\": -0.0000003511993117365369, \"cov15\": -0.0000006116331333801101, \"cov16\": null, \"cov17\": null, \"cov18\": null, \"cov19\": null, \"cov22\": 0.00000004269849963628015, \"cov23\": 0.0000001652315642167251, \"cov24\": -0.000001188272298999616, \"cov25\": -0.000003474746550303541, \"cov26\": null, \"cov27\": null, \"cov28\": null, \"cov29\": null, \"cov33\": 0.000002180374831570821, \"cov34\": -0.00001610794494292334, \"cov35\": -0.00003216007703051434, \"cov36\": null, \"cov37\": null, \"cov38\": null, \"cov39\": null, \"cov44\": 0.0001225544881180622, \"cov45\": 0.000244571774526925, \"cov46\": null, \"cov47\": null, \"cov48\": null, \"cov49\": null, \"cov55\": 0.0005289132815081551, \"cov56\": null, \"cov57\": null, \"cov58\": null, \"cov59\": null, \"cov66\": null, \"cov67\": null, \"cov68\": null, \"cov69\": null, \"cov77\": null, \"cov78\": null, \"cov79\": null, \"cov88\": null, \"cov89\": null, \"cov99\": null}, \"eigenvalues\": [0.0000000906181, 0.000000143906, 0.00000280507, 0.000006186, 0.0000846935, 0.0229989], \"coefficient_names\": [\"q\", \"e\", \"i\", \"node\", \"argperi\", \"peri_time\"], \"coefficient_values\": [1.98661612780438, 0.112693660770792, 10.9280240257648, 302.4275358394863, 20.0284777698686, 60438.4715926361], \"non_grav_uncertainty\": {}, \"coefficient_uncertainties\": [0.0000680844, 0.0000347818, 0.000206636, 0.00147661, 0.0110704, 0.0229981]}, \"moid_data\": {\"Mars\": null, \"Earth\": 0.97577, \"Venus\": null, \"Jupiter\": null}, \"epoch_data\": {\"epoch\": 60600.0, \"timeform\": \"MJD\", \"timesystem\": \"TDT\"}, \"system_data\": {\"eph\": \"DE431\", \"refsys\": \"Ecliptic\", \"refframe\": \"ICRF\", \"force_model\": \"????\", \"EclipticObliquityArcseconds\": \"84381.448\"}, \"software_data\": {\"mpcorb_version\": \"0.4\", \"fitting_datetime\": \"2024-12-05 03:31:18\", \"fitting_software_name\": \"orbfit\", \"fitting_software_version\": \"1.0\", \"mpcorb_creation_datetime\": \"2024-12-05 03:31:24\"}, \"categorization\": {\"orbit_type_int\": null, \"orbit_type_str\": \"\", \"object_type_int\": 0, \"object_type_str\": \"Minor Planet\", \"orbit_subtype_int\": null, \"orbit_subtype_str\": \"\"}, \"magnitude_data\": {\"G\": 0.15, \"H\": 19.442, \"G1\": null, \"G2\": null, \"G12\": null, \"photometric_model\": \"????\"}, \"designation_data\": {\"found\": 1, \"permid\": \"\", \"iau_name\": \"\", \"orbfit_name\": \"2024RU193\", \"iau_designation\": \"2024 RU193\", \"designation_count\": 0, \"packed_primary_provisional_designation\": \"K24RJ3U\", \"unpacked_primary_provisional_designation\": \"2024 RU193\", \"packed_secondary_provisional_designations\": [], \"unpacked_secondary_provisional_designations\": [], \"new_style_packed_primary_provisional_designation\": \"K24R00193U\"}, \"non_grav_booleans\": {\"non_gravs\": false, \"non_grav_model\": {\"yc\": false, \"srp\": false, \"marsden\": false, \"yabushita\": false, \"yarkovski\": false}, \"non_grav_coefficients\": {\"A1\": false, \"A2\": false, \"A3\": false, \"DT\": false, \"srp\": false, \"yarkovski\": false}}, \"orbit_fit_statistics\": {\"nopp\": 1, \"score1\": 0.0, \"score2\": 0.0, \"U_param\": 0.0, \"numparams\": 6, \"nobs_radar\": 0, \"nobs_total\": 15, \"snr_below_1\": false, \"snr_below_3\": false, \"nobs_optical\": 15, \"orbit_quality\": \"good\", \"arc_length_sel\": \"56 days\", \"nobs_radar_sel\": 0, \"nobs_total_sel\": 12, \"normalized_RMS\": 0.817763, \"arc_length_total\": \"56 days\", \"nobs_optical_sel\": 12, \"not_normalized_RMS\": null, \"sig_to_noise_ratio\": [49838.6937974452, 32442.45746778057, 26352.382417348606, 5377.010634610278, 50192.743468564084, 6304.724565497953]}}"
+     },
+     {
+      "mpc_orb_jsonb": "{\"CAR\": {\"covariance\": {\"cov00\": 0.000000000000004987031055580872, \"cov01\": 0.000000000000004724653444521697, \"cov02\": 0.000000000000001045700558584314, \"cov03\": -0.00000000000000001296964115190159, \"cov04\": -0.000000000000000005073536052214426, \"cov05\": -0.0000000000000000002035918814011143, \"cov06\": null, \"cov07\": null, \"cov08\": null, \"cov09\": null, \"cov11\": 0.00000000000002819457969388418, \"cov12\": 0.000000000000001346365570276398, \"cov13\": -0.0000000000000000593684304915713, \"cov14\": 0.00000000000000002459490234275479, \"cov15\": 0.00000000000000001352343000171999, \"cov16\": null, \"cov17\": null, \"cov18\": null, \"cov19\": null, \"cov22\": 0.000000000000008801304869322076, \"cov23\": -0.000000000000000006444047870567076, \"cov24\": 0.00000000000000000459591680574845, \"cov25\": -0.000000000000000009064868956036527, \"cov26\": null, \"cov27\": null, \"cov28\": null, \"cov29\": null, \"cov33\": 0.0000000000000000001362405916713961, \"cov34\": -0.00000000000000000004899951694106161, \"cov35\": -0.0000000000000000000151036242467054, \"cov36\": null, \"cov37\": null, \"cov38\": null, \"cov39\": null, \"cov44\": 0.00000000000000000004573928241552245, \"cov45\": 0.000000000000000000004783229756295617, \"cov46\": null, \"cov47\": null, \"cov48\": null, \"cov49\": null, \"cov55\": 0.00000000000000000008520442378804892, \"cov56\": null, \"cov57\": null, \"cov58\": null, \"cov59\": null, \"cov66\": null, \"cov67\": null, \"cov68\": null, \"cov69\": null, \"cov77\": null, \"cov78\": null, \"cov79\": null, \"cov88\": null, \"cov89\": null, \"cov99\": null}, \"eigenvalues\": [0.00000000000859564, 0.0000000000836707, 0.000000000263076, 0.0000000627581, 0.0000000938684, 0.000000170977], \"coefficient_names\": [\"x\", \"y\", \"z\", \"vx\", \"vy\", \"vz\"], \"coefficient_values\": [-3.16171754207263, 1.06852587917859, 0.583789412494445, -0.00223461552668221, -0.00906942315943092, -0.000620349116527544], \"coefficient_uncertainties\": [0.0000000706189, 0.000000167912, 0.0000000938153, 0.000000000369108, 0.000000000213867, 0.000000000291898]}, \"COM\": {\"covariance\": {\"cov00\": 0.000000000000002349546371697368, \"cov01\": -0.0000000000000006353041589845668, \"cov02\": 0.000000000000003853694717521328, \"cov03\": 0.000000000000006774324864107518, \"cov04\": 0.0000000000001848321188769322, \"cov05\": 0.000000000001128473689399322, \"cov06\": null, \"cov07\": null, \"cov08\": null, \"cov09\": null, \"cov11\": 0.0000000000000001865401416525313, \"cov12\": -0.0000000000000009880648476818822, \"cov13\": -0.0000000000000008788893536199059, \"cov14\": -0.00000000000003867473079025537, \"cov15\": -0.0000000000002251692557612052, \"cov16\": null, \"cov17\": null, \"cov18\": null, \"cov19\": null, \"cov22\": 0.000000000003015855903210772, \"cov23\": -0.000000000004654679010477349, \"cov24\": 0.000000000004392583176926894, \"cov25\": -0.000000000001043846888091349, \"cov26\": null, \"cov27\": null, \"cov28\": null, \"cov29\": null, \"cov33\": 0.00000000007506630152457415, \"cov34\": -0.00000000007302511785667576, \"cov35\": 0.00000000000579065560811904, \"cov36\": null, \"cov37\": null, \"cov38\": null, \"cov39\": null, \"cov44\": 0.0000000001625957081621864, \"cov45\": 0.000000000551763171399817, \"cov46\": null, \"cov47\": null, \"cov48\": null, \"cov49\": null, \"cov55\": 0.000000003444345063719778, \"cov56\": null, \"cov57\": null, \"cov58\": null, \"cov59\": null, \"cov66\": null, \"cov67\": null, \"cov68\": null, \"cov69\": null, \"cov77\": null, \"cov78\": null, \"cov79\": null, \"cov88\": null, \"cov89\": null, \"cov99\": null}, \"eigenvalues\": [0.00000000336917, 0.0000000141095, 0.000000028746, 0.0000000463814, 0.000000212956, 0.0000586888], \"coefficient_names\": [\"q\", \"e\", \"i\", \"node\", \"argperi\", \"peri_time\"], \"coefficient_values\": [3.07903684372822, 0.094263934914093, 10.3399193855167, 54.8119262028571, 199.6340892564876, 61525.0371800078], \"coefficient_uncertainties\": [0.0000000484721, 0.000000013658, 0.00000173662, 0.00000866408, 0.0000127513, 0.0000586885]}, \"moid_data\": {\"Mars\": null, \"Earth\": null, \"Venus\": null, \"Jupiter\": null}, \"epoch_data\": {\"epoch\": 61000.0, \"timeform\": \"MJD\", \"timesystem\": \"TDT\"}, \"system_data\": {\"eph\": \"DE431\", \"refsys\": \"Ecliptic\", \"refframe\": \"ICRF\", \"force_model\": \"????\", \"EclipticObliquityArcseconds\": \"84381.448\"}, \"software_data\": {\"mpcorb_version\": \"0.4\", \"fitting_datetime\": \"2026-03-08T14:34:58.818684+00:00\", \"fitting_software_name\": \"orbfit\", \"fitting_software_version\": \"1.0\", \"mpcorb_creation_datetime\": \"2026-03-08 14:34:59\"}, \"categorization\": {\"orbit_type_int\": 19, \"orbit_type_str\": \"Other\", \"object_type_int\": 0, \"object_type_str\": \"Minor Planet\", \"orbit_subtype_int\": null, \"orbit_subtype_str\": \"\"}, \"magnitude_data\": {\"G\": 0.15, \"H\": 14.777, \"G1\": null, \"G2\": null, \"G12\": null, \"photometric_model\": \"????\"}, \"designation_data\": {\"permid\": \"256520\", \"iau_name\": \"\", \"orbfit_name\": \"256520\", \"designation_count\": 1, \"packed_primary_provisional_designation\": \"K07EK0M\", \"unpacked_primary_provisional_designation\": \"2007 EM200\", \"packed_secondary_provisional_designations\": [], \"unpacked_secondary_provisional_designations\": []}, \"non_grav_booleans\": {\"non_gravs\": false, \"non_grav_model\": {\"yc\": false, \"srp\": false, \"marsden\": false, \"yabushita\": false, \"yarkovski\": false}, \"non_grav_coefficients\": {\"A1\": false, \"A2\": false, \"A3\": false, \"DT\": false, \"srp\": false, \"yarkovski\": false}}, \"orbit_fit_statistics\": {\"nopp\": 19, \"score1\": 0.0, \"score2\": 0.0, \"U_param\": 0, \"numparams\": 6, \"nobs_radar\": 0, \"nobs_total\": 600, \"snr_below_1\": false, \"snr_below_3\": false, \"nobs_optical\": 600, \"orbit_quality\": \"good\", \"arc_length_sel\": \"1991-2026\", \"nobs_radar_sel\": 0, \"nobs_total_sel\": 582, \"normalized_RMS\": 0.939057, \"arc_length_total\": \"1991-2026\", \"nobs_optical_sel\": 582, \"not_normalized_RMS\": null, \"sig_to_noise_ratio\": [4647541.941287676, 72461709.33294478, 2381731.7943416056, 68758676.5673827, 7340701.630697319, 6271089.938983219]}}"
+     },
+     {
+      "mpc_orb_jsonb": "{\"CAR\": {\"covariance\": {\"cov00\": 0.000000000000007783070367515361, \"cov01\": 0.000000000000008527038685295383, \"cov02\": -0.00000000000000009371298570302113, \"cov03\": -0.00000000000000001647926102760838, \"cov04\": 0.00000000000000002618500363501044, \"cov05\": -0.000000000000000003725644613016184, \"cov06\": null, \"cov07\": null, \"cov08\": null, \"cov09\": null, \"cov11\": 0.00000000000001145158553743228, \"cov12\": 0.0000000000000006171968882024837, \"cov13\": -0.00000000000000001644335224506285, \"cov14\": 0.00000000000000003607822437924862, \"cov15\": -0.00000000000000000454793733472669, \"cov16\": null, \"cov17\": null, \"cov18\": null, \"cov19\": null, \"cov22\": 0.000000000000003623103264125087, \"cov23\": -0.000000000000000000577105098058077, \"cov24\": 0.000000000000000001180740866169856, \"cov25\": 0.0000000000000000001386884393151582, \"cov26\": null, \"cov27\": null, \"cov28\": null, \"cov29\": null, \"cov33\": 0.00000000000000000003925869291445484, \"cov34\": -0.00000000000000000005193577367688454, \"cov35\": 0.000000000000000000001941019458273811, \"cov36\": null, \"cov37\": null, \"cov38\": null, \"cov39\": null, \"cov44\": 0.0000000000000000001168748069495291, \"cov45\": -0.00000000000000000001043941606614171, \"cov46\": null, \"cov47\": null, \"cov48\": null, \"cov49\": null, \"cov55\": 0.0000000000000000000575298074243183, \"cov56\": null, \"cov57\": null, \"cov58\": null, \"cov59\": null, \"cov66\": null, \"cov67\": null, \"cov68\": null, \"cov69\": null, \"cov77\": null, \"cov78\": null, \"cov79\": null, \"cov88\": null, \"cov89\": null, \"cov99\": null}, \"eigenvalues\": [0.00000000000514886, 0.0000000000655685, 0.000000000237679, 0.0000000286229, 0.0000000607209, 0.000000135468], \"coefficient_names\": [\"x\", \"y\", \"z\", \"vx\", \"vy\", \"vz\"], \"coefficient_values\": [-1.9369741445124, 1.99505150507402, -0.338841080360344, -0.00740282784177073, -0.00564343607961805, -0.000348319363534428], \"coefficient_uncertainties\": [0.0000000882217, 0.000000107012, 0.0000000601922, 0.000000000198138, 0.00000000034187, 0.000000000239854]}, \"COM\": {\"covariance\": {\"cov00\": 0.0000000000000007578012910958992, \"cov01\": -0.0000000000000003180612139043449, \"cov02\": 0.000000000000002192362720840473, \"cov03\": -0.000000000000008739016551485168, \"cov04\": 0.00000000000004159251382518373, \"cov05\": 0.00000000000009254928274401753, \"cov06\": null, \"cov07\": null, \"cov08\": null, \"cov09\": null, \"cov11\": 0.0000000000000001346126434445407, \"cov12\": -0.0000000000000009266782001399895, \"cov13\": 0.000000000000003490014045368409, \"cov14\": -0.00000000000001737815012479764, \"cov15\": -0.00000000000003620503899391593, \"cov16\": null, \"cov17\": null, \"cov18\": null, \"cov19\": null, \"cov22\": 0.000000000001508446126030806, \"cov23\": -0.0000000000002306962518243937, \"cov24\": 0.0000000000005186928178930824, \"cov25\": 0.0000000000007315957098656902, \"cov26\": null, \"cov27\": null, \"cov28\": null, \"cov29\": null, \"cov33\": 0.000000000146598764111967, \"cov34\": -0.0000000001474526913664391, \"cov35\": -0.000000000005936312287723502, \"cov36\": null, \"cov37\": null, \"cov38\": null, \"cov39\": null, \"cov44\": 0.0000000001777227388184315, \"cov45\": 0.00000000008452102104717594, \"cov46\": null, \"cov47\": null, \"cov48\": null, \"cov49\": null, \"cov55\": 0.0000000002238365399437919, \"cov56\": null, \"cov57\": null, \"cov58\": null, \"cov59\": null, \"cov66\": null, \"cov67\": null, \"cov68\": null, \"cov69\": null, \"cov77\": null, \"cov78\": null, \"cov79\": null, \"cov88\": null, \"cov89\": null, \"cov99\": null}, \"eigenvalues\": [0.000000000655593, 0.000000016679, 0.000000021345, 0.0000000291626, 0.0000002979, 0.0000149615], \"coefficient_names\": [\"q\", \"e\", \"i\", \"node\", \"argperi\", \"peri_time\"], \"coefficient_values\": [1.86461692659324, 0.215486852598341, 7.0698956889631, 234.8799141490903, 106.9784390185504, 60483.0098582871], \"coefficient_uncertainties\": [0.0000000275282, 0.0000000116023, 0.00000122819, 0.0000121078, 0.0000133313, 0.0000149612]}, \"moid_data\": {\"Mars\": null, \"Earth\": null, \"Venus\": null, \"Jupiter\": null}, \"epoch_data\": {\"epoch\": 61000.0, \"timeform\": \"MJD\", \"timesystem\": \"TDT\"}, \"system_data\": {\"eph\": \"DE431\", \"refsys\": \"Ecliptic\", \"refframe\": \"ICRF\", \"force_model\": \"????\", \"EclipticObliquityArcseconds\": \"84381.448\"}, \"software_data\": {\"mpcorb_version\": \"0.4\", \"fitting_datetime\": \"2026-02-17T13:14:25.294096+00:00\", \"fitting_software_name\": \"orbfit\", \"fitting_software_version\": \"1.0\", \"mpcorb_creation_datetime\": \"2026-02-17 13:14:25\"}, \"categorization\": {\"orbit_type_int\": 11, \"orbit_type_str\": \"Main Belt\", \"object_type_int\": 0, \"object_type_str\": \"Minor Planet\", \"orbit_subtype_int\": null, \"orbit_subtype_str\": \"\"}, \"magnitude_data\": {\"G\": 0.15, \"H\": 16.884, \"G1\": null, \"G2\": null, \"G12\": null, \"photometric_model\": \"????\"}, \"designation_data\": {\"permid\": \"317529\", \"iau_name\": \"\", \"orbfit_name\": \"317529\", \"designation_count\": 1, \"packed_primary_provisional_designation\": \"K02TN9R\", \"unpacked_primary_provisional_designation\": \"2002 TR239\", \"packed_secondary_provisional_designations\": [], \"unpacked_secondary_provisional_designations\": []}, \"non_grav_booleans\": {\"non_gravs\": false, \"non_grav_model\": {\"yc\": false, \"srp\": false, \"marsden\": false, \"yabushita\": false, \"yarkovski\": false}, \"non_grav_coefficients\": {\"A1\": false, \"A2\": false, \"A3\": false, \"DT\": false, \"srp\": false, \"yarkovski\": false}}, \"orbit_fit_statistics\": {\"nopp\": 18, \"score1\": 0.0, \"score2\": 0.0, \"U_param\": 0, \"numparams\": 6, \"nobs_radar\": 0, \"nobs_total\": 636, \"snr_below_1\": false, \"snr_below_3\": false, \"nobs_optical\": 636, \"orbit_quality\": \"good\", \"arc_length_sel\": \"1991-2026\", \"nobs_radar_sel\": 0, \"nobs_total_sel\": 625, \"normalized_RMS\": 0.785685, \"arc_length_total\": \"1991-2026\", \"nobs_optical_sel\": 625, \"not_normalized_RMS\": null, \"sig_to_noise_ratio\": [67482506.23181885, 11227031.930200186, 5287478.684998019, 16563884.703706427, 76195127.84322667, 1590582.4023354664]}}"
+     },
+     {
+      "mpc_orb_jsonb": "{\"CAR\": {\"covariance\": {\"cov00\": 0.0000000000001471794659338706, \"cov01\": 0.00000000000009809556172036686, \"cov02\": 0.00000000000002145613114002169, \"cov03\": -0.0000000000000003623742852292125, \"cov04\": 0.0000000000000001011580112319526, \"cov05\": -0.00000000000000004399197460388359, \"cov06\": null, \"cov07\": null, \"cov08\": null, \"cov09\": null, \"cov11\": 0.0000000000001218737558562902, \"cov12\": 0.00000000000002080319358247011, \"cov13\": -0.0000000000000002555448651856655, \"cov14\": 0.0000000000000002396221205816834, \"cov15\": -0.000000000000000009381959314638736, \"cov16\": null, \"cov17\": null, \"cov18\": null, \"cov19\": null, \"cov22\": 0.00000000000007812045261884955, \"cov23\": -0.00000000000000007732310820336713, \"cov24\": 0.00000000000000004860132361329533, \"cov25\": -0.00000000000000003111374776434585, \"cov26\": null, \"cov27\": null, \"cov28\": null, \"cov29\": null, \"cov33\": 0.000000000000000001187338112314888, \"cov34\": -0.0000000000000000004956700913012957, \"cov35\": -0.00000000000000000006141521811290271, \"cov36\": null, \"cov37\": null, \"cov38\": null, \"cov39\": null, \"cov44\": 0.0000000000000000007945633680039207, \"cov45\": -0.0000000000000000001151900891993519, \"cov46\": null, \"cov47\": null, \"cov48\": null, \"cov49\": null, \"cov55\": 0.000000000000000001358197251547383, \"cov56\": null, \"cov57\": null, \"cov58\": null, \"cov59\": null, \"cov66\": null, \"cov67\": null, \"cov68\": null, \"cov69\": null, \"cov77\": null, \"cov78\": null, \"cov79\": null, \"cov88\": null, \"cov89\": null, \"cov99\": null}, \"eigenvalues\": [0.0000000000288705, 0.000000000665665, 0.0000000011689, 0.000000188582, 0.000000269511, 0.000000488851], \"coefficient_names\": [\"x\", \"y\", \"z\", \"vx\", \"vy\", \"vz\"], \"coefficient_values\": [-2.16365935836101, 1.97071810343727, -0.0842952678897157, -0.00653646994032284, -0.00768179311613217, -0.00166984327444985], \"coefficient_uncertainties\": [0.00000038364, 0.000000349104, 0.0000002795, 0.00000000108965, 0.000000000891383, 0.00000000116542]}, \"COM\": {\"covariance\": {\"cov00\": 0.00000000000007127565410636566, \"cov01\": -0.00000000000002478870926072506, \"cov02\": -0.00000000000004861848282909692, \"cov03\": 0.00000000000000885648421438734, \"cov04\": -0.000000000008638501632327674, \"cov05\": -0.00000000003760356871075752, \"cov06\": null, \"cov07\": null, \"cov08\": null, \"cov09\": null, \"cov11\": 0.000000000000008719896182920826, \"cov12\": 0.00000000000001700313869430509, \"cov13\": 0.000000000000007168838801230035, \"cov14\": 0.000000000003085743155091136, \"cov15\": 0.00000000001353843004492667, \"cov16\": null, \"cov17\": null, \"cov18\": null, \"cov19\": null, \"cov22\": 0.00000000004200355947798824, \"cov23\": 0.00000000002614050717779135, \"cov24\": -0.000000000022028190581712, \"cov25\": 0.00000000001292733368926927, \"cov26\": null, \"cov27\": null, \"cov28\": null, \"cov29\": null, \"cov33\": 0.000000001040182536958609, \"cov34\": -0.000000001003864208056514, \"cov35\": 0.0000000001150985443339425, \"cov36\": null, \"cov37\": null, \"cov38\": null, \"cov39\": null, \"cov44\": 0.000000008601939443775265, \"cov45\": 0.00000003804478446033591, \"cov46\": null, \"cov47\": null, \"cov48\": null, \"cov49\": null, \"cov55\": 0.0000001916867875428072, \"cov56\": null, \"cov57\": null, \"cov58\": null, \"cov59\": null, \"cov66\": null, \"cov67\": null, \"cov68\": null, \"cov69\": null, \"cov77\": null, \"cov78\": null, \"cov79\": null, \"cov88\": null, \"cov89\": null, \"cov99\": null}, \"eigenvalues\": [0.00000000932186, 0.0000000500947, 0.000000112163, 0.000000272748, 0.000000794915, 0.000437823], \"coefficient_names\": [\"q\", \"e\", \"i\", \"node\", \"argperi\", \"peri_time\"], \"coefficient_values\": [2.89645015641282, 0.044543794746893, 9.5974652110896, 307.8644093286986, 231.4767175055801, 61204.7394111154], \"coefficient_uncertainties\": [0.000000266975, 0.0000000933804, 0.00000648102, 0.0000322519, 0.0000927466, 0.00043782]}, \"moid_data\": {\"Mars\": null, \"Earth\": null, \"Venus\": null, \"Jupiter\": null}, \"epoch_data\": {\"epoch\": 61000.0, \"timeform\": \"MJD\", \"timesystem\": \"TDT\"}, \"system_data\": {\"eph\": \"DE431\", \"refsys\": \"Ecliptic\", \"refframe\": \"ICRF\", \"force_model\": \"????\", \"EclipticObliquityArcseconds\": \"84381.448\"}, \"software_data\": {\"mpcorb_version\": \"0.4\", \"fitting_datetime\": \"2026-03-08T14:54:54.982792+00:00\", \"fitting_software_name\": \"orbfit\", \"fitting_software_version\": \"1.0\", \"mpcorb_creation_datetime\": \"2026-03-08 14:54:55\"}, \"categorization\": {\"orbit_type_int\": 11, \"orbit_type_str\": \"Main Belt\", \"object_type_int\": 0, \"object_type_str\": \"Minor Planet\", \"orbit_subtype_int\": null, \"orbit_subtype_str\": \"\"}, \"magnitude_data\": {\"G\": 0.15, \"H\": 17.424, \"G1\": null, \"G2\": null, \"G12\": null, \"photometric_model\": \"????\"}, \"designation_data\": {\"permid\": \"\", \"iau_name\": \"\", \"orbfit_name\": \"2015AS84\", \"designation_count\": 1, \"packed_primary_provisional_designation\": \"K15A84S\", \"unpacked_primary_provisional_designation\": \"2015 AS84\", \"packed_secondary_provisional_designations\": [], \"unpacked_secondary_provisional_designations\": []}, \"non_grav_booleans\": {\"non_gravs\": false, \"non_grav_model\": {\"yc\": false, \"srp\": false, \"marsden\": false, \"yabushita\": false, \"yarkovski\": false}, \"non_grav_coefficients\": {\"A1\": false, \"A2\": false, \"A3\": false, \"DT\": false, \"srp\": false, \"yarkovski\": false}}, \"orbit_fit_statistics\": {\"nopp\": 5, \"score1\": 0.0, \"score2\": 0.0, \"U_param\": 0, \"numparams\": 6, \"nobs_radar\": 0, \"nobs_total\": 55, \"snr_below_1\": false, \"snr_below_3\": false, \"nobs_optical\": 55, \"orbit_quality\": \"good\", \"arc_length_sel\": \"2014-2026\", \"nobs_radar_sel\": 0, \"nobs_total_sel\": 55, \"normalized_RMS\": 0.895299, \"arc_length_total\": \"2014-2026\", \"nobs_optical_sel\": 55, \"not_normalized_RMS\": null, \"sig_to_noise_ratio\": [10949158.255009951, 4479869.349290008, 842617.9747319221, 5220238.5519051375, 9755986.005258918, 1289423.3766063969]}}"
+     },
+     {
+      "mpc_orb_jsonb": "{\"CAR\": {\"covariance\": {\"cov00\": 0.0000000000006448859458265339, \"cov01\": 0.0000000000007022316595407164, \"cov02\": 0.00000000000009358187427216834, \"cov03\": -0.000000000000001570910701642407, \"cov04\": 0.000000000000002076033189529806, \"cov05\": -0.00000000000000004317565709388543, \"cov06\": null, \"cov07\": null, \"cov08\": null, \"cov09\": null, \"cov11\": 0.000000000001992272886965383, \"cov12\": 0.000000000000345029391624072, \"cov13\": -0.000000000000002310207043566896, \"cov14\": 0.000000000000008166392680879909, \"cov15\": 0.000000000000001198870105437086, \"cov16\": null, \"cov17\": null, \"cov18\": null, \"cov19\": null, \"cov22\": 0.0000000000008084174298011583, \"cov23\": -0.0000000000000005134527243341625, \"cov24\": 0.000000000000001894604793216602, \"cov25\": -0.0000000000000004702441006599632, \"cov26\": null, \"cov27\": null, \"cov28\": null, \"cov29\": null, \"cov33\": 0.000000000000000004324698077629753, \"cov34\": -0.000000000000000008092274233946288, \"cov35\": -0.0000000000000000007632899140528957, \"cov36\": null, \"cov37\": null, \"cov38\": null, \"cov39\": null, \"cov44\": 0.00000000000000003554213746845394, \"cov45\": 0.000000000000000005060747294456719, \"cov46\": null, \"cov47\": null, \"cov48\": null, \"cov49\": null, \"cov55\": 0.000000000000000004585669727836615, \"cov56\": null, \"cov57\": null, \"cov58\": null, \"cov59\": null, \"cov66\": null, \"cov67\": null, \"cov68\": null, \"cov69\": null, \"cov77\": null, \"cov78\": null, \"cov79\": null, \"cov88\": null, \"cov89\": null, \"cov99\": null}, \"eigenvalues\": [0.000000000070119, 0.000000000495542, 0.0000000016632, 0.000000582629, 0.000000856833, 0.00000154013], \"coefficient_names\": [\"x\", \"y\", \"z\", \"vx\", \"vy\", \"vz\"], \"coefficient_values\": [-1.98877719707527, 1.80386847566686, -0.0279601858321301, -0.00824458129699339, -0.00601148880916877, -0.00219551899958854], \"coefficient_uncertainties\": [0.000000803048, 0.00000141148, 0.00000089912, 0.00000000207959, 0.00000000596172, 0.00000000214142]}, \"COM\": {\"covariance\": {\"cov00\": 0.0000000000002705188274080889, \"cov01\": -0.0000000000001022392253470847, \"cov02\": 0.000000000001311341928634965, \"cov03\": -0.000000000001131461219790949, \"cov04\": 0.00000000003052490548968603, \"cov05\": 0.00000000009491541726053448, \"cov06\": null, \"cov07\": null, \"cov08\": null, \"cov09\": null, \"cov11\": 0.00000000000003882683927166622, \"cov12\": -0.0000000000004955139206190448, \"cov13\": 0.000000000000479774535438453, \"cov14\": -0.00000000001218218301111639, \"cov15\": -0.0000000000375188482056176, \"cov16\": null, \"cov17\": null, \"cov18\": null, \"cov19\": null, \"cov22\": 0.0000000001475404662845634, \"cov23\": 0.0000000006590810705858749, \"cov24\": -0.0000000004685599707176855, \"cov25\": 0.0000000005653002473835375, \"cov26\": null, \"cov27\": null, \"cov28\": null, \"cov29\": null, \"cov33\": 0.000000007694189247995084, \"cov34\": -0.000000007852517098674576, \"cov35\": -0.000000001011836745338645, \"cov36\": null, \"cov37\": null, \"cov38\": null, \"cov39\": null, \"cov44\": 0.00000001819405438748857, \"cov45\": 0.00000003180573169307044, \"cov46\": null, \"cov47\": null, \"cov48\": null, \"cov49\": null, \"cov55\": 0.00000009396370923148308, \"cov56\": null, \"cov57\": null, \"cov58\": null, \"cov59\": null, \"cov66\": null, \"cov67\": null, \"cov68\": null, \"cov69\": null, \"cov77\": null, \"cov78\": null, \"cov79\": null, \"cov88\": null, \"cov89\": null, \"cov99\": null}, \"eigenvalues\": [0.0000000103008, 0.000000104398, 0.000000158608, 0.000000449315, 0.0000021465, 0.000306541], \"coefficient_names\": [\"q\", \"e\", \"i\", \"node\", \"argperi\", \"peri_time\"], \"coefficient_values\": [2.12188009994091, 0.200644587860762, 12.2886495605381, 315.051082916103, 78.0164815986572, 62220.6482459281], \"coefficient_uncertainties\": [0.000000520114, 0.000000197045, 0.0000121466, 0.0000877165, 0.000134885, 0.000306535]}, \"moid_data\": {\"Mars\": null, \"Earth\": null, \"Venus\": null, \"Jupiter\": null}, \"epoch_data\": {\"epoch\": 61000.0, \"timeform\": \"MJD\", \"timesystem\": \"TDT\"}, \"system_data\": {\"eph\": \"DE431\", \"refsys\": \"Ecliptic\", \"refframe\": \"ICRF\", \"force_model\": \"????\", \"EclipticObliquityArcseconds\": \"84381.448\"}, \"software_data\": {\"mpcorb_version\": \"0.4\", \"fitting_datetime\": \"2026-02-22T18:00:20.905711+00:00\", \"fitting_software_name\": \"orbfit\", \"fitting_software_version\": \"1.0\", \"mpcorb_creation_datetime\": \"2026-02-22 18:00:21\"}, \"categorization\": {\"orbit_type_int\": 11, \"orbit_type_str\": \"Main Belt\", \"object_type_int\": 0, \"object_type_str\": \"Minor Planet\", \"orbit_subtype_int\": null, \"orbit_subtype_str\": \"\"}, \"magnitude_data\": {\"G\": 0.15, \"H\": 17.935, \"G1\": null, \"G2\": null, \"G12\": null, \"photometric_model\": \"????\"}, \"designation_data\": {\"permid\": \"\", \"iau_name\": \"\", \"orbfit_name\": \"2015RA355\", \"designation_count\": 1, \"packed_primary_provisional_designation\": \"K15RZ5A\", \"unpacked_primary_provisional_designation\": \"2015 RA355\", \"packed_secondary_provisional_designations\": [], \"unpacked_secondary_provisional_designations\": []}, \"non_grav_booleans\": {\"non_gravs\": false, \"non_grav_model\": {\"yc\": false, \"srp\": false, \"marsden\": false, \"yabushita\": false, \"yarkovski\": false}, \"non_grav_coefficients\": {\"A1\": false, \"A2\": false, \"A3\": false, \"DT\": false, \"srp\": false, \"yarkovski\": false}}, \"orbit_fit_statistics\": {\"nopp\": 6, \"score1\": 0.0, \"score2\": 0.0, \"U_param\": 0, \"numparams\": 6, \"nobs_radar\": 0, \"nobs_total\": 94, \"snr_below_1\": false, \"snr_below_3\": false, \"nobs_optical\": 94, \"orbit_quality\": \"good\", \"arc_length_sel\": \"2011-2026\", \"nobs_radar_sel\": 0, \"nobs_total_sel\": 94, \"normalized_RMS\": 0.368396, \"arc_length_total\": \"2011-2026\", \"nobs_optical_sel\": 94, \"not_normalized_RMS\": null, \"sig_to_noise_ratio\": [311993.90483531787, 2660920.061288087, 624078.2949980898, 7474275.695160484, 228043.1232220015, 490842.1210679628]}}"
+     }
+    ],
+    "rows": 5
+   },
+   "orbits_has_oid": {
+    "adql": "SELECT oid FROM alerce_tap.lsst_mpc_orbits",
+    "error": "BrokerError: TAP query failed after 2 attempts: Field query: No such field known: column 'oid' could not be located in table metadata"
+   },
+   "orbits_has_ssobjectid": {
+    "adql": "SELECT ssobjectid FROM alerce_tap.lsst_mpc_orbits",
+    "data": [
+     {
+      "ssobjectid": 21165823553581909
+     },
+     {
+      "ssobjectid": 21163637197189197
+     },
+     {
+      "ssobjectid": 21163615974209874
+     },
+     {
+      "ssobjectid": 21164728050529363
+     },
+     {
+      "ssobjectid": 21164728337970497
+     }
+    ],
+    "rows": 5
+   },
+   "sample_mpc_orbits": {
+    "adql": "SELECT a, q, e, i, node, argperi, peri_time, mean_anomaly, period, mean_motion, a_unc, e_unc, i_unc, h, g, earth_moid, arc_length_total, arc_length_sel, nobs_total, nobs_total_sel, nopp, u_param, not_normalized_rms, normalized_rms, epoch_mjd, yarkovsky, yarkovsky_unc, srp, srp_unc, a1, a1_unc, a2, a2_unc, a3, a3_unc, dt, dt_unc FROM alerce_tap.lsst_mpc_orbits",
+    "data": [
+     {
+      "a": 0.0,
+      "a1": 0.0,
+      "a1_unc": 0.0,
+      "a2": 0.0,
+      "a2_unc": 0.0,
+      "a3": 0.0,
+      "a3_unc": 0.0,
+      "a_unc": 0.0,
+      "arc_length_sel": 0.0,
+      "arc_length_total": 0.0,
+      "argperi": 20.0284777698686,
+      "dt": 0.0,
+      "dt_unc": 0.0,
+      "e": 0.112693660770792,
+      "e_unc": 3.47818e-05,
+      "earth_moid": 0.97577,
+      "epoch_mjd": 60600.0,
+      "g": 0.15,
+      "h": 19.442,
+      "i": 10.9280240257648,
+      "i_unc": 0.000206636,
+      "mean_anomaly": 0.0,
+      "mean_motion": 0.0,
+      "nobs_total": 15,
+      "nobs_total_sel": 12,
+      "node": 302.4275358394863,
+      "nopp": 1,
+      "normalized_rms": 0.817763,
+      "not_normalized_rms": 0.0,
+      "peri_time": 60438.4715926361,
+      "period": 0.0,
+      "q": 1.98661612780438,
+      "srp": 0.0,
+      "srp_unc": 0.0,
+      "u_param": 0,
+      "yarkovsky": 0.0,
+      "yarkovsky_unc": 0.0
+     },
+     {
+      "a": 3.39948574691699,
+      "a1": 0.0,
+      "a1_unc": 0.0,
+      "a2": 0.0,
+      "a2_unc": 0.0,
+      "a3": 0.0,
+      "a3_unc": 0.0,
+      "a_unc": 1.50528e-08,
+      "arc_length_sel": 12545.147069860996,
+      "arc_length_total": 12545.147069860996,
+      "argperi": 199.6340892564876,
+      "dt": 0.0,
+      "dt_unc": 0.0,
+      "e": 0.094263934914093,
+      "e_unc": 1.3658e-08,
+      "earth_moid": 0.0,
+      "epoch_mjd": 61000.0,
+      "g": 0.15,
+      "h": 14.777,
+      "i": 10.3399193855167,
+      "i_unc": 1.73662e-06,
+      "mean_anomaly": 277.4391233809678,
+      "mean_motion": 0.15724767647465518,
+      "nobs_total": 600,
+      "nobs_total_sel": 582,
+      "node": 54.8119262028571,
+      "nopp": 19,
+      "normalized_rms": 0.939057,
+      "not_normalized_rms": 0.0,
+      "peri_time": 61525.0371800078,
+      "period": 2289.3819996,
+      "q": 3.07903684372822,
+      "srp": 0.0,
+      "srp_unc": 0.0,
+      "u_param": 0,
+      "yarkovsky": 0.0,
+      "yarkovsky_unc": 0.0
+     },
+     {
+      "a": 2.3767822537696546,
+      "a1": 0.0,
+      "a1_unc": 0.0,
+      "a2": 0.0,
+      "a2_unc": 0.0,
+      "a3": 0.0,
+      "a3_unc": 0.0,
+      "a_unc": 3.20354e-09,
+      "arc_length_sel": 12548.012413055996,
+      "arc_length_total": 12548.012413055996,
+      "argperi": 106.9784390185504,
+      "dt": 0.0,
+      "dt_unc": 0.0,
+      "e": 0.215486852598341,
+      "e_unc": 1.16023e-08,
+      "earth_moid": 0.0,
+      "epoch_mjd": 61000.0,
+      "g": 0.15,
+      "h": 16.884,
+      "i": 7.0698956889631,
+      "i_unc": 1.22819e-06,
+      "mean_anomaly": 139.0600052507692,
+      "mean_motion": 0.26897999406650847,
+      "nobs_total": 636,
+      "nobs_total_sel": 625,
+      "node": 234.8799141490903,
+      "nopp": 18,
+      "normalized_rms": 0.785685,
+      "not_normalized_rms": 0.0,
+      "peri_time": 60483.0098582871,
+      "period": 1338.38950086,
+      "q": 1.86461692659324,
+      "srp": 0.0,
+      "srp_unc": 0.0,
+      "u_param": 0,
+      "yarkovsky": 0.0,
+      "yarkovsky_unc": 0.0
+     },
+     {
+      "a": 3.031483955505346,
+      "a1": null,
+      "a1_unc": null,
+      "a2": null,
+      "a2_unc": null,
+      "a3": null,
+      "a3_unc": null,
+      "a_unc": 3.49865e-08,
+      "arc_length_sel": 4094.6934094099997,
+      "arc_length_total": 4094.6934094099997,
+      "argperi": 231.4767175055801,
+      "dt": null,
+      "dt_unc": null,
+      "e": 0.044543794746893,
+      "e_unc": 9.33804e-08,
+      "earth_moid": null,
+      "epoch_mjd": 61000.0,
+      "g": 0.15,
+      "h": 17.424,
+      "i": 9.5974652110896,
+      "i_unc": 6.48102e-06,
+      "mean_anomaly": 321.7683877669136,
+      "mean_motion": 0.18673303798611746,
+      "nobs_total": 55,
+      "nobs_total_sel": 55,
+      "node": 307.8644093286986,
+      "nopp": 5,
+      "normalized_rms": 0.895299,
+      "not_normalized_rms": null,
+      "peri_time": 61204.7394111154,
+      "period": 1927.88594821,
+      "q": 2.89645015641282,
+      "srp": null,
+      "srp_unc": null,
+      "u_param": 0,
+      "yarkovsky": null,
+      "yarkovsky_unc": null
+     },
+     {
+      "a": 2.654488939109488,
+      "a1": null,
+      "a1_unc": null,
+      "a2": null,
+      "a2_unc": null,
+      "a3": null,
+      "a3_unc": null,
+      "a_unc": 4.5435e-08,
+      "arc_length_sel": 5237.633987002998,
+      "arc_length_total": 5237.633987002998,
+      "argperi": 78.0164815986572,
+      "dt": null,
+      "dt_unc": null,
+      "e": 0.200644587860762,
+      "e_unc": 1.97045e-07,
+      "earth_moid": null,
+      "epoch_mjd": 61000.0,
+      "g": 0.15,
+      "h": 17.935,
+      "i": 12.2886495605381,
+      "i_unc": 1.21466e-05,
+      "mean_anomaly": 81.8217150636557,
+      "mean_motion": 0.2278938964318062,
+      "nobs_total": 94,
+      "nobs_total_sel": 94,
+      "node": 315.051082916103,
+      "nopp": 6,
+      "normalized_rms": 0.368396,
+      "not_normalized_rms": null,
+      "peri_time": 62220.6482459281,
+      "period": 1579.68249978,
+      "q": 2.12188009994091,
+      "srp": null,
+      "srp_unc": null,
+      "u_param": 0,
+      "yarkovsky": null,
+      "yarkovsky_unc": null
+     },
+     {
+      "a": 2.754127209265016,
+      "a1": 0.0,
+      "a1_unc": 0.0,
+      "a2": 0.0,
+      "a2_unc": 0.0,
+      "a3": 0.0,
+      "a3_unc": 0.0,
+      "a_unc": 6.65415e-09,
+      "arc_length_sel": 8887.126514722002,
+      "arc_length_total": 8887.126514722002,
+      "argperi": 342.6937341215461,
+      "dt": 0.0,
+      "dt_unc": 0.0,
+      "e": 0.199890923125404,
+      "e_unc": 5.16257e-08,
+      "earth_moid": 0.0,
+      "epoch_mjd": 61000.0,
+      "g": 0.15,
+      "h": 18.245,
+      "i": 5.5919663411681,
+      "i_unc": 4.86891e-06,
+      "mean_anomaly": 68.5212137693349,
+      "mean_motion": 0.2156393828073135,
+      "nobs_total": 100,
+      "nobs_total_sel": 93,
+      "node": 79.832967604955,
+      "nopp": 7,
+      "normalized_rms": 0.925489,
+      "not_normalized_rms": 0.0,
+      "peri_time": 62351.6955132938,
+      "period": 1669.45386002,
+      "q": 2.20360217900024,
+      "srp": 0.0,
+      "srp_unc": 0.0,
+      "u_param": 0,
+      "yarkovsky": 0.0,
+      "yarkovsky_unc": 0.0
+     },
+     {
+      "a": 0.0,
+      "a1": 0.0,
+      "a1_unc": 0.0,
+      "a2": 0.0,
+      "a2_unc": 0.0,
+      "a3": 0.0,
+      "a3_unc": 0.0,
+      "a_unc": 0.0,
+      "arc_length_sel": 0.0,
+      "arc_length_total": 0.0,
+      "argperi": 208.9341756794721,
+      "dt": 0.0,
+      "dt_unc": 0.0,
+      "e": 0.151529999914166,
+      "e_unc": 1.69293e-07,
+      "earth_moid": 1.63263,
+      "epoch_mjd": 60600.0,
+      "g": 0.15,
+      "h": 17.408,
+      "i": 18.9902058425027,
+      "i_unc": 1.98149e-05,
+      "mean_anomaly": 0.0,
+      "mean_motion": 0.0,
+      "nobs_total": 52,
+      "nobs_total_sel": 52,
+      "node": 170.4061387165357,
+      "nopp": 6,
+      "normalized_rms": 0.510742,
+      "not_normalized_rms": 0.0,
+      "peri_time": 60452.0541766926,
+      "period": 0.0,
+      "q": 2.6195443704608,
+      "srp": 0.0,
+      "srp_unc": 0.0,
+      "u_param": 0,
+      "yarkovsky": 0.0,
+      "yarkovsky_unc": 0.0
+     },
+     {
+      "a": 3.168369391453284,
+      "a1": 0.0,
+      "a1_unc": 0.0,
+      "a2": 0.0,
+      "a2_unc": 0.0,
+      "a3": 0.0,
+      "a3_unc": 0.0,
+      "a_unc": 2.11627e-08,
+      "arc_length_sel": 6172.213937082998,
+      "arc_length_total": 6172.213937082998,
+      "argperi": 37.8927549439483,
+      "dt": 0.0,
+      "dt_unc": 0.0,
+      "e": 0.078071420720332,
+      "e_unc": 3.37774e-08,
+      "earth_moid": 0.0,
+      "epoch_mjd": 61000.0,
+      "g": 0.15,
+      "h": 16.714,
+      "i": 13.4833436603438,
+      "i_unc": 4.2746e-06,
+      "mean_anomaly": 81.5736102198956,
+      "mean_motion": 0.17476334971272614,
+      "nobs_total": 132,
+      "nobs_total_sel": 127,
+      "node": 29.9635085485553,
+      "nopp": 10,
+      "normalized_rms": 1.03802,
+      "not_normalized_rms": 0.0,
+      "peri_time": 62593.1623549111,
+      "period": 2059.92847237,
+      "q": 2.92101029169571,
+      "srp": 0.0,
+      "srp_unc": 0.0,
+      "u_param": 0,
+      "yarkovsky": 0.0,
+      "yarkovsky_unc": 0.0
+     },
+     {
+      "a": 3.1831591477093535,
+      "a1": 0.0,
+      "a1_unc": 0.0,
+      "a2": 0.0,
+      "a2_unc": 0.0,
+      "a3": 0.0,
+      "a3_unc": 0.0,
+      "a_unc": 8.13606e-09,
+      "arc_length_sel": 7538.053794722003,
+      "arc_length_total": 7538.053794722003,
+      "argperi": 224.5809043546398,
+      "dt": 0.0,
+      "dt_unc": 0.0,
+      "e": 0.058701801222376,
+      "e_unc": 1.54056e-08,
+      "earth_moid": 0.0,
+      "epoch_mjd": 61000.0,
+      "g": 0.15,
+      "h": 15.539,
+      "i": 10.430314993256,
+      "i_unc": 1.52676e-06,
+      "mean_anomaly": 152.3356637627155,
+      "mean_motion": 0.17354677401107163,
+      "nobs_total": 537,
+      "nobs_total_sel": 513,
+      "node": 140.9114042954187,
+      "nopp": 17,
+      "normalized_rms": 0.936489,
+      "not_normalized_rms": 0.0,
+      "peri_time": 62196.5900110853,
+      "period": 2074.36872308,
+      "q": 2.99630197216133,
+      "srp": 0.0,
+      "srp_unc": 0.0,
+      "u_param": 0,
+      "yarkovsky": 0.0,
+      "yarkovsky_unc": 0.0
+     },
+     {
+      "a": 2.2544925542420287,
+      "a1": 0.0,
+      "a1_unc": 0.0,
+      "a2": 0.0,
+      "a2_unc": 0.0,
+      "a3": 0.0,
+      "a3_unc": 0.0,
+      "a_unc": 3.47731e-09,
+      "arc_length_sel": 8777.237326272998,
+      "arc_length_total": 8777.237326272998,
+      "argperi": 311.379601739568,
+      "dt": 0.0,
+      "dt_unc": 0.0,
+      "e": 0.172701946511025,
+      "e_unc": 1.7826e-08,
+      "earth_moid": 0.0,
+      "epoch_mjd": 61000.0,
+      "g": 0.15,
+      "h": 17.235,
+      "i": 6.2590077231494,
+      "i_unc": 1.82503e-06,
+      "mean_anomaly": 90.9404420299623,
+      "mean_motion": 0.29115943362519153,
+      "nobs_total": 447,
+      "nobs_total_sel": 435,
+      "node": 87.0420808032956,
+      "nopp": 15,
+      "normalized_rms": 0.83398,
+      "not_normalized_rms": 0.0,
+      "peri_time": 61924.0969960025,
+      "period": 1236.4359812,
+      "q": 1.86513730172982,
+      "srp": 0.0,
+      "srp_unc": 0.0,
+      "u_param": 0,
+      "yarkovsky": 0.0,
+      "yarkovsky_unc": 0.0
+     }
+    ],
+    "rows": 10
+   },
+   "sample_ss_detection": {
+    "adql": "SELECT diasourceid, ssobjectid, designation, ecllambda, eclbeta, gallon, gallat, elongation, phaseangle, toporange, toporangerate, heliorange, heliorangerate, ephra, ephdec, ephvmag, ephrate, ephratera, ephratedec, ephoffset, ephoffsetra, ephoffsetdec, ephoffsetalongtrack, ephoffsetcrosstrack FROM alerce_tap.lsst_ss_detection",
+    "error": "BrokerError: TAP query failed after 2 attempts: Field query: No such field known: column 'diasourceid' could not be located in table metadata"
+   },
+   "ss_object_columns": {
+    "adql": "SELECT column_name, datatype FROM TAP_SCHEMA.columns WHERE table_name = 'alerce_tap.lsst_ss_object' ORDER BY column_name",
+    "data": [
+     {
+      "column_name": "arc",
+      "datatype": "float"
+     },
+     {
+      "column_name": "created_date",
+      "datatype": "char"
+     },
+     {
+      "column_name": "designation",
+      "datatype": "char"
+     },
+     {
+      "column_name": "extendednessmax",
+      "datatype": "float"
+     },
+     {
+      "column_name": "extendednessmedian",
+      "datatype": "float"
+     },
+     {
+      "column_name": "extendednessmin",
+      "datatype": "float"
+     },
+     {
+      "column_name": "firstobservationmjdtai",
+      "datatype": "double"
+     },
+     {
+      "column_name": "g_chi2",
+      "datatype": "float"
+     },
+     {
+      "column_name": "g_g12",
+      "datatype": "float"
+     },
+     {
+      "column_name": "g_g12err",
+      "datatype": "float"
+     },
+     {
+      "column_name": "g_h",
+      "datatype": "float"
+     },
+     {
+      "column_name": "g_h_g_g12_cov",
+      "datatype": "float"
+     },
+     {
+      "column_name": "g_herr",
+      "datatype": "float"
+     },
+     {
+      "column_name": "g_nobs",
+      "datatype": "int"
+     },
+     {
+      "column_name": "g_nobsused",
+      "datatype": "int"
+     },
+     {
+      "column_name": "g_phaseanglemax",
+      "datatype": "float"
+     },
+     {
+      "column_name": "g_phaseanglemin",
+      "datatype": "float"
+     },
+     {
+      "column_name": "g_slope_fit_failed",
+      "datatype": "boolean"
+     },
+     {
+      "column_name": "i_chi2",
+      "datatype": "float"
+     },
+     {
+      "column_name": "i_g12",
+      "datatype": "float"
+     },
+     {
+      "column_name": "i_g12err",
+      "datatype": "float"
+     },
+     {
+      "column_name": "i_h",
+      "datatype": "float"
+     },
+     {
+      "column_name": "i_h_i_g12_cov",
+      "datatype": "float"
+     },
+     {
+      "column_name": "i_herr",
+      "datatype": "float"
+     },
+     {
+      "column_name": "i_nobs",
+      "datatype": "int"
+     },
+     {
+      "column_name": "i_nobsused",
+      "datatype": "int"
+     },
+     {
+      "column_name": "i_phaseanglemax",
+      "datatype": "float"
+     },
+     {
+      "column_name": "i_phaseanglemin",
+      "datatype": "float"
+     },
+     {
+      "column_name": "i_slope_fit_failed",
+      "datatype": "boolean"
+     },
+     {
+      "column_name": "moidearth",
+      "datatype": "float"
+     },
+     {
+      "column_name": "moidearthdeltav",
+      "datatype": "float"
+     },
+     {
+      "column_name": "moideartheclipticlongitude",
+      "datatype": "float"
+     },
+     {
+      "column_name": "moidearthtrueanomaly",
+      "datatype": "float"
+     },
+     {
+      "column_name": "moidearthtrueanomalyobject",
+      "datatype": "float"
+     },
+     {
+      "column_name": "nobs",
+      "datatype": "int"
+     },
+     {
+      "column_name": "oid",
+      "datatype": "long"
+     },
+     {
+      "column_name": "r_chi2",
+      "datatype": "float"
+     },
+     {
+      "column_name": "r_g12",
+      "datatype": "float"
+     },
+     {
+      "column_name": "r_g12err",
+      "datatype": "float"
+     },
+     {
+      "column_name": "r_h",
+      "datatype": "float"
+     },
+     {
+      "column_name": "r_h_r_g12_cov",
+      "datatype": "float"
+     },
+     {
+      "column_name": "r_herr",
+      "datatype": "float"
+     },
+     {
+      "column_name": "r_nobs",
+      "datatype": "int"
+     },
+     {
+      "column_name": "r_nobsused",
+      "datatype": "int"
+     },
+     {
+      "column_name": "r_phaseanglemax",
+      "datatype": "float"
+     },
+     {
+      "column_name": "r_phaseanglemin",
+      "datatype": "float"
+     },
+     {
+      "column_name": "r_slope_fit_failed",
+      "datatype": "boolean"
+     },
+     {
+      "column_name": "tisserand_j",
+      "datatype": "float"
+     },
+     {
+      "column_name": "u_chi2",
+      "datatype": "float"
+     },
+     {
+      "column_name": "u_g12",
+      "datatype": "float"
+     },
+     {
+      "column_name": "u_g12err",
+      "datatype": "float"
+     },
+     {
+      "column_name": "u_h",
+      "datatype": "float"
+     },
+     {
+      "column_name": "u_h_u_g12_cov",
+      "datatype": "float"
+     },
+     {
+      "column_name": "u_herr",
+      "datatype": "float"
+     },
+     {
+      "column_name": "u_nobs",
+      "datatype": "int"
+     },
+     {
+      "column_name": "u_nobsused",
+      "datatype": "int"
+     },
+     {
+      "column_name": "u_phaseanglemax",
+      "datatype": "float"
+     },
+     {
+      "column_name": "u_phaseanglemin",
+      "datatype": "float"
+     },
+     {
+      "column_name": "u_slope_fit_failed",
+      "datatype": "boolean"
+     },
+     {
+      "column_name": "y_chi2",
+      "datatype": "float"
+     },
+     {
+      "column_name": "y_g12",
+      "datatype": "float"
+     },
+     {
+      "column_name": "y_g12err",
+      "datatype": "float"
+     },
+     {
+      "column_name": "y_h",
+      "datatype": "float"
+     },
+     {
+      "column_name": "y_h_y_g12_cov",
+      "datatype": "float"
+     },
+     {
+      "column_name": "y_herr",
+      "datatype": "float"
+     },
+     {
+      "column_name": "y_nobs",
+      "datatype": "int"
+     },
+     {
+      "column_name": "y_nobsused",
+      "datatype": "int"
+     },
+     {
+      "column_name": "y_phaseanglemax",
+      "datatype": "float"
+     },
+     {
+      "column_name": "y_phaseanglemin",
+      "datatype": "float"
+     },
+     {
+      "column_name": "y_slope_fit_failed",
+      "datatype": "boolean"
+     },
+     {
+      "column_name": "z_chi2",
+      "datatype": "float"
+     },
+     {
+      "column_name": "z_g12",
+      "datatype": "float"
+     },
+     {
+      "column_name": "z_g12err",
+      "datatype": "float"
+     },
+     {
+      "column_name": "z_h",
+      "datatype": "float"
+     },
+     {
+      "column_name": "z_h_z_g12_cov",
+      "datatype": "float"
+     },
+     {
+      "column_name": "z_herr",
+      "datatype": "float"
+     },
+     {
+      "column_name": "z_nobs",
+      "datatype": "int"
+     },
+     {
+      "column_name": "z_nobsused",
+      "datatype": "int"
+     },
+     {
+      "column_name": "z_phaseanglemax",
+      "datatype": "float"
+     },
+     {
+      "column_name": "z_phaseanglemin",
+      "datatype": "float"
+     },
+     {
+      "column_name": "z_slope_fit_failed",
+      "datatype": "boolean"
+     }
+    ],
+    "rows": 81
+   },
+   "ss_offset_with_good_orbit": {
+    "adql": "SELECT ss.designation, ss.ephoffset, ss.ephoffsetalongtrack, o.normalized_rms, o.arc_length_total, o.nopp, o.h FROM alerce_tap.lsst_ss_detection AS ss JOIN alerce_tap.lsst_mpc_orbits AS o ON o.ssobjectid = ss.ssobjectid WHERE o.normalized_rms < 1.5 AND o.nopp >= 3",
+    "data": [
+     {
+      "arc_length_total": 11843.225840834006,
+      "designation": "J97L01J",
+      "ephoffset": 0.044594887644052505,
+      "ephoffsetalongtrack": null,
+      "h": 16.124,
+      "nopp": 21,
+      "normalized_rms": 0.875138
+     },
+     {
+      "arc_length_total": 7284.079273102002,
+      "designation": "K16Cd3G",
+      "ephoffset": 0.1823049783706665,
+      "ephoffsetalongtrack": null,
+      "h": 17.725,
+      "nopp": 6,
+      "normalized_rms": 0.429596
+     },
+     {
+      "arc_length_total": 7824.581464004999,
+      "designation": "K04RW1B",
+      "ephoffset": 0.06140666455030441,
+      "ephoffsetalongtrack": null,
+      "h": 17.865,
+      "nopp": 13,
+      "normalized_rms": 0.724194
+     },
+     {
+      "arc_length_total": 8572.847538830994,
+      "designation": "K02T50P",
+      "ephoffset": 0.03805932030081749,
+      "ephoffsetalongtrack": null,
+      "h": 15.737,
+      "nopp": 15,
+      "normalized_rms": 0.749122
+     },
+     {
+      "arc_length_total": 9670.981336295996,
+      "designation": "J99RQ0G",
+      "ephoffset": 0.0215105302631855,
+      "ephoffsetalongtrack": null,
+      "h": 17.516,
+      "nopp": 9,
+      "normalized_rms": 0.865941
+     },
+     {
+      "arc_length_total": 8777.032936655,
+      "designation": "K16ED4N",
+      "ephoffset": 0.015547123737633228,
+      "ephoffsetalongtrack": null,
+      "h": 18.222,
+      "nopp": 12,
+      "normalized_rms": 0.839594
+     },
+     {
+      "arc_length_total": 6330.259513795995,
+      "designation": "K09S98A",
+      "ephoffset": 0.049134884029626846,
+      "ephoffsetalongtrack": null,
+      "h": 14.034,
+      "nopp": 15,
+      "normalized_rms": 0.775536
+     },
+     {
+      "arc_length_total": 6294.011864722002,
+      "designation": "K21F31U",
+      "ephoffset": 0.06825093924999237,
+      "ephoffsetalongtrack": null,
+      "h": 16.822,
+      "nopp": 13,
+      "normalized_rms": 0.929173
+     },
+     {
+      "arc_length_total": 5720.184038610995,
+      "designation": "K20B93Q",
+      "ephoffset": 0.062229130417108536,
+      "ephoffsetalongtrack": null,
+      "h": 17.003,
+      "nopp": 8,
+      "normalized_rms": 0.39038
+     },
+     {
+      "arc_length_total": 5176.223886945,
+      "designation": "K14N97T",
+      "ephoffset": 0.03265399485826492,
+      "ephoffsetalongtrack": null,
+      "h": 18.048,
+      "nopp": 9,
+      "normalized_rms": 0.421722
+     },
+     {
+      "arc_length_total": 0.0,
+      "designation": "K01N02A",
+      "ephoffset": 0.06743215024471283,
+      "ephoffsetalongtrack": null,
+      "h": 17.126,
+      "nopp": 5,
+      "normalized_rms": 0.582245
+     },
+     {
+      "arc_length_total": 5381.861379352003,
+      "designation": "K16V39R",
+      "ephoffset": 0.055595964193344116,
+      "ephoffsetalongtrack": null,
+      "h": 17.707,
+      "nopp": 7,
+      "normalized_rms": 0.845376
+     },
+     {
+      "arc_length_total": 9847.791197487997,
+      "designation": "K01SN0P",
+      "ephoffset": 0.01900291070342064,
+      "ephoffsetalongtrack": null,
+      "h": 15.026,
+      "nopp": 21,
+      "normalized_rms": 0.895573
+     },
+     {
+      "arc_length_total": 6743.167476295996,
+      "designation": "K07R77M",
+      "ephoffset": 0.01616979017853737,
+      "ephoffsetalongtrack": null,
+      "h": 16.094,
+      "nopp": 13,
+      "normalized_rms": 0.772711
+     },
+     {
+      "arc_length_total": 6185.073309815,
+      "designation": "K10R99J",
+      "ephoffset": 0.04748765379190445,
+      "ephoffsetalongtrack": null,
+      "h": 17.126,
+      "nopp": 12,
+      "normalized_rms": 0.906718
+     },
+     {
+      "arc_length_total": 8128.044938009005,
+      "designation": "K10RF4R",
+      "ephoffset": 0.04880676046013832,
+      "ephoffsetalongtrack": null,
+      "h": 18.424,
+      "nopp": 10,
+      "normalized_rms": 0.840302
+     },
+     {
+      "arc_length_total": 6690.104596295995,
+      "designation": "K17A17X",
+      "ephoffset": 0.045383255928754807,
+      "ephoffsetalongtrack": null,
+      "h": 17.471,
+      "nopp": 8,
+      "normalized_rms": 0.75277
+     },
+     {
+      "arc_length_total": 8992.031826655,
+      "designation": "K01N16G",
+      "ephoffset": 0.026260025799274445,
+      "ephoffsetalongtrack": null,
+      "h": 17.03,
+      "nopp": 12,
+      "normalized_rms": 0.942812
+     },
+     {
+      "arc_length_total": 12620.975556945,
+      "designation": "J91P11F",
+      "ephoffset": 0.007153455168008804,
+      "ephoffsetalongtrack": null,
+      "h": 13.578,
+      "nopp": 24,
+      "normalized_rms": 0.721971
+     },
+     {
+      "arc_length_total": 7130.009622535001,
+      "designation": "K06SG4O",
+      "ephoffset": 0.0580710843205452,
+      "ephoffsetalongtrack": null,
+      "h": 15.631,
+      "nopp": 13,
+      "normalized_rms": 0.951196
+     }
+    ],
+    "rows": 20
+   },
+   "tables": {
+    "adql": "SELECT table_name FROM TAP_SCHEMA.tables",
+    "data": [
+     {
+      "table_name": "tap_schema.schemas"
+     },
+     {
+      "table_name": "tap_schema.tables"
+     },
+     {
+      "table_name": "tap_schema.columns"
+     },
+     {
+      "table_name": "tap_schema.keys"
+     },
+     {
+      "table_name": "tap_schema.key_columns"
+     },
+     {
+      "table_name": "tap_schema.groups"
+     },
+     {
+      "table_name": "alerce_tap.object"
+     },
+     {
+      "table_name": "alerce_tap.ztf_object"
+     },
+     {
+      "table_name": "alerce_tap.lsst_dia_object"
+     },
+     {
+      "table_name": "alerce_tap.lsst_ss_object"
+     },
+     {
+      "table_name": "alerce_tap.lsst_mpc_orbits"
+     },
+     {
+      "table_name": "alerce_tap.detection"
+     },
+     {
+      "table_name": "alerce_tap.ztf_detection"
+     },
+     {
+      "table_name": "alerce_tap.lsst_detection"
+     },
+     {
+      "table_name": "alerce_tap.lsst_ss_detection"
+     },
+     {
+      "table_name": "alerce_tap.forced_photometry"
+     },
+     {
+      "table_name": "alerce_tap.ztf_forced_photometry"
+     },
+     {
+      "table_name": "alerce_tap.lsst_forced_photometry"
+     },
+     {
+      "table_name": "alerce_tap.ztf_non_detection"
+     },
+     {
+      "table_name": "alerce_tap.ztf_ss"
+     },
+     {
+      "table_name": "alerce_tap.ztf_ps1"
+     },
+     {
+      "table_name": "alerce_tap.ztf_gaia"
+     },
+     {
+      "table_name": "alerce_tap.ztf_dataquality"
+     },
+     {
+      "table_name": "alerce_tap.ztf_reference"
+     },
+     {
+      "table_name": "alerce_tap.magstat"
+     },
+     {
+      "table_name": "alerce_tap.classifier"
+     },
+     {
+      "table_name": "alerce_tap.taxonomy"
+     },
+     {
+      "table_name": "alerce_tap.probability"
+     },
+     {
+      "table_name": "alerce_tap.feature"
+     },
+     {
+      "table_name": "alerce_tap.feature_name_lut"
+     },
+     {
+      "table_name": "alerce_tap.feature_version_lut"
+     },
+     {
+      "table_name": "alerce_tap.sid_lut"
+     },
+     {
+      "table_name": "alerce_tap.band"
+     },
+     {
+      "table_name": "alerce_tap.xmatch"
+     },
+     {
+      "table_name": "alerce_tap.catalog_id_lut"
+     },
+     {
+      "table_name": "alerce_tap.allwise"
+     },
+     {
+      "table_name": "alerce_tap.gaiadr3_source"
+     },
+     {
+      "table_name": "ztf.object"
+     },
+     {
+      "table_name": "ztf.detection"
+     },
+     {
+      "table_name": "ztf.forced_photometry"
+     },
+     {
+      "table_name": "ztf.non_detection"
+     },
+     {
+      "table_name": "ztf.magstat"
+     },
+     {
+      "table_name": "ztf.probability"
+     },
+     {
+      "table_name": "ztf.xmatch"
+     },
+     {
+      "table_name": "ztf.allwise"
+     },
+     {
+      "table_name": "ztf.gaia_ztf"
+     },
+     {
+      "table_name": "ztf.ss_ztf"
+     },
+     {
+      "table_name": "ztf.ps1_ztf"
+     },
+     {
+      "table_name": "ztf.reference"
+     },
+     {
+      "table_name": "ztf.dataquality"
+     },
+     {
+      "table_name": "ztf.taxonomy"
+     },
+     {
+      "table_name": "ztf.feature_version"
+     },
+     {
+      "table_name": "ztf.feature"
+     }
+    ],
+    "rows": 53
+   }
+  },
+  "frontier_mjd": null,
+  "null_fractions": {
+   "orbits_a1": {
+    "adql": "SELECT COUNT(*) AS n_total, COUNT(a1) AS n_present, MIN(a1) AS v_min, MAX(a1) AS v_max, AVG(a1) AS v_mean FROM alerce_tap.lsst_mpc_orbits",
+    "rows": [
+     {
+      "n_present": 1812,
+      "n_total": 130909,
+      "v_max": 0.0,
+      "v_mean": 0.0,
+      "v_min": 0.0
+     }
+    ]
+   },
+   "orbits_a2": {
+    "adql": "SELECT COUNT(*) AS n_total, COUNT(a2) AS n_present, MIN(a2) AS v_min, MAX(a2) AS v_max, AVG(a2) AS v_mean FROM alerce_tap.lsst_mpc_orbits",
+    "rows": [
+     {
+      "n_present": 1812,
+      "n_total": 130909,
+      "v_max": 0.0,
+      "v_mean": 0.0,
+      "v_min": 0.0
+     }
+    ]
+   },
+   "orbits_a3": {
+    "adql": "SELECT COUNT(*) AS n_total, COUNT(a3) AS n_present, MIN(a3) AS v_min, MAX(a3) AS v_max, AVG(a3) AS v_mean FROM alerce_tap.lsst_mpc_orbits",
+    "rows": [
+     {
+      "n_present": 1812,
+      "n_total": 130909,
+      "v_max": 0.0,
+      "v_mean": 0.0,
+      "v_min": 0.0
+     }
+    ]
+   },
+   "orbits_dt": {
+    "adql": "SELECT COUNT(*) AS n_total, COUNT(dt) AS n_present, MIN(dt) AS v_min, MAX(dt) AS v_max, AVG(dt) AS v_mean FROM alerce_tap.lsst_mpc_orbits",
+    "rows": [
+     {
+      "n_present": 1812,
+      "n_total": 130909,
+      "v_max": 0.0,
+      "v_mean": 0.0,
+      "v_min": 0.0
+     }
+    ]
+   },
+   "orbits_srp": {
+    "adql": "SELECT COUNT(*) AS n_total, COUNT(srp) AS n_present, MIN(srp) AS v_min, MAX(srp) AS v_max, AVG(srp) AS v_mean FROM alerce_tap.lsst_mpc_orbits",
+    "rows": [
+     {
+      "n_present": 1812,
+      "n_total": 130909,
+      "v_max": 0.0,
+      "v_mean": 0.0,
+      "v_min": 0.0
+     }
+    ]
+   },
+   "orbits_yarkovsky": {
+    "adql": "SELECT COUNT(*) AS n_total, COUNT(yarkovsky) AS n_present, MIN(yarkovsky) AS v_min, MAX(yarkovsky) AS v_max, AVG(yarkovsky) AS v_mean FROM alerce_tap.lsst_mpc_orbits",
+    "rows": [
+     {
+      "n_present": 1822,
+      "n_total": 130909,
+      "v_max": 0.000944492788443881,
+      "v_mean": -2.351833783579737e-06,
+      "v_min": -0.0017078979455992
+     }
+    ]
+   },
+   "ssdet_ephoffset": {
+    "adql": "SELECT COUNT(*) AS n_total, COUNT(ephoffset) AS n_present, MIN(ephoffset) AS v_min, MAX(ephoffset) AS v_max, AVG(ephoffset) AS v_mean FROM alerce_tap.lsst_ss_detection",
+    "rows": [
+     {
+      "n_present": 961558,
+      "n_total": 961558,
+      "v_max": 0.999973714351654,
+      "v_mean": 0.08467370744199258,
+      "v_min": 6.54822142678313e-05
+     }
+    ]
+   },
+   "ssdet_ephoffsetalongtrack": {
+    "adql": "SELECT COUNT(*) AS n_total, COUNT(ephoffsetalongtrack) AS n_present, MIN(ephoffsetalongtrack) AS v_min, MAX(ephoffsetalongtrack) AS v_max, AVG(ephoffsetalongtrack) AS v_mean FROM alerce_tap.lsst_ss_detection",
+    "rows": [
+     {
+      "n_present": 0,
+      "n_total": 961558,
+      "v_max": null,
+      "v_mean": null,
+      "v_min": null
+     }
+    ]
+   },
+   "ssdet_ephoffsetcrosstrack": {
+    "adql": "SELECT COUNT(*) AS n_total, COUNT(ephoffsetcrosstrack) AS n_present, MIN(ephoffsetcrosstrack) AS v_min, MAX(ephoffsetcrosstrack) AS v_max, AVG(ephoffsetcrosstrack) AS v_mean FROM alerce_tap.lsst_ss_detection",
+    "rows": [
+     {
+      "n_present": 0,
+      "n_total": 961558,
+      "v_max": null,
+      "v_mean": null,
+      "v_min": null
+     }
+    ]
+   },
+   "ssdet_ephrate": {
+    "adql": "SELECT COUNT(*) AS n_total, COUNT(ephrate) AS n_present, MIN(ephrate) AS v_min, MAX(ephrate) AS v_max, AVG(ephrate) AS v_mean FROM alerce_tap.lsst_ss_detection",
+    "rows": [
+     {
+      "n_present": 961558,
+      "n_total": 961558,
+      "v_max": 0.0,
+      "v_mean": 0.0,
+      "v_min": 0.0
+     }
+    ]
+   },
+   "ssdet_heliorange": {
+    "adql": "SELECT COUNT(*) AS n_total, COUNT(heliorange) AS n_present, MIN(heliorange) AS v_min, MAX(heliorange) AS v_max, AVG(heliorange) AS v_mean FROM alerce_tap.lsst_ss_detection",
+    "rows": [
+     {
+      "n_present": 961558,
+      "n_total": 961558,
+      "v_max": 89.81432342529297,
+      "v_mean": 1.4399343472422812,
+      "v_min": 6.840028987653568e-09
+     }
+    ]
+   },
+   "ssdet_phaseangle": {
+    "adql": "SELECT COUNT(*) AS n_total, COUNT(phaseangle) AS n_present, MIN(phaseangle) AS v_min, MAX(phaseangle) AS v_max, AVG(phaseangle) AS v_mean FROM alerce_tap.lsst_ss_detection",
+    "rows": [
+     {
+      "n_present": 961558,
+      "n_total": 961558,
+      "v_max": 84.8523178100586,
+      "v_mean": 10.43869819969728,
+      "v_min": 0.020321449264883995
+     }
+    ]
+   },
+   "ssdet_toporange": {
+    "adql": "SELECT COUNT(*) AS n_total, COUNT(toporange) AS n_present, MIN(toporange) AS v_min, MAX(toporange) AS v_max, AVG(toporange) AS v_mean FROM alerce_tap.lsst_ss_detection",
+    "rows": [
+     {
+      "n_present": 961558,
+      "n_total": 961558,
+      "v_max": 89.31945037841797,
+      "v_mean": 1.036546279954589,
+      "v_min": 2.505453067236374e-10
+     }
+    ]
+   }
+  },
+  "reached": true,
+  "schema": {
+   "alerce_tap.detection": [
+    "band",
+    "created_date",
+    "dec",
+    "measurement_id",
+    "mjd",
+    "oid",
+    "ra",
+    "sid"
+   ],
+   "alerce_tap.lsst_mpc_orbits": [
+    "a",
+    "a1",
+    "a1_unc",
+    "a2",
+    "a2_unc",
+    "a3",
+    "a3_unc",
+    "a_unc",
+    "arc_length_sel",
+    "arc_length_total",
+    "argperi",
+    "argperi_unc",
+    "created_at",
+    "created_date",
+    "designation",
+    "dt",
+    "dt_unc",
+    "e",
+    "e_unc",
+    "earth_moid",
+    "epoch_mjd",
+    "fitting_datetime",
+    "g",
+    "h",
+    "i",
+    "i_unc",
+    "mean_anomaly",
+    "mean_anomaly_unc",
+    "mean_motion",
+    "mean_motion_unc",
+    "mpc_orb_jsonb",
+    "nobs_total",
+    "nobs_total_sel",
+    "node",
+    "node_unc",
+    "nopp",
+    "normalized_rms",
+    "not_normalized_rms",
+    "orbit_type_int",
+    "packed_primary_provisional_designation",
+    "peri_time",
+    "peri_time_unc",
+    "period",
+    "period_unc",
+    "q",
+    "q_unc",
+    "srp",
+    "srp_unc",
+    "ssobjectid",
+    "u_param",
+    "unpacked_primary_provisional_designation",
+    "updated_at",
+    "updated_date",
+    "yarkovsky",
+    "yarkovsky_unc"
+   ],
+   "alerce_tap.lsst_ss_detection": [
+    "created_date",
+    "designation",
+    "diadistancerank",
+    "eclbeta",
+    "ecllambda",
+    "elongation",
+    "ephdec",
+    "ephoffset",
+    "ephoffsetalongtrack",
+    "ephoffsetcrosstrack",
+    "ephoffsetdec",
+    "ephoffsetra",
+    "ephra",
+    "ephrate",
+    "ephratedec",
+    "ephratera",
+    "ephvmag",
+    "gallat",
+    "gallon",
+    "helio_vtot",
+    "helio_vx",
+    "helio_vy",
+    "helio_vz",
+    "helio_x",
+    "helio_y",
+    "helio_z",
+    "heliorange",
+    "heliorangerate",
+    "measurement_id",
+    "phaseangle",
+    "ssobjectid",
+    "topo_vtot",
+    "topo_vx",
+    "topo_vy",
+    "topo_vz",
+    "topo_x",
+    "topo_y",
+    "topo_z",
+    "toporange",
+    "toporangerate"
+   ],
+   "alerce_tap.lsst_ss_object": [
+    "arc",
+    "created_date",
+    "designation",
+    "extendednessmax",
+    "extendednessmedian",
+    "extendednessmin",
+    "firstobservationmjdtai",
+    "g_chi2",
+    "g_g12",
+    "g_g12err",
+    "g_h",
+    "g_h_g_g12_cov",
+    "g_herr",
+    "g_nobs",
+    "g_nobsused",
+    "g_phaseanglemax",
+    "g_phaseanglemin",
+    "g_slope_fit_failed",
+    "i_chi2",
+    "i_g12",
+    "i_g12err",
+    "i_h",
+    "i_h_i_g12_cov",
+    "i_herr",
+    "i_nobs",
+    "i_nobsused",
+    "i_phaseanglemax",
+    "i_phaseanglemin",
+    "i_slope_fit_failed",
+    "moidearth",
+    "moidearthdeltav",
+    "moideartheclipticlongitude",
+    "moidearthtrueanomaly",
+    "moidearthtrueanomalyobject",
+    "nobs",
+    "oid",
+    "r_chi2",
+    "r_g12",
+    "r_g12err",
+    "r_h",
+    "r_h_r_g12_cov",
+    "r_herr",
+    "r_nobs",
+    "r_nobsused",
+    "r_phaseanglemax",
+    "r_phaseanglemin",
+    "r_slope_fit_failed",
+    "tisserand_j",
+    "u_chi2",
+    "u_g12",
+    "u_g12err",
+    "u_h",
+    "u_h_u_g12_cov",
+    "u_herr",
+    "u_nobs",
+    "u_nobsused",
+    "u_phaseanglemax",
+    "u_phaseanglemin",
+    "u_slope_fit_failed",
+    "y_chi2",
+    "y_g12",
+    "y_g12err",
+    "y_h",
+    "y_h_y_g12_cov",
+    "y_herr",
+    "y_nobs",
+    "y_nobsused",
+    "y_phaseanglemax",
+    "y_phaseanglemin",
+    "y_slope_fit_failed",
+    "z_chi2",
+    "z_g12",
+    "z_g12err",
+    "z_h",
+    "z_h_z_g12_cov",
+    "z_herr",
+    "z_nobs",
+    "z_nobsused",
+    "z_phaseanglemax",
+    "z_phaseanglemin",
+    "z_slope_fit_failed"
+   ]
+  },
+  "url": "https://tap.alerce.online/tap"
+ },
+ "calls": 38,
+ "momentum_ceiling_calibration": [
+  {
+   "a2_au_day2": 4.62e-14,
+   "amr_m2_kg": 2.5724575544503517e-06,
+   "ceiling_a2_hard": 5.827563453868818e-13,
+   "d_m": 490.0,
+   "epsilon_effective": 0.07927841604080453,
+   "name": "(101955) Bennu",
+   "rho": 1190.0,
+   "source": "JPL fitted A2; da/dt -19.0e-4 au/Myr"
+  },
+  {
+   "a2_au_day2": 1.2848e-13,
+   "amr_m2_kg": 1.6666666666666667e-05,
+   "ceiling_a2_hard": 3.775613611056565e-12,
+   "d_m": 60.0,
+   "epsilon_effective": 0.034028905824408824,
+   "name": "2005 ES70",
+   "rho": 1500.0,
+   "source": "Del Vigna et al. 2018"
+  },
+  {
+   "a2_au_day2": 1.14329e-12,
+   "amr_m2_kg": 0.00025,
+   "ceiling_a2_hard": 5.663420416584847e-11,
+   "d_m": 4.0,
+   "epsilon_effective": 0.020187270516805925,
+   "name": "2009 BD",
+   "rho": 1500.0,
+   "source": "Del Vigna et al. 2018; AMR-fitted"
+  }
+ ],
+ "now_mjd": 61251.52939,
+ "probed_at_utc": "2026-07-30T12:42:19Z",
+ "verdict": "OK"
+}

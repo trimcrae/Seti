@@ -1774,3 +1774,41 @@ def test_bin_trials_survive_the_night_dedup_guard(tmp_path, monkeypatch):
     assert led.bin_trials, "no per-bin trials were recorded at all"
     assert L.bin_key(150.2, -30.4) in led.bin_trials
     assert led.targets["777"].get("local_rate") is not None
+
+
+def test_mixed_polarity_across_nights_cannot_reach_candidate():
+    """Single-mechanism coherence: a reflector flashes, an occulter dips.
+
+    A star doing both on different nights is varying intrinsically — the
+    dominant astrophysical population at these amplitudes, and 3 of 3 of the
+    first candidates the channel promoted on real Rubin data (|a| <= 3%, one at
+    0.013%).  Such targets cap at `interest` and carry a note; they are flagged
+    rather than discarded, because this deliberately forgoes a hypothetical
+    object that both occults and glints.
+    """
+    def _build(polarities):
+        led = L.Ledger()
+        led.n_target_visits, led.n_events_kept = 200000, 200
+        evs = [_event(night=f"n{61500 + 30 * i}", mjd=61500.2 + 30 * i,
+                      polarity=pol) for i, pol in enumerate(polarities)]
+        led.add_night("n61500", evs, target_visits=0, targets_in_footprint=0,
+                      alerts_seen=0)
+        led.apply_visit_history(
+            {"4242": [61500.0 + i for i in range(60)]})
+        return led
+
+    same = _build(["flash", "flash"])
+    same.assess()
+    assert same.targets["4242"]["tier"] in ("candidate", "alarm")
+    assert same.targets["4242"]["polarities"] == ["flash"]
+
+    mixed = _build(["flash", "dip"])
+    mixed.assess()
+    rec = mixed.targets["4242"]
+    assert rec["tier"] == "interest"
+    assert rec["polarities"] == ["dip", "flash"]
+    assert any("mixed_polarity" in n for n in rec["notes"])
+
+    # The trade is reversible: switching the requirement off restores promotion.
+    mixed.assess(require_single_polarity=False)
+    assert mixed.targets["4242"]["tier"] in ("candidate", "alarm")

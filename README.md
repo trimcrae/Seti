@@ -32,6 +32,7 @@ decisive actions live in **[STATUS.md](STATUS.md)**.
 | Narrow absorption lines | **Absorption-mode** analogue (engineered monochromatic absorber) — no published blind search | `seti.spectra.absorb` | `spectra.yml` (`mode: absorption`) |
 | Gaia XP anomalies | Spectral shapes no normal-stellar model reconstructs, in ~220M BP/RP spectra | `seti.xp` | `xp.yml` |
 | **Rubin nightly alert screen** | **Cross-night recurrence of *achromatic* difference-image events on catalogued nearby stars** — flash (specular/S30) and dip (grey occultation) in one funnel, on the world-public LSST stream. Recurrence at a fixed position is the axis no published alert-stream search uses | `seti.tocsin` | `tocsin.yml` (nightly cron), `tocsin-probe.yml` |
+| **Von Neumann probes in the solar system** | **Cross-object *structure* in Rubin's per-detection ephemeris residuals** — `ssSource.ephOffset*` for every known minor planet, gated by the radiation momentum ceiling (a theorem, not a fit) and decided on the *population*: element clustering, orbital-pole coherence, resonance concentration, photometric homogeneity. Self-replication predicts a population, not one weird asteroid. The only channel here with a **real positive control** (J002E3, WT1190F, 2020 SO) | `seti.loom` | `loom.yml` (weekly cron), `loom-probe.yml` |
 
 ## How work happens
 

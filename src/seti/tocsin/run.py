@@ -171,11 +171,25 @@ def probe(cfg=None, out_dir: str | Path | None = None) -> dict:
                             "reached": False}}
     tap = AlerceTAP(conf["acquire"]["alerce_tap_url"],
                     timeout=float(conf["acquire"]["timeout_s"]))
+
+    def checkpoint() -> None:
+        """Write the record after every stage.
+
+        The probe queries a live service with a job timeout above it.  Writing
+        only at the end means a single slow query loses the whole pass ---
+        including the answers that had already been obtained.  Checkpointing
+        costs nothing and makes a timeout partially informative instead of
+        totally wasted.
+        """
+        rec["verdict"] = "OK" if rec["alerce"].get("reached") else "NO_DATA_REACHED"
+        _write_json(out / "probe.json", rec)
+
     try:
         rec["alerce"]["schema"] = tap.describe()
         rec["alerce"]["reached"] = True
     except Exception as exc:                              # noqa: BLE001
         rec["alerce"]["error"] = f"{type(exc).__name__}: {exc}"[:800]
+    checkpoint()
 
     # The diagnostic battery.  A schema dump says a column exists; it does not
     # say whether any row populates it, how current the data are, or what the
@@ -184,11 +198,20 @@ def probe(cfg=None, out_dir: str | Path | None = None) -> dict:
     # small independent queries and captures each error separately.
     if rec["alerce"]["reached"]:
         try:
-            rec["alerce"]["diagnostics"] = tap.diagnostics(
-                _now_mjd(), gaia_catid=int(conf["acquire"].get("gaia_catid", 1)))
+            diag: dict = {}
+            rec["alerce"]["diagnostics"] = diag
+
+            def _record(name, result):
+                diag[name] = result
+                checkpoint()
+
+            tap.diagnostics(_now_mjd(),
+                            gaia_catid=int(conf["acquire"].get("gaia_catid", 1)),
+                            on_result=_record)
         except Exception as exc:                          # noqa: BLE001
             rec["alerce"]["diagnostics"] = {
                 "error": f"{type(exc).__name__}: {exc}"[:800]}
+        checkpoint()
 
     # A tiny live slice of the real query, in both variants.
     if rec["alerce"]["reached"]:
@@ -221,6 +244,7 @@ def probe(cfg=None, out_dir: str | Path | None = None) -> dict:
                 }
             except Exception as exc:                      # noqa: BLE001
                 rec["alerce"][label] = {"error": f"{type(exc).__name__}: {exc}"[:800]}
+            checkpoint()
         try:
             fp = tap.forced_photometry_night(
                 lo, hi, parallax_min_mas=None, sid_diaobject=None, maxrec=20)
@@ -231,8 +255,7 @@ def probe(cfg=None, out_dir: str | Path | None = None) -> dict:
             rec["alerce"]["forced_photometry"] = {
                 "error": f"{type(exc).__name__}: {exc}"[:800]}
 
-    rec["verdict"] = "OK" if rec["alerce"].get("reached") else "NO_DATA_REACHED"
-    _write_json(out / "probe.json", rec)
+    checkpoint()
     print(f"[tocsin] probe verdict={rec['verdict']} -> {out/'probe.json'}")
     return rec
 

@@ -225,7 +225,8 @@ class AlerceTAP:
         return out
 
     # -- diagnostics -------------------------------------------------------
-    def diagnostics(self, now_mjd: float, gaia_catid: int = 1) -> dict:
+    def diagnostics(self, now_mjd: float, gaia_catid: int = 1,
+                    on_result=None) -> dict:
         """A battery of small, independent queries that characterise the service.
 
         Written because the first probe returned an empty night window and the
@@ -254,6 +255,10 @@ class AlerceTAP:
             except Exception as exc:                      # noqa: BLE001
                 out[name] = {"error": f"{type(exc).__name__}: {exc}"[:500],
                              "adql": adql}
+            # Report after every query so a job timeout part-way through still
+            # leaves every answer obtained so far on disk.
+            if on_result is not None:
+                on_result(name, out[name])
 
         # What tables exist at all.
         run("tables", "SELECT table_name FROM TAP_SCHEMA.tables", maxrec=200)
@@ -285,14 +290,17 @@ class AlerceTAP:
             maxrec=50)
 
         # How current is the data?
+        # MIN/MAX on an indexed column is cheap; a full-table COUNT(*) is not,
+        # and on a billion-row detection table it would eat the job timeout for
+        # a number nothing here needs.
         run("mjd_range_detection",
-            "SELECT MIN(mjd) AS mjd_min, MAX(mjd) AS mjd_max, COUNT(*) AS n "
+            "SELECT MIN(mjd) AS mjd_min, MAX(mjd) AS mjd_max "
             "FROM alerce_tap.detection", maxrec=5)
         run("mjd_range_object",
-            "SELECT MIN(firstmjd) AS first_min, MAX(lastmjd) AS last_max, "
-            "COUNT(*) AS n FROM alerce_tap.object", maxrec=5)
+            "SELECT MIN(firstmjd) AS first_min, MAX(lastmjd) AS last_max "
+            "FROM alerce_tap.object", maxrec=5)
         run("mjd_range_lsst_join",
-            "SELECT MIN(d.mjd) AS mjd_min, MAX(d.mjd) AS mjd_max, COUNT(*) AS n "
+            "SELECT MIN(d.mjd) AS mjd_min, MAX(d.mjd) AS mjd_max "
             "FROM alerce_tap.detection AS d "
             "JOIN alerce_tap.lsst_detection AS ld ON d.oid = ld.oid "
             "AND d.sid = ld.sid AND d.measurement_id = ld.measurement_id",

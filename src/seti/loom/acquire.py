@@ -656,12 +656,20 @@ class AlerceSSO:
             where.append(f"d.mjd < {float(mjd_hi)}")
         if nearest_only:
             where.append("ss.diadistancerank = 1")
+        # `mean_offset` is the ranking quantity, not `mean_along`: the along-track
+        # and cross-track columns are NULL for every row in this mirror (measured
+        # 2026-07-30), so a shortlist built on them would be empty and the channel
+        # would report a clean null having screened nothing.  They are still
+        # requested, because if the mirror starts populating them the aggregate is
+        # strictly better than the magnitude, and `_shortlist` prefers them when
+        # they are finite.
         adql = ("SELECT ss.ssobjectid, COUNT(*) AS n_det, "
                 "MIN(d.mjd) AS mjd_min, MAX(d.mjd) AS mjd_max, "
                 "AVG(ss.ephoffsetalongtrack) AS mean_along, "
                 "AVG(ss.ephoffsetcrosstrack) AS mean_cross, "
                 "MAX(ABS(ss.ephoffsetalongtrack)) AS max_abs_along, "
                 "AVG(ss.ephoffset) AS mean_offset, "
+                "MAX(ss.ephoffset) AS max_offset, "
                 "AVG(ss.heliorange) AS mean_heliorange, "
                 "MIN(ss.heliorange) AS min_heliorange, "
                 "MAX(ss.heliorange) AS max_heliorange, "

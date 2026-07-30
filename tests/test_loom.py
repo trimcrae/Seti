@@ -1101,6 +1101,106 @@ def test_unverified_control_values_are_none_not_invented():
 
 
 # ---------------------------------------------------------------------------
+# Calibration against the published population
+# ---------------------------------------------------------------------------
+def test_epsilon_effective_reproduces_the_anchor_objects():
+    """The calibration arithmetic, checked against the three anchor objects."""
+    from seti.loom import calibrate
+
+    for row in nongrav.calibration_table():
+        eps = float(calibrate.epsilon_effective(row["a2_au_day2"], row["d_m"],
+                                                rho_kg_m3=row["rho"]))
+        assert eps == pytest.approx(row["epsilon_effective"], rel=1e-9)
+
+
+def test_diameter_prefers_a_measured_value_over_an_albedo_guess():
+    """The whole point of calibrating on SBDB is removing the albedo assumption."""
+    from seti.loom import calibrate
+
+    d = calibrate.diameter_m([20.0, 20.0], diameter_km=[0.49, float("nan")],
+                             albedo=[0.046, 0.046])
+    assert float(d[0]) == pytest.approx(490.0)
+    # The second falls back to H and the object's own albedo, not a population mean.
+    assert float(d[1]) == pytest.approx(
+        float(nongrav.diameter_m_from_h(20.0, albedo=0.046)))
+
+
+def test_summarise_epsilon_lists_exceedances_rather_than_counting_them():
+    """Each object above the hard ceiling is a claim, so each is named."""
+    from seti.loom import calibrate
+
+    rows = [{"full_name": f"({i}) Ordinary", "A2": 1e-14, "H": 18.0,
+             "diameter": 1.0, "albedo": 0.14} for i in range(40)]
+    # One object with an absurd acceleration for its size.
+    rows.append({"full_name": "(999) Weird", "A2": 1e-9, "H": 18.0,
+                 "diameter": 1.0, "albedo": 0.14})
+    out = calibrate.summarise_epsilon(rows).as_dict()
+    assert out["ok"]
+    assert out["n"] == 41
+    assert out["n_above_hard_1.0"] == 1
+    assert out["exceedances"][0]["name"] == "(999) Weird"
+    assert out["exceedances"][0]["diameter_measured"] is True
+    # And the ordinary population stays well under the realistic envelope.
+    assert out["quantiles"]["p50"] < 0.1
+
+
+def test_summarise_epsilon_degrades_on_a_thin_sample():
+    from seti.loom import calibrate
+
+    out = calibrate.summarise_epsilon([{"A2": 1e-14, "H": 18.0}]).as_dict()
+    assert not out["ok"]
+    assert "non-zero fitted A2" in out["reason"]
+
+
+def test_yarkovsky_unit_is_measured_not_trusted():
+    """Every acceleration in the channel depends on this scale factor.
+
+    A consistent mirror-to-JPL ratio *is* the unit. A scattered one means the two
+    sources are not fitting the same quantity, which is worse than a wrong scale
+    and must be reported differently.
+    """
+    from seti.loom import calibrate
+
+    jpl = [{"pdes": "2016 NB1", "A2": -1.7079e-13},
+           {"pdes": "2004 DH2", "A2": 3.8011e-14},
+           {"pdes": "1982 DB", "A2": 1.4417e-14},
+           {"pdes": "2007 CT26", "A2": -1.3160e-13}]
+    mirror = [{"unpacked_primary_provisional_designation": r["pdes"],
+               "yarkovsky": r["A2"] / 1e-10} for r in jpl]
+    out = calibrate.verify_yarkovsky_unit(mirror, jpl)
+    assert out["verdict"] == "DOCUMENTED_UNIT_CONFIRMED"
+    assert out["implied_unit_au_day2"] == pytest.approx(1e-10, rel=1e-6)
+
+    # A different-but-consistent scale is a correction, and is reported as one.
+    mirror_off = [{"unpacked_primary_provisional_designation": r["pdes"],
+                   "yarkovsky": r["A2"] / 1e-12} for r in jpl]
+    out2 = calibrate.verify_yarkovsky_unit(mirror_off, jpl)
+    assert out2["verdict"] == "UNIT_DIFFERS_FROM_DOCUMENTATION"
+    assert out2["implied_unit_au_day2"] == pytest.approx(1e-12, rel=1e-6)
+
+    # Scatter means the two are not the same quantity at all.
+    mirror_bad = [{"unpacked_primary_provisional_designation": r["pdes"],
+                   "yarkovsky": r["A2"] / (1e-10 * (1 + 3 * k))}
+                  for k, r in enumerate(jpl)]
+    out3 = calibrate.verify_yarkovsky_unit(mirror_bad, jpl)
+    assert out3["verdict"] == "INCONSISTENT_ACROSS_OBJECTS"
+
+    # And too few matches is its own outcome, not a silent pass.
+    out4 = calibrate.verify_yarkovsky_unit(mirror[:1], jpl)
+    assert out4["verdict"] == "TOO_FEW_MATCHES"
+
+
+def test_calibrate_module_imports_without_network():
+    from seti.loom import calibrate
+
+    assert "A2" in calibrate.SBDB_FIELDS
+    assert "diameter" in calibrate.SBDB_FIELDS
+    # More than one constraint form is tried, because the query grammar is not
+    # something to guess at silently.
+    assert len(calibrate.SBDB_CONSTRAINTS) >= 3
+
+
+# ---------------------------------------------------------------------------
 # Config wiring
 # ---------------------------------------------------------------------------
 def test_thresholds_dataclass_matches_config():

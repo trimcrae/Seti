@@ -1,0 +1,150 @@
+name: loom-calibrate
+
+# LOOM calibration --- the two measurements that do NOT depend on survey age
+# (docs/loom.md §3.1).  Both can run today while the residual path waits for a
+# second apparition.
+#
+# 1. THE CEILING'S REALISED EFFICIENCY, ON THE WHOLE PUBLISHED POPULATION.
+#    The momentum ceiling is a theorem, but the statement that "epsilon = 0.1 is a
+#    generous envelope for real thermal recoil" rests on ten objects: three from
+#    the literature (Bennu, 2005 ES70, 2009 BD) and seven measured from the live
+#    ALeRCE mirror.  JPL's Small-Body Database holds a fitted A2 for several
+#    hundred asteroids, most with H and many with a MEASURED diameter and albedo,
+#    so the same quantity can be computed for the entire published population.
+#    That gives the envelope a 99th percentile instead of an argument, and it
+#    shows the TAIL -- which is the regime the gate actually operates in.
+#
+#    Anything above epsilon = 1 there is a dark comet, a badly wrong diameter, or
+#    a fit artefact, and finding out which is a result either way.  Exceedances
+#    are listed object by object rather than counted, because each one is a claim
+#    that sunlight cannot drive it.
+#
+# 2. THE UNIT OF lsst_mpc_orbits.yarkovsky, MEASURED RATHER THAN TRUSTED.
+#    It is *documented* as 1e-10 au/day^2 and every acceleration in this channel
+#    depends on that being true -- read it raw and every object jumps ten orders
+#    of magnitude above every ceiling.  Documentation is not verification.  The
+#    twelve objects in the mirror with a genuine non-zero value are cross-matched
+#    to JPL's own A2 and the ratio MEASURES the scale.  A consistent ratio is the
+#    unit; a scattered one means the two sources are not fitting the same quantity,
+#    which is worse than a wrong scale factor and is reported differently.
+#
+# CREDENTIALS: none.  JPL's SBDB query API and ALeRCE TAP are both public.
+
+on:
+  workflow_dispatch:
+    inputs:
+      out_dir:
+        description: "Override the results directory (blank = results/loom)"
+        required: false
+        default: ""
+  schedule:
+    # 16:20 UTC = 12:20 ET on the first of each month.  Offset from both tocsin
+    # (14:10) and loom (15:40) so the three never contend for the same service.
+    # Monthly, not weekly: the published non-gravitational catalogue changes on
+    # the timescale of papers, not nights.
+    - cron: "20 16 1 * *"
+
+permissions:
+  contents: write
+
+jobs:
+  calibrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Calibrate the ceiling and verify the yarkovsky unit
+        run: |
+          if [ -n "${{ github.event.inputs.out_dir }}" ]; then
+            python -m seti.cli loom-calibrate --out-dir "${{ github.event.inputs.out_dir }}"
+          else
+            python -m seti.cli loom-calibrate
+          fi
+
+      - name: Show what was measured
+        if: always()
+        run: |
+          [ -f results/loom/calibration.json ] && python - <<'PY'
+          import json, pathlib
+          rec = json.loads(pathlib.Path("results/loom/calibration.json").read_text())
+          print("verdict:", rec.get("verdict"))
+          print("headline:", rec.get("headline", "-"))
+
+          print("\n=== SBDB fetch ===")
+          sb = rec.get("sbdb", {})
+          print("  used constraint:", sb.get("used_constraint"), "| rows:", sb.get("n_rows"))
+          for name, a in (sb.get("attempts") or {}).items():
+              print(f"  {name}: status={a.get('status')} rows={a.get('n_rows')} "
+                    f"{a.get('error','')}{str(a.get('body',''))[:120]}")
+
+          print("\n=== ANCHOR BEFORE (what the gate rested on) ===")
+          for r in rec.get("anchor_before", []):
+              print(f"  {r['name']}: eps_eff = {r['epsilon_effective']:.4f}")
+
+          print("\n=== MEASURED EFFICIENCY DISTRIBUTION ===")
+          for label, e in (rec.get("epsilon") or {}).items():
+              if not e.get("ok"):
+                  print(f"  {label}: NOT OK -- {e.get('reason')}")
+                  continue
+              q = e["quantiles"]
+              print(f"  {label} (rho = {e['rho_assumed_kg_m3']:.0f} kg/m^3), "
+                    f"n = {e['n']}")
+              print(f"    median {q.get('p50'):.4g} | p90 {q.get('p90'):.4g} | "
+                    f"p99 {q.get('p99'):.4g} | max {q.get('max'):.4g}")
+              print(f"    above eps=0.1: {e['n_above_realistic_0.1']} | "
+                    f"above eps=1: {e['n_above_hard_1.0']} | "
+                    f"above eps=2: {e['n_above_specular_2.0']}")
+              # Each exceedance is a claim that sunlight cannot drive that object.
+              for x in e.get("exceedances", [])[:15]:
+                  print(f"      {x['name']}: eps={x['epsilon_effective']:.3g} "
+                        f"D={x['diameter_m']:.0f} m "
+                        f"({'measured' if x['diameter_measured'] else 'from H'}) "
+                        f"A2={x['A2_au_day2']:.3g}")
+
+          print("\n=== YARKOVSKY UNIT ===")
+          u = rec.get("yarkovsky_unit", {})
+          print("  verdict:", u.get("verdict"))
+          print(" ", u.get("note", "")[:300])
+          if u.get("n_matched"):
+              print(f"  matched {u['n_matched']} objects | median ratio "
+                    f"{u.get('median_ratio')} | scatter {u.get('fractional_scatter')}")
+              for p in (u.get("pairs") or [])[:12]:
+                  print(f"    {p['designation']}: mirror {p['mirror_yarkovsky']:.4g} "
+                        f"vs JPL {p['jpl_a2_au_day2']:.4g} -> {p['ratio']:.4g}")
+          PY
+
+      - name: Commit the calibration
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # ONE PATHSPEC AT A TIME: `git add` with several pathspecs is atomic, so
+          # a single unmatched glob stages NOTHING and `|| true` swallows it.
+          git add -f -- results/loom/calibration.json || echo "no calibration.json"
+          echo "=== staged ==="
+          git diff --cached --name-only
+          if git diff --cached --quiet; then
+            echo "No calibration changes to commit."
+          else
+            git commit -m "loom: momentum-ceiling calibration on the published A2 population"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: loom-calibration
+          path: results/loom/

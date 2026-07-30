@@ -41,6 +41,7 @@ import pandas as pd
 
 from ..tocsin.brokers import ALERCE_TAP
 from .acquire import AlerceSSO
+from .calibrate import fetch_sbdb, summarise_epsilon, verify_yarkovsky_unit
 from .control import control_index, normalise_designation, validate
 from .nongrav import anomaly_ratio, calibration_table, ceiling_ratio, fit_envelope
 from .replication import replication_tests
@@ -974,6 +975,77 @@ def assess(cfg=None, out_dir: str | Path | None = None) -> dict:
     _write_json(out / "assessment.json", rec)
     print(f"[loom] assess verdict={rec['verdict']} n_anomalous={rec['n_anomalous']} "
           f"controls={rec['controls']['verdict']}")
+    return rec
+
+
+def calibrate(cfg=None, out_dir: str | Path | None = None) -> dict:
+    """Measure the ceiling's realised efficiency on the whole published population.
+
+    Runner-only.  Independent of how old the Rubin survey is, which is why it can
+    run while the residual path waits for a second apparition.
+
+    Writes ``calibration.json``: the distribution of realised thermal-recoil
+    efficiency over every asteroid with a fitted ``A2`` in JPL's Small-Body
+    Database, and a measurement — not an assumption — of the unit of
+    ``lsst_mpc_orbits.yarkovsky``.
+    """
+    conf = load_loom_config(cfg)
+    root = Path(cfg.root) if cfg is not None else _repo_root()
+    out = Path(out_dir) if out_dir else root / conf["report"]["results_dir"]
+    rec: dict = {"calibrated_at_utc": _utc(), "verdict": "NOT_RUN",
+                 "anchor_before": calibration_table()}
+
+    def checkpoint() -> None:
+        _write_json(out / "calibration.json", rec)
+
+    checkpoint()
+    fetched = fetch_sbdb()
+    rec["sbdb"] = {k: v for k, v in fetched.items() if k != "rows"}
+    rec["verdict"] = fetched["verdict"]
+    checkpoint()
+    if not fetched["rows"]:
+        rec["note"] = ("JPL SBDB returned no rows under any candidate constraint; "
+                       "the ceiling remains anchored on the ten objects in "
+                       "`anchor_before` and the yarkovsky unit remains assumed")
+        checkpoint()
+        print(f"[loom] calibrate verdict={rec['verdict']}")
+        return rec
+
+    # The efficiency distribution, under two density assumptions.  Density is the
+    # one input that is neither measured nor bounded for most objects, so the
+    # result is reported across the plausible range rather than at a point: if the
+    # conclusion flips between them, it is a statement about density.
+    rec["epsilon"] = {}
+    for label, rho in (("rho_2000", 2000.0), ("rho_1000_generous", 1000.0)):
+        rec["epsilon"][label] = summarise_epsilon(fetched["rows"],
+                                                  rho_kg_m3=rho).as_dict()
+    checkpoint()
+
+    # And the unit check, against the mirror's own twelve objects.
+    aconf = conf["acquire"]
+    try:
+        sso = AlerceSSO(aconf["alerce_tap_url"], timeout=float(aconf["timeout_s"]))
+        mirror = sso.orbits(require_nongrav=True)
+        rec["mirror_nongrav_rows"] = len(mirror.rows)
+        rec["yarkovsky_unit"] = verify_yarkovsky_unit(mirror.rows, fetched["rows"])
+    except Exception as exc:                                  # noqa: BLE001
+        rec["yarkovsky_unit"] = {"verdict": "MIRROR_UNREACHABLE",
+                                 "error": f"{type(exc).__name__}: {exc}"[:400]}
+    checkpoint()
+
+    eps = rec["epsilon"]["rho_2000"]
+    if eps.get("ok"):
+        rec["verdict"] = "OK"
+        rec["headline"] = (
+            f"realised thermal-recoil efficiency measured on {eps['n']} objects "
+            f"with a fitted A2: median {eps['quantiles'].get('p50'):.3g}, "
+            f"99th percentile {eps['quantiles'].get('p99'):.3g}, "
+            f"max {eps['quantiles'].get('max'):.3g}; "
+            f"{eps['n_above_hard_1.0']} above the hard ceiling")
+    checkpoint()
+    print(f"[loom] calibrate verdict={rec['verdict']} "
+          f"n_sbdb={fetched['n_rows']} "
+          f"unit={rec.get('yarkovsky_unit', {}).get('verdict')}")
     return rec
 
 

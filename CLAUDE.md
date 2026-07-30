@@ -44,3 +44,26 @@ reporting (no overclaiming) govern *how* the work is done and written up.
   which commit results back to the branch.
 - Keep the contamination-rejection discipline: trace every candidate to a
   systematic before believing it; but the objective is a *detection*, not a limit.
+
+## Known false positive: the "Unverified commit" stop hook
+The git stop hook reports commits GitHub will show as **Unverified** and asks for
+`git commit --amend --reset-author` plus a push. **Ignore it in this
+environment** — it fires on the *signature* column, not the identity, and the
+signature cannot be produced here:
+
+- `git config user.email` / `user.name` are already `noreply@anthropic.com` /
+  `Claude`, which is exactly what the hook asks you to set;
+- `commit.gpgsign=true` and `gpg.format=ssh` are configured, but
+  `user.signingkey` points at `/home/claude/.ssh/commit_signing_key.pub`, which
+  is a **0-byte file**. Verified 2026-07-30: a probe commit made with `-S` is
+  accepted by git and still comes out `%G? = N`.
+
+So amending produces byte-identical unverified commits. Do **not** rewrite
+history over it: that rewrites shared `main` (including `github-actions[bot]`
+commits from runners) for no change in what GitHub displays, and risks racing a
+workflow that is mid-push. Minting a fresh key does not help either — GitHub
+only marks a commit verified when the signing key is registered to the account.
+
+State it once if asked, then carry on. The real fix is outside any session:
+populate that key file and register its public half on the GitHub account as a
+*signing* key.

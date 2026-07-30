@@ -107,6 +107,18 @@ class Thresholds:
     # Residual path.
     min_detections_for_drift: int = 8
     min_accel_snr: float = 5.0
+    # A quadratic fitted over a two-week baseline has essentially no leverage on
+    # curvature, so the fitted acceleration is an extrapolation and its formal error
+    # is meaningless.  The first clean run promoted four objects whose residual
+    # series spanned 2 to 29 days and whose implied accelerations were 10^4 to 10^8
+    # times the momentum ceiling -- numbers that are not candidates but fit
+    # blow-ups.  The Rubin solar-system stream was about a month old at the time;
+    # this gate is what makes the channel wait for the data instead of inventing it.
+    min_residual_arc_days: float = 180.0
+    # Two apparitions is the minimum at which an acceleration can be told from an
+    # orbit-fit error at all, and it is what the law-discrimination and
+    # apparition-trend tests need.  The residual path cannot promote below it.
+    min_apparitions_for_promotion: int = 2
     max_timing_correlation: float = 0.5
     min_delta_chi2_law: float = 9.0
     max_sky_variance_explained: float = 0.3
@@ -153,6 +165,7 @@ class ObjectRecord:
     accel_au_day2_residual: float = float("nan")
     accel_snr_residual: float = float("nan")
     ratio_hard_residual: float = float("nan")
+    residual_arc_days: float = float("nan")
     n_detections: int = 0
     mjd_min: float = float("nan")
     mjd_max: float = float("nan")
@@ -319,7 +332,11 @@ def assign_tier(rec: ObjectRecord, th: Thresholds) -> ObjectRecord:
     acceleration.  A magnitude-only promotion would rediscover dark comets, which
     is what the literature already contains.
     """
-    reasons: list[str] = []
+    # ACCUMULATE, never replace.  Reasons recorded earlier -- by `_apply_series`,
+    # which is where the residual path names why it could not test an object -- must
+    # survive into the final record, or the tier says "untestable" with no account
+    # of what was missing.  Replacing this list threw that away.
+    reasons: list[str] = list(rec.reasons)
     # Each channel is gated on ITS OWN parameter's signal-to-noise.  A fitted value
     # without an uncertainty has no signal-to-noise at all, and substituting a
     # default would silently promote it.
@@ -333,13 +350,16 @@ def assign_tier(rec: ObjectRecord, th: Thresholds) -> ObjectRecord:
     rec.score = score
 
     if not _fin(rec.h):
-        rec.tier, rec.reasons = "untestable", ["no_absolute_magnitude"]
+        rec.tier = "untestable"
+        rec.reasons = _dedup([*reasons, "no_absolute_magnitude"])
         return rec
     if not ratios and not _fin(rec.amr_ratio):
-        rec.tier, rec.reasons = "untestable", ["no_acceleration_measurement"]
+        rec.tier = "untestable"
+        why = "no_acceleration_measurement"
         if _fin(rec.a2_au_day2) and not a2_usable:
-            rec.reasons = [f"a2_snr_{rec.a2_snr:.1f}_below_{th.min_snr_a2}"
-                           if _fin(rec.a2_snr) else "no_a2_uncertainty"]
+            why = (f"a2_snr_{rec.a2_snr:.1f}_below_{th.min_snr_a2}"
+                   if _fin(rec.a2_snr) else "no_a2_uncertainty")
+        rec.reasons = _dedup([*reasons, why])
         return rec
 
     # Systematic explanations, evaluated once and reused by every threshold.
@@ -407,8 +427,19 @@ def assign_tier(rec: ObjectRecord, th: Thresholds) -> ObjectRecord:
         reasons.append("above_realistic_thermal_recoil_envelope")
     else:
         rec.tier = "ordinary"
-    rec.reasons = reasons
+    rec.reasons = _dedup(reasons)
     return rec
+
+
+def _dedup(items: list[str]) -> list[str]:
+    """Preserve order, drop repeats.  A reason stated twice is not stated twice."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for x in items:
+        if x not in seen:
+            seen.add(x)
+            out.append(x)
+    return out
 
 
 def screen_orbits(rows: list[dict], th: Thresholds,

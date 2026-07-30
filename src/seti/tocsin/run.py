@@ -550,6 +550,33 @@ def screen_night(cfg=None, lookback_nights: float | None = None,
     summary["counts"].update(verdict.counts)
     summary["notes"].extend(verdict.notes)
 
+    # OBSERVABILITY.  The first live run produced 62 events in which every
+    # single fractional amplitude was untestable, because a wrong Gaia column
+    # name had silently disabled the baseline photometry --- and therefore the
+    # greyness test, this channel's core discriminator.  Nothing in the summary
+    # said so.  These two distributions make that class of failure impossible to
+    # miss: if `baseline_sources` is dominated by anything other than
+    # `rubin_template`, or `bands_per_event` is dominated by 1, the colour test
+    # is not actually running and no result should be believed.
+    base_src: dict[str, int] = {}
+    bands_hist: dict[str, int] = {}
+    grey_tested = 0
+    for ev in verdict.events:
+        for pb in ev.per_band.values():
+            k = str(pb.get("baseline_source", "unknown"))
+            base_src[k] = base_src.get(k, 0) + 1
+        nb = str(len(ev.bands))
+        bands_hist[nb] = bands_hist.get(nb, 0) + 1
+        grey_tested += int(bool(ev.grey_tested))
+    summary["baseline_sources"] = base_src
+    summary["bands_per_event"] = bands_hist
+    summary["greyness_tested_fraction"] = (
+        round(grey_tested / len(verdict.events), 4) if verdict.events else None)
+    if verdict.events and grey_tested == 0:
+        summary["notes"].append(
+            "NO event could be colour-tested: the achromaticity discriminant "
+            "did not run at all this window")
+
     # The denominator: forced photometry on every tracked nearby star tonight.
     try:
         fp = tap.forced_photometry_night(

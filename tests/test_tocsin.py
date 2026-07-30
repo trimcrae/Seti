@@ -56,9 +56,9 @@ def _target(source_id="4242", ra=150.0, dec=-30.0, pmra=0.0, pmdec=0.0,
         "ra_error": 0.02, "dec_error": 0.02,
         "pmra": pmra, "pmdec": pmdec, "pmra_error": 0.03, "pmdec_error": 0.03,
         "parallax": 20.0, "phot_g_mean_mag": 15.0, "bp_rp": 2.5,
-        "mag_u_sdss": mag_g + 1.5, "mag_g_sdss": mag_g, "mag_r_sdss": mag_r,
-        "mag_i_sdss": mag_r - 0.4, "mag_z_sdss": mag_r - 0.6,
-        "mag_y_ps1": mag_r - 0.7,
+        "u_sdss_mag": mag_g + 1.5, "g_sdss_mag": mag_g, "r_sdss_mag": mag_r,
+        "i_sdss_mag": mag_r - 0.4, "z_sdss_mag": mag_r - 0.6,
+        "y_ps1_mag": mag_r - 0.7,
     }
     row.update(kw)
     return row
@@ -224,6 +224,26 @@ def test_parallax_shells_cover_the_distance_limit():
     assert min(lo for lo, _ in shells) == pytest.approx(10.0)
     for lo, hi in shells:
         assert hi > lo
+
+
+def test_gspc_synthetic_magnitude_columns_use_the_real_gaia_names():
+    """Regression: Gaia DR3 names these `<band>_<system>_mag`, not `mag_<band>_<system>`.
+
+    Getting this backwards is silent, not loud: the JOIN errors, acquisition
+    falls back to no synthetic photometry, and every fractional amplitude
+    downstream becomes untestable — which disables the greyness test, i.e. the
+    channel's core discriminator.  The first live run produced 62 events with
+    exactly zero colour tests because of this.
+    """
+    assert T.GSPC_MAG_COLUMN["g"] == "g_sdss_mag"
+    assert T.GSPC_MAG_COLUMN["r"] == "r_sdss_mag"
+    assert T.GSPC_MAG_COLUMN["y"] == "y_ps1_mag"
+    q = T.build_target_adql(10.0, 20.0)
+    assert "s.g_sdss_mag AS g_sdss_mag" in q
+    assert "mag_g_sdss" not in q
+    # The screen must read the same names it asked Gaia for.
+    from seti.tocsin.screen import BASELINE_COLUMN
+    assert BASELINE_COLUMN == T.GSPC_MAG_COLUMN
 
 
 def test_target_adql_has_the_quality_and_footprint_cuts():
@@ -406,7 +426,7 @@ def test_single_band_event_is_kept_but_marked_untested():
 
 def test_absent_baseline_flux_marks_the_amplitude_untestable():
     tg = _targets(_target())
-    tg = tg.drop(columns=[c for c in tg.columns if c.startswith("mag_")])
+    tg = tg.drop(columns=[c for c in tg.columns if c.endswith("_mag")])
     a = _alert()
     a.template_flux_njy = None
     v = screen_alerts([a], tg, Thresholds())

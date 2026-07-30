@@ -42,13 +42,20 @@ GAIA_EPOCH = 2016.0
 # GSPC synthetic band -> LSST alert band.  The u and y mappings are the loosest
 # (SDSS u is bluer and much narrower than LSST u; PS1 y is used for LSST y), so
 # `photometry` consumers should prefer g/r/i/z pairs when a choice exists.
-GSPC_TO_LSST = {
-    "u": "u_sdss",
-    "g": "g_sdss",
-    "r": "r_sdss",
-    "i": "i_sdss",
-    "z": "z_sdss",
-    "y": "y_ps1",
+# GSPC synthetic magnitude column for each LSST band.  The Gaia DR3 datamodel
+# names these `<band>_<system>_mag` (g_sdss_mag, y_ps1_mag, ...) --- NOT
+# `mag_g_sdss`.  Getting this backwards is not a loud failure: the JOIN simply
+# errors, the acquisition falls back to no synthetic photometry, and every
+# fractional amplitude downstream becomes untestable --- which silently disables
+# the greyness test, i.e. this channel's core discriminator.  That is exactly
+# what the first live run did.
+GSPC_MAG_COLUMN = {
+    "u": "u_sdss_mag",
+    "g": "g_sdss_mag",
+    "r": "r_sdss_mag",
+    "i": "i_sdss_mag",
+    "z": "z_sdss_mag",
+    "y": "y_ps1_mag",
 }
 
 _MAS_PER_DEG = 3.6e6
@@ -215,11 +222,7 @@ def build_target_adql(parallax_min_mas: float, parallax_max_mas: float,
     """
     cols = ", ".join(f"g.{c}" for c in _TARGET_COLS)
     if require_synthetic:
-        syn = ", ".join(
-            f"s.{b} AS {b}" for b in
-            ("mag_u_sdss", "mag_g_sdss", "mag_r_sdss", "mag_i_sdss",
-             "mag_z_sdss", "mag_y_ps1")
-        )
+        syn = ", ".join(f"s.{c} AS {c}" for c in GSPC_MAG_COLUMN.values())
         join = ("JOIN gaiadr3.synthetic_photometry_gspc AS s "
                 "ON s.source_id = g.source_id")
         select = f"SELECT TOP {max_rows} {cols}, {syn}"

@@ -1,0 +1,703 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures</title>
+<!--Generated on Wed Jul  8 13:40:42 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+    // Pre-apply spinout-banner dismissal here, before the banner paints, so it
+    // never flashes in only to be hidden later by the deferred arxiv-header.js.
+    // Key matches arxiv-header.js: "arxiv-banner-dismissed:" + data-banner-name.
+    if (localStorage.getItem('arxiv-banner-dismissed:spinout-nonprofit')) {
+      document.documentElement.setAttribute("data-banner-dismissed", "");
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css"><link rel="stylesheet" type="text/css" media="screen"
+  href="/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626"><style>
+  /* Banner pre-dismissal (set above before paint -> no flash-then-hide) and
+     reading-mode chrome hiding. */
+  html[data-banner-dismissed] .ds-announcement { display: none; }
+  html[data-reading-mode="enabled"] .ds-announcement,
+  html[data-reading-mode="enabled"] .ds-site-footer { display: none; }
+  /* Keep the announcement text dark on the Open-Blue band in both colour themes
+     (otherwise it inherits the paper's warm-wash text in dark mode and washes out). */
+  .ds-announcement-text { color: var(--arxiv-ink, #1c1a17); }
+</style>
+<script defer src="/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog><div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement"
+    data-banner-name="spinout-nonprofit">
+    <img class="ds-announcement-glyph" src="/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+    <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+    <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+    <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/"><img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/base/1.0.1/images/arxiv-logo-primary-light.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2607.07413v1">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2607.07413v1"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_abstract"><a href="#abstract1" title="In SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_title">Abstract</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S1" title="In SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">1 </span>Introduction</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S2" title="In SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2 </span>The Detection Window Model</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS1" title="In 2 The Detection Window Model ‣ SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.1 </span>Exponential technological growth</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS2" title="In 2 The Detection Window Model ‣ SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.2 </span>Duration of the detection window</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S3" title="In SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3 </span>Estimating Plausible Values of <math class="ltx_Math" alttext="\tau_{d}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>d</mi></msub><annotation encoding="application/x-tex">\tau_{d}</annotation></semantics></math></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S4" title="In SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4 </span>Caveats</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S5" title="In SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5 </span>Implications for SETI Strategies</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S6" title="In SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">6 </span>Conclusions</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_bibliography"><a href="#bib" title="In SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: CC BY 4.0
+  </a>
+  <div id="watermark-tr">
+arXiv:2607.07413v1 [astro-ph.IM] 08 Jul 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line">
+<div id="p1" class="ltx_para">
+<span id="p1.1" class="ltx_ERROR undefined">\lefttitle</span>
+<p id="p1.2" class="ltx_p">M. A. Garrett
+<span id="p1.2.1" class="ltx_ERROR undefined">\righttitle</span>SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures</p>
+</div>
+<div id="p2" class="ltx_para">
+<span id="p2.1" class="ltx_ERROR undefined">\jnlPage</span>
+<p id="p2.2" class="ltx_p">14
+<span id="p2.2.1" class="ltx_ERROR undefined">\jnlDoiYr</span>2026
+<span id="p2.2.2" class="ltx_ERROR undefined">\doival</span>10.1017/S1743921326XXXXX</p>
+</div>
+<div id="p3" class="ltx_para">
+<span id="p3.1" class="ltx_ERROR undefined">\aopheadtitle</span>
+<p id="p3.2" class="ltx_p">Proceedings IAU Symposium No. 404</p>
+</div>
+<h1 class="ltx_title ltx_title_document">SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Michael A. Garrett
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Jodrell Bank Centre for Astrophysics, Department of Physics &amp; Astronomy, Oxford Road,
+Alan Turing Building, University of Manchester, M13 9PL, UK 
+<br class="ltx_break">email: <span id="id1.1.id1" class="ltx_text ltx_font_typewriter">michael.garrett@manchester.ac.uk</span>
+</span></span></span>
+</div>
+
+<div id="abstract1" class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">The search for extraterrestrial intelligence (SETI) has traditionally framed the detection challenge with a focus on the parameter <math class="ltx_Math" alttext="L" display="inline" intent=":literal"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math> in the Drake equation - the communicative lifetime
+of a civilisation. I argue that the more pertinent quantity is <math class="ltx_Math" alttext="\tau_{d}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>d</mi></msub><annotation encoding="application/x-tex">\tau_{d}</annotation></semantics></math>, the duration
+during which a civilisation produces technosignatures that are <em class="ltx_emph ltx_font_italic">actually detectable by us, now</em>.
+Modelling technological progress as an exponential process,
+we show that <math class="ltx_Math" alttext="\tau_{d}=\alpha^{-1}\ln(K_{\rm max}/K_{\rm min})" display="inline" intent=":literal"><semantics><mrow><msub><mi>τ</mi><mi>d</mi></msub><mo>=</mo><mrow><msup><mi>α</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>ln</mi><mo>⁡</mo><mrow><mo stretchy="false">(</mo><mrow><msub><mi>K</mi><mi>max</mi></msub><mo>/</mo><msub><mi>K</mi><mi>min</mi></msub></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex">\tau_{d}=\alpha^{-1}\ln(K_{\rm max}/K_{\rm min})</annotation></semantics></math>, where <math class="ltx_Math" alttext="\alpha" display="inline" intent=":literal"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math> is the
+rate of technological acceleration and <math class="ltx_Math" alttext="[K_{\rm min},K_{\rm max}]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><msub><mi>K</mi><mi>min</mi></msub><mo>,</mo><msub><mi>K</mi><mi>max</mi></msub><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[K_{\rm min},K_{\rm max}]</annotation></semantics></math> brackets the technology
+levels accessible to our instruments. As <math class="ltx_Math" alttext="\alpha" display="inline" intent=":literal"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math> increases, <math class="ltx_Math" alttext="\tau_{d}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>d</mi></msub><annotation encoding="application/x-tex">\tau_{d}</annotation></semantics></math> can shrink to mere decades, dramatically narrowing the
+window in which civilisations overlap technically. This
+“technology mismatch” has implications for future search strategies, emphasising
+broadband and technology-agnostic approaches, as well as anomaly detection across
+multi-wavelength/messenger survey data.</p>
+</div>
+<div class="ltx_classification">
+<h6 class="ltx_title ltx_title_classification">keywords: </h6>
+extraterrestrial intelligence, technosignatures, SETI, technological acceleration,
+Great Silence, radio leakage
+
+</div>
+<span id="id1" class="ltx_note ltx_note_frontmatter ltx_role_editors"><sup class="ltx_note_mark">†</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">†</sup><span class="ltx_note_type">editors: </span>J. Haqq-Misra &amp; R. Kopparapu, eds.</span></span></span>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.6" class="ltx_p">Drake’s original formulation of the number of detectable civilisations in the Galaxy
+(<cite class="ltx_cite ltx_citemacro_cite">Drake (<a href="#bib.bib2" title="" class="ltx_ref">1961</a>)</cite>) has often been reduced to <math id="S1.p1.1.m1" class="ltx_Math" alttext="N\sim L" display="inline" intent=":literal"><semantics><mrow><mi>N</mi><mo>∼</mo><mi>L</mi></mrow><annotation encoding="application/x-tex">N\sim L</annotation></semantics></math>, where <math id="S1.p1.2.m2" class="ltx_Math" alttext="L" display="inline" intent=":literal"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math> is the communicative
+lifetime of a civilisation. This framing implicitly assumes that a civilisation remains
+detectable throughout its communicative phase, i.e. that its technosignatures always
+overlap in character with our search capabilities. In 1973, Sagan recognised a
+fundamental difficulty: civilisations substantially more advanced than our own “will have
+technologies and laws of nature currently inaccessible to us”
+<cite class="ltx_cite ltx_citemacro_cite">Sagan (<a href="#bib.bib9" title="" class="ltx_ref">1973</a>)</cite>. He introduced the concept of a <em id="S1.p1.6.1" class="ltx_emph ltx_font_italic">detection window</em>, <math id="S1.p1.3.m3" class="ltx_Math" alttext="\tau_{d}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>d</mi></msub><annotation encoding="application/x-tex">\tau_{d}</annotation></semantics></math>,
+suggesting that the more relevant Drake term is not <math id="S1.p1.4.m4" class="ltx_Math" alttext="L" display="inline" intent=":literal"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math> but the shorter interval during
+which a civilisation’s signatures are actually detectable — leading to <math id="S1.p1.5.m5" class="ltx_Math" alttext="N\sim\tau_{d}" display="inline" intent=":literal"><semantics><mrow><mi>N</mi><mo>∼</mo><msub><mi>τ</mi><mi>d</mi></msub></mrow><annotation encoding="application/x-tex">N\sim\tau_{d}</annotation></semantics></math>
+rather than <math id="S1.p1.6.m6" class="ltx_Math" alttext="N\sim L" display="inline" intent=":literal"><semantics><mrow><mi>N</mi><mo>∼</mo><mi>L</mi></mrow><annotation encoding="application/x-tex">N\sim L</annotation></semantics></math>.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.1" class="ltx_p">This technology mismatch perhaps becomes clearer when we consider the contemporary
+trajectory of our own civilisation. Radio communications offer a telling example.
+Between roughly 1930 and 1990, Earth’s electromagnetic signature was dominated by a
+small number of high-power, low-gain, narrowband, analogue broadcast transmitters -
+precisely the kind of signal that traditional and ongoing SETI efforts have always targeted. By contrast,
+the period from 1990 onwards has been characterised by exactly the oppossite - a large number of low-power,
+high-gain, broadband, digital devices <cite class="ltx_cite ltx_citemacro_cite">Sullivan et al. (<a href="#bib.bib11" title="" class="ltx_ref">1978</a>); Saide et al. (<a href="#bib.bib10" title="" class="ltx_ref">2023</a>)</cite>. Most current SETI
+efforts are still focused on narrowband signals in the style of the earlier era, and are
+therefore already partially mismatched to our own present-day technology. This limits us to the detection of what be described as ”primitive”, deliberate, narrowband beacons.</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>The Detection Window Model</h2>
+
+<section id="S2.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.1 </span>Exponential technological growth</h3>
+
+<div id="S2.SS1.p1" class="ltx_para">
+<p id="S2.SS1.p1.2" class="ltx_p">Let the technological level of a civilisation be described by a continuous variable <math id="S2.SS1.p1.1.m1" class="ltx_Math" alttext="K" display="inline" intent=":literal"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math>
+that increases with time <math id="S2.SS1.p1.2.m2" class="ltx_Math" alttext="t" display="inline" intent=":literal"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>. We model progress as an exponential process
+<cite class="ltx_cite ltx_citemacro_cite">Kurzweil (<a href="#bib.bib7" title="" class="ltx_ref">2005</a>)</cite>:</p>
+<table id="S2.E1" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E1.m1" class="ltx_Math" alttext="K(t)=K_{0}\,e^{\alpha t}," display="block" intent=":literal"><semantics><mrow><mrow><mrow><mi>K</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo>=</mo><mrow><msub><mi>K</mi><mn>0</mn></msub><mo lspace="0em" rspace="0em">​</mo><msup><mi>e</mi><mrow><mi>α</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi></mrow></msup></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">K(t)=K_{0}\,e^{\alpha t},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(1)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS1.p1.7" class="ltx_p">where <math id="S2.SS1.p1.3.m1" class="ltx_Math" alttext="K_{0}" display="inline" intent=":literal"><semantics><msub><mi>K</mi><mn>0</mn></msub><annotation encoding="application/x-tex">K_{0}</annotation></semantics></math> is the initial level at <math id="S2.SS1.p1.4.m2" class="ltx_Math" alttext="t=0" display="inline" intent=":literal"><semantics><mrow><mi>t</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">t=0</annotation></semantics></math> and <math id="S2.SS1.p1.5.m3" class="ltx_Math" alttext="\alpha" display="inline" intent=":literal"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math> (yr<sup id="S2.SS1.p1.7.1" class="ltx_sup"><span id="S2.SS1.p1.7.1.1" class="ltx_text ltx_font_italic">-1</span></sup>) is the rate of
+technological acceleration. For <math id="S2.SS1.p1.7.m5" class="ltx_Math" alttext="\alpha\ll 1" display="inline" intent=":literal"><semantics><mrow><mi>α</mi><mo>≪</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\alpha\ll 1</annotation></semantics></math>, equation (<a href="#S2.E1" title="In 2.1 Exponential technological growth ‣ 2 The Detection Window Model ‣ SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>) reduces to
+linear growth. Historically, individual technologies follow logistic (S-curve)
+trajectories, but the aggregate capability of a civilisation can be approximated as a
+superposition of many overlapping S-curves. Historically, individual technologies often follow logistic (S-curve) trajectories, with periods of rapid growth followed by saturation <cite class="ltx_cite ltx_citemacro_cite">Foster (<a href="#bib.bib3" title="" class="ltx_ref">1986</a>)</cite>, but the aggregate capability of a civilisation can be approximated as a superposition of many overlapping S-curves.</p>
+</div>
+<div id="S2.SS1.p2" class="ltx_para">
+<p id="S2.SS1.p2.1" class="ltx_p">Artificial intelligence represents a
+qualitative departure: unlike prior domain-specific technologies, AI acts as a
+meta-technology that accelerates innovation across all other domains, including itself,
+potentially driving <math id="S2.SS1.p2.1.m1" class="ltx_Math" alttext="\alpha" display="inline" intent=":literal"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math> to values far larger than any previously observed.</p>
+</div>
+</section>
+<section id="S2.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.2 </span>Duration of the detection window</h3>
+
+<div id="S2.SS2.p1" class="ltx_para">
+<p id="S2.SS2.p1.3" class="ltx_p">Our ability to detect the technosignatures of another civilisation is limited to a
+specific range of technology levels, <math id="S2.SS2.p1.1.m1" class="ltx_Math" alttext="[K_{\rm min},K_{\rm max}]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><msub><mi>K</mi><mi>min</mi></msub><mo>,</mo><msub><mi>K</mi><mi>max</mi></msub><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[K_{\rm min},K_{\rm max}]</annotation></semantics></math>. Signatures from
+technologies below <math id="S2.SS2.p1.2.m2" class="ltx_Math" alttext="K_{\rm min}" display="inline" intent=":literal"><semantics><msub><mi>K</mi><mi>min</mi></msub><annotation encoding="application/x-tex">K_{\rm min}</annotation></semantics></math> are too faint or primitive to be observed at
+interstellar distances; those above <math id="S2.SS2.p1.3.m3" class="ltx_Math" alttext="K_{\rm max}" display="inline" intent=":literal"><semantics><msub><mi>K</mi><mi>max</mi></msub><annotation encoding="application/x-tex">K_{\rm max}</annotation></semantics></math> rely on physical principles or media
+currently unknown to us, rendering them invisible to our instruments.</p>
+</div>
+<div id="S2.SS2.p2" class="ltx_para">
+<p id="S2.SS2.p2.4" class="ltx_p">From equation (<a href="#S2.E1" title="In 2.1 Exponential technological growth ‣ 2 The Detection Window Model ‣ SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>), the civilisation reaches <math id="S2.SS2.p2.1.m1" class="ltx_Math" alttext="K_{\rm min}" display="inline" intent=":literal"><semantics><msub><mi>K</mi><mi>min</mi></msub><annotation encoding="application/x-tex">K_{\rm min}</annotation></semantics></math> and <math id="S2.SS2.p2.2.m2" class="ltx_Math" alttext="K_{\rm max}" display="inline" intent=":literal"><semantics><msub><mi>K</mi><mi>max</mi></msub><annotation encoding="application/x-tex">K_{\rm max}</annotation></semantics></math>
+at times <math id="S2.SS2.p2.3.m3" class="ltx_Math" alttext="t_{1}=\alpha^{-1}\ln(K_{\rm min}/K_{0})" display="inline" intent=":literal"><semantics><mrow><msub><mi>t</mi><mn>1</mn></msub><mo>=</mo><mrow><msup><mi>α</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>ln</mi><mo>⁡</mo><mrow><mo stretchy="false">(</mo><mrow><msub><mi>K</mi><mi>min</mi></msub><mo>/</mo><msub><mi>K</mi><mn>0</mn></msub></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex">t_{1}=\alpha^{-1}\ln(K_{\rm min}/K_{0})</annotation></semantics></math> and
+<math id="S2.SS2.p2.4.m4" class="ltx_Math" alttext="t_{2}=\alpha^{-1}\ln(K_{\rm max}/K_{0})" display="inline" intent=":literal"><semantics><mrow><msub><mi>t</mi><mn>2</mn></msub><mo>=</mo><mrow><msup><mi>α</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>ln</mi><mo>⁡</mo><mrow><mo stretchy="false">(</mo><mrow><msub><mi>K</mi><mi>max</mi></msub><mo>/</mo><msub><mi>K</mi><mn>0</mn></msub></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex">t_{2}=\alpha^{-1}\ln(K_{\rm max}/K_{0})</annotation></semantics></math> respectively. The duration of the detectable
+window is therefore</p>
+<table id="S2.E2" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E2.m1" class="ltx_Math" alttext="\tau_{d}\;=\;t_{2}-t_{1}\;=\;\frac{1}{\alpha}\ln\!\left(\frac{K_{\rm max}}{K_{\rm min}}\right)." display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>τ</mi><mi>d</mi></msub><mo lspace="0.558em" rspace="0.558em">=</mo><mrow><msub><mi>t</mi><mn>2</mn></msub><mo>−</mo><msub><mi>t</mi><mn>1</mn></msub></mrow><mo rspace="0.558em">=</mo><mrow><mfrac><mn>1</mn><mi>α</mi></mfrac><mo lspace="0.167em" rspace="0em">​</mo><mrow><mpadded style="width:0.748em;" width="0.748em"><mi>ln</mi></mpadded><mo>⁡</mo><mrow><mo>(</mo><mfrac><msub><mi>K</mi><mi>max</mi></msub><msub><mi>K</mi><mi>min</mi></msub></mfrac><mo>)</mo></mrow></mrow></mrow></mrow><mo lspace="0em">.</mo></mrow><annotation encoding="application/x-tex">\tau_{d}\;=\;t_{2}-t_{1}\;=\;\frac{1}{\alpha}\ln\!\left(\frac{K_{\rm max}}{K_{\rm min}}\right).</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(2)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S2.SS2.p3" class="ltx_para">
+<p id="S2.SS2.p3.6" class="ltx_p">Equation (<a href="#S2.E2" title="In 2.2 Duration of the detection window ‣ 2 The Detection Window Model ‣ SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>) shows that <math id="S2.SS2.p3.1.m1" class="ltx_Math" alttext="\tau_{d}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>d</mi></msub><annotation encoding="application/x-tex">\tau_{d}</annotation></semantics></math> is <em id="S2.SS2.p3.6.1" class="ltx_emph ltx_font_italic">inversely proportional</em> to the
+acceleration rate <math id="S2.SS2.p3.2.m2" class="ltx_Math" alttext="\alpha" display="inline" intent=":literal"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math>, but only <em id="S2.SS2.p3.6.2" class="ltx_emph ltx_font_italic">logarithmically</em> sensitive to the technology
+range ratio <math id="S2.SS2.p3.3.m3" class="ltx_Math" alttext="K_{\rm max}/K_{\rm min}" display="inline" intent=":literal"><semantics><mrow><msub><mi>K</mi><mi>max</mi></msub><mo>/</mo><msub><mi>K</mi><mi>min</mi></msub></mrow><annotation encoding="application/x-tex">K_{\rm max}/K_{\rm min}</annotation></semantics></math>. As <math id="S2.SS2.p3.4.m4" class="ltx_Math" alttext="\alpha" display="inline" intent=":literal"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math> grows, the detection window
+narrows; the precise value of the dynamic range makes little quantitative difference
+(see Section <a href="#S3" title="3 Estimating Plausible Values of 𝜏_𝑑 ‣ SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>). We note that our analysis assumes a constant technological acceleration rate <math id="S2.SS2.p3.5.m5" class="ltx_Math" alttext="\alpha" display="inline" intent=":literal"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math>. More generally, if <math id="S2.SS2.p3.6.m6" class="ltx_Math" alttext="\alpha" display="inline" intent=":literal"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math> varies with time, the detection window is determined by the integrated growth history. Equation (<a href="#S2.E2" title="In 2.2 Duration of the detection window ‣ 2 The Detection Window Model ‣ SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>) should therefore be regarded as an effective first-order approximation based on the mean acceleration rate over the detectable interval.</p>
+</div>
+</section>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Estimating Plausible Values of <math id="S3.1.m1" class="ltx_Math" alttext="\tau_{d}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>d</mi></msub><annotation encoding="application/x-tex">\tau_{d}</annotation></semantics></math>
+</h2>
+
+<div id="S3.p1" class="ltx_para">
+<p id="S3.p1.14" class="ltx_p">The key parameter is <math id="S3.p1.1.m1" class="ltx_Math" alttext="\alpha=\ln 2/T_{2}" display="inline" intent=":literal"><semantics><mrow><mi>α</mi><mo>=</mo><mrow><mi>ln</mi><mo lspace="0.167em">⁡</mo><mrow><mn>2</mn><mo>/</mo><msub><mi>T</mi><mn>2</mn></msub></mrow></mrow></mrow><annotation encoding="application/x-tex">\alpha=\ln 2/T_{2}</annotation></semantics></math>, where <math id="S3.p1.2.m2" class="ltx_Math" alttext="T_{2}" display="inline" intent=":literal"><semantics><msub><mi>T</mi><mn>2</mn></msub><annotation encoding="application/x-tex">T_{2}</annotation></semantics></math> is the technology doubling
+time. Drawing on historical trends <cite class="ltx_cite ltx_citemacro_cite">Garrett (<a href="#bib.bib4" title="" class="ltx_ref">2026a</a>)</cite>, we define <em id="S3.p1.14.1" class="ltx_emph ltx_font_italic">Slow growth:</em> (<math id="S3.p1.3.m3" class="ltx_Math" alttext="T_{2}\sim 100" display="inline" intent=":literal"><semantics><mrow><msub><mi>T</mi><mn>2</mn></msub><mo>∼</mo><mn>100</mn></mrow><annotation encoding="application/x-tex">T_{2}\sim 100</annotation></semantics></math> yr, pre-industrial), <math id="S3.p1.4.m4" class="ltx_Math" alttext="\alpha\approx 0.007" display="inline" intent=":literal"><semantics><mrow><mi>α</mi><mo>≈</mo><mn>0.007</mn></mrow><annotation encoding="application/x-tex">\alpha\approx 0.007</annotation></semantics></math> yr<sup id="S3.p1.14.2" class="ltx_sup"><span id="S3.p1.14.2.1" class="ltx_text ltx_font_italic">-1</span></sup>;
+<em id="S3.p1.14.3" class="ltx_emph ltx_font_italic">Moderate growth</em> (<math id="S3.p1.6.m6" class="ltx_Math" alttext="T_{2}\sim 25" display="inline" intent=":literal"><semantics><mrow><msub><mi>T</mi><mn>2</mn></msub><mo>∼</mo><mn>25</mn></mrow><annotation encoding="application/x-tex">T_{2}\sim 25</annotation></semantics></math> yr, late 20th century), <math id="S3.p1.7.m7" class="ltx_Math" alttext="\alpha\approx 0.03" display="inline" intent=":literal"><semantics><mrow><mi>α</mi><mo>≈</mo><mn>0.03</mn></mrow><annotation encoding="application/x-tex">\alpha\approx 0.03</annotation></semantics></math> yr<sup id="S3.p1.14.4" class="ltx_sup"><span id="S3.p1.14.4.1" class="ltx_text ltx_font_italic">-1</span></sup>;
+<em id="S3.p1.14.5" class="ltx_emph ltx_font_italic">Rapid growth</em> (<math id="S3.p1.9.m9" class="ltx_Math" alttext="T_{2}\sim 5" display="inline" intent=":literal"><semantics><mrow><msub><mi>T</mi><mn>2</mn></msub><mo>∼</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">T_{2}\sim 5</annotation></semantics></math> yr, early AI era), <math id="S3.p1.10.m10" class="ltx_Math" alttext="\alpha\approx 0.14" display="inline" intent=":literal"><semantics><mrow><mi>α</mi><mo>≈</mo><mn>0.14</mn></mrow><annotation encoding="application/x-tex">\alpha\approx 0.14</annotation></semantics></math> yr<sup id="S3.p1.14.6" class="ltx_sup"><span id="S3.p1.14.6.1" class="ltx_text ltx_font_italic">-1</span></sup>; and
+<em id="S3.p1.14.7" class="ltx_emph ltx_font_italic">Post-biological / ASI-driven growth</em> (<math id="S3.p1.12.m12" class="ltx_Math" alttext="T_{2}&lt;1" display="inline" intent=":literal"><semantics><mrow><msub><mi>T</mi><mn>2</mn></msub><mo>&lt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">T_{2}&lt;1</annotation></semantics></math> yr): <math id="S3.p1.13.m13" class="ltx_Math" alttext="\alpha&gt;1" display="inline" intent=":literal"><semantics><mrow><mi>α</mi><mo>&gt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\alpha&gt;1</annotation></semantics></math> yr<sup id="S3.p1.14.8" class="ltx_sup"><span id="S3.p1.14.8.1" class="ltx_text ltx_font_italic">-1</span></sup>.</p>
+</div>
+<div id="S3.p2" class="ltx_para">
+<p id="S3.p2.9" class="ltx_p">A ratio <math id="S3.p2.1.m1" class="ltx_Math" alttext="K_{\rm max}/K_{\rm min}\sim 10^{6}" display="inline" intent=":literal"><semantics><mrow><mrow><msub><mi>K</mi><mi>max</mi></msub><mo>/</mo><msub><mi>K</mi><mi>min</mi></msub></mrow><mo>∼</mo><msup><mn>10</mn><mn>6</mn></msup></mrow><annotation encoding="application/x-tex">K_{\rm max}/K_{\rm min}\sim 10^{6}</annotation></semantics></math> is a conservative estimate for the
+dynamic range of a single technological paradigm before it becomes obsolete, giving
+<math id="S3.p2.2.m2" class="ltx_Math" alttext="\ln(K_{\rm max}/K_{\rm min})\approx 14" display="inline" intent=":literal"><semantics><mrow><mrow><mi>ln</mi><mo>⁡</mo><mrow><mo stretchy="false">(</mo><mrow><msub><mi>K</mi><mi>max</mi></msub><mo>/</mo><msub><mi>K</mi><mi>min</mi></msub></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>≈</mo><mn>14</mn></mrow><annotation encoding="application/x-tex">\ln(K_{\rm max}/K_{\rm min})\approx 14</annotation></semantics></math>. Under these assumptions:
+<math id="S3.p2.3.m3" class="ltx_Math" alttext="\tau_{d}\approx 2000" display="inline" intent=":literal"><semantics><mrow><msub><mi>τ</mi><mi>d</mi></msub><mo>≈</mo><mn>2000</mn></mrow><annotation encoding="application/x-tex">\tau_{d}\approx 2000</annotation></semantics></math> yr (slow), <math id="S3.p2.4.m4" class="ltx_Math" alttext="\approx 500" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>≈</mo><mn>500</mn></mrow><annotation encoding="application/x-tex">\approx 500</annotation></semantics></math> yr (moderate), <math id="S3.p2.5.m5" class="ltx_Math" alttext="\approx 100" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>≈</mo><mn>100</mn></mrow><annotation encoding="application/x-tex">\approx 100</annotation></semantics></math> yr (rapid),
+and <math id="S3.p2.6.m6" class="ltx_Math" alttext="\lesssim 20" display="inline" intent=":literal"><semantics><mrow><merror class="ltx_ERROR undefined undefined"><mtext>\lesssim</mtext></merror><mo lspace="0em" rspace="0em">​</mo><mn>20</mn></mrow><annotation encoding="application/x-tex">\lesssim 20</annotation></semantics></math> yr (post-biological with <math id="S3.p2.7.m7" class="ltx_Math" alttext="\alpha\geq 1" display="inline" intent=":literal"><semantics><mrow><mi>α</mi><mo>≥</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\alpha\geq 1</annotation></semantics></math> yr<sup id="S3.p2.9.1" class="ltx_sup"><span id="S3.p2.9.1.1" class="ltx_text ltx_font_italic">-1</span></sup>). Choosing different values of <math id="S3.p2.9.m9" class="ltx_Math" alttext="K_{\rm max}/K_{\rm min}" display="inline" intent=":literal"><semantics><mrow><msub><mi>K</mi><mi>max</mi></msub><mo>/</mo><msub><mi>K</mi><mi>min</mi></msub></mrow><annotation encoding="application/x-tex">K_{\rm max}/K_{\rm min}</annotation></semantics></math> makes little difference to these figures.</p>
+</div>
+<div id="S3.p3" class="ltx_para">
+<p id="S3.p3.2" class="ltx_p">A selection effect follows directly from equation (<a href="#S2.E2" title="In 2.2 Duration of the detection window ‣ 2 The Detection Window Model ‣ SETI’s blind spot: Technological Acceleration &amp; fleeting technosignatures" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>): SETI surveys are
+inherently biased toward detecting civilisations with low <math id="S3.p3.1.m1" class="ltx_Math" alttext="\alpha" display="inline" intent=":literal"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math>, since their longer
+windows <math id="S3.p3.2.m2" class="ltx_Math" alttext="\tau_{d}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>d</mi></msub><annotation encoding="application/x-tex">\tau_{d}</annotation></semantics></math> make them statistically easier to find. Rapidly advancing
+civilisations are the
+hardest to catch.</p>
+</div>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Caveats</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p id="S4.p1.1" class="ltx_p">The model is deliberately simple, and several factors could extend <math id="S4.p1.1.m1" class="ltx_Math" alttext="\tau_{d}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>d</mi></msub><annotation encoding="application/x-tex">\tau_{d}</annotation></semantics></math> beyond
+the values derived above. These include:</p>
+</div>
+<div id="S4.p2" class="ltx_para">
+<p id="S4.p2.1" class="ltx_p"><em id="S4.p2.1.1" class="ltx_emph ltx_font_italic">Persistence and legacy signals.</em> Legacy beacons designed to operate autonomously
+for millennia, and engineered artefacts such as megastructures, may outlive the
+civilisations that built them <cite class="ltx_cite ltx_citemacro_cite">Čirkovíc &amp; Bradbury (<a href="#bib.bib1" title="" class="ltx_ref">2006</a>)</cite>. Infrastructure inertia can also
+slow the replacement of older, more detectable technologies <cite class="ltx_cite ltx_citemacro_cite">Hughes (<a href="#bib.bib6" title="" class="ltx_ref">1983</a>)</cite>.</p>
+</div>
+<div id="S4.p3" class="ltx_para">
+<p id="S4.p3.1" class="ltx_p"><em id="S4.p3.1.1" class="ltx_emph ltx_font_italic">Physical limits.</em> Thermodynamic constraints ultimately cap energy consumption
+and computational growth <cite class="ltx_cite ltx_citemacro_cite">Lloyd (<a href="#bib.bib8" title="" class="ltx_ref">2000</a>)</cite>. Latency across large distributed networks
+imposes additional practical bounds on the coherence of any distributed
+super-intelligence.</p>
+</div>
+<div id="S4.p4" class="ltx_para">
+<p id="S4.p4.1" class="ltx_p"><em id="S4.p4.1.1" class="ltx_emph ltx_font_italic">Behavioural factors.</em> Civilisations may deliberately plateau their technological
+development for cultural, political, or environmental reasons. Alternatively, some advanced
+societies might enhance rather than abandon powerful beacons, maintaining or widening
+<math id="S4.p4.1.m1" class="ltx_Math" alttext="\tau_{d}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>d</mi></msub><annotation encoding="application/x-tex">\tau_{d}</annotation></semantics></math> for intentional signals even as their internal braodband communications become
+undetectable.</p>
+</div>
+<div id="S4.p5" class="ltx_para">
+<p id="S4.p5.3" class="ltx_p">These moderating factors notwithstanding, the central result remains robust: rapid
+technological acceleration compresses <math id="S4.p5.1.m1" class="ltx_Math" alttext="\tau_{d}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>d</mi></msub><annotation encoding="application/x-tex">\tau_{d}</annotation></semantics></math> significantly. For post-biological
+civilisations with <math id="S4.p5.2.m2" class="ltx_Math" alttext="\alpha\geq 1" display="inline" intent=":literal"><semantics><mrow><mi>α</mi><mo>≥</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\alpha\geq 1</annotation></semantics></math> yr<sup id="S4.p5.3.1" class="ltx_sup"><span id="S4.p5.3.1.1" class="ltx_text ltx_font_italic">-1</span></sup>, detectable windows become
+cosmologically negligible, reframing the Great Silence not as evidence of absence but
+as evidence of extreme technological disparity.</p>
+</div>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">5 </span>Implications for SETI Strategies</h2>
+
+<div id="S5.p1" class="ltx_para">
+<p id="S5.p1.1" class="ltx_p">If <math id="S5.p1.1.m1" class="ltx_Math" alttext="\tau_{d}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>d</mi></msub><annotation encoding="application/x-tex">\tau_{d}</annotation></semantics></math> is indeed short for most advanced civilisations, the traditional focus on
+narrowband radio signals is doubly constrained: such signals are already a product of a
+transitional technological phase on Earth, and the equivalent phase elsewhere may be
+vanishingly brief. Several strategic conclusions follow.</p>
+</div>
+<div id="S5.p2" class="ltx_para">
+<p id="S5.p2.1" class="ltx_p"><em id="S5.p2.1.1" class="ltx_emph ltx_font_italic">Broadband radio searches.</em> In addition to narrowband SETI, searches should
+expand to cover the full accessible frequency domain (MHz–THz), consistent with the
+leakage profile of a more mature technological civilisation. Simulations show that
+Earth’s aggregate mobile and radar emission would constitute a detectable broadband
+source to a sufficiently advanced receiver <cite class="ltx_cite ltx_citemacro_cite">Saide et al. (<a href="#bib.bib10" title="" class="ltx_ref">2023</a>)</cite>, motivating analogous
+searches at extrasolar distances. Most recently, arguments have been made to begin deep, wide-field broadband radio surveys of the sky with SKA and ngVLA pathfinders to detect BRaTs (Broadband Radio Technosignatures), using multi-wavelength data and AI to eliminate confounding sources <cite class="ltx_cite ltx_citemacro_citep">(Garrett et al., <a href="#bib.bib5" title="" class="ltx_ref">2026b</a>)</cite>.</p>
+</div>
+<div id="S5.p3" class="ltx_para">
+<p id="S5.p3.1" class="ltx_p"><em id="S5.p3.1.1" class="ltx_emph ltx_font_italic">Technology-agnostic, persistent signatures.</em> More effort should be directed
+toward signatures whose lifetimes are <math id="S5.p3.1.m1" class="ltx_Math" alttext="\gg\tau_{d}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>≫</mo><msub><mi>τ</mi><mi>d</mi></msub></mrow><annotation encoding="application/x-tex">\gg\tau_{d}</annotation></semantics></math>: waste heat from megastructures,
+Dyson sphere candidates, anomalous stellar dimming, and other large-scale
+astro-engineering manifestations. Such signatures are rooted in energy conservation
+and are therefore detectable regardless of the specific technology producing them.
+Wide-field surveys with facilities such as the Vera C. Rubin Observatory are well placed to search systematically for such rare anomalies.</p>
+</div>
+<div id="S5.p4" class="ltx_para">
+<p id="S5.p4.1" class="ltx_p"><em id="S5.p4.1.1" class="ltx_emph ltx_font_italic">AI-driven anomaly detection.</em> Future SETI is, in essence, an anomaly-detection
+problem across high-dimensional, multi-wavelength and multi-messenger survey data.
+Machine learning already offers powerful tools for distinguishing non-natural outliers
+in electromagnetic datasets. As AI capabilities grow, the ability to construct
+accurate models of the natural universe and to flag departures from expectation will
+expand enormously, potentially identifying technosignatures too subtle or
+non-anthropocentric for traditional methodologies <cite class="ltx_cite ltx_citemacro_citep">(Garrett et al., <a href="#bib.bib5" title="" class="ltx_ref">2026b</a>)</cite>.</p>
+</div>
+</section>
+<section id="S6" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">6 </span>Conclusions</h2>
+
+<div id="S6.p1" class="ltx_para">
+<p id="S6.p1.1" class="ltx_p">We have presented a simple model in which the duration of detectability of a
+civilisation’s technosignatures is
+<math id="S6.p1.1.m1" class="ltx_Math" alttext="\tau_{d}=\alpha^{-1}\ln(K_{\rm max}/K_{\rm min})" display="inline" intent=":literal"><semantics><mrow><msub><mi>τ</mi><mi>d</mi></msub><mo>=</mo><mrow><msup><mi>α</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>ln</mi><mo>⁡</mo><mrow><mo stretchy="false">(</mo><mrow><msub><mi>K</mi><mi>max</mi></msub><mo>/</mo><msub><mi>K</mi><mi>min</mi></msub></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex">\tau_{d}=\alpha^{-1}\ln(K_{\rm max}/K_{\rm min})</annotation></semantics></math>. The key results are:</p>
+</div>
+<div id="S6.p2" class="ltx_para">
+<ol id="S6.I1" class="ltx_enumerate">
+<li id="S6.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="S6.I1.i1.p1" class="ltx_para">
+<p id="S6.I1.i1.p1.2" class="ltx_p"><math id="S6.I1.i1.p1.1.m1" class="ltx_Math" alttext="\tau_{d}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>d</mi></msub><annotation encoding="application/x-tex">\tau_{d}</annotation></semantics></math> is inversely proportional to the technological acceleration rate
+<math id="S6.I1.i1.p1.2.m2" class="ltx_Math" alttext="\alpha" display="inline" intent=":literal"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math> and only weakly sensitive to the dynamic range of detectable
+technology.</p>
+</div>
+</li>
+<li id="S6.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="S6.I1.i2.p1" class="ltx_para">
+<p id="S6.I1.i2.p1.8" class="ltx_p">For rapid AI-driven growth (<math id="S6.I1.i2.p1.1.m1" class="ltx_Math" alttext="\alpha\approx 0.14" display="inline" intent=":literal"><semantics><mrow><mi>α</mi><mo>≈</mo><mn>0.14</mn></mrow><annotation encoding="application/x-tex">\alpha\approx 0.14</annotation></semantics></math> yr<sup id="S6.I1.i2.p1.8.1" class="ltx_sup"><span id="S6.I1.i2.p1.8.1.1" class="ltx_text ltx_font_italic">-1</span></sup>, <math id="S6.I1.i2.p1.3.m3" class="ltx_Math" alttext="T_{2}\sim 5" display="inline" intent=":literal"><semantics><mrow><msub><mi>T</mi><mn>2</mn></msub><mo>∼</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">T_{2}\sim 5</annotation></semantics></math> yr),
+<math id="S6.I1.i2.p1.4.m4" class="ltx_Math" alttext="\tau_{d}\approx 100" display="inline" intent=":literal"><semantics><mrow><msub><mi>τ</mi><mi>d</mi></msub><mo>≈</mo><mn>100</mn></mrow><annotation encoding="application/x-tex">\tau_{d}\approx 100</annotation></semantics></math> yr. For post-biological civilisations with
+<math id="S6.I1.i2.p1.5.m5" class="ltx_Math" alttext="\alpha\geq 1" display="inline" intent=":literal"><semantics><mrow><mi>α</mi><mo>≥</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\alpha\geq 1</annotation></semantics></math> yr<sup id="S6.I1.i2.p1.8.2" class="ltx_sup"><span id="S6.I1.i2.p1.8.2.1" class="ltx_text ltx_font_italic">-1</span></sup>, <math id="S6.I1.i2.p1.7.m7" class="ltx_Math" alttext="\tau_{d}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>d</mi></msub><annotation encoding="application/x-tex">\tau_{d}</annotation></semantics></math> falls below <math id="S6.I1.i2.p1.8.m8" class="ltx_Math" alttext="\sim 20" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>20</mn></mrow><annotation encoding="application/x-tex">\sim 20</annotation></semantics></math> yr.</p>
+</div>
+</li>
+<li id="S6.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span> 
+<div id="S6.I1.i3.p1" class="ltx_para">
+<p id="S6.I1.i3.p1.1" class="ltx_p">The Great Silence may reflect not a scarcity of advanced civilisations but
+the brevity of their detectable phases.</p>
+</div>
+</li>
+<li id="S6.I1.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">4.</span> 
+<div id="S6.I1.i4.p1" class="ltx_para">
+<p id="S6.I1.i4.p1.1" class="ltx_p">Current narrowband SETI is already mismatched to our own evolving technology.
+Future searches should be complemened by broadband approaches, persistent
+technology-agnostic signatures, and AI-driven anomaly detection across
+deep, wide-field, electromagnetic/multi-messenger datasets.</p>
+</div>
+</li>
+</ol>
+</div>
+<div id="S6.p3" class="ltx_para">
+<p id="S6.p3.1" class="ltx_p">The search for extraterrestrial intelligence is, ultimately, a search for our own
+future. As humanity approaches potential post-biological transitions, recognising that
+the universe’s most advanced civilisations may operate beyond our current observational
+horizon is not a counsel of despair, but a call to broaden our strategy.</p>
+</div>
+</section>
+<section id="Sx1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">Acknowledgments</h2>
+
+<div id="Sx1.p1" class="ltx_para ltx_noindent">
+<p id="Sx1.p1.1" class="ltx_p">The author would like to thank the symposium organisers for an excellent meeting.</p>
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul class="ltx_biblist">
+<li id="bib.bib1" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Čirkovíc &amp; Bradbury (2006)</span>
+<span class="ltx_bibblock">
+Čirkovíc, M. M. &amp; Bradbury, R. J. 2006,
+<span id="bib.bib1.1.1" class="ltx_text ltx_font_italic">New Astronomy</span>, 11, 628
+
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Drake (1961)</span>
+<span class="ltx_bibblock">
+Drake, F. D. 1961,
+<span id="bib.bib2.1.1" class="ltx_text ltx_font_italic">Physics Today</span>, 14, 40
+
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Foster (1986)</span>
+<span class="ltx_bibblock">
+Foster, R.N. 1986,
+<span id="bib.bib3.1.1" class="ltx_text ltx_font_italic">Innovation: The Attacker’s Advantage</span>,
+Summit Books, New York
+
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Garrett (2026a)</span>
+<span class="ltx_bibblock">
+Garrett, M. A. 2026,
+<span id="bib.bib4.1.1" class="ltx_text ltx_font_italic">Acta Astronautica</span>, 238, 160
+
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Garrett et al. (2026b)</span>
+<span class="ltx_bibblock">
+Garrett, M. A. 2026,
+<span id="bib.bib5.1.1" class="ltx_text ltx_font_italic">MNRAS</span> in press, https://arxiv.org/abs/2605.10212
+
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Hughes (1983)</span>
+<span class="ltx_bibblock">
+Hughes, T. P. 1983,
+<span id="bib.bib6.1.1" class="ltx_text ltx_font_italic">Networks of Power</span>, Johns Hopkins University Press
+
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kurzweil (2005)</span>
+<span class="ltx_bibblock">
+Kurzweil, R. 2005,
+<span id="bib.bib7.1.1" class="ltx_text ltx_font_italic">The Singularity Is Near</span>, Penguin Books, New York
+
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Lloyd (2000)</span>
+<span class="ltx_bibblock">
+Lloyd, S. 2000,
+<span id="bib.bib8.1.1" class="ltx_text ltx_font_italic">Nature</span>, 406, 1047
+
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Sagan (1973)</span>
+<span class="ltx_bibblock">
+Sagan, C. 1973,
+<span id="bib.bib9.1.1" class="ltx_text ltx_font_italic">Icarus</span>, 19, 350
+
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Saide et al. (2023)</span>
+<span class="ltx_bibblock">
+Saide, R. C., Garrett, M. A., &amp; Heeralall-Issur, N. 2023,
+<span id="bib.bib10.1.1" class="ltx_text ltx_font_italic">MNRAS</span>, 522, 2393
+
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Sullivan et al. (1978)</span>
+<span class="ltx_bibblock">
+Sullivan, W. T., Brown, S., &amp; Wetherill, C. 1978,
+<span id="bib.bib11.1.1" class="ltx_text ltx_font_italic">Science</span>, 199, 377
+
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2607.07413v1/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer><footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation">
+        </a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International">
+        </a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences">
+        </a>
+      </div>
+    </div>
+  </div>
+</footer><div id="fixed-buttons-container">
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>

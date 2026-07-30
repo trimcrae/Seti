@@ -1,0 +1,392 @@
+[2206.04092] Searching the SETI Ellipsoid with Gaia
+
+Searching the SETI Ellipsoid with Gaia
+
+James R. A. Davenport
+
+Astronomy Department, University of Washington, Box 951580, Seattle, WA 98195, USA
+
+Bárbara Cabrales
+
+Department of Astronomy, Smith College, Northampton, MA 01063, USA
+
+Sofia Sheikh
+
+Department of Astronomy, University of California Berkeley, Berkeley CA 94720, USA
+
+SETI Institute, 339 N Bernardo Ave Suite 200, Mountain View, CA 94043
+
+Steve Croft
+
+Department of Astronomy, University of California Berkeley, Berkeley CA 94720, USA
+
+Andrew P. V. Siemion
+
+Department of Astronomy, University of California Berkeley, Berkeley CA 94720, USA
+
+SETI Institute, 339 N Bernardo Ave Suite 200, Mountain View, CA 94043
+
+Daniel Giles
+
+SETI Institute, 339 N Bernardo Ave Suite 200, Mountain View, CA 94043
+
+Ann Marie Cody
+
+SETI Institute, 339 N Bernardo Ave Suite 200, Mountain View, CA 94043
+
+Abstract
+The SETI Ellipsoid is a geometric method for prioritizing technosignature observations based on the strategy of receiving signals synchronized to conspicuous astronomical events.
+Precise distances to nearby stars from Gaia makes constraining Ellipsoid crossing times possible.
+Here we explore the utility of using the Gaia Catalog of Nearby Stars to select targets on the SN 1987A SETI Ellipsoid, as well the Ellipsoids defined by 278 classical novae.
+Less than 8% of stars within the 100 pc sample are inside the SN 1987A SETI Ellipsoid, meaning the vast majority of nearby stars are still viable targets for monitoring over time.
+We find an average of 734 stars per year within the 100 pc volume will intersect the Ellipsoid from SN 1987A, with ∼ similar-to \sim 10% of those having distance uncertainties from Gaia better than 0.1 lyr.
+
+† † software:
+Python, IPython (Pérez & Granger, 2007 ) ,
+NumPy (Oliphant, 2007 ) ,
+Matplotlib (Hunter, 2007 ) ,
+SciPy (Jones et al., 2001– ) ,
+Pandas (Wes McKinney, 2010 ) ,
+Astropy (Astropy Collaboration et al., 2013 )
+
+1 Introduction
+
+In developing robust searches for technosignatures – signs of technological activity from extraterrestrial sources – we must confront choices on both the types of signals that will be explored from our data, as well as which stars to observe and when (Tarter, 2001 ) . While this is broadly true for all studies in observational astronomy that explore detection limits on rare phenomena, it is especially so in the search for extraterrestrial intelligence (SETI). Here we focus on the latter challenge, identifying which nearby stars to monitor and when based on their locations relative to a coordinating beacon or event.
+
+Transmitting signals in coordination with conspicuous galactic-scale events has been identified as an efficient means for generating simple interstellar beacons (e.g. Corbet, 1999 ) , and possibly even in establishing two-way communications (Seto, 2019 ) . These events must be sufficiently rare and noteworthy (e.g. nearby supernovae), such that extraterrestrial astronomers could reasonably assume that unknown observers (i.e. us) would take notice. The geometric approach to identifying stars that could be generating such synchronized signals at a given point in time is known as the “SETI Ellipsoid” (Lemarchand, 1994 ) . The limiting factor for selecting targets based on this approach has traditionally been a lack of precise distances for nearby stars (Makovetskii, 1977 ) .
+
+Gaia provides a revolutionary step forward in our understanding of the true locations of stars in the Milky Way (Gaia Collaboration et al., 2016 ) . While the Hipparcos mission estimated distances for 118k stars in the solar neighborhood (Perryman et al., 1997 ) , the latest release from Gaia provides parallaxes for over 1.5 billion sources (Gaia Collaboration et al., 2020a ) .
+With more than ∼ similar-to \sim 200x better astrometric precision than Hipparcos, Gaia enables < 10 % absent percent 10 <10\% distance uncertainties for for stars out to several kpc (Bailer-Jones et al., 2021 ) .
+This remarkable distance precision directly translates into lower uncertainties on the timing for signal coordination along the SETI Ellipsoid.
+
+In this paper we demonstrate the utility of Gaia in defining targets for monitoring along the SETI Ellipsoid. In § 2 we review the geometry used in the SETI Ellipsoid framework. We focus our discussion in § 3 around the sample of 331k stars from Gaia within 100 pc of the Sun, and in § 4 we demonstrate how to select targets of interest from this sample over time in coordination with SN 1987A.
+We provide an overview of target yields from other possible coordinating events in § 5 . Finally, in § 6 we conclude with a summary and discussion of future work.
+
+2 The SETI Ellipsoid
+
+The “SETI Ellipsoid” is a geometric framework for identifying signals (i.e. beacons) that are in synchronization or coordination with noteworthy astronomical phenomena (Tang, 1976 ; Lemarchand, 1994 ) . Under this scheme, shown in Figure 1 , an extraterrestrial agent would observe a rare event (e.g. a nearby supernova), and shortly thereafter broadcast a conspicuous signal indicating they have observed the event. Utilizing these rare events allows extraterrestrial agents to more efficiently operate beacons, as they need to broadcast signals only at specific times.
+The source event provides a natural focal point of attention for other astronomers (i.e. us), acting as “Schelling Points” to facilitate communication between unknown observers (Wright, 2017 ) .
+
+Figure 1:
+Schematic diagram of the SETI Ellipsoid framework. A civilization (black dot) could synchronize a technosignature beacon with a noteworthy source event (green dot). The arrival time of these coordinated signals is defined by the time-evolving ellipsoid, whose foci are Earth and the source event. Stars outside the Ellipsoid may have transmitted signals in coordination with their observation of the source event, but we those signals have not reached Earth yet (blue dot).
+For stars far inside the Ellipsoid (pink dot), we have missed the opportunity to receive such coordinated signals.
+
+This synchronized communication approach has been suggested as a basis for technosignature searches previously (e.g. Makovetskii, 1977 ; Lemarchand, 1994 ) . We also note that the basic geometry of the SETI Ellipsoid is identical to the study of light echos around supernovae (e.g. Chevalier & Emmering, 1988 ) .
+Here we provide a brief review of the framework.
+
+The SETI Ellipsoid is so named because it leverages the geometric properties of ellipses. As shown in Figure 1 , we consider an ellipsoid whose foci are the location of the source event (e.g. a nearby supernova) and the Earth.
+The ellipsoid expands in time, and stars that intersect the surface of the ellipsoid could choose to produce a signal coordinated to leave near-synchronously with the arrival of the event.
+The time that synchronized signals would arrive to us from a given star is based on the distance to the star ( d 1 subscript 𝑑 1 d_{1} ), and the distance from that star to the source event ( d 2 subscript 𝑑 2 d_{2} ), both in units of lyr. Following the discussion by Lemarchand ( 1994 ) , the Ellipsoid at any given time can be defined by:
+
+d 1 + d 2 = 2 ​ 𝒜 = 2 ​ 𝒞 + T subscript 𝑑 1 subscript 𝑑 2 2 𝒜 2 𝒞 𝑇 d_{1}+d_{2}=2\,\mathscr{A}=2\,\mathscr{C}+T
+
+(1)
+
+where, as shown in Figure 1 , 𝒜 𝒜 \mathscr{A} is the semi-major axis of the ellipsoid in lyr, 𝒞 𝒞 \mathscr{C} is the foci distance from the center of the ellipsoid in lyr ( 2 ​ 𝒞 2 𝒞 2\,\mathscr{C} is the distance from Earth to the synchronizing event), and T = c ​ t 𝑇 𝑐 𝑡 T=c\,t is the elapsed time since the synchronizing event was observed on Earth ( t 𝑡 t ) times the speed of light ( c 𝑐 c ), in units of lyr.
+
+Stars can be grouped into four categories based on this framework:
+1) Stars that have not yet observed the source event and therefore cannot have transmitted a synchronized signal 1 1 1 Unless they are anticipating a noteworthy astrophysical event, as Seto ( 2019 ) suggest. .
+2) Stars that have observed the source event, but if they have transmitted a synchronized signal it has not yet reached Earth.
+3) Stars whose potential synchronized signal would be arriving at Earth now (i.e. those intersecting the Ellipsoid).
+4) Stars for which any synchronized signal must have arrived at Earth in the past.
+
+In Figure 1 , and throughout most of this paper, we focus on SN 1987A as a noteworthy source event to consider in generating a SETI Ellipsoid. In Figure 2 we show a to-scale drawing of the SETI Ellipsoid and the information front (i.e. when the event is observed) from SN 1987A. We use the distance for SN 1987A of 51.4 ± plus-or-minus \pm 1.2 kpc, defined by Panagia ( 1999 ) .
+While light from the supernova has reached a great many stars in the Milky Way, the Ellipsoid carves out a tremendously small volume of space still. Though SN 1987A was observed more than 35 years ago, the potential for exploring galactic-scale signal coordination with this event is just beginning.
+
+Figure 2:
+To-scale drawing of the information front (green dashed line) and the SETI Ellipsoid (black solid line) for SN 1987A, in an arbitrary coordinate frame oriented along the line of sight to the Large Magellanic Cloud. Though SN 1987A was observed more than 35 years ago, very few synchronized signals could have reached us thus far.
+
+The SETI Ellipsoid framework itself offers few clues as to the nature of any beacon or signal. Instead, it provides a straightforward method for selecting targets to observe in time. Given accurate distances, Equation 1 can be solved either to plan when a sample of stars should be observed to maximize the likelihood of receiving synchronized signals, or equivalently can determine which stars in a given set of observations (e.g. in an archive) intersect the Ellipsoid.
+Since the synchronization is governed by light travel time, uncertainties in distances to stars, to the source event, and in the dates of source events (e.g. for historical supernovae) directly impact timing uncertainties for receiving signals, and must be propagated appropriately when solving Equation 1.
+
+3 The Gaia Catalog of
+Nearby Stars
+
+The most recent data release from the Gaia mission, EDR3, provides the largest and most precise sample of astrometry ever gathered for stars in our Galaxy, containing more than 1.5 billion sources with parallax measurements (Gaia Collaboration et al., 2020a ) . This latest catalog has parallax measurements that are 30% more precise than the previous Gaia release. Using a model that accounts for both variable interstellar extinction and the Gaia magnitude limit, Bailer-Jones et al. ( 2021 ) have generated probabilistic distance estimates for 1.35 billion stars in Gaia EDR3. The increased precision from Gaia EDR3, and the probabilistic distances from Bailer-Jones et al. ( 2021 ) , enable us to make both accurate and precise estimates for when nearby stars will intersect the SETI Ellipsoid for a given source event.
+
+The Gaia Catalog of Nearby Stars (GCNS; Gaia Collaboration et al., 2020b ) contains a benchmark sample of 331k stars from the Gaia EDR3 release with robust distances within 100pc of the Sun. The GCNS provides probabilistic distances to each star, and is estimated to be ∼ similar-to \sim 92% complete for stars down to spectral type M8. All GCNS targets are also brighter than G ∼ 20.5 similar-to 𝐺 20.5 G\sim 20.5 mag. This ensures we can explore a wide range of spectral types with modest aperture telescopes, and with a high confidence in our Ellipsoid timing. The GCNS is therefore ideal for selecting targets for monitoring with the SETI Ellipsoid.
+
+Figure 3:
+Two dimensional histogram of the symmetrized distance errors for 331k stars in the GCNS, with the median (dashed line) and mode (solid line) distance errors shown. Typical uncertainties are less than 1 lyr for all stars within the 100 pc sample the GCNS, making this sample amenable for use in searching for synchronized signals via the SETI Ellipsoid framework.
+
+The accuracy of the expected arrival time for synchronized signals is directly impacted by uncertainties in the distance to the target stars. In Figure 3 we show the distance uncertainty for GCNS stars as a function of distance. Here we follow Bailer-Jones et al. ( 2021 ) , and use the “symmetrized distance uncertainty” from the provided distance probabilities (16%, 50%, 84%), also known as ( r l ​ o subscript 𝑟 𝑙 𝑜 r_{lo} , r m ​ e ​ d subscript 𝑟 𝑚 𝑒 𝑑 r_{med} , r h ​ i subscript 𝑟 ℎ 𝑖 r_{hi} ), computed as σ r = ( r h ​ i − r l ​ o ) / 2 subscript 𝜎 𝑟 subscript 𝑟 ℎ 𝑖 subscript 𝑟 𝑙 𝑜 2 \sigma_{r}=(r_{hi}-r_{lo})/2 . The distance shown in Figure 3 , and used throughout this work, is the 50% probability ( r m ​ e ​ d subscript 𝑟 𝑚 𝑒 𝑑 r_{med} ). As Bailer-Jones et al. ( 2021 ) describe, the distance posterior probabilities depend on the star’s distance, color, and variations in the Gaia limiting magnitude. While there is up to 2 dex of range in Figure 3 , typical (median or mode) distances uncertainties are less than 0.1 lyr for stars out to ∼ similar-to \sim 100 lyr, and less than 1 lyr for stars out to 326 lyr (100 pc). From the total GCNS sample, 4% of stars have symmetrized distance uncertainties less than 0.1 lyr, and
+54% of stars less than 1 lyr in Gaia EDR3. This provides a large number of nearby targets whose SETI Ellipsoid crossing times (i.e. when we could expect to receive synchronized signals) are accurate to within ∼ similar-to \sim 1 year or better.
+
+4 Selecting Targets on the
+SN 1987A SETI Ellipsoid
+
+With robust distances to stars from Gaia, and a synchronizing event identified (e.g. SN 1987A), selecting targets to monitor using the SETI Ellipsoid requires solving the linear Equation 1 based on the elapsed time since the synchronizing event was observed. The Ellipsoid dimensions (i.e. 𝒜 𝒜 \mathscr{A} and ℬ ℬ \mathscr{B} ) grow with time.
+Since the Ellipsoid grows with the speed of light, which is must faster than the relative motions of stars within our Galaxy, we assume that all objects are stationary, and thus d 1 subscript 𝑑 1 d_{1} and d 2 subscript 𝑑 2 d_{2} don’t change in time for a given star.
+
+Figure 4:
+Galactocentric Y,Z location for stars in the GCNS, with points colored by their designation within the SETI Ellipsoid framework for SN 1987A. 192,489 stars have seen SN 1987A but we could not yet have received a synchronized transmission (blue points). 138,823 stars have not observed SN 1987A (red points). There are 25,817 stars inside the current SETI ellipsoid for SN 1987A (purple points). At time of writing (mid 2022), 134 stars from the GCNS are within 0.1 lyr of the SN 1987A Ellipsoid surface. The location of the Sun is also indicated (yellow cross).
+
+For the GCNS, we demonstrate this selection in Figure 4 by finding stars within 0.1 lyr of the present day SN 1987A SETI Ellipsoid. The threshold of 0.1 lyr was chosen to illustrate the near best possible synchronization timing precision that Gaia distances can achieve. The actual value of this Ellipsoid threshold should be chosen with properties of the monitoring campaign in mind, such as observing baseline and cadence.
+
+We find that presently 134 stars from the GCNS are within 0.1 lyr of the SN 1987A SETI Ellipsoid, i.e. are within ± plus-or-minus \pm 0.1 years of having possible synchronized signals arrive to us. These targets lay on a cone-like distribution oriented towards the LMC. From the 331k stars in the GCNS, 25,817 stars are inside the Ellipsoid, meaning we can no longer receive synchronized signals from them. 192,489 stars have seen SN 1987A but are too far away for us to have received a synchronized transmission yet. 138,823 GCNS sources have not observed SN 1987A.
+
+A technosignature monitoring campaign of nearby stars starting now should consider prioritizing these 134 stars. We emphasize however this target list will change steadily over time. At present we find that an average of 734 stars per year within the GCNS intersect the SN 1987A Ellipsoid. While this is a large number of targets to monitor each year, it is well within the capability for many surveys or (semi-)robotic follow-up instruments (e.g. Ivezić et al., 2008 ) .
+
+To further illustrate the changing sample of SETI Ellipsoid targets over time, in Figure 5 we compute the Ellipsoid crossing date (in calendar years) for the entire CGNS sample. For visual clarity we only show a “slice” through the GCNS, limiting the plot to the 47,484 stars with galactocentric | X | < 10 X 10 |\rm{X}|<10 pc. The SETI Ellipsoid for SN 1987A continues to widen significantly over the next ∼ similar-to \sim 50 years, but will not reach the furthest stars in this sample for several hundred years.
+
+Figure 5:
+Earth-centered galactocentric Y,Z positions for a slice of 47,484 stars within the GCNS with | X | < 10 X 10 |\rm{X}|<10 pc. Points are colored by the date when each star star intersects the SN 1987A SETI Ellipsoid. Contours show the progression of the SETI Ellipsoid each century.
+
+To explore possible signs of synchronized SN 1987A signals from these 134 stars in the GCNS, we cross-matched their positions with the 19,355 published variability “alerts” from the Gaia Science Alerts archive (Hodgkin et al., 2021 ) .
+This alert stream is designed to identify new and rapid changes in brightness by Gaia over its entire observing lifetime. The pipeline for identifying Gaia alerts from the large volume of real-time data is complex, and involves by-eye validation. As such, this database is not a complete reference for significant variability detected with Gaia, but instead is a useful resource when searching for possible dramatic events. None of the 134 stars in our SETI Ellipsoid crossing sample were found to have an alert issued. The nearest alert cross-match to one of our 134 stars was over 200 arcsec away.
+
+However, our sample of 134 stars contain those that are likely crossing the SETI Ellipsoid now , and so we should not expect they would have been targets for receiving synchronized signals in the past.
+Since Gaia has been observing since mid 2014, we expanded our sample to include stars that crossed the SN 1987A Ellipsoid anytime during the Gaia mission. This recovered a total of 5658 sources in the GCNS. Cross-matching these stars to the Gaia alerts catalog we again find no compelling alerts, with the closest being 63 arcsec away. While this alert database does not contain a complete search for variability from these 5658 stars, we can rule out any long timescale (months to years) or dramatic novae-like technosignatures from this sample. As the Gaia mission continues to publish variability alerts, monitoring the stream for the current sample of SETI Ellipsoid crossing sources is a low-effort method for conducting passive SETI. A more comprehensive study of variability for these sources will be possible with future Gaia data releases.
+
+5 Galactic Novae as Synchronizing Events
+
+Thus far we have used the most recent local supernova, SN 1987A as our focus for searching for signal synchronization. However, there are numerous other conspicuous astronomical phenomena that have been suggested for use in developing the SETI Ellipsoid, including Gamma-Ray bursts (Corbet, 1999 ) , binary neutron star mergers (Seto, 2019 ) , and historical supernovae (Seto, 2021 ) . We cannot know what timescales or astrophysical processes would seem “conspicuous” to an extraterrestrial civilization with likely a much longer baseline for scientific and technological discovery (e.g. Kipping et al., 2020 ; Balbi & Ćirković, 2021 ) . Therefore we acknowledge the potential for anthropogenic bias inherent in this choice, and instead focus on which phenomena may be well suited to our current observing capabilities.
+
+Galactic (or classical) novae were one of the very first targets suggested for use when developing the SETI Ellipsoid framework (Makovetskii, 1977 ) . These events have characteristically bright optical outbursts, and occur within the Galaxy at a rate of ∼ similar-to \sim 50 per year (Shafter, 2017 ; De et al., 2021 ) . Novae occur predominantly near the Galactic plane, which means distant events are likely obscured by extinction (Kawash et al., 2021 ) . This results in the majority of novae events being relatively nearby (within a few kpc), which could help facilitate signal synchronization over smaller regions of the Galaxy.
+
+To explore the utility of classical novae for the SETI Ellipsoid in the Gaia era, we analyzed a large set of events with Gaia EDR3 distances. Our catalog of novae events was drawn from the list maintained by Bill Gray 2 2 2 https://github.com/Bill-Gray/galnovae , which includes both historical novae events and regularly updated contributions from ongoing wide field surveys.
+We cross matched this list with Gaia EDR3 and the probabilistic distances from Bailer-Jones et al. ( 2021 ) using a 3 arcsec matching radius, and selected 278 events with robust distances. As shown in Figure 6 , these events occur primarily near the galactic plane, and have been detected out to distances of ∼ similar-to \sim 10 kpc. This sample includes novae that were observed hundreds of years ago, with the oldest being Novae 1670, also known as CK Vul (Shara et al., 1985 ) .
+
+Figure 6:
+Top: Sky positions for 278 galactic novae with cross-matches from Gaia EDR3 and distances from Bailer-Jones et al. ( 2021 ) . These events are predominantly located within the galactic midplane.
+Bottom: Distance versus time since discovery for the 278 novae in our sample. Large uncertainties in distance are the result of faint quiescent luminosities for the novae systems in Gaia, and high extinction.
+
+Figure 7:
+SETI Ellipsoid diagram for Novae Cygnus 1975 in galactocentric X,Y coordinates, centered on the Earth.
+Colors for points are the same as in Figure 4 . 142 sources with the GCNS are presently located within 0.1 lyr of the SETI Ellipsoid for N Cyg 1975.
+
+As a representative example from these 278 novae, in Figure 7 we show the current day SETI Ellipsoid for Novae Cygnus 1975. This is the same event Makovetskii ( 1977 ) originally suggested using for defining the SETI Ellipsoid. While the Ellipsoid has broadened considerably over the past 45 years, and the opportunity for us to broadcast a synchronized signal to nearby stars has passed, N Cyg 1975 remains a viable event for identifying stars to monitor.
+
+These events are fairly frequent, up to ∼ similar-to \sim 10 per year in the current data. For each of the 278 novae we computed their current-day SETI Ellipsoid profiles, and selected stars within 0.1 lyr of the Ellipsoid surface.
+Each event had ∼ similar-to \sim 140 stars near the Ellipsoid surface, comparable to the point-in-time estimate for the SN 1987A Ellipsoid of 134. This is expected, since the yield of sources within a fixed tolerance of the Ellipsoid is directly related to the local stellar density. In total, SETI Ellipsoids from the 278 novae events had 41,180 source intersections identified from the GCNS, coming from 36,135 individual stars (i.e. 5045 stars currently intersect two or more SETI Ellipsoids).
+
+As with the SN 1987A example above, we repeated this exercise for the 278 galactic novae SETI Ellipsoids including any GCNS stars that intersected the Ellipsoid since mid 2014. We again matched the Gaia Science Alerts archive to these Ellipsoid intersections. We only considered alerts within 1 arcsec of a SETI Ellipsoid crossing star, stars that had distance uncertainties less than 1 lyr, and alerts that occurred after the expected Ellipsoid crossing time (allowing for a 0.3 year window before the Ellipsoid crossing time to account for timing uncertainty).
+
+For 16 of the 278 novae we recovered a Gaia Science Alert of interest. These alerts were all classified in the Gaia Science Alerts archive as coming from nearby flare or cool stars, with the exception of an outburst from the known CV, VW Hyi in early 2022 (Gaia Alert: Gaia22alg ), which intersected the SETI Ellipsoids for both N Sco 1893 and N Mus 1983 at different times in 2015. VW Hyi is highly variable, with more than a dozen outbursts throughout the light curve provided with the Gaia Alert data. We therefore do not believe any of the events recovered from the Gaia Science Alerts represent a synchronized signal along the SETI Ellipsoid from these 278 galactic novae.
+
+All together, SETI Ellipsoids based on classical novae yield a large number of stars (more than 36k) to monitor at any given time (i.e. within 0.1 lyr of the present day Ellipsoids).
+This makes galactic novae likely too numerous to use for in selecting sources for targeted SETI monitoring campaigns. However, as we have demonstrated with the Gaia Science Alerts archive, it is straightforward to mine survey data and real-time alerts for sources that intersect a great many SETI Ellipsoids.
+
+6 Discussion
+
+We have presented a review of the SETI Ellipsoid framework for identifying signals that could be synchronized with conspicuous astronomical events. The remarkably precise parallaxes provided by the Gaia mission enable accurate distance estimates for stars within 100 pc of the Sun. These in turn allow us to constrain timing uncertainties for stars intersecting the SETI Ellipsoid. Gaia allows the SETI Ellipsoid technique to finally be useful in selecting targets for robust technosignature searches. The precision mapping of stars from Gaia also enables other methods for constraining technosignature targets based on 2D and 3D positions, e.g. the Earth Transit Zone (Heller & Pudritz, 2016 ; Wells et al., 2018 ) .
+
+Gaia and the SETI Ellipsoid are a powerful basis for enabling technosignature searches with modern wide-field surveys (Djorgovski, 2000 ; Davenport, 2019 ) .
+The Ellipsoid algorithm is straightforward to implement, and we recommend it be used in searching data from many time domain surveys that can be cross matched to Gaia, as well as selecting targets for SETI monitoring programs (Isaacson et al., 2017 ) .
+The SETI Ellipsoid framework provides a clear when and where to consider in selecting targets or mining large data archives. However, this approach does not specify what type of signal we might expect to be synchronized. There is a clear need for further theory development around the types of technosignatures that can be explored with modern surveys (Sheikh, 2020 ) .
+
+We have demonstrated the utility of the SETI Ellipsoid in selecting targets over time from the GCNS, and in mining variability information from the Gaia Science Alerts.
+The best timing accuracy for exploring signal synchronization is available for stars with the smallest distance uncertainties. We propose that the 4% of nearby stars within the GCNS (13,789 sources) with < < 0.1 lyr symmetrized distance uncertainties be a priority for future monitoring when they cross SETI Ellipsoids of interest. These sources have typical distances < < 100 pc, and a median brightness of G = 12.3 𝐺 12.3 G=12.3 mag.
+
+The nearly volume complete nature of the GCNS means we can place robust limits on the the technosgnature searches we carry out for these stars. However we emphasize the Gaia Science Alerts used here do not contain a complete census of variability from these stars, and instead are illustrative of the type of search that can be done with light curves from forthcoming Gaia data releases (e.g. DR3, expected mid-2022). The continued improvement in parallax precision from future Gaia releases will also expand the sample of stars with acceptably small distance uncertainties that should be monitored.
+In future work, we will present practical explorations using the SETI Ellipsoid framework for target selection from both space-based (TESS; Ricker et al., 2015 ) and ground-based (ZTF; Bellm et al., 2019 ) surveys.
+
+The authors wish to thank Jill Tarter and Jason Wright for helpful discussions that contributed to the development of this project.
+JRAD acknowledges support from the DiRAC Institute in the Department of Astronomy at the University of Washington. The DIRAC Institute is supported through generous gifts from the Charles and Lisa Simonyi Fund for Arts and Sciences, and the Washington Research Foundation.
+The authors acknowledge support from the Breakthrough Listen initiative. Breakthrough Listen is managed by the Breakthrough Initiatives, sponsored by the Breakthrough Prize Foundation.
+SC acknowledges support as the Director of the
+Berkeley SETI Research Center Research Experience for Undergraduates Site, supported by the National Science Foundation under Grant AST 1950897.
+S.Z.S. acknowledges that this material is based upon work supported by the National Science Foundation MPS-Ascend Postdoctoral Research Fellowship under Grant No. 2138147.
+We acknowledge ESA Gaia, DPAC and the Photometric Science Alerts Team (http://gsaweb.ast.cam.ac.uk/alerts).
+
+References
+
+Astropy Collaboration et al. (2013)
+
+Astropy Collaboration, Robitaille, T. P., Tollerud, E. J., et al. 2013,
+A&A, 558, A33, doi:  10.1051/0004-6361/201322068
+
+Bailer-Jones et al. (2021)
+
+Bailer-Jones, C. A. L., Rybizki, J., Fouesneau, M., Demleitner, M., &
+Andrae, R. 2021, AJ, 161, 147, doi:  10.3847/1538-3881/abd806
+
+Balbi & Ćirković (2021)
+
+Balbi, A., & Ćirković, M. M. 2021, AJ, 161, 222,
+doi:  10.3847/1538-3881/abec48
+
+Bellm et al. (2019)
+
+Bellm, E. C., Kulkarni, S. R., Graham, M. J., et al. 2019, PASP, 131,
+018002, doi:  10.1088/1538-3873/aaecbe
+
+Chevalier & Emmering (1988)
+
+Chevalier, R. A., & Emmering, R. T. 1988, ApJ, 331, L105,
+doi:  10.1086/185245
+
+Corbet (1999)
+
+Corbet, R. H. D. 1999, PASP, 111, 881, doi:  10.1086/316395
+
+Davenport (2019)
+
+Davenport, J. R. A. 2019, arXiv e-prints, arXiv:1907.04443.
+
+https://arxiv.org/abs/1907.04443
+
+De et al. (2021)
+
+De, K., Kasliwal, M. M., Hankins, M. J., et al. 2021, ApJ, 912, 19,
+doi:  10.3847/1538-4357/abeb75
+
+Djorgovski (2000)
+
+Djorgovski, S. 2000, in Astronomical Society of the Pacific Conference
+Series, Vol. 213, Bioastronomy 99, ed. G. Lemarchand & K. Meech, 519
+
+Gaia Collaboration et al. (2020a)
+
+Gaia Collaboration, Brown, A. G. A., Vallenari, A., et al.
+2020a, arXiv e-prints, arXiv:2012.01533,
+doi:  https://doi.org/10.1051/0004-6361/202039657
+
+Gaia Collaboration et al. (2016)
+
+Gaia Collaboration, Prusti, T., de Bruijne, J. H. J., et al. 2016,
+A&A, 595, A1, doi:  10.1051/0004-6361/201629272
+
+Gaia Collaboration et al. (2020b)
+
+Gaia Collaboration, Smart, R. L., Sarro, L. M., et al.
+2020b, arXiv e-prints, arXiv:2012.02061.
+
+https://arxiv.org/abs/2012.02061
+
+Heller & Pudritz (2016)
+
+Heller, R., & Pudritz, R. E. 2016, Astrobiology, 16, 259,
+doi:  10.1089/ast.2015.1358
+
+Hodgkin et al. (2021)
+
+Hodgkin, S. T., Harrison, D. L., Breedt, E., et al. 2021, A&A, 652,
+A76, doi:  10.1051/0004-6361/202140735
+
+Hunter (2007)
+
+Hunter, J. D. 2007, Computing In Science & Engineering, 9, 90,
+doi:  10.1109/MCSE.2007.55
+
+Isaacson et al. (2017)
+
+Isaacson, H., Siemion, A. P. V., Marcy, G. W., et al. 2017, PASP, 129,
+054501, doi:  10.1088/1538-3873/aa5800
+
+Ivezić et al. (2008)
+
+Ivezić, Ž., Tyson, J. A., Acosta, E., et al. 2008, ArXiv
+e-prints, # 0805.2366.
+
+https://arxiv.org/abs/0805.2366
+
+Jones et al. (2001–)
+
+Jones, E., Oliphant, T., Peterson, P., et al. 2001–, SciPy: Open source
+scientific tools for Python.
+
+http://www.scipy.org/
+
+Kawash et al. (2021)
+
+Kawash, A., Chomiuk, L., Rodriguez, J. A., et al. 2021, ApJ, 922, 25,
+doi:  10.3847/1538-4357/ac1f1a
+
+Kipping et al. (2020)
+
+Kipping, D., Frank, A., & Scharf, C. 2020, International Journal of
+Astrobiology, 19, 430, doi:  10.1017/S1473550420000208
+
+Lemarchand (1994)
+
+Lemarchand, G. A. 1994, Ap&SS, 214, 209, doi:  10.1007/BF00982337
+
+Makovetskii (1977)
+
+Makovetskii, P. V. 1977, Soviet Ast., 21, 251
+
+Oliphant (2007)
+
+Oliphant, T. E. 2007, Computing in Science Engineering, 9, 10,
+doi:  10.1109/MCSE.2007.58
+
+Panagia (1999)
+
+Panagia, N. 1999, in New Views of the Magellanic Clouds, ed. Y. H. Chu,
+N. Suntzeff, J. Hesser, & D. Bohlender, Vol. 190, 549
+
+Pérez & Granger (2007)
+
+Pérez, F., & Granger, B. E. 2007, Computing in Science and Engineering, 9,
+21, doi:  10.1109/MCSE.2007.53
+
+Perryman et al. (1997)
+
+Perryman, M. A. C., Lindegren, L., Kovalevsky, J., et al. 1997, A&A,
+500, 501
+
+Ricker et al. (2015)
+
+Ricker, G. R., Winn, J. N., Vanderspek, R., et al. 2015, Journal of
+Astronomical Telescopes, Instruments, and Systems, 1, 014003,
+doi:  10.1117/1.JATIS.1.1.014003
+
+Seto (2019)
+
+Seto, N. 2019, ApJ, 875, L10, doi:  10.3847/2041-8213/ab133a
+
+Seto (2021)
+
+—. 2021, ApJ, 917, 96, doi:  10.3847/1538-4357/ac0c7b
+
+Shafter (2017)
+
+Shafter, A. W. 2017, ApJ, 834, 196, doi:  10.3847/1538-4357/834/2/196
+
+Shara et al. (1985)
+
+Shara, M. M., Moffat, A. F. J., & Webbink, R. F. 1985, ApJ, 294, 271,
+doi:  10.1086/163296
+
+Sheikh (2020)
+
+Sheikh, S. Z. 2020, International Journal of Astrobiology, 19, 237,
+doi:  10.1017/S1473550419000284
+
+Tang (1976)
+
+Tang, T. B. 1976, Journal of the British Interplanetary Society, 29, 469
+
+Tarter (2001)
+
+Tarter, J. 2001, ARA&A, 39, 511, doi:  10.1146/annurev.astro.39.1.511
+
+Wells et al. (2018)
+
+Wells, R., Poppenhaeger, K., Watson, C. A., & Heller, R. 2018, MNRAS,
+473, 345, doi:  10.1093/mnras/stx2077
+
+Wes McKinney (2010)
+
+Wes McKinney. 2010, in Proceedings of the 9th Python in Science
+Conference, ed. Stéfan van der Walt & Jarrod Millman, 56 – 61,
+doi:  10.25080/Majora-92bf1922-00a
+
+Wright (2017)
+
+Wright, J. T. 2017, Exoplanets and SETI, 186,
+doi:  10.1007/978-3-319-30648-3_186-1
+
+◄
+
+Feeling lucky?
+
+Conversion report
+Report an issue
+View original on arXiv ►
+
+Copyright
+Privacy Policy
+
+Generated on Mon Mar 11 20:09:22 2024 by L a T e XML

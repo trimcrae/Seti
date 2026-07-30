@@ -1,0 +1,961 @@
+A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array
+
+Report GitHub Issue
+×
+
+Title:
+
+Content selection saved. Describe the issue below:
+
+Description:
+
+Submit without GitHub
+Submit in GitHub
+
+arXiv is now an independent nonprofit!
+Learn more
+×
+
+Back to arXiv
+
+Why HTML?
+
+Report Issue
+
+Back to Abstract
+
+Download PDF
+
+Abstract
+
+I Introduction
+
+I.1 3I/ATLAS
+I.2 Connection to Technosignatures
+I.3 The Allen Telescope Array
+
+II Observations
+
+III Data Analysis
+
+III.1 Finding narrowband hits with bliss
+III.2 RFI blanking and drift rate limits
+III.3 Search for localized events with NBeamAnalysis
+
+IV Results
+V Upper Limits
+VI Conclusions
+References
+
+License: CC BY 4.0
+
+arXiv:2512.18142v2 [astro-ph.EP] 20 May 2026
+
+A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS
+with the Allen Telescope Array
+
+Sofia Z. Sheikh
+
+SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+
+Berkeley SETI Research Center, 339 Campbell, Berkeley, CA 94720
+
+Valeria Garcia Lopez
+
+Furman University, Physics Department, 3300 Poinsett Highway, Greenville, SC 29613.
+
+Breakthrough Listen, University of California, Berkeley, 501 Campbell Hall #3411, Berkeley, CA 94720, USA
+
+Isabel Gerrard
+
+Breakthrough Listen, University of Oxford, Denys Wilkinson Building, Keble Road, Oxford OX1 3RH, UK
+
+SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+
+James R. A. Davenport
+
+Department of Astronomy and the DiRAC Institute, University of Washington, 3910 15th Avenue NE, Seattle, WA 98195, USA
+
+Wael Farah
+
+SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+
+Blayne Griffin
+
+SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+
+University of Central Arkansas, Department of Physics, Astronomy, and Engineering, 201 Donaghey Ave, Conway, AR 72035
+
+Steve Croft
+
+Breakthrough Listen, University of Oxford, Denys Wilkinson Building, Keble Road, Oxford OX1 3RH, UK
+
+SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+
+Breakthrough Listen, University of California, Berkeley, 501 Campbell Hall #3411, Berkeley, CA 94720, USA
+
+Luigi F. Cruz
+
+SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+
+Imke de Pater
+
+Department of Astronomy, University of California, Berkeley, 501 Campbell #3411, Berkeley, CA 94720
+
+Department of Earth and Space Science, University of California, Berkeley, 501 Campbell #3411, Berkeley, CA 94720
+
+Ben Jacobson-Bell
+
+Berkeley SETI Research Center, 339 Campbell, Berkeley, CA 94720
+
+Department of Astronomy, University of California, Berkeley, 501 Campbell #3411, Berkeley, CA 94720
+
+Mark Masters
+
+SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+
+Karen I. Perez
+
+SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+
+Alexander W. Pollak
+
+SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+
+Carol Shumaker
+
+SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+
+Andrew Siemion
+
+SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+
+Sub-Department of Astrophysics, University of Oxford, Banbury Road, OX1 3RH
+
+Berkeley SETI Research Center, 339 Campbell, Berkeley, CA 94720
+
+Jodrell Bank Centre for Astrophysics (JBCA), Department of Physics & Astronomy, Alan Turing Building, The University of Manchester, M13 9PL, UK
+
+Department of Physics, Faculty of Science, University of Malta, Msida MSD 2080, Malta
+
+Abstract
+In 2025 July, the third-ever interstellar object, 3I/ATLAS, was discovered on its ingress into the Solar System. Similar to the NASA Voyager missions sent in 1977, science probes by extraterrestrial life (“artifact technosignatures”) could be sent to explore other stellar systems like our own. In this campaign, we used the SETI Institute’s Allen Telescope Array to observe 3I/ATLAS from 1–9 GHz. We detected nearly 74 million narrowband hits in 7.25 hr of data using the newly-developed search pipeline bliss . We then to mitigate Radio Frequency Interference ( RFI ) in our dataset, narrowing the dataset down to ∼ \sim 2 million hits. These hits were further filtered by the localization code NBeamAnalysis , and the remaining 211 hits were visually inspected in the time-frequency domain. We did not find any signals worthy of additional follow-up. Accounting for the Doppler drift correction and given the non-detection, we are able to set an Effective Isotropic Radiated Power ( EIRP ) upper limit of 10 − 110 10-110  W on radio technosignatures from 3I/ATLAS across the frequency and drift rate ranges covered by our survey.
+
+\turnoffeditone
+
+I Introduction
+
+I.1 3I/ATLAS
+
+On 2025 July 1, the third-ever interstellar object—originally reported as “C/2025 N1 (ATLAS)” and now known more commonly as “3I/ATLAS”—was discovered by the Asteroid Terrestrial-impact Last Alert System (ATLAS) facility in Rio Hurtado, Chile, with the pre-discovery observations extending as far back as 55 days (Feinstein et al. , 2025 ) . As of 2025 October, the object’s orbital eccentricity was estimated to be e e =6.137 1 1 1 Ephemerides in https://ssd.jpl.nasa.gov/horizons/ , making it more eccentric, than the first two known interstellar objects, 1I/‘Oumuamua and 2I/Borisov (e.g., Bannister et al. , 2019 ) . Many telescopes across the world have tracked the orbit of 3I/ATLAS, and ongoing monitoring has revealed clear cometary activity (Jewitt and Luu, 2025 ; Alarcon et al. , 2025 ; Minev et al. , 2025 ; Belyakov et al. , 2025 ; Bolin et al. , 2025 ; Chandler et al. , 2025 ; Rahatgaonkar et al. , 2025 ) . If this object is a comet, as expected from the initial characterization, it should be volatile-rich and may produce a dramatic tail now that it has passed perihelion.
+
+In early observations, the object appeared red in color (Alvarez-Candal et al. , 2025 ; Opitom et al. , 2025 ; Seligman et al. , 2025b ) , with a coma of cometary emission developing as it approached the Sun (Cordiner et al. , 2025 ; Rahatgaonkar et al. , 2025 ) . It reached perihelion ( q ∼ 1.356 q\sim 1.356  AU) on UT 2025 October 29 (Seligman et al. , 2025a ) , though . There is still much to learn about this interstellar object, so it is scientifically advantageous that we can observe it throughout its approach. A tentative rotation period of 16.79 hr has been determined from early observations (de la Fuente Marcos et al. , 2025 ) , which can be compared to 1I/‘Oumuamua’s very clear tumbling period of 7.3 hr (Fraser et al. , 2018 ) and 2I/Borisov’s more ambiguous rotation constraint (Bolin and Lisse, 2020 ) . Early observations are critical for precisely constraining the orbit and any non-gravitational accelerations, as well as the composition of cometary ejecta from 3I/ATLAS.
+
+I.2 Connection to Technosignatures
+
+A “technosignature” is an astronomically-observable sign of non-human technology built Extraterrestrial Intelligence ( ETI ). Historically, most searches for technosignatures have searched for directed electromagnetic radiation, particularly at radio wavelengths (Drake, 1961 ) . These radio technosignatures could be efficient for communicating information across interstellar distances, easily distinguishable from natural sources, and relatively unaffected by gas and dust along the line of sight (Cocconi and Morrison, 1959 ) . Recent radio technosignature searches have been covering the immense parameter space more rapidly than ever before ( Choza et al. , 2023 ) , but the prevalence of radio transmitters in the Galaxy and the universe is still poorly constrained at this point in time (Wright et al. , 2018 ) .
+
+Proposals to search for artifacts in the Solar System appeared in the technosignature literature almost simultaneously with radio searches (Bracewell, 1960 ) . This is because, despite their association with science fiction, physical artifacts such as probes, surface structures, or spacecraft within the Solar System are as worthy of rigorous characterization and observation as electromagnetic technosignatures at interstellar distances. Sheikh ( 2020 ) employed the Nine Axes framework to evaluate the comparative advantages and disadvantages of artifacts in our Solar System (“Solar System technosignatures,” in that work), summarized as follows.
+
+Most fundamentally, Voyager and similar probes will eventually become interstellar objects in other stellar systems. We thus know that no extrapolation is needed for the idea of interstellar technological objects, as we have a proof-by-existence. Passive Solar System artifacts also would not require constant power influx to keep them detectable as technosignatures, unlike electromagnetic transmitters, as they could be unique in observable features (shape/color/composition). This makes them low-cost for the signaler, and likely to be longer-lived as a detectable signature. At merely interplanetary distances (as opposed to interstellar), astronomical facilities are sensitive to smaller objects and less powerful transmissions, making our understanding more complete, and Solar System technosignatures, as a class, more detectable. If the artifact were meant to be discovered as a beacon or a message, it could be packed with data storage in physical form, which has benefits in volume and redundancy over transmitted electromagnetic waves (Gertz, 2016 ) . Finally, Solar System artifacts may also confer unique advantages beyond their use for communication (e.g., could leverage stars as gravitational lenses by placing small communication relay artifacts across many stellar systems; Kerby and Wright, 2021 ) .
+
+To differentiate a natural Interstellar Object ( ISO ) from an artificial one, we would need significant evidence of artificiality. Technosignature search strategies for ISO s over the next decade are outlined in detail by Davenport et al. ( 2025 ) . Observables could include non-gravitational trajectories beyond those expected from natural cometary emission (e.g. Taylor et al. , 2024 ) , unusual bolometric optical properties (e.g., reflectance, albedo), spectral lines inconsistent with a standard cometary or asteroidal composition, unusual morphologies or rotation profiles, or other anomalous features (Rogers et al. , 2024 ) . The most unambiguous observable, however, would be narrowband emission, particularly in the radio, which can only be produced by technological sources. While some technological artifacts may have no radio emission at all (e.g., Voyager in the far future), many of the potential motivations for creating and sending objects across interstellar distances would benefit strongly from an artificial radio component.
+
+We can thus use high frequency-resolution radio observations to characterize potential emission from ISO s. We seek to understand the population-level characteristics of ISO s, i.e., being able to set limits on the percentage of these objects that host radio transmitters. Even if no technosignatures are detected, high frequency resolution radio spectroscopy can also be leveraged to detect cometary emission (Crovisier et al. , 2016 ; Park et al. , 2018 ; Pisano et al. , 2025 ) to better understand the properties of natural ISO s.
+
+As established above, the technosignature hypothesis is not unreasonable in a galaxy with other technologically-capable life (which we may or may not reside in). We note that there is no compelling evidence yet that 3I/ATLAS has any non-natural characteristics extensive observation by the scientific community. However, it is still worth setting constraints on technological radio emission from 3I/ATLAS throughout its passage of our Solar System. This is standard practice (e.g., see Enriquez et al. , 2018 , for a search for narrowband radio emission from 1I/‘Oumuamua) , and should be performed for all ISO s in the future as well.
+
+I.3 The Allen Telescope Array
+
+The Allen Telescope Array ( ATA ) is a 42-element radio interferometer at Hat Creek Radio Observatory ( HCRO ) in Hat Creek, California. The 6.1-m offset Gregorian elements are in the process of being refurbished with dual-polarization log-pyramidal “Antonio” feeds. These feeds are cryocooled to 70 K, allowing for sensitivity from 1–10 GHz. The current active array consists of the 28 of the 42 dishes that have been upgraded to date. The analog signals from these feeds are amplified and sent over optical fiber to the on-site signal processing room. There, the signals are heterodyned with four independently-tuned local oscillators, with each of these independent tunings sampling 672 MHz anywhere in the available frequency range of the instrument. Finally, data from the four tunings are digitized and saved to the network via a 100-Gb ethernet link 2 2 2 This has since been upgraded to 400 Gb, after the observations reported here . Further details on the chain and hardware refurbishment process will be described by ATA Team ( in prep ) and Pollak and others ( in prep ) .
+
+In Section  II , we will discuss the observing parameters and campaign choices for the 3I/ATLAS ATA observations. In Section  III , we outline the data analysis and hit filtering that were used to search for signals-of-interest. The signals that we visually inspected are discussed in Section  IV and the implications for the presence of narrowband transmitters are covered in Section  V . Finally, we summarize and conclude in Section  VI .
+
+II Observations
+
+The ATA is privately owned and operated by the SETI Institute, allowing for rapid follow-up of targets-of-opportunity between larger Search for Extraterrestrial Intelligence ( SETI ) surveys. Following the announcement of 3I/ATLAS, the ATA team rapidly designed an observing campaign and initiated on-sky observations on 2025 July 2, approximately 23 hours following the initial ATLAS report. In general, the frequency of a potential ETI transmitter is unknown, and covering more parameter space is more valuable than trying to guess at “magic frequencies” (Zuckerman, 1985 ) . Given this, we leveraged the ATA ’s large bandwidth and multiple simultaneous tunings to maximize our frequency coverage. The sessions were divided into three frequency chunks: “low” (1000–3688 MHz), “mid” (3688–6376 MHz) and “high” (6376–9064 MHz). Each chunk consisted of four 672-MHz tunings. We took data across five observing sessions, with a total of 7.25 hr of on-source observations. Details for each observing session are shown in Table  1 .
+
+Date of First Scan
+Frequency Ranges
+Total
+Observing Time
+
+(UTC)
+(MHz)
+(hr)
+
+2025-07-03-05:10:38
+1000–3688
+1.3
+
+2025-07-05-04:50:14
+3688–6376
+1.1
+
+2025-07-08-04:52:40
+6376–9064
+3.4
+
+2025-07-09-05:20:16
+1000–3688
+1.1
+
+2025-07-10-05:16:28
+3688–6376
+0.3
+
+Table 1: Observing sessions for this campaign, comprising 7.25 hours over 1–9 GHz.
+
+During the sessions, a series of 5-minute beamformed scans of 3I/ATLAS were taken using the in-house beamformer backend BLADE (Cruz and others, in prep ) . BLADE is flexible for different science cases, and includes options for both high frequency resolution and high time resolution modes. In this project, we used the high frequency resolution mode of BLADE which allows the user to specify the exact frequency and time resolution, the polarization data to be saved (if any), and the number and location of beamformed beams. The data are saved as filterbank HDF5 files across 96-MHz sub-bands, with seven sub-bands per tuning (or 28 per frequency “chunk” as described above). For this project, we chose a frequency resolution of 1.9 Hz (sufficiently fine to resolve narrowband signals) and a sampling time of 16.8 s. We saved only the Stokes-I product (i.e., no polarization information was recorded). Two beams were placed on the sky for each scan: one “on-beam” at the center of the incoherent beam, centered on the location of 3I/ATLAS, and another “off-beam” five synthesized beamwidths away, with the inter-beam distance calculated for the center frequency of each tuning and applied to the entire tuning.
+
+Prior to each observing session, the ATA ’s GPU-based cross-correlation backend was used to target 3C 286, a flux and phase calibrator which is stable across the entire frequency range of the ATA (Perley and Butler, 2017 ) . These calibration scans lasted 10 minutes each. We then used our in-house CASA (McMullin et al. , 2007 ) pipeline to calculate the instrumental delays, phases, and bandpass solutions which were then applied to the subsequent beamformer observations. The data taken for this campaign totaled ∼ \sim 22 TB.
+
+III Data Analysis
+
+III.1 Finding narrowband hits with bliss
+
+We used the code bliss 3 3 3 to search for Doppler-drifting narrowband signals within the 7.25 hr of data from the campaign described in Section  II . bliss is a successor to the turboSETI (Enriquez et al. , 2017 ) and seticore 4 4 4 software packages. For a more thorough description of the bliss code, see Sheikh et al. ( 2025 ) and Jacobson-Bell and others ( 2026 ) .
+
+We ran the bliss_find_hits utility from bliss with a minimum drift rate of − 4 -4  Hz/s, a maximum drift rate of 4 Hz/s, and a Signal-to-Noise Ratio ( SNR ) threshold of 15. This drift rate range is relatively standard in the field and is sufficient to identify signals at a plausible range of radial accelerations relative to the receiver (see further drift rate discussion for this particular object in Section  III.2 ). Similarly, an SNR threshold of 15
+
+III.2 RFI blanking and drift rate limits
+
+By covering 1–9 GHz, we take advantage of the ATA ’s wide bandwidth, especially in the less-explored high frequency regions (i.e., above 5 GHz) which have not been as well-covered in prior SETI searches. However, this wide bandwidth also includes the spectrally-contaminated L-band, which covers downlink frequencies for GPS and other persistent classes of RFI ; this comes with its own challenges, especially in an era of increasing human radio emissions. Trying to run the signal localization code NBeamAnalysis 5 5 5 ( Tusay and Gerrard , 2026 ) . without first filtering the data would be prohibitively expensive in terms of computation time. Thus, to minimize the effect of these high-interference spectral windows on our data analysis, we “blank” any spectral region with a large amount of hits, removing all hits in those boundaries from further analysis 6 6 6 We hope to apply more sophisticated RFI removal in these regions in the future, but for now the number of hits returned is computationally prohibitive. A saturation of hits spanning a wide range of drift rates for an extended bandwidth suggests that an underlying signal was not a strong match to a single drift rate and thus is a strong indicator of local interference. The full list of blanked frequency intervals is shown in the appendix (Table  4 ) and in sum constitutes 16% of the total 1–9 GHz band.
+
+Figure 1:
+
+To filter out signals that do not match the dynamics of 3I/ATLAS, we characterized the acceleration of the object during the times of observation, to compare the observed drift rates with those expected from the acceleration between the object and the Earth. We took the time derivative of the deldot parameter within JPL Horizons, which gives the apparent range rate relative to the observer in km/s. Figure 2 displays the resulting acceleration as a function of time, which takes a sinusoidal form due to the radial acceleration contribution from the Earth’s rotation. From this, we estimated the average and standard deviation of the acceleration during the observation intervals. The values for all five sessions fell within 3.2 × 10 − 5 3.2\times 10^{-5}  km/s 2 to 3.5 × 10 − 5 ​ km/s 2 3.5\times 10^{-5}~\textrm{km/s}^{2} , with very low standard deviation within the sessions ( 10 − 7 10^{-7}  km/s 2 ), indicating that the same filter can be used for all sessions. This is logically consistent, given that the sessions began slightly after the object’s rise time each night, implying a similar geometrical contribution from Earth’s rotation each night.
+
+Figure 2: The radial acceleration of 3I/ATLAS over the 9 9 days containing our observations (blue line). Observation times are highlighted in yellow. This allows us to determine the expected drift rates for potential signals coming from 3I/ATLAS.
+
+We then converted the acceleration to a drift rate using the following equation from Sheikh et al. ( 2019 ) :
+
+ν ˙ = d ​ v d ​ t × ν o ​ b ​ s c \dot{\nu}=\frac{\frac{dv}{dt}\times\nu_{obs}}{c}
+
+(1)
+
+where ν ˙ \dot{\nu} is the drift rate in Hz/s, ν o ​ b ​ s \nu_{obs} is the frequency in Hz, d ​ v d ​ t \frac{dv}{dt} is the acceleration as calculated previously, and c c is the speed of light. Drift rates in Hz/s are dependent on observing frequency; to set a threshold for the entire search range in Hz/s, we need to consider the Hz/s drift rate of the highest frequencies in the survey. At a center frequency of 8728 MHz (our highest tuning), the maximum drift rate of 3I/ATLAS would be 1.01 Hz/s. Meanwhile, at a center frequency of 1336 MHz (our lowest tuning), the minimum drift rate of 3I/ATLAS would be 0.15 Hz/s. We considered applying drift-rate-specific filters for each of the tunings to incorporate this information in a frequency-dependent way. However, the rotation or tumbling period of 3I/ATLAS is not yet certain: this contribution, especially in Solar System objects, can be extremely large. Sheikh et al. ( 2019 ) note that asteroid 2008 DP4 tumbles in a way that could result in observed drift rates up to 4.22 nHz (i.e., 4.22 Hz/s at 1 GHz). Here, we take a middle ground approach. We filter our hits for drift rates between 0.05–1.5 Hz/s at all frequencies, sufficient to capture the known acceleration of 3I/ATLAS at all frequencies within our sample with some flexibility for additional rotational contributions 7 7 7 One might expect an active artifact to have stabilization against rotation, much like our telescopes and spacecraft. However, passive artifacts may have no such stabilization. To complicate matters further, one could imagine that rotation could be used as a tool to create artificial gravity within a space environment (Polstorff, 1965 ) .
+
+III.3 Search for localized events with NBeamAnalysis
+
+After running bliss and filtering out hits based on the frequency and drift rate cuts described in Sections  III.1 and III.2 , the remaining hits were run through the NBeamAnalysis spatial filtering pipeline. This pipeline is described in detail by Tusay et al. ( 2024 ) , but we will describe it briefly here. In Section  II , we described the two-beam observing strategy that we employed using the ATA beamformer mode: the on-beam was placed on the target (3I/ATLAS) and the off-beam was placed 5 synthesized beamwidths away. The NBeamAnalysis pipeline employs a series of different procedures which leverage two beams to identify signals that are consistent with a localized point source on the sky:
+
+•
+
+Compare the hit tables from bliss for the on-beam and the off-beam. If two hits in the tables are nearly identical in frequency and have an SNR ratio between the two beams that is less than N a ​ n ​ t ​ e ​ n ​ n ​ a ​ s \sqrt{N_{antennas}} = 28 \sqrt{28} = 5.29, then the hits are removed.
+
+•
+
+If the DOT score is 1, the beams are identical. DOT scores close to 0 indicate two arrays with different properties, potentially identifying signals that are present much more strongly in the on-beam.
+
+•
+
+Calculate the SNR ratio between the two arrays around every hit. As in the first step, any hit with an SNR ratio greater than 5.29 is potentially of interest.
+
+Up to 1000 plots depicting signals with SNR ratios greater than 5.29 are generated for visual inspection. If more than 1000 signals surpass that threshold, then the 1000 with the lowest DOT scores are plotted. If no signals have SNR ratios greater than 5.29, the 100 signals which score best in a combined assessment of the DOT score and the SNR ratio are plotted for visual inspection.
+
+IV Results
+
+After running bliss on all of our observations, we identified a total of 73,974,799 narrowband hits across the 7.25 hr of observation. After removing any hit in the frequency blanking ranges from Table  4 , which sum to a total blanked bandwidth of 1269.8 MHz ( ∼ \sim 16% of the total bandwidth) we were then left with ∼ \sim 11 million hits. After drift rate blanking, ∼ \sim 2 million hits remained. The frequency distribution of this population of hits, before and after the blanking steps,
+
+Figure 3: Frequency distribution of the ∼ 74 \sim 74 million hits obtained in this survey. The top, middle, and bottom panels correspond to the “low” (1000–3688 MHz), “mid” (3688–6376 MHz), and “high” (6376–9064 MHz) frequency ranges, respectively. All y-axes are scaled to the same limits. All hits identified by bliss are shown in blue, blanking ranges are shown with , the hits after blanking within the frequency ranges are shown in brown, and the hits after limiting the drift rate range are shown in gold. Applying blanking ranges and drift rate limits significantly reduced dense clusters of hits (reducing the total number of hits by 97.4%) which improved our ability to process the data and detect putative signals associated with 3I/ATLAS.
+
+Figure 4: The distribution of the ∼ 74 \sim 74 million hits from this survey across drift rate. Note the peak of hits around 0 Hz/s (expected because most RFI transmitters are in the same reference frame as the telescope, i.e., on the ground). After the drift rate cut, the count of hits is much more even across the restricted drift rate range. Note that the sawtooth pattern seen across drift rate is a known artifact in the current development version of bliss , caused by an overestimation of SNR for high-bandwidth ( ≳ 10 \gtrsim 10  Hz wide) hits close to integer multiples of the unit drift rate. It causes increased amounts of false positives close to these drift rates but does not cause false negatives (for more details, see Jacobson-Bell and others, 2026 ) .
+
+Figure 5: The distribution of the ∼ 74 \sim 74 million hits from this survey across SNR . As expected, there are significantly more weak hits than strong ones, and there is no significant trend in SNR when filters are applied to frequency and drift rate.
+
+After running NBeamAnalysis , 211 plots were highlighted for further analysis. Of these plots, 11 are events with SNR ratios greater than 5.29 The remaining 200 plots were from two observations that did not produce any final signals above the threshold, resulting in the backup plotting functionality, which selects 100 signals with the best combined assessment of DOT score and SNR ratio. After visual inspection, all of these 211 events were easily attributable to RFI: Two examples of those 211 events are shown in Figures  7 and 8 .
+
+Figure 6:
+
+Figure 7: An output waterfall plot from NBeamAnalysis for a signal which was ranked in the top 211 events. The on-beam (pointed at 3I/ATLAS) is shown in the left subplot, while the off-beam is shown in the right subplot. Each subplot is a normalized waterfall plot with frequency on the horizontal axis, time on the vertical axis, and intensity (scaled to the on-beam plot from 0–1) indicated by the color bar. This hit had a frequency outside of the blanking ranges, a drift rate in the allowable range, a relatively low DOT score (indicating significant difference between the plots), and an SNR ratio above 5.29 (indicating consistency with a point source on the sky). However, two things immediately discount this signal as an ETI technosignature: (1) the signal in the on-beam is not a narrowband technosignature despite the bliss hit, but rather some kind of broader-band modulated signal, and (2) this frequency is consistent with the L-band downlink for the Iridium satellites. The Iridium RFI explanation is consistent with the point source characteristics of the hit as well, as satellites and other distant human transmitters can mimic the characteristics that we would expect from a true ETI technosignature.
+
+A summary of the number of hits that passed each stage of analysis is shown in Table  2 .
+
+Date (UTC)
+bliss
+RFI Blanking
+Drift Rate Limits
+NBeamAnalysis
+Plotting
+
+2025-07-03
+32,346,482
+5,887,236
+823,046
+288,316
+5
+0
+
+2025-07-05
+12,415,496
+63,451
+4,339
+1,330
+100
+0
+
+2025-07-08
+609,692
+626,114
+22,675
+8,332
+100
+0
+
+2025-07-09
+23,511,437
+4,363,855
+1,020,006
+448,305
+1
+0
+
+2025-07-10
+5,091,692
+234,930
+63,716
+29,557
+5
+0
+
+Total
+73,974,799
+11,175,586
+1,933,782
+775,840
+211
+0
+
+Table 2: The number of hits remaining after each filtering step of the pipeline. The stark differences between different dates are due both to the variable observing session length and the different amount of RFI in each frequency band. Note that the two nights that returned 100 plots were returning the default number of “backup” plots with no plots surpassing the SNR ratio threshold i.e., they were generally of less interest.
+
+Figure 8: An output waterfall plot from NBeamAnalysis from an observation with 0 signals above the 5.29 SNR ratio threshold. This signal had a non-blanked frequency, a drift rate in the allowable range, and does appear to be truly narrowband (i.e., technological). However, the signal has a similar SNR in both the on-beam and the off-beam, indicating a local interferer in the allocation allotted to fixed-satellite service (Earth-to-space).
+
+V Upper Limits
+
+Given 3I/ATLAS’s distance from Earth during the observing window ( ∼ \sim 3.35 AU), the ATA would be able to detect a narrowband radio signal if its flux density exceeds a threshold S m ​ i ​ n S_{min} as follows:
+
+S min = S / N min β ⋅ ( S sys Δ ​ ν t ) ⋅ Δ ​ ν n p ⋅ τ obs S_{\text{min}}=\frac{S/N_{\text{min}}}{\sqrt{\beta}}\cdot\left(\frac{S_{\text{sys}}}{\Delta\nu_{t}}\right)\cdot\sqrt{\frac{\Delta\nu}{n_{p}\cdot\tau_{\text{obs}}}}
+
+(2)
+
+Here, S / N min S/N_{\text{min}} is the desired signal-to-noise threshold, S sys S_{\text{sys}} is the system equivalent flux density (in e.g., Jy), Δ ​ ν t \Delta\nu_{t} is the transmitter bandwidth, Δ ​ ν \Delta\nu is the channel bandwidth of the data, n p n_{p} is the number of polarizations, τ obs \tau_{\mathrm{obs}} is the observing time, and β \beta is the dechirping efficiency. This equation is slightly modified from the turboSETI formulation in e.g., Gajjar et al. ( 2021 ) in the following way. Given our frequency resolution ( Δ ​ ν ≈ 1.9 ​ Hz \Delta\nu\approx 1.9~\text{Hz} ) and temporal resolution ( Δ ​ t ≈ 16.777 ​ sec \Delta t\approx 16.777~\text{sec} ), signals with high frequency drift are spread across multiple channels, resulting in reduced sensitivity: this will happen to some degree regardless of the de-drifting algorithm being applied. However, compared to the turboSETI de-Doppler algorithm considered by Gajjar et al. ( 2021 ) , the bliss algorithm recovers β \sqrt{\beta} by including neighboring bins containing smeared signal into the power estimate.
+
+This dechirping efficiency can be expressed as follows for our survey:
+
+β = [ round ​ ( Δ ​ t Δ ​ ν × | ν ˙ | ) ] − 1 \beta=[\mathrm{round}\big(\frac{\Delta t}{\Delta\nu}\times|\dot{\nu}|\big)]^{-1}
+
+The parameter ν ˙ \dot{\nu} represents the drift rate being searched. Currently bliss rounds | ν ˙ | |\dot{\nu}| to the nearest integer multiple of the unit drift rate Δ ​ ν Δ ​ t \frac{\Delta\nu}{\Delta t} , accounting for the difference between this formulation of β \beta and the one in Gajjar et al. ( 2021 ) . Our system achieves maximum dechirping efficiency for drift rates of 0.113 Hz/s or less, with sensitivity getting gradually worse as the drift rates increase. Based on our minimum S min S_{\mathrm{min}} at various frequencies, we can then calculate the corresponding EIRP for all our observations using:
+
+EIRP obs = S min × 4 ​ π ​ D obs 2 × Δ ​ ν \text{EIRP}_{\text{obs}}=S_{\text{min}}\times 4\pi D^{2}_{\text{obs}}\times\Delta\nu
+
+(3)
+
+We also calculated a worst-case EIRP for the lowest dechirping efficiencies in our survey (i.e., those corresponding to 1.5 Hz/s), modifying the flux sensitivity accordingly. The EIRP values across the frequencies from 1 to 9 GHz are shown in Table  3 .
+
+The beamformer System Equivalent Flux Density ( SEFD ) values shown in Table  3 are derived from the SEFD s of individual antennas, calculated by CASA during calibration (as described in Section  II ). We remove outliers by identifying antennas in each polarization with SEFD s greater than 1.5 times the interquartile range above the third quartile; antennas with abnormally high SEFD values generally have hardware issues at the feed level and should be removed from the dataset (in this survey, this affected 8–12 of the 56 antenna-polarization combinations depending on the frequency). Then we take an unweighted mean of individual antenna SEFD s and divide by the number of elements remaining in the list for that polarization. Finally, the two average polarization SEFD values are themselves averaged to obtain the final beamformer SEFD , and, for frequencies with two sessions, those two session SEFD s are averaged as well to give a single beamformer SEFD for each frequency tuning. Note that the error bars on the beamformer SEFD values in Table  3 are derived from the standard deviation of the population of individual antenna SEFDs, which fall around 15%: this is relatively standard for the ATA and these uncertainties can be propagated linearly to the S min S_{\min} and EIRP values if desired.
+
+Center Frequency
+SEFD
+S min S_{\min}
+EIRP
+
+(MHz)
+(Jy)
+(Jy)
+(W)
+
+1336
+390 ± \pm 60
+170–2300
+10–40
+
+2008
+420 ± \pm 56
+190–2400
+11–40
+
+2680
+460 ± \pm 54
+200–2700
+12–40
+
+3352
+460 ± \pm 60
+200–2700
+12–40
+
+4024
+560 ± \pm 68
+250–3200
+15–50
+
+4696
+620 ± \pm 84
+280–3600
+16–60
+
+5368
+640 ± \pm 114
+280–3700
+17–60
+
+6040
+670 ± \pm 118
+300–3900
+18–60
+
+6712
+740 ± \pm 105
+330–4300
+20–70
+
+7384
+810 ± \pm 139
+360–4700
+21–80
+
+8056
+940 ± \pm 225
+420–5500
+25–90
+
+8728
+1150 ± \pm 326
+500–6700
+31–110
+
+Table 3: The SEFD of the beamformer, minimum detectable flux density ( S min S_{\min} ), and EIRP values for different center frequencies. The ranges in S min S_{\min} and EIRP demonstrate values for the best-case to worst-case dechirping efficiencies.
+
+Finally, we can compare these EIRP values with the recently-posted values from Pisano et al. ( 2025 ) : in the narrowband technosignature search of 3I/ATLAS in that work, the authors report a minimum EIRP value of 0.17 W. This value is about commensurate with a cellphone handset, significantly more sensitive than this work; this is expected given MeerKAT’s world-class sensitivity. However, MeerKAT only set limits from 900–1670 MHz, so this work increases the frequencies covered for 3I/ATLAS by a factor of 10.
+
+VI Conclusions
+
+In this work, we considered the most recently-discovered interstellar object, 3I/ATLAS, through a technosignature lens, motivating this frame in Section  I . We took 7.25 hr of data on 3I/ATLAS across 1–9 GHz with the ATA , using a high frequency resolution beamforming mode designed for narrowband signal searches (see Section  II ). In Section  III , we described the deployment of the narrowband hit-finding code bliss , RFI blanking and drift rate limits, and spatial filtering with the NBeamAnalysis code to filter our initial ∼ 74 \sim 74 million bliss hits down to 211 plots for visual inspection. We found no evidence of narrowband technosignatures in this dataset (Section  IV ). This result implies EIRP upper limits of 10 − 110 10-110  W across our frequency and drift rate range.
+
+In the future, the blanking ranges for RFI in this project will be explored in more detail to determine whether modulation-sensitive analysis strategies could mitigate the RFI while still allowing for narrowband searches in these ranges. In addition, as far as we know, this is the first time that expected drift rate contributions have been used as a filter for a technosignature search of a Solar System object. These advances in technosignature searches with ATA will be applied to future searches on the instrument, further pushing into unexplored parameter space for the SETI .
+
+1000–1025
+1775–1802
+2062.3–2062.8
+2257–2258
+2705–2800
+
+1075–1116
+1811–1813
+2067.3–2067.8
+2269–2270.3
+3264–3274
+
+1168–1184.3
+1899–1901
+2097–2098
+2271.3–2279
+3341–3343
+
+1187–1227
+1927–1945
+2110–2154.6
+2299–2301
+3492–3493
+
+1246–1250
+1951–1980
+2166–2169.5
+2316–2345
+3600–4200
+
+1275–1314
+1990–1996
+2179–2203.5
+2353–2359.5
+4999–5000.9
+
+1395–1420.5
+1999–2000.5
+2211–2212
+2484–2488
+5048–5049.5
+
+1525–1562
+2010–2011
+2226–2227.5
+2497.25–2498.5
+5810–5830
+
+1572–1580
+2022–2023
+2237–2241
+2565.75–2585
+7300–7307
+
+1671–1705
+2049–2054
+2244–2248
+2590–2609
+7596.5–7604
+
+Table 4: The blanking ranges, in MHz, used for this survey. Any hit from bliss that had a center frequency within a blanking range was removed from the survey due to high levels of RFI at those frequencies.
+
+The Allen Telescope Array (ATA) refurbishment program and its ongoing operations have received substantial support from Franklin Antonio. Additional contributions from Frank Levinson, Greg Papadopoulos, the Breakthrough Listen Initiative and other private donors have been instrumental in the renewal of the ATA. The Paul G. Allen Family Foundation provided major support for the design and construction of the ATA, alongside contributions from Nathan Myhrvold, Xilinx Corporation, Sun Microsystems, and other private donors. The ATA has also been supported by contributions from the US Naval Observatory and the US National Science Foundation. Breakthrough Listen is managed by the Breakthrough Initiatives, sponsored by the Breakthrough Prize Foundation. BG acknowledges support from the SETI Institute REU program (NSF Award 2447895). JRAD acknowledges support from the DiRAC Institute in the Department of Astronomy at the University of Washington. The DiRAC Institute is supported through generous gifts from the Charles and Lisa Simonyi Fund for Arts and Sciences, Janet and Lloyd Frink, and the Washington Research Foundation.
+
+SETI
+Search for Extraterrestrial Intelligence
+ETI
+Extraterrestrial Intelligence
+ATA
+Allen Telescope Array
+RFI
+Radio Frequency Interference
+SNR
+Signal-to-Noise Ratio
+FRB
+Fast Radio Burst
+BLADE
+Breakthrough Listen Accelerated Digital signal processing Engine
+FWHM
+full width at half maximum
+BL
+the Breakthrough Listen Initiative
+HCRO
+Hat Creek Radio Observatory
+GBT
+Green Bank Telescope
+FCC
+Federal Communications Commission
+SEFD
+System Equivalent Flux Density
+EIRP
+Effective Isotropic Radiated Power
+ISO
+Interstellar Object
+
+References
+
+M. R. Alarcon, M. Serra-Ricart, J. Licandro, S. G. Arencibia, I. Ruiz Cejudo, and I. Trujillo (2025)
+Deep g’-band Imaging of Interstellar Comet 3I/ATLAS from the Two-meter Twin Telescope (TTT) .
+
+The Astronomer’s Telegram 17264 , pp. 1 .
+
+Cited by: §I.1 .
+
+A. Alvarez-Candal, J. Rizos, L. Lara, P. Santos-Sanz, P. Gutierrez, J. Ortiz, N. Morales, and J. de León (2025)
+X-shooter spectrum of comet c/2025 n1: insights into a distant interstellar visitor .
+
+arXiv preprint arXiv:2507.07312 .
+
+Cited by: §I.1 .
+
+ATA Team (in prep)
+”Upgrades to the digital signal processing system on the allen telescope array” .
+
+Note: ”in prep”
+
+Cited by: §I.3 .
+
+M. Bannister, A. Bhandare, P. Dybczynski, A. Fitzsimmons, A. Guilbert-Lepoutre, R. Jedicke, M. Knight, K. J. Meech, A. McNeill, S. Pfalzner, et al. (2019)
+The natural history of’oumuamua .
+
+Nature astronomy .
+
+Cited by: §I.1 .
+
+M. Belyakov, B. T. Bolin, C. Fremling, and M. Graham (2025)
+Spectral Slope and Colors of Interstellar Comet 3I/ATLAS with the Palomar 200-inch Palomar Next Generation Spectrograph .
+
+The Astronomer’s Telegram 17276 , pp. 1 .
+
+Cited by: §I.1 .
+
+B. T. Bolin and C. M. Lisse (2020)
+Constraints on the spin-pole orientation, jet morphology, and rotation of interstellar comet 2i/borisov with deep hst imaging .
+
+Monthly Notices of the Royal Astronomical Society 497 ( 4 ), pp. 4031–4041 .
+
+Cited by: §I.1 .
+
+B. T. Bolin, M. Belyakov, C. L. Gray, C. Ingebretsen, G. Jewett, M. Kilic, and C. Lisse (2025)
+Apache Point Observatory Colors of Interstellar Comet 3I/ATLAS .
+
+The Astronomer’s Telegram 17284 , pp. 1 .
+
+Cited by: §I.1 .
+
+R. N. Bracewell (1960)
+Communications from superior galactic communities .
+
+Cited by: §I.2 .
+
+C. O. Chandler, P. H. Bernardinelli, M. Jurić, D. Singh, H. H. Hsieh, I. Sullivan, R. L. Jones, J. A. Kurlander, D. Vavilov, S. Eggl, M. Holman, F. Spoto, M. E. Schwamb, E. J. Christensen, W. Beebe, A. Roodman, K. Lim, T. Jenness, J. Bosch, B. Smart, E. Bellm, S. MacBride, M. L. Rawls, S. Greenstreet, C. Slater, A. Heinze, Ž. Ivezić, B. Blum, A. Connolly, G. Daues, R. Makadia, M. Gower, J. Bryce Kalmbach, D. Monet, M. T. Bannister, L. Dones, R. C. Dorsey, W. C. Fraser, J. C. Forbes, C. Fuentes, C. E. Holt, L. Inno, G. H. Jones, M. M. Knight, C. J. Lintott, T. Lister, R. Lupton, M. J. Mendoza Magbanua, R. Malhotra, B. E. A. Mueller, J. Murtagh, N. Pandey, W. T. Reach, N. H. Samarasinha, D. Z. Seligman, C. Snodgrass, M. Solontoi, G. M. Szabó, E. White, M. Womack, L. A. Young, R. Allbery, R. Armellin, É. Aubourg, C. Avdellidou, F. Azfar, J. Bauer, K. Bechtol, M. Belyakov, S. D. Benecchi, I. Bertini, B. T. Bolin, v. Bose, L. E. Buchanan, A. Boucaud, R. C. Boufleur, D. Boutigny, F. Braga-Ribas, D. Calabrese, J. I. B. Camargo, N. Caplar, B. Carry, J. P. Carvajal, Y. Choi, P. Cowan, S. Croft, M. Ćuk, F. Daruich, G. Daubard, J. R. A. Davenport, T. Daylan, J. Delgado, H. A. R. Devillepoix, P. E. Doherty, A. Donaldson, H. Drass, S. J. Deppe, G. P. Dubois-Felsmann, F. Economou, M. R. Eduardo, D. Farnocchia, M. K. Frissell, G. Fedorets, M. B. Fernandes, M. Fulle, D. W. Gerdes, A. R. Gibbs, A. F. Gillan, L. P. Guy, M. Hammergren, A. Hanushevsky, F. Hernandez, D. Hestroffer, M. J. Hopkins, M. Granvik, S. Ieva, D. H. Irving, B. T. Jannuzi, D. Jimenez, A. Ramos Gomes-Júnior, C. Juramy, S. M. Kahn, A. Kannawadi, Y. Kang, A. Kryszczyńska, I. Kotov, A. Koumjian, K. S. Krughoff, C. Lage, T. J. Lange, W. G. Levine, Z. Li, J. Licandro, H. W. Lin, N. B. Lust, R. R. Lyttle, A. A. Mahabal, M. Mahlke, A. A. Plazas Malagón, L. E. Salazar Manzano, M. Marc, G. Margoti, D. Marčeta, F. Menanteau, J. Meyers, D. Mills, N. Morato, S. More, C. B. Morrison, Y. Moulane, M. A. Muñoz-Gutiérrez, N. F. M., P. O’Connor, D. Oldag, W. J. Oldroyd, W. O’Mullane, C. Opitom, D. Oszkiewicz, G. L. Page, J. Patterson, M. J. Payne, J. Peloton, C. L. Pereira, J. R. Peterson, D. Polin, H. M. M. Pollek, R. Polen, Y. Qiu, D. Ragozzine, J. Rajagopal, v. van Reeven, M. Rice, S. T. Ridgway, A. S. Rivkin, J. E. Robinson, A. Rożek, A. Salnikov, B. O. Sánchez, G. Sarid, C. A. Schambeau, D. Scolnic, R. H. Schindler, R. Seaman, Š. Jacques, R. A. Shaw, A. Shugart, J. Sick, A. Siraj, M. C. Sitarz, S. Sobhani, C. Soldahl, B. Stalder, S. Stetzler, J. D. Swinbank, L. Szigeti, M. Tauraso, A. Thornton, L. Tonietti, D. E. Trilling, and C. A. Trujillo (2025)
+NSF-DOE Vera C. Rubin Observatory Observations of Interstellar Comet 3I/ATLAS (C/2025 N1) .
+
+arXiv e-prints , pp. arXiv:2507.13409 .
+
+External Links: 2507.13409
+
+Cited by: §I.1 .
+
+C. Choza, D. Bautista, S. Croft, A. P. Siemion, B. Brzycki, K. Bhattaram, D. Czech, I. de Pater, V. Gajjar, H. Isaacson, et al. (2023)
+The breakthrough listen search for intelligent life: technosignature search of 97 nearby galaxies .
+
+The Astronomical Journal 167 ( 1 ), pp. 10 .
+
+Cited by: §I.2 .
+
+G. Cocconi and P. Morrison (1959)
+Searching for interstellar communications .
+
+Nature 184 , pp. 844–846 .
+
+Note: Things I notice:- This paper is in Nature! A prestigious, mainstream publication- This paper is only two pages long - just presenting the idea- Cocconi and Morrison were both at Cornell for at least some time during the production of this paper - so was Sagan, Cornell has a wonderful history of early SETI work
+
+External Links: Document ,
+ISSN 0028-0836 ,
+Link
+
+Cited by: §I.2 .
+
+M. A. Cordiner, N. X. Roth, M. S. P. Kelley, D. Bodewits, S. B. Charnley, M. N. Drozdovskaya, D. Farnocchia, M. Micheli, S. N. Milam, C. Opitom, M. E. Schwamb, C. A. Thomas, and S. Bagnulo (2025)
+JWST Detection of a Carbon-dioxide-dominated Gas Coma Surrounding Interstellar Object 3I/ATLAS .
+
+ApJ 991 ( 2 ), pp. L43 .
+
+Cited by: §I.1 .
+
+J. Crovisier, D. Bockelée-Morvan, P. Colom, and N. Biver (2016)
+Comets at radio wavelengths .
+
+Comptes Rendus Physique 17 ( 9 ), pp. 985–994 .
+
+Cited by: §I.2 .
+
+L. Cruz et al. (in prep)
+”BLADE: the breakthough listen accelerated dsp engine” .
+
+Note: ”in prep”
+
+Cited by: §II .
+
+J. R. A. Davenport, S. Z. Sheikh, S. Croft, B. C. Lacki, J. T. Wright, C. Lintott, A. Frank, T. J. W. Lazio, C. O. Chandler, A. P. V. Siemion, S. DiKerby, E. White, V. Garcia Lopez, E. E. Yu, M. K. Frissell, P. Yoachim, N. Morato, D. Singh, J. Zhang, and D. Z. Seligman (2025)
+Technosignature Searches of Interstellar Objects .
+
+arXiv e-prints , pp. arXiv:2508.16825 .
+
+External Links: Document ,
+2508.16825
+
+Cited by: §I.2 .
+
+R. de la Fuente Marcos, M. R. Alarcon, J. Licandro, M. Serra-Ricart, J. de Leon, C. de la Fuente Marcos, G. Lombardi, A. Tejero, A. Cabrera-Lavers, S. Guerra Arencibia, and I. Ruiz Cejudo (2025)
+Assessing interstellar comet 3I/ATLAS with the 10.4 m Gran Telescopio Canarias and the Two-meter Twin Telescope .
+
+arXiv e-prints , pp. arXiv:2507.12922 .
+
+External Links: Document ,
+2507.12922
+
+Cited by: §I.1 .
+
+F. D. Drake (1961)
+Project ozma .
+
+Physics Today 14 , pp. 40–46 .
+
+External Links: Document ,
+ISSN 19450699
+
+Cited by: §I.2 .
+
+J. E. Enriquez, A. Siemion, T. J. W. Lazio, M. Lebofsky, D. H. MacMahon, R. S. Park, S. Croft, D. DeBoer, N. Gizani, V. Gajjar, et al. (2018)
+Breakthrough listen observations of 1i/’oumuamua with the gbt .
+
+arXiv preprint arXiv:1801.02814 .
+
+Cited by: §I.2 .
+
+J. E. Enriquez, A. Siemion, G. Foster, V. Gajjar, G. Hellbourg, J. Hickish, H. Isaacson, D. C. Price, S. Croft, D. DeBoer, M. Lebofsky, D. H. E. MacMahon, and D. Werthimer (2017)
+The Breakthrough Listen Search for Intelligent Life: 1.1-1.9 GHz Observations of 692 Nearby Stars .
+
+ApJ 849 ( 2 ), pp. 104 .
+
+External Links: Document ,
+1709.03491
+
+Cited by: §III.1 .
+
+A. D. Feinstein, J. W. Noonan, and D. Z. Seligman (2025)
+Precovery Observations of 3I/ATLAS from TESS Suggest Possible Distant Activity .
+
+ApJ 991 ( 1 ), pp. L2 .
+
+Cited by: §I.1 .
+
+W. C. Fraser, P. Pravec, A. Fitzsimmons, P. Lacerda, M. T. Bannister, C. Snodgrass, and I. Smolić (2018)
+The tumbling rotational state of 1i/‘oumuamua .
+
+Nature Astronomy 2 ( 5 ), pp. 383–386 .
+
+Cited by: §I.1 .
+
+V. Gajjar, K. I. Perez, A. P. V. Siemion, G. Foster, B. Brzycki, S. Chatterjee, Y. Chen, J. M. Cordes, S. Croft, D. Czech, D. DeBoer, J. DeMarines, J. Drew, M. Gowanlock, H. Isaacson, B. C. Lacki, M. Lebofsky, D. H. E. MacMahon, I. S. Morrison, C. Ng, I. de Pater, D. C. Price, S. Z. Sheikh, A. Suresh, C. Webb, and S. P. Worden (2021)
+The breakthrough listen search for intelligent life near the galactic center I .
+
+arXiv preprint .
+
+Note: arXiv:2104.14148 [astro‑ph.HE]
+
+Cited by: §V ,
+§V .
+
+J. Gertz (2016)
+ET Probes: Looking Here as Well as There .
+
+Journal of the British Interplanetary Society 69 , pp. 88–91 .
+
+External Links: Document ,
+1609.04635
+
+Cited by: §I.2 .
+
+B. Jacobson-Bell et al. (2026)
+”The breakthrough listen search for intelligent life: a technosignature search of 1176 nearby stars at 1–12 ghz with the green bank telescope” .
+
+Note: ”in prep”
+
+Cited by: §III.1 ,
+Figure 4 .
+
+D. Jewitt and J. Luu (2025)
+Interstellar Interloper C/2025 N1 is Active .
+
+The Astronomer’s Telegram 17263 , pp. 1 .
+
+Cited by: §I.1 .
+
+S. Kerby and J. T. Wright (2021)
+Stellar gravitational lens engineering for interstellar communication and artifact seti .
+
+The Astronomical Journal 162 ( 6 ), pp. 252 .
+
+Cited by: §I.2 .
+
+J. P. McMullin, B. Waters, D. Schiebel, W. Young, and K. Golap (2007)
+CASA architecture and applications .
+
+In Astronomical data analysis software and systems XVI ,
+
+Vol. 376 , pp. 127 .
+
+Cited by: §II .
+
+M. Minev, A. Kostov, and A. Mutafov (2025)
+Follow up observations of interstellar comet 3I/ATLAS .
+
+The Astronomer’s Telegram 17275 , pp. 1 .
+
+Cited by: §I.1 .
+
+C. Opitom, C. Snodgrass, E. Jehin, M. T. Bannister, E. Bufanda, S. E. Deam, R. Dorsey, M. Ferrais, S. Hmiddouch, M. M. Knight, R. Kokotanekova, B. Leicester, M. Marsset, B. Murphy, V. Okoth, R. Ridden-Harper, M. Vander Donckt, L. Ferellec, D. Hutsemekers, M. Lippi, J. Manfroid, and Z. Benkhaldoun (2025)
+Snapshot of a new interstellar comet: 3I/ATLAS has a red and featureless spectrum .
+
+arXiv e-prints , pp. arXiv:2507.05226 .
+
+External Links: Document ,
+2507.05226
+
+Cited by: §I.1 .
+
+R. S. Park, D. J. Pisano, T. J. W. Lazio, P. W. Chodas, and S. P. Naidu (2018)
+Search for OH 18 cm Radio Emission from 1I/2017 U1 with the Green Bank Telescope .
+
+AJ 155 ( 5 ), pp. 185 .
+
+Cited by: §I.2 .
+
+R. A. Perley and B. J. Butler (2017)
+An Accurate Flux Density Scale from 50 MHz to 50 GHz .
+
+ApJS 230 ( 1 ), pp. 7 .
+
+External Links: Document ,
+1609.05940
+
+Cited by: §II .
+
+D. J. Pisano, O. M. Smirnov, M. Ivchenko, L. Roth, S. Buchner, C. Tremblay, A. Siemion, and F. Camilo (2025)
+Further MeerKAT observations of 1665/1667 MHz OH in absorption and emission, and a technosignature search in 3I/ATLAS .
+
+The Astronomer’s Telegram 17499 , pp. 1 .
+
+External Links: Link
+
+Cited by: §I.2 ,
+§V .
+
+A. Pollak et al. (in prep)
+”Instrumentation upgrades to the allen telescope array” .
+
+Note: ”in prep”
+
+Cited by: §I.3 .
+
+W. K. Polstorff (1965)
+Dynamics of a rotating cylindrical space station .
+
+Technical report
+
+NASA .
+
+Cited by: footnote 7 .
+
+R. Rahatgaonkar, J. P. Carvajal, T. H. Puzia, B. Luco, E. Jehin, D. Hutsemékers, C. Opitom, J. Manfroid, M. Marsset, B. Yang, L. Buchanan, W. C. Fraser, J. Forbes, M. Bannister, D. Bodewits, B. T. Bolin, M. Belyakov, M. M. Knight, C. Snodgrass, E. Bufanda, R. Dorsey, L. Ferellec, F. La Forgia, M. Lippi, B. Murphy, P. K. Nayak, and M. Vander Donckt (2025)
+VLT observations of interstellar comet 3I/ATLAS II. From quiescence to glow: Dramatic rise of Ni I emission and incipient CN outgassing at large heliocentric distances .
+
+arXiv e-prints , pp. arXiv:2508.18382 .
+
+Cited by: §I.1 ,
+§I.1 .
+
+B. Rogers, C. J. Lintott, S. Croft, M. E. Schwamb, and J. R. A. Davenport (2024)
+The Weird and the Wonderful in Our Solar System: Searching for Serendipity in the Legacy Survey of Space and Time .
+
+AJ 167 ( 3 ), pp. 118 .
+
+External Links: Document ,
+2401.08763
+
+Cited by: §I.2 .
+
+D. Z. Seligman, M. Micheli, D. Farnocchia, L. Denneau, J. W. Noonan, T. Santana-Ros, L. Conversi, M. Devogèle, L. Faggioli, A. D. Feinstein, et al. (2025a)
+Discovery and preliminary characterization of a third interstellar object: 3i/atlas .
+
+arXiv preprint arXiv:2507.02757 .
+
+Cited by: §I.1 .
+
+D. Z. Seligman, M. Micheli, D. Farnocchia, L. Denneau, J. W. Noonan, H. H. Hsieh, T. Santana-Ros, J. Tonry, K. Auchettl, L. Conversi, M. Devogèle, L. Faggioli, A. D. Feinstein, M. Fenucci, M. Ferrais, T. Frincke, O. R. Hainaut, K. Hart, A. Hoffman, C. E. Holt, W. B. Hoogendam, M. E. Huber, E. Jehin, T. Kareta, J. V. Keane, M. S. P. Kelley, T. Lister, K. Mandt, D. Marčeta, K. J. Meech, M. Amine Miftah, M. Morgan, F. Ocaña, E. Peña-Asensio, B. J. Shappee, R. J. Siverd, A. G. Taylor, M. A. Tucker, R. Wainscoat, R. Weryk, J. J. Wray, A. Yaginuma, B. Yang, Q. Ye, and Q. Zhang (2025b)
+Discovery and Preliminary Characterization of a Third Interstellar Object: 3I/ATLAS .
+
+arXiv e-prints , pp. arXiv:2507.02757 .
+
+External Links: Document ,
+2507.02757
+
+Cited by: §I.1 .
+
+S. Sheikh, E. Hort, B. Cabrales, I. Gerrard, W. Farah, N. Tusay, S. Balcarcel, S. Shostak, and other authors (2025)
+A large-scale survey of the anti-solar point with the allen telescope array: survey design and pilot results .
+
+Note: in prep
+
+Cited by: §III.1 .
+
+S. Z. Sheikh, J. T. Wright, A. Siemion, and J. E. Enriquez (2019)
+Choosing a Maximum Drift Rate in a SETI Search: Astrophysical Considerations .
+
+ApJ 884 ( 1 ), pp. 14 .
+
+External Links: Document ,
+1910.01148
+
+Cited by: §III.2 ,
+§III.2 .
+
+S. Z. Sheikh (2020)
+Nine axes of merit for technosignature searches .
+
+International Journal of Astrobiology 19 ( 3 ), pp. 237–243 .
+
+Cited by: §I.2 .
+
+A. G. Taylor, D. Z. Seligman, M. J. Holman, P. Vereš, D. Farnocchia, N. Lewis, M. Micheli, and J. T. Wright (2024)
+Strong Nongravitational Accelerations and the Potential for Misidentification of Near-Earth Objects .
+
+ApJ 976 ( 2 ), pp. 190 .
+
+Cited by: §I.2 .
+
+N. Tusay and I. Gerrard (2026)
+Isabelgerrard/nbeamanalysis: efficient and stable sky-localization .
+
+Zenodo .
+
+External Links: Document ,
+Link
+
+Cited by: footnote 5 .
+
+N. Tusay, S. Z. Sheikh, E. L. Sneed, W. Farah, A. W. Pollak, L. F. Cruz, A. Siemion, D. R. DeBoer, and J. T. Wright (2024)
+A radio technosignature search of trappist-1 with the allen telescope array .
+
+The Astronomical Journal 168 ( 6 ), pp. 283 .
+
+Cited by: §III.3 .
+
+J. T. Wright, S. Kanodia, and E. Lubar (2018)
+How much seti has been done? finding needles in the n-dimensional cosmic haystack .
+
+The Astronomical Journal 156 ( 6 ), pp. 260 .
+
+Cited by: §I.2 .
+
+B. Zuckerman (1985)
+Preferred frequencies for SETI observations .
+
+Acta Astronautica 12 ( 2 ), pp. 127–129 .
+
+External Links: Document
+
+Cited by: §II .
+
+Experimental support, please
+view the build logs
+for errors. Generated by
+
+L
+A
+T
+E
+
+xml
+
+.
+
+Instructions for reporting errors
+We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+methods listed below:
+
+Click the "Report Issue" (
+
+) button, located in the page header.
+
+Tip: You can select the relevant text first, to include it in your report.
+Our team has already identified the following issues . We appreciate your time reviewing and reporting rendering errors we
+may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+all.
+Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a list of packages that need conversion , and welcome developer contributions .
+
+We gratefully acknowledge support from
+our major funders ,
+member institutions , ,
+and all contributors.
+
+About
+·
+Help
+·
+Contact
+·
+Subscribe
+·
+Copyright
+·
+Privacy
+·
+Accessibility
+·
+Operational Status (opens in new tab)
+
+Major funding support from

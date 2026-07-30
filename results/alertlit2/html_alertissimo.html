@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+<title>Alertissimo - a tool for orchestration of LSST broker streams</title>
+<!--Generated on Thu Jan 15 14:41:57 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<!--Document created on March 8, 2003.-->
+<meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport"/>
+<link href="/static/browse/0.3.4/css/arxiv-html-papers-20250916.css" rel="stylesheet" type="text/css"/>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.3/html2canvas.min.js"></script>
+<script src="/static/browse/0.3.4/js/addons_new.js"></script>
+<script src="/static/browse/0.3.4/js/feedbackOverlay.js"></script>
+<base href="/html/2601.10454v1/"/></head>
+<body>
+<nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_section"><a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S1" title="In Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">1 </span>Introduction</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S2" title="In Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2 </span>Alertissimo</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S2.SS1" title="In 2 Alertissimo ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.1 </span>Broker orchestration</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S2.SS2" title="In 2 Alertissimo ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.2 </span>DSL for transients</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S2.SS3" title="In 2 Alertissimo ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.3 </span>Architecture overview</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S3" title="In Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3 </span>Conclusion</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line">
+<div class="ltx_para" id="p1">
+<span class="ltx_ERROR undefined" id="p1.1">\articleNo</span>
+<p class="ltx_p" id="p1.2">?
+
+
+<span class="ltx_ERROR undefined" id="p1.2.1">\volnumber</span>1
+
+
+
+
+</p>
+</div>
+<div class="ltx_para" id="p2">
+<span class="ltx_ERROR undefined" id="p2.1">\hauthor</span>
+<p class="ltx_p" id="p2.2">V. Vujčić, V.A. Srećković, S. Babarogić</p>
+</div>
+<span class="ltx_note ltx_role_institutetext" id="id1"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_note_type">institutetext: </span>Astronomical Observatory, Volgina 7, 11060 Belgrade, Serbia <span class="ltx_note ltx_role_email" id="id1.1"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_note_type">email: </span>veljko@aob.rs</span></span></span>
+</span></span></span><span class="ltx_note ltx_role_institutetext" id="id2"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_note_type">institutetext: </span>University of Belgrade, Institute of Physics Belgrade, PO Box 57, 11001 Belgrade, Serbia
+</span></span></span><span class="ltx_note ltx_role_institutetext" id="id3"><sup class="ltx_note_mark">3</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">3</sup><span class="ltx_note_type">institutetext: </span>University of Belgrade, Faculty of Organizational Sciences, Jove Ilića, 11000 Belgrade, Serbia
+</span></span></span>
+<h1 class="ltx_title ltx_title_document">Alertissimo - a tool for orchestration of LSST broker streams</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+V. Vujčić<span class="ltx_ERROR undefined" id="id1.1.id1">\orcid</span>0000-0002-0525-1197
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">V.A. Srećković<span class="ltx_ERROR undefined" id="id2.1.id1">\orcid</span>0000-0001-7938-5748
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">S. Babarogić<span class="ltx_ERROR undefined" id="id3.1.id1">\orcid</span>0000-0003-3635-4671
+</span></span>
+</div>
+<div class="ltx_dates">(March 8, 2003)</div>
+<div class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p" id="id4.id1">The Vera C. Rubin Observatory, through its Legacy Survey of Space and Time, will soon start producing 10 million alerts on transient astronomical objects per night. Due to logistics and bandwidth, alerts will not be dispatched directly to the public but to ’brokers’ i.e. tools selected by LSST to handle alert streams. Brokers offer both common, specific and micro-specific functionalities related to alert handling, analysis, representation and dissemination. In this ecosystem, potentially augmented by data streams from other astronomical sources, there is a - need demonstrated by the community - for use cases which combine features of individual brokers. In this paper we present initial efforts and a prototype of such a tool, along with a language that would allow users to define use cases / workflows in a manner tailored for the domain.</p>
+</div>
+<div class="ltx_classification">
+<h6 class="ltx_title ltx_title_classification">keywords: </h6>Astronomical transients – Large astronomical surveys – Vera C. Rubin Observatory – Real time event processing – Domain-specific languages – Natural language processing
+</div>
+<span class="ltx_note ltx_note_frontmatter ltx_role_volume" id="id4"><sup class="ltx_note_mark">†</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">†</sup><span class="ltx_note_type">volume: </span>56</span></span></span>
+<section class="ltx_section" id="S1">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+<div class="ltx_para" id="S1.p1">
+<p class="ltx_p" id="S1.p1.1">As a new era of astronomical data science is about to kick off with Vera C. Rubin Observatory’s Legacy Survey of Space and Time (Rubin/LSST) <cite class="ltx_cite ltx_citemacro_citet">Ivezić<span class="ltx_text ltx_bib_etal"> et al.</span> (<a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib.bib33" title="LSST: From Science Drivers to Reference Design and Anticipated Data Products">2019</a>)</cite> production phase, the ecosystem of tools and infrastructure dealing with transient astronomical events looks fit and (almost) ready for the data burst. It is commonly known that the LSST Alert Production pipeline <cite class="ltx_cite ltx_citemacro_citep">(Bosch<span class="ltx_text ltx_bib_etal"> et al.</span>, <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib.bib2" title="An overview of the lsst image processing pipelines">2018</a>)</cite> will capture and process images, perform difference-image analysis and distribute alerts of every astronomical source with a signal-to-noise ratio (SNR) ratio <math alttext="&gt;" class="ltx_Math" display="inline" id="S1.p1.1.m1" intent=":literal"><semantics><mo>&gt;</mo><annotation encoding="application/x-tex">&gt;</annotation></semantics></math> 5 in positive or negative flux <cite class="ltx_cite ltx_citemacro_citep">(Graham<span class="ltx_text ltx_bib_etal"> et al.</span>, <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib.bib3" title="LSST alerts: key numbers">2019b</a>)</cite>. Due to bandwidth and other considerations, alerts will not be directly available to the public but through ’brokers’ - tools developed by different scientific teams worldwide, specifically made for and approved by LSST. At least six brokers (AleRCE, AMPEL, ANTARES, Fink, Lasair, Pitt-Google) will be able to ingest LSST alert stream in near-real time, analyze, classify, offer UI tools, programming APIs and more. Some of the main features of brokers overlap but they differ significantly in how they expose these features, with even greater divergence in their underlying implementations and backend technologies. <cite class="ltx_cite ltx_citemacro_citep">(Vujčić<span class="ltx_text ltx_bib_etal"> et al.</span>, <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib.bib1" title="An overview of astronomical transient brokers in rubin era">2025</a>)</cite>.</p>
+</div>
+</section>
+<section class="ltx_section" id="S2">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>Alertissimo</h2>
+<div class="ltx_para" id="S2.p1">
+<p class="ltx_p" id="S2.p1.1">We introduce <cite class="ltx_cite ltx_citemacro_cite">Alertissimo (<a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib.bib37" title="Alertissimo">2025</a>)</cite> - a tool for orchestration of broker streams and potentially for a wider scope of astro-science use cases. It can be seen as a novel topic but also an extension of the work done and analyzed by the Serbian group related to astronomical stream processing and virtual observatory <cite class="ltx_cite ltx_citemacro_citep">(Vujčić and Jevremović, <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib.bib4" title="Real-time stream processing in astronomy">2020</a>; Jevremović<span class="ltx_text ltx_bib_etal"> et al.</span>, <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib.bib5" title="Databases for collisional and radiative processes in small molecules needed for spectroscopy use in astrophysics">2020</a>)</cite>. This tool is conceived on two premises: 
+<br class="ltx_break"/>a) that there is a need for building workflows out of multiple LSST broker data streams (and potentially external sources as well); 
+<br class="ltx_break"/>b) that there is a need for a tool that would allow expressing such workflows in a powerful yet approachable manner. 
+<br class="ltx_break"/>We can roughly name these two premises as ’Broker Orchestration’ and ’DSL for Transients’. We also present Alertissimo’s overall architecture.</p>
+</div>
+<section class="ltx_subsection" id="S2.SS1">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.1 </span>Broker orchestration</h3>
+<div class="ltx_para" id="S2.SS1.p1">
+<p class="ltx_p" id="S2.SS1.p1.1">As stated above, at least 6 LSST brokers are in a mature development phase, and some of them - like Lasair, ALeRCE, ANTARES and Fink - have worked in production with Zwicky Transient Facility (ZTF) data (<cite class="ltx_cite ltx_citemacro_citet">Graham<span class="ltx_text ltx_bib_etal"> et al.</span> <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib.bib17" title="The zwicky transient facility: science objectives">2019a</a></cite>, data volume order of magnitude lower than LSST). Apart from technological choices, implementation differences and performance, brokers also vary in features (and microfeatures), and in the ways they are exposed through their UIs and APIs. There are ongoing discussions in the Transients and Variable Stars scientific collaboration (LSST-TVS) on use cases that combine features of various brokers (see the Appendix <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib" title="References ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_title">References</span></a> for a use case featuring supermassive binary black hole (SMBBH) detection). There may also be availability and responsiveness considerations, in a technical sense.</p>
+</div>
+<div class="ltx_para" id="S2.SS1.p2">
+<p class="ltx_p" id="S2.SS1.p2.1">Brokers offer external access to their features through APIs, most through REST<span class="ltx_note ltx_role_footnote" id="footnote1"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_tag ltx_tag_note">1</span>Representational State Transfer, an architectural style for web services which defines GET and POST methods for data retrieval</span></span></span> and Python, some through a Python interface only. Here we have a similar but non-standardized set of their exposed methods, not only related to major feature differences but also to naming conventions and microfeatures (e.g - how do they retrieve single vs multiple objects? can they handle SQL? how does output look like and can you control granulation? etc). API access control is implemented differently across brokers, typically requiring users to supply credentials — such as tokens or username/password combinations — with varying permission models and granularity.</p>
+</div>
+<div class="ltx_para" id="S2.SS1.p3">
+<p class="ltx_p" id="S2.SS1.p3.1">It is a relatively easy task to write a program or a script that would pick specific methods from various brokers and perform a single use case. Alertissimo should act here as a generator of scientific scenarios - take any number of features from any broker (or other available source) and orchestrate them with one another. The primary function of Alertissimo here is one of a science-enabler, where all decisions are in control of the user<span class="ltx_note ltx_role_footnote" id="footnote2"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_tag ltx_tag_note">2</span>However, the idea persists that Alertissimo could also act in a ’light’ AI-based counseling manner too, based on the knowledge of previous user experiences/success rates. This kind of development could take place in later phases.</span></span></span>.</p>
+</div>
+<div class="ltx_para" id="S2.SS1.p4">
+<p class="ltx_p" id="S2.SS1.p4.1">Alertissimo is designed with an input-agnostic core, where user-specified workflows are first translated into intermediate representations (IR) with a well-defined structure built using Pydantic<span class="ltx_note ltx_role_footnote" id="footnote3"><sup class="ltx_note_mark">3</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">3</sup><span class="ltx_tag ltx_tag_note">3</span>Pydantic is a Python library designed for data validation, parsing, and serialization which provides a structured way to define data schemas and ensures that incoming data conform to the specified types and constraints.</span></span></span> models. These IR models are the product of a conceptual analysis of broker features; their design is generalized, while their implementation is specialized through a polymorphic class structure.</p>
+</div>
+<figure class="ltx_figure" id="S2.F1"><img alt="Refer to caption" class="ltx_graphics ltx_centering ltx_img_portrait" height="801" id="S2.F1.1.g1" src="diagram-export-11-4-2025-10_06_48-PM.png" width="419"/>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>End to end flow diagram of Alertissimo modules illustrating the pipeline from DSL input through orchestration to broker execution. For detailed description see Subsection <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S2.SS3" title="2.3 Architecture overview ‣ 2 Alertissimo ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_tag">2.3</span></a></figcaption>
+</figure>
+</section>
+<section class="ltx_subsection" id="S2.SS2">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.2 </span>DSL for transients</h3>
+<div class="ltx_para" id="S2.SS2.p1">
+<p class="ltx_p" id="S2.SS2.p1.1">The challenge of translating high-level user specifications into executable workflows is often addressed through Domain-Specific Languages (DSLs) and workflow systems <cite class="ltx_cite ltx_citemacro_citep">(Gil<span class="ltx_text ltx_bib_etal"> et al.</span>, <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib.bib10" title="Wings: intelligent workflow-based design of computational experiments">2010</a>)</cite>. There are three main directions for Alertissimo UI development, one of them being the backbone of the others - the DSL for Transients. The two others, Natural Language Processing (NLP) <cite class="ltx_cite ltx_citemacro_citet">Chowdhary (<a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib.bib7" title="Natural language processing">2020</a>)</cite> and visual workflow builder are planned to be built once a mature DSL foundation is established. DSLs <cite class="ltx_cite ltx_citemacro_citep">(Mernik<span class="ltx_text ltx_bib_etal"> et al.</span>, <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib.bib6" title="When and how to develop domain-specific languages">2005</a>)</cite> are programming languages designed for a very specific purpose and are usually of declarative nature<span class="ltx_note ltx_role_footnote" id="footnote4"><sup class="ltx_note_mark">4</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">4</sup><span class="ltx_tag ltx_tag_note">4</span>Declarative programming languages are stating ’what’ should be done in contrast with imperative languages which are describing ’how’ it should be done. All general programming languages are imperative while more narrowly specified languages, such as SQL, rule-based languages, HTML etc are declarative.</span></span></span>.
+Alertissimo’s DSL for Transients acts as the semantic and syntactic backbone linking user intent with system capabilities. It exposes a structured, declarative representation of broker operations, allowing every workflow to be expressed in a consistent formalism. This provides that all interactions, no matter how informal their starting point was, ultimately resolve into a precise and testable specification. The demo version of Alertissimo featuring DSL for Transients is currently available through a github branch (<a class="ltx_ref ltx_url ltx_font_typewriter" href="https://github.com/sambolino/alertissimo/tree/feature/dsl" title="">https://github.com/sambolino/alertissimo/tree/feature/dsl</a>). Example of DSL for Transients is found in the Appendix <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib" title="References ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_title">References</span></a>.</p>
+</div>
+<div class="ltx_para" id="S2.SS2.p2">
+<p class="ltx_p" id="S2.SS2.p2.1">The natural language interface in Alertissimo will enable users to describe their scientific intentions in plain terms, while maintaining expressive power. The aim is to test both a pure NLP prompt, where users would describe use-cases in written English, and a chat-bot style AI dialogue which could act as an assistant providing refinement and disambiguation, even for users initially unfamiliar with broker architectures. Both the natural language and visual interfaces of Alertissimo will be developed on top of a formally defined DSL grammar. As DSL defines the valid constructs, relationships, and parameter types for workflows involving broker orchestration, it also ensures that any interface — textual, conversational, or visual — ultimately produces valid, executable specifications. This formal grammar serves as the common translation layer: natural language inputs are parsed and normalized into DSL expressions, and also the visual interface directly maps user manipulations of blocks and links into equivalent DSL statements.</p>
+</div>
+<div class="ltx_para" id="S2.SS2.p3">
+<p class="ltx_p" id="S2.SS2.p3.1">From a broader perspective, this layered UI approach reflects a continuum between accessibility and expressiveness. At one end, the conversational interface empowers domain scientists to describe ideas without syntactic constraints; at the other, the DSL offers power users fine-grained control and versionable scripts suitable for integration into research pipelines. The visual interface bridges these modes, exposing the structure of the DSL while remaining approachable.</p>
+</div>
+</section>
+<section class="ltx_subsection" id="S2.SS3">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.3 </span>Architecture overview</h3>
+<div class="ltx_para" id="S2.SS3.p1">
+<p class="ltx_p" id="S2.SS3.p1.1">The overall architecture of Alertissimo is depicted in Figure <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S2.F1" title="Figure 1 ‣ 2.1 Broker orchestration ‣ 2 Alertissimo ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_tag">1</span></a>, with data flow and key components as follows:</p>
+</div>
+<div class="ltx_para" id="S2.SS3.p2">
+<ol class="ltx_enumerate" id="S2.I1">
+<li class="ltx_item" id="S2.I1.i1" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span>
+<div class="ltx_para" id="S2.I1.i1.p1">
+<p class="ltx_p" id="S2.I1.i1.p1.1">Input Layer: Users can define their use-cases via multiple interfaces (DSL, NLP/chatbot (planned), Visual blocks - Yahoo Pipes <cite class="ltx_cite ltx_citemacro_citep">(Pruett, <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib.bib11" title="Yahoo! pipes">2007</a>)</cite> style (planned)), with the DSL being the currently implemented method.</p>
+</div>
+</li>
+<li class="ltx_item" id="S2.I1.i2" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span>
+<div class="ltx_para" id="S2.I1.i2.p1">
+<p class="ltx_p" id="S2.I1.i2.p1.1">Parsing and Validation: User input is reduced to DSL formalism to the appropriate parser (DSL Parser, etc.). Validation is performed both in terms of grammar and broker capabilities.</p>
+</div>
+</li>
+<li class="ltx_item" id="S2.I1.i3" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span>
+<div class="ltx_para" id="S2.I1.i3.p1">
+<p class="ltx_p" id="S2.I1.i3.p1.1">Capabilities: Broker capabilities are defined within yaml<span class="ltx_note ltx_role_footnote" id="footnote5"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup><span class="ltx_tag ltx_tag_note">5</span>YAML is a human-readable data serialization language primarily used for configuration files and data storage</span></span></span> files</p>
+</div>
+</li>
+<li class="ltx_item" id="S2.I1.i4" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">4.</span>
+<div class="ltx_para" id="S2.I1.i4.p1">
+<p class="ltx_p" id="S2.I1.i4.p1.1">IR Generation: Valid DSL is being translated into IR models, still being execution-agnostic.</p>
+</div>
+</li>
+<li class="ltx_item" id="S2.I1.i5" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">5.</span>
+<div class="ltx_para" id="S2.I1.i5.p1">
+<p class="ltx_p" id="S2.I1.i5.p1.1">Orchestration and Execution: The validated IR is processed by the Orchestrator. This component manages the workflow by making polymorphic calls to the Execution Layer, which consists of an Abstract Broker interface. This design allows the system to specialize the implementation for different targets while maintaining a generic core. For the sake of performance/execution control, The orchestrator can also trigger a workflow coordination framework, such as an Airflow DAG (planned).</p>
+</div>
+</li>
+<li class="ltx_item" id="S2.I1.i6" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">6.</span>
+<div class="ltx_para" id="S2.I1.i6.p1">
+<p class="ltx_p" id="S2.I1.i6.p1.1">Response Handling and Output: Responses from brokers are collected and processed by and the system executes one or more output actions, such as to Notify a user, Store the data, Display it, Trigger a downstream process, or Publish the results.</p>
+</div>
+</li>
+</ol>
+</div>
+</section>
+</section>
+<section class="ltx_section" id="S3">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Conclusion</h2>
+<div class="ltx_para" id="S3.p1">
+<p class="ltx_p" id="S3.p1.1">Alertissimo is a new tool for building scientific workflows out of streams of alerts generated by Rubin/LSST. The alerts are not disseminated directly to the public, but through tools called ’brokers’ - projects developed for ingestion and analysis of LSST transient alerts. Alertissimo covers all of the brokers’ concepts and features and offers an integrated interface for orchestrating multiple brokers within a single workflow. On top of Alertissimo lies a domain-specific language devised to easily yet expressively represent scientific use cases. NLP/LLM/chatbot and visual workflows are planned as extensions that dependably translate and validate to the canonical DSL.</p>
+</div>
+<div class="ltx_para" id="S3.p2">
+<p class="ltx_p" id="S3.p2.1">Together, these interaction paradigms establish a scalable human–machine interface strategy, ensuring that Alertissimo remains adaptable as new brokers, data modalities, and analysis paradigms emerge in astronomy and astrophysics. Our prototype demonstrates how broker interoperability and workflow definition can empower the astronomy and astrophysics community in the era of Rubin/LSST.</p>
+</div>
+<div class="ltx_acknowledgements">
+<h6 class="ltx_title ltx_title_acknowledgements">Acknowledgements.</h6>This research was supported by the Ministry of Science, Technological Development and Innovation of the Republic of Serbia (MSTDIRS) through contract no. 451-03-66/2024-03/200002 made with Astronomical Observatory (Belgrade), 451-03-47/2023-01/200024 made with Institute of physics Belgrade.
+The authors acknowledge the networking opportunities from the COST Action CA22133 - The birth of solar systems (PLANETS) supported by COST (European Cooperation in Science and Technology).
+
+</div>
+</section>
+<section class="ltx_bibliography" id="bib">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+<ul class="ltx_biblist" id="bib.L1">
+<li class="ltx_bibitem ltx_bib_misc" id="bib.bib37">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Alertissimo (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Alertissimo</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note"><a class="ltx_ref ltx_url ltx_font_typewriter" href="https://github.com/sambolino/alertissimo" title="">https://github.com/sambolino/alertissimo</a>Accessed: 2025-10-29</span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S2.p1.1" title="2 Alertissimo ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_tag">§2</span></a>.
+</span>
+</li>
+<li class="ltx_bibitem ltx_bib_article" id="bib.bib2">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Bosch, Y. AlSayyad, R. Armstrong, E. Bellm, H. Chiang, S. Eggl, K. Findeisen, M. Fisher-Levine, L. P. Guy, A. Guyonnet, <span class="ltx_text ltx_bib_etal">et al.</span> (2018)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">An overview of the lsst image processing pipelines</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:1812.03248</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S1.p1.1" title="1 Introduction ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li class="ltx_bibitem ltx_bib_article" id="bib.bib7">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">K. Chowdhary (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Natural language processing</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Fundamentals of artificial intelligence</span>, <span class="ltx_text ltx_bib_pages"> pp. 603–649</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S2.SS2.p1.1" title="2.2 DSL for transients ‣ 2 Alertissimo ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li class="ltx_bibitem ltx_bib_article" id="bib.bib10">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Y. Gil, V. Ratnakar, J. Kim, P. Gonzalez-Calero, P. Groth, J. Moody, and E. Deelman (2010)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Wings: intelligent workflow-based design of computational experiments</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">IEEE Intelligent Systems</span> <span class="ltx_text ltx_bib_volume">26</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 62–72</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S2.SS2.p1.1" title="2.2 DSL for transients ‣ 2 Alertissimo ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li class="ltx_bibitem ltx_bib_article" id="bib.bib17">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Graham, S. Kulkarni, E. Bellm, S. Adams, C. Barbarino, N. Blagorodnova, D. Bodewits, B. Bolin, P. Brady, S. Cenko, C. Chang, M. Coughlin, K. De, G. Eadie, T. Farnham, U. Feindt, A. Franckowiak, C. Fremling, S. Gezari, and J. Zolkower (2019a)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The zwicky transient facility: science objectives</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Publications of the Astronomical Society of the Pacific</span> <span class="ltx_text ltx_bib_volume">131</span>, <span class="ltx_text ltx_bib_pages"> pp. 078001</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a class="ltx_ref doi ltx_bib_external" href="https://dx.doi.org/10.1088/1538-3873/ab006c" title="">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S2.SS1.p1.1" title="2.1 Broker orchestration ‣ 2 Alertissimo ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li class="ltx_bibitem ltx_bib_book" id="bib.bib3">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Graham, E. Bellm, L. Guy, C. Slater, and G. Dubois-Felsmann (2019b)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">LSST alerts: key numbers</span>.
+</span>
+<span class="ltx_bibblock"> <span class="ltx_text ltx_bib_publisher">DMTN-102, URL https://dmtn-102. lsst. io, LSST Data Management Technical Note</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a class="ltx_ref ltx_bib_external" href="https://github.com/lsst-dm/dmtn-102" title="">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S1.p1.1" title="1 Introduction ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li class="ltx_bibitem ltx_bib_article" id="bib.bib33">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Ž. Ivezić, S. M. Kahn, J. A. Tyson, B. Abel, E. Acosta, R. Allsman, D. Alonso, Y. AlSayyad, S. F. Anderson, J. Andrew, J. R. P. Angel, G. Z. Angeli, R. Ansari, P. Antilogus, C. Araujo, R. Armstrong, K. T. Arndt, P. Astier, É. Aubourg, N. Auza, T. S. Axelrod, D. J. Bard, J. D. Barr, A. Barrau, J. G. Bartlett, A. E. Bauer, B. J. Bauman, S. Baumont, E. Bechtol, K. Bechtol, A. C. Becker, J. Becla, C. Beldica, S. Bellavia, F. B. Bianco, R. Biswas, G. Blanc, J. Blazek, R. D. Blandford, J. S. Bloom, J. Bogart, T. W. Bond, M. T. Booth, A. W. Borgland, K. Borne, J. F. Bosch, D. Boutigny, C. A. Brackett, A. Bradshaw, W. N. Brandt, M. E. Brown, J. S. Bullock, P. Burchat, D. L. Burke, G. Cagnoli, D. Calabrese, S. Callahan, A. L. Callen, J. L. Carlin, E. L. Carlson, S. Chandrasekharan, G. Charles-Emerson, S. Chesley, E. C. Cheu, H. Chiang, J. Chiang, C. Chirino, D. Chow, D. R. Ciardi, C. F. Claver, J. Cohen-Tanugi, J. J. Cockrum, R. Coles, A. J. Connolly, K. H. Cook, A. Cooray, K. R. Covey, C. Cribbs, W. Cui, R. Cutri, P. N. Daly, S. F. Daniel, F. Daruich, G. Daubard, G. Daues, W. Dawson, F. Delgado, A. Dellapenna, R. de Peyster, M. de Val-Borro, S. W. Digel, P. Doherty, R. Dubois, G. P. Dubois-Felsmann, J. Durech, F. Economou, T. Eifler, M. Eracleous, B. L. Emmons, A. Fausti Neto, H. Ferguson, E. Figueroa, M. Fisher-Levine, W. Focke, M. D. Foss, J. Frank, M. D. Freemon, E. Gangler, E. Gawiser, J. C. Geary, P. Gee, M. Geha, C. J. B. Gessner, R. R. Gibson, D. K. Gilmore, T. Glanzman, W. Glick, T. Goldina, D. A. Goldstein, I. Goodenow, M. L. Graham, W. J. Gressler, P. Gris, L. P. Guy, A. Guyonnet, G. Haller, R. Harris, P. A. Hascall, J. Haupt, F. Hernandez, S. Herrmann, E. Hileman, J. Hoblitt, J. A. Hodgson, C. Hogan, J. D. Howard, D. Huang, M. E. Huffer, P. Ingraham, W. R. Innes, S. H. Jacoby, B. Jain, F. Jammes, M. J. Jee, T. Jenness, G. Jernigan, D. Jevremović, K. Johns, A. S. Johnson, M. W. G. Johnson, R. L. Jones, C. Juramy-Gilles, M. Jurić, J. S. Kalirai, N. J. Kallivayalil, B. Kalmbach, J. P. Kantor, P. Karst, M. M. Kasliwal, H. Kelly, R. Kessler, V. Kinnison, D. Kirkby, L. Knox, I. V. Kotov, V. L. Krabbendam, K. S. Krughoff, P. Kubánek, J. Kuczewski, S. Kulkarni, J. Ku, N. R. Kurita, C. S. Lage, R. Lambert, T. Lange, J. B. Langton, L. Le Guillou, D. Levine, M. Liang, K. Lim, C. J. Lintott, K. E. Long, M. Lopez, P. J. Lotz, R. H. Lupton, N. B. Lust, L. A. MacArthur, A. Mahabal, R. Mandelbaum, T. W. Markiewicz, D. S. Marsh, P. J. Marshall, S. Marshall, M. May, R. McKercher, M. McQueen, J. Meyers, M. Migliore, M. Miller, and D. J. Mills (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">LSST: From Science Drivers to Reference Design and Anticipated Data Products</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Astrophysical Journal</span> <span class="ltx_text ltx_bib_volume">873</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 111</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a class="ltx_ref doi ltx_bib_external" href="https://dx.doi.org/10.3847/1538-4357/ab042c" title="">Document</a>,
+<span class="ltx_text ltx_bib_external">0805.2366</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S1.p1.1" title="1 Introduction ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li class="ltx_bibitem ltx_bib_article" id="bib.bib5">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">D. Jevremović, V. Srećković, B. Marinković, and V. Vujčić (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Databases for collisional and radiative processes in small molecules needed for spectroscopy use in astrophysics</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Contributions of the Astronomical Observatory Skalnate Pleso</span> <span class="ltx_text ltx_bib_volume">50</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 44–54</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S2.p1.1" title="2 Alertissimo ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_tag">§2</span></a>.
+</span>
+</li>
+<li class="ltx_bibitem ltx_bib_article" id="bib.bib8">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">S. Komossa, D. Grupe, P. Marziani, L. Popović, S. Marčeta-Mandić, E. Bon, D. Ilić, A. Kovačević, A. Kraus, Z. Haiman, <span class="ltx_text ltx_bib_etal">et al.</span> (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The extremes of agn variability: outbursts, deep fades, changing looks, exceptional spectral states, and semi-periodicities</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Advances in Space Research</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#p4.1" title="Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_title">Alertissimo - a tool for orchestration of LSST broker streams</span></a>.
+</span>
+</li>
+<li class="ltx_bibitem ltx_bib_article" id="bib.bib9">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. B. Kovačević, L. Č. Popović, and D. Ilić (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Two-dimensional correlation analysis of periodicity in active galactic nuclei time series</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Open astronomy</span> <span class="ltx_text ltx_bib_volume">29</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 51–55</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#p4.1" title="Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_title">Alertissimo - a tool for orchestration of LSST broker streams</span></a>.
+</span>
+</li>
+<li class="ltx_bibitem ltx_bib_article" id="bib.bib6">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Mernik, J. Heering, and A. M. Sloane (2005)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">When and how to develop domain-specific languages</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ACM computing surveys (CSUR)</span> <span class="ltx_text ltx_bib_volume">37</span> (<span class="ltx_text ltx_bib_number">4</span>), <span class="ltx_text ltx_bib_pages"> pp. 316–344</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S2.SS2.p1.1" title="2.2 DSL for transients ‣ 2 Alertissimo ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li class="ltx_bibitem ltx_bib_book" id="bib.bib11">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Pruett (2007)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Yahoo! pipes</span>.
+</span>
+<span class="ltx_bibblock"> <span class="ltx_text ltx_bib_publisher">O’Reilly</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S2.I1.i1.p1.1" title="In 2.3 Architecture overview ‣ 2 Alertissimo ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_tag">item 1</span></a>.
+</span>
+</li>
+<li class="ltx_bibitem ltx_bib_article" id="bib.bib1">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">V. Vujčić, V. Srećković, S. Babarogić, and J. Aleksić (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">An overview of astronomical transient brokers in rubin era</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Contrib. Astron. Obs. Skalnaté Pleso</span> <span class="ltx_text ltx_bib_volume">55</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 95–105</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S1.p1.1" title="1 Introduction ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li class="ltx_bibitem ltx_bib_incollection" id="bib.bib4">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">V. Vujčić and D. Jevremović (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Real-time stream processing in astronomy</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Knowledge Discovery in Big Data from Astronomy and Earth Observation</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 173–182</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#S2.p1.1" title="2 Alertissimo ‣ Alertissimo - a tool for orchestration of LSST broker streams"><span class="ltx_text ltx_ref_tag">§2</span></a>.
+</span>
+</li>
+</ul>
+</section>
+<div class="ltx_pagination ltx_role_newpage"></div>
+<div class="ltx_para" id="p3">
+<p class="ltx_p" id="p3.1">DSL for Transients - example code</p>
+</div>
+<div class="ltx_para" id="p4">
+<p class="ltx_p" id="p4.1">Here is a sample code of DSL for Transients for supermassive binary black hole (SMBBH) detection, based on the use case presented on the online meeting of the LSST-TVS collaboration. The use case was proposed by prof dr Andjelka Kovačević based on longstanding research of AGN and SMBBH variability (<cite class="ltx_cite ltx_citemacro_citet">Kovačević<span class="ltx_text ltx_bib_etal"> et al.</span> (<a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib.bib9" title="Two-dimensional correlation analysis of periodicity in active galactic nuclei time series">2020</a>)</cite>, <cite class="ltx_cite ltx_citemacro_citet">Komossa<span class="ltx_text ltx_bib_etal"> et al.</span> (<a class="ltx_ref" href="https://arxiv.org/html/2601.10454v1#bib.bib8" title="The extremes of agn variability: outbursts, deep fades, changing looks, exceptional spectral states, and semi-periodicities">2025</a>)</cite>). The meeting took place on the Feb 21st 2025. Comments include original definition of the use case from the discussion.</p>
+</div>
+<div class="ltx_para" id="p5">
+<div class="ltx_listing ltx_lst_numbers_left ltx_lstlisting ltx_framed ltx_framed_rectangle ltx_listing" id="p5.1" style="--ltx-bg-color:#FFFFFF;">
+<div class="ltx_listing_data"><a download="" href="data:text/plain;base64,IyBGaW5rK0FMZVJDRStMYXNhaXIrQU5UQVJFUyBhZ3JlZSBvbiBhbGVydAojICgncmVxdWlyZWQnIGFyZ3VtZW50IGlzIGFkZGVkIGZvciBzaG93Y2FzZSkKY29uZmlybSBvYmplY3RfaWQ9IlpURjI1YWF6cWF2ZyIgYnJva2Vycz1bZmluaywgYWxlcmNlLCBsYXNhaXIsIGFudGFyZXNdIHJlcXVpcmVkPTMKIyBBTGVSQ0UgcmV0cmlldmVzIFpURiBjdXJ2ZXMgb2YgYWxlcnRlZCBvYmplY3QKbGlnaHRjdXJ2ZSBicm9rZXI9YWxlcmNlIHN1cnZleT0ienRmIgojIExhc2FpciByZXRyaWV2ZXMgaGlzdG9yaWNhbCBsaWdodCBjdXJ2ZXMgZnJvbSBQYW4tU1RBUlIgb2YKIyBhbGVydGVkIG9iamVjdHMsIGFuZCBjcm9zc21hdGNoZXMgd2l0aCBJUiwgUiwgWCBjYXRhbG9ndWVzLgojIEhlbHBzIGlkZW50aWZ5IG11bHRpLXdhdmVsZW5ndGggcGVyaW9kaWNpdHkuCmNyb3NzbWF0Y2ggYnJva2VyPWxhc2FpciBjYXRhbG9nPSJwYW5zdGFycnMiIGZpbHRlcnM9WyJpciIsICJyYWRpbyIsICJ4cmF5Il0KIyBBTlRBUkVTIGNyb3NzbWF0Y2hlcyBhbGVydGVkIG9iamVjdCB3aXRoIGVST1NJVEEgZXRjIGZvcgojIGZ1cnRoZXIgY29uZmlybWF0aW9uIG9mIG11bHRpd2F2ZWxlbmd0aCBvZiBwZXJpb2RpY2l0eSBvcmlnaW4uCmNyb3NzbWF0Y2ggYnJva2VyPWFudGFyZXMgY2F0YWxvZz0iZXJvc2l0YSIKIyBMYXNhaXIgcHJvdmlkZXMgYSBLYWZrYS1iYXNlZCBhbGVydCBzdHJlYW0gdGhhdCB1cGRhdGVzIGluCiMgcmVhbC10aW1lIHdoZW5ldmVyIGEgbmV3IG9ic2VydmF0aW9uIGlzIG1hZGUgZm9yIGEKIyBtb25pdG9yZWQgb2JqZWN0Lgptb25pdG9yIGJyb2tlcj1sYXNhaXIgc3RyZWFtPSJrYWZrYSIKY2xhc3NpZnkgbWV0aG9kPSJwZXJpb2RpY2l0eV9kZXRlY3Rpb24iCm5vdGlmeSB0ZWFtCnN0b3JlIGRi">⬇</a></div>
+<div class="ltx_listingline" id="lstnumberx1">
+<span class="ltx_tag ltx_tag_listingline">1</span><span class="ltx_text ltx_lst_comment ltx_font_typewriter" id="lstnumberx1.1" style="font-size:80%;--ltx-fg-color:#ABABAB;">#<span class="ltx_text ltx_lst_space" id="lstnumberx1.1.1"> </span>Fink+ALeRCE+Lasair+ANTARES<span class="ltx_text ltx_lst_space" id="lstnumberx1.1.2"> </span>agree<span class="ltx_text ltx_lst_space" id="lstnumberx1.1.3"> </span>on<span class="ltx_text ltx_lst_space" id="lstnumberx1.1.4"> </span>alert</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx2">
+<span class="ltx_tag ltx_tag_listingline">2</span><span class="ltx_text ltx_lst_comment ltx_font_typewriter" id="lstnumberx2.1" style="font-size:80%;--ltx-fg-color:#ABABAB;">#<span class="ltx_text ltx_lst_space" id="lstnumberx2.1.1"> </span>(’required’<span class="ltx_text ltx_lst_space" id="lstnumberx2.1.2"> </span>argument<span class="ltx_text ltx_lst_space" id="lstnumberx2.1.3"> </span>is<span class="ltx_text ltx_lst_space" id="lstnumberx2.1.4"> </span>added<span class="ltx_text ltx_lst_space" id="lstnumberx2.1.5"> </span>for<span class="ltx_text ltx_lst_space" id="lstnumberx2.1.6"> </span>showcase)</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx3">
+<span class="ltx_tag ltx_tag_listingline">3</span><span class="ltx_text ltx_lst_keyword ltx_font_typewriter ltx_font_bold" id="lstnumberx3.1" style="font-size:80%;--ltx-fg-color:#FF9900;">confirm</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx3.2" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_keywords2 ltx_font_typewriter" id="lstnumberx3.3" style="font-size:80%;--ltx-fg-color:#3366E6;">object_id</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx3.4" style="font-size:80%;">=</span><span class="ltx_text ltx_lst_string ltx_font_typewriter ltx_font_bold" id="lstnumberx3.5" style="font-size:80%;--ltx-fg-color:#268C66;">"ZTF25aazqavg"</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx3.6" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_keywords2 ltx_font_typewriter" id="lstnumberx3.7" style="font-size:80%;--ltx-fg-color:#3366E6;">brokers</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx3.8" style="font-size:80%;">=[</span><span class="ltx_text ltx_lst_identifier ltx_font_typewriter" id="lstnumberx3.9" style="font-size:80%;">fink</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx3.10" style="font-size:80%;">,</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx3.11" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_identifier ltx_font_typewriter" id="lstnumberx3.12" style="font-size:80%;">alerce</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx3.13" style="font-size:80%;">,</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx3.14" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_identifier ltx_font_typewriter" id="lstnumberx3.15" style="font-size:80%;">lasair</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx3.16" style="font-size:80%;">,</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx3.17" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_identifier ltx_font_typewriter" id="lstnumberx3.18" style="font-size:80%;">antares</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx3.19" style="font-size:80%;">]</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx3.20" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_keywords2 ltx_font_typewriter" id="lstnumberx3.21" style="font-size:80%;--ltx-fg-color:#3366E6;">required</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx3.22" style="font-size:80%;">=3</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx4">
+<span class="ltx_tag ltx_tag_listingline">4</span><span class="ltx_text ltx_lst_comment ltx_font_typewriter" id="lstnumberx4.1" style="font-size:80%;--ltx-fg-color:#ABABAB;">#<span class="ltx_text ltx_lst_space" id="lstnumberx4.1.1"> </span>ALeRCE<span class="ltx_text ltx_lst_space" id="lstnumberx4.1.2"> </span>retrieves<span class="ltx_text ltx_lst_space" id="lstnumberx4.1.3"> </span>ZTF<span class="ltx_text ltx_lst_space" id="lstnumberx4.1.4"> </span>curves<span class="ltx_text ltx_lst_space" id="lstnumberx4.1.5"> </span>of<span class="ltx_text ltx_lst_space" id="lstnumberx4.1.6"> </span>alerted<span class="ltx_text ltx_lst_space" id="lstnumberx4.1.7"> </span>object</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx5">
+<span class="ltx_tag ltx_tag_listingline">5</span><span class="ltx_text ltx_lst_keyword ltx_font_typewriter ltx_font_bold" id="lstnumberx5.1" style="font-size:80%;--ltx-fg-color:#FF9900;">lightcurve</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx5.2" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_keywords2 ltx_font_typewriter" id="lstnumberx5.3" style="font-size:80%;--ltx-fg-color:#3366E6;">broker</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx5.4" style="font-size:80%;">=</span><span class="ltx_text ltx_lst_identifier ltx_font_typewriter" id="lstnumberx5.5" style="font-size:80%;">alerce</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx5.6" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_identifier ltx_font_typewriter" id="lstnumberx5.7" style="font-size:80%;">survey</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx5.8" style="font-size:80%;">=</span><span class="ltx_text ltx_lst_string ltx_font_typewriter ltx_font_bold" id="lstnumberx5.9" style="font-size:80%;--ltx-fg-color:#268C66;">"ztf"</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx6">
+<span class="ltx_tag ltx_tag_listingline">6</span><span class="ltx_text ltx_lst_comment ltx_font_typewriter" id="lstnumberx6.1" style="font-size:80%;--ltx-fg-color:#ABABAB;">#<span class="ltx_text ltx_lst_space" id="lstnumberx6.1.1"> </span>Lasair<span class="ltx_text ltx_lst_space" id="lstnumberx6.1.2"> </span>retrieves<span class="ltx_text ltx_lst_space" id="lstnumberx6.1.3"> </span>historical<span class="ltx_text ltx_lst_space" id="lstnumberx6.1.4"> </span>light<span class="ltx_text ltx_lst_space" id="lstnumberx6.1.5"> </span>curves<span class="ltx_text ltx_lst_space" id="lstnumberx6.1.6"> </span>from<span class="ltx_text ltx_lst_space" id="lstnumberx6.1.7"> </span>Pan-STARR<span class="ltx_text ltx_lst_space" id="lstnumberx6.1.8"> </span>of</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx7">
+<span class="ltx_tag ltx_tag_listingline">7</span><span class="ltx_text ltx_lst_comment ltx_font_typewriter" id="lstnumberx7.1" style="font-size:80%;--ltx-fg-color:#ABABAB;">#<span class="ltx_text ltx_lst_space" id="lstnumberx7.1.1"> </span>alerted<span class="ltx_text ltx_lst_space" id="lstnumberx7.1.2"> </span>objects,<span class="ltx_text ltx_lst_space" id="lstnumberx7.1.3"> </span>and<span class="ltx_text ltx_lst_space" id="lstnumberx7.1.4"> </span>crossmatches<span class="ltx_text ltx_lst_space" id="lstnumberx7.1.5"> </span>with<span class="ltx_text ltx_lst_space" id="lstnumberx7.1.6"> </span>IR,<span class="ltx_text ltx_lst_space" id="lstnumberx7.1.7"> </span>R,<span class="ltx_text ltx_lst_space" id="lstnumberx7.1.8"> </span>X<span class="ltx_text ltx_lst_space" id="lstnumberx7.1.9"> </span>catalogues.</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx8">
+<span class="ltx_tag ltx_tag_listingline">8</span><span class="ltx_text ltx_lst_comment ltx_font_typewriter" id="lstnumberx8.1" style="font-size:80%;--ltx-fg-color:#ABABAB;">#<span class="ltx_text ltx_lst_space" id="lstnumberx8.1.1"> </span>Helps<span class="ltx_text ltx_lst_space" id="lstnumberx8.1.2"> </span>identify<span class="ltx_text ltx_lst_space" id="lstnumberx8.1.3"> </span>multi-wavelength<span class="ltx_text ltx_lst_space" id="lstnumberx8.1.4"> </span>periodicity.</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx9">
+<span class="ltx_tag ltx_tag_listingline">9</span><span class="ltx_text ltx_lst_keyword ltx_font_typewriter ltx_font_bold" id="lstnumberx9.1" style="font-size:80%;--ltx-fg-color:#FF9900;">crossmatch</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx9.2" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_keywords2 ltx_font_typewriter" id="lstnumberx9.3" style="font-size:80%;--ltx-fg-color:#3366E6;">broker</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx9.4" style="font-size:80%;">=</span><span class="ltx_text ltx_lst_identifier ltx_font_typewriter" id="lstnumberx9.5" style="font-size:80%;">lasair</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx9.6" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_keywords2 ltx_font_typewriter" id="lstnumberx9.7" style="font-size:80%;--ltx-fg-color:#3366E6;">catalog</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx9.8" style="font-size:80%;">=</span><span class="ltx_text ltx_lst_string ltx_font_typewriter ltx_font_bold" id="lstnumberx9.9" style="font-size:80%;--ltx-fg-color:#268C66;">"panstarrs"</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx9.10" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_keywords2 ltx_font_typewriter" id="lstnumberx9.11" style="font-size:80%;--ltx-fg-color:#3366E6;">filters</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx9.12" style="font-size:80%;">=[</span><span class="ltx_text ltx_lst_string ltx_font_typewriter ltx_font_bold" id="lstnumberx9.13" style="font-size:80%;--ltx-fg-color:#268C66;">"ir"</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx9.14" style="font-size:80%;">,</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx9.15" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_string ltx_font_typewriter ltx_font_bold" id="lstnumberx9.16" style="font-size:80%;--ltx-fg-color:#268C66;">"radio"</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx9.17" style="font-size:80%;">,</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx9.18" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_string ltx_font_typewriter ltx_font_bold" id="lstnumberx9.19" style="font-size:80%;--ltx-fg-color:#268C66;">"xray"</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx9.20" style="font-size:80%;">]</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx10">
+<span class="ltx_tag ltx_tag_listingline">10</span><span class="ltx_text ltx_lst_comment ltx_font_typewriter" id="lstnumberx10.1" style="font-size:80%;--ltx-fg-color:#ABABAB;">#<span class="ltx_text ltx_lst_space" id="lstnumberx10.1.1"> </span>ANTARES<span class="ltx_text ltx_lst_space" id="lstnumberx10.1.2"> </span>crossmatches<span class="ltx_text ltx_lst_space" id="lstnumberx10.1.3"> </span>alerted<span class="ltx_text ltx_lst_space" id="lstnumberx10.1.4"> </span>object<span class="ltx_text ltx_lst_space" id="lstnumberx10.1.5"> </span>with<span class="ltx_text ltx_lst_space" id="lstnumberx10.1.6"> </span>eROSITA<span class="ltx_text ltx_lst_space" id="lstnumberx10.1.7"> </span>etc<span class="ltx_text ltx_lst_space" id="lstnumberx10.1.8"> </span>for</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx11">
+<span class="ltx_tag ltx_tag_listingline">11</span><span class="ltx_text ltx_lst_comment ltx_font_typewriter" id="lstnumberx11.1" style="font-size:80%;--ltx-fg-color:#ABABAB;">#<span class="ltx_text ltx_lst_space" id="lstnumberx11.1.1"> </span>further<span class="ltx_text ltx_lst_space" id="lstnumberx11.1.2"> </span>confirmation<span class="ltx_text ltx_lst_space" id="lstnumberx11.1.3"> </span>of<span class="ltx_text ltx_lst_space" id="lstnumberx11.1.4"> </span>multiwavelength<span class="ltx_text ltx_lst_space" id="lstnumberx11.1.5"> </span>of<span class="ltx_text ltx_lst_space" id="lstnumberx11.1.6"> </span>periodicity<span class="ltx_text ltx_lst_space" id="lstnumberx11.1.7"> </span>origin.</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx12">
+<span class="ltx_tag ltx_tag_listingline">12</span><span class="ltx_text ltx_lst_keyword ltx_font_typewriter ltx_font_bold" id="lstnumberx12.1" style="font-size:80%;--ltx-fg-color:#FF9900;">crossmatch</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx12.2" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_keywords2 ltx_font_typewriter" id="lstnumberx12.3" style="font-size:80%;--ltx-fg-color:#3366E6;">broker</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx12.4" style="font-size:80%;">=</span><span class="ltx_text ltx_lst_identifier ltx_font_typewriter" id="lstnumberx12.5" style="font-size:80%;">antares</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx12.6" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_keywords2 ltx_font_typewriter" id="lstnumberx12.7" style="font-size:80%;--ltx-fg-color:#3366E6;">catalog</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx12.8" style="font-size:80%;">=</span><span class="ltx_text ltx_lst_string ltx_font_typewriter ltx_font_bold" id="lstnumberx12.9" style="font-size:80%;--ltx-fg-color:#268C66;">"erosita"</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx13">
+<span class="ltx_tag ltx_tag_listingline">13</span><span class="ltx_text ltx_lst_comment ltx_font_typewriter" id="lstnumberx13.1" style="font-size:80%;--ltx-fg-color:#ABABAB;">#<span class="ltx_text ltx_lst_space" id="lstnumberx13.1.1"> </span>Lasair<span class="ltx_text ltx_lst_space" id="lstnumberx13.1.2"> </span>provides<span class="ltx_text ltx_lst_space" id="lstnumberx13.1.3"> </span>a<span class="ltx_text ltx_lst_space" id="lstnumberx13.1.4"> </span>Kafka-based<span class="ltx_text ltx_lst_space" id="lstnumberx13.1.5"> </span>alert<span class="ltx_text ltx_lst_space" id="lstnumberx13.1.6"> </span>stream<span class="ltx_text ltx_lst_space" id="lstnumberx13.1.7"> </span>that<span class="ltx_text ltx_lst_space" id="lstnumberx13.1.8"> </span>updates<span class="ltx_text ltx_lst_space" id="lstnumberx13.1.9"> </span>in</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx14">
+<span class="ltx_tag ltx_tag_listingline">14</span><span class="ltx_text ltx_lst_comment ltx_font_typewriter" id="lstnumberx14.1" style="font-size:80%;--ltx-fg-color:#ABABAB;">#<span class="ltx_text ltx_lst_space" id="lstnumberx14.1.1"> </span>real-time<span class="ltx_text ltx_lst_space" id="lstnumberx14.1.2"> </span>whenever<span class="ltx_text ltx_lst_space" id="lstnumberx14.1.3"> </span>a<span class="ltx_text ltx_lst_space" id="lstnumberx14.1.4"> </span>new<span class="ltx_text ltx_lst_space" id="lstnumberx14.1.5"> </span>observation<span class="ltx_text ltx_lst_space" id="lstnumberx14.1.6"> </span>is<span class="ltx_text ltx_lst_space" id="lstnumberx14.1.7"> </span>made<span class="ltx_text ltx_lst_space" id="lstnumberx14.1.8"> </span>for<span class="ltx_text ltx_lst_space" id="lstnumberx14.1.9"> </span>a</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx15">
+<span class="ltx_tag ltx_tag_listingline">15</span><span class="ltx_text ltx_lst_comment ltx_font_typewriter" id="lstnumberx15.1" style="font-size:80%;--ltx-fg-color:#ABABAB;">#<span class="ltx_text ltx_lst_space" id="lstnumberx15.1.1"> </span>monitored<span class="ltx_text ltx_lst_space" id="lstnumberx15.1.2"> </span>object.</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx16">
+<span class="ltx_tag ltx_tag_listingline">16</span><span class="ltx_text ltx_lst_keyword ltx_font_typewriter ltx_font_bold" id="lstnumberx16.1" style="font-size:80%;--ltx-fg-color:#FF9900;">monitor</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx16.2" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_keywords2 ltx_font_typewriter" id="lstnumberx16.3" style="font-size:80%;--ltx-fg-color:#3366E6;">broker</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx16.4" style="font-size:80%;">=</span><span class="ltx_text ltx_lst_identifier ltx_font_typewriter" id="lstnumberx16.5" style="font-size:80%;">lasair</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx16.6" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_keywords2 ltx_font_typewriter" id="lstnumberx16.7" style="font-size:80%;--ltx-fg-color:#3366E6;">stream</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx16.8" style="font-size:80%;">=</span><span class="ltx_text ltx_lst_string ltx_font_typewriter ltx_font_bold" id="lstnumberx16.9" style="font-size:80%;--ltx-fg-color:#268C66;">"kafka"</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx17">
+<span class="ltx_tag ltx_tag_listingline">17</span><span class="ltx_text ltx_lst_keyword ltx_font_typewriter ltx_font_bold" id="lstnumberx17.1" style="font-size:80%;--ltx-fg-color:#FF9900;">classify</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx17.2" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_keywords2 ltx_font_typewriter" id="lstnumberx17.3" style="font-size:80%;--ltx-fg-color:#3366E6;">method</span><span class="ltx_text ltx_font_typewriter" id="lstnumberx17.4" style="font-size:80%;">=</span><span class="ltx_text ltx_lst_string ltx_font_typewriter ltx_font_bold" id="lstnumberx17.5" style="font-size:80%;--ltx-fg-color:#268C66;">"periodicity_detection"</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx18">
+<span class="ltx_tag ltx_tag_listingline">18</span><span class="ltx_text ltx_lst_keyword ltx_font_typewriter ltx_font_bold" id="lstnumberx18.1" style="font-size:80%;--ltx-fg-color:#FF9900;">notify</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx18.2" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_identifier ltx_font_typewriter" id="lstnumberx18.3" style="font-size:80%;">team</span>
+</div>
+<div class="ltx_listingline" id="lstnumberx19">
+<span class="ltx_tag ltx_tag_listingline">19</span><span class="ltx_text ltx_lst_keyword ltx_font_typewriter ltx_font_bold" id="lstnumberx19.1" style="font-size:80%;--ltx-fg-color:#FF9900;">store</span><span class="ltx_text ltx_lst_space ltx_font_typewriter" id="lstnumberx19.2" style="font-size:80%;"> </span><span class="ltx_text ltx_lst_identifier ltx_font_typewriter" id="lstnumberx19.3" style="font-size:80%;">db</span>
+</div>
+</div>
+</div>
+</article>
+</div>
+<footer class="ltx_page_footer">
+<div class="ltx_page_logo">Generated  on Thu Jan 15 14:41:57 2026 by <a class="ltx_LaTeXML_logo" href="http://dlmf.nist.gov/LaTeXML/"><span style="letter-spacing:-0.2em; margin-right:0.1em;">L<span class="ltx_font_smallcaps" style="position:relative; bottom:2.2pt;">a</span>T<span class="ltx_font_smallcaps" style="font-size:120%;position:relative; bottom:-0.2ex;">e</span></span><span style="font-size:90%; position:relative; bottom:-0.2ex;">XML</span><img alt="Mascot Sammy" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg=="/></a>
+</div></footer>
+</div>
+</body>
+</html>

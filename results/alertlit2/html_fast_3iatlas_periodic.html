@@ -1,0 +1,1065 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Periodic Radio Technosignature Search toward 3I/ATLAS with FAST</title>
+<!--Generated on Thu Jul  2 03:40:13 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<meta name="keywords" lang="en" content="; ">
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+    // Pre-apply spinout-banner dismissal here, before the banner paints, so it
+    // never flashes in only to be hidden later by the deferred arxiv-header.js.
+    // Key matches arxiv-header.js: "arxiv-banner-dismissed:" + data-banner-name.
+    if (localStorage.getItem('arxiv-banner-dismissed:spinout-nonprofit')) {
+      document.documentElement.setAttribute("data-banner-dismissed", "");
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css"><link rel="stylesheet" type="text/css" media="screen"
+  href="/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626"><style>
+  /* Banner pre-dismissal (set above before paint -> no flash-then-hide) and
+     reading-mode chrome hiding. */
+  html[data-banner-dismissed] .ds-announcement { display: none; }
+  html[data-reading-mode="enabled"] .ds-announcement,
+  html[data-reading-mode="enabled"] .ds-site-footer { display: none; }
+  /* Keep the announcement text dark on the Open-Blue band in both colour themes
+     (otherwise it inherits the paper's warm-wash text in dark mode and washes out). */
+  .ds-announcement-text { color: var(--arxiv-ink, #1c1a17); }
+</style>
+<script defer src="/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog><div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement"
+    data-banner-name="spinout-nonprofit">
+    <img class="ds-announcement-glyph" src="/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+    <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+    <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+    <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/"><img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/base/1.0.1/images/arxiv-logo-primary-light.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2607.01666v1">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2607.01666v1"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_abstract"><a href="#abstract1" title="In Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title">Abstract</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S1" title="In Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">I </span>Introduction</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S2" title="In Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II </span>Methodology and Data Analysis</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS1" title="In II Methodology and Data Analysis ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.1 </span>Canonical Polyadic Decomposition and Beam-domain Characterization</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS2" title="In II Methodology and Data Analysis ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.2 </span>Periodicity Diagnostics and Multibeam Validation</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS3" title="In II Methodology and Data Analysis ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II.3 </span>Steps for the Analysis Framework</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S3" title="In Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III </span>Results</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S4" title="In Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">IV </span>Discussion</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S4.SS1" title="In IV Discussion ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">IV.1 </span>Sensitivity</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S4.SS2" title="In IV Discussion ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">IV.2 </span>Figure of Merit for Signal Search</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S4.SS3" title="In IV Discussion ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">IV.3 </span>Interpretation of the CPD-based Periodicity Search Framework</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S5" title="In Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">V </span>Conclusion</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_acknowledgements"><a href="#S5.acknowledgements1" title="In V Conclusion ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title">Acknowledgements</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_appendix"><a href="#A1" title="In Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">A </span>Computational Implementation of CPD</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_bibliography"><a href="#bib" title="In Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: arXiv.org perpetual non-exclusive license
+  </a>
+  <div id="watermark-tr">
+arXiv:2607.01666v1 [astro-ph.IM] 02 Jul 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document ltx_authors_multiline">
+<h1 class="ltx_title ltx_title_document">Periodic Radio Technosignature Search toward 3I/ATLAS with FAST</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0000-0002-1190-473X" title="" class="ltx_ref orcid">Jian-Kang Li (李健康)</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">School of Integrated Circuits, Shanghai Dianji University, Shanghai 200240, People’s Republic of China
+</span>
+<span class="ltx_contact ltx_role_affiliation">Institute for Frontiers in Astronomy and Astrophysics, Beijing Normal University, Beijing 102206, People’s Republic of China
+</span>
+<span class="ltx_contact ltx_role_affiliation">School of Physics and Astronomy, Beijing Normal University, Beijing 100875, People’s Republic of China
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2607.01666v1/mailto:fakeemail1@google.com">fakeemail1@google.com</a>
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0000-0002-4683-5500" title="" class="ltx_ref orcid">Zhen-Zhao Tao (陶振钊)</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">College of Computer and Information, Dezhou University, Dezhou 253023, People’s Republic of China
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2607.01666v1/mailto:fakeemail1@google.com">fakeemail1@google.com</a>
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0000-0002-3363-9965" title="" class="ltx_ref orcid">Tong-Jie Zhang (张同杰) <span class="ltx_ref ltx_href">✉</span></a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Institute for Frontiers in Astronomy and Astrophysics, Beijing Normal University, Beijing 102206, People’s Republic of China
+</span>
+<span class="ltx_contact ltx_role_affiliation">School of Physics and Astronomy, Beijing Normal University, Beijing 100875, People’s Republic of China
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2607.01666v1/mailto:%5B">[</a>
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Men-Quan Liu (刘门全)<a href="2607.01666v1/mailto:menquan@sdju.edu.cn" title="" class="ltx_ref ltx_href">✉</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">School of Integrated Circuits, Shanghai Dianji University, Shanghai 200240, People’s Republic of China
+</span>
+<span class="ltx_contact ltx_role_email"><a href="2607.01666v1/mailto:%5B">[</a>
+</span></span></span>
+</div>
+
+<div id="abstract1" class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">3I/ATLAS, the third confirmed interstellar object discovered in the Solar System, provides a unique opportunity for targeted technosignature searches. We report a periodic radio technosignature search toward 3I/ATLAS using the Five-hundred-meter Aperture Spherical Telescope (FAST) L-band multibeam receiver. To search for periodically modulated signals and distinguish center-beam-dominated candidates from multibeam radio-frequency interference, we apply canonical polyadic decomposition (CPD) to the multibeam dynamic spectra. CPD factorizes the multibeam data tensor into a set of separable components, with associated time, frequency, and beam signatures. Candidate components are then selected through periodogram and autocorrelation diagnostics. We find no credible artificial periodic radio technosignature above 0.146 W is detected from the direction of 3I/ATLAS. This search expands the range of signal types explored for this target by including periodic modulated signal, and illustrates that CPD is a promising framework for multibeam periodic technosignature searches.</p>
+</div>
+<div class="ltx_keywords">
+<a href="http://astrothesaurus.org/uat/2127" title="" class="ltx_ref ltx_href">Search for extraterrestrial intelligence (2127)</a>; <a href="http://astrothesaurus.org/uat/1338" title="" class="ltx_ref ltx_href">Radio astronomy (1338)</a>;<a href="http://astrothesaurus.org/uat/52" title="" class="ltx_ref ltx_href">Interstellar objects(52)</a>; <a href="http://astrothesaurus.org/uat/74" title="" class="ltx_ref ltx_href">Astrobiology (74)</a>
+</div>
+<div id="p1" class="ltx_para">
+<p id="p1.1" class="ltx_p">show]tjzhang@bnu.edu.cn</p>
+</div>
+<div id="p2" class="ltx_para">
+<p id="p2.1" class="ltx_p">show]menquan@sdju.edu.cn</p>
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">I </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.1" class="ltx_p">The Search for Extraterrestrial Intelligence (SETI) aims at identifying technosignatures as observable manifestations of technology <cite class="ltx_cite ltx_citemacro_citep">(J. Tarter, <a href="#bib.bib28" title="" class="ltx_ref">2001</a>)</cite>. Among the various proposed technosignatures, radio signals remain one of the most extensively explored channels because of their detectability, transmission efficiency, and long propagation range <cite class="ltx_cite ltx_citemacro_citep">(G. Cocconi &amp; P. Morrison, <a href="#bib.bib3" title="" class="ltx_ref">1959</a>)</cite>. Beyond the conventional focuses on narrowband Doppler-drifting signals, SETI searches can also be extended to other phenomenological classes of radio technosignatures. Periodically modulated radio signals constitute a plausible technosignature class because artificial transmitters need not remain continuously on, and may instead appear as intermittent or repeating signals owing to beacon operation, sky-scanning strategies, rotational or orbital modulation, or energy cost consideration. Cost-optimized beacon models, for example, have explicitly argued that economically motivated interstellar transmitters may be observed as recurrent short-duration events rather than as continuous emission<cite class="ltx_cite ltx_citemacro_citep">(G. Benford et al., <a href="#bib.bib1" title="" class="ltx_ref">2010</a>)</cite>, while intermittent signaling has also been discussed as a natural consequence of planetary rotation, duty-cycle constraints, and targeted transmission geometry <cite class="ltx_cite ltx_citemacro_citep">(R. H. Gray, <a href="#bib.bib7" title="" class="ltx_ref">2020</a>)</cite>. In parallel with these theoretical considerations, periodic SETI works have already been explored observationally in several in radio observations<cite class="ltx_cite ltx_citemacro_citep">(e.g. G. R. Harp et al., <a href="#bib.bib8" title="" class="ltx_ref">2018</a>; A. Suresh et al., <a href="#bib.bib27" title="" class="ltx_ref">2023</a>; J.-K. Li et al., <a href="#bib.bib18" title="" class="ltx_ref">2026a</a>)</cite>.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.1" class="ltx_p">3I/ATLAS is the third confirmed interstellar object passing through the Solar System. As a rare extrasolar body observed at close range during a limited time window, it provides an unusual target for sensitive radio technosignature searches. Dedicated SETI observations of 3I/ATLAS have already been reported with several facilities, including the Allen Telescope Array, MeerKAT, and the Green Bank Telescope, with no credible narrowband drifting technosignature detections reported to date <cite class="ltx_cite ltx_citemacro_citep">(S. Z. Sheikh et al., <a href="#bib.bib24" title="" class="ltx_ref">2025</a>; D. J. Pisano et al., <a href="#bib.bib22" title="" class="ltx_ref">2025</a>; B. Jacobson-Bell et al., <a href="#bib.bib11" title="" class="ltx_ref">2025</a>)</cite>. FAST, with its exceptional sensitivity and multibeam capability, offers a particularly powerful dataset for extending such searches <cite class="ltx_cite ltx_citemacro_citep">(P. Jiang et al., <a href="#bib.bib12" title="" class="ltx_ref">2019</a>, <a href="#bib.bib13" title="" class="ltx_ref">2020</a>; L. Qian et al., <a href="#bib.bib23" title="" class="ltx_ref">2020</a>)</cite>. We also carry out a narrowband Doppler-drift singal search using the same FAST multibeam observation data of 3I/ATLAS<cite class="ltx_cite ltx_citemacro_citep">(J.-K. Li et al., <a href="#bib.bib19" title="" class="ltx_ref">2026b</a>)</cite>.</p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p id="S1.p3.1" class="ltx_p">Different from our previous narrowband drifting technosignature search, the present paper focuses on periodically modulated signal structures in the time. Relative to drifting narrowband searches, extending the accessible technosignature parameter space. This work adopts canonical polyadic decomposition <cite class="ltx_cite ltx_citemacro_citep">(CPD; F. L. Hitchcock, <a href="#bib.bib10" title="" class="ltx_ref">1927</a>; J. D. Carroll &amp; J.-J. Chang, <a href="#bib.bib2" title="" class="ltx_ref">1970</a>; T. G. Kolda &amp; B. W. Bader, <a href="#bib.bib14" title="" class="ltx_ref">2009</a>)</cite> as the central analysis framework for periodic signal identification in FAST multibeam dynamic spectra. By constructing the data tensor cube into time, frequency, and beam components, the method enables simultaneous characterization of temporal periodicity, spectral structure, and beam occupancy. In this formulation, periodic signal searching and center-beam discrimination are embedded in a unified decomposition framework, which is particularly suitable for multibeam SETI observations.</p>
+</div>
+<div id="S1.p4" class="ltx_para">
+<p id="S1.p4.1" class="ltx_p">The focus of the present paper is placed on the periodicity search methodology and its application to the 3I/ATLAS observations. Section <a href="#S2" title="II Methodology and Data Analysis ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">II</span></a> presents the CPD-based periodic-search procedure. Section <a href="#S3" title="III Results ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III</span></a> gives the search results and diagnostic characterization. The implications and limitations of the analysis are discussed in Section <a href="#S4" title="IV Discussion ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">IV</span></a>, and Section <a href="#S5" title="V Conclusion ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">V</span></a> summarizes the main conclusions.</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">II </span>Methodology and Data Analysis</h2>
+
+<div id="S2.p1" class="ltx_para">
+<p id="S2.p1.3" class="ltx_p">The data used in this work was recorded by the FAST psr backend, configured with a sampling time of 49.152 <math id="S2.p1.1.m1" class="ltx_Math" alttext="\mu{\rm s}" display="inline" intent=":literal"><semantics><mrow><mi>μ</mi><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">s</mi></mrow><annotation encoding="application/x-tex">\mu{\rm s}</annotation></semantics></math> and a frequency resolution of <math id="S2.p1.2.m2" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math> 0.122 MHz. The observation dates<span id="footnote1" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_tag ltx_tag_note">1</span>Since we did not turn on the psr data backend in 2025-10-03, we only carry out periodic technosignature search for these three days in this work.</span></span></span> and observation modes have been introduced in <cite class="ltx_cite ltx_citemacro_cite">J.-K. Li et al. (<a href="#bib.bib19" title="" class="ltx_ref">2026b</a>)</cite>. During each observation, a 2 s reference diode signal was injected every 300 s for temperature and polarization calibration. This reference diode signal can also serve as an internal reference for validating the sensitivity of the periodic-signal search and for interpreting components associated with the calibration cadence. In addition, radio frequency interference (RFI) mitigation was performed using a root-mean-square (rms)-based flagging scheme, in which any frequency channel whose rms deviated from the median by more than <math id="S2.p1.3.m3" class="ltx_Math" alttext="5\times{\rm MAD}" display="inline" intent=":literal"><semantics><mrow><mn>5</mn><mo lspace="0.222em" rspace="0.222em">×</mo><mi>MAD</mi></mrow><annotation encoding="application/x-tex">5\times{\rm MAD}</annotation></semantics></math> was flagged. The polarization calibration and rms RFI flagged schemes are adopted from <cite class="ltx_cite ltx_citemacro_cite">X.-H. Sun et al. (<a href="#bib.bib26" title="" class="ltx_ref">2021</a>)</cite>.</p>
+</div>
+<div id="S2.p2" class="ltx_para">
+<p id="S2.p2.1" class="ltx_p">For each observation, the time-frequency data from multiple beams are organized into a three-dimensional data cube and analyzed independently. In practice, the central beam still serves as the center beam, while only three of the outermost beams are selected as reference off-source beams. Additionally, the dynamic spectra used here have been time-binned, with a post-downsampling time bin of <math id="S2.p2.1.m1" class="ltx_Math" alttext="\sim 0.12~{\rm s}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mrow><mn>0.12</mn><mo lspace="0.330em" rspace="0em">​</mo><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">\sim 0.12~{\rm s}</annotation></semantics></math>, which allows an efficient search over moderate and relatively long periodic timescales while preserving the multibeam structure required for signal identification.<span id="footnote2" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_tag ltx_tag_note">2</span>These choices were motivated by the very large data volume of the original multibeam data and the associated computational cost. In the present analysis, we therefore used only three outermost beams as reference beams and adopted time-downsampled data products. Future work may extend the analysis to a larger set of reference beams and explore analyses based on data with higher time resolution.</span></span></span> The analysis procedure consists of four main steps: construction of the multibeam data tensor with baseline subtraction and normalization preprocessing, CPD, identification of periodic components and multibeam comparison. In addition, an autocorrelation function (ACF) diagnostic is used to provide supplementary characterization of the frequency-domain structure of each component.</p>
+</div>
+<section id="S2.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.1 </span>Canonical Polyadic Decomposition and Beam-domain Characterization</h3>
+
+<div id="S2.SS1.p1" class="ltx_para">
+<p id="S2.SS1.p1.7" class="ltx_p">For each observation, the multibeam dynamic spectrum is represented as a third-order tensor</p>
+<table id="S2.E1" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E1.m1" class="ltx_Math" alttext="X(t,\nu,b)\in\mathbb{R}^{T\times F\times B}," display="block" intent=":literal"><semantics><mrow><mrow><mrow><mi>X</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo>,</mo><mi>ν</mi><mo>,</mo><mi>b</mi><mo stretchy="false">)</mo></mrow></mrow><mo>∈</mo><msup><mi>ℝ</mi><mrow><mi>T</mi><mo lspace="0.222em" rspace="0.222em">×</mo><mi>F</mi><mo lspace="0.222em" rspace="0.222em">×</mo><mi>B</mi></mrow></msup></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">X(t,\nu,b)\in\mathbb{R}^{T\times F\times B},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(1)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS1.p1.6" class="ltx_p">where <math id="S2.SS1.p1.1.m1" class="ltx_Math" alttext="t" display="inline" intent=":literal"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math> denotes time index, <math id="S2.SS1.p1.2.m2" class="ltx_Math" alttext="\nu" display="inline" intent=":literal"><semantics><mi>ν</mi><annotation encoding="application/x-tex">\nu</annotation></semantics></math> denotes frequency channel, and <math id="S2.SS1.p1.3.m3" class="ltx_Math" alttext="b" display="inline" intent=":literal"><semantics><mi>b</mi><annotation encoding="application/x-tex">b</annotation></semantics></math> denotes beam index. Here <math id="S2.SS1.p1.4.m4" class="ltx_Math" alttext="T" display="inline" intent=":literal"><semantics><mi>T</mi><annotation encoding="application/x-tex">T</annotation></semantics></math>, <math id="S2.SS1.p1.5.m5" class="ltx_Math" alttext="F" display="inline" intent=":literal"><semantics><mi>F</mi><annotation encoding="application/x-tex">F</annotation></semantics></math>, and <math id="S2.SS1.p1.6.m6" class="ltx_Math" alttext="B" display="inline" intent=":literal"><semantics><mi>B</mi><annotation encoding="application/x-tex">B</annotation></semantics></math> are the numbers of time samples, frequency channels, and beams, respectively. This tensor representation preserves the three observables most relevant to the present search: temporal modulation, spectral localization, and beam-to-beam variation.</p>
+</div>
+<div id="S2.SS1.p2" class="ltx_para">
+<p id="S2.SS1.p2.1" class="ltx_p">To separate mixed structures in the multibeam dynamic spectrum, we apply canonical polyadic decomposition (CPD), also known as the CANDECOMP/PARAFAC decomposition, to the tensor <math id="S2.SS1.p2.1.m1" class="ltx_Math" alttext="X(t,\nu,b)" display="inline" intent=":literal"><semantics><mrow><mi>X</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo>,</mo><mi>ν</mi><mo>,</mo><mi>b</mi><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">X(t,\nu,b)</annotation></semantics></math>. CPD represents a tensor as a sum of rank-one outer products, with early roots in the polyadic tensor decomposition introduced by <cite class="ltx_cite ltx_citemacro_citet">F. L. Hitchcock (<a href="#bib.bib10" title="" class="ltx_ref">1927</a>)</cite> and broad modern applications in signal processing and machine learning <cite class="ltx_cite ltx_citemacro_citep">(e.g., F. Cong et al., <a href="#bib.bib4" title="" class="ltx_ref">2015</a>; N. D. Sidiropoulos et al., <a href="#bib.bib25" title="" class="ltx_ref">2017</a>)</cite>. In astronomy, <cite class="ltx_cite ltx_citemacro_citet">H. Farias et al. (<a href="#bib.bib6" title="" class="ltx_ref">2018</a>)</cite> introduced TensorFit as a tensor-mode framework for handling and analyzing large spectral cubes, motivated by data products from facilities such as ALMA. The spectral cube is treated as a multidimension data object, typically with two spatial axes and one spectral/velocity axis to support scalable cube analysis.</p>
+</div>
+<div id="S2.SS1.p3" class="ltx_para">
+<p id="S2.SS1.p3.11" class="ltx_p">In our work, the multibeam dynamic spectra data can be regarded as a native tensor form. The data can be decomposed as</p>
+<table id="S2.E2" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E2.m1" class="ltx_Math" alttext="X_{t\nu b}\approx\sum_{r=1}^{R}\lambda_{r}\,\mathbf{a}_{r}\circ\mathbf{c}_{r}\circ\mathbf{d}_{r}=\sum_{r=1}^{R}\lambda_{r}\,a_{tr}\,c_{\nu r}\,d_{br}," display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>X</mi><mrow><mi>t</mi><mo lspace="0em" rspace="0em">​</mo><mi>ν</mi><mo lspace="0em" rspace="0em">​</mo><mi>b</mi></mrow></msub><mo rspace="0.111em">≈</mo><mrow><munderover><mo movablelimits="false">∑</mo><mrow><mi>r</mi><mo>=</mo><mn>1</mn></mrow><mi>R</mi></munderover><mrow><mrow><msub><mi>λ</mi><mi>r</mi></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>𝐚</mi><mi>r</mi></msub></mrow><mo lspace="0.222em" rspace="0.222em">∘</mo><msub><mi>𝐜</mi><mi>r</mi></msub><mo lspace="0.222em" rspace="0.222em">∘</mo><msub><mi>𝐝</mi><mi>r</mi></msub></mrow></mrow><mo rspace="0.111em">=</mo><mrow><munderover><mo movablelimits="false">∑</mo><mrow><mi>r</mi><mo>=</mo><mn>1</mn></mrow><mi>R</mi></munderover><mrow><msub><mi>λ</mi><mi>r</mi></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>a</mi><mrow><mi>t</mi><mo lspace="0em" rspace="0em">​</mo><mi>r</mi></mrow></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>c</mi><mrow><mi>ν</mi><mo lspace="0em" rspace="0em">​</mo><mi>r</mi></mrow></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>d</mi><mrow><mi>b</mi><mo lspace="0em" rspace="0em">​</mo><mi>r</mi></mrow></msub></mrow></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">X_{t\nu b}\approx\sum_{r=1}^{R}\lambda_{r}\,\mathbf{a}_{r}\circ\mathbf{c}_{r}\circ\mathbf{d}_{r}=\sum_{r=1}^{R}\lambda_{r}\,a_{tr}\,c_{\nu r}\,d_{br},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(2)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS1.p3.8" class="ltx_p">where <math id="S2.SS1.p3.1.m1" class="ltx_Math" alttext="R" display="inline" intent=":literal"><semantics><mi>R</mi><annotation encoding="application/x-tex">R</annotation></semantics></math> is the adopted decomposition rank, <math id="S2.SS1.p3.2.m2" class="ltx_Math" alttext="\lambda_{r}" display="inline" intent=":literal"><semantics><msub><mi>λ</mi><mi>r</mi></msub><annotation encoding="application/x-tex">\lambda_{r}</annotation></semantics></math> is the weight of the <math id="S2.SS1.p3.3.m3" class="ltx_Math" alttext="r" display="inline" intent=":literal"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math>th component, <math id="S2.SS1.p3.4.m4" class="ltx_Math" alttext="a_{tr}" display="inline" intent=":literal"><semantics><msub><mi>a</mi><mrow><mi>t</mi><mo lspace="0em" rspace="0em">​</mo><mi>r</mi></mrow></msub><annotation encoding="application/x-tex">a_{tr}</annotation></semantics></math> is its temporal factor, <math id="S2.SS1.p3.5.m5" class="ltx_Math" alttext="c_{\nu r}" display="inline" intent=":literal"><semantics><msub><mi>c</mi><mrow><mi>ν</mi><mo lspace="0em" rspace="0em">​</mo><mi>r</mi></mrow></msub><annotation encoding="application/x-tex">c_{\nu r}</annotation></semantics></math> is its frequency factor, and <math id="S2.SS1.p3.6.m6" class="ltx_Math" alttext="d_{br}" display="inline" intent=":literal"><semantics><msub><mi>d</mi><mrow><mi>b</mi><mo lspace="0em" rspace="0em">​</mo><mi>r</mi></mrow></msub><annotation encoding="application/x-tex">d_{br}</annotation></semantics></math> is its beam factor. In this form, each component provides a separable description of one structure in the data across time, frequency, and beam space. Unlike matrix decomposition, however, the determination of tensor rank is substantially more complicated, and in general, has been proven as an NP-hard problem <cite class="ltx_cite ltx_citemacro_citep">(C. J. Hillar &amp; L.-H. Lim, <a href="#bib.bib9" title="" class="ltx_ref">2013</a>)</cite>, so in practice <math id="S2.SS1.p3.7.m7" class="ltx_Math" alttext="R" display="inline" intent=":literal"><semantics><mi>R</mi><annotation encoding="application/x-tex">R</annotation></semantics></math> must be specified empirically. For a third-order tensor <math id="S2.SS1.p3.8.m8" class="ltx_Math" alttext="X\in\mathbb{R}^{T\times F\times B}" display="inline" intent=":literal"><semantics><mrow><mi>X</mi><mo>∈</mo><msup><mi>ℝ</mi><mrow><mi>T</mi><mo lspace="0.222em" rspace="0.222em">×</mo><mi>F</mi><mo lspace="0.222em" rspace="0.222em">×</mo><mi>B</mi></mrow></msup></mrow><annotation encoding="application/x-tex">X\in\mathbb{R}^{T\times F\times B}</annotation></semantics></math>, the rank is weakly bounded by <cite class="ltx_cite ltx_citemacro_citet">J. B. Kruskal (<a href="#bib.bib16" title="" class="ltx_ref">1989</a>)</cite></p>
+<table id="S2.E3" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E3.m1" class="ltx_Math" alttext="R\leqslant\min(TF,\,TB,\,FB)." display="block" intent=":literal"><semantics><mrow><mrow><mi>R</mi><mo>⩽</mo><mrow><mi>min</mi><mo>⁡</mo><mrow><mo stretchy="false">(</mo><mrow><mi>T</mi><mo lspace="0em" rspace="0em">​</mo><mi>F</mi></mrow><mo rspace="0.337em">,</mo><mrow><mi>T</mi><mo lspace="0em" rspace="0em">​</mo><mi>B</mi></mrow><mo rspace="0.337em">,</mo><mrow><mi>F</mi><mo lspace="0em" rspace="0em">​</mo><mi>B</mi></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow><mo lspace="0em">.</mo></mrow><annotation encoding="application/x-tex">R\leqslant\min(TF,\,TB,\,FB).</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(3)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS1.p3.10" class="ltx_p">In the present application, we restricted <math id="S2.SS1.p3.9.m1" class="ltx_Math" alttext="R" display="inline" intent=":literal"><semantics><mi>R</mi><annotation encoding="application/x-tex">R</annotation></semantics></math> to a dimensionally admissible range and, in the final analysis, adopted <math id="S2.SS1.p3.10.m2" class="ltx_Math" alttext="R=F" display="inline" intent=":literal"><semantics><mrow><mi>R</mi><mo>=</mo><mi>F</mi></mrow><annotation encoding="application/x-tex">R=F</annotation></semantics></math>, i.e., the number of frequency channels. In this form, each component is described by a separable structure in time, frequency, and beam space. This choice provides sufficient component capacity for channel-scale structures while keeping the dense tensor decomposition computationally tractable. Details of the CPD implementation are described in Appendix <a href="#A1" title="Appendix A Computational Implementation of CPD ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">A</span></a>.</p>
+</div>
+<div id="S2.SS1.p4" class="ltx_para">
+<p id="S2.SS1.p4.10" class="ltx_p">The relative importance of each component is measured by its normalized energy contribution,</p>
+<table id="S2.E4" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E4.m1" class="ltx_Math" alttext="\eta_{r}=\frac{\lambda_{r}^{2}}{\sum_{k}\lambda_{k}^{2}}," display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>η</mi><mi>r</mi></msub><mo>=</mo><mfrac><msubsup><mi>λ</mi><mi>r</mi><mn>2</mn></msubsup><mrow><msub><mo>∑</mo><mi>k</mi></msub><msubsup><mi>λ</mi><mi>k</mi><mn>2</mn></msubsup></mrow></mfrac></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">\eta_{r}=\frac{\lambda_{r}^{2}}{\sum_{k}\lambda_{k}^{2}},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(4)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS1.p4.2" class="ltx_p">which is used to rank the energy level of components. In the following, the component index <math id="S2.SS1.p4.1.m1" class="ltx_Math" alttext="r" display="inline" intent=":literal"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math> refers to the original decomposition label, while the energy rank refers to the ordering induced by <math id="S2.SS1.p4.2.m2" class="ltx_Math" alttext="\eta_{r}" display="inline" intent=":literal"><semantics><msub><mi>η</mi><mi>r</mi></msub><annotation encoding="application/x-tex">\eta_{r}</annotation></semantics></math>. To quantify the beam-domain concentration of each component, we define the beam fraction</p>
+<table id="S2.E5" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E5.m1" class="ltx_Math" alttext="f_{br}=\frac{\lambda_{r}^{2}d_{br}^{2}}{\sum_{b^{\prime}}\lambda_{r}^{2}d_{b^{\prime}r}^{2}}," display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>f</mi><mrow><mi>b</mi><mo lspace="0em" rspace="0em">​</mo><mi>r</mi></mrow></msub><mo>=</mo><mfrac><mrow><msubsup><mi>λ</mi><mi>r</mi><mn>2</mn></msubsup><mo lspace="0em" rspace="0em">​</mo><msubsup><mi>d</mi><mrow><mi>b</mi><mo lspace="0em" rspace="0em">​</mo><mi>r</mi></mrow><mn>2</mn></msubsup></mrow><mrow><msub><mo>∑</mo><msup><mi>b</mi><mo>′</mo></msup></msub><mrow><msubsup><mi>λ</mi><mi>r</mi><mn>2</mn></msubsup><mo lspace="0em" rspace="0em">​</mo><msubsup><mi>d</mi><mrow><msup><mi>b</mi><mo>′</mo></msup><mo lspace="0em" rspace="0em">​</mo><mi>r</mi></mrow><mn>2</mn></msubsup></mrow></mrow></mfrac></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">f_{br}=\frac{\lambda_{r}^{2}d_{br}^{2}}{\sum_{b^{\prime}}\lambda_{r}^{2}d_{b^{\prime}r}^{2}},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(5)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS1.p4.5" class="ltx_p">which measures the fractional beam-domain energy carried by beam <math id="S2.SS1.p4.3.m1" class="ltx_Math" alttext="b" display="inline" intent=":literal"><semantics><mi>b</mi><annotation encoding="application/x-tex">b</annotation></semantics></math> for component <math id="S2.SS1.p4.4.m2" class="ltx_Math" alttext="r" display="inline" intent=":literal"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math>. For the center beam <math id="S2.SS1.p4.5.m3" class="ltx_Math" alttext="b_{c}" display="inline" intent=":literal"><semantics><msub><mi>b</mi><mi>c</mi></msub><annotation encoding="application/x-tex">b_{c}</annotation></semantics></math>, we further define a dominance ratio</p>
+<table id="S2.E6" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E6.m1" class="ltx_Math" alttext="D_{r}=\frac{f_{b_{c}r}}{\max_{b\neq b_{c}}f_{br}}," display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>D</mi><mi>r</mi></msub><mo>=</mo><mfrac><msub><mi>f</mi><mrow><msub><mi>b</mi><mi>c</mi></msub><mo lspace="0em" rspace="0em">​</mo><mi>r</mi></mrow></msub><mrow><msub><mi>max</mi><mrow><mi>b</mi><mo>≠</mo><msub><mi>b</mi><mi>c</mi></msub></mrow></msub><mo lspace="0.167em">⁡</mo><msub><mi>f</mi><mrow><mi>b</mi><mo lspace="0em" rspace="0em">​</mo><mi>r</mi></mrow></msub></mrow></mfrac></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">D_{r}=\frac{f_{b_{c}r}}{\max_{b\neq b_{c}}f_{br}},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(6)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS1.p4.6" class="ltx_p">so that larger <math id="S2.SS1.p4.6.m1" class="ltx_Math" alttext="D_{r}" display="inline" intent=":literal"><semantics><msub><mi>D</mi><mi>r</mi></msub><annotation encoding="application/x-tex">D_{r}</annotation></semantics></math> indicates a stronger concentration toward the center beam relative to all off-center beams. We also compute the normalized beam entropy</p>
+<table id="S2.E7" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E7.m1" class="ltx_Math" alttext="H_{r}=-\frac{1}{\ln B}\sum_{b}f_{br}\ln f_{br}," display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>H</mi><mi>r</mi></msub><mo>=</mo><mrow><mo>−</mo><mrow><mfrac><mn>1</mn><mrow><mi>ln</mi><mo lspace="0.167em">⁡</mo><mi>B</mi></mrow></mfrac><mo lspace="0em" rspace="0em">​</mo><mrow><munder><mo movablelimits="false">∑</mo><mi>b</mi></munder><mrow><msub><mi>f</mi><mrow><mi>b</mi><mo lspace="0em" rspace="0em">​</mo><mi>r</mi></mrow></msub><mo lspace="0.167em" rspace="0em">​</mo><mrow><mi>ln</mi><mo lspace="0.167em">⁡</mo><msub><mi>f</mi><mrow><mi>b</mi><mo lspace="0em" rspace="0em">​</mo><mi>r</mi></mrow></msub></mrow></mrow></mrow></mrow></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">H_{r}=-\frac{1}{\ln B}\sum_{b}f_{br}\ln f_{br},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(7)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS1.p4.9" class="ltx_p">which measures the concentration of the component energy distribution across the beam axis of the <math id="S2.SS1.p4.7.m1" class="ltx_Math" alttext="X_{t\nu b}" display="inline" intent=":literal"><semantics><msub><mi>X</mi><mrow><mi>t</mi><mo lspace="0em" rspace="0em">​</mo><mi>ν</mi><mo lspace="0em" rspace="0em">​</mo><mi>b</mi></mrow></msub><annotation encoding="application/x-tex">X_{t\nu b}</annotation></semantics></math> data cube. A component with a large <math id="S2.SS1.p4.8.m2" class="ltx_Math" alttext="D_{r}" display="inline" intent=":literal"><semantics><msub><mi>D</mi><mi>r</mi></msub><annotation encoding="application/x-tex">D_{r}</annotation></semantics></math> and a small <math id="S2.SS1.p4.9.m3" class="ltx_Math" alttext="H_{r}" display="inline" intent=":literal"><semantics><msub><mi>H</mi><mi>r</mi></msub><annotation encoding="application/x-tex">H_{r}</annotation></semantics></math> is therefore considered more center-dominant in beam space. These quantities are used as practical diagnostics to identify components whose beam signatures are more consistent with center-beam localization.</p>
+</div>
+</section>
+<section id="S2.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.2 </span>Periodicity Diagnostics and Multibeam Validation</h3>
+
+<div id="S2.SS2.p1" class="ltx_para">
+<p id="S2.SS2.p1.8" class="ltx_p">For each CPD component, we firstly examine the periodicity from the temporal factor through the periodogram. The minimum period is set to <math id="S2.SS2.p1.1.m1" class="ltx_Math" alttext="P_{\min}=6\,t_{\rm samp}" display="inline" intent=":literal"><semantics><mrow><msub><mi>P</mi><mi>min</mi></msub><mo>=</mo><mrow><mn>6</mn><mo lspace="0.170em" rspace="0em">​</mo><msub><mi>t</mi><mi>samp</mi></msub></mrow></mrow><annotation encoding="application/x-tex">P_{\min}=6\,t_{\rm samp}</annotation></semantics></math>, where <math id="S2.SS2.p1.2.m2" class="ltx_Math" alttext="t_{\rm samp}" display="inline" intent=":literal"><semantics><msub><mi>t</mi><mi>samp</mi></msub><annotation encoding="application/x-tex">t_{\rm samp}</annotation></semantics></math> is the effective sampling time of the time-binned data. This lower bound is adopted to ensure that even the shortest searched periodicity is resolved by multiple time samples. The maximum period is set to <math id="S2.SS2.p1.3.m3" class="ltx_Math" alttext="P_{\max}=T_{\rm obs}/3" display="inline" intent=":literal"><semantics><mrow><msub><mi>P</mi><mi>max</mi></msub><mo>=</mo><mrow><msub><mi>T</mi><mi>obs</mi></msub><mo>/</mo><mn>3</mn></mrow></mrow><annotation encoding="application/x-tex">P_{\max}=T_{\rm obs}/3</annotation></semantics></math>, where <math id="S2.SS2.p1.4.m4" class="ltx_Math" alttext="T_{\rm obs}" display="inline" intent=":literal"><semantics><msub><mi>T</mi><mi>obs</mi></msub><annotation encoding="application/x-tex">T_{\rm obs}</annotation></semantics></math> is the observing duration. This choice requires that a candidate periodic signal be sampled over at least about three cycles within a given observation. For the present observations, this corresponds to <math id="S2.SS2.p1.5.m5" class="ltx_Math" alttext="P_{\min}\simeq 0.7\,\mathrm{s}" display="inline" intent=":literal"><semantics><mrow><msub><mi>P</mi><mi>min</mi></msub><mo>≃</mo><mrow><mn>0.7</mn><mo lspace="0.170em" rspace="0em">​</mo><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">P_{\min}\simeq 0.7\,\mathrm{s}</annotation></semantics></math> and <math id="S2.SS2.p1.6.m6" class="ltx_Math" alttext="P_{\max}\simeq 10^{3}\,\mathrm{s}" display="inline" intent=":literal"><semantics><mrow><msub><mi>P</mi><mi>max</mi></msub><mo>≃</mo><mrow><msup><mn>10</mn><mn>3</mn></msup><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">P_{\max}\simeq 10^{3}\,\mathrm{s}</annotation></semantics></math>. Additionally, the duty cycle <math id="S2.SS2.p1.7.m7" class="ltx_Math" alttext="\delta=\tau_{\rm sig}/P" display="inline" intent=":literal"><semantics><mrow><mi>δ</mi><mo>=</mo><mrow><msub><mi>τ</mi><mi>sig</mi></msub><mo>/</mo><mi>P</mi></mrow></mrow><annotation encoding="application/x-tex">\delta=\tau_{\rm sig}/P</annotation></semantics></math> search range is 0.01–0.5 in this work, where the <math id="S2.SS2.p1.8.m8" class="ltx_Math" alttext="\tau_{\rm sig}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>sig</mi></msub><annotation encoding="application/x-tex">\tau_{\rm sig}</annotation></semantics></math> is the signal duration of a single pulse.</p>
+</div>
+<div id="S2.SS2.p2" class="ltx_para">
+<p id="S2.SS2.p2.10" class="ltx_p">The multibeam validation is based on a set of criteria designed to identify CPD components whose energy and periodicity are preferentially concentrated in the central beam. We define a per-beam temporal projection</p>
+<table id="S2.E8" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E8.m1" class="ltx_Math" alttext="Z^{(r)}_{t,b}\equiv\sum_{\nu}X(t,\nu,b)\,\tilde{c}_{r}(\nu),\qquad\tilde{c}_{r}(\nu)\equiv\frac{c_{r}(\nu)}{\|c_{r}\|_{2}}," display="block" intent=":literal"><semantics><mrow><mrow><mrow><msubsup><mi>Z</mi><mrow><mi>t</mi><mo>,</mo><mi>b</mi></mrow><mrow><mo stretchy="false">(</mo><mi>r</mi><mo stretchy="false">)</mo></mrow></msubsup><mo rspace="0.111em">≡</mo><mrow><munder><mo movablelimits="false">∑</mo><mi>ν</mi></munder><mrow><mi>X</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo>,</mo><mi>ν</mi><mo>,</mo><mi>b</mi><mo stretchy="false">)</mo></mrow><mo lspace="0.170em" rspace="0em">​</mo><msub><mover accent="true"><mi>c</mi><mo>~</mo></mover><mi>r</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>ν</mi><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow><mo rspace="2.167em">,</mo><mrow><mrow><msub><mover accent="true"><mi>c</mi><mo>~</mo></mover><mi>r</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>ν</mi><mo stretchy="false">)</mo></mrow></mrow><mo>≡</mo><mfrac><mrow><msub><mi>c</mi><mi>r</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>ν</mi><mo stretchy="false">)</mo></mrow></mrow><msub><mrow><mo stretchy="false">‖</mo><msub><mi>c</mi><mi>r</mi></msub><mo stretchy="false">‖</mo></mrow><mn>2</mn></msub></mfrac></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">Z^{(r)}_{t,b}\equiv\sum_{\nu}X(t,\nu,b)\,\tilde{c}_{r}(\nu),\qquad\tilde{c}_{r}(\nu)\equiv\frac{c_{r}(\nu)}{\|c_{r}\|_{2}},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(8)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS2.p2.9" class="ltx_p">which yields a time series in each beam that is maximally sensitive to the component’s spectral footprint.
+Periodicity is quantified from <math id="S2.SS2.p2.1.m1" class="ltx_Math" alttext="Z^{(r)}_{t,b}" display="inline" intent=":literal"><semantics><msubsup><mi>Z</mi><mrow><mi>t</mi><mo>,</mo><mi>b</mi></mrow><mrow><mo stretchy="false">(</mo><mi>r</mi><mo stretchy="false">)</mo></mrow></msubsup><annotation encoding="application/x-tex">Z^{(r)}_{t,b}</annotation></semantics></math> via the periodogram, where the component period <math id="S2.SS2.p2.2.m2" class="ltx_Math" alttext="P_{0}" display="inline" intent=":literal"><semantics><msub><mi>P</mi><mn>0</mn></msub><annotation encoding="application/x-tex">P_{0}</annotation></semantics></math> is obtained from the temporal factor <math id="S2.SS2.p2.3.m3" class="ltx_Math" alttext="a_{r}(t)" display="inline" intent=":literal"><semantics><mrow><msub><mi>a</mi><mi>r</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">a_{r}(t)</annotation></semantics></math>.
+For consistency, we also measure the peak period in the center-beam projection, <math id="S2.SS2.p2.4.m4" class="ltx_Math" alttext="P_{0,\rm center}" display="inline" intent=":literal"><semantics><msub><mi>P</mi><mrow><mn>0</mn><mo>,</mo><mi>center</mi></mrow></msub><annotation encoding="application/x-tex">P_{0,\rm center}</annotation></semantics></math>, and require it agreement with the component period <math id="S2.SS2.p2.5.m5" class="ltx_Math" alttext="P_{0}" display="inline" intent=":literal"><semantics><msub><mi>P</mi><mn>0</mn></msub><annotation encoding="application/x-tex">P_{0}</annotation></semantics></math>. We also set a minimum periodogram SNR at <math id="S2.SS2.p2.6.m6" class="ltx_Math" alttext="P_{0}" display="inline" intent=":literal"><semantics><msub><mi>P</mi><mn>0</mn></msub><annotation encoding="application/x-tex">P_{0}</annotation></semantics></math> in the center beam together with an upper limit on the maximum off-beam periodogram SNR at the same <math id="S2.SS2.p2.7.m7" class="ltx_Math" alttext="P_{0}" display="inline" intent=":literal"><semantics><msub><mi>P</mi><mn>0</mn></msub><annotation encoding="application/x-tex">P_{0}</annotation></semantics></math>, so that only periodicities that are both significant and preferentially concentrated in the center beam are retained for further inspection. The beam dominance ratio <math id="S2.SS2.p2.8.m8" class="ltx_Math" alttext="D_{r}" display="inline" intent=":literal"><semantics><msub><mi>D</mi><mi>r</mi></msub><annotation encoding="application/x-tex">D_{r}</annotation></semantics></math> and normalized beam entropy <math id="S2.SS2.p2.9.m9" class="ltx_Math" alttext="H_{r}" display="inline" intent=":literal"><semantics><msub><mi>H</mi><mi>r</mi></msub><annotation encoding="application/x-tex">H_{r}</annotation></semantics></math> are used to measure the energy concentration in beam space for components. The adopted quantities and criteria are summarized in Table <a href="#S2.T1" title="Table 1 ‣ II.2 Periodicity Diagnostics and Multibeam Validation ‣ II Methodology and Data Analysis ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.</p>
+</div>
+<figure id="S2.T1" class="ltx_table">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_table">Table 1: </span>Adopted criteria for periodicity diagnostics and multibeam validation.</figcaption>
+<table id="S2.T1.9" class="ltx_tabular">
+<thead class="ltx_thead">
+<tr id="S2.T1.9.10.1" class="ltx_tr">
+<th id="S2.T1.9.10.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">Quantity</th>
+<th id="S2.T1.9.10.1.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">Criteria</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S2.T1.2.2" class="ltx_tr">
+<td id="S2.T1.1.1.1" class="ltx_td ltx_align_left ltx_border_t">Beam dominance ratio <math id="S2.T1.1.1.1.m1" class="ltx_Math" alttext="D_{r}" display="inline" intent=":literal"><semantics><msub><mi>D</mi><mi>r</mi></msub><annotation encoding="application/x-tex">D_{r}</annotation></semantics></math>
+</td>
+<td id="S2.T1.2.2.2" class="ltx_td ltx_align_left ltx_border_t"><math id="S2.T1.2.2.2.m1" class="ltx_Math" alttext="D_{r}\geqslant 3.0" display="inline" intent=":literal"><semantics><mrow><msub><mi>D</mi><mi>r</mi></msub><mo>⩾</mo><mn>3.0</mn></mrow><annotation encoding="application/x-tex">D_{r}\geqslant 3.0</annotation></semantics></math></td>
+</tr>
+<tr id="S2.T1.4.4" class="ltx_tr">
+<td id="S2.T1.3.3.1" class="ltx_td ltx_align_left">Normalized beam entropy <math id="S2.T1.3.3.1.m1" class="ltx_Math" alttext="H_{r}" display="inline" intent=":literal"><semantics><msub><mi>H</mi><mi>r</mi></msub><annotation encoding="application/x-tex">H_{r}</annotation></semantics></math>
+</td>
+<td id="S2.T1.4.4.2" class="ltx_td ltx_align_left"><math id="S2.T1.4.4.2.m1" class="ltx_Math" alttext="H_{r}\leqslant 0.60" display="inline" intent=":literal"><semantics><mrow><msub><mi>H</mi><mi>r</mi></msub><mo>⩽</mo><mn>0.60</mn></mrow><annotation encoding="application/x-tex">H_{r}\leqslant 0.60</annotation></semantics></math></td>
+</tr>
+<tr id="S2.T1.5.5" class="ltx_tr">
+<td id="S2.T1.5.5.2" class="ltx_td ltx_align_left">Period consistency</td>
+<td id="S2.T1.5.5.1" class="ltx_td ltx_align_left"><math id="S2.T1.5.5.1.m1" class="ltx_Math" alttext="\left|\log_{10}P_{0,\rm center}-\log_{10}P_{0}\right|\leq 0.02" display="inline" intent=":literal"><semantics><mrow><mrow><mo>|</mo><mrow><mrow><msub><mi>log</mi><mn>10</mn></msub><mo lspace="0.167em">⁡</mo><msub><mi>P</mi><mrow><mn>0</mn><mo>,</mo><mi>center</mi></mrow></msub></mrow><mo>−</mo><mrow><msub><mi>log</mi><mn>10</mn></msub><mo lspace="0.167em">⁡</mo><msub><mi>P</mi><mn>0</mn></msub></mrow></mrow><mo>|</mo></mrow><mo>≤</mo><mn>0.02</mn></mrow><annotation encoding="application/x-tex">\left|\log_{10}P_{0,\rm center}-\log_{10}P_{0}\right|\leq 0.02</annotation></semantics></math></td>
+</tr>
+<tr id="S2.T1.7.7" class="ltx_tr">
+<td id="S2.T1.6.6.1" class="ltx_td ltx_align_left">Central-beam periodogram SNR at <math id="S2.T1.6.6.1.m1" class="ltx_Math" alttext="P_{0}" display="inline" intent=":literal"><semantics><msub><mi>P</mi><mn>0</mn></msub><annotation encoding="application/x-tex">P_{0}</annotation></semantics></math>
+</td>
+<td id="S2.T1.7.7.2" class="ltx_td ltx_align_left"><math id="S2.T1.7.7.2.m1" class="ltx_Math" alttext="{\rm SNR}_{\rm center}(P_{0})\geqslant 10" display="inline" intent=":literal"><semantics><mrow><mrow><msub><mi>SNR</mi><mi>center</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><msub><mi>P</mi><mn>0</mn></msub><mo stretchy="false">)</mo></mrow></mrow><mo>⩾</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">{\rm SNR}_{\rm center}(P_{0})\geqslant 10</annotation></semantics></math></td>
+</tr>
+<tr id="S2.T1.9.9" class="ltx_tr">
+<td id="S2.T1.8.8.1" class="ltx_td ltx_align_left ltx_border_b">Maximum off-beam periodogram SNR at <math id="S2.T1.8.8.1.m1" class="ltx_Math" alttext="P_{0}" display="inline" intent=":literal"><semantics><msub><mi>P</mi><mn>0</mn></msub><annotation encoding="application/x-tex">P_{0}</annotation></semantics></math>
+</td>
+<td id="S2.T1.9.9.2" class="ltx_td ltx_align_left ltx_border_b"><math id="S2.T1.9.9.2.m1" class="ltx_Math" alttext="{\rm SNR}_{\rm off,max}(P_{0})\leqslant 8" display="inline" intent=":literal"><semantics><mrow><mrow><msub><mi>SNR</mi><mrow><mi>off</mi><mo>,</mo><mi>max</mi></mrow></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><msub><mi>P</mi><mn>0</mn></msub><mo stretchy="false">)</mo></mrow></mrow><mo>⩽</mo><mn>8</mn></mrow><annotation encoding="application/x-tex">{\rm SNR}_{\rm off,max}(P_{0})\leqslant 8</annotation></semantics></math></td>
+</tr>
+</tbody>
+</table>
+</figure>
+<div id="S2.SS2.p3" class="ltx_para">
+<p id="S2.SS2.p3.6" class="ltx_p">In addition, we also define a per-beam spectral projection,</p>
+<table id="S2.E9" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E9.m1" class="ltx_Math" alttext="W^{(r)}_{\nu,b}\equiv\sum_{t}X(t,\nu,b)\,\tilde{a}_{r}(t),\qquad\tilde{a}_{r}(t)\equiv\frac{a_{r}(t)}{\|a_{r}\|_{2}}," display="block" intent=":literal"><semantics><mrow><mrow><mrow><msubsup><mi>W</mi><mrow><mi>ν</mi><mo>,</mo><mi>b</mi></mrow><mrow><mo stretchy="false">(</mo><mi>r</mi><mo stretchy="false">)</mo></mrow></msubsup><mo rspace="0.111em">≡</mo><mrow><munder><mo movablelimits="false">∑</mo><mi>t</mi></munder><mrow><mi>X</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo>,</mo><mi>ν</mi><mo>,</mo><mi>b</mi><mo stretchy="false">)</mo></mrow><mo lspace="0.170em" rspace="0em">​</mo><msub><mover accent="true"><mi>a</mi><mo>~</mo></mover><mi>r</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow><mo rspace="2.167em">,</mo><mrow><mrow><msub><mover accent="true"><mi>a</mi><mo>~</mo></mover><mi>r</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo>≡</mo><mfrac><mrow><msub><mi>a</mi><mi>r</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><msub><mrow><mo stretchy="false">‖</mo><msub><mi>a</mi><mi>r</mi></msub><mo stretchy="false">‖</mo></mrow><mn>2</mn></msub></mfrac></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">W^{(r)}_{\nu,b}\equiv\sum_{t}X(t,\nu,b)\,\tilde{a}_{r}(t),\qquad\tilde{a}_{r}(t)\equiv\frac{a_{r}(t)}{\|a_{r}\|_{2}},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(9)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS2.p3.5" class="ltx_p">which highlights the frequency channels that participate in the component’s temporal modulation in each beam. We compute the ACF of <math id="S2.SS2.p3.1.m1" class="ltx_Math" alttext="W^{(r)}_{\nu,b}" display="inline" intent=":literal"><semantics><msubsup><mi>W</mi><mrow><mi>ν</mi><mo>,</mo><mi>b</mi></mrow><mrow><mo stretchy="false">(</mo><mi>r</mi><mo stretchy="false">)</mo></mrow></msubsup><annotation encoding="application/x-tex">W^{(r)}_{\nu,b}</annotation></semantics></math> to characterize the spectral morphology associated with the components. In particular, channel-confined structures are expected to produce localized peaks in <math id="S2.SS2.p3.2.m2" class="ltx_Math" alttext="W^{(r)}_{\nu,b}" display="inline" intent=":literal"><semantics><msubsup><mi>W</mi><mrow><mi>ν</mi><mo>,</mo><mi>b</mi></mrow><mrow><mo stretchy="false">(</mo><mi>r</mi><mo stretchy="false">)</mo></mrow></msubsup><annotation encoding="application/x-tex">W^{(r)}_{\nu,b}</annotation></semantics></math>, whereas some forms of RFI tend to exhibit comb-like features that leave a more organized equal-spaced peaks imprint in the ACF. Taken together, components that satisfy the beam-space concentration criteria (<math id="S2.SS2.p3.3.m3" class="ltx_Math" alttext="D_{r}" display="inline" intent=":literal"><semantics><msub><mi>D</mi><mi>r</mi></msub><annotation encoding="application/x-tex">D_{r}</annotation></semantics></math> and <math id="S2.SS2.p3.4.m4" class="ltx_Math" alttext="H_{r}" display="inline" intent=":literal"><semantics><msub><mi>H</mi><mi>r</mi></msub><annotation encoding="application/x-tex">H_{r}</annotation></semantics></math>) and the multibeam periodicity criteria are classified as potential candidate components. Figure <a href="#S2.F1" title="Figure 1 ‣ II.2 Periodicity Diagnostics and Multibeam Validation ‣ II Methodology and Data Analysis ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a> shows a simulated periodic signal with <math id="S2.SS2.p3.5.m5" class="ltx_Math" alttext="P_{0}=32" display="inline" intent=":literal"><semantics><mrow><msub><mi>P</mi><mn>0</mn></msub><mo>=</mo><mn>32</mn></mrow><annotation encoding="application/x-tex">P_{0}=32</annotation></semantics></math> s injected in the center beam only. After CPD, the injected signal is decomposed as a component whose periodicity is strongly supported in the central-beam projection but is not comparably present in the off-beam projections, yielding a large contrast between the periodograms. The corresponding frequency-domain projection is concentrated at the injected channels, producing several prominent isolated peaks. The ACF of frequency projection also correspondingly exhibits elevated values at non-zero lags associated with separations between these peaks.</p>
+</div>
+<figure id="S2.F1" class="ltx_figure">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>
+Simulated injection and CPD recovery of a center-dominant periodic signal.
+(a) Raw synthetic multibeam dynamic spectra before CPD. A periodic signal with period <math id="S2.F1.6.m1" class="ltx_Math" alttext="P=32~{\rm s}" display="inline" intent=":literal"><semantics><mrow><mi>P</mi><mo>=</mo><mrow><mn>32</mn><mo lspace="0.330em" rspace="0em">​</mo><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">P=32~{\rm s}</annotation></semantics></math>, duty cycle <math id="S2.F1.7.m2" class="ltx_Math" alttext="\delta=0.12" display="inline" intent=":literal"><semantics><mrow><mi>δ</mi><mo>=</mo><mn>0.12</mn></mrow><annotation encoding="application/x-tex">\delta=0.12</annotation></semantics></math> and peak amplitude <math id="S2.F1.8.m3" class="ltx_Math" alttext="A=8\sigma_{\rm noise}" display="inline" intent=":literal"><semantics><mrow><mi>A</mi><mo>=</mo><mrow><mn>8</mn><mo lspace="0em" rspace="0em">​</mo><msub><mi>σ</mi><mi>noise</mi></msub></mrow></mrow><annotation encoding="application/x-tex">A=8\sigma_{\rm noise}</annotation></semantics></math> is injected into six narrow frequency channels in the central beam only.
+(b) CPD-based diagnostics for the corresponding center-dominant component. Top row: the dynamic spectra for the four beam during the observation. Middle-left: periodograms of the per-beam projected time factors, with the component-defined period <math id="S2.F1.9.m4" class="ltx_Math" alttext="P_{0}" display="inline" intent=":literal"><semantics><msub><mi>P</mi><mn>0</mn></msub><annotation encoding="application/x-tex">P_{0}</annotation></semantics></math> (vertical dashed line) and the corresponding periodogram significance <math id="S2.F1.10.m5" class="ltx_Math" alttext="\mathrm{SNR}_{b}(P_{0})" display="inline" intent=":literal"><semantics><mrow><msub><mi>SNR</mi><mi>b</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><msub><mi>P</mi><mn>0</mn></msub><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathrm{SNR}_{b}(P_{0})</annotation></semantics></math> annotated in each panel. Middle-right: per-beam ACF computed from the per-beam frequency projections. Bottom-left: normalized projected time series. Bottom-right: normalized per-beam frequency projections.</figcaption>
+</figure>
+</section>
+<section id="S2.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">II.3 </span>Steps for the Analysis Framework</h3>
+
+<div id="S2.SS3.p1" class="ltx_para">
+<p id="S2.SS3.p1.4" class="ltx_p">Before CPD analysis, the raw psrfits data are converted into filterbank format for four polarization channels, and thus derived the Stokes parameters as <math id="S2.SS3.p1.1.m1" class="ltx_Math" alttext="I=XX+YY" display="inline" intent=":literal"><semantics><mrow><mi>I</mi><mo>=</mo><mrow><mrow><mi>X</mi><mo lspace="0em" rspace="0em">​</mo><mi>X</mi></mrow><mo>+</mo><mrow><mi>Y</mi><mo lspace="0em" rspace="0em">​</mo><mi>Y</mi></mrow></mrow></mrow><annotation encoding="application/x-tex">I=XX+YY</annotation></semantics></math>, <math id="S2.SS3.p1.2.m2" class="ltx_Math" alttext="Q=XX-YY" display="inline" intent=":literal"><semantics><mrow><mi>Q</mi><mo>=</mo><mrow><mrow><mi>X</mi><mo lspace="0em" rspace="0em">​</mo><mi>X</mi></mrow><mo>−</mo><mrow><mi>Y</mi><mo lspace="0em" rspace="0em">​</mo><mi>Y</mi></mrow></mrow></mrow><annotation encoding="application/x-tex">Q=XX-YY</annotation></semantics></math>, <math id="S2.SS3.p1.3.m3" class="ltx_Math" alttext="U=2XY" display="inline" intent=":literal"><semantics><mrow><mi>U</mi><mo>=</mo><mrow><mn>2</mn><mo lspace="0em" rspace="0em">​</mo><mi>X</mi><mo lspace="0em" rspace="0em">​</mo><mi>Y</mi></mrow></mrow><annotation encoding="application/x-tex">U=2XY</annotation></semantics></math>, <math id="S2.SS3.p1.4.m4" class="ltx_Math" alttext="V=-2XY" display="inline" intent=":literal"><semantics><mrow><mi>V</mi><mo>=</mo><mrow><mo>−</mo><mrow><mn>2</mn><mo lspace="0em" rspace="0em">​</mo><mi>X</mi><mo lspace="0em" rspace="0em">​</mo><mi>Y</mi></mrow></mrow></mrow><annotation encoding="application/x-tex">V=-2XY</annotation></semantics></math> after polarization calibration. The multibeam dynamic spectra are assembled into a tensor for each Stokes product, CPD is then applied to the preprocessed multibeam data tensor. Our goal is not merely to identify components with periodicity in time, but also to characterize whether such periodicity is preferentially associated with the center beam rather than being comparably present in reference beams.</p>
+</div>
+<div id="S2.SS3.p2" class="ltx_para">
+<p id="S2.SS3.p2.1" class="ltx_p">The analysis consists of two main parts. The first part is the CPD of each multibeam tensor, from which we record the basic properties of all components, including their component weights, energy ratios, beam-domain diagnostics, dominant periods, and auxiliary ACF-based frequency descriptors. This step provides a global characterization of the decomposed structures and serves as the basis for identifying components of potential interest.</p>
+</div>
+<div id="S2.SS3.p3" class="ltx_para">
+<p id="S2.SS3.p3.1" class="ltx_p">The second is a component-level diagnostic product produced for the components. We further examine the temporal periodicity, compare the corresponding periodogram behavior across all available beams, and inspect the frequency-domain morphology through the ACF of the frequency factor. The per-beam periodic metrics and related diagnostic quantities are retained for subsequent visual inspection and statistical analysis.</p>
+</div>
+</section>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">III </span>Results</h2>
+
+<div id="S3.p1" class="ltx_para">
+<p id="S3.p1.1" class="ltx_p">After applying the RFI-flagging procedure described in Section <a href="#S2" title="II Methodology and Data Analysis ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">II</span></a>, we identified a heavily contaminated frequency interval spanning approximately 1140–1300 MHz, where the interference level was markedly higher than that in the rest of the band. This interval was therefore masked in all subsequent processing. The analysis was then restricted to the two retained sub-bands, 1050–1140 MHz and 1300–1450 MHz, and the total component number for each data tensor is fixed to <math id="S3.p1.1.m1" class="ltx_Math" alttext="N_{\rm comp}=1965" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mi>comp</mi></msub><mo>=</mo><mn>1965</mn></mrow><annotation encoding="application/x-tex">N_{\rm comp}=1965</annotation></semantics></math>.</p>
+</div>
+<div id="S3.p2" class="ltx_para">
+<p id="S3.p2.7" class="ltx_p">Overall, we find 2753 central beam dominant components (<math id="S3.p2.1.m1" class="ltx_Math" alttext="D_{r}\geqslant 3.0" display="inline" intent=":literal"><semantics><mrow><msub><mi>D</mi><mi>r</mi></msub><mo>⩾</mo><mn>3.0</mn></mrow><annotation encoding="application/x-tex">D_{r}\geqslant 3.0</annotation></semantics></math> and <math id="S3.p2.2.m2" class="ltx_Math" alttext="H_{r}\leqslant 0.60" display="inline" intent=":literal"><semantics><mrow><msub><mi>H</mi><mi>r</mi></msub><mo>⩽</mo><mn>0.60</mn></mrow><annotation encoding="application/x-tex">H_{r}\leqslant 0.60</annotation></semantics></math>) for this periodic signals search toward 3I/ATLAS. Among these central beam dominant components, we find 3 components satisfy the criteria in Table <a href="#S2.T1" title="Table 1 ‣ II.2 Periodicity Diagnostics and Multibeam Validation ‣ II Methodology and Data Analysis ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>, and their information is summarized in Table <a href="#S3.T2" title="Table 2 ‣ III Results ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>. These three components were all found in Stokes-<math id="S3.p2.3.m3" class="ltx_Math" alttext="V" display="inline" intent=":literal"><semantics><mi>V</mi><annotation encoding="application/x-tex">V</annotation></semantics></math> polarization channel during the observation on 2026-01-05. The component r1176 is rejected as part of the injected calibration signal due to its close agreement with the calibration timescale. The component r55 exhibits periodogram peak at <math id="S3.p2.4.m4" class="ltx_Math" alttext="P_{0}=18.874" display="inline" intent=":literal"><semantics><mrow><msub><mi>P</mi><mn>0</mn></msub><mo>=</mo><mn>18.874</mn></mrow><annotation encoding="application/x-tex">P_{0}=18.874</annotation></semantics></math> s in central beam, but the periodogram shows a remarkable harmonic structure and also retains substantial power <math id="S3.p2.5.m5" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>300 s, and the component time factor displays a clear modulation on <math id="S3.p2.6.m6" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>300 s timescale, we therefore attribute r55 as another manifestation of the calibration injection rather than an independent narrowband periodic signal. Component r952 does not exhibit the characteristic <math id="S3.p2.7.m7" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>300 s harmonic pattern. However, the central beam frequency factors do not show a clear localized spectral concentration, and the corresponding frequency-domain ACFs lack a distinct, reproducible correlation scale beyond weak fluctuations. We thus regard r952 as inconsistent with the narrowband periodic signal we search and exclude it.</p>
+</div>
+<figure id="S3.T2" class="ltx_table">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_table">Table 2: </span>Information of the potential candidate components.</figcaption>
+<table id="S3.T2.6" class="ltx_tabular">
+<thead class="ltx_thead">
+<tr id="S3.T2.6.6" class="ltx_tr">
+<th id="S3.T2.6.6.7" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">Components</th>
+<th id="S3.T2.6.6.8" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">Energy rank order</th>
+<th id="S3.T2.1.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><math id="S3.T2.1.1.1.m1" class="ltx_Math" alttext="D_{r}" display="inline" intent=":literal"><semantics><msub><mi>D</mi><mi>r</mi></msub><annotation encoding="application/x-tex">D_{r}</annotation></semantics></math></th>
+<th id="S3.T2.2.2.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><math id="S3.T2.2.2.2.m1" class="ltx_Math" alttext="H_{r}" display="inline" intent=":literal"><semantics><msub><mi>H</mi><mi>r</mi></msub><annotation encoding="application/x-tex">H_{r}</annotation></semantics></math></th>
+<th id="S3.T2.3.3.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">
+<math id="S3.T2.3.3.3.m1" class="ltx_Math" alttext="P_{0}" display="inline" intent=":literal"><semantics><msub><mi>P</mi><mn>0</mn></msub><annotation encoding="application/x-tex">P_{0}</annotation></semantics></math> (s)</th>
+<th id="S3.T2.4.4.4" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">
+<math id="S3.T2.4.4.4.m1" class="ltx_Math" alttext="P_{0,\rm center}" display="inline" intent=":literal"><semantics><msub><mi>P</mi><mrow><mn>0</mn><mo>,</mo><mi>center</mi></mrow></msub><annotation encoding="application/x-tex">P_{0,\rm center}</annotation></semantics></math> (s)</th>
+<th id="S3.T2.5.5.5" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><math id="S3.T2.5.5.5.m1" class="ltx_Math" alttext="{\rm SNR}_{\rm center}(P_{0})" display="inline" intent=":literal"><semantics><mrow><msub><mi>SNR</mi><mi>center</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><msub><mi>P</mi><mn>0</mn></msub><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">{\rm SNR}_{\rm center}(P_{0})</annotation></semantics></math></th>
+<th id="S3.T2.6.6.6" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><math id="S3.T2.6.6.6.m1" class="ltx_Math" alttext="{\rm SNR}_{\rm off,max}(P_{0})" display="inline" intent=":literal"><semantics><mrow><msub><mi>SNR</mi><mrow><mi>off</mi><mo>,</mo><mi>max</mi></mrow></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><msub><mi>P</mi><mn>0</mn></msub><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">{\rm SNR}_{\rm off,max}(P_{0})</annotation></semantics></math></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S3.T2.6.7.1" class="ltx_tr">
+<td id="S3.T2.6.7.1.1" class="ltx_td ltx_align_left ltx_border_t">r1176</td>
+<td id="S3.T2.6.7.1.2" class="ltx_td ltx_align_center ltx_border_t">793</td>
+<td id="S3.T2.6.7.1.3" class="ltx_td ltx_align_center ltx_border_t">11.683</td>
+<td id="S3.T2.6.7.1.4" class="ltx_td ltx_align_center ltx_border_t">0.340</td>
+<td id="S3.T2.6.7.1.5" class="ltx_td ltx_align_center ltx_border_t">300.097</td>
+<td id="S3.T2.6.7.1.6" class="ltx_td ltx_align_center ltx_border_t">300.097</td>
+<td id="S3.T2.6.7.1.7" class="ltx_td ltx_align_center ltx_border_t">1025.542</td>
+<td id="S3.T2.6.7.1.8" class="ltx_td ltx_align_center ltx_border_t">6.240</td>
+</tr>
+<tr id="S3.T2.6.8.2" class="ltx_tr">
+<td id="S3.T2.6.8.2.1" class="ltx_td ltx_align_left">r55</td>
+<td id="S3.T2.6.8.2.2" class="ltx_td ltx_align_center">315</td>
+<td id="S3.T2.6.8.2.3" class="ltx_td ltx_align_center">23.039</td>
+<td id="S3.T2.6.8.2.4" class="ltx_td ltx_align_center">0.144</td>
+<td id="S3.T2.6.8.2.5" class="ltx_td ltx_align_center">18.874</td>
+<td id="S3.T2.6.8.2.6" class="ltx_td ltx_align_center">18.874</td>
+<td id="S3.T2.6.8.2.7" class="ltx_td ltx_align_center">701.013</td>
+<td id="S3.T2.6.8.2.8" class="ltx_td ltx_align_center">6.188</td>
+</tr>
+<tr id="S3.T2.6.9.3" class="ltx_tr">
+<td id="S3.T2.6.9.3.1" class="ltx_td ltx_align_left ltx_border_b">r952</td>
+<td id="S3.T2.6.9.3.2" class="ltx_td ltx_align_center ltx_border_b">1212</td>
+<td id="S3.T2.6.9.3.3" class="ltx_td ltx_align_center ltx_border_b">56.775</td>
+<td id="S3.T2.6.9.3.4" class="ltx_td ltx_align_center ltx_border_b">0.072</td>
+<td id="S3.T2.6.9.3.5" class="ltx_td ltx_align_center ltx_border_b">16.580</td>
+<td id="S3.T2.6.9.3.6" class="ltx_td ltx_align_center ltx_border_b">16.580</td>
+<td id="S3.T2.6.9.3.7" class="ltx_td ltx_align_center ltx_border_b">13.359</td>
+<td id="S3.T2.6.9.3.8" class="ltx_td ltx_align_center ltx_border_b">3.388</td>
+</tr>
+</tbody>
+</table>
+</figure>
+<figure id="S3.F2" class="ltx_figure">
+<div class="ltx_flex_figure">
+<div class="ltx_flex_cell ltx_flex_size_2"><img src="2607.01666v1/ATLAS_0105_StokesV_1050_1140_r0055.png" id="S3.F2.g1" class="ltx_graphics ltx_centering ltx_figure_panel ltx_img_square" width="236" height="261" alt="Refer to caption"></div>
+<div class="ltx_flex_cell ltx_flex_size_2"><img src="2607.01666v1/ATLAS_0105_StokesV_1300_1450_r0952.png" id="S3.F2.g2" class="ltx_graphics ltx_centering ltx_figure_panel ltx_img_square" width="236" height="261" alt="Refer to caption"></div>
+</div>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 2: </span> Candidate component r55 with period of <math id="S3.F2.3.m1" class="ltx_Math" alttext="P_{0}=18.87" display="inline" intent=":literal"><semantics><mrow><msub><mi>P</mi><mn>0</mn></msub><mo>=</mo><mn>18.87</mn></mrow><annotation encoding="application/x-tex">P_{0}=18.87</annotation></semantics></math> s in 1050–1140 MHz (a) and r952 with period of <math id="S3.F2.4.m2" class="ltx_Math" alttext="P_{0}=16.58" display="inline" intent=":literal"><semantics><mrow><msub><mi>P</mi><mn>0</mn></msub><mo>=</mo><mn>16.58</mn></mrow><annotation encoding="application/x-tex">P_{0}=16.58</annotation></semantics></math> s 1300–1450 MHz (b) in our search. The layout of the two panels are the same as Figure <a href="#S2.F1" title="Figure 1 ‣ II.2 Periodicity Diagnostics and Multibeam Validation ‣ II Methodology and Data Analysis ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.</figcaption>
+</figure>
+<div id="S3.p3" class="ltx_para">
+<p id="S3.p3.2" class="ltx_p">Figure <a href="#S3.F3" title="Figure 3 ‣ III Results ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a> shows the distribution of all components in the <math id="S3.p3.1.m1" class="ltx_Math" alttext="(P_{0},\mathrm{SNR})" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">(</mo><msub><mi>P</mi><mn>0</mn></msub><mo>,</mo><mi>SNR</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(P_{0},\mathrm{SNR})</annotation></semantics></math> plane for Stokes-<math id="S3.p3.2.m2" class="ltx_Math" alttext="IQUV" display="inline" intent=":literal"><semantics><mrow><mi>I</mi><mo lspace="0em" rspace="0em">​</mo><mi>Q</mi><mo lspace="0em" rspace="0em">​</mo><mi>U</mi><mo lspace="0em" rspace="0em">​</mo><mi>V</mi></mrow><annotation encoding="application/x-tex">IQUV</annotation></semantics></math>. Across all polarization channels, the population is strongly skewed toward longer periods. Components with short periods are comparatively rare, while the density increases markedly from tens of seconds to several hundred seconds and beyond. A prominent feature is the occurrence of vertical banding and clustered structures, where many components share nearly the same period but span a wide range of periodogram SNR. This pattern suggests that the periods are not uniformly spread across the searched range. Instead, many components accumulate around a limited number of preferred timescales, forming vertical bands in the period-SNR plane. Within each vertical band, the periodogram SNR spans a wide dynamic range, indicating that the same characteristic timescale can appear with varying apparent significance.</p>
+</div>
+<figure id="S3.F3" class="ltx_figure"><img src="2607.01666v1/x1.png" id="S3.F3.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="660" height="181" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>Distribution of components for Stokes <math id="S3.F3.2.m1" class="ltx_Math" alttext="IQUV" display="inline" intent=":literal"><semantics><mrow><mi>I</mi><mo lspace="0em" rspace="0em">​</mo><mi>Q</mi><mo lspace="0em" rspace="0em">​</mo><mi>U</mi><mo lspace="0em" rspace="0em">​</mo><mi>V</mi></mrow><annotation encoding="application/x-tex">IQUV</annotation></semantics></math> polarization channels in our observation. The central beam dominant components are denoted in blue triangle, and the three potential candidates are highlighted in red star.</figcaption>
+</figure>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">IV </span>Discussion</h2>
+
+<section id="S4.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">IV.1 </span>Sensitivity</h3>
+
+<div id="S4.SS1.p1" class="ltx_para">
+<p id="S4.SS1.p1.20" class="ltx_p">The sensitivity of a radio observation can be determined by system equivalent flux density <cite class="ltx_cite ltx_citemacro_citep">(T. L. Wilson et al., <a href="#bib.bib31" title="" class="ltx_ref">2013</a>; A. R. Thompson et al., <a href="#bib.bib29" title="" class="ltx_ref">2017</a>)</cite></p>
+<table id="S4.E10" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S4.E10.m1" class="ltx_Math" alttext="\mathrm{SEFD}=\frac{2k_{\mathrm{B}}T_{\mathrm{sys}}}{A_{\mathrm{eff}}}," display="block" intent=":literal"><semantics><mrow><mrow><mi>SEFD</mi><mo>=</mo><mfrac><mrow><mn>2</mn><mo lspace="0em" rspace="0em">​</mo><msub><mi>k</mi><mi mathvariant="normal">B</mi></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>T</mi><mi>sys</mi></msub></mrow><msub><mi>A</mi><mi>eff</mi></msub></mfrac></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">\mathrm{SEFD}=\frac{2k_{\mathrm{B}}T_{\mathrm{sys}}}{A_{\mathrm{eff}}},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(10)</span></td>
+</tr></tbody>
+</table>
+<p id="S4.SS1.p1.6" class="ltx_p">where <math id="S4.SS1.p1.1.m1" class="ltx_Math" alttext="k_{\mathrm{B}}" display="inline" intent=":literal"><semantics><msub><mi>k</mi><mi mathvariant="normal">B</mi></msub><annotation encoding="application/x-tex">k_{\mathrm{B}}</annotation></semantics></math> is the Boltzmann constant, <math id="S4.SS1.p1.2.m2" class="ltx_Math" alttext="T_{\mathrm{sys}}" display="inline" intent=":literal"><semantics><msub><mi>T</mi><mi>sys</mi></msub><annotation encoding="application/x-tex">T_{\mathrm{sys}}</annotation></semantics></math> is the system temperature, and <math id="S4.SS1.p1.3.m3" class="ltx_Math" alttext="A_{\mathrm{eff}}" display="inline" intent=":literal"><semantics><msub><mi>A</mi><mi>eff</mi></msub><annotation encoding="application/x-tex">A_{\mathrm{eff}}</annotation></semantics></math> is the effective collecting area. The sensitivity <math id="S4.SS1.p1.4.m4" class="ltx_Math" alttext="A_{\mathrm{eff}}/T_{\mathrm{sys}}" display="inline" intent=":literal"><semantics><mrow><msub><mi>A</mi><mi>eff</mi></msub><mo>/</mo><msub><mi>T</mi><mi>sys</mi></msub></mrow><annotation encoding="application/x-tex">A_{\mathrm{eff}}/T_{\mathrm{sys}}</annotation></semantics></math> of FAST L-band 19 beam receiver is <math id="S4.SS1.p1.5.m5" class="ltx_Math" alttext="\sim 2000\,\mathrm{m^{2}\,K^{-1}}" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mrow><mn>2000</mn><mo lspace="0.170em" rspace="0em">​</mo><msup><mi mathvariant="normal">m</mi><mn>2</mn></msup><mo lspace="0em" rspace="0em">​</mo><msup><mi mathvariant="normal">K</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow></mrow><annotation encoding="application/x-tex">\sim 2000\,\mathrm{m^{2}\,K^{-1}}</annotation></semantics></math> <cite class="ltx_cite ltx_citemacro_citep">(R. Nan et al., <a href="#bib.bib21" title="" class="ltx_ref">2011</a>; D. Li &amp; Z. Pan, <a href="#bib.bib17" title="" class="ltx_ref">2016</a>; P. Jiang et al., <a href="#bib.bib12" title="" class="ltx_ref">2019</a>)</cite>. To detect a channel-width periodic signal, the minimum detectable flux density <math id="S4.SS1.p1.6.m6" class="ltx_Math" alttext="S_{\min}" display="inline" intent=":literal"><semantics><msub><mi>S</mi><mi>min</mi></msub><annotation encoding="application/x-tex">S_{\min}</annotation></semantics></math> can be calculated by <cite class="ltx_cite ltx_citemacro_citep">(V. Morello et al., <a href="#bib.bib20" title="" class="ltx_ref">2020</a>)</cite></p>
+<table id="S4.E11" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S4.E11.m1" class="ltx_Math" alttext="S_{\min}\approx\frac{({\rm SNR})_{\min}\,{\rm SEFD}}{\sqrt{n_{\rm pol}\,\Delta\nu_{\rm ch}\,T_{\rm obs}}}\sqrt{\frac{\delta}{1-\delta}}," display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>S</mi><mi>min</mi></msub><mo>≈</mo><mrow><mfrac><mrow><msub><mrow><mo stretchy="false">(</mo><mi>SNR</mi><mo stretchy="false">)</mo></mrow><mi>min</mi></msub><mo lspace="0.170em" rspace="0em">​</mo><mi>SEFD</mi></mrow><msqrt><mrow><msub><mi>n</mi><mi>pol</mi></msub><mo lspace="0.170em" rspace="0em">​</mo><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>ν</mi><mi>ch</mi></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>T</mi><mi>obs</mi></msub></mrow></msqrt></mfrac><mo lspace="0em" rspace="0em">​</mo><msqrt><mfrac><mi>δ</mi><mrow><mn>1</mn><mo>−</mo><mi>δ</mi></mrow></mfrac></msqrt></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">S_{\min}\approx\frac{({\rm SNR})_{\min}\,{\rm SEFD}}{\sqrt{n_{\rm pol}\,\Delta\nu_{\rm ch}\,T_{\rm obs}}}\sqrt{\frac{\delta}{1-\delta}},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(11)</span></td>
+</tr></tbody>
+</table>
+<p id="S4.SS1.p1.16" class="ltx_p">where <math id="S4.SS1.p1.7.m1" class="ltx_Math" alttext="({\rm SNR})_{\min}=10" display="inline" intent=":literal"><semantics><mrow><msub><mrow><mo stretchy="false">(</mo><mi>SNR</mi><mo stretchy="false">)</mo></mrow><mi>min</mi></msub><mo>=</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">({\rm SNR})_{\min}=10</annotation></semantics></math> is the signal-to-noise ratio threshold, <math id="S4.SS1.p1.8.m2" class="ltx_Math" alttext="\Delta\nu_{\rm ch}\sim 0.122~{\rm MHz}" display="inline" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>ν</mi><mi>ch</mi></msub></mrow><mo>∼</mo><mrow><mn>0.122</mn><mo lspace="0.330em" rspace="0em">​</mo><mi>MHz</mi></mrow></mrow><annotation encoding="application/x-tex">\Delta\nu_{\rm ch}\sim 0.122~{\rm MHz}</annotation></semantics></math> is the frequency channel bandwidth, <math id="S4.SS1.p1.9.m3" class="ltx_Math" alttext="n_{\mathrm{pol}}=2" display="inline" intent=":literal"><semantics><mrow><msub><mi>n</mi><mi>pol</mi></msub><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">n_{\mathrm{pol}}=2</annotation></semantics></math> is the number of polarization channels adopted in the sensitivity estimate, <math id="S4.SS1.p1.10.m4" class="ltx_Math" alttext="T_{\rm obs}=3000~{\rm s}" display="inline" intent=":literal"><semantics><mrow><msub><mi>T</mi><mi>obs</mi></msub><mo>=</mo><mrow><mn>3000</mn><mo lspace="0.330em" rspace="0em">​</mo><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">T_{\rm obs}=3000~{\rm s}</annotation></semantics></math> is the observation duration, and <math id="S4.SS1.p1.11.m5" class="ltx_Math" alttext="\delta" display="inline" intent=":literal"><semantics><mi>δ</mi><annotation encoding="application/x-tex">\delta</annotation></semantics></math> is the duty cycle. Although the periodic search is performed for all four Stokes products <math id="S4.SS1.p1.12.m6" class="ltx_Math" alttext="(I,Q,U,V)" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">(</mo><mi>I</mi><mo>,</mo><mi>Q</mi><mo>,</mo><mi>U</mi><mo>,</mo><mi>V</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(I,Q,U,V)</annotation></semantics></math>, the EIRP limits reported here are computed as a Stokes-<math id="S4.SS1.p1.13.m7" class="ltx_Math" alttext="I" display="inline" intent=":literal"><semantics><mi>I</mi><annotation encoding="application/x-tex">I</annotation></semantics></math> sensitivity estimate, therefore we adopt <math id="S4.SS1.p1.14.m8" class="ltx_Math" alttext="n_{\rm pol}=2" display="inline" intent=":literal"><semantics><mrow><msub><mi>n</mi><mi>pol</mi></msub><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">n_{\rm pol}=2</annotation></semantics></math>, corresponding to the two independent orthogonal polarization channels used to form Stokes <math id="S4.SS1.p1.15.m9" class="ltx_Math" alttext="I" display="inline" intent=":literal"><semantics><mi>I</mi><annotation encoding="application/x-tex">I</annotation></semantics></math>. For the observation target at distance <math id="S4.SS1.p1.16.m10" class="ltx_Math" alttext="d" display="inline" intent=":literal"><semantics><mi>d</mi><annotation encoding="application/x-tex">d</annotation></semantics></math>, our minimum luminosity detection threshold can be quantified by equivalent isotropic radiated power (EIRP) by</p>
+<table id="S4.E12" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S4.E12.m1" class="ltx_Math" alttext="\mathrm{EIRP}=4\pi d^{2}S_{\min}\Delta\nu_{\rm ch}." display="block" intent=":literal"><semantics><mrow><mrow><mi>EIRP</mi><mo>=</mo><mrow><mn>4</mn><mo lspace="0em" rspace="0em">​</mo><mi>π</mi><mo lspace="0em" rspace="0em">​</mo><msup><mi>d</mi><mn>2</mn></msup><mo lspace="0em" rspace="0em">​</mo><msub><mi>S</mi><mi>min</mi></msub><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>ν</mi><mi>ch</mi></msub></mrow></mrow><mo lspace="0em">.</mo></mrow><annotation encoding="application/x-tex">\mathrm{EIRP}=4\pi d^{2}S_{\min}\Delta\nu_{\rm ch}.</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(12)</span></td>
+</tr></tbody>
+</table>
+<p id="S4.SS1.p1.19" class="ltx_p">The corresponding EIRP for each observation date is listed in the second column of Table <a href="#S4.T3" title="Table 3 ‣ IV.2 Figure of Merit for Signal Search ‣ IV Discussion ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>. The minimum detectable flux density <math id="S4.SS1.p1.17.m1" class="ltx_Math" alttext="S_{\min}" display="inline" intent=":literal"><semantics><msub><mi>S</mi><mi>min</mi></msub><annotation encoding="application/x-tex">S_{\min}</annotation></semantics></math> is calculated by the median <math id="S4.SS1.p1.18.m2" class="ltx_Math" alttext="\delta" display="inline" intent=":literal"><semantics><mi>δ</mi><annotation encoding="application/x-tex">\delta</annotation></semantics></math> value of Stokes-<math id="S4.SS1.p1.19.m3" class="ltx_Math" alttext="I" display="inline" intent=":literal"><semantics><mi>I</mi><annotation encoding="application/x-tex">I</annotation></semantics></math> for each date.</p>
+</div>
+</section>
+<section id="S4.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">IV.2 </span>Figure of Merit for Signal Search</h3>
+
+<div id="S4.SS2.p1" class="ltx_para">
+<p id="S4.SS2.p1.5" class="ltx_p">A commonly used figure of merit to evaluate the signal search is continuous-waveform transmitter figure of merit (CWTFM) defined in <cite class="ltx_cite ltx_citemacro_cite">J. E. Enriquez et al. (<a href="#bib.bib5" title="" class="ltx_ref">2017</a>)</cite></p>
+<table id="S4.E13" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S4.E13.m1" class="ltx_Math" alttext="{\rm CWTFM}=\frac{\xi_{\rm ref}{\rm EIRP}}{N\left(\frac{\Delta\nu_{\rm tot}}{\nu_{c}}\right)}," display="block" intent=":literal"><semantics><mrow><mrow><mi>CWTFM</mi><mo>=</mo><mfrac><mrow><msub><mi>ξ</mi><mi>ref</mi></msub><mo lspace="0em" rspace="0em">​</mo><mi>EIRP</mi></mrow><mrow><mi>N</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo>(</mo><mfrac><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>ν</mi><mi>tot</mi></msub></mrow><msub><mi>ν</mi><mi>c</mi></msub></mfrac><mo>)</mo></mrow></mrow></mfrac></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">{\rm CWTFM}=\frac{\xi_{\rm ref}{\rm EIRP}}{N\left(\frac{\Delta\nu_{\rm tot}}{\nu_{c}}\right)},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(13)</span></td>
+</tr></tbody>
+</table>
+<p id="S4.SS2.p1.4" class="ltx_p">where <math id="S4.SS2.p1.1.m1" class="ltx_Math" alttext="N" display="inline" intent=":literal"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math> is the number of observations<span id="footnote3" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">3</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">3</sup><span class="ltx_tag ltx_tag_note">3</span>In the original definition in <cite class="ltx_cite ltx_citemacro_cite">J. E. Enriquez et al. (<a href="#bib.bib5" title="" class="ltx_ref">2017</a>)</cite>, <math id="footnote3.m1" class="ltx_Math" alttext="N=N_{\rm stars}=n_{\rm stars}\times N_{\rm pointing}" display="inline" intent=":literal"><semantics><mrow><mi>N</mi><mo>=</mo><msub><mi>N</mi><mi>stars</mi></msub><mo>=</mo><mrow><msub><mi>n</mi><mi>stars</mi></msub><mo lspace="0.222em" rspace="0.222em">×</mo><msub><mi>N</mi><mi>pointing</mi></msub></mrow></mrow><annotation encoding="application/x-tex">N=N_{\rm stars}=n_{\rm stars}\times N_{\rm pointing}</annotation></semantics></math> refers the total number of stars during the survey, with <math id="footnote3.m2" class="ltx_Math" alttext="N_{\rm pointing}" display="inline" intent=":literal"><semantics><msub><mi>N</mi><mi>pointing</mi></msub><annotation encoding="application/x-tex">N_{\rm pointing}</annotation></semantics></math> being the number of pointings during the survey and <math id="footnote3.m3" class="ltx_Math" alttext="n_{\rm stars}" display="inline" intent=":literal"><semantics><msub><mi>n</mi><mi>stars</mi></msub><annotation encoding="application/x-tex">n_{\rm stars}</annotation></semantics></math> being the number of stars per pointing. In our single-target observation, although <math id="footnote3.m4" class="ltx_Math" alttext="n_{\rm stars}" display="inline" intent=":literal"><semantics><msub><mi>n</mi><mi>stars</mi></msub><annotation encoding="application/x-tex">n_{\rm stars}</annotation></semantics></math> is 1, we still carry out several times of tracking observations in different dates. Therefore, in this work, we refer <math id="footnote3.m5" class="ltx_Math" alttext="N" display="inline" intent=":literal"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math> to the number of observations. </span></span></span>, <math id="S4.SS2.p1.2.m2" class="ltx_Math" alttext="\Delta\nu_{\rm tot}" display="inline" intent=":literal"><semantics><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>ν</mi><mi>tot</mi></msub></mrow><annotation encoding="application/x-tex">\Delta\nu_{\rm tot}</annotation></semantics></math> denotes the total frequency bandwidth, <math id="S4.SS2.p1.3.m3" class="ltx_Math" alttext="\nu_{c}" display="inline" intent=":literal"><semantics><msub><mi>ν</mi><mi>c</mi></msub><annotation encoding="application/x-tex">\nu_{c}</annotation></semantics></math> is the central frequency in our search and <math id="S4.SS2.p1.4.m4" class="ltx_Math" alttext="\xi_{\rm ref}=10^{-10}\,{\rm W^{-1}}" display="inline" intent=":literal"><semantics><mrow><msub><mi>ξ</mi><mi>ref</mi></msub><mo>=</mo><mrow><msup><mn>10</mn><mrow><mo>−</mo><mn>10</mn></mrow></msup><mo lspace="0em" rspace="0em">​</mo><msup><mi mathvariant="normal">W</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow></mrow><annotation encoding="application/x-tex">\xi_{\rm ref}=10^{-10}\,{\rm W^{-1}}</annotation></semantics></math> is the reference normalization factor.</p>
+</div>
+<div id="S4.SS2.p2" class="ltx_para">
+<p id="S4.SS2.p2.1" class="ltx_p">To quantify the merits of our periodic signal search, we also adopt the periodic spectral signaltransmitter figure of merit (PSSTFM) defined in <cite class="ltx_cite ltx_citemacro_cite">A. Suresh et al. (<a href="#bib.bib27" title="" class="ltx_ref">2023</a>)</cite></p>
+<table id="S4.E14" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S4.E14.m1" class="ltx_Math" alttext="{\rm PSSTFM}=\frac{\xi_{\rm ref}{\rm EIRP}}{N\left(\frac{\Delta\nu_{\rm tot}}{\nu_{c}}\right)\log_{10}\left(\frac{P_{\max}}{P_{\min}}\right)\log_{10}\left(\frac{\delta_{\max}}{\delta_{\min}}\right)}," display="block" intent=":literal"><semantics><mrow><mrow><mi>PSSTFM</mi><mo>=</mo><mfrac><mrow><msub><mi>ξ</mi><mi>ref</mi></msub><mo lspace="0em" rspace="0em">​</mo><mi>EIRP</mi></mrow><mrow><mi>N</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo>(</mo><mfrac><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>ν</mi><mi>tot</mi></msub></mrow><msub><mi>ν</mi><mi>c</mi></msub></mfrac><mo>)</mo></mrow><mo lspace="0.167em" rspace="0em">​</mo><mrow><msub><mi>log</mi><mn>10</mn></msub><mo>⁡</mo><mrow><mo>(</mo><mfrac><msub><mi>P</mi><mi>max</mi></msub><msub><mi>P</mi><mi>min</mi></msub></mfrac><mo>)</mo></mrow></mrow><mo lspace="0.167em" rspace="0em">​</mo><mrow><msub><mi>log</mi><mn>10</mn></msub><mo>⁡</mo><mrow><mo>(</mo><mfrac><msub><mi>δ</mi><mi>max</mi></msub><msub><mi>δ</mi><mi>min</mi></msub></mfrac><mo>)</mo></mrow></mrow></mrow></mfrac></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">{\rm PSSTFM}=\frac{\xi_{\rm ref}{\rm EIRP}}{N\left(\frac{\Delta\nu_{\rm tot}}{\nu_{c}}\right)\log_{10}\left(\frac{P_{\max}}{P_{\min}}\right)\log_{10}\left(\frac{\delta_{\max}}{\delta_{\min}}\right)},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(14)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S4.SS2.p3" class="ltx_para">
+<p id="S4.SS2.p3.1" class="ltx_p">Compared with the CWTFM in Eq. (<a href="#S4.E13" title="Equation 13 ‣ IV.2 Figure of Merit for Signal Search ‣ IV Discussion ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">13</span></a>), PSSTFM in Eq. (<a href="#S4.E14" title="Equation 14 ‣ IV.2 Figure of Merit for Signal Search ‣ IV Discussion ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">14</span></a>) includes additional terms involving period and duty cycle in the denominator. In this case, for a fixed CWTFM value, smaller PSSTFM indicates a more thorough search. The corresponding PSSTFM for each observation date are also listed in Table <a href="#S4.T3" title="Table 3 ‣ IV.2 Figure of Merit for Signal Search ‣ IV Discussion ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>.</p>
+</div>
+<figure id="S4.T3" class="ltx_table">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_table">Table 3: </span>EIRP, CWTFM, and PSSTFM values of our periodic signal search toward 3I/ATLAS.</figcaption>
+<table id="S4.T3.7" class="ltx_tabular">
+<thead class="ltx_thead">
+<tr id="S4.T3.1.1" class="ltx_tr">
+<th id="S4.T3.1.1.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">Observation Date</th>
+<th id="S4.T3.1.1.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">Distance (AU)</th>
+<th id="S4.T3.1.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">Median <math id="S4.T3.1.1.1.m1" class="ltx_Math" alttext="\delta" display="inline" intent=":literal"><semantics><mi>δ</mi><annotation encoding="application/x-tex">\delta</annotation></semantics></math>
+</th>
+<th id="S4.T3.1.1.4" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">EIRP (W)</th>
+<th id="S4.T3.1.1.5" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">CWTFM</th>
+<th id="S4.T3.1.1.6" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt">PSSTFM</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S4.T3.3.3" class="ltx_tr">
+<td id="S4.T3.3.3.3" class="ltx_td ltx_align_left ltx_border_t">2025-10-29</td>
+<td id="S4.T3.3.3.4" class="ltx_td ltx_align_center ltx_border_t">2.3101</td>
+<td id="S4.T3.3.3.5" class="ltx_td ltx_align_center ltx_border_t">0.097</td>
+<td id="S4.T3.3.3.6" class="ltx_td ltx_align_center ltx_border_t">0.304</td>
+<td id="S4.T3.2.2.1" class="ltx_td ltx_align_center ltx_border_t"><math id="S4.T3.2.2.1.m1" class="ltx_Math" alttext="2.53\times 10^{-11}" display="inline" intent=":literal"><semantics><mrow><mn>2.53</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>11</mn></mrow></msup></mrow><annotation encoding="application/x-tex">2.53\times 10^{-11}</annotation></semantics></math></td>
+<td id="S4.T3.3.3.2" class="ltx_td ltx_align_center ltx_border_t"><math id="S4.T3.3.3.2.m1" class="ltx_Math" alttext="4.72\times 10^{-12}" display="inline" intent=":literal"><semantics><mrow><mn>4.72</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>12</mn></mrow></msup></mrow><annotation encoding="application/x-tex">4.72\times 10^{-12}</annotation></semantics></math></td>
+</tr>
+<tr id="S4.T3.5.5" class="ltx_tr">
+<td id="S4.T3.5.5.3" class="ltx_td ltx_align_left">2025-12-19</td>
+<td id="S4.T3.5.5.4" class="ltx_td ltx_align_center">1.7977</td>
+<td id="S4.T3.5.5.5" class="ltx_td ltx_align_center">0.190</td>
+<td id="S4.T3.5.5.6" class="ltx_td ltx_align_center">0.272</td>
+<td id="S4.T3.4.4.1" class="ltx_td ltx_align_center"><math id="S4.T3.4.4.1.m1" class="ltx_Math" alttext="2.27\times 10^{-11}" display="inline" intent=":literal"><semantics><mrow><mn>2.27</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>11</mn></mrow></msup></mrow><annotation encoding="application/x-tex">2.27\times 10^{-11}</annotation></semantics></math></td>
+<td id="S4.T3.5.5.2" class="ltx_td ltx_align_center"><math id="S4.T3.5.5.2.m1" class="ltx_Math" alttext="4.22\times 10^{-12}" display="inline" intent=":literal"><semantics><mrow><mn>4.22</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>12</mn></mrow></msup></mrow><annotation encoding="application/x-tex">4.22\times 10^{-12}</annotation></semantics></math></td>
+</tr>
+<tr id="S4.T3.7.7" class="ltx_tr">
+<td id="S4.T3.7.7.3" class="ltx_td ltx_align_left ltx_border_b">2026-01-05</td>
+<td id="S4.T3.7.7.4" class="ltx_td ltx_align_center ltx_border_b">1.9446</td>
+<td id="S4.T3.7.7.5" class="ltx_td ltx_align_center ltx_border_b">0.047</td>
+<td id="S4.T3.7.7.6" class="ltx_td ltx_align_center ltx_border_b">0.146</td>
+<td id="S4.T3.6.6.1" class="ltx_td ltx_align_center ltx_border_b"><math id="S4.T3.6.6.1.m1" class="ltx_Math" alttext="1.22\times 10^{-11}" display="inline" intent=":literal"><semantics><mrow><mn>1.22</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>11</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.22\times 10^{-11}</annotation></semantics></math></td>
+<td id="S4.T3.7.7.2" class="ltx_td ltx_align_center ltx_border_b"><math id="S4.T3.7.7.2.m1" class="ltx_Math" alttext="2.27\times 10^{-12}" display="inline" intent=":literal"><semantics><mrow><mn>2.27</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>12</mn></mrow></msup></mrow><annotation encoding="application/x-tex">2.27\times 10^{-12}</annotation></semantics></math></td>
+</tr>
+</tbody>
+</table>
+</figure>
+</section>
+<section id="S4.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">IV.3 </span>Interpretation of the CPD-based Periodicity Search Framework</h3>
+
+<div id="S4.SS3.p1" class="ltx_para">
+<p id="S4.SS3.p1.1" class="ltx_p">The CPD-based periodic search adopted in this work takes a tensor component as the basic analysis unit. Each component is characterized by a joint structure in time, frequency, and beam space, represented respectively by its temporal, frequency, and beam-domain factors. A periodic signal is not treated simply as a localized excess at frequency channels or within one beam, but as a separable multibeam dynamic-spectrum component with an associated periodicity, spectral morphology, and beam-distribution pattern. Such a representation is particularly well suited to the central-beam/reference-beam observing configuration adopted here, because it allows the center-dominant nature of the component to be evaluated directly through the CPD-based beam-domain diagnostics.</p>
+</div>
+<div id="S4.SS3.p2" class="ltx_para">
+<p id="S4.SS3.p2.1" class="ltx_p">Periodic signals may appear in multiple distinct frequency channels. In such a situation, CPD provides a natural way to examine whether an individual periodic component remains concentrated in the central beam. The resulting analysis combines periodicity diagnostics directly with multibeam morphology, which is a central requirement for distinguishing center-dominant behavior from broadly distributed instrumental RFIs. Moreover, the components can be naturally ordered according to their energy contribution, providing a convenient hierarchy for visual inspection and statistical screening. Components with larger energy ratios generally represent the most prominent structures present in the data, while very low-energy components are more often consistent with weak residuals or noise-like fluctuations.</p>
+</div>
+</section>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">V </span>Conclusion</h2>
+
+<div id="S5.p1" class="ltx_para">
+<p id="S5.p1.1" class="ltx_p">We perform channel-width periodic technosignature search toward 3I/ATLAS with FAST L-band multibeam receiver in the frequency range of 1.05-1.45 GHz. We propose an analysis framework based on the utilization of canonical polyadic decomposition (CPD) to multibeam data, so that we can split them into separated components with weighted rank and determine those components with center-dominant feature. Each component is characterized by beam dominance, periodicity, as well as ACF diagnostics in frequency.</p>
+</div>
+<div id="S5.p2" class="ltx_para">
+<p id="S5.p2.2" class="ltx_p">After using our CPD-based framework to the four Stokes products from the 3-hr 3I/ATLAS observation data, as well as visual inspeciton for each component, we report a nondetection of channel-width periodic signal within <math id="S5.p2.1.m1" class="ltx_Math" alttext="P\in[0.7{\rm s},1000{\rm s}]" display="inline" intent=":literal"><semantics><mrow><mi>P</mi><mo>∈</mo><mrow><mo stretchy="false">[</mo><mrow><mn>0.7</mn><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">s</mi></mrow><mo>,</mo><mrow><mn>1000</mn><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">s</mi></mrow><mo stretchy="false">]</mo></mrow></mrow><annotation encoding="application/x-tex">P\in[0.7{\rm s},1000{\rm s}]</annotation></semantics></math> above our adopted periodogram-significance threshold of 10<math id="S5.p2.2.m2" class="ltx_Math" alttext="\sigma" display="inline" intent=":literal"><semantics><mi>σ</mi><annotation encoding="application/x-tex">\sigma</annotation></semantics></math>. This nondetection can place a constraint that there is no solid evidence for any periodic singal transmitter with EIRP above 0.146 W on 3I/ATLAS.</p>
+</div>
+<div id="S5.p3" class="ltx_para">
+<p id="S5.p3.1" class="ltx_p">In the future, we plan to extend the periodic signal search with segment-consistency tests across the observing time, requiring candidate periodicities to persist coherently in independent time blocks rather than arising from localized fluctuations. This extension naturally enables the use of our psr backend data with microsecond-level sampling, thereby expanding the searchable period range to shorter timescales. We also plan to apply our CPD-based framework to multibeam targeted observations for periodic technosignature search with FAST. Signal with periodic modulation remains comparatively under-explored as a technosignature type relative to narrowband drifting searches, and incorporating it can help extend the coverage of plausible technosignature classes.</p>
+</div>
+<div id="S5.acknowledgements1" class="ltx_acknowledgements">
+We sincerely appreciate the staffs in FAST data center for approving our DDT application on FAST observing time. This work is supported by National Key R&amp;D Program of China (2023YFB4503305), the China Manned Space Program with grant No. CMS-CSST-2025-A01, the National Natural Science Foundation of China (Grants No12373109). This work made use of the data from FAST (Five-hundred-meter Aperture Spherical radio Telescope). FAST is a Chinese national mega-science facility, operated by National Astronomical Observatories, Chinese Academy of Sciences.
+
+</div>
+</section>
+<section id="A1" class="ltx_appendix">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix A </span>Computational Implementation of CPD</h2>
+
+<div id="A1.p1" class="ltx_para">
+<p id="A1.p1.1" class="ltx_p">The multibeam dynamic spectrum is represented as a dense third-order tensor <math id="A1.p1.1.m1" class="ltx_Math" alttext="X\in\mathbb{R}^{T\times F\times B}" display="inline" intent=":literal"><semantics><mrow><mi>X</mi><mo>∈</mo><msup><mi>ℝ</mi><mrow><mi>T</mi><mo lspace="0.222em" rspace="0.222em">×</mo><mi>F</mi><mo lspace="0.222em" rspace="0.222em">×</mo><mi>B</mi></mrow></msup></mrow><annotation encoding="application/x-tex">X\in\mathbb{R}^{T\times F\times B}</annotation></semantics></math>, with modes corresponding to time,
+frequency, and beam index. The CP model is fitted using the standard alternating least-squares algorithm <cite class="ltx_cite ltx_citemacro_citep">(CP-ALS; T. G. Kolda &amp; B. W. Bader, <a href="#bib.bib14" title="" class="ltx_ref">2009</a>)</cite>. In each ALS iteration, two factor matrices are held fixed while the remaining factor matrix is updated by solving a linear least-squares euqation. For the three modes in our tensor, the updates can be written as</p>
+<table id="A1.E1" class="ltx_equationgroup ltx_eqn_table">
+<tbody>
+<tr id="A1.E1X" class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math id="A1.E1X.2.1.1.m1" class="ltx_Math" alttext="\displaystyle A" display="inline" intent=":literal"><semantics><mi>A</mi><annotation encoding="application/x-tex">\displaystyle A</annotation></semantics></math></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math id="A1.E1X.3.2.2.m1" class="ltx_Math" alttext="\displaystyle\leftarrow X_{(t)}(D\odot C)\left[(C^{\rm T}C)\ast(D^{\rm T}D)+\eta I\right]^{-1}," display="inline" intent=":literal"><semantics><mrow><mrow><mi></mi><mo stretchy="false">←</mo><mrow><msub><mi>X</mi><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>D</mi><mo lspace="0.222em" rspace="0.222em">⊙</mo><mi>C</mi></mrow><mo stretchy="false">)</mo></mrow><mo lspace="0em" rspace="0em">​</mo><msup><mrow><mo>[</mo><mrow><mrow><mrow><mo stretchy="false">(</mo><mrow><msup><mi>C</mi><mi mathvariant="normal">T</mi></msup><mo lspace="0em" rspace="0em">​</mo><mi>C</mi></mrow><mo rspace="0.055em" stretchy="false">)</mo></mrow><mo rspace="0.222em">∗</mo><mrow><mo stretchy="false">(</mo><mrow><msup><mi>D</mi><mi mathvariant="normal">T</mi></msup><mo lspace="0em" rspace="0em">​</mo><mi>D</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>+</mo><mrow><mi>η</mi><mo lspace="0em" rspace="0em">​</mo><mi>I</mi></mrow></mrow><mo>]</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">\displaystyle\leftarrow X_{(t)}(D\odot C)\left[(C^{\rm T}C)\ast(D^{\rm T}D)+\eta I\right]^{-1},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="3" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equationgroup ltx_align_right">(A1)</span></td>
+</tr>
+<tr id="A1.E1Xa" class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math id="A1.E1Xa.2.1.1.m1" class="ltx_Math" alttext="\displaystyle C" display="inline" intent=":literal"><semantics><mi>C</mi><annotation encoding="application/x-tex">\displaystyle C</annotation></semantics></math></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math id="A1.E1Xa.3.2.2.m1" class="ltx_Math" alttext="\displaystyle\leftarrow X_{(\nu)}(D\odot A)\left[(A^{\rm T}A)\ast(D^{\rm T}D)+\eta I\right]^{-1}," display="inline" intent=":literal"><semantics><mrow><mrow><mi></mi><mo stretchy="false">←</mo><mrow><msub><mi>X</mi><mrow><mo stretchy="false">(</mo><mi>ν</mi><mo stretchy="false">)</mo></mrow></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>D</mi><mo lspace="0.222em" rspace="0.222em">⊙</mo><mi>A</mi></mrow><mo stretchy="false">)</mo></mrow><mo lspace="0em" rspace="0em">​</mo><msup><mrow><mo>[</mo><mrow><mrow><mrow><mo stretchy="false">(</mo><mrow><msup><mi>A</mi><mi mathvariant="normal">T</mi></msup><mo lspace="0em" rspace="0em">​</mo><mi>A</mi></mrow><mo rspace="0.055em" stretchy="false">)</mo></mrow><mo rspace="0.222em">∗</mo><mrow><mo stretchy="false">(</mo><mrow><msup><mi>D</mi><mi mathvariant="normal">T</mi></msup><mo lspace="0em" rspace="0em">​</mo><mi>D</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>+</mo><mrow><mi>η</mi><mo lspace="0em" rspace="0em">​</mo><mi>I</mi></mrow></mrow><mo>]</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">\displaystyle\leftarrow X_{(\nu)}(D\odot A)\left[(A^{\rm T}A)\ast(D^{\rm T}D)+\eta I\right]^{-1},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr id="A1.E1Xb" class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math id="A1.E1Xb.2.1.1.m1" class="ltx_Math" alttext="\displaystyle D" display="inline" intent=":literal"><semantics><mi>D</mi><annotation encoding="application/x-tex">\displaystyle D</annotation></semantics></math></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math id="A1.E1Xb.3.2.2.m1" class="ltx_Math" alttext="\displaystyle\leftarrow X_{(b)}(C\odot A)\left[(A^{\rm T}A)\ast(C^{\rm T}C)+\eta I\right]^{-1}," display="inline" intent=":literal"><semantics><mrow><mrow><mi></mi><mo stretchy="false">←</mo><mrow><msub><mi>X</mi><mrow><mo stretchy="false">(</mo><mi>b</mi><mo stretchy="false">)</mo></mrow></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>C</mi><mo lspace="0.222em" rspace="0.222em">⊙</mo><mi>A</mi></mrow><mo stretchy="false">)</mo></mrow><mo lspace="0em" rspace="0em">​</mo><msup><mrow><mo>[</mo><mrow><mrow><mrow><mo stretchy="false">(</mo><mrow><msup><mi>A</mi><mi mathvariant="normal">T</mi></msup><mo lspace="0em" rspace="0em">​</mo><mi>A</mi></mrow><mo rspace="0.055em" stretchy="false">)</mo></mrow><mo rspace="0.222em">∗</mo><mrow><mo stretchy="false">(</mo><mrow><msup><mi>C</mi><mi mathvariant="normal">T</mi></msup><mo lspace="0em" rspace="0em">​</mo><mi>C</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>+</mo><mrow><mi>η</mi><mo lspace="0em" rspace="0em">​</mo><mi>I</mi></mrow></mrow><mo>]</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">\displaystyle\leftarrow X_{(b)}(C\odot A)\left[(A^{\rm T}A)\ast(C^{\rm T}C)+\eta I\right]^{-1},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+</tbody>
+</table>
+<p id="A1.p1.7" class="ltx_p">where <math id="A1.p1.2.m1" class="ltx_Math" alttext="X_{(t)}" display="inline" intent=":literal"><semantics><msub><mi>X</mi><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></msub><annotation encoding="application/x-tex">X_{(t)}</annotation></semantics></math>, <math id="A1.p1.3.m2" class="ltx_Math" alttext="X_{(\nu)}" display="inline" intent=":literal"><semantics><msub><mi>X</mi><mrow><mo stretchy="false">(</mo><mi>ν</mi><mo stretchy="false">)</mo></mrow></msub><annotation encoding="application/x-tex">X_{(\nu)}</annotation></semantics></math>, and <math id="A1.p1.4.m3" class="ltx_Math" alttext="X_{(b)}" display="inline" intent=":literal"><semantics><msub><mi>X</mi><mrow><mo stretchy="false">(</mo><mi>b</mi><mo stretchy="false">)</mo></mrow></msub><annotation encoding="application/x-tex">X_{(b)}</annotation></semantics></math> are the tensor unfoldings along the time, frequency, and beam modes, respectively. Here <math id="A1.p1.5.m4" class="ltx_Math" alttext="\odot" display="inline" intent=":literal"><semantics><mo>⊙</mo><annotation encoding="application/x-tex">\odot</annotation></semantics></math> denotes the
+Khatri–Rao product, <math id="A1.p1.6.m5" class="ltx_Math" alttext="\ast" display="inline" intent=":literal"><semantics><mo>∗</mo><annotation encoding="application/x-tex">\ast</annotation></semantics></math> denotes the Hadamard product, and <math id="A1.p1.7.m6" class="ltx_Math" alttext="\eta I" display="inline" intent=":literal"><semantics><mrow><mi>η</mi><mo lspace="0em" rspace="0em">​</mo><mi>I</mi></mrow><annotation encoding="application/x-tex">\eta I</annotation></semantics></math> is a
+small ridge-regularization term used for numerical stability.</p>
+</div>
+<div id="A1.p2" class="ltx_para">
+<p id="A1.p2.4" class="ltx_p">We implement these updates directly in Python/NumPy by explicitly forming the tensor unfoldings and Khatri–Rao products and solving the regularized normal equations given in Equation (<a href="#A1.E1" title="Equation A1 ‣ Appendix A Computational Implementation of CPD ‣ Periodic Radio Technosignature Search toward 3I/ATLAS with FAST" class="ltx_ref"><span class="ltx_text ltx_ref_tag">A1</span></a>). After each full ALS iteration, the columns of <math id="A1.p2.1.m1" class="ltx_Math" alttext="A" display="inline" intent=":literal"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>, <math id="A1.p2.2.m2" class="ltx_Math" alttext="C" display="inline" intent=":literal"><semantics><mi>C</mi><annotation encoding="application/x-tex">C</annotation></semantics></math>, and <math id="A1.p2.3.m3" class="ltx_Math" alttext="D" display="inline" intent=":literal"><semantics><mi>D</mi><annotation encoding="application/x-tex">D</annotation></semantics></math> are normalized and the corresponding norms are absorbed into the component weights <math id="A1.p2.4.m4" class="ltx_Math" alttext="\lambda_{r}" display="inline" intent=":literal"><semantics><msub><mi>λ</mi><mi>r</mi></msub><annotation encoding="application/x-tex">\lambda_{r}</annotation></semantics></math>. This normalization fixes the arbitrary scaling among the three factor matrices, although the usual CPD sign and permutation indeterminacies remain. This implementation is algorithmically equivalent to the standard dense CP-ALS routines such as <span id="A1.p2.4.1" class="ltx_text ltx_font_typewriter">TensorLy</span> <cite class="ltx_cite ltx_citemacro_citep">(J. Kossaifi et al., <a href="#bib.bib15" title="" class="ltx_ref">2019</a>)</cite> or <span id="A1.p2.4.2" class="ltx_text ltx_font_typewriter">pyTensorlab</span> <cite class="ltx_cite ltx_citemacro_citep">(N. Vervliet et al., <a href="#bib.bib30" title="" class="ltx_ref">2025</a>)</cite>, but it keeps direct control over the time–frequency–beam tensor construction,beam indexing, rank setting, and the subsequent periodogram and autocorrelation diagnostics.</p>
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul class="ltx_biblist">
+<li id="bib.bib1" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">G. Benford et al. (2010)</span>
+<span class="ltx_bibblock">
+Benford, G., Benford, J., &amp; Benford, D. 2010, Searching for Cost-Optimized Interstellar Beacons, Astrobiology, 10, 491, doi: <a href="http://doi.org/10.1089/ast.2009.0394" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1089/ast.2009.0394</span></a>
+
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">J. D. Carroll &amp; J.-J. Chang (1970)</span>
+<span class="ltx_bibblock">
+Carroll, J. D., &amp; Chang, J.-J. 1970, Analysis of individual differences in multidimensional scaling via an N-way generalization of “Eckart-Young” decomposition, Psychometrika, 35, 283, doi: <a href="http://doi.org/10.1007/BF02310791" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1007/BF02310791</span></a>
+
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">G. Cocconi &amp; P. Morrison (1959)</span>
+<span class="ltx_bibblock">
+Cocconi, G., &amp; Morrison, P. 1959, Searching for Interstellar Communications, Nature, 184, 844, doi: <a href="http://doi.org/10.1038/184844a0" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1038/184844a0</span></a>
+
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">F. Cong et al. (2015)</span>
+<span class="ltx_bibblock">
+Cong, F., Lin, Q.-H., Kuang, L.-D., et al. 2015, Tensor decomposition of EEG signals: A brief review, Journal of Neuroscience Methods, 248, 59, doi: <a href="http://doi.org/https://doi.org/10.1016/j.jneumeth.2015.03.018" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">https://doi.org/10.1016/j.jneumeth.2015.03.018</span></a>
+
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">J. E. Enriquez et al. (2017)</span>
+<span class="ltx_bibblock">
+Enriquez, J. E., Siemion, A., Foster, G., et al. 2017, The Breakthrough Listen Search for Intelligent Life: 1.1-1.9 GHz Observations of 692 Nearby Stars, ApJ, 849, 104, doi: <a href="http://doi.org/10.3847/1538-4357/aa8d1b" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.3847/1538-4357/aa8d1b</span></a>
+
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">H. Farias et al. (2018)</span>
+<span class="ltx_bibblock">
+Farias, H., Nuñez, C., &amp; Solar, M. 2018, TensorFit a tool to analyse spectral cubes in a tensor mode, Astronomy and Computing, 25, 195, doi: <a href="http://doi.org/10.1016/j.ascom.2018.10.007" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1016/j.ascom.2018.10.007</span></a>
+
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">R. H. Gray (2020)</span>
+<span class="ltx_bibblock">
+Gray, R. H. 2020, Intermittent signals and planetary days in SETI, International Journal of Astrobiology, 19, 299, doi: <a href="http://doi.org/10.1017/S1473550420000038" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1017/S1473550420000038</span></a>
+
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">G. R. Harp et al. (2018)</span>
+<span class="ltx_bibblock">
+Harp, G. R., Ackermann, R. F., Astorga, A., et al. 2018, The Application of Autocorrelation SETI Search Techniques in an ATA Survey, ApJ, 869, 66, doi: <a href="http://doi.org/10.3847/1538-4357/aaeb98" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.3847/1538-4357/aaeb98</span></a>
+
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">C. J. Hillar &amp; L.-H. Lim (2013)</span>
+<span class="ltx_bibblock">
+Hillar, C. J., &amp; Lim, L.-H. 2013, Most Tensor Problems Are NP-Hard, Journal of the ACM, 60, doi: <a href="http://doi.org/10.1145/2512329" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1145/2512329</span></a>
+
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">F. L. Hitchcock (1927)</span>
+<span class="ltx_bibblock">
+Hitchcock, F. L. 1927, The Expression of a Tensor or a Polyadic as a Sum of Products, Journal of Mathematics and Physics, 6, 164, doi: <a href="http://doi.org/https://doi.org/10.1002/sapm192761164" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">https://doi.org/10.1002/sapm192761164</span></a>
+
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">B. Jacobson-Bell et al. (2025)</span>
+<span class="ltx_bibblock">
+Jacobson-Bell, B., Croft, S., White, E., et al. 2025, Breakthrough Listen Observations of 3I/ATLAS with the Green Bank Telescope at 1─12 GHz, Research Notes of the American Astronomical Society, 9, 351, doi: <a href="http://doi.org/10.3847/2515-5172/ae3083" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.3847/2515-5172/ae3083</span></a>
+
+</span>
+</li>
+<li id="bib.bib12" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">P. Jiang et al. (2019)</span>
+<span class="ltx_bibblock">
+Jiang, P., Yue, Y., Gan, H., et al. 2019, Commissioning progress of the FAST, Science China Physics, Mechanics, and Astronomy, 62, 959502, doi: <a href="http://doi.org/10.1007/s11433-018-9376-1" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1007/s11433-018-9376-1</span></a>
+
+</span>
+</li>
+<li id="bib.bib13" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">P. Jiang et al. (2020)</span>
+<span class="ltx_bibblock">
+Jiang, P., Tang, N.-Y., Hou, L.-G., et al. 2020, The fundamental performance of FAST with 19-beam receiver at L band, Research in Astronomy and Astrophysics, 20, 064, doi: <a href="http://doi.org/10.1088/1674-4527/20/5/64" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1088/1674-4527/20/5/64</span></a>
+
+</span>
+</li>
+<li id="bib.bib14" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">T. G. Kolda &amp; B. W. Bader (2009)</span>
+<span class="ltx_bibblock">
+Kolda, T. G., &amp; Bader, B. W. 2009, Tensor Decompositions and Applications, SIAM Review, 51, 455, doi: <a href="http://doi.org/10.1137/07070111X" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1137/07070111X</span></a>
+
+</span>
+</li>
+<li id="bib.bib15" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">J. Kossaifi et al. (2019)</span>
+<span class="ltx_bibblock">
+Kossaifi, J., Panagakis, Y., Anandkumar, A., &amp; Pantic, M. 2019, TensorLy: Tensor Learning in Python, Journal of Machine Learning Research, 20, 1.
+
+</span>
+<span class="ltx_bibblock"><a href="http://jmlr.org/papers/v20/18-277.html" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://jmlr.org/papers/v20/18-277.html</a>
+
+</span>
+</li>
+<li id="bib.bib16" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">J. B. Kruskal (1989)</span>
+<span class="ltx_bibblock">
+Kruskal, J. B. 1989, Rank, decomposition, and uniqueness for 3-way and n-way arrays (NLD: North-Holland Publishing Co.), 7–18
+
+</span>
+</li>
+<li id="bib.bib17" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">D. Li &amp; Z. Pan (2016)</span>
+<span class="ltx_bibblock">
+Li, D., &amp; Pan, Z. 2016, The Five-hundred-meter Aperture Spherical Radio Telescope Project, Radio Science, 51, 1060, doi: <a href="http://doi.org/10.1002/2015RS005877" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1002/2015RS005877</span></a>
+
+</span>
+</li>
+<li id="bib.bib18" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">J.-K. Li et al. (2026a)</span>
+<span class="ltx_bibblock">
+Li, J.-K., Tao, Z.-Z., Wang, P., &amp; Zhang, T.-J. 2026a, Dual-backend Multibeam Position-switching Targeted SETI Observations toward Nearby Active Planet-hosting Systems with FAST, AJ, 171, 78, doi: <a href="http://doi.org/10.3847/1538-3881/ae28cc" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.3847/1538-3881/ae28cc</span></a>
+
+</span>
+</li>
+<li id="bib.bib19" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">J.-K. Li et al. (2026b)</span>
+<span class="ltx_bibblock">
+Li, J.-K., Tao, Z.-Z., &amp; Zhang, T.-J. 2026b, Narrowband Radio Technosignature Search toward 3I/ATLAS with FAST, arXiv e-prints, arXiv:2603.19023, doi: <a href="http://doi.org/10.48550/arXiv.2603.19023" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.48550/arXiv.2603.19023</span></a>
+
+</span>
+</li>
+<li id="bib.bib20" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">V. Morello et al. (2020)</span>
+<span class="ltx_bibblock">
+Morello, V., Barr, E. D., Stappers, B. W., Keane, E. F., &amp; Lyne, A. G. 2020, Optimal periodicity searching: revisiting the fast folding algorithm for large-scale pulsar surveys, MNRAS, 497, 4654, doi: <a href="http://doi.org/10.1093/mnras/staa2291" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1093/mnras/staa2291</span></a>
+
+</span>
+</li>
+<li id="bib.bib21" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">R. Nan et al. (2011)</span>
+<span class="ltx_bibblock">
+Nan, R., Li, D., Jin, C., et al. 2011, The Five-Hundred Aperture Spherical Radio Telescope (fast) Project, International Journal of Modern Physics D, 20, 989, doi: <a href="http://doi.org/10.1142/S0218271811019335" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1142/S0218271811019335</span></a>
+
+</span>
+</li>
+<li id="bib.bib22" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">D. J. Pisano et al. (2025)</span>
+<span class="ltx_bibblock">
+Pisano, D. J., Smirnov, O. M., Ivchenko, M., et al. 2025, Further MeerKAT observations of 1665/1667 MHz OH in absorption and emission, and a technosignature search in 3I/ATLAS, The Astronomer’s Telegram, 17499, 1
+
+</span>
+</li>
+<li id="bib.bib23" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">L. Qian et al. (2020)</span>
+<span class="ltx_bibblock">
+Qian, L., Yao, R., Sun, J., et al. 2020, FAST: Its Scientific Achievements and Prospects, The Innovation, 1, 100053, doi: <a href="http://doi.org/10.1016/j.xinn.2020.100053" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1016/j.xinn.2020.100053</span></a>
+
+</span>
+</li>
+<li id="bib.bib24" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">S. Z. Sheikh et al. (2025)</span>
+<span class="ltx_bibblock">
+Sheikh, S. Z., Garcia Lopez, V., Gerrard, I., et al. 2025, A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array, arXiv e-prints, arXiv:2512.18142, doi: <a href="http://doi.org/10.48550/arXiv.2512.18142" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.48550/arXiv.2512.18142</span></a>
+
+</span>
+</li>
+<li id="bib.bib25" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">N. D. Sidiropoulos et al. (2017)</span>
+<span class="ltx_bibblock">
+Sidiropoulos, N. D., De Lathauwer, L., Fu, X., et al. 2017, Tensor Decomposition for Signal Processing and Machine Learning, IEEE Transactions on Signal Processing, 65, 3551, doi: <a href="http://doi.org/10.1109/TSP.2017.2690524" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1109/TSP.2017.2690524</span></a>
+
+</span>
+</li>
+<li id="bib.bib26" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">X.-H. Sun et al. (2021)</span>
+<span class="ltx_bibblock">
+Sun, X.-H., Meng, M.-N., Gao, X.-Y., et al. 2021, New continuum and polarization observations of the Cygnus Loop with FAST I. Data processing and verification, Research in Astronomy and Astrophysics, 21, 282, doi: <a href="http://doi.org/10.1088/1674-4527/21/11/282" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1088/1674-4527/21/11/282</span></a>
+
+</span>
+</li>
+<li id="bib.bib27" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">A. Suresh et al. (2023)</span>
+<span class="ltx_bibblock">
+Suresh, A., Gajjar, V., Nagarajan, P., et al. 2023, A 4-8 GHz Galactic Center Search for Periodic Technosignatures, AJ, 165, 255, doi: <a href="http://doi.org/10.3847/1538-3881/acccf0" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.3847/1538-3881/acccf0</span></a>
+
+</span>
+</li>
+<li id="bib.bib28" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">J. Tarter (2001)</span>
+<span class="ltx_bibblock">
+Tarter, J. 2001, The Search for Extraterrestrial Intelligence (SETI), ARA&amp;A, 39, 511, doi: <a href="http://doi.org/10.1146/annurev.astro.39.1.511" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1146/annurev.astro.39.1.511</span></a>
+
+</span>
+</li>
+<li id="bib.bib29" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">A. R. Thompson et al. (2017)</span>
+<span class="ltx_bibblock">
+Thompson, A. R., Moran, J. M., &amp; Swenson, Jr., G. W. 2017, Interferometry and Synthesis in Radio Astronomy, 3rd Edition (Springer), doi: <a href="http://doi.org/10.1007/978-3-319-44431-4" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1007/978-3-319-44431-4</span></a>
+
+</span>
+</li>
+<li id="bib.bib30" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">N. Vervliet et al. (2025)</span>
+<span class="ltx_bibblock">
+Vervliet, N., Hendrikx, S., Widdershoven, R., et al. 2025, pyTensorlab 2025.12,
+
+</span>
+</li>
+<li id="bib.bib31" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">T. L. Wilson et al. (2013)</span>
+<span class="ltx_bibblock">
+Wilson, T. L., Rohlfs, K., &amp; Hüttemeister, S. 2013, Tools of Radio Astronomy (Springer), doi: <a href="http://doi.org/10.1007/978-3-642-39950-3" title="" class="ltx_ref ltx_href"><span class="ltx_ref ltx_nolink">10.1007/978-3-642-39950-3</span></a>
+
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2607.01666v1/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer><footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation">
+        </a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International">
+        </a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences">
+        </a>
+      </div>
+    </div>
+  </div>
+</footer><div id="fixed-buttons-container">
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+<title>The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves</title>
+<!--Generated on Wed Dec 13 05:21:24 2023 by LaTeXML (version 0.8.7) http://dlmf.nist.gov/LaTeXML/.-->
+<meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+<link href="/static/browse/0.3.4/css/ar5iv_0.7.4.min.css" rel="stylesheet" type="text/css"/>
+<link href="/static/browse/0.3.4/css/latexml_styles.css" rel="stylesheet" type="text/css"/>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.3/html2canvas.min.js"></script>
+<script src="/static/browse/0.3.4/js/addons.js"></script>
+<script src="/static/browse/0.3.4/js/feedbackOverlay.js"></script>
+<meta content="exoplanets,  transit photometry,  technosignatures,  SETI" lang="en" name="keywords"/>
+<base href="/html/2312.07903v1/"/></head>
+<body>
+<nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_section"><a class="ltx_ref" href="#S1" title="1 Introduction ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">1 </span>Introduction</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a class="ltx_ref" href="#S2" title="2 Data, Pre-processing, and Target Selection ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2 </span>Data, Pre-processing, and Target Selection</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="#S2.SS1" title="2.1 Data ‣ 2 Data, Pre-processing, and Target Selection ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.1 </span>Data</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="#S2.SS2" title="2.2 Pre-processing ‣ 2 Data, Pre-processing, and Target Selection ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.2 </span>Pre-processing</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="#S2.SS3" title="2.3 Target Selection ‣ 2 Data, Pre-processing, and Target Selection ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.3 </span>Target Selection</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a class="ltx_ref" href="#S3" title="3 Methods ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3 </span>Methods</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="#S3.SS1" title="3.1 Expected Transit Parameters ‣ 3 Methods ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.1 </span>Expected Transit Parameters</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="#S3.SS2" title="3.2 Anomaly Search ‣ 3 Methods ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.2 </span>Anomaly Search</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="#S3.SS3" title="3.3 Signal Injection and Recovery ‣ 3 Methods ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.3 </span>Signal Injection and Recovery</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a class="ltx_ref" href="#S4" title="4 Results ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4 </span>Results</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="#S4.SS1" title="4.1 Transits Flagged as Missing ‣ 4 Results ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.1 </span>Transits Flagged as Missing</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="#S4.SS2" title="4.2 Transits Flagged as Unexpectedly Deep ‣ 4 Results ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.2 </span>Transits Flagged as Unexpectedly Deep</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="#S4.SS3" title="4.3 Transits Flagged for Large TTVs ‣ 4 Results ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.3 </span>Transits Flagged for Large TTVs</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a class="ltx_ref" href="#S5" title="5 Discussion and Conclusions ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5 </span>Discussion and Conclusions</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="#S5.SS1" title="5.1 Future Directions ‣ 5 Discussion and Conclusions ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5.1 </span>Future Directions</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_appendix"><a class="ltx_ref" href="#A1" title="Appendix A Summary Table ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">A </span>Summary Table</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div class="ltx_page_content"><div class="section" id="target-section"><div id="license-tr">License: CC BY 4.0</div><div id="watermark-tr">arXiv:2312.07903v1 [astro-ph.EP] 13 Dec 2023</div></div>
+<article class="ltx_document ltx_authors_multiline">
+<h1 class="ltx_title ltx_title_document">The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a class="ltx_ref orcid" href="https://orcid.org/0000-0002-2412-517X" title="">Anna Zuckerman</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Breakthrough Listen, University of California Berkeley, Berkeley CA 94720
+</span>
+<span class="ltx_contact ltx_role_affiliation">Department of Astrophysical and Planetary Sciences, University of Colorado Boulder, 2000 Colorado Ave, Boulder, CO 80309
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a class="ltx_ref orcid" href="https://orcid.org/0000-0002-0637-835X" title="">James R. A. Davenport</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Astronomy Department, University of Washington, Box 951580, Seattle, WA 98195, USA
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a class="ltx_ref orcid" href="https://orcid.org/0000-0003-4823-129X" title="">Steve Croft</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Breakthrough Listen, University of California Berkeley, Berkeley CA 94720
+</span>
+<span class="ltx_contact ltx_role_affiliation">SETI Institute, Mountain View, California
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a class="ltx_ref orcid" href="https://orcid.org/0000-0003-2828-7720" title="">Andrew Siemion</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Breakthrough Listen, University of California Berkeley, Berkeley CA 94720
+</span>
+<span class="ltx_contact ltx_role_affiliation">SETI Institute, Mountain View, California
+</span>
+<span class="ltx_contact ltx_role_affiliation">Department of Physics and Astronomy, University of Manchester, UK
+</span>
+<span class="ltx_contact ltx_role_affiliation">University of Malta, Institute of Space Sciences and Astronomy, Msida, MSD2080, Malta
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a class="ltx_ref orcid" href="https://orcid.org/0000-0002-4278-3168" title="">Imke de Pater</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Departments of Astronomy and Earth and Planetary Science, University of California Berkeley, Berkeley CA 94720
+</span></span></span>
+</div>
+<div class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p" id="id6.id1">Never before has the detection and characterization of exoplanets via transit photometry been as promising and feasible as it is now, due to the increasing breadth and sensitivity of time domain optical surveys. Past works have made use of phase-folded stellar lightcurves in order to study the properties of exoplanet transits, because this provides the highest signal that a transit is present at a given period and ephemeris. Characterizing transits on an individual, rather than phase-folded, basis is much more challenging due to the often low signal-to-noise ratio (SNR) of lightcurves, missing data, and low sampling rates. However, by phase-folding a lightcurve we implicitly assume that all transits have the same expected properties, and lose all information about the nature and variability of the transits. We miss the natural variability in transit shapes, or even the deliberate or inadvertent modification of transit signals by an extraterrestrial civilization (for example, via laser emission or orbiting megastructures). In this work, we develop an algorithm to search stellar lightcurves for individual anomalous (in timing or depth) transits, and we report the results of that search for 218 confirmed transiting exoplanet systems from Kepler.</p>
+</div>
+<div class="ltx_keywords">exoplanets, transit photometry, technosignatures, SETI
+</div>
+<span class="ltx_note ltx_note_frontmatter ltx_role_software" id="id1"><sup class="ltx_note_mark">†</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">†</sup><span class="ltx_note_type">software: </span><span class="ltx_text ltx_font_typewriter" id="id1.1">Batman</span> Transit Model <cite class="ltx_cite ltx_citemacro_citep">(Kreidberg, <a class="ltx_ref" href="#bib.bib10" title="">2015</a>)</cite>,
+<span class="ltx_text ltx_font_typewriter" id="id1.2">Lightkurve</span> <cite class="ltx_cite ltx_citemacro_citep">(Lightkurve Collaboration et al., <a class="ltx_ref" href="#bib.bib11" title="">2018</a>)</cite>,
+<span class="ltx_text ltx_font_typewriter" id="id1.3">Astropy</span> <cite class="ltx_cite ltx_citemacro_citep">(Astropy Collaboration et al., <a class="ltx_ref" href="#bib.bib2" title="">2013</a>, <a class="ltx_ref" href="#bib.bib3" title="">2018</a>, <a class="ltx_ref" href="#bib.bib4" title="">2022</a>)</cite></span></span></span>
+<section class="ltx_section" id="S1">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+<div class="ltx_para" id="S1.p1">
+<p class="ltx_p" id="S1.p1.1">The expanding availability of photometric stellar lightcurves, for instance from the Kepler and Transiting Exoplanet Survey Satellite (TESS) missions, has provided the chance to discover and understand the orbital properties of thousands of exoplanet systems in recent years.
+Past studies have been limited to detection of transiting exoplanets or characterization of planetary and orbital properties from analysis of collectively phase-folded transits. The phase-folded shape of an exoplanetary transit provides a wealth of information about the planetary system that produced the transit, but can inherently only provide insight into the ensemble properties of all the observed transits of that planet. While some work has been dedicated to understanding the provenance of unusually shaped transits by reverse-engineering the shape of a transiting body from the transit <cite class="ltx_cite ltx_citemacro_citep">(Sandford &amp; Kipping, <a class="ltx_ref" href="#bib.bib14" title="">2019</a>)</cite>, this has always been done after phase-folding. No past work has comprehensively searched for and characterized missing or anomalous individual transits in stellar lightcurve data.</p>
+</div>
+<div class="ltx_para" id="S1.p2">
+<p class="ltx_p" id="S1.p2.1">The population variability of exoplanet transits and the nature and prevalence of unexpected transits is poorly understood. This represents a major gap in the study of exoplanet populations. For instance, individual transits can be a powerful tool in studying stellar surface variability such as star spots <cite class="ltx_cite ltx_citemacro_citep">(Morris et al., <a class="ltx_ref" href="#bib.bib12" title="">2017</a>)</cite>. In addition, unexpected or anomalous transits represent an important potential technosignature in the Search for Extraterrestrial Intelligence (SETI) <cite class="ltx_cite ltx_citemacro_citep">(Wright &amp; Kipping, <a class="ltx_ref" href="#bib.bib20" title="">2019</a>)</cite>. Intelligent extraterrestrial civilizations may broadcast their presence by intentionally or inadvertently modifying the shape of their host planet’s transit, for example with laser emission or megastructures <cite class="ltx_cite ltx_citemacro_citep">(e.g. Kipping &amp; Teachey, <a class="ltx_ref" href="#bib.bib9" title="">2016</a>; Arnold, <a class="ltx_ref" href="#bib.bib1" title="">2005</a>)</cite>. In addition, observations discrepant with expectation often drive theoretical advancement, so the discovery of unusually-shaped transits produced by unexplained phenomena would be scientifically interesting in and of itself and would necessitate new concepts in planetary or stellar astrophysics, if not SETI.</p>
+</div>
+<div class="ltx_para" id="S1.p3">
+<p class="ltx_p" id="S1.p3.1">We present a new algorithm to analyze lightcurves on a transit-by-transit basis without phase-folding, in order to study the variability between individual transits and search for transits that are missing or anomalous. We present the methodology and results of a search for transits which are apparently missing, or which exhibit unexpectedly large transit-timing-variations (TTV’s) or apparent depths. We find no transits with anomalous properties which cannot be explained after visual vetting.
+</p>
+</div>
+</section>
+<section class="ltx_section" id="S2">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>Data, Pre-processing, and Target Selection</h2>
+<section class="ltx_subsection" id="S2.SS1">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.1 </span>Data</h3>
+<div class="ltx_para" id="S2.SS1.p1">
+<p class="ltx_p" id="S2.SS1.p1.1">The Kepler mission <cite class="ltx_cite ltx_citemacro_citep">(Borucki et al., <a class="ltx_ref" href="#bib.bib6" title="">2010</a>)</cite> has produced 2708 confirmed detections of transiting exoplanet systems<span class="ltx_note ltx_role_footnote" id="footnote1"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_tag ltx_tag_note">1</span>As of June 6, 2022, as reported by the NASA Exoplanet Archive (https://exoplanetarchive.ipac.caltech.edu)</span></span></span>. The program ran from 2009 to 2013, observing approximately 150,000 stars in multiple 90-day quarters, at a cadence of either 30 minutes or 60 seconds. The mission prioritized Main Sequence stars for which Earth-like planets would be detectable <cite class="ltx_cite ltx_citemacro_citep">(Batalha et al., <a class="ltx_ref" href="#bib.bib5" title="">2010</a>)</cite>. Lightcurves produced by the Kepler Mission Science Operations Center can be publicly downloaded from the Barbara A. Mikulski Archive for Space Telescopes (MAST) archive (<span class="ltx_text ltx_ast_dataset" id="S2.SS1.p1.1.1">https://doi.org/10.17909/T9059R (catalog DOI: 10.17909/T9059R)</span>).
+The Kepler Science Processing Pipeline is described in <cite class="ltx_cite ltx_citemacro_cite">Jenkins et al. (<a class="ltx_ref" href="#bib.bib8" title="">2010</a>)</cite>. Lightcurves comprise measured flux as a function of time. They often contain extended intervals of missing data (due to the telescope entering safe mode, rotating towards Earth, or executing a quarterly roll) as well as individual data points flagged for quality issues (due to cosmic ray hits, reaction wheel zero crossings, impulsive outliers, thruster firings, etc.).</p>
+</div>
+</section>
+<section class="ltx_subsection" id="S2.SS2">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.2 </span>Pre-processing</h3>
+<div class="ltx_para" id="S2.SS2.p1">
+<p class="ltx_p" id="S2.SS2.p1.1">Before transits can be identified and anomalies detected, we first process each target lightcurve. For each planetary system, we download lightcurve data from the MAST using the interface provided by the <span class="ltx_text ltx_font_typewriter" id="S2.SS2.p1.1.1">LightKurve</span> package. We use the default Presearch Data Conditioning Simple Aperture Photometry (PDCSAP) flux values that have been cotrended by the Kepler team using the PDC cotrending algorithm <cite class="ltx_cite ltx_citemacro_citep">(Stumpe et al., <a class="ltx_ref" href="#bib.bib17" title="">2012</a>; Smith et al., <a class="ltx_ref" href="#bib.bib15" title="">2012</a>; Stumpe et al., <a class="ltx_ref" href="#bib.bib16" title="">2014</a>)</cite>. Kepler’s observing run is divided into quarters, punctuated by rolls of the telescope. We fit and remove a linear trend from each quarter, and stitch the quarters into one continuous lightcurve (see Figure <a class="ltx_ref" href="#S2.F1" title="Figure 1 ‣ 2.2 Pre-processing ‣ 2 Data, Pre-processing, and Target Selection ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_tag">1</span></a>). We then mask out data with quality issues flagged during Kepler data acquisition. Each lightcurve corresponds to one stellar target which may or may not be host to more than one exoplanet. So, for each target planet we mask out any additional transits from “sibling planets”, which might interfere with our fitting process. This masking uses a folding and Box-Least-Squares fitting approach, and so relies on the first order assumption that all transits appear near their expected locations. We acquire a list of sibling planets by querying the NASA Exoplanet Archive database (<span class="ltx_text ltx_ast_dataset" id="S2.SS2.p1.1.2">https://catcopy.ipac.caltech.edu/dois/doi.php?id=10.26133/NEA4 (catalog DOI 10.26133/NEA4)</span>)<span class="ltx_note ltx_role_footnote" id="footnote2"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_tag ltx_tag_note">2</span>Accessed on 2022-01-22 at 22:20 PST, returning 2363 rows</span></span></span>.
+On very rare occasions, key parameters returned from the NASA exoplanet archive were null, preventing the masking of a sibling planet. In these cases, sibling transits that are not properly masked can interfere with the fitting. This failure mode is vetted in Section <a class="ltx_ref" href="#S4" title="4 Results ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_tag">4</span></a> by querying the Simbad archive when additional siblings are suspected.</p>
+</div>
+<figure class="ltx_figure" id="S2.F1"><img alt="Refer to caption" class="ltx_graphics ltx_centering ltx_img_landscape" height="366" id="S2.F1.g1" src="x1.png" width="830"/>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>Example detrended, stitched, and masked lightcurves. Orange points are data that have been removed from our analysis due to quality issues flagged by the Kepler pipeline.</figcaption>
+</figure>
+</section>
+<section class="ltx_subsection" id="S2.SS3">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.3 </span>Target Selection</h3>
+<div class="ltx_para" id="S2.SS3.p1">
+<p class="ltx_p" id="S2.SS3.p1.1">Because we analyze transits individually, we are strongly limited by the depth and duration of the transit signal relative to the local noise. In order to maximize the statistical significance of any characterization we make, we sort all confirmed Kepler targets by the ratio of the expected transit depth to the scatter in the flux (defined as the the median rolling standard deviation (SD) of the flux values, with a window size of 10 timesteps), and take only the best 10% of targets. This corresponds to a threshold ratio of 6.73. We choose 10% as our threshold because targets below this cutoff tend to have transits with depths similar to the lightcurve noise (less than a few times the noise), and thus are not good candidates for unambiguous detection of missing transits. If the expected depth for a particular transiting system is near or below the average scatter of the lightcurve, we cannot make any significant statement about the nature of an individual transit. This produces 228 targets. We determine the expected depth by fitting the ensemble of transits together for each planet to produce an average transit model for that planet. We download the reported transit properties (period, semimajor axis, inclination, eccentricity, argument of periastron, impact parameter, transit duration, ephemeris, and planet and star radii) for each planetary system from the NASA Exoplanet Archive, and use these as initial parameters for fitting. We perform the transit fitting using a <span class="ltx_text ltx_font_typewriter" id="S2.SS3.p1.1.1">Batman</span> transit model wrapped in Python’s <span class="ltx_text ltx_font_typewriter" id="S2.SS3.p1.1.2">lmfit</span> method. The <span class="ltx_text ltx_font_typewriter" id="S2.SS3.p1.1.3">Batman</span> package (described fully by <cite class="ltx_cite ltx_citemacro_citet">Kreidberg <a class="ltx_ref" href="#bib.bib10" title="">2015</a></cite>) produces a transit model based on input planetary and orbital parameters, and <span class="ltx_text ltx_font_typewriter" id="S2.SS3.p1.1.4">lmfit</span> allows us to fit for the best <span class="ltx_text ltx_font_typewriter" id="S2.SS3.p1.1.5">Batman</span> transit model using a brute-force method over a grid of points. The ensemble fit parameters sometimes differ significantly from the reported NASA transit parameters. Because we are concerned only with deviations in the transit depth or midpoint for individual transits, we are not concerned with defining physically accurate transit parameters, but rather with defining the model that best represents the depth and timing of transits for each planetary system as a whole. We take the depth of this ensemble model as the expected transit depth for each individual transit. By selecting the systems with the highest ratio of expected transit depth to flux scatter, we aim to produce the highest confidence results possible.</p>
+</div>
+</section>
+</section>
+<section class="ltx_section" id="S3">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Methods</h2>
+<section class="ltx_subsection" id="S3.SS1">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.1 </span>Expected Transit Parameters</h3>
+<div class="ltx_para" id="S3.SS1.p1">
+<p class="ltx_p" id="S3.SS1.p1.1">Before fitting individual transits, we must first define a set of expected parameters to serve as initial guesses for individual transit fits. We take the preliminary set of parameters determined for the purpose of target selection (as described in Section <a class="ltx_ref" href="#S2.SS3" title="2.3 Target Selection ‣ 2 Data, Pre-processing, and Target Selection ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_tag">2.3</span></a>), and inspect the fits produced by those parameters by eye. In the case of a poor fit, we manually update the fit parameters to produce a better expected transit shape. This allows us to have high confidence that the expected transit models well represent an ‘average’ transit, and thus provide a good baseline from which to define unusual transit shapes. We refer to this set of parameters as the ‘ensemble fit parameters’, because they provide our best fit to the entire ensemble of transits for a planet.</p>
+</div>
+</section>
+<section class="ltx_subsection" id="S3.SS2">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.2 </span>Anomaly Search</h3>
+<div class="ltx_para" id="S3.SS2.p1">
+<p class="ltx_p" id="S3.SS2.p1.1">After pre-processing, the lightcurves are ready to be searched for missing or unusual transits. For each star, we iterate over each transit. For each expected transit midpoint (with midpoints determined using the period and ephemeris provided by the NASA Exoplanet Archive in the Kepler KOI table <cite class="ltx_cite ltx_citemacro_citep">(Thompson et al., <a class="ltx_ref" href="#bib.bib18" title="">2018</a>)</cite>, we define a window spanning three times the expected transit duration on either side of the expected midpoint. If insufficient data (defined as less than 70% of the expected number of datapoints in the window) is present in a given transit’s window due to data gaps or data quality issues, we ignore that transit. Even so, missing or sparse data is one of the most common reasons for poor fitting of individual transits.</p>
+</div>
+<div class="ltx_para" id="S3.SS2.p2">
+<p class="ltx_p" id="S3.SS2.p2.1">We then fit the transit with a <span class="ltx_text ltx_font_typewriter" id="S3.SS2.p2.1.1">Batman</span> transit model. We first mask the expected location of the transit in order to fit and remove a linear trend as a first-order correction for stellar variability. Short-timescale non-linear stellar variability is not removed, and this is another common reason for poor fitting. Next, we produce a preliminary model of the transit in order to update the expected midpoint, and repeat the process of masking the transit and removing a linear trend. This helps avoid errors in baseline trend removal when the transit is not centered at the expected location. We then fit a final <span class="ltx_text ltx_font_typewriter" id="S3.SS2.p2.1.2">Batman</span> model to the transit to produce a set of fit parameters, using the ensemble model parameters as initial guesses.</p>
+</div>
+<div class="ltx_para" id="S3.SS2.p3">
+<p class="ltx_p" id="S3.SS2.p3.1">As a reference of comparison for individual transits, we take the median of each parameter produced in this final <span class="ltx_text ltx_font_typewriter" id="S3.SS2.p3.1.1">Batman</span> fit over all transits and refer to this set of parameters as the ‘median fit parameters’. This set of median fit parameters provides the standard against which we define which individual transits are considered anomalous.</p>
+</div>
+<div class="ltx_para" id="S3.SS2.p4">
+<p class="ltx_p" id="S3.SS2.p4.1">Once each transit has been fit, we flag the transits that meet certain requirements. We define three flags: (1) transits which appear “missing”, (2) transits which appear unusually deep, and (3) transits which appear to have unexpectedly large transit-timing variations (TTVs). These are defined quantitatively as follows:</p>
+<ol class="ltx_enumerate" id="S3.I1">
+<li class="ltx_item" id="S3.I1.i1" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">(1)</span>
+<div class="ltx_para" id="S3.I1.i1.p1">
+<p class="ltx_p" id="S3.I1.i1.p1.1">fit transit depth shallower than 3 times the flux SD, and greater than 3 sigma away from the median of the fit transit depths (the transit is effectively indistinguishable from a flat section of lightcurve).
+</p>
+</div>
+</li>
+<li class="ltx_item" id="S3.I1.i2" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">(2)</span>
+<div class="ltx_para" id="S3.I1.i2.p1">
+<p class="ltx_p" id="S3.I1.i2.p1.1">fit transit depth exceeds the median fit transit depth by more than 3 sigma.</p>
+</div>
+</li>
+<li class="ltx_item" id="S3.I1.i3" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">(3)</span>
+<div class="ltx_para" id="S3.I1.i3.p1">
+<p class="ltx_p" id="S3.I1.i3.p1.1">fit transit TTV exceeds the median fit TTV by more than 5 sigma. We choose 5 sigma in this case to prevent flagging expected large TTVs due to coherent variation in transit timing from sibling planets.</p>
+</div>
+</li>
+</ol>
+</div>
+<div class="ltx_para" id="S3.SS2.p5">
+<p class="ltx_p" id="S3.SS2.p5.1">Defining the flagging criteria based on the actual distribution of fitted transit properties circumvents issues with small discrepancies between the ensemble and mean fit parameters which sometimes arise due to imperfect expected parameter values. It also allows us to flag TTVs even in several-planet systems which are often expected to have large TTVs due to the gravitational effects of planets on their siblings’ orbits. Figure <a class="ltx_ref" href="#S3.F2" title="Figure 2 ‣ 3.2 Anomaly Search ‣ 3 Methods ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_tag">2</span></a> demonstrates the threshold applied for each flag.</p>
+</div>
+<figure class="ltx_figure" id="S3.F2"><img alt="Refer to caption" class="ltx_graphics ltx_centering ltx_img_landscape" height="465" id="S3.F2.g1" src="x2.png" width="581"/>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>Demonstration of the thresholds used for flagging fit transit parameters for an example planet (Kepler-696b). Each datapoint represents one transit.</figcaption>
+</figure>
+</section>
+<section class="ltx_subsection" id="S3.SS3">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.3 </span>Signal Injection and Recovery</h3>
+<div class="ltx_para" id="S3.SS3.p1">
+<p class="ltx_p" id="S3.SS3.p1.1">In order to assess our confidence in flags produced by our anomaly search for any given planetary system, we perform an injection and recovery of simulated transits and evaluate both the accuracy with which we can recover their depths and timings, and the accuracy of the flagging processes.
+We would like to be able to reject flagged transits in systems for which the injection and recovery shows it is difficult to accurately determine the transit parameters, or systems for which many transits are erroneously flagged.</p>
+</div>
+<div class="ltx_para" id="S3.SS3.p2">
+<p class="ltx_p" id="S3.SS3.p2.1">We inject transits into each lightcurve as follows. First, we define a set of 1000 injection locations chosen randomly across the lightcurve under the requirement that sufficient data is present in the surrounding window to perform a <span class="ltx_text ltx_font_typewriter" id="S3.SS3.p2.1.1">Batman</span> fit. We then choose a sample randomly from a distribution of depths and TTVs without replacement to produce the injection parameters. The depth parameter space spans from zero to 3.5 sigma above the median fit depth, and the TTV parameter space spans from zero to 1.1 times the size of the fitting window. We choose this range to ensure that we sample from all regions which should produce flags, as well as regions expected to erroneously produce flags. We inject each transit by defining a <span class="ltx_text ltx_font_typewriter" id="S3.SS3.p2.1.2">Batman</span> model using the chosen depth and TTV, and median fit parameter values for the other parameters, and add the injection model onto the existing lightcurve in order to preserve noise and stellar variability.</p>
+</div>
+<div class="ltx_para" id="S3.SS3.p3">
+<p class="ltx_p" id="S3.SS3.p3.1">We then attempt to recover each injection by performing the fitting exactly as described in Section <a class="ltx_ref" href="#S3.SS2" title="3.2 Anomaly Search ‣ 3 Methods ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_tag">3.2</span></a>. Once all injections are fit the flags are defined exactly as described above, using the median and standard deviation of the real individual transit fits to determine the threshold values for flagging. We calculate the RMS error between the injected and recovered depths and TTVs for each planet, and produce diagnostic plots to visualize the recovery accuracy (as shown in Figure <a class="ltx_ref" href="#S3.F3" title="Figure 3 ‣ 3.3 Signal Injection and Recovery ‣ 3 Methods ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_tag">3</span></a>). For this paper, we define ‘true positive’ injections to be injections whose injected depth or TTV is within the region that should produce a flag, and whose recovered depth or TTV does in fact produce the expected flag. We define ‘true negative’ flags analogously, as transits whose injected parameters should not produce a flag, and whose recovered parameters indeed are not flagged. ‘False positive’ injections are those whose parameters should not produce a flag, yet the recovery is inaccurate and the recovered transit is flagged. Similarly, ‘false negative’ injections are those whose parameters should produce a flag, but due to poor recovery are not flagged.</p>
+</div>
+<div class="ltx_para" id="S3.SS3.p4">
+<p class="ltx_p" id="S3.SS3.p4.1">We perform this injection and recovery process for each planetary system. We can then use the accuracy of the injection recovery to inform vetting of flagged transits.</p>
+</div>
+<figure class="ltx_figure" id="S3.F3"><img alt="Refer to caption" class="ltx_graphics ltx_centering ltx_img_landscape" height="339" id="S3.F3.g1" src="x3.png" width="706"/>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>Scatter plot demonstrating injection and recovery accuracy for a sample lightcurve. Each point represents the injected properties of recovered transits. In the left-hand plot, orange triangles represent transits flagged for large TTVs, and the orange filled area represents the region of parameter space which should produce a TTV flag. In the right-hand plot, orange triangles represent transits flagged as missing, blue squares represent transits flagged for large depths, and the orange and blue regions represent the corresponding regions of parameter space expected to produce flags. Not all transits injected in the shaded regions are flagged due to imperfect recovery of the injected properties.</figcaption>
+</figure>
+</section>
+</section>
+<section class="ltx_section" id="S4">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Results</h2>
+<div class="ltx_para" id="S4.p1">
+<p class="ltx_p" id="S4.p1.1">We run the individual transit fitting algorithm described in Section <a class="ltx_ref" href="#S3.SS2" title="3.2 Anomaly Search ‣ 3 Methods ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_tag">3.2</span></a> on each of the 228 planetary targets described in Section <a class="ltx_ref" href="#S2" title="2 Data, Pre-processing, and Target Selection ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_tag">2</span></a>. The <span class="ltx_text ltx_font_typewriter" id="S4.p1.1.1">Batman</span> model fails to converge for 10 of these targets, leaving 218 which we can search for anomalous transits. This means we search 39879 total transits. Using the flags defined above, we flag 6 transits as apparently missing, 92 as unexpectedly deep, and 51 as having unexpectedly large TTVs.</p>
+</div>
+<div class="ltx_para" id="S4.p2">
+<p class="ltx_p" id="S4.p2.1">We then visually inspect these flagged transits. We reject flagged transits using several criteria, which vary slightly for each flag. In fitting individual transits, we are often challenged by the sparsity of data around the expected transit. Thus, all flags have some false positives when the transit is truly present in the data with its expected shape, but a good fit to the transit cannot be produced due to missing or sparse data. Another complication for all flags arises from sibling transits which fall within the fitting window. Though sibling transits are masked before fitting, in a few cases sibling transits with large TTVs cannot be perfectly masked beforehand and can interfere with fitting.</p>
+</div>
+<section class="ltx_subsection" id="S4.SS1">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.1 </span>Transits Flagged as Missing</h3>
+<div class="ltx_para" id="S4.SS1.p1">
+<p class="ltx_p" id="S4.SS1.p1.1">Our primary interest is to identify and examine potentially “missing” transits. In general, we find that despite the noisiness and sparseness of data for individual transits, we are able to accurately determine that a transit is present at each expected location and to fit its depth and TTV. However, some transits are flagged as missing.</p>
+</div>
+<div class="ltx_para" id="S4.SS1.p2">
+<p class="ltx_p" id="S4.SS1.p2.1">For such missing transits, one possible false positive comes from poor fitting due to missing or sparse data in the region around the transit. Four of the six transits flagged as missing are clearly present in the data on visual inspection, but are fit poorly due to missing data and/or stellar variability. These are shown in Figure <a class="ltx_ref" href="#S4.F4" title="Figure 4 ‣ 4.1 Transits Flagged as Missing ‣ 4 Results ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_tag">4</span></a>.</p>
+</div>
+<figure class="ltx_figure" id="S4.F4"><img alt="Refer to caption" class="ltx_graphics ltx_centering ltx_img_landscape" height="457" id="S4.F4.g1" src="x4.png" width="830"/>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 4: </span>Four of the six transits flagged as missing are clearly present on visual inspection of the data. Top left: Kepler-314c, transit 166, is flagged as missing but is clearly visible in the raw data. Missing data at the edge of the fit window and short timescale stellar variability make the fitting difficult and produce a false positive. Top right: Kepler-472, transit 92 is flagged as missing yet is clearly present on visual inspection. Bottom left: Kepler-564, transit 105 is mis-fit due to two quality masked data points exactly at the transit minimum, which effectively hide the transit. Bottom right: Similarly, the model fits adjacent stellar variability instead of transit 63 of Kepler-732b because of a single missing datapoint in the fit, as well as short-timescale stellar variability which alters the shape of the transit.</figcaption>
+</figure>
+<div class="ltx_para" id="S4.SS1.p3">
+<p class="ltx_p" id="S4.SS1.p3.1">The two remaining candidates are both transits of the planet Kepler-1655b (Figure <a class="ltx_ref" href="#S4.F5" title="Figure 5 ‣ 4.1 Transits Flagged as Missing ‣ 4 Results ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_tag">5</span></a>). For these two, the transit is not visually identifiable in the processed data. The first step for further visual vetting is an inspection of the unprocessed (i.e., with no linear detrending) lightcurve in a wider window around the flagged transit. When inspected this way, transit 22 has a visually identifiable feature at the location of the fit transit which matches the expected transit shape, and this can be identified as the transit itself. A wide section of missing data beginning three datapoints to the right of the transit egress, in conjunction with local stellar variability, impairs accurate linear trend removal. The trend that is removed artificially raises, and therefore obscures, the transit.
+For transit 17, the cause of the flag is somewhat less clear. However, inspecting the wider region around the transit reveals stellar variability on the same order as the expected transit depth. This is an edge case for which the timescale of the stellar variability was too short to be detrended, yet too long to be included in the calculation of the SD. Thus we must also reject this transit as a statistically significant“missing” transit.</p>
+</div>
+<figure class="ltx_figure" id="S4.F5"><img alt="Refer to caption" class="ltx_graphics ltx_centering ltx_img_landscape" height="452" id="S4.F5.g1" src="x5.png" width="830"/>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 5: </span>Kepler-1655b transits 17 (top) and 22 (bottom) are flagged as ”missing” and are not obviously present on visual inspection, but are ultimately rejected due to poor linear trend removal and due to stellar variability which could mask a present transit. </figcaption>
+</figure>
+<div class="ltx_para" id="S4.SS1.p4">
+<p class="ltx_p" id="S4.SS1.p4.1">Though we are most interested in potentially missing transits, our dataset is also highly amendable to a search for transits with unusually large depths or TTVs. These are discussed in the following two sections.</p>
+</div>
+</section>
+<section class="ltx_subsection" id="S4.SS2">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.2 </span>Transits Flagged as Unexpectedly Deep</h3>
+<div class="ltx_para" id="S4.SS2.p1">
+<p class="ltx_p" id="S4.SS2.p1.1">One possible false positive for transits flagged as unexpectedly deep comes from poor fitting due to missing or sparse data. In the case of missing data, there is an additional failure mode that occurs when the midpoint is fit inside a region of missing data, and the depth is then essentially unbounded. Of the 92 flagged transits, 23 are rejected as false positives for this reason. An additional 31 are rejected because non-linear stellar variability results in a mischaracterization of the local baseline, and thus an apparently deeper transit. Also, 19 transits are rejected because the scatter in the out-of-transit lightcurve is large compared to the difference between the fit depth and expected depth; thus the excess depth could be explained by random variability rather than a true increase in transit depth. Large instrumental scatter can also make the linear detrending unreliable for these transits.</p>
+</div>
+<div class="ltx_para" id="S4.SS2.p2">
+<p class="ltx_p" id="S4.SS2.p2.1">Another class of false positive comes from sibling transits which overlap with the target transit, deepening the apparent transit. Though we attempt to mask these sibling transits, we are unable to initially mask a sibling transit properly in cases when the transit exhibits a very large TTV, or in the rare case that a search of the NASA exoplanet archive returns null parameters. We vet for the first failure mode by overplotting the individually fit midpoints of resolved sibling planets, and reject a single transit (Kepler-247c transit 113) which clearly has an overlapping sibling. To check for the second failure mode, we manually search the Simbad database for siblings and in two cases find an unmasked sibling planet. From this we can reject five flagged transits of Kepler-18c, because visual inspection reveals the transits of Kepler-18d clearly move in and out of the fitting window. Similarly, we reject Kepler-51b transit 30 because an additional sibling (Kepler-51d) is reported in Simbad and has an expected transit midpoint that directly overlaps.</p>
+</div>
+<div class="ltx_para" id="S4.SS2.p3">
+<p class="ltx_p" id="S4.SS2.p3.1">We reject another four transits because analysis of the injection and recovery process reveals that accurate recovery of transit parameters is difficult. If for a given system we are unable to recover injected deep transits, or we flag normal transits as unusually deep, we cannot have high confidence in any transit flagged for that system and so must reject it. We impose a threshold on the fraction of false positive injections, out of the total number of injections which should not be flagged. We choose that threshold to be 10% in order to reject the clear tail of outliers with especially poor injection recovery while retaining the majority of transits. This test allows us to reject transits of Kepler-25c, Kepler-17b, Kepler-685b, and Kepler-506b. This leaves nine transits.</p>
+</div>
+<div class="ltx_para" id="S4.SS2.p4">
+<p class="ltx_p" id="S4.SS2.p4.1">The next step for visual vetting is an inspection of the unprocessed (i.e., with no linear detrending) lightcurve flux in a wider window around the flagged transit. When inspected this way, several transits can be clearly rejected based on one of the previously identified failure modes. When the pre-detrending lightcurve is inspected in a wider window, it becomes apparent that Kepler-314c transit 109 and Kepler-682b transit 41 have short-timescale stellar variability with a timescale comparable to the transit duration and with amplitude comparable to the difference between the fit and expected depth. Thus, the apparently large depth could be caused by unfortunately timed stellar variability.</p>
+</div>
+<div class="ltx_para" id="S4.SS2.p5">
+<p class="ltx_p" id="S4.SS2.p5.1">This leaves five remaining transits (Kepler-685b transit 791, Kepler-422b transit 99, Kepler-74b transit 56, Kepler-433b transit 248, and Kepler-41b transit 616). Although these transits do not fall under any of the failure modes described above, they are not anomalous enough to warrant further investigation. All five of these transits appear to fall on the tail of a normal distribution of fit depths for their respective systems, or result from small coherent trends in an otherwise normal fit depth distribution (which may occur due to moving starspots or other stellar surface features).</p>
+</div>
+</section>
+<section class="ltx_subsection" id="S4.SS3">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.3 </span>Transits Flagged for Large TTVs</h3>
+<div class="ltx_para" id="S4.SS3.p1">
+<p class="ltx_p" id="S4.SS3.p1.1">As in the previous two cases, for transits flagged for large TTVs a possible false positive comes from poor fitting due to missing or sparse data near the transit. We reject 27 of the 51 transits flagged for large TTVs for this reason. We reject another 12 that were fit poorly due to short timescale stellar variability or single missing datapoints that bias the fitting. For a further set of five, short timescale stellar variability produces a feature that mimics the expected transit shape enough to ‘fool’ the <span class="ltx_text ltx_font_typewriter" id="S4.SS3.p1.1.1">Batman</span> model into fitting the variability rather than the transit itself.</p>
+</div>
+<div class="ltx_para" id="S4.SS3.p2">
+<p class="ltx_p" id="S4.SS3.p2.1">Another class of false positive comes from sibling transits present in the fitting window which are fit instead of the target transit. We reject the same five transits of Kepler-18c described in Section <a class="ltx_ref" href="#S4.SS2" title="4.2 Transits Flagged as Unexpectedly Deep ‣ 4 Results ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_tag">4.2</span></a> because a Simbad search reveals a sibling planet unresolved in the NASA Exoplanet Archive whose transits coincide with the flagged transits.</p>
+</div>
+<div class="ltx_para" id="S4.SS3.p3">
+<p class="ltx_p" id="S4.SS3.p3.1">This leaves two remaining transits, which are shown in Figure <a class="ltx_ref" href="#S4.F6" title="Figure 6 ‣ 4.3 Transits Flagged for Large TTVs ‣ 4 Results ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_tag">6</span></a>.</p>
+</div>
+<figure class="ltx_figure" id="S4.F6"><img alt="Refer to caption" class="ltx_graphics ltx_centering ltx_img_square" height="387" id="S4.F6.g1" src="x6.png" width="415"/>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 6: </span>Kepler-40b transit 201 and Kepler 548b transit 132 are flagged for large TTVs and pass the visual inspection of the fit. </figcaption>
+</figure>
+<div class="ltx_para" id="S4.SS3.p4">
+<p class="ltx_p" id="S4.SS3.p4.1">Transit 201 is only 5% above the 5 sigma threshold, but does not obviously fall on the expected tail of a normal distribution of TTVs, as shown in Figure <a class="ltx_ref" href="#S4.F7" title="Figure 7 ‣ 4.3 Transits Flagged for Large TTVs ‣ 4 Results ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_tag">7</span></a>. However, Kepler-40b is a rotating variable subgiant star, and thus likely to exhibit starspots. Transit 201 is consistent with the shape expected from contamination due to the exoplanet crossing a starspot feature <cite class="ltx_cite ltx_citemacro_citep">(Morris et al., <a class="ltx_ref" href="#bib.bib12" title="">2017</a>)</cite>.</p>
+</div>
+<figure class="ltx_figure" id="S4.F7"><img alt="Refer to caption" class="ltx_graphics ltx_centering ltx_img_landscape" height="232" id="S4.F7.g1" src="x7.png" width="623"/>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 7: </span>Kepler-40b transit 201 is barely above the threshold for flagging, and consistent with contamination from stellar variability</figcaption>
+</figure>
+<div class="ltx_para" id="S4.SS3.p5">
+<p class="ltx_p" id="S4.SS3.p5.1">Kepler-548b transit 132 is flagged for its large TTV, but is most unusual in its dramatically reduced depth. Transits in the system are generally fit well, and no other transit exhibits a shallow depth. No unexpected sibling transit appears in the fitting window (nor could this explain both the large TTV and the shallow depth), and the lightcurve appears free of stellar flaring or other activity which could give the transit an apparently shallower depth. However, when the lightcurve for this transit is created using the raw (SAP) flux values <cite class="ltx_cite ltx_citemacro_citep">(Twicken et al., <a class="ltx_ref" href="#bib.bib19" title="">2010</a>; Morris et al., <a class="ltx_ref" href="#bib.bib13" title="">2020</a>)</cite>, rather than the PDCSAP flux values, the transit no longer appears unusually shallow (Figure <a class="ltx_ref" href="#S4.F8" title="Figure 8 ‣ 4.3 Transits Flagged for Large TTVs ‣ 4 Results ‣ The Breakthrough Listen Search for Intelligent Life: Detection and Characterization of Anomalous Transits in Kepler Lightcurves"><span class="ltx_text ltx_ref_tag">8</span></a>). This appears to be a rare case in which cotrending applied to the PDCSAP values significantly modifies the shape of a transit, producing a spurious flag.</p>
+</div>
+<figure class="ltx_figure" id="S4.F8"><img alt="Refer to caption" class="ltx_graphics ltx_centering ltx_img_landscape" height="294" id="S4.F8.g1" src="x8.png" width="830"/>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 8: </span>Kepler-548b, transit 132, is an apparently very unusual transit with both a large TTV and a shallow depth. However, the transit appears to have a normal shape when viewed using the pre-cotrending SAP flux values, and thus the anomaly can be credited to artifact of the Kepler cotrending process.</figcaption>
+</figure>
+</section>
+</section>
+<section class="ltx_section" id="S5">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">5 </span>Discussion and Conclusions</h2>
+<div class="ltx_para" id="S5.p1">
+<p class="ltx_p" id="S5.p1.1">To the best of our knowledge, no past work has attempted to characterize the shapes of transits individually in stellar lightcurves, though some have searched individually for TTVs. We have developed and implemented an algorithm to search stellar lightcurves for unusual transits, and have performed a search for such transits on 218 Kepler transiting exoplanet systems. We find and vet 6 candidate transits flagged by our algorithm as missing, 51 flagged as having an unusually large TTV, and 92 flagged as having an unusually large depth. We visually inspect all flagged transits, and reject each as a likely indication of new astrophysics or extraterrestrial intelligence.</p>
+</div>
+<div class="ltx_para" id="S5.p2">
+<p class="ltx_p" id="S5.p2.1">Our nondetection allows us to put a useful upper limit on the occurrence rate of transits with inexplicably anomalous properties. Zero of 218 stars host a transit which passed our search algorithm and could not be rejected via manual inspection; the upper limit on detections at 95% confidence with zero detected is 2.99. We conclude that less than 2.99 per 218 Kepler stars, or less than 1.4%, host transits with inexplicably large depths or TTVs, or transits which appear to be missing. In choosing our sample we are biased towards planets with deep transits and lightcurves with low flux uncertainties, but this should not bias our detection rates. We are however only sensitive to a small subset of all transits of each planet due to finite Kepler observing times. The median duration of a lightcurve in our target set is 1459.5 days. Thus, our upper limit should be understood to reflect an occurrence rate per 1459.5 days.</p>
+</div>
+<div class="ltx_para" id="S5.p3">
+<p class="ltx_p" id="S5.p3.1">Our search is designed to be agnostic to the cause of any anomalous transit shapes. We attempt to reject known astrophysical causes, for instance by rejecting transits where sibling planets, stellar flares, or short-timescale stellar variability can cause apparent anomalies. However, had we been unable to reject any flagged transits an unexpected astrophysical explanation would still be possible. Our search would also be sensitive to non-astrophysical transit anomalies, which represent a possible technosignature in the Search for Extraterrestrial Intelligence. A civilization might choose to cloak its transits from known neighbors, or else broadcast its presence intentionally or unintentionally by modifying its transit shape with megastructures or lasers <cite class="ltx_cite ltx_citemacro_citep">(Wright &amp; Kipping, <a class="ltx_ref" href="#bib.bib20" title="">2019</a>)</cite>.
+While <cite class="ltx_cite ltx_citemacro_citet">Kipping &amp; Teachey (<a class="ltx_ref" href="#bib.bib9" title="">2016</a>)</cite> have noted directed emission from a laser could “cloak” or modify a transit of a planet in the Kepler band using technology presently available, multi-band detection of transits would be able to distinguish this type of variability compared to megastructures.
+In addition, if an intelligent civilization aware of life near our Sun were to attempt to send a beacon or information towards the Sun, it would have to choose the best time to do so. The interval in which the civilization’s home planet transits between its host star and the Sun would be clever choice of timing if this civilization expects others to be actively studying the transits of exoplanets for non-SETI purposes. Thus, the interval around a transit is an especially important time to search for SETI signals <cite class="ltx_cite ltx_citemacro_citep">(Franz et al., <a class="ltx_ref" href="#bib.bib7" title="">2022</a>)</cite>.</p>
+</div>
+<section class="ltx_subsection" id="S5.SS1">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.1 </span>Future Directions</h3>
+<div class="ltx_para" id="S5.SS1.p1">
+<p class="ltx_p" id="S5.SS1.p1.1">The techniques implemented in the work could be readily applied to other large datasets, such as the TESS catalog of transiting exoplanet lightcurves <cite class="ltx_cite ltx_citemacro_citep">(Borucki et al., <a class="ltx_ref" href="#bib.bib6" title="">2010</a>)</cite>.
+In addition, the set of transit fits produced as a result of this work could be very useful as a training dataset in a machine learning search for unexpected transits in stellar lightcurves. Past exoplanet searches miss transits from planets with periods longer than the survey observing time, comets or asteroids, or
+rogue planets. The nature and prevalence of unexpected transits is poorly understood. This represents a major gap in our understanding of the occurrence rate of long-period exoplanets. These long-period planets are likely to be gas giants whose key role in the formation and evolution of planetary systems is an active area of research. Each fit transit from this work can become a labelled positive observation, and fit section of lightcurve with no known transit labelled negative observations, to train a machine learning algorithm to search pixel-by-pixel through stellar lightcurves for transits which appear where none is expected.</p>
+</div>
+<div class="ltx_para" id="S5.SS1.p2">
+<p class="ltx_p" id="S5.SS1.p2.1">Future work could improve on some of the methods used here in order to reduce the need for visual vetting, or to expand the transit fitting approaches. For instance, a more sophisticated method of jointly fitting transits and stellar variability using Gaussian Processes or wavelet analysis could better detrend each transit fitting window and thus mitigate some false positive candidates we encountered. In addition, a future work might benefit from jointly fitting the transits of each sibling planet in a system in order to avoid the necessity of masking the transits of sibling transits in each fitting.</p>
+</div>
+<div class="ltx_acknowledgements">
+We thank the anonymous referee for helpful comments which improved the final version of this work.
+We thank The Breakthrough Listen Initiative, and everyone who has provided support for this project.
+We are grateful to the Berkeley SETI Research Center (BSRC) for their support of this research. We thank the staff and students of Breakthrough Listen for their support of SETI data collection and making this data publicly available at <a class="ltx_ref ltx_url ltx_font_typewriter" href="https://seti.berkeley.edu/opendata" title="">https://seti.berkeley.edu/opendata</a>. Breakthrough Listen is managed by the Breakthrough Initiatives, sponsored by the Breakthrough Prize Foundation.
+AZ was funded as a participant in the Berkeley SETI Research Center Research Experience for Undergraduates Site, supported by the National Science Foundation under Grant No. 1950897.
+JRAD acknowledges support from the DiRAC Institute in the Department of Astronomy at the University of Washington. The DiRAC Institute is supported through generous gifts from the Charles and Lisa Simonyi Fund for Arts and Sciences, and the Washington Research Foundation.
+This paper includes data collected by the Kepler mission. The Kepler mission was a PI-led Discovery Class Mission funded by the NASA Science Mission directorate.
+
+
+
+</div>
+</section>
+</section>
+<section class="ltx_appendix" id="A1">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix A </span>Summary Table</h2>
+<figure class="ltx_table" id="A1.T1">
+<table class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle" id="A1.T1.1">
+<tbody class="ltx_tbody">
+<tr class="ltx_tr" id="A1.T1.1.1.1">
+<th class="ltx_td ltx_th ltx_th_row" colspan="3" id="A1.T1.1.1.1.1" style="padding-left:2.0pt;padding-right:2.0pt;"></th>
+<td class="ltx_td ltx_align_center" colspan="6" id="A1.T1.1.1.1.2" style="padding-left:2.0pt;padding-right:2.0pt;">Median Fit Parameters</td>
+<td class="ltx_td ltx_align_center" colspan="2" id="A1.T1.1.1.1.3" style="padding-left:2.0pt;padding-right:2.0pt;">Injection/recovery Summary</td>
+</tr>
+<tr class="ltx_tr" id="A1.T1.1.2.2">
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_t" id="A1.T1.1.2.2.1" rowspan="2" style="padding-left:2.0pt;padding-right:2.0pt;"><span class="ltx_text" id="A1.T1.1.2.2.1.1">Name</span></th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_t" id="A1.T1.1.2.2.2" rowspan="2" style="padding-left:2.0pt;padding-right:2.0pt;"><span class="ltx_text" id="A1.T1.1.2.2.2.1">Siblings</span></th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_t" id="A1.T1.1.2.2.3" rowspan="2" style="padding-left:2.0pt;padding-right:2.0pt;"><span class="ltx_text" id="A1.T1.1.2.2.3.1"># Transits</span></th>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.2.2.4" rowspan="2" style="padding-left:2.0pt;padding-right:2.0pt;"><span class="ltx_text" id="A1.T1.1.2.2.4.1">Rp/Rs</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.2.2.5" style="padding-left:2.0pt;padding-right:2.0pt;">Semimajor</td>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.2.2.6" style="padding-left:2.0pt;padding-right:2.0pt;">Inc.</td>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.2.2.7" rowspan="2" style="padding-left:2.0pt;padding-right:2.0pt;"><span class="ltx_text" id="A1.T1.1.2.2.7.1">Ecc.</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.2.2.8" style="padding-left:2.0pt;padding-right:2.0pt;">Arg. of</td>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.2.2.9" style="padding-left:2.0pt;padding-right:2.0pt;">Rel.</td>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.2.2.10" style="padding-left:2.0pt;padding-right:2.0pt;">Depth Recovery</td>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.2.2.11" style="padding-left:2.0pt;padding-right:2.0pt;">TTV recovery</td>
+</tr>
+<tr class="ltx_tr" id="A1.T1.1.3.3">
+<td class="ltx_td ltx_align_center" id="A1.T1.1.3.3.1" style="padding-left:2.0pt;padding-right:2.0pt;">axis [AU]</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.3.3.2" style="padding-left:2.0pt;padding-right:2.0pt;">[Deg]</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.3.3.3" style="padding-left:2.0pt;padding-right:2.0pt;">Periastron</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.3.3.4" style="padding-left:2.0pt;padding-right:2.0pt;">Depth</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.3.3.5" style="padding-left:2.0pt;padding-right:2.0pt;">RMS [Days]</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.3.3.6" style="padding-left:2.0pt;padding-right:2.0pt;">RMS</td>
+</tr>
+<tr class="ltx_tr" id="A1.T1.1.4.4">
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_t" id="A1.T1.1.4.4.1" style="padding-left:2.0pt;padding-right:2.0pt;">Kepler-117 b</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_t" id="A1.T1.1.4.4.2" style="padding-left:2.0pt;padding-right:2.0pt;">c</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_t" id="A1.T1.1.4.4.3" style="padding-left:2.0pt;padding-right:2.0pt;">77</th>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.4.4.4" style="padding-left:2.0pt;padding-right:2.0pt;">0.046</td>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.4.4.5" style="padding-left:2.0pt;padding-right:2.0pt;">21.55</td>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.4.4.6" style="padding-left:2.0pt;padding-right:2.0pt;">89.47</td>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.4.4.7" style="padding-left:2.0pt;padding-right:2.0pt;">0.0</td>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.4.4.8" style="padding-left:2.0pt;padding-right:2.0pt;">254.3</td>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.4.4.9" style="padding-left:2.0pt;padding-right:2.0pt;">0.00252</td>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.4.4.10" style="padding-left:2.0pt;padding-right:2.0pt;">0.00041</td>
+<td class="ltx_td ltx_align_center ltx_border_t" id="A1.T1.1.4.4.11" style="padding-left:2.0pt;padding-right:2.0pt;">0.313</td>
+</tr>
+<tr class="ltx_tr" id="A1.T1.1.5.5">
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row" id="A1.T1.1.5.5.1" style="padding-left:2.0pt;padding-right:2.0pt;">Kepler-396 c</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row" id="A1.T1.1.5.5.2" style="padding-left:2.0pt;padding-right:2.0pt;">b</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row" id="A1.T1.1.5.5.3" style="padding-left:2.0pt;padding-right:2.0pt;">16</th>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.5.5.4" style="padding-left:2.0pt;padding-right:2.0pt;">0.049</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.5.5.5" style="padding-left:2.0pt;padding-right:2.0pt;">79.64</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.5.5.6" style="padding-left:2.0pt;padding-right:2.0pt;">89.47</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.5.5.7" style="padding-left:2.0pt;padding-right:2.0pt;">0.0</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.5.5.8" style="padding-left:2.0pt;padding-right:2.0pt;">0.0</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.5.5.9" style="padding-left:2.0pt;padding-right:2.0pt;">0.00245</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.5.5.10" style="padding-left:2.0pt;padding-right:2.0pt;">0.00115</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.5.5.11" style="padding-left:2.0pt;padding-right:2.0pt;">0.437</td>
+</tr>
+<tr class="ltx_tr" id="A1.T1.1.6.6">
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row" id="A1.T1.1.6.6.1" style="padding-left:2.0pt;padding-right:2.0pt;">Kepler-782 b</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row" id="A1.T1.1.6.6.2" style="padding-left:2.0pt;padding-right:2.0pt;">None</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row" id="A1.T1.1.6.6.3" style="padding-left:2.0pt;padding-right:2.0pt;">9</th>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.6.6.4" style="padding-left:2.0pt;padding-right:2.0pt;">0.026</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.6.6.5" style="padding-left:2.0pt;padding-right:2.0pt;">104.61</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.6.6.6" style="padding-left:2.0pt;padding-right:2.0pt;">90.0</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.6.6.7" style="padding-left:2.0pt;padding-right:2.0pt;">0.0</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.6.6.8" style="padding-left:2.0pt;padding-right:2.0pt;">0.0</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.6.6.9" style="padding-left:2.0pt;padding-right:2.0pt;">0.00085</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.6.6.10" style="padding-left:2.0pt;padding-right:2.0pt;">0.00014</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.6.6.11" style="padding-left:2.0pt;padding-right:2.0pt;">0.49</td>
+</tr>
+<tr class="ltx_tr" id="A1.T1.1.7.7">
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row" id="A1.T1.1.7.7.1" style="padding-left:2.0pt;padding-right:2.0pt;">Kepler-39 b</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row" id="A1.T1.1.7.7.2" style="padding-left:2.0pt;padding-right:2.0pt;">None</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row" id="A1.T1.1.7.7.3" style="padding-left:2.0pt;padding-right:2.0pt;">66</th>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.7.7.4" style="padding-left:2.0pt;padding-right:2.0pt;">0.091</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.7.7.5" style="padding-left:2.0pt;padding-right:2.0pt;">23.72</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.7.7.6" style="padding-left:2.0pt;padding-right:2.0pt;">88.42</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.7.7.7" style="padding-left:2.0pt;padding-right:2.0pt;">0.0</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.7.7.8" style="padding-left:2.0pt;padding-right:2.0pt;">98.9</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.7.7.9" style="padding-left:2.0pt;padding-right:2.0pt;">0.00887</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.7.7.10" style="padding-left:2.0pt;padding-right:2.0pt;">0.00139</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.7.7.11" style="padding-left:2.0pt;padding-right:2.0pt;">0.252</td>
+</tr>
+<tr class="ltx_tr" id="A1.T1.1.8.8">
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row" id="A1.T1.1.8.8.1" style="padding-left:2.0pt;padding-right:2.0pt;">Kepler-108 c</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row" id="A1.T1.1.8.8.2" style="padding-left:2.0pt;padding-right:2.0pt;">b</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row" id="A1.T1.1.8.8.3" style="padding-left:2.0pt;padding-right:2.0pt;">7</th>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.8.8.4" style="padding-left:2.0pt;padding-right:2.0pt;">0.031</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.8.8.5" style="padding-left:2.0pt;padding-right:2.0pt;">70.92</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.8.8.6" style="padding-left:2.0pt;padding-right:2.0pt;">89.47</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.8.8.7" style="padding-left:2.0pt;padding-right:2.0pt;">0.0</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.8.8.8" style="padding-left:2.0pt;padding-right:2.0pt;">0.0</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.8.8.9" style="padding-left:2.0pt;padding-right:2.0pt;">0.00101</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.8.8.10" style="padding-left:2.0pt;padding-right:2.0pt;">0.00016</td>
+<td class="ltx_td ltx_align_center" id="A1.T1.1.8.8.11" style="padding-left:2.0pt;padding-right:2.0pt;">0.595</td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 1: </span>System information, including median transit fit parameter values, and injection and recovery statistics for each exoplanet in our sample. A subset is shown here as an example. The full table is available in machine readable format.</figcaption>
+</figure>
+</section>
+<section class="ltx_bibliography" id="bib">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+<ul class="ltx_biblist">
+<li class="ltx_bibitem" id="bib.bib1">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Arnold (2005)</span>
+<span class="ltx_bibblock">
+Arnold, L. F. A. 2005, ApJ, 627, 534, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.1086/430437" title="">10.1086/430437</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib2">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Astropy Collaboration et al. (2013)</span>
+<span class="ltx_bibblock">
+Astropy Collaboration, Robitaille, T. P., Tollerud, E. J., et al. 2013, A&amp;A, 558, A33, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.1051/0004-6361/201322068" title="">10.1051/0004-6361/201322068</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib3">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Astropy Collaboration et al. (2018)</span>
+<span class="ltx_bibblock">
+Astropy Collaboration, Price-Whelan, A. M., Sipőcz, B. M., et al. 2018, AJ, 156, 123, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.3847/1538-3881/aabc4f" title="">10.3847/1538-3881/aabc4f</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib4">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Astropy Collaboration et al. (2022)</span>
+<span class="ltx_bibblock">
+Astropy Collaboration, Price-Whelan, A. M., Lim, P. L., et al. 2022, apj, 935, 167, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.3847/1538-4357/ac7c74" title="">10.3847/1538-4357/ac7c74</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib5">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Batalha et al. (2010)</span>
+<span class="ltx_bibblock">
+Batalha, N. M., Borucki, W. J., Koch, D. G., et al. 2010, The Astrophysical Journal, 713, L109, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.1088/2041-8205/713/2/l109" title="">10.1088/2041-8205/713/2/l109</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib6">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Borucki et al. (2010)</span>
+<span class="ltx_bibblock">
+Borucki, W. J., Koch, D., Basri, G., et al. 2010, Science, 327, 977, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.1126/science.1185402" title="">10.1126/science.1185402</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib7">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Franz et al. (2022)</span>
+<span class="ltx_bibblock">
+Franz, N., Croft, S., Siemion, A. P. V., et al. 2022, The Astronomical Journal, 163, 104, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.3847/1538-3881/ac46c9" title="">10.3847/1538-3881/ac46c9</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib8">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Jenkins et al. (2010)</span>
+<span class="ltx_bibblock">
+Jenkins, J. M., Caldwell, D. A., Chandrasekaran, H., et al. 2010, ApJ, 713, L87, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.1088/2041-8205/713/2/L87" title="">10.1088/2041-8205/713/2/L87</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib9">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kipping &amp; Teachey (2016)</span>
+<span class="ltx_bibblock">
+Kipping, D. M., &amp; Teachey, A. 2016, MNRAS, 459, 1233, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.1093/mnras/stw672" title="">10.1093/mnras/stw672</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib10">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kreidberg (2015)</span>
+<span class="ltx_bibblock">
+Kreidberg, L. 2015, Publications of the Astronomical Society of the Pacific, 127, 1161, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.1086/683602" title="">10.1086/683602</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib11">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Lightkurve Collaboration et al. (2018)</span>
+<span class="ltx_bibblock">
+Lightkurve Collaboration, Cardoso, J. V. d. M., Hedges, C., et al. 2018, Lightkurve: Kepler and TESS time series analysis in Python, Astrophysics Source Code Library
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib12">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Morris et al. (2017)</span>
+<span class="ltx_bibblock">
+Morris, B. M., Hebb, L., Davenport, J. R. A., Rohn, G., &amp; Hawley, S. L. 2017, ApJ, 846, 99, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.3847/1538-4357/aa8555" title="">10.3847/1538-4357/aa8555</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib13">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Morris et al. (2020)</span>
+<span class="ltx_bibblock">
+Morris, R. L., Twicken, J. D., Smith, J. C., et al. 2020, Kepler Data Processing Handbook: Photometric Analysis, Kepler Science Document KSCI-19081-003, id. 6. Edited by Jon M. Jenkins.
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib14">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Sandford &amp; Kipping (2019)</span>
+<span class="ltx_bibblock">
+Sandford, E., &amp; Kipping, D. 2019, The Astronomical Journal, 157, 42, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.3847/1538-3881/aaf565" title="">10.3847/1538-3881/aaf565</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib15">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Smith et al. (2012)</span>
+<span class="ltx_bibblock">
+Smith, J. C., Stumpe, M. C., Van Cleve, J. E., et al. 2012, PASP, 124, 1000, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.1086/667697" title="">10.1086/667697</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib16">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Stumpe et al. (2014)</span>
+<span class="ltx_bibblock">
+Stumpe, M. C., Smith, J. C., Catanzarite, J. H., et al. 2014, PASP, 126, 100, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.1086/674989" title="">10.1086/674989</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib17">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Stumpe et al. (2012)</span>
+<span class="ltx_bibblock">
+Stumpe, M. C., Smith, J. C., Van Cleve, J. E., et al. 2012, PASP, 124, 985, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.1086/667698" title="">10.1086/667698</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib18">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Thompson et al. (2018)</span>
+<span class="ltx_bibblock">
+Thompson, S. E., Coughlin, J. L., Hoffman, K., et al. 2018, ApJS, 235, 38, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.3847/1538-4365/aab4f9" title="">10.3847/1538-4365/aab4f9</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib19">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Twicken et al. (2010)</span>
+<span class="ltx_bibblock">
+Twicken, J. D., Clarke, B. D., Bryson, S. T., et al. 2010, in Software and Cyberinfrastructure for Astronomy, ed. N. M. Radziwill &amp; A. Bridger, Vol. 7740, International Society for Optics and Photonics (SPIE), 774023, doi: <a class="ltx_ref ltx_href" href="http://doi.org/10.1117/12.856790" title="">10.1117/12.856790</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib20">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wright &amp; Kipping (2019)</span>
+<span class="ltx_bibblock">
+Wright, J., &amp; Kipping, D. 2019, Bulletin of the AAS, 51
+
+</span>
+</li>
+</ul>
+</section>
+<div class="ltx_pagination ltx_role_newpage"></div>
+</article>
+</div>
+<footer class="ltx_page_footer">
+<div class="ltx_page_logo">Generated  on Wed Dec 13 05:21:24 2023 by <a class="ltx_LaTeXML_logo" href="http://dlmf.nist.gov/LaTeXML/"><span style="letter-spacing:-0.2em; margin-right:0.1em;">L<span style="font-size:70%;position:relative; bottom:2.2pt;">A</span>T<span style="position:relative; bottom:-0.4ex;">E</span></span><span class="ltx_font_smallcaps">xml</span><img alt="[LOGO]" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg=="/></a>
+</div></footer>
+</div>
+</body>
+</html>

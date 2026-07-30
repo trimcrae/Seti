@@ -1,0 +1,1704 @@
+[1804.01251] INTERSTELLAR COMMUNICATION. XI. SHORT PULSE DURATION LIMITS OF OPTICAL SETI
+
+INTERSTELLAR COMMUNICATION. XI. SHORT PULSE DURATION LIMITS OF OPTICAL SETI
+
+Michael Hippke
+
+Sonneberg Observatory, Sternwartestr. 32, 96515 Sonneberg, Germany
+
+michael@hippke.org
+
+Abstract
+Previous and ongoing searches for extraterrestrial optical and infrared nanosecond laser pulses and narrow line-width continuous emissions have so far returned null results. At the commonly used observation cadence of ∼ 10 − 9 similar-to absent superscript 10 9 \sim 10^{-9}\, s, sky-integrated starlight is a relevant noise source for large field-of-view surveys. This can be reduced with narrow bandwidth filters, multipixel detectors, or a shorter observation cadence. We examine the limits of short pulses set by the uncertainty principle, interstellar scattering, atmospheric scintillation, refraction, dispersion and receiver technology. We find that optimal laser pulses are time-bandwidth limited Gaussians with a duration of Δ ​ t ≈  10 − 12 Δ 𝑡 superscript 10 12 \Delta t\approx\,10^{-12}  s at a wavelength λ 0 ≈ 1 ​ μ subscript 𝜆 0 1 𝜇 \lambda_{0}\approx 1\,\mu m, and a spectral width of Δ ​ λ ≈ 1.5 Δ 𝜆 1.5 \Delta\lambda\approx 1.5\, nm. Shorter pulses are too strongly affected through Earth’s atmosphere. Given certain technological advances, survey speed can be increased by three orders of magnitude when moving from ns to ps pulses. Faster (and/or parallel) signal processing would allow for an all-sky-at-once survey of lasers targeted at Earth.
+
+1 Introduction
+
+Optical SETI typically assumes laser signals to be either pulsed or narrowband. Short pulses are usually assumed to be Δ ​ t min ≤ 10 − 9 Δ subscript 𝑡 min superscript 10 9 \Delta t_{\rm min}\leq 10^{-9}\, s (Howard & Horowitz, 2001 ) or 10 − 14 ​ … ​ 10 − 12 superscript 10 14 … superscript 10 12 10^{-14}\dots 10^{-12}\, s (Maire et al., 2016 ) . Narrowband continuous emissions are generally taken as Δ ​ λ < 10 − 2 Δ 𝜆 superscript 10 2 \Delta\lambda<10^{-2}\, nm (e.g., Tellis & Marcy, 2017 ) or even Δ ​ λ < 10 − 12 Δ 𝜆 superscript 10 12 \Delta\lambda<10^{-12}\, nm ( < <\, Hz, Kingsley, 1993b ) .
+
+The justification for the feasibility of optical SETI is that short pulses or narrowband emissions outshine their blended host star as the main noise source (e.g., Howard et al., 2004 ) . This is plausible, because a laser focused and received through 10 m telescopes would outshine a G2V host star for laser pulses of kJ energy at ns cadence (or in a narrow spectral channel), independently of distance, and there exist MJ (PW) lasers on Earth (Holzrichter & Manes, 2017 ) .
+
+Such examples offer a credible use-case for observations of individual stars one by one. However, a survey of the entire sky could be much faster by observing a large field of view. Unfortunately, noise levels increase with the number of stars observed and quickly require implausibly high signal power (or multipixel detectors). In order to reduce the noise levels, one could “know” (guess) the correct wavelength and use a narrow filter in addition to short time cadence. This scenario is explored in paper 10 of this series.
+
+Another option, which is explored in this paper, is to increase the time resolution. For one hemisphere, the total night sky radiance over a bandwidth of 1 , 000 1 000 1{,}000\, nm is ≈ 10 14 absent superscript 10 14 \approx 10^{14} photons per second (section  7.1 ), or ≈ 10 5 absent superscript 10 5 \approx 10^{5} photons per ns. This is the background flux which competes with a laser signal in an all-sky survey, and would overpower the typically assumed plausible OSETI signals. To make the background noise small per cadence, one could reduce the sky coverage, bandwidth, or a combination of both. At an observation cadence of order picosecond, the all-sky noise flux would reduce to ≈ 100 absent 100 \approx 100 photons per cadence. As typical wide-field telescopes have fields-of-view of 5 ∘ × 5 ∘ superscript 5 superscript 5 5^{\circ}\times 5^{\circ} ( ∼ 1 / 1 , 000 similar-to absent 1 1 000 \sim 1/1{,}000 of the sky, section  6.2 ), noise levels reduce to 0.1 photons per ps cadence, which is negligible.
+
+In this paper, we determine the physical short end time limit of laser pulses, set by the time-bandwidth limit, barycentric corrections, interstellar scattering, atmospheric refraction, dispersion, and broadening, and receiver technology.
+
+2 Physical limits
+
+2.1 Time-bandwidth limit
+
+The Heisenberg uncertainty principle (time-bandwidth limit) prohibits an arbitrary combination of infinitely short and narrow pulses: “the more precisely the position is determined, the less precisely the momentum is known in this instant, and vice versa” (Heisenberg, 1927 ) , so that
+Δ ​ E ​ Δ ​ t ≥ ℏ / 2 Δ 𝐸 Δ 𝑡 Planck-constant-over-2-pi 2 \Delta E\,\Delta t\geq\hbar/2 where Δ ​ E Δ 𝐸 \Delta E is the standard deviation of the particle energy, Δ ​ t Δ 𝑡 \Delta t is the time it takes the expectation value to change by one standard deviation, and ℏ Planck-constant-over-2-pi \hbar is the reduced Planck constant. A photon pulse with a temporal width Δ ​ t Δ 𝑡 \Delta t can therefore not be monochromatic, but has a spectrum. Both are related through a Fourier transform, and it can be shown that (Griffiths, 2004 ; Rullière, 2005 )
+
+Δ ​ t min ≥ K ​ λ 0 2 Δ ​ λ ​ c Δ subscript 𝑡 min 𝐾 superscript subscript 𝜆 0 2 Δ 𝜆 𝑐 \Delta t_{\rm min}\geq K\frac{\lambda_{0}^{2}}{\Delta\lambda\,c}
+
+(1)
+
+where λ 0 subscript 𝜆 0 \lambda_{0} is the central wavelength, Δ ​ λ Δ 𝜆 \Delta\lambda is the width of the spectrum (FWHM), c 𝑐 c is the speed of light and K ∼ 0.441 similar-to 𝐾 0.441 K\sim 0.441 for a Gaussian pulse shape. For example, a near-infrared (NIR) laser pulse ( λ 0 = 1 ​ μ subscript 𝜆 0 1 𝜇 \lambda_{0}=1\,\mu m) with a 5 % bandwidth ( Δ ​ λ = 50 Δ 𝜆 50 \Delta\lambda=50\, nm) has a minimum width of Δ ​ t min ∼ 29 × 10 − 15 similar-to Δ subscript 𝑡 min 29 superscript 10 15 \Delta t_{\rm min}\sim 29\times 10^{-15}\, s, or ∼  29 similar-to absent 29 \sim\,29\, fs (Tables  1 , 2 ).
+
+As an example, Tellis & Marcy ( 2017 ) state that “Laser lines as narrow as 1 Hz are already in use on Earth”. While this is a true statement, a Hz bandwidth laser pulse at λ = 1 ​ μ 𝜆 1 𝜇 \lambda=1\,\mu m has a pulse duration ⪆ 0.4 greater-than-or-approximately-equals absent 0.4 \gtrapprox 0.4\, s, so that a choice between “broadband” short pulses and “continous” wave narrowband emission is required. The allowed parameter space for pulses is shown in Figure  1 . There is no obvious distinction where one regimes begins and the other ends. To comply with the literature, we will refer to “pulses” for signals with Δ ​ t min < μ Δ subscript 𝑡 min 𝜇 \Delta t_{\rm min}<\,\mu s.
+
+Figure 1: Parameter space of a Gaussian pulse with a minimum time-bandwidth product for λ = μ 𝜆 𝜇 \lambda=\,\mu m (black line). Atmospheric effects (section  4 ) are shown in blue. Small star symbols represent past and current OSETI experiments (section  6.1 ), which are ∼ 3 similar-to absent 3 \sim 3 orders of magnitude from the time-bandwidth limit. The red star symbol indicates the OSETI sweet spot identified in this paper.
+
+Table 1: Unit prefixes
+
+Text
+Symbol
+Power
+
+milli
+m
+10 − 3 superscript 10 3 10^{-3}
+
+micro
+μ 𝜇 \mu
+10 − 6 superscript 10 6 10^{-6}
+
+nano
+n
+10 − 9 superscript 10 9 10^{-9}
+
+pico
+p
+10 − 12 superscript 10 12 10^{-12}
+
+femto
+f
+10 − 15 superscript 10 15 10^{-15}
+
+Table 2: Examples for time-bandwidth limited Gaussian pulses at λ 0 = 1 ​ μ subscript 𝜆 0 1 𝜇 \lambda_{0}=1\,\mu m
+
+Δ ​ λ Δ 𝜆 \Delta\lambda (nm)
+Δ ​ λ / λ 0 Δ 𝜆 subscript 𝜆 0 \Delta\lambda/\lambda_{0}
+Δ ​ t min Δ subscript 𝑡 min \Delta t_{\rm min}
+Comment
+
+50
+0.05
+29 fs
+Shortest plausible pulse
+
+1.5
+2 × 10 − 3 2 superscript 10 3 2\times 10^{-3}
+1 ps
+Atmospheric limit
+
+0.01
+1 × 10 − 5 1 superscript 10 5 1\times 10^{-5}
+0.15 ns
+Normal spectroscopy
+
+10 − 6 superscript 10 6 10^{-6}
+1 × 10 − 9 1 superscript 10 9 1\times 10^{-9}
+
+1.5 ​ μ 1.5 𝜇 1.5\,\mu s
+Extreme spectroscopy
+
+3 × 10 − 12 3 superscript 10 12 3\times 10^{-12}
+3 × 10 − 15 3 superscript 10 15 3\times 10^{-15}
+0.4 s
+Hz bandwidth
+
+2.2 Minimum laser linewidth
+
+The minimum laser linewidth is also a function of power, which was known even before the first laser was experimentally demonstrated. The fundamental (quantum) limit for the linewidth of a laser is (Schawlow & Townes, 1958 )
+
+Δ ​ f laser = 2 ​ π ​ h ​ f ​ ( Δ ​ f c ) 2 P out , Δ subscript 𝑓 laser 2 𝜋 ℎ 𝑓 superscript Δ subscript 𝑓 c 2 subscript 𝑃 out \Delta f_{\rm laser}=\frac{2\pi hf(\Delta f_{\mathrm{c}})^{2}}{P_{\mathrm{out}}},
+
+(2)
+
+where Δ ​ f laser Δ subscript 𝑓 laser \Delta f_{\rm laser} is the half width at half-maximum linewidth of the laser, Δ ​ f c Δ subscript 𝑓 c \Delta f_{\mathrm{c}} is the half width of the resonances of the laser resonator and P out subscript 𝑃 out P_{\mathrm{out}} is the laser output power. For OSETI, power levels will be large ( ≫ much-greater-than \gg\, W) so that Δ ​ f laser ≪ much-less-than Δ subscript 𝑓 laser absent \Delta f_{\rm laser}\ll\, Hz (i.e., ≪ 10 − 12 much-less-than absent superscript 10 12 \ll 10^{-12}\, nm), and Schawlow-Townes produce no relevant limit.
+
+Figure 2: Left: Comparison of pulse shapes with approximately the same energy integrals. Gaussian (black), sech 2 (red), Lorentzian (blue). Right: Spectrum of a Gaussian (black) and a sech 2 pulse for 0.5 < α < 3 0.5 𝛼 3 0.5<\alpha<3 (red).
+
+2.3 Laser pulse shape
+
+Laser generation can produce pulses of various shapes in the time and frequency domains (Smith & Landon, 1970 ; Hao et al., 2013 ) . Typically, the the temporal intensity of short laser pulses is approximated with a Gaussian
+
+P ​ ( t ) = P P ​ exp ​ ( − 4 ​ ln ⁡ 2 ​ ( t τ ) 2 ) 𝑃 𝑡 subscript 𝑃 P exp 4 2 superscript 𝑡 𝜏 2 P(t)=P_{\rm P}\,{\rm exp}\left(-4\ln 2\left(\frac{t}{\tau}\right)^{2}\right)
+
+(3)
+
+where τ 𝜏 \tau is the pulse duration and P P subscript 𝑃 P P_{\rm P} is the peak power. A minor discrepancy with reality is that the tails of a Gaussian function never actually reach zero (but the laser power does). Due to laser production technicalities, pulses from mode-locked lasers often have a temporal shape better described with a squared hyperbolic secant (sech 2 ) function (Lazaridis et al., 1995 )
+
+P ​ ( t ) = P P cosh 2 ​ ( t τ ) . 𝑃 𝑡 subscript 𝑃 P superscript cosh 2 𝑡 𝜏 P(t)=\frac{P_{\rm P}}{\mathrm{cosh}^{2}\left(\frac{t}{\tau}\right)}.
+
+(4)
+
+For pulses of the same amplitude and energy, a Gaussian has slightly weaker wings than the sech 2 -shaped pulse (Figure  2 , left). For same energy same full-width at half-mean (FWHM) pulses, the Gaussian’s peak power is higher, ∼ 0.94 similar-to absent 0.94 \sim 0.94 the pulse energy divided by the FWHM pulse duration compared to ≈ 0.88 absent 0.88 \approx 0.88 for the sech 2 pulse. The time-bandwidth product of a Gaussian is K ∼ 0.441 similar-to 𝐾 0.441 K\sim 0.441 and K ∼ 0.315 similar-to 𝐾 0.315 K\sim 0.315 for the sech 2 pulse, which allows for slightly shorter (FWHM) time-bandwidth limited sech 2 pulses.
+
+The intensity spectrum of a Gaussian pulse is also a Gaussian. For sech 2 pulses, the spectrum depends on its phase-amplitude-coupling factor α 𝛼 \alpha , and the normalized power spectrum is (Lazaridis et al., 1995 )
+
+E ​ ( ω ) = sech ​ ( π 2 ​ ( ω ​ τ + α ) ) ​ sech ​ ( π 2 ​ ( ω ​ τ − α ) ) sech 2 ​ ( π ​ α / 2 ) . 𝐸 𝜔 sech 𝜋 2 𝜔 𝜏 𝛼 sech 𝜋 2 𝜔 𝜏 𝛼 superscript sech 2 𝜋 𝛼 2 E(\omega)=\frac{{\rm sech}\left(\frac{\pi}{2}(\omega\tau+\alpha)\right){\rm sech}\left(\frac{\pi}{2}(\omega\tau-\alpha)\right)}{{\rm sech}^{2}(\pi\alpha/2)}.
+
+(5)
+
+A variety of shapes for 0.5 < α < 3 0.5 𝛼 3 0.5<\alpha<3 is shown in Figure  2 (right), ranging from an approximately Gaussian to a top-hat function. For larger values of α 𝛼 \alpha , the spectrum approximates a rectangle, which might be favorable given finite sized spectral windows of atmospheric transparency and low noise (see paper 10 of this series and Figure  4 ).
+
+A variety of other pulse shapes exists for other laser technologies, such as the Lorentzian shape (Figure  2 , left). The observation of an alien laser pulse shape will tell us a lot about the technology used for its production. The following calculations in this paper will assume the most common Gaussian form.
+
+3 Interstellar effects
+
+Interstellar extinction is the absorption and scattering of photons by dust and gas. Absorption, mainly as a function of wavelength and distance, is discussed in paper 10 of this series. Relevant for the short pulse case is interstellar plasma scattering, which produces a temporal delay and pulse broadening in time and frequency.
+
+3.1 Dispersion
+
+Dispersive time delays from interstellar plasma are well-known from pulsar studies and follow the relation (Taylor & Cordes, 1993 )
+
+t d ∼ 4.15 ​ DM ​ f − 2 ​ ( ms ) similar-to subscript 𝑡 𝑑 4.15 DM superscript 𝑓 2 ms t_{d}\sim 4.15\,{\rm DM}\,f^{-2}\,\,\,\,{\rm(ms)}
+
+(6)
+
+valid for pulses λ > μ 𝜆 𝜇 \lambda>\mu m (Shostak, 2011 ) , where f 𝑓 f is the frequency in GHz and DM is the dispersion measure in units of pc cm -3 . The dispersion law corresponds to cold plasma and is valid where the photon frequency is much larger than the plasma frequency.
+
+A typical dispersion measure is DM = 1 ​ pc ​ cm − 3 DM 1 pc superscript cm 3 \rm{DM}=1\,{\rm pc\,cm}^{-3} over 100 pc in the solar neighborhood, DM = 30 ​ pc ​ cm − 3 DM 30 pc superscript cm 3 {\rm DM}=30\,{\rm pc\,cm}^{-3} over kpc distances and DM = 100 ​ pc ​ cm − 3 DM 100 pc superscript cm 3 \rm{DM}=100\,{\rm pc\,cm}^{-3} over kpc towards the galactic center (Yao et al., 2017 ) . For GHz frequencies and DM = 30 ​ pc ​ cm − 3 DM 30 pc superscript cm 3 {\rm DM}=30\,{\rm pc\,cm}^{-3} , the delay is t d ≈ 0.1 subscript 𝑡 𝑑 0.1 t_{d}\approx 0.1\, s and decreases to ≈ 1 absent 1 \approx 1\, ps at λ = μ 𝜆 𝜇 \lambda=\,\mu m.
+
+Dispersive delays can approximately be removed by shifting the time-series of many narrow frequency channels with an estimated amount of DM for the source. This correction is never perfect because of the finite number of individual channels and time sampling, and the imperfect knowledge of the true (time variable) DM (Alder, 2012 ) . In a typical OSETI observation, where the receiver is monochromatic (e.g., a photomultiplier, PMT), de-dispersion is not possible. Even in case a fast spectrograph would be used, the correction can only be applied post-detection, as the DM is not known a priori. Overall, the time delay is of order ps or less, and changes little ( < 1 absent 1 <1\, %, i.e. ≲ 10 less-than-or-similar-to absent 10 \lesssim 10\, fs) over time.
+
+3.2 Scatter broadening
+
+Dust and protons in the interstellar medium scatter and absorb (then re-radiate) photons, reducing the pulse amplitude and leaving an exponential scattering tail (Cordes & Lazio, 2002 ) . Such a tail could be modelled using an exponentially modified normal distribution (Grushka, 1972 )
+
+f ​ ( x ) = λ 2 ​ e λ 2 ​ ( 2 ​ μ + λ ​ σ 2 − 2 ​ x ) ​ erfc ⁡ ( μ + λ ​ σ 2 − x 2 ​ σ ) 𝑓 𝑥 𝜆 2 superscript 𝑒 𝜆 2 2 𝜇 𝜆 superscript 𝜎 2 2 𝑥 erfc 𝜇 𝜆 superscript 𝜎 2 𝑥 2 𝜎 {\displaystyle f(x)={\frac{\lambda}{2}}e^{{\frac{\lambda}{2}}(2\mu+\lambda\sigma^{2}-2x)}\operatorname{erfc}\left({\frac{\mu+\lambda\sigma^{2}-x}{{\sqrt{2}}\sigma}}\right)}
+
+(7)
+
+where erfc is the complementary error function
+
+erfc ⁡ ( x ) erfc 𝑥 \displaystyle\operatorname{erfc}(x)
+= 1 − erf ⁡ ( x ) absent 1 erf 𝑥 \displaystyle=1-\operatorname{erf}(x)
+
+(8)
+
+= 2 π ​ ∫ x ∞ e − t 2 ​ 𝑑 t . absent 2 𝜋 superscript subscript 𝑥 superscript 𝑒 superscript 𝑡 2 differential-d 𝑡 \displaystyle={\frac{2}{{\sqrt{\pi}}}}\int_{x}^{\infty}e^{{-t^{2}}}\,dt.
+
+This is illustrated in Figure  3 . On the one hand, it has been argued that the effect “can be quite severe” (Howard et al., 2000b ; Horowitz et al., 2001 ; Howard et al., 2004 ) . On the other hand, conflicting statements exist, “temporal dispersion (…) is entirely negligible at optical wavelengths.” (Howard et al., 2000a ) . Both arguments are based on calculations in Cordes ( 2002 , Appendix M. 3) which state that a fraction of the pulse, e − τ superscript 𝑒 𝜏 e^{-\tau} arrives unscattered, while 1 − e − τ 1 superscript 𝑒 𝜏 1-e^{-\tau} is broadened in time, with τ 𝜏 \tau as the total optical depth. Therefore, scatter broadening is small for optical wavelengths out to 100 pc, and in the IR out to kpc.
+
+Frequency dependent scatter broadening is well known from pulsars, following a Kolmogorov ( 1941 ) turbulence model with a frequency scaling of f − 4 superscript 𝑓 4 f^{-4} . Pulsar scatter measurements closely follow this scaling over a large dispersion range, 2 < DM < 1 , 000 formulae-sequence 2 DM 1 000 2<{\rm DM}<1{,}000 (Krishnakumar et al., 2015 ) . However, the majority of sources show a flatter index over a frequency range between 0.1 ​ … ​ 1 0.1 … 1 0.1\dots 1  GHz, with some down to f − 3 superscript 𝑓 3 f^{-3} (Krishnakumar et al., 2017 ; Xu & Zhang, 2017 ) .
+
+Using this scaling, the strongest scattering at GHz frequencies in our galaxy of ≈ 1 absent 1 \approx 1\, s for DM= 1000 1000 1000\, pc cm -3 scales to 10 − 25 superscript 10 25 10^{-25}\, s at λ = μ 𝜆 𝜇 \lambda=\mu m (or 10 − 17 superscript 10 17 10^{-17}\, s at f − 3 superscript 𝑓 3 f^{-3} ). This indicates that scattering tails at optical and IR wavelengths are irrelevant, because the time-bandwidth limit is stronger in all realistic cases.
+
+This is in agreement with radio observations of the Crab pulsar which show pulses with high power (MJ) at f = 8.6 𝑓 8.6 f=8.6\, GHz which are unresolved at 2 ns (Hankins et al., 2003 ) time resolution and 0.4 ns time resolution. Interstellar scattering models predict 0.05 ns at f = 8.6 𝑓 8.6 f=8.6\, GHz for the Crab Nebula’s DM of 56.7 (Hankins & Eilek, 2007 ) at a distance of 1.9 ± 0.1 plus-or-minus 1.9 0.1 1.9\pm 0.1\, kpc (Trimble, 1973 ) .
+
+At optical and IR wavelengths, practical measurements only exist into the ms regime. The scattering tail is unknown in practice. Limits from the Crab pulsar show no detectable scattering tail at UV and optical wavelengths for an optical millisecond pulse width and E ​ ( B − V ) = 0.52 𝐸 𝐵 𝑉 0.52 E(B-V)=0.52 (Sollerman et al., 2000 ; Hinton et al., 2006 ; Karpov et al., 2007 ; Lucarelli et al., 2008 ) .
+
+These results indicate that the influence of the ISM is irrelevant for temporal pulse broadening at optical and IR wavelengths.
+
+Figure 3: An original Gaussian pulse at FWHM=1 ps (blue) is delayed and broadened (red). Pulse broadening is < <\, fs in practice and exaggerated by > 100 × >100\times here for clarity.
+
+3.3 Spectral broadening
+
+Spectral broadening by the ISM and interplanetary medium is along most lines of sight well approximated as Δ ​ f broad ∼ 0.1 ​ Hz ​ f GHz − 6 / 5 similar-to Δ subscript 𝑓 broad 0.1 Hz subscript superscript 𝑓 6 5 GHz \Delta f_{\rm broad}\sim 0.1\,{\rm Hz}\,f^{-6/5}_{\rm GHz} (Cordes & Lazio, 1991 ; Siemion et al., 2013 , 2015 ) . For λ = μ 𝜆 𝜇 \lambda=\mu m ( f ∼ 10 14 similar-to 𝑓 superscript 10 14 f\sim 10^{14}\, Hz) we get Δ ​ f broad ≲ 10 − 8 less-than-or-similar-to Δ subscript 𝑓 broad superscript 10 8 \Delta f_{\rm broad}\lesssim 10^{-8}\, Hz, which is negligible.
+
+Figure 4: Atmospheric transparency as a function of wavelength and bandwidth, using a Gaussian convolution. Data from Noll et al. ( 2012 ); Jones et al. ( 2013 ) for VLT Cerro Paranal at an altitude of 2640 m at median observing conditions with a precipitable water vapor of 2.5 2.5 2.5\, mm at zenith angle.
+
+4 Atmospheric effects
+
+Dispersion and turbulence absorb and distort pulses travelling through Earth’s atmosphere. Pulses are delayed compared to the speed of light in vacuum, broadened in length, and their temporal and spectral shapes are distorted. In addition, their amplitudes vary due to scintillation (“twinkling”), as discussed in paper 10 of this series and shown in Figure  4 .
+
+The effects mainly depend on wavelength, initial pulse duration, and turbulence characteristics. The total delay and pulse broadening effects are of order ps under most conditions.
+
+Figure 5: Left: Estimated scintillation as a function of wavelength, with curves for medium to low turbulence ( 10 − 15 < C 2 < 10 − 17 superscript 10 15 superscript 𝐶 2 superscript 10 17 10^{-15}<C^{2}<10^{-17} ) from space to ground. The red symbol shows the measurements taken with the 1 m Jacobus Kapteyn Telescope on La Palma under typical conditions (Osborn et al., 2015 ) . Right: Scintillation as a function of observational cadence, scaled following Figure 10 in Osborn et al. ( 2015 ) .
+
+4.1 Atmospheric scintillation
+
+Scintillation is a variation of the optical refractive index, caused by anomalous refraction through small-scale fluctuations in air density due to temperature gradients. It enlarges the point spread function of the telescope (Coulman et al., 1995 ) if not corrected for with adaptive optics (Hardy, 1998 ) . The strength of scintillation is measured as the variance of the beam amplitude (the Rytov variance, Andrews et al., 1988 )
+
+σ 2 = 1.23 ​ C 2 ​ k 7 / 6 ​ H 11 / 6 superscript 𝜎 2 1.23 superscript 𝐶 2 superscript 𝑘 7 6 superscript 𝐻 11 6 \sigma^{2}=1.23C^{2}k^{7/6}H^{11/6}
+
+(9)
+
+where k = 2 ​ π / λ 𝑘 2 𝜋 𝜆 k=2\pi/\lambda is the wave number, H is the scale height of the atmospheric turbulence (generally taken as H ∼ 8 , 000 similar-to 𝐻 8 000 H\sim 8{,}000\, m, Osborn et al., 2015 ) , and C 2 superscript 𝐶 2 C^{2} is the structure constant for refractive-index fluctuations as a measure of the optical turbulence strength. Observed values are C 2 = 1.7 × 10 − 14 ​ m − 2 / 3 superscript 𝐶 2 1.7 superscript 10 14 superscript m 2 3 C^{2}=1.7\times 10^{-14}\,{\rm m}^{-2/3} at ground level and C 2 = 2 × 10 − 18 ​ m − 2 / 3 superscript 𝐶 2 2 superscript 10 18 superscript m 2 3 C^{2}=2\times 10^{-18}\,{\rm m}^{-2/3} at a height of 14 km (Coulman et al., 1988 ; Kopeika et al., 2001 ; Zilberman et al., 2001 ) . Common distinctions for turbulence levels are 10 − 13 superscript 10 13 10^{-13} (strong), 10 − 15 superscript 10 15 10^{-15} (average), and 10 − 17 superscript 10 17 10^{-17} (weak) (Goodman, 1985 ; Zhu & Kahn, 2002 ) . Turbulence is particularly low at Dome C in Antarctica, about 2 … 4 × 2\dots 4\times lower than at other observatories such as Cerro Tololo, Cerro Pachón, La Palma, Mauna Kea, and Paranal (Kenyon et al., 2006 ; Osborn et al., 2015 ) . Longer wavelengths experience a smaller variance with a factor of a few between optical and NIR wavelengths (Figure  5 ).
+
+The median coherence time is typically 10 ​ … ​ 50 10 … 50 10\dots 50\, ms (Kenyon et al., 2006 ) , much longer than the relevant time scales of expected OSETI pulses (ns). In longer exposures, the scintillation noise will be reduced by temporal averaging (for details, see Osborn et al., 2015 ) . A common approximation for the time averaging is given by Young ( 1967 ) :
+
+σ Y 2 = 10 − 5 ​ D − 4 / 3 ​ t − 1 ​ ( cos ⁡ z ) − 3 ​ exp ⁡ ( − 2 ​ h / H ) superscript subscript 𝜎 𝑌 2 superscript 10 5 superscript 𝐷 4 3 superscript 𝑡 1 superscript 𝑧 3 2 ℎ 𝐻 \sigma_{Y}^{2}=10^{-5}D^{-4/3}t^{-1}(\cos z)^{-3}\exp{\left(-2h/H\right)}
+
+(10)
+
+where D 𝐷 D is the telescope aperture,
+z 𝑧 z the zenith distance,
+t 𝑡 t the observation cadence and
+h ℎ h the altitude. For a 1 s cadence of a meter-sized telescope under typical conditions, σ Y 2 ∼ 10 − 5 similar-to superscript subscript 𝜎 𝑌 2 superscript 10 5 \sigma_{Y}^{2}\sim 10^{-5} .
+
+In practice, there is a cutoff point around the coherence time. The turning point is set by the amount of spatial averaging of the scintillation (the telescope aperture) and the wind velocity.
+
+For the 1 m Jacobus Kapteyn Telescope on La Palma under typical conditions, the knee is observed around t ∼ 50 similar-to 𝑡 50 t\sim 50\, ms, below which scintillation changes to the short-exposure regime with amplitude variations of ∼ 20 similar-to absent 20 \sim 20\, % per 50 ms cadence (Osborn et al., 2015 ) . Another station in Graz/Austria measured 200 Hz (5 ms) as the maximum frequency of the atmospheric fluctuations (Prochazka et al., 2004 ; Kral et al., 2006 ) . Therefore, on ms and shorter timescales, scintillation will typically cause abrupt signal variations of 10 ​ … ​ 50 10 … 50 10\dots 50\, % every 1 ​ … ​ 50 1 … 50 1\dots 50  ms (Figure  5 ). Scintillation occurs as temporally autocorrelated (red) noise.
+
+4.2 Wavelength change from atmospheric refraction
+
+While light travels at c = 299 , 792 , 458 𝑐 299 792 458 c=299{,}792{,}458\, m s -1 in vacuum, its phase velocity v 𝑣 v is lower in a medium. In air, the refractive index is n ≈ 1.00027717 𝑛 1.00027717 n\approx 1.00027717 , so that light travels at v = c / n ≈ 299 , 709 , 388 formulae-sequence 𝑣 𝑐 𝑛 299 709 388 v=c/n\approx 299{,}709{,}388  m s -1 , causing a change in wavelength λ 𝜆 \lambda . The refractive index is mainly a function of pressure (altitude), water vapour, and carbon dioxide (Edlén, 1966 ) . At λ = 1 ​ μ 𝜆 1 𝜇 \lambda=1\,\mu m, the wavelength change amounts to Δ ​ λ ∼ 0.27 similar-to Δ 𝜆 0.27 \Delta\lambda\sim 0.27\, nm, which is of the same order as the bandwidth of a time-bandwidth limited pulse. The transmitter or receiver may choose to adjust for this. Corrections are possible to better than 10 − 8 superscript 10 8 10^{-8} , which makes the effect negligible (Edlén, 1966 ) .
+
+4.3 Arrival time variations from refraction
+
+The delay in the arrival time of a pulse can be critical or irrelevant, depending on the magnitude of the effect and the search paradigm. For single pulses strong enough to ensure a significant detection, it is irrelevant whether these are recorded a little bit earlier or later - they are detected in any case. Single pulses, however, are of little value, because one can never be sure of their astrophysical origin. After such an initial detection, the search for a repeating pulse will be crucial. The most convenient repetition scheme would be a constant repetition, where the variations in arrival time are smaller than the instrumental measurement uncertainty. Therefore, it is interesting to determine the absolute delay, as well as the change in delay over time.
+
+4.3.1 Absolute refractive delay
+
+The approximate delay for the travel time from space to ground for a refractive index of n ≈ 1.00027717 𝑛 1.00027717 n\approx 1.00027717 and an air scale height of H = 8 , 000 𝐻 8 000 H=8{,}000\, m is ≈ 7.5 absent 7.5 \approx 7.5\, ns at zenith ( ≈ 12 absent 12 \approx 12\, ns at 45 ∘ superscript 45 45^{\circ} elevation angle), with slight (0.5 ns) variations from wavelength, temperature, pressure and humidity. During the course of an hour-long observing session, the elevation angle changes, causing arrival time variations of typically 1 ​ … ​ 10 1 … 10 1\dots 10  ns. Searches for periodic signals require a correction for these effects. Detailed models for these parameters exist with experimental validation at the < 1 absent 1 <1\, ps level (Mendes, 2004 ) . Atmospheric correction models leave residuals of a few ps over an observing season (Wijaya & Brunner, 2011 ) .
+
+Figure 6: Left: Dispersion for a pulse with Δ ​ λ = 100 Δ 𝜆 100 \Delta\lambda=100\, nm and air distance of 20 km as a function of wavelength. The dispersion is < <\, ps for λ > 300 𝜆 300 \lambda>300\, nm. Right: Dispersive pulse broadening as a function of initial pulse duration. Colors show scenarios for travel distances from space to sea-level (red), mid ( 2 , 500 2 500 2{,}500  m, blue) and high ( 5 , 000 5 000 5{,}000  m, black) altitude. Initial pulses shorter than 10 − 12 superscript 10 12 10^{-12}\, s are very sensitive to dispersion, because the square of the pulse duration is smaller than the group delay dispersion. The effect becomes negligible for pulses longer than 10 − 12 superscript 10 12 10^{-12}\, s.
+
+4.3.2 Variations of the refractive delay
+
+Fluctuations in the index of refraction of the air cause speed of light variations that cause a different time delay for a laser pulse (Currie & Prochazka, 2014 ) . In practice, the effect has been measured with laser ranging observations to the Envisat satellite with the Graz Satellite Laser Ranging station (Prochazka et al., 2004 ; Kral et al., 2006 ) . From an altitude of 500 m to space and back, the atmospheric timing jitter was 0.6 ​ … ​ 1.0 0.6 … 1.0 0.6\dots 1.0\, ps, consistent with various models (Hulley & Pavlis, 2007 ) . For a pulse traveling from space to Earth once (not twice), the effect is about half this value ( 0.3 ​ … ​ 0.5 0.3 … 0.5 0.3\dots 0.5\, ps). At higher altitudes (e.g., 5 , 000 5 000 5{,}000\, m), the jitter is likely smaller by a factor of a few, perhaps of order 0.1 0.1 0.1\, ps.
+
+4.4 Pulse broadening through dispersion
+
+Since there are no perfectly monochromatic pulses (section  2.1 ), we have to consider the way in which a group of photons of different wavelengths travels through a medium such as Earth’s atmosphere. A laser pulse can be treated as an envelope of wave amplitudes which travels through a medium with a group velocity
+
+D λ = GVD × − 2 ​ π ​ c λ 2 ​ ( 10 − 24 ​ ps ​ nm − 1 ​ km − 1 ) subscript 𝐷 𝜆 GVD 2 𝜋 𝑐 superscript 𝜆 2 superscript 10 24 ps superscript nm 1 superscript km 1 D_{\lambda}={\rm GVD}\times\frac{-2\pi c}{\lambda^{2}}\,\,\,\,(10^{-24}\,{\rm ps\,nm}^{-1}\,{\rm km}^{-1})
+
+(11)
+
+where GVD ≈ 0.030036 GVD 0.030036 {\rm GVD}\approx 0.030036\, fs 2  mm -1 is the estimated group velocity dispersion in air (Ciddor, 1996 ) . For λ = 300 𝜆 300 \lambda=300\, nm ( λ = μ 𝜆 𝜇 \lambda=\,\mu m) and 8 km of air, we get D λ ≈ 0.5 subscript 𝐷 𝜆 0.5 D_{\lambda}\approx 0.5\, ps (0.05 ps).
+
+Dispersive pulse broadening also depends on the initial pulse duration T 0 subscript 𝑇 0 T_{0} . Initial pulses < <\, ps are very sensitive to dispersion, because the square of the pulse duration is smaller than the group delay dispersion. The effect becomes negligible for pulses > >  ps. For an originally unchirped Gaussian pulse with the duration T 0 subscript 𝑇 0 T_{0} , the pulse duration is increased to (Boyd, 2013 )
+
+T 2 = T 0 ​ 1 + ( 4 ​ ln ⁡ 2 ​ D 2 T 0 2 ) 2 subscript 𝑇 2 subscript 𝑇 0 1 superscript 4 2 subscript 𝐷 2 superscript subscript 𝑇 0 2 2 T_{2}=T_{0}\sqrt{1+\left(4\ln 2\frac{D_{2}}{T_{0}^{2}}\right)^{2}}
+
+(12)
+
+where the group delay dispersion D 2 subscript 𝐷 2 D_{2} per unit length (in units of s 2  m -1 ) is the group velocity dispersion. For initial pulse durations T 0 = 1 subscript 𝑇 0 1 T_{0}=1  ps over 20 km of air, T 2 ≈ 1.3 subscript 𝑇 2 1.3 T_{2}\approx 1.3\, ps. The effect becomes negligible ( < 1 absent 1 <1\, %) for pulses longer than a few ps (Figure  6 ).
+
+Figure 7: Pulse broadening (as a factor of the initial pulse duration) due to turbulence, as a function of initial pulse length. Distance: Space to sea-level. Each series of curves shows wavelengths of 300 nm (top), 500 nm (middle) and 1 , 000 1 000 1{,}000\, nm (bottom). Red: Strong turbulence ( C 2 = 10 − 14 superscript 𝐶 2 superscript 10 14 C^{2}=10^{-14}\, m, L = 10 𝐿 10 L=10\, m). Blue: medium turbulence ( C 2 = 10 − 16 superscript 𝐶 2 superscript 10 16 C^{2}=10^{-16}\, m, L = 10 𝐿 10 L=10\, m). Black: Quiet air ( C 2 = 10 − 17 superscript 𝐶 2 superscript 10 17 C^{2}=10^{-17}\, m, L = 1 𝐿 1 L=1\, m). Pulse broadening becomes negligible ( < 1 absent 1 <1\, %) for T 0 > subscript 𝑇 0 absent T_{0}>  ps in most cases and for T 0 > 0.1 subscript 𝑇 0 0.1 T_{0}>0.1  ns in all scenarios.
+
+4.5 Pulse broadening through turbulence
+
+Short optical signals passing through a turbulent medium such as Earth’s atmosphere are temporally distorted, so that the received pulse has a longer duration. A semi-analytical model by Young et al. ( 1998 ) valid for the far-field (Tjin-Tham-Sjin et al., 1998 ) gives
+
+T 2 = T 0 2 + 8 ​ α subscript 𝑇 2 subscript superscript 𝑇 2 0 8 𝛼 T_{2}=\sqrt{T^{2}_{0}+8\alpha}
+
+(13)
+
+where z 𝑧 z is the distance so that
+
+α = 0.322 ​ σ 2 ​ Q − 5 / 6 ( k ​ c ) 2 , Q = z k ​ L 2 . formulae-sequence 𝛼 0.322 superscript 𝜎 2 superscript 𝑄 5 6 superscript 𝑘 𝑐 2 𝑄 𝑧 𝑘 superscript 𝐿 2 \alpha=0.322\frac{\sigma^{2}Q^{-5/6}}{(kc)^{2}},\,\,\,Q=\frac{z}{kL^{2}}.
+
+(14)
+
+The model is valid for narrowband optical and IR pulses ( T 0 > 2 × 10 − 14 subscript 𝑇 0 2 superscript 10 14 T_{0}>2\times 10^{-14}\, s). For the stratosphere and up, pulse broadening is very low ( < 1 absent 1 <1\, %). Most relevant is the lowest layer, the troposphere, which contains ≈ 90 absent 90 \approx 90\, % of the air mass. Even in high turbulence, pulse broadening becomes negligible ( < 1 absent 1 <1\, %) for T 0 > 0.1 subscript 𝑇 0 0.1 T_{0}>0.1  ns. In more quiet, photometric conditions, we expect pulse broadening to reduce to < 0.1 absent 0.1 <0.1\, ps (Figure  7 ).
+
+We note that Lu et al. ( 2012 ) calculate pulse broadening to be more severe (about two orders of magnitude, at 10 ps). The authors use a theoretical framework by Marcuse ( 1981 ) for single-mode fibers which is likely not applicable to the atmosphere. Disagreements over which approximations describe reality best can be resolved by real-world measurements.
+
+These theoretical estimates are in agreement with practical results. The atmospheric scattering in free-space laser communications ( λ = 1.06 ​ μ 𝜆 1.06 𝜇 \lambda=1.06\,\mu m) is not relevant in practice for 10 ps ( 10 − 11 superscript 10 11 10^{-11}\, s) pulses unless strong turbulence is present (Majumdar & Ricklin, 2010 ) . The dependence of turbulent pulse broadening on wavelength is model-dependent and ranges between negligible Young et al. ( 1998 ) and a linear relation, with shorter wavelengths having stronger broadening (Kelly & Andrews, 1999 ) . In the latter model, temporal broadening is found to be very relevant for 10 ​ … ​ 30 10 … 30 10\dots 30  fs pulses and becomes irrelevant for > 100 absent 100 >100\, fs under all conditions (far field, near field, horizontal, vertical, strong turbulence) (Kelly & Andrews, 1999 ) .
+
+5 Barycentering
+
+Repeating signals may be periodic. The period can be constant or changing. A constant period can be constant in the ETI reference frame, or can be corrected to be constant (by ETI) for the Sun’s or the Earth’s reference frame. It is useful to understand the accuracy limits in order to perform the according periodicity tests for an assumed scenario.
+
+It appears unlikely that a distant (e.g., kpc) periodic transmitter would be corrected for Earth’s barycentric motion due to the dynamics of the solar system, such as nutation and precession of the Earth, over kyr of light time travel.
+
+As we do not know the ETI’s origin and thus reference frame (e.g., a transmitter in orbit around a star), we can only correct for the motion of known bodies. In our case, this is the Earth orbiting the sun.
+
+The classical light travel time across the Earth’s orbit (the Rømer delay) has a magnitude of ≲ 498 ​ cos ​ β less-than-or-similar-to absent 498 cos 𝛽 \lesssim 498\,{\rm cos}\,\beta seconds with β 𝛽 \beta as the ecliptic latitude of the source, over the course of half a year; a rate of < 3.2 × 10 − 5 absent 3.2 superscript 10 5 <3.2\times 10^{-5} . Over the course of a one hour observing session, this amounts to < 0.12 absent 0.12 <0.12\, s, and could smear any periodicity (of periodic signals) if uncorrected. Compared to this delay, other factors such as the Einstein and Shapiro delay are small ( < 1.6 absent 1.6 <1.6\, ms).
+
+Simple barycentric correction codes offer corrections down to 0.24 cm s -1 , or 29 ns over an hour (Wright & Eastman, 2014 ) . More complex implementations such as TEMPO2 (Hobbs et al., 2006 ) offer an accuracy of ≈ 0.5 absent 0.5 \approx 0.5\, ns over 1 hr and ≈ 100 absent 100 \approx 100\, ns over years (Edwards et al., 2006 ) . These corrections have been validated against many pulsars with timing residuals of ≈ 200 absent 200 \approx 200  ns over 10 yrs (Hobbs et al., 2010 )
+
+5.1 Spatial resolution
+
+In an all-sky at once observation (without high spatial resolution), barycentering corrections can not be made, because the ecliptic latitude of the source is unknown. With spatial resolution, the source location still has has uncertainties ( δ ​ α 𝛿 𝛼 \delta\alpha , δ ​ β 𝛿 𝛽 \delta\beta ) which give rise to periodic timing errors δ ​ t c 𝛿 subscript 𝑡 𝑐 \delta t_{c} resulting from incorrect barycentric correction (Lyne et al., 2006 )
+
+δ ​ t c = 𝛿 subscript 𝑡 𝑐 absent \displaystyle\delta t_{c}=
+A ​ δ ​ α ​ sin ​ ( ω ​ t − α ) ​ cos ​ β − limit-from 𝐴 𝛿 𝛼 sin 𝜔 𝑡 𝛼 cos 𝛽 \displaystyle A\,\delta\alpha\,{\rm sin}(\omega t-\alpha)\,{\rm cos}\beta-
+
+(15)
+
+A ​ δ ​ β ​ cos ​ ( ω ​ t − α ) ​ sin ​ β 𝐴 𝛿 𝛽 cos 𝜔 𝑡 𝛼 sin 𝛽 \displaystyle A\,\delta\beta\,{\rm cos}(\omega t-\alpha)\,{\rm sin}\beta
+
+which can amount to an absolute delay delta of a few seconds per degree on the sky. A source which is misidentified by one degree, and repeats periodically in the ETI reference frame, would change its period by ≲ 1 less-than-or-similar-to absent 1 \lesssim 1\, ms per hour in Earth’s reference frame.
+
+5.2 Wavelength Doppler shift
+
+Earth’s orbit ( ≲ 30 less-than-or-similar-to absent 30 \lesssim 30\, km s -1 ) and rotation ( ≲ 0.3 less-than-or-similar-to absent 0.3 \lesssim 0.3\, km s -1 ) result in Doppler shifts in the received radiation spectrum. The corresponding shift over the course of half a year is Δ ​ λ = λ 0 ​ v ​ c − 1 ∼ 0.1 Δ 𝜆 subscript 𝜆 0 𝑣 superscript 𝑐 1 similar-to 0.1 \Delta\lambda=\lambda_{0}vc^{-1}\sim 0.1\, nm. This is smaller than the atmospheric limit for pulses ( Δ ​ λ ∼ 1.5 similar-to Δ 𝜆 1.5 \Delta\lambda\sim 1.5\, nm for ps pulses, table  2 ). It is however larger by a factor of ∼ 10 similar-to absent 10 \sim 10 than classical spectroscopy, and needs to be corrected in this case.
+
+6 Instrumental effects
+
+Before discussing telescope and detector choices, we review the technology used in previous OSETI experiments.
+
+Table 3: Selection of previous pulsed OSETI detectors
+
+Obervatory
+Cadence (ns)
+
+λ 𝜆 \lambda (nm)
+Sensitivity ( γ 𝛾 \gamma  m − 2 2 {}^{-2}\, ns -1 )
+Reference
+
+MANIA 6 m
+100
+300 ​ … ​ 800 300 … 800 300\dots 800
+n/a
+Shvartsman et al. ( 1993 )
+
+Kingsley Columbus 0.25 m
+2
+300 ​ … ​ 650 300 … 650 300\dots 650
+n/a
+Kingsley ( 1995 )
+
+OZ Australia 0.4 m
+1
+300 ​ … ​ 650 300 … 650 300\dots 650
+n/a
+Bhathal ( 2000 , 2001 )
+
+Lick 1 m Nickel
+5
+450 ​ … ​ 850 450 … 850 450\dots 850
+51
+Wright et al. ( 2001 )
+
+Harvard Oak Ridge 1.5 m
+5
+450 ​ … ​ 650 450 … 650 450\dots 650
+100
+Howard et al. ( 2004 )
+
+Princeton Fitz Randolph 0.9 m
+5
+450 ​ … ​ 850 450 … 850 450\dots 850
+80
+Howard et al. ( 2004 )
+
+STACEE heliostats
+12
+300 ​ … ​ 600 300 … 600 300\dots 600
+10
+Hanna et al. ( 2009 )
+
+Leuschner 0.8 m
+5
+300 ​ … ​ 700 300 … 700 300\dots 700
+41
+Korpela et al. ( 2011 )
+
+Harvard 1.8 m
+5
+300 ​ … ​ 800 300 … 800 300\dots 800
+60
+Mead ( 2013 )
+
+Lick 1 m NIROSETI
+1
+950 ​ … ​ 1650 950 … 1650 950\dots 1650
+40
+Maire et al. ( 2014 )
+
+Veritas 12 m
+50
+300 ​ … ​ 500 300 … 500 300\dots 500
+1
+Abeysekara et al. ( 2016 )
+
+Boquete 0.5 m
+5
+350 ​ … ​ 600 350 … 600 350\dots 600
+67
+Schuetz et al. ( 2016 )
+
+Table 4: Comparison of observation choices
+
+Bandwidth (nm)
+Cadence
+G2V star at d = 100 𝑑 100 d=100\, pc
+5 ∘ × 5 ∘ superscript 5 superscript 5 5^{\circ}\times 5^{\circ}
+All-sky
+
+1 , 000 1 000 1{,}000
+s
+10 6 superscript 10 6 10^{6}
+10 11 superscript 10 11 10^{11}
+10 14 superscript 10 14 10^{14}
+
+1 , 000 1 000 1{,}000
+ns
+10 − 3 superscript 10 3 10^{-3}
+100 100 100
+10 5 superscript 10 5 10^{5}
+
+1 , 000 1 000 1{,}000
+ps
+10 − 6 superscript 10 6 10^{-6}
+0.1 0.1 0.1
+100 100 100
+
+1 1 1
+ps
+10 − 9 superscript 10 9 10^{-9}
+10 − 4 superscript 10 4 10^{-4}
+0.1 0.1 0.1
+
+Fluxes in photons per square meter.
+
+6.1 Previous searches
+
+Searches for continuous and pulsed laser signals began in the 1970s with efforts by Shvartsman ( 1977 ); Beskin et al. ( 1997 ) . Using small telescopes, fast PMTs entered the field in the 1990s (Kingsley, 1993a , 1995 ) and were soon widely adopted (e.g., Wright et al., 2004 ; Stone et al., 2005 ) . All modern searches for pulsed signals used PMTs with cadences of order ns (Table  3 ).
+
+Searches with Cherenkov telescopes have been suggested by Eichler & Beskin ( 2001 ); Holder et al. ( 2005 ) , and performed by e.g., Abeysekara et al. ( 2016 ) . Heliostats entered the field at about the same time (Ong et al., 1996 ; Hanna et al., 2009 ) .
+
+Only recently, quantum efficiency became sufficiently high to allow for useful nanosecond IR detectors, in discrete avalanche photodiodes (DAPDs) (Wright et al., 2014 ; Maire et al., 2014 , 2016 ) . While this project searches mainly for individual strong pulses, it uses a (weak) MHz pulsed lasers for tests.
+
+Observations have mostly focused on FGK stars and individual objects, such as the anomalous star KIC 8462852 (Schuetz et al., 2016 ; Abeysekara et al., 2016 ) , and exoplanet host stars Trappist-1, GJ 422 and Wolf 1061 (Welsh et al., 2018 ) .
+
+The Harvard all-sky survey used a 1.8 m telescopes with 16 PMTs, each with 64 pixels, scanning a field-of-view of 1.6 ∘ × 0.2 ∘ superscript 1.6 superscript 0.2 1.6^{\circ}\times 0.2^{\circ} ( 4 × 10 − 6 4 superscript 10 6 4\times 10^{-6} of one sky hemisphere). Following Table  4 , the expected broadband flux per pixel is 10 − 3 superscript 10 3 10^{-3} per 5 ns cadence Mead ( 2013 ) . This shows that broadband large field-of-view observations are possible even at “slow” ns cadence, using higher spatial resolution.
+
+Spectroscopic (continuous wave) searches have been suggested (Betz, 1993 ) and performed (Reines & Marcy, 2002 ; Tellis & Marcy, 2017 ) for ∼ 5 , 600 similar-to absent 5 600 \sim 5{,}600 FGKM stars with power thresholds between 3 kW and 13 MW in a wavelength range 364 < λ < 789 364 𝜆 789 364<\lambda<789  nm.
+
+6.2 Telescope
+
+Light travels very slowly at 30 cm ns -1 . This is relevant at short cadence, where all light from a collector must arrive at the detector within the same cadence, otherwise temporal smearing occurs, reducing the signal amplitude, and thus sensitivity. We now examine three exemplary telescope designs relevant for OSETI.
+
+6.2.1 Classical telescopes
+
+In a parabolic telescope mirror, parallel rays are perfectly focused to a point (the mirror is free of spherical aberration), no matter where they strike the mirror. However, this is only the case for rays that are parallel to the axis of the parabola, i.e. in the center of the field of view. Rays entering at an angle of a nonzero field of view will suffer from coma. This and higher order aberrations can be reduced with correctors, at the expense of additional throughput losses and costs. For typical parabolic reflectors, coma and astigmatism are < 10 ​ μ absent 10 𝜇 <10\,\mu m for a field of view of a few degrees. The corresponding light time travel difference is < 10 absent 10 <10\, fs, i.e. negligible. For meter-sized telescopes, practical limits to the field of view are of order 5 ∘ superscript 5 5^{\circ} (Roy, 2009 ) . The LSST will have a FOV of 5 ∘ superscript 5 5^{\circ} (Claver et al., 2004 ; Neill et al., 2016 ) . These limits keep light time travel differences <  50 absent 50 <\,50\, fs, which means that atmospheric effects are larger by at least an order of magnitude. Similarly, mirror surface roughness of typically < λ / 4 absent 𝜆 4 <\lambda/4 results in negligible ( < <\, fs) arrival time variations.
+
+In case of multiple coincidence detectors, a precise alignment is required which takes into account the light travel time. For example, a ps cadence corresponds to a distance of 0.3 mm.
+
+6.2.2 Fresnel lenses
+
+Fresnel lenses are thinner (typically mm), lighter and cheaper than classical lenses, as they divide the lens into a set of concentric annular sections. The finite size of these sections (typically mm) makes them much cheaper (hundreds of USD for a meter-sized aperture), but also of inferior optical quality, compared to classical lenses or parabolic mirrors. They can be made of plastics or acrylic, and their transparency can be of order unity for optical and IR wavelengths (Figure  8 ). Fresnel lenses are not diffraction limited, but can focus light to a mm spot size, so that their isocronicity error is a few ps (Costa et al., 2007 ) . They have a large field of view, up to 30 ∘ × 30 ∘ superscript 30 superscript 30 30^{\circ}\times 30^{\circ} . It has been suggested to build a dedicated OSETI instrument in a dome, with an array of Fresnel lenses and detectors to cover the entire sky (Covault, 2013 ) . There are also plans to use Fresnel lenses for Cherenkov telescopes (Cusumano et al., 2002 ; Maccarone et al., 2008 ; Arruda & GAW collaboration, 2010 ) .
+
+6.2.3 Cherenkov Telescopes
+
+Cherenkov Telescopes for the detection of very-high-energy gamma-ray photons offer large apertures for competitive prices. A Cherenkov telescope with a 12 m aperture and 15 ∘ superscript 15 15^{\circ} field of view would exceed the étendue of LSST by a factor of 10 (Vassiliev et al., 2007 ) . However, these telescopes are not isochronous. For example, the common Davies-Cotton telescope type with a total mirror area of order 10 10 10\, m 2 located in 18 hexagonal facets of 0.78 m has an optical time spread of Δ ​ t ≲ 0.84 less-than-or-similar-to Δ 𝑡 0.84 \Delta t\lesssim 0.84\, ns rms (Moderski et al., 2013 ) . Its primary reflector forms a spherical structure towards the focal point, allowing for smaller aberrations off the optical axis compared to a parabolic design. Similarly, the H.E.S.S.-I telescope has a Δ ​ t ∼ 5 similar-to Δ 𝑡 5 \Delta t\sim 5\, ns (rms ∼ 1.4 similar-to absent 1.4 \sim 1.4\, ns) (Akhperjanian & Sahakian, 2004 ; Schliesser & Mirzoyan, 2005 ) . Larger telescopes with the Davies-Cotton design would suffer from larger time spread (Davies & Cotton, 1957 ; Vassiliev et al., 2007 ) . The effect could be reduced to ≲ 0.3 less-than-or-similar-to absent 0.3 \lesssim 0.3\, ns by mounting the tessellated parabolic mirror facets staggered in depth (Dravins et al., 2013 ) .
+
+Telescope designs such as the Schwarzschild-Couder (Schwarzschild, 1905 ) offer isochronous large unvigneted fields of view, up to 12 ∘ superscript 12 12^{\circ} (Vassiliev et al., 2007 ; Vassiliev & Fegan, 2008 ) . The isochronicity however is only valid on axis. Rays from the large field of view have a delay of ∼ 0.3 similar-to absent 0.3 \sim 0.3\, ns per degree (Figure 10 from Vassiliev et al., 2007 ) . In principle, this effect is correctable by delaying the pixels in the detector accordingly. If the detector has many ( 10 4 superscript 10 4 10^{4} ) pixels, the field of view per pixel is small ( ∼ similar-to \sim  arcmin), so that the time smear effect per pixel is small ( ∼ 5 similar-to absent 5 \sim 5\, ps). There are plans to build detectors with many ( 10 4 superscript 10 4 10^{4} ) pixels (Actis et al., 2011 ; Acharya et al., 2013 ; Dickinson et al., 2018 ) .
+
+Figure 8: Transparency as a function of wavelength for acrylic Fresnel lenses. Source: Thorlabs.
+
+6.2.4 Heliostats
+
+The problem of light time travel variations is particularly severe for extended light collectors such as heliostats, as used by STACEE, with 64 individual heliostats (each 37 m 2 ) and a total collecting area of 2 , 300 2 300 2{,}300\, m 2 (Hanna et al., 2009 ) . Synchronization was increased with separate detectors for groups of heliostats. Still, cadence was limited to 12 ns.
+
+Table 5: Detector technologies available for OSETI
+
+Detector
+Wavelength
+Temp. (K)
+QE (%)
+Time jitter Δ ​ t Δ 𝑡 \Delta t (ps)
+Dark count rate
+Max count rate (MHz)
+
+PMT
+optical
+300
+40
+300
+100 Hz
+10
+
+PMT
+IR
+200
+2
+300
+200 kHz
+10
+
+Si SPAD
+optical
+250
+65
+400
+25 Hz
+10
+
+InGaAs SPAD
+IR
+240
+10
+55
+16 kHz
+100
+
+Frequency up-conversion
+IR
+300
+2
+40
+20 kHz
+10
+
+SNSPD
+IR
+1.5
+57
+30
+1 Hz
+1000
+
+Data from Hadfield ( 2009 )
+
+6.3 Detector
+
+An ideal detector would have a 100 % quantum efficiency, zero noise and dead time after a signal, and perfect time resolution. Commercial PMTs offer bandwidths of ≈ 100 absent 100 \approx 100\, %, quantum efficiencies of ≈ 50 absent 50 \approx 50\, %, dark rates of a few hundred Hz when cooled, reset times of ≈ 3 absent 3 \approx 3\, ns and timing jitter of ≈ 0.1 absent 0.1 \approx 0.1\, ns (Abbasi et al., 2010 ) . We show an overview of useful detector types for OSETI in Table  5 .
+
+Superconducting nanowire single-photon detectors (SNSPDs) require cooling to a few K (Zhang et al., 2003 ) and provide ultrahigh counting rates exceeding 1 GHz (Tarkhov et al., 2008 ) . Originally, their timing jitter was similar to PMTs, ∼ 0.15 similar-to absent 0.15 \sim 0.15  ns (Gol’tsman et al., 2001 ; Marsili et al., 2013 ) . Latest improvements reduce timing jitter to very low values ( < 18 absent 18 <18  ps FWHM, Shcheslavskiy et al., 2016 ) , at low intrinsic dark count rate ( ≪ much-less-than \ll  kHz, Gemmell et al., 2017 ) , and short recovery times ( < 20 absent 20 <20\, ns, Gemmell et al., 2017 ) . Quantum efficiency is near unity in the optical and IR for single photons (93 %, Marsili et al., 2013 ) .
+
+Single Photon Avalanche Photodiodes (SPADs) offer a time resolution of ∼ 50 similar-to absent 50 \sim 50\, ps, but a maximum count rate of 8 MHz (125 ns) (Billotta et al., 2009 ; Zampieri et al., 2015 ) .
+
+Microwave Kinetic Inductance Detectors (MKIDs) provide large arrays at maximum count rates of ∼ 10 3 similar-to absent superscript 10 3 \sim 10^{3} counts/pixel/s with μ 𝜇 \mu s timing (McHugh et al., 2012 ; Mazin et al., 2012 ) .
+
+Timing resolutions of OSETI instruments have improved from 100 ns (Shvartsman, 1977 ) to 20 ns (Shvartsman et al., 1997 ) and finally 1 ns (Maire et al., 2014 ) , a decrease by two orders of magnitude over 50 years.
+
+6.4 Electronics
+
+Detectors can only be as fast as the readout electronics. Typical commercial sampling equipment works at GHz frequencies, and devices up to 10 GHz (0.1 ns) are common. Free-space optical communication is common at 0.56 ns cadence (1.8 GHz) (Brandl et al., 2014 ; Ferraro et al., 2015 ) . The fastest commercially available signal processing oscilloscopes sample at 100 GHz, or 10 − 11 superscript 10 11 10^{-11}\, s (Foster et al., 2008 ; Füser et al., 2012 ) . In the laboratory, petahertz optical oscilloscopes ( 10 − 15 superscript 10 15 10^{-15}\, s) have been demonstrated (Kim et al., 2013 ) .
+
+In practice, fast detectors such as SNSPDs can be sampled at ∼ 10 similar-to absent 10 \sim 10\, ps time resolution as long as the count rate is ≲ 10 less-than-or-similar-to absent 10 \lesssim 10\, MHz (dead time 100 ns), as demonstrated by Shcheslavskiy et al. ( 2016 ) using commercial equipment.
+
+7 Noise
+
+7.1 Stochastic background
+
+Measurements of the night sky brightness are available for many observatory sites, such as
+La Palma (21.9 mag arcsec -2 in V-band, Benn & Ellison, 1998 ) ,
+San Pedro Martir (Mexico) (21.84, Plauchu-Frayn et al., 2017 ) ,
+Calar Alto (22.01, Sánchez et al., 2007 ) and
+Dome A in Antarctica (23.4, Sims et al., 2012 ; Yang et al., 2017 ) .
+
+A detailed model of the night sky spectrum (Cerro Paranal Advanced Sky Model) is consistent with these values 1 1 1 For the conversion of light-intensity units, see Benn & Ellison ( 1998 , Appendix) (Noll et al., 2012 ; Jones et al., 2013 ) . This is also consistent with measurements using a large field-of-view telescope with a PMT, resulting in 2 × 10 12 2 superscript 10 12 2\times 10^{12} γ 𝛾 \gamma\, s -1  sr -1  m -2 for 300 < λ < 650 300 𝜆 650 300<\lambda<650\, nm for dark sky regions such as Sculptor or Virgo, and about twice the value for bright regions such as Carina towards the galactic plane (Hampf et al., 2011 ) , in agreement with measurements from Namibia (Preuß et al., 2002 ) and La Palma (Mirzoyan & Lorenz, 1994 ) .
+
+Based on these counts, the total radiance for one sky hemisphere ( 2.7 × 10 11 2.7 superscript 10 11 2.7\times 10^{11}\, arcsec 2 ) is ≈ 10 14 ​ γ absent superscript 10 14 𝛾 \approx 10^{14}\,\gamma\, s − 1 1 {}^{-1}\, m -2 . With a 1 nm filter centered at λ = 1.064 ​ μ 𝜆 1.064 𝜇 \lambda=1.064\,\mu m, the radiance is < 10 11 ​ γ absent superscript 10 11 𝛾 <10^{11}\,\gamma\, s − 1 1 {}^{-1}\, m -2 , or about half that value for telescope and receiver efficiencies of 50 %. This is still ≲ 100 ​ γ less-than-or-similar-to absent 100 𝛾 \lesssim 100\,\gamma\, ns − 1 1 {}^{-1}\, m -2 . The all-sky background would be very small ( ≲ 0.1 less-than-or-similar-to absent 0.1 \lesssim 0.1 ) at a picosecond observation cadence, or when observing a fraction of the sky.
+
+In a typical wide-field telescopes with a fields-of-view of 5 ∘ × 5 ∘ superscript 5 superscript 5 5^{\circ}\times 5^{\circ} ( ∼ 1 / 1 , 000 similar-to absent 1 1 000 \sim 1/1{,}000 of the sky, section  6.2 ), noise levels reduce to 0.1 photons per ps cadence for a bandwidth of 1 , 000 1 000 1{,}000\, nm (Table  4 ).
+
+7.2 Short natural astrophysical pulses
+
+A detailed study of astrophysical phenomena found that the shortest timescale of (known) natural signals in the optical appears to be of microsecond duration and longer (Howard & Horowitz, 2001 ) . If that is true, no optical “RFI” exists at ns or ps cadence. The discovery of such a source would be of great interest in any case.
+
+Terrestrial interference comes from Air Cerenkov flashes produced by cosmic rays and γ 𝛾 \gamma -rays. These have typical durations of ∼ 5 similar-to absent 5 \sim 5\, ns and can be distinguished by imageable tracks in multi-pixel detectors (Eichler & Beskin, 2001 ) . Similarly, OSETI observations have been triggered by airplane positioning lights with μ 𝜇 \mu s durations. These signals can be flagged with a dome camera which detects bright moving objects. Such events are not periodic on the relevant time scales (Mead, 2013 ) .
+
+Figure 9: Received photons per timeslot in the lunar laser ranging experiment (red, Murphy et al., 2008 ) versus expected photons following a Poisson distribution (blue). To explain the 6, 7 and 8 photon events, the flux level has to be 6 × 6\times higher, which can not be explained with better atmospheric transparency which is of order 50 %. The difference can only be due to laser power variations and pointing quality fluctuations .
+
+7.3 Poissonian photon pileup
+
+Using beamsplitters and multiple coincidence detectors, the false positive rate can be reduced. In the absence of any true pulsed signal, the expected number of coincidences R 𝑅 R is (Wright et al., 2001 ; Coldwell, 2002 )
+
+R = ( r n ) n ​ η PMT ​ T n − 1 𝑅 superscript 𝑟 𝑛 𝑛 subscript 𝜂 PMT superscript 𝑇 𝑛 1 R=\left(\frac{r}{n}\right)^{n}\,\eta_{\rm PMT}\,T^{n-1}\,
+
+(16)
+
+where n ≥ 1 𝑛 1 n\geq 1 is the number of detectors, r 𝑟 r is the number of photons per second, T 𝑇 T is the pulse width, and η 𝜂 \eta is the detector efficiency. For example, a rate of 10 6 superscript 10 6 10^{6} detected photons per second leads to 9 × 10 5 9 superscript 10 5 9\times 10^{5} coincidences per hour with two detectors, and 133 per hour with 3 detectors for η = 1 𝜂 1 \eta=1 . Using a more realistic η = 0.2 𝜂 0.2 \eta=0.2 , it reduces to 27 hr -1 . The downside of this false positive signal reduction by multiple coincidence detection is a loss in sensitivity to < 1 / n absent 1 𝑛 <1/n .
+
+For the search paradigm of repeating signals, false positives (or a noise floor) are not critical, as these effects vanish with well-known search methods for periodicity, such as FFTs, periodograms and autocorrelation.
+
+In practice, data might occur not to exhibit strict Poisson noise, as is observed in lunar laser ranging, which measures the distance between the Earth and the moon with the light travel time from Earth-based lasers bounced back by retro-reflectors placed on the lunar surface (Murphy et al., 2008 , 2012 ) . These observations originally used few high power pulses (Shelus, 1985 ; Samain et al., 1998 ; Murphy, 2013 ) , but recently moved towards lower pulse energies at much higher repetition frequency (80 MHz) Nd:YAGs at λ = 1064 𝜆 1064 \lambda=1064\, nm and λ = 532 𝜆 532 \lambda=532\, nm with typical widths Δ ​ λ ∼ 0.19 similar-to Δ 𝜆 0.19 \Delta\lambda\sim 0.19\, nm in combination with short (10 ps) pulse durations (Adelberger et al., 2017 ) . Many weaker pulses have the advantage that their arrival time errors can be averaged, and a finite amount of monetary investment buys more average laser power (at lower peak power). This concept has been proposed for OSETI by Leeb et al. ( 2013 ) .
+
+Lunar laser ranging observations have been found to exhibit a strong shot-to-shot variability ascribed to speckle structure and other scintillation (“seeing”) effects. At an average return rate of 0.23 photons per pulse, statistics would expect < 20 absent 20 <20  % of the returns to be in multiple-photon bundles, and no events with more than four photons in a 10 , 000 10 000 10{,}000 -shot run. In practice (Murphy et al., 2008 ) , 46 46 46\, % of the returning photons were in multiple-photon bundles, with up to 8 photons detected in one cadence (Figure  9 ). For OSETI, the pointing quality is irrelevant, as the ETI laser would illuminate all of Earth equally. Atmospheric scintillation, however, may contribute 10 ​ … ​ 50 10 … 50 10\dots 50\, % of flux variation, and may lead to higher than expected photon pile-up.
+
+Table 6: Summary of effects on short pulses ( λ 0 = 1 ​ μ subscript 𝜆 0 1 𝜇 \lambda_{0}=1\,\mu m, Δ ​ λ = 1 Δ 𝜆 1 \Delta\lambda=1\, nm)
+
+Component
+Effect
+Comment
+Section
+
+\toprule Physical limits:
+
+2
+
+– Time-bandwidth limit
+
+≈ \approx\, ps
+Choice based on λ 0 subscript 𝜆 0 \lambda_{0} and Δ ​ λ Δ 𝜆 \Delta\lambda
+
+2.1
+
+– Schawlow-Townes
+
+Δ ​ f laser ≪ much-less-than Δ subscript 𝑓 laser absent \Delta f_{\rm laser}\ll\, Hz
+Irrelevant
+2.2
+
+– Pulse shape
+
+∼ 10 similar-to absent 10 \sim 10\, % of pulse duration
+Irrelevant
+2.3
+
+Interstellar:
+
+3
+
+– Dispersion
+
+≈ \approx\, ps
+Constant delay; variation < 1 absent 1 <1\, %
+3.1
+
+– Scatter broadening
+
+< <\, fs
+Irrelevant
+3.2
+
+– Spectral broadening
+
+< 10 − 8 absent superscript 10 8 <10^{-8}  Hz
+Irrelevant
+3.3
+
+Atmospheric:
+
+4
+
+– Scintillation
+
+≲ 20 less-than-or-similar-to absent 20 \lesssim 20\, % variance
+Typical frequency ≈ 200 absent 200 \approx 200\, Hz
+4.1
+
+– Wavelength change (refraction)
+
+≲ 0.3 less-than-or-similar-to absent 0.3 \lesssim 0.3\, nm
+Correctable to < 10 − 4 absent superscript 10 4 <10^{-4}\, nm
+4.2
+
+– Absolute refractive delay
+
+≲ 10 less-than-or-similar-to absent 10 \lesssim 10\, ns
+Correctable to ∼ similar-to \sim\, ps
+4.3.1
+
+– Refractive delay variations
+
+≲ 0.5 less-than-or-similar-to absent 0.5 \lesssim 0.5\, ps
+Likely not correctable
+4.3.2
+
+– Pulse broadening (dispersion)
+
+T 2 ≲ 0.3 less-than-or-similar-to subscript 𝑇 2 0.3 T_{2}\lesssim 0.3\, ps for T 0 = 1 subscript 𝑇 0 1 T_{0}=1\, ps
+For medium turbulence
+4.4
+
+– Pulse broadening (turbulence)
+
+T 2 ≲ 0.1 less-than-or-similar-to subscript 𝑇 2 0.1 T_{2}\lesssim 0.1\, ps for T 0 = 1 subscript 𝑇 0 1 T_{0}=1\, ps
+For medium turbulence
+4.5
+
+Barycentering
+
+< 0.12 absent 0.12 <0.12\, s per hour
+Correctable to ≲ 0.5 less-than-or-similar-to absent 0.5 \lesssim 0.5\, ns per hour
+5
+
+– Finite spatial resolution
+
+< <\, ms per degree per hour
+Relevant for periodic signals
+5.1
+
+– Spectral Doppler shift
+
+< 0.1 absent 0.1 <0.1\, nm per 6 months
+Correctable to < 10 − 4 absent superscript 10 4 <10^{-4}\, nm
+5.2
+
+Telescope
+
+6.2
+
+– Parabolic reflector
+
+< 10 absent 10 <10\, fs
+Instrument alignment relevant
+6.2.1
+
+– Fresnel lenses
+
+∼ 3 similar-to absent 3 \sim 3\, ps
+
+6.2.2
+
+– Cherenkov telescopes
+
+∼ 0.3 similar-to absent 0.3 \sim 0.3  ns per degree
+Correctable with multipixel detectors to ∼ 5 similar-to absent 5 \sim 5\, ps
+6.2.3
+
+– Heliostats
+
+∼ 10 similar-to absent 10 \sim 10\, ns
+
+6.2.4
+
+Detector
+
+> 30 absent 30 >30\, ps
+Depending on type, see Table  5
+
+6.3
+
+Electronics
+
+> 10 absent 10 >10\, ps
+See text
+6.4
+
+8 Summary of results
+
+All relevant effects are summarized in Table  6 . Interstellar effects are irrelevant in all cases. Pulses are broadened by ≲ 0.3 less-than-or-similar-to absent 0.3 \lesssim 0.3\, ps by dispersion and ≲ 0.1 less-than-or-similar-to absent 0.1 \lesssim 0.1\, ps by turbulence in the atmosphere. Time of arrival variations are dominated by changes in refraction to ≲ 0.5 less-than-or-similar-to absent 0.5 \lesssim 0.5\, ps. Most atmospheric effects are also a function of wavelength, and are factor of a few less severe for NIR compared to optical.
+
+Given these atmospheric limits, pulses shorter than ps are not realistic for ground-based detectors. Such ps pulses have time-bandwidth limits of Δ ​ λ ∼ similar-to Δ 𝜆 absent \Delta\lambda\sim\, nm at λ 0 = 1 ​ μ subscript 𝜆 0 1 𝜇 \lambda_{0}=1\,\mu m. This corresponds to a fractional bandwidth Δ ​ λ / λ 0 ∼ 0.001 similar-to Δ 𝜆 subscript 𝜆 0 0.001 \Delta\lambda/\lambda_{0}\sim 0.001 . As can be seen in Figure  4 , there are windows of atmospheric transparency (discussed in detail in paper 10 of this series) of order unity even for large bandwidths, Δ ​ λ / λ 0 ≲ 0.1 less-than-or-similar-to Δ 𝜆 subscript 𝜆 0 0.1 \Delta\lambda/\lambda_{0}\lesssim 0.1 .
+
+Periodic signals are additionally affected by barycentering issues. While spectral Doppler shifts are correctable, current timing codes are limited to an accuracy of order ns per hour. This accuracy may be improved in the future with more detailed models and calibrations by many pulsars. For repeating ps pulses which occur e.g. at kHz repetition over a few seconds, current corrections are sufficient. Over longer times (years), many subtle adjustments would need to be made. For example, continental drifts are a few cm per year, which translates to ≳ 100 greater-than-or-equivalent-to absent 100 \gtrsim 100\,\, ps yr -1 (or ≳ 0.3 greater-than-or-equivalent-to absent 0.3 \gtrsim 0.3\,\, ps day -1 ). It appears sensible to restrict searches of periodic ps pulses to short time durations of order minutes.
+
+9 Discussion
+
+9.1 Short signals through spectroscopy
+
+There is one additional method for OSETI, which is widely ignored in the literature. It is based on spectra which are Fourier transformed to search for periodic modulations. In this section, we explain the method and discuss its advantages and issues.
+
+The spectral modulation of coherently separated laser pulses was first noted by Chin et al. ( 1992 ) and subsequently studied in Borra ( 2010a , b , 2012 ) with the motivation to apply the method to astronomical data. Astronomical spectra are sampled at equal wavelength intervals, λ = c / f 𝜆 𝑐 𝑓 \lambda=c/f where Δ ​ λ = const Δ 𝜆 const \Delta\lambda={\rm const} . To search for signals with a constant temporal period, these spectra must be converted to equal frequency intervals f = c / λ 𝑓 𝑐 𝜆 f=c/\lambda with Δ ​ f = const Δ 𝑓 const \Delta f={\rm const} . With constant frequency intervals, a Spectral Fourier transform (SFFT) can me made which produces power for signals with a constant temporal period, such as repeating laser pulses.
+
+Searches for such periodic temporal modulations were reported for SDSS spectra of individual stars (Borra & Trottier, 2016 ; Borra, 2017 ) as well as galaxies (Borra, 2013 ) . Detections were claimed with repetition frequencies (not pulse durations) of ≈ 10 − 13 absent superscript 10 13 \approx 10^{-13}\, s.
+
+For repetition frequencies of ≈ 10 − 13 absent superscript 10 13 \approx 10^{-13}\, s, the pulse duration must be shorter than this value. Due to atmospheric pulse broadening, this appears impossible, and the results are likely instrumental artifacts. In general, however, the method appears to be useful for signals with longer repetition frequencies, but would require independent confirmation with another method in case a signal would be detected.
+
+SFFTs are not sensitive to the pulse length, but instead to the duration between pulses ( ρ ) \rho) , where 1 / ρ 1 𝜌 1/\rho is the pulse repetition rate. SFFTs’ sensitivity region is constrained by the spectral resolution, typically 2.5 × 10 − 15 ​ … ​ 4 × 10 − 12 2.5 superscript 10 15 … 4 superscript 10 12 2.5\times 10^{-15}\dots 4\times 10^{-12}\, s for optical spectra with R ≈ 10 , 000 𝑅 10 000 R\approx 10{,}000 and can be increased to longer spacings ( 10 − 11 superscript 10 11 10^{-11}\, s) with higher resolution ( R = 100 , 000 𝑅 100 000 R=100{,}000 ) spectrographs. The spectrograph “ESPRESSO” is expected to deliver a resolution of R = 200 , 000 𝑅 200 000 R=200{,}000 between 380 < λ < 780 380 𝜆 780 380<\lambda<780  nm at 5 % efficiency, a linewidth of 0.001 nm (González Hernández et al., 2017 ) .
+
+As the method of spectral Fourier transforms (SFFT) is not intuitive and requires careful implementation, we provide an open-source Python solution for future tests 2 2 2 http://github.com/hippke/laserpulses .
+The sensitivity of SFFTs is limited to about 10 − 5 superscript 10 5 10^{-5} of the stellar flux in SDSS spectra, if the star is blended with the hypothetical laser source. For a L = L ⊙ 𝐿 subscript 𝐿 direct-product L=L_{\odot} star and a competing laser with D t = D r = 10 subscript 𝐷 t subscript 𝐷 r 10 D_{\rm t}=D_{\rm r}=10\, m at λ = 1 ​ μ 𝜆 1 𝜇 \lambda=1\,\mu m, this SNR can be achieved with an average laser power of 3.5 MW independently of distance. For comparison, military laser weapons are being developed with ≈ 0.2 absent 0.2 \approx 0.2\, MW power. For faster survey speeds, multiple spectra can be obtained in parallel, as was done by SDSS.
+
+Overall, SFFTs are appealing for signals with very high repetition rates. They are limited to 10 − 10 superscript 10 10 10^{-10}\,  s < ρ < 10 − 12 absent 𝜌 superscript 10 12 \,<\rho<10^{-12}\, s, with limits set by the resolution of spectroscopy and atmospheric pulse broadening.
+
+9.2 Data volume of a ps cadence broadband all-sky survey
+
+We now estimate the data volume and computing power requirements for observations at high (ps) cadence. For an all-sky survey, the stochastic sky-integrated background of starlight and atmospheric noise is ≈ 10 14 ​ γ absent superscript 10 14 𝛾 \approx 10^{14}\,\gamma\, s -1  sr -1  m -2 for optical and NIR wavelengths. Sampled at ps cadence, at least 100 channels (spatial or color) would be required for less than unity flux per cadence, in order to push noise to less than one photon per cadence.
+
+Every cadence and channel could be sampled with e.g., one byte of data to allow for 256 distinct values. The data stream is then 100 GB s -1 . For comparison, the Breakthrough Listen Radio Data Recorder (MacMahon et al., 2018 ) saves 24 GB s -1 of data to disk. Their computing facilities also allow for real-time de-dispersion and pulse search. It appears that an all-sky optical and NIR survey at ps cadence would not require implausible computing requirements.
+
+10 Conclusion
+
+We have examined the influence of interstellar and atmospheric effects on short pulses. We find that pulse durations are limited to ps due to refraction and dispersion.
+
+With current technology, timing ( Δ ​ t ∼ 10 − 9 similar-to Δ 𝑡 superscript 10 9 \Delta t\sim 10^{-9}\, s) is a better filter than frequency ( ∼ 10 − 6 ​ Δ ​ λ / λ 0 similar-to absent superscript 10 6 Δ 𝜆 subscript 𝜆 0 \sim 10^{-6}\,\Delta\lambda/\lambda_{0} ). This might be countered by new spectroscopic technologies on the receiver side, or power level advantages of continuous over pulsed lasers on the transmitter side.
+
+The optimal laser signals to maximize S / N 𝑆 𝑁 S/N appear to be time-bandwidth limited Gaussian Δ ​ t ≈  10 − 12 Δ 𝑡 superscript 10 12 \Delta t\approx\,10^{-12}  s pulses at a wavelength λ 0 ≈ 1 ​ μ subscript 𝜆 0 1 𝜇 \lambda_{0}\approx 1\,\mu m, and a spectral width of Δ ​ λ ≈ 1.5 Δ 𝜆 1.5 \Delta\lambda\approx 1.5\, nm. An all-sky all the time survey at ps cadence may be performed given certain technological advances.
+
+Acknowledgments
+MH is thankful to Marlin (Ben) Schuetz for useful discussions.
+
+References
+
+Abbasi et al. (2010)
+
+Abbasi, R., Abdou, Y., Abu-Zayyad, T., et al. 2010,
+Nuclear
+Instruments and Methods in Physics Research A, 618, 139
+
+Abeysekara et al. (2016)
+
+Abeysekara, A. U., Archambault, S., & Archer, A. 2016,
+ApJ, 818, L33
+
+Acharya et al. (2013)
+
+Acharya, B. S., Actis, M., Aghajani, T., et al. 2013,
+Astroparticle
+Physics, 43, 3
+
+Actis et al. (2011)
+
+Actis, M., Agnetta, G., Aharonian, F., et al. 2011,
+Experimental
+Astronomy, 32, 193
+
+Adelberger et al. (2017)
+
+Adelberger, E. G., Battat, J. B. R., Birkmeier, K. J., et al. 2017,
+Classical and
+Quantum Gravity, 34, 245008
+
+Akhperjanian & Sahakian (2004)
+
+Akhperjanian, A., & Sahakian, V. 2004,
+Astroparticle
+Physics, 21, 149
+
+Alder (2012)
+
+Alder, B. 2012, Radio Astronomy, Methods in computational physics (Elsevier
+Science)
+
+Andrews et al. (1988)
+
+Andrews, L. C., Phillips, R. L., & Shivamoggi, B. K. 1988,
+Appl. Opt., 27, 2150
+
+Arruda & GAW collaboration (2010)
+
+Arruda, L., & GAW collaboration. 2010, ArXiv e-prints,
+arXiv:1006.2266
+[astro-ph.HE]
+
+Benn & Ellison (1998)
+
+Benn, C. R., & Ellison, S. L. 1998,
+New A Rev.,
+42, 503
+
+Beskin et al. (1997)
+
+Beskin, G., Borisov, N., Komarova, V., et al. 1997,
+Ap&SS, 252,
+51
+
+Betz (1993)
+
+Betz, A. 1993, in Astronomical Society of the Pacific Conference Series,
+Vol. 47, Third Decennial US-USSR Conference on SETI, ed. G. S. Shostak, 373
+
+Bhathal (2000)
+
+Bhathal, R. 2000, in Astronomical Society of the Pacific Conference Series,
+Vol. 213, Bioastronomy 99, ed. G. Lemarchand & K. Meech
+
+Bhathal (2001)
+
+Bhathal, R. 2001, in Proc. SPIE,
+Vol. 4273, The Search for Extraterrestrial Intelligence (SETI) in the Optical
+Spectrum III, ed. S. A. Kingsley & R. Bhathal , 144
+
+Billotta et al. (2009)
+
+Billotta, S., Belluso, M., Bonanno, G., et al. 2009,
+Journal of
+Modern Optics, 56, 273
+
+Borra (2010a)
+
+Borra, E. F. 2010a,
+ApJ,
+715, 589
+
+Borra (2010b)
+
+—. 2010b,
+A&A,
+511, L6
+
+Borra (2012)
+
+—. 2012,
+AJ, 144,
+181
+
+Borra (2013)
+
+—. 2013,
+ApJ,
+774, 142
+
+Borra (2017)
+
+—. 2017,
+Journal of
+Astrophysics and Astronomy, 38, 23
+
+Borra & Trottier (2016)
+
+Borra, E. F., & Trottier, E. 2016,
+PASP,
+128, 114201
+
+Boyd (2013)
+
+Boyd, R. 2013, Nonlinear Optics (Elsevier Science)
+
+Brandl et al. (2014)
+
+Brandl, P., Schidl, S., & Zimmermann, H. 2014,
+IEEE
+Journal of Selected Topics in Quantum Electronics, 20, 391
+
+Chin et al. (1992)
+
+Chin, S. L., François, V., Watson, J. M., & Delisle, C. 1992,
+Appl. Opt., 31, 3383
+
+Ciddor (1996)
+
+Ciddor, P. E. 1996,
+Applied Optics,
+35, 1566
+
+Claver et al. (2004)
+
+Claver, C. F., Sweeney, D. W., Tyson, J. A., et al. 2004,
+in Proc. SPIE, Vol. 5489,
+Ground-based Telescopes, ed. J. M. Oschmann, Jr. , 705
+
+Coldwell (2002)
+
+Coldwell, C. M. 2002, PhD thesis, Harvard University
+
+Cordes (2002)
+
+Cordes, J. A. 2002, in SETI 2020: a Roadmap for the Search for
+Extraterrestrial Intelligence, ed. D. Osgood & R. D. Ekers (Seti Press)
+
+Cordes & Lazio (1991)
+
+Cordes, J. M., & Lazio, T. J. 1991,
+ApJ, 376, 123
+
+Cordes & Lazio (2002)
+
+Cordes, J. M., & Lazio, T. J. W. 2002, ArXiv Astrophysics
+e-prints, astro-ph/0207156
+
+Costa et al. (2007)
+
+Costa, J., Pimenta, M., & Tome, B. 2007,
+IEEE
+Transactions on Nuclear Science, 54, 313
+
+Coulman et al. (1988)
+
+Coulman, C. E., Vernin, J., Coqueugniot, Y., & Caccia, J. L. 1988,
+Applied Optics,
+27, 155
+
+Coulman et al. (1995)
+
+Coulman, C. E., Vernin, J., & Fuchs, A. 1995,
+Appl. Opt., 34, 5461
+
+Covault (2013)
+
+Covault, C. 2013, in APS April Meeting Abstracts, S2.002
+
+Currie & Prochazka (2014)
+
+Currie, D. G., & Prochazka, I. 2014,
+in Laser Communication and
+Propagation through the Atmosphere and Oceans III, ed. A. M. J. van Eijk,
+C. C. Davis, & S. M. Hammel (SPIE)
+
+Cusumano et al. (2002)
+
+Cusumano, G., Agnetta, G., Biondo, B., et al. 2002,
+Mem. Soc. Astron. Italiana, 73, 1211
+
+Davies & Cotton (1957)
+
+Davies, J. M., & Cotton, E. S. 1957,
+Solar
+Energy, 1, 16
+
+Dickinson et al. (2018)
+
+Dickinson, H., Krennrich, F., Weinstein, A., et al. 2018,
+ArXiv e-prints,
+arXiv:1802.05715
+[astro-ph.IM]
+
+Dravins et al. (2013)
+
+Dravins, D., LeBohec, S., Jensen, H., Nuñez, P. D., & CTA
+Consortium. 2013,
+Astroparticle
+Physics, 43, 331
+
+Edlén (1966)
+
+Edlén, B. 1966,
+Metrologia,
+2, 71
+
+Edwards et al. (2006)
+
+Edwards, R. T., Hobbs, G. B., & Manchester, R. N. 2006,
+MNRAS,
+372, 1549
+
+Eichler & Beskin (2001)
+
+Eichler, D., & Beskin, G. 2001,
+Astrobiology,
+1, 489
+
+Ferraro et al. (2015)
+
+Ferraro, M. S., Clark, W. R., Rabinovich, W. S., et al. 2015,
+Applied Optics,
+54, F182
+
+Foster et al. (2008)
+
+Foster, M. A., Salem, R., Geraghty, D. F., et al. 2008,
+Nature, 456, 81
+
+Füser et al. (2012)
+
+Füser, H., Eichstädt, S., Baaske, K., et al. 2012,
+Measurement
+Science and Technology, 23, 025201
+
+Gemmell et al. (2017)
+
+Gemmell, N. R., Hills, M., Bradshaw, T., et al. 2017,
+Superconductor
+Science Technology, 30, 11LT01
+
+Gol’tsman et al. (2001)
+
+Gol’tsman, G. N., Okunev, O., Chulkova, G., et al. 2001,
+Applied Physics
+Letters, 79, 705
+
+González Hernández et al. (2017)
+
+González Hernández, J. I., Pepe, F., Molaro, P., & Santos, N.
+2017, ArXiv e-prints,
+arXiv:1711.05250
+[astro-ph.IM]
+
+Goodman (1985)
+
+Goodman, J. 1985, Statistical Optics, Wiley-Interscience (Wiley)
+
+Griffiths (2004)
+
+Griffiths, D. J. 2004, Introduction to Quantum Mechanics (Prentice Hall
+International)
+
+Grushka (1972)
+
+Grushka, E. 1972,
+Analytical
+Chemistry, 44, 1733
+
+Hadfield (2009)
+
+Hadfield, R. H. 2009,
+Nature
+Photonics, 3, 696
+
+Hampf et al. (2011)
+
+Hampf, D., Rowell, G., Wild, N., et al. 2011,
+Advances in
+Space Research, 48, 1017
+
+Hankins & Eilek (2007)
+
+Hankins, T. H., & Eilek, J. A. 2007,
+ApJ, 670, 693
+
+Hankins et al. (2003)
+
+Hankins, T. H., Kern, J. S., Weatherall, J. C., & Eilek, J. A. 2003,
+Nature, 422, 141
+
+Hanna et al. (2009)
+
+Hanna, D. S., Ball, J., Covault, C. E., et al. 2009,
+Astrobiology,
+9, 345
+
+Hao et al. (2013)
+
+Hao, Y., Ye, Q., Pan, Z., Cai, H., & Qu, R. 2013,
+Optik -
+International Journal for Light and Electron Optics, 124, 2417
+
+Hardy (1998)
+
+Hardy, J. W. 1998, Adaptive Optics for Astronomical Telescopes (Oxford
+University Press), 448
+
+Heisenberg (1927)
+
+Heisenberg, W. 1927,
+Zeitschrift für
+Physik, 43, 172
+
+Hinton et al. (2006)
+
+Hinton, J., Hermann, G., Krötz, P., & Funk, S. 2006,
+Astroparticle
+Physics, 26, 22
+
+Hobbs et al. (2010)
+
+Hobbs, G., Lyne, A. G., & Kramer, M. 2010,
+MNRAS,
+402, 1027
+
+Hobbs et al. (2006)
+
+Hobbs, G. B., Edwards, R. T., & Manchester, R. N. 2006,
+MNRAS,
+369, 655
+
+Holder et al. (2005)
+
+Holder, J., Ashworth, P., LeBohec, S., Rose, H. J., & Weekes, T. C.
+2005, International Cosmic Ray Conference, 5, 387
+
+Holzrichter & Manes (2017)
+
+Holzrichter, J. F., & Manes, K. R. 2017,
+Applied
+Physics B: Lasers and Optics, 123, 42
+
+Horowitz et al. (2001)
+
+Horowitz, P., Coldwell, C. M., Howard, A. B., et al. 2001,
+in Proc. SPIE, Vol. 4273, The
+Search for Extraterrestrial Intelligence (SETI) in the Optical Spectrum III,
+ed. S. A. Kingsley & R. Bhathal , 119
+
+Howard et al. (2000a)
+
+Howard, A., Horowitz, P., C., & C. 2000a,
+American Institute of Aeronautics and Astronautics, Proceedings
+of the 51st IAF Congress in Rio de Janeiro, 1
+
+Howard et al. (2000b)
+
+Howard, A., Horowitz, P., Coldwell, C., et al. 2000b, in
+Astronomical Society of the Pacific Conference Series, Vol. 213, Bioastronomy
+99, ed. G. Lemarchand & K. Meech
+
+Howard & Horowitz (2001)
+
+Howard, A. B., & Horowitz, P. 2001,
+in Proc. SPIE, Vol. 4273, The
+Search for Extraterrestrial Intelligence (SETI) in the Optical Spectrum III,
+ed. S. A. Kingsley & R. Bhathal , 153
+
+Howard & Horowitz (2001)
+
+Howard, A. B., & Horowitz, P. 2001,
+in The Search for Extraterrestrial
+Intelligence (SETI) in the Optical Spectrum III, ed. S. A. Kingsley &
+R. Bhathal (SPIE)
+
+Howard et al. (2004)
+
+Howard, A. W., Horowitz, P., Wilkinson, D. T., et al. 2004,
+ApJ, 613, 1270
+
+Hulley & Pavlis (2007)
+
+Hulley, G. C., & Pavlis, E. C. 2007,
+Journal of
+Geophysical Research (Solid Earth), 112, B06417
+
+Jones et al. (2013)
+
+Jones, A., Noll, S., Kausch, W., Szyszka, C., & Kimeswenger, S.
+2013,
+A&A,
+560, A91
+
+Karpov et al. (2007)
+
+Karpov, S., Beskin, G., Biryukov, A., et al. 2007,
+Ap&SS, 308,
+595
+
+Kelly & Andrews (1999)
+
+Kelly, D. E. T. T. S., & Andrews, L. C. 1999,
+Waves in
+Random Media, 9, 307
+
+Kenyon et al. (2006)
+
+Kenyon, S. L., Lawrence, J. S., Ashley, M. C. B., et al. 2006,
+PASP, 118, 924
+
+Kim et al. (2013)
+
+Kim, K. T., Zhang, C., Shiner, A. D., et al. 2013,
+Nature
+Photonics, 7, 958
+
+Kingsley (1995)
+
+Kingsley, S. 1995, in Astronomical Society of the Pacific Conference Series,
+Vol. 74, Progress in the Search for Extraterrestrial Life., ed. G. S.
+Shostak, 387
+
+Kingsley (1993a)
+
+Kingsley, S. A. 1993a,
+in Proc. SPIE, Vol. 1867, The
+Search for Extraterrestrial Intelligence (SETI) in the Optical Spectrum, ed.
+S. A. Kingsley , 178
+
+Kingsley (1993b)
+
+Kingsley, S. A. 1993b,
+in Proc. SPIE, Vol. 1867, The
+Search for Extraterrestrial Intelligence (SETI) in the Optical Spectrum, ed.
+S. A. Kingsley , 75
+
+Kolmogorov (1941)
+
+Kolmogorov, A. 1941, Akademiia Nauk SSSR Doklady, 30, 301
+
+Kopeika et al. (2001)
+
+Kopeika, N. S., Zilberman, A., & Sorani, Y. 2001,
+in Optical Pulse and Beam
+Propagation III, ed. Y. B. Band (SPIE)
+
+Korpela et al. (2011)
+
+Korpela, E. J., Anderson, D. P., Bankay, R., et al. 2011,
+in Proc. SPIE, Vol. 8152,
+Instruments, Methods, and Missions for Astrobiology XIV , 815212
+
+Kral et al. (2006)
+
+Kral, L., Prochazka, I., & Hamal, K. 2006,
+in Optics in Atmospheric
+Propagation and Adaptive Systems IX, ed. A. Kohnle & K. Stein (SPIE)
+
+Krishnakumar et al. (2017)
+
+Krishnakumar, M. A., Joshi, B. C., & Manoharan, P. K. 2017,
+ApJ, 846,
+104
+
+Krishnakumar et al. (2015)
+
+Krishnakumar, M. A., Mitra, D., Naidu, A., Joshi, B. C., &
+Manoharan, P. K. 2015,
+ApJ, 804,
+23
+
+Lazaridis et al. (1995)
+
+Lazaridis, P., Debarge, G., & Gallion, P. 1995,
+Optics Letters,
+20, 1160
+
+Leeb et al. (2013)
+
+Leeb, W. R., Poppe, A., Hammel, E., et al. 2013,
+Astrobiology,
+13, 521
+
+Lu et al. (2012)
+
+Lu, H., Zhao, W., & Xie, X. 2012,
+Optics
+Communications, 285, 3169
+
+Lucarelli et al. (2008)
+
+Lucarelli, F., Barrio, J., Antoranz, P., et al. 2008,
+Nuclear
+Instruments and Methods in Physics Research Section A: Accelerators,
+Spectrometers, Detectors and Associated Equipment, 589, 415
+
+Lyne et al. (2006)
+
+Lyne, A., Graham-Smith, F., & Graham-Smith, F. 2006, Pulsar Astronomy,
+Cambridge Astrophysics (Cambridge University Press)
+
+Maccarone et al. (2008)
+
+Maccarone, M. C., Assis, P., Catalano, O., et al. 2008,
+International Cosmic Ray Conference, 3, 1297
+
+MacMahon et al. (2018)
+
+MacMahon, D. H. E., Price, D. C., Lebofsky, M., et al. 2018,
+PASP, 130,
+044502
+
+Maire et al. (2014)
+
+Maire, J., Wright, S. A., Werthimer, D., et al. 2014,
+in Proc. SPIE, Vol. 9147,
+Ground-based and Airborne Instrumentation for Astronomy V , 91474K
+
+Maire et al. (2016)
+
+Maire, J., Wright, S. A., Dorval, P., et al. 2016,
+in Proc. SPIE, Vol. 9908,
+Ground-based and Airborne Instrumentation for Astronomy VI , 990810
+
+Majumdar & Ricklin (2010)
+
+Majumdar, A., & Ricklin, J. 2010, Free-Space Laser Communications: Principles
+and Advances, Optical and Fiber Communications Reports (Springer New York)
+
+Marcuse (1981)
+
+Marcuse, D. 1981,
+Applied Optics,
+20, 3573
+
+Marsili et al. (2013)
+
+Marsili, F., Verma, V. B., Stern, J. A., et al. 2013,
+Nature
+Photonics, 7, 210
+
+Mazin et al. (2012)
+
+Mazin, B. A., Bumble, B., Meeker, S. R., et al. 2012,
+Optics Express,
+20, 1503
+
+McHugh et al. (2012)
+
+McHugh, S., Mazin, B. A., Serfass, B., et al. 2012,
+Review of Scientific
+Instruments, 83, 044702
+
+Mead (2013)
+
+Mead, C. C. 2013, PhD thesis, Harvard University
+
+Mendes (2004)
+
+Mendes, V. B. 2004,
+Geophysical
+Research Letters, 31
+
+Mirzoyan & Lorenz (1994)
+
+Mirzoyan, R., & Lorenz, E. 1994, Measurement of the night sky light background
+at LaPalma (Max-Planck-Inst. für Physik)
+
+Moderski et al. (2013)
+
+Moderski, R., Aguilar, J. A., Barnacka, A., et al. 2013,
+ArXiv e-prints,
+arXiv:1307.3137
+[astro-ph.IM]
+
+Murphy (2013)
+
+Murphy, T. W. 2013,
+Reports
+on Progress in Physics, 76, 076901
+
+Murphy et al. (2012)
+
+Murphy, Jr., T. W., Adelberger, E. G., Battat, J. B. R., et al. 2012,
+Classical
+and Quantum Gravity, 29, 184005
+
+Murphy et al. (2008)
+
+—. 2008, PASP, 120,
+20
+
+Neill et al. (2016)
+
+Neill, D. R., Muller, G., Hileman, E., et al. 2016,
+in Proc. SPIE, Vol. 9906,
+Ground-based and Airborne Telescopes VI , 99060Q
+
+Noll et al. (2012)
+
+Noll, S., Kausch, W., Barden, M., et al. 2012,
+A&A,
+543, A92
+
+Ong et al. (1996)
+
+Ong, R. A., Bhattacharya, D., Covault, C. E., et al. 1996,
+Astroparticle
+Physics, 5, 353
+
+Osborn et al. (2015)
+
+Osborn, J., Föhring, D., Dhillon, V. S., & Wilson, R. W. 2015,
+MNRAS, 452,
+1707
+
+Plauchu-Frayn et al. (2017)
+
+Plauchu-Frayn, I., Richer, M. G., Colorado, E., et al. 2017,
+PASP,
+129, 035003
+
+Preuß et al. (2002)
+
+Preuß, S., Hermann, G., Hofmann, W., & Kohnle, A. 2002,
+Nuclear
+Instruments and Methods in Physics Research Section A: Accelerators,
+Spectrometers, Detectors and Associated Equipment, 481, 229
+
+Prochazka et al. (2004)
+
+Prochazka, I., Hamal, K., & Kral, L. 2004,
+in Laser Radar Techniques for
+Atmospheric Sensing, ed. U. N. Singh (SPIE)
+
+Reines & Marcy (2002)
+
+Reines, A. E., & Marcy, G. W. 2002,
+PASP, 114, 416
+
+Roy (2009)
+
+Roy, F. P. 2009, JRASC, 103, 54
+
+Rullière (2005)
+
+Rullière, C., ed. 2005, Femtosecond Laser Pulses (Springer New York)
+
+Samain et al. (1998)
+
+Samain, E., Mangin, J. F., Veillet, C., et al. 1998,
+A&AS, 130, 235
+
+Sánchez et al. (2007)
+
+Sánchez, S. F., Aceituno, J., Thiele, U., Pérez-Ramírez,
+D., & Alves, J. 2007,
+PASP, 119, 1186
+
+Schawlow & Townes (1958)
+
+Schawlow, A. L., & Townes, C. H. 1958,
+Physical
+Review, 112, 1940
+
+Schliesser & Mirzoyan (2005)
+
+Schliesser, A., & Mirzoyan, R. 2005,
+Astroparticle
+Physics, 24, 382
+
+Schuetz et al. (2016)
+
+Schuetz, M., Vakoch, D. A., Shostak, S., & Richards, J. 2016,
+ApJ,
+825, L5
+
+Schwarzschild (1905)
+
+Schwarzschild, K. 1905, Astronomische Mitteilungen der
+Universitaets-Sternwarte zu Goettingen, 10
+
+Shcheslavskiy et al. (2016)
+
+Shcheslavskiy, V., Morozov, P., Divochiy, A., et al. 2016,
+Review of Scientific
+Instruments, 87, 053117
+
+Shelus (1985)
+
+Shelus, P. J. 1985,
+IEEE
+Transactions on Geoscience and Remote Sensing, 23, 385
+
+Shostak (2011)
+
+Shostak, S. 2011,
+Acta
+Astronautica, 68, 366
+
+Shvartsman et al. (1993)
+
+Shvartsman, V., Beskin, G., Mitronova, S., et al. 1993, in Astronomical
+Society of the Pacific Conference Series, Vol. 47, Third Decennial US-USSR
+Conference on SETI, ed. G. S. Shostak, 381
+
+Shvartsman (1977)
+
+Shvartsman, V. F. 1977, Soobshcheniya Spetsial’noj
+Astrofizicheskoj Observatorii, 19, 5
+
+Shvartsman et al. (1997)
+
+Shvartsman, V. F., Bernstein, I. N., Beskin, G. M., et al. 1997,
+Astronomical
+and Astrophysical Transactions, 13, 13
+
+Siemion et al. (2015)
+
+Siemion, A., Benford, J., Cheng-Jin, J., et al. 2015,
+Advancing Astrophysics with the Square Kilometre Array
+(AASKA14), 116
+
+Siemion et al. (2013)
+
+Siemion, A. P. V., Demorest, P., Korpela, E., et al. 2013,
+ApJ, 767,
+94
+
+Sims et al. (2012)
+
+Sims, G., Ashley, M. C. B., Cui, X., et al. 2012,
+PASP, 124, 637
+
+Smith & Landon (1970)
+
+Smith, A. W., & Landon, A. J. 1970,
+Applied Physics
+Letters, 17, 340
+
+Sollerman et al. (2000)
+
+Sollerman, J., Lundqvist, P., Lindler, D., et al. 2000,
+ApJ, 537, 861
+
+Stone et al. (2005)
+
+Stone, R. P. S., Wright, S. A., Drake, F., et al. 2005,
+Astrobiology,
+5, 604
+
+Tarkhov et al. (2008)
+
+Tarkhov, M., Claudon, J., Poizat, J. P., et al. 2008,
+Applied Physics
+Letters, 92, 241112
+
+Taylor & Cordes (1993)
+
+Taylor, J. H., & Cordes, J. M. 1993,
+ApJ, 411, 674
+
+Tellis & Marcy (2017)
+
+Tellis, N. K., & Marcy, G. W. 2017,
+AJ, 153,
+251
+
+Tjin-Tham-Sjin et al. (1998)
+
+Tjin-Tham-Sjin, D. E., Young, C. Y., & Andrews, L. C. 1998,
+in Free-Space Laser Communication
+Technologies X, ed. G. S. Mecherle (SPIE)
+
+Trimble (1973)
+
+Trimble, V. 1973,
+PASP, 85, 579
+
+Vassiliev et al. (2007)
+
+Vassiliev, V., Fegan, S., & Brousseau, P. 2007,
+Astroparticle
+Physics, 28, 10
+
+Vassiliev et al. (2007)
+
+Vassiliev, V., Fegan, S., & Brousseau, P. 2007,
+Astroparticle
+Physics, 28, 10
+
+Vassiliev & Fegan (2008)
+
+Vassiliev, V. V., & Fegan, S. J. 2008, International Cosmic
+Ray Conference, 3, 1445
+
+Welsh et al. (2018)
+
+Welsh, B., Vallerga, J., Kotze, M., & Wheatley, J. 2018, in American
+Astronomical Society Meeting Abstracts, Vol. 231, American Astronomical
+Society Meeting Abstracts, 104.01
+
+Wijaya & Brunner (2011)
+
+Wijaya, D. D., & Brunner, F. K. 2011,
+Journal of
+Geodesy, 85, 623
+
+Wright & Eastman (2014)
+
+Wright, J. T., & Eastman, J. D. 2014,
+PASP, 126, 838
+
+Wright et al. (2001)
+
+Wright, S. A., Drake, F., Stone, R. P., Treffers, D., & Werthimer,
+D. 2001, in Proc. SPIE, Vol. 4273,
+The Search for Extraterrestrial Intelligence (SETI) in the Optical Spectrum
+III, ed. S. A. Kingsley & R. Bhathal , 173
+
+Wright et al. (2004)
+
+Wright, S. A., Stone, R. P. S., Drake, F., et al. 2004, in IAU
+Symposium, Vol. 213, Bioastronomy 2002: Life Among the Stars, ed. R. Norris
+& F. Stootman, 415
+
+Wright et al. (2014)
+
+Wright, S. A., Werthimer, D., Treffers, R. R., et al. 2014,
+in Proc. SPIE, Vol. 9147,
+Ground-based and Airborne Instrumentation for Astronomy V , 91470J
+
+Xu & Zhang (2017)
+
+Xu, S., & Zhang, B. 2017,
+ApJ, 835,
+2
+
+Yang et al. (2017)
+
+Yang, Y., Moore, A. M., Krisciunas, K., et al. 2017,
+AJ, 154, 6
+
+Yao et al. (2017)
+
+Yao, J. M., Manchester, R. N., & Wang, N. 2017,
+ApJ, 835,
+29
+
+Young (1967)
+
+Young, A. T. 1967,
+AJ, 72, 747
+
+Young et al. (1998)
+
+Young, C. Y., Andrews, L. C., & Ishimaru, A. 1998,
+Appl. Opt., 37, 7655
+
+Zampieri et al. (2015)
+
+Zampieri, L., Naletto, G., Barbieri, C., et al. 2015,
+in Proc. SPIE, Vol. 9504, Photon
+Counting Applications 2015 , 95040C
+
+Zhang et al. (2003)
+
+Zhang, J., Slysz, W., Verevkin, A., et al. 2003,
+IEEE
+Transactions on Appiled Superconductivity, 13, 180
+
+Zhu & Kahn (2002)
+
+Zhu, X., & Kahn, J. 2002,
+IEEE
+Transactions on Communications, 50, 1293
+
+Zilberman et al. (2001)
+
+Zilberman, A., Kopeika, N. S., & Sorani, Y. 2001,
+in Laser Weapons Technology II,
+ed. W. E. Thompson & P. H. Merritt (SPIE)
+
+◄
+
+Feeling lucky?
+
+Conversion report
+Report an issue
+View original on arXiv ►
+
+Copyright
+Privacy Policy
+
+Generated on Sun Mar 10 08:46:51 2024 by L a T e XML

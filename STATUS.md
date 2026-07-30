@@ -103,23 +103,57 @@ of magnitude and flags the whole catalogue). `srp` is in **m²/ton**. `a1/a2/a3`
 are *also* labelled m²/ton, which is dimensionally wrong for Marsden
 accelerations, so those three are treated as unit-unverified and unused.
 
-**State: built, offline-tested (64 tests), probe dispatched 2026-07-30.** The
-probe is a **go/no-go**, not a formality: measured against JPL's SBDB the same
-day, only **589** asteroids of 1,553,300 have a fitted `A2` (22 have `A1`, 11 have
-`A3`), so if ALeRCE's mirror is no better then Path A (fitted non-grav terms)
-cannot support a population statistic and the channel runs on per-detection
-residuals alone — which it can, and which is the unbiased path anyway. The probe
-also settles the `ephoffset*` angular unit from its measured distribution, which of
-two candidate joins reaches `detection` for the epoch, and `ssObject`'s real
-column names (asked, not guessed).
+**State: built, offline-tested (75 tests), PROBED against the live service
+2026-07-30 — and the probe rewrote the architecture.** It earned its keep four
+times over; each finding would otherwise have produced a *confident wrong answer*
+rather than an error (`results/loom/probe.json`, `docs/loom.md` §2.1):
 
-**Next actions.** (1) Read `results/loom/probe.json` and set `sid_ssobject`,
-`join_on` and the Path A/Path B split from what it measured. (2) Dispatch
-`loom-screen`. (3) Calibrate `a1/a2/a3` units against objects with published JPL
-solutions before using those columns at all. (4) Re-run the vnprobelit sweep's
-suggestion of reading the Del Vigna / Greenberg per-object `A2` tables on the
-runner, which would turn ε_eff from a 3-object argument into a ~250-object
-measured distribution.
+1. **There is no `diasourceid`.** The per-detection key is `measurement_id`, so
+   the join is `(measurement_id, oid=ssobjectid)`. The `diasourceid` form at least
+   raised. The tempting `oid`-only alternative does **not** raise — it silently
+   returns the **cross product** of every prediction with every detection of that
+   object, so a "residual time series" is an N×M cartesian join and its scatter is
+   an artefact. Retained as `join_on: object`, diagnostic-only. `sid = 2` confirmed.
+2. **`ephoffsetalongtrack`/`crosstrack` are NULL for all 961,558 detections**, and
+   `ephrate`/`ephratera`/`ephratedec` are identically zero. Only the scalar
+   `ephoffset` is populated — 100%, mean **0.085″**, which also settles the unit
+   question in favour of arcsec. Since the along/cross split *is* the channel's
+   central discriminant, `residuals.decompose_offset` now **reconstructs** it from
+   `d.ra/d.dec` minus `ephra/ephdec` projected onto the object's own track
+   direction (taken from neighbouring epochs, not from the state vectors, because
+   the schema does not state their frame and a 23.4° error would rotate along-track
+   into cross-track). Validated for free against the populated `ephoffset`
+   magnitude; the analysis **stops** on disagreement.
+3. **`ephoffset` max = 0.99997″ over 961,558 rows** is almost certainly the
+   source-association radius. If so the channel is **blind to residuals above ~1″
+   by construction** — the most anomalous objects fail to associate and never
+   appear. A hard sensitivity ceiling that must be quoted in any result; the probe
+   now histograms across the boundary to settle it.
+4. **ZERO IS THIS MIRROR'S "MISSING", AND IT IS NOT NULL.** `srp`, `a1`, `a2`,
+   `a3`, `dt` are non-NULL for 1812 of 130,909 orbit rows and **every one is
+   exactly 0.0** — fill, not measurement. `COUNT(col)` counts zeros, so the first
+   null-fraction query reported them populated. Every read now goes through
+   `screen._fz`. A *measured* zero non-gravitational term is the strongest possible
+   statement that an object is ordinary; an absent one means untestable.
+
+**What that leaves.** Only **1822** orbit rows carry a genuine `yarkovsky` and only
+**7** reach |A2| > 3σ — and `srp`, the area-to-mass ratio that is the strongest
+artificiality discriminant, is **unavailable today**. So Path A is a 7-object
+cross-check and **Path B is the channel**: per-detection `ephoffset` structure over
+961,558 detections, on the reconstructed decomposition, which is also the unbiased
+path since it does not inherit MPC's choice of which objects were worth fitting.
+`lsst_ss_object` exists with 81 columns (real names now recorded) and **0 rows**, so
+the photometric axis reports `EMPTY`, not a null result.
+
+**Next actions.** (1) Read the second probe's `ephoffset` histogram and settle
+whether the 1″ ceiling is the association radius; state it in any result either
+way. (2) Dispatch `loom-screen` — expect `NONGRAV_COLUMNS_EMPTY` on Path A and the
+residual path to carry the run. (3) The timing veto is currently **untestable**
+(`ephrate` zero-filled), so a shutter/clock offset is indistinguishable from a real
+along-track acceleration; find another handle on it or quote the limitation. (4)
+Calibrate `a1/a2/a3` units against published JPL solutions before ever using those
+columns. (5) Read the Del Vigna / Greenberg per-object `A2` tables on the runner to
+turn ε_eff from a 3-object argument into a ~250-object measured distribution.
 
 Docs: `docs/loom.md`. Config: `config/loom.yaml`. Workflows: `loom-probe.yml`
 (dispatch), `loom.yml` (weekly, 11:40 ET Mondays — offset from TOCSIN so the two

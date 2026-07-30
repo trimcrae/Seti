@@ -378,9 +378,17 @@ def screen(cfg=None, out_dir: str | Path | None = None,
     # and identifiable only across the population, so it is measured here and
     # subtracted, not merely noted.
     timing = fit_common_timing(
-        [_f(s.get("mean_along")) for s in summaries],
-        [_f(s.get("mean_ephrate")) for s in summaries])
+        [_f(s.get("mean_along")) if math.isfinite(_f(s.get("mean_along")))
+         else _f(s.get("mean_offset")) for s in summaries],
+        [_fz(s.get("mean_ephrate")) for s in summaries])
     rec["common_timing"] = timing.as_dict()
+    if timing.reason == "ephrate_identically_zero":
+        rec["notes"].append(
+            "the common timing offset could NOT be fitted: ephrate is zero-filled "
+            "for every solar-system detection in this mirror, so the sample's "
+            "residuals are not timing-decontaminated and the per-object timing "
+            "veto is untestable.  A shutter or clock offset would be "
+            "indistinguishable from a real along-track acceleration here.")
     checkpoint()
 
     # Shortlist: the objects whose aggregate along-track offset is largest after
@@ -479,22 +487,36 @@ def _none_or_int(v):
 
 
 def _shortlist(summaries: list[dict], dt_seconds: float, size: int) -> list:
-    """Rank objects by timing-corrected mean along-track offset.
+    """Rank objects by timing-corrected mean offset, on the best column available.
 
-    Correcting for the fitted common timing offset *before* ranking matters: an
-    uncorrected ranking is dominated by whichever objects were moving fastest,
-    which is a property of the survey's cadence and of where the object was in its
-    apparition, not of the object.
+    Prefers ``mean_along`` — the signed along-track mean is the physically right
+    quantity — and falls back to ``mean_offset``, the scalar magnitude, which is the
+    only one this mirror populates (measured 2026-07-30: along/cross are NULL for
+    all 961,558 rows).  Without the fallback the shortlist would be empty and the
+    channel would report a clean null having screened nothing, which is the worst
+    outcome available.
+
+    Correcting for the fitted common timing offset *before* ranking matters where
+    ``ephrate`` carries a measurement: an uncorrected ranking is dominated by
+    whichever objects were moving fastest, which is a property of the survey's
+    cadence and of where the object was in its apparition, not of the object.  In
+    this mirror ``ephrate`` is identically zero, so the correction is a no-op and
+    the ranking is on raw magnitude — which must be remembered when reading it,
+    because it means the shortlist is not timing-decontaminated.
     """
     scored: list[tuple[float, object]] = []
     dt = dt_seconds if math.isfinite(_f(dt_seconds)) else 0.0
     for s in summaries:
         key = s.get("ssobjectid")
-        along = _f(s.get("mean_along"))
-        rate = _f(s.get("mean_ephrate"))
-        if key is None or not math.isfinite(along):
+        if key is None:
             continue
-        corrected = along - (rate * dt / 60.0 if math.isfinite(rate) else 0.0)
+        value = _f(s.get("mean_along"))
+        if not math.isfinite(value):
+            value = _f(s.get("mean_offset"))
+        if not math.isfinite(value):
+            continue
+        rate = _fz(s.get("mean_ephrate"))
+        corrected = value - (rate * dt / 60.0 if math.isfinite(rate) else 0.0)
         scored.append((abs(corrected), key))
     scored.sort(key=lambda t: -t[0])
     return [k for _, k in scored[:int(size)]]

@@ -1032,6 +1032,25 @@ def test_acquire_module_imports_without_network():
         assert col in acquire.SS_DETECTION_COLUMNS, col
 
 
+def test_shortlist_falls_back_to_the_populated_offset_column():
+    """Without the fallback the shortlist is empty and the channel reports a null.
+
+    The along-track aggregate is NULL for every row in the live mirror, so ranking
+    on it alone would screen nothing and call the result clean.
+    """
+    from seti.loom.run import _shortlist
+
+    summaries = [{"ssobjectid": i, "mean_along": None, "mean_offset": 0.01 * i,
+                  "mean_ephrate": 0.0} for i in range(1, 21)]
+    got = _shortlist(summaries, dt_seconds=float("nan"), size=5)
+    assert got == [20, 19, 18, 17, 16]
+
+    # And where the signed along-track mean IS available it is preferred.
+    summaries2 = [{"ssobjectid": i, "mean_along": -0.5 if i == 3 else 0.001,
+                   "mean_offset": 99.0, "mean_ephrate": 0.0} for i in range(1, 11)]
+    assert _shortlist(summaries2, dt_seconds=0.0, size=1) == [3]
+
+
 def test_analyse_series_uses_the_reconstruction_when_columns_are_null():
     """The path the live mirror forces: NULL along/cross, rebuilt from positions.
 

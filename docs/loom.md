@@ -2,9 +2,9 @@
 
 *A loom is the machine that makes copies of a pattern.*
 
-**Channel status:** built, offline-tested (74 tests), **probed against the live
-service on 2026-07-30**. The probe changed the channel's architecture — read §2.1
-before anything else.
+**Channel status:** built, offline-tested (86 tests), run against live data on
+2026-07-30. **The channel works and the data is not yet old enough to use it** —
+see §2.2. The probe changed the architecture; read §2.1 first.
 
 ---
 
@@ -214,6 +214,79 @@ row), and the broker frontier is MJD **61235.4**.
   in this mirror it requires the law-discrimination channel — which needs
   multi-apparition arcs, and the ALeRCE orbit epochs span MJD 59000–61200 with
   arcs up to 59,535 days, so those exist.
+
+---
+
+## 2.2 What the live runs found: the survey is a month old
+
+Three screens ran on 2026-07-30. The funnel is now sound — 66,686 orbits pass the
+quality cuts, 2,759 of them have ≥12 solar-system detections, the shortlist and the
+parent are the same population (`shortlist_in_parent_fraction = 1.0`), the join is
+1:1, and 2,287 objects were analysed in 20 batched queries in 967 s.
+
+**The channel currently reports nothing, and the reason is the binding one.**
+
+The second run reported `REPLICATION_STRUCTURE_DETECTED` on 150 anomalies, with
+pole coherence and inclination isotropy both at the randomisation floor. It traced
+to a bug in this code: `analyse_series` used `scatter / sqrt(n)` as the per-point
+astrometric uncertainty. That is the uncertainty on the *mean*, so for 25
+detections it understated the per-point error five-fold, inflating every
+acceleration signal-to-noise by five and every Δχ² by twenty-five. The
+corroborating evidence was already in the output — the anomaly score correlated
+with detection count at ρ = −0.475, which is the "ranks objects by how well they
+were observed" failure — and the warning did not fire because the threshold was
+0.5. Fixed with a two-pass fit (rescale σ by √(reduced χ²) about the *fitted
+model*, never below the instrumental floor); the quality-correlation threshold is
+now 0.3 and configurable. **150 anomalies became 4.**
+
+The remaining four were also artefacts, and their diagnosis is the channel's
+current limit: their **residual series span 2 to 29 days**, against orbit arcs of
+8,000 to 16,000 days, and their implied accelerations were 10⁴ to 10⁸ times the
+momentum ceiling. A quadratic fitted over a two-week baseline has no leverage on
+curvature; the fitted acceleration is an extrapolation and its formal error means
+nothing.
+
+The cause is simply that **the LSST survey proper began on 2026-06-30**. Every
+solar-system object in the mirror has one apparition, so:
+
+- `law_discrimination` returns `INSUFFICIENT_R_SPAN` for every object — the
+  heliocentric distance barely changes over a month, and that test is the
+  channel's central novelty claim;
+- `apparition_trend` returns `TOO_FEW_APPARITIONS` for every object;
+- `fit_common_timing` cannot run at all, because `ephrate` is zero-filled, so a
+  shutter offset remains indistinguishable from a real along-track acceleration.
+
+Two gates now enforce this rather than letting it leak into a result:
+`min_residual_arc_days = 180` and `min_apparitions_for_promotion = 2`. Under them
+all four objects become `untestable` with the reason named, and the assessment
+returns `INSUFFICIENT_POPULATION`.
+
+**This is a "not yet", not a null.** The channel is correct, the reconstruction is
+validated on real data to 1.4×10⁻⁸ arcsec, and every discriminant it needs becomes
+available as the arc lengthens. That is what a standing weekly screen is for. Per
+`CLAUDE.md` a clean null would be a reason to change the question; a
+coverage-limited non-result is a reason to keep the screen running and wait.
+
+### A correction to the record
+
+An earlier reading of the second run reported that `2020 SO` (the 1966 Surveyor 2
+Centaur) and `2007 VN84` (the Rosetta spacecraft) were present in the screened
+sample. **They were not.** `normalise_designation` stripped whitespace and then
+matched a leading run of digits as the permanent number, dropping trailing letters
+as a name — which turns every provisional designation into its discovery *year*.
+`2020 SO` became `2020`, and so did every other object discovered in 2020. That
+matched hundreds of ordinary asteroids, forced 287 of them into a shortlist as
+"positive controls", and produced a `SCREEN_INSENSITIVE` verdict about objects that
+were never there.
+
+Fixed, with a regression test: the permanent-number branch now fires only when the
+digits stand alone or are followed by a name of three or more letters that is not a
+plausible discovery year. The corrected verdict is `NO_CONTROLS_PRESENT` — no known
+artificial object is in this sample, the control is **unexercised, not passed**, and
+sensitivity to the artificiality discriminant remains untested.
+
+A matcher that is too permissive does not merely add noise in this channel. It
+fabricates the one falsifiable check the channel has.
 
 ---
 

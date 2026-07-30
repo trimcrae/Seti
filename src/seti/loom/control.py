@@ -189,21 +189,49 @@ DARK_COMET_SOURCE = ("Seligman et al. 2023, PSJ 4, 35 -- significant non-radial 
 # ---------------------------------------------------------------------------
 # Designation matching
 # ---------------------------------------------------------------------------
+# A provisional designation begins with a four-digit year in this range.  Used to
+# tell "2020 SO" (a provisional designation) from "101955 Bennu" (a permanent
+# number followed by a name), which otherwise look structurally identical once
+# whitespace is removed.
+_PROVISIONAL_YEAR = re.compile(r"^(1[89]|20)\d{2}$")
+
+
 def normalise_designation(value) -> str:
     """Canonical form for comparing designations across catalogues.
 
-    Upper-cased, with spaces, underscores, parentheses and leading zeros removed,
-    because the same object appears as ``2020 SO``, ``2020SO``, ``(101955)`` and
-    ``101955 Bennu`` depending on which table it came from, and a naive string
+    The same object appears as ``2020 SO``, ``2020SO``, ``(101955)`` and
+    ``101955 Bennu`` depending on which table it came from, so a naive string
     comparison silently finds nothing.
+
+    **The trap this function exists to avoid, having fallen into it.**  An earlier
+    version stripped whitespace and then matched a leading run of digits as the
+    permanent number, dropping any trailing letters as a name.  That turns *every
+    provisional designation into its discovery year*: ``2020 SO`` became ``2020``,
+    and so did ``2020 AB12`` and every other object discovered that year.  The
+    control index then matched hundreds of ordinary asteroids, 287 of them were
+    forced into a shortlist as "positive controls", and a live run reported that
+    ``2020 SO`` and the Rosetta spacecraft were present in the sample when neither
+    was.  A matcher that is too permissive does not merely add noise here — it
+    fabricates the one falsifiable check the channel has.
+
+    So the permanent-number branch fires only when the digits stand alone, or when
+    they are followed by a *name* (three or more letters) and are not a plausible
+    discovery year.  Everything else keeps its letters.
     """
-    s = str(value or "").upper()
-    s = re.sub(r"[()\s_\-]", "", s)
-    # A leading numbered-object id keeps its digits but drops any trailing name.
-    m = re.match(r"^(\d+)([A-Z].*)?$", s)
+    s = str(value or "").strip()
+    if not s:
+        return ""
+    # Strip an enclosing pair of parentheses, "(2020 SO)" -> "2020 SO", and the
+    # MPC's leading "(101955)" number form alike.
+    s = re.sub(r"^\(\s*(.*?)\s*\)$", r"\1", s)
+    s = re.sub(r"^\(\s*(\d+)\s*\)\s*", r"\1 ", s).strip()
+    m = re.fullmatch(r"(\d+)", s)
     if m:
         return str(int(m.group(1)))
-    return s
+    m = re.fullmatch(r"(\d+)\s+([A-Za-z]{3,})", s)      # 101955 Bennu
+    if m and not _PROVISIONAL_YEAR.match(m.group(1)):
+        return str(int(m.group(1)))
+    return re.sub(r"[\s_\-]", "", s).upper()
 
 
 def _index(entries) -> dict[str, dict]:

@@ -85,7 +85,9 @@ DEFAULTS: dict = {
         # first live run failed the drift fit on 273 of 400 objects for want of
         # epochs rather than for want of signal.
         "min_detections_for_summary": 12,
-        "shortlist_size": 2000,
+        # Covers the whole eligible population; batching made a complete screen
+        # affordable, and it removes a selection step on the observable itself.
+        "shortlist_size": 20000,
         # Objects per residual query.  The first live run used one query per object
         # at 1.4 s each; batching turns 400 queries into 20 and the wall-clock
         # budget then buys an order of magnitude more objects.
@@ -779,6 +781,7 @@ def _apply_series(rec, tests: dict, th: Thresholds) -> None:
     rec.breakpoint_mjd = _f(bp.get("break_mjd"))
     sky = tests.get("sky_along") or {}
     rec.sky_variance_explained = _f(sky.get("variance_explained_by_sky_bin"))
+    rec.residual_arc_days = _f(drift.get("arc_days"))
     # A residual-path acceleration is only believable above a signal-to-noise
     # floor; below it the quadratic coefficient is fitting noise and must not
     # contribute to the tier.
@@ -787,6 +790,24 @@ def _apply_series(rec, tests: dict, th: Thresholds) -> None:
         rec.ratio_hard_residual = float("nan")
         rec.reasons.append(f"residual_accel_snr_{rec.accel_snr_residual:.1f}_"
                            f"below_{th.min_accel_snr}")
+    # BASELINE, which is the binding constraint while the survey is young.  A
+    # quadratic fitted over a two-week series has no leverage on curvature, so the
+    # fitted acceleration is an extrapolation: the first clean run promoted four
+    # objects with 2-to-29-day series and implied accelerations 10^4 to 10^8 times
+    # the momentum ceiling.  Those are fit blow-ups, not candidates, and the
+    # correct response is to record the object as UNTESTABLE on this path rather
+    # than to score it either way.
+    if (not math.isfinite(rec.residual_arc_days)
+            or rec.residual_arc_days < th.min_residual_arc_days):
+        rec.ratio_hard_residual = float("nan")
+        rec.reasons.append(
+            f"residual_series_spans_{rec.residual_arc_days:.0f}d_below_"
+            f"{th.min_residual_arc_days:.0f}d__acceleration_not_constrained")
+    if rec.n_apparitions < th.min_apparitions_for_promotion:
+        rec.ratio_hard_residual = float("nan")
+        rec.reasons.append(
+            f"only_{rec.n_apparitions}_apparition__an_acceleration_cannot_be_"
+            f"separated_from_an_orbit_fit_error")
 
 
 # ---------------------------------------------------------------------------

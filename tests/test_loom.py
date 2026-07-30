@@ -981,6 +981,34 @@ def test_designation_normalisation_matches_across_catalogues():
     assert n(None) == ""
 
 
+def test_designation_normalisation_does_not_collapse_to_the_discovery_year():
+    """A permissive matcher does not add noise here — it fabricates the control.
+
+    An earlier version matched a leading run of digits as the permanent number and
+    dropped trailing letters as a name, turning every provisional designation into
+    its discovery year. ``2020 SO`` became ``2020``, and so did every other object
+    discovered in 2020: 287 ordinary asteroids were forced into a shortlist as
+    positive controls, and a live run reported that 2020 SO and the Rosetta
+    spacecraft were in the sample when neither was.
+    """
+    n = control.normalise_designation
+    assert n("2020 SO") == "2020SO"
+    assert n("2020 SO") != n("2020 AB12")
+    assert n("2003 RM") != n("2003 XY123")
+    assert n("1998 KY26") == "1998KY26"
+    # Distinct control entries must stay distinct from each other.
+    idx = control.control_index()
+    for d in ("2020 SO", "2003 RM", "2009 BD", "1998 KY26", "1991 VG"):
+        assert n(d) in idx, d
+    # And an ordinary object sharing only the year must NOT match any control.
+    for d in ("2020 AB12", "2003 QQ47", "2009 XY7", "1998 ZZ9", "1991 AA1"):
+        assert n(d) not in idx, d
+
+    # Permanent numbers still normalise, and are not confused with a year.
+    assert n("101955 Bennu") == "101955"
+    assert n("6489 Golevka") == "6489"
+
+
 def test_control_validation_recovers_a_planted_artificial_object():
     """If the screen does not recover J002E3, it does not work."""
     rows = [{"designation": f"FILLER {i}", "score": 0.01 * i, "flagged": False}
@@ -1306,6 +1334,41 @@ def test_sigma_never_falls_below_the_instrumental_floor():
     out = analyse_series(rows, th, n_null=100)
     spec = math.sqrt(0.010 ** 2 + 0.007 ** 2)
     assert out["sigma_arcsec_used"] >= spec
+
+
+def test_short_baseline_is_untestable_not_anomalous():
+    """The four artefacts the first clean live run promoted.
+
+    A quadratic fitted over a two-week series has no leverage on curvature, so the
+    fitted acceleration is an extrapolation — the live objects came out at 10^4 to
+    10^8 times the momentum ceiling, which is a fit blow-up, not a candidate. The
+    correct outcome is UNTESTABLE on this path, with the reason named.
+    """
+    from seti.loom.run import _apply_series
+
+    th = screen.Thresholds()
+    rec = screen.screen_orbit_row(_orbit_row(h=17.9), th)
+    tests = {
+        "drift": {"verdict": "OK", "accel_au_per_day2": 1e-6,
+                  "accel_snr": 6.5, "arc_days": 18.0},
+        "geometry": {"power_ratio": 15.6},
+        "apparitions": {"n_apparitions": 1},
+    }
+    _apply_series(rec, tests, th)
+    screen.assign_tier(rec, th)
+    assert not np.isfinite(rec.ratio_hard_residual)
+    assert rec.tier == "untestable"
+    assert any("residual_series_spans" in r for r in rec.reasons)
+    assert any("only_1_apparition" in r for r in rec.reasons)
+
+    # With a real baseline and two apparitions the same acceleration is testable.
+    rec2 = screen.screen_orbit_row(_orbit_row(h=17.9), th)
+    tests2 = dict(tests)
+    tests2["drift"] = {"verdict": "OK", "accel_au_per_day2": 1e-6,
+                       "accel_snr": 6.5, "arc_days": 900.0}
+    tests2["apparitions"] = {"n_apparitions": 3, "spearman": 0.95}
+    _apply_series(rec2, tests2, th)
+    assert np.isfinite(rec2.ratio_hard_residual)
 
 
 def test_analyse_series_refuses_a_reconstruction_that_disagrees():

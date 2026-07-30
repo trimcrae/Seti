@@ -103,57 +103,56 @@ of magnitude and flags the whole catalogue). `srp` is in **m²/ton**. `a1/a2/a3`
 are *also* labelled m²/ton, which is dimensionally wrong for Marsden
 accelerations, so those three are treated as unit-unverified and unused.
 
-**State: built, offline-tested (75 tests), PROBED against the live service
-2026-07-30 — and the probe rewrote the architecture.** It earned its keep four
-times over; each finding would otherwise have produced a *confident wrong answer*
-rather than an error (`results/loom/probe.json`, `docs/loom.md` §2.1):
+**State: built, offline-tested (86 tests), RUN against live data 2026-07-30 —
+and the honest verdict is "not yet", not a null.** Full account in `docs/loom.md`
+§2.1-2.2. The funnel is now sound: 66,686 orbits pass the quality cuts, 2,759 have
+>=12 solar-system detections, shortlist and parent are the same population
+(fraction 1.0), the join is 1:1, 2,287 objects analysed in 20 batched queries in
+967 s. The offset reconstruction validates against the survey's own `ephoffset` to
+**1.4e-08 arcsec**.
 
-1. **There is no `diasourceid`.** The per-detection key is `measurement_id`, so
-   the join is `(measurement_id, oid=ssobjectid)`. The `diasourceid` form at least
-   raised. The tempting `oid`-only alternative does **not** raise — it silently
-   returns the **cross product** of every prediction with every detection of that
-   object, so a "residual time series" is an N×M cartesian join and its scatter is
-   an artefact. Retained as `join_on: object`, diagnostic-only. `sid = 2` confirmed.
-2. **`ephoffsetalongtrack`/`crosstrack` are NULL for all 961,558 detections**, and
-   `ephrate`/`ephratera`/`ephratedec` are identically zero. Only the scalar
-   `ephoffset` is populated — 100%, mean **0.085″**, which also settles the unit
-   question in favour of arcsec. Since the along/cross split *is* the channel's
-   central discriminant, `residuals.decompose_offset` now **reconstructs** it from
-   `d.ra/d.dec` minus `ephra/ephdec` projected onto the object's own track
-   direction (taken from neighbouring epochs, not from the state vectors, because
-   the schema does not state their frame and a 23.4° error would rotate along-track
-   into cross-track). Validated for free against the populated `ephoffset`
-   magnitude; the analysis **stops** on disagreement.
-3. **`ephoffset` max = 0.99997″ over 961,558 rows** is almost certainly the
-   source-association radius. If so the channel is **blind to residuals above ~1″
-   by construction** — the most anomalous objects fail to associate and never
-   appear. A hard sensitivity ceiling that must be quoted in any result; the probe
-   now histograms across the boundary to settle it.
-4. **ZERO IS THIS MIRROR'S "MISSING", AND IT IS NOT NULL.** `srp`, `a1`, `a2`,
-   `a3`, `dt` are non-NULL for 1812 of 130,909 orbit rows and **every one is
-   exactly 0.0** — fill, not measurement. `COUNT(col)` counts zeros, so the first
-   null-fraction query reported them populated. Every read now goes through
-   `screen._fz`. A *measured* zero non-gravitational term is the strongest possible
-   statement that an object is ordinary; an absent one means untestable.
+**Two systematics were found and traced before being believed, both mine.**
 
-**What that leaves.** Only **1822** orbit rows carry a genuine `yarkovsky` and only
-**7** reach |A2| > 3σ — and `srp`, the area-to-mass ratio that is the strongest
-artificiality discriminant, is **unavailable today**. So Path A is a 7-object
-cross-check and **Path B is the channel**: per-detection `ephoffset` structure over
-961,558 detections, on the reconstructed decomposition, which is also the unbiased
-path since it does not inherit MPC's choice of which objects were worth fitting.
-`lsst_ss_object` exists with 81 columns (real names now recorded) and **0 rows**, so
-the photometric axis reports `EMPTY`, not a null result.
+1. A run reported `REPLICATION_STRUCTURE_DETECTED` on 150 anomalies with two
+   statistics at the randomisation floor. `analyse_series` was using
+   `scatter / sqrt(n)` as the per-point astrometric error — that is the error on
+   the *mean*, understating the per-point value five-fold at 25 detections and
+   inflating every acceleration S/N by 5 and every delta-chi-squared by 25. The
+   corroborating evidence was already in the output: the score correlated with
+   detection count at rho = -0.475, the "ranks objects by how well they were
+   observed" failure, and the warning missed it because the threshold was 0.5.
+   Fixed with a two-pass fit rescaling sigma by sqrt(reduced chi-squared) about the
+   *fitted model*, never below the instrumental floor. **150 anomalies became 4.**
+2. `normalise_designation` collapsed every provisional designation to its discovery
+   **year** — `2020 SO` -> `2020` — so the control index matched hundreds of
+   ordinary asteroids, 287 were forced into a shortlist as "positive controls", and
+   a run reported that 2020 SO and the Rosetta spacecraft were in the sample.
+   **They were not.** Corrected verdict: `NO_CONTROLS_PRESENT` — the control is
+   unexercised, not passed.
 
-**Next actions.** (1) Read the second probe's `ephoffset` histogram and settle
-whether the 1″ ceiling is the association radius; state it in any result either
-way. (2) Dispatch `loom-screen` — expect `NONGRAV_COLUMNS_EMPTY` on Path A and the
-residual path to carry the run. (3) The timing veto is currently **untestable**
-(`ephrate` zero-filled), so a shutter/clock offset is indistinguishable from a real
-along-track acceleration; find another handle on it or quote the limitation. (4)
-Calibrate `a1/a2/a3` units against published JPL solutions before ever using those
-columns. (5) Read the Del Vigna / Greenberg per-object `A2` tables on the runner to
-turn ε_eff from a 3-object argument into a ~250-object measured distribution.
+**The binding limit is survey age.** The four surviving anomalies had residual
+series spanning **2 to 29 days** against orbit arcs of 8,000-16,000 days, with
+implied accelerations 10^4 to 10^8 times the momentum ceiling — fit blow-ups from
+extrapolating a quadratic off a two-week baseline. LSST survey proper began
+2026-06-30, so every object has ONE apparition, and the channel's central novelty
+claim (which heliocentric-distance law the drift follows) returns
+`INSUFFICIENT_R_SPAN` for every object. `min_residual_arc_days = 180` and
+`min_apparitions_for_promotion = 2` now enforce that; all four become `untestable`
+with the reason named and the assessment returns `INSUFFICIENT_POPULATION`.
+
+Per CLAUDE.md a clean null is a reason to change the question — but this is a
+coverage-limited non-result, not a null, and the discriminants become available as
+the arc lengthens. The channel runs weekly and waits.
+
+**Next actions.** (1) Let the weekly cron accumulate; the law and apparition tests
+switch on at the second apparition (~6-12 months for main-belt objects). (2) The
+timing veto is untestable while `ephrate` is zero-filled — find another handle or
+quote the limitation. (3) The 1-arcsec association radius removes the most
+anomalous objects by construction; the one lead it leaves is that a *truncated*
+series is itself a signature, worth building. (4) Calibrate `a1/a2/a3` units
+against published JPL solutions before ever using those columns. (5) Read the
+Del Vigna / Greenberg per-object A2 tables on the runner to turn eps_eff from a
+3-object argument into a ~250-object measured distribution.
 
 Docs: `docs/loom.md`. Config: `config/loom.yaml`. Workflows: `loom-probe.yml`
 (dispatch), `loom.yml` (weekly, 11:40 ET Mondays — offset from TOCSIN so the two

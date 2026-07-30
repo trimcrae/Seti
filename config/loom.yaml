@@ -135,7 +135,11 @@ acquire:
   # Full time-series pulls are expensive; the bulk aggregate query builds the
   # shortlist and only the shortlist gets one.  Same two-stage shape as TOCSIN.
   # Raised from 400 because batching (below) made each object ~20x cheaper.
-  shortlist_size: 2000
+  # Set to cover the WHOLE eligible population (2,759 objects met the >=12
+  # detection cut on 2026-07-30). Batching made a complete screen affordable, and
+  # screening everything eligible removes a selection step and makes the trial
+  # count well defined -- a top-N slice by offset is itself a cut on the observable.
+  shortlist_size: 20000
   # Objects per residual query.  The first live run issued one query per object at
   # ~1.4 s each and spent its whole budget on 400 objects; batching turns that into
   # one query per 100 objects, split by ssobjectid locally at no cost.
@@ -191,6 +195,19 @@ screen:
   min_detections_for_drift: 8
   # Below this the fitted quadratic coefficient is fitting noise.
   min_accel_snr: 5.0
+  # THE BINDING CONSTRAINT WHILE THE SURVEY IS YOUNG.  A quadratic fitted over a
+  # two-week baseline has no leverage on curvature, so the fitted acceleration is
+  # an extrapolation and its formal error means nothing.  The first clean live run
+  # promoted four objects whose residual series spanned 2 to 29 days -- against
+  # orbit arcs of 8,000 to 16,000 days -- with implied accelerations 10^4 to 10^8
+  # times the momentum ceiling.  Those are fit blow-ups, not candidates.  The Rubin
+  # solar-system alert stream was about a month old when that ran; these two gates
+  # are what make the channel WAIT for the data rather than invent a result from it.
+  min_residual_arc_days: 180.0
+  # Two apparitions is the minimum at which an acceleration can be told from an
+  # orbit-fit error at all, and it is what the law-discrimination and
+  # apparition-trend tests need in any case.
+  min_apparitions_for_promotion: 2
   # A clock or shutter error dt produces an along-track offset of exactly
   # rate * dt -- linear in ephrate, identical for every object, and perfectly
   # degenerate with acceleration in any single object.  Both quantities are

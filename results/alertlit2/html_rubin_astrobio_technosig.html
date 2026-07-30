@@ -1,0 +1,944 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time</title>
+<!--Generated on Sat May 30 06:46:41 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+    // Pre-apply spinout-banner dismissal here, before the banner paints, so it
+    // never flashes in only to be hidden later by the deferred arxiv-header.js.
+    // Key matches arxiv-header.js: "arxiv-banner-dismissed:" + data-banner-name.
+    if (localStorage.getItem('arxiv-banner-dismissed:spinout-nonprofit')) {
+      document.documentElement.setAttribute("data-banner-dismissed", "");
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css"><link rel="stylesheet" type="text/css" media="screen"
+  href="/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626"><style>
+  /* Banner pre-dismissal (set above before paint -> no flash-then-hide) and
+     reading-mode chrome hiding. */
+  html[data-banner-dismissed] .ds-announcement { display: none; }
+  html[data-reading-mode="enabled"] .ds-announcement,
+  html[data-reading-mode="enabled"] .ds-site-footer { display: none; }
+  /* Keep the announcement text dark on the Open-Blue band in both colour themes
+     (otherwise it inherits the paper's warm-wash text in dark mode and washes out). */
+  .ds-announcement-text { color: var(--arxiv-ink, #1c1a17); }
+</style>
+<script defer src="/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog><div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement"
+    data-banner-name="spinout-nonprofit">
+    <img class="ds-announcement-glyph" src="/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+    <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+    <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+    <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/"><img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/base/1.0.1/images/arxiv-logo-primary-light.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2606.00574v1">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2606.00574v1"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_abstract"><a href="#abstract1" title="In Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_title">Abstract</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S1" title="In Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">1 </span>Introduction</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S2" title="In Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2 </span>Framework and prototype workflows</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS1" title="In 2 Framework and prototype workflows ‣ Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.1 </span>Coherence diagnostics</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS2" title="In 2 Framework and prototype workflows ‣ Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.2 </span>Simulation setup</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S3" title="In Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3 </span>Results and discussion</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S4" title="In Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4 </span>Conclusion and outlook</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_bibliography"><a href="#bib" title="In Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: CC BY 4.0
+  </a>
+  <div id="watermark-tr">
+arXiv:2606.00574v1 [astro-ph.IM] 30 May 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line">
+<div id="p1" class="ltx_para">
+<span id="p1.1" class="ltx_ERROR undefined">\lefttitle</span>
+<p id="p1.2" class="ltx_p">Kovačević, Mason, Ćiprijanović, Long, Korczakowska, Moore, Voulukka
+<span id="p1.2.1" class="ltx_ERROR undefined">\righttitle</span>Astrobiology and Technosignatures in the Rubin LSST</p>
+</div>
+<div id="p2" class="ltx_para">
+<span id="p2.1" class="ltx_ERROR undefined">\jnlPage</span>
+<p id="p2.2" class="ltx_p">17
+<span id="p2.2.1" class="ltx_ERROR undefined">\jnlDoiYr</span>2026
+<span id="p2.2.2" class="ltx_ERROR undefined">\doival</span>10.1017/xxxxx</p>
+</div>
+<div id="p3" class="ltx_para">
+<span id="p3.1" class="ltx_ERROR undefined">\aopheadtitle</span>
+<p id="p3.2" class="ltx_p">Proceedings IAU Symposium No. 404</p>
+</div>
+<h1 class="ltx_title ltx_title_document">Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Andjelka B. Kovačević<sup id="id13.2.id1" class="ltx_sup">1</sup>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Nigel J. Mason<sup id="id14.2.id1" class="ltx_sup">2</sup>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Aleksandra Ćiprijanović<sup id="id15.2.id1" class="ltx_sup"><span id="id15.2.id1.1" class="ltx_text ltx_font_italic">3,4,5</span></sup>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Becky Long<sup id="id16.2.id1" class="ltx_sup">2</sup>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Dominika Korczakowska<sup id="id17.2.id1" class="ltx_sup">2</sup>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Maia Moore<sup id="id18.2.id1" class="ltx_sup">2</sup>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+Juulia Voulukka<sup id="id19.7.id1" class="ltx_sup">2</sup>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation"><sup id="id20.8.id1" class="ltx_sup">1</sup>University of Belgrade – Faculty of Mathematics, Department of
+Astronomy, Belgrade, Serbia;
+email: <span id="id9.3.1" class="ltx_text ltx_font_typewriter">andjelka.kovacevic@matf.bg.ac.rs
+<br class="ltx_break"><sup id="id9.3.1.1" class="ltx_sup"><span id="id9.3.1.1.1" class="ltx_text ltx_font_serif">2</span></sup></span>School of Physics and Astronomy, University of Kent,
+Canterbury, CT2 7NH, United Kingdom;
+email: <span id="id10.4.2" class="ltx_text ltx_font_typewriter">N.J.Mason@kent.ac.uk
+<br class="ltx_break"><sup id="id10.4.2.1" class="ltx_sup"><span id="id10.4.2.1.1" class="ltx_text ltx_font_serif">3</span></sup></span>Fermi National Accelerator Laboratory, Batavia, IL 60510, USA
+<br class="ltx_break"><sup id="id21.9.id2" class="ltx_sup">4</sup>Department of Astronomy and Astrophysics, University of Chicago,
+Chicago, IL 60637, USA
+<br class="ltx_break"><sup id="id22.10.id3" class="ltx_sup">5</sup>NSF-Simons AI Institute for the Sky (SkAI),
+172 E. Chestnut St., Chicago, IL 60611, USA
+</span></span></span>
+</div>
+
+<div id="abstract1" class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">The Vera C. Rubin Observatory Legacy Survey of Space and Time (LSST) will map sources in multiband colour–variability space. We present a prototype coherence-based framework for astrobiology and technosignature searches, in which candidates are treated as structured departures from natural astrophysical manifolds rather than isolated photometric outliers. We illustrate the framework with three simulated cases: five Kuiper Belt Object (KBO) surface/activity states, a grid of 649 synthetic exoplanet spectra with vegetation-red-edge-like (VRE) perturbations, and 500 synthetic multiband light curves, each projected into LSST-like observable space and analysed through colour geometry, chromatic variability, and cross-band coherence. Key results include a full-colour Mahalanobis distance <math class="ltx_Math" alttext="D\approx 5.1" display="inline" intent=":literal"><semantics><mrow><mi>D</mi><mo>≈</mo><mn>5.1</mn></mrow><annotation encoding="application/x-tex">D\approx 5.1</annotation></semantics></math> for the weak-coma KBO state (<math class="ltx_Math" alttext="{\sim}5\sigma" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mrow><mn>5</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">{\sim}5\sigma</annotation></semantics></math> in the five-dimensional colour vector), an indicative VRE coherence threshold at <math class="ltx_Math" alttext="f_{\rm crit}\approx 0.13" display="inline" intent=":literal"><semantics><mrow><msub><mi>f</mi><mi>crit</mi></msub><mo>≈</mo><mn>0.13</mn></mrow><annotation encoding="application/x-tex">f_{\rm crit}\approx 0.13</annotation></semantics></math>, and an idealised stacking forecast reaching <math class="ltx_Math" alttext="5\sigma" display="inline" intent=":literal"><semantics><mrow><mn>5</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">5\sigma</annotation></semantics></math> under optimistic assumptions. We show, using a small Gaia DR3 stellar sample, that stellar colour and photometric stability may inform the prioritisation of Galactic regions for applying such coherence diagnostics.</p>
+</div>
+<div class="ltx_classification">
+<h6 class="ltx_title ltx_title_classification">keywords: </h6>
+astrobiology, technosignatures, surveys, methods: statistical,
+planets and satellites: surfaces, Kuiper belt: general
+
+</div>
+<span id="id1" class="ltx_note ltx_note_frontmatter ltx_role_editors"><sup class="ltx_note_mark">†</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">†</sup><span class="ltx_note_type">editors: </span>J. Haqq-Misra &amp; R. Kopparapu, eds.</span></span></span>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.1" class="ltx_p">The Vera C. Rubin Observatory Legacy Survey of Space and Time
+<cite class="ltx_cite ltx_citemacro_citep">(LSST, Ivezić et al., <a href="#bib.bib3" title="" class="ltx_ref">2019</a>)</cite> will provide multiband time-domain
+measurements for an unprecedented number of astrophysical sources.
+For astrobiology and technosignature searches, this motivates a shift
+from single-feature anomaly detection to the search for coherent
+structure in observable space <cite class="ltx_cite ltx_citemacro_citep">(Gallay, Davenport, &amp; Croft, <a href="#bib.bib1" title="" class="ltx_ref">2025</a>; Kovačević, Mason &amp; Ćiprijanović, <a href="#bib.bib5" title="" class="ltx_ref">2025</a>)</cite>: a
+candidate is not simply unusual in one colour, band, or epoch, but
+follows a direction inconsistent with the manifold populated by known
+astrophysical processes <cite class="ltx_cite ltx_citemacro_citep">(Li et al., <a href="#bib.bib6" title="" class="ltx_ref">2022</a>)</cite>.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.1" class="ltx_p">This is especially relevant for broadband photometry, because each
+band measurement is a weighted projection of the underlying physical
+spectrum through the LSST total system throughput curve.
+Although this compresses spectral information, it retains sensitivity
+to broad physical structure: variations in continuum slope, haze
+opacity, methane absorption, scattering behaviour, or surface
+reflectance can imprint correlated multiband patterns in LSST
+observables.
+LSST-like photometry therefore probes not only amplitude, but also
+coherence across observables — a logic that has also been explored
+for reflected-light technosignatures with future direct-imaging
+missions <cite class="ltx_cite ltx_citemacro_citep">(Haqq-Misra et al., <a href="#bib.bib2" title="" class="ltx_ref">2022</a>; Kopparapu et al., <a href="#bib.bib4" title="" class="ltx_ref">2024</a>)</cite>.
+While the present work focuses on astrobiology-motivated simulations,
+the coherence framework applies equally to technosignature scenarios
+such as anomalous industrial atmospheric chemistry or Dysonian
+partial-obscuration light curves, which produce directional
+displacements in colour or variability space of the kind targeted here.</p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p id="S1.p3.1" class="ltx_p">Here we illustrate this idea with three prototype experiments
+described in Section <a href="#S2" title="2 Framework and prototype workflows ‣ Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>, testing whether colour
+geometry, chromatic variability, and cross-band coherence can provide
+practical diagnostics for Rubin-era astrobiology and technosignature
+anomaly searches.</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>Framework and prototype workflows</h2>
+
+<section id="S2.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.1 </span>Coherence diagnostics</h3>
+
+<div id="S2.SS1.p1" class="ltx_para">
+<p id="S2.SS1.p1.11" class="ltx_p">For each parameter vector <math id="S2.SS1.p1.1.m1" class="ltx_Math" alttext="\theta\in\Theta\subset{R}^{p}" display="inline" intent=":literal"><semantics><mrow><mi>θ</mi><mo>∈</mo><mi mathvariant="normal">Θ</mi><mo>⊂</mo><msup><mi>R</mi><mi>p</mi></msup></mrow><annotation encoding="application/x-tex">\theta\in\Theta\subset{R}^{p}</annotation></semantics></math>
+describing an atmosphere, surface, or activity state, the forward
+model produces a spectrum <math id="S2.SS1.p1.2.m2" class="ltx_Math" alttext="F_{\lambda}(\theta)" display="inline" intent=":literal"><semantics><mrow><msub><mi>F</mi><mi>λ</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>θ</mi><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">F_{\lambda}(\theta)</annotation></semantics></math> using the Planetary
+Spectrum Generator <cite class="ltx_cite ltx_citemacro_citep">(PSG, Villanueva et al., <a href="#bib.bib9" title="" class="ltx_ref">2022</a>)</cite> that is projected
+into Rubin/LSST colours using the full system throughput curves
+(filter, optics, detector, and atmosphere at 1.2 airmasses).
+A reduced colour vector is written schematically as
+<math id="S2.SS1.p1.3.m3" class="ltx_Math" alttext="\mathbf{c}(\theta)=(g-r,\ r-i,\ i-z)." display="inline" intent=":literal"><semantics><mrow><mrow><mrow><mi>𝐜</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>θ</mi><mo stretchy="false">)</mo></mrow></mrow><mo>=</mo><mrow><mo stretchy="false">(</mo><mrow><mi>g</mi><mo>−</mo><mi>r</mi></mrow><mo rspace="0.667em">,</mo><mrow><mi>r</mi><mo>−</mo><mi>i</mi></mrow><mo rspace="0.667em">,</mo><mrow><mi>i</mi><mo>−</mo><mi>z</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><mo lspace="0em">.</mo></mrow><annotation encoding="application/x-tex">\mathbf{c}(\theta)=(g-r,\ r-i,\ i-z).</annotation></semantics></math>
+In each experiment below, coherence is operationalised as structured,
+multi-observable displacement that exceeds what is expected from
+photometric noise alone, quantified via a manifold-appropriate
+distance or projection metric.
+Rather than treating colours as isolated observables, we analyse their
+gradient structure,
+<math id="S2.SS1.p1.4.m4" class="ltx_Math" alttext="\mathbf{d}=\frac{\Delta\mathbf{c}}{\Delta\alpha}," display="inline" intent=":literal"><semantics><mrow><mrow><mi>𝐝</mi><mo>=</mo><mfrac><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝐜</mi></mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>α</mi></mrow></mfrac></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">\mathbf{d}=\frac{\Delta\mathbf{c}}{\Delta\alpha},</annotation></semantics></math>
+where <math id="S2.SS1.p1.5.m5" class="ltx_Math" alttext="\alpha" display="inline" intent=":literal"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math> denotes an ordered model sequence or controlling
+physical parameter, and <math id="S2.SS1.p1.6.m6" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math> denotes a finite difference between
+adjacent discrete states.
+The gradient vector <math id="S2.SS1.p1.7.m7" class="ltx_Math" alttext="\mathbf{d}" display="inline" intent=":literal"><semantics><mi>𝐝</mi><annotation encoding="application/x-tex">\mathbf{d}</annotation></semantics></math> encodes how LSST-observable colour
+changes as the physical state varies (e.g. surface composition,
+atmospheric opacity, or activity level); a signal of interest is one
+whose direction in colour space is inconsistent with gradients
+produced by known astrophysical processes, making <math id="S2.SS1.p1.8.m8" class="ltx_Math" alttext="\|\mathbf{d}\|" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">‖</mo><mi>𝐝</mi><mo stretchy="false">‖</mo></mrow><annotation encoding="application/x-tex">\|\mathbf{d}\|</annotation></semantics></math>
+and its orientation jointly diagnostic.
+Throughout, we adopt a single-epoch per-band photometric uncertainty
+<math id="S2.SS1.p1.9.m9" class="ltx_Math" alttext="\sigma_{m}=0.01" display="inline" intent=":literal"><semantics><mrow><msub><mi>σ</mi><mi>m</mi></msub><mo>=</mo><mn>0.01</mn></mrow><annotation encoding="application/x-tex">\sigma_{m}=0.01</annotation></semantics></math> mag.
+A single colour index (e.g. <math id="S2.SS1.p1.10.m10" class="ltx_Math" alttext="g-r" display="inline" intent=":literal"><semantics><mrow><mi>g</mi><mo>−</mo><mi>r</mi></mrow><annotation encoding="application/x-tex">g-r</annotation></semantics></math>) combines two independent band
+measurements, giving <math id="S2.SS1.p1.11.m11" class="ltx_Math" alttext="\sigma_{\rm col}=\sqrt{\sigma_{m}^{2}+\sigma_{m}^{2}}\simeq 0.014" display="inline" intent=":literal"><semantics><mrow><msub><mi>σ</mi><mi>col</mi></msub><mo>=</mo><msqrt><mrow><msubsup><mi>σ</mi><mi>m</mi><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>σ</mi><mi>m</mi><mn>2</mn></msubsup></mrow></msqrt><mo>≃</mo><mn>0.014</mn></mrow><annotation encoding="application/x-tex">\sigma_{\rm col}=\sqrt{\sigma_{m}^{2}+\sigma_{m}^{2}}\simeq 0.014</annotation></semantics></math> <span id="S2.SS1.p1.11.1" class="ltx_text">mag</span>.</p>
+</div>
+<div id="S2.SS1.p2" class="ltx_para">
+<p id="S2.SS1.p2.2" class="ltx_p">A differential colour index (e.g. <math id="S2.SS1.p2.1.m1" class="ltx_Math" alttext="\Delta(g-r)" display="inline" intent=":literal"><semantics><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>g</mi><mo>−</mo><mi>r</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">\Delta(g-r)</annotation></semantics></math>, the difference
+between two independent colour measurements such as the coma-bearing
+and no-coma states, or the Vegetation red edge-like (VRE) and baseline spectra) propagates
+as <math id="S2.SS1.p2.2.m2" class="ltx_Math" alttext="\sigma_{\Delta\rm col}=\sqrt{\sigma_{\rm col}^{2}+\sigma_{\rm col}^{2}}=0.02\,\text{mag}" display="inline" intent=":literal"><semantics><mrow><msub><mi>σ</mi><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>col</mi></mrow></msub><mo>=</mo><msqrt><mrow><msubsup><mi>σ</mi><mi>col</mi><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>σ</mi><mi>col</mi><mn>2</mn></msubsup></mrow></msqrt><mo>=</mo><mrow><mn>0.02</mn><mo lspace="0.170em" rspace="0em">​</mo><mtext>mag</mtext></mrow></mrow><annotation encoding="application/x-tex">\sigma_{\Delta\rm col}=\sqrt{\sigma_{\rm col}^{2}+\sigma_{\rm col}^{2}}=0.02\,\text{mag}</annotation></semantics></math>.</p>
+</div>
+<div id="S2.SS1.p3" class="ltx_para">
+<p id="S2.SS1.p3.1" class="ltx_p">These two quantities are used throughout the KBO and VRE
+experiments below.</p>
+</div>
+<div id="S2.SS1.p4" class="ltx_para">
+<p id="S2.SS1.p4.3" class="ltx_p"><span id="S2.SS1.p4.3.1" class="ltx_text ltx_font_italic">Simulated Kuiper Belt Object (KBO) experiment.</span>
+The coma-bearing state is quantified as a displacement from the
+no-coma mixed-surface reference,
+<math id="S2.SS1.p4.1.m1" class="ltx_Math" alttext="\Delta\mathbf{c}_{\rm coma}=(\Delta(g-r),\Delta(r-i),\Delta(i-z))" display="inline" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>𝐜</mi><mi>coma</mi></msub></mrow><mo>=</mo><mrow><mo stretchy="false">(</mo><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>g</mi><mo>−</mo><mi>r</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>,</mo><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>r</mi><mo>−</mo><mi>i</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>,</mo><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>i</mi><mo>−</mo><mi>z</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">\Delta\mathbf{c}_{\rm coma}=(\Delta(g-r),\Delta(r-i),\Delta(i-z))</annotation></semantics></math>,
+where each component is a differential colour index with uncertainty
+<math id="S2.SS1.p4.2.m2" class="ltx_Math" alttext="\sigma_{\Delta\rm col}=0.02" display="inline" intent=":literal"><semantics><mrow><msub><mi>σ</mi><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>col</mi></mrow></msub><mo>=</mo><mn>0.02</mn></mrow><annotation encoding="application/x-tex">\sigma_{\Delta\rm col}=0.02</annotation></semantics></math> mag (defined above).
+With a diagonal covariance matrix <math id="S2.SS1.p4.3.m3" class="ltx_Math" alttext="\Sigma" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Σ</mi><annotation encoding="application/x-tex">\Sigma</annotation></semantics></math> (a conservative
+idealisation that neglects inter-band correlated noise and is used
+solely for the KBO detectability proxy), the detectability metric is</p>
+<table id="S2.E1" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E1.m1" class="ltx_Math" alttext="\chi^{2}_{\rm coma}=\Delta\mathbf{c}_{\rm coma}^{T}\Sigma^{-1}\Delta\mathbf{c}_{\rm coma},\qquad{\rm SNR}_{\rm coma}\equiv D=\sqrt{\chi^{2}_{\rm coma}}," display="block" intent=":literal"><semantics><mrow><mrow><mrow><msubsup><mi>χ</mi><mi>coma</mi><mn>2</mn></msubsup><mo>=</mo><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msubsup><mi>𝐜</mi><mi>coma</mi><mi>T</mi></msubsup><mo lspace="0em" rspace="0em">​</mo><msup><mi mathvariant="normal">Σ</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>𝐜</mi><mi>coma</mi></msub></mrow></mrow><mo rspace="2.167em">,</mo><mrow><msub><mi>SNR</mi><mi>coma</mi></msub><mo>≡</mo><mi>D</mi><mo>=</mo><msqrt><msubsup><mi>χ</mi><mi>coma</mi><mn>2</mn></msubsup></msqrt></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">\chi^{2}_{\rm coma}=\Delta\mathbf{c}_{\rm coma}^{T}\Sigma^{-1}\Delta\mathbf{c}_{\rm coma},\qquad{\rm SNR}_{\rm coma}\equiv D=\sqrt{\chi^{2}_{\rm coma}},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(1)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS1.p4.11" class="ltx_p">where <math id="S2.SS1.p4.4.m1" class="ltx_Math" alttext="D" display="inline" intent=":literal"><semantics><mi>D</mi><annotation encoding="application/x-tex">D</annotation></semantics></math> is the Mahalanobis distance in colour space.
+For a <math id="S2.SS1.p4.5.m2" class="ltx_Math" alttext="p" display="inline" intent=":literal"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-dimensional colour vector, <math id="S2.SS1.p4.6.m3" class="ltx_Math" alttext="D" display="inline" intent=":literal"><semantics><mi>D</mi><annotation encoding="application/x-tex">D</annotation></semantics></math> follows a <math id="S2.SS1.p4.7.m4" class="ltx_Math" alttext="\chi(p)" display="inline" intent=":literal"><semantics><mrow><mi>χ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>p</mi><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">\chi(p)</annotation></semantics></math>
+distribution under the null; with <math id="S2.SS1.p4.8.m5" class="ltx_Math" alttext="p=5" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">p=5</annotation></semantics></math> (full <math id="S2.SS1.p4.9.m6" class="ltx_Math" alttext="ugriz" display="inline" intent=":literal"><semantics><mrow><mi>u</mi><mo lspace="0em" rspace="0em">​</mo><mi>g</mi><mo lspace="0em" rspace="0em">​</mo><mi>r</mi><mo lspace="0em" rspace="0em">​</mo><mi>i</mi><mo lspace="0em" rspace="0em">​</mo><mi>z</mi></mrow><annotation encoding="application/x-tex">ugriz</annotation></semantics></math> vector),
+<math id="S2.SS1.p4.10.m7" class="ltx_Math" alttext="D\approx 5.1" display="inline" intent=":literal"><semantics><mrow><mi>D</mi><mo>≈</mo><mn>5.1</mn></mrow><annotation encoding="application/x-tex">D\approx 5.1</annotation></semantics></math> corresponds to <math id="S2.SS1.p4.11.m8" class="ltx_Math" alttext="{\sim}5\sigma" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mrow><mn>5</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">{\sim}5\sigma</annotation></semantics></math> significance.</p>
+</div>
+<div id="S2.SS1.p5" class="ltx_para">
+<p id="S2.SS1.p5.19" class="ltx_p"><span id="S2.SS1.p5.19.1" class="ltx_text ltx_font_italic">Vegetation red edge-like (VRE) experiment.</span>
+We use the differential colour plane
+<math id="S2.SS1.p5.1.m1" class="ltx_Math" alttext="x_{1}=\Delta(r-i)" display="inline" intent=":literal"><semantics><mrow><msub><mi>x</mi><mn>1</mn></msub><mo>=</mo><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>r</mi><mo>−</mo><mi>i</mi></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow><annotation encoding="application/x-tex">x_{1}=\Delta(r-i)</annotation></semantics></math>, <math id="S2.SS1.p5.2.m2" class="ltx_Math" alttext="x_{2}=\Delta(i-z)" display="inline" intent=":literal"><semantics><mrow><msub><mi>x</mi><mn>2</mn></msub><mo>=</mo><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>i</mi><mo>−</mo><mi>z</mi></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow><annotation encoding="application/x-tex">x_{2}=\Delta(i-z)</annotation></semantics></math>,
+where <math id="S2.SS1.p5.3.m3" class="ltx_Math" alttext="(r-i)_{\rm VRE}" display="inline" intent=":literal"><semantics><msub><mrow><mo stretchy="false">(</mo><mrow><mi>r</mi><mo>−</mo><mi>i</mi></mrow><mo stretchy="false">)</mo></mrow><mi>VRE</mi></msub><annotation encoding="application/x-tex">(r-i)_{\rm VRE}</annotation></semantics></math> and <math id="S2.SS1.p5.4.m4" class="ltx_Math" alttext="(r-i)_{\rm base}" display="inline" intent=":literal"><semantics><msub><mrow><mo stretchy="false">(</mo><mrow><mi>r</mi><mo>−</mo><mi>i</mi></mrow><mo stretchy="false">)</mo></mrow><mi>base</mi></msub><annotation encoding="application/x-tex">(r-i)_{\rm base}</annotation></semantics></math> are the synthetic
+LSST colours of spectra with and without the pigment-edge
+perturbation respectively, evaluated at identical atmospheric
+parameters (pressure, H<sub id="S2.SS1.p5.19.2" class="ltx_sub">2</sub>/He fraction, CH<sub id="S2.SS1.p5.19.3" class="ltx_sub">4</sub>, haze optical
+depth), so that <math id="S2.SS1.p5.7.m7" class="ltx_Math" alttext="\Delta(r-i)=(r-i)_{\rm VRE}-(r-i)_{\rm base}" display="inline" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>r</mi><mo>−</mo><mi>i</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>=</mo><mrow><msub><mrow><mo stretchy="false">(</mo><mrow><mi>r</mi><mo>−</mo><mi>i</mi></mrow><mo stretchy="false">)</mo></mrow><mi>VRE</mi></msub><mo>−</mo><msub><mrow><mo stretchy="false">(</mo><mrow><mi>r</mi><mo>−</mo><mi>i</mi></mrow><mo stretchy="false">)</mo></mrow><mi>base</mi></msub></mrow></mrow><annotation encoding="application/x-tex">\Delta(r-i)=(r-i)_{\rm VRE}-(r-i)_{\rm base}</annotation></semantics></math>
+isolates the colour shift due solely to the pigment-edge feature
+with atmospheric nuisance removed by construction; and similarly
+for <math id="S2.SS1.p5.8.m8" class="ltx_Math" alttext="\Delta(i-z)" display="inline" intent=":literal"><semantics><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>i</mi><mo>−</mo><mi>z</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">\Delta(i-z)</annotation></semantics></math>.
+Each differential colour index carries uncertainty
+<math id="S2.SS1.p5.9.m9" class="ltx_Math" alttext="\sigma_{\Delta\rm col}=0.02" display="inline" intent=":literal"><semantics><mrow><msub><mi>σ</mi><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>col</mi></mrow></msub><mo>=</mo><mn>0.02</mn></mrow><annotation encoding="application/x-tex">\sigma_{\Delta\rm col}=0.02</annotation></semantics></math> mag.
+The simulated grid is used to estimate the response directions
+of VRE, haze, and CH<sub id="S2.SS1.p5.19.4" class="ltx_sub">4</sub> in <math id="S2.SS1.p5.11.m11" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>-colour space via OLS
+regression of <math id="S2.SS1.p5.12.m12" class="ltx_Math" alttext="(\Delta(r-i),\Delta(i-z))" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">(</mo><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>r</mi><mo>−</mo><mi>i</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>,</mo><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>i</mi><mo>−</mo><mi>z</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(\Delta(r-i),\Delta(i-z))</annotation></semantics></math> against <math id="S2.SS1.p5.13.m13" class="ltx_Math" alttext="f_{\rm VRE}" display="inline" intent=":literal"><semantics><msub><mi>f</mi><mi>VRE</mi></msub><annotation encoding="application/x-tex">f_{\rm VRE}</annotation></semantics></math>
+(fractional VRE coverage), <math id="S2.SS1.p5.14.m14" class="ltx_Math" alttext="\tau_{\rm haze}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>haze</mi></msub><annotation encoding="application/x-tex">\tau_{\rm haze}</annotation></semantics></math> (haze optical depth),
+and <math id="S2.SS1.p5.15.m15" class="ltx_Math" alttext="\log_{10}({\rm CH}_{4})" display="inline" intent=":literal"><semantics><mrow><msub><mi>log</mi><mn>10</mn></msub><mo>⁡</mo><mrow><mo stretchy="false">(</mo><msub><mi>CH</mi><mn>4</mn></msub><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">\log_{10}({\rm CH}_{4})</annotation></semantics></math> (log methane mixing ratio), yielding
+2-element slope vectors <math id="S2.SS1.p5.16.m16" class="ltx_Math" alttext="\mathbf{d}_{\rm VRE}" display="inline" intent=":literal"><semantics><msub><mi>𝐝</mi><mi>VRE</mi></msub><annotation encoding="application/x-tex">\mathbf{d}_{\rm VRE}</annotation></semantics></math>,
+<math id="S2.SS1.p5.17.m17" class="ltx_Math" alttext="\mathbf{d}_{\rm haze}" display="inline" intent=":literal"><semantics><msub><mi>𝐝</mi><mi>haze</mi></msub><annotation encoding="application/x-tex">\mathbf{d}_{\rm haze}</annotation></semantics></math>, <math id="S2.SS1.p5.18.m18" class="ltx_Math" alttext="\mathbf{d}_{\rm CH_{4}}" display="inline" intent=":literal"><semantics><msub><mi>𝐝</mi><msub><mi>CH</mi><mn>4</mn></msub></msub><annotation encoding="application/x-tex">\mathbf{d}_{\rm CH_{4}}</annotation></semantics></math> respectively.
+The projection weights <math id="S2.SS1.p5.19.m19" class="ltx_Math" alttext="(W_{1},W_{2})" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">(</mo><msub><mi>W</mi><mn>1</mn></msub><mo>,</mo><msub><mi>W</mi><mn>2</mn></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(W_{1},W_{2})</annotation></semantics></math> are the leading eigenvector of
+the signal-to-nuisance ratio matrix</p>
+<table id="S2.E2" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E2.m1" class="ltx_Math" alttext="M=\bigl(C_{\rm nuis}+\varepsilon I\bigr)^{-1}\bigl(\mathbf{d}_{\rm VRE}\mathbf{d}_{\rm VRE}^{T}\bigr)," display="block" intent=":literal"><semantics><mrow><mrow><mi>M</mi><mo>=</mo><mrow><msup><mrow><mo maxsize="1.200em" minsize="1.200em">(</mo><mrow><msub><mi>C</mi><mi>nuis</mi></msub><mo>+</mo><mrow><mi>ε</mi><mo lspace="0em" rspace="0em">​</mo><mi>I</mi></mrow></mrow><mo maxsize="1.200em" minsize="1.200em">)</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo lspace="0em" rspace="0em">​</mo><mrow><mo maxsize="1.200em" minsize="1.200em">(</mo><mrow><msub><mi>𝐝</mi><mi>VRE</mi></msub><mo lspace="0em" rspace="0em">​</mo><msubsup><mi>𝐝</mi><mi>VRE</mi><mi>T</mi></msubsup></mrow><mo maxsize="1.200em" minsize="1.200em">)</mo></mrow></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">M=\bigl(C_{\rm nuis}+\varepsilon I\bigr)^{-1}\bigl(\mathbf{d}_{\rm VRE}\mathbf{d}_{\rm VRE}^{T}\bigr),</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(2)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS1.p5.26" class="ltx_p">where
+<math id="S2.SS1.p5.20.m1" class="ltx_Math" alttext="C_{\rm nuis}=\lambda_{\rm haze}\,\mathbf{d}_{\rm haze}\mathbf{d}_{\rm haze}^{T}+\lambda_{\rm CH_{4}}\,\mathbf{d}_{\rm CH_{4}}\mathbf{d}_{\rm CH_{4}}^{T}" display="inline" intent=":literal"><semantics><mrow><msub><mi>C</mi><mi>nuis</mi></msub><mo>=</mo><mrow><mrow><msub><mi>λ</mi><mi>haze</mi></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>𝐝</mi><mi>haze</mi></msub><mo lspace="0em" rspace="0em">​</mo><msubsup><mi>𝐝</mi><mi>haze</mi><mi>T</mi></msubsup></mrow><mo>+</mo><mrow><msub><mi>λ</mi><msub><mi>CH</mi><mn>4</mn></msub></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>𝐝</mi><msub><mi>CH</mi><mn>4</mn></msub></msub><mo lspace="0em" rspace="0em">​</mo><msubsup><mi>𝐝</mi><msub><mi>CH</mi><mn>4</mn></msub><mi>T</mi></msubsup></mrow></mrow></mrow><annotation encoding="application/x-tex">C_{\rm nuis}=\lambda_{\rm haze}\,\mathbf{d}_{\rm haze}\mathbf{d}_{\rm haze}^{T}+\lambda_{\rm CH_{4}}\,\mathbf{d}_{\rm CH_{4}}\mathbf{d}_{\rm CH_{4}}^{T}</annotation></semantics></math> is the nuisance matrix penalising
+<math id="S2.SS1.p5.21.m2" class="ltx_Math" alttext="\Delta" display="inline" intent=":literal"><semantics><mi mathvariant="normal">Δ</mi><annotation encoding="application/x-tex">\Delta</annotation></semantics></math>-colour directions that haze or CH<sub id="S2.SS1.p5.26.1" class="ltx_sub">4</sub> could mimic as a
+VRE signal (equal weights <math id="S2.SS1.p5.23.m4" class="ltx_Math" alttext="\lambda_{\rm haze}=\lambda_{\rm CH_{4}}=1" display="inline" intent=":literal"><semantics><mrow><msub><mi>λ</mi><mi>haze</mi></msub><mo>=</mo><msub><mi>λ</mi><msub><mi>CH</mi><mn>4</mn></msub></msub><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\lambda_{\rm haze}=\lambda_{\rm CH_{4}}=1</annotation></semantics></math>), <math id="S2.SS1.p5.24.m5" class="ltx_Math" alttext="I" display="inline" intent=":literal"><semantics><mi>I</mi><annotation encoding="application/x-tex">I</annotation></semantics></math> is the <math id="S2.SS1.p5.25.m6" class="ltx_Math" alttext="2\times 2" display="inline" intent=":literal"><semantics><mrow><mn>2</mn><mo lspace="0.222em" rspace="0.222em">×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">2\times 2</annotation></semantics></math> identity matrix, and
+<math id="S2.SS1.p5.26.m7" class="ltx_Math" alttext="\varepsilon=10^{-6}" display="inline" intent=":literal"><semantics><mrow><mi>ε</mi><mo>=</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>6</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\varepsilon=10^{-6}</annotation></semantics></math> ensures invertibility.
+The resulting VRE score and its SNR are</p>
+<table id="S2.E3" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E3.m1" class="ltx_Math" alttext="S_{\rm VRE}=W_{1}\,\Delta(r-i)+W_{2}\,\Delta(i-z),\qquad{\rm SNR}_{\rm VRE}=\frac{S_{\rm VRE}}{\sigma_{S_{\rm VRE}}}," display="block" intent=":literal"><semantics><mrow><mrow><mrow><msub><mi>S</mi><mi>VRE</mi></msub><mo>=</mo><mrow><mrow><msub><mi>W</mi><mn>1</mn></msub><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>r</mi><mo>−</mo><mi>i</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>+</mo><mrow><msub><mi>W</mi><mn>2</mn></msub><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>i</mi><mo>−</mo><mi>z</mi></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow><mo rspace="2.167em">,</mo><mrow><msub><mi>SNR</mi><mi>VRE</mi></msub><mo>=</mo><mfrac><msub><mi>S</mi><mi>VRE</mi></msub><msub><mi>σ</mi><msub><mi>S</mi><mi>VRE</mi></msub></msub></mfrac></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">S_{\rm VRE}=W_{1}\,\Delta(r-i)+W_{2}\,\Delta(i-z),\qquad{\rm SNR}_{\rm VRE}=\frac{S_{\rm VRE}}{\sigma_{S_{\rm VRE}}},</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(3)</span></td>
+</tr></tbody>
+</table>
+<p id="S2.SS1.p5.34" class="ltx_p">where <math id="S2.SS1.p5.27.m1" class="ltx_Math" alttext="\sigma_{S_{\rm VRE}}=\sqrt{W_{1}^{2}+W_{2}^{2}}\,\sigma_{\Delta\rm col}" display="inline" intent=":literal"><semantics><mrow><msub><mi>σ</mi><msub><mi>S</mi><mi>VRE</mi></msub></msub><mo>=</mo><mrow><msqrt><mrow><msubsup><mi>W</mi><mn>1</mn><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>W</mi><mn>2</mn><mn>2</mn></msubsup></mrow></msqrt><mo lspace="0.170em" rspace="0em">​</mo><msub><mi>σ</mi><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>col</mi></mrow></msub></mrow></mrow><annotation encoding="application/x-tex">\sigma_{S_{\rm VRE}}=\sqrt{W_{1}^{2}+W_{2}^{2}}\,\sigma_{\Delta\rm col}</annotation></semantics></math>
+with <math id="S2.SS1.p5.28.m2" class="ltx_Math" alttext="\sigma_{\Delta\rm col}=0.02" display="inline" intent=":literal"><semantics><mrow><msub><mi>σ</mi><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>col</mi></mrow></msub><mo>=</mo><mn>0.02</mn></mrow><annotation encoding="application/x-tex">\sigma_{\Delta\rm col}=0.02</annotation></semantics></math> mag.
+The threshold <math id="S2.SS1.p5.29.m3" class="ltx_Math" alttext="\tau=0.3" display="inline" intent=":literal"><semantics><mrow><mi>τ</mi><mo>=</mo><mn>0.3</mn></mrow><annotation encoding="application/x-tex">\tau=0.3</annotation></semantics></math> in the coherence margin
+<math id="S2.SS1.p5.30.m4" class="ltx_Math" alttext="M_{\rm VRE}=({\rm SNR}_{\rm VRE}-\tau)/\tau" display="inline" intent=":literal"><semantics><mrow><msub><mi>M</mi><mi>VRE</mi></msub><mo>=</mo><mrow><mrow><mo stretchy="false">(</mo><mrow><msub><mi>SNR</mi><mi>VRE</mi></msub><mo>−</mo><mi>τ</mi></mrow><mo stretchy="false">)</mo></mrow><mo>/</mo><mi>τ</mi></mrow></mrow><annotation encoding="application/x-tex">M_{\rm VRE}=({\rm SNR}_{\rm VRE}-\tau)/\tau</annotation></semantics></math> is chosen as the value
+at which the median VRE projection begins to separate systematically
+from the baseline; it is not calibrated against a formal null
+distribution and should be treated as indicative.
+The stacking forecast uses <math id="S2.SS1.p5.31.m5" class="ltx_Math" alttext="D_{0}\equiv{\rm median}({\rm SNR}_{\rm VRE}\mid f_{\rm VRE}&gt;0,\,{\rm SNR}_{\rm VRE}&gt;0)" display="inline" intent=":literal"><semantics><mrow><msub><mi>D</mi><mn>0</mn></msub><mo>≡</mo><mrow><mi>median</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mrow><mrow><msub><mi>SNR</mi><mi>VRE</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo fence="true" rspace="0em">∣</mo><msub><mi>f</mi><mi>VRE</mi></msub><mo fence="true" lspace="0em">&gt;</mo></mrow><mo lspace="0em" rspace="0em">​</mo><mn>0</mn></mrow><mo rspace="0.337em">,</mo><msub><mi>SNR</mi><mi>VRE</mi></msub></mrow><mo>&gt;</mo><mn>0</mn></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow><annotation encoding="application/x-tex">D_{0}\equiv{\rm median}({\rm SNR}_{\rm VRE}\mid f_{\rm VRE}&gt;0,\,{\rm SNR}_{\rm VRE}&gt;0)</annotation></semantics></math> as the per-object
+coherence score and accumulates <math id="S2.SS1.p5.32.m6" class="ltx_Math" alttext="\sqrt{N}\,D_{0}" display="inline" intent=":literal"><semantics><mrow><msqrt><mi>N</mi></msqrt><mo lspace="0.170em" rspace="0em">​</mo><msub><mi>D</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">\sqrt{N}\,D_{0}</annotation></semantics></math> over <math id="S2.SS1.p5.33.m7" class="ltx_Math" alttext="N" display="inline" intent=":literal"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math> independent
+objects under the ideal systematic-floor assumption (<math id="S2.SS1.p5.34.m8" class="ltx_Math" alttext="f_{\rm sys}=0" display="inline" intent=":literal"><semantics><mrow><msub><mi>f</mi><mi>sys</mi></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">f_{\rm sys}=0</annotation></semantics></math>);
+the 16–84 percentile band is propagated across the full atmospheric
+parameter grid.</p>
+</div>
+<div id="S2.SS1.p6" class="ltx_para">
+<p id="S2.SS1.p6.11" class="ltx_p"><span id="S2.SS1.p6.11.1" class="ltx_text ltx_font_italic">Light-curve experiment.</span>
+Near-simultaneous colour pairs are constructed with
+<math id="S2.SS1.p6.1.m1" class="ltx_Math" alttext="\Delta t_{\rm pair}=0.35" display="inline" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>t</mi><mi>pair</mi></msub></mrow><mo>=</mo><mn>0.35</mn></mrow><annotation encoding="application/x-tex">\Delta t_{\rm pair}=0.35</annotation></semantics></math> days.
+The chromatic-variability coordinate is
+<math id="S2.SS1.p6.2.m2" class="ltx_Math" alttext="C_{\rm chroma}=\sigma_{g-r}+\sigma_{r-i}," display="inline" intent=":literal"><semantics><mrow><mrow><msub><mi>C</mi><mi>chroma</mi></msub><mo>=</mo><mrow><msub><mi>σ</mi><mrow><mi>g</mi><mo>−</mo><mi>r</mi></mrow></msub><mo>+</mo><msub><mi>σ</mi><mrow><mi>r</mi><mo>−</mo><mi>i</mi></mrow></msub></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">C_{\rm chroma}=\sigma_{g-r}+\sigma_{r-i},</annotation></semantics></math>
+where <math id="S2.SS1.p6.3.m3" class="ltx_Math" alttext="\sigma_{g-r}" display="inline" intent=":literal"><semantics><msub><mi>σ</mi><mrow><mi>g</mi><mo>−</mo><mi>r</mi></mrow></msub><annotation encoding="application/x-tex">\sigma_{g-r}</annotation></semantics></math> and <math id="S2.SS1.p6.4.m4" class="ltx_Math" alttext="\sigma_{r-i}" display="inline" intent=":literal"><semantics><msub><mi>σ</mi><mrow><mi>r</mi><mo>−</mo><mi>i</mi></mrow></msub><annotation encoding="application/x-tex">\sigma_{r-i}</annotation></semantics></math> are the rms scatter of
+near-simultaneous colour pairs.
+The cross-band coherence coordinate is
+<math id="S2.SS1.p6.5.m5" class="ltx_Math" alttext="C_{\rm cross}=\tfrac{1}{2}(\mathrm{XCI}+\mathrm{SCI})," display="inline" intent=":literal"><semantics><mrow><mrow><msub><mi>C</mi><mi>cross</mi></msub><mo>=</mo><mrow><mfrac><mn>1</mn><mn>2</mn></mfrac><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>XCI</mi><mo>+</mo><mi>SCI</mi></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">C_{\rm cross}=\tfrac{1}{2}(\mathrm{XCI}+\mathrm{SCI}),</annotation></semantics></math>
+where XCI is the mean Pearson correlation coefficient between the
+zero-lag magnitude residuals of neighbouring band pairs (<math id="S2.SS1.p6.6.m6" class="ltx_Math" alttext="g" display="inline" intent=":literal"><semantics><mi>g</mi><annotation encoding="application/x-tex">g</annotation></semantics></math>–<math id="S2.SS1.p6.7.m7" class="ltx_Math" alttext="r" display="inline" intent=":literal"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math> and
+<math id="S2.SS1.p6.8.m8" class="ltx_Math" alttext="r" display="inline" intent=":literal"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math>–<math id="S2.SS1.p6.9.m9" class="ltx_Math" alttext="i" display="inline" intent=":literal"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>) evaluated over all epochs, and SCI is the mean same-night
+paired correlation within a single night; both are bounded in
+<math id="S2.SS1.p6.10.m10" class="ltx_Math" alttext="[-1,1]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mrow><mo>−</mo><mn>1</mn></mrow><mo>,</mo><mn>1</mn><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[-1,1]</annotation></semantics></math>.
+The equal weighting of XCI and SCI was found empirically to provide
+good class separation in the simulated dataset; higher <math id="S2.SS1.p6.11.m11" class="ltx_Math" alttext="C_{\rm cross}" display="inline" intent=":literal"><semantics><msub><mi>C</mi><mi>cross</mi></msub><annotation encoding="application/x-tex">C_{\rm cross}</annotation></semantics></math>
+values indicate more coherent multiband variability.</p>
+</div>
+</section>
+<section id="S2.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.2 </span>Simulation setup</h3>
+
+<div id="S2.SS2.p1" class="ltx_para">
+<p id="S2.SS2.p1.19" class="ltx_p"><span id="S2.SS2.p1.19.1" class="ltx_text ltx_font_italic">KBO.</span>
+PSG reflected-light spectra were generated for an idealised KBO at
+40 AU and convolved with the full Rubin/LSST <math id="S2.SS2.p1.1.m1" class="ltx_Math" alttext="ugrizy" display="inline" intent=":literal"><semantics><mrow><mi>u</mi><mo lspace="0em" rspace="0em">​</mo><mi>g</mi><mo lspace="0em" rspace="0em">​</mo><mi>r</mi><mo lspace="0em" rspace="0em">​</mo><mi>i</mi><mo lspace="0em" rspace="0em">​</mo><mi>z</mi><mo lspace="0em" rspace="0em">​</mo><mi>y</mi></mrow><annotation encoding="application/x-tex">ugrizy</annotation></semantics></math> system
+throughputs (filter, optics, detector, and atmosphere at
+1.2 airmasses).
+Spectra for five surface/activity states were modelled: R1, 100% achondrite
+inactive baseline; R2, 40% organic proxy and 60% achondrite; R3,
+30% Antarctica/ice proxy and 70% achondrite; R4, 40% achondrite,
+30% Antarctica/ice proxy, and 30% organic proxy; and R5, the R4
+mixture plus a weak silicate-dust aerosol coma.
+<span id="S2.SS2.p1.19.2" class="ltx_text ltx_font_italic">VRE.</span>
+A GJ 1214b-like PSG template was used as a controlled sub-Neptune
+atmosphere testbed, not as a literal vegetation-hosting planet.
+Spectra were generated over <math id="S2.SS2.p1.2.m2" class="ltx_Math" alttext="0.30" display="inline" intent=":literal"><semantics><mn>0.30</mn><annotation encoding="application/x-tex">0.30</annotation></semantics></math>–<math id="S2.SS2.p1.3.m3" class="ltx_Math" alttext="1.10\,\mu" display="inline" intent=":literal"><semantics><mrow><mn>1.10</mn><mo lspace="0.170em" rspace="0em">​</mo><mi>μ</mi></mrow><annotation encoding="application/x-tex">1.10\,\mu</annotation></semantics></math>m at <math id="S2.SS2.p1.4.m4" class="ltx_Math" alttext="R=1000" display="inline" intent=":literal"><semantics><mrow><mi>R</mi><mo>=</mo><mn>1000</mn></mrow><annotation encoding="application/x-tex">R=1000</annotation></semantics></math>.
+Sub-Neptune atmospheres with thick H<sub id="S2.SS2.p1.19.3" class="ltx_sub">2</sub>/He envelopes maintain a
+temperate pressure layer (<math id="S2.SS2.p1.6.m6" class="ltx_Math" alttext="{\sim}0.1" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>0.1</mn></mrow><annotation encoding="application/x-tex">{\sim}0.1</annotation></semantics></math>–<math id="S2.SS2.p1.7.m7" class="ltx_Math" alttext="1" display="inline" intent=":literal"><semantics><mn>1</mn><annotation encoding="application/x-tex">1</annotation></semantics></math> bar) where liquid water
+could in principle exist, making them a speculative but
+self-consistent context for pigment-bearing aerial organisms by
+analogy with proposed aerial-biosphere scenarios <cite class="ltx_cite ltx_citemacro_citep">(Seager et al., <a href="#bib.bib8" title="" class="ltx_ref">2021</a>)</cite>;
+the sigmoid edge proxy is used here purely as a controlled spectral
+perturbation of known shape at the canonical vegetation red-edge
+wavelength (<math id="S2.SS2.p1.8.m8" class="ltx_Math" alttext="\lambda_{0}=0.705\,\mu" display="inline" intent=":literal"><semantics><mrow><msub><mi>λ</mi><mn>0</mn></msub><mo>=</mo><mrow><mn>0.705</mn><mo lspace="0.170em" rspace="0em">​</mo><mi>μ</mi></mrow></mrow><annotation encoding="application/x-tex">\lambda_{0}=0.705\,\mu</annotation></semantics></math>m, chosen to coincide with the
+<math id="S2.SS2.p1.9.m9" class="ltx_Math" alttext="r" display="inline" intent=":literal"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math>–<math id="S2.SS2.p1.10.m10" class="ltx_Math" alttext="i" display="inline" intent=":literal"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math> filter boundary for maximal colour sensitivity), and is not
+an assertion of biological plausibility.
+The grid varied pressure <math id="S2.SS2.p1.11.m11" class="ltx_Math" alttext="(0.1,1,10\,{\rm bar})" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">(</mo><mn>0.1</mn><mo>,</mo><mn>1</mn><mo>,</mo><mrow><mn>10</mn><mo lspace="0.170em" rspace="0em">​</mo><mi>bar</mi></mrow><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(0.1,1,10\,{\rm bar})</annotation></semantics></math>, H<sub id="S2.SS2.p1.19.4" class="ltx_sub">2</sub>/He fraction
+<math id="S2.SS2.p1.13.m13" class="ltx_Math" alttext="(95.5,80.2,60.4\%)" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">(</mo><mn>95.5</mn><mo>,</mo><mn>80.2</mn><mo>,</mo><mrow><mn>60.4</mn><mo>%</mo></mrow><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(95.5,80.2,60.4\%)</annotation></semantics></math>, CH<sub id="S2.SS2.p1.19.5" class="ltx_sub">4</sub> abundance
+<math id="S2.SS2.p1.15.m15" class="ltx_Math" alttext="(10^{-4},10^{-3},10^{-2},10^{-1})" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">(</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>4</mn></mrow></msup><mo>,</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>3</mn></mrow></msup><mo>,</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>2</mn></mrow></msup><mo>,</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(10^{-4},10^{-3},10^{-2},10^{-1})</annotation></semantics></math>, and haze optical depth
+<math id="S2.SS2.p1.16.m16" class="ltx_Math" alttext="(0.0,0.3,1.0)" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">(</mo><mn>0.0</mn><mo>,</mo><mn>0.3</mn><mo>,</mo><mn>1.0</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(0.0,0.3,1.0)</annotation></semantics></math>, giving 108 baseline spectra; a VRE-like sigmoid
+pigment-edge proxy was injected with
+amplitudes <math id="S2.SS2.p1.17.m17" class="ltx_Math" alttext="A=0.0,0.10,0.30" display="inline" intent=":literal"><semantics><mrow><mi>A</mi><mo>=</mo><mrow><mn>0.0</mn><mo>,</mo><mn>0.10</mn><mo>,</mo><mn>0.30</mn></mrow></mrow><annotation encoding="application/x-tex">A=0.0,0.10,0.30</annotation></semantics></math> and widths <math id="S2.SS2.p1.18.m18" class="ltx_Math" alttext="w=0.02,0.05\,\mu" display="inline" intent=":literal"><semantics><mrow><mi>w</mi><mo>=</mo><mrow><mn>0.02</mn><mo>,</mo><mrow><mn>0.05</mn><mo lspace="0.170em" rspace="0em">​</mo><mi>μ</mi></mrow></mrow></mrow><annotation encoding="application/x-tex">w=0.02,0.05\,\mu</annotation></semantics></math>m,
+producing 649 spectra in total (three VRE coverage levels:
+<math id="S2.SS2.p1.19.m19" class="ltx_Math" alttext="f_{\rm VRE}\in\{0.0,0.1,0.3\}" display="inline" intent=":literal"><semantics><mrow><msub><mi>f</mi><mi>VRE</mi></msub><mo>∈</mo><mrow><mo stretchy="false">{</mo><mn>0.0</mn><mo>,</mo><mn>0.1</mn><mo>,</mo><mn>0.3</mn><mo stretchy="false">}</mo></mrow></mrow><annotation encoding="application/x-tex">f_{\rm VRE}\in\{0.0,0.1,0.3\}</annotation></semantics></math>).</p>
+</div>
+<div id="S2.SS2.p2" class="ltx_para">
+<p id="S2.SS2.p2.16" class="ltx_p"><span id="S2.SS2.p2.16.1" class="ltx_text ltx_font_italic">Light curves.</span>
+In total 500 synthetic LSST-like <math id="S2.SS2.p2.1.m1" class="ltx_Math" alttext="gri" display="inline" intent=":literal"><semantics><mrow><mi>g</mi><mo lspace="0em" rspace="0em">​</mo><mi>r</mi><mo lspace="0em" rspace="0em">​</mo><mi>i</mi></mrow><annotation encoding="application/x-tex">gri</annotation></semantics></math> light curves were generated in equal
+numbers (<math id="S2.SS2.p2.2.m2" class="ltx_Math" alttext="N\approx 167" display="inline" intent=":literal"><semantics><mrow><mi>N</mi><mo>≈</mo><mn>167</mn></mrow><annotation encoding="application/x-tex">N\approx 167</annotation></semantics></math> per class) for three variability regimes over
+a 3-year LSST-like baseline with irregular cadence (mean 1.2 visits per night, seasonal gaps of 185 days)
+and band fractions <math id="S2.SS2.p2.3.m3" class="ltx_Math" alttext="g" display="inline" intent=":literal"><semantics><mi>g</mi><annotation encoding="application/x-tex">g</annotation></semantics></math>:<math id="S2.SS2.p2.4.m4" class="ltx_Math" alttext="r" display="inline" intent=":literal"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math>:<math id="S2.SS2.p2.5.m5" class="ltx_Math" alttext="i" display="inline" intent=":literal"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math> = 15%:55%:30%.
+Coherent objects are simulated with a stable periodic signal with semi-amplitude
+<math id="S2.SS2.p2.6.m6" class="ltx_Math" alttext="A=0.10" display="inline" intent=":literal"><semantics><mrow><mi>A</mi><mo>=</mo><mn>0.10</mn></mrow><annotation encoding="application/x-tex">A=0.10</annotation></semantics></math> mag (plus a 0.03 mag harmonic) at a period drawn uniformly
+from <math id="S2.SS2.p2.7.m7" class="ltx_Math" alttext="P\in[30,90]" display="inline" intent=":literal"><semantics><mrow><mi>P</mi><mo>∈</mo><mrow><mo stretchy="false">[</mo><mn>30</mn><mo>,</mo><mn>90</mn><mo stretchy="false">]</mo></mrow></mrow><annotation encoding="application/x-tex">P\in[30,90]</annotation></semantics></math> days, with identical scaling across all three
+bands (achromatic).
+Natural objects carry a drifting-amplitude, drifting-phase periodic
+process (amplitude random-walked in <math id="S2.SS2.p2.8.m8" class="ltx_Math" alttext="[0.02,0.28]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mn>0.02</mn><mo>,</mo><mn>0.28</mn><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[0.02,0.28]</annotation></semantics></math> mag) plus a
+chromatic cloud/weather modulation with band scaling
+<math id="S2.SS2.p2.9.m9" class="ltx_Math" alttext="s_{g}=1.40" display="inline" intent=":literal"><semantics><mrow><msub><mi>s</mi><mi>g</mi></msub><mo>=</mo><mn>1.40</mn></mrow><annotation encoding="application/x-tex">s_{g}=1.40</annotation></semantics></math>, <math id="S2.SS2.p2.10.m10" class="ltx_Math" alttext="s_{r}=1.00" display="inline" intent=":literal"><semantics><mrow><msub><mi>s</mi><mi>r</mi></msub><mo>=</mo><mn>1.00</mn></mrow><annotation encoding="application/x-tex">s_{r}=1.00</annotation></semantics></math>, <math id="S2.SS2.p2.11.m11" class="ltx_Math" alttext="s_{i}=0.65" display="inline" intent=":literal"><semantics><mrow><msub><mi>s</mi><mi>i</mi></msub><mo>=</mo><mn>0.65</mn></mrow><annotation encoding="application/x-tex">s_{i}=0.65</annotation></semantics></math>, producing brightness–colour
+coupling absent in the coherent case.
+Noise objects have flat flux with photometric scatter only
+(SNR <math id="S2.SS2.p2.12.m12" class="ltx_Math" alttext="\in" display="inline" intent=":literal"><semantics><mo>∈</mo><annotation encoding="application/x-tex">\in</annotation></semantics></math> [10,50]).
+Each object was characterised by an irregular-cadence
+autocorrelation, phase stability index (PSI, circular statistics),
+amplitude stability index (ASI), zero-lag cross-band correlation
+(XCI), same-night paired correlation (SCI), paired colour scatter
+(<math id="S2.SS2.p2.13.m13" class="ltx_Math" alttext="\sigma_{g-r}" display="inline" intent=":literal"><semantics><msub><mi>σ</mi><mrow><mi>g</mi><mo>−</mo><mi>r</mi></mrow></msub><annotation encoding="application/x-tex">\sigma_{g-r}</annotation></semantics></math>, <math id="S2.SS2.p2.14.m14" class="ltx_Math" alttext="\sigma_{r-i}" display="inline" intent=":literal"><semantics><msub><mi>σ</mi><mrow><mi>r</mi><mo>−</mo><mi>i</mi></mrow></msub><annotation encoding="application/x-tex">\sigma_{r-i}</annotation></semantics></math>), and brightness–colour coupling
+(RBC). Each object was embedded in the
+<math id="S2.SS2.p2.15.m15" class="ltx_Math" alttext="C_{\rm chroma}" display="inline" intent=":literal"><semantics><msub><mi>C</mi><mi>chroma</mi></msub><annotation encoding="application/x-tex">C_{\rm chroma}</annotation></semantics></math>–<math id="S2.SS2.p2.16.m16" class="ltx_Math" alttext="C_{\rm cross}" display="inline" intent=":literal"><semantics><msub><mi>C</mi><mi>cross</mi></msub><annotation encoding="application/x-tex">C_{\rm cross}</annotation></semantics></math> diagnostic plane.</p>
+</div>
+</section>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Results and discussion</h2>
+
+<div id="S3.p1" class="ltx_para">
+<p id="S3.p1.5" class="ltx_p">Figure <a href="#S3.F1" title="Figure 1 ‣ Population prior illustration ‣ 3 Results and discussion ‣ Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a> shows that the controlled KBO sequence
+forms a low-dimensional colour-gradient manifold after projection
+through Rubin/LSST filters.
+The visible-slope plane provides the clearest separation, while redder
+colour spaces become increasingly compressed.
+The weak-coma state (R5) produces the strongest activity-related
+departure under our simulated conditions, reaching a full-colour
+Mahalanobis distance of <math id="S3.p1.1.m1" class="ltx_Math" alttext="D\approx 5.1" display="inline" intent=":literal"><semantics><mrow><mi>D</mi><mo>≈</mo><mn>5.1</mn></mrow><annotation encoding="application/x-tex">D\approx 5.1</annotation></semantics></math> (<math id="S3.p1.2.m2" class="ltx_Math" alttext="{\approx}5\sigma" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>≈</mo><mrow><mn>5</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow></mrow><annotation encoding="application/x-tex">{\approx}5\sigma</annotation></semantics></math> for a
+five-dimensional colour vector), which equals <math id="S3.p1.3.m3" class="ltx_Math" alttext="{\rm SNR}_{\rm coma}" display="inline" intent=":literal"><semantics><msub><mi>SNR</mi><mi>coma</mi></msub><annotation encoding="application/x-tex">{\rm SNR}_{\rm coma}</annotation></semantics></math>
+from Eq. (<a href="#S2.E1" title="In 2.1 Coherence diagnostics ‣ 2 Framework and prototype workflows ‣ Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>).
+KBO activity is thus represented as a coherent displacement from a
+natural colour track rather than an isolated colour excess, and most
+discriminatory information is concentrated in the blue-to-visible
+gradients: denser sampling toward the <math id="S3.p1.4.m4" class="ltx_Math" alttext="u" display="inline" intent=":literal"><semantics><mi>u</mi><annotation encoding="application/x-tex">u</annotation></semantics></math>- and <math id="S3.p1.5.m5" class="ltx_Math" alttext="g" display="inline" intent=":literal"><semantics><mi>g</mi><annotation encoding="application/x-tex">g</annotation></semantics></math>-band regime could
+improve manifold discrimination.</p>
+</div>
+<div id="S3.p2" class="ltx_para">
+<p id="S3.p2.10" class="ltx_p">Figure <a href="#S3.F2" title="Figure 2 ‣ Population prior illustration ‣ 3 Results and discussion ‣ Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> applies the same geometric logic to a
+VRE-like pigment-edge proxy.
+Panel (a) shows how a localised spectral perturbation projects through
+the broad Rubin/LSST passbands, producing correlated broadband colour
+shifts rather than a sharply isolated spectral feature.
+Panel (b) shows the VRE coherence margin
+<math id="S3.p2.1.m1" class="ltx_Math" alttext="M_{\rm VRE}=({\rm SNR}_{\rm VRE}-\tau)/\tau" display="inline" intent=":literal"><semantics><mrow><msub><mi>M</mi><mi>VRE</mi></msub><mo>=</mo><mrow><mrow><mo stretchy="false">(</mo><mrow><msub><mi>SNR</mi><mi>VRE</mi></msub><mo>−</mo><mi>τ</mi></mrow><mo stretchy="false">)</mo></mrow><mo>/</mo><mi>τ</mi></mrow></mrow><annotation encoding="application/x-tex">M_{\rm VRE}=({\rm SNR}_{\rm VRE}-\tau)/\tau</annotation></semantics></math> as a function of
+fractional VRE coverage; for the indicative threshold <math id="S3.p2.2.m2" class="ltx_Math" alttext="\tau=0.3" display="inline" intent=":literal"><semantics><mrow><mi>τ</mi><mo>=</mo><mn>0.3</mn></mrow><annotation encoding="application/x-tex">\tau=0.3</annotation></semantics></math>,
+the median trend first crosses zero at <math id="S3.p2.3.m3" class="ltx_Math" alttext="f_{\rm crit}\approx 0.13" display="inline" intent=":literal"><semantics><mrow><msub><mi>f</mi><mi>crit</mi></msub><mo>≈</mo><mn>0.13</mn></mrow><annotation encoding="application/x-tex">f_{\rm crit}\approx 0.13</annotation></semantics></math>
+(linearly interpolated between grid points <math id="S3.p2.4.m4" class="ltx_Math" alttext="f_{\rm VRE}=0.0" display="inline" intent=":literal"><semantics><mrow><msub><mi>f</mi><mi>VRE</mi></msub><mo>=</mo><mn>0.0</mn></mrow><annotation encoding="application/x-tex">f_{\rm VRE}=0.0</annotation></semantics></math> and
+<math id="S3.p2.5.m5" class="ltx_Math" alttext="0.1" display="inline" intent=":literal"><semantics><mn>0.1</mn><annotation encoding="application/x-tex">0.1</annotation></semantics></math>).
+Panel (c) gives the idealised stacking forecast for
+<math id="S3.p2.6.m6" class="ltx_Math" alttext="f_{\rm sys}=0" display="inline" intent=":literal"><semantics><mrow><msub><mi>f</mi><mi>sys</mi></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">f_{\rm sys}=0</annotation></semantics></math>, reaching illustrative <math id="S3.p2.7.m7" class="ltx_Math" alttext="3\sigma" display="inline" intent=":literal"><semantics><mrow><mn>3</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">3\sigma</annotation></semantics></math> and <math id="S3.p2.8.m8" class="ltx_Math" alttext="5\sigma" display="inline" intent=":literal"><semantics><mrow><mn>5</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">5\sigma</annotation></semantics></math>
+thresholds at <math id="S3.p2.9.m9" class="ltx_Math" alttext="N\approx 53" display="inline" intent=":literal"><semantics><mrow><mi>N</mi><mo>≈</mo><mn>53</mn></mrow><annotation encoding="application/x-tex">N\approx 53</annotation></semantics></math> and <math id="S3.p2.10.m10" class="ltx_Math" alttext="N\approx 148" display="inline" intent=":literal"><semantics><mrow><mi>N</mi><mo>≈</mo><mn>148</mn></mrow><annotation encoding="application/x-tex">N\approx 148</annotation></semantics></math>, respectively; the
+16–84 percentile band reflects variation across the full atmospheric
+grid.</p>
+</div>
+<div id="S3.p3" class="ltx_para">
+<p id="S3.p3.2" class="ltx_p">Figure <a href="#S3.F3" title="Figure 3 ‣ Population prior illustration ‣ 3 Results and discussion ‣ Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a> extends the framework to
+time-domain photometry, testing temporal–chromatic coherence across stable coherent modulation, natural stochastic chromatic variability, and incoherent noise. The same framework could later be extended to hypothetical engineered modulation patterns, not as photometric identification, but as a test of whether different mechanisms occupy distinct Rubin/LSST temporal–colour coherence regions.
+Individual diagnostics such as phase stability, temporal persistence,
+or colour coherence overlap strongly and do not by themselves reliably
+separate variability classes.
+However, when embedded in the joint <math id="S3.p3.1.m1" class="ltx_Math" alttext="C_{\rm chroma}" display="inline" intent=":literal"><semantics><msub><mi>C</mi><mi>chroma</mi></msub><annotation encoding="application/x-tex">C_{\rm chroma}</annotation></semantics></math>–<math id="S3.p3.2.m2" class="ltx_Math" alttext="C_{\rm cross}" display="inline" intent=":literal"><semantics><msub><mi>C</mi><mi>cross</mi></msub><annotation encoding="application/x-tex">C_{\rm cross}</annotation></semantics></math>
+manifold, coherent, natural stochastic, and noise-dominated variability
+occupy distinct regions: coherent cases preserve aligned multiband
+morphology, natural cases show structured but less stable variability,
+and noise cases lack persistent cross-band organisation.</p>
+</div>
+<div id="S3.p4" class="ltx_para">
+<p id="S3.p4.1" class="ltx_p">Across all three experiments, the diagnostic power arises from
+structured multi-observable displacement rather than any single
+photometric feature.
+In each case the framework identifies not a single anomalous
+measurement but a direction in colour or variability space that is
+geometrically inconsistent with known astrophysical manifolds—the
+operational definition of coherence used throughout.</p>
+</div>
+<div id="S3.p5" class="ltx_para">
+<p id="S3.p5.1" class="ltx_p">Knowing where to deploy these diagnostics efficiently requires
+a population-level prior: a way to identify, from large survey
+data, which stellar environments are most promising for
+coherence-based anomaly searches before any target-specific
+observation is made.</p>
+</div>
+<section id="S3.SSx1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">Population prior illustration</h3>
+
+<div id="S3.SSx1.p1" class="ltx_para">
+<p id="S3.SSx1.p1.4" class="ltx_p">The three coherence experiments above establish <span id="S3.SSx1.p1.4.1" class="ltx_text ltx_font_italic">how</span> to
+detect anomalous signals; a complementary question is <span id="S3.SSx1.p1.4.2" class="ltx_text ltx_font_italic">where</span>
+in the Galaxy to look first.
+As a separate proof-of-concept directly addressing this question,
+we use a small Gaia DR3 <cite class="ltx_cite ltx_citemacro_citep">(Maíz Apellániz et al., <a href="#bib.bib7" title="" class="ltx_ref">2023</a>)</cite> star sample (<math id="S3.SSx1.p1.1.m1" class="ltx_Math" alttext="N_{\star}=100" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mo>⋆</mo></msub><mo>=</mo><mn>100</mn></mrow><annotation encoding="application/x-tex">N_{\star}=100</annotation></semantics></math>
+per bin; uncertainties on fractions are <math id="S3.SSx1.p1.2.m2" class="ltx_Math" alttext="{\sim}0.05" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>0.05</mn></mrow><annotation encoding="application/x-tex">{\sim}0.05</annotation></semantics></math> at the
+<math id="S3.SSx1.p1.3.m3" class="ltx_Math" alttext="1\sigma" display="inline" intent=":literal"><semantics><mrow><mn>1</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">1\sigma</annotation></semantics></math> Bernoulli level) to illustrate how a simple
+stellar-population prior could prioritise environments where
+the coherence diagnostics would be most efficiently deployed.
+A photometrically calm, solar-type host star provides the stable
+baseline against which multiband coherence anomalies are most readily
+identified.
+Table <a href="#S3.T1" title="Table 1 ‣ Population prior illustration ‣ 3 Results and discussion ‣ Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a> shows that the Galactic
+Plane population contains a larger fraction of solar-like and
+photometrically calm stars than the high-latitude comparison sample;
+given the small sample sizes the difference is indicative rather
+than statistically definitive.
+The resulting Habitability Potential Index
+<math id="S3.SSx1.p1.4.m4" class="ltx_Math" alttext="(\mathrm{HPI}=0.5f_{\rm solar}+0.5f_{\rm calm})" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">(</mo><mrow><mi>HPI</mi><mo>=</mo><mrow><mrow><mn>0.5</mn><mo lspace="0em" rspace="0em">​</mo><msub><mi>f</mi><mi>solar</mi></msub></mrow><mo>+</mo><mrow><mn>0.5</mn><mo lspace="0em" rspace="0em">​</mo><msub><mi>f</mi><mi>calm</mi></msub></mrow></mrow></mrow><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(\mathrm{HPI}=0.5f_{\rm solar}+0.5f_{\rm calm})</annotation></semantics></math> acts as a
+feature-based ranking variable; its purpose is not to estimate a
+physical probability of habitability, but to provide a
+proof-of-concept illustration of a first-order population prior based
+on large surveys (Gaia, LSST) for scouting Galactic environments
+relevant to future astrobiology and technosignature missions.</p>
+</div>
+<figure id="S3.F1" class="ltx_figure"><img src="2606.00574v1/kbo_signature.png" id="S3.F1.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="568" height="457" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure"><span id="S3.F1.10.5.1" class="ltx_text" style="font-size:90%;">Figure 1</span>: </span><span id="S3.F1.8.4" class="ltx_text" style="font-size:90%;">KBO simulation.
+(a) Differential state-transition signatures from forward PSG
+reflected-light spectra projected through Rubin/LSST total system
+throughput curves.
+(b1)–(b3) Simulated states in complementary LSST colour–colour
+spaces; the visible-slope plane gives the clearest separation,
+while redder spaces show increasing compression and degeneracy.
+(c) State distinguishability in the full LSST colour vector via
+Mahalanobis distance (<math id="S3.F1.5.1.m1" class="ltx_Math" alttext="D\equiv{\rm SNR}_{\rm coma}" display="inline" intent=":literal"><semantics><mrow><mi>D</mi><mo>≡</mo><msub><mi>SNR</mi><mi>coma</mi></msub></mrow><annotation encoding="application/x-tex">D\equiv{\rm SNR}_{\rm coma}</annotation></semantics></math>,
+Eq. <a href="#S2.E1" title="In 2.1 Coherence diagnostics ‣ 2 Framework and prototype workflows ‣ Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>), with <math id="S3.F1.6.2.m2" class="ltx_Math" alttext="\sigma_{m}=0.01" display="inline" intent=":literal"><semantics><mrow><msub><mi>σ</mi><mi>m</mi></msub><mo>=</mo><mn>0.01</mn></mrow><annotation encoding="application/x-tex">\sigma_{m}=0.01</annotation></semantics></math> mag and
+<math id="S3.F1.7.3.m3" class="ltx_Math" alttext="5\sigma" display="inline" intent=":literal"><semantics><mrow><mn>5</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">5\sigma</annotation></semantics></math> reference line for <math id="S3.F1.8.4.m4" class="ltx_Math" alttext="p=5" display="inline" intent=":literal"><semantics><mrow><mi>p</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">p=5</annotation></semantics></math> colour dimensions.</span></figcaption>
+</figure>
+<figure id="S3.F2" class="ltx_figure"><img src="2606.00574v1/x1.png" id="S3.F2.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="830" height="299" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure"><span id="S3.F2.26.12.1" class="ltx_text" style="font-size:90%;">Figure 2</span>: </span><span id="S3.F2.22.11" class="ltx_text" style="font-size:90%;">VRE proxy simulation from PSG atmosphere spectra projected
+through Rubin/LSST total system throughput curves.
+(a) Differential spectrum <math id="S3.F2.12.1.m1" class="ltx_Math" alttext="\Delta F_{\rm VRE}=F_{\rm planet,VRE}-F_{\rm planet}" display="inline" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>F</mi><mi>VRE</mi></msub></mrow><mo>=</mo><mrow><msub><mi>F</mi><mrow><mi>planet</mi><mo>,</mo><mi>VRE</mi></mrow></msub><mo>−</mo><msub><mi>F</mi><mi>planet</mi></msub></mrow></mrow><annotation encoding="application/x-tex">\Delta F_{\rm VRE}=F_{\rm planet,VRE}-F_{\rm planet}</annotation></semantics></math> for a representative 0.1 bar, 95.5% H<sub id="S3.F2.22.11.1" class="ltx_sub">2</sub>/He,
+methane-poor, haze-free model (<math id="S3.F2.14.3.m3" class="ltx_Math" alttext="f_{\rm VRE}=0.02" display="inline" intent=":literal"><semantics><mrow><msub><mi>f</mi><mi>VRE</mi></msub><mo>=</mo><mn>0.02</mn></mrow><annotation encoding="application/x-tex">f_{\rm VRE}=0.02</annotation></semantics></math>); throughput
+curves show how the perturbation projects into broadband colour space.
+(b) VRE colour-coherence margin <math id="S3.F2.15.4.m4" class="ltx_Math" alttext="M_{\rm VRE}" display="inline" intent=":literal"><semantics><msub><mi>M</mi><mi>VRE</mi></msub><annotation encoding="application/x-tex">M_{\rm VRE}</annotation></semantics></math> versus fractional
+VRE coverage; median trend over pressure, composition, CH<sub id="S3.F2.22.11.2" class="ltx_sub">4</sub>,
+and haze variations, with indicative threshold <math id="S3.F2.17.6.m6" class="ltx_Math" alttext="\tau=0.3" display="inline" intent=":literal"><semantics><mrow><mi>τ</mi><mo>=</mo><mn>0.3</mn></mrow><annotation encoding="application/x-tex">\tau=0.3</annotation></semantics></math> and
+<math id="S3.F2.18.7.m7" class="ltx_Math" alttext="f_{\rm crit}\approx 0.13" display="inline" intent=":literal"><semantics><mrow><msub><mi>f</mi><mi>crit</mi></msub><mo>≈</mo><mn>0.13</mn></mrow><annotation encoding="application/x-tex">f_{\rm crit}\approx 0.13</annotation></semantics></math> linearly interpolated between grid points.
+(c) Idealised stacking forecast (<math id="S3.F2.19.8.m8" class="ltx_Math" alttext="f_{\rm sys}=0" display="inline" intent=":literal"><semantics><mrow><msub><mi>f</mi><mi>sys</mi></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">f_{\rm sys}=0</annotation></semantics></math>) converting
+<math id="S3.F2.20.9.m9" class="ltx_Math" alttext="\mathrm{SNR}_{\rm VRE}" display="inline" intent=":literal"><semantics><msub><mi>SNR</mi><mi>VRE</mi></msub><annotation encoding="application/x-tex">\mathrm{SNR}_{\rm VRE}</annotation></semantics></math> scores (Eq. <a href="#S2.E3" title="In 2.1 Coherence diagnostics ‣ 2 Framework and prototype workflows ‣ Prospects for Astrobiology and Technosignature Searches with the Vera C. Rubin Observatory Legacy Survey of Space and Time" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>) into
+stacked significance <math id="S3.F2.21.10.m10" class="ltx_Math" alttext="\sqrt{N}\,D_{0}" display="inline" intent=":literal"><semantics><mrow><msqrt><mi>N</mi></msqrt><mo lspace="0.170em" rspace="0em">​</mo><msub><mi>D</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">\sqrt{N}\,D_{0}</annotation></semantics></math> for <math id="S3.F2.22.11.m11" class="ltx_Math" alttext="N" display="inline" intent=":literal"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math> independent objects;
+blue band: 16–84 percentile range; pale vertical bands: illustrative
+small-stack and survey-stack regimes.</span></figcaption>
+</figure>
+<figure id="S3.F3" class="ltx_figure"><img src="2606.00574v1/lightcurves.png" id="S3.F3.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="598" height="327" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure"><span id="S3.F3.14.7.1" class="ltx_text" style="font-size:90%;">Figure 3</span>: </span><span id="S3.F3.12.6" class="ltx_text" style="font-size:90%;">Simulated multiband light-curve populations in the
+<math id="S3.F3.7.1.m1" class="ltx_Math" alttext="C_{\rm chroma}" display="inline" intent=":literal"><semantics><msub><mi>C</mi><mi>chroma</mi></msub><annotation encoding="application/x-tex">C_{\rm chroma}</annotation></semantics></math>–<math id="S3.F3.8.2.m2" class="ltx_Math" alttext="C_{\rm cross}" display="inline" intent=":literal"><semantics><msub><mi>C</mi><mi>cross</mi></msub><annotation encoding="application/x-tex">C_{\rm cross}</annotation></semantics></math> diagnostic plane.
+Left: noise-dominated, natural, and coherent variability classes
+(<math id="S3.F3.9.3.m3" class="ltx_Math" alttext="N\approx 167" display="inline" intent=":literal"><semantics><mrow><mi>N</mi><mo>≈</mo><mn>167</mn></mrow><annotation encoding="application/x-tex">N\approx 167</annotation></semantics></math> each, 500 total); ellipses show population covariance,
+open circles mark centroid-nearest examples.
+Right: normalised Rubin/LSST <math id="S3.F3.10.4.m4" class="ltx_Math" alttext="g" display="inline" intent=":literal"><semantics><mi>g</mi><annotation encoding="application/x-tex">g</annotation></semantics></math>, <math id="S3.F3.11.5.m5" class="ltx_Math" alttext="r" display="inline" intent=":literal"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math>, <math id="S3.F3.12.6.m6" class="ltx_Math" alttext="i" display="inline" intent=":literal"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math> light curves for those
+examples; coherent case shows stable cross-band structure, natural
+case shows stochastic variability, noise case is dominated by
+incoherent fluctuations.</span></figcaption>
+</figure>
+<figure id="S3.T1" class="ltx_table">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table"><span id="S3.T1.29.11.1" class="ltx_text" style="font-size:90%;">Table 1</span>: </span><span id="S3.T1.20.10" class="ltx_text" style="font-size:90%;">Gaia DR3 stellar-population context used as an illustrative
+habitability prior for LSST astrobiology searches
+(<math id="S3.T1.11.1.m1" class="ltx_Math" alttext="N_{\star}=100" display="inline" intent=":literal"><semantics><mrow><msub><mi>N</mi><mo>⋆</mo></msub><mo>=</mo><mn>100</mn></mrow><annotation encoding="application/x-tex">N_{\star}=100</annotation></semantics></math> per sample; Bernoulli uncertainties <math id="S3.T1.12.2.m2" class="ltx_Math" alttext="{\sim}0.05" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>0.05</mn></mrow><annotation encoding="application/x-tex">{\sim}0.05</annotation></semantics></math>
+at <math id="S3.T1.13.3.m3" class="ltx_Math" alttext="1\sigma" display="inline" intent=":literal"><semantics><mrow><mn>1</mn><mo lspace="0em" rspace="0em">​</mo><mi>σ</mi></mrow><annotation encoding="application/x-tex">1\sigma</annotation></semantics></math>).
+The Galactic Plane sample comprises stars with
+<math id="S3.T1.14.4.m4" class="ltx_Math" alttext="|b|&lt;15^{\circ}" display="inline" intent=":literal"><semantics><mrow><mrow><mo stretchy="false">|</mo><mi>b</mi><mo stretchy="false">|</mo></mrow><mo>&lt;</mo><msup><mn>15</mn><mo>∘</mo></msup></mrow><annotation encoding="application/x-tex">|b|&lt;15^{\circ}</annotation></semantics></math>; the high-latitude sample has <math id="S3.T1.15.5.m5" class="ltx_Math" alttext="|b|&gt;30^{\circ}" display="inline" intent=":literal"><semantics><mrow><mrow><mo stretchy="false">|</mo><mi>b</mi><mo stretchy="false">|</mo></mrow><mo>&gt;</mo><msup><mn>30</mn><mo>∘</mo></msup></mrow><annotation encoding="application/x-tex">|b|&gt;30^{\circ}</annotation></semantics></math>.
+<math id="S3.T1.16.6.m6" class="ltx_Math" alttext="f_{\rm solar}" display="inline" intent=":literal"><semantics><msub><mi>f</mi><mi>solar</mi></msub><annotation encoding="application/x-tex">f_{\rm solar}</annotation></semantics></math> uses the colour cut <math id="S3.T1.17.7.m7" class="ltx_Math" alttext="0.8&lt;BP-RP&lt;1.5" display="inline" intent=":literal"><semantics><mrow><mn>0.8</mn><mo>&lt;</mo><mrow><mrow><mi>B</mi><mo lspace="0em" rspace="0em">​</mo><mi>P</mi></mrow><mo>−</mo><mrow><mi>R</mi><mo lspace="0em" rspace="0em">​</mo><mi>P</mi></mrow></mrow><mo>&lt;</mo><mn>1.5</mn></mrow><annotation encoding="application/x-tex">0.8&lt;BP-RP&lt;1.5</annotation></semantics></math> as a proxy for
+late-G to K-type stars.
+<math id="S3.T1.18.8.m8" class="ltx_Math" alttext="f_{\rm calm}" display="inline" intent=":literal"><semantics><msub><mi>f</mi><mi>calm</mi></msub><annotation encoding="application/x-tex">f_{\rm calm}</annotation></semantics></math> uses <math id="S3.T1.19.9.m9" class="ltx_Math" alttext="\mathrm{MAD}(G)&lt;0.02" display="inline" intent=":literal"><semantics><mrow><mrow><mi>MAD</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>G</mi><mo stretchy="false">)</mo></mrow></mrow><mo>&lt;</mo><mn>0.02</mn></mrow><annotation encoding="application/x-tex">\mathrm{MAD}(G)&lt;0.02</annotation></semantics></math> mag as a proxy for low
+photometric variability.
+<math id="S3.T1.20.10.m10" class="ltx_Math" alttext="\mathrm{HPI}=0.5f_{\rm solar}+0.5f_{\rm calm}" display="inline" intent=":literal"><semantics><mrow><mi>HPI</mi><mo>=</mo><mrow><mrow><mn>0.5</mn><mo lspace="0em" rspace="0em">​</mo><msub><mi>f</mi><mi>solar</mi></msub></mrow><mo>+</mo><mrow><mn>0.5</mn><mo lspace="0em" rspace="0em">​</mo><msub><mi>f</mi><mi>calm</mi></msub></mrow></mrow></mrow><annotation encoding="application/x-tex">\mathrm{HPI}=0.5f_{\rm solar}+0.5f_{\rm calm}</annotation></semantics></math> is an illustrative
+ranking variable, not a physical habitability probability.</span></figcaption>
+<table id="S3.T1.27" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S3.T1.23.3" class="ltx_tr">
+<th id="S3.T1.23.3.4" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt"><span id="S3.T1.23.3.4.1" class="ltx_text ltx_font_bold">Sample</span></th>
+<th id="S3.T1.21.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><math id="S3.T1.21.1.1.m1" class="ltx_Math" alttext="N_{\star}" display="inline" intent=":literal"><semantics><msub><mi>N</mi><mo>⋆</mo></msub><annotation encoding="application/x-tex">N_{\star}</annotation></semantics></math></th>
+<th id="S3.T1.22.2.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><math id="S3.T1.22.2.2.m1" class="ltx_Math" alttext="f_{\rm solar}" display="inline" intent=":literal"><semantics><msub><mi>f</mi><mi>solar</mi></msub><annotation encoding="application/x-tex">f_{\rm solar}</annotation></semantics></math></th>
+<th id="S3.T1.23.3.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><math id="S3.T1.23.3.3.m1" class="ltx_Math" alttext="f_{\rm calm}" display="inline" intent=":literal"><semantics><msub><mi>f</mi><mi>calm</mi></msub><annotation encoding="application/x-tex">f_{\rm calm}</annotation></semantics></math></th>
+<th id="S3.T1.23.3.5" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span id="S3.T1.23.3.5.1" class="ltx_text ltx_font_bold">HPI</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S3.T1.25.5" class="ltx_tr">
+<td id="S3.T1.25.5.3" class="ltx_td ltx_align_left ltx_border_t">Galactic Plane</td>
+<td id="S3.T1.25.5.4" class="ltx_td ltx_align_center ltx_border_t">100</td>
+<td id="S3.T1.24.4.1" class="ltx_td ltx_align_center ltx_border_t"><math id="S3.T1.24.4.1.m1" class="ltx_Math" alttext="0.63\pm 0.05" display="inline" intent=":literal"><semantics><mrow><mn>0.63</mn><mo>±</mo><mn>0.05</mn></mrow><annotation encoding="application/x-tex">0.63\pm 0.05</annotation></semantics></math></td>
+<td id="S3.T1.25.5.2" class="ltx_td ltx_align_center ltx_border_t"><math id="S3.T1.25.5.2.m1" class="ltx_Math" alttext="0.80\pm 0.04" display="inline" intent=":literal"><semantics><mrow><mn>0.80</mn><mo>±</mo><mn>0.04</mn></mrow><annotation encoding="application/x-tex">0.80\pm 0.04</annotation></semantics></math></td>
+<td id="S3.T1.25.5.5" class="ltx_td ltx_align_center ltx_border_t">0.72</td>
+</tr>
+<tr id="S3.T1.27.7" class="ltx_tr">
+<td id="S3.T1.27.7.3" class="ltx_td ltx_align_left ltx_border_bb">High Galactic Latitude</td>
+<td id="S3.T1.27.7.4" class="ltx_td ltx_align_center ltx_border_bb">100</td>
+<td id="S3.T1.26.6.1" class="ltx_td ltx_align_center ltx_border_bb"><math id="S3.T1.26.6.1.m1" class="ltx_Math" alttext="0.50\pm 0.05" display="inline" intent=":literal"><semantics><mrow><mn>0.50</mn><mo>±</mo><mn>0.05</mn></mrow><annotation encoding="application/x-tex">0.50\pm 0.05</annotation></semantics></math></td>
+<td id="S3.T1.27.7.2" class="ltx_td ltx_align_center ltx_border_bb"><math id="S3.T1.27.7.2.m1" class="ltx_Math" alttext="0.68\pm 0.05" display="inline" intent=":literal"><semantics><mrow><mn>0.68</mn><mo>±</mo><mn>0.05</mn></mrow><annotation encoding="application/x-tex">0.68\pm 0.05</annotation></semantics></math></td>
+<td id="S3.T1.27.7.5" class="ltx_td ltx_align_center ltx_border_bb">0.59</td>
+</tr>
+</tbody>
+</table>
+</figure>
+</section>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Conclusion and outlook</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p id="S4.p1.1" class="ltx_p">We presented three prototype Rubin/LSST coherence experiments
+spanning KBO colour manifolds, VRE-like atmospheric perturbations,
+and multiband time-domain variability, showing that physically
+meaningful signals appear as coherent geometric displacements in
+observable space rather than isolated photometric anomalies under
+idealised conditions.
+The present work establishes the signal direction and coherence
+geometry; false-positive characterisation against realistic source
+populations remains the critical next step.
+Future work will: (i) inject all three diagnostics into realistic
+LSST cadences to quantify irregular-sampling and systematic effects;
+(ii) characterise false-positive rates against realistic LSST-like
+source populations; (iii) expand the population prior to a full
+Rubin/LSST target list combining stellar colour, photometric
+stability, and transiting planet catalogues; and (iv) replace
+idealised proxies with physically motivated forward models.</p>
+</div>
+</section>
+<section id="Sx1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">Acknowledgments</h2>
+
+<div id="Sx1.p1" class="ltx_para ltx_noindent">
+<p id="Sx1.p1.1" class="ltx_p">The Authors express gratitude to the Organizers of IAUS 404
+and the University of Kent for their support.
+A.B.K. acknowledges funding provided by the University of
+Belgrade – Faculty of Mathematics (contract
+451-03-33/2026-03/200104).
+N.J.M. recognises the support of Europlanet 2024 RI, which has
+received funding from the European Union’s Horizon 2020 research and
+innovation programme under grant agreement No. 871149. A. Ć.: This work was produced by Fermi Forward Discovery Group, LLC under Contract No. 89243024CSC000002 with the U.S. Department of Energy, Office of Science, Office of High Energy Physics. The United States Government retains, and the publisher, by accepting the work for publication, acknowledges that the United States Government retains a non-exclusive, paid-up, irrevocable, world-wide license to publish or reproduce the published form of this work, or allow others to do so, for United States Government purposes. The Department of Energy will provide public access to these results of federally sponsored research in accordance with the DOE Public Access Plan (http://energy.gov/downloads/doe-public-access-plan).</p>
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul class="ltx_biblist">
+<li id="bib.bib1" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Gallay, Davenport, &amp; Croft (2025)</span>
+<span class="ltx_bibblock">
+Gallay E. M., Davenport J. R. A., Croft S., 2025, AJ, 170, 95.
+doi:10.3847/1538-3881/ade4bb
+
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Haqq-Misra et al. (2022)</span>
+<span class="ltx_bibblock">
+Haqq-Misra, J., Schwieterman, E. W., Socas-Navarro, H., Kopparapu, R.,
+Angerhausen, D., et al. 2022,
+Searching for technosignatures in exoplanetary systems with current
+and future missions, <span id="bib.bib2.1.1" class="ltx_text ltx_font_italic">Acta Astronautica</span>, 198, 194–207.
+doi:10.1016/j.actaastro.2022.05.040
+
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Ivezić et al. (2019)</span>
+<span class="ltx_bibblock">
+Ivezić, Ž., et al. 2019, <span id="bib.bib3.1.1" class="ltx_text ltx_font_italic">ApJ</span>, 873, 111.
+doi:10.3847/1538-4357/ab042c
+
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kopparapu et al. (2024)</span>
+<span class="ltx_bibblock">
+Kopparapu, R. K., Kofman, V., Haqq-Misra, J., Kopparapu, V., &amp;
+Lingam, M. 2024,
+Detectability of Solar Panels as a Technosignature,
+<span id="bib.bib4.1.1" class="ltx_text ltx_font_italic">ApJ</span>, 969, 190.
+doi:10.3847/1538-4357/ad6d5f
+
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kovačević, Mason &amp; Ćiprijanović (2025)</span>
+<span class="ltx_bibblock">
+Kovačević, A., Mason, N. J., &amp; Ćiprijanović, A. 2025,
+Multiscale astrobiology with the Vera C. Rubin Observatory Legacy
+Survey of Space and Time,
+<span id="bib.bib5.1.1" class="ltx_text ltx_font_italic">Frontiers in Astronomy and Space Sciences</span>, 12, 1594485.
+doi:10.3389/fspas.2025.1594485
+
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Li et al. (2022)</span>
+<span class="ltx_bibblock">
+Li, X., Ragosta, F., Clarkson, W. I., &amp; Bianco, F. B. 2022,
+Preparing to Discover the Unknown with Rubin LSST: Time Domain,
+<span id="bib.bib6.1.1" class="ltx_text ltx_font_italic">ApJS</span>, 258, 2.
+doi:10.3847/1538-4365/ac3bca
+
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Maíz Apellániz et al. (2023)</span>
+<span class="ltx_bibblock">
+Maíz Apellániz, J., Holgado, G., Pantaleoni González, M.,
+&amp; Caballero, J. A. 2023,
+Stellar variability in Gaia DR3. I. Three-band photometric
+dispersions for 145 million sources,
+<span id="bib.bib7.1.1" class="ltx_text ltx_font_italic">A&amp;A</span>, 677, A95.
+doi:10.1051/0004-6361/202346989
+
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Seager et al. (2021)</span>
+<span class="ltx_bibblock">
+Seager, S., Petkowski, J. J., Gao, P., Bains, W., Bryan, N. C.,
+Ranjan, S., &amp; Greaves, J. S. 2021,
+<span id="bib.bib8.1.1" class="ltx_text ltx_font_italic">Universe</span>, 7, 172.
+doi:10.3390/universe7060172
+
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Villanueva et al. (2022)</span>
+<span class="ltx_bibblock">
+Villanueva, G. L., Liuzzi, G., Faggi, S., Protopapa, S., Kofman, V.,
+Fauchez, T., Stone, S. W., &amp; Mandell, A. M. 2022,
+<span id="bib.bib9.1.1" class="ltx_text ltx_font_italic">Fundamentals of the Planetary Spectrum Generator</span>.
+
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2606.00574v1/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer><footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation">
+        </a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International">
+        </a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences">
+        </a>
+      </div>
+    </div>
+  </div>
+</footer><div id="fixed-buttons-container">
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>

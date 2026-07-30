@@ -1,0 +1,1470 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array</title>
+<!--Generated on Wed May 20 21:54:18 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+    // Pre-apply spinout-banner dismissal here, before the banner paints, so it
+    // never flashes in only to be hidden later by the deferred arxiv-header.js.
+    // Key matches arxiv-header.js: "arxiv-banner-dismissed:" + data-banner-name.
+    if (localStorage.getItem('arxiv-banner-dismissed:spinout-nonprofit')) {
+      document.documentElement.setAttribute("data-banner-dismissed", "");
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css"><link rel="stylesheet" type="text/css" media="screen"
+  href="/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626"><style>
+  /* Banner pre-dismissal (set above before paint -> no flash-then-hide) and
+     reading-mode chrome hiding. */
+  html[data-banner-dismissed] .ds-announcement { display: none; }
+  html[data-reading-mode="enabled"] .ds-announcement,
+  html[data-reading-mode="enabled"] .ds-site-footer { display: none; }
+  /* Keep the announcement text dark on the Open-Blue band in both colour themes
+     (otherwise it inherits the paper's warm-wash text in dark mode and washes out). */
+  .ds-announcement-text { color: var(--arxiv-ink, #1c1a17); }
+</style>
+<script defer src="/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog><div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement"
+    data-banner-name="spinout-nonprofit">
+    <img class="ds-announcement-glyph" src="/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+    <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+    <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+    <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/"><img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/base/1.0.1/images/arxiv-logo-primary-light.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2512.18142v2">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2512.18142v2"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_abstract"><a href="#abstract1" title="In A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_title">Abstract</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S1" title="In A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">I </span>Introduction</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S1.SS1" title="In I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">I.1 </span>3I/ATLAS</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S1.SS2" title="In I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">I.2 </span>Connection to Technosignatures</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S1.SS3" title="In I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">I.3 </span>The Allen Telescope Array</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S2" title="In A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II </span>Observations</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S3" title="In A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III </span>Data Analysis</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS1" title="In III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.1 </span>Finding narrowband hits with <span class="ltx_text ltx_font_typewriter">bliss</span></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS2" title="In III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.2 </span>RFI blanking and drift rate limits</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS3" title="In III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III.3 </span>Search for localized events with <span class="ltx_text ltx_font_typewriter">NBeamAnalysis</span></span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S4" title="In A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">IV </span>Results</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S5" title="In A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">V </span>Upper Limits</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S6" title="In A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">VI </span>Conclusions</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_bibliography"><a href="#bib" title="In A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: CC BY 4.0
+  </a>
+  <div id="watermark-tr">
+arXiv:2512.18142v2 [astro-ph.EP] 20 May 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document ltx_authors_multiline">
+<h1 class="ltx_title ltx_title_document">A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS 
+<br class="ltx_break">with the Allen Telescope Array</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0000-0001-7057-4999" title="" class="ltx_ref orcid">Sofia Z. Sheikh</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+</span>
+<span class="ltx_contact ltx_role_affiliation">Berkeley SETI Research Center, 339 Campbell, Berkeley, CA 94720
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0009-0000-2879-6539" title="" class="ltx_ref orcid">Valeria Garcia Lopez</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Furman University, Physics Department, 3300 Poinsett Highway, Greenville, SC 29613.
+</span>
+<span class="ltx_contact ltx_role_affiliation">Breakthrough Listen, University of California, Berkeley, 501 Campbell Hall #3411, Berkeley, CA 94720, USA
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0009-0003-9610-5068" title="" class="ltx_ref orcid">Isabel Gerrard</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Breakthrough Listen, University of Oxford, Denys Wilkinson Building, Keble Road, Oxford OX1 3RH, UK
+</span>
+<span class="ltx_contact ltx_role_affiliation">SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0000-0002-0637-835X" title="" class="ltx_ref orcid">James R. A. Davenport</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Department of Astronomy and the DiRAC Institute, University of Washington, 3910 15th Avenue NE, Seattle, WA 98195, USA
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0000-0002-0161-7243" title="" class="ltx_ref orcid">Wael Farah</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0009-0002-2532-3079" title="" class="ltx_ref orcid">Blayne Griffin</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+</span>
+<span class="ltx_contact ltx_role_affiliation">University of Central Arkansas, Department of Physics, Astronomy, and Engineering, 201 Donaghey Ave, Conway, AR 72035
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0000-0003-4823-129X" title="" class="ltx_ref orcid">Steve Croft</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Breakthrough Listen, University of Oxford, Denys Wilkinson Building, Keble Road, Oxford OX1 3RH, UK
+</span>
+<span class="ltx_contact ltx_role_affiliation">SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+</span>
+<span class="ltx_contact ltx_role_affiliation">Breakthrough Listen, University of California, Berkeley, 501 Campbell Hall #3411, Berkeley, CA 94720, USA
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0000-0001-5576-2254" title="" class="ltx_ref orcid">Luigi F. Cruz</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0000-0002-4278-3168" title="" class="ltx_ref orcid">Imke de Pater</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Department of Astronomy, University of California, Berkeley, 501 Campbell #3411, Berkeley, CA 94720
+</span>
+<span class="ltx_contact ltx_role_affiliation">Department of Earth and Space Science, University of California, Berkeley, 501 Campbell #3411, Berkeley, CA 94720
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0009-0009-6231-9280" title="" class="ltx_ref orcid">Ben Jacobson-Bell</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Berkeley SETI Research Center, 339 Campbell, Berkeley, CA 94720
+</span>
+<span class="ltx_contact ltx_role_affiliation">Department of Astronomy, University of California, Berkeley, 501 Campbell #3411, Berkeley, CA 94720
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Mark Masters
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0000-0002-6341-4548" title="" class="ltx_ref orcid">Karen I. Perez</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0000-0002-3430-7671" title="" class="ltx_ref orcid">Alexander W. Pollak</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Carol Shumaker
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="https://orcid.org/0000-0003-2828-7720" title="" class="ltx_ref orcid">Andrew Siemion</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">SETI Institute, 339 Bernardo Ave, Suite 200, Mountain View, CA 94043, USA
+</span>
+<span class="ltx_contact ltx_role_affiliation">Sub-Department of Astrophysics, University of Oxford, Banbury Road, OX1 3RH
+</span>
+<span class="ltx_contact ltx_role_affiliation">Berkeley SETI Research Center, 339 Campbell, Berkeley, CA 94720
+</span>
+<span class="ltx_contact ltx_role_affiliation">Jodrell Bank Centre for Astrophysics (JBCA), Department of Physics &amp; Astronomy, Alan Turing Building, The University of Manchester, M13 9PL, UK
+</span>
+<span class="ltx_contact ltx_role_affiliation">Department of Physics, Faculty of Science, University of Malta, Msida MSD 2080, Malta
+</span></span></span>
+</div>
+
+<div id="abstract1" class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">In 2025 July, the third-ever interstellar object, 3I/ATLAS, was discovered on its ingress into the Solar System. Similar to the NASA Voyager missions sent in 1977, science probes by extraterrestrial life (“artifact technosignatures”) could be sent to explore other stellar systems like our own. In this campaign, we used the SETI Institute’s Allen Telescope Array to observe 3I/ATLAS from 1–9 GHz. We detected nearly 74 million narrowband hits in 7.25 hr of data using the newly-developed search pipeline <span class="ltx_text ltx_font_typewriter">bliss</span>. We then  to mitigate  <a href="#S6.4.4.4"><span href="#S6.4.4.4" title="Radio Frequency Interference" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_long">Radio Frequency Interference</span></span></a> (<a href="#S6.4.4.4"><abbr href="#S6.4.4.4" title="Radio Frequency Interference" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">RFI</span></abbr></a>) in our dataset, narrowing the dataset down to <math class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>2 million hits. These hits were further filtered by the localization code <span class="ltx_text ltx_font_typewriter">NBeamAnalysis</span>, and the remaining 211 hits were visually inspected in the time-frequency domain. We did not find any signals worthy of additional follow-up. Accounting for the Doppler drift correction and given the non-detection, we are able to set an  <a href="#S6.14.14.14"><span href="#S6.14.14.14" title="Effective Isotropic Radiated Power" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_long">Effective Isotropic Radiated Power</span></span></a> (<a href="#S6.14.14.14"><abbr href="#S6.14.14.14" title="Effective Isotropic Radiated Power" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">EIRP</span></abbr></a>) upper limit of <math class="ltx_Math" alttext="10-110" display="inline" intent=":literal"><semantics><mrow><mn>10</mn><mo>−</mo><mn>110</mn></mrow><annotation encoding="application/x-tex">10-110</annotation></semantics></math> W on radio technosignatures from 3I/ATLAS across the frequency and drift rate ranges covered by our survey.</p>
+</div>
+<div id="p1" class="ltx_para">
+<span id="p1.1" class="ltx_ERROR undefined">\turnoffeditone</span>
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">I </span>Introduction</h2>
+
+<section id="S1.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">I.1 </span>3I/ATLAS</h3>
+
+<div id="S1.SS1.p1" class="ltx_para">
+<p id="S1.SS1.p1.1" class="ltx_p">On 2025 July 1, the third-ever interstellar object—originally reported as “C/2025 N1 (ATLAS)” and now known more commonly as “3I/ATLAS”—was discovered by the Asteroid Terrestrial-impact Last Alert System (ATLAS) facility in Rio Hurtado, Chile, with the pre-discovery observations extending as far back as 55 days <cite class="ltx_cite ltx_citemacro_citep">(Feinstein<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib46" title="Precovery Observations of 3I/ATLAS from TESS Suggest Possible Distant Activity" class="ltx_ref">2025</a>)</cite>. As of 2025 October, the object’s orbital eccentricity was estimated to be <math id="S1.SS1.p1.1.m1" class="ltx_Math" alttext="e" display="inline" intent=":literal"><semantics><mi>e</mi><annotation encoding="application/x-tex">e</annotation></semantics></math>=6.137<span id="footnote1" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_tag ltx_tag_note">1</span>Ephemerides in <a href="https://ssd.jpl.nasa.gov/horizons/" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://ssd.jpl.nasa.gov/horizons/</a></span></span></span>, making it more eccentric,  than the first two known interstellar objects, 1I/‘Oumuamua and 2I/Borisov <cite class="ltx_cite ltx_citemacro_citep">(e.g., Bannister<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib20" title="The natural history of’oumuamua" class="ltx_ref">2019</a>)</cite>. Many telescopes across the world have tracked the orbit of 3I/ATLAS, and ongoing monitoring has revealed clear cometary activity <cite class="ltx_cite ltx_citemacro_citep">(Jewitt and Luu, <a href="#bib.bib8" title="Interstellar Interloper C/2025 N1 is Active" class="ltx_ref">2025</a>; Alarcon<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib9" title="Deep g’-band Imaging of Interstellar Comet 3I/ATLAS from the Two-meter Twin Telescope (TTT)" class="ltx_ref">2025</a>; Minev<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib10" title="Follow up observations of interstellar comet 3I/ATLAS" class="ltx_ref">2025</a>; Belyakov<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib11" title="Spectral Slope and Colors of Interstellar Comet 3I/ATLAS with the Palomar 200-inch Palomar Next Generation Spectrograph" class="ltx_ref">2025</a>; Bolin<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib12" title="Apache Point Observatory Colors of Interstellar Comet 3I/ATLAS" class="ltx_ref">2025</a>; Chandler<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib29" title="NSF-DOE Vera C. Rubin Observatory Observations of Interstellar Comet 3I/ATLAS (C/2025 N1)" class="ltx_ref">2025</a>; Rahatgaonkar<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib45" title="VLT observations of interstellar comet 3I/ATLAS II. From quiescence to glow: Dramatic rise of Ni I emission and incipient CN outgassing at large heliocentric distances" class="ltx_ref">2025</a>)</cite>. If this object is a comet, as expected from the initial characterization, it should be volatile-rich and may produce a dramatic tail now that it has passed perihelion.</p>
+</div>
+<div id="S1.SS1.p2" class="ltx_para">
+<p id="S1.SS1.p2.1" class="ltx_p">In early observations, the object appeared red in color <cite class="ltx_cite ltx_citemacro_citep">(Alvarez-Candal<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib15" title="X-shooter spectrum of comet c/2025 n1: insights into a distant interstellar visitor" class="ltx_ref">2025</a>; Opitom<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib13" title="Snapshot of a new interstellar comet: 3I/ATLAS has a red and featureless spectrum" class="ltx_ref">2025</a>; Seligman<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib14" title="Discovery and Preliminary Characterization of a Third Interstellar Object: 3I/ATLAS" class="ltx_ref">2025b</a>)</cite>, with a coma of cometary emission developing as it approached the Sun <cite class="ltx_cite ltx_citemacro_citep">(Cordiner<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib47" title="JWST Detection of a Carbon-dioxide-dominated Gas Coma Surrounding Interstellar Object 3I/ATLAS" class="ltx_ref">2025</a>; Rahatgaonkar<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib45" title="VLT observations of interstellar comet 3I/ATLAS II. From quiescence to glow: Dramatic rise of Ni I emission and incipient CN outgassing at large heliocentric distances" class="ltx_ref">2025</a>)</cite>. It reached perihelion (<math id="S1.SS1.p2.1.m1" class="ltx_Math" alttext="q\sim 1.356" display="inline" intent=":literal"><semantics><mrow><mi>q</mi><mo>∼</mo><mn>1.356</mn></mrow><annotation encoding="application/x-tex">q\sim 1.356</annotation></semantics></math> AU) on UT 2025 October 29 <cite class="ltx_cite ltx_citemacro_citep">(Seligman<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib17" title="Discovery and preliminary characterization of a third interstellar object: 3i/atlas" class="ltx_ref">2025a</a>)</cite>, though . There is still much to learn about this interstellar object, so it is scientifically advantageous that we can observe it throughout its approach. A tentative rotation period of 16.79 hr has been determined from early observations <cite class="ltx_cite ltx_citemacro_citep">(de la Fuente Marcos<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib36" title="Assessing interstellar comet 3I/ATLAS with the 10.4 m Gran Telescopio Canarias and the Two-meter Twin Telescope" class="ltx_ref">2025</a>)</cite>, which can be compared to 1I/‘Oumuamua’s very clear tumbling period of 7.3 hr <cite class="ltx_cite ltx_citemacro_citep">(Fraser<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib18" title="The tumbling rotational state of 1i/‘oumuamua" class="ltx_ref">2018</a>)</cite> and 2I/Borisov’s more ambiguous rotation constraint <cite class="ltx_cite ltx_citemacro_citep">(Bolin and Lisse, <a href="#bib.bib19" title="Constraints on the spin-pole orientation, jet morphology, and rotation of interstellar comet 2i/borisov with deep hst imaging" class="ltx_ref">2020</a>)</cite>.  Early observations are critical for precisely constraining the orbit and any non-gravitational accelerations, as well as the composition of cometary ejecta from 3I/ATLAS.</p>
+</div>
+</section>
+<section id="S1.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">I.2 </span>Connection to Technosignatures</h3>
+
+<div id="S1.SS2.p1" class="ltx_para">
+<p id="S1.SS2.p1.1" class="ltx_p">A “technosignature” is an astronomically-observable sign of non-human technology built   <a href="#S6.2.2.2"><span href="#S6.2.2.2" title="Extraterrestrial Intelligence" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_long">Extraterrestrial Intelligence</span></span></a> (<a href="#S6.2.2.2"><abbr href="#S6.2.2.2" title="Extraterrestrial Intelligence" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ETI</span></abbr></a>). Historically, most searches for technosignatures have searched for directed electromagnetic radiation, particularly at radio wavelengths <cite class="ltx_cite ltx_citemacro_citep">(Drake, <a href="#bib.bib21" title="Project ozma" class="ltx_ref">1961</a>)</cite>. These radio technosignatures could be efficient for communicating information across interstellar distances, easily distinguishable from natural sources, and relatively unaffected by gas and dust along the line of sight <cite class="ltx_cite ltx_citemacro_citep">(Cocconi and Morrison, <a href="#bib.bib22" title="Searching for interstellar communications" class="ltx_ref">1959</a>)</cite>. Recent radio technosignature searches have been covering the immense parameter space more rapidly than ever before <cite class="ltx_cite ltx_citemacro_citep">( Choza<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib23" title="The breakthrough listen search for intelligent life: technosignature search of 97 nearby galaxies" class="ltx_ref">2023</a>)</cite>, but the prevalence of radio transmitters in the Galaxy and the universe is still poorly constrained at this point in time <cite class="ltx_cite ltx_citemacro_citep">(Wright<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib24" title="How much seti has been done? finding needles in the n-dimensional cosmic haystack" class="ltx_ref">2018</a>)</cite>.</p>
+</div>
+<div id="S1.SS2.p2" class="ltx_para">
+<p id="S1.SS2.p2.1" class="ltx_p">Proposals to search for artifacts in the Solar System appeared in the technosignature literature almost simultaneously with radio searches <cite class="ltx_cite ltx_citemacro_citep">(Bracewell, <a href="#bib.bib25" title="Communications from superior galactic communities" class="ltx_ref">1960</a>)</cite>. This is because, despite their association with science fiction, physical artifacts such as probes, surface structures, or spacecraft within the Solar System are as worthy of rigorous characterization and observation as electromagnetic technosignatures at interstellar distances. <cite class="ltx_cite ltx_citemacro_citet">Sheikh (<a href="#bib.bib26" title="Nine axes of merit for technosignature searches" class="ltx_ref">2020</a>)</cite> employed the Nine Axes framework to evaluate the comparative advantages and disadvantages of artifacts in our Solar System (“Solar System technosignatures,” in that work), summarized as follows.</p>
+</div>
+<div id="S1.SS2.p3" class="ltx_para">
+<p id="S1.SS2.p3.1" class="ltx_p">Most fundamentally, Voyager and similar probes will eventually become interstellar objects in other stellar systems. We thus know that no extrapolation is needed for the idea of interstellar technological objects, as we have a proof-by-existence. Passive Solar System artifacts also would not require constant power influx to keep them detectable as technosignatures, unlike electromagnetic transmitters, as they could be unique in observable features (shape/color/composition). This makes them low-cost for the signaler, and likely to be longer-lived as a detectable signature. At merely interplanetary distances (as opposed to interstellar), astronomical facilities are sensitive to smaller objects and less powerful transmissions, making our understanding more complete, and Solar System technosignatures, as a class, more detectable. If the artifact were meant to be discovered as a beacon or a message, it could be packed with data storage in physical form, which has benefits in volume and redundancy over transmitted electromagnetic waves <cite class="ltx_cite ltx_citemacro_citep">(Gertz, <a href="#bib.bib5" title="ET Probes: Looking Here as Well as There" class="ltx_ref">2016</a>)</cite>. Finally, Solar System artifacts may also confer unique advantages beyond their use for communication <cite class="ltx_cite ltx_citemacro_citep">(e.g.,  could leverage stars as gravitational lenses by placing small communication relay artifacts across many stellar systems; Kerby and Wright, <a href="#bib.bib27" title="Stellar gravitational lens engineering for interstellar communication and artifact seti" class="ltx_ref">2021</a>)</cite>.</p>
+</div>
+<div id="S1.SS2.p4" class="ltx_para">
+<p id="S1.SS2.p4.1" class="ltx_p">To differentiate a natural  <a href="#S6.15.15.15"><span href="#S6.15.15.15" title="Interstellar Object" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_long">Interstellar Object</span></span></a> (<a href="#S6.15.15.15"><abbr href="#S6.15.15.15" title="Interstellar Object" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ISO</span></abbr></a>) from an artificial one, we would need significant evidence of artificiality. Technosignature search strategies for <a href="#S6.15.15.15"><abbr href="#S6.15.15.15" title="Interstellar Object" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ISO</span></abbr></a>s over the next decade are outlined in detail by <cite class="ltx_cite ltx_citemacro_citet">Davenport<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib32" title="Technosignature Searches of Interstellar Objects" class="ltx_ref">2025</a>)</cite>. Observables could include non-gravitational trajectories beyond those expected from natural cometary emission <cite class="ltx_cite ltx_citemacro_citep">(e.g. Taylor<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib48" title="Strong Nongravitational Accelerations and the Potential for Misidentification of Near-Earth Objects" class="ltx_ref">2024</a>)</cite>, unusual bolometric optical properties (e.g., reflectance, albedo), spectral lines inconsistent with a standard cometary or asteroidal composition, unusual morphologies or rotation profiles, or other anomalous features <cite class="ltx_cite ltx_citemacro_citep">(Rogers<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib4" title="The Weird and the Wonderful in Our Solar System: Searching for Serendipity in the Legacy Survey of Space and Time" class="ltx_ref">2024</a>)</cite>. The most unambiguous observable, however, would be narrowband emission, particularly in the radio, which can only be produced by technological sources. While some technological artifacts may have no radio emission at all (e.g., Voyager in the far future), many of the potential motivations for creating and sending objects across interstellar distances would benefit strongly from an artificial radio component.</p>
+</div>
+<div id="S1.SS2.p5" class="ltx_para">
+<p id="S1.SS2.p5.1" class="ltx_p">We can thus use high frequency-resolution radio observations to characterize potential emission from <a href="#S6.15.15.15"><abbr href="#S6.15.15.15" title="Interstellar Object" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ISO</span></abbr></a>s. We seek to understand the population-level characteristics of <a href="#S6.15.15.15"><abbr href="#S6.15.15.15" title="Interstellar Object" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ISO</span></abbr></a>s, i.e., being able to set limits on the percentage of these objects that host radio transmitters. Even if no technosignatures are detected, high frequency resolution radio spectroscopy can also be leveraged to detect cometary emission <cite class="ltx_cite ltx_citemacro_citep">(Crovisier<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib49" title="Comets at radio wavelengths" class="ltx_ref">2016</a>; Park<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib50" title="Search for OH 18 cm Radio Emission from 1I/2017 U1 with the Green Bank Telescope" class="ltx_ref">2018</a>; Pisano<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib52" title="Further MeerKAT observations of 1665/1667 MHz OH in absorption and emission, and a technosignature search in 3I/ATLAS" class="ltx_ref">2025</a>)</cite> to better understand the properties of natural <a href="#S6.15.15.15"><abbr href="#S6.15.15.15" title="Interstellar Object" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ISO</span></abbr></a>s.</p>
+</div>
+<div id="S1.SS2.p6" class="ltx_para">
+<p id="S1.SS2.p6.1" class="ltx_p">As established above, the technosignature hypothesis is not unreasonable in a galaxy with other technologically-capable life (which we may or may not reside in). We note that there is no compelling evidence yet that 3I/ATLAS has any non-natural characteristics  extensive observation by the scientific community. However, it is still worth setting constraints on technological radio emission from 3I/ATLAS throughout its passage of our Solar System. This is standard practice <cite class="ltx_cite ltx_citemacro_citep">(e.g., see Enriquez<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib28" title="Breakthrough listen observations of 1i/’oumuamua with the gbt" class="ltx_ref">2018</a>, for a search for narrowband radio emission from 1I/‘Oumuamua)</cite>, and should be performed for all <a href="#S6.15.15.15"><abbr href="#S6.15.15.15" title="Interstellar Object" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ISO</span></abbr></a>s in the future as well.</p>
+</div>
+</section>
+<section id="S1.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">I.3 </span>The Allen Telescope Array</h3>
+
+<div id="S1.SS3.p1" class="ltx_para">
+<p id="S1.SS3.p1.1" class="ltx_p">The  <a href="#S6.3.3.3"><span href="#S6.3.3.3" title="Allen Telescope Array" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_long">Allen Telescope Array</span></span></a> (<a href="#S6.3.3.3"><abbr href="#S6.3.3.3" title="Allen Telescope Array" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ATA</span></abbr></a>) is a 42-element radio interferometer at  <a href="#S6.10.10.10"><span href="#S6.10.10.10" title="Hat Creek Radio Observatory" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_long">Hat Creek Radio Observatory</span></span></a> (<a href="#S6.10.10.10"><abbr href="#S6.10.10.10" title="Hat Creek Radio Observatory" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">HCRO</span></abbr></a>) in Hat Creek, California. The 6.1-m offset Gregorian elements are in the process of being refurbished with dual-polarization log-pyramidal “Antonio” feeds. These feeds are cryocooled to 70 K, allowing for sensitivity from 1–10 GHz. The current active array consists of the 28 of the 42 dishes that have been upgraded to date. The analog signals from these feeds are amplified and sent over optical fiber to the on-site signal processing room. There, the signals are heterodyned with four independently-tuned local oscillators, with each of these independent tunings sampling 672 MHz anywhere in the available frequency range of the instrument. Finally, data from the four tunings are digitized and saved to the network via a 100-Gb ethernet link<span id="footnote2" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_tag ltx_tag_note">2</span>This has since been upgraded to 400 Gb, after the observations reported here</span></span></span>. Further details on the  chain and hardware refurbishment process will be described by <cite class="ltx_cite ltx_citemacro_citet">ATA Team (<a href="#bib.bib39" title="”Upgrades to the digital signal processing system on the allen telescope array”" class="ltx_ref">in prep</a>)</cite> and <cite class="ltx_cite ltx_citemacro_citet">Pollak and others (<a href="#bib.bib40" title="”Instrumentation upgrades to the allen telescope array”" class="ltx_ref">in prep</a>)</cite>.</p>
+</div>
+<div id="S1.SS3.p2" class="ltx_para">
+<p id="S1.SS3.p2.1" class="ltx_p">In Section <a href="#S2" title="II Observations ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">II</span></a>, we will discuss the observing parameters and campaign choices for the 3I/ATLAS <a href="#S6.3.3.3"><abbr href="#S6.3.3.3" title="Allen Telescope Array" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ATA</span></abbr></a> observations. In Section <a href="#S3" title="III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III</span></a>, we outline the data analysis and hit filtering that were used to search for signals-of-interest. The signals that we visually inspected are discussed in Section <a href="#S4" title="IV Results ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">IV</span></a> and the implications for the presence of narrowband transmitters are covered in Section <a href="#S5" title="V Upper Limits ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">V</span></a>. Finally, we summarize and conclude in Section <a href="#S6" title="VI Conclusions ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">VI</span></a>.</p>
+</div>
+</section>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">II </span>Observations</h2>
+
+<div id="S2.p1" class="ltx_para">
+<p id="S2.p1.1" class="ltx_p">The <a href="#S6.3.3.3"><abbr href="#S6.3.3.3" title="Allen Telescope Array" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ATA</span></abbr></a> is privately owned and operated by the SETI Institute, allowing for rapid follow-up of targets-of-opportunity between larger  <a href="#S6.1.1.1"><span href="#S6.1.1.1" title="Search for Extraterrestrial Intelligence" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_long">Search for Extraterrestrial Intelligence</span></span></a> (<a href="#S6.1.1.1"><abbr href="#S6.1.1.1" title="Search for Extraterrestrial Intelligence" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SETI</span></abbr></a>) surveys. Following the announcement of 3I/ATLAS, the ATA team rapidly designed an observing campaign and initiated on-sky observations on 2025 July 2, approximately 23 hours following the initial ATLAS report. In general, the frequency of a potential <a href="#S6.2.2.2"><abbr href="#S6.2.2.2" title="Extraterrestrial Intelligence" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ETI</span></abbr></a> transmitter is unknown, and covering more parameter space is more valuable than trying to guess at “magic frequencies” <cite class="ltx_cite ltx_citemacro_citep">(Zuckerman, <a href="#bib.bib38" title="Preferred frequencies for SETI observations" class="ltx_ref">1985</a>)</cite>. Given this, we leveraged the <a href="#S6.3.3.3"><abbr href="#S6.3.3.3" title="Allen Telescope Array" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ATA</span></abbr></a>’s large bandwidth and multiple simultaneous tunings to maximize our frequency coverage. The sessions were divided into three frequency chunks: “low” (1000–3688 MHz), “mid” (3688–6376 MHz) and “high” (6376–9064 MHz). Each chunk consisted of four  672-MHz tunings. We took data across five observing sessions, with a total of 7.25 hr of on-source observations. Details for each observing session are shown in Table <a href="#S2.T1" title="Table 1 ‣ II Observations ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.</p>
+</div>
+<figure id="S2.T1" class="ltx_table">
+<table id="S2.T1.1" class="ltx_tabular ltx_centering ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr id="S2.T1.1.1.1" class="ltx_tr">
+<td id="S2.T1.1.1.1.1" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t">Date of First Scan</td>
+<td id="S2.T1.1.1.1.2" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">Frequency Ranges</td>
+<td id="S2.T1.1.1.1.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">Total
+Observing Time</td>
+</tr>
+<tr id="S2.T1.1.2.2" class="ltx_tr">
+<td id="S2.T1.1.2.2.1" class="ltx_td ltx_align_center ltx_border_l ltx_border_r">(UTC)</td>
+<td id="S2.T1.1.2.2.2" class="ltx_td ltx_align_center ltx_border_r">(MHz)</td>
+<td id="S2.T1.1.2.2.3" class="ltx_td ltx_align_center ltx_border_r">(hr)</td>
+</tr>
+<tr id="S2.T1.1.3.3" class="ltx_tr">
+<td id="S2.T1.1.3.3.1" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t">2025-07-03-05:10:38</td>
+<td id="S2.T1.1.3.3.2" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1000–3688</td>
+<td id="S2.T1.1.3.3.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">1.3</td>
+</tr>
+<tr id="S2.T1.1.4.4" class="ltx_tr">
+<td id="S2.T1.1.4.4.1" class="ltx_td ltx_align_center ltx_border_l ltx_border_r">2025-07-05-04:50:14</td>
+<td id="S2.T1.1.4.4.2" class="ltx_td ltx_align_center ltx_border_r">3688–6376</td>
+<td id="S2.T1.1.4.4.3" class="ltx_td ltx_align_center ltx_border_r">1.1</td>
+</tr>
+<tr id="S2.T1.1.5.5" class="ltx_tr">
+<td id="S2.T1.1.5.5.1" class="ltx_td ltx_align_center ltx_border_l ltx_border_r">2025-07-08-04:52:40</td>
+<td id="S2.T1.1.5.5.2" class="ltx_td ltx_align_center ltx_border_r">6376–9064</td>
+<td id="S2.T1.1.5.5.3" class="ltx_td ltx_align_center ltx_border_r">3.4</td>
+</tr>
+<tr id="S2.T1.1.6.6" class="ltx_tr">
+<td id="S2.T1.1.6.6.1" class="ltx_td ltx_align_center ltx_border_l ltx_border_r">2025-07-09-05:20:16</td>
+<td id="S2.T1.1.6.6.2" class="ltx_td ltx_align_center ltx_border_r">1000–3688</td>
+<td id="S2.T1.1.6.6.3" class="ltx_td ltx_align_center ltx_border_r">1.1</td>
+</tr>
+<tr id="S2.T1.1.7.7" class="ltx_tr">
+<td id="S2.T1.1.7.7.1" class="ltx_td ltx_align_center ltx_border_b ltx_border_l ltx_border_r">2025-07-10-05:16:28</td>
+<td id="S2.T1.1.7.7.2" class="ltx_td ltx_align_center ltx_border_b ltx_border_r">3688–6376</td>
+<td id="S2.T1.1.7.7.3" class="ltx_td ltx_align_center ltx_border_b ltx_border_r">0.3</td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 1: </span>Observing sessions for this campaign, comprising 7.25 hours over 1–9 GHz.</figcaption>
+</figure>
+<div id="S2.p2" class="ltx_para">
+<p id="S2.p2.1" class="ltx_p">During the sessions, a series of 5-minute beamformed scans of 3I/ATLAS were taken using the in-house beamformer backend <span id="S2.p2.1.1" class="ltx_text ltx_font_typewriter">BLADE</span> <cite class="ltx_cite ltx_citemacro_citep">(Cruz and others, <a href="#bib.bib41" title="”BLADE: the breakthough listen accelerated dsp engine”" class="ltx_ref">in prep</a>)</cite>. <span id="S2.p2.1.2" class="ltx_text ltx_font_typewriter">BLADE</span> is flexible for different science cases, and includes options for both high frequency resolution and high time resolution modes. In this project, we used the high frequency resolution mode of <span id="S2.p2.1.3" class="ltx_text ltx_font_typewriter">BLADE</span> which allows the user to specify the exact frequency and time resolution, the polarization data to be saved (if any), and the number and location of beamformed beams. The data are saved as filterbank HDF5 files across 96-MHz sub-bands, with seven sub-bands per tuning (or 28  per frequency “chunk” as described above). For this project, we chose a frequency resolution of 1.9 Hz (sufficiently fine to resolve narrowband signals) and a sampling time of 16.8 s. We saved only the Stokes-I product (i.e., no polarization information was recorded). Two beams were placed on the sky for each scan: one “on-beam” at the center of the incoherent beam, centered on the location of 3I/ATLAS, and another “off-beam” five synthesized beamwidths away, with the inter-beam distance calculated for the center frequency of each tuning and applied to the entire tuning.</p>
+</div>
+<div id="S2.p3" class="ltx_para">
+<p id="S2.p3.1" class="ltx_p">Prior to each observing session, the <a href="#S6.3.3.3"><abbr href="#S6.3.3.3" title="Allen Telescope Array" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ATA</span></abbr></a>’s GPU-based cross-correlation backend was used to target 3C 286, a flux and phase calibrator which is stable across the entire frequency range of the <a href="#S6.3.3.3"><abbr href="#S6.3.3.3" title="Allen Telescope Array" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ATA</span></abbr></a> <cite class="ltx_cite ltx_citemacro_citep">(Perley and Butler, <a href="#bib.bib43" title="An Accurate Flux Density Scale from 50 MHz to 50 GHz" class="ltx_ref">2017</a>)</cite>. These calibration scans lasted 10 minutes each. We then used our in-house <span id="S2.p3.1.1" class="ltx_text ltx_font_typewriter">CASA</span> <cite class="ltx_cite ltx_citemacro_citep">(McMullin<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib44" title="CASA architecture and applications" class="ltx_ref">2007</a>)</cite> pipeline to calculate the instrumental delays, phases, and bandpass solutions which were then applied to the subsequent beamformer observations. The data taken for this campaign totaled <math id="S2.p3.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>22 TB.</p>
+</div>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">III </span>Data Analysis</h2>
+
+<section id="S3.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">III.1 </span>Finding narrowband hits with <span id="S3.SS1.1.1" class="ltx_text ltx_font_typewriter">bliss</span>
+</h3>
+
+<div id="S3.SS1.p1" class="ltx_para">
+<p id="S3.SS1.p1.1" class="ltx_p">We used the code <span id="S3.SS1.p1.1.1" class="ltx_text ltx_font_typewriter">bliss<span id="footnote3" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">3</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">3</sup><span class="ltx_tag ltx_tag_note"><span id="footnote3.1.1.1" class="ltx_text ltx_font_serif">3</span></span></span></span></span></span> to search for Doppler-drifting narrowband signals within the 7.25 hr of data from the campaign described in Section <a href="#S2" title="II Observations ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">II</span></a>. <span id="S3.SS1.p1.1.2" class="ltx_text ltx_font_typewriter">bliss</span> is a successor to the <span id="S3.SS1.p1.1.3" class="ltx_text ltx_font_typewriter">turboSETI</span> <cite class="ltx_cite ltx_citemacro_citep">(Enriquez<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib30" title="The Breakthrough Listen Search for Intelligent Life: 1.1-1.9 GHz Observations of 692 Nearby Stars" class="ltx_ref">2017</a>)</cite> and <span id="S3.SS1.p1.1.4" class="ltx_text ltx_font_typewriter">seticore<span id="footnote4" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">4</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">4</sup><span class="ltx_tag ltx_tag_note"><span id="footnote4.1.1.1" class="ltx_text ltx_font_serif">4</span></span></span></span></span></span> software packages.  For a more thorough description of the <span id="S3.SS1.p1.1.5" class="ltx_text ltx_font_typewriter">bliss</span> code, see <cite class="ltx_cite ltx_citemacro_citet">Sheikh<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib51" title="A large-scale survey of the anti-solar point with the allen telescope array: survey design and pilot results" class="ltx_ref">2025</a>)</cite> and <cite class="ltx_cite ltx_citemacro_citet">Jacobson-Bell and others (<a href="#bib.bib42" title="”The breakthrough listen search for intelligent life: a technosignature search of 1176 nearby stars at 1–12 ghz with the green bank telescope”" class="ltx_ref">2026</a>)</cite>.</p>
+</div>
+<div id="S3.SS1.p2" class="ltx_para">
+<p id="S3.SS1.p2.1" class="ltx_p">We ran the <span id="S3.SS1.p2.1.1" class="ltx_text ltx_font_typewriter">bliss_find_hits</span> utility from <span id="S3.SS1.p2.1.2" class="ltx_text ltx_font_typewriter">bliss</span> with a minimum drift rate of <math id="S3.SS1.p2.1.m1" class="ltx_Math" alttext="-4" display="inline" intent=":literal"><semantics><mrow><mo>−</mo><mn>4</mn></mrow><annotation encoding="application/x-tex">-4</annotation></semantics></math> Hz/s, a maximum drift rate of 4 Hz/s, and a  <a href="#S6.5.5.5"><span href="#S6.5.5.5" title="Signal-to-Noise Ratio" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_long">Signal-to-Noise Ratio</span></span></a> (<a href="#S6.5.5.5"><abbr href="#S6.5.5.5" title="Signal-to-Noise Ratio" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SNR</span></abbr></a>) threshold of 15. This drift rate range is relatively standard in the field and is sufficient to identify signals at a plausible range of radial accelerations relative to the receiver (see further drift rate discussion for this particular object in Section <a href="#S3.SS2" title="III.2 RFI blanking and drift rate limits ‣ III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.2</span></a>). Similarly, an <a href="#S6.5.5.5"><abbr href="#S6.5.5.5" title="Signal-to-Noise Ratio" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SNR</span></abbr></a> threshold of 15</p>
+</div>
+</section>
+<section id="S3.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">III.2 </span>RFI blanking and drift rate limits</h3>
+
+<div id="S3.SS2.p1" class="ltx_para">
+<p id="S3.SS2.p1.1" class="ltx_p">By covering 1–9 GHz, we take advantage of the <a href="#S6.3.3.3"><abbr href="#S6.3.3.3" title="Allen Telescope Array" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ATA</span></abbr></a>’s wide bandwidth, especially in the less-explored high frequency regions (i.e., above 5 GHz) which have not been as well-covered in prior <a href="#S6.1.1.1"><abbr href="#S6.1.1.1" title="Search for Extraterrestrial Intelligence" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SETI</span></abbr></a> searches. However, this wide bandwidth also includes the spectrally-contaminated L-band, which covers downlink frequencies for GPS and other persistent classes of <a href="#S6.4.4.4"><abbr href="#S6.4.4.4" title="Radio Frequency Interference" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">RFI</span></abbr></a>; this comes with its own challenges, especially in an era of increasing human radio emissions. Trying to run the signal localization code <span id="S3.SS2.p1.1.1" class="ltx_text ltx_font_typewriter">NBeamAnalysis<span id="footnote5" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup><span class="ltx_tag ltx_tag_note"><span id="footnote5.1.1.1" class="ltx_text ltx_font_serif">5</span></span><cite class="ltx_cite ltx_citemacro_citep"><span id="footnote5.5.1" class="ltx_text ltx_font_serif">(</span>Tusay and Gerrard<span id="footnote5.6.2.1.1" class="ltx_text ltx_font_serif">, </span><a href="#bib.bib55" title="Isabelgerrard/nbeamanalysis: efficient and stable sky-localization" class="ltx_ref">2026</a><span id="footnote5.7.3" class="ltx_text ltx_font_serif">)</span></cite><span id="footnote5.8" class="ltx_text ltx_font_serif">.</span></span></span></span></span> without first filtering the data would be prohibitively expensive in terms of computation time. Thus, to minimize the effect of these high-interference spectral windows on our data analysis, we “blank” any spectral region with a large amount of hits, removing all hits in those boundaries from further analysis<span id="footnote6" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">6</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">6</sup><span class="ltx_tag ltx_tag_note">6</span>We hope to apply more sophisticated <a href="#S6.4.4.4"><abbr href="#S6.4.4.4" title="Radio Frequency Interference" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">RFI</span></abbr></a> removal in these regions in the future, </span></span></span> but for now the number of hits returned is computationally prohibitive.  A saturation of hits spanning a wide range of drift rates for an extended bandwidth suggests that an underlying signal was not a strong match to a single drift rate and thus is a strong indicator of local interference. The full list of blanked frequency intervals is shown in the appendix (Table <a href="#A0.T4" title="Table 4 ‣ VI Conclusions ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>) and in sum constitutes 16% of the total 1–9 GHz band.</p>
+</div>
+<figure id="S3.F1" class="ltx_figure"><img src="2512.18142v2/DR_vs_Freq_RFI_plots.png" id="S3.F1.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="476" height="173" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span></figcaption>
+</figure>
+<div id="S3.SS2.p2" class="ltx_para">
+<p id="S3.SS2.p2.5" class="ltx_p">To filter out signals that do not match the dynamics of 3I/ATLAS, we characterized the acceleration of the object during the times of observation, to compare the observed drift rates with those expected from the acceleration between the object and the Earth. We took the time derivative of the <span id="S3.SS2.p2.5.1" class="ltx_text ltx_font_typewriter">deldot</span> parameter within JPL Horizons, which gives the apparent range rate relative to the observer in km/s. Figure <a href="#S3.F2" title="Figure 2 ‣ III.2 RFI blanking and drift rate limits ‣ III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> displays the resulting acceleration as a function of time, which takes a sinusoidal form due to the radial acceleration contribution from the Earth’s rotation. From this, we estimated the average and standard deviation of the acceleration during the observation intervals. The values for all five sessions fell within <math id="S3.SS2.p2.1.m1" class="ltx_Math" alttext="3.2\times 10^{-5}" display="inline" intent=":literal"><semantics><mrow><mn>3.2</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>5</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3.2\times 10^{-5}</annotation></semantics></math> km/s<sup id="S3.SS2.p2.5.2" class="ltx_sup">2</sup> to <math id="S3.SS2.p2.3.m3" class="ltx_Math" alttext="3.5\times 10^{-5}~\textrm{km/s}^{2}" display="inline" intent=":literal"><semantics><mrow><mrow><mn>3.5</mn><mo lspace="0.222em" rspace="0.222em">×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>5</mn></mrow></msup></mrow><mo lspace="0em" rspace="0em">​</mo><msup><mtext>km/s</mtext><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">3.5\times 10^{-5}~\textrm{km/s}^{2}</annotation></semantics></math>, with very low standard deviation within the sessions (<math id="S3.SS2.p2.4.m4" class="ltx_Math" alttext="10^{-7}" display="inline" intent=":literal"><semantics><msup><mn>10</mn><mrow><mo>−</mo><mn>7</mn></mrow></msup><annotation encoding="application/x-tex">10^{-7}</annotation></semantics></math> km/s<sup id="S3.SS2.p2.5.3" class="ltx_sup">2</sup>), indicating that the same filter can be used for all sessions. This is logically consistent, given that the sessions began slightly after the object’s rise time each night, implying a similar geometrical contribution from Earth’s rotation each night.</p>
+</div>
+<figure id="S3.F2" class="ltx_figure"><img src="2512.18142v2/A3.png" id="S3.F2.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="476" height="205" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>The radial acceleration of 3I/ATLAS over the <math id="S3.F2.2.m1" class="ltx_Math" alttext="9" display="inline" intent=":literal"><semantics><mn>9</mn><annotation encoding="application/x-tex">9</annotation></semantics></math> days containing our observations (blue line). Observation times are highlighted in yellow. This allows us to determine the expected drift rates for potential signals coming from 3I/ATLAS.</figcaption>
+</figure>
+<div id="S3.SS2.p3" class="ltx_para">
+<p id="S3.SS2.p3.1" class="ltx_p">We then converted the acceleration to a drift rate using the following equation from <cite class="ltx_cite ltx_citemacro_citet">Sheikh<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib31" title="Choosing a Maximum Drift Rate in a SETI Search: Astrophysical Considerations" class="ltx_ref">2019</a>)</cite>:</p>
+</div>
+<div id="S3.SS2.p4" class="ltx_para">
+<table id="S3.E1" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S3.E1.m1" class="ltx_Math" alttext="\dot{\nu}=\frac{\frac{dv}{dt}\times\nu_{obs}}{c}" display="block" intent=":literal"><semantics><mrow><mover accent="true"><mi>ν</mi><mo>˙</mo></mover><mo>=</mo><mfrac><mrow><mfrac><mrow><mi>d</mi><mo lspace="0em" rspace="0em">​</mo><mi>v</mi></mrow><mrow><mi>d</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi></mrow></mfrac><mo lspace="0.222em" rspace="0.222em">×</mo><msub><mi>ν</mi><mrow><mi>o</mi><mo lspace="0em" rspace="0em">​</mo><mi>b</mi><mo lspace="0em" rspace="0em">​</mo><mi>s</mi></mrow></msub></mrow><mi>c</mi></mfrac></mrow><annotation encoding="application/x-tex">\dot{\nu}=\frac{\frac{dv}{dt}\times\nu_{obs}}{c}</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(1)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S3.SS2.p5" class="ltx_para">
+<p id="S3.SS2.p5.4" class="ltx_p">where <math id="S3.SS2.p5.1.m1" class="ltx_Math" alttext="\dot{\nu}" display="inline" intent=":literal"><semantics><mover accent="true"><mi>ν</mi><mo>˙</mo></mover><annotation encoding="application/x-tex">\dot{\nu}</annotation></semantics></math> is the drift rate in Hz/s, <math id="S3.SS2.p5.2.m2" class="ltx_Math" alttext="\nu_{obs}" display="inline" intent=":literal"><semantics><msub><mi>ν</mi><mrow><mi>o</mi><mo lspace="0em" rspace="0em">​</mo><mi>b</mi><mo lspace="0em" rspace="0em">​</mo><mi>s</mi></mrow></msub><annotation encoding="application/x-tex">\nu_{obs}</annotation></semantics></math> is the frequency in Hz, <math id="S3.SS2.p5.3.m3" class="ltx_Math" alttext="\frac{dv}{dt}" display="inline" intent=":literal"><semantics><mfrac><mrow><mi>d</mi><mo lspace="0em" rspace="0em">​</mo><mi>v</mi></mrow><mrow><mi>d</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi></mrow></mfrac><annotation encoding="application/x-tex">\frac{dv}{dt}</annotation></semantics></math> is the acceleration as calculated previously, and <math id="S3.SS2.p5.4.m4" class="ltx_Math" alttext="c" display="inline" intent=":literal"><semantics><mi>c</mi><annotation encoding="application/x-tex">c</annotation></semantics></math> is the speed of light. Drift rates in Hz/s are dependent on observing frequency; to set a threshold for the entire search range in Hz/s, we need to consider the Hz/s drift rate of the highest frequencies in the survey. At a center frequency of 8728 MHz (our highest tuning), the maximum drift rate of 3I/ATLAS would be 1.01 Hz/s. Meanwhile, at a center frequency of 1336 MHz (our lowest tuning), the minimum drift rate of 3I/ATLAS would be 0.15 Hz/s. We considered applying drift-rate-specific filters for each of the tunings to incorporate this information in a frequency-dependent way. However, the rotation or tumbling period of 3I/ATLAS is not yet certain: this contribution, especially in Solar System objects, can be extremely large. <cite class="ltx_cite ltx_citemacro_citet">Sheikh<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib31" title="Choosing a Maximum Drift Rate in a SETI Search: Astrophysical Considerations" class="ltx_ref">2019</a>)</cite> note that asteroid 2008 DP4 tumbles in a way that could result in observed drift rates up to 4.22 nHz (i.e., 4.22 Hz/s at 1 GHz). Here, we take a middle ground approach. We filter our hits for drift rates between 0.05–1.5 Hz/s at all frequencies, sufficient to capture the known acceleration of 3I/ATLAS at all frequencies within our sample with some flexibility for additional rotational contributions<span id="footnote7" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">7</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">7</sup><span class="ltx_tag ltx_tag_note">7</span>One might expect an active artifact to have stabilization against rotation, much like our telescopes and spacecraft. However, passive artifacts may have no such stabilization. To complicate matters further, one could imagine that rotation could be used as a tool to create artificial gravity within a space environment <cite class="ltx_cite ltx_citemacro_citep">(Polstorff, <a href="#bib.bib34" title="Dynamics of a rotating cylindrical space station" class="ltx_ref">1965</a>)</cite></span></span></span>.</p>
+</div>
+</section>
+<section id="S3.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">III.3 </span>Search for localized events with <span id="S3.SS3.1.1" class="ltx_text ltx_font_typewriter">NBeamAnalysis</span>
+</h3>
+
+<div id="S3.SS3.p1" class="ltx_para">
+<p id="S3.SS3.p1.1" class="ltx_p">After running <span id="S3.SS3.p1.1.1" class="ltx_text ltx_font_typewriter">bliss</span> and filtering out hits based on the frequency and drift rate cuts described in Sections <a href="#S3.SS1" title="III.1 Finding narrowband hits with bliss ‣ III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.1</span></a> and <a href="#S3.SS2" title="III.2 RFI blanking and drift rate limits ‣ III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III.2</span></a>, the remaining hits were run through the <span id="S3.SS3.p1.1.2" class="ltx_text ltx_font_typewriter">NBeamAnalysis</span> spatial filtering pipeline. This pipeline is described in detail by <cite class="ltx_cite ltx_citemacro_citet">Tusay<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib35" title="A radio technosignature search of trappist-1 with the allen telescope array" class="ltx_ref">2024</a>)</cite>, but we will describe it briefly here. In Section <a href="#S2" title="II Observations ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">II</span></a>, we described the two-beam observing strategy that we employed using the ATA beamformer mode: the on-beam was placed on the target (3I/ATLAS) and the off-beam was placed 5 synthesized beamwidths away. The <span id="S3.SS3.p1.1.3" class="ltx_text ltx_font_typewriter">NBeamAnalysis</span> pipeline employs a series of different procedures which leverage two beams to identify signals that are consistent with a localized point source on the sky:</p>
+<ul id="S3.I1" class="ltx_itemize">
+<li id="S3.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i1.p1" class="ltx_para">
+<p id="S3.I1.i1.p1.2" class="ltx_p">Compare the hit tables from <span id="S3.I1.i1.p1.2.1" class="ltx_text ltx_font_typewriter">bliss</span> for the on-beam and the off-beam. If two hits in the tables are nearly identical in frequency and have an <a href="#S6.5.5.5"><abbr href="#S6.5.5.5" title="Signal-to-Noise Ratio" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SNR</span></abbr></a> ratio between the two beams that is less than <math id="S3.I1.i1.p1.1.m1" class="ltx_Math" alttext="\sqrt{N_{antennas}}" display="inline" intent=":literal"><semantics><msqrt><msub><mi>N</mi><mrow><mi>a</mi><mo lspace="0em" rspace="0em">​</mo><mi>n</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi><mo lspace="0em" rspace="0em">​</mo><mi>e</mi><mo lspace="0em" rspace="0em">​</mo><mi>n</mi><mo lspace="0em" rspace="0em">​</mo><mi>n</mi><mo lspace="0em" rspace="0em">​</mo><mi>a</mi><mo lspace="0em" rspace="0em">​</mo><mi>s</mi></mrow></msub></msqrt><annotation encoding="application/x-tex">\sqrt{N_{antennas}}</annotation></semantics></math> = <math id="S3.I1.i1.p1.2.m2" class="ltx_Math" alttext="\sqrt{28}" display="inline" intent=":literal"><semantics><msqrt><mn>28</mn></msqrt><annotation encoding="application/x-tex">\sqrt{28}</annotation></semantics></math> = 5.29, then the hits are removed.</p>
+</div>
+</li>
+<li id="S3.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i2.p1" class="ltx_para">
+<p id="S3.I1.i2.p1.1" class="ltx_p">If the DOT score is 1, the beams are identical. DOT scores close to 0 indicate two arrays with different properties, potentially identifying signals that are present much more strongly in the on-beam.</p>
+</div>
+</li>
+<li id="S3.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i3.p1" class="ltx_para">
+<p id="S3.I1.i3.p1.1" class="ltx_p">Calculate the SNR ratio between the two arrays around every hit. As in the first step, any hit with an SNR ratio greater than 5.29 is potentially of interest.</p>
+</div>
+</li>
+</ul>
+</div>
+<div id="S3.SS3.p2" class="ltx_para">
+<p id="S3.SS3.p2.1" class="ltx_p">Up to 1000 plots depicting signals with SNR ratios greater than 5.29 are generated for visual inspection. If more than 1000 signals surpass that threshold, then the 1000 with the lowest DOT scores are plotted. If no signals have SNR ratios greater than 5.29, the 100 signals which score best in a combined assessment of the DOT score and the SNR ratio are plotted for visual inspection.</p>
+</div>
+</section>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">IV </span>Results</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p id="S4.p1.3" class="ltx_p">After running <span id="S4.p1.3.1" class="ltx_text ltx_font_typewriter">bliss</span> on all of our observations, we identified a total of 73,974,799 narrowband hits across the 7.25 hr of observation. After removing any hit in the frequency blanking ranges from Table <a href="#A0.T4" title="Table 4 ‣ VI Conclusions ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>, which sum to a total blanked bandwidth of 1269.8 MHz (<math id="S4.p1.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>16% of the total bandwidth) we were then left with <math id="S4.p1.2.m2" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>11 million hits. After drift rate blanking, <math id="S4.p1.3.m3" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>2 million hits remained. The frequency distribution of this population of hits, before and after the blanking steps,</p>
+</div>
+<figure id="S4.F3" class="ltx_figure"><img src="2512.18142v2/H4.png" id="S4.F3.g1" class="ltx_graphics ltx_centering ltx_img_portrait" width="286" height="359" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>Frequency distribution of the <math id="S4.F3.2.m1" class="ltx_Math" alttext="\sim 74" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>74</mn></mrow><annotation encoding="application/x-tex">\sim 74</annotation></semantics></math> million hits obtained in this survey. The top, middle, and bottom panels correspond to the “low” (1000–3688 MHz), “mid” (3688–6376 MHz), and “high” (6376–9064 MHz) frequency ranges, respectively. All y-axes are scaled to the same limits. All hits identified by <span id="S4.F3.4.1" class="ltx_text ltx_font_typewriter">bliss</span> are shown in blue, blanking ranges are shown with , the hits after blanking within the frequency ranges are shown in brown, and the hits after limiting the drift rate range are shown in gold. Applying blanking ranges and drift rate limits significantly reduced dense clusters of hits (reducing the total number of hits by 97.4%) which improved our ability to process the data and detect putative signals associated with 3I/ATLAS.
+</figcaption>
+</figure>
+<figure id="S4.F4" class="ltx_figure"><img src="2512.18142v2/D3.png" id="S4.F4.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="476" height="233" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 4: </span>The distribution of the <math id="S4.F4.3.m1" class="ltx_Math" alttext="\sim 74" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>74</mn></mrow><annotation encoding="application/x-tex">\sim 74</annotation></semantics></math> million hits from this survey across drift rate. Note the peak of hits around 0 Hz/s (expected because most <a href="#S6.4.4.4"><abbr href="#S6.4.4.4" title="Radio Frequency Interference" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">RFI</span></abbr></a> transmitters are in the same reference frame as the telescope, i.e., on the ground). After the drift rate cut, the count of hits is much more even across the restricted drift rate range. Note that the sawtooth pattern seen across drift rate is a known artifact in the current development version of <span id="S4.F4.6.1" class="ltx_text ltx_font_typewriter">bliss</span>, caused by an overestimation of <a href="#S6.5.5.5"><abbr href="#S6.5.5.5" title="Signal-to-Noise Ratio" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SNR</span></abbr></a> for high-bandwidth (<math id="S4.F4.4.m2" class="ltx_Math" alttext="\gtrsim 10" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>≳</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">\gtrsim 10</annotation></semantics></math> Hz wide) hits close to integer multiples of the unit drift rate. It causes increased amounts of false positives close to these drift rates but does not cause false negatives <cite class="ltx_cite ltx_citemacro_citep">(for more details, see Jacobson-Bell and others, <a href="#bib.bib42" title="”The breakthrough listen search for intelligent life: a technosignature search of 1176 nearby stars at 1–12 ghz with the green bank telescope”" class="ltx_ref">2026</a>)</cite>.</figcaption>
+</figure>
+<figure id="S4.F5" class="ltx_figure"><img src="2512.18142v2/S3.png" id="S4.F5.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="476" height="233" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 5: </span>The distribution of the <math id="S4.F5.2.m1" class="ltx_Math" alttext="\sim 74" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>74</mn></mrow><annotation encoding="application/x-tex">\sim 74</annotation></semantics></math> million hits from this survey across <a href="#S6.5.5.5"><abbr href="#S6.5.5.5" title="Signal-to-Noise Ratio" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SNR</span></abbr></a>. As expected, there are significantly more weak hits than strong ones, and there is no significant trend in <a href="#S6.5.5.5"><abbr href="#S6.5.5.5" title="Signal-to-Noise Ratio" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SNR</span></abbr></a> when filters are applied to frequency and drift rate.</figcaption>
+</figure>
+<div id="S4.p2" class="ltx_para">
+<p id="S4.p2.1" class="ltx_p">After running <span id="S4.p2.1.1" class="ltx_text ltx_font_typewriter">NBeamAnalysis</span>, 211 plots were highlighted for further analysis.  Of these plots, 11 are events with <a href="#S6.5.5.5"><abbr href="#S6.5.5.5" title="Signal-to-Noise Ratio" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SNR</span></abbr></a> ratios greater than 5.29  The remaining 200 plots were from two observations that did not produce any final signals above the threshold, resulting in the backup plotting functionality, which selects 100 signals with the best combined assessment of DOT score and <a href="#S6.5.5.5"><abbr href="#S6.5.5.5" title="Signal-to-Noise Ratio" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SNR</span></abbr></a> ratio. After visual inspection, all of these 211 events were easily attributable to RFI:  Two examples of those 211 events are shown in Figures <a href="#S4.F7" title="Figure 7 ‣ IV Results ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">7</span></a> and <a href="#S4.F8" title="Figure 8 ‣ IV Results ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">8</span></a>.</p>
+</div>
+<figure id="S4.F6" class="ltx_figure"><img src="2512.18142v2/SNRr_v_DOT.png" id="S4.F6.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="476" height="298" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 6: </span></figcaption>
+</figure>
+<figure id="S4.F7" class="ltx_figure"><img src="2512.18142v2/MJD_60865_21975_fmid1626.675918_DR1.427_x0.21_SNRr6.08.png" id="S4.F7.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="598" height="195" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 7: </span>An output waterfall plot from <span id="S4.F7.3.1" class="ltx_text ltx_font_typewriter">NBeamAnalysis</span> for a signal which was ranked in the top 211 events. The on-beam (pointed at 3I/ATLAS) is shown in the left subplot, while the off-beam is shown in the right subplot. Each subplot is a normalized waterfall plot with frequency on the horizontal axis, time on the vertical axis, and intensity (scaled to the on-beam plot from 0–1) indicated by the color bar. This hit had a frequency outside of the blanking ranges, a drift rate in the allowable range, a relatively low DOT score (indicating significant difference between the plots), and an SNR ratio above 5.29 (indicating consistency with a point source on the sky). However, two things immediately discount this signal as an <a href="#S6.2.2.2"><abbr href="#S6.2.2.2" title="Extraterrestrial Intelligence" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ETI</span></abbr></a> technosignature: (1) the signal in the on-beam is not a narrowband technosignature despite the <span id="S4.F7.4.2" class="ltx_text ltx_font_typewriter">bliss</span> hit, but rather some kind of broader-band modulated signal, and (2) this frequency is consistent with the L-band downlink for the Iridium satellites. The Iridium <a href="#S6.4.4.4"><abbr href="#S6.4.4.4" title="Radio Frequency Interference" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">RFI</span></abbr></a> explanation is consistent with the point source characteristics of the hit as well, as satellites and other distant human transmitters can mimic the characteristics that we would expect from a true <a href="#S6.2.2.2"><abbr href="#S6.2.2.2" title="Extraterrestrial Intelligence" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ETI</span></abbr></a> technosignature.</figcaption>
+</figure>
+<div id="S4.p3" class="ltx_para">
+<p id="S4.p3.1" class="ltx_p">A summary of the number of hits that passed each stage of analysis is shown in Table <a href="#S4.T2" title="Table 2 ‣ IV Results ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>.</p>
+</div>
+<figure id="S4.T2" class="ltx_table">
+<table id="S4.T2.1" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S4.T2.1.1.1" class="ltx_tr">
+<th id="S4.T2.1.1.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_l ltx_border_r ltx_border_t"><span id="S4.T2.1.1.1.1.1" class="ltx_text ltx_font_bold">Date (UTC)</span></th>
+<th id="S4.T2.1.1.1.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r ltx_border_t"><span id="S4.T2.1.1.1.2.1" class="ltx_text ltx_font_typewriter ltx_font_bold">bliss</span></th>
+<th id="S4.T2.1.1.1.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r ltx_border_t"><span id="S4.T2.1.1.1.3.1" class="ltx_text ltx_font_bold">RFI Blanking</span></th>
+<th id="S4.T2.1.1.1.4" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r ltx_border_t"><span id="S4.T2.1.1.1.4.1" class="ltx_text ltx_font_bold">Drift Rate Limits</span></th>
+<th id="S4.T2.1.1.1.5" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r ltx_border_t"><span id="S4.T2.1.1.1.5.1" class="ltx_text ltx_font_typewriter ltx_font_bold">NBeamAnalysis</span></th>
+<th id="S4.T2.1.1.1.6" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r ltx_border_t"><span id="S4.T2.1.1.1.6.1" class="ltx_text ltx_font_bold">Plotting</span></th>
+<th id="S4.T2.1.1.1.7" class="ltx_td ltx_th ltx_th_column ltx_border_r ltx_border_t"></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S4.T2.1.2.1" class="ltx_tr">
+<td id="S4.T2.1.2.1.1" class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t">2025-07-03</td>
+<td id="S4.T2.1.2.1.2" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">32,346,482</td>
+<td id="S4.T2.1.2.1.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">5,887,236</td>
+<td id="S4.T2.1.2.1.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">823,046</td>
+<td id="S4.T2.1.2.1.5" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">288,316</td>
+<td id="S4.T2.1.2.1.6" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">5</td>
+<td id="S4.T2.1.2.1.7" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">0</td>
+</tr>
+<tr id="S4.T2.1.3.2" class="ltx_tr">
+<td id="S4.T2.1.3.2.1" class="ltx_td ltx_align_center ltx_border_l ltx_border_r">2025-07-05</td>
+<td id="S4.T2.1.3.2.2" class="ltx_td ltx_align_center ltx_border_r">12,415,496</td>
+<td id="S4.T2.1.3.2.3" class="ltx_td ltx_align_center ltx_border_r">63,451</td>
+<td id="S4.T2.1.3.2.4" class="ltx_td ltx_align_center ltx_border_r">4,339</td>
+<td id="S4.T2.1.3.2.5" class="ltx_td ltx_align_center ltx_border_r">1,330</td>
+<td id="S4.T2.1.3.2.6" class="ltx_td ltx_align_center ltx_border_r">100</td>
+<td id="S4.T2.1.3.2.7" class="ltx_td ltx_align_center ltx_border_r">0</td>
+</tr>
+<tr id="S4.T2.1.4.3" class="ltx_tr">
+<td id="S4.T2.1.4.3.1" class="ltx_td ltx_align_center ltx_border_l ltx_border_r">2025-07-08</td>
+<td id="S4.T2.1.4.3.2" class="ltx_td ltx_align_center ltx_border_r">609,692</td>
+<td id="S4.T2.1.4.3.3" class="ltx_td ltx_align_center ltx_border_r">626,114</td>
+<td id="S4.T2.1.4.3.4" class="ltx_td ltx_align_center ltx_border_r">22,675</td>
+<td id="S4.T2.1.4.3.5" class="ltx_td ltx_align_center ltx_border_r">8,332</td>
+<td id="S4.T2.1.4.3.6" class="ltx_td ltx_align_center ltx_border_r">100</td>
+<td id="S4.T2.1.4.3.7" class="ltx_td ltx_align_center ltx_border_r">0</td>
+</tr>
+<tr id="S4.T2.1.5.4" class="ltx_tr">
+<td id="S4.T2.1.5.4.1" class="ltx_td ltx_align_center ltx_border_l ltx_border_r">2025-07-09</td>
+<td id="S4.T2.1.5.4.2" class="ltx_td ltx_align_center ltx_border_r">23,511,437</td>
+<td id="S4.T2.1.5.4.3" class="ltx_td ltx_align_center ltx_border_r">4,363,855</td>
+<td id="S4.T2.1.5.4.4" class="ltx_td ltx_align_center ltx_border_r">1,020,006</td>
+<td id="S4.T2.1.5.4.5" class="ltx_td ltx_align_center ltx_border_r">448,305</td>
+<td id="S4.T2.1.5.4.6" class="ltx_td ltx_align_center ltx_border_r">1</td>
+<td id="S4.T2.1.5.4.7" class="ltx_td ltx_align_center ltx_border_r">0</td>
+</tr>
+<tr id="S4.T2.1.6.5" class="ltx_tr">
+<td id="S4.T2.1.6.5.1" class="ltx_td ltx_align_center ltx_border_l ltx_border_r">2025-07-10</td>
+<td id="S4.T2.1.6.5.2" class="ltx_td ltx_align_center ltx_border_r">5,091,692</td>
+<td id="S4.T2.1.6.5.3" class="ltx_td ltx_align_center ltx_border_r">234,930</td>
+<td id="S4.T2.1.6.5.4" class="ltx_td ltx_align_center ltx_border_r">63,716</td>
+<td id="S4.T2.1.6.5.5" class="ltx_td ltx_align_center ltx_border_r">29,557</td>
+<td id="S4.T2.1.6.5.6" class="ltx_td ltx_align_center ltx_border_r">5</td>
+<td id="S4.T2.1.6.5.7" class="ltx_td ltx_align_center ltx_border_r">0</td>
+</tr>
+<tr id="S4.T2.1.7.6" class="ltx_tr">
+<td id="S4.T2.1.7.6.1" class="ltx_td ltx_align_center ltx_border_b ltx_border_l ltx_border_r ltx_border_t"><span id="S4.T2.1.7.6.1.1" class="ltx_text ltx_font_bold">Total</span></td>
+<td id="S4.T2.1.7.6.2" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">73,974,799</td>
+<td id="S4.T2.1.7.6.3" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">11,175,586</td>
+<td id="S4.T2.1.7.6.4" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">1,933,782</td>
+<td id="S4.T2.1.7.6.5" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">775,840</td>
+<td id="S4.T2.1.7.6.6" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">211</td>
+<td id="S4.T2.1.7.6.7" class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">0</td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 2: </span>The number of hits remaining after each filtering step of the pipeline. The stark differences between different dates are due both to the variable observing session length and the different amount of <a href="#S6.4.4.4"><abbr href="#S6.4.4.4" title="Radio Frequency Interference" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">RFI</span></abbr></a> in each frequency band. Note that the two nights that returned 100 plots were returning the default number of “backup” plots with no plots surpassing the SNR ratio threshold i.e., they were generally of less interest.</figcaption>
+</figure>
+<figure id="S4.F8" class="ltx_figure"><img src="2512.18142v2/MJD_60861_19928_fmid5197.461828_DR0.221_x0.06_SNRr1.06.png" id="S4.F8.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="598" height="195" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 8: </span>An output waterfall plot from <span id="S4.F8.2.1" class="ltx_text ltx_font_typewriter">NBeamAnalysis</span> from an observation with 0 signals above the 5.29 SNR ratio threshold. This signal had a non-blanked frequency, a drift rate in the allowable range, and does appear to be truly narrowband (i.e., technological). However, the signal has a similar <a href="#S6.5.5.5"><abbr href="#S6.5.5.5" title="Signal-to-Noise Ratio" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SNR</span></abbr></a> in both the on-beam and the off-beam, indicating a local interferer in the allocation allotted to fixed-satellite service (Earth-to-space).</figcaption>
+</figure>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">V </span>Upper Limits</h2>
+
+<div id="S5.p1" class="ltx_para">
+<p id="S5.p1.2" class="ltx_p">Given 3I/ATLAS’s distance from Earth during the observing window (<math id="S5.p1.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>3.35 AU), the ATA would be able to detect a narrowband radio signal if its flux density exceeds a threshold <math id="S5.p1.2.m2" class="ltx_Math" alttext="S_{min}" display="inline" intent=":literal"><semantics><msub><mi>S</mi><mrow><mi>m</mi><mo lspace="0em" rspace="0em">​</mo><mi>i</mi><mo lspace="0em" rspace="0em">​</mo><mi>n</mi></mrow></msub><annotation encoding="application/x-tex">S_{min}</annotation></semantics></math> as follows:</p>
+</div>
+<div id="S5.p2" class="ltx_para">
+<table id="S5.E2" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S5.E2.m1" class="ltx_Math" alttext="S_{\text{min}}=\frac{S/N_{\text{min}}}{\sqrt{\beta}}\cdot\left(\frac{S_{\text{sys}}}{\Delta\nu_{t}}\right)\cdot\sqrt{\frac{\Delta\nu}{n_{p}\cdot\tau_{\text{obs}}}}" display="block" intent=":literal"><semantics><mrow><msub><mi>S</mi><mtext>min</mtext></msub><mo>=</mo><mrow><mfrac><mrow><mi>S</mi><mo>/</mo><msub><mi>N</mi><mtext>min</mtext></msub></mrow><msqrt><mi>β</mi></msqrt></mfrac><mo lspace="0.222em" rspace="0.222em">⋅</mo><mrow><mo>(</mo><mfrac><msub><mi>S</mi><mtext>sys</mtext></msub><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>ν</mi><mi>t</mi></msub></mrow></mfrac><mo rspace="0.055em">)</mo></mrow><mo rspace="0.222em">⋅</mo><msqrt><mfrac><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>ν</mi></mrow><mrow><msub><mi>n</mi><mi>p</mi></msub><mo lspace="0.222em" rspace="0.222em">⋅</mo><msub><mi>τ</mi><mtext>obs</mtext></msub></mrow></mfrac></msqrt></mrow></mrow><annotation encoding="application/x-tex">S_{\text{min}}=\frac{S/N_{\text{min}}}{\sqrt{\beta}}\cdot\left(\frac{S_{\text{sys}}}{\Delta\nu_{t}}\right)\cdot\sqrt{\frac{\Delta\nu}{n_{p}\cdot\tau_{\text{obs}}}}</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(2)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S5.p3" class="ltx_para">
+<p id="S5.p3.10" class="ltx_p">Here, <math id="S5.p3.1.m1" class="ltx_Math" alttext="S/N_{\text{min}}" display="inline" intent=":literal"><semantics><mrow><mi>S</mi><mo>/</mo><msub><mi>N</mi><mtext>min</mtext></msub></mrow><annotation encoding="application/x-tex">S/N_{\text{min}}</annotation></semantics></math> is the desired signal-to-noise threshold, <math id="S5.p3.2.m2" class="ltx_Math" alttext="S_{\text{sys}}" display="inline" intent=":literal"><semantics><msub><mi>S</mi><mtext>sys</mtext></msub><annotation encoding="application/x-tex">S_{\text{sys}}</annotation></semantics></math> is the system equivalent flux density (in e.g., Jy), <math id="S5.p3.3.m3" class="ltx_Math" alttext="\Delta\nu_{t}" display="inline" intent=":literal"><semantics><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>ν</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">\Delta\nu_{t}</annotation></semantics></math> is the transmitter bandwidth, <math id="S5.p3.4.m4" class="ltx_Math" alttext="\Delta\nu" display="inline" intent=":literal"><semantics><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>ν</mi></mrow><annotation encoding="application/x-tex">\Delta\nu</annotation></semantics></math> is the channel bandwidth of the data, <math id="S5.p3.5.m5" class="ltx_Math" alttext="n_{p}" display="inline" intent=":literal"><semantics><msub><mi>n</mi><mi>p</mi></msub><annotation encoding="application/x-tex">n_{p}</annotation></semantics></math> is the number of polarizations, <math id="S5.p3.6.m6" class="ltx_Math" alttext="\tau_{\mathrm{obs}}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>obs</mi></msub><annotation encoding="application/x-tex">\tau_{\mathrm{obs}}</annotation></semantics></math> is the observing time, and <math id="S5.p3.7.m7" class="ltx_Math" alttext="\beta" display="inline" intent=":literal"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math> is the dechirping efficiency. This equation is slightly modified from the <span id="S5.p3.10.1" class="ltx_text ltx_font_typewriter">turboSETI</span> formulation in e.g., <cite class="ltx_cite ltx_citemacro_citet">Gajjar<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib37" title="The breakthrough listen search for intelligent life near the galactic center I" class="ltx_ref">2021</a>)</cite> in the following way. Given our frequency resolution (<math id="S5.p3.8.m8" class="ltx_Math" alttext="\Delta\nu\approx 1.9~\text{Hz}" display="inline" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>ν</mi></mrow><mo>≈</mo><mrow><mn>1.9</mn><mo lspace="0.330em" rspace="0em">​</mo><mtext>Hz</mtext></mrow></mrow><annotation encoding="application/x-tex">\Delta\nu\approx 1.9~\text{Hz}</annotation></semantics></math>) and temporal resolution (<math id="S5.p3.9.m9" class="ltx_Math" alttext="\Delta t\approx 16.777~\text{sec}" display="inline" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi></mrow><mo>≈</mo><mrow><mn>16.777</mn><mo lspace="0.330em" rspace="0em">​</mo><mtext>sec</mtext></mrow></mrow><annotation encoding="application/x-tex">\Delta t\approx 16.777~\text{sec}</annotation></semantics></math>), signals with high frequency drift are spread across multiple channels, resulting in reduced sensitivity: this will happen to some degree regardless of the de-drifting algorithm being applied. However, compared to the <span id="S5.p3.10.2" class="ltx_text ltx_font_typewriter">turboSETI</span> de-Doppler algorithm considered by <cite class="ltx_cite ltx_citemacro_citet">Gajjar<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib37" title="The breakthrough listen search for intelligent life near the galactic center I" class="ltx_ref">2021</a>)</cite>, the <span id="S5.p3.10.3" class="ltx_text ltx_font_typewriter">bliss</span> algorithm recovers <math id="S5.p3.10.m10" class="ltx_Math" alttext="\sqrt{\beta}" display="inline" intent=":literal"><semantics><msqrt><mi>β</mi></msqrt><annotation encoding="application/x-tex">\sqrt{\beta}</annotation></semantics></math> by including neighboring bins containing smeared signal into the power estimate.</p>
+</div>
+<div id="S5.p4" class="ltx_para">
+<p id="S5.p4.1" class="ltx_p">This dechirping efficiency can be expressed as follows for our survey:</p>
+</div>
+<div id="S5.p5" class="ltx_para">
+<table id="S5.Ex1" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S5.Ex1.m1" class="ltx_Math" alttext="\beta=[\mathrm{round}\big(\frac{\Delta t}{\Delta\nu}\times|\dot{\nu}|\big)]^{-1}" display="block" intent=":literal"><semantics><mrow><mi>β</mi><mo>=</mo><msup><mrow><mo stretchy="false">[</mo><mrow><mi>round</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo maxsize="1.200em" minsize="1.200em">(</mo><mrow><mfrac><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi></mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>ν</mi></mrow></mfrac><mo lspace="0.222em" rspace="0.222em">×</mo><mrow><mo stretchy="false">|</mo><mover accent="true"><mi>ν</mi><mo>˙</mo></mover><mo stretchy="false">|</mo></mrow></mrow><mo maxsize="1.200em" minsize="1.200em">)</mo></mrow></mrow><mo stretchy="false">]</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\beta=[\mathrm{round}\big(\frac{\Delta t}{\Delta\nu}\times|\dot{\nu}|\big)]^{-1}</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S5.p6" class="ltx_para">
+<p id="S5.p6.5" class="ltx_p">The parameter <math id="S5.p6.1.m1" class="ltx_Math" alttext="\dot{\nu}" display="inline" intent=":literal"><semantics><mover accent="true"><mi>ν</mi><mo>˙</mo></mover><annotation encoding="application/x-tex">\dot{\nu}</annotation></semantics></math> represents the drift rate being searched. Currently <span id="S5.p6.5.1" class="ltx_text ltx_font_typewriter">bliss</span> rounds <math id="S5.p6.2.m2" class="ltx_Math" alttext="|\dot{\nu}|" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">|</mo><mover accent="true"><mi>ν</mi><mo>˙</mo></mover><mo stretchy="false">|</mo></mrow><annotation encoding="application/x-tex">|\dot{\nu}|</annotation></semantics></math> to the nearest integer multiple of the unit drift rate <math id="S5.p6.3.m3" class="ltx_Math" alttext="\frac{\Delta\nu}{\Delta t}" display="inline" intent=":literal"><semantics><mfrac><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>ν</mi></mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi></mrow></mfrac><annotation encoding="application/x-tex">\frac{\Delta\nu}{\Delta t}</annotation></semantics></math>, accounting for the difference between this formulation of <math id="S5.p6.4.m4" class="ltx_Math" alttext="\beta" display="inline" intent=":literal"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math> and the one in <cite class="ltx_cite ltx_citemacro_citet">Gajjar<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib37" title="The breakthrough listen search for intelligent life near the galactic center I" class="ltx_ref">2021</a>)</cite>. Our system achieves maximum dechirping efficiency for drift rates of 0.113 Hz/s or less, with sensitivity getting gradually worse as the drift rates increase. Based on our minimum <math id="S5.p6.5.m5" class="ltx_Math" alttext="S_{\mathrm{min}}" display="inline" intent=":literal"><semantics><msub><mi>S</mi><mi>min</mi></msub><annotation encoding="application/x-tex">S_{\mathrm{min}}</annotation></semantics></math> at various frequencies, we can then calculate the corresponding <a href="#S6.14.14.14"><abbr href="#S6.14.14.14" title="Effective Isotropic Radiated Power" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">EIRP</span></abbr></a> for all our observations using:</p>
+</div>
+<div id="S5.p7" class="ltx_para">
+<table id="S5.E3" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S5.E3.m1" class="ltx_Math" alttext="\text{EIRP}_{\text{obs}}=S_{\text{min}}\times 4\pi D^{2}_{\text{obs}}\times\Delta\nu" display="block" intent=":literal"><semantics><mrow><msub><mtext>EIRP</mtext><mtext>obs</mtext></msub><mo>=</mo><mrow><mrow><mrow><mrow><msub><mi>S</mi><mtext>min</mtext></msub><mo lspace="0.222em" rspace="0.222em">×</mo><mn>4</mn></mrow><mo lspace="0em" rspace="0em">​</mo><mi>π</mi><mo lspace="0em" rspace="0em">​</mo><msubsup><mi>D</mi><mtext>obs</mtext><mn>2</mn></msubsup></mrow><mo lspace="0.222em" rspace="0.222em">×</mo><mi mathvariant="normal">Δ</mi></mrow><mo lspace="0em" rspace="0em">​</mo><mi>ν</mi></mrow></mrow><annotation encoding="application/x-tex">\text{EIRP}_{\text{obs}}=S_{\text{min}}\times 4\pi D^{2}_{\text{obs}}\times\Delta\nu</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(3)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S5.p8" class="ltx_para">
+<p id="S5.p8.1" class="ltx_p">We also calculated a worst-case <a href="#S6.14.14.14"><abbr href="#S6.14.14.14" title="Effective Isotropic Radiated Power" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">EIRP</span></abbr></a> for the lowest dechirping efficiencies in our survey (i.e., those corresponding to 1.5 Hz/s), modifying the flux sensitivity accordingly. The <a href="#S6.14.14.14"><abbr href="#S6.14.14.14" title="Effective Isotropic Radiated Power" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">EIRP</span></abbr></a> values across the frequencies from 1 to 9 GHz are shown in Table <a href="#S5.T3" title="Table 3 ‣ V Upper Limits ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>.</p>
+</div>
+<div id="S5.p9" class="ltx_para">
+<p id="S5.p9.1" class="ltx_p">The beamformer  <a href="#S6.13.13.13"><span href="#S6.13.13.13" title="System Equivalent Flux Density" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_long">System Equivalent Flux Density</span></span></a> (<a href="#S6.13.13.13"><abbr href="#S6.13.13.13" title="System Equivalent Flux Density" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SEFD</span></abbr></a>) values shown in Table <a href="#S5.T3" title="Table 3 ‣ V Upper Limits ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a> are derived from the <a href="#S6.13.13.13"><abbr href="#S6.13.13.13" title="System Equivalent Flux Density" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SEFD</span></abbr></a>s of individual antennas, calculated by CASA during calibration (as described in Section <a href="#S2" title="II Observations ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">II</span></a>). We remove outliers by identifying antennas in each polarization with <a href="#S6.13.13.13"><abbr href="#S6.13.13.13" title="System Equivalent Flux Density" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SEFD</span></abbr></a>s greater than 1.5 times the interquartile range above the third quartile; antennas with abnormally high <a href="#S6.13.13.13"><abbr href="#S6.13.13.13" title="System Equivalent Flux Density" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SEFD</span></abbr></a> values generally have hardware issues at the feed level and should be removed from the dataset (in this survey, this affected 8–12 of the 56 antenna-polarization combinations depending on the frequency). Then we take an unweighted mean of individual antenna <a href="#S6.13.13.13"><abbr href="#S6.13.13.13" title="System Equivalent Flux Density" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SEFD</span></abbr></a>s and divide by the number of elements remaining in the list for that polarization. Finally, the two average polarization <a href="#S6.13.13.13"><abbr href="#S6.13.13.13" title="System Equivalent Flux Density" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SEFD</span></abbr></a> values are themselves averaged to obtain the final beamformer <a href="#S6.13.13.13"><abbr href="#S6.13.13.13" title="System Equivalent Flux Density" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SEFD</span></abbr></a>, and, for frequencies with two sessions, those two session <a href="#S6.13.13.13"><abbr href="#S6.13.13.13" title="System Equivalent Flux Density" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SEFD</span></abbr></a>s are averaged as well to give a single beamformer <a href="#S6.13.13.13"><abbr href="#S6.13.13.13" title="System Equivalent Flux Density" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SEFD</span></abbr></a> for each frequency tuning. Note that the error bars on the beamformer <a href="#S6.13.13.13"><abbr href="#S6.13.13.13" title="System Equivalent Flux Density" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SEFD</span></abbr></a> values in Table <a href="#S5.T3" title="Table 3 ‣ V Upper Limits ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a> are derived from the standard deviation of the population of individual antenna SEFDs, which fall around 15%: this is relatively standard for the ATA and these uncertainties can be propagated linearly to the <math id="S5.p9.1.m1" class="ltx_Math" alttext="S_{\min}" display="inline" intent=":literal"><semantics><msub><mi>S</mi><mi>min</mi></msub><annotation encoding="application/x-tex">S_{\min}</annotation></semantics></math> and <a href="#S6.14.14.14"><abbr href="#S6.14.14.14" title="Effective Isotropic Radiated Power" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">EIRP</span></abbr></a> values if desired.</p>
+</div>
+<figure id="S5.T3" class="ltx_table">
+<table id="S5.T3.13" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S5.T3.1.1" class="ltx_tr">
+<th id="S5.T3.1.1.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_th_row ltx_border_l ltx_border_r ltx_border_t"><span id="S5.T3.1.1.2.1" class="ltx_text ltx_font_bold">Center Frequency</span></th>
+<th id="S5.T3.1.1.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_th_row ltx_border_r ltx_border_t"><span id="S5.T3.1.1.3.1" class="ltx_text ltx_font_bold">SEFD</span></th>
+<th id="S5.T3.1.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r ltx_border_t"><math id="S5.T3.1.1.1.m1" class="ltx_Math" alttext="S_{\min}" display="inline" intent=":literal"><semantics><msub><mi>S</mi><mi>min</mi></msub><annotation encoding="application/x-tex">S_{\min}</annotation></semantics></math></th>
+<th id="S5.T3.1.1.4" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r ltx_border_t"><span id="S5.T3.1.1.4.1" class="ltx_text ltx_font_bold">EIRP</span></th>
+</tr>
+<tr id="S5.T3.13.14.1" class="ltx_tr">
+<th id="S5.T3.13.14.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_th_row ltx_border_l ltx_border_r">(MHz)</th>
+<th id="S5.T3.13.14.1.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_th_row ltx_border_r">(Jy)</th>
+<th id="S5.T3.13.14.1.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r">(Jy)</th>
+<th id="S5.T3.13.14.1.4" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r">(W)</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S5.T3.2.2" class="ltx_tr">
+<th id="S5.T3.2.2.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r ltx_border_t">1336</th>
+<th id="S5.T3.2.2.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t">390 <math id="S5.T3.2.2.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 60</th>
+<td id="S5.T3.2.2.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">170–2300</td>
+<td id="S5.T3.2.2.4" class="ltx_td ltx_align_center ltx_border_r ltx_border_t">10–40</td>
+</tr>
+<tr id="S5.T3.3.3" class="ltx_tr">
+<th id="S5.T3.3.3.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r">2008</th>
+<th id="S5.T3.3.3.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r">420 <math id="S5.T3.3.3.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 56</th>
+<td id="S5.T3.3.3.3" class="ltx_td ltx_align_center ltx_border_r">190–2400</td>
+<td id="S5.T3.3.3.4" class="ltx_td ltx_align_center ltx_border_r">11–40</td>
+</tr>
+<tr id="S5.T3.4.4" class="ltx_tr">
+<th id="S5.T3.4.4.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r">2680</th>
+<th id="S5.T3.4.4.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r">460 <math id="S5.T3.4.4.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 54</th>
+<td id="S5.T3.4.4.3" class="ltx_td ltx_align_center ltx_border_r">200–2700</td>
+<td id="S5.T3.4.4.4" class="ltx_td ltx_align_center ltx_border_r">12–40</td>
+</tr>
+<tr id="S5.T3.5.5" class="ltx_tr">
+<th id="S5.T3.5.5.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r">3352</th>
+<th id="S5.T3.5.5.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r">460 <math id="S5.T3.5.5.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 60</th>
+<td id="S5.T3.5.5.3" class="ltx_td ltx_align_center ltx_border_r">200–2700</td>
+<td id="S5.T3.5.5.4" class="ltx_td ltx_align_center ltx_border_r">12–40</td>
+</tr>
+<tr id="S5.T3.6.6" class="ltx_tr">
+<th id="S5.T3.6.6.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r">4024</th>
+<th id="S5.T3.6.6.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r">560 <math id="S5.T3.6.6.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 68</th>
+<td id="S5.T3.6.6.3" class="ltx_td ltx_align_center ltx_border_r">250–3200</td>
+<td id="S5.T3.6.6.4" class="ltx_td ltx_align_center ltx_border_r">15–50</td>
+</tr>
+<tr id="S5.T3.7.7" class="ltx_tr">
+<th id="S5.T3.7.7.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r">4696</th>
+<th id="S5.T3.7.7.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r">620 <math id="S5.T3.7.7.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 84</th>
+<td id="S5.T3.7.7.3" class="ltx_td ltx_align_center ltx_border_r">280–3600</td>
+<td id="S5.T3.7.7.4" class="ltx_td ltx_align_center ltx_border_r">16–60</td>
+</tr>
+<tr id="S5.T3.8.8" class="ltx_tr">
+<th id="S5.T3.8.8.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r">5368</th>
+<th id="S5.T3.8.8.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r">640 <math id="S5.T3.8.8.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 114</th>
+<td id="S5.T3.8.8.3" class="ltx_td ltx_align_center ltx_border_r">280–3700</td>
+<td id="S5.T3.8.8.4" class="ltx_td ltx_align_center ltx_border_r">17–60</td>
+</tr>
+<tr id="S5.T3.9.9" class="ltx_tr">
+<th id="S5.T3.9.9.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r">6040</th>
+<th id="S5.T3.9.9.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r">670 <math id="S5.T3.9.9.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 118</th>
+<td id="S5.T3.9.9.3" class="ltx_td ltx_align_center ltx_border_r">300–3900</td>
+<td id="S5.T3.9.9.4" class="ltx_td ltx_align_center ltx_border_r">18–60</td>
+</tr>
+<tr id="S5.T3.10.10" class="ltx_tr">
+<th id="S5.T3.10.10.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r">6712</th>
+<th id="S5.T3.10.10.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r">740 <math id="S5.T3.10.10.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 105</th>
+<td id="S5.T3.10.10.3" class="ltx_td ltx_align_center ltx_border_r">330–4300</td>
+<td id="S5.T3.10.10.4" class="ltx_td ltx_align_center ltx_border_r">20–70</td>
+</tr>
+<tr id="S5.T3.11.11" class="ltx_tr">
+<th id="S5.T3.11.11.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r">7384</th>
+<th id="S5.T3.11.11.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r">810 <math id="S5.T3.11.11.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 139</th>
+<td id="S5.T3.11.11.3" class="ltx_td ltx_align_center ltx_border_r">360–4700</td>
+<td id="S5.T3.11.11.4" class="ltx_td ltx_align_center ltx_border_r">21–80</td>
+</tr>
+<tr id="S5.T3.12.12" class="ltx_tr">
+<th id="S5.T3.12.12.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_l ltx_border_r">8056</th>
+<th id="S5.T3.12.12.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r">940 <math id="S5.T3.12.12.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 225</th>
+<td id="S5.T3.12.12.3" class="ltx_td ltx_align_center ltx_border_r">420–5500</td>
+<td id="S5.T3.12.12.4" class="ltx_td ltx_align_center ltx_border_r">25–90</td>
+</tr>
+<tr id="S5.T3.13.13" class="ltx_tr">
+<th id="S5.T3.13.13.2" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_b ltx_border_l ltx_border_r">8728</th>
+<th id="S5.T3.13.13.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_b ltx_border_r">1150 <math id="S5.T3.13.13.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> 326</th>
+<td id="S5.T3.13.13.3" class="ltx_td ltx_align_center ltx_border_b ltx_border_r">500–6700</td>
+<td id="S5.T3.13.13.4" class="ltx_td ltx_align_center ltx_border_b ltx_border_r">31–110</td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 3: </span>The <a href="#S6.13.13.13"><abbr href="#S6.13.13.13" title="System Equivalent Flux Density" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SEFD</span></abbr></a> of the beamformer, minimum detectable flux density (<math id="S5.T3.16.m1" class="ltx_Math" alttext="S_{\min}" display="inline" intent=":literal"><semantics><msub><mi>S</mi><mi>min</mi></msub><annotation encoding="application/x-tex">S_{\min}</annotation></semantics></math>), and <a href="#S6.14.14.14"><abbr href="#S6.14.14.14" title="Effective Isotropic Radiated Power" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">EIRP</span></abbr></a> values for different center frequencies. The ranges in <math id="S5.T3.17.m2" class="ltx_Math" alttext="S_{\min}" display="inline" intent=":literal"><semantics><msub><mi>S</mi><mi>min</mi></msub><annotation encoding="application/x-tex">S_{\min}</annotation></semantics></math> and <a href="#S6.14.14.14"><abbr href="#S6.14.14.14" title="Effective Isotropic Radiated Power" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">EIRP</span></abbr></a> demonstrate values for the best-case to worst-case dechirping efficiencies.</figcaption>
+</figure>
+<div id="S5.p10" class="ltx_para">
+<p id="S5.p10.1" class="ltx_p">Finally, we can compare these <a href="#S6.14.14.14"><abbr href="#S6.14.14.14" title="Effective Isotropic Radiated Power" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">EIRP</span></abbr></a> values with the recently-posted values from <cite class="ltx_cite ltx_citemacro_citet">Pisano<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib52" title="Further MeerKAT observations of 1665/1667 MHz OH in absorption and emission, and a technosignature search in 3I/ATLAS" class="ltx_ref">2025</a>)</cite>: in the narrowband technosignature search of 3I/ATLAS in that work, the authors report a minimum <a href="#S6.14.14.14"><abbr href="#S6.14.14.14" title="Effective Isotropic Radiated Power" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">EIRP</span></abbr></a> value of 0.17 W. This value is about commensurate with a cellphone handset, significantly more sensitive than this work; this is expected given MeerKAT’s world-class sensitivity. However, MeerKAT only set limits from 900–1670 MHz, so this work increases the frequencies covered for 3I/ATLAS by a factor of 10.</p>
+</div>
+</section>
+<section id="S6" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">VI </span>Conclusions</h2>
+
+<div id="S6.p1" class="ltx_para">
+<p id="S6.p1.2" class="ltx_p">In this work, we considered the most recently-discovered interstellar object, 3I/ATLAS, through a technosignature lens, motivating this frame in Section <a href="#S1" title="I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">I</span></a>. We took 7.25 hr of data on 3I/ATLAS across 1–9 GHz with the <a href="#S6.3.3.3"><abbr href="#S6.3.3.3" title="Allen Telescope Array" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ATA</span></abbr></a>, using a high frequency resolution beamforming mode designed for narrowband signal searches (see Section <a href="#S2" title="II Observations ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">II</span></a>). In Section <a href="#S3" title="III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">III</span></a>, we described the deployment of the narrowband hit-finding code <span id="S6.p1.2.1" class="ltx_text ltx_font_typewriter">bliss</span>, <a href="#S6.4.4.4"><abbr href="#S6.4.4.4" title="Radio Frequency Interference" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">RFI</span></abbr></a> blanking and drift rate limits, and spatial filtering with the <span id="S6.p1.2.2" class="ltx_text ltx_font_typewriter">NBeamAnalysis</span> code to filter our initial <math id="S6.p1.1.m1" class="ltx_Math" alttext="\sim 74" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>∼</mo><mn>74</mn></mrow><annotation encoding="application/x-tex">\sim 74</annotation></semantics></math> million <span id="S6.p1.2.3" class="ltx_text ltx_font_typewriter">bliss</span> hits down to 211 plots for visual inspection. We found no evidence of narrowband technosignatures in this dataset (Section <a href="#S4" title="IV Results ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">IV</span></a>). This result implies <a href="#S6.14.14.14"><abbr href="#S6.14.14.14" title="Effective Isotropic Radiated Power" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">EIRP</span></abbr></a> upper limits of <math id="S6.p1.2.m2" class="ltx_Math" alttext="10-110" display="inline" intent=":literal"><semantics><mrow><mn>10</mn><mo>−</mo><mn>110</mn></mrow><annotation encoding="application/x-tex">10-110</annotation></semantics></math> W across our frequency and drift rate range.</p>
+</div>
+<div id="S6.p2" class="ltx_para">
+<p id="S6.p2.1" class="ltx_p">In the future, the blanking ranges for <a href="#S6.4.4.4"><abbr href="#S6.4.4.4" title="Radio Frequency Interference" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">RFI</span></abbr></a> in this project will be explored in more detail to determine whether modulation-sensitive analysis strategies could mitigate the <a href="#S6.4.4.4"><abbr href="#S6.4.4.4" title="Radio Frequency Interference" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">RFI</span></abbr></a> while still allowing for narrowband searches in these ranges. In addition, as far as we know, this is the first time that expected drift rate contributions have been used as a filter for a technosignature search of a Solar System object. These advances in technosignature searches with <a href="#S6.3.3.3"><abbr href="#S6.3.3.3" title="Allen Telescope Array" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">ATA</span></abbr></a> will be applied to future searches on the instrument, further pushing into unexplored parameter space for the <a href="#S6.1.1.1"><abbr href="#S6.1.1.1" title="Search for Extraterrestrial Intelligence" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">SETI</span></abbr></a>.</p>
+</div>
+<figure id="A0.T4" class="ltx_table">
+<table id="A0.T4.1" class="ltx_tabular ltx_centering ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr id="A0.T4.1.1.1" class="ltx_tr">
+<td id="A0.T4.1.1.1.1" class="ltx_td ltx_align_left ltx_border_l ltx_border_r ltx_border_t">1000–1025</td>
+<td id="A0.T4.1.1.1.2" class="ltx_td ltx_align_left ltx_border_r ltx_border_t">1775–1802</td>
+<td id="A0.T4.1.1.1.3" class="ltx_td ltx_align_left ltx_border_r ltx_border_t">2062.3–2062.8</td>
+<td id="A0.T4.1.1.1.4" class="ltx_td ltx_align_left ltx_border_r ltx_border_t">2257–2258</td>
+<td id="A0.T4.1.1.1.5" class="ltx_td ltx_align_left ltx_border_r ltx_border_t">2705–2800</td>
+</tr>
+<tr id="A0.T4.1.2.2" class="ltx_tr">
+<td id="A0.T4.1.2.2.1" class="ltx_td ltx_align_left ltx_border_l ltx_border_r">1075–1116</td>
+<td id="A0.T4.1.2.2.2" class="ltx_td ltx_align_left ltx_border_r">1811–1813</td>
+<td id="A0.T4.1.2.2.3" class="ltx_td ltx_align_left ltx_border_r">2067.3–2067.8</td>
+<td id="A0.T4.1.2.2.4" class="ltx_td ltx_align_left ltx_border_r">2269–2270.3</td>
+<td id="A0.T4.1.2.2.5" class="ltx_td ltx_align_left ltx_border_r">3264–3274</td>
+</tr>
+<tr id="A0.T4.1.3.3" class="ltx_tr">
+<td id="A0.T4.1.3.3.1" class="ltx_td ltx_align_left ltx_border_l ltx_border_r">1168–1184.3</td>
+<td id="A0.T4.1.3.3.2" class="ltx_td ltx_align_left ltx_border_r">1899–1901</td>
+<td id="A0.T4.1.3.3.3" class="ltx_td ltx_align_left ltx_border_r">2097–2098</td>
+<td id="A0.T4.1.3.3.4" class="ltx_td ltx_align_left ltx_border_r">2271.3–2279</td>
+<td id="A0.T4.1.3.3.5" class="ltx_td ltx_align_left ltx_border_r">3341–3343</td>
+</tr>
+<tr id="A0.T4.1.4.4" class="ltx_tr">
+<td id="A0.T4.1.4.4.1" class="ltx_td ltx_align_left ltx_border_l ltx_border_r">1187–1227</td>
+<td id="A0.T4.1.4.4.2" class="ltx_td ltx_align_left ltx_border_r">1927–1945</td>
+<td id="A0.T4.1.4.4.3" class="ltx_td ltx_align_left ltx_border_r">2110–2154.6</td>
+<td id="A0.T4.1.4.4.4" class="ltx_td ltx_align_left ltx_border_r">2299–2301</td>
+<td id="A0.T4.1.4.4.5" class="ltx_td ltx_align_left ltx_border_r">3492–3493</td>
+</tr>
+<tr id="A0.T4.1.5.5" class="ltx_tr">
+<td id="A0.T4.1.5.5.1" class="ltx_td ltx_align_left ltx_border_l ltx_border_r">1246–1250</td>
+<td id="A0.T4.1.5.5.2" class="ltx_td ltx_align_left ltx_border_r">1951–1980</td>
+<td id="A0.T4.1.5.5.3" class="ltx_td ltx_align_left ltx_border_r">2166–2169.5</td>
+<td id="A0.T4.1.5.5.4" class="ltx_td ltx_align_left ltx_border_r">2316–2345</td>
+<td id="A0.T4.1.5.5.5" class="ltx_td ltx_align_left ltx_border_r">3600–4200</td>
+</tr>
+<tr id="A0.T4.1.6.6" class="ltx_tr">
+<td id="A0.T4.1.6.6.1" class="ltx_td ltx_align_left ltx_border_l ltx_border_r">1275–1314</td>
+<td id="A0.T4.1.6.6.2" class="ltx_td ltx_align_left ltx_border_r">1990–1996</td>
+<td id="A0.T4.1.6.6.3" class="ltx_td ltx_align_left ltx_border_r">2179–2203.5</td>
+<td id="A0.T4.1.6.6.4" class="ltx_td ltx_align_left ltx_border_r">2353–2359.5</td>
+<td id="A0.T4.1.6.6.5" class="ltx_td ltx_align_left ltx_border_r">4999–5000.9</td>
+</tr>
+<tr id="A0.T4.1.7.7" class="ltx_tr">
+<td id="A0.T4.1.7.7.1" class="ltx_td ltx_align_left ltx_border_l ltx_border_r">1395–1420.5</td>
+<td id="A0.T4.1.7.7.2" class="ltx_td ltx_align_left ltx_border_r">1999–2000.5</td>
+<td id="A0.T4.1.7.7.3" class="ltx_td ltx_align_left ltx_border_r">2211–2212</td>
+<td id="A0.T4.1.7.7.4" class="ltx_td ltx_align_left ltx_border_r">2484–2488</td>
+<td id="A0.T4.1.7.7.5" class="ltx_td ltx_align_left ltx_border_r">5048–5049.5</td>
+</tr>
+<tr id="A0.T4.1.8.8" class="ltx_tr">
+<td id="A0.T4.1.8.8.1" class="ltx_td ltx_align_left ltx_border_l ltx_border_r">1525–1562</td>
+<td id="A0.T4.1.8.8.2" class="ltx_td ltx_align_left ltx_border_r">2010–2011</td>
+<td id="A0.T4.1.8.8.3" class="ltx_td ltx_align_left ltx_border_r">2226–2227.5</td>
+<td id="A0.T4.1.8.8.4" class="ltx_td ltx_align_left ltx_border_r">2497.25–2498.5</td>
+<td id="A0.T4.1.8.8.5" class="ltx_td ltx_align_left ltx_border_r">5810–5830</td>
+</tr>
+<tr id="A0.T4.1.9.9" class="ltx_tr">
+<td id="A0.T4.1.9.9.1" class="ltx_td ltx_align_left ltx_border_l ltx_border_r">1572–1580</td>
+<td id="A0.T4.1.9.9.2" class="ltx_td ltx_align_left ltx_border_r">2022–2023</td>
+<td id="A0.T4.1.9.9.3" class="ltx_td ltx_align_left ltx_border_r">2237–2241</td>
+<td id="A0.T4.1.9.9.4" class="ltx_td ltx_align_left ltx_border_r">2565.75–2585</td>
+<td id="A0.T4.1.9.9.5" class="ltx_td ltx_align_left ltx_border_r">7300–7307</td>
+</tr>
+<tr id="A0.T4.1.10.10" class="ltx_tr">
+<td id="A0.T4.1.10.10.1" class="ltx_td ltx_align_left ltx_border_b ltx_border_l ltx_border_r">1671–1705</td>
+<td id="A0.T4.1.10.10.2" class="ltx_td ltx_align_left ltx_border_b ltx_border_r">2049–2054</td>
+<td id="A0.T4.1.10.10.3" class="ltx_td ltx_align_left ltx_border_b ltx_border_r">2244–2248</td>
+<td id="A0.T4.1.10.10.4" class="ltx_td ltx_align_left ltx_border_b ltx_border_r">2590–2609</td>
+<td id="A0.T4.1.10.10.5" class="ltx_td ltx_align_left ltx_border_b ltx_border_r">7596.5–7604</td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 4: </span>The blanking ranges, in MHz, used for this survey. Any hit from <span id="A0.T4.3.1" class="ltx_text ltx_font_typewriter">bliss</span> that had a center frequency within a blanking range was removed from the survey due to high levels of <a href="#S6.4.4.4"><abbr href="#S6.4.4.4" title="Radio Frequency Interference" class="ltx_glossaryref"><span class="ltx_text ltx_glossary_short">RFI</span></abbr></a> at those frequencies.</figcaption>
+</figure>
+<div id="S6.p3" class="ltx_para">
+<p id="S6.p3.1" class="ltx_p">The Allen Telescope Array (ATA) refurbishment program and its ongoing operations have received substantial support from Franklin Antonio. Additional contributions from Frank Levinson, Greg Papadopoulos, the Breakthrough Listen Initiative and other private donors have been instrumental in the renewal of the ATA. The Paul G. Allen Family Foundation provided major support for the design and construction of the ATA, alongside contributions from Nathan Myhrvold, Xilinx Corporation, Sun Microsystems, and other private donors. The ATA has also been supported by contributions from the US Naval Observatory and the US National Science Foundation. Breakthrough Listen is managed by the Breakthrough Initiatives, sponsored by the Breakthrough Prize Foundation. BG acknowledges support from the SETI Institute REU program (NSF Award 2447895). JRAD acknowledges support from the DiRAC Institute in the Department of Astronomy at the University of Washington. The DiRAC Institute is supported through generous gifts from the Charles and Lisa Simonyi Fund for Arts and Sciences, Janet and Lloyd Frink, and the Washington Research Foundation.</p>
+</div>
+<section id="S6.15" class="ltx_glossary ltx_acronym ltx_list_acronym">
+<dl id="S6.15.15" class="ltx_glossarylist">
+<dt id="S6.1.1.1" class="ltx_glossaryentry">SETI</dt>
+<dd>Search for Extraterrestrial Intelligence</dd>
+<dt id="S6.2.2.2" class="ltx_glossaryentry">ETI</dt>
+<dd>Extraterrestrial Intelligence</dd>
+<dt id="S6.3.3.3" class="ltx_glossaryentry">ATA</dt>
+<dd>Allen Telescope Array</dd>
+<dt id="S6.4.4.4" class="ltx_glossaryentry">RFI</dt>
+<dd>Radio Frequency Interference</dd>
+<dt id="S6.5.5.5" class="ltx_glossaryentry">SNR</dt>
+<dd>Signal-to-Noise Ratio</dd>
+<dt id="S6.6.6.6" class="ltx_glossaryentry">FRB</dt>
+<dd>Fast Radio Burst</dd>
+<dt id="S6.7.7.7" class="ltx_glossaryentry">BLADE</dt>
+<dd>Breakthrough Listen Accelerated Digital signal processing Engine</dd>
+<dt id="S6.8.8.8" class="ltx_glossaryentry">FWHM</dt>
+<dd>full width at half maximum</dd>
+<dt id="S6.9.9.9" class="ltx_glossaryentry">BL</dt>
+<dd>the Breakthrough Listen Initiative</dd>
+<dt id="S6.10.10.10" class="ltx_glossaryentry">HCRO</dt>
+<dd>Hat Creek Radio Observatory</dd>
+<dt id="S6.11.11.11" class="ltx_glossaryentry">GBT</dt>
+<dd>Green Bank Telescope</dd>
+<dt id="S6.12.12.12" class="ltx_glossaryentry">FCC</dt>
+<dd>Federal Communications Commission</dd>
+<dt id="S6.13.13.13" class="ltx_glossaryentry">SEFD</dt>
+<dd>System Equivalent Flux Density</dd>
+<dt id="S6.14.14.14" class="ltx_glossaryentry">EIRP</dt>
+<dd>Effective Isotropic Radiated Power</dd>
+<dt id="S6.15.15.15" class="ltx_glossaryentry">ISO</dt>
+<dd>Interstellar Object</dd>
+</dl>
+</section>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul id="bib.L1" class="ltx_biblist">
+<li id="bib.bib9" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. R. Alarcon, M. Serra-Ricart, J. Licandro, S. G. Arencibia, I. Ruiz Cejudo, and I. Trujillo (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Deep g’-band Imaging of Interstellar Comet 3I/ATLAS from the Two-meter Twin Telescope (TTT)</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astronomer’s Telegram</span> <span class="ltx_text ltx_bib_volume">17264</span>, <span class="ltx_text ltx_bib_pages"> pp. 1</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p1.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib15" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Alvarez-Candal, J. Rizos, L. Lara, P. Santos-Sanz, P. Gutierrez, J. Ortiz, N. Morales, and J. de León (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">X-shooter spectrum of comet c/2025 n1: insights into a distant interstellar visitor</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2507.07312</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p2.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib39" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">ATA Team (in prep)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">”Upgrades to the digital signal processing system on the allen telescope array”</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">”in prep”</span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS3.p1.1" title="I.3 The Allen Telescope Array ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.3</span></a>.
+</span>
+</li>
+<li id="bib.bib20" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Bannister, A. Bhandare, P. Dybczynski, A. Fitzsimmons, A. Guilbert-Lepoutre, R. Jedicke, M. Knight, K. J. Meech, A. McNeill, S. Pfalzner, <span class="ltx_text ltx_bib_etal">et al.</span> (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The natural history of’oumuamua</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Nature astronomy</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p1.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Belyakov, B. T. Bolin, C. Fremling, and M. Graham (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Spectral Slope and Colors of Interstellar Comet 3I/ATLAS with the Palomar 200-inch Palomar Next Generation Spectrograph</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astronomer’s Telegram</span> <span class="ltx_text ltx_bib_volume">17276</span>, <span class="ltx_text ltx_bib_pages"> pp. 1</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p1.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib19" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. T. Bolin and C. M. Lisse (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Constraints on the spin-pole orientation, jet morphology, and rotation of interstellar comet 2i/borisov with deep hst imaging</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Monthly Notices of the Royal Astronomical Society</span> <span class="ltx_text ltx_bib_volume">497</span> (<span class="ltx_text ltx_bib_number">4</span>), <span class="ltx_text ltx_bib_pages"> pp. 4031–4041</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p2.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib12" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. T. Bolin, M. Belyakov, C. L. Gray, C. Ingebretsen, G. Jewett, M. Kilic, and C. Lisse (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Apache Point Observatory Colors of Interstellar Comet 3I/ATLAS</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astronomer’s Telegram</span> <span class="ltx_text ltx_bib_volume">17284</span>, <span class="ltx_text ltx_bib_pages"> pp. 1</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p1.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib25" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">R. N. Bracewell (1960)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Communications from superior galactic communities</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p2.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>.
+</span>
+</li>
+<li id="bib.bib29" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">C. O. Chandler, P. H. Bernardinelli, M. Jurić, D. Singh, H. H. Hsieh, I. Sullivan, R. L. Jones, J. A. Kurlander, D. Vavilov, S. Eggl, M. Holman, F. Spoto, M. E. Schwamb, E. J. Christensen, W. Beebe, A. Roodman, K. Lim, T. Jenness, J. Bosch, B. Smart, E. Bellm, S. MacBride, M. L. Rawls, S. Greenstreet, C. Slater, A. Heinze, Ž. Ivezić, B. Blum, A. Connolly, G. Daues, R. Makadia, M. Gower, J. Bryce Kalmbach, D. Monet, M. T. Bannister, L. Dones, R. C. Dorsey, W. C. Fraser, J. C. Forbes, C. Fuentes, C. E. Holt, L. Inno, G. H. Jones, M. M. Knight, C. J. Lintott, T. Lister, R. Lupton, M. J. Mendoza Magbanua, R. Malhotra, B. E. A. Mueller, J. Murtagh, N. Pandey, W. T. Reach, N. H. Samarasinha, D. Z. Seligman, C. Snodgrass, M. Solontoi, G. M. Szabó, E. White, M. Womack, L. A. Young, R. Allbery, R. Armellin, É. Aubourg, C. Avdellidou, F. Azfar, J. Bauer, K. Bechtol, M. Belyakov, S. D. Benecchi, I. Bertini, B. T. Bolin, v. Bose, L. E. Buchanan, A. Boucaud, R. C. Boufleur, D. Boutigny, F. Braga-Ribas, D. Calabrese, J. I. B. Camargo, N. Caplar, B. Carry, J. P. Carvajal, Y. Choi, P. Cowan, S. Croft, M. Ćuk, F. Daruich, G. Daubard, J. R. A. Davenport, T. Daylan, J. Delgado, H. A. R. Devillepoix, P. E. Doherty, A. Donaldson, H. Drass, S. J. Deppe, G. P. Dubois-Felsmann, F. Economou, M. R. Eduardo, D. Farnocchia, M. K. Frissell, G. Fedorets, M. B. Fernandes, M. Fulle, D. W. Gerdes, A. R. Gibbs, A. F. Gillan, L. P. Guy, M. Hammergren, A. Hanushevsky, F. Hernandez, D. Hestroffer, M. J. Hopkins, M. Granvik, S. Ieva, D. H. Irving, B. T. Jannuzi, D. Jimenez, A. Ramos Gomes-Júnior, C. Juramy, S. M. Kahn, A. Kannawadi, Y. Kang, A. Kryszczyńska, I. Kotov, A. Koumjian, K. S. Krughoff, C. Lage, T. J. Lange, W. G. Levine, Z. Li, J. Licandro, H. W. Lin, N. B. Lust, R. R. Lyttle, A. A. Mahabal, M. Mahlke, A. A. Plazas Malagón, L. E. Salazar Manzano, M. Marc, G. Margoti, D. Marčeta, F. Menanteau, J. Meyers, D. Mills, N. Morato, S. More, C. B. Morrison, Y. Moulane, M. A. Muñoz-Gutiérrez, N. F. M., P. O’Connor, D. Oldag, W. J. Oldroyd, W. O’Mullane, C. Opitom, D. Oszkiewicz, G. L. Page, J. Patterson, M. J. Payne, J. Peloton, C. L. Pereira, J. R. Peterson, D. Polin, H. M. M. Pollek, R. Polen, Y. Qiu, D. Ragozzine, J. Rajagopal, v. van Reeven, M. Rice, S. T. Ridgway, A. S. Rivkin, J. E. Robinson, A. Rożek, A. Salnikov, B. O. Sánchez, G. Sarid, C. A. Schambeau, D. Scolnic, R. H. Schindler, R. Seaman, Š. Jacques, R. A. Shaw, A. Shugart, J. Sick, A. Siraj, M. C. Sitarz, S. Sobhani, C. Soldahl, B. Stalder, S. Stetzler, J. D. Swinbank, L. Szigeti, M. Tauraso, A. Thornton, L. Tonietti, D. E. Trilling, and C. A. Trujillo (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">NSF-DOE Vera C. Rubin Observatory Observations of Interstellar Comet 3I/ATLAS (C/2025 N1)</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv:2507.13409</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">2507.13409</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p1.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib23" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">C. Choza, D. Bautista, S. Croft, A. P. Siemion, B. Brzycki, K. Bhattaram, D. Czech, I. de Pater, V. Gajjar, H. Isaacson, <span class="ltx_text ltx_bib_etal">et al.</span> (2023)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The breakthrough listen search for intelligent life: technosignature search of 97 nearby galaxies</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astronomical Journal</span> <span class="ltx_text ltx_bib_volume">167</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 10</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p1.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>.
+</span>
+</li>
+<li id="bib.bib22" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">G. Cocconi and P. Morrison (1959)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Searching for interstellar communications</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Nature</span> <span class="ltx_text ltx_bib_volume">184</span>, <span class="ltx_text ltx_bib_pages"> pp. 844–846</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">Things I notice:- This paper is in Nature! A prestigious, mainstream publication- This paper is only two pages long - just presenting the idea- Cocconi and Morrison were both at Cornell for at least some time during the production of this paper - so was Sagan, Cornell has a wonderful history of early SETI work</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1038/184844a0" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text issn ltx_bib_external">ISSN 0028-0836</span>,
+<a href="http://www.nature.com/articles/184844a0" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p1.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>.
+</span>
+</li>
+<li id="bib.bib47" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. A. Cordiner, N. X. Roth, M. S. P. Kelley, D. Bodewits, S. B. Charnley, M. N. Drozdovskaya, D. Farnocchia, M. Micheli, S. N. Milam, C. Opitom, M. E. Schwamb, C. A. Thomas, and S. Bagnulo (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">JWST Detection of a Carbon-dioxide-dominated Gas Coma Surrounding Interstellar Object 3I/ATLAS</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">991</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. L43</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p2.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib49" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Crovisier, D. Bockelée-Morvan, P. Colom, and N. Biver (2016)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Comets at radio wavelengths</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Comptes Rendus Physique</span> <span class="ltx_text ltx_bib_volume">17</span> (<span class="ltx_text ltx_bib_number">9</span>), <span class="ltx_text ltx_bib_pages"> pp. 985–994</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p5.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>.
+</span>
+</li>
+<li id="bib.bib41" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">L. Cruz <span class="ltx_text ltx_bib_etal">et al.</span> (in prep)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">”BLADE: the breakthough listen accelerated dsp engine”</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">”in prep”</span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p2.1" title="II Observations ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib32" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. R. A. Davenport, S. Z. Sheikh, S. Croft, B. C. Lacki, J. T. Wright, C. Lintott, A. Frank, T. J. W. Lazio, C. O. Chandler, A. P. V. Siemion, S. DiKerby, E. White, V. Garcia Lopez, E. E. Yu, M. K. Frissell, P. Yoachim, N. Morato, D. Singh, J. Zhang, and D. Z. Seligman (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Technosignature Searches of Interstellar Objects</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv:2508.16825</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.48550/arXiv.2508.16825" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2508.16825</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p4.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>.
+</span>
+</li>
+<li id="bib.bib36" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">R. de la Fuente Marcos, M. R. Alarcon, J. Licandro, M. Serra-Ricart, J. de Leon, C. de la Fuente Marcos, G. Lombardi, A. Tejero, A. Cabrera-Lavers, S. Guerra Arencibia, and I. Ruiz Cejudo (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Assessing interstellar comet 3I/ATLAS with the 10.4 m Gran Telescopio Canarias and the Two-meter Twin Telescope</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv:2507.12922</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.48550/arXiv.2507.12922" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2507.12922</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p2.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib21" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">F. D. Drake (1961)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Project ozma</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Physics Today</span> <span class="ltx_text ltx_bib_volume">14</span>, <span class="ltx_text ltx_bib_pages"> pp. 40–46</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1063/1.3057500" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text issn ltx_bib_external">ISSN 19450699</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p1.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>.
+</span>
+</li>
+<li id="bib.bib28" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. E. Enriquez, A. Siemion, T. J. W. Lazio, M. Lebofsky, D. H. MacMahon, R. S. Park, S. Croft, D. DeBoer, N. Gizani, V. Gajjar, <span class="ltx_text ltx_bib_etal">et al.</span> (2018)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Breakthrough listen observations of 1i/’oumuamua with the gbt</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:1801.02814</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p6.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>.
+</span>
+</li>
+<li id="bib.bib30" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. E. Enriquez, A. Siemion, G. Foster, V. Gajjar, G. Hellbourg, J. Hickish, H. Isaacson, D. C. Price, S. Croft, D. DeBoer, M. Lebofsky, D. H. E. MacMahon, and D. Werthimer (2017)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Breakthrough Listen Search for Intelligent Life: 1.1-1.9 GHz Observations of 692 Nearby Stars</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">849</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 104</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-4357/aa8d1b" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">1709.03491</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS1.p1.1" title="III.1 Finding narrowband hits with bliss ‣ III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.1</span></a>.
+</span>
+</li>
+<li id="bib.bib46" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. D. Feinstein, J. W. Noonan, and D. Z. Seligman (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Precovery Observations of 3I/ATLAS from TESS Suggest Possible Distant Activity</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">991</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. L2</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p1.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib18" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">W. C. Fraser, P. Pravec, A. Fitzsimmons, P. Lacerda, M. T. Bannister, C. Snodgrass, and I. Smolić (2018)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The tumbling rotational state of 1i/‘oumuamua</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Nature Astronomy</span> <span class="ltx_text ltx_bib_volume">2</span> (<span class="ltx_text ltx_bib_number">5</span>), <span class="ltx_text ltx_bib_pages"> pp. 383–386</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p2.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib37" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">V. Gajjar, K. I. Perez, A. P. V. Siemion, G. Foster, B. Brzycki, S. Chatterjee, Y. Chen, J. M. Cordes, S. Croft, D. Czech, D. DeBoer, J. DeMarines, J. Drew, M. Gowanlock, H. Isaacson, B. C. Lacki, M. Lebofsky, D. H. E. MacMahon, I. S. Morrison, C. Ng, I. de Pater, D. C. Price, S. Z. Sheikh, A. Suresh, C. Webb, and S. P. Worden (2021)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The breakthrough listen search for intelligent life near the galactic center I</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv:2104.14148 [astro‑ph.HE]</span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S5.p3.10" title="V Upper Limits ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§V</span></a>,
+<a href="#S5.p6.5" title="V Upper Limits ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§V</span></a>.
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Gertz (2016)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">ET Probes: Looking Here as Well as There</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of the British Interplanetary Society</span> <span class="ltx_text ltx_bib_volume">69</span>, <span class="ltx_text ltx_bib_pages"> pp. 88–91</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.48550/arXiv.1609.04635" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">1609.04635</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p3.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>.
+</span>
+</li>
+<li id="bib.bib42" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. Jacobson-Bell <span class="ltx_text ltx_bib_etal">et al.</span> (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">”The breakthrough listen search for intelligent life: a technosignature search of 1176 nearby stars at 1–12 ghz with the green bank telescope”</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">”in prep”</span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS1.p1.1" title="III.1 Finding narrowband hits with bliss ‣ III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.1</span></a>,
+<a href="#S4.F4" title="In IV Results ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Figure 4</span></a>.
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">D. Jewitt and J. Luu (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Interstellar Interloper C/2025 N1 is Active</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astronomer’s Telegram</span> <span class="ltx_text ltx_bib_volume">17263</span>, <span class="ltx_text ltx_bib_pages"> pp. 1</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p1.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib27" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">S. Kerby and J. T. Wright (2021)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Stellar gravitational lens engineering for interstellar communication and artifact seti</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astronomical Journal</span> <span class="ltx_text ltx_bib_volume">162</span> (<span class="ltx_text ltx_bib_number">6</span>), <span class="ltx_text ltx_bib_pages"> pp. 252</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p3.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>.
+</span>
+</li>
+<li id="bib.bib44" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. P. McMullin, B. Waters, D. Schiebel, W. Young, and K. Golap (2007)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">CASA architecture and applications</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Astronomical data analysis software and systems XVI</span>,
+</span>
+<span class="ltx_bibblock">Vol. <span class="ltx_text ltx_bib_volume">376</span>, <span class="ltx_text ltx_bib_pages"> pp. 127</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p3.1" title="II Observations ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Minev, A. Kostov, and A. Mutafov (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Follow up observations of interstellar comet 3I/ATLAS</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astronomer’s Telegram</span> <span class="ltx_text ltx_bib_volume">17275</span>, <span class="ltx_text ltx_bib_pages"> pp. 1</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p1.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib13" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">C. Opitom, C. Snodgrass, E. Jehin, M. T. Bannister, E. Bufanda, S. E. Deam, R. Dorsey, M. Ferrais, S. Hmiddouch, M. M. Knight, R. Kokotanekova, B. Leicester, M. Marsset, B. Murphy, V. Okoth, R. Ridden-Harper, M. Vander Donckt, L. Ferellec, D. Hutsemekers, M. Lippi, J. Manfroid, and Z. Benkhaldoun (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Snapshot of a new interstellar comet: 3I/ATLAS has a red and featureless spectrum</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv:2507.05226</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.48550/arXiv.2507.05226" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2507.05226</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p2.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib50" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">R. S. Park, D. J. Pisano, T. J. W. Lazio, P. W. Chodas, and S. P. Naidu (2018)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Search for OH 18 cm Radio Emission from 1I/2017 U1 with the Green Bank Telescope</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">155</span> (<span class="ltx_text ltx_bib_number">5</span>), <span class="ltx_text ltx_bib_pages"> pp. 185</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p5.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>.
+</span>
+</li>
+<li id="bib.bib43" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">R. A. Perley and B. J. Butler (2017)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">An Accurate Flux Density Scale from 50 MHz to 50 GHz</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJS</span> <span class="ltx_text ltx_bib_volume">230</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 7</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-4365/aa6df9" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">1609.05940</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p3.1" title="II Observations ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+<li id="bib.bib52" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">D. J. Pisano, O. M. Smirnov, M. Ivchenko, L. Roth, S. Buchner, C. Tremblay, A. Siemion, and F. Camilo (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Further MeerKAT observations of 1665/1667 MHz OH in absorption and emission, and a technosignature search in 3I/ATLAS</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astronomer’s Telegram</span> <span class="ltx_text ltx_bib_volume">17499</span>, <span class="ltx_text ltx_bib_pages"> pp. 1</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://www.astronomerstelegram.org/?read=17499" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p5.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>,
+<a href="#S5.p10.1" title="V Upper Limits ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§V</span></a>.
+</span>
+</li>
+<li id="bib.bib40" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Pollak <span class="ltx_text ltx_bib_etal">et al.</span> (in prep)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">”Instrumentation upgrades to the allen telescope array”</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">”in prep”</span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS3.p1.1" title="I.3 The Allen Telescope Array ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.3</span></a>.
+</span>
+</li>
+<li id="bib.bib34" class="ltx_bibitem ltx_bib_report">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">W. K. Polstorff (1965)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Dynamics of a rotating cylindrical space station</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_type">Technical report</span>
+</span>
+<span class="ltx_bibblock"> <span class="ltx_text ltx_bib_publisher">NASA</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#footnote7" title="In III.2 RFI blanking and drift rate limits ‣ III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">footnote 7</span></a>.
+</span>
+</li>
+<li id="bib.bib45" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">R. Rahatgaonkar, J. P. Carvajal, T. H. Puzia, B. Luco, E. Jehin, D. Hutsemékers, C. Opitom, J. Manfroid, M. Marsset, B. Yang, L. Buchanan, W. C. Fraser, J. Forbes, M. Bannister, D. Bodewits, B. T. Bolin, M. Belyakov, M. M. Knight, C. Snodgrass, E. Bufanda, R. Dorsey, L. Ferellec, F. La Forgia, M. Lippi, B. Murphy, P. K. Nayak, and M. Vander Donckt (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">VLT observations of interstellar comet 3I/ATLAS II. From quiescence to glow: Dramatic rise of Ni I emission and incipient CN outgassing at large heliocentric distances</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv:2508.18382</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p1.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>,
+<a href="#S1.SS1.p2.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. Rogers, C. J. Lintott, S. Croft, M. E. Schwamb, and J. R. A. Davenport (2024)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Weird and the Wonderful in Our Solar System: Searching for Serendipity in the Legacy Survey of Space and Time</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">AJ</span> <span class="ltx_text ltx_bib_volume">167</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. 118</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-3881/ad1f5a" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2401.08763</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p4.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>.
+</span>
+</li>
+<li id="bib.bib17" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">D. Z. Seligman, M. Micheli, D. Farnocchia, L. Denneau, J. W. Noonan, T. Santana-Ros, L. Conversi, M. Devogèle, L. Faggioli, A. D. Feinstein, <span class="ltx_text ltx_bib_etal">et al.</span> (2025a)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Discovery and preliminary characterization of a third interstellar object: 3i/atlas</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2507.02757</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p2.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib14" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">D. Z. Seligman, M. Micheli, D. Farnocchia, L. Denneau, J. W. Noonan, H. H. Hsieh, T. Santana-Ros, J. Tonry, K. Auchettl, L. Conversi, M. Devogèle, L. Faggioli, A. D. Feinstein, M. Fenucci, M. Ferrais, T. Frincke, O. R. Hainaut, K. Hart, A. Hoffman, C. E. Holt, W. B. Hoogendam, M. E. Huber, E. Jehin, T. Kareta, J. V. Keane, M. S. P. Kelley, T. Lister, K. Mandt, D. Marčeta, K. J. Meech, M. Amine Miftah, M. Morgan, F. Ocaña, E. Peña-Asensio, B. J. Shappee, R. J. Siverd, A. G. Taylor, M. A. Tucker, R. Wainscoat, R. Weryk, J. J. Wray, A. Yaginuma, B. Yang, Q. Ye, and Q. Zhang (2025b)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Discovery and Preliminary Characterization of a Third Interstellar Object: 3I/ATLAS</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv:2507.02757</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.48550/arXiv.2507.02757" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">2507.02757</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS1.p2.1" title="I.1 3I/ATLAS ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.1</span></a>.
+</span>
+</li>
+<li id="bib.bib51" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">S. Sheikh, E. Hort, B. Cabrales, I. Gerrard, W. Farah, N. Tusay, S. Balcarcel, S. Shostak, and other authors (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A large-scale survey of the anti-solar point with the allen telescope array: survey design and pilot results</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">in prep</span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS1.p1.1" title="III.1 Finding narrowband hits with bliss ‣ III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.1</span></a>.
+</span>
+</li>
+<li id="bib.bib31" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">S. Z. Sheikh, J. T. Wright, A. Siemion, and J. E. Enriquez (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Choosing a Maximum Drift Rate in a SETI Search: Astrophysical Considerations</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">884</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 14</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.3847/1538-4357/ab3fa8" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text ltx_bib_external">1910.01148</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS2.p3.1" title="III.2 RFI blanking and drift rate limits ‣ III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.2</span></a>,
+<a href="#S3.SS2.p5.4" title="III.2 RFI blanking and drift rate limits ‣ III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.2</span></a>.
+</span>
+</li>
+<li id="bib.bib26" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">S. Z. Sheikh (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Nine axes of merit for technosignature searches</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">International Journal of Astrobiology</span> <span class="ltx_text ltx_bib_volume">19</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. 237–243</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p2.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>.
+</span>
+</li>
+<li id="bib.bib48" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. G. Taylor, D. Z. Seligman, M. J. Holman, P. Vereš, D. Farnocchia, N. Lewis, M. Micheli, and J. T. Wright (2024)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Strong Nongravitational Accelerations and the Potential for Misidentification of Near-Earth Objects</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">ApJ</span> <span class="ltx_text ltx_bib_volume">976</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 190</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p4.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>.
+</span>
+</li>
+<li id="bib.bib55" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">N. Tusay and I. Gerrard (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Isabelgerrard/nbeamanalysis: efficient and stable sky-localization</span>.
+</span>
+<span class="ltx_bibblock"> <span class="ltx_text ltx_bib_publisher">Zenodo</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.5281/zenodo.19188799" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<a href="https://doi.org/10.5281/zenodo.19188799" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#footnote5" title="In III.2 RFI blanking and drift rate limits ‣ III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text ltx_font_serif">footnote 5</span></span></a>.
+</span>
+</li>
+<li id="bib.bib35" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">N. Tusay, S. Z. Sheikh, E. L. Sneed, W. Farah, A. W. Pollak, L. F. Cruz, A. Siemion, D. R. DeBoer, and J. T. Wright (2024)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A radio technosignature search of trappist-1 with the allen telescope array</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astronomical Journal</span> <span class="ltx_text ltx_bib_volume">168</span> (<span class="ltx_text ltx_bib_number">6</span>), <span class="ltx_text ltx_bib_pages"> pp. 283</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS3.p1.1" title="III.3 Search for localized events with NBeamAnalysis ‣ III Data Analysis ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§III.3</span></a>.
+</span>
+</li>
+<li id="bib.bib24" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. T. Wright, S. Kanodia, and E. Lubar (2018)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">How much seti has been done? finding needles in the n-dimensional cosmic haystack</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">The Astronomical Journal</span> <span class="ltx_text ltx_bib_volume">156</span> (<span class="ltx_text ltx_bib_number">6</span>), <span class="ltx_text ltx_bib_pages"> pp. 260</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.SS2.p1.1" title="I.2 Connection to Technosignatures ‣ I Introduction ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§I.2</span></a>.
+</span>
+</li>
+<li id="bib.bib38" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. Zuckerman (1985)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Preferred frequencies for SETI observations</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Acta Astronautica</span> <span class="ltx_text ltx_bib_volume">12</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 127–129</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1016/0094-5765%2885%2990081-5" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p1.1" title="II Observations ‣ A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§II</span></a>.
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2512.18142v2/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer><footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation">
+        </a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International">
+        </a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences">
+        </a>
+      </div>
+    </div>
+  </div>
+</footer><div id="fixed-buttons-container">
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>

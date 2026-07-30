@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+<title>Exploring the Universe with SNAD: Anomaly Detection in Astronomy</title>
+<!--Generated on Thu Oct 24 15:59:09 2024 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+<link href="/static/browse/0.3.4/css/ar5iv.0.7.9.min.css" rel="stylesheet" type="text/css"/>
+<link href="/static/browse/0.3.4/css/ar5iv-fonts.0.7.9.min.css" rel="stylesheet" type="text/css"/>
+<link href="/static/browse/0.3.4/css/latexml_styles.css" rel="stylesheet" type="text/css"/>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.3/html2canvas.min.js"></script>
+<script src="/static/browse/0.3.4/js/addons_new.js"></script>
+<script src="/static/browse/0.3.4/js/feedbackOverlay.js"></script>
+<meta content="Methods: data analysis Supernovae: general Transients Astronomical data bases" lang="en" name="keywords"/>
+<base href="/html/2410.18875v1/"/></head>
+<body>
+<nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_section"><a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S1" title="In Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">1 </span>Introduction</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S2" title="In Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2 </span>What is the SNAD project?</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S2.SS1" title="In 2 What is the SNAD project? ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.1 </span>Goals and objectives</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S2.SS2" title="In 2 What is the SNAD project? ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.2 </span>Team members and expertise</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S2.SS3" title="In 2 What is the SNAD project? ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.3 </span>Data sources and techniques</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S3" title="In Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3 </span>Key Contributions and Discoveries</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S3.SS1" title="In 3 Key Contributions and Discoveries ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.1 </span>Supernova catalog</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S3.SS2" title="In 3 Key Contributions and Discoveries ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.2 </span>Superluminous supernova candidates</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S3.SS3" title="In 3 Key Contributions and Discoveries ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.3 </span>Red dwarf flares</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S3.SS4" title="In 3 Key Contributions and Discoveries ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.4 </span>Catalog of artefacts</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S4" title="In Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4 </span>Scientific Tools and Resources</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S4.SS1" title="In 4 Scientific Tools and Resources ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.1 </span>SNAD ZTF Viewer</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S4.SS2" title="In 4 Scientific Tools and Resources ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.2 </span>SNAD knowledge database</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S4.SS3" title="In 4 Scientific Tools and Resources ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.3 </span>SNAD Transient Miner</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S4.SS4" title="In 4 Scientific Tools and Resources ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.4 </span>Coniferest Python Library</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S5" title="In Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5 </span>Future Directions and Challenges</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line"><span class="ltx_note ltx_role_institutetext" id="id1"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_note_type">institutetext: </span>Space Research Institute of the Russian Academy of Sciences, Profsoyuznaya 84/32, Moscow 117997, Russia <span class="ltx_note ltx_role_email" id="id1.1"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_note_type">email: </span>alinusss@gmail.com</span></span></span>
+</span></span></span><span class="ltx_note ltx_role_institutetext" id="id2"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_note_type">institutetext: </span>Department of Astronomy, University of Illinois at Urbana-Champaign, 1002 W. Green St., IL 61801, USA
+</span></span></span><span class="ltx_note ltx_role_institutetext" id="id3"><sup class="ltx_note_mark">3</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">3</sup><span class="ltx_note_type">institutetext: </span>Center for AstroPhysical Surveys, National Center for Supercomputing Applications, Urbana, IL, 61801, USA
+</span></span></span><span class="ltx_note ltx_role_institutetext" id="id4"><sup class="ltx_note_mark">4</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">4</sup><span class="ltx_note_type">institutetext: </span>Faculty of Space Research, Lomonosov Moscow State University, Leninsky Gori 1 bld. 52, Moscow 119234, Russia
+</span></span></span><span class="ltx_note ltx_role_institutetext" id="id5"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup><span class="ltx_note_type">institutetext: </span>Université Clermont Auvergne, CNRS/IN2P3, LPC, F-63000 Clermont-Ferrand, France
+</span></span></span><span class="ltx_note ltx_role_institutetext" id="id6"><sup class="ltx_note_mark">6</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">6</sup><span class="ltx_note_type">institutetext: </span>Sternberg Astronomical Institute, Lomonosov Moscow State University, Universitetsky 13, Moscow 119234, Russia
+</span></span></span><span class="ltx_note ltx_role_institutetext" id="id7"><sup class="ltx_note_mark">7</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">7</sup><span class="ltx_note_type">institutetext: </span>National Research University Higher School of Economics, 21/4 Staraya Basmannaya Ulitsa, Moscow 105066, Russia
+</span></span></span><span class="ltx_note ltx_role_institutetext" id="id8"><sup class="ltx_note_mark">8</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">8</sup><span class="ltx_note_type">institutetext: </span>Physics department, University of Surrey, Stag Hill, Guildford GU2 7XH, UK</span></span></span>
+<h1 class="ltx_title ltx_title_document">Exploring the Universe with SNAD: Anomaly Detection in Astronomy</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Alina A. Volnova
+
+</span><span class="ltx_author_notes">11
+<span class="ltx_contact ltx_role_orcid"><a class="ltx_ref" href="https://orcid.org/0000-0003-3554-1037" title="ORCID identifier">0000-0003-3554-1037</a></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Patrick D. Aleo
+</span><span class="ltx_author_notes">2233
+<span class="ltx_contact ltx_role_orcid"><a class="ltx_ref" href="https://orcid.org/0000-0002-6298-1663" title="ORCID identifier">0000-0002-6298-1663</a></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Anastasia Lavrukhina
+</span><span class="ltx_author_notes">44</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Etienne Russeil
+</span><span class="ltx_author_notes">55
+<span class="ltx_contact ltx_role_orcid"><a class="ltx_ref" href="https://orcid.org/0000-0001-9923-2407" title="ORCID identifier">0000-0001-9923-2407</a></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Timofey Semenikhin
+</span><span class="ltx_author_notes">4466</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Emmanuel Gangler
+</span><span class="ltx_author_notes">55</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Emille E. O. Ishida
+</span><span class="ltx_author_notes">55
+<span class="ltx_contact ltx_role_orcid"><a class="ltx_ref" href="https://orcid.org/0000-0002-0406-076X" title="ORCID identifier">0000-0002-0406-076X</a></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Matwey V. Kornilov
+</span><span class="ltx_author_notes">6677
+<span class="ltx_contact ltx_role_orcid"><a class="ltx_ref" href="https://orcid.org/0000-0002-5193-9806" title="ORCID identifier">0000-0002-5193-9806</a></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Vladimir Korolev
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_orcid"><a class="ltx_ref" href="https://orcid.org/0009-0008-7691-6142" title="ORCID identifier">0009-0008-7691-6142</a></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Konstantin Malanchev
+</span><span class="ltx_author_notes">2266
+<span class="ltx_contact ltx_role_orcid"><a class="ltx_ref" href="https://orcid.org/0000-0001-7179-7406" title="ORCID identifier">0000-0001-7179-7406</a></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Maria V. Pruzhinskaya
+</span><span class="ltx_author_notes">55
+<span class="ltx_contact ltx_role_orcid"><a class="ltx_ref" href="https://orcid.org/0000-0001-7178-0823" title="ORCID identifier">0000-0001-7178-0823</a></span>
+</span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Sreevarsha Sreejith
+</span><span class="ltx_author_notes">88
+<span class="ltx_contact ltx_role_orcid"><a class="ltx_ref" href="https://orcid.org/0000-0002-6423-1348" title="ORCID identifier">0000-0002-6423-1348</a></span>
+</span></span>
+</div>
+<div class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p" id="id1.id1">SNAD is an international project with a primary focus on detecting astronomical anomalies within large-scale surveys, using active learning and other machine learning algorithms. The work carried out by SNAD not only contributes to the discovery and classification of various astronomical phenomena but also enhances our understanding and implementation of machine learning techniques within the field of astrophysics. This paper provides a review of the SNAD project and summarizes the advancements and achievements made by the team over several years.</p>
+</div>
+<div class="ltx_keywords">
+<h6 class="ltx_title ltx_title_keywords">Keywords: </h6>Methods: data analysis Supernovae: general Transients Astronomical data bases
+</div>
+<section class="ltx_section" id="S1">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+<div class="ltx_para" id="S1.p1">
+<p class="ltx_p" id="S1.p1.1">In modern astronomy, discoveries of new objects are based on a huge flow of data coming from all-sky surveys (e.g., the Sloan Digital Sky Survey, SDSS <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib7" title="">7</a>]</cite>, the Zwicky Transient Facility, ZTF <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib5" title="">5</a>]</cite>, the Vera Rubin Observatory Legacy Survey of Space and Time, LSST <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib19" title="">19</a>]</cite>). The terabytes of data generated every night contain information, allowing the discovery of several hundred transients per year. Undoubtedly, the human resource is limited, and each scientist should choose from a variety of discovered objects those that are of the greatest interest to him. However, this is not a trivial task, given the number of transients to choose from. In addition, the total mass of discovered objects may contain rare or not yet known phenomena. Thus, we are faced with the problem of classifying a large number of objects, and specifically in this case: the search for anomalies or outliers.</p>
+</div>
+<div class="ltx_para" id="S1.p2">
+<p class="ltx_p" id="S1.p2.1">It is natural to expect that such large volumes of data that are generated in astronomy today require machine learning (ML) methods for processing. Despite the fact that ML has become an integral part of data analysis in almost all areas of science in recent years, astronomy has benefited from it only recently, starting from solving problems in classification and regression (see, e.g., <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib21" title="">21</a>]</cite>). In the light of the search for the most interesting objects among all detected ones anomaly detection (AD) algorithms have a wide field of application: would it be search for galaxies with anomalous spectra <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib4" title="">4</a>]</cite>, transient with extraordinary light curves <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib32" title="">32</a>]</cite>, or unusual variable stars <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib27" title="">27</a>]</cite>.</p>
+</div>
+<div class="ltx_para" id="S1.p3">
+<p class="ltx_p" id="S1.p3.1">However, most of those algorithms are based on statistical models, and the anomaly is defined as an object that does not fit the model. Observational defects lead to multiple identifications of non-physical events as anomalous, giving the researcher hundreds of candidates for further investigations. To decrease the amount of “not interesting” objects and to detect the astrophysical anomalies AD algorithms need some advisory from human in which object should be considered as anomalous, i.e., active learning (AL) is required. AL is a subclass of ML algorithms where the user may adjust the model by interactively setting scores to the objects which are suspicious for the machine. In this learning paradigm, the user can select which type of object should be considered as anomalous, extracting some rare classes of objects from the bulk of huge sky-survey data (see, e.g., <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib21" title="">21</a>, <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib37" title="">37</a>]</cite>).</p>
+</div>
+<div class="ltx_para" id="S1.p4">
+<p class="ltx_p" id="S1.p4.1">Given to its important impact in the future of astronomical discoveries with modern data sets, the problem of anomaly detection have already been explored in the literature. This includes recent studies using data streams <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib30" title="">30</a>]</cite>, deep <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib12" title="">12</a>]</cite>, generative <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib36" title="">36</a>]</cite> and active <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib22" title="">22</a>, <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib15" title="">15</a>]</cite> methods. Nevertheless, the incidence of false positives continues to be an important bottle neck to be overcome if we intend to take full advantadge of modern astronomical data. We describe here one of such attempts, which has been consistently focusing on anomaly detection for astronomy in the last 5 years.</p>
+</div>
+<div class="ltx_para" id="S1.p5">
+<p class="ltx_p" id="S1.p5.1">This paper is an overview of the SNAD project – an international group of researchers (including astronomers, physicists, data scientists and mathematicians) which focus on developing new AL algorithms for the search for anomalous objects in large data-sets of all-sky astronomical surveys. In Section <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S2" title="2 What is the SNAD project? ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">2</span></a> we provide the description and main goals of the project and the team, and briefly summarise data sources and used techniques. In Section <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S3" title="3 Key Contributions and Discoveries ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">3</span></a> the most prominent results of the project are presented. Section <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S4" title="4 Scientific Tools and Resources ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">4</span></a> describes some auxiliary products developed by the team, which are now publicly available. Section <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S5" title="5 Future Directions and Challenges ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">5</span></a> gives conclusive remarks for future prospects of the project.</p>
+</div>
+</section>
+<section class="ltx_section" id="S2">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>What is the SNAD project?</h2>
+<section class="ltx_subsection" id="S2.SS1">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.1 </span>Goals and objectives</h3>
+<div class="ltx_para" id="S2.SS1.p1">
+<p class="ltx_p" id="S2.SS1.p1.1">The goal of the SNAD<span class="ltx_note ltx_role_footnote" id="footnote1"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_tag ltx_tag_note">1</span><a class="ltx_ref ltx_url" href="https://snad.space" style="color:#0000FF;" title="">https://snad.space</a></span></span></span> project is to develop a pipeline where human expertise and modern machine learning techniques can complement each other in the task of identifying unusual astronomical objects mostly by their photometrical features. The team concentrates on the search for unusual, rare or yet unknown objects in the sets of photometric light curves (LCs) by combining different AL AD algorithms with the additional information provided by the expert in order to label a significant fraction of the most obvious outliers and choose those which are true astronomical anomalies. Enabling reliable anomaly/outlier detection based solely on photometric observations is one of the fundamental puzzles to be solved before we can convert the full potential of large-scale surveys into scientific results. This project represents an effective strategy to guarantee we shall not overlook exciting new science hidden in the data we fought so hard to acquire.</p>
+</div>
+</section>
+<section class="ltx_subsection" id="S2.SS2">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.2 </span>Team members and expertise</h3>
+<div class="ltx_para" id="S2.SS2.p1">
+<p class="ltx_p" id="S2.SS2.p1.1">The SNAD team is composed of young researchers, each offering a unique set of skills and experiences that are utilized within the project. All team members are involved in various stages of the anomaly detection process, from feature engineering to expert analysis.</p>
+</div>
+<div class="ltx_para" id="S2.SS2.p2">
+<p class="ltx_p" id="S2.SS2.p2.1">In addition to their collective expertise in anomaly detection, each team member also contributes their unique knowledge from different fields: gamma-ray bursts (Alina Volnova), supernovae (Maria Pruzhinskaya), fast transients (Anastasia Lavrukhina), accretion flows in astrophysics (Konstantin Malanchev), adapting machine learning algorithms (Emille E. O. Ishida), astronomical site characterization (Matwey Kornilov), time-domain astronomy and photometric classification (Partick Aleo), astronomical image analysis and dwarf galaxy detection (Sreevarsha Sreejith), real-bogus classification (Timofey Semenikhin), aeronautical science (Vladimir Korolev), symbolic regression for light curve analysis (Etienne Russeil), observational cosmology (Emmanuel Gangler).</p>
+</div>
+<div class="ltx_para" id="S2.SS2.p3">
+<p class="ltx_p" id="S2.SS2.p3.1">Over the years, several other researchers, including Florian Mondon, Anastasia Malancheva, Alexandra Novinskaya, and Anastasiya Voloshina have also contributed their skills and knowledge to the project.</p>
+</div>
+<div class="ltx_para" id="S2.SS2.p4">
+<p class="ltx_p" id="S2.SS2.p4.1">SNAD activities are designed around annual meetings whose format was inspired by other initiatives which focused on boosting innovation and creativity (e.g. the silicon valley model <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib2" title="">2</a>]</cite> and the Cosmostatistics Initiative<span class="ltx_note ltx_role_footnote" id="footnote2"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_tag ltx_tag_note">2</span><a class="ltx_ref ltx_url" href="cosmostatistics-initiative.org/" style="color:#0000FF;" title="">cosmostatistics-initiative.org/</a></span></span></span> ). We also invite<span class="ltx_note ltx_role_footnote" id="footnote3"><sup class="ltx_note_mark">3</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">3</sup><span class="ltx_tag ltx_tag_note">3</span><a class="ltx_ref ltx_url" href="https://snad.space/#contact" style="color:#0000FF;" title="">https://snad.space/#contact</a></span></span></span> other researchers and students of different levels for collaboration in the field of astronomical anomalies detection. The resulting environment is one of the key components which play an important role in the development of products described in this work.</p>
+</div>
+</section>
+<section class="ltx_subsection" id="S2.SS3">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.3 </span>Data sources and techniques</h3>
+<div class="ltx_para" id="S2.SS3.p1">
+<p class="ltx_p" id="S2.SS3.p1.2">The first data-set used for our research was extracted from the Open Supernova Catalog<span class="ltx_note ltx_role_footnote" id="footnote4"><sup class="ltx_note_mark">4</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">4</sup><span class="ltx_tag ltx_tag_note">4</span><a class="ltx_ref ltx_url" href="https://github.com/astrocatalogs" style="color:#0000FF;" title="">https://github.com/astrocatalogs</a></span></span></span> (OSC; <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib18" title="">18</a>]</cite>). It contains all publicly available data on all SNe from a dozen of catalogues, including, in different cases, multi-colour LCs, spectra, redshift estimations and classification. We extracted 1999 LCs with the number of data points enough to fit the LC within some particular interval of time relative to the maximum, and presented in 3 different photometric pass-bands (<math alttext="gri,g^{\prime}r^{\prime}i^{\prime}" class="ltx_Math" display="inline" id="S2.SS3.p1.1.m1.2"><semantics id="S2.SS3.p1.1.m1.2a"><mrow id="S2.SS3.p1.1.m1.2.2.2" xref="S2.SS3.p1.1.m1.2.2.3.cmml"><mrow id="S2.SS3.p1.1.m1.1.1.1.1" xref="S2.SS3.p1.1.m1.1.1.1.1.cmml"><mi id="S2.SS3.p1.1.m1.1.1.1.1.2" xref="S2.SS3.p1.1.m1.1.1.1.1.2.cmml">g</mi><mo id="S2.SS3.p1.1.m1.1.1.1.1.1" xref="S2.SS3.p1.1.m1.1.1.1.1.1.cmml">⁢</mo><mi id="S2.SS3.p1.1.m1.1.1.1.1.3" xref="S2.SS3.p1.1.m1.1.1.1.1.3.cmml">r</mi><mo id="S2.SS3.p1.1.m1.1.1.1.1.1a" xref="S2.SS3.p1.1.m1.1.1.1.1.1.cmml">⁢</mo><mi id="S2.SS3.p1.1.m1.1.1.1.1.4" xref="S2.SS3.p1.1.m1.1.1.1.1.4.cmml">i</mi></mrow><mo id="S2.SS3.p1.1.m1.2.2.2.3" xref="S2.SS3.p1.1.m1.2.2.3.cmml">,</mo><mrow id="S2.SS3.p1.1.m1.2.2.2.2" xref="S2.SS3.p1.1.m1.2.2.2.2.cmml"><msup id="S2.SS3.p1.1.m1.2.2.2.2.2" xref="S2.SS3.p1.1.m1.2.2.2.2.2.cmml"><mi id="S2.SS3.p1.1.m1.2.2.2.2.2.2" xref="S2.SS3.p1.1.m1.2.2.2.2.2.2.cmml">g</mi><mo id="S2.SS3.p1.1.m1.2.2.2.2.2.3" xref="S2.SS3.p1.1.m1.2.2.2.2.2.3.cmml">′</mo></msup><mo id="S2.SS3.p1.1.m1.2.2.2.2.1" xref="S2.SS3.p1.1.m1.2.2.2.2.1.cmml">⁢</mo><msup id="S2.SS3.p1.1.m1.2.2.2.2.3" xref="S2.SS3.p1.1.m1.2.2.2.2.3.cmml"><mi id="S2.SS3.p1.1.m1.2.2.2.2.3.2" xref="S2.SS3.p1.1.m1.2.2.2.2.3.2.cmml">r</mi><mo id="S2.SS3.p1.1.m1.2.2.2.2.3.3" xref="S2.SS3.p1.1.m1.2.2.2.2.3.3.cmml">′</mo></msup><mo id="S2.SS3.p1.1.m1.2.2.2.2.1a" xref="S2.SS3.p1.1.m1.2.2.2.2.1.cmml">⁢</mo><msup id="S2.SS3.p1.1.m1.2.2.2.2.4" xref="S2.SS3.p1.1.m1.2.2.2.2.4.cmml"><mi id="S2.SS3.p1.1.m1.2.2.2.2.4.2" xref="S2.SS3.p1.1.m1.2.2.2.2.4.2.cmml">i</mi><mo id="S2.SS3.p1.1.m1.2.2.2.2.4.3" xref="S2.SS3.p1.1.m1.2.2.2.2.4.3.cmml">′</mo></msup></mrow></mrow><annotation-xml encoding="MathML-Content" id="S2.SS3.p1.1.m1.2b"><list id="S2.SS3.p1.1.m1.2.2.3.cmml" xref="S2.SS3.p1.1.m1.2.2.2"><apply id="S2.SS3.p1.1.m1.1.1.1.1.cmml" xref="S2.SS3.p1.1.m1.1.1.1.1"><times id="S2.SS3.p1.1.m1.1.1.1.1.1.cmml" xref="S2.SS3.p1.1.m1.1.1.1.1.1"></times><ci id="S2.SS3.p1.1.m1.1.1.1.1.2.cmml" xref="S2.SS3.p1.1.m1.1.1.1.1.2">𝑔</ci><ci id="S2.SS3.p1.1.m1.1.1.1.1.3.cmml" xref="S2.SS3.p1.1.m1.1.1.1.1.3">𝑟</ci><ci id="S2.SS3.p1.1.m1.1.1.1.1.4.cmml" xref="S2.SS3.p1.1.m1.1.1.1.1.4">𝑖</ci></apply><apply id="S2.SS3.p1.1.m1.2.2.2.2.cmml" xref="S2.SS3.p1.1.m1.2.2.2.2"><times id="S2.SS3.p1.1.m1.2.2.2.2.1.cmml" xref="S2.SS3.p1.1.m1.2.2.2.2.1"></times><apply id="S2.SS3.p1.1.m1.2.2.2.2.2.cmml" xref="S2.SS3.p1.1.m1.2.2.2.2.2"><csymbol cd="ambiguous" id="S2.SS3.p1.1.m1.2.2.2.2.2.1.cmml" xref="S2.SS3.p1.1.m1.2.2.2.2.2">superscript</csymbol><ci id="S2.SS3.p1.1.m1.2.2.2.2.2.2.cmml" xref="S2.SS3.p1.1.m1.2.2.2.2.2.2">𝑔</ci><ci id="S2.SS3.p1.1.m1.2.2.2.2.2.3.cmml" xref="S2.SS3.p1.1.m1.2.2.2.2.2.3">′</ci></apply><apply id="S2.SS3.p1.1.m1.2.2.2.2.3.cmml" xref="S2.SS3.p1.1.m1.2.2.2.2.3"><csymbol cd="ambiguous" id="S2.SS3.p1.1.m1.2.2.2.2.3.1.cmml" xref="S2.SS3.p1.1.m1.2.2.2.2.3">superscript</csymbol><ci id="S2.SS3.p1.1.m1.2.2.2.2.3.2.cmml" xref="S2.SS3.p1.1.m1.2.2.2.2.3.2">𝑟</ci><ci id="S2.SS3.p1.1.m1.2.2.2.2.3.3.cmml" xref="S2.SS3.p1.1.m1.2.2.2.2.3.3">′</ci></apply><apply id="S2.SS3.p1.1.m1.2.2.2.2.4.cmml" xref="S2.SS3.p1.1.m1.2.2.2.2.4"><csymbol cd="ambiguous" id="S2.SS3.p1.1.m1.2.2.2.2.4.1.cmml" xref="S2.SS3.p1.1.m1.2.2.2.2.4">superscript</csymbol><ci id="S2.SS3.p1.1.m1.2.2.2.2.4.2.cmml" xref="S2.SS3.p1.1.m1.2.2.2.2.4.2">𝑖</ci><ci id="S2.SS3.p1.1.m1.2.2.2.2.4.3.cmml" xref="S2.SS3.p1.1.m1.2.2.2.2.4.3">′</ci></apply></apply></list></annotation-xml><annotation encoding="application/x-tex" id="S2.SS3.p1.1.m1.2c">gri,g^{\prime}r^{\prime}i^{\prime}</annotation><annotation encoding="application/x-llamapun" id="S2.SS3.p1.1.m1.2d">italic_g italic_r italic_i , italic_g start_POSTSUPERSCRIPT ′ end_POSTSUPERSCRIPT italic_r start_POSTSUPERSCRIPT ′ end_POSTSUPERSCRIPT italic_i start_POSTSUPERSCRIPT ′ end_POSTSUPERSCRIPT</annotation></semantics></math> or <math alttext="BRI" class="ltx_Math" display="inline" id="S2.SS3.p1.2.m2.1"><semantics id="S2.SS3.p1.2.m2.1a"><mrow id="S2.SS3.p1.2.m2.1.1" xref="S2.SS3.p1.2.m2.1.1.cmml"><mi id="S2.SS3.p1.2.m2.1.1.2" xref="S2.SS3.p1.2.m2.1.1.2.cmml">B</mi><mo id="S2.SS3.p1.2.m2.1.1.1" xref="S2.SS3.p1.2.m2.1.1.1.cmml">⁢</mo><mi id="S2.SS3.p1.2.m2.1.1.3" xref="S2.SS3.p1.2.m2.1.1.3.cmml">R</mi><mo id="S2.SS3.p1.2.m2.1.1.1a" xref="S2.SS3.p1.2.m2.1.1.1.cmml">⁢</mo><mi id="S2.SS3.p1.2.m2.1.1.4" xref="S2.SS3.p1.2.m2.1.1.4.cmml">I</mi></mrow><annotation-xml encoding="MathML-Content" id="S2.SS3.p1.2.m2.1b"><apply id="S2.SS3.p1.2.m2.1.1.cmml" xref="S2.SS3.p1.2.m2.1.1"><times id="S2.SS3.p1.2.m2.1.1.1.cmml" xref="S2.SS3.p1.2.m2.1.1.1"></times><ci id="S2.SS3.p1.2.m2.1.1.2.cmml" xref="S2.SS3.p1.2.m2.1.1.2">𝐵</ci><ci id="S2.SS3.p1.2.m2.1.1.3.cmml" xref="S2.SS3.p1.2.m2.1.1.3">𝑅</ci><ci id="S2.SS3.p1.2.m2.1.1.4.cmml" xref="S2.SS3.p1.2.m2.1.1.4">𝐼</ci></apply></annotation-xml><annotation encoding="application/x-tex" id="S2.SS3.p1.2.m2.1c">BRI</annotation><annotation encoding="application/x-llamapun" id="S2.SS3.p1.2.m2.1d">italic_B italic_R italic_I</annotation></semantics></math>). These 1999 LCs allowed us to test our main ideas by finding several peculiar and super-luminous SNe, along with a few dozens of miss-classified objects <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib32" title="">32</a>]</cite>.</p>
+</div>
+<div class="ltx_para" id="S2.SS3.p2">
+<p class="ltx_p" id="S2.SS3.p2.3">The results of the first try encouraged us to use more numerous data-set of photometric LCs, and the Zwicky Transient Facility (ZTF) survey results were chosen. The ZTF survey started on March 2018 and during its initial phase has observed around a billion objects <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib5" title="">5</a>]</cite>. Each object is represented with a bunch of LCs in filters <math alttext="zg,zr,zi" class="ltx_Math" display="inline" id="S2.SS3.p2.1.m1.3"><semantics id="S2.SS3.p2.1.m1.3a"><mrow id="S2.SS3.p2.1.m1.3.3.3" xref="S2.SS3.p2.1.m1.3.3.4.cmml"><mrow id="S2.SS3.p2.1.m1.1.1.1.1" xref="S2.SS3.p2.1.m1.1.1.1.1.cmml"><mi id="S2.SS3.p2.1.m1.1.1.1.1.2" xref="S2.SS3.p2.1.m1.1.1.1.1.2.cmml">z</mi><mo id="S2.SS3.p2.1.m1.1.1.1.1.1" xref="S2.SS3.p2.1.m1.1.1.1.1.1.cmml">⁢</mo><mi id="S2.SS3.p2.1.m1.1.1.1.1.3" xref="S2.SS3.p2.1.m1.1.1.1.1.3.cmml">g</mi></mrow><mo id="S2.SS3.p2.1.m1.3.3.3.4" xref="S2.SS3.p2.1.m1.3.3.4.cmml">,</mo><mrow id="S2.SS3.p2.1.m1.2.2.2.2" xref="S2.SS3.p2.1.m1.2.2.2.2.cmml"><mi id="S2.SS3.p2.1.m1.2.2.2.2.2" xref="S2.SS3.p2.1.m1.2.2.2.2.2.cmml">z</mi><mo id="S2.SS3.p2.1.m1.2.2.2.2.1" xref="S2.SS3.p2.1.m1.2.2.2.2.1.cmml">⁢</mo><mi id="S2.SS3.p2.1.m1.2.2.2.2.3" xref="S2.SS3.p2.1.m1.2.2.2.2.3.cmml">r</mi></mrow><mo id="S2.SS3.p2.1.m1.3.3.3.5" xref="S2.SS3.p2.1.m1.3.3.4.cmml">,</mo><mrow id="S2.SS3.p2.1.m1.3.3.3.3" xref="S2.SS3.p2.1.m1.3.3.3.3.cmml"><mi id="S2.SS3.p2.1.m1.3.3.3.3.2" xref="S2.SS3.p2.1.m1.3.3.3.3.2.cmml">z</mi><mo id="S2.SS3.p2.1.m1.3.3.3.3.1" xref="S2.SS3.p2.1.m1.3.3.3.3.1.cmml">⁢</mo><mi id="S2.SS3.p2.1.m1.3.3.3.3.3" xref="S2.SS3.p2.1.m1.3.3.3.3.3.cmml">i</mi></mrow></mrow><annotation-xml encoding="MathML-Content" id="S2.SS3.p2.1.m1.3b"><list id="S2.SS3.p2.1.m1.3.3.4.cmml" xref="S2.SS3.p2.1.m1.3.3.3"><apply id="S2.SS3.p2.1.m1.1.1.1.1.cmml" xref="S2.SS3.p2.1.m1.1.1.1.1"><times id="S2.SS3.p2.1.m1.1.1.1.1.1.cmml" xref="S2.SS3.p2.1.m1.1.1.1.1.1"></times><ci id="S2.SS3.p2.1.m1.1.1.1.1.2.cmml" xref="S2.SS3.p2.1.m1.1.1.1.1.2">𝑧</ci><ci id="S2.SS3.p2.1.m1.1.1.1.1.3.cmml" xref="S2.SS3.p2.1.m1.1.1.1.1.3">𝑔</ci></apply><apply id="S2.SS3.p2.1.m1.2.2.2.2.cmml" xref="S2.SS3.p2.1.m1.2.2.2.2"><times id="S2.SS3.p2.1.m1.2.2.2.2.1.cmml" xref="S2.SS3.p2.1.m1.2.2.2.2.1"></times><ci id="S2.SS3.p2.1.m1.2.2.2.2.2.cmml" xref="S2.SS3.p2.1.m1.2.2.2.2.2">𝑧</ci><ci id="S2.SS3.p2.1.m1.2.2.2.2.3.cmml" xref="S2.SS3.p2.1.m1.2.2.2.2.3">𝑟</ci></apply><apply id="S2.SS3.p2.1.m1.3.3.3.3.cmml" xref="S2.SS3.p2.1.m1.3.3.3.3"><times id="S2.SS3.p2.1.m1.3.3.3.3.1.cmml" xref="S2.SS3.p2.1.m1.3.3.3.3.1"></times><ci id="S2.SS3.p2.1.m1.3.3.3.3.2.cmml" xref="S2.SS3.p2.1.m1.3.3.3.3.2">𝑧</ci><ci id="S2.SS3.p2.1.m1.3.3.3.3.3.cmml" xref="S2.SS3.p2.1.m1.3.3.3.3.3">𝑖</ci></apply></list></annotation-xml><annotation encoding="application/x-tex" id="S2.SS3.p2.1.m1.3c">zg,zr,zi</annotation><annotation encoding="application/x-llamapun" id="S2.SS3.p2.1.m1.3d">italic_z italic_g , italic_z italic_r , italic_z italic_i</annotation></semantics></math> with a cadence – on average <math alttext="\sim" class="ltx_Math" display="inline" id="S2.SS3.p2.2.m2.1"><semantics id="S2.SS3.p2.2.m2.1a"><mo id="S2.SS3.p2.2.m2.1.1" xref="S2.SS3.p2.2.m2.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S2.SS3.p2.2.m2.1b"><csymbol cd="latexml" id="S2.SS3.p2.2.m2.1.1.cmml" xref="S2.SS3.p2.2.m2.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S2.SS3.p2.2.m2.1c">\sim</annotation><annotation encoding="application/x-llamapun" id="S2.SS3.p2.2.m2.1d">∼</annotation></semantics></math> 1 day for the Galactic plane and <math alttext="\sim" class="ltx_Math" display="inline" id="S2.SS3.p2.3.m3.1"><semantics id="S2.SS3.p2.3.m3.1a"><mo id="S2.SS3.p2.3.m3.1.1" xref="S2.SS3.p2.3.m3.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S2.SS3.p2.3.m3.1b"><csymbol cd="latexml" id="S2.SS3.p2.3.m3.1.1.cmml" xref="S2.SS3.p2.3.m3.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S2.SS3.p2.3.m3.1c">\sim</annotation><annotation encoding="application/x-llamapun" id="S2.SS3.p2.3.m3.1d">∼</annotation></semantics></math> 3 days
+for the Northern-equatorial sky. To minimize the affection of different cadences on the results we selected 3 different fields: 1 in the M31 galaxy, 1 in the Galactic plane, and 1 far above the Galactic disk and analysed data from the first 9.4 months of the ZTF survey, between 17 March and 31 December 2018. The total amount of objects with at least 100 data-point in the LC is 2.25 millions. The results of the search for anomalies in this set are described in Section <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S3" title="3 Key Contributions and Discoveries ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">3</span></a>.</p>
+</div>
+<div class="ltx_para" id="S2.SS3.p3">
+<p class="ltx_p" id="S2.SS3.p3.1">Investigating all data described above we experimented with a series of different anomaly detection algorithms. Our goal was to quantify their effectiveness in identifying scientifically interesting anomalous objects within large data sets. Among others, we used Isolation Forest (IF) <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib26" title="">26</a>]</cite>, Local Outlier Factor <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib9" title="">9</a>]</cite>, Gaussian Mixture Models <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib29" title="">29</a>]</cite> and one-class Support Vector Machines <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib34" title="">34</a>]</cite>. These were applied to small <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib32" title="">32</a>]</cite> as well as large <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib27" title="">27</a>]</cite> data sets with encouraging results.</p>
+</div>
+<div class="ltx_para" id="S2.SS3.p4">
+<p class="ltx_p" id="S2.SS3.p4.1">However, we noticed that frequently, the majority of objects with high anomaly score represent non-astrophysical artificial effects. These were most times border effects, glitches in the detector, bad CCDs, cosmic rays, unexpected telescope movements, satellites, etc. This discovery was important, and generated an additional line of investigation, described in Section <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S3.SS4" title="3.4 Catalog of artefacts ‣ 3 Key Contributions and Discoveries ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">3.4</span></a>. Nevertheless, the need of an adaptive algorithm, which could allow the user to define which type of anomaly was interesting became increasingly more evident.</p>
+</div>
+<div class="ltx_para" id="S2.SS3.p5">
+<p class="ltx_p" id="S2.SS3.p5.1">We started experimenting with adaptive learning techniques by using the Active Anomaly Discovery algorithm (AAD) <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib13" title="">13</a>]</cite>, which uses a human-in-the-loop strategy to apply a series of sequential modifications to a traditional IF. By downgrading decision paths which disagree with the expert’s definition of what is an interesting anomaly the algorithm allows the construction of a personalized AD model. We showed that this strategy is effective in small <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib22" title="">22</a>]</cite> and large <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib31" title="">31</a>]</cite> data sets. The successful experiences with AAD motivated many of the results described below.</p>
+</div>
+</section>
+</section>
+<section class="ltx_section" id="S3">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Key Contributions and Discoveries</h2>
+<section class="ltx_subsection" id="S3.SS1">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.1 </span>Supernova catalog</h3>
+<div class="ltx_para" id="S3.SS1.p1">
+<p class="ltx_p" id="S3.SS1.p1.1">The SNAD team discovered potential, unreported supernovae — powerful and bright explosion of a star, indicating the final stage of its evolution <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib8" title="">8</a>]</cite> — within the ZTF DRs during a non-targeted anomaly detection search <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib27" title="">27</a>]</cite>. This led to the inception of a new experiment aimed at developing specialized machine learning models. The AAD algorithm (Section <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S2.SS3" title="2.3 Data sources and techniques ‣ 2 What is the SNAD project? ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">2.3</span></a>) and the SNAD Transient Miner (Section <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S4.SS3" title="4.3 SNAD Transient Miner ‣ 4 Scientific Tools and Resources ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">4.3</span></a>) have been trained and refined based on our long-term experience with supernovae. Applying these algorithms, the SNAD team identified 144 new supernova candidates hidden within the vast photometric data of the ZTF survey.</p>
+</div>
+<div class="ltx_para" id="S3.SS1.p2">
+<p class="ltx_p" id="S3.SS1.p2.1">Each of these candidates has been thoroughly inspected and validated by our domain experts. Detailed information about the candidates has been made publicly available in the SNAD supernova catalog<span class="ltx_note ltx_role_footnote" id="footnote5"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup><span class="ltx_tag ltx_tag_note">5</span><a class="ltx_ref ltx_url" href="https://snad.space/catalog/" style="color:#0000FF;" title="">https://snad.space/catalog/</a></span></span></span>.</p>
+</div>
+<div class="ltx_para" id="S3.SS1.p3">
+<p class="ltx_p" id="S3.SS1.p3.1">Furthermore, these supernova candidates have also been reported to the Transient Name Server<span class="ltx_note ltx_role_footnote" id="footnote6"><sup class="ltx_note_mark">6</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">6</sup><span class="ltx_tag ltx_tag_note">6</span><a class="ltx_ref ltx_url" href="https://www.wis-tns.org/" style="color:#0000FF;" title="">https://www.wis-tns.org/</a></span></span></span> (TNS). The TNS is the official resource for announcing new astronomical transients, and our reports ensure that these candidates are available for further study by the international astronomical community. With this dual approach of cataloguing and reporting, we aim to foster collaboration and further our understanding of supernovae.</p>
+</div>
+</section>
+<section class="ltx_subsection" id="S3.SS2">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.2 </span>Superluminous supernova candidates</h3>
+<div class="ltx_para" id="S3.SS2.p1">
+<p class="ltx_p" id="S3.SS2.p1.1">Among the supernova candidates discovered using the AAD algorithm (Section <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S2.SS3" title="2.3 Data sources and techniques ‣ 2 What is the SNAD project? ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">2.3</span></a>) we report four objects: SNAD120, SNAD121, SNAD160, SNAD187, which could belong to the superluminous supernovae class. They display an unusually broad LC when compared to the Nugent’s models<span class="ltx_note ltx_role_footnote" id="footnote7"><sup class="ltx_note_mark">7</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">7</sup><span class="ltx_tag ltx_tag_note">7</span><a class="ltx_ref ltx_url" href="https://c3.lbl.gov/nugent/nugent_templates.html" style="color:#0000FF;" title="">https://c3.lbl.gov/nugent/nugent˙templates.html</a></span></span></span> and multiple redshift estimations indicate their high absolute brightness <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib31" title="">31</a>]</cite>.
+Among them, SNAD160 displays a particularly broad LC and further analysis indicates that it could belong to the pair instability supernovae class <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib33" title="">33</a>]</cite>. It is a theoretical category of thermonuclear explosions of extremely massive stars, as described by <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib3" title="">3</a>]</cite> <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib16" title="">16</a>]</cite>. There have been no reports of observational confirmation of such event yet and any good candidate contributes to enrich our understanding of the phenomena. 
+<br class="ltx_break"/></p>
+</div>
+<div class="ltx_para" id="S3.SS2.p2">
+<p class="ltx_p" id="S3.SS2.p2.1">Additional analysis has been performed by inputting SNAD160 to a symbolic regression algorithm. It is a machine learning method based on genetic programming <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib25" title="">25</a>]</cite> that computes a mathematical expression with independent variables to optimally fits some input data. We developed a more complex approach of the algorithm called Multiview symbolic regression (MvSR). It allows for the input of multiple datasets supposedly generated by the same parametric function, and directly returns the common parametric function that generated the examples. MvSR was applied to SNAD160 with LCs in passbands “g” and “r” being used as two separate datasets. The resulting parametric function describes transient like behaviors with a linear rising and an exponential decay.</p>
+</div>
+<div class="ltx_para" id="S3.SS2.p3">
+<table class="ltx_equation ltx_eqn_table" id="S3.E1">
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math alttext="f(t)=A(t+C)\times e^{B(t+C)}" class="ltx_Math" display="block" id="S3.E1.m1.3"><semantics id="S3.E1.m1.3a"><mrow id="S3.E1.m1.3.3" xref="S3.E1.m1.3.3.cmml"><mrow id="S3.E1.m1.3.3.3" xref="S3.E1.m1.3.3.3.cmml"><mi id="S3.E1.m1.3.3.3.2" xref="S3.E1.m1.3.3.3.2.cmml">f</mi><mo id="S3.E1.m1.3.3.3.1" xref="S3.E1.m1.3.3.3.1.cmml">⁢</mo><mrow id="S3.E1.m1.3.3.3.3.2" xref="S3.E1.m1.3.3.3.cmml"><mo id="S3.E1.m1.3.3.3.3.2.1" stretchy="false" xref="S3.E1.m1.3.3.3.cmml">(</mo><mi id="S3.E1.m1.2.2" xref="S3.E1.m1.2.2.cmml">t</mi><mo id="S3.E1.m1.3.3.3.3.2.2" stretchy="false" xref="S3.E1.m1.3.3.3.cmml">)</mo></mrow></mrow><mo id="S3.E1.m1.3.3.2" xref="S3.E1.m1.3.3.2.cmml">=</mo><mrow id="S3.E1.m1.3.3.1" xref="S3.E1.m1.3.3.1.cmml"><mrow id="S3.E1.m1.3.3.1.1" xref="S3.E1.m1.3.3.1.1.cmml"><mi id="S3.E1.m1.3.3.1.1.3" xref="S3.E1.m1.3.3.1.1.3.cmml">A</mi><mo id="S3.E1.m1.3.3.1.1.2" xref="S3.E1.m1.3.3.1.1.2.cmml">⁢</mo><mrow id="S3.E1.m1.3.3.1.1.1.1" xref="S3.E1.m1.3.3.1.1.1.1.1.cmml"><mo id="S3.E1.m1.3.3.1.1.1.1.2" stretchy="false" xref="S3.E1.m1.3.3.1.1.1.1.1.cmml">(</mo><mrow id="S3.E1.m1.3.3.1.1.1.1.1" xref="S3.E1.m1.3.3.1.1.1.1.1.cmml"><mi id="S3.E1.m1.3.3.1.1.1.1.1.2" xref="S3.E1.m1.3.3.1.1.1.1.1.2.cmml">t</mi><mo id="S3.E1.m1.3.3.1.1.1.1.1.1" xref="S3.E1.m1.3.3.1.1.1.1.1.1.cmml">+</mo><mi id="S3.E1.m1.3.3.1.1.1.1.1.3" xref="S3.E1.m1.3.3.1.1.1.1.1.3.cmml">C</mi></mrow><mo id="S3.E1.m1.3.3.1.1.1.1.3" rspace="0.055em" stretchy="false" xref="S3.E1.m1.3.3.1.1.1.1.1.cmml">)</mo></mrow></mrow><mo id="S3.E1.m1.3.3.1.2" rspace="0.222em" xref="S3.E1.m1.3.3.1.2.cmml">×</mo><msup id="S3.E1.m1.3.3.1.3" xref="S3.E1.m1.3.3.1.3.cmml"><mi id="S3.E1.m1.3.3.1.3.2" xref="S3.E1.m1.3.3.1.3.2.cmml">e</mi><mrow id="S3.E1.m1.1.1.1" xref="S3.E1.m1.1.1.1.cmml"><mi id="S3.E1.m1.1.1.1.3" xref="S3.E1.m1.1.1.1.3.cmml">B</mi><mo id="S3.E1.m1.1.1.1.2" xref="S3.E1.m1.1.1.1.2.cmml">⁢</mo><mrow id="S3.E1.m1.1.1.1.1.1" xref="S3.E1.m1.1.1.1.1.1.1.cmml"><mo id="S3.E1.m1.1.1.1.1.1.2" stretchy="false" xref="S3.E1.m1.1.1.1.1.1.1.cmml">(</mo><mrow id="S3.E1.m1.1.1.1.1.1.1" xref="S3.E1.m1.1.1.1.1.1.1.cmml"><mi id="S3.E1.m1.1.1.1.1.1.1.2" xref="S3.E1.m1.1.1.1.1.1.1.2.cmml">t</mi><mo id="S3.E1.m1.1.1.1.1.1.1.1" xref="S3.E1.m1.1.1.1.1.1.1.1.cmml">+</mo><mi id="S3.E1.m1.1.1.1.1.1.1.3" xref="S3.E1.m1.1.1.1.1.1.1.3.cmml">C</mi></mrow><mo id="S3.E1.m1.1.1.1.1.1.3" stretchy="false" xref="S3.E1.m1.1.1.1.1.1.1.cmml">)</mo></mrow></mrow></msup></mrow></mrow><annotation-xml encoding="MathML-Content" id="S3.E1.m1.3b"><apply id="S3.E1.m1.3.3.cmml" xref="S3.E1.m1.3.3"><eq id="S3.E1.m1.3.3.2.cmml" xref="S3.E1.m1.3.3.2"></eq><apply id="S3.E1.m1.3.3.3.cmml" xref="S3.E1.m1.3.3.3"><times id="S3.E1.m1.3.3.3.1.cmml" xref="S3.E1.m1.3.3.3.1"></times><ci id="S3.E1.m1.3.3.3.2.cmml" xref="S3.E1.m1.3.3.3.2">𝑓</ci><ci id="S3.E1.m1.2.2.cmml" xref="S3.E1.m1.2.2">𝑡</ci></apply><apply id="S3.E1.m1.3.3.1.cmml" xref="S3.E1.m1.3.3.1"><times id="S3.E1.m1.3.3.1.2.cmml" xref="S3.E1.m1.3.3.1.2"></times><apply id="S3.E1.m1.3.3.1.1.cmml" xref="S3.E1.m1.3.3.1.1"><times id="S3.E1.m1.3.3.1.1.2.cmml" xref="S3.E1.m1.3.3.1.1.2"></times><ci id="S3.E1.m1.3.3.1.1.3.cmml" xref="S3.E1.m1.3.3.1.1.3">𝐴</ci><apply id="S3.E1.m1.3.3.1.1.1.1.1.cmml" xref="S3.E1.m1.3.3.1.1.1.1"><plus id="S3.E1.m1.3.3.1.1.1.1.1.1.cmml" xref="S3.E1.m1.3.3.1.1.1.1.1.1"></plus><ci id="S3.E1.m1.3.3.1.1.1.1.1.2.cmml" xref="S3.E1.m1.3.3.1.1.1.1.1.2">𝑡</ci><ci id="S3.E1.m1.3.3.1.1.1.1.1.3.cmml" xref="S3.E1.m1.3.3.1.1.1.1.1.3">𝐶</ci></apply></apply><apply id="S3.E1.m1.3.3.1.3.cmml" xref="S3.E1.m1.3.3.1.3"><csymbol cd="ambiguous" id="S3.E1.m1.3.3.1.3.1.cmml" xref="S3.E1.m1.3.3.1.3">superscript</csymbol><ci id="S3.E1.m1.3.3.1.3.2.cmml" xref="S3.E1.m1.3.3.1.3.2">𝑒</ci><apply id="S3.E1.m1.1.1.1.cmml" xref="S3.E1.m1.1.1.1"><times id="S3.E1.m1.1.1.1.2.cmml" xref="S3.E1.m1.1.1.1.2"></times><ci id="S3.E1.m1.1.1.1.3.cmml" xref="S3.E1.m1.1.1.1.3">𝐵</ci><apply id="S3.E1.m1.1.1.1.1.1.1.cmml" xref="S3.E1.m1.1.1.1.1.1"><plus id="S3.E1.m1.1.1.1.1.1.1.1.cmml" xref="S3.E1.m1.1.1.1.1.1.1.1"></plus><ci id="S3.E1.m1.1.1.1.1.1.1.2.cmml" xref="S3.E1.m1.1.1.1.1.1.1.2">𝑡</ci><ci id="S3.E1.m1.1.1.1.1.1.1.3.cmml" xref="S3.E1.m1.1.1.1.1.1.1.3">𝐶</ci></apply></apply></apply></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S3.E1.m1.3c">f(t)=A(t+C)\times e^{B(t+C)}</annotation><annotation encoding="application/x-llamapun" id="S3.E1.m1.3d">italic_f ( italic_t ) = italic_A ( italic_t + italic_C ) × italic_e start_POSTSUPERSCRIPT italic_B ( italic_t + italic_C ) end_POSTSUPERSCRIPT</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right" rowspan="1"><span class="ltx_tag ltx_tag_equation ltx_align_right">(1)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div class="ltx_para" id="S3.SS2.p4">
+<p class="ltx_p" id="S3.SS2.p4.1">It is particularly well fitting SNAD160 in both pass-bands as shown in Fig. <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S3.F1" title="Figure 1 ‣ 3.2 Superluminous supernova candidates ‣ 3 Key Contributions and Discoveries ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">1</span></a>. It has been applied to other SLSN candidates and provides an accurate representation of the LCs. With three free parameters, this equation offers a noticeably dense description of supernova events. Using this representation for further feature extraction analysis could lead to more interesting SLSN discoveries.</p>
+</div>
+<figure class="ltx_figure" id="S3.F1"><img alt="Refer to caption" class="ltx_graphics ltx_centering ltx_img_landscape" height="378" id="S3.F1.g1" src="extracted/5952113/SNAD160_fit.png" width="598"/>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>Fit of SNAD160 using equation <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S3.E1" title="In 3.2 Superluminous supernova candidates ‣ 3 Key Contributions and Discoveries ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">1</span></a> resulting from MvSR procedure. The magnitude is normalized by subtraction of the peak magnitude.</figcaption>
+</figure>
+</section>
+<section class="ltx_subsection" id="S3.SS3">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.3 </span>Red dwarf flares</h3>
+<div class="ltx_para" id="S3.SS3.p1">
+<p class="ltx_p" id="S3.SS3.p1.1">Within the SNAD group, we are currently working on detecting red dwarf flares in the high cadence data of the ZTF survey releases. Stellar flares are very energetic phenomena, during which the optical luminosity of a star increases by several fold over tens of seconds.
+The currently accepted version of stellar flares’ nature is a magnetic field, generated in the convective stellar interior <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib17" title="">17</a>]</cite>.
+The detection of rapid stellar flares, such as those from red dwarfs, is of significant importance in the field of exoplanet science, particularly when studying exoplanet habitability.
+Additionally, creating a statistically significant sample of red dwarf flares can greatly aid in our understanding of the physical processes involved in these events.</p>
+</div>
+<div class="ltx_para" id="S3.SS3.p2">
+<p class="ltx_p" id="S3.SS3.p2.1">By this time, approximately a hundred new candidates for red dwarf flares have been found (A. Voloshina et al., in prep). Some of them were discovered using the AAD algorithm (Section <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S2.SS3" title="2.3 Data sources and techniques ‣ 2 What is the SNAD project? ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">2.3</span></a>). Others were detected by fitting the LCs with a model that accurately describes the properties and shape of red dwarf flares’ LCs, followed by further analysis of the goodness of fit. The candidates found using presented methods are then subject to further analysis and approval by experts within the SNAD team, with the assistance of the SNAD ZTF Viewer (Section <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S4.SS1" title="4.1 SNAD ZTF Viewer ‣ 4 Scientific Tools and Resources ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">4.1</span></a>).</p>
+</div>
+<div class="ltx_para" id="S3.SS3.p3">
+<p class="ltx_p" id="S3.SS3.p3.1">Examples of found red dwarf flare candidates LCs presented in Fig. <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S3.F2" title="Figure 2 ‣ 3.3 Red dwarf flares ‣ 3 Key Contributions and Discoveries ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">2</span></a>.
+Found candidates vary both by a LC shape (multiple outburst or one outburst flare) and brightness, which allows exploring the complexity of flare events and forming a more comprehensive sample.</p>
+</div>
+<figure class="ltx_figure" id="S3.F2"><img alt="Refer to caption" class="ltx_graphics ltx_centering ltx_img_landscape" height="230" id="S3.F2.g1" src="extracted/5952113/rdf_candidates.png" width="598"/>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>Two examples of red dwarf flares candidates found by SNAD team.</figcaption>
+</figure>
+</section>
+<section class="ltx_subsection" id="S3.SS4">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.4 </span>Catalog of artefacts</h3>
+<div class="ltx_para" id="S3.SS4.p1">
+<p class="ltx_p" id="S3.SS4.p1.1">Another interesting data product that resulted from the construction of the SNAD database is the SNAD catalog of artefacts. The term artefact is generally used as an umbrella term to denote observational, phenomenological or instrumental oddities in signal that manifest as diffraction spikes, a step-effect in brightness, colour saturation etc. to name a few. We are collating a catalog of such occurrences in the SNAD database that is aimed for both outreach and science goals. The catalog consists of the OIDs (identifying number that’s referenced in ZTF), the FITS images of the respective fields and the SNAD link to the main object page denoted by the OID. Some examples of the artefacts thus identified are given in Figure <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S3.F3" title="Figure 3 ‣ 3.4 Catalog of artefacts ‣ 3 Key Contributions and Discoveries ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">3</span></a>. While spurious in the strictest sense, several of these artefacts present as visually breathtaking making them perfect for outreach purposes.</p>
+</div>
+<div class="ltx_para" id="S3.SS4.p2">
+<p class="ltx_p" id="S3.SS4.p2.2">The catalog of artefacts also provides a data set for training machine learning algorithms that could potentially be used for identifying and/or removing these objects from fields of interest. Using the labels of 2230 objects from SNAD knowledge database (Section <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S4.SS2" title="4.2 SNAD knowledge database ‣ 4 Scientific Tools and Resources ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">4.2</span></a>), roughly half of which are artefacts, we developed an algorithm that predicts whether an object is an artefact or not based on the sequence of object frames from the ZTF survey. The algorithm consists of two parts: (1) a variational auto-encoder that returns the compressed representation of each frame after being trained on all the images from the sample and, (2) a recurrent neural network that takes the sequence of compressed frame representations and an object label as inputs, and returns the probability that the object is an artefact. Currently the best classification result is <math alttext="\rm{ROC-AUC}=0.856\pm 0.010" class="ltx_Math" display="inline" id="S3.SS4.p2.1.m1.1"><semantics id="S3.SS4.p2.1.m1.1a"><mrow id="S3.SS4.p2.1.m1.1.1" xref="S3.SS4.p2.1.m1.1.1.cmml"><mrow id="S3.SS4.p2.1.m1.1.1.2" xref="S3.SS4.p2.1.m1.1.1.2.cmml"><mi id="S3.SS4.p2.1.m1.1.1.2.2" xref="S3.SS4.p2.1.m1.1.1.2.2.cmml">ROC</mi><mo id="S3.SS4.p2.1.m1.1.1.2.1" xref="S3.SS4.p2.1.m1.1.1.2.1.cmml">−</mo><mi id="S3.SS4.p2.1.m1.1.1.2.3" xref="S3.SS4.p2.1.m1.1.1.2.3.cmml">AUC</mi></mrow><mo id="S3.SS4.p2.1.m1.1.1.1" xref="S3.SS4.p2.1.m1.1.1.1.cmml">=</mo><mrow id="S3.SS4.p2.1.m1.1.1.3" xref="S3.SS4.p2.1.m1.1.1.3.cmml"><mn id="S3.SS4.p2.1.m1.1.1.3.2" xref="S3.SS4.p2.1.m1.1.1.3.2.cmml">0.856</mn><mo id="S3.SS4.p2.1.m1.1.1.3.1" xref="S3.SS4.p2.1.m1.1.1.3.1.cmml">±</mo><mn id="S3.SS4.p2.1.m1.1.1.3.3" xref="S3.SS4.p2.1.m1.1.1.3.3.cmml">0.010</mn></mrow></mrow><annotation-xml encoding="MathML-Content" id="S3.SS4.p2.1.m1.1b"><apply id="S3.SS4.p2.1.m1.1.1.cmml" xref="S3.SS4.p2.1.m1.1.1"><eq id="S3.SS4.p2.1.m1.1.1.1.cmml" xref="S3.SS4.p2.1.m1.1.1.1"></eq><apply id="S3.SS4.p2.1.m1.1.1.2.cmml" xref="S3.SS4.p2.1.m1.1.1.2"><minus id="S3.SS4.p2.1.m1.1.1.2.1.cmml" xref="S3.SS4.p2.1.m1.1.1.2.1"></minus><ci id="S3.SS4.p2.1.m1.1.1.2.2.cmml" xref="S3.SS4.p2.1.m1.1.1.2.2">ROC</ci><ci id="S3.SS4.p2.1.m1.1.1.2.3.cmml" xref="S3.SS4.p2.1.m1.1.1.2.3">AUC</ci></apply><apply id="S3.SS4.p2.1.m1.1.1.3.cmml" xref="S3.SS4.p2.1.m1.1.1.3"><csymbol cd="latexml" id="S3.SS4.p2.1.m1.1.1.3.1.cmml" xref="S3.SS4.p2.1.m1.1.1.3.1">plus-or-minus</csymbol><cn id="S3.SS4.p2.1.m1.1.1.3.2.cmml" type="float" xref="S3.SS4.p2.1.m1.1.1.3.2">0.856</cn><cn id="S3.SS4.p2.1.m1.1.1.3.3.cmml" type="float" xref="S3.SS4.p2.1.m1.1.1.3.3">0.010</cn></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S3.SS4.p2.1.m1.1c">\rm{ROC-AUC}=0.856\pm 0.010</annotation><annotation encoding="application/x-llamapun" id="S3.SS4.p2.1.m1.1d">roman_ROC - roman_AUC = 0.856 ± 0.010</annotation></semantics></math> and <math alttext="\rm{Accuracy}=0.802\pm 0.023" class="ltx_Math" display="inline" id="S3.SS4.p2.2.m2.1"><semantics id="S3.SS4.p2.2.m2.1a"><mrow id="S3.SS4.p2.2.m2.1.1" xref="S3.SS4.p2.2.m2.1.1.cmml"><mi id="S3.SS4.p2.2.m2.1.1.2" xref="S3.SS4.p2.2.m2.1.1.2.cmml">Accuracy</mi><mo id="S3.SS4.p2.2.m2.1.1.1" xref="S3.SS4.p2.2.m2.1.1.1.cmml">=</mo><mrow id="S3.SS4.p2.2.m2.1.1.3" xref="S3.SS4.p2.2.m2.1.1.3.cmml"><mn id="S3.SS4.p2.2.m2.1.1.3.2" xref="S3.SS4.p2.2.m2.1.1.3.2.cmml">0.802</mn><mo id="S3.SS4.p2.2.m2.1.1.3.1" xref="S3.SS4.p2.2.m2.1.1.3.1.cmml">±</mo><mn id="S3.SS4.p2.2.m2.1.1.3.3" xref="S3.SS4.p2.2.m2.1.1.3.3.cmml">0.023</mn></mrow></mrow><annotation-xml encoding="MathML-Content" id="S3.SS4.p2.2.m2.1b"><apply id="S3.SS4.p2.2.m2.1.1.cmml" xref="S3.SS4.p2.2.m2.1.1"><eq id="S3.SS4.p2.2.m2.1.1.1.cmml" xref="S3.SS4.p2.2.m2.1.1.1"></eq><ci id="S3.SS4.p2.2.m2.1.1.2.cmml" xref="S3.SS4.p2.2.m2.1.1.2">Accuracy</ci><apply id="S3.SS4.p2.2.m2.1.1.3.cmml" xref="S3.SS4.p2.2.m2.1.1.3"><csymbol cd="latexml" id="S3.SS4.p2.2.m2.1.1.3.1.cmml" xref="S3.SS4.p2.2.m2.1.1.3.1">plus-or-minus</csymbol><cn id="S3.SS4.p2.2.m2.1.1.3.2.cmml" type="float" xref="S3.SS4.p2.2.m2.1.1.3.2">0.802</cn><cn id="S3.SS4.p2.2.m2.1.1.3.3.cmml" type="float" xref="S3.SS4.p2.2.m2.1.1.3.3">0.023</cn></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S3.SS4.p2.2.m2.1c">\rm{Accuracy}=0.802\pm 0.023</annotation><annotation encoding="application/x-llamapun" id="S3.SS4.p2.2.m2.1d">roman_Accuracy = 0.802 ± 0.023</annotation></semantics></math>.</p>
+</div>
+<figure class="ltx_figure" id="S3.F3">
+<div class="ltx_flex_figure">
+<div class="ltx_flex_cell ltx_flex_size_4">
+<figure class="ltx_figure ltx_figure_panel ltx_align_center" id="S3.F3.sf1"><img alt="Refer to caption" class="ltx_graphics ltx_img_square" height="120" id="S3.F3.sf1.g1" src="extracted/5952113/1.png" width="120"/>
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">(a) </span></figcaption>
+</figure>
+</div>
+<div class="ltx_flex_cell ltx_flex_size_4">
+<figure class="ltx_figure ltx_figure_panel ltx_align_center" id="S3.F3.sf2"><img alt="Refer to caption" class="ltx_graphics ltx_img_square" height="120" id="S3.F3.sf2.g1" src="extracted/5952113/2.png" width="120"/>
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">(b) </span></figcaption>
+</figure>
+</div>
+<div class="ltx_flex_cell ltx_flex_size_4">
+<figure class="ltx_figure ltx_figure_panel ltx_align_center" id="S3.F3.sf3"><img alt="Refer to caption" class="ltx_graphics ltx_img_square" height="120" id="S3.F3.sf3.g1" src="extracted/5952113/3.png" width="120"/>
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">(c) </span></figcaption>
+</figure>
+</div>
+<div class="ltx_flex_cell ltx_flex_size_4">
+<figure class="ltx_figure ltx_figure_panel ltx_align_center" id="S3.F3.sf4"><img alt="Refer to caption" class="ltx_graphics ltx_img_square" height="120" id="S3.F3.sf4.g1" src="extracted/5952113/4.png" width="120"/>
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">(d) </span></figcaption>
+</figure>
+</div>
+</div>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>Some examples from the SNAD catalog of artefacts.</figcaption>
+</figure>
+</section>
+</section>
+<section class="ltx_section" id="S4">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Scientific Tools and Resources</h2>
+<section class="ltx_subsection" id="S4.SS1">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.1 </span>SNAD ZTF Viewer</h3>
+<div class="ltx_para" id="S4.SS1.p1">
+<p class="ltx_p" id="S4.SS1.p1.1">The SNAD Viewer<span class="ltx_note ltx_role_footnote" id="footnote8"><sup class="ltx_note_mark">8</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">8</sup><span class="ltx_tag ltx_tag_note">8</span><a class="ltx_ref ltx_url" href="https://ztf.snad.space" style="color:#0000FF;" title="">https://ztf.snad.space</a></span></span></span> <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib28" title="">28</a>]</cite> is a web portal specifically designed for astronomers, providing a centralized view of individual objects from various data releases.
+It integrates data from multiple publicly available astronomical archives and sources, thereby offering a comprehensive platform for time-domain data analysis and interpretation.</p>
+</div>
+<div class="ltx_para" id="S4.SS1.p2">
+<p class="ltx_p" id="S4.SS1.p2.1">In the era of big data in astronomy, the SNAD Viewer emerges as a significant tool designed to centralize and streamline the management of astronomical data.
+Initially conceived to facilitate expert feedback in active machine learning applications (see Sections <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S4.SS3" title="4.3 SNAD Transient Miner ‣ 4 Scientific Tools and Resources ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">4.3</span></a>,<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S4.SS4" title="4.4 Coniferest Python Library ‣ 4 Scientific Tools and Resources ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">4.4</span></a>), the SNAD Viewer has evolved into a valuable community asset.
+It centralizes public information and provides a multi-dimensional view of individual objects from the ZTF data releases.</p>
+</div>
+<div class="ltx_para" id="S4.SS1.p3">
+<p class="ltx_p" id="S4.SS1.p3.1">The SNAD Viewer’s infrastructure is characterized by its scalability and flexibility.
+It is designed to accommodate a wide range of data types and user needs, demonstrating its adaptability to the changing landscape of astronomical research.
+This adaptability extends to its ability to be personalized and used by other surveys and for various scientific goals, underscoring its broad applicability within the field.</p>
+</div>
+<div class="ltx_para" id="S4.SS1.p4">
+<p class="ltx_p" id="S4.SS1.p4.1">Importantly, the SNAD Viewer is not an isolated entity but is part of a larger network of astronomical data portals.
+It is linked to by other significant portals such as Antares, Fink, YSE PZ, and Astro-COLIBRI, which further enhances its accessibility and utility within the astronomical community.
+This interconnectedness highlights the collaborative nature of modern astronomical research and the crucial role of the SNAD Viewer within this ecosystem.</p>
+</div>
+<div class="ltx_para" id="S4.SS1.p5">
+<p class="ltx_p" id="S4.SS1.p5.1">The SNAD Viewer is publicly available online, emphasizing its commitment to open science and the democratization of astronomical data.
+It serves as a testament to the crucial roles that domain experts continue to play in the era of big data in astronomy.</p>
+</div>
+</section>
+<section class="ltx_subsection" id="S4.SS2">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.2 </span>SNAD knowledge database</h3>
+<div class="ltx_para" id="S4.SS2.p1">
+<p class="ltx_p" id="S4.SS2.p1.1">In addition to the discovery of candidates in anomalies, our research also led to the creation of a knowledge database. One of the core features of the SNAD ZTF Viewer (Section <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S4.SS1" title="4.1 SNAD ZTF Viewer ‣ 4 Scientific Tools and Resources ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">4.1</span></a>) is the ability to assign specific tags to each ZTF object, a function our experts extensively used when reviewing potential anomalies.
+This tagging system incorporates a wide range of general astronomical classes, including variable stars, transients, active galactic nuclei, along with their various specific types and subtypes. We also devised custom tags for internal purposes, as well as non-astrophysical tags like artefacts and their subtypes. Multiple tags can be assigned to a single object, with the history of tag changes stored in the database.</p>
+</div>
+<div class="ltx_para" id="S4.SS2.p2">
+<p class="ltx_p" id="S4.SS2.p2.1">During the expert analysis, a total of 2743 objects were labelled. Despite the ZTF data processing pipeline’s procedure to distinguish astrophysical events from bogus ones, almost a half of them are artefacts. These assigned labels serve as a reliable source of curated data for training supervised machine learning models. Furthermore, they can help to refine the ZTF’s pre-processing pipeline, ensuring more efficient identification and classification of astronomical events in the future.</p>
+</div>
+</section>
+<section class="ltx_subsection" id="S4.SS3">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.3 </span>SNAD Transient Miner</h3>
+<div class="ltx_para" id="S4.SS3.p1">
+<p class="ltx_p" id="S4.SS3.p1.1">The SNAD Miner is an exhaustive similarity search for LC features for transient discovery, using simulated LCs as a guide to identify transients in a large dataset mostly comprised of variable stars <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib11" title="">11</a>]</cite>. Specifically, it leverages extracted statistical features from simulated SNe LCs, from which a k-D tree is applied to search for similar feature values in the ZTF DR4. As a result, we discovered 11 previously missed transients, 7 SNe candidates and 4 AGN candidates.</p>
+</div>
+<div class="ltx_para" id="S4.SS3.p2">
+<p class="ltx_p" id="S4.SS3.p2.2">Realistic ZTF simulations were generated using <span class="ltx_text ltx_font_typewriter" id="S4.SS3.p2.2.1">SNANA</span> <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib24" title="">24</a>]</cite>, with ZTF data release 3 cadence and magnitude error distribution
+(see <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib10" title="">10</a>]</cite> for details). Starting from the template models originally developed for PLAsTiCC, <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib23" title="">23</a>, <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib20" title="">20</a>]</cite>, we selected the seven brightest, well-sampled LCs to use as a reference (3 SLSN-I, 1 SN Ia, 1 SN II and 2 TDE with peak magnitude <math alttext="\sim" class="ltx_Math" display="inline" id="S4.SS3.p2.1.m1.1"><semantics id="S4.SS3.p2.1.m1.1a"><mo id="S4.SS3.p2.1.m1.1.1" xref="S4.SS3.p2.1.m1.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S4.SS3.p2.1.m1.1b"><csymbol cd="latexml" id="S4.SS3.p2.1.m1.1.1.cmml" xref="S4.SS3.p2.1.m1.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S4.SS3.p2.1.m1.1c">\sim</annotation><annotation encoding="application/x-llamapun" id="S4.SS3.p2.1.m1.1d">∼</annotation></semantics></math>17<sup class="ltx_sup" id="S4.SS3.p2.2.2"><span class="ltx_text ltx_font_italic" id="S4.SS3.p2.2.2.1">m</span></sup>).</p>
+</div>
+<div class="ltx_para" id="S4.SS3.p3">
+<p class="ltx_p" id="S4.SS3.p3.2">Using these objects, we applied a k-D tree <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib6" title="">6</a>]</cite> to their extracted 82 non-normalized features. Subsequently, we identified the 15 nearest neighbors for each simulation (105 matches in total, resulting in 89 unique ZTF DR4 sources), and manually inspected the results. Ultimately, we discovered 11 previously unreported supernova and active galactic nucleus candidates. The remaining 94 matches (81 unique ZTF DR4 sources) were either known/already reported transients or variable stars. Given the large number of variable stars previously estimated in ZTF data releases <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib11" title="">11</a>]</cite>, it is reasonable to expect many well sampled, high-amplitude variable stars whose coverage in parameter space significantly overlaps with the regions populated by transients (see, e.g. Figure 4 in <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib1" title="">1</a>]</cite>). Thus, a ratio of 18 transients (11 newly-discovered) to 44 variable stars out of 89 unique sources selected from 990,220 considered ZTF sources is a very successful result. Considering the extreme case where <math alttext="\approx 3000" class="ltx_Math" display="inline" id="S4.SS3.p3.1.m1.1"><semantics id="S4.SS3.p3.1.m1.1a"><mrow id="S4.SS3.p3.1.m1.1.1" xref="S4.SS3.p3.1.m1.1.1.cmml"><mi id="S4.SS3.p3.1.m1.1.1.2" xref="S4.SS3.p3.1.m1.1.1.2.cmml"></mi><mo id="S4.SS3.p3.1.m1.1.1.1" xref="S4.SS3.p3.1.m1.1.1.1.cmml">≈</mo><mn id="S4.SS3.p3.1.m1.1.1.3" xref="S4.SS3.p3.1.m1.1.1.3.cmml">3000</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.SS3.p3.1.m1.1b"><apply id="S4.SS3.p3.1.m1.1.1.cmml" xref="S4.SS3.p3.1.m1.1.1"><approx id="S4.SS3.p3.1.m1.1.1.1.cmml" xref="S4.SS3.p3.1.m1.1.1.1"></approx><csymbol cd="latexml" id="S4.SS3.p3.1.m1.1.1.2.cmml" xref="S4.SS3.p3.1.m1.1.1.2">absent</csymbol><cn id="S4.SS3.p3.1.m1.1.1.3.cmml" type="integer" xref="S4.SS3.p3.1.m1.1.1.3">3000</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.SS3.p3.1.m1.1c">\approx 3000</annotation><annotation encoding="application/x-llamapun" id="S4.SS3.p3.1.m1.1d">≈ 3000</annotation></semantics></math> SNe discovered by ZTF <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib14" title="">14</a>]</cite> were part of the data set, the expected incidence of SNe when choosing 100 sources at random would be of <math alttext="&lt;1(\approx 0.3)" class="ltx_Math" display="inline" id="S4.SS3.p3.2.m2.1"><semantics id="S4.SS3.p3.2.m2.1a"><mrow id="S4.SS3.p3.2.m2.1.1" xref="S4.SS3.p3.2.m2.1.1.cmml"><mi id="S4.SS3.p3.2.m2.1.1.3" xref="S4.SS3.p3.2.m2.1.1.3.cmml"></mi><mo id="S4.SS3.p3.2.m2.1.1.2" xref="S4.SS3.p3.2.m2.1.1.2.cmml">&lt;</mo><mrow id="S4.SS3.p3.2.m2.1.1.1" xref="S4.SS3.p3.2.m2.1.1.1.cmml"><mn id="S4.SS3.p3.2.m2.1.1.1.3" xref="S4.SS3.p3.2.m2.1.1.1.3.cmml">1</mn><mspace id="S4.SS3.p3.2.m2.1.1.1a" width="0.3888888888888889em" xref="S4.SS3.p3.2.m2.1.1.1.cmml"></mspace><mrow id="S4.SS3.p3.2.m2.1.1.1.1.1" xref="S4.SS3.p3.2.m2.1.1.1.1.1.1.cmml"><mo id="S4.SS3.p3.2.m2.1.1.1.1.1.2" stretchy="false" xref="S4.SS3.p3.2.m2.1.1.1.1.1.1.cmml">(</mo><mrow id="S4.SS3.p3.2.m2.1.1.1.1.1.1" xref="S4.SS3.p3.2.m2.1.1.1.1.1.1.cmml"><mi id="S4.SS3.p3.2.m2.1.1.1.1.1.1.2" xref="S4.SS3.p3.2.m2.1.1.1.1.1.1.2.cmml"></mi><mo id="S4.SS3.p3.2.m2.1.1.1.1.1.1.1" xref="S4.SS3.p3.2.m2.1.1.1.1.1.1.1.cmml">≈</mo><mn id="S4.SS3.p3.2.m2.1.1.1.1.1.1.3" xref="S4.SS3.p3.2.m2.1.1.1.1.1.1.3.cmml">0.3</mn></mrow><mo id="S4.SS3.p3.2.m2.1.1.1.1.1.3" stretchy="false" xref="S4.SS3.p3.2.m2.1.1.1.1.1.1.cmml">)</mo></mrow></mrow></mrow><annotation-xml encoding="MathML-Content" id="S4.SS3.p3.2.m2.1b"><apply id="S4.SS3.p3.2.m2.1.1.cmml" xref="S4.SS3.p3.2.m2.1.1"><lt id="S4.SS3.p3.2.m2.1.1.2.cmml" xref="S4.SS3.p3.2.m2.1.1.2"></lt><csymbol cd="latexml" id="S4.SS3.p3.2.m2.1.1.3.cmml" xref="S4.SS3.p3.2.m2.1.1.3">absent</csymbol><apply id="S4.SS3.p3.2.m2.1.1.1.cmml" xref="S4.SS3.p3.2.m2.1.1.1"><csymbol cd="latexml" id="S4.SS3.p3.2.m2.1.1.1.2.cmml" xref="S4.SS3.p3.2.m2.1.1.1">annotated</csymbol><cn id="S4.SS3.p3.2.m2.1.1.1.3.cmml" type="integer" xref="S4.SS3.p3.2.m2.1.1.1.3">1</cn><apply id="S4.SS3.p3.2.m2.1.1.1.1.1.1.cmml" xref="S4.SS3.p3.2.m2.1.1.1.1.1"><approx id="S4.SS3.p3.2.m2.1.1.1.1.1.1.1.cmml" xref="S4.SS3.p3.2.m2.1.1.1.1.1.1.1"></approx><csymbol cd="latexml" id="S4.SS3.p3.2.m2.1.1.1.1.1.1.2.cmml" xref="S4.SS3.p3.2.m2.1.1.1.1.1.1.2">absent</csymbol><cn id="S4.SS3.p3.2.m2.1.1.1.1.1.1.3.cmml" type="float" xref="S4.SS3.p3.2.m2.1.1.1.1.1.1.3">0.3</cn></apply></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.SS3.p3.2.m2.1c">&lt;1(\approx 0.3)</annotation><annotation encoding="application/x-llamapun" id="S4.SS3.p3.2.m2.1d">&lt; 1 ( ≈ 0.3 )</annotation></semantics></math> event.</p>
+</div>
+<figure class="ltx_figure" id="S4.F4"><img alt="Refer to caption" class="ltx_graphics ltx_centering ltx_img_landscape" height="153" id="S4.F4.g1" src="extracted/5952113/SNAD_Miner_schmatic.jpg" width="598"/>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 4: </span>SNAD Miner schematic. We use bright ZTF SNe simulations (left) and extract their LC features (left center). Then, we apply a (PCA+) k-D tree on these features, to search for real ZTF DR events nearest neighbors (right center). Some of these matched nearest neighbors were previously missed SNe (right).</figcaption>
+</figure>
+<div class="ltx_para" id="S4.SS3.p4">
+<p class="ltx_p" id="S4.SS3.p4.1">This “<span class="ltx_text ltx_font_typewriter" id="S4.SS3.p4.1.1">SNAD</span> Miner” process is flexible, and can use simulated or real objects as the input, any number of features, and any number of nearest neighbors to “mine” in the existing dataset. A schematic is shown in Figure <a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#S4.F4" title="Figure 4 ‣ 4.3 SNAD Transient Miner ‣ 4 Scientific Tools and Resources ‣ Exploring the Universe with SNAD: Anomaly Detection in Astronomy"><span class="ltx_text ltx_ref_tag">4</span></a>.</p>
+</div>
+</section>
+<section class="ltx_subsection" id="S4.SS4">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.4 </span>Coniferest Python Library</h3>
+<div class="ltx_para" id="S4.SS4.p1">
+<p class="ltx_p" id="S4.SS4.p1.1">The coniferest library <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib35" title="">35</a>]</cite> is aiming to add adaptive capabilities to isolation forest algorithm which is
+inherently static.</p>
+</div>
+<div class="ltx_para" id="S4.SS4.p2">
+<p class="ltx_p" id="S4.SS4.p2.1">The library has implementations of two adaptive learning algorithms. One of them is an already
+mentioned earlier AAD algorithm <cite class="ltx_cite ltx_citemacro_cite">[<a class="ltx_ref" href="https://arxiv.org/html/2410.18875v1#bib.bib13" title="">13</a>]</cite>. And the second one is the implementation of our own adaptive
+learning isolation forest algorithm named Pineforest. It is based of tree filtering approach.
+After every new observation with some label given by an expert the Pineforest filters out trees that
+do not push forward right observations.</p>
+</div>
+<div class="ltx_para" id="S4.SS4.p3">
+<p class="ltx_p" id="S4.SS4.p3.1">This approach have a few remarkable advantages. First, the algorithm have not much hyperparameters, so it
+is easy to tune. Second, it maybe used for both – as an adaptive learning with an expert in loop and
+as an accumulator of prior knowledge about data. Finally, it has a very good performance characteristics making it suitable for data intensive applications.</p>
+</div>
+<div class="ltx_para" id="S4.SS4.p4">
+<p class="ltx_p" id="S4.SS4.p4.1">Also, as a bonus the library includes our own implementations of classical
+isolation forest with much better performance in scoring compared to scikit-learn’s one.
+Refer to coniferest package documentation for more details.</p>
+</div>
+</section>
+</section>
+<section class="ltx_section" id="S5">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">5 </span>Future Directions and Challenges</h2>
+<div class="ltx_para" id="S5.p1">
+<p class="ltx_p" id="S5.p1.1">Large scale sky surveys have fundamentally changed the process of astronomical investigation and discovery. In the era of LSST, when millions of new transients will be detected every night, serendipitous discoveries will not happen. On the other hand, targeted searches are bound to identify objects which fall within our domain knowledge.</p>
+</div>
+<div class="ltx_para" id="S5.p2">
+<p class="ltx_p" id="S5.p2.1">The SNAD team has been consistently working on the development of adaptable algorithms and tools which allow the user to probe the boundaries of their domain knowledge – thus enabling scientific discovery in large data sets. These have been proven to be effective in current state of the art catalog data.</p>
+</div>
+<div class="ltx_para" id="S5.p3">
+<p class="ltx_p" id="S5.p3.1">In the near future we intend to concentrate our efforts in two important bottlenecks: ensuring that our tools are scalable to meet LSST requirements and make additional connections with expert communities to guarantee scientific impact of SNAD products. The latter will allow the SNAD team to develop increasingly more personalized tools which will fulfill the requirements of individual experts and ensure that we can fully exploit the scientific potential of modern astronomical surveys.</p>
+</div>
+<section class="ltx_subsubsection" id="S5.SS0.SSSx1">
+<h4 class="ltx_title ltx_title_subsubsection">Acknowledgements</h4>
+<div class="ltx_para" id="S5.SS0.SSSx1.p1">
+<p class="ltx_p" id="S5.SS0.SSSx1.p1.1">Authors thank the Ministry of Science and Higher Education of Russian Federation for financial support, grant
+075-15-2022-1221 (2022-BRICS-8847-2335).
+We used the equipment funded by the Lomonosov Moscow State University Program of Development.
+This work made use of the Illinois Campus Cluster, a computing resource that is operated by the Illinois Campus Cluster Program (ICCP) in conjunction with the National Center for Supercomputing
+Applications (NCSA) and which is supported by funds from the University of Illinois at Urbana-Champaign.</p>
+</div>
+</section>
+</section>
+<section class="ltx_bibliography" id="bib">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+<ul class="ltx_biblist">
+<li class="ltx_bibitem" id="bib.bib1">
+<span class="ltx_tag ltx_tag_bibitem">[1]</span>
+<span class="ltx_bibblock">
+Aleo, P.D., Malanchev, K.L., Pruzhinskaya, M.V., et al.: SNAD transient
+miner: Finding missed transient events in ZTF DR4 using k-D trees. New
+Astronomy <span class="ltx_text ltx_font_bold" id="bib.bib1.1.1">96</span>, 101846 (Oct 2022). https://doi.org/10.1016/j.newast.2022.101846
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib2">
+<span class="ltx_tag ltx_tag_bibitem">[2]</span>
+<span class="ltx_bibblock">
+Annika Steiber, S.A.: The Silicon Valley Model. Springer Cham, Swizertland
+(2016)
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib3">
+<span class="ltx_tag ltx_tag_bibitem">[3]</span>
+<span class="ltx_bibblock">
+Barkat, Z., Rakavy, G., and Sack, N.: Dynamics of supernova explosion resulting
+from pair formation. Phys. Rev. Lett. <span class="ltx_text ltx_font_bold" id="bib.bib3.1.1">18</span>, 379–381 (Mar 1967).
+https://doi.org/10.1103/PhysRevLett.18.379,
+<a class="ltx_ref ltx_url" href="https://link.aps.org/doi/10.1103/PhysRevLett.18.379" style="color:#0000FF;" title="">https://link.aps.org/doi/10.1103/PhysRevLett.18.379</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib4">
+<span class="ltx_tag ltx_tag_bibitem">[4]</span>
+<span class="ltx_bibblock">
+Baron, D. and Poznanski, D.: The weirdest SDSS galaxies: results from an
+outlier detection algorithm. Monthly Notices of the Royal Astronomical
+Society <span class="ltx_text ltx_font_bold" id="bib.bib4.1.1">465</span>(4), 4530–4555 (Mar 2017). https://doi.org/10.1093/mnras/stw3021
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib5">
+<span class="ltx_tag ltx_tag_bibitem">[5]</span>
+<span class="ltx_bibblock">
+Bellm, E.C., Kulkarni, S.R., Graham, M.J., et al.: The Zwicky Transient
+Facility: System Overview, Performance, and First Results. Publications of
+the Astronomical Society of the Pacific <span class="ltx_text ltx_font_bold" id="bib.bib5.1.1">131</span>(995), 018002 (Jan
+2019). https://doi.org/10.1088/1538-3873/aaecbe
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib6">
+<span class="ltx_tag ltx_tag_bibitem">[6]</span>
+<span class="ltx_bibblock">
+Bentley, J.L.: Multidimensional binary search trees used for associative
+searching. Commun. ACM <span class="ltx_text ltx_font_bold" id="bib.bib6.1.1">18</span>(9), 509–517 (Sep 1975).
+https://doi.org/10.1145/361002.361007, <a class="ltx_ref ltx_url" href="https://doi.org/10.1145/361002.361007" style="color:#0000FF;" title="">https://doi.org/10.1145/361002.361007</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib7">
+<span class="ltx_tag ltx_tag_bibitem">[7]</span>
+<span class="ltx_bibblock">
+Blanton, M.R., Bershady, M.A., Abolfathi, B., et al.: Sloan Digital Sky
+Survey IV: Mapping the Milky Way, Nearby Galaxies, and the Distant Universe.
+The Astronomical Journal <span class="ltx_text ltx_font_bold" id="bib.bib7.1.1">154</span>(1), 28 (Jul 2017).
+https://doi.org/10.3847/1538-3881/aa7567
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib8">
+<span class="ltx_tag ltx_tag_bibitem">[8]</span>
+<span class="ltx_bibblock">
+Branch, D. and Wheeler, J.C.: Supernova Explosions (2017).
+https://doi.org/10.1007/978-3-662-55054-0
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib9">
+<span class="ltx_tag ltx_tag_bibitem">[9]</span>
+<span class="ltx_bibblock">
+Breunig, M.M., Kriegel, H.P., Ng, R.T., et al.: Lof: identifying density-based
+local outliers. In: Proceedings of the 2000 ACM SIGMOD international
+conference on Management of data. pp. 93–104 (2000)
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib10">
+<span class="ltx_tag ltx_tag_bibitem">[10]</span>
+<span class="ltx_bibblock">
+Chatterjee, D., Narayan, G., Aleo, P.D., et al.: El-CID: A filter for
+Gravitational-wave Electromagnetic Counterpart Identification. arXiv
+e-prints arXiv:2108.04166 (Aug 2021)
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib11">
+<span class="ltx_tag ltx_tag_bibitem">[11]</span>
+<span class="ltx_bibblock">
+Chen, X., Wang, S., Deng, L., et al.: The Zwicky Transient Facility
+Catalog of Periodic Variable Stars. The Astrophysical Journal Supplement
+Series <span class="ltx_text ltx_font_bold" id="bib.bib11.1.1">249</span>(1), 18 (Jul 2020). https://doi.org/10.3847/1538-4365/ab9cae
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib12">
+<span class="ltx_tag ltx_tag_bibitem">[12]</span>
+<span class="ltx_bibblock">
+Ćiprijanović, A., Lewis, A., Pedro, K., et al.: DeepAstroUDA:
+semi-supervised universal domain adaptation for cross-survey galaxy
+morphology classification and anomaly detection. Machine Learning: Science
+and Technology <span class="ltx_text ltx_font_bold" id="bib.bib12.1.1">4</span>(2), 025013 (Jun 2023).
+https://doi.org/10.1088/2632-2153/acca5f
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib13">
+<span class="ltx_tag ltx_tag_bibitem">[13]</span>
+<span class="ltx_bibblock">
+Das, S., Wong, W.K., Fern, A., et al.: Incorporating Feedback into
+Tree-based Anomaly Detection. In: Workshop on Interactive Data Exploration
+and Analytics (IDEA’17). p. arXiv:1708.09441. KDD workshop (Aug 2017)
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib14">
+<span class="ltx_tag ltx_tag_bibitem">[14]</span>
+<span class="ltx_bibblock">
+Dhawan, S., Goobar, A., Smith, M., et al.: The Zwicky Transient Facility
+Type Ia supernova survey: first data release and results. Monthly Notices of
+the Royal Astrononmical Society <span class="ltx_text ltx_font_bold" id="bib.bib14.1.1">510</span>(2), 2228–2241 (Feb 2022).
+https://doi.org/10.1093/mnras/stab3093
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib15">
+<span class="ltx_tag ltx_tag_bibitem">[15]</span>
+<span class="ltx_bibblock">
+Etsebeth, V., Lochner, M., Walmsley, M., et al.: Astronomaly at Scale:
+Searching for Anomalies Amongst 4 Million Galaxies. arXiv e-prints
+arXiv:2309.08660 (Sep 2023). https://doi.org/10.48550/arXiv.2309.08660
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib16">
+<span class="ltx_tag ltx_tag_bibitem">[16]</span>
+<span class="ltx_bibblock">
+Gal-Yam, A.: The most luminous supernovae. Annual Review of Astronomy and
+Astrophysics <span class="ltx_text ltx_font_bold" id="bib.bib16.1.1">57</span>(1), 305–333 (2019).
+https://doi.org/10.1146/annurev-astro-081817-051819,
+<a class="ltx_ref ltx_url" href="https://doi.org/10.1146/annurev-astro-081817-051819" style="color:#0000FF;" title="">https://doi.org/10.1146/annurev-astro-081817-051819</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib17">
+<span class="ltx_tag ltx_tag_bibitem">[17]</span>
+<span class="ltx_bibblock">
+Gershberg, R.E.: Solar-Type Activity in Main-Sequence Stars (2005).
+https://doi.org/10.1007/3-540-28243-2
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib18">
+<span class="ltx_tag ltx_tag_bibitem">[18]</span>
+<span class="ltx_bibblock">
+Guillochon, J., Parrent, J., Kelley, L.Z., et al.: An Open Catalog for
+Supernova Data. The Astrophysical Journal <span class="ltx_text ltx_font_bold" id="bib.bib18.1.1">835</span>(1), 64 (Jan 2017).
+https://doi.org/10.3847/1538-4357/835/1/64
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib19">
+<span class="ltx_tag ltx_tag_bibitem">[19]</span>
+<span class="ltx_bibblock">
+Hambleton, K.M., Bianco, F.B., Street, R., et al.: Rubin Observatory
+LSST Transients and Variable Stars Roadmap. arXiv e-prints arXiv:2208.04499
+(Aug 2022). https://doi.org/10.48550/arXiv.2208.04499
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib20">
+<span class="ltx_tag ltx_tag_bibitem">[20]</span>
+<span class="ltx_bibblock">
+Hložek, R., Ponder, K.A., Malz, A.I., et al.: Results of the
+Photometric LSST Astronomical Time-series Classification Challenge
+(PLAsTiCC). arXiv e-prints arXiv:2012.12392 (Dec 2020)
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib21">
+<span class="ltx_tag ltx_tag_bibitem">[21]</span>
+<span class="ltx_bibblock">
+Ishida, E.E.O., Beck, R., González-Gaitán, S., et al.:
+Optimizing spectroscopic follow-up strategies for supernova photometric
+classification with active learning. Monthly Notices of the Royal
+Astronomical Society <span class="ltx_text ltx_font_bold" id="bib.bib21.1.1">483</span>(1), 2–18 (Feb 2019).
+https://doi.org/10.1093/mnras/sty3015
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib22">
+<span class="ltx_tag ltx_tag_bibitem">[22]</span>
+<span class="ltx_bibblock">
+Ishida, E.E.O., Kornilov, M.V., Malanchev, K.L., et al.: Active anomaly
+detection for time-domain discoveries. Astronomy and Astrophysics
+<span class="ltx_text ltx_font_bold" id="bib.bib22.1.1">650</span>, A195 (Jun 2021). https://doi.org/10.1051/0004-6361/202037709
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib23">
+<span class="ltx_tag ltx_tag_bibitem">[23]</span>
+<span class="ltx_bibblock">
+Kessler, R., Narayan, G., Avelino, A., et al.: Models and Simulations
+for the Photometric LSST Astronomical Time Series Classification Challenge
+(PLAsTiCC). Publications of the Astronomical Society of the Pacific
+<span class="ltx_text ltx_font_bold" id="bib.bib23.1.1">131</span>(1003), 094501 (Sep 2019). https://doi.org/10.1088/1538-3873/ab26f1
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib24">
+<span class="ltx_tag ltx_tag_bibitem">[24]</span>
+<span class="ltx_bibblock">
+Kessler, R., Bernstein, J.P., Cinabro, D., et al.: SNANA: A Public
+Software Package for Supernova Analysis. Publications of the Astronomical
+Society of the Pacific <span class="ltx_text ltx_font_bold" id="bib.bib24.1.1">121</span>(883),  1028 (Sep 2009).
+https://doi.org/10.1086/605984
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib25">
+<span class="ltx_tag ltx_tag_bibitem">[25]</span>
+<span class="ltx_bibblock">
+Koza, J. and Koza, J.: Genetic Programming: On the Programming of Computers by
+Means of Natural Selection. A Bradford book, Bradford (1992),
+<a class="ltx_ref ltx_url" href="https://books.google.com.br/books?id=Bhtxo60BV0EC" style="color:#0000FF;" title="">https://books.google.com.br/books?id=Bhtxo60BV0EC</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib26">
+<span class="ltx_tag ltx_tag_bibitem">[26]</span>
+<span class="ltx_bibblock">
+Liu, F.T., Ting, K.M., and Zhou, Z.H.: Isolation forest. In: 2008 Eighth IEEE
+International Conference on Data Mining. pp. 413–422. IEEE (2008)
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib27">
+<span class="ltx_tag ltx_tag_bibitem">[27]</span>
+<span class="ltx_bibblock">
+Malanchev, K.L., Pruzhinskaya, M.V., Korolev, V.S., et al.: Anomaly
+detection in the Zwicky Transient Facility DR3. Monthly Notices of the Royal
+Astrononmical Society <span class="ltx_text ltx_font_bold" id="bib.bib27.1.1">502</span>(4), 5147–5175 (Apr 2021).
+https://doi.org/10.1093/mnras/stab316
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib28">
+<span class="ltx_tag ltx_tag_bibitem">[28]</span>
+<span class="ltx_bibblock">
+Malanchev, K., Kornilov, M.V., Pruzhinskaya, M.V., et al.: The SNAD
+Viewer: Everything You Want to Know about Your Favorite ZTF Object.
+Publications of the Astronomical Society of the Pacific <span class="ltx_text ltx_font_bold" id="bib.bib28.1.1">135</span>(1044),
+024503 (Feb 2023). https://doi.org/10.1088/1538-3873/acb292
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib29">
+<span class="ltx_tag ltx_tag_bibitem">[29]</span>
+<span class="ltx_bibblock">
+McLachlan, G.J. and Peel, D.: Finite mixture models. Wiley Series in
+Probability and Statistics, New York (2000)
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib30">
+<span class="ltx_tag ltx_tag_bibitem">[30]</span>
+<span class="ltx_bibblock">
+Perez-Carrasco, M., Cabrera-Vives, G., Hernandez-García, L., et al.:
+Alert Classification for the ALeRCE Broker System: The Anomaly Detector.
+The Astronomical Journal <span class="ltx_text ltx_font_bold" id="bib.bib30.1.1">166</span>(4), 151 (Oct 2023).
+https://doi.org/10.3847/1538-3881/ace0c1
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib31">
+<span class="ltx_tag ltx_tag_bibitem">[31]</span>
+<span class="ltx_bibblock">
+Pruzhinskaya, M.V., Ishida, E.E.O., Novinskaya, A.K., et al.: Supernova
+search with active learning in ZTF DR3. Astronomy and Astrophysics
+<span class="ltx_text ltx_font_bold" id="bib.bib31.1.1">672</span>, A111 (Apr 2023). https://doi.org/10.1051/0004-6361/202245172
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib32">
+<span class="ltx_tag ltx_tag_bibitem">[32]</span>
+<span class="ltx_bibblock">
+Pruzhinskaya, M.V., Malanchev, K.L., Kornilov, M.V., et al.: Anomaly
+detection in the Open Supernova Catalog. Monthly Notices of the Royal
+Astrononmical Society <span class="ltx_text ltx_font_bold" id="bib.bib32.1.1">489</span>(3), 3591–3608 (Nov 2019).
+https://doi.org/10.1093/mnras/stz2362
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib33">
+<span class="ltx_tag ltx_tag_bibitem">[33]</span>
+<span class="ltx_bibblock">
+Pruzhinskaya, M., Volnova, A., Kornilov, M., et al.: Could SNAD160 be a
+Pair-instability Supernova? Research Notes of the American Astronomical
+Society <span class="ltx_text ltx_font_bold" id="bib.bib33.1.1">6</span>(6), 122 (Jun 2022). https://doi.org/10.3847/2515-5172/ac76cf
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib34">
+<span class="ltx_tag ltx_tag_bibitem">[34]</span>
+<span class="ltx_bibblock">
+Schölkopf, B., Williamson, R., Smola, A., et al.: Support vector method for
+novelty detection. vol. 12, pp. 582–588 (01 1999)
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib35">
+<span class="ltx_tag ltx_tag_bibitem">[35]</span>
+<span class="ltx_bibblock">
+SNAD: Coniferest python package, <a class="ltx_ref ltx_url" href="https://github.com/snad-space/coniferest" style="color:#0000FF;" title="">https://github.com/snad-space/coniferest</a>
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib36">
+<span class="ltx_tag ltx_tag_bibitem">[36]</span>
+<span class="ltx_bibblock">
+Storey-Fisher, K., Huertas-Company, M., Ramachandra, N., et al.: Anomaly
+detection in Hyper Suprime-Cam galaxy images with generative adversarial
+networks. Monthly Notes of the Royal Astronomical Society <span class="ltx_text ltx_font_bold" id="bib.bib36.1.1">508</span>(2),
+2946–2963 (Dec 2021). https://doi.org/10.1093/mnras/stab2589
+
+</span>
+</li>
+<li class="ltx_bibitem" id="bib.bib37">
+<span class="ltx_tag ltx_tag_bibitem">[37]</span>
+<span class="ltx_bibblock">
+Walmsley, M., Smith, L., Lintott, C., et al.: Galaxy Zoo: probabilistic
+morphology through Bayesian CNNs and active learning. Monthly Notices of the
+Royal Astronomical Society <span class="ltx_text ltx_font_bold" id="bib.bib37.1.1">491</span>(2), 1554–1574 (Jan 2020).
+https://doi.org/10.1093/mnras/stz2816
+
+</span>
+</li>
+</ul>
+</section>
+<div class="ltx_pagination ltx_role_newpage"></div>
+</article>
+</div>
+<footer class="ltx_page_footer">
+<div class="ltx_page_logo">Generated  on Thu Oct 24 15:59:09 2024 by <a class="ltx_LaTeXML_logo" href="http://dlmf.nist.gov/LaTeXML/"><span style="letter-spacing:-0.2em; margin-right:0.1em;">L<span class="ltx_font_smallcaps" style="position:relative; bottom:2.2pt;">a</span>T<span class="ltx_font_smallcaps" style="font-size:120%;position:relative; bottom:-0.2ex;">e</span></span><span style="font-size:90%; position:relative; bottom:-0.2ex;">XML</span><img alt="Mascot Sammy" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg=="/></a>
+</div></footer>
+</div>
+</body>
+</html>

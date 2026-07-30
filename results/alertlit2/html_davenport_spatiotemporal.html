@@ -1,0 +1,727 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>[1907.04443] SETI in the Spatio-Temporal Survey Domain</title><meta property="og:description" content="Traditional searches for extraterrestrial intelligence (SETI) or “technosignatures” focus on dedicated observations of single stars or regions in the sky to detect excess or transient emission from intelligent sources.…">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SETI in the Spatio-Temporal Survey Domain">
+<meta name="twitter:image:src" content="https://ar5iv.labs.arxiv.org/assets/ar5iv_card.png">
+<meta name="twitter:image:alt" content="ar5iv logo">
+<meta property="og:title" content="SETI in the Spatio-Temporal Survey Domain">
+<meta property="og:site_name" content="ar5iv">
+<meta property="og:image" content="https://ar5iv.labs.arxiv.org/assets/ar5iv_card.png">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://ar5iv.labs.arxiv.org/html/1907.04443">
+<link rel="canonical" target="_blank" href="https://ar5iv.labs.arxiv.org/html/1907.04443">
+
+<!--Generated on Tue Mar 19 17:35:11 2024 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<script>
+  function detectColorScheme(){
+    var theme="light";
+    var current_theme = localStorage.getItem("ar5iv_theme");
+    if(current_theme){
+      if(current_theme == "dark"){
+        theme = "dark";
+      } }
+    else if(!window.matchMedia) { return false; }
+    else if(window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      theme = "dark"; }
+    if (theme=="dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light"); } }
+
+  detectColorScheme();
+
+  function toggleColorScheme(){
+    var current_theme = localStorage.getItem("ar5iv_theme");
+    if (current_theme) {
+      if (current_theme == "light") {
+        localStorage.setItem("ar5iv_theme", "dark"); }
+      else {
+        localStorage.setItem("ar5iv_theme", "light"); } }
+    else {
+        localStorage.setItem("ar5iv_theme", "dark"); }
+    detectColorScheme(); }
+</script>
+<link media="all" rel="stylesheet" href="/assets/ar5iv-fonts.0.8.4.css"><link media="all" rel="stylesheet" href="/assets/ar5iv.0.8.5.css"><link media="all" rel="stylesheet" href="/assets/ar5iv-site.0.2.2.css">
+</head>
+<body>
+<div class="ltx_page_main">
+<div class="ltx_page_content">
+<article class="ltx_document ltx_authors_multiline">
+<h1 class="ltx_title ltx_title_document">SETI in the Spatio-Temporal Survey Domain
+</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">James. R. A. Davenport
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Department of Astronomy, University of Washington, Seattle, WA 98195, USA
+</span>
+<span class="ltx_contact ltx_role_affiliation">DIRAC Fellow
+</span></span></span>
+</div>
+
+<div class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p id="id2.id1" class="ltx_p">Traditional searches for extraterrestrial intelligence (SETI) or “technosignatures” focus on dedicated observations of single stars or regions in the sky to detect excess or transient emission from intelligent sources. The newest generation of synoptic time domain surveys enable an entirely new approach: spatio–temporal SETI, where technosignatures may be discovered from spatially resolved sources or multiple stars over time.
+Current optical time domain surveys such as ZTF and the Evryscope can probe 10–100 times more of the “Cosmic Haystack” parameter space volume than many radio SETI investigations. Small-aperture, high cadence surveys like Evryscope can be comparable in their Haystack volume completeness to deeper surveys including LSST. Investigations with these surveys can also be conducted at a fraction of the cost of dedicated SETI surveys, since they make use of data already being gathered.
+However, SETI methodology has not widely utilized such surveys, and the field is in need of new search algorithms that can account for signals in both the spatial and temporal domains.
+Here I describe the broad potential for modern wide-field time domain optical surveys to revolutionize our search for technosignatures, and illustrate some example SETI approaches using transiting exoplanets to form a distributed beacon.</p>
+</div>
+<span id="id1" class="ltx_note ltx_note_frontmatter ltx_role_software"><sup class="ltx_note_mark">†</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">†</sup><span class="ltx_note_type">software: </span>Python, IPython <cite class="ltx_cite ltx_citemacro_citep">(Pérez &amp; Granger, <a href="#bib.bib32" title="" class="ltx_ref">2007</a>)</cite>, NumPy <cite class="ltx_cite ltx_citemacro_citep">(Oliphant, <a href="#bib.bib30" title="" class="ltx_ref">2007</a>)</cite>, Matplotlib <cite class="ltx_cite ltx_citemacro_citep">(Hunter, <a href="#bib.bib15" title="" class="ltx_ref">2007</a>)</cite>, SciPy <cite class="ltx_cite ltx_citemacro_citep">(Jones et al., <a href="#bib.bib20" title="" class="ltx_ref">2001–</a>)</cite>, Pandas <cite class="ltx_cite ltx_citemacro_citep">(McKinney, <a href="#bib.bib29" title="" class="ltx_ref">2010</a>)</cite>, Astropy <cite class="ltx_cite ltx_citemacro_citep">(Astropy Collaboration et al., <a href="#bib.bib2" title="" class="ltx_ref">2013</a>)</cite></span></span></span>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.1" class="ltx_p">Despite more than half a century of activity, the Search for Extra-Terrestrial Intelligence (SETI) – also described as the search for “technosignatures” – is a field of study very much in its infancy.
+The lack of SETI research by the astronomical community is partially due to funding limitations in recent decades, as well as social pressures against studying SETI experienced by professional astronomers and organizations <cite class="ltx_cite ltx_citemacro_citep">(Wright &amp; Oman-Reagan, <a href="#bib.bib45" title="" class="ltx_ref">2018</a>)</cite>.
+Indeed, the volume of parameter space for SETI (or the search for a needle amongst the “Cosmic Haystack”) at radio wavelengths has been barely explored <cite class="ltx_cite ltx_citemacro_citet">Wright et al. (<a href="#bib.bib44" title="" class="ltx_ref">2018</a>)</cite>, and thus many obvious signals may be awaiting our discovery.
+However, the new era of surveys and data-driven discovery in astronomy holds great promise for revolutionizing SETI.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.1" class="ltx_p">Traditional SETI work requires time-consuming observations, often through dedicated monitoring of nearby stars by radio telescopes. Such observing campaigns are expensive and difficult to obtain given the competitive nature of telescope allocation. Recent progress for systematic “technosignature” searches has been made by Breakthrough Listen <cite class="ltx_cite ltx_citemacro_citep">(Worden et al., <a href="#bib.bib41" title="" class="ltx_ref">2017</a>; Isaacson et al., <a href="#bib.bib17" title="" class="ltx_ref">2017</a>)</cite>, primarily at radio wavelengths <cite class="ltx_cite ltx_citemacro_citep">(e.g. Price et al., <a href="#bib.bib33" title="" class="ltx_ref">2018</a>)</cite>.</p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p id="S1.p3.2" class="ltx_p">The SETI conundrum has always been not only “<span id="S1.p3.2.1" class="ltx_text ltx_font_italic">What should we look for?</span>”, but also <span id="S1.p3.2.2" class="ltx_text ltx_font_italic">“When, where, and how</span>”.
+While <cite class="ltx_cite ltx_citemacro_citet">Wright et al. (<a href="#bib.bib44" title="" class="ltx_ref">2018</a>)</cite> suggest the completeness of our search of the “Cosmic Haystack” at radio wavelengths is akin to the ratio of a small swimming pool compared to the Earth’s oceans (<math id="S1.p3.1.m1.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S1.p3.1.m1.1a"><mo id="S1.p3.1.m1.1.1" xref="S1.p3.1.m1.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S1.p3.1.m1.1b"><csymbol cd="latexml" id="S1.p3.1.m1.1.1.cmml" xref="S1.p3.1.m1.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S1.p3.1.m1.1c">\sim</annotation></semantics></math>10<sup id="S1.p3.2.3" class="ltx_sup"><span id="S1.p3.2.3.1" class="ltx_text ltx_font_italic">-20</span></sup>), SETI at optical wavelengths is surely many orders of magnitude less complete.
+Current optical-SETI is typically focused on searches for nanosecond pulses with specialized wide-field high-speed imaging <cite class="ltx_cite ltx_citemacro_citep">(Howard et al., <a href="#bib.bib14" title="" class="ltx_ref">2004</a>)</cite>, or unusual spectroscopic features <cite class="ltx_cite ltx_citemacro_citep">(Isaacson et al., <a href="#bib.bib16" title="" class="ltx_ref">2019</a>)</cite>.
+Wide-field time domain photometric surveys enable us to greatly expand our search in two key dimensions of parameter space: 1) collectively observing nearly the entire night sky, and 2) providing precision time-resolved monitoring over many years.</p>
+</div>
+<div id="S1.p4" class="ltx_para">
+<p id="S1.p4.1" class="ltx_p"><cite class="ltx_cite ltx_citemacro_citet">Djorgovski (<a href="#bib.bib8" title="" class="ltx_ref">2000</a>)</cite> highlighted the opportunity for a new age of generalized SETI using a virtual observatory made of digital sky surveys.
+New missions like the currently running Zwicky Transient Facility <cite class="ltx_cite ltx_citemacro_citep">(ZTF; Bellm, <a href="#bib.bib3" title="" class="ltx_ref">2014</a>)</cite> and the upcoming Large Synoptic Survey Telescope <cite class="ltx_cite ltx_citemacro_citep">(LSST; Ivezić et al., <a href="#bib.bib19" title="" class="ltx_ref">2008</a>)</cite> will be transformative in enabling both reproducible and cost-efficient SETI. By developing search strategies that utilize public survey databases and real-time “alert streams”, both of which are being developed to facilitate a wide range of science goals from these facilities, optical survey SETI can be conducted automatically. As new search algorithms are developed, these databases can be re-analyzed, providing a much-needed level of reproducibility and transparency that will help reduce the “giggle factor” stigma for SETI <cite class="ltx_cite ltx_citemacro_citep">(Wright &amp; Oman-Reagan, <a href="#bib.bib45" title="" class="ltx_ref">2018</a>)</cite>.</p>
+</div>
+<div id="S1.p5" class="ltx_para">
+<p id="S1.p5.1" class="ltx_p">In this paper I explore the potential for wide-field time domain surveys in conducting a new generation of technosignature searches, starting with an overview of the motivation for doing SETI with optical surveys in §<a href="#S2" title="2 Why Optical Survey SETI? ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>.
+In §<a href="#S3" title="3 Potential Strategies ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a> I describe the general principles behind technosignature searches in time domain surveys, including spatial over-densities of light curve signals and coordinated signals between multiple sources, for example.
+In §<a href="#S4" title="4 Comparing Optical Surveys to Radio Searches ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a> I introduce several relevant surveys, and use the “Cosmic Haystack” search volume metric developed by <cite class="ltx_cite ltx_citemacro_citet">Wright et al. (<a href="#bib.bib44" title="" class="ltx_ref">2018</a>)</cite> to quantitatively compare these surveys to current radio SETI approaches.
+The data-driven spatio-temporal domain explored by these surveys necessitates new SETI approaches be developed, and in §<a href="#S5" title="5 Example: Distribution of Transiting Exoplanets in the Kepler Field ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a> I outline an example signal where transiting planets around many stars could act as a spatially distributed beacon.
+Finally in §<a href="#S6" title="6 Discussion ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">6</span></a> I discuss ideas for other search approaches, and the advantages in cost and reproducibility of conducting SETI with current and upcoming optical time domain surveys.</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>Why Optical Survey SETI?</h2>
+
+<div id="S2.p1" class="ltx_para">
+<p id="S2.p1.1" class="ltx_p">Wide-field imaging surveys, and their associated infrastructure, are an ideal data source for carrying out technosignature searches that augment efforts in other wavelengths or with different observing strategies. By covering large portions of the night sky with repeated imaging, and with surveys that span years to decades in duration, we can substantially reduce the challenge of deciding <span id="S2.p1.1.1" class="ltx_text ltx_font_italic">when</span> and <span id="S2.p1.1.2" class="ltx_text ltx_font_italic">where</span> to look. Increasingly, multiple surveys obtain imaging that overlaps in both time and sky coverage, but with complementary properties (e.g. imaging depth, cadence, wavelength coverage), which allows for rapid vetting and characterization of rare or low signal-to-noise events. Surveys also produce important baseline information about the known objects in our Galaxy (e.g. their positions, temperatures, etc), which allows us to eliminate uncertainty on <span id="S2.p1.1.3" class="ltx_text ltx_font_italic">what</span> objects being targeted for SETI.</p>
+</div>
+<div id="S2.p2" class="ltx_para">
+<p id="S2.p2.1" class="ltx_p">Optical surveys are also an excellent platform for exploring <span id="S2.p2.1.1" class="ltx_text ltx_font_italic">how</span> to conduct technosignature searches. The large archives of data produced from these surveys become valuable legacies that enable science long after data acquisition has concluded. Searches for new phenomena in time-domain astronomy can be carried out both in the future with new observations and in the past by re-analyzing survey archives.
+Using survey archives for SETI as opposed to targeted observations of individual stars allows us to compare the results of competing algorithms or strategies, and enables reproducible science. Search algorithms are also portable, and ideally can be used to carry out SETI on any new survey or large ensemble of observations.
+As future survey data is gathered, new classes of technosignature signals may be detectable that rely on decades worth of data.
+Since any technosignature detection candidate should be the subject of great scrutiny, making the data and algorithms open and reproducible will be critical for comparison and independent validation.</p>
+</div>
+<div id="S2.p3" class="ltx_para">
+<p id="S2.p3.1" class="ltx_p">Large surveys, particularly ground-based efforts like LSST, are a highly prioritized component of the current and future development landscape in astronomy <cite class="ltx_cite ltx_citemacro_citep">(Council, <a href="#bib.bib7" title="" class="ltx_ref">2010</a>)</cite>. As such, great efforts are being made to develop survey tools and technologies to enable science from these missions, such as new database technologies <cite class="ltx_cite ltx_citemacro_citep">(Juric, <a href="#bib.bib21" title="" class="ltx_ref">2012</a>; Zečević et al., <a href="#bib.bib46" title="" class="ltx_ref">2019</a>)</cite>, real-time event broadcasting <cite class="ltx_cite ltx_citemacro_citep">(Patterson et al., <a href="#bib.bib31" title="" class="ltx_ref">2019</a>)</cite>, and real-time data analysis frameworks <cite class="ltx_cite ltx_citemacro_citep">(e.g. Schwamb et al., <a href="#bib.bib35" title="" class="ltx_ref">2019</a>)</cite>.
+The infrastructure needed to conduct technosignature searches with these large optical surveys is therefore already being developed. As with many areas of astrophysics in the “survey era”, the biggest bottleneck for SETI with these surveys is the support (both financial and social) for researchers to develop algorithms and mine the available data.</p>
+</div>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Potential Strategies</h2>
+
+<div id="S3.p1" class="ltx_para">
+<p id="S3.p1.1" class="ltx_p">SETI with large surveys falls into two basic approaches: 1) classify every object or phenomena in the data, and any remaining outliers are technosignature candidates <cite class="ltx_cite ltx_citemacro_citep">(Djorgovski, <a href="#bib.bib8" title="" class="ltx_ref">2000</a>)</cite>, or 2) search for specific “impossible” or unusual types of signals in the data, which I advocate for in this work. While the latter strategy does not guarantee a complete search for all SETI signals in the data, it is technically feasible for almost any time domain survey.</p>
+</div>
+<div id="S3.p2" class="ltx_para">
+<p id="S3.p2.1" class="ltx_p">Several types of signals have been suggested that may be viable for use with optical surveys. For example, <cite class="ltx_cite ltx_citemacro_citet">Villarroel et al. (<a href="#bib.bib39" title="" class="ltx_ref">2016</a>)</cite> searched two wide field, single-epoch optical surveys for objects “disappearing” over decades timescales. <cite class="ltx_cite ltx_citemacro_citet">Lacki (<a href="#bib.bib23" title="" class="ltx_ref">2019</a>)</cite> outline a method to search for specular reflections of interplanetary objects, particularly in wide field surveys. <cite class="ltx_cite ltx_citemacro_citet">Arnold (<a href="#bib.bib1" title="" class="ltx_ref">2005</a>)</cite> describe the the observable signature of transits from artificial objects, which could be searched for with exoplanet transit surveys. <cite class="ltx_cite ltx_citemacro_citet">Kipping &amp; Teachey (<a href="#bib.bib22" title="" class="ltx_ref">2016</a>)</cite> find that exoplanet transits could be hidden or “cloaked” to an observer by using directed laser emission.</p>
+</div>
+<div id="S3.p3" class="ltx_para">
+<p id="S3.p3.1" class="ltx_p">Here I describe a few general classes of technosignature signals that may be well suited to developing new detection algorithms for spatio-temporal surveys:</p>
+</div>
+<div id="S3.p4" class="ltx_para">
+<ol id="S3.I1" class="ltx_enumerate">
+<li id="S3.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="S3.I1.i1.p1" class="ltx_para">
+<p id="S3.I1.i1.p1.1" class="ltx_p"><span id="S3.I1.i1.p1.1.1" class="ltx_text ltx_font_bold">Unusual variability profiles or statistical distributions of fluxes </span>– either on short timescales such as Boyajian’s Star <cite class="ltx_cite ltx_citemacro_citep">(Boyajian et al., <a href="#bib.bib6" title="" class="ltx_ref">2015</a>)</cite>, or long timescales such as disappearing stars <cite class="ltx_cite ltx_citemacro_citep">(Villarroel et al., <a href="#bib.bib39" title="" class="ltx_ref">2016</a>)</cite> or occasionally missing transits <cite class="ltx_cite ltx_citemacro_citep">(Kipping &amp; Teachey, <a href="#bib.bib22" title="" class="ltx_ref">2016</a>)</cite></p>
+</div>
+</li>
+<li id="S3.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="S3.I1.i2.p1" class="ltx_para">
+<p id="S3.I1.i2.p1.1" class="ltx_p"><span id="S3.I1.i2.p1.1.1" class="ltx_text ltx_font_bold">Spatial correlations of events or phenomena </span>– e.g. coordination of transiting systems, or rebroadcasting events such as novae along the “SETI ellipse” that defines the ellipsoid for receiving synchronized signals from multiple transmitters
+<cite class="ltx_cite ltx_citemacro_citep">(Makovetskii, <a href="#bib.bib27" title="" class="ltx_ref">1977</a>; Lemarchand, <a href="#bib.bib26" title="" class="ltx_ref">1994</a>; Tarter, <a href="#bib.bib37" title="" class="ltx_ref">2001</a>; Shostak, <a href="#bib.bib36" title="" class="ltx_ref">2004</a>)</cite></p>
+</div>
+</li>
+<li id="S3.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span> 
+<div id="S3.I1.i3.p1" class="ltx_para">
+<p id="S3.I1.i3.p1.1" class="ltx_p"><span id="S3.I1.i3.p1.1.1" class="ltx_text ltx_font_bold">Spatial over-density or distribution</span> – e.g. an over-density of a given phenomena, such as within the “Earth Transit Zone” band of stars that would see Earth as a transiting exoplanet <cite class="ltx_cite ltx_citemacro_citep">(Heller &amp; Pudritz, <a href="#bib.bib13" title="" class="ltx_ref">2016</a>)</cite>, or in spatial clusters</p>
+</div>
+</li>
+<li id="S3.I1.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">4.</span> 
+<div id="S3.I1.i4.p1" class="ltx_para">
+<p id="S3.I1.i4.p1.1" class="ltx_p"><span id="S3.I1.i4.p1.1.1" class="ltx_text ltx_font_bold">Unnatural patterns</span> – particularly patterns of otherwise normal astrophysical variability (e.g. flares, pulsations, transits, etc), such as broadcasting a prime or fibonacci sequence using transits <cite class="ltx_cite ltx_citemacro_citep">(Arnold, <a href="#bib.bib1" title="" class="ltx_ref">2005</a>; Wright et al., <a href="#bib.bib43" title="" class="ltx_ref">2016</a>)</cite>.</p>
+</div>
+</li>
+</ol>
+</div>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Comparing Optical Surveys
+<br class="ltx_break">to Radio Searches</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p id="S4.p1.1" class="ltx_p">While the potential for optical time domain surveys to advance technosignature searches has been qualitatively laid out in §<a href="#S2" title="2 Why Optical Survey SETI? ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>, it is important to quantitatively compare them to traditional searches in the radio.
+<cite class="ltx_cite ltx_citemacro_citet">Wright et al. (<a href="#bib.bib44" title="" class="ltx_ref">2018</a>)</cite> have provided a framework to quantify the volume of observable parameter space covered by various SETI projects – dubbed the “Cosmic Haystack”. Though this metric was developed with radio surveys in mind, it is broadly applicable to surveys at other wavelengths that are not explicitly designed for SETI <cite class="ltx_cite ltx_citemacro_citep">(e.g. see Forgan, <a href="#bib.bib11" title="" class="ltx_ref">2019</a>)</cite>.</p>
+</div>
+<div id="S4.p2" class="ltx_para">
+<p id="S4.p2.3" class="ltx_p">For typical optical surveys using broadband photometry <cite class="ltx_cite ltx_citemacro_citep">(Djorgovski et al., <a href="#bib.bib9" title="" class="ltx_ref">2013</a>)</cite>, the key parameters that determine the Haystack volume coverage are the sky coverage (<math id="S4.p2.1.m1.1" class="ltx_Math" alttext="\Omega" display="inline"><semantics id="S4.p2.1.m1.1a"><mi mathvariant="normal" id="S4.p2.1.m1.1.1" xref="S4.p2.1.m1.1.1.cmml">Ω</mi><annotation-xml encoding="MathML-Content" id="S4.p2.1.m1.1b"><ci id="S4.p2.1.m1.1.1.cmml" xref="S4.p2.1.m1.1.1">Ω</ci></annotation-xml><annotation encoding="application/x-tex" id="S4.p2.1.m1.1c">\Omega</annotation></semantics></math> in sq deg), total integration time per target (<math id="S4.p2.2.m2.1" class="ltx_Math" alttext="T" display="inline"><semantics id="S4.p2.2.m2.1a"><mi id="S4.p2.2.m2.1.1" xref="S4.p2.2.m2.1.1.cmml">T</mi><annotation-xml encoding="MathML-Content" id="S4.p2.2.m2.1b"><ci id="S4.p2.2.m2.1.1.cmml" xref="S4.p2.2.m2.1.1">𝑇</ci></annotation-xml><annotation encoding="application/x-tex" id="S4.p2.2.m2.1c">T</annotation></semantics></math> in sec), and survey sensitivity or per-epoch depth (<math id="S4.p2.3.m3.1" class="ltx_Math" alttext="S" display="inline"><semantics id="S4.p2.3.m3.1a"><mi id="S4.p2.3.m3.1.1" xref="S4.p2.3.m3.1.1.cmml">S</mi><annotation-xml encoding="MathML-Content" id="S4.p2.3.m3.1b"><ci id="S4.p2.3.m3.1.1.cmml" xref="S4.p2.3.m3.1.1">𝑆</ci></annotation-xml><annotation encoding="application/x-tex" id="S4.p2.3.m3.1c">S</annotation></semantics></math> in Jy).
+Since these terms all act as scalers in the Haystack volume integration, surveys with different properties (e.g. few deep exposures versus many shallow exposures) can have comparably large Haystack coverage, filling out very different portions of the search volume. For maximum impact, SETI should therefore be conducted on many types of surveys.</p>
+</div>
+<div id="S4.p3" class="ltx_para">
+<p id="S4.p3.2" class="ltx_p">As a demonstration, I have computed the Haystack volume coverage for five representative current and future optical time domain surveys, as shown in Figure <a href="#S4.F1" title="Figure 1 ‣ 4 Comparing Optical Surveys to Radio Searches ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>. This includes the Catalina Real Time Transient Survey <cite class="ltx_cite ltx_citemacro_citep">(CRTS; Drake et al., <a href="#bib.bib10" title="" class="ltx_ref">2009</a>)</cite>, Zwicky Transient Facility <cite class="ltx_cite ltx_citemacro_citep">(ZTF; Bellm, <a href="#bib.bib3" title="" class="ltx_ref">2014</a>)</cite>, the Transiting Exoplanet Survey Satellite <cite class="ltx_cite ltx_citemacro_citep">(<span id="S4.p3.2.1.1" class="ltx_text ltx_font_slanted">TESS</span>; Ricker et al., <a href="#bib.bib34" title="" class="ltx_ref">2015</a>)</cite>, the Large Synoptic Survey Telescope <cite class="ltx_cite ltx_citemacro_citep">(LSST; Ivezić et al., <a href="#bib.bib19" title="" class="ltx_ref">2008</a>)</cite>, and the Evryscope <cite class="ltx_cite ltx_citemacro_citep">(Law et al., <a href="#bib.bib25" title="" class="ltx_ref">2015</a>)</cite>. These include space-based and ground-based surveys, and vary greatly in telescope collecting area, total numbers of visits, and survey footprint design.
+I have assumed sensitivity (<math id="S4.p3.1.m1.1" class="ltx_Math" alttext="S" display="inline"><semantics id="S4.p3.1.m1.1a"><mi id="S4.p3.1.m1.1.1" xref="S4.p3.1.m1.1.1.cmml">S</mi><annotation-xml encoding="MathML-Content" id="S4.p3.1.m1.1b"><ci id="S4.p3.1.m1.1.1.cmml" xref="S4.p3.1.m1.1.1">𝑆</ci></annotation-xml><annotation encoding="application/x-tex" id="S4.p3.1.m1.1c">S</annotation></semantics></math>) is the published per-visit photometric depth for each survey. The total integration time per target (<math id="S4.p3.2.m2.1" class="ltx_Math" alttext="T" display="inline"><semantics id="S4.p3.2.m2.1a"><mi id="S4.p3.2.m2.1.1" xref="S4.p3.2.m2.1.1.cmml">T</mi><annotation-xml encoding="MathML-Content" id="S4.p3.2.m2.1b"><ci id="S4.p3.2.m2.1.1.cmml" xref="S4.p3.2.m2.1.1">𝑇</ci></annotation-xml><annotation encoding="application/x-tex" id="S4.p3.2.m2.1c">T</annotation></semantics></math>) was computed as the average number of visits per target in the survey multiplied by the per-visit exposure time. The same power of transmitter is assumed as in <cite class="ltx_cite ltx_citemacro_citet">Wright et al. (<a href="#bib.bib44" title="" class="ltx_ref">2018</a>)</cite>.
+The code to generate the figures in this manuscript is online.<span id="footnote1" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_tag ltx_tag_note">1</span><a target="_blank" href="https://github.com/TheAstroFactory/survey_seti" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://github.com/TheAstroFactory/survey_seti</a></span></span></span></p>
+</div>
+<figure id="S4.F1" class="ltx_figure"><img src="" id="S4.F1.g1" class="ltx_graphics ltx_centering ltx_missing ltx_missing_image" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>
+Comparison of the 8-D “Cosmic Haystack” SETI search volume fraction, defined by <cite class="ltx_cite ltx_citemacro_citet">Wright et al. (<a href="#bib.bib44" title="" class="ltx_ref">2018</a>)</cite>, computed using five optical surveys with varying designs. The Haystack fraction covered by these optical surveys is 1-2 dex larger than typical SETI programs conducted in the radio.
+Evryscope <cite class="ltx_cite ltx_citemacro_citet">Law et al. (<a href="#bib.bib25" title="" class="ltx_ref">2015</a>)</cite> is the best survey considered here for SETI work, narrowly beating LSST due to its wide field of view and very dense light curves.</figcaption>
+</figure>
+<div id="S4.p4" class="ltx_para">
+<p id="S4.p4.5" class="ltx_p">Typical values for the Haystack fraction for radio SETI programs as presented in <cite class="ltx_cite ltx_citemacro_citet">Wright et al. (<a href="#bib.bib44" title="" class="ltx_ref">2018</a>)</cite> are in the range of <math id="S4.p4.1.m1.1" class="ltx_Math" alttext="\log V_{Haystack}=-20" display="inline"><semantics id="S4.p4.1.m1.1a"><mrow id="S4.p4.1.m1.1.1" xref="S4.p4.1.m1.1.1.cmml"><mrow id="S4.p4.1.m1.1.1.2" xref="S4.p4.1.m1.1.1.2.cmml"><mi id="S4.p4.1.m1.1.1.2.1" xref="S4.p4.1.m1.1.1.2.1.cmml">log</mi><mo lspace="0.167em" id="S4.p4.1.m1.1.1.2a" xref="S4.p4.1.m1.1.1.2.cmml">⁡</mo><msub id="S4.p4.1.m1.1.1.2.2" xref="S4.p4.1.m1.1.1.2.2.cmml"><mi id="S4.p4.1.m1.1.1.2.2.2" xref="S4.p4.1.m1.1.1.2.2.2.cmml">V</mi><mrow id="S4.p4.1.m1.1.1.2.2.3" xref="S4.p4.1.m1.1.1.2.2.3.cmml"><mi id="S4.p4.1.m1.1.1.2.2.3.2" xref="S4.p4.1.m1.1.1.2.2.3.2.cmml">H</mi><mo lspace="0em" rspace="0em" id="S4.p4.1.m1.1.1.2.2.3.1" xref="S4.p4.1.m1.1.1.2.2.3.1.cmml">​</mo><mi id="S4.p4.1.m1.1.1.2.2.3.3" xref="S4.p4.1.m1.1.1.2.2.3.3.cmml">a</mi><mo lspace="0em" rspace="0em" id="S4.p4.1.m1.1.1.2.2.3.1a" xref="S4.p4.1.m1.1.1.2.2.3.1.cmml">​</mo><mi id="S4.p4.1.m1.1.1.2.2.3.4" xref="S4.p4.1.m1.1.1.2.2.3.4.cmml">y</mi><mo lspace="0em" rspace="0em" id="S4.p4.1.m1.1.1.2.2.3.1b" xref="S4.p4.1.m1.1.1.2.2.3.1.cmml">​</mo><mi id="S4.p4.1.m1.1.1.2.2.3.5" xref="S4.p4.1.m1.1.1.2.2.3.5.cmml">s</mi><mo lspace="0em" rspace="0em" id="S4.p4.1.m1.1.1.2.2.3.1c" xref="S4.p4.1.m1.1.1.2.2.3.1.cmml">​</mo><mi id="S4.p4.1.m1.1.1.2.2.3.6" xref="S4.p4.1.m1.1.1.2.2.3.6.cmml">t</mi><mo lspace="0em" rspace="0em" id="S4.p4.1.m1.1.1.2.2.3.1d" xref="S4.p4.1.m1.1.1.2.2.3.1.cmml">​</mo><mi id="S4.p4.1.m1.1.1.2.2.3.7" xref="S4.p4.1.m1.1.1.2.2.3.7.cmml">a</mi><mo lspace="0em" rspace="0em" id="S4.p4.1.m1.1.1.2.2.3.1e" xref="S4.p4.1.m1.1.1.2.2.3.1.cmml">​</mo><mi id="S4.p4.1.m1.1.1.2.2.3.8" xref="S4.p4.1.m1.1.1.2.2.3.8.cmml">c</mi><mo lspace="0em" rspace="0em" id="S4.p4.1.m1.1.1.2.2.3.1f" xref="S4.p4.1.m1.1.1.2.2.3.1.cmml">​</mo><mi id="S4.p4.1.m1.1.1.2.2.3.9" xref="S4.p4.1.m1.1.1.2.2.3.9.cmml">k</mi></mrow></msub></mrow><mo id="S4.p4.1.m1.1.1.1" xref="S4.p4.1.m1.1.1.1.cmml">=</mo><mrow id="S4.p4.1.m1.1.1.3" xref="S4.p4.1.m1.1.1.3.cmml"><mo id="S4.p4.1.m1.1.1.3a" xref="S4.p4.1.m1.1.1.3.cmml">−</mo><mn id="S4.p4.1.m1.1.1.3.2" xref="S4.p4.1.m1.1.1.3.2.cmml">20</mn></mrow></mrow><annotation-xml encoding="MathML-Content" id="S4.p4.1.m1.1b"><apply id="S4.p4.1.m1.1.1.cmml" xref="S4.p4.1.m1.1.1"><eq id="S4.p4.1.m1.1.1.1.cmml" xref="S4.p4.1.m1.1.1.1"></eq><apply id="S4.p4.1.m1.1.1.2.cmml" xref="S4.p4.1.m1.1.1.2"><log id="S4.p4.1.m1.1.1.2.1.cmml" xref="S4.p4.1.m1.1.1.2.1"></log><apply id="S4.p4.1.m1.1.1.2.2.cmml" xref="S4.p4.1.m1.1.1.2.2"><csymbol cd="ambiguous" id="S4.p4.1.m1.1.1.2.2.1.cmml" xref="S4.p4.1.m1.1.1.2.2">subscript</csymbol><ci id="S4.p4.1.m1.1.1.2.2.2.cmml" xref="S4.p4.1.m1.1.1.2.2.2">𝑉</ci><apply id="S4.p4.1.m1.1.1.2.2.3.cmml" xref="S4.p4.1.m1.1.1.2.2.3"><times id="S4.p4.1.m1.1.1.2.2.3.1.cmml" xref="S4.p4.1.m1.1.1.2.2.3.1"></times><ci id="S4.p4.1.m1.1.1.2.2.3.2.cmml" xref="S4.p4.1.m1.1.1.2.2.3.2">𝐻</ci><ci id="S4.p4.1.m1.1.1.2.2.3.3.cmml" xref="S4.p4.1.m1.1.1.2.2.3.3">𝑎</ci><ci id="S4.p4.1.m1.1.1.2.2.3.4.cmml" xref="S4.p4.1.m1.1.1.2.2.3.4">𝑦</ci><ci id="S4.p4.1.m1.1.1.2.2.3.5.cmml" xref="S4.p4.1.m1.1.1.2.2.3.5">𝑠</ci><ci id="S4.p4.1.m1.1.1.2.2.3.6.cmml" xref="S4.p4.1.m1.1.1.2.2.3.6">𝑡</ci><ci id="S4.p4.1.m1.1.1.2.2.3.7.cmml" xref="S4.p4.1.m1.1.1.2.2.3.7">𝑎</ci><ci id="S4.p4.1.m1.1.1.2.2.3.8.cmml" xref="S4.p4.1.m1.1.1.2.2.3.8">𝑐</ci><ci id="S4.p4.1.m1.1.1.2.2.3.9.cmml" xref="S4.p4.1.m1.1.1.2.2.3.9">𝑘</ci></apply></apply></apply><apply id="S4.p4.1.m1.1.1.3.cmml" xref="S4.p4.1.m1.1.1.3"><minus id="S4.p4.1.m1.1.1.3.1.cmml" xref="S4.p4.1.m1.1.1.3"></minus><cn type="integer" id="S4.p4.1.m1.1.1.3.2.cmml" xref="S4.p4.1.m1.1.1.3.2">20</cn></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.p4.1.m1.1c">\log V_{Haystack}=-20</annotation></semantics></math> to <math id="S4.p4.2.m2.1" class="ltx_Math" alttext="-17" display="inline"><semantics id="S4.p4.2.m2.1a"><mrow id="S4.p4.2.m2.1.1" xref="S4.p4.2.m2.1.1.cmml"><mo id="S4.p4.2.m2.1.1a" xref="S4.p4.2.m2.1.1.cmml">−</mo><mn id="S4.p4.2.m2.1.1.2" xref="S4.p4.2.m2.1.1.2.cmml">17</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.p4.2.m2.1b"><apply id="S4.p4.2.m2.1.1.cmml" xref="S4.p4.2.m2.1.1"><minus id="S4.p4.2.m2.1.1.1.cmml" xref="S4.p4.2.m2.1.1"></minus><cn type="integer" id="S4.p4.2.m2.1.1.2.cmml" xref="S4.p4.2.m2.1.1.2">17</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.p4.2.m2.1c">-17</annotation></semantics></math>. However, these programs are mostly targeted observations of nearby stars. The largest program featured in <cite class="ltx_cite ltx_citemacro_citet">Wright et al. (<a href="#bib.bib44" title="" class="ltx_ref">2018</a>)</cite>, by <cite class="ltx_cite ltx_citemacro_citet">Tingay et al. (<a href="#bib.bib38" title="" class="ltx_ref">2018</a>)</cite>, had <math id="S4.p4.3.m3.1" class="ltx_Math" alttext="\Omega=400" display="inline"><semantics id="S4.p4.3.m3.1a"><mrow id="S4.p4.3.m3.1.1" xref="S4.p4.3.m3.1.1.cmml"><mi mathvariant="normal" id="S4.p4.3.m3.1.1.2" xref="S4.p4.3.m3.1.1.2.cmml">Ω</mi><mo id="S4.p4.3.m3.1.1.1" xref="S4.p4.3.m3.1.1.1.cmml">=</mo><mn id="S4.p4.3.m3.1.1.3" xref="S4.p4.3.m3.1.1.3.cmml">400</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.p4.3.m3.1b"><apply id="S4.p4.3.m3.1.1.cmml" xref="S4.p4.3.m3.1.1"><eq id="S4.p4.3.m3.1.1.1.cmml" xref="S4.p4.3.m3.1.1.1"></eq><ci id="S4.p4.3.m3.1.1.2.cmml" xref="S4.p4.3.m3.1.1.2">Ω</ci><cn type="integer" id="S4.p4.3.m3.1.1.3.cmml" xref="S4.p4.3.m3.1.1.3">400</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.p4.3.m3.1c">\Omega=400</annotation></semantics></math> sq deg and <math id="S4.p4.4.m4.1" class="ltx_Math" alttext="T=10800" display="inline"><semantics id="S4.p4.4.m4.1a"><mrow id="S4.p4.4.m4.1.1" xref="S4.p4.4.m4.1.1.cmml"><mi id="S4.p4.4.m4.1.1.2" xref="S4.p4.4.m4.1.1.2.cmml">T</mi><mo id="S4.p4.4.m4.1.1.1" xref="S4.p4.4.m4.1.1.1.cmml">=</mo><mn id="S4.p4.4.m4.1.1.3" xref="S4.p4.4.m4.1.1.3.cmml">10800</mn></mrow><annotation-xml encoding="MathML-Content" id="S4.p4.4.m4.1b"><apply id="S4.p4.4.m4.1.1.cmml" xref="S4.p4.4.m4.1.1"><eq id="S4.p4.4.m4.1.1.1.cmml" xref="S4.p4.4.m4.1.1.1"></eq><ci id="S4.p4.4.m4.1.1.2.cmml" xref="S4.p4.4.m4.1.1.2">𝑇</ci><cn type="integer" id="S4.p4.4.m4.1.1.3.cmml" xref="S4.p4.4.m4.1.1.3">10800</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.p4.4.m4.1c">T=10800</annotation></semantics></math> seconds, and yielded <math id="S4.p4.5.m5.1" class="ltx_Math" alttext="\log V_{Haystack}=-17.36" display="inline"><semantics id="S4.p4.5.m5.1a"><mrow id="S4.p4.5.m5.1.1" xref="S4.p4.5.m5.1.1.cmml"><mrow id="S4.p4.5.m5.1.1.2" xref="S4.p4.5.m5.1.1.2.cmml"><mi id="S4.p4.5.m5.1.1.2.1" xref="S4.p4.5.m5.1.1.2.1.cmml">log</mi><mo lspace="0.167em" id="S4.p4.5.m5.1.1.2a" xref="S4.p4.5.m5.1.1.2.cmml">⁡</mo><msub id="S4.p4.5.m5.1.1.2.2" xref="S4.p4.5.m5.1.1.2.2.cmml"><mi id="S4.p4.5.m5.1.1.2.2.2" xref="S4.p4.5.m5.1.1.2.2.2.cmml">V</mi><mrow id="S4.p4.5.m5.1.1.2.2.3" xref="S4.p4.5.m5.1.1.2.2.3.cmml"><mi id="S4.p4.5.m5.1.1.2.2.3.2" xref="S4.p4.5.m5.1.1.2.2.3.2.cmml">H</mi><mo lspace="0em" rspace="0em" id="S4.p4.5.m5.1.1.2.2.3.1" xref="S4.p4.5.m5.1.1.2.2.3.1.cmml">​</mo><mi id="S4.p4.5.m5.1.1.2.2.3.3" xref="S4.p4.5.m5.1.1.2.2.3.3.cmml">a</mi><mo lspace="0em" rspace="0em" id="S4.p4.5.m5.1.1.2.2.3.1a" xref="S4.p4.5.m5.1.1.2.2.3.1.cmml">​</mo><mi id="S4.p4.5.m5.1.1.2.2.3.4" xref="S4.p4.5.m5.1.1.2.2.3.4.cmml">y</mi><mo lspace="0em" rspace="0em" id="S4.p4.5.m5.1.1.2.2.3.1b" xref="S4.p4.5.m5.1.1.2.2.3.1.cmml">​</mo><mi id="S4.p4.5.m5.1.1.2.2.3.5" xref="S4.p4.5.m5.1.1.2.2.3.5.cmml">s</mi><mo lspace="0em" rspace="0em" id="S4.p4.5.m5.1.1.2.2.3.1c" xref="S4.p4.5.m5.1.1.2.2.3.1.cmml">​</mo><mi id="S4.p4.5.m5.1.1.2.2.3.6" xref="S4.p4.5.m5.1.1.2.2.3.6.cmml">t</mi><mo lspace="0em" rspace="0em" id="S4.p4.5.m5.1.1.2.2.3.1d" xref="S4.p4.5.m5.1.1.2.2.3.1.cmml">​</mo><mi id="S4.p4.5.m5.1.1.2.2.3.7" xref="S4.p4.5.m5.1.1.2.2.3.7.cmml">a</mi><mo lspace="0em" rspace="0em" id="S4.p4.5.m5.1.1.2.2.3.1e" xref="S4.p4.5.m5.1.1.2.2.3.1.cmml">​</mo><mi id="S4.p4.5.m5.1.1.2.2.3.8" xref="S4.p4.5.m5.1.1.2.2.3.8.cmml">c</mi><mo lspace="0em" rspace="0em" id="S4.p4.5.m5.1.1.2.2.3.1f" xref="S4.p4.5.m5.1.1.2.2.3.1.cmml">​</mo><mi id="S4.p4.5.m5.1.1.2.2.3.9" xref="S4.p4.5.m5.1.1.2.2.3.9.cmml">k</mi></mrow></msub></mrow><mo id="S4.p4.5.m5.1.1.1" xref="S4.p4.5.m5.1.1.1.cmml">=</mo><mrow id="S4.p4.5.m5.1.1.3" xref="S4.p4.5.m5.1.1.3.cmml"><mo id="S4.p4.5.m5.1.1.3a" xref="S4.p4.5.m5.1.1.3.cmml">−</mo><mn id="S4.p4.5.m5.1.1.3.2" xref="S4.p4.5.m5.1.1.3.2.cmml">17.36</mn></mrow></mrow><annotation-xml encoding="MathML-Content" id="S4.p4.5.m5.1b"><apply id="S4.p4.5.m5.1.1.cmml" xref="S4.p4.5.m5.1.1"><eq id="S4.p4.5.m5.1.1.1.cmml" xref="S4.p4.5.m5.1.1.1"></eq><apply id="S4.p4.5.m5.1.1.2.cmml" xref="S4.p4.5.m5.1.1.2"><log id="S4.p4.5.m5.1.1.2.1.cmml" xref="S4.p4.5.m5.1.1.2.1"></log><apply id="S4.p4.5.m5.1.1.2.2.cmml" xref="S4.p4.5.m5.1.1.2.2"><csymbol cd="ambiguous" id="S4.p4.5.m5.1.1.2.2.1.cmml" xref="S4.p4.5.m5.1.1.2.2">subscript</csymbol><ci id="S4.p4.5.m5.1.1.2.2.2.cmml" xref="S4.p4.5.m5.1.1.2.2.2">𝑉</ci><apply id="S4.p4.5.m5.1.1.2.2.3.cmml" xref="S4.p4.5.m5.1.1.2.2.3"><times id="S4.p4.5.m5.1.1.2.2.3.1.cmml" xref="S4.p4.5.m5.1.1.2.2.3.1"></times><ci id="S4.p4.5.m5.1.1.2.2.3.2.cmml" xref="S4.p4.5.m5.1.1.2.2.3.2">𝐻</ci><ci id="S4.p4.5.m5.1.1.2.2.3.3.cmml" xref="S4.p4.5.m5.1.1.2.2.3.3">𝑎</ci><ci id="S4.p4.5.m5.1.1.2.2.3.4.cmml" xref="S4.p4.5.m5.1.1.2.2.3.4">𝑦</ci><ci id="S4.p4.5.m5.1.1.2.2.3.5.cmml" xref="S4.p4.5.m5.1.1.2.2.3.5">𝑠</ci><ci id="S4.p4.5.m5.1.1.2.2.3.6.cmml" xref="S4.p4.5.m5.1.1.2.2.3.6">𝑡</ci><ci id="S4.p4.5.m5.1.1.2.2.3.7.cmml" xref="S4.p4.5.m5.1.1.2.2.3.7">𝑎</ci><ci id="S4.p4.5.m5.1.1.2.2.3.8.cmml" xref="S4.p4.5.m5.1.1.2.2.3.8">𝑐</ci><ci id="S4.p4.5.m5.1.1.2.2.3.9.cmml" xref="S4.p4.5.m5.1.1.2.2.3.9">𝑘</ci></apply></apply></apply><apply id="S4.p4.5.m5.1.1.3.cmml" xref="S4.p4.5.m5.1.1.3"><minus id="S4.p4.5.m5.1.1.3.1.cmml" xref="S4.p4.5.m5.1.1.3"></minus><cn type="float" id="S4.p4.5.m5.1.1.3.2.cmml" xref="S4.p4.5.m5.1.1.3.2">17.36</cn></apply></apply></annotation-xml><annotation encoding="application/x-tex" id="S4.p4.5.m5.1c">\log V_{Haystack}=-17.36</annotation></semantics></math>.</p>
+</div>
+<div id="S4.p5" class="ltx_para">
+<p id="S4.p5.1" class="ltx_p">The wide field optical surveys I have examined here all out perform the radio programs explored by <cite class="ltx_cite ltx_citemacro_citet">Wright et al. (<a href="#bib.bib44" title="" class="ltx_ref">2018</a>)</cite> in their Haystack fraction. Due to its very wide field coverage, and near continuous monitoring each night, Evryscope (abbreviated as “Evry” in Figure <a href="#S4.F1" title="Figure 1 ‣ 4 Comparing Optical Surveys to Radio Searches ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>) ranks as the best optical survey for technosignature searches of those surveyed here. The remarkable similarity in Haystack fraction between Evryscope, which uses 7-cm diameter telescopes, and the 8.4-m LSST survey reinforces the need to sample the Haystack volume with as many different survey “shapes” as possible. Note that since the area coverage, photometric depth, and cadence of these two surveys are so different, they will each be sensitive to very different specific SETI detection properties, such as signal repetition timescales or amplitudes.</p>
+</div>
+<div id="S4.p6" class="ltx_para">
+<p id="S4.p6.1" class="ltx_p"><cite class="ltx_cite ltx_citemacro_citet">Wright et al. (<a href="#bib.bib44" title="" class="ltx_ref">2018</a>)</cite> likened their Haystack fraction to searching for fish in a hot tub or small swimming pool compared to the Earth’s oceans. Our results for SETI with optical surveys are closer to 1-2 Olympic sized swimming pools (each 2500 m<sup id="S4.p6.1.1" class="ltx_sup">3</sup>, according FINA standards) compared to the Earth’s oceans<span id="footnote2" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_tag ltx_tag_note">2</span>Calculation done via Wolfram<math id="footnote2.m1.1" class="ltx_Math" alttext="|" display="inline"><semantics id="footnote2.m1.1b"><mo fence="false" stretchy="false" id="footnote2.m1.1.1" xref="footnote2.m1.1.1.cmml">|</mo><annotation-xml encoding="MathML-Content" id="footnote2.m1.1c"><ci id="footnote2.m1.1.1.cmml" xref="footnote2.m1.1.1">|</ci></annotation-xml><annotation encoding="application/x-tex" id="footnote2.m1.1d">|</annotation></semantics></math>Alpha</span></span></span>. While optical surveys still only cover a tiny fraction of the total volume of parameter space, it is a substantial improvement.</p>
+</div>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">5 </span>Example: Distribution of Transiting Exoplanets in the <span id="S5.1.1" class="ltx_text ltx_font_italic">Kepler</span> Field</h2>
+
+<div id="S5.p1" class="ltx_para">
+<p id="S5.p1.1" class="ltx_p">To illustrate the potential for possible technosignature searches in the spatio-temporal survey domain, in this section I demonstrate two examples of signals that rely on samples of transiting exoplanets. Transits are a promising target for SETI since they are relatively efficient to find over wide areas with surveys like <span id="S5.p1.1.1" class="ltx_text ltx_font_slanted">Kepler</span> <cite class="ltx_cite ltx_citemacro_citep">(Borucki et al., <a href="#bib.bib5" title="" class="ltx_ref">2010</a>)</cite> or <span id="S5.p1.1.2" class="ltx_text ltx_font_slanted">TESS</span>, and they represent a natural object to attract attention with, known as a “Schelling point” <cite class="ltx_cite ltx_citemacro_citep">(Wright, <a href="#bib.bib42" title="" class="ltx_ref">2017</a>)</cite>. Creating such a beacon requires either generating a transiting system with unusual properties or patterns <cite class="ltx_cite ltx_citemacro_citep">(e.g. Arnold, <a href="#bib.bib1" title="" class="ltx_ref">2005</a>; Kipping &amp; Teachey, <a href="#bib.bib22" title="" class="ltx_ref">2016</a>; Forgan, <a href="#bib.bib12" title="" class="ltx_ref">2017</a>)</cite>, or as outlined in §<a href="#S3" title="3 Potential Strategies ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a> an unusual <span id="S5.p1.1.3" class="ltx_text ltx_font_italic">distribution</span> of transiting systems. The two examples outlined here explore the latter scenario, though I note the former is also well suited to automated approaches that would make use of future surveys and should be developed further. While I do not advocate these <span id="S5.p1.1.4" class="ltx_text ltx_font_italic">specific</span> metrics are ideal for SETI, they demonstrate the type of signals we should design software systems to find in modern surveys.</p>
+</div>
+<section id="S5.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.1 </span>Two-Point Correlation Function</h3>
+
+<div id="S5.SS1.p1" class="ltx_para">
+<p id="S5.SS1.p1.1" class="ltx_p">The easiest conceptual method to search for a technosignature beacon in the spatial distribution of exoplanets would be looking for over-densities, i.e. regions with an unusually large number of transiting systems relative to the local density of stars. However this requires a large and very uniform sampling of exoplanets per square degree to determine if the density is unusual. Such spatially uniform samples are difficult to achieve since e.g. bright stars can saturate large regions.</p>
+</div>
+<div id="S5.SS1.p2" class="ltx_para">
+<p id="S5.SS1.p2.1" class="ltx_p">Another simple statistical test is to measure the distribution of exoplanet systems using the two-point angular correlation function <cite class="ltx_cite ltx_citemacro_citep">(Landy &amp; Szalay, <a href="#bib.bib24" title="" class="ltx_ref">1993</a>)</cite>. This method measures the probability of finding two sources separated by a given radial distance, and is often used in cosmology to characterize the distribution of galaxies on cosmological scales,. The two-point correlation function is easily measured thanks to generalized functions from packages such as <span id="S5.SS1.p2.1.1" class="ltx_text ltx_font_typewriter">astroML</span> <cite class="ltx_cite ltx_citemacro_citep">(Ivezić et al., <a href="#bib.bib18" title="" class="ltx_ref">2014</a>)</cite>, and more efficient approaches have been produced that can scale to very large datasets <cite class="ltx_cite ltx_citemacro_citep">(e.g. Wang et al., <a href="#bib.bib40" title="" class="ltx_ref">2013</a>)</cite>.</p>
+</div>
+<figure id="S5.F2" class="ltx_figure"><img src="/html/1907.04443/assets/x2.png" id="S5.F2.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="231" height="162" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>two point correlation function of transiting exoplanets versus all stars in the kepler field. No obvious signs of engineering of the exoplanet population as a whole. exoplanets are actually slightly less correlated on small size scales than stars in general, which may be an artifact of detected planets being around brighter stars in the sample (i.e. having lower total density).
+While overly simple, this example demonstrates one possible test that could be done using existing and future exoplanet surveys.</figcaption>
+</figure>
+<div id="S5.SS1.p3" class="ltx_para">
+<p id="S5.SS1.p3.1" class="ltx_p">In Figure <a href="#S5.F2" title="Figure 2 ‣ 5.1 Two-Point Correlation Function ‣ 5 Example: Distribution of Transiting Exoplanets in the Kepler Field ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> I show the two-point correlation function up to spatial scales of 5 degrees for both the sample of 2,324 transiting exoplanets discovered by the <span id="S5.SS1.p3.1.1" class="ltx_text ltx_font_slanted">Kepler</span> primary mission,<span id="footnote3" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">3</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">3</sup><span class="ltx_tag ltx_tag_note">3</span>Catalog from <a target="_blank" href="http://exoplanetarchive.ipac.caltech.edu" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://exoplanetarchive.ipac.caltech.edu</a></span></span></span> and for 201,312 stars in the <span id="S5.SS1.p3.1.2" class="ltx_text ltx_font_slanted">Kepler</span> field. Since the sample of exoplanets was relatively small, uncertainties shown in Figure <a href="#S5.F2" title="Figure 2 ‣ 5.1 Two-Point Correlation Function ‣ 5 Example: Distribution of Transiting Exoplanets in the Kepler Field ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> were estimated by bootstrapping the correlation function 500 times. Here the correlation was done using only the (RA, Dec) coordinates for each star or exoplanet system, but can also be done for additional dimensions (e.g. including distance, orbital properties, etc).</p>
+</div>
+<div id="S5.SS1.p4" class="ltx_para">
+<p id="S5.SS1.p4.1" class="ltx_p">The correlation functions shown in Figure <a href="#S5.F2" title="Figure 2 ‣ 5.1 Two-Point Correlation Function ‣ 5 Example: Distribution of Transiting Exoplanets in the Kepler Field ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> are not substantively different between the exoplanet and field star populations, indicating no signs of a large-scale “beacon” based on the distribution of exoplanets in the <span id="S5.SS1.p4.1.1" class="ltx_text ltx_font_slanted">Kepler</span> field. The slight differences in the correlation functions are not unexpected, given how sensitive this metric is to sample selection biases and non-uniformity. Indeed, even in “simple” scenarios of galaxy population analyses from well-studied surveys, considerable effort must be made to compare the correlation functions between different samples <cite class="ltx_cite ltx_citemacro_citep">(e.g. Wang et al., <a href="#bib.bib40" title="" class="ltx_ref">2013</a>)</cite>. As the 2-D correlation requires very homogeneous and large samples of sources to plausibly detect outliers with, it would be an inefficient metric for a civilization to base a beacon around.</p>
+</div>
+</section>
+<section id="S5.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.2 </span>Clusters of Similarity</h3>
+
+<div id="S5.SS2.p1" class="ltx_para">
+<p id="S5.SS2.p1.1" class="ltx_p">Rather than searching for an exoplanet beacon consisting of outliers in spatial density or distribution (e.g. §<a href="#S5.SS1" title="5.1 Two-Point Correlation Function ‣ 5 Example: Distribution of Transiting Exoplanets in the Kepler Field ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5.1</span></a>), we can consider groups of systems that are unusually similar in some way. In the simplest case this could take the form of many closely clustered stars with transiting exoplanets, where each planet had the same radius, transit depth, transit ephemeris (or transit midpoint), or orbital period, for example. The assumption here is that a civilization would have engineered this unlikely set of transiting systems, like a lighthouse, in order to be noticed by early astronomers who are characterizing the exoplanet demographics of our Galaxy (i.e. us). This SETI approach relies on both the spatial and temporal information contained in exoplanet-hunting surveys like <span id="S5.SS2.p1.1.1" class="ltx_text ltx_font_slanted">Kepler</span> or <span id="S5.SS2.p1.1.2" class="ltx_text ltx_font_slanted">TESS</span>.
+Here I demonstrate a simple algorithm for searching for such clusters of exoplanets with unusually similar orbital periods.</p>
+</div>
+<div id="S5.SS2.p2" class="ltx_para">
+<p id="S5.SS2.p2.1" class="ltx_p">As with many proposed technosignature signals, the key to this spatially distributed beacon system being effective is that the similarity metric for the cluster of stars must be substantially outside the realm of possible values that nature can produce. A civilization constructing such a beacon would also need to be aware of the natural distribution of exoplanet periods in order to determine the precision needed to place their transiting bodies. Thus we don’t have to arbitrarily choose which orbital periods are interesting to search over or how close in period they need to be to count as a technosignature candidate, but instead we can adopt a data-driven approach where our thresholds are empirically set based on a probability threshold.</p>
+</div>
+<div id="S5.SS2.p3" class="ltx_para">
+<p id="S5.SS2.p3.1" class="ltx_p">For this demonstration I selected the same sample used in §<a href="#S5.SS1" title="5.1 Two-Point Correlation Function ‣ 5 Example: Distribution of Transiting Exoplanets in the Kepler Field ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5.1</span></a> of 2,324 known transiting exoplanet systems within the <span id="S5.SS2.p3.1.1" class="ltx_text ltx_font_slanted">Kepler</span> field, with orbital periods ranging from 0.35 days to 1,322.5 days.
+The NearestNeighbor clustering algorithm from <span id="S5.SS2.p3.1.2" class="ltx_text ltx_font_typewriter">scikit-learn</span> for <math id="S5.SS2.p3.1.m1.1" class="ltx_Math" alttext="k=3" display="inline"><semantics id="S5.SS2.p3.1.m1.1a"><mrow id="S5.SS2.p3.1.m1.1.1" xref="S5.SS2.p3.1.m1.1.1.cmml"><mi id="S5.SS2.p3.1.m1.1.1.2" xref="S5.SS2.p3.1.m1.1.1.2.cmml">k</mi><mo id="S5.SS2.p3.1.m1.1.1.1" xref="S5.SS2.p3.1.m1.1.1.1.cmml">=</mo><mn id="S5.SS2.p3.1.m1.1.1.3" xref="S5.SS2.p3.1.m1.1.1.3.cmml">3</mn></mrow><annotation-xml encoding="MathML-Content" id="S5.SS2.p3.1.m1.1b"><apply id="S5.SS2.p3.1.m1.1.1.cmml" xref="S5.SS2.p3.1.m1.1.1"><eq id="S5.SS2.p3.1.m1.1.1.1.cmml" xref="S5.SS2.p3.1.m1.1.1.1"></eq><ci id="S5.SS2.p3.1.m1.1.1.2.cmml" xref="S5.SS2.p3.1.m1.1.1.2">𝑘</ci><cn type="integer" id="S5.SS2.p3.1.m1.1.1.3.cmml" xref="S5.SS2.p3.1.m1.1.1.3">3</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S5.SS2.p3.1.m1.1c">k=3</annotation></semantics></math> was used to easily identify and compute the projected angular distances between the nearest stars for each of the 2,324 exoplanet systems (i.e. each exoplanet and its two nearest neighbors). Even using the “brute force” algorithm, this clustering takes less than 1 second to compute for such small samples of objects. Since many of the exoplanets in the sample reside in multi-planet systems, the NearestNeighbor algorithm will produce clusters with multiple object separations of exactly zero. I therefore further restricted my sample to clusters that contain no multi-planet systems, leaving a total of 1,217 clusters constructed of three single transiting systems. Note also that due to the uniform but stochastic sampling of exoplanet systems across the field (see §<a href="#S5.SS1" title="5.1 Two-Point Correlation Function ‣ 5 Example: Distribution of Transiting Exoplanets in the Kepler Field ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5.1</span></a>), some clusters are partially or fully redundant (i.e. the same three stars can be selected in differing orders in up to three separate clusters). I do not eliminate this redundancy in this demonstration.</p>
+</div>
+<div id="S5.SS2.p4" class="ltx_para">
+<p id="S5.SS2.p4.1" class="ltx_p">For each <math id="S5.SS2.p4.1.m1.1" class="ltx_Math" alttext="k=3" display="inline"><semantics id="S5.SS2.p4.1.m1.1a"><mrow id="S5.SS2.p4.1.m1.1.1" xref="S5.SS2.p4.1.m1.1.1.cmml"><mi id="S5.SS2.p4.1.m1.1.1.2" xref="S5.SS2.p4.1.m1.1.1.2.cmml">k</mi><mo id="S5.SS2.p4.1.m1.1.1.1" xref="S5.SS2.p4.1.m1.1.1.1.cmml">=</mo><mn id="S5.SS2.p4.1.m1.1.1.3" xref="S5.SS2.p4.1.m1.1.1.3.cmml">3</mn></mrow><annotation-xml encoding="MathML-Content" id="S5.SS2.p4.1.m1.1b"><apply id="S5.SS2.p4.1.m1.1.1.cmml" xref="S5.SS2.p4.1.m1.1.1"><eq id="S5.SS2.p4.1.m1.1.1.1.cmml" xref="S5.SS2.p4.1.m1.1.1.1"></eq><ci id="S5.SS2.p4.1.m1.1.1.2.cmml" xref="S5.SS2.p4.1.m1.1.1.2">𝑘</ci><cn type="integer" id="S5.SS2.p4.1.m1.1.1.3.cmml" xref="S5.SS2.p4.1.m1.1.1.3">3</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S5.SS2.p4.1.m1.1c">k=3</annotation></semantics></math> star cluster I compute two metrics that should be considered when searching for spatially distributed technosignature beacons, shown in Figure <a href="#S5.F3" title="Figure 3 ‣ 5.2 Clusters of Similarity ‣ 5 Example: Distribution of Transiting Exoplanets in the Kepler Field ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>. First I simply calculate the mean cartesian distance of the three exoplanet systems about the “center” or average spatial position in 2D space (RA, Dec). This enables us to potentially identify clusters of transiting systems that are unusually close together in projected separation. Second I compute the similarity of the orbital periods for the three exoplanets in each cluster. This similarity metric here is defined as the range (i.e. max period – min period) divided by the mean orbital period of the three stars.
+This period metric is easy to interpret, allowing us to identify clusters of transiting exoplanets whose orbital periods deviate by less than a given percentage.</p>
+</div>
+<figure id="S5.F3" class="ltx_figure"><img src="/html/1907.04443/assets/x3.png" id="S5.F3.g1" class="ltx_graphics ltx_centering ltx_img_square" width="230" height="228" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>Fractional range of orbital periods versus the mean angular separation for KNN clusters in (RA, Dec) space of transiting exoplanet systems in <span id="S5.F3.6.1" class="ltx_text ltx_font_slanted">Kepler</span>. This sample only includes systems with only a single known transiting exoplanet. These KNN clusters have typical spatial separations of <math id="S5.F3.3.m1.1" class="ltx_Math" alttext="\sim" display="inline"><semantics id="S5.F3.3.m1.1b"><mo id="S5.F3.3.m1.1.1" xref="S5.F3.3.m1.1.1.cmml">∼</mo><annotation-xml encoding="MathML-Content" id="S5.F3.3.m1.1c"><csymbol cd="latexml" id="S5.F3.3.m1.1.1.cmml" xref="S5.F3.3.m1.1.1">similar-to</csymbol></annotation-xml><annotation encoding="application/x-tex" id="S5.F3.3.m1.1d">\sim</annotation></semantics></math>0.1 deg. For <math id="S5.F3.4.m2.1" class="ltx_Math" alttext="K" display="inline"><semantics id="S5.F3.4.m2.1b"><mi id="S5.F3.4.m2.1.1" xref="S5.F3.4.m2.1.1.cmml">K</mi><annotation-xml encoding="MathML-Content" id="S5.F3.4.m2.1c"><ci id="S5.F3.4.m2.1.1.cmml" xref="S5.F3.4.m2.1.1">𝐾</ci></annotation-xml><annotation encoding="application/x-tex" id="S5.F3.4.m2.1d">K</annotation></semantics></math>=3, three unique clusters have a spread in their orbital periods below 6% (red points). However this is not a significant outlier in the orbital period similarity, and these clusters are not unusually close together in their spatial separation.</figcaption>
+</figure>
+<div id="S5.SS2.p5" class="ltx_para">
+<p id="S5.SS2.p5.3" class="ltx_p">I find no anonymously self-similar <math id="S5.SS2.p5.1.m1.1" class="ltx_Math" alttext="k=3" display="inline"><semantics id="S5.SS2.p5.1.m1.1a"><mrow id="S5.SS2.p5.1.m1.1.1" xref="S5.SS2.p5.1.m1.1.1.cmml"><mi id="S5.SS2.p5.1.m1.1.1.2" xref="S5.SS2.p5.1.m1.1.1.2.cmml">k</mi><mo id="S5.SS2.p5.1.m1.1.1.1" xref="S5.SS2.p5.1.m1.1.1.1.cmml">=</mo><mn id="S5.SS2.p5.1.m1.1.1.3" xref="S5.SS2.p5.1.m1.1.1.3.cmml">3</mn></mrow><annotation-xml encoding="MathML-Content" id="S5.SS2.p5.1.m1.1b"><apply id="S5.SS2.p5.1.m1.1.1.cmml" xref="S5.SS2.p5.1.m1.1.1"><eq id="S5.SS2.p5.1.m1.1.1.1.cmml" xref="S5.SS2.p5.1.m1.1.1.1"></eq><ci id="S5.SS2.p5.1.m1.1.1.2.cmml" xref="S5.SS2.p5.1.m1.1.1.2">𝑘</ci><cn type="integer" id="S5.SS2.p5.1.m1.1.1.3.cmml" xref="S5.SS2.p5.1.m1.1.1.3">3</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S5.SS2.p5.1.m1.1c">k=3</annotation></semantics></math> clusters of exoplanets in the <span id="S5.SS2.p5.3.1" class="ltx_text ltx_font_slanted">Kepler</span> sample considered here. The cluster with the most similar period distribution consists of Kepler-1295, Kepler-1612, and Kepler-612. This triplet of systems have orbital periods within 5.1% of each other (mean period of <math id="S5.SS2.p5.2.m2.1" class="ltx_Math" alttext="P=3.82" display="inline"><semantics id="S5.SS2.p5.2.m2.1a"><mrow id="S5.SS2.p5.2.m2.1.1" xref="S5.SS2.p5.2.m2.1.1.cmml"><mi id="S5.SS2.p5.2.m2.1.1.2" xref="S5.SS2.p5.2.m2.1.1.2.cmml">P</mi><mo id="S5.SS2.p5.2.m2.1.1.1" xref="S5.SS2.p5.2.m2.1.1.1.cmml">=</mo><mn id="S5.SS2.p5.2.m2.1.1.3" xref="S5.SS2.p5.2.m2.1.1.3.cmml">3.82</mn></mrow><annotation-xml encoding="MathML-Content" id="S5.SS2.p5.2.m2.1b"><apply id="S5.SS2.p5.2.m2.1.1.cmml" xref="S5.SS2.p5.2.m2.1.1"><eq id="S5.SS2.p5.2.m2.1.1.1.cmml" xref="S5.SS2.p5.2.m2.1.1.1"></eq><ci id="S5.SS2.p5.2.m2.1.1.2.cmml" xref="S5.SS2.p5.2.m2.1.1.2">𝑃</ci><cn type="float" id="S5.SS2.p5.2.m2.1.1.3.cmml" xref="S5.SS2.p5.2.m2.1.1.3">3.82</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S5.SS2.p5.2.m2.1c">P=3.82</annotation></semantics></math> days), only <math id="S5.SS2.p5.3.m3.1" class="ltx_Math" alttext="2.4\sigma" display="inline"><semantics id="S5.SS2.p5.3.m3.1a"><mrow id="S5.SS2.p5.3.m3.1.1" xref="S5.SS2.p5.3.m3.1.1.cmml"><mn id="S5.SS2.p5.3.m3.1.1.2" xref="S5.SS2.p5.3.m3.1.1.2.cmml">2.4</mn><mo lspace="0em" rspace="0em" id="S5.SS2.p5.3.m3.1.1.1" xref="S5.SS2.p5.3.m3.1.1.1.cmml">​</mo><mi id="S5.SS2.p5.3.m3.1.1.3" xref="S5.SS2.p5.3.m3.1.1.3.cmml">σ</mi></mrow><annotation-xml encoding="MathML-Content" id="S5.SS2.p5.3.m3.1b"><apply id="S5.SS2.p5.3.m3.1.1.cmml" xref="S5.SS2.p5.3.m3.1.1"><times id="S5.SS2.p5.3.m3.1.1.1.cmml" xref="S5.SS2.p5.3.m3.1.1.1"></times><cn type="float" id="S5.SS2.p5.3.m3.1.1.2.cmml" xref="S5.SS2.p5.3.m3.1.1.2">2.4</cn><ci id="S5.SS2.p5.3.m3.1.1.3.cmml" xref="S5.SS2.p5.3.m3.1.1.3">𝜎</ci></apply></annotation-xml><annotation encoding="application/x-tex" id="S5.SS2.p5.3.m3.1c">2.4\sigma</annotation></semantics></math> from the average of the period range distribution in Figure <a href="#S5.F3" title="Figure 3 ‣ 5.2 Clusters of Similarity ‣ 5 Example: Distribution of Transiting Exoplanets in the Kepler Field ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>.
+This cluster also has a mean separation of 0.09 deg, only slightly closer than the typical cluster separation of 0.11 deg.</p>
+</div>
+</section>
+</section>
+<section id="S6" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">6 </span>Discussion</h2>
+
+<div id="S6.p1" class="ltx_para">
+<p id="S6.p1.1" class="ltx_p">In this paper I have presented the great potential for using algorithms to search for SETI or “technosignature” signals in modern spatio–temporal surveys, such as TESS, ZTF, or LSST. Though these surveys are primarily in optical wavelengths as opposed to traditional SETI at radio frequencies, there are many promising algorithmic approaches that may be considered. Further, these searches can “piggyback” on datasets and computational resources being developed for other science goals.
+This SETI approach also connects with the rise of data science and statistical methods in astronomy to characterize, and find outliers in, large datasets. Interestingly, the search for technosignatures is possibly one of only a few areas where “big data” survey astronomy intersects with the growing astrobiology discipline. As <cite class="ltx_cite ltx_citemacro_citet">Berea et al. (<a href="#bib.bib4" title="" class="ltx_ref">2019</a>)</cite> note, expertise in many complementary domains of data analysis (e.g. cybersecurity) may also be useful for advancing survey SETI.</p>
+</div>
+<div id="S6.p2" class="ltx_para">
+<p id="S6.p2.3" class="ltx_p">To illustrate the sorts of SETI algorithms that could be easily constructed based on existing data analysis and machine learning libraries, I have outlined a few simple approaches to search for beacons based on the distribution of exoplanets in the <span id="S6.p2.3.1" class="ltx_text ltx_font_slanted">Kepler</span> field.
+The most detailed example in §<a href="#S5.SS2" title="5.2 Clusters of Similarity ‣ 5 Example: Distribution of Transiting Exoplanets in the Kepler Field ‣ SETI in the Spatio-Temporal Survey Domain" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5.2</span></a> searches for clusters of transiting exoplanet systems with unusually similar properties.
+One obvious simplification of this approach as outlined is the need to pre-define the number of stars in each cluster, here assumed to be <math id="S6.p2.1.m1.1" class="ltx_Math" alttext="k=3" display="inline"><semantics id="S6.p2.1.m1.1a"><mrow id="S6.p2.1.m1.1.1" xref="S6.p2.1.m1.1.1.cmml"><mi id="S6.p2.1.m1.1.1.2" xref="S6.p2.1.m1.1.1.2.cmml">k</mi><mo id="S6.p2.1.m1.1.1.1" xref="S6.p2.1.m1.1.1.1.cmml">=</mo><mn id="S6.p2.1.m1.1.1.3" xref="S6.p2.1.m1.1.1.3.cmml">3</mn></mrow><annotation-xml encoding="MathML-Content" id="S6.p2.1.m1.1b"><apply id="S6.p2.1.m1.1.1.cmml" xref="S6.p2.1.m1.1.1"><eq id="S6.p2.1.m1.1.1.1.cmml" xref="S6.p2.1.m1.1.1.1"></eq><ci id="S6.p2.1.m1.1.1.2.cmml" xref="S6.p2.1.m1.1.1.2">𝑘</ci><cn type="integer" id="S6.p2.1.m1.1.1.3.cmml" xref="S6.p2.1.m1.1.1.3">3</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S6.p2.1.m1.1c">k=3</annotation></semantics></math>. However, it is trivial in practice to adjust this number, or scan over many possible values. Indeed, I explored <math id="S6.p2.2.m2.1" class="ltx_Math" alttext="k=2" display="inline"><semantics id="S6.p2.2.m2.1a"><mrow id="S6.p2.2.m2.1.1" xref="S6.p2.2.m2.1.1.cmml"><mi id="S6.p2.2.m2.1.1.2" xref="S6.p2.2.m2.1.1.2.cmml">k</mi><mo id="S6.p2.2.m2.1.1.1" xref="S6.p2.2.m2.1.1.1.cmml">=</mo><mn id="S6.p2.2.m2.1.1.3" xref="S6.p2.2.m2.1.1.3.cmml">2</mn></mrow><annotation-xml encoding="MathML-Content" id="S6.p2.2.m2.1b"><apply id="S6.p2.2.m2.1.1.cmml" xref="S6.p2.2.m2.1.1"><eq id="S6.p2.2.m2.1.1.1.cmml" xref="S6.p2.2.m2.1.1.1"></eq><ci id="S6.p2.2.m2.1.1.2.cmml" xref="S6.p2.2.m2.1.1.2">𝑘</ci><cn type="integer" id="S6.p2.2.m2.1.1.3.cmml" xref="S6.p2.2.m2.1.1.3">2</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S6.p2.2.m2.1c">k=2</annotation></semantics></math> through <math id="S6.p2.3.m3.1" class="ltx_Math" alttext="k=8" display="inline"><semantics id="S6.p2.3.m3.1a"><mrow id="S6.p2.3.m3.1.1" xref="S6.p2.3.m3.1.1.cmml"><mi id="S6.p2.3.m3.1.1.2" xref="S6.p2.3.m3.1.1.2.cmml">k</mi><mo id="S6.p2.3.m3.1.1.1" xref="S6.p2.3.m3.1.1.1.cmml">=</mo><mn id="S6.p2.3.m3.1.1.3" xref="S6.p2.3.m3.1.1.3.cmml">8</mn></mrow><annotation-xml encoding="MathML-Content" id="S6.p2.3.m3.1b"><apply id="S6.p2.3.m3.1.1.cmml" xref="S6.p2.3.m3.1.1"><eq id="S6.p2.3.m3.1.1.1.cmml" xref="S6.p2.3.m3.1.1.1"></eq><ci id="S6.p2.3.m3.1.1.2.cmml" xref="S6.p2.3.m3.1.1.2">𝑘</ci><cn type="integer" id="S6.p2.3.m3.1.1.3.cmml" xref="S6.p2.3.m3.1.1.3">8</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="S6.p2.3.m3.1c">k=8</annotation></semantics></math> clusters with this data, and found no substantial outliers in either the orbital period similarity or spatial separation.</p>
+</div>
+<div id="S6.p3" class="ltx_para">
+<p id="S6.p3.1" class="ltx_p">While I’ve explored self-similarity between spatially proximate exoplanet systems as the search metric here, one could instead pick densities of the <span id="S6.p3.1.1" class="ltx_text ltx_font_italic">most unlikely</span> transiting systems. Since long-period eclipses are geometrically the most rare to detect, a spatial cluster of long-period exoplanets should immediately stand out as being very unlikely, even if the period similarity and average separation is not exceptional. Adding such a long-period or unlikely-period cluster-finding algorithm to a future survey SETI toolkit is straightforward. However, these systems are also the most time-intensive to detect for an observer, and so a more efficient beacon for both construction and detection would consist of short-period systems.</p>
+</div>
+<div id="S6.p4" class="ltx_para">
+<p id="S6.p4.1" class="ltx_p">As described in the introduction, sky surveys enable a wide range of algorithmic approaches to use for SETI. Real-time alert streams from surveys like ZTF and soon LSST <cite class="ltx_cite ltx_citemacro_citep">(e.g. Schwamb et al., <a href="#bib.bib35" title="" class="ltx_ref">2019</a>)</cite> make rapid identification and follow-up of unusual variability straightforward to implement. Other approaches could include monitoring for over-densities in the spatial distribution of alerts, especially within the Earth Transit Zone <cite class="ltx_cite ltx_citemacro_citep">(Heller &amp; Pudritz, <a href="#bib.bib13" title="" class="ltx_ref">2016</a>)</cite>, searching for slowly appearing or disappearing stars on decades timescales <cite class="ltx_cite ltx_citemacro_citep">(Villarroel et al., <a href="#bib.bib39" title="" class="ltx_ref">2016</a>)</cite>, or looking for coordinated variability with e.g. novae along the “SETI ellipsoid” over wide areas of the sky <cite class="ltx_cite ltx_citemacro_citep">(Lemarchand, <a href="#bib.bib26" title="" class="ltx_ref">1994</a>)</cite>. Unnatural motions of objects could also be searched for in sky surveys. This might be akin to searching for interstellar asteroids <cite class="ltx_cite ltx_citemacro_citep">(e.g. Mamajek, <a href="#bib.bib28" title="" class="ltx_ref">2017</a>)</cite> whose trajectories suddenly change. In future work we will explore a framework for searching the ZTF alert stream for unusual or “impossible” sequences of events in light curves.</p>
+</div>
+<div id="S6.p5" class="ltx_para">
+<p id="S6.p5.1" class="ltx_p">Finally, while the opportunity for conducing SETI research using large surveys has been noted for nearly two decades <cite class="ltx_cite ltx_citemacro_citep">(e.g. Djorgovski, <a href="#bib.bib8" title="" class="ltx_ref">2000</a>)</cite>, what has been lacking is the development of general-use algorithms or software packages designed for such searches. This is an area in clear need of further exploration, and an opportunity for contribution to SETI by many software-minded researchers from all disciplines.</p>
+</div>
+<div class="ltx_acknowledgements">J.R.A.D. thanks Nicholas M. Law and Jason T. Wright for their ongoing conversations in developing this idea, Andrew P. V. Siemion and the Berkeley SETI Research Center team for hosting me for an enlightening and motivating visit, the Research Corporation for Scientific Advancement for hosting the 2018 TDA Scialog meeting, and Daniela Huppenkothen for comments that greatly improved this manuscript.
+J.R.A.D. acknowledges support from the DIRAC Institute in the Department of Astronomy at the University of Washington. The DIRAC Institute is supported through generous gifts from the Charles and Lisa Simonyi Fund for Arts and Sciences, and the Washington Research Foundation.
+This paper includes data collected by the Kepler mission. Funding for the Kepler mission is provided by the NASA Science Mission directorate.
+This research has made use of the NASA Exoplanet Archive, which is operated by the California Institute of Technology, under contract with the National Aeronautics and Space Administration under the Exoplanet Exploration Program.
+This work made use of the gaia-kepler.fun crossmatch database created by Megan Bedell.
+
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul class="ltx_biblist">
+<li id="bib.bib1" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Arnold (2005)</span>
+<span class="ltx_bibblock">
+Arnold, L. 2005, in SF2A-2005: Semaine de l’Astrophysique Francaise, ed.
+F. Casoli, T. Contini, J. M. Hameury, &amp; L. Pagani, 207
+
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Astropy Collaboration et al. (2013)</span>
+<span class="ltx_bibblock">
+Astropy Collaboration, Robitaille, T. P., Tollerud, E. J., et al. 2013,
+A&amp;A, 558, A33
+
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Bellm (2014)</span>
+<span class="ltx_bibblock">
+Bellm, E. 2014, in The Third Hot-wiring the Transient Universe Workshop, ed.
+P. R. Wozniak, M. J. Graham, A. A. Mahabal, &amp; R. Seaman, 27–33
+
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Berea et al. (2019)</span>
+<span class="ltx_bibblock">
+Berea, A., Croft, S., &amp; Angerhausen, D. 2019, arXiv e-prints,
+arXiv:1903.08381
+
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Borucki et al. (2010)</span>
+<span class="ltx_bibblock">
+Borucki, W. J., Koch, D., Basri, G., et al. 2010, Science, 327, 977
+
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Boyajian et al. (2015)</span>
+<span class="ltx_bibblock">
+Boyajian, T. S., LaCourse, D. M., Rappaport, S. A., et al. 2015, ArXiv
+e-prints, arXiv:1509.03622
+
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Council (2010)</span>
+<span class="ltx_bibblock">
+Council, N. R. 2010, New Worlds, New Horizons in Astronomy and Astrophysics
+(Washington, DC: The National Academies Press), doi:10.17226/12951
+
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Djorgovski (2000)</span>
+<span class="ltx_bibblock">
+Djorgovski, S. 2000, in Astronomical Society of the Pacific Conference
+Series, Vol. 213, Bioastronomy 99, ed. G. Lemarchand &amp; K. Meech, 519
+
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Djorgovski et al. (2013)</span>
+<span class="ltx_bibblock">
+Djorgovski, S. G., Mahabal, A., Drake, A., Graham, M., &amp; Donalek, C.
+2013, Sky Surveys, ed. T. D. Oswalt &amp; H. E. Bond, 223
+
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Drake et al. (2009)</span>
+<span class="ltx_bibblock">
+Drake, A. J., Djorgovski, S. G., Mahabal, A., et al. 2009, ApJ, 696,
+870
+
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Forgan (2019)</span>
+<span class="ltx_bibblock">
+Forgan, D. 2019, Research Notes of the AAS, 3, 32
+
+</span>
+</li>
+<li id="bib.bib12" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Forgan (2017)</span>
+<span class="ltx_bibblock">
+Forgan, D. H. 2017, ArXiv e-prints, arXiv:1707.03730
+
+</span>
+</li>
+<li id="bib.bib13" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Heller &amp; Pudritz (2016)</span>
+<span class="ltx_bibblock">
+Heller, R., &amp; Pudritz, R. E. 2016, Astrobiology, 16, 259
+
+</span>
+</li>
+<li id="bib.bib14" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Howard et al. (2004)</span>
+<span class="ltx_bibblock">
+Howard, A. W., Horowitz, P., Wilkinson, D. T., et al. 2004, ApJ, 613,
+1270
+
+</span>
+</li>
+<li id="bib.bib15" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Hunter (2007)</span>
+<span class="ltx_bibblock">
+Hunter, J. D. 2007, Computing In Science &amp; Engineering, 9, 90
+
+</span>
+</li>
+<li id="bib.bib16" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Isaacson et al. (2019)</span>
+<span class="ltx_bibblock">
+Isaacson, H., Siemion, A. P. V., Marcy, G. W., et al. 2019, PASP, 131,
+014201
+
+</span>
+</li>
+<li id="bib.bib17" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Isaacson et al. (2017)</span>
+<span class="ltx_bibblock">
+—. 2017, PASP, 129, 054501
+
+</span>
+</li>
+<li id="bib.bib18" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Ivezić et al. (2014)</span>
+<span class="ltx_bibblock">
+Ivezić, Ž., Connolly, A., Vanderplas, J., &amp; Gray, A. 2014,
+Statistics, Data Mining and Machine Learning in Astronomy (Princeton
+University Press)
+
+</span>
+</li>
+<li id="bib.bib19" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Ivezić et al. (2008)</span>
+<span class="ltx_bibblock">
+Ivezić, Ž., Tyson, J. A., Acosta, E., et al. 2008, ArXiv
+e-prints, # 0805.2366, arXiv:0805.2366
+
+</span>
+</li>
+<li id="bib.bib20" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Jones et al. (2001–)</span>
+<span class="ltx_bibblock">
+Jones, E., Oliphant, T., Peterson, P., et al. 2001–, SciPy: Open source
+scientific tools for Python, , , [Online; accessed ¡today¿]
+
+</span>
+</li>
+<li id="bib.bib21" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Juric (2012)</span>
+<span class="ltx_bibblock">
+Juric, M. 2012, LSD: Large Survey Database framework, , , ascl:1209.003
+
+</span>
+</li>
+<li id="bib.bib22" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kipping &amp; Teachey (2016)</span>
+<span class="ltx_bibblock">
+Kipping, D. M., &amp; Teachey, A. 2016, MNRAS, 459, 1233
+
+</span>
+</li>
+<li id="bib.bib23" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Lacki (2019)</span>
+<span class="ltx_bibblock">
+Lacki, B. C. 2019, arXiv e-prints, arXiv:1903.05839
+
+</span>
+</li>
+<li id="bib.bib24" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Landy &amp; Szalay (1993)</span>
+<span class="ltx_bibblock">
+Landy, S. D., &amp; Szalay, A. S. 1993, ApJ, 412, 64
+
+</span>
+</li>
+<li id="bib.bib25" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Law et al. (2015)</span>
+<span class="ltx_bibblock">
+Law, N. M., Fors, O., Ratzloff, J., et al. 2015, PASP, 127, 234
+
+</span>
+</li>
+<li id="bib.bib26" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Lemarchand (1994)</span>
+<span class="ltx_bibblock">
+Lemarchand, G. A. 1994, Ap&amp;SS, 214, 209
+
+</span>
+</li>
+<li id="bib.bib27" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Makovetskii (1977)</span>
+<span class="ltx_bibblock">
+Makovetskii, P. V. 1977, Soviet Ast., 21, 251
+
+</span>
+</li>
+<li id="bib.bib28" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Mamajek (2017)</span>
+<span class="ltx_bibblock">
+Mamajek, E. 2017, Research Notes of the American Astronomical Society, 1, 21
+
+</span>
+</li>
+<li id="bib.bib29" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">McKinney (2010)</span>
+<span class="ltx_bibblock">
+McKinney, W. 2010, in Proceedings of the 9th Python in Science Conference, ed.
+S. van der Walt &amp; J. Millman, 51 – 56
+
+</span>
+</li>
+<li id="bib.bib30" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Oliphant (2007)</span>
+<span class="ltx_bibblock">
+Oliphant, T. E. 2007, Computing in Science Engineering, 9, 10
+
+</span>
+</li>
+<li id="bib.bib31" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Patterson et al. (2019)</span>
+<span class="ltx_bibblock">
+Patterson, M. T., Bellm, E. C., Rusholme, B., et al. 2019, PASP, 131,
+018001
+
+</span>
+</li>
+<li id="bib.bib32" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Pérez &amp; Granger (2007)</span>
+<span class="ltx_bibblock">
+Pérez, F., &amp; Granger, B. E. 2007, Computing in Science and Engineering, 9,
+21
+
+</span>
+</li>
+<li id="bib.bib33" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Price et al. (2018)</span>
+<span class="ltx_bibblock">
+Price, D. C., MacMahon, D. H. E., Lebofsky, M., et al. 2018, ArXiv
+e-prints, arXiv:1804.04571
+
+</span>
+</li>
+<li id="bib.bib34" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Ricker et al. (2015)</span>
+<span class="ltx_bibblock">
+Ricker, G. R., Winn, J. N., Vanderspek, R., et al. 2015, Journal of
+Astronomical Telescopes, Instruments, and Systems, 1, 014003
+
+</span>
+</li>
+<li id="bib.bib35" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Schwamb et al. (2019)</span>
+<span class="ltx_bibblock">
+Schwamb, M. E., Hsieh, H., Bannister, M. T., et al. 2019, Research Notes of
+the AAS, 3, 51
+
+</span>
+</li>
+<li id="bib.bib36" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Shostak (2004)</span>
+<span class="ltx_bibblock">
+Shostak, S. 2004, in IAU Symposium, Vol. 213, Bioastronomy 2002: Life Among
+the Stars, ed. R. Norris &amp; F. Stootman, 409
+
+</span>
+</li>
+<li id="bib.bib37" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Tarter (2001)</span>
+<span class="ltx_bibblock">
+Tarter, J. 2001, ARA&amp;A, 39, 511
+
+</span>
+</li>
+<li id="bib.bib38" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Tingay et al. (2018)</span>
+<span class="ltx_bibblock">
+Tingay, S. J., Tremblay, C. D., &amp; Croft, S. 2018, ApJ, 856, 31
+
+</span>
+</li>
+<li id="bib.bib39" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Villarroel et al. (2016)</span>
+<span class="ltx_bibblock">
+Villarroel, B., Imaz, I., &amp; Bergstedt, J. 2016, AJ, 152, 76
+
+</span>
+</li>
+<li id="bib.bib40" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wang et al. (2013)</span>
+<span class="ltx_bibblock">
+Wang, Y., Brunner, R. J., &amp; Dolence, J. C. 2013, MNRAS, 432, 1961
+
+</span>
+</li>
+<li id="bib.bib41" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Worden et al. (2017)</span>
+<span class="ltx_bibblock">
+Worden, S. P., Drew, J., Siemion, A., et al. 2017, Acta Astronautica,
+139, 98
+
+</span>
+</li>
+<li id="bib.bib42" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wright (2017)</span>
+<span class="ltx_bibblock">
+Wright, J. T. 2017, Exoplanets and SETI, 186
+
+</span>
+</li>
+<li id="bib.bib43" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wright et al. (2016)</span>
+<span class="ltx_bibblock">
+Wright, J. T., Cartier, K. M. S., Zhao, M., Jontof-Hutter, D., &amp;
+Ford, E. B. 2016, ApJ, 816, 17
+
+</span>
+</li>
+<li id="bib.bib44" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wright et al. (2018)</span>
+<span class="ltx_bibblock">
+Wright, J. T., Kanodia, S., &amp; Lubar, E. 2018, AJ, 156, 260
+
+</span>
+</li>
+<li id="bib.bib45" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wright &amp; Oman-Reagan (2018)</span>
+<span class="ltx_bibblock">
+Wright, J. T., &amp; Oman-Reagan, M. P. 2018, International Journal of
+Astrobiology, 17, 177
+
+</span>
+</li>
+<li id="bib.bib46" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Zečević et al. (2019)</span>
+<span class="ltx_bibblock">
+Zečević, P., Slater, C. T., Jurić, M., et al. 2019, arXiv
+e-prints, arXiv:1905.09034
+
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+<div class="ar5iv-footer"><a href="/html/1907.04442" class="ar5iv-nav-button ar5iv-nav-button-prev">◄</a>
+    <a class="ar5iv-home-button" href="/"><img height="40" alt="ar5iv homepage" src="/assets/ar5iv.png"></a>
+    <a href="/feeling_lucky" class="ar5iv-text-button">Feeling<br>lucky?</a>
+    <a href="/land_of_honey_and_milk" rel="nofollow" aria-hidden="true" tabindex="-1"></a>
+    <a href="/log/1907.04443" class="ar5iv-text-button ar5iv-severity-warning">Conversion<br>report</a>
+    <a class="ar5iv-text-button" target="_blank" href="https://github.com/dginev/ar5iv/issues/new?template=improve-article--arxiv-id-.md&title=Improve+article+1907.04443">Report<br>an issue</a>
+    <a href="https://arxiv.org/abs/1907.04443" class="ar5iv-text-button arxiv-ui-theme">View&nbsp;original<br>on&nbsp;arXiv</a><a href="/html/1907.04444" class="ar5iv-nav-button ar5iv-nav-button-next">►</a>
+</div><footer class="ltx_page_footer">
+<a class="ar5iv-toggle-color-scheme" href="javascript:toggleColorScheme()" title="Toggle ar5iv color scheme"><span class="color-scheme-icon"></span></a>
+<a class="ar5iv-footer-button" href="https://arxiv.org/help/license" target="_blank">Copyright</a>
+<a class="ar5iv-footer-button" href="https://arxiv.org/help/policies/privacy_policy" target="_blank">Privacy Policy</a>
+
+<div class="ltx_page_logo">Generated  on Tue Mar 19 17:35:11 2024 by <a target="_blank" href="http://dlmf.nist.gov/LaTeXML/" class="ltx_LaTeXML_logo"><span style="letter-spacing:-0.2em; margin-right:0.1em;">L<span class="ltx_font_smallcaps" style="position:relative; bottom:2.2pt;">a</span>T<span class="ltx_font_smallcaps" style="font-size:120%;position:relative; bottom:-0.2ex;">e</span></span><span style="font-size:90%; position:relative; bottom:-0.2ex;">XML</span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==" alt="Mascot Sammy"></a>
+</div></footer>
+</div>
+
+    <script>
+      var canMathML = typeof(MathMLElement) == "function";
+      if (!canMathML) {
+        var body = document.querySelector("body");
+        body.firstElementChild.setAttribute('style', 'opacity: 0;');
+        var loading = document.createElement("div");
+        loading.setAttribute("id", "mathjax-loading-spinner");
+        var message = document.createElement("div");
+        message.setAttribute("id", "mathjax-loading-message");
+        message.innerText = "Typesetting Equations...";
+        body.prepend(loading);
+        body.prepend(message);
+
+        var el = document.createElement("script");
+        el.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js";
+        document.querySelector("head").appendChild(el);
+
+        window.MathJax = {
+          startup: {
+            pageReady: () => {
+              return MathJax.startup.defaultPageReady().then(() => {
+                body.removeChild(loading);
+                body.removeChild(message);
+                body.firstElementChild.removeAttribute('style');
+              }); } } };
+      }
+    </script>
+    <script>
+    // Auxiliary function, building the preview feature when
+    // an inline citation is clicked
+    function clicked_cite(e) {
+      e.preventDefault();
+      let cite = this.closest('.ltx_cite');
+      let next = cite.nextSibling;
+      if (next && next.nodeType == Node.ELEMENT_NODE && next.getAttribute('class') == "ar5iv-bibitem-preview") {
+        next.remove();
+        return; }
+      // Before adding a preview modal,
+      // cleanup older previews, in case they're still open
+      document.querySelectorAll('span.ar5iv-bibitem-preview').forEach(function(node) {
+        node.remove();
+      })
+
+      // Create the preview
+      preview = document.createElement('span');
+      preview.setAttribute('class','ar5iv-bibitem-preview');
+      let target = document.getElementById(this.getAttribute('href').slice(1));
+      target.childNodes.forEach(function (child) {
+        preview.append(child.cloneNode(true));
+      });
+      let close_x = document.createElement('button');
+      close_x.setAttribute("aria-label","Close modal for bibliography item preview");
+      close_x.textContent = "×";
+      close_x.setAttribute('class', 'ar5iv-button-close-preview');
+      close_x.setAttribute('onclick','this.parentNode.remove()');
+      preview.append(close_x);
+      preview.querySelectorAll('.ltx_tag_bibitem').forEach(function(node) {
+        node.remove();
+      });
+      cite.parentNode.insertBefore(preview, cite.nextSibling);
+      return;
+    }
+    // Global Document initialization:
+    // - assign the preview feature to all inline citation links
+    document.querySelectorAll(".ltx_cite .ltx_ref").forEach(function (link) {
+      link.addEventListener("click", clicked_cite);
+    });
+    </script>
+    </body>
+</html>

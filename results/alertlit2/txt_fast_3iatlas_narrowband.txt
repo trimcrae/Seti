@@ -1,0 +1,1664 @@
+Narrowband Radio Technosignature Search toward 3I/ATLAS with FAST
+
+Report GitHub Issue
+×
+
+Title:
+
+Content selection saved. Describe the issue below:
+
+Description:
+
+Submit without GitHub
+Submit in GitHub
+
+arXiv is now an independent nonprofit!
+Learn more
+×
+
+Back to arXiv
+
+Why HTML?
+
+Report Issue
+
+Back to Abstract
+
+Download PDF
+
+Abstract
+I Introduction
+
+II Observations
+
+II.1 Target Information
+
+II.2 Strategy
+
+II.2.1 FAST Digital Backend
+
+III Data Analysis
+
+III.1 Hit Matching, Event Grouping and Potential Candidate Selection
+III.2 Hits Filtering
+III.3 Significance of SNR
+III.4 Structure Tensor
+III.5 Principal Component Analysis
+III.6 Overall Workflow
+
+IV Results
+
+V Discussion
+
+V.1 Sensitivity
+
+V.2 Bayesian Limits on the Detection of Technosignatures
+
+V.2.1 Priors for Transmitter Occurrence Probability and EIRP
+V.2.2 Hierarchical Prior Models
+
+V.3 Events Featurization
+
+VI Conclusion
+
+Acknowledgements
+
+A Explained Variance Ratio in PCA for Drifting Signal
+B Chirp-up Drifting Potential Candidates
+
+C Derivations for Bayesian Limits
+
+C.1 Posterior for Null Detection
+C.2 Adopted Parameters and Hyperparameters
+
+References
+
+License: arXiv.org perpetual non-exclusive license
+
+arXiv:2603.19023v3 [astro-ph.IM] 24 Jul 2026
+
+Narrowband Radio Technosignature Search toward 3I/ATLAS with FAST
+
+Jian-Kang Li (李健康)
+
+Institute for Frontiers in Astronomy and Astrophysics, Beijing Normal University, Beijing 102206, People’s Republic of China
+
+School of Physics and Astronomy, Beijing Normal University, Beijing 100875, People’s Republic of China; tjzhang@bnu.edu.cn
+
+Zhen-Zhao Tao (陶振钊)
+
+Institute for Astronomical Science, Dezhou University, Dezhou 253023, People’s Republic of China
+
+College of Computer and Information, Dezhou University, Dezhou 253023, People’s Republic of China
+
+Tong-Jie Zhang (张同杰) ✉
+
+Institute for Frontiers in Astronomy and Astrophysics, Beijing Normal University, Beijing 102206, People’s Republic of China
+
+School of Physics and Astronomy, Beijing Normal University, Beijing 100875, People’s Republic of China; tjzhang@bnu.edu.cn
+
+Abstract
+3I/ATLAS is the third confirmed interstellar object passing through the Solar System. In this work, we conduct narrowband radio technosignature search toward 3I/ATLAS using the Five-hundred-meter Aperture Spherical Telescope (FAST) L-band multibeam receiver from October 2025 to January 2026 on 4 separate dates (i.e. Mars closest, perihelion, Earth closest and a post-Earth-closest epoch, respectively). We carry out frequency-drifting signal searching with signal-to-noise ratio (SNR) over 10 within 1.05-1.45 GHz via bliss pipeline. These signal hits are grouped into event by beam, frequency and drift rate matching, the events are then filtered by cluster analysis and drift rate cut-off. We also characterized the events by their significance in SNR, structure tensor as well as principal component analysis (PCA). No credible narrowband radio technosignature are detected from 3I/ATLAS after visual inspections. The null results place constraints on the presence of transmitters above 2.862 × 10 − 3 2.862\times 10^{-3} W. We further introduce a Bayesian inference framework to assess the occurrence probability of hypothetical transmitters while accounting for uncertainty in their characteristic transmitter power through physically motivated priors.
+
+Search for extraterrestrial intelligence (2127) ; Radio astronomy (1338) ; Interstellar objects(52) ; Astrobiology (74)
+
+I Introduction
+
+The Search for Extraterrestrial Intelligence (SETI) endeavors to identify potential technosignatures as observable manifestations of technology, without presupposing the physical nature of their sources. Narrowband radio emission has long been recognized as a promising technosignature, motivated by the fact that such emissions are not known to arise from natural astrophysical processes (Tarter, 2001 ) and can be transmitted efficiently with low energy requirements and minimal propagation losses (Cocconi and Morrison, 1959 ) .
+
+Historically, radio SETI efforts have overwhelmingly focused on stars and planetary systems, particularly those hosting exoplanets (Sheikh et al. , 2020 ; Traas et al. , 2021 ; Smith et al. , 2021 ; Margot et al. , 2021 ; Tao et al. , 2022 , 2023 ; Luan et al. , 2025 ; Li et al. , 2026 ) . At the same time, the possibility that interstellar objects or artificial interstellar probes could also constitute relevant technosignature targets proposed by Bracewell ( 1960 ) and later discussions by Freitas and Valdes ( 1985 ) . More recently, Davenport et al. ( 2025 ) reviewed the current state of technosignature searches for interstellar objects and related targets. In practice, however, dedicated radio searches of small bodies have remained comparatively rare, largely because such objects are uncommon and typically provide only limited observational windows. The discovery of 3I/ATLAS therefore offers a timely opportunity to extend technosignature searches to this still sparsely explored target class.
+
+3I/ATLAS was discovered on 2025 July 1 by the Asteroid Terrestrial-impact Last Alert System (ATLAS) station. As the third confirmed interstellar object (ISO) traverse the Solar System, similar to the previous confirmed ISO 1I/‘Oumuamua and 2I/Borisov, 3I/ATLAS follows an unbound hyperbolic trajectory with eccentricity of 6.1394 and perihelion of 1.3564 AU 1 1 1 Orbital elements are taken from JPL Horizons: https://ssd.jpl.nasa.gov/horizons/ . Numerous observations have confirmed its cometary activity, including the presence of a coma (Seligman et al. , 2025 ; Bolin et al. , 2025b ; Farnham et al. , 2025 ) , a Sun-facing plume (Opitom et al. , 2025 ; Cordiner et al. , 2025 ; Santana-Ros et al. , 2025 ; Jewitt et al. , 2025 ) and a tail (Kareta et al. , 2025 ; Bolin et al. , 2025a ) . The reported non-gravitational acceleration also consistent with outgassing-driven forces expected for an active comet (Eubanks et al. , 2025 ; Jewitt et al. , 2025 ; Neukart, 2025 ) .
+
+Although the available observational evidence favors a cometary interpretation for 3I/ATLAS, it remains an unusually rare and time-limited target for sensitive radio observations. As the third confirmed interstellar object, it provides a well-defined opportunity to extend narrowband SETI search to a distinct class of nearby transient objects. Several dedicated SETI observations of 3I/ATLAS have already been carried out by Breakthrough Listen utilizing Allen Telescope Array (Sheikh et al. , 2025 , ATA) , MeerKAT (Pisano et al. , 2025 ) and Green Bank Telescope (Jacobson-Bell et al. , 2025b , GBT) , with analyses reported to date yielding null results.
+
+As the largest single-dish radio telescope in the world, FAST can achieve unprecedented sensitivity for detecting faint signal (Jiang et al. , 2019 , 2020 ; Li et al. , 2020 ; Qian et al. , 2020 ) . Previous FAST SETI efforts have predominantly targeted extrasolar systems, including nearby stars and globular clusters (Tao et al. , 2022 , 2023 ; Huang et al. , 2023 ; Luan et al. , 2025 ; Li et al. , 2026 ; Huang et al. , 2026 ) . Besides, FAST has also been used to observe Solar System comets, primarily for molecular line studies (Chen et al. , 2024 ; Jiang et al. , 2025 ) .
+
+In this work, we use FAST multibeam L-band observations of 3I/ATLAS obtained at multiple epochs, during which the object’s sky position and observing geometry changed, to carry out a dedicated search for narrowband Doppler-drift radio signals, extending narrowband SETI observations to an interstellar comet during its brief passage through the inner Solar System. We introduce Bayes factor to quantify the significance of the difference in SNR between on-source and off-source. Furthermore, we also utilize structure tensor and PCA to characterize the signals we detect for further analysis. In section II , we discuss the observation setting in this work. The data analysis and signal characterization are introduced in section III , and the corresponding results are presented in section IV . Section V is the implication of our results and section VI lists the conclusion of this work.
+
+II Observations
+
+II.1 Target Information
+
+We divide our total observation time into four dates, corresponding to different sky position and observing geometry, and each scan lasts for 1 hour. The details for each observation are listed in Table 1 , and the relative positions of 3I/ATLAS and Earth are illustrated in Figure 1 . The four epochs correspond to Mars closest approach, perihelion, Earth closest approach, and a subsequent epoch after Earth closest approach, when the object was receding from Earth.
+
+Table 1: Observation Details of 3I/ATLAS in This Work.
+
+Start Time (UTC)
+R.A. (J2000.0)
+Decl. (J2000.0)
+
+⟨ d ⟩ \langle d\rangle (AU)
+
+⟨ d ˙ ⟩ \langle\dot{d}\rangle (km/s)
+⟨ θ SOT ⟩ ( ∘ ) \langle\theta_{\mathrm{SOT}}\rangle(^{\circ})
+
+2025-10-03 06:00:00
+14:21:06.43
+-10:37:00.6
+2.4913
+-6.9589
+26.7492
+
+2025-10-29 03:30:00
+13:30:19.35
+-07:00:16.5
+2.3101
+-17.7519
+12.3551
+
+2025-12-19 21:13:00
+10:43:02.16
++07:21:23.5
+1.7977
+0.9657
+108.414
+
+2026-01-05 18:50:00
+09:22:32.32
++13:30:16.8
+1.9446
+29.7860
+146.2780
+
+Note. — The second and third columns list the mean right ascension and declination for each observation, in the J2000 reference frame. ⟨ d ⟩ \langle d\rangle and ⟨ d ˙ ⟩ \langle\dot{d}\rangle are the mean geocentric distance between observer and target and its corresponding change rate, respective. ⟨ θ SOT ⟩ \langle\theta_{\mathrm{SOT}}\rangle is the mean Sun-Observer-Target apparent Solar elongation angle seen from the observer.
+
+Figure 1: Heliocentric geometry of 3I/ATLAS and the Earth during our observations. The left panel shows the trajectories projected onto the heliocentric ecliptic X-Y plane, while the right panel shows the Z-Y projection.
+
+II.2 Strategy
+
+The traditional on-off position-switching strategy is widely used in single-dish radio SETI observations (Enriquez et al. , 2017 ; Price et al. , 2020 ; Margot et al. , 2023 ; Choza et al. , 2024 ) . In this approach, the telescope alternates between the target position (“on”) and nearby reference pointings (“off”). Artificial technosignatures are expected to be present only in the on-source data and statistically absent in the off-source measurements, which provides a practical discriminator against terrestrial radio frequency interference (RFI) and instrumental artifacts (Enriquez et al. , 2017 ) . A technical description of this strategy as implemented in Breakthrough Listen is given by Lebofsky et al. ( 2019 ) .
+
+The 19-beam receiver of FAST enables a closely related, but more time-efficient, discrimination scheme based on simultaneous multibeam coverage. We adopt a multibeam coincidence matching strategy (MBCM) in which the central beam continuously tracks the target as the on-source beam, while other six outermost beams provide contemporaneous reference measurements (See Figure 2 ). Candidate signals are therefore expected to be confined to the on-source beam and absent in the reference beams, allowing effective rejection of broadband or spatially extended RFI through beam-to-beam consistency checks.
+
+Figure 2: A simple diagram for the multibeam layout of FAST. The central beam (Beam 1) is filled with blue color, and the six outermost beams (Beam 8, 10, 12, 14, 16, 18) filled with pink are the reference beams we use in the search. The angular separation of reference beam is ∼ 11 ′ ​ 6 \sim 11^{\prime}6 from the center beam.
+
+II.2.1 FAST Digital Backend
+
+We used the FAST SETI backend, configured with a sampling time of ∼ 10 ​ s \sim 10\mathrm{s} and a frequency resolution of δ ​ ν = 7.45 \delta\nu=7.45 Hz to achieve high spectral resolution. The FAST multibeam digital backend is described in Zhang et al. ( 2020 ) and Li et al. ( 2020 ) . The data were recorded over 1.0-1.5 GHz with four polarization channels per beam (XX, YY, XY, and YX), corresponding to the auto- and cross-correlations of two orthogonal linear feeds, X and Y. For the analysis we restricted the band to 1.05-1.45 GHz, excluding the outermost 50 MHz at each band edge where the response is degraded by bandpass roll-off. Our narrowband search is performed on all four channels.
+
+III Data Analysis
+
+The Doppler-drift search for narrowband signals is performed using bliss (West, 2025 ) 2 2 2 The version of bliss used in this work is 0.0.1rc8. , a Python package that performs a direct computation of the drift-frequency plane in the drifting signal search. A continuous narrowband signal of extraterrestrial origin is expected to exhibit an apparent frequency drift, ν ˙ ≡ d ​ ν / d ​ t \dot{\nu}\equiv d\nu/dt , due to relative line-of-sight acceleration between the transmitter and the receiver. We searched drift rates in the range ν ˙ ∈ [ − 2 , + 2 ] ​ Hz ​ s − 1 \dot{\nu}\in[-2,+2]\,\mathrm{Hz\,s^{-1}} and SNR threshold of 10.
+
+In our FAST multibeam SETI observations, the central beam continuously tracks the target and is treated as the on-source beam b on b_{\rm on} , while the remaining beams provide simultaneous off-source references. We denote the set of each off-source beams as ℬ off = { b off , i } i \mathcal{B}_{\mathrm{off}}=\{b_{\mathrm{off},i}\}_{i} , where i i is the beam number of the off-source beam (here i i =8, 10, 12, 14, 16, 18). For a dynamic spectrum x b ​ ( ν , t ) x_{b}(\nu,t) , we run a Doppler-drift search over trial drift rates and record a finite set of detections. We define hit as any detection returned by the search, characterized by its representative frequency ν 0 \nu_{0} , trial drift rate ν ˙ 0 \dot{\nu}_{0} , and signal-to-noise ratio SNR h \mathrm{SNR}_{h} , satisfying
+
+ℋ ≡ { h = ( ν 0 , ν ˙ 0 , SNR h ) : SNR h ≥ SNR th ∧ 0 < | ν ˙ 0 | ≤ ν ˙ max } , \mathcal{H}\equiv\left\{\,h=(\nu_{0},\dot{\nu}_{0},\mathrm{SNR}_{h})\ :\ \mathrm{SNR}_{h}\geq\mathrm{SNR}_{\rm th}\ \wedge\ 0<|\dot{\nu}_{0}|\leq\dot{\nu}_{\max}\right\},
+
+(1)
+
+where SNR th \mathrm{SNR}_{\rm th} is the signal-to-noise ratio threshold. The hits appear in b on b_{\rm on} is defined as ℋ on \mathcal{H}_{\mathrm{on}} , while those appear in b off , i b_{\mathrm{off},i} is defined as ℋ off , i \mathcal{H}_{\mathrm{off},i} . Following the definition in Traas et al. ( 2021 ) , the events are defined as the set of hit presenting in b on b_{\rm on} over the scan duration τ obs \tau_{\rm obs} :
+
+ℰ ≡ { h ∈ ℋ on : | ν − ν 0 | ≤ | ν ˙ 0 | ​ τ obs } . \mathcal{E}\ \equiv\ \left\{\ h\in\mathcal{H}_{\mathrm{on}}\ :\ |\nu-\nu_{0}|\leq|\dot{\nu}_{0}|\,\tau_{\rm obs}\right\}.
+
+(2)
+
+Potential candidate is then defined no hits in ℬ off \mathcal{B}_{\mathrm{off}} :
+
+ρ ≡ { ε ​ ( ν 0 , ν ˙ 0 ) ∈ ℰ : ∀ i , ∄ ​ h ′ ∈ ℋ off , i ​ s.t. ​ | ν − ν 0 | ≤ | ν ˙ 0 | ​ τ obs } . \rho\equiv\left\{\varepsilon(\nu_{0},\dot{\nu}_{0})\in\mathcal{E}\ :\ \forall i,\ \nexists\,h^{\prime}\in\mathcal{H}_{{\rm off},i}\ \text{s.t.}\ |\nu-\nu_{0}|\leq|\dot{\nu}_{0}|\,\tau_{\rm obs}\right\}.
+
+(3)
+
+III.1 Hit Matching, Event Grouping and Potential Candidate Selection
+
+In Traas et al. ( 2021 ) , on-source and off-source scans are acquired sequentially, so the association between detections is established across scans, and an event represents a set of hits in all on-source scans that are consistent in frequency-drift space, and potential candidate is defined as event with no hit in all off-source scans 3 3 3 It should be noticed that the definitions of “event” and (potential) “candidate” in Traas et al. ( 2021 ) and this work are relatively unusual than many other SETI literature. . While in our multibeam tracking observations, all beams are recorded simultaneously, removing any temporal offset between on and off measurements. In practice, off-source beams may contain no hits within the Doppler-consistent frequency window of an on-source hit, or contain hits that are not consistent in ( ν 0 , ν ˙ 0 ) (\nu_{0},\dot{\nu}_{0}) at the search resolution. Strict constraint for candidate that event with no hit in all off-source scans may cause mismatch of hits.
+
+To avoid this, for each on-source hit h = ( ν 0 , ν ˙ 0 , SNR h ) ∈ ℋ b on h=(\nu_{0},\dot{\nu}_{0},\mathrm{SNR}_{h})\in\mathcal{H}_{b_{\rm on}} , we construct a multibeam event by extracting Doppler-consistent dynamic spectrum segments from the on-source beam and from all simultaneously recorded off-source beams, and grouping them into event by rewritten Eq. ( 2 ) as
+
+ℰ MB ≡ { ε MB ​ ( h , x b ) = ( h ​ ( ν 0 , ν ˙ 0 ) { x b ​ ( ν , t ) } b ∈ ℬ off ) : h ∈ ℋ on ∧ | ν − ν 0 | ≤ | ν ˙ 0 | ​ τ obs } . \mathcal{E}_{\rm MB}\ \equiv\ \left\{\varepsilon_{\rm MB}(h,x_{b})=\begin{pmatrix}h(\nu_{0},\dot{\nu}_{0})\\
+\left\{x_{b}(\nu,t)\right\}_{b\in\mathcal{B}_{\rm off}}\end{pmatrix}\ :h\in\mathcal{H}_{\mathrm{on}}\ \wedge\ |\nu-\nu_{0}|\leq|\dot{\nu}_{0}|\,\tau_{\rm obs}\right\}.
+
+(4)
+
+For a given on-source hit h = ( ν 0 , ν ˙ 0 ) ∈ ℋ on h=(\nu_{0},\dot{\nu}_{0})\in\mathcal{H}_{\rm on} and the i i th off-source beam with hit set ℋ off , i \mathcal{H}_{{\rm off},i} , we define a matched detection if there exists h ′ = ( ν 0 ′ , ν ˙ 0 ′ ) ∈ ℋ off , i h^{\prime}=(\nu^{\prime}_{0},\dot{\nu}^{\prime}_{0})\in\mathcal{H}_{{\rm off},i} such that
+
+𝒟 i ( ν 0 , ν ˙ 0 ) ≡ { x b ( ν , t ) : ∀ b ∈ ℬ off , ∃ h ′ ( ν 0 ′ , ν ˙ 0 ′ ) ∈ ℋ off , i s.t. | ν 0 ′ − ν 0 | ≤ δ ν ∧ | ν ˙ 0 ′ − ν ˙ 0 | ≤ δ ν ˙ . } \mathcal{D}_{i}(\nu_{0},\dot{\nu}_{0})\ \equiv\ \left\{x_{b}(\nu,t)\ :\ \forall b\in\mathcal{B}_{\rm off},\ \exists\,h^{\prime}(\nu^{\prime}_{0},\dot{\nu}^{\prime}_{0})\in\mathcal{H}_{{\rm off},i}\ \ \text{s.t.}\ \ \left|\nu^{\prime}_{0}-\nu_{0}\right|\leq\delta\nu\ \wedge\ \left|\dot{\nu}^{\prime}_{0}-\dot{\nu}_{0}\right|\leq\delta\dot{\nu}.\right\}
+
+(5)
+
+where δ ​ ν ˙ = δ ​ ν / τ obs \delta\dot{\nu}=\delta\nu/\tau_{\rm obs} is the drift rate resolution ( δ ​ ν ˙ = 0.0024 \delta\dot{\nu}=0.0024 Hz/s in this search). And the potential candidate is therefore defined by
+
+ρ MB ≡ { ε MB ​ ( h , x b ) ∈ ℰ MB : ∀ b ∈ ℬ off , x b ∉ 𝒟 i ​ ( ν 0 , ν ˙ 0 ) } . \rho_{\rm MB}\equiv\left\{\varepsilon_{\rm MB}(h,x_{b})\in\mathcal{E}_{\rm MB}:\ \forall\,b\in\mathcal{B}_{\rm off},\ x_{b}\notin\mathcal{D}_{i}(\nu_{0},\dot{\nu}_{0})\right\}.
+
+(6)
+
+III.2 Hits Filtering
+
+The hits we get after hit searching are not the final hits used for event grouping. Because RFI phenomenology is strongly frequency dependent, we perform clustering independently within coarse frequency intervals. We partition the band into non-overlapping bins of width 50 MHz. Within each bin, we combine on-source hits and the available off beams. To prevent the clustering structure from being dominated by the typically much larger off-source population, we perform a balanced subsampling of the off-source hits within each 50 MHz frequency bin. Specifically, in each bin we keep all on-source hits and select an off-source subset with a total size comparable to the on-source sample, while preserving the relative representation of the different off beams. We then apply Hierarchical Density-Based Spatial Clustering of Applications with Noise (HDBSCAN; Campello et al. , 2013 ) within each bin to the feature vectors ( ν , ν ˙ , log 10 ⁡ SNR ) (\nu,\dot{\nu},\log_{10}{\rm SNR}) after robust scaling. Similar density-based clustering strategies have recently been explored in SETI works. For example, Jacobson-Bell et al. ( 2025a ) applied HDBSCAN to features including frequency, drift rate, and log ⁡ ( SNR ) \log(\mathrm{SNR}) to group morphologically similar hits, while Zhang et al. ( 2020 ); Zhao et al. ( 2026 ) used DBSCAN for residual RFI mitigation in SETI commensal survey data. Besides recording the cluster label for each hit, we also record the membership probability that quantifies how strongly a point belongs to its assigned cluster. For each cluster, we additionally compute summary diagnostics such as the cluster size and the on/off composition, including the off fraction
+
+f off ​ ( c ) = N off ​ ( c ) N on ​ ( c ) + N off ​ ( c ) , f_{\rm off}(c)=\frac{N_{\rm off}(c)}{N_{\rm on}(c)+N_{\rm off}(c)},
+
+(7)
+
+where N on ​ ( c ) N_{\rm on}(c) and N off ​ ( c ) N_{\rm off}(c) denote the numbers of on-source and off-source hits assigned to cluster c c , respectively. The on-source hits that fall into clusters with large f off f_{\rm off} are interpreted as morphologically consistent with the off-source population and thus more likely to be RFI-like, whereas on-source hits assigned to clusters with small f off f_{\rm off} or labeled as noise are treated as atypical and prioritized for further vetting (here we set the f off f_{\rm off} threshold of 0.1%).
+
+We also filter the hits by drift rate before potential candidate selection. The drift rates caused by the relative motion of comet in the observation dates are listed in Table 2 . Although the maximum drift rate (MDR) we used is 2 Hz ​ s − 1 \mathrm{Hz\,s^{-1}} in the hit searching, the relative accelerations of the comet are at about ∼  10 − 5 ​ k ​ m ​ s − 1 \sim\,10^{-5}\ km\,s^{-1} level during our observation within our observation frequency range, and correspond to drift rate of approximately 0.1-0.2 Hz ​ s − 1 \mathrm{Hz\,s^{-1}} . The rotation period of 3I/ATLAS is 16.16 hours (Santana-Ros et al. , 2025 ) , and the nucleus radius is estimated as ∼ \sim 3 km (Kareta et al. , 2025 ; Santana-Ros et al. , 2025 ) , resulting in a rotational acceleration of ∼ 3.50 × 10 − 5 ​ m ​ s − 2 \sim 3.50\times 10^{-5}\ \mathrm{m\,s^{-2}} and corresponding drift rate of ∼ 1.23 − 1.69 × 10 − 4 ​ Hz ​ s − 1 \sim 1.23-1.69\times 10^{-4}\ \mathrm{Hz\,s^{-1}} within our observation frequency range, which is 2 magnitudes of order higher than the relative accelerations in Table 2 , and therefore can be neglected.
+
+Table 2: Accelerations and drift rates of 3I/ATLAS during our observation dates.
+
+Observation Date
+⟨ v ˙ ⟩ ​ ( km / s 2 ) \langle\dot{v}\rangle(\mathrm{km/s^{2}})
+
+⟨ ν ˙ ⟩ \langle\dot{\nu}\rangle at 1250 MHz [ Hz ​ s − 1 \mathrm{Hz\,s^{-1}} ]
+Used ⟨ ν ˙ ⟩ \langle\dot{\nu}\rangle range [ Hz ​ s − 1 \mathrm{Hz\,s^{-1}} ]
+
+2025-10-03
+2.632 × 10 − 5 2.632\times 10^{-5}
+0.109
+(0,0.15)
+
+2025-10-29
+2.553 × 10 − 5 2.553\times 10^{-5}
+0.105
+(0,0.15)
+
+2025-12-19
+4.794 × 10 − 5 4.794\times 10^{-5}
+0.199
+(0,0.25)
+
+2026-01-05
+5.002 × 10 − 5 5.002\times 10^{-5}
+0.207
+(0,0.25)
+
+Note. — The second and third columns are the mean acceleration and drift rate at central frequency for each observation, the fourth column is the drift rate we used for filtering.
+
+III.3 Significance of SNR
+
+The modified definitions for event also enable us to quantify the significance in SNR between on-source and off-source hits. In multibeam tracking observations, signals appear in multiple beams within a certain frequency range are most probably RFIs. Therefore, beyond the binary criterion of the existence of counterpart off-source hits, we can define a quantitative metric that measures how consistent the strength of the on-source and off-source detections. In particular, a candidate-like signal is expected to be significantly stronger in the on-source beam than in off-source beam, whereas an RFI-like signal tends to show comparable strengths across beams.
+
+During the event grouping, we also record the SNR of the hits in the event. For each off-source dynamic spectrum in the set { x b ​ ( ν , t ) } b ∈ ℬ off \left\{x_{b}(\nu,t)\right\}_{b\in\mathcal{B}_{\rm off}} , if there are more than one hits satisfy Eq. ( 5 ), we select the hit with the SNR closest to the SNR of corresponding on-source hit among these off-source hits, and its detection status is marked as “1” (All on-source hits are mark as “1”). While if the off-source dynamic spectrum satisfy x b ∉ 𝒟 i ​ ( ν 0 , ν ˙ 0 ) x_{b}\notin\mathcal{D}_{i}(\nu_{0},\dot{\nu}_{0}) within the frequency range, its detection status is marked as “0” and we select the SNR threshold as an upper limit. So potential candidate should be those events with detection status of 1000000. Since there are small gain differences between the central beam and the reference beams, we apply a beam gain ratio adjustment to the off-source SNR values and SNR threshold upper limits used in the event-level SNR significance calculation by the beam gain ratio R b ​ ( ν ) ≡ G b ​ ( ν ) / G on ​ ( ν ) R_{b}(\nu)\equiv G_{b}(\nu)/G_{\rm on}(\nu) , which can be obtained from the weekly updated antenna gain measurement of FAST. The off-center beams have relative beam efficiencies mostly above 90% of the central beam, and the polarized beam responses of the off-center beams do not differ from the central beam at an order-of-magnitude level Chen et al. ( 2025 ) . The polarization measurement for the 19 beams by Ching et al. ( 2025 ) reveals that the central-beam polarization calibration is more accurate than that of the off-center beams, however, the resulting Mueller-matrix parameters and the terms most relevant to the cross products, such as the residual phase, feed ellipticity, and leakage, remain small corrections rather than large changes in response. We therefore assume, in this rough SNR reference adjustment for off-source beams, that the beam-to-beam cross-correlation products XY/YX response ratio is of the same order as the auto-correlation XX/YY or Stokes- I I gain ratio R b ​ ( ν ) R_{b}(\nu) 4 4 4 Gain measurements of FAST: https://fast.bao.ac.cn/cms/category/1977569564215562242 . The ratios are used only as an approximate reference adjustment for comparing off-source SNRs with the central-beam SNR, and do not affect the event selection. The gain corrections for cross-correlation products need more accurate and detailed polarization measurements and calibrations. .
+
+Based on statistical analysis of past multibeam observations with SNR threshold of 10 (Tao et al. , 2022 , 2023 ; Luan et al. , 2025 ) , we can determine that the distribution of SNRs can be modeled by a log-normal distribution ln ⁡ y ∼ 𝒩 ​ ( μ , σ 2 ) \ln y\sim\mathcal{N}(\mu,\sigma^{2}) . We then compare two competing hypotheses for each event: (i) H R H_{\rm R} (RFI-like): the SNR values of on-source and off-source are drawn from the same parent distribution; (ii) H O H_{\rm O} (on-source-enhanced): the on-source SNR value is systematically stronger than the off-source ensemble by an offset Δ ≥ 0 \Delta\geq 0 . These two hypotheses can be formulated by
+
+H R : ln y on ∼ 𝒩 ( μ , σ 2 ) , ln y b ∼ 𝒩 ( μ , σ 2 ) , H_{\rm R}:\quad\ln y_{\rm on}\sim\mathcal{N}(\mu,\sigma^{2}),\quad\ln y_{b}\sim\mathcal{N}(\mu,\sigma^{2}),
+
+(8)
+
+and
+
+H O : ln y on ∼ 𝒩 ( μ + Δ , σ 2 ) , ln y b ∼ 𝒩 ( μ , σ 2 ) , Δ ≥ 0 . H_{\rm O}:\quad\ln y_{\rm on}\sim\mathcal{N}(\mu+\Delta,\sigma^{2}),\quad\ln y_{b}\sim\mathcal{N}(\mu,\sigma^{2}),\quad\Delta\geq 0.
+
+(9)
+
+The likelihood for H R H_{\rm R} can be written by
+
+ℒ ​ ( D ∣ μ , σ , H R ) = p ​ ( y on ∣ μ , σ ) ​ ∏ b ∈ ℬ det p ​ ( y b ∣ μ , σ ) ​ ∏ b ∈ ℬ nodet P ​ ( y b ≤ L b ∣ μ , σ ) , \mathcal{L}(D\mid\mu,\sigma,H_{\rm R})=p(y_{\rm on}\mid\mu,\sigma)\,\prod_{b\in\mathcal{B}_{\rm det}}p(y_{b}\mid\mu,\sigma)\,\prod_{b\in\mathcal{B}_{\rm nodet}}P(y_{b}\leq L_{b}\mid\mu,\sigma),
+
+(10)
+
+and the likelihood for H O H_{\rm O} can be written by
+
+ℒ ​ ( D ∣ μ , σ , Δ , H O ) = p ​ ( y on ∣ μ + Δ , σ ) ​ ∏ b ∈ ℬ det p ​ ( y b ∣ μ , σ ) ​ ∏ b ∈ ℬ nodet P ​ ( y b ≤ L b ∣ μ , σ ) , \mathcal{L}(D\mid\mu,\sigma,\Delta,H_{\rm O})=p(y_{\rm on}\mid\mu+\Delta,\sigma)\,\prod_{b\in\mathcal{B}_{\rm det}}p(y_{b}\mid\mu,\sigma)\,\prod_{b\in\mathcal{B}_{\rm nodet}}P(y_{b}\leq L_{b}\mid\mu,\sigma),
+
+(11)
+
+where ℬ det \mathcal{B}_{\rm det} are the beams with detection status of “1”, while ℬ nodet \mathcal{B}_{\rm nodet} are the beams with detection status of “0”. We quantify the strength-contrast evidence via the Bayes factor
+
+BF ≡ p ​ ( D ∣ H O ) p ​ ( D ∣ H R ) , \mathrm{BF}\equiv\frac{p(D\mid H_{\rm O})}{p(D\mid H_{\rm R})},
+
+(12)
+
+where the marginal likelihood under each hypothesis is obtained by integrating over the nuisance parameters,
+
+p ​ ( D ∣ H R ) = ∫ p ​ ( D ∣ μ , σ , H R ) ​ p ​ ( μ , σ ) ​ 𝑑 μ ​ 𝑑 σ , p(D\mid H_{\rm R})=\int p(D\mid\mu,\sigma,H_{\rm R})\,p(\mu,\sigma)\,d\mu\,d\sigma,
+
+(13)
+
+and
+
+p ​ ( D ∣ H O ) = ∫ p ​ ( D ∣ μ , σ , Δ , H O ) ​ p ​ ( μ , σ , Δ ) ​ 𝑑 μ ​ 𝑑 σ ​ 𝑑 Δ . p(D\mid H_{\rm O})=\int p(D\mid\mu,\sigma,\Delta,H_{\rm O})\,p(\mu,\sigma,\Delta)\,d\mu\,d\sigma\,d\Delta.
+
+(14)
+
+For the hyperparameters μ \mu , σ \sigma and Δ \Delta , we adopt weakly informative hyperpriors
+
+μ ∼ 𝒩 ​ ( μ μ , s μ 2 ) , σ ∼ HalfNormal ​ ( s σ ) , Δ ∼ HalfNormal ​ ( s Δ ) , \mu\sim\mathcal{N}(\mu_{\mu},s_{\mu}^{2}),\quad\sigma\sim\mathrm{HalfNormal}(s_{\sigma}),\quad\Delta\sim\mathrm{HalfNormal}(s_{\Delta}),
+
+(15)
+
+with ( μ μ , s μ , s σ ) (\mu_{\mu},s_{\mu},s_{\sigma}) estimated from the off-source beams hits in the same observation.
+
+III.4 Structure Tensor
+
+The waterfall plot of a dynamic spectrum may be viewed as a 2-dimension scalar field image I ​ ( ν , t ) I(\nu,t) , where each pixel corresponds to p = ( ν i , t i ) \mathrm{p}=(\nu_{i},t_{i}) . In the presence of noise, a narrowband signal with a nonzero drift rate introduces local structure with both directionally organized and anisotropic feature within a small neighborhood in the ( ν , t ) (\nu,t) plane. Such local orientation can be quantified by the gradient structure tensor (Knutsson et al. , 2011 ) , i.e., the second-moment matrix of the image gradients,
+
+J ​ ( p ) ≡ ⟨ ∇ I ​ ( p ) ​ ∇ I ​ ( p ) T ⟩ = ( J t ​ t J t ​ ν J t ​ ν J ν ​ ν ) = ( ⟨ I t 2 ⟩ ⟨ I t ​ I ν ⟩ ⟨ I t ​ I ν ⟩ ⟨ I ν 2 ⟩ ) , J(\mathrm{p})\equiv\left\langle\nabla I(\mathrm{p})\,\nabla I(\mathrm{p})^{T}\right\rangle=\begin{pmatrix}J_{tt}&J_{t\nu}\\
+J_{t\nu}&J_{\nu\nu}\end{pmatrix}=\begin{pmatrix}\langle I_{t}^{2}\rangle&\langle I_{t}I_{\nu}\rangle\\
+\langle I_{t}I_{\nu}\rangle&\langle I_{\nu}^{2}\rangle\end{pmatrix},
+
+(16)
+
+where ∇ I = ( I t , I ν ) T \nabla I=(I_{t},I_{\nu})^{T} with I t ≡ ∂ I / ∂ t I_{t}\equiv\partial I/\partial t and I ν ≡ ∂ I / ∂ ν I_{\nu}\equiv\partial I/\partial\nu , and ⟨ ⋅ ⟩ \langle\cdot\rangle denotes a local neighborhood average. The eigenvalues of J J are
+
+λ 1 , 2 = 1 2 ​ [ ( J t ​ t + J ν ​ ν ) ± ( J t ​ t − J ν ​ ν ) 2 + 4 ​ J t ​ ν 2 ] . \lambda_{1,2}=\frac{1}{2}\left[(J_{tt}+J_{\nu\nu})\pm\sqrt{(J_{tt}-J_{\nu\nu})^{2}+4J_{t\nu}^{2}}\right].
+
+(17)
+
+A convenient scalar measure of local anisotropy is the coherence,
+
+c ​ o ​ h = λ 1 − λ 2 λ 1 + λ 2 , coh=\frac{\lambda_{1}-\lambda_{2}}{\lambda_{1}+\lambda_{2}},
+
+(18)
+
+which ranges from 0 (locally isotropic texture, with no preferred direction) to 1 1 (a local structure whose gradients are strongly aligned with a dominant direction).
+
+The gradient orientation angle can be written as
+
+θ g = 1 2 ​ arctan ⁡ 2 ​ J t ​ ν J t ​ t − J ν ​ ν , \theta_{g}=\frac{1}{2}\arctan\frac{2J_{t\nu}}{J_{tt}-J_{\nu\nu}},
+
+(19)
+
+and the orientation of the underlying line-like feature (i.e., the local ridge direction) is orthogonal to the gradient, such that
+
+θ line = θ g + π 2 . \theta_{\rm line}=\theta_{g}+\frac{\pi}{2}.
+
+(20)
+
+With θ line \theta_{\rm line} defined relative to the frequency axis in the ( ν , t ) (\nu,t) plane, the corresponding local slope yields an estimate of the drift rate,
+
+ν ˙ = d ​ ν d ​ t = tan ⁡ θ line ​ δ ​ ν δ ​ t , \dot{\nu}=\frac{d\nu}{dt}=\tan\theta_{\rm line}\,\frac{\delta\nu}{\delta t},
+
+(21)
+
+where δ ​ ν / δ ​ t \delta\nu/\delta t converts pixel units to physical units. Intuitively, for a small dynamic spectrum patch containing a line- or ridge-like feature, the local angle describes the dominant orientation of that feature (and hence its local drift direction), whereas the coherence measures how strongly the patch resembles a well-defined line rather than an isotropic texture.
+
+In practice, to improve robustness against noise, we apply two stages of Gaussian smoothing. We first smooth the dynamic spectrum with widths ( σ pre , t , σ pre , ν ) (\sigma_{\rm pre,t},\sigma_{\rm pre,\nu}) before computing numerical gradients, and then compute the tensor components from locally averaged outer products of the gradients using a second smoothing with widths ( σ st , t , σ st , ν ) (\sigma_{\rm st,t},\sigma_{\rm st,\nu}) . Optionally, a non-negative weight map w ​ ( p ) w(p) may be introduced in the outer products (e.g., based on local signal energy) to emphasize high-power regions when estimating J J . Figure  3 illustrates the structure tensor characterization of a simulated drifting narrowband signal generated with setigen (Brzycki et al. , 2022 ) and embedded in Gaussian noise. The injected signal has a Gaussian spectral profile with width 3 ​ δ ​ ν 3\delta\nu , an amplitude corresponding to SNR = 40 \mathrm{SNR}=40 , and a drift rate of + 0.5 ​ Hz ​ s − 1 +0.5\,\mathrm{Hz\,s^{-1}} .
+
+Figure 3: Waterfall plots for a dynamic spectrum with a frequency drifting signal (left), its corresponding coherence map (middle) and orientation angle (right). Quivers are plotted in the high-coherence region ( coh > 0.97 {\rm coh}>0.97 ). The contiguous, dense quiver field traces the signal track, and the arrow orientation encodes the sign of the drift rate.
+
+For this simulated example, the high-coherence region gives an estimated drift rate of ν ˙ ∼ 0.46 ​ Hz ​ s − 1 \dot{\nu}\sim 0.46\,\mathrm{Hz\,s^{-1}} by ν ˙ = ( δ ​ ν / δ ​ t ) ​ tan ⁡ θ \dot{\nu}=(\delta\nu/\delta t)\tan\theta , generally consistent with the injected value of + 0.5 ​ Hz ​ s − 1 +0.5\,\mathrm{Hz\,s^{-1}} . The small difference is expected because the estimate is obtained from local gradients in a finite, noisy, discretely sampled dynamic spectrum rather than from the known injected track itself. In addition, the long-duration simulation makes the drifting line span numerous frequency channels, so edge truncation, finite pixel sampling, local smoothing, and accumulated noise fluctuations can slightly bias the orientation-based drift estimate.
+
+III.5 Principal Component Analysis
+
+The dynamic spectrum can be also regarded as a 2-dimension matrix X ∈ ℝ N t × N ν X\in\mathbb{R}^{N_{t}\times N_{\nu}} , then we can extract the principal components (PCs) for this dynamic spectrum, and featurize the drifting signals. PCA is an unsupervised machine-learning method for data decomposition or compression. For our 2-dimension dynamic spectrum matrix, we can use singular value decomposition (SVD) to decompose the matrix into
+
+X c = U ​ Σ ​ V T , X_{c}=U\,\Sigma\,V^{T},
+
+(22)
+
+where X c X_{c} is the matrix after mean bandpass filtering,
+
+μ j = 1 N t ​ ∑ i = 1 N t X i ​ j , X c = X − 𝟏 ​ μ T , \mu_{j}=\frac{1}{N_{t}}\sum_{i=1}^{N_{t}}X_{ij},\quad X_{c}=X-\mathbf{1}\mu^{T},
+
+(23)
+
+U ∈ ℝ N t × r U\in\mathbb{R}^{N_{t}\times r} and V ∈ ℝ N ν × r V\in\mathbb{R}^{N_{\nu}\times r} are the unitary matrix, Σ = diag ​ ( σ 1 , … , σ s ) \Sigma=\mathrm{diag}(\sigma_{1},\ldots,\sigma_{s}) is the rectangular diagonal matrix with σ i \sigma_{i} being the singular values of X c X_{c} , and r ≤ min ⁡ ( N t , N ν ) r\leq\min(N_{t},N_{\nu}) is ranks. Such mean bandpass filtering can efficiently remove the time-invariant (non-drifting) components at each frequency channel. Consequently, stationary carriers and persistent bandpass-like features are strongly suppressed, while frequency-drifting tracks remain in X c X_{c} . We can then reconstruct the dynamic spectrum by
+
+X k ^ = U k ​ Σ k ​ V k T + 𝟏 ​ μ T , \widehat{X_{k}}=U_{k}\,\Sigma_{k}\,V_{k}^{T}+\mathbf{1}\mu^{T},
+
+(24)
+
+with explained-variance ratio EVR k = σ k 2 / ∑ j σ j 2 \mathrm{EVR}_{k}=\sigma_{k}^{2}/\sum_{j}\sigma_{j}^{2} . The k k -th PCs are given by the columns of V V ( v k ∈ ℝ N ν v_{k}\in\mathbb{R}^{N_{\nu}} ), which describes the frequency-domain loading pattern. The corresponding temporal score is S = U ​ Σ S=U\Sigma ( s k = σ k ​ u k ∈ ℝ N t s_{k}=\sigma_{k}u_{k}\in\mathbb{R}^{N_{t}} ), where u k u_{k} is the k k -th column of U U . Thus, the temporal score gives the time-dependent amplitude with which the frequency-domain component v k v_{k} contributes to the dynamic spectrum. For a Doppler-drifting narrowband line in a dynamic spectrum, the EVR of the PCA can be approximated by
+
+EVR m ∝ exp ⁡ [ − ( 2 ​ π ​ m ​ w ν | ν ˙ | ​ τ obs ) 2 ] , m = 0 , 1 , … , \mathrm{EVR}_{m}\propto\exp\left[-\left(\frac{2\pi mw_{\nu}}{|\dot{\nu}|\tau_{\rm obs}}\right)^{2}\right],\quad m=0,1,\dots,
+
+(25)
+
+where w ν ≪ | ν ˙ | ​ τ obs w_{\nu}\ll|\dot{\nu}|\tau_{\rm obs} denotes the effective linewidth in frequency of the drifting feature, and m m is the Fourier-mode order. We further define the EVR entropy as
+
+H EVR = − ∑ m p m ​ ln ⁡ p m , p m = EVR m ∑ j EVR j . H_{\rm EVR}=-\sum_{m}p_{m}\ln p_{m},\quad p_{m}=\frac{\mathrm{EVR}_{m}}{\sum_{j}\mathrm{EVR}_{j}}.
+
+(26)
+
+Under the above approximation, the EVR entropy of a drifting line can be expressed as
+
+H EVR ≈ ln ⁡ ( | ν ˙ | ​ τ obs 2 ​ π ​ w ν ) + 1 2 ​ ln ⁡ ( π ​ e ) . H_{\rm EVR}\approx\ln\left(\frac{|\dot{\nu}|\tau_{\rm obs}}{2\pi w_{\nu}}\right)+\frac{1}{2}\ln(\pi e).
+
+(27)
+
+The detailed derivations of the PCA for Doppler-drifting signal are in Appendix A . Figure 4 is the PCA summary for a simulated drifting signal used in Section III.4 .
+
+Figure 4: PCA summary for the drifting signal. First row: metadata for this panel (left) and the cumulative explained variance ratio (CEVR) curve (right). We define the CEVR as ∑ k = 1 K EVR k \sum_{k=1}^{K}\mathrm{EVR}_{k} . The vertical dotted line marks the minimum number of PCs required to reach CEVR ≥ 0.995 \mathrm{CEVR}\geq 0.995 . Second row: the original dynamic spectrum (left), its rank- k recon k_{\rm recon} reconstruction X ^ k recon \hat{X}_{k_{\rm recon}} (center), and the residual X − X ^ k recon X-\hat{X}_{k_{\rm recon}} (right). Third row: PCA diagnostics for the first k recon k_{\rm recon} temporal score loadings s k ​ ( t ) s_{k}(t) (left), explained variance ratio EVR k \mathrm{EVR}_{k} (center), and frequency component loadings v k ​ ( ν ) v_{k}(\nu) (right). Scores and components are normalized for display, the color scheme is consistent across the three bottom panels for each PC. Fourth row: time-frequency loading diagnostic illustrating whether PCs are arranged along a drift-like time-frequency trend. Each point represents the power-weighted response centroid of one principal component in the ( t , ν ) (t,\nu) plane, and the dashed line is a linear fit to these points with the EVR used as the fitting weight. Although the top component number for reconstruction is 221, we only show the top 15 components in the third row.
+
+For a drifting narrowband signal, a certain number of PCs typically captures a correlated spectral pattern v k ​ ( ν ) v_{k}(\nu) and a smoothly varying temporal score S k ​ ( t ) S_{k}(t) , producing a compact representation in EVR. The EVR entropy for the simulated signal is 5.094, which is modestly larger than the theoretical approximation values 4.722 in Eq. ( 27 ) with w ν ≈ 3 ​ δ ​ ν w_{\nu}\approx 3\delta\nu . This difference is expected because the simulated data do not exactly satisfy the ideal shift-invariant Gaussian-kernel assumption. Finite drift span and edge truncation can introduce discrete spectral leakage, small time variability in the line amplitude or profile can spread power across additional modes, and residual correlated noise or spectral texture can further transfer variance into higher-order PCs. Together, these effects raise the measured H EVR H_{\rm EVR} modestly above the theoretical estimate.
+
+To examine whether the PCA decomposition captures a possible frequency-drifting pattern, we assign each PC a representative point in the time–frequency plane. For the k k -th component, with temporal score s k ​ ( t ) s_{k}(t) and frequency loading v k ​ ( ν ) v_{k}(\nu) , we define
+
+t k = ∑ t t ​ | s k ​ ( t ) | 2 ∑ t | s k ​ ( t ) | 2 , ν k = ∑ ν ν ​ | v k ​ ( ν ) | 2 ∑ ν | v k ​ ( ν ) | 2 . t_{k}=\frac{\sum_{t}t|s_{k}(t)|^{2}}{\sum_{t}|s_{k}(t)|^{2}},\qquad\nu_{k}=\frac{\sum_{\nu}\nu|v_{k}(\nu)|^{2}}{\sum_{\nu}|v_{k}(\nu)|^{2}}.
+
+(28)
+
+The set of points ( t k , ν k ) (t_{k},\nu_{k}) provides a compact time–frequency loading diagnostic of the PCA decomposition. Since t k t_{k} and ν k \nu_{k} are power-weighted response centroids rather than local track coordinates, these points naturally tend to cluster near the time–frequency region where the integrated PC response is strongest. The two ends of a drifting track can still contribute through the global response weights of the corresponding scores and loadings, but they are not represented as separate local trajectory points. We then fit a linear relation ν k = a E ​ V ​ R ​ t k + b E ​ V ​ R \nu_{k}=a_{EVR}t_{k}+b_{EVR} to these points, using the EVR of each component as the fitting weight. This diagnostic is used only to qualitatively examine whether the representative PC response locations show an overall frequency-drifting tendency, rather than to reconstruct the full drifting track.
+
+III.6 Overall Workflow
+
+The overall data analysis processes are illustrated in Figure 5 . Before the finding hits step with bliss_find_hits , the raw sdfits data are converted into HDF5 format by blimpy (Price et al. , 2019 ) . The fits files are archived for each beam, each fits file corresponds to a different sample time segment of the observation. For each beam, these fits files are time-ordered, concatenated along the time axis, and then converted into an HDF5 product containing two-dimensional time-frequency power spectra for four polarization channels, XX, YY, XY and YX, which are derived from self-correlation and cross correlation of the data in two orthogonal linear polarization directions X and Y.
+
+Figure 5: A schematic representation of our workflow for the data analysis.
+
+In this work, we perform an independent narrowband Doppler-drift search on each of the four polarization channels and the Stokes- I I total intensity, following the procedure outlined in Figure 5 . For each channel, we generate a list of potential candidates and inspect them using standard dynamic spectrum (waterfall plot) visualizations to assess whether they meet the criteria in Eq. ( 6 ). This assessment is complemented by structure-tensor diagnostics and PCA summary plots, which provide additional feature-based characterization of the signals. We then quantify the physical and statistical properties of the resulting sample using dedicated statistical analyses.
+
+IV Results
+
+The general number statistics for hits, events and potential candidates in this narrowband drifting signal search are listed in Table 3 . There are two major types of RFI sources at the FAST site, civil aviations and navigation satellites, which occupy 22.5% and 14.76% of the total bandwidth (See Wang et al. ( 2021 ) for detailed frequency coverage). About 40% hits fall in the frequency ranges of civil aviation and navigation satellites, implying that a considerable amount of RFIs may come from these known sources. The larger hit fraction in the navigation satellite bands, compared with their bandwidth fraction, is expected because these transmitters are usually strong and persistent RFI sources, which is also consistent with the RFI environment tests at the FAST site.
+
+We further decompose the event-level filtering stage in Table  3 . A potential candidate is required to have no matched off-hit counterpart, not to be assigned to large off-hits populated cluster, and to fall within the adopted date-dependent drift-rate range simultaneously. The auto-correlation products XX and YY have filtering fractions close to those of Stokes- I I , whereas the cross-correlation products, especially XY, show different behavior. In particular, the larger no-off-hit and unclustered fractions in XY leads its relatively high candidate fraction.
+
+Table 3: Numbers of hits, events, and potential candidates in the narrowband drifting signal search.
+
+Polarization
+Hits
+Hits in Civil, GNSS (%)
+Event
+No off hit (%)
+Unclustered (%)
+Drift range (%)
+Candidate
+
+Stokes- I I
+
+7743123
+2.46, 33.94
+1105897
+27.109
+5.003
+18.895
+1542
+
+XX
+7524031
+2.23, 35.97
+1079020
+28.444
+5.928
+19.575
+1662
+
+YY
+7355950
+2.46, 33.57
+1061361
+29.236
+5.968
+18.394
+2028
+
+XY
+2832144
+2.22, 37.66
+124943
+97.250
+17.986
+29.752
+7216
+
+YX
+2316772
+1.91, 36.13
+443614
+45.499
+8.866
+5.533
+3386
+
+Note. —
+The third column gives the percentages of hits falling in the frequency ranges of civil aviation and global navigation satellite system (GNSS), respectively.
+The columns No off hit, Unclustered, and Drift range give the percentages of events satisfying the no off-hit counterpart condition, not being assigned to any large off-hits populated cluster, and the date-dependent adopted drift rate range, respectively.
+
+The distributions of hits and events in frequency, drift rate, and signal-to-noise ratio for total intensity and each polarization channel are illustrated in Figure 6 , and some known RFI sources within the observation frequency ranges (Wang et al. , 2021 ) are also shown in the plots. The slight negative drift rate bias is caused by the downward relative acceleration of non-geosynchronous satellites Zhang et al. ( 2006 ) . The signal population differences in polarizations are also reflected in the divergent distributions between XY and other polarization channels.
+
+Figure 6: Histograms of the distributions of frequency (left column), drift rate (middle column) and signal-to-noise ratio (right column) for the signals in total intensity and four polarization channels.
+
+Using Stokes- I I as the reference catalog, we carry out a match for frequency counterparts in XX, YY, XY, and YX within one fine channel δ ​ ν ch \delta\nu_{\rm ch} . The matched results are listed in Table 4 . The matched fraction is high at the hit level, with 94.7 % 94.7\% of Stokes- I I hits having a counterpart in at least one polarization product, and remains substantial at the event level ( 82.3 % 82.3\% ). However, the matched fraction drops to 7.7 % 7.7\% for the potential candidate level. We also note that the matched fractions differ among the polarization products: the auto-correlation products XX and YY show higher correspondence with Stokes- I I than the cross-correlation products XY and YX. This suggests that a signal identified in Stokes- I I or in one polarization product may not always appear as a detected counterpart in every other polarization product, possibly because of differences in apparent signal power, noise properties, and the response of the search and filtering algorithm across polarization channels.
+
+Table 4: Stokes- I I referenced frequency matching with polarization products.
+
+Catalog
+XX (%)
+YY (%)
+XY (%)
+YX (%)
+Any pol. channel (%)
+
+Hits
+86.7
+86.7
+63.4
+60.7
+94.7
+
+Events
+73.5
+71.9
+3.5
+28.9
+82.3
+
+Potential Candidates
+4.9
+2.5
+0.1
+0.8
+7.7
+
+Note. —
+Stokes- I I is used as the reference catalog. A match is defined by a frequency separation smaller than one channel width δ ​ ν ch = 7.45 ​ Hz \delta\nu_{\rm ch}=7.45\,{\rm Hz} .
+
+We further investigate the distribution of potential candidates by the scatter plot in Figure 7 . A large fraction of potential candidates cluster within several restricted frequency windows rather than being uniformly distributed across the band. In particular, prominent concentrations coincide with the civil aviation band and the navigation satellites. The drift rates span a broad range, forming an overall band-like distribution, suggesting that these potential candidates are likely dominated by RFI with similar phenomenology.
+
+Figure 7: Scatter plots of potential candidate in frequency, drift rate and signal-to-noise ratio for total intensity and four polarization channels. The color and the size for each point represent the value of SNR in log space. The blue and ornage color bar are the frequency ranges of civil aviation and navigation satellites, respectively. The black dashed lines represent the expected drift rates for each observation date.
+
+All selected potential candidates are reexamined by a visual inspection of the dynamic spectra. Almost all the potential candidates are two kinds of obvious false positives mentioned in Tao et al. ( 2022 ) , which can be directly excluded. Specifically, those potential candidates fall at the expected drift rates in Figure 7 are also filtered during the visual inspection. Seven potential candidates survive after visual inspection, and exhibit similar “chirp-up” feature, instead of constant linear drift, which are listed in Table 5 . All these seven chirp-up signal are found in the observation on 5 January 2026.
+
+Table 5: Frequencies and drift rates of the seven chirp-up potential candidates.
+
+Event ID
+Central Frequency [MHz]
+Drift rate [ Hz ​ s − 1 \mathrm{Hz\,s^{-1}} ]
+Polarization channel
+ln BF
+
+244
+1431.9978
+0.045
+StokesI
+2.423
+
+250
+1431.9978
+0.045
+XX
+2.359
+
+3703
+1250.0126
+0.055
+YX
+-2.035
+
+5965
+1333.3168
+0.135
+YY
+0.768
+
+47992
+1250.0126
+0.047
+YY
+-0.199
+
+225671
+1066.6534
+0.115
+YY
+1.097
+
+250224
+1066.6534
+0.107
+StokesI
+-1.087
+
+Figure 8 (a) illustrates an example of these chirp-up drifting signals (Other six chirp-up potential candidates are shown in Appendix B ). We also identify a potential candidate exhibiting a chirp-up morphology, however, a morphologically similar signal is present in the reference beam (See Figure 8 (b)). We therefore reject this as RFI, which suggests that the chirp-up signals may share a common instrumental origin.
+
+Figure 8: (a) A chirp-up signal at frequency 1431.9978 MHz, with a drift rate of 0.045 Hz ​ s − 1 \mathrm{Hz\,s^{-1}} given by bliss . The chirp-up signal only appears in the central beam, while no obvious corresponding drifting signals appear in any reference beam. (b) A chirp-up signal at 1312.5502 MHz absent in the central beam, but appears in one of the reference beams.
+
+Motivated by this, we investigate whether the observed chirp-up frequencies can be explained as intermodulation products of the nominal clock-oscillator frequencies used on the ROACH 2 FPGA board. 5 5 5 The nominal frequencies of all crystal oscillators used on ROACH2 are listed at https://github.com/ska-sa/roach2_hardware/blob/master/release/rev2/A/BOM/ROACH-2_sEV2_BOM.csv . Specifically, we consider integer linear combinations of the form ν = m ​ ν 1 + n ​ ν 2 \nu=m\nu_{1}+n\nu_{2} , where ν 1 \nu_{1} and ν 2 \nu_{2} are candidate oscillator frequencies and m m and n n are non-negative integers. By scanning over ( ν 1 , ν 2 , m , n ) (\nu_{1},\nu_{2},m,n) , we construct intermodulation sequences and assess whether they can account for the measured frequencies of the chirp-up signal. Figure 9 summarizes the best-matching pairings for these signals. All five frequencies admits one or more such explanations within absolute residual | ν model − ν obs | ⩽ 0.03 ​ MHz |\nu_{\rm model}-\nu_{\rm obs}|\leqslant 0.03{\rm MHz} . Moreover, the solution sets overlap across different frequencies in terms of the oscillator frequency pairs, indicating that the seven signals can be linked through a common clock oscillator frequency library. This behavior is consistent with an instrumental (clock-related intermodulation) RFI origin. Additionally, since there is currently no evidence indicating any abnormal acceleration variations in the 3I/ATLAS, and the drift rates of these signals do not align with the expected drift rate for 5 January 2026, finally, we are inclined to classify these signals as RFI.
+
+Figure 9: Intermodulation analysis for the chirp-up signal frequencies. The horizontal axis lists the clock-frequency pairs ( ν i , ν j ) (\nu_{i},\nu_{j}) , and each row corresponds to one signal frequency ν obs \nu_{\rm obs} . Each cell reports the integers ( m , n ) (m,n) of the best match ν model = m ​ ν 1 + n ​ ν 2 \nu_{\rm model}=m\nu_{1}+n\nu_{2} (with m , n ≥ 0 m,n\geq 0 and m + n ⩽ 50 m+n\leqslant 50 ). The colormap shows the absolute residual | ν model − ν obs | |\nu_{\rm model}-\nu_{\rm obs}| .
+
+V Discussion
+
+V.1 Sensitivity
+
+The sensitivity of a radio observation can be determined by system equivalent flux density (Wilson et al. , 2013 ; Thompson et al. , 2017 )
+
+SEFD = 2 ​ k B ​ T sys A eff , \mathrm{SEFD}=\frac{2k_{\mathrm{B}}T_{\mathrm{sys}}}{A_{\mathrm{eff}}},
+
+(29)
+
+where k B k_{\mathrm{B}} is the Boltzmann constant, T sys T_{\mathrm{sys}} is the system temperature, and A eff A_{\mathrm{eff}} is the effective collecting area. The sensitivity A eff / T sys A_{\mathrm{eff}}/T_{\mathrm{sys}} of FAST L-band 19 beam receiver is ∼ 2000 ​ m 2 ​ K − 1 \sim 2000\,\mathrm{m^{2}\,K^{-1}} (Nan et al. , 2011 ; Li and Pan, 2016 ; Jiang et al. , 2019 ) . For narrowband signal detection (i.e., the signal bandwidth is narrower or equal to the observing spectral resolution), the minimum detectable flux density S min S_{\min} can be given by (Enriquez et al. , 2017 ; Gajjar et al. , 2021 ; Sheikh et al. , 2025 )
+
+S min = SNR th ​ SEFD β ​ ν t ​ δ ​ ν ch n pol ​ τ obs , S_{\min}=\mathrm{SNR}_{\rm th}\frac{\mathrm{SEFD}}{\sqrt{\beta}\nu_{t}}\sqrt{\frac{\delta\nu_{\mathrm{ch}}}{n_{\mathrm{pol}}\tau_{\mathrm{obs}}}},
+
+(30)
+
+where τ obs \tau_{\mathrm{obs}} is the effective observing duration, δ ​ ν ch \delta\nu_{\mathrm{ch}} is the frequency channel bandwidth, δ ​ ν t \delta\nu_{t} is the transmitted signal width (we assume to be δ ​ ν t ∼ 1 \delta\nu_{t}\sim 1 Hz), n pol n_{\mathrm{pol}} represents the number of polarization channels of the telescope and β \beta is the dechirping efficiency expressed as (Gajjar et al. , 2021 ) 7 7 7 6 6 6 In the S min S_{\min} expression of Gajjar et al. ( 2021 ) , the dechirping-efficiency factor appears as β \beta in the denominator. For consistency with bliss , which recovers β \sqrt{\beta} of the signal power, we use the corresponding β \sqrt{\beta} factor in our calculation.
+
+β = { 1 | ν ˙ | ⩽ δ ​ ν ch δ ​ t δ ​ ν | ν ˙ | ​ δ ​ t | ν ˙ | > δ ​ ν ch δ ​ t . \beta=\begin{cases}1&\left\lvert\dot{\nu}\right\rvert\leqslant\frac{\delta\nu_{\rm ch}}{\delta t}\\
+\dfrac{\delta\nu}{\left\lvert\dot{\nu}\right\rvert\delta t}&\left\lvert\dot{\nu}\right\rvert>\frac{\delta\nu_{\rm ch}}{\delta t}.\end{cases}
+
+(31)
+
+The minimum detectable flux density can be used to estimate the minimum luminosity detection threshold based on the distance of the source d d , which can be quantified by equivalent isotropic radiated power (EIRP) of the antenna:
+
+EIRP = 4 ​ π ​ d 2 ​ S min ​ δ ​ ν t . \mathrm{EIRP}=4\pi d^{2}S_{\min}\delta\nu_{t}.
+
+(32)
+
+Based on the distances and our observation configurations, the EIRP is estimated to be ∼ 10 − 3 \sim 10^{-3} W for our observations. We also define an Earth-directed EIRP per steradian L Ω ≡ EIRP / Ω ⊕ L_{\Omega}\equiv{\rm EIRP}/\Omega_{\oplus} as a comparative indicator for a hypothetical Earth-pointing transmitter, where
+
+Ω ⊕ ​ ( d ) = 2 ​ π ​ ( 1 − cos ⁡ α ) , sin ⁡ α = R ⊕ d \Omega_{\oplus}(d)=2\pi\left(1-\cos\alpha\right),\quad\sin\alpha=\frac{R_{\oplus}}{d}
+
+(33)
+
+is the solid angle corresponding to the Earth as seen from 3I/ATLAS, with R ⊕ R_{\oplus} being the radius of Earth. The EIRP values and the Earth-directed EIRP values per steradian are listed in Table 6 .
+
+Table 6: EIRP values, solid angle of Earth, and the Earth-directed EIRP per steradian of 3I/ATLAS during our observation dates.
+
+Observation Date
+EIRP (W)
+
+Ω ⊕ \Omega_{\oplus} (sr)
+
+L Ω L_{\Omega} (W/sr)
+
+2025-10-03
+5.497 × 10 − 3 5.497\times 10^{-3}
+9.140 × 10 − 10 9.140\times 10^{-10}
+6.014 × 10 6 6.014\times 10^{6}
+
+2025-10-29
+4.727 × 10 − 3 4.727\times 10^{-3}
+1.063 × 10 − 9 1.063\times 10^{-9}
+4.446 × 10 6 4.446\times 10^{6}
+
+2025-12-19
+2.862 × 10 − 3 2.862\times 10^{-3}
+1.755 × 10 − 9 1.755\times 10^{-9}
+1.631 × 10 6 1.631\times 10^{6}
+
+2026-01-05
+3.349 × 10 − 3 3.349\times 10^{-3}
+1.500 × 10 − 9 1.500\times 10^{-9}
+2.233 × 10 6 2.233\times 10^{6}
+
+V.2 Bayesian Limits on the Detection of Technosignatures
+
+We consider the hypothesis that a comet may host a narrowband radio transmitter with a small prior probability p T p_{T} . Let T ∈ { 0 , 1 } T\in\{0,1\} denote latent indicator of whether the target hosts a narrowband transmitter ( T = 1 ) (T=1) or not ( T = 0 ) (T=0) . For a radio transmitter with EIRP strength parameter L > 0 L>0 , the single-trial detection probability to detect the signal from the transmitter can be given by
+
+𝒫 det ​ ( L ) = Φ ​ ( n pol ​ τ obs δ ​ ν ch ​ β ​ L 4 ​ π ​ d 2 ​ SEFD − SNR th ) = Φ ​ ( ζ ​ L − SNR th ) , \mathcal{P}_{{\rm det}}(L)=\Phi(\sqrt{\frac{n_{\rm pol}\tau_{\rm obs}}{\delta\nu_{\rm ch}}}\frac{\sqrt{\beta}L}{4\pi d^{2}{\rm SEFD}}-{\rm SNR}_{\rm th})=\Phi(\zeta L-{\rm SNR}_{\rm th}),
+
+(34)
+
+where ζ \zeta collects the instrumental sensitivity, integration time, spectral resolution, and target distance dependence, Φ ​ ( x ) \Phi(x) is the standard normal cumulative distribution function.
+
+To account for the different frequency coverages of different surveys, we introduce a frequency coverage fraction. Let
+[ ν ref , min , ν ref , max ] [\nu_{\rm ref,min},\nu_{\rm ref,max}] be the assumed reference emission frequency range of the transmitter, and let
+[ ν min , ν max ] [\nu_{\min},\nu_{\max}] be the searched frequency range of the observation. The covered bandwidth within the reference range is
+
+Δ ​ ν cov = max ⁡ [ 0 , min ⁡ ( ν max , ν ref , max ) − max ⁡ ( ν min , ν ref , min ) ] . \Delta\nu_{\rm cov}=\max\left[0,\,\min(\nu_{\max},\nu_{\rm ref,max})-\max(\nu_{\min},\nu_{\rm ref,min})\right].
+
+(35)
+
+Assuming a uniform transmitter frequency distribution over [ ν ref , min , ν ref , max ] [\nu_{\rm ref,min},\nu_{\rm ref,max}] , the frequency-coverage fraction is
+
+f ν = Δ ​ ν cov Δ ​ ν ref . f_{\nu}=\frac{\Delta\nu_{\rm cov}}{\Delta\nu_{\rm ref}}.
+
+(36)
+
+For the k k -th observing configuration, we define the single-trial detection probability given L L as 𝒫 det , k ​ ( L ) \mathcal{P}_{{\rm det},k}(L) . Under the assumption that trials are independent conditioned on ( T , L ) (T,L) , the likelihood of observing all-zero outcomes given T = 1 T=1 and L L is
+
+ℒ ​ ( all0 ∣ T = 1 , L ) = ∏ k = 1 K [ 1 − f ν , k ​ 𝒫 det , k ​ ( L ) ] N k . \mathcal{L}(\mathrm{all0}\mid T=1,L)=\prod_{k=1}^{K}[1-f_{\nu,k}\mathcal{P}_{{\rm det},k}(L)]^{N_{k}}.
+
+(37)
+
+While for T = 0 T=0 , the likelihood is
+
+ℒ ​ ( all0 ∣ T = 0 ) = 1 . \mathcal{L}(\mathrm{all0}\mid T=0)=1.
+
+(38)
+
+The joint posterior p ​ ( p T , L ∣ all0 ) p(p_{T},L\mid\mathrm{all0}) can be given by
+
+p ​ ( p T , L ∣ all0 ) = ℒ ​ ( all0 ∣ T = 1 , L ) ​ π ​ ( L ) ​ p T ​ π ​ ( p T ) p ​ ( all0 ) , p(p_{T},L\mid\mathrm{all0})=\frac{\mathcal{L}(\mathrm{all0}\mid T=1,L)\pi(L)p_{T}\pi(p_{T})}{p(\mathrm{all0})},
+
+(39)
+
+where p ​ ( all0 ) p(\mathrm{all0}) is the evidence of all-zero observation result, π ​ ( p T ) \pi(p_{T}) is the prior of p T p_{T} and π ​ ( L ) \pi(L) is the prior of L L . The details derivations for above equations are given in Appendix C.1 . Apart from the all-zero result in this work, we also include the observation configurations of null results in ATA (Sheikh et al. , 2025 ) , GBT (Jacobson-Bell et al. , 2025b ) and MeerKAT Pisano et al. ( 2025 ) for joint constraints. The SEFD of ATA are fitted by the values for different center frequencies. And for simplicity, we assume that reference frequency range of the transmitter is 1-12 GHz, so that Δ ​ ν cov \Delta\nu_{\rm cov} is equal to the frequency range for each observation. 8 8 8 The frequency range of the transmitter, as well as its distribution, can be also modeled by Bayesian metohds, but here, we just use this simple frequency coverage fraction for illustrative propose. .
+
+V.2.1 Priors for Transmitter Occurrence Probability and EIRP
+
+The analysis above requires specifying priors for the transmitter occurrence probability p T p_{T} and the transmitter EIRP L L . We adopt simple prior families designed to encode only two minimal expectations. The probability that a given target hosts an active narrowband transmitter is small ( p T ≪ 1 ) (p_{T}\ll 1) , while its order of magnitude remains uncertain. Accordingly, we use flexible distributions on p T p_{T} that concentrate most prior mass at low values yet do not enforce a single characteristic scale. Specifically, we explore two alternative choices for p T p_{T} : (i) a scaled-beta prior, in which q ∼ Beta ​ ( a , b ) q\sim\mathrm{Beta}(a,b) and p T = p T , max ​ q p_{T}=p_{T,\max}q , thereby enforcing 0 < p T ≤ p T , max 0<p_{T}\leq p_{T,\max} while allowing the concentration toward small p T p_{T} to be tuned by ( a , b ) (a,b) ; and (ii) a logit-normal prior, in which z ∼ 𝒩 ​ ( μ p , σ p 2 ) z\sim\mathcal{N}(\mu_{p},\sigma_{p}^{2}) and p T = p T , max ​ sigmoid ​ ( z ) p_{T}=p_{T,\max}\,\mathrm{sigmoid}(z) , equivalently representing a logit-normal prior rescaled to ( 0 , p T , max ) (0,p_{T,\max}) . The EIRP of the transmitter on the comet is not expected to be extreme, but it may plausibly span a relatively small orders of magnitude, this motivates placing a log-normal prior ln ⁡ L ∼ 𝒩 ​ ( μ L , σ L 2 ) \ln L\sim\mathcal{N}(\mu_{L},\sigma_{L}^{2}) , so that multiplicative uncertainty is represented naturally. These assumptions are deliberately conservative and are used to illustrate how non-detections map to constraints on ( p T , L ) (p_{T},L) .
+
+Because the observational outcome is an all-zero non-detection, we report one-sided Bayesian credible upper limits on the transmitter occurrence probability from the marginal posterior of p T p_{T} . The EIRP parameter L L is retained in the Bayesian model as an assumed transmitter power scale, but it is treated as a nuisance parameter and marginalized over from the joint posterior in Eq. ( 39 ). The 95% upper limit p T , 95 p_{T,95} is defined by
+
+∫ 0 p T , 95 p ​ ( p T ∣ all0 ) ​ 𝑑 p T = 0.95 . \int_{0}^{p_{T,95}}p(p_{T}\mid{\rm all0})\,dp_{T}=0.95.
+
+(40)
+
+With the adopted fixed parameter choices listed in Appendix  C.2 , the two single-layer prior choices give similar illustrative upper limits on p T p_{T} . For the logit-normal prior, we obtain log 10 ⁡ p T , 95 = − 4.720 \log_{10}p_{T,95}=-4.720 , while for the scaled-beta prior we obtain log 10 ⁡ p T , 95 = − 4.419 \log_{10}p_{T,95}=-4.419 . These values are nearly unchanged among the individual observation configurations in this fixed-parameter single-layer calculation. The primary information of all-zero result is from Eq. ( 37 ). When p T ≪ 1 p_{T}\ll 1 and/or f ν ​ 𝒫 det ​ ( L ) f_{\nu}\mathcal{P}_{{\rm det}}(L) remains small over much of the prior-supported range, the likelihood provides only limited leverage on p T p_{T} after marginalizing over L L . Therefore, in this fixed-parameter single-layer demonstration, the marginal upper limits are only weakly differentiated by the individual observing configurations and should be interpreted together with the adopted prior choices.
+
+V.2.2 Hierarchical Prior Models
+
+To avoid over-committing to a single, fixed prior scale for the transmitter occurrence probability in the weak-information (all-zero) regime, we adopt hierarchical prior families in which the distributional shape parameters are themselves treated as unknowns and inferred jointly with the occurrence probability. The EIRP parameter L L is retained as an assumed transmitter-strength scale and marginalized over when deriving the upper limit on p T p_{T} .
+
+We implement two hierarchical variants consistent with the previous non-hierarchical priors: (i) hierarchical scaled-beta prior, in which
+
+q ∣ m , κ ∼ Beta ​ ( m ​ κ , ( 1 − m ) ​ κ ) . q\mid m,\kappa\sim\mathrm{Beta}(m\kappa,(1-m)\kappa).
+
+(41)
+
+Here m ∈ ( 0 , 1 ) m\in(0,1) controls the prior mean of q q through the expected value 𝔼 ​ ( q ∣ m , κ ) = m \mathbb{E}(q\mid m,\kappa)=m , while κ > 0 \kappa>0 controls the prior concentration (or dispersion) around m m , and larger κ \kappa yields a more concentrated prior and smaller κ \kappa yields a more diffuse prior. We complete the hierarchical model by assigning hyperpriors
+
+m ∼ Beta ​ ( α m , β m ) , κ ∼ Gamma ​ ( a κ , b κ ) , m\sim\mathrm{Beta}(\alpha_{m},\beta_{m}),\quad\kappa\sim\mathrm{Gamma}(a_{\kappa},b_{\kappa}),
+
+(42)
+
+where the Gamma distribution is parameterized by shape a κ a_{\kappa} and rate b κ b_{\kappa} . (ii) hierarchical logit-normal prior, in which
+
+z ∣ μ p , σ p ∼ 𝒩 ​ ( μ p , σ p 2 ) , z\mid\mu_{p},\sigma_{p}\sim\mathcal{N}(\mu_{p},\sigma_{p}^{2}),
+
+(43)
+
+where p T = p T , max ​ sigmoid ​ ( z ) p_{T}=p_{T,\max}\,\mathrm{sigmoid}(z) , and assign hyperpriors to ( μ p , σ p ) (\mu_{p},\sigma_{p}) ,
+
+μ p ∼ 𝒩 ​ ( μ p , 0 , τ μ p 2 ) , σ p ∼ HalfNormal ​ ( s σ p ) . \mu_{p}\sim\mathcal{N}(\mu_{p,0},\tau_{\mu_{p}}^{2}),\quad\sigma_{p}\sim\mathrm{HalfNormal}(s_{\sigma_{p}}).
+
+(44)
+
+In this hierarchical model, μ p \mu_{p} controls the typical scale of p T p_{T} in logit space, while σ p \sigma_{p} controls the dispersion of p T p_{T} implied by the prior. The half-normal hyperprior on σ p \sigma_{p} ensures positivity and allows the width of the logit-scale distribution to be inferred rather than fixed.
+
+For the transmitter EIRP, we adopt a hierarchical log-normal family to represent multiplicative uncertainty over orders of magnitude,
+
+ln ⁡ L ∣ μ L , σ L ∼ 𝒩 ​ ( μ L , σ L 2 ) , \ln L\mid\mu_{L},\sigma_{L}\sim\mathcal{N}(\mu_{L},\sigma_{L}^{2}),
+
+(45)
+
+with hyperpriors on the location and scale parameters,
+
+μ L ∼ 𝒩 ​ ( μ L , 0 , τ μ L 2 ) , ln ⁡ σ L ∼ 𝒩 ​ ( ln ⁡ σ L , 0 , τ ln ⁡ σ L 2 ) , \mu_{L}\sim\mathcal{N}(\mu_{L,0},\tau_{\mu_{L}}^{2}),\quad\ln\sigma_{L}\sim\mathcal{N}(\ln\sigma_{L,0},\tau_{\ln\sigma_{L}}^{2}),
+
+(46)
+
+which represents multiplicative uncertainty in L L naturally on a logarithmic scale. In the occurrence probability constraints reported below, L L and its hyperparameters are treated as nuisance quantities and marginalized over.
+
+In the all-zero detection regime, the constraints of the likelihood are driven primarily by the transition of the effective detection probability f ν ​ 𝒫 det ​ ( L ) f_{\nu}\mathcal{P}_{\rm det}(L) from low to high values across the prior-supported range of L L . The constraint is obtained from the one-dimensional marginal posterior p ​ ( p T ∣ all0 ) p(p_{T}\mid{\rm all0}) after marginalizing over L L and all hyperparameters. The 95% upper limits p T , 95 p_{T,95} for the occurrence probability are listed in Table  7 . The corresponding two-dimensional log 10 ⁡ p T \log_{10}p_{T} – log 10 ⁡ L \log_{10}L posterior contours are shown in Appendix  15 as diagnostic visualizations of the remaining degeneracy between the occurrence probability and the assumed transmitter power scale, and of the sensitivity to the adopted prior family.
+
+Table 7:
+One-sided 95% Bayesian credible upper limits on the transmitter occurrence probability for the hierarchical prior models with p T , max = 0.005 p_{T,\max}=0.005 . The EIRP parameter L L is treated as a nuisance parameter and marginalized over. These limits are conditional on the adopted prior families and hyperpriors.
+
+Observation
+
+log 10 ⁡ p T , 95 \log_{10}p_{T,95} (scaled-beta)
+
+log 10 ⁡ p T , 95 \log_{10}p_{T,95} (logit-normal)
+
+ATA (Sheikh et al. , 2025 )
+
+− 4.503 -4.503
+− 2.355 -2.355
+
+FAST (This work)
+− 4.592 -4.592
+− 2.339 -2.339
+
+GBT (Jacobson-Bell et al. , 2025b )
+
+− 4.376 -4.376
+− 2.341 -2.341
+
+MeerKAT (Pisano et al. , 2025 )
+
+− 4.428 -4.428
+− 2.355 -2.355
+
+All
+− 4.443 -4.443
+− 2.356 -2.356
+
+The upper limits in Table  7 are determined by both the observation configurations and the adopted hierarchical prior family. The former one is reflected in effective detection probabilities f ν , k ​ 𝒫 det , k ​ ( L ) f_{\nu,k}\mathcal{P}_{{\rm det},k}(L) . The distance, sensitivity, threshold, and integration time determine the transition region of 𝒫 det , k ​ ( L ) \mathcal{P}_{{\rm det},k}(L) as a function of L L , while the searched bandwidth enters through the frequency-coverage factor f ν , k f_{\nu,k} . After marginalizing over the assumed EIRP scale L L , these likelihood factors determine how strongly the all-zero result suppresses different values of p T p_{T} .
+
+The scaled-beta and logit-normal hierarchical priors lead to noticeably different upper limits on p T p_{T} . This difference reflects the different ways in which the two prior families distribute probability mass over the allowed interval of p T p_{T} once their shape parameters are allowed to vary. The scaled-beta model can place substantial probability density toward very small occurrence probabilities, leading to more stringent p T , 95 p_{T,95} values, whereas the logit-normal model is more centrally distributed in logit space and therefore yields less stringent upper limits.
+
+Finally, we emphasize that the purpose of these priors is not to claim a physically unique distribution for either p T p_{T} or L L , but to provide illustrative parameterizations demonstrating how non-detections map to make constraints on transmitter occurrence probability with the assumed transmitter EIRP.
+
+V.3 Events Featurization
+
+Although all of the events are false positives, we still make statistical analysis for the Bayes Factor, coherence and PCA for them, so that we can investigate the characteristics for these false positives. We first summarize the empirical distributions of the Bayes factor in Figure 10 across polarization products and band categories. The total intensity and four polarization channels exhibit markedly different BF distributions: Stokes- I I as well as XX and YY are predominantly negative with modest tails, whereas the cross-polarization products (XY/YX) are broader and more multimodal, with a substantial fraction extending to ln BF>0. A similar dependence is observed across frequency categories: GNSS-rich regions show heavy-tailed, multimodal BF distributions, consistent with heterogeneous interference morphologies, while the civil-aviation band appears comparatively more homogeneous.
+
+Figure 10: Distribution of the Bayes factor for potential candidates. Left: density histograms of for ln BF Stokes- I I and the four polarization products (XX, YY, XY, YX). Middle: violin plots of ln BF grouped by polarization product (dashed lines indicate quartiles), with black stars indicating the seven chirp-up potential candidates in Table 5 . Right: violin plots of ln BF grouped by frequency-band category.
+
+The statistics for the outputs resulting from structure tensor and PCA are illustrated in Figure 11 . These features of the dynamic spectra in all beams of each event are stratified by polarization channel and by on/off beam. As we described in Section III.4 , we select high-coherence regions to place the structure tensor quiver arrows. This restriction is intended to preferentially select locally anisotropic patches that, in an ideal narrowband drifting signal, would concentrate around the drift track and thereby highlight its linear geometry. If the selected region is dominated by a single, stable linear structure, coh \mathrm{coh} within that region should be relatively uniform and Var ​ ( coh ) \mathrm{Var}(\mathrm{coh}) should be small. Therefore, Var ​ ( coh ) \mathrm{Var}(\mathrm{coh}) can be interpreted as a quality-control indicator for whether the selected high-coherence region behaves like a coherent structure instead aggregates multiple texture-driven patches. The line-orientation estimator θ line \theta_{\rm line} has group medians close to zero with modest dispersion, whereas Var ​ ( θ ) {\rm Var}(\theta) shows a long-tailed distribution, which is consistent with the characteristics of textured backgrounds or multi-component structures where no single drift-like ridge dominates the patch (See the examples of six event waterfall plots in Figure 8 and Figure 13 , almost all quiver arrows are horizontal without any significant inclination).
+
+The EVR entropy H EVR H_{\rm EVR} is systematically lower for the cross-hands (XY/YX) than for XX/YY, implying that the EVR distribution is more peaked toward the first few PCs, so that most of the variance can be represented by a smaller number of leading components with top rank. The EVR-weight trend slopes defined for rough frequency-drifting tendency, generally concentrated around a zero-drift mean values, especially the XY channel. The component-to-component ratios ln ⁡ ( EVR k / EVR k + 1 ) \ln(\mathrm{EVR}_{k}/\mathrm{EVR}_{k+1}) decrease rapidly with k k and approach a near-flat tail at larger k k , showing that the PCA spectrum transitions from a steep leading part to a noise-dominated regime. Finally, the goodness-of-fit R 2 R^{2} for the quadratic model ln ⁡ ( EVR m ) \ln(\mathrm{EVR}_{m}) varies substantially by group, with generally higher R 2 R^{2} in the cross-hands products, indicating that those channels more often follow a smooth, rapidly decaying EVR envelope over the fitted range.
+
+Figure 11: Distributions of feature diagnostics derived from the structure tensor and PCA for the potential candidates in all beams, grouped by polarization channels and beams (ON: central beam; OFF: reference beams). First row: structure tensor statistics computed on the selected high-coherence regions, ⟨ coh ⟩ \left\langle{\rm coh}\right\rangle and Var ​ ( coh ) {\rm Var\ (coh)} . Second row: statistics of line orientation angle, ⟨ θ ⟩ \left\langle\theta\right\rangle and Var ​ θ {\rm Var}\ \theta of the dynamic spectra. Third row: distributions of EVR entropy H EVR H_{\rm EVR} , and the EVR-weight trend slope a E ​ V ​ R a_{EVR} of the dynamic spectra defined in Section III.5 . Fourth row: median trend of EVR ratio ln ⁡ ( EVR k / EVR k + 1 ) \ln({\rm EVR}_{k}/{\rm EVR}_{k+1}) versus k k for the top 15 components (curves show per-group medians and shaded regions show the interquartile range) and the coefficient of determination R 2 R^{2} from fitting ln ⁡ ( EVR m ) \ln({\rm EVR}_{m}) in Eq. ( 25 ) across available components. Box plots summarize per-group distributions (median, IQR, and 1.5 × \times IQR whiskers) and colored points show individual samples in each group.
+
+Because the vast majority of the present sample consists of false positives and complex RFI or background noise, these statistics primarily reflect the background texture and instrumental/RFI imprint within the dynamic spectrum cutouts, rather than isolating the idealized signature of a single, clean Doppler-drifting narrowband track. A notable outcome is that the ON and OFF beams exhibit broadly similar population-level distributions for these features. This consistency is aligned with the fact that the vast majority of detections in the present sample are false positives: the dominant contribution to these statistics is therefore the morphology of background noise texture and persistent instrumental/RFI. At the same time, the nontrivial coherence levels and structured EVR patterns indicate that these RFI/noise realizations are not featureless. They often contain anisotropic and low-rank components that are quantified by the same diagnostics, and which must be accounted for when interpreting drifting-signal features.
+
+We also identify a plausible reason why visually apparent drifting tracks are not consistently traced by the structure-tensor quiver arrows. Coherence measure is derived from locally averaged second moments of the intensity gradients, and thus quantifies local anisotropy. In real dynamic spectrum, many visually apparent signal with drift-like features often show amplitude modulation and intermittency along the track, whereas the background often contains stable instrumental/RFI texture (e.g., quasi-horizontal striations). Under our high-coherence sampling strategy, the selected pixels preferentially trace the most repeatable anisotropic texture within each patch, which frequently aligns close to the frequency axis, yielding ⟨ θ ⟩ \langle\theta\rangle concentrated near zero even when a drift-like pattern signal is present. Figure 12 illustrates this behavior using two representative false-positive events that appear in all beams: one contains a visually clear linear drift, and the other is a relatively broadband horizontal feature. Although the drift is visible in both the waterfall and the orientation-angle map, its intermittency leads to spatially fragmented coherence, so the sampled quivers do not follow the track continuously. By contrast, the broadband horizontal feature is more uniform and produces a stronger, more spatially coherent anisotropic signature, and is therefore more reliably emphasized by the quiver arrows.
+
+Figure 12: Waterfall plots (left), coherence map (middle) and orientation angle (right) for Doppler-drifting RFI signal (top) and relatively broadband RFI signal (bottom) appearing in all beams.
+
+VI Conclusion
+
+We perform ∼ 4 − hr \sim 4-{\rm hr} narrowband technosignature search toward 3I/ATLAS, the third confirmed ISO, with FAST L-band multibeam receiver in the frequency range of 1.05-1.45 GHz. The data was recorded on SETI backend with 7.5 Hz frequency resolution and 10 s sample time. We search for narrowband drifting signal with drift rates consistent with the relative motion of 3I/ATLAS and SNR threshold above 10, in four polarization channels.
+
+The hit search is performed using bliss within ± 2 ​ Hz ​ s − 1 \pm\ 2\ \mathrm{Hz\,s^{-1}} . The obtained hits are filtered by HDBSCAN and expected drift rate. We apply Bayes factor to quantify the significance in the SNR differences between on-source and off-source. We also utilize structure tensor and PCA to featurize the morphology of the events.
+
+After visual inspections, almost all potential candidates we obtain are obvious false positives and rejected as RFIs, except seven chirp-up signals detected on 5 January 2026, which only appear in the central beam. These seven chirp-up signals are finally rejected as instrumental RFIs instead of signal of interest, due to the consistency with the clock oscillator intermodulation in frequencies and inconsistency with the expected drift rate. Based on the null result, our search places an EIRP upper limit of 2.862 × 10 − 3 ​ W 2.862\times 10^{-3}\,\mathrm{W} for any narrowband radio transmitters. We also present a Bayesian model for deriving illustrative limits on the transmitter occurrence probability with assumed transmitter power distributions.
+
+We sincerely appreciate the referee’s suggestions, which help us greatly improve our manuscript. We thank the staffs in FAST data center for approving our DDT application on FAST observing time. We thank Chenoa Tremblay for sharing
+the MeerKAT information about the technosginature search. This work was supported by National Key R&D Program of China, No.2024YFA1611804 and the China Manned Space Program with grant No. CMS-CSST-2025-A01. This work made use of the data from FAST (Five-hundred-meter Aperture Spherical radio Telescope). FAST is a Chinese national mega-science facility, operated by National Astronomical Observatories, Chinese Academy of Sciences.
+
+Appendix A Explained Variance Ratio in PCA for Drifting Signal
+
+Consider the dynamic spectrum X c ∈ ℝ N t × N ν X_{c}\in\mathbb{R}^{N_{t}\times N_{\nu}} . A narrow Doppler-drifting line can be idealized as a spectral profile,
+
+X c ​ ( t i , ν j ) ≈ α ​ ( t i ) ​ g ​ ( ν j − ν 0 − ν ˙ , t i ) , X_{c}(t_{i},\nu_{j})\approx\alpha(t_{i})g(\nu_{j}-\nu_{0}-\dot{\nu},t_{i}),
+
+(A1)
+
+where a ​ ( t i ) a(t_{i}) is the amplitude and g ​ ( ν ) g(\nu) has characteristic width w ν w_{\nu} . For drifting regime | ν ˙ | ​ τ obs ≫ w ν |\dot{\nu}|\tau_{\rm obs}\gg w_{\nu} , applying PCA to X c X_{c} is equivalent to diagonalizing the frequency-domain covariance,
+
+C ν ≡ 1 N t ​ X c T ​ X c , EVR m = λ m ∑ s λ s , C_{\nu}\equiv\frac{1}{N_{t}}X_{c}^{T}X_{c},\quad\mathrm{EVR}_{m}=\frac{\lambda_{m}}{\sum_{s}\lambda_{s}},
+
+(A2)
+
+where { λ m } \{\lambda_{m}\} are the eigenvalues of C ν C_{\nu} (equivalently λ m = σ m 2 \lambda_{m}=\sigma_{m}^{2} , with σ m \sigma_{m} the singular values of X c X_{c} ) Substituting the drifting-profile yields
+
+C ν ​ ( ν j , ν k ) = 1 N t ​ ∑ i = 1 N t α 2 ​ ( t i ) ​ g ​ ( ν j − ν 0 − ν ˙ ​ t i ) ​ g ​ ( ν k − ν 0 − ν ˙ ​ t i ) . C_{\nu}(\nu_{j},\nu_{k})=\frac{1}{N_{t}}\sum_{i=1}^{N_{t}}\alpha^{2}(t_{i})g\left(\nu_{j}-\nu_{0}-\dot{\nu}t_{i}\right)g\left(\nu_{k}-\nu_{0}-\dot{\nu}t_{i}\right).
+
+(A3)
+
+When the drift spans many line widths, the correlation between channels depends primarily on the frequency separation Δ ​ ν = ν j − ν k \Delta\nu=\nu_{j}-\nu_{k} . Approximating α 2 ​ ( t i ) \alpha^{2}(t_{i}) by its time average A 2 ≡ ⟨ α 2 ⟩ A^{2}\equiv\langle\alpha^{2}\rangle and replacing the discrete sum by an integral along the drift line gives an approximately shift-invariant kernel,
+
+C ν ​ ( ν j , ν k ) ≈ K ​ ( Δ ​ ν ) = A 2 | ν ˙ | ​ τ obs ​ ∫ − ∞ ∞ g ​ ( u ) ​ g ​ ( u − Δ ​ ν ) ​ 𝑑 u . C_{\nu}(\nu_{j},\nu_{k})\approx K(\Delta\nu)=\frac{A^{2}}{|\dot{\nu}|\tau_{\rm obs}}\int_{-\infty}^{\infty}g(u)g(u-\Delta\nu)du.
+
+(A4)
+
+For a Gaussian line profile g ​ ( ν ) ∝ exp ⁡ [ − ν 2 / ( 2 ​ w ν 2 ) ] g(\nu)\propto\exp[-\nu^{2}/(2w_{\nu}^{2})] , the correlation kernel is also Gaussian,
+
+K ​ ( Δ ​ ν ) = K 0 ​ exp ⁡ ( − Δ ​ ν 2 4 ​ w ν 2 ) . K(\Delta\nu)=K_{0}\exp\left(-\frac{\Delta\nu^{2}}{4w^{2}_{\nu}}\right).
+
+(A5)
+
+Over the drift span, define the number of frequency channels traversed as
+
+N span ≡ round ​ ( | ν ˙ | ​ τ obs δ ​ ν ) , N_{\rm span}\equiv{\rm round}\left(\frac{|\dot{\nu}|\tau_{\rm obs}}{\delta\nu}\right),
+
+(A6)
+
+and consider the discrete Fourier modes
+
+v m ​ ( j ) = exp ⁡ ( i ​ 2 ​ π ​ m ​ j N span ) , m = 0 , … , N span − 1 , v_{m}(j)=\exp\left(i\frac{2\pi mj}{N_{\rm span}}\right),\qquad m=0,\dots,N_{\rm span}-1,
+
+(A7)
+
+which approximately diagonalize a shift-invariant covariance. The corresponding eigenvalues can be written as the discrete Fourier transform of the sampled kernel K n ≡ K ​ ( n ​ δ ​ ν ) K_{n}\equiv K(n\delta\nu) ,
+For | ν ˙ | ​ τ obs ≫ δ ​ ν |\dot{\nu}|\tau_{\rm obs}\gg\delta\nu case,
+
+λ m = ∑ n = 0 N span − 1 K n ​ exp ⁡ ( − i ​ 2 ​ π ​ m ​ n N span ) . \lambda_{m}=\sum_{n=0}^{N_{\rm span}-1}K_{n}\exp\left(-i\frac{2\pi mn}{N_{\rm span}}\right).
+
+(A8)
+
+In the large-span limit, this sum is well-approximated by the continuous Fourier transform
+
+λ m ≈ ∫ − ∞ ∞ K ​ ( Δ ​ ν ) ​ e − i ​ ℓ m ​ Δ ​ ν ​ d ​ ( Δ ​ ν ) , ℓ m ≡ 2 ​ π ​ m | ν ˙ | ​ τ obs . \lambda_{m}\approx\int_{-\infty}^{\infty}K(\Delta\nu)e^{-i\ell_{m}\Delta\nu}d(\Delta\nu),\quad\ell_{m}\equiv\frac{2\pi m}{|\dot{\nu}|\tau_{\rm obs}}.
+
+(A9)
+
+Using Equation ( A5 ) and the Gaussian Fourier transform,
+
+∫ − ∞ ∞ exp ⁡ ( − x 2 4 ​ w ν 2 ) ​ e − i ​ ℓ ​ x ​ 𝑑 x = 2 ​ π ​ w ν ​ exp ⁡ [ − ( ℓ ​ w ν ) 2 ] , \int_{-\infty}^{\infty}\exp\left(-\frac{x^{2}}{4w_{\nu}^{2}}\right)e^{-i\ell x}dx=2\sqrt{\pi}w_{\nu}\exp\left[-(\ell w_{\nu})^{2}\right],
+
+(A10)
+
+we obtain
+
+λ m ≈ K 0 ​ ( 2 ​ π ​ w ν ) ​ exp ⁡ [ − ( ℓ m ​ w ν ) 2 ] = K 0 ​ ( 2 ​ π ​ w ν ) ​ exp ⁡ [ − ( 2 ​ π ​ m ​ w ν | ν ˙ | ​ τ obs ) 2 ] . \lambda_{m}\approx K_{0}(2\sqrt{\pi}w_{\nu})\exp\left[-(\ell_{m}w_{\nu})^{2}\right]=K_{0}(2\sqrt{\pi}w_{\nu})\exp\left[-\left(\frac{2\pi mw_{\nu}}{|\dot{\nu}|\tau_{\rm obs}}\right)^{2}\right].
+
+(A11)
+
+We define the EVR entropy as
+
+H EVR = − ∑ m p m ​ ln ⁡ p m , p m = λ m ∑ s λ s . H_{\rm EVR}=-\sum_{m}p_{m}\ln p_{m},\qquad p_{m}=\frac{\lambda_{m}}{\sum_{s}\lambda_{s}}.
+
+(A12)
+
+For | ν ˙ | ​ τ obs ≫ w ν |\dot{\nu}|\tau_{\rm obs}\gg w_{\nu} , define
+
+a ≡ ( 2 ​ π ​ w ν | ν ˙ | ​ τ obs ) 2 ≪ 1 . a\equiv\left(\frac{2\pi w_{\nu}}{|\dot{\nu}|\tau_{\rm obs}}\right)^{2}\ll 1.
+
+(A13)
+
+Up to normalization, Equation ( A11 ) implies p m ∝ e − a ​ m 2 p_{m}\propto e^{-am^{2}} , so that
+
+p m ≈ e − a ​ m 2 ∑ s e − a ​ s 2 ≈ a π ​ e − a ​ m 2 , p_{m}\approx\frac{e^{-am^{2}}}{\sum_{s}e^{-as^{2}}}\approx\sqrt{\frac{a}{\pi}}e^{-am^{2}},
+
+(A14)
+
+where we have used the continuum approximation
+
+∑ s e − a ​ s 2 ≈ ∫ − ∞ ∞ e − a ​ x 2 ​ 𝑑 x = π a . \sum_{s}e^{-as^{2}}\approx\int_{-\infty}^{\infty}e^{-ax^{2}}dx=\sqrt{\frac{\pi}{a}}.
+
+(A15)
+
+Treating p ​ ( x ) = a / π ​ e − a ​ x 2 p(x)=\sqrt{a/\pi}\,e^{-ax^{2}} as a continuous density yields
+
+H EVR ≈ − ∫ − ∞ ∞ p ​ ( x ) ​ ln ⁡ p ​ ( x ) ​ 𝑑 x = 1 2 ​ ln ⁡ ( π ​ e a ) = ln ⁡ ( | ν ˙ | ​ τ obs 2 ​ π ​ w ν ) + 1 2 ​ ln ⁡ ( π ​ e ) . H_{\rm EVR}\approx-\int_{-\infty}^{\infty}p(x)\ln p(x)dx=\frac{1}{2}\ln\left(\frac{\pi e}{a}\right)=\ln\left(\frac{|\dot{\nu}|\tau_{\rm obs}}{2\pi w_{\nu}}\right)+\frac{1}{2}\ln(\pi e).
+
+(A16)
+
+In addition, our derivation replaces the discrete modal sum and discrete Fourier transform by a continuous Gaussian integral and a continuous Fourier transform. For a finite drift span and a finite number of modes, this discrete-continuous approximation modifies the tail weights and induces spectral leakage in the discrete spectrum, which may increase H EVR H_{\rm EVR} relative to the idealized expression.
+
+Appendix B Chirp-up Drifting Potential Candidates
+
+There are seven potential candidates exhibit chirp-up drifting feature. Apart from the potential candidates with event ID 250, other six potential candidates listed in Table 5 are illustrated in Figure 13 and Figure 14 .
+
+Figure 13: Four drifting potential candidates with similar chirp-up features with Figure 8 . Panel (a) and (b) are actually the same signal in YY and YX channels, in spite of different drift rates given by bliss . Panel (c) and (d) are two chirp-up drifting signals with similar chirp-up morphological pattern different from the signals in Panel (a) and (b). Panel (b) uses a differnet diverging colormap to distinguish positive and negative values in the signed cross-hand data.
+
+Figure 14: Two drifting potential candidates with chirp-up features with Figure 8 in Stokes- I I . Signal in Panel (a) of this Figure and the signal in Panel (a) of Figure 8 , as well as signal in Panel (b) of this Figure and the signal in Panel (d) of Figure 13 can be attributed as the same signals dwe to the same frequencies and similar chirp-up shapes.
+
+Appendix C Derivations for Bayesian Limits
+
+C.1 Posterior for Null Detection
+
+For the ideal Gaussian noise in radio observation, the test statistic x x satisfies x ∼ 𝒩 ​ ( μ 0 , σ 2 ) x\sim\mathcal{N}(\mu_{0},\sigma^{2}) for pure noise. For the case of signal detection with EIRP of L L , the mean of test statistic x x becomes μ 0 + Δ ​ μ ​ ( L ) \mu_{0}+\Delta\mu(L) , then the SNR can be defined as
+
+SNR = x − μ 0 σ 0 . {\rm SNR}=\frac{x-\mu_{0}}{\sigma_{0}}.
+
+(C1)
+
+The SNR for pure noise satisfies SNR ∣ H 0 ∼ 𝒩 ​ ( 0 , 1 ) {\rm SNR}\mid H_{0}\sim\mathcal{N}(0,1) , while the SNR for signal detection should be SNR ∣ H 1 ∼ 𝒩 ​ ( Δ ​ μ ​ ( L ) / σ 0 , 1 ) {\rm SNR}\mid H_{1}\sim\mathcal{N}(\Delta\mu(L)/\sigma_{0},1) . The typical SNR for a signal μ SNR ​ ( L ) = Δ ​ μ ​ ( L ) / σ 0 \mu_{\rm SNR}(L)=\Delta\mu(L)/\sigma_{0} can be given by
+
+μ SNR ​ ( L ) = β SEFD ​ n pol ​ τ obs δ ​ ν ch ​ L 4 ​ π ​ d 2 = ζ ​ L . \mu_{\rm SNR}(L)=\frac{\sqrt{\beta}}{{\rm SEFD}}\sqrt{\frac{n_{\rm pol}\tau_{\rm obs}}{\delta\nu_{\rm ch}}}\frac{L}{4\pi d^{2}}=\zeta L.
+
+(C2)
+
+Then the probability 𝒫 det \mathcal{P}_{\rm det} of detecting a signal above SNR th {\rm SNR}_{\rm th} can be calculated by
+
+𝒫 det ​ ( L ) = Pr ⁡ ( SNR > SNR th ) = 1 − Φ ​ ( SNR th − μ SNR ​ ( L ) ) = Φ ​ ( ζ ​ L − SNR th ) . \mathcal{P}_{\rm det}(L)=\Pr({\rm SNR}>{\rm SNR}_{\rm th})=1-\Phi\left({\rm SNR}_{\rm th}-\mu_{\rm SNR}(L)\right)=\Phi\left(\zeta L-{\rm SNR}_{\rm th}\right).
+
+(C3)
+
+We assume T ∣ p T ∼ Bernoulli ​ ( p T ) T\mid p_{T}\sim\mathrm{Bernoulli}(p_{T}) , so that Pr ⁡ ( T = 1 ∣ p T ) = p T \Pr(T=1\mid p_{T})=p_{T} and Pr ⁡ ( T = 0 ∣ p T ) = 1 − p T \Pr(T=0\mid p_{T})=1-p_{T} . Conditional on T = 1 T=1 , the transmitter has an EIRP of L L drawn from a prior π ​ ( L ) \pi(L) , while for T = 0 T=0 , L L is not physically meaningful and will not enter the likelihood below. Consider K K observational configurations, where configuration k k contains N k N_{k} independent trials. For a given EIRP L L , the single-trial detection probability in configuration k k is 𝒫 det , k ​ ( L ) \mathcal{P}_{{\rm det},k}(L) . Using Bayes’ theorem and assuming independent priors π ​ ( p T ) \pi(p_{T}) and π ​ ( L ) \pi(L) , the joint posterior for ( p T , L , T ) (p_{T},L,T) is
+
+p ​ ( p T , L , T ∣ all0 ) = ℒ ​ ( all0 ∣ T , L ) ​ π ​ ( L ) , Pr ⁡ ( T ∣ p T ) ​ π ​ ( p T ) p ​ ( all0 ) , p(p_{T},L,T\mid\mathrm{all0})=\frac{\mathcal{L}(\mathrm{all0}\mid T,L)\pi(L),\Pr(T\mid p_{T})\pi(p_{T})}{p(\mathrm{all0})},
+
+(C4)
+
+where Pr ⁡ ( T ∣ p T ) = p T T ​ ( 1 − p T ) 1 − T \Pr(T\mid p_{T})=p_{T}^{T}(1-p_{T})^{1-T} , and the evidence is
+
+p ​ ( all0 ) = ∑ T ∈ 0 , 1 ∬ ℒ ​ ( all0 ∣ T , L ) ​ π ​ ( L ) ​ Pr ⁡ ( T ∣ p T ) ​ π ​ ( p T ) ​ d L ​ d p T . p(\mathrm{all0})=\sum_{T\in{0,1}}\iint\mathcal{L}(\mathrm{all0}\mid T,L)\pi(L)\Pr(T\mid p_{T})\pi(p_{T}){\rm d}L{\rm d}p_{T}.
+
+(C5)
+
+Finally, we marginalize over the latent indicator T T to obtain the posterior in ( p T , L ) (p_{T},L) :
+
+p ​ ( p T , L ∣ all0 ) = ∑ T ∈ 0 , 1 p ​ ( p T , L , T ∣ all0 ) ​ [ ( 1 − p T ) ​ ℒ ​ ( all0 ∣ T = 0 ) ] + [ p T ​ ℒ ​ ( all0 ∣ T = 1 , L ) ] p ​ ( all0 ) ​ π ​ ( L ) ​ π ​ ( p T ) . p(p_{T},L\mid\mathrm{all0})=\sum_{T\in{0,1}}p(p_{T},L,T\mid\mathrm{all0})\frac{\left[(1-p_{T})\mathcal{L}(\mathrm{all0}\mid T=0)\right]+\left[p_{T}\mathcal{L}(\mathrm{all0}\mid T=1,L)\right]}{p(\mathrm{all0})}\pi(L)\pi(p_{T}).
+
+(C6)
+
+Substituting Equations ( 37 )-( 38 ) gives a compact mixture-likelihood form:
+
+p ​ ( p T , L ∣ all0 ) = [ ( 1 − p T ) + p T ​ ∏ k = 1 K ( 1 − 𝒫 det , k ​ ( L ) ) N k ] ​ π ​ ( L ) ​ π ​ ( p T ) ∬ [ ( 1 − p T ) + p T ​ ∏ k = 1 K ( 1 − 𝒫 det , k ​ ( L ) ) N k ] ​ π ​ ( L ) ​ π ​ ( p T ) ​ d L ​ d p T . p(p_{T},L\mid\mathrm{all0})=\frac{\left[(1-p_{T})+p_{T}\prod_{k=1}^{K}\left(1-\mathcal{P}_{{\rm det},k}(L)\right)^{N_{k}}\right]\pi(L)\pi(p_{T})}{\iint{\left[(1-p_{T})+p_{T}\prod_{k=1}^{K}\left(1-\mathcal{P}_{{\rm det},k}(L)\right)^{N_{k}}\right]\pi(L)\pi(p_{T}){\rm d}L{\rm d}p_{T}}}.
+
+(C7)
+
+C.2 Adopted Parameters and Hyperparameters
+
+In this Appendix we summarize the prior families and the numerical hyperparameters adopted in the illustrative Bayesian analysis. These choices are intentionally simple and are not intended to represent a unique physical model. Rather, they encode conservative expectations that (i) the transmitter occurrence probability is small but poorly known in scale, and (ii) the EIRP may span orders of magnitude and is therefore more naturally parameterized in ln ⁡ L \ln L .
+
+For the non-hierarchical models, we initially adopt a deliberately loose upper bound p T , max = 0.5 p_{T,\max}=0.5 to ensure that the prior support covers a broad range of plausible occurrence probabilities and parameterize p T = p T , max ​ q p_{T}=p_{T,\max}q . We consider (i) a scaled-beta prior q ∼ Beta ​ ( a , b ) q\sim{\rm Beta}(a,b) with ( a , b ) = ( 5 , 5000 ) (a,b)=(5,5000) , which concentrates prior mass near q ≈ a / ( a + b ) ≃ 10 − 3 q\approx a/(a+b)\simeq 10^{-3} (thus p T ∼ 5 × 10 − 4 p_{T}\sim 5\times 10^{-4} ) while retaining a long tail to larger values, and logit-normal mapping p T = p T , max ​ sigmoid ​ ( z ) p_{T}=p_{T,\max}\,{\rm sigmoid}(z) with z ∼ 𝒩 ​ ( μ p , σ p 2 ) z\sim\mathcal{N}(\mu_{p},\sigma_{p}^{2}) and ( μ p , σ p ) = ( − 3 , 10 ) (\mu_{p},\sigma_{p})=(-3,10) , which is deliberately diffuse in logit space and therefore weakly informative for p T p_{T} over many orders of magnitude. For the EIRP we adopt a log-normal prior ln ⁡ L ∼ 𝒩 ​ ( μ L , σ L 2 ) \ln L\sim\mathcal{N}(\mu_{L},\sigma_{L}^{2}) with ( μ L , σ L ) = ( ln ⁡ 2 , ln ⁡ 10 ) (\mu_{L},\sigma_{L})=(\ln 2,\ln 10) , implying a median L ≃ 2 ​ W L\simeq 2{\rm W} and a multiplicative scatter of exp ⁡ ( σ L ) = 10 \exp(\sigma_{L})=10 .
+
+In the non-hierarchical models, the resulting one-sided upper limits on p T p_{T} lie well below the deliberately loose bound p T , max = 0.5 p_{T,\max}=0.5 . Therefore, we subsequently restrict the hierarchical analyses to a grid of smaller p T , max p_{T,\max} values, p T , max ∈ { 0.01 , 0.008 , 0.005 } p_{T,\max}\in\{0.01,0.008,0.005\} . For the scaled-beta hierarchical model we retain p T = p T , max ​ q p_{T}=p_{T,\max}q and use
+
+q ∣ m , κ ∼ Beta ​ ( m ​ κ , ( 1 − m ) ​ κ ) , m ∼ Beta ​ ( α m , β m ) , κ ∼ Gamma ​ ( a κ , b κ ) , q\mid m,\kappa\sim{\rm Beta}(m\kappa,\,(1-m)\kappa),\quad m\sim{\rm Beta}(\alpha_{m},\beta_{m}),\quad\kappa\sim{\rm Gamma}(a_{\kappa},b_{\kappa}),
+
+(C8)
+
+with ( α m , β m ) = ( 2 , 2000 ) (\alpha_{m},\beta_{m})=(2,2000) and ( a κ , b κ ) = ( 5 , 0.05 ) (a_{\kappa},b_{\kappa})=(5,0.05) . This places m ∼ 10 − 3 m\sim 10^{-3} , pushing the typical p T p_{T} to small values, while κ \kappa controls how tightly p T p_{T} is concentrated around m m : larger κ \kappa produces stronger shrinkage (narrower posteriors in log ⁡ p T \log p_{T} ) and makes the inferred ( p T , L ) (p_{T},L) region more sensitive to the imposed upper bound p T , max p_{T,\max} .
+
+For the logit-normal hierarchical model we adopt
+
+z ∣ μ p , σ p ∼ 𝒩 ​ ( μ p , σ p 2 ) , p T = p T , max ​ sigmoid ​ ( z ) , z\mid\mu_{p},\sigma_{p}\sim\mathcal{N}(\mu_{p},\sigma_{p}^{2}),\quad p_{T}=p_{T,\max}\,{\rm sigmoid}(z),
+
+(C9)
+
+with μ p ∼ 𝒩 ​ ( μ p , 0 , τ μ p 2 ) \mu_{p}\sim\mathcal{N}(\mu_{p,0},\tau_{\mu_{p}}^{2}) and σ p ∼ HalfNormal ​ ( s σ p ) \sigma_{p}\sim{\rm HalfNormal}(s_{\sigma_{p}}) . We use ( μ p , 0 , τ μ p ) = ( − 3 , 4 ) (\mu_{p,0},\tau_{\mu_{p}})=(-3,4) and s σ p = 2 s_{\sigma_{p}}=2 , which yields a broad prior on p T p_{T} in logit space but still favors small p T p_{T} . Compared to the scaled-beta hierarchical model, this mapping tends to redistribute probability more smoothly in log ⁡ p T \log p_{T} , producing smaller morphological changes of the diagnostic log ⁡ p T − log ⁡ L \log p_{T}-\log L contours when p T , max p_{T,\max} is varied.
+
+For the EIRP hierarchical model we retain a log-normal form
+
+ln ⁡ L ∣ μ L , σ L ∼ 𝒩 ​ ( μ L , σ L 2 ) , μ L ∼ 𝒩 ​ ( μ L , 0 , τ μ L 2 ) , ln ⁡ σ L ∼ 𝒩 ​ ( ln ⁡ σ L , 0 , τ ln ⁡ σ L 2 ) . \ln L\mid\mu_{L},\sigma_{L}\sim\mathcal{N}(\mu_{L},\sigma_{L}^{2}),\quad\mu_{L}\sim\mathcal{N}(\mu_{L,0},\tau_{\mu_{L}}^{2}),\quad\ln\sigma_{L}\sim\mathcal{N}(\ln\sigma_{L,0},\tau_{\ln\sigma_{L}}^{2}).
+
+(C10)
+
+We adopt ( μ L , 0 , τ μ L ) = ( 0 , 1 ) (\mu_{L,0},\tau_{\mu_{L}})=(0,1) and ( ln ⁡ σ L , 0 , τ ln ⁡ σ L ) = ( 0.83 , 0.25 ) (\ln\sigma_{L,0},\tau_{\ln\sigma_{L}})=(0.83,0.25) , corresponding to a prior median L ∼ 1 ​ W L\sim 1{\rm W} and a typical dispersion σ L ∼ e 0.83 ≈ 2.3 \sigma_{L}\sim e^{0.83}\approx 2.3 . In the main occurrence probability limits, L L and its hyperparameters are treated as nuisance quantities and marginalized over.
+
+In the all-zero detection regime, the likelihood provides limited leverage on p T p_{T} unless the effective detection probability f ν , k ​ 𝒫 det , k ​ ( L ) f_{\nu,k}\mathcal{P}_{{\rm det},k}(L) varies appreciably across the prior-supported range of L L . The imposed value of p T , max p_{T,\max} therefore affects the allowed range of the marginal posterior of p T p_{T} , especially for the scaled-beta family. As illustrative examples, Figure  15 shows how the diagnostic joint posterior contours change with different choices of p T , max p_{T,\max} for the scaled-beta and logit-normal hierarchical models. Figure  16 shows the corresponding diagnostic posterior contours for the adopted case with p T , max = 0.005 p_{T,\max}=0.005 . These figures are included only to visualize the remaining p T p_{T} – L L degeneracy and the prior-family dependence. The numerical upper limits reported in Table  7 are computed from the one-dimensional marginal posterior p ​ ( p T ∣ all0 ) p(p_{T}\mid{\rm all0}) .
+
+Figure 15:
+Diagnostic joint posterior contours for the scaled-beta (top) and scaled logit-normal (bottom) hierarchical prior models with different p T , max p_{T,\max} settings. The contours show the joint posterior densities in the log 10 ⁡ p T \log_{10}p_{T} – log 10 ⁡ L \log_{10}L plane after marginalizing over hyperparameters for the observing configurations in ATA, GBT, MeerKAT, and this work. Solid and dashed curves enclose the 68% and 95% HPD regions, respectively.
+
+Figure 16:
+Diagnostic posterior contours for the scaled-beta (a) and scaled logit-normal (b) hierarchical prior models with p T , max = 0.005 p_{T,\max}=0.005 . The contours show the joint posterior densities in the log 10 ⁡ p T \log_{10}p_{T} – log 10 ⁡ L \log_{10}L plane after marginalizing over hyperparameters for the observing configurations in ATA, GBT, MeerKAT, and this work. Solid and dashed curves enclose the 68% and 95% HPD regions, respectively. The top-left panel shows the one-dimensional marginal posterior of log 10 ⁡ p T \log_{10}p_{T} , while the bottom-right panel shows the one-dimensional marginal posterior of log 10 ⁡ L \log_{10}L .
+
+References
+
+B. Bolin, L. Abron, M. Belyakov, J. P. Carvajal, C. Fremling, J. Hanus, C. Ingebretsen, P. King, B. Luco, K. Noll, T. H. Puzia, R. Rahatgaonkar, K. Silva, and I. Wong (2025a)
+The Anti-Solar Tail of Comet 3I/ATLAS Seen in Deep Multi-band Imaging Taken at Gemini South .
+
+The Astronomer’s Telegram 17363 , pp. 1 .
+
+Cited by: §I .
+
+B. T. Bolin, M. Belyakov, C. Fremling, M. J. Graham, A. M. Abdelaziz, E. Elhosseiny, C. L. Gray, C. Ingebretsen, G. Jewett, C. M. Lisse, S. Karpov, M. Kilic, M. Mašek, M. Molham, D. Roderick, A. Takey, L. Abron, M. W. Coughlin, C. Hsieh, K. S. Noll, and I. Wong (2025b)
+Interstellar comet 3I/ATLAS: discovery and physical description .
+
+MNRAS 542 ( 1 ), pp. L139–L143 .
+
+External Links: Document ,
+2507.05252
+
+Cited by: §I .
+
+R. N. Bracewell (1960)
+Communications from Superior Galactic Communities .
+
+Nature 186 ( 4726 ), pp. 670–671 .
+
+External Links: Document
+
+Cited by: §I .
+
+B. Brzycki, A. P. V. Siemion, I. d. Pater, S. Croft, J. Hoang, C. Ng, D. C. Price, S. Sheikh, and Z. Zheng (2022)
+Setigen: Simulating Radio Technosignatures for the Search for Extraterrestrial Intelligence .
+
+AJ 163 ( 5 ), pp. 222 .
+
+External Links: Document ,
+2203.09668
+
+Cited by: §III.4 .
+
+R. J. G. B. Campello, D. Moulavi, and J. Sander (2013)
+Density-based clustering based on hierarchical density estimates .
+
+In Advances in Knowledge Discovery and Data Mining , J. Pei, V. S. Tseng, L. Cao, H. Motoda, and G. Xu (Eds.) ,
+
+Berlin, Heidelberg , pp. 160–172 .
+
+External Links: ISBN 978-3-642-37456-2
+
+Cited by: §III.2 .
+
+L. Chen, C. Tsai, J. Li, B. Yang, D. Li, Y. Duan, C. Hsia, Z. Pan, L. Qian, D. Quan, X. Jiang, X. Li, R. Zhao, and P. Zuo (2024)
+FAST Observations of Four Comets to Search for the Molecular Line Emissions between 1.0 and 1.5 GHz Frequencies .
+
+Research in Astronomy and Astrophysics 24 ( 10 ), pp. 105008 .
+
+External Links: Document ,
+2409.06227
+
+Cited by: §I .
+
+X. Chen, T. Ching, D. Li, C. Heiles, T. Robishaw, X. Du, M. Krco, P. Jiang, Q. Yang, and J. Lu (2025)
+Beam Measurements of Full Stokes Parameters for the FAST L-band 19-beam Receiver .
+
+AJ 169 ( 3 ), pp. 158 .
+
+External Links: Document ,
+2411.18865
+
+Cited by: §III.3 .
+
+T. Ching, C. Heiles, D. Li, T. Robishaw, X. Chen, L. Meng, Y. Yue, L. Qian, and H. Liu (2025)
+On-axis Polarization Calibration of the FAST L-band 19-beam Receiver .
+
+AJ 170 ( 2 ), pp. 116 .
+
+External Links: Document ,
+2411.18763
+
+Cited by: §III.3 .
+
+C. Choza, D. Bautista, S. Croft, A. P. V. Siemion, B. Brzycki, K. Bhattaram, D. Czech, I. de Pater, V. Gajjar, H. Isaacson, K. Lacker, B. Lacki, M. Lebofsky, D. H. E. MacMahon, D. Price, S. Schoultz, S. Sheikh, S. S. Varghese, L. Morgan, J. Drew, and S. P. Worden (2024)
+The Breakthrough Listen Search for Intelligent Life: Technosignature Search of 97 Nearby Galaxies .
+
+AJ 167 ( 1 ), pp. 10 .
+
+External Links: Document ,
+2312.03943
+
+Cited by: §II.2 .
+
+G. Cocconi and P. Morrison (1959)
+Searching for Interstellar Communications .
+
+Nature 184 ( 4690 ), pp. 844–846 .
+
+External Links: Document
+
+Cited by: §I .
+
+M. A. Cordiner, N. X. Roth, M. S. P. Kelley, D. Bodewits, S. B. Charnley, M. N. Drozdovskaya, D. Farnocchia, M. Micheli, S. N. Milam, C. Opitom, M. E. Schwamb, C. A. Thomas, and S. Bagnulo (2025)
+JWST Detection of a Carbon-dioxide-dominated Gas Coma Surrounding Interstellar Object 3I/ATLAS .
+
+ApJ 991 ( 2 ), pp. L43 .
+
+External Links: Document ,
+2508.18209
+
+Cited by: §I .
+
+J. R. A. Davenport, S. Z. Sheikh, S. Croft, B. C. Lacki, J. T. Wright, C. Lintott, A. Frank, T. J. W. Lazio, C. O. Chandler, A. P. V. Siemion, S. DiKerby, E. White, V. Garcia Lopez, E. E. Yu, M. K. Frissell, P. Yoachim, N. Morato, D. Singh, J. Zhang, and D. Z. Seligman (2025)
+Technosignature Searches of Interstellar Objects .
+
+arXiv e-prints , pp. arXiv:2508.16825 .
+
+External Links: Document ,
+2508.16825
+
+Cited by: §I .
+
+J. E. Enriquez, A. Siemion, G. Foster, V. Gajjar, G. Hellbourg, J. Hickish, H. Isaacson, D. C. Price, S. Croft, D. DeBoer, M. Lebofsky, D. H. E. MacMahon, and D. Werthimer (2017)
+The Breakthrough Listen Search for Intelligent Life: 1.1-1.9 GHz Observations of 692 Nearby Stars .
+
+ApJ 849 ( 2 ), pp. 104 .
+
+External Links: Document ,
+1709.03491
+
+Cited by: §II.2 ,
+§V.1 .
+
+T. M. Eubanks, A. Hibberd, B. G. Bills, W. P. Blase, A. M. Hein, R. G. Kennedy, A. Coffinet, and P. Kervella (2025)
+Astrometry with Interplanetary Spacecraft: Determination of the Non-gravitational Accelerations of the Interstellar Object 3I/ATLAS .
+
+Research Notes of the American Astronomical Society 9 ( 12 ), pp. 329 .
+
+External Links: Document
+
+Cited by: §I .
+
+T. L. Farnham, M. Hood, M. S. P. Kelley, and J. M. Sunshine (2025)
+A Search for Coma in TESS Observations of Interstellar Comet 3I/ATLAS .
+
+Research Notes of the American Astronomical Society 9 ( 10 ), pp. 266 .
+
+External Links: Document
+
+Cited by: §I .
+
+R. A. Freitas and F. Valdes (1985)
+The Search for Extraterrestrial Artifacts (SETA). .
+
+Acta Astronautica 12 ( 12 ), pp. 1027–1034 .
+
+External Links: Document
+
+Cited by: §I .
+
+V. Gajjar, K. I. Perez, A. P. V. Siemion, G. Foster, B. Brzycki, S. Chatterjee, Y. Chen, J. M. Cordes, S. Croft, D. Czech, D. DeBoer, J. DeMarines, J. Drew, M. Gowanlock, H. Isaacson, B. C. Lacki, M. Lebofsky, D. H. E. MacMahon, I. S. Morrison, C. Ng, I. de Pater, D. C. Price, S. Z. Sheikh, A. Suresh, C. Webb, and S. Pete Worden (2021)
+The Breakthrough Listen Search For Intelligent Life Near the Galactic Center. I. .
+
+AJ 162 ( 1 ), pp. 33 .
+
+External Links: Document ,
+2104.14148
+
+Cited by: §V.1 ,
+§V.1 ,
+footnote 6 .
+
+B. Huang, Z. Tao, T. Zhang, and V. Gajjar (2026)
+The FAST-SETI Milky Way Globular Cluster Survey. I. A Pilot Multibeam On-the-fly Search of Five Globular Clusters at the L Band .
+
+AJ 171 ( 1 ), pp. 51 .
+
+External Links: Document ,
+2511.21085
+
+Cited by: §I .
+
+B. Huang, Z. Tao, and T. Zhang (2023)
+A Solution to Continuous RFI in Narrowband Radio SETI with FAST: The MultiBeam Point-source Scanning Strategy .
+
+AJ 166 ( 6 ), pp. 245 .
+
+External Links: Document ,
+2307.11368
+
+Cited by: §I .
+
+B. Jacobson-Bell, S. Croft, C. Choza, A. Andersson, D. Bautista, V. Gajjar, M. Lebofsky, D. H. E. MacMahon, C. Painter, and A. P. V. Siemion (2025a)
+Anomaly Detection and Radio-frequency Interference Classification with Unsupervised Learning in Narrowband Radio Technosignature Searches .
+
+AJ 169 ( 4 ), pp. 206 .
+
+External Links: Document ,
+2411.16556
+
+Cited by: §III.2 .
+
+B. Jacobson-Bell, S. Croft, E. White, A. P. V. Siemion, M. Lebofsky, and D. H. E. MacMahon (2025b)
+Breakthrough Listen Observations of 3I/ATLAS with the Green Bank Telescope at 1─12 GHz .
+
+Research Notes of the American Astronomical Society 9 ( 12 ), pp. 351 .
+
+External Links: Document ,
+2512.19763
+
+Cited by: §I ,
+§V.2 ,
+Table 7 .
+
+D. Jewitt, M. Hui, M. Mutchler, Y. Kim, and J. Agarwal (2025)
+Hubble Space Telescope Observations of the Interstellar Interloper 3I/ATLAS .
+
+ApJ 990 ( 1 ), pp. L2 .
+
+External Links: Document ,
+2508.02934
+
+Cited by: §I .
+
+D. Jiang, L. Qian, M. Guo, Q. Hao, M. Huang, P. Jiang, H. Liu, C. Sun, X. Wang, Q. Yang, N. Yu, L. Zhao, Y. Zhao, L. Zhang, Y. Zhang, T. Zhang, and Z. Pan (2025)
+From emission to absorption: the FAST observation of the OH 18-cm lines from the Comet C2025/A6 .
+
+arXiv e-prints , pp. arXiv:2512.21969 .
+
+External Links: Document ,
+2512.21969
+
+Cited by: §I .
+
+P. Jiang, N. Tang, L. Hou, M. Liu, M. Krčo, L. Qian, J. Sun, T. Ching, B. Liu, Y. Duan, Y. Yue, H. Gan, R. Yao, H. Li, G. Pan, D. Yu, H. Liu, D. Li, B. Peng, J. Yan, and FAST Collaboration (2020)
+The fundamental performance of FAST with 19-beam receiver at L band .
+
+Research in Astronomy and Astrophysics 20 ( 5 ), pp. 064 .
+
+External Links: Document ,
+2002.01786
+
+Cited by: §I .
+
+P. Jiang, Y. Yue, H. Gan, R. Yao, H. Li, G. Pan, J. Sun, D. Yu, H. Liu, N. Tang, L. Qian, J. Lu, J. Yan, B. Peng, S. Zhang, Q. Wang, Q. Li, D. Li, and FAST Collaboration (2019)
+Commissioning progress of the FAST .
+
+Science China Physics, Mechanics, and Astronomy 62 ( 5 ), pp. 959502 .
+
+External Links: Document ,
+1903.06324
+
+Cited by: §I ,
+§V.1 .
+
+T. Kareta, C. Champagne, L. McClure, J. Emery, B. N. L. Sharkey, J. Bauer, M. S. Connelley, J. Rayner, C. A. Thomas, V. Reddy, and M. Firgard (2025)
+Near-discovery Observations of Interstellar Comet 3I/ATLAS with the NASA Infrared Telescope Facility .
+
+ApJ 990 ( 2 ), pp. L65 .
+
+External Links: Document ,
+2507.12234
+
+Cited by: §I ,
+§III.2 .
+
+H. Knutsson, C. Westin, and M. Andersson (2011)
+Representing Local Structure Using Tensors II .
+
+In Lecture Notes in Computer Science ,
+
+Vol. 6688 , pp. 545–556 .
+
+External Links: Document
+
+Cited by: §III.4 .
+
+M. Lebofsky, S. Croft, A. P. V. Siemion, D. C. Price, J. E. Enriquez, H. Isaacson, D. H. E. MacMahon, D. Anderson, B. Brzycki, J. Cobb, D. Czech, D. DeBoer, J. DeMarines, J. Drew, G. Foster, V. Gajjar, N. Gizani, G. Hellbourg, E. J. Korpela, B. Lacki, S. Sheikh, D. Werthimer, P. Worden, A. Yu, and Y. G. Zhang (2019)
+The Breakthrough Listen Search for Intelligent Life: Public Data, Formats, Reduction, and Archiving .
+
+PASP 131 ( 1006 ), pp. 124505 .
+
+External Links: Document ,
+1906.07391
+
+Cited by: §II.2 .
+
+D. Li, V. Gajjar, P. Wang, A. Siemion, Z. Zhang, H. Zhang, Y. Yue, Y. Zhu, C. Jin, S. Li, S. Berger, B. Brzycki, J. Cobb, S. Croft, D. Czech, D. DeBoer, J. DeMarines, J. Drew, J. Emilio Enriquez, N. Gizani, E. J. Korpela, H. Isaacson, M. Lebofsky, B. Lacki, D. H. E. MacMahon, M. Nanez, C. Niu, X. Pei, D. C. Price, D. Werthimer, P. Worden, Y. Gerry Zhang, T. Zhang, and FAST Collaboration (2020)
+Opportunities to search for extraterrestrial intelligence with the FAST .
+
+Research in Astronomy and Astrophysics 20 ( 5 ), pp. 078 .
+
+External Links: Document
+
+Cited by: §I ,
+§II.2.1 .
+
+D. Li and Z. Pan (2016)
+The Five-hundred-meter Aperture Spherical Radio Telescope Project .
+
+Radio Science 51 , pp. 1060–1064 .
+
+External Links: Document ,
+1612.09372
+
+Cited by: §V.1 .
+
+J. Li, Z. Tao, P. Wang, and T. Zhang (2026)
+Dual-backend Multibeam Position-switching Targeted SETI Observations toward Nearby Active Planet-hosting Systems with FAST .
+
+AJ 171 ( 2 ), pp. 78 .
+
+External Links: Document ,
+2509.09654
+
+Cited by: §I ,
+§I .
+
+X. Luan, B. Huang, Z. Tao, Y. Cui, T. Zhang, and P. Wang (2025)
+Multibeam SETI Observations Toward Nearby M Dwarfs with FAST .
+
+AJ 169 ( 4 ), pp. 217 .
+
+External Links: Document ,
+2502.20419
+
+Cited by: §I ,
+§I ,
+§III.3 .
+
+J. Margot, M. G. Li, P. Pinchuk, N. Myhrvold, L. Lesyna, L. E. Alcantara, M. T. Andrakin, J. Arunseangroj, D. S. Baclet, M. H. Belk, Z. R. Bhadha, N. W. Brandis, R. E. Carey, H. P. Cassar, S. S. Chava, C. Chen, J. Chen, K. T. Cheng, A. Cimbri, B. Cloutier, J. A. Combitsis, K. L. Couvrette, B. P. Coy, K. W. Davis, A. F. Delcayre, M. R. Du, S. E. Feil, D. Fu, T. J. Gilmore, E. Grahill-Bland, L. M. Iglesias, Z. Juneau, A. G. Karapetian, G. Karfakis, C. T. Lambert, E. A. Lazbin, J. H. Li, Z. (. Li, N. M. Liskij, A. V. Lopilato, D. J. Lu, D. Ma, V. Mathur, M. H. Minasyan, M. K. Muller, M. T. Nasielski, J. T. Nguyen, L. M. Nicholson, S. Niemoeller, D. Ohri, A. U. Padhye, S. V. Penmetcha, Y. Prakash, X. (. Qi, L. Rindt, V. Sahu, J. A. Scally, Z. Scott, T. J. Seddon, L. V. Shohet, A. Sinha, A. E. Sinigiani, J. Song, S. M. Stice, N. M. Tabucol, A. Uplisashvili, K. Vanga, A. G. Vazquez, G. Vetushko, V. Villa, M. Vincent, I. J. Waasdorp, I. B. Wagaman, A. Wang, J. C. Wight, E. Wong, N. Yamaguchi, Z. Zhang, J. Zhao, and R. S. Lynch (2023)
+A Search for Technosignatures Around 11,680 Stars with the Green Bank Telescope at 1.15-1.73 GHz .
+
+AJ 166 ( 5 ), pp. 206 .
+
+External Links: Document ,
+2308.02712
+
+Cited by: §II.2 .
+
+J. Margot, P. Pinchuk, R. Geil, S. Alexander, S. Arora, S. Biswas, J. Cebreros, S. P. Desai, B. Duclos, R. Dunne, K. K. Lin Fu, S. Goel, J. Gonzales, A. Gonzalez, R. Jain, A. Lam, B. Lewis, R. Lewis, G. Li, M. MacDougall, C. Makarem, I. Manan, E. Molina, C. Nagib, K. Neville, C. O’Toole, V. Rockwell, Y. Rokushima, G. Romanek, C. Schmidgall, S. Seth, R. Shah, Y. Shimane, M. Singhal, A. Tokadjian, L. Villafana, Z. Wang, I. Yun, L. Zhu, and R. S. Lynch (2021)
+A Search for Technosignatures around 31 Sun-like Stars with the Green Bank Telescope at 1.15-1.73 GHz .
+
+AJ 161 ( 2 ), pp. 55 .
+
+External Links: Document ,
+2011.05265
+
+Cited by: §I .
+
+R. Nan, D. Li, C. Jin, Q. Wang, L. Zhu, W. Zhu, H. Zhang, Y. Yue, and L. Qian (2011)
+The Five-Hundred Aperture Spherical Radio Telescope (fast) Project .
+
+International Journal of Modern Physics D 20 ( 6 ), pp. 989–1024 .
+
+External Links: Document ,
+1105.3794
+
+Cited by: §V.1 .
+
+F. Neukart (2025)
+Non-Gravitational Acceleration in 3I ATLAS: Constraints on Exotic Volatile Outgassing in Interstellar Comets .
+
+arXiv e-prints , pp. arXiv:2511.07450 .
+
+External Links: Document ,
+2511.07450
+
+Cited by: §I .
+
+C. Opitom, C. Snodgrass, E. Jehin, M. T. Bannister, E. Bufanda, S. E. Deam, R. C. Dorsey, M. Ferrais, S. Hmiddouch, M. M. Knight, R. Kokotanekova, B. Leicester, M. Marsset, B. Murphy, V. Okoth, R. Ridden-Harper, M. Vander Donckt, L. Ferellec, D. Hutsemékers, M. Lippi, J. Manfroid, and Z. Benkhaldoun (2025)
+Snapshot of a new interstellar comet: 3I/ATLAS has a red and featureless spectrum .
+
+MNRAS 544 ( 1 ), pp. L31–L36 .
+
+External Links: Document ,
+2507.05226
+
+Cited by: §I .
+
+D. J. Pisano, O. M. Smirnov, M. Ivchenko, L. Roth, S. Buchner, C. Tremblay, A. Siemion, and F. Camilo (2025)
+Further MeerKAT observations of 1665/1667 MHz OH in absorption and emission, and a technosignature search in 3I/ATLAS .
+
+The Astronomer’s Telegram 17499 , pp. 1 .
+
+Cited by: §I ,
+§V.2 ,
+Table 7 .
+
+D. C. Price, J. E. Enriquez, B. Brzycki, S. Croft, D. Czech, D. DeBoer, J. DeMarines, G. Foster, V. Gajjar, N. Gizani, G. Hellbourg, H. Isaacson, B. Lacki, M. Lebofsky, D. H. E. MacMahon, I. d. Pater, A. P. V. Siemion, D. Werthimer, J. A. Green, J. F. Kaczmarek, R. J. Maddalena, S. Mader, J. Drew, and S. P. Worden (2020)
+The Breakthrough Listen Search for Intelligent Life: Observations of 1327 Nearby Stars Over 1.10-3.45 GHz .
+
+AJ 159 ( 3 ), pp. 86 .
+
+External Links: Document ,
+1906.07750
+
+Cited by: §II.2 .
+
+D. Price, J. Enriquez, Y. Chen, and M. Siebert (2019)
+Blimpy: Breakthrough Listen I/O Methods for Python .
+
+The Journal of Open Source Software 4 ( 42 ), pp. 1554 .
+
+External Links: Document
+
+Cited by: §III.6 .
+
+L. Qian, R. Yao, J. Sun, J. Xu, Z. Pan, and P. Jiang (2020)
+FAST: Its Scientific Achievements and Prospects .
+
+The Innovation 1 ( 3 ), pp. 100053 .
+
+External Links: Document ,
+2011.13542
+
+Cited by: §I .
+
+T. Santana-Ros, O. Ivanova, S. Mykhailova, N. Erasmus, K. Kamiński, D. Oszkiewicz, T. Kwiatkowski, M. Husárik, T. S. Ngwane, and A. Penttilä (2025)
+Temporal evolution of the third interstellar comet 3I/ATLAS: Spin, color, spectra, and dust activity .
+
+A&A 702 , pp. L3 .
+
+External Links: Document ,
+2508.00808
+
+Cited by: §I ,
+§III.2 .
+
+D. Z. Seligman, M. Micheli, D. Farnocchia, L. Denneau, J. W. Noonan, H. H. Hsieh, T. Santana-Ros, J. Tonry, K. Auchettl, L. Conversi, M. Devogèle, L. Faggioli, A. D. Feinstein, M. Fenucci, M. Ferrais, T. Frincke, M. Gillon, O. R. Hainaut, K. Hart, A. Hoffman, C. E. Holt, W. B. Hoogendam, M. E. Huber, E. Jehin, T. Kareta, J. V. Keane, M. S. P. Kelley, T. Lister, K. Mandt, J. Manfroid, D. Marčeta, K. J. Meech, M. Amine Miftah, M. Morgan, F. Ocaña, E. Peña-Asensio, B. J. Shappee, R. J. Siverd, A. G. Taylor, M. A. Tucker, R. Wainscoat, R. Weryk, J. J. Wray, A. Yaginuma, B. Yang, Q. Ye, and Q. Zhang (2025)
+Discovery and Preliminary Characterization of a Third Interstellar Object: 3I/ATLAS .
+
+ApJ 989 ( 2 ), pp. L36 .
+
+External Links: Document ,
+2507.02757
+
+Cited by: §I .
+
+S. Z. Sheikh, V. Garcia Lopez, I. Gerrard, J. R. A. Davenport, W. Farah, B. Griffin, S. Croft, L. F. Cruz, I. de Pater, B. Jacobson-Bell, M. Masters, K. I. Perez, A. W. Pollak, C. Shumaker, and A. Siemion (2025)
+A Search for Radio Technosignatures from Interstellar Object 3I/ATLAS with the Allen Telescope Array .
+
+arXiv e-prints , pp. arXiv:2512.18142 .
+
+External Links: Document ,
+2512.18142
+
+Cited by: §I ,
+§V.1 ,
+§V.2 ,
+Table 7 .
+
+S. Z. Sheikh, A. Siemion, J. E. Enriquez, D. C. Price, H. Isaacson, M. Lebofsky, V. Gajjar, and P. Kalas (2020)
+The Breakthrough Listen Search for Intelligent Life: A 3.95-8.00 GHz Search for Radio Technosignatures in the Restricted Earth Transit Zone .
+
+AJ 160 ( 1 ), pp. 29 .
+
+External Links: Document ,
+2002.06162
+
+Cited by: §I .
+
+S. Smith, D. C. Price, S. Z. Sheikh, D. J. Czech, S. Croft, D. DeBoer, V. Gajjar, H. Isaacson, B. C. Lacki, M. Lebofsky, D. H. E. MacMahon, C. Ng, K. I. Perez, A. P. V. Siemion, C. I. Webb, J. Drew, S. P. Worden, and A. Zic (2021)
+A radio technosignature search towards Proxima Centauri resulting in a signal of interest .
+
+Nature Astronomy 5 , pp. 1148–1152 .
+
+External Links: Document ,
+2111.08007
+
+Cited by: §I .
+
+Z. Tao, B. Huang, X. Luan, J. Li, H. Zhao, H. Wang, and T. Zhang (2023)
+The Most Sensitive SETI Observations Toward Barnard’s Star with FAST .
+
+AJ 166 ( 5 ), pp. 190 .
+
+External Links: Document ,
+2309.15377
+
+Cited by: §I ,
+§I ,
+§III.3 .
+
+Z. Tao, H. Zhao, T. Zhang, V. Gajjar, Y. Zhu, Y. Yue, H. Zhang, W. Liu, S. Li, J. Zhang, C. Liu, H. Wang, R. Duan, L. Qian, C. Jin, D. Li, A. Siemion, P. Jiang, D. Werthimer, J. Cobb, E. Korpela, and D. P. Anderson (2022)
+Sensitive Multibeam Targeted SETI Observations toward 33 Exoplanet Systems with FAST .
+
+AJ 164 ( 4 ), pp. 160 .
+
+External Links: Document ,
+2208.02421
+
+Cited by: §I ,
+§I ,
+§III.3 ,
+§IV .
+
+J. Tarter (2001)
+The Search for Extraterrestrial Intelligence (SETI) .
+
+ARA&A 39 , pp. 511–548 .
+
+External Links: Document
+
+Cited by: §I .
+
+A. R. Thompson, J. M. Moran, and G. W. Swenson (2017)
+Interferometry and Synthesis in Radio Astronomy, 3rd Edition .
+
+Springer .
+
+External Links: Document
+
+Cited by: §V.1 .
+
+R. Traas, S. Croft, V. Gajjar, H. Isaacson, M. Lebofsky, D. H. E. MacMahon, K. Perez, D. C. Price, S. Sheikh, A. P. V. Siemion, S. Smith, J. Drew, and S. P. Worden (2021)
+The Breakthrough Listen Search for Intelligent Life: Searching for Technosignatures in Observations of TESS Targets of Interest .
+
+AJ 161 ( 6 ), pp. 286 .
+
+External Links: Document ,
+2101.11137
+
+Cited by: §I ,
+§III.1 ,
+§III ,
+footnote 3 .
+
+Y. Wang, H. Zhang, H. Hu, S. Huang, W. Zhu, G. Zhi, T. Zhang, Z. Fan, and L. Yang (2021)
+Satellite RFI mitigation on FAST .
+
+Research in Astronomy and Astrophysics 21 ( 1 ), pp. 018 .
+
+External Links: Document
+
+Cited by: §IV ,
+§IV .
+
+N. West (2025)
+UCBerkeleySETI/bliss: breakthrough listen interesting signal search .
+
+Zenodo .
+
+External Links: Document ,
+Link
+
+Cited by: §III .
+
+T. L. Wilson, K. Rohlfs, and S. Hüttemeister (2013)
+Tools of Radio Astronomy .
+
+Springer .
+
+External Links: Document
+
+Cited by: §V.1 .
+
+J. Zhang, K. Zhang, R. Grenfell, and R. Deakin (2006)
+GPS Satellite Velocity and Acceleration Determination using the Broadcast Ephemeris .
+
+Journal of Navigation 59 ( 2 ), pp. 293–305 .
+
+External Links: Document
+
+Cited by: §IV .
+
+Z. Zhang, D. Werthimer, T. Zhang, J. Cobb, E. Korpela, D. Anderson, V. Gajjar, R. Lee, S. Li, X. Pei, X. Zhang, S. Huang, P. Wang, Y. Zhu, R. Duan, H. Zhang, C. Jin, L. Zhu, and D. Li (2020)
+First SETI Observations with China’s Five-hundred-meter Aperture Spherical Radio Telescope (FAST) .
+
+ApJ 891 ( 2 ), pp. 174 .
+
+External Links: Document ,
+2002.02130
+
+Cited by: §II.2.1 ,
+§III.2 .
+
+L. Zhao, X. Luan, X. Chao, Y. Wang, J. Li, Z. Tao, T. Zhang, H. Wang, and D. Werthimer (2026)
+An Improved Machine Learning Approach for Radio Frequency Interference Mitigation in FAST─SETI Survey Archival Data .
+
+AJ 171 ( 2 ), pp. 86 .
+
+External Links: Document ,
+2512.15809
+
+Cited by: §III.2 .
+
+Experimental support, please
+view the build logs
+for errors. Generated by
+
+L
+A
+T
+E
+
+xml
+
+.
+
+Instructions for reporting errors
+We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+methods listed below:
+
+Click the "Report Issue" (
+
+) button, located in the page header.
+
+Tip: You can select the relevant text first, to include it in your report.
+Our team has already identified the following issues . We appreciate your time reviewing and reporting rendering errors we
+may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+all.
+Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a list of packages that need conversion , and welcome developer contributions .
+
+We gratefully acknowledge support from
+our major funders ,
+member institutions , ,
+and all contributors.
+
+About
+·
+Help
+·
+Contact
+·
+Subscribe
+·
+Copyright
+·
+Privacy
+·
+Accessibility
+·
+Operational Status (opens in new tab)
+
+Major funding support from

@@ -1,0 +1,381 @@
+[1907.04443] SETI in the Spatio-Temporal Survey Domain
+
+SETI in the Spatio-Temporal Survey Domain
+
+James. R. A. Davenport
+
+Department of Astronomy, University of Washington, Seattle, WA 98195, USA
+
+DIRAC Fellow
+
+Abstract
+Traditional searches for extraterrestrial intelligence (SETI) or “technosignatures” focus on dedicated observations of single stars or regions in the sky to detect excess or transient emission from intelligent sources. The newest generation of synoptic time domain surveys enable an entirely new approach: spatio–temporal SETI, where technosignatures may be discovered from spatially resolved sources or multiple stars over time.
+Current optical time domain surveys such as ZTF and the Evryscope can probe 10–100 times more of the “Cosmic Haystack” parameter space volume than many radio SETI investigations. Small-aperture, high cadence surveys like Evryscope can be comparable in their Haystack volume completeness to deeper surveys including LSST. Investigations with these surveys can also be conducted at a fraction of the cost of dedicated SETI surveys, since they make use of data already being gathered.
+However, SETI methodology has not widely utilized such surveys, and the field is in need of new search algorithms that can account for signals in both the spatial and temporal domains.
+Here I describe the broad potential for modern wide-field time domain optical surveys to revolutionize our search for technosignatures, and illustrate some example SETI approaches using transiting exoplanets to form a distributed beacon.
+
+† † software: Python, IPython (Pérez & Granger, 2007 ) , NumPy (Oliphant, 2007 ) , Matplotlib (Hunter, 2007 ) , SciPy (Jones et al., 2001– ) , Pandas (McKinney, 2010 ) , Astropy (Astropy Collaboration et al., 2013 )
+
+1 Introduction
+
+Despite more than half a century of activity, the Search for Extra-Terrestrial Intelligence (SETI) – also described as the search for “technosignatures” – is a field of study very much in its infancy.
+The lack of SETI research by the astronomical community is partially due to funding limitations in recent decades, as well as social pressures against studying SETI experienced by professional astronomers and organizations (Wright & Oman-Reagan, 2018 ) .
+Indeed, the volume of parameter space for SETI (or the search for a needle amongst the “Cosmic Haystack”) at radio wavelengths has been barely explored Wright et al. ( 2018 ) , and thus many obvious signals may be awaiting our discovery.
+However, the new era of surveys and data-driven discovery in astronomy holds great promise for revolutionizing SETI.
+
+Traditional SETI work requires time-consuming observations, often through dedicated monitoring of nearby stars by radio telescopes. Such observing campaigns are expensive and difficult to obtain given the competitive nature of telescope allocation. Recent progress for systematic “technosignature” searches has been made by Breakthrough Listen (Worden et al., 2017 ; Isaacson et al., 2017 ) , primarily at radio wavelengths (e.g. Price et al., 2018 ) .
+
+The SETI conundrum has always been not only “ What should we look for? ”, but also “When, where, and how ”.
+While Wright et al. ( 2018 ) suggest the completeness of our search of the “Cosmic Haystack” at radio wavelengths is akin to the ratio of a small swimming pool compared to the Earth’s oceans ( ∼ similar-to \sim 10 -20 ), SETI at optical wavelengths is surely many orders of magnitude less complete.
+Current optical-SETI is typically focused on searches for nanosecond pulses with specialized wide-field high-speed imaging (Howard et al., 2004 ) , or unusual spectroscopic features (Isaacson et al., 2019 ) .
+Wide-field time domain photometric surveys enable us to greatly expand our search in two key dimensions of parameter space: 1) collectively observing nearly the entire night sky, and 2) providing precision time-resolved monitoring over many years.
+
+Djorgovski ( 2000 ) highlighted the opportunity for a new age of generalized SETI using a virtual observatory made of digital sky surveys.
+New missions like the currently running Zwicky Transient Facility (ZTF; Bellm, 2014 ) and the upcoming Large Synoptic Survey Telescope (LSST; Ivezić et al., 2008 ) will be transformative in enabling both reproducible and cost-efficient SETI. By developing search strategies that utilize public survey databases and real-time “alert streams”, both of which are being developed to facilitate a wide range of science goals from these facilities, optical survey SETI can be conducted automatically. As new search algorithms are developed, these databases can be re-analyzed, providing a much-needed level of reproducibility and transparency that will help reduce the “giggle factor” stigma for SETI (Wright & Oman-Reagan, 2018 ) .
+
+In this paper I explore the potential for wide-field time domain surveys in conducting a new generation of technosignature searches, starting with an overview of the motivation for doing SETI with optical surveys in § 2 .
+In § 3 I describe the general principles behind technosignature searches in time domain surveys, including spatial over-densities of light curve signals and coordinated signals between multiple sources, for example.
+In § 4 I introduce several relevant surveys, and use the “Cosmic Haystack” search volume metric developed by Wright et al. ( 2018 ) to quantitatively compare these surveys to current radio SETI approaches.
+The data-driven spatio-temporal domain explored by these surveys necessitates new SETI approaches be developed, and in § 5 I outline an example signal where transiting planets around many stars could act as a spatially distributed beacon.
+Finally in § 6 I discuss ideas for other search approaches, and the advantages in cost and reproducibility of conducting SETI with current and upcoming optical time domain surveys.
+
+2 Why Optical Survey SETI?
+
+Wide-field imaging surveys, and their associated infrastructure, are an ideal data source for carrying out technosignature searches that augment efforts in other wavelengths or with different observing strategies. By covering large portions of the night sky with repeated imaging, and with surveys that span years to decades in duration, we can substantially reduce the challenge of deciding when and where to look. Increasingly, multiple surveys obtain imaging that overlaps in both time and sky coverage, but with complementary properties (e.g. imaging depth, cadence, wavelength coverage), which allows for rapid vetting and characterization of rare or low signal-to-noise events. Surveys also produce important baseline information about the known objects in our Galaxy (e.g. their positions, temperatures, etc), which allows us to eliminate uncertainty on what objects being targeted for SETI.
+
+Optical surveys are also an excellent platform for exploring how to conduct technosignature searches. The large archives of data produced from these surveys become valuable legacies that enable science long after data acquisition has concluded. Searches for new phenomena in time-domain astronomy can be carried out both in the future with new observations and in the past by re-analyzing survey archives.
+Using survey archives for SETI as opposed to targeted observations of individual stars allows us to compare the results of competing algorithms or strategies, and enables reproducible science. Search algorithms are also portable, and ideally can be used to carry out SETI on any new survey or large ensemble of observations.
+As future survey data is gathered, new classes of technosignature signals may be detectable that rely on decades worth of data.
+Since any technosignature detection candidate should be the subject of great scrutiny, making the data and algorithms open and reproducible will be critical for comparison and independent validation.
+
+Large surveys, particularly ground-based efforts like LSST, are a highly prioritized component of the current and future development landscape in astronomy (Council, 2010 ) . As such, great efforts are being made to develop survey tools and technologies to enable science from these missions, such as new database technologies (Juric, 2012 ; Zečević et al., 2019 ) , real-time event broadcasting (Patterson et al., 2019 ) , and real-time data analysis frameworks (e.g. Schwamb et al., 2019 ) .
+The infrastructure needed to conduct technosignature searches with these large optical surveys is therefore already being developed. As with many areas of astrophysics in the “survey era”, the biggest bottleneck for SETI with these surveys is the support (both financial and social) for researchers to develop algorithms and mine the available data.
+
+3 Potential Strategies
+
+SETI with large surveys falls into two basic approaches: 1) classify every object or phenomena in the data, and any remaining outliers are technosignature candidates (Djorgovski, 2000 ) , or 2) search for specific “impossible” or unusual types of signals in the data, which I advocate for in this work. While the latter strategy does not guarantee a complete search for all SETI signals in the data, it is technically feasible for almost any time domain survey.
+
+Several types of signals have been suggested that may be viable for use with optical surveys. For example, Villarroel et al. ( 2016 ) searched two wide field, single-epoch optical surveys for objects “disappearing” over decades timescales. Lacki ( 2019 ) outline a method to search for specular reflections of interplanetary objects, particularly in wide field surveys. Arnold ( 2005 ) describe the the observable signature of transits from artificial objects, which could be searched for with exoplanet transit surveys. Kipping & Teachey ( 2016 ) find that exoplanet transits could be hidden or “cloaked” to an observer by using directed laser emission.
+
+Here I describe a few general classes of technosignature signals that may be well suited to developing new detection algorithms for spatio-temporal surveys:
+
+1.
+
+Unusual variability profiles or statistical distributions of fluxes – either on short timescales such as Boyajian’s Star (Boyajian et al., 2015 ) , or long timescales such as disappearing stars (Villarroel et al., 2016 ) or occasionally missing transits (Kipping & Teachey, 2016 )
+
+2.
+
+Spatial correlations of events or phenomena – e.g. coordination of transiting systems, or rebroadcasting events such as novae along the “SETI ellipse” that defines the ellipsoid for receiving synchronized signals from multiple transmitters
+(Makovetskii, 1977 ; Lemarchand, 1994 ; Tarter, 2001 ; Shostak, 2004 )
+
+3.
+
+Spatial over-density or distribution – e.g. an over-density of a given phenomena, such as within the “Earth Transit Zone” band of stars that would see Earth as a transiting exoplanet (Heller & Pudritz, 2016 ) , or in spatial clusters
+
+4.
+
+Unnatural patterns – particularly patterns of otherwise normal astrophysical variability (e.g. flares, pulsations, transits, etc), such as broadcasting a prime or fibonacci sequence using transits (Arnold, 2005 ; Wright et al., 2016 ) .
+
+4 Comparing Optical Surveys
+to Radio Searches
+
+While the potential for optical time domain surveys to advance technosignature searches has been qualitatively laid out in § 2 , it is important to quantitatively compare them to traditional searches in the radio.
+Wright et al. ( 2018 ) have provided a framework to quantify the volume of observable parameter space covered by various SETI projects – dubbed the “Cosmic Haystack”. Though this metric was developed with radio surveys in mind, it is broadly applicable to surveys at other wavelengths that are not explicitly designed for SETI (e.g. see Forgan, 2019 ) .
+
+For typical optical surveys using broadband photometry (Djorgovski et al., 2013 ) , the key parameters that determine the Haystack volume coverage are the sky coverage ( Ω Ω \Omega in sq deg), total integration time per target ( T 𝑇 T in sec), and survey sensitivity or per-epoch depth ( S 𝑆 S in Jy).
+Since these terms all act as scalers in the Haystack volume integration, surveys with different properties (e.g. few deep exposures versus many shallow exposures) can have comparably large Haystack coverage, filling out very different portions of the search volume. For maximum impact, SETI should therefore be conducted on many types of surveys.
+
+As a demonstration, I have computed the Haystack volume coverage for five representative current and future optical time domain surveys, as shown in Figure 1 . This includes the Catalina Real Time Transient Survey (CRTS; Drake et al., 2009 ) , Zwicky Transient Facility (ZTF; Bellm, 2014 ) , the Transiting Exoplanet Survey Satellite ( TESS ; Ricker et al., 2015 ) , the Large Synoptic Survey Telescope (LSST; Ivezić et al., 2008 ) , and the Evryscope (Law et al., 2015 ) . These include space-based and ground-based surveys, and vary greatly in telescope collecting area, total numbers of visits, and survey footprint design.
+I have assumed sensitivity ( S 𝑆 S ) is the published per-visit photometric depth for each survey. The total integration time per target ( T 𝑇 T ) was computed as the average number of visits per target in the survey multiplied by the per-visit exposure time. The same power of transmitter is assumed as in Wright et al. ( 2018 ) .
+The code to generate the figures in this manuscript is online. 1 1 1 https://github.com/TheAstroFactory/survey_seti
+
+Figure 1:
+Comparison of the 8-D “Cosmic Haystack” SETI search volume fraction, defined by Wright et al. ( 2018 ) , computed using five optical surveys with varying designs. The Haystack fraction covered by these optical surveys is 1-2 dex larger than typical SETI programs conducted in the radio.
+Evryscope Law et al. ( 2015 ) is the best survey considered here for SETI work, narrowly beating LSST due to its wide field of view and very dense light curves.
+
+Typical values for the Haystack fraction for radio SETI programs as presented in Wright et al. ( 2018 ) are in the range of log ⁡ V H ​ a ​ y ​ s ​ t ​ a ​ c ​ k = − 20 subscript 𝑉 𝐻 𝑎 𝑦 𝑠 𝑡 𝑎 𝑐 𝑘 20 \log V_{Haystack}=-20 to − 17 17 -17 . However, these programs are mostly targeted observations of nearby stars. The largest program featured in Wright et al. ( 2018 ) , by Tingay et al. ( 2018 ) , had Ω = 400 Ω 400 \Omega=400 sq deg and T = 10800 𝑇 10800 T=10800 seconds, and yielded log ⁡ V H ​ a ​ y ​ s ​ t ​ a ​ c ​ k = − 17.36 subscript 𝑉 𝐻 𝑎 𝑦 𝑠 𝑡 𝑎 𝑐 𝑘 17.36 \log V_{Haystack}=-17.36 .
+
+The wide field optical surveys I have examined here all out perform the radio programs explored by Wright et al. ( 2018 ) in their Haystack fraction. Due to its very wide field coverage, and near continuous monitoring each night, Evryscope (abbreviated as “Evry” in Figure 1 ) ranks as the best optical survey for technosignature searches of those surveyed here. The remarkable similarity in Haystack fraction between Evryscope, which uses 7-cm diameter telescopes, and the 8.4-m LSST survey reinforces the need to sample the Haystack volume with as many different survey “shapes” as possible. Note that since the area coverage, photometric depth, and cadence of these two surveys are so different, they will each be sensitive to very different specific SETI detection properties, such as signal repetition timescales or amplitudes.
+
+Wright et al. ( 2018 ) likened their Haystack fraction to searching for fish in a hot tub or small swimming pool compared to the Earth’s oceans. Our results for SETI with optical surveys are closer to 1-2 Olympic sized swimming pools (each 2500 m 3 , according FINA standards) compared to the Earth’s oceans 2 2 2 Calculation done via Wolfram | | | Alpha . While optical surveys still only cover a tiny fraction of the total volume of parameter space, it is a substantial improvement.
+
+5 Example: Distribution of Transiting Exoplanets in the Kepler Field
+
+To illustrate the potential for possible technosignature searches in the spatio-temporal survey domain, in this section I demonstrate two examples of signals that rely on samples of transiting exoplanets. Transits are a promising target for SETI since they are relatively efficient to find over wide areas with surveys like Kepler (Borucki et al., 2010 ) or TESS , and they represent a natural object to attract attention with, known as a “Schelling point” (Wright, 2017 ) . Creating such a beacon requires either generating a transiting system with unusual properties or patterns (e.g. Arnold, 2005 ; Kipping & Teachey, 2016 ; Forgan, 2017 ) , or as outlined in § 3 an unusual distribution of transiting systems. The two examples outlined here explore the latter scenario, though I note the former is also well suited to automated approaches that would make use of future surveys and should be developed further. While I do not advocate these specific metrics are ideal for SETI, they demonstrate the type of signals we should design software systems to find in modern surveys.
+
+5.1 Two-Point Correlation Function
+
+The easiest conceptual method to search for a technosignature beacon in the spatial distribution of exoplanets would be looking for over-densities, i.e. regions with an unusually large number of transiting systems relative to the local density of stars. However this requires a large and very uniform sampling of exoplanets per square degree to determine if the density is unusual. Such spatially uniform samples are difficult to achieve since e.g. bright stars can saturate large regions.
+
+Another simple statistical test is to measure the distribution of exoplanet systems using the two-point angular correlation function (Landy & Szalay, 1993 ) . This method measures the probability of finding two sources separated by a given radial distance, and is often used in cosmology to characterize the distribution of galaxies on cosmological scales,. The two-point correlation function is easily measured thanks to generalized functions from packages such as astroML (Ivezić et al., 2014 ) , and more efficient approaches have been produced that can scale to very large datasets (e.g. Wang et al., 2013 ) .
+
+Figure 2: two point correlation function of transiting exoplanets versus all stars in the kepler field. No obvious signs of engineering of the exoplanet population as a whole. exoplanets are actually slightly less correlated on small size scales than stars in general, which may be an artifact of detected planets being around brighter stars in the sample (i.e. having lower total density).
+While overly simple, this example demonstrates one possible test that could be done using existing and future exoplanet surveys.
+
+In Figure 2 I show the two-point correlation function up to spatial scales of 5 degrees for both the sample of 2,324 transiting exoplanets discovered by the Kepler primary mission, 3 3 3 Catalog from http://exoplanetarchive.ipac.caltech.edu and for 201,312 stars in the Kepler field. Since the sample of exoplanets was relatively small, uncertainties shown in Figure 2 were estimated by bootstrapping the correlation function 500 times. Here the correlation was done using only the (RA, Dec) coordinates for each star or exoplanet system, but can also be done for additional dimensions (e.g. including distance, orbital properties, etc).
+
+The correlation functions shown in Figure 2 are not substantively different between the exoplanet and field star populations, indicating no signs of a large-scale “beacon” based on the distribution of exoplanets in the Kepler field. The slight differences in the correlation functions are not unexpected, given how sensitive this metric is to sample selection biases and non-uniformity. Indeed, even in “simple” scenarios of galaxy population analyses from well-studied surveys, considerable effort must be made to compare the correlation functions between different samples (e.g. Wang et al., 2013 ) . As the 2-D correlation requires very homogeneous and large samples of sources to plausibly detect outliers with, it would be an inefficient metric for a civilization to base a beacon around.
+
+5.2 Clusters of Similarity
+
+Rather than searching for an exoplanet beacon consisting of outliers in spatial density or distribution (e.g. § 5.1 ), we can consider groups of systems that are unusually similar in some way. In the simplest case this could take the form of many closely clustered stars with transiting exoplanets, where each planet had the same radius, transit depth, transit ephemeris (or transit midpoint), or orbital period, for example. The assumption here is that a civilization would have engineered this unlikely set of transiting systems, like a lighthouse, in order to be noticed by early astronomers who are characterizing the exoplanet demographics of our Galaxy (i.e. us). This SETI approach relies on both the spatial and temporal information contained in exoplanet-hunting surveys like Kepler or TESS .
+Here I demonstrate a simple algorithm for searching for such clusters of exoplanets with unusually similar orbital periods.
+
+As with many proposed technosignature signals, the key to this spatially distributed beacon system being effective is that the similarity metric for the cluster of stars must be substantially outside the realm of possible values that nature can produce. A civilization constructing such a beacon would also need to be aware of the natural distribution of exoplanet periods in order to determine the precision needed to place their transiting bodies. Thus we don’t have to arbitrarily choose which orbital periods are interesting to search over or how close in period they need to be to count as a technosignature candidate, but instead we can adopt a data-driven approach where our thresholds are empirically set based on a probability threshold.
+
+For this demonstration I selected the same sample used in § 5.1 of 2,324 known transiting exoplanet systems within the Kepler field, with orbital periods ranging from 0.35 days to 1,322.5 days.
+The NearestNeighbor clustering algorithm from scikit-learn for k = 3 𝑘 3 k=3 was used to easily identify and compute the projected angular distances between the nearest stars for each of the 2,324 exoplanet systems (i.e. each exoplanet and its two nearest neighbors). Even using the “brute force” algorithm, this clustering takes less than 1 second to compute for such small samples of objects. Since many of the exoplanets in the sample reside in multi-planet systems, the NearestNeighbor algorithm will produce clusters with multiple object separations of exactly zero. I therefore further restricted my sample to clusters that contain no multi-planet systems, leaving a total of 1,217 clusters constructed of three single transiting systems. Note also that due to the uniform but stochastic sampling of exoplanet systems across the field (see § 5.1 ), some clusters are partially or fully redundant (i.e. the same three stars can be selected in differing orders in up to three separate clusters). I do not eliminate this redundancy in this demonstration.
+
+For each k = 3 𝑘 3 k=3 star cluster I compute two metrics that should be considered when searching for spatially distributed technosignature beacons, shown in Figure 3 . First I simply calculate the mean cartesian distance of the three exoplanet systems about the “center” or average spatial position in 2D space (RA, Dec). This enables us to potentially identify clusters of transiting systems that are unusually close together in projected separation. Second I compute the similarity of the orbital periods for the three exoplanets in each cluster. This similarity metric here is defined as the range (i.e. max period – min period) divided by the mean orbital period of the three stars.
+This period metric is easy to interpret, allowing us to identify clusters of transiting exoplanets whose orbital periods deviate by less than a given percentage.
+
+Figure 3: Fractional range of orbital periods versus the mean angular separation for KNN clusters in (RA, Dec) space of transiting exoplanet systems in Kepler . This sample only includes systems with only a single known transiting exoplanet. These KNN clusters have typical spatial separations of ∼ similar-to \sim 0.1 deg. For K 𝐾 K =3, three unique clusters have a spread in their orbital periods below 6% (red points). However this is not a significant outlier in the orbital period similarity, and these clusters are not unusually close together in their spatial separation.
+
+I find no anonymously self-similar k = 3 𝑘 3 k=3 clusters of exoplanets in the Kepler sample considered here. The cluster with the most similar period distribution consists of Kepler-1295, Kepler-1612, and Kepler-612. This triplet of systems have orbital periods within 5.1% of each other (mean period of P = 3.82 𝑃 3.82 P=3.82 days), only 2.4 ​ σ 2.4 𝜎 2.4\sigma from the average of the period range distribution in Figure 3 .
+This cluster also has a mean separation of 0.09 deg, only slightly closer than the typical cluster separation of 0.11 deg.
+
+6 Discussion
+
+In this paper I have presented the great potential for using algorithms to search for SETI or “technosignature” signals in modern spatio–temporal surveys, such as TESS, ZTF, or LSST. Though these surveys are primarily in optical wavelengths as opposed to traditional SETI at radio frequencies, there are many promising algorithmic approaches that may be considered. Further, these searches can “piggyback” on datasets and computational resources being developed for other science goals.
+This SETI approach also connects with the rise of data science and statistical methods in astronomy to characterize, and find outliers in, large datasets. Interestingly, the search for technosignatures is possibly one of only a few areas where “big data” survey astronomy intersects with the growing astrobiology discipline. As Berea et al. ( 2019 ) note, expertise in many complementary domains of data analysis (e.g. cybersecurity) may also be useful for advancing survey SETI.
+
+To illustrate the sorts of SETI algorithms that could be easily constructed based on existing data analysis and machine learning libraries, I have outlined a few simple approaches to search for beacons based on the distribution of exoplanets in the Kepler field.
+The most detailed example in § 5.2 searches for clusters of transiting exoplanet systems with unusually similar properties.
+One obvious simplification of this approach as outlined is the need to pre-define the number of stars in each cluster, here assumed to be k = 3 𝑘 3 k=3 . However, it is trivial in practice to adjust this number, or scan over many possible values. Indeed, I explored k = 2 𝑘 2 k=2 through k = 8 𝑘 8 k=8 clusters with this data, and found no substantial outliers in either the orbital period similarity or spatial separation.
+
+While I’ve explored self-similarity between spatially proximate exoplanet systems as the search metric here, one could instead pick densities of the most unlikely transiting systems. Since long-period eclipses are geometrically the most rare to detect, a spatial cluster of long-period exoplanets should immediately stand out as being very unlikely, even if the period similarity and average separation is not exceptional. Adding such a long-period or unlikely-period cluster-finding algorithm to a future survey SETI toolkit is straightforward. However, these systems are also the most time-intensive to detect for an observer, and so a more efficient beacon for both construction and detection would consist of short-period systems.
+
+As described in the introduction, sky surveys enable a wide range of algorithmic approaches to use for SETI. Real-time alert streams from surveys like ZTF and soon LSST (e.g. Schwamb et al., 2019 ) make rapid identification and follow-up of unusual variability straightforward to implement. Other approaches could include monitoring for over-densities in the spatial distribution of alerts, especially within the Earth Transit Zone (Heller & Pudritz, 2016 ) , searching for slowly appearing or disappearing stars on decades timescales (Villarroel et al., 2016 ) , or looking for coordinated variability with e.g. novae along the “SETI ellipsoid” over wide areas of the sky (Lemarchand, 1994 ) . Unnatural motions of objects could also be searched for in sky surveys. This might be akin to searching for interstellar asteroids (e.g. Mamajek, 2017 ) whose trajectories suddenly change. In future work we will explore a framework for searching the ZTF alert stream for unusual or “impossible” sequences of events in light curves.
+
+Finally, while the opportunity for conducing SETI research using large surveys has been noted for nearly two decades (e.g. Djorgovski, 2000 ) , what has been lacking is the development of general-use algorithms or software packages designed for such searches. This is an area in clear need of further exploration, and an opportunity for contribution to SETI by many software-minded researchers from all disciplines.
+
+J.R.A.D. thanks Nicholas M. Law and Jason T. Wright for their ongoing conversations in developing this idea, Andrew P. V. Siemion and the Berkeley SETI Research Center team for hosting me for an enlightening and motivating visit, the Research Corporation for Scientific Advancement for hosting the 2018 TDA Scialog meeting, and Daniela Huppenkothen for comments that greatly improved this manuscript.
+J.R.A.D. acknowledges support from the DIRAC Institute in the Department of Astronomy at the University of Washington. The DIRAC Institute is supported through generous gifts from the Charles and Lisa Simonyi Fund for Arts and Sciences, and the Washington Research Foundation.
+This paper includes data collected by the Kepler mission. Funding for the Kepler mission is provided by the NASA Science Mission directorate.
+This research has made use of the NASA Exoplanet Archive, which is operated by the California Institute of Technology, under contract with the National Aeronautics and Space Administration under the Exoplanet Exploration Program.
+This work made use of the gaia-kepler.fun crossmatch database created by Megan Bedell.
+
+References
+
+Arnold (2005)
+
+Arnold, L. 2005, in SF2A-2005: Semaine de l’Astrophysique Francaise, ed.
+F. Casoli, T. Contini, J. M. Hameury, & L. Pagani, 207
+
+Astropy Collaboration et al. (2013)
+
+Astropy Collaboration, Robitaille, T. P., Tollerud, E. J., et al. 2013,
+A&A, 558, A33
+
+Bellm (2014)
+
+Bellm, E. 2014, in The Third Hot-wiring the Transient Universe Workshop, ed.
+P. R. Wozniak, M. J. Graham, A. A. Mahabal, & R. Seaman, 27–33
+
+Berea et al. (2019)
+
+Berea, A., Croft, S., & Angerhausen, D. 2019, arXiv e-prints,
+arXiv:1903.08381
+
+Borucki et al. (2010)
+
+Borucki, W. J., Koch, D., Basri, G., et al. 2010, Science, 327, 977
+
+Boyajian et al. (2015)
+
+Boyajian, T. S., LaCourse, D. M., Rappaport, S. A., et al. 2015, ArXiv
+e-prints, arXiv:1509.03622
+
+Council (2010)
+
+Council, N. R. 2010, New Worlds, New Horizons in Astronomy and Astrophysics
+(Washington, DC: The National Academies Press), doi:10.17226/12951
+
+Djorgovski (2000)
+
+Djorgovski, S. 2000, in Astronomical Society of the Pacific Conference
+Series, Vol. 213, Bioastronomy 99, ed. G. Lemarchand & K. Meech, 519
+
+Djorgovski et al. (2013)
+
+Djorgovski, S. G., Mahabal, A., Drake, A., Graham, M., & Donalek, C.
+2013, Sky Surveys, ed. T. D. Oswalt & H. E. Bond, 223
+
+Drake et al. (2009)
+
+Drake, A. J., Djorgovski, S. G., Mahabal, A., et al. 2009, ApJ, 696,
+870
+
+Forgan (2019)
+
+Forgan, D. 2019, Research Notes of the AAS, 3, 32
+
+Forgan (2017)
+
+Forgan, D. H. 2017, ArXiv e-prints, arXiv:1707.03730
+
+Heller & Pudritz (2016)
+
+Heller, R., & Pudritz, R. E. 2016, Astrobiology, 16, 259
+
+Howard et al. (2004)
+
+Howard, A. W., Horowitz, P., Wilkinson, D. T., et al. 2004, ApJ, 613,
+1270
+
+Hunter (2007)
+
+Hunter, J. D. 2007, Computing In Science & Engineering, 9, 90
+
+Isaacson et al. (2019)
+
+Isaacson, H., Siemion, A. P. V., Marcy, G. W., et al. 2019, PASP, 131,
+014201
+
+Isaacson et al. (2017)
+
+—. 2017, PASP, 129, 054501
+
+Ivezić et al. (2014)
+
+Ivezić, Ž., Connolly, A., Vanderplas, J., & Gray, A. 2014,
+Statistics, Data Mining and Machine Learning in Astronomy (Princeton
+University Press)
+
+Ivezić et al. (2008)
+
+Ivezić, Ž., Tyson, J. A., Acosta, E., et al. 2008, ArXiv
+e-prints, # 0805.2366, arXiv:0805.2366
+
+Jones et al. (2001–)
+
+Jones, E., Oliphant, T., Peterson, P., et al. 2001–, SciPy: Open source
+scientific tools for Python, , , [Online; accessed ¡today¿]
+
+Juric (2012)
+
+Juric, M. 2012, LSD: Large Survey Database framework, , , ascl:1209.003
+
+Kipping & Teachey (2016)
+
+Kipping, D. M., & Teachey, A. 2016, MNRAS, 459, 1233
+
+Lacki (2019)
+
+Lacki, B. C. 2019, arXiv e-prints, arXiv:1903.05839
+
+Landy & Szalay (1993)
+
+Landy, S. D., & Szalay, A. S. 1993, ApJ, 412, 64
+
+Law et al. (2015)
+
+Law, N. M., Fors, O., Ratzloff, J., et al. 2015, PASP, 127, 234
+
+Lemarchand (1994)
+
+Lemarchand, G. A. 1994, Ap&SS, 214, 209
+
+Makovetskii (1977)
+
+Makovetskii, P. V. 1977, Soviet Ast., 21, 251
+
+Mamajek (2017)
+
+Mamajek, E. 2017, Research Notes of the American Astronomical Society, 1, 21
+
+McKinney (2010)
+
+McKinney, W. 2010, in Proceedings of the 9th Python in Science Conference, ed.
+S. van der Walt & J. Millman, 51 – 56
+
+Oliphant (2007)
+
+Oliphant, T. E. 2007, Computing in Science Engineering, 9, 10
+
+Patterson et al. (2019)
+
+Patterson, M. T., Bellm, E. C., Rusholme, B., et al. 2019, PASP, 131,
+018001
+
+Pérez & Granger (2007)
+
+Pérez, F., & Granger, B. E. 2007, Computing in Science and Engineering, 9,
+21
+
+Price et al. (2018)
+
+Price, D. C., MacMahon, D. H. E., Lebofsky, M., et al. 2018, ArXiv
+e-prints, arXiv:1804.04571
+
+Ricker et al. (2015)
+
+Ricker, G. R., Winn, J. N., Vanderspek, R., et al. 2015, Journal of
+Astronomical Telescopes, Instruments, and Systems, 1, 014003
+
+Schwamb et al. (2019)
+
+Schwamb, M. E., Hsieh, H., Bannister, M. T., et al. 2019, Research Notes of
+the AAS, 3, 51
+
+Shostak (2004)
+
+Shostak, S. 2004, in IAU Symposium, Vol. 213, Bioastronomy 2002: Life Among
+the Stars, ed. R. Norris & F. Stootman, 409
+
+Tarter (2001)
+
+Tarter, J. 2001, ARA&A, 39, 511
+
+Tingay et al. (2018)
+
+Tingay, S. J., Tremblay, C. D., & Croft, S. 2018, ApJ, 856, 31
+
+Villarroel et al. (2016)
+
+Villarroel, B., Imaz, I., & Bergstedt, J. 2016, AJ, 152, 76
+
+Wang et al. (2013)
+
+Wang, Y., Brunner, R. J., & Dolence, J. C. 2013, MNRAS, 432, 1961
+
+Worden et al. (2017)
+
+Worden, S. P., Drew, J., Siemion, A., et al. 2017, Acta Astronautica,
+139, 98
+
+Wright (2017)
+
+Wright, J. T. 2017, Exoplanets and SETI, 186
+
+Wright et al. (2016)
+
+Wright, J. T., Cartier, K. M. S., Zhao, M., Jontof-Hutter, D., &
+Ford, E. B. 2016, ApJ, 816, 17
+
+Wright et al. (2018)
+
+Wright, J. T., Kanodia, S., & Lubar, E. 2018, AJ, 156, 260
+
+Wright & Oman-Reagan (2018)
+
+Wright, J. T., & Oman-Reagan, M. P. 2018, International Journal of
+Astrobiology, 17, 177
+
+Zečević et al. (2019)
+
+Zečević, P., Slater, C. T., Jurić, M., et al. 2019, arXiv
+e-prints, arXiv:1905.09034
+
+◄
+
+Feeling lucky?
+
+Conversion report
+Report an issue
+View original on arXiv ►
+
+Copyright
+Privacy Policy
+
+Generated on Tue Mar 19 17:35:11 2024 by L a T e XML

@@ -23,6 +23,17 @@ name: loom-litcheck
 # CREDENTIALS: none.  arXiv is public; it is simply unreachable from the sandbox.
 
 on:
+  # CHAINED OFF THE CALIBRATION, NOT SCHEDULED INDEPENDENTLY.  The calibration
+  # is what produces the survivor list this reads, and it is the only thing that
+  # can change it, so a clock-based schedule here would either run before the
+  # list exists or re-read a stale one.  Chaining also fixes the ordering that
+  # matters downstream: alerts.yml suppresses exceedances the literature already
+  # explains, so it must see a litcheck no older than the calibration it is
+  # judging -- otherwise the first run after a new dark-comet paper notifies
+  # about an object that was published months ago.
+  workflow_run:
+    workflows: ["loom-calibrate"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       names:

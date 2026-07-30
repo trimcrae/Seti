@@ -5,6 +5,39 @@ vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
 next. Last updated: 2026-07-30.
 
+### The Rubin channels now run and report without a session, 2026-07-30
+
+`tocsin` (nightly, 10:10 ET), `loom` (weekly, Mon 11:40 ET) and `loom-calibrate`
+(monthly, 12:20 ET on the 1st) were already unattended crons committing results
+back to `main`. What was missing was the half that closes the loop: something
+that decides a human has to look, and says so out loud.
+
+`alerts.yml` + `src/seti/alerts.py` do that. Three severities — `candidate` (a
+channel promoted something), `health` (the pipeline is broken in a way that
+produces *no error*), `milestone` (a capability came online). It opens a GitHub
+issue **assigned to the repository owner**, because assignment is what reaches
+an inbox regardless of the recipient's watch settings; the issue itself would
+not. `loom-litcheck` now chains off `loom-calibrate` so the alert never
+notifies about an exceedance the literature already explains.
+
+Two design points that are load-bearing rather than decorative:
+
+* **Deduplication by stable key** (`results/alerts/state.json`). A finding
+  notifies once. Without it the first promoted candidate emails every week
+  forever, and inside a month the apparatus has a working detector and a human
+  who ignores it. A consumed alert is still reported as *active* — dedup must
+  not make a live condition look resolved.
+* **Staleness is read from the timestamp INSIDE each result file**, never from
+  its mtime. A runner clones the repository fresh, so every mtime is the
+  checkout time and a channel dead for a year looks thirty seconds old. An
+  mtime-based check would not merely be inaccurate on the runner, it could
+  never fire there — and the daily heartbeat is the only thing that can tell a
+  dead cron from an empty sky. Pinned by
+  `tests/test_alerts.py::test_staleness_is_read_from_the_file_not_the_mtime`.
+
+State seeded 2026-07-30 with `875163 (1998 SH2)` and `428209 (2006 VC)` marked
+seen, so those two do not re-notify. Anything new does. See `docs/alerts.md`.
+
 ### New channel: LOOM — von Neumann probe *population* search in Rubin SSO alerts (`loom/`), 2026-07-30
 
 **The question this repository has not asked: is there a *population* of

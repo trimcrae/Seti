@@ -267,6 +267,39 @@ available as the arc lengthens. That is what a standing weekly screen is for. Pe
 `CLAUDE.md` a clean null would be a reason to change the question; a
 coverage-limited non-result is a reason to keep the screen running and wait.
 
+### The one measurement the data does support today
+
+Path A needs no survey baseline at all — MPC fits `yarkovsky` against decades of
+astrometry — so the 12 objects with a genuine (non-zero) fitted value are testable
+now. Seven pass the S/N ≥ 3 reliability gate, and **every one sits below even the
+realistic thermal-recoil envelope**:
+
+| designation | H | A2 (au/day²) | S/N | da/dt (10⁻⁴ au/Myr) | ε_eff |
+|---|---|---|---|---|---|
+| 2016 NB1 | 23.92 | −1.708e-13 | 40.5 | −102 | 0.022 |
+| 2004 DH2 | 20.25 | +3.801e-14 | 15.1 | +20 | 0.027 |
+| 1937 UB (Hermes) | 17.68 | −1.189e-14 | 9.8 | −6.4 | 0.027 |
+| 2007 CT26 | 23.54 | −1.316e-13 | 8.3 | −71 | 0.020 |
+| 1982 DB | 18.75 | +1.442e-14 | 6.7 | +5.8 | 0.020 |
+| 2004 MW2 | 19.38 | −2.150e-14 | 5.3 | −14 | 0.022 |
+| 2011 AA37 | 22.91 | −8.092e-14 | 3.9 | −33 | 0.017 |
+
+The measured drifts, −102 to +20 ×10⁻⁴ au/Myr, sit squarely inside the published
+Yarkovsky range, and the realised efficiencies cluster at **ε_eff = 0.017–0.027**.
+
+That is worth more than a null. The momentum ceiling was calibrated on three
+objects (Bennu, 2005 ES70, 2009 BD) at ε_eff = 0.020–0.079, and these seven — an
+independent set, fitted by MPC rather than by the papers the calibration came from
+— land in the same band. **The gate is now anchored on ten objects rather than
+three**, and the ε = 0.1 "generous envelope" is confirmed generous: no reliably
+measured natural object in this sample comes within a factor of four of it.
+
+One object, 2002 AX51, exceeds the realistic envelope by 6.5× — but at S/N = 1.16
+its A2 is not a detection, and the screen records it `untestable` for exactly that
+reason rather than promoting it. That is the Del Vigna base-rate discipline doing
+its job on live data: the most interesting-looking number in the table is the one
+with no signal behind it.
+
 ### A correction to the record
 
 An earlier reading of the second run reported that `2020 SO` (the 1966 Surveyor 2

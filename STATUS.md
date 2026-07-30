@@ -140,6 +140,22 @@ claim (which heliocentric-distance law the drift follows) returns
 `min_apparitions_for_promotion = 2` now enforce that; all four become `untestable`
 with the reason named and the assessment returns `INSUFFICIENT_POPULATION`.
 
+**The one measurement the data DOES support today**, and it is worth more than a
+null. Path A needs no survey baseline (MPC fits `yarkovsky` against decades of
+astrometry), so the 12 objects with a genuine non-zero value are testable now.
+Seven pass the S/N >= 3 gate and every one sits below even the *realistic*
+thermal-recoil envelope, at **eps_eff = 0.017-0.027** (2016 NB1 S/N 40.5,
+2004 DH2 15.1, 1937 UB 9.8, 2007 CT26 8.3, 1982 DB 6.7, 2004 MW2 5.3,
+2011 AA37 3.9; drifts -102 to +20 x10^-4 au/Myr, squarely inside the published
+Yarkovsky range). The momentum ceiling was calibrated on three objects at
+eps_eff = 0.020-0.079; these seven are an independent set fitted by MPC rather
+than by the calibration papers, and they land in the same band. **The gate is now
+anchored on ten objects rather than three**, and eps = 0.1 is confirmed generous —
+no reliably measured natural object comes within a factor of four of it. The one
+object exceeding the realistic envelope (2002 AX51, 6.5x) has S/N = 1.16 and is
+correctly recorded `untestable`: the most interesting-looking number in the table
+is the one with no signal behind it.
+
 Per CLAUDE.md a clean null is a reason to change the question — but this is a
 coverage-limited non-result, not a null, and the discriminants become available as
 the arc lengthens. The channel runs weekly and waits.

@@ -523,6 +523,45 @@ def screen(cfg=None, out_dir: str | Path | None = None,
         rec["ss_object_verdict"] = "SKIPPED"
     rec["timings"]["total_s"] = round(elapsed(), 1)
 
+    # COVERAGE: how long a baseline did this run actually have?
+    #
+    # This is the number that decides whether the channel can say anything at all,
+    # and it changes every week as the survey accumulates.  Recording it makes the
+    # run self-describing: a reader a year from now can see at a glance that the
+    # 2026-07-30 runs had a median residual baseline of days, not years, and that
+    # every object had one apparition -- which is why the law-discrimination and
+    # apparition-trend tests, the channel's actual novelty, could not run.  Without
+    # it a future reader would have to reconstruct the survey's age to interpret an
+    # empty candidate list, and would probably read it as a null instead.
+    arcs = np.array([_f(r.residual_arc_days) for r in recs
+                     if math.isfinite(_f(r.residual_arc_days))])
+    apps = np.array([r.n_apparitions for r in recs if r.n_apparitions > 0])
+    cov: dict = {"n_with_residual_fit": int(arcs.size)}
+    if arcs.size:
+        cov.update({
+            "residual_arc_days_median": float(np.median(arcs)),
+            "residual_arc_days_max": float(arcs.max()),
+            "residual_arc_days_p90": float(np.percentile(arcs, 90)),
+            "n_above_min_arc": int((arcs >= th.min_residual_arc_days).sum()),
+            "min_residual_arc_days": float(th.min_residual_arc_days),
+        })
+    if apps.size:
+        cov.update({"apparitions_median": float(np.median(apps)),
+                    "apparitions_max": int(apps.max()),
+                    "n_multi_apparition": int((apps >= 2).sum())})
+    cov["law_discrimination_available"] = bool(
+        arcs.size and (arcs >= th.min_residual_arc_days).sum() > 0
+        and apps.size and (apps >= 2).sum() > 0)
+    if not cov["law_discrimination_available"]:
+        cov["note"] = (
+            "no object has both a baseline above the minimum and two apparitions, "
+            "so the heliocentric-distance law test -- the discriminant that "
+            "separates an engineered acceleration from a dark comet, and the "
+            "channel's central novelty claim -- could not run on ANY object.  An "
+            "empty candidate list from this run is a statement about the survey's "
+            "age, not about the solar system.")
+    rec["coverage"] = cov
+
     # Funnel after both paths.
     funnel_b: dict = {"n_shortlist": len(shortlist), "n_analysed": n_done}
     for tier in ("untestable", "ordinary", "watch", "interest", "candidate"):

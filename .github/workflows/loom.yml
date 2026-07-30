@@ -134,10 +134,20 @@ jobs:
               print(f"\n=== {name} ===")
               print("verdict:", s.get("verdict"))
               for k in ("n_orbits", "n_shortlist", "n_residual_series_done",
+                        "n_controls_forced_into_shortlist",
+                        "shortlist_in_parent_fraction",
                         "n_objects", "n_anomalous", "frontier_mjd",
                         "orbits_verdict", "ss_object_verdict"):
                   if k in s:
                       print(f"  {k}: {s[k]}")
+              # COVERAGE FIRST: this is the number that decides whether the run
+              # could say anything at all, and an empty candidate list means
+              # something completely different depending on it.
+              cov = s.get("coverage")
+              if cov:
+                  print("  COVERAGE:")
+                  for k in sorted(cov):
+                      print(f"    {k}: {cov[k]}")
               for k in ("funnel_path_a", "funnel_final", "tiers", "timings",
                         "common_timing", "quality_independence"):
                   if k in s:

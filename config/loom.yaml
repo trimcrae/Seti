@@ -1,6 +1,38 @@
 # LOOM channel --- a population search for self-replicating probes among
 # solar-system objects, on the Rubin/LSST alert stream.
 #
+# WHAT THE LIVE MIRROR ACTUALLY HOLDS (measured by loom-probe, 2026-07-30;
+# results/loom/probe.json).  Four findings, each of which changed the code:
+#
+#   1. `lsst_ss_detection` (961,558 rows) has NO `diasourceid`; the per-detection
+#      key is `measurement_id`.  See `join_on` below.
+#   2. `ephoffsetalongtrack` and `ephoffsetcrosstrack` are NULL for ALL 961,558
+#      rows, and `ephrate`/`ephratera`/`ephratedec` are identically zero.  Only the
+#      scalar `ephoffset` is populated -- 100%, mean 0.085, max 0.99997.  So the
+#      along/cross split, which is the channel's central discriminant, is
+#      RECONSTRUCTED from d.ra/d.dec minus ephra/ephdec projected onto the object's
+#      own track direction (residuals.decompose_offset), and validated against the
+#      populated `ephoffset` magnitude.
+#   3. `ephoffset` max = 0.99997 arcsec over 961,558 rows is almost certainly the
+#      source-association radius, not a coincidence.  If so the channel is BLIND to
+#      residuals above ~1 arcsec by construction -- a sensitivity ceiling that must
+#      be stated in any result, since a large enough anomaly simply fails to
+#      associate and never appears.  loom-probe now histograms `ephoffset` to
+#      confirm.
+#   4. ZERO IS THIS MIRROR'S "MISSING", AND IT IS NOT NULL.  `srp`, `a1`, `a2`,
+#      `a3`, `dt` are non-NULL for 1812 of 130,909 orbit rows and every one of those
+#      values is EXACTLY 0.0 -- fill, not measurement.  Only 1822 rows have a
+#      genuine `yarkovsky`, and only **7** reach |A2| > 3 sigma.  So the
+#      area-to-mass-ratio channel is unavailable today and Path A is 7 objects:
+#      the channel runs on per-detection residuals, which is the unbiased path
+#      anyway.  Every read of these columns goes through `screen._fz`, which treats
+#      exact zero as missing, because a "measured zero" non-gravitational term is
+#      the strongest possible statement that an object is ordinary.
+#
+#   Also: `lsst_ss_object` exists with 81 columns and 0 rows, so the photometric
+#   axis is present in the schema and empty in the data -- reported as EMPTY, never
+#   as a null result.
+#
 # Every selection number lives here.  See docs/loom.md for the claim, the novelty
 # position, and what each test can and cannot decide.
 #
@@ -30,18 +62,23 @@ acquire:
   timeout_s: 900
   maxrec: 2000000
 
-  # ALeRCE `sid` for solar-system rows.  TOCSIN MEASURED sid=1 -> LSST diaObject
-  # and sid=0 -> ZTF on 2026-07-30; the ssObject value is NOT measured, so `null`
-  # drops the clause entirely.  That is the safe default: a wrong guess here would
-  # return an empty result rather than an error, which is the failure mode that
-  # cost TOCSIN a week.
-  sid_ssobject: null
+  # ALeRCE `sid` for solar-system rows.  MEASURED by loom-probe on 2026-07-30:
+  # sid = 2 on the `detection` rows that join to lsst_ss_detection (TOCSIN had
+  # already measured sid=1 -> LSST diaObject, sid=0 -> ZTF).
+  sid_ssobject: 2
 
-  # Which key joins lsst_ss_detection to the generic detection table (for the
-  # epoch, which ssSource does not carry).  `measurement_id` joins
-  # detection.measurement_id to lsst_ss_detection.diasourceid; `oid` joins on the
-  # object id.  A probe question -- loom-probe tries both and reports which
-  # returns rows.
+  # Which key joins lsst_ss_detection to the generic detection table (for the epoch
+  # and the sky position, neither of which ssSource carries).
+  #
+  # MEASURED 2026-07-30: there is NO `diasourceid` column -- the per-detection key
+  # is `measurement_id`, and the join is
+  #     d.measurement_id = ss.measurement_id AND d.oid = ss.ssobjectid
+  # The `diasourceid` form raised "No such field known", which is at least loud.
+  # The alternative `object` form (d.oid = ss.ssobjectid alone) does NOT raise: it
+  # silently returns the CROSS PRODUCT of every prediction for an object with every
+  # detection of that object, so a query that looks like a residual time series is
+  # an N x M cartesian join and its scatter is an artefact.  `object` is retained
+  # only as a labelled diagnostic; nothing computes from it.
   join_on: measurement_id
 
   # Keep only the source nearest the prediction (diadistancerank = 1).  Without

@@ -2,8 +2,9 @@
 
 *A loom is the machine that makes copies of a pattern.*
 
-**Channel status:** built, offline-tested (64 tests), **not yet run against live
-data**. The go/no-go measurement is `loom-probe`; see §7.
+**Channel status:** built, offline-tested (74 tests), **probed against the live
+service on 2026-07-30**. The probe changed the channel's architecture — read §2.1
+before anything else.
 
 ---
 
@@ -76,6 +77,94 @@ credential. ALeRCE's TAP service is public.
 
 Both conversions live in one module (`nongrav.py`) so there is exactly one place
 they can be wrong.
+
+---
+
+## 2.1 What the live mirror actually holds — measured 2026-07-30
+
+`loom-probe` ran against ALeRCE on 2026-07-30 (`results/loom/probe.json`, 38
+queries). It is the reason this section exists, and **four of its findings changed
+the code**. Each one would otherwise have produced a confident wrong answer rather
+than an error, which is the failure mode this repository fears most.
+
+**1. There is no `diasourceid`.** The per-detection key of `lsst_ss_detection` is
+`measurement_id`, so the join to `detection` — needed for the epoch *and* the sky
+position, neither of which `ssSource` carries — is
+`d.measurement_id = ss.measurement_id AND d.oid = ss.ssobjectid`. The
+`diasourceid` form raised "No such field known", which is at least loud. The
+tempting alternative, `d.oid = ss.ssobjectid` alone, does **not** raise: it
+silently returns the cross product of every prediction for an object with every
+detection of that object, so a query that looks like a residual time series is an
+N×M cartesian join and its scatter is an artefact of the join. It is retained
+as `join_on: object`, labelled diagnostic-only, and `_join_clause` raises on
+anything else. Confirmed alongside: solar-system `detection` rows carry `sid = 2`.
+
+**2. The along-track/cross-track decomposition is entirely NULL.**
+`ephoffsetalongtrack` and `ephoffsetcrosstrack` are NULL for **all 961,558**
+solar-system detections, and `ephrate`/`ephratera`/`ephratedec` are identically
+zero. Only the scalar `ephoffset` is populated — 100%, mean **0.085″**, which is
+exactly the ~0.1″ a well-observed minor planet should show and settles the unit
+question in favour of arcsec.
+
+Since the along/cross split is the channel's central discriminant (§3.2), it is
+**reconstructed**: `residuals.decompose_offset` takes the observed position from
+`detection`, the predicted position from `ephra`/`ephdec`, and the direction of
+motion from the object's own track between neighbouring epochs. The track
+direction comes from the object's own detections rather than from the (populated)
+state vectors deliberately: the alert schema does not state whether those vectors
+are ecliptic or equatorial, and a 23.4° frame error would rotate along-track into
+cross-track and destroy the exact quantity being measured. Two detections half an
+hour apart define the track with no frame assumption at all.
+
+The reconstruction is **validated for free**: its magnitude must agree with the
+populated `ephoffset` column, and `analyse_series` returns
+`RECONSTRUCTION_DISAGREES_WITH_EPHOFFSET` and stops if it does not. An object
+observed only once per night has no measurable track direction and is reported
+untestable on that axis rather than assigned an arbitrary one.
+
+**3. `ephoffset` appears to be truncated at the association radius.** Its maximum
+over 961,558 rows is **0.99997″**. That is either a remarkable coincidence or a 1″
+source-matching radius — and if it is the radius, the channel is **blind to
+residuals above ~1″ by construction**, because a large enough anomaly simply fails
+to associate with its prediction and never appears in the table at all. This is a
+hard sensitivity ceiling and it must be quoted in any result from this channel.
+The probe now histograms `ephoffset` across the boundary to settle it. Note the
+direction of the bias: it removes the *most* anomalous objects, so a null here is
+weak evidence about the solar system and strong evidence only about sub-arcsecond
+residual structure.
+
+**4. Zero is this mirror's "missing", and zero is not NULL.** `srp`, `a1`, `a2`,
+`a3` and `dt` are non-NULL for 1812 of 130,909 orbit rows and **every one of those
+values is exactly 0.0** — fill, not measurement. The same pattern appears in `a`,
+`mean_motion`, `period`, `not_normalized_rms` and `arc_length_total` on rows where
+the quantity was not determined. `COUNT(col)` counts a zero as present, so the
+first null-fraction query reported these columns as populated; the probe now counts
+non-NULL *and* non-zero separately, and every read goes through `screen._fz`, which
+treats exact zero as missing. This matters because a *measured* non-gravitational
+term of zero is the strongest possible statement that an object is ordinary,
+whereas an absent one means untestable — and the whole channel is built on not
+confusing those two.
+
+**The consequences for the architecture, stated plainly.** Only **1822** orbit rows
+carry a genuine `yarkovsky`, and only **7** reach |A2| > 3σ. The `srp` column —
+the area-to-mass ratio, which §3.5 identifies as the single strongest artificiality
+discriminant and the one that separates engineering from outgassing — is
+**unavailable in this mirror today**. So:
+
+- **Path A is 7 objects.** It is a cross-check, not a search. This is the outcome
+  the design anticipated and the reason the parent-population query does not
+  default to `require_nongrav`.
+- **Path B is the channel**: per-detection `ephoffset` structure over 961,558
+  detections, on the reconstructed decomposition. It is also the unbiased path,
+  since it does not inherit MPC's choice of which objects were worth fitting.
+- **The photometric axis is present in the schema and empty in the data.**
+  `lsst_ss_object` exists with 81 columns (real names measured: `g_h`, `g_g12`,
+  `g_chi2`, `g_slope_fit_failed`, `extendednessmedian`, `tisserand_j`, keyed on
+  `oid`) and **0 rows**. `ss_objects()` reports `EMPTY`; it is not a null result.
+- **Promotion to `candidate` cannot currently happen through the AMR channel**, so
+  in this mirror it requires the law-discrimination channel — which needs
+  multi-apparition arcs, and the ALeRCE orbit epochs span MJD 59000–61200 with
+  arcs up to 59,535 days, so those exist.
 
 ---
 

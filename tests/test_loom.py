@@ -172,6 +172,139 @@ def test_fit_quality_rejects_short_arc_and_inflated_rms():
 # ---------------------------------------------------------------------------
 # Residual analysis
 # ---------------------------------------------------------------------------
+def test_zero_is_missing_not_a_measured_zero():
+    """The live mirror writes 0.0 where a quantity was not determined.
+
+    Measured 2026-07-30: ``srp``, ``a1``, ``a2``, ``a3`` and ``dt`` are non-NULL
+    for 1812 of 130,909 orbit rows and every one of those values is exactly 0.0.
+    Reading a zero as a *measured* non-gravitational term is the strongest possible
+    statement that an object is ordinary, so it must read as untestable instead.
+    """
+    th = screen.Thresholds()
+    rec = screen.assign_tier(screen.screen_orbit_row(
+        _orbit_row(h=20.0, yarkovsky=0.0, yarkovsky_unc=0.0,
+                   srp=0.0, srp_unc=0.0), th), th)
+    assert not np.isfinite(rec.a2_au_day2)
+    assert not np.isfinite(rec.amr_m2_kg)
+    assert rec.tier == "untestable"
+    assert rec.reasons == ["no_acceleration_measurement"]
+
+    # Zero-fill in the orbit block reads as absent, so the rejection is named
+    # "no_arc_length" rather than the misleading "arc_0d_below_180d".
+    rec2 = screen.screen_orbit_row(
+        _orbit_row(arc_length_total=0.0, normalized_rms=0.0), th)
+    assert "no_arc_length" in rec2.orbit_reasons
+    assert "no_normalized_rms" in rec2.orbit_reasons
+
+    # And a real measurement still reads as one.
+    rec3 = screen.screen_orbit_row(
+        _orbit_row(h=20.0, yarkovsky=4.62e-4, yarkovsky_unc=1e-5), th)
+    assert rec3.a2_au_day2 == pytest.approx(4.62e-14)
+
+
+def test_join_clause_rejects_the_cartesian_form_by_default():
+    """The object-only join does not raise; it silently returns a cross product."""
+    from seti.loom.acquire import _join_clause
+
+    on = _join_clause("measurement_id")
+    assert "measurement_id" in on and "ssobjectid" in on
+    # The diagnostic-only form is available but explicitly labelled.
+    assert _join_clause("object") == "d.oid = ss.ssobjectid"
+    with pytest.raises(ValueError):
+        _join_clause("diasourceid")
+
+
+def test_ss_detection_columns_match_the_measured_schema():
+    """There is no ``diasourceid``; the per-detection key is ``measurement_id``."""
+    from seti.loom import acquire
+
+    assert "measurement_id" in acquire.SS_DETECTION_COLUMNS
+    assert "diasourceid" not in acquire.SS_DETECTION_COLUMNS
+    # The reconstruction inputs must be requested, or the fallback cannot run.
+    for col in ("ephra", "ephdec", "ephoffset", "toporange", "heliorange",
+                "diadistancerank", "ssobjectid"):
+        assert col in acquire.SS_DETECTION_COLUMNS, col
+    # And the zero-fill set must name every column the mirror fills with zeros.
+    for col in ("srp", "a1", "a2", "a3", "dt", "yarkovsky", "ephrate"):
+        assert col in acquire.ZERO_MEANS_MISSING, col
+
+
+# ---------------------------------------------------------------------------
+# Reconstructing the decomposition the mirror does not carry
+# ---------------------------------------------------------------------------
+def test_offset_reconstruction_recovers_a_planted_along_track_lag():
+    """The along/cross split, rebuilt from positions when the columns are NULL.
+
+    An object moving in +RA with a pure along-track lag must come back as all
+    along-track and no cross-track, and the reconstructed magnitude must equal the
+    planted offset — which is what validates the reconstruction against the
+    alert's own populated ``ephoffset``.
+    """
+    # Two detections per night, 30 minutes apart, over five nights; the object
+    # tracks in +RA at 0.01 deg/day and lags along-track by a growing amount.
+    mjd, ra_p, dec_p, lag = [], [], [], []
+    for night in range(5):
+        for k in (0, 1):
+            t = 60000.0 + night + k * (30.0 / 1440.0)
+            mjd.append(t)
+            ra_p.append(10.0 + 0.5 * (t - 60000.0))
+            dec_p.append(5.0)
+            lag.append(0.1 * night)          # arcsec, along +RA
+    mjd = np.array(mjd)
+    ra_p = np.array(ra_p)
+    dec_p = np.array(dec_p)
+    lag = np.array(lag)
+    # Observed = predicted shifted along +RA by `lag` arcsec.
+    ra_o = ra_p + lag / 3600.0 / np.cos(np.radians(dec_p))
+    dec_o = dec_p.copy()
+
+    along, cross, total = residuals.decompose_offset(mjd, ra_o, dec_o, ra_p, dec_p)
+    ok = np.isfinite(along)
+    assert ok.sum() == mjd.size
+    assert np.allclose(along[ok], lag[ok], atol=1e-6)
+    assert np.allclose(cross[ok], 0.0, atol=1e-6)
+    assert np.allclose(total[ok], np.abs(lag[ok]), atol=1e-6)
+
+
+def test_offset_reconstruction_puts_a_perpendicular_offset_in_cross_track():
+    """A displacement perpendicular to the track must not leak into along-track."""
+    mjd = np.array([60000.0, 60000.0 + 30.0 / 1440.0])
+    ra_p = np.array([10.0, 10.02])
+    dec_p = np.array([0.0, 0.0])
+    ra_o = ra_p.copy()
+    dec_o = dec_p + 0.2 / 3600.0            # 0.2 arcsec north, track is east
+    along, cross, total = residuals.decompose_offset(mjd, ra_o, dec_o, ra_p, dec_p)
+    assert np.allclose(along, 0.0, atol=1e-6)
+    assert np.allclose(np.abs(cross), 0.2, atol=1e-6)
+
+
+def test_track_direction_is_oriented_along_increasing_time():
+    """Otherwise half the epochs flip sign and a real drift averages to nothing."""
+    mjd = np.array([60000.0, 60000.0 + 30.0 / 1440.0, 60000.0 + 60.0 / 1440.0])
+    ra = np.array([10.0, 10.01, 10.02])
+    dec = np.zeros(3)
+    ex, ey = residuals.track_direction(mjd, ra, dec)
+    assert np.all(np.isfinite(ex))
+    # All three point the same way (+RA), including the last, whose only
+    # neighbour is EARLIER in time.
+    assert np.allclose(ex, 1.0, atol=1e-6)
+    assert np.allclose(ey, 0.0, atol=1e-6)
+
+
+def test_track_direction_is_nan_without_a_close_neighbour():
+    """One detection per night gives no measurable track direction."""
+    mjd = np.array([60000.0, 60003.0, 60006.0])
+    ex, ey = residuals.track_direction(mjd, np.array([10.0, 10.1, 10.2]),
+                                       np.zeros(3), max_gap_days=0.5)
+    assert not np.any(np.isfinite(ex))
+
+
+def test_offset_from_positions_wraps_right_ascension():
+    """An object near 0h must not acquire a 360-degree residual."""
+    dx, dy = residuals.offset_from_positions([0.0001], [0.0], [359.9999], [0.0])
+    assert abs(float(dx[0]) - 0.72) < 0.01
+
+
 def test_arcsec_to_km_uses_topocentric_distance():
     """One arcsec at 1 au is ~725 km; geometry must not be left in the signal."""
     km = float(residuals.arcsec_to_km(1.0, 1.0))
@@ -897,6 +1030,68 @@ def test_acquire_module_imports_without_network():
                 "ephoffsetcrosstrack", "ephrate", "heliorange", "toporange",
                 "diadistancerank", "designation", "ssobjectid"):
         assert col in acquire.SS_DETECTION_COLUMNS, col
+
+
+def test_analyse_series_uses_the_reconstruction_when_columns_are_null():
+    """The path the live mirror forces: NULL along/cross, rebuilt from positions.
+
+    Rows shaped exactly like the live join — ``ephoffsetalongtrack`` NULL,
+    ``ephrate`` zero-filled, ``ephoffset`` populated — must still produce a drift
+    fit, and the reconstruction must validate against ``ephoffset``.
+    """
+    from seti.loom.run import analyse_series
+
+    th = screen.Thresholds()
+    rows = []
+    for night in range(8):
+        for k in (0, 1):
+            t = 60000.0 + 40.0 * night + k * (30.0 / 1440.0)
+            ra_p = 10.0 + 0.01 * (t - 60000.0)
+            lag = 0.002 * (t - 60000.0) ** 2 / 100.0     # arcsec, accelerating
+            rows.append({
+                "mjd": t,
+                "ra": ra_p + lag / 3600.0,
+                "dec": 5.0,
+                "ephra": ra_p,
+                "ephdec": 5.0,
+                "ephoffset": abs(lag),
+                "ephoffsetalongtrack": None,
+                "ephoffsetcrosstrack": None,
+                "ephrate": 0.0,
+                "heliorange": 2.5,
+                "toporange": 1.8,
+            })
+    out = analyse_series(rows, th, n_null=100)
+    assert out["verdict"] == "OK", out
+    assert out["decomposition"] == "reconstructed_from_positions_and_track"
+    assert out["reconstruction_check"]["agrees"] is True
+    assert out["drift"]["verdict"] == "OK"
+    # `ephrate` is zero-filled, so the timing veto could not be evaluated and must
+    # be NaN rather than a confident zero correlation.
+    assert not np.isfinite(out["timing_correlation"])
+    assert out["geometry"]["power_ratio"] > 10.0
+
+
+def test_analyse_series_refuses_a_reconstruction_that_disagrees():
+    """If the rebuilt magnitude contradicts ``ephoffset``, nothing downstream runs."""
+    from seti.loom.run import analyse_series
+
+    th = screen.Thresholds()
+    rows = []
+    for night in range(8):
+        for k in (0, 1):
+            t = 60000.0 + 40.0 * night + k * (30.0 / 1440.0)
+            ra_p = 10.0 + 0.01 * (t - 60000.0)
+            rows.append({
+                "mjd": t, "ra": ra_p + 0.5 / 3600.0, "dec": 5.0,
+                "ephra": ra_p, "ephdec": 5.0,
+                "ephoffset": 5.0,                 # contradicts the 0.5" rebuilt
+                "ephoffsetalongtrack": None, "ephoffsetcrosstrack": None,
+                "ephrate": 0.0, "heliorange": 2.5, "toporange": 1.8,
+            })
+    out = analyse_series(rows, th, n_null=100)
+    assert out["verdict"] == "RECONSTRUCTION_DISAGREES_WITH_EPHOFFSET"
+    assert out["reconstruction_check"]["agrees"] is False
 
 
 def test_assess_end_to_end_recovers_a_planted_family(tmp_path):

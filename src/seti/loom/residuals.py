@@ -95,6 +95,110 @@ def g_constant(r_au) -> np.ndarray:
     return np.where(np.isfinite(r), 1.0, np.nan)
 
 
+# ---------------------------------------------------------------------------
+# 0. Reconstructing the decomposition the mirror does not carry
+# ---------------------------------------------------------------------------
+# MEASURED 2026-07-30: `ephoffsetalongtrack` and `ephoffsetcrosstrack` are NULL for
+# all 961,558 solar-system detections in the ALeRCE mirror, and `ephrate`,
+# `ephratera`, `ephratedec` are identically zero.  Only the scalar `ephoffset` is
+# populated.  Since the along-track/cross-track split is the channel's central
+# discriminant (§3.2 of docs/loom.md), it is reconstructed here from what IS there:
+# the observed position from `detection`, the predicted position from `ephra`/
+# `ephdec`, and the direction of motion from the object's own track.
+#
+# The track direction is taken from neighbouring detections of the same object
+# rather than from the state vectors, deliberately.  The state vectors are
+# populated, but the alert schema does not state whether they are ecliptic or
+# equatorial, and a 23.4-degree frame error would rotate along-track into
+# cross-track and destroy exactly the quantity being measured.  Two detections of
+# the same object half an hour apart define the track direction with no frame
+# assumption at all.
+def offset_from_positions(ra_obs, dec_obs, eph_ra, eph_dec):
+    """Observed-minus-predicted offset in arcsec, as (delta_ra*cos(dec), delta_dec).
+
+    Returned as a pair rather than a magnitude so it can be projected.  The
+    ``cos(dec)`` term is applied here, matching the convention the alert's own
+    ``ephoffsetra`` documents, and the RA difference is wrapped so an object near
+    0h does not acquire a 360-degree residual.
+    """
+    ra_o = np.asarray(ra_obs, dtype=float)
+    dec_o = np.asarray(dec_obs, dtype=float)
+    ra_p = np.asarray(eph_ra, dtype=float)
+    dec_p = np.asarray(eph_dec, dtype=float)
+    dra = (ra_o - ra_p + 180.0) % 360.0 - 180.0
+    dec_mid = np.radians(0.5 * (dec_o + dec_p))
+    return (dra * np.cos(dec_mid) * 3600.0, (dec_o - dec_p) * 3600.0)
+
+
+def track_direction(mjd, ra_deg, dec_deg, max_gap_days: float = 0.5):
+    """Unit sky-plane direction of motion at each epoch, from neighbouring epochs.
+
+    For each detection the direction is taken from the nearest detection within
+    ``max_gap_days`` — within a night an object moves along its track, so the
+    displacement between two detections half an hour apart *is* the track
+    direction, to far better precision than the residual being measured.  Epochs
+    with no neighbour inside the window return NaN, which propagates: an object
+    observed once a night for a month has no measurable track direction and must
+    be reported as untestable on this axis rather than assigned an arbitrary one.
+    """
+    t = np.asarray(mjd, dtype=float)
+    ra = np.asarray(ra_deg, dtype=float)
+    dec = np.asarray(dec_deg, dtype=float)
+    n = t.size
+    ex = np.full(n, np.nan)
+    ey = np.full(n, np.nan)
+    good = np.isfinite(t) & np.isfinite(ra) & np.isfinite(dec)
+    idx = np.flatnonzero(good)
+    if idx.size < 2:
+        return ex, ey
+    order = idx[np.argsort(t[idx])]
+    ts = t[order]
+    for k, i in enumerate(order):
+        best_j, best_dt = -1, np.inf
+        for k2 in (k - 1, k + 1):
+            if 0 <= k2 < order.size:
+                dt = abs(ts[k2] - ts[k])
+                if 0 < dt <= max_gap_days and dt < best_dt:
+                    best_dt, best_j = dt, order[k2]
+        if best_j < 0:
+            continue
+        dra = (ra[best_j] - ra[i] + 180.0) % 360.0 - 180.0
+        dx = dra * math.cos(math.radians(0.5 * (dec[i] + dec[best_j])))
+        dy = dec[best_j] - dec[i]
+        # Orient along INCREASING TIME, always.  If the neighbour used is the
+        # earlier one the displacement points backwards, and leaving it that way
+        # would flip the along-track sign for half the epochs, so a real lag and a
+        # real lead would cancel and a secular drift would average to nothing.
+        if t[best_j] < t[i]:
+            dx, dy = -dx, -dy
+        norm = math.hypot(dx, dy)
+        if norm <= 0:
+            continue
+        ex[i], ey[i] = dx / norm, dy / norm
+    return ex, ey
+
+
+def decompose_offset(mjd, ra_obs, dec_obs, eph_ra, eph_dec,
+                     max_gap_days: float = 0.5):
+    """Along-track and cross-track components of the O-C offset, in arcsec.
+
+    The reconstruction the mirror's NULL columns force.  Returns
+    ``(along, cross, total)``; ``total`` is returned so a caller can check it
+    against the alert's own ``ephoffset`` column, which is populated — that
+    agreement is a free validation that the reconstruction is right, and a
+    disagreement means the frame or the sign convention is wrong and nothing
+    downstream should be believed.
+    """
+    dx, dy = offset_from_positions(ra_obs, dec_obs, eph_ra, eph_dec)
+    ex, ey = track_direction(mjd, ra_obs, dec_obs, max_gap_days=max_gap_days)
+    along = dx * ex + dy * ey
+    # Cross-track is the perpendicular in the sky plane: rotate the unit vector
+    # by 90 degrees, (ex, ey) -> (-ey, ex).
+    cross = dx * (-ey) + dy * ex
+    total = np.hypot(dx, dy)
+    return along, cross, total
+
+
 def arcsec_to_km(offset_arcsec, toporange_au) -> np.ndarray:
     """Angular offset to physical along-track displacement (km)."""
     th = np.asarray(offset_arcsec, dtype=float)

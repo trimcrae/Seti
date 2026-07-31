@@ -47,6 +47,46 @@ Two design points that are load-bearing rather than decorative:
 State seeded 2026-07-30 with `875163 (1998 SH2)` and `428209 (2006 VC)` marked
 seen, so those two do not re-notify. Anything new does. See `docs/alerts.md`.
 
+**Added 2026-07-31: the frontier not MOVING is a second, earlier check.** The
+30-day test above measures the mirror against the wall clock, so it cannot fire
+until a freeze has burned through the whole budget — and the mirror is already
+~16 d behind *when* it stops, so a mirror that dies today is reported in a
+fortnight. That fortnight is a run of clean nulls meaning *no new sky* filed as
+*clean sky*. `results/alerts/frontier.json` is the memory that fixes it: nothing
+else in the repository has any, because every channel result file describes the
+run that wrote it, and from a single file a frozen mirror and an advancing one
+are indistinguishable.
+
+* `first_seen_utc` of the current value **is** the stall clock — the last time
+  the frontier was observed to move. It is preserved by a run that sees no
+  change, and the frontier is folded in only on the *recording* pass, never the
+  dry run. Either mistake resets the clock every run and silently disables the
+  check while it still looks implemented. Both are pinned by tests.
+* Reads the **broker** frontier over the **screened** one
+  (`summary.json:broker_frontier_mjd` before `ledger.json:last_mjd_screened`).
+  Equal while a channel is caught up; they come apart exactly when it matters,
+  because a channel that breaks while the mirror advances freezes the *screened*
+  frontier — a channel bug, not a mirror outage.
+* **The 7-day threshold is a placeholder and says so in the code.** ALeRCE's
+  ingest cadence has never been measured here: the frontier has sat at MJD
+  61235.41918 unchanged across every committed run since 2026-07-30T10:26:40Z.
+  A threshold below the real batch interval would fire on ordinary behaviour and
+  be trained into noise — the failure this module exists to avoid — so 7 d is
+  deliberately above any plausible batching and still 4× faster than the age
+  check. `observed_advance_days` accumulates the real cadence run by run;
+  tighten `FRONTIER_STALL_DAYS` from that record, not by guessing again.
+* Seeded from the record git already held, so the clock starts at the earliest
+  committed sighting rather than at the moment the check was written. Those
+  stamps are **lower bounds** — the freeze may predate either channel's first
+  run — which delays the alert rather than raising it early.
+* The frontier is reported in `latest.json`, the workflow log and the CLI
+  **whether or not it alerts**: below the threshold a stalling mirror is
+  invisible in every other field, and "how old is the newest sky we have seen"
+  is the first thing to check before reading any null as a claim about the sky.
+
+Verified live on the runner 2026-07-31 16:58 ET: `frozen_days` 1.44 (tocsin) /
+1.32 (loom), silent, `first_seen_utc` preserved across the run.
+
 ### New channel: LOOM — von Neumann probe *population* search in Rubin SSO alerts (`loom/`), 2026-07-30
 
 **The question this repository has not asked: is there a *population* of

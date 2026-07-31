@@ -763,6 +763,12 @@ def _cmd_alert_check(args, cfg):
     rep = check(root, record=not args.dry_run)
     print(f"[alerts] active={rep['n_active']} new={rep['n_new']} "
           f"by_severity={rep['by_severity']}")
+    # Printed whether or not anything alerts: below the stall threshold a frozen
+    # broker mirror is invisible in every other line here, and a null screened
+    # against no new sky is not a statement about the sky.
+    for ch, f in sorted((rep.get("frontier") or {}).items()):
+        print(f"  frontier {ch}: MJD {f.get('mjd')} "
+              f"({f.get('lag_days')} d behind, frozen {f.get('frozen_days')} d)")
     for a in rep["new"]:
         print(f"  [{a['severity']}] {a['title']}")
     title = issue_title(rep["new"])

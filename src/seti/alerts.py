@@ -70,6 +70,45 @@ STALE_DAYS = {"tocsin": 4.0, "loom": 10.0}
 # fires and a mirror that has actually stopped shows up inside a fortnight.
 DATA_LAG_LIMIT_DAYS = 30.0
 
+# How long the frontier may sit at the SAME VALUE before that is a failure.
+#
+# The check above asks whether the data is old.  This asks whether it is
+# MOVING, and the two come apart exactly when it matters.  A mirror that stops
+# ingesting is caught by the age check only once the freeze has burned through
+# the whole 30-day budget -- and because the mirror is already ~16 days behind
+# when it stops, that is a fortnight of clean nulls, each of them "no new sky"
+# being read as "clean sky".  Watching for the frontier to stop ADVANCING sees
+# the same failure from the first week.
+#
+# WHY 7 DAYS AND NOT 2.  A threshold below the mirror's ingest cadence fires on
+# ordinary batching, and an alert that fires on ordinary behaviour is noise
+# inside a month -- the failure this module is built to avoid.  ALeRCE's
+# cadence has not been measured here yet: the frontier sat at MJD 61235.41918
+# unchanged across every run from 2026-07-30 to 2026-07-31, which is the only
+# observation there is.  7 days is therefore deliberately conservative: it is
+# above any plausible batch interval and still four times faster than the age
+# check.  ``observed_advance_days`` in results/alerts/frontier.json accumulates
+# the real cadence run by run; tighten this once that has an answer.
+FRONTIER_STALL_DAYS = 7.0
+
+# Where each channel reports the frontier, in preference order.
+#
+# The BROKER's frontier, not the SCREENED one, is what answers "has the data
+# stopped".  They are equal while a channel is caught up, but they fail apart:
+# if the channel breaks while the mirror keeps advancing, the screened frontier
+# freezes and the data has not stopped at all.  Reading the broker's own number
+# first keeps a channel bug from being reported as a mirror outage.
+FRONTIER_KEYS = {
+    "tocsin": (("summary.json", "broker_frontier_mjd"),
+               ("ledger.json", "last_mjd_screened")),
+    "loom": (("screen.json", "frontier_mjd"),),
+}
+
+# How many past frontier values to keep.  This is the record the stall
+# threshold is meant to be calibrated against, so it is kept generously: at one
+# advance per night it is most of a year, and the file stays a few kB.
+FRONTIER_HISTORY_LIMIT = 300
+
 MJD_EPOCH = datetime(1858, 11, 17, tzinfo=timezone.utc)
 
 
@@ -139,6 +178,125 @@ def _age_days(path: Path, now: datetime) -> float:
     except OSError:
         return float("inf")
     return (now - mtime).total_seconds() / 86400.0
+
+
+# ---------------------------------------------------------------------------
+# The data frontier, and whether it is moving
+# ---------------------------------------------------------------------------
+def frontier_path(root: Path) -> Path:
+    return root / "results" / "alerts" / "frontier.json"
+
+
+def current_frontiers(root: Path) -> dict[str, tuple[float, str]]:
+    """The newest epoch each channel can see, and which file said so.
+
+    Returns ``{channel: (mjd, source)}``, omitting any channel whose frontier is
+    missing, unparseable or zero -- an unknown frontier is not a stopped one,
+    and treating it as stopped would alert on every channel that has never run.
+    """
+    out: dict[str, tuple[float, str]] = {}
+    for channel, sources in FRONTIER_KEYS.items():
+        for name, key in sources:
+            rec = _load(root / "results" / channel / name)
+            if not isinstance(rec, dict):
+                continue
+            mjd = _f(rec.get(key))
+            if math.isfinite(mjd) and mjd > 0:
+                out[channel] = (mjd, f"{name}:{key}")
+                break
+    return out
+
+
+def _advance_cadence(entry: dict) -> dict:
+    """How often this channel's frontier has actually been seen to advance.
+
+    This is the empirical answer that ``FRONTIER_STALL_DAYS`` is a placeholder
+    for.  It measures the gap between the times successive frontier VALUES were
+    first seen, which is the mirror's ingest cadence as observed from here --
+    not the run cadence, and not the mirror's own claim about itself.
+    """
+    stamps = [_parse_stamp(h.get("first_seen_utc"))
+              for h in (entry.get("history") or [])]
+    stamps.append(_parse_stamp(entry.get("first_seen_utc")))
+    stamps = [s for s in stamps if s is not None]
+    gaps = sorted((b - a).total_seconds() / 86400.0
+                  for a, b in zip(stamps, stamps[1:]) if b > a)
+    if not gaps:
+        # One frontier value seen so far: no advance has been observed, so the
+        # cadence is genuinely unknown.  Reporting a number here would invite
+        # calibrating the threshold against nothing.
+        return {"n_advances": 0}
+    mid = len(gaps) // 2
+    median = gaps[mid] if len(gaps) % 2 else 0.5 * (gaps[mid - 1] + gaps[mid])
+    return {"n_advances": len(gaps), "median_days": round(median, 3),
+            "max_days": round(gaps[-1], 3)}
+
+
+def record_frontier(root: Path, now: datetime | None = None,
+                    path: Path | None = None) -> dict:
+    """Fold today's frontier into the history, and return the whole record.
+
+    ``first_seen_utc`` is the load-bearing field: for the CURRENT value it is
+    the last time the frontier was observed to move, which is the only clock a
+    stall can be measured against.  It must therefore survive a run that sees
+    no change -- which is why an unchanged frontier extends ``last_seen_utc``
+    and leaves ``first_seen_utc`` alone.
+
+    Called only on the recording pass.  A dry run that wrote here would stamp
+    ``first_seen_utc`` at the moment of the check and reset the stall clock on
+    every evaluation, so the alert could never fire.
+    """
+    now = now or datetime.now(timezone.utc)
+    path = path or frontier_path(root)
+    stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    rec = _load(path) or {}
+    channels = dict(rec.get("channels") or {})
+    for channel, (mjd, source) in current_frontiers(root).items():
+        prev = dict(channels.get(channel) or {})
+        history = list(prev.get("history") or [])
+        if _f(prev.get("mjd")) == mjd:
+            # Same epoch as last time: another sighting of the same freeze.
+            entry = dict(prev)
+            entry["last_seen_utc"] = stamp
+            entry["n_sightings"] = int(prev.get("n_sightings") or 1) + 1
+        else:
+            if prev.get("mjd") is not None:
+                history.append({k: prev.get(k) for k in
+                                ("mjd", "first_seen_utc", "last_seen_utc")})
+            entry = {"mjd": mjd, "first_seen_utc": stamp, "last_seen_utc": stamp,
+                     "n_sightings": 1}
+        entry["source"] = source
+        entry["history"] = history[-FRONTIER_HISTORY_LIMIT:]
+        entry["observed_advance_days"] = _advance_cadence(entry)
+        channels[channel] = entry
+
+    out = {"channels": channels, "updated_utc": stamp,
+           "stall_limit_days": FRONTIER_STALL_DAYS}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(out, indent=1, sort_keys=True) + "\n")
+    return out
+
+
+def frontier_status(root: Path, now: datetime | None = None) -> dict:
+    """Per-channel {mjd, source, frozen_days, lag_days} for the run report."""
+    now = now or datetime.now(timezone.utc)
+    seen = (_load(frontier_path(root)) or {}).get("channels") or {}
+    out: dict[str, dict] = {}
+    for channel, (mjd, source) in current_frontiers(root).items():
+        entry = seen.get(channel) or {}
+        since = (_parse_stamp(entry.get("first_seen_utc"))
+                 if _f(entry.get("mjd")) == mjd else None)
+        out[channel] = {
+            "mjd": mjd,
+            "source": source,
+            "lag_days": round((now - (MJD_EPOCH + timedelta(days=mjd)))
+                              .total_seconds() / 86400.0, 3),
+            "frozen_days": (None if since is None else
+                            round((now - since).total_seconds() / 86400.0, 3)),
+            "observed_advance_days": entry.get("observed_advance_days"),
+        }
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -377,6 +535,70 @@ def health_alerts(root: Path, now: datetime | None = None) -> list[Alert]:
                 detail={"frontier_mjd": mjd, "lag_days": lag,
                         "limit_days": DATA_LAG_LIMIT_DAYS}))
 
+    # HAS THE FRONTIER STOPPED MOVING, AS OPPOSED TO MERELY BEING OLD?
+    #
+    # The check above measures the frontier against the wall clock, so it can
+    # only fire once a freeze has eaten the entire 30-day budget -- and the
+    # mirror is already ~16 days behind before it stops, so that is a fortnight
+    # of nulls that mean "no new sky" being filed as "clean sky".  This one
+    # measures the frontier against ITSELF: the same epoch, run after run, is a
+    # stall regardless of how recent that epoch happens to be.
+    #
+    # It needs memory, and results/alerts/frontier.json is that memory.  Nothing
+    # else in the repository has it: every channel's result file describes the
+    # run that wrote it, so from a single file a frozen mirror and an advancing
+    # one are indistinguishable.
+    seen = (_load(frontier_path(root)) or {}).get("channels") or {}
+    for channel, (mjd, source) in current_frontiers(root).items():
+        entry = seen.get(channel) or {}
+        # A frontier never recorded, or one that differs from the record, has
+        # not been observed to sit still -- the first sighting of a value is
+        # the start of its clock, not evidence about how long it has been there.
+        if _f(entry.get("mjd")) != mjd:
+            continue
+        since = _parse_stamp(entry.get("first_seen_utc"))
+        if since is None:
+            continue
+        frozen = (now - since).total_seconds() / 86400.0
+        if frozen > FRONTIER_STALL_DAYS:
+            src_file, _, src_key = source.partition(":")
+            cadence = entry.get("observed_advance_days") or {}
+            n_adv = int(cadence.get("n_advances") or 0)
+            measured = (f"Observed cadence so far: {n_adv} advance(s), median "
+                        f"{cadence.get('median_days')} d, longest gap "
+                        f"{cadence.get('max_days')} d."
+                        if n_adv else
+                        "The frontier has not yet been observed to advance at "
+                        "all, so there is no measured cadence to compare this "
+                        "against.")
+            out.append(Alert(
+                # Escalate by doubling, as the staleness check does: a mirror
+                # that stays dead should keep nagging without nagging weekly.
+                key=f"{channel}:frontier_stalled:"
+                    f"{int(math.log2(frozen / FRONTIER_STALL_DAYS))}",
+                severity="health", channel=channel,
+                title=f"{channel.upper()}'s data frontier has not advanced in "
+                      f"{frozen:.0f} days",
+                body=(f"`{channel}` has reported the same newest epoch, MJD "
+                      f"{mjd:.5f}, on every run since "
+                      f"{entry.get('first_seen_utc')} — {frozen:.1f} days, "
+                      f"against a limit of {FRONTIER_STALL_DAYS:.0f}. Source: "
+                      f"`results/{channel}/{src_file}` → `{src_key}`.\n\n"
+                      f"{measured}\n\n"
+                      f"The channel is running and committing normally; what "
+                      f"has stopped is the mirror. Every null it reports while "
+                      f"this holds means *no new sky*, not *clean sky*, and the "
+                      f"two are not the same result.\n\n"
+                      f"Check whether ALeRCE is still ingesting the LSST alert "
+                      f"stream. If the pause turns out to be ordinary batching, "
+                      f"raise `FRONTIER_STALL_DAYS` using the cadence recorded "
+                      f"in `results/alerts/frontier.json` rather than by "
+                      f"guessing again."),
+                detail={"frontier_mjd": mjd, "frozen_days": frozen,
+                        "limit_days": FRONTIER_STALL_DAYS, "source": source,
+                        "first_seen_utc": entry.get("first_seen_utc"),
+                        "observed_advance_days": cadence}))
+
     # A channel that reaches no data is not returning a null; it is not running.
     for channel, name in (("tocsin", "summary.json"), ("loom", "screen.json")):
         rec = _load(root / "results" / channel / name) or {}
@@ -414,6 +636,10 @@ def check(root: Path, state_path: Path | None = None,
     state = _load(state_path) or {"seen": {}}
     seen = dict(state.get("seen") or {})
 
+    # EVALUATE BEFORE RECORDING THE FRONTIER, always.  record_frontier stamps
+    # the moment a frontier value was first seen, and that stamp is what the
+    # stall check measures against; folding today's sighting in first would
+    # move the clock forward on every run and the stall could never fire.
     alerts = evaluate(root, now)
     new = [a for a in alerts if a.key not in seen]
     stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -424,6 +650,7 @@ def check(root: Path, state_path: Path | None = None,
         state_path.parent.mkdir(parents=True, exist_ok=True)
         state_path.write_text(json.dumps({"seen": seen}, indent=1,
                                          sort_keys=True) + "\n")
+        record_frontier(root, now)
 
     report = {
         "checked_at_utc": stamp,
@@ -434,6 +661,11 @@ def check(root: Path, state_path: Path | None = None,
                         for s in SEVERITIES},
         "new": [a.as_dict() for a in new],
         "active": [a.as_dict() for a in alerts],
+        # Reported whether or not it alerts.  Below the threshold a stalling
+        # mirror is invisible in every other field here, and "how old is the
+        # newest sky we have seen" is the first thing to check before reading
+        # any null on this page as a statement about the sky.
+        "frontier": frontier_status(root, now),
     }
     out = root / "results" / "alerts"
     out.mkdir(parents=True, exist_ok=True)

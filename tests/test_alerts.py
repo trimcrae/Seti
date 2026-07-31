@@ -15,15 +15,18 @@ import pytest
 
 from seti.alerts import (
     DATA_LAG_LIMIT_DAYS,
+    FRONTIER_STALL_DAYS,
     MJD_EPOCH,
     STALE_DAYS,
     check,
+    current_frontiers,
     evaluate,
     health_alerts,
     issue_body,
     issue_labels,
     issue_title,
     loom_alerts,
+    record_frontier,
     tocsin_alerts,
 )
 
@@ -238,6 +241,184 @@ def test_a_missing_or_zeroed_frontier_is_not_an_alert(tmp_path):
            {"frontier_mjd": 0, "screened_at_utc": _stamp(NOW)})
     _write(tmp_path, "results/tocsin/ledger.json", {"last_mjd_screened": None})
     assert [x for x in health_alerts(tmp_path, NOW) if "data_frontier" in x.key] == []
+
+
+# ---------------------------------------------------------------------------
+# A frontier that has stopped MOVING, as distinct from one that is merely OLD
+# ---------------------------------------------------------------------------
+def _tocsin_at(root: Path, mjd: float, now: datetime) -> None:
+    """A healthy tocsin run whose broker frontier sits at ``mjd``."""
+    _write(root, "results/tocsin/summary.json",
+           {"run_at_utc": _stamp(now), "broker_frontier_mjd": mjd})
+
+
+def test_a_frozen_frontier_alerts_long_before_the_age_check_would(tmp_path):
+    """THE POINT OF THE CHECK.
+
+    A mirror that stops ingesting is ~16 days behind already, so the absolute
+    age check cannot fire for another fortnight -- a fortnight of nulls that
+    mean 'no new sky' being read as 'clean sky'. Measuring the frontier against
+    itself sees the same failure in the first week.
+    """
+    mjd = _mjd_at(NOW - timedelta(days=17))          # ordinary lag: age check silent
+    _tocsin_at(tmp_path, mjd, NOW - timedelta(days=10))
+    record_frontier(tmp_path, NOW - timedelta(days=10))
+    _tocsin_at(tmp_path, mjd, NOW)                   # same epoch, ten days later
+
+    alerts = health_alerts(tmp_path, NOW)
+    assert [x for x in alerts if "data_frontier" in x.key] == []      # not yet old
+    stalled = [x for x in alerts if "frontier_stalled" in x.key]
+    assert len(stalled) == 1
+    assert stalled[0].severity == "health" and stalled[0].channel == "tocsin"
+    assert stalled[0].detail["frozen_days"] == pytest.approx(10.0, abs=0.1)
+
+
+def test_an_advancing_frontier_is_silent(tmp_path):
+    """The mirror doing its job must never notify, however far behind it runs."""
+    for day in range(12):
+        when = NOW - timedelta(days=11 - day)
+        _tocsin_at(tmp_path, _mjd_at(when - timedelta(days=16)), when)
+        record_frontier(tmp_path, when)
+        assert [x for x in health_alerts(tmp_path, when)
+                if "frontier_stalled" in x.key] == []
+
+
+def test_a_pause_inside_the_limit_is_silent(tmp_path):
+    """Below the threshold this is ordinary batching, and an alert that fires on
+    ordinary behaviour is trained into noise inside a month."""
+    mjd = _mjd_at(NOW - timedelta(days=17))
+    _tocsin_at(tmp_path, mjd, NOW - timedelta(days=6))
+    record_frontier(tmp_path, NOW - timedelta(days=6))
+    _tocsin_at(tmp_path, mjd, NOW)
+    assert [x for x in health_alerts(tmp_path, NOW)
+            if "frontier_stalled" in x.key] == []
+    assert FRONTIER_STALL_DAYS < DATA_LAG_LIMIT_DAYS
+
+
+def test_the_first_sighting_of_a_frontier_does_not_alert(tmp_path):
+    """A value seen once has not been observed to sit still. Starting the clock
+    at zero -- rather than at the file's date -- is what keeps a first run, or a
+    channel that has just come online, from notifying on day one."""
+    _tocsin_at(tmp_path, _mjd_at(NOW - timedelta(days=200)), NOW)
+    assert [x for x in health_alerts(tmp_path, NOW)
+            if "frontier_stalled" in x.key] == []
+
+
+def test_the_stall_clock_survives_runs_that_see_no_change(tmp_path):
+    """The regression this is most exposed to: if an unchanged frontier rewrote
+    first_seen_utc, every run would reset the clock and the alert could never
+    fire -- while looking perfectly well-implemented."""
+    mjd = _mjd_at(NOW - timedelta(days=17))
+    for day in range(10):                                  # ten runs, no advance
+        when = NOW - timedelta(days=9 - day)
+        _tocsin_at(tmp_path, mjd, when)
+        record_frontier(tmp_path, when)
+    rec = json.loads((tmp_path / "results/alerts/frontier.json").read_text())
+    entry = rec["channels"]["tocsin"]
+    assert entry["first_seen_utc"] == _stamp(NOW - timedelta(days=9))
+    assert entry["last_seen_utc"] == _stamp(NOW)
+    assert entry["n_sightings"] == 10
+    assert [x for x in health_alerts(tmp_path, NOW)
+            if "frontier_stalled" in x.key] != []
+
+
+def test_the_broker_frontier_is_preferred_to_the_screened_one(tmp_path):
+    """A channel that breaks while the mirror keeps advancing freezes the
+    SCREENED frontier. That is a channel bug, and reporting it as a mirror
+    outage sends the reader to the wrong system."""
+    _write(tmp_path, "results/tocsin/summary.json",
+           {"run_at_utc": _stamp(NOW),
+            "broker_frontier_mjd": _mjd_at(NOW - timedelta(days=16))})
+    _write(tmp_path, "results/tocsin/ledger.json",
+           {"last_mjd_screened": _mjd_at(NOW - timedelta(days=120))})
+    mjd, source = current_frontiers(tmp_path)["tocsin"]
+    assert source == "summary.json:broker_frontier_mjd"
+    assert mjd == pytest.approx(_mjd_at(NOW - timedelta(days=16)))
+
+
+def test_the_screened_frontier_is_the_fallback(tmp_path):
+    """loom has no broker field, and tocsin predates one."""
+    _write(tmp_path, "results/tocsin/ledger.json",
+           {"last_mjd_screened": _mjd_at(NOW - timedelta(days=16))})
+    _write(tmp_path, "results/loom/screen.json",
+           {"frontier_mjd": _mjd_at(NOW - timedelta(days=16))})
+    got = current_frontiers(tmp_path)
+    assert got["tocsin"][1] == "ledger.json:last_mjd_screened"
+    assert got["loom"][1] == "screen.json:frontier_mjd"
+
+
+def test_loom_stalls_too(tmp_path):
+    _write(tmp_path, "results/loom/screen.json",
+           {"frontier_mjd": _mjd_at(NOW - timedelta(days=17)),
+            "screened_at_utc": _stamp(NOW)})
+    record_frontier(tmp_path, NOW - timedelta(days=9))
+    a = [x for x in health_alerts(tmp_path, NOW) if "frontier_stalled" in x.key]
+    assert len(a) == 1 and a[0].channel == "loom"
+
+
+def test_a_missing_frontier_is_never_recorded_or_stalled(tmp_path):
+    """Zero is this repository's recurring 'missing' value; an unknown frontier
+    is not a stopped one."""
+    _write(tmp_path, "results/loom/screen.json",
+           {"frontier_mjd": 0, "screened_at_utc": _stamp(NOW)})
+    _write(tmp_path, "results/tocsin/ledger.json", {"last_mjd_screened": None})
+    rec = record_frontier(tmp_path, NOW)
+    assert rec["channels"] == {}
+    assert [x for x in health_alerts(tmp_path, NOW)
+            if "frontier_stalled" in x.key] == []
+
+
+def test_the_stall_alert_escalates_by_doubling(tmp_path):
+    """A mirror that stays dead should keep nagging, but not every week."""
+    mjd = _mjd_at(NOW - timedelta(days=17))
+    _tocsin_at(tmp_path, mjd, NOW)
+    record_frontier(tmp_path, NOW)
+    keys = set()
+    for days in (8, 10, 13, 15, 20, 30, 60):
+        _tocsin_at(tmp_path, mjd, NOW + timedelta(days=days))
+        keys |= {x.key for x in health_alerts(tmp_path, NOW + timedelta(days=days))
+                 if "frontier_stalled" in x.key}
+    assert keys == {"tocsin:frontier_stalled:0", "tocsin:frontier_stalled:1",
+                    "tocsin:frontier_stalled:2", "tocsin:frontier_stalled:3"}
+
+
+def test_the_observed_cadence_accumulates_for_calibration(tmp_path):
+    """FRONTIER_STALL_DAYS is a conservative guess pending a measurement. The
+    history is that measurement, so it has to actually record advances."""
+    for day in range(6):
+        when = NOW - timedelta(days=5 - day)
+        _tocsin_at(tmp_path, _mjd_at(when - timedelta(days=16)), when)
+        record_frontier(tmp_path, when)
+    cadence = (json.loads((tmp_path / "results/alerts/frontier.json").read_text())
+               ["channels"]["tocsin"]["observed_advance_days"])
+    assert cadence["n_advances"] == 5
+    assert cadence["median_days"] == pytest.approx(1.0)
+
+
+def test_a_dry_run_does_not_move_the_stall_clock(tmp_path):
+    """The other way the check could be silently disabled: if the evaluation
+    pass recorded the frontier, the clock would reset on every check."""
+    mjd = _mjd_at(NOW - timedelta(days=17))
+    _tocsin_at(tmp_path, mjd, NOW - timedelta(days=9))
+    record_frontier(tmp_path, NOW - timedelta(days=9))
+    before = (tmp_path / "results/alerts/frontier.json").read_text()
+    _tocsin_at(tmp_path, mjd, NOW)
+    rep = check(tmp_path, now=NOW, record=False)
+    assert (tmp_path / "results/alerts/frontier.json").read_text() == before
+    assert any("frontier_stalled" in a["key"] for a in rep["new"])
+
+
+def test_the_report_carries_the_frontier_even_when_silent(tmp_path):
+    """Below the threshold a stalling mirror is invisible in every other field,
+    and it is the first thing to check before reading a null as a result."""
+    _tocsin_at(tmp_path, _mjd_at(NOW - timedelta(days=16)), NOW - timedelta(days=2))
+    record_frontier(tmp_path, NOW - timedelta(days=2))
+    _tocsin_at(tmp_path, _mjd_at(NOW - timedelta(days=16)), NOW)
+    rep = check(tmp_path, now=NOW)
+    assert not rep["alert"]
+    f = rep["frontier"]["tocsin"]
+    assert f["frozen_days"] == pytest.approx(2.0, abs=0.1)
+    assert f["lag_days"] == pytest.approx(16.0, abs=0.1)
 
 
 # ---------------------------------------------------------------------------

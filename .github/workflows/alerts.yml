@@ -184,6 +184,11 @@ jobs:
           # so one unmatched glob stages NOTHING and `|| true` hides it.
           git add -f -- results/alerts/state.json || echo "no state.json"
           git add -f -- results/alerts/latest.json || echo "no latest.json"
+          # frontier.json is the only MEMORY in this repository of where the
+          # broker mirror was on previous runs.  A run that evaluates but does
+          # not commit it leaves the stall check comparing today against today
+          # forever, which disables it while every test still passes.
+          git add -f -- results/alerts/frontier.json || echo "no frontier.json"
           if git diff --cached --quiet; then
             echo "No alert-state changes to commit."
           else
@@ -209,6 +214,15 @@ jobs:
           print("checked at:", r.get("checked_at_utc"))
           print("active:", r.get("n_active"), " new:", r.get("n_new"))
           print("by severity:", r.get("by_severity"))
+          # Printed even when nothing alerts: below the stall threshold a
+          # frozen mirror is invisible in every other line of this report, and
+          # a null screened against no new sky is not a statement about the sky.
+          for ch, f in sorted((r.get("frontier") or {}).items()):
+              cad = f.get("observed_advance_days") or {}
+              print(f"  frontier {ch}: MJD {f.get('mjd')} "
+                    f"({f.get('lag_days')} d behind, frozen "
+                    f"{f.get('frozen_days')} d, {cad.get('n_advances', 0)} "
+                    f"advance(s) observed)")
           for a in r.get("active", []):
               flag = "NEW " if a in r.get("new", []) else "    "
               print(f"  {flag}[{a['severity']}] {a['title']}")

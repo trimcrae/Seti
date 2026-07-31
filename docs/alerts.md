@@ -136,6 +136,59 @@ up inside a fortnight. A missing or zero frontier is treated as *unknown*, not
 as a 61,000-day lag; zero is this repository's recurring "missing" value and an
 upper bound that admits it turns every absent field into an alert.
 
+### It notices the frontier *not moving*, which is earlier than it being old
+
+The check above measures the frontier against the wall clock, so it cannot fire
+until a freeze has burned through the whole 30-day budget. But the mirror is
+already ~16 days behind *when* it stops — so a mirror that dies today is
+reported in a fortnight, and the fortnight in between is a run of clean nulls
+that mean "no new sky" being filed as "clean sky".
+
+So there is a second check, measuring the frontier against **itself**: the same
+epoch, run after run, is a stall regardless of how recent that epoch happens to
+be. It needs memory, and `results/alerts/frontier.json` is that memory — nothing
+else in the repository has it, because every channel's result file describes the
+run that wrote it, and from a single file a frozen mirror and an advancing one
+are indistinguishable.
+
+```
+results/alerts/frontier.json
+  channels.<name>.mjd                     the newest epoch now visible
+  channels.<name>.first_seen_utc          when it last MOVED — the stall clock
+  channels.<name>.last_seen_utc           the most recent sighting of that value
+  channels.<name>.history                 previous values, with their spans
+  channels.<name>.observed_advance_days   the measured ingest cadence
+```
+
+Two details carry the whole check. `first_seen_utc` is preserved by a run that
+sees no change — if an unchanged frontier rewrote it, every run would reset the
+clock and the alert could never fire while looking perfectly well-implemented.
+And the frontier is only recorded on the **recording** pass, never the dry run,
+for the same reason.
+
+It reads the **broker's** frontier in preference to the **screened** one
+(`results/tocsin/summary.json` → `broker_frontier_mjd`, falling back to
+`ledger.json` → `last_mjd_screened`). The two are equal while a channel is
+caught up, but they come apart exactly when it matters: if the channel breaks
+while the mirror keeps advancing, the screened frontier freezes and the data has
+not stopped at all — reporting that as a mirror outage sends you to the wrong
+system.
+
+**The threshold is 7 days, and it is a placeholder.** ALeRCE's ingest cadence
+has not been measured here: the frontier sat at MJD 61235.41918 unchanged across
+every run from 2026-07-30 to 2026-07-31, which is the only observation there is.
+A threshold below the real batch interval would fire on ordinary behaviour and
+be trained into noise inside a month — the failure this whole module is built to
+avoid — so 7 days is deliberately conservative, above any plausible batching and
+still four times faster than the age check. `observed_advance_days` accumulates
+the real cadence run by run; tighten `FRONTIER_STALL_DAYS` from that record
+rather than by guessing again.
+
+The frontier is reported in `results/alerts/latest.json` and in the workflow log
+**whether or not it alerts**, because below the threshold a stalling mirror is
+invisible in every other field, and "how old is the newest sky we have seen" is
+the first thing to check before reading any null as a statement about the sky.
+
 ### GitHub's own inactivity policy
 
 The other thing that can stop a cron is GitHub's own policy: **scheduled
@@ -190,6 +243,7 @@ results/loom/calibration.json     the ceiling's realised efficiency; exceedances
 results/loom/litcheck.json        which exceedances the literature already explains
 results/alerts/latest.json        every active alert, and which are new
 results/alerts/state.json         the deduplication memory
+results/alerts/frontier.json      where the broker mirror was on previous runs
 results/watchdog/status.json      unresolved breakage
 ```
 

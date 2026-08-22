@@ -189,6 +189,48 @@ The frontier is reported in `results/alerts/latest.json` and in the workflow log
 invisible in every other field, and "how old is the newest sky we have seen" is
 the first thing to check before reading any null as a statement about the sky.
 
+### It notices the frontier *starting* again, which is visible only once
+
+The stall check answers "has the data stopped". Nothing answered "has it
+started", and the two are not symmetric. A stall is visible in every run that
+follows it, so it can be noticed late and still be noticed. A recovery is
+visible in **exactly one** run — the first whose frontier differs from the
+record — and afterwards the mirror simply looks healthy, as though it always had
+been. Miss that run and the only trace is a number in `frontier.json` that
+quietly changed.
+
+So `frontier_recovery_alerts` raises a `milestone` when a channel's frontier
+advances past the recorded one. It is gated on the **same threshold as the
+stall check**, so a recovery fires if and only if the stall it ended had itself
+been worth reporting: this alert is always the answer to a question already
+asked, never an unprompted one. An ordinary nightly advance notifies nothing —
+a healthy mirror advances every night, and reporting that is the noise this
+module exists to avoid. A frontier that moves *backwards* is not a recovery
+either; that is a broker re-indexing or a channel reading a different table, and
+announcing it would promise data that is not there.
+
+The alert carries the **advance interval** — first sighting of the old value to
+first sighting of the new one, measured exactly as `observed_advance_days`
+measures it — which is the cadence datum `FRONTIER_STALL_DAYS` has never had. It
+is an *upper bound* on the mirror's true ingest gap: the frontier is sampled
+about once a day and a change finer than that cannot be seen from here.
+
+It also says whether the mirror is merely *inside the age limit* or genuinely
+current, because one advance after a long outage may be a partial backfill, and
+a null read during the catch-up still means *no new sky*.
+
+**A recovery re-arms the stall keys it answers.** Without this the stall
+detector is one-shot for the life of the repository: the stall key escalates by
+doubling (`:0`, `:1`, `:2`), so once reported those keys are consumed forever and
+the *next* outage stays silent until it grows past the longest escalation already
+seen. This repository consumed `:0` and `:1` during the July 2026 Rubin outage,
+which would have bought the next stall 28 days of silence and the one after that
+56 — a detector whose blind spot doubles every time it fires is worse than none,
+because the silence still reads as health. The recovery is the honest moment to
+clear them: the condition has demonstrably ended, so re-arming announces nothing
+and loses nothing. Keys whose condition is **still true** are never cleared, or
+they would re-raise on the next run and re-notify about something already sent.
+
 ### GitHub's own inactivity policy
 
 The other thing that can stop a cron is GitHub's own policy: **scheduled

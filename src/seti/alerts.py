@@ -300,6 +300,105 @@ def frontier_status(root: Path, now: datetime | None = None) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# The frontier starts moving again
+# ---------------------------------------------------------------------------
+def frontier_recovery_alerts(root: Path, now: datetime | None = None) -> list[Alert]:
+    """The mirror has advanced again after a stall long enough to have alerted.
+
+    The stall check answers "has the data stopped".  Nothing answered "has it
+    STARTED", and the two are not symmetric.  A stall is visible in every run
+    that follows it, so it can be noticed late and still be noticed.  A recovery
+    is visible in EXACTLY ONE run -- the first whose frontier differs from the
+    recorded one -- and after that the mirror simply looks healthy, as though it
+    always had been.  Miss that run and the only trace is a number in
+    frontier.json that quietly changed.
+
+    Like the stall check this must be evaluated BEFORE ``record_frontier``
+    folds today's sighting in, which is the order :func:`check` already
+    guarantees; afterwards the old value is gone and there is nothing to compare
+    against.
+
+    AN ORDINARY ADVANCE IS DELIBERATELY NOT AN ALERT.  A healthy mirror advances
+    every night, and notifying on every night's ingest is exactly the noise this
+    module exists to avoid.  The gate is the same threshold the stall check
+    uses, so a recovery fires if and only if the stall it ends had itself been
+    worth reporting: this alert is the answer to a question already asked, never
+    an unprompted one.
+    """
+    now = now or datetime.now(timezone.utc)
+    out: list[Alert] = []
+    seen = (_load(frontier_path(root)) or {}).get("channels") or {}
+    for channel, (mjd, source) in current_frontiers(root).items():
+        entry = seen.get(channel) or {}
+        prev = _f(entry.get("mjd"))
+        # A frontier never recorded has not been observed to move.  One that
+        # went BACKWARDS is not a recovery either -- that is a broker
+        # re-indexing or a channel reading a different table, and announcing it
+        # as recovery would promise data that is not there.
+        if not math.isfinite(prev) or mjd <= prev:
+            continue
+        first = _parse_stamp(entry.get("first_seen_utc"))
+        if first is None:
+            continue
+        # Measured first-sighting to first-sighting, the same way
+        # _advance_cadence measures it, so the number quoted to a human and the
+        # number folded into the cadence record are the same number.
+        interval = (now - first).total_seconds() / 86400.0
+        if interval <= FRONTIER_STALL_DAYS:
+            continue
+
+        last = _parse_stamp(entry.get("last_seen_utc")) or first
+        confirmed = (last - first).total_seconds() / 86400.0
+        sky = mjd - prev
+        lag = (now - (MJD_EPOCH + timedelta(days=mjd))).total_seconds() / 86400.0
+        caught_up = lag <= DATA_LAG_LIMIT_DAYS
+        out.append(Alert(
+            key=f"{channel}:frontier_recovered:{mjd:.5f}",
+            severity="milestone", channel=channel,
+            title=f"{channel.upper()}'s data frontier is moving again "
+                  f"(+{sky:.1f} days of sky)",
+            body=(f"`{channel}` has advanced from MJD {prev:.5f} to MJD "
+                  f"{mjd:.5f} — {sky:.1f} days of sky — after sitting still "
+                  f"since {entry.get('first_seen_utc')}.\n\n"
+                  f"The stall was confirmed across {confirmed:.1f} days of "
+                  f"sightings; the advance itself happened between "
+                  f"{entry.get('last_seen_utc')} and now, so the interval "
+                  f"between successive frontier values is {interval:.1f} days. "
+                  f"That is an UPPER BOUND on the mirror's true ingest gap — "
+                  f"this repository samples the frontier about once a day and "
+                  f"cannot see a change finer than that.\n\n"
+                  + (f"The frontier is now {lag:.1f} days behind the wall "
+                     f"clock, inside the {DATA_LAG_LIMIT_DAYS:.0f}-day limit, "
+                     f"so the age alert clears. That is not the same as "
+                     f"current: the mirror's ordinary lag is ~16 days, and "
+                     f"anything above that is still backlog.\n\n"
+                     if caught_up else
+                     f"The frontier is still {lag:.1f} days behind the wall "
+                     f"clock, past "
+                     f"the {DATA_LAG_LIMIT_DAYS:.0f}-day limit. One advance is "
+                     f"not a recovery: this may be a partial backfill, so do "
+                     f"not read the next null as a statement about tonight's "
+                     f"sky until the lag comes down.\n\n") +
+                  f"This is the cadence datum `FRONTIER_STALL_DAYS` has never "
+                  f"had — it was set to {FRONTIER_STALL_DAYS:.0f} by "
+                  f"guesswork because no advance had ever been observed here. "
+                  f"Recalibrate it against `observed_advance_days` in "
+                  f"`results/alerts/frontier.json` now that there is one.\n\n"
+                  f"Note that the nights lost to the stall are ABSENT, not "
+                  f"null: they were never observed, so they add nothing to the "
+                  f"screen's trial count and must not be counted as clean sky."),
+            detail={"channel": channel, "source": source,
+                    "frontier_mjd": mjd, "previous_mjd": prev,
+                    "sky_days_gained": sky,
+                    "advance_interval_days": interval,
+                    "stall_confirmed_days": confirmed,
+                    "lag_days": lag, "caught_up": caught_up,
+                    "first_seen_utc": entry.get("first_seen_utc"),
+                    "last_seen_utc": entry.get("last_seen_utc")}))
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Per-channel conditions
 # ---------------------------------------------------------------------------
 def tocsin_alerts(root: Path) -> list[Alert]:
@@ -620,7 +719,8 @@ def health_alerts(root: Path, now: datetime | None = None) -> list[Alert]:
 # ---------------------------------------------------------------------------
 def evaluate(root: Path, now: datetime | None = None) -> list[Alert]:
     """Every alert condition, evaluated against whatever results exist."""
-    return [*tocsin_alerts(root), *loom_alerts(root), *health_alerts(root, now)]
+    return [*tocsin_alerts(root), *loom_alerts(root), *health_alerts(root, now),
+            *frontier_recovery_alerts(root, now)]
 
 
 def check(root: Path, state_path: Path | None = None,
@@ -647,6 +747,38 @@ def check(root: Path, state_path: Path | None = None,
         for a in new:
             seen[a.key] = {"first_seen_utc": stamp, "severity": a.severity,
                            "title": a.title}
+
+        # RE-ARM THE STALL KEYS THE RECOVERY JUST ANSWERED.
+        #
+        # Without this the stall detector is ONE-SHOT for the life of the
+        # repository.  The stall key escalates by doubling --
+        # `<channel>:frontier_stalled:0`, `:1`, `:2` -- so once a stall has been
+        # reported those keys are consumed forever, and the NEXT outage is
+        # silent until it grows past the longest escalation already seen.  This
+        # repository has already consumed `:0` and `:1` on the July 2026 Rubin
+        # outage, so the next stall would say nothing for its first 28 days,
+        # and the one after that nothing for 56.  A detector whose blind spot
+        # doubles every time it fires is worse than no detector, because the
+        # silence still reads as health.
+        #
+        # A recovery is the honest moment to clear them: the condition those
+        # keys stand for has demonstrably ended, so re-arming announces nothing
+        # and loses nothing.
+        #
+        # Only keys NOT currently active are cleared.  Dropping a key whose
+        # condition is still true would re-raise it on the very next run --
+        # re-notifying a human about something they were already told, which is
+        # the noise this module is built to avoid.
+        active_keys = {a.key for a in alerts}
+        for a in alerts:
+            if ":frontier_recovered:" not in a.key:
+                continue
+            for prefix in (f"{a.channel}:frontier_stalled:",
+                           f"{a.channel}:data_frontier:"):
+                for k in [k for k in seen
+                          if k.startswith(prefix) and k not in active_keys]:
+                    seen.pop(k, None)
+
         state_path.parent.mkdir(parents=True, exist_ok=True)
         state_path.write_text(json.dumps({"seen": seen}, indent=1,
                                          sort_keys=True) + "\n")

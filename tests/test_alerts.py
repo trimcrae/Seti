@@ -21,6 +21,7 @@ from seti.alerts import (
     check,
     current_frontiers,
     evaluate,
+    frontier_recovery_alerts,
     health_alerts,
     issue_body,
     issue_labels,
@@ -530,3 +531,134 @@ def test_issue_body_states_a_measurement_not_a_finding(tmp_path):
     lowered = body.lower()
     assert "technosignature" not in lowered
     assert "artificial object found" not in lowered
+
+
+# ---------------------------------------------------------------------------
+# A frontier that starts MOVING again
+# ---------------------------------------------------------------------------
+def test_a_recovery_after_a_stall_fires_a_milestone(tmp_path):
+    """THE POINT OF THE CHECK.
+
+    A stall is visible in every run that follows it, so it can be noticed late.
+    A recovery is visible in exactly ONE run -- the first whose frontier differs
+    from the record -- and afterwards the mirror simply looks healthy, as though
+    it always had been. Nothing else in the repository would say the data came
+    back.
+    """
+    old = _mjd_at(NOW - timedelta(days=40))
+    _tocsin_at(tmp_path, old, NOW - timedelta(days=20))
+    record_frontier(tmp_path, NOW - timedelta(days=20))
+    _tocsin_at(tmp_path, _mjd_at(NOW - timedelta(days=16)), NOW)
+
+    a = frontier_recovery_alerts(tmp_path, NOW)
+    assert len(a) == 1
+    assert a[0].severity == "milestone" and a[0].channel == "tocsin"
+    assert a[0].detail["sky_days_gained"] == pytest.approx(24.0, abs=0.1)
+    assert a[0].detail["advance_interval_days"] == pytest.approx(20.0, abs=0.1)
+    assert a[0].detail["caught_up"] is True
+
+
+def test_an_ordinary_advance_never_notifies(tmp_path):
+    """A healthy mirror advances every night. Notifying on that is precisely the
+    noise this module exists to avoid, so the recovery gate is the same
+    threshold the stall check uses: an advance is only worth reporting if the
+    stall it ended was itself worth reporting."""
+    for day in range(12):
+        when = NOW - timedelta(days=11 - day)
+        _tocsin_at(tmp_path, _mjd_at(when - timedelta(days=16)), when)
+        record_frontier(tmp_path, when)
+        assert frontier_recovery_alerts(tmp_path, when) == []
+
+
+def test_a_pause_inside_the_limit_recovers_silently(tmp_path):
+    """The symmetry that keeps this honest: a pause too short to raise a stall
+    must also be too short to raise a recovery, or the module announces the end
+    of something it never reported the start of."""
+    mjd = _mjd_at(NOW - timedelta(days=17))
+    _tocsin_at(tmp_path, mjd, NOW - timedelta(days=6))
+    record_frontier(tmp_path, NOW - timedelta(days=6))
+    assert [x for x in health_alerts(tmp_path, NOW)
+            if "frontier_stalled" in x.key] == []
+    _tocsin_at(tmp_path, _mjd_at(NOW - timedelta(days=11)), NOW)
+    assert frontier_recovery_alerts(tmp_path, NOW) == []
+
+
+def test_a_frontier_going_backwards_is_not_a_recovery(tmp_path):
+    """A broker re-indexing, or a channel that started reading a different
+    table, moves the frontier the wrong way. Announcing that as recovery would
+    promise data that is not there."""
+    _tocsin_at(tmp_path, _mjd_at(NOW - timedelta(days=16)), NOW - timedelta(days=20))
+    record_frontier(tmp_path, NOW - timedelta(days=20))
+    _tocsin_at(tmp_path, _mjd_at(NOW - timedelta(days=60)), NOW)
+    assert frontier_recovery_alerts(tmp_path, NOW) == []
+
+
+def test_a_first_sighting_is_not_a_recovery(tmp_path):
+    """A channel coming online has no recorded predecessor, so there is no
+    advance to report -- only a first value."""
+    _tocsin_at(tmp_path, _mjd_at(NOW - timedelta(days=16)), NOW)
+    assert frontier_recovery_alerts(tmp_path, NOW) == []
+
+
+def test_a_partial_backfill_says_it_is_not_caught_up(tmp_path):
+    """One advance is not a recovery. If the mirror is still past the age limit
+    the next null still means 'no new sky', and the alert has to say so rather
+    than declare victory."""
+    _tocsin_at(tmp_path, _mjd_at(NOW - timedelta(days=200)), NOW - timedelta(days=20))
+    record_frontier(tmp_path, NOW - timedelta(days=20))
+    _tocsin_at(tmp_path, _mjd_at(NOW - timedelta(days=150)), NOW)
+
+    a = frontier_recovery_alerts(tmp_path, NOW)
+    assert len(a) == 1 and a[0].detail["caught_up"] is False
+    assert "partial backfill" in a[0].body
+
+
+def test_the_recovery_re_arms_the_stall_key(tmp_path):
+    """THE ONE-SHOT BUG.
+
+    The stall key escalates by doubling, so once consumed it is consumed for the
+    life of the repository and the NEXT outage is silent until it grows past the
+    longest escalation already seen. Re-arming on the recovery that answers it is
+    what makes the detector repeatable rather than single-use.
+    """
+    old = _mjd_at(NOW - timedelta(days=26))
+    _tocsin_at(tmp_path, old, NOW - timedelta(days=10))
+    check(tmp_path, now=NOW - timedelta(days=10))          # first sighting
+    _tocsin_at(tmp_path, old, NOW - timedelta(days=1))
+    rep = check(tmp_path, now=NOW - timedelta(days=1))     # stall fires
+    assert any("frontier_stalled" in a["key"] for a in rep["new"])
+
+    _tocsin_at(tmp_path, _mjd_at(NOW - timedelta(days=16)), NOW)
+    rep = check(tmp_path, now=NOW)                         # recovery
+    assert any("frontier_recovered" in a["key"] for a in rep["new"])
+
+    seen = json.loads((tmp_path / "results/alerts/state.json").read_text())["seen"]
+    assert not [k for k in seen if "frontier_stalled" in k]
+
+    # And the detector genuinely works a second time.
+    frozen = _mjd_at(NOW - timedelta(days=16))
+    _tocsin_at(tmp_path, frozen, NOW + timedelta(days=9))
+    rep = check(tmp_path, now=NOW + timedelta(days=9))
+    assert any("frontier_stalled" in a["key"] for a in rep["new"])
+
+
+def test_re_arming_never_clears_a_condition_that_is_still_true(tmp_path):
+    """Dropping a key whose condition still holds re-raises it on the very next
+    run, notifying a human about something they were already told."""
+    _write(tmp_path, "results/tocsin/ledger.json",
+           {"last_mjd_screened": _mjd_at(NOW - timedelta(days=200))})
+    _tocsin_at(tmp_path, _mjd_at(NOW - timedelta(days=200)), NOW - timedelta(days=10))
+    check(tmp_path, now=NOW - timedelta(days=10))
+    _tocsin_at(tmp_path, _mjd_at(NOW - timedelta(days=200)), NOW - timedelta(days=1))
+    check(tmp_path, now=NOW - timedelta(days=1))
+
+    # The frontier advances, but the SCREENED data is still ancient, so the
+    # age alert is still active and must survive the re-arm.
+    _tocsin_at(tmp_path, _mjd_at(NOW - timedelta(days=150)), NOW)
+    rep = check(tmp_path, now=NOW)
+    assert any("frontier_recovered" in a["key"] for a in rep["new"])
+    active = {a["key"] for a in rep["active"]}
+    seen = json.loads((tmp_path / "results/alerts/state.json").read_text())["seen"]
+    for k in active:
+        if "data_frontier" in k:
+            assert k in seen, "an active age alert was re-armed and will re-notify"

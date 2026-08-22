@@ -219,8 +219,11 @@ def _advance_cadence(entry: dict) -> dict:
               for h in (entry.get("history") or [])]
     stamps.append(_parse_stamp(entry.get("first_seen_utc")))
     stamps = [s for s in stamps if s is not None]
+    # strict=False is the correct pairing, not a waiver: the two iterables are
+    # deliberately of different length (n and n-1) because this walks
+    # CONSECUTIVE PAIRS of one list.  strict=True would raise on every call.
     gaps = sorted((b - a).total_seconds() / 86400.0
-                  for a, b in zip(stamps, stamps[1:]) if b > a)
+                  for a, b in zip(stamps, stamps[1:], strict=False) if b > a)
     if not gaps:
         # One frontier value seen so far: no advance has been observed, so the
         # cadence is genuinely unknown.  Reporting a number here would invite

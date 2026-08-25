@@ -272,7 +272,7 @@ a light curve rather than an alert.
 | **Aperture blending** | *The dominant new systematic.* ASAS-SN's PSF is 16″ FWHM (8″ pixels), so the aperture routinely contains other stars, and with no centroid there is nothing to reject a flare on one of them. This is the defence the Rubin path gets free from `astrometric_offset`. | `blend_neighbours()` counts catalogue neighbours inside the aperture by flux ratio. It must be run against a catalogue **complete to the survey's depth** (a Gaia cone search on the runner); against the nearby-star list alone it measures only a lower bound, and says so. |
 | **Proper-motion aperture drift** | See §6. Manufactures dips on exactly the best targets. | Segmentation for ATLAS, exclusion for ASAS-SN. |
 | **Survey systematics read as events** | Formal error bars omit flat-fielding, blending and subtraction systematics, so believing them calls systematics events. | The per-epoch uncertainty is `max(formal_err, measured scatter)`, where the scatter is 1.4826 × MAD of the star's own light curve. Every threshold is therefore relative to what *that star* actually does. |
-| **Low-amplitude variables** | Still the dominant astrophysical population, and now with no colour to separate them (ASAS-SN) — this is where the loss of achromaticity hurts most. | The ledger's duty-cycle test is the designed defence; `frac_scatter` is reported per band as an early warning. |
+| **Low-amplitude variables** | Still the dominant astrophysical population, and now with no colour to separate them (ASAS-SN) — this is where the loss of achromaticity hurts most. | The ledger's duty-cycle test is the designed defence. A band whose measured scatter exceeds `max_frac_scatter` (50 % of the star's flux) is dropped from the **numerator and the denominator together**: its event threshold is 6× that scatter, so it could only ever register a ~300 % excursion, and keeping its epochs as trials would deflate the ensemble rate and shrink every other target's p-value. |
 | **Cosmic rays / artefacts** | No `pixelFlags_*` exists. | ATLAS `chi/N` outliers against the *star's own median* (self-calibrating, since χ²/N depends on magnitude, seeing and field) → `pixel_flag_bad`. ASAS-SN `quality` flag plus seeing outliers → epoch dropped. |
 | **Trailed sources / satellites** | No `glint_trail` exists. | ATLAS `maj`/`min` elongation outliers → `raw["trail_flag"]`, which `screen._per_alert_flags` already treats as fatal. ASAS-SN has no substitute; recurrence is the only defence. |
 | **Solar-system objects crossing the aperture** | *Worse here than on the Rubin path.* An 8″-pixel aperture on the ecliptic is crossed by asteroids often, and there is no `ssObjectId` to exclude them. | **Not yet implemented.** The correct check is JPL's SB-Identification API (`ssd-api.jpl.nasa.gov/sb_ident.api`, measured reachable) or the MPC, queried per *event* rather than per epoch — a few hundred calls, not millions. Until it exists, every event carries `ss_association_unavailable_in_<survey>` and no event may be promoted on the strength of a single epoch near the ecliptic. |
@@ -413,7 +413,7 @@ needs no shared denominator.
 
 ## 11. Status
 
-Built and offline-tested (65 tests, `tests/test_tocsin_altfeeds.py`), `ruff`
+Built and offline-tested (68 tests, `tests/test_tocsin_altfeeds.py`), `ruff`
 clean, workflow YAML parses. **Not yet run against either live service** — the
 sandbox has no egress, and the probe is the first thing the workflow does.
 

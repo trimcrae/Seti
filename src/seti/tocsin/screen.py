@@ -135,8 +135,19 @@ def _baseline_flux(alert: NormalizedAlert, row, band: str, rel_err: float
     3. Nothing --- the amplitude is marked untestable, and the event can be
        recorded but not promoted on amplitude evidence.
     """
+    # THE TEMPLATE FLUX BELONGS TO THE ALERT'S OWN BAND, AND ONLY TO IT.
+    # `alert.template_flux_njy` is Rubin's forced PSF flux on the coadd template
+    # in `alert.band`; it says nothing about any other band.  Returning it for a
+    # different `band` was a real bug with a quiet, one-sided failure mode: the
+    # one-sided non-detection test asks what a grey event of amplitude `a` would
+    # have produced in the band that stayed SILENT, and it was being handed the
+    # DETECTED band's baseline.  On a red star those differ by a factor of a few,
+    # so the test was under-powered when the detection was the bluer band and
+    # over-powered when it was the redder one -- and this test rejects events
+    # (docs/tocsin.md 3.2 records five), so an over-powered version discards real
+    # candidates without leaving any trace that it did.
     tf, tfe = alert.template_flux_njy, alert.template_flux_err_njy
-    if tf is not None and np.isfinite(tf) and tf > 0:
+    if band == alert.band and tf is not None and np.isfinite(tf) and tf > 0:
         err = tfe if (tfe is not None and np.isfinite(tfe) and tfe > 0) else 0.0
         return float(tf), float(err), "rubin_template"
     col = BASELINE_COLUMN.get(band)

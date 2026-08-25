@@ -1993,3 +1993,44 @@ def test_population_stage_degrades_without_bin_trials(tmp_path):
     rec = population(_Cfg(), out_dir=tmp_path / "res", targets_path=tp)
     assert rec["verdict"] == "NO_BIN_TRIALS"
     assert "reconstructed" in rec["note"]
+
+
+# --- the template flux belongs to the alert's own band ----------------------
+#
+# `_baseline_flux(alert, row, band, ...)` used to return `alert.template_flux_njy`
+# whenever it was present and positive, WITHOUT consulting `band`. Correct for
+# its main caller, wrong for the one-sided non-detection test, which asks what a
+# grey event would have produced in the band that stayed SILENT and was handed
+# the DETECTED band's baseline instead. On a red star those differ by a factor of
+# a few, and because that test REJECTS events (docs/tocsin.md 3.2 records five),
+# an over-powered version discards real candidates leaving no trace.
+
+def test_the_template_flux_is_not_reused_across_bands():
+    from seti.tocsin.screen import _baseline_flux
+
+    a = _alert(band="g", template_flux=1000.0)
+    row = {"g_sdss_mag": 20.0, "i_sdss_mag": 17.0}
+
+    same, _err, src = _baseline_flux(a, row, "g", 0.03)
+    assert src == "rubin_template" and same == pytest.approx(1000.0)
+
+    # The silent band must fall through to Gaia synthetic photometry rather than
+    # borrowing the detected band's number.
+    other, other_err, other_src = _baseline_flux(a, row, "i", 0.03)
+    assert other_src == "gaia_gspc_synthetic"
+    assert other != pytest.approx(1000.0)
+    # i = 17.0 is far brighter than g = 20.0, so on this red star the correct
+    # baseline is much LARGER -- the old behaviour under-predicted it by ~16x and
+    # would have declared the non-detection consistent with a grey event.
+    assert other > 10.0 * 1000.0
+    assert other_err == pytest.approx(other * 0.03)
+
+
+def test_a_band_with_no_synthetic_photometry_is_untestable_not_borrowed():
+    # Falling back to the detected band's template here would manufacture a
+    # confident answer out of a band we have no baseline for at all.
+    from seti.tocsin.screen import _baseline_flux
+
+    a = _alert(band="g", template_flux=1000.0)
+    flux, err, src = _baseline_flux(a, {"g_sdss_mag": 20.0}, "z", 0.03)
+    assert flux is None and err is None and src == "no_gaia_synthetic"

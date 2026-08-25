@@ -1,6 +1,74 @@
 # The frozen Rubin frontier: mirror, or sky?
 
-*Opened 2026-08-25. Live state: `results/rubin_outage/brokers.json`.*
+*Opened 2026-08-25. **Answered the same day: `SKY_STOPPED`.** Live state:
+`results/rubin_outage/brokers.json`; the observatory's own words in
+`results/rubin_outage/status_pages.json`.*
+
+## The answer
+
+**Rubin is not observing. Nothing is being missed, and nothing in the pipeline
+is wrong.**
+
+Two independent brokers stop on the same night, and their nightly histograms
+agree count-for-count:
+
+| night | ALeRCE detections | Fink alerts |
+|---|---|---|
+| 2026-07-11 | 125,278 | 125,442 |
+| 2026-07-12 | 71,983 | 71,683 |
+| 2026-07-13 | 744,559 | 744,559 |
+| **2026-07-14** | **473,344** | **473,344** |
+| 2026-07-15 → | *(nothing)* | *(nothing)* |
+
+The stream ends on a **full-sized night**, not a taper — 473k alerts, then
+silence. A mirror cut off mid-ingest would leave a short final night in one
+broker and a complete one in the other; instead both stop together, on the same
+night, at the same counts. Fink's LSST portal holds 132 nights in total and its
+newest is 2026-07-14. `MIRROR_STALLED` is excluded.
+
+**The observatory's own posts confirm it, and date it to the day**
+(`results/rubin_outage/status_pages.json`, fetched from the Rubin forum's
+Discourse API with per-post timestamps):
+
+* **2026-07-15** — *"A major winter storm is expected in the next few days to
+  impact observatory operations. All NOIRLab facilities on Cerro Tololo and
+  Cerro Pachón are preparing for shutdown. Cerro Pachón will be evacuated later
+  today."*
+* **2026-07-20** — *"our access road is cut at the bottom near the main highway
+  from La Serena … We will be off sky for days at a minimum."*
+* **2026-08-02** — *"the going has been slowed by the large amount of snow high
+  on the road to the summit. A new storm came in and stopped work on Friday."*
+* **2026-08-21** (most recent) — *"getting a back up generator working reliably
+  and then bringing up the lights for the first time since mid July inside the
+  control room, level 3 and the dome … then look in the next period to the
+  telescope, camera, and dome. Assessments continue, but the big three
+  (telescope, camera, and dome) look good so far."*
+
+Our last epoch, the night of 13/14 July, is **the last night before the
+evacuation**. No restart date has been announced; as of 21 August the summit was
+being brought back up on generator power, with water and fuel delivery named as
+the prerequisites for sustained operation.
+
+**What this means for the record.** Every null either Rubin channel files for
+the interval from 2026-07-15 onward means *no new sky*, not *clean sky*. The
+frontier alerts are correct and must not be relaxed: `FRONTIER_STALL_DAYS` is
+measuring a real condition. `alerts.py::outage_context` now carries this verdict
+into both frontier alert bodies, so a reader is not sent to re-diagnose it —
+and drops it automatically once the frontier moves past the epoch it explains.
+`frontier_recovery_alerts` will announce the restart.
+
+### An incidental finding: ALeRCE's non-LSST feed stopped earlier
+
+The survey-currency control (`alerce_tap.object` grouped by `sid`/`tid`) shows
+`sid=0` — the non-LSST survey, 9.09M objects — with a newest epoch of
+**2026-04-30**, two and a half months before the LSST feed stopped. So ALeRCE
+offers no live control, and more practically: **routing a starved channel to
+ZTF through the same broker is not an option.** Worth knowing before it is
+proposed. Fink's ZTF portal (`api.fink-portal.org`) did not answer at all
+(connect timeout); its LSST portal answered normally.
+
+---
+
 
 ## The observation
 
@@ -69,7 +137,7 @@ and their newest epochs drift by hours while both are current; treating that as
 "ahead" would raise `MIRROR_STALLED` on ordinary behaviour. Pinned by
 `tests/test_rubin_outage.py`.
 
-## The leading hypothesis, and why it is not yet the answer
+## The hypothesis that got there first (confirmed 2026-08-25)
 
 Public reporting places a **historic winter storm over Chile's Coquimbo region on
 15–21 July 2026** — the worst since 1997, 13 dead, >100,000 residents cut off,
@@ -80,15 +148,15 @@ halting recovery, and conditions finally clearing on **18 August** for road
 inspection and snow clearing.
 
 **Our last alert epoch is the night of 13/14 July — the last night before that
-storm arrived.** The coincidence is close enough that a Rubin shutdown is the
-obvious explanation, and it predicts `SKY_STOPPED`.
+storm arrived.** The coincidence was close enough that a Rubin shutdown was the
+obvious explanation, and it predicted `SKY_STOPPED`.
 
-It is a hypothesis, not a result. It rests on news coverage rather than on data
-we hold, and both official sources (`community.lsst.org`, `rubinobservatory.org`)
-are egress-blocked from the sandbox, so the claim has not been checked against
-Rubin's own status. The cross-broker check settles it from the alert stream
-itself, which is the only evidence that actually bears on whether *we* are
-missing sky.
+It was recorded as a hypothesis rather than a result because it rested on news
+coverage rather than on data we hold, and both official sources
+(`community.lsst.org`, `rubinobservatory.org`) are egress-blocked from the
+sandbox. The cross-broker check settled it from the alert stream itself, and
+`rubin_status_fetch.py` then read the observatory's own posts on the runner.
+Both agree with it.
 
 ### Sources for the hypothesis
 

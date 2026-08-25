@@ -27,6 +27,7 @@ from seti.alerts import (
     issue_labels,
     issue_title,
     loom_alerts,
+    outage_context,
     record_frontier,
     tocsin_alerts,
 )
@@ -662,3 +663,68 @@ def test_re_arming_never_clears_a_condition_that_is_still_true(tmp_path):
     for k in active:
         if "data_frontier" in k:
             assert k in seen, "an active age alert was re-armed and will re-notify"
+
+
+# --- the cross-broker verdict, carried into the frontier alerts --------------
+#
+# Both frontier alerts used to end by telling the reader to check whether ALeRCE
+# was still ingesting.  It was, and the stream had stopped instead.  Once
+# `rubin-outage` has settled that, repeating the question sends the reader to
+# re-diagnose a solved problem and to suspect a service that is working.
+
+def _outage(tmp_path, verdict, alerce_mjd=61235.41918, fink_mjd=61235.5):
+    d = tmp_path / "results" / "rubin_outage"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "brokers.json").write_text(json.dumps({
+        "checked_at_utc": "2026-08-25T20:40:00Z",
+        "decision": {"verdict": verdict,
+                     "alerce_frontier_mjd": alerce_mjd,
+                     "alerce_frontier_utc": "2026-07-14T10:03:37Z",
+                     "other_brokers": {"fink": {"frontier_mjd": fink_mjd,
+                                                "frontier_utc": "2026-07-14T12:00:00Z"}}}}))
+
+
+def _frontier_files(tmp_path, mjd=61235.41918):
+    for channel, name, key in (("tocsin", "summary.json", "broker_frontier_mjd"),
+                               ("loom", "screen.json", "frontier_mjd")):
+        d = tmp_path / "results" / channel
+        d.mkdir(parents=True, exist_ok=True)
+        (d / name).write_text(json.dumps({key: mjd}))
+
+
+def test_a_settled_sky_stopped_verdict_reaches_the_alert_body(tmp_path):
+    _frontier_files(tmp_path)
+    _outage(tmp_path, "SKY_STOPPED")
+    text = outage_context(tmp_path)
+    assert "SKY_STOPPED" in text
+    assert "no change to the broker path" in text
+    assert "docs/rubin-outage.md" in text
+
+
+def test_a_mirror_stalled_verdict_is_marked_urgent(tmp_path):
+    _frontier_files(tmp_path)
+    _outage(tmp_path, "MIRROR_STALLED", fink_mjd=61270.5)
+    text = outage_context(tmp_path)
+    assert "MIRROR_STALLED" in text and "urgent" in text
+
+
+def test_an_undecided_verdict_says_nothing(tmp_path):
+    # UNDETERMINED_SINGLE_SOURCE is precisely the state in which the reader
+    # SHOULD still go and check; asserting a cause there would be a fabrication.
+    _frontier_files(tmp_path)
+    _outage(tmp_path, "UNDETERMINED_SINGLE_SOURCE")
+    assert outage_context(tmp_path) == ""
+
+
+def test_a_verdict_is_dropped_once_the_frontier_moves_past_it(tmp_path):
+    # The mirror advanced after the check ran, so the old verdict explains an
+    # epoch nobody is looking at any more. A stale explanation on a live alert is
+    # worse than none: it stops the reader looking.
+    _frontier_files(tmp_path, mjd=61300.0)
+    _outage(tmp_path, "SKY_STOPPED")
+    assert outage_context(tmp_path) == ""
+
+
+def test_no_outage_file_at_all_is_silent_not_an_error(tmp_path):
+    _frontier_files(tmp_path)
+    assert outage_context(tmp_path) == ""

@@ -138,6 +138,51 @@ def designation_patterns(name: str) -> list[re.Pattern]:
     return pats
 
 
+# Objects resolved by a paper this module's arXiv machinery CANNOT reach.
+#
+# The searches below are arXiv-only, which is the right default -- the
+# non-gravitational literature lives there -- but it has one blind spot that
+# matters enormously: a journal paper with no arXiv preprint is invisible to
+# every query in this file, so an object it explains keeps being reported as an
+# unexplained lead indefinitely.  That is the most expensive failure available
+# here, because it does not look like a failure; it looks like a candidate.
+#
+# So resolutions found by other means are recorded explicitly, with their
+# citation, and consulted alongside the searches.  Each entry is a claim a human
+# can check, not a flag.
+PUBLISHED_RESOLUTIONS: dict[str, dict] = {
+    "1998 SH2": {
+        "resolution": "dark comet -- weak cometary outgassing, confirmed",
+        "citation": "Farnocchia et al. 2026, Nature Astronomy, "
+                    "'Non-gravitational acceleration indicative of cometary "
+                    "activity of near-Earth object' (published 2026-07-10)",
+        "doi": "10.1038/s41550-026-02913-7",
+        "note": "Astrometry 1998-2025 showed the object 19 sigma from its "
+                "gravity-only prediction; targeted large-aperture imaging then "
+                "found a weak low-surface-brightness tail and coma. It is the "
+                "first object whose cometary activity was PREDICTED from "
+                "non-gravitational perturbation and then confirmed -- which is "
+                "also, exactly, the inference this channel makes, reaching the "
+                "mundane answer. No arXiv preprint was locatable, so the "
+                "searches in this module cannot find it.",
+    },
+}
+
+
+def published_resolution(name: str) -> dict | None:
+    """A recorded non-arXiv resolution for this object, if one exists.
+
+    Matched on the provisional designation, which is the reliable key here for
+    the same reason it is in :func:`designation_patterns`: permanent numbers
+    change hands and bare digit runs match anything.
+    """
+    for key, rec in PUBLISHED_RESOLUTIONS.items():
+        for pat in designation_patterns(key):
+            if pat.search(name):
+                return rec
+    return None
+
+
 @dataclass
 class ObjectCheck:
     """What the literature says about one object."""
@@ -148,14 +193,25 @@ class ObjectCheck:
     errors: list = field(default_factory=list)
 
     @property
+    def resolution(self) -> dict | None:
+        return published_resolution(self.name)
+
+    @property
     def explained(self) -> bool:
-        return bool(self.hits)
+        return bool(self.hits) or self.resolution is not None
 
     def as_dict(self) -> dict:
+        # The two routes are reported separately rather than merged. "A search
+        # found it" and "a human recorded a paper the search cannot reach" are
+        # different evidential claims, and collapsing them would hide which one
+        # a verdict rests on.
+        res = self.resolution
         return {"name": self.name, "explained_in_literature": self.explained,
                 "n_hits": len(self.hits), "hits": self.hits,
                 "searched": self.searched, "errors": self.errors,
-                "verdict": ("EXPLAINED_IN_LITERATURE" if self.explained
+                "published_resolution": res,
+                "verdict": ("EXPLAINED_BY_PUBLISHED_RESOLUTION" if res
+                            else "EXPLAINED_IN_LITERATURE" if self.hits
                             else "NOT_FOUND_IN_SEARCHED_LITERATURE")}
 
 

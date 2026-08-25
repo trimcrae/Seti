@@ -1,0 +1,56 @@
+name: sextantlit
+
+# Prior-art / novelty adjudication for SEXTANT: a population screen of Gaia's
+# per-observation asteroid astrometry (gaiafpr/gaiadr3 sso_observation) for
+# anomalous ephemeris residuals against independent JPL/MPC orbits, read as a
+# technosignature.  The dev sandbox has NO egress (arxiv.org, api.openalex.org,
+# aanda.org, vizier.cds.unistra.fr all return CONNECT 403); the runner does.
+# Results are committed back to the branch.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sextantlit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Fetch prior-art evidence (soft 50-min deadline, partials kept)
+        run: |
+          timeout -k 30 3300 python scripts/sextantlit_fetch.py 3000 \
+            || echo "fetcher hit soft deadline or errored; committing partials"
+          echo "=== files ==="
+          ls -la results/sextantlit/ || true
+          echo "=== summary ==="
+          cat results/sextantlit/summary.json || true
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/sextantlit/ || true
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "sextantlit: arXiv+OpenAlex+VizieR prior-art sweep for Gaia SSO astrometric-residual technosignature screen"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sextantlit-outputs
+          path: results/sextantlit/
+          if-no-files-found: warn

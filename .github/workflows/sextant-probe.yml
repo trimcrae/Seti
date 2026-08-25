@@ -1,0 +1,205 @@
+name: sextant-probe
+
+# SEXTANT stage 0 --- the go/no-go measurement (docs/sextant-acquire.md).
+#
+# WHY THIS EXISTS AS A SEPARATE WORKFLOW, AND WHY IT MUST RUN FIRST.
+#
+# The sandbox where src/seti/sextant/acquire.py was written has NO egress to
+# gea.esac.esa.int (CONNECT tunnel 403), so every column name, row count and
+# column count in that module came from a single live runner probe on
+# 2026-08-25 and everything else in it is an INFERENCE. The inferences are
+# enumerated in acquire.OPEN_QUESTIONS and each one fails SILENTLY rather than
+# loudly, which is why they are measured before anything is built on them:
+#
+#   * the ESA Gaia TAP service is believed to cap SYNCHRONOUS anonymous queries
+#     at ~2000 rows. If that is true and a bulk pull used the synchronous path,
+#     every query would come back truncated and the channel would screen 0.004%
+#     of a 46-million-row catalogue while reporting success. The module is
+#     asynchronous by default; this measures the real cap.
+#   * x_gaia/y_gaia/z_gaia are documented in AU but their FRAME is not stated
+#     anywhere reachable. Ecliptic and equatorial differ by the 23.44 deg
+#     obliquity, which would rotate along-scan into across-scan and destroy the
+#     observable. Gaia sits at L2, so MIN/MAX of z_gaia separates the two by two
+#     orders of magnitude --- one aggregate query settles it.
+#   * `epoch` is believed to be days from 2010.0 in TCB. TCB leads TDB by ~10 s
+#     in the Gaia era and an asteroid at 30 arcsec/day covers 3.5 mas in 10 s ---
+#     a coherent along-track shift over the WHOLE catalogue, i.e. exactly the
+#     signal. MIN/MAX of (epoch_utc - epoch) says whether the two columns share a
+#     time scale.
+#   * astrometric_outcome_ccd / astrometric_outcome_transit / is_rejected are the
+#     channel's PRIMARY OBSERVABLE after the 2026-08-25 re-aim (the post-fit
+#     residual search is occupied: arXiv:2605.22702 and arXiv:2411.09750). Their
+#     value meanings are unverified, so the probe measures the distributions and
+#     the per-object census, and NOTHING is hard-coded as "good".
+#   * whether gaiafpr.sso_observation is a SUPERSET of gaiadr3.sso_observation or
+#     an increment to be unioned with it is unsettled. Guess "superset" wrongly
+#     and half of every arc is discarded; guess "increment" wrongly and every
+#     shared observation is counted twice, halving each object's apparent scatter.
+#     reconcile_observations REFUSES to guess; this is the query that decides.
+#
+# The probe commits its record verbatim, so a later schema change appears as a
+# DIFF IN VERSION CONTROL rather than as an unexplained null months afterwards,
+# and it checkpoints after EVERY query so a job timeout still leaves everything
+# already learned on disk.
+#
+# CREDENTIALS: none. gea.esac.esa.int/tap-server/tap is a public IVOA TAP service.
+
+on:
+  workflow_dispatch:
+    inputs:
+      out_dir:
+        description: "Override the results directory (blank = results/sextant)"
+        required: false
+        default: ""
+      sample_rows:
+        description: "How many verbatim rows to record per table (default 20)"
+        required: false
+        default: "20"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Probe the Gaia SSO tables and record the live schema
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.out_dir }}" ]; then
+            ARGS="$ARGS --out-dir ${{ github.event.inputs.out_dir }}"
+          fi
+          if [ -n "${{ github.event.inputs.sample_rows }}" ]; then
+            ARGS="$ARGS --sample-rows ${{ github.event.inputs.sample_rows }}"
+          fi
+          python -m seti.cli sextant-probe $ARGS
+      - name: Show the verdict --- especially the rejection flags and the frame
+        if: always()
+        run: |
+          [ -f results/sextant/probe.json ] && python - <<'PY'
+          import json, pathlib
+          rec = json.loads(pathlib.Path("results/sextant/probe.json").read_text())
+          diag = rec.get("diagnostics") or {}
+          ans = rec.get("answers") or {}
+          print("verdict:", rec.get("verdict"), "| reached:", rec.get("reached"),
+                "| calls:", rec.get("calls"))
+
+          print("\n=== live schema (committed verbatim; a change shows as a diff) ===")
+          for t, n in sorted((rec.get("schema_column_counts") or {}).items()):
+              print(f"  {t}: {n} columns")
+          print("\n=== does the live schema still carry what we SELECT? ===")
+          for t, c in sorted((rec.get("column_check") or {}).items()):
+              print(f"  {t}: live={c['n_live']} expected={c['n_expected']} "
+                    f"missing={c['missing_from_live']}")
+              print(f"      residuals_ok={c['residuals_ok']['verdict']} "
+                    f"missing={c['residuals_ok']['missing']}")
+              if c.get("unclaimed_by_this_module"):
+                  print(f"      columns this module does not pull: "
+                        f"{c['unclaimed_by_this_module']}")
+
+          print("\n=== THE SYNCHRONOUS ROW CAP (silent truncation risk) ===")
+          print("   ", ans.get("sync_row_cap"))
+
+          print("\n=== declared service output limits ===")
+          print("   ", (rec.get("service_limits") or {}).get("output_limits"))
+
+          print("\n=== THE FRAME OF THE STATE VECTORS (23.44 deg or nothing) ===")
+          print("   ", ans.get("state_vector_frame"))
+
+          print("\n=== THE EPOCH ZERO POINT AND TIME SCALE ===")
+          print("   ", ans.get("epoch_zero_point"))
+
+          print("\n=== ROWS PER TRANSIT (they are NOT independent) ===")
+          print("   ", ans.get("rows_per_transit"))
+
+          print("\n=== REJECTION: the channel's primary observable ===")
+          print("    is_rejected predicate accepted:",
+                ans.get("is_rejected_predicate_that_worked"))
+          print("   ", ans.get("rejection_fraction"))
+          print("\n    per-object census sample (attempts is the DENOMINATOR):")
+          for num, e in sorted((ans.get("rejection_ledger_sample") or {}).items()):
+              print(f"      {num}: attempts={e['attempts']} "
+                    f"modal={e['modal_flag']} by_flag={e['by_flag']}")
+
+          print("\n=== quality-flag value distributions (nothing hard-coded good) ===")
+          for name, d in sorted(diag.items()):
+              if not name.startswith("flag_"):
+                  continue
+              if "error" in d:
+                  print(f"  {name}: ERROR {d['error'][:200]}")
+              else:
+                  print(f"  {name}: {json.dumps(d.get('data', []), default=str)[:600]}")
+
+          print("\n=== DR3 vs FPR: superset, or increment? ===")
+          for name, d in sorted(diag.items()):
+              if not name.startswith("release_overlap"):
+                  continue
+              if "error" in d:
+                  print(f"  {name}: ERROR {d['error'][:220]}")
+              else:
+                  print(f"  {name}: rows={d.get('rows')} "
+                        f"{json.dumps(d.get('data', []), default=str)[:400]}")
+          print("\n  reconciliation trial on one object, by dedup strategy:")
+          for strat, r in (rec.get("reconciliation_trial") or {}).items():
+              if not isinstance(r, dict) or "verdict" not in r:
+                  continue
+              print(f"    {strat}: {r['verdict']} "
+                    f"overlap={r['report'].get('n_overlap')} "
+                    f"dr3_only={r['report'].get('n_dr3_only')} "
+                    f"fpr_only={r['report'].get('n_fpr_only')}")
+              for n in r.get("notes", []):
+                  print(f"        {n[:300]}")
+
+          print("\n=== every other diagnostic ===")
+          for name, d in sorted(diag.items()):
+              if name.startswith(("flag_", "release_overlap")):
+                  continue
+              if "see" in d:
+                  continue
+              if "error" in d:
+                  print(f"  {name}: ERROR {d['error'][:220]}")
+              else:
+                  print(f"  {name}: rows={d.get('rows')} "
+                        f"truncated={d.get('truncated')} "
+                        f"{json.dumps(d.get('data', []), default=str)[:300]}")
+
+          print("\n=== still UNVERIFIED at the time this record was written ===")
+          for k, q in sorted((rec.get("open_questions") or {}).items()):
+              print(f"  {k}: {q['question']}")
+              print(f"      assumed: {q['assumed']}")
+          PY
+      - name: Commit the probe record
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # ONE PATHSPEC AT A TIME: `git add` with several pathspecs is atomic, so
+          # a single unmatched glob stages NOTHING and `|| true` swallows it.
+          git add -f -- results/sextant/probe.json || echo "no probe.json"
+          echo "=== staged ==="
+          git diff --cached --name-only
+          if git diff --cached --quiet; then
+            echo "No probe changes to commit."
+          else
+            git commit -m "sextant: live Gaia SSO schema + rejection-flag distributions"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sextant-probe
+          path: results/sextant/

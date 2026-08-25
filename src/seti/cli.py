@@ -720,6 +720,12 @@ def _cmd_loom_probe(args, cfg):
     probe(cfg, out_dir=args.out_dir)
 
 
+def _cmd_sextant_probe(args, cfg):
+    from .sextant.acquire import probe
+
+    probe(cfg, out_dir=args.out_dir, sample_rows=args.sample_rows)
+
+
 def _cmd_loom_screen(args, cfg):
     from .loom.run import load_loom_config, screen
 
@@ -1321,6 +1327,26 @@ def main(argv=None):
                             "delivered for every detection of every known object")
     p.add_argument("--out-dir", default=None)
     p.set_defaults(func=_cmd_loom_probe)
+
+    p = sub.add_parser("sextant-probe",
+                       help="SEXTANT stage 0 (runner-only): record the live Gaia "
+                            "SSO schema from gea.esac.esa.int and MEASURE what "
+                            "the module can only assume \u2014 the synchronous row "
+                            "cap (a wrong guess truncates every bulk pull "
+                            "silently), the frame of the observer state vectors "
+                            "(23.44 deg rotates along-scan into across-scan), the "
+                            "epoch's time scale, the DR3/FPR overlap, and the "
+                            "value distribution of astrometric_outcome_ccd / "
+                            "astrometric_outcome_transit / is_rejected \u2014 which "
+                            "are this channel's PRIMARY OBSERVABLE, since every "
+                            "published search over this dataset works post-fit "
+                            "and is blind to objects that fail to fit")
+    p.add_argument("--out-dir", default=None)
+    p.add_argument("--sample-rows", type=int, default=20,
+                   help="how many verbatim rows to record per table; the schema "
+                        "can list a column that no row populates, and only rows "
+                        "settle that")
+    p.set_defaults(func=_cmd_sextant_probe)
 
     p = sub.add_parser("loom-screen",
                        help="LOOM stage 1: screen the solar-system parent "

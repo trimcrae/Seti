@@ -184,6 +184,13 @@ KINDS: tuple[tuple[str, str], ...] = (("a", "asteroid"), ("c", "comet"))
 # SIGNAL, not a row count, and must never be read as a population.
 SBDB_ROW_LIMIT = 200_000
 
+# Where the screen writes.  Separate from `config/loom.yaml`'s `results/loom`
+# because this stage chains `loom-litcheck` on its own survivors, and that stage
+# writes `litcheck.json` into whatever directory it is handed -- so sharing a
+# directory with the scheduled `loom-litcheck` run would have this job silently
+# overwrite that run's answer with an answer to a different question.
+DEFAULT_RESULTS_DIR = "results/loom-catalogue"
+
 # ---------------------------------------------------------------------------
 # The two objects this whole screen exists to put in context
 # ---------------------------------------------------------------------------
@@ -1517,12 +1524,17 @@ def run_catalogue(cfg=None, out_dir=None, do_census: bool = True,
     """
     from pathlib import Path
 
-    from .run import _utc, _write_json, load_loom_config, thresholds_from_config
+    from .run import _repo_root, _utc, _write_json, load_loom_config, thresholds_from_config
 
     conf = load_loom_config(cfg)
     th = thresholds_from_config(conf)
-    root = Path(cfg.root) if cfg is not None else Path(__file__).resolve().parents[3]
-    out = Path(out_dir) if out_dir else root / conf["report"]["results_dir"]
+    root = Path(cfg.root) if cfg is not None else _repo_root()
+    # Deliberately NOT `conf["report"]["results_dir"]`, which is `results/loom`.
+    # This screen chains `loom-litcheck` on its own survivors, and that stage
+    # writes `litcheck.json` into whatever directory it is given -- so sharing a
+    # directory with the scheduled `loom-litcheck` run would have this job silently
+    # overwrite that run's answer with an answer to a different question.
+    out = Path(out_dir) if out_dir else root / DEFAULT_RESULTS_DIR
     path = out / "catalogue.json"
 
     rec: dict = {"screened_at_utc": _utc(), "verdict": "NOT_RUN",

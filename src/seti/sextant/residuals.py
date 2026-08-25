@@ -1121,6 +1121,7 @@ def compute_residuals(obs, target_state: Callable[[np.ndarray], np.ndarray],
                       sun_state: Callable[[np.ndarray], np.ndarray] | None = None,
                       allow_partial: bool = False,
                       allow_approximate: bool = False,
+                      compute_bases: bool = True,
                       key: str = "") -> ResidualSeries:
     """The channel's observable: O-C in the scan frame, with its error model.
 
@@ -1241,6 +1242,28 @@ def compute_residuals(obs, target_state: Callable[[np.ndarray], np.ndarray],
                            if sun_state is not None else np.zeros(6))
 
     signal_columns: dict[str, np.ndarray] = {}
+    partials = np.zeros((n, 0))
+    if not compute_bases:
+        # The convention resolver runs this chain dozens of times and needs only
+        # the residuals, not the design.  Skipping the variational integrations
+        # makes resolution cheap; every consumer of the bases checks for them.
+        notes.append("bases_not_computed__compute_bases_false")
+        return ResidualSeries(
+            key=key, n=n, jd_tdb=jd, al_mas=al, ac_mas=ac,
+            sigma_al_random=np.sqrt(np.maximum(var_al_r, 0.0)),
+            sigma_ac_random=np.sqrt(np.maximum(var_ac_r, 0.0)),
+            sigma_al_systematic=np.sqrt(np.maximum(var_al_s, 0.0)),
+            sigma_ac_systematic=np.sqrt(np.maximum(var_ac_s, 0.0)),
+            delta_au=dn, r_au=rn, phase_deg=phase, elongation_deg=elong,
+            sensitivity_mas_per_km=sens,
+            track_scan_projection=np.abs(track_dot_scan),
+            sun_scan_projection=sun_scan, transit_id=tid, is_rejected=is_rej,
+            along_scan_rate_mas_per_day=rate_al,
+            outcome_ccd=_col(cols, "astrometric_outcome_ccd", n),
+            outcome_transit=_col(cols, "astrometric_outcome_transit", n),
+            state0=np.asarray(state0, dtype=float).reshape(6), jd0=float(jd0),
+            orbit_source=orbit_source.as_dict(), conventions=conv.as_dict(),
+            independence=klass, notes=notes)
     try:
         s0r = np.asarray(state0, dtype=float).reshape(6)
         for _law in FORCE_LAWS:
@@ -1423,7 +1446,8 @@ def transverse_unit(state: np.ndarray) -> np.ndarray:
 
 def variational_response(state0: np.ndarray, jd0: float, jd_eval: np.ndarray,
                          law: str = "radiation", *, mu: float = GM_SUN_AU3_DAY2,
-                         step_days: float = 1.0) -> np.ndarray:
+                         step_days: float = 1.0,
+                         zero_epoch: float | None = None) -> np.ndarray:
     """Exact linear displacement response (au, (N, 3)) per unit ``A2`` (au/day^2).
 
     THE SCALAR SECULAR FORMULA IS NOT GOOD ENOUGH, AND THIS IS WHY IT MATTERS.
@@ -1447,7 +1471,13 @@ def variational_response(state0: np.ndarray, jd0: float, jd_eval: np.ndarray,
 
         d2(dr)/dt2 = -mu/r^3 dr + 3 mu (r.dr) r / r^5 + g(r) t_hat(t)
 
-    with ``dr = 0`` and ``d(dr)/dt = 0`` at ``jd0``.  Those initial conditions are
+    with ``dr = 0`` and ``d(dr)/dt = 0`` at ``zero_epoch`` (``jd0`` by default).
+    ``jd0`` is the epoch AT WHICH ``state0`` is given and cannot be moved without
+    moving the reference orbit with it; ``zero_epoch`` is where the response is
+    pinned, and is the free choice.  Keeping them as separate arguments is not
+    fussiness --- conflating them silently reparametrises the reference
+    trajectory, which is what the first version of the invariance test actually
+    measured.  Those initial conditions are
     not a choice that has to be defended: changing them adds a homogeneous
     solution of the same equation, which is exactly a state perturbation, which
     is exactly what the six nuisance partials span --- so the fitted amplitude is
@@ -1460,8 +1490,9 @@ def variational_response(state0: np.ndarray, jd0: float, jd_eval: np.ndarray,
     out = np.full((t.size, 3), np.nan)
     if not good.any():
         return out
-    lo = min(float(np.min(t[good])), float(jd0))
-    hi = max(float(np.max(t[good])), float(jd0))
+    ref_epoch = float(jd0 if zero_epoch is None else zero_epoch)
+    lo = min(float(np.min(t[good])), ref_epoch)
+    hi = max(float(np.max(t[good])), ref_epoch)
     if hi <= lo:
         return np.zeros((t.size, 3))
     n_steps = max(int(math.ceil((hi - lo) / max(float(step_days), 1e-6))), 8)
@@ -1485,7 +1516,7 @@ def variational_response(state0: np.ndarray, jd0: float, jd_eval: np.ndarray,
 
     # Integrate outward from jd0 in both directions so the reference epoch is
     # where the response vanishes, whichever end of the arc it sits in.
-    i0 = int(round((float(jd0) - lo) / h))
+    i0 = int(round((ref_epoch - lo) / h))
     i0 = int(np.clip(i0, 0, n_steps))
     states = np.zeros((n_steps + 1, 6))
     for direction in (+1, -1):
@@ -2144,7 +2175,8 @@ def resolve_conventions(obs, target_state: Callable[[np.ndarray], np.ndarray],
                         s = compute_residuals(
                             cols, target_state, orbit_source, conv=conv,
                             sun_state=sun_state, allow_partial=allow_partial,
-                            allow_approximate=allow_approximate)
+                            allow_approximate=allow_approximate,
+                            compute_bases=False)
                     except (KeyError, ValueError, np.linalg.LinAlgError) as exc:
                         trials.append({"convention": conv.as_dict(),
                                        "error": f"{type(exc).__name__}: {exc}"})

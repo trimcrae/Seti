@@ -1862,31 +1862,127 @@ def model_comparison(series: ResidualSeries, *,
 
     usable = {k: v for k, v in fits.items()
               if v.get("ok") and math.isfinite(v.get("delta_chi2", float("nan")))}
+    out["fits"] = fits
     if len(usable) < 2:
         out["verdict"] = "MODELS_NOT_EVALUABLE"
         return out
-    ranked = sorted(usable, key=lambda k: -usable[k]["delta_chi2"])
-    best, second = ranked[0], ranked[1]
-    out["best_model"] = best
-    out["next_model"] = second
-    out["delta_chi2_best"] = usable[best]["delta_chi2"]
-    out["delta_chi2_margin"] = usable[best]["delta_chi2"] - usable[second]["delta_chi2"]
-    out["best_family"] = best.split(":", 1)[0]
-    out["best_snr"] = usable[best].get("snr")
-    if usable[best]["delta_chi2"] < float(min_delta_chi2):
+
+    # TWO QUESTIONS, ANSWERED SEPARATELY, because they have different answers.
+    #
+    #   (i)  FAMILY: does a force acting on the ORBIT beat an artefact of the
+    #        MEASUREMENT?  This is the one that decides whether an object is
+    #        interesting at all, and it is usually decisive because the two
+    #        families have completely different shapes in time.
+    #   (ii) LAW: which force?  This is the novel discriminant and it is
+    #        frequently NOT answerable, because over an arc that samples little
+    #        heliocentric range the three laws are the same curve.  Reporting a
+    #        winner there would be reporting the noise, so separability is
+    #        measured first and the preference is withheld when it is absent.
+    forces = {k: v for k, v in usable.items() if k.startswith("force:")}
+    geoms = {k: v for k, v in usable.items() if k.startswith("geometry:")}
+    best_force = max(forces, key=lambda k: forces[k]["delta_chi2"]) if forces else None
+    best_geom = max(geoms, key=lambda k: geoms[k]["delta_chi2"]) if geoms else None
+    out["best_force_model"] = best_force
+    out["best_geometric_model"] = best_geom
+    d_force = forces[best_force]["delta_chi2"] if best_force else float("-inf")
+    d_geom = geoms[best_geom]["delta_chi2"] if best_geom else float("-inf")
+    out["delta_chi2_force"] = d_force if math.isfinite(d_force) else None
+    out["delta_chi2_geometric"] = d_geom if math.isfinite(d_geom) else None
+    out["family_margin"] = d_force - d_geom
+    out["best_snr"] = forces[best_force].get("snr") if best_force else float("nan")
+
+    sep = law_separability(series, include_rejected=include_rejected)
+    out["law_separability"] = sep
+    if len(forces) >= 2:
+        ranked = sorted(forces, key=lambda k: -forces[k]["delta_chi2"])
+        out["best_law"] = ranked[0]
+        out["next_law"] = ranked[1]
+        out["law_margin"] = (forces[ranked[0]]["delta_chi2"]
+                             - forces[ranked[1]]["delta_chi2"])
+        pair = tuple(sorted((ranked[0].split(":")[1], ranked[1].split(":")[1])))
+        corr = sep.get("correlations", {}).get("|".join(pair))
+        if corr is not None and corr >= sep.get("max_separable_correlation", 0.999):
+            out["law_verdict"] = "LAWS_NOT_SEPARABLE"
+            out["law_note"] = (
+                f"the {pair[0]} and {pair[1]} design columns correlate at "
+                f"{corr:.5f} after the orbit-error subspace is removed; over "
+                f"this arc they are the same curve and no law preference is "
+                f"reported however large the chi-squared difference")
+        elif out["law_margin"] < float(min_delta_chi2):
+            out["law_verdict"] = "NO_LAW_PREFERRED"
+        else:
+            out["law_verdict"] = "LAW_PREFERRED"
+    else:
+        out["law_verdict"] = "TOO_FEW_LAWS_EVALUABLE"
+
+    if max(d_force, d_geom) < float(min_delta_chi2):
         out["verdict"] = "NO_MODEL_PREFERRED"
-        out["note"] = (f"the best model improves chi-squared by only "
-                       f"{usable[best]['delta_chi2']:.1f} over the orbit-error "
-                       f"subspace alone; below {min_delta_chi2} that is not a "
-                       f"preference, it is a fit")
+        out["note"] = (f"no model improves chi-squared by more than "
+                       f"{min_delta_chi2} over the orbit-error subspace alone; "
+                       f"this residual series is consistent with an ordinary "
+                       f"object and an ordinary orbit")
         return out
-    if out["delta_chi2_margin"] < float(min_delta_chi2) / 2.0:
-        out["verdict"] = "MODELS_DEGENERATE"
-        out["note"] = ("two models fit this arc equally well; the observing "
-                       "geometry does not separate them and no law is preferred")
+    if abs(out["family_margin"]) < float(min_delta_chi2):
+        out["verdict"] = "FAMILIES_DEGENERATE"
+        out["note"] = ("a force acting on the orbit and an artefact of the "
+                       "measurement fit this arc equally well; the observing "
+                       "geometry does not separate them")
         return out
-    out["verdict"] = ("FORCE_LAW_PREFERRED" if out["best_family"] == "force"
+    out["best_model"] = best_force if out["family_margin"] > 0 else best_geom
+    out["best_family"] = "force" if out["family_margin"] > 0 else "geometry"
+    out["verdict"] = ("FORCE_LAW_PREFERRED" if out["family_margin"] > 0
                       else "GEOMETRIC_EXPLANATION_PREFERRED")
+    return out
+
+
+def law_separability(series: ResidualSeries, *, include_rejected: bool = False,
+                     max_separable_correlation: float = 0.999) -> dict:
+    """Can this arc tell the force laws apart at all?
+
+    LOOM's ``law_discrimination`` returned ``INSUFFICIENT_R_SPAN`` on every
+    Rubin object because a one-month baseline samples no heliocentric range.
+    Gaia's 2014-2020 arc is far better --- a main-belt object completes one to
+    three revolutions --- but "better" is not "sufficient", and for a
+    near-circular orbit ``g(r)`` is very nearly constant whichever law is true.
+
+    Rather than proxying that with an ``r`` span, this measures the thing that
+    actually matters: the correlation between the *design columns*, whitened by
+    the error model and with the orbit-error subspace projected out.  Two columns
+    correlating at 0.9999 are the same curve, and a chi-squared difference
+    between them is noise however large it is.
+    """
+    m = series.usable(include_rejected=include_rejected)
+    out: dict = {"n": int(m.sum()),
+                 "max_separable_correlation": float(max_separable_correlation)}
+    if m.sum() < 10 or not series.signal_columns:
+        out["verdict"] = "NOT_EVALUABLE"
+        return out
+    r = series.r_au[m]
+    r = r[np.isfinite(r)]
+    if r.size:
+        out["r_min_au"] = float(r.min())
+        out["r_max_au"] = float(r.max())
+        out["r_span_fraction"] = float(r.max() / r.min() - 1.0)
+    N = nuisance_design(series, m)
+    w = 1.0 / np.maximum(series.sigma_al_random[m], 1e-12)
+    cols = {}
+    for law, c in series.signal_columns.items():
+        v = np.asarray(c, dtype=float)[m] * w
+        if not np.all(np.isfinite(v)):
+            continue
+        if N.size:
+            Nw = N * w[:, None]
+            coef, *_ = np.linalg.lstsq(Nw, v, rcond=None)
+            v = v - Nw @ coef
+        nrm = float(np.linalg.norm(v))
+        if nrm > 0:
+            cols[law] = v / nrm
+    out["correlations"] = {}
+    names = sorted(cols)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            out["correlations"]["|".join(sorted((a, b)))] = abs(float(cols[a] @ cols[b]))
+    out["verdict"] = "OK" if out["correlations"] else "NOT_EVALUABLE"
     return out
 
 

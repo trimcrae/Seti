@@ -759,6 +759,13 @@ def _cmd_loom_litcheck(args, cfg):
     litcheck(cfg, out_dir=args.out_dir, names=args.name or None)
 
 
+def _cmd_loom_catalogue(args, cfg):
+    from .loom.catalogue import run_catalogue
+
+    run_catalogue(cfg, out_dir=args.out_dir, do_census=not args.no_census,
+                  max_tail=args.max_tail)
+
+
 def _cmd_alert_check(args, cfg):
     import os as _os
     from pathlib import Path as _Path
@@ -1408,6 +1415,33 @@ def main(argv=None):
                    help="object to check (repeatable); default is the survivors "
                         "recorded in calibration.json")
     p.set_defaults(func=_cmd_loom_litcheck)
+
+    p = sub.add_parser("loom-catalogue",
+                       help="LOOM (runner-only): run the radiation momentum "
+                            "ceiling over the WHOLE small-body catalogue, not the "
+                            "939 rows one A2|DF query returned. COUNTS the "
+                            "denominator (1.55M asteroids + 4,069 comets, "
+                            "unconstrained) instead of assuming it and checks the "
+                            "constrained queries against it; screens |A| over all "
+                            "three of A1/A2/A3, not A2 alone; reports what every "
+                            "reliability cut removed, marginally AND in sequence; "
+                            "and states where the standing exceedances actually "
+                            "sit in the distribution. A crowded tail is the "
+                            "finding, not a shortlist: promotion to candidate "
+                            "needs an artificiality channel and SBDB serves none, "
+                            "so this tops out at `interest`")
+    p.add_argument("--out-dir", default=None,
+                   help="results directory (default results/loom-catalogue; "
+                        "deliberately NOT results/loom, because this stage chains "
+                        "loom-litcheck and would overwrite that run's litcheck.json)")
+    p.add_argument("--no-census", action="store_true",
+                   help="skip the two unconstrained ~1.55-million-row pulls. Much "
+                        "faster, but the denominator is then ASSUMED rather than "
+                        "counted and the completeness check cannot run")
+    p.add_argument("--max-tail", type=int, default=400,
+                   help="how many above-ceiling objects to list individually, per "
+                        "kind; the rest are counted only")
+    p.set_defaults(func=_cmd_loom_catalogue)
 
     p = sub.add_parser("alert-check",
                        help="Decide whether anything in results/ needs human "

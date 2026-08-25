@@ -16,6 +16,13 @@ name: rubin-outage
 # what watch continuously.
 
 on:
+  schedule:
+    # 13:20 UTC = 09:20 ET, Mondays --- before tocsin (14:10) and well before
+    # alerts (17:05), so the verdict the frontier alerts quote is current rather
+    # than a week stale.  It is also what EXPIRES the verdict: alerts.py drops
+    # the recorded cause once the frontier moves past the epoch it explains, and
+    # this is the job that notices Rubin came back.
+    - cron: "20 13 * * 1"
   workflow_dispatch:
     inputs:
       out_dir:

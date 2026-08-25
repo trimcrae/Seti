@@ -54,7 +54,25 @@ SEVERITIES = ("candidate", "health", "milestone")
 # How stale a channel's results may get before silence is treated as failure.
 # Nightly channels get a wider window than their cadence so one missed firing is
 # not an incident; a week of silence is.
-STALE_DAYS = {"tocsin": 4.0, "loom": 10.0}
+STALE_DAYS = {"tocsin": 4.0, "loom": 10.0,
+              # Channels opened while Rubin is off sky.  Each window is a little
+              # over twice its cadence, so one missed firing is not an incident
+              # and two are.  They are listed here for the same reason the Rubin
+              # channels are: an unwatched cron that stops produces exactly the
+              # empty directory a quiet sky produces.
+              "loom-catalogue": 45.0,      # monthly, 2nd
+              "tocsin_altfeeds": 16.0,     # weekly, Wednesdays
+              "sextant": 45.0}             # monthly, 3rd
+
+# Which file in a channel's directory carries its run stamp.  Not every channel
+# is named `summary.json`/`screen.json`, and a marker that does not exist is
+# skipped silently -- so a typo here disables the staleness check for that
+# channel while leaving it looking configured.  Pinned by a test.
+STALE_MARKER = {"tocsin": "summary.json",
+                "loom": "screen.json",
+                "loom-catalogue": "catalogue.json",
+                "tocsin_altfeeds": "probe.json",
+                "sextant": "probe.json"}
 
 # How far the DATA may fall behind the wall clock before that is a failure.
 #
@@ -629,7 +647,7 @@ def health_alerts(root: Path, now: datetime | None = None) -> list[Alert]:
     out: list[Alert] = []
     for channel, limit in STALE_DAYS.items():
         d = root / "results" / channel
-        marker = d / ("summary.json" if channel == "tocsin" else "screen.json")
+        marker = d / STALE_MARKER[channel]
         if not marker.exists():
             continue
         age = _age_days(marker, now)

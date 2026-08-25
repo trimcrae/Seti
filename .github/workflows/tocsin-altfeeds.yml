@@ -44,6 +44,17 @@ name: tocsin-altfeeds
 # corresponding CLI subcommands are added to src/seti/cli.py.
 
 on:
+  schedule:
+    # 18:40 UTC = 14:40 ET, Wednesdays.  Weekly, not nightly: neither feed is a
+    # bulk service --- ASAS-SN is one cone search per target and ATLAS is a
+    # throttled job queue --- so a run walks a bounded slice, and a nightly
+    # cadence would spend the quota faster than the archive grows.  Offset from
+    # every other channel so no two jobs contend for the same public service.
+    #
+    # A scheduled firing has EMPTY inputs, which is why both survey stages test
+    # for the empty string: a cron that silently ran neither feed would look
+    # exactly like a cron that found nothing.
+    - cron: "40 18 * * 3"
   workflow_dispatch:
     inputs:
       survey:
@@ -215,7 +226,7 @@ jobs:
       # secret is absent, so an unconfigured repository reports "not run for want
       # of a credential" rather than an empty result that reads like a null.
       - name: Screen ATLAS forced photometry
-        if: github.event.inputs.probe_only != 'true' && (github.event.inputs.survey == 'atlas' || github.event.inputs.survey == 'both')
+        if: github.event.inputs.probe_only != 'true' && (github.event.inputs.survey == 'atlas' || github.event.inputs.survey == 'both' || github.event.inputs.survey == '')
         env:
           ATLAS_TOKEN: ${{ secrets.ATLAS_TOKEN }}
           ATLAS_USERNAME: ${{ secrets.ATLAS_USERNAME }}

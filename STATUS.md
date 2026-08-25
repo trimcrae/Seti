@@ -5,7 +5,7 @@ vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
 next. Last updated: 2026-07-30.
 
-### The Rubin frontier has been frozen since 2026-07-14 — mirror or sky? 2026-08-25
+### Rubin is snowed in: SKY_STOPPED, settled 2026-08-25
 
 Both Rubin channels have reported the same newest epoch, MJD 61235.419 =
 2026-07-14T10:03Z, on **every run since 2026-07-30** — 62 sightings,
@@ -27,14 +27,28 @@ ALeRCE for a 120-night detection histogram. Verdicts: `MIRROR_STALLED`,
 *not* SKY_STOPPED, since a confident single-source verdict would re-create the
 blind spot), `NO_BROKER_REACHED`. Pinned by `tests/test_rubin_outage.py`.
 
-**Leading hypothesis: Rubin is snowed in.** A historic winter storm hit Chile's
-Coquimbo region 15–21 July 2026 (worst since 1997; state of emergency 16 July);
-NOIRLab shut down Cerro Tololo and Cerro Pachón, snow up to 3 m, the summit road
-unable to carry water and fuel trucks, conditions clearing only on 18 August.
-**Our last epoch is the night of 13/14 July — the last night before the storm.**
-That is a hypothesis from news coverage, not a result: Rubin's own status pages
-are egress-blocked from the sandbox, and the cross-broker check settles it from
-the alert stream itself. See `docs/rubin-outage.md`.
+**Verdict: `SKY_STOPPED`.** ALeRCE and Fink stop on the same night and their
+nightly histograms agree count-for-count (2026-07-13: 744,559 both; 2026-07-14:
+473,344 both), and the stream ends on a **full-sized night** rather than a
+taper — a mid-ingest cutoff would leave the two brokers disagreeing. Rubin's own
+forum posts, fetched on the runner, date it to the day: evacuation announced
+**2026-07-15**, access road cut **07-20** ("off sky for days at a minimum"),
+and as of the most recent post (**08-21**) the summit is being brought back up
+on a backup generator — "lights for the first time since mid July" — with water
+and fuel delivery the stated prerequisites for sustained operation. No restart
+date announced. **Our last epoch is the night of 13/14 July, the last night
+before the evacuation.**
+
+Consequences, all recorded in `docs/rubin-outage.md`: every null either channel
+files from 2026-07-15 on means *no new sky*, not *clean sky*; the frontier
+thresholds are measuring a real condition and must **not** be relaxed;
+`alerts.py::outage_context` carries the verdict into both frontier alert bodies
+and drops it automatically once the frontier moves past the epoch it explains.
+
+**Incidental, and it kills the cheapest substitute:** ALeRCE's non-LSST feed
+(`sid=0`, 9.09M objects) has a newest epoch of **2026-04-30**, two and a half
+months before the LSST feed stopped. Routing a starved channel to ZTF through
+the same broker is not an option.
 
 ### The Rubin channels now run and report without a session, 2026-07-30
 

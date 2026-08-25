@@ -183,6 +183,60 @@ def _age_days(path: Path, now: datetime) -> float:
 # ---------------------------------------------------------------------------
 # The data frontier, and whether it is moving
 # ---------------------------------------------------------------------------
+def outage_path(root: Path) -> Path:
+    return root / "results" / "rubin_outage" / "brokers.json"
+
+
+def outage_context(root: Path) -> str:
+    """The established cause of a frozen frontier, or "" if none is established.
+
+    Both frontier alerts used to end by asking the reader to "check whether
+    ALeRCE is still ingesting the LSST alert stream" — one suspect out of two,
+    and the wrong one as it turned out.  ``rubin-outage`` answers that question
+    from a second broker; once it has, repeating the question wastes the reader's
+    attention and points them at a service that is working.
+
+    Deliberately narrow: it reports only what the cross-broker check decided, and
+    only while that decision still describes the frontier the alert is about.  A
+    verdict older than the epoch it explains is not evidence about the present,
+    so it is dropped rather than restated — a stale explanation attached to a
+    live alert is worse than no explanation, because it stops the reader looking.
+    """
+    rec = _load(outage_path(root))
+    if not isinstance(rec, dict):
+        return ""
+    d = rec.get("decision") or {}
+    verdict = str(d.get("verdict") or "")
+    if verdict not in ("SKY_STOPPED", "MIRROR_STALLED"):
+        return ""
+    checked_mjd = _f(d.get("alerce_frontier_mjd"))
+    # Is the verdict still about the frontier the alert is about?  If the mirror
+    # has moved on since the check ran, the old verdict explains an epoch nobody
+    # is looking at any more.
+    live = [m for m, _ in current_frontiers(root).values()]
+    if live and not any(abs(m - checked_mjd) <= 1.0 for m in live):
+        return ""
+
+    when = str(rec.get("checked_at_utc") or "")[:10]
+    others = ", ".join(
+        f"{k} {str(v.get('frontier_utc') or '')[:10]}"
+        for k, v in (d.get("other_brokers") or {}).items()) or "none"
+    if verdict == "SKY_STOPPED":
+        return (f"\n\n**Cause established {when} by `rubin-outage`: "
+                f"SKY_STOPPED.** Independent brokers stop on the same night "
+                f"(ALeRCE {str(d.get('alerce_frontier_utc') or '')[:10]}; "
+                f"{others}), so the alert stream itself stopped and no change to "
+                f"the broker path recovers data that was never taken. Do not "
+                f"relax the threshold on this — the condition is real. See "
+                f"`docs/rubin-outage.md`.")
+    return (f"\n\n**Cause established {when} by `rubin-outage`: "
+            f"MIRROR_STALLED.** Another broker holds newer LSST epochs "
+            f"({others}) than ALeRCE "
+            f"({str(d.get('alerce_frontier_utc') or '')[:10]}), so real sky is "
+            f"going unscreened. This is urgent: route the channels through a "
+            f"current broker. See `docs/rubin-outage.md`.")
+
+
 def frontier_path(root: Path) -> Path:
     return root / "results" / "alerts" / "frontier.json"
 
@@ -600,6 +654,10 @@ def health_alerts(root: Path, now: datetime | None = None) -> list[Alert]:
                       f"before its commit step leaves no trace here at all."),
                 detail={"age_days": age, "limit_days": limit}))
 
+    # The cross-broker verdict, if one has been reached: appended to both
+    # frontier alerts so the reader is not sent to re-diagnose a settled cause.
+    cause = outage_context(root)
+
     # HAS THE DATA STOPPED, AS OPPOSED TO THE CHANNEL?
     #
     # Every check above asks whether the screens ran. This asks whether they
@@ -633,7 +691,7 @@ def health_alerts(root: Path, now: datetime | None = None) -> list[Alert]:
                       f"separately from the staleness check.\n\n"
                       f"Check whether ALeRCE is still ingesting the LSST alert "
                       f"stream before reading any recent null from this "
-                      f"channel."),
+                      f"channel." + cause),
                 detail={"frontier_mjd": mjd, "lag_days": lag,
                         "limit_days": DATA_LAG_LIMIT_DAYS}))
 
@@ -695,7 +753,7 @@ def health_alerts(root: Path, now: datetime | None = None) -> list[Alert]:
                       f"stream. If the pause turns out to be ordinary batching, "
                       f"raise `FRONTIER_STALL_DAYS` using the cadence recorded "
                       f"in `results/alerts/frontier.json` rather than by "
-                      f"guessing again."),
+                      f"guessing again." + cause),
                 detail={"frontier_mjd": mjd, "frozen_days": frozen,
                         "limit_days": FRONTIER_STALL_DAYS, "source": source,
                         "first_seen_utc": entry.get("first_seen_utc"),

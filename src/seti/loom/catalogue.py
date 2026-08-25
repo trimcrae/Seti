@@ -442,6 +442,28 @@ def _display_name(row: dict) -> str:
     return str(row.get("full_name") or row.get("pdes") or row.get("name") or "?").strip()
 
 
+def h_equivalent(diameter_metres, albedo: float = 0.14) -> float:
+    """The ``H`` a body of this diameter and albedo would have.
+
+    The inverse of ``D = 1329/sqrt(p) * 10^(-H/5)`` km, and it exists for one
+    narrow purpose: :func:`seti.loom.screen.assign_tier` treats a missing ``H``
+    as "we do not know how big this is" and returns ``untestable``, which is
+    correct for the Rubin path where ``H`` is the *only* size information.  Here
+    it is not — a comet with a measured 2 km diameter and no ``H`` has a size, and
+    its efficiency has already been computed from that size.  Passing the
+    diameter's ``H`` equivalent makes the ladder's size gate true exactly when the
+    size is known, and it changes no ratio: those are computed from the diameter
+    itself, never from this number.
+
+    Used *only* when ``H`` is genuinely absent, so an object with a real ``H``
+    keeps it and nothing about the existing path moves.
+    """
+    d = _f(diameter_metres)
+    if not _fin(d) or d <= 0 or albedo <= 0:
+        return float("nan")
+    return -5.0 * math.log10(d * math.sqrt(albedo) / 1329.0e3)
+
+
 def _standing_key(row: dict) -> str | None:
     """Which standing exceedance is this row, if any?
 
@@ -515,6 +537,11 @@ def screen_entry(row: dict, rho_kg_m3: float = RHO_TYPICAL_KG_M3,
         "is_comet": comet,
         "neo": str(row.get("neo") or "").strip() or None,
         "H": h,
+        # The H a body of the diameter actually used would have, filled in only
+        # where H is genuinely absent.  It is a "the size is known" flag for the
+        # tier ladder and enters no ratio; see :func:`h_equivalent`.
+        "H_effective": h if _fin(h) else h_equivalent(d_m, albedo=(
+            albedo if _fin(albedo) and albedo > 0 else default_albedo)),
         "diameter_m": d_m,
         "diameter_measured": bool(_fin(d_km)),
         "albedo": albedo,
@@ -558,7 +585,12 @@ def record_from_entry(entry: dict, th: Thresholds) -> ObjectRecord:
     """
     rec = ObjectRecord(key=entry.get("key") or "", designation=entry.get("name"),
                        path="sbdb_catalogue")
-    rec.h = _f(entry.get("H"))
+    # `assign_tier` reads `h` as "do we know how big this is", which for the Rubin
+    # path is the same question because H is the only size it has.  Here it is not:
+    # a comet with a measured 2 km diameter and no H has a size, its efficiency was
+    # computed from that size, and passing NaN would report it `untestable` while
+    # the ratio sitting beside it says 1e4.  `H_effective` is H wherever H exists.
+    rec.h = _f(entry.get("H_effective"))
     rec.diameter_m = _f(entry.get("diameter_m"))
     rec.a, rec.e, rec.i = _f(entry.get("a_au")), _f(entry.get("e")), _f(entry.get("i_deg"))
     rec.tisserand_j = _f(entry.get("tisserand_j"))
@@ -710,9 +742,14 @@ def epsilon_distribution(eps: Iterable[float], n_bins_per_dex: int = 4) -> dict:
     if v.size == 0:
         out["reason"] = "no object has both a fitted |A| and a usable size"
         return out
-    out["quantiles"] = {f"p{int(q * 100)}": float(np.quantile(v, q))
-                        for q in (0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95,
-                                  0.99, 0.999)}
+    # Labelled explicitly rather than derived from the quantile: `int(0.999*100)`
+    # is 99, which would have silently overwritten p99 with p99.9 and reported the
+    # 99.9th percentile under the 99th's name -- in the one part of the
+    # distribution this whole screen is about.
+    out["quantiles"] = {label: float(np.quantile(v, q)) for label, q in (
+        ("p1", 0.01), ("p5", 0.05), ("p10", 0.10), ("p25", 0.25), ("p50", 0.50),
+        ("p75", 0.75), ("p90", 0.90), ("p95", 0.95), ("p99", 0.99),
+        ("p999", 0.999))}
     out["quantiles"]["min"] = float(v.min())
     out["quantiles"]["max"] = float(v.max())
     for label, thr in (("realistic", EPSILON_REALISTIC), ("hard", EPSILON_HARD),
@@ -872,7 +909,13 @@ class CatalogueScreen:
     n_unique: int = 0
     entries: list = field(default_factory=list)
     populations: dict = field(default_factory=dict)
+    #: Above-ceiling ASTEROIDS, ranked among themselves.  Comets are kept apart in
+    #: :attr:`tail_comets` because they are bound by different physics and a
+    #: merged ranking would bury every asteroid under objects whose exceedance is
+    #: expected of them.
     tail: list = field(default_factory=list)
+    tail_comets: list = field(default_factory=list)
+    n_above_ceiling: dict = field(default_factory=dict)
     survivors: list = field(default_factory=list)
     standing: dict = field(default_factory=dict)
     verdict: str = "NOT_RUN"
@@ -882,6 +925,8 @@ class CatalogueScreen:
     def as_dict(self, max_entries: int = 0) -> dict:
         out = {"n_rows": self.n_rows, "n_unique_objects": self.n_unique,
                "populations": self.populations, "tail": self.tail,
+               "tail_comets": self.tail_comets,
+               "n_above_ceiling": self.n_above_ceiling,
                "survivors": self.survivors, "standing_exceedances": self.standing,
                "verdict": self.verdict, "headline": self.headline,
                "notes": self.notes,
@@ -968,27 +1013,54 @@ def screen_catalogue(rows: Sequence[dict], th: Thresholds | None = None,
             block["tiers"][tier] = sum(1 for e in subset if e.get("tier") == tier)
         scr.populations[kind_label] = block
 
-    # The tail, ranked.  Everything above the hard ceiling, whether or not it is
-    # reliable and whether or not it is already known — because a tail listing that
-    # silently drops the unreliable entries cannot be used to judge how crowded the
-    # tail is, which is the question this run exists to answer.
-    above = [e for e in entries if _fin(_f(e["epsilon_1au"])) and _f(e["epsilon_1au"]) > 1.0]
-    above.sort(key=lambda e: -_f(e["epsilon_1au"]))
-    for rank, e in enumerate(above, start=1):
-        e["tail_rank"] = rank
-    scr.tail = [_tail_entry(e) for e in above[:max_tail]]
-    if len(above) > max_tail:
-        scr.notes.append(f"{len(above)} objects exceed the hard ceiling; the "
-                         f"{max_tail} largest are listed individually and the rest "
-                         f"are counted only")
+    # The tail, ranked WITHIN EACH KIND rather than across both.  A single merged
+    # ranking would be meaningless and actively harmful: a comet at eps = 1e7 is
+    # not "more anomalous" than an asteroid at eps = 3, it is a comet, and there
+    # are hundreds of them — so a merged list capped at `max_tail` would push
+    # every asteroid off the page with objects whose exceedance is expected.  The
+    # split is the same one `calibrate.summarise_epsilon` makes, for the same
+    # reason: the two populations are bound by different physics.
+    #
+    # Everything above the ceiling is listed, reliable or not and known or not,
+    # because a tail listing that silently drops the unreliable entries cannot be
+    # used to judge how crowded the tail is — the question this run exists to
+    # answer.
+    above_ast = sorted((e for e in entries
+                        if not e["is_comet"] and _f(e["epsilon_1au"]) > 1.0),
+                       key=lambda e: -_f(e["epsilon_1au"]))
+    above_com = sorted((e for e in entries
+                        if e["is_comet"] and _f(e["epsilon_1au"]) > 1.0),
+                       key=lambda e: -_f(e["epsilon_1au"]))
+    for group in (above_ast, above_com):
+        for rank, e in enumerate(group, start=1):
+            e["tail_rank"] = rank
+    scr.tail = [_tail_entry(e) for e in above_ast[:max_tail]]
+    scr.tail_comets = [_tail_entry(e) for e in above_com[:max_tail]]
+    scr.n_above_ceiling = {"asteroid": len(above_ast), "comet": len(above_com)}
+    for label, group in (("asteroid", above_ast), ("comet", above_com)):
+        if len(group) > max_tail:
+            scr.notes.append(
+                f"{len(group)} {label}s exceed the hard ceiling; the {max_tail} "
+                f"largest are listed individually and the rest are counted only")
 
     # Survivors: above the ceiling, reliably fitted, and not already explained by
     # what the object is known to be.  These are what `seti.loom.litcheck` reads.
+    #
+    # ASTEROIDS ONLY, and that is not a convenience.  A comet accelerates by
+    # shedding mass, so it is not bound by the radiation momentum budget at all and
+    # exceeding the ceiling is what a comet DOES — every one of the 81 comets in
+    # the 2026-07-30 calibration run was above it.  Feeding those to a literature
+    # search would bury the handful of objects the search exists for under
+    # hundreds of hits that were never anomalous.  Dark comets are unaffected:
+    # they are classified as asteroids, which is exactly why they are the
+    # contaminant this channel has to work to reject rather than one it can filter
+    # out by kind.
+    #
     # NOTHING here is a candidate: promotion needs an artificiality channel and
     # SBDB serves none, so `tier` for every one of these is `interest` at best.
     scr.survivors = [t for t in scr.tail if t["reliable"] and not t["known_as"]]
 
-    scr.standing = _standing_report(entries, above)
+    scr.standing = _standing_report(entries, above_ast, above_com)
     scr.verdict, scr.headline = _verdict(scr)
     return scr
 
@@ -996,7 +1068,7 @@ def screen_catalogue(rows: Sequence[dict], th: Thresholds | None = None,
 def _tail_entry(e: dict) -> dict:
     """One tail object, with everything needed to judge it without a re-query."""
     keep = ("tail_rank", "key", "name", "pdes", "kind", "class", "is_comet", "neo",
-            "H", "diameter_m", "diameter_measured", "albedo",
+            "H", "H_effective", "diameter_m", "diameter_measured", "albedo",
             "a_au", "e", "i_deg", "q_au", "moid_au",
             "tisserand_j", "comet_like_dynamics",
             "epsilon_1au", "g_law_assumed", "epsilon_at_perihelion",
@@ -1015,24 +1087,34 @@ def _tail_entry(e: dict) -> dict:
     # density and albedo it rests on or lives only in one corner of it.
     d_m = _f(e.get("diameter_m"))
     out["sensitivity"] = sensitivity_grid(
-        _f(e.get("A_magnitude_au_day2")), _f(e.get("H")),
+        _f(e.get("A_magnitude_au_day2")), _f(e.get("H_effective")),
         diameter_metres=d_m if e.get("diameter_measured") and _fin(d_m) else None)
     return out
 
 
-def _standing_report(entries: Sequence[dict], above: Sequence[dict]) -> dict:
+def _standing_report(entries: Sequence[dict], above_ast: Sequence[dict],
+                     above_com: Sequence[dict] = ()) -> dict:
     """Where the two standing exceedances land in the full distribution.
 
     The question this run was commissioned to answer, so it is answered
     explicitly rather than left to be read off a ranked list: for each of
     ``875163 (1998 SH2)`` and ``428209 (2006 VC)``, its efficiency now that all
     three components are used, its rank among everything above the ceiling, how
-    many objects sit above it, and its percentile in the whole screened
-    population.  If either is no longer in the screened set at all — a re-fit
-    since 2026-07-30 could remove its ``A2`` or change its arc — that is reported
-    as ``NOT_IN_SCREENED_POPULATION``, which is a finding and not an absence.
+    many objects sit above it, and its percentile in the screened population.
+
+    Both objects are asteroids, so both the rank and the percentile are taken
+    **among asteroids**.  Ranking them against comets would be arithmetic rather
+    than a comparison: every comet is above the ceiling because it accelerates by
+    shedding mass, so a merged rank would say "these two are 400th" and mean
+    nothing at all.  The comet count is reported beside it so the reader can see
+    what was excluded and why.
+
+    If either object is no longer in the screened set — a re-fit since 2026-07-30
+    could remove its ``A2`` or change its arc — that is reported as
+    ``NOT_IN_SCREENED_POPULATION``, which is a finding and not an absence.
     """
-    eps_all = np.array([_f(e["epsilon_1au"]) for e in entries], dtype=float)
+    eps_all = np.array([_f(e["epsilon_1au"]) for e in entries if not e["is_comet"]],
+                       dtype=float)
     eps_all = eps_all[np.isfinite(eps_all) & (eps_all > 0)]
     out: dict = {}
     for key, description in STANDING_EXCEEDANCES.items():
@@ -1058,12 +1140,17 @@ def _standing_report(entries: Sequence[dict], above: Sequence[dict]) -> dict:
         rec["tisserand_j"] = hit["tisserand_j"]
         rec["comet_like_dynamics"] = hit["comet_like_dynamics"]
         rec["tail_rank"] = hit.get("tail_rank")
-        rec["n_objects_above_it"] = int(sum(1 for e in above
-                                            if _f(e["epsilon_1au"]) > eps))
+        rec["n_asteroids_above_it"] = int(sum(1 for e in above_ast
+                                              if _f(e["epsilon_1au"]) > eps))
         if eps_all.size and _fin(eps):
-            rec["percentile_in_screened_population"] = float(
+            rec["percentile_among_screened_asteroids"] = float(
                 (eps_all <= eps).sum() / eps_all.size)
-        rec["n_above_hard_ceiling_total"] = int(len(above))
+        rec["n_asteroids_above_hard_ceiling"] = int(len(above_ast))
+        rec["n_comets_above_hard_ceiling"] = int(len(above_com))
+        rec["ranked_against"] = ("asteroids only; every comet is above the ceiling "
+                                 "because it accelerates by shedding mass, so a "
+                                 "merged rank would be arithmetic rather than a "
+                                 "comparison")
         out[key] = rec
     return out
 
@@ -1095,7 +1182,7 @@ def _verdict(scr: CatalogueScreen) -> tuple[str, str]:
             f"{n_above} ({frac:.2%}) exceed it, "
             f"{n_surv} of those are reliably fitted and not already identified")
     if exp is not None:
-        head += f"; a log-normal core fit expects {exp:.1f}"
+        head += f"; a log-normal core fit of the ordinary population expects {exp:.3g}"
     if n_above == 0:
         return "NOTHING_ABOVE_CEILING", head
     # "Crowded" is defined on the fraction, not on the count: a tail of 40 in
@@ -1528,9 +1615,23 @@ def run_catalogue(cfg=None, out_dir=None, do_census: bool = True,
     # separate an engineered object from a dark comet nobody has published.
     rec["litcheck_input"] = [s["name"] for s in scr.survivors]
     rec["completed_chunks"] = completed
-    # Rows are carried forward for a resume, but only the small detail pulls --
-    # the census is counted in flight and its rows are never retained.
-    rec["resume_rows"] = rows
+    # Rows are carried forward ONLY when there is something left to resume.  The
+    # census is counted in flight and its rows are never retained; the detail rows
+    # are ~1 MB and a run that finished every chunk has nothing to resume, so
+    # committing them would put a megabyte of duplicated input into git on every
+    # successful run for no benefit -- `catalogue_objects.csv` is the re-derivable
+    # artefact, and it holds the screened quantities rather than the raw fields.
+    expected = {f"detail:{k}:{c}" for k, _ in KINDS for c in NONGRAV_COMPONENTS}
+    if do_census:
+        expected |= {f"census:{k}" for k, _ in KINDS}
+    incomplete = sorted(expected - set(completed))
+    rec["incomplete_chunks"] = incomplete
+    if incomplete:
+        rec["resume_rows"] = rows
+        rec.setdefault("notes", []).append(
+            f"{len(incomplete)} chunk(s) did not complete ({', '.join(incomplete)}); "
+            f"the fetched rows are carried in `resume_rows` so the next run does not "
+            f"re-pay for them, and every fraction above is over a PARTIAL pull")
     checkpoint()
 
     if write_objects_csv:
@@ -1547,6 +1648,7 @@ def _write_objects_csv(path, entries: Sequence[dict]) -> None:
     import csv
 
     cols = ["key", "name", "pdes", "kind", "class", "is_comet", "neo", "H",
+            "H_effective",
             "diameter_m", "diameter_measured", "albedo", "a_au", "e", "i_deg",
             "q_au", "moid_au", "tisserand_j", "comet_like_dynamics",
             "A_magnitude_au_day2", "A_sigma_au_day2", "A_snr",

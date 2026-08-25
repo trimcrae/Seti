@@ -391,6 +391,12 @@ def test_epsilon_distribution_reports_shape_not_just_quantiles():
     dist = catalogue.epsilon_distribution([0.05, 0.07, 0.1, 0.15, 0.4, 1.5, 3.0])
     assert dist["n"] == 7
     assert dist["quantiles"]["max"] == pytest.approx(3.0)
+    # p99 and p99.9 must be DIFFERENT keys.  `int(0.999 * 100)` is 99, so a naive
+    # label would report the 99.9th percentile under the 99th's name -- in exactly
+    # the part of the distribution this screen is about.
+    assert dist["quantiles"]["p999"] >= dist["quantiles"]["p99"]
+    assert dist["quantiles"]["p99"] == pytest.approx(
+        float(np.quantile([0.05, 0.07, 0.1, 0.15, 0.4, 1.5, 3.0], 0.99)))
     assert dist["n_above_hard_1"] == 2
     assert dist["n_above_specular_2"] == 1
     assert dist["fraction_above_hard_1"] == pytest.approx(2 / 7)
@@ -629,10 +635,11 @@ def test_standing_report_places_both_objects_in_the_distribution():
     sh2 = scr.standing["875163"]
     assert sh2["status"] == "SCREENED"
     assert sh2["epsilon_1au"] == pytest.approx(1.578, rel=1e-3)
-    assert sh2["n_objects_above_it"] == 1
+    assert sh2["n_asteroids_above_it"] == 1
     assert sh2["tail_rank"] == 2
-    assert 0.99 < sh2["percentile_in_screened_population"] <= 1.0
-    assert sh2["n_above_hard_ceiling_total"] == 3
+    assert 0.99 < sh2["percentile_among_screened_asteroids"] <= 1.0
+    assert sh2["n_asteroids_above_hard_ceiling"] == 3
+    assert sh2["n_comets_above_hard_ceiling"] == 0
     assert scr.standing["428209"]["tail_rank"] == 3
 
 
@@ -704,7 +711,7 @@ def test_tail_listing_is_capped_and_says_so():
         r["A2_sigma"] = r["A2"] / 30.0
     scr = catalogue.screen_catalogue(rows, max_tail=10)
     assert len(scr.tail) == 10
-    assert any("60 objects exceed the hard ceiling" in n for n in scr.notes)
+    assert any("60 asteroids exceed the hard ceiling" in n for n in scr.notes)
 
 
 def test_screen_output_is_json_serialisable():
@@ -1030,3 +1037,125 @@ def test_run_catalogue_calls_a_dead_fetch_a_dead_fetch(tmp_path, monkeypatch):
     assert rec["verdict"] == "NO_DATA_REACHED"
     assert "DEAD FETCH" in rec["note"]
     assert "tail" not in rec
+
+
+# ---------------------------------------------------------------------------
+# 11. the asteroid/comet split, which decides what a "survivor" is
+# ---------------------------------------------------------------------------
+def test_tails_are_ranked_within_kind_not_across_kinds():
+    """A comet at eps = 1e4 is not "more anomalous" than an asteroid at eps = 3.
+
+    Every comet is above the ceiling because it accelerates by shedding mass, so a
+    merged ranking would push every asteroid off a capped list with objects whose
+    exceedance is expected of them — and would report the two standing objects as
+    ranked several hundredth, which is arithmetic rather than a comparison.
+    """
+    a2 = a2_for_epsilon(4.0)
+    rows = population(20, seed=79) + [
+        make_row(spkid="20313131", pdes="313131", full_name="313131 (2031 AA)",
+                 A2=a2, A2_sigma=a2 / 30.0),
+    ] + [make_row(spkid=f"1000{i:03d}", pdes=f"{i}P", full_name=f"{i}P/Synth",
+                  **{"class": "JFc"}, H=None, diameter=2.0, q=2.5,
+                  A1=1e-9, A1_sigma=1e-11) for i in range(1, 12)]
+    scr = catalogue.screen_catalogue(rows)
+    assert scr.n_above_ceiling == {"asteroid": 1, "comet": 11}
+    assert [t["name"] for t in scr.tail] == ["313131 (2031 AA)"]
+    assert scr.tail[0]["tail_rank"] == 1
+    assert len(scr.tail_comets) == 11
+    assert scr.tail_comets[0]["tail_rank"] == 1
+
+
+def test_survivors_never_include_comets():
+    """A comet above the radiation ceiling is the ceiling WORKING, not a lead.
+
+    All 81 comets in the 2026-07-30 calibration run were above it.  Feeding those
+    to the literature search would bury the objects the search exists for.  Dark
+    comets are unaffected: they are classified as asteroids, which is precisely
+    why they are the contaminant this channel has to reject by argument rather
+    than one it can filter out by kind.
+    """
+    rows = population(20, seed=83) + [
+        make_row(spkid=f"1000{i:03d}", pdes=f"{i}P", full_name=f"{i}P/Synth",
+                 **{"class": "JFc"}, H=None, diameter=2.0, q=2.5,
+                 A1=1e-9, A1_sigma=1e-11) for i in range(1, 6)]
+    scr = catalogue.screen_catalogue(rows)
+    assert scr.tail_comets and scr.survivors == []
+    assert scr.verdict == "NOTHING_ABOVE_CEILING"
+
+
+def test_a_measured_diameter_is_a_size_even_without_an_absolute_magnitude():
+    """``untestable`` must mean "we do not know how big it is", not "no H column".
+
+    A comet with a measured 2 km diameter has a size and its efficiency was
+    computed from that size; reporting it ``untestable`` beside a ratio of 1e4
+    would be an internal contradiction.  ``H_effective`` is the H that diameter
+    implies, and it is filled in ONLY where H is genuinely absent.
+    """
+    with_h = catalogue.screen_entry(make_row(H=20.0, diameter=0.383, albedo=0.058,
+                                             A2=1e-13, A2_sigma=1e-15))
+    assert with_h["H_effective"] == 20.0            # a real H is never overwritten
+
+    no_h = catalogue.screen_entry(make_row(H=None, diameter=2.0, albedo=0.04,
+                                           **{"class": "JFc"},
+                                           full_name="12P/Synth",
+                                           A1=1e-9, A1_sigma=1e-11))
+    assert math.isnan(no_h["H"])
+    assert no_h["H_effective"] == pytest.approx(
+        catalogue.h_equivalent(2000.0, albedo=0.04))
+    assert no_h["diameter_m"] == pytest.approx(2000.0)
+    rec = catalogue.record_from_entry(no_h, Thresholds())
+    assert rec.tier == "interest"
+    assert "no_absolute_magnitude" not in rec.reasons
+
+
+def test_h_equivalent_inverts_the_size_relation():
+    d = float(nongrav.diameter_m_from_h(19.0, albedo=0.12))
+    assert catalogue.h_equivalent(d, albedo=0.12) == pytest.approx(19.0, abs=1e-9)
+    assert math.isnan(catalogue.h_equivalent(0.0))
+    assert math.isnan(catalogue.h_equivalent(None))
+
+
+def test_a_complete_run_does_not_commit_a_megabyte_of_raw_rows(tmp_path, monkeypatch):
+    """A run with nothing left to resume carries no resume payload.
+
+    The detail rows are ~1 MB at catalogue scale; committing them on every
+    successful run would put a megabyte of duplicated input into git for no
+    benefit, because ``catalogue_objects.csv`` already holds the screened
+    quantities in a form anyone can re-derive the distribution from.
+    """
+    rows = population(30, seed=73)
+    all_chunks = [f"detail:{k}:{c}" for k in ("a", "c")
+                  for c in ("A1", "A2", "A3")] + ["census:a", "census:c"]
+
+    def fake_fetch(**kw):
+        for name in all_chunks:
+            kw["on_result"](name, {"status": 200, "n_rows": len(rows)})
+        return {"chunks": {}, "rows": rows, "census": {}, "verdict": "OK",
+                "field_discovery": {"available": None}}
+
+    monkeypatch.setattr(catalogue, "fetch_catalogue", fake_fetch)
+    rec = catalogue.run_catalogue(out_dir=tmp_path)
+    assert rec["incomplete_chunks"] == []
+    assert "resume_rows" not in rec
+    assert json.loads((tmp_path / "catalogue.json").read_text()).get("resume_rows") is None
+
+
+def test_a_partial_run_says_its_fractions_are_over_a_partial_pull(tmp_path, monkeypatch):
+    """An unfinished fetch must not be read as a population.
+
+    Every fraction the screen reports is over what was fetched, so a run that
+    lost two of its eight chunks has to say so on the record rather than leaving
+    a reader to infer a denominator that was never reached.
+    """
+    rows = population(30, seed=89)
+
+    def fake_fetch(**kw):
+        kw["on_result"]("detail:a:A2", {"status": 200, "n_rows": len(rows)})
+        return {"chunks": {}, "rows": rows, "census": {}, "verdict": "OK",
+                "field_discovery": {"available": None}}
+
+    monkeypatch.setattr(catalogue, "fetch_catalogue", fake_fetch)
+    rec = catalogue.run_catalogue(out_dir=tmp_path)
+    assert len(rec["incomplete_chunks"]) == 7
+    assert rec["resume_rows"]
+    assert any("PARTIAL pull" in n for n in rec["notes"])

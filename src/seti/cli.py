@@ -714,6 +714,33 @@ def _cmd_tocsin_assess(args, cfg):
     assess_only(cfg, out_dir=args.out_dir)
 
 
+def _cmd_tocsin_altfeeds_probe(args, cfg):
+    from .tocsin.altfeeds import probe
+
+    rec = probe(cfg, out_dir=args.out_dir)
+    print(f"[tocsin-altfeeds] probe verdict={rec['verdict']}")
+
+
+def _cmd_tocsin_altfeeds_census(args, cfg):
+    from .tocsin.altfeeds import census
+
+    rec = census(cfg, targets_path=args.targets, out_dir=args.out_dir)
+    print(f"[tocsin-altfeeds] census verdict={rec['verdict']} "
+          f"n_targets={rec.get('n_targets')}")
+
+
+def _cmd_tocsin_altfeeds(args, cfg):
+    from .tocsin.altfeeds import run_survey
+
+    surveys = ("asassn", "atlas") if args.survey == "both" else (args.survey,)
+    for s in surveys:
+        rec = run_survey(s, cfg, targets_path=args.targets, out_dir=args.out_dir,
+                         max_targets=args.max_targets,
+                         mjd_lo=args.mjd_lo, mjd_hi=args.mjd_hi)
+        print(f"[tocsin-altfeeds] {s}: {rec['verdict']} "
+              f"denominator={rec.get('denominator')}")
+
+
 def _cmd_loom_probe(args, cfg):
     from .loom.run import probe
 
@@ -1323,6 +1350,51 @@ def main(argv=None):
                             "ledger, without touching the network")
     p.add_argument("--out-dir", default=None)
     p.set_defaults(func=_cmd_tocsin_assess)
+
+    p = sub.add_parser("tocsin-altfeeds-probe",
+                       help="TOCSIN alternative feeds, stage 0 (runner-only): "
+                            "record the LIVE response shape of ASAS-SN Sky "
+                            "Patrol v2 and ATLAS forced photometry verbatim. "
+                            "Every column name in altfeeds.py is inferred from "
+                            "documentation until this runs, and on the Rubin "
+                            "path that posture was wrong in three places")
+    p.add_argument("--out-dir", default=None)
+    p.set_defaults(func=_cmd_tocsin_altfeeds_probe)
+
+    p = sub.add_parser("tocsin-altfeeds-census",
+                       help="TOCSIN alternative feeds, stage 1 (offline): the "
+                            "GO/NO-GO. What fraction of the cached Gaia "
+                            "nearby-star list lies inside each feed's usable "
+                            "magnitude WINDOW for an event of a given fractional "
+                            "amplitude \u2014 2.7 mag brighter than the headline "
+                            "depth for a 10%% event \u2014 and how many of those are "
+                            "brighter than Rubin's own saturation and therefore "
+                            "unscreenable by the alert stream at all")
+    p.add_argument("--targets", default=None)
+    p.add_argument("--out-dir", default=None)
+    p.set_defaults(func=_cmd_tocsin_altfeeds_census)
+
+    p = sub.add_parser("tocsin-altfeeds",
+                       help="TOCSIN alternative feeds, stage 2 (runner-only): "
+                            "pull per-target light curves from ASAS-SN Sky "
+                            "Patrol v2 and/or ATLAS forced photometry, reduce "
+                            "them to events against each star's own measured "
+                            "scatter, run the existing TOCSIN funnel, and fold "
+                            "the result into a SEPARATE per-survey ledger. "
+                            "ASAS-SN needs no credentials; ATLAS reads "
+                            "ATLAS_TOKEN and skips cleanly without it")
+    p.add_argument("--survey", default="asassn",
+                   choices=["asassn", "atlas", "both"])
+    p.add_argument("--max-targets", type=int, default=200,
+                   help="neither feed is a bulk service (one cone search per "
+                        "target; a throttled job queue), so a run walks a "
+                        "bounded slice ordered brightest-first in the survey's "
+                        "own band")
+    p.add_argument("--mjd-lo", type=float, default=None)
+    p.add_argument("--mjd-hi", type=float, default=None)
+    p.add_argument("--targets", default=None)
+    p.add_argument("--out-dir", default=None)
+    p.set_defaults(func=_cmd_tocsin_altfeeds)
 
     p = sub.add_parser("loom-probe",
                        help="LOOM stage 0 (runner-only): record the live ALeRCE "

@@ -379,9 +379,12 @@ class LightCurveThresholds:
     # is meant to be measured against.
     clip_sigma: float = 4.0
     clip_iters: int = 5
-    # A light curve whose fractional scatter exceeds this is a known variable, a
-    # blend, or a drifting aperture.  Kept, but flagged; the ledger's duty-cycle
-    # test is the designed defence and this is only an early warning.
+    # A band whose scatter exceeds this fraction of the star's own flux is a
+    # known variable, a blend, or a drifting aperture.  REJECTED from both the
+    # numerator and the denominator: the event threshold is `min_abs_snr` times
+    # this same scatter, so such a band cannot register anything below a ~300 %
+    # excursion, and counting its epochs as trials would deflate the ensemble
+    # rate and shrink every other target's p-value.
     max_frac_scatter: float = 0.5
     # The quiescent flux must itself be a detection before dF/F* means anything.
     quiescent_min_snr: float = 5.0

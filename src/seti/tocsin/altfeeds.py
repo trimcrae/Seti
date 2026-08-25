@@ -283,7 +283,14 @@ class SurveySpec:
 ASASSN = SurveySpec(
     key="asassn",
     name="ASAS-SN Sky Patrol v2",
-    endpoint="http://asas-sn.ifa.hawaii.edu/skypatrol/",
+    # MEASURED, not documented.  The probe run of 2026-08-25 found
+    # `asas-sn.ifa.hawaii.edu:80/skypatrol/` unreachable from the runner (connect
+    # timeout), and the vendor client's own source names a different service
+    # entirely: a Flask API on `asassn-lb01.ifa.hawaii.edu` PORT 9006, with light
+    # curve blocks served from `asassn-data{01,02,03}.ifa.hawaii.edu:9006`.  The
+    # human-facing web host is not the API host, and pointing at it produced a
+    # failure that could just as easily have been read as "the service is down".
+    endpoint="http://asassn-lb01.ifa.hawaii.edu:9006",
     native_bands=("g",),
     band_label={"g": "g"},
     band_wl_um={"g": 0.4770},          # Sloan g'
@@ -1771,11 +1778,28 @@ class AsasSnSkyPatrol:
         self.notes: list[str] = []
 
     def _pyasassn(self):
+        """The vendor client, if this environment can actually import it.
+
+        It usually cannot, and the reason is worth recording rather than
+        rediscovering: ``pyasassn`` 0.6.4 pins ``pyarrow==4.0.1`` because it
+        decodes responses with ``pyarrow.deserialize``, which was REMOVED from
+        pyarrow after 4.x.  This repository requires ``pyarrow>=12``, so the two
+        cannot coexist, and the pinned build additionally drags in a numpy old
+        enough that it will not compile on Python 3.11 (reproduced here and on
+        the runner, 2026-08-25).
+
+        So the raw-HTTP path is the real path, not the fallback.  This is kept
+        because an environment that *does* have the client should use it --- it
+        speaks the service's own protocol --- but nothing depends on it.
+        """
         if self._client is None:
             try:
                 from pyasassn.client import SkyPatrolClient
-            except ImportError as exc:
-                raise AltFeedError(f"pyasassn unavailable: {exc}") from exc
+            except Exception as exc:                               # noqa: BLE001
+                raise AltFeedError(
+                    f"pyasassn unavailable ({type(exc).__name__}: {exc}); "
+                    f"it pins pyarrow==4.0.1 for pyarrow.deserialize, which this "
+                    f"repository's pyarrow>=12 no longer provides") from exc
             self._client = SkyPatrolClient()
         return self._client
 
@@ -1792,16 +1816,45 @@ class AsasSnSkyPatrol:
         """
         rec: dict = {"survey": ASASSN.key, "endpoint": self.endpoint,
                      "reached": False, "paths": {}}
-        try:
-            s = _session(self.timeout)
-            r = s.get(self.endpoint)
-            self.calls += 1
-            rec["paths"]["http_root"] = {"status": int(r.status_code),
-                                         "content_type": r.headers.get("content-type"),
-                                         "body_head": r.text[:800]}
-            rec["reached"] = r.status_code < 400
-        except Exception as exc:                                   # noqa: BLE001
-            rec["paths"]["http_root"] = {"error": str(exc)[:400]}
+        s = _session(self.timeout)
+
+        # The service's own metadata endpoints.  `get_schema` is the one that
+        # matters: it names every column the light-curve tables actually carry,
+        # which is the record this module's column lookups have to be checked
+        # against.
+        for name, path in (("get_schema", "/get_schema"),
+                           ("get_counts", "/get_counts")):
+            try:
+                r = s.get(f"{self.endpoint}{path}")
+                self.calls += 1
+                rec["paths"][name] = {"status": int(r.status_code),
+                                      "content_type": r.headers.get("content-type"),
+                                      "bytes": len(r.content or b""),
+                                      "body_head": r.text[:1500]}
+                rec["reached"] = rec["reached"] or r.status_code < 400
+            except Exception as exc:                               # noqa: BLE001
+                rec["paths"][name] = {"error": str(exc)[:400]}
+
+        # WHICH SERIALISATION WILL IT SERVE?  The vendor client asks for
+        # `format: "arrow"` and decodes it with a pyarrow function that no longer
+        # exists (see `_pyasassn`), so the only way this module can read a light
+        # curve is if the server will serve something else.  Guessing which is
+        # exactly the mistake the probe exists to prevent, so every candidate is
+        # ASKED, on a tiny cone, and whatever comes back is recorded verbatim.
+        for fmt in ("json", "csv", "pandas", "arrow"):
+            try:
+                r = s.post(
+                    f"{self.endpoint}/lookup_cone/radius0.01_ra0.0_dec0.0",
+                    json={"catalog": "master_list", "cols": ["asas_sn_id"],
+                          "format": fmt, "download": False})
+                self.calls += 1
+                rec["paths"][f"cone_format_{fmt}"] = {
+                    "status": int(r.status_code),
+                    "content_type": r.headers.get("content-type"),
+                    "bytes": len(r.content or b""),
+                    "body_head": r.text[:400]}
+            except Exception as exc:                               # noqa: BLE001
+                rec["paths"][f"cone_format_{fmt}"] = {"error": str(exc)[:400]}
         try:
             client = self._pyasassn()
             rec["paths"]["pyasassn"] = {"ok": True,

@@ -849,3 +849,36 @@ def test_an_undetected_star_has_no_quiescent_flux_and_is_refused():
                               A.ASASSN)
     assert not red.bands["g"].usable
     assert red.bands["g"].reason == "no_quiescent_flux"
+
+
+# --- the ASAS-SN endpoint the probe corrected -------------------------------
+#
+# The first probe run pointed at `asas-sn.ifa.hawaii.edu:80/skypatrol/` -- the
+# human-facing web host, taken from documentation -- and got a connect timeout
+# from the runner. That failure is indistinguishable from "the service is down",
+# which is how a documentation-derived endpoint quietly becomes a null result.
+# The vendor client's own source names the real API: a Flask service on
+# asassn-lb01.ifa.hawaii.edu PORT 9006.
+
+def test_the_asassn_endpoint_is_the_api_host_not_the_web_host():
+    from seti.tocsin.altfeeds import ASASSN
+
+    assert "asassn-lb01.ifa.hawaii.edu:9006" in ASASSN.endpoint
+    assert "skypatrol" not in ASASSN.endpoint
+
+
+def test_the_vendor_client_failure_names_the_pyarrow_pin():
+    # pyasassn 0.6.4 decodes with pyarrow.deserialize, removed after pyarrow 4.x,
+    # and this repository requires pyarrow>=12. Anyone who hits this should be
+    # told why rather than concluding the package is merely missing.
+    import pytest as _pytest
+
+    from seti.tocsin.altfeeds import AltFeedError, AsasSnSkyPatrol
+
+    c = AsasSnSkyPatrol()
+    try:
+        c._pyasassn()
+    except AltFeedError as exc:
+        assert "pyarrow" in str(exc)
+    except Exception as exc:  # pragma: no cover - only if the client imports
+        _pytest.skip(f"pyasassn importable in this environment: {exc}")

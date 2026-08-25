@@ -45,6 +45,15 @@ name: sextant-probe
 # CREDENTIALS: none. gea.esac.esa.int/tap-server/tap is a public IVOA TAP service.
 
 on:
+  schedule:
+    # 19:20 UTC = 15:20 ET on the 3rd of each month.  Two things make this worth
+    # a schedule rather than a one-off: the archive's conventions can change
+    # under a release (a re-minted observation_id or a re-encoded outcome flag
+    # would otherwise surface as a silently wrong screen), and the per-object
+    # REJECTION CENSUS this probe records is itself the channel's observable ---
+    # so until the screen lands, this is the only thing watching the discard
+    # pile at all.
+    - cron: "20 19 3 * *"
   workflow_dispatch:
     inputs:
       out_dir:

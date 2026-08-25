@@ -728,3 +728,28 @@ def test_a_verdict_is_dropped_once_the_frontier_moves_past_it(tmp_path):
 def test_no_outage_file_at_all_is_silent_not_an_error(tmp_path):
     _frontier_files(tmp_path)
     assert outage_context(tmp_path) == ""
+
+
+def test_every_watched_channel_has_a_marker_file_configured():
+    # A marker that does not exist is skipped SILENTLY, so a channel missing
+    # from STALE_MARKER -- or named with a typo -- has no staleness check at all
+    # while looking configured. That is the failure this module exists to catch,
+    # applied to itself.
+    from seti.alerts import STALE_DAYS, STALE_MARKER
+
+    assert set(STALE_DAYS) == set(STALE_MARKER)
+    for channel, name in STALE_MARKER.items():
+        assert name.endswith(".json"), channel
+
+
+def test_a_new_channel_going_quiet_raises_a_stale_alert(tmp_path):
+    from seti.alerts import STALE_MARKER, health_alerts
+
+    d = tmp_path / "results" / "tocsin_altfeeds"
+    d.mkdir(parents=True)
+    stamp = (NOW - timedelta(days=40)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    (d / STALE_MARKER["tocsin_altfeeds"]).write_text(
+        json.dumps({"run_at_utc": stamp, "verdict": "OK"}))
+
+    keys = [a.key for a in health_alerts(tmp_path, now=NOW)]
+    assert any(k.startswith("tocsin_altfeeds:stale:") for k in keys)

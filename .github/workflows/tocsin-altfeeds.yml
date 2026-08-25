@@ -1,0 +1,312 @@
+name: tocsin-altfeeds
+
+# TOCSIN on alternative feeds --- ASAS-SN Sky Patrol v2 and ATLAS forced
+# photometry (docs/tocsin-altfeeds.md, src/seti/tocsin/altfeeds.py).
+#
+# WHY THIS WORKFLOW EXISTS.  Rubin has been off sky since the night of
+# 13/14 July 2026 (docs/rubin-outage.md, verdict SKY_STOPPED) and both alert
+# brokers stop on that night.  The obvious substitute is dead by MEASUREMENT,
+# not by assumption: ALeRCE's non-LSST feed has a newest epoch of 2026-04-30 and
+# Fink's ZTF portal did not answer at all, so re-pointing tocsin.yml at ZTF
+# through the broker it already uses is not an option (docs/substitute-surveys.md).
+# These two feeds are a different SHAPE of data --- per-target light curves rather
+# than an alert stream --- and the adapter's whole job is to normalise them into
+# the NormalizedAlert schema so the existing funnel never sees a survey's column
+# names.
+#
+# WHAT IS AND IS NOT CLAIMED HERE.  Stated in the workflow because a reader of a
+# committed artefact should not have to go looking:
+#   * PRESERVED: the cross-night recurrence ledger --- this channel's actual
+#     instrument --- and a denominator that is better than the Rubin path's,
+#     because forced photometry says how many times a star was looked at and
+#     showed nothing without any footprint reconstruction;
+#   * PRESERVED IN ATLAS ONLY: the sub-visit timescale.  An ATLAS exposure is
+#     30 s, exactly a Rubin visit, so a short event is diluted identically, and
+#     ATLAS's quad of four exposures within the hour reproduces the intra-night
+#     structure of Rubin's visit pair.  ASAS-SN stacks 3 x 90 s and cannot.
+#   * LOST: depth (~5 mag), the achromaticity discriminant (absent entirely in
+#     single-band ASAS-SN; rare in ATLAS, which schedules its filters by
+#     lunation), independent astrometry, and Rubin's flag suite.
+# The `census` stage below quantifies the depth loss against the real target
+# list BEFORE any data is fetched, and it is the go/no-go: if the reachable
+# fraction at a plausible amplitude is negligible, the right response is to
+# change the question, not to run and file a null.
+#
+# CREDENTIALS.  ASAS-SN Sky Patrol v2 needs NONE (measured on the runner
+# 2026-08-25: HTTP 200, no token), which is why it runs unattended here.  ATLAS
+# needs a free account and a token; it is read from the ATLAS_TOKEN secret
+# exactly as tocsin.yml reads LASAIR_TOKEN, and the ATLAS stage skips cleanly
+# with a named verdict when the secret is absent.  Nothing in this workflow
+# fails because a token is missing.
+#
+# The entry points are called as module functions rather than through
+# `python -m seti.cli`, so this workflow runs before (and whether or not) the
+# corresponding CLI subcommands are added to src/seti/cli.py.
+
+on:
+  workflow_dispatch:
+    inputs:
+      survey:
+        description: "Which feed to run: asassn | atlas | both"
+        required: false
+        default: "asassn"
+      max_targets:
+        description: >-
+          Targets to walk this run.  Neither feed is a bulk service --- ASAS-SN is
+          one cone search per target, ATLAS is a job queue with a per-account
+          throttle --- so a run takes a bounded slice, ordered brightest-first in
+          the survey's own band (the only ordering that spends a limited quota
+          where an event of a given fractional amplitude is detectable at all).
+        required: false
+        default: "200"
+      mjd_lo:
+        description: "Window start MJD (blank = the survey's full baseline)"
+        required: false
+        default: ""
+      mjd_hi:
+        description: "Window end MJD (blank = now)"
+        required: false
+        default: ""
+      probe_only:
+        description: >-
+          Run ONLY the probe and the offline census.  Use this first: the probe
+          records each service's live response verbatim, and every column name in
+          altfeeds.py is documentation-derived until it does.
+        required: false
+        default: "false"
+      rebuild_targets:
+        description: "Force a fresh Gaia nearby-star pull, ignoring the cache"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  # Each survey keeps a single mutable ledger file committed back to the branch;
+  # two concurrent runs would race each other's commits and lose one.
+  group: tocsin-altfeeds-ledger
+  cancel-in-progress: false
+
+jobs:
+  altfeeds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Install the ASAS-SN client (optional)
+        # pyasassn is the service's own client.  It is NOT a hard dependency:
+        # the adapter falls back to raw HTTP and the probe records which path
+        # answered, so a packaging failure here degrades one access route rather
+        # than the run.
+        continue-on-error: true
+        run: pip install pyasassn
+
+      # STAGE 0 --- the probe.  Runs FIRST and always.  Every column name in
+      # altfeeds.py was read from documentation; on the Rubin path that same
+      # posture was wrong in three places, each of which would have produced a
+      # confident null rather than an error (docs/tocsin.md §5.1).  The record is
+      # committed verbatim so a later change at either service appears as a diff
+      # in version control instead of as an unexplained quiet result.
+      - name: Probe both feeds and record their LIVE response shapes
+        if: always()
+        env:
+          ATLAS_TOKEN: ${{ secrets.ATLAS_TOKEN }}
+          ATLAS_USERNAME: ${{ secrets.ATLAS_USERNAME }}
+          ATLAS_PASSWORD: ${{ secrets.ATLAS_PASSWORD }}
+        run: |
+          python - <<'PY'
+          from seti.tocsin.altfeeds import probe
+          rec = probe()
+          for name, d in (rec.get("surveys") or {}).items():
+              print(f"== {name}: reached={d.get('reached')} verdict={d.get('verdict')}")
+              for k, v in d.items():
+                  if k in ("survey", "reached", "verdict"):
+                      continue
+                  print(f"   {k}: {str(v)[:400]}")
+          PY
+
+      # The Gaia target list is ~10^5 rows, too large to commit and needlessly
+      # expensive to re-pull; it is shared with tocsin.yml through the same
+      # cache key so the two workflows never build it twice.
+      - name: Restore the nearby-star target list
+        id: targets-cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/tocsin
+          key: tocsin-targets-${{ hashFiles('config/tocsin.yaml') }}-v1
+
+      - name: Build the Gaia DR3 nearby-star target list
+        if: steps.targets-cache.outputs.cache-hit != 'true' || github.event.inputs.rebuild_targets == 'true'
+        run: python -m seti.cli tocsin-targets
+
+      # STAGE 1 --- the census.  Offline, no network, and it is the GO/NO-GO.
+      # "g <~ 18" is where the STAR is detected at 5 sigma; detecting a
+      # fractional event of amplitude a on that star needs a*F* to clear 6 sigma
+      # of the per-epoch noise, which for a 10 % event is 2.7 mag brighter than
+      # the nominal depth.  Quoting the raw depth would over-state the usable
+      # sample by a large factor, so the real number is computed against the real
+      # target list and committed before anything is fetched.
+      - name: Reachability census against the real target list (offline)
+        if: always()
+        run: |
+          python - <<'PY'
+          from seti.tocsin.altfeeds import census
+          rec = census()
+          print("verdict:", rec.get("verdict"), "| targets:", rec.get("n_targets"))
+          for key, s in (rec.get("surveys") or {}).items():
+              print(f"   {key}: {s.get('n_brighter_than_rubin_saturation')} targets are "
+                    f"brighter than Rubin's own saturation (r < "
+                    f"{s.get('rubin_saturation_mag_r')}) and so cannot be screened by "
+                    f"the alert stream at all")
+              for band, b in (s.get("bands") or {}).items():
+                  print(f"== {key} {band}: 5-sigma depth {b['nominal_depth_5sigma']}, "
+                        f"saturates at {b['saturation_mag']}, "
+                        f"median target mag {b.get('median_mag')}, "
+                        f"{b['n_saturated']} saturated, "
+                        f"{b['n_without_synthetic_photometry']} without GSPC")
+                  for amp, d in b["by_amplitude"].items():
+                      print(f"   amplitude {amp}: {d['mag_window'][0]} <= mag <= "
+                            f"{d['mag_window'][1]} -> {d['n_reachable']} targets "
+                            f"({100 * d['fraction_of_all_targets']:.2f}% of the list), "
+                            f"of which {d['n_reachable_and_rubin_saturated']} are "
+                            f"invisible to Rubin")
+              for k in list(s):
+                  if k.startswith("n_pm_drift_excluded"):
+                      print(f"   {key}: {k} = {s[k]}")
+          PY
+
+      # STAGE 2 --- ASAS-SN.  The feed that can run unattended today: no token.
+      - name: Screen ASAS-SN Sky Patrol v2
+        if: github.event.inputs.probe_only != 'true' && (github.event.inputs.survey == 'asassn' || github.event.inputs.survey == 'both' || github.event.inputs.survey == '')
+        run: |
+          python - <<'PY'
+          import os
+          from seti.tocsin.altfeeds import run_survey
+
+          def _f(name):
+              v = os.environ.get(name, "").strip()
+              return float(v) if v else None
+
+          rec = run_survey("asassn",
+                           max_targets=int(os.environ.get("MAX_TARGETS") or 200),
+                           mjd_lo=_f("MJD_LO"), mjd_hi=_f("MJD_HI"))
+          print("verdict:", rec.get("verdict"), "| denominator:", rec.get("denominator"))
+          for k in sorted(rec.get("counts", {})):
+              print(f"  {k}: {rec['counts'][k]}")
+          for n in rec.get("notes", []):
+              print("note:", n)
+          PY
+        env:
+          MAX_TARGETS: ${{ github.event.inputs.max_targets }}
+          MJD_LO: ${{ github.event.inputs.mjd_lo }}
+          MJD_HI: ${{ github.event.inputs.mjd_hi }}
+
+      # STAGE 3 --- ATLAS.  Needs a token; skips with a NAMED verdict when the
+      # secret is absent, so an unconfigured repository reports "not run for want
+      # of a credential" rather than an empty result that reads like a null.
+      - name: Screen ATLAS forced photometry
+        if: github.event.inputs.probe_only != 'true' && (github.event.inputs.survey == 'atlas' || github.event.inputs.survey == 'both')
+        env:
+          ATLAS_TOKEN: ${{ secrets.ATLAS_TOKEN }}
+          ATLAS_USERNAME: ${{ secrets.ATLAS_USERNAME }}
+          ATLAS_PASSWORD: ${{ secrets.ATLAS_PASSWORD }}
+          MAX_TARGETS: ${{ github.event.inputs.max_targets }}
+          MJD_LO: ${{ github.event.inputs.mjd_lo }}
+          MJD_HI: ${{ github.event.inputs.mjd_hi }}
+        run: |
+          python - <<'PY'
+          import os
+          from seti.tocsin.altfeeds import AtlasForcedPhotometry, run_survey
+
+          if not AtlasForcedPhotometry().available:
+              print("ATLAS SKIPPED: no ATLAS_TOKEN secret is configured.")
+              print("Register free at https://fallingstar-data.com/forcedphot/ and add")
+              print("the token as the repository secret ATLAS_TOKEN (or ATLAS_USERNAME +")
+              print("ATLAS_PASSWORD).  This is a missing credential, NOT a null result.")
+              raise SystemExit(0)
+
+          def _f(name):
+              v = os.environ.get(name, "").strip()
+              return float(v) if v else None
+
+          rec = run_survey("atlas",
+                           max_targets=int(os.environ.get("MAX_TARGETS") or 200),
+                           mjd_lo=_f("MJD_LO"), mjd_hi=_f("MJD_HI"))
+          print("verdict:", rec.get("verdict"), "| denominator:", rec.get("denominator"))
+          for k in sorted(rec.get("counts", {})):
+              print(f"  {k}: {rec['counts'][k]}")
+          for n in rec.get("notes", []):
+              print("note:", n)
+          PY
+
+      - name: Summarise what each feed could and could not test
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          root = pathlib.Path("results/tocsin_altfeeds")
+          for key in ("asassn", "atlas"):
+              p = root / key / "summary.json"
+              if not p.exists():
+                  print(f"== {key}: not run")
+                  continue
+              s = json.loads(p.read_text())
+              print(f"== {key}: verdict={s.get('verdict')} "
+                    f"denominator={s.get('denominator')}")
+              led = s.get("ledger", {})
+              print("   cumulative target-nights:", led.get("cumulative_target_visits"))
+              print("   ensemble rate per target-night:",
+                    led.get("ensemble_rate_per_target_visit"))
+              print("   tiers:", led.get("tier_counts"))
+              st = s.get("signature_transfer", {})
+              for k in ("sub_visit_timescale", "achromaticity", "astrometric_offset",
+                        "rubin_flags", "recurrence_ledger", "denominator"):
+                  print(f"   {k}: {st.get(k)}")
+          PY
+
+      - name: Commit the probe, the census and each feed's ledger
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # ONE PATHSPEC AT A TIME.  `git add` with several pathspecs is atomic:
+          # one unmatched glob stages NOTHING, `|| true` swallows the failure,
+          # and the run's results are silently discarded.  This has cost this
+          # repository whole runs (see knell.yml).
+          git add -f -- results/tocsin_altfeeds/probe.json || echo "no probe.json"
+          git add -f -- results/tocsin_altfeeds/census.json || echo "no census.json"
+          git add -f -- results/tocsin_altfeeds/asassn/summary.json || echo "no asassn summary"
+          git add -f -- results/tocsin_altfeeds/asassn/events.json || echo "no asassn events"
+          git add -f -- results/tocsin_altfeeds/asassn/ledger_asassn.json || echo "no asassn ledger"
+          git add -f -- results/tocsin_altfeeds/atlas/summary.json || echo "no atlas summary"
+          git add -f -- results/tocsin_altfeeds/atlas/events.json || echo "no atlas events"
+          git add -f -- results/tocsin_altfeeds/atlas/ledger_atlas.json || echo "no atlas ledger"
+          echo "=== staged ==="
+          git diff --cached --name-only
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "tocsin-altfeeds: ASAS-SN / ATLAS light-curve screen while Rubin is off sky"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tocsin-altfeeds
+          path: results/tocsin_altfeeds/

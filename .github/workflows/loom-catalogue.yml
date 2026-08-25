@@ -1,0 +1,400 @@
+name: loom-catalogue
+
+# THE MOMENTUM-CEILING SCREEN, RUN OVER THE WHOLE SMALL-BODY CATALOGUE.
+# (docs/loom-catalogue.md; the gate itself is docs/loom.md §3.1.)
+#
+# WHY THIS EXISTS.  LOOM carries two standing exceedances --- 875163 (1998 SH2)
+# at eps_eff = 1.58 and 428209 (2006 VC) at 1.30 --- both above the hard
+# radiation momentum ceiling, both reliably fitted, and neither found in the
+# literature search that followed.  They came out of ONE query
+# ({"AND": ["A2|DF"]}, 939 rows, 2026-07-30), and two objects above a ceiling
+# mean nothing without a denominator.  A tail with two entries and a tail with
+# two hundred are the same list until you know how many objects were screened,
+# what the bulk of the distribution looks like, and how many the tail was
+# EXPECTED to hold.  This job measures all three.
+#
+# WHAT IT DOES DIFFERENTLY FROM loom-calibrate.
+#   1. It COUNTS the denominator instead of assuming it.  JPL's SBDB query API
+#      serves spkid/full_name/pdes/kind/class/A1/A2/A3 for every small body with
+#      no constraint at all -- 1,553,263 asteroids and 4,069 comets, measured on
+#      this same API by this repository's DERELICT channel.  So the number of
+#      objects with each non-gravitational parameter fitted is counted, and the
+#      constrained A1|DF / A2|DF / A3|DF queries are CHECKED against it object by
+#      object.  A constrained query that silently misses rows -- the failure mode
+#      that makes a population screen a lie -- shows up as a set difference.
+#   2. It screens |A| = sqrt(A1^2 + A2^2 + A3^2), not |A2| alone.  The ceiling
+#      bounds the TOTAL non-gravitational acceleration, and screening on the
+#      transverse component alone understates every object with a fitted radial
+#      or normal term -- which is most comets.
+#   3. It reports what every reliability cut removed, marginally AND in sequence.
+#      A cut that quietly eats 90% of the catalogue changes the meaning of every
+#      fraction downstream.
+#   4. It states where the two standing exceedances land in the full
+#      distribution: their rank, how many objects sit above them, their
+#      percentile.  IF THE TAIL IS CROWDED, THAT IS THE FINDING, and the verdict
+#      says TAIL_DENSELY_POPULATED rather than reporting a long list of
+#      "exceedances" as though each were a lead.
+#
+# WHAT IT CANNOT DO.  Promote anything to `candidate`.  "Inactive small body with
+# an acceleration above Yarkovsky expectations" is Seligman et al. 2023's dark
+# comets, that population is known to be incomplete, and SBDB's query fields
+# carry no area-to-mass ratio and no time structure -- so the ceiling tops out at
+# `interest` and the survivors are handed to loom-litcheck with their Tisserand
+# parameter and comet-like-dynamics flag attached.  That chaining is a step in
+# this job, writing into the same out-dir, so a survivor list is never published
+# without the literature check that decides whether it is a lead at all.
+#
+# CREDENTIALS: none.  JPL's SBDB query API is public (measured HTTP 200 from a
+# runner on 2026-08-25).
+
+on:
+  workflow_dispatch:
+    inputs:
+      out_dir:
+        description: "Results directory (blank = results/loom-catalogue)"
+        required: false
+        default: ""
+      skip_census:
+        description: >-
+          Skip the two unconstrained ~1.55-million-row census pulls.  Much
+          faster, but the denominator is then ASSUMED rather than counted and the
+          completeness check cannot run -- the record says so.
+        required: false
+        default: "false"
+      skip_litcheck:
+        description: "Skip the chained literature check on the survivors"
+        required: false
+        default: "false"
+      max_tail:
+        description: "How many tail objects to list individually (default 400)"
+        required: false
+        default: ""
+  schedule:
+    # 17:10 UTC = 13:10 ET on the 2nd of each month.  Deliberately offset from
+    # loom-calibrate (16:20 on the 1st), loom (15:40 Mondays) and tocsin (14:10)
+    # so no two jobs contend for the same public service, and a day after the
+    # calibration so the two runs' numbers can be compared on fresh data.
+    # Monthly rather than weekly: the published non-gravitational catalogue
+    # changes on the timescale of orbit-solution updates, not nights.
+    - cron: "10 17 2 * *"
+
+permissions:
+  contents: write
+
+jobs:
+  catalogue:
+    runs-on: ubuntu-latest
+    # The census pull is ~1.55 million rows and is the only slow request in the
+    # job.  A cancelled Actions job never runs its commit step, so the stage
+    # checkpoints after every chunk and the census is issued LAST -- a job that
+    # dies there still has the screen on disk.
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          # Designation tables live in the PDFs when arXiv serves no HTML; needed
+          # only by the chained litcheck step.
+          pip install pypdf
+
+      - name: Screen the whole non-gravitational catalogue
+        env:
+          OUT_DIR: ${{ github.event.inputs.out_dir }}
+          SKIP_CENSUS: ${{ github.event.inputs.skip_census }}
+          MAX_TAIL: ${{ github.event.inputs.max_tail }}
+        run: |
+          OUT="${OUT_DIR:-results/loom-catalogue}"
+          echo "out_dir=$OUT skip_census=${SKIP_CENSUS:-false} max_tail=${MAX_TAIL:-400}"
+          # Prefer the CLI subcommand where it is registered; fall back to the
+          # module entry point where it is not, so this workflow does not depend
+          # on a change to src/seti/cli.py landing first.  Which path ran is
+          # printed, because "the command did not exist" and "the screen found
+          # nothing" must never look the same from the outside.
+          if python -m seti.cli loom-catalogue --help >/dev/null 2>&1; then
+            echo "[loom-catalogue] running via seti.cli"
+            args="--out-dir $OUT"
+            if [ "${SKIP_CENSUS}" = "true" ]; then args="$args --no-census"; fi
+            if [ -n "${MAX_TAIL}" ]; then args="$args --max-tail ${MAX_TAIL}"; fi
+            python -m seti.cli loom-catalogue $args
+          else
+            echo "[loom-catalogue] seti.cli has no loom-catalogue subcommand; calling the module"
+            OUT="$OUT" SKIP_CENSUS="${SKIP_CENSUS:-false}" MAX_TAIL="${MAX_TAIL:-400}" \
+            python - <<'PY'
+          import os
+          from seti.loom.catalogue import run_catalogue
+          run_catalogue(out_dir=os.environ["OUT"],
+                        do_census=os.environ.get("SKIP_CENSUS", "false") != "true",
+                        max_tail=int(os.environ.get("MAX_TAIL") or 400))
+          PY
+          fi
+
+      - name: Show the denominator, the distribution, and where the two standing objects sit
+        if: always()
+        env:
+          OUT_DIR: ${{ github.event.inputs.out_dir }}
+        run: |
+          OUT="${OUT_DIR:-results/loom-catalogue}"
+          [ -f "$OUT/catalogue.json" ] || { echo "no catalogue.json"; exit 0; }
+          OUT="$OUT" python - <<'PY'
+          import json, os, pathlib
+          rec = json.loads(pathlib.Path(os.environ["OUT"], "catalogue.json").read_text())
+
+          def num(v):
+              """`_write_json` writes a non-finite float as null; print it as NaN.
+
+              A missing value must never print as 0 in a table a human reads off:
+              "we could not measure it" and "we measured it and got nothing" are
+              the distinction this whole channel is built on.
+              """
+              return float("nan") if v is None else float(v)
+
+          print("verdict:", rec.get("verdict"))
+          print("headline:", rec.get("headline", "-"))
+          for n in rec.get("notes", []):
+              print("  note:", n)
+
+          print("\n=== THE DENOMINATOR (counted, not assumed) ===")
+          cen = rec.get("census") or {}
+          tot = cen.get("total")
+          if tot:
+              print(f"  small bodies in SBDB: {tot['n_rows']:,}")
+              print(f"    with A1 fitted: {tot['n_with_A1']:,} | "
+                    f"A2: {tot['n_with_A2']:,} | A3: {tot['n_with_A3']:,}")
+              print(f"    with ANY non-gravitational parameter: {tot['n_with_any']:,} "
+                    f"({tot['fraction_with_any']:.4%})")
+          else:
+              print("  NO CENSUS -- the denominator is assumed, not counted")
+          comp = rec.get("completeness") or {}
+          print(f"  completeness of the constrained queries: {comp.get('verdict')}")
+          if comp.get("note"):
+              print("   ", comp["note"])
+          print(f"  rows fetched: {rec.get('n_rows_fetched')} -> "
+                f"{rec.get('n_unique_objects')} unique objects")
+
+          print("\n=== g(r) NORMALISATION (why a 1 au comparison is law-independent) ===")
+          g = rec.get("g_normalisation") or {}
+          print(f"  g_radiation(1 au, d=2)   = {g.get('g_radiation_d2_at_1au')}")
+          print(f"  g_radiation(1 au, d=2.25)= {g.get('g_radiation_d225_at_1au')}")
+          print(f"  g_comet(1 au)            = {g.get('g_comet_at_1au')}")
+
+          for kind in ("asteroid", "comet"):
+              pop = (rec.get("populations") or {}).get(kind) or {}
+              if not pop:
+                  continue
+              print(f"\n=== {kind.upper()}S ===")
+              print(f"  screened: {pop['n_objects']} | with a fit: "
+                    f"{pop['n_with_nongrav_fit']} | reliable: {pop['n_reliable']}")
+              print(f"  by component: {pop['n_by_component']}")
+              print(f"  tiers: {pop['tiers']}")
+
+              print("  --- what each reliability cut removed ---")
+              led = pop.get("cut_ledger") or {}
+              for c in led.get("cuts", []):
+                  print(f"    {c['cut']:<18} alone {c['n_failing_alone']:>6} "
+                        f"({c['fraction_failing_alone']:.1%})  "
+                        f"in sequence {c['n_removed_in_sequence']:>6}  "
+                        f"surviving {c['n_surviving_after']:>6}   {c['criterion']}")
+              print(f"    -> {led.get('n_surviving')} of {led.get('n_entering')} survive "
+                    f"({(led.get('fraction_surviving') or 0):.1%})")
+
+              for label in ("epsilon_all_screened", "epsilon_reliable_only"):
+                  d = pop.get(label) or {}
+                  if not d.get("quantiles"):
+                      print(f"  {label}: {d.get('reason', 'no data')}")
+                      continue
+                  q = d["quantiles"]
+                  print(f"  --- {label} (n = {d['n']}) ---")
+                  print(f"    p50 {q['p50']:.4g} | p90 {q['p90']:.4g} | "
+                        f"p99 {q['p99']:.4g} | p99.9 {q['p999']:.4g} | max {q['max']:.4g}")
+                  print(f"    above eps=0.3: {d['n_above_realistic_0.3']} "
+                        f"({d['fraction_above_realistic_0.3']:.3%}) | "
+                        f"above eps=1: {d['n_above_hard_1']} "
+                        f"({d['fraction_above_hard_1']:.3%}) | "
+                        f"above eps=2: {d['n_above_specular_2']}")
+                  h = d.get("histogram") or {}
+                  for lo, n in zip(h.get("log10_epsilon_edges", []), h.get("counts", [])):
+                      if n:
+                          print(f"      log10(eps) {lo:+.2f} : {'#' * min(60, n)} {n}")
+
+              te = pop.get("tail_expectation_all_screened") or {}
+              print("  --- was the tail expected to be this full? ---")
+              if not te.get("ok"):
+                  print(f"    {te.get('reason')}")
+              else:
+                  print(f"    log-normal core fit: mu = {te['log10_mu']:.3f}, "
+                        f"sigma = {te['log10_sigma']:.3f} (lower half only)")
+                  for r in te["thresholds"]:
+                      print(f"    eps > {r['threshold']:<4g}: observed {r['observed']:>5} "
+                            f"vs expected {r['expected_lognormal']:.2f} "
+                            f"(excess {r['excess']:+.1f}, Poisson p "
+                            f"{r['poisson_p_at_least_observed']:.3g})")
+                  for r in te.get("model_check", []):
+                      print(f"    model check at the sample's own p{r['sample_quantile']:.2f} "
+                            f"(eps = {r['threshold']:.4g}): observed {r['observed']} "
+                            f"vs expected {r['expected_lognormal']:.1f}")
+                  print("    NOTE: the log-normal is a REFERENCE for an ordinary")
+                  print("    thermal-recoil population, not a theory of one, and the")
+                  print("    Poisson p carries no trials correction.  If the model check")
+                  print("    already misses, the extrapolation to eps = 1 means nothing.")
+
+          print("\n=== THE TWO STANDING EXCEEDANCES, IN CONTEXT ===")
+          for key, s in (rec.get("standing_exceedances") or {}).items():
+              print(f"\n  {key}: {s['status']}")
+              print(f"    {s['expected']}")
+              if s["status"] != "SCREENED":
+                  print(f"    {s.get('note')}")
+                  continue
+              print(f"    eps_1au = {num(s['epsilon_1au']):.4g} | S/N {num(s['A_snr']):.2f} | "
+                    f"components {s['components_fitted']} | reliable {s['reliable']}")
+              print(f"    tier {s.get('tier')} | T_J {s['tisserand_j']:.3f} | "
+                    f"comet-like dynamics {s['comet_like_dynamics']}")
+              print(f"    rank {s.get('tail_rank')} of "
+                    f"{s['n_asteroids_above_hard_ceiling']} ASTEROIDS above the "
+                    f"ceiling; {s['n_asteroids_above_it']} sit above it")
+              print(f"    percentile among screened asteroids: "
+                    f"{num(s.get('percentile_among_screened_asteroids')):.5f}")
+              print(f"    ({s['n_comets_above_hard_ceiling']} comets are also above "
+                    f"the ceiling and are ranked separately -- {s['ranked_against']})")
+              if s.get("fails"):
+                  print(f"    FAILS: {s['fails']}")
+
+          n_above = rec.get("n_above_ceiling") or {}
+          for kind, key in (("asteroid", "tail"), ("comet", "tail_comets")):
+              rows = rec.get(key) or []
+              label = kind.upper() + "S"
+              print(f"\n=== THE TAIL, {label} ABOVE THE HARD CEILING "
+                    f"({n_above.get(kind, len(rows))} total, {len(rows)} listed) ===")
+              if kind == "comet":
+                  print("    Expected of every one of them: a comet accelerates by")
+                  print("    SHEDDING MASS and is not bound by the radiation momentum")
+                  print("    budget at all.  Listed as a check that the gate separates")
+                  print("    the two populations, never as a shortlist.")
+              # Asteroids in full; comets truncated hard.  There are hundreds of
+              # them, every one is expected to be here, and a log that buries the
+              # four objects worth reading in three hundred that are not is a log
+              # nobody reads.
+              for t in rows[:(60 if kind == "asteroid" else 15)]:
+                  sens = t.get("sensitivity") or {}
+                  robust = sens.get("robust_above_ceiling")
+                  print(f"  #{t['tail_rank']:<3} {t['name'][:44]:<44} "
+                        f"eps={num(t['epsilon_1au']):.4g} "
+                        f"(rho=1000: {num(t.get('epsilon_1au_rho_1000')):.4g}"
+                        f"{', ROBUST across the whole assumption grid' if robust else ''}) "
+                        f"|A|={num(t['A_magnitude_au_day2']):.3g} "
+                        f"S/N={num(t.get('A_snr')):.2f} "
+                        f"comp={t['components_fitted']} "
+                        f"T_J={num(t['tisserand_j']):.3f} "
+                        f"{'COMET-LIKE' if t['comet_like_dynamics'] else 'asteroidal'} "
+                        f"tier={t['tier']} "
+                        f"| {t['known_as'] or ('RELIABLE' if t['reliable'] else '; '.join(t['fails'])[:60])}")
+                  if t.get("epsilon_at_perihelion_is_meaningful"):
+                      print(f"        at its own perihelion (q = {num(t['q_au']):.3f} au, "
+                            f"sublimation law): eps = {num(t['epsilon_at_perihelion']):.4g}"
+                            f"   -- the 1 au figure is an extrapolation to a distance "
+                            f"this object may never visit")
+
+          print("\n=== SURVIVORS (above the ceiling, reliably fitted, not already identified) ===")
+          print("    NOTHING here is a candidate.  Promotion needs an artificiality")
+          print("    channel -- an anomalous area-to-mass ratio, or an acceleration")
+          print("    independent of heliocentric distance -- and SBDB serves neither.")
+          for s in (rec.get("survivors") or []):
+              print(f"  {s['name']}: eps={s['epsilon_1au']:.4g} S/N={s['A_snr']:.2f} "
+                    f"T_J={s['tisserand_j']:.3f} "
+                    f"{'COMET-LIKE DYNAMICS -- hidden outgassing is the natural reading' if s['comet_like_dynamics'] else 'asteroidal dynamics'} "
+                    f"arc={s['data_arc_days']}d nobs={s['n_obs_used']} U={s['condition_code']}")
+          print("\n  litcheck input:", rec.get("litcheck_input"))
+          PY
+
+      - name: Ask the literature about the survivors
+        if: always() && github.event.inputs.skip_litcheck != 'true'
+        env:
+          OUT_DIR: ${{ github.event.inputs.out_dir }}
+        run: |
+          OUT="${OUT_DIR:-results/loom-catalogue}"
+          [ -f "$OUT/catalogue.json" ] || { echo "no catalogue.json; nothing to check"; exit 0; }
+          # The survivors are read from the screen's own output and passed by name,
+          # so this NEVER falls back to the calibration run's stale survivor list.
+          # It writes into the same out-dir, which is deliberately NOT results/loom:
+          # loom-litcheck's own scheduled run owns results/loom/litcheck.json and
+          # this must not overwrite it.
+          NAMES=$(OUT="$OUT" python - <<'PY'
+          import json, os, pathlib
+          rec = json.loads(pathlib.Path(os.environ["OUT"], "catalogue.json").read_text())
+          print("\n".join(rec.get("litcheck_input") or []))
+          PY
+          )
+          if [ -z "$NAMES" ]; then
+            echo "no survivors to check -- either nothing exceeded the ceiling, or"
+            echo "every exceedance was unreliably fitted or already identified."
+            exit 0
+          fi
+          args="--out-dir $OUT"
+          while IFS= read -r n; do
+            [ -n "$n" ] && args="$args --name \"$n\""
+          done <<< "$NAMES"
+          echo "loom-litcheck$args"
+          eval python -m seti.cli loom-litcheck $args
+
+      - name: Show what the literature says
+        if: always() && github.event.inputs.skip_litcheck != 'true'
+        env:
+          OUT_DIR: ${{ github.event.inputs.out_dir }}
+        run: |
+          OUT="${OUT_DIR:-results/loom-catalogue}"
+          [ -f "$OUT/litcheck.json" ] || { echo "no litcheck.json"; exit 0; }
+          OUT="$OUT" python - <<'PY'
+          import json, os, pathlib
+          rec = json.loads(pathlib.Path(os.environ["OUT"], "litcheck.json").read_text())
+          print("verdict:", rec.get("verdict"))
+          print("explained:", rec.get("n_explained"), "of", rec.get("n_objects"))
+          for name, o in (rec.get("objects") or {}).items():
+              print(f"\n  {name}: {o['verdict']} ({o['n_hits']} hits)")
+              for h in o.get("hits", [])[:3]:
+                  print(f"     [{h['source']}] matched {h['matched']!r}")
+                  print(f"       ...{h['context'][:200]}...")
+          print("\nNOTE: NOT_FOUND_IN_SEARCHED_LITERATURE is a statement about the")
+          print("searches as much as about the object, and the dark-comet population")
+          print("is KNOWN to be incomplete -- so an object absent from the literature")
+          print("is not thereby unexplained.")
+          PY
+
+      - name: Commit the screen
+        if: always()
+        env:
+          OUT_DIR: ${{ github.event.inputs.out_dir }}
+        run: |
+          OUT="${OUT_DIR:-results/loom-catalogue}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # ONE PATHSPEC AT A TIME: `git add` with several pathspecs is atomic, so
+          # a single unmatched glob stages NOTHING and `|| true` swallows it.
+          git add -f -- "$OUT/catalogue.json" || echo "no catalogue.json"
+          git add -f -- "$OUT/catalogue_objects.csv" || echo "no catalogue_objects.csv"
+          git add -f -- "$OUT/litcheck.json" || echo "no litcheck.json"
+          echo "=== staged ==="
+          git diff --cached --name-only
+          if git diff --cached --quiet; then
+            echo "No catalogue changes to commit."
+          else
+            git commit -m "loom: momentum-ceiling screen over the full SBDB non-gravitational catalogue"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: loom-catalogue
+          path: |
+            results/loom-catalogue/
+            ${{ github.event.inputs.out_dir }}
+          if-no-files-found: warn

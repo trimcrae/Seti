@@ -2,7 +2,7 @@
  "alerce": {
   "frontier_any_mjd": 61235.41918367943,
   "frontier_mjd": 61235.41918367943,
-  "frontier_ss_mjd": null,
+  "frontier_ss_mjd": 61235.416274280105,
   "last_nights": [
    {
     "date": "2026-06-30",
@@ -55,6 +55,7 @@
     "night_mjd": 61235
    }
   ],
+  "newest_any_survey_mjd": 61235.41918367943,
   "nightly_counts": [
    {
     "date": "2026-04-30",
@@ -280,7 +281,12 @@
     "rows": 1
    },
    "max_mjd_ss_detection": {
-    "error": "BrokerError: TAP query failed after 2 attempts: Field query: column ss.oid does not exist\nLINE 1: ...n AS ss JOIN alerce_tap.detection AS d ON d.oid = ss.oid AND...\n                                                             ^\nHINT:  Perhaps you meant to reference the column \"d.oid\"."
+    "data": [
+     {
+      "mjd_max": 61235.416274280105
+     }
+    ],
+    "rows": 1
    },
    "nightly_counts_120d": {
     "data": [
@@ -450,53 +456,208 @@
      }
     ],
     "rows": 41
+   },
+   "survey_currency": {
+    "data": [
+     {
+      "last_max": 61160.50812500017,
+      "n": "9093519",
+      "sid": "0",
+      "tid": "0"
+     },
+     {
+      "last_max": 61235.41918367943,
+      "n": "5164217",
+      "sid": "1",
+      "tid": "1"
+     },
+     {
+      "last_max": 61235.416274280105,
+      "n": "130909",
+      "sid": "2",
+      "tid": "1"
+     }
+    ],
+    "rows": 3
    }
   },
+  "survey_currency": [
+   {
+    "last_mjd": 61160.50812500017,
+    "last_utc": "2026-04-30T12:11:42Z",
+    "n": 9093519.0,
+    "sid": "0",
+    "tid": "0"
+   },
+   {
+    "last_mjd": 61235.41918367943,
+    "last_utc": "2026-07-14T10:03:37Z",
+    "n": 5164217.0,
+    "sid": "1",
+    "tid": "1"
+   },
+   {
+    "last_mjd": 61235.416274280105,
+    "last_utc": "2026-07-14T09:59:26Z",
+    "n": 130909.0,
+    "sid": "2",
+    "tid": "1"
+   }
+  ],
   "url": "https://tap.alerce.online/tap"
  },
- "checked_at_utc": "2026-08-25T20:33:10Z",
+ "checked_at_utc": "2026-08-25T20:41:58Z",
  "decision": {
   "alerce_frontier_mjd": 61235.41918367943,
   "alerce_frontier_utc": "2026-07-14T10:03:37Z",
   "brokers_ahead_days": {},
+  "controls": {
+   "alerce_newest_survey": {
+    "days_behind_now": 42.44,
+    "frontier_mjd": 61235.41918367943,
+    "frontier_utc": "2026-07-14T10:03:37Z"
+   }
+  },
   "lag_days": 42.44,
-  "other_brokers": {},
-  "verdict": "UNDETERMINED_SINGLE_SOURCE",
-  "why": "Only ALeRCE answered, so a stalled mirror and a stopped stream remain indistinguishable. Do not read this as SKY_STOPPED."
+  "live_controls": [],
+  "other_brokers": {
+   "fink": {
+    "frontier_mjd": 61235.5,
+    "frontier_utc": "2026-07-14T12:00:00Z"
+   }
+  },
+  "verdict": "SKY_STOPPED",
+  "why": "Every broker reached stops on the same night. The alert stream itself stopped, so the channels' nulls mean 'no new sky', and no change to the broker path recovers data that was never taken."
  },
  "fink": {
   "attempts": {
-   "latests_GET": {
-    "bytes": 207,
-    "method": "GET",
-    "status": 404,
-    "text_head": "<!doctype html>\n<html lang=en>\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>\n",
-    "url": "https://api.lsst.fink-portal.org/api/v1/latests"
-   },
-   "latests_POST": {
-    "bytes": 207,
-    "method": "POST",
-    "status": 404,
-    "text_head": "<!doctype html>\n<html lang=en>\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>\n",
-    "url": "https://api.lsst.fink-portal.org/api/v1/latests"
-   },
-   "schema_GET": {
-    "bytes": 64,
-    "method": "GET",
-    "status": 200,
-    "text_head": "Retrieve the data schema for a given endpoint for Fink/Rubin API",
-    "url": "https://api.lsst.fink-portal.org/api/v1/schema"
-   },
-   "statistics_POST": {
+   "lsst_statistics": {
     "bytes": 65719,
-    "json_head": "[{\"f:alerts\": \"414\", \"f:alerts_g\": \"0\", \"f:alerts_i\": \"414\", \"f:alerts_r\": \"0\", \"f:alerts_u\": \"0\", \"f:alerts_y\": \"0\", \"f:alerts_z\": \"0\", \"f:fink_broker_version\": \"4.1\", \"f:fink_science_version\": \"8.39.0\", \"f:glint_trail\": \"414\", \"f:in_tns\": \"0\", \"f:isDipole\": \"414\", \"f:is_cataloged\": \"0\", \"f:is_first\": \"414\", \"f:is_sso\": \"0\", \"f:lsst_schema_version\": \"lsst.v10_0\", \"f:objects\": \"413\", \"f:pixelFlags_cr\": \"414\", \"f:pixelFlags_saturated\": \"414\", \"f:pixelFlags_streak\": \"414\", \"f:visits\": \"3\", \"f:night\": \"20251025\"}, {\"f:alerts\": \"1479\", \"f:alerts_g\": \"0\", \"f:alerts_i\": \"931\", \"f:alerts_r\": \"548\", \"f:alerts_u\": \"0\", \"f:alerts_y\": \"0\", \"f:alerts_z\": \"0\", \"f:fink_broker_version\": \"4.1\", \"f:fink_science_version\": \"8.39.0\", \"f:glint_trail\": \"1479\", \"f:in_tns\": \"5\", \"f:isDipole\": \"1479\", \"f:is_cataloged\": \"0\", \"f:is_first\": \"1415\", \"f:is_sso\": \"0\", \"f:lsst_schema_version\": \"lsst.v10_0\", \"f:objects\": \"1423\", \"f:pixelFlags_cr\": \"1479\", \"f:pixelFlags_saturated\": \"1479\", \"f:pixelFlags_streak\": \"1479\", \"f:visits\": \"8\", \"f:night\": \"20251027\"}, {\"f:alerts\": \"1348\", \"f:alerts_g\": \"0\", \"f:alerts_i\": \"0\", \"f:alerts_r\": \"0\", \"f:alerts_u\": \"0\", \"f:alerts_y\": \"0\", \"f:alerts_z\": \"1348\", \"f:fink_broker_version\": \"4.1\", \"f:fink_science_version\": \"8.39.0\", \"f:glint_trail\": \"1348\", \"f:in_tns\": \"0\", \"f:isDipole\": \"1348\", \"f:is_cataloged\": \"0\", \"f:is_first\": \"1263\", \"f:is_sso\": \"0\", \"f:lsst_schema_version\": \"lsst.v10_0\", \"f:objects\": \"1271\", \"f:pixelFlags_cr\": \"1348\", \"f:pixelFlags_saturated\": \"1348\", \"f:pixelFlags_streak\": \"1348\", \"f:visits\": \"16\", \"f:night\": \"20251102\"}, {\"f:alerts\": \"2249\", \"f:alerts_g\": \"1381\", \"f:alerts_i\": \"868\", \"f:alerts_r\": \"0\", \"f:alerts_u\": \"0\", \"f:alerts_y\": \"0\", \"f:alerts_z\": \"0\", \"f:fink_broker_version\": \"4.1\", \"f:fink_science_version\": \"8.39.0\", \"f:glint_trail\": \"2249\", \"f:in_tns\": \"3\", \"f:isDipole\": \"2249\", \"f:is_cataloged\": \"0\", \"f:is_first\": \"2055\", \"f:is_sso\": \"0\", \"f:lsst_schema_version\": \"lsst.v10_0\", \"f:objects\": \"2065\", \"f:pixelFlags_cr\": \"2249\", \"f:pixelFl",
+    "frontier_mjd": 61235.5,
+    "last_night": "2026-07-14",
+    "last_nights": [
+     {
+      "date": "2026-06-30",
+      "mjd": 61221.5,
+      "n_alerts": 254984.0
+     },
+     {
+      "date": "2026-07-01",
+      "mjd": 61222.5,
+      "n_alerts": 36224.0
+     },
+     {
+      "date": "2026-07-06",
+      "mjd": 61227.5,
+      "n_alerts": 543950.0
+     },
+     {
+      "date": "2026-07-07",
+      "mjd": 61228.5,
+      "n_alerts": 623292.0
+     },
+     {
+      "date": "2026-07-09",
+      "mjd": 61230.5,
+      "n_alerts": 664612.0
+     },
+     {
+      "date": "2026-07-10",
+      "mjd": 61231.5,
+      "n_alerts": 227916.0
+     },
+     {
+      "date": "2026-07-11",
+      "mjd": 61232.5,
+      "n_alerts": 125442.0
+     },
+     {
+      "date": "2026-07-12",
+      "mjd": 61233.5,
+      "n_alerts": 71683.0
+     },
+     {
+      "date": "2026-07-13",
+      "mjd": 61234.5,
+      "n_alerts": 744559.0
+     },
+     {
+      "date": "2026-07-14",
+      "mjd": 61235.5,
+      "n_alerts": 473344.0
+     }
+    ],
     "method": "POST",
+    "n_nights": 132,
     "status": 200,
     "url": "https://api.lsst.fink-portal.org/api/v1/statistics"
+   },
+   "ztf_statistics": {
+    "error": "ConnectTimeout: HTTPSConnectionPool(host='api.fink-portal.org', port=443): Max retries exceeded with url: /api/v1/statistics (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.fink-portal.org', port=443) at 0x7f986c17c5d0>, 'Connection to api.fink-portal.org timed out. (connect timeout=120.0)'))",
+    "method": "POST",
+    "url": "https://api.fink-portal.org/api/v1/statistics"
    }
   },
-  "frontier_mjd": null,
-  "url": "https://api.lsst.fink-portal.org"
+  "frontier_mjd": 61235.5,
+  "last_night": "2026-07-14",
+  "nightly_counts": [
+   {
+    "date": "2026-06-30",
+    "mjd": 61221.5,
+    "n_alerts": 254984.0
+   },
+   {
+    "date": "2026-07-01",
+    "mjd": 61222.5,
+    "n_alerts": 36224.0
+   },
+   {
+    "date": "2026-07-06",
+    "mjd": 61227.5,
+    "n_alerts": 543950.0
+   },
+   {
+    "date": "2026-07-07",
+    "mjd": 61228.5,
+    "n_alerts": 623292.0
+   },
+   {
+    "date": "2026-07-09",
+    "mjd": 61230.5,
+    "n_alerts": 664612.0
+   },
+   {
+    "date": "2026-07-10",
+    "mjd": 61231.5,
+    "n_alerts": 227916.0
+   },
+   {
+    "date": "2026-07-11",
+    "mjd": 61232.5,
+    "n_alerts": 125442.0
+   },
+   {
+    "date": "2026-07-12",
+    "mjd": 61233.5,
+    "n_alerts": 71683.0
+   },
+   {
+    "date": "2026-07-13",
+    "mjd": 61234.5,
+    "n_alerts": 744559.0
+   },
+   {
+    "date": "2026-07-14",
+    "mjd": 61235.5,
+    "n_alerts": 473344.0
+   }
+  ],
+  "url": "https://api.lsst.fink-portal.org",
+  "ztf_control": {
+   "frontier_mjd": null,
+   "last_night": null,
+   "last_nights": null
+  }
  },
  "lasair": {
   "frontier_mjd": null,
@@ -504,5 +665,5 @@
   "skipped": "no LASAIR_TOKEN in the environment",
   "url": "https://api.lasair.lsst.ac.uk/api"
  },
- "now_mjd": 61277.85637
+ "now_mjd": 61277.86248
 }

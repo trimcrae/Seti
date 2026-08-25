@@ -353,8 +353,8 @@ def require_independent_prediction(source: OrbitSource, *,
 #
 # It is also, mercifully, a question the data answers by itself, because every
 # candidate is wrong by SECONDS and a second of time is enormous at mas
-# precision.  TCB - UTC in 2015 is about 84.8 s (67.184 s of TT - UTC plus
-# ~17.6 s of TCB - TT); a main-belt object moves ~30 arcsec/hour, so 84.8 s of
+# precision.  TCB - UTC in mid-2015 is about 87.0 s (68.184 s of TT - UTC plus
+# 18.8 s of TCB - TT); a main-belt object moves ~30 arcsec/hour, so 87 s of
 # time-scale error is ~0.7 arcsec of along-track offset --- seven hundred times
 # the signal, and PROPORTIONAL TO SKY RATE, which is a shape nothing else in the
 # problem has.  `resolve_conventions` therefore measures the convention instead
@@ -2073,8 +2073,11 @@ def fit_common_time_offset(series_list: Sequence[ResidualSeries]) -> dict:
     ss_tot = float(np.sum(iv * y * y))
     out["variance_explained"] = (1.0 - float(np.sum(iv * resid * resid)) / ss_tot
                                  if ss_tot > 0 else float("nan"))
-    known = {"leap_second": 1.0, "tt_minus_tai": 32.184, "tt_minus_utc_2015": 67.184,
-             "tcb_minus_tt_2015": 17.6, "tcb_minus_utc_2015": 84.8}
+    # Every one of these is a real mistake somebody could make with these two
+    # columns, and a fitted dt landing on one names it instead of leaving it to
+    # be reported as a population-wide acceleration.
+    known = {"leap_second": 1.0, "tt_minus_tai": 32.184, "tt_minus_utc_2015": 68.184,
+             "tcb_minus_tt_2015": 18.8, "tcb_minus_utc_2015": 87.0}
     dt = abs(out["dt_seconds"])
     near = [k for k, v in known.items() if v > 0 and abs(dt - v) < 0.25 * v]
     out["matches_known_time_scale_error"] = near

@@ -1853,3 +1853,45 @@ def test_corpus_is_built_not_assumed():
     # The fixed list stays as a floor, and the corpus is added to it.
     import inspect
     assert "extra_ids" in inspect.signature(litcheck.check_objects).parameters
+
+
+# --- resolutions the arXiv machinery cannot reach ---------------------------
+#
+# 875163 (1998 SH2) was one of this channel's two standing exceedances until
+# Farnocchia et al. 2026 (Nature Astronomy) confirmed it as an outgassing dark
+# comet -- predicted from its non-gravitational perturbation, then confirmed with
+# a coma and a weak tail. That is precisely the inference LOOM makes, arriving at
+# the mundane answer. The paper has no locatable arXiv preprint, so every search
+# in litcheck.py is blind to it, and without an explicit record the object would
+# be reported as an unexplained lead forever.
+
+def test_a_journal_only_resolution_still_marks_an_object_explained():
+    from seti.loom.litcheck import ObjectCheck
+
+    d = ObjectCheck(name="875163 (1998 SH2)").as_dict()
+    assert d["explained_in_literature"] is True
+    assert d["verdict"] == "EXPLAINED_BY_PUBLISHED_RESOLUTION"
+    assert "10.1038/s41550-026-02913-7" in d["published_resolution"]["doi"]
+
+
+def test_the_two_routes_to_explained_are_reported_separately():
+    # "A search found it" and "a human recorded a paper the search cannot reach"
+    # are different evidential claims; a merged flag would hide which one a
+    # verdict rests on.
+    from seti.loom.litcheck import ObjectCheck
+
+    searched = ObjectCheck(name="1234 (1999 XX1)",
+                           hits=[{"source": "arXiv", "matched": "1999 XX1",
+                                  "context": "..."}])
+    assert searched.as_dict()["verdict"] == "EXPLAINED_IN_LITERATURE"
+    assert searched.as_dict()["published_resolution"] is None
+
+
+def test_the_remaining_exceedance_is_not_swept_up_with_it():
+    # 428209 (2006 VC) is not resolved, and a resolution keyed too loosely would
+    # silently discard the only standing lead this channel has left.
+    from seti.loom.litcheck import ObjectCheck
+
+    d = ObjectCheck(name="428209 (2006 VC)").as_dict()
+    assert d["explained_in_literature"] is False
+    assert d["verdict"] == "NOT_FOUND_IN_SEARCHED_LITERATURE"

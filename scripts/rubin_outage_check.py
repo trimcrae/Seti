@@ -50,6 +50,9 @@ MJD_UNIX_EPOCH = 40587.0
 # sub-day difference is bookkeeping, not evidence of a stalled mirror.
 AHEAD_TOLERANCE_DAYS = 1.0
 
+# Fink's ZTF portal, used only as a control on whether Fink itself is alive.
+FINK_ZTF_API = "https://api.fink-portal.org"
+
 
 def _now_mjd() -> float:
     return MJD_UNIX_EPOCH + datetime.datetime.now(
@@ -105,10 +108,13 @@ def probe_alerce(timeout: float) -> dict:
                maxrec=5)
     out["frontier_mjd"] = _num(rows[0].get("mjd_max")) if rows else None
 
+    # `lsst_ss_detection` has no `oid`: it carries `ssobjectid`, and the join is
+    # (measurement_id, ssobjectid) --- `seti.loom.acquire._join_clause`.  Run 1
+    # guessed `ss.oid` and lost the loom frontier to an ADQL error.
     rows = run("max_mjd_ss_detection",
                "SELECT MAX(d.mjd) AS mjd_max FROM alerce_tap.lsst_ss_detection AS ss "
-               "JOIN alerce_tap.detection AS d ON d.oid = ss.oid "
-               "AND d.sid = ss.sid AND d.measurement_id = ss.measurement_id",
+               "JOIN alerce_tap.detection AS d "
+               "ON d.measurement_id = ss.measurement_id AND d.oid = ss.ssobjectid",
                maxrec=5)
     out["frontier_ss_mjd"] = _num(rows[0].get("mjd_max")) if rows else None
 
@@ -118,6 +124,27 @@ def probe_alerce(timeout: float) -> dict:
     rows = run("max_mjd_any_detection",
                "SELECT MAX(mjd) AS mjd_max FROM alerce_tap.detection", maxrec=5)
     out["frontier_any_mjd"] = _num(rows[0].get("mjd_max")) if rows else None
+
+    # THE SELF-CONTROL.  Run 1 found the bare `detection` table maxing at exactly
+    # the LSST frontier, which is consistent with two very different things: a
+    # mirror that ingests only LSST (so the two are the same number by
+    # construction) and a mirror that has stopped ingesting everything.  Grouping
+    # the far smaller `object` table by survey separates them: if ALeRCE is
+    # current on another survey while LSST sits at 2026-07-14, the service is
+    # alive and its LSST feed specifically is not.
+    rows = run("survey_currency",
+               "SELECT sid, tid, COUNT(*) AS n, MAX(lastmjd) AS last_max "
+               "FROM alerce_tap.object GROUP BY sid, tid", maxrec=50)
+    if rows:
+        surveys = []
+        for r in rows:
+            last = _num(r.get("last_max"))
+            surveys.append({"sid": r.get("sid"), "tid": str(r.get("tid")),
+                            "n": _num(r.get("n")), "last_mjd": last,
+                            "last_utc": _iso(last)})
+        out["survey_currency"] = surveys
+        newest = [s["last_mjd"] for s in surveys if s["last_mjd"] is not None]
+        out["newest_any_survey_mjd"] = max(newest) if newest else None
 
     lo = _now_mjd() - 120.0
     rows = run("nightly_counts_120d",
@@ -143,53 +170,85 @@ def probe_alerce(timeout: float) -> dict:
 # Fink --- the independent second opinion
 # --------------------------------------------------------------------------
 def probe_fink(timeout: float) -> dict:
-    """Ask Fink's LSST portal for its newest alert.
+    """Ask Fink for its newest LSST night --- and for its newest ZTF night.
 
-    Fink's REST API is POST-with-JSON, but the endpoint set of the LSST portal
-    (as opposed to the long-standing ZTF one) is not verified from inside the
-    sandbox, so each candidate endpoint is tried both ways and the raw response
-    recorded.  A 404 here is itself informative and must not look like an outage.
+    Run 1 established the endpoint set the hard way: ``/api/v1/latests`` is 404 on
+    the LSST portal, and ``/api/v1/statistics`` returns the whole per-night
+    history --- one row per observing night, with ``f:night`` as ``YYYYMMDD`` and
+    ``f:alerts`` as that night's alert count.  That is a **second, independent
+    nightly histogram** of the same stream ALeRCE mirrors, which is exactly the
+    comparison this check was written to make.
+
+    The ZTF portal is queried as a **control on Fink itself**.  If Fink's LSST
+    history stops on the same night as ALeRCE's while its ZTF history runs to
+    this week, then two independent brokers are alive and neither is being handed
+    LSST alerts --- which no broker-side explanation covers.
     """
     import requests
 
     out: dict = {"url": FINK_LSST_API, "attempts": {}}
-    attempts = [
-        ("latests_POST", "POST", "/api/v1/latests",
-         {"class": "allclasses", "n": 20, "output-format": "json"}),
-        ("statistics_POST", "POST", "/api/v1/statistics",
-         {"date": "", "output-format": "json"}),
-        ("latests_GET", "GET", "/api/v1/latests",
-         {"class": "allclasses", "n": 20, "output-format": "json"}),
-        ("schema_GET", "GET", "/api/v1/schema", None),
-    ]
-    newest: float | None = None
-    for name, method, path, body in attempts:
-        url = FINK_LSST_API.rstrip("/") + path
-        rec: dict = {"method": method, "url": url}
+
+    def stats(label: str, base: str) -> dict:
+        url = base.rstrip("/") + "/api/v1/statistics"
+        rec: dict = {"method": "POST", "url": url}
         try:
-            if method == "POST":
-                resp = requests.post(url, json=body, timeout=timeout)
-            else:
-                resp = requests.get(url, params=body, timeout=timeout)
+            resp = requests.post(url, json={"date": "", "output-format": "json"},
+                                 timeout=timeout)
             rec["status"] = resp.status_code
-            text = resp.text or ""
-            rec["bytes"] = len(text)
-            try:
-                payload = resp.json()
-            except Exception:                                     # noqa: BLE001
-                payload = None
-                rec["text_head"] = text[:800]
-            if payload is not None:
-                rec["json_head"] = json.dumps(payload)[:2000]
-                cand = _max_time_in(payload)
-                if cand is not None:
-                    rec["newest_mjd"] = cand
-                    newest = cand if newest is None else max(newest, cand)
+            rec["bytes"] = len(resp.text or "")
+            payload = resp.json()
+            nights = _nights_from_fink_stats(payload)
+            rec["n_nights"] = len(nights)
+            rec["last_nights"] = nights[-10:]
+            if nights:
+                rec["last_night"] = nights[-1]["date"]
+                rec["frontier_mjd"] = nights[-1]["mjd"]
         except Exception as exc:                                  # noqa: BLE001
             rec["error"] = f"{type(exc).__name__}: {exc}"[:400]
-        out["attempts"][name] = rec
-    out["frontier_mjd"] = newest
+        out["attempts"][label] = rec
+        return rec
+
+    lsst = stats("lsst_statistics", FINK_LSST_API)
+    ztf = stats("ztf_statistics", FINK_ZTF_API)
+
+    out["frontier_mjd"] = lsst.get("frontier_mjd")
+    out["last_night"] = lsst.get("last_night")
+    out["nightly_counts"] = lsst.get("last_nights")
+    # The control, kept as its own field: it must never be mistaken for an LSST
+    # frontier, or a live ZTF feed would read as live Rubin data.
+    out["ztf_control"] = {"frontier_mjd": ztf.get("frontier_mjd"),
+                          "last_night": ztf.get("last_night"),
+                          "last_nights": ztf.get("last_nights")}
     return out
+
+
+def _nights_from_fink_stats(payload) -> list[dict]:
+    """Fink's per-night statistics rows -> [{date, mjd, n_alerts}], oldest first.
+
+    ``f:night`` is a ``YYYYMMDD`` string labelling the observing night, so the
+    epoch it stands for is a date, not an instant.  It is placed at 12:00 UT of
+    that date: a Chilean night's alerts carry timestamps from about 00:00 to
+    10:00 UT on the labelled date, so noon is within half a day of every one of
+    them and no rounding choice can make one broker look a night ahead of
+    another when they hold the same night.
+    """
+    rows = payload if isinstance(payload, list) else (payload or {}).get("results") or []
+    nights = []
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        raw = str(r.get("f:night") or r.get("night") or "").strip()
+        if len(raw) != 8 or not raw.isdigit():
+            continue
+        try:
+            d = datetime.date(int(raw[:4]), int(raw[4:6]), int(raw[6:]))
+        except ValueError:
+            continue
+        mjd = (d.toordinal() - datetime.date(1858, 11, 17).toordinal()) + 0.5
+        nights.append({"date": d.isoformat(), "mjd": float(mjd),
+                       "n_alerts": _num(r.get("f:alerts"))})
+    nights.sort(key=lambda x: x["mjd"])
+    return nights
 
 
 def _max_time_in(payload, depth: int = 0) -> float | None:
@@ -270,11 +329,11 @@ def probe_lasair(timeout: float) -> dict:
 # Verdict
 # --------------------------------------------------------------------------
 def decide(alerce: dict, fink: dict, lasair: dict) -> dict:
-    """Name the cause, or say plainly that one broker cannot name it.
+    """Name the cause, or say plainly that the evidence cannot name it.
 
     ``UNDETERMINED_SINGLE_SOURCE`` is a real outcome, not a failure to try: a
     verdict of SKY_STOPPED resting on the only broker we can reach would be the
-    same single-source claim the check was written to break.
+    same single-source claim this check exists to break.
     """
     a = alerce.get("frontier_mjd")
     others = {k: v for k, v in (("fink", fink.get("frontier_mjd")),
@@ -283,6 +342,20 @@ def decide(alerce: dict, fink: dict, lasair: dict) -> dict:
 
     ahead = {k: round(v - a, 3) for k, v in others.items()
              if a is not None and v - a > AHEAD_TOLERANCE_DAYS}
+
+    # The controls: is each service demonstrably current on data that is NOT the
+    # LSST stream?  A broker that is stale everywhere proves nothing about Rubin.
+    controls = {}
+    ztf = (fink.get("ztf_control") or {}).get("frontier_mjd")
+    if ztf is not None:
+        controls["fink_ztf"] = {"frontier_mjd": ztf, "frontier_utc": _iso(ztf),
+                                "days_behind_now": round(_now_mjd() - ztf, 2)}
+    other_survey = alerce.get("newest_any_survey_mjd")
+    if other_survey is not None:
+        controls["alerce_newest_survey"] = {
+            "frontier_mjd": other_survey, "frontier_utc": _iso(other_survey),
+            "days_behind_now": round(_now_mjd() - other_survey, 2)}
+    live_controls = [k for k, c in controls.items() if c["days_behind_now"] <= 7.0]
 
     if a is None and not others:
         verdict, why = "NO_BROKER_REACHED", (
@@ -299,6 +372,11 @@ def decide(alerce: dict, fink: dict, lasair: dict) -> dict:
             "Every broker reached stops on the same night. The alert stream "
             "itself stopped, so the channels' nulls mean 'no new sky', and no "
             "change to the broker path recovers data that was never taken.")
+        if live_controls:
+            why += (" Corroborated: " + ", ".join(live_controls) + " "
+                    + ("is" if len(live_controls) == 1 else "are")
+                    + " current on non-LSST data, so the brokers themselves are "
+                      "alive and simply have no LSST alerts to serve.")
     else:
         verdict, why = "UNDETERMINED_SINGLE_SOURCE", (
             "Only ALeRCE answered, so a stalled mirror and a stopped stream "
@@ -309,6 +387,7 @@ def decide(alerce: dict, fink: dict, lasair: dict) -> dict:
             "other_brokers": {k: {"frontier_mjd": v, "frontier_utc": _iso(v)}
                               for k, v in others.items()},
             "brokers_ahead_days": ahead,
+            "controls": controls, "live_controls": live_controls,
             "lag_days": (round(_now_mjd() - a, 2) if a is not None else None)}
 
 
@@ -328,8 +407,10 @@ def main() -> int:
 
     print("[outage] querying Fink LSST ...", flush=True)
     fink = probe_fink(min(args.timeout, 120.0))
-    print(f"[outage] Fink frontier: {fink.get('frontier_mjd')} "
-          f"({_iso(fink.get('frontier_mjd'))})", flush=True)
+    print(f"[outage] Fink LSST last night: {fink.get('last_night')} "
+          f"(mjd {fink.get('frontier_mjd')})", flush=True)
+    print(f"[outage] Fink ZTF control last night: "
+          f"{(fink.get('ztf_control') or {}).get('last_night')}", flush=True)
 
     print("[outage] querying Lasair ...", flush=True)
     lasair = probe_lasair(min(args.timeout, 120.0))
@@ -343,8 +424,15 @@ def main() -> int:
     print(f"[outage] wrote {path}")
     d = rec["decision"]
     print(f"[outage] VERDICT {d['verdict']}: {d['why']}")
+    for name, c in (d.get("controls") or {}).items():
+        print(f"[outage] control {name}: {c['frontier_utc']} "
+              f"({c['days_behind_now']} d behind now)")
+    print("[outage] ALeRCE nightly LSST detections:")
     for night in (alerce.get("last_nights") or [])[-6:]:
         print(f"[outage]   {night['date']}  n={night['n']}")
+    print("[outage] Fink nightly LSST alerts:")
+    for night in (fink.get("nightly_counts") or [])[-6:]:
+        print(f"[outage]   {night['date']}  n={night['n_alerts']}")
     return 0
 
 

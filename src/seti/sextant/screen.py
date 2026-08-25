@@ -133,8 +133,9 @@ class Thresholds:
     #: stratum) above which an object enters the shortlist.
     min_rejection_z: float = 4.0
     #: Fraction of the excess that must survive dropping any single covariate
-    #: from the stratification.  An excess that halves when crowding is removed
-    #: from the null was crowding.
+    #: from the stratification.  The requirement is ROBUSTNESS TO THE NULL'S
+    #: DEFINITION: an excess that exists only under one particular way of
+    #: stratifying is a property of that stratification, not of the object.
     min_covariate_survival: float = 0.5
     #: Rank correlation of the excess with any single covariate above which the
     #: screen is measuring the survey rather than the sky.
@@ -154,6 +155,13 @@ class Thresholds:
     #: Above this, an orbit fit could have removed essentially all of the signal
     #: and the measurement is not a measurement.
     max_absorbed_fraction: float = 0.995
+    #: Excess scatter about the fitted model, in units of the archive's own
+    #: error model.  An unresolved binary's photocentre wobbles on the
+    #: SATELLITE's period --- hours to days --- which no heliocentric basis
+    #: function reaches, so it appears as unmodelled short-timescale
+    #: scatter rather than as a drift.  That, and not the amplitude bound,
+    #: is the discriminant that works at Yarkovsky amplitudes.
+    max_excess_scatter: float = 2.0
 
     # --- contamination --------------------------------------------------------
     #: Galactic latitude below which crowding dominates and a rejection excess is
@@ -235,9 +243,20 @@ class RejectionRecord:
     known_binary: bool = False
     binary_reference: str | None = None
     scan_anisotropy: float = float("nan")
+    photocentre_verdict: str = ""
+    photocentre_ratio: float = float("nan")
+    excess_scatter: float = float("nan")
     # outcome
     tier: str = "untestable"
+    #: The narrative: everything worth telling a reader about this object.
     reasons: list[str] = field(default_factory=list)
+    #: The subset of `reasons` that DISQUALIFY promotion.  Kept separate because
+    #: the two were conflated once and the consequence was silent: `assign_tier`
+    #: runs twice (before and after characterisation), and on the second pass it
+    #: read its own informational note from the first pass as a veto and demoted
+    #: every object it had just promoted.  A reason and a veto are different
+    #: things and are now different fields.
+    vetoes: list[str] = field(default_factory=list)
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -357,7 +376,7 @@ def sample_rejection_summary(records: list[RejectionRecord]) -> dict:
 # ---------------------------------------------------------------------------
 def covariate_strata(records: list[RejectionRecord],
                      covariates: tuple[str, ...] = DEFAULT_COVARIATES,
-                     n_bins: int = 4) -> np.ndarray:
+                     n_bins: int = 4, min_per_stratum: int = 20) -> np.ndarray:
     """Equal-count strata in the covariates that drive the rejection rate.
 
     Equal-count rather than equal-width because every one of these covariates is
@@ -365,15 +384,30 @@ def covariate_strata(records: list[RejectionRecord],
     NEO-to-outer-belt range --- and an equal-width binning would put 99% of the
     sample in one bin and call it a control.
 
+    **The bin count adapts to the sample, and it has to.**  Five covariates at
+    four bins each is 1024 cells; on a sample of 500 objects that is half an
+    object per cell, every stratum falls below the calibration floor, and the
+    screen returns NaN for every object while looking like it ran.  That is
+    exactly what the first version did.  The per-covariate bin count is therefore
+    the largest that keeps the *average* occupancy at ``min_per_stratum``, capped
+    at ``n_bins``.  On the real catalogue (>100,000 objects) the cap binds and
+    the stratification is as fine as it was designed to be; on a small sample it
+    degrades to a coarser but honest control instead of to nothing.
+
     An object missing a covariate gets its own bin rather than being dropped:
     "we could not control for this" and "this was controlled for" must not be
     the same row.
     """
+    usable = [name for name in covariates
+              if np.any(np.isfinite(np.array([getattr(r, name, float("nan"))
+                                              for r in records], dtype=float)))]
+    if usable and len(records) > 0:
+        target = max(len(records) / max(int(min_per_stratum), 1), 1.0)
+        per = int(math.floor(target ** (1.0 / len(usable))))
+        n_bins = max(2, min(int(n_bins), per))
     cols = []
-    for name in covariates:
+    for name in usable:
         v = np.array([getattr(r, name, float("nan")) for r in records], dtype=float)
-        if not np.any(np.isfinite(v)):
-            continue
         fin = np.isfinite(v)
         if fin.sum() > 4 * n_bins:
             q = np.linspace(0, 1, int(n_bins) + 1)[1:-1]
@@ -437,12 +471,15 @@ def rejection_excess(records: list[RejectionRecord], th: Thresholds,
     Three things happen here and the third is the one that matters.
 
     1. The excess is computed under the FULL stratification.
-    2. It is recomputed with each covariate dropped in turn.  An excess that
-       collapses when crowding leaves the null was crowding; the covariate whose
-       removal costs the most is recorded by name as ``binding_covariate``, and
-       ``covariate_survival`` is the fraction of the excess that survives the
-       worst case.  This is the difference between controlling for a confounder
-       and mentioning it.
+    2. It is recomputed with each covariate dropped in turn.  The primary z
+       already controls for every covariate, so this is not the control --- it is
+       the *robustness* check on the control: an excess that survives only one
+       particular stratification is a property of that stratification.  The
+       covariate whose removal costs the most is recorded by name as
+       ``binding_covariate`` and ``covariate_survival`` is the fraction that
+       survives the worst case.  A survival above 1 is common and benign (a
+       coarser null has a lower expected rate for a crowded object); it is the
+       collapse that is disqualifying.
     3. The maximum excess is calibrated against matched random subsets of the
        same screened sample, so the p-value already carries the trials factor
        over a catalogue of >100,000 objects rather than acquiring it later.
@@ -463,10 +500,13 @@ def rejection_excess(records: list[RejectionRecord], th: Thresholds,
         drop[name] = z_r
     if drop:
         stack = np.vstack([drop[k] for k in drop])
-        with np.errstate(invalid="ignore"):
-            worst_idx = np.nanargmin(np.where(np.isfinite(stack), stack, np.inf),
-                                     axis=0) if stack.size else None
-        z_min = np.nanmin(stack, axis=0) if stack.size else np.full(z.shape, np.nan)
+        # A column that is all-NaN means no reduced stratification could score
+        # that object; np.nanmin would both warn and return NaN, so the sentinel
+        # is explicit and the all-NaN case is carried as NaN on purpose.
+        filled = np.where(np.isfinite(stack), stack, np.inf)
+        worst_idx = np.argmin(filled, axis=0)
+        z_min = np.min(filled, axis=0)
+        z_min = np.where(np.isfinite(z_min), z_min, np.nan)
         names = list(drop)
     else:
         z_min = z.copy()
@@ -681,12 +721,13 @@ def characterise(rec: RejectionRecord, series: ResidualSeries, th: Thresholds,
     an amplitude, which is what both published treatments of this table are.
     """
     reasons: list[str] = list(rec.reasons)
+    vetoes: list[str] = list(rec.vetoes)
     part = scan_axis_partition(series)
     rec.scan_anisotropy = part.get("sigma_ratio_ac_over_al", float("nan"))
     if (math.isfinite(rec.scan_anisotropy)
             and rec.scan_anisotropy < th.min_scan_anisotropy):
-        reasons.append(f"scan_anisotropy_{rec.scan_anisotropy:.1f}_below_"
-                       f"{th.min_scan_anisotropy}__error_model_not_as_documented")
+        vetoes.append(f"scan_anisotropy_{rec.scan_anisotropy:.1f}_below_"
+                      f"{th.min_scan_anisotropy}__error_model_not_as_documented")
 
     mc = model_comparison(series, min_observations=th.min_observations_for_model,
                           min_arc_days=th.min_arc_days,
@@ -704,19 +745,36 @@ def characterise(rec: RejectionRecord, series: ResidualSeries, th: Thresholds,
         rec.absorbed_fraction = float(f.get("absorbed_fraction", float("nan")))
     if (math.isfinite(rec.absorbed_fraction)
             and rec.absorbed_fraction > th.max_absorbed_fraction):
-        reasons.append(f"absorbed_fraction_{rec.absorbed_fraction:.4f}__an_orbit_"
-                       f"fit_could_have_removed_essentially_all_of_this")
+        vetoes.append(f"absorbed_fraction_{rec.absorbed_fraction:.4f}__an_orbit_"
+                      f"fit_could_have_removed_essentially_all_of_this")
     if rec.model_verdict == "GEOMETRIC_EXPLANATION_PREFERRED":
-        reasons.append(f"geometric_explanation_preferred__{rec.best_geometric_model}")
+        vetoes.append(f"geometric_explanation_preferred__{rec.best_geometric_model}")
 
     if binaries is not None and binaries.match(rec):
         rec.known_binary = True
         rec.binary_reference = binaries.reference
-        reasons.append("known_or_candidate_binary__photocentre_wobble")
+        vetoes.append("known_or_candidate_binary__photocentre_wobble")
+    # The amplitude bound is REPORTED, not a veto.  A genuine Yarkovsky-scale
+    # drift implies ~100 km of displacement over a six-year arc, comfortably
+    # inside what a binary photocentre could supply, so vetoing on it would veto
+    # every real signal.  What it can say positively is that a LARGE displacement
+    # cannot be a wobble at all.
     pb = photocentre_bound(series, rec.force_amplitude)
-    if pb.get("verdict") == "WITHIN_PHOTOCENTRE_BOUND":
-        reasons.append("displacement_within_photocentre_wobble_bound")
-    rec.reasons = _dedup(reasons)
+    rec.photocentre_verdict = pb.get("verdict", "")
+    rec.photocentre_ratio = float(pb.get("ratio_to_bound", float("nan")))
+    # The discriminant that works at ordinary amplitudes is the TIMESCALE.  A
+    # photocentre wobble runs on the satellite's period --- hours to days --- which
+    # no heliocentric basis function here can absorb, so it shows up as excess
+    # scatter about the fitted model rather than as a drift.
+    bfit = mc.get("fits", {}).get(bf) if bf else None
+    if bfit and math.isfinite(bfit.get("chi2_reduced", float("nan"))):
+        rec.excess_scatter = math.sqrt(max(bfit["chi2_reduced"], 0.0))
+        if rec.excess_scatter > th.max_excess_scatter:
+            vetoes.append(f"excess_scatter_{rec.excess_scatter:.1f}x_the_error_"
+                          f"model__unmodelled_short_timescale_structure__"
+                          f"photocentre_wobble_candidate")
+    rec.vetoes = _dedup(vetoes)
+    rec.reasons = _dedup([*reasons, *vetoes])
     return rec
 
 
@@ -729,6 +787,7 @@ def assign_tier(rec: RejectionRecord, th: Thresholds) -> RejectionRecord:
     channel rests on not confusing them.
     """
     reasons: list[str] = list(rec.reasons)
+    vetoes: list[str] = list(rec.vetoes)
     if rec.n_attempts < th.min_attempts or rec.n_transits < th.min_transits:
         rec.tier = "untestable"
         rec.reasons = _dedup([*reasons,
@@ -748,23 +807,26 @@ def assign_tier(rec: RejectionRecord, th: Thresholds) -> RejectionRecord:
     # excess is the object's or the observing conditions'.
     if (math.isfinite(rec.covariate_survival)
             and rec.covariate_survival < th.min_covariate_survival):
-        reasons.append(f"excess_collapses_when_{rec.binding_covariate}_leaves_the_"
-                       f"null__survival_{rec.covariate_survival:.2f}")
+        vetoes.append(f"excess_not_robust_to_the_null__drops_to_"
+                      f"{rec.covariate_survival:.2f}_of_itself_when_"
+                      f"{rec.binding_covariate}_leaves_the_stratification")
         rec.tier = "watch"
-        rec.reasons = _dedup(reasons)
+        rec.vetoes = _dedup(vetoes)
+        rec.reasons = _dedup([*reasons, *vetoes])
         return rec
     if (math.isfinite(rec.abs_galactic_latitude_deg)
             and rec.abs_galactic_latitude_deg < th.min_abs_galactic_latitude_deg):
-        reasons.append(f"galactic_latitude_{rec.abs_galactic_latitude_deg:.1f}deg"
-                       f"__crowding_not_excluded")
+        vetoes.append(f"galactic_latitude_{rec.abs_galactic_latitude_deg:.1f}deg"
+                      f"__crowding_not_excluded")
         rec.tier = "watch"
-        rec.reasons = _dedup(reasons)
+        rec.vetoes = _dedup(vetoes)
+        rec.reasons = _dedup([*reasons, *vetoes])
         return rec
 
-    systematic = bool(reasons)
-    if systematic:
+    if vetoes:
         rec.tier = "watch"
-        rec.reasons = _dedup(reasons)
+        rec.vetoes = _dedup(vetoes)
+        rec.reasons = _dedup([*reasons, *vetoes])
         return rec
 
     rec.tier = "interest"
@@ -787,7 +849,8 @@ def assign_tier(rec: RejectionRecord, th: Thresholds) -> RejectionRecord:
             reasons.append(f"law_discriminated__{rec.best_force_model}")
         else:
             reasons.append(f"law_not_discriminated__{rec.law_verdict}")
-    rec.reasons = _dedup(reasons)
+    rec.vetoes = _dedup(vetoes)
+    rec.reasons = _dedup([*reasons, *vetoes])
     return rec
 
 

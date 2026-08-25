@@ -5,6 +5,37 @@ vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
 next. Last updated: 2026-07-30.
 
+### The Rubin frontier has been frozen since 2026-07-14 — mirror or sky? 2026-08-25
+
+Both Rubin channels have reported the same newest epoch, MJD 61235.419 =
+2026-07-14T10:03Z, on **every run since 2026-07-30** — 62 sightings,
+`n_advances = 0`, now 26 days frozen and 42 days behind the wall clock. The
+frontier alerts have been firing correctly since 2026-08-07. The channels are
+healthy: they run, reach ALeRCE, get a valid answer and commit; `tocsin` reports
+`NO_NEW_DATA` because its watermark has caught the broker's frontier.
+
+What the alerts cannot say is **which** thing stopped, and the two possibilities
+have opposite consequences — a stalled ALeRCE mirror means real sky is going
+unscreened and the broker path must change; a stopped alert stream means the
+nulls are honest and no code change recovers anything. One broker cannot tell
+them apart: "my newest LSST row is 2026-07-14" is consistent with both.
+
+`scripts/rubin_outage_check.py` + `rubin-outage.yml` ask a **second** broker
+(Fink LSST, public; Lasair when a token is set) for its newest LSST epoch, and
+ALeRCE for a 120-night detection histogram. Verdicts: `MIRROR_STALLED`,
+`SKY_STOPPED`, `UNDETERMINED_SINGLE_SOURCE` (only ALeRCE answered — explicitly
+*not* SKY_STOPPED, since a confident single-source verdict would re-create the
+blind spot), `NO_BROKER_REACHED`. Pinned by `tests/test_rubin_outage.py`.
+
+**Leading hypothesis: Rubin is snowed in.** A historic winter storm hit Chile's
+Coquimbo region 15–21 July 2026 (worst since 1997; state of emergency 16 July);
+NOIRLab shut down Cerro Tololo and Cerro Pachón, snow up to 3 m, the summit road
+unable to carry water and fuel trucks, conditions clearing only on 18 August.
+**Our last epoch is the night of 13/14 July — the last night before the storm.**
+That is a hypothesis from news coverage, not a result: Rubin's own status pages
+are egress-blocked from the sandbox, and the cross-broker check settles it from
+the alert stream itself. See `docs/rubin-outage.md`.
+
 ### The Rubin channels now run and report without a session, 2026-07-30
 
 `tocsin` (nightly, 10:10 ET), `loom` (weekly, Mon 11:40 ET) and `loom-calibrate`

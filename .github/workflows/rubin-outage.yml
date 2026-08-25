@@ -1,0 +1,100 @@
+name: rubin-outage
+
+# Did the MIRROR stop, or did the SKY?  (`scripts/rubin_outage_check.py`)
+#
+# Both Rubin channels have reported the same newest epoch --- MJD 61235.419 =
+# 2026-07-14T10:03Z --- on every run since 2026-07-30.  The frontier alerts fire
+# correctly but name one suspect out of two, and the two have opposite
+# consequences: a stalled ALeRCE mirror means real sky is going unscreened and
+# the broker path must change, whereas a stopped alert stream means the nulls are
+# honest and no code change recovers anything.  One broker cannot tell them
+# apart, so this job asks a SECOND one (Fink LSST; Lasair too when a token is
+# configured) for its newest LSST epoch and compares.
+#
+# Public endpoints only; the Lasair leg is skipped when no token is set.
+# Dispatch-only: it is a diagnosis, not a monitor --- the frontier alerts are
+# what watch continuously.
+
+on:
+  workflow_dispatch:
+    inputs:
+      out_dir:
+        description: "Override the results directory (blank = results/rubin_outage)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Ask every reachable broker for its newest LSST epoch
+        env:
+          LASAIR_TOKEN: ${{ secrets.LASAIR_TOKEN }}
+        run: |
+          if [ -n "${{ github.event.inputs.out_dir }}" ]; then
+            python scripts/rubin_outage_check.py --out-dir "${{ github.event.inputs.out_dir }}"
+          else
+            python scripts/rubin_outage_check.py
+          fi
+
+      - name: Show the verdict
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/rubin_outage/brokers.json")
+          if not p.exists():
+              print("no brokers.json --- the check did not reach the report stage")
+              raise SystemExit(0)
+          rec = json.loads(p.read_text())
+          d = rec["decision"]
+          print("VERDICT:", d["verdict"])
+          print(d["why"])
+          print("ALeRCE frontier:", d["alerce_frontier_mjd"], d["alerce_frontier_utc"],
+                f"(lag {d['lag_days']} d)")
+          for name, v in d["other_brokers"].items():
+              print(f"{name} frontier:", v["frontier_mjd"], v["frontier_utc"])
+          for night in (rec.get("alerce", {}).get("last_nights") or []):
+              print(f"  {night['date']}  n={night['n']}")
+          PY
+
+      - name: Commit the diagnosis
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # ONE PATHSPEC AT A TIME: `git add` with several pathspecs is atomic,
+          # so one unmatched glob would stage nothing and discard the run.
+          git add -f -- results/rubin_outage/brokers.json || echo "no brokers.json"
+          echo "=== staged ==="
+          git diff --cached --name-only
+          if git diff --cached --quiet; then
+            echo "No result changes to commit."
+          else
+            git commit -m "rubin-outage: newest LSST epoch held by each reachable broker"
+            git checkout -- . 2>/dev/null || true
+            git pull --rebase --autostash origin ${{ github.ref_name }} || true
+            git push origin HEAD:${{ github.ref_name }} || \
+              { git checkout -- . 2>/dev/null || true; \
+                git pull --rebase --autostash origin ${{ github.ref_name }}; \
+                git push origin HEAD:${{ github.ref_name }}; }
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rubin-outage
+          path: results/rubin_outage/

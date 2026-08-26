@@ -60,7 +60,14 @@ on:
       survey:
         description: "Which feed to run: asassn | atlas | both"
         required: false
-        default: "asassn"
+        # `both`, to match what the SCHEDULE does.  On a cron firing every
+        # `github.event.inputs.*` is empty, and the steps below read empty as
+        # "both" -- so a default of `asassn` here meant a hand-fired or
+        # automatically re-fired run silently screened one of the two feeds and
+        # looked like the scheduled run.  The catch-up in `seti.cronwatch`
+        # dispatches with no inputs, which makes this the difference between
+        # recovering a dropped Wednesday and half-recovering it.
+        default: "both"
       max_targets:
         description: >-
           Targets to walk this run.  Neither feed is a bulk service --- ASAS-SN is

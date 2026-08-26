@@ -794,12 +794,69 @@ def health_alerts(root: Path, now: datetime | None = None) -> list[Alert]:
 
 
 # ---------------------------------------------------------------------------
+# Did the SCHEDULER fire at all?
+# ---------------------------------------------------------------------------
+def scheduler_alerts(root: Path) -> list[Alert]:
+    """A cron that never fired, as reported by ``seti.cronwatch``.
+
+    This is the gap every other check in this module leaves open.  ``STALE_DAYS``
+    asks whether results are old, and its windows are deliberately over twice
+    each channel's cadence so one missed firing is not an incident -- which is
+    correct for a channel that is merely late, and useless for a scheduler that
+    dropped the firing outright.  Between the two sits a week in which nothing
+    says anything, and for a weekly channel that is the whole interval.
+
+    The finding is read rather than computed here: asking the Actions API needs a
+    token and network, both of which the hourly watchdog has and this evaluation
+    does not.  Dedup is keyed by the missed firing, so one dropped Wednesday
+    notifies once, however many times it is re-read.
+    """
+    rec = _load(root / "results" / "cronwatch" / "status.json")
+    if not isinstance(rec, dict):
+        return []
+    out: list[Alert] = []
+    for wf in rec.get("workflows") or []:
+        if not wf.get("overdue"):
+            continue
+        name = wf.get("name") or wf.get("workflow")
+        fired = wf.get("catchup_dispatched_utc")
+        out.append(Alert(
+            key=f"cron:{wf.get('workflow')}:{wf.get('expected_last_fire_utc')}",
+            severity="health", channel="cronwatch",
+            title=f"{name} did not fire at {wf.get('expected_last_fire_utc')}",
+            body=(f"GitHub's scheduler did not start `{wf.get('workflow')}` at its "
+                  f"scheduled firing of {wf.get('expected_last_fire_utc')} "
+                  f"(cron `{wf.get('cron_matched')}`, cadence "
+                  f"{wf.get('cadence_hours')} h). Its last scheduled run was "
+                  f"{wf.get('last_scheduled_run_utc') or 'never'}, "
+                  f"{wf.get('hours_late')} h ago.\n\n"
+                  + ("A catch-up run was dispatched automatically at "
+                     f"{fired}; check that it finished.\n\n" if fired else
+                     "NO catch-up was dispatched" + (
+                         " -- this workflow has no `workflow_dispatch` trigger, so "
+                         "the firing can only be recovered by hand.\n\n"
+                         if not wf.get("has_dispatch") else
+                         f" ({wf.get('catchup_error', 'the dispatch was not attempted')}).\n\n")
+                  )
+                  + "Scheduled runs on GitHub are best effort and are dropped "
+                    "under load. A dropped firing leaves no failed run for the "
+                    "watchdog to retry and no stale result until the staleness "
+                    "window expires days later, which is why it is watched "
+                    "separately."),
+            detail={k: wf.get(k) for k in (
+                "workflow", "cron_matched", "cadence_hours", "grace_hours",
+                "expected_last_fire_utc", "last_scheduled_run_utc", "hours_late",
+                "has_dispatch", "catchup_dispatched_utc", "catchup_error")}))
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Orchestration and deduplication
 # ---------------------------------------------------------------------------
 def evaluate(root: Path, now: datetime | None = None) -> list[Alert]:
     """Every alert condition, evaluated against whatever results exist."""
     return [*tocsin_alerts(root), *loom_alerts(root), *health_alerts(root, now),
-            *frontier_recovery_alerts(root, now)]
+            *frontier_recovery_alerts(root, now), *scheduler_alerts(root)]
 
 
 def check(root: Path, state_path: Path | None = None,

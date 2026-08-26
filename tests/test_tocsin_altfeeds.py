@@ -1094,3 +1094,65 @@ def test_the_ztf_probe_asks_a_bounded_question():
     c = A.ZtfIrsa()
     assert c.probe_timeout <= 30.0
     assert c.timeout <= 60.0
+
+
+# The probe of 2026-08-26 recorded IRSA's real columns and one real hazard in
+# them: some integer columns arrive in hex (`ccdid: "0x1"`).
+ZTF_CSV_REAL = (
+    "oid,expid,hjd,mjd,mag,magerr,catflags,filtercode,ra,dec,chi,sharp,"
+    "filefracday,field,ccdid,qid,limitmag,magzp,magzprms,clrcoeff,clrcounc,"
+    "exptime,airmass,programid\n"
+    "1,45030090,2458204.8068,58204.3,13.121748,0.0144,0,zg,187.2779,2.0524,"
+    "0.417,0.01,20180327300891,473,0x1,1,20.25,26.249,0.02,-0.057,3.8e-05,"
+    "30,1.156,1\n"
+    "1,45030091,2458206.8068,58206.3,13.130000,0.0150,0x8000,zg,187.2779,2.0524,"
+    "0.430,0.01,20180329300891,473,0x1,1,20.10,26.240,0.02,-0.057,3.8e-05,"
+    "30,1.200,1\n"
+    "1,45030092,2458208.8068,58208.3,13.140000,0.0160,not-a-number,zg,187.2779,"
+    "2.0524,0.440,0.01,20180331300891,473,0x1,1,20.00,26.230,0.02,-0.057,"
+    "3.8e-05,30,1.210,1\n"
+)
+
+
+def test_a_hex_catflags_is_read_as_a_flag_not_dropped_to_clean():
+    """The direction an error must never fall.
+
+    IRSA serves some integer columns in hex, and `float("0x8000")` raises. Under
+    a float parse that exception becomes NaN, NaN fails the finite test, and the
+    epoch is treated as UNFLAGGED -- a bad epoch silently promoted to good.
+    """
+    _h, rows = A.parse_csv_text(ZTF_CSV_REAL)
+    lc = A.ztf_rows_to_lightcurve(rows, "t", 187.2779, 2.0524)
+    assert lc.good[0] is np.True_ or lc.good[0]        # clean epoch
+    assert not lc.good[1], "0x8000 must be read as the bad-quality bit"
+
+
+def test_an_unreadable_quality_word_is_not_a_clean_one():
+    _h, rows = A.parse_csv_text(ZTF_CSV_REAL)
+    lc = A.ztf_rows_to_lightcurve(rows, "t", 187.2779, 2.0524)
+    assert not lc.good[2]
+    assert any("could not read" in n for n in lc.notes)
+
+
+def test_ztf_chi_reaches_the_artefact_gate():
+    """`chi` transfers to ATLAS's `chi_n` slot without re-calibration.
+
+    The gate is RELATIVE -- an epoch is rejected for being a wild outlier
+    against this star's own median chi -- so it does not matter that ZTF's chi
+    and ATLAS's reduced chi^2 are different statistics.
+    """
+    _h, rows = A.parse_csv_text(ZTF_CSV_REAL)
+    lc = A.ztf_rows_to_lightcurve(rows, "t", 187.2779, 2.0524)
+    assert lc.chi_n is not None
+    assert lc.chi_n[0] == pytest.approx(0.417)
+
+
+def test_the_real_irsa_columns_all_resolve():
+    """Read against the column list the live service actually returned."""
+    _h, rows = A.parse_csv_text(ZTF_CSV_REAL)
+    lc = A.ztf_rows_to_lightcurve(rows, "t", 187.2779, 2.0524)
+    assert lc.mjd[0] == 58204.3
+    assert lc.flux_njy[0] == pytest.approx(10 ** ((8.90 - 13.121748) / 2.5) * 1e9)
+    assert lc.limit_njy is not None                    # per-epoch limitmag
+    assert list(lc.band) == ["zg", "zg", "zg"]
+    assert any("sharp" in n for n in lc.notes)

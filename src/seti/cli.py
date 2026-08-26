@@ -789,8 +789,51 @@ def _cmd_loom_litcheck(args, cfg):
 def _cmd_loom_catalogue(args, cfg):
     from .loom.catalogue import run_catalogue
 
-    run_catalogue(cfg, out_dir=args.out_dir, do_census=not args.no_census,
-                  max_tail=args.max_tail)
+    rec = run_catalogue(cfg, out_dir=args.out_dir, do_census=not args.no_census,
+                        max_tail=args.max_tail)
+    # A DEAD FETCH FAILS THE JOB.  "JPL did not answer" and "nothing exceeds the
+    # ceiling" are different statements about the solar system, and a green run
+    # makes them look identical to every reader downstream -- the workflow, the
+    # staleness check, and whoever glances at the Actions tab.  Exiting non-zero
+    # puts it in front of the hourly watchdog, which retries it, instead.
+    if rec.get("dead_fetch"):
+        raise SystemExit(
+            f"[loom] catalogue DEAD FETCH: verdict={rec.get('verdict')} "
+            f"n_rows=0 -- nothing was screened and nothing was committed")
+
+
+def _cmd_cron_watch(args, cfg):
+    """Did GitHub actually fire the schedules?  Re-fire what it dropped."""
+    import os as _os
+    from pathlib import Path as _Path
+
+    from .cronwatch import ActionsApi, sweep
+
+    root = _Path(cfg.root) if cfg is not None else _Path.cwd()
+    repo = args.repo or _os.environ.get("GITHUB_REPOSITORY") or ""
+    token = _os.environ.get("GITHUB_TOKEN") or _os.environ.get("GH_TOKEN") or ""
+    api = None
+    if repo and token:
+        api = ActionsApi(repo, token)
+    else:
+        # Explicit, because a sweep with no API answers UNKNOWN for every
+        # workflow -- which is the honest reading, and would look like a clean
+        # bill of health to anyone skimming the output.
+        print("[cronwatch] no GITHUB_REPOSITORY/GITHUB_TOKEN: every workflow "
+              "will be reported UNKNOWN and nothing will be dispatched")
+    rep = sweep(root, api=api, ref=args.ref, dispatch=not args.no_dispatch,
+                out_dir=args.out_dir)
+    print(f"[cronwatch] workflows={rep['n_workflows']} "
+          f"overdue={rep['n_overdue']} unknown={rep['n_unknown']} "
+          f"dispatched={rep['n_dispatched']}")
+    for wf in rep["workflows"]:
+        if wf["status"] in ("OK", "WITHIN_GRACE"):
+            continue
+        print(f"  {wf['status']:<10} {wf['workflow']:<28} "
+              f"expected {wf['expected_last_fire_utc']} "
+              f"last {wf['last_scheduled_run_utc'] or 'never'}"
+              + (" -> catch-up dispatched" if wf.get("catchup_dispatched_utc")
+                 else ""))
 
 
 def _cmd_alert_check(args, cfg):
@@ -1514,6 +1557,23 @@ def main(argv=None):
                    help="how many above-ceiling objects to list individually, per "
                         "kind; the rest are counted only")
     p.set_defaults(func=_cmd_loom_catalogue)
+
+    p = sub.add_parser("cron-watch",
+                       help="Ask GitHub whether the scheduled screens actually "
+                            "FIRED, and re-dispatch any firing it dropped. "
+                            "Runner-only (needs GITHUB_TOKEN). A dropped cron "
+                            "leaves no failed run to retry and no stale result "
+                            "for days, so it is invisible to every other check")
+    p.add_argument("--repo", default=None,
+                   help="owner/name (default: $GITHUB_REPOSITORY)")
+    p.add_argument("--ref", default="main",
+                   help="git ref to dispatch catch-up runs on (default main; "
+                        "scheduled runs only ever fire on the default branch)")
+    p.add_argument("--no-dispatch", action="store_true",
+                   help="report dropped firings without re-firing them")
+    p.add_argument("--out-dir", default=None,
+                   help="results directory (default results/cronwatch)")
+    p.set_defaults(func=_cmd_cron_watch)
 
     p = sub.add_parser("alert-check",
                        help="Decide whether anything in results/ needs human "

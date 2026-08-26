@@ -989,12 +989,18 @@ def test_run_catalogue_writes_checkpoints_and_can_resume(tmp_path, monkeypatch):
 
     seen: list[str] = []
 
+    # Every chunk the orchestrator expects, so this run is COMPLETE -- the case
+    # that has to start from the service next time, because a finished run keeps
+    # its chunk list and drops its rows.
+    all_chunks = [f"detail:{k}:{c}" for k in ("a", "c")
+                  for c in ("A1", "A2", "A3")] + ["census:a", "census:c"]
+
     def fake_fetch(**kw):
-        for name in ("detail:a:A1", "detail:a:A2", "census:a"):
+        for name in all_chunks:
             if name in set(kw.get("done_chunks") or ()):
                 continue
             seen.append(name)
-            kw["on_result"](name, {"status": 200, "n_rows": len(rows), "rows": rows})
+            kw["on_result"](name, {"status": 200, "n_rows": len(rows)}, rows)
         return {"chunks": {}, "rows": list(kw.get("resume_rows") or []) + rows,
                 "census": {"asteroid": {"counts": {
                     "n_rows": 1553263, "n_with_A1": 22, "n_with_A2": 589,
@@ -1014,15 +1020,22 @@ def test_run_catalogue_writes_checkpoints_and_can_resume(tmp_path, monkeypatch):
     assert (tmp_path / "catalogue.json").exists()
     assert (tmp_path / "catalogue_objects.csv").exists()
     on_disk = json.loads((tmp_path / "catalogue.json").read_text())
-    assert on_disk["completed_chunks"] == ["detail:a:A1", "detail:a:A2", "census:a"]
+    assert on_disk["completed_chunks"] == all_chunks
+    assert on_disk["incomplete_chunks"] == []
     # The census rows are counted in flight and never retained -- 1.55 million rows
     # in a committed JSON file is not a result, it is a repository problem.
     assert "keys_with_any" not in on_disk["census"]["asteroid"]["counts"]
+    # A finished run leaves no checkpoint behind: the next run must start from
+    # the service, not from a chunk list whose rows are gone.
+    assert not (tmp_path / "catalogue.inprogress.json").exists()
 
-    # Second run: the chunks the first one committed are not fetched again.
+    # Second run: a FINISHED run is not a resume point, so every chunk is fetched
+    # again.  (Before 2026-08-26 this asserted the opposite, and the fake fetch
+    # returned rows whether or not it was asked to -- which is why a real second
+    # run screened zero rows and committed that over the answer.)
     seen.clear()
     catalogue.run_catalogue(out_dir=tmp_path)
-    assert seen == []
+    assert seen == all_chunks
 
 
 def test_run_catalogue_calls_a_dead_fetch_a_dead_fetch(tmp_path, monkeypatch):
@@ -1037,6 +1050,116 @@ def test_run_catalogue_calls_a_dead_fetch_a_dead_fetch(tmp_path, monkeypatch):
     assert rec["verdict"] == "NO_DATA_REACHED"
     assert "DEAD FETCH" in rec["note"]
     assert "tail" not in rec
+    assert rec["dead_fetch"] is True
+    # It is not written where a result goes, either.
+    assert not (tmp_path / "catalogue.json").exists()
+    assert json.loads(
+        (tmp_path / "catalogue.inprogress.json").read_text())["dead_fetch"] is True
+
+
+def test_a_dead_fetch_leaves_the_previous_catalogue_untouched(tmp_path, monkeypatch):
+    """The failure of 2026-08-26, as a test.
+
+    The first run of `loom-catalogue` from `main` skipped every chunk, screened
+    nothing, called it `NO_DATA_REACHED` -- and committed those 23 lines over the
+    15,796 of the real screen, in four seconds, green.  A dead fetch must leave
+    the standing answer exactly where it is: the two exceedances are neither
+    confirmed nor withdrawn by a service that did not answer.
+    """
+    good = {"verdict": "TAIL_CROWDED", "n_rows_fetched": 939,
+            "completed_chunks": ["detail:a:A1", "detail:a:A2", "detail:a:A3",
+                                 "detail:c:A1", "detail:c:A2", "detail:c:A3",
+                                 "census:a", "census:c"],
+            "survivors": [{"name": "875163 (1998 SH2)"}]}
+    (tmp_path / "catalogue.json").write_text(json.dumps(good))
+
+    monkeypatch.setattr(catalogue, "fetch_catalogue", lambda **kw: {
+        "chunks": {}, "rows": [], "census": {}, "verdict": "NO_DATA_REACHED"})
+    rec = catalogue.run_catalogue(out_dir=tmp_path)
+
+    assert rec["dead_fetch"] is True
+    assert rec["previous_result_kept"] is True
+    assert json.loads((tmp_path / "catalogue.json").read_text()) == good
+
+
+def test_a_completed_chunk_list_without_rows_skips_nothing(tmp_path, monkeypatch):
+    """The mechanism behind that failure: a chunk list is not a resume point.
+
+    A finished run records every chunk as complete and deliberately drops the
+    rows.  If that list is honoured, the next run fetches nothing and screens
+    zero rows while looking exactly like a run that found nothing.
+    """
+    rows = population(20, seed=101)
+    asked: list[str] = []
+
+    def fake_fetch(**kw):
+        for name in ("detail:a:A1", "census:a"):
+            if name in set(kw.get("done_chunks") or ()):
+                continue
+            asked.append(name)
+            kw["on_result"](name, {"status": 200, "n_rows": len(rows)}, rows)
+        return {"chunks": {}, "rows": list(kw.get("resume_rows") or []) + rows,
+                "census": {}, "verdict": "OK", "field_discovery": {"available": None}}
+
+    monkeypatch.setattr(catalogue, "fetch_catalogue", fake_fetch)
+    (tmp_path / "catalogue.inprogress.json").write_text(json.dumps(
+        {"completed_chunks": ["detail:a:A1", "census:a"]}))     # no resume_rows
+
+    rec = catalogue.run_catalogue(out_dir=tmp_path)
+    assert asked == ["detail:a:A1", "census:a"]
+    assert rec["n_rows_fetched"] == len(rows)
+    assert any("not a resume point" in n for n in rec.get("notes", []))
+
+
+def test_an_interrupted_run_resumes_from_its_checkpoint(tmp_path, monkeypatch):
+    """The resume that IS safe: rows carried with the chunk list that produced them.
+
+    A cancelled Actions job never reaches the end of `run_catalogue`, so the rows
+    have to be in the checkpoint the moment each chunk lands, not written once at
+    the end.
+    """
+    carried = population(12, seed=103)
+    rows = population(8, seed=104)
+    asked: list[str] = []
+
+    def fake_fetch(**kw):
+        for name in ("detail:a:A1", "detail:a:A2"):
+            if name in set(kw.get("done_chunks") or ()):
+                continue
+            asked.append(name)
+            kw["on_result"](name, {"status": 200, "n_rows": len(rows)}, rows)
+        return {"chunks": {}, "rows": list(kw.get("resume_rows") or []) + rows,
+                "census": {}, "verdict": "OK", "field_discovery": {"available": None}}
+
+    monkeypatch.setattr(catalogue, "fetch_catalogue", fake_fetch)
+    (tmp_path / "catalogue.inprogress.json").write_text(json.dumps(
+        {"completed_chunks": ["detail:a:A1"], "resume_rows": carried}))
+
+    rec = catalogue.run_catalogue(out_dir=tmp_path)
+    assert asked == ["detail:a:A2"]                    # the done chunk was skipped
+    assert rec["n_rows_fetched"] == len(carried) + len(rows)
+    assert any("resuming an interrupted run" in n for n in rec.get("notes", []))
+
+
+def test_every_checkpoint_carries_the_rows_fetched_so_far(tmp_path, monkeypatch):
+    """A job killed between chunks must leave a resumable checkpoint behind."""
+    rows = population(15, seed=107)
+    seen_states: list[dict] = []
+
+    def fake_fetch(**kw):
+        kw["on_result"]("detail:a:A1", {"status": 200, "n_rows": len(rows)}, rows)
+        seen_states.append(json.loads(
+            (tmp_path / "catalogue.inprogress.json").read_text()))
+        raise KeyboardInterrupt("job cancelled mid-fetch")
+
+    monkeypatch.setattr(catalogue, "fetch_catalogue", fake_fetch)
+    with pytest.raises(KeyboardInterrupt):
+        catalogue.run_catalogue(out_dir=tmp_path)
+
+    assert seen_states[0]["completed_chunks"] == ["detail:a:A1"]
+    assert len(seen_states[0]["resume_rows"]) == len(rows)
+    # And the result the last good run committed is still there to be read.
+    assert not (tmp_path / "catalogue.json").exists()
 
 
 # ---------------------------------------------------------------------------

@@ -1733,6 +1733,19 @@ def asassn_rows_to_lightcurve(rows: list[dict], target_id: str, ra: float, dec: 
 # ---------------------------------------------------------------------------
 # Clients --- runner-only network code
 # ---------------------------------------------------------------------------
+def _text_head(body: bytes, n: int) -> str:
+    """The first ``n`` characters of a response, or a note that it is binary.
+
+    Recording `r.text` of an Arrow buffer produces pages of replacement
+    characters in a committed artefact and hides the one thing worth reading.
+    """
+    try:
+        head = body[:n * 2].decode("utf-8")
+    except UnicodeDecodeError:
+        return f"<binary: {len(body)} bytes>"
+    return head[:n]
+
+
 def _session(timeout: float):
     """A ``requests.Session`` with a real per-request deadline.
 
@@ -1835,26 +1848,80 @@ class AsasSnSkyPatrol:
             except Exception as exc:                               # noqa: BLE001
                 rec["paths"][name] = {"error": str(exc)[:400]}
 
-        # WHICH SERIALISATION WILL IT SERVE?  The vendor client asks for
-        # `format: "arrow"` and decodes it with a pyarrow function that no longer
-        # exists (see `_pyasassn`), so the only way this module can read a light
-        # curve is if the server will serve something else.  Guessing which is
-        # exactly the mistake the probe exists to prevent, so every candidate is
-        # ASKED, on a tiny cone, and whatever comes back is recorded verbatim.
-        for fmt in ("json", "csv", "pandas", "arrow"):
+        # WHICH REQUEST DOES IT ACCEPT, AND WHICH SERIALISATION DOES IT SERVE?
+        #
+        # The first probe (2026-08-25) asked four formats with `cols:
+        # ["asas_sn_id"]` and got HTTP 500 from all four, while `/get_schema` and
+        # `/get_counts` answered 200.  A 500 on every format including the
+        # vendor's own is not a format question: either the request shape is
+        # wrong or the failure is server-side and after the query.  Two things
+        # separate those, and both are ASKED rather than assumed:
+        #
+        #   * the VENDOR-EXACT payload.  `pyasassn` 0.6.4 sends
+        #     cols=['asas_sn_id','ra_deg','dec_deg', +'catalog_sources' for
+        #     master_list] -- and a server that filters a cone by computing an
+        #     angular distance needs `ra_deg`/`dec_deg` to still BE there.  Our
+        #     single-column request would then raise inside the handler, which is
+        #     precisely a 500.
+        #   * the first bytes, in hex.  `pa.deserialize` reads a LEGACY buffer
+        #     format; a modern Arrow IPC stream starts `ARROW1` / `FFFFFFFF`, and
+        #     pyarrow>=12 can read that directly.  Which one comes back decides
+        #     whether this module can parse a light curve at all, and it cannot
+        #     be read off any documentation.
+        cols_default = ["asas_sn_id", "ra_deg", "dec_deg"]
+        variants = [
+            ("vendor_master", {"catalog": "master_list",
+                               "cols": [*cols_default, "catalog_sources"]}),
+            ("vendor_stellar", {"catalog": "stellar_main", "cols": cols_default}),
+            ("single_col", {"catalog": "master_list", "cols": ["asas_sn_id"]}),
+        ]
+        for label, base in variants:
+            for fmt in ("arrow", "json", "csv", "parquet", "pandas"):
+                key = f"cone_{label}_{fmt}"
+                try:
+                    r = s.post(
+                        f"{self.endpoint}/lookup_cone/radius0.02_ra180.0_dec0.0",
+                        json={**base, "format": fmt, "download": False})
+                    self.calls += 1
+                    body = r.content or b""
+                    rec["paths"][key] = {
+                        "status": int(r.status_code),
+                        "content_type": r.headers.get("content-type"),
+                        "bytes": len(body),
+                        "first_bytes_hex": body[:32].hex(),
+                        "body_head": _text_head(body, 300)}
+                except Exception as exc:                           # noqa: BLE001
+                    rec["paths"][key] = {"error": str(exc)[:400]}
+                if rec["paths"][key].get("status") == 200:
+                    # One shape answering is enough to settle the question; the
+                    # rest of the matrix is only there to find one.
+                    rec["accepted_request"] = {"variant": label, "format": fmt}
+                    break
+            if rec.get("accepted_request"):
+                break
+
+        # THE LIGHT-CURVE ENDPOINT ITSELF.  The index query above only names
+        # targets; the curves come from `get_block` on the data servers, with a
+        # base64 query hash the CLIENT builds.  Probed with a deliberately
+        # invalid hash: a 4xx that names the hash proves the route exists and is
+        # reachable without credentials, which is what has to be true before any
+        # of this is worth implementing.  A connection failure here would mean
+        # the data servers are firewalled even though the load balancer is not.
+        for server in (1, 2):
+            key = f"get_block_probe_data{server:02d}"
+            url = (f"http://asassn-data{server:02d}.ifa.hawaii.edu:9006/get_block/"
+                   f"query_hash-PROBE-block_idx-0-catalog-master_list")
             try:
-                r = s.post(
-                    f"{self.endpoint}/lookup_cone/radius0.01_ra0.0_dec0.0",
-                    json={"catalog": "master_list", "cols": ["asas_sn_id"],
-                          "format": fmt, "download": False})
+                r = s.get(url)
                 self.calls += 1
-                rec["paths"][f"cone_format_{fmt}"] = {
-                    "status": int(r.status_code),
-                    "content_type": r.headers.get("content-type"),
-                    "bytes": len(r.content or b""),
-                    "body_head": r.text[:400]}
+                body = r.content or b""
+                rec["paths"][key] = {"status": int(r.status_code),
+                                     "content_type": r.headers.get("content-type"),
+                                     "bytes": len(body),
+                                     "first_bytes_hex": body[:32].hex(),
+                                     "body_head": _text_head(body, 300)}
             except Exception as exc:                               # noqa: BLE001
-                rec["paths"][f"cone_format_{fmt}"] = {"error": str(exc)[:400]}
+                rec["paths"][key] = {"error": str(exc)[:400]}
         try:
             client = self._pyasassn()
             rec["paths"]["pyasassn"] = {"ok": True,

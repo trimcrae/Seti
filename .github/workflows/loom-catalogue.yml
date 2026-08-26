@@ -376,6 +376,17 @@ jobs:
           git add -f -- "$OUT/catalogue.json" || echo "no catalogue.json"
           git add -f -- "$OUT/catalogue_objects.csv" || echo "no catalogue_objects.csv"
           git add -f -- "$OUT/litcheck.json" || echo "no litcheck.json"
+          # The checkpoint of an UNFINISHED run, and the only thing a later run
+          # can legitimately resume from: it carries the rows fetched so far
+          # alongside the chunk list that produced them, so a job killed by its
+          # own timeout does not re-pay for the whole fetch.  A dead fetch lands
+          # here too, rather than over the committed screen
+          # (src/seti/loom/catalogue.py:run_catalogue).  `-A` rather than `-f`
+          # because a run that FINISHED deletes this file, and that deletion has
+          # to be staged as well -- a stale checkpoint left in git is a resume
+          # point offered for a run that already ended.
+          git add -A -f -- "$OUT/catalogue.inprogress.json" \
+            || echo "no catalogue.inprogress.json"
           echo "=== staged ==="
           git diff --cached --name-only
           if git diff --cached --quiet; then

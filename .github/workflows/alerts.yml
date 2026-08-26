@@ -125,14 +125,34 @@ jobs:
         if: steps.alerts.outputs.alert == 'true' && github.event.inputs.no_issue != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LABELS: ${{ steps.alerts.outputs.labels }}
         run: |
           # `gh issue create --label` FAILS on a label that does not exist, and
           # that failure would swallow the whole notification.
+          #
+          # The severity labels and the two oldest channels are created with
+          # chosen colours; everything else is created FROM THE LABELS THIS RUN
+          # ACTUALLY PRODUCED.  `alerts.issue_labels` emits one label per channel
+          # that raised something, so a hand-kept list here silently kills the
+          # first notification every new channel ever sends -- and the channels
+          # have outgrown it: tocsin_altfeeds, loom-catalogue, sextant,
+          # rubin_outage and cronwatch can all raise alerts today, and none of
+          # them was in the list.
           gh label create candidate -c "#B60205" -d "A channel promoted something" 2>/dev/null || true
           gh label create health    -c "#FBCA04" -d "The pipeline is broken in a way that produces no error" 2>/dev/null || true
           gh label create milestone -c "#0E8A16" -d "A capability came online" 2>/dev/null || true
           gh label create tocsin    -c "#1D76DB" -d "Rubin stellar alert screen" 2>/dev/null || true
           gh label create loom      -c "#5319E7" -d "Solar-system artefact screen" 2>/dev/null || true
+          IFS=',' read -ra _names <<< "${LABELS:-}"
+          for _n in "${_names[@]}"; do
+            _n="$(echo "$_n" | xargs)"
+            [ -n "$_n" ] || continue
+            gh label create "$_n" -c "#BFD4F2" \
+              -d "raised by the alerts workflow" 2>/dev/null || true
+          done
+          echo "labels for this issue: ${LABELS:-<none>}"
 
       - name: Open an issue and assign it
         id: issue

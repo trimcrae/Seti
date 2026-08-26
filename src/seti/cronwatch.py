@@ -309,6 +309,15 @@ def assess(workflows: list[ScheduledWorkflow], last_runs: dict[str, datetime | N
             rec["status"] = "NO_FIRING_IN_HORIZON"
             findings.append(rec)
             continue
+        # SATISFIED FIRST.  A run that already covers the expected firing settles
+        # the question, and asking it before anything else keeps a workflow that
+        # fired normally from being labelled by an unrelated edit to its file --
+        # `tocsin-altfeeds` fired its 18:40 slot at 21:12 on 2026-08-26 and was
+        # then reported SCHEDULE_TOO_NEW purely because the file had been touched
+        # since, for a concurrency change that has nothing to do with its cron.
+        if last is not None and last >= expected:
+            findings.append(rec)
+            continue
         born = (changed_at or {}).get(wf.file)
         if born is not None and expected < born:
             rec["status"] = "SCHEDULE_TOO_NEW"
@@ -322,9 +331,6 @@ def assess(workflows: list[ScheduledWorkflow], last_runs: dict[str, datetime | N
             # Too soon to call: the firing is due but GitHub's scheduler runs
             # late as a matter of course.
             rec["status"] = "WITHIN_GRACE"
-            findings.append(rec)
-            continue
-        if last is not None and last >= expected:
             findings.append(rec)
             continue
         rec["status"] = "MISSED"

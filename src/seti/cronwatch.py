@@ -374,6 +374,59 @@ def plan_catchup(findings: list[dict], state: dict, *,
     return out
 
 
+# ---------------------------------------------------------------------------
+# The gate: is the repository's own test workflow green on the default branch?
+#
+# WHY THIS LIVES HERE.  `watchdog`'s failure sweep deliberately skips `ci` --
+# `select(.name != "watchdog" and .name != "ci")` -- because auto-retrying a
+# failing test suite is fighting the signal rather than reading it.  That is the
+# right call about RETRYING and it left nobody watching: CI was red on `main`
+# from 2026-07-31 until 2026-08-22, twenty-two days, over a single lint error,
+# and it was found by accident.  Every screen in this repository is defended by
+# tests that nothing was checking still passed.
+#
+# So: not retried, but read, and reported through the same alert path as
+# everything else.
+GATE_WORKFLOW = "ci.yml"
+
+
+def gate_status(api, workflow_file: str = GATE_WORKFLOW,
+                branch: str = "main") -> dict:
+    """The newest completed run of the test workflow on the default branch."""
+    rec: dict = {"workflow": workflow_file, "branch": branch,
+                 "status": "UNKNOWN"}
+    if api is None or not hasattr(api, "latest_run"):
+        rec["note"] = "no API available; the gate was not read"
+        return rec
+    try:
+        run = api.latest_run(workflow_file, branch=branch)
+    except Exception as exc:                                       # noqa: BLE001
+        rec["error"] = str(exc)[:200]
+        rec["note"] = ("the Actions API did not answer; an unread gate is not a "
+                       "green one, and it is not a red one either")
+        return rec
+    if not run:
+        rec["status"] = "NO_RUN"
+        return rec
+    conclusion = str(run.get("conclusion") or "").lower()
+    rec.update({"conclusion": conclusion or None,
+                "run_status": run.get("status"),
+                "head_sha": run.get("head_sha"),
+                "run_url": run.get("html_url"),
+                "run_started_at": run.get("run_started_at"),
+                "run_id": run.get("id")})
+    if conclusion == "success":
+        rec["status"] = "GREEN"
+    elif conclusion in ("failure", "timed_out", "startup_failure"):
+        rec["status"] = "RED"
+    elif conclusion == "cancelled":
+        # A human (or a superseding push) stopped it.  Not a verdict on the code.
+        rec["status"] = "CANCELLED"
+    else:
+        rec["status"] = "PENDING"
+    return rec
+
+
 def sweep(root: Path | str = ".", *, api=None, now: datetime | None = None,
           ref: str = "main", dispatch: bool = True,
           out_dir: Path | str | None = None,
@@ -440,7 +493,9 @@ def sweep(root: Path | str = ".", *, api=None, now: datetime | None = None,
         k: v for k, v in state["caught_up"].items()
         if not v or _parse_iso(v) is None or _parse_iso(v) >= cutoff}
 
+    gate = gate_status(api, branch=ref)
     report = {"checked_at_utc": _iso(now),
+              "gate": gate,
               "n_workflows": len(workflows),
               "n_overdue": sum(1 for f in findings if f.get("overdue")),
               "n_unknown": sum(1 for f in findings if f["status"] == "UNKNOWN"),
@@ -503,6 +558,26 @@ class ActionsApi:
             return None
         stamp = runs[0].get("run_started_at") or runs[0].get("created_at")
         return _parse_iso(str(stamp)) if stamp else None
+
+    def latest_run(self, workflow_file: str, branch: str | None = None,
+                   event: str | None = None) -> dict | None:
+        """The newest run of a workflow, optionally on one branch."""
+        import requests
+
+        url = (f"{self.api_root}/repos/{self.repo}/actions/workflows/"
+               f"{workflow_file}/runs")
+        params: dict = {"per_page": 1}
+        if branch:
+            params["branch"] = branch
+        if event:
+            params["event"] = event
+        r = requests.get(url, headers=self._headers(), timeout=self.timeout,
+                         params=params)
+        if r.status_code == 404:
+            return None
+        r.raise_for_status()
+        runs = (r.json() or {}).get("workflow_runs") or []
+        return runs[0] if runs else None
 
     def workflow_changed_at(self, workflow_file: str) -> datetime | None:
         """When the file last changed on the default branch.

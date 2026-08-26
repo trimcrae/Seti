@@ -802,6 +802,50 @@ def health_alerts(root: Path, now: datetime | None = None) -> list[Alert]:
 
 
 # ---------------------------------------------------------------------------
+# Is the repository's own gate green?
+# ---------------------------------------------------------------------------
+def gate_alerts(root: Path) -> list[Alert]:
+    """CI red on the default branch, read from the scheduler sweep.
+
+    The one check in this repository that is about the repository rather than
+    the sky, and the omission it closes is documented in its own git log: CI was
+    red on `main` from 2026-07-31 to 2026-08-22 -- twenty-two days, one lint
+    error -- and was found by accident.  `watchdog` skips `ci` on purpose,
+    because auto-retrying a failing test suite argues with the signal instead of
+    reading it; that is a decision about RETRYING, and it left nobody reading.
+
+    Every screen here rests on tests.  A test suite nobody checks still passes is
+    not a safety net, it is a story about one.
+
+    Keyed by the commit, so a red gate notifies once per broken head rather than
+    every hour, and a fix that lands under a new commit closes the loop by
+    simply not raising.
+    """
+    rec = _load(root / "results" / "cronwatch" / "status.json")
+    if not isinstance(rec, dict):
+        return []
+    gate = rec.get("gate")
+    if not isinstance(gate, dict) or gate.get("status") != "RED":
+        return []
+    sha = str(gate.get("head_sha") or "unknown")
+    return [Alert(
+        key=f"gate:red:{sha[:12]}",
+        severity="health", channel="cronwatch",
+        title=f"CI is {gate.get('conclusion')} on {gate.get('branch')}",
+        body=(f"The newest `{gate.get('workflow')}` run on "
+              f"`{gate.get('branch')}` concluded **{gate.get('conclusion')}** "
+              f"at commit `{sha[:12]}`.\n\n{gate.get('run_url') or ''}\n\n"
+              f"Nothing retries this on purpose -- a failing test suite is a "
+              f"result, not a flake -- but nothing was reading it either until "
+              f"now: CI sat red on `main` from 2026-07-31 to 2026-08-22 over a "
+              f"single lint error. Every screen in this repository rests on "
+              f"these tests."),
+        detail={k: gate.get(k) for k in ("workflow", "branch", "conclusion",
+                                         "head_sha", "run_url", "run_id",
+                                         "run_started_at")})]
+
+
+# ---------------------------------------------------------------------------
 # Is the feed still serving what the screen needs?
 # ---------------------------------------------------------------------------
 def feed_alerts(root: Path) -> list[Alert]:
@@ -912,7 +956,7 @@ def evaluate(root: Path, now: datetime | None = None) -> list[Alert]:
     """Every alert condition, evaluated against whatever results exist."""
     return [*tocsin_alerts(root), *loom_alerts(root), *health_alerts(root, now),
             *frontier_recovery_alerts(root, now), *scheduler_alerts(root),
-            *feed_alerts(root)]
+            *feed_alerts(root), *gate_alerts(root)]
 
 
 def check(root: Path, state_path: Path | None = None,

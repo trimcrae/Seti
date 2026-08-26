@@ -14,6 +14,7 @@ two of them were watched.
 | the run **failed** | a red run in the Actions tab | `watchdog`, hourly, and it re-runs the failed jobs |
 | the **data** stopped | runs stay green, results stay fresh, the frontier stops moving | `alerts.health_alerts` — the frontier lag and stall checks, and `rubin-outage` for the cause |
 | the run **never started** | *nothing at all* | nobody, until now |
+| the **tests** went red | CI red on `main`; every screen still runs and still commits | nobody, until now — `watchdog` skips `ci` on purpose |
 
 The third is the nastiest, because it leaves no artefact anywhere. There is no
 failed run to retry — there is no run. The results do not change, so nothing is
@@ -79,6 +80,26 @@ monitor gets ignored:
   job is worse than either alone.
 * **At most three catch-ups per sweep.** Six channels dropping at once is a
   GitHub-wide problem, and firing six jobs into it is not the answer.
+
+## And one check that is about the repository, not the sky
+
+The same sweep reads **the gate**: the newest `ci.yml` run on the default
+branch. `watchdog`'s failure sweep skips `ci` deliberately —
+`select(.name != "watchdog" and .name != "ci")` — because auto-retrying a
+failing test suite argues with the signal instead of reading it. That is the
+right call about *retrying*, and it left nobody *reading*: CI was red on `main`
+from 2026-07-31 to 2026-08-22, twenty-two days, over one lint error, and it was
+found by accident.
+
+So the gate is read and reported, never retried. `RED` (failure, timed out, or
+a startup failure — the shape a workflow file that will not parse takes) raises
+a health alert keyed by the commit, so one broken head notifies once. `CANCELLED`
+does not raise: a human or a superseding push stopped it, which is not a verdict
+on the code. Neither does an API that would not answer — an unread gate is not a
+green one, and it is not a red one either.
+
+Every screen in this repository rests on those tests. A suite nobody checks
+still passes is not a safety net; it is a story about one.
 
 ## Reading the output
 

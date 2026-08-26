@@ -742,6 +742,46 @@ def test_every_watched_channel_has_a_marker_file_configured():
         assert name.endswith(".json"), channel
 
 
+def test_a_red_gate_raises_and_a_green_one_does_not(tmp_path):
+    """CI red on main was invisible for 22 days in 2026. Not any more."""
+    from seti.alerts import gate_alerts
+
+    d = tmp_path / "results" / "cronwatch"
+    d.mkdir(parents=True)
+
+    def sweep(gate):
+        (d / "status.json").write_text(json.dumps({"gate": gate, "workflows": []}))
+        return gate_alerts(tmp_path)
+
+    got = sweep({"status": "RED", "conclusion": "failure", "workflow": "ci.yml",
+                 "branch": "main", "head_sha": "deadbeefcafe1234",
+                 "run_url": "https://example.invalid/run/7"})
+    assert len(got) == 1
+    assert got[0].key == "gate:red:deadbeefcafe"
+    assert "failure" in got[0].title
+
+    assert sweep({"status": "GREEN", "conclusion": "success"}) == []
+    # An API that did not answer is not a red gate, and not a green one either.
+    assert sweep({"status": "UNKNOWN", "error": "502"}) == []
+    assert sweep({"status": "CANCELLED", "conclusion": "cancelled"}) == []
+
+
+def test_a_red_gate_notifies_once_per_broken_commit(tmp_path):
+    from seti.alerts import gate_alerts
+
+    d = tmp_path / "results" / "cronwatch"
+    d.mkdir(parents=True)
+
+    def key_for(sha):
+        (d / "status.json").write_text(json.dumps({"gate": {
+            "status": "RED", "conclusion": "failure", "head_sha": sha}}))
+        return gate_alerts(tmp_path)[0].key
+
+    first = key_for("aaaaaaaaaaaa1111")
+    assert key_for("aaaaaaaaaaaa1111") == first        # same head, one alert
+    assert key_for("bbbbbbbbbbbb2222") != first        # a new break notifies
+
+
 def test_a_feed_that_answers_but_cannot_serve_a_light_curve_alerts(tmp_path):
     """ASAS-SN's actual state on 2026-08-26: host up, every cone request 500.
 

@@ -234,6 +234,61 @@ def test_a_slot_after_the_last_edit_is_judged_normally():
 
 
 # ---------------------------------------------------------------------------
+# 3b. the gate
+# ---------------------------------------------------------------------------
+class GateApi:
+    """An API that answers only the gate query."""
+
+    def __init__(self, run):
+        self.run = run
+        self.asked: list[tuple] = []
+
+    def latest_run(self, workflow_file, branch=None, event=None):
+        self.asked.append((workflow_file, branch, event))
+        if isinstance(self.run, Exception):
+            raise self.run
+        return self.run
+
+
+@pytest.mark.parametrize("conclusion,expected", [
+    ("success", "GREEN"),
+    ("failure", "RED"),
+    ("timed_out", "RED"),
+    ("startup_failure", "RED"),          # the alerts.yml break of 2026-08-26
+    ("cancelled", "CANCELLED"),          # a human stopped it; not a verdict
+    (None, "PENDING"),
+])
+def test_the_gate_reads_the_conclusion(conclusion, expected):
+    api = GateApi({"conclusion": conclusion, "status": "completed",
+                   "head_sha": "abc123", "id": 1})
+    got = cw.gate_status(api, branch="main")
+    assert got["status"] == expected
+    assert api.asked == [("ci.yml", "main", None)]
+
+
+def test_an_unread_gate_is_not_a_green_one():
+    got = cw.gate_status(GateApi(RuntimeError("502")), branch="main")
+    assert got["status"] == "UNKNOWN"
+    assert "502" in got["error"]
+
+
+def test_the_gate_is_recorded_in_the_sweep(tmp_path):
+    root = repo_with(tmp_path, {"screen.yml": "40 18 * * 3"})
+
+    class Api(FakeApi):
+        def latest_run(self, workflow_file, branch=None, event=None):
+            return {"conclusion": "failure", "status": "completed",
+                    "head_sha": "deadbeefcafe", "id": 7,
+                    "html_url": "https://example.invalid/run/7"}
+
+    rep = cw.sweep(root, api=Api({"screen.yml": utc(2026, 8, 26, 18, 41)}),
+                   now=utc(2026, 8, 27, 12, 0), out_dir=root / "out")
+    assert rep["gate"]["status"] == "RED"
+    assert json.loads(
+        (root / "out" / "status.json").read_text())["gate"]["head_sha"] == "deadbeefcafe"
+
+
+# ---------------------------------------------------------------------------
 # 4. catch-up
 # ---------------------------------------------------------------------------
 class FakeApi:

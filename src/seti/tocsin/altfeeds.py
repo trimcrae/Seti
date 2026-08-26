@@ -2230,12 +2230,22 @@ class ZtfIrsa:
     #: uses its own current default, which is recorded by :meth:`describe`
     #: rather than pinned here --- a hard-coded release goes stale silently and
     #: a stale release is a light curve that stops growing.
-    def __init__(self, endpoint: str = ZTF.endpoint, timeout: float = 120.0,
-                 radius_arcsec: float = 1.5, collection: str | None = None):
+    def __init__(self, endpoint: str = ZTF.endpoint, timeout: float = 60.0,
+                 radius_arcsec: float = 1.5, collection: str | None = None,
+                 probe_timeout: float = 25.0):
         self.endpoint = endpoint.rstrip("/")
         self.timeout = float(timeout)
         self.radius_arcsec = float(radius_arcsec)
         self.collection = collection
+        # A DIAGNOSTIC GETS ITS OWN, SHORTER LEASH -- and the reason is not the
+        # same as the reason ASAS-SN got one.  `requests`' timeout is per socket
+        # read, not per request: a service that dribbles bytes holds the
+        # connection open indefinitely under any read timeout.  Probe run
+        # 33022081059 sat inside `describe()` for twenty-five minutes and was
+        # killed there, with a 120 s timeout configured and doing nothing.  So
+        # the probe also enforces a wall-clock BUDGET across its requests, which
+        # is the only limit that binds a slow trickle.
+        self.probe_timeout = float(probe_timeout)
         self.calls = 0
         self.notes: list[str] = []
         self._s = None
@@ -2280,23 +2290,38 @@ class ZtfIrsa:
         A service that returns rows for BOTH is not filtering by position and
         every light curve this module builds from it would be someone else's.
         """
+        import time as _time
+
         rec: dict = {"survey": ZTF.key, "endpoint": self.endpoint,
-                     "reached": False, "paths": {}}
-        s = self._sess()
+                     "reached": False, "paths": {},
+                     "probe_budget_s": self.probe_timeout * 4}
+        s = _session(self.probe_timeout)
+        # A NARROW WINDOW AND A SMALL CONE, on purpose.  The question here is
+        # "what does this service serve", not "give me everything it has": a
+        # 5-arcsec cone with no time cut asks for every epoch of every object in
+        # the field, and the answer to a diagnostic should be small enough to
+        # arrive.  One ZTF season is plenty to see the columns and the bands.
+        window = (59000.0, 59365.0)
         probes = [
-            # A bright, well-observed northern star field: 3C 273 is at
-            # +2 deg, inside ZTF's footprint and certain to be covered.
-            ("covered_csv", 187.2779, 2.0524, 5.0, "csv"),
-            ("covered_votable", 187.2779, 2.0524, 5.0, "votable"),
-            ("covered_ipac", 187.2779, 2.0524, 5.0, "ipac_table"),
+            # 3C 273's field: +2 deg, inside ZTF's footprint, certain to be
+            # covered and certain to have been visited many times.
+            ("covered_csv", 187.2779, 2.0524, 2.0, "csv"),
+            ("covered_votable", 187.2779, 2.0524, 2.0, "votable"),
             # Deep south: ZTF is a Palomar survey and does not go here.  Rows
             # returned for this position would mean the cone is being ignored.
-            ("uncovered_control", 60.0, -80.0, 5.0, "csv"),
+            ("uncovered_control", 60.0, -80.0, 2.0, "csv"),
         ]
+        deadline = _time.monotonic() + self.probe_timeout * 4
         for name, ra, dec, rad, fmt in probes:
+            if _time.monotonic() > deadline:
+                rec["paths"][name] = {"skipped": "probe budget exhausted; the "
+                                                 "service is answering too slowly "
+                                                 "to diagnose within its own leash"}
+                continue
             try:
                 r = s.get(self.endpoint,
-                          params=self._params(ra, dec, rad, fmt=fmt))
+                          params=self._params(ra, dec, rad, fmt=fmt,
+                                              mjd_lo=window[0], mjd_hi=window[1]))
                 self.calls += 1
                 body = r.content or b""
                 text = _text_head(body, 600)
@@ -2342,11 +2367,29 @@ class ZtfIrsa:
 
     def lightcurves(self, requests_: list[dict], radius_arcsec: float | None = None,
                     mjd_lo: float | None = None, mjd_hi: float | None = None,
-                    on_result=None) -> dict[str, LightCurve]:
-        """One cone per target; every epoch inside it, all bands together."""
+                    on_result=None, max_seconds: float = 5400.0
+                    ) -> dict[str, LightCurve]:
+        """One cone per target; every epoch inside it, all bands together.
+
+        ``max_seconds`` bounds the WHOLE slice, not each request.  Per-request
+        timeouts do not bound a walk: 200 targets at 60 s each is three hours,
+        past the job's own timeout, and a job killed by the runner commits
+        nothing at all.  When the budget runs out the walk stops and says how far
+        it got -- a short slice honestly reported beats a long one that never
+        lands.
+        """
+        import time as _time
+
         out: dict[str, LightCurve] = {}
         s = self._sess()
-        for req in requests_:
+        deadline = _time.monotonic() + float(max_seconds)
+        for i, req in enumerate(requests_):
+            if _time.monotonic() > deadline:
+                self.notes.append(
+                    f"time budget of {max_seconds:g}s exhausted after {i} of "
+                    f"{len(requests_)} targets; the slice is short and this "
+                    f"record says so rather than the ledger implying a full walk")
+                break
             tid = str(req["target_id"])
             try:
                 r = s.get(self.endpoint,

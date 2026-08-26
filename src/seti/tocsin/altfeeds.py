@@ -1829,7 +1829,15 @@ class AsasSnSkyPatrol:
         """
         rec: dict = {"survey": ASASSN.key, "endpoint": self.endpoint,
                      "reached": False, "paths": {}}
-        s = _session(self.timeout)
+        # A PROBE GETS A SHORT LEASH.  `self.timeout` is 300 s because a real
+        # light-curve pull is allowed to be slow; a diagnostic is not.  The
+        # matrix below makes seventeen requests, so a service that HANGS rather
+        # than answering would burn 85 minutes of runner time before writing a
+        # word -- which is what happened on 2026-08-26 (run 33017129997, killed
+        # after 19 minutes inside this method).  30 s is far longer than any
+        # answer this service has ever given.
+        probe_timeout = min(float(self.timeout), 30.0)
+        s = _session(probe_timeout)
 
         # The service's own metadata endpoints.  `get_schema` is the one that
         # matters: it names every column the light-curve tables actually carry,
@@ -1875,9 +1883,19 @@ class AsasSnSkyPatrol:
             ("vendor_stellar", {"catalog": "stellar_main", "cols": cols_default}),
             ("single_col", {"catalog": "master_list", "cols": ["asas_sn_id"]}),
         ]
+        # And a leash on the MATRIX as well as on each request: once the service
+        # has failed to answer three times in a row it is not going to start, and
+        # walking the remaining twelve combinations only delays the record that
+        # says so.
+        transport_failures = 0
         for label, base in variants:
             for fmt in ("arrow", "json", "csv", "parquet", "pandas"):
                 key = f"cone_{label}_{fmt}"
+                if transport_failures >= 3:
+                    rec["paths"][key] = {"skipped": "three consecutive transport "
+                                                    "failures -- the service is not "
+                                                    "answering, not answering badly"}
+                    continue
                 try:
                     r = s.post(
                         f"{self.endpoint}/lookup_cone/radius0.02_ra180.0_dec0.0",
@@ -1890,8 +1908,10 @@ class AsasSnSkyPatrol:
                         "bytes": len(body),
                         "first_bytes_hex": body[:32].hex(),
                         "body_head": _text_head(body, 300)}
+                    transport_failures = 0
                 except Exception as exc:                           # noqa: BLE001
                     rec["paths"][key] = {"error": str(exc)[:400]}
+                    transport_failures += 1
                 if rec["paths"][key].get("status") == 200:
                     # One shape answering is enough to settle the question; the
                     # rest of the matrix is only there to find one.

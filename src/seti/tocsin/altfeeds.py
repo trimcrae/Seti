@@ -3034,6 +3034,9 @@ def _fetch(spec: SurveySpec, targets, lth: LightCurveThresholds,
     order: a bounded quota spent on stars too faint to carry a detectable event
     buys a denominator and no possible numerator.
     """
+    import os as _os
+    import time as _time
+
     notes: list[str] = []
     n = len(targets)
     mag = np.full(n, np.nan)
@@ -3102,7 +3105,30 @@ def _fetch(spec: SurveySpec, targets, lth: LightCurveThresholds,
                          "token as a repository secret; the workflow passes it exactly "
                          "as LASAIR_TOKEN is passed.")
             return {}, {}, notes
+        # A WALL-CLOCK BUDGET OVER THE WHOLE WALK, for the same reason ZTF has
+        # one, learned here the expensive way.  ATLAS is a queue: `collect`
+        # waits up to `max_wait_s` PER TASK, and a target can need several tasks
+        # (one per proper-motion segment, plus a baseline pass).  Nothing bounded
+        # the sum, so a 200-target slice could not finish inside the job's own
+        # 240-minute timeout -- and a job the runner kills runs no commit step,
+        # so the run costs hours of throttled quota and lands NOTHING.  The
+        # scheduled run of 2026-08-26 was doing exactly that, 133 minutes into
+        # its ATLAS step with no result written, when it was cut short.
+        #
+        # 150 minutes leaves the job an hour to screen, ledger and commit what
+        # the walk did fetch.  A short slice that lands beats a long one that
+        # does not, and the note says which happened.
+        budget_s = float(_os.environ.get("ALTFEEDS_FETCH_BUDGET_S") or 9000.0)
+        deadline = _time.monotonic() + budget_s
+        n_walked = 0
         for i in order:
+            if _time.monotonic() > deadline:
+                notes.append(
+                    f"fetch budget of {budget_s:g}s exhausted after {n_walked} of "
+                    f"{len(order)} targets; this slice is SHORT and the ledger's "
+                    f"denominator counts only what was walked")
+                break
+            n_walked += 1
             tid = str(ids[i])
             try:
                 lc, q = client.lightcurve(tid, float(ra[i]), float(dec[i]),
@@ -3112,6 +3138,8 @@ def _fetch(spec: SurveySpec, targets, lth: LightCurveThresholds,
                 continue
             lightcurves[tid] = lc
             quiescent[tid] = q
+        notes.append(f"atlas: walked {n_walked} of {len(order)} targets, "
+                     f"{len(lightcurves)} light curves")
     return lightcurves, quiescent, notes
 
 

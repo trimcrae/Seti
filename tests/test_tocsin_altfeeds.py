@@ -995,3 +995,56 @@ def test_ztf_is_deeper_than_atlas_where_it_matters():
     assert A.ZTF.depth_5sigma["zg"] > A.ATLAS.depth_5sigma["c"] + 1.0
     assert A.ZTF.saturation_mag["zg"] >= A.RUBIN_SATURATION_MAG - 4.0
     assert A.ZTF.exposure_s == 30.0                  # a Rubin visit, as ATLAS is
+
+
+def test_the_band_bracket_reproduces_the_pairs_atlas_had_hard_coded():
+    """The generalisation must not move ATLAS's numbers.
+
+    `c` sits between SDSS g and r, `o` between r and i -- which is exactly what
+    was written down by hand before the bracket was derived from wavelength.
+    """
+    import pandas as pd
+
+    t = pd.DataFrame({"g_sdss_mag": [15.0], "r_sdss_mag": [14.5],
+                      "i_sdss_mag": [14.3], "z_sdss_mag": [14.2],
+                      "u_sdss_mag": [16.0]})
+    c = A.synthetic_native_mag(t, A.ATLAS, "c")[0]
+    o = A.synthetic_native_mag(t, A.ATLAS, "o")[0]
+    assert 14.5 < c < 15.0          # between g and r, as its wavelength is
+    assert 14.3 < o < 14.5          # between r and i
+
+
+def test_every_ztf_band_is_predictable_from_the_target_list():
+    """The failure this guards: a new feed whose census silently reaches zero.
+
+    `synthetic_native_mag` used to return NaN for any survey but two, so adding
+    ZTF produced a census in which all three of its bands reached no targets at
+    all, while every other number in the record looked healthy.
+    """
+    import pandas as pd
+
+    t = pd.DataFrame({"g_sdss_mag": [15.0], "r_sdss_mag": [14.5],
+                      "i_sdss_mag": [14.3], "z_sdss_mag": [14.2],
+                      "u_sdss_mag": [16.0]})
+    for band in A.ZTF.native_bands:
+        m = A.synthetic_native_mag(t, A.ZTF, band)[0]
+        assert np.isfinite(m), f"{band} unpredictable"
+    # zg is 2 nm from SDSS g, so it must land essentially on g.
+    assert A.synthetic_native_mag(t, A.ZTF, "zg")[0] == pytest.approx(15.0, abs=0.02)
+    # zr is redder than SDSS r and bluer than i.
+    assert 14.3 < A.synthetic_native_mag(t, A.ZTF, "zr")[0] < 14.5
+
+
+def test_a_band_outside_the_sdss_set_is_unknown_not_extrapolated():
+    """A census that counts a band nobody can predict is worse than one that
+    says it could not."""
+    import dataclasses
+
+    import pandas as pd
+
+    t = pd.DataFrame({"g_sdss_mag": [15.0], "r_sdss_mag": [14.5],
+                      "i_sdss_mag": [14.3], "z_sdss_mag": [14.2],
+                      "u_sdss_mag": [16.0]})
+    far_ir = dataclasses.replace(A.ZTF, band_wl_um={**A.ZTF.band_wl_um, "zk": 2.2},
+                                 native_bands=("zk",))
+    assert not np.isfinite(A.synthetic_native_mag(t, far_ir, "zk")[0])

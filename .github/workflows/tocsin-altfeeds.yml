@@ -103,7 +103,15 @@ permissions:
 concurrency:
   # Each survey keeps a single mutable ledger file committed back to the branch;
   # two concurrent runs would race each other's commits and lose one.
-  group: tocsin-altfeeds-ledger
+  #
+  # A PROBE-ONLY RUN GETS ITS OWN GROUP.  It touches probe.json and census.json
+  # and never the ledger, so there is nothing for it to race -- while a screening
+  # run can hold the lane for hours (ATLAS is a throttled job queue, and the job
+  # timeout is four).  Sharing the group meant the diagnostic that says whether a
+  # feed works at all had to wait behind the run that needs the answer.
+  group: >-
+    tocsin-altfeeds-${{ github.event.inputs.probe_only == 'true'
+    && 'probe' || 'ledger' }}
   cancel-in-progress: false
 
 jobs:

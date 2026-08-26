@@ -1048,3 +1048,49 @@ def test_a_band_outside_the_sdss_set_is_unknown_not_extrapolated():
     far_ir = dataclasses.replace(A.ZTF, band_wl_um={**A.ZTF.band_wl_um, "zk": 2.2},
                                  native_bands=("zk",))
     assert not np.isfinite(A.synthetic_native_mag(t, far_ir, "zk")[0])
+
+
+def test_the_ztf_walk_stops_at_its_time_budget_and_says_so():
+    """A per-request timeout does not bound a walk.
+
+    200 targets at 60 s each is over three hours -- past the job's own timeout,
+    and a job the runner kills commits nothing at all.  A short slice honestly
+    reported beats a long one that never lands.
+    """
+    class SlowClock:
+        def __init__(self):
+            self.t = 0.0
+
+        def monotonic(self):
+            self.t += 100.0                  # every call burns 100 s
+            return self.t
+
+    c = A.ZtfIrsa()
+    reqs = [{"target_id": str(i), "ra": 1.0 * i, "dec": 2.0} for i in range(50)]
+    import sys
+    import types
+    fake_time = types.ModuleType("time")
+    clock = SlowClock()
+    fake_time.monotonic = clock.monotonic
+    real = sys.modules.get("time")
+    sys.modules["time"] = fake_time
+    try:
+        out = c.lightcurves(reqs, max_seconds=250.0)
+    finally:
+        if real is not None:
+            sys.modules["time"] = real
+    assert out == {}
+    assert any("time budget" in n for n in c.notes)
+
+
+def test_the_ztf_probe_asks_a_bounded_question():
+    """A diagnostic that asks for everything is a diagnostic that never answers.
+
+    Probe 33022081059 sat in `describe()` for 25 minutes with a 120 s timeout
+    configured: `requests` times out on socket reads, not on the request, so a
+    slow trickle is unbounded. The probe now carries a wall-clock budget, a
+    small cone and a one-season window.
+    """
+    c = A.ZtfIrsa()
+    assert c.probe_timeout <= 30.0
+    assert c.timeout <= 60.0

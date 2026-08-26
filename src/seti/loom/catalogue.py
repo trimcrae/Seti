@@ -92,6 +92,7 @@ function and is unit-tested offline against synthetic catalogues.
 
 from __future__ import annotations
 
+import inspect
 import json
 import math
 import re
@@ -1441,6 +1442,27 @@ def fetch_covariance(spkid: str, timeout: float = 60.0, session=None) -> dict:
     return out
 
 
+def _emit(on_result, name: str, rec: dict, rows: Sequence[dict]) -> None:
+    """Call an ``on_result`` callback, handing it the rows if it wants them.
+
+    The orchestrator needs the rows fetched *so far* at every checkpoint, not
+    just the per-chunk record: a chunk list written without them is not a resume
+    point, it is an instruction to skip work whose output is gone (the failure of
+    2026-08-26, run 33014829553).  Older two-argument callbacks -- the test fakes
+    among them -- keep working, and the arity is read from the signature rather
+    than caught as a ``TypeError`` so a genuine ``TypeError`` raised *inside* the
+    callback is not silently swallowed and retried.
+    """
+    try:
+        n_params = len(inspect.signature(on_result).parameters)
+    except (TypeError, ValueError):                            # builtins, C funcs
+        n_params = 2
+    if n_params >= 3:
+        on_result(name, rec, rows)
+    else:
+        on_result(name, rec)
+
+
 def fetch_catalogue(timeout: float = 300.0, census_timeout: float = 900.0,
                     session=None, on_result=None, do_census: bool = True,
                     resume_rows: Sequence[dict] | None = None,
@@ -1491,7 +1513,7 @@ def fetch_catalogue(timeout: float = 300.0, census_timeout: float = 900.0,
             if rec.get("status") == 200:
                 out["verdict"] = "OK"
             if on_result is not None:
-                on_result(name, rec)
+                _emit(on_result, name, rec, out["rows"])
 
     if do_census:
         for kind, label in KINDS:
@@ -1503,7 +1525,7 @@ def fetch_catalogue(timeout: float = 300.0, census_timeout: float = 900.0,
             rec.pop("rows", None)
             out["census"][label] = rec
             if on_result is not None:
-                on_result(name, rec)
+                _emit(on_result, name, rec, out["rows"])
     out["n_rows"] = len(out["rows"])
     return out
 
@@ -1536,6 +1558,19 @@ def run_catalogue(cfg=None, out_dir=None, do_census: bool = True,
     # overwrite that run's answer with an answer to a different question.
     out = Path(out_dir) if out_dir else root / DEFAULT_RESULTS_DIR
     path = out / "catalogue.json"
+    # WHERE THE CHECKPOINTS GO, AND WHY IT IS NOT `catalogue.json`.
+    # `catalogue.json` is a RESULT: the workflow commits it, the staleness check
+    # reads its mtime, and a human reads it as the state of the catalogue.  It is
+    # not scratch space.  Writing the in-flight record there means the good screen
+    # is destroyed by the first checkpoint of every subsequent run, before a
+    # single row has been fetched -- so a run that then dies, times out, or comes
+    # back empty leaves an empty file where the answer was.  That is exactly what
+    # happened on 2026-08-26 (run 33014829553): 23 lines replaced 15,796, the job
+    # went green, and the freshly written file reset the staleness clock.
+    # Checkpoints therefore go to their own file, which is also the ONLY resume
+    # point (see below), and `catalogue.json` is written once, at the end, when
+    # there is something to write.
+    progress_path = out / "catalogue.inprogress.json"
 
     rec: dict = {"screened_at_utc": _utc(), "verdict": "NOT_RUN",
                  "g_normalisation": g_normalisation(),
@@ -1550,19 +1585,42 @@ def run_catalogue(cfg=None, out_dir=None, do_census: bool = True,
                  "fetch": {}}
 
     def checkpoint() -> None:
-        _write_json(path, rec)
+        _write_json(progress_path, rec)
 
-    # Resume: a previous run's committed chunks are not re-fetched.
+    # RESUME, AND THE ONE RULE THAT MAKES IT SAFE: the rows are the resume point,
+    # never the chunk list.
+    #
+    # A finished run records `completed_chunks` for the record and deliberately
+    # drops `resume_rows` -- a megabyte of duplicated input nobody should commit
+    # monthly.  Reading that chunk list as "already done" skips every fetch and
+    # screens ZERO rows, which is not a resume, it is a catalogue that deletes
+    # itself on its second firing.  So a chunk is skipped only when the rows it
+    # produced are carried back in with it, and only an INTERRUPTED run (whose
+    # checkpoint file survives) can offer that.
     done: list[str] = []
     resume: list[dict] = []
-    if path.exists():
+    # Kept in a local list because `rec.update(scr.as_dict())` below carries the
+    # SCREEN's `notes` and would otherwise drop everything recorded up here.
+    run_notes: list[str] = rec.setdefault("notes", [])
+    if progress_path.exists():
         try:
-            prev = json.loads(path.read_text())
-            done = list(prev.get("completed_chunks") or [])
-            resume = list(prev.get("resume_rows") or [])
+            prev_progress = json.loads(progress_path.read_text())
+            resume = list(prev_progress.get("resume_rows") or [])
+            if resume:
+                done = list(prev_progress.get("completed_chunks") or [])
+                rec.setdefault("notes", []).append(
+                    f"resuming an interrupted run: {len(done)} chunk(s) and "
+                    f"{len(resume)} row(s) carried forward from "
+                    f"{progress_path.name}")
+            elif prev_progress.get("completed_chunks"):
+                rec.setdefault("notes", []).append(
+                    f"{progress_path.name} lists "
+                    f"{len(prev_progress['completed_chunks'])} completed chunk(s) "
+                    "but carries no rows, so nothing is skipped -- a chunk list "
+                    "without its rows is not a resume point")
         except Exception as exc:                              # noqa: BLE001
             rec.setdefault("notes", []).append(
-                f"could not read the previous {path.name} for resume: {exc!r}")
+                f"could not read {progress_path.name} for resume: {exc!r}")
     rec["resumed_chunks"] = done
     checkpoint()
 
@@ -1570,10 +1628,16 @@ def run_catalogue(cfg=None, out_dir=None, do_census: bool = True,
     rec["fetch"] = progress
     completed: list[str] = list(done)
 
-    def _record(name, value):
+    def _record(name, value, rows=()):
         progress[name] = {k: v for k, v in value.items() if k != "rows"}
         completed.append(name)
         rec["completed_chunks"] = completed
+        # The rows go into EVERY checkpoint, because the run that needs them is
+        # the one that never reaches the end: an Actions job killed by its own
+        # timeout or a cancellation runs no more of this function.  They are
+        # dropped again below if the run finishes.
+        if rows:
+            rec["resume_rows"] = list(rows)
         checkpoint()
 
     fetched = fetch_catalogue(on_result=_record, do_census=do_census,
@@ -1589,12 +1653,22 @@ def run_catalogue(cfg=None, out_dir=None, do_census: bool = True,
                        "non-gravitational queries.  This is a DEAD FETCH, not a "
                        "null result: the two standing exceedances are neither "
                        "confirmed nor withdrawn by it")
+        rec["dead_fetch"] = True
+        # A dead fetch NEVER becomes the committed record.  It stays in the
+        # checkpoint file, where the next run can resume from it and a human can
+        # read what the service said; `catalogue.json` keeps whatever real screen
+        # was already there.  The caller is expected to fail the job on this
+        # verdict rather than exit green (see `cli._cmd_loom_catalogue`): a green
+        # run is what let this failure reach `main` unnoticed.
+        rec["previous_result_kept"] = path.exists()
         checkpoint()
-        print(f"[loom] catalogue verdict={rec['verdict']} n_rows=0")
+        print(f"[loom] catalogue verdict={rec['verdict']} n_rows=0 "
+              f"(DEAD FETCH -- {path.name} left as it was)")
         return rec
 
     scr = screen_catalogue(rows, th=th, max_tail=max_tail)
     rec.update(scr.as_dict())
+    rec["notes"] = [*run_notes, *(rec.get("notes") or [])]
     rec["n_rows_fetched"] = len(rows)
 
     # The census, and the completeness check it makes possible.
@@ -1644,7 +1718,16 @@ def run_catalogue(cfg=None, out_dir=None, do_census: bool = True,
             f"{len(incomplete)} chunk(s) did not complete ({', '.join(incomplete)}); "
             f"the fetched rows are carried in `resume_rows` so the next run does not "
             f"re-pay for them, and every fraction above is over a PARTIAL pull")
-    checkpoint()
+        checkpoint()
+    else:
+        # Finished.  The rows are dropped from the record (a megabyte of raw
+        # input is not a result -- `catalogue_objects.csv` carries the screened
+        # quantities), and with them goes the checkpoint file: leaving one behind
+        # would offer the NEXT run a resume point with no rows in it.
+        rec.pop("resume_rows", None)
+        progress_path.unlink(missing_ok=True)
+    # The result, written once, now that there is a result to write.
+    _write_json(path, rec)
 
     if write_objects_csv:
         _write_objects_csv(out / "catalogue_objects.csv", scr.entries)

@@ -125,8 +125,6 @@ jobs:
         if: steps.alerts.outputs.alert == 'true' && github.event.inputs.no_issue != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LABELS: ${{ steps.alerts.outputs.labels }}
         run: |
           # `gh issue create --label` FAILS on a label that does not exist, and

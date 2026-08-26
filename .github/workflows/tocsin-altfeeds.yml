@@ -58,7 +58,7 @@ on:
   workflow_dispatch:
     inputs:
       survey:
-        description: "Which feed to run: asassn | atlas | both"
+        description: "Which feed to run: asassn | atlas | ztf | both (= all three)"
         required: false
         # `both`, to match what the SCHEDULE does.  On a cron firing every
         # `github.event.inputs.*` is empty, and the steps below read empty as
@@ -275,6 +275,35 @@ jobs:
               print("note:", n)
           PY
 
+      - name: Screen ZTF (IRSA light-curve service)
+        if: github.event.inputs.probe_only != 'true' && (github.event.inputs.survey == 'ztf' || github.event.inputs.survey == 'both' || github.event.inputs.survey == '')
+        env:
+          MAX_TARGETS: ${{ github.event.inputs.max_targets }}
+          MJD_LO: ${{ github.event.inputs.mjd_lo }}
+          MJD_HI: ${{ github.event.inputs.mjd_hi }}
+        run: |
+          python - <<'PY'
+          import os
+          from seti.tocsin.altfeeds import run_survey
+
+          # No token and no queue: IRSA serves the ZTF archive directly, which is
+          # why this feed is the one a scheduled job can lean on.  It is also the
+          # only one of the three that depends on neither a broker (all stopped
+          # when Rubin did) nor a service that has since gone down (ASAS-SN).
+          def _f(name):
+              v = os.environ.get(name, "").strip()
+              return float(v) if v else None
+
+          rec = run_survey("ztf",
+                           max_targets=int(os.environ.get("MAX_TARGETS") or 200),
+                           mjd_lo=_f("MJD_LO"), mjd_hi=_f("MJD_HI"))
+          print("verdict:", rec.get("verdict"), "| denominator:", rec.get("denominator"))
+          for k in sorted(rec.get("counts", {})):
+              print(f"  {k}: {rec['counts'][k]}")
+          for n in rec.get("notes", [])[:40]:
+              print("note:", n)
+          PY
+
       - name: Summarise what each feed could and could not test
         if: always()
         run: |
@@ -317,6 +346,9 @@ jobs:
           git add -f -- results/tocsin_altfeeds/atlas/summary.json || echo "no atlas summary"
           git add -f -- results/tocsin_altfeeds/atlas/events.json || echo "no atlas events"
           git add -f -- results/tocsin_altfeeds/atlas/ledger_atlas.json || echo "no atlas ledger"
+          git add -f -- results/tocsin_altfeeds/ztf/summary.json || echo "no ztf summary"
+          git add -f -- results/tocsin_altfeeds/ztf/events.json || echo "no ztf events"
+          git add -f -- results/tocsin_altfeeds/ztf/ledger_ztf.json || echo "no ztf ledger"
           echo "=== staged ==="
           git diff --cached --name-only
           if git diff --cached --quiet; then

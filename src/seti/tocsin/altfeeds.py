@@ -338,7 +338,62 @@ ATLAS = SurveySpec(
            "scheduled by lunation, so same-night two-band coverage is rare."),
 )
 
-SURVEYS: dict[str, SurveySpec] = {ASASSN.key: ASASSN, ATLAS.key: ATLAS}
+# ZTF, through IRSA's own light-curve service --- NOT through a broker.
+#
+# WHY A THIRD FEED, AND WHY THIS ONE.  ASAS-SN's query and light-curve services
+# went down under us (probe of 2026-08-26: fifteen cone requests, every one HTTP
+# 500; both data servers refusing connections), which left ATLAS carrying the
+# whole bright sample alone.  ZTF restores it from a different direction: IRSA
+# serves the archive directly, so it depends on none of the alert brokers that
+# stopped when Rubin did (docs/rubin-outage.md), and none of the ASAS-SN
+# machinery that is down.  A public archive with no token and no queue is also
+# the only one of the three that a scheduled job can lean on without an account.
+#
+# WHAT IT ADDS THAT ATLAS DOES NOT.  ATLAS saturates near 12.5 and ZTF near 12.5
+# too, but ZTF is ~1.3 mag DEEPER per exposure (20.8 vs 19.5 in the blue), so the
+# window 16 < m < 20.8 --- fainter than Rubin's saturation, out of ATLAS's useful
+# reach --- is ZTF's alone.  Three bands rather than two, and g and r are taken
+# on the SAME night far more often than ATLAS's lunation-scheduled c and o, so
+# the achromaticity discriminant that ASAS-SN could not run at all and ATLAS runs
+# rarely becomes routinely available here.
+#
+# WHAT IT LOSES, AND THIS IS THE HONEST COST.  The service returns MATCHFILE
+# light curves: epochs where the object was DETECTED.  There is no forced
+# photometry, so a non-detection is not distinguishable from an epoch that was
+# never taken, and the exact denominator ATLAS gives us is not available.  For
+# this sample that bites less than it sounds --- these stars sit 4 to 8
+# magnitudes above ZTF's per-epoch limit, so an absent epoch means "not
+# observed", not "too faint", unless the star dropped by more than 4 mag --- but
+# it is a real difference in kind and `run_survey` marks the denominator as
+# detection-dominated rather than exact.  Every number below is nominal and is
+# superseded by what the probe and the per-epoch `limitmag` column actually say.
+ZTF = SurveySpec(
+    key="ztf",
+    name="ZTF (IRSA light-curve service)",
+    endpoint="https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves",
+    native_bands=("zg", "zr", "zi"),
+    band_label={"zg": "g", "zr": "r", "zi": "i"},
+    band_wl_um={"zg": 0.4722, "zr": 0.6339, "zi": 0.7886},
+    depth_5sigma={"zg": 20.8, "zr": 20.6, "zi": 19.9},
+    saturation_mag={"zg": 12.5, "zr": 12.5, "zi": 12.5},
+    exposure_s=30.0,                   # THE SAME AS A RUBIN VISIT, as ATLAS is
+    exposures_per_epoch=1,             # one exposure per visit, unlike ATLAS's quad
+    psf_fwhm_arcsec=2.0,
+    pixel_scale_arcsec=1.01,
+    aperture_radius_arcsec=3.0,
+    flux_unit_to_njy=1.0,              # the service serves MAGNITUDES; see
+                                       # `ztf_rows_to_lightcurve`, which converts
+    time_is_jd=False,                  # `mjd` column is served alongside `hjd`
+    is_difference_flux=False,          # matchfile photometry, not subtraction
+    fixed_catalogue_position=True,     # keyed to ZTF's own matchfile objects
+    auth_env=None,                     # public; no token, no queue
+    notes=("Detections only -- no forced photometry, so the denominator is "
+           "detection-dominated rather than exact.  30 s exposures, so a "
+           "sub-visit event is diluted exactly as it is in a Rubin visit."),
+)
+
+SURVEYS: dict[str, SurveySpec] = {ASASSN.key: ASASSN, ATLAS.key: ATLAS,
+                                  ZTF.key: ZTF}
 
 # Approximate Rubin single-visit saturation, AB, in r.  A 30 s LSST visit on an
 # 8.4 m mirror saturates at roughly this magnitude; the exact value moves with
@@ -1541,6 +1596,142 @@ def _num(row: dict, key: str) -> float:
     return _numv(row.get(key))
 
 
+def parse_csv_text(text: str) -> tuple[list[str], list[dict]]:
+    """Parse a CSV response into its own header names and row dicts.
+
+    Keyed by the file's own header line, never by position, for the reason
+    :func:`parse_atlas_text` gives: a re-ordered column read positionally
+    produces a light curve rather than an error.
+    """
+    import csv as _csv
+    import io as _io
+
+    reader = _csv.reader(_io.StringIO(text))
+    rows: list[dict] = []
+    header: list[str] = []
+    for i, parts in enumerate(reader):
+        if i == 0:
+            header = [c.strip().lstrip("#").strip().lower() for c in parts]
+            continue
+        if not parts or len(parts) != len(header):
+            continue
+        rows.append(dict(zip(header, [c.strip() for c in parts], strict=True)))
+    return header, rows
+
+
+# ZTF's per-epoch quality word.  IRSA documents `catflags` as a bitmask of
+# processing conditions, and its own service exposes BAD_CATFLAGS_MASK=32768 as
+# the recommended cut for "photometry usable for science".  Applied here rather
+# than in the request so the record keeps the rejected epochs and can say how
+# many there were -- a cut made server-side is a cut nobody can count.
+ZTF_BAD_CATFLAGS_MASK = 32768
+
+
+def mag_to_njy(mag: np.ndarray) -> np.ndarray:
+    """AB magnitude to nanojansky.  3631 Jy is the AB zero point."""
+    with np.errstate(over="ignore", invalid="ignore"):
+        return np.where(np.isfinite(mag), 10.0 ** ((8.90 - mag) / 2.5) * 1.0e9, np.nan)
+
+
+def mag_err_to_njy(mag: np.ndarray, magerr: np.ndarray) -> np.ndarray:
+    """Symmetrised flux error from a magnitude error.
+
+    dF/F = ln(10)/2.5 * dm to first order.  The first-order form is used
+    deliberately: the asymmetry it ignores is below 1 % for dm < 0.02 and below
+    5 % for dm < 0.1, which is smaller than the systematic floor this channel
+    already carries, and a symmetric error is what every downstream statistic in
+    the funnel assumes.  Epochs with dm large enough for that to matter are the
+    ones the reduction discards anyway.
+    """
+    f = mag_to_njy(mag)
+    return np.where(np.isfinite(f) & np.isfinite(magerr),
+                    f * (np.log(10.0) / 2.5) * np.abs(magerr), np.nan)
+
+
+def ztf_rows_to_lightcurve(rows: list[dict], target_id: str, ra: float, dec: float,
+                           spec: SurveySpec = ZTF) -> LightCurve:
+    """Map IRSA light-curve rows onto a :class:`LightCurve` in nJy and MJD.
+
+    Column meanings are IRSA's documented ones and are looked up BY NAME with
+    alternatives, so a rename costs the field rather than the run, and whatever
+    was actually present is recorded in ``raw_columns``:
+
+    ``mjd``        epoch.  ``hjd`` is also served and deliberately NOT used: it
+                   is heliocentre-corrected, and mixing corrected and uncorrected
+                   times across feeds would put a 500 s wobble into a cross-feed
+                   ledger keyed on nights.
+    ``mag``/``magerr``  PSF-fit magnitude and its error.  **Magnitudes, not
+                   flux** --- this is the one feed of the three that serves no
+                   flux column at all, so the conversion happens here and the
+                   whole rest of the module still sees nJy.
+    ``limitmag``   that exposure's own 5-sigma limit, which is strictly better
+                   than the nominal depth in :data:`ZTF`, exactly as ATLAS's
+                   ``mag5sig`` is.
+    ``catflags``   the per-epoch quality bitmask; ``& 32768`` marks an epoch
+                   IRSA itself says is not science-grade.
+    ``filtercode`` ``zg`` / ``zr`` / ``zi``.
+
+    NO NON-DETECTIONS ARE PRESENT.  Every row is a detection, so the absence of
+    an epoch means either "not observed" or "fainter than ~20.8", and this
+    module cannot tell those apart.  For a sample 4-8 magnitudes above that
+    limit the second case requires an event deeper than any this channel screens
+    for, which is why the feed is usable at all -- but the ambiguity is recorded
+    on the light curve rather than assumed away.
+    """
+    if not rows:
+        return LightCurve(target_id=target_id, ra=ra, dec=dec, survey=spec.key,
+                          mjd=np.array([]), flux_njy=np.array([]),
+                          flux_err_njy=np.array([]), band=np.array([]),
+                          notes=["no rows served"])
+    cols = sorted({k for r in rows for k in r})
+
+    def col(names, cast=float):
+        out = []
+        for r in rows:
+            v = _pick(r, names)
+            try:
+                out.append(cast(v) if v not in (None, "", "null") else
+                           (np.nan if cast is float else None))
+            except (TypeError, ValueError):
+                out.append(np.nan if cast is float else None)
+        return np.asarray(out, dtype=float if cast is float else object)
+
+    mjd = col(("mjd", "obsmjd", "mjd_obs"))
+    mag = col(("mag", "magpsf", "mag_autocorr"))
+    magerr = col(("magerr", "sigmapsf", "magerr_auto"))
+    limitmag = col(("limitmag", "diffmaglim", "maglim"))
+    catflags = col(("catflags", "catflag", "flags"))
+    band = np.asarray([str(_pick(r, ("filtercode", "filter", "fid")) or "").strip().lower()
+                       or "zg" for r in rows], dtype=object)
+    # `fid` is served as 1/2/3 by some IRSA tables rather than as a name.
+    band = np.asarray([{"1": "zg", "2": "zr", "3": "zi"}.get(b, b) for b in band],
+                      dtype=object)
+
+    flux = mag_to_njy(mag)
+    ferr = mag_err_to_njy(mag, magerr)
+    limit = mag_to_njy(limitmag)
+    good = np.isfinite(mag) & np.isfinite(magerr)
+    n_flagged = 0
+    if np.any(np.isfinite(catflags)):
+        bad = np.isfinite(catflags) & (
+            (catflags.astype("int64", copy=False) & ZTF_BAD_CATFLAGS_MASK) != 0)
+        n_flagged = int(np.count_nonzero(bad))
+        good = good & ~bad
+
+    notes = [f"{len(rows)} rows served; columns {cols}"]
+    if n_flagged:
+        notes.append(f"{n_flagged} epochs carry catflags & {ZTF_BAD_CATFLAGS_MASK} "
+                     f"and are marked not-good (kept in the record, excluded from "
+                     f"the statistics)")
+    notes.append("DETECTIONS ONLY: an absent epoch is 'not observed' or 'below "
+                 "~20.8 mag' and this feed cannot separate them")
+    return LightCurve(
+        target_id=target_id, ra=ra, dec=dec, survey=spec.key,
+        mjd=mjd, flux_njy=flux, flux_err_njy=ferr, band=band,
+        limit_njy=limit if np.any(np.isfinite(limit)) else None,
+        good=good, raw_columns=cols, notes=notes)
+
+
 def atlas_rows_to_lightcurve(rows: list[dict], target_id: str, ra: float, dec: float,
                              spec: SurveySpec = ATLAS,
                              flux_unit_to_njy: float | None = None) -> LightCurve:
@@ -1998,6 +2189,166 @@ class AsasSnSkyPatrol:
         return out
 
 
+class ZtfIrsa:
+    """ZTF light curves from IRSA, over plain HTTP with no credentials.
+
+    One GET per target: ``nph_light_curves`` takes a cone and returns every
+    matchfile epoch inside it.  No queue, no token, no client library --- which
+    is why this feed is the one a scheduled job can lean on after the other two
+    proved fragile in different ways (ASAS-SN's service down; ATLAS behind an
+    account-limited job queue).
+
+    The cone radius is small on purpose, for the same reason it is small in
+    :class:`AsasSnSkyPatrol`: the service keys light curves to ZTF's own
+    matchfile objects, so a generous radius quietly returns a neighbour's light
+    curve for a high-proper-motion star and nothing announces the substitution.
+    """
+
+    #: IRSA serves several data releases side by side; left unset the service
+    #: uses its own current default, which is recorded by :meth:`describe`
+    #: rather than pinned here --- a hard-coded release goes stale silently and
+    #: a stale release is a light curve that stops growing.
+    def __init__(self, endpoint: str = ZTF.endpoint, timeout: float = 120.0,
+                 radius_arcsec: float = 1.5, collection: str | None = None):
+        self.endpoint = endpoint.rstrip("/")
+        self.timeout = float(timeout)
+        self.radius_arcsec = float(radius_arcsec)
+        self.collection = collection
+        self.calls = 0
+        self.notes: list[str] = []
+        self._s = None
+
+    @property
+    def available(self) -> bool:
+        return True                    # public archive; nothing to configure
+
+    def _sess(self):
+        if self._s is None:
+            self._s = _session(self.timeout)
+        return self._s
+
+    def _params(self, ra: float, dec: float, radius_arcsec: float | None = None,
+                bands: tuple[str, ...] | None = None,
+                mjd_lo: float | None = None, mjd_hi: float | None = None,
+                fmt: str = "csv") -> dict:
+        r_deg = float(radius_arcsec or self.radius_arcsec) / 3600.0
+        # Eight decimals, not six: at six, a 1.5" radius is sent as 0.000417 deg
+        # = 1.5012", and a cone that is quietly wider than the one asked for is
+        # how a neighbour's light curve arrives labelled as the target's.  The
+        # 1.2 mas here is immaterial physically and free to get right.
+        params: dict = {"POS": f"CIRCLE {ra:.6f} {dec:.6f} {r_deg:.8f}",
+                        "FORMAT": fmt}
+        if bands:
+            # The service takes ONE band name; several are fetched by asking
+            # for all of them (no BANDNAME) and splitting on `filtercode`,
+            # which is also how the two-band night fraction stays measurable.
+            if len(bands) == 1:
+                params["BANDNAME"] = bands[0].removeprefix("z")
+        if mjd_lo is not None and mjd_hi is not None:
+            params["TIME"] = f"{float(mjd_lo):.5f} {float(mjd_hi):.5f}"
+        if self.collection:
+            params["COLLECTION"] = self.collection
+        return params
+
+    def describe(self) -> dict:
+        """Record what the live service serves, verbatim, before anything reads it.
+
+        Two positions are asked, not one: a field the survey certainly covers
+        and a field it certainly does not (the far south, below ZTF's horizon).
+        A service that returns rows for BOTH is not filtering by position and
+        every light curve this module builds from it would be someone else's.
+        """
+        rec: dict = {"survey": ZTF.key, "endpoint": self.endpoint,
+                     "reached": False, "paths": {}}
+        s = self._sess()
+        probes = [
+            # A bright, well-observed northern star field: 3C 273 is at
+            # +2 deg, inside ZTF's footprint and certain to be covered.
+            ("covered_csv", 187.2779, 2.0524, 5.0, "csv"),
+            ("covered_votable", 187.2779, 2.0524, 5.0, "votable"),
+            ("covered_ipac", 187.2779, 2.0524, 5.0, "ipac_table"),
+            # Deep south: ZTF is a Palomar survey and does not go here.  Rows
+            # returned for this position would mean the cone is being ignored.
+            ("uncovered_control", 60.0, -80.0, 5.0, "csv"),
+        ]
+        for name, ra, dec, rad, fmt in probes:
+            try:
+                r = s.get(self.endpoint,
+                          params=self._params(ra, dec, rad, fmt=fmt))
+                self.calls += 1
+                body = r.content or b""
+                text = _text_head(body, 600)
+                entry = {"status": int(r.status_code),
+                         "content_type": r.headers.get("content-type"),
+                         "bytes": len(body),
+                         "body_head": text}
+                if fmt == "csv" and r.status_code == 200:
+                    header, rows = parse_csv_text(r.text)
+                    entry["columns"] = header
+                    entry["n_rows"] = len(rows)
+                    entry["first_row"] = rows[0] if rows else None
+                    entry["bands_seen"] = sorted({
+                        str(_pick(x, ("filtercode", "filter", "fid")) or "")
+                        for x in rows})
+                rec["paths"][name] = entry
+                rec["reached"] = rec["reached"] or r.status_code < 400
+            except Exception as exc:                               # noqa: BLE001
+                rec["paths"][name] = {"error": str(exc)[:400]}
+
+        covered = rec["paths"].get("covered_csv") or {}
+        control = rec["paths"].get("uncovered_control") or {}
+        n_here = int(covered.get("n_rows") or 0)
+        n_there = int(control.get("n_rows") or 0)
+        rec["position_filter_verdict"] = (
+            "OK" if n_here > 0 and n_there == 0 else
+            "NO_ROWS_ANYWHERE" if n_here == 0 and n_there == 0 else
+            "CONE_IGNORED" if n_there > 0 else "UNDETERMINED")
+        # USABLE means a light curve can actually be read: rows came back for a
+        # covered field, with the columns this module needs, and the cone was
+        # honoured.  Reachability alone is what made the ASAS-SN probe report OK
+        # while every query failed.
+        needed = {"mjd", "mag", "magerr"}
+        have = set(covered.get("columns") or [])
+        rec["usable"] = bool(n_here > 0 and needed <= have
+                             and rec["position_filter_verdict"] == "OK")
+        if not rec["usable"]:
+            missing = sorted(needed - have)
+            rec["unusable_reason"] = (
+                f"covered-field rows: {n_here}; missing columns: {missing or 'none'}; "
+                f"position filter: {rec['position_filter_verdict']}")
+        return rec
+
+    def lightcurves(self, requests_: list[dict], radius_arcsec: float | None = None,
+                    mjd_lo: float | None = None, mjd_hi: float | None = None,
+                    on_result=None) -> dict[str, LightCurve]:
+        """One cone per target; every epoch inside it, all bands together."""
+        out: dict[str, LightCurve] = {}
+        s = self._sess()
+        for req in requests_:
+            tid = str(req["target_id"])
+            try:
+                r = s.get(self.endpoint,
+                          params=self._params(float(req["ra"]), float(req["dec"]),
+                                              radius_arcsec, mjd_lo=mjd_lo,
+                                              mjd_hi=mjd_hi))
+                self.calls += 1
+                if r.status_code >= 400:
+                    self.notes.append(f"{tid}: HTTP {r.status_code} "
+                                      f"{(r.text or '')[:120]}")
+                    continue
+                _header, rows = parse_csv_text(r.text)
+            except Exception as exc:                               # noqa: BLE001
+                self.notes.append(f"{tid}: {str(exc)[:200]}")
+                continue
+            if not rows:
+                continue
+            out[tid] = ztf_rows_to_lightcurve(rows, tid, float(req["ra"]),
+                                              float(req["dec"]))
+            if on_result is not None:
+                on_result(tid, out[tid])
+        return out
+
+
 class AtlasForcedPhotometry:
     """ATLAS forced photometry --- the closest like-for-like to a Rubin visit.
 
@@ -2263,8 +2614,8 @@ def _clean(obj):
     return obj
 
 
-def probe(cfg=None, out_dir: str | Path | None = None, surveys=("asassn", "atlas")
-          ) -> dict:
+def probe(cfg=None, out_dir: str | Path | None = None,
+          surveys=("asassn", "atlas", "ztf")) -> dict:
     """Stage 0, runner-only: record each service's LIVE response verbatim.
 
     Runs before any science claim, for the reason ``docs/tocsin.md`` §5.1 records
@@ -2295,6 +2646,12 @@ def probe(cfg=None, out_dir: str | Path | None = None, surveys=("asassn", "atlas
         except Exception as exc:                                   # noqa: BLE001
             rec["surveys"]["atlas"] = {"error": str(exc)[:600], "reached": False}
         reached.append(bool(rec["surveys"]["atlas"].get("reached")))
+    if "ztf" in surveys:
+        try:
+            rec["surveys"]["ztf"] = ZtfIrsa().describe()
+        except Exception as exc:                                   # noqa: BLE001
+            rec["surveys"]["ztf"] = {"error": str(exc)[:600], "reached": False}
+        reached.append(bool(rec["surveys"]["ztf"].get("reached")))
     # THE VERDICT FOLLOWS USABILITY, NOT REACHABILITY.  The 2026-08-25 probe
     # reported OK for a run in which ASAS-SN answered 500 to every light-curve
     # request, because the host was up and `reached` was all this asked.  A green
@@ -2594,7 +2951,28 @@ def _fetch(spec: SurveySpec, targets, lth: LightCurveThresholds,
 
     lightcurves: dict[str, LightCurve] = {}
     quiescent: dict[str, dict[str, Quiescent]] = {}
-    if spec.key == ASASSN.key:
+    if spec.key == ZTF.key:
+        # One cone per target, like ASAS-SN and unlike ATLAS's queue -- and, like
+        # ASAS-SN, keyed to the survey's own matchfile objects, so a star that
+        # has walked out of its own cone over the baseline is excluded rather
+        # than silently matched to a neighbour.
+        client = ZtfIrsa()
+        reqs = []
+        n_drift = 0
+        for i in order:
+            if drift_excluded(pmra[i], pmdec[i], lo, hi, spec, lth):
+                n_drift += 1
+                continue
+            reqs.append({"target_id": str(ids[i]), "ra": float(ra[i]),
+                         "dec": float(dec[i])})
+        if n_drift:
+            notes.append(f"{n_drift} targets excluded: proper-motion drift exceeds "
+                         f"{lth.max_drift_frac:g} x {spec.psf_fwhm_arcsec:g}\" over the "
+                         f"window, and this feed cannot re-centre its aperture")
+        lightcurves = client.lightcurves(reqs, mjd_lo=mjd_lo, mjd_hi=mjd_hi)
+        notes.extend(client.notes[:20])
+        notes.append(f"ztf: {client.calls} requests, {len(lightcurves)} light curves")
+    elif spec.key == ASASSN.key:
         client = AsasSnSkyPatrol()
         reqs = []
         n_drift = 0

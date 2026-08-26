@@ -665,8 +665,12 @@ def test_asassn_needs_no_token_at_all():
 
 
 def test_an_unknown_survey_is_an_error_not_a_default():
+    # `ztf` was the example of an unknown survey here until 2026-08-26, when it
+    # became a real one.  A feed that silently defaults to another feed's spec
+    # would screen the wrong depths against the right targets.
     with pytest.raises(A.AltFeedError):
-        A.run_survey("ztf")
+        A.run_survey("gaia-alerts")
+    assert set(A.SURVEYS) == {"asassn", "atlas", "ztf"}
 
 
 def test_a_missing_target_list_gives_a_named_verdict(tmp_path):
@@ -688,7 +692,7 @@ def test_the_census_runs_offline_from_a_cached_target_list(tmp_path):
     t.to_parquet(p)
     rec = A.census(targets_path=p, out_dir=tmp_path)
     assert rec["verdict"] == "OK" and rec["n_targets"] == 3
-    assert set(rec["surveys"]) == {"asassn", "atlas"}
+    assert set(rec["surveys"]) == {"asassn", "atlas", "ztf"}
     assert rec["surveys"]["atlas"]["bands"]["o"]["by_amplitude"]["0.1"]["n_reachable"] == 3
     # These stars are brighter than Rubin's saturation, so they are exactly the
     # population the alert stream cannot screen at all.
@@ -882,3 +886,112 @@ def test_the_vendor_client_failure_names_the_pyarrow_pin():
         assert "pyarrow" in str(exc)
     except Exception as exc:  # pragma: no cover - only if the client imports
         _pytest.skip(f"pyasassn importable in this environment: {exc}")
+
+
+# ---------------------------------------------------------------------------
+# ZTF through IRSA: the third feed, opened 2026-08-26 when ASAS-SN went down
+# ---------------------------------------------------------------------------
+ZTF_CSV = (
+    "oid,expid,hjd,mjd,mag,magerr,catflags,filtercode,ra,dec,limitmag\n"
+    "1,101,2458000.5,58000.0,15.00,0.010,0,zg,187.2779,2.0524,20.7\n"
+    "1,102,2458002.5,58002.0,15.02,0.011,0,zg,187.2779,2.0524,20.6\n"
+    "1,103,2458003.5,58003.0,15.90,0.030,32768,zg,187.2779,2.0524,20.1\n"
+    "2,104,2458004.5,58004.0,14.60,0.009,0,zr,187.2779,2.0524,20.5\n"
+)
+
+
+def test_a_ztf_csv_is_parsed_by_its_own_header_names():
+    header, rows = A.parse_csv_text(ZTF_CSV)
+    assert header[:4] == ["oid", "expid", "hjd", "mjd"]
+    assert len(rows) == 4
+    assert rows[0]["filtercode"] == "zg"
+
+
+def test_a_reordered_ztf_csv_reads_the_same_values():
+    """The whole reason the parse is name-keyed.
+
+    A positional parse of a re-ordered file reads the wrong number into every
+    field after the change -- and a wrong magnitude column produces a light
+    curve, not an error.
+    """
+    reordered = ("mjd,magerr,mag,filtercode,catflags,limitmag\n"
+                 "58000.0,0.010,15.00,zg,0,20.7\n")
+    _h, rows = A.parse_csv_text(reordered)
+    lc = A.ztf_rows_to_lightcurve(rows, "t", 187.2779, 2.0524)
+    straight = A.ztf_rows_to_lightcurve(A.parse_csv_text(ZTF_CSV)[1][:1], "t",
+                                        187.2779, 2.0524)
+    assert lc.flux_njy[0] == pytest.approx(straight.flux_njy[0])
+    assert lc.mjd[0] == straight.mjd[0]
+
+
+def test_ztf_magnitudes_become_nanojansky():
+    """This is the one feed of the three that serves no flux column at all."""
+    _h, rows = A.parse_csv_text(ZTF_CSV)
+    lc = A.ztf_rows_to_lightcurve(rows, "t", 187.2779, 2.0524)
+    # AB: m = 8.90 - 2.5 log10(F / 1 Jy); 15.00 mag is 3.63e6 nJy.
+    assert lc.flux_njy[0] == pytest.approx(10 ** ((8.90 - 15.00) / 2.5) * 1e9, rel=1e-9)
+    # A 0.010 mag error is 0.92 % in flux.
+    assert lc.flux_err_njy[0] / lc.flux_njy[0] == pytest.approx(0.0092, abs=2e-4)
+    assert lc.mjd[0] == 58000.0
+    assert lc.survey == "ztf"
+
+
+def test_a_flagged_ztf_epoch_is_kept_but_not_good():
+    """A cut made server-side is a cut nobody can count."""
+    _h, rows = A.parse_csv_text(ZTF_CSV)
+    lc = A.ztf_rows_to_lightcurve(rows, "t", 187.2779, 2.0524)
+    assert len(lc) == 4                              # nothing silently dropped
+    assert list(lc.good) == [True, True, False, True]
+    assert any("catflags" in n for n in lc.notes)
+
+
+def test_ztf_bands_survive_both_spellings():
+    _h, rows = A.parse_csv_text(
+        "mjd,mag,magerr,fid\n58000.0,15.0,0.01,1\n58001.0,14.9,0.01,2\n")
+    lc = A.ztf_rows_to_lightcurve(rows, "t", 0.0, 0.0)
+    assert list(lc.band) == ["zg", "zr"]
+
+
+def test_the_ztf_record_says_it_has_no_non_detections():
+    """The honest cost of a matchfile feed, carried on the light curve itself."""
+    _h, rows = A.parse_csv_text(ZTF_CSV)
+    lc = A.ztf_rows_to_lightcurve(rows, "t", 187.2779, 2.0524)
+    assert any("DETECTIONS ONLY" in n for n in lc.notes)
+
+
+def test_an_empty_ztf_response_is_an_empty_curve_not_a_crash():
+    lc = A.ztf_rows_to_lightcurve([], "t", 1.0, 2.0)
+    assert len(lc) == 0 and "no rows served" in lc.notes[0]
+
+
+def test_the_ztf_cone_is_small_enough_to_refuse_a_neighbour():
+    """A generous radius returns a neighbour's light curve and says nothing."""
+    c = A.ZtfIrsa()
+    assert c.radius_arcsec <= 3.0
+    params = c._params(10.0, 20.0)
+    assert params["POS"].startswith("CIRCLE 10.000000 20.000000")
+    # Checked in arcseconds, which is the unit the systematic lives in: the cone
+    # that is sent must not be measurably wider than the cone that was asked for.
+    sent_arcsec = float(params["POS"].split()[-1]) * 3600.0
+    assert abs(sent_arcsec - 1.5) < 1e-3
+
+
+def test_a_ztf_time_window_is_passed_as_mjd():
+    p = A.ZtfIrsa()._params(1.0, 2.0, mjd_lo=58000.0, mjd_hi=59000.0)
+    assert p["TIME"] == "58000.00000 59000.00000"
+
+
+def test_ztf_needs_no_token_and_no_queue():
+    assert A.ZTF.auth_env is None
+    assert A.ZtfIrsa().available is True
+
+
+def test_ztf_is_deeper_than_atlas_where_it_matters():
+    """The reason for the third feed, as an assertion rather than a claim.
+
+    Rubin saturates near 16; ATLAS runs out around 19.5 in the blue; ZTF reaches
+    20.8.  The window 16 < m < 20.8 is what ZTF adds to this channel.
+    """
+    assert A.ZTF.depth_5sigma["zg"] > A.ATLAS.depth_5sigma["c"] + 1.0
+    assert A.ZTF.saturation_mag["zg"] >= A.RUBIN_SATURATION_MAG - 4.0
+    assert A.ZTF.exposure_s == 30.0                  # a Rubin visit, as ATLAS is

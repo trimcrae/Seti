@@ -1722,7 +1722,36 @@ def ztf_rows_to_lightcurve(rows: list[dict], target_id: str, ra: float, dec: flo
     mag = col(("mag", "magpsf", "mag_autocorr"))
     magerr = col(("magerr", "sigmapsf", "magerr_auto"))
     limitmag = col(("limitmag", "diffmaglim", "maglim"))
-    catflags = col(("catflags", "catflag", "flags"))
+    # PSF-fit quality.  The probe of 2026-08-26 confirmed IRSA serves `chi` and
+    # `sharp` per epoch; `chi` is used the same way ATLAS's `chi_n` is, and that
+    # transfers WITHOUT re-calibration because the gate is relative -- an epoch
+    # is rejected for being a wild outlier against THIS star's own median chi,
+    # not against an absolute number that would depend on which pipeline's chi
+    # this is (see `reduce_lightcurve`).
+    chi = col(("chi", "chi_n", "chipsf"))
+    sharp = col(("sharp", "sharpness"))
+
+    # CATFLAGS IS PARSED AS AN INTEGER, IN WHATEVER BASE IT ARRIVES.
+    #
+    # IRSA serves some integer columns in hex -- the probe's first row carries
+    # `ccdid: "0x1"` -- and `float("0x8000")` raises.  Under the old float parse
+    # that exception became NaN, NaN failed the finite test, and the epoch was
+    # therefore treated as UNFLAGGED: a bad epoch silently promoted to good,
+    # which is precisely the direction an error must never fall.  Parsed with
+    # base 0 so both "32768" and "0x8000" work, and anything still unparseable
+    # marks the epoch NOT good rather than clean.
+    def _flag(v):
+        if v in (None, "", "null"):
+            return None
+        try:
+            return int(str(v).strip(), 0)
+        except ValueError:
+            try:                                   # "0" served as "0.0"
+                return int(float(v))
+            except (TypeError, ValueError):
+                return "unparseable"
+
+    flags = [_flag(_pick(r, ("catflags", "catflag", "flags"))) for r in rows]
     band = np.asarray([str(_pick(r, ("filtercode", "filter", "fid")) or "").strip().lower()
                        or "zg" for r in rows], dtype=object)
     # `fid` is served as 1/2/3 by some IRSA tables rather than as a name.
@@ -1733,25 +1762,34 @@ def ztf_rows_to_lightcurve(rows: list[dict], target_id: str, ra: float, dec: flo
     ferr = mag_err_to_njy(mag, magerr)
     limit = mag_to_njy(limitmag)
     good = np.isfinite(mag) & np.isfinite(magerr)
-    n_flagged = 0
-    if np.any(np.isfinite(catflags)):
-        bad = np.isfinite(catflags) & (
-            (catflags.astype("int64", copy=False) & ZTF_BAD_CATFLAGS_MASK) != 0)
-        n_flagged = int(np.count_nonzero(bad))
-        good = good & ~bad
+    bad = np.array([isinstance(f, int) and (f & ZTF_BAD_CATFLAGS_MASK) != 0
+                    for f in flags], dtype=bool)
+    unparseable = np.array([f == "unparseable" for f in flags], dtype=bool)
+    n_flagged = int(np.count_nonzero(bad))
+    n_unparseable = int(np.count_nonzero(unparseable))
+    good = good & ~bad & ~unparseable
 
     notes = [f"{len(rows)} rows served; columns {cols}"]
     if n_flagged:
         notes.append(f"{n_flagged} epochs carry catflags & {ZTF_BAD_CATFLAGS_MASK} "
                      f"and are marked not-good (kept in the record, excluded from "
                      f"the statistics)")
+    if n_unparseable:
+        notes.append(f"{n_unparseable} epochs have a catflags value this parser "
+                     f"could not read and are marked NOT good: an unreadable "
+                     f"quality word is not a clean one")
+    if np.any(np.isfinite(sharp)):
+        notes.append("per-epoch `sharp` is served and recorded; it is a "
+                     "point-source/extended discriminant and no stage consumes "
+                     "it yet")
     notes.append("DETECTIONS ONLY: an absent epoch is 'not observed' or 'below "
                  "~20.8 mag' and this feed cannot separate them")
     return LightCurve(
         target_id=target_id, ra=ra, dec=dec, survey=spec.key,
         mjd=mjd, flux_njy=flux, flux_err_njy=ferr, band=band,
         limit_njy=limit if np.any(np.isfinite(limit)) else None,
-        good=good, raw_columns=cols, notes=notes)
+        good=good, chi_n=chi if np.any(np.isfinite(chi)) else None,
+        raw_columns=cols, notes=notes)
 
 
 def atlas_rows_to_lightcurve(rows: list[dict], target_id: str, ra: float, dec: float,

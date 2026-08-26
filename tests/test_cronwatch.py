@@ -214,6 +214,19 @@ def test_a_schedule_is_not_blamed_for_a_slot_that_predates_it():
     assert got[0]["schedule_changed_at_utc"] == "2026-08-25T22:38:00Z"
 
 
+def test_a_workflow_that_fired_is_ok_even_if_the_file_changed_since():
+    """The 2026-08-26 sweep mislabelled `tocsin-altfeeds` this way.
+
+    It fired its 18:40 slot (late, at 21:12) and was then reported
+    SCHEDULE_TOO_NEW because the file had been edited afterwards for an unrelated
+    concurrency change.  A run that covers the firing settles the question.
+    """
+    got = cw.assess([wf()], {"screen.yml": utc(2026, 8, 26, 21, 12)},
+                    utc(2026, 8, 27, 12, 0),
+                    changed_at={"screen.yml": utc(2026, 8, 26, 21, 44)})
+    assert got[0]["status"] == "OK"
+
+
 def test_a_slot_after_the_last_edit_is_judged_normally():
     got = cw.assess([wf()], {"screen.yml": None}, utc(2026, 8, 27, 12, 0),
                     changed_at={"screen.yml": utc(2026, 8, 25, 22, 38)})

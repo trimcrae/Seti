@@ -1071,20 +1071,42 @@ def synthetic_native_mag(targets, spec: SurveySpec, native_band: str) -> np.ndar
     sdss_wl = {"u": 0.3557, "g": 0.4702, "r": 0.6175, "i": 0.7491, "z": 0.8946}
     if spec.key == ASASSN.key and native_band == "g":
         return col("g")
-    if spec.key == ATLAS.key and native_band in ("c", "o"):
-        blue, red = ("g", "r") if native_band == "c" else ("r", "i")
-        m_b, m_r = col(blue), col(red)
-        f_b, f_r = ab_to_njy(m_b), ab_to_njy(m_r)
-        wb, wr = sdss_wl[blue], sdss_wl[red]
-        w = spec.band_wl_um[native_band]
-        with np.errstate(divide="ignore", invalid="ignore"):
-            # Linear in log F_nu vs log lambda: a power-law SED locally, which is
-            # the mildest defensible assumption for a two-point interpolation.
-            slope = (np.log10(f_r) - np.log10(f_b)) / (math.log10(wr) - math.log10(wb))
-            log_f = np.log10(f_b) + slope * (math.log10(w) - math.log10(wb))
-            f = 10.0 ** log_f
-        return njy_to_ab(f)
-    return np.full(len(targets), np.nan)
+
+    # EVERY OTHER BAND IS BRACKETED AND INTERPOLATED, and the bracket is chosen
+    # from the wavelength rather than written down per survey.
+    #
+    # It used to be a hard-coded pair per ATLAS band, with an unconditional NaN
+    # for anything else -- so adding ZTF produced a census in which all three of
+    # its bands reached zero targets, silently, while every other number in the
+    # record looked fine.  That is the shape of failure this module exists to
+    # refuse, so the mapping is now derived: pick the two SDSS bands that
+    # bracket the native effective wavelength and interpolate between them.  For
+    # ATLAS this reproduces exactly the pairs that were hard-coded (c -> g,r;
+    # o -> r,i), which is the point.
+    w = spec.band_wl_um.get(native_band)
+    if w is None:
+        return np.full(len(targets), np.nan)
+    order = sorted(sdss_wl.items(), key=lambda kv: kv[1])
+    blue = red = None
+    for (b0, w0), (b1, w1) in zip(order, order[1:], strict=False):
+        if w0 <= w <= w1:
+            blue, red = b0, b1
+            break
+    if blue is None:
+        # Outside the SDSS set entirely: assessed as unknown rather than
+        # extrapolated.  A census that counts a band nobody can predict is worse
+        # than one that says it could not.
+        return np.full(len(targets), np.nan)
+    m_b, m_r = col(blue), col(red)
+    f_b, f_r = ab_to_njy(m_b), ab_to_njy(m_r)
+    wb, wr = sdss_wl[blue], sdss_wl[red]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        # Linear in log F_nu vs log lambda: a power-law SED locally, which is
+        # the mildest defensible assumption for a two-point interpolation.
+        slope = (np.log10(f_r) - np.log10(f_b)) / (math.log10(wr) - math.log10(wb))
+        log_f = np.log10(f_b) + slope * (math.log10(w) - math.log10(wb))
+        f = 10.0 ** log_f
+    return njy_to_ab(f)
 
 
 def reachable_fraction(targets, spec: SurveySpec, amplitudes=(0.03, 0.10, 0.30, 1.00),

@@ -802,6 +802,53 @@ def health_alerts(root: Path, now: datetime | None = None) -> list[Alert]:
 
 
 # ---------------------------------------------------------------------------
+# Is the feed still serving what the screen needs?
+# ---------------------------------------------------------------------------
+def feed_alerts(root: Path) -> list[Alert]:
+    """A survey that answers but cannot serve a light curve.
+
+    The third way a channel produces a clean null while looking healthy, after
+    "the cron stopped" and "the data stopped": the SERVICE changes under it.  A
+    token expires, an endpoint moves, a serialisation stops being readable --
+    and the run still starts, still writes a fresh stamp, still commits, and
+    still reports nothing found.  ASAS-SN is in exactly that state today: the
+    host answers `/get_schema` while every cone request returns HTTP 500.
+
+    Read from the probe's own per-survey ``usable`` flag rather than judged here,
+    because only the adapter knows what it needs from its service.  Keyed by the
+    reason, so a feed that stays broken notifies once and a feed that breaks in a
+    NEW way notifies again.
+    """
+    rec = _load(root / "results" / "tocsin_altfeeds" / "probe.json")
+    if not isinstance(rec, dict):
+        return []
+    out: list[Alert] = []
+    for survey, block in sorted((rec.get("surveys") or {}).items()):
+        if not isinstance(block, dict) or block.get("usable"):
+            continue
+        reason = str(block.get("unusable_reason")
+                     or block.get("error")
+                     or block.get("verdict")
+                     or "the probe recorded no usable path to a light curve")
+        out.append(Alert(
+            key=f"tocsin_altfeeds:feed_unusable:{survey}:"
+                f"{hashlib.sha1(reason.encode()).hexdigest()[:8]}",
+            severity="health", channel="tocsin_altfeeds",
+            title=f"{survey.upper()} cannot serve light curves",
+            body=(f"The `{survey}` adapter reached its service but has no usable "
+                  f"path to a light curve.\n\nReason recorded by the probe: "
+                  f"{reason}\n\nA screen over this feed would run, commit and "
+                  f"report nothing found -- which is indistinguishable from a "
+                  f"quiet sky and is not a result. Read "
+                  f"`results/tocsin_altfeeds/probe.json`; the request matrix "
+                  f"there records verbatim what the service answered."),
+            detail={"survey": survey, "reached": block.get("reached"),
+                    "verdict": block.get("verdict"),
+                    "accepted_request": block.get("accepted_request")}))
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Did the SCHEDULER fire at all?
 # ---------------------------------------------------------------------------
 def scheduler_alerts(root: Path) -> list[Alert]:
@@ -864,7 +911,8 @@ def scheduler_alerts(root: Path) -> list[Alert]:
 def evaluate(root: Path, now: datetime | None = None) -> list[Alert]:
     """Every alert condition, evaluated against whatever results exist."""
     return [*tocsin_alerts(root), *loom_alerts(root), *health_alerts(root, now),
-            *frontier_recovery_alerts(root, now), *scheduler_alerts(root)]
+            *frontier_recovery_alerts(root, now), *scheduler_alerts(root),
+            *feed_alerts(root)]
 
 
 def check(root: Path, state_path: Path | None = None,

@@ -742,6 +742,43 @@ def test_every_watched_channel_has_a_marker_file_configured():
         assert name.endswith(".json"), channel
 
 
+def test_a_feed_that_answers_but_cannot_serve_a_light_curve_alerts(tmp_path):
+    """ASAS-SN's actual state on 2026-08-26: host up, every cone request 500.
+
+    A screen over it runs, commits and finds nothing -- which is what a quiet sky
+    looks like.  The distinction has to be raised, not inferred.
+    """
+    from seti.alerts import feed_alerts
+
+    d = tmp_path / "results" / "tocsin_altfeeds"
+    d.mkdir(parents=True)
+    (d / "probe.json").write_text(json.dumps({
+        "surveys": {"asassn": {"reached": True, "usable": False,
+                               "unusable_reason": "no cone request was accepted"},
+                    "atlas": {"reached": True, "usable": True, "verdict": "OK"}}}))
+
+    got = feed_alerts(tmp_path)
+    assert [a.channel for a in got] == ["tocsin_altfeeds"]
+    assert "ASASSN" in got[0].title
+    assert "no cone request was accepted" in got[0].body
+
+
+def test_a_feed_alert_is_keyed_by_the_reason_so_a_new_break_re_notifies(tmp_path):
+    from seti.alerts import feed_alerts
+
+    d = tmp_path / "results" / "tocsin_altfeeds"
+    d.mkdir(parents=True)
+
+    def probe(reason):
+        (d / "probe.json").write_text(json.dumps({"surveys": {"atlas": {
+            "reached": True, "usable": False, "unusable_reason": reason}}}))
+        return feed_alerts(tmp_path)[0].key
+
+    first = probe("the token was rejected")
+    assert probe("the token was rejected") == first       # same break, same key
+    assert probe("the queue endpoint moved") != first     # a new break notifies
+
+
 def test_the_channel_that_explains_the_outage_is_watched_too(tmp_path):
     """`rubin-outage` going quiet has a second cost the others do not.
 

@@ -1928,6 +1928,21 @@ class AsasSnSkyPatrol:
                                         "catalogs": _safe_repr(getattr(client, "catalogs", None))}
         except Exception as exc:                                   # noqa: BLE001
             rec["paths"]["pyasassn"] = {"error": str(exc)[:400]}
+
+        # REACHED IS NOT USABLE, and conflating them is how the first probe
+        # returned `verdict: OK` for a feed whose every light-curve request
+        # answered 500.  `/get_schema` answering proves the host is up; what this
+        # channel needs is a cone request the server accepts and a serialisation
+        # this environment can parse.  Until one of those exists, no light curve
+        # can be read and a screen over this feed would return a clean null with
+        # nothing behind it.
+        rec["usable"] = bool(rec.get("accepted_request")) or bool(
+            rec["paths"].get("pyasassn", {}).get("ok"))
+        if not rec["usable"]:
+            rec["unusable_reason"] = (
+                "no cone request was accepted (every variant and format in the "
+                "matrix above), and the vendor client cannot be imported here "
+                "-- so there is no path to a light curve, only to metadata")
         return rec
 
     def lightcurves(self, requests_: list[dict], radius_arcsec: float = 5.0,
@@ -2055,6 +2070,7 @@ class AtlasForcedPhotometry:
             rec["queue_status"] = int(r.status_code)
             rec["queue_body_head"] = r.text[:1200]
             rec["verdict"] = "OK" if r.status_code < 400 else "QUEUE_UNREADABLE"
+            rec["usable"] = rec["verdict"] == "OK"
         except Exception as exc:                                   # noqa: BLE001
             rec["queue_error"] = str(exc)[:400]
             rec["verdict"] = "QUEUE_UNREACHABLE"
@@ -2259,8 +2275,24 @@ def probe(cfg=None, out_dir: str | Path | None = None, surveys=("asassn", "atlas
         except Exception as exc:                                   # noqa: BLE001
             rec["surveys"]["atlas"] = {"error": str(exc)[:600], "reached": False}
         reached.append(bool(rec["surveys"]["atlas"].get("reached")))
-    rec["verdict"] = ("OK" if all(reached) else
-                      "PARTIAL" if any(reached) else "NO_FEED_REACHED")
+    # THE VERDICT FOLLOWS USABILITY, NOT REACHABILITY.  The 2026-08-25 probe
+    # reported OK for a run in which ASAS-SN answered 500 to every light-curve
+    # request, because the host was up and `reached` was all this asked.  A green
+    # probe over a feed that cannot serve a light curve is exactly the kind of
+    # clean-looking null this channel exists to avoid.
+    usable = {k: bool(v.get("usable")) for k, v in rec["surveys"].items()}
+    rec["usable_surveys"] = sorted(k for k, v in usable.items() if v)
+    rec["unusable_surveys"] = sorted(k for k, v in usable.items() if not v)
+    if usable and all(usable.values()):
+        rec["verdict"] = "OK"
+    elif any(usable.values()):
+        rec["verdict"] = "PARTIAL"
+    elif any(reached):
+        # Reachable and useless is its own state, and it is the one that reads
+        # like health from every other angle.
+        rec["verdict"] = "REACHED_BUT_UNUSABLE"
+    else:
+        rec["verdict"] = "NO_FEED_REACHED"
     _write_json(out / "probe.json", rec)
     print(f"[tocsin-altfeeds] probe verdict={rec['verdict']}")
     return rec

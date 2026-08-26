@@ -62,7 +62,14 @@ STALE_DAYS = {"tocsin": 4.0, "loom": 10.0,
               # empty directory a quiet sky produces.
               "loom-catalogue": 45.0,      # monthly, 2nd
               "tocsin_altfeeds": 16.0,     # weekly, Wednesdays
-              "sextant": 45.0}             # monthly, 3rd
+              "sextant": 45.0,             # monthly, 3rd
+              # Weekly, Mondays.  Watched for the same reason as the rest, and
+              # for one of its own: `outage_context` quotes this channel's
+              # verdict inside the frontier alerts, so a channel that has quietly
+              # stopped keeps an old cause attached to a live alert until the
+              # frontier moves.  The expiry there is about the EPOCH the verdict
+              # describes; this is about the channel that produces it.
+              "rubin_outage": 16.0}
 
 # Which file in a channel's directory carries its run stamp.  Not every channel
 # is named `summary.json`/`screen.json`, and a marker that does not exist is
@@ -72,7 +79,8 @@ STALE_MARKER = {"tocsin": "summary.json",
                 "loom": "screen.json",
                 "loom-catalogue": "catalogue.json",
                 "tocsin_altfeeds": "probe.json",
-                "sextant": "probe.json"}
+                "sextant": "probe.json",
+                "rubin_outage": "brokers.json"}
 
 # How far the DATA may fall behind the wall clock before that is a failure.
 #

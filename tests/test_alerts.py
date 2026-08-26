@@ -742,6 +742,25 @@ def test_every_watched_channel_has_a_marker_file_configured():
         assert name.endswith(".json"), channel
 
 
+def test_the_channel_that_explains_the_outage_is_watched_too(tmp_path):
+    """`rubin-outage` going quiet has a second cost the others do not.
+
+    Its verdict is quoted inside every frontier alert through
+    `outage_context`, so a channel that has stopped keeps attributing a live
+    alert to a cause nobody re-checked.
+    """
+    from seti.alerts import STALE_MARKER, health_alerts
+
+    d = tmp_path / "results" / "rubin_outage"
+    d.mkdir(parents=True)
+    stamp = (NOW - timedelta(days=40)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    (d / STALE_MARKER["rubin_outage"]).write_text(
+        json.dumps({"checked_at_utc": stamp, "decision": {"verdict": "SKY_STOPPED"}}))
+
+    keys = [a.key for a in health_alerts(tmp_path, now=NOW)]
+    assert any(k.startswith("rubin_outage:stale:") for k in keys)
+
+
 def test_a_new_channel_going_quiet_raises_a_stale_alert(tmp_path):
     from seti.alerts import STALE_MARKER, health_alerts
 

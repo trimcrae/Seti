@@ -1156,3 +1156,71 @@ def test_the_real_irsa_columns_all_resolve():
     assert lc.limit_njy is not None                    # per-epoch limitmag
     assert list(lc.band) == ["zg", "zg", "zg"]
     assert any("sharp" in n for n in lc.notes)
+
+
+def test_the_atlas_walk_is_bounded_by_wall_clock_too(tmp_path, monkeypatch):
+    """The failure of 2026-08-26, in the feed it actually happened to.
+
+    ATLAS is a queue: `collect` waits up to `max_wait_s` PER TASK and a target
+    can need several. Nothing bounded the sum, so a 200-target slice could not
+    finish inside the job's 240-minute timeout -- and a job the runner kills
+    runs no commit step, so hours of throttled quota land nothing at all.
+    """
+    import pandas as pd
+
+    targets = pd.DataFrame({
+        "source_id": [f"{i}" for i in range(10)],
+        "ra": [10.0 + i for i in range(10)], "dec": [2.0] * 10,
+        "pmra": [0.0] * 10, "pmdec": [0.0] * 10,
+        "g_sdss_mag": [14.0 + 0.1 * i for i in range(10)],
+        "r_sdss_mag": [13.8 + 0.1 * i for i in range(10)],
+        "i_sdss_mag": [13.6 + 0.1 * i for i in range(10)],
+        "z_sdss_mag": [13.5 + 0.1 * i for i in range(10)],
+        "u_sdss_mag": [15.0 + 0.1 * i for i in range(10)],
+    })
+
+    calls = {"n": 0}
+
+    class SlowAtlas:
+        available = True
+
+        def __init__(self, *a, **k):
+            pass
+
+        def lightcurve(self, tid, ra, dec, *a, **k):
+            calls["n"] += 1
+            raise A.AltFeedError("would have taken 30 minutes")
+
+    monkeypatch.setattr(A, "AtlasForcedPhotometry", SlowAtlas)
+    monkeypatch.setenv("ALTFEEDS_FETCH_BUDGET_S", "0")     # budget already spent
+    lcs, _q, notes = A._fetch(A.ATLAS, targets, A.LightCurveThresholds(),
+                              max_targets=10, mjd_lo=58000.0, mjd_hi=59000.0)
+    assert lcs == {}
+    assert calls["n"] == 0, "the walk must stop before spending more quota"
+    assert any("budget" in n for n in notes)
+
+
+def test_a_normal_atlas_walk_reports_how_far_it_got(tmp_path, monkeypatch):
+    import pandas as pd
+
+    targets = pd.DataFrame({
+        "source_id": ["a", "b"], "ra": [10.0, 11.0], "dec": [2.0, 2.0],
+        "pmra": [0.0, 0.0], "pmdec": [0.0, 0.0],
+        "g_sdss_mag": [14.0, 14.1], "r_sdss_mag": [13.8, 13.9],
+        "i_sdss_mag": [13.6, 13.7], "z_sdss_mag": [13.5, 13.6],
+        "u_sdss_mag": [15.0, 15.1],
+    })
+
+    class OkAtlas:
+        available = True
+
+        def __init__(self, *a, **k):
+            pass
+
+        def lightcurve(self, tid, ra, dec, *a, **k):
+            return A.atlas_rows_to_lightcurve([], tid, ra, dec), {}
+
+    monkeypatch.setattr(A, "AtlasForcedPhotometry", OkAtlas)
+    _lcs, _q, notes = A._fetch(A.ATLAS, targets, A.LightCurveThresholds(),
+                               max_targets=2, mjd_lo=58000.0, mjd_hi=59000.0)
+    assert any("walked 2 of 2" in n for n in notes)

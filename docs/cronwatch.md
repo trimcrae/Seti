@@ -1,17 +1,21 @@
 # The third silence: a screen that never started
 
-*Opened 2026-08-26. Code: `src/seti/cronwatch.py`, `scripts/cron_watch.py`,
-wired into `.github/workflows/watchdog.yml`. Live state:
-`results/cronwatch/status.json`.*
+*Opened 2026-08-26. Code: `src/seti/cronwatch.py` + `scripts/cron_watch.py`
+(never started), `src/seti/failsweep.py` + `scripts/fail_sweep.py` (failed),
+both wired into `.github/workflows/watchdog.yml` and the first also into
+`.github/workflows/cronwatch.yml`. Live state: `results/cronwatch/status.json`,
+`results/cronwatch/state.json`, `results/watchdog/status.json`.*
 
 ## The gap this closes
 
-Every channel here can fall silent in three different ways, and until now only
-two of them were watched.
+Every channel here can fall silent in four different ways, and when this was
+opened only two of them were watched. All four are watched now — and the first
+row, the one that *was* covered, turned out to be covered wrongly; see **The
+retry that made things worse** below.
 
 | what stopped | what it looks like | who catches it |
 |---|---|---|
-| the run **failed** | a red run in the Actions tab | `watchdog`, hourly, and it re-runs the failed jobs |
+| the run **failed** | a red run in the Actions tab | `seti.failsweep`, hourly inside `watchdog`, and it re-runs the failed jobs *a retry can fix* |
 | the **data** stopped | runs stay green, results stay fresh, the frontier stops moving | `alerts.health_alerts` — the frontier lag and stall checks, and `rubin-outage` for the cause |
 | the run **never started** | *nothing at all* | nobody, until now |
 | the **tests** went red | CI red on `main`; every screen still runs and still commits | nobody, until now — `watchdog` skips `ci` on purpose |
@@ -80,6 +84,59 @@ monitor gets ignored:
   job is worse than either alone.
 * **At most three catch-ups per sweep.** Six channels dropping at once is a
   GitHub-wide problem, and firing six jobs into it is not the answer.
+
+## The retry that made things worse
+
+A re-run is not a fresh run. **It checks out the run's own `head_sha`**, and
+that one fact turns the obvious retry rule — *it failed, try it again* — into a
+way to undo a fix.
+
+On 2026-08-27 at 03:17 UTC the hourly sweep re-ran `tocsin-altfeeds` run
+33022081059: an ATLAS pass built from `1de2f34`, killed by its job timeout after
+walking 133 minutes and writing nothing. The bug behind it — an ATLAS walk with
+no wall-clock budget — had been found, fixed and merged hours earlier, and
+`main` was six commits past it. The retry started the deleted code, on a
+four-hour lane, ahead of two queued runs that carried the fix; had it reached
+its commit step it would have written that superseded code's ledger over theirs.
+
+So the rule the sweep was missing is the general one:
+
+> If the commit a failed run was built from is no longer the head of **its own
+> branch**, a re-run can only reproduce the failure or half-succeed and commit
+> stale results over fresh ones. So it is not retried — it is recorded as
+> `superseded`, naming both commits.
+
+Judged per branch against that branch's head, so a feature-branch run is
+superseded when *that* branch moves, not when `main` does.
+
+There had been a guard: `results/watchdog/skiplist.json`, ten hand-listed run
+ids. It is the wrong shape, and this is the proof — a list can only hold a run
+someone thought of in advance, and this one was created, failed and resurrected
+inside six hours. It is still honoured, for runs superseded in ways a sha cannot
+express. It is no longer what stands between a fix and its own undoing.
+
+The other four refusals, each previously implicit or absent:
+
+* **A run that is not `completed` is not retried.** An in-flight attempt 2 is
+  not a failure waiting for attempt 3, and asking for one races the attempt
+  already running.
+* **A branch whose head cannot be read is skipped, not guessed** — the same
+  refusal this file already makes for an unanswering API. The count is printed
+  loudly, because a sweep that retries nothing looks exactly like a sweep with
+  nothing to retry.
+* **At most five retries per sweep**, for the reason there are at most three
+  catch-ups.
+* **Every considered run lands in `retry` or `skipped` with a reason.** Silence
+  about a decision is how this happened.
+
+And the reason none of it was caught before it ran: those rules were twenty
+lines of `gh api | jq` inside `watchdog.yml`, which no test could reach and
+which could only be exercised by merging and waiting an hour. They are now
+`src/seti/failsweep.py` under `tests/test_failsweep.py`, with the incident as
+the first test and a wiring test that fails if the logic migrates back into the
+workflow file. The ledger is also written on *every* sweep now, not only when
+something failed — a file that appears only on bad days cannot tell "nothing
+failed" from "the sweep did not run", which is this document's whole subject.
 
 ## And one check that is about the repository, not the sky
 

@@ -605,6 +605,41 @@ class ActionsApi:
         except ValueError:
             return None
 
+    def recent_runs(self, per_page: int = 100) -> list[dict]:
+        """The newest runs in the repository, all workflows, all events."""
+        import requests
+
+        url = f"{self.api_root}/repos/{self.repo}/actions/runs"
+        r = requests.get(url, headers=self._headers(), timeout=self.timeout,
+                         params={"per_page": int(per_page)})
+        r.raise_for_status()
+        return (r.json() or {}).get("workflow_runs") or []
+
+    def branch_head(self, branch: str) -> str | None:
+        """The sha at the tip of a branch, or None if it cannot be read.
+
+        `seti.failsweep` refuses to re-run a failed run whose commit is no
+        longer its branch's head -- a re-run checks out the run's OWN commit, so
+        that would re-run code the repository has already replaced.
+        """
+        import requests
+
+        url = f"{self.api_root}/repos/{self.repo}/commits/{branch}"
+        r = requests.get(url, headers=self._headers(), timeout=self.timeout)
+        if r.status_code >= 400:
+            return None
+        return ((r.json() or {}).get("sha")) or None
+
+    def rerun_failed_jobs(self, run_id: int) -> None:
+        import requests
+
+        url = (f"{self.api_root}/repos/{self.repo}/actions/runs/{int(run_id)}"
+               f"/rerun-failed-jobs")
+        r = requests.post(url, headers=self._headers(), timeout=self.timeout)
+        if r.status_code >= 400:
+            raise RuntimeError(f"rerun-failed-jobs {run_id} -> {r.status_code} "
+                               f"{(r.text or '')[:200]}")
+
     def dispatch(self, workflow_file: str, ref: str = "main") -> None:
         import requests
 

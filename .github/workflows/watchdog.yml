@@ -4,12 +4,13 @@ name: watchdog
 # scheduler from the default branch, needs no external state.
 #
 # TWO DIFFERENT FAILURES, and the second one is invisible to the first:
-#  1. RUNS THAT FAILED.  Finds workflow runs from the last 24 h that ended
-#     failure / cancelled / timed_out (cancelled is how job-timeout kills
-#     present); auto-retries their failed jobs (<=2 retries for
-#     failures/timeouts, <=1 for cancels, so a deliberate human cancel is not
-#     fought forever); commits a ledger to results/watchdog/ when anything was
-#     found.  Green sweeps commit nothing (no hourly noise).
+#  1. RUNS THAT FAILED.  `seti.failsweep` finds runs from the last 24 h that
+#     ended failure / cancelled / timed_out and re-runs their failed jobs --
+#     but only where re-running can help.  It refuses when the run's commit is
+#     no longer its branch's head, because a re-run checks out the RUN'S OWN
+#     commit: on 2026-08-27 that resurrected a four-hour ATLAS pass at a commit
+#     six merges stale, whose bug had already been fixed.  Every refusal is
+#     recorded with its reason in results/watchdog/status.json.
 #  2. RUNS THAT NEVER STARTED.  GitHub's scheduler is best effort and drops
 #     firings under load -- `tocsin-altfeeds` lost its first scheduled slot on
 #     2026-08-26, and this workflow itself, nominally hourly at :17, fired that
@@ -20,6 +21,12 @@ name: watchdog
 #     ran on a schedule event, reports anything past its own grace window, and
 #     re-dispatches it once (workflow_dispatch is one of the two events GitHub
 #     exempts from the no-recursive-triggering rule, so the token here can).
+#
+# BOTH SWEEPS ARE PYTHON, NOT INLINE SHELL, and that is the point.  The failure
+# sweep used to be twenty lines of `gh api | jq` in this file -- logic no test
+# could reach, which could only be exercised by merging it and waiting an hour.
+# It is now `src/seti/failsweep.py` with `tests/test_failsweep.py` around it,
+# and the incident above is the first test in that file.
 
 on:
   schedule:
@@ -36,81 +43,28 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Sweep recent runs and auto-retry failures
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -uo pipefail
-          cutoff=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
-          gh api "repos/${{ github.repository }}/actions/runs?per_page=50" --jq '
-            [.workflow_runs[]
-             | select(.name != "watchdog" and .name != "ci")
-             | select(.created_at > "'"$cutoff"'")
-             | select(.conclusion == "failure" or .conclusion == "cancelled"
-                      or .conclusion == "timed_out")
-             | {id, name, head_branch, conclusion, run_attempt,
-                html_url, created_at}]' > /tmp/failures.json
-          # Superseded runs (root cause fixed, replacement dispatched) are
-          # listed in the skiplist and never resurrected — retrying them just
-          # races the replacement run for commits and API quota.
-          skip='[]'
-          [ -f results/watchdog/skiplist.json ] && skip=$(cat results/watchdog/skiplist.json)
-          jq --argjson skip "$skip" \
-            '[.[] | select(.id as $i | ($skip | index($i)) == null)]' \
-            /tmp/failures.json > /tmp/failures_filtered.json
-          mv /tmp/failures_filtered.json /tmp/failures.json
-          n=$(jq length /tmp/failures.json)
-          echo "failed/cancelled/timed-out runs in last 24h (after skiplist): $n"
-          retried=0
-          if [ "$n" -gt 0 ]; then
-            mapfile -t rows < <(jq -c '.[]' /tmp/failures.json)
-            for row in "${rows[@]}"; do
-              id=$(jq -r .id <<<"$row")
-              att=$(jq -r .run_attempt <<<"$row")
-              conc=$(jq -r .conclusion <<<"$row")
-              max=3; [ "$conc" = "cancelled" ] && max=2
-              if [ "$att" -lt "$max" ]; then
-                echo "re-running failed jobs of run $id ($conc, attempt $att)"
-                gh api -X POST \
-                  "repos/${{ github.repository }}/actions/runs/$id/rerun-failed-jobs" \
-                  && retried=$((retried+1)) \
-                  || echo "rerun request failed for $id (may be running already)"
-              else
-                echo "run $id ($conc) exhausted retries (attempt $att) — ledger only"
-              fi
-            done
-            mkdir -p results/watchdog
-            jq -n --slurpfile f /tmp/failures.json \
-              --arg t "$(date -u +%FT%TZ)" --argjson r "$retried" \
-              '{checked_at_utc: $t, retried: $r, failures: $f[0]}' \
-              > results/watchdog/status.json
-          fi
-      - name: Commit ledger (only when failures were found)
-        run: |
-          [ -f results/watchdog/status.json ] || { echo "green sweep"; exit 0; }
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f results/watchdog/status.json
-          if git diff --cached --quiet; then
-            echo "ledger unchanged"
-          else
-            git commit -m "watchdog: failure sweep ledger ($(date -u +%FT%TZ))"
-            git pull --rebase --autostash || true
-            git push || echo "ledger push failed (non-fatal)"
-          fi
-
-      # ---------------------------------------------------------------------
-      # 2. Runs that never started.
-      # ---------------------------------------------------------------------
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install (pyyaml + requests only)
-        # NOT `pip install -e .`: this job runs every hour, and the scheduler
-        # watch needs to read YAML and make two HTTP calls per workflow, not the
-        # whole scientific stack.  scripts/cron_watch.py imports seti.cronwatch
-        # directly for exactly this reason.
+        # NOT `pip install -e .`: this job runs every hour, and both sweeps need
+        # to read YAML and make a handful of HTTP calls, not the whole
+        # scientific stack.  scripts/*_sweep.py import their modules directly
+        # for exactly this reason.
         run: python -m pip install --quiet --upgrade pip pyyaml requests
+
+      # ---------------------------------------------------------------------
+      # 1. Runs that failed.
+      # ---------------------------------------------------------------------
+      - name: Sweep recent runs and retry the failures a retry can fix
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python scripts/fail_sweep.py
+
+      # ---------------------------------------------------------------------
+      # 2. Runs that never started.
+      # ---------------------------------------------------------------------
       - name: Did the scheduled screens actually FIRE?
         if: always()
         env:
@@ -119,17 +73,26 @@ jobs:
         run: |
           python scripts/cron_watch.py \
             --ref "${{ github.event.repository.default_branch || 'main' }}"
-      - name: Commit the scheduler ledger
+
+      # ---------------------------------------------------------------------
+      # One commit for both ledgers.  Two commits meant two `git pull --rebase`
+      # races against each other inside one job.
+      # ---------------------------------------------------------------------
+      - name: Commit the ledgers
         if: always()
         run: |
-          [ -f results/cronwatch/status.json ] || { echo "no sweep written"; exit 0; }
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f results/cronwatch/status.json results/cronwatch/state.json
+          # `bash -e`: an `[ -f ] && ...` list that ends false at the end of a
+          # loop kills the step, so the test is a real `if`.
+          for f in results/watchdog/status.json results/cronwatch/status.json \
+                   results/cronwatch/state.json; do
+            if [ -f "$f" ]; then git add -f "$f"; fi
+          done
           if git diff --cached --quiet; then
-            echo "scheduler ledger unchanged"
+            echo "ledgers unchanged"
           else
-            git commit -m "cronwatch: scheduler sweep ($(date -u +%FT%TZ))"
+            git commit -m "watchdog: failure + scheduler sweep ($(date -u +%FT%TZ))"
             git pull --rebase --autostash || true
-            git push || echo "scheduler ledger push failed (non-fatal)"
+            git push || echo "ledger push failed (non-fatal)"
           fi

@@ -733,14 +733,39 @@ def test_the_complementary_population_is_counted_against_rubins_saturation():
 
 
 def test_the_probe_writes_a_record_even_when_nothing_is_reachable(tmp_path, monkeypatch):
+    """EVERY survey in the default set is stubbed, and that is the point.
+
+    This test read the ambient network until 2026-08-27: adding ZTF to the
+    probe's default surveys left its `describe` unpatched, so the test passed in
+    a sandbox with no egress and FAILED on the runner, where IRSA answers and the
+    verdict is PARTIAL rather than NO_FEED_REACHED.  It broke CI on `main` for
+    six consecutive merges.  A test whose result depends on whether the machine
+    running it can reach the internet is not testing this repository.
+    """
     def boom(self):
         raise RuntimeError("no egress in the sandbox")
-    monkeypatch.setattr(A.AsasSnSkyPatrol, "describe", boom)
-    monkeypatch.setattr(A.AtlasForcedPhotometry, "describe", boom)
+    for client in (A.AsasSnSkyPatrol, A.AtlasForcedPhotometry, A.ZtfIrsa):
+        monkeypatch.setattr(client, "describe", boom)
     rec = A.probe(out_dir=tmp_path)
     assert rec["verdict"] == "NO_FEED_REACHED"
     assert (tmp_path / "probe.json").exists()
     assert "no egress" in rec["surveys"]["asassn"]["error"]
+    assert set(rec["surveys"]) == set(A.SURVEYS), (
+        "a survey missing from the probe's default set is a feed nobody probes")
+
+
+def test_no_default_probe_survey_is_left_unstubbed():
+    """The guard for the class, not the instance.
+
+    A fourth feed added tomorrow would reintroduce exactly the same bug: the
+    probe would reach a live service from inside the test suite, and the failure
+    would appear only on a machine WITH network. Every client the probe can
+    construct must be reachable from the test module by name.
+    """
+    for key in A.SURVEYS:
+        assert key in {"asassn", "atlas", "ztf"}, (
+            f"survey {key!r} is in SURVEYS but this test module does not know "
+            f"how to stub its client; stub it above before adding it")
 
 
 def test_the_signature_transfer_statement_is_carried_in_every_summary():
@@ -1067,18 +1092,13 @@ def test_the_ztf_walk_stops_at_its_time_budget_and_says_so():
 
     c = A.ZtfIrsa()
     reqs = [{"target_id": str(i), "ra": 1.0 * i, "dec": 2.0} for i in range(50)]
-    import sys
-    import types
-    fake_time = types.ModuleType("time")
-    clock = SlowClock()
-    fake_time.monotonic = clock.monotonic
-    real = sys.modules.get("time")
-    sys.modules["time"] = fake_time
-    try:
-        out = c.lightcurves(reqs, max_seconds=250.0)
-    finally:
-        if real is not None:
-            sys.modules["time"] = real
+    # The clock is INJECTED rather than the stdlib `time` module being swapped
+    # out globally, which is what this test used to do.  That worked only while
+    # `requests` happened to be imported already: the first import inside the
+    # fake window asked for `time.time`, which the fake did not have, and the
+    # test died in `requests.sessions` with an AttributeError having nothing to
+    # do with budgets.
+    out = c.lightcurves(reqs, max_seconds=250.0, clock=SlowClock().monotonic)
     assert out == {}
     assert any("time budget" in n for n in c.notes)
 

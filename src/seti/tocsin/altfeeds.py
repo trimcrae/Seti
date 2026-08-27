@@ -2429,8 +2429,8 @@ class ZtfIrsa:
     def lightcurves(self, requests_: list[dict], radius_arcsec: float | None = None,
                     mjd_lo: float | None = None, mjd_hi: float | None = None,
                     th: LightCurveThresholds | None = None,
-                    on_result=None, max_seconds: float = 5400.0
-                    ) -> dict[str, LightCurve]:
+                    on_result=None, max_seconds: float = 5400.0,
+                    clock=None) -> dict[str, LightCurve]:
         """One cone per proper-motion SEGMENT per target; all bands together.
 
         WHY SEGMENTS RATHER THAN A REFUSAL.  The first real run (2026-08-26)
@@ -2455,14 +2455,20 @@ class ZtfIrsa:
         """
         import time as _time
 
+        # The clock is injectable so a test can exhaust the budget without
+        # waiting an hour -- and, more to the point, without swapping the
+        # stdlib `time` module out from under `requests`, which is how the
+        # earlier version of that test worked and why it broke the moment
+        # anything imported `requests` for the first time inside the fake.
+        now = clock or _time.monotonic
         th = th or LightCurveThresholds()
         out: dict[str, LightCurve] = {}
         s = self._sess()
         lo = float(mjd_lo) if mjd_lo is not None else 58194.0   # ZTF from 2018-03
         hi = float(mjd_hi) if mjd_hi is not None else 70000.0
-        deadline = _time.monotonic() + float(max_seconds)
+        deadline = now() + float(max_seconds)
         for i, req in enumerate(requests_):
-            if _time.monotonic() > deadline:
+            if now() > deadline:
                 self.notes.append(
                     f"time budget of {max_seconds:g}s exhausted after {i} of "
                     f"{len(requests_)} targets; the slice is short and this "
@@ -2479,7 +2485,7 @@ class ZtfIrsa:
             rows: list[dict] = []
             failed = False
             for seg in segs:
-                if _time.monotonic() > deadline:
+                if now() > deadline:
                     failed = True          # a half-walked star is not a light curve
                     self.notes.append(f"{tid}: budget exhausted mid-target; its "
                                       f"partial segments are discarded rather "

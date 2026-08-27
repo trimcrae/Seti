@@ -1409,3 +1409,41 @@ def test_a_target_half_walked_when_the_budget_ends_is_discarded():
                           "pmra": 3000.0, "pmdec": 0.0}],
                         mjd_lo=58194.0, mjd_hi=61300.0, max_seconds=0.0)
     assert out == {}
+
+
+def test_a_detection_only_feed_never_claims_an_exact_denominator(tmp_path, monkeypatch):
+    """The false claim ZTF's first successful run committed, 2026-08-27.
+
+    The label was decided by a count -- "more star-nights than twice the events,
+    therefore exact" -- which is arithmetic about a sample, not a fact about a
+    feed. It printed `forced_photometry_exact` for a service that serves
+    matchfile detections and no forced photometry, contradicting the note this
+    module writes onto every one of its light curves. An occurrence rate over an
+    assumed denominator is not a rate.
+    """
+    import pandas as pd
+
+    targets = pd.DataFrame({
+        "source_id": ["a", "b"], "ra": [10.0, 11.0], "dec": [2.0, 2.0],
+        "pmra": [0.0, 0.0], "pmdec": [0.0, 0.0],
+        "g_sdss_mag": [15.0, 15.1], "r_sdss_mag": [14.8, 14.9],
+        "i_sdss_mag": [14.6, 14.7], "z_sdss_mag": [14.5, 14.6],
+        "u_sdss_mag": [16.0, 16.1],
+    })
+    tpath = tmp_path / "targets.parquet"
+    targets.to_parquet(tpath)
+
+    lc = A.ztf_rows_to_lightcurve(
+        A.parse_csv_text(ZTF_CSV)[1], "a", 10.0, 2.0)
+    rec = A.run_survey("ztf", targets_path=tpath, out_dir=tmp_path / "out",
+                       lightcurves={"a": lc})
+    assert rec["denominator"] == "detection_dominated_lower_bound"
+    assert rec["forced_coverage_fraction"] == 0.0
+    assert any("LOWER BOUND" in n for n in rec["notes"])
+
+
+def test_a_forced_photometry_feed_may_still_claim_an_exact_denominator():
+    """The rule is about the feed, so it must not have broken the other two."""
+    assert A.ATLAS.has_forced_photometry is True
+    assert A.ASASSN.has_forced_photometry is True
+    assert A.ZTF.has_forced_photometry is False

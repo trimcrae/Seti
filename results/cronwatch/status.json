@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-08-27T22:34:50Z",
+ "checked_at_utc": "2026-08-27T23:47:49Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -11,14 +11,15 @@
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
- "n_overdue": 2,
+ "n_dispatched": 1,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 10,
  "ref": "main",
  "workflows": [
   {
    "cadence_hours": 24.0,
+   "catchup_dispatched_utc": "2026-08-27T23:47:49Z",
    "cron_matched": "5 17 * * *",
    "crons": [
     "5 17 * * *"
@@ -26,11 +27,14 @@
    "expected_last_fire_utc": "2026-08-27T17:05:00Z",
    "grace_hours": 6.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 6.71,
+   "hours_since_last_run": 28.56,
    "last_scheduled_run_utc": "2026-08-26T19:14:28Z",
+   "missed_by": "grace",
    "name": "alerts",
-   "overdue": false,
-   "status": "WITHIN_GRACE",
+   "note": "alerts should have fired at 2026-08-27T17:05:00Z (cron '5 17 * * *') and its last scheduled run was 2026-08-26T19:14:28Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
+   "overdue": true,
+   "status": "MISSED",
    "workflow": "alerts.yml"
   },
   {
@@ -160,34 +164,27 @@
    "expected_last_fire_utc": "2026-08-27T14:10:00Z",
    "grace_hours": 6.0,
    "has_dispatch": true,
-   "hours_late": 8.41,
-   "hours_since_last_run": 31.67,
-   "last_scheduled_run_utc": "2026-08-26T14:54:28Z",
-   "missed_by": "grace",
+   "hours_late": null,
+   "last_scheduled_run_utc": "2026-08-27T23:44:24Z",
    "name": "tocsin",
-   "note": "tocsin should have fired at 2026-08-27T14:10:00Z (cron '10 14 * * *') and its last scheduled run was 2026-08-26T14:54:28Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
-   "overdue": true,
-   "status": "MISSED",
+   "overdue": false,
+   "status": "OK",
    "workflow": "tocsin.yml"
   },
   {
    "cadence_hours": 1.0,
-   "catchup_error": "dispatch watchdog.yml -> 403 {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/actions/workflows#create-a-workflow-dispatch-event\",\"status\":\"403\"}",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-08-27T22:17:00Z",
+   "expected_last_fire_utc": "2026-08-27T23:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": 0.3,
-   "hours_since_last_run": 8.33,
-   "last_scheduled_run_utc": "2026-08-27T14:15:16Z",
-   "missed_by": "silence",
+   "hours_late": null,
+   "last_scheduled_run_utc": "2026-08-27T23:47:19Z",
    "name": "watchdog",
-   "note": "watchdog has not run on its schedule for 8.33 h (measured from its last run), which is longer than one cadence plus its grace (3.00 h).  Its most recent slot was 2026-08-27T22:17:00Z (cron '17 * * * *').  Lateness against a single slot cannot catch this: a channel firing more often than its own grace window gets a fresh slot before the old one can age out, so only the gap since the last ACTUAL run can see a sustained outage.",
-   "overdue": true,
-   "status": "MISSED",
+   "overdue": false,
+   "status": "OK",
    "workflow": "watchdog.yml"
   }
  ]

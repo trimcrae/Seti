@@ -269,6 +269,45 @@ green one, and it is not a red one either.
 Every screen in this repository rests on those tests. A suite nobody checks
 still passes is not a safety net; it is a story about one.
 
+## The limit: when the scheduler drops everything
+
+Measured 2026-08-27, and it is worth writing down because no amount of design
+inside this repository removes it.
+
+Between 03:16:49 and 07:50 UTC, GitHub fired **no scheduled run at all** for this
+repository:
+
+* `watchdog` (`17 * * * *`) — 04:17, 05:17, 06:17 and 07:17 all dropped. Last
+  scheduled run 03:16:49.
+* `cronwatch` (`43 */6 * * *`) — its 00:43 slot was dropped and recovered by
+  catch-up; its 06:43 slot was dropped too. It has **never** had a scheduled run.
+
+Five consecutive dropped firings across both watch lanes. Push-triggered
+workflows (`ci`) fired normally throughout, so this is `schedule` delivery
+specifically, which GitHub documents as best effort and deprioritises under load.
+
+Everything built here worked exactly as designed, and none of it could help:
+
+* the silence clock **saw** it — `MISSED | missed_by=silence | 3.31 h`;
+* `--self-heal-only` **acted** on it — a catch-up was dispatched at 06:34:37 and
+  the one-dispatch-per-slot ledger correctly refused a second;
+* and the recovered run then found the same silence, because a `workflow_dispatch`
+  run is not a `schedule` run and does not reset the clock.
+
+**Every recovery mechanism here is itself started by the scheduler.** A sweep can
+only re-fire a dropped channel if the sweep ran, and a sweep is a scheduled
+workflow. When delivery stops wholesale there is nothing inside the repository
+left to notice — the second lane exists for the case where *one* schedule is
+dropped, not where *all* of them are. GITHUB_TOKEN pushes deliberately do not
+trigger workflows, so a committing run cannot bootstrap the next one either.
+
+So the honest statement of coverage is: this watch survives a dropped firing, and
+it survives a dropped *watchdog*. It does not survive a scheduler outage, and it
+cannot, because it lives inside the thing that stopped. Closing that needs an
+actor **outside** GitHub Actions — an external cron that calls the
+`workflow_dispatch` API on a timer. Until one exists, a wholesale outage is
+recovered by whoever next looks.
+
 ## Reading the output
 
 `results/cronwatch/status.json` carries one record per scheduled workflow with

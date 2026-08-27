@@ -1447,3 +1447,170 @@ def test_a_forced_photometry_feed_may_still_claim_an_exact_denominator():
     assert A.ATLAS.has_forced_photometry is True
     assert A.ASASSN.has_forced_photometry is True
     assert A.ZTF.has_forced_photometry is False
+
+
+# ---------------------------------------------------------------------------
+# One target must not be able to eat the whole job (2026-08-27).
+#
+# The walk budget added on 2026-08-26 is checked BETWEEN targets, so it bounds
+# how many targets are started and says nothing about how long one of them may
+# run.  ATLAS costs two queued tasks per proper-motion segment -- the difference
+# pass and the reduced-image baseline -- each waiting up to `max_wait_s`, and
+# nothing capped the segment count.  So a single high-proper-motion star could
+# outlast the runner's own 240-minute timeout, and a job the runner kills
+# executes no commit step and lands nothing: the exact failure the walk budget
+# was written to prevent, displaced one level down.
+#
+# ZTF had all of this from its first real run.  These tests hold ATLAS to it.
+# ---------------------------------------------------------------------------
+
+class _FakeAtlasQueue:
+    """An ATLAS client with the network replaced, counting queued tasks."""
+
+    def __init__(self, per_task_s=0.0, clock=None):
+        import seti.tocsin.altfeeds as _A
+        self.client = _A.AtlasForcedPhotometry(token="t")
+        self.per_task_s = float(per_task_s)
+        self.submits = []
+        self.collects = 0
+        self._t = [0.0]
+        self.client.submit = self._submit
+        self.client.collect = self._collect
+
+    def _submit(self, ra, dec, mjd_lo=None, mjd_hi=None, use_reduced=False):
+        self.submits.append({"ra": ra, "dec": dec, "mjd_lo": mjd_lo,
+                             "mjd_hi": mjd_hi, "use_reduced": use_reduced})
+        return f"task/{len(self.submits)}"
+
+    def _collect(self, task_url, deadline=None):
+        self.collects += 1
+        self._t[0] += self.per_task_s
+        return _atlas_text(n=8, dflux_ujy=100.0, noise_ujy=0.0)
+
+
+def test_atlas_caps_its_proper_motion_segments_like_ztf_does():
+    """Without a cap the nearest, best targets are the ones that never finish."""
+    import seti.tocsin.altfeeds as A
+
+    q = _FakeAtlasQueue()
+    # 2 arcsec/yr over a 14-year window: far more segments than the cap allows.
+    lc, _ = q.client.lightcurve("s", 10.0, 20.0, 2000.0, 0.0,
+                                57200.0, 62300.0, with_baseline=False)
+    assert q.collects <= A.AtlasForcedPhotometry.MAX_PM_SEGMENTS
+    assert any("CAPPED" in n for n in lc.notes), (
+        "a cap that does not say so puts the fabricated end-of-segment decay "
+        "straight back into the curve, unannounced")
+
+
+def test_an_uncapped_target_is_left_alone_and_says_how_many_segments():
+
+    q = _FakeAtlasQueue()
+    lc, _ = q.client.lightcurve("s", 10.0, 20.0, 0.0, 0.0,
+                                58000.0, 58400.0, with_baseline=False)
+    assert q.collects == 1
+    assert any(n.startswith("pm_segments=1") for n in lc.notes)
+    assert not any("CAPPED" in n for n in lc.notes)
+
+
+def test_a_target_that_runs_past_the_walk_budget_is_discarded_not_returned(monkeypatch):
+    """A half-walked star is a light curve with a HOLE in it.
+
+    In a search for dips that hole is the one artefact the channel must never
+    manufacture, so the target is dropped and counted, never folded in.
+    """
+    import time as _time
+
+    import seti.tocsin.altfeeds as A
+
+    q = _FakeAtlasQueue()
+    # A deadline already in the past: the first segment must not be submitted.
+    with pytest.raises(A.AltFeedError) as exc:
+        q.client.lightcurve("s", 10.0, 20.0, 2000.0, 0.0, 57200.0, 62300.0,
+                            deadline=_time.monotonic() - 1.0)
+    assert "budget exhausted mid-target" in str(exc.value)
+    assert q.collects == 0 and q.submits == []
+
+
+def test_the_difference_curve_survives_a_budget_that_dies_in_the_baseline_pass(
+        monkeypatch):
+    """The two passes are not equally disposable.
+
+    A complete difference curve whose reduced-image baseline was cut short is a
+    real light curve whose AMPLITUDES are untestable -- a documented degradation,
+    not a hole in the time series.  It is kept, and the note says so, because
+    discarding it would throw away good epochs while keeping it silently would
+    let an untestable amplitude read as a measured one.
+    """
+    import seti.tocsin.altfeeds as A
+
+    q = _FakeAtlasQueue()
+    now = {"t": 0.0}
+    monkeypatch.setattr(A.time, "monotonic", lambda: now["t"])
+
+    # The clock jumps past the deadline the moment the difference pass is
+    # fetched, so the baseline pass is the thing that runs out of time.
+    real_collect = q._collect
+
+    def collect(task_url, deadline=None):
+        text = real_collect(task_url, deadline)
+        now["t"] = 10_000.0
+        return text
+
+    q.client.collect = collect
+
+    lc, quiescent = q.client.lightcurve("s", 10.0, 20.0, 0.0, 0.0,
+                                        58000.0, 58400.0, deadline=100.0)
+
+    assert len(lc.mjd) >= 1, "the difference curve was complete and must be kept"
+    assert quiescent == {}, "no baseline was measured, so none may be reported"
+    assert any("baseline INCOMPLETE" in n for n in lc.notes)
+    assert any("untestable" in n for n in lc.notes)
+    # One collect for the difference segment, none for the baseline.
+    assert q.collects == 1
+
+
+def test_atlas_collect_never_waits_past_the_walks_own_deadline(monkeypatch):
+    """`max_wait_s` is 1800 s PER TASK; the walk's budget must win when shorter."""
+    import time as _time
+
+    import seti.tocsin.altfeeds as A
+
+    client = A.AtlasForcedPhotometry(token="t", poll_s=0.0, max_wait_s=1800.0)
+    slept = []
+    monkeypatch.setattr(A.time, "sleep", lambda s: slept.append(s))
+
+    class _Resp:
+        status_code = 200
+
+        @staticmethod
+        def json():
+            return {}                      # never finishes
+
+        text = ""
+
+    class _Sess:
+        @staticmethod
+        def get(*a, **k):
+            return _Resp()
+
+    monkeypatch.setattr(client, "_sess", lambda: _Sess())
+    t0 = _time.monotonic()
+    with pytest.raises(A.AltFeedError) as exc:
+        client.collect("task/1", deadline=t0 - 1.0)      # already past
+    assert "did not finish" in str(exc.value)
+    assert _time.monotonic() - t0 < 5.0, (
+        "it waited on its own 1800 s bound instead of the walk's deadline")
+
+
+def test_the_walk_passes_its_deadline_down_into_each_target():
+    """The regression: bounding the LOOP is not bounding the WORK."""
+    import inspect
+
+    import seti.tocsin.altfeeds as A
+
+    src = inspect.getsource(A._fetch)
+    assert "deadline=deadline" in src, (
+        "_fetch checks the budget between targets but does not hand it to the "
+        "target, so one star can still outlast the job")
+    assert "deadline" in inspect.signature(
+        A.AtlasForcedPhotometry.lightcurve).parameters

@@ -2657,9 +2657,25 @@ class AtlasForcedPhotometry:
             raise AltFeedError(f"ATLAS queue returned no task url: {r.text[:300]}")
         return str(url)
 
-    def collect(self, task_url: str) -> str:
-        """Poll one queued task and return its result file as text."""
-        deadline = time.monotonic() + self.max_wait_s
+    #: ATLAS costs TWO queued tasks per proper-motion segment -- the difference
+    #: pass and the `use_reduced` baseline -- so an eleven-year window on a
+    #: 1 arcsec/yr star is ~22 tasks, each of which may wait `max_wait_s`.  ZTF
+    #: has had a cap since its first real run for exactly this reason; ATLAS had
+    #: none, which is how one target could outlast the job.  Where it binds, the
+    #: drift inside a segment exceeds the allowance and the light curve says so.
+    MAX_PM_SEGMENTS = 12
+
+    def collect(self, task_url: str, deadline: float | None = None) -> str:
+        """Poll one queued task and return its result file as text.
+
+        ``deadline`` is an outer ``time.monotonic()`` bound -- the walk's budget.
+        Without it this waits ``max_wait_s`` per task, and a target needing
+        several tasks can outlast the whole job while the walk budget, which is
+        only consulted BETWEEN targets, never gets a say.  See
+        :meth:`lightcurve`.
+        """
+        own = time.monotonic() + self.max_wait_s
+        deadline = own if deadline is None else min(own, float(deadline))
         while time.monotonic() < deadline:
             r = self._sess().get(task_url, headers=self._headers())
             self.calls += 1
@@ -2676,13 +2692,17 @@ class AtlasForcedPhotometry:
             if body.get("error_msg"):
                 raise AltFeedError(f"ATLAS task failed: {str(body['error_msg'])[:200]}")
             time.sleep(self.poll_s)
-        raise AltFeedError(f"ATLAS task did not finish within {self.max_wait_s:.0f}s")
+        raise AltFeedError(
+            f"ATLAS task did not finish within {self.max_wait_s:.0f}s "
+            f"(or the walk's remaining budget, whichever was shorter)")
 
     def lightcurve(self, target_id: str, ra: float, dec: float,
                    pmra: float = 0.0, pmdec: float = 0.0,
                    mjd_lo: float | None = None, mjd_hi: float | None = None,
                    th: LightCurveThresholds | None = None,
-                   with_baseline: bool = True) -> tuple[LightCurve, dict[str, Quiescent]]:
+                   with_baseline: bool = True,
+                   deadline: float | None = None
+                   ) -> tuple[LightCurve, dict[str, Quiescent]]:
         """One target's difference light curve, plus its quiescent flux per band.
 
         The window is split by :func:`pm_segments` so the aperture stays on a
@@ -2695,27 +2715,66 @@ class AtlasForcedPhotometry:
         target is untestable and the events can be recorded but never promoted on
         amplitude evidence --- which is the honest degradation, not a fallback to
         a transformed Gaia magnitude.
+
+        ``deadline`` is the walk's ``time.monotonic()`` budget.  ONE TARGET MUST
+        NOT BE ABLE TO EAT THE WHOLE JOB: the walk budget in :func:`_fetch` is
+        checked only between targets, so before this existed a single star
+        needing many segments -- 2 queued tasks each, up to ``max_wait_s`` apiece
+        -- could run past the runner's own timeout, and a job the runner kills
+        executes no commit step and lands NOTHING.  Past the deadline this raises
+        rather than returning what it has: a half-walked star is not a light
+        curve, it is a light curve with a hole where the budget ran out, and a
+        hole in a search for dips is the one artefact this channel must never
+        manufacture.
         """
         th = th or LightCurveThresholds()
         lo = float(mjd_lo) if mjd_lo is not None else 57200.0     # ATLAS from ~2015
         hi = float(mjd_hi) if mjd_hi is not None else 70000.0
         segs = pm_segments(ra, dec, pmra, pmdec, lo, hi, ATLAS, th)
+        capped = len(segs) > self.MAX_PM_SEGMENTS
+        if capped:
+            segs = pm_segments(ra, dec, pmra, pmdec, lo, hi, ATLAS, th,
+                               max_segments=self.MAX_PM_SEGMENTS)
+
+        def _out_of_time() -> bool:
+            return deadline is not None and time.monotonic() > float(deadline)
+
         rows: list[dict] = []
         cols: list[str] = []
-        for s in segs:
-            text = self.collect(self.submit(s["ra"], s["dec"], s["mjd_lo"], s["mjd_hi"]))
+        for seg in segs:
+            if _out_of_time():
+                raise AltFeedError(
+                    f"walk budget exhausted mid-target after "
+                    f"{len(rows)} rows over part of {len(segs)} segments; "
+                    f"discarded rather than folded into a gappy light curve")
+            text = self.collect(self.submit(seg["ra"], seg["dec"],
+                                            seg["mjd_lo"], seg["mjd_hi"]),
+                                deadline=deadline)
             c, r = parse_atlas_text(text)
             cols = cols or c
             rows.extend(r)
         lc = atlas_rows_to_lightcurve(rows, target_id, ra, dec)
-        lc.notes.append(f"pm_segments={len(segs)}")
+        lc.notes.append(f"pm_segments={len(segs)}"
+                        + (f" (CAPPED at {self.MAX_PM_SEGMENTS}: drift within a "
+                           f"segment exceeds the allowance)" if capped else ""))
         lc.raw_columns = cols or lc.raw_columns
         quiescent: dict[str, Quiescent] = {}
         if with_baseline and segs:
             red_rows: list[dict] = []
             for seg in segs:
+                if _out_of_time():
+                    # The difference curve IS complete here, so it is kept; only
+                    # the amplitude baseline is short.  Said out loud in the
+                    # notes, because an untestable amplitude must never read as
+                    # a measured one.
+                    lc.notes.append(
+                        "baseline INCOMPLETE: walk budget exhausted before the "
+                        "reduced-image pass finished; amplitudes in this target "
+                        "are untestable")
+                    break
                 text = self.collect(self.submit(seg["ra"], seg["dec"], seg["mjd_lo"],
-                                                seg["mjd_hi"], use_reduced=True))
+                                                seg["mjd_hi"], use_reduced=True),
+                                    deadline=deadline)
                 _c, r = parse_atlas_text(text)
                 red_rows.extend(r)
             rlc = atlas_rows_to_lightcurve(red_rows, target_id, ra, dec)
@@ -3266,8 +3325,13 @@ def _fetch(spec: SurveySpec, targets, lth: LightCurveThresholds,
             n_walked += 1
             tid = str(ids[i])
             try:
+                # The deadline goes DOWN into the target, not just around the
+                # loop.  Checking it only here bounds the number of targets
+                # started and says nothing about how long one of them may run,
+                # which is how a single star came to outlast the whole job.
                 lc, q = client.lightcurve(tid, float(ra[i]), float(dec[i]),
-                                          float(pmra[i]), float(pmdec[i]), lo, hi, lth)
+                                          float(pmra[i]), float(pmdec[i]), lo, hi, lth,
+                                          deadline=deadline)
             except AltFeedError as exc:
                 notes.append(f"{tid}: {str(exc)[:200]}")
                 continue

@@ -81,18 +81,11 @@ jobs:
       - name: Commit the ledgers
         if: always()
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # `bash -e`: an `[ -f ] && ...` list that ends false at the end of a
-          # loop kills the step, so the test is a real `if`.
-          for f in results/watchdog/status.json results/cronwatch/status.json \
-                   results/cronwatch/state.json; do
-            if [ -f "$f" ]; then git add -f "$f"; fi
-          done
-          if git diff --cached --quiet; then
-            echo "ledgers unchanged"
-          else
-            git commit -m "watchdog: failure + scheduler sweep ($(date -u +%FT%TZ))"
-            git pull --rebase --autostash || true
-            git push || echo "ledger push failed (non-fatal)"
-          fi
+          # VERIFIED against the remote, and a failure turns this run red.  The
+          # pattern this replaces exited 0 after a conflicted rebase stranded
+          # the commit -- see scripts/commit_results.sh.
+          scripts/commit_results.sh \
+            "watchdog: failure + scheduler sweep ($(date -u +%FT%TZ))" \
+            results/watchdog/status.json \
+            results/cronwatch/status.json \
+            results/cronwatch/state.json

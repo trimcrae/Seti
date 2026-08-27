@@ -174,31 +174,19 @@ jobs:
 
       - name: Commit the screened table and the assessment
         if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # ONE PATHSPEC AT A TIME.  `git add` with several pathspecs is atomic:
-          # one unmatched glob stages NOTHING, `|| true` swallows the failure,
-          # and the run's results are silently discarded.  This has cost this
-          # repository whole runs (see knell.yml).
-          git add -f -- results/loom/objects.csv || echo "no objects.csv"
-          git add -f -- results/loom/screen.json || echo "no screen.json"
-          git add -f -- results/loom/assessment.json || echo "no assessment.json"
-          git add -f -- results/loom/residual_tests.json || echo "no residual_tests.json"
-          echo "=== staged ==="
-          git diff --cached --name-only
-          if git diff --cached --quiet; then
-            echo "No result changes to commit."
-          else
-            git commit -m "loom: solar-system artefact screen — residual structure + replication tests"
-            git checkout -- . 2>/dev/null || true
-            git pull --rebase --autostash origin ${{ github.ref_name }} || true
-            git push origin HEAD:${{ github.ref_name }} || \
-              { git checkout -- . 2>/dev/null || true; \
-                git pull --rebase --autostash origin ${{ github.ref_name }}; \
-                git push origin HEAD:${{ github.ref_name }}; }
-          fi
-
+          # The result of the push is VERIFIED against the remote, and a
+          # failure turns this run red rather than dropping the results in a
+          # green one.  See scripts/commit_results.sh -- run 33029076779 spent
+          # 169 minutes walking the ATLAS queue and landed nothing.
+          scripts/commit_results.sh \
+            "loom: solar-system artefact screen — residual structure + replication tests" \
+            results/loom/objects.csv \
+            results/loom/screen.json \
+            results/loom/assessment.json \
+            results/loom/residual_tests.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

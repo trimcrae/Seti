@@ -96,7 +96,11 @@ jobs:
           fetch-depth: 0
       - name: Fetch the results the triggering run just pushed
         run: |
-          git pull --ff-only origin ${{ github.event.repository.default_branch }} || true
+          # NOT `|| true`.  This pull is how the run gets the results it was woken
+          # up to evaluate; swallowing its failure means evaluating the PREVIOUS
+          # tree and reporting the answer as current.  A red run here is retried
+          # by the hourly failure sweep; a silent stale evaluation is not.
+          git pull --ff-only origin ${{ github.event.repository.default_branch }}
           git log --oneline -3
 
       - uses: actions/setup-python@v5
@@ -195,30 +199,18 @@ jobs:
 
       - name: Commit the alert state
         if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # ONE PATHSPEC AT A TIME: `git add` with several pathspecs is atomic,
-          # so one unmatched glob stages NOTHING and `|| true` hides it.
-          git add -f -- results/alerts/state.json || echo "no state.json"
-          git add -f -- results/alerts/latest.json || echo "no latest.json"
-          # frontier.json is the only MEMORY in this repository of where the
-          # broker mirror was on previous runs.  A run that evaluates but does
-          # not commit it leaves the stall check comparing today against today
-          # forever, which disables it while every test still passes.
-          git add -f -- results/alerts/frontier.json || echo "no frontier.json"
-          if git diff --cached --quiet; then
-            echo "No alert-state changes to commit."
-          else
-            git commit -m "alerts: record raised alerts and current state"
-            git checkout -- . 2>/dev/null || true
-            git pull --rebase --autostash origin ${{ github.event.repository.default_branch }} || true
-            git push origin HEAD:${{ github.event.repository.default_branch }} || \
-              { git checkout -- . 2>/dev/null || true; \
-                git pull --rebase --autostash origin ${{ github.event.repository.default_branch }}; \
-                git push origin HEAD:${{ github.event.repository.default_branch }}; }
-          fi
-
+          # The result of the push is VERIFIED against the remote, and a
+          # failure turns this run red rather than dropping the results in a
+          # green one.  See scripts/commit_results.sh -- run 33029076779 spent
+          # 169 minutes walking the ATLAS queue and landed nothing.
+          scripts/commit_results.sh \
+            "alerts: record raised alerts and current state" \
+            results/alerts/state.json \
+            results/alerts/latest.json \
+            results/alerts/frontier.json
       - name: Report
         if: always()
         run: |

@@ -8,7 +8,7 @@ both wired into `.github/workflows/watchdog.yml` and the first also into
 
 ## The gap this closes
 
-Every channel here can fall silent in four different ways, and when this was
+Every channel here can fall silent in five different ways, and when this was
 opened only two of them were watched. All four are watched now — and the first
 row, the one that *was* covered, turned out to be covered wrongly; see **The
 retry that made things worse** below.
@@ -16,6 +16,7 @@ retry that made things worse** below.
 | what stopped | what it looks like | who catches it |
 |---|---|---|
 | the run **failed** | a red run in the Actions tab | `seti.failsweep`, hourly inside `watchdog`, and it re-runs the failed jobs *a retry can fix* |
+| the result **never landed** | a GREEN run, the work done, the commit stranded by a conflicted rebase | `scripts/commit_results.sh`, which verifies against the remote and fails loudly |
 | the **data** stopped | runs stay green, results stay fresh, the frontier stops moving | `alerts.health_alerts` — the frontier lag and stall checks, and `rubin-outage` for the cause |
 | the run **never started** | *nothing at all* | nobody, until now |
 | the **tests** went red | CI red on `main`; every screen still runs and still commits | nobody, until now — `watchdog` skips `ci` on purpose |
@@ -137,6 +138,67 @@ the first test and a wiring test that fails if the logic migrates back into the
 workflow file. The ledger is also written on *every* sweep now, not only when
 something failed — a file that appears only on bad days cannot tell "nothing
 failed" from "the sweep did not run", which is this document's whole subject.
+
+## The fifth silence: a result that was computed and never landed
+
+Found at 04:58 UTC on 2026-08-27, and it is the worst of the family so far,
+because the run is *green* and the work was *done*.
+
+`tocsin-altfeeds` run 33029076779 spent **169 minutes** walking the ATLAS queue,
+screened it, wrote `atlas/summary.json`, `atlas/events.json` and
+`atlas/ledger_atlas.json`, and committed them. `main` had moved eight commits in
+those 169 minutes. Then:
+
+```
+git pull --rebase --autostash origin main || true     # CONFLICT in census.json
+git push origin HEAD:main || { ... retry ... }        # "Everything up-to-date"
+```
+
+The rebase conflicted on a generated JSON file that the concurrent run had also
+rewritten. `|| true` swallowed it, leaving **a rebase in progress with the commit
+unapplied**. `git push` then had nothing to push, printed *Everything
+up-to-date*, and exited 0. The retry could not help: a second `git pull --rebase`
+fails while a rebase is in progress, and its `|| true` swallowed that too. The
+step exited 0, the run went green, and 169 minutes of queue time reached nobody.
+
+And it would not have been noticed. The file it should have refreshed simply did
+not change, so `alerts.STALE_DAYS` reads the channel as a little old rather than
+broken — the same blind spot the empty-catalogue commit exploited from the other
+direction. **A check that measures whether a file changed cannot tell you whether
+the thing that changed it did any work — and it cannot tell you that the work was
+done and thrown away either.**
+
+`scripts/commit_results.sh` replaces that pattern in all ten scheduled
+workflows, on two rules:
+
+1. **Never rebase.** These are generated artefacts, wholly rewritten by the run
+   that produces them. There is no line-level history to preserve, and a
+   three-way merge of two machine-written JSON files is meaningless even when it
+   succeeds. So the tree is re-created at whatever the branch head is *now* and
+   the files are laid over it. A conflict is then impossible, and
+   last-writer-wins is stated rather than discovered.
+2. **Verify the result, not the call.** A zero exit from `git push` is not
+   evidence that anything was pushed — *Everything up-to-date* is also zero. So
+   the commit must afterwards be an ancestor of the **remote** ref, read back
+   with `git ls-remote`. That is the check the old pattern lacked, and the only
+   one that could have caught this.
+
+Anything unresolvable exits non-zero, which turns the run red so the failure
+sweep sees it. A loud failure beats a silent drop: the run that drops silently is
+indistinguishable from one that had nothing to say.
+
+`tests/test_commit_results.py` runs both patterns against real repositories with
+a real conflicting change on the remote — including one test that asserts the
+*old* sequence really did exit 0 while dropping the result, so if the premise
+ever stops being true, that shows up as a failing test rather than as a rewrite
+of this page.
+
+The rule is enforced going forward: a test walks every **scheduled** workflow and
+fails if it swallows the outcome of a `git pull` or `git push`. The line is drawn
+at *scheduled* deliberately — a dispatch-only workflow is started by someone who
+watches it finish, while a scheduled one has only its exit code to speak with,
+and `|| echo` takes even that away. The other 76 dispatch-only workflows still
+carry the old pattern and should be converted as they are touched.
 
 ## And one check that is about the repository, not the sky
 

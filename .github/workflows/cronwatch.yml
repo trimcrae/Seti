@@ -57,14 +57,10 @@ jobs:
       - name: Commit the scheduler ledger
         if: always()
         run: |
-          [ -f results/cronwatch/status.json ] || { echo "no sweep written"; exit 0; }
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f results/cronwatch/status.json results/cronwatch/state.json
-          if git diff --cached --quiet; then
-            echo "scheduler ledger unchanged"
-          else
-            git commit -m "cronwatch: second-lane sweep ($(date -u +%FT%TZ))"
-            git pull --rebase --autostash || true
-            git push || echo "scheduler ledger push failed (non-fatal)"
-          fi
+          # VERIFIED against the remote, and a failure turns this run red.  The
+          # pattern this replaces exited 0 after a conflicted rebase stranded
+          # the commit -- see scripts/commit_results.sh.
+          scripts/commit_results.sh \
+            "cronwatch: second-lane sweep ($(date -u +%FT%TZ))" \
+            results/cronwatch/status.json \
+            results/cronwatch/state.json

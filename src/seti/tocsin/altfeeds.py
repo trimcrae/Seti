@@ -385,7 +385,16 @@ ZTF = SurveySpec(
                                        # `ztf_rows_to_lightcurve`, which converts
     time_is_jd=False,                  # `mjd` column is served alongside `hjd`
     is_difference_flux=False,          # matchfile photometry, not subtraction
-    fixed_catalogue_position=True,     # keyed to ZTF's own matchfile objects
+    # FALSE, and the distinction cost the first real run 110 of its 120 targets.
+    # This flag asks whether the QUERY POSITION is ours to choose, not whose
+    # catalogue the photometry is keyed to.  ZTF's photometry does come from its
+    # own matchfile objects -- which is why the cone stays at 1.5 arcsec -- but
+    # IRSA takes an arbitrary cone AND a time window in the same request, so a
+    # high-proper-motion star is followed by splitting the window, exactly as on
+    # the ATLAS path.  Marking it True made `pm_segments` return a single
+    # segment and `drift_excluded` refuse every star over 45 mas/yr, which in a
+    # 100 pc sample is nearly all of them.
+    fixed_catalogue_position=False,
     auth_env=None,                     # public; no token, no queue
     notes=("Detections only -- no forced photometry, so the denominator is "
            "detection-dominated rather than exact.  30 s exposures, so a "
@@ -599,7 +608,8 @@ def pm_drift_arcsec(pmra_mas_yr: float, pmdec_mas_yr: float, dt_yr: float) -> fl
 
 def pm_segments(ra: float, dec: float, pmra_mas_yr: float, pmdec_mas_yr: float,
                 mjd_lo: float, mjd_hi: float, spec: SurveySpec,
-                th: LightCurveThresholds | None = None) -> list[dict]:
+                th: LightCurveThresholds | None = None,
+                max_segments: int | None = None) -> list[dict]:
     """Split a request window so the aperture never walks off a high-PM star.
 
     Forced photometry is measured at the coordinate supplied, once, for the whole
@@ -628,6 +638,12 @@ def pm_segments(ra: float, dec: float, pmra_mas_yr: float, pmdec_mas_yr: float,
         span_yr = (mjd_hi - mjd_lo) / 365.25
         max_span_yr = allowance_arcsec / (mu / 1000.0)
         n_seg = max(1, int(math.ceil(span_yr / max_span_yr))) if max_span_yr > 0 else 1
+    if max_segments is not None:
+        # The caller pays one request per segment, so it may cap the count.  The
+        # drift inside each segment then EXCEEDS the allowance, and the caller is
+        # expected to record that: a cap that silently pretended otherwise would
+        # put the fabricated end-of-segment decay straight back into the curve.
+        n_seg = min(n_seg, max(1, int(max_segments)))
     edges = np.linspace(mjd_lo, mjd_hi, n_seg + 1)
     out = []
     for i in range(n_seg):
@@ -2403,11 +2419,32 @@ class ZtfIrsa:
                 f"position filter: {rec['position_filter_verdict']}")
         return rec
 
+    #: Most segments one target may be split into.  A 3 arcsec/yr star needs 52
+    #: over ZTF's baseline and Barnard's Star would need ~170 -- and each segment
+    #: is a request, so without a cap the nearest and best targets are exactly
+    #: the ones that eat the whole walk.  Where it binds, the drift inside a
+    #: segment exceeds the allowance and the light curve says so.
+    MAX_PM_SEGMENTS = 24
+
     def lightcurves(self, requests_: list[dict], radius_arcsec: float | None = None,
                     mjd_lo: float | None = None, mjd_hi: float | None = None,
+                    th: LightCurveThresholds | None = None,
                     on_result=None, max_seconds: float = 5400.0
                     ) -> dict[str, LightCurve]:
-        """One cone per target; every epoch inside it, all bands together.
+        """One cone per proper-motion SEGMENT per target; all bands together.
+
+        WHY SEGMENTS RATHER THAN A REFUSAL.  The first real run (2026-08-26)
+        excluded 110 of its 120 targets because their proper motion carries them
+        further than a quarter of ZTF's 2 arcsec PSF over an eleven-year
+        baseline -- every star above 45 mas/yr, which in a 100 pc sample is
+        nearly all of them.  That cut is right for ASAS-SN, whose aperture is
+        pinned to its own source list.  It is wrong here, and the distinction is
+        worth stating exactly: ZTF's PHOTOMETRY is keyed to its matchfile
+        objects, but the SEARCH POSITION is ours to choose and the service takes
+        a cone and a time window in the same request.  So the window is split as
+        the ATLAS path splits it, each piece asked at the position the star
+        actually occupied then, and the pieces concatenated.  The small cone,
+        not the refusal, is what keeps a neighbour out.
 
         ``max_seconds`` bounds the WHOLE slice, not each request.  Per-request
         timeouts do not bound a walk: 200 targets at 60 s each is three hours,
@@ -2418,8 +2455,11 @@ class ZtfIrsa:
         """
         import time as _time
 
+        th = th or LightCurveThresholds()
         out: dict[str, LightCurve] = {}
         s = self._sess()
+        lo = float(mjd_lo) if mjd_lo is not None else 58194.0   # ZTF from 2018-03
+        hi = float(mjd_hi) if mjd_hi is not None else 70000.0
         deadline = _time.monotonic() + float(max_seconds)
         for i, req in enumerate(requests_):
             if _time.monotonic() > deadline:
@@ -2429,27 +2469,51 @@ class ZtfIrsa:
                     f"record says so rather than the ledger implying a full walk")
                 break
             tid = str(req["target_id"])
-            try:
-                r = s.get(self.endpoint,
-                          params=self._params(float(req["ra"]), float(req["dec"]),
-                                              radius_arcsec, mjd_lo=mjd_lo,
-                                              mjd_hi=mjd_hi))
-                self.calls += 1
-                if r.status_code >= 400:
-                    self.notes.append(f"{tid}: HTTP {r.status_code} "
-                                      f"{(r.text or '')[:120]}")
-                    continue
-                _header, rows = parse_csv_text(r.text)
-            except Exception as exc:                               # noqa: BLE001
-                self.notes.append(f"{tid}: {str(exc)[:200]}")
+            ra0, dec0 = float(req["ra"]), float(req["dec"])
+            pmra, pmdec = float(req.get("pmra") or 0.0), float(req.get("pmdec") or 0.0)
+            segs = pm_segments(ra0, dec0, pmra, pmdec, lo, hi, ZTF, th)
+            capped = len(segs) > self.MAX_PM_SEGMENTS
+            if capped:
+                segs = pm_segments(ra0, dec0, pmra, pmdec, lo, hi, ZTF, th,
+                                   max_segments=self.MAX_PM_SEGMENTS)
+            rows: list[dict] = []
+            failed = False
+            for seg in segs:
+                if _time.monotonic() > deadline:
+                    failed = True          # a half-walked star is not a light curve
+                    self.notes.append(f"{tid}: budget exhausted mid-target; its "
+                                      f"partial segments are discarded rather "
+                                      f"than folded into a gappy light curve")
+                    break
+                try:
+                    r = s.get(self.endpoint,
+                              params=self._params(float(seg["ra"]), float(seg["dec"]),
+                                                  radius_arcsec,
+                                                  mjd_lo=seg["mjd_lo"],
+                                                  mjd_hi=seg["mjd_hi"]))
+                    self.calls += 1
+                    if r.status_code >= 400:
+                        self.notes.append(f"{tid}: HTTP {r.status_code} "
+                                          f"{(r.text or '')[:120]}")
+                        failed = True
+                        break
+                    _header, seg_rows = parse_csv_text(r.text)
+                except Exception as exc:                           # noqa: BLE001
+                    self.notes.append(f"{tid}: {str(exc)[:200]}")
+                    failed = True
+                    break
+                rows.extend(seg_rows)
+            if failed or not rows:
                 continue
-            if not rows:
-                continue
-            out[tid] = ztf_rows_to_lightcurve(rows, tid, float(req["ra"]),
-                                              float(req["dec"]))
+            lc = ztf_rows_to_lightcurve(rows, tid, ra0, dec0)
+            lc.notes.append(f"pm_segments={len(segs)}"
+                            + (f" (CAPPED at {self.MAX_PM_SEGMENTS}: drift within a "
+                               f"segment exceeds the allowance)" if capped else ""))
+            out[tid] = lc
             if on_result is not None:
-                on_result(tid, out[tid])
+                on_result(tid, lc)
         return out
+
 
 
 class AtlasForcedPhotometry:
@@ -3043,7 +3107,52 @@ def _fetch(spec: SurveySpec, targets, lth: LightCurveThresholds,
     for nb in spec.native_bands:
         m = synthetic_native_mag(targets, spec, nb)
         mag = np.where(np.isfinite(m) & (~np.isfinite(mag) | (m < mag)), m, mag)
-    order = np.argsort(np.where(np.isfinite(mag), mag, np.inf))
+    # NEVER SPEND QUOTA ON A TARGET THE SURVEY CANNOT MEASURE.
+    #
+    # Brightest-first is the right ordering for a SHALLOW feed, where the limit
+    # that bites is depth.  It is exactly the wrong one at the bright end: every
+    # survey here also has a saturation limit, and a star above it produces no
+    # photometry at all.  ZTF saturates near 12.5 and the census counts 26,172
+    # of these targets above it in zg -- so the first real ZTF slice, ordered
+    # brightest-first, spent all ten of its surviving requests on stars that
+    # cannot appear in a matchfile, and came back with zero light curves and a
+    # NO_DATA_REACHED verdict that was about the ORDERING, not the sky.
+    #
+    # A target is kept when at least one native band can measure it; the order
+    # is then brightest-first among those, which is still the ordering that puts
+    # a bounded quota where a given fractional amplitude is detectable.
+    measurable = np.zeros(n, dtype=bool)
+    for nb in spec.native_bands:
+        m = synthetic_native_mag(targets, spec, nb)
+        sat = float(spec.saturation_mag.get(nb, -np.inf))
+        depth = float(spec.depth_5sigma.get(nb, np.inf))
+        measurable |= np.isfinite(m) & (m > sat) & (m < depth)
+    n_saturated = int(np.count_nonzero(np.isfinite(mag) & ~measurable))
+    if n_saturated:
+        notes.append(f"{n_saturated} targets are outside {spec.key}'s usable "
+                     f"magnitude range in every native band (saturated or below "
+                     f"the per-epoch limit) and are not requested at all")
+    # TWO DIFFERENT EMPTY SETS, and only one of them justifies walking anyway.
+    # If no magnitude could be PREDICTED at all (no synthetic photometry in the
+    # target list) then the survey's limits say nothing and the walk proceeds
+    # blind.  If magnitudes were predicted and every one falls outside the
+    # survey's usable range, walking spends the quota on stars that cannot yield
+    # photometry -- which is precisely what produced NO_DATA_REACHED.
+    any_predicted = bool(np.any(np.isfinite(mag)))
+    if measurable.any():
+        keep = measurable
+    elif not any_predicted:
+        keep = np.ones(n, dtype=bool)
+        notes.append(f"no target magnitude could be predicted for {spec.key}; "
+                     f"the walk proceeds blind and its limits are untested")
+    else:
+        keep = np.zeros(n, dtype=bool)
+        notes.append(f"every predicted magnitude falls outside {spec.key}'s "
+                     f"usable range, so nothing is requested: this is a statement "
+                     f"about the SLICE, not about the sky")
+    ranked = np.where(keep, np.where(np.isfinite(mag), mag, np.inf), np.inf)
+    order = np.argsort(ranked)
+    order = order[np.isfinite(ranked[order])]
     if max_targets:
         order = order[:int(max_targets)]
     ids = (np.asarray(targets["source_id"]).astype(str) if "source_id" in targets
@@ -3058,26 +3167,19 @@ def _fetch(spec: SurveySpec, targets, lth: LightCurveThresholds,
     lightcurves: dict[str, LightCurve] = {}
     quiescent: dict[str, dict[str, Quiescent]] = {}
     if spec.key == ZTF.key:
-        # One cone per target, like ASAS-SN and unlike ATLAS's queue -- and, like
-        # ASAS-SN, keyed to the survey's own matchfile objects, so a star that
-        # has walked out of its own cone over the baseline is excluded rather
-        # than silently matched to a neighbour.
+        # NO DRIFT EXCLUSION HERE, deliberately, unlike ASAS-SN.  The search
+        # position is ours to choose and the service takes a time window in the
+        # same request, so a high-proper-motion star is SEGMENTED (as on the
+        # ATLAS path) instead of being dropped.  Excluding on drift cost the
+        # first real run 110 of its 120 targets -- every star over 45 mas/yr,
+        # which in a 100 pc sample is most of them.
         client = ZtfIrsa()
-        reqs = []
-        n_drift = 0
-        for i in order:
-            if drift_excluded(pmra[i], pmdec[i], lo, hi, spec, lth):
-                n_drift += 1
-                continue
-            reqs.append({"target_id": str(ids[i]), "ra": float(ra[i]),
-                         "dec": float(dec[i])})
-        if n_drift:
-            notes.append(f"{n_drift} targets excluded: proper-motion drift exceeds "
-                         f"{lth.max_drift_frac:g} x {spec.psf_fwhm_arcsec:g}\" over the "
-                         f"window, and this feed cannot re-centre its aperture")
-        lightcurves = client.lightcurves(reqs, mjd_lo=mjd_lo, mjd_hi=mjd_hi)
+        reqs = [{"target_id": str(ids[i]), "ra": float(ra[i]), "dec": float(dec[i]),
+                 "pmra": float(pmra[i]), "pmdec": float(pmdec[i])} for i in order]
+        lightcurves = client.lightcurves(reqs, mjd_lo=mjd_lo, mjd_hi=mjd_hi, th=lth)
         notes.extend(client.notes[:20])
-        notes.append(f"ztf: {client.calls} requests, {len(lightcurves)} light curves")
+        notes.append(f"ztf: {client.calls} requests over {len(reqs)} targets, "
+                     f"{len(lightcurves)} light curves")
     elif spec.key == ASASSN.key:
         client = AsasSnSkyPatrol()
         reqs = []

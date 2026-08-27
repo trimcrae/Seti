@@ -1224,3 +1224,168 @@ def test_a_normal_atlas_walk_reports_how_far_it_got(tmp_path, monkeypatch):
     _lcs, _q, notes = A._fetch(A.ATLAS, targets, A.LightCurveThresholds(),
                                max_targets=2, mjd_lo=58000.0, mjd_hi=59000.0)
     assert any("walked 2 of 2" in n for n in notes)
+
+
+# ---------------------------------------------------------------------------
+# What the first real ZTF slice taught (2026-08-26, NO_DATA_REACHED)
+# ---------------------------------------------------------------------------
+def _nearby_targets(n=6, bright=True):
+    import pandas as pd
+
+    # Bright end: 10-11 mag, far above ZTF's 12.5 saturation.  Faint end: 15-16,
+    # squarely inside its usable range.
+    base = 10.0 if bright else 15.0
+    return pd.DataFrame({
+        "source_id": [f"s{i}" for i in range(n)],
+        "ra": [10.0 + i for i in range(n)], "dec": [20.0] * n,
+        "pmra": [500.0] * n, "pmdec": [-300.0] * n,          # a real nearby star
+        "g_sdss_mag": [base + 0.1 * i for i in range(n)],
+        "r_sdss_mag": [base - 0.2 + 0.1 * i for i in range(n)],
+        "i_sdss_mag": [base - 0.4 + 0.1 * i for i in range(n)],
+        "z_sdss_mag": [base - 0.5 + 0.1 * i for i in range(n)],
+        "u_sdss_mag": [base + 1.0 + 0.1 * i for i in range(n)],
+    })
+
+
+def test_a_saturated_target_is_never_requested(monkeypatch):
+    """The bug behind the first real ZTF run's NO_DATA_REACHED.
+
+    Brightest-first is right for a shallow feed and exactly wrong at the bright
+    end: ZTF saturates near 12.5, the census counts 26,172 targets above it, and
+    the slice spent every request on stars that cannot appear in a matchfile.
+    """
+    asked = []
+
+    class Client:
+        calls = 0
+        notes: list[str] = []
+
+        def __init__(self, *a, **k):
+            pass
+
+        def lightcurves(self, reqs, **kw):
+            asked.extend(r["target_id"] for r in reqs)
+            return {}
+
+    monkeypatch.setattr(A, "ZtfIrsa", Client)
+    _lc, _q, notes = A._fetch(A.ZTF, _nearby_targets(bright=True),
+                              A.LightCurveThresholds(), max_targets=6,
+                              mjd_lo=58194.0, mjd_hi=61300.0)
+    assert asked == [], "saturated targets must not be requested at all"
+    assert any("usable magnitude range" in n for n in notes)
+
+
+def test_a_measurable_target_is_requested(monkeypatch):
+    asked = []
+
+    class Client:
+        calls = 0
+        notes: list[str] = []
+
+        def __init__(self, *a, **k):
+            pass
+
+        def lightcurves(self, reqs, **kw):
+            asked.extend(r["target_id"] for r in reqs)
+            return {}
+
+    monkeypatch.setattr(A, "ZtfIrsa", Client)
+    A._fetch(A.ZTF, _nearby_targets(bright=False), A.LightCurveThresholds(),
+             max_targets=6, mjd_lo=58194.0, mjd_hi=61300.0)
+    assert len(asked) == 6
+
+
+def test_high_proper_motion_is_segmented_not_refused(monkeypatch):
+    """The other half of that run: 110 of 120 targets dropped on drift.
+
+    Correct for ASAS-SN, whose aperture is pinned to its own source list. Wrong
+    here: the SEARCH position is ours to choose and the service takes a time
+    window in the same request, so the star is followed instead of abandoned.
+    """
+    seen: list[dict] = []
+
+    class Session:
+        def get(self, url, params=None, **kw):
+            seen.append(params)
+
+            class R:
+                status_code = 200
+                text = ("mjd,mag,magerr,catflags,filtercode,limitmag\n"
+                        "58200.0,15.0,0.01,0,zg,20.5\n")
+            return R()
+
+    c = A.ZtfIrsa()
+    c._s = Session()
+    out = c.lightcurves([{"target_id": "fast", "ra": 10.0, "dec": 20.0,
+                          "pmra": 3000.0, "pmdec": 0.0}],
+                        mjd_lo=58194.0, mjd_hi=61300.0)
+    assert "fast" in out, "a fast star must still produce a light curve"
+    assert len(seen) > 1, "the window must be split into segments"
+    # Each segment asks at a different position, and every window is inside the
+    # requested baseline.
+    positions = {p["POS"] for p in seen}
+    assert len(positions) == len(seen)
+    for p in seen:
+        lo, hi = (float(x) for x in p["TIME"].split())
+        assert 58194.0 <= lo < hi <= 61300.0
+    assert any("pm_segments=" in n for n in out["fast"].notes)
+
+
+def test_a_slow_star_is_asked_for_in_one_request(monkeypatch):
+    seen = []
+
+    class Session:
+        def get(self, url, params=None, **kw):
+            seen.append(params)
+
+            class R:
+                status_code = 200
+                text = "mjd,mag,magerr,catflags,filtercode,limitmag\n58200.0,15.0,0.01,0,zg,20.5\n"
+            return R()
+
+    c = A.ZtfIrsa()
+    c._s = Session()
+    c.lightcurves([{"target_id": "slow", "ra": 10.0, "dec": 20.0,
+                    "pmra": 1.0, "pmdec": 0.0}], mjd_lo=58194.0, mjd_hi=61300.0)
+    assert len(seen) == 1
+
+
+def test_the_segment_count_is_capped_so_one_star_cannot_eat_the_walk():
+    """Barnard's Star would need ~170 requests; the cap says so out loud."""
+    seen = []
+
+    class Session:
+        def get(self, url, params=None, **kw):
+            seen.append(params)
+
+            class R:
+                status_code = 200
+                text = ("mjd,mag,magerr,catflags,filtercode,limitmag\n"
+                        "58200.0,15.0,0.01,0,zg,20.5\n")
+            return R()
+
+    c = A.ZtfIrsa()
+    c._s = Session()
+    out = c.lightcurves([{"target_id": "barnard", "ra": 269.45, "dec": 4.69,
+                          "pmra": -800.0, "pmdec": 10300.0}],
+                        mjd_lo=58194.0, mjd_hi=61300.0)
+    assert len(seen) == A.ZtfIrsa.MAX_PM_SEGMENTS
+    assert any("CAPPED" in n for n in out["barnard"].notes)
+
+
+def test_a_target_half_walked_when_the_budget_ends_is_discarded():
+    """A gappy curve assembled from some of a star's segments is not a light
+    curve of that star -- the missing years look exactly like a dip."""
+    class Session:
+        def get(self, url, params=None, **kw):
+            class R:
+                status_code = 200
+                text = "mjd,mag,magerr,catflags,filtercode,limitmag\n58200.0,15.0,0.01,0,zg,20.5\n"
+            return R()
+
+    c = A.ZtfIrsa()
+    c._s = Session()
+    out = c.lightcurves([{"target_id": "fast", "ra": 10.0, "dec": 20.0,
+                          "pmra": 3000.0, "pmdec": 0.0}],
+                        mjd_lo=58194.0, mjd_hi=61300.0, max_seconds=0.0)
+    assert out == {}

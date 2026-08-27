@@ -272,6 +272,10 @@ class SurveySpec:
     is_difference_flux: bool          # True: served flux is already dF
     fixed_catalogue_position: bool    # True: we cannot choose the aperture centre
     auth_env: str | None
+    # Does the service measure at EVERY epoch it observed, or only where it
+    # detected something?  This decides whether a non-detection is information.
+    # It is a property of the feed and must never be inferred from counts.
+    has_forced_photometry: bool = True
     notes: str = ""
 
 
@@ -396,6 +400,7 @@ ZTF = SurveySpec(
     # 100 pc sample is nearly all of them.
     fixed_catalogue_position=False,
     auth_env=None,                     # public; no token, no queue
+    has_forced_photometry=False,       # matchfile DETECTIONS, not forced
     notes=("Detections only -- no forced photometry, so the denominator is "
            "detection-dominated rather than exact.  30 s exposures, so a "
            "sub-visit event is diluted exactly as it is in a Rubin visit."),
@@ -3029,15 +3034,37 @@ def run_survey(survey: str, cfg=None, targets_path: str | Path | None = None,
     summary["counts"].update(verdict.counts)
     summary["notes"].extend(verdict.notes)
 
-    # THE DENOMINATOR, stated in the artefact rather than implied.  Unlike the
-    # Rubin path, every trial here carries real non-detection information, so
-    # the ensemble rate is a rate and not an upper bound.
+    # THE DENOMINATOR, stated in the artefact rather than implied.
+    #
+    # WHOSE PROPERTY THIS IS.  It was decided by a COUNT -- "more star-nights
+    # than twice the events, therefore exact" -- which is arithmetic about a
+    # sample, not a fact about a feed.  On 2026-08-27 that printed
+    # `forced_photometry_exact` into ZTF's committed record, for a service that
+    # serves matchfile DETECTIONS and no forced photometry at all, flatly
+    # contradicting the note this module writes onto every ZTF light curve.  A
+    # false claim about the denominator is worse than a missing one: an
+    # occurrence rate over an assumed denominator is not a rate.
+    #
+    # So the label follows the SPEC.  A feed that measures every epoch it
+    # observed can carry an exact denominator once it has enough star-nights to
+    # mean anything; a detection-only feed never can, however many it has,
+    # because an absent epoch is unobserved-or-undetected and this module cannot
+    # separate them.
     n_pairs = len(verdict.star_night_pairs)
     n_events = len(verdict.events)
     summary["counts"]["target_nights_screened"] = n_pairs
-    summary["denominator"] = ("forced_photometry_exact" if n_pairs > 2 * max(n_events, 1)
-                              else "detection_dominated_lower_bound")
-    summary["forced_coverage_fraction"] = 1.0 if n_pairs else 0.0
+    if spec.has_forced_photometry:
+        summary["denominator"] = (
+            "forced_photometry_exact" if n_pairs > 2 * max(n_events, 1)
+            else "detection_dominated_lower_bound")
+        summary["forced_coverage_fraction"] = 1.0 if n_pairs else 0.0
+    else:
+        summary["denominator"] = "detection_dominated_lower_bound"
+        summary["forced_coverage_fraction"] = 0.0
+        summary["notes"].append(
+            f"{spec.key} serves detections only: an absent epoch is 'not "
+            f"observed' OR 'below the limit' and this module cannot separate "
+            f"them, so every rate over this denominator is a LOWER BOUND")
 
     lconf = conf["ledger"]
     ledger_path = out / f"ledger_{spec.key}.json"

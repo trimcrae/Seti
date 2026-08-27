@@ -395,3 +395,50 @@ def test_the_report_is_written_where_the_alert_layer_reads_it(tmp_path):
     rep = json.loads((root / "out" / "status.json").read_text())
     assert rep["n_workflows"] == 1 and rep["n_overdue"] == 0
     assert rep["workflows"][0]["last_scheduled_run_utc"] == "2026-08-26T18:41:00Z"
+
+
+def test_the_watch_does_not_depend_on_a_single_cron(tmp_path):
+    """The hole found on 2026-08-26: the watcher could not watch itself.
+
+    `cronwatch` ran only inside `watchdog`, which is itself hourly and scheduled.
+    So the exact failure it exists to catch, applied to `watchdog`, also switched
+    it off -- and that night `watchdog`'s last scheduled run was 22:10 UTC with
+    the next still missing 2 h 15 m later, past its own grace, with nothing
+    saying so because saying so was its job.
+    """
+    import yaml
+
+    lanes = []
+    for name in ("watchdog.yml", "cronwatch.yml"):
+        doc = yaml.safe_load(open(f".github/workflows/{name}"))
+        triggers = doc.get(True, doc.get("on")) or {}
+        crons = [e["cron"] for e in (triggers.get("schedule") or [])]
+        assert crons, f"{name} must be scheduled"
+        assert any("cron_watch.py" in str(s.get("run", ""))
+                   for s in doc["jobs"][next(iter(doc["jobs"]))]["steps"]), \
+            f"{name} must actually run the sweep"
+        lanes.append(crons[0])
+
+    assert len(set(lanes)) == 2, "two lanes on the same cron are one lane"
+    # Different minute as well as different cadence: a scheduler dropping one
+    # particular slot must not take both.
+    minutes = {c.split()[0] for c in lanes}
+    assert len(minutes) == 2, f"both lanes fire at the same minute: {lanes}"
+
+
+def test_only_one_lane_dispatches_catch_ups():
+    """Two schedules that both re-fire could double-fire the same missed slot.
+
+    The failure being guarded against is the watch going SILENT, and that is
+    fixed by a second REPORTER, not by a second actor.
+    """
+    import yaml
+
+    doc = yaml.safe_load(open(".github/workflows/cronwatch.yml"))
+    steps = doc["jobs"]["sweep"]["steps"]
+    runs = " ".join(str(s.get("run", "")) for s in steps)
+    assert "--no-dispatch" in runs
+
+    doc2 = yaml.safe_load(open(".github/workflows/watchdog.yml"))
+    runs2 = " ".join(str(s.get("run", "")) for s in doc2["jobs"]["sweep"]["steps"])
+    assert "cron_watch.py" in runs2 and "--no-dispatch" not in runs2

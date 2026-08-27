@@ -1,0 +1,70 @@
+name: cronwatch
+
+# THE SECOND PAIR OF EYES, and the reason it exists is a hole found in the first.
+#
+# `seti.cronwatch` watches whether GitHub actually fired each scheduled
+# workflow -- but it ran only INSIDE `watchdog`, which is itself an hourly
+# scheduled workflow.  So the one failure it exists to catch, applied to
+# `watchdog` itself, also switches it off: when the hourly cron is dropped, the
+# check that would have noticed is exactly the thing that did not run.
+#
+# It is not hypothetical.  On 2026-08-26 `watchdog`'s last scheduled run was
+# 22:10 UTC and the next was still missing 2 h 15 m later -- past its own two
+# hour grace window -- and nothing said so, because saying so was its job.
+#
+# So the sweep runs from two independent crons on different cadences.  Both have
+# to be dropped for the watch to go blind, and each reports the other, because
+# `cronwatch` reads every scheduled workflow in the repository including these
+# two.
+#
+# THIS ONE ONLY REPORTS.  `--no-dispatch` is deliberate: catch-up dispatches stay
+# the single responsibility of the `watchdog` sweep.  Two schedules that both
+# re-fire could race between reading the state ledger and writing it, and
+# double-fire the same missed slot; two that both report cannot.  The failure
+# this guards against is the watch going SILENT, and a silent watch is fixed by
+# a second reporter, not by a second actor.
+
+on:
+  schedule:
+    # Every six hours at :43 -- a different cadence AND a different minute from
+    # watchdog's hourly :17, so a scheduler that is dropping one particular slot
+    # does not take both.
+    - cron: "43 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install (pyyaml + requests only)
+        run: python -m pip install --quiet --upgrade pip pyyaml requests
+      - name: Did the scheduled screens actually FIRE?
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python scripts/cron_watch.py --no-dispatch \
+            --ref "${{ github.event.repository.default_branch || 'main' }}"
+      - name: Commit the scheduler ledger
+        if: always()
+        run: |
+          [ -f results/cronwatch/status.json ] || { echo "no sweep written"; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/cronwatch/status.json results/cronwatch/state.json
+          if git diff --cached --quiet; then
+            echo "scheduler ledger unchanged"
+          else
+            git commit -m "cronwatch: second-lane sweep ($(date -u +%FT%TZ))"
+            git pull --rebase --autostash || true
+            git push || echo "scheduler ledger push failed (non-fatal)"
+          fi

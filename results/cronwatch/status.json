@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-08-27T14:15:46Z",
+ "checked_at_utc": "2026-08-27T22:34:50Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -12,7 +12,7 @@
   "workflow": "ci.yml"
  },
  "n_dispatched": 0,
- "n_overdue": 0,
+ "n_overdue": 2,
  "n_unknown": 0,
  "n_workflows": 10,
  "ref": "main",
@@ -23,14 +23,14 @@
    "crons": [
     "5 17 * * *"
    ],
-   "expected_last_fire_utc": "2026-08-26T17:05:00Z",
+   "expected_last_fire_utc": "2026-08-27T17:05:00Z",
    "grace_hours": 6.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-08-26T19:14:28Z",
    "name": "alerts",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "alerts.yml"
   },
   {
@@ -39,14 +39,14 @@
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-08-27T12:43:00Z",
+   "expected_last_fire_utc": "2026-08-27T18:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-08-27T10:29:22Z",
+   "last_scheduled_run_utc": "2026-08-27T22:34:27Z",
    "name": "cronwatch",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "cronwatch.yml"
   },
   {
@@ -160,27 +160,34 @@
    "expected_last_fire_utc": "2026-08-27T14:10:00Z",
    "grace_hours": 6.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 8.41,
+   "hours_since_last_run": 31.67,
    "last_scheduled_run_utc": "2026-08-26T14:54:28Z",
+   "missed_by": "grace",
    "name": "tocsin",
-   "overdue": false,
-   "status": "WITHIN_GRACE",
+   "note": "tocsin should have fired at 2026-08-27T14:10:00Z (cron '10 14 * * *') and its last scheduled run was 2026-08-26T14:54:28Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
+   "overdue": true,
+   "status": "MISSED",
    "workflow": "tocsin.yml"
   },
   {
    "cadence_hours": 1.0,
+   "catchup_error": "dispatch watchdog.yml -> 403 {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/actions/workflows#create-a-workflow-dispatch-event\",\"status\":\"403\"}",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-08-27T13:17:00Z",
+   "expected_last_fire_utc": "2026-08-27T22:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.3,
+   "hours_since_last_run": 8.33,
    "last_scheduled_run_utc": "2026-08-27T14:15:16Z",
+   "missed_by": "silence",
    "name": "watchdog",
-   "overdue": false,
-   "status": "OK",
+   "note": "watchdog has not run on its schedule for 8.33 h (measured from its last run), which is longer than one cadence plus its grace (3.00 h).  Its most recent slot was 2026-08-27T22:17:00Z (cron '17 * * * *').  Lateness against a single slot cannot catch this: a channel firing more often than its own grace window gets a fresh slot before the old one can age out, so only the gap since the last ACTUAL run can see a sustained outage.",
+   "overdue": true,
+   "status": "MISSED",
    "workflow": "watchdog.yml"
   }
  ]

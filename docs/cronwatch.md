@@ -86,6 +86,37 @@ monitor gets ignored:
 * **At most three catch-ups per sweep.** Six channels dropping at once is a
   GitHub-wide problem, and firing six jobs into it is not the answer.
 
+### The clock that could not see the outage it was built for
+
+Grace was measured against the most recent **expected slot**. That lateness can
+never exceed one cadence, because a new slot keeps arriving and resetting it —
+so any channel firing more often than its own grace window could never be
+reported missed at all. The fastest channel here is `watchdog`, which is the
+*actor* for every other one.
+
+Measured on 2026-08-27: `watchdog`'s 04:17, 05:17 **and** 06:17 firings were all
+dropped. At 06:40, with no run in 3 h 23 m, the ledger said `WITHIN_GRACE` — and
+would have said it indefinitely. The sharper the cadence, the blinder the check,
+which is exactly backwards.
+
+So there are two clocks now, and a channel is overdue if **either** trips:
+
+* **the slot clock** — `now - expected_slot > grace`. Unchanged, and still the
+  sensitive one wherever it can speak: a dropped weekly firing is called in 12 h
+  rather than after 180 h of silence.
+* **the silence clock** — `now - last_actual_run > cadence + grace`. Hourly:
+  3 h. This is the only one that can see a sustained outage of a fast channel.
+
+`missed_by` in the ledger names which clock could see it, so `silence` marks the
+case the original test was structurally blind to. A channel that has never run at
+all is measured from when its schedule appeared, or the same blindness returns by
+another door — a new hourly cron that never fires once would otherwise sit at
+`WITHIN_GRACE` for ever. `SCHEDULE_TOO_NEW` and `UNKNOWN` are decided before
+either clock and still win.
+
+One dropped hourly firing is still not an incident: measured drift here runs to
+151 minutes, and 1 h 23 m of silence stays quiet.
+
 ### One refusal that had to be narrowed
 
 Catch-ups were the `watchdog` lane's job *alone*, so that two schedules could not

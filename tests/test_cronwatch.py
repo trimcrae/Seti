@@ -511,3 +511,132 @@ def test_the_second_lane_is_wired_to_self_heal_not_to_silence():
     assert "--no-dispatch" not in body, (
         "the second lane can see a dropped watchdog and nothing else can; "
         "forbidding it to act leaves that case reported but never recovered")
+
+
+# ---------------------------------------------------------------------------
+# The check was blindest where it mattered most (2026-08-27).
+#
+# Lateness measured against the most recent EXPECTED slot cannot exceed one
+# cadence, because a new slot keeps arriving and resetting it.  So any channel
+# firing more often than its own grace window could never be reported missed --
+# and the fastest channel here is `watchdog`, the actor for every other one.
+#
+# That morning its 04:17, 05:17 and 06:17 firings were all dropped.  At 06:40,
+# 3 h 23 m with no run at all, the ledger said WITHIN_GRACE.
+# ---------------------------------------------------------------------------
+
+def _hourly(file="watchdog.yml"):
+    from seti.cronwatch import ScheduledWorkflow
+
+    return ScheduledWorkflow(file=file, name=file.removesuffix(".yml"),
+                             crons=["17 * * * *"], has_dispatch=True)
+
+
+def test_a_sustained_outage_of_an_hourly_channel_is_reported_missed():
+    """THE REGRESSION.  Three dropped firings in a row, and the old test slept."""
+    from seti.cronwatch import assess
+
+    now = datetime(2026, 8, 27, 6, 40, tzinfo=timezone.utc)
+    last = datetime(2026, 8, 27, 3, 16, 49, tzinfo=timezone.utc)
+    rec = assess([_hourly()], {"watchdog.yml": last}, now)[0]
+
+    assert rec["status"] == "MISSED", (
+        "3 h 23 m with no run read as healthy because a fresh slot arrives "
+        "every hour and resets the lateness clock")
+    assert rec["overdue"] is True
+    assert rec["missed_by"] == "silence"
+    assert rec["hours_since_last_run"] == pytest.approx(3.39, abs=0.02)
+
+
+def test_one_dropped_hourly_firing_is_still_not_an_incident():
+    """The new clock must not turn ordinary scheduler drift into noise.
+
+    Measured drift in this repository runs to 151 minutes; a single skipped
+    hourly slot has to stay quiet.
+    """
+    from seti.cronwatch import assess
+
+    now = datetime(2026, 8, 27, 6, 40, tzinfo=timezone.utc)
+    last = datetime(2026, 8, 27, 5, 16, 49, tzinfo=timezone.utc)   # 1 h 23 m ago
+    rec = assess([_hourly()], {"watchdog.yml": last}, now)[0]
+    assert rec["status"] == "WITHIN_GRACE"
+    assert rec["overdue"] is False
+
+
+def test_the_silence_clock_trips_at_one_cadence_plus_grace():
+    """Hourly: 1 h cadence + 2 h grace = 3 h, and not a minute sooner."""
+    from seti.cronwatch import assess
+
+    now = datetime(2026, 8, 27, 6, 40, tzinfo=timezone.utc)
+    just_inside = now - timedelta(hours=2, minutes=58)
+    just_outside = now - timedelta(hours=3, minutes=2)
+    assert assess([_hourly()], {"watchdog.yml": just_inside}, now)[0]["status"] \
+        == "WITHIN_GRACE"
+    assert assess([_hourly()], {"watchdog.yml": just_outside}, now)[0]["status"] \
+        == "MISSED"
+
+
+def test_a_slow_channel_is_still_caught_by_the_slot_clock_not_the_silence_one():
+    """A dropped WEEKLY firing must be called in 12 h, not in 8 days.
+
+    The silence clock for a weekly channel is 168 h + 12 h; waiting for that
+    would report a missed Wednesday the following Thursday, which is useless.
+    The original test stays the sensitive one wherever it can speak.
+    """
+    from seti.cronwatch import ScheduledWorkflow, assess
+
+    wf = ScheduledWorkflow(file="tocsin-altfeeds.yml", name="tocsin-altfeeds",
+                           crons=["40 18 * * 3"], has_dispatch=True)
+    now = datetime(2026, 8, 27, 12, 0, tzinfo=timezone.utc)     # Thu
+    last = datetime(2026, 8, 19, 18, 45, tzinfo=timezone.utc)   # the WEEK BEFORE
+    rec = assess([wf], {"tocsin-altfeeds.yml": last}, now)[0]
+    assert rec["status"] == "MISSED"
+    assert rec["missed_by"] == "grace", (
+        "the slot clock should have called this ~17 h after the missed slot, "
+        "long before 180 h of silence -- `missed_by` names the clock that "
+        "could SEE it, and for slow cadences that is still the slot clock")
+
+
+def test_a_new_hourly_cron_that_has_never_fired_once_is_caught_too():
+    """Otherwise the same blindness returns by another door.
+
+    A brand-new hourly schedule that never fires has no last run to measure
+    silence from, and its slot clock resets every hour -- so it would sit at
+    WITHIN_GRACE for ever.  Measured from when the schedule appeared instead.
+    """
+    from seti.cronwatch import assess
+
+    now = datetime(2026, 8, 27, 6, 40, tzinfo=timezone.utc)
+    born = datetime(2026, 8, 27, 1, 0, tzinfo=timezone.utc)      # 5 h 40 m ago
+    rec = assess([_hourly()], {"watchdog.yml": None}, now,
+                 changed_at={"watchdog.yml": born})[0]
+    assert rec["status"] == "MISSED" and rec["missed_by"] == "silence"
+    assert "hours_since_last_run" not in rec, "there is no last run to report"
+    assert "when its schedule appeared" in rec["note"]
+
+
+def test_a_schedule_too_new_to_have_missed_anything_still_wins():
+    """The refusal is decided before either clock, and must stay that way."""
+    from seti.cronwatch import assess
+
+    now = datetime(2026, 8, 27, 6, 40, tzinfo=timezone.utc)
+    born = datetime(2026, 8, 27, 6, 30, tzinfo=timezone.utc)     # after the slot
+    rec = assess([_hourly()], {"watchdog.yml": None}, now,
+                 changed_at={"watchdog.yml": born})[0]
+    assert rec["status"] == "SCHEDULE_TOO_NEW" and rec["overdue"] is False
+
+
+def test_silence_never_overrides_the_refusals():
+    """UNKNOWN and SCHEDULE_TOO_NEW still win: they are decided earlier."""
+    from seti.cronwatch import assess
+
+    now = datetime(2026, 8, 27, 6, 40, tzinfo=timezone.utc)
+    long_ago = datetime(2026, 8, 20, tzinfo=timezone.utc)
+    unknown = assess([_hourly()], {"watchdog.yml": long_ago}, now,
+                     unknown={"watchdog.yml"})[0]
+    assert unknown["status"] == "UNKNOWN" and unknown["overdue"] is False
+
+    born = datetime(2026, 8, 27, 6, 30, tzinfo=timezone.utc)   # after the slot
+    fresh = assess([_hourly()], {"watchdog.yml": long_ago}, now,
+                   changed_at={"watchdog.yml": born})[0]
+    assert fresh["status"] == "SCHEDULE_TOO_NEW" and fresh["overdue"] is False

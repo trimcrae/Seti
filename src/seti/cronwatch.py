@@ -327,7 +327,35 @@ def assess(workflows: list[ScheduledWorkflow], last_runs: dict[str, datetime | N
                 f"{wf.file} ({_iso(born)}), so this schedule never had that slot")
             findings.append(rec)
             continue
-        if now - expected <= grace:
+        # TWO CLOCKS, AND THE SECOND ONE EXISTS BECAUSE THE FIRST IS BLIND TO
+        # FAST CADENCES.  Lateness against the most recent EXPECTED slot cannot
+        # exceed one cadence, because a new slot keeps arriving and resetting
+        # it.  For anything firing more often than the grace window that test
+        # can never trip: an hourly cron's lateness never exceeds ~1 h against a
+        # 2 h floor, so an hourly channel could NEVER be reported missed.
+        #
+        # Measured on 2026-08-27: `watchdog` -- the actor for every other
+        # channel -- had its 04:17, 05:17 and 06:17 firings all dropped, 3 h 23 m
+        # with no run, and this module reported WITHIN_GRACE the whole time.
+        # The sharper the cadence, the blinder the check, which is exactly
+        # backwards.
+        #
+        # So a channel is also overdue when the gap since its last ACTUAL run
+        # exceeds one cadence plus its grace.  For slow cadences the first test
+        # is still the sensitive one (a dropped weekly firing is called in 12 h,
+        # not in 8 days); for fast ones this is the only one that can speak.
+        # A channel that has NEVER run is measured from when its schedule
+        # appeared, or the same blindness returns by another door: a new hourly
+        # cron that has not fired once would sit at WITHIN_GRACE for ever,
+        # because its slot clock also resets every hour.  SCHEDULE_TOO_NEW is
+        # decided above and still wins, so this only speaks once the schedule
+        # has had real slots to miss.
+        since = last if last is not None else (changed_at or {}).get(wf.file)
+        silence = None if since is None else now - since
+        silence_limit = (cad + grace) if cad is not None else None
+        silent_too_long = (silence is not None and silence_limit is not None
+                           and silence > silence_limit)
+        if now - expected <= grace and not silent_too_long:
             # Too soon to call: the firing is due but GitHub's scheduler runs
             # late as a matter of course.
             rec["status"] = "WITHIN_GRACE"
@@ -336,12 +364,34 @@ def assess(workflows: list[ScheduledWorkflow], last_runs: dict[str, datetime | N
         rec["status"] = "MISSED"
         rec["overdue"] = True
         rec["hours_late"] = round((now - expected).total_seconds() / 3600.0, 2)
-        rec["note"] = (
-            f"{wf.name} should have fired at {_iso(expected)} "
-            f"(cron {expected_cron!r}) and its last scheduled run was "
-            f"{_iso(last) or 'never'}.  GitHub drops scheduled firings under "
-            f"load; this is that, not a failure -- there is no failed run to "
-            f"retry, which is why the hourly failure sweep cannot see it.")
+        if last is not None:
+            rec["hours_since_last_run"] = round(
+                (now - last).total_seconds() / 3600.0, 2)
+        # Which clock could SEE it.  "grace" means the ordinary slot test caught
+        # it -- the sensitive one wherever it can speak.  "silence" means only
+        # the gap since the last run could, which is the fast-cadence case the
+        # slot test is structurally blind to.
+        rec["missed_by"] = "grace" if now - expected > grace else "silence"
+        if rec["missed_by"] == "silence":
+            rec["note"] = (
+                f"{wf.name} has not run on its schedule for "
+                f"{silence.total_seconds() / 3600.0:.2f} h "
+                f"(measured from {'its last run' if last is not None else 'when its schedule appeared'}), "
+                f"which is longer "
+                f"than one cadence plus its grace "
+                f"({silence_limit.total_seconds() / 3600.0:.2f} h).  Its most "
+                f"recent slot was {_iso(expected)} (cron {expected_cron!r}).  "
+                f"Lateness against a single slot cannot catch this: a channel "
+                f"firing more often than its own grace window gets a fresh slot "
+                f"before the old one can age out, so only the gap since the "
+                f"last ACTUAL run can see a sustained outage.")
+        else:
+            rec["note"] = (
+                f"{wf.name} should have fired at {_iso(expected)} "
+                f"(cron {expected_cron!r}) and its last scheduled run was "
+                f"{_iso(last) or 'never'}.  GitHub drops scheduled firings under "
+                f"load; this is that, not a failure -- there is no failed run to "
+                f"retry, which is why the hourly failure sweep cannot see it.")
         findings.append(rec)
     return findings
 

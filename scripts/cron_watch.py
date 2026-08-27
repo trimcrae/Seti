@@ -23,7 +23,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from seti.cronwatch import ActionsApi, sweep  # noqa: E402
+from seti.cronwatch import SELF_HEAL_ONLY, ActionsApi, sweep  # noqa: E402
 
 
 def main(argv=None) -> int:
@@ -33,6 +33,10 @@ def main(argv=None) -> int:
                     help="ref to dispatch catch-up runs on; scheduled runs only "
                          "ever fire on the default branch, so this is main")
     ap.add_argument("--no-dispatch", action="store_true")
+    ap.add_argument("--self-heal-only", action="store_true",
+                    help="dispatch ONLY the workflows in "
+                         "seti.cronwatch.SELF_HEAL_ONLY -- the ones the single-"
+                         "actor rule cannot cover because they are the actor")
     ap.add_argument("--out-dir", default=None)
     ap.add_argument("--root", default=".")
     args = ap.parse_args(argv)
@@ -46,6 +50,7 @@ def main(argv=None) -> int:
               "will be UNKNOWN and nothing will be dispatched")
 
     rep = sweep(args.root, api=api, ref=args.ref, dispatch=not args.no_dispatch,
+                dispatch_only=SELF_HEAL_ONLY if args.self_heal_only else None,
                 out_dir=args.out_dir)
     print(f"[cronwatch] workflows={rep['n_workflows']} "
           f"overdue={rep['n_overdue']} unknown={rep['n_unknown']} "

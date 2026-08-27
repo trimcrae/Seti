@@ -426,19 +426,88 @@ def test_the_watch_does_not_depend_on_a_single_cron(tmp_path):
     assert len(minutes) == 2, f"both lanes fire at the same minute: {lanes}"
 
 
-def test_only_one_lane_dispatches_catch_ups():
+def test_only_one_lane_dispatches_catch_ups_for_any_ordinary_channel():
     """Two schedules that both re-fire could double-fire the same missed slot.
 
     The failure being guarded against is the watch going SILENT, and that is
     fixed by a second REPORTER, not by a second actor.
+
+    NARROWED ON 2026-08-27, and this test says why rather than being deleted.
+    The rule held for every channel except the actor itself: `watchdog` cannot
+    re-fire `watchdog`.  That morning its 04:17 AND 05:17 UTC firings were both
+    dropped and it sat 2 h 23 m past a 2 h grace, seen only by the lane that was
+    forbidden to act.  So the second lane now runs `--self-heal-only`, which
+    dispatches `seti.cronwatch.SELF_HEAL_ONLY` and nothing else -- the
+    single-actor rule intact for every ordinary channel, and no race introduced,
+    since a `watchdog` that were running is a `watchdog` that is not overdue.
     """
     import yaml
+
+    from seti.cronwatch import SELF_HEAL_ONLY
 
     doc = yaml.safe_load(open(".github/workflows/cronwatch.yml"))
     steps = doc["jobs"]["sweep"]["steps"]
     runs = " ".join(str(s.get("run", "")) for s in steps)
-    assert "--no-dispatch" in runs
+    assert "--self-heal-only" in runs
+    # The exception must stay an exception.
+    assert SELF_HEAL_ONLY == {"watchdog.yml"}
 
     doc2 = yaml.safe_load(open(".github/workflows/watchdog.yml"))
     runs2 = " ".join(str(s.get("run", "")) for s in doc2["jobs"]["sweep"]["steps"])
-    assert "cron_watch.py" in runs2 and "--no-dispatch" not in runs2
+    assert "cron_watch.py" in runs2
+    assert "--no-dispatch" not in runs2 and "--self-heal-only" not in runs2
+
+
+# ---------------------------------------------------------------------------
+# The one workflow the single-actor rule cannot cover (2026-08-27).
+#
+# Catch-ups belong to `watchdog` alone so two lanes cannot double-fire a missed
+# slot.  That holds for every channel except `watchdog` itself, where it is
+# circular: `watchdog` cannot re-fire `watchdog`, because the case is precisely
+# that `watchdog` did not run.  Measured that morning -- its 04:17 and 05:17 UTC
+# firings both dropped, 2 h 23 m past a 2 h grace, and the only lane that could
+# see it was the one forbidden to act.
+# ---------------------------------------------------------------------------
+
+def _overdue(workflow):
+    return {"workflow": workflow, "overdue": True, "has_dispatch": True,
+            "expected_last_fire_utc": "2026-08-27T05:17:00Z"}
+
+
+def test_the_second_lane_may_re_fire_the_watchdog_and_nothing_else():
+    from seti.cronwatch import SELF_HEAL_ONLY, plan_catchup
+
+    findings = [_overdue("watchdog.yml"), _overdue("tocsin.yml"),
+                _overdue("loom.yml")]
+    planned = plan_catchup(findings, {}, only=SELF_HEAL_ONLY)
+    assert [r["workflow"] for r in planned] == ["watchdog.yml"]
+
+
+def test_the_watchdog_lane_itself_still_dispatches_everything():
+    """`only` must not become the default, or every catch-up stops."""
+    from seti.cronwatch import plan_catchup
+
+    findings = [_overdue("tocsin.yml"), _overdue("loom.yml")]
+    assert len(plan_catchup(findings, {})) == 2
+
+
+def test_a_watchdog_catch_up_is_still_issued_only_once():
+    """The single-dispatch ledger rule is not weakened by the exception."""
+    from seti.cronwatch import SELF_HEAL_ONLY, plan_catchup
+
+    findings = [_overdue("watchdog.yml")]
+    first = plan_catchup(findings, {}, only=SELF_HEAL_ONLY)
+    assert len(first) == 1
+    state = {"caught_up": {"watchdog.yml@2026-08-27T05:17:00Z": "2026-08-27T05:36:00Z"}}
+    assert plan_catchup(findings, state, only=SELF_HEAL_ONLY) == []
+
+
+def test_the_second_lane_is_wired_to_self_heal_not_to_silence():
+    import yaml
+
+    doc = yaml.safe_load(open(".github/workflows/cronwatch.yml"))
+    body = "\n".join(s.get("run", "") for s in doc["jobs"]["sweep"]["steps"])
+    assert "--self-heal-only" in body
+    assert "--no-dispatch" not in body, (
+        "the second lane can see a dropped watchdog and nothing else can; "
+        "forbidding it to act leaves that case reported but never recovered")

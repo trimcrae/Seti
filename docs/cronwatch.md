@@ -86,6 +86,24 @@ monitor gets ignored:
 * **At most three catch-ups per sweep.** Six channels dropping at once is a
   GitHub-wide problem, and firing six jobs into it is not the answer.
 
+### One refusal that had to be narrowed
+
+Catch-ups were the `watchdog` lane's job *alone*, so that two schedules could not
+race between reading the catch-up ledger and writing it and double-fire the same
+slot. The second lane therefore only reported.
+
+That is right for every channel except the actor itself, and there it is
+circular: **`watchdog` cannot re-fire `watchdog`**, because the case in question
+is precisely that `watchdog` did not run. Measured on 2026-08-27 — its 04:17 and
+05:17 UTC firings were *both* dropped, and at 05:36, 2 h 23 m past a 2 h grace,
+the only lane that could see it was the one forbidden to act. Reported, never
+recovered, until a human happened to look.
+
+So the second lane runs `--self-heal-only`: it may dispatch
+`cronwatch.SELF_HEAL_ONLY` — `{watchdog.yml}` — and nothing else. The
+single-actor rule stands for every ordinary channel, and no race is introduced,
+because a `watchdog` that were running is a `watchdog` that is not overdue.
+
 ## The retry that made things worse
 
 A re-run is not a fresh run. **It checks out the run's own `head_sha`**, and

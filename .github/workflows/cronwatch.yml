@@ -17,12 +17,22 @@ name: cronwatch
 # `cronwatch` reads every scheduled workflow in the repository including these
 # two.
 #
-# THIS ONE ONLY REPORTS.  `--no-dispatch` is deliberate: catch-up dispatches stay
-# the single responsibility of the `watchdog` sweep.  Two schedules that both
-# re-fire could race between reading the state ledger and writing it, and
-# double-fire the same missed slot; two that both report cannot.  The failure
-# this guards against is the watch going SILENT, and a silent watch is fixed by
-# a second reporter, not by a second actor.
+# THIS ONE ALMOST ONLY REPORTS.  Catch-up dispatches are the `watchdog` sweep's
+# job alone, so that two schedules cannot race between reading the catch-up
+# ledger and writing it and double-fire the same missed slot; two that both
+# merely report cannot.  The failure this guards against is the watch going
+# SILENT, and a silent watch is fixed by a second reporter, not a second actor.
+#
+# WITH ONE EXCEPTION, AND IT IS CIRCULAR.  `watchdog` cannot re-fire `watchdog`,
+# because the case in question is precisely that `watchdog` did not run.  On
+# 2026-08-27 its 04:17 AND 05:17 UTC firings were both dropped, and at 05:36 --
+# 2 h 23 m past a 2 h grace -- the only lane that could see it was the one
+# forbidden to act.  Reported, never recovered, until a human noticed.
+#
+# So `--self-heal-only` lets this lane dispatch `watchdog` and nothing else
+# (seti.cronwatch.SELF_HEAL_ONLY).  There is no race to create: `watchdog`
+# cannot be the competing writer here, because a `watchdog` that were running is
+# a `watchdog` that is not overdue.
 
 on:
   schedule:
@@ -52,7 +62,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          python scripts/cron_watch.py --no-dispatch \
+          python scripts/cron_watch.py --self-heal-only \
             --ref "${{ github.event.repository.default_branch || 'main' }}"
       - name: Commit the scheduler ledger
         if: always()

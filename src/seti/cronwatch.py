@@ -349,22 +349,47 @@ def assess(workflows: list[ScheduledWorkflow], last_runs: dict[str, datetime | N
 # ---------------------------------------------------------------------------
 # 4. catch-up
 # ---------------------------------------------------------------------------
+#: THE ONE WORKFLOW THE SINGLE-ACTOR RULE CANNOT COVER.
+#:
+#: Catch-up dispatches are the `watchdog` sweep's job alone, so that two
+#: schedules cannot race between reading the catch-up ledger and writing it and
+#: double-fire the same missed slot.  `cronwatch`, the second lane, therefore
+#: only REPORTS.
+#:
+#: That reasoning holds for every channel except one, and the exception is
+#: circular: `watchdog` cannot re-fire `watchdog`, because the case in question
+#: is precisely that `watchdog` did not run.  Measured on 2026-08-27: its 04:17
+#: and 05:17 UTC firings were both dropped, and at 05:36 -- 2 h 23 m past a
+#: 2 h grace -- the only lane that could see it was the one forbidden to act.
+#:
+#: So the second lane may dispatch this, and nothing else.  There is no race to
+#: create: `watchdog` cannot be the other writer here, since a `watchdog` that
+#: were running is a `watchdog` that is not overdue.
+SELF_HEAL_ONLY = {"watchdog.yml"}
+
+
 def _catchup_key(rec: dict) -> str:
     return f"{rec['workflow']}@{rec['expected_last_fire_utc']}"
 
 
 def plan_catchup(findings: list[dict], state: dict, *,
-                 max_catchups: int = MAX_CATCHUPS_PER_SWEEP) -> list[dict]:
+                 max_catchups: int = MAX_CATCHUPS_PER_SWEEP,
+                 only: set[str] | None = None) -> list[dict]:
     """Which missed firings this sweep should re-fire.
 
     One dispatch per missed firing, ever.  A catch-up that fails leaves a failed
     run, and a failed run is the failure sweep's business; re-dispatching it here
     would be two monitors fighting over the same job.
+
+    ``only`` restricts this sweep to named workflows, and exists for exactly one
+    case -- see :data:`SELF_HEAL_ONLY` and the note there.
     """
     done = set((state or {}).get("caught_up") or {})
     out = []
     for rec in findings:
         if not rec.get("overdue") or not rec.get("has_dispatch"):
+            continue
+        if only is not None and rec.get("workflow") not in only:
             continue
         if _catchup_key(rec) in done:
             continue
@@ -429,6 +454,7 @@ def gate_status(api, workflow_file: str = GATE_WORKFLOW,
 
 def sweep(root: Path | str = ".", *, api=None, now: datetime | None = None,
           ref: str = "main", dispatch: bool = True,
+          dispatch_only: set[str] | None = None,
           out_dir: Path | str | None = None,
           max_catchups: int = MAX_CATCHUPS_PER_SWEEP) -> dict:
     """One pass: read the schedules, ask the API, report, and re-fire the drops.
@@ -476,7 +502,8 @@ def sweep(root: Path | str = ".", *, api=None, now: datetime | None = None,
                       changed_at=changed_at)
     fired: list[dict] = []
     if dispatch and api is not None:
-        for rec in plan_catchup(findings, state, max_catchups=max_catchups):
+        for rec in plan_catchup(findings, state, max_catchups=max_catchups,
+                                only=dispatch_only):
             try:
                 api.dispatch(rec["workflow"], ref)
             except Exception as exc:                           # noqa: BLE001

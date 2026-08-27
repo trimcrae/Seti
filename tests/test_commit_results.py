@@ -187,7 +187,7 @@ def test_untracked_files_this_run_generated_survive_for_later_steps(remote_and_c
 def test_nothing_to_commit_is_success_and_says_so(remote_and_clone):
     origin, work, _ = remote_and_clone
     r = run_script(work, "m", "results/census.json")       # unchanged from origin
-    assert "identical" in r.stdout
+    assert "none of the requested paths" in r.stdout
 
 
 def test_a_path_this_run_did_not_produce_is_skipped_not_fatal(remote_and_clone):
@@ -265,12 +265,19 @@ def test_a_finished_runs_deleted_checkpoint_is_committed_as_a_deletion(remote_an
     git(seed, "add", "-A")
     git(seed, "commit", "-qm", "checkpoint")
     git(seed, "push", "-q", "origin", "main")
+    # The run must actually HAVE the checkpoint before it can be the one that
+    # deleted it.  A checkpoint that appeared on the branch after this run
+    # started belongs to a CONCURRENT run and must not be pruned by this one --
+    # which is the authorship rule doing its job, and is tested separately.
+    git(work, "pull", "-q", "origin", "main")
 
-    # Our run finished: it wrote the catalogue and removed the checkpoint.
+    # Our run finished: it wrote the catalogue and REMOVED the checkpoint.
     (work / "results" / "catalogue.json").write_text('{"rows": 1371}\n')
-    run_script(work, "finished", "results/catalogue.json",
-               "--prune", "results/catalogue.inprogress.json")
+    (work / "results" / "catalogue.inprogress.json").unlink()
+    r = run_script(work, "finished", "results/catalogue.json",
+                   "--prune", "results/catalogue.inprogress.json")
 
+    assert "deleted by this run" in r.stdout
     assert "rows" in remote_file(origin, "results/catalogue.json")
     listing = git(origin, "ls-tree", "-r", "--name-only", "main").stdout
     assert "catalogue.inprogress.json" not in listing
@@ -290,7 +297,7 @@ def test_an_ordinary_missing_path_is_never_treated_as_a_deletion(remote_and_clon
     # Genuinely absent from this run -- not merely left over from the checkout.
     (work / "results" / "census.json").unlink()
     r = run_script(work, "m", "results/new.json", "results/census.json")
-    assert "not produced by this run" in r.stdout
+    assert "is not --prune; ignoring" in r.stdout
     # It existed on the branch and this run made no claim about it: it stays.
     assert '{"n": 1}' in remote_file(origin, "results/census.json")
     assert '{"a": 1}' in remote_file(origin, "results/new.json")
@@ -305,3 +312,98 @@ def test_the_helper_is_executable():
     """
     import os
     assert os.access(SCRIPT, os.X_OK), "scripts/commit_results.sh is not executable"
+
+
+# --------------------------------------------------------------------------
+# Existence is not authorship (2026-08-27).
+#
+# An ATLAS-only run of `tocsin-altfeeds` -- with the ZTF step SKIPPED -- committed
+# results/tocsin_altfeeds/ztf/* over the corrected 05:05 ZTF results, reverting
+# them to the stale 00:36 record.  The workflow hands this script every feed's
+# paths on every run, and that run's ztf/* files were simply what its checkout
+# contained.  The pattern this script replaced was accidentally safe here,
+# because `git add` on an unmodified file stages nothing.
+# --------------------------------------------------------------------------
+
+def test_a_path_this_run_did_not_touch_is_not_committed_over_a_newer_one(
+        remote_and_clone):
+    """THE REGRESSION: the ATLAS run clobbering the ZTF ledger."""
+    origin, work, seed = remote_and_clone
+
+    # A ZTF run lands its corrected results on the branch...
+    (seed / "results" / "ztf.json").write_text('{"denominator": "corrected"}\n')
+    git(seed, "add", "-A")
+    git(seed, "commit", "-qm", "ztf: the corrected run")
+    git(seed, "push", "-q", "origin", "main")
+
+    # ...while our ATLAS run, checked out BEFORE that, screened only ATLAS.
+    # Its results/ztf.json is untouched: it never ran the ZTF step.
+    (work / "results" / "atlas.json").write_text('{"walked": 4}\n')
+
+    r = run_script(work, "atlas ledger",
+                   "results/atlas.json", "results/ztf.json", "results/census.json")
+
+    assert "walked" in remote_file(origin, "results/atlas.json")
+    assert "corrected" in remote_file(origin, "results/ztf.json"), (
+        "a run that skipped ZTF committed its stale checkout copy over the "
+        "real ZTF results")
+    assert "unchanged from this run's checkout" in r.stdout
+
+
+def test_a_path_this_run_rewrote_is_still_committed(remote_and_clone):
+    """The rule must not become 'never commit anything'."""
+    origin, work, _seed = remote_and_clone
+    (work / "results" / "census.json").write_text('{"n": 42}\n')   # modified
+    run_script(work, "m", "results/census.json")
+    assert '{"n": 42}' in remote_file(origin, "results/census.json")
+
+
+def test_a_file_this_run_created_is_committed(remote_and_clone):
+    """Untracked-and-present is authorship: nothing else could have made it."""
+    origin, work, _seed = remote_and_clone
+    (work / "results" / "brand_new.json").write_text('{"fresh": true}\n')
+    run_script(work, "m", "results/brand_new.json")
+    assert "fresh" in remote_file(origin, "results/brand_new.json")
+
+
+def test_a_run_that_regenerated_a_file_identically_leaves_the_branch_alone(
+        remote_and_clone):
+    """Byte-identical to its own checkout is not evidence of a fresh result.
+
+    And if the branch has moved on, the branch's copy is the newer one -- so
+    the safe reading of 'identical' is 'do not touch'.
+    """
+    origin, work, seed = remote_and_clone
+    (seed / "results" / "census.json").write_text('{"n": 777, "newer": true}\n')
+    git(seed, "commit", "-qam", "someone else, later")
+    git(seed, "push", "-q", "origin", "main")
+
+    # Our run "regenerated" census.json to exactly what it checked out.
+    (work / "results" / "census.json").write_text('{"n": 1}\n')
+
+    run_script(work, "m", "results/census.json")
+    assert "newer" in remote_file(origin, "results/census.json")
+
+
+def test_a_concurrent_runs_checkpoint_is_not_pruned_by_a_run_that_never_had_it(
+        remote_and_clone):
+    """The other half of the authorship rule, and it needs its own test.
+
+    `--prune` says "absence is a result".  But absence is only THIS run's result
+    if this run had the file to begin with.  A checkpoint written to the branch
+    by a concurrent run, after ours started, is not ours to delete.
+    """
+    origin, work, seed = remote_and_clone
+    # Appears on the branch AFTER our clone -- our run never saw it.
+    (seed / "results" / "catalogue.inprogress.json").write_text('{"theirs": 1}\n')
+    git(seed, "add", "-A")
+    git(seed, "commit", "-qm", "a concurrent run checkpointed")
+    git(seed, "push", "-q", "origin", "main")
+
+    (work / "results" / "catalogue.json").write_text('{"rows": 9}\n')
+    run_script(work, "ours", "results/catalogue.json",
+               "--prune", "results/catalogue.inprogress.json")
+
+    assert "theirs" in remote_file(origin, "results/catalogue.inprogress.json"), (
+        "a run that never had the checkpoint deleted another run's")
+    assert "rows" in remote_file(origin, "results/catalogue.json")

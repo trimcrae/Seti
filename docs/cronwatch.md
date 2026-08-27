@@ -269,6 +269,37 @@ green one, and it is not a red one either.
 Every screen in this repository rests on those tests. A suite nobody checks
 still passes is not a safety net; it is a story about one.
 
+### And the fix had a bug of exactly the family it was fixing
+
+`commit_results.sh` landed the ATLAS ledger at 09:01 UTC — and reverted the ZTF
+ledger to a stale copy in the same commit.
+
+The ATLAS run checked out `9bf2210`, screened **only** ATLAS (the ZTF step
+skipped), and the workflow hands the helper *every* feed's paths on every run. So
+its `results/tocsin_altfeeds/ztf/*` were simply what its checkout contained, and
+"lay our files over the current head" laid down files it had never written —
+putting `denominator: forced_photometry_exact` back over the corrected
+`detection_dominated_lower_bound` from the 05:05 run.
+
+The pattern this script *replaced* was accidentally safe here: `git add` on an
+unmodified file stages nothing, so a feed nobody screened was never committed. My
+rule was unconditional and threw that away. It is now explicit:
+
+> A listed path is this run's output only if it **differs from the tree the run
+> checked out** — modified, created, or deleted by this run. A file identical to
+> its own checkout is not a result; it is a copy of whatever `main` looked like
+> when the job started, and `main` may since have moved on for good reason.
+
+Evaluated before the reset, while `HEAD` is still the run's own checkout. The
+same rule fixes `--prune` in both directions: a run that finished and deleted its
+checkpoint commits that deletion, and a run that never *had* the checkpoint — one
+a concurrent run wrote after ours started — does not delete it.
+
+Two of the tests written for the original helper had to change, and neither was
+weakened: one asserted a message that is now more precise, and one had an
+unrealistic setup (a clone that never contained the checkpoint it claimed to have
+deleted), which the new rule correctly refused.
+
 ## The limit: when the scheduler drops everything
 
 Measured 2026-08-27, and it is worth writing down because no amount of design

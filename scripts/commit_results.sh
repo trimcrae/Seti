@@ -60,21 +60,59 @@ ATTEMPTS="${RESULTS_PUSH_ATTEMPTS:-5}"
 # that FINISHED deletes its checkpoint, and a stale checkpoint left in git is a
 # resume point offered for a run that already ended.  Ordinary paths are only
 # ever added; a run that did not produce one is not asserting it should go.
+# EXISTENCE IS NOT AUTHORSHIP, and getting that wrong cost the ZTF ledger.
+#
+# On 2026-08-27 an ATLAS-only run of `tocsin-altfeeds` (survey=atlas, the ZTF
+# step SKIPPED) committed `results/tocsin_altfeeds/ztf/*` over the corrected
+# 05:05 ZTF results, reverting them to the stale 00:36 record with the wrong
+# denominator.  The workflow hands this script every feed's paths on every run,
+# and the ATLAS run's ztf/* files were simply what its checkout contained -- so
+# "lay our files over the current head" laid down files it had never written.
+#
+# The pattern this script replaced was accidentally safe here: `git add` on an
+# unmodified file stages nothing, so a feed nobody screened was never committed.
+# That safety is now an EXPLICIT rule rather than a side effect:
+#
+#     a listed path is this run's output only if it DIFFERS from the tree the
+#     run checked out -- modified, created, or deleted by this run.  A file
+#     identical to its own checkout is not a result; it is a copy of whatever
+#     `main` looked like when the job started, and `main` may since have moved
+#     on for good reason.
+#
+# Evaluated BEFORE the reset below, while HEAD is still the run's own checkout.
+_produced() {
+  local path="$1"
+  if ! git ls-files --error-unmatch -- "$path" >/dev/null 2>&1; then
+    [ -e "$path" ]          # untracked and present == created by this run
+    return
+  fi
+  ! git diff --quiet HEAD -- "$path"
+}
+
 stage="$(mktemp -d)"
 present=()
 prune=()
 mode="keep"
 for p in "$@"; do
   if [ "$p" = "--prune" ]; then mode="prune"; continue; fi
+  if ! _produced "$p"; then
+    if [ -e "$p" ]; then
+      echo "commit_results: $p is unchanged from this run's checkout -- this run"
+      echo "                did not produce it, so it is left as $BRANCH has it"
+    else
+      echo "commit_results: $p not produced by this run; skipping it"
+    fi
+    continue
+  fi
   if [ -e "$p" ]; then
     mkdir -p "$stage/$(dirname "$p")"
     cp -R "$p" "$stage/$(dirname "$p")/"
     present+=("$p")
   elif [ "$mode" = "prune" ]; then
     prune+=("$p")
-    echo "commit_results: $p absent; its deletion will be committed"
+    echo "commit_results: $p was deleted by this run; its deletion will be committed"
   else
-    echo "commit_results: $p not produced by this run; skipping it"
+    echo "commit_results: $p was deleted by this run but is not --prune; ignoring"
   fi
 done
 if [ "${#present[@]}" -eq 0 ] && [ "${#prune[@]}" -eq 0 ]; then

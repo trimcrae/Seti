@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-08-28T12:12:52Z",
+ "checked_at_utc": "2026-08-28T22:16:32Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -11,8 +11,8 @@
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
- "n_overdue": 0,
+ "n_dispatched": 2,
+ "n_overdue": 2,
  "n_unknown": 0,
  "n_workflows": 10,
  "ref": "main",
@@ -23,30 +23,34 @@
    "crons": [
     "5 17 * * *"
    ],
-   "expected_last_fire_utc": "2026-08-27T17:05:00Z",
+   "expected_last_fire_utc": "2026-08-28T17:05:00Z",
    "grace_hours": 6.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-08-28T01:25:03Z",
    "name": "alerts",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "alerts.yml"
   },
   {
    "cadence_hours": 6.0,
+   "catchup_dispatched_utc": "2026-08-28T22:16:32Z",
    "cron_matched": "43 */6 * * *",
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-08-28T06:43:00Z",
+   "expected_last_fire_utc": "2026-08-28T18:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 3.56,
+   "hours_since_last_run": 10.07,
    "last_scheduled_run_utc": "2026-08-28T12:12:16Z",
+   "missed_by": "grace",
    "name": "cronwatch",
-   "overdue": false,
-   "status": "OK",
+   "note": "cronwatch should have fired at 2026-08-28T18:43:00Z (cron '43 */6 * * *') and its last scheduled run was 2026-08-28T12:12:16Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
+   "overdue": true,
+   "status": "MISSED",
    "workflow": "cronwatch.yml"
   },
   {
@@ -153,18 +157,22 @@
   },
   {
    "cadence_hours": 24.0,
+   "catchup_dispatched_utc": "2026-08-28T22:16:32Z",
    "cron_matched": "10 14 * * *",
    "crons": [
     "10 14 * * *"
    ],
-   "expected_last_fire_utc": "2026-08-27T14:10:00Z",
+   "expected_last_fire_utc": "2026-08-28T14:10:00Z",
    "grace_hours": 6.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 8.11,
+   "hours_since_last_run": 22.54,
    "last_scheduled_run_utc": "2026-08-27T23:44:24Z",
+   "missed_by": "grace",
    "name": "tocsin",
-   "overdue": false,
-   "status": "OK",
+   "note": "tocsin should have fired at 2026-08-28T14:10:00Z (cron '10 14 * * *') and its last scheduled run was 2026-08-27T23:44:24Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
+   "overdue": true,
+   "status": "MISSED",
    "workflow": "tocsin.yml"
   },
   {
@@ -173,11 +181,11 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-08-28T11:17:00Z",
+   "expected_last_fire_utc": "2026-08-28T21:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-08-28T11:19:54Z",
+   "last_scheduled_run_utc": "2026-08-28T22:16:03Z",
    "name": "watchdog",
    "overdue": false,
    "status": "OK",

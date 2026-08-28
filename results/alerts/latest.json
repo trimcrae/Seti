@@ -69,7 +69,7 @@
    "channel": "tocsin",
    "detail": {
     "frontier_mjd": 61235.41918367943,
-    "lag_days": 44.57323168097222,
+    "lag_days": 44.64045197541667,
     "limit_days": 30.0
    },
    "key": "tocsin:data_frontier:0",
@@ -81,7 +81,7 @@
    "channel": "loom",
    "detail": {
     "frontier_mjd": 61235.416274280105,
-    "lag_days": 44.576141080289354,
+    "lag_days": 44.64336137473379,
     "limit_days": 30.0
    },
    "key": "loom:data_frontier:0",
@@ -94,7 +94,7 @@
    "detail": {
     "first_seen_utc": "2026-07-30T10:26:40Z",
     "frontier_mjd": 61235.41918,
-    "frozen_days": 28.557230175208336,
+    "frozen_days": 28.624450469652782,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -106,12 +106,12 @@
    "title": "TOCSIN's data frontier has not advanced in 29 days"
   },
   {
-   "body": "`loom` has reported the same newest epoch, MJD 61235.41627, on every run since 2026-07-30T13:13:46Z \u2014 28.4 days, against a limit of 7. Source: `results/loom/screen.json` \u2192 `frontier_mjd`.\n\nThe frontier has not yet been observed to advance at all, so there is no measured cadence to compare this against.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-08-26 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`.",
+   "body": "`loom` has reported the same newest epoch, MJD 61235.41627, on every run since 2026-07-30T13:13:46Z \u2014 28.5 days, against a limit of 7. Source: `results/loom/screen.json` \u2192 `frontier_mjd`.\n\nThe frontier has not yet been observed to advance at all, so there is no measured cadence to compare this against.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-08-26 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`.",
    "channel": "loom",
    "detail": {
     "first_seen_utc": "2026-07-30T13:13:46Z",
     "frontier_mjd": 61235.416274280105,
-    "frozen_days": 28.441188508541668,
+    "frozen_days": 28.508408802986114,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -120,7 +120,7 @@
    },
    "key": "loom:frontier_stalled:2",
    "severity": "health",
-   "title": "LOOM's data frontier has not advanced in 28 days"
+   "title": "LOOM's data frontier has not advanced in 29 days"
   },
   {
    "body": "GitHub's scheduler did not start `alerts.yml` at its scheduled firing of 2026-08-27T17:05:00Z (cron `5 17 * * *`, cadence 24.0 h). Its last scheduled run was 2026-08-26T19:14:28Z, 6.71 h ago.\n\nA catch-up run was dispatched automatically at 2026-08-27T23:47:49Z; check that it finished.\n\nScheduled runs on GitHub are best effort and are dropped under load. A dropped firing leaves no failed run for the watchdog to retry and no stale result until the staleness window expires days later, which is why it is watched separately.",
@@ -155,17 +155,17 @@
    "title": "ASASSN cannot serve light curves"
   }
  ],
- "alert": true,
+ "alert": false,
  "by_severity": {
   "candidate": 0,
-  "health": 1,
+  "health": 0,
   "milestone": 0
  },
- "checked_at_utc": "2026-08-27T23:49:04Z",
+ "checked_at_utc": "2026-08-28T01:25:52Z",
  "frontier": {
   "loom": {
-   "frozen_days": 28.441,
-   "lag_days": 44.576,
+   "frozen_days": 28.508,
+   "lag_days": 44.643,
    "mjd": 61235.416274280105,
    "observed_advance_days": {
     "n_advances": 0
@@ -173,8 +173,8 @@
    "source": "screen.json:frontier_mjd"
   },
   "tocsin": {
-   "frozen_days": 28.557,
-   "lag_days": 44.573,
+   "frozen_days": 28.624,
+   "lag_days": 44.64,
    "mjd": 61235.41918,
    "observed_advance_days": {
     "n_advances": 0
@@ -183,26 +183,6 @@
   }
  },
  "n_active": 8,
- "n_new": 1,
- "new": [
-  {
-   "body": "GitHub's scheduler did not start `alerts.yml` at its scheduled firing of 2026-08-27T17:05:00Z (cron `5 17 * * *`, cadence 24.0 h). Its last scheduled run was 2026-08-26T19:14:28Z, 6.71 h ago.\n\nA catch-up run was dispatched automatically at 2026-08-27T23:47:49Z; check that it finished.\n\nScheduled runs on GitHub are best effort and are dropped under load. A dropped firing leaves no failed run for the watchdog to retry and no stale result until the staleness window expires days later, which is why it is watched separately.",
-   "channel": "cronwatch",
-   "detail": {
-    "cadence_hours": 24.0,
-    "catchup_dispatched_utc": "2026-08-27T23:47:49Z",
-    "catchup_error": null,
-    "cron_matched": "5 17 * * *",
-    "expected_last_fire_utc": "2026-08-27T17:05:00Z",
-    "grace_hours": 6.0,
-    "has_dispatch": true,
-    "hours_late": 6.71,
-    "last_scheduled_run_utc": "2026-08-26T19:14:28Z",
-    "workflow": "alerts.yml"
-   },
-   "key": "cron:alerts.yml:2026-08-27T17:05:00Z",
-   "severity": "health",
-   "title": "alerts did not fire at 2026-08-27T17:05:00Z"
-  }
- ]
+ "n_new": 0,
+ "new": []
 }

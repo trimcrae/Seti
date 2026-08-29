@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-08-29T03:44:13Z",
+ "checked_at_utc": "2026-08-29T07:21:32Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -39,17 +39,14 @@
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-08-29T00:43:00Z",
+   "expected_last_fire_utc": "2026-08-29T06:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": 3.02,
-   "hours_since_last_run": 5.11,
-   "last_scheduled_run_utc": "2026-08-28T22:37:25Z",
-   "missed_by": "grace",
+   "hours_late": null,
+   "last_scheduled_run_utc": "2026-08-29T07:21:11Z",
    "name": "cronwatch",
-   "note": "cronwatch should have fired at 2026-08-29T00:43:00Z (cron '43 */6 * * *') and its last scheduled run was 2026-08-28T22:37:25Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
-   "overdue": true,
-   "status": "MISSED",
+   "overdue": false,
+   "status": "OK",
    "workflow": "cronwatch.yml"
   },
   {
@@ -172,18 +169,22 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_error": "dispatch watchdog.yml -> 403 {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/actions/workflows#create-a-workflow-dispatch-event\",\"status\":\"403\"}",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-08-29T03:17:00Z",
+   "expected_last_fire_utc": "2026-08-29T07:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.08,
+   "hours_since_last_run": 3.64,
    "last_scheduled_run_utc": "2026-08-29T03:43:14Z",
+   "missed_by": "silence",
    "name": "watchdog",
-   "overdue": false,
-   "status": "OK",
+   "note": "watchdog has not run on its schedule for 3.64 h (measured from its last run), which is longer than one cadence plus its grace (3.00 h).  Its most recent slot was 2026-08-29T07:17:00Z (cron '17 * * * *').  Lateness against a single slot cannot catch this: a channel firing more often than its own grace window gets a fresh slot before the old one can age out, so only the gap since the last ACTUAL run can see a sustained outage.",
+   "overdue": true,
+   "status": "MISSED",
    "workflow": "watchdog.yml"
   }
  ]

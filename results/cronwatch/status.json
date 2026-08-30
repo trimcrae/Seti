@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-08-30T17:27:06Z",
+ "checked_at_utc": "2026-08-30T21:02:13Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -11,8 +11,8 @@
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
- "n_overdue": 0,
+ "n_dispatched": 1,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 10,
  "ref": "main",
@@ -27,26 +27,30 @@
    "grace_hours": 6.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-08-29T19:39:41Z",
+   "last_scheduled_run_utc": "2026-08-30T19:43:52Z",
    "name": "alerts",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "alerts.yml"
   },
   {
    "cadence_hours": 6.0,
+   "catchup_dispatched_utc": "2026-08-30T21:02:13Z",
    "cron_matched": "43 */6 * * *",
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-08-30T12:43:00Z",
+   "expected_last_fire_utc": "2026-08-30T18:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 2.32,
+   "hours_since_last_run": 4.09,
    "last_scheduled_run_utc": "2026-08-30T16:56:46Z",
+   "missed_by": "grace",
    "name": "cronwatch",
-   "overdue": false,
-   "status": "OK",
+   "note": "cronwatch should have fired at 2026-08-30T18:43:00Z (cron '43 */6 * * *') and its last scheduled run was 2026-08-30T16:56:46Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
+   "overdue": true,
+   "status": "MISSED",
    "workflow": "cronwatch.yml"
   },
   {
@@ -161,10 +165,10 @@
    "grace_hours": 6.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-08-29T17:39:54Z",
+   "last_scheduled_run_utc": "2026-08-30T18:02:05Z",
    "name": "tocsin",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "tocsin.yml"
   },
   {
@@ -173,11 +177,11 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-08-30T17:17:00Z",
+   "expected_last_fire_utc": "2026-08-30T20:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-08-30T17:26:36Z",
+   "last_scheduled_run_utc": "2026-08-30T21:01:46Z",
    "name": "watchdog",
    "overdue": false,
    "status": "OK",

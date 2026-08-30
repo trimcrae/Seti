@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-08-30T06:39:51Z",
+ "checked_at_utc": "2026-08-30T12:12:54Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -12,7 +12,7 @@
   "workflow": "ci.yml"
  },
  "n_dispatched": 0,
- "n_overdue": 0,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 10,
  "ref": "main",
@@ -39,11 +39,11 @@
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-08-30T00:43:00Z",
+   "expected_last_fire_utc": "2026-08-30T06:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-08-30T05:47:28Z",
+   "last_scheduled_run_utc": "2026-08-30T12:12:34Z",
    "name": "cronwatch",
    "overdue": false,
    "status": "OK",
@@ -169,18 +169,22 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_error": "dispatch watchdog.yml -> 403 {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/actions/workflows#create-a-workflow-dispatch-event\",\"status\":\"403\"}",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-08-30T06:17:00Z",
+   "expected_last_fire_utc": "2026-08-30T11:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.93,
+   "hours_since_last_run": 5.56,
    "last_scheduled_run_utc": "2026-08-30T06:39:22Z",
+   "missed_by": "silence",
    "name": "watchdog",
-   "overdue": false,
-   "status": "OK",
+   "note": "watchdog has not run on its schedule for 5.56 h (measured from its last run), which is longer than one cadence plus its grace (3.00 h).  Its most recent slot was 2026-08-30T11:17:00Z (cron '17 * * * *').  Lateness against a single slot cannot catch this: a channel firing more often than its own grace window gets a fresh slot before the old one can age out, so only the gap since the last ACTUAL run can see a sustained outage.",
+   "overdue": true,
+   "status": "MISSED",
    "workflow": "watchdog.yml"
   }
  ]

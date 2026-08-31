@@ -69,7 +69,7 @@
    "channel": "tocsin",
    "detail": {
     "frontier_mjd": 61235.41918367943,
-    "lag_days": 48.4765001396875,
+    "lag_days": 48.49248396509259,
     "limit_days": 30.0
    },
    "key": "tocsin:data_frontier:0",
@@ -81,7 +81,7 @@
    "channel": "loom",
    "detail": {
     "frontier_mjd": 61235.416274280105,
-    "lag_days": 48.47940953900463,
+    "lag_days": 48.49539336440972,
     "limit_days": 30.0
    },
    "key": "loom:data_frontier:0",
@@ -94,7 +94,7 @@
    "detail": {
     "first_seen_utc": "2026-07-30T10:26:40Z",
     "frontier_mjd": 61235.41918,
-    "frozen_days": 32.46049863392361,
+    "frozen_days": 32.4764824593287,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -106,12 +106,12 @@
    "title": "TOCSIN's data frontier has not advanced in 32 days"
   },
   {
-   "body": "`loom` has reported the same newest epoch, MJD 61235.41627, on every run since 2026-07-30T13:13:46Z \u2014 32.3 days, against a limit of 7. Source: `results/loom/screen.json` \u2192 `frontier_mjd`.\n\nThe frontier has not yet been observed to advance at all, so there is no measured cadence to compare this against.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-08-31 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`.",
+   "body": "`loom` has reported the same newest epoch, MJD 61235.41627, on every run since 2026-07-30T13:13:46Z \u2014 32.4 days, against a limit of 7. Source: `results/loom/screen.json` \u2192 `frontier_mjd`.\n\nThe frontier has not yet been observed to advance at all, so there is no measured cadence to compare this against.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-08-31 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`.",
    "channel": "loom",
    "detail": {
     "first_seen_utc": "2026-07-30T13:13:46Z",
     "frontier_mjd": 61235.416274280105,
-    "frozen_days": 32.344456967256946,
+    "frozen_days": 32.36044079266203,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -142,11 +142,11 @@
   "health": 0,
   "milestone": 0
  },
- "checked_at_utc": "2026-08-31T21:29:47Z",
+ "checked_at_utc": "2026-08-31T21:52:48Z",
  "frontier": {
   "loom": {
-   "frozen_days": 32.344,
-   "lag_days": 48.479,
+   "frozen_days": 32.36,
+   "lag_days": 48.495,
    "mjd": 61235.416274280105,
    "observed_advance_days": {
     "n_advances": 0
@@ -154,8 +154,8 @@
    "source": "screen.json:frontier_mjd"
   },
   "tocsin": {
-   "frozen_days": 32.46,
-   "lag_days": 48.477,
+   "frozen_days": 32.476,
+   "lag_days": 48.492,
    "mjd": 61235.41918,
    "observed_advance_days": {
     "n_advances": 0

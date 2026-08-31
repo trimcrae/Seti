@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-08-31T20:01:51Z",
+ "checked_at_utc": "2026-08-31T23:01:31Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -12,7 +12,7 @@
   "workflow": "ci.yml"
  },
  "n_dispatched": 0,
- "n_overdue": 0,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 10,
  "ref": "main",
@@ -27,10 +27,10 @@
    "grace_hours": 6.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-08-30T19:43:52Z",
+   "last_scheduled_run_utc": "2026-08-31T21:51:56Z",
    "name": "alerts",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "alerts.yml"
   },
   {
@@ -43,10 +43,10 @@
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-08-31T14:23:40Z",
+   "last_scheduled_run_utc": "2026-08-31T23:01:08Z",
    "name": "cronwatch",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "cronwatch.yml"
   },
   {
@@ -93,10 +93,10 @@
    "grace_hours": 12.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-08-24T16:06:00Z",
+   "last_scheduled_run_utc": "2026-08-31T21:02:04Z",
    "name": "loom",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "loom.yml"
   },
   {
@@ -167,18 +167,22 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_error": "dispatch watchdog.yml -> 403 {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/actions/workflows#create-a-workflow-dispatch-event\",\"status\":\"403\"}",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-08-31T19:17:00Z",
+   "expected_last_fire_utc": "2026-08-31T22:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.74,
+   "hours_since_last_run": 3.0,
    "last_scheduled_run_utc": "2026-08-31T20:01:25Z",
+   "missed_by": "silence",
    "name": "watchdog",
-   "overdue": false,
-   "status": "OK",
+   "note": "watchdog has not run on its schedule for 3.00 h (measured from its last run), which is longer than one cadence plus its grace (3.00 h).  Its most recent slot was 2026-08-31T22:17:00Z (cron '17 * * * *').  Lateness against a single slot cannot catch this: a channel firing more often than its own grace window gets a fresh slot before the old one can age out, so only the gap since the last ACTUAL run can see a sustained outage.",
+   "overdue": true,
+   "status": "MISSED",
    "workflow": "watchdog.yml"
   }
  ]

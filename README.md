@@ -23,6 +23,12 @@ GitHub Actions workflow for the data-touching runs, and committed results
 under `results/`. Current per-channel state, surviving candidates, and next
 decisive actions live in **[STATUS.md](STATUS.md)**.
 
+The table below shows the channels that define the repository's shape. The
+**complete index — every channel package, its question, data, CLI command,
+workflow, doc, results directory and current verdict — is
+[docs/channels.md](docs/channels.md)**; conventions for adding a channel are in
+[docs/channel-brief.md](docs/channel-brief.md).
+
 | Channel | Novel angle | Package | Workflow |
 |---|---|---|---|
 | WD infrared excess | Dyson waste-heat around **white dwarfs** — excluded by Project Hephaistos II, only ever treated theoretically | `seti.{acquire,sed,contamination,discriminate,stats}` | `science.yml` |

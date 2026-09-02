@@ -8,7 +8,7 @@
 PY ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python)
 RUFF ?= $(if $(wildcard .venv/bin/ruff),.venv/bin/ruff,ruff)
 
-.PHONY: all venv install asset sample analyze completeness forecast figures test lint data clean
+.PHONY: all venv install asset sample analyze completeness forecast figures test test-serial lint data clean
 
 all: analyze completeness forecast figures
 
@@ -49,7 +49,13 @@ figures: analyze forecast contamination-budget
 paper: paper-numbers figures
 	cd paper && latexmk -pdf -bibtex -interaction=nonstopmode main.tex
 
+# Parallel across cores (pytest-xdist, in the dev extras); tests are
+# network-guarded and write only to tmp_path, so workers do not interact.
 test:
+	$(PY) -m pytest -q -n auto
+
+# The serial run, for bisecting an order-dependent failure.
+test-serial:
 	$(PY) -m pytest -q
 
 lint:

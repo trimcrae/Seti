@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-09-03T05:02:11Z",
+ "checked_at_utc": "2026-09-03T09:45:52Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -11,8 +11,8 @@
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
- "n_overdue": 0,
+ "n_dispatched": 1,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 10,
  "ref": "main",
@@ -35,18 +35,22 @@
   },
   {
    "cadence_hours": 6.0,
+   "catchup_dispatched_utc": "2026-09-03T09:45:52Z",
    "cron_matched": "43 */6 * * *",
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-09-03T00:43:00Z",
+   "expected_last_fire_utc": "2026-09-03T06:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 3.05,
+   "hours_since_last_run": 4.73,
    "last_scheduled_run_utc": "2026-09-03T05:01:50Z",
+   "missed_by": "grace",
    "name": "cronwatch",
-   "overdue": false,
-   "status": "OK",
+   "note": "cronwatch should have fired at 2026-09-03T06:43:00Z (cron '43 */6 * * *') and its last scheduled run was 2026-09-03T05:01:50Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
+   "overdue": true,
+   "status": "MISSED",
    "workflow": "cronwatch.yml"
   },
   {
@@ -169,11 +173,11 @@
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-09-03T04:17:00Z",
+   "expected_last_fire_utc": "2026-09-03T09:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-09-03T04:21:02Z",
+   "last_scheduled_run_utc": "2026-09-03T09:45:25Z",
    "name": "watchdog",
    "overdue": false,
    "status": "OK",

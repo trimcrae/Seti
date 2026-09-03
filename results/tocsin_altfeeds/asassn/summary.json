@@ -1,0 +1,95 @@
+{
+ "auth_env": null,
+ "counts": {},
+ "n_targets_total": 139706,
+ "notes": [
+  "40590 targets are outside asassn's usable magnitude range in every native band (saturated or below the per-epoch limit) and are not requested at all",
+  "10 targets excluded: proper-motion drift exceeds 0.25 x 16\" over the requested window, and ASAS-SN photometers its own catalogued position so the drift cannot be engineered away",
+  "asassn_unavailable: pyasassn unavailable (ModuleNotFoundError: No module named 'pyasassn'); it pins pyarrow==4.0.1 for pyarrow.deserialize, which this repository's pyarrow>=12 no longer provides"
+ ],
+ "reachability": {
+  "assumption": "background_limited_noise",
+  "bands": {
+   "g": {
+    "by_amplitude": {
+     "0.03": {
+      "fraction_of_all_targets": 0.15118,
+      "fraction_of_assessable": 0.16326,
+      "mag_cut": 13.995,
+      "mag_window": [
+       10.5,
+       13.995
+      ],
+      "n_reachable": 21121,
+      "n_reachable_and_rubin_saturated": 21103
+     },
+     "0.1": {
+      "fraction_of_all_targets": 0.25616,
+      "fraction_of_assessable": 0.27663,
+      "mag_cut": 15.302,
+      "mag_window": [
+       10.5,
+       15.302
+      ],
+      "n_reachable": 35787,
+      "n_reachable_and_rubin_saturated": 35736
+     },
+     "0.3": {
+      "fraction_of_all_targets": 0.40267,
+      "fraction_of_assessable": 0.43484,
+      "mag_cut": 16.495,
+      "mag_window": [
+       10.5,
+       16.495
+      ],
+      "n_reachable": 56255,
+      "n_reachable_and_rubin_saturated": 55575
+     },
+     "1": {
+      "fraction_of_all_targets": 0.60735,
+      "fraction_of_assessable": 0.65588,
+      "mag_cut": 17.802,
+      "mag_window": [
+       10.5,
+       17.802
+      ],
+      "n_reachable": 84850,
+      "n_reachable_and_rubin_saturated": 75208
+     }
+    },
+    "mag_source": "gspc_g_sdss_mag_direct",
+    "median_mag": 16.14,
+    "n_saturated": 15327,
+    "n_with_synthetic_photometry": 129369,
+    "n_without_synthetic_photometry": 10337,
+    "nominal_depth_5sigma": 18.0,
+    "saturation_mag": 10.5
+   }
+  },
+  "n_brighter_than_rubin_saturation": 91261,
+  "n_sigma": 6.0,
+  "n_targets": 139706,
+  "note": "depth_5sigma is nominal; the per-epoch `mag5sig` (ATLAS) / `limit` (ASAS-SN) column supersedes it at run time",
+  "rubin_saturation_mag_r": 16.0,
+  "survey": "asassn",
+  "verdict": "OK"
+ },
+ "run_at_utc": "2026-09-02T21:19:32Z",
+ "signature_transfer": {
+  "achromaticity": "UNAVAILABLE: single-band survey, the discriminant cannot run",
+  "astrometric_offset": "UNAVAILABLE: photometry is forced at the requested position, so the separation is zero by construction",
+  "complementary_bright_window": "10.5 <= m <= 16: stars this feed can screen and the Rubin alert stream cannot, because they saturate a 30 s LSST visit",
+  "denominator": "PRESERVED AND IMPROVED: every good epoch is a trial, measured per target, with no footprint proxy",
+  "depth_penalty_mag_vs_rubin": 6.5,
+  "dominant_new_systematic": "aperture blending: 16 arcsec FWHM with no centroid to reject an unrelated source",
+  "exposure_s": 90.0,
+  "intra_night_structure": "3 exposures per epoch",
+  "recurrence_ledger": "PRESERVED --- and this is the channel's actual instrument",
+  "rubin_flags": "UNAVAILABLE: no reliability, dipole, glint-trail, extendedness or solar-system association exists in this feed",
+  "rubin_visit_s": 30.0,
+  "sub_visit_timescale": "degraded: 90 s per exposure x 3 against a 30 s Rubin visit, so a sub-second event is diluted further"
+ },
+ "survey": "asassn",
+ "survey_name": "ASAS-SN Sky Patrol v2",
+ "verdict": "NO_DATA_REACHED"
+}

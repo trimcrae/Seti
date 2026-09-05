@@ -153,7 +153,7 @@ def _quad(ra_c, dec_c, half=0.43, obsjd=MJD0 + 2400000.5 + 0.3, fid=2, maglimit=
             "ra": ra_c, "dec": dec_c,
             "ra1": ra_c - half, "dec1": dec_c - half, "ra2": ra_c + half, "dec2": dec_c - half,
             "ra3": ra_c + half, "dec3": dec_c + half, "ra4": ra_c - half, "dec4": dec_c + half,
-            "maglimit": maglimit, "exptime": 30.0, "programid": 1}
+            "maglimit": maglimit, "exptime": 30.0, "ipac_gid": 1}
 
 
 def test_a_quadrant_covering_a_star_is_a_trial_with_its_own_limit():
@@ -221,14 +221,19 @@ class FakeSession:
             code = self.statuses.pop(page)
             return R({}, code)
         items = self.pages.get(page, [])
-        return R({"items": items, "has_next": page + 1 in self.pages, "page": page})
+        # As measured with count=false: the service never numbers the page and
+        # never says has_next; only a short page ends the walk.
+        return R({"items": items, "has_next": False, "page": None, "total": None})
 
 
-def test_the_sweep_passes_the_window_as_a_repeated_lastmjd_and_pages_by_has_next():
-    api = Z.AlerceZtfAPI(sleep=lambda s: None)
-    api._s = FakeSession({1: [{"oid": "a"}], 2: [{"oid": "b"}], 3: [{"oid": "c"}]})
+def test_the_sweep_passes_the_window_as_a_repeated_lastmjd_and_pages_until_a_short_page():
+    """The first live run: `count=false` makes has_next always false, so the walk
+    took one page of 1000 and stopped.  Only a short page ends it now."""
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=2)
+    api._s = FakeSession({1: [{"oid": "a"}, {"oid": "a2"}], 2: [{"oid": "b"}, {"oid": "b2"}],
+                          3: [{"oid": "c"}]})
     rows, stats = api.objects_in_window(61000.0, 61001.0)
-    assert [r["oid"] for r in rows] == ["a", "b", "c"]
+    assert [r["oid"] for r in rows] == ["a", "a2", "b", "b2", "c"]
     assert stats["pages"] == 3 and stats["truncated"] is False
     url, params = api._s.requests[0]
     assert url.endswith("/objects")
@@ -236,12 +241,28 @@ def test_the_sweep_passes_the_window_as_a_repeated_lastmjd_and_pages_by_has_next
     assert ("count", "false") in params
 
 
+def test_a_numbered_page_with_has_next_is_still_honoured():
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=5)
+
+    class Numbered(FakeSession):
+        def get(self, url, params=None):
+            r = super().get(url, params)
+            page = int(dict(params or []).get("page", 1))
+            r._p = {"items": self.pages.get(page, []), "has_next": page + 1 in self.pages,
+                    "page": page}
+            return r
+
+    api._s = Numbered({1: [{"oid": "a"}], 2: [{"oid": "b"}]})
+    rows, stats = api.objects_in_window(61000.0, 61001.0)
+    assert [r["oid"] for r in rows] == ["a", "b"] and stats["pages"] == 2
+
+
 def test_a_transient_server_error_is_retried_and_a_deadline_truncates():
-    api = Z.AlerceZtfAPI(sleep=lambda s: None)
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=1)
     api._s = FakeSession({1: [{"oid": "a"}], 2: [{"oid": "b"}]}, statuses={1: 503})
     rows, stats = api.objects_in_window(61000.0, 61001.0)
     assert [r["oid"] for r in rows] == ["a", "b"]
-    api2 = Z.AlerceZtfAPI(sleep=lambda s: None)
+    api2 = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=1)
     api2._s = FakeSession({1: [{"oid": "a"}], 2: [{"oid": "b"}]})
     import time as _t
     rows2, stats2 = api2.objects_in_window(61000.0, 61001.0, deadline=_t.monotonic() - 1)
@@ -281,10 +302,10 @@ class FakeIrsa:
         self.calls = 0
         self.notes: list[str] = []
 
-    def exposures(self, lo, hi, programid=1):
+    def exposures(self, lo, hi, public_gid=1):
         return [e for e in self._exp if lo <= e["obsjd"] - 2400000.5 < hi]
 
-    def frontier(self, programid=1):
+    def frontier(self, public_gid=1):
         return self._frontier
 
 
@@ -414,7 +435,7 @@ def test_the_config_block_overrides_the_defaults(tmp_path):
     cfg, _tp = _prepare(tmp_path)
     _conf, z = Z.ztf_config(cfg)
     assert z["backfill_start_mjd"] == 61250.0 and z["max_nights_per_run"] == 1.0
-    assert z["programid"] == Z.DEFAULTS["programid"]
+    assert z["public_gid"] == Z.DEFAULTS["public_gid"]
 
 
 def test_the_repository_config_block_matches_the_module_defaults():
@@ -430,3 +451,56 @@ def test_the_repository_config_block_matches_the_module_defaults():
 
 def test_ab_round_trip_used_by_the_normaliser():
     assert float(njy_to_ab(float(ab_to_njy(17.0)))) == pytest.approx(17.0)
+
+
+def test_ztf_detections_carry_the_measured_astrometric_floor():
+    a = Z.normalize_alerce_ztf_detections("o", [_det(MJD0)])[0]
+    assert a.ra_err_arcsec == Z.ZTF_ASTROMETRIC_FLOOR_ARCSEC
+    # 1 arcsec is the 3-sigma line, so a 0.5 arcsec residual centroid passes.
+    assert 0.5 / a.pos_err_arcsec < 3.0 < 1.1 / a.pos_err_arcsec
+
+
+def test_the_votable_error_message_is_extracted_not_the_document_head():
+    doc = ("<?xml version=\"1.0\"?><VOTABLE><RESOURCE type=\"results\"><INFO name=\"QUERY_STATUS\" "
+           "value=\"ERROR\">Column programid not found in table ztf.ztf_current_meta_sci"
+           "</INFO></RESOURCE></VOTABLE>")
+    assert Z.votable_error(doc) == "Column programid not found in table ztf.ztf_current_meta_sci"
+    assert Z.votable_error("obsjd,fid\n1,2\n") is None
+
+
+def test_the_exposure_query_asks_for_ipac_gid_one_night_at_a_time():
+    seen = []
+
+    class Sess:
+        def get(self, url, params=None):
+            seen.append(params["QUERY"])
+
+            class R:
+                status_code = 200
+                text = "obsjd,fid\n"
+            return R()
+
+    irsa = Z.IrsaZtfExposures()
+    irsa._s = Sess()
+    irsa.exposures(61000.0, 61002.5, 1)
+    assert len(seen) == 3
+    assert all("ipac_gid = 1" in q and "programid" not in q for q in seen)
+    assert "obsjd >= 2461000.500000" in seen[0] and "obsjd < 2461001.500000" in seen[0]
+
+
+def test_a_failed_footprint_folds_nothing_and_keeps_the_watermark(tmp_path):
+    """The first live run folded four empty nights when IRSA errored."""
+    cfg, tp = _prepare(tmp_path)
+
+    class BrokenIrsa(FakeIrsa):
+        def exposures(self, lo, hi, public_gid=1):
+            raise Z.ZtfLiveError("IRSA TAP error: Column programid not found")
+
+    api = FakeApi([], {}, {}, frontier=MJD0 + 5.0)
+    out = tmp_path / "out"
+    rec = Z.screen_window(cfg, targets_path=tp, out_dir=out, api=api,
+                          irsa=BrokenIrsa([], frontier=MJD0 + 5.0))
+    assert rec["verdict"] == "NO_DENOMINATOR"
+    assert rec["watermark_mjd"] is None
+    assert not (out / "ledger.json").exists()
+    assert any("programid" in n for n in rec["notes"])

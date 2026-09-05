@@ -86,7 +86,7 @@ forced photometry), and unattended bulk access.
 |---|---|---|---|
 | **ASAS-SN Sky Patrol v2** | 200 | **none** | Full sky, ~1 d cadence, g≲18. Shallow — but TOCSIN's sample is *nearby* stars, which are bright. The only no-token option. |
 | **ATLAS forced photometry** | 200 | free account + token | Full sky **including the south**, ~1 d, 30 s exposures, quads within the hour. The closest like-for-like to a Rubin visit. |
-| **ZTF forced photometry (IPAC)** | 401 | account | Northern only, and the live stream appears to have ended (see above); the archive remains useful as a revisit history. |
+| **ZTF forced photometry (IPAC)** | 401 | account | Northern only. Whether ZTF is still *observing* is not settled by the broker facts above — those are facts about ALeRCE and Fink. Since 2026-09-05 `rubin-outage` asks ZTF's own nightly alert archive (`ztf.uw.edu/alerts/public/`), ALeRCE's ZTF API, ANTARES and Lasair-ZTF for their newest epoch every week and records `decision.ztf` in `results/rubin_outage/brokers.json`; see `docs/rubin-outage.md`. The IRSA light-curve archive (no login) is a data release whose newest epoch was 2025-10-20 on 2026-08-27. |
 | **MPC** | 200 | none | Every reported asteroid observation since the 19th century — the longest possible baseline for a residual test. |
 | **JPL SBDB** | 200 | none | A1/A2/A3 non-gravitational parameters. |
 | Pan-STARRS via MAST | 404 | — | Endpoint path in this probe was wrong; deep northern per-epoch photometry is worth a corrected retry. |

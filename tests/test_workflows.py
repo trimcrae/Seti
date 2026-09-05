@@ -98,3 +98,23 @@ def test_a_schedule_is_a_cron_this_repository_can_reason_about(path):
         pytest.skip("not scheduled")
     for entry in entries:
         parse_cron(entry["cron"])
+
+
+def test_the_altfeeds_job_deadline_matches_its_timeout():
+    """`seti.tocsin.altwalk` clips every survey's fetch budget to a job-wide
+    deadline the workflow derives from its own timeout.  If the two numbers
+    drift apart the clip is wrong in one of two directions: too short wastes
+    runner time, too long recreates the 2026-09-02 cancellation."""
+    import re
+
+    path = Path(".github/workflows/tocsin-altfeeds.yml")
+    doc = yaml.load(path.read_text(), Loader=StrictLoader)
+    job = doc["jobs"]["altfeeds"]
+    timeout_min = int(job["timeout-minutes"])
+    runs = [s.get("run") or "" for s in job["steps"]]
+    declared = [int(m.group(1)) for r in runs
+                for m in re.finditer(r"^\s*TIMEOUT_MIN=(\d+)\s*$", r, re.M)]
+    assert declared, "no step sets TIMEOUT_MIN for the job-wide deadline"
+    assert declared == [timeout_min], (
+        f"TIMEOUT_MIN {declared} must equal timeout-minutes {timeout_min}")
+    assert any("ALTFEEDS_JOB_DEADLINE_UNIX" in r for r in runs)

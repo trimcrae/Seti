@@ -849,3 +849,24 @@ def test_a_new_channel_going_quiet_raises_a_stale_alert(tmp_path):
 
     keys = [a.key for a in health_alerts(tmp_path, now=NOW)]
     assert any(k.startswith("tocsin_altfeeds:stale:") for k in keys)
+
+
+def test_tocsin_ztf_candidate_fires_and_keys_on_targets(tmp_path):
+    from seti.alerts import tocsin_ztf_alerts
+
+    _write(tmp_path, "results/tocsin_ztf/assessment.json",
+           {"tier_counts": {"candidate": 1, "interest": 3}, "candidates": ["Z1"]})
+    a = tocsin_ztf_alerts(tmp_path)
+    assert [x.severity for x in a] == ["candidate"] and a[0].channel == "tocsin_ztf"
+    assert "proxy" in a[0].body
+    _write(tmp_path, "results/tocsin_ztf/assessment.json",
+           {"tier_counts": {"candidate": 1}, "candidates": ["Z1"]})
+    assert tocsin_ztf_alerts(tmp_path)[0].key == a[0].key
+    _write(tmp_path, "results/tocsin_ztf/assessment.json",
+           {"tier_counts": {"interest": 5}})
+    assert tocsin_ztf_alerts(tmp_path) == [], "interest is a watchlist entry, not an alert"
+
+
+def test_tocsin_ztf_is_a_watched_channel():
+    from seti.alerts import STALE_DAYS, STALE_MARKER, evaluate  # noqa: F401
+    assert "tocsin_ztf" in STALE_DAYS and STALE_MARKER["tocsin_ztf"] == "run.json"

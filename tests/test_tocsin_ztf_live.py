@@ -692,3 +692,19 @@ def test_windows_sit_on_night_boundaries_so_consecutive_chunks_never_share_a_nig
     nights_b = {Z.night_id(m) for m in np.arange(b, Z.night_start(61241.0), 0.01)}
     assert not (nights_a & nights_b)
     assert len(nights_a) == 3 and len(nights_b) == 3
+
+
+def test_assess_only_lists_the_promoted_targets_by_id(tmp_path, monkeypatch):
+    cfg, _tp = _prepare(tmp_path)
+    out = tmp_path / "out"
+    out.mkdir()
+    from seti.tocsin.ledger import Ledger
+    led = Ledger()
+    led.targets = {"a": {"tier": "candidate", "events": [], "notes": []},
+                   "b": {"tier": "interest", "events": [], "notes": []}}
+    led.save(out / "ledger.json")
+    # The tiers here are the point of the test, not their recomputation.
+    monkeypatch.setattr(Ledger, "assess", lambda self, **kw: {"tier_counts": {"candidate": 1}})
+    rec = Z.assess_only(cfg, out_dir=out)
+    assert rec["candidates"] == ["a"] and rec["interests"] == ["b"] and rec["alarms"] == []
+    assert json.loads((out / "assessment.json").read_text())["candidates"] == ["a"]

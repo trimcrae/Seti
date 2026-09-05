@@ -69,7 +69,10 @@ STALE_DAYS = {"tocsin": 4.0, "loom": 10.0,
               # stopped keeps an old cause attached to a live alert until the
               # frontier moves.  The expiry there is about the EPOCH the verdict
               # describes; this is about the channel that produces it.
-              "rubin_outage": 16.0}
+              "rubin_outage": 16.0,
+              # Twice daily while the backfill from 2026-07-14 catches up, then
+              # nightly; two days is a little over two nightly cadences.
+              "tocsin_ztf": 2.5}
 
 # Which file in a channel's directory carries its run stamp.  Not every channel
 # is named `summary.json`/`screen.json`, and a marker that does not exist is
@@ -80,7 +83,10 @@ STALE_MARKER = {"tocsin": "summary.json",
                 "loom-catalogue": "catalogue.json",
                 "tocsin_altfeeds": "probe.json",
                 "sextant": "probe.json",
-                "rubin_outage": "brokers.json"}
+                "rubin_outage": "brokers.json",
+                # run.json is written by every run, even one that folded
+                # nothing; summary.json is per window and can be a stale chunk.
+                "tocsin_ztf": "run.json"}
 
 # How far the DATA may fall behind the wall clock before that is a failure.
 #
@@ -552,6 +558,39 @@ def tocsin_alerts(root: Path) -> list[Alert]:
     return out
 
 
+def tocsin_ztf_alerts(root: Path) -> list[Alert]:
+    """Conditions on the live ZTF stellar screen (``docs/tocsin-ztf.md``).
+
+    The same promotion rule as the Rubin screen, on the same ledger code; keyed
+    on the promoted targets so a re-assessment of the same set stays quiet and a
+    new one joining does not.
+    """
+    out: list[Alert] = []
+    d = root / "results" / "tocsin_ztf"
+    assess = _load(d / "assessment.json") or {}
+    tiers = assess.get("tier_counts") or {}
+    n_cand = int(tiers.get("candidate") or 0)
+    if n_cand:
+        names = sorted(str(t) for t in (assess.get("candidates") or [])) or [str(n_cand)]
+        out.append(Alert(
+            key="tocsin_ztf:candidates:" + hashlib.sha1(
+                "|".join(names).encode()).hexdigest()[:12],
+            severity="candidate", channel="tocsin_ztf",
+            title=f"TOCSIN-ZTF promoted {n_cand} target(s) to candidate",
+            body=(f"The live ZTF stellar screen has {n_cand} target(s) at tier "
+                  f"`candidate`: repeated achromatic events at a catalogued nearby "
+                  f"star's position, surviving the funnel and the trial-corrected "
+                  f"cross-night test on the ZTF ledger.\n\n"
+                  f"Read `results/tocsin_ztf/assessment.json` and `watchlist.csv`.\n\n"
+                  f"Before believing it: ZTF alerts carry no dipole, trail or "
+                  f"solar-system flags, so check the star's ZTF light curve for a "
+                  f"reference-image artefact and its position against known "
+                  f"variables; and note which nights were counted on the "
+                  f"detection-footprint proxy (`denominator_by_night`)."),
+            detail={"n_candidate": n_cand, "targets": names[:20]}))
+    return out
+
+
 def loom_alerts(root: Path) -> list[Alert]:
     """Conditions on the solar-system artefact channel."""
     out: list[Alert] = []
@@ -976,7 +1015,8 @@ def scheduler_alerts(root: Path) -> list[Alert]:
 # ---------------------------------------------------------------------------
 def evaluate(root: Path, now: datetime | None = None) -> list[Alert]:
     """Every alert condition, evaluated against whatever results exist."""
-    return [*tocsin_alerts(root), *loom_alerts(root), *health_alerts(root, now),
+    return [*tocsin_alerts(root), *tocsin_ztf_alerts(root), *loom_alerts(root),
+            *health_alerts(root, now),
             *frontier_recovery_alerts(root, now), *scheduler_alerts(root),
             *feed_alerts(root), *gate_alerts(root)]
 

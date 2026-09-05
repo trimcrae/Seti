@@ -99,6 +99,9 @@ DEFAULTS: dict = {
     "irsa_tap_url": IRSA_TAP_SYNC,
     "timeout_s": 120.0,
     "page_size": 1000,
+    #: The objects sweep is paged in slices this long (days) so no request sits
+    #: deep in the service's offset; a quarter-night is a few dozen pages.
+    "sweep_slice_days": 0.25,
     #: Northern list: ZTF reaches dec ~ -31.  The Rubin list stops at +15.
     "dec_min": -31.0,
     "dec_max": 90.0,
@@ -160,10 +163,11 @@ class AlerceZtfAPI:
     """Thin client for ``api.alerce.online/ztf/v1``: objects by window, per-object history."""
 
     def __init__(self, base: str = ALERCE_ZTF_API, timeout: float = 120.0,
-                 page_size: int = 1000, sleep=None):
+                 page_size: int = 1000, sleep=None, slice_days: float = 0.25):
         self.base = base.rstrip("/")
         self.timeout = float(timeout)
         self.page_size = int(page_size)
+        self.slice_days = float(slice_days)
         self.calls = 0
         self.notes: list[str] = []
         self._s = None
@@ -174,11 +178,17 @@ class AlerceZtfAPI:
             self._s = _session(self.timeout)
         return self._s
 
+    #: Back-off between retries of one request, seconds.  MEASURED 2026-09-05:
+    #: the service answers HTTP 500 ("overloaded or an error in the application")
+    #: under a long paged sweep; three quick retries were not enough.
+    RETRY_WAITS_S = (5.0, 10.0, 20.0, 40.0, 60.0)
+
     def _get(self, path: str, params: list[tuple[str, str]] | dict | None = None,
-             retries: int = 3):
+             retries: int | None = None):
         """GET with bounded retries on 429/5xx.  Raises :class:`ZtfLiveError`."""
         url = f"{self.base}/{path.lstrip('/')}"
         last = ""
+        retries = len(self.RETRY_WAITS_S) if retries is None else int(retries)
         for attempt in range(retries + 1):
             try:
                 r = self._sess().get(url, params=params)
@@ -192,7 +202,7 @@ class AlerceZtfAPI:
             if r.status_code == 404:
                 return None
             if r.status_code in (429, 500, 502, 503, 504) and attempt < retries:
-                wait = 5.0 * (attempt + 1)
+                wait = self.RETRY_WAITS_S[min(attempt, len(self.RETRY_WAITS_S) - 1)]
                 ra = r.headers.get("Retry-After")
                 if ra and str(ra).isdigit():
                     wait = min(120.0, float(ra))
@@ -217,40 +227,62 @@ class AlerceZtfAPI:
         expensive part of the query and the sweep does not need it.
         """
         rows: list[dict] = []
-        stats = {"pages": 0, "truncated": False, "page_size": self.page_size}
-        page = 1
-        while True:
-            if deadline is not None and time.monotonic() > deadline:
-                stats["truncated"] = True
-                self.notes.append(f"objects sweep stopped by the deadline after "
-                                  f"{stats['pages']} pages")
-                break
-            if max_pages is not None and page > int(max_pages):
-                stats["truncated"] = True
-                break
-            params = [("lastmjd", f"{float(mjd_lo):.6f}"), ("lastmjd", f"{float(mjd_hi):.6f}"),
-                      ("page", str(page)), ("page_size", str(self.page_size)),
-                      ("order_by", "oid"), ("order_mode", "ASC"), ("count", "false")]
-            payload = self._get("objects", params)
-            items = (payload or {}).get("items") if isinstance(payload, dict) else payload
-            items = items or []
-            rows.extend(r for r in items if isinstance(r, dict))
-            stats["pages"] += 1
-            # MEASURED 2026-09-05 (results/tocsin_ztf/probe.json): with
-            # `count=false` the service answers `page: null, has_next: false`
-            # on EVERY page, so `has_next` cannot end the walk -- the first live
-            # run took exactly one page of 1000 and called it a night.  A page
-            # shorter than page_size is the only reliable end; `has_next` is
-            # honoured only when the service also numbers the page.
-            numbered = isinstance(payload, dict) and payload.get("page") is not None
-            has_next = bool(payload.get("has_next")) if numbered else (len(items) >= self.page_size)
-            if not items or not has_next:
-                break
-            page += 1
-            if page > self.MAX_SWEEP_PAGES:
-                stats["truncated"] = True
-                self.notes.append(f"objects sweep stopped at MAX_SWEEP_PAGES={self.MAX_SWEEP_PAGES}")
-                break
+        stats = {"pages": 0, "slices": 0, "truncated": False, "page_size": self.page_size,
+                 "slice_days": self.slice_days}
+        # IN SLICES.  MEASURED 2026-09-05, run 33942793097: paging a three-night
+        # window as one query walked deep into the offset and the service
+        # answered HTTP 500 after 27 minutes.  A quarter-night slice is a few
+        # dozen pages at most, so no request is ever far from the start of its
+        # result set.  A slice that still fails after the retries truncates the
+        # sweep and says so; the caller then folds nothing and keeps the
+        # watermark, so the window is asked for again next run.
+        lo = float(mjd_lo)
+        while lo < float(mjd_hi) and not stats["truncated"]:
+            hi = min(float(mjd_hi), lo + self.slice_days)
+            stats["slices"] += 1
+            page = 1
+            while True:
+                if deadline is not None and time.monotonic() > deadline:
+                    stats["truncated"] = True
+                    self.notes.append(f"objects sweep stopped by the deadline after "
+                                      f"{stats['pages']} pages")
+                    break
+                if max_pages is not None and stats["pages"] >= int(max_pages):
+                    stats["truncated"] = True
+                    break
+                params = [("lastmjd", f"{lo:.6f}"), ("lastmjd", f"{hi:.6f}"),
+                          ("page", str(page)), ("page_size", str(self.page_size)),
+                          ("order_by", "oid"), ("order_mode", "ASC"), ("count", "false")]
+                try:
+                    payload = self._get("objects", params)
+                except ZtfLiveError as exc:
+                    stats["truncated"] = True
+                    stats["error"] = str(exc)[:400]
+                    self.notes.append(f"objects sweep slice {lo:.3f}-{hi:.3f} page {page} "
+                                      f"failed after retries: {str(exc)[:200]}")
+                    break
+                items = (payload or {}).get("items") if isinstance(payload, dict) else payload
+                items = items or []
+                rows.extend(r for r in items if isinstance(r, dict))
+                stats["pages"] += 1
+                # MEASURED 2026-09-05 (results/tocsin_ztf/probe.json): with
+                # `count=false` the service answers `page: null, has_next: false`
+                # on EVERY page, so `has_next` cannot end the walk -- the first
+                # live run took exactly one page of 1000 and called it a night.
+                # A page shorter than page_size is the only reliable end;
+                # `has_next` is honoured only when the service numbers the page.
+                numbered = isinstance(payload, dict) and payload.get("page") is not None
+                has_next = (bool(payload.get("has_next")) if numbered
+                            else (len(items) >= self.page_size))
+                if not items or not has_next:
+                    break
+                page += 1
+                if stats["pages"] >= self.MAX_SWEEP_PAGES:
+                    stats["truncated"] = True
+                    self.notes.append(f"objects sweep stopped at "
+                                      f"MAX_SWEEP_PAGES={self.MAX_SWEEP_PAGES}")
+                    break
+            lo = hi
         stats["objects"] = len(rows)
         return rows, stats
 
@@ -397,14 +429,23 @@ class IrsaZtfExposures:
             lo = hi
         return out
 
-    def frontier(self, public_gid: int | None = 1) -> float | None:
-        where = (f" WHERE {PUBLIC_GID_COLUMN} = {int(public_gid)}"
-                 if public_gid is not None else "")
-        rows = self.query(f"SELECT MAX(obsjd) AS obsjd_max FROM {self.table}{where}", maxrec=5)
-        for r in rows:
-            v = _num(r.get("obsjd_max"))
-            if v is not None:
-                return v - JD_MINUS_MJD
+    #: Lookbacks for the frontier query, days.  MEASURED 2026-09-05: MAX(obsjd)
+    #: over the whole table read-timed out at 240 s twice; bounded by obsjd the
+    #: same MAX is an index walk.  Widened only when a slice is empty.
+    FRONTIER_LOOKBACKS_D = (3.0, 10.0, 40.0, 120.0, 400.0)
+
+    def frontier(self, public_gid: int | None = 1, now: float | None = None) -> float | None:
+        now = _now_mjd() if now is None else float(now)
+        for back in self.FRONTIER_LOOKBACKS_D:
+            where = [f"obsjd > {now - back + JD_MINUS_MJD:.6f}"]
+            if public_gid is not None:
+                where.append(f"{PUBLIC_GID_COLUMN} = {int(public_gid)}")
+            rows = self.query(f"SELECT MAX(obsjd) AS obsjd_max FROM {self.table} "
+                              f"WHERE {' AND '.join(where)}", maxrec=5)
+            for r in rows:
+                v = _num(r.get("obsjd_max"))
+                if v is not None:
+                    return v - JD_MINUS_MJD
         return None
 
     def describe(self, now: float | None = None) -> dict:
@@ -786,7 +827,8 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
     led = Ledger.load(ledger_path)
     explicit = mjd_lo is not None or mjd_hi is not None
     api = api or AlerceZtfAPI(z["alerce_ztf_api"], timeout=float(z["timeout_s"]),
-                              page_size=int(z["page_size"]))
+                              page_size=int(z["page_size"]),
+                              slice_days=float(z.get("sweep_slice_days", 0.25)))
     irsa = irsa or IrsaZtfExposures(z["irsa_tap_url"], timeout=float(z["timeout_s"]) * 2)
     now = _now_mjd()
     t0 = time.monotonic()
@@ -851,10 +893,24 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
     summary["timings_s"]["objects_sweep"] = round(time.monotonic() - t1, 1)
     summary["counts"]["objects_in_window"] = len(objects)
     summary["counts"]["objects_pages"] = ostats.get("pages", 0)
+    summary["counts"]["objects_slices"] = ostats.get("slices", 0)
+    summary["notes"].extend(getattr(api, "notes", [])[:10])
     if ostats.get("truncated"):
-        summary["notes"].append("objects sweep TRUNCATED (deadline or page cap): this "
-                                "window's numerator is incomplete and the watermark is "
-                                "not advanced")
+        # An incomplete numerator is not folded: the trials would be counted
+        # once and the events partially, and the next run (same window, the
+        # watermark unmoved) could not add the missing events to a night whose
+        # trials it must not add twice.  Nothing is written; the run says why.
+        summary["verdict"] = "SWEEP_TRUNCATED"
+        summary["error"] = ostats.get("error")
+        summary["notes"].append("objects sweep TRUNCATED (server error, deadline or page "
+                                "cap): this window's numerator is incomplete, nothing is "
+                                "folded and the watermark is not advanced")
+        summary["watermark_mjd"] = _finite(led.last_mjd_screened)
+        summary["timings_s"]["total"] = round(time.monotonic() - t0, 1)
+        _write_json(out / "summary.json", summary)
+        print(f"[tocsin-ztf] SWEEP_TRUNCATED after {ostats.get('pages')} pages: "
+              f"{ostats.get('error')}")
+        return summary
 
     # 2. Match to the nearby-star list.
     matched = match_objects(objects, targets, th, epoch_jyear)
@@ -1037,7 +1093,7 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
                        max_grey_z=float(conf["screen"]["max_grey_z"]),
                        mixed_polarity_requires_grey_both=bool(
                            lconf.get("mixed_polarity_requires_grey_both", True)))
-    if not explicit and not ostats.get("truncated"):
+    if not explicit:
         led.last_mjd_screened = float(hi)
     led.save(ledger_path)
     summary["ledger"] = stats

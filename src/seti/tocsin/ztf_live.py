@@ -99,9 +99,6 @@ DEFAULTS: dict = {
     "irsa_tap_url": IRSA_TAP_SYNC,
     "timeout_s": 120.0,
     "page_size": 1000,
-    #: The objects sweep is paged in slices this long (days) so no request sits
-    #: deep in the service's offset; a quarter-night is a few dozen pages.
-    "sweep_slice_days": 0.25,
     #: Northern list: ZTF reaches dec ~ -31.  The Rubin list stops at +15.
     "dec_min": -31.0,
     "dec_max": 90.0,
@@ -163,11 +160,10 @@ class AlerceZtfAPI:
     """Thin client for ``api.alerce.online/ztf/v1``: objects by window, per-object history."""
 
     def __init__(self, base: str = ALERCE_ZTF_API, timeout: float = 120.0,
-                 page_size: int = 1000, sleep=None, slice_days: float = 0.25):
+                 page_size: int = 1000, sleep=None):
         self.base = base.rstrip("/")
         self.timeout = float(timeout)
         self.page_size = int(page_size)
-        self.slice_days = float(slice_days)
         self.calls = 0
         self.notes: list[str] = []
         self._s = None
@@ -181,7 +177,7 @@ class AlerceZtfAPI:
     #: Back-off between retries of one request, seconds.  MEASURED 2026-09-05:
     #: the service answers HTTP 500 ("overloaded or an error in the application")
     #: under a long paged sweep; three quick retries were not enough.
-    RETRY_WAITS_S = (5.0, 10.0, 20.0, 40.0, 60.0)
+    RETRY_WAITS_S = (5.0, 15.0, 30.0, 60.0, 120.0)
 
     def _get(self, path: str, params: list[tuple[str, str]] | dict | None = None,
              retries: int | None = None):
@@ -221,69 +217,66 @@ class AlerceZtfAPI:
                           max_pages: int | None = None) -> tuple[list[dict], dict]:
         """Every object whose NEWEST detection falls in ``[mjd_lo, mjd_hi)``.
 
-        Range filters are passed as repeated query parameters
-        (``lastmjd=lo&lastmjd=hi``), the convention ALeRCE's own client uses.
-        Paged by ``has_next``; ``count`` is off because counting a night is the
-        expensive part of the query and the sweep does not need it.
+        KEYSET PAGINATION ON ``lastmjd``, not page offsets.  MEASURED 2026-09-05
+        across four live runs: with ``count=false`` the service never numbers
+        pages (run 1 stopped after one); ordering by ``oid`` makes every page a
+        walk of the object-id index filtered by ``lastmjd``, so a NARROW window
+        is SLOWER (a quarter-night drew nginx 504 on page 1, run 4) and a deep
+        offset in a wide window drew HTTP 500 after 27 minutes (run 3).  Ordering
+        by the filtered column itself and advancing the window's lower bound to
+        the last epoch seen turns every request into a short index range scan
+        from a fresh start.  Objects sharing the boundary epoch are returned
+        twice and de-duplicated by ``oid``; a page whose newest epoch does not
+        move the cursor is nudged by a microsecond so the walk cannot stall.
         """
         rows: list[dict] = []
-        stats = {"pages": 0, "slices": 0, "truncated": False, "page_size": self.page_size,
-                 "slice_days": self.slice_days}
-        # IN SLICES.  MEASURED 2026-09-05, run 33942793097: paging a three-night
-        # window as one query walked deep into the offset and the service
-        # answered HTTP 500 after 27 minutes.  A quarter-night slice is a few
-        # dozen pages at most, so no request is ever far from the start of its
-        # result set.  A slice that still fails after the retries truncates the
-        # sweep and says so; the caller then folds nothing and keeps the
-        # watermark, so the window is asked for again next run.
-        lo = float(mjd_lo)
-        while lo < float(mjd_hi) and not stats["truncated"]:
-            hi = min(float(mjd_hi), lo + self.slice_days)
-            stats["slices"] += 1
-            page = 1
-            while True:
-                if deadline is not None and time.monotonic() > deadline:
-                    stats["truncated"] = True
-                    self.notes.append(f"objects sweep stopped by the deadline after "
-                                      f"{stats['pages']} pages")
-                    break
-                if max_pages is not None and stats["pages"] >= int(max_pages):
-                    stats["truncated"] = True
-                    break
-                params = [("lastmjd", f"{lo:.6f}"), ("lastmjd", f"{hi:.6f}"),
-                          ("page", str(page)), ("page_size", str(self.page_size)),
-                          ("order_by", "oid"), ("order_mode", "ASC"), ("count", "false")]
-                try:
-                    payload = self._get("objects", params)
-                except ZtfLiveError as exc:
-                    stats["truncated"] = True
-                    stats["error"] = str(exc)[:400]
-                    self.notes.append(f"objects sweep slice {lo:.3f}-{hi:.3f} page {page} "
-                                      f"failed after retries: {str(exc)[:200]}")
-                    break
-                items = (payload or {}).get("items") if isinstance(payload, dict) else payload
-                items = items or []
-                rows.extend(r for r in items if isinstance(r, dict))
-                stats["pages"] += 1
-                # MEASURED 2026-09-05 (results/tocsin_ztf/probe.json): with
-                # `count=false` the service answers `page: null, has_next: false`
-                # on EVERY page, so `has_next` cannot end the walk -- the first
-                # live run took exactly one page of 1000 and called it a night.
-                # A page shorter than page_size is the only reliable end;
-                # `has_next` is honoured only when the service numbers the page.
-                numbered = isinstance(payload, dict) and payload.get("page") is not None
-                has_next = (bool(payload.get("has_next")) if numbered
-                            else (len(items) >= self.page_size))
-                if not items or not has_next:
-                    break
-                page += 1
-                if stats["pages"] >= self.MAX_SWEEP_PAGES:
-                    stats["truncated"] = True
-                    self.notes.append(f"objects sweep stopped at "
-                                      f"MAX_SWEEP_PAGES={self.MAX_SWEEP_PAGES}")
-                    break
-            lo = hi
+        seen: set[str] = set()
+        stats = {"pages": 0, "truncated": False, "page_size": self.page_size,
+                 "pagination": "keyset_lastmjd"}
+        cursor = float(mjd_lo)
+        hi = float(mjd_hi)
+        while cursor < hi:
+            if deadline is not None and time.monotonic() > deadline:
+                stats["truncated"] = True
+                self.notes.append(f"objects sweep stopped by the deadline after "
+                                  f"{stats['pages']} pages at MJD {cursor:.5f}")
+                break
+            if max_pages is not None and stats["pages"] >= int(max_pages):
+                stats["truncated"] = True
+                break
+            if stats["pages"] >= self.MAX_SWEEP_PAGES:
+                stats["truncated"] = True
+                self.notes.append(f"objects sweep stopped at MAX_SWEEP_PAGES="
+                                  f"{self.MAX_SWEEP_PAGES}")
+                break
+            params = [("lastmjd", f"{cursor:.6f}"), ("lastmjd", f"{hi:.6f}"),
+                      ("page", "1"), ("page_size", str(self.page_size)),
+                      ("order_by", "lastmjd"), ("order_mode", "ASC"), ("count", "false")]
+            try:
+                payload = self._get("objects", params)
+            except ZtfLiveError as exc:
+                stats["truncated"] = True
+                stats["error"] = str(exc)[:400]
+                self.notes.append(f"objects sweep at MJD {cursor:.5f} failed after retries: "
+                                  f"{str(exc)[:200]}")
+                break
+            items = (payload or {}).get("items") if isinstance(payload, dict) else payload
+            items = [r for r in (items or []) if isinstance(r, dict)]
+            stats["pages"] += 1
+            newest = None
+            for r in items:
+                v = _num(r.get("lastmjd"))
+                if v is not None:
+                    newest = v if newest is None else max(newest, v)
+                oid = str(r.get("oid"))
+                if oid not in seen:
+                    seen.add(oid)
+                    rows.append(r)
+            if len(items) < self.page_size or newest is None:
+                break
+            cursor = newest if newest > cursor else cursor + 1e-6
         stats["objects"] = len(rows)
+        stats["cursor_end_mjd"] = cursor
         return rows, stats
 
     #: A full ZTF night is a few hundred pages of 1000; this is a runaway guard.
@@ -748,6 +741,56 @@ def quadrant_footprint(exposures: list[dict], targets, th, epoch_jyear: float
     return pairs, bands, limits, epochs, stats
 
 
+def proxy_footprint(objects: list[dict], targets, th, epoch_jyear: float,
+                    nights: set, bin_deg: float = 1.0) -> tuple[set, dict, dict]:
+    """The Rubin path's denominator, for nights IRSA's exposure table has not reached.
+
+    Every object that alerted on a night marks the 1-degree sky bin it lies in
+    as observed that night; a target inside an observed bin is a trial.  The
+    swept objects are exactly "everything that alerted", so the bins trace
+    where the camera pointed, at the cost of no per-visit limit and no band
+    coverage --- those nights' events cannot use the one-sided non-detection
+    test and the summary says so.  Returns ``(pairs, visit_epochs, stats)``.
+    """
+    stats = {"proxy_objects": 0, "proxy_bins": 0, "proxy_star_nights": 0}
+    pairs: set = set()
+    epochs: dict[str, list[float]] = {}
+    if not objects or targets is None or len(targets) == 0 or not nights:
+        return pairs, epochs, stats
+    observed: set = set()
+    for o in objects:
+        ra, dec, mjd = _num(o.get("meanra")), _num(o.get("meandec")), _num(o.get("lastmjd"))
+        if ra is None or dec is None or mjd is None:
+            continue
+        night = night_id(mjd)
+        if night not in nights:
+            continue
+        observed.add((int(math.floor(ra / bin_deg)), int(math.floor(dec / bin_deg)), night))
+        stats["proxy_objects"] += 1
+    if not observed:
+        return pairs, epochs, stats
+    p_ra, p_dec, _sig, ids = _propagated(targets, epoch_jyear, th)
+    rab = np.floor(p_ra / bin_deg).astype(int)
+    decb = np.floor(p_dec / bin_deg).astype(int)
+    by_night: dict[str, set] = {}
+    for a, d, n in observed:
+        by_night.setdefault(n, set()).add((a, d))
+    for night, bins in by_night.items():
+        hit = np.fromiter(((int(a), int(d)) in bins for a, d in zip(rab, decb, strict=True)),
+                          dtype=bool, count=rab.size)
+        try:
+            n_int = int(night.lstrip("n"))
+        except ValueError:
+            continue
+        for idx in np.nonzero(hit)[0]:
+            tid = str(ids[idx])
+            pairs.add((tid, night))
+            epochs.setdefault(tid, []).append(round(n_int + 1.1666667, 6))
+    stats["proxy_bins"] = len(observed)
+    stats["proxy_star_nights"] = len(pairs)
+    return pairs, epochs, stats
+
+
 # ---------------------------------------------------------------------------
 # Probe
 # ---------------------------------------------------------------------------
@@ -827,34 +870,35 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
     led = Ledger.load(ledger_path)
     explicit = mjd_lo is not None or mjd_hi is not None
     api = api or AlerceZtfAPI(z["alerce_ztf_api"], timeout=float(z["timeout_s"]),
-                              page_size=int(z["page_size"]),
-                              slice_days=float(z.get("sweep_slice_days", 0.25)))
+                              page_size=int(z["page_size"]))
     irsa = irsa or IrsaZtfExposures(z["irsa_tap_url"], timeout=float(z["timeout_s"]) * 2)
     now = _now_mjd()
     t0 = time.monotonic()
     summary: dict = {"run_at_utc": _utc(), "explicit_window": explicit, "verdict": "NOT_RUN",
                      "counts": {}, "notes": [], "timings_s": {}}
 
-    # THE WINDOW.  Capped at the exposure table's frontier, never the wall
-    # clock: a night folded without its trials would count events against
-    # nothing.
+    # THE WINDOW.  Capped at the STREAM's frontier and the wall clock.  MEASURED
+    # 2026-09-05: IRSA's public exposure table runs ~60 days behind the stream,
+    # so capping there would make a "live" screen two months late.  Nights the
+    # exposure table has reached get the exact quadrant denominator; later
+    # nights get the detection-footprint proxy (step 4), and the summary says
+    # which nights got which.
     frontiers: dict = {}
+    try:
+        frontiers["irsa_exposures_mjd"] = irsa.frontier(int(z["public_gid"]))
+    except Exception as exc:                                       # noqa: BLE001
+        summary["notes"].append(f"irsa_frontier_failed: {str(exc)[:200]}")
     if explicit:
         hi = float(mjd_hi) if mjd_hi is not None else now
         lo = float(mjd_lo) if mjd_lo is not None else hi - float(z["lookback_nights"])
     else:
         try:
-            frontiers["irsa_exposures_mjd"] = irsa.frontier(int(z["public_gid"]))
-        except Exception as exc:                                   # noqa: BLE001
-            summary["notes"].append(f"irsa_frontier_failed: {str(exc)[:200]}")
-        try:
             frontiers["alerce_ztf_mjd"] = api.frontier()
         except Exception as exc:                                   # noqa: BLE001
             summary["notes"].append(f"alerce_frontier_failed: {str(exc)[:200]}")
         caps = [now - float(z["ingest_lag_days"])]
-        for v in frontiers.values():
-            if v is not None:
-                caps.append(float(v))
+        if frontiers.get("alerce_ztf_mjd") is not None:
+            caps.append(float(frontiers["alerce_ztf_mjd"]))
         hi_cap = min(caps)
         wm = _finite(led.last_mjd_screened)
         lo = wm if wm is not None else float(z["backfill_start_mjd"])
@@ -893,7 +937,7 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
     summary["timings_s"]["objects_sweep"] = round(time.monotonic() - t1, 1)
     summary["counts"]["objects_in_window"] = len(objects)
     summary["counts"]["objects_pages"] = ostats.get("pages", 0)
-    summary["counts"]["objects_slices"] = ostats.get("slices", 0)
+    summary["counts"]["objects_sweep_pages"] = ostats.get("pages", 0)
     summary["notes"].extend(getattr(api, "notes", [])[:10])
     if ostats.get("truncated"):
         # An incomplete numerator is not folded: the trials would be counted
@@ -954,17 +998,49 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
     summary["counts"]["detections_pulled"] = len(alerts)
     summary["counts"]["upper_limits_pulled"] = sum(len(v) for v in ul_epochs.values())
 
-    # 4. The denominator: the public quadrants that covered each star.
+    # 4. The denominator: the public quadrants that covered each star, for the
+    #    nights the exposure table has reached; the detection-footprint proxy
+    #    (where tonight's alerted objects lie, in 1-degree bins -- the Rubin
+    #    path's own denominator) for the nights it has not.
     t3 = time.monotonic()
     footprint_pairs: set = set()
     observed_bands: dict = {}
     fp_limits: dict = {}
     fp_epochs: dict = {}
+    irsa_fr = frontiers.get("irsa_exposures_mjd")
+    exact_hi = min(hi, float(irsa_fr)) if irsa_fr is not None else lo
+    window_nights = {f"n{n}" for n in range(night_of(lo), night_of(hi) + 1)}
+    # A night is exact only if the exposure table has reached its END: a night
+    # the table holds half of would count half its exposures as the whole.
+    # Night n spans MJD n + 16/24 to n + 1 + 16/24 (schema.NIGHT_BOUNDARY_FRAC).
+    exact_nights = ({f"n{n}" for n in range(night_of(lo), night_of(hi) + 1)
+                     if irsa_fr is not None and (n + 1.0 + 16.0 / 24.0) <= float(irsa_fr)}
+                    if exact_hi > lo else set())
+    proxy_nights = window_nights - exact_nights
+    summary["denominator_by_night"] = {n: ("quadrant_exact" if n in exact_nights
+                                           else "detection_proxy")
+                                       for n in sorted(window_nights)}
     try:
-        exposures = irsa.exposures(lo, hi, int(z["public_gid"]))
+        exposures = irsa.exposures(lo, exact_hi, int(z["public_gid"])) if exact_hi > lo else []
         footprint_pairs, observed_bands, fp_limits, fp_epochs, fstats = quadrant_footprint(
             exposures, targets, th, epoch_jyear)
+        # Quadrant coverage is authoritative only for the nights the table has
+        # reached; a quadrant row that somehow labels a later night is dropped
+        # so the two denominators never mix on one night.
+        footprint_pairs = {p for p in footprint_pairs if p[1] in exact_nights}
         summary["counts"].update(fstats)
+        if proxy_nights:
+            ppairs, pepochs, pstats = proxy_footprint(objects, targets, th, epoch_jyear,
+                                                      proxy_nights)
+            footprint_pairs |= ppairs
+            for tid, mjds in pepochs.items():
+                fp_epochs.setdefault(tid, []).extend(mjds)
+            summary["counts"].update(pstats)
+            summary["notes"].append(
+                f"{len(proxy_nights)} of {len(window_nights)} nights lie beyond IRSA's "
+                f"exposure frontier (MJD {irsa_fr}) and use the detection-footprint "
+                f"proxy: 1-degree bins holding any alerted object that night, no "
+                f"per-visit limit, no band coverage")
     except Exception as exc:                                       # noqa: BLE001
         # NO DENOMINATOR, NO FOLD.  The first live run folded four nights with
         # zero trials when this query failed, and advanced the watermark past
@@ -1010,7 +1086,6 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
     # 6. Which events are folded: those in the window, and those on nights whose
     #    trials are already in the ledger (the backfill case; module docstring).
     folded_nights_before = set(led.nights)
-    window_nights = {f"n{n}" for n in range(night_of(lo), night_of(hi) + 1)}
     events_in = [ev for ev in verdict.events
                  if ev.night in window_nights or ev.night in folded_nights_before]
     summary["counts"]["events_kept"] = len(verdict.events)
@@ -1048,7 +1123,9 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
     if n_total == 0:
         summary["denominator"] = "unavailable"
     elif n_fp > 2 * max(len(event_pairs), 1):
-        summary["denominator"] = "quadrant_footprint_exact"
+        summary["denominator"] = ("quadrant_footprint_exact" if not proxy_nights else
+                                  "detection_footprint_proxy" if not exact_nights else
+                                  "mixed_quadrant_exact_and_detection_proxy")
     else:
         summary["denominator"] = "detection_dominated_lower_bound"
         summary["notes"].append("the quadrant footprint covers few of the screened "
@@ -1158,5 +1235,5 @@ def assess_only(cfg=None, out_dir: str | Path | None = None) -> dict:
 
 
 __all__ = ["AlerceZtfAPI", "IrsaZtfExposures", "normalize_alerce_ztf_detections",
-           "upper_limits", "match_objects", "quadrant_footprint", "probe",
+           "upper_limits", "match_objects", "quadrant_footprint", "proxy_footprint", "probe",
            "build_ztf_targets", "screen_window", "screen", "assess_only"]

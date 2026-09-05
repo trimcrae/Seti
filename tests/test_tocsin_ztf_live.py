@@ -194,34 +194,25 @@ def test_an_unparsable_exposure_row_is_counted_and_skipped():
 # ---------------------------------------------------------------------------
 # the objects sweep against a fake API
 # ---------------------------------------------------------------------------
-class FakeSession:
-    def __init__(self, pages: dict, statuses: dict | None = None, first_slice_only=True):
-        self.pages = pages          # page number -> items (served for the FIRST slice)
-        self.statuses = statuses or {}
+class KeysetSession:
+    """The service as measured: `page` never numbered, `has_next` never true;
+    objects served by ascending lastmjd from the window's lower bound."""
+
+    def __init__(self, objects: list[dict], statuses: list[int] | None = None):
+        self.objects = sorted(objects, key=lambda o: o["lastmjd"])
+        self.statuses = list(statuses or [])       # HTTP codes for the first calls
         self.requests: list = []
-        self.first_slice_only = first_slice_only
-        self._first_lo = None
 
     def get(self, url, params=None):
         self.requests.append((url, list(params) if params is not None else None))
-        pmap = dict(params or [])
-        page = int(pmap.get("page", 1))
-        los = [v for k, v in (params or []) if k == "lastmjd"]
-        if los:
-            if self._first_lo is None:
-                self._first_lo = los[0]
-            if self.first_slice_only and los[0] != self._first_lo:
-                class Empty:
-                    status_code = 200
-                    headers: dict = {}
-                    text = ""
-
-                    def json(self):
-                        return {"items": [], "has_next": False, "page": None}
-                return Empty()
+        pmap = {}
+        los = []
+        for k, v in (params or []):
+            if k == "lastmjd":
+                los.append(float(v))
+            pmap[k] = v
 
         class R:
-            status_code = 200
             headers: dict = {}
             text = ""
 
@@ -232,77 +223,84 @@ class FakeSession:
             def json(self):
                 return self._p
 
-        if page in self.statuses:
-            code = self.statuses.pop(page)
-            return R({}, code)
-        items = self.pages.get(page, [])
-        # As measured with count=false: the service never numbers the page and
-        # never says has_next; only a short page ends the walk.
+        if self.statuses:
+            return R({}, self.statuses.pop(0))
+        n = int(pmap.get("page_size", 1000))
+        if pmap.get("order_by") == "lastmjd" and pmap.get("order_mode") == "DESC":
+            return R({"items": self.objects[-1:], "has_next": False, "page": None})
+        lo, hi = los
+        items = [o for o in self.objects if lo <= o["lastmjd"] < hi][:n]
         return R({"items": items, "has_next": False, "page": None, "total": None})
 
 
-def test_the_sweep_passes_the_window_as_a_repeated_lastmjd_and_pages_until_a_short_page():
-    """The first live run: `count=false` makes has_next always false, so the walk
-    took one page of 1000 and stopped.  Only a short page ends it now."""
-    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=2, slice_days=1.0)
-    api._s = FakeSession({1: [{"oid": "a"}, {"oid": "a2"}], 2: [{"oid": "b"}, {"oid": "b2"}],
-                          3: [{"oid": "c"}]})
+def _objs(n, lo=61000.0, step=0.001):
+    return [{"oid": f"o{i}", "lastmjd": lo + i * step, "meanra": 1.0, "meandec": 1.0}
+            for i in range(n)]
+
+
+def test_the_sweep_orders_by_lastmjd_and_advances_a_cursor_not_an_offset():
+    """Runs 1-4: has_next never true, oid ordering slow on narrow windows, deep
+    offsets time out.  Keyset on the filtered column has none of those."""
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=4)
+    api._s = KeysetSession(_objs(10))
     rows, stats = api.objects_in_window(61000.0, 61001.0)
-    assert [r["oid"] for r in rows] == ["a", "a2", "b", "b2", "c"]
-    assert stats["pages"] == 3 and stats["slices"] == 1 and stats["truncated"] is False
-    url, params = api._s.requests[0]
-    assert url.endswith("/objects")
-    assert [v for k, v in params if k == "lastmjd"] == ["61000.000000", "61001.000000"]
-    assert ("count", "false") in params
+    assert sorted(r["oid"] for r in rows) == sorted(f"o{i}" for i in range(10))
+    assert len(rows) == 10, "boundary objects returned twice must be de-duplicated"
+    assert stats["pagination"] == "keyset_lastmjd" and stats["truncated"] is False
+    for _url, params in api._s.requests:
+        pm = dict(params)
+        assert pm["order_by"] == "lastmjd" and pm["order_mode"] == "ASC"
+        assert pm["page"] == "1" and pm["count"] == "false"
+    los = [float([v for k, v in p if k == "lastmjd"][0]) for _u, p in api._s.requests]
+    assert los == sorted(los) and los[0] == 61000.0 and los[-1] > 61000.0
 
 
-def test_the_sweep_is_sliced_so_no_request_sits_deep_in_the_offset():
-    """Run 33942793097: one three-night query, 27 minutes, HTTP 500."""
-    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=10, slice_days=0.5)
-    api._s = FakeSession({1: [{"oid": "a"}]}, first_slice_only=False)
-    rows, stats = api.objects_in_window(61000.0, 61002.0)
-    assert stats["slices"] == 4 and stats["pages"] == 4
-    los = [[v for k, v in p if k == "lastmjd"] for _u, p in api._s.requests]
-    assert los[0] == ["61000.000000", "61000.500000"]
-    assert los[-1] == ["61001.500000", "61002.000000"]
+def test_a_short_page_ends_the_sweep_and_an_empty_window_is_one_request():
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=100)
+    api._s = KeysetSession(_objs(7))
+    rows, stats = api.objects_in_window(61000.0, 61001.0)
+    assert len(rows) == 7 and stats["pages"] == 1
+    api2 = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=100)
+    api2._s = KeysetSession([])
+    rows2, stats2 = api2.objects_in_window(61000.0, 61001.0)
+    assert rows2 == [] and stats2["pages"] == 1
 
 
-def test_a_slice_that_fails_after_retries_truncates_the_sweep_with_the_error():
-    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=10, slice_days=0.5)
-    api._s = FakeSession({1: [{"oid": "a"}]}, statuses={1: 500}, first_slice_only=False)
+def test_a_page_of_identical_epochs_nudges_the_cursor_so_the_walk_cannot_stall():
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=3)
+    objs = [{"oid": f"same{i}", "lastmjd": 61000.5} for i in range(3)] + \
+           [{"oid": "later", "lastmjd": 61000.7}]
+    api._s = KeysetSession(objs)
+    rows, stats = api.objects_in_window(61000.0, 61001.0)
+    assert {r["oid"] for r in rows} == {"same0", "same1", "same2", "later"}
+    assert stats["pages"] <= 4
+
+
+def test_a_request_that_fails_after_retries_truncates_the_sweep_with_the_error():
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=10)
     api.RETRY_WAITS_S = ()                              # no retries: fail at once
+    api._s = KeysetSession(_objs(3), statuses=[504])
     rows, stats = api.objects_in_window(61000.0, 61001.0)
-    assert stats["truncated"] is True and "500" in stats["error"]
-    assert stats["slices"] == 1                          # stopped at the failing slice
+    assert stats["truncated"] is True and "504" in stats["error"]
     assert any("failed after retries" in n for n in api.notes)
 
 
-def test_a_numbered_page_with_has_next_is_still_honoured():
-    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=5, slice_days=1.0)
-
-    class Numbered(FakeSession):
-        def get(self, url, params=None):
-            r = super().get(url, params)
-            page = int(dict(params or []).get("page", 1))
-            r._p = {"items": self.pages.get(page, []), "has_next": page + 1 in self.pages,
-                    "page": page}
-            return r
-
-    api._s = Numbered({1: [{"oid": "a"}], 2: [{"oid": "b"}]})
-    rows, stats = api.objects_in_window(61000.0, 61001.0)
-    assert [r["oid"] for r in rows] == ["a", "b"] and stats["pages"] == 2
-
-
 def test_a_transient_server_error_is_retried_and_a_deadline_truncates():
-    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=1, slice_days=1.0)
-    api._s = FakeSession({1: [{"oid": "a"}], 2: [{"oid": "b"}]}, statuses={1: 503})
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=10)
+    api._s = KeysetSession(_objs(3), statuses=[503, 500])
     rows, stats = api.objects_in_window(61000.0, 61001.0)
-    assert [r["oid"] for r in rows] == ["a", "b"]
-    api2 = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=1, slice_days=1.0)
-    api2._s = FakeSession({1: [{"oid": "a"}], 2: [{"oid": "b"}]})
+    assert len(rows) == 3 and stats["truncated"] is False
+    api2 = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=10)
+    api2._s = KeysetSession(_objs(3))
     import time as _t
     rows2, stats2 = api2.objects_in_window(61000.0, 61001.0, deadline=_t.monotonic() - 1)
     assert rows2 == [] and stats2["truncated"] is True
+
+
+def test_the_frontier_is_the_newest_lastmjd_served():
+    api = Z.AlerceZtfAPI(sleep=lambda s: None)
+    api._s = KeysetSession(_objs(5))
+    assert api.frontier() == pytest.approx(61000.004)
 
 
 # ---------------------------------------------------------------------------
@@ -376,7 +374,7 @@ def test_a_window_screens_folds_and_advances_the_watermark(tmp_path):
     nd = {"ZTFa": [{"mjd": MJD0 - 10 + k, "fid": 2, "diffmaglim": 20.3} for k in range(8)]}
     api = FakeApi([{"oid": "ZTFa", "meanra": 150.0, "meandec": 30.0, "lastmjd": night_mjd + 0.02},
                    {"oid": "ZTFfar", "meanra": 10.0, "meandec": 10.0, "lastmjd": night_mjd}],
-                  dets, nd, frontier=MJD0 + 5.0)
+                  dets, nd, frontier=MJD0 + 2.0)
     irsa = FakeIrsa(_nights_of_exposures(MJD0, 3), frontier=MJD0 + 2.9)
     out = tmp_path / "out"
     rec = Z.screen_window(cfg, targets_path=tp, out_dir=out, api=api, irsa=irsa)
@@ -391,6 +389,7 @@ def test_a_window_screens_folds_and_advances_the_watermark(tmp_path):
     assert rec["counts"]["target_nights_from_footprint"] == 2
     assert rec["counts"]["target_nights_screened"] == 2
     assert rec["denominator"] in ("quadrant_footprint_exact", "detection_dominated_lower_bound")
+    assert set(rec["denominator_by_night"].values()) == {"quadrant_exact"}
     assert rec["watermark_mjd"] == 61251.0
     led = json.loads((out / "ledger.json").read_text())
     assert led["n_target_visits"] == 2
@@ -402,13 +401,11 @@ def test_a_window_screens_folds_and_advances_the_watermark(tmp_path):
         assert t0["n_visits"] >= 8
     assert (out / "summary.json").exists() and (out / "watchlist.csv").exists()
 
-    # Second run: the next night, capped by the exposure-table frontier.
+    # Second run: the next night; then the stream's frontier stops the walk.
     rec2 = Z.screen_window(cfg, targets_path=tp, out_dir=out, api=api, irsa=irsa)
     assert rec2["mjd_lo"] == 61251.0 and rec2["mjd_hi"] == 61252.0
     rec3 = Z.screen_window(cfg, targets_path=tp, out_dir=out, api=api, irsa=irsa)
-    assert rec3["mjd_hi"] == pytest.approx(MJD0 + 2.9)      # the frontier, not a full night
-    rec4 = Z.screen_window(cfg, targets_path=tp, out_dir=out, api=api, irsa=irsa)
-    assert rec4["verdict"] == "NO_NEW_DATA"
+    assert rec3["verdict"] == "NO_NEW_DATA"
 
 
 def test_an_event_on_an_unscreened_earlier_night_is_deferred_to_the_sweep(tmp_path):
@@ -462,13 +459,54 @@ def test_an_unreachable_api_is_a_named_verdict(tmp_path):
     assert rec["verdict"] == "NO_DATA_REACHED" and "502" in rec["error"]
 
 
-def test_the_window_is_capped_by_the_exposure_table_frontier_not_the_clock(tmp_path):
+def test_nights_beyond_the_exposure_frontier_use_the_detection_proxy(tmp_path):
+    """MEASURED: IRSA's public exposure table runs ~60 d behind the stream."""
     cfg, tp = _prepare(tmp_path)
-    api = FakeApi([], {}, {}, frontier=MJD0 + 100.0)
-    irsa = FakeIrsa([], frontier=MJD0 + 0.4)
+    night_mjd = MJD0 + 0.3
+    # Two alerted objects tonight: one on t0's 1-degree bin, one far away.  The
+    # exposure table has not reached this night, so trials come from the bins.
+    api = FakeApi([{"oid": "ZTFa", "meanra": 150.0, "meandec": 30.0, "lastmjd": night_mjd},
+                   {"oid": "ZTFfar", "meanra": 10.0, "meandec": 10.0, "lastmjd": night_mjd}],
+                  {"ZTFa": [_det(night_mjd, fid=2, magpsf=16.0, magpsf_corr=14.2, ra=150.0)]},
+                  {}, frontier=MJD0 + 100.0)
+    irsa = FakeIrsa([], frontier=MJD0 - 40.0)              # sixty days stale
     rec = Z.screen_window(cfg, targets_path=tp, out_dir=tmp_path / "out", api=api, irsa=irsa)
-    assert rec["mjd_hi"] == pytest.approx(MJD0 + 0.4)
-    assert rec["frontiers"]["irsa_exposures_mjd"] == MJD0 + 0.4
+    assert rec["mjd_hi"] == 61251.0, "the stream, not the exposure table, caps the window"
+    assert rec["frontiers"]["irsa_exposures_mjd"] == MJD0 - 40.0
+    assert set(rec["denominator_by_night"].values()) == {"detection_proxy"}
+    # t0 (150.0) and t1 (150.3) share the bin [150,151) x [30,31); t2 at 150.6 too.
+    assert rec["counts"]["proxy_star_nights"] == 3
+    assert rec["counts"]["target_nights_from_footprint"] == 3
+    assert rec["denominator"] in ("detection_footprint_proxy", "detection_dominated_lower_bound")
+    assert any("detection-footprint proxy" in n for n in rec["notes"])
+
+
+def test_a_window_straddling_the_exposure_frontier_mixes_the_two_denominators(tmp_path):
+    cfg, tp = _prepare(tmp_path)
+    (tmp_path / "config" / "tocsin.yaml").write_text("ztf:\n  backfill_start_mjd: 61250.0\n"
+                                                     "  max_nights_per_run: 2.0\n")
+    n1, n2 = MJD0 + 0.3, MJD0 + 1.3
+    api = FakeApi([{"oid": "A", "meanra": 150.0, "meandec": 30.0, "lastmjd": n2}],
+                  {"A": [_det(n2, fid=2, ra=150.0)]}, {}, frontier=MJD0 + 100.0)
+    irsa = FakeIrsa(_nights_of_exposures(MJD0, 1), frontier=MJD0 + 0.9)   # first night only
+    rec = Z.screen_window(cfg, targets_path=tp, out_dir=tmp_path / "out", api=api, irsa=irsa)
+    kinds = rec["denominator_by_night"]
+    assert kinds[Z.night_id(n1)] == "quadrant_exact"
+    assert kinds[Z.night_id(n2)] == "detection_proxy"
+    assert rec["counts"]["footprint_star_nights"] == 2       # quadrant: t0, t1 on night 1
+    assert rec["counts"]["proxy_star_nights"] == 3           # bin: t0, t1, t2 on night 2
+    assert rec["denominator"] in ("mixed_quadrant_exact_and_detection_proxy",
+                                  "detection_dominated_lower_bound")
+
+
+def test_proxy_footprint_marks_only_the_requested_nights():
+    t = _targets(n=3)
+    objs = [{"oid": "a", "meanra": 150.2, "meandec": 30.1, "lastmjd": MJD0 + 0.3},
+            {"oid": "b", "meanra": 150.2, "meandec": 30.1, "lastmjd": MJD0 + 5.3}]
+    pairs, epochs, stats = Z.proxy_footprint(objs, t, _th(), 2026.6, {Z.night_id(MJD0 + 0.3)})
+    assert {p[1] for p in pairs} == {Z.night_id(MJD0 + 0.3)}
+    assert stats["proxy_objects"] == 1 and stats["proxy_bins"] == 1
+    assert all(len(v) == 1 for v in epochs.values())
 
 
 def test_the_config_block_overrides_the_defaults(tmp_path):

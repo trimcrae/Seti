@@ -295,8 +295,19 @@ class Ledger:
                   visit_history: dict[str, list[float]] | None = None,
                   target_positions: dict[str, tuple[float, float]] | None = None,
                   bin_trials: dict | None = None,
+                  dedupe_night: bool = True,
                   ) -> None:
         """Fold **one observing night** into the running state.
+
+        ``dedupe_night=False`` adds the trials even when the night label has been
+        seen before.  That is for callers that screen a few TARGETS over many
+        nights per run (the alternative feeds), where two runs legitimately
+        contribute different stars on the same night and the caller guarantees
+        novelty by keeping each star's windows disjoint (``altwalk.WalkState``).
+        With the default, a second run over the same night is dropped, which is
+        right for the Rubin path and was silently wrong for the other one: the
+        committed ATLAS ledger of 2026-09-02 held 1337 nights and exactly 1337
+        target-visits across six stars.
 
         ``target_visits`` is that night's trial count (distinct star-nights
         actually observed).  ``visit_history`` maps target id -> visit MJDs
@@ -313,8 +324,10 @@ class Ledger:
         de-duplicated by star-night; the trial count is made safe the same way,
         by keying on the night and ignoring a night already recorded.
         """
-        if night and night not in self.nights:
+        new_night = bool(night) and night not in self.nights
+        if new_night:
             self.nights.append(night)
+        if night and (new_night or not dedupe_night):
             self.n_target_visits += int(target_visits)
             self.n_targets_screened = max(self.n_targets_screened,
                                           int(targets_in_footprint))

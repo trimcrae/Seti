@@ -33,6 +33,7 @@ import argparse
 import datetime
 import json
 import pathlib
+import re
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
@@ -326,9 +327,218 @@ def probe_lasair(timeout: float) -> dict:
 
 
 # --------------------------------------------------------------------------
+# ZTF --- is the OTHER public wide-field stream alive at all?
+# --------------------------------------------------------------------------
+# WHY THIS IS HERE.  With Rubin dark, ZTF is the one public wide-field survey
+# whose alert stream is shaped like Rubin's.  Two facts about it were on record
+# before 2026-09-05, and both were about BROKERS, not about ZTF: ALeRCE's non-LSST
+# table stopped on 2026-04-30, and Fink's ZTF portal timed out.  From those the
+# repository inferred that "the live stream appears to have ended", which is one
+# hypothesis out of two -- exactly the mirror-vs-sky ambiguity this script exists
+# to break for Rubin.  So the same discipline is applied to ZTF: ask several
+# independent public endpoints for their newest ZTF epoch, and name the newest.
+#
+# The strongest source is the archive ZTF publishes ITSELF: one tarball per
+# night at ztf.uw.edu/alerts/public/, so its directory listing is a nightly
+# histogram that depends on no broker.  A night with alerts is a tarball of
+# hundreds of megabytes; a night with none is a few tens of bytes, which is why
+# size is read as well as date.
+ZTF_PUBLIC_ARCHIVE = "https://ztf.uw.edu/alerts/public/"
+ALERCE_ZTF_API = "https://api.alerce.online/ztf/v1"
+ANTARES_API = "https://api.antares.noirlab.edu/v1"
+LASAIR_ZTF_ENDPOINT = "https://lasair-ztf.lsst.ac.uk/api"
+#: A stream is LIVE if some public endpoint holds an epoch this recent.  A week
+#: absorbs weather, the bright-of-moon gap and a broker's ingest lag together.
+ZTF_LIVE_WITHIN_DAYS = 7.0
+#: Below this a nightly tarball held no alerts (an empty archive member).
+ZTF_TARBALL_MIN_BYTES = 1_000_000
+
+_TARBALL_NAME = re.compile(r"ztf_public_(\d{8})\.tar\.gz", re.I)
+_SIZE_TOKEN = re.compile(r"^(\d+(?:\.\d+)?)([KMGT]?)$", re.I)
+_SIZE_MULT = {"": 1, "K": 1024, "M": 1024 ** 2, "G": 1024 ** 3, "T": 1024 ** 4}
+
+
+def parse_ztf_archive_listing(html: str) -> list[dict]:
+    """The nightly tarballs in an autoindex page -> [{date, mjd, size_bytes}], oldest first.
+
+    Parsed line by line, keyed on the file NAME: the date is the eight digits in
+    it, and the size is the last token on the line that reads like an autoindex
+    size (``1.3G``, ``45``).  A line whose size cannot be read keeps the date
+    and carries ``size_bytes=None`` --- "unknown", never "empty".  One entry per
+    night: the listing shows each name twice (href and text).
+    """
+    out: dict[str, dict] = {}
+    for line in (html or "").splitlines():
+        m = _TARBALL_NAME.search(line)
+        if not m:
+            continue
+        raw = m.group(1)
+        try:
+            d = datetime.date(int(raw[:4]), int(raw[4:6]), int(raw[6:]))
+        except ValueError:
+            continue
+        tail = line[line.rfind("</a>") + 4:] if "</a>" in line else ""
+        tail = re.sub(r"<[^>]*>", " ", tail)        # table cells, if any
+        size = None
+        for tok in reversed(tail.split()):
+            sm = _SIZE_TOKEN.match(tok.strip())
+            if sm:
+                size = int(float(sm.group(1)) * _SIZE_MULT[sm.group(2).upper()])
+                break
+        mjd = (d.toordinal() - datetime.date(1858, 11, 17).toordinal()) + 0.5
+        rec = out.get(d.isoformat())
+        if rec is None or (rec.get("size_bytes") is None and size is not None):
+            out[d.isoformat()] = {"date": d.isoformat(), "mjd": float(mjd),
+                                  "size_bytes": size}
+    return sorted(out.values(), key=lambda r: r["mjd"])
+
+
+def ztf_archive_frontier(entries: list[dict],
+                         min_bytes: int = ZTF_TARBALL_MIN_BYTES) -> dict:
+    """The newest night whose tarball actually held alerts.
+
+    A tarball smaller than ``min_bytes`` is an empty night (weather, or the
+    camera off); it proves the archive job ran and says nothing about the sky,
+    so it does not move the frontier.  A tarball of unknown size counts, because
+    "unknown" must not read as "empty".
+    """
+    with_alerts = [e for e in entries
+                   if e.get("size_bytes") is None or int(e["size_bytes"]) >= int(min_bytes)]
+    newest_any = entries[-1] if entries else None
+    newest = with_alerts[-1] if with_alerts else None
+    return {"frontier_mjd": newest["mjd"] if newest else None,
+            "last_night": newest["date"] if newest else None,
+            "last_tarball_any_size": newest_any["date"] if newest_any else None,
+            "n_tarballs": len(entries),
+            "n_empty_recent": sum(1 for e in entries[-30:]
+                                  if e.get("size_bytes") is not None
+                                  and int(e["size_bytes"]) < int(min_bytes))}
+
+
+def ztf_status(sources: dict, now: float | None = None,
+               live_within_days: float = ZTF_LIVE_WITHIN_DAYS) -> dict:
+    """LIVE / DARK_OR_UNSERVED / UNREACHED from whatever the sources returned.
+
+    ``DARK_OR_UNSERVED`` is deliberately not ``DARK``: every source reached
+    agreeing on an old epoch is strong evidence the stream stopped, but it is
+    still evidence about what is SERVED.  The archive listing is the one source
+    that comes from ZTF itself, and when it is among those reached the ``why``
+    says so, because that is the case in which the two readings collapse.
+    """
+    now = _now_mjd() if now is None else float(now)
+    by_source = {k: v.get("frontier_mjd") for k, v in (sources or {}).items()}
+    reached = {k: v for k, v in by_source.items() if v is not None}
+    if not reached:
+        return {"status": "UNREACHED", "newest_mjd": None, "newest_utc": None,
+                "newest_source": None, "days_behind_now": None, "by_source": by_source,
+                "why": "No public ZTF endpoint returned an epoch; this says nothing "
+                       "about ZTF."}
+    src, newest = max(reached.items(), key=lambda kv: kv[1])
+    behind = round(now - newest, 2)
+    live = behind <= float(live_within_days)
+    archive_reached = "archive" in reached
+    if live:
+        why = (f"ZTF is LIVE: {src} holds an epoch {behind} d old"
+               + (" and the archive ZTF publishes itself agrees" if archive_reached
+                  and src != "archive" and now - reached["archive"] <= live_within_days
+                  else "") + ".")
+    else:
+        why = (f"No public ZTF endpoint holds an epoch newer than {behind} d ago "
+               f"({src}). ")
+        why += ("That includes ZTF's own nightly alert archive, so the stream itself "
+                "has stopped or stopped being published." if archive_reached else
+                "ZTF's own archive listing was not reached, so this is what the "
+                "BROKERS serve; the stream itself is not established either way.")
+    return {"status": "LIVE" if live else "DARK_OR_UNSERVED",
+            "newest_mjd": newest, "newest_utc": _iso(newest), "newest_source": src,
+            "days_behind_now": behind, "by_source": by_source, "why": why}
+
+
+def probe_ztf(timeout: float) -> dict:
+    """Ask every public ZTF endpoint for its newest epoch.  Nothing here raises."""
+    import os
+
+    import requests
+
+    out: dict = {"sources": {}}
+
+    def rec_for(name: str, url: str) -> dict:
+        r: dict = {"url": url}
+        out["sources"][name] = r
+        return r
+
+    # 1. The archive ZTF publishes itself.
+    r = rec_for("archive", ZTF_PUBLIC_ARCHIVE)
+    try:
+        resp = requests.get(ZTF_PUBLIC_ARCHIVE, timeout=timeout)
+        r["status"] = resp.status_code
+        entries = parse_ztf_archive_listing(resp.text)
+        r.update(ztf_archive_frontier(entries))
+        r["last_entries"] = entries[-10:]
+    except Exception as exc:                                      # noqa: BLE001
+        r["error"] = f"{type(exc).__name__}: {exc}"[:400]
+        r["frontier_mjd"] = None
+
+    # 2. ALeRCE's ZTF API (a different service from the TAP mirror the Rubin
+    #    channels use, whose non-LSST table stopped on 2026-04-30).
+    url = f"{ALERCE_ZTF_API}/objects"
+    r = rec_for("alerce_ztf", url)
+    try:
+        resp = requests.get(url, params={"order_by": "lastmjd", "order_mode": "DESC",
+                                         "page_size": 1, "page": 1}, timeout=timeout)
+        r["status"] = resp.status_code
+        payload = resp.json()
+        r["json_head"] = json.dumps(payload)[:600]
+        r["frontier_mjd"] = _max_time_in(payload)
+    except Exception as exc:                                      # noqa: BLE001
+        r["error"] = f"{type(exc).__name__}: {exc}"[:400]
+        r["frontier_mjd"] = None
+
+    # 3. ANTARES (NOIRLab), public, no token.  JSON:API; the newest-alert time
+    #    is an MJD under `properties`, found by the shape-agnostic scanner.
+    url = f"{ANTARES_API}/loci"
+    r = rec_for("antares", url)
+    try:
+        resp = requests.get(url, params={"sort": "-properties.newest_alert_observation_time",
+                                         "page[limit]": 1}, timeout=timeout)
+        r["status"] = resp.status_code
+        payload = resp.json()
+        r["json_head"] = json.dumps(payload)[:600]
+        r["frontier_mjd"] = _max_time_in(payload)
+    except Exception as exc:                                      # noqa: BLE001
+        r["error"] = f"{type(exc).__name__}: {exc}"[:400]
+        r["frontier_mjd"] = None
+
+    # 4. Lasair's ZTF instance, only with a token.
+    token = (os.environ.get("LASAIR_ZTF_TOKEN") or os.environ.get("LASAIR_TOKEN") or "").strip()
+    r = rec_for("lasair_ztf", LASAIR_ZTF_ENDPOINT)
+    if not token:
+        r["skipped"] = "no LASAIR_ZTF_TOKEN / LASAIR_TOKEN in the environment"
+        r["frontier_mjd"] = None
+    else:
+        try:
+            resp = requests.post(LASAIR_ZTF_ENDPOINT.rstrip("/") + "/query/",
+                                 headers={"Authorization": f"Token {token}"},
+                                 data={"selected": "MAX(objects.jdmax) AS jdmax",
+                                       "tables": "objects", "conditions": "",
+                                       "limit": 1, "format": "json"},
+                                 timeout=timeout)
+            r["status"] = resp.status_code
+            payload = resp.json()
+            r["json_head"] = json.dumps(payload)[:600]
+            r["frontier_mjd"] = _max_time_in(payload)
+        except Exception as exc:                                  # noqa: BLE001
+            r["error"] = f"{type(exc).__name__}: {exc}"[:400]
+            r["frontier_mjd"] = None
+
+    out["status"] = ztf_status(out["sources"])
+    return out
+
+
+# --------------------------------------------------------------------------
 # Verdict
 # --------------------------------------------------------------------------
-def decide(alerce: dict, fink: dict, lasair: dict) -> dict:
+def decide(alerce: dict, fink: dict, lasair: dict, ztf_probe: dict | None = None) -> dict:
     """Name the cause, or say plainly that the evidence cannot name it.
 
     ``UNDETERMINED_SINGLE_SOURCE`` is a real outcome, not a failure to try: a
@@ -355,6 +565,12 @@ def decide(alerce: dict, fink: dict, lasair: dict) -> dict:
         controls["alerce_newest_survey"] = {
             "frontier_mjd": other_survey, "frontier_utc": _iso(other_survey),
             "days_behind_now": round(_now_mjd() - other_survey, 2)}
+    # The ZTF probe's sources are controls of the same kind: a public endpoint
+    # current on ZTF proves the wider alert infrastructure is alive.
+    for name, fr in ((ztf_probe or {}).get("status") or {}).get("by_source", {}).items():
+        if fr is not None:
+            controls[f"ztf_{name}"] = {"frontier_mjd": fr, "frontier_utc": _iso(fr),
+                                       "days_behind_now": round(_now_mjd() - fr, 2)}
     live_controls = [k for k, c in controls.items() if c["days_behind_now"] <= 7.0]
 
     if a is None and not others:
@@ -382,13 +598,18 @@ def decide(alerce: dict, fink: dict, lasair: dict) -> dict:
             "Only ALeRCE answered, so a stalled mirror and a stopped stream "
             "remain indistinguishable. Do not read this as SKY_STOPPED.")
 
-    return {"verdict": verdict, "why": why,
-            "alerce_frontier_mjd": a, "alerce_frontier_utc": _iso(a),
-            "other_brokers": {k: {"frontier_mjd": v, "frontier_utc": _iso(v)}
-                              for k, v in others.items()},
-            "brokers_ahead_days": ahead,
-            "controls": controls, "live_controls": live_controls,
-            "lag_days": (round(_now_mjd() - a, 2) if a is not None else None)}
+    out = {"verdict": verdict, "why": why,
+           "alerce_frontier_mjd": a, "alerce_frontier_utc": _iso(a),
+           "other_brokers": {k: {"frontier_mjd": v, "frontier_utc": _iso(v)}
+                             for k, v in others.items()},
+           "brokers_ahead_days": ahead,
+           "controls": controls, "live_controls": live_controls,
+           "lag_days": (round(_now_mjd() - a, 2) if a is not None else None)}
+    if ztf_probe is not None and ztf_probe.get("status"):
+        # Kept as its own block, never folded into the Rubin verdict: a live ZTF
+        # says nothing about LSST, and the two questions have different readers.
+        out["ztf"] = dict(ztf_probe["status"])
+    return out
 
 
 def main() -> int:
@@ -415,9 +636,22 @@ def main() -> int:
     print("[outage] querying Lasair ...", flush=True)
     lasair = probe_lasair(min(args.timeout, 120.0))
 
+    print("[outage] asking the public ZTF endpoints for their newest epoch ...", flush=True)
+    ztf = probe_ztf(min(args.timeout, 120.0))
+    zs = ztf.get("status") or {}
+    print(f"[outage] ZTF: {zs.get('status')} newest {zs.get('newest_utc')} "
+          f"via {zs.get('newest_source')} ({zs.get('days_behind_now')} d behind now)",
+          flush=True)
+    for name, src in (ztf.get("sources") or {}).items():
+        print(f"[outage]   ztf/{name}: status={src.get('status')} "
+              f"frontier={_iso(src.get('frontier_mjd'))} "
+              f"{('error=' + str(src.get('error'))[:120]) if src.get('error') else ''}"
+              f"{('skipped=' + str(src.get('skipped'))) if src.get('skipped') else ''}",
+              flush=True)
+
     rec = {"checked_at_utc": _utc(), "now_mjd": round(_now_mjd(), 5),
-           "decision": decide(alerce, fink, lasair),
-           "alerce": alerce, "fink": fink, "lasair": lasair}
+           "decision": decide(alerce, fink, lasair, ztf),
+           "alerce": alerce, "fink": fink, "lasair": lasair, "ztf": ztf}
 
     path = out_dir / "brokers.json"
     path.write_text(json.dumps(rec, indent=1, sort_keys=True, default=str))

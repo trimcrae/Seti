@@ -743,11 +743,18 @@ class Reduction:
     bands: dict[str, BandReduction] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
     usable: bool = False
+    # Per-light-curve medians of the ATLAS quality columns, kept so a later
+    # REFRESH window (too short to calibrate its own) can be judged against
+    # them --- see `altwalk.WalkState` and the `prior` argument below.
+    chi_med: float = float("nan")
+    elo_med: float = float("nan")
+    baseline_from_prior: bool = False
 
 
 def reduce_lightcurve(lc: LightCurve, spec: SurveySpec,
                       th: LightCurveThresholds | None = None,
                       quiescent: dict[str, Quiescent] | None = None,
+                      prior=None,
                       ) -> Reduction:
     """Turn one light curve into alerts (the numerator) and visits (the denominator).
 
@@ -768,6 +775,16 @@ def reduce_lightcurve(lc: LightCurve, spec: SurveySpec,
     a trial deflates the ensemble rate, which makes every other target's binomial
     p-value smaller than it should be --- the anti-conservative direction, the one
     that manufactures significance.
+
+    ``prior`` (an :class:`altwalk.Prior`) supplies the level, scatter and F* that
+    were measured from the star's FULL history on an earlier walk.  A refresh
+    window of a week or two carries a few dozen exposures, which cannot measure
+    the star's own scatter to the precision the 6-sigma rule needs, and a
+    scatter estimated from twenty points is biased low --- which would call
+    ordinary epochs events.  With a prior the short window is judged against the
+    long baseline: its epochs are trials, its deviants are events, and the
+    baseline is not re-estimated.  Without one the function behaves exactly as
+    before.
     """
     th = th or LightCurveThresholds()
     red = Reduction(target_id=str(lc.target_id))
@@ -775,6 +792,15 @@ def reduce_lightcurve(lc: LightCurve, spec: SurveySpec,
     if n == 0:
         red.notes.append("empty_lightcurve")
         return red
+    prior_bands = dict(getattr(prior, "bands", None) or {})
+    prior_q = dict(getattr(prior, "quiescent", None) or {})
+    if prior is not None and spec.is_difference_flux and not quiescent:
+        # The reduced-image pass is not repeated on a refresh; F* is the one
+        # measured by the full walk, with its provenance intact.
+        quiescent = {b: Quiescent(float(v["flux_njy"]), float(v["err_njy"]),
+                                  str(v.get("source") or "prior"))
+                     for b, v in prior_q.items()
+                     if v.get("flux_njy") is not None}
 
     mjd = np.asarray(lc.mjd, dtype=float)
     flux = np.asarray(lc.flux_njy, dtype=float)
@@ -788,15 +814,23 @@ def reduce_lightcurve(lc: LightCurve, spec: SurveySpec,
     # own median is a cosmic ray, a blend, or a subtraction artefact.  Calibrated
     # per light curve because chi/N depends on magnitude, seeing and field.
     bad_epoch = np.zeros(n, dtype=bool)
+    prior_chi = getattr(prior, "chi_med", None)
+    prior_elo = getattr(prior, "elo_med", None)
     if lc.chi_n is not None:
         chi = np.asarray(lc.chi_n, dtype=float)
         med = float(np.nanmedian(chi[good])) if good.any() else float("nan")
+        if prior_chi is not None and np.isfinite(prior_chi) and prior_chi > 0:
+            med = float(prior_chi)
+        red.chi_med = med
         if np.isfinite(med) and med > 0:
             bad_epoch |= np.isfinite(chi) & (chi > th.outlier_chi_factor * med)
     trailed = np.zeros(n, dtype=bool)
     if lc.elongation is not None:
         elo = np.asarray(lc.elongation, dtype=float)
         med = float(np.nanmedian(elo[good])) if good.any() else float("nan")
+        if prior_elo is not None and np.isfinite(prior_elo) and prior_elo > 0:
+            med = float(prior_elo)
+        red.elo_med = med
         if np.isfinite(med) and med > 0:
             trailed |= np.isfinite(elo) & (elo > th.elongation_factor * med)
 
@@ -805,15 +839,30 @@ def reduce_lightcurve(lc: LightCurve, spec: SurveySpec,
         br = BandReduction(band=nb,
                            n_epochs=int(np.sum(np.array([str(b) == nb for b in bands]))),
                            n_good=int(sel.sum()))
-        if br.n_good < th.min_good_epochs:
-            br.reason = f"fewer_than_{th.min_good_epochs}_good_epochs"
-            red.bands[nb] = br
-            continue
-        base = robust_baseline(flux[sel], th)
-        if not base.ok:
-            br.reason = base.reason
-            red.bands[nb] = br
-            continue
+        pb = prior_bands.get(nb)
+        if pb is not None and _prior_ok(pb):
+            # Judged against the full-history baseline: any good epoch is a
+            # trial, and the minimum-epoch rule (which protects the ESTIMATE of
+            # the baseline) does not apply because nothing is estimated here.
+            if br.n_good < 1:
+                br.reason = "no_good_epochs_in_refresh_window"
+                red.bands[nb] = br
+                continue
+            base = Baseline(level=float(pb["level"]), scatter=float(pb["scatter"]),
+                            n_used=int(pb.get("n_used") or 0),
+                            n_total=int(pb.get("n_used") or 0), ok=True,
+                            reason="prior")
+            red.baseline_from_prior = True
+        else:
+            if br.n_good < th.min_good_epochs:
+                br.reason = f"fewer_than_{th.min_good_epochs}_good_epochs"
+                red.bands[nb] = br
+                continue
+            base = robust_baseline(flux[sel], th)
+            if not base.ok:
+                br.reason = base.reason
+                red.bands[nb] = br
+                continue
         br.level_njy = base.level
         br.scatter_njy = base.scatter
 
@@ -827,7 +876,8 @@ def reduce_lightcurve(lc: LightCurve, spec: SurveySpec,
             # means the reference image caught the star at a different level
             # (a real variable, or a reference built during an event), which
             # biases every amplitude; it is subtracted anyway but reported.
-            if abs(base.level) > 3.0 * base.scatter / math.sqrt(max(base.n_used, 1)):
+            if (base.reason != "prior"
+                    and abs(base.level) > 3.0 * base.scatter / math.sqrt(max(base.n_used, 1))):
                 red.notes.append(f"{nb}:nonzero_difference_baseline")
         else:
             br.quiescent_njy = base.level
@@ -958,7 +1008,18 @@ def reduce_lightcurve(lc: LightCurve, spec: SurveySpec,
     red.usable = any(b.usable for b in red.bands.values())
     if not red.usable:
         red.notes.append("no_usable_band")
+    if red.baseline_from_prior:
+        red.notes.append("baseline_from_full_history_prior")
     return red
+
+
+def _prior_ok(pb: dict) -> bool:
+    try:
+        level = float(pb.get("level"))
+        scatter = float(pb.get("scatter"))
+    except (TypeError, ValueError):
+        return False
+    return bool(np.isfinite(level) and np.isfinite(scatter) and scatter > 0)
 
 
 # ---------------------------------------------------------------------------
@@ -2469,8 +2530,8 @@ class ZtfIrsa:
         th = th or LightCurveThresholds()
         out: dict[str, LightCurve] = {}
         s = self._sess()
-        lo = float(mjd_lo) if mjd_lo is not None else 58194.0   # ZTF from 2018-03
-        hi = float(mjd_hi) if mjd_hi is not None else 70000.0
+        lo_default = float(mjd_lo) if mjd_lo is not None else 58194.0   # ZTF from 2018-03
+        hi_default = float(mjd_hi) if mjd_hi is not None else 70000.0
         deadline = now() + float(max_seconds)
         for i, req in enumerate(requests_):
             if now() > deadline:
@@ -2482,6 +2543,11 @@ class ZtfIrsa:
             tid = str(req["target_id"])
             ra0, dec0 = float(req["ra"]), float(req["dec"])
             pmra, pmdec = float(req.get("pmra") or 0.0), float(req.get("pmdec") or 0.0)
+            # A per-request window overrides the walk's: a REFRESH of a star
+            # already walked asks only for the epochs after its recorded
+            # high-water mark (altwalk.WalkState.plan).
+            lo = float(req["mjd_lo"]) if req.get("mjd_lo") is not None else lo_default
+            hi = float(req["mjd_hi"]) if req.get("mjd_hi") is not None else hi_default
             segs = pm_segments(ra0, dec0, pmra, pmdec, lo, hi, ZTF, th)
             capped = len(segs) > self.MAX_PM_SEGMENTS
             if capped:
@@ -2524,6 +2590,49 @@ class ZtfIrsa:
             if on_result is not None:
                 on_result(tid, lc)
         return out
+
+    def archive_frontier(self, ra: float, dec: float, mjd_lo: float,
+                         radius_arcsec: float | None = None) -> float | None:
+        """The newest epoch the archive holds near one well-observed position.
+
+        IRSA serves a DATA RELEASE, not a live stream: its newest epoch sits
+        months behind the wall clock and jumps forward when a release lands.  A
+        walked star must therefore never be recorded as screened past the
+        archive's own frontier, or the epochs between the frontier and the wall
+        clock --- which arrive with the next release --- would be skipped for
+        ever.  One cheap cone at the most-observed walked target over a recent
+        window measures where the archive currently ends.  None when the request
+        fails or returns nothing, which the caller treats as "unknown", not as
+        "no advance".
+        """
+        try:
+            r = self._sess().get(self.endpoint,
+                                 params=self._params(float(ra), float(dec), radius_arcsec,
+                                                     mjd_lo=float(mjd_lo), mjd_hi=70000.0))
+            self.calls += 1
+            if r.status_code >= 400:
+                self.notes.append(f"archive frontier probe: HTTP {r.status_code}")
+                return None
+            _header, rows = parse_csv_text(r.text)
+        except Exception as exc:                                   # noqa: BLE001
+            self.notes.append(f"archive frontier probe: {str(exc)[:160]}")
+            return None
+        best = None
+        for row in rows:
+            for key in ("mjd", "hjd", "jd"):
+                v = row.get(key)
+                if v in (None, ""):
+                    continue
+                try:
+                    f = float(v)
+                except ValueError:
+                    continue
+                if key != "mjd":
+                    f -= JD_MINUS_MJD
+                if 50000.0 < f < 80000.0:
+                    best = f if best is None else max(best, f)
+                break
+        return best
 
 
 
@@ -2677,24 +2786,91 @@ class AtlasForcedPhotometry:
         own = time.monotonic() + self.max_wait_s
         deadline = own if deadline is None else min(own, float(deadline))
         while time.monotonic() < deadline:
-            r = self._sess().get(task_url, headers=self._headers())
-            self.calls += 1
-            if r.status_code >= 400:
-                raise AltFeedError(f"ATLAS task unreadable: {r.status_code} {r.text[:200]}")
-            body = r.json() or {}
-            result = body.get("result_url")
-            if result:
-                rr = self._sess().get(result, headers=self._headers())
-                self.calls += 1
-                if rr.status_code >= 400:
-                    raise AltFeedError(f"ATLAS result unreadable: {rr.status_code}")
-                return rr.text
-            if body.get("error_msg"):
-                raise AltFeedError(f"ATLAS task failed: {str(body['error_msg'])[:200]}")
+            text, _runtime = self.poll_once(task_url)
+            if text is not None:
+                return text
             time.sleep(self.poll_s)
         raise AltFeedError(
             f"ATLAS task did not finish within {self.max_wait_s:.0f}s "
             f"(or the walk's remaining budget, whichever was shorter)")
+
+    def poll_once(self, task_url: str) -> tuple[str | None, float | None]:
+        """One look at a queued task: ``(result_text, server_runtime_s)``.
+
+        ``result_text`` is None while the task is still running.  A task the
+        server marks failed raises :class:`AltFeedError`, so the caller can tell
+        "not yet" from "never".  The runtime is the server's own ``runtime``
+        field when present --- the number that says how much of the wall clock
+        was ATLAS working and how much was queueing, which is what decides
+        whether more concurrency helps (see :class:`altwalk.AtlasWalk`).
+        """
+        r = self._sess().get(task_url, headers=self._headers())
+        self.calls += 1
+        if r.status_code >= 400:
+            raise AltFeedError(f"ATLAS task unreadable: {r.status_code} {r.text[:200]}")
+        body = r.json() or {}
+        result = body.get("result_url")
+        if result:
+            rr = self._sess().get(result, headers=self._headers())
+            self.calls += 1
+            if rr.status_code >= 400:
+                raise AltFeedError(f"ATLAS result unreadable: {rr.status_code}")
+            runtime = body.get("runtime")
+            try:
+                runtime = float(runtime) if runtime is not None else None
+            except (TypeError, ValueError):
+                runtime = None
+            return rr.text, runtime
+        if body.get("error_msg"):
+            raise AltFeedError(f"ATLAS task failed: {str(body['error_msg'])[:200]}")
+        return None, None
+
+    @staticmethod
+    def assemble(target_id: str, ra: float, dec: float, segs: list[dict],
+                 diff_texts: list[str], reduced_texts: list[str],
+                 th: LightCurveThresholds | None = None, *, capped: bool = False,
+                 baseline_complete: bool = True
+                 ) -> tuple[LightCurve, dict[str, Quiescent]]:
+        """Turn the per-segment result files of one target into a light curve and F*.
+
+        Shared by the serial :meth:`lightcurve` and the concurrent
+        :class:`altwalk.AtlasWalk`, so the two paths cannot drift apart in how a
+        light curve is built or how the quiescent flux is measured.
+        """
+        th = th or LightCurveThresholds()
+        rows: list[dict] = []
+        cols: list[str] = []
+        for text in diff_texts:
+            c, r = parse_atlas_text(text or "")
+            cols = cols or c
+            rows.extend(r)
+        lc = atlas_rows_to_lightcurve(rows, target_id, ra, dec)
+        lc.notes.append(f"pm_segments={len(segs)}"
+                        + (f" (CAPPED at {AtlasForcedPhotometry.MAX_PM_SEGMENTS}: drift "
+                           f"within a segment exceeds the allowance)" if capped else ""))
+        lc.raw_columns = cols or lc.raw_columns
+        quiescent: dict[str, Quiescent] = {}
+        if not baseline_complete:
+            lc.notes.append(
+                "baseline INCOMPLETE: walk budget exhausted before the "
+                "reduced-image pass finished; amplitudes in this target "
+                "are untestable")
+        if reduced_texts:
+            red_rows: list[dict] = []
+            for text in reduced_texts:
+                _c, r = parse_atlas_text(text or "")
+                red_rows.extend(r)
+            rlc = atlas_rows_to_lightcurve(red_rows, target_id, ra, dec)
+            for nb in ATLAS.native_bands:
+                sel = np.array([str(b) == nb for b in rlc.band], dtype=bool)
+                if sel.sum() >= th.min_good_epochs:
+                    base = robust_baseline(rlc.flux_njy[sel], th)
+                    if base.ok and base.level > 0:
+                        quiescent[nb] = Quiescent(
+                            float(base.level),
+                            float(base.scatter / math.sqrt(max(base.n_used, 1))),
+                            "atlas_reduced_images")
+        return lc, quiescent
 
     def lightcurve(self, target_id: str, ra: float, dec: float,
                    pmra: float = 0.0, pmdec: float = 0.0,
@@ -2739,55 +2915,33 @@ class AtlasForcedPhotometry:
         def _out_of_time() -> bool:
             return deadline is not None and time.monotonic() > float(deadline)
 
-        rows: list[dict] = []
-        cols: list[str] = []
+        diff_texts: list[str] = []
         for seg in segs:
             if _out_of_time():
                 raise AltFeedError(
                     f"walk budget exhausted mid-target after "
-                    f"{len(rows)} rows over part of {len(segs)} segments; "
+                    f"{len(diff_texts)} of {len(segs)} segments; "
                     f"discarded rather than folded into a gappy light curve")
-            text = self.collect(self.submit(seg["ra"], seg["dec"],
-                                            seg["mjd_lo"], seg["mjd_hi"]),
-                                deadline=deadline)
-            c, r = parse_atlas_text(text)
-            cols = cols or c
-            rows.extend(r)
-        lc = atlas_rows_to_lightcurve(rows, target_id, ra, dec)
-        lc.notes.append(f"pm_segments={len(segs)}"
-                        + (f" (CAPPED at {self.MAX_PM_SEGMENTS}: drift within a "
-                           f"segment exceeds the allowance)" if capped else ""))
-        lc.raw_columns = cols or lc.raw_columns
-        quiescent: dict[str, Quiescent] = {}
+            diff_texts.append(self.collect(self.submit(seg["ra"], seg["dec"],
+                                                       seg["mjd_lo"], seg["mjd_hi"]),
+                                           deadline=deadline))
+        reduced_texts: list[str] = []
+        baseline_complete = True
         if with_baseline and segs:
-            red_rows: list[dict] = []
             for seg in segs:
                 if _out_of_time():
                     # The difference curve IS complete here, so it is kept; only
                     # the amplitude baseline is short.  Said out loud in the
                     # notes, because an untestable amplitude must never read as
                     # a measured one.
-                    lc.notes.append(
-                        "baseline INCOMPLETE: walk budget exhausted before the "
-                        "reduced-image pass finished; amplitudes in this target "
-                        "are untestable")
+                    baseline_complete = False
                     break
-                text = self.collect(self.submit(seg["ra"], seg["dec"], seg["mjd_lo"],
-                                                seg["mjd_hi"], use_reduced=True),
-                                    deadline=deadline)
-                _c, r = parse_atlas_text(text)
-                red_rows.extend(r)
-            rlc = atlas_rows_to_lightcurve(red_rows, target_id, ra, dec)
-            for nb in ATLAS.native_bands:
-                sel = np.array([str(b) == nb for b in rlc.band], dtype=bool)
-                if sel.sum() >= th.min_good_epochs:
-                    base = robust_baseline(rlc.flux_njy[sel], th)
-                    if base.ok and base.level > 0:
-                        quiescent[nb] = Quiescent(
-                            float(base.level),
-                            float(base.scatter / math.sqrt(max(base.n_used, 1))),
-                            "atlas_reduced_images")
-        return lc, quiescent
+                reduced_texts.append(self.collect(
+                    self.submit(seg["ra"], seg["dec"], seg["mjd_lo"], seg["mjd_hi"],
+                                use_reduced=True), deadline=deadline))
+        return self.assemble(target_id, ra, dec, segs, diff_texts,
+                             reduced_texts if with_baseline else [], th,
+                             capped=capped, baseline_complete=baseline_complete)
 
 
 def _dataframe_to_rows(obj) -> list[dict]:
@@ -2964,7 +3118,8 @@ def census(cfg=None, targets_path: str | Path | None = None,
 def fold(verdict: AltFeedVerdict, ledger_path: Path, targets_n: int,
          alpha_fdr: float = 0.05, min_visits_for_rate: int = 5,
          max_duty_cycle: float = 0.2, n_null_timing: int = 2000,
-         timing_alpha: float = 0.01, max_grey_z: float = 3.0) -> dict:
+         timing_alpha: float = 0.01, max_grey_z: float = 3.0,
+         dedupe_night: bool = False) -> dict:
     """Fold one survey's pass into its OWN ledger and re-assess.
 
     **A separate ledger per survey, never the Rubin one.**  The ledger's
@@ -2975,6 +3130,19 @@ def fold(verdict: AltFeedVerdict, ledger_path: Path, targets_n: int,
     surveys are combined, if ever, at the level of *which targets recur in more
     than one of them*, which is a much stronger statement and needs no shared
     denominator.
+
+    **Trials are keyed to the star-night, not the night.**  The Rubin ledger
+    drops a night it has already recorded because there one run screens every
+    target over one night, and a re-run of that night is a duplicate.  Here one
+    run screens a handful of TARGETS over eleven years and the next run adds
+    other targets over the same eleven years, so the night labels collide by
+    construction and the night-level rule silently discarded every later
+    target's trials --- the committed ATLAS ledger of 2026-09-02 held 1337
+    nights and exactly 1337 target-visits over six stars.  Novelty is instead
+    guaranteed upstream: :class:`altwalk.WalkState` keeps each star's requested
+    windows disjoint across runs, so nothing folded here has been folded before.
+    ``targets_n`` is the number of stars actually walked with a usable
+    reduction, which is the population the rate is over.
     """
     led = Ledger.load(ledger_path)
     if not led.opened_utc:
@@ -2991,7 +3159,8 @@ def fold(verdict: AltFeedVerdict, ledger_path: Path, targets_n: int,
                       alerts_seen=verdict.counts.get("alerts_in", 0) if first else 0,
                       visit_history=None,
                       target_positions=verdict.target_positions,
-                      bin_trials=verdict.bin_trials_by_night.get(night))
+                      bin_trials=verdict.bin_trials_by_night.get(night),
+                      dedupe_night=dedupe_night)
         first = False
     # AFTER every night, so a target whose record is created by a later night
     # still receives its history --- the same ordering bug the Rubin path hit.
@@ -3003,6 +3172,17 @@ def fold(verdict: AltFeedVerdict, ledger_path: Path, targets_n: int,
                        mixed_polarity_requires_grey_both=True)
     led.save(ledger_path)
     return stats
+
+
+def _walk_summary(state, windows: dict) -> dict:
+    """What the walk state says after this run, for the committed summary."""
+    modes: dict[str, int] = {}
+    for w in windows.values():
+        m = str(w.get("mode") or "full")
+        modes[m] = modes.get(m, 0) + 1
+    return {"n_walked": state.n_walked(), "n_usable": state.n_usable(),
+            "this_run": modes,
+            "archive_frontier_mjd": state.archive_frontier_mjd}
 
 
 def run_survey(survey: str, cfg=None, targets_path: str | Path | None = None,
@@ -3060,12 +3240,23 @@ def run_survey(survey: str, cfg=None, targets_path: str | Path | None = None,
     summary["n_targets_total"] = int(len(targets))
     summary["reachability"] = reachable_fraction(targets, spec)
 
+    # THE WALK STATE: which stars have been screened, over what window, and the
+    # full-history baseline each one measured (altwalk.WalkState).  Loaded before
+    # the fetch so the plan can skip what is already current, saved after the
+    # reductions so the next run continues from here rather than from the top.
+    from .altwalk import WalkState
+    state_path = out / "walked.json"
+    state = WalkState.load(state_path, survey=spec.key)
+    windows: dict[str, dict] = {}
     if lightcurves is None:
-        lightcurves, quiescent, fetch_notes = _fetch(spec, targets, lth,
-                                                     max_targets, mjd_lo, mjd_hi)
+        lightcurves, quiescent, fetch_notes, windows = _fetch_planned(
+            spec, targets, lth, max_targets, mjd_lo, mjd_hi, state=state)
         summary["notes"].extend(fetch_notes)
+        summary["walk"] = _walk_summary(state, windows)
         if not lightcurves:
             summary["verdict"] = "NO_DATA_REACHED"
+            if state.n_walked() or state.archive_frontier_mjd is not None:
+                state.save(state_path)
             _write_json(out / "summary.json", summary)
             print(f"[tocsin-altfeeds] {spec.key}: NO_DATA_REACHED")
             return summary
@@ -3085,11 +3276,47 @@ def run_survey(survey: str, cfg=None, targets_path: str | Path | None = None,
         quiescent = _fill_quiescent_from_gspc(quiescent or {}, lightcurves, targets, spec)
 
     reductions = []
+    by_tid: dict[str, Reduction] = {}
     for tid, lc in lightcurves.items():
-        red = reduce_lightcurve(lc, spec, lth, (quiescent or {}).get(tid))
+        win = windows.get(tid) or {}
+        # A REFRESH window is judged against the priors its full walk measured;
+        # a full walk measures its own.
+        prior = state.prior_for(tid) if win.get("mode") == "refresh" else None
+        red = reduce_lightcurve(lc, spec, lth, (quiescent or {}).get(tid), prior=prior)
         red.notes.extend(lc.notes)
         reductions.append(red)
+        by_tid[tid] = red
     verdict = screen_lightcurves(reductions, targets, spec, th, lth)
+
+    # RECORD THE WALK before anything else can fail: every window fetched this
+    # run is now screened, and the next run must not ask for it again.
+    if windows:
+        frontier = state.archive_frontier_mjd if spec.key in ARCHIVE_SURVEYS else None
+        for tid, win in windows.items():
+            red = by_tid.get(tid)
+            lc = lightcurves[tid]
+            hi_rec = float(win["mjd_hi"])
+            if frontier is not None and math.isfinite(frontier):
+                # Never past the archive's own frontier: the epochs after it do
+                # not exist yet and arrive with the next release.
+                hi_rec = min(hi_rec, float(frontier))
+            baseline = {b: {"level": br.level_njy, "scatter": br.scatter_njy,
+                            "n_used": br.n_good}
+                        for b, br in (red.bands if red else {}).items() if br.usable}
+            qd = {b: {"flux_njy": br.quiescent_njy, "err_njy": br.quiescent_err_njy,
+                      "source": br.quiescent_source}
+                  for b, br in (red.bands if red else {}).items()
+                  if br.usable and np.isfinite(br.quiescent_njy)}
+            state.record(tid, mjd_lo=float(win["mjd_lo"]), mjd_hi=hi_rec,
+                         mode=str(win.get("mode") or "full"),
+                         usable=bool(red.usable if red else False),
+                         n_epochs=len(lc), baseline=baseline, quiescent=qd,
+                         chi_med=(red.chi_med if red else None),
+                         elo_med=(red.elo_med if red else None),
+                         notes=[x for x in (red.notes if red else [])
+                                if not x.startswith("pm_segments")][:8])
+        state.save(state_path)
+        summary["walk"] = _walk_summary(state, windows)
     summary["counts"].update(verdict.counts)
     summary["notes"].extend(verdict.notes)
 
@@ -3127,7 +3354,11 @@ def run_survey(survey: str, cfg=None, targets_path: str | Path | None = None,
 
     lconf = conf["ledger"]
     ledger_path = out / f"ledger_{spec.key}.json"
-    summary["ledger"] = fold(verdict, ledger_path, int(len(targets)),
+    # The population the rate is over is the stars actually walked with a
+    # usable reduction, not the whole target list; the offline tests, which hand
+    # light curves in directly, have no walk state and keep the old count.
+    targets_n = state.n_usable() if windows else int(len(targets))
+    summary["ledger"] = fold(verdict, ledger_path, targets_n,
                              alpha_fdr=float(lconf["alpha_fdr"]),
                              min_visits_for_rate=int(lconf["min_visits_for_rate"]),
                              max_duty_cycle=float(lconf["max_duty_cycle"]),
@@ -3181,19 +3412,37 @@ def _fill_quiescent_from_gspc(quiescent: dict, lightcurves: dict, targets,
     return out
 
 
+#: Surveys served as a DATA RELEASE rather than a live stream.  A walked target
+#: is never recorded as screened past such an archive's own frontier: the epochs
+#: between the frontier and the wall clock do not exist yet, and will arrive with
+#: the next release (see `altwalk.WalkState.plan` and `ZtfIrsa.archive_frontier`).
+ARCHIVE_SURVEYS = frozenset({"ztf"})
+
+#: Where each survey's history begins, for a first full walk.
+SURVEY_START_MJD = {"atlas": 57200.0, "ztf": 58194.0, "asassn": 57000.0}
+
+
 def _fetch(spec: SurveySpec, targets, lth: LightCurveThresholds,
-           max_targets: int | None, mjd_lo: float | None, mjd_hi: float | None
-           ) -> tuple[dict, dict, list[str]]:
+           max_targets: int | None, mjd_lo: float | None, mjd_hi: float | None,
+           state=None, now: float | None = None) -> tuple[dict, dict, list[str]]:
     """Runner-only acquisition for one survey.  Returns (lightcurves, F*, notes).
+
+    Thin wrapper over :func:`_fetch_planned`, which also returns the window each
+    light curve was fetched for; kept so callers that only want the curves are
+    unchanged.
+    """
+    lightcurves, quiescent, notes, _windows = _fetch_planned(
+        spec, targets, lth, max_targets, mjd_lo, mjd_hi, state=state, now=now)
+    return lightcurves, quiescent, notes
+
+
+def _measurable_order(spec: SurveySpec, targets, notes: list[str]) -> np.ndarray:
+    """Indices of the targets the survey can measure, brightest first.
 
     Target ordering is by predicted native-band brightness, not by catalogue
     order: a bounded quota spent on stars too faint to carry a detectable event
     buys a denominator and no possible numerator.
     """
-    import os as _os
-    import time as _time
-
-    notes: list[str] = []
     n = len(targets)
     mag = np.full(n, np.nan)
     for nb in spec.native_bands:
@@ -3244,20 +3493,64 @@ def _fetch(spec: SurveySpec, targets, lth: LightCurveThresholds,
                      f"about the SLICE, not about the sky")
     ranked = np.where(keep, np.where(np.isfinite(mag), mag, np.inf), np.inf)
     order = np.argsort(ranked)
-    order = order[np.isfinite(ranked[order])]
-    if max_targets:
-        order = order[:int(max_targets)]
+    return order[np.isfinite(ranked[order])]
+
+
+def _fetch_planned(spec: SurveySpec, targets, lth: LightCurveThresholds,
+                   max_targets: int | None, mjd_lo: float | None, mjd_hi: float | None,
+                   state=None, now: float | None = None
+                   ) -> tuple[dict, dict, list[str], dict]:
+    """Runner-only acquisition for one survey, planned against the walk state.
+
+    Returns ``(lightcurves, F*, notes, windows)`` where ``windows`` maps each
+    fetched target id to ``{"mjd_lo", "mjd_hi", "mode"}`` --- the window that
+    light curve covers and whether it was a ``full`` walk, a ``refresh`` of a
+    star already walked, or a ``rewalk`` of one previously found unusable.  The
+    caller records those windows in the state after reducing the curves, so a
+    star is never asked for the same epochs twice (:mod:`altwalk`).
+
+    ``max_targets`` bounds the number of NEW full-history walks this run; the
+    refreshes of already-walked stars are planned first and are not counted
+    against it, because each is a few nights of exposures and they are what
+    keeps the ledger current.
+    """
+    import os as _os
+    import time as _time
+
+    from .altwalk import (
+        AtlasTargetJob,
+        AtlasWalk,
+        WalkState,
+        effective_budget_s,
+        mjd_to_utc,
+    )
+    from .altwalk import now_mjd as _now_mjd
+
+    notes: list[str] = []
+    windows: dict[str, dict] = {}
+    n = len(targets)
+    order = _measurable_order(spec, targets, notes)
     ids = (np.asarray(targets["source_id"]).astype(str) if "source_id" in targets
            else np.arange(n).astype(str))
     ra = np.asarray(targets["ra"], dtype=float)
     dec = np.asarray(targets["dec"], dtype=float)
     pmra = np.asarray(targets["pmra"], dtype=float) if "pmra" in targets else np.zeros(n)
     pmdec = np.asarray(targets["pmdec"], dtype=float) if "pmdec" in targets else np.zeros(n)
-    lo = float(mjd_lo) if mjd_lo is not None else 57200.0
-    hi = float(mjd_hi) if mjd_hi is not None else 61300.0
+    index_of = {str(ids[i]): int(i) for i in order}
+    state = state if state is not None else WalkState(survey=spec.key)
+    now = float(now) if now is not None else _now_mjd()
+    start = SURVEY_START_MJD.get(spec.key, 57000.0)
+
+    def _req(p: dict) -> dict:
+        i = index_of[p["target_id"]]
+        return {"target_id": p["target_id"], "ra": float(ra[i]), "dec": float(dec[i]),
+                "pmra": float(pmra[i]), "pmdec": float(pmdec[i]),
+                "mjd_lo": float(p["mjd_lo"]), "mjd_hi": float(p["mjd_hi"]),
+                "mode": p["mode"]}
 
     lightcurves: dict[str, LightCurve] = {}
     quiescent: dict[str, dict[str, Quiescent]] = {}
+
     if spec.key == ZTF.key:
         # NO DRIFT EXCLUSION HERE, deliberately, unlike ASAS-SN.  The search
         # position is ours to choose and the service takes a time window in the
@@ -3266,14 +3559,61 @@ def _fetch(spec: SurveySpec, targets, lth: LightCurveThresholds,
         # first real run 110 of its 120 targets -- every star over 45 mas/yr,
         # which in a 100 pc sample is most of them.
         client = ZtfIrsa()
-        reqs = [{"target_id": str(ids[i]), "ra": float(ra[i]), "dec": float(dec[i]),
-                 "pmra": float(pmra[i]), "pmdec": float(pmdec[i])} for i in order]
-        lightcurves = client.lightcurves(reqs, mjd_lo=mjd_lo, mjd_hi=mjd_hi, th=lth)
-        notes.extend(client.notes[:20])
-        notes.append(f"ztf: {client.calls} requests over {len(reqs)} targets, "
+        # WHERE DOES THE ARCHIVE END?  IRSA serves a release, not a stream, so
+        # before deciding which walked stars are due a refresh the walk asks
+        # the archive where its own newest epoch sits, at the position of the
+        # most-observed star it already knows.  One request.
+        ref = state.most_observed() if state.n_walked() else None
+        if ref is not None and ref.target_id in index_of and hasattr(client, "archive_frontier"):
+            i = index_of[ref.target_id]
+            probe_lo = max(start, float(ref.mjd_hi) - 60.0)
+            fr = client.archive_frontier(float(ra[i]), float(dec[i]), probe_lo)
+            if fr is not None:
+                state.observe_archive_frontier(fr)
+                notes.append(f"ztf archive frontier probe at {ref.target_id}: "
+                             f"MJD {fr:.2f} ({mjd_to_utc(fr)})")
+            else:
+                notes.append("ztf archive frontier probe returned nothing; the "
+                             "recorded frontier is unchanged and no refresh is planned "
+                             "past it")
+        plan = state.plan([str(ids[i]) for i in order], survey_start_mjd=start, now=now,
+                          max_new=max_targets, mjd_lo=mjd_lo, mjd_hi=mjd_hi,
+                          archive_frontier=state.archive_frontier_mjd)
+        notes.extend(plan.notes)
+        reqs = [_req(p) for p in plan.requests]
+        budget_s, clip = effective_budget_s(
+            float(_os.environ.get("ALTFEEDS_ZTF_BUDGET_S") or 5400.0))
+        if clip:
+            notes.append(clip)
+        if reqs and budget_s > 0:
+            lightcurves = client.lightcurves(reqs, mjd_lo=mjd_lo, mjd_hi=mjd_hi, th=lth,
+                                             max_seconds=budget_s)
+        elif reqs:
+            notes.append(f"fetch budget of {budget_s:g}s exhausted before the ZTF walk "
+                         f"started; 0 of {len(reqs)} targets requested")
+        notes.extend(list(getattr(client, "notes", []))[:20])
+        for r in reqs:
+            if r["target_id"] in lightcurves:
+                windows[r["target_id"]] = {"mjd_lo": r["mjd_lo"], "mjd_hi": r["mjd_hi"],
+                                           "mode": r["mode"]}
+        # The newest epoch any fetched curve holds is a lower bound on the
+        # archive frontier, and it is free.
+        newest = None
+        for lc in lightcurves.values():
+            m = np.asarray(lc.mjd, dtype=float)
+            m = m[np.isfinite(m)]
+            if m.size:
+                newest = float(m.max()) if newest is None else max(newest, float(m.max()))
+        state.observe_archive_frontier(newest)
+        notes.append(f"ztf: {getattr(client, 'calls', 0)} requests over {len(reqs)} targets "
+                     f"({len(plan.refresh)} refresh, {len(plan.fresh)} full), "
                      f"{len(lightcurves)} light curves")
     elif spec.key == ASASSN.key:
         client = AsasSnSkyPatrol()
+        lo = float(mjd_lo) if mjd_lo is not None else start
+        hi = float(mjd_hi) if mjd_hi is not None else now
+        if max_targets:
+            order = order[:int(max_targets)]
         reqs = []
         n_drift = 0
         for i in order:
@@ -3291,6 +3631,8 @@ def _fetch(spec: SurveySpec, targets, lth: LightCurveThresholds,
         except AltFeedError as exc:
             notes.append(f"asassn_unavailable: {str(exc)[:300]}")
         notes.extend(client.notes[:20])
+        for tid in lightcurves:
+            windows[tid] = {"mjd_lo": lo, "mjd_hi": hi, "mode": "full"}
     else:
         client = AtlasForcedPhotometry()
         if not client.available:
@@ -3298,7 +3640,7 @@ def _fetch(spec: SurveySpec, targets, lth: LightCurveThresholds,
                          "free at https://fallingstar-data.com/forcedphot/ and add the "
                          "token as a repository secret; the workflow passes it exactly "
                          "as LASAIR_TOKEN is passed.")
-            return {}, {}, notes
+            return {}, {}, notes, windows
         # A WALL-CLOCK BUDGET OVER THE WHOLE WALK, for the same reason ZTF has
         # one, learned here the expensive way.  ATLAS is a queue: `collect`
         # waits up to `max_wait_s` PER TASK, and a target can need several tasks
@@ -3309,37 +3651,78 @@ def _fetch(spec: SurveySpec, targets, lth: LightCurveThresholds,
         # scheduled run of 2026-08-26 was doing exactly that, 133 minutes into
         # its ATLAS step with no result written, when it was cut short.
         #
-        # 150 minutes leaves the job an hour to screen, ledger and commit what
-        # the walk did fetch.  A short slice that lands beats a long one that
-        # does not, and the note says which happened.
+        # The survey's own budget is then CLIPPED TO THE JOB'S (altwalk.
+        # effective_budget_s): the run of 2026-09-02 kept every survey inside
+        # its own budget and still died, because the sum of the budgets was
+        # longer than the job.
         budget_s = float(_os.environ.get("ALTFEEDS_FETCH_BUDGET_S") or 9000.0)
+        budget_s, clip = effective_budget_s(budget_s)
+        if clip:
+            notes.append(clip)
         deadline = _time.monotonic() + budget_s
+        plan = state.plan([str(ids[i]) for i in order], survey_start_mjd=start, now=now,
+                          max_new=max_targets, mjd_lo=mjd_lo, mjd_hi=mjd_hi)
+        notes.extend(plan.notes)
+        reqs = [_req(p) for p in plan.requests]
         n_walked = 0
-        for i in order:
-            if _time.monotonic() > deadline:
+        if budget_s <= 0 or _time.monotonic() > deadline:
+            notes.append(
+                f"fetch budget of {budget_s:g}s exhausted after 0 of "
+                f"{len(reqs)} targets; this slice is SHORT and the ledger's "
+                f"denominator counts only what was walked")
+        elif hasattr(client, "submit") and hasattr(client, "poll_once"):
+            # THE CONCURRENT WALK.  Several tasks in flight at once, one deadline
+            # over all of them, and a target started only when the running
+            # estimate says it will finish (altwalk.AtlasWalk).
+            jobs = [AtlasTargetJob(target_id=r["target_id"], ra=r["ra"], dec=r["dec"],
+                                   pmra=r["pmra"], pmdec=r["pmdec"],
+                                   mjd_lo=r["mjd_lo"], mjd_hi=r["mjd_hi"],
+                                   # A refresh reduces against the F* the full
+                                   # walk measured (altwalk.Prior); the
+                                   # reduced-image pass is not repeated.
+                                   with_baseline=(r["mode"] != "refresh"))
+                    for r in reqs]
+            walk = AtlasWalk(client)
+            lightcurves, quiescent, wnotes = walk.run(jobs, deadline, th=lth)
+            notes.extend(wnotes)
+            n_walked = len(lightcurves) + sum(1 for j in jobs if j.failed)
+            if any("deadline" in w for w in wnotes):
                 notes.append(
                     f"fetch budget of {budget_s:g}s exhausted after {n_walked} of "
-                    f"{len(order)} targets; this slice is SHORT and the ledger's "
+                    f"{len(reqs)} targets; this slice is SHORT and the ledger's "
                     f"denominator counts only what was walked")
-                break
-            n_walked += 1
-            tid = str(ids[i])
-            try:
-                # The deadline goes DOWN into the target, not just around the
-                # loop.  Checking it only here bounds the number of targets
-                # started and says nothing about how long one of them may run,
-                # which is how a single star came to outlast the whole job.
-                lc, q = client.lightcurve(tid, float(ra[i]), float(dec[i]),
-                                          float(pmra[i]), float(pmdec[i]), lo, hi, lth,
-                                          deadline=deadline)
-            except AltFeedError as exc:
-                notes.append(f"{tid}: {str(exc)[:200]}")
-                continue
-            lightcurves[tid] = lc
-            quiescent[tid] = q
-        notes.append(f"atlas: walked {n_walked} of {len(order)} targets, "
+        else:
+            # Serial fallback for a client without the queue API (the tests'
+            # fakes).  The deadline goes DOWN into the target, not just around
+            # the loop: checking it only here bounds the number of targets
+            # started and says nothing about how long one of them may run.
+            for r in reqs:
+                if _time.monotonic() > deadline:
+                    notes.append(
+                        f"fetch budget of {budget_s:g}s exhausted after {n_walked} of "
+                        f"{len(reqs)} targets; this slice is SHORT and the ledger's "
+                        f"denominator counts only what was walked")
+                    break
+                n_walked += 1
+                tid = r["target_id"]
+                try:
+                    lc, q = client.lightcurve(tid, r["ra"], r["dec"], r["pmra"], r["pmdec"],
+                                              r["mjd_lo"], r["mjd_hi"], lth,
+                                              with_baseline=(r["mode"] != "refresh"),
+                                              deadline=deadline)
+                except AltFeedError as exc:
+                    notes.append(f"{tid}: {str(exc)[:200]}")
+                    continue
+                lightcurves[tid] = lc
+                quiescent[tid] = q
+        for r in reqs:
+            if r["target_id"] in lightcurves:
+                windows[r["target_id"]] = {"mjd_lo": r["mjd_lo"], "mjd_hi": r["mjd_hi"],
+                                           "mode": r["mode"]}
+        notes.append(f"atlas: walked {n_walked} of {len(reqs)} targets "
+                     f"({len(plan.refresh)} refresh, {len(plan.fresh)} full), "
                      f"{len(lightcurves)} light curves")
-    return lightcurves, quiescent, notes
+    return lightcurves, quiescent, notes, windows
 
 
 def signature_transfer(spec: SurveySpec) -> dict:

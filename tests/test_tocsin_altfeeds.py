@@ -1608,9 +1608,14 @@ def test_the_walk_passes_its_deadline_down_into_each_target():
 
     import seti.tocsin.altfeeds as A
 
-    src = inspect.getsource(A._fetch)
+    # `_fetch` is now a wrapper; the walk itself lives in `_fetch_planned`.
+    src = inspect.getsource(A._fetch_planned)
     assert "deadline=deadline" in src, (
-        "_fetch checks the budget between targets but does not hand it to the "
-        "target, so one star can still outlast the job")
+        "_fetch_planned checks the budget between targets but does not hand it to "
+        "the target, so one star can still outlast the job")
+    # And the concurrent scheduler takes the same single deadline over all of
+    # its in-flight tasks.
+    from seti.tocsin import altwalk as W
+    assert "deadline" in inspect.signature(W.AtlasWalk.run).parameters
     assert "deadline" in inspect.signature(
         A.AtlasForcedPhotometry.lightcurve).parameters

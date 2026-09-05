@@ -45,7 +45,12 @@ name: tocsin-altfeeds
 
 on:
   schedule:
-    # 18:40 UTC = 14:40 ET, Wednesdays.  Weekly, not nightly: neither feed is a
+    # 18:40 UTC = 14:40 ET, Wednesdays AND Saturdays.  Twice weekly since
+    # 2026-09-05: with the walk state (seti.tocsin.altwalk) each run refreshes
+    # every star already walked -- a few nights each, seconds of server time --
+    # and then spends the rest of its budget on new full-history walks, so the
+    # ledger grows with every run instead of re-buying the same six stars.
+    # Not nightly: neither feed is a
     # bulk service --- ASAS-SN is one cone search per target and ATLAS is a
     # throttled job queue --- so a run walks a bounded slice, and a nightly
     # cadence would spend the quota faster than the archive grows.  Offset from
@@ -54,7 +59,7 @@ on:
     # A scheduled firing has EMPTY inputs, which is why both survey stages test
     # for the empty string: a cron that silently ran neither feed would look
     # exactly like a cron that found nothing.
-    - cron: "40 18 * * 3"
+    - cron: "40 18 * * 3,6"
   workflow_dispatch:
     inputs:
       survey:
@@ -123,6 +128,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      # ONE DEADLINE FOR THE WHOLE JOB.  Every survey below has its own fetch
+      # budget, and the run of 2026-09-02 kept each of them and still died: the
+      # ZTF step started with no idea how much job time the ATLAS step had used,
+      # and the runner cancelled it 86 minutes later, one step short of the
+      # commit.  `seti.tocsin.altwalk.effective_budget_s` clips every survey's
+      # budget to this, keeping a reserve for reduce/screen/ledger/commit.  The
+      # number here MUST equal `timeout-minutes` above (tests/test_workflows.py).
+      - name: Set the job-wide deadline every fetch budget is clipped to
+        run: |
+          TIMEOUT_MIN=240
+          echo "ALTFEEDS_JOB_DEADLINE_UNIX=$(( $(date +%s) + TIMEOUT_MIN * 60 ))" >> "$GITHUB_ENV"
 
       - name: Install
         run: |
@@ -310,7 +327,7 @@ jobs:
           python - <<'PY'
           import json, pathlib
           root = pathlib.Path("results/tocsin_altfeeds")
-          for key in ("asassn", "atlas"):
+          for key in ("asassn", "atlas", "ztf"):
               p = root / key / "summary.json"
               if not p.exists():
                   print(f"== {key}: not run")
@@ -318,6 +335,7 @@ jobs:
               s = json.loads(p.read_text())
               print(f"== {key}: verdict={s.get('verdict')} "
                     f"denominator={s.get('denominator')}")
+              print("   walk:", s.get("walk"))
               led = s.get("ledger", {})
               print("   cumulative target-nights:", led.get("cumulative_target_visits"))
               print("   ensemble rate per target-night:",
@@ -345,12 +363,15 @@ jobs:
             results/tocsin_altfeeds/asassn/summary.json \
             results/tocsin_altfeeds/asassn/events.json \
             results/tocsin_altfeeds/asassn/ledger_asassn.json \
+            results/tocsin_altfeeds/asassn/walked.json \
             results/tocsin_altfeeds/atlas/summary.json \
             results/tocsin_altfeeds/atlas/events.json \
             results/tocsin_altfeeds/atlas/ledger_atlas.json \
+            results/tocsin_altfeeds/atlas/walked.json \
             results/tocsin_altfeeds/ztf/summary.json \
             results/tocsin_altfeeds/ztf/events.json \
-            results/tocsin_altfeeds/ztf/ledger_ztf.json
+            results/tocsin_altfeeds/ztf/ledger_ztf.json \
+            results/tocsin_altfeeds/ztf/walked.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -428,3 +428,92 @@ Two things are known to be missing and neither is blocking:
 Per the charter, the point of all this is a **detection**. If the census says the
 reachable window is empty, that is a reason to change the question — not to write
 up how empty it was.
+
+## 12. The walk itself: deadline, concurrency, walk state, denominator (2026-09-05)
+
+*Code: `src/seti/tocsin/altwalk.py`; tests: `tests/test_tocsin_altwalk.py`.*
+
+Four weeks of scheduled runs produced three failures that were properties of
+**how the walk was organised**, not of any feed. Each is now pinned by a test.
+
+### 12.1 The job had no deadline, only the surveys did
+
+The 2026-09-02 run kept ATLAS inside its 150-minute budget, then started the
+ZTF step with no knowledge of how much of the 240-minute job was left, and the
+runner cancelled it 86 minutes later — one step short of the commit. The
+workflow now sets **one job-wide deadline** (`ALTFEEDS_JOB_DEADLINE_UNIX`, from
+its own `timeout-minutes`, checked equal by `tests/test_workflows.py`) and
+`altwalk.effective_budget_s` clips every survey's budget to it, holding back
+fifteen minutes for reduce/screen/ledger/commit. A clipped budget is written
+into the summary as such: *short because the job was short* is a different fact
+from *short because the feed was slow*.
+
+### 12.2 Every run re-walked the same six stars
+
+The walk order is deterministic (brightest measurable first) and nothing
+recorded what had been walked, so each weekly run bought the same six
+full-history light curves again. `altwalk.WalkState`
+(`results/tocsin_altfeeds/<survey>/walked.json`) records, per star, the window
+screened so far and the **full-history baseline** it measured (level, scatter,
+F\*, the ATLAS quality medians). The plan for a run is then:
+
+1. **Refresh** every walked star whose recorded high-water mark is more than
+   seven days behind the request frontier — a window of a few nights, seconds of
+   server time — reduced against the stored priors
+   (`reduce_lightcurve(prior=…)`: a two-week window cannot measure a star's own
+   scatter, and a scatter estimated from twenty points is biased low, which
+   would call ordinary epochs events).
+2. **Full-walk** new stars with whatever budget remains, up to `max_targets`.
+
+Refreshes are planned first and are not counted against `max_targets`; they are
+what keeps the ledger current. The request frontier is the wall clock minus a
+three-day ingest lag, so a refresh never claims nights the server has not
+finished reducing. For ZTF via IRSA — a *data release*, not a stream — the
+frontier is additionally capped at the archive's own newest epoch, measured
+each run by one cone at the most-observed walked star (`ZtfIrsa.archive_frontier`);
+otherwise the epochs between the release and the wall clock, which arrive with
+the *next* release, would be skipped for ever. No ZTF refresh is planned until
+the archive advances.
+
+The old code also carried a hard-coded upper window of MJD 61300 for ATLAS,
+which would have gone stale on 2026-09-21 and silently excluded every night
+after it. The window now ends at the wall clock.
+
+### 12.3 ATLAS tasks are walked several at a time
+
+The serial walk submitted one task, polled it to completion (a full-history job
+runs ~20 minutes server-side), then submitted the next. `altwalk.AtlasWalk`
+keeps `ALTFEEDS_ATLAS_CONCURRENCY` (default 6) tasks in flight, polls them in
+one pass, pauses on a 429 and retries the same task, and — the part that
+matters for the budget — **starts a target only when the running median
+time-to-complete fits before the deadline**, so it does not queue work it will
+abandon. A target still in flight at the deadline is dropped with a note rather
+than folded as a half-walked light curve. How much concurrency helps is a
+property of ATLAS's own scheduler that the sandbox cannot measure, so the walk
+*records* the achieved rate (tasks finished per hour, server runtimes, achieved
+parallelism) in the summary notes; the next tuning decision is made on that
+number.
+
+### 12.4 The ledger's denominator was undercounted — badly
+
+The Rubin ledger de-duplicates trials **by night**, because there one run
+screens every target over one night and a re-run of that night is a duplicate.
+Here one run screens a few *targets* over eleven years and the next run adds
+other targets over the same eleven years, so the night labels collide by
+construction and the night-level rule dropped every later target's trials. The
+committed ATLAS ledger of 2026-09-02 held **1337 nights and exactly 1337
+target-visits over six stars**, and an ensemble rate of 0.32 events per visit
+that was an artefact of that.
+
+`fold` now adds trials keyed to the **star-night** (`Ledger.add_night(…,
+dedupe_night=False)`), with novelty guaranteed upstream by the disjoint
+per-star windows the walk state maintains. `n_targets_screened` is the number
+of stars walked with a usable reduction, not the length of the target list.
+The ATLAS and ZTF ledgers and event files built under the old rule were
+deleted in the same commit; they are rebuilt from the first run of the new walk.
+
+### 12.5 Cadence
+
+Twice weekly (Wednesday and Saturday, 14:40 ET) since 2026-09-05. With
+refreshes cheap and full walks bounded, every run grows the ledger; the
+`cronwatch` sweep reads the two-day/five-day cadence from the cron itself.

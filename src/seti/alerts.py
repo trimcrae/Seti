@@ -254,13 +254,35 @@ def outage_context(root: Path) -> str:
                 f"{others}), so the alert stream itself stopped and no change to "
                 f"the broker path recovers data that was never taken. Do not "
                 f"relax the threshold on this — the condition is real. See "
-                f"`docs/rubin-outage.md`.")
+                f"`docs/rubin-outage.md`." + _ztf_sentence(d))
     return (f"\n\n**Cause established {when} by `rubin-outage`: "
             f"MIRROR_STALLED.** Another broker holds newer LSST epochs "
             f"({others}) than ALeRCE "
             f"({str(d.get('alerce_frontier_utc') or '')[:10]}), so real sky is "
             f"going unscreened. This is urgent: route the channels through a "
-            f"current broker. See `docs/rubin-outage.md`.")
+            f"current broker. See `docs/rubin-outage.md`." + _ztf_sentence(d))
+
+
+def _ztf_sentence(decision: dict) -> str:
+    """What the same check found about ZTF, the other public wide-field stream.
+
+    Empty when the check predates the ZTF probe.  Kept to one sentence: it tells
+    a reader of a Rubin frontier alert whether a substitute stream exists at all,
+    which is the decision the alert leaves them with.
+    """
+    z = decision.get("ztf") or {}
+    status = str(z.get("status") or "")
+    newest = str(z.get("newest_utc") or "")[:10]
+    src = str(z.get("newest_source") or "")
+    if status == "LIVE":
+        return (f" ZTF, the other public wide-field alert stream, is LIVE (newest "
+                f"night {newest} via {src}), so `tocsin-altfeeds` has a current feed "
+                f"to lean on.")
+    if status == "DARK_OR_UNSERVED":
+        return (f" ZTF is not current at any public endpoint either (newest {newest} "
+                f"via {src}); the alternative feeds are ATLAS forced photometry and "
+                f"the archives.")
+    return ""
 
 
 def frontier_path(root: Path) -> Path:

@@ -132,7 +132,7 @@ def test_the_registry_reads_this_repository(tmp_path):
     """The real workflows, so a rename cannot quietly empty the watch list."""
     got = {w.file: w for w in cw.read_schedules(".")}
     assert "tocsin.yml" in got and "watchdog.yml" in got
-    assert got["tocsin-altfeeds.yml"].crons == ["40 18 * * 3"]
+    assert got["tocsin-altfeeds.yml"].crons == ["40 18 * * 3,6"]   # twice weekly since 2026-09-05
     # Every scheduled workflow must be re-firable, or a dropped firing cannot be
     # recovered by anything short of a human.
     for wf in got.values():

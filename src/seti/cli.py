@@ -714,6 +714,35 @@ def _cmd_tocsin_assess(args, cfg):
     assess_only(cfg, out_dir=args.out_dir)
 
 
+def _cmd_tocsin_ztf_probe(args, cfg):
+    from .tocsin.ztf_live import probe
+
+    rec = probe(cfg, out_dir=args.out_dir)
+    print(f"[tocsin-ztf] probe verdict={rec['verdict']}")
+
+
+def _cmd_tocsin_ztf_targets(args, cfg):
+    from .tocsin.ztf_live import build_ztf_targets
+
+    rec = build_ztf_targets(cfg, out_path=args.out)
+    print(f"[tocsin-ztf] targets verdict={rec['verdict']} n={rec.get('n_targets')}")
+
+
+def _cmd_tocsin_ztf_screen(args, cfg):
+    from .tocsin.ztf_live import screen
+
+    screen(cfg, chunks=args.chunks, max_run_seconds=args.max_run_seconds,
+           mjd_lo=args.mjd_lo, mjd_hi=args.mjd_hi,
+           targets_path=args.targets, out_dir=args.out_dir)
+
+
+def _cmd_tocsin_ztf_assess(args, cfg):
+    from .tocsin.ztf_live import assess_only
+
+    rec = assess_only(cfg, out_dir=args.out_dir)
+    print(f"[tocsin-ztf] tiers={rec.get('tier_counts')}")
+
+
 def _cmd_tocsin_altfeeds_probe(args, cfg):
     from .tocsin.altfeeds import probe
 
@@ -1393,6 +1422,37 @@ def main(argv=None):
                             "ledger, without touching the network")
     p.add_argument("--out-dir", default=None)
     p.set_defaults(func=_cmd_tocsin_assess)
+
+    p = sub.add_parser("tocsin-ztf-probe",
+                       help="TOCSIN on the LIVE ZTF stream, stage 0: record the live "
+                            "shapes of ALeRCE's ZTF API and IRSA's exposure table")
+    p.add_argument("--out-dir", default=None)
+    p.set_defaults(func=_cmd_tocsin_ztf_probe)
+
+    p = sub.add_parser("tocsin-ztf-targets",
+                       help="TOCSIN-ZTF stage 1: the Gaia nearby-star list over "
+                            "ZTF's sky (dec > -31), cached like tocsin's")
+    p.add_argument("--out", default=None)
+    p.set_defaults(func=_cmd_tocsin_ztf_targets)
+
+    p = sub.add_parser("tocsin-ztf-screen",
+                       help="TOCSIN-ZTF stage 2 (nightly): sweep the objects that "
+                            "alerted in the window, match them to catalogued nearby "
+                            "stars, fetch their history and upper limits, build the "
+                            "quadrant-footprint denominator from IRSA, run the funnel "
+                            "in both polarities and fold the ZTF ledger")
+    p.add_argument("--chunks", type=int, default=1)
+    p.add_argument("--max-run-seconds", type=float, default=None)
+    p.add_argument("--mjd-lo", type=float, default=None)
+    p.add_argument("--mjd-hi", type=float, default=None)
+    p.add_argument("--targets", default=None)
+    p.add_argument("--out-dir", default=None)
+    p.set_defaults(func=_cmd_tocsin_ztf_screen)
+
+    p = sub.add_parser("tocsin-ztf-assess",
+                       help="TOCSIN-ZTF stage 3 (offline): re-assess the ZTF ledger")
+    p.add_argument("--out-dir", default=None)
+    p.set_defaults(func=_cmd_tocsin_ztf_assess)
 
     p = sub.add_parser("tocsin-altfeeds-probe",
                        help="TOCSIN alternative feeds, stage 0 (runner-only): "

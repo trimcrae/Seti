@@ -563,3 +563,62 @@ def test_run_survey_saves_the_walk_state_and_counts_walked_stars(tmp_path, monke
     led2 = json.loads((out / "ledger_atlas.json").read_text())
     assert led2["n_target_visits"] > 400
     assert math.isfinite(W.WalkState.load(out / "walked.json").get("a").mjd_hi)
+
+
+def test_a_target_whose_atlas_tasks_fail_is_recorded_unusable_not_retried(monkeypatch):
+    """Run 33940907907: two of five walked stars failed with 'No data returned' and,
+    unrecorded, would have been walked again on every run."""
+    class Failing:
+        available = True
+
+        def __init__(self, *a, **k):
+            pass
+
+        def lightcurve(self, tid, ra, dec, pmra, pmdec, lo, hi, th, with_baseline=True,
+                       deadline=None):
+            raise A.AltFeedError("ATLAS task failed: No data returned")
+
+    monkeypatch.setattr(A, "AtlasForcedPhotometry", Failing)
+    monkeypatch.delenv(W.JOB_DEADLINE_ENV, raising=False)
+    monkeypatch.setenv("ALTFEEDS_FETCH_BUDGET_S", "9000")
+    st = W.WalkState(survey="atlas")
+    t = _targets(("a",))
+    lcs, _q, _n, windows = A._fetch_planned(A.ATLAS, t, A.LightCurveThresholds(),
+                                            max_targets=1, mjd_lo=None, mjd_hi=None,
+                                            state=st, now=61000.0)
+    assert lcs == {} and windows == {}
+    rec = st.get("a")
+    assert rec is not None and rec.usable is False
+    assert any("atlas_failed" in n for n in rec.notes)
+    plan = st.plan(["a"], survey_start_mjd=57200.0, now=61001.0, max_new=1)
+    assert plan.requests == [] and plan.skipped_unusable == 1
+
+
+def test_the_reduced_pass_is_off_unless_asked_for(monkeypatch):
+    seen = {}
+
+    class Client:
+        available = True
+
+        def __init__(self, *a, **k):
+            pass
+
+        def submit(self, ra, dec, lo, hi, use_reduced=False):
+            seen.setdefault("reduced", []).append(use_reduced)
+            return f"t{len(seen['reduced'])}"
+
+        def poll_once(self, url):
+            return _atlas_text(n=30), 100.0
+
+    monkeypatch.setattr(A, "AtlasForcedPhotometry", Client)
+    monkeypatch.delenv(W.JOB_DEADLINE_ENV, raising=False)
+    monkeypatch.delenv("ALTFEEDS_ATLAS_REDUCED_PASS", raising=False)
+    monkeypatch.setenv("ALTFEEDS_FETCH_BUDGET_S", "9000")
+    A._fetch_planned(A.ATLAS, _targets(("a",)), A.LightCurveThresholds(), max_targets=1,
+                     mjd_lo=None, mjd_hi=None, state=W.WalkState(survey="atlas"), now=61000.0)
+    assert seen["reduced"] and not any(seen["reduced"])
+    seen.clear()
+    monkeypatch.setenv("ALTFEEDS_ATLAS_REDUCED_PASS", "1")
+    A._fetch_planned(A.ATLAS, _targets(("a",)), A.LightCurveThresholds(), max_targets=1,
+                     mjd_lo=None, mjd_hi=None, state=W.WalkState(survey="atlas"), now=61000.0)
+    assert any(seen["reduced"])

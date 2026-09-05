@@ -2636,6 +2636,58 @@ class ZtfIrsa:
 
 
 
+#: ATLAS costs TWO queued tasks per proper-motion segment when the reduced-image
+#: baseline pass is on -- see `AtlasForcedPhotometry.MAX_PM_SEGMENTS`.
+ATLAS_MAX_PM_SEGMENTS = 12
+
+
+def assemble_atlas_target(target_id: str, ra: float, dec: float, segs: list[dict],
+             diff_texts: list[str], reduced_texts: list[str],
+             th: LightCurveThresholds | None = None, *, capped: bool = False,
+             baseline_complete: bool = True
+             ) -> tuple[LightCurve, dict[str, Quiescent]]:
+    """Turn the per-segment result files of one target into a light curve and F*.
+
+    Shared by the serial :meth:`lightcurve` and the concurrent
+    :class:`altwalk.AtlasWalk`, so the two paths cannot drift apart in how a
+    light curve is built or how the quiescent flux is measured.
+    """
+    th = th or LightCurveThresholds()
+    rows: list[dict] = []
+    cols: list[str] = []
+    for text in diff_texts:
+        c, r = parse_atlas_text(text or "")
+        cols = cols or c
+        rows.extend(r)
+    lc = atlas_rows_to_lightcurve(rows, target_id, ra, dec)
+    lc.notes.append(f"pm_segments={len(segs)}"
+                    + (f" (CAPPED at {ATLAS_MAX_PM_SEGMENTS}: drift "
+                       f"within a segment exceeds the allowance)" if capped else ""))
+    lc.raw_columns = cols or lc.raw_columns
+    quiescent: dict[str, Quiescent] = {}
+    if not baseline_complete:
+        lc.notes.append(
+            "baseline INCOMPLETE: walk budget exhausted before the "
+            "reduced-image pass finished; amplitudes in this target "
+            "are untestable")
+    if reduced_texts:
+        red_rows: list[dict] = []
+        for text in reduced_texts:
+            _c, r = parse_atlas_text(text or "")
+            red_rows.extend(r)
+        rlc = atlas_rows_to_lightcurve(red_rows, target_id, ra, dec)
+        for nb in ATLAS.native_bands:
+            sel = np.array([str(b) == nb for b in rlc.band], dtype=bool)
+            if sel.sum() >= th.min_good_epochs:
+                base = robust_baseline(rlc.flux_njy[sel], th)
+                if base.ok and base.level > 0:
+                    quiescent[nb] = Quiescent(
+                        float(base.level),
+                        float(base.scatter / math.sqrt(max(base.n_used, 1))),
+                        "atlas_reduced_images")
+    return lc, quiescent
+
+
 class AtlasForcedPhotometry:
     """ATLAS forced photometry --- the closest like-for-like to a Rubin visit.
 
@@ -2772,7 +2824,7 @@ class AtlasForcedPhotometry:
     #: has had a cap since its first real run for exactly this reason; ATLAS had
     #: none, which is how one target could outlast the job.  Where it binds, the
     #: drift inside a segment exceeds the allowance and the light curve says so.
-    MAX_PM_SEGMENTS = 12
+    MAX_PM_SEGMENTS = ATLAS_MAX_PM_SEGMENTS
 
     def collect(self, task_url: str, deadline: float | None = None) -> str:
         """Poll one queued task and return its result file as text.
@@ -2825,52 +2877,7 @@ class AtlasForcedPhotometry:
             raise AltFeedError(f"ATLAS task failed: {str(body['error_msg'])[:200]}")
         return None, None
 
-    @staticmethod
-    def assemble(target_id: str, ra: float, dec: float, segs: list[dict],
-                 diff_texts: list[str], reduced_texts: list[str],
-                 th: LightCurveThresholds | None = None, *, capped: bool = False,
-                 baseline_complete: bool = True
-                 ) -> tuple[LightCurve, dict[str, Quiescent]]:
-        """Turn the per-segment result files of one target into a light curve and F*.
 
-        Shared by the serial :meth:`lightcurve` and the concurrent
-        :class:`altwalk.AtlasWalk`, so the two paths cannot drift apart in how a
-        light curve is built or how the quiescent flux is measured.
-        """
-        th = th or LightCurveThresholds()
-        rows: list[dict] = []
-        cols: list[str] = []
-        for text in diff_texts:
-            c, r = parse_atlas_text(text or "")
-            cols = cols or c
-            rows.extend(r)
-        lc = atlas_rows_to_lightcurve(rows, target_id, ra, dec)
-        lc.notes.append(f"pm_segments={len(segs)}"
-                        + (f" (CAPPED at {AtlasForcedPhotometry.MAX_PM_SEGMENTS}: drift "
-                           f"within a segment exceeds the allowance)" if capped else ""))
-        lc.raw_columns = cols or lc.raw_columns
-        quiescent: dict[str, Quiescent] = {}
-        if not baseline_complete:
-            lc.notes.append(
-                "baseline INCOMPLETE: walk budget exhausted before the "
-                "reduced-image pass finished; amplitudes in this target "
-                "are untestable")
-        if reduced_texts:
-            red_rows: list[dict] = []
-            for text in reduced_texts:
-                _c, r = parse_atlas_text(text or "")
-                red_rows.extend(r)
-            rlc = atlas_rows_to_lightcurve(red_rows, target_id, ra, dec)
-            for nb in ATLAS.native_bands:
-                sel = np.array([str(b) == nb for b in rlc.band], dtype=bool)
-                if sel.sum() >= th.min_good_epochs:
-                    base = robust_baseline(rlc.flux_njy[sel], th)
-                    if base.ok and base.level > 0:
-                        quiescent[nb] = Quiescent(
-                            float(base.level),
-                            float(base.scatter / math.sqrt(max(base.n_used, 1))),
-                            "atlas_reduced_images")
-        return lc, quiescent
 
     def lightcurve(self, target_id: str, ra: float, dec: float,
                    pmra: float = 0.0, pmdec: float = 0.0,
@@ -2942,6 +2949,9 @@ class AtlasForcedPhotometry:
         return self.assemble(target_id, ra, dec, segs, diff_texts,
                              reduced_texts if with_baseline else [], th,
                              capped=capped, baseline_complete=baseline_complete)
+
+
+AtlasForcedPhotometry.assemble = staticmethod(assemble_atlas_target)
 
 
 def _dataframe_to_rows(obj) -> list[dict]:
@@ -3674,17 +3684,37 @@ def _fetch_planned(spec: SurveySpec, targets, lth: LightCurveThresholds,
             # THE CONCURRENT WALK.  Several tasks in flight at once, one deadline
             # over all of them, and a target started only when the running
             # estimate says it will finish (altwalk.AtlasWalk).
+            #
+            # THE REDUCED-IMAGE PASS IS OFF BY DEFAULT.  MEASURED 2026-09-05
+            # (run 33940907907): ATLAS runs ONE of a user's tasks at a time
+            # (achieved parallelism 0.88 with six in flight; server runtime
+            # median 108 s against ~285 s of wall per task), so a target costs
+            # its task COUNT, and the baseline pass doubles it -- the median
+            # target took 57 minutes and three finished in 145.  Without the
+            # pass F* comes from the documented GSPC fallback, flagged with its
+            # 20 % passband error; ATLAS's two-band nights are 0.14 % of the
+            # total, so the greyness test this costs was almost never testable
+            # anyway.  ALTFEEDS_ATLAS_REDUCED_PASS=1 turns it back on.
+            reduced_pass = _os.environ.get("ALTFEEDS_ATLAS_REDUCED_PASS", "0").strip() == "1"
             jobs = [AtlasTargetJob(target_id=r["target_id"], ra=r["ra"], dec=r["dec"],
                                    pmra=r["pmra"], pmdec=r["pmdec"],
                                    mjd_lo=r["mjd_lo"], mjd_hi=r["mjd_hi"],
                                    # A refresh reduces against the F* the full
                                    # walk measured (altwalk.Prior); the
-                                   # reduced-image pass is not repeated.
-                                   with_baseline=(r["mode"] != "refresh"))
+                                   # reduced-image pass is never repeated.
+                                   with_baseline=(reduced_pass and r["mode"] != "refresh"))
                     for r in reqs]
-            walk = AtlasWalk(client)
+            walk = AtlasWalk(client, concurrency=int(
+                _os.environ.get("ALTFEEDS_ATLAS_CONCURRENCY", "") or 2))
             lightcurves, quiescent, wnotes = walk.run(jobs, deadline, th=lth)
             notes.extend(wnotes)
+            # A target whose tasks FAILED is recorded as unusable so the next
+            # run does not spend its budget on the same star again; it is
+            # re-walked after the unusable interval (altwalk.WalkState.plan).
+            for j in jobs:
+                if j.failed and j.target_id not in lightcurves:
+                    state.record(j.target_id, mjd_lo=j.mjd_lo, mjd_hi=j.mjd_hi, mode="full",
+                                 usable=False, n_epochs=0, notes=[f"atlas_failed: {j.failed}"[:200]])
             n_walked = len(lightcurves) + sum(1 for j in jobs if j.failed)
             if any("deadline" in w for w in wnotes):
                 notes.append(
@@ -3712,6 +3742,10 @@ def _fetch_planned(spec: SurveySpec, targets, lth: LightCurveThresholds,
                                               deadline=deadline)
                 except AltFeedError as exc:
                     notes.append(f"{tid}: {str(exc)[:200]}")
+                    if "budget" not in str(exc):
+                        state.record(tid, mjd_lo=r["mjd_lo"], mjd_hi=r["mjd_hi"], mode="full",
+                                     usable=False, n_epochs=0,
+                                     notes=[f"atlas_failed: {str(exc)[:160]}"])
                     continue
                 lightcurves[tid] = lc
                 quiescent[tid] = q

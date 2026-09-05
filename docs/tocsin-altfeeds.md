@@ -512,6 +512,24 @@ of stars walked with a usable reduction, not the length of the target list.
 The ATLAS and ZTF ledgers and event files built under the old rule were
 deleted in the same commit; they are rebuilt from the first run of the new walk.
 
+### 12.4a What the first concurrent walk measured (run 33940907907, 2026-09-05)
+
+Six tasks in flight for 145 minutes: 46 submitted, 36 finished, **achieved
+parallelism 0.88**, server runtime median 108 s against ~285 s of wall per
+task. ATLAS runs **one of a user's tasks at a time**; concurrency only keeps the
+queue fed. A target therefore costs its task *count*, and with the reduced-image
+baseline pass on that was two tasks per proper-motion segment — the median
+target took 57 minutes and three finished. So the reduced pass is now **off by
+default** (`ALTFEEDS_ATLAS_REDUCED_PASS=1` restores it): F\* comes from the
+documented GSPC fallback, flagged with its 20 % passband error, and since
+ATLAS's same-night two-band coverage measured 0.14 % of star-nights, the
+greyness test this costs was almost never testable anyway. Concurrency defaults
+to two. A target whose tasks fail (two of five did, "No data returned") is
+recorded as unusable so the next run does not buy it again.
+
+The denominator fix (§12.4) is confirmed on live data: 1,418 star-nights over
+the two usable stars, against 1,337 for six under the old rule.
+
 ### 12.5 Cadence
 
 Twice weekly (Wednesday and Saturday, 14:40 ET) since 2026-09-05. With

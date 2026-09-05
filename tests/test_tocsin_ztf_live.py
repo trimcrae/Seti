@@ -241,7 +241,7 @@ def _objs(n, lo=61000.0, step=0.001):
 def test_the_sweep_orders_by_lastmjd_and_advances_a_cursor_not_an_offset():
     """Runs 1-4: has_next never true, oid ordering slow on narrow windows, deep
     offsets time out.  Keyset on the filtered column has none of those."""
-    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=4)
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=4, workers=1)
     api._s = KeysetSession(_objs(10))
     rows, stats = api.objects_in_window(61000.0, 61001.0)
     assert sorted(r["oid"] for r in rows) == sorted(f"o{i}" for i in range(10))
@@ -256,18 +256,18 @@ def test_the_sweep_orders_by_lastmjd_and_advances_a_cursor_not_an_offset():
 
 
 def test_a_short_page_ends_the_sweep_and_an_empty_window_is_one_request():
-    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=100)
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=100, workers=1)
     api._s = KeysetSession(_objs(7))
     rows, stats = api.objects_in_window(61000.0, 61001.0)
     assert len(rows) == 7 and stats["pages"] == 1
-    api2 = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=100)
+    api2 = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=100, workers=1)
     api2._s = KeysetSession([])
     rows2, stats2 = api2.objects_in_window(61000.0, 61001.0)
     assert rows2 == [] and stats2["pages"] == 1
 
 
 def test_a_page_of_identical_epochs_nudges_the_cursor_so_the_walk_cannot_stall():
-    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=3)
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=3, workers=1)
     objs = [{"oid": f"same{i}", "lastmjd": 61000.5} for i in range(3)] + \
            [{"oid": "later", "lastmjd": 61000.7}]
     api._s = KeysetSession(objs)
@@ -277,7 +277,7 @@ def test_a_page_of_identical_epochs_nudges_the_cursor_so_the_walk_cannot_stall()
 
 
 def test_a_request_that_fails_after_retries_truncates_the_sweep_with_the_error():
-    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=10)
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=10, workers=1)
     api.RETRY_WAITS_S = ()                              # no retries: fail at once
     api._s = KeysetSession(_objs(3), statuses=[504])
     rows, stats = api.objects_in_window(61000.0, 61001.0)
@@ -286,15 +286,51 @@ def test_a_request_that_fails_after_retries_truncates_the_sweep_with_the_error()
 
 
 def test_a_transient_server_error_is_retried_and_a_deadline_truncates():
-    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=10)
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=10, workers=1)
     api._s = KeysetSession(_objs(3), statuses=[503, 500])
     rows, stats = api.objects_in_window(61000.0, 61001.0)
     assert len(rows) == 3 and stats["truncated"] is False
-    api2 = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=10)
+    api2 = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=10, workers=1)
     api2._s = KeysetSession(_objs(3))
     import time as _t
     rows2, stats2 = api2.objects_in_window(61000.0, 61001.0, deadline=_t.monotonic() - 1)
     assert rows2 == [] and stats2["truncated"] is True
+
+
+def test_the_sweep_splits_the_window_across_workers_and_merges_without_duplicates():
+    """Run 5: ~18 s per page, half an hour per night serially."""
+    objs = _objs(40, step=0.02)                         # 61000.00 .. 61000.78
+    sessions: list = []
+
+    def new_session():
+        s = KeysetSession(objs)
+        sessions.append(s)
+        return s
+
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=5, workers=4)
+    api._new_session = new_session
+    rows, stats = api.objects_in_window(61000.0, 61001.0)
+    assert sorted(r["oid"] for r in rows) == sorted(o["oid"] for o in objs)
+    assert stats["workers"] == 4 and len(sessions) == 4
+    # Each worker asked only for its own quarter of the window.
+    starts = sorted(float([v for k, v in p if k == "lastmjd"][0]) for s in sessions
+                    for _u, p in s.requests[:1])
+    assert starts == pytest.approx([61000.0, 61000.25, 61000.5, 61000.75])
+    assert stats["pages"] >= 8 and stats["truncated"] is False
+
+
+def test_one_failing_worker_truncates_the_merged_sweep():
+    calls = {"n": 0}
+
+    def new_session():
+        calls["n"] += 1
+        return KeysetSession(_objs(4), statuses=[500] if calls["n"] == 2 else None)
+
+    api = Z.AlerceZtfAPI(sleep=lambda s: None, page_size=10, workers=2)
+    api.RETRY_WAITS_S = ()
+    api._new_session = new_session
+    rows, stats = api.objects_in_window(61000.0, 61001.0)
+    assert stats["truncated"] is True and "500" in stats["error"]
 
 
 def test_the_frontier_is_the_newest_lastmjd_served():
@@ -605,3 +641,36 @@ def test_the_frontier_query_is_bounded_and_widens_only_when_empty():
     assert all("obsjd >" in q and "ipac_gid = 1" in q for q in seen)
     # Never an unbounded MAX over the whole table.
     assert all("WHERE obsjd >" in q for q in seen)
+
+
+def test_a_chunk_is_not_started_when_the_previous_one_would_not_fit(tmp_path, monkeypatch):
+    """Run 5: the second chunk began with 43 minutes left, swept for 39, folded nothing."""
+    cfg, _tp = _prepare(tmp_path)
+    clock = {"t": 0.0}
+    monkeypatch.setattr(Z.time, "monotonic", lambda: clock["t"])
+    calls = []
+
+    def fake_window(cfg_, **kw):
+        calls.append(kw)
+        clock["t"] += 400.0                             # each chunk takes 400 s
+        return {"verdict": "OK", "mjd_lo": 1.0, "mjd_hi": 2.0, "counts": {}, "notes": []}
+
+    monkeypatch.setattr(Z, "screen_window", fake_window)
+    out = Z.screen(cfg, chunks=5, max_run_seconds=1000.0, out_dir=tmp_path / "out")
+    # 0 -> 400 (chunk 1), 600 left >= 440 -> chunk 2 -> 800; 200 left < 440 -> stop.
+    assert len(out) == 2 and len(calls) == 2
+    run = json.loads((tmp_path / "out" / "run.json").read_text())
+    assert len(run["chunks"]) == 2
+    assert any("not started" in n for n in run["notes"])
+
+
+def test_the_run_record_stops_after_a_truncated_or_unfolded_chunk(tmp_path, monkeypatch):
+    cfg, _tp = _prepare(tmp_path)
+    monkeypatch.setattr(Z, "screen_window",
+                        lambda cfg_, **kw: {"verdict": "SWEEP_TRUNCATED", "counts": {},
+                                            "notes": [], "error": "HTTP 500"})
+    out = Z.screen(cfg, chunks=3, max_run_seconds=1000.0, out_dir=tmp_path / "out")
+    assert len(out) == 1
+    run = json.loads((tmp_path / "out" / "run.json").read_text())
+    assert run["chunks"][0]["verdict"] == "SWEEP_TRUNCATED"
+    assert run["chunks"][0]["error"] == "HTTP 500"

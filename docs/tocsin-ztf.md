@@ -165,10 +165,41 @@ non-detection test. When IRSA's table catches up with a night that was folded
 on the proxy, that night is not re-folded — the summary's
 `denominator_by_night` is the record of which kind each night got.
 
-## 8. Status
+## 8. The first complete window (run 5, 2026-09-05 05:03–06:33 UTC)
 
-Built, offline-tested (31 tests), lint-clean, probed live and corrected as
-above. The first complete window is the next step; per the charter the
-objective is a detection, and if the northern nearby-star sample produces a
-clean null over a season, that is a reason to change the question, not to write
-up the null.
+The keyset sweep worked. The first chunk, nights 60676–60679 (1–4 January
+2026), went end to end and folded:
+
+| | |
+|---|---|
+| objects that alerted in the window | ~114k per 1.2 nights (~95 pages of 1000 per night) |
+| alerts on catalogued nearby stars | 902 |
+| events kept by the funnel | 64, on 64 stars (all `watch`: single events) |
+| trials (star-nights, exact quadrant footprint) | 111,889 over 95,171 stars |
+| ensemble rate per star-night | 5.7 × 10⁻⁴ |
+| rejections | 196 astrometric offset · 162 chromatic · 140 low significance · 76 `dubious` · 4 mixed polarity same night |
+
+The colour test is running (162 chromatic rejections — flares — is the
+discriminant the ZTF glint search could rarely apply, working here on the
+intra-night g+r pairs), `visits_exact` is true for every target, and every
+event carries the unavailability reasons of §5.
+
+What the run also measured: **~18 s of service latency per page of 1000**, so a
+night is half an hour serially, and the second chunk began with 43 minutes left,
+swept for 39, and was truncated by the deadline — 127 pages that folded nothing.
+Both are fixed: the window is now swept by four keyset walkers over equal
+sub-ranges (`sweep_workers`), and a chunk is started only if the previous one
+would fit in the remaining budget. `run.json` records every chunk of a run.
+
+**Where the backfill starts.** The ledger was reset and the sweep restarted at
+MJD 61235, the night of 2026-07-14 — Rubin's last night. The channel exists to
+cover the Rubin-dark interval; at ~8 minutes a night that is reached in about a
+week of nightly runs, after which each run screens the previous night. Earlier
+nights can be folded later with explicit `mjd_lo`/`mjd_hi` windows, which fold
+their nights but never move the watermark.
+
+## 9. Status
+
+Live, nightly at 11:25 ET, backfilling from 2026-07-14. 35 offline tests. Per
+the charter the objective is a detection; a clean null over the season is a
+reason to change the question, not to write it up.

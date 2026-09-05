@@ -131,6 +131,18 @@ jobs:
                     "| alerce frontier", pr.get("alerce_ztf", {}).get("frontier_mjd"),
                     "| irsa frontier", pr.get("irsa_exposures", {}).get("frontier_mjd"),
                     "lag", pr.get("irsa_exposures", {}).get("frontier_lag_days"), "d")
+          r = pathlib.Path("results/tocsin_ztf/run.json")
+          if r.exists():
+              run = json.loads(r.read_text())
+              print("run:", run.get("elapsed_s"), "s |", run.get("notes"))
+              for c in run.get("chunks", []):
+                  print("  chunk", c.get("mjd_lo"), "->", c.get("mjd_hi"), c.get("verdict"),
+                        "| denominator", c.get("denominator"),
+                        "| objects", (c.get("counts") or {}).get("objects_in_window"),
+                        "matched", (c.get("counts") or {}).get("objects_matched"),
+                        "| events folded", (c.get("counts") or {}).get("events_folded"),
+                        "| star-nights", (c.get("counts") or {}).get("target_nights_screened"),
+                        "| tiers", c.get("ledger_tiers"))
           p = pathlib.Path("results/tocsin_ztf/summary.json")
           if not p.exists():
               print("no summary.json --- the screen did not reach the report stage")
@@ -157,6 +169,7 @@ jobs:
           scripts/commit_results.sh \
             "tocsin-ztf: nightly ZTF alert screen while Rubin is dark — S30 flash/dip" \
             results/tocsin_ztf/probe.json \
+            results/tocsin_ztf/run.json \
             results/tocsin_ztf/summary.json \
             results/tocsin_ztf/ledger.json \
             results/tocsin_ztf/assessment.json \

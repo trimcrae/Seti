@@ -99,12 +99,18 @@ DEFAULTS: dict = {
     "irsa_tap_url": IRSA_TAP_SYNC,
     "timeout_s": 120.0,
     "page_size": 1000,
+    #: Parallel keyset walks over equal sub-ranges of the window (run 5: ~18 s
+    #: of service latency per page, so a night is half an hour serially).
+    "sweep_workers": 4,
     #: Northern list: ZTF reaches dec ~ -31.  The Rubin list stops at +15.
     "dec_min": -31.0,
     "dec_max": 90.0,
-    #: Where the sweep starts with an empty ledger.  2026-01-01: enough nights
-    #: for the recurrence statistic, few enough to backfill in days of runs.
-    "backfill_start_mjd": 60676.0,
+    #: Where the sweep starts with an empty ledger: MJD 61235 = the night of
+    #: 2026-07-14, Rubin's last night.  The ZTF channel exists to cover the
+    #: Rubin-dark interval, and at ~8 min a night (four sweep workers) that is
+    #: reached in a week of nightly runs; earlier nights can be folded later
+    #: with explicit windows, which never move the watermark.
+    "backfill_start_mjd": 61235.0,
     "max_nights_per_run": 3.0,
     "lookback_nights": 1.0,
     #: The stream is served within hours; the exposure table lags more, and it
@@ -160,10 +166,11 @@ class AlerceZtfAPI:
     """Thin client for ``api.alerce.online/ztf/v1``: objects by window, per-object history."""
 
     def __init__(self, base: str = ALERCE_ZTF_API, timeout: float = 120.0,
-                 page_size: int = 1000, sleep=None):
+                 page_size: int = 1000, sleep=None, workers: int = 4):
         self.base = base.rstrip("/")
         self.timeout = float(timeout)
         self.page_size = int(page_size)
+        self.workers = max(1, int(workers))
         self.calls = 0
         self.notes: list[str] = []
         self._s = None
@@ -180,14 +187,15 @@ class AlerceZtfAPI:
     RETRY_WAITS_S = (5.0, 15.0, 30.0, 60.0, 120.0)
 
     def _get(self, path: str, params: list[tuple[str, str]] | dict | None = None,
-             retries: int | None = None):
+             retries: int | None = None, sess=None):
         """GET with bounded retries on 429/5xx.  Raises :class:`ZtfLiveError`."""
         url = f"{self.base}/{path.lstrip('/')}"
         last = ""
         retries = len(self.RETRY_WAITS_S) if retries is None else int(retries)
+        sess = sess if sess is not None else self._sess()
         for attempt in range(retries + 1):
             try:
-                r = self._sess().get(url, params=params)
+                r = sess.get(url, params=params)
                 self.calls += 1
             except Exception as exc:                               # noqa: BLE001
                 last = f"{type(exc).__name__}: {exc}"[:200]
@@ -214,7 +222,8 @@ class AlerceZtfAPI:
 
     def objects_in_window(self, mjd_lo: float, mjd_hi: float,
                           deadline: float | None = None,
-                          max_pages: int | None = None) -> tuple[list[dict], dict]:
+                          max_pages: int | None = None,
+                          workers: int | None = None) -> tuple[list[dict], dict]:
         """Every object whose NEWEST detection falls in ``[mjd_lo, mjd_hi)``.
 
         KEYSET PAGINATION ON ``lastmjd``, not page offsets.  MEASURED 2026-09-05
@@ -228,13 +237,58 @@ class AlerceZtfAPI:
         from a fresh start.  Objects sharing the boundary epoch are returned
         twice and de-duplicated by ``oid``; a page whose newest epoch does not
         move the cursor is nudged by a microsecond so the walk cannot stall.
+
+        IN PARALLEL SUB-RANGES.  MEASURED run 5: a page of 1000 takes ~18 s of
+        service latency, so a night (~95 pages) is half an hour serially.  The
+        window is split into ``workers`` equal sub-ranges, each walked by its own
+        keyset cursor on its own session; the results are merged and
+        de-duplicated.  Four workers is a modest load on a public API.
         """
+        n_workers = max(1, int(workers if workers is not None else self.workers))
+        lo, hi = float(mjd_lo), float(mjd_hi)
+        edges = np.linspace(lo, hi, n_workers + 1)
+        ranges = [(float(edges[i]), float(edges[i + 1])) for i in range(n_workers)
+                  if edges[i + 1] > edges[i]]
+        stats = {"pages": 0, "truncated": False, "page_size": self.page_size,
+                 "pagination": "keyset_lastmjd", "workers": len(ranges)}
+        if len(ranges) <= 1:
+            rows, part = self._walk(lo, hi, deadline, max_pages, self._sess())
+            stats.update({k: v for k, v in part.items() if k != "rows"})
+            stats["objects"] = len(rows)
+            return rows, stats
+        from concurrent.futures import ThreadPoolExecutor
+        per_worker_pages = None if max_pages is None else max(1, int(max_pages) // len(ranges))
+        with ThreadPoolExecutor(max_workers=len(ranges)) as pool:
+            futures = [pool.submit(self._walk, a, b, deadline, per_worker_pages,
+                                   self._new_session()) for a, b in ranges]
+            parts = [f.result() for f in futures]
         rows: list[dict] = []
         seen: set[str] = set()
-        stats = {"pages": 0, "truncated": False, "page_size": self.page_size,
-                 "pagination": "keyset_lastmjd"}
-        cursor = float(mjd_lo)
-        hi = float(mjd_hi)
+        for part_rows, part in parts:
+            stats["pages"] += int(part.get("pages", 0))
+            if part.get("truncated"):
+                stats["truncated"] = True
+                if part.get("error") and not stats.get("error"):
+                    stats["error"] = part["error"]
+            for r in part_rows:
+                oid = str(r.get("oid"))
+                if oid not in seen:
+                    seen.add(oid)
+                    rows.append(r)
+        stats["objects"] = len(rows)
+        return rows, stats
+
+    def _new_session(self):
+        return _session(self.timeout)
+
+    def _walk(self, lo: float, hi: float, deadline, max_pages, sess
+              ) -> tuple[list[dict], dict]:
+        """One keyset walk over ``[lo, hi)`` on one session (thread-safe by construction)."""
+        rows: list[dict] = []
+        seen: set[str] = set()
+        stats = {"pages": 0, "truncated": False}
+        cursor = float(lo)
+        hi = float(hi)
         while cursor < hi:
             if deadline is not None and time.monotonic() > deadline:
                 stats["truncated"] = True
@@ -253,7 +307,7 @@ class AlerceZtfAPI:
                       ("page", "1"), ("page_size", str(self.page_size)),
                       ("order_by", "lastmjd"), ("order_mode", "ASC"), ("count", "false")]
             try:
-                payload = self._get("objects", params)
+                payload = self._get("objects", params, sess=sess)
             except ZtfLiveError as exc:
                 stats["truncated"] = True
                 stats["error"] = str(exc)[:400]
@@ -275,7 +329,6 @@ class AlerceZtfAPI:
             if len(items) < self.page_size or newest is None:
                 break
             cursor = newest if newest > cursor else cursor + 1e-6
-        stats["objects"] = len(rows)
         stats["cursor_end_mjd"] = cursor
         return rows, stats
 
@@ -870,7 +923,8 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
     led = Ledger.load(ledger_path)
     explicit = mjd_lo is not None or mjd_hi is not None
     api = api or AlerceZtfAPI(z["alerce_ztf_api"], timeout=float(z["timeout_s"]),
-                              page_size=int(z["page_size"]))
+                              page_size=int(z["page_size"]),
+                              workers=int(z.get("sweep_workers", 4)))
     irsa = irsa or IrsaZtfExposures(z["irsa_tap_url"], timeout=float(z["timeout_s"]) * 2)
     now = _now_mjd()
     t0 = time.monotonic()
@@ -1194,20 +1248,46 @@ def screen(cfg=None, chunks: int = 1, max_run_seconds: float | None = None,
            ) -> list[dict]:
     """Walk up to ``chunks`` consecutive windows inside one wall-clock budget."""
     _conf, z = ztf_config(cfg)
+    root = Path(cfg.root) if cfg is not None else _repo_root()
+    out_path = Path(out_dir) if out_dir else root / z["results_dir"]
     budget = float(max_run_seconds if max_run_seconds is not None else z["max_run_seconds"])
-    deadline = time.monotonic() + budget
+    started = time.monotonic()
+    deadline = started + budget
     out: list[dict] = []
+    run: dict = {"run_at_utc": _utc(), "budget_s": budget, "chunks": [], "notes": []}
+    last_duration = None
     for i in range(max(1, int(chunks))):
-        if time.monotonic() > deadline:
-            print(f"[tocsin-ztf] budget of {budget:.0f}s spent after {i} chunks; yielding")
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            run["notes"].append(f"budget of {budget:.0f}s spent after {i} chunks")
             break
+        # DO NOT START A CHUNK THAT CANNOT FINISH.  MEASURED run 5: the second
+        # chunk began with 43 minutes left, swept for 39 of them and was
+        # truncated by the deadline -- 127 pages of service time that folded
+        # nothing.  A chunk is started only if the previous one would fit.
+        if last_duration is not None and remaining < 1.1 * last_duration:
+            run["notes"].append(f"chunk {i + 1} not started: {remaining:.0f}s left, the "
+                                f"previous chunk took {last_duration:.0f}s")
+            print(f"[tocsin-ztf] {run['notes'][-1]}")
+            break
+        t0 = time.monotonic()
         rec = screen_window(cfg, mjd_lo=mjd_lo, mjd_hi=mjd_hi, targets_path=targets_path,
                             out_dir=out_dir, deadline=deadline)
+        last_duration = time.monotonic() - t0
         out.append(rec)
-        if rec.get("verdict") in ("NO_NEW_DATA", "NO_TARGET_LIST", "NO_DATA_REACHED"):
+        run["chunks"].append({k: rec.get(k) for k in (
+            "verdict", "mjd_lo", "mjd_hi", "denominator", "denominator_by_night",
+            "watermark_mjd", "counts", "timings_s", "frontiers", "error")}
+            | {"ledger_tiers": (rec.get("ledger") or {}).get("tier_counts"),
+               "ledger_visits": (rec.get("ledger") or {}).get("cumulative_target_visits"),
+               "notes": (rec.get("notes") or [])[:12]})
+        if rec.get("verdict") in ("NO_NEW_DATA", "NO_TARGET_LIST", "NO_DATA_REACHED",
+                                  "SWEEP_TRUNCATED", "NO_DENOMINATOR"):
             break
         if mjd_lo is not None or mjd_hi is not None:
             break
+    run["elapsed_s"] = round(time.monotonic() - started, 1)
+    _write_json(out_path / "run.json", run)
     return out
 
 

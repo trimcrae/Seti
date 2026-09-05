@@ -215,8 +215,32 @@ sit on night boundaries (`night_start`), a night the frontier falls inside
 waits for the next run, and the ledger was reset once more so those six nights
 are refolded whole.
 
+### 8b. Run 7 (08:02–09:26 UTC): the six nights refolded whole
+
+| | |
+|---|---|
+| nights | 6 (2026-07-14 → 07-20), all on the detection proxy |
+| objects swept | 461k in 515 pages (four workers) |
+| catalogued stars that alerted | 79 |
+| detections on them | 1,771 |
+| events kept by the funnel / folded into these nights | 453 / 32 (the rest are on earlier nights the sweep has not reached and are deferred) |
+| trials (star-nights) | 163,768 — against 140,180 for the same six nights with the boundary bug |
+| tiers | 30 `watch`, 1 `interest` |
+
+The `interest` star is Gaia DR3 4276040238425545344 (RA 273.07°, Dec +1.54°):
+two grey-tested dips of 17 % and 18 % in g and r on consecutive nights, 59
+visited nights, duty cycle 0.03. Two consecutive nights is what a single
+multi-day event looks like as much as what a repeater does, and the tier says
+exactly that — *interest*, not candidate. It is the first entry on the ZTF
+watchlist and nothing more yet.
+
+Throughput after run 7: six sweep workers and three chunks per run, with a
+second daily firing at 23:25 ET while the backfill catches up (~47 nights to
+go, ~9 nights per run).
+
 ## 9. Status
 
-Live, nightly at 11:25 ET, backfilling from 2026-07-14. 35 offline tests. Per
-the charter the objective is a detection; a clean null over the season is a
-reason to change the question, not to write it up.
+Live since 2026-09-05, twice daily (11:25 and 23:25 ET) until the backfill from
+2026-07-14 reaches the stream, then screening the previous night each morning.
+36 offline tests. Per the charter the objective is a detection; a clean null
+over the season is a reason to change the question, not to write it up.

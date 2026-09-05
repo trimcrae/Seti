@@ -101,7 +101,7 @@ DEFAULTS: dict = {
     "page_size": 1000,
     #: Parallel keyset walks over equal sub-ranges of the window (run 5: ~18 s
     #: of service latency per page, so a night is half an hour serially).
-    "sweep_workers": 4,
+    "sweep_workers": 6,
     #: Northern list: ZTF reaches dec ~ -31.  The Rubin list stops at +15.
     "dec_min": -31.0,
     "dec_max": 90.0,
@@ -1330,6 +1330,11 @@ def assess_only(cfg=None, out_dir: str | Path | None = None) -> dict:
     led.save(ledger_path)
     _write_watchlist(out, led, conf)
     rec = {"assessed_at_utc": _utc(), **stats}
+    # The promoted targets by id, so `alerts.tocsin_ztf_alerts` keys on WHICH
+    # stars were promoted rather than how many.
+    for tier in ("candidate", "alarm", "interest"):
+        rec[f"{tier}s" if tier != "alarm" else "alarms"] = sorted(
+            tid for tid, rec_t in led.targets.items() if rec_t.get("tier") == tier)
     _write_json(out / "assessment.json", rec)
     return rec
 

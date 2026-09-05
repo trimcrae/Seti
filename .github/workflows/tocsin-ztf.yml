@@ -31,15 +31,20 @@ on:
     # caps the window.  Offset from tocsin (14:10), loom (15:40) and alerts
     # (17:05), and from the hour.
     - cron: "25 15 * * *"
+    # A second firing at 03:25 UTC (23:25 EDT) while the backfill from
+    # 2026-07-14 catches up with the stream; once caught up it finds no new
+    # night and costs a few minutes.  The concurrency group serialises the two.
+    - cron: "25 3 * * *"
   workflow_dispatch:
     inputs:
       chunks:
         description: >-
           Consecutive windows to walk in one run (each up to max_nights_per_run
-          nights).  The first runs BACKFILL from 2026-01-01; raising this walks
-          more of it per dispatch.  Stops early at the services' frontier.
+          nights).  The first runs BACKFILL from 2026-07-14; raising this walks
+          more of it per dispatch.  Stops early at the services' frontier, and
+          a chunk is not started unless the previous one would fit the budget.
         required: false
-        default: "2"
+        default: "3"
       mjd_lo:
         description: "Explicit window start MJD (blank = the watermark)"
         required: false
@@ -104,7 +109,7 @@ jobs:
           if [ -n "${{ github.event.inputs.chunks }}" ]; then
             args="$args --chunks ${{ github.event.inputs.chunks }}"
           else
-            args="$args --chunks 2"
+            args="$args --chunks 3"
           fi
           if [ -n "${{ github.event.inputs.mjd_lo }}" ]; then
             args="$args --mjd-lo ${{ github.event.inputs.mjd_lo }}"

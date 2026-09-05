@@ -215,6 +215,9 @@ ztf:
   # public alerts.
   public_gid: 1
   page_size: 1000
+  # Sweep slice, days: paged in quarter-nights so no request sits deep in the
+  # service's offset (a three-night sweep in one query drew HTTP 500).
+  sweep_slice_days: 0.25
   max_matched_objects: 3000
   results_dir: "results/tocsin_ztf"
   ledger_path: "results/tocsin_ztf/ledger.json"

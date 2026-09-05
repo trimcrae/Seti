@@ -57,6 +57,41 @@ into both frontier alert bodies, so a reader is not sent to re-diagnose it —
 and drops it automatically once the frontier moves past the epoch it explains.
 `frontier_recovery_alerts` will announce the restart.
 
+### Is ZTF observing? Yes — measured 2026-09-05, and the earlier inference was wrong
+
+Two facts about **brokers** were on record (below): ALeRCE's non-LSST TAP table
+stopped on 2026-04-30 and Fink's ZTF portal timed out. From those this
+repository inferred that the ZTF live stream "appears to have ended" — one
+hypothesis out of two, the same mirror-vs-sky ambiguity this check exists to
+break for Rubin. So `rubin_outage_check.py` now applies the same discipline to
+ZTF (`probe_ztf`): ask several independent public endpoints for their newest ZTF
+epoch, the strongest being the nightly tarball archive **ZTF publishes itself**
+(`ztf.uw.edu/alerts/public/`, one file per night, size read as well as date so
+an empty night does not move the frontier).
+
+The first run, 2026-09-05 03:10 UTC, found **ZTF LIVE** (`decision.ztf` in
+`results/rubin_outage/brokers.json`):
+
+| source | newest ZTF epoch | behind the wall clock |
+|---|---|---|
+| ZTF's own alert archive | night of 2026-09-04 (3001 nightly tarballs on file) | < 1 d |
+| ALeRCE ZTF API (`api.alerce.online/ztf/v1`) | 2026-09-04T12:38Z | 0.6 d |
+| ANTARES (`api.antares.noirlab.edu`) | 2026-09-04T12:38Z | 0.6 d |
+| Lasair-ZTF | not asked (no token) | — |
+
+ALeRCE's ZTF **API** is current while its **TAP mirror's** non-LSST table is
+four months stale: two services of one broker, and the one the Rubin channels
+happen to read is the one that stopped. Fink's ZTF portal is simply unreachable
+from the runner. Neither fact was ever evidence about ZTF.
+
+**What follows.** There *is* a public, nightly, alert-stream-shaped feed to
+screen while Rubin is dark — northern sky (δ ≳ −30°), r ≲ 20.5 per visit, both
+difference polarities issued as alerts — and it is reachable without a
+credential through two independent brokers. The frontier alert bodies now
+carry this sentence (`alerts._ztf_sentence`), and the three live ZTF sources
+are recorded as corroborating controls on the Rubin verdict: the alert
+infrastructure is alive and simply has no LSST alerts to serve.
+
 ### An incidental finding: ALeRCE's non-LSST feed stopped earlier
 
 The survey-currency control (`alerce_tap.object` grouped by `sid`/`tid`) shows

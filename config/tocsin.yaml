@@ -191,3 +191,30 @@ report:
   # (bad template, new field) cannot commit a huge file.  Truncation is always
   # recorded in summary.json rather than applied silently.
   max_candidate_rows: 2000
+
+# TOCSIN on the LIVE ZTF public alert stream (src/seti/tocsin/ztf_live.py,
+# docs/tocsin-ztf.md).  Rubin has been dark since 2026-07-14; ZTF was measured
+# live on 2026-09-05 from its own nightly archive, ALeRCE's ZTF API and ANTARES.
+# The funnel, the ledger and the target model above are reused unchanged; only
+# acquisition differs.  Every key here overrides ztf_live.DEFAULTS.
+ztf:
+  alerce_ztf_api: "https://api.alerce.online/ztf/v1"
+  irsa_tap_url: "https://irsa.ipac.caltech.edu/TAP/sync"
+  # ZTF reaches dec ~ -31; the Rubin list above stops at +15.  A separate list.
+  dec_min: -31.0
+  dec_max: 90.0
+  # Where the sweep starts with an empty ledger: 2026-01-01.  The window never
+  # advances past IRSA's exposure-table frontier, so no night is folded without
+  # its trials.
+  backfill_start_mjd: 60676.0
+  max_nights_per_run: 3.0
+  lookback_nights: 1.0
+  ingest_lag_days: 0.3
+  max_run_seconds: 5400.0
+  # Public-survey quadrants only: those are the ones that issue public alerts.
+  programid: 1
+  page_size: 1000
+  max_matched_objects: 3000
+  results_dir: "results/tocsin_ztf"
+  ledger_path: "results/tocsin_ztf/ledger.json"
+

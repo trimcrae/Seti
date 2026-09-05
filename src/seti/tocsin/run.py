@@ -282,16 +282,24 @@ def probe(cfg=None, out_dir: str | Path | None = None) -> dict:
 # targets
 # ---------------------------------------------------------------------------
 def build_targets(cfg=None, out_path: str | Path | None = None,
-                  max_rows_per_shell: int = 500000) -> dict:
+                  max_rows_per_shell: int = 500000,
+                  dec_min: float | None = None, dec_max: float | None = None) -> dict:
     """Fetch the Gaia DR3 nearby-star target list, in parallax shells.  Runner-only.
 
     Chunking is not optional: a single monolithic Gaia query at this row count
     times out on the runner (``docs/channel-brief.md`` §2).  Shells are equal in
     volume so the row count per query stays roughly flat.
+
+    ``dec_min``/``dec_max`` override the configured Rubin footprint, for a list
+    over another survey's sky (``ztf_live.build_ztf_targets``).
     """
     conf = load_tocsin_config(cfg)
     root = Path(cfg.root) if cfg is not None else _repo_root()
-    tconf = conf["target"]
+    tconf = dict(conf["target"])
+    if dec_min is not None:
+        tconf["dec_min"] = float(dec_min)
+    if dec_max is not None:
+        tconf["dec_max"] = float(dec_max)
     out = Path(out_path) if out_path else root / ".cache" / "tocsin" / "targets.parquet"
     rec = {"built_at_utc": _utc(), "shells": [], "n_targets": 0,
            "verdict": "NOT_RUN", "path": str(out)}

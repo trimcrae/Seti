@@ -68,7 +68,7 @@ from .run import (
     load_targets,
     load_tocsin_config,
 )
-from .schema import NormalizedAlert, night_id
+from .schema import NIGHT_BOUNDARY_FRAC, NormalizedAlert, night_id
 from .screen import ScreenVerdict, screen_alerts
 from .targets import GAIA_EPOCH, match_alerts_to_targets, position_uncertainty_arcsec, propagate_pm
 
@@ -130,6 +130,16 @@ DEFAULTS: dict = {
 
 class ZtfLiveError(RuntimeError):
     """A live leg failed in a way the run can name."""
+
+
+def night_start(mjd: float) -> float:
+    """The MJD at which the observing night containing ``mjd`` begins.
+
+    Night labels are ``floor(mjd - 16/24)`` (``schema.night_id``), so a night runs
+    from 16:00 UTC to 16:00 UTC the next day; a Palomar night (~02:00-13:00 UTC)
+    sits wholly inside one label, as a Chilean night does.
+    """
+    return math.floor(float(mjd) - NIGHT_BOUNDARY_FRAC) + NIGHT_BOUNDARY_FRAC
 
 
 def ztf_config(cfg=None) -> tuple[dict, dict]:
@@ -956,9 +966,17 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
         hi_cap = min(caps)
         wm = _finite(led.last_mjd_screened)
         lo = wm if wm is not None else float(z["backfill_start_mjd"])
-        hi = min(hi_cap, lo + float(z["max_nights_per_run"]))
+        # WHOLE NIGHTS ONLY.  MEASURED run 6: windows cut at integer MJDs split
+        # observing nights (a night label runs 16:00 UTC to 16:00 UTC), so the
+        # night shared by two consecutive chunks was folded twice -- first with
+        # almost no trials, then with its real ones, which the ledger's
+        # night-level de-duplication dropped.  One night in three lost its
+        # denominator.  Both edges now sit on night boundaries; a night the cap
+        # falls inside waits for the next run.
+        lo = night_start(lo)
+        hi = night_start(min(hi_cap, lo + float(z["max_nights_per_run"])))
     summary.update({"mjd_lo": round(lo, 5), "mjd_hi": round(hi, 5), "frontiers": frontiers,
-                    "nights": sorted({night_of(lo), night_of(hi)})})
+                    "nights": sorted({night_of(lo), night_of(hi - 1e-6)})})
     if hi <= lo:
         summary["verdict"] = "NO_NEW_DATA"
         summary["notes"].append("the watermark has caught up with the newest epoch both "
@@ -1063,12 +1081,14 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
     fp_epochs: dict = {}
     irsa_fr = frontiers.get("irsa_exposures_mjd")
     exact_hi = min(hi, float(irsa_fr)) if irsa_fr is not None else lo
-    window_nights = {f"n{n}" for n in range(night_of(lo), night_of(hi) + 1)}
+    # `hi` is exclusive: an epoch at exactly `hi` belongs to the next night, so
+    # the last night label inside the window is that of `hi - 1e-6`.
+    window_nights = {f"n{n}" for n in range(night_of(lo), night_of(hi - 1e-6) + 1)}
     # A night is exact only if the exposure table has reached its END: a night
     # the table holds half of would count half its exposures as the whole.
     # Night n spans MJD n + 16/24 to n + 1 + 16/24 (schema.NIGHT_BOUNDARY_FRAC).
-    exact_nights = ({f"n{n}" for n in range(night_of(lo), night_of(hi) + 1)
-                     if irsa_fr is not None and (n + 1.0 + 16.0 / 24.0) <= float(irsa_fr)}
+    exact_nights = ({f"n{n}" for n in range(night_of(lo), night_of(hi - 1e-6) + 1)
+                     if irsa_fr is not None and (n + 1.0 + NIGHT_BOUNDARY_FRAC) <= float(irsa_fr)}
                     if exact_hi > lo else set())
     proxy_nights = window_nights - exact_nights
     summary["denominator_by_night"] = {n: ("quadrant_exact" if n in exact_nights

@@ -415,7 +415,9 @@ def test_a_window_screens_folds_and_advances_the_watermark(tmp_path):
     out = tmp_path / "out"
     rec = Z.screen_window(cfg, targets_path=tp, out_dir=out, api=api, irsa=irsa)
     assert rec["verdict"] == "OK"
-    assert rec["mjd_lo"] == 61250.0 and rec["mjd_hi"] == 61251.0        # one night
+    # Whole nights only: the window snaps to the 16:00 UTC night boundaries.
+    assert rec["mjd_lo"] == pytest.approx(61249 + 2.0 / 3.0)
+    assert rec["mjd_hi"] == pytest.approx(61250 + 2.0 / 3.0)
     assert rec["counts"]["objects_in_window"] == 2
     assert rec["counts"]["objects_matched"] == 1
     assert rec["counts"]["detections_pulled"] == 2
@@ -426,10 +428,11 @@ def test_a_window_screens_folds_and_advances_the_watermark(tmp_path):
     assert rec["counts"]["target_nights_screened"] == 2
     assert rec["denominator"] in ("quadrant_footprint_exact", "detection_dominated_lower_bound")
     assert set(rec["denominator_by_night"].values()) == {"quadrant_exact"}
-    assert rec["watermark_mjd"] == 61251.0
+    assert rec["watermark_mjd"] == pytest.approx(61250 + 2.0 / 3.0)
     led = json.loads((out / "ledger.json").read_text())
     assert led["n_target_visits"] == 2
-    assert led["last_mjd_screened"] == 61251.0
+    assert led["last_mjd_screened"] == pytest.approx(61250 + 2.0 / 3.0)
+    assert len(led["nights"]) == 1, "one whole night, one label"
     if led["targets"]:
         t0 = led["targets"]["t0"]
         assert t0["visits_exact"] is True
@@ -439,7 +442,9 @@ def test_a_window_screens_folds_and_advances_the_watermark(tmp_path):
 
     # Second run: the next night; then the stream's frontier stops the walk.
     rec2 = Z.screen_window(cfg, targets_path=tp, out_dir=out, api=api, irsa=irsa)
-    assert rec2["mjd_lo"] == 61251.0 and rec2["mjd_hi"] == 61252.0
+    assert rec2["mjd_lo"] == pytest.approx(61250 + 2.0 / 3.0)
+    assert rec2["mjd_hi"] == pytest.approx(61251 + 2.0 / 3.0)
+    # The cap (MJD0 + 2.0) falls inside the next night, which waits.
     rec3 = Z.screen_window(cfg, targets_path=tp, out_dir=out, api=api, irsa=irsa)
     assert rec3["verdict"] == "NO_NEW_DATA"
 
@@ -507,7 +512,8 @@ def test_nights_beyond_the_exposure_frontier_use_the_detection_proxy(tmp_path):
                   {}, frontier=MJD0 + 100.0)
     irsa = FakeIrsa([], frontier=MJD0 - 40.0)              # sixty days stale
     rec = Z.screen_window(cfg, targets_path=tp, out_dir=tmp_path / "out", api=api, irsa=irsa)
-    assert rec["mjd_hi"] == 61251.0, "the stream, not the exposure table, caps the window"
+    assert rec["mjd_hi"] == pytest.approx(61250 + 2.0 / 3.0), \
+        "the stream, not the exposure table, caps the window"
     assert rec["frontiers"]["irsa_exposures_mjd"] == MJD0 - 40.0
     assert set(rec["denominator_by_night"].values()) == {"detection_proxy"}
     # t0 (150.0) and t1 (150.3) share the bin [150,151) x [30,31); t2 at 150.6 too.
@@ -674,3 +680,15 @@ def test_the_run_record_stops_after_a_truncated_or_unfolded_chunk(tmp_path, monk
     run = json.loads((tmp_path / "out" / "run.json").read_text())
     assert run["chunks"][0]["verdict"] == "SWEEP_TRUNCATED"
     assert run["chunks"][0]["error"] == "HTTP 500"
+
+
+def test_windows_sit_on_night_boundaries_so_consecutive_chunks_never_share_a_night():
+    """Run 6: integer-MJD edges split nights; the shared night lost its trials."""
+    assert Z.night_start(61235.0) == pytest.approx(61234 + 2.0 / 3.0)
+    assert Z.night_start(61234 + 2.0 / 3.0) == pytest.approx(61234 + 2.0 / 3.0)
+    assert Z.night_start(61235.9) == pytest.approx(61235 + 2.0 / 3.0)
+    a, b = Z.night_start(61235.0), Z.night_start(61238.0)
+    nights_a = {Z.night_id(m) for m in np.arange(a, b, 0.01)}
+    nights_b = {Z.night_id(m) for m in np.arange(b, Z.night_start(61241.0), 0.01)}
+    assert not (nights_a & nights_b)
+    assert len(nights_a) == 3 and len(nights_b) == 3

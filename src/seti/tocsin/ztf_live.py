@@ -48,6 +48,7 @@ import csv
 import io
 import json
 import math
+import re
 import time
 from pathlib import Path
 
@@ -79,6 +80,16 @@ IRSA_EXPOSURE_TABLE = "ztf.ztf_current_meta_sci"
 #: the ATLAS c/o mapping (docs/tocsin-altfeeds.md 4).
 ZTF_FID_BAND = {1: "g", 2: "r", 3: "i"}
 ZTF_START_MJD = 58194.0            # public survey from 2018-03
+#: Per-axis astrometric uncertainty assigned to a ZTF difference-image centroid.
+#: ZTF alerts carry none, and the schema's 50 mas floor is Rubin's.  MEASURED on
+#: the first live run (results/tocsin_ztf, 2026-09-05): the 18 detections of
+#: three catalogued nearby stars sat 0.16-1.4 arcsec from the propagated Gaia
+#: position, median ~0.5, while ZTF's own `distnr` put each within 0.1 arcsec
+#: of its reference source -- the difference-image centroid of a bright star's
+#: residual scatters at a few tenths of an arcsecond.  With the Rubin floor all
+#: 18 were rejected as astrometric offsets at 3-28 sigma.  0.25 arcsec per axis
+#: (0.35 total) makes 1 arcsec the 3-sigma line; `max_sep_arcsec` still bounds.
+ZTF_ASTROMETRIC_FLOOR_ARCSEC = 0.25
 JD_MINUS_MJD = 2400000.5
 LN10_OVER_2P5 = math.log(10.0) / 2.5
 
@@ -100,8 +111,8 @@ DEFAULTS: dict = {
     #: is the exposure table that caps the window (see `frontier`).
     "ingest_lag_days": 0.3,
     "max_run_seconds": 5400.0,
-    #: Only public-survey quadrants issue public alerts.
-    "programid": 1,
+    #: Only public-survey quadrants issue public alerts (IRSA `ipac_gid` = 1).
+    "public_gid": 1,
     #: Stop fetching per-object history after this many matched objects in one
     #: window: a night that matches thousands of nearby stars is a bad night
     #: (a reference-image change), not a discovery, and it should be looked at.
@@ -225,12 +236,26 @@ class AlerceZtfAPI:
             items = items or []
             rows.extend(r for r in items if isinstance(r, dict))
             stats["pages"] += 1
-            has_next = bool((payload or {}).get("has_next")) if isinstance(payload, dict) else False
+            # MEASURED 2026-09-05 (results/tocsin_ztf/probe.json): with
+            # `count=false` the service answers `page: null, has_next: false`
+            # on EVERY page, so `has_next` cannot end the walk -- the first live
+            # run took exactly one page of 1000 and called it a night.  A page
+            # shorter than page_size is the only reliable end; `has_next` is
+            # honoured only when the service also numbers the page.
+            numbered = isinstance(payload, dict) and payload.get("page") is not None
+            has_next = bool(payload.get("has_next")) if numbered else (len(items) >= self.page_size)
             if not items or not has_next:
                 break
             page += 1
+            if page > self.MAX_SWEEP_PAGES:
+                stats["truncated"] = True
+                self.notes.append(f"objects sweep stopped at MAX_SWEEP_PAGES={self.MAX_SWEEP_PAGES}")
+                break
         stats["objects"] = len(rows)
         return rows, stats
+
+    #: A full ZTF night is a few hundred pages of 1000; this is a runaway guard.
+    MAX_SWEEP_PAGES = 5000
 
     def detections(self, oid: str) -> list[dict]:
         payload = self._get(f"objects/{oid}/detections")
@@ -302,7 +327,23 @@ class AlerceZtfAPI:
 # ---------------------------------------------------------------------------
 EXPOSURE_COLUMNS = ("obsjd", "fid", "field", "ccdid", "qid", "ra", "dec",
                     "ra1", "dec1", "ra2", "dec2", "ra3", "dec3", "ra4", "dec4",
-                    "maglimit", "exptime", "programid")
+                    "maglimit", "exptime", "ipac_gid")
+#: IRSA's group id for the public survey (1 = public, 2 = partnership, 3 =
+#: Caltech).  The metadata table carries `ipac_gid`, not the alert packet's
+#: `programid`; the first live run asked for `programid` and got a VOTable error.
+PUBLIC_GID_COLUMN = "ipac_gid"
+
+
+def votable_error(text: str) -> str | None:
+    """The QUERY_STATUS error message inside a VOTable error document, or None."""
+    if not text or not text.lstrip().startswith("<"):
+        return None
+    m = re.search(r'<INFO[^>]*name="QUERY_STATUS"[^>]*value="ERROR"[^>]*>(.*?)</INFO>',
+                  text, re.S | re.I)
+    if m:
+        return re.sub(r"\s+", " ", m.group(1)).strip()[:600]
+    m = re.search(r"<INFO[^>]*>(.*?)</INFO>", text, re.S | re.I)
+    return (re.sub(r"\s+", " ", m.group(1)).strip()[:600] if m else text[:300])
 
 
 class IrsaZtfExposures:
@@ -330,22 +371,35 @@ class IrsaZtfExposures:
         if r.status_code >= 400:
             raise ZtfLiveError(f"IRSA TAP HTTP {r.status_code}: {r.text[:300]}")
         text = r.text or ""
-        if text.lstrip().startswith("<"):
-            raise ZtfLiveError(f"IRSA TAP returned an error document: {text[:300]}")
+        err = votable_error(text)
+        if err is not None:
+            raise ZtfLiveError(f"IRSA TAP error: {err}")
         reader = csv.DictReader(io.StringIO(text))
         return [{(k or "").strip().lower(): v for k, v in row.items()} for row in reader]
 
-    def exposures(self, mjd_lo: float, mjd_hi: float, programid: int | None = 1) -> list[dict]:
-        where = [f"obsjd >= {float(mjd_lo) + JD_MINUS_MJD:.6f}",
-                 f"obsjd < {float(mjd_hi) + JD_MINUS_MJD:.6f}"]
-        if programid is not None:
-            where.append(f"programid = {int(programid)}")
-        adql = (f"SELECT {', '.join(EXPOSURE_COLUMNS)} FROM {self.table} "
-                f"WHERE {' AND '.join(where)}")
-        return self.query(adql)
+    def exposures(self, mjd_lo: float, mjd_hi: float, public_gid: int | None = 1) -> list[dict]:
+        """Public science quadrants in ``[mjd_lo, mjd_hi)``, one TAP query per night.
 
-    def frontier(self, programid: int | None = 1) -> float | None:
-        where = f" WHERE programid = {int(programid)}" if programid is not None else ""
+        A night is ~45k quadrant rows; asking for a window night by night keeps
+        every response far inside the service's row limit instead of relying on
+        a MAXREC the service may silently clip.
+        """
+        out: list[dict] = []
+        lo = float(mjd_lo)
+        while lo < float(mjd_hi):
+            hi = min(float(mjd_hi), lo + 1.0)
+            where = [f"obsjd >= {lo + JD_MINUS_MJD:.6f}", f"obsjd < {hi + JD_MINUS_MJD:.6f}"]
+            if public_gid is not None:
+                where.append(f"{PUBLIC_GID_COLUMN} = {int(public_gid)}")
+            adql = (f"SELECT {', '.join(EXPOSURE_COLUMNS)} FROM {self.table} "
+                    f"WHERE {' AND '.join(where)}")
+            out.extend(self.query(adql, maxrec=500_000))
+            lo = hi
+        return out
+
+    def frontier(self, public_gid: int | None = 1) -> float | None:
+        where = (f" WHERE {PUBLIC_GID_COLUMN} = {int(public_gid)}"
+                 if public_gid is not None else "")
         rows = self.query(f"SELECT MAX(obsjd) AS obsjd_max FROM {self.table}{where}", maxrec=5)
         for r in rows:
             v = _num(r.get("obsjd_max"))
@@ -359,6 +413,7 @@ class IrsaZtfExposures:
         try:
             fr = self.frontier()
             rec["frontier_mjd"] = fr
+            rec["public_gid_column"] = PUBLIC_GID_COLUMN
             rec["frontier_lag_days"] = None if fr is None else round(now - fr, 2)
             rec["reached"] = True
             lo = (fr - 1.0) if fr is not None else now - 3.0
@@ -459,6 +514,8 @@ def normalize_alerce_ztf_detections(oid: str, dets: list[dict]) -> list[Normaliz
             ra=_num(r.get("ra")) or float("nan"), dec=_num(r.get("dec")) or float("nan"),
             dflux_njy=float(dflux), dflux_err_njy=float(dflux_err),
             broker="alerce-ztf",
+            ra_err_arcsec=ZTF_ASTROMETRIC_FLOOR_ARCSEC,
+            dec_err_arcsec=ZTF_ASTROMETRIC_FLOOR_ARCSEC,
             template_flux_njy=template, template_flux_err_njy=template_err,
             snr=float(dflux / dflux_err) if dflux_err > 0 else None,
             reliability=rel, reliability_version=rel_version,
@@ -745,7 +802,7 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
         lo = float(mjd_lo) if mjd_lo is not None else hi - float(z["lookback_nights"])
     else:
         try:
-            frontiers["irsa_exposures_mjd"] = irsa.frontier(int(z["programid"]))
+            frontiers["irsa_exposures_mjd"] = irsa.frontier(int(z["public_gid"]))
         except Exception as exc:                                   # noqa: BLE001
             summary["notes"].append(f"irsa_frontier_failed: {str(exc)[:200]}")
         try:
@@ -848,12 +905,25 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
     fp_limits: dict = {}
     fp_epochs: dict = {}
     try:
-        exposures = irsa.exposures(lo, hi, int(z["programid"]))
+        exposures = irsa.exposures(lo, hi, int(z["public_gid"]))
         footprint_pairs, observed_bands, fp_limits, fp_epochs, fstats = quadrant_footprint(
             exposures, targets, th, epoch_jyear)
         summary["counts"].update(fstats)
     except Exception as exc:                                       # noqa: BLE001
-        summary["notes"].append(f"footprint_query_failed: {str(exc)[:300]}")
+        # NO DENOMINATOR, NO FOLD.  The first live run folded four nights with
+        # zero trials when this query failed, and advanced the watermark past
+        # them; the backfill rule then reads those nights as screened.  A night
+        # without its trials is not screened, so nothing is written and the
+        # next run asks for the same window again.
+        summary["notes"].append(f"footprint_query_failed: {str(exc)[:600]}")
+        summary["verdict"] = "NO_DENOMINATOR"
+        summary["denominator"] = "unavailable"
+        summary["timings_s"]["footprint"] = round(time.monotonic() - t3, 1)
+        summary["watermark_mjd"] = _finite(led.last_mjd_screened)
+        _write_json(out / "summary.json", summary)
+        print(f"[tocsin-ztf] NO_DENOMINATOR: the exposure query failed; window "
+              f"{lo:.3f}-{hi:.3f} is NOT marked screened")
+        return summary
     summary["timings_s"]["footprint"] = round(time.monotonic() - t3, 1)
 
     # 5. Screen, one night at a time, with that night's own limits.

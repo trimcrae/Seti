@@ -198,6 +198,23 @@ week of nightly runs, after which each run screens the previous night. Earlier
 nights can be folded later with explicit `mjd_lo`/`mjd_hi` windows, which fold
 their nights but never move the watermark.
 
+### 8a. The first parallel run (run 6, 06:38–07:58 UTC) and the night-boundary bug
+
+Four sweep workers: six nights (2026-07-14 to 07-20) in 75 minutes, 462k
+objects swept, 76 catalogued stars alerted, 1,755 detections, 31 events folded
+(121 dips and 54 flashes among the 175 kept before the fold rule), 44 of them
+colour-tested on same-night g+r pairs, one star already at `interest`. Every
+night lay beyond IRSA's frontier and used the detection proxy: 140,180
+star-nights.
+
+It also exposed a bug: a night label runs 16:00 UTC to 16:00 UTC, so a window
+cut at an integer MJD begins inside the night the previous chunk had just
+folded with almost no trials, and the ledger's night-level de-duplication then
+dropped the real ones — one night in three without a denominator. Windows now
+sit on night boundaries (`night_start`), a night the frontier falls inside
+waits for the next run, and the ledger was reset once more so those six nights
+are refolded whole.
+
 ## 9. Status
 
 Live, nightly at 11:25 ET, backfilling from 2026-07-14. 35 offline tests. Per

@@ -8,7 +8,16 @@ Rubin has been off sky since the night of 13/14 July 2026 (`docs/rubin-outage.md
 verdict `SKY_STOPPED`). Both Rubin channels have consumed everything the brokers
 hold. What follows is what else exists, and what each source actually serves.
 
-## Ruled out by measurement: ZTF through the same broker
+## Ruled out by measurement: ZTF through the same broker — but NOT ZTF itself
+
+*Correction, 2026-09-05.* What is measured below is that ALeRCE's TAP mirror
+stopped carrying non-LSST data and that Fink's ZTF portal is unreachable. Those
+are facts about two broker services. `rubin-outage` now asks ZTF's own nightly
+alert archive, ALeRCE's separate ZTF API and ANTARES directly, and on
+2026-09-05 all three held epochs from the night of 2026-09-04: **ZTF is
+observing and its public alert stream is being served** (`docs/rubin-outage.md`,
+"Is ZTF observing?"). The route through the TAP mirror is closed; the stream is
+not.
 
 The cheapest imaginable substitute — point TOCSIN at ZTF via the ALeRCE TAP
 service it already uses, changing a survey id and nothing else — **does not

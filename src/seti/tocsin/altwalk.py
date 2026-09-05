@@ -491,10 +491,13 @@ class AtlasWalk:
 
     # -- planning one target -----------------------------------------------
     def _expand(self, job: AtlasTargetJob, th) -> None:
-        from .altfeeds import ATLAS, AtlasForcedPhotometry, pm_segments
+        # Module-level names, not attributes of the client class: the tests
+        # replace `altfeeds.AtlasForcedPhotometry` with fakes, and the walk must
+        # keep working against them.
+        from .altfeeds import ATLAS, ATLAS_MAX_PM_SEGMENTS, pm_segments
         segs = pm_segments(job.ra, job.dec, job.pmra, job.pmdec, job.mjd_lo, job.mjd_hi,
                            ATLAS, th)
-        cap = AtlasForcedPhotometry.MAX_PM_SEGMENTS
+        cap = ATLAS_MAX_PM_SEGMENTS
         job.capped = len(segs) > cap
         if job.capped:
             segs = pm_segments(job.ra, job.dec, job.pmra, job.pmdec, job.mjd_lo,
@@ -669,16 +672,14 @@ class AtlasWalk:
 
     def _finish(self, job: AtlasTargetJob, th, lightcurves: dict, quiescent: dict,
                 on_target) -> None:
-        from .altfeeds import AtlasForcedPhotometry
+        from .altfeeds import assemble_atlas_target
         diff = [t.text for t in sorted((t for t in job.tasks if t.kind == "diff"),
                                        key=lambda t: t.seg_index)]
         red = [t.text for t in sorted((t for t in job.tasks if t.kind == "reduced"),
                                       key=lambda t: t.seg_index)]
         try:
-            lc, q = AtlasForcedPhotometry.assemble(job.target_id, job.ra, job.dec,
-                                                   job.segs, diff, red, th,
-                                                   capped=job.capped,
-                                                   baseline_complete=True)
+            lc, q = assemble_atlas_target(job.target_id, job.ra, job.dec, job.segs, diff, red,
+                                          th, capped=job.capped, baseline_complete=True)
         except Exception as exc:                                  # noqa: BLE001
             self.notes.append(f"{job.target_id}: assembly failed: {str(exc)[:160]}")
             return

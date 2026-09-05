@@ -138,11 +138,37 @@ watermark), `probe_only`, `rebuild_targets`. Outputs committed per run:
 `probe.json`, `summary.json`, `ledger.json`, `assessment.json`,
 `watchlist.csv`, `events_latest.csv`, `rejected_latest.csv`.
 
-## 7. Status
+## 7. What the first live runs taught (2026-09-05, runs 1-4)
 
-Built and offline-tested (22 tests), lint-clean. **Not yet run against either
-live service** at the time of writing; the probe is the first thing the workflow
-does and every field name above is to be read against `probe.json` before any
-number from this channel is believed. Per the charter the objective is a
-detection: if the northern nearby-star sample produces a clean null over a
-season, that is a reason to change the question, not to write up the null.
+Every field name in §1-§4 was documentation-derived until the probe recorded
+the services; `results/tocsin_ztf/probe.json` now holds the live shapes and
+they match — every detection, non-detection and object key listed above is
+present, `isdiffpos` is served as ±1, and IRSA's quadrant table has every
+column named. The northern list is 166,899 stars. What did not match was on our
+side, and each item is now pinned by a test:
+
+| run | what happened | fix |
+|---|---|---|
+| 1 | The sweep took one page of 1000 and called a three-night window complete: with `count=false` the service answers `page: null, has_next: false` on every page. | Pagination no longer trusts `has_next`. |
+| 1 | IRSA returned a VOTable error: the table has no `programid`; the public-survey column is `ipac_gid`. | `ipac_gid = 1`; the error text is extracted, not the document head. |
+| 1 | All 18 detections of three catalogued stars were rejected as astrometric offsets at 3–28σ: ZTF alerts carry no position error, so Rubin's 50 mas floor applied to centroids sitting 0.16–1.4″ from the propagated Gaia position while ZTF's own `distnr` put each within 0.1″ of its reference source. | A measured 0.25″ per-axis floor (`ZTF_ASTROMETRIC_FLOOR_ARCSEC`); 1″ is the 3σ line. |
+| 1 | Four nights were folded with zero trials when the exposure query failed, and the watermark advanced past them. | `NO_DENOMINATOR`: nothing folded, watermark kept. |
+| 3 | One three-night `lastmjd` query paged 27 minutes into the offset and drew HTTP 500. | — |
+| 4 | A quarter-night slice ordered by `oid` drew nginx 504 on page 1: ordering by `oid` walks the id index filtered by epoch, so a *narrow* window is *slower*. | **Keyset pagination on `lastmjd`**: order by the filtered column, advance the lower bound to the newest epoch seen, de-duplicate the boundary. |
+| 4 | IRSA's `MAX(obsjd)` over the whole table read-timed out at 240 s. | Bounded lookback (3 d, widened only when empty). |
+| 4 | IRSA's public exposure table is **60 days behind the stream** (frontier MJD 61228.19 = 2026-07-07 against a stream at 61288.17). | The stream caps the window; nights the table has reached to their end get the exact quadrant denominator, later nights the detection-footprint proxy (§3), recorded per night. |
+
+The proxy is the Rubin path's own denominator and carries the same caveat: a
+1° bin over-counts trials slightly relative to a 0.73° quadrant and carries no
+per-visit limit, so events on proxy nights cannot use the one-sided
+non-detection test. When IRSA's table catches up with a night that was folded
+on the proxy, that night is not re-folded — the summary's
+`denominator_by_night` is the record of which kind each night got.
+
+## 8. Status
+
+Built, offline-tested (31 tests), lint-clean, probed live and corrected as
+above. The first complete window is the next step; per the charter the
+objective is a detection, and if the northern nearby-star sample produces a
+clean null over a season, that is a reason to change the question, not to write
+up the null.

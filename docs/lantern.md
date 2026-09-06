@@ -62,7 +62,9 @@ section, with the citation, before anything else is written.
 ### 3.1 Data path (runner-only)
 
 1. **Planets.** NASA Exoplanet Archive `pscomppars`, `tran_flag=1`: period,
-   T₀, T₁₄, eccentricity, ω, Rp/Rs and their errors.
+   T₀, T₁₄, eccentricity, ω, Rp/Rs and their errors. A row without T₁₄ gets
+   it from the geometry, (P/π)·asin(√((1+k)²−b²)/(a/Rs)), flagged
+   `duration_derived_from_geometry`; without that it is `phase_unresolved`.
 2. **Observations.** MAST `Observations.query_criteria(obs_collection="JWST",
    dataproduct_type="timeseries", instrument_name=<inst>*)` — one query per
    instrument. TSO products are `timeseries`, not `spectrum` (the lesson
@@ -148,7 +150,19 @@ broad-band median (the star). Then:
 | `transit_constancy`, `transit_excess_sigma` | line change in transit vs the continuum's own change | line changes no more than the continuum |
 
 Errors are the larger of the propagated and the empirical (scatter) error, so
-a red-noise-dominated series cannot manufacture significance.
+a red-noise-dominated series cannot manufacture significance. The
+per-integration noise of the line series is measured from the *temporal*
+residual of the side pixels (each integration minus the time-median spectrum
+there), never from their spread around their own median — that spread is
+stellar structure, and using it suppressed every SNR ten-fold in
+development.
+
+Synthetic performance (a 2048-sample NIRSpec-like grid with a line forest,
+800 integrations, 2×10⁻³ per-pixel noise): a planet line at 2% of the
+continuum is recovered at 185σ with vanish SNR ≫ 5 and in-eclipse residual
+1.7σ; at 0.8% it is 85σ; the same line held constant is rejected
+(`low_snr`, `tracks_continuum`); a 1-sample spike, a 14-sample-wide band and
+a null all yield no tier. Analysis is 2–3 s per exposure.
 
 ### 3.5 Vetoes (every one has a counter in `summary.json`)
 

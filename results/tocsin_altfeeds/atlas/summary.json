@@ -1,51 +1,57 @@
 {
  "auth_env": "ATLAS_TOKEN",
  "counts": {
-  "alerts_in": 1814,
-  "associated": 882,
-  "epochs_total": 6092,
-  "events_kept": 426,
-  "events_kept_after_native_tests": 426,
-  "lightcurves": 3,
-  "positionally_matched": 882,
-  "quality_passed": 882,
-  "rejected_bad_pixels": 25,
-  "rejected_chromatic_native_nondetection": 0,
-  "star_nights_observed": 1418,
-  "star_nights_two_band": 2,
-  "structurally_valid": 907,
-  "target_nights_screened": 1418,
-  "targets_unusable": 1,
-  "targets_usable": 2,
-  "two_band_night_fraction": 0.00141
+  "alerts_in": 4084,
+  "associated": 829,
+  "epochs_total": 12452,
+  "events_kept": 405,
+  "events_kept_after_native_tests": 400,
+  "lightcurves": 7,
+  "positionally_matched": 829,
+  "quality_passed": 1492,
+  "rejected_bad_pixels": 548,
+  "rejected_chromatic_native_nondetection": 5,
+  "rejected_trailed": 2,
+  "star_nights_observed": 2862,
+  "star_nights_two_band": 20,
+  "structurally_valid": 2042,
+  "target_nights_screened": 2862,
+  "targets_usable": 7,
+  "two_band_night_fraction": 0.00699
  },
  "denominator": "forced_photometry_exact",
  "forced_coverage_fraction": 1.0,
  "ledger": {
-  "alerts_seen": 1814,
-  "cumulative_target_visits": 1418,
-  "ensemble_rate_per_target_visit": 0.3004231311706629,
-  "events_kept": 426,
+  "alerts_seen": 5898,
+  "cumulative_target_visits": 4280,
+  "ensemble_rate_per_target_visit": 0.1929906542056075,
+  "events_kept": 826,
   "fdr_threshold": null,
-  "nights": 1337,
-  "targets_with_events": 2,
+  "nights": 2243,
+  "targets_with_events": 7,
   "tier_counts": {
    "alarm": 0,
    "candidate": 0,
-   "interest": 0,
-   "none": 1,
-   "watch": 1
+   "interest": 2,
+   "none": 2,
+   "watch": 3
   },
   "version": 2
  },
  "n_targets_total": 139706,
  "notes": [
   "29784 targets are outside atlas's usable magnitude range in every native band (saturated or below the per-epoch limit) and are not requested at all",
+  "2 walked targets are current to within 7 d of the request frontier (MJD 61285.87) and were not re-requested",
+  "1 targets were unusable on their last full walk and are not due a re-walk yet",
   "5481843025342799104: task diff[0] failed: ATLAS task failed: No data returned",
   "5292028393100840320: task diff[0] failed: ATLAS task failed: No data returned",
-  "stopped starting targets with 352s left: the median target has taken 3411s and would not finish",
-  "atlas scheduler: concurrency 6, 46 tasks submitted, 36 finished, 15.0 tasks/h, 3 targets completed, 0 abandoned; server runtime median 108s, achieved parallelism 0.88",
-  "atlas: walked 5 of 200 targets (0 refresh, 200 full), 3 light curves"
+  "4726357491998516480: task diff[0] failed: ATLAS task failed: No data returned",
+  "4708990018643008896: task diff[0] failed: ATLAS task failed: No data returned",
+  "6196627086360009600: walk deadline reached with 3 of 6 tasks unfinished; discarded rather than folded into a gappy light curve",
+  "188 planned targets were never started (walk deadline)",
+  "atlas scheduler: concurrency 2, 56 tasks submitted, 46 finished, 18.4 tasks/h, 7 targets completed, 1 abandoned; server runtime median 140s, achieved parallelism 0.84",
+  "fetch budget of 9000s exhausted after 11 of 200 targets; this slice is SHORT and the ledger's denominator counts only what was walked",
+  "atlas: walked 11 of 200 targets (0 refresh, 200 full), 7 light curves"
  ],
  "reachability": {
   "assumption": "background_limited_noise",
@@ -169,7 +175,7 @@
   "survey": "atlas",
   "verdict": "OK"
  },
- "run_at_utc": "2026-09-05T03:09:45Z",
+ "run_at_utc": "2026-09-05T20:48:37Z",
  "signature_transfer": {
   "achromaticity": "available only when both filters fall on the same night; the fraction is measured per run as two_band_night_fraction",
   "astrometric_offset": "UNAVAILABLE: photometry is forced at the requested position, so the separation is zero by construction",
@@ -189,10 +195,10 @@
  "verdict": "OK",
  "walk": {
   "archive_frontier_mjd": null,
-  "n_usable": 2,
-  "n_walked": 3,
+  "n_usable": 9,
+  "n_walked": 14,
   "this_run": {
-   "full": 3
+   "full": 7
   }
  }
 }

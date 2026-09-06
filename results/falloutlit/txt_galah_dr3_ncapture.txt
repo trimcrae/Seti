@@ -1,0 +1,3800 @@
+MNRAS 000, 1–29 (2021)
+
+Preprint 7 January 2022
+
+Compiled using MNRAS LATEX style file v3.0
+
+arXiv:2109.04059v2 [astro-ph.GA] 6 Jan 2022
+
+The GALAH Survey: Chemical tagging and chrono-chemodynamics of
+accreted halo stars with GALAH+ DR3 and Gaia eDR3★ †
+Sven Buder,1,2 ‡ Karin Lind3 , Melissa K. Ness4,5 , Diane K. Feuillet6 , Danny Horta7 , Stephanie Monty1,2 ,
+Tobias Buck8 , Thomas Nordlander1,2 , Joss Bland-Hawthorn9,2 , Andrew R. Casey10,11 ,
+Gayandhi M. De Silva12 , Valentina D’Orazi13 , Ken C. Freeman1,2 , Michael R. Hayden9,2 , Janez Kos14 ,
+Sarah L. Martell15,2 , Geraint F. Lewis9 , Jane Lin1,2 , Katharine. J. Schlesinger1 , Sanjib Sharma9,2 ,
+Jeffrey D. Simpson15,2 , Dennis Stello15,9,16,2 , Daniel B. Zucker12,17,2 , Tomaž Zwitter14 , Ioana Ciucă1,2,18 ,
+Jonathan Horner19 , Chiaki Kobayashi20,2 , Yuan-Sen Ting (丁源森)1,21 , Rosemary F. G. Wyse22 ,
+and the GALAH collaboration
+(Affiliations listed after the references)
+
+Accepted 2021 November 26. Received 2021 November 3; in original form 2021 September 9
+
+ABSTRACT
+
+Since the advent of Gaia astrometry, it is possible to identify massive accreted systems within the Galaxy through their unique
+dynamical signatures. One such system, Gaia-Sausage-Enceladus (GSE), appears to be an early “building block” given its virial
+mass > 1010 M at infall (𝑧 ∼ 1 − 3). In order to separate the progenitor population from the background stars, we investigate its
+chemical properties with up to 30 element abundances from the GALAH+ Survey Data Release 3 (DR3). To inform our choice
+of elements for purely chemically selecting accreted stars, we analyse 4164 stars with low-𝛼 abundances and halo kinematics.
+These are most different to the Milky Way stars for abundances of Mg, Si, Na, Al, Mn, Fe, Ni, and Cu. Based on the significance
+of abundance differences and detection rates, we apply Gaussian mixture models to various element abundance combinations.
+We find the most populated and least contaminated component, which we confirm to represent GSE, contains 1049 stars
+selected via [Na/Fe] vs. [Mg/Mn] in GALAH+ DR3. We provide tables of our selections and report the chrono-chemodynamical
+properties
+√︁ (age, chemistry, and dynamics). Through a previously reported clean dynamical selection of GSE stars, including
+30 < 𝐽𝑅 / kpc km s−1 < 55, we can characterise an unprecedented 24 abundances of this structure
+√︁ with GALAH+ DR3. With
+our chemical selection we characterise the dynamical properties of the GSE, for example mean 𝐽𝑅 / kpc km s−1 = 26+9
+−14 . We
+find only (29 ± 1)% of the GSE stars within the clean dynamical selection region. Our methodology will improve future studies
+of accreted structures and their importance for the formation of the Milky Way. 
+Key words: The Galaxy – Galaxy: formation – Galaxy: halo – Galaxy: abundances – Galaxy: kinematics and dynamics
+
+1 INTRODUCTION
+Significant investment has been made in the pursuit of understanding how the Milky Way, as a benchmark spiral galaxy, has formed.
+To unravel our Galactic history we need large inventories of stellar
+spatial/dynamical information (e.g. Gaia Collaboration et al. 2021),
+as well as chemical abundances (Jofré et al. 2019). Stellar ages
+(Soderblom 2010), even at low precision, in concert with this information are key in connecting the Milky Way today to its past.
+Holistically, the Milky Way has been described as comprised of
+an ensemble of populations, identified as major overdensities. These
+
+★ GALAH+ combines observations obtained through the main GALAH pro-
+
+posals as well as K2-HERMES, TESS-HERMES, and partner proposals.
+† All code, data, figures, and tables available at https://github.com/
+svenbuder/Accreted-stars-in-GALAH-DR3.
+‡ E-mail: sven.buder@anu.edu.au
+© 2021 The Authors
+
+include a thin and a thick disk component, the bulge, and the halo
+(see e.g. Bland-Hawthorn & Gerhard 2016, for a review). With improvements in both the quantity and diversity of the data, it has
+become clear that the two disk components overlap not only spatially
+but also dynamically (e.g. Bovy et al. 2012a). Recent studies argue
+that the disk populations are better disentangled using their (fixed)
+chemical abundances rather than their (evolving) orbital properties;
+as young (thin) low-𝛼 and old (thick) high-𝛼 (e.g. Bensby et al. 2014;
+Buder et al. 2019; Bland-Hawthorn et al. 2019). As the kinematic
+and dynamic properties of stars change with time as the Galaxy
+evolves, we see that structures identified chemically that have likely
+been born with discrete and separate orbital properties now overlap. This includes populations of stars with disk-like chemistry on
+halo-like orbits and vice-versa (e.g. Belokurov et al. 2020). Coarse
+kinematic/dynamic selections are therefore likely to be significantly
+contaminated. A possible way forward is to concentrate on the chemical abundances of stars and select (or “tag”) stars chemically (see
+
+2
+
+S. Buder et al.
+
+e.g. Freeman & Bland-Hawthorn 2002, for a review on chemical tagging) as a way to identify signatures of the Milky Way’s formation.
+The basic assumption here is that element abundances of stars are
+similar if they are born together, do not change significantly over
+time, and are significantly distinct from other populations/birth sites.
+In the disk it appears that the chemical abundance variance is low
+(Bovy 2016; Ness et al. 2018, 2019; Weinberg et al. 2021; Ting &
+Weinberg 2021). However, the stellar halo has a much more diverse
+and composite origin (e.g. Helmi 2020; Naidu et al. 2020).
+The stellar halo captures the story of the earliest moments in the
+assembly of the Milky Way, as well as its cosmological encounters,
+via accreted populations over time. One big and outstanding question
+in the realm of the halo is: to what level did accreted stars and mergers
+play an important role in the Milky Way’s formation? The importance
+of accretion in the build-up of the halo - and its connection with the
+disk due to their co-existence and thus likely interaction - is still
+enigmatic. This also includes the linked question of what fraction of
+the halo formed in-situ (Bland-Hawthorn & Gerhard 2016). Mergers
+lead to complex phase-space structure and a wide range of both
+orbital properties and chemical abundances (e.g. Amorisco 2017;
+Jean-Baptiste et al. 2017; Monachesi et al. 2019; Koppelman et al.
+2020). As we gather more data, we hope to be able to decipher
+this puzzle. Ultimately we will need to link our observations with
+theoretical predictions to find the most likely formation scenarios.
+Opening a new chapter in the understanding of the Galactic halo,
+Nissen & Schuster (1997) found differences between the chemical
+abundances1 of halo stars even though their metallicities and iron
+abundances exhibit significant overlap. When expanding the sample
+from 13 halo and 16 disk stars to a total of 94 stars, two clear sequences of low- and high-𝛼 halo stars became evident in the [Fe/H] vs.
+[Mg/Fe], that is, the Tinsley-Wallerstein diagram (Nissen & Schuster
+2010). Such differences were also found to be clearly visible for other
+nucleosynthesis channels (Nissen & Schuster 2010, 2011; Ting et al.
+2012; Hawkins et al. 2015), among them light odd-Z elements like Na
+and Al or iron-peak elements like Ni, Mn, and Cu. Guided by our theoretical understanding of the metallicity-dependent nucleosynthesis
+of Na, Al, and Cu through massive stars and in particular supernovae
+(SNe) II as well as Mn via SNIa (e.g. Kobayashi et al. 2006, 2020b),
+the low enrichment in these elements suggested that these stars were
+born outside of the Milky Way. This picture was further supported by
+the very different overall kinematic and dynamic properties of these
+stars compared to the Milky Way (Nissen & Schuster 2010; Schuster
+et al. 2012), but was limited to few stars.
+Astrometric data provided by the Gaia satellite (Gaia Collaboration et al. 2016b) have been revolutionary. These data have enabled
+the discovery of accreted structures in dynamical space, most notably
+the Gaia-Sausage-Enceladus (GSE, see e.g. Belokurov et al. 2018;
+Helmi et al. 2018; Helmi 2020). The stellar and virial masses of the
+Gaia-Enceladus-Sausage progenitor satellite has been estimated in
+the range of 𝑀★ ∼ 108.7−9.85 M (Feuillet et al. 2020; Naidu et al.
+2021) and 𝑀vir > 1010 M (Belokurov et al. 2018), or a mass ratio
+at infall (with respect to the early Milky Way) between 1:4 and 1:2.5
+(Helmi et al. 2018; Naidu et al. 2021). According to preliminary
+chemical studies of this overdensity (Das et al. 2020), it seems likely
+that it could contribute between 20–30 % to the metal-poor stars below iron abundances [Fe/H] < −1. According to estimates by Naidu
+
+1
+
+Chemical abundances of an arbitrary element X are reported either with an
+absolute logarithmic ratio of the number densities with respect to H, that is
+A(X) = log ( 𝑁X /𝑁H ) + 12, or as a ratio of elements X and Y relative to the
+Solar values ( ), that is [X/Y] = (A(X) − A(Y)) − A(X) − A(Y) .
+MNRAS 000, 1–29 (2021)
+
+et al. (2020), the GSE contributes significantly to the inner halo
+(𝑅 < 15 kpc), but even dominates the halo within 𝑧 ≈ 10 − 20 kpc
+and 𝑅 ≈ 15 − 25 kpc. The observational evidence (for reviews see
+Nissen & Gustafsson 2018; Helmi 2020) seems to support the picture
+suggested by Searle & Zinn (1978), where accretion processes contribute massively to the build-up of the halo, in addition to an in-situ
+inner halo population that formed during a dissipative collapse.
+In recent years, with the advent of revolutionary data from massive
+stellar surveys. Especially the combination of data from Gaia with
+spectroscopic surveys like the SDSS SEGUE and APOGEE Surveys
+(e.g. Belokurov et al. 2018; Helmi et al. 2018; Mackereth & Bovy
+2018; Hayes et al. 2018; Myeong et al. 2018c; Das et al. 2020) and
+the H3 Survey (Conroy et al. 2019; Naidu et al. 2020; Bonaca et al.
+2020) has helped to identify a wealth of substructure in the stellar
+halo of the Galaxy. The excitement of such discoveries in such a short
+period of time has lead to a plethora of different conjectured accretion
+events (along with their nomenclature), whose reality and distinction
+still needs to be fully established. Certainly reviewed, it would be
+useful to have more consistency in the different structures reported
+in the literature (Helmi 2020) or consensus in adopted nomenclature
+(see e.g Naidu et al. 2020).
+In this paper, we will therefore assume that the low-α halo stars
+(Nissen & Schuster 2010; Hayes et al. 2018), blob (Koppelman et al.
+2018; Das et al. 2020), Sausage (Belokurov et al. 2018), and GaiaEnceladus (Helmi et al. 2018) are more or less contaminated selections of the same substructure, which we will refer to as GSE. Several
+of these assumptions have already been convincingly demonstrated
+to be true, e.g. for low-𝛼 halo and GSE to first order (Haywood
+et al. 2018a; Mackereth et al. 2019). We emphasise, however, that
+different techniques might actually select not only the GSE, but also
+from other separate substructures. Several substructures, like Sequoia (Barbá et al. 2019; Myeong et al. 2019; Monty et al. 2020)
+on significantly retrograde orbits, have been found, which might be
+“contaminating” the GSE selection. We revisit this problem especially in the discussion at the end of our study.
+We are just at the beginning of understanding how we can use
+our “tools” (Helmi 2020), that is astrophysical ones, like chemical
+composition and age, as well as kinematic/dynamical ones, to identify
+accreted stars. We provide a list of previously used tools to identify
+accreted stars in App. A, sorted by the categories of information they
+use from purely kinematic over chemodynamic to purely chemical.
+Future work should study how (dis-)similar the selection of stars
+using these different techniques can be.
+In this paper, we aim to identify, or “tag”, accreted stars to first
+order via their chemical composition, a technique proposed by Freeman & Bland-Hawthorn (2002) to identify the signatures of galaxy
+formation. We use estimates of the chemical composition from the
+stellar spectroscopic survey GALactic Archaeology with HERMES
+(GALAH, De Silva et al. 2015; Buder et al. 2021) aided by the astrometric data from the Gaia satellite (Gaia Collaboration et al. 2021).
+The combination of these data sets together with age estimates from
+isochrone fitting allows us to study the ages, chemistry, and dynamics (chrono-chemodynamics) of the selected stars, that is, their stellar
+ages as well as their chemical and dynamical properties.
+The data of the GALAH survey, exceeds the data by Nissen &
+Schuster (2010) and APOGEE both in the number of stars and the
+number of element abundances. GALAH+ DR3 delivers up to 30
+element abundances. 2% of its 588 571 stars are metal poor with
+[Fe/H] < −1 and 4% exhibit halo kinematics (Buder et al. 2021).
+In this observational paper we therefore aim to address the following
+questions:
+
+Accreted stars in GALAH+ DR3
+
+3
+
+(i) How can we best select accreted stars chemically within
+GALAH+ DR3 data?
+(ii) Avoiding circular arguments, what dynamical space do the
+chemically selected GSE stars occupy and what are the chemical
+properties of the dynamically selected GSE stars?
+(iii) Are the dynamically and chemically selected substructures
+truly the same, that is what is the quantitative overlap?
+(iv) What can we learn from the stars of the chemical and dynamical selection that do and do not overlap?
+
+throughout this study. We expect the stars to have passed the spectroscopic quality check flag_sp, be part of the GALAH main survey or the K2/TESS-HERMES follow-up (to exclude observations
+of the bulge and open/globular clusters, such as 𝜔 Cen), be within
+𝐷 𝜛 < 10 kpc (to exclude LMC and SMC), and have available dynamic/age data and unflagged, that is, reliably measured abundances
+for each of the particular set of elements X used:
+
+In our initial search for chemical differences between accreted
+halo stars and in-situ Milky Way stars we are guided by the sample
+from Nissen & Schuster (2010), which comprises the largest number
+of abundances studied for accreted halo stars and compare with the
+more recent literature achieved with data from APOGEE and H3
+when putting our results into context.
+We present the data used for this study in Sec. 2, together with a
+description of different quality cuts that we perform, before trying to
+find the best chemical and dynamical selection of accreted stars in
+Sec. 3. We compare the samples of these techniques, and in particular their chrono-chemodynamic properties in Sec. 4. In that section,
+we will also include the current literature for each of the properties. This allows us to then put our results into context during our
+discussion Sec. 5. Here we put the purely observational constraints
+from Sec. 3 in the context of the theoretical framework of Galactic chemical evolution and nucleosynthesis pathways to discuss the
+prospects of chemically tagging the accreted halo (Sec. 5.1), discuss
+the (dis-)similarities of different selections (Sec. 5.2), how we can
+combine selection criteria for a chemodynamical selection of the
+GSE (Sec. 5.3), and the implication of the stellar age distribution of
+the GSE on different formation and accretion scenarios (Sec. 5.4). We
+conclude our study in Sec. 6 and give an outlook in Sec. 7, including
+remarks on the way forward by combining chemistry and dynamics
+to identify and analyse chemodynamic substructure, for example in
+abundance-action space.
+
+Basic cuts =
+
+2 DATA: GALAH+ DR3 AND ITS
+VALUE-ADDED-CATALOGUES (VACS)
+For this study, we use the chemical abundance data from GALAH+
+DR3 (Buder et al. 2021) together with the spatial and astrometric
+information from the Gaia mission (Gaia Collaboration et al. 2016a),
+namely Gaia eDR3 (Gaia Collaboration et al. 2021), and include
+corrections of parallax zero points (Lindegren et al. 2021a,b).
+GALAH+ DR3 provides elemental abundances based on highresolution (𝑅 ∼ 28 000) spectra from the four optical bands of the
+HERMES spectrograph (Sheinis et al. 2015) at the Anglo-Australian
+Telescope. In brief, stellar parameters (𝑇eff , log 𝑔, [Fe/H], 𝑣 mic ,
+𝑣 broad , and 𝑣 rad ) and abundances for up to 30 different elements are
+estimated using our modified version of the spectrum synthesis code
+Spectroscopy Made Easy (sme Valenti & Piskunov 1996; Piskunov
+& Valenti 2017) and 1D marcs model atmospheres (Gustafsson
+et al. 2008). Eleven elements are computed in non-LTE (Amarsi
+et al. 2020), the others in local thermodynamic equilibrium (LTE).
+Combining GALAH+ DR3 with Gaia eDR3 provides a dataset with
+chemical abundances for up to 30 different elements and kinematic
+as well as dynamic properties and isochrone interpolated stellar ages
+for 678 324 spectra of 588 571 stars. Here, we use the value-addedcatalogues (VACs) of stellar ages and dynamics provided as part of
+GALAH+ DR3 (Buder et al. 2021).
+We apply some basic cuts to each selection that will be used
+
+
+flag_sp = 0, flag_fe_h = 0,
+
+
+
+
+ survey ≠ “other”, 𝐷 < 10 kpc,
+
+𝜛
+
+
+L_Z, J_R, ecc & age_bstep finite and
+
+
+
+ flag_X_fe = 0 for each used element X
+
+
+(1)
+
+We focus on field stars, as we know that globular clusters exhibit
+significant abundance trends due to multiple stellar populations (e.g.
+Carretta et al. 2009). We stress, however, that these clusters also hold
+valuable information and, according to current studies (e.g. Massari
+et al. 2019; Koch-Hansen et al. 2021), ∼35% of them appear to be
+linked to merger events.
+The requirement of finite age estimates from BSTEP (a Bayesian
+isochrone interpolation tool used as part of GALAH+ DR3 Sharma
+et al. 2018) ensures that the fitting of both ages and distances via
+BSTEP was successful. As a result, we can use the distances 𝐷 𝜛
+for all stars of our base sample that are informed by spectroscopic,
+photometric, and astrometric information, rather than the photogeometric or geometric distances by Bailer-Jones et al. (2021) that are
+also provided in the GALAH+ DR3 VACs.
+For the radial velocities, we prefer to use the template matched
+values rv_obst provided by the GALAH DR3 RV VAC, otherwise
+those from the sme pipeline (rv_sme_v2) and else those from Gaia
+eDR3 (Katz et al. 2019), which originate in Gaia DR2. We always
+the radial velocity 𝑣 rad with the smallest uncertainty:
+
+
+rv_obst if available w/ smallest unc., else
+
+
+
+𝑣 rad = rv_sme_v2 if avail. w/ smallest unc., else
+
+
+ dr2_radial_velocity if avail. w/ smallest unc.
+
+
+(2)
+
+In practice, we use 97% radial velocities from template matching
+and 3% GALAH radial velocities where no template was available.
+We only use Gaia DR2 radial velocities for 185 stars of the base sample ( 1%) and 4 stars of our final chemical and dynamical selections
+( 1%), none of them being main-sequence turn-off (MSTO) stars.
+We use kinematic and dynamic properties like orbit actions and
+eccentricities as reported in the GALAH DR3 VAC for dynamics.
+These calculations were performed by using galpy (Bovy 2015)
+and its orbit module as well as galpy’s actionAngleStaeckel
+approximations via the Staeckel fudge (Binney 2012; Mackereth &
+Bovy 2018). Calculations assumed the axisymmetric potential by
+McMillan (2017) and a circular velocity of 233.1 km s−1 . The Sun
+is positioned at 𝑅 = 8.21 kpc and 𝑧 = 0.025 kpc (Jurić et al. 2008)
+with space motions 𝑈 = −11.1 km s−1 , 𝑉 = 15.17 km s−1 , 𝑊 =
+7.25 km s−1 (Schönrich et al. 2010; Reid & Brunthaler 2004) relative
+to the Local Standard of Rest (LRS). For more details see Buder
+et al. (2021). We use isochrone-interpolated stellar ages from BSTEP
+(Sharma et al. 2018). The most reliable isochrone-interpolated stellar
+ages of our data set are determined for
+n
+
+
+MSTO stars = 𝑇eff ≥ 5350 K and log 𝑔 ≥ 3.5 log cm s−2
+
+(3)
+
+MNRAS 000, 1–29 (2021)
+
+4
+
+S. Buder et al.
+
+Figure 1. Visualisation of the preliminary selection of low-𝛼 stars (see Eq. 4) from GALAH+ DR3 based on the selection by Nissen & Schuster (2010).
+Panel a) Initial selection (shown with red dashed line) of stars via a cut in total velocity 𝑣tot > 180 km s−1 , here shown in the classical Toomre diagram 𝑉 vs.
+√
+𝑈 2 + 𝑊 2 , relative to the local standard of rest (LSR). Stars on retrograde orbits are left of the red line of 𝑉 = −233.1 km s−1 . Panel b) Same stars, but in the
+Galactocentric reference frame. Panel c) [Fe/H] vs. [Mg/Fe] diagram with the chemical selection of low-𝛼 halo stars by Nissen & Schuster (2010) shown as red
+dashed box. Our selection (orange dashed box) is extended towards lower [Fe/H] to built a larger sample. Panel d) [Fe/H] vs. global [𝛼/Fe] diagram showing
+an additional cut (orange dashed box) to clean our selection from contamination due to the lower precision of our sample relative to Nissen & Schuster (2010).
+Error bars in the bottom left of each panel show the median uncertainties for our base sample (black) and high 𝑣tot samples (blue).
+
+3 CHEMICAL/DYNAMICAL SELECTIONS
+As we describe in Sec. 1, a plethora of different techniques exist
+to enable the selection of accreted stars (see also again Table 1). In
+this section, we seek the best way to chemically tag (Freeman &
+Bland-Hawthorn 2002; Ting et al. 2015) accreted stars. This refers to
+tracing a common origin through similarities in chemical composition, under the assumption that each origin is chemically distinct. In
+a similar context, Rix & Bovy (2013) advocated strongly for the use
+of mono-abundance populations as a productive way forward, both
+when applied via the selection of chemical cells (Ting et al. 2015; Lu
+et al. 2021) for observational data (e.g. Bovy et al. 2012b,a, 2016)
+as well as models (e.g. Ting et al. 2013; Bird et al. 2013), when
+keeping in mind that these are not necessarily mono-age populations
+(Minchev et al. 2017). This approach is effectively one application
+of strong chemical tagging, because it does not at all rely on nonchemical data for the selection of accreted substructures.
+In order to find the best chemical selection of accreted stars in
+GALAH+ DR3, we are, however, limited by the data. We therefore
+first have to assess the enrichment differences between the halo and
+the disk among elements reported in GALAH+ DR3. While initial
+applications of mono-abundance populations have been performed
+in 2-dimensional space (e.g. Navarro et al. 2011; Di Matteo et al.
+2019; Carollo & Chiba 2021) for [Fe/H] and [Mg/Fe] or [𝛼/Fe], the
+use of more abundances and especially nucleosynthesis dimensions,
+seems advisable and can be based on already existing literature (Nissen & Schuster 2010; Ting et al. 2012; Hawkins et al. 2015; Hayes
+et al. 2018; Das et al. 2020). We therefore first study the quantitative enrichment differences as found in GALAH+ DR3 in Sec. 3.1
+and then assess the most promising combination of abundances in
+Sec. 3.2, before finding our final chemical selection of accreted stars
+(Sec. 3.3), which we aim to compare to the dynamical selection introduced in Sec. 3.4. We put our findings of chemical differences
+into the theoretical context of nucleosynthesis processes like SNIa
+and SNII in Sec. 5.1.
+
+3.1 Chemical differences of kinematic low-/high-𝛼 halo stars
+The studies by Nissen & Schuster (2010, 2011, 2012) and Nissen
+et al. (2014) have found significant differences between high-velocity
+stars of the disk and accreted stars (low-𝛼 halo in their study), when
+using the differences in [Mg/Fe] and [Na/Fe] as a baseline. We use
+MNRAS 000, 1–29 (2021)
+
+the selection of accreted (low-𝛼 halo) stars and abundances reported
+in these studies, which are among the most precise measurements
+across nucleosynthesis channels of halo stars to date, as a starting
+point to learn about the enrichment differences between the halo
+and disk for different elements within GALAH+ DR3. These also
+serve as an additional reliability check of GALAH+ DR3 data in
+this parameter space. We find three stars (2MASS IDs 074343980004006, 08584388-1607583, 13535810-4632194) overlapping between GALAH+ DR3 and the sample from Nissen & Schuster (2010),
+with [Fe/H] values of -1.27, -0.86, and -0.73, respectively.. Their stellar parameters agree within the uncertainties for all stellar parameters
+(we note parallax uncertainties of less than 1%) and the abundances
+typically differ by less than 0.05 dex, with Cr being the only exception
+with a difference of 0.1 dex. We note only 195 (5%) of our low-𝛼 halo
+sample are MSTO stars, similar to the selection by Nissen & Schuster
+(2010). The majority of our sample are giant stars. Found differences
+and scatters between the literature and our sample could thus be real
+or influenced by non-LTE effects as well as analysis effects like the
+choice of analysed lines and our prescription of microturbulence (see
+discussion in Sec. 6.4 of Buder et al. 2021).
+
+3.1.1 Separating kinematic low- and high-𝛼 halo stars
+For the comparison with the literature data of the low-𝛼 halo, we
+perform very similar cuts to the GALAH+ DR3 data as Nissen &
+Schuster (2010). We apply an initial cut in the total velocity of
+𝑣 tot > 180 km s−1 with respect to the LSR. We plot the velocity
+distribution (grey-scaled density) in Fig. 1a in a classic Toomre diagram of space velocities with respect to the LSR for the GALAH+
+DR3 data and with Galactocentric space velocities in Fig. 1b. We
+only show data with reliable (unflagged) [Mg/Fe] and [𝛼/Fe] (an
+error-weighted average of Mg, Si, Ca, and Ti i lines) in addition to
+the basic quality cuts of Eq. 1. We adopt this definition of [𝛼/Fe] from
+GALAH+ DR3 and explicitly treat O separately, because of its significantly different trend compared to the other 𝛼-process elements (see
+Buder et al. 2018, for a detailed discussion). In this projection, stars
+that move similar to the LSR are located close to the origin of coordinates, like the Sun. Almost all stars of GALAH+ DR3 have small
+total motions compared to the LSR, with only 3.1% (13296 spectra)
+and 2.3% (9894 spectra) above a total or tangential velocity (𝑣 tot
+or 𝑣𝑇 ) above 180 km s−1 , respectively. These stars, shown in a blue
+
+Accreted stars in GALAH+ DR3
+density distribution in Fig. 1, are typically assigned to the kinematic
+halo (e.g. Venn et al. 2004) and are thought to cover both accreted
+stars as well as in-situ halo and/or disk stars on dynamically hot and
+heated orbits. In addition to this kinematic cut, we apply a cut in both
+𝛼-enhancement and iron abundance, to get a preliminary selection of
+the low-𝛼 halo as reported by Nissen & Schuster (2010). However, we
+expand the selection by Nissen & Schuster (2010), shown as the red
+dashed lines in Fig. 1c, which is limited to −1.6 < [Fe/H] < −0.4
+down to an iron abundance of [Fe/H] ∼ −2.0, where the onset of
+SNIa contributions for the GSE was found by Matsuno et al. (2019).
+This includes more stars in our preliminary selection (see the difference between red and orange dashed lines in Fig. 1c), as the low-𝛼
+halo stars clearly extend past the original selection by Nissen &
+Schuster (2010). We acknowledge that this preliminary selection excludes the most metal-poor stars of the GSE (Cordoni et al. 2021).
+Our precision for kinematic halo stars is on average lower by a factor
+of 2-3 compared to Nissen & Schuster (2010), for example 0.09,
+0.10, and 0.04 compared to 0.03, 0.03, and 0.02 for [Fe/H], [Mg/Fe],
+and [𝛼/Fe]. We thus see a significant contamination of our [Mg/Fe]
+measurements by the high-𝛼 halo, located at [Fe/H] = −0.65+0.24
+,
+−0.43
++0.08 . We therefore apply
+[Mg/Fe] = 0.29+0.11
+,
+and[𝛼/Fe]
+=
+0.27
+−0.11
+−0.07
+a second chemical cut, estimated from the data by Nissen & Schuster (2010), on the combined [𝛼/Fe] (see the orange dashed line in
+Fig. 1d). The applied cuts for the preliminary selection of low-𝛼 halo
+stars in GALAH+ DR3 data, leading to a sample of 4164 spectra (3838 of them with unflagged [Na/Fe] measurements), can be
+summarised as
+
+ 𝐸𝑞. 1, 𝑣 tot > 180 km s−1 ,
+
+
+
+
+
+flags = 0 for Fe, 𝛼, Mg, & Na,
+
+
+
+(4)
+Prel. low − 𝛼 halo = −2.0 ≤ [Fe/H] ≤ −0.4,
+
+
+1
+1
+
+ [Mg/Fe] < − 12 × [Fe/H] + 6 , and
+
+
+
+0.7
+1
+
+ [𝛼/Fe] < − 6 × [Fe/H] + 12 .
+Conversely, we describe the preliminary high-𝛼 halo via
+
+
+𝐸𝑞. 1, 𝑣 tot > 180 km s−1 ,
+
+
+
+
+
+flags = 0 for Fe, 𝛼, Mg, & Na,
+
+
+
+Prel. high − 𝛼 halo = −2.0 ≤ [Fe/H] ≤ −0.4,
+
+
+1 × [Fe/H] + 1 , and
+
+ [Mg/Fe] ≥ − 12
+
+6
+
+
+ [𝛼/Fe] ≥ − 1 × [Fe/H] + 0.7 .
+12
+
+6
+
+(5)
+
+3.1.2 Chemical differences for element groups
+To get a first impression of how significant the differences for the
+low- and high-𝛼 halo are, we follow a similar approach to Nissen
+& Schuster (2011, see their Fig. 5) by plotting the abundances for
+our preliminary low-𝛼 halo selection (orange) and all GALAH+ DR3
+stars (greyscale) as a function of the light odd-Z element Na in Fig. 2.
+We overplot the measurements by Nissen & Schuster (2010, 2011);
+Nissen et al. (2014); Fishlock et al. (2017) for low-𝛼 halo (red)
+and high-𝛼 halo (blue) as well as thick disk stars (black). Although
+the individual figures with [Na/Fe] as their x-axis are sorted by
+their atomic numbers, we subsequently discuss them based on their
+major element group, that is 1) light elements Li and O, 2) the 𝛼process elements Mg, Si, Ca, and Ti, as well as their error-weighted
+combination noted as 𝛼, 3) the light odd-Z elements Al and K, 4)
+the iron-peak elements Sc, V, Cr, Mn, Co, Ni, Cu, and Zn, 5) the
+s-process dominated elements Y, Zr, Ba, La, and Ce, and 6) the rprocess dominated elements Nd and Eu. Both our measurements and
+those from the literature are assuming 1D non-LTE for Li Nissen &
+
+5
+
+Schuster (2012), C and O (Nissen et al. 2014). For Na, Mg, Al, Si, K,
+Ca, Mn, and Ba we compare our 1D non-LTE measurements with 1D
+LTE ones from the literature. For the other elements (Sc, Ti, V, Cr,
+Co, Ni, Cu, Zn, Rb, Sr, Y, Zr, La, Ce, Ru, Nd, and Eu) we compare
+1D LTE measurements.
+We are looking for a way to isolate the accreted structure via its
+chemical signature. We aim to find those elements in Fig. 2, which
+show both a dense concentration of accreted stars in abundance space
+(suggesting either a high measurement precision or a low intrinsic
+dispersion of the particular element in accreted stars) as well as a
+significant separation from the preliminary high-𝛼 halo as well as
+thick disk. In addition to this figure, we have calculated the 16th ,
+50th , and 84th percentile for each abundance for the preliminary low𝛼 and high-𝛼 selection and computed means 𝜇𝑙 and 𝜇 ℎ , standard
+deviations 𝜎𝑙 and 𝜎ℎ as well as skewness values 𝜇˜ 𝑙,3 and 𝜇˜ ℎ,3 for
+both selections after performing 2-𝜎 clipping2 . We list all values in
+Tab. 1 and include them subsequently for the assessment of the abundance differences. While these calculations allow us to quantify the
+distributions, we note that we do not necessarily expect the chemical
+enrichment in a low-mass galaxy to produce normally distributed
+abundances. To allow better judgement of Gaussianity beyond the
+calculated numbers, we append histograms for the selections in the
+supplementary material, again sorted by the major element groups.
+Readers who are not concerned with the reliability and Gaussianity of the GALAH abundances, can move on to Sec. 3.2, where we
+choose the most promising abundances.
+Light elements: Li, O: Looking at Li in Fig. 2, we do not see a
+significant separation of the structures, but a distribution of stars from
+all structures across a significant range of [Li/Fe] (with 68% of the
+values between 0.71 and 2.10), which can be explained by the change
+of [Li/Fe] across different populations due to stellar evolutionary
+effects like depletion (e.g. Gao et al. 2020). For O, we see that
+the GALAH+ DR3 data is overlapping with the data by Nissen et al.
+(2014), but exhibits a larger scatter and extends to much higher [O/Fe]
+(with 68% of the values between 0.30 and 0.79), whereas the low-𝛼
+halo stars by Nissen et al. (2014) only extend up to [O/Fe] ≤ 0.61.
+For O, especially when measured from the 𝜆7774 O i triplet as for
+both our and the Nissen et al. (2014) data, 3D and non-LTE effects
+are known to be significant (Amarsi et al. 2015, 2016, 2019). Our
+abundance data takes into account non-LTE corrections from Amarsi
+et al. (2020), and we note that Nissen et al. (2014) likewise used nonLTE corrections from Fabbian et al. (2009). There is an extended tail
+towards higher [O/Fe] values (causing a slightly positive skewness
+of 𝜇˜ 𝑙,3 = 0.28). This suggests an unknown error source causing
+spurious high abundances (see discussions in Buder et al. 2021).
+𝛼-process elements: Mg, Si, S, Ca, Ti: For the individual 𝛼-process
+elements (Fig. 2), but especially for their error-weighted combination
+(reported as [𝛼/Fe] by GALAH+ DR3), we see a significantly smaller
+scatter than for O, that is 0.07, 0.09, 0.09, 0.10, and 0.13 for [𝛼/Fe],
+[Mg/Fe], [Si/Fe], [Ca/Fe], and [Ti/Fe], compared to the much higher
+value of 0.22 for [O/Fe]. Each of their distributions is symmetrical
+and agrees extremely well with the distribution of stars from Nissen
+& Schuster (2010) for [Na/Fe] < 0. For [Mg/Fe] we see a moderately
+negative skewness of 𝜇˜ 𝑙,3 = −0.53, which is caused by our strict linear cuts on both elements. The distribution for Ti is, contrary to those
+
+2 For this, we clip the lowest and highest 2.275% of the sample. Using 3-𝜎
+clipping or no 𝜎 clipping lead to on average 10-17% and 12-24% smaller
+significances, respectively.
+
+MNRAS 000, 1–29 (2021)
+
+6
+
+S. Buder et al.
+
+Figure 2. Abundances [X/Fe] for the the 28 elements measured by GALAH in addition to Na and Fe, whose abundance ratio [Na/Fe] is used on the
+ordinate. GALAH+ DR3 stars which are preliminary tagged to the low-𝛼 halo (via Eq. 4) are shown in orange with numbers indicate in the bottom right. stars
+which are preliminary tagged to the high-𝛼 halo (via Eq. 5) are shown in black contours. We also show the data by Nissen & Schuster (2010) for 𝛼, Na, Mg, Si,
+Ca, Ti, Cr, and Ni with red circles for their low-𝛼 halo stars, blue open circles for their high-𝛼 halo stars and black crossed for their thick disk stars. For the same
+stars of this study, we plot the data by Nissen & Schuster (2011) for Mn, Cu, Zn, Y, and Ba, Nissen & Schuster (2012) for Li (their non-LTE values with arrows
+for upper limits), Nissen et al. (2014) for O (their non-LTE values based on the 𝜆7774 O i triplet), and Fishlock et al. (2017) for Sc, Zr, La, Ce, Nd, and Eu.
+
+MNRAS 000, 1–29 (2021)
+
+Accreted stars in GALAH+ DR3
+
+7
+
+Table 1. Numbers of measurements and statistic properties of element abundances [X/Y] of the preliminary selected low-𝛼 (𝑙) and high-𝛼 (ℎ) halo
+stars. For each abundance ratio, we report 16/50/84th percentiles. We further calculate mean 𝜇𝑖 , standard deviation 𝜎𝑖 , and skewness 𝜇˜ 𝑖,3 after performing
+2-𝜎-clipping (removing the top/bottom 2.275% of the sample). In addition to the difference of the means we report their significance 𝑟 . Major element groups
+are separated by horizontal lines: firstly [Fe/H] followed by light, 𝛼-process elements, light odd Z, iron-peak, and neutron-capture elements. We caution that the
+values of 𝑟 for both 𝛼 and Mg depend on where the line is drawn between low- and high-𝛼 samples.
+
+Nr.
+
+Prel. low-𝛼 halo (Eq. 4)
+Perc. 16/50/84
+𝜇𝑙 ± 𝜎𝑙
+
+𝜇˜ 𝑙,3
+
+Nr.
+
+Prel. high-𝛼 halo (Eq. 5)
+Perc. 16/50/84
+𝜇ℎ ± 𝜎ℎ
+
+𝜇˜ ℎ,3
+
+3838
+
+−1.15+0.39
+−0.37
+
+−0.04
+
+5230
+
+−0.66+0.16
+−0.29
+
+−0.70 ± 0.20
+
+[Li/Fe]
+[C/Fe]
+[O/Fe]
+
+525
+25
+3090
+
+1.28+0.82
+−0.58
+0.77+0.61
+−0.26
+0.53+0.26
+−0.23
+
+1.33 ± 0.63
+0.87 ± 0.36
+0.54 ± 0.22
+
+0.18
+0.38
+0.28
+
+548
+62
+4929
+
++1.08
+0.92−0.85
++0.39
+0.60−0.29
++0.20
+0.57−0.18
+
+[ 𝛼/Fe]
+[Mg/Fe]
+[Si/Fe]
+[Ca/Fe]
+[Ti/Fe]
+
+3838
+3838
+3750
+3716
+3543
+
+0.15+0.07
+−0.08
+0.12+0.08
+−0.11
+0.14+0.10
+−0.10
+0.21+0.10
+−0.11
+0.17+0.14
+−0.12
+
+0.15 ± 0.07
+0.12 ± 0.09
+0.14 ± 0.09
+0.20 ± 0.10
+0.18 ± 0.13
+
+−0.24
+−0.53
+0.12
+−0.26
+0.67
+
+5230
+5230
+5174
+5045
+5015
+
+[Na/Fe]
+[Al/Fe]
+[K/Fe]
+
+3838
+1580
+3769
+
+−0.18+0.18
+−0.14
+−0.01+0.25
+−0.18
+0.11+0.12
+−0.14
+
+−0.17 ± 0.15
+0.01 ± 0.20
+0.10 ± 0.12
+
+0.31
+0.53
+0.00
+
+[Sc/Fe]
+[V/Fe]
+[Cr/Fe]
+[Mn/Fe]
+[Co/Fe]
+[Ni/Fe]
+[Cu/Fe]
+[Zn/Fe]
+
+3805
+1310
+3586
+3811
+1587
+3066
+2613
+3629
+
+0.06+0.09
+−0.09
+0.02+0.32
+−0.29
+−0.15+0.13
+−0.13
+−0.36+0.14
+−0.12
+−0.07+0.35
+−0.13
+−0.15+0.12
+−0.12
+−0.49+0.28
+−0.14
+0.16+0.18
+−0.15
+
+0.07 ± 0.08
+0.04 ± 0.30
+−0.15 ± 0.12
+−0.36 ± 0.12
+0.03 ± 0.30
+−0.14 ± 0.11
+−0.45 ± 0.19
+0.17 ± 0.16
+
+[Rb/Fe]
+[Sr/Fe]
+[Y/Fe]
+[Zr/Fe]
+[Ba/Fe]
+[La/Fe]
+[Ce/Fe]
+
+124
+126
+3582
+1311
+3822
+2441
+1083
+
+0.12+0.86
+−0.22
+1.02+0.48
+−0.58
+0.08+0.25
+−0.22
+0.26+0.41
+−0.25
+0.31+0.33
+−0.30
+0.25+0.31
+−0.18
+−0.16+0.25
+−0.14
+
+[Ru/Fe]
+[Nd/Fe]
+[Eu/Fe]
+
+242
+2954
+1841
+
+0.42+0.46
+−0.21
+0.47+0.20
+−0.16
+0.44+0.18
+−0.16
+
+[X/Y]
+[Fe/H]
+
+| 𝜇 −𝜇ℎ |
+
+𝜇𝑙 − 𝜇ℎ
+
+𝑟 = √︃ 𝑙
+
+−0.93
+
+−0.45
+
+1.16
+
+1.00 ± 0.82
+0.66 ± 0.28
+0.58 ± 0.18
+
+0.16
+0.18
+0.34
+
+0.34
+0.21
+−0.04
+
+0.33
+0.47
+0.15
+
++0.07
+0.28−0.05
++0.10
+0.33−0.06
++0.11
+0.27−0.08
++0.11
+0.26−0.11
++0.11
+0.27−0.09
+
+0.29 ± 0.06
+0.34 ± 0.08
+0.28 ± 0.09
+0.26 ± 0.10
+0.28 ± 0.10
+
+0.59
+0.83
+0.63
+0.13
+0.73
+
+−0.14
+−0.23
+−0.14
+−0.06
+−0.10
+
+1.58
+1.98
+1.09
+0.42
+0.62
+
+5230
+4777
+5142
+
++0.10
+0.10−0.11
++0.12
+0.31−0.14
++0.16
+0.17−0.15
+
+0.10 ± 0.10
+0.30 ± 0.12
+0.17 ± 0.14
+
+−0.03
+−0.29
+0.22
+
+−0.27
+−0.29
+−0.07
+
+1.52
+1.26
+0.37
+
+0.02
+0.69
+0.08
+0.16
+1.85
+0.12
+0.86
+0.37
+
+5198
+2841
+5101
+5172
+3844
+4813
+4875
+4824
+
++0.09
+0.14−0.08
++0.33
+0.22−0.22
+−0.06+0.10
+−0.10
+−0.19+0.12
+−0.12
++0.12
+0.09−0.12
++0.09
+0.04−0.11
++0.13
+0.01−0.19
++0.23
+0.21−0.16
+
+0.15 ± 0.08
+0.27 ± 0.26
+−0.06 ± 0.10
+−0.19 ± 0.11
+0.11 ± 0.16
+0.04 ± 0.09
+−0.01 ± 0.14
+0.23 ± 0.19
+
+0.27
+0.73
+0.29
+0.08
+2.08
+−0.08
+−0.53
+0.38
+
+−0.08
+−0.23
+−0.09
+−0.17
+−0.08
+−0.18
+−0.44
+−0.07
+
+0.72
+0.57
+0.62
+1.05
+0.23
+1.27
+1.82
+0.28
+
+0.34 ± 0.48
+0.97 ± 0.44
+0.09 ± 0.22
+0.34 ± 0.36
+0.32 ± 0.29
+0.31 ± 0.25
+−0.11 ± 0.21
+
+0.75
+−0.11
+0.48
+1.33
+0.41
+1.16
+1.39
+
+905
+386
+4813
+2653
+5216
+3497
+2140
+
++0.19
+0.13−0.16
++0.59
+0.74−0.39
++0.31
+0.11−0.25
++0.36
+0.20−0.22
++0.37
+0.14−0.28
++0.30
+0.17−0.16
+−0.17+0.19
+−0.12
+
+0.15 ± 0.18
+0.81 ± 0.42
+0.13 ± 0.27
+0.26 ± 0.30
+0.18 ± 0.30
+0.23 ± 0.25
+−0.13 ± 0.20
+
+0.84
+0.40
+0.68
+1.15
+0.67
+1.40
+2.09
+
+0.19
+0.16
+−0.04
+0.08
+0.14
+0.08
+0.02
+
+0.37
+0.26
+0.12
+0.17
+0.34
+0.22
+0.05
+
+0.51 ± 0.33
+0.49 ± 0.18
+0.44 ± 0.16
+
+1.26
+0.65
+0.25
+
+850
+3765
+3045
+
++0.31
+0.36−0.18
++0.19
+0.34−0.14
++0.12
+0.30−0.11
+
+0.42 ± 0.26
+0.37 ± 0.17
+0.31 ± 0.11
+
+1.36
+1.22
+0.43
+
+0.10
+0.12
+0.13
+
+0.22
+0.48
+0.70
+
+−1.15 ± 0.33
+
+of other 𝛼-elements, skewed towards higher values with 𝜇˜ 𝑙,3 = 0.67,
+indicating possible issues with high [Ti/Fe] measurements (because
+Ti is detected in more than 92% of the low-𝛼 halo). In these panels,
+which have all measurements for [Mg/Fe], we notice a significant
+number (602 spectra, that is, 16%) of stars preliminary selected as
+part of the low-𝛼 halo, but with [Na/Fe] > 0. Nissen & Schuster
+(2010) found only 2 of the 38 (5%) low-𝛼 halo stars in their study
+(G53-41 and G150-40) in this abundance space. Due to our lower precision, our sample also reaches into the super-Solar [Na/Fe] regime.
+Nissen & Schuster (2011) suggested that their two Na-enhanced stars
+could be halo field counterparts of the Na-enhanced globular cluster
+stars. While we have excluded the dedicated globular cluster observations like those of 𝜔 Cen in our initial selection (see Eq. 1), a
+follow-up of these Na-rich stars should be done in a dedicated study.
+
+2
+𝜎𝑙2 +𝜎ℎ
+
+Light odd-Z elements: Na, Al, K: Similar to Na and based on the
+studies by Hawkins et al. (2015) and Das et al. (2020), we would
+expect Al to show a significant difference between the preliminary
+low- and high-𝛼 halo. Indeed, we see a very similar (almost 1:1
+relation) between the [Na/Fe] and [Al/Fe] measurements of the low𝛼 halo in Fig. 2. In our sample of GALAH+ DR3, we are, however
+only able to estimate 41% of the Al abundances for the low-𝛼 halo.
+This is caused by the challenges involved in detecting Al lines in our
+spectral at the lowest [Al/Fe] in our sample, as is also indicated by the
+positive skewness of 𝜇˜ 𝑙,3 = 0.53. Contrary to this, we can measure
+[K/Fe] from the K i resonance line for almost all stars (98%). This
+element, however, shows only small differences in [K/Fe] between
+the low- and high-𝛼 halo.
+
+MNRAS 000, 1–29 (2021)
+
+8
+
+S. Buder et al.
+
+Iron-peak elements: Sc to Zn: For the iron-peak elements, we are
+able to detect Sc, Cr, Mn and Zn in more than 90% of the sample.
+For Ni and Cu, the corresponding detection frequencies are 80% and
+68%. Less than half of the measurements are available for Co (41%)
+and V (34%). Especially for the last three elements, we see that the
+distribution is positively skewed with 𝜇˜ 𝑙,3 = 0.86, 1.85, and 0.69
+for Cu, Co, and V, respectively. For Co and V, we can explain these
+issues with existing measurement issues in GALAH+ DR3 (Buder
+et al. 2021), with large scatter for V (68% of the values between
+−0.27 and 0.34) and extended tails of high abundances for both V
+and Co. For Cu, the most likely explanation are detection limitations,
+as this element shows the largest difference of |𝜇𝑙 − 𝜇 ℎ | = 0.44 of
+all elements (except Fe) in our sample (see again Tab. 1). For this
+element, we further see the best agreement between the distribution
+of abundances [X/Fe] compared to those from Nissen & Schuster
+(2010) and Nissen & Schuster (2011). Their values of [X/Fe] of the
+low-𝛼 halo are typically higher and less scattered for Cr (𝜇𝑙 ± 𝜎𝑙 =
+−0.02 ± 0.03 compared to our 𝜇𝑙 ± 𝜎𝑙 = −0.15 ± 0.12). For both Mn
+(𝜇𝑙 ± 𝜎𝑙 = −0.31 ± 0.05 compared to our 𝜇𝑙 ± 𝜎𝑙 = −0.36 ± 0.12) and
+Ni (𝜇𝑙 ± 𝜎𝑙 = −0.10 ± 0.05 compared to our 𝜇𝑙 ± 𝜎𝑙 = −0.14 ± 0.11)
+we find good agreement. This is especially noteworthy in the case of
+Mn, because the element was treated in LTE by them, but non-LTE
+by us with calculations based on departure coefficients by Amarsi
+et al. (2020). For Zn, their values are significantly lower and less
+scattered than ours (𝜇𝑙 ± 𝜎𝑙 = 0.02 ± 0.09 compared to our 𝜇𝑙 ± 𝜎𝑙 =
+0.17 ± 0.16). Given that we use the same two lines with the same
+excitation potential, possible reasons are either the differences in our
+analysis (log(𝑔 𝑓 ) values of 𝜆𝜆4722, 4811 Zn i) or that the underlying
+selection is different.
+
+Neutron-capture elements: Rb to Eu: We estimate higher values
+than Nissen & Schuster (2011) for Y (𝜇𝑙 ± 𝜎𝑙 = −0.14 ± 0.09 compared to our 𝜇𝑙 ± 𝜎𝑙 = 0.09 ± 0.22). Similar to Zn, Y is estimated
+from two lines (𝜆𝜆4855, 4884 Y ii) of the blue HERMES detector,
+the latter overlapping (but again with different log(𝑔 𝑓 ) values) with
+𝜆𝜆4884, 5087 Y ii, that is, the two lines used by Nissen & Schuster
+(2011). As an effect of the high [Y/Fe] of the low-𝛼 halo, the difference between the means of low-𝛼 and high-𝛼 halo is only 0.04. Also
+for Ba, we see a significant difference between the values from Nissen & Schuster (2011) and our distributions (𝜇𝑙 ± 𝜎𝑙 = −0.16 ± 0.09
+compared to our 𝜇𝑙 ± 𝜎𝑙 = 0.32 ± 0.29). The scatter of our [Ba/Fe] is
+large, and the lack of lower [Ba/Fe] values for low [Na/Fe] ∼ −0.5
+stars suggests that our values are possibly too high for the most Napoor low-𝛼 halo stars. For the other three s-process elements Zr, La,
+and Ce, we are limited again by detectability, allowing only measurements of 34%, 64%, 28% of the low-𝛼 halo. In general, all of the
+s-process elements show significant tails of high [X/Fe] values and
+positive skewness of 𝜇˜ 𝑙,3 = 0.48, 1.33, 0.41, 1.16, and 1.39 for Y,
+Zr, Ba, La, and Ce. It is noteworthy that the position of the [Ce/Fe]
+distribution (𝜇𝑙 ± 𝜎𝑙 = −0.11 ± 0.21) coincides with those of Y and
+Ba by Nissen & Schuster (2011).
+For the r-process elements we find typically positive values of
+[X/Fe] with 𝜇𝑙 ± 𝜎𝑙 = 0.49 ± 0.18 and 𝜇𝑙 ± 𝜎𝑙 = 0.44 ± 0.16 for Nd
+and Eu, respectively. Both are above the average values for the high-𝛼
+halo, with mean differences 𝜇𝑙 − 𝜇 ℎ of 0.12 and 0.13, respectively.
+This could be an effect of our measurements being close to the
+detection limit and possibly overestimated. The few estimates by
+Fishlock et al. (2017) for the low-𝛼 halo sample by Nissen & Schuster
+(2010) are at least always at the lower edge of our measurements.
+MNRAS 000, 1–29 (2021)
+
+3.2 Choosing the most promising abundances
+Having looked at the various elements covered by the GALAH+ DR3
+data, we now consider which combination of abundances is most
+promising as a tool for the selection of GSE stars using GALAH+
+DR3 and Gaia eDR3. The previous research (Nissen & Schuster
+2010, 2011; Ting et al. 2012; Hawkins et al. 2015; Hayes et al. 2018)
+provided several promising indicators for elements with significantly
+different nucleosynthetic sites and ejection timescales, including 2dimensional maps of [Na/Fe] vs. [Ni/Fe] or [Al/Fe] vs. [Mg/Mn].
+Based on the available abundances and their separation between
+the preliminary low-𝛼 halo from the high-𝛼 halo, we are now looking
+for the combination within GALAH+ DR3 and Gaia eDR3 that is
+most promising to select as many accreted stars chemically, while
+avoiding significant contamination. As a guideline, we use correlation, precision, and the number of measurements to select the most
+promising combination from the individual elements.
+Among the major element groups, we identify the 𝛼-process elements, odd-Z elements, and iron-peak elements to have both the
+largest absolute distances 𝜇𝑙 − 𝜇 ℎ between the low-𝛼 and high-𝛼
+halo. Furthermore, following the arguments of Lindegren & Feltzing (2013), we can quantify how significant the separation between
+the two populations is, by taking into account their scatter within
+GALAH+ DR3 - caused by either their intrinsic scatter or our measurement uncertainties:
+𝜇1,2 = ±
+
+𝑟𝜎
+2
+
+→
+
+𝑟=
+
+|𝜇1 − 𝜇2 |
+.
+𝜎
+
+(6)
+
+This separation significance 𝑟 is listed in Table 1. We find the largest
+values (𝑟 > 1) for [Fe/H], [𝛼/Fe], [Mg/Fe], [Si/Fe], [Na/Fe], [Al/Fe],
+[Mn/Fe], [Ni/Fe], and [Cu/Fe].
+To get a sense of the correlation between the individual elements,
+we calculate the Pearson correlation coefficients 𝑟 𝑃 for the low-𝛼
+halo stars, indicating higher correlations between 𝛼-Mg (0.63), 𝛼Si (0.63), Na-Al (0.71), Mn-Cu (0.56), and Ni-Cu (0.64) but lesser
+correlations for Mg-Si (0.36) and Mn-Ni (0.40). Comparing these
+coefficients to all other element combinations, coefficients above 0.6
+appear infrequently among the preliminary low-𝛼 stars, that is, only
+for combinations of 𝛼 with Mg or Si (𝛼 is computed based on Mg,
+Si, Ca, and Ti), Na with Al (odd-Z), Mn or Ni with Cu (iron-peak),
+Y with Ba as well as Zr with La with Ce (all s-process), and Nd with
+La/Ce/Eu (s/r-process).
+We note that at higher precision, we would expect these correlation
+coefficients to be even larger, but at the same time would expect to see
+clear intrinsic differences between elements (e.g. Ting & Weinberg
+2021; Weinberg et al. 2021).
+Among the elements with 𝑟 > 1, Al has the fewest measured
+abundances for the low-𝛼 halo (41%), followed by Cu (68%) and Ni
+(80%), all other elements have close to 100% detection rate within
+our selection.
+We have repeated this exercise also with higher values of 𝑣 tot up
+to 240 km s−1 and a more strict limit on [Fe/H], for example only
+down to −1.6 dex. In all cases with similar results on the separation
+significances 𝑟 within 0.15, with the exception of the rarely measured
+element C, which increase by up to a factor of 2.
+To get a different angle on the detection rate, we plot the completeness (as a function of the numbers of stars with unflagged
+[Fe/H] measurements) in bins of −3.0..(0.2).. − 0.4 dex in Fig. 3
+- this time for all stars and not only the preliminary low-𝛼 halo ones.
+Based on Fig. 3a, we can conclude that the detection rate for all elements decreases towards lower [Fe/H], with a significant drop below
+[Fe/H] ≤ −1.5 dex. We further include Al, which was previously
+used by Das et al. (2020) with APOGEE abundances, but is not well
+
+Accreted stars in GALAH+ DR3
+
+9
+
+Our input to xdgmm is a matrix of features and their uncertainty
+matrix for 𝑛 stars. Features are different combinations of the 6 most
+promising elements Mg, Si, Na, Mn, Cu, and Ni, in different notations and combinations, such as [Mg/Na] or [Cu/Fe], and their
+uncertainties. Because xdgmms are computationally expensive, we
+first use simple GMMs, that is, scikit-learn’s GaussianMixture
+(Pedregosa et al. 2011), to explore which combination of measurements is most promising. We discuss the possible combinations of
+measurements to features subsequently.
+Both for simple GMMs and xdgmm, we estimate how many model
+components are preferable by using the Bayesian information criterion (BIC, Schwarz 1978), defined as
+BIC = ln(𝑛)𝑘 − 2 log L,
+
+(7)
+
+with 𝑛 being the number of stars/observations of 𝑘 components of
+the GMM yielding a maximised likelihood function L. We test up
+to 𝑘 ≤ 30 components for the simple GMMs and 𝑘 ≤ 10 for the
+xdgmm. We select the model with the lowest BIC as the best one.
+3.3.1 Assessing abundance combinations with simple GMMs
+
+Figure 3. Overview of completeness of the most promising elements and
+their combinations as a function of [Fe/H]. Panel a) for single elements.
+Panel b) for combinations of 2 elements. Panel c) for 3-6 elements.
+
+measured at low [Fe/H] by GALAH with less than 50% detections
+below [Fe/H] < −1 dex. For Cu and Ni the detection rate falls under
+50% below [Fe/H] < −1.4, for Na below [Fe/H] < −1.8, for Si below [Fe/H] < −2.0 and for Mg as well as Mn below [Fe/H] < −2.4.
+Because of the limitations in detection and element precision
+within our sample, we limit ourselves to Mg (and neglect Si as well
+as [𝛼/Fe]), Na (and neglect Al), and Mn, Cu, and Ni subsequently.
+
+3.3 Dissecting the abundance space with Gaussian Mixture
+Models (GMM)
+Assessing membership probabilities of an unknown number of underlying distributions from high-dimensional data with uncertainties
+is an increasingly important task in the era of large-scale surveys. Due
+to the complexity of the data, the selection of appropriate techniques
+from the plethora of methods available is non-trivial. In the case of
+accreted stars, both 𝑘-means (Hayes et al. 2018; Mackereth et al.
+2019) and GMMs (Das et al. 2020) have been applied successfully to
+APOGEE data, but have not taken uncertainties of the data into account. 𝑘-means might suffer from inflexibilities in component shapes
+and lacks a probabilistic component assignment. GMMs, however,
+are more flexible and find a mixture of multi-dimensional Gaussian
+probability distributions (VanderPlas 2016).
+We emphasise that the aim of our study is to identify accreted stars,
+not to find subgroups among the accreted stars. To unravel the underlying true distribution from our noisy data to first order, we therefore
+can apply GMMs via Extreme Deconvolution (XD, Bovy et al. 2011).
+In particular, we aim to use the extreme deconvolution Gaussian mixture modelling code xdgmm by Holoien et al. (2017). We optimise
+the model likelihood using the iterative Expectation-Maximization
+algorithm (Dempster et al. 1977) embedded in xdgmm’s implementation of astroml (Vanderplas et al. 2012).
+
+There are several ways in which features from the 6 most promising
+elements Mg, Si, Na, Mn, Cu, and Ni can be used in order to assess
+which stars are most likely accreted: 1) feed all of them as individual
+features, 2) combine some element abundances either via their ratio
+or their sum, such as [Mg/Na] or [Mn+Cu/Fe] or 3) select only a
+subset to fit. Given our limited measurement precision, we try to find
+combinations with the clearest separations and Gaussian-like shape.
+Due to the selection function of GALAH, the data of GALAH+
+DR3 is dominated by observations of the low-𝛼 disk, which is not the
+focus of this study. Including these stars in a GMM would shift the
+focus of the algorithm away from the typically metal-poor accreted
+stars and we therefore implement an initial cut on the iron abundance
+of [Fe/H] < −0.6. This does not affect the low-𝛼 halo stars and still
+leaves a significant part of the high-𝛼 halo as can be seen from the
+percentiles of [Fe/H] in Tab. 1.
+We plot the detection rates of the promising elements for low
+metallicities in Fig. 3a, showing a clear difference in the detectability of these elements towards the metal-poor regime. We are now
+concerned with combinations of them. In Fig. 3b we plot combinations of different pairs of groups. We see that the detection rate
+of Mg+Mn is similar to that of the less well measured Mg, and
+Mg+Cu is similar to that of Cu. In Fig. 3c we plot the most numerous combinations of 3 (Mg+Na+Mn), 4 (Mg+Na+Mn+Cu), and 5
+(Mg+Si+Na+Mn+Ni+Cu) elements. The combination of Mg+Mn
+is the one with the highest detection rate, followed by that of
+Mg+Na+Mn (which is similar to Mg+Na and Na+Mn), followed
+by that of Mg+Na+Mn+Cu (similar to any combination of these
+elements with Cu), followed by the combination of all 6 elements.
+To get a first impression of possible 2D combinations of the 6
+most promising elements, we inspect the corner plot (ForemanMackey 2016) both in abundance space as well as the difference with
+respect to the 50th percentile (a robust representative of the high𝛼 halo stars) in an uncertainty weighted version to identify again
+significant differences but this time in 2D space3 . Here, we only
+show the histograms in Fig. 4 and provide the corner plots in the
+supplementary material4 . Looking at the histograms, we see clear
+3
+
+Among the metal-poor stars, accreted stars stand out most significantly in
+Fe, Na, and Cu (3 𝜎 or more) and less in Mg, Si, Mn, and Ni (around 2 𝜎).
+4 In these 2D-density plots, accreted features are located in the bottom left.
+MNRAS 000, 1–29 (2021)
+
+10
+
+S. Buder et al.
+
+Figure 4. Histograms of [Fe/H], [Mg/Fe], [Si/Fe], [Na/Fe], [Mn/Fe], [Ni/Fe], and [Cu/Fe] for stars with [Fe/H] < −0.6 which passed the basic quality
+cuts (Eq. 1). Only stars with unflagged measurements for all these elements are shown. Extensive corner plots are provided in the supplementary material.
+
+Table 2. Overview of the combinations used for the Simple Gaussian Mixture
+Models to estimate the number of components to sample out. The GMM input,
+consisting of the number of data points with each combination as input array
+has yielded the lowest BIC score for the number of components lists.
+Set
+
+[Mg/Fe], [Mn/Fe]
+[Mg/H], [Mn/Fe]
+[Mg/Fe], [Na/Fe], [Mn/Fe]
+[Mg/H], [Na/Fe], [Mn/Fe]
+[Mg/Mn], [Na/Fe]
+[Mg/Cu], [Na/Fe]
+
+26810
+26810
+26057
+26057
+26057
+20974
+
+5
+4
+7
+8
+6
+4
+
+MgH_Na
+Mg_Na_Cu
+Mg_Na_Mn_Cu
+
+[Mg/H], [Na/Fe]
+[Mg/Fe], [Na/Fe], [Cu/Fe]
+[Mg/Fe], [Na/Fe],
+[Mn/Fe], [Cu/Fe]
+[Mg/Fe], [Si/Fe], [Na/Fe],
+[Mn/Fe], [Ni/Fe], [Cu/Fe]
+[Mg/Mn], [Si/Cu],
+[Na/Fe], [Ni/Fe]
+
+26670
+20974
+20693
+
+5
+8
+9
+
+18544
+
+7
+
+18544
+
+5
+
+all_6_rel
+
+double-peak structures for [Na/Fe] and even resolved for [Cu/Fe].
+Asymmetries are visible for [Fe/H], [Mg/Fe], [Mn/Fe], and [Ni/Fe].
+[Si/Fe] shows no clear asymmetry in the histogram.
+For each of the combinations listed in Tab. 2, we have fitted simple
+GMMs from scikit-learn’s GaussianMixture between 3 and 30
+components. Because of the cut we employed in [Fe/H] as well as
+the complex, non-Gaussian, structure with respect to [Fe/H], it is
+not reasonable to include [Fe/H] itself as an input label. We use it,
+however, later-on as a label to assess the components. To limit highconfidence outliers, we have applied further cuts to the data via limits
+on the uncertainties (e_X_fe < 0.25 dex) as well as boundaries for
+the abundances ([Fe/H] < −0.5, −0.3 < [Mg/Fe] < 0.7,−0.3 <
+[Si/Fe] < 0.7, −0.7 < [Na/Fe] < 0.7, −0.3 < [Mn/Fe] < 0.25,
+−0.7 < [Ni/Fe] < 0.25, and −0.3 < [Cu/Fe] < 0.7) in addition to
+the basic cuts and abundance flags. We plot the distribution of BICs
+(normalised to the lowest BIC) in Fig. 5. All combinations are best
+recovered with simple GMMs with fewer than 10 components.
+In addition to testing different element combinations, we also explore the influence of the abundance notation. For example, we test
+both the use of [Mg/Fe] vs. [Mn/Fe] as well as [Mg/H] vs. [Mn/Fe].
+The latter is motivated by the findings by Feuillet et al. (2021) who
+separated accreted stars in the [Mg/H] vs. [Al/Fe] plane (see also Ting
+MNRAS 000, 1–29 (2021)
+
+Comp.
+Nr.
+
+Mg_Mn
+MgH_Mn
+Mg_Na_Mn
+MgH_Na_Mn
+MgMn_Na
+MgCu_Na
+
+all_6
+
+Figure 5. Bayesian information criterions (BIC) normalised to the lowest
+value per realisation) for different simple Gaussian Mixture Models. With
+our normalisation, better, that is, more negative BIC values result in higher
+normalised BIC. The GMMs are indicated in the legend and listed in Tab. 2.
+Normalised BIC values for more than 15 components continuously fall.
+
+Input for simple GMMs (see Sec. 3.3.1)
+Combination
+Data Points
+
+et al. 2012). They found [Mg/H] to be a cleaner tracer, as [Mg/Fe] is
+influenced by the onset of SNIa Fe contributions. Additionally, we fit
+a combination of ratios of nucleosynthesis pathway tracers. We use
+both [Mg/Mn] and [Mg/Cu], which are likely tracing SNe II contributions from massive stars and SNIa of low mass stars (Kobayashi
+et al. 2020b). We further test the use of [Mg/Fe], [Na/Fe], [Mn/Fe],
+and [Cu/Fe] as input, as we expect differences for Na, Mn, and Cu because of the metallicity-dependence of hypernovae (Kobayashi et al.
+2006, 2020b). Finally, we also test the combination of all six elements
+with 6 dimensions, as well as with a reduced dimensionality through
+[Mg/Cu], [Si/Cu], [Ni/Fe], and [Na/Fe].
+Whilst we fit the GMMs to the data points without uncertainties, we
+take uncertainties into account when predicting membership probabilities via Monte Carlo sampling. For each datapoint, we sample
+the input abundances 1000 times with means and standard deviations
+from X_fe and e_X_fe and calculate a mean membership posterior
+probability for the components. For our simple GMM plots, we require a probability of at least 0.25 and use the probability as weight
+for the density plots. We list the probabilities for the most important components (for this study) in Tab. 3. Reported percentiles of
+distributions are weighted by these probabilities.
+We start our exploration with a simple input of [Mg/Fe] and
+[Mn/Fe] (Mg_Mn) and recover the best result with 5 GMM components. These are shown in the top left panel of Fig. 6 via density
+contours. By inspecting the position of the components in this abundance plane, we can identify the 5 components and subsequently
+
+Accreted stars in GALAH+ DR3
+
+11
+
+Table 3. Sources selected via the different chemical selections. We highlight the probability in bold face, if it is the largest among the fitted components. The
+full table (including all GMM components) is available online together with a crossmatch with the GALAH+DR3 main and value-added-catalogs in a FITS file.
+GALAH+ DR3
+sobject_id
+131116000501004
+131116000501008
+131116000501014
+131116000501018
+131116000501022
+...
+
+Mg_Mn
+Ac. MR MP-i𝛼
+0.65
+0.11
+0.41
+0.23
+0.01
+...
+
+0.09
+0.07
+0.07
+0.16
+0.14
+...
+
+MgH_Mn
+Ac. MR Ac. MP
+0.54
+0.21
+0.45
+0.45
+0.01
+...
+
+0.27
+0.21
+0.34
+0.18
+0.0
+...
+
+Mg_Na_Mn
+Ac. MR MP-i𝛼
+0.3
+0.0
+0.4
+0.1
+0.0
+...
+
+0.13
+0.0
+0.1
+0.16
+0.02
+...
+
+Ac. MR
+0.27
+0.0
+0.31
+0.15
+0.0
+...
+
+MgH_Na_Mn
+Ac. MP MP-i𝛼
+0.17
+0.08
+0.16
+0.06
+0.0
+...
+
+0.25
+0.01
+0.24
+0.31
+0.0
+...
+
+MgMn_Na
+Ac. MR MP-i𝛼
+0.33
+0.0
+0.52
+0.15
+0.0
+...
+
+0.25
+0.0
+0.13
+0.21
+0.07
+...
+
+MgCu_Na
+Ac. MR MP-i𝛼
+nan
+nan
+nan
+0.65
+0.03
+...
+
+nan
+nan
+nan
+0.23
+0.35
+...
+
+Figure 6. Overview of input planes for the simple Gaussian Mixture Models. Coloured densities indicate probability-weighted distributions of the
+individual components. We colour similar components of different GMMs with similar colours (see text for details), but stress that the colours of the columns
+are independent of each other. Panel a) shows [Mg/Fe] vs. [Mn/Fe] for the GMM Mg_Mn (used as input plane). Panel b) [Fe/H] vs. [Na/Fe] for the GMM Mg_Mn,
+showing the orange component also extending towards super-Solar [Na/Fe]. Panel c) [Na/Fe] vs. [Mg/Mn] for the GMM Mg_Mn. Panel d) [Fe/H] vs. [Mg/Fe] for
+the GMM Mg_Mn, showing the orange component overlapping with the red component. Panel e) [Fe/H] vs. [Mg/Fe] for the GMM MgH_Mn, showing the accreted
+stars fitted with two components. Panel f) shows [Mg/Fe] vs. [Mn/Fe] for the GMM MgMn_Na. Panel g) [Fe/H] vs. [Na/Fe] for the GMM MgMn_Na, showing a
+clear separation of the orange component from those with super-Solar [Na/Fe] via an intermediate blue component. Panel h) [Na/Fe] vs. [Mg/Mn] for the GMM
+MgMn_Na (used as input plane). Panel i) [Fe/H] vs. [Mg/Fe] for the GMM MgMn_Na, showing the orange component separated from the red component. Panel
+h) [Fe/H] vs. [Mg/Fe] for the GMM MgCu_Na. We only plot data with posterior probabilities above 0.25 for the individual components.
+
+trace similar groups in the other projections(including the action
+space provided in the supplementary material) as the following:
+
+of Mg_Mn, we notice a contamination from stars with Solar [Na/Fe]
+(Fig. 6b), broadening the distribution to [Na/Fe] = −0.12+0.22
+.
+−0.19
+
+(i) Red & Magenta – low-𝛼 disk
+(ii) Black & Purple & Rose – high-𝛼 disk/halo
+(iii) Blue – metal-poor intermediate-𝛼; not clearly accreted nor
+high-𝛼 disk/halo (MP-i𝛼)
+(iv) Orange – mainly accreted stars
+(v) Green – mainly accreted stars ([Mg/H]-poor < −1.3)
+
+Before adding [Na/Fe] as input to resolve this issue, we assess a
+slightly different input of [Mg/H] and [Mn/Fe] (Fig. 6e). [Mg/H] is a
+purer tracer of SNII contributions (Kobayashi et al. 2020b; Feuillet
+et al. 2021). We see that in the projections, the models are giving more
+weight to the [Mg/H] poor stars, and model them with two components - an [Mg/H]-poor (dark-orange around [Mg/H] = −1.52+0.24
+)
+−0.34
++0.18
+and [Mg/H]-richer one (orange around [Mg/H] = −0.97−0.23 ).
+Interestingly, both exhibit very similar [Mg/Fe] distributions with
+[Mg/Fe] = 0.15+0.11
+and [Mg/Fe] = 0.18+0.10
+, respectively. Fur−0.12
+−0.13
+ther, the orange component is now slightly more confined to subSolar [Mg/Fe] = −0.14+0.17
+. The GMM fails, however, to tell apart
+−0.16
+low- from high-𝛼 disk stars, which are modelled with two extended
+components with similar means.
+
+Stars of the red component (Fig. 6a-d) have values closest to Solar [Mg/Fe] and [Mn/Fe] and are mostly [Fe/H]-rich stars in the
+sample. Stars of the black/purple/rose component also have the highest [Fe/H] values in the sample, but also the highest [Mg/Fe] ones,
+making them likely high-𝛼 disk/halo stars, with a possible contamination by low-𝛼 disk stars. Stars of the blue component differ from
+the black/purple/rose ones, because they have lower [Mn/Fe] values.
+These values are, however, not as low as those of the orange component, which is consistent with accreted stars, based on our intuition
+of the chemical composition of low-𝛼 halo stars. We are later concerned with the distribution of the individual abundances. Here we
+are interested to identify which abundances and abundance planes are
+needed to identify accreted stars. Especially for the orange component
+
+When adding [Na/Fe] to the GMM, the models need typically
+between 6 and 8 components to fit the data well. We have tested
+different combinations of the 3 abundances as input (we attach a
+figure for the other GMMs similar to Fig. 6 in the supplementary
+material for a complete overview). They all include a component
+similar to the orange one from Mg_Mn, but are not contaminated with
+MNRAS 000, 1–29 (2021)
+
+12
+
+S. Buder et al.
+
+Figure 7. Overview of two metal-poor components of the xdgmm in abundance planes that were identified as those with the highest separation
+significance in Sec 3.2. Orange indicates the accreted component (with sub-Solar [Na/Fe]). Blue indicates the in-situ component (with higher [Na/Fe]). The red
+line in panel b) indicates the selection between low- and high-𝛼 halo suggested by Nissen & Schuster (2010). Only stars with probabilities above 0.45 for each
+component are shown, as suggested by the overlap analysis of Sec. 4.1.
+
+Solar [Na/Fe] stars. This leads to a clearer separation between the
+accreted component and the other components, especially in [Na/Fe],
+with one intermediate (blue) component between them (compare
+Figs. 6b and g).
+Inspired by the argument discussed in Hawkins et al. (2015), we
+also test the abundance ratio [Mg/Mn]. Such ratios are excellent
+tracers of orthogonal nucleosynthesis pathways (e.g. Ting et al. 2012,
+2015). In this particular case, Mg is primarily produced by SNII
+(Nomoto et al. 2013) and Mn by SNIa (Gratton 1989). This idea was
+already applied by Das et al. (2020) for APOGEE data. They used
+[Mg/Mn] paired with [Al/Fe], the latter tracing SNII contributions
+while being sensitive to the progenitor C and N abundances. For
+GALAH+ DR3 data, however, we again turn to [Na/Fe] instead of
+[Al/Fe] due to the higher detection rate for the GMM MgMn_Na.
+Similar to Mg_Na_Mn, we find an accreted component (orange) that
+is separated by the typical disk components through an intermediate
+component (blue). Both orange and blue components share similar
+[Mn/Fe] (−0.37+0.12
+and −0.35+0.09
+for orange and blue components
+−0.13
+−0.10
+respectively), but differ in their [Mg/Fe] and thus [Mg/Mn] values.
+We further test adding the iron-peak element Cu to the GMM,
+both instead (MgCu_Na) and in addition to Mn (Mg_Na_Mn_Cu), but
+do not find more promising component separations than without Cu.
+In particular, the distribution of the accreted component (orange) is
+very similar to those of the other GMMs, but includes less stars due
+to the detection limit of Cu. We have further tested GMMs using
+all 6 elements Mg, Si, Na, Mn, Ni, and Cu with different input
+combinations - without any improvement (see online material).
+Given the decreasing number of stars available for an increasing
+number of abundances used for the GMM, we decide to continue
+hereafter with MgMn_Na. Although we already achieve remarkable
+separations only with Mg_Mn, we are concerned by the contamination
+of stars with super-Solar [Na/Fe] for the latter GMM. The latter
+GMM would be promising, if for each star, a limit [Na/Fe] ≯ 0
+could be estimated. As the simple GMMs do not take into account
+MNRAS 000, 1–29 (2021)
+
+uncertainties, when fitting the components, we now use the input of
+[Na/Fe] and [Mg/Mn] with their uncertainties for the xdgmm.
+3.3.2 XDGMM with [Na/Fe] vs. [Mg/Mn]
+For our final selection of accreted stars within the chemical planes,
+we apply the xdgmm introduced at the beginning of this section. We
+use the abundance plane of [Na/Fe] vs. [Mg/Mn], which we identify
+as the most promising one in terms of separation significance of
+elements (see Sec. 3.2), detection rate towards low iron abundances
+(see Fig. 3) as well as our test of the possible abundance planes with
+simple GMMs in Sec. 3.3.1.
+We tested up to 10 Gaussian components and find the lowest BIC
+value for 5 components. Among these, we recover the component
+with low [Na/Fe] and high [Mg/Mn] values, that is, the accreted
+component. We plot the abundance overview of this component with
+orange contours in [Na/Fe] vs. [Mg/Mn] as well as the seven elements vs. [Fe/H] with the highest separation significance in Fig. 7.
+We further identify a component overlapping with the accreted component (plotted with blue contours in Fig. 7), which shows on average
+higher [Mg/Fe], [Na/Fe], [Al/Fe], and [Cu/Fe] values. As we calculate a probability of each source to belong to a component, we test
+which probability threshold to use subsequently (in Sec. 4.1) and
+discuss the reliability of our selection of accreted stars in Sec. 5.1.2.
+
+3.4 Dynamical selection of GSE stars for this study
+For the dynamical selection of accreted stars, and especially GSE
+stars, we resort to the literature, as reviewed in Sec. A and listed in
+Tab. 1. Here we limit ourselves to the dynamical selection by Feuillet
+et al. (2021), as this was shown to be least contaminated. Hereafter,
+we refer to the dynamical selection as the sample of stars that passes
+the basic cuts (Eq. 1) and have angular momenta
+−500 < 𝐿 𝑍 <
+√︁
+500 kpc km s−1 as well as radial actions 30 < 𝐽 𝑅 / kpc km s−1 < 55,
+as suggested by Feuillet et al. (2021). We plot the distribution of
+
+Accreted stars in GALAH+ DR3
+
+13
+
+Table 4. Chronochemodynamic properties (shown as 16th /50th /84th percentiles) of the chemical and dynamical selection of accreted stars. We further
+list the properties of the stars that overlap between both selections. The selection criteria are explained in detail in Secs. 3.3.2 and 3.4, respectively.
+Only distributions with more than 100 measurements are shown. Values in
+parentheses may be biased because they were used for the selection.
+Property
+
+Chemical
+Selection
+
+Chemodynamical
+Selection
+
+Dynamical
+Selection
+
+[Fe/H]
+[ 𝛼/Fe]
+[Li/Fe]
+[C/Fe]
+[O/Fe]
+[Na/Fe]
+[Mg/Fe]
+[Mg/Mn]
+[Al/Fe]
+[Si/Fe]
+[K/Fe]
+[Ca/Fe]
+[Sc/Fe]
+[Ti/Fe]
+[V/Fe]
+[Cr/Fe]
+[Mn/Fe]
+[Co/Fe]
+[Ni/Fe]
+[Cu/Fe]
+[Zn/Fe]
+[Rb/Fe]
+[Sr/Fe]
+[Y/Fe]
+[Zr/Fe]
+[Ba/Fe]
+[La/Fe]
+[Ce/Fe]
+[Ru/Fe]
+[Nd/Fe]
+[Eu/Fe]
+
+−1.11+0.28
+−0.30
++0.07
+0.11−0.08
++0.24
+0.54−0.23
+(−0.35+0.05
+)
+−0.09
++0.09 )
+(0.09−0.09
++0.15 )
+(0.52−0.17
+−0.18+0.18
+−0.12
++0.11
+0.10−0.10
++0.13
+0.08−0.15
++0.09
+0.17−0.11
+0.05+0.09
+−0.11
+0.10+0.13
+−0.12
+−0.06+0.33
+−0.29
+−0.22+0.12
+−0.13
+−0.43+0.12
+−0.12
+−0.11+0.31
+−0.11
+−0.18+0.11
+−0.10
+−0.57+0.12
+−0.12
+0.17+0.23
+−0.18
+0.12+0.25
+−0.24
+0.19+0.39
+−0.22
+0.49+0.28
+−0.33
+0.23+0.27
+−0.17
+−0.17+0.20
+−0.15
+0.48+0.20
+−0.15
+0.46+0.16
+−0.15
+
+−1.03+0.26
+−0.29
+0.10+0.07
+−0.06
+0.51+0.17
+−0.21
+(−0.35+0.06
+)
+−0.09
+(0.07+0.09
+)
+−0.09
+(0.48+0.12
+)
+−0.17
+−0.18+0.11
+−0.12
+0.09+0.11
+−0.09
+0.08+0.12
+−0.15
+0.17+0.11
+−0.10
+0.05+0.08
+−0.11
+0.10+0.14
+−0.13
++0.30
+−0.07−0.28
++0.11
+−0.20−0.13
++0.13
+−0.40−0.10
++0.39
+−0.14−0.11
++0.11
+−0.19−0.10
++0.12
+−0.58−0.10
++0.22
+0.14−0.17
+0.10+0.21
+−0.22
+0.17+0.61
+−0.23
+0.43+0.29
+−0.31
+0.24+0.27
+−0.15
++0.20
+−0.16−0.17
+0.49+0.17
+−0.12
+0.46+0.16
+−0.12
+
+−1.16+0.32
+−0.41
+0.16+0.12
+−0.09
+1.94+0.97
+−1.06
+0.55+0.27
+−0.23
+−0.22+0.17
+−0.13
+0.12+0.12
+−0.10
+0.47+0.14
+−0.16
+−0.12+0.26
+−0.13
+0.13+0.14
+−0.10
+0.10+0.14
+−0.14
+0.23+0.13
+−0.13
+0.07+0.11
+−0.10
+0.19+0.22
+−0.13
+0.04+0.32
+−0.32
+−0.13+0.14
+−0.12
+−0.34+0.14
+−0.12
+−0.08+0.50
+−0.13
+−0.15+0.12
+−0.12
+−0.52+0.16
+−0.13
+0.15+0.19
+−0.16
+0.09+0.25
+−0.22
+0.27+0.64
+−0.24
+0.25+0.36
+−0.29
+0.28+0.45
+−0.17
+−0.12+0.41
+−0.17
+0.52+0.21
+−0.15
+0.48+0.17
+−0.13
+
+𝐽𝑅 / kpc km s−1
+𝐿 𝑍 / kpc km s−1
+𝐽𝑍 / kpc km s−1
+𝑉𝑅 / km s−1
+𝑉𝜙 / km s−1
+𝑒
+𝐸 / 105 km2 s−2
+𝑅ap / kpc
+𝑅peri / kpc
+𝑧max / kpc
+
+26+9
+−14
+100+510
+−430
+200+240
+−130
+−0+190
+−210
+20+100
+−70
++0.09
+0.88−0.36
+−1.61+0.22
+−0.26
+11.7+6.7
+−5.2
++1.98
+0.78−0.59
+4.7+5.4
+−2.4
+
+(35+6
+)
+−3
+(10+280
+)
+−250
+160+240
+−110
+−130+390
+−160
+2+36
+−32
+0.96+0.03
+−0.04
++0.15
+−1.45−0.10
++5.7
+16.5−3.1
+0.37+0.45
+−0.26
++5.0
+6.7−3.6
+
+(35+6
+)
+−3
+(10+250
+)
+−230
+140+230
+−100
+20+250
+−300
+2+34
+−30
+0.96+0.03
+−0.04
+−1.46+0.15
+−0.11
+16.2+5.7
+−3.1
+0.34+0.41
+−0.25
+6.0+5.4
+−3.5
+
+Figure 8. Percentage of overlap between the chemically and dynamically selected stars as a function of the membership probability of stars
+belonging to the GMM component of accreted stars. Lines indicate the
+percentage as a function of all chemically selected stars (blue) and all dynamically selected stars (orange). Solid lines require that the accreted component
+is the one with the highest (’best’) probability. The grey area indicates an
+overlap of (29 ± 1)%, where the overlap plateaus with respect to the chemical
+selection. The black solid line indicates a normalised probability of 0.45,
+the location where both lines meet and where the overlap as a function of
+chemical selection does not increase for larger probabilities.
+
+√
+GALAH+ DR3 stars within the 𝐿 𝑍 vs. 𝐽 𝑅 plane in Fig. 9f in black
+and the clean selection box by Feuillet et al. (2021) with a red dashed
+rectangle. The stars of GALAH+ DR3 within this box are then shown
+in a red density contour plot. The majority of stars are located at the
+lower edge of the box, indicating that more stars would be selected
+with a lower threshold of 𝐽 𝑅 . Subsequently, we assess the overlap
+(and non-overlap) of the dynamical selection with our chemical one.
+
+4 CHRONO-CHEMODYNAMIC PROPERTIES OF THE
+CHEMICALLY AND DYNAMICALLY SELECTED
+ACCRETED STARS
+In this section, we compare a variety of properties of the chemically
+and dynamically selected accreted stars, including the metallicity
+distribution function, abundance distributions, dynamical properties,
+and stellar ages. Hereafter, our chemical selection refers to the orange
+selections in [Na/Fe] vs. [Mg/Mn] space, √
+and the dynamical selection refers to the red selection in 𝐿 𝑍 vs. 𝐽 𝑅 space (see previous
+Section and Fig. 9). We begin by assessing the overlap of the different
+selections, both in numbers and in their respective selection planes
+and then extend the comparison to the other properties.
+
+4.1 Selection overlap
+As we have computed the probabilities that the stars in GALAH+
+DR3 belong to the accreted Gaussian component, the overlap with
+the dynamical selection box varies significantly as a function of this
+probability. We plot the selection overlap as a function of the probability of stars belonging to the accreted component in our chemical GMM in Fig. 8 in blue relative to the chemical selection and
+in orange relative to the dynamical selection (for which unflagged
+measurements of Mg, Na, and Mn were available). We further differentiate between the probability of a star belonging to the accreted
+component (solid lines) and this probability also being the highest
+among all possible components (dashed lines). Both are naturally the
+
+√︁
+
+same above 0.5, but here we are also interested in studying the contamination by other components, for example when a star is equally
+likely or more likely to belong to another component.
+We find that the overlap reaches a plateau at (29 ± 1)% above
+a probability of 0.45. That implies that, below this probability, our
+chemical selection might be either contaminated or that we are selecting from a accreted structure that is different to the dynamically
+MNRAS 000, 1–29 (2021)
+
+14
+
+S. Buder et al.
+
+√
+Figure 9. Comparison of chemical and dynamical selections in their respective planes, [Na/Fe] vs. [Mg/Mn] (top panels) and 𝐿 𝑍 vs. 𝐽𝑅 , respectively.
+Left panels (a and d): Chemical selection (orange). Middle panels (b and e): Overlap of chemical and dynamical selection (purple). Right panels (c and
+f): Dynamical selection (red). Black background contours show the GALAH+ DR3 sample. The red dashed box indicates the clean selection of GSE stars by
+Feuillet et al. (2021).
+
+selected (clean) one. Looking at the overlap with respect to the available stars within the dynamical selection, we see a decrease as we
+restrict our chemical selection towards a more and more reliable
+selection (higher probability). It falls below (29 ± 1)% around a
+probability of 0.45. Under the assumption that we are selecting from
+the same population, we therefore find the best compromise between
+contamination and sample size for a probability of 0.45 or higher of
+stars belonging to the accreted (orange) model component and use
+this hereafter as a threshold for our chemical selection. In Tab. 5, we
+list the stars and their probability of belonging to the accreted component as well as the stars selected via the dynamical selection from
+Feuillet et al. (2021). We note that sampling the orbital parameters
+within their uncertainties and keeping only those stars that lie often
+enough (more than 50 or even 90% of the time) within the dynamical
+selection box would reject roughly
+90% of likely true GSE stars and
+√
+in particular those with low 𝐽 𝑅 , but remove only roughly 10% of
+false positives. We thus decided not to take this approach.
+With the maximum selection overlap of (29 ± 1)% in mind, we
+now consider which of the selection planes show agreement and
+disagreement between the samples. In Fig. 9, we plot the chemical
+selection plane in the top panels and the dynamical selection plane
+in the bottom panels.
+Comparing Fig. 9a and c, and with the help of the percentiles
+listed in Tab. 4 for each selection, it becomes clear that the chemical selection exhibits lower [Na/Fe] values in a tighter distribution
++0.17 ). The distribu(−0.35+0.05
+) than the dynamical one (−0.22−0.13
+−0.09
+MNRAS 000, 1–29 (2021)
+
+Table 5. Overview of sources selected as accreted. We list the normalised
+probability 𝑝 of sources to be selected chemically via the xdgmm of [Na/Fe]
+vs. [Mg/Mn] as well as those dynamically
+√ selected based on the suggestion
+by Feuillet et al. (2021) in the 𝐿 𝑍 vs. 𝐽𝑅 plane. The selection criteria are
+explained in detail in Secs. 3.3.2 and 3.4, respectively. Chemically selected
+stars, as selected for the analysis throughout this study with 𝑝 > 0.45 are
+marked in bold.
+GALAH+ DR3
+sobject_id
+
+Chemical selection
+𝑝 ( [Na/Fe], [Mg/Mn])
+
+Dynamical Selection
+√
+𝑝 (𝐿 𝑍 vs. 𝐽𝑅 )
+
+131116000501004
+131116000501201
+140209001701097
+140209003701238
+...
+
+0.12
+0.03
+0.58
+0.89
+...
+
+0
+1
+1
+0
+...
+
+tions of [Mg/Mn] values, however, agree fairly well (0.52+0.15
+vs.
+−0.17
+0.47+0.14
+).
+We
+discuss
+this
+disagreement
+in
+Sec.
+5.1,
+as
+it
+hints
+to−0.16
+wards a limitation of our chemical selection to tell apart accreted
+stars from in-situ stars (see [Na/Fe] in Fig. 7, where the metal-poor
+in-situ component is located around [Na/Fe] > 0 dex).
+In Fig. 9d we clearly see that the actions of stars from the chemical
+selection (orange contours) extend far outside
+√︁ of the clean dynamical
+selection (red dashed rectangle), that is 𝐽 𝑅 / kpc km s−1 of 26+9
+−14
+compared to the 35+6
+, which have to be within the clean selected
+−3
+√︁
+box with 30 < 𝐽 𝑅 / kpc km s−1 < 55. This selection was chosen by
+
+Accreted stars in GALAH+ DR3
+Feuillet et al. (2021) in order to avoid contamination by the high-𝛼
+disk, whose dynamically hot tail extends towards these high radial
+actions (e.g. Feuillet et al. 2020; Das et al. 2020). Both of our distributions in angular momentum 𝐿 𝑍 (100+510
+kpc km s−1 compared to
+−430
+the 10+250
+kpc km s−1 ) agree at high radial actions. The on average
+−230
+slightly prograde orbits of the chemical selection are mainly caused
+by the stars with low 𝐽 𝑅 and positive 𝐿 𝑍 . Based on the density contours in Fig. 9d, we see that these stars are however
+only a minority
+√︁
+and their numbers drop significantly√︁below 𝐽 𝑅 / kpc km s−1 < 20,
+that is 33%, 22%, and 12% below 𝐽 𝑅 / kpc km s−1 of 20, 15, and
+10. We also note that 20% of the chemically selected stars exceed
+the upper limit of 𝐿 𝑍 ∼ 500 kpc km s−1 set by Feuillet et al. (2021).
+8% even exceed 𝐿 𝑍 > 1000 kpc km s−1 , that is, roughly half of the
+Sun’s angular momentum. We find similar√︁values for the sample by
+Das et al. (2020), with average values of 𝐽 𝑅 kpc km s−1 = 30+11
+−10
+and 𝐿 𝑍 = −10+612
+kpc km s−1 in the same notation, and 19% of the
+−590
+accreted stars in their sample exhibiting 𝐿 𝑍 > 500 kpc km s−1 .
+We discuss these non-overlapping stars with low 𝐽 𝑅 and/or high
+𝐿 𝑍 in Sec. 5.2.2. Before that, we are interested in exploring the
+chrono-chemodynamic properties of the chemical, dynamical, and
+chemodynamic selection, this last selection being the overlap of the
+chemical and dynamical selection and thus a less complete, but even
+cleaner selection of the GSE than a purely dynamical one.
+
+4.2 Stellar chemistry
+The chemical properties of accreted stars, and especially the GSE,
+have only come into focus in the last decade (Nissen & Gustafsson
+2018; Helmi 2020). As spectroscopic surveys were only able to collect data in recent years, studies of the chemistry of accreted stars
+with a plethora of different instruments are often limited to the iron
+abundance, which we discuss first. We then briefly present the distributions of the other elements, discussed in major abundance groups,
+and compare to the literature where available. For this section, we
+will use both the distributions shown in Figs. 10 and 11 and quantified within Tab. 4 with the aim to outline significant differences
+between the two selections.
+
+4.2.1 Iron abundance [Fe/H] as metallicity tracer
+Based on the study of the inner halo by Carollo et al. (2007)
+and Ivezić et al. (2008), the iron abundance of (inner) halo stars
+(< 10 kpc) could be expected to peak between [Fe/H] ∼ −1.6 and
+[Fe/H] ∼ −1.45 ± 0.32 based on SEGUE data. Fernández-Alvar
+et al. (2017) found a peak around [Fe/H] ∼ −1.5 in the inner halo
+when using APOGEE DR12. Using APOGEE DR13, Hayes et al.
+(2018) showed the distribution of stars with low [Fe/H] and [Mg/Fe]
+(consistent with the low-𝛼 halo) to peak around -1.2 and -1.3 (see
+their Fig. 2), similar to findings by Matsuno et al. (2019). With data
+from APOGEE DR14, Das et al. (2020) found that their chemically
+selected accreted stars (with a similar chemical selection plane as
+ours) peak at [M/H] ∼ −1.3 (see Fig. 10a and c) and dominate
+in this [Fe/H] regime below [Fe/H] < −1.2 by contributing up to
+30% of stars (see also Mackereth et al. 2019; Naidu et al. 2020).
+Following up the identified GSE with SkyMapper and APOGEE
+DR16, Feuillet et al. (2020, 2021) found the distribution to be best
+described with a Gaussian around [Fe/H] ∼ −1.17 ± 0.34 dex and
+[Fe/H] ∼ −1.15 respectively (see Fig. 10b and d). A similar distri+0.24 was recovered by Naidu et al.
+bution around [Fe/H] ∼ −1.15−0.33
+(2020), who used data of the H3 Survey with a different dynamical
+
+15
+
+selection. They found, however, a more extended tail towards metalpoor stars within their data (pink lines in Fig. 10b and d). Our data
+do not show such an extended tail, when comparing the cumulative
+distribution functions in Fig. 10d.
+Using the same selection as Feuillet et al. (2020), but data from
+the TOPoS Survey, Bonifacio et al. (2021) find a lower average
+metallicity of [M/H] ∼ −1.45 ± 0.3 (estimated by us based on their
+Fig. 20). They report, however, [M/H] and not [Fe/H] and further
+assume [𝛼/Fe] = 0.4 for these low metallicities5 . While their finding
+is more aligned with those by Das et al. (2020), both when using the
+original [M/H] values from APOGEE DR14 used by them and the
+updated DR16 [Fe/H] values, they are much more metal-poor than
+all of the other distributions shown in Fig. 10.
+The [Fe/H] distribution of the chemically selected sample
+(−1.11+0.28
+) agrees well with the dynamically selected one
+−0.30
++0.32
+(−1.16−0.41 ). However, although these distributions agree, their overlap (chemodynamical selection) is on average more metal-rich by
+0.08 and 0.13, respectively. We find good agreement between the
+iron abundance distribution, shown in Fig. 10, of our dynamically
+) and the values by Naidu et al.
+selected GSE sample (−1.16+0.32
+−0.41
+(2020) and Feuillet et al. (2021), both in terms of the mean/median
+value and dispersion (see Tab. 4).
+We acknowledge note that different studies are potentially surveying different parts of the GSE (see also the discussion by Bonifacio
+et al. 2021). The overlap between the different studies is currently
+minimal and more follow-up is needed. Our results and agreement
+with most studies suggests, however, that we are mainly selecting
+GSE stars. We assess this further with the individual abundances.
+4.2.2 Light elements: Li, C, O
+The Li abundances of both chemical and dynamical selections are
+distributed with very few stars along two sequences in Fig. 11, agreeing between the selections. The higher A(Li) sequence (2.20+0.30
+for
+−0.07
+the chemical and 2.37+0.14
+for
+the
+dynamical
+selection)
+traces
+the
+−0.16
+Spite Plateau (Spite & Spite 1982). It is sparsely populated by the few
+stars, mainly dwarfs. The lower sequences (0.98+0.15
+and 0.97+0.24
+)
+−0.18
+−0.16
+are close to the Solar abundance defined by GALAH+ DR3 (Buder
+et al. 2021) and populated mainly by giant stars. However, measurements of Li are limited to a low number of stars, and we therefore do
+not compile quantitative distributions in Tab. 4 for the chemical and
+chemodynamical selections.
+Due to the wavelength range of GALAH, we are not able to put
+constraints on either C or N. We therefore refer to the studies by
+Nissen et al. (2014) as well as Hawkins et al. (2015) and Hayes et al.
+(2018) for further insight.
+We find [O/Fe] to agree between the different selections and our
+chemodynamical selection with [O/Fe] = 0.51+0.17
+to be slightly
+−0.21
+above the ratios found by Ramírez et al. (2012) and Nissen et al.
+(2014) around 0.4 and much above the ratios found in APOGEE
+(around 0.3) by Hawkins et al. (2015) and Hayes et al. (2018). The
+disagreement between the latter, however, is found for all metalpoor stars between GALAH and APOGEE (e.g. Buder et al. 2018)
+and observed between most optical and near-IR O abundances (e.g.,
+Bensby et al. 2014). It may arise due to 3D NLTE effects in the optical
+O triplet (e.g., Amarsi et al. 2020) or systematics in modelling the
+5
+
+Although their comparisons of [M/H] with [Fe/H] values show that their
+[M/H] traces [Fe/H] on average for the metal-rich part of their sample, we
+note that differences between both quantities could be as large as 0.3 dex
+because of changes in [𝛼/Fe].
+MNRAS 000, 1–29 (2021)
+
+16
+
+S. Buder et al.
+
+Figure 10. Relative (top panels) and cumulative (bottom panels) distribution of iron abundances [Fe/H] for our samples of accreted stars. Left panels
+a and c show chemically selected accreted stars and compare with the results by Das et al. (2020). Right panels b and d show the dynamical selections of the
+GSE by our work and Feuillet et al. (2020, 2021) as well as Naidu et al. (2020).
+
+molecular effects in the IR CO and OH lines (e.g., Collet et al. 2007;
+Hayek et al. 2011).
+4.2.3 𝛼-process elements: Mg, Si, S, Ca, Ti
+While both chemical and dynamical selections recover the low-𝛼
+enhancement expected for accreted stars, we notice that the abundances of the dynamical selection typically extend towards higher
+values than the chemical selection. In particular, the median of the
+distributions increase in their deviation from Mg (0.03 dex) and Si
+(0.03 dex) towards Ca (0.06 dex) and even more pronounced for Ti
+(0.09 dex). We find that a significant fraction of dynamically selected
+stars exhibit higher amounts of 𝛼-enhancement than the chemically
+selected ones and this deviation increases from Mg to Ti. In particular, between 26% (for Mg) and 39% (for Ti) of the dynamically
+selected stars have [Mg/Fe] and [Ti/Fe] above the 84th percentile of
+the chemically selected sample. It has to be noted though, that Mg
+was one of our the elements used for the chemical selection.
+
+results by (Hawkins et al. 2015). We note a slight upturn of [Ni/Fe]
+with increasing [Fe/H] for the dynamical selection, which differs
+both from our chemical selection and the decreasing trend found by
+Nissen & Schuster (2010) and Hawkins et al. (2015). For [Zn/Fe], our
+values are higher than those around 0 dex found by Nissen & Schuster
+(2011). Also for these elements, we find that the dynamically selected
+stars extend towards slightly higher abundances, most pronounced for
+Cr and Mn with differences around 0.08 dex. While the dispersion
+of the distributions moves around the 0.1 dex level, we note outliers
+towards higher [X/Fe] for the elements V and Co. For both elements,
+possible systematic trends towards higher values have been cautioned
+for GALAH+ DR3 (Buder et al. 2021). However, also the results by
+Hawkins et al. (2015) showed a slightly larger scatter for [V/Fe].
+
+4.2.6 Neutron-capture elements: Rb to Eu
+4.2.4 Light odd-Z elements: Na, Al, K
+We already pointed out the sub-Solar [Na/Fe] values of the accreted
+stars throughout this study. In Sec. 4.1, we have, however, also identified higher [Na/Fe] abundances of the dynamical selection with
+respect to the chemical one. We find a similar difference for [Al/Fe],
+that is, −0.18+0.18
+dex for the chemical and −0.12+0.26
+dex for the
+−0.12
+−0.13
+dynamical selection, the latter extending towards much higher and
+even super-Solar [Al/Fe] values. We find that K behaves different
+than Na and Al, in that [K/Fe] is found to be typically above 0 dex.
+4.2.5 Iron-peak elements: Sc to Zn
+The distribution of most iron-peak elements (with exception of Sc and
+Zn) within our chemical and dynamical selections are sub-Solar, with
+the lowest values for [Mn/Fe] around −0.40+0.13
+dex and [Cu/Fe]
+−0.10
+around −0.58+0.12
+dex.
+Due
+to
+the
+difficulty
+associated
+to measure
+−0.10
+V in GALAH, we find a larger scatter for this element, similar to the
+MNRAS 000, 1–29 (2021)
+
+Neutron-capture elements are the least well measured elements in
+GALAH+ DR3, especially at low metallicities. Because of the limited amount of measurements, we will not comment on the distributions for Rb, Sr (see however Aguado et al. 2021), and Ru. For the
+neutron-capture elements, we also see the largest dispersion in the
+distributions, that is, typically on the order of 0.2 − 0.3 dex. Among
+these elements, we also find significant differences in the distributions. For Y and Ba, the abundances of the chemical selection are
+above those of the dynamical selection, whereas for Zr, La, Ce, Nd,
+and Eu this is not the case. We note that our distributions (see also
+Aguado et al. 2021) of Y and Ba are higher than those by Nissen &
+Schuster (2011). Comparing our distribution with the measurements
+by Venn et al. (2004) for Ba and La as well as Fishlock et al. (2017)
+for Zn, Zr, La, and Nd strengthens the impression from Sec. 3.1,
+that the GALAH+ DR3 measurements for these elements are close
+to or below the detection limit. For Eu, we refer the reader to the
+dedicated studies by Matsuno et al. (2021) and Aguado et al. (2021)
+with GALAH+ DR3 data.
+
+Accreted stars in GALAH+ DR3
+
+17
+
+Figure 11. Abundance distributions [X/Fe] (and absolute abundance for Li) as a function of iron abundance [Fe/H] for elements X (noted in each
+panel). Shown are the distributions of all GALAH+ DR3 stars (black contours) as well as those of the chemically selected (orange contours) and dynamically
+selected (red contours) accreted stars. Quantities of each distributions are listed in Tab. 4 together with the distribution of the stars within both the chemical and
+dynamical selection.
+
+MNRAS 000, 1–29 (2021)
+
+18
+
+S. Buder et al.
+
+Figure 12. Comparison of kinematic properties (Galactocentric velocities 𝑉𝑅 vs. 𝑉𝜙 ) as well as dynamic properties (𝐿 𝑍 , 𝐸, and 𝑒) for stars selected as
+accreted ones by means of chemistry (orange) and dynamics (red). Black contours/lines denote the overall GALAH+ DR3 sample (mainly disk stars).
+
+4.3 Stellar kinematics/dynamics
+In Sec. 4.1, we have already identified significant differences in
+the radial actions of chemically and dynamically selected accreted
+stars, while their angular momenta were on average similar around
+𝐿 𝑍 ∼ 0 kpc km s−1 . Here, we return to the plane of Galactocentric
+velocities, 𝑉𝑅 vs. 𝑉 𝜙 (Fig. 12a) as well as 𝐿 𝑍 vs. 𝐸 (Fig. 12b),
+in which the Sausage (Belokurov et al. 2018) and Gaia-Enceladus
+(Helmi et al. 2018) were initially discovered. As expected from the
+dynamical selection of GSE stars with the highest radial actions,
+these stars (red contours in Fig. 12) also are restricted to the regions
+with highest 𝑉𝑅 . The quantities of 𝑉𝑅 listed in Tab. 4 are therefore
+not really descriptive, but still inform us about a slight asymmetry
+in 𝑉𝑅 for the GALAH+ DR3 sample. Dynamically selected GSE
+stars with the highest radial actions seem to show larger 𝑉𝑅 than
+negative (𝑉𝑅 =20+250
+km s−1 ). We do not notice this asymmetry
+−300
+in the chemically selected stars (𝑉𝑅 =−0+190
+km s−1 ). The location
+−210
+of chemically selected stars overlaps with the dynamically selected
+ones in this plane, but extends beyond it and covers the whole area
+of low 𝑉 𝜙 ∼ 0 km s−1 for −400 < 𝑉𝑅 < 400 km s−1 . We further
+notice a significant extension of 21% chemically selected stars with
+100 km s−1 < 𝑉 𝜙 < 𝑣 ◦ . This velocity space is usually dominated
+by the high-𝛼 or inner stellar disk (black contours in Fig. 12), thus
+suggesting that 21% of the chemically accreted stars show disk-like
+kinematics. Going back to the action space, we identify the stars
+with 𝑉 𝜙 > 100 km s−1 as those that also exhibit lower radial actions,
+√︁
+that is, 𝐽 𝑅 / kpc km s−1 =12.4+16.6
+in Fig. 9d, marking a significant
+−7.1
+overlap with low-𝐿 𝑍 disk orbits.
+In action-energy space (Fig. 12b), we again identify GSE stars via
+their low |𝐿 𝑍 |. Accreted stars selected via their chemistry (orange)
+show a large distribution of energies (−1.61+0.22
+×105 km2 s−2 ).
+−0.26
+Comparing these values with those by Horta et al. (2021), who used
+the same gravitational potential (McMillan 2017) within the same
+orbit calculation code galpy (Bovy 2015; Mackereth & Bovy 2018)
+suggests a non-negligible overlap with the Inner Galaxy Structure
+(IGS) / Heracles they identified (Horta et al. 2021). In a similar manner, we find most members of the GSE (79%) tend to have orbit energies above −1.8×105 km2 s−2 . In addition, however, we also find 7%
+chemically selected stars with 𝐸 < −2.0×105 km2 s−2 . Similar to the
+IGS/Heracles stars (within a 4 kpc sphere around the Galactic centre),
++1.6 kpc (but
+these stars are located within the Inner Galaxy at 𝑅 =2.6−1.1
++0.8
+further away from the Galactic plane at |𝑧| =1.6−0.4 kpc because of
+GALAH’s selection function with |𝑏| > 10 deg). We discuss this further in Sec. 5.1.2, as this raises the questions how reliable - or how
+MNRAS 000, 1–29 (2021)
+
+Figure 13. Stellar Age distributions of our chemically selected accreted
+stars (orange) and dynamically selected GSE stars (red). Ages are estimated via isochrone fitting, which is most precise for main-sequence turn-off
+(MSTO) stars. Their distribution (12 and 184 stars, respectively) is plotted
+with solid lines and we annotate their 16/50/84th percentiles. Uncertainties
+are on average 13% for MSTO stars and 50% for all stars (mainly giants).
+
+contaminated - our selection is or if there is an actual connection
+between IGS/Heracles and the GSE.
+Among the many possible dynamic parameters of accreted stars
+analysed in the literature (e.g. Schuster et al. 2012), the eccentricity 𝑒
+of orbits has been identified to be a rather distinctive property among
+the GSE (Mackereth et al. 2019; Naidu et al. 2020). Our sample
+supports this fact as well (Fig. 12c), showing extraordinarily high
+eccentricities for both selections. Such high values (𝑒 =0.96+0.03
+)
+−0.04
+are introduced by the dynamical selection itself. However, the majority of chemically selected accreted stars also show such high values
+(𝑒 =0.88+0.09
+), although with a much larger and significant tail to−0.36
+wards lower values.
+
+4.4 Stellar ages
+Stellar ages are likely the ultimate key to study the evolution of the
+Galaxy and it is therefore also essential to study the ages of accreted
+stars to place constraints on the beginning, duration, and end of
+accretion events. For GALAH+ DR3, stellar ages are provided as
+part of a value-added-catalogue estimated via isochrone fitting. For
+a detailed explanation of this analysis we refer to the DR3 release
+paper by Buder et al. (2021).
+As reliable stellar ages are still difficult to estimate, the best way
+
+Accreted stars in GALAH+ DR3
+for our sample to estimate ages is based on isochrone fitting of MSTO
+stars (Eq. 3). This limits our sample to 12 and 184 MSTO stars for
+the chemically and dynamically selected samples (see Fig. 13).
+In general, stars of the GSE are very old, that is 11.3+0.8
+Gyr
+−3.1
+(chemically selected) and 11.4+0.8
+Gyr
+(dynamically
+selected).
+We
+−3.2
+see a sharp drop of stellar ages below 10 Gyr and only few stars below
+this age. We note that of the three chemically selected MSTO stars
+with ages below 10 Gyr, two have likely underestimated stellar ages,
+as their positions in the color-magnitude diagram are consistent with
+significantly older ages. Their dynamic properties, like 𝑒 > 0.9, are
+consistent with the GSE.
+These age distributions allow us to put constraints on the end of
+the accretion. We discuss this in Sec. 5.4, where we also put our
+estimates into the context of the literature.
+
+5 DISCUSSION
+The aim of our study is to find a way to best select accreted stars
+in the MW with chemical abundance data from GALAH+ DR3, and
+use those data to characterise accreted stars, especially of the GSE,
+chrono-chemodynamically. Here, we reflect upon this endeavour and
+several key aspects. Firstly, in Sec. 5.1 we discuss the prospect of
+chemically tagging accreted stars and telltale elements of accretion.
+We then discuss the differences found for chemical and dynamical
+selections (Sec. 5.2). These differences inform our discussion on how
+to move forward towards a chemodynamical selection of accreted
+stars in Sec. 5.3. Lastly, we briefly put our age estimates into the
+context of other studies and discuss the implications for timescales
+of star formation and accretion in Sec. 5.4.
+
+5.1 Prospects for chemically tagging the accreted halo
+Why do we expect in-situ and accreted stars to show different chemical enrichment histories? If we accept the picture that the early
+Milky Way was assembled bottom-up via hierarchical aggregation
+of smaller elements and significant amount of accretion events (e.g.
+Searle & Zinn 1978), the difference of the chemical evolution of
+such accreted stars depends significantly on the initial mass function,
+the mass of the accreted system, and star formation history of each
+accreted structure. Such differences will, for example, influence at
+which [Fe/H] we see the typical knee in the [𝛼/Fe] vs. [Fe/H] plane,
+at which SNIa kick in (e.g. Tinsley 1979; Gilmore & Wyse 1991;
+McWilliam 1997; Matteucci 2021). The chrono-chemodynamic data
+of GALAH+ DR3 is so rich that we cannot address all questions
+here. We explicitly postpone a discussion of the resemblance of the
+accreted structures with dwarf Spheroidal galaxies to a follow-up, but
+refer to recent work by Hayes et al. (2018) and Monty et al. (2020) as
+well as the review by Nissen & Gustafsson (2018). For this work, we
+concentrate on the following questions: Which telltale elements have
+we identified (Sec. 5.1.1)? How reliable is our selection, that is, is our
+chemical selection actually selecting the GSE and how contaminated
+is this selection (Sec. 5.1.2) in combination with the question, how
+chemically different are accreted stars from in-situ ones?
+
+5.1.1 Telltale elements of accretion based on GALAH+ DR3
+Among the 30 elements measured by GALAH+ DR3, not all increase
+the prospects of chemical tagging equally (Ting et al. 2015) and
+are potentially useful to disentangle accreted stars from in-situ stars
+purely based on chemistry. We already elaborated on the separation
+
+19
+
+significance between low- and high-𝛼 halo in Sec. 3.1 (see also Tab. 1
+as well as the detection rate towards lower metallicities in Fig. 3).
+We found a compromise between these criteria and the number of
+measurements when limiting ourselves to measurements of Mg, Na,
+and Mn. Here, we are now concerned with putting the separation
+significance in a nucleosynthetic context, to identify telltale elements
+of accretion based on GALH+ DR3.
+Similar to Nissen & Schuster (2012), the data of GALAH+ DR3
+does not suggest a difference for Li between the accreted stars and the
+rest of the distribution. Simpson et al. (2021) already showed that the
+Li abundances of the GSE agrees with the in-situ stars in the metalpoor regime. Similar to Molaro et al. (2020), they conclude that the
+Spite plateau is universal and cannot serve to identify accreted stars.
+If we were able to measure C down to lower metallicities in
+GALAH+ DR3, this element (in combination with N) would certainly provide a powerful diagnostic. This was shown previously by
+Nissen et al. (2014) as well as Hawkins et al. (2015) and Hayes et al.
+(2018), who find changes of [C/Fe] and [N/Fe] in low-𝛼 halo stars, but
+a conserved and lower [(C+N)/Fe] abundance relative to the canonical disk stars. Carbon is mainly produced by massive stars (especially
+through SNII) and Asymptotic Giant Branch (AGB) stars (Kobayashi
+et al. 2020b). The low [C/Fe] values at low [Fe/H] thus suggest fewer
+contributions from both SNII and AGB stars in the birthplaces of
+accreted stars (see Nissen et al. 2014, for further discussion).
+Similar to Mg, we see that the accreted stars of the GSE, independent of their selection, are lower in their 𝛼-process element
+abundances than the high-𝛼 disk, as already found in previous studies (Venn et al. 2004; Nissen & Schuster 2010; Hawkins et al. 2015;
+Hayes et al. 2018; Mackereth et al. 2019; Koppelman et al. 2019,
+2021; Recio-Blanco et al. 2021; Di Matteo et al. 2020; Matsuno
+et al. 2021). We have shown a decreasing separation significance 𝑟
+in Tab. 1 from Mg to Ca, with exception of the more precisely measured element Ti. This confirms the decreasing difference between
+them as a function of 𝛼-process element number, as shown by Hayes
+et al. (2018) and is expected based on the changing contribution of
+SNIa to these individual elements (Tsujimoto et al. 1995; Kobayashi
+et al. 2020a). In this respect, [Mg/Fe] - or better [Mg/H] (Feuillet
+et al. 2021) - is the purest tracer of enrichment through SNII (e.g.
+Kobayashi et al. 2020b).
+As discussed in the literature (Nissen & Schuster 2010; Hawkins
+et al. 2015; Hayes et al. 2018), the light odd-Z elements Na and Al
+are also enriched through SNII, but the yields show a very strong
+dependence on the metallicity of their progenitors, which influences
+a cascade of element production and recycling during He burning
+and the CNO cycle (e.g. Woosley et al. 2002; Kobayashi et al. 2006,
+2020b). As such, the abundances of Na and Al behave differently
+from the 𝛼-process elements in the metal-poor regime and also for
+systems with different enrichment histories. This makes Na and Al
+(the latter less well measured in GALAH+ DR3) telltale elements for
+accretion (see also Kobayashi & Nakasato 2011; Ting et al. 2012).
+For the iron-peak elements between Sc and Zn, we are facing a
+complex superposition of different nucleosynthetic processes causing significant differences especially between odd and even element
+abundance trends. Cr to Ni are expected to be formed mainly during thermonuclear explosions of SNe, as well as in incomplete or
+complete Si-burning during explosive burning of core-collapse SNe
+(Kobayashi et al. 2006, 2020b). We have found several of the ironpeak elements, such as Mn, Ni, and Cu to show significantly lower
+enrichment compared to the Galactic disk - in agreement with previous observations (Nissen & Schuster 2010, 2011; Hawkins et al.
+2015; Hayes et al. 2018). In particular, the behaviour of Mn and Ni,
+both mainly enriched by SNIa, can inform our understanding of the
+MNRAS 000, 1–29 (2021)
+
+20
+
+S. Buder et al.
+
+nucleosynthesis via SNIa, including those with sub-Chandrasekhar
+masses (Kobayashi et al. 2020a; de los Reyes et al. 2020; Sanders
+et al. 2021). Within GALAH+ DR3, Mn is well measured down to
+lowest metallicities (see Fig. 3), whereas Ni is less well measured.
+The estimates for [Cu/Fe] suggest that Cu itself also has the potential
+of being a telltale element. Its enrichment is, similar to Na and Al,
+dependent on the metallicity of the progenitors, that is, massive stars
+that have exploded as SNII (Kobayashi et al. 2006, 2020b). A better
+detection rate for Cu and Ni would certainly place these elements
+among the rank of telltale elements.
+The most difficult and, to a large extent, still enigmatic enrichment
+processes are found for neutron-capture elements. Chemical enrichment models nowadays model these elements with a combination
+of AGB stars, core-collapse SNe (including SNe II, HNe, electroncapture SNe and magneto-rotational SNe), 𝜈-driven winds, neutron
+star mergers, and black hole mergers (see Kobayashi et al. 2020b, and
+references therein). But there remains significant uncertainty about
+the sites and yields of neutron-capture. Thanks to detailed individual studies as well as large spectroscopic surveys, more and more
+observational data for neutron-capture elements become available,
+and GALAH itself is delivering abundance estimates for up to 12
+neutron-capture elements. Our measurements of neutron-capture elements show both higher scatter (see Fig. 2) and are (with the exception of Ce) also on average higher than previous estimates by Nissen
+& Schuster (2011) and Fishlock et al. (2017). This includes both the
+first peak s-process elements like Zr and Y as well as second peak
+s-process elements like Ba and La. Fishlock et al. (2017) especially
+find low [Y/Eu] abundances among the accreted stars. This difference with respect to the in-situ stars holds valuable information on
+the possible build-up of the Galactic halo by low-mass dwarf galaxies
+and more massive mergers (Venn et al. 2004). As metal-poor AGB
+stars are likely contributing to low [Y/Eu] abundances (Venn et al.
+2004), these abundance ratios will help us to put more constraints on
+the origins of elements (see also Recio-Blanco et al. 2021), including the amount of r-process enhancement (Aguado et al. 2021) and
+the contribution of neutron-stars mergers and core-collapse SNe via
+[Eu/Mg] (Matsuno et al. 2021).
+5.1.2 Reliability and contamination of our chemical selection: Are
+we actually selecting accreted stars and especially the GSE?
+After the identification of telltale elements in GALAH+ DR3, we
+apply GMMs in Sec. 3.3 to identify substructures in chemical space,
+which are (to first order) different from the disk. That is, with our
+applied GMM we are actually finding overdensities in the chemical
+space of [Na/Fe] vs. [Mg/Mn]. Here we are now concerned with the
+question how reliable such a selection is to identify accreted stars. In
+particular, we are interested in the question of wether we are actually
+selecting stars of the dynamically identified GSE or if our chemical
+selection is significantly different (or contaminated).
+To what extent do previously identified accreted structures overlap
+with our chemical selection? Naidu et al. (2020) have already elaborated on this important key problem for their GSE selection, finding
+at least an overlap of Arjuna, Wukong/LMS-1, the Helmi streams,
+Aleph, and Sagittarius (Sgr).
+Naidu et al. (2021) argue that Arjuna is the retrograde debris (with
+𝐿 𝑍 < −700 kpc km s−1 ) of the GSE with similar [Fe/H]. As such, we
+expect these stars to also appear in our selection. When inspecting
+the retrograde tail of our chemical selection, we find only a small
+portion of stars, that is, 9% below 𝐿 𝑍 < −500 kpc km s−1 and 6%
+below 𝐿 𝑍 < −700 kpc km s−1 , in agreement with the value of ∼ 5%
+from the study by Naidu et al. (2021) and confirming that Arjuna is
+MNRAS 000, 1–29 (2021)
+
+likely contained in our selection, but not significantly contributing
+to it. A more detailed study of the 58 stars of this debris structure
+and its possible chemical differences with respect to the GSE as well
+as comparison with all the 507 stars with 𝐿 𝑍 < −700 kpc km s−1 is
+therefore not necessary for this particular discussion.
+We further do not anticipate a significant contamination by
+Wukong/LMS-1 (Yuan et al. 2020b; Naidu et al. 2020). This structure has been identified to be overlapping with the low [Fe/H] and
+low 𝑒 and prograde tail of the GSE (Naidu et al. 2020). We adopt
+a selection similar to the one by Naidu et al. (2020), and find that
+4.3% of our chemical selection fulfills criteria for Wukong/LMS-1,
+with [Fe/H] < −1.45 and 𝑒 < 0.7. Further limiting the sample to
+prograde orbits with 200 < 𝐿 𝑍 / kpc km s−1 < 1000 lowers this
+number to an insignificant 1.4%, not even taking into account the
+orbit energy restriction by Naidu et al. (2020).
+Because GALAH+ DR3 is mainly observing stars in the Solar
+neighbourhood (81.2% of the stars are within 2 kpc), we do not expect
+a significant contamination by Sgr in our data set. While Hasselquist
+et al. (2017) found most of the Sgr core stars to be more metal-rich
+than our chemical selection, Hasselquist et al. (2019) found stars
+of the Sgr stream to overlap with accreted stars in chemical space.
+The latter stars exhibit eccentricities of 0.40-0.85 and apocentre radii
+𝑅apo > 25 kpc. After comparing the latter with our typically lower
+values of 𝑅apo =11.7+6.7
+kpc for our chemical selection, we conclude
+−5.2
+that there is no significant contamination of our selection by Sgr and
+Sgr stream stars. We can exclude a significant contamination by the
+Helmi stream based on the low number of Helmi stream stars found in
+GALAH+ DR3 data by Limberg et al. (2021). Due to our [Fe/H] cut,
+we further do not expect significant contamination in our chemical
+selection from Aleph. This overdensity was discovered by Naidu et al.
+(2020) as a prograde, highly circular, dynamic overdensity. It is yet to
+be classified but its chemistry ([Fe/H] ∼ −0.51 and [𝛼/Fe] ∼ 0.19)
+as well as location (𝑅 = 11.1+5.7
+kpc) and high angular momentum
+−1.6
+resemble the hot tail of the outer low-𝛼 disk.
+We also come back to the possible contamination by the
+IGS/Heracles (Horta et al. 2021) mentioned in Sec. 4.3. There we
+found 7% chemically selected stars with 𝐸 < −2.0 × 105 km2 s−2 located in the inner Galaxy at 𝑅 =2.6+1.6
+kpc. Together with the portion
+−1.1
+of 20% stars with prograde orbits, typical of the high-velocity disk
+(𝐿 𝑍 ∼ 500 kpc km s−1 ), these are the two most significant (identified) sources of overlap/contamination. Similar to Horta et al. (2021),
+we therefore have to discuss the question of whether we can tell apart
+accreted structures chemically both from other accreted structures
+(GSE and Heracles) as well as from in-situ stars (GSE and the in-situ
+disk). Horta et al. (2021) argue based on comparisons of chemical
+evolutions models from Andrews et al. (2017), that both accreted and
+in-situ overlap in chemical space of [Al/Fe] vs. [Mg/Mn] and thus
+cannot, to our understanding, be completely separated.
+We follow this question up, but with a slightly different angle, by
+looking at where stars with different [Fe/H] values are distributed
+within the [Na/Fe] vs. [Mg/Mn] diagram, see Fig. 14. Although this
+projection is not separating accreted from in-situ stars, it is giving an
+idea of where these stars are distributed over different [Fe/H] ranges.
+In general, we see the trend that we cannot completely distinguish the
+abundances of the most metal-poor (panel a) stars from the high-𝛼
+disk in this plane. However, going from [Fe/H] ∼ −2, we see that the
+distribution in [Na/Fe] widens towards [Fe/H] ∼ −1 (panels b-e),
+before it overlaps again with the high-𝛼 disk at [Fe/H] > −0.9. This
+suggests that there is a range in [Fe/H] where we can obtain a higher
+purity sample of accreted stars that are less contaminated by the insitu disk. However, to fully understand the underlying structure and
+the completeness of the separation in this and other chemical planes,
+
+Accreted stars in GALAH+ DR3
+
+21
+
+Figure 15. Overlap of the different selections used throughout
+√ this study,
+that is via [Na/Fe] vs. [Mg/Mn] for “This Work”, 𝐿 𝑍 vs. 𝐽𝑅 for F+21
+(Feuillet et al. 2021), 𝑒 and [Fe/H] vs. [𝛼/Fe] for N+20 (Naidu et al. 2020),
+and 𝑣tot and [Fe/H] vs. [Mg/Fe] for NS+10 (Nissen & Schuster 2010).
+Diagonal entries show number of spectra per selection. Non-diagonal entries
+show overlap percentages relative to the stars per column. Percentages have
+been adjusted for possible flags to be independent of abundance detection
+limits (e.g. for [Na/Fe]).
+
+Figure 14. Distribution of stars with different [Fe/H] values (blue contours) within the [Na/Fe] vs. [Mg/Mn] plane. Stars of GALAH+ DR3
+(mainly disk with [Na/Fe] & 0 are shown in black contours in the background. Accreted stars (see Fig. 9) are expected around (-0.3,0.5).
+
+one needs to expand the comparison with chemical evolution models
+as done by Horta et al. (2021) towards models and cosmological
+hydrodynamical simulations that trace the chemical enrichment and
+include mergers (Buck 2020; Buck et al. 2021; Sestito et al. 2021).
+Here we aim to identify to what extent our chemical selection
+is truly identifying only GSE stars as the most dominant accreted
+structure in dynamical space. In Secs. 4.2.3 and 4.2.5, we find that
+our chemical selection of accreted stars tends to choose more Naand Mn-poor stars than the dynamical selection of the GSE. Combining these effects, their [Mg/Mn] ratios again behave rather simi+0.14 dex for the
+larly, that is, 0.52+0.15
+dex for the chemical and 0.47−0.16
+−0.17
+dynamical selection. This suggests that differences in Mg and Mn
+abundances are not driving the difference between the chemical and
+dynamical selections. We have, however, identified that our chemical
+selection is not selecting stars with [Na/Fe] & 0 dex, as it attributes
+these stars to an intermediate component (shown in blue in Fig. 7).
+Comparing our chemical and dynamical selections in terms of their
+[Na/Fe] coverage, thus constitutes a significant mismatch: 72% of
+the dynamically selected GSE stars have higher [Na/Fe] values than
+the 84th percentile of the chemically selected ones. To solve this
+issue in the future, multiple pathways are possible: a) increase the
+number of elemental abundance measurements and decrease their
+uncertainty in the hope that the differences between accreted and insitu stars become detectable within the [Na/Fe] vs. [Mg/Mn] plane;
+b) find other abundance planes/combinations; c) combine chemical
+with dynamical information to select accreted stars. Option a) will
+only be available with new/better data, e.g. thanks to ongoing observations of GALAH Phase 2 as well as from upcoming surveys such
+as 4MOST (de Jong et al. 2019), WEAVE (Dalton et al. 2018), and
+
+SDSS-V (Kollmeier et al. 2017). We have already explored option b)
+throughout this study (see Sec. 3).
+A complicating factor regarding the validity of currently used
+orbit actions is the assumption of axisymmetry, that is, the neglect
+of the Galactic bar. Whilst it is beyond the scope of this study to
+perform quantitative comparisons, we note that the existence of the
+bar and the orbits that we calculated suggest a significant interaction
+of accreted GSE stars with the bar. For stars with small radial actions,
+an interaction with the bar (with a certain pattern speed Ω𝑏 ) could
+for example scramble their initial action 𝐽 𝑅 and 𝐿 𝑍 , while shifting
+their position in the 𝐸 vs. 𝐿 𝑍 along a line of constant Jacobi integral
+𝐸 𝐽 = 𝐸 − Ω𝑏 · 𝐿 𝑍 (Binney & Tremaine 2008; Sellwood 2014). This
+has to be tested in the future, but could explain both an underdensity
+of stars at low 𝐿 𝑍 ∼ 0 kpc km s−1 and 𝐸 ∼ −2 × 105 km2 s−2 and an
+overdensity of accreted stars with larger (almost disk-like) 𝐸 and 𝐿 𝑍 ,
+as the interaction with the bar may have increased both quantities.
+
+5.2 The (dis-)similarity of samples based on different selection
+techniques and surveys
+5.2.1 Our selections vs. others
+As we set out to identify how similar chemical selection of accreted
+stars are to dynamical ones, in Fig. 15 we look at the actual overlap between these different selection techniques, when applied to
+GALAH+ DR3. This allows us to confirm independently that the
+low-𝛼 halo found by Nissen & Schuster (2010) is indeed significantly overlapping with the selection of the GSE by Naidu et al.
+(2020), that is, 57% and 74% depending on what sample we use as
+denominator. We further see that the clean dynamical selection by
+Feuillet et al. (2021) indeed overlaps almost 100% with the selection
+by Naidu et al. (2020), but covers only 21% of stars.
+Comparing our selection with other techniques, we have already
+identified an overlap with the clean dynamical selection of Feuillet
+√
+et al. (2021) of (29±1% (see Sec. 4.1) as this selection avoids low 𝐽 𝑅
+regions possibly contaminated by the high-𝛼 halo and disk. Using
+additional chemical information to tell apart high-𝛼 from low-𝛼 stars
+has been pioneered by Nissen & Schuster (2010) among kinematic
+halo stars and optimised by Naidu et al. (2020) with eccentricities
+above 𝑒 > 0.7. We find that our chemical selection overlaps significantly with both studies (75% and 73% respectively), although our
+MNRAS 000, 1–29 (2021)
+
+22
+
+S. Buder et al.
+
+selection only includes 16-21% of the stars selected by both studies.
+This suggests that we are indeed only selecting a chemically defined
+subset of the low-𝛼 halo / GSE. We have therefore checked how these
+numbers change if we also include the metal-poor intermediate-𝛼
+component (see blue contours in Fig. 7). This would lead to an increase in our numbers of accreted stars from 1049 to 4910 and an
+increase with all other selections from 16-29% to 60-78% (with respect to the latter selections). However, it would also increase the
+contamination, as the overlap with respect to our selection decreases
+from 28% to 16% compared to the selection by Feuillet et al. (2021)
+and even worse from 73-75% to 54-47% for the other two selections.
+Comparing the metallicity distribution function of our chemical
+selection with the one by Das et al. (2020), we have established
+in Sec. 4.2.1, that the stars that they select as accreted are signif+0.33 dex with updated APOGEE
+icantly more metal-poor (−1.25−0.24
+DR16 [Fe/H] values) than our selection (−1.11+0.28
+dex). We found
+−0.30
+however excellent agreement between our metallicity distribution
+function and the one from Naidu et al. (2020) and Feuillet et al.
+(2020, 2021) based on actions; compare also to the values of
+[Fe/H] = −1.24 ± 0.37 from LAMOST (Amarante et al. 2020).
+When looking at the actual overlap of our selection and the one
+by Das et al. (2020), we find four and two (different) stars overlapping with our chemical and dynamical selection, respectively.
+According to APOGEE DR16, the iron abundances of the four stars
+([Fe/H] =−1.42+0.07
+) are similarly more metal-poor by 0.22+0.03
+−0.01
+−0.16
+than our estimates, similar to the disagreement of our and their overall MDF (see Fig. 10). This is somewhat surprising, as we found a
+very similar MDF with the dynamical selection of APOGEE DR16
+by Feuillet et al. (2021). Contrary to this, the [Fe/H] estimates of the
+two dynamically selected stars (with [Fe/H] = −1.59 and −1.12 dex)
+are more similar, with only 0.1 dex lower values for APOGEE DR16.
+The discrepancy of different GSE selections was already discussed
+by Bonifacio et al. (2021), as they also found lower metallicities
+than Naidu et al. (2020) and Feuillet et al. (2020). While different
+metallicity scales of the different surveys could be the source of this
+disagreement, in this work, we demonstrate that the new selection
+within APOGEE DR16 by Feuillet et al. (2021) and the selection
+by Das et al. (2020), but with updated values from APOGEE DR16,
+show a disagreement. This is an important finding and suggests that
+the chemical and dynamical selections of the same survey are selecting slightly different samples, that is, the chemical one by Das et al.
+(2020) is more metal-poor within APOGEE DR16 than the one by
+Feuillet et al. (2021). It should also be mentioned, that the selection
+suggested by Myeong et al. (2019) in the 𝐽 𝜙 /𝐽tot vs. (𝐽 𝑅 − 𝐽 𝑍 ) /𝐽tot
+plane with APOGEE DR14 stars resulted in a more metal-rich sample ([Fe/H] ∼ −1.0). Again, this suggests that different chemical
+and dynamical selections - already within APOGEE DR16 - result
+in slightly different selections.
+Moving forward, it will be important to compare the different
+selections of the GSE also spatially and while taking the selection
+functions into account (e.g. Lane et al. 2021), as different surveys
+probe different parts of the Galaxy and differences within the surveys
+might also reflect spatial differences of the GSE. It should also be
+assessed in more detail whether the chemical selection by Das et al.
+(2020) did for example also select a larger amount of IGS/Heracles
+stars, for which Horta et al. (2021) find mean [Fe/H] around −1.3 dex
+in the inner Galaxy, thus possibly contaminating the selection by Das
+et al. (2020). Analysing the target selection of the sample from Das
+et al. (2020), we identified that roughly 18% of the stars were targeted
+by APOGEE during observations observations of more metal-poor
+globular cluster and streams. While we cannot draw significant conMNRAS 000, 1–29 (2021)
+
+√
+Figure 16. Distribution of [Mg/Fe] vs. 𝐽𝑅 for GALAH+ DR3 (black
+contours). Overlaid are the dynamically (red) and chemically
+(orange)
+√
+selected accreted stars. The latter extend towards lower 𝐽𝑅 at increasing
+[Mg/Fe] down to the region populated by the high-𝛼 stellar disk.
+
+clusions from these differences, we note that stellar surveys suffer
+from the ability to sufficiently benchmark iron abundances in the
+metal-poor regime due to still low numbers of benchmark stars. More
+efforts similar to those of Hawkins et al. (2016) and Karovicova et al.
+(2020) will be needed to fully validate the iron-abundances in the
+metal-poor regime. One very metal-poor turn-off star found as part of
+the GSE by Naidu et al. (2020) was observed by GALAH, but without
+parameters reported within GALAH+ DR3 due to its high 𝑇eff , large
+distance, and thus low signal-to-noise GALAH+ DR3 spectrum.
+
+5.2.2 Non-overlapping stars as key
+In Secs. 4.1 and 4.3, we√︁ found stars within the chemically selected accreted stars with 𝐽 𝑅 / kpc km s−1 < 30 and higher 𝑉 𝜙 >
+√︁
+100 km s−1 . In particular the stars with low 𝐽 𝑅 / kpc km s−1 < 20
+are also those with higher 𝐿 𝑍 = 380+710
+kpc km s−1 . We plot the
+−550
+√
+change of [Mg/Fe] with radial action 𝐽 𝑅 in Fig. 16. Further, we
+find that the dynamically selected GSE extends towards higher 𝛼enhancement into the region, where we would expect the in-situ stars
+to be situated. This can be further appreciated not only when looking
+at our dynamical selection of the 𝛼-process element abundances in
+Fig. 11, but also Fig. 11 by Naidu et al. (2020).
+Future studies√should model the distribution of accreted stars in
+the [Mg/Fe] vs. 𝐽 𝑅 plane, especially in terms of time scales. We
+sadly have no stars within the lower right quadrant of Fig. 16 among
+the chemically selected accreted MSTO stars. These stars would
+otherwise allow us to study if there is an age gradient in this plane.
+Our prediction for future studies with reliable
+stellar ages is that
+√
+stars (born during the merger) with lower 𝐽 𝑅 should not only be
+more enriched in [Mg/Fe], but also younger, as their birth material
+was likely mixed with the 𝛼-enhanced material of the Milky Way
+(contrary to their older accreted siblings) or exhibited a burst of star
+formation (Gilmore & Wyse 1991). Finding such a gradient would
+allow us to estimate how much mixing happened over the time-scale
+of the merger and also put limits on the time-scale of the merger.
+Comparisons of their ages with those of the high-𝛼 disk and halo
+would also aid the necessary estimation of false-positive chemical
+selection (contamination) of disk stars as accreted stars.
+
+Accreted stars in GALAH+ DR3
+
+23
+
+(red colours in Fig. 17a) for the disk stars (black contours) and high
+eccentricities (𝑒 > 0.6) in the upper left quartile. From this figure, it
+also becomes evident that we are only selecting the low [Na/Fe] stars
+(orange contours showing the chemically selected stars) of the high
+eccentricity stars. We remind ourselves that Mackereth et al. (2019)
+found ∼ 2/3 of nearby halo stars have 𝑒 > 0.8, and Naidu et al. (2020)
+selected stars based on their high eccentricities with 𝑒 > 0.7. Which
+values of eccentricity should now be favoured? Whilst we stress that
+finding the best chemodynamic selection is beyond the scope of this
+paper, a first look at the distribution of chemical parameters as a function of eccentricity 𝑒, see Fig. 18, can inform future studies. Here,
+we see clear overdensities around 𝑒  0.5 and 𝑒  0.8. The latter
+also coincides with the position of our dynamically identified GSE
+stars (red contours). To allow the comparison with different chemical
+abundances, we plot [Fe/H], the selection of low- and high-𝛼 stars by
+Naidu et al. (2020) - similar to the cut by Nissen & Schuster (2010)
+- and [Na/Fe] in the different panels. Depending on what a certain
+survey is able to measure, it thus could be explored to combine eccentricity with any of these combinations. Fig. 18c also suggests,
+that already upper limits on [Na/Fe], like [Na/Fe] ≯ 0, could suffice
+to select accreted stars and overcome detection limits. We thus suggest to further assess the combination of abundance limits - such as
+[Na/Fe] ≯ 0 or [Al/Fe] ≯ 0 - with orbit limits - such as 𝑒 > 0.7 as
+suggested by Mackereth et al. (2019) and Naidu et al. (2020).
+
+Figure 17. Mean eccentricity (panel a) and [Fe/H] (panel b) in different
+regions of the [Na/Fe] vs. [Mg/Mn] plane for stars of GALAH+ DR3. Only
+bins with more than 5 stars have been populated. Density contours correspond
+to those from Fig. 9a) with the chemically selected accreted stars (orange)
+and all stars of GALAH+ DR3 (black).
+
+5.3 Towards a chemodynamical selection of the GSE
+We have identified that the chemical selection extends significantly
+outside the clean dynamical one in dynamical space and vice-versa in
+chemical space. Only (29±1)% of the stars of our chemical selection
+were found within the clean dynamical selection box (Sec. 4.1 and
+Fig. 9d). There are three avenues to solve this disagreement: (i) loosen
+constraints on the chemical abundances for the chemical selection (to
+also include the high [Na/Fe] stars of the GSE), (ii) loosen
+√ constraints
+on the dynamical selection (to also include the low 𝐽 𝑅 stars found
+for the GSE), or (iii) combine less strict constraints of the chemical
+and dynamical selections.
+Concerning option (i), this would lead to adding stars from the
+intermediate Gaussian component (see blue component in Fig. 7) to
+our selection. As we are not able to separate the contamination by
+in-situ stars within this blue component, it is however beyond the
+scope of this paper to estimate the contamination and we resort to
+the other options here.
+Option (ii) was√︁already tested by Feuillet et al. (2020) and suggested that below 𝐽 𝑅 / kpc km s−1 < 30 a significant contamination
+by the disk is starting to dominate a dynamical selection.
+Finally, we are interested in combining less-strict chemical with informative dynamical properties towards a chemodynamical selection.
+The literature is already rich in suggested selections (see Sec. A). Inspired by the promising analysis of eccentricity 𝑒 by Mackereth et al.
+(2019) and Naidu et al. (2020), we assess the possible combination of
+this orbit parameter with chemical abundances. In Fig. 17, we plot our
+chemical selection plane [Na/Fe] vs. [Mg/Mn], but coloured by mean
+eccentricities (panel a) and coloured by mean [Fe/H] (panel b). We
+see a very sharp transition between typically low eccentricity stars
+
+5.4 Timescales of star formation and accretion
+Stellar ages help us to limit accretion timescales (also of the GSE)
+and trace back, which events shaped the formation of the Milky Way,
+including the merging history of our Galaxy (Wyse 2001). Multiple
+studies (e.g. Jofré et al. 2010; Schuster et al. 2012; Hawkins et al.
+2014; Gallart et al. 2019; Das et al. 2020; Montalbán et al. 2021)
+have delivered estimates of stellar ages of accreted/GSE stars. As
+we are still unable to both estimate very reliable ages and further
+disentangle the MW halo from the disk reliably, the age estimates of
+different samples are in disagreement on several fronts.
+Looking at the kinematic halo stars, Gallart et al. (2019) found
+that the accreted stars, selected as the blue sequence (in photometric
+colours) of the kinematic halo were coeval with their redder counterpart, and both significantly older than the average MW high-𝛼 (thick)
+disk star. While Schuster et al. (2012) and Hawkins et al. (2014) also
+found the metal-poor accreted stars to be coeval with the old high-𝛼
+halo and disk stars, they identified the metal-rich end of the accreted
+population to be younger than the majority of the high-𝛼 halo/disk.
+With the help of asteroseismically aided observations, Montalbán
+et al. (2021) were able to estimate some of the most precise ages of
+GSE stars to date. They confirmed that the average GSE star is likely
+slightly younger (or coeval within uncertainties) than the average
+old and nearly coeval high-𝛼 stars (Miglio et al. 2021) with robust
+asteroseismically aided age estimates. They thus concluded that a
+significant part of the MW high-𝛼 disk was already in place before
+the infall of the GSE at around 10 Gyr, echoing the conclusions of
+several other earlier papers, based on more limited data (e.g. Wyse
+2001, and references therein). In particular, the age of one in-situ
+high-𝛼 star that was already in place and likely dynamically heated
+by the merger allowed (Chaplin et al. 2020) to infer at 68% confidence
+that the earliest the merger could have begun was 11.6 Gyr ago at 68.
+Our average ages of 11.3+0.8
+Gyr and 11.4+0.8
+Gyr, respectively,
+−3.1
+−3.2
+coincide with this estimate, but appear to be older (although consistent within uncertainties) than the average of the distribution found
+by Montalbán et al. (2021) at 9.7 ± 0.6 Gyr. As the accuracy of stellar
+age estimation is subject to several complex factors, such as atomic
+MNRAS 000, 1–29 (2021)
+
+24
+
+S. Buder et al.
+
+Figure 18. Distribution of eccentricity as a function of different abundances of GALAH+ DR3 (black contours) and the dynamically selected stars
+(red contours). Panel a) as a function of [Fe/H]. Panel b) as a function of an adjusted difference between [𝛼/Fe] and [Fe/H] as suggested by Naidu et al.
+(2020). Panel c) as a function of [Na/Fe]. Panel d) as a function of [Na/Fe] with additional contours indicating our chemically selected accreted (orange) and
+intermediate (blue) components. Red dashed lines indicates the 𝑒 limited as suggested by Naidu et al. (2020).
+
+diffusion (see e.g. Jofré & Weiss 2011), a discussion of this disagreement, including the contentious ages of young 𝛼-enhanced stars with
+large masses (e.g. Chiappini et al. 2015; Zhang et al. 2021), is beyond
+the scope of this paper.
+Looking at the lower end of stellar ages, Bonaca et al. (2020)
+found both the star formation rate of the high-𝛼 disk and in-situ halo
+stars to truncate 8.3 ± 0.1 Gyr ago (𝑧 ≃ 1), whereas they find the
+star formation of accreted stellar halo to truncate 10.2+0.2
+Gyr ago
+−0.1
+(𝑧 ≃ 2). While small in size, 75% (9/12) and 75% (138/184) of the
+MSTO stars of our chemically and dynamically identified accreted
+stars also show ages above 10 Gyr (Fig. 13).
+While these observations suggest that the GSE has not significantly
+influenced the formation of the thick disk, it has fuelled the hypothesis
+that the last major merger of the GSE is chronologically not only
+consistent with the decrease of star formation in the high-𝛼 disk
+(Bonaca et al. 2020) and beginning of star formation of the low𝛼 disk, but that there is actually a causal connection (see e.g. Buck
+2020). If true, this allows us to put constraints on the merger timescale
+and subsequent onset of the low-𝛼 disk formation (e.g. Wyse 2001;
+Di Matteo et al. 2019; Belokurov et al. 2020).
+The jury is still out as to whether the GSE is responsible for the
+decrease in thick disk star formation. But it seems that at least the
+timing is plausible in this eventful Galactic epoch. Future studies of
+the chrono-chemodynamic properties of the accreted and in-situ stars
+promise to shed light on the circumstances of drastic changes in the
+Galactic structure.
+
+6 CONCLUSIONS
+In this study we set out to identify which elements are best used to
+identify accreted stars in our Milky Way based on elemental abundances from the third data release of the GALAH Survey (Buder
+et al. 2021) and to compare this chemical selection with dynamical
+ones from the literature. The key findings of our study are:
+• To identify the best set of elements for this task, we follow the
+approach by Nissen & Schuster (2010) to identify accreted stars (in
+their paper called low-α halo stars) via their high total velocities and
+low [Mg/Fe] compared to the (thick) disk stars. We find several elements showing a significant separation in GALAH+ DR3 between
+abundances of the accreted stars and the disk (or in-situ stars), including Mg, Si, Na, Al, Mn, Ni, and Cu. Their detection rates as a
+function of [Fe/H] vary strongly, and we find the best compromise
+of significance of separation and detection rates for Mg, Mn, and Na
+MNRAS 000, 1–29 (2021)
+
+- ranking them as the best telltale elements of accretion based on
+GALAH+ DR3 (see discussion in Sec. 5.1.1).
+• We test the identification of accreted stars based on these elements in different abundance planes via Gaussian Mixture Models
+and find the best results from [Na/Fe] vs. [Mg/Mn], similar to the
+selection via [Al/Fe] vs. [Mg/Mn] used by Hawkins et al. (2015) and
+Das et al. (2020) for data from the APOGEE Survey.
+• We compare the chrono-chemodynamic properties of stars identified via this chemical selection with those
+√ of the accreted stars of
+the GSE, selected via a box in 𝐿 𝑍 vs. 𝐽 𝑅 space as suggested by
+Feuillet et al. (2021). We discuss the implications for chemical tagging of accreted stars as well as how we can interpret the difference
+between chemical and dynamical selections. Our main points are:
+Firstly, values of [Na/Fe] of stars identified through dynamical selection are typically 0.1 dex higher than those of the chemical selection
+and secondly, the radial actions 𝐽 𝑅 of the chemical selection extend well below the clean selection in dynamical space suggested by
+Feuillet et al. (2021). In particular, only (29 ± 1)% of the chemically
+selected stars fall within the clean dynamical selection box.
+• We discuss the reliability and contamination of our selection
+in Sec. 5.1.2, finding that our chemical selection is possibly - but
+insignificantly - contaminated by the IGS/Heracles (7%) and other
+accreted structures.
+• We find 20% of the chemically selected accreted stars on prograde orbits 𝐿 𝑍 > 500 kpc km s−1 , that is, overlapping with the hot
+disk. More follow-up is necessary to identify if this is caused by contamination or an actual overlap in dynamical space, thus suggesting
+changes of orbits of accreted stars (see our discussion in Sec. 5.2.2).
+• If one is interested in the chemical properties of the GSE it
+is favourable to use the quantities estimated based on the dynamical selection. To analyse the dynamical properties of the GSE,
+however, those estimated from the chemical selection should be
+preferred. Again, we caution that we expect a small contamination by the IGS/Heracles (7%) as well as possibly the dynamically hot stellar disk. 20% of our chemically selected stars exhibit
+𝐿 𝑍 > 500 kpc km s−1 . This is an upper limit of our contamination, as
+it could be either caused by contamination of our selection or changed
+orbits of truly accreted stars. We do not suggest to use the overlap of
+both selections, as we have identified significant differences due to
+the overlap of accreted and in-situ stars in [Na/Fe], which prohibit us
+to distinguish the accreted stars with high [Na/Fe] from the in-situ
+ones within our uncertainties. In particular, 72% of the stars of the
+dynamically selected GSE have [Na/Fe] above the 84th percentile of
+the chemically selected ones.
+
+Accreted stars in GALAH+ DR3
+• We therefore also discuss how we can find a better selection of
+accreted stars in chemodynamical space. In Sec. 5.3, we thus show
+how the previously suggested orbit eccentricity (see e.g. Mackereth
+et al. 2019; Naidu et al. 2020) in combination with chemistry can
+help future studies to find appropriate selections.
+• To allow reproducibility of results and better comparison between different studies and selections, as well as their measured
+properties, we encourage researchers to report all assumptions going
+into the calculation of orbit parameters and to report uncertainties.
+• Finally, we use age estimates of MSTO stars to find typical ages
+of 11.3+0.8
+Gyr (chemically selected) and 11.4+0.8
+Gyr (dynamically
+−3.1
+−3.2
+selected) for the accreted stars in GALAH+ DR3. We see a significant
+drop below 10 Gyr in our sample and a tentative agreement with the
+finding by Bonaca et al. (2020) of a truncation of star formation of
+accreted stars around 10 Gyr. However, our distributions only include
+12 and 184 MSTO stars for the chemical and dynamical selections,
+respectively, and are thus prone to outliers. Due to the small numbers
+of stars younger than 10 Gyr, we cannot draw strong conclusions
+concerning the cessation of star formation.
+
+7 OUTLOOK
+With the ongoing development of new instruments and the beginning
+of the era of large-scale stellar surveys (see Nissen & Gustafsson
+2018; Jofré et al. 2019, for reviews), the bulge and halo have now
+also come into reach and we start to see streams and substructures in
+the halo (see e.g. Helmi 2020, for a review), which are evidence of
+ongoing and past accretion events. How significant these events were
+is still under investigation: How many mergers happened? Where
+are their remnants now? How (dis-)similar are their properties to the
+in-situ stars that were already in the Galaxy? Which of these were
+major mergers? How much (primordial) gas did they bring into the
+Galaxy? What is the connection between mergers with the pause in
+star formation and different chemistry that we observe between the
+high- and low-𝛼 disk? Helmi (2020) concludes that, to be able to
+interpret various structures, we need detailed chemical abundances
+of stars with full phase-space information, which in-turn motivates
+the continuing efforts of ongoing and upcoming surveys.
+With the availability of astrometric information from the Gaia
+satellite mission and its Data Releases 1 (Gaia Collaboration et al.
+2016b), DR2 (Gaia Collaboration et al. 2018a), and eDR3 (Gaia
+Collaboration et al. 2021) as well as the industrial revolution of stellar
+spectroscopic surveys, delivering millions of chemical abundance
+measurements (for a review see Jofré et al. 2019), our selection
+techniques of accreted stars start to shift from kinematic towards
+chemodynamic or even purely chemical properties.
+We are, however, just at the beginning of truly understanding the
+interplay of kinematics/dynamics, chemistry, and ages of the different substructures. We know that, when it comes to these different
+properties, kinematic properties change on short timescales, whereas
+dynamic properties (in a slowly evolving potential) are conserved for
+a longer period. But we hope that chemical abundances, as locked
+in the stellar atmosphere at birth, do not change significantly over
+cosmic time for individual stars, and are furthermore significantly
+different for different Galactic and extra-galactic birth places. Stellar
+ages (which are difficult to extract from our observables) are our best
+hope to narrow down the formation scenarios of our Galaxy.
+Two major question that need to be answered in more holistic
+studies are: When can we actually identify a star as accreted? And
+how can we tell it apart from other accreted stars? In this study, we
+have been able to answer this question in terms of the most extreme
+
+25
+
+cases, that is the significantly different enrichment of some stars for
+example in Na (and Al). However, we clearly are struggling at the
+overlap of accreted structures themselves (e.g. GSE and IGS/Heracles
+or GSE vs. Arjuna) as well as accreted stars and in-situ ones. When
+do we actually call stars in-situ, given that the Milky Way itself likely
+started from several smaller structures that then kept accreting and
+star formation also takes place during mergers from material of both
+in-situ and accreted material? More research is needed to push our
+understanding of the underlying (accreted) structure of our Milky
+Way and its building blocks. Possible clues might also be found by
+studying the spatial distribution of these stars compared to the older
+GSE stars. Due to the low number of identified stars, this should,
+however, be done by combining the stars identified by the various
+different and complementary surveys.
+As a follow-up study we also strongly propose to attempt to associate the substructures detected in dynamical space that are not
+overlapping with the clean GSE box by Feuillet et al. (2021) in detail. This would be an application of the methodology similar to the
+one by Naidu et al. (2020), as already done for the Helmi streams
+for GALAH+ DR3 by Limberg et al. (2021), but is beyond the scope
+of this study. Along a similar line of thought, we also suggest to
+continue the efforts of searching for associations between accreted
+structures with other substructure. Such studies include the search for
+associations between globular clusters and accreted structures (Massari et al. 2019), stellar streams with globular clusters as potential
+progenitors (Bonaca et al. 2021) and moving groups with accreted
+structures (Schuler et al. 2021). These studies made use of the data
+from different surveys, including data provided by Gaia Collaboration et al. (2018c) in combination with the work by Vasiliev (2019)
+and the H3 Survey (Conroy et al. 2019). The data from the GALAH
+survey is very complementary to these surveys, as it probes different
+regions of the Galaxy and/or adds the high-dimensional chemical
+perspective and thus allows to confirm found accreted associations
+even stronger.
+In the future it will be vital to continue the effort of comparing
+present-day observations with both higher redshift observations as
+well as potential formation scenarios. High redshift observations may
+allow us to observe major mergers as they happen and inform us on
+their importance. Was the MW high-𝛼 (thick) disk for example heated
+up by major mergers like those of the GSE, or was it already born
+hot as the correlation of higher gas velocity dispersions at higher
+redshifts would suggest (Wisnioski et al. 2015; Leaman et al. 2017)?
+Can we find a consistent story over all redshifts?
+Favouring or excluding formation scenarios will need to go handin-hand with the comparison to (cosmological hydrodynamical) simulations (e.g. Mackereth & Bovy 2018; Bonaca et al. 2017; Wu et al.
+2021), which allow us to time accretion events and trace accreted
+stars spatially, dynamically, and now also chemically. Much progress
+has been made in recent years through studies of the in-situ and exsitu fractions (e.g. Pillepich et al. 2015), the influence of mergers on
+the 𝛼-enhancement (e.g. Zolotov et al. 2010; Grand et al. 2020; Buck
+2020; Renaud et al. 2021a), the estimation of infall scenarios and
+parameters of the GSE (e.g. Villalobos & Helmi 2008; Koppelman
+et al. 2021; Naidu et al. 2021), including the amount and importance
+of gas-rich and gas-poor mergers (e.g. Fensch et al. 2017; Renaud
+et al. 2021b) and telling apart different components of simulated
+galaxies (e.g. Obreja et al. 2019). We expect great progress here and
+an iterative convergence on deciphering the origin of the elements,
+as elemental abundance measurements - especially of environments
+different than the already well-studied disk - inform the constraints
+on chemical enrichment processes and yields (e.g. Fernández-Alvar
+MNRAS 000, 1–29 (2021)
+
+26
+
+S. Buder et al.
+
+et al. 2018; Vincenzo et al. 2019; Eitner et al. 2020; Sanders et al.
+2021; Ishigaki et al. 2021).
+
+0.21.3; Pedregosa et al. 2011), statsmodels (v. 0.10.1), xdgmm (v.
+1.1). We further made use of topcat (version 4.7; Taylor 2005);
+
+ACKNOWLEDGEMENTS
+
+DATA AVAILABILITY
+
+We acknowledge the traditional owners of the land on which the
+AAT and ANU stand, the Gamilaraay, the Ngunnawal and Ngambri
+people. We pay our respects to elders past, present, and emerging
+and are proud to continue their tradition of surveying the night sky in
+the Southern hemisphere. This work was supported by the Australian
+Research Council Centre of Excellence for All Sky Astrophysics in
+3 Dimensions (ASTRO 3D), through project number CE170100013.
+KL acknowledges funds from the European Research Council (ERC)
+under the European Union’s Horizon 2020 research and innovation
+programme (Grant agreement No. 852977). TB acknowledges support from the European Research Council under ERC-CoG grant
+CRAGSMAN-646955. JK and TZ acknowledge financial support of
+the Slovenian Research Agency (research core funding No. P1-0188)
+and the European Space Agency (PRODEX Experiment Arrangement No. C4000127986). KCF acknowledges support from the the
+Australian Research Council under award number DP160103747. CK
+acknowledges funding from the UK Science and Technology Facility Council (STFC) through grant ST/R000905/1 and ST/V000632/1,
+and the Stromlo Distinguished Visitorship at the ANU. We thank Rohan Naidu for sharing the [Fe/H] values from Naidu et al. (2020).
+Hyperlink figures to code access are inspired by Rodrigo Luger.
+
+The data used for this study is published by Buder et al. (2021) and can
+be accessed publicly via https://docs.datacentral.org.au/
+galah/dr3/overview/. We provide full tables for Tables 3 and 5 in
+the supplementary material. All code to reproduce the analysis and
+figures can be accessed via https://github.com/svenbuder/
+Accreted-stars-in-GALAH-DR3 and is also marked behind each
+figure with a link icon to this repository.
+
+FACILITIES
+AAT with 2df-HERMES at Siding Spring Observatory: The
+GALAH Survey is based data acquired through the Australian Astronomical Observatory, under programs: A/2013B/13 (The GALAH
+pilot survey); A/2014A/25, A/2015A/19, A2017A/18 (The GALAH
+survey phase 1), A2018 A/18 (Open clusters with HERMES),
+A2019A/1 (Hierarchical star formation in Ori OB1), A2019A/15
+(The GALAH survey phase 2), A/2015B/19, A/2016A/22,
+A/2016B/10, A/2017B/16, A/2018B/15 (The HERMES-TESS program), and A/2015A/3, A/2015B/1, A/2015B/19, A/2016A/22,
+A/2016B/12, A/2017A/14, (The HERMES K2-follow-up program).
+This paper includes data that has been provided by AAO Data Central (datacentral.aao.gov.au). Gaia: This work has made use of
+data from the European Space Agency (ESA) mission Gaia (http:
+//www.cosmos.esa.int/gaia), processed by the Gaia Data Processing and Analysis Consortium (DPAC, http://www.cosmos.
+esa.int/web/gaia/dpac/consortium). Funding for the DPAC
+has been provided by national institutions, in particular the institutions participating in the Gaia Multilateral Agreement. Other facilities: This publication makes use of data products from the Two
+Micron All Sky Survey (Skrutskie et al. 2006) and the CDS VizieR
+catalogue access tool (Ochsenbein et al. 2000).
+
+SOFTWARE
+The research for this publication was coded in python (version 3.7.4)
+and included its packages astropy (v. 3.2.2; Astropy Collaboration
+et al. 2013, 2018), corner (v. 2.0.1; Foreman-Mackey 2016), galpy
+(version 1.6.0; Bovy 2015), IPython (v. 7.8.0; Pérez & Granger
+2007), matplotlib (v. 3.1.3; Hunter 2007), NumPy (v. 1.17.2; Walt
+et al. 2011), scipy (version 1.3.1; Virtanen et al. 2020), sklearn (v.
+MNRAS 000, 1–29 (2021)
+
+REFERENCES
+Aguado D. S., et al., 2021, ApJ, 908, L8
+Amarante J. A. S., Smith M. C., Boeche C., 2020, MNRAS, 492, 3816
+Amarsi A. M., Asplund M., Collet R., Leenaarts J., 2015, MNRAS, 454, L11
+Amarsi A. M., Asplund M., Collet R., Leenaarts J., 2016, MNRAS, 455,
+3735
+Amarsi A. M., Nissen P. E., Asplund M., Lind K., Barklem P. S., 2019, A&A,
+622, L4
+Amarsi A. M., et al., 2020, A&A, 642, A62
+Amorisco N. C., 2017, MNRAS, 464, 2882
+An D., Beers T. C., 2021, ApJ, 918, 74
+Andrews B. H., Weinberg D. H., Schönrich R., Johnson J. A., 2017, ApJ,
+835, 224
+Astropy Collaboration et al., 2013, A&A, 558, A33
+Astropy Collaboration et al., 2018, AJ, 156, 123
+Bailer-Jones C. A. L., Rybizki J., Fouesneau M., Demleitner M., Andrae R.,
+2021, AJ, 161, 147
+Barbá R. H., Minniti D., Geisler D., Alonso-García J., Hempel M., Monachesi
+A., Arias J. I., Gómez F. A., 2019, ApJ, 870, L24
+Belokurov V., et al., 2006, ApJ, 642, L137
+Belokurov V., Erkal D., Evans N. W., Koposov S. E., Deason A. J., 2018,
+MNRAS, 478, 611
+Belokurov V., Sanders J. L., Fattahi A., Smith M. C., Deason A. J., Evans
+N. W., Grand R. J. J., 2020, MNRAS, 494, 3880
+Bensby T., Feltzing S., Oey M. S., 2014, A&A, 562, A71
+Binney J., 2012, MNRAS, 426, 1324
+Binney J., Tremaine S., 2008, Galactic Dynamics: Second Edition. Princeton
+University Press
+Bird J. C., Kazantzidis S., Weinberg D. H., Guedes J., Callegari S., Mayer L.,
+Madau P., 2013, ApJ, 773, 43
+Bland-Hawthorn J., Gerhard O., 2016, ARA&A, 54, 529
+Bland-Hawthorn J., et al., 2019, MNRAS, 486, 1167
+Bonaca A., Conroy C., Wetzel A., Hopkins P. F., Kereš D., 2017, ApJ, 845,
+101
+Bonaca A., et al., 2020, ApJ, 897, L18
+Bonaca A., et al., 2021, ApJ, 909, L26
+Bonifacio P., et al., 2021, A&A, 651, A79
+Bovy J., 2015, ApJS, 216, 29
+Bovy J., 2016, ApJ, 817, 49
+Bovy J., Hogg D. W., Roweis S. T., 2011, Ann. Appl. Stat., 5, 1657
+Bovy J., Rix H.-W., Hogg D. W., 2012a, ApJ, 751, 131
+Bovy J., Rix H.-W., Liu C., Hogg D. W., Beers T. C., Lee Y. S., 2012b, ApJ,
+753, 148
+Bovy J., Rix H.-W., Schlafly E. F., Nidever D. L., Holtzman J. A., Shetrone
+M., Beers T. C., 2016, ApJ, 823, 30
+Buck T., 2020, MNRAS, 491, 5435
+Buck T., Rybizki J., Buder S., Obreja A., Macciò A. V., Pfrommer C., Steinmetz M., Ness M., 2021, MNRAS, 508, 3365
+Buder S., et al., 2018, MNRAS, 478, 4513
+Buder S., et al., 2019, A&A, 624, A19
+Buder S., et al., 2021, MNRAS, 506, 150
+
+Accreted stars in GALAH+ DR3
+Carollo D., Chiba M., 2021, ApJ, 908, 191
+Carollo D., et al., 2007, Nature, 450, 1020
+Carollo D., et al., 2010, ApJ, 712, 692
+Carretta E., et al., 2009, A&A, 505, 117
+Chaplin W. J., et al., 2020, Nature Astronomy, 4, 382
+Chiappini C., et al., 2015, A&A, 576, L12
+Collet R., Asplund M., Trampedach R., 2007, A&A, 469, 687
+Conroy C., Naidu R. P., Zaritsky D., Bonaca A., Cargile P., Johnson B. D.,
+Caldwell N., 2019, ApJ, 887, 237
+Cordoni G., et al., 2021, MNRAS, 503, 2539
+Dalton G., et al., 2018, in J. E. C., L. S., H. T., eds, SPIE Conference Series
+Vol. 10702, Proc. SPIE. SPIE, p. 107021B, doi:10.1117/12.2312031
+Das P., Hawkins K., Jofré P., 2020, MNRAS, 493, 5195
+De Silva G. M., et al., 2015, MNRAS, 449, 2604
+Dempster A. P., Laird N. M., Rubin D. B., 1977, Journal of the Royal Statistical
+Society: Series B (Methodological), 39, 1
+Di Matteo P., Haywood M., Lehnert M. D., Katz D., Khoperskov S., Snaith
+O. N., Gómez A., Robichon N., 2019, A&A, 632, A4
+Di Matteo P., Spite M., Haywood M., Bonifacio P., Gómez A., Spite F., Caffau
+E., 2020, A&A, 636, A115
+Eitner P., Bergemann M., Hansen C. J., Cescutti G., Seitenzahl I. R., Larsen
+S., Plez B., 2020, A&A, 635, A38
+Fabbian D., Asplund M., Barklem P. S., Carlsson M., Kiselman D., 2009,
+A&A, 500, 1221
+Fensch J., et al., 2017, MNRAS, 465, 1934
+Fernández-Alvar E., et al., 2017, MNRAS, 465, 1586
+Fernández-Alvar E., et al., 2018, ApJ, 852, 50
+Feuillet D. K., Feltzing S., Sahlholdt C. L., Casagrande L., 2020, MNRAS,
+497, 109
+Feuillet D. K., Sahlholdt C. L., Feltzing S., Casagrande L., 2021, MNRAS,
+508, 1489
+Fishlock C. K., Yong D., Karakas A. I., Alves-Brito A., Meléndez J., Nissen
+P. E., Kobayashi C., Casey A. R., 2017, MNRAS, 466, 4672
+Foreman-Mackey D., 2016, The Journal of Open Source Software, 1, 24
+Freeman K., Bland-Hawthorn J., 2002, ARA&A, 40, 487
+Gaia Collaboration et al., 2016a, A&A, 595, A1
+Gaia Collaboration et al., 2016b, A&A, 595, A2
+Gaia Collaboration et al., 2018a, A&A, 616, A1
+Gaia Collaboration et al., 2018b, A&A, 616, A10
+Gaia Collaboration et al., 2018c, A&A, 616, A12
+Gaia Collaboration et al., 2021, A&A, 649, A1
+Gallart C., Bernard E. J., Brook C. B., Ruiz-Lara T., Cassisi S., Hill V.,
+Monelli M., 2019, Nature Astronomy, 3, 932
+Gao X., et al., 2020, MNRAS, 497, L30
+Gilmore G., Wyse R. F. G., 1991, ApJ, 367, L55
+Grand R. J. J., et al., 2020, MNRAS, 497, 1603
+Gratton R. G., 1989, A&A, 208, 171
+Gratton R. G., Carretta E., Desidera S., Lucatello S., Mazzei P., Barbieri M.,
+2003, A&A, 406, 131
+Gustafsson B., Edvardsson B., Eriksson K., Jørgensen U. G., Nordlund Å.,
+Plez B., 2008, A&A, 486, 951
+Hasselquist S., et al., 2017, ApJ, 845, 162
+Hasselquist S., et al., 2019, ApJ, 872, 58
+Hawkins K., Jofré P., Gilmore G., Masseron T., 2014, MNRAS, 445, 2575
+Hawkins K., Jofré P., Masseron T., Gilmore G., 2015, MNRAS, 453, 758
+Hawkins K., et al., 2016, A&A, 592, A70
+Hayek W., Asplund M., Collet R., Nordlund Å., 2011, A&A, 529, A158
+Hayes C. R., et al., 2018, ApJ, 852, 49
+Haywood M., Di Matteo P., Lehnert M., Snaith O., Fragkoudi F., Khoperskov
+S., 2018a, A&A, 618, A78
+Haywood M., Di Matteo P., Lehnert M. D., Snaith O., Khoperskov S., Gómez
+A., 2018b, ApJ, 863, 113
+Helmi A., 2020, ARA&A, 58, 205
+Helmi A., White S. D. M., de Zeeuw P. T., Zhao H., 1999, Nature, 402, 53
+Helmi A., Veljanoski J., Breddels M. A., Tian H., Sales L. V., 2017, A&A,
+598, A58
+Helmi A., Babusiaux C., Koppelman H. H., Massari D., Veljanoski J., Brown
+A. G. A., 2018, Nature, 563, 85
+
+27
+
+Holoien T. W. S., Marshall P. J., Wechsler R. H., 2017, AJ, 153, 249
+Horta D., et al., 2021, MNRAS, 500, 1385
+Hunter J. D., 2007, Comput Sci Eng, 9, 90
+Ibata R. A., Gilmore G., Irwin M. J., 1994, Nature, 370, 194
+Ishigaki M. N., Chiba M., Aoki W., 2012, ApJ, 753, 64
+Ishigaki M. N., Aoki W., Chiba M., 2013, ApJ, 771, 67
+Ishigaki M. N., et al., 2021, MNRAS, 506, 5410
+Ivezić Ž., et al., 2008, ApJ, 684, 287
+Jean-Baptiste I., Di Matteo P., Haywood M., Gómez A., Montuori M., Combes
+F., Semelin B., 2017, A&A, 604, A106
+Jofré P., Weiss A., 2011, A&A, 533, A59
+Jofré P., Panter B., Hansen C. J., Weiss A., 2010, A&A, 517, A57
+Jofré P., Heiter U., Soubiran C., 2019, ARA&A, 57, 571
+Jurić M., et al., 2008, ApJ, 673, 864
+Karovicova I., White T. R., Nordlander T., Casagrand e L., Ireland M., Huber
+D., Jofré P., 2020, A&A, 640, A25
+Katz D., et al., 2019, A&A, 622, A205
+Kobayashi C., Nakasato N., 2011, ApJ, 729, 16
+Kobayashi C., Umeda H., Nomoto K., Tominaga N., Ohkubo T., 2006, ApJ,
+653, 1145
+Kobayashi C., Leung S.-C., Nomoto K., 2020a, ApJ, 895, 138
+Kobayashi C., Karakas A. I., Lugaro M., 2020b, ApJ, 900, 179
+Koch-Hansen A. J., Hansen C. J., McWilliam A., 2021, A&A, 653, A2
+Kollmeier J. A., et al., 2017, arXiv e-prints, p. arXiv:1711.03234
+Koppelman H., Helmi A., Veljanoski J., 2018, ApJ, 860, L11
+Koppelman H. H., Helmi A., Massari D., Price-Whelan A. M., Starkenburg
+T. K., 2019, A&A, 631, L9
+Koppelman H. H., Bos R. O. Y., Helmi A., 2020, A&A, 642, L18
+Koppelman H. H., Hagen J. H. J., Helmi A., 2021, A&A, 647, A37
+Lane J. M. M., Bovy J., Mackereth J. T., 2021, arXiv e-prints, p.
+arXiv:2106.09699
+Leaman R., et al., 2017, MNRAS, 472, 1879
+Limberg G., et al., 2021, ApJ, 913, L28
+Lindegren L., Feltzing S., 2013, A&A, 553, A94
+Lindegren L., et al., 2021a, A&A, 649, A2
+Lindegren L., et al., 2021b, A&A, 649, A4
+Lu Y., Ness M., Buck T., Zinn J., 2021, arXiv e-prints, p. arXiv:2102.12003
+Mackereth J. T., Bovy J., 2018, PASP, 130, 114501
+Mackereth J. T., et al., 2019, MNRAS, 482, 3426
+Malhan K., Ibata R. A., 2018, MNRAS, 477, 4063
+Massari D., Koppelman H. H., Helmi A., 2019, A&A, 630, L4
+Matsuno T., Aoki W., Suda T., 2019, ApJ, 874, L35
+Matsuno T., Hirai Y., Tarumi Y., Hotokezaka K., Tanaka M., Helmi A., 2021,
+A&A, 650, A110
+Matteucci F., 2021, A&ARv, 29, 5
+McMillan P. J., 2017, MNRAS, 465, 76
+McWilliam A., 1997, ARA&A, 35, 503
+Miglio A., et al., 2021, A&A, 645, A85
+Minchev I., Steinmetz M., Chiappini C., Martig M., Anders F., Matĳevic G.,
+de Jong R. S., 2017, ApJ, 834, 27
+Molaro P., Cescutti G., Fu X., 2020, MNRAS, 496, 2902
+Monachesi A., et al., 2019, MNRAS, 485, 2589
+Montalbán J., et al., 2021, Nature Astronomy, 5, 640
+Monty S., Venn K. A., Lane J. M. M., Lokhorst D., Yong D., 2020, MNRAS,
+497, 1236
+Myeong G. C., Evans N. W., Belokurov V., Amorisco N. C., Koposov S. E.,
+2018a, MNRAS, 475, 1537
+Myeong G. C., Evans N. W., Belokurov V., Sanders J. L., Koposov S. E.,
+2018b, MNRAS, 478, 5449
+Myeong G. C., Evans N. W., Belokurov V., Sanders J. L., Koposov S. E.,
+2018c, ApJ, 856, L26
+Myeong G. C., Vasiliev E., Iorio G., Evans N. W., Belokurov V., 2019,
+MNRAS, 488, 1235
+Naidu R. P., Conroy C., Bonaca A., Johnson B. D., Ting Y.-S., Caldwell N.,
+Zaritsky D., Cargile P. A., 2020, ApJ, 901, 48
+Naidu R. P., et al., 2021, arXiv preprints, p. 2103.03251
+Navarro J. F., Abadi M. G., Venn K. A., Freeman K. C., Anguiano B., 2011,
+MNRAS, 412, 1203
+MNRAS 000, 1–29 (2021)
+
+28
+
+S. Buder et al.
+
+Necib L., et al., 2020, Nature Astronomy, 4, 1078
+Ness M., et al., 2018, ApJ, 853, 198
+Ness M. K., Johnston K. V., Blancato K., Rix H. W., Beane A., Bird J. C.,
+Hawkins K., 2019, ApJ, 883, 177
+Nikakhtar F., et al., 2021, ApJ, 921, 106
+Nissen P. E., Gustafsson B., 2018, A&ARv, 26, 6
+Nissen P. E., Schuster W. J., 1997, A&A, 326, 751
+Nissen P. E., Schuster W. J., 2010, A&A, 511, L10
+Nissen P. E., Schuster W. J., 2011, A&A, 530, A15
+Nissen P. E., Schuster W. J., 2012, A&A, 543, A28
+Nissen P. E., Hoeg E., Schuster W. J., 1997, in Bonnet R. M., et al., eds, ESA
+Special Publication Vol. 402, Hipparcos - Venice ’97. pp 225–230
+Nissen P. E., Chen Y. Q., Carigi L., Schuster W. J., Zhao G., 2014, A&A,
+568, A25
+Nomoto K., Kobayashi C., Tominaga N., 2013, ARA&A, 51, 457
+Obreja A., et al., 2019, MNRAS, 487, 4424
+Ochsenbein F., Bauer P., Marcout J., 2000, A&AS, 143, 23
+Ostdiek B., et al., 2020, A&A, 636, A75
+Pedregosa F., et al., 2011, J Mach Learn Res, 12, 2825
+Pérez F., Granger B. E., 2007, Comput Sci Eng, 9, 21
+Pillepich A., Madau P., Mayer L., 2015, ApJ, 799, 184
+Piskunov N., Valenti J. A., 2017, A&A, 597, A16
+Ramírez I., Meléndez J., Chanamé J., 2012, ApJ, 757, 164
+Re Fiorentin P., Lattanzi M. G., Spagna A., Curir A., 2015, AJ, 150, 128
+Recio-Blanco A., Fernández-Alvar E., de Laverny P., Antoja T., Helmi A.,
+Crida A., 2021, A&A, 648, A108
+Reid M. J., Brunthaler A., 2004, ApJ, 616, 872
+Renaud F., Agertz O., Read J. I., Ryde N., Andersson E. P., Bensby T., Rey
+M. P., Feuillet D. K., 2021a, MNRAS, 503, 5846
+Renaud F., Agertz O., Andersson E. P., Read J. I., Ryde N., Bensby T., Rey
+M. P., Feuillet D. K., 2021b, MNRAS, 503, 5868
+Rix H.-W., Bovy J., 2013, A&ARv, 21, 61
+Sanders J. L., Belokurov V., Man K. T. F., 2021, MNRAS, 506, 4321
+Schönrich R., Binney J., Dehnen W., 2010, MNRAS, 403, 1829
+Schuler S. C., Andrews J. J., Clanzy V. R., Mourabit M., Chanamé J., Agüeros
+M. A., 2021, AJ, 162, 109
+Schuster W. J., Moreno E., Nissen P. E., Pichardo B., 2012, A&A, 538, A21
+Schwarz G., 1978, Annals of Statistics, 6, 461
+Searle L., Zinn R., 1978, ApJ, 225, 357
+Sellwood J. A., 2014, Reviews of Modern Physics, 86, 1
+Sestito F., et al., 2021, MNRAS, 500, 3750
+Sharma S., et al., 2018, MNRAS, 473, 2004
+Sheinis A., et al., 2015, J. Astron. Telesc. Instrum. Syst., 1, 035002
+Simpson J. D., et al., 2021, MNRAS, 507, 43
+Skrutskie M. F., et al., 2006, AJ, 131, 1163
+Soderblom D. R., 2010, ARA&A, 48, 581
+Spite F., Spite M., 1982, A&A, 115, 357
+Taylor M. B., 2005, in Shopbell P., Britton M., Ebert R., eds, ASPC Vol.
+347, Astronomical Data Analysis Software and Systems XIV. p. 29
+Ting Y.-S., Weinberg D. H., 2021, arXiv e-prints, p. arXiv:2102.04992
+Ting Y.-S., Freeman K. C., Kobayashi C., De Silva G. M., Bland-Hawthorn
+J., 2012, MNRAS, 421, 1231
+Ting Y.-S., Rix H.-W., Bovy J., van de Ven G., 2013, MNRAS, 434, 652
+Ting Y.-S., Conroy C., Goodman A., 2015, ApJ, 807, 104
+Tinsley B. M., 1979, ApJ, 229, 1046
+Tsujimoto T., Nomoto K., Yoshii Y., Hashimoto M., Yanagida S., Thielemann
+F.-K., 1995, MNRAS, 277, 945
+Valenti J. A., Piskunov N., 1996, A&AS, 118, 595
+VanderPlas J., 2016, Python Data Science Handbook: Essential Tools for
+Working with Data, 1st edn. O’Reilly Media, Inc.
+Vanderplas J., Connolly A., Ivezić Ž., Gray A., 2012, in Conference on
+Intelligent Data Understanding (CIDU). pp 47 –54
+Vasiliev E., 2019, MNRAS, 484, 2832
+Venn K. A., Irwin M., Shetrone M. D., Tout C. A., Hill V., Tolstoy E., 2004,
+AJ, 128, 1177
+Villalobos Á., Helmi A., 2008, MNRAS, 391, 1806
+Vincenzo F., Spitoni E., Calura F., Matteucci F., Silva Aguirre V., Miglio A.,
+Cescutti G., 2019, MNRAS, 487, L47
+MNRAS 000, 1–29 (2021)
+
+Virtanen P., et al., 2020, Nature Methods, 17, 261
+Walt S. v. d., Colbert S. C., Varoquaux G., 2011, Comput Sci Eng, 13, 22
+Weinberg D. H., et al., 2021, arXiv e-prints, p. arXiv:2108.08860
+Wisnioski E., et al., 2015, ApJ, 799, 209
+Woosley S. E., Heger A., Weaver T. A., 2002, Reviews of Modern Physics,
+74, 1015
+Wu Y., Valluri M., Panithanpaisal N., Sanderson R. E., Freese K., Wetzel A.,
+Sharma S., 2021, MNRAS,
+Wyse R. F. G., 2001, in Funes J. G., Corsini E. M., eds, ASPC Vol. 230,
+Galaxy Disks and Disk Galaxies. pp 71–80
+Yuan Z., Chang J., Banerjee P., Han J., Kang X., Smith M. C., 2018, ApJ,
+863, 26
+Yuan Z., et al., 2020a, ApJ, 891, 39
+Yuan Z., Chang J., Beers T. C., Huang Y., 2020b, ApJ, 898, L37
+Zhang M., et al., 2021, arXiv e-prints, p. arXiv:2109.00746
+Zolotov A., Willman B., Brooks A. M., Governato F., Hogg D. W., Shen S.,
+Wadsley J., 2010, ApJ, 721, 738
+de Jong R. S., et al., 2019, The Messenger, 175, 3
+de los Reyes M. A. C., Kirby E. N., Seitenzahl I. R., Shen K. J., 2020, ApJ,
+891, 85
+1 Research School of Astronomy & Astrophysics, Australian National
+
+University, Canberra, ACT 2611, Australia
+2 ARC Centre of Excellence for All Sky Astrophysics in 3 Dimensions (ASTRO 3D), Australia
+3 Department of Astronomy, Stockholm University, AlbaNova
+University Centre, SE-106 91 Stockholm, Sweden
+4 Department of Astronomy, Columbia University, Pupin Physics
+Laboratories, New York, NY 10027, USA
+5 Center for Computational Astrophysics, Flatiron Institute, 162
+Fifth Avenue, New York, NY 10010, USA
+6 Lund Observatory, Department of Astronomy & Theoretical
+Physics, Box 43, SE-221 00 Lund, Sweden
+7 Astrophysics Research Institute, Liverpool John Moores University,
+146 Brownlow Hill, Liverpool L3 5RF, UK
+8 Leibniz-Institut für Astrophysik Potsdam (AIP), An der Sternwarte
+16, D-14482 Potsdam, Germany
+9 Sydney Institute for Astronomy, School of Physics, A28, The
+University of Sydney, NSW 2006, Australia
+10 Monash Centre for Astrophysics, Monash University, Australia
+11 School of Physics & Astronomy, Monash University, Australia
+12 Department of Physics & Astronomy, Macquarie University,
+Sydney, NSW 2109, Australia
+13 Istituto Nazionale di Astrofisica, Osservatorio Astronomico di
+Padova, vicolo dell’Osservatorio 5, 35122, Padova, Italy
+14 Faculty of Mathematics & Physics, University of Ljubljana,
+Jadranska 19, 1000 Ljubljana, Slovenia
+15 School of Physics, UNSW, Sydney, NSW 2052, Australia
+16 Stellar Astrophysics Centre, Aarhus University, Ny Munkegade
+120, DK-8000 Aarhus C, Denmark
+17 Macquarie University Research Centre for Astronomy, Astrophysics & Astrophotonics, Sydney, NSW 2109, Australia
+18 Mullard Space Science Laboratory, University College London,
+Holmbury St. Mary, Dorking, Surrey, RH5 6NT, UK
+19 Centre for Astrophysics, University of Southern Queensland,
+Toowoomba, QLD 4350, Australia
+20 Centre for Astrophysics Research, University of Hertfordshire,
+Hatfield, AL10 9AB, UK
+21 Research School of Computer Science, Australian National
+University, Acton ACT 2601, Australia
+22 Center for Astrophysical Sciences & Department of Physics &
+Astronomy, The Johns Hopkins University, Baltimore, MD 21218
+
+Accreted stars in GALAH+ DR3
+
+29
+
+Table 1. A compilation of different techniques to identify major accretion structures. The list includes photometric information used in colour-magnitude
+diagrams (CMD), stellar kinematic properties such as Galactic longitude 𝑙 and latitude 𝑏, radial velocity 𝑣rad , tangential velocity (𝑉𝑇 ), total velocity (𝑉tot ),
+Galactocentric Cartesian velocities (𝑉𝑋 , 𝑉𝑌 , and 𝑉𝑍 ), Galactocentric cylindrical velocities (𝑉𝑅 , 𝑉𝜙 , and 𝑉𝑍 ), stellar dynamic properties such as maximum
+Galactocentric radius (𝑅max ), actions (𝐽𝑅 , 𝐽 𝜙 = 𝐿 𝑍 , 𝐽𝑍 , and total 𝐽tot ), eccentricity 𝑒, orbit energy 𝐸, as well as stellar chemical information such as the
+iron abundances relative to hydrogen [Fe/H], and element abundances of element X relative to iron [X/Fe]. 𝑘-means and Gaussian Mixture Models (GMM) are
+scikit-learn clustering algorithms (Pedregosa et al. 2011), whereas StarGo is a neutral-network-based clustering method Yuan et al. (2018). We note that
+the references are not necessarily the first ones finding these properties, but examples of their application. In the case of [Na/Fe] vs. [Ni/Fe] for stars with high
+𝑉tot , the correlation has e.g. found by Nissen et al. (1997); Nissen & Schuster (2010) and discussed by Venn et al. (2004) before being applied explicitly by
+Bensby et al. (2014).
+Category
+
+Properties
+
+Example Reference(s)
+
+Stellar photometry
+
+𝑚𝑖 and/or 𝑚𝑖 − 𝑚 𝑗
+√︃
+𝑉𝑋 , 𝑉𝑌 , 𝑉𝑍 , and 𝑉𝑋2 + 𝑉𝑍2
+𝑉𝑅 , 𝑉𝜙 , 𝑉𝑍 ellipsoid membership probability
+...
+two-point velocity correlation function
+Neural-network based classification with Gaia DR2 6D
+(same as the previous)
+
+Belokurov et al. (2006)
+
+Stellar kinematics
+
+Stellar dynamics
+
+Koppelman et al. (2018)
+Carollo et al. (2010)
+Ishigaki et al. (2012, 2013)
+Re Fiorentin et al. (2015)
+Ostdiek et al. (2020)
+Necib et al. (2020)
+
+𝑉𝜙 and √︃
+𝑅max
+𝐽𝑍 and 𝐽⊥ = 𝐽𝑋2 + 𝐽𝑌2
+𝐿 𝑍 and 𝐸
+𝐿 𝑍 , 𝐸, and 𝐿 𝑍 / |𝐿 𝑍 ,circ |
+𝐽 𝜙 /𝐽tot and ( 𝐽𝑍 − 𝐽𝑅 )/𝐽tot
+𝐿 𝑍 and 𝐽𝑅
+𝐸, 𝐿, 𝜃 = arccos 𝐿 𝑍 /𝐿, 𝜙 = arctan 𝐿𝑋 /𝐿𝑌 via StarGo
+
+Helmi et al. (1999)
+Helmi et al. (2017, 2018)
+Koppelman et al. (2019)
+Myeong et al. (2019)
+Feuillet et al. (2020)
+Yuan et al. (2020a)
+
+Stellar kinematics and photometry
+
+𝑣rad and 𝑚𝑖
+𝑙, 𝑏, 𝜇𝑙 , 𝜇𝑏 , 𝑚𝑖 via streamfinder
+𝑉𝑇 and sequences in the CMD
+(same as the previous)
+(same as the previous)
+
+Ibata et al. (1994)
+Malhan & Ibata (2018)
+Gaia Collaboration et al. (2018b)
+Haywood et al. (2018b)
+Gallart et al. (2019)
+
+Stellar chemokinematics
+
+𝑉tot , [Fe/H], and [Mg/Fe]
+...
+𝑉tot , [Na/Fe], [Ni/Fe]
+𝑙, 𝑏, 𝑣rad , [Fe/H], and [𝛼/Fe]
+𝑉𝜙 and [Fe/H]
+(same as the previous)
+Galactocentric spherical 𝑉𝜌 , 𝑉𝜙 , and [Fe/H]
+Galactocentric spherical 𝑉𝜌 , 𝑉𝜙 , 𝑉𝜃 and [Fe/H] via GMM
+𝑉𝑋 , 𝑉𝑌 , 𝑉𝑍 , and [Fe/H] via GMM
+
+Nissen & Schuster (2010)
+Navarro et al. (2011)
+Bensby et al. (2014)
+Hawkins et al. (2015)
+Belokurov et al. (2020)
+An & Beers (2021)
+Belokurov et al. (2018)
+Myeong et al. (2018a)
+Nikakhtar et al. (2021)
+
+Stellar chemodynamics
+
+𝑒, [Fe/H], [Mg/Fe], [Al/Fe], [Ni/Fe] via 𝑘-means
+[Fe/H], 𝐽𝑅 , 𝐿 𝑍 , and 𝐽𝑍
+𝑒, [Fe/H], and [𝛼/Fe]
+𝐸 and 𝑒 informed by [Al/Fe] and [Mg/Mn]
+
+Mackereth et al. (2019)
+Myeong et al. (2018b)
+Naidu et al. (2020)
+Horta et al. (2021)
+
+Stellar chemistry
+
+[Fe/H] and [Mg/Fe]
+[Fe/H] and [𝛼/Fe]
+[Al/Fe], [Mg/Mn] via GMM
+[Al/Fe], [Mg/H]
+[Fe/H], [X/Fe] for (C+N), O, Mg, Al, Si, K, Ca, Cr, Mn, and Ni via 𝑘-means
+
+Di Matteo et al. (2019, 2020)
+Carollo & Chiba (2021)
+Das et al. (2020)
+Feuillet et al. (2021)
+Hayes et al. (2018)
+
+APPENDIX A: SELECTION AND VISUALISATION
+TECHNIQUES OF HALO/ACCRETED STARS
+Many selections of major substructures in the halo via spatial, photometric, kinematic, dynamic, and chemical properties (or a combination of those) exist - we list several of them, categorised by the used
+selection properties in Table 1.
+
+Gratton et al. (2003)
+
+We acknowledge that this list is incomplete and not all studies that
+used the listed techniques are included. We hope this list is of use for
+giving the reader an overview of the existing techniques to uncover
+major merger events in the early history of the Milky Way (see Helmi
+2020, for a review).
+This paper has been typeset from a TEX/LATEX file prepared by the author.
+
+MNRAS 000, 1–29 (2021)
+
+

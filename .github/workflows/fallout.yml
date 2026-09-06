@@ -40,12 +40,25 @@ on:
         description: "Also run the falloutlit literature sweep (true|false)"
         required: false
         default: "true"
+      tier:
+        description: "Which tier to run: galah | hires | both. hires = JINAbase/Hypatia via VizieR TAP (Pb, Ag, Pd, Eu; censored limits), its own job and commit-back"
+        required: false
+        default: "galah"
+      hires_sources:
+        description: "Comma-separated compilations for the hires tier (JINABASE,HYPATIA)"
+        required: false
+        default: "JINABASE,HYPATIA"
+      hires_stage:
+        description: "hires stage (hires-probe|hires-acquire|hires-screen|hires-assess|hires-all)"
+        required: false
+        default: "hires-all"
 
 permissions:
   contents: write
 
 jobs:
   fallout:
+    if: ${{ github.event.inputs.tier != 'hires' }}
     runs-on: ubuntu-latest
     # The GALAH DR4 allstar FITS is ~760 MB; the pull plus the 5-hypothesis fit
     # over ~6e5 stars, the leave-one-out over the prefilter, the shuffled null
@@ -167,6 +180,99 @@ jobs:
           path: results/fallout/stars_*.parquet
           if-no-files-found: ignore
           retention-days: 14
+
+  fallout-hires:
+    # The high-resolution tier: JINAbase (J/ApJS/238/36) and Hypatia
+    # (J/AJ/148/54 or newer) discovered on VizieR TAP at runtime, joined if
+    # split into element groups, upper limits kept as censored values. Small
+    # tables (a few thousand rows), so the fits are seconds; the TAP discovery
+    # round trips dominate.
+    if: ${{ github.event.inputs.tier == 'hires' || github.event.inputs.tier == 'both' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import pyvo, pyarrow; print('imports OK')"
+      - name: Offline gate
+        run: python -m pytest -q -p no:cacheprovider tests/test_fallout.py -k "hires or censored or limit"
+      - name: Run the high-resolution tier
+        run: |
+          python -m seti.fallout.run \
+            --stage "${{ github.event.inputs.hires_stage || 'hires-all' }}" \
+            --surveys "${{ github.event.inputs.hires_sources || 'JINABASE,HYPATIA' }}"
+          echo "=== hires summary (head) ==="
+          python - <<'PY' || true
+          import json
+          d = json.load(open("results/fallout/hires_summary.json"))
+          print(d.get("verdict_code"), "|", d.get("verdict"))
+          print(json.dumps(d.get("funnel"), indent=1))
+          for s in d.get("per_source") or []:
+              print(s.get("source"), "elements:", s.get("elements"), "decisive:", s.get("decisive_elements_present"))
+              print("   per-element counts:", s.get("per_element_counts"))
+              print("   upper limits:", s.get("per_element_upper_limits"))
+          PY
+          echo "=== hires report ==="
+          cat results/fallout/HIRES_REPORT.md || true
+      - name: Discovery post-mortem (which VizieR tables answered, which columns resolved)
+        if: always()
+        run: |
+          python - <<'PY' || true
+          import json
+          from pathlib import Path
+          for name in ("hires_probe.json", "hires_acquisition.json"):
+              p = Path("results/fallout") / name
+              if not p.exists():
+                  print(f"no {name}"); continue
+              d = json.loads(p.read_text())
+              srcs = d.get("sources")
+              items = srcs.items() if isinstance(srcs, dict) else [(s.get("source"), s) for s in srcs or []]
+              for sv, blk in items:
+                  print(f"\n=== {name}: {sv}: {blk.get('verdict', '')} -> {blk.get('n_rows', '')} rows; tables {blk.get('tables_used')}")
+                  disc = blk.get("discovery") or blk
+                  for g in (disc.get("groups") or [])[:6]:
+                      print(f"    group {g['prefix']}: n_el={g['n_elements_union']} params={g['has_params']} preferred={g['preferred']} tables={g['tables']}")
+                  for t, ti in (disc.get("tables") or {}).items():
+                      print(f"    table {t}: {ti.get('n_elements')} elements {ti.get('elements')}; params {list((ti.get('params') or {}).keys())}; ids {ti.get('id_columns')}")
+                  cf = blk.get("columns_found") or {}
+                  for el, e in (cf.get("elements") or {}).items():
+                      print(f"    element {el}: {e}")
+                  for line in blk.get("log") or []:
+                      print("    log:", line)
+          PY
+      - name: Commit results (small files only)
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "fallout-hires: Pb/Ag/Pd/Eu fission-pattern search on JINAbase / Hypatia" \
+            results/fallout/hires_probe.json \
+            results/fallout/hires_acquisition.json \
+            results/fallout/hires_screen.json \
+            results/fallout/hires_summary.json \
+            results/fallout/HIRES_REPORT.md \
+            results/fallout/hires_candidates_jinabase.csv \
+            results/fallout/hires_candidates_hypatia.csv
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fallout-hires-outputs
+          path: |
+            results/fallout/hires_*
+            results/fallout/HIRES_REPORT.md
+            results/fallout/scores_hires_*.parquet
+            results/fallout/vectors_hires_*.parquet
+            results/fallout/stars_hires_*.parquet
+          if-no-files-found: warn
 
   falloutlit:
     if: ${{ github.event.inputs.run_lit != 'false' }}

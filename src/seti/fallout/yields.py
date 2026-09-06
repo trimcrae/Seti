@@ -227,7 +227,17 @@ SOLAR_LOGEPS: dict[str, float] = {
     "Gd": 1.08,
     "Tb": 0.31,
     "Dy": 1.10,
+    "Ho": 0.48,
+    "Er": 0.93,
+    "Tm": 0.10,
+    "Yb": 0.85,
+    "Hf": 0.85,
+    "Os": 1.40,
+    "Ir": 1.38,
+    "Pt": 1.62,   # meteoritic
     "Pb": 1.75,   # never a fission product: the A=208 anti-signature
+    "Th": 0.03,   # r-process only; 1.4e10 yr
+    "U": -0.54,   # r-process only; meteoritic
 }
 
 # ---------------------------------------------------------------------------
@@ -264,7 +274,23 @@ S_FRACTION: dict[str, float] = {
     "Gd": 0.15,
     "Tb": 0.07,
     "Dy": 0.15,
+    "Ho": 0.08,
+    "Er": 0.16,
+    "Tm": 0.13,
+    "Yb": 0.32,
+    "Hf": 0.55,
+    "Os": 0.09,
+    "Ir": 0.01,
+    "Pt": 0.05,
+    # Pb: dominated by the s-process (strong component, Pb-208) -- Arlandini
+    # 1999 gives ~46% for the stellar model but the Galactic-evolution value
+    # (Travaglio et al. 2001; Bisterzo 2014) is >= 85% once low-metallicity AGB
+    # stars are included. The *shape* test only needs Pb to be an s-process
+    # element that fission never makes; 0.85 is the GCE value.
     "Pb": 0.85,
+    # Th and U: r-process only (no stable isotope reachable by the s-process).
+    "Th": 0.0,
+    "U": 0.0,
 }
 
 #: p-process (gamma-process) share of the solar abundance; only where it is
@@ -302,6 +328,17 @@ def r_fraction(element: str) -> float:
 #: The n-capture elements a survey can plausibly deliver. Order is by mass.
 NCAPTURE_ELEMENTS: tuple[str, ...] = (
     "Rb", "Sr", "Y", "Zr", "Mo", "Ru", "Ba", "La", "Ce", "Pr", "Nd", "Sm", "Eu",
+)
+
+#: The full set the high-resolution literature compilations (JINAbase, Hypatia)
+#: can carry. The additions are the elements that DECIDE the fission vector:
+#: Pd/Ag/Cd/Sn are the fission valley (~1000x below the peaks, where the
+#: r-process is not suppressed at all); Pb is made by the s-process and never
+#: by fission (A=208 is beyond every fission fragment); Th/U are r-only.
+NCAPTURE_ELEMENTS_EXTENDED: tuple[str, ...] = (
+    "Rb", "Sr", "Y", "Zr", "Mo", "Ru", "Rh", "Pd", "Ag", "Cd", "Sn",
+    "Ba", "La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Yb",
+    "Hf", "Os", "Ir", "Pt", "Pb", "Th", "U",
 )
 
 #: The element the fission pattern is normalised to: a_f = 1 doubles Nd.
@@ -385,6 +422,7 @@ __all__ = [
     "DEFAULT_HORIZON_YR",
     "FISSION_ANCHOR",
     "NCAPTURE_ELEMENTS",
+    "NCAPTURE_ELEMENTS_EXTENDED",
     "P_FRACTION",
     "SOLAR_LOGEPS",
     "S_FRACTION",

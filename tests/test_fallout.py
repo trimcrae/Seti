@@ -22,6 +22,7 @@ Teff/logg/[Fe/H] pipeline trends and catalogue-style errors and flags -- drives:
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import numpy as np
@@ -268,6 +269,7 @@ def test_the_reference_candidate_passes_every_veto(templates, pcfg):
     ("unexplained_by_all_templates", {"reduced_chi2_best": 12.0}),      # chi2_f = 230 on 9 elements
     ("heavy_peak_incoherent", {"peer_Ce": 0.0, "peer_Nd": 0.0}),        # La alone carries the heavy peak
     ("la_cn_blend", {"sample": "giant", "teff": 4500.0, "lr_loo_driver": "La"}),
+    ("literature_heterogeneity", {"hetero_max_dex": 0.6}),             # duplicate entries disagree
 ])
 def test_each_veto_is_tripped_by_its_case(templates, pcfg, veto, mutate):
     cand = _passing_candidate(templates, pcfg)
@@ -522,7 +524,8 @@ def test_split_samples_applies_both_boxes(block):
 def test_entry_points_expose_the_four_stages():
     import argparse
 
-    assert R.STAGES == ("probe", "acquire", "screen", "assess", "vet", "all")
+    assert R.STAGES[:6] == ("probe", "acquire", "screen", "assess", "vet", "all")
+    assert R.STAGES[6:] == ("hires-probe", "hires-acquire", "hires-screen", "hires-assess", "hires-all")
     top = argparse.ArgumentParser()
     sub = top.add_subparsers()
     R.register(sub)
@@ -561,6 +564,341 @@ def test_workflow_is_dispatchable_and_commits_through_the_verified_script():
     assert "seti.fallout.run" in text
     assert "tests/test_fallout.py" in text
     assert "results/fallout/vet.json" in text
+    assert "fallout-hires" in doc["jobs"], "the high-resolution tier is its own job"
+    assert "results/fallout/hires_summary.json" in text
+    assert "tier" in triggers["workflow_dispatch"]["inputs"]
+
+
+# ---------------------------------------------------------------------------
+# High-resolution tier: Pb / Ag / Pd / Eu with censored limits
+# ---------------------------------------------------------------------------
+from seti.fallout import hires as HR  # noqa: E402
+
+HIRES_ELEMENTS = ["Sr", "Y", "Zr", "Pd", "Ag", "Ba", "La", "Ce", "Nd", "Sm", "Eu", "Pb"]
+
+
+@pytest.fixture(scope="module")
+def htemplates() -> P.Templates:
+    return P.build_templates(HIRES_ELEMENTS)
+
+
+@pytest.fixture(scope="module")
+def hcfg(block) -> P.PatternConfig:
+    return HR._pattern_config(block)
+
+
+def _hsig(n, dex=0.12):
+    return np.full((n, len(HIRES_ELEMENTS)), np.sqrt(dex ** 2 + 0.05 ** 2))
+
+
+def test_extended_templates_carry_the_deciding_elements(htemplates):
+    """Fission makes no Pb and almost no Ag/Pd; the s-process makes Pb, the r-process fills the valley."""
+    f = dict(zip(htemplates.elements, np.log10(1 + 3.0 * htemplates.F), strict=True))
+    s = dict(zip(htemplates.elements, np.log10(1 + 3.0 * htemplates.S), strict=True))
+    r = dict(zip(htemplates.elements, np.log10(1 + 3.0 * htemplates.R), strict=True))
+    # Pd sits at the light-peak edge (A=105-108, 1.6% per fission): small, not zero
+    assert f["Pb"] == 0.0 and f["Ag"] < 0.01 and f["Pd"] < 0.1
+    assert s["Pb"] > 0.5, "the s-process makes Pb"
+    assert r["Ag"] > 0.3 and r["Pd"] > 0.2, "the r-process fills the fission valley"
+    df = P.decisive_ratios(f)
+    ds = P.decisive_ratios(s)
+    dr = P.decisive_ratios(r)
+    assert df["Pb/Nd"] < ds["Pb/Nd"] - 0.5
+    assert df["Ag/Nd"] < dr["Ag/Nd"] - 0.4 and df["Pd/Nd"] < dr["Pd/Nd"] - 0.3
+    assert df["Eu/Nd"] < dr["Eu/Nd"] - 0.3
+    # r-only elements are r-only
+    T2 = P.build_templates(["Nd", "Th", "U", "Pb"])
+    assert T2.S[T2.index("Th")] == 0.0 and T2.R[T2.index("Th")] == 1.0
+    assert T2.F[T2.index("Th")] == 0.0 and T2.F[T2.index("Pb")] == 0.0
+
+
+def test_a_pb_upper_limit_below_the_s_prediction_is_evidence_for_fission(htemplates, hcfg):
+    """An s-like heavy peak (Ba/La/Ce/Nd up) with Pb: (a) unmeasured, (b) an upper limit far
+    below what s predicts, (c) detected at the s level. The limit must RAISE the fission
+    preference relative to (a); the detection must kill it."""
+    # heavy peak at the fission shape (which the s-process can mimic when Pb is unknown)
+    base = np.log10(1 + 4.0 * htemplates.F)
+    base[htemplates.index("Sr")] = np.nan
+    base[htemplates.index("Y")] = np.nan
+    base[htemplates.index("Zr")] = np.nan
+    base[htemplates.index("Pd")] = np.nan
+    base[htemplates.index("Ag")] = np.nan
+    base[htemplates.index("Eu")] = np.nan
+    k = htemplates.index("Pb")
+    sig = _hsig(1)
+    unknown = base.copy()
+    unknown[k] = np.nan
+    lr_unknown = P.fission_lr_only(unknown[None, :], sig, htemplates, hcfg)[0]
+    # (b) Pb <= -0.3 dex: far below the s-process prediction for that Nd
+    lim = base.copy()
+    lim[k] = -0.3
+    limits = np.zeros((1, len(HIRES_ELEMENTS)), dtype=int)
+    limits[0, k] = P.UPPER_LIMIT
+    lr_limit = P.fission_lr_only(lim[None, :], sig, htemplates, hcfg, limits)[0]
+    assert lr_limit > lr_unknown + 3, (lr_limit, lr_unknown)
+    # a limit far ABOVE any prediction is uninformative: no change
+    loose = base.copy()
+    loose[k] = 3.0
+    lr_loose = P.fission_lr_only(loose[None, :], sig, htemplates, hcfg, limits)[0]
+    assert abs(lr_loose - lr_unknown) < 0.5
+    # (c) Pb detected at the s-process level for this heavy peak
+    fit_s = P.fit_patterns(unknown[None, :], sig, htemplates, hcfg)
+    a_s = float(fit_s["a_s"].iloc[0]) if fit_s["a_s"].iloc[0] > 0 else 4.0
+    det = base.copy()
+    det[k] = float(np.log10(1 + a_s * htemplates.S[k]))
+    res = P.fit_patterns(det[None, :], sig, htemplates, hcfg)
+    assert res["fission_lr"].iloc[0] < 0, "Pb at the s level: fission cannot make it"
+    assert res["classification"].iloc[0] in (P.S_PROCESS, P.S_PLUS_R, P.R_PROCESS)
+
+
+def test_censored_loss_is_the_gaussian_cdf_and_a_lower_limit_mirrors_it():
+    ob = P._prep(np.array([[0.0, 0.0]]), np.array([[0.1, 0.1]]),
+                 np.array([[P.UPPER_LIMIT, P.LOWER_LIMIT]]))
+    assert ob.has_lim and ob.w.sum() == 0
+    # prediction well below an upper limit costs ~0; well above costs a lot
+    assert P._loss(ob, np.array([-0.5, 0.5]))[0] < 1e-4   # 5 sigma inside: -2 ln Phi(5) ~ 6e-7
+    assert P._loss(ob, np.array([0.5, -0.5]))[0] > 40
+    # at the limit exactly: -2 ln 0.5 each
+    assert abs(P._loss(ob, np.array([0.0, 0.0]))[0] - 2 * (-2 * np.log(0.5))) < 1e-9
+    # no limits -> plain chi2, unchanged behaviour
+    ob0 = P._prep(np.array([[0.2, np.nan]]), np.array([[0.1, 0.1]]))
+    assert not ob0.has_lim and abs(P._loss(ob0, np.zeros(2))[0] - 4.0) < 1e-9
+
+
+def test_r_dominated_metal_poor_star_with_valley_elements_is_r_not_fission(htemplates, hcfg):
+    """An r-II star: Eu +1, the heavy peak up, and Ag/Pd UP with it (the r-process fills the
+    valley). With Pb absent or a limit it must classify r, not fission."""
+    rng = np.random.default_rng(5)
+    n = 30
+    obs = np.log10(1 + 8.0 * htemplates.R)[None, :] + rng.normal(0, 0.1, (n, len(HIRES_ELEMENTS)))
+    limits = np.zeros((n, len(HIRES_ELEMENTS)), dtype=int)
+    k = htemplates.index("Pb")
+    obs[:, k] = 0.3                         # Pb < +0.3: consistent with r (little Pb) and with fission
+    limits[:, k] = P.UPPER_LIMIT
+    res = P.fit_patterns(obs, _hsig(n), htemplates, hcfg, limits)
+    assert (res["classification"] == P.R_PROCESS).mean() >= 0.9, res["classification"].value_counts().to_dict()
+    assert (res["fission_lr"] < 0).all()
+    # and the reason is the valley + Eu: drop Ag, Pd and Eu and the r/fission contrast weakens
+    o2 = obs.copy()
+    for el in ("Ag", "Pd", "Eu"):
+        o2[:, htemplates.index(el)] = np.nan
+    lr2 = P.fission_lr_only(o2, _hsig(n), htemplates, hcfg, limits)
+    assert lr2.mean() > res["fission_lr"].mean()
+
+
+def test_injected_fission_star_with_pb_limit_classifies_fission(htemplates, hcfg):
+    rng = np.random.default_rng(6)
+    n = 30
+    obs = np.log10(1 + 6.0 * htemplates.F)[None, :] + rng.normal(0, 0.1, (n, len(HIRES_ELEMENTS)))
+    limits = np.zeros((n, len(HIRES_ELEMENTS)), dtype=int)
+    for el in ("Pb", "Ag"):
+        k = htemplates.index(el)
+        obs[:, k] = 0.1                     # upper limits near solar-scaled: what fission leaves
+        limits[:, k] = P.UPPER_LIMIT
+    res = P.fit_patterns(obs, _hsig(n), htemplates, hcfg, limits)
+    assert (res["classification"] == P.FISSION).mean() >= 0.9, res["classification"].value_counts().to_dict()
+    assert (res["n_limits"] == 2).all()
+    loo = P.leave_one_out(obs, _hsig(n), htemplates, hcfg, limits)
+    assert (loo["lr_loo_min"] >= hcfg.lr_min).mean() >= 0.8
+    dec = P.decisive_ratios({el: float(obs[0, k]) for k, el in enumerate(HIRES_ELEMENTS)},
+                            {el: int(limits[0, k]) for k, el in enumerate(HIRES_ELEMENTS)})
+    assert dec["Pb/Nd_limit"] == "<" and dec["Ag/Nd_limit"] == "<" and dec["Eu/Nd_limit"] == ""
+    assert dec["Pb/Nd"] < -0.5
+
+
+def test_resolve_hires_columns_understands_vizier_conventions():
+    cols = ["Name", "Teff", "logg", "[Fe/H]", "[Sr/H]", "e_[Sr/H]", "l_[Sr/H]", "__Ba_Fe_", "e___Ba_Fe_",
+            "logeps(Eu)", "l_logeps(Eu)", "Pb", "l_Pb", "Y", "recno", "[Nd/Fe]", "f_[Nd/Fe]"]
+    res = HR.resolve_hires_columns(cols)
+    assert res["Sr"] == {"value": "[Sr/H]", "kind": "xh", "err": "e_[Sr/H]", "limit": "l_[Sr/H]"}
+    assert res["Ba"]["kind"] == "xfe" and res["Ba"]["err"] == "e___Ba_Fe_"
+    assert res["Eu"]["kind"] == "logeps" and res["Eu"]["limit"] == "l_logeps(Eu)"
+    assert res["Pb"]["kind"] == "xfe_bare" and res["Pb"]["limit"] == "l_Pb"
+    assert "Y" not in res, "a bare symbol with no e_/l_ companion is not an abundance"
+    assert res["Nd"]["flag"] == "f_[Nd/Fe]"
+    assert "Fe" not in res
+    assert HR._limit_code("<") == P.UPPER_LIMIT and HR._limit_code("") == 0 and HR._limit_code(">") == P.LOWER_LIMIT
+
+
+def _synthetic_vizier(rng, n=300, *, split=True, inject_fission=True):
+    """A JINAbase-like VizieR catalogue: a parameter table and two element-group tables
+    joined on Name, [X/H] values with l_ limit flags, duplicate entries for some stars."""
+    T = P.build_templates(HIRES_ELEMENTS)
+    names = [f"HE{i:04d}" for i in range(n)]
+    feh = rng.uniform(-3.2, -1.2, n)
+    teff = rng.uniform(4400.0, 6300.0, n)
+    logg = rng.uniform(1.0, 4.5, n)
+    a_r = np.abs(rng.normal(0, 1.5, n))
+    params = pd.DataFrame({"Name": names, "Teff": teff, "logg": logg, "[Fe/H]": feh, "Ref": "A18"})
+    light, heavy = {"Name": names}, {"Name": names}
+    for k, el in enumerate(T.elements):
+        v = np.log10(1 + a_r * T.R[k]) + feh + rng.normal(0, 0.12, n)   # [X/H]
+        v = v - 0.05 * (teff - 5300.0) / 1000.0                          # a mild pipeline trend
+        lim = np.array([""] * n, dtype=object)
+        if el in ("Pb", "Ag", "Pd"):
+            ul = rng.random(n) < 0.6
+            v = np.where(ul, feh + 0.4 + rng.uniform(0, 0.3, n), v)     # loose upper limits
+            lim = np.where(ul, "<", "")
+        tgt = light if el in ("Sr", "Y", "Zr", "Pd", "Ag") else heavy
+        tgt[f"[{el}/H]"] = v
+        tgt[f"e_[{el}/H]"] = 0.1
+        tgt[f"l_[{el}/H]"] = lim
+    light = pd.DataFrame(light)
+    heavy = pd.DataFrame(heavy)
+    if inject_fission:
+        i = 42
+        for tab in (light, heavy):
+            for k, el in enumerate(T.elements):
+                c = f"[{el}/H]"
+                if c in tab.columns:
+                    tab.loc[i, c] = feh[i] + float(np.log10(1 + 10.0 * T.F[k])) + rng.normal(0, 0.05)
+                    tab.loc[i, f"l_{c}"] = ""
+        heavy.loc[i, "[Pb/H]"] = feh[i] + 0.1
+        heavy.loc[i, "l_[Pb/H]"] = "<"
+        light.loc[i, "[Ag/H]"] = feh[i] + 0.1
+        light.loc[i, "l_[Ag/H]"] = "<"
+        # an r-II star, and a star with badly disagreeing duplicate entries
+        j = 43
+        for tab in (light, heavy):
+            for k, el in enumerate(T.elements):
+                c = f"[{el}/H]"
+                if c in tab.columns:
+                    tab.loc[j, c] = feh[j] + float(np.log10(1 + 20.0 * T.R[k]))
+                    tab.loc[j, f"l_{c}"] = ""
+        dup = heavy.iloc[[44]].copy()
+        dup["[Nd/H]"] = dup["[Nd/H]"] + 0.9
+        heavy = pd.concat([heavy, dup], ignore_index=True)
+        params = pd.concat([params, params.iloc[[44]]], ignore_index=True)
+    if not split:
+        one = params.merge(light, on="Name").merge(heavy, on="Name")
+        return {"J/ApJS/238/36/abund": one}
+    return {"J/ApJS/238/36/table1": params, "J/ApJS/238/36/light": light, "J/ApJS/238/36/heavy": heavy}
+
+
+def _query_fn_for(tables: dict):
+    """A TAP stand-in answering TAP_SCHEMA and SELECT * queries from in-memory tables."""
+    def query(adql: str):
+        q = adql.replace("\n", " ")
+        if "TAP_SCHEMA.tables" in q:
+            hits = [t for t in tables if any(k in q for k in ("238/36", "JINA", "jina", "Jina"))]
+            return pd.DataFrame({"table_name": [f'"{t}"' for t in hits],
+                                 "description": ["JINAbase (Abohalima+ 2018)"] * len(hits)})
+        if "TAP_SCHEMA.columns" in q:
+            rows = [(t, c) for t in tables if t in q for c in tables[t].columns]
+            return pd.DataFrame(rows, columns=["table_name", "column_name"])
+        m = re.search(r'FROM "([^"]+)"', q)
+        if m and m.group(1) in tables:
+            return tables[m.group(1)].copy()
+        return pd.DataFrame()
+    return query
+
+
+def test_split_table_discovery_joins_on_name_and_keeps_limits(block):
+    rng = np.random.default_rng(7)
+    tables = _synthetic_vizier(rng, n=120)
+    spec = HR.DEFAULT_SOURCES["JINABASE"]
+    disc = HR.discover_source("JINABASE", spec, query_fn=_query_fn_for(tables))
+    assert disc["n_tables_found"] == 3
+    grp = disc["groups"][0]
+    assert grp["prefix"] == "J/ApJS/238/36" and grp["has_params"] and grp["preferred"]
+    assert grp["n_elements_union"] == len(HIRES_ELEMENTS)
+    assert disc["tables"]["J/ApJS/238/36/table1"]["n_elements"] == 0
+    assert disc["tables"]["J/ApJS/238/36/table1"]["has_params"]
+    pull = HR.fetch_source("JINABASE", spec, query_fn=_query_fn_for(tables))
+    # 120 stars; HE0044 is duplicated in the parameter AND the heavy table, so the outer
+    # join cross-multiplies it to 4 rows -- the duplicate collapse is what makes it one star
+    assert pull.verdict == "OK" and pull.n_rows == 123, pull.degradation
+    assert any("joined 3 tables on Name" in line for line in pull.log)
+    t = pull.table
+    collapsed, _, cnotes = HR.collapse_duplicates(t, HIRES_ELEMENTS)
+    assert cnotes["n_stars"] == 120 and cnotes["n_multi_entry"] == 1
+    assert {"star_id", "teff", "logg", "fe_h", "Pb", "lim_Pb", "e_Pb", "Ag", "lim_Ag"} <= set(t.columns)
+    assert (t["lim_Pb"] == P.UPPER_LIMIT).sum() > 30
+    assert pull.columns_found["elements"]["Pb"]["kind"] == "xh"
+    assert pull.columns_found["elements"]["Pb"]["n_upper_limits"] > 30
+    # [X/H] became [X/Fe]
+    nd_h = tables["J/ApJS/238/36/heavy"]["[Nd/H]"].to_numpy()[:5]
+    assert np.allclose(t["Nd"].to_numpy()[:5] + t["fe_h"].to_numpy()[:5], nd_h)
+    # unsplit form works too
+    one = _synthetic_vizier(np.random.default_rng(7), n=50, split=False)
+    pull1 = HR.fetch_source("JINABASE", spec, query_fn=_query_fn_for(one))
+    assert pull1.verdict == "OK" and pull1.n_rows >= 51
+    assert HR.collapse_duplicates(pull1.table, HIRES_ELEMENTS)[2]["n_stars"] == 50
+
+
+def test_duplicates_are_collapsed_and_their_scatter_measured():
+    df = pd.DataFrame({"star_id": ["a", "a", "b", "c", "c", "c"],
+                       "teff": [5000, 5100, 5200, 4800, 4800, 4800], "logg": 4.0, "fe_h": -2.0,
+                       "Nd": [0.5, 0.7, 0.1, 0.2, np.nan, 0.3], "lim_Nd": [0, 0, 0, 0, 0, 0],
+                       "e_Nd": 0.1,
+                       "Pb": [1.0, 0.8, np.nan, 0.9, 0.5, np.nan], "lim_Pb": [-1, -1, 0, 0, -1, 0],
+                       "e_Pb": 0.1})
+    out, scatter, notes = HR.collapse_duplicates(df, ["Nd", "Pb"])
+    assert list(out["star_id"]) == ["a", "b", "c"] and list(out["n_entries"]) == [2, 1, 3]
+    a = out[out["star_id"] == "a"].iloc[0]
+    assert abs(a["Nd"] - 0.6) < 1e-9 and a["lim_Nd"] == 0
+    assert a["Pb"] == 0.8 and a["lim_Pb"] == P.UPPER_LIMIT, "only limits -> the tightest one"
+    c = out[out["star_id"] == "c"].iloc[0]
+    assert c["Pb"] == 0.9 and c["lim_Pb"] == 0, "a detection beats a limit"
+    assert abs(a["hetero_max_dex"] - 0.2) < 1e-9
+    assert notes["n_multi_entry"] == 2
+    assert "Nd" in scatter and np.isnan(scatter["Nd"]) or scatter["Nd"] >= 0
+
+
+def test_hires_end_to_end_recovers_the_injected_star_and_rejects_the_r_star(tmp_path, block):
+    rng = np.random.default_rng(11)
+    tables = _synthetic_vizier(rng, n=300)
+    b = json.loads(json.dumps(block))
+    b["hires"]["null"] = {"n_perm": 2, "max_rows": 400, "seed": 1}
+    b["hires"]["sensitivity"] = {"amplitudes": [3.0, 10.0], "n_inject": 60}
+    b["hires"]["sources"] = {"JINABASE": b["hires"]["sources"]["JINABASE"]}
+    summary = R.fallout_run(load_config(), stage="hires-all", surveys="JINABASE", out_dir=tmp_path, block=b,
+                            inject={"query_fn": _query_fn_for(tables)})
+    assert summary["tier"] == "hires" and summary["verdict_code"] == HR.VERDICT_CANDIDATES, summary["verdict"]
+    src = summary["per_source"][0]
+    assert set(src["decisive_elements_present"]) >= {"Pb", "Ag", "Pd", "Eu"}
+    assert src["per_element_upper_limits"]["Pb"] > 30
+    assert src["duplicates"]["n_multi_entry"] == 1
+    ids = [c["star_id"] for c in src["survivors"]]
+    assert "HE0042" in ids, src
+    assert "HE0043" not in ids
+    surv = next(c for c in src["survivors"] if c["star_id"] == "HE0042")
+    assert surv["dec_Pb/Nd_limit"] == "<" and surv["dec_Pb/Nd"] < -0.5
+    assert surv["n_limits"] >= 2
+    cand = pd.read_csv(tmp_path / "hires_candidates_jinabase.csv")
+    dup_row = cand[cand["star_id"] == "HE0044"]
+    if len(dup_row):
+        assert bool(dup_row["veto_literature_heterogeneity"].iloc[0])
+    em = src["error_model"]["per_element"]
+    assert any(v["source"] == "duplicate_scatter" for v in em.values()) or src["duplicates"]["n_multi_entry"] < 6
+    for f in ("hires_probe.json", "hires_acquisition.json", "hires_screen.json", "hires_summary.json",
+              "HIRES_REPORT.md", "stars_hires_jinabase.parquet"):
+        assert (tmp_path / f).exists() or f == "hires_probe.json", f
+    assert "Pb/Nd" in (tmp_path / "HIRES_REPORT.md").read_text()
+    on_disk = json.loads((tmp_path / "hires_summary.json").read_text())
+    assert on_disk["generated_utc"].endswith("Z") and on_disk["funnel"]["n_survivors"] >= 1
+    assert src["sensitivity"][-1]["frac_lr_pass_testable"] > 0.5
+
+
+def test_hires_degrades_honestly_when_vizier_answers_nothing(tmp_path, block):
+    summary = R.fallout_run(load_config(), stage="hires-all", surveys="JINABASE,HYPATIA", out_dir=tmp_path,
+                            block=block, inject={"query_fn": lambda q: pd.DataFrame()})
+    assert summary["verdict_code"] == HR.VERDICT_NO_DATA
+    assert all(s["verdict"] == "NO_DATA_REACHED" for s in summary["acquisition"]["sources"])
+    assert not list(tmp_path.glob("stars_hires_*.parquet"))
+    # discovery that raises is also NO_DATA_REACHED, not a crash
+    def boom(q):
+        raise RuntimeError("TAP down")
+    pull = HR.fetch_source("HYPATIA", HR.DEFAULT_SOURCES["HYPATIA"], query_fn=boom)
+    assert pull.verdict == "NO_DATA_REACHED" and "discovery" in pull.degradation or pull.verdict == "NO_DATA_REACHED"
+    # tables that answer but carry no element column -> QUERY_RETURNED_ZERO_ROWS
+    only_params = {"J/ApJS/238/36/table1": pd.DataFrame({"Name": ["a", "b"], "Teff": [5000, 5100],
+                                                           "logg": [4, 4], "[Fe/H]": [-2, -2]})}
+    pull2 = HR.fetch_source("JINABASE", HR.DEFAULT_SOURCES["JINABASE"], query_fn=_query_fn_for(only_params))
+    assert pull2.verdict in ("QUERY_RETURNED_ZERO_ROWS", "NO_DATA_REACHED")
+    probe = R.fallout_run(load_config(), stage="hires-probe", out_dir=tmp_path, block=block,
+                          inject={"query_fn": lambda q: pd.DataFrame()})
+    assert (tmp_path / "hires_probe.json").exists() and probe["sources"]["JINABASE"]["n_tables_found"] == 0
 
 
 # ---------------------------------------------------------------------------

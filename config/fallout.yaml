@@ -159,3 +159,39 @@ fallout:
   report:
     max_candidates: 50
     loo_prefilter_lr: 4.0      # leave-one-out is computed for stars above this
+
+  # ---------------------------------------------------------------------------
+  # HIGH-RESOLUTION TIER (stages hires-probe/acquire/screen/assess; its own
+  # workflow job). The GALAH v2 run showed the dwarf sample cannot test the
+  # hypothesis (20% testable, 1.5% completeness at Nd +1 dex) and that no
+  # GALAH element separates fission from s+r DECISIVELY. The deciding elements
+  # -- Pb (s-process only, never fission), Ag/Pd (the fission valley the
+  # r-process fills), Eu -- live in high-resolution literature compilations.
+  # ---------------------------------------------------------------------------
+  hires:
+    sources:
+      JINABASE:
+        keywords: ["J/ApJS/238/36", "JINAbase"]
+        prefer: ["J/ApJS/238/36"]
+        note: "Abohalima & Frebel 2018, ApJS 238, 36: ~1,900 metal-poor stars, up to ~20 n-capture elements, limits flagged"
+      HYPATIA:
+        keywords: ["Hypatia"]
+        prefer: ["J/AJ/148/54"]
+        note: "Hinkel et al. 2014, AJ 148, 54; a newer VizieR release is preferred if discovery finds one"
+    pull:
+      max_rows: 20000            # per table; both compilations are far smaller
+    min_values_per_element: 5    # an element with fewer measured stars is dropped from the space
+    peer:
+      min_rows: 40               # compilations are small; below this an element gets a median
+    pattern:
+      elements: [Rb, Sr, Y, Zr, Mo, Ru, Rh, Pd, Ag, Cd, Sn, Ba, La, Ce, Pr, Nd, Sm, Eu, Gd, Tb, Dy, Ho, Er, Yb, Hf, Os, Ir, Pt, Pb, Th, U]
+      min_elements: 6
+      core_elements: [Ba, La, Ce, Nd, Eu, Pb, Ag, Pd]
+      hetero_max_dex: 0.3        # duplicate literature entries disagreeing by more: vetoed
+      error_default_dex: 0.15
+    null:
+      n_perm: 5
+      max_rows: 20000
+    sensitivity:
+      amplitudes: [1.0, 2.0, 3.0, 5.0, 10.0, 20.0]
+      n_inject: 1000

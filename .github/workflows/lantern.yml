@@ -1,0 +1,309 @@
+name: lantern
+
+# LANTERN — a narrow emission line that vanishes at secondary eclipse
+# (docs/lantern.md).
+#
+#   probe+inventory ──▶ screen (N target shards, checkpointed) ──▶ assess ──▶ commit
+#                  └──▶ lit (arXiv/OpenAlex prior-art sweep)     ──▶ commit
+#
+# Across EVERY public JWST time-series observation of a transiting planet, is
+# there an unresolved emission feature present outside secondary eclipse and
+# ABSENT while the planet is behind its star?  Stellar lines and instrument
+# artefacts do not care whether the planet is occulted; a monochromatic source
+# on the planet does.
+#
+# Operational design (docs/channel-brief.md §3):
+#  * the inventory runs ONCE and travels to the shards as an artifact;
+#  * every exposure is streamed one product at a time (download, read, delete)
+#    and checkpointed to its own JSON immediately -- a killed shard loses
+#    minutes; re-running a shard skips exposures that already have a checkpoint;
+#  * fail-fast:false matrix; wall clock is one shard;
+#  * reduce_only_run_id re-assesses a prior run's checkpoints without MAST;
+#  * commit-back goes through scripts/commit_results.sh, which VERIFIES the push
+#    against the remote instead of trusting a zero exit.
+
+on:
+  workflow_dispatch:
+    inputs:
+      targets:
+        description: >-
+          Semicolon-separated host names to restrict the inventory to (empty =
+          every transiting-planet host with a JWST time series).
+        required: false
+        default: ""
+      instruments:
+        description: "Comma-separated MAST instrument prefixes"
+        required: false
+        default: "NIRSPEC,NIRISS,NIRCAM,MIRI"
+      max_shards:
+        description: "Number of screen shards (targets are round-robined by size)"
+        required: false
+        default: "8"
+      max_file_gb:
+        description: "Skip any single x1dints product larger than this (GB)"
+        required: false
+        default: "3.0"
+      max_products_per_target:
+        description: "Cap on exposures analysed per target (0 = all)"
+        required: false
+        default: "0"
+      run_lit:
+        description: "Run the prior-art sweep job (true/false)"
+        required: false
+        default: "true"
+      reduce_only_run_id:
+        description: "Skip probe/inventory/screen; assess this prior run's checkpoints"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+env:
+  RESULTS_BRANCH: ${{ github.ref_name }}
+
+jobs:
+  inventory:
+    if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,pandas,astroquery,requests,yaml; from astropy.io import fits; print('imports OK')"
+      - name: Offline gate — the synthetic battery must hold on this runner
+        run: |
+          python -m pytest tests/test_lantern.py -q -p no:cacheprovider
+          python -m seti.lantern.run selftest
+      - name: Probe the archives
+        run: python -m seti.lantern.run probe --instruments "${{ github.event.inputs.instruments || 'NIRSPEC,NIRISS,NIRCAM,MIRI' }}"
+      - name: Inventory
+        run: |
+          python -m seti.lantern.run inventory \
+            --targets "${{ github.event.inputs.targets }}" \
+            --instruments "${{ github.event.inputs.instruments || 'NIRSPEC,NIRISS,NIRCAM,MIRI' }}" \
+            --n-shards ${{ github.event.inputs.max_shards || '8' }}
+          python - <<'PY'
+          import json
+          inv = json.load(open("results/lantern/inventory.json"))
+          print(json.dumps(inv.get("funnel"), indent=2))
+          print("verdict:", inv.get("verdict"))
+          PY
+      - id: plan
+        name: Shard plan
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, pathlib
+          p = pathlib.Path("results/lantern/shards.json")
+          shards = json.loads(p.read_text()) if p.exists() else []
+          # An empty matrix is invalid; emit one shard that will report NO_DATA_REACHED.
+          idx = [str(i) for i in range(len(shards))] or ["0"]
+          print("shards=" + json.dumps(idx))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lantern-inventory
+          path: |
+            results/lantern/inventory.json
+            results/lantern/shards.json
+            results/lantern/probe.json
+            results/lantern/selftest.json
+          if-no-files-found: warn
+      - name: Commit inventory
+        if: always()
+        run: |
+          scripts/commit_results.sh \
+            "lantern: inventory of JWST exoplanet time series" \
+            results/lantern/inventory.json \
+            results/lantern/probe.json \
+            results/lantern/selftest.json
+
+  screen:
+    needs: inventory
+    if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 4          # be a good citizen toward the MAST download service
+      matrix:
+        shard: ${{ fromJSON(needs.inventory.outputs.shards) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - uses: actions/download-artifact@v4
+        with:
+          name: lantern-inventory
+          path: results/lantern/
+      - name: Free disk
+        run: |
+          df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android 2>/dev/null || true
+          df -h / | tail -1
+      - name: Screen shard ${{ matrix.shard }}
+        run: |
+          python -m seti.lantern.run screen \
+            --shard ${{ matrix.shard }} \
+            --n-shards ${{ github.event.inputs.max_shards || '8' }} \
+            --max-file-gb ${{ github.event.inputs.max_file_gb || '3.0' }} \
+            --max-products-per-target ${{ github.event.inputs.max_products_per_target || '0' }} \
+            --work-dir "$RUNNER_TEMP/lantern_work"
+          echo "=== shard log ==="
+          cat results/lantern/screen_shard${{ matrix.shard }}.json | head -80
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lantern-obs-${{ matrix.shard }}
+          path: |
+            results/lantern/obs/
+            results/lantern/screen_shard${{ matrix.shard }}.json
+          if-no-files-found: warn
+
+  assess:
+    needs: [inventory, screen]
+    if: ${{ always() && github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: lantern-*
+          merge-multiple: true
+          path: results/lantern/
+      - name: Assess
+        run: |
+          find results/lantern/obs -name '*.json' | wc -l
+          python -m seti.lantern.run assess
+          echo "=== summary ==="
+          python -c "import json; s=json.load(open('results/lantern/summary.json')); print(json.dumps({k:s[k] for k in ('verdict','funnel','rejections')}, indent=2))"
+      # A verdict must never read as a science null when no data was tested.
+      - name: Assert the verdict is not a disguised no-data run
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path("results/lantern/summary.json")
+          if not p.exists():
+              print("::error::no summary.json -- assess produced nothing"); sys.exit(1)
+          s = json.loads(p.read_text())
+          v, n = s.get("verdict"), s["funnel"].get("exposures_analysed", 0)
+          if n == 0 and v != "NO_DATA_REACHED":
+              print(f"::error::verdict {v!r} with 0 analysed exposures is a disguised no-data run"); sys.exit(1)
+          if v == "NO_VANISHING_LINE":
+              print(f"::notice::{n} exposures analysed, no vanishing narrow line at the quoted "
+                    "sensitivity. A COUNT, NOT AN OCCURRENCE LIMIT -- see docs/lantern.md.")
+          if v == "VANISHING_LINE_CANDIDATES_PENDING_VET":
+              print(f"::warning::{s['funnel']['tiers']} -- candidates pending vet; see candidates.json")
+          PY
+      - name: Commit results
+        run: |
+          scripts/commit_results.sh \
+            "lantern: eclipse-vanishing narrow-line screen of JWST exoplanet time series" \
+            results/lantern/summary.json \
+            results/lantern/candidates.json \
+            results/lantern/inventory.json \
+            results/lantern/probe.json \
+            results/lantern/selftest.json \
+            results/lantern/obs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lantern-final
+          path: results/lantern/
+          if-no-files-found: warn
+
+  assess-only:
+    if: ${{ github.event.inputs.reduce_only_run_id != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Fetch checkpoints from a prior run
+        uses: actions/download-artifact@v4
+        with:
+          pattern: lantern-*
+          merge-multiple: true
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/lantern/
+      - name: Assess
+        run: |
+          python -m seti.lantern.run assess
+          python -c "import json; s=json.load(open('results/lantern/summary.json')); print(json.dumps({k:s[k] for k in ('verdict','funnel','rejections')}, indent=2))"
+      - name: Commit results
+        run: |
+          scripts/commit_results.sh \
+            "lantern: re-assessment of a prior run's checkpoints" \
+            results/lantern/summary.json \
+            results/lantern/candidates.json \
+            results/lantern/obs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lantern-final
+          path: results/lantern/
+          if-no-files-found: warn
+
+  lit:
+    if: ${{ github.event.inputs.run_lit != 'false' && github.event.inputs.reduce_only_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pdftotext
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Prior-art sweep
+        run: python scripts/lanternlit_fetch.py
+      - name: Commit literature results
+        run: |
+          scripts/commit_results.sh \
+            "lanternlit: prior-art sweep for eclipse-gated laser-line searches" \
+            results/lanternlit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lanternlit
+          path: results/lanternlit/
+          if-no-files-found: warn

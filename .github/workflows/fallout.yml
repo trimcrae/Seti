@@ -1,0 +1,197 @@
+name: fallout
+
+# FALLOUT — the fission-product abundance PATTERN in a photosphere
+# (docs/fallout.md; S14 in docs/necrosignatures.md).
+#
+# Fission product, after its short-lived members decay, is a fixed SHAPE in
+# n-capture space: light peak Zr-Mo-Ru, heavy peak Ba-La-Ce-Pr-Nd, a ~1000x
+# valley between, nothing past Sm, no Pb. Against solar that reads
+# [Nd/Ba] >> 0, [Ce/Ba] > 0, [La/Ba] > 0, [Mo/Zr] > 0, [Ru/Zr] > 0, [Eu/Nd] < 0
+# -- a vector neither the s-process ([Nd/Ba] < 0) nor the r-process
+# ([Eu/Nd] > 0) nor any mixture of them makes. MIDDEN searches the Tc/Pm LINES
+# (the < 1e5 yr window); FALLOUT is its complement, the pattern that outlives
+# its makers by megayears.
+#
+# Data: GALAH DR4 allstar from Data Central, through seti.tailings.acquire,
+# with the cloud.datacentral URL that actually answered on the tailings
+# dispatch tried FIRST. Cool dwarfs (log g > 4, 4500-6300 K) are the primary
+# sample; giants a separate lower-weight one.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Stage (probe|acquire|screen|assess|all)"
+        required: false
+        default: "all"
+      surveys:
+        description: "Comma-separated surveys (GALAH, optionally APOGEE)"
+        required: false
+        default: "GALAH"
+      max_rows:
+        description: "Row cap for the bulk catalogue pull (the broad box, dwarfs + giants)"
+        required: false
+        default: "1200000"
+      resume_run_id:
+        description: "Prior run id whose fallout-outputs artifact should seed this run (skips the pull if stars_*.parquet is in it)"
+        required: false
+        default: ""
+      run_lit:
+        description: "Also run the falloutlit literature sweep (true|false)"
+        required: false
+        default: "true"
+
+permissions:
+  contents: write
+
+jobs:
+  fallout:
+    runs-on: ubuntu-latest
+    # The GALAH DR4 allstar FITS is ~760 MB; the pull plus the 5-hypothesis fit
+    # over ~6e5 stars, the leave-one-out over the prefilter, the shuffled null
+    # and the sensitivity injection fit comfortably inside this.
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import pyvo, astroquery, pyarrow; print('imports OK')"
+      - name: Offline gate (the detector must pass its own tests first)
+        run: python -m pytest -q -p no:cacheprovider tests/test_fallout.py
+      - name: Seed checkpoints from a prior run's artifact
+        if: ${{ github.event.inputs.resume_run_id != '' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: fallout-outputs
+          run-id: ${{ github.event.inputs.resume_run_id }}
+          github-token: ${{ github.token }}
+          path: results/fallout/
+      - name: Run the fission-pattern search
+        run: |
+          ls -la results/fallout/ 2>/dev/null || true
+          df -h / | tail -1
+          # The bulk FITS is streamed to the runner's scratch space, never into
+          # the checkout (same reasoning as tailings.yml). Set from $RUNNER_TEMP
+          # inside the step: the `runner` context does not exist in a job-level
+          # env: block and the file fails to parse.
+          export FALLOUT_CACHE="${RUNNER_TEMP}/fallout-cache"
+          mkdir -p "$FALLOUT_CACHE"
+          echo "cache dir: $FALLOUT_CACHE"
+          python -m seti.fallout.run \
+            --stage "${{ github.event.inputs.stage || 'all' }}" \
+            --surveys "${{ github.event.inputs.surveys || 'GALAH' }}" \
+            --max-rows "${{ github.event.inputs.max_rows || '1200000' }}" \
+            --cache-dir "$FALLOUT_CACHE"
+          echo "=== summary (head) ==="
+          python - <<'PY' || true
+          import json
+          d = json.load(open("results/fallout/summary.json"))
+          print(d.get("verdict_code"), "|", d.get("verdict"))
+          print(json.dumps(d.get("funnel"), indent=1))
+          print(json.dumps(d.get("vetoes"), indent=1))
+          PY
+          echo "=== report ==="
+          cat results/fallout/REPORT.md || true
+      - name: Acquisition post-mortem (which URL answered, which columns were found)
+        if: always()
+        run: |
+          python - <<'PY' || true
+          import json
+          from pathlib import Path
+          for name in ("probe.json", "acquisition.json"):
+              p = Path("results/fallout") / name
+              if not p.exists():
+                  print(f"no {name}")
+                  continue
+              d = json.loads(p.read_text())
+              for sv, blk in (d.get("surveys") or {}).items() if isinstance(d.get("surveys"), dict) else [(b.get("survey"), b) for b in d.get("surveys") or []]:
+                  print(f"\n=== {name}: {sv}: {blk.get('verdict', '')} via {blk.get('route', '')} -> {blk.get('n_rows', '')} rows")
+                  if blk.get("degradation"):
+                      print("    degradation:", blk["degradation"])
+                  cf = blk.get("columns_found") or {}
+                  if cf:
+                      print("    elements:", cf.get("elements"))
+                      print("    extras:", cf.get("extras"), "absent:", cf.get("extras_absent"))
+                  for r in (blk.get("download_routes") or blk.get("routes") or []):
+                      mark = "USED " if r.get("used") else ("PICK " if r.get("selected") else "     ")
+                      print(f"    {mark}HTTP {r.get('status')!s:>4} len={r.get('content_length')} {r.get('url')}  [{r.get('why')}]")
+                  for line in blk.get("log") or []:
+                      print("    log:", line)
+          PY
+      - name: Commit results (small files only; star tables stay artifacts)
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          # The push is VERIFIED against the remote and a failure turns this
+          # run red rather than dropping the results in a green one -- see
+          # scripts/commit_results.sh (run 33029076779 lost 169 minutes of
+          # results to a swallowed rebase conflict).
+          scripts/commit_results.sh \
+            "fallout: fission-product pattern search results" \
+            results/fallout/probe.json \
+            results/fallout/acquisition.json \
+            results/fallout/templates.json \
+            results/fallout/screen.json \
+            results/fallout/summary.json \
+            results/fallout/REPORT.md \
+            results/fallout/candidates_galah_dwarf.csv \
+            results/fallout/candidates_galah_giant.csv \
+            results/fallout/candidates_apogee_dwarf.csv \
+            results/fallout/candidates_apogee_giant.csv
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fallout-outputs
+          path: |
+            results/fallout/
+            !results/fallout/stars_*.parquet
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fallout-stars
+          path: results/fallout/stars_*.parquet
+          if-no-files-found: ignore
+          retention-days: 14
+
+  falloutlit:
+    if: ${{ github.event.inputs.run_lit != 'false' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pdftotext
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Fetch literature evidence (soft 75-min deadline, partials kept)
+        run: |
+          timeout -k 30 4500 python scripts/falloutlit_fetch.py \
+            || echo "fetcher hit soft deadline or errored; committing partials"
+          python -c "import json;d=json.load(open('results/falloutlit/summary.json'));print(d['n_ok'],'ok /',d['n_urls'],'urls;',d['n_title_verified'],'/',d['n_title_requested'],'titles verified')" || true
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "falloutlit: FALLOUT fission-pattern prior-art evidence" \
+            results/falloutlit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: falloutlit
+          path: results/falloutlit/
+          if-no-files-found: warn

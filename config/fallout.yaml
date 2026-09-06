@@ -1,0 +1,129 @@
+# FALLOUT --- the fission-product abundance PATTERN in a photosphere
+# (docs/fallout.md). Every threshold the channel uses lives here.
+
+fallout:
+  surveys: [GALAH]              # APOGEE is an optional second stage (Ce, Nd only)
+
+  # Bulk-download routes, in the order they are tried. The FIRST entry is the
+  # URL that actually answered on the GitHub runner for TAILINGS
+  # (results/tailings/provenance.json, route GALAH_DR4_allstar_cloud, HTTP 200,
+  # 758 MB, image/fits). Anything seti.tailings.acquire.FILE_ROUTES knows that
+  # is not listed here is appended as a further fallback at runtime.
+  sources:
+    GALAH:
+      - name: GALAH_DR4_allstar_cloud
+        url: https://cloud.datacentral.org.au/teamdata/GALAH/public/GALAH_DR4/catalogs/galah_dr4_allstar_240705.fits
+        note: "GALAH DR4 allstar on cloud.datacentral -- the route that WORKED on the runner"
+      - name: GALAH_DR4_allstar_dc
+        url: https://datacentral.org.au/teamdata/GALAH/public/GALAH_DR4/catalogs/galah_dr4_allstar_240705.fits
+        note: "same file on the bare datacentral hostname (404 on the tailings dispatch)"
+      - name: GALAH_DR3_allstar_v2_cloud
+        url: https://cloud.datacentral.org.au/teamdata/GALAH/public/GALAH_DR3/GALAH_DR3_main_allstar_v2.fits
+        note: "GALAH DR3 main allstar v2 (live on the runner; fewer n-capture elements than DR4)"
+    APOGEE:
+      - name: APOGEE_DR17_allStarLite_rev1
+        url: https://data.sdss.org/sas/dr17/apogee/spectro/aspcap/dr17/synspec_rev1/allStarLite-dr17-synspec_rev1.fits
+        note: "DR17 ASPCAP allStarLite rev1; H band carries Ce and Nd only"
+      - name: APOGEE_DR17_allStar_rev1
+        url: https://data.sdss.org/sas/dr17/apogee/spectro/aspcap/dr17/synspec_rev1/allStar-dr17-synspec_rev1.fits
+        note: "the full allStar (~2.5 GB); the route that answered for tailings"
+
+  # The box applied INSIDE the FITS reader. Deliberately broad: dwarfs and
+  # giants come down in one pull and are split below, so acquisition happens
+  # once. Rows: GALAH DR4 has 917,588; this box keeps most of them.
+  pull:
+    teff_min: 4000.0
+    teff_max: 6500.0
+    logg_min: 0.5
+    snr_min: 30.0
+    feh_min: -1.5
+    max_rows: 1200000
+
+  # Extra columns discovered by regex (first match wins; absence is logged).
+  # Canonical name -> candidate patterns. These extend seti.fallout.acquire's
+  # defaults; the GALAH DR4 names are flag_sp, age, e_rv_comp_1, ...
+  extra_columns:
+    flag_sp: ["^flag_sp$", "^starflag$", "^aspcapflag$"]
+    age: ["^age$", "^age_bstep$", "^age_50$"]
+    binary_flag: ["^flag_binary$", "^is_binary$", "^binary$", "^sb2_flag$", "^flag_sb2$"]
+
+  # The two samples, split at screen time.
+  #   dwarf -- PRIMARY. log g > 4, 4500 < Teff < 6300 K: the convective-envelope
+  #            regime where diffusion/levitation cannot make heavy-element
+  #            peculiarity (the TAILINGS argument, docs/tailings.md sec 1), and
+  #            where the AGB/mass-transfer s-process contamination of giants is
+  #            least. [Fe/H] >= -1.0 for the same thin-envelope reason.
+  #   giant -- SECONDARY, lower weight: AGB self-enrichment and mass-transfer
+  #            s-process live here. Reported separately, never counted as a
+  #            primary candidate.
+  samples:
+    dwarf:
+      logg_min: 4.0
+      logg_max: 5.5
+      teff_min: 4500.0
+      teff_max: 6300.0
+      feh_min: -1.0
+      snr_min: 40.0
+      weight: primary
+    giant:
+      logg_min: 0.5
+      logg_max: 3.5
+      teff_min: 4000.0
+      teff_max: 5500.0
+      feh_min: -1.0
+      snr_min: 40.0
+      weight: secondary
+
+  # Pattern fit (seti.fallout.pattern.PatternConfig).
+  pattern:
+    elements: [Rb, Sr, Y, Zr, Mo, Ru, Ba, La, Ce, Pr, Nd, Sm, Eu]
+    horizon_yr: 1.0e+6         # decay horizon; Tc has become Ru, Cs-137 is Ba
+    amp_min: 0.03              # amplitude grid (0 plus log-spaced)
+    amp_max: 100.0
+    n_amp: 40
+    n_amp_2d: 26
+    systematic_floor_dex: 0.05 # sigma = sqrt(reported^2 + floor^2)
+    error_default_dex: 0.15    # when a catalogue gives no per-element error
+    min_elements: 5
+    # ln likelihood ratios (Delta chi2 = 2 lr). lr_min is a FLOOR: the working
+    # threshold is max(lr_min, shuffled-null quantile) -- see null below.
+    lr_min: 8.0                # fission vs best natural mixture
+    enrich_min: 12.5           # anything vs nothing added (Delta chi2 = 25)
+    ambiguity_margin: 2.0
+    ba_element: Ba
+    # a flagged CORE element vetoes the star; a flagged Rb/Mo/Ru just drops out
+    core_elements: [Y, Zr, Ba, La, Ce, Nd, Sm, Eu]
+    # vetoes
+    snr_min: 40.0
+    s_ba_fe_min: 0.5           # [Ba/Fe] above which Ba-star morphology is tested
+    s_light_fe_min: 0.3        # [Y/Fe] and [Zr/Fe] both above: whole s-process up
+    r_eu_fe_min: 0.3           # [Eu/Fe] above with [Eu/Nd] > 0: r-process star
+    young_ali_min: 2.3         # A(Li) above this: young -> Ba over-estimated
+    young_age_max_gyr: 1.0
+    young_ba_fe_min: 0.2
+    raw_consistency_fraction: 0.5   # raw-vector lr must reach this x threshold
+    null_quantile: 0.999
+
+  # Peer-residual regression (reuses seti.tailings.manifold.fit_element).
+  peer:
+    degree: 2
+    clip_sigma: 4.0
+    clip_iterations: 4
+    min_rows: 200
+
+  # Shuffled-element null: permute (value, error) pairs across each star's
+  # element slots, re-score, take the quantile.
+  null:
+    n_perm: 3
+    max_rows: 20000
+    seed: 20260906
+
+  # Sensitivity: inject the fission pattern at these amplitudes (a_f = 1 doubles
+  # Nd) into real vectors and report the recovered fraction.
+  sensitivity:
+    amplitudes: [0.5, 1.0, 2.0, 3.0, 5.0, 10.0, 20.0]
+    n_inject: 1500
+
+  report:
+    max_candidates: 50
+    loo_prefilter_lr: 4.0      # leave-one-out is computed for stars above this

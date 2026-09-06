@@ -1,0 +1,160 @@
+# LANTERN channel — every threshold, phase window and artefact wavelength in one
+# place (docs/lantern.md).  Code never hard-codes a number from this file.
+#
+# The claim: an UNRESOLVED emission line that is present outside secondary
+# eclipse and ABSENT while the planet is hidden behind its star.  Stellar lines,
+# detector features and instrument artefacts do not care whether the planet is
+# occulted; a monochromatic source ON the planet does.  Transit is the second
+# phase reference: a planet-origin line is constant in-vs-out of transit.
+
+instruments:
+  # Resolving power R (approximate, mid-band) and the number of extracted
+  # samples per resolution element.  A laser is always unresolved, so the
+  # "narrow" window is 1-3 resolution elements = [2, 6] samples at Nyquist.
+  # R sets the velocity width c/R a real line is smeared to (docs/lantern.md §6).
+  NIRSPEC:
+    G395H: {R: 2700, samples_per_resel: 2, wavelength_um: [2.87, 5.27]}
+    G235H: {R: 2700, samples_per_resel: 2, wavelength_um: [1.66, 3.07]}
+    G140H: {R: 2700, samples_per_resel: 2, wavelength_um: [0.97, 1.84]}
+    G395M: {R: 1000, samples_per_resel: 2, wavelength_um: [2.87, 5.10]}
+    G235M: {R: 1000, samples_per_resel: 2, wavelength_um: [1.66, 3.07]}
+    G140M: {R: 1000, samples_per_resel: 2, wavelength_um: [0.97, 1.84]}
+    PRISM: {R: 100, samples_per_resel: 1, wavelength_um: [0.60, 5.30]}
+  NIRISS:
+    SOSS: {R: 700, samples_per_resel: 2, wavelength_um: [0.60, 2.85]}
+  NIRCAM:
+    GRISM: {R: 1600, samples_per_resel: 2, wavelength_um: [2.40, 5.00]}
+  MIRI:
+    LRS: {R: 100, samples_per_resel: 1, wavelength_um: [4.90, 14.00]}
+  # Used when the header grating/filter is not in the table above.
+  default: {R: 1000, samples_per_resel: 2}
+
+# Known detector / instrument artefact wavelengths (micron).  A feature whose
+# centre lies inside a range, or within `edge_tolerance_um` of a range edge, is
+# vetoed as `known_artefact_wavelength`.  These ranges are APPROXIMATE, taken
+# from the instrument documentation, and the empirical recurrence-across-targets
+# veto is the backstop for anything this table misses.  Refine from the data.
+artefacts:
+  edge_tolerance_um: 0.01
+  NIRSPEC:
+    G395H:
+      - {range_um: [3.69, 3.85], note: "NRS1/NRS2 detector gap (position varies with target placement)"}
+      - {range_um: [2.85, 2.90], note: "blue throughput edge of F290LP"}
+      - {range_um: [5.10, 5.30], note: "red end: falling throughput, poor flat"}
+    G235H:
+      - {range_um: [2.19, 2.28], note: "NRS1/NRS2 detector gap"}
+      - {range_um: [1.65, 1.68], note: "blue throughput edge of F170LP"}
+    G140H:
+      - {range_um: [1.37, 1.45], note: "NRS1/NRS2 detector gap"}
+      - {range_um: [0.97, 1.00], note: "blue throughput edge"}
+    G395M:
+      - {range_um: [2.85, 2.90], note: "blue throughput edge"}
+    PRISM:
+      - {range_um: [0.60, 0.70], note: "blue end: steep throughput, saturation-prone"}
+      - {range_um: [5.10, 5.30], note: "red end"}
+  NIRISS:
+    SOSS:
+      - {range_um: [0.60, 0.95], note: "order-1/order-2 overlap and order-0 contamination region"}
+      - {range_um: [2.75, 2.85], note: "order-1 red edge, falling throughput"}
+  NIRCAM:
+    GRISM:
+      - {range_um: [2.40, 2.50], note: "F322W2 blue throughput edge"}
+      - {range_um: [3.95, 4.05], note: "F322W2 red edge / F444W blue edge"}
+      - {range_um: [4.90, 5.05], note: "F444W red edge"}
+  MIRI:
+    LRS:
+      - {range_um: [4.90, 5.30], note: "blue end: steep throughput and wavelength-solution edge"}
+      - {range_um: [11.50, 14.00], note: "red end: wavelength calibration and low S/N"}
+
+phase:
+  # Fraction of T14 used as the ingress/egress exclusion when Rp/Rs is unknown;
+  # when known the ingress duration is T14 * (Rp/Rs) (b=0 approximation).
+  ingress_fraction_default: 0.10
+  # Extra guard (fraction of T14) around every predicted contact, on top of the
+  # propagated ephemeris timing uncertainty.
+  out_guard_fraction: 0.05
+  # Eclipse timing needs the orbit: above this eccentricity, with no argument of
+  # periastron, the eclipse phase is unknown -> observation is phase_unresolved.
+  ecc_max_assume_circular: 0.05
+  # If the propagated timing uncertainty exceeds this fraction of T14 the
+  # ephemeris cannot place the contacts -> phase_unresolved (never a candidate).
+  max_timing_uncertainty_frac: 0.50
+  # Timing uncertainty added when the integration times come from a header
+  # start/end interpolation with no barycentric correction (days, ~8 min).
+  header_time_uncertainty_days: 0.006
+  # Minimum integrations in each phase state for the discriminant to run.
+  min_in_eclipse: 8
+  min_out_eclipse: 16
+  min_in_transit: 8
+  min_out_transit: 16
+  # Baseline BEFORE the predicted ingress: the drop must be separable from the
+  # detector settling ramp, so an observation that starts inside eclipse cannot
+  # host a candidate.
+  min_baseline_before_ingress: 8
+
+line:
+  # Narrow-feature search on the time-averaged out-of-eclipse spectrum.
+  sigma_min: 6.0
+  min_from_edge: 8
+  min_width_resel: 1.0
+  max_width_resel: 3.0
+  continuum_window: 31          # running-median window (samples)
+  noise_block: 64               # block size for the robust (MAD) noise estimate
+  clip_sigma: 5.0               # per-pixel sigma clip across integrations
+  # Generous: on a line-rich M dwarf the peaks between absorption lines are
+  # "narrow positive features" too, and the eclipse test -- not a cap -- is
+  # what removes them.  A cap that crowded out a real line would be a miss.
+  max_features_per_spectrum: 200
+  # Line-flux series: line pixels = half-max width +- line_pad; side windows at
+  # [side_inner, side_outer] samples from the line for the local continuum.
+  line_pad: 1
+  side_inner: 3
+  side_outer: 15
+  # Broad-band continuum light curve (the star): median over +-cont_half_width
+  # samples excluding the line and its side windows.
+  cont_half_width: 150
+
+discriminant:
+  # THE test.  Line flux in eclipse consistent with zero, out of eclipse
+  # significantly positive, and the drop at the predicted contacts.
+  out_positive_snr_min: 5.0
+  in_eclipse_zero_sigma_max: 2.0
+  vanish_snr_interest: 3.0
+  vanish_snr_candidate: 5.0
+  # A line whose fractional eclipse drop matches the CONTINUUM's own fractional
+  # drop (and is inconsistent with total vanishing) is stellar or systematic.
+  tracks_continuum_sigma: 3.0
+  # Out-of-eclipse line-vs-continuum correlation above this (with p below
+  # continuum_corr_p_max) means systematics drive the line flux.
+  continuum_corr_max: 0.5
+  continuum_corr_p_max: 0.01
+  # Settling-ramp templates (e-folding times in integrations) and the veto: the
+  # ramp model must not fit the line series better than the eclipse-step model.
+  ramp_taus: [5, 10, 20, 40, 80]
+  ramp_corr_max: 0.5
+  # Free-step timing scan: the best-fit drop must sit within this many
+  # ingress-durations (plus timing uncertainty) of the predicted contact.
+  timing_tolerance_ingress_units: 2.0
+  # Cosmic-ray guard: removing the brightest N integrations must not kill the
+  # time-averaged detection.
+  cosmic_ray_top_n: 2
+  # Transit consistency: the line must not change in transit beyond the
+  # continuum's own change by more than this many sigma.
+  transit_excess_sigma_max: 3.0
+
+recurrence:
+  # Candidate wavelengths recurring across >= min_targets DIFFERENT targets
+  # (within bin_um) are instrumental.
+  bin_um: 0.004
+  min_targets: 3
+
+fdr:
+  alpha: 0.05
+
+acquire:
+  instruments: ["NIRSPEC", "NIRISS", "NIRCAM", "MIRI"]
+  match_radius_arcsec: 30.0
+  max_file_bytes: 3.0e9
+  product_batch: 15
+  retries: 3
+  retry_pause_s: 5.0

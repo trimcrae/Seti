@@ -833,3 +833,232 @@ def test_cli_probe_and_run_write_summaries_offline(cfg, tmp_path, monkeypatch):
     assert (tmp_path / "probe" / "probe.json").exists()
     assert rep["verdict"] == VERDICT_NO_DATA
     assert all(v["status"] == "QUERY_FAILED" for v in rep["tables"].values())
+
+
+# --------------------------------------------------------------------------
+# `--stage vet`: AllWISE W3/W4 on the no-detection stars
+# --------------------------------------------------------------------------
+W3REL, W4REL = (0.20, 0.55), (0.30, 0.70)      # Ks - W3 / Ks - W4 = a + b (J - Ks), injected
+ETZ_ID = 6243032008973309440
+
+
+def _wise_rows(ra, dec, ks, jk, deficit=0.0, w3=None, ccf="0000", sep_arcsec=0.3, ident="J1"):
+    """One AllWISE row in the VizieR II/328 spelling, on the injected relation."""
+    w3m = ks - (W3REL[0] + W3REL[1] * jk) + deficit if w3 is None else w3
+    w4m = ks - (W4REL[0] + W4REL[1] * jk) + deficit
+    return pd.DataFrame({"AllWISE": [ident], "RAJ2000": [ra + sep_arcsec / 3600.0], "DEJ2000": [dec],
+                         "W1mag": [ks - 0.05], "W2mag": [ks - 0.1], "W3mag": [w3m], "e_W3mag": [0.02],
+                         "snr3": [80.0], "chi2W3": [1.1], "W4mag": [w4m], "e_W4mag": [0.04], "snr4": [30.0],
+                         "chi2W4": [1.0], "ccf": [ccf], "qph": ["AAAA"], "ex": [0], "nb": [1], "na": [0]})
+
+
+def _vet_dir(tmp_path, cfg, n_control=80, seed=3):
+    """A results dir with a synthetic missing list, summary and residual table."""
+    rng = np.random.default_rng(seed)
+    n = 600
+    resid = pd.DataFrame({
+        "source_id": np.arange(1000, 1000 + n), "ra": rng.uniform(0, 360, n), "dec": rng.uniform(-60, 60, n),
+        "pmra": rng.normal(0, 20, n), "pmdec": rng.normal(0, 20, n), "epoch": 2016.0,
+        "ks_m": rng.uniform(4.0, 6.0, n), "e_ks": 0.02, "jk": rng.uniform(0.0, 1.0, n),
+        "resid_s09": rng.normal(0, 0.15, n), "locus_ok_s09": True, "q_s09": 3, "b": 30.0})
+    resid.loc[:2, "resid_s09"] = 0.0
+    resid.loc[0, "source_id"] = 555        # an IRAS-UL star: photospheric in W3/W4
+    resid.loc[0, ["ks_m", "jk"]] = [4.9, 0.4]
+    missing = pd.DataFrame({
+        "source_id": [-80763, 2001, 2002, 2003, ETZ_ID],
+        "origin": ["hipparcos2", "gaia_dr3", "gaia_dr3", "gaia_dr3", "gaia_dr3"],
+        "hip": [80763, np.nan, np.nan, np.nan, np.nan],
+        "ra": [247.35, 10.0, 20.0, 30.0, 243.4175], "dec": [-26.43, 5.0, 6.0, 7.0, -21.3999],
+        "b": [15.0, 40.0, 40.0, 40.0, 21.1], "ks_m": [-4.1, 5.0, 5.1, 4.95, 5.125],
+        "e_ks": [0.3, 0.02, 0.02, 0.02, 0.02], "jk": [1.25, 0.5, 0.6, 0.45, 0.399],
+        "pred_s09_jy": [2926.0, 0.6, 0.55, 0.62, 0.53], "etz": [False, False, False, False, True],
+        "nearby": [False] * 5})
+    d = tmp_path / "vet"
+    d.mkdir()
+    resid.to_csv(d / "bright_residuals.csv", index=False)
+    missing.to_csv(d / "missing_bright_candidates.csv", index=False)
+    (d / "summary.json").write_text(json.dumps({"iras_upper_limit_below_photosphere_source_ids": [555]}))
+    return d, resid, missing
+
+
+class FakeWise:
+    """AllWISE cones: control/UL stars photospheric; 2001 closed, 2002 a -1 mag
+    deficit, 2003 empty (with a flagged neighbour 25" away), ETZ star photospheric."""
+
+    def __init__(self, resid, missing, fail=False):
+        self.resid, self.missing, self.fail = resid, missing, fail
+        self.calls: list[str] = []
+        self.route_counts = {"vizier": 0, "irsa": 0}
+        self.discovery, self.errors = {}, []
+
+    def __call__(self, ra, dec, radius_arcsec, label):
+        self.calls.append(label)
+        if self.fail:
+            raise RuntimeError("no AllWISE route")
+        self.route_counts["vizier"] += 1
+        sid = int(label.split("_")[1])
+        if sid == 2003:
+            if radius_arcsec > 10:
+                return _wise_rows(ra, dec, 6.0, 0.3, ccf="D000", sep_arcsec=25.0, ident="Jhalo")
+            return pd.DataFrame(columns=["AllWISE", "RAJ2000", "DEJ2000", "W3mag", "W4mag"])
+        if sid == 2001:
+            return _wise_rows(ra, dec, 5.0, 0.5)
+        if sid == 2002:
+            return _wise_rows(ra, dec, 5.1, 0.6, deficit=1.0)
+        if sid == ETZ_ID:
+            return _wise_rows(ra, dec, 5.125, 0.399)
+        if sid == 555:
+            return _wise_rows(ra, dec, 4.9, 0.4)
+        row = self.resid.set_index("source_id").loc[sid]
+        rng = np.random.default_rng(sid)
+        return _wise_rows(ra, dec, row["ks_m"], row["jk"], deficit=rng.normal(0, 0.03))
+
+
+def test_fit_linear_locus_recovers_slope_and_scatter():
+    rng = np.random.default_rng(0)
+    x = rng.uniform(0, 1, 60)
+    y = 0.2 + 0.55 * x + rng.normal(0, 0.04, 60)
+    y[:3] += 1.5                                           # excess outliers are clipped, not fitted
+    loc = bright.fit_linear_locus(x, y)
+    assert loc["ok"] and abs(loc["a"] - 0.2) < 0.03 and abs(loc["b"] - 0.55) < 0.06
+    assert 0.02 < loc["scatter"] < 0.07 and loc["n_clipped"] >= 3
+    assert not bright.fit_linear_locus(x[:5], y[:5])["ok"]
+
+
+def test_vet_star_verdicts_on_synthetic_cones(cfg):
+    loci = {"w3": {"ok": True, "a": W3REL[0], "b": W3REL[1], "scatter": 0.05},
+            "w4": {"ok": True, "a": W4REL[0], "b": W4REL[1], "scatter": 0.06}}
+    star = {"ks_m": 5.0, "e_ks": 0.02, "jk": 0.5}
+    v = cfg["vet"]
+
+    def norm(df):
+        return bright._wise_norm(df, 10.0, 5.0)
+
+    closed = bright.vet_star_verdict(star, norm(_wise_rows(10.0, 5.0, 5.0, 0.5)), loci, v)
+    assert closed["verdict"] == bright.VET_PRESENT and abs(closed["resid_w3"]) < 0.1 and closed["cc_flags"] == "0000"
+    deficit = bright.vet_star_verdict(star, norm(_wise_rows(10.0, 5.0, 5.0, 0.5, deficit=1.0)), loci, v)
+    assert deficit["verdict"] == bright.VET_DEFICIT and deficit["resid_w3"] < -0.9 and deficit["sig_w4"] < -3
+    empty = bright.vet_star_verdict(star, pd.DataFrame(), loci, v)
+    assert empty["verdict"] == bright.VET_NO_SOURCE and empty["n_in_cone"] == 0
+    sat = bright.vet_star_verdict({"ks_m": 2.8, "e_ks": 0.2, "jk": 0.8},
+                                  norm(_wise_rows(10.0, 5.0, 2.8, 0.8, w3=2.5)), loci, v)
+    assert sat["verdict"] == bright.VET_INCONCLUSIVE and "saturated" in sat["note"]
+    one_band = bright.vet_star_verdict(star, norm(_wise_rows(10.0, 5.0, 5.0, 0.5, deficit=1.0).assign(snr4=1.0)),
+                                       loci, v)
+    assert one_band["verdict"] == bright.VET_INCONCLUSIVE and "w4: not measured" in one_band["note"]
+    no_locus = bright.vet_star_verdict(star, norm(_wise_rows(10.0, 5.0, 5.0, 0.5)), {"w3": {"ok": False}}, v)
+    assert no_locus["verdict"] == bright.VET_INCONCLUSIVE
+
+
+def test_control_selection_is_photospheric_and_spread_in_colour(cfg):
+    d, resid, _ = _vet_dir(__import__("pathlib").Path(__import__("tempfile").mkdtemp()), cfg)
+    ctrl = bright.select_control_stars(resid, cfg["vet"])
+    assert len(ctrl) == 60
+    assert (ctrl["resid_s09"].abs() < 0.05).all() and ctrl["ks_m"].between(4.5, 5.5).all()
+    assert ctrl["jk"].is_monotonic_increasing and ctrl["jk"].iloc[-1] - ctrl["jk"].iloc[0] > 0.7
+
+
+def test_vet_stage_end_to_end_closes_gaps_and_escalates_the_deficit(cfg, tmp_path):
+    d, resid, missing = _vet_dir(tmp_path, cfg)
+    wise = FakeWise(resid, missing)
+    seen = {}
+
+    def gaia(query, label):
+        seen["q"] = query
+        return pd.DataFrame({"source_id": [2001, 2002, 2003, ETZ_ID], "pmra": [10.0, 0.0, 0.0, -20.0],
+                             "pmdec": [0.0, 0.0, 0.0, 5.0]})
+
+    rep = bright.run_vet_stage(cfg, d, wise_fetcher=wise, gaia_fetcher=gaia)
+    assert rep["verdict"] == "W3_W4_DEFICIT_ESCALATE"
+    assert "2001, 2002, 2003" in seen["q"] and "-80763" not in seen["q"]
+    by = {r["source_id"]: r for r in rep["stars"]}
+    assert by[-80763]["verdict"] == bright.VET_SATURATED
+    assert not any(lab == "vet_-80763" for lab in wise.calls)                 # never queried
+    assert by[2001]["verdict"] == bright.VET_PRESENT
+    assert by[2002]["verdict"] == bright.VET_DEFICIT and by[2002]["resid_w4"] < -0.9
+    assert by[2003]["verdict"] == bright.VET_NO_SOURCE
+    assert by[2003]["nearest_wide_cc_flags"] == "D000" and by[2003]["artefact_region_plausible"] is True
+    assert abs(by[2003]["nearest_wide_sep_arcsec"] - 25.0) < 1.0
+    assert by[555]["vet_set"] == "iras_ul" and by[555]["verdict"] == bright.VET_PRESENT
+    assert by[555]["pm_source"] == "catalogue" and by[2001]["pm_source"] == "gaia_lookup"
+    assert rep[f"etz_star_{ETZ_ID}"]["verdict"] == bright.VET_PRESENT
+    c = rep["counters"]
+    assert (c[bright.VET_PRESENT], c[bright.VET_DEFICIT], c[bright.VET_NO_SOURCE], c[bright.VET_SATURATED]) == (3, 1, 1, 1)
+    assert rep["control"]["n_selected"] == 60 and rep["control"]["n_answered"] == 60
+    loc = rep["control"]["locus"]
+    assert abs(loc["w3"]["b"] - W3REL[1]) < 0.05 and abs(loc["w4"]["a"] - W4REL[0]) < 0.05
+    assert rep["n_stars_answered"] == 5
+    j = json.loads((d / "bright_vet.json").read_text())
+    assert j["verdict"] == rep["verdict"] and j["wise_routes"]["vizier"] > 60
+    csv = pd.read_csv(d / "bright_vet.csv")
+    assert set(csv["source_id"]) == {-80763, 2001, 2002, 2003, ETZ_ID, 555}
+    assert {"verdict", "resid_w3", "sig_w3", "resid_w4", "sig_w4", "cc_flags"} <= set(csv.columns)
+
+
+def test_vet_stage_with_a_dead_fetcher_writes_no_data_reached(cfg, tmp_path):
+    d, resid, missing = _vet_dir(tmp_path, cfg)
+    wise = FakeWise(resid, missing, fail=True)
+
+    def gaia(query, label):
+        raise RuntimeError("gaia down too")
+
+    rep = bright.run_vet_stage(cfg, d, wise_fetcher=wise, gaia_fetcher=gaia)
+    assert rep["verdict"] == VERDICT_NO_DATA
+    j = json.loads((d / "bright_vet.json").read_text())
+    assert j["verdict"] == VERDICT_NO_DATA and j["ledger_counts"]["QUERY_FAILED"] > 60
+    assert j["counters"][bright.VET_SATURATED] == 1 and j["counters"][bright.VET_INCONCLUSIVE] == 5
+    assert all(s["pm_source"] in ("catalogue", "unknown_assumed_zero") for s in j["stars"])
+    assert (d / "bright_vet.csv").exists()
+
+
+def test_vet_stage_with_too_few_controls_is_inconclusive_not_null(cfg, tmp_path):
+    d, resid, missing = _vet_dir(tmp_path, cfg)
+    c = json.loads(json.dumps(cfg))
+    c["vet"]["n_control"] = 5
+    wise = FakeWise(resid, missing)
+    rep = bright.run_vet_stage(c, d, wise_fetcher=wise, gaia_fetcher=lambda q, lab: pd.DataFrame())
+    assert rep["verdict"] == "CONTROL_LOCUS_UNAVAILABLE"
+    assert rep["counters"][bright.VET_INCONCLUSIVE] == 4 and rep["counters"][bright.VET_NO_SOURCE] == 1
+
+
+def test_vet_stage_with_nothing_to_vet(cfg, tmp_path):
+    rep = bright.run_vet_stage(cfg, tmp_path, wise_fetcher=FakeWise(None, None), gaia_fetcher=lambda q, lab: None)
+    assert rep["verdict"] == "NOTHING_TO_VET" and (tmp_path / "bright_vet.json").exists()
+
+
+def test_allwise_cone_query_composes_from_quoted_schema(monkeypatch):
+    schema = ['"AllWISE"', '"RAJ2000"', '"DEJ2000"', '"W1mag"', '"W3mag"', '"e_W3mag"', '"snr3"',
+              '"chi2W3"', '"W4mag"', '"e_W4mag"', '"snr4"', '"ccf"', '"qph"', '"ex"']
+    seen = {}
+
+    def fake_discover(table, url=None):
+        return {"table": table, "names": [bright._unquote(c) for c in schema], "meta": {},
+                "route": "TAP_SCHEMA", "errors": []}
+
+    class R:
+        status, error = "OK", ""
+        data = pd.DataFrame({"W3mag": [5.0]})
+
+    def fake_run_tap(url, q, label, **kw):
+        seen["q"], seen["url"] = q, url
+        return R()
+
+    monkeypatch.setattr(bright, "discover_columns", fake_discover)
+    import seti.vigil.acquire as va
+    monkeypatch.setattr(va, "run_tap", fake_run_tap)
+    f = bright.AllWiseConeFetcher(load_bright_config()["vet"])
+    df = f(243.4175, -21.3999, 6.0, "vet_x")
+    assert len(df) == 1 and seen["url"] == bright.VIZIER_TAP and f.route_counts["vizier"] == 1
+    q = seen["q"]
+    assert '""' not in q and 'FROM "II/328/allwise" WHERE 1 = CONTAINS(POINT(\'ICRS\', RAJ2000, DEJ2000)' in q
+    assert "W3mag, e_W3mag, snr3, chi2W3, W4mag" in q
+
+
+def test_cli_vet_stage(cfg, tmp_path, monkeypatch):
+    d, resid, missing = _vet_dir(tmp_path, cfg)
+    wise = FakeWise(resid, missing)
+    monkeypatch.setattr(bright, "AllWiseConeFetcher", lambda v: wise)
+    monkeypatch.setattr(bright, "default_gaia_fetcher", lambda q, lab: pd.DataFrame())
+    monkeypatch.setattr(bright, "load_bright_config", lambda p=None: cfg)
+    assert bright.main(["--stage", "vet", "--out", str(d)]) == 0
+    assert json.loads((d / "bright_vet.json").read_text())["verdict"] == "W3_W4_DEFICIT_ESCALATE"

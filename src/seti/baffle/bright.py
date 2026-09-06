@@ -1375,8 +1375,8 @@ def missing_bright(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     pred = df["pred_s09_jy"].to_numpy(float)
     m = (~has_akari & ~has_iras & (b > float(mcfg.get("b_min_deg", 10.0)))
          & np.isfinite(pred) & (pred > lim) & df["locus_ok_s09"].to_numpy(bool))
-    cols = [c for c in ("source_id", "origin", "hip", "ra", "dec", "l", "b", "ecl_lat", "parallax",
-                        "distance_pc", "phot_g_mean_mag", "bp_rp", "j_m", "ks_m", "e_ks", "jk",
+    cols = [c for c in ("source_id", "origin", "hip", "ra", "dec", "pmra", "pmdec", "epoch", "l", "b",
+                        "ecl_lat", "parallax", "distance_pc", "phot_g_mean_mag", "bp_rp", "j_m", "ks_m", "e_ks", "jk",
                         "lum_class", "pred_s09_jy", "pred_s18_jy", "pred_f12_jy", "pred_f25_jy",
                         "tmass_read1_regime", "n_neigh_30", "n_neigh_60", "etz", "nearby")
             if c in df.columns]
@@ -1730,12 +1730,404 @@ def probe_bright(cfg: dict, out_dir, *, url: str = VIZIER_TAP, gaia_fetcher=None
 
 
 # ===========================================================================
+# Vet stage: AllWISE W3/W4 on the no-detection stars
+# ===========================================================================
+IRSA_TAP = "https://irsa.ipac.caltech.edu/TAP"
+
+VET_PRESENT = "PHOTOSPHERE_PRESENT_AT_12_22_UM"
+VET_DEFICIT = "W3_W4_DEFICIT"
+VET_NO_SOURCE = "NO_WISE_SOURCE"
+VET_INCONCLUSIVE = "INCONCLUSIVE"
+VET_SATURATED = "saturated_beyond_all_catalogues"
+
+# Both AllWISE routes, runner-verified spellings first (results/ember/probe.json):
+# VizieR II/328/allwise: AllWISE, RAJ2000, DEJ2000, W3mag, e_W3mag, snr3, chi2W3,
+# W4mag, e_W4mag, snr4, chi2W4, ccf, ex, qph;  IRSA allwise_p3as_psd: designation,
+# ra, dec, w3mpro, w3sigmpro, w3snr, w3rchi2, w4mpro, w4sigmpro, w4snr, cc_flags,
+# ext_flg, ph_qual.
+WISE_ALIASES: dict[str, tuple[str, ...]] = {
+    "wise_id": ("allwise", "designation"),
+    "wise_ra": ("raj2000", "_raj2000", "ra"), "wise_dec": ("dej2000", "_dej2000", "dec", "de"),
+    "w1": ("w1mag", "w1mpro"), "w2": ("w2mag", "w2mpro"),
+    "w3": ("w3mag", "w3mpro"), "e_w3": ("e_w3mag", "w3sigmpro", "w3mpro_error"),
+    "w3snr": ("snr3", "w3snr"), "w3rchi2": ("chi2w3", "w3rchi2"),
+    "w4": ("w4mag", "w4mpro"), "e_w4": ("e_w4mag", "w4sigmpro", "w4mpro_error"),
+    "w4snr": ("snr4", "w4snr"), "w4rchi2": ("chi2w4", "w4rchi2"),
+    "cc_flags": ("ccf", "cc_flags"), "ph_qual": ("qph", "ph_qual"), "ext_flg": ("ex", "ext_flg"),
+    "wise_nb": ("nb",), "wise_na": ("na",),
+}
+_WISE_REQUIRED = ("wise_ra", "wise_dec", "w3", "w4")
+
+
+class AllWiseConeFetcher:
+    """Cone around one position: VizieR ``II/328/allwise`` first, IRSA fallback.
+
+    ``__call__(ra, dec, radius_arcsec, label)`` returns raw rows.  Column names
+    are discovered once per route; every SELECT goes through
+    :func:`select_list`, so an unresolved required column fails the star with
+    the logical name in the ledger rather than an empty identifier on the wire.
+    """
+
+    def __init__(self, cfg_vet: dict):
+        self.routes = [("vizier", VIZIER_TAP, cfg_vet.get("allwise_table", '"II/328/allwise"')),
+                       ("irsa", IRSA_TAP, cfg_vet.get("irsa_table", "allwise_p3as_psd"))]
+        self.resolved: dict[str, dict[str, str]] = {}
+        self.discovery: dict[str, dict] = {}
+        self.route_counts: dict[str, int] = {"vizier": 0, "irsa": 0}
+        self.errors: list[str] = []
+
+    def _resolve(self, name: str, url: str, table: str) -> dict[str, str]:
+        if name not in self.resolved:
+            disc = discover_columns(table, url)
+            self.discovery[name] = {"route": disc["route"], "n_columns": len(disc["names"]),
+                                    "errors": disc["errors"][:3]}
+            self.resolved[name] = resolve_aliases(disc["names"], WISE_ALIASES)
+        return self.resolved[name]
+
+    def __call__(self, ra: float, dec: float, radius_arcsec: float, label: str) -> pd.DataFrame:
+        from seti.vigil.acquire import run_tap
+
+        last = ""
+        for name, url, table in self.routes:
+            try:
+                res = self._resolve(name, url, table)
+                select = select_list(res, required=_WISE_REQUIRED)
+                ra_c = _adql_col(res["wise_ra"], "wise_ra")
+                de_c = _adql_col(res["wise_dec"], "wise_dec")
+                q = (f"SELECT {select} FROM {table} WHERE 1 = CONTAINS(POINT('ICRS', {ra_c}, {de_c}), "
+                     f"CIRCLE('ICRS', {ra:.7f}, {dec:.7f}, {radius_arcsec / 3600.0:.8f}))")
+                r = run_tap(url, q, label=f"{label}@{name}", retries=2, async_first=False)
+                if r.status == "QUERY_FAILED":
+                    raise RuntimeError(r.error or "QUERY_FAILED")
+                self.route_counts[name] += 1
+                return r.data if r.data is not None else pd.DataFrame()
+            except Exception as exc:  # noqa: BLE001
+                last = f"{name}: {exc!r}"
+                self.errors.append(f"{label} {last}"[:300])
+        raise RuntimeError(f"{label}: every AllWISE route failed ({last})")
+
+
+def fit_linear_locus(x, y, n_min: int = 15) -> dict:
+    """Robust straight line y = a + b·x with one MAD-clipping pass; scatter = 1.4826·MAD."""
+    x = np.asarray(x, float)
+    y = np.asarray(y, float)
+    ok = np.isfinite(x) & np.isfinite(y)
+    x, y = x[ok], y[ok]
+    out = {"ok": False, "n": int(len(x)), "a": None, "b": None, "scatter": None}
+    if len(x) < n_min:
+        return out
+    b, a = np.polyfit(x, y, 1)
+    r = y - (a + b * x)
+    mad = 1.4826 * np.median(np.abs(r - np.median(r)))
+    keep = np.abs(r - np.median(r)) <= max(3.0 * mad, 0.05)
+    if keep.sum() >= n_min:
+        b, a = np.polyfit(x[keep], y[keep], 1)
+        r = y - (a + b * x)
+        mad = 1.4826 * np.median(np.abs(r[keep] - np.median(r[keep])))
+    out.update({"ok": True, "a": float(a), "b": float(b), "scatter": float(max(mad, 1e-3)),
+                "n_clipped": int((~keep).sum())})
+    return out
+
+
+def _wise_band(row: pd.Series, b: str, snr_min: float, sat_mag: float) -> tuple[float, float, bool, bool]:
+    """(mag, err, measured, saturated) for band ``w3``/``w4`` of one AllWISE row."""
+    m = float(pd.to_numeric(row.get(b), errors="coerce"))
+    e = float(pd.to_numeric(row.get(f"e_{b}"), errors="coerce"))
+    snr = float(pd.to_numeric(row.get(f"{b}snr"), errors="coerce"))
+    measured = np.isfinite(m) and (not np.isfinite(snr) or snr >= snr_min) and np.isfinite(e)
+    return m, e, bool(measured), bool(np.isfinite(m) and m < sat_mag)
+
+
+def vet_star_verdict(star: dict, wise: pd.DataFrame, loci: dict, cfg_vet: dict) -> dict:
+    """Verdict for one no-detection star from its AllWISE cone rows.
+
+    ``star`` needs ``ks_m``, ``e_ks``, ``jk``; ``wise`` is canonical-named
+    (via :data:`WISE_ALIASES`) with ``sep_arcsec``.  ``loci`` is
+    ``{"w3": fit, "w4": fit}`` from :func:`fit_linear_locus`.
+    """
+    rec = {"verdict": VET_INCONCLUSIVE, "note": "", "n_in_cone": int(len(wise))}
+    for k in ("wise_id", "sep_arcsec", "w1", "w2", "w3", "e_w3", "w3snr", "w3rchi2", "w4", "e_w4",
+              "w4snr", "cc_flags", "ph_qual", "ext_flg", "resid_w3", "sig_w3", "resid_w4", "sig_w4"):
+        rec[k] = None
+    if not len(wise):
+        rec["verdict"] = VET_NO_SOURCE
+        return rec
+    row = wise.sort_values("sep_arcsec").iloc[0]
+    for k in ("wise_id", "cc_flags", "ph_qual"):
+        v = row.get(k)
+        rec[k] = None if v is None or (isinstance(v, float) and np.isnan(v)) else str(v)
+    for k in ("sep_arcsec", "w1", "w2", "w3", "e_w3", "w3snr", "w3rchi2", "w4", "e_w4", "w4snr", "ext_flg"):
+        v = float(pd.to_numeric(row.get(k), errors="coerce"))
+        rec[k] = None if not np.isfinite(v) else v
+    ks = float(star.get("ks_m", np.nan))
+    e_ks = float(star.get("e_ks", np.nan))
+    e_ks = e_ks if np.isfinite(e_ks) else 0.0
+    jk = float(star.get("jk", np.nan))
+    notes = []
+    ok_bands = {}
+    for b, sat in (("w3", float(cfg_vet.get("w3_sat_mag", 3.8))), ("w4", float(cfg_vet.get("w4_sat_mag", -0.4)))):
+        m, e, measured, saturated = _wise_band(row, b, float(cfg_vet.get("snr_min", 3.0)), sat)
+        loc = loci.get(b, {})
+        if not loc.get("ok"):
+            notes.append(f"{b}: no control locus")
+            continue
+        if not measured:
+            notes.append(f"{b}: not measured (snr/err)")
+            continue
+        if saturated:
+            notes.append(f"{b}: saturated ({m:.2f} < {sat})")
+        if not (np.isfinite(ks) and np.isfinite(jk)):
+            notes.append(f"{b}: no Ks/J-Ks anchor")
+            continue
+        pred = loc["a"] + loc["b"] * jk
+        resid = (ks - m) - pred
+        err = max(loc["scatter"], math.sqrt(e_ks ** 2 + e ** 2))
+        rec[f"resid_{b}"] = float(resid)
+        rec[f"sig_{b}"] = float(resid / err)
+        if not saturated:
+            ok_bands[b] = (resid, resid / err)
+    rec["note"] = "; ".join(notes)
+    if len(ok_bands) == 2:
+        pr, ps = float(cfg_vet.get("present_resid_min", -0.3)), float(cfg_vet.get("present_sig_max", 3.0))
+        dr, ds = float(cfg_vet.get("deficit_resid_max", -0.5)), float(cfg_vet.get("deficit_sig_min", 3.0))
+        if all(r > pr and abs(sg) < ps for r, sg in ok_bands.values()):
+            rec["verdict"] = VET_PRESENT
+        elif all(r < dr and sg < -ds for r, sg in ok_bands.values()):
+            rec["verdict"] = VET_DEFICIT
+    return rec
+
+
+def _wise_norm(raw: pd.DataFrame, ra: float, dec: float) -> pd.DataFrame:
+    if raw is None or not len(raw):
+        return pd.DataFrame()
+    df, _ = normalise_columns(pd.DataFrame(raw), WISE_ALIASES)
+    if "wise_ra" not in df or "wise_dec" not in df:
+        return pd.DataFrame()
+    df["wise_ra"] = pd.to_numeric(df["wise_ra"], errors="coerce")
+    df["wise_dec"] = pd.to_numeric(df["wise_dec"], errors="coerce")
+    df = df.dropna(subset=["wise_ra", "wise_dec"])
+    df["sep_arcsec"] = separation_arcsec(ra, dec, df["wise_ra"].to_numpy(float), df["wise_dec"].to_numpy(float))
+    return df.reset_index(drop=True)
+
+
+def select_control_stars(resid: pd.DataFrame, cfg_vet: dict) -> pd.DataFrame:
+    """Photospheric-at-9-um, W3/W4-unsaturated stars, spread evenly in J-Ks."""
+    m = (resid["resid_s09"].abs() < float(cfg_vet.get("control_resid_max", 0.05)))
+    m &= resid["ks_m"].between(float(cfg_vet.get("control_ks_min", 4.5)), float(cfg_vet.get("control_ks_max", 5.5)))
+    if "locus_ok_s09" in resid:
+        m &= resid["locus_ok_s09"].astype(bool)
+    if "q_s09" in resid:
+        m &= pd.to_numeric(resid["q_s09"], errors="coerce") == 3
+    pool = resid[m & np.isfinite(resid["jk"].to_numpy(float))].sort_values("jk", kind="stable")
+    n = int(cfg_vet.get("n_control", 60))
+    if len(pool) <= n:
+        return pool.reset_index(drop=True)
+    idx = np.unique(np.round(np.linspace(0, len(pool) - 1, n)).astype(int))
+    return pool.iloc[idx].reset_index(drop=True)
+
+
+def load_vet_inputs(cfg: dict, out_dir: Path, gaia_fetcher=None, ledger: list | None = None) -> pd.DataFrame:
+    """The stars to vet: the missing list plus the IRAS-upper-limit stars.
+
+    Proper motions come from the CSVs where present, from bright_residuals.csv
+    for the IRAS-UL stars, and from one Gaia lookup by source_id otherwise; a
+    star whose motion cannot be found is propagated with zero and noted.
+    """
+    ledger = ledger if ledger is not None else []
+    rows: list[pd.DataFrame] = []
+    mpath = out_dir / "missing_bright_candidates.csv"
+    if mpath.exists() and mpath.stat().st_size > 0:
+        m = pd.read_csv(mpath)
+        if len(m):
+            m["vet_set"] = "missing"
+            rows.append(m)
+    spath = out_dir / "summary.json"
+    ul_ids: list[int] = []
+    if spath.exists():
+        ul_ids = [int(x) for x in json.loads(spath.read_text()).get("iras_upper_limit_below_photosphere_source_ids", [])]
+    rpath = out_dir / "bright_residuals.csv"
+    resid = pd.read_csv(rpath, low_memory=False) if rpath.exists() else pd.DataFrame()
+    if ul_ids and len(resid):
+        u = resid[resid["source_id"].isin(ul_ids)].copy()
+        u["vet_set"] = "iras_ul"
+        rows.append(u)
+    if not rows:
+        return pd.DataFrame()
+    stars = pd.concat(rows, ignore_index=True, sort=False)
+    stars = stars.drop_duplicates("source_id").reset_index(drop=True)
+    for c in ("pmra", "pmdec", "epoch", "e_ks", "hip", "etz", "nearby"):
+        if c not in stars:
+            stars[c] = np.nan
+    stars["pm_source"] = np.where(np.isfinite(pd.to_numeric(stars["pmra"], errors="coerce")), "catalogue", "")
+    need = stars[(stars["pm_source"] == "") & (stars["source_id"] > 0)]
+    if len(need) and gaia_fetcher is not None:
+        ids = ", ".join(str(int(x)) for x in need["source_id"])
+        q = f"SELECT source_id, pmra, pmdec FROM gaiadr3.gaia_source WHERE source_id IN ({ids})"
+        t0 = time.monotonic()
+        try:
+            pm = _lower(pd.DataFrame(gaia_fetcher(q, "vet_pm_lookup"))).set_index("source_id")
+            for i in need.index:
+                sid = int(stars.at[i, "source_id"])
+                if sid in pm.index:
+                    stars.at[i, "pmra"] = float(pm.at[sid, "pmra"])
+                    stars.at[i, "pmdec"] = float(pm.at[sid, "pmdec"])
+                    stars.at[i, "epoch"] = float(cfg["epochs"].get("gaia", 2016.0))
+                    stars.at[i, "pm_source"] = "gaia_lookup"
+            _record(ledger, "vet", "vet_pm_lookup", QUERY_OK if len(pm) else QUERY_ZERO,
+                    n_rows=len(pm), elapsed_s=time.monotonic() - t0, query=q)
+        except Exception as exc:  # noqa: BLE001
+            _record(ledger, "vet", "vet_pm_lookup", QUERY_FAILED, error=repr(exc),
+                    elapsed_s=time.monotonic() - t0, query=q)
+    stars.loc[stars["pm_source"] == "", "pm_source"] = "unknown_assumed_zero"
+    stars["epoch"] = pd.to_numeric(stars["epoch"], errors="coerce").fillna(float(cfg["epochs"].get("gaia", 2016.0)))
+    return stars
+
+
+def run_vet_stage(cfg: dict, out_dir, *, wise_fetcher=None, gaia_fetcher=None) -> dict:
+    """W3/W4 coverage check on every no-detection star, with an in-query control locus."""
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    vcfg = cfg.get("vet", {}) or {}
+    t_start = time.monotonic()
+    ledger: list[dict] = []
+    rep: dict = {"channel": "baffle_bright", "stage": "vet",
+                 "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                 "counters": {v: 0 for v in (VET_PRESENT, VET_DEFICIT, VET_NO_SOURCE, VET_INCONCLUSIVE, VET_SATURATED)},
+                 "control": {}, "stars": [], "ledger": ledger}
+    wise_fetcher = wise_fetcher or AllWiseConeFetcher(vcfg)
+    gaia_fetcher = gaia_fetcher or default_gaia_fetcher
+    radius = float(vcfg.get("radius_arcsec", 6.0))
+    wide = float(vcfg.get("wide_radius_arcsec", 60.0))
+    epoch = float(vcfg.get("epoch", 2010.5))
+
+    def finish(verdict: str, reason: str = "") -> dict:
+        rep["verdict"] = verdict
+        if reason:
+            rep["reason"] = reason
+        rep["elapsed_s"] = round(time.monotonic() - t_start, 1)
+        rep["ledger_counts"] = {s: int(sum(1 for e in ledger if e["status"] == s))
+                                for s in (QUERY_OK, QUERY_ZERO, QUERY_FAILED)}
+        if getattr(wise_fetcher, "route_counts", None) is not None:
+            rep["wise_routes"] = dict(wise_fetcher.route_counts)
+            rep["wise_discovery"] = getattr(wise_fetcher, "discovery", {})
+            rep["wise_errors"] = list(getattr(wise_fetcher, "errors", []))[:20]
+        _write_json(out_dir / "bright_vet.json", rep)
+        pd.DataFrame(rep["stars"]).to_csv(out_dir / "bright_vet.csv", index=False)
+        return rep
+
+    stars = load_vet_inputs(cfg, out_dir, gaia_fetcher, ledger)
+    rep["n_stars_to_vet"] = int(len(stars))
+    if not len(stars):
+        return finish("NOTHING_TO_VET", "no missing_bright_candidates.csv rows and no IRAS-UL ids")
+    rpath = out_dir / "bright_residuals.csv"
+    resid = pd.read_csv(rpath, low_memory=False) if rpath.exists() else pd.DataFrame()
+    control = select_control_stars(resid, vcfg) if len(resid) else pd.DataFrame()
+    rep["control"]["n_selected"] = int(len(control))
+
+    def cone(ra, dec, pmra, pmdec, ep, r, label):
+        ra_e, de_e = propagate_to_epoch([ra], [dec], [pmra], [pmdec], from_epoch=float(ep), to_epoch=epoch)
+        t0 = time.monotonic()
+        try:
+            raw = wise_fetcher(float(ra_e[0]), float(de_e[0]), r, label)
+        except Exception as exc:  # noqa: BLE001
+            _record(ledger, "vet", label, QUERY_FAILED, error=repr(exc), elapsed_s=time.monotonic() - t0)
+            return None
+        df = _wise_norm(raw, float(ra_e[0]), float(de_e[0]))
+        _record(ledger, "vet", label, QUERY_OK if len(df) else QUERY_ZERO, n_rows=len(df),
+                elapsed_s=time.monotonic() - t0)
+        return df
+
+    # Control locus, measured in the same query.
+    ctrl_rows = []
+    for _i, c in control.iterrows():
+        df = cone(c["ra"], c["dec"], c.get("pmra", 0.0), c.get("pmdec", 0.0), c.get("epoch", 2016.0),
+                  radius, f"control_{int(c['source_id'])}")
+        if df is None or not len(df):
+            continue
+        row = df.sort_values("sep_arcsec").iloc[0]
+        w3, e3, m3, s3 = _wise_band(row, "w3", float(vcfg.get("snr_min", 3.0)), float(vcfg.get("w3_sat_mag", 3.8)))
+        w4, e4, m4, s4 = _wise_band(row, "w4", float(vcfg.get("snr_min", 3.0)), float(vcfg.get("w4_sat_mag", -0.4)))
+        ctrl_rows.append({"source_id": int(c["source_id"]), "jk": float(c["jk"]), "ks_m": float(c["ks_m"]),
+                          "ks_w3": float(c["ks_m"]) - w3 if (m3 and not s3) else np.nan,
+                          "ks_w4": float(c["ks_m"]) - w4 if (m4 and not s4) else np.nan})
+    ctrl = pd.DataFrame(ctrl_rows)
+    rep["control"]["n_answered"] = int(len(ctrl))
+    loci = {}
+    for b in ("w3", "w4"):
+        loci[b] = (fit_linear_locus(ctrl["jk"], ctrl[f"ks_{b}"], int(vcfg.get("n_min_control", 15)))
+                   if len(ctrl) else {"ok": False, "n": 0})
+    rep["control"]["locus"] = loci
+    rep["control"]["stars"] = _json_safe(ctrl.to_dict(orient="records")) if len(ctrl) else []
+
+    # The stars themselves.
+    n_answered = 0
+    for _, st in stars.iterrows():
+        sid = int(st["source_id"])
+        rec = {"source_id": sid, "vet_set": st.get("vet_set"), "hip": st.get("hip"),
+               "ra": float(st["ra"]), "dec": float(st["dec"]), "ks_m": float(st.get("ks_m", np.nan)),
+               "jk": float(st.get("jk", np.nan)), "pred_s09_jy": st.get("pred_s09_jy"),
+               "etz": bool(st.get("etz")) if pd.notna(st.get("etz")) else None,
+               "nearby": bool(st.get("nearby")) if pd.notna(st.get("nearby")) else None,
+               "pm_source": st.get("pm_source")}
+        if np.isfinite(rec["ks_m"]) and rec["ks_m"] < float(vcfg.get("ks_no_query_max", 0.0)):
+            rec.update({"verdict": VET_SATURATED, "note": "brighter than every catalogue's saturation; not queried"})
+            rep["counters"][VET_SATURATED] += 1
+            rep["stars"].append(rec)
+            continue
+        df = cone(st["ra"], st["dec"], st.get("pmra", 0.0), st.get("pmdec", 0.0), st.get("epoch", 2016.0),
+                  radius, f"vet_{sid}")
+        if df is None:
+            rec.update({"verdict": VET_INCONCLUSIVE, "note": "AllWISE query failed"})
+            rep["counters"][VET_INCONCLUSIVE] += 1
+            rep["stars"].append(rec)
+            continue
+        n_answered += 1
+        rec.update(vet_star_verdict({"ks_m": rec["ks_m"], "e_ks": st.get("e_ks", np.nan), "jk": rec["jk"]},
+                                    df, loci, vcfg))
+        if rec["verdict"] == VET_NO_SOURCE:
+            wdf = cone(st["ra"], st["dec"], st.get("pmra", 0.0), st.get("pmdec", 0.0), st.get("epoch", 2016.0),
+                       wide, f"vet_{sid}_wide")
+            if wdf is not None and len(wdf):
+                nr = wdf.sort_values("sep_arcsec").iloc[0]
+                ccf = str(nr.get("cc_flags", "") or "")
+                rec["nearest_wide_sep_arcsec"] = float(nr["sep_arcsec"])
+                rec["nearest_wide_cc_flags"] = ccf
+                rec["nearest_wide_w1"] = float(pd.to_numeric(nr.get("w1"), errors="coerce"))
+                letters = set(str(vcfg.get("artefact_cc_letters", "DHOP")))
+                rec["artefact_region_plausible"] = bool(set(ccf.upper()) & letters)
+                rec["note"] = (f"nothing within {radius:g}\"; nearest AllWISE source {nr['sep_arcsec']:.1f}\" "
+                               f"away with cc_flags={ccf!r}")
+            else:
+                rec["nearest_wide_sep_arcsec"] = None
+                rec["artefact_region_plausible"] = None
+                rec["note"] = f"nothing within {radius:g}\" nor within {wide:g}\""
+        rep["counters"][rec["verdict"]] += 1
+        rep["stars"].append(rec)
+
+    rep["n_stars_answered"] = n_answered
+    etz_id = int(vcfg.get("etz_star_source_id", 6243032008973309440))
+    hit = [r for r in rep["stars"] if r["source_id"] == etz_id]
+    rep[f"etz_star_{etz_id}"] = ({k: hit[0].get(k) for k in ("verdict", "note", "resid_w3", "sig_w3", "resid_w4",
+                                                             "sig_w4", "w3", "w4", "cc_flags", "sep_arcsec")}
+                                 if hit else "not in the vet list")
+    n_queried = int(sum(1 for r in rep["stars"] if r["verdict"] != VET_SATURATED))
+    if n_queried and n_answered == 0 and rep["control"]["n_answered"] == 0:
+        return finish(VERDICT_NO_DATA, "no AllWISE route answered for any star")
+    if not all(loci[b].get("ok") for b in loci):
+        return finish("CONTROL_LOCUS_UNAVAILABLE",
+                      f"only {rep['control']['n_answered']} control stars answered; every measured star is INCONCLUSIVE")
+    if rep["counters"][VET_DEFICIT]:
+        return finish("W3_W4_DEFICIT_ESCALATE", f"{rep['counters'][VET_DEFICIT]} star(s) fainter than the photosphere in W3 and W4")
+    return finish("VET_COMPLETE")
+
+
+# ===========================================================================
 # CLI
 # ===========================================================================
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m seti.baffle.bright",
                                  description="BAFFLE bright tier: AKARI/IRAS mid-IR deficits on G < 7.5 stars")
-    ap.add_argument("--stage", choices=("probe", "run"), default="run")
+    ap.add_argument("--stage", choices=("probe", "run", "vet"), default="run")
     ap.add_argument("--max-targets", type=int, default=None)
     ap.add_argument("--out", default=None, help="results directory (default results/baffle_bright)")
     ap.add_argument("--config", default=None)
@@ -1745,6 +2137,11 @@ def main(argv=None) -> int:
     if a.stage == "probe":
         rep = probe_bright(cfg, out)
         print(json.dumps({k: v.get("status") for k, v in rep["tables"].items()} | {"verdict": rep["verdict"]}))
+        return 0
+    if a.stage == "vet":
+        v = run_vet_stage(cfg, out)
+        print(json.dumps({"verdict": v.get("verdict"), "counters": v.get("counters"),
+                          "n_control_answered": v.get("control", {}).get("n_answered")}))
         return 0
     mt = a.max_targets if (a.max_targets or 0) > 0 else None
     s = run_bright_stage(cfg, out, max_targets=mt)

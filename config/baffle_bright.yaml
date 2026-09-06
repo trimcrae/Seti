@@ -120,3 +120,32 @@ screen:
 
 sensitivity:
   inject_mags: [0.5, 0.7, 1.0, 2.0]   # deficits injected into every measured star, recovery reported by regime
+
+# --- `--stage vet`: W3/W4 coverage check on the no-detection stars -----------
+# The missing_bright_candidates list is the fully-opaque limit of the screen,
+# but it is ALSO what an AKARI/IRAS coverage gap looks like.  AllWISE W3 (12 um)
+# and W4 (22 um) saturate only at W3 ~ 3.8 and W4 ~ -0.4, so at Ks ~ 5 they are
+# clean photospheric measurements of exactly the band the screen would block.
+# The locus is measured in the SAME query on a control set of stars that are
+# photospheric at 9 um (|resid_s09| < control_resid_max) and unsaturated in W3/W4.
+vet:
+  allwise_table: '"II/328/allwise"'      # VizieR TAP (primary)
+  irsa_table: "allwise_p3as_psd"         # IRSA TAP (fallback)
+  epoch: 2010.5                          # AllWISE mean epoch; positions propagated to it
+  radius_arcsec: 6.0                     # cone per star
+  wide_radius_arcsec: 60.0               # second cone when the 6" one is empty (nearest source, cc_flags)
+  n_control: 60
+  control_resid_max: 0.05                # |resid_s09| < this: photospheric at 9 um
+  control_ks_min: 4.5                    # W3/W4 unsaturated ...
+  control_ks_max: 5.5                    # ... and bright enough for good SNR
+  n_min_control: 15                      # fewer answering control stars -> no locus, everything INCONCLUSIVE
+  w3_sat_mag: 3.8                        # AllWISE saturation onsets
+  w4_sat_mag: -0.4
+  ks_no_query_max: 0.0                   # Ks below this: saturated_beyond_all_catalogues, not queried (Antares)
+  snr_min: 3.0                           # a band counts as measured above this SNR
+  present_resid_min: -0.3                # PHOTOSPHERE_PRESENT: both resid > this and |sig| < present_sig_max
+  present_sig_max: 3.0
+  deficit_resid_max: -0.5                # W3_W4_DEFICIT: both resid < this and sig < -deficit_sig_min
+  deficit_sig_min: 3.0
+  artefact_cc_letters: "DHOP"            # any of these in the nearest source's cc_flags: bright-star artefact plausible
+  etz_star_source_id: 6243032008973309440   # called out explicitly in bright_vet.json

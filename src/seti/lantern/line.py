@@ -266,7 +266,7 @@ def feature_snr_in_mask(flux, mask, index: int, flux_err=None, samples_per_resel
 
 
 def _template_fwhm(spec, noise, i, reach: int, fwhm_max: float,
-                   exclude=None) -> tuple[float, float]:
+                   exclude=None) -> tuple[float, float, float, float]:
     """Best-fitting Gaussian FWHM (samples) of the feature at ``i`` by weighted
     least squares of ``a * template + b + c * x`` over ``+-reach`` samples of
     the (masked-continuum) residual, for templates from a single-pixel spike
@@ -275,7 +275,10 @@ def _template_fwhm(spec, noise, i, reach: int, fwhm_max: float,
     from the continuum fit) while removing the stellar line forest that would
     otherwise mislead a fit on the raw spectrum.  A matched-template width is
     stable where a moment or a half-max count is not.  Returns
-    ``(fwhm, sub_pixel_centre)``."""
+    ``(fwhm_best, sub_pixel_centre, fwhm_lo, fwhm_hi)`` where ``[lo, hi]`` is
+    the range of template widths within ``delta chi^2 <= 4`` (2 sigma) of the
+    best: at low S/N the point estimate wanders with wing noise, and the
+    width guards act on what is EXCLUDED, not on the point estimate."""
     n = spec.size
     lo, hi = max(0, i - reach), min(n, i + reach + 1)
     y = spec[lo:hi]
@@ -284,16 +287,18 @@ def _template_fwhm(spec, noise, i, reach: int, fwhm_max: float,
     if exclude is not None:
         ok &= ~np.asarray(exclude, bool)[lo:hi]
     if ok.sum() < 5:
-        return 1.0, float(i)
+        return 1.0, float(i), 1.0, 1.0
     x = np.arange(lo, hi, dtype=float)[ok]
     y, w = y[ok], 1.0 / s[ok] ** 2
     sw = np.sqrt(w)
     grid = np.unique(np.concatenate([[1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0],
                                      np.linspace(3.0, max(fwhm_max, 3.0), 10)]))
     xl = (x - i) / max(reach, 1)
+    chi_by_fwhm = {}
     best = (np.inf, 1.0, float(i))
     for fwhm in grid:
         sig = fwhm / 2.3548
+        cbest = np.inf
         for c0 in (i - 0.5, i - 0.25, i, i + 0.25, i + 0.5):
             tmpl = np.exp(-0.5 * ((x - c0) / sig) ** 2)
             A = np.column_stack([tmpl, np.ones_like(x), xl])
@@ -301,9 +306,14 @@ def _template_fwhm(spec, noise, i, reach: int, fwhm_max: float,
             if coef[0] <= 0:
                 continue
             chi2 = float(np.sum(w * (y - A @ coef) ** 2))
+            cbest = min(cbest, chi2)
             if chi2 < best[0]:
                 best = (chi2, float(fwhm), float(c0))
-    return best[1], best[2]
+        chi_by_fwhm[float(fwhm)] = cbest
+    if not np.isfinite(best[0]):
+        return 1.0, float(i), 1.0, 1.0
+    consistent = [f for f, c2 in chi_by_fwhm.items() if c2 <= best[0] + 4.0]
+    return best[1], best[2], float(min(consistent)), float(max(consistent))
 
 
 def narrow_feature_search(wavelength, spec, spec_err=None, samples_per_resel: float = 2.0,
@@ -363,12 +373,15 @@ def narrow_feature_search(wavelength, spec, spec_err=None, samples_per_resel: fl
         # single-sample spike fits the FWHM~1 template.
         # Masked NEGATIVE residuals (absorption lines of the forest) are kept
         # out of the width fit; masked positive ones are the feature's own wings.
-        fwhm, _c0 = _template_fwhm(resid, noise, i, 3 * max_w, 3.0 * max_w,
-                                   exclude=grow & (resid < 0))
-        if fwhm < 0.75 * min_w:
+        fwhm, _c0, fwhm_lo, fwhm_hi = _template_fwhm(resid, noise, i, 3 * max_w, 3.0 * max_w,
+                                                     exclude=grow & (resid < 0))
+        # Guards act on the 2-sigma-consistent width range: a spike is one
+        # for which even 0.75 resolution elements is EXCLUDED; too wide is one
+        # for which every width up to max_w is excluded.
+        if fwhm_hi < 0.75 * min_w:
             counters["single_pixel_spike"] += 1
             continue
-        if fwhm > max_w or width > max_w + 1:
+        if fwhm_lo > max_w or width > max_w + 1:
             counters["too_wide"] += 1
             continue
         ew = float(np.nansum((resid[left:right + 1] / np.fmax(cont[left:right + 1], 1e-12))
@@ -376,6 +389,7 @@ def narrow_feature_search(wavelength, spec, spec_err=None, samples_per_resel: fl
         feats.append({
             "index": int(i), "wavelength": float(wl[i]), "snr": float(z[i]),
             "width_samples": int(width), "fwhm_samples": float(fwhm),
+            "fwhm_range_samples": [float(fwhm_lo), float(fwhm_hi)],
             "width_resel": float(fwhm / spr),
             "left": int(left), "right": int(right),
             "amplitude_norm": float(resid[i]),
@@ -625,12 +639,13 @@ def cosmic_ray_driven(flux, mask, left: int, right: int, sigma_min: float,
     order = np.argsort(np.where(m, series, -np.inf))[::-1]
     dropped = [int(i) for i in order[:top_n] if m[i]]
     m[dropped] = False
-    avg = time_average_spectrum(f, m, flux_err, (cfg or {}).get("clip_sigma", 5.0))
-    scan = narrow_feature_search(np.arange(f.shape[1]), avg["spec"], avg["spec_err"],
-                                 samples_per_resel, cfg)
-    centre = 0.5 * (left + right)
-    snr_after = max((d["snr"] for d in scan["features"] if abs(d["index"] - centre) <= 2),
-                    default=0.0)
+    # Residual significance at the feature on the re-averaged spectrum -- not a
+    # re-run of the full guard chain, whose width classification can flip at
+    # a boundary and falsely report "no feature".
+    centre = int(round(0.5 * (left + right)))
+    snr_after = feature_snr_in_mask(f, m, centre, flux_err, samples_per_resel, cfg, halfwidth=1)
+    if not np.isfinite(snr_after):
+        snr_after = 0.0
     out_series = series[np.asarray(mask, bool)]
     med = np.nanmedian(out_series)
     mad = 1.4826 * np.nanmedian(np.abs(out_series - med)) + 1e-12

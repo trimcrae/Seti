@@ -23,6 +23,7 @@ from seti.lantern.line import (
     bh_fdr,
     cosmic_ray_driven,
     eclipse_discriminant,
+    feature_snr_in_mask,
     is_recurrent,
     known_artefact,
     line_flux_series,
@@ -67,6 +68,8 @@ def _full(s, feature, lab, mask, artefact=None):
     if lab["phase_class"] in ("eclipse", "both"):
         disc = eclipse_discriminant(ser["line"], ser["line_err"], ser["cont"], lab, s["times"],
                                     _CONF["discriminant"])
+        disc["in_eclipse_spectrum_snr"] = feature_snr_in_mask(
+            s["flux"], lab["in_eclipse"], feature["index"], s["flux_err"], 2.0, _CONF["line"])
     if lab["phase_class"] in ("transit", "both"):
         tr = transit_consistency(ser["line"], ser["line_err"], ser["cont"], lab)
     cr = cosmic_ray_driven(s["flux"], mask, feature["left"], feature["right"], 6.0,
@@ -152,7 +155,8 @@ def test_recovers_vanishing_planet_line_as_candidate():
     disc, tr, cr, a = _full(s, f, lab, m)
     assert disc["eclipse_vanish_snr"] > 5.0
     assert disc["out_positive_snr"] > 5.0
-    assert abs(disc["in_eclipse_sigma"]) < 2.0
+    assert abs(disc["in_eclipse_sigma"]) < 3.0
+    assert disc["in_eclipse_spectrum_snr"] < 2.0          # gone from the in-eclipse spectrum
     assert disc["line_fractional_drop"] > 0.8
     assert abs(disc["continuum_correlation"]) < 0.5
     assert abs(disc["free_step_offset_integrations"]) <= 3
@@ -201,6 +205,7 @@ def test_stellar_emission_line_constant_through_eclipse_is_rejected():
     disc, _, _, a = _full(s, f, lab, m)
     assert disc["eclipse_vanish_snr"] < 3.0    # ...but it does not vanish
     assert abs(disc["in_eclipse_sigma"]) > 5.0
+    assert disc["in_eclipse_spectrum_snr"] > 6.0   # still there in the in-eclipse spectrum
     assert a["tier"] == "none"
     assert "low_snr" in a["vetoes"] and "tracks_continuum" in a["vetoes"]
 
@@ -520,6 +525,22 @@ def test_read_x1dints_synthetic_fits(tmp_path):
         h2.writeto(p3, overwrite=True)
     s3 = read_x1dints(p3)
     assert s3["time_source"] == "header_linear" and s3["times"][0] > 2.4e6
+
+
+def test_full_size_grid_recovers_line_and_rejects_stellar():
+    """2048 samples x 800 integrations, the NIRSpec-like case, through analyse_stack."""
+    for kw, expect in ((dict(line_amp=0.02), "candidate"),
+                       (dict(line_amp=0.02, line_vanishes=False), "none"),
+                       (dict(line_amp=0.0), None)):
+        s = synthesise_timeseries(n_wl=2048, n_int=800, **kw)
+        s["meta"] = {"INSTRUME": "NIRSPEC", "GRATING": "G395H"}
+        s["time_source"] = "int_times_bjd_tdb"
+        rec = R.analyse_stack(s, [s["ephemeris"]], _CONF, "X")
+        assert rec["phase_class"] == "eclipse" and rec["n_scanned"] > 900
+        near = [f for f in rec["features"] if abs(f["wavelength"] - LINE_WL) < 0.005]
+        got = near[0]["tier_local"] if near else None
+        assert got == expect, (kw, got, near[0]["vetoes_local"] if near else None)
+        assert len(json.dumps(R._json_safe(rec))) < 200_000       # checkpoint stays small
 
 
 def test_ephemeris_dataclass_roundtrip():

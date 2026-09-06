@@ -121,7 +121,7 @@ broad-band median (the star). Then:
 | Statistic | Meaning | Candidate needs |
 |---|---|---|
 | `out_positive_snr` | line flux out of eclipse over its error | ≥ 5 |
-| `in_eclipse_sigma` | in-eclipse line flux over its error | \|·\| ≤ 2 (consistent with zero) |
+| `in_eclipse_spectrum_snr` | the feature's significance on the **in-eclipse time-averaged spectrum** (same masked continuum as the search) — the bias-free "consistent with zero" test; `in_eclipse_sigma` (series mean over its error) is also reported | ≤ 2 |
 | `eclipse_vanish_snr` | (out − in) / joint error | ≥ 5 (≥ 3 for `interest`) |
 | `line_fractional_drop` vs `continuum_fractional_drop` | did the line drop like the star (~10⁻³) or like the planet (~1)? | line ≠ continuum, consistent with 1 |
 | `continuum_correlation` | line vs continuum over **out-of-eclipse** integrations (a planet line is constant there; any correlation is systematics) | \|r\| < 0.5 |

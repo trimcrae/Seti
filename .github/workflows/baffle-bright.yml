@@ -28,8 +28,9 @@ on:
     inputs:
       stage:
         description: >-
-          "probe" (schema discovery + tiny queries — run this first) or "run"
-          (the whole tier).
+          "probe" (schema discovery + tiny queries — run this first), "run"
+          (the whole tier), or "vet" (AllWISE W3/W4 coverage check on the
+          no-detection stars of the committed results — needs a prior run).
         required: false
         default: "run"
       max_targets:
@@ -58,6 +59,7 @@ jobs:
       - name: Offline gate — planted deficits must be recovered on this runner
         run: python -m pytest tests/test_baffle_bright.py -q -p no:cacheprovider
       - name: Probe (TAP_SCHEMA discovery, tiny queries, upload test)
+        if: ${{ github.event.inputs.stage != 'vet' }}
         run: |
           python -m seti.baffle.bright --stage probe
           echo "=== probe ==="
@@ -72,7 +74,7 @@ jobs:
           print("verdict", d["verdict"])
           PY
       - name: Run (targets → anchors → mid-IR → locus → screen)
-        if: ${{ github.event.inputs.stage != 'probe' }}
+        if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'vet' }}
         run: |
           MT=""
           if [ "${{ github.event.inputs.max_targets || '0' }}" != "0" ]; then
@@ -91,9 +93,34 @@ jobs:
                   "tail_asymmetry", "sensitivity", "denominators", "locus", "ledger_counts")
           print(json.dumps({k: s.get(k) for k in keys if k in s}, indent=2)[:8000])
           PY
+      - name: Vet (AllWISE W3/W4 on the no-detection stars, control locus in-query)
+        if: ${{ github.event.inputs.stage == 'vet' }}
+        run: |
+          python -m seti.baffle.bright --stage vet
+          echo "=== vet ==="
+          python - <<'PY'
+          import json
+          v = json.load(open("results/baffle_bright/bright_vet.json"))
+          keys = ("verdict", "reason", "n_stars_to_vet", "n_stars_answered", "counters",
+                  "wise_routes", "ledger_counts")
+          print(json.dumps({k: v.get(k) for k in keys if k in v}, indent=2))
+          c = v.get("control", {})
+          print("control:", c.get("n_selected"), "selected,", c.get("n_answered"), "answered;",
+                json.dumps(c.get("locus")))
+          for k in v:
+              if k.startswith("etz_star_"):
+                  print(k, json.dumps(v[k]))
+          for s in v.get("stars", []):
+              print(s["source_id"], s.get("vet_set"), s["verdict"], "resid_w3", s.get("resid_w3"),
+                    "resid_w4", s.get("resid_w4"), "-", (s.get("note") or "")[:100])
+          if "NO_DATA_REACHED" in v.get("verdict", ""):
+              print("::error::vet reached no AllWISE route — a transport failure, not a science result")
+          if "ESCALATE" in v.get("verdict", ""):
+              print(f"::notice::{v['counters']['W3_W4_DEFICIT']} no-detection star(s) are ALSO faint in W3 and W4 — escalate")
+          PY
       # A verdict must never read as a science null when no data was reached.
       - name: Assert the verdict is not a disguised no-data run
-        if: ${{ github.event.inputs.stage != 'probe' }}
+        if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'vet' }}
         run: |
           python - <<'PY'
           import json, pathlib, sys
@@ -139,4 +166,6 @@ jobs:
             results/baffle_bright/bright_residuals.csv \
             results/baffle_bright/locus_bright.json \
             results/baffle_bright/ledger.json \
-            results/baffle_bright/probe.json
+            results/baffle_bright/probe.json \
+            results/baffle_bright/bright_vet.json \
+            results/baffle_bright/bright_vet.csv

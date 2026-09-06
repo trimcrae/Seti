@@ -248,6 +248,9 @@ threshold is the expected accidental rate, stated in `summary.json`.
 | `nlte_saturated_lines` | Ba II 5853/6141/6496 saturating in metal-rich cool dwarfs | the preference must hold with **Ba excluded**; `lr_noba` is reported next to `fission_lr` for every candidate, with La/Ce as the heavy-peak anchor |
 | `single_element_driver` | a one-element anomaly wearing a pattern's clothes — **the crucial test** | leave-one-out: `fission_lr` recomputed with each element dropped in turn; the minimum must still clear the threshold, and the element whose removal hurts most is named |
 | `teff_peer_residual` | a pattern manufactured by the regression | the raw [X/Fe] vector must carry at least half the threshold too; the counter also records how many raw-space passers the peer residual removed |
+| `unexplained_by_all_templates` | a star that "wins" against worse models without fitting (both first-run survivors) | reduced χ² of the **best** model > 3 → `UNEXPLAINED_BY_ALL_TEMPLATES`, listed separately, never a candidate |
+| `heavy_peak_incoherent` | one hot element carrying the heavy peak | fewer than two of La/Ce/Nd individually ≥ 2σ in the fission direction |
+| `la_cn_blend` | CN blends on the La II lines in cool giants | giant, Teff < 4800 K, preference carried by La, in a sample whose La residual tracks C/N or Teff (or could not be checked) |
 
 The order is the order of application; `first_veto` says which one a star hit
 first, and every veto is also counted independently so the funnel cannot hide
@@ -317,6 +320,79 @@ system was concentrated. For a K dwarf the requirement is ~4× larger; for an
 M dwarf ~15× — which is why the sample is bounded at Teff > 4500 K.
 
 ---
+
+## 4a. What the first real run showed, and what it changed (2026-09-06)
+
+The channel ran on GALAH DR4 from the runner (`results/fallout/`, run
+commit `3fe0d23`): 395,752 rows from `GALAH_DR4_allstar_cloud`, 101,928
+dwarfs and 78,344 giants in the boxes, 11/12 pattern elements. Four things
+were wrong, and each is now a rule rather than a lesson.
+
+**The error model was wrong.** The shuffled-element null put its 99.9th
+percentile at ln LR **17.0** (dwarfs) / **9.7** (giants) against **2.3** on
+the synthetic population, and the sample null's tail ran to 91. The cause is
+in `peer_scatter_dex`: GALAH's quoted per-element errors understate the
+measured peer-residual scatter by 2–4× (dwarfs: Nd 0.16, La 0.22, Ce 0.28,
+Rb 0.40, Sr 0.34, Eu 0.32 dex). Every element's error is now **floored at
+that sample's measured peer scatter of that element**
+(`pattern.error_floors`) — the per-element form of the sqrt(reduced χ²)
+rescaling LOOM applies — and the floors and inflation ratios are recorded in
+`summary.json` under `error_model`. Under the floors the null threshold falls
+back toward the config floor and the LR values are calibrated. A test injects
+4×-under-quoted errors into pure noise and confirms the floored statistic
+stops manufacturing patterns while a real injected fission star survives.
+
+**Winning is not fitting.** Both giant "survivors" — 170203001601307
+(χ²_f = 229.7 on 9 elements, reduced ≈ 29) and 230511003401363 (χ²_f = 52.5
+on 8) — beat the natural models only because those were worse. A star whose
+*best* model has reduced χ² above `max_reduced_chi2 = 3` is now
+`UNEXPLAINED_BY_ALL_TEMPLATES`: counted, listed separately in the report,
+never a fission candidate.
+
+**One hot element must not carry a pattern.** Both survivors were La-driven
+(peer La +0.89 and +0.77 dex against a template prediction of ~+0.3 at their
+a_f; Sm negative; Sr −1.0 in the first). Two vetoes were added:
+`heavy_peak_incoherent` (at least two of La/Ce/Nd individually ≥ 2σ in the
+fission direction) and `la_cn_blend` (in giants the La residual is regressed
+on Teff, log g, [C/Fe], [N/Fe], vsini — GALAH's C and N are now carried — and
+if it tracks C/N or anti-correlates with Teff, a La-carried preference below
+4800 K is vetoed; if the diagnostic cannot be computed La is distrusted, not
+trusted). The correlations are reported in `summary.json` under
+`la_diagnostics`.
+
+**Sensitivity was mis-reported.** The dwarf curve read 1% completeness at
+a_f = 10 because 79,690 of 101,928 dwarfs are `INSUFFICIENT` (Rb, Sr, Ru, Eu
+are rarely measured in dwarfs) and an injection into them cannot succeed.
+Completeness is now reported on **testable** stars (≥ 5 elements and ≥ 2 of
+La/Ce/Nd measured) with the testable fraction beside it, and the all-star
+number kept as a second column.
+
+**The offline re-vet of the committed candidates** (`vet` stage, run on the
+working tree from `candidates_galah_*.csv` with sigmas rebuilt from the
+recorded peer-scatter floors — the acquired table and the vectors are not on
+disk, so the shuffled null and its threshold could *not* be recomputed and
+the stale 17.0 / 9.7 thresholds were used): under the floored errors the two
+giants' ln LR fell from 52.5 → 9.0 and 26.9 → 11.7; both are
+`unexplained_by_all_templates` (reduced χ² 14.1 and 3.2), both fail
+leave-one-out on La (LOO minima 0.6 and 6.8), both trip `la_cn_blend`.
+**Vetted survivors: 0 dwarfs, 0 giants**; verdict `NO_FISSION_PATTERN`
+(behind the `DEGRADED_SOURCE` prefix for the missing rv/fibre columns). Of the
+163 dwarf and 72 giant above-threshold stars, 127 and 57 are unexplained by
+every template — the list a human should read, because a star nothing fits is
+either bad data or new astrophysics, and the report separates it from the
+candidates rather than burying it. The calibrated numbers — floored null,
+recomputed threshold, testable-conditioned completeness — require the next
+runner dispatch.
+
+**The concept scan** (`results/falloutlit/concept_scan.json`, decoy-aware,
+modelled on metronomelit's): 198 verbatim abstracts, 5 regex hits for
+"fission yield/product/fragment pattern against stellar/photospheric
+abundances", **0 decoy-free** — the four survivors are r-process fission
+cycling in neutron-star mergers and the R-Process Alliance (nucleosynthesis
+decoys, listed as `nucleosynthesis_adjacent_hits` for a human to read). Six of
+the 18 title-verified full-text targets remain unresolved (Cowley 2004,
+Korotin 2015, Rekhi 2025, Karinkuzhi 2021, Hansen 2018, Prantzos 2020) and are
+recorded as such in `verification.json`, not dropped.
 
 ## 5. Interpretation ladder
 

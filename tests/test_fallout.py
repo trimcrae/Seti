@@ -236,7 +236,10 @@ def _passing_candidate(templates, pcfg) -> pd.DataFrame:
     res = P.fit_patterns(obs, _sig(1), templates, pcfg)
     loo = P.leave_one_out(obs, _sig(1), templates, pcfg)
     row = {el: float(obs[0, k]) for k, el in enumerate(templates.elements)}
-    row.update({"fe_h": 0.0, "snr": 120.0, "flag_sp": 0, "Li": -0.5, "age": 4.0, "binary_flag": 0})
+    row.update({f"peer_{el}": float(obs[0, k]) for k, el in enumerate(templates.elements)})
+    row.update({f"sig_{el}": float(_sig(1)[0, k]) for k, el in enumerate(templates.elements)})
+    row.update({"fe_h": 0.0, "snr": 120.0, "flag_sp": 0, "Li": -0.5, "age": 4.0, "binary_flag": 0,
+                "sample": "dwarf", "teff": 5600.0})
     cand = pd.concat([pd.DataFrame([row]), res, loo], axis=1)
     cand["lr_noba"] = P.lr_without(obs, _sig(1), templates, pcfg, drop=("Ba",))
     cand["fission_lr_raw"] = res["fission_lr"]
@@ -261,6 +264,10 @@ def test_the_reference_candidate_passes_every_veto(templates, pcfg):
     ("nlte_saturated_lines", {"lr_noba": 1.0}),
     ("single_element_driver", {"lr_loo_min": 2.0}),
     ("teff_peer_residual", {"fission_lr_raw": 0.5}),
+    # the first real run's lessons
+    ("unexplained_by_all_templates", {"reduced_chi2_best": 12.0}),      # chi2_f = 230 on 9 elements
+    ("heavy_peak_incoherent", {"peer_Ce": 0.0, "peer_Nd": 0.0}),        # La alone carries the heavy peak
+    ("la_cn_blend", {"sample": "giant", "teff": 4500.0, "lr_loo_driver": "La"}),
 ])
 def test_each_veto_is_tripped_by_its_case(templates, pcfg, veto, mutate):
     cand = _passing_candidate(templates, pcfg)
@@ -515,7 +522,7 @@ def test_split_samples_applies_both_boxes(block):
 def test_entry_points_expose_the_four_stages():
     import argparse
 
-    assert R.STAGES == ("probe", "acquire", "screen", "assess", "all")
+    assert R.STAGES == ("probe", "acquire", "screen", "assess", "vet", "all")
     top = argparse.ArgumentParser()
     sub = top.add_subparsers()
     R.register(sub)
@@ -553,3 +560,250 @@ def test_workflow_is_dispatchable_and_commits_through_the_verified_script():
     assert "scripts/falloutlit_fetch.py" in text
     assert "seti.fallout.run" in text
     assert "tests/test_fallout.py" in text
+    assert "results/fallout/vet.json" in text
+
+
+# ---------------------------------------------------------------------------
+# What the first real GALAH DR4 run taught (2026-09-06)
+# ---------------------------------------------------------------------------
+def test_error_floor_inflates_underestimated_errors_and_is_recorded(pcfg):
+    df = pd.DataFrame({"Nd": [0.3, 0.2], "e_Nd": [0.02, 0.03], "Ce": [0.1, 0.1], "e_Ce": [0.05, 0.05]})
+    floors = P.error_floors(df, ["Nd", "Ce"], {"Nd": 0.16, "Ce": 0.28}, cfg=pcfg)
+    assert floors["Nd"]["floor_dex"] == 0.16 and floors["Nd"]["median_quoted_dex"] == 0.025
+    assert floors["Nd"]["inflation"] == 6.4 and floors["Ce"]["inflation"] == 5.6
+    obs, sig, _, _ = P.assemble_vectors(df, ["Nd", "Ce"], cfg=pcfg,
+                                        sigma_floor={el: d["floor_dex"] for el, d in floors.items()})
+    assert abs(sig[0, 0] - np.sqrt(0.16 ** 2 + pcfg.systematic_floor_dex ** 2)) < 1e-9
+    assert abs(sig[0, 1] - np.sqrt(0.28 ** 2 + pcfg.systematic_floor_dex ** 2)) < 1e-9
+    # mode "none" leaves the quoted error alone
+    off = P.PatternConfig(error_floor_mode="none")
+    floors0 = P.error_floors(df, ["Nd"], {"Nd": 0.16}, cfg=off)
+    assert floors0["Nd"]["floor_dex"] == 0.0
+
+
+def test_underestimated_errors_do_not_make_a_candidate_but_a_real_fission_star_still_is(templates, pcfg):
+    """A noise vector at 3 sigma of an under-quoted error looks like a pattern until
+    the error is floored at the measured scatter; a genuine strong injection survives
+    the flooring."""
+    rng = np.random.default_rng(2026)
+    K = len(GALAH_ELEMENTS)
+    true_scatter = np.array([0.40, 0.34, 0.08, 0.23, 0.15, 0.31, 0.10, 0.22, 0.28, 0.16, 0.22, 0.32])
+    quoted = true_scatter / 4.0                       # the real-run ratio
+    n = 2000
+    noise = rng.normal(0, 1, (n, K)) * true_scatter
+    sig_quoted = np.tile(np.sqrt(quoted ** 2 + 0.05 ** 2), (n, 1))
+    sig_floored = np.tile(np.sqrt(true_scatter ** 2 + 0.05 ** 2), (n, 1))
+    lr_q = P.fission_lr_only(noise, sig_quoted, templates, pcfg)
+    lr_f = P.fission_lr_only(noise, sig_floored, templates, pcfg)
+    rate_q = (lr_q >= pcfg.lr_min).mean()
+    rate_f = (lr_f >= pcfg.lr_min).mean()
+    assert rate_q > 0.01, "under-quoted errors manufacture 'patterns' from pure noise"
+    assert rate_f < 0.002, "floored errors do not"
+    assert rate_q > 5 * max(rate_f, 1.0 / n)
+    # the chi2 scale is what moved: the same vectors, the same shapes, 16x the statistic
+    assert np.median(lr_q[lr_q > 0]) > 5 * np.median(lr_f[lr_f > 0])
+    # the genuine star: fission at a_f = 20 (Nd +1.3 dex) on top of the same, dwarf-scale
+    # noise. At a_f = 10 the honest completeness against 0.16-0.40 dex scatter is ~50%,
+    # which is what the sensitivity curve is for; the test asks for the unambiguous case.
+    inj = noise[:60] + np.log10(1 + 20.0 * templates.F)[None, :]
+    fit = P.fit_patterns(inj, sig_floored[:60], templates, pcfg)
+    cls = fit["classification"]
+    # Against 0.3-0.4 dex scatter on half the elements, ~1 in 5 lands AMBIGUOUS
+    # (fission best, ln LR below 8): that is the honest completeness, and the
+    # sensitivity curve is where it is reported. The star must be PREFERRED as
+    # fission almost always, and unambiguously so most of the time.
+    assert ((cls == P.FISSION) | (cls == P.AMBIGUOUS)).mean() >= 0.9, cls.value_counts().to_dict()
+    assert (cls == P.FISSION).mean() >= 0.7, cls.value_counts().to_dict()
+    assert (fit["fission_lr"] > 0).mean() >= 0.9
+    loo = P.leave_one_out(inj, sig_floored[:60], templates, pcfg)
+    # Leave-one-out at the full threshold roughly halves completeness at this
+    # noise level (measured ~47% here); the floor below is the honest one and
+    # the per-sample curve in summary.json is where the real number lives.
+    assert (loo["lr_loo_min"] >= pcfg.lr_min).mean() >= 0.35
+    assert (loo["lr_loo_min"] > 0).mean() >= 0.8, "the preference does not COLLAPSE without any one element"
+
+
+def test_a_vector_nothing_fits_is_unexplained_not_fission(templates, pcfg):
+    """The real giant survivor: La +1.2, Sr -0.85, Sm negative, chi2_f = 230 on 9 elements."""
+    obs = np.full((1, len(GALAH_ELEMENTS)), np.nan)
+    for el, v in {"Sr": -1.0, "Y": -0.1, "Zr": 0.0, "Ba": -0.15, "La": 1.2, "Ce": 0.2,
+                  "Nd": 0.3, "Sm": -0.45, "Eu": 0.0}.items():
+        obs[0, templates.index(el)] = v
+    sig = np.full_like(obs, np.sqrt(0.10 ** 2 + 0.05 ** 2))
+    res = P.fit_patterns(obs, sig, templates, pcfg)
+    assert res["fission_lr"].iloc[0] > pcfg.lr_min, "it 'wins' against the natural models"
+    assert res["reduced_chi2_best"].iloc[0] > pcfg.max_reduced_chi2, "but nothing fits it"
+    assert res["classification"].iloc[0] == P.UNEXPLAINED
+    cand = pd.concat([pd.DataFrame([{"sample": "giant", "teff": 4780.0}]), res], axis=1)
+    vet = P.apply_vetoes(cand, cfg=pcfg, lr_threshold=pcfg.lr_min)
+    assert bool(vet["veto_unexplained_by_all_templates"].iloc[0])
+    assert not bool(vet["vet_pass"].iloc[0])
+
+
+def test_la_diagnostics_flags_a_cn_tracking_residual_and_clears_a_clean_one(pcfg):
+    rng = np.random.default_rng(4)
+    n = 2000
+    N = rng.normal(0.0, 0.3, n)
+    teff = rng.uniform(4000.0, 5200.0, n)
+    tracking = pd.DataFrame({"peer_La": 0.4 * N + rng.normal(0, 0.1, n), "N": N, "C": rng.normal(0, 0.2, n),
+                             "teff": teff, "logg": rng.uniform(1.5, 3.5, n), "vsini": rng.uniform(1, 8, n)})
+    d = P.la_diagnostics(tracking, cfg=pcfg)
+    assert d["la_cn_suspect"] and "N rho=" in d["reason"]
+    assert abs(d["correlations"]["N"]) > 0.5
+    clean = tracking.copy()
+    clean["peer_La"] = rng.normal(0, 0.1, n)
+    d2 = P.la_diagnostics(clean, cfg=pcfg)
+    assert not d2["la_cn_suspect"]
+    # not computable -> distrusted, and says why
+    d3 = P.la_diagnostics(clean[["peer_La"]], cfg=pcfg)
+    assert d3["la_cn_suspect"] and "no covariate" in d3["reason"]
+    d4 = P.la_diagnostics(clean.head(20), cfg=pcfg)
+    assert d4["la_cn_suspect"] and "need" in d4["reason"]
+
+
+def test_la_cn_blend_veto_needs_giant_cool_la_carried_and_suspect(templates, pcfg):
+    base = _passing_candidate(templates, pcfg)
+    base.loc[0, "sample"] = "giant"
+    base.loc[0, "teff"] = 4500.0
+    base.loc[0, "lr_loo_driver"] = "La"
+    assert bool(P.apply_vetoes(base, cfg=pcfg, lr_threshold=pcfg.lr_min)["veto_la_cn_blend"].iloc[0])
+    # not suspect in this sample -> no veto
+    assert not bool(P.apply_vetoes(base, cfg=pcfg, lr_threshold=pcfg.lr_min,
+                                   la_cn_suspect=False)["veto_la_cn_blend"].iloc[0])
+    # a warm giant, or a dwarf, is not vetoed
+    warm = base.copy()
+    warm.loc[0, "teff"] = 5100.0
+    assert not bool(P.apply_vetoes(warm, cfg=pcfg, lr_threshold=pcfg.lr_min)["veto_la_cn_blend"].iloc[0])
+    dwarf = base.copy()
+    dwarf.loc[0, "sample"] = "dwarf"
+    assert not bool(P.apply_vetoes(dwarf, cfg=pcfg, lr_threshold=pcfg.lr_min)["veto_la_cn_blend"].iloc[0])
+
+
+def test_heavy_peak_coherence_counts_elements_individually(templates, pcfg):
+    cand = _passing_candidate(templates, pcfg)
+    vet = P.apply_vetoes(cand, cfg=pcfg, lr_threshold=pcfg.lr_min)
+    assert int(vet["n_heavy_coherent"].iloc[0]) == 3 and not bool(vet["veto_heavy_peak_incoherent"].iloc[0])
+    one = cand.copy()
+    one.loc[0, "peer_Ce"] = 0.05
+    one.loc[0, "peer_Nd"] = -0.05
+    v1 = P.apply_vetoes(one, cfg=pcfg, lr_threshold=pcfg.lr_min)
+    assert int(v1["n_heavy_coherent"].iloc[0]) == 1 and bool(v1["veto_heavy_peak_incoherent"].iloc[0])
+    # no sigma information at all -> cannot be shown coherent -> vetoed, not waved through
+    nosig = cand.drop(columns=[c for c in cand.columns if c.startswith("sig_")])
+    assert bool(P.apply_vetoes(nosig, cfg=pcfg, lr_threshold=pcfg.lr_min)["veto_heavy_peak_incoherent"].iloc[0])
+
+
+def test_sensitivity_is_conditioned_on_testable_stars(templates, pcfg):
+    rng = np.random.default_rng(12)
+    n = 400
+    obs = rng.normal(0, 1, (n, len(GALAH_ELEMENTS))) * 0.1
+    sig = np.full_like(obs, np.sqrt(0.1 ** 2 + 0.05 ** 2))
+    # half the stars have only Y, Zr, Ba measured: untestable
+    for el in GALAH_ELEMENTS:
+        if el not in ("Y", "Zr", "Ba"):
+            obs[: n // 2, templates.index(el)] = np.nan
+    mask = P.testable_mask(obs, templates, pcfg)
+    assert mask.sum() == n // 2 and not mask[: n // 2].any()
+    sens = P.sensitivity_curve(obs, sig, templates, pcfg, lr_threshold=pcfg.lr_min,
+                               amplitudes=(10.0,), n_inject=400, rng=rng, with_loo=False)
+    r = sens[0]
+    assert abs(r["testable_fraction"] - 0.5) < 1e-9 and r["n_testable"] == n // 2
+    assert r["frac_lr_pass_testable"] > 0.9
+    assert r["frac_lr_pass_all"] < 0.6, "the untestable half caps the all-star number"
+    assert r["frac_lr_pass"] == r["frac_lr_pass_all"], "the legacy column is the all-star number"
+
+
+def _real_shaped_candidates(templates, elements):
+    """A candidates CSV shaped like the first real run's: peer_ columns, no sig_ columns,
+    two La-driven 'survivors' and one genuine fission star."""
+    rows = []
+    def row(star_id, sample, teff, vec, chi2_f, chi2_nat, n_meas, vet_pass):
+        r = {"star_id": star_id, "sample": sample, "teff": teff, "logg": 2.5 if sample == "giant" else 4.4,
+             "fe_h": -0.1, "snr": 60.0, "flag_sp": 0, "n_measured": n_meas, "chi2_f": chi2_f,
+             "chi2_natural": chi2_nat, "chi2_null": chi2_nat + 20, "fission_lr": 0.5 * (chi2_nat - chi2_f),
+             "enrich_lr": 40.0, "lr_noba": 30.0, "lr_loo_min": 12.0, "lr_loo_driver": "La",
+             "fission_lr_raw": 30.0, "a_f": 2.0, "classification": "FISSION", "natural_class": "S_PLUS_R",
+             "vet_pass": vet_pass, "first_veto": "" if vet_pass else "single_element_driver",
+             "veto_reasons": "", "flagged_core": False}
+        for el in elements:
+            r[el] = vec.get(el, np.nan)
+            r[f"peer_{el}"] = vec.get(el, np.nan)
+        for el in ("Rb", "Sr", "Y", "Zr", "Mo", "Ru", "Ba", "La", "Ce", "Nd", "Sm", "Eu"):
+            r.setdefault(el, np.nan)
+        return r
+    rows.append(row("170203001601307", "giant", 4784.0,
+                    {"Rb": -0.24, "Sr": -1.01, "Y": -0.12, "Zr": 0.02, "Ba": -0.16, "La": 0.89,
+                     "Ce": 0.20, "Nd": 0.31, "Sm": -0.45, "Eu": -0.01}, 229.7, 334.6, 9, True))
+    rows.append(row("230511003401363", "giant", 4451.0,
+                    {"Y": -0.06, "Zr": -0.13, "Ba": 0.18, "La": 0.77, "Ce": 0.22, "Nd": 0.48,
+                     "Sm": 0.23, "Eu": -0.14}, 52.5, 106.4, 8, True))
+    real = {el: float(np.log10(1 + 8.0 * templates.F[templates.index(el)])) for el in elements}
+    rows.append(row("G_FISSION", "dwarf", 5600.0, real, 1.0, 120.0, 12, True))
+    return pd.DataFrame(rows)
+
+
+def test_vet_stage_rebuilds_sigmas_from_recorded_floors_and_vetoes_the_la_driven_giants(tmp_path, block, templates):
+    elements = GALAH_ELEMENTS
+    cand = _real_shaped_candidates(templates, elements)
+    floors = {"Rb": 0.17, "Sr": 0.14, "Y": 0.08, "Zr": 0.09, "Mo": 0.12, "Ru": 0.16, "Ba": 0.12,
+              "La": 0.10, "Ce": 0.10, "Nd": 0.09, "Sm": 0.09, "Eu": 0.19}
+    for sample in ("dwarf", "giant"):
+        cand[cand["sample"] == sample].to_csv(tmp_path / f"candidates_galah_{sample}.csv", index=False)
+    per_sample = []
+    for sample in ("dwarf", "giant"):
+        per_sample.append({"survey": "GALAH", "sample": sample, "n_stars": 1000, "n_elements": 12,
+                           "elements": elements, "threshold": {"lr_used": 9.7, "lr_min_config": 8.0,
+                                                              "enrich_min": 12.5},
+                           "error_model": {"per_element": {el: {"floor_dex": v, "median_quoted_dex": v / 3,
+                                                                "inflation": 3.0} for el, v in floors.items()}},
+                           "la_diagnostics": {"la_cn_suspect": True, "reason": "La residual tracks N rho=+0.31"},
+                           "n_survivors": 2 if sample == "giant" else 1, "n_pass_lr": 3, "vetoes": {}})
+    summary = {"channel": "fallout", "generated_utc": "2026-09-06T13:42:27Z", "verdict_code": R.VERDICT_CANDIDATES,
+               "verdict": "x", "per_sample": per_sample, "templates": {"templates": templates.to_dict(1.0)},
+               "acquisition": {"surveys": [{"survey": "GALAH", "verdict": "OK", "n_rows": 1000,
+                                            "degraded": False, "columns_found": {}}]}}
+    (tmp_path / "summary.json").write_text(json.dumps(summary))
+    (tmp_path / "templates.json").write_text(json.dumps({"templates": templates.to_dict(1.0)}))
+
+    out = R.fallout_run(load_config(), stage="vet", out_dir=tmp_path, block=block)
+    vet = json.loads((tmp_path / "vet.json").read_text())
+    g = vet["samples"]["GALAH/giant"]
+    assert "rebuilt from recorded" in g["sigma"]["sigma_source"] and g["sigma"]["refit"]
+    assert g["n_survivors_screen"] == 2 and g["n_survivors_vetted"] == 0
+    stars = {s["star_id"]: s for s in vet["stars"]}
+    for sid in ("170203001601307", "230511003401363"):
+        assert not stars[sid]["vet_pass"]
+        assert any(v in stars[sid]["veto_reasons"] for v in
+                   ("unexplained_by_all_templates", "heavy_peak_incoherent", "la_cn_blend",
+                    "single_element_driver"))
+    assert stars["G_FISSION"]["vet_pass"], stars["G_FISSION"]
+    assert vet["samples"]["GALAH/dwarf"]["n_survivors_vetted"] == 1
+    assert out["verdict_code"] == R.VERDICT_CANDIDATES
+    assert out["funnel"]["n_survivors_vetted_giant"] == 0 and out["funnel"]["n_survivors_vetted_dwarf"] == 1
+    assert "1 cool-dwarf and 0 giant" in out["verdict"]
+    assert (tmp_path / "vetted_galah_giant.csv").exists() and (tmp_path / "REPORT.md").exists()
+    assert "Vet stage" in (tmp_path / "REPORT.md").read_text()
+
+
+def test_concept_scan_separates_the_target_from_its_decoys(tmp_path):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "falloutlit_fetch", Path(__file__).resolve().parents[1] / "scripts" / "falloutlit_fetch.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    def entry(aid, title, summary):
+        return f"<entry><id>http://arxiv.org/abs/{aid}</id><title>{title}</title><summary>{summary}</summary></entry>"
+    atom = "<feed>" + entry("1111.0001", "A target",
+                            "We fit the fission product yield pattern to the photospheric abundances of a G dwarf.") \
+        + entry("1111.0002", "A decoy", "Fission product yields of U-235 for reactor antineutrino "
+                                        "spectra, with a stellar neutrino background.") \
+        + entry("1111.0003", "Adjacent", "Fission fragment distributions shape the r-process abundance pattern in kilonova ejecta.") \
+        + entry("1111.0004", "Unrelated", "The s-process in AGB stars and the solar abundance decomposition.") + "</feed>"
+    (tmp_path / "arxiv_q_test.atom").write_text(atom)
+    res = mod.scan(tmp_path)
+    assert res["n_abstracts_scanned"] == 4 and res["n_target_regex_hits"] == 3
+    assert [h["arxiv"] for h in res["decoy_free_hits"]] == ["http://arxiv.org/abs/1111.0001"]
+    assert [h["arxiv"] for h in res["nucleosynthesis_adjacent_hits"]] == ["http://arxiv.org/abs/1111.0003"]
+    assert (tmp_path / "concept_scan.json").exists()

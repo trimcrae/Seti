@@ -34,7 +34,15 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .locus import BANDS, Locus, fit_locus, locus_quality_mask, residuals, wise_qual_letters
+from .locus import (
+    BANDS,
+    Locus,
+    fit_locus,
+    locus_quality_mask,
+    residuals,
+    w3_usable,
+    wise_qual_letters,
+)
 
 VETO_ORDER = (
     "w1_only_methane_like", "w2_only_single_band",
@@ -105,9 +113,9 @@ def band_pass(df: pd.DataFrame, cfg: dict | None = None) -> pd.DataFrame:
     for band in ("w1", "w2", "w3"):
         sig, res = _num(df, f"sig_{band}"), _num(df, f"resid_{band}")
         out[f"pass_{band}"] = (sig < -float(c["sig_min"])) & (res < -float(c["resid_min"]))
-    w3snr = _num(df, "w3snr")
     r3 = _num(df, "resid_w3")
-    w3_status = np.where(~np.isfinite(r3) | ~(w3snr > float(c["w3_snr_min"])), "unmeasured",
+    w3ok = w3_usable(df, {"w3_snr_min": c["w3_snr_min"], "w3_err_max": c.get("w3_err_max", 0.2)})
+    w3_status = np.where(~np.isfinite(r3) | ~w3ok, "unmeasured",
                          np.where(r3 < -float(c["resid_min"]) / 2.0, "deficit",
                                   np.where(r3 > float(c["resid_min"]) / 2.0, "excess", "normal")))
     out["w3_status"] = w3_status

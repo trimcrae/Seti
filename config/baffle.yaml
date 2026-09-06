@@ -52,7 +52,8 @@ locus:
   jk_min: -0.2
   jk_max: 1.4
   min_per_bin: 25                  # bins with fewer stars are dropped (interpolated across)
-  w3_snr_min: 5.0                  # W3 residuals only where w3snr > this
+  w3_snr_min: 5.0                  # W3 residuals only where w3snr > this ...
+  w3_err_max: 0.2                  # ... or, where the mirror serves NO w3snr (it does not), w3mpro_error < this
   tail_sigmas: [3.0, 5.0]          # tail-asymmetry report thresholds
 
 screen:
@@ -95,6 +96,46 @@ screen:
 sensitivity:
   inject_mags: [0.2, 0.3, 0.5, 1.0]  # synthetic two-band deficits injected into the locus sample
   max_stars: 20000                   # cap on the injected copy (runtime)
+
+# --- vet stage (src/seti/baffle/vet.py): ~8 upload queries, never per-star cones ---
+vet:
+  gaia_neighbour_radius_arcsec: 10.0 # Gaia archive upload join radius
+  blend_radius_arcsec: 6.0           # blend_flux_theft: neighbour within this ...
+  blend_dg_max: 1.5                  # ... with G < G_cand + this
+  crowded_radius_arcsec: 6.0         # crowded_field (report): >= crowded_n_min Gaia sources within this
+  crowded_n_min: 3
+  epochs:                            # positions propagated from Gaia 2016.0 before each match
+    gaia: 2016.0
+    allwise: 2010.5
+    catwise: 2015.5
+    unwise: 2014.0
+  allwise:
+    table: '"II/328/allwise"'        # VizieR TAP; columns discovered from TAP_SCHEMA, quoted once
+    radius_arcsec: 3.0
+    xmatch_catalogue: "vizier:II/328/allwise"
+  catwise:
+    table: '"II/365/catwise"'
+    radius_arcsec: 3.0
+    xmatch_catalogue: "vizier:II/365/catwise"
+  unwise:
+    table: '"II/363/unwise"'
+    radius_arcsec: 3.0
+    xmatch_catalogue: "vizier:II/363/unwise"
+  upload_chunk: 4000                 # rows per TAP upload
+  xmatch_url: "http://cdsxmatch.u-strasbg.fr/xmatch/api/v1/sync"
+  photospheric_nsig: 3.0             # CatWISE/unWISE residuals within this of 0 -> AllWISE photometry wrong
+  deficit_mag: -0.30                 # ... both bands below this ...
+  deficit_nsig: 3.0                  # ... at more than this -> catwise_confirms_deficit
+  w3_excess_mag: 0.5                 # resid_w3 above this: blend / dusty neighbour (veto)
+  w3_deficit_mag: -0.30              # resid_w3 below this: w3_deficit_consistent (note)
+  w3_err_max: 0.2
+  include_deferred_lpv: true         # vet the deferred_lpv.csv rows too
+  missing:
+    radius_close_arcsec: 6.0         # wise_source_present_within_6as
+    radius_far_arcsec: 15.0          # wise_source_present_6_to_15as / no_wise_source_within_15as
+    nearest_radius_arcsec: 60.0      # nearest AllWISE source (cc_flags) for the absent group
+    n_control: 1000                  # uniform random control of the non-nearby / non-ETZ rows
+    seed: 20260906
 
 # --- read by src/seti/baffle/radio.py (another module; keys documented there).
 #     Leave EMPTY to defer to config/baffle_radio.yaml; anything set here

@@ -132,12 +132,47 @@ found four things the synthetic population could not, each now a fix in flight:
 Both giants are recorded as *pending vet*, not as candidates, and the honest
 reading is a La measurement systematic until the vet says otherwise.
 
+**SECOND RUN, FALLOUT v2, 10:23 ET (run 34038831684): calibrated, and the
+verdict is `NO_FISSION_PATTERN` with a sensitivity that says where the
+question can and cannot be asked.** Per-element error floors at the measured
+peer scatter (inflation 0.7–2.7× the quoted GALAH errors; Ba 2.7×, Nd 2.4×,
+Y 2.4× in giants) bring the shuffled-element null's 99.9th percentile to
+ln LR 4.1 / 3.9, so the configured floor of 8 now governs. Above it: 10
+dwarfs and 21 giants; **0 survivors** in either sample after the vet stage;
+29 stars `UNEXPLAINED_BY_ALL_TEMPLATES` (reduced χ² > 3 under every
+template, fission included) are listed for a human, not counted as anything.
+La carries no C/N/Teff correlation in either sample (|ρ| < 0.1), so the
+first run's two La-driven giants were bad fits, not CN blends; both now fall
+to `unexplained` + `single_element_driver`.
+
+The sensitivity, conditioned on testable stars (≥ 5 elements and ≥ 2 of
+La/Ce/Nd unflagged):
+
+| sample | testable | LR+LOO completeness at Nd +0.6 / +0.78 / +1.04 / +1.32 dex |
+|---|---|---|
+| GALAH dwarfs (101,928) | **20%** | 0.0% / 0.1% / 1.5% / 4.3% |
+| GALAH giants (78,344) | 98% | 7.9% / 37% / 68% / 80% |
+
+So the cool-dwarf sample — the one where diffusion cannot manufacture a
+heavy-element peculiarity — **cannot test the hypothesis at any enrichment
+GALAH can measure**; the giants can, above roughly +0.8 dex in Nd, and show
+nothing. Per the charter this changes the question rather than closing it:
+the elements that *decide* fission against the s- and r-process — Pb (the
+s-process makes it, fission never), Ag and Pd (the fission valley), Eu — are
+not in GALAH at all. They are in the high-resolution literature
+compilations (JINAbase, ~1,900 metal-poor stars; Hypatia, thousands of FGK
+stars), with upper limits that enter a censored likelihood as evidence. A
+`hires` stage on those is being built now. APOGEE (Ce and Nd only) cannot
+separate the three processes and is not dispatched.
+
 **Prior-art sweeps, read.** `metronomelit`: 478 verbatim abstracts across 38
 queries, one decoy-free hit — eRO-QPE2, quasi-periodic X-ray eruptions from a
 galactic nucleus — which is not a flare-timing search on stars. `lanternlit`:
 79 abstracts plus the Kipping & Teachey citation tree, **zero** hits tying an
 artificial narrow line to the planet's eclipse phase. `falloutlit`: 74 fetches,
-12 of 18 id-title checks verified; Whitmire & Wright 1980 (Icarus 42, 149) has
+12 of 18 id-title checks verified, and the decoy-aware concept scan over 198
+abstracts finds **zero** decoy-free hits (the five regex hits are r-process
+fission cycling in neutron-star mergers); Whitmire & Wright 1980 (Icarus 42, 149) has
 25 citing works on Crossref and no executed search among them. Each sweep is
 evidence of absence from arXiv, not proof; the docs keep the "to be verified"
 wording until the concept scans are complete.

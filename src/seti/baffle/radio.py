@@ -51,7 +51,7 @@ the number is in ``voids.csv`` for anyone who wants to look at the tail.
 Access route
 ------------
 VizieR TAP (``J/A+A/659/A1``).  **No table or column name is hard-coded**: the
-table is discovered from ``TAP_SCHEMA.tables`` (``LIKE '%659/A1%'``) and the
+table is discovered from ``TAP_SCHEMA.tables`` (``LIKE '%659/A1/%'``) and the
 RA / Dec / total-flux columns from ``TAP_SCHEMA.columns`` at run time, by UCD
 first and by name second, and every name used is written into the ledger.  If
 VizieR discovery fails the ASTRON TAP (``https://vo.astron.org/tap``, which
@@ -139,7 +139,7 @@ LOTSS_DR2_MID_EPOCH = 2017.5   # DR2 observations span 2014 - 2020
 DEFAULTS: dict = {
     "lotss": {
         "vizier_tap": VIZIER_TAP,
-        "vizier_catalogue_hint": "659/A1",
+        "vizier_catalogue_hint": "659/A1/",
         "astron_tap": ASTRON_TAP,
         "astron_table_hint": "lotss",
         "max_rows_per_tile": 40000,
@@ -875,14 +875,15 @@ def _pick_table(names: list[str]) -> str:
     def score(n: str) -> tuple:
         nl = n.lower()
         return (("gaus" in nl) or ("mosaic" in nl) or ("component" in nl),
-                -(("main" in nl) + ("source" in nl) + ("dr2" in nl)), len(nl))
+                -(("main" in nl) + ("source" in nl) + ("dr2" in nl) + 2 * ("catalog" in nl)),
+                len(nl))
     return sorted(names, key=score)[0]
 
 
 def discover_lotss(cfg: dict) -> dict:
     """Find the LoTSS DR2 source table and its columns at run time.
 
-    VizieR first (``TAP_SCHEMA.tables LIKE '%659/A1%'``, then the bright
+    VizieR first (``TAP_SCHEMA.tables LIKE '%659/A1/%'``, then the bright
     tier's ``discover_columns`` on the chosen table), ASTRON second.  Every
     name is stored bare (``ra_col`` etc.), the table quoted once (``table``),
     and what TAP_SCHEMA served is kept verbatim (``names_as_served``) so the
@@ -898,7 +899,7 @@ def discover_lotss(cfg: dict) -> dict:
                  "degraded_reasons": [], "ledger": [], "tables_seen": [],
                  "columns": [], "names_as_served": [], "discovery_route": None}
     routes = [("vizier", lc.get("vizier_tap", VIZIER_TAP),
-               f"table_name LIKE '%{lc.get('vizier_catalogue_hint', '659/A1')}%'"),
+               f"table_name LIKE '%{lc.get('vizier_catalogue_hint', '659/A1/')}%'"),
               ("astron", lc.get("astron_tap", ASTRON_TAP),
                f"table_name LIKE '%{lc.get('astron_table_hint', 'lotss')}%'")]
     for route, url, like in routes:

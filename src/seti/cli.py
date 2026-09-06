@@ -1022,6 +1022,12 @@ def _cmd_metronome(args, cfg):
     return _metronome_main(list(args.rest))
 
 
+def _cmd_baffle(args, cfg):
+    from .baffle.run import _cmd_baffle as _baffle_cmd
+
+    return _baffle_cmd(args, cfg)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="seti", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2129,6 +2135,15 @@ def main(argv=None):
 
     from .lantern.run import register as _register_lantern
     _register_lantern(sub)
+
+    # --- 2026-09-06: BAFFLE, reciprocal mid-IR absorbing screens; runnable as
+    #     `python -m seti.baffle.run` (what baffle.yml calls) or `seti baffle`.
+    from .baffle.run import add_arguments as _baffle_args
+    p = sub.add_parser("baffle",
+                       help="BAFFLE: stars whose W1 AND W2 sit below the photospheric locus "
+                            "(reciprocal absorbing screens); same flags as seti.baffle.run")
+    _baffle_args(p)
+    p.set_defaults(func=_cmd_baffle)
 
     from .fallout.run import _add_arguments as _fallout_args
     from .fallout.run import _cmd_fallout

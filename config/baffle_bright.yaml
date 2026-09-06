@@ -1,0 +1,122 @@
+# BAFFLE bright tier — AKARI/IRC + IRAS mid-IR deficits on the stars 2MASS and
+# WISE saturate on (docs/baffle.md §4; src/seti/baffle/bright.py).
+#
+# The main track is blind for Ks < 4.5, W1 < 8, W2 < 7 — the ~10^4 brightest
+# stars, which include most of the NEAREST ones and hence the highest-prior
+# observers a warden would shield.  Their unsaturated mid-IR photometry is the
+# AKARI/IRC PSC (9 and 18 um, VizieR II/297) and the IRAS PSC (12 and 25 um,
+# VizieR II/125).  A warden's screen is likely near-OPAQUE in band, so the
+# deficit looked for is LARGE (>= 0.7-1 mag) and a 0.2-0.3 mag near-IR anchor
+# is enough.  Signature S38 on the bright end.
+#
+# Units: magnitudes unless stated; fluxes in Jy; angles in arcsec / deg as
+# named; epochs in Julian years.
+
+targets:
+  g_max: 7.5                      # Gaia DR3 phot_g_mean_mag ceiling (~40k stars)
+  ra_slab_deg: 30.0               # 12 RA slabs, one Gaia query each, checkpointed
+  # Gaia DR3 is INCOMPLETE for G < 3 (the ~300 brightest stars saturate the
+  # detectors and are missing or have poor astrometry).  The Hipparcos-2
+  # catalogue (van Leeuwen 2007, VizieR I/311/hip2) fills that end when the
+  # VizieR TAP route is reachable; when it is not, summary.json records
+  # brightest_300_not_covered: true rather than pretending.
+  hipparcos:
+    enabled: true
+    table: '"I/311/hip2"'
+    hp_max: 3.5                   # Hpmag ceiling for the supplement (~300 stars)
+    epoch: 1991.25
+    dedupe_radius_arcsec: 3.0     # a Hip star this close to a Gaia target (at 2016.0) is the same star
+  neighbours:
+    g_max: 10.0                   # crowding companions: another Gaia G < 10 star ...
+    radius_arcsec: 60.0           # ... fetched out to the IRAS crowding radius
+
+epochs:
+  gaia: 2016.0
+  hipparcos: 1991.25
+  tmass: 2000.0                   # 2MASS observed 1997-2001
+  akari: 2006.7                   # AKARI all-sky survey 2006-2007
+  iras: 1983.5                    # IRAS 1983
+  # At 1"/yr the Gaia->survey offsets are 16", 10" and 33": a naive match loses
+  # exactly the nearest stars.  Every target is propagated before matching.
+
+tmass:
+  table: '"II/246/out"'
+  radius_arcsec: 3.0
+  upload_chunk: 4000              # rows per TAP upload / X-Match chunk
+  ph_qual_ok: "ABCD"              # Ks < 4 comes from 51-ms Read-1 frames: quality B-D, errors 0.2-0.3 mag
+  read1_ks_max: 4.0               # tmass_read1_regime flag (also set from Rflg where present)
+  xmatch_url: "http://cdsxmatch.u-strasbg.fr/xmatch/api/v1/sync"
+  xmatch_catalogue: "vizier:II/246/out"
+
+akari:
+  table: '"II/297/irc"'
+  radius_arcsec: 6.0              # IRC positional accuracy ~1-2"
+  n_ra_chunks: 12                 # full-catalogue pull (~871k rows) in RA slices, local KD-tree match
+  quality_ok: [3]                 # q_S09 / q_S18 = 3: high-reliability flux
+  limit_9_jy: 0.05                # 5-sigma PSC limit at 9 um (S9W)
+  # IRC PSC zero points (Jy for 0 mag) from the IRC PSC release notes v1.0.
+  # The EMPIRICAL locus absorbs any zero-point error: a wrong ZP shifts every
+  # star's Ks - [9] by the same constant and the residuals are unchanged.
+  zero_points_jy:
+    s09: 56.26
+    s18: 12.00
+  # Bright-end non-linearity / saturation of the IRC survey photometry.  Above
+  # roughly these fluxes the PSC flux is depressed, which is exactly a FALSE
+  # DEFICIT.  When the PHOTOSPHERIC PREDICTION exceeds the threshold the AKARI
+  # band cannot be the primary evidence; IRAS 12 um (no saturation for stars)
+  # takes over as primary and the AKARI band is reported only.  Values are the
+  # release-note guidance and are conservative on purpose.
+  saturation_9_jy: 30.0
+  saturation_18_jy: 100.0
+
+iras:
+  table: '"II/125/main"'
+  radius_arcsec: 30.0             # 12-um beam 0.75' x 4.5'; positions to ~10-20"
+  use_error_ellipse: true         # Major/Minor/PosAng (95 % ellipse, arcsec) where the columns exist
+  ellipse_floor_arcsec: 30.0      # each ellipse axis is at least this
+  ellipse_cap_arcsec: 120.0       # and at most this
+  n_ra_chunks: 12                 # full-catalogue pull (~245k rows); positions are B1950 -> precessed
+  quality_ok: [3]                 # q_Fnu = 3 high, 2 moderate, 1 UPPER LIMIT
+  upper_limit_quality: 1
+  zero_points_jy:                 # IRAS explanatory supplement (Jy for 0 mag); see the AKARI note
+    f12: 28.3
+    f25: 6.73
+
+locus:
+  # Ks - m_b versus (J - Ks): running median and 1.4826*MAD per bin, linearly
+  # interpolated, on the whole quality-cut target population.
+  jk_min: -0.3
+  jk_max: 1.6
+  bin_width: 0.05
+  min_per_bin: 20
+  n_min_fit: 60                   # fewer usable stars than this -> the band has no locus
+  # Luminosity class split by absolute G: giant if M_G < giant_mg_max and
+  # bp_rp > giant_bp_rp_min.  "auto" uses the split only when it reduces the
+  # median robust scatter by the factor below AND both classes have n_min_class.
+  class_split: auto               # auto | pooled | split
+  class_split_gain_min: 0.85
+  n_min_class: 150
+  giant_mg_max: 2.5
+  giant_bp_rp_min: 0.9
+  tail_sigmas: [3.0, 5.0]         # tail-asymmetry report thresholds
+
+screen:
+  deficit_mag_min: 0.7            # deficit (= -residual) at least this in the primary band ...
+  sig_min: 4.0                    # ... at this many sigma, sigma = max(locus scatter, star's own error)
+  # ... AND in at least one independent band (AKARI 18, IRAS 12, IRAS 25):
+  # two instruments, or two bands, must agree.
+  lpv:                            # deferred, not dropped: 1983 / 1999 / 2006 epoch-mismatch risk
+    jk_max: 1.1
+    bp_rp_max: 3.0
+  crowded:
+    g_max: 10.0                   # another Gaia G < this ...
+    radius_arcsec: 30.0           # ... within this (AKARI)
+    iras_radius_arcsec: 60.0      # ... or this (IRAS bands)
+  etz_ecl_lat_deg: 0.264          # Earth Transit Zone flag
+  nearby_parallax_mas: 20.0       # nearby flag (d < 50 pc)
+  missing:
+    b_min_deg: 10.0
+    predicted_over_limit_min: 10.0   # predicted S09 > this x limit_9_jy with NO AKARI and NO IRAS source
+
+sensitivity:
+  inject_mags: [0.5, 0.7, 1.0, 2.0]   # deficits injected into every measured star, recovery reported by regime

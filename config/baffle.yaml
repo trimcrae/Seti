@@ -1,0 +1,106 @@
+# BAFFLE — every selection / rejection threshold in one place (docs/baffle.md).
+#
+# The observable: a star (and everything within a few arcminutes of it) whose
+# mid-infrared flux is SIGNIFICANTLY BELOW its photospheric prediction in BOTH
+# W1 and W2 (and W3/W4 where measured) with normal optical and near-IR.  A
+# reciprocal absorbing screen on the Sun-star line would do this; no natural
+# foreground does (interstellar extinction makes the IR RELATIVELY brighter).
+#
+# Two tracks share the acquisition ledger:
+#   deficit  Gaia DR3 x AllWISE x 2MASS in-archive join, pre-cut on
+#            Ks - W1 or Ks - W2 below `pre_cut_*`, PLUS a uniform ~0.5 %
+#            random_index calibration subsample (the photospheric locus).
+#   missing  bright (G < g_max_missing) stars with a 2MASS match and NO AllWISE
+#            counterpart at all (LEFT JOIN allwise_neighbourhood ... IS NULL).
+#
+# Units: magnitudes unless stated; parallax in mas; angles in arcsec / deg as
+# named.  `random_index` is Gaia DR3's uniform permutation index over
+# 1,811,709,771 rows, so `locus_random_index_max: 9058548` is ~0.5 %.
+
+acquire:
+  g_max: 15.0                      # deficit track: Gaia G ceiling (WISE confusion + saturation window)
+  g_max_missing: 13.0              # missing track: bright enough that AllWISE cannot miss a photosphere
+  pre_cut_w1: -0.15                # in-archive pre-selection on (Ks - W1), mag
+  pre_cut_w2: -0.15                # in-archive pre-selection on (Ks - W2), mag
+  locus_random_index_max: 9058548  # ~0.5 % of DR3: the photospheric-locus calibration sample
+  gaia_random_index_max: 1811709771
+  dec_band_deg: 5.0                # primary chunk: 36 declination bands
+  top: 2000000                     # ADQL TOP per query (a cap, not a target)
+  max_split_depth: 6               # recursive random_index halving on failure / truncation
+  query_timeout_s: 1500            # time-box per query attempt (seconds)
+  count_timeout_s: 900             # time-box for the COUNT(*) ruler
+  retries_per_transport: 2
+  transport_cooldown_queries: 25   # skip a transport for this many queries after a quota error
+  probe_band_deg: 1.0              # probe stage: one 1-degree band, TOP 100 per track
+  neighbour_radius_arcmin: 3.0     # fetch_gaia_neighbours default (patch stage)
+
+locus:
+  # Quality cuts that define the photospheric calibration sample.
+  tmass_ph_qual: "AAA"
+  wise_ph_qual_ok: ["A"]           # W1 and W2 quality letters accepted for the locus
+  cc_flags_ok: "0000"
+  ext_flag_max: 0
+  w1_min_unsat: 8.0                # w1mpro > this (AllWISE saturation onset)
+  w2_min_unsat: 7.0                # w2mpro > this
+  rchi2_quantile: 0.95             # keep w1rchi2 / w2rchi2 below this quantile of the locus sample
+  poe_min: 5.0                     # parallax_over_error > this
+  # Luminosity classes: a straight line in the CMD.
+  giant_mg_max: 2.5                # giant if M_G < this AND bp_rp > giant_bp_rp_min
+  giant_bp_rp_min: 0.9
+  blue_bp_rp_max: 0.4              # pooled 'blue' class below this bp_rp
+  jk_bin_width: 0.05               # (J - Ks) bin width for the running median
+  jk_min: -0.2
+  jk_max: 1.4
+  min_per_bin: 25                  # bins with fewer stars are dropped (interpolated across)
+  w3_snr_min: 5.0                  # W3 residuals only where w3snr > this
+  tail_sigmas: [3.0, 5.0]          # tail-asymmetry report thresholds
+
+screen:
+  sig_min: 5.0                     # sig_w1 < -sig_min AND sig_w2 < -sig_min
+  resid_min: 0.30                  # resid_w1 < -resid_min AND resid_w2 < -resid_min (mag)
+  w3_snr_min: 5.0                  # W3 consistency reported only above this SNR
+  w4_snr_min: 5.0
+  saturated:
+    w1mpro_min: 8.0
+    w2mpro_min: 7.0
+    ks_min: 4.5
+  wise_ph_qual_ok: ["A", "B"]      # accepted W1 / W2 quality letters for a candidate
+  tmass_ph_qual_ok: "AAA"
+  cc_flags_ok: "0000"
+  ext_flag_max: 0
+  rchi2_max: 3.0                   # bad_profile_fit above this (blend / saturation proxy)
+  var_flag_min: 6                  # wise_variable if W1 or W2 var_flag digit >= this
+  lpv:
+    bp_rp_max: 3.0                 # deferred_lpv: 2MASS (1998-2001) vs WISE (2010) epoch mismatch
+    jk_max: 1.1
+  crowded:
+    number_of_mates_max: 0
+    number_of_neighbours_max: 1
+    wise_angdist_max_arcsec: 1.5
+  blend_radius_arcsec: 8.0         # blend_flux_theft: a brighter Gaia source within this radius
+  ipd_frac_multi_peak_max: 10
+  non_single_star_max: 0
+  ruwe_report: 1.4                 # bad_astrometry: REPORT ONLY (a 1-AU baffle does not perturb astrometry)
+  pm_report_mas_yr: 300.0          # high_pm_epoch_risk: report, keep
+  etz_ecl_lat_deg: 0.264           # Earth Transit Zone flag
+  nearby_parallax_mas: 20.0        # nearby flag (d < 50 pc)
+  missing:
+    b_min_deg: 10.0
+    ks_min: 5.0
+    ks_max: 11.0
+    tmass_ph_qual_ok: "AAA"
+    babs_bin_deg: 10.0
+    g_bin_mag: 1.0
+
+sensitivity:
+  inject_mags: [0.2, 0.3, 0.5, 1.0]  # synthetic two-band deficits injected into the locus sample
+  max_stars: 20000                   # cap on the injected copy (runtime)
+
+# --- read by src/seti/baffle/radio.py (another module; keys documented there).
+#     Leave EMPTY to defer to config/baffle_radio.yaml; anything set here
+#     overrides that file's `radio:` mapping.  Its outputs go to results/baffle/radio/. ---
+radio: {}
+
+# --- read by src/seti/baffle/patch.py (another module; keys documented there) ---
+patch:
+  max_objects: 200

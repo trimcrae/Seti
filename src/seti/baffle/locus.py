@@ -36,13 +36,34 @@ DEFAULT_LOCUS_CFG = {
     "giant_mg_max": 2.5, "giant_bp_rp_min": 0.9, "blue_bp_rp_max": 0.4,
     "jk_bin_width": 0.05, "jk_min": -0.2, "jk_max": 1.4, "min_per_bin": 25,
     "w3_snr_min": 5.0, "w3_err_max": 0.2, "tail_sigmas": [3.0, 5.0],
+    # (G - Ks) vs (BP - RP) locus, per luminosity class and per Galactic zone
+    "gks": {"bin_width": 0.05, "x_min": -0.5, "x_max": 4.5, "min_per_bin": 25,
+            "plane_b_deg": 10.0},
 }
+GKS_BAND = "gks"
 
 
 def _cfg(cfg: dict | None) -> dict:
     out = dict(DEFAULT_LOCUS_CFG)
-    out.update(cfg or {})
+    out["gks"] = dict(DEFAULT_LOCUS_CFG["gks"])
+    for k, v in (cfg or {}).items():
+        if k == "gks" and isinstance(v, dict):
+            out["gks"].update(v)
+        else:
+            out[k] = v
     return out
+
+
+def galactic_zone(df: pd.DataFrame, plane_b_deg: float = 10.0) -> np.ndarray:
+    """'plane' (|b| < plane_b_deg) / 'offplane' / 'unknown' per row."""
+    b = _num(df, "b")
+    return np.where(~np.isfinite(b), "unknown",
+                    np.where(np.abs(b) < float(plane_b_deg), "plane", "offplane")).astype(object)
+
+
+def gks_keys(lum_class: str, zone: str) -> list[str]:
+    """Locus-class keys to try, most specific first."""
+    return [f"{lum_class}@{zone}", f"all@{zone}", f"{lum_class}@all", "all@all"]
 
 
 def _num(df: pd.DataFrame, col: str) -> np.ndarray:
@@ -233,10 +254,61 @@ def fit_locus(sample: pd.DataFrame, cfg: dict | None = None, *,
                 per_band[band] = fit
         if per_band:
             bins[lc] = per_band
+    # (G - Ks) vs (BP - RP): a contaminated Ks moves a star off THIS locus by
+    # the same amount it moves it off Ks - W1; a screen does not.  The reddening
+    # vector runs close to the intrinsic locus, so the fit is per zone.
+    g = c["gks"]
+    gedges = np.arange(float(g["x_min"]), float(g["x_max"]) + float(g["bin_width"]) / 2,
+                       float(g["bin_width"]))
+    x = _num(df, "bp_rp")
+    y = _num(df, "phot_g_mean_mag") - ks
+    zone = galactic_zone(df, float(g["plane_b_deg"]))
+    n_gks = {}
+    for lc in list(LUM_CLASSES) + ["all"]:
+        for z in ("plane", "offplane", "all"):
+            sel = (np.ones(len(df), dtype=bool) if lc == "all" else (cls == lc)) \
+                & (np.ones(len(df), dtype=bool) if z == "all" else (zone == z))
+            if not sel.any():
+                continue
+            fit = _running_median(x[sel], y[sel], gedges, int(g["min_per_bin"]))
+            if fit["centers"]:
+                bins.setdefault(f"{lc}@{z}", {})[GKS_BAND] = fit
+                n_gks[f"{lc}@{z}"] = int(sel.sum())
     meta = {"n_input": int(len(sample)), "n_locus": int(len(df)),
-            "n_by_class": n_by_class, "rchi2_thresholds": thresholds,
+            "n_by_class": n_by_class, "n_gks_by_class_zone": n_gks,
+            "rchi2_thresholds": thresholds,
             "jk_bin_width": width, "config": {k: c[k] for k in c}}
     return Locus(bins=bins, meta=meta)
+
+
+def gks_residuals(df: pd.DataFrame, locus: Locus, cfg: dict | None = None
+                  ) -> tuple[np.ndarray, np.ndarray]:
+    """``resid_gks = (G - Ks) - locus(BP - RP)`` and ``sig_gks``; NaN without a fit.
+
+    Positive = Ks too bright for the star's G (or G too faint).  A contaminated
+    Ks gives ``resid_gks ~ -resid_w1``; a screen leaves ``resid_gks ~ 0``.
+    """
+    c = _cfg(cfg)
+    n = len(df)
+    x = _num(df, "bp_rp")
+    y = _num(df, "phot_g_mean_mag") - _num(df, "ks_m")
+    e_ks = np.nan_to_num(_num(df, "ks_msigcom"))
+    zone = galactic_zone(df, float(c["gks"]["plane_b_deg"]))
+    cls = luminosity_class(df, c).to_numpy().astype(str)
+    med = np.full(n, np.nan)
+    sc = np.full(n, np.nan)
+    for lc in np.unique(cls):
+        for z in np.unique(zone):
+            sel = (cls == lc) & (zone == z)
+            key = next((k for k in gks_keys(lc, z if z != "unknown" else "all")
+                        if locus.has(k, GKS_BAND)), None)
+            if key is None:
+                continue
+            m, s_ = locus.predict(x[sel], key, GKS_BAND)
+            med[sel], sc[sel] = m, s_
+    resid = y - med
+    sig = resid / np.sqrt(np.square(sc) + np.square(e_ks) + 0.01 ** 2)
+    return resid, sig
 
 
 def residuals(df: pd.DataFrame, locus: Locus, cfg: dict | None = None) -> pd.DataFrame:
@@ -266,6 +338,7 @@ def residuals(df: pd.DataFrame, locus: Locus, cfg: dict | None = None) -> pd.Dat
             sig = np.where(w3ok, sig, np.nan)
         out[f"resid_{band}"] = resid
         out[f"sig_{band}"] = sig
+    out["resid_gks"], out["sig_gks"] = gks_residuals(out, locus, c)
     return out
 
 
@@ -288,6 +361,6 @@ def tail_asymmetry(df: pd.DataFrame, cfg: dict | None = None) -> dict:
     return out
 
 
-__all__ = ["BANDS", "DEFAULT_LOCUS_CFG", "LUM_CLASSES", "Locus", "absolute_g",
-           "fit_locus", "locus_quality_mask", "luminosity_class", "residuals",
-           "tail_asymmetry", "w3_usable", "wise_qual_letters"]
+__all__ = ["BANDS", "DEFAULT_LOCUS_CFG", "GKS_BAND", "LUM_CLASSES", "Locus", "absolute_g",
+           "fit_locus", "galactic_zone", "gks_keys", "gks_residuals", "locus_quality_mask",
+           "luminosity_class", "residuals", "tail_asymmetry", "w3_usable", "wise_qual_letters"]

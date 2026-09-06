@@ -1,39 +1,65 @@
 """BAFFLE ``vet`` stage: per-candidate archive checks that the screen cannot do.
 
-Why this stage exists (run 34053752510, the first real screen)
-----------------------------------------------------------------
-135 two-band-deficit survivors, 107 of them at |b| < 10°, no two within 10′ of
-each other, and ``neighbours_not_checked = 2055`` because no neighbour table
-was ever supplied.  Many have a *flat* WISE SED (W1 ≈ W2 ≈ W3) sitting ~1 mag
-below K_s — the AllWISE counterpart is a fainter object than the 2MASS/Gaia
-star: a deblended fragment or a wrong counterpart in a crowded field, not a
-shadow.  This stage asks the archives the questions that separate those cases,
-in **~8 upload queries**, never per-star cones.
+Why this stage exists (runs 34053752510 and 34054735689)
+----------------------------------------------------------
+The first real screen left 135 two-band-deficit survivors, 107 at |b| < 10°,
+with ``neighbours_not_checked = 2055``.  The first vet (8 upload queries, 0
+failures) found 19 deblended AllWISE components, 15 stars whose AllWISE
+photometry was contradicted by CatWISE/unWISE, 1 W3 excess — and 102
+INCONCLUSIVE, every one ``independent_class = ambiguous``.  Two reasons:
+
+* the unWISE zero point was wrong by exactly the AB→Vega offset (unWISE
+  ``FW1``/``FW2`` are **Vega** nanomaggies, Schlafly+2019; ``22.5 − 2.5
+  log10(F)`` is already Vega).  Fixed, and guarded by a self-check that no
+  naming can fool: the median of (unWISE − CatWISE) over the matched
+  candidates must sit within ``zeropoint_check_max_mag`` of zero, otherwise
+  ``unwise_zeropoint_suspect`` is recorded with the measured offset and unWISE
+  does not vote.  The same check runs on CatWISE vs AllWISE-proper.
+* CatWISE agrees with AllWISE (median residuals −0.34 / −0.39) — but CatWISE
+  is built from the same WISE frames, and the survivors' SED is *grey*
+  (W1 ≈ W2 ≈ W3 photospheric, Ks too bright relative to all three).  The
+  natural mechanism with that signature is a **2MASS blend that WISE
+  deblends**: the 2MASS PSF is 2.5–3″ and the PSC sums close pairs, while
+  AllWISE's PSF fit separates ≳ 2–3″ pairs — Ks is the sum, W1/W2/W3 are the
+  star's own.  Hence the four tests below.
 
 Deficit-candidate vet (``candidates.csv`` + ``deferred_lpv.csv``)
 -----------------------------------------------------------------
-1. **Gaia neighbours** — one Gaia-archive upload join within 10″: brightest
-   neighbour's G and separation, counts within 3″/6″/10″.  Veto
-   ``blend_flux_theft`` (a neighbour within 6″ with G < G_cand + 1.5); report
-   ``crowded_field`` (≥ 3 Gaia sources within 6″).
-2. **AllWISE proper** (VizieR ``II/328/allwise``, 3″ after propagation to
-   2010.5): ``nb``/``na`` (blend components / active deblend), ``w1sat``/
-   ``w2sat``, fluxes, ``w1rchi2``, ``cc_flags``, ``ph_qual``, W1–W4.  Veto
-   ``deblended_component`` (nb > 1 or na > 0) and ``saturated_pixels``.
-3. **CatWISE2020** (``II/365/catwise``, 3″ at 2015.5) and **unWISE**
-   (``II/363/unwise``, 3″ at ~2014): independent W1/W2 with better deblending.
-   Their K_s − W residuals are evaluated against the SAME locus
-   (``locus.json``): ``catwise_photospheric`` (within 3σ of 0 → the AllWISE
-   photometry was wrong, veto), ``catwise_confirms_deficit`` (both bands
-   < −0.3 mag at > 3σ → survives), ``catwise_missing``.
-4. **W3 consistency**: ``w3_excess`` (resid_w3 > +0.5, a blend / dusty
-   neighbour signature → veto) and ``w3_deficit_consistent`` (< −0.3, note).
-   The screen's ``resid_w3`` was NaN for every candidate because the Gaia
-   mirror serves no ``w3snr``; the locus now falls back to ``w3mpro_error``
-   and this stage re-evaluates W3 from the re-pulled AllWISE row.
+1. **Gaia neighbours** (one Gaia-archive upload join, 10″): brightest
+   neighbour, counts within 3″/4″/6″/10″, the nearest neighbour's ΔG.
+   Veto ``blend_flux_theft`` (within 6″, G < G_cand + 1.5); veto
+   ``unresolved_in_2mass`` (within 4″, G < G_cand + 4: a 4-mag-fainter red
+   neighbour still adds tenths in Ks); note ``crowded_field`` (≥ 3 within 6″);
+   ``gaia_isolated`` counts stars with no neighbour within 10″ at all.
+2. **AllWISE proper** (VizieR ``II/328/allwise``, 3″ at 2010.5): ``nb``/``na``,
+   fluxes, rchi2, flags, W1–W4.  Veto ``deblended_component`` (nb > 1 or
+   na > 0) and ``saturated_pixels`` (``w1sat``/``w2sat`` > 0 — VizieR does not
+   serve them, so they come from IRSA ``allwise_p3as_psd`` in one extra upload).
+3. **CatWISE2020** / **unWISE** (3″ at 2015.5 / 2014): independent W1/W2
+   against the SAME locus (``locus.json``): ``catwise_photospheric`` (veto),
+   ``catwise_confirms_deficit``, ``catwise_missing``.
+4. **W3 consistency**: ``w3_excess`` (veto) / ``w3_deficit_consistent`` (note).
+5. **2MASS PSC flags** (VizieR ``II/246/out``, 3″ at 2000): veto
+   ``tmass_blend`` if the K-band ``Bflg`` > 1 or ``Cflg``(K) ≠ '0'; note
+   ``tmass_close_pair`` if ``prox`` < 6″; ``Xflg`` and ``pxCntr`` reported.
+6. **Independent higher-resolution Ks** (1.5″ at ~2010): UKIDSS GPS
+   (``II/316/gps6``), UKIDSS LAS (``II/319/las9``), VHS (``II/367/vhs_dr5``)
+   and VVV (table discovered under ``LIKE '%VVV%'``).
+   ``resid_ks_hires = Ks_hires − Ks_2MASS``: ≥ 0.2 mag fainter and within
+   0.2 of −resid_w1 → veto ``tmass_ks_contaminated``; within 0.1 of 2MASS →
+   ``ks_confirmed_hires``, the deficit is real *in the star* (the deciding test).
+7. **G − Ks consistency** (no network; computed by the screen for every row
+   from the (G−Ks)(BP−RP) locus per class and Galactic zone): a contaminated
+   Ks gives ``resid_gks ≈ −resid_w1``; a screen leaves ``resid_gks ≈ 0``.
+   Veto ``ks_too_bright_for_g``; note ``gks_photospheric``.
 
-``vet_verdict`` ∈ {``SURVIVES_VET``, ``BLEND``, ``DEBLENDED_COMPONENT``,
-``ALLWISE_PHOTOMETRY_WRONG``, ``W3_INCONSISTENT``, ``INCONCLUSIVE``}.
+``vet_verdict`` ∈ {``SURVIVES_VET``, ``SURVIVES_VET_NO_HIRES_KS``, ``BLEND``,
+``DEBLENDED_COMPONENT``, ``ALLWISE_PHOTOMETRY_WRONG``, ``W3_INCONSISTENT``,
+``TMASS_BLEND``, ``KS_CONTAMINATED``, ``INCONCLUSIVE``}.  SURVIVES_VET requires
+Gaia 4″ clean AND 2MASS flags clean AND CatWISE confirms AND NOT
+ks_too_bright_for_g AND the high-resolution Ks confirming 2MASS; with no
+high-resolution coverage the verdict is ``SURVIVES_VET_NO_HIRES_KS`` (listed
+separately).  INCONCLUSIVE rows say why in ``vet_notes``.
 
 Missing-track vet
 -----------------
@@ -41,20 +67,29 @@ The Gaia × AllWISE cross-match table lacking an entry is **not** the same as
 WISE having no source.  The screen's missing fraction by G already shows
 39 % at G 4–5 and 14 % at |b| < 10°: that is the cross-match's behaviour on
 saturated and crowded sources (the best-neighbour algorithm drops them), not
-an absence of 3–5 µm light.  This stage measures the *real* absence rate by
-a direct positional match of the ``nearby`` / ``etz`` candidates plus a
-uniform random control of the rest: ``wise_source_present_within_6as``,
-``wise_source_present_6_to_15as`` (astrometric offset, saturated bright
-star), ``no_wise_source_within_15as`` — and for the last group CatWISE /
-unWISE presence and the nearest AllWISE source's ``cc_flags``.
+an absence of 3–5 µm light.  This stage measures the *real* absence rate by a
+direct positional match (``nearby`` / ``etz`` candidates plus a uniform random
+control): ``wise_source_present_within_6as``, ``wise_source_present_6_to_15as``
+(astrometric offset, saturated bright star), ``no_wise_source_within_15as`` —
+and for the last group CatWISE / unWISE presence, the nearest AllWISE source's
+``cc_flags``, and the **brightest AllWISE source within 3′**.  Run 34054735689
+showed every absent star sitting 20–60″ from a D/H/d/h-flagged fragment: a
+star inside a bright star's artefact region, or the bright star itself whose
+primary entry was lost at saturation, where AllWISE, CatWISE and unWISE all
+suppress detections.  Such stars (brightest neighbour W1 < 6, or the star's
+own predicted W1 ≈ Ks − 0.05 below the 8.2 saturation regime) are
+``ARTEFACT_REGION_OR_SATURATED``, not truly missing.
 
 Transport
 ---------
 Every fetcher is injectable and the offline tests inject all of them.  The
-VizieR path reuses ``seti.baffle.bright``'s discover-then-quote-once machinery
-(``discover_columns``, ``resolve_aliases``, ``select_list``, ``run_vizier``):
-no column name reaches the wire that TAP_SCHEMA did not serve, and an empty
-identifier raises before composition (the ``Encountered '""'`` failure).
+VizieR / IRSA path reuses ``seti.baffle.bright``'s discover-then-quote-once
+machinery (``discover_columns``, ``resolve_aliases``, ``select_list``,
+``run_vizier``): no column name reaches the wire that TAP_SCHEMA did not
+serve, an empty identifier raises before composition, and the unit /
+description TAP_SCHEMA serves for every resolved column is recorded in
+``vet.json`` so a zero-point question can be answered from the ledger.
+Query budget: 9–10 uploads for the deficit vet + 2–6 for the missing vet.
 """
 
 from __future__ import annotations
@@ -68,6 +103,7 @@ import numpy as np
 import pandas as pd
 
 from .bright import (
+    IRSA_TAP,
     VIZIER_TAP,
     _adql_col,
     _lower,
@@ -78,13 +114,19 @@ from .bright import (
 )
 from .locus import Locus, luminosity_class
 
-VET_VERDICTS = ("SURVIVES_VET", "BLEND", "DEBLENDED_COMPONENT", "ALLWISE_PHOTOMETRY_WRONG",
-                "W3_INCONSISTENT", "INCONCLUSIVE")
-VET_VETOES = ("blend_flux_theft", "deblended_component", "saturated_pixels",
-              "catwise_photospheric", "w3_excess")
-VET_NOTES = ("crowded_field", "catwise_confirms_deficit", "catwise_missing",
+VET_VERDICTS = ("SURVIVES_VET", "SURVIVES_VET_NO_HIRES_KS", "BLEND", "DEBLENDED_COMPONENT",
+                "ALLWISE_PHOTOMETRY_WRONG", "W3_INCONSISTENT", "TMASS_BLEND", "KS_CONTAMINATED",
+                "INCONCLUSIVE")
+SURVIVOR_VERDICTS = ("SURVIVES_VET", "SURVIVES_VET_NO_HIRES_KS")
+VET_VETOES = ("blend_flux_theft", "unresolved_in_2mass", "deblended_component", "saturated_pixels",
+              "catwise_photospheric", "w3_excess", "tmass_blend", "tmass_ks_contaminated",
+              "ks_too_bright_for_g")
+VET_NOTES = ("crowded_field", "gaia_isolated", "catwise_confirms_deficit", "catwise_missing",
              "w3_deficit_consistent", "gaia_neighbours_unavailable", "allwise_unavailable",
-             "allwise_missing", "catwise_unavailable")
+             "allwise_missing", "catwise_unavailable", "tmass_close_pair", "tmass_flags_unavailable",
+             "tmass_flags_missing", "ks_confirmed_hires", "ks_hires_ambiguous", "no_hires_ks_coverage",
+             "hires_ks_unavailable", "gks_photospheric", "gks_unmeasured", "unwise_zeropoint_suspect",
+             "catwise_zeropoint_suspect", "catwise_not_confirming")
 
 QUERY_OK = "QUERY_OK"
 QUERY_ZERO = "QUERY_RETURNED_ZERO_ROWS"
@@ -96,6 +138,8 @@ DEFAULTS: dict = {
     "blend_dg_max": 1.5,
     "crowded_radius_arcsec": 6.0,
     "crowded_n_min": 3,
+    "gaia_2mass_radius_arcsec": 4.0,
+    "gaia_2mass_dg_max": 4.0,
     "epochs": {"gaia": 2016.0, "allwise": 2010.5, "catwise": 2015.5, "unwise": 2014.0},
     "allwise": {"table": '"II/328/allwise"', "radius_arcsec": 3.0,
                 "xmatch_catalogue": "vizier:II/328/allwise"},
@@ -103,20 +147,37 @@ DEFAULTS: dict = {
                 "xmatch_catalogue": "vizier:II/365/catwise"},
     "unwise": {"table": '"II/363/unwise"', "radius_arcsec": 3.0,
                "xmatch_catalogue": "vizier:II/363/unwise"},
+    "irsa_allwise": {"table": "allwise_p3as_psd", "url": IRSA_TAP, "radius_arcsec": 3.0},
+    "tmass": {"table": '"II/246/out"', "radius_arcsec": 3.0, "epoch": 2000.0,
+              "close_pair_arcsec": 6.0, "xmatch_catalogue": "vizier:II/246/out"},
+    "hires_ks": {"radius_arcsec": 1.5, "epoch": 2010.0, "contaminated_min_mag": 0.2,
+                 "consistency_tol_mag": 0.2, "confirm_tol_mag": 0.1,
+                 "surveys": {"vvv": {"table": "", "discover_like": "%VVV%",
+                                     "prefer": ['"II/376/vvv2"', '"II/348/vvv2"']},
+                             "gps": {"table": '"II/316/gps6"'},
+                             "vhs": {"table": '"II/367/vhs_dr5"'},
+                             "las": {"table": '"II/319/las9"'}}},
     "upload_chunk": 4000,
     "xmatch_url": "http://cdsxmatch.u-strasbg.fr/xmatch/api/v1/sync",
+    "unwise_flux_system": "vega",
+    "zeropoint_check_max_mag": 0.3,
+    "indep_err_floor_mag": 0.02,
     "photospheric_nsig": 3.0,
     "deficit_mag": -0.30,
     "deficit_nsig": 3.0,
     "w3_excess_mag": 0.5,
     "w3_deficit_mag": -0.30,
     "w3_err_max": 0.2,
+    "gks": {"veto_min_mag": 0.2, "veto_nsig": 3.0, "consistency_tol_mag": 0.25,
+            "photospheric_max_mag": 0.1, "photospheric_nsig": 2.0},
     "include_deferred_lpv": True,
     "missing": {"radius_close_arcsec": 6.0, "radius_far_arcsec": 15.0,
-                "nearest_radius_arcsec": 60.0, "n_control": 1000, "seed": 20260906},
+                "nearest_radius_arcsec": 60.0, "artefact_radius_arcsec": 180.0,
+                "artefact_w1_max": 6.0, "predicted_w1_offset": 0.05, "saturation_w1": 8.2,
+                "n_control": 1000, "seed": 20260906},
 }
 
-# --- VizieR column aliases (canonical -> candidates; resolved against TAP_SCHEMA) ---
+# --- VizieR / IRSA column aliases (canonical -> candidates; resolved against TAP_SCHEMA) ---
 ALLWISE_ALIASES = {
     "designation": ("AllWISE", "designation"),
     "ra": ("RAJ2000", "RA_pm", "ra"), "dec": ("DEJ2000", "DE_pm", "dec"),
@@ -132,6 +193,11 @@ ALLWISE_ALIASES = {
     "w1rchi2": ("W1rchi2", "chi2W1", "w1rchi2"), "w2rchi2": ("W2rchi2", "chi2W2", "w2rchi2"),
     "w1snr": ("W1snr", "snrW1", "w1snr"), "w3snr": ("W3snr", "snrW3", "w3snr"),
     "d2m": ("d2M", "d2m"),
+}
+IRSA_ALLWISE_ALIASES = {
+    "designation": ("designation",), "ra": ("ra",), "dec": ("dec",),
+    "w1sat": ("w1sat",), "w2sat": ("w2sat",), "nb": ("nb",), "na": ("na",),
+    "w1": ("w1mpro",), "w2": ("w2mpro",), "cc_flags": ("cc_flags",),
 }
 CATWISE_ALIASES = {
     "designation": ("Name", "CatWISE", "designation", "source_name"),
@@ -152,16 +218,40 @@ UNWISE_ALIASES = {
     "w2flux": ("FW2", "flux_w2", "fw2"), "e_w2flux": ("e_FW2", "dflux_w2"),
     "flags_w1": ("fW1", "flags_unwise_w1", "flags_w1"), "flags_w2": ("fW2", "flags_unwise_w2"),
 }
-# unWISE fluxes are AB nanomaggies: Vega = AB - offset (Jarrett+2011 / Schlafly+2019).
+TMASS_PSC_ALIASES = {
+    "designation": ("2MASS", "designation"),
+    "ra": ("RAJ2000", "ra"), "dec": ("DEJ2000", "dec"),
+    "j": ("Jmag", "j_m"), "h": ("Hmag", "h_m"), "ks": ("Kmag", "ks_m", "k_m"),
+    "e_ks": ("e_Kmag", "ks_msigcom", "k_msigcom"),
+    "qflg": ("Qflg", "ph_qual"), "rflg": ("Rflg", "rd_flg"), "bflg": ("Bflg", "bl_flg"),
+    "cflg": ("Cflg", "cc_flg"), "xflg": ("Xflg", "gal_contam"), "aflg": ("Aflg", "mp_flg"),
+    "prox": ("prox",), "pxpa": ("pxPA", "pxpa"), "pxcntr": ("pxCntr", "pxcntr"),
+}
+HIRES_KS_ALIASES = {
+    "designation": ("Name", "ID", "objID", "sourceID", "designation", "iauname"),
+    "ra": ("RAJ2000", "RA_ICRS", "ra"), "dec": ("DEJ2000", "DE_ICRS", "dec"),
+    "ks": ("Ksmag", "Kmag", "Ksmag3", "Kmag3", "Ksap3", "Kap3", "Kspmag", "Kpmag", "kAperMag3",
+           "ksAperMag3", "ksmag", "kmag"),
+    "e_ks": ("e_Ksmag", "e_Kmag", "e_Ksmag3", "e_Kmag3", "e_Ksap3", "e_Kap3", "e_Kspmag",
+             "e_Kpmag", "kAperMag3Err", "ksAperMag3Err"),
+    "class": ("mCl", "Kcl", "Kscl", "mergedClass", "cl", "pStar"),
+}
+# unWISE fluxes are VEGA nanomaggies (Schlafly+2019); an AB-system mirror would need these.
 UNWISE_VEGA_OFFSET = {"w1": 2.699, "w2": 3.339}
+HIRES_PRIORITY = ("vvv", "gps", "vhs", "las")
 
 
 def _cfg(cfg: dict | None) -> dict:
     out = {k: (dict(v) if isinstance(v, dict) else v) for k, v in DEFAULTS.items()}
+    out["hires_ks"]["surveys"] = {k: dict(v) for k, v in DEFAULTS["hires_ks"]["surveys"].items()}
     src = (cfg or {}).get("vet", cfg) if isinstance(cfg, dict) else {}
     for k, v in (src or {}).items():
         if isinstance(v, dict) and isinstance(out.get(k), dict):
-            out[k].update(v)
+            for k2, v2 in v.items():
+                if isinstance(v2, dict) and isinstance(out[k].get(k2), dict):
+                    out[k][k2] = {**out[k][k2], **v2}
+                else:
+                    out[k][k2] = v2
         else:
             out[k] = v
     return out
@@ -173,8 +263,18 @@ def _num(df: pd.DataFrame, col: str) -> np.ndarray:
     return pd.to_numeric(df[col], errors="coerce").to_numpy(dtype=float)
 
 
+def _str(df: pd.DataFrame, col: str) -> pd.Series:
+    if col not in df.columns:
+        return pd.Series([""] * len(df), index=df.index, dtype=object)
+    return df[col].astype(object).where(df[col].notna(), "").astype(str).str.strip()
+
+
 def _now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def _obj(n: int, index, fill=np.nan) -> pd.Series:
+    return pd.Series([fill] * n, index=index, dtype=object)
 
 
 # ===========================================================================
@@ -214,7 +314,7 @@ def gaia_neighbours_upload_query(radius_arcsec: float) -> str:
 
 def vizier_upload_query(table: str, resolved: dict, radius_arcsec: float,
                         required=("ra", "dec")) -> str:
-    """VizieR TAP upload join composed from discovered (bare) names, quoted once."""
+    """TAP upload join composed from discovered (bare) names, quoted once."""
     holes = [k for k in ("ra", "dec") if not resolved.get(k)]
     if holes:
         raise RuntimeError(f"{table}: position columns not resolved: {holes} (resolved: {resolved})")
@@ -224,6 +324,10 @@ def vizier_upload_query(table: str, resolved: dict, radius_arcsec: float,
     return (f"SELECT u.source_id, {select} FROM TAP_UPLOAD.targets AS u "
             f"JOIN {table} AS t ON 1 = CONTAINS(POINT('ICRS', t.{ra_c}, t.{de_c}), "
             f"CIRCLE('ICRS', u.ra, u.dec, {float(radius_arcsec) / 3600.0:.8f}))")
+
+
+def table_discovery_query(like: str) -> str:
+    return f"SELECT table_name FROM TAP_SCHEMA.tables WHERE table_name LIKE '{like}'"
 
 
 # ===========================================================================
@@ -251,33 +355,57 @@ def default_gaia_upload_fetcher(positions: pd.DataFrame, radius_arcsec: float,
     raise RuntimeError(f"{label}: Gaia upload join failed after {retries} attempts: {last!r}")
 
 
+def discover_table(like: str, prefer=(), url: str = VIZIER_TAP, run=None) -> str | None:
+    """First TAP_SCHEMA table matching ``like``; ``prefer`` wins when present."""
+    run = run or run_vizier
+    df = _lower(run(table_discovery_query(like), label=f"tables:{like}", url=url))
+    names = [str(x) for x in df["table_name"]] if len(df) and "table_name" in df.columns else []
+    bare = {n.strip('"'): n for n in names}
+    for p in prefer:
+        if p.strip('"') in bare:
+            return f'"{p.strip(chr(34))}"'
+    return f'"{names[0].strip(chr(34))}"' if names else None
+
+
 class UploadMatcher:
-    """One VizieR catalogue around uploaded positions (TAP upload; X-Match fallback).
+    """One catalogue around uploaded positions (TAP upload; X-Match fallback).
 
     ``__call__(positions, radius_arcsec, label)`` takes ``source_id, ra, dec``
     already at the catalogue epoch and returns canonical-named rows with the
     uploaded ``source_id`` attached.  Columns are discovered once from
-    TAP_SCHEMA and quoted exactly once by :func:`select_list`.
+    TAP_SCHEMA (unit / description kept in ``meta``) and quoted exactly once.
     """
 
-    def __init__(self, name: str, table: str, aliases: dict, *, url: str = VIZIER_TAP,
+    def __init__(self, name: str, table: str | None, aliases: dict, *, url: str = VIZIER_TAP,
                  xmatch_url: str | None = None, xmatch_catalogue: str | None = None,
-                 chunk: int = 4000):
+                 chunk: int = 4000, discover_like: str | None = None, prefer=()):
         self.name, self.table, self.aliases, self.url = name, table, aliases, url
         self.xmatch_url = xmatch_url or DEFAULTS["xmatch_url"]
         self.xmatch_catalogue = xmatch_catalogue
         self.chunk = int(chunk)
+        self.discover_like, self.prefer = discover_like, tuple(prefer)
         self.discovery: dict | None = None
         self.resolved: dict[str, str] = {}
+        self.meta: dict[str, dict] = {}
         self.routes_used: list[str] = []
 
     def _discover(self) -> None:
+        if not self.table and self.discover_like:
+            self.table = discover_table(self.discover_like, self.prefer, self.url)
+            if not self.table:
+                raise RuntimeError(f"{self.name}: no table matches {self.discover_like!r}")
         if self.discovery is None:
             self.discovery = discover_columns(self.table, self.url)
             self.resolved = resolve_aliases(self.discovery["names"], self.aliases)
+            allmeta = self.discovery.get("meta") or {}
+            self.meta = {canon: allmeta.get(actual, {}) for canon, actual in self.resolved.items()}
             if "ra" not in self.resolved or "dec" not in self.resolved:
                 raise RuntimeError(f"{self.table}: RA/Dec not resolved from "
                                    f"{self.discovery['names'][:40]}")
+
+    def describe(self) -> dict:
+        return {"table": self.table, "resolved": dict(self.resolved), "meta": dict(self.meta),
+                "routes_used": list(self.routes_used)}
 
     def _tap_upload(self, pos: pd.DataFrame, radius_arcsec: float, label: str) -> pd.DataFrame:
         from astropy.table import Table
@@ -335,14 +463,23 @@ class UploadMatcher:
 
 
 def default_matchers(cfg: dict | None = None) -> dict:
+    """Every catalogue matcher the stage uses, keyed by name."""
     c = _cfg(cfg)
     out = {}
     for name, aliases in (("allwise", ALLWISE_ALIASES), ("catwise", CATWISE_ALIASES),
-                          ("unwise", UNWISE_ALIASES)):
+                          ("unwise", UNWISE_ALIASES), ("tmass", TMASS_PSC_ALIASES)):
         sub = c[name]
         out[name] = UploadMatcher(name, sub["table"], aliases, xmatch_url=c["xmatch_url"],
                                   xmatch_catalogue=sub.get("xmatch_catalogue"),
                                   chunk=int(c["upload_chunk"]))
+    ir = c["irsa_allwise"]
+    out["irsa_allwise"] = UploadMatcher("irsa_allwise", ir["table"], IRSA_ALLWISE_ALIASES,
+                                        url=ir.get("url", IRSA_TAP), chunk=int(c["upload_chunk"]))
+    for name, sub in c["hires_ks"]["surveys"].items():
+        out[name] = UploadMatcher(name, sub.get("table") or None, HIRES_KS_ALIASES,
+                                  chunk=int(c["upload_chunk"]),
+                                  discover_like=sub.get("discover_like"),
+                                  prefer=tuple(sub.get("prefer") or ()))
     return out
 
 
@@ -414,18 +551,45 @@ def nearest_per_target(matches: pd.DataFrame, targets: pd.DataFrame, radius_arcs
     return near.reset_index()
 
 
+def brightest_per_target(matches: pd.DataFrame, targets: pd.DataFrame, radius_arcsec: float,
+                         mag_col: str = "w1") -> pd.DataFrame:
+    """Brightest (smallest ``mag_col``) catalogue row per target within ``radius``."""
+    cols = ["source_id", "sep_arcsec", "n_within"]
+    if matches is None or len(matches) == 0 or "source_id" not in matches.columns:
+        return pd.DataFrame(columns=cols)
+    m = matches.copy()
+    m["source_id"] = pd.to_numeric(m["source_id"], errors="coerce")
+    t = targets.set_index("source_id")
+    m = m[np.isin(m["source_id"].to_numpy(), t.index.to_numpy())].copy()
+    if not len(m):
+        return pd.DataFrame(columns=cols)
+    tra = t.loc[m["source_id"].to_numpy(), "ra"].to_numpy(float)
+    tde = t.loc[m["source_id"].to_numpy(), "dec"].to_numpy(float)
+    m["sep_arcsec"] = separation_arcsec(tra, tde, _num(m, "ra"), _num(m, "dec"))
+    m = m[m["sep_arcsec"] <= float(radius_arcsec)]
+    if not len(m):
+        return pd.DataFrame(columns=cols)
+    m["_mag"] = _num(m, mag_col)
+    m = m.sort_values(["source_id", "_mag"], na_position="last")
+    counts = m.groupby("source_id").size().rename("n_within")
+    best = m.drop_duplicates("source_id", keep="first").set_index("source_id").join(counts)
+    return best.drop(columns=["_mag"]).reset_index()
+
+
 def gaia_neighbour_stats(neigh: pd.DataFrame | None, cands: pd.DataFrame, cfg: dict) -> pd.DataFrame:
-    """Brightest-neighbour G / sep and counts within 3″/6″/10″ per candidate."""
+    """Neighbour counts within 3″/4″/6″/10″, brightest and nearest neighbours, the vetoes."""
     c = _cfg(cfg)
-    r_blend = float(c["blend_radius_arcsec"])
+    r_blend, r_2m = float(c["blend_radius_arcsec"]), float(c["gaia_2mass_radius_arcsec"])
     out = pd.DataFrame({"source_id": cands["source_id"].to_numpy()})
-    for col in ("gaia_n_3as", "gaia_n_6as", "gaia_n_10as"):
+    for col in ("gaia_n_3as", "gaia_n_4as", "gaia_n_6as", "gaia_n_10as",
+                "gaia_brightest_neighbour_g", "gaia_brightest_neighbour_sep_arcsec",
+                "gaia_nearest_neighbour_sep_arcsec", "gaia_nearest_neighbour_dg"):
         out[col] = np.nan
-    out["gaia_brightest_neighbour_g"] = np.nan
-    out["gaia_brightest_neighbour_sep_arcsec"] = np.nan
     out["gaia_neighbours_checked"] = False
     out["blend_flux_theft"] = False
+    out["unresolved_in_2mass"] = False
     out["crowded_field"] = False
+    out["gaia_isolated"] = False
     if neigh is None or len(neigh) == 0 or "target_source_id" not in neigh.columns:
         return out
     n = neigh.copy()
@@ -442,8 +606,11 @@ def gaia_neighbour_stats(neigh: pd.DataFrame | None, cands: pd.DataFrame, cfg: d
         g = _num(rows, "phot_g_mean_mag")
         others = rows["source_id"].to_numpy() != sid
         out.loc[i, "gaia_n_3as"] = int((sep <= 3.0).sum())
+        out.loc[i, "gaia_n_4as"] = int((sep <= r_2m).sum())
         out.loc[i, "gaia_n_6as"] = int((sep <= 6.0).sum())
         out.loc[i, "gaia_n_10as"] = int((sep <= 10.0).sum())
+        g_c = float(cpos.loc[sid, "phot_g_mean_mag"]) if "phot_g_mean_mag" in cpos else np.nan
+        out.loc[i, "gaia_isolated"] = not others.any()
         if others.any():
             g_o, s_o = g[others], sep[others]
             fin = np.isfinite(g_o)
@@ -451,22 +618,34 @@ def gaia_neighbour_stats(neigh: pd.DataFrame | None, cands: pd.DataFrame, cfg: d
                 k = int(np.nanargmin(np.where(fin, g_o, np.inf)))
                 out.loc[i, "gaia_brightest_neighbour_g"] = g_o[k]
                 out.loc[i, "gaia_brightest_neighbour_sep_arcsec"] = s_o[k]
-            g_c = float(cpos.loc[sid, "phot_g_mean_mag"]) if "phot_g_mean_mag" in cpos else np.nan
+            kn = int(np.argmin(s_o))
+            out.loc[i, "gaia_nearest_neighbour_sep_arcsec"] = s_o[kn]
+            if np.isfinite(g_c) and np.isfinite(g_o[kn]):
+                out.loc[i, "gaia_nearest_neighbour_dg"] = g_o[kn] - g_c
             if np.isfinite(g_c):
                 out.loc[i, "blend_flux_theft"] = bool(
                     np.any((s_o <= r_blend) & fin & (g_o < g_c + float(c["blend_dg_max"]))))
+                out.loc[i, "unresolved_in_2mass"] = bool(
+                    np.any((s_o <= r_2m) & fin & (g_o < g_c + float(c["gaia_2mass_dg_max"]))))
         out.loc[i, "crowded_field"] = bool(
             (sep <= float(c["crowded_radius_arcsec"])).sum() >= int(c["crowded_n_min"]))
     return out
 
 
-def unwise_vega_mags(df: pd.DataFrame) -> pd.DataFrame:
-    """Fill ``w1``/``w2`` (Vega) from AB nanomaggy fluxes when the mirror serves only fluxes."""
+def unwise_vega_mags(df: pd.DataFrame, flux_system: str = "vega") -> pd.DataFrame:
+    """Fill ``w1``/``w2`` (Vega) from nanomaggy fluxes when the mirror serves only fluxes.
+
+    unWISE fluxes are **Vega** nanomaggies (Schlafly+2019): ``m = 22.5 − 2.5
+    log10(F)``.  ``flux_system="ab"`` additionally subtracts the AB→Vega
+    offsets — the mistake of run 34054735689, kept only as an explicit option.
+    """
     out = df.copy()
     for b in ("w1", "w2"):
         flux = _num(out, f"{b}flux")
         with np.errstate(divide="ignore", invalid="ignore"):
-            mag = 22.5 - 2.5 * np.log10(np.where(flux > 0, flux, np.nan)) - UNWISE_VEGA_OFFSET[b]
+            mag = 22.5 - 2.5 * np.log10(np.where(flux > 0, flux, np.nan))
+            if str(flux_system).lower() == "ab":
+                mag = mag - UNWISE_VEGA_OFFSET[b]
             eflux = _num(out, f"e_{b}flux")
             emag = 1.0857 * np.where(flux > 0, eflux / np.where(flux > 0, flux, np.nan), np.nan)
         have = _num(out, b) if b in out.columns else np.full(len(out), np.nan)
@@ -476,8 +655,21 @@ def unwise_vega_mags(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def zeropoint_check(a: np.ndarray, b: np.ndarray, max_offset: float, label: str) -> dict:
+    """Median(a − b) over stars measured in both; suspect if beyond ``max_offset``."""
+    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)
+    ok = np.isfinite(a) & np.isfinite(b)
+    rep = {"label": label, "n": int(ok.sum()), "median_offset_mag": None, "suspect": False}
+    if ok.sum() >= 3:
+        off = float(np.median(a[ok] - b[ok]))
+        rep["median_offset_mag"] = off
+        rep["robust_sigma_mag"] = float(1.4826 * np.median(np.abs(a[ok] - b[ok] - off)))
+        rep["suspect"] = bool(abs(off) > float(max_offset))
+    return rep
+
+
 def locus_residuals(cands: pd.DataFrame, w1, e_w1, w2, e_w2, locus: Locus | None,
-                    lcfg: dict | None = None) -> dict:
+                    lcfg: dict | None = None, err_floor: float = 0.0) -> dict:
     """K_s − W residuals of independent photometry against the SAME locus."""
     n = len(cands)
     if locus is None:
@@ -489,7 +681,8 @@ def locus_residuals(cands: pd.DataFrame, w1, e_w1, w2, e_w2, locus: Locus | None
     out = {}
     for band, w, e in (("w1", w1, e_w1), ("w2", w2, e_w2)):
         w = np.asarray(w, dtype=float)
-        e = np.nan_to_num(np.asarray(e, dtype=float))
+        e = np.nan_to_num(np.asarray(e, dtype=float)) if e is not None else np.zeros(n)
+        e = np.maximum(e, float(err_floor))
         med, sc = locus.predict(jk, cls, band)
         resid = (ks - w) - med
         out[f"resid_{band}"] = resid
@@ -514,7 +707,7 @@ def w3_residual(cands: pd.DataFrame, w3, e_w3, locus: Locus | None, cfg: dict) -
     """resid_w3 against the locus's W3 bins (NaN where no W3 locus / no usable W3)."""
     c = _cfg(cfg)
     n = len(cands)
-    if locus is None or not (locus.has("all", "w3") or any(locus.has(k, "w3") for k in locus.classes())):
+    if locus is None or not any(locus.has(k, "w3") for k in locus.classes()):
         return np.full(n, np.nan), np.full(n, np.nan)
     w3 = np.asarray(w3, dtype=float)
     e_w3 = np.asarray(e_w3, dtype=float)
@@ -529,18 +722,33 @@ def w3_residual(cands: pd.DataFrame, w3, e_w3, locus: Locus | None, cfg: dict) -
     return resid, sig
 
 
+def tmass_flag_char(flags: pd.Series, pos: int = 2) -> pd.Series:
+    """Band character (J=0, H=1, K=2) of a 3-character 2MASS flag string."""
+    s = flags.astype(str).str.strip().str.ljust(3, "?")
+    return s.str[pos]
+
+
 def decide(row: pd.Series) -> tuple[str, str, str]:
     """(vet_verdict, vetoes, notes) from one assembled row.  Precedence documented."""
     vetoes, notes = [], []
-    if bool(row.get("blend_flux_theft", False)):
+
+    def flag(k):
+        return bool(row.get(k, False)) and str(row.get(k)).lower() not in ("nan", "none", "")
+
+    if flag("blend_flux_theft"):
         vetoes.append("blend_flux_theft")
-    if bool(row.get("crowded_field", False)):
+    if flag("unresolved_in_2mass"):
+        vetoes.append("unresolved_in_2mass")
+    if flag("crowded_field"):
         notes.append("crowded_field")
-    if not bool(row.get("gaia_neighbours_checked", False)):
+    if flag("gaia_isolated"):
+        notes.append("gaia_isolated")
+    gaia_ok = flag("gaia_neighbours_checked")
+    if not gaia_ok:
         notes.append("gaia_neighbours_unavailable")
-    if bool(row.get("deblended_component", False)):
+    if flag("deblended_component"):
         vetoes.append("deblended_component")
-    if bool(row.get("saturated_pixels", False)):
+    if flag("saturated_pixels"):
         vetoes.append("saturated_pixels")
     aw = str(row.get("allwise_status", "unavailable"))
     if aw == "unavailable":
@@ -555,12 +763,50 @@ def decide(row: pd.Series) -> tuple[str, str, str]:
     elif ind == "missing":
         notes.append("catwise_unavailable" if str(row.get("catwise_status", "")) == "unavailable"
                      and str(row.get("unwise_status", "")) == "unavailable" else "catwise_missing")
+    else:
+        notes.append("catwise_not_confirming")
+    if flag("unwise_zeropoint_suspect"):
+        notes.append("unwise_zeropoint_suspect")
+    if flag("catwise_zeropoint_suspect"):
+        notes.append("catwise_zeropoint_suspect")
     w3s = str(row.get("w3_status", "unmeasured"))
     if w3s == "excess":
         vetoes.append("w3_excess")
     elif w3s == "deficit":
         notes.append("w3_deficit_consistent")
-    if "blend_flux_theft" in vetoes:
+    # 2MASS PSC flags
+    ts = str(row.get("tmass_status", "unavailable"))
+    if flag("tmass_blend"):
+        vetoes.append("tmass_blend")
+    if flag("tmass_close_pair"):
+        notes.append("tmass_close_pair")
+    if ts == "unavailable":
+        notes.append("tmass_flags_unavailable")
+    elif ts == "missing":
+        notes.append("tmass_flags_missing")
+    tmass_ok = ts == "matched" and not flag("tmass_blend")
+    # high-resolution Ks
+    hs = str(row.get("hires_status", "unavailable"))
+    if flag("tmass_ks_contaminated"):
+        vetoes.append("tmass_ks_contaminated")
+    hires_confirms = flag("ks_confirmed_hires")
+    if hires_confirms:
+        notes.append("ks_confirmed_hires")
+    elif hs == "matched":
+        notes.append("ks_hires_ambiguous")
+    elif hs == "missing":
+        notes.append("no_hires_ks_coverage")
+    else:
+        notes.append("hires_ks_unavailable")
+    # G - Ks consistency
+    if flag("ks_too_bright_for_g"):
+        vetoes.append("ks_too_bright_for_g")
+    if flag("gks_photospheric"):
+        notes.append("gks_photospheric")
+    if flag("gks_unmeasured"):
+        notes.append("gks_unmeasured")
+
+    if "blend_flux_theft" in vetoes or "unresolved_in_2mass" in vetoes:
         verdict = "BLEND"
     elif "deblended_component" in vetoes:
         verdict = "DEBLENDED_COMPONENT"
@@ -568,9 +814,17 @@ def decide(row: pd.Series) -> tuple[str, str, str]:
         verdict = "ALLWISE_PHOTOMETRY_WRONG"
     elif "w3_excess" in vetoes:
         verdict = "W3_INCONSISTENT"
-    elif (bool(row.get("gaia_neighbours_checked", False)) and aw == "matched"
-          and ind == "confirms_deficit"):
-        verdict = "SURVIVES_VET"
+    elif "tmass_blend" in vetoes:
+        verdict = "TMASS_BLEND"
+    elif "tmass_ks_contaminated" in vetoes or "ks_too_bright_for_g" in vetoes:
+        verdict = "KS_CONTAMINATED"
+    elif gaia_ok and aw == "matched" and ind == "confirms_deficit" and tmass_ok:
+        if hires_confirms:
+            verdict = "SURVIVES_VET"
+        elif hs == "missing":
+            verdict = "SURVIVES_VET_NO_HIRES_KS"
+        else:
+            verdict = "INCONCLUSIVE"        # hires Ks answered but neither confirms nor contaminates
     else:
         verdict = "INCONCLUSIVE"
     return verdict, ";".join(vetoes), ";".join(notes)
@@ -581,10 +835,11 @@ def decide(row: pd.Series) -> tuple[str, str, str]:
 # ===========================================================================
 def vet_deficit_candidates(cands: pd.DataFrame, cfg: dict, locus: Locus | None, ledger: VetLedger,
                            *, gaia_fetcher=None, matchers: dict | None = None,
-                           locus_cfg: dict | None = None) -> pd.DataFrame:
+                           locus_cfg: dict | None = None, report: dict | None = None) -> pd.DataFrame:
     """Assemble every measurement and the verdict for each candidate row."""
     c = _cfg(cfg)
     ep = c["epochs"]
+    report = report if report is not None else {}
     cands = cands.reset_index(drop=True).copy()
     cands["source_id"] = pd.to_numeric(cands["source_id"], errors="coerce").astype("int64")
     n = len(cands)
@@ -594,33 +849,45 @@ def vet_deficit_candidates(cands: pd.DataFrame, cfg: dict, locus: Locus | None, 
     gaia_fetcher = gaia_fetcher or default_gaia_upload_fetcher
     pos_gaia = cands[["source_id", "ra", "dec"]].copy()
 
+    def _pos(epoch: float) -> pd.DataFrame:
+        ra_e, de_e = propagate(cands["ra"], cands["dec"], _num(cands, "pmra"), _num(cands, "pmdec"),
+                               float(ep["gaia"]), float(epoch))
+        return pd.DataFrame({"source_id": cands["source_id"], "ra": ra_e, "dec": de_e})
+
     # 1. Gaia neighbours (one upload join)
     neigh = _fetch(ledger, "gaia-neighbours (upload)", gaia_fetcher, pos_gaia,
                    float(c["gaia_neighbour_radius_arcsec"]), "gaia-neighbours")
-    gstats = gaia_neighbour_stats(neigh, cands, c)
-    out = cands.merge(gstats, on="source_id", how="left")
+    out = cands.merge(gaia_neighbour_stats(neigh, cands, c), on="source_id", how="left")
 
-    # 2-3. AllWISE proper, CatWISE, unWISE (one upload each, PM-propagated)
-    tables = {}
-    for name in ("allwise", "catwise", "unwise"):
-        sub = c[name]
-        ra_e, de_e = propagate(cands["ra"], cands["dec"], _num(cands, "pmra"), _num(cands, "pmdec"),
-                               float(ep["gaia"]), float(ep[name]))
-        pos = pd.DataFrame({"source_id": cands["source_id"], "ra": ra_e, "dec": de_e})
+    # 2-3, 5-6. One upload per catalogue, PM-propagated to its epoch
+    tables: dict = {}
+
+    def _match(name: str, epoch: float, radius: float, label: str, post=None):
         fn = matchers.get(name)
-        raw = (_fetch(ledger, f"{name} (upload, {sub['radius_arcsec']}\")", fn, pos,
-                      float(sub["radius_arcsec"]), name) if fn is not None else None)
-        if raw is not None and name == "unwise" and len(raw):
-            raw = unwise_vega_mags(raw)
-        near = nearest_per_target(raw, pos, float(sub["radius_arcsec"])) if raw is not None else None
-        tables[name] = (raw is not None, near)
+        pos = _pos(epoch)
+        if fn is None:
+            tables[name] = (False, None)
+            return
+        raw = _fetch(ledger, label, fn, pos, radius, name)
+        if raw is not None and post is not None and len(raw):
+            raw = post(raw)
+        tables[name] = (raw is not None, nearest_per_target(raw, pos, radius) if raw is not None else None)
+
+    _match("allwise", ep["allwise"], c["allwise"]["radius_arcsec"], f"allwise (upload, {c['allwise']['radius_arcsec']}\")")
+    _match("catwise", ep["catwise"], c["catwise"]["radius_arcsec"], f"catwise (upload, {c['catwise']['radius_arcsec']}\")")
+    _match("unwise", ep["unwise"], c["unwise"]["radius_arcsec"], f"unwise (upload, {c['unwise']['radius_arcsec']}\")",
+           post=lambda raw: unwise_vega_mags(raw, str(c["unwise_flux_system"])))
+    _match("tmass", c["tmass"]["epoch"], c["tmass"]["radius_arcsec"], f"2mass psc (upload, {c['tmass']['radius_arcsec']}\")")
+    hcfg = c["hires_ks"]
+    for name in HIRES_PRIORITY:
+        if name in hcfg["surveys"] and name in matchers:
+            _match(name, hcfg["epoch"], hcfg["radius_arcsec"], f"hires ks {name} (upload, {hcfg['radius_arcsec']}\")")
 
     def _attach(name: str, cols: dict):
-        avail, near = tables[name]
+        avail, near = tables.get(name, (False, None))
         out[f"{name}_status"] = "unavailable" if not avail else "missing"
         for outcol in cols.values():
-            # object dtype: designations and flag strings share the table with floats
-            out[outcol] = pd.Series([np.nan] * len(out), index=out.index, dtype=object)
+            out[outcol] = _obj(len(out), out.index)
         out[f"{name}_sep_arcsec"] = np.nan
         out[f"{name}_n_within"] = np.nan
         if avail and near is not None and len(near):
@@ -649,6 +916,36 @@ def vet_deficit_candidates(cands: pd.DataFrame, cfg: dict, locus: Locus | None, 
     _attach("unwise", {"designation": "unwise_designation", "w1": "unwise_w1", "e_w1": "unwise_e_w1",
                        "w2": "unwise_w2", "e_w2": "unwise_e_w2", "flags_w1": "unwise_flags_w1",
                        "flags_w2": "unwise_flags_w2"})
+    _attach("tmass", {"designation": "tmass_psc_designation", "ks": "tmass_psc_ks", "e_ks": "tmass_psc_e_ks",
+                      "qflg": "tmass_qflg", "rflg": "tmass_rflg", "bflg": "tmass_bflg", "cflg": "tmass_cflg",
+                      "xflg": "tmass_xflg", "aflg": "tmass_aflg", "prox": "tmass_prox",
+                      "pxcntr": "tmass_pxcntr"})
+    for name in HIRES_PRIORITY:
+        _attach(name, {"designation": f"hires_{name}_designation", "ks": f"hires_{name}_ks",
+                       "e_ks": f"hires_{name}_e_ks", "class": f"hires_{name}_class"})
+
+    out = out.copy()          # defragment after the column-by-column attach
+
+    # 2b. IRSA route for w1sat / w2sat when VizieR did not serve them
+    sat_missing = not (np.isfinite(_num(out, "allwise_w1sat")).any() or np.isfinite(_num(out, "allwise_w2sat")).any())
+    report["allwise_sat_route"] = "vizier" if not sat_missing else "none"
+    if sat_missing and matchers.get("irsa_allwise") is not None and tables.get("allwise", (False,))[0]:
+        pos = _pos(ep["allwise"])
+        raw = _fetch(ledger, f"irsa allwise_p3as_psd (upload, {c['irsa_allwise']['radius_arcsec']}\")",
+                     matchers["irsa_allwise"], pos, float(c["irsa_allwise"]["radius_arcsec"]), "irsa_allwise")
+        if raw is not None:
+            near = nearest_per_target(raw, pos, float(c["irsa_allwise"]["radius_arcsec"]))
+            if len(near):
+                near = near.set_index("source_id")
+                hit = out["source_id"].isin(near.index).to_numpy()
+                idx = out.loc[hit, "source_id"].to_numpy()
+                for canon, outcol in (("w1sat", "allwise_w1sat"), ("w2sat", "allwise_w2sat"),
+                                      ("nb", "allwise_nb"), ("na", "allwise_na")):
+                    if canon in near.columns:
+                        cur = out.loc[hit, outcol]
+                        new = near.loc[idx, canon].to_numpy()
+                        out.loc[hit, outcol] = np.where(pd.to_numeric(cur, errors="coerce").notna(), cur, new)
+                report["allwise_sat_route"] = "irsa"
 
     # AllWISE-proper flags
     nb, na = _num(out, "allwise_nb"), _num(out, "allwise_na")
@@ -657,16 +954,44 @@ def vet_deficit_candidates(cands: pd.DataFrame, cfg: dict, locus: Locus | None, 
     out["allwise_flags_available"] = np.isfinite(nb) | np.isfinite(na)
     out["allwise_sat_available"] = np.isfinite(_num(out, "allwise_w1sat"))
 
+    # Zero-point self-checks that no column naming can fool
+    zmax = float(c["zeropoint_check_max_mag"])
+    zp = {"catwise_vs_allwise_w1": zeropoint_check(_num(out, "catwise_w1"), _num(out, "allwise_w1"), zmax, "catwise_w1 - allwise_w1"),
+          "catwise_vs_allwise_w2": zeropoint_check(_num(out, "catwise_w2"), _num(out, "allwise_w2"), zmax, "catwise_w2 - allwise_w2")}
+    for b in ("w1", "w2"):
+        # CatWISE is the reference; with too few CatWISE matches the AllWISE-proper
+        # magnitudes stand in, so a zero-point error can never go unchecked.
+        chk = zeropoint_check(_num(out, f"unwise_{b}"), _num(out, f"catwise_{b}"), zmax, f"unwise_{b} - catwise_{b}")
+        if chk["n"] < 3:
+            chk = zeropoint_check(_num(out, f"unwise_{b}"), _num(out, f"allwise_{b}"), zmax,
+                                  f"unwise_{b} - allwise_{b} (catwise absent)")
+        zp[f"unwise_vs_catwise_{b}"] = chk
+    unwise_suspect = bool(zp["unwise_vs_catwise_w1"]["suspect"] or zp["unwise_vs_catwise_w2"]["suspect"])
+    catwise_suspect = bool(zp["catwise_vs_allwise_w1"]["suspect"] or zp["catwise_vs_allwise_w2"]["suspect"])
+    report["zeropoint_checks"] = zp
+    report["unwise_zeropoint_suspect"] = unwise_suspect
+    report["catwise_zeropoint_suspect"] = catwise_suspect
+    out["unwise_zeropoint_suspect"] = unwise_suspect
+    out["catwise_zeropoint_suspect"] = catwise_suspect
+    if unwise_suspect:
+        print(f"[baffle-vet] unWISE zero point suspect: median offsets "
+              f"{zp['unwise_vs_catwise_w1']['median_offset_mag']} / "
+              f"{zp['unwise_vs_catwise_w2']['median_offset_mag']} mag — unWISE does not vote", flush=True)
+
     # Independent photometry against the same locus
+    floor = float(c["indep_err_floor_mag"])
     for name in ("catwise", "unwise"):
         r = locus_residuals(out, _num(out, f"{name}_w1"), _num(out, f"{name}_e_w1"),
-                            _num(out, f"{name}_w2"), _num(out, f"{name}_e_w2"), locus, locus_cfg)
+                            _num(out, f"{name}_w2"), _num(out, f"{name}_e_w2"), locus, locus_cfg, floor)
         for k, v in r.items():
             out[f"{name}_{k}"] = v
         out[f"{name}_class"] = classify_independent(r, c)
     cat_cls = out["catwise_class"].astype(str).to_numpy()
     un_cls = out["unwise_class"].astype(str).to_numpy()
-    # CatWISE leads (deeper, PM-aware); unWISE fills in and can contradict it.
+    if unwise_suspect:
+        un_cls = np.full(len(out), "missing", dtype=object)
+    if catwise_suspect:
+        cat_cls = np.full(len(out), "missing", dtype=object)
     ind = np.where(cat_cls != "missing", cat_cls, un_cls).astype(object)
     both = (cat_cls != "missing") & (un_cls != "missing")
     ind[both & (cat_cls != un_cls) & ((cat_cls == "photospheric") | (un_cls == "photospheric"))] = "photospheric"
@@ -675,8 +1000,7 @@ def vet_deficit_candidates(cands: pd.DataFrame, cfg: dict, locus: Locus | None, 
 
     # 4. W3 consistency from the re-pulled AllWISE row (falls back to the screen's W3)
     w3 = np.where(np.isfinite(_num(out, "allwise_w3")), _num(out, "allwise_w3"), _num(out, "w3mpro"))
-    e_w3 = np.where(np.isfinite(_num(out, "allwise_e_w3")), _num(out, "allwise_e_w3"),
-                    _num(out, "w3mpro_error"))
+    e_w3 = np.where(np.isfinite(_num(out, "allwise_e_w3")), _num(out, "allwise_e_w3"), _num(out, "w3mpro_error"))
     r3, s3 = w3_residual(out, w3, e_w3, locus, c)
     out["vet_resid_w3"], out["vet_sig_w3"] = r3, s3
     out["w3_status"] = np.where(~np.isfinite(r3), "unmeasured",
@@ -685,10 +1009,50 @@ def vet_deficit_candidates(cands: pd.DataFrame, cfg: dict, locus: Locus | None, 
     if locus is None or not any(locus.has(k, "w3") for k in list(locus.classes())):
         out["w3_status_note"] = "no W3 locus in locus.json (re-screen with the w3mpro_error fallback)"
 
+    # 5. 2MASS PSC flags: K-band character of Bflg / Cflg, prox
+    bk = tmass_flag_char(_str(out, "tmass_bflg"), 2)
+    ck = tmass_flag_char(_str(out, "tmass_cflg"), 2)
+    matched_t = out["tmass_status"].eq("matched").to_numpy()
+    out["tmass_bflg_k"] = pd.to_numeric(bk, errors="coerce").to_numpy()
+    out["tmass_cflg_k"] = ck.where(matched_t, "").to_numpy()
+    out["tmass_blend"] = matched_t & ((pd.to_numeric(bk, errors="coerce").to_numpy() > 1)
+                                      | (~ck.isin(["0", "?"]).to_numpy() & (ck != "").to_numpy()))
+    out["tmass_close_pair"] = matched_t & (_num(out, "tmass_prox") < float(c["tmass"]["close_pair_arcsec"]))
+
+    # 6. Independent higher-resolution Ks (first survey with a match, in priority order)
+    hk = np.full(len(out), np.nan)
+    he = np.full(len(out), np.nan)
+    hsurvey = _obj(len(out), out.index, "")
+    any_avail = any(tables.get(nm, (False,))[0] for nm in HIRES_PRIORITY)
+    for nm in HIRES_PRIORITY:
+        k = _num(out, f"hires_{nm}_ks")
+        take = np.isfinite(k) & ~np.isfinite(hk)
+        hk[take] = k[take]
+        he[take] = _num(out, f"hires_{nm}_e_ks")[take]
+        hsurvey[take] = nm
+    out["hires_survey"] = hsurvey
+    out["hires_ks"], out["hires_e_ks"] = hk, he
+    out["hires_status"] = np.where(np.isfinite(hk), "matched", "missing" if any_avail else "unavailable")
+    resid_ks = hk - _num(out, "ks_m")
+    out["resid_ks_hires"] = resid_ks
+    r1 = _num(out, "resid_w1")
+    out["tmass_ks_contaminated"] = (np.isfinite(resid_ks) & (resid_ks >= float(hcfg["contaminated_min_mag"]))
+                                    & (np.abs(resid_ks + r1) < float(hcfg["consistency_tol_mag"])))
+    out["ks_confirmed_hires"] = np.isfinite(resid_ks) & (np.abs(resid_ks) < float(hcfg["confirm_tol_mag"]))
+
+    # 7. G - Ks consistency (columns come from the screen; NaN when it predates the G-Ks locus)
+    gk = c["gks"]
+    rg, sg = _num(out, "resid_gks"), _num(out, "sig_gks")
+    out["ks_too_bright_for_g"] = ((rg > float(gk["veto_min_mag"])) & (sg > float(gk["veto_nsig"]))
+                                  & (np.abs(rg + r1) < float(gk["consistency_tol_mag"])))
+    out["gks_photospheric"] = (np.abs(rg) < float(gk["photospheric_max_mag"])) & (np.abs(sg) < float(gk["photospheric_nsig"]))
+    out["gks_unmeasured"] = ~np.isfinite(rg)
+
     verdicts = [decide(row) for _, row in out.iterrows()]
     out["vet_verdict"] = [v[0] for v in verdicts]
     out["vet_vetoes"] = [v[1] for v in verdicts]
     out["vet_notes"] = [v[2] for v in verdicts]
+    report["matchers"] = {k: v.describe() for k, v in matchers.items() if isinstance(v, UploadMatcher)}
     return out
 
 
@@ -730,8 +1094,8 @@ def vet_missing(missing: pd.DataFrame, cfg: dict, ledger: VetLedger, *,
         return targets, rep
     targets["source_id"] = pd.to_numeric(targets["source_id"], errors="coerce").astype("int64")
     matchers = matchers if matchers is not None else default_matchers(c)
-    r_close, r_far, r_near = (float(mc["radius_close_arcsec"]), float(mc["radius_far_arcsec"]),
-                              float(mc["nearest_radius_arcsec"]))
+    r_close, r_far, r_near, r_art = (float(mc["radius_close_arcsec"]), float(mc["radius_far_arcsec"]),
+                                     float(mc["nearest_radius_arcsec"]), float(mc["artefact_radius_arcsec"]))
 
     ra_w, de_w = propagate(targets["ra"], targets["dec"], _num(targets, "pmra"), _num(targets, "pmdec"),
                            float(ep["gaia"]), float(ep["allwise"]))
@@ -742,7 +1106,7 @@ def vet_missing(missing: pd.DataFrame, cfg: dict, ledger: VetLedger, *,
     out["wise_status"] = "unavailable" if raw is None else "no_wise_source_within_15as"
     out["allwise_sep_arcsec"] = np.nan
     out["allwise_w1"], out["allwise_w2"] = np.nan, np.nan
-    out["allwise_cc_flags"] = pd.Series([""] * len(out), index=out.index, dtype=object)
+    out["allwise_cc_flags"] = _obj(len(out), out.index, "")
     if raw is not None:
         near = nearest_per_target(raw, pos_w, r_far)
         if len(near):
@@ -756,11 +1120,16 @@ def vet_missing(missing: pd.DataFrame, cfg: dict, ledger: VetLedger, *,
                     out.loc[hit, col] = near.loc[idx, canon].to_numpy()
             out.loc[hit, "wise_status"] = np.where(sep <= r_close, "wise_source_present_within_6as",
                                                    "wise_source_present_6_to_15as")
-    # the truly-absent group: CatWISE / unWISE presence and the nearest AllWISE source
+    # the absent group: CatWISE / unWISE presence, the nearest AllWISE source, the
+    # brightest AllWISE source within 3' (artefact region of a bright star)
     absent = out["wise_status"].eq("no_wise_source_within_15as").to_numpy()
     out["catwise_present"], out["unwise_present"] = np.nan, np.nan
     out["nearest_allwise_sep_arcsec"] = np.nan
-    out["nearest_allwise_cc_flags"] = pd.Series([""] * len(out), index=out.index, dtype=object)
+    out["nearest_allwise_cc_flags"] = _obj(len(out), out.index, "")
+    out["brightest_allwise_3am_w1"], out["brightest_allwise_3am_sep_arcsec"] = np.nan, np.nan
+    out["brightest_allwise_3am_cc_flags"] = _obj(len(out), out.index, "")
+    out["predicted_w1"] = _num(out, "ks_m") - float(mc["predicted_w1_offset"])
+    out["bright_star_artefact_region"] = False
     if absent.any():
         sub = out[absent]
         for name, col in (("catwise", "catwise_present"), ("unwise", "unwise_present")):
@@ -787,32 +1156,58 @@ def vet_missing(missing: pd.DataFrame, cfg: dict, ledger: VetLedger, *,
                 out.loc[hit, "nearest_allwise_sep_arcsec"] = near.loc[idx, "sep_arcsec"].to_numpy()
                 if "cc_flags" in near.columns:
                     out.loc[hit, "nearest_allwise_cc_flags"] = near.loc[idx, "cc_flags"].to_numpy()
+        r = _fetch(ledger, f"missing: allwise brightest (upload, {r_art:g}\")", matchers["allwise"],
+                   pos_n, r_art, "missing-allwise-brightest")
+        if r is not None:
+            best = brightest_per_target(r, pos_n, r_art, "w1")
+            if len(best):
+                best = best.set_index("source_id")
+                hit = out["source_id"].isin(best.index).to_numpy() & absent
+                idx = out.loc[hit, "source_id"].to_numpy()
+                if "w1" in best.columns:
+                    out.loc[hit, "brightest_allwise_3am_w1"] = _num(best.loc[idx], "w1")
+                out.loc[hit, "brightest_allwise_3am_sep_arcsec"] = best.loc[idx, "sep_arcsec"].to_numpy()
+                if "cc_flags" in best.columns:
+                    out.loc[hit, "brightest_allwise_3am_cc_flags"] = best.loc[idx, "cc_flags"].to_numpy()
+        bw1 = _num(out, "brightest_allwise_3am_w1")
+        out["bright_star_artefact_region"] = absent & ((bw1 < float(mc["artefact_w1_max"]))
+                                                       | (_num(out, "predicted_w1") < float(mc["saturation_w1"])))
+    art = out["bright_star_artefact_region"].to_numpy(dtype=bool)
     cat_p, un_p = _num(out, "catwise_present"), _num(out, "unwise_present")
-    truly = absent & ~(cat_p > 0) & ~(un_p > 0) & (np.isfinite(cat_p) | np.isfinite(un_p))
+    truly = absent & ~art & ~(cat_p > 0) & ~(un_p > 0) & (np.isfinite(cat_p) | np.isfinite(un_p))
     out["truly_missing"] = truly
     out["missing_vet_status"] = np.where(out["wise_status"].eq("unavailable"), "unavailable",
-                                         np.where(truly, "truly_missing",
-                                                  np.where(absent, "absent_in_allwise_only",
-                                                           out["wise_status"])))
+                                         np.where(art, "ARTEFACT_REGION_OR_SATURATED",
+                                                  np.where(truly, "truly_missing",
+                                                           np.where(absent, "absent_in_allwise_only",
+                                                                    out["wise_status"]))))
 
     counters = out["wise_status"].value_counts().to_dict()
     by_group = {g: d["wise_status"].value_counts().to_dict() for g, d in out.groupby("vet_group")}
+    keep = [c_ for c_ in ("source_id", "ra", "dec", "b", "phot_g_mean_mag", "ks_m", "predicted_w1",
+                          "parallax", "etz", "nearby", "vet_group", "nearest_allwise_sep_arcsec",
+                          "nearest_allwise_cc_flags", "brightest_allwise_3am_w1",
+                          "brightest_allwise_3am_sep_arcsec", "brightest_allwise_3am_cc_flags")
+            if c_ in out.columns]
     rep.update({
         "counters": {k: int(v) for k, v in counters.items()},
         "counters_by_group": {g: {k: int(v) for k, v in d.items()} for g, d in by_group.items()},
+        "status_counters": {k: int(v) for k, v in out["missing_vet_status"].value_counts().to_dict().items()},
         "n_absent_in_allwise": int(absent.sum()),
+        "n_artefact_region_or_saturated": int(art.sum()),
+        "n_artefact_by_bright_neighbour": int((absent & (_num(out, "brightest_allwise_3am_w1") < float(mc["artefact_w1_max"]))).sum()),
+        "n_artefact_by_own_saturation": int((absent & (_num(out, "predicted_w1") < float(mc["saturation_w1"]))).sum()),
         "n_truly_missing": int(truly.sum()),
         "control_no_wise_fraction": (float((out["vet_group"].eq("control")
                                             & absent).sum() / max(1, int(out["vet_group"].eq("control").sum())))
                                      if int(out["vet_group"].eq("control").sum()) else None),
-        "truly_missing": out.loc[truly, [c_ for c_ in ("source_id", "ra", "dec", "b", "phot_g_mean_mag",
-                                                       "ks_m", "parallax", "etz", "nearby", "vet_group",
-                                                       "nearest_allwise_sep_arcsec",
-                                                       "nearest_allwise_cc_flags")
-                                         if c_ in out.columns]].to_dict(orient="records"),
+        "artefact_region_or_saturated": out.loc[art, keep].to_dict(orient="records"),
+        "truly_missing": out.loc[truly, keep].to_dict(orient="records"),
         "note": ("the Gaia x AllWISE best-neighbour table lacking an entry is the cross-match's "
                  "behaviour on saturated / crowded sources; this is the directly measured "
-                 "absence rate"),
+                 "absence rate.  ARTEFACT_REGION_OR_SATURATED: the brightest AllWISE source within "
+                 "3' has W1 < artefact_w1_max, or the star's own predicted W1 (Ks - 0.05) is in the "
+                 "saturation regime -- AllWISE, CatWISE and unWISE all suppress detections there"),
     })
     if raw is None:
         rep["missing_vet_verdict"] = "NO_DATA_REACHED"
@@ -829,7 +1224,7 @@ def vet_missing(missing: pd.DataFrame, cfg: dict, ledger: VetLedger, *,
 _VET_COMPACT = (
     "source_id", "ra", "dec", "l", "b", "ecl_lat", "parallax", "distance_pc", "phot_g_mean_mag",
     "bp_rp", "lum_class", "jk", "j_m", "ks_m", "w1mpro", "w2mpro", "w3mpro", "w3mpro_error",
-    "resid_w1", "sig_w1", "resid_w2", "sig_w2", "etz", "nearby", "vet_source",
+    "resid_w1", "sig_w1", "resid_w2", "sig_w2", "resid_gks", "sig_gks", "etz", "nearby", "vet_source",
 )
 
 
@@ -856,6 +1251,11 @@ def _json_safe(o):
     if isinstance(o, np.ndarray):
         return _json_safe(o.tolist())
     return o
+
+
+def _count_tokens(col: pd.Series, tokens) -> dict:
+    parts = col.astype(str).str.split(";")
+    return {k: int(parts.map(lambda s, k=k: k in s).sum()) for k in tokens}
 
 
 def run_vet_stage(cfg: dict, out_dir, *, gaia_fetcher=None, matchers=None,
@@ -888,38 +1288,46 @@ def run_vet_stage(cfg: dict, out_dir, *, gaia_fetcher=None, matchers=None,
                  if len(cands) else 0,
                  "locus_loaded": locus is not None,
                  "locus_has_w3": bool(locus is not None and any(locus.has(k, "w3") for k in locus.classes())),
+                 "locus_has_gks": bool(locus is not None and any(locus.has(k, "gks") for k in locus.classes())),
+                 "screen_has_gks_columns": bool(len(cands) and "resid_gks" in cands.columns),
                  "n_missing_in": int(len(missing))}
     if len(cands):
         table = vet_deficit_candidates(cands, c, locus, ledger, gaia_fetcher=gaia_fetcher,
-                                       matchers=matchers, locus_cfg=locus_cfg)
+                                       matchers=matchers, locus_cfg=locus_cfg, report=rep)
     else:
         table = cands
     if len(table):
         table.to_csv(out / "vet_table.csv", index=False)
-        surv = table[table["vet_verdict"] == "SURVIVES_VET"]
+        surv = table[table["vet_verdict"].isin(SURVIVOR_VERDICTS)]
         surv.to_csv(out / "vetted_candidates.csv", index=False)
         rep["verdict_counts"] = {k: int((table["vet_verdict"] == k).sum()) for k in VET_VERDICTS}
-        rep["veto_counters"] = {k: int(table["vet_vetoes"].astype(str).str.split(";").map(lambda s, k=k: k in s).sum())
-                                for k in VET_VETOES}
-        rep["note_counters"] = {k: int(table["vet_notes"].astype(str).str.split(";").map(lambda s, k=k: k in s).sum())
-                                for k in VET_NOTES}
-        rep["n_survivors"] = int(len(surv))
+        rep["veto_counters"] = _count_tokens(table["vet_vetoes"], VET_VETOES)
+        rep["note_counters"] = _count_tokens(table["vet_notes"], VET_NOTES)
+        rep["n_survivors"] = int((table["vet_verdict"] == "SURVIVES_VET").sum())
+        rep["n_survivors_no_hires_ks"] = int((table["vet_verdict"] == "SURVIVES_VET_NO_HIRES_KS").sum())
+        rep["n_vetted_candidates_written"] = int(len(surv))
         rep["n_survivors_etz"] = int(surv["etz"].map(lambda x: str(x).lower() == "true").sum()) \
             if "etz" in surv.columns else 0
         rep["n_survivors_nearby"] = int(surv["nearby"].map(lambda x: str(x).lower() == "true").sum()) \
             if "nearby" in surv.columns else 0
-        rep["survivors"] = surv[[k for k in _VET_COMPACT + ("vet_notes", "independent_class",
+        rep["hires_ks_coverage"] = {k: int(v) for k, v in table["hires_status"].value_counts().to_dict().items()}
+        rep["hires_ks_by_survey"] = {k: int(v) for k, v in table["hires_survey"].astype(str).value_counts().to_dict().items() if k}
+        rep["survivors"] = surv[[k for k in _VET_COMPACT + ("vet_verdict", "vet_notes", "independent_class",
                                                             "catwise_resid_w1", "catwise_resid_w2",
                                                             "unwise_resid_w1", "unwise_resid_w2",
-                                                            "w3_status", "gaia_n_6as")
+                                                            "w3_status", "gaia_n_4as", "gaia_n_6as",
+                                                            "tmass_bflg", "tmass_cflg", "tmass_prox",
+                                                            "hires_survey", "hires_ks", "resid_ks_hires")
                                  if k in surv.columns]].to_dict(orient="records")
         rep["allwise_columns_missing"] = [k for k in ("nb", "na", "w1sat", "w2sat", "w1rchi2")
-                                          if not table[f"allwise_{k}"].notna().any()]
+                                          if not pd.to_numeric(table[f"allwise_{k}"], errors="coerce").notna().any()]
+        rep["tmass_columns_missing"] = [k for k in ("bflg", "cflg", "xflg", "prox", "pxcntr")
+                                        if table[f"tmass_{k}"].astype(str).replace("nan", "").eq("").all()]
     else:
         pd.DataFrame().to_csv(out / "vet_table.csv", index=False)
         pd.DataFrame().to_csv(out / "vetted_candidates.csv", index=False)
         rep["verdict_counts"] = {k: 0 for k in VET_VERDICTS}
-        rep["n_survivors"] = 0
+        rep["n_survivors"] = rep["n_survivors_no_hires_ks"] = 0
 
     if len(missing):
         mtable, mrep = vet_missing(missing, c, ledger, matchers=matchers)
@@ -932,6 +1340,7 @@ def run_vet_stage(cfg: dict, out_dir, *, gaia_fetcher=None, matchers=None,
 
     deficit_reached = any(e["status"] != QUERY_FAILED for e in ledger.entries
                           if not e["label"].startswith("missing"))
+    n_surv_all = rep["n_survivors"] + rep["n_survivors_no_hires_ks"]
     if not len(cands):
         rep["verdict_deficit_after_vet"] = "NO_DATA_REACHED" if not (out / "candidates.csv").exists() \
             else "NO_MIDIR_DEFICIT_SURVIVOR"
@@ -939,8 +1348,9 @@ def run_vet_stage(cfg: dict, out_dir, *, gaia_fetcher=None, matchers=None,
     elif not deficit_reached:
         rep["verdict_deficit_after_vet"] = "NO_DATA_REACHED"
         rep["note"] = "every vet archive query failed; nothing was vetted"
-    elif rep["n_survivors"] > 0:
-        rep["verdict_deficit_after_vet"] = f"MIDIR_DEFICIT_CANDIDATES_SURVIVE_VET (n={rep['n_survivors']})"
+    elif n_surv_all > 0:
+        rep["verdict_deficit_after_vet"] = (f"MIDIR_DEFICIT_CANDIDATES_SURVIVE_VET (n={rep['n_survivors']}, "
+                                            f"no_hires_ks={rep['n_survivors_no_hires_ks']})")
     else:
         rep["verdict_deficit_after_vet"] = "NO_MIDIR_DEFICIT_SURVIVOR"
     if ledger.all_failed():
@@ -958,9 +1368,12 @@ def run_vet_stage(cfg: dict, out_dir, *, gaia_fetcher=None, matchers=None,
     return rep
 
 
-__all__ = ["ALLWISE_ALIASES", "CATWISE_ALIASES", "DEFAULTS", "UNWISE_ALIASES", "VET_NOTES",
-           "VET_VERDICTS", "VET_VETOES", "UploadMatcher", "VetLedger", "classify_independent",
-           "decide", "default_gaia_upload_fetcher", "default_matchers", "gaia_neighbour_stats",
+__all__ = ["ALLWISE_ALIASES", "CATWISE_ALIASES", "DEFAULTS", "HIRES_KS_ALIASES", "HIRES_PRIORITY",
+           "IRSA_ALLWISE_ALIASES", "SURVIVOR_VERDICTS", "TMASS_PSC_ALIASES", "UNWISE_ALIASES",
+           "VET_NOTES", "VET_VERDICTS", "VET_VETOES", "UploadMatcher", "VetLedger",
+           "brightest_per_target", "classify_independent", "decide", "default_gaia_upload_fetcher",
+           "default_matchers", "discover_table", "gaia_neighbour_stats",
            "gaia_neighbours_upload_query", "locus_residuals", "nearest_per_target", "propagate",
-           "run_vet_stage", "select_missing_targets", "separation_arcsec", "unwise_vega_mags",
-           "vet_deficit_candidates", "vet_missing", "vizier_upload_query", "w3_residual"]
+           "run_vet_stage", "select_missing_targets", "separation_arcsec", "table_discovery_query",
+           "tmass_flag_char", "unwise_vega_mags", "vet_deficit_candidates", "vet_missing",
+           "vizier_upload_query", "w3_residual", "zeropoint_check"]

@@ -46,6 +46,12 @@ class Sky:
         self.allwise: dict[int, dict] = {}      # per source_id overrides / presence
         self.catwise: dict[int, dict] = {}
         self.unwise: dict[int, dict] = {}
+        self.tmass: dict[int, dict] = {}
+        self.irsa_allwise: dict[int, dict] = {}
+        self.gps: dict[int, dict] = {}
+        self.vvv: dict[int, dict] = {}
+        self.vhs: dict[int, dict] = {}
+        self.las: dict[int, dict] = {}
         self.raise_on: set[str] = set()
         self.calls: list[str] = []
 
@@ -88,8 +94,9 @@ class Sky:
             return pd.DataFrame(rows)
         return fetch
 
-    def matchers(self):
-        return {n: self._matcher(n) for n in ("allwise", "catwise", "unwise")}
+    def matchers(self, names=("allwise", "catwise", "unwise", "tmass", "irsa_allwise",
+                              "gps", "vvv", "vhs", "las")):
+        return {n: self._matcher(n) for n in names}
 
 
 def _true_w(cands: pd.DataFrame, locus: L.Locus, band: str) -> np.ndarray:
@@ -136,6 +143,10 @@ def _sky_all_confirm(cands, locus) -> Sky:
         sky.catwise[sid] = {"w1": w1t[k] + 0.8, "e_w1": 0.02, "w2": w2t[k] + 0.8, "e_w2": 0.02,
                             "cc_flags": "00", "ab_flags": "00"}
         sky.unwise[sid] = {"w1": w1t[k] + 0.8, "e_w1": 0.02, "w2": w2t[k] + 0.8, "e_w2": 0.02}
+        ks = float(cands.loc[k, "ks_m"])
+        sky.tmass[sid] = {"ks": ks, "e_ks": 0.02, "qflg": "AAA", "rflg": "222", "bflg": "111",
+                          "cflg": "000", "xflg": 0, "aflg": 0, "prox": 25.0, "pxcntr": 1}
+        sky.gps[sid] = {"ks": ks + 0.02, "e_ks": 0.01, "class": -1}
     return sky
 
 
@@ -159,9 +170,14 @@ def test_confirmed_candidates_survive_the_vet(cands, locus):
     assert (t["allwise_status"] == "matched").all() and (t["gaia_n_6as"] == 1).all()
     assert (t["w3_status"] == "normal").all()
     assert t["catwise_resid_w1"].between(-0.9, -0.7).all()
-    # exactly four upload queries, none per star
-    assert len(ledger.entries) == 4 and all(e["status"] == V.QUERY_OK for e in ledger.entries)
-    assert len(sky.calls) == 4
+    assert (t["tmass_status"] == "matched").all() and not t["tmass_blend"].any()
+    assert (t["hires_survey"] == "gps").all() and t["ks_confirmed_hires"].all()
+    assert t["vet_notes"].str.contains("ks_confirmed_hires").all()
+    assert (t["gks_photospheric"]).all() and not t["ks_too_bright_for_g"].any()
+    # nine upload queries (gaia, allwise, catwise, unwise, 2mass, 4 hires), none per star
+    assert len(ledger.entries) == 9 and all(e["status"] != V.QUERY_FAILED for e in ledger.entries)
+    assert sum(e["status"] == V.QUERY_OK for e in ledger.entries) == 6      # vvv/vhs/las: zero rows
+    assert len(sky.calls) == 9
 
 
 def test_a_brighter_gaia_neighbour_within_6as_is_a_blend(cands, locus):
@@ -175,15 +191,15 @@ def test_a_brighter_gaia_neighbour_within_6as_is_a_blend(cands, locus):
     assert row["gaia_n_6as"] == 2 and row["gaia_brightest_neighbour_g"] == pytest.approx(g + 1.0)
     assert row["gaia_brightest_neighbour_sep_arcsec"] == pytest.approx(np.hypot(3.0, 2.0), abs=0.05)
     assert (t[t["source_id"] != sid]["vet_verdict"] == "SURVIVES_VET").all()
-    # fainter than G + 1.5, or beyond 6": no blend; three sources within 6" is crowded_field
+    # fainter than G + 1.5 and beyond the 4" 2MASS radius: no blend; three within 6" is crowded_field
     sky2 = _sky_all_confirm(cands, locus)
-    sky2.gaia_extra += [{"target": sid, "sid": 1, "dra_arcsec": 2.0, "ddec_arcsec": 0.0, "g": g + 3.0},
-                        {"target": sid, "sid": 2, "dra_arcsec": 0.0, "ddec_arcsec": 4.0, "g": g + 2.0},
+    sky2.gaia_extra += [{"target": sid, "sid": 1, "dra_arcsec": 5.0, "ddec_arcsec": 0.0, "g": g + 3.0},
+                        {"target": sid, "sid": 2, "dra_arcsec": 0.0, "ddec_arcsec": 5.5, "g": g + 2.0},
                         {"target": sid, "sid": 3, "dra_arcsec": 8.0, "ddec_arcsec": 0.0, "g": g - 5.0}]
     t2, _ = _run(cands, locus, sky2)
     row = t2[t2["source_id"] == sid].iloc[0]
     assert row["vet_verdict"] == "SURVIVES_VET" and "crowded_field" in row["vet_notes"]
-    assert row["gaia_n_6as"] == 3 and row["gaia_n_10as"] == 4
+    assert row["gaia_n_4as"] == 1 and row["gaia_n_6as"] == 3 and row["gaia_n_10as"] == 4
 
 
 def test_deblended_component_and_saturated_pixels(cands, locus):
@@ -288,16 +304,190 @@ def test_a_failed_service_leaves_the_star_inconclusive_with_the_note(cands, locu
 
 def test_decide_precedence_table():
     base = {"gaia_neighbours_checked": True, "allwise_status": "matched",
-            "independent_class": "confirms_deficit", "w3_status": "normal"}
-    assert V.decide(pd.Series(base))[0] == "SURVIVES_VET"
-    assert V.decide(pd.Series(dict(base, blend_flux_theft=True, deblended_component=True)))[0] == "BLEND"
-    assert V.decide(pd.Series(dict(base, deblended_component=True, w3_status="excess")))[0] == "DEBLENDED_COMPONENT"
-    assert V.decide(pd.Series(dict(base, saturated_pixels=True)))[0] == "ALLWISE_PHOTOMETRY_WRONG"
-    assert V.decide(pd.Series(dict(base, w3_status="excess")))[0] == "W3_INCONSISTENT"
-    assert V.decide(pd.Series(dict(base, allwise_status="missing")))[0] == "INCONCLUSIVE"
-    v, vetoes, notes = V.decide(pd.Series(dict(base, crowded_field=True, w3_status="deficit")))
+            "independent_class": "confirms_deficit", "w3_status": "normal",
+            "tmass_status": "matched", "hires_status": "matched", "ks_confirmed_hires": True}
+    d = lambda **kw: V.decide(pd.Series(dict(base, **kw)))[0]     # noqa: E731
+    assert d() == "SURVIVES_VET"
+    assert d(hires_status="missing", ks_confirmed_hires=False) == "SURVIVES_VET_NO_HIRES_KS"
+    assert d(ks_confirmed_hires=False) == "INCONCLUSIVE"            # hires answered, undecided
+    assert d(hires_status="unavailable", ks_confirmed_hires=False) == "INCONCLUSIVE"
+    assert d(blend_flux_theft=True, deblended_component=True) == "BLEND"
+    assert d(unresolved_in_2mass=True, tmass_blend=True) == "BLEND"
+    assert d(deblended_component=True, w3_status="excess") == "DEBLENDED_COMPONENT"
+    assert d(saturated_pixels=True) == "ALLWISE_PHOTOMETRY_WRONG"
+    assert d(independent_class="photospheric") == "ALLWISE_PHOTOMETRY_WRONG"
+    assert d(w3_status="excess", tmass_blend=True) == "W3_INCONSISTENT"
+    assert d(tmass_blend=True, ks_too_bright_for_g=True) == "TMASS_BLEND"
+    assert d(tmass_ks_contaminated=True) == "KS_CONTAMINATED"
+    assert d(ks_too_bright_for_g=True) == "KS_CONTAMINATED"
+    assert d(allwise_status="missing") == "INCONCLUSIVE"
+    assert d(tmass_status="missing") == "INCONCLUSIVE"
+    assert d(independent_class="ambiguous") == "INCONCLUSIVE"
+    v, vetoes, notes = V.decide(pd.Series(dict(base, crowded_field=True, w3_status="deficit",
+                                               tmass_close_pair=True, gks_photospheric=True)))
     assert v == "SURVIVES_VET" and vetoes == ""
-    assert notes == "crowded_field;catwise_confirms_deficit;w3_deficit_consistent"
+    assert notes == ("crowded_field;catwise_confirms_deficit;w3_deficit_consistent;tmass_close_pair;"
+                     "ks_confirmed_hires;gks_photospheric")
+    _, _, notes = V.decide(pd.Series(dict(base, independent_class="ambiguous", hires_status="missing",
+                                          ks_confirmed_hires=False, gks_unmeasured=True)))
+    assert "catwise_not_confirming" in notes and "no_hires_ks_coverage" in notes and "gks_unmeasured" in notes
+
+
+def test_tmass_blend_flags_close_pair_and_unresolved_gaia_neighbour(cands, locus):
+    sky = _sky_all_confirm(cands, locus)
+    s0, s1, s2, s3 = (int(cands.loc[i, "source_id"]) for i in range(4))
+    sky.tmass[s0]["bflg"] = "112"                       # K-band blend component
+    sky.tmass[s1]["cflg"] = "00c"                       # K-band contamination
+    sky.tmass[s2]["prox"] = 3.5                         # close pair, not a veto
+    g3 = float(cands.loc[3, "phot_g_mean_mag"])
+    sky.gaia_extra.append({"target": s3, "sid": 77, "dra_arcsec": 2.5, "ddec_arcsec": 2.0, "g": g3 + 3.0})
+    t, _ = _run(cands, locus, sky)
+    t = t.set_index("source_id")
+    assert t.loc[s0, "vet_verdict"] == "TMASS_BLEND" and t.loc[s0, "tmass_bflg_k"] == 2
+    assert t.loc[s1, "vet_verdict"] == "TMASS_BLEND" and t.loc[s1, "tmass_cflg_k"] == "c"
+    assert t.loc[s2, "vet_verdict"] == "SURVIVES_VET" and "tmass_close_pair" in t.loc[s2, "vet_notes"]
+    assert t.loc[s3, "vet_verdict"] == "BLEND" and "unresolved_in_2mass" in t.loc[s3, "vet_vetoes"]
+    assert "blend_flux_theft" not in t.loc[s3, "vet_vetoes"]          # 3 mag fainter: not flux theft
+    assert t.loc[s3, "gaia_n_4as"] == 2 and t.loc[s3, "gaia_nearest_neighbour_dg"] == pytest.approx(3.0)
+    assert bool(t.loc[s2, "gaia_isolated"]) and "gaia_isolated" in t.loc[s2, "vet_notes"]
+    # 2MASS flags unavailable: no veto, a note, and INCONCLUSIVE rather than a survivor
+    sky2 = _sky_all_confirm(cands, locus)
+    sky2.raise_on = {"tmass"}
+    t2, _ = _run(cands, locus, sky2)
+    assert (t2["vet_verdict"] == "INCONCLUSIVE").all()
+    assert t2["vet_notes"].str.contains("tmass_flags_unavailable").all()
+
+
+def test_hires_ks_decides_contaminated_confirmed_or_no_coverage(cands, locus):
+    sky = _sky_all_confirm(cands, locus)
+    s0, s1, s2, s3 = (int(cands.loc[i, "source_id"]) for i in range(4))
+    ks = cands.set_index("source_id")["ks_m"]
+    sky.gps[s0] = {"ks": ks[s0] + 0.8, "e_ks": 0.02}     # UKIDSS sees a fainter star: 2MASS Ks was the sum
+    sky.gps[s1] = {"ks": ks[s1] + 0.4, "e_ks": 0.02}     # neither confirms nor matches -resid_w1
+    sky.gps[s2] = {"absent": True}                      # no coverage
+    sky.gps[s3] = {"absent": True}
+    sky.vvv[s3] = {"ks": ks[s3] - 0.03, "e_ks": 0.02}   # VVV covers it instead
+    t, _ = _run(cands, locus, sky)
+    t = t.set_index("source_id")
+    assert t.loc[s0, "vet_verdict"] == "KS_CONTAMINATED" and "tmass_ks_contaminated" in t.loc[s0, "vet_vetoes"]
+    assert t.loc[s0, "resid_ks_hires"] == pytest.approx(0.8, abs=1e-6)
+    assert t.loc[s1, "vet_verdict"] == "INCONCLUSIVE" and "ks_hires_ambiguous" in t.loc[s1, "vet_notes"]
+    assert t.loc[s2, "vet_verdict"] == "SURVIVES_VET_NO_HIRES_KS"
+    assert "no_hires_ks_coverage" in t.loc[s2, "vet_notes"] and t.loc[s2, "hires_status"] == "missing"
+    assert t.loc[s3, "vet_verdict"] == "SURVIVES_VET" and t.loc[s3, "hires_survey"] == "vvv"
+    # every hires service down: hires_ks_unavailable, INCONCLUSIVE (not a no-coverage survivor)
+    sky.raise_on = {"gps", "vvv", "vhs", "las"}
+    t2, _ = _run(cands, locus, sky)
+    assert (t2["hires_status"] == "unavailable").all()
+    assert (t2["vet_verdict"] == "INCONCLUSIVE").all() and t2["vet_notes"].str.contains("hires_ks_unavailable").all()
+
+
+def test_ks_too_bright_for_g_from_the_screen_columns(cands, locus):
+    sky = _sky_all_confirm(cands, locus)
+    df = cands.copy()
+    s0 = int(df.loc[0, "source_id"])
+    df.loc[0, "resid_gks"], df.loc[0, "sig_gks"] = -df.loc[0, "resid_w1"], 12.0
+    df.loc[1, "resid_gks"] = np.nan                      # a screen that predates the G-Ks locus
+    t, _ = _run(df, locus, sky)
+    t = t.set_index("source_id")
+    assert t.loc[s0, "vet_verdict"] == "KS_CONTAMINATED" and "ks_too_bright_for_g" in t.loc[s0, "vet_vetoes"]
+    s1 = int(df.loc[1, "source_id"])
+    assert t.loc[s1, "vet_verdict"] == "SURVIVES_VET" and "gks_unmeasured" in t.loc[s1, "vet_notes"]
+
+
+def test_unwise_vega_fluxes_and_the_zeropoint_self_check(cands, locus):
+    sky = _sky_all_confirm(cands, locus)
+    # serve unWISE as Vega nanomaggy FLUXES (what II/363 does): the conversion must land on CatWISE
+    for sid, spec in sky.unwise.items():
+        sky.unwise[sid] = {"w1flux": 10 ** ((22.5 - spec["w1"]) / 2.5), "e_w1flux": 1.0,
+                           "w2flux": 10 ** ((22.5 - spec["w2"]) / 2.5), "e_w2flux": 1.0}
+    rep = {}
+    t = V.vet_deficit_candidates(cands, CFG, locus, V.VetLedger(), gaia_fetcher=sky.gaia,
+                                 matchers=sky.matchers(), locus_cfg=R.DEFAULTS["locus"], report=rep)
+    zp = rep["zeropoint_checks"]
+    assert abs(zp["unwise_vs_catwise_w1"]["median_offset_mag"]) < 0.01 and not rep["unwise_zeropoint_suspect"]
+    assert abs(zp["catwise_vs_allwise_w1"]["median_offset_mag"]) < 0.01 and not rep["catwise_zeropoint_suspect"]
+    assert (t["unwise_class"] == "confirms_deficit").all() and (t["vet_verdict"] == "SURVIVES_VET").all()
+    # the error floor acts on the significance, not on the served column
+    zeros = np.zeros(len(cands))
+    w1t = _true_w(cands, locus, "w1")
+    r = V.locus_residuals(cands, w1t - 0.05, zeros, w1t - 0.05, zeros, locus, err_floor=0.5)
+    assert (np.abs(r["sig_w1"]) < 0.11).all()
+    # the run-34054735689 mistake: an extra AB->Vega offset -> suspect, unWISE does not vote
+    cfg_ab = V._cfg({"unwise_flux_system": "ab"})
+    rep2 = {}
+    t2 = V.vet_deficit_candidates(cands, cfg_ab, locus, V.VetLedger(), gaia_fetcher=sky.gaia,
+                                  matchers=sky.matchers(), locus_cfg=R.DEFAULTS["locus"], report=rep2)
+    assert rep2["unwise_zeropoint_suspect"] is True
+    assert rep2["zeropoint_checks"]["unwise_vs_catwise_w1"]["median_offset_mag"] == pytest.approx(-2.699, abs=0.01)
+    assert rep2["zeropoint_checks"]["unwise_vs_catwise_w2"]["median_offset_mag"] == pytest.approx(-3.339, abs=0.01)
+    assert t2["vet_notes"].str.contains("unwise_zeropoint_suspect").all()
+    assert (t2["vet_verdict"] == "SURVIVES_VET").all()     # CatWISE still carries the vote
+    # with CatWISE absent, a suspect unWISE cannot confirm: INCONCLUSIVE
+    for sid in list(sky.catwise):
+        sky.catwise[sid] = {"absent": True}
+    rep3 = {}
+    t3 = V.vet_deficit_candidates(cands, cfg_ab, locus, V.VetLedger(), gaia_fetcher=sky.gaia,
+                                  matchers=sky.matchers(), locus_cfg=R.DEFAULTS["locus"], report=rep3)
+    assert (t3["vet_verdict"] == "INCONCLUSIVE").all() and (t3["independent_class"] == "missing").all()
+    assert "catwise absent" in rep3["zeropoint_checks"]["unwise_vs_catwise_w1"]["label"]
+    # CatWISE vs AllWISE-proper is checked the same way
+    sky4 = _sky_all_confirm(cands, locus)
+    for sid in sky4.catwise:
+        sky4.catwise[sid]["w1"] -= 1.0
+        sky4.catwise[sid]["w2"] -= 1.0
+    rep4 = {}
+    V.vet_deficit_candidates(cands, CFG, locus, V.VetLedger(), gaia_fetcher=sky4.gaia,
+                             matchers=sky4.matchers(), locus_cfg=R.DEFAULTS["locus"], report=rep4)
+    assert rep4["catwise_zeropoint_suspect"] is True
+
+
+def test_irsa_route_supplies_w1sat_w2sat_when_vizier_lacks_them(cands, locus):
+    sky = _sky_all_confirm(cands, locus)
+    for spec in sky.allwise.values():
+        spec.pop("w1sat")
+        spec.pop("w2sat")
+    s0 = int(cands.loc[0, "source_id"])
+    for sid in cands["source_id"].astype(int):
+        sky.irsa_allwise[sid] = {"w1sat": 0.0, "w2sat": 0.0, "nb": 1, "na": 0}
+    sky.irsa_allwise[s0]["w2sat"] = 0.3
+    rep = {}
+    ledger = V.VetLedger()
+    t = V.vet_deficit_candidates(cands, CFG, locus, ledger, gaia_fetcher=sky.gaia,
+                                 matchers=sky.matchers(), locus_cfg=R.DEFAULTS["locus"], report=rep)
+    assert rep["allwise_sat_route"] == "irsa" and len(ledger.entries) == 10
+    t = t.set_index("source_id")
+    assert t.loc[s0, "vet_verdict"] == "ALLWISE_PHOTOMETRY_WRONG" and t["allwise_sat_available"].all()
+    # IRSA absent from the matcher set: the note stays, nothing breaks
+    rep2 = {}
+    t2 = V.vet_deficit_candidates(cands, CFG, locus, V.VetLedger(), gaia_fetcher=sky.gaia,
+                                  matchers=sky.matchers(("allwise", "catwise", "unwise", "tmass", "gps")),
+                                  locus_cfg=R.DEFAULTS["locus"], report=rep2)
+    assert rep2["allwise_sat_route"] == "none" and not t2["allwise_sat_available"].any()
+
+
+def test_table_discovery_and_upload_matcher_discover_like(monkeypatch):
+    from seti.baffle import vet
+
+    q = V.table_discovery_query("%VVV%")
+    assert "TAP_SCHEMA.tables" in q and "LIKE '%VVV%'" in q
+
+    def fake_run(query, *, uploads=None, label="", url=None, retries=3):
+        if "TAP_SCHEMA.tables" in query:
+            return pd.DataFrame({"table_name": ['"II/348/vvv2"', '"II/376/vvv2"', '"II/348/vvvcatl"']})
+        return pd.DataFrame({"source_id": [1], "RAJ2000": [1.0], "DEJ2000": [2.0], "Ksmag3": [9.0],
+                             "e_Ksmag3": [0.01]})
+
+    monkeypatch.setattr(vet, "run_vizier", fake_run)
+    monkeypatch.setattr(vet, "discover_columns", lambda table, url=None: {
+        "table": table, "names": ["RAJ2000", "DEJ2000", "Ksmag3", "e_Ksmag3"], "route": "x",
+        "meta": {"Ksmag3": {"unit": "mag", "ucd": "phot.mag;em.IR.K"}}})
+    assert V.discover_table("%VVV%", prefer=('"II/376/vvv2"',)) == '"II/376/vvv2"'
+    assert V.discover_table("%VVV%") == '"II/348/vvv2"'
+    m = V.UploadMatcher("vvv", None, V.HIRES_KS_ALIASES, discover_like="%VVV%", prefer=('"II/376/vvv2"',))
+    df = m(pd.DataFrame({"source_id": [1], "ra": [1.0], "dec": [2.0]}), 1.5, "t")
+    assert m.table == '"II/376/vvv2"' and df.loc[0, "ks"] == 9.0
+    assert m.describe()["meta"]["ks"]["unit"] == "mag"
 
 
 # ---------------------------------------------------------------------------
@@ -325,9 +515,12 @@ def test_locus_reload_and_independent_residuals(cands, locus, tmp_path):
 def test_unwise_nanomaggies_become_vega_magnitudes():
     df = pd.DataFrame({"w1flux": [1000.0, 0.0], "e_w1flux": [10.0, 1.0],
                        "w2flux": [500.0, np.nan], "e_w2flux": [10.0, np.nan]})
-    out = V.unwise_vega_mags(df)
-    assert out.loc[0, "w1"] == pytest.approx(22.5 - 7.5 - 2.699)
-    assert out.loc[0, "w2"] == pytest.approx(22.5 - 2.5 * np.log10(500.0) - 3.339)
+    out = V.unwise_vega_mags(df)                              # Vega nanomaggies: no offset
+    assert out.loc[0, "w1"] == pytest.approx(22.5 - 7.5)
+    assert out.loc[0, "w2"] == pytest.approx(22.5 - 2.5 * np.log10(500.0))
+    ab = V.unwise_vega_mags(df, "ab")                         # the explicit AB option
+    assert ab.loc[0, "w1"] == pytest.approx(22.5 - 7.5 - 2.699)
+    assert ab.loc[0, "w2"] == pytest.approx(22.5 - 2.5 * np.log10(500.0) - 3.339)
     assert out.loc[0, "e_w1"] == pytest.approx(1.0857 * 0.01)
     assert np.isnan(out.loc[1, "w1"]) and np.isnan(out.loc[1, "w2"])
     # a served magnitude wins over the flux conversion
@@ -413,7 +606,10 @@ def test_upload_matcher_composes_from_discovery_and_canonicalises(monkeypatch):
     m2(pd.DataFrame({"source_id": [7, 7, 7], "ra": [1.0] * 3, "dec": [2.0] * 3}), 3.0, "t")
     assert m2.routes_used == ["tap_upload", "tap_upload"]
     d = V.default_matchers(CFG)
-    assert set(d) == {"allwise", "catwise", "unwise"} and d["unwise"].table == '"II/363/unwise"'
+    assert set(d) == {"allwise", "catwise", "unwise", "tmass", "irsa_allwise", "vvv", "gps", "vhs", "las"}
+    assert d["unwise"].table == '"II/363/unwise"' and d["tmass"].table == '"II/246/out"'
+    assert d["vvv"].table is None and d["vvv"].discover_like == "%VVV%"
+    assert d["irsa_allwise"].url.startswith("https://irsa")
 
 
 # ---------------------------------------------------------------------------
@@ -425,6 +621,7 @@ def _missing_frame():
     m["nearby"] = False
     m.loc[:19, "nearby"] = True
     m.loc[20:29, "etz"] = True
+    m.loc[20:29, "ks_m"] = 10.0          # predicted W1 9.95: outside the saturation regime
     return m
 
 
@@ -476,13 +673,62 @@ def test_missing_track_direct_match_counters_and_truly_missing():
     assert absent["nearest_allwise_sep_arcsec"].between(39, 41).all()
     assert set(out["missing_vet_status"]) >= {"truly_missing", "absent_in_allwise_only",
                                               "wise_source_present_within_6as"}
-    # queries: allwise 15", catwise, unwise, allwise nearest -> four uploads, no per-star cones
-    assert len(ledger.entries) == 4
+    assert rep["n_artefact_region_or_saturated"] == 0 and rep["status_counters"]["truly_missing"] == 5
+    # queries: allwise 15", catwise, unwise, allwise nearest 60", allwise brightest 3' -> five uploads
+    assert len(ledger.entries) == 5
     # every counterpart present -> NO_TRULY_MISSING_COUNTERPART
     for k in range(20, 30):
         sky.allwise[sids[k]] = {"w1": 8.0, "w2": 8.0, "cc_flags": "0000", "offset_arcsec": 0.5}
     out2, rep2 = V.vet_missing(m, cfg, V.VetLedger(), matchers=matchers)
     assert rep2["missing_vet_verdict"] == "NO_TRULY_MISSING_COUNTERPART" and rep2["n_absent_in_allwise"] == 0
+
+
+def test_missing_artefact_region_or_saturated_is_not_truly_missing():
+    m = _missing_frame()
+    sids = m["source_id"].astype(int).tolist()
+    m.loc[25, "ks_m"] = 7.0                              # own predicted W1 6.95 < 8.2: saturation regime
+    cfg = V._cfg({"missing": {"n_control": 0}})
+    sky = Sky(m)
+    for k, sid in enumerate(sids[:30]):
+        sky.allwise[sid] = {"absent": True} if 20 <= k < 30 else {"w1": 8.0, "w2": 8.0, "cc_flags": "0000",
+                                                                  "offset_arcsec": 0.5}
+    bright_sid = sids[27]
+
+    class Wide:
+        def __call__(self, positions, radius_arcsec, label):
+            if radius_arcsec >= 180:                    # brightest-within-3' query
+                rows = []
+                for _, p in positions.iterrows():
+                    w1 = 4.0 if int(p["source_id"]) == bright_sid else 9.0
+                    rows.append({"source_id": int(p["source_id"]), "ra": p["ra"],
+                                 "dec": p["dec"] + 100 / 3600.0, "w1": w1, "cc_flags": "DdDD"})
+                    rows.append({"source_id": int(p["source_id"]), "ra": p["ra"],
+                                 "dec": p["dec"] + 30 / 3600.0, "w1": 12.0, "cc_flags": "d000"})
+                return pd.DataFrame(rows)
+            if radius_arcsec >= 60:
+                return pd.DataFrame({"source_id": positions["source_id"], "ra": positions["ra"],
+                                     "dec": positions["dec"] + 30 / 3600.0, "cc_flags": "d000",
+                                     "w1": 12.0, "w2": 12.0})
+            return sky._matcher("allwise")(positions, radius_arcsec, label)
+
+    matchers = sky.matchers()
+    matchers["allwise"] = Wide()
+    out, rep = V.vet_missing(m, cfg, V.VetLedger(), matchers=matchers)
+    out = out.set_index("source_id")
+    assert rep["n_absent_in_allwise"] == 10
+    assert rep["n_artefact_region_or_saturated"] == 2 and rep["n_truly_missing"] == 8
+    assert rep["n_artefact_by_bright_neighbour"] == 1 and rep["n_artefact_by_own_saturation"] == 1
+    assert out.loc[bright_sid, "missing_vet_status"] == "ARTEFACT_REGION_OR_SATURATED"
+    assert out.loc[bright_sid, "brightest_allwise_3am_w1"] == 4.0
+    assert out.loc[bright_sid, "brightest_allwise_3am_sep_arcsec"] == pytest.approx(100.0, abs=0.5)
+    assert out.loc[bright_sid, "brightest_allwise_3am_cc_flags"] == "DdDD"
+    assert out.loc[sids[25], "missing_vet_status"] == "ARTEFACT_REGION_OR_SATURATED"
+    assert out.loc[sids[25], "predicted_w1"] == pytest.approx(6.95)
+    assert out.loc[sids[26], "missing_vet_status"] == "truly_missing"
+    assert out.loc[sids[26], "nearest_allwise_cc_flags"] == "d000"
+    assert rep["missing_vet_verdict"] == "TRULY_MISSING_COUNTERPARTS_PENDING (n=8)"
+    assert {r["source_id"] for r in rep["artefact_region_or_saturated"]} == {bright_sid, sids[25]}
+    assert rep["status_counters"]["ARTEFACT_REGION_OR_SATURATED"] == 2
 
 
 def test_missing_select_targets_and_failed_service():
@@ -523,7 +769,7 @@ def _seed_screen_outputs(out: Path, cands: pd.DataFrame, locus: L.Locus, missing
 def test_stage_writes_every_file_with_no_data_reached_when_every_fetcher_raises(cands, locus, tmp_path):
     _seed_screen_outputs(tmp_path, cands, locus)
     sky = Sky(cands)
-    sky.raise_on = {"gaia", "allwise", "catwise", "unwise"}
+    sky.raise_on = set(sky.matchers()) | {"gaia"}
     rep = V.run_vet_stage(R.load_baffle_config(None), tmp_path, gaia_fetcher=sky.gaia,
                           matchers=sky.matchers())
     for name in ("vet.json", "vet_table.csv", "vetted_candidates.csv", "missing_vet.json", "missing_vet.csv"):
@@ -550,12 +796,18 @@ def test_stage_end_to_end_through_run_py(cands, locus, tmp_path, monkeypatch):
     for sid in mm["source_id"].astype(int):
         sky.allwise[sid] = {"w1": 8.0, "w2": 8.0, "cc_flags": "0000", "offset_arcsec": 0.5}
     rep = R.baffle_run(None, stage="vet", out_root=tmp_path, gaia_fetcher=sky.gaia, matchers=sky.matchers())
-    assert rep["verdict_deficit_after_vet"] == "MIDIR_DEFICIT_CANDIDATES_SURVIVE_VET (n=5)"
-    assert rep["verdict_counts"] == {"SURVIVES_VET": 5, "BLEND": 0, "DEBLENDED_COMPONENT": 1,
-                                     "ALLWISE_PHOTOMETRY_WRONG": 0, "W3_INCONSISTENT": 0, "INCONCLUSIVE": 1}
+    assert rep["verdict_deficit_after_vet"] == "MIDIR_DEFICIT_CANDIDATES_SURVIVE_VET (n=5, no_hires_ks=0)"
+    assert rep["verdict_counts"] == {"SURVIVES_VET": 5, "SURVIVES_VET_NO_HIRES_KS": 0, "BLEND": 0,
+                                     "DEBLENDED_COMPONENT": 1, "ALLWISE_PHOTOMETRY_WRONG": 0,
+                                     "W3_INCONSISTENT": 0, "TMASS_BLEND": 0, "KS_CONTAMINATED": 0,
+                                     "INCONCLUSIVE": 1}
     assert rep["missing_vet_verdict"] == "NO_TRULY_MISSING_COUNTERPART"
     assert rep["allwise_columns_missing"] == [] and rep["locus_has_w3"] is True
-    assert rep["n_queries"] == 4 + 1                          # 4 deficit uploads + 1 missing (no absent group)
+    assert rep["locus_has_gks"] is True and rep["screen_has_gks_columns"] is True
+    assert rep["tmass_columns_missing"] == [] and rep["hires_ks_by_survey"] == {"gps": 7}
+    assert rep["zeropoint_checks"]["unwise_vs_catwise_w1"]["suspect"] is False
+    assert "matchers" in rep and rep["allwise_sat_route"] == "vizier"
+    assert rep["n_queries"] == 9 + 1                          # 9 deficit uploads + 1 missing (no absent group)
     vetted = pd.read_csv(tmp_path / "vetted_candidates.csv")
     assert len(vetted) == 5 and sid0 not in set(vetted["source_id"]) and 424242 not in set(vetted["source_id"])
     table = pd.read_csv(tmp_path / "vet_table.csv")
@@ -563,7 +815,8 @@ def test_stage_end_to_end_through_run_py(cands, locus, tmp_path, monkeypatch):
     assert table.set_index("source_id").loc[424242, "vet_notes"].find("allwise_missing") >= 0
     # summary carries the post-vet verdict and drops the query ledger
     s = json.loads((tmp_path / "summary.json").read_text())
-    assert s["verdict"] == "MIDIR_DEFICIT_CANDIDATES_SURVIVE_VET (n=5) | NO_TRULY_MISSING_COUNTERPART"
+    assert s["verdict"] == ("MIDIR_DEFICIT_CANDIDATES_SURVIVE_VET (n=5, no_hires_ks=0) | "
+                            "NO_TRULY_MISSING_COUNTERPART")
     assert s["verdict_screen"].startswith("MIDIR_DEFICIT_CANDIDATES_PENDING_VET")
     assert "ledger" not in s["vet"] and s["missing_vet"]["n_targets"] == 40
     # the patch stage now receives the vetted survivors

@@ -229,7 +229,108 @@ ARXIV_Q: dict[str, str] = {
     # Ap-star radionuclide claims (the only prior fission-adjacent spectroscopy).
     "przybylski_technetium_promethium": 'all:"Przybylski" AND (all:"technetium" OR all:"promethium")',
     "actinides_ap_stars": 'abs:"actinide" AND abs:"Ap star"',
+    # --- decoys, fetched on purpose so the concept scan can prove it rejects them
+    "decoy_s_r_decomposition": 'abs:"s-process" AND abs:"r-process" AND abs:"decomposition"',
+    "decoy_wd_pollution_abundances": 'abs:"polluted white dwarf" AND abs:"abundance pattern"',
+    "decoy_przybylski_star": 'all:"Przybylski\'s star"',
+    "decoy_ap_star_rare_earth": 'abs:"Ap star" AND abs:"rare earth" AND abs:"abundance"',
+    "decoy_reactor_fission_yields": 'abs:"fission yields" AND abs:"reactor"',
 }
+
+
+# --------------------------------------------------------------------------
+# 2b. Decoy-aware concept scan over every fetched abstract (modelled on
+#     scripts/metronomelit_fetch.py). Runs offline on whatever Atom files exist.
+# --------------------------------------------------------------------------
+#: The target concept: a FISSION yield / product / fragment pattern brought
+#: into contact with STELLAR or PHOTOSPHERIC ABUNDANCES (fitted, compared,
+#: searched for). Either order, within ~120 characters.
+TARGET = re.compile(
+    r"fission\W{0,4}(yield|product|fragment)s?\W.{0,120}?(stellar|star|photospher|abundance)"
+    r"|(stellar|star|photospher|abundance).{0,120}?fission\W{0,4}(yield|product|fragment)s?",
+    re.I | re.S)
+TARGET2 = re.compile(
+    r"(nuclear waste|reactor waste|spent fuel|fission waste).{0,160}?(star|photospher|technosignature)",
+    re.I | re.S)
+
+DECOYS = {
+    "s_r_decomposition": re.compile(r"\b(s-?process|r-?process|i-?process|neutron[- ]capture|AGB)\b", re.I),
+    "wd_pollution": re.compile(r"white dwarf|polluted|DZ\b|DAZ\b", re.I),
+    "przybylski": re.compile(r"Przybylski|HD ?101065", re.I),
+    "ap_star": re.compile(r"\bAp\b star|\bAp\b|chemically peculiar|roAp|magnetic star", re.I),
+    "reactor_physics": re.compile(r"reactor|antineutrino|fuel cycle|spent fuel|ENDF|JEFF|cross[- ]section", re.I),
+    "supernova_or_cosmic_fission": re.compile(r"supernova|kilonova|neutron star merger|fission cycling|fission recycling|superheavy", re.I),
+}
+
+
+def _entries(xml: str) -> list[tuple[str, str, str]]:
+    out = []
+    for e in re.findall(r"<entry>(.*?)</entry>", xml, re.S):
+        m_id = re.search(r"<id>([^<]+)</id>", e)
+        m_ti = re.search(r"<title>(.*?)</title>", e, re.S)
+        m_su = re.search(r"<summary>(.*?)</summary>", e, re.S)
+        if not (m_id and m_ti):
+            continue
+        out.append((m_id.group(1).strip(), " ".join(m_ti.group(1).split()),
+                    " ".join((m_su.group(1) if m_su else "").split())))
+    return out
+
+
+def scan(out_dir: pathlib.Path | None = None) -> dict:
+    """Decoy-aware concept scan; writes ``concept_scan.json`` next to the Atom files.
+
+    A decoy-free hit is an abstract that puts a fission yield/product pattern
+    against stellar or photospheric abundances WITHOUT being (only) an s/r
+    decomposition, a polluted-white-dwarf study, a Przybylski/Ap-star line
+    claim, reactor physics, or supernova/kilonova fission-cycling
+    nucleosynthesis. The novelty position in docs/fallout.md is to be read
+    against ``decoy_free_hits`` and is not established until this file exists.
+    """
+    d = out_dir or OUT
+    hits, n_abs = [], 0
+    for p in sorted(d.glob("arxiv_*.atom")):
+        for aid, title, summ in _entries(p.read_text(errors="ignore")):
+            n_abs += 1
+            # arXiv titles carry LaTeX ("$R$-Process"); the dollar signs would
+            # hide "r-process" from the decoy regex and manufacture a decoy-free hit.
+            blob = f"{title} {summ}".replace("$", "")
+            if not (TARGET.search(blob) or TARGET2.search(blob)):
+                continue
+            tags = [k for k, rx in DECOYS.items() if rx.search(blob)]
+            hits.append({"arxiv": aid, "title": title, "decoys": tags,
+                         "source_query": p.name, "snippet": blob[:600]})
+    seen, dedup = set(), []
+    for h in hits:
+        if h["arxiv"] in seen:
+            continue
+        seen.add(h["arxiv"])
+        dedup.append(h)
+    clean = [h for h in dedup if not h["decoys"]]
+    # Hits whose only decoy tags are the nucleosynthesis-adjacent ones are the
+    # ones a referee would raise; list them separately so they are not lost
+    # behind the reactor-physics noise.
+    near = [h for h in dedup if h["decoys"] and set(h["decoys"]) <= {"s_r_decomposition", "supernova_or_cosmic_fission"}]
+    out = {
+        "n_abstracts_scanned": n_abs,
+        "n_target_regex_hits": len(dedup),
+        "n_after_decoy_removal": len(clean),
+        "decoy_free_hits": clean,
+        "nucleosynthesis_adjacent_hits": near,
+        "all_hits": dedup,
+        "target_regex": [TARGET.pattern, TARGET2.pattern],
+        "decoys": {k: v.pattern for k, v in DECOYS.items()},
+        "interpretation": (
+            "A decoy-free hit is an abstract that brings a FISSION yield/product/fragment "
+            "pattern into contact with stellar or photospheric abundances (or nuclear waste "
+            "with a star/technosignature) and is not merely an s-/r-process decomposition, a "
+            "polluted-white-dwarf study, a Przybylski/Ap-star line claim, reactor physics, or "
+            "supernova/kilonova fission-cycling nucleosynthesis. nucleosynthesis_adjacent_hits "
+            "are the ones tagged only with the nucleosynthesis decoys and must be read by a "
+            "human. The novelty position in docs/fallout.md is to be read against "
+            "decoy_free_hits, and it is not established until this file exists."),
+    }
+    (d / "concept_scan.json").write_text(json.dumps(out, indent=2))
+    return out
 
 # --------------------------------------------------------------------------
 # 3. OpenAlex / Crossref: pre-arXiv literature and citation trees.
@@ -295,8 +396,17 @@ def main() -> None:
                 print(f"  pdftotext failed: {exc!r}")
 
     n_ver = sum(1 for v in VERIFY if v["verified"])
+    for v in VERIFY:
+        v["status"] = ("VERIFIED: fetched" if v["verified"] else
+                       "UNVERIFIED: no arXiv title match -- nothing fetched, not citable; "
+                       "the paper may be journal-only (Cowley 2004, Korotin 2015), have a "
+                       "different arXiv title (Rekhi 2025, Karinkuzhi 2021, Hansen 2018, "
+                       "Prantzos 2020), or not exist under this title")
     (OUT / "verification.json").write_text(json.dumps(
         {"n_requested": len(VERIFY), "n_verified": n_ver,
+         "note": ("Unverified slugs are RECORDED, not dropped: each keeps its wanted title and "
+                  "the search outcome so the next sweep can retry with a corrected title. "
+                  "They contribute no files and must not be cited."),
          "unverified": [v for v in VERIFY if not v["verified"]],
          "all": VERIFY}, indent=2))
     print(f"\n[1] title-verified {n_ver}/{len(VERIFY)}; "
@@ -356,12 +466,20 @@ def main() -> None:
             except Exception:  # noqa: BLE001
                 break
 
+    print("\n[6] decoy-aware concept scan over every fetched abstract")
+    sc = scan()
+    print(f"    {sc['n_abstracts_scanned']} abstracts, {sc['n_target_regex_hits']} target hits, "
+          f"{sc['n_after_decoy_removal']} decoy-free, "
+          f"{len(sc['nucleosynthesis_adjacent_hits'])} nucleosynthesis-adjacent")
+
     n_ok = sum(1 for s in STATUS if s["ok"])
     (OUT / "summary.json").write_text(
         json.dumps(
             {"n_urls": len(STATUS), "n_ok": n_ok, "n_failed": len(STATUS) - n_ok,
              "n_title_verified": sum(1 for v in VERIFY if v["verified"]),
              "n_title_requested": len(VERIFY), "verification": VERIFY,
+             "concept_scan": {k: sc[k] for k in ("n_abstracts_scanned", "n_target_regex_hits",
+                                                 "n_after_decoy_removal")},
              "status": STATUS},
             indent=2,
         )
@@ -370,4 +488,16 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    if "--scan-only" in sys.argv:
+        # Offline: re-run the concept scan over the Atom files already on disk.
+        res = scan()
+        print(json.dumps({k: res[k] for k in ("n_abstracts_scanned", "n_target_regex_hits",
+                                              "n_after_decoy_removal")}))
+        for h in res["decoy_free_hits"]:
+            print("DECOY-FREE:", h["arxiv"], "|", h["title"][:90])
+        for h in res["nucleosynthesis_adjacent_hits"]:
+            print("ADJACENT  :", h["arxiv"], "|", h["title"][:90], "|", h["decoys"])
+    else:
+        main()

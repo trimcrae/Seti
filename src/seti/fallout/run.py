@@ -382,7 +382,11 @@ def _overall_verdict(acq: dict | None, per_sample: list[dict], vet: dict | None 
     prim = [s for s in scored if str(s.get("sample")) == "dwarf"]
     n_prim = sum(n_surv(s) for s in prim)
     n_sec = sum(n_surv(s) for s in scored if s not in prim)
-    n_unex = sum(int(s.get("n_unexplained_above_threshold", 0)) for s in scored)
+    if vet:
+        n_unex = sum(int((v.get("vetoes") or {}).get("unexplained_by_all_templates", 0))
+                     for v in (vet.get("samples") or {}).values())
+    else:
+        n_unex = sum(int(s.get("n_unexplained_above_threshold", 0)) for s in scored)
     code = VERDICT_CANDIDATES if (n_prim or n_sec) else VERDICT_NO_PATTERN
     vetted = " (after the vet stage)" if vet else ""
     if code == VERDICT_NO_PATTERN:
@@ -501,6 +505,9 @@ def vet_candidates(cand: pd.DataFrame, *, elements: list[str], cfg: P.PatternCon
     kept as ``*_screen``.
     """
     out = cand.copy()
+    for c in ("vet_pass", "first_veto", "veto_reasons"):
+        if c in out.columns:
+            out[f"{c}_screen"] = out[c]
     notes: dict = {"sigma_source": "sig_ columns", "refit": False}
     T = P.build_templates(elements, horizon_yr=cfg.horizon_yr)
     els = list(T.elements)
@@ -574,7 +581,10 @@ def stage_vet(block: dict, out_dir: Path, surveys: list[str], acq: dict | None, 
             em = ((rec.get("error_model") or {}).get("per_element") or {})
             floors = {el: d.get("floor_dex") for el, d in em.items()} if em else \
                 dict(rec.get("peer_scatter_dex") or {})
-            la_diag = rec.get("la_diagnostics") or {}
+            la_diag = rec.get("la_diagnostics") or {
+                "la_cn_suspect": True,
+                "reason": ("no La diagnostic in this summary (screened before the diagnostic "
+                           "existed); La in cool giants is distrusted until shown clean")}
             la_suspect = bool(la_diag.get("la_cn_suspect", True))
             vetted, notes = vet_candidates(cand, elements=elements, cfg=cfg, lr_threshold=thr,
                                            floors=floors, la_cn_suspect=la_suspect)
@@ -596,7 +606,7 @@ def stage_vet(block: dict, out_dir: Path, surveys: list[str], acq: dict | None, 
             for _, row in vetted.iterrows():
                 prev_pass = bool(row.get("vet_pass_screen", False)) if "vet_pass_screen" in vetted.columns else None
                 vet["stars"].append({
-                    "star_id": row.get("star_id"), "sample": name, "survey": sv,
+                    "star_id": str(row.get("star_id")), "sample": name, "survey": sv,
                     "fission_lr_screen": row.get("fission_lr_screen"),
                     "fission_lr": row.get("fission_lr"),
                     "reduced_chi2_best": row.get("reduced_chi2_best"),

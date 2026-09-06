@@ -2130,7 +2130,8 @@ def main(argv=None):
     from .lantern.run import register as _register_lantern
     _register_lantern(sub)
 
-    from .fallout.run import _add_arguments as _fallout_args, _cmd_fallout
+    from .fallout.run import _add_arguments as _fallout_args
+    from .fallout.run import _cmd_fallout
     p = sub.add_parser("fallout",
                        help="FALLOUT (S14): the fission-product abundance PATTERN in "
                             "cool-dwarf photospheres (GALAH DR4 / APOGEE DR17)")

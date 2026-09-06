@@ -135,6 +135,58 @@ not queried. **The bright tier is closed: 29,080 of the sky's brightest
 stars carry a photosphere, not a shadow, at 9–25 µm, and the 13 that
 carried no mid-IR catalogue entry carry one in WISE.**
 
+**MAIN FUNNEL, first real run (34048834972 dispatched 13:30 ET; acquisition
+complete at 13:59 ET; the screen job's patch stage was cancelled at 15:04 ET
+after 64 min and the screen re-reduced from the uploaded shards as run
+34053752510, 6 min).** Acquisition: **complete by construction** — 36
+declination bands, 36 leaves, every leaf `QUERY_OK`, 417,589 deficit-track
+rows returned against a COUNT(*) of 417,589 (completeness 1.000), 602,383
+missing-track rows against 602,383; six shards of ~25 min each, no truncation,
+no split needed. The archive-side pre-selection (K_s − W1 or K_s − W2 below
+−0.15) plus the 0.5 % random_index subsample means the parent population
+screened is the ~30 million Gaia G < 15 stars with a 2MASS and an AllWISE
+counterpart, of which 152,042 are the locus subsample (86,475 locus-grade
+after quality cuts: 63,149 dwarfs, 22,492 giants, 834 blue). Denominators:
+2,051 ETZ stars and 276 stars within 50 pc in the screened rows.
+
+The tails: W1 at +5σ holds 13 stars, at −5σ **none**; at ±3σ 199 vs 29. W2
+is symmetric at 5σ (30 vs 29) and 310 vs 189 at 3σ — the W2 negative tail
+is populated, which is the CO-bandhead/giant-locus width and the crowding of
+the W2 PSF, and is why the two-band requirement matters. Two-band deficits
+≥ 0.3 mag at ≥ 5σ: 2,055. Vetoes (first-veto counts): `w2_only_single_band`
+39,493, `w1_only_methane_like` 1,324, `poor_tmass_phot_qual` 971,
+`wise_artifact` 578, `extended` 177, `gaia_variable` 56, `saturated` 47,
+`poor_wise_phot_qual` 41, `wise_variable` 21, `crowded_match` 17,
+`multi_peak` 10, `lpv_colour` 2 (deferred). **135 survive**, 0 in the ETZ,
+0 within 50 pc. Sensitivity (20,000 injections per depth, same vetoes): 35 %
+at 0.3 mag, 91 % at 0.5, 92 % at 1.0.
+
+Reading the 135 before believing any: 107 lie at |b| < 10° and 76 at
+|b| < 5°; their distances run 0.3–50 kpc (median 2 kpc); **no two lie within
+10′ of each other** (no patch coherence anywhere); and the typical survivor
+has W1 ≈ W2 ≈ W3 — a flat, photospheric WISE SED — sitting ~1 mag below
+K_s (e.g. Gaia DR3 512945405846907904: K_s 8.64, W1 9.77, W2 9.79, W3 9.73,
+b = 1.8°). A screen dims the star; it does not hand its counterpart a
+different, fainter, self-consistent photosphere. That is the signature of a
+deblended fragment or a wrong counterpart in a crowded field, and the one
+veto built for it, `blend_flux_theft`, never ran (`neighbours_not_checked =
+2055`: no neighbour table was supplied on the runner). The W3 residual was
+also not computed (the W3 locus fitted zero stars: `w3snr` came back empty
+from the Gaia mirror). Both are the vet stage now being built: Gaia
+neighbours within 10″, AllWISE `nb/na/w?sat` (the deblending record the
+Gaia mirror lacks), independent CatWISE2020 and unWISE W1/W2 photometry
+against the same locus, and the W3 consistency test; survivors of that go
+to the patch geometry.
+
+The `missing` track is a catalogue measurement, not a candidate list:
+602,383 of 7,311,754 bright 2MASS stars (8.2 %) have no entry in Gaia's
+AllWISE neighbourhood table — 14 % at |b| < 10° falling to 3 % at
+|b| > 20°, and 39 % at G 4–5 — i.e. the cross-match's behaviour on
+saturated and crowded sources. The 74,154 that pass the |b| > 10°,
+K_s 5–11, AAA, non-variable cuts (353 ETZ, 993 within 50 pc) are being
+re-tested by direct positional match against AllWISE, CatWISE and unWISE in
+the same vet, which measures the *real* absence rate.
+
 ### Three new questions, 2026-09-06: METRONOME, LANTERN, FALLOUT
 
 The charter ranks novelty first, and after 35 channels the taxonomy in

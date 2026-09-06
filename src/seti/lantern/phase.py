@@ -246,7 +246,18 @@ def ephemeris_from_archive_row(row: dict, planet_name: str | None = None) -> Eph
     if per is None or t0 is None:
         notes.append("missing_period_or_t0")
     if dur_h is None:
-        notes.append("missing_duration")
+        # T14 from the geometry when the archive row lacks it:
+        # T14 = (P/pi) asin( sqrt((1+k)^2 - b^2) / (a/Rs) )  (circular, Winn 2010).
+        a_rs, k, b = f("pl_ratdor"), f("pl_ratror"), f("pl_imppar")
+        b = 0.0 if b is None else abs(b)
+        if per is not None and a_rs is not None and k is not None and a_rs > 1 \
+                and (1 + k) ** 2 > b ** 2:
+            arg = np.sqrt((1 + k) ** 2 - b ** 2) / a_rs
+            if 0 < arg < 1:
+                dur_h = 24.0 * per / np.pi * float(np.arcsin(arg))
+                notes.append("duration_derived_from_geometry")
+        if dur_h is None:
+            notes.append("missing_duration")
     p_err, t0_err = f("pl_orbpererr1"), f("pl_tranmiderr1")
     if p_err is None:
         notes.append("period_err_missing")

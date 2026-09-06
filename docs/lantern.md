@@ -96,16 +96,34 @@ be separable from the detector settling ramp.
 
 ### 3.3 Narrow-feature search (`line.py`)
 
-On the time-averaged, continuum-normalised out-of-eclipse spectrum:
+On the time-averaged, continuum-normalised out-of-eclipse spectrum (each
+integration divided by its own median before a 5σ-clipped mean; the per-pixel
+error is the larger of the scatter across integrations and the propagated
+error):
 
-* continuum = **notched local quadratic** (window 31 samples, ±hole excluded,
-  >4σ excursions masked on a second pass) — a running median fails on a
-  steep continuum, a local line leaves band curvature in the residual;
-* noise = block-wise MAD of the residual, floored by the propagated error;
+* continuum = **notched local quadratic** — window 31 samples, ±2 excluded
+  around each sample, with a **fixed two-pass** >4σ excursion clip (the
+  excursion and its ±2 wings are masked from the fit). Three things were
+  learned building this on a synthetic M-dwarf line forest: a running median
+  returns the centre sample exactly on a steep continuum and a line shifts
+  its rank; a wide hole (as wide as the widest allowed line) turns the fit
+  into an extrapolation from the window's outer lobes whose error at low
+  S/N is several σ (seen as ±10σ artefacts in the in-eclipse spectrum);
+  and iterating the clip to convergence with the unmasked noise is a
+  positive feedback loop that ends with everything masked;
+* noise = block-wise MAD of the **unmasked** residual, floored by the
+  propagated error (the clip threshold itself uses the conservative
+  all-sample MAD, so it cannot run away); on the synthetic forest the
+  unmasked z has robust σ = 0.95;
 * a feature is an interior (≥8 samples from either end), **bounded** local
-  maximum at ≥6σ, not adjacent to a NaN gap, with a **matched-template FWHM
-  of 1–3 resolution elements** (a single-sample spike is a hot pixel or
-  cosmic ray, wider than 3 elements is a band). These are the guards of
+  maximum at ≥6σ, not adjacent to a NaN gap, whose **matched-template width
+  is consistent with 1–3 resolution elements**: Gaussian templates from a
+  single-sample spike to 9 elements are fitted with a linear baseline
+  (significant absorption, z < −3, excluded), and the guards act on the
+  2σ-consistent (Δχ² ≤ 4) width range — a spike is one for which even 0.75
+  elements is excluded, too wide is one for which every width up to 3
+  elements is excluded. A point estimate of the width wanders with wing
+  noise at 8σ; the range does not. These are the guards of
   `seti.panspermia.dossier.narrow_feature_scan` / `jwst_bio.laser_line_scan`,
   re-implemented for a 2048-sample grid with a line-rich stellar continuum.
 

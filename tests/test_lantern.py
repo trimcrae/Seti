@@ -143,6 +143,14 @@ def test_events_in_window_and_archive_row():
     assert ev[0]["ingress_duration"] == pytest.approx(0.0125)
     bad = ephemeris_from_archive_row({"pl_name": "Y b", "pl_orbper": None})
     assert not bad.valid() and "missing_period_or_t0" in bad.notes
+    # No pl_trandur but the geometry is known: T14 is derived (hot Jupiter,
+    # P=3 d, a/Rs=8, k=0.1, b=0 -> (P/pi) asin(1.1/8) = 3.16 h).
+    geo = ephemeris_from_archive_row({"pl_name": "Z b", "pl_orbper": 3.0, "pl_tranmid": 2460000.0,
+                                      "pl_trandur": None, "pl_ratdor": 8.0, "pl_ratror": 0.1})
+    assert geo.valid() and "duration_derived_from_geometry" in geo.notes
+    assert abs(geo.duration * 24.0 - 3.0 / np.pi * np.arcsin(1.1 / 8.0) * 24.0) < 1e-9
+    nogeo = ephemeris_from_archive_row({"pl_name": "W b", "pl_orbper": 3.0, "pl_tranmid": 2460000.0})
+    assert not nogeo.valid() and "missing_duration" in nogeo.notes
 
 
 # --- detector: recovery ------------------------------------------------------------------
@@ -311,13 +319,13 @@ def test_local_poly_continuum_follows_curvature_and_hole():
     y2 = y.copy()
     y2[200:203] += 0.05
     # The hole keeps the feature's own samples out of their own continuum...
-    cont = local_poly_continuum(y2, 31, 4)
+    cont = local_poly_continuum(y2, 31, 2)
     assert np.nanmax(np.abs(cont[200:203] - y[200:203])) < 1e-4
     # ...and with the feature masked (the search's second pass) the whole
     # neighbourhood follows the curvature.
     mask = np.zeros(400, bool)
     mask[198:205] = True
-    cont2 = local_poly_continuum(y2, 31, 4, mask=mask)
+    cont2 = local_poly_continuum(y2, 31, 2, mask=mask)
     assert np.nanmax(np.abs(cont2[150:250] - y[150:250])) < 1e-4
 
 
@@ -539,7 +547,11 @@ def test_full_size_grid_recovers_line_and_rejects_stellar():
         assert rec["phase_class"] == "eclipse" and rec["n_scanned"] > 900
         near = [f for f in rec["features"] if abs(f["wavelength"] - LINE_WL) < 0.005]
         got = near[0]["tier_local"] if near else None
-        assert got == expect, (kw, got, near[0]["vetoes_local"] if near else None)
+        if expect is None:
+            # A forest pseudo-peak may sit anywhere; it must simply never be a tier.
+            assert got in (None, "none"), (kw, got, near[0]["vetoes_local"] if near else None)
+        else:
+            assert got == expect, (kw, got, near[0]["vetoes_local"] if near else None)
         assert len(json.dumps(R._json_safe(rec))) < 200_000       # checkpoint stays small
 
 

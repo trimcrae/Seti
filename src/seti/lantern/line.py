@@ -38,7 +38,7 @@ VETO_NAMES = (
 
 _DEFAULT_LINE_CFG: dict = {
     "sigma_min": 6.0, "min_from_edge": 8, "min_width_resel": 1.0,
-    "max_width_resel": 3.0, "continuum_window": 31, "noise_block": 64,
+    "max_width_resel": 3.0, "continuum_window": 31, "continuum_hole": 2, "noise_block": 64,
     "clip_sigma": 5.0, "max_features_per_spectrum": 200,
     "line_pad": 1, "side_inner": 3, "side_outer": 15, "cont_half_width": 150,
 }
@@ -146,8 +146,11 @@ def local_poly_continuum(spec, window: int = 31, hole: int = 4, mask=None,
                 pred[i] = np.mean(y[use])
             continue
         xl = (use - i) / float(hw)
+        # With few samples a quadratic's centre value is poorly constrained;
+        # drop to a line rather than extrapolate.
+        d = deg if use.size >= 4 * deg + 4 else min(deg, 1)
         try:
-            coef = np.polyfit(xl, y[use], deg)
+            coef = np.polyfit(xl, y[use], d)
         except (np.linalg.LinAlgError, ValueError):
             pred[i] = np.mean(y[use])
             continue
@@ -155,16 +158,26 @@ def local_poly_continuum(spec, window: int = 31, hole: int = 4, mask=None,
     return pred
 
 
-def block_noise(resid, block: int = 64, spec_err=None) -> np.ndarray:
+def block_noise(resid, block: int = 64, spec_err=None, exclude=None) -> np.ndarray:
     """Robust per-pixel noise: block-wise MAD of the residual, interpolated,
-    floored by the propagated error."""
+    floored by the propagated error.  ``exclude`` (the excursion mask) keeps
+    imperfectly modelled stellar lines out of the MAD: on a forested spectrum
+    they can be a third of every block, which puts the median of |resid| on a
+    knife edge and makes the noise -- and every SNR -- unstable."""
     r = np.asarray(resid, float)
     n = r.size
     b = max(8, int(block))
+    use = np.isfinite(r)
+    if exclude is not None:
+        ex = np.asarray(exclude, bool)
+        # Fall back to all finite samples in a block where the mask ate it.
+        use_ex = use & ~ex
+        use = use_ex if use_ex.sum() >= max(8, n // 4) else use
     centres, mads = [], []
     for s in range(0, n, b):
-        seg = r[s:s + b]
-        seg = seg[np.isfinite(seg)]
+        seg = r[s:s + b][use[s:s + b]]
+        if seg.size < 5:
+            seg = r[s:s + b][np.isfinite(r[s:s + b])]
         if seg.size >= 5:
             centres.append(s + 0.5 * min(b, n - s))
             mads.append(1.4826 * np.median(np.abs(seg - np.median(seg))))
@@ -211,36 +224,49 @@ def _width_bounds(spr: float, c: dict) -> tuple[int, int]:
 def residual_z(spec, spec_err, samples_per_resel: float = 2.0, cfg: dict | None = None) -> dict:
     """Continuum residual and its significance for a normalised spectrum.
 
-    Iterated notched local-quadratic continuum: each pass masks every
-    >4-sigma excursion (and its wings) so a strong feature -- or a stellar
-    line forest, whose first-pass residual dominates the noise -- cannot bias
-    the continuum of the samples beside it; iterate until the mask converges.
+    Notched local-quadratic continuum with a FIXED two-pass excursion clip:
+    each pass masks every >4-sigma excursion (and its wings) so a strong
+    feature -- or a stellar line forest, whose first-pass residual dominates
+    the noise -- cannot bias the continuum of the samples beside it.  The
+    clip threshold uses the conservative all-sample MAD; only the final
+    significance uses the MAD of the UNMASKED residual (floored by the
+    propagated error).  Iterating to convergence with the unmasked noise is
+    a positive feedback loop (smaller noise -> more excursions -> smaller
+    noise) that ends with everything masked; a fixed pass count with a
+    conservative threshold cannot run away and gives a stable noise under
+    small changes to the input (e.g. dropping two integrations).
     Returns ``z``, ``resid``, ``noise``, ``cont`` and the final ``mask``.
     """
     c = {**_DEFAULT_LINE_CFG, **(cfg or {})}
     s = np.asarray(spec, float)
     n = s.size
-    _, max_w = _width_bounds(max(float(samples_per_resel), 1.0), c)
-    hole = max_w + 1
+    # A SMALL hole.  The excursion mask, not the hole, is what keeps a feature
+    # out of its own continuum; a hole as wide as the widest allowed line
+    # leaves the quadratic only the two outer lobes of the window, and its
+    # value at the centre becomes an extrapolation whose error is several
+    # sigma at low S/N (seen as +-10 sigma residuals in the in-eclipse
+    # spectrum).  +-2 samples covers the sub-threshold wings of an
+    # unresolved line; the mask covers everything above threshold.
+    hole = int(c.get("continuum_hole", 2))
     cont = local_poly_continuum(s, c["continuum_window"], hole)
     resid = s - cont
-    noise = block_noise(resid, c["noise_block"], spec_err)
+    noise_all = block_noise(resid, c["noise_block"], spec_err)
     grow = np.zeros(n, bool)
-    for _pass in range(4):
+    for _pass in range(2):
         with np.errstate(invalid="ignore", divide="ignore"):
-            z0 = resid / noise
+            z0 = resid / noise_all
         excur = np.isfinite(z0) & (np.abs(z0) > 4.0)
         new = excur.copy()
         for k in (1, 2):                 # the wings of an excursion
             new[k:] |= excur[:-k]
             new[:-k] |= excur[k:]
-        new |= grow
-        if not new.any() or np.array_equal(new, grow):
+        grow |= new
+        if not grow.any():
             break
-        grow = new
         cont = local_poly_continuum(s, c["continuum_window"], hole, mask=grow)
         resid = s - cont
-        noise = block_noise(resid, c["noise_block"], spec_err)
+        noise_all = block_noise(resid, c["noise_block"], spec_err)
+    noise = block_noise(resid, c["noise_block"], spec_err, exclude=grow) if grow.any() else noise_all
     with np.errstate(invalid="ignore", divide="ignore"):
         z = resid / noise
     return {"z": z, "resid": resid, "noise": noise, "cont": cont, "mask": grow}
@@ -346,7 +372,7 @@ def narrow_feature_search(wavelength, spec, spec_err=None, samples_per_resel: fl
     spr = max(float(samples_per_resel), 1.0)
     min_w, max_w = _width_bounds(spr, c)
     rz = residual_z(s, spec_err, spr, c)
-    z, resid, noise, cont, grow = rz["z"], rz["resid"], rz["noise"], rz["cont"], rz["mask"]
+    z, resid, noise, cont = rz["z"], rz["resid"], rz["noise"], rz["cont"]
     lo, hi = c["min_from_edge"], n - c["min_from_edge"]
     dlam = np.abs(np.gradient(wl)) if n > 1 else np.ones(n)
     feats = []
@@ -371,10 +397,11 @@ def narrow_feature_search(wavelength, spec, spec_err=None, samples_per_resel: fl
         # on a pixel has its neighbours at exactly half peak, so a
         # count-above-half-max is unstable there; a template fit is not.  A
         # single-sample spike fits the FWHM~1 template.
-        # Masked NEGATIVE residuals (absorption lines of the forest) are kept
-        # out of the width fit; masked positive ones are the feature's own wings.
+        # Significant absorption (the forest, z < -3) is kept out of the width
+        # fit; mildly negative neighbours are noise and must stay in, because
+        # they are what constrains a single-sample spike to be narrow.
         fwhm, _c0, fwhm_lo, fwhm_hi = _template_fwhm(resid, noise, i, 3 * max_w, 3.0 * max_w,
-                                                     exclude=grow & (resid < 0))
+                                                     exclude=np.isfinite(z) & (z < -3.0))
         # Guards act on the 2-sigma-consistent width range: a spike is one
         # for which even 0.75 resolution elements is EXCLUDED; too wide is one
         # for which every width up to max_w is excluded.

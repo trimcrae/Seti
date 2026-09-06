@@ -98,7 +98,12 @@ line:
   min_from_edge: 8
   min_width_resel: 1.0
   max_width_resel: 3.0
-  continuum_window: 31          # running-median window (samples)
+  continuum_window: 31          # local-quadratic continuum window (samples)
+  # Samples excluded around each sample in its own continuum fit.  Kept SMALL:
+  # the >4-sigma excursion mask is what keeps a feature out of its continuum;
+  # a wide hole turns the fit into an extrapolation from the window's outer
+  # lobes and its error at low S/N is several sigma.
+  continuum_hole: 2
   noise_block: 64               # block size for the robust (MAD) noise estimate
   clip_sigma: 5.0               # per-pixel sigma clip across integrations
   # Generous: on a line-rich M dwarf the peaks between absorption lines are

@@ -24,7 +24,11 @@ Stages
              under ``summary["patch"]`` and written to ``patch.json``.
 ``radio``    ``from .radio import run_radio_stage`` (another agent's module);
              ``run_radio_stage(cfg, out_dir) -> dict`` -> ``summary["radio"]``.
-``assess``   rewrite ``summary.json`` from what is on disk and print it.
+``assess``   rewrite ``summary.json`` from what is on disk and print it; when
+             ``vetted_candidates.csv`` and ``patches.csv`` both exist, fold the
+             vet and the patch together per candidate (``seti.baffle.final``)
+             into ``final_candidates.csv`` and ``summary["final"]``, from which
+             the summary verdict then reads.
 ``all``      every stage in order.
 
 Verdict vocabulary (``summary.json["verdict"]``): ``NO_DATA_REACHED``,
@@ -53,6 +57,7 @@ import numpy as np
 import pandas as pd
 
 from . import acquire as acq
+from . import final as fin
 from . import screen as scr
 from .locus import (
     DEFAULT_LOCUS_CFG,
@@ -83,6 +88,7 @@ DEFAULTS: dict = {
     "sensitivity": {"inject_mags": [0.2, 0.3, 0.5, 1.0], "max_stars": 20000},
     "output": {"max_vetoed_rows": 50000},
     "vet": {},                      # seti.baffle.vet.DEFAULTS fills every key
+    "final": dict(fin.DEFAULTS),
     "radio": {},
     "patch": {"max_objects": 200},
 }
@@ -153,6 +159,15 @@ def _json_default(o):
 def _write(path: Path, obj) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(obj, indent=2, default=_json_default))
+
+
+def _read_csv_or_empty(path: Path) -> pd.DataFrame:
+    if not path.exists() or path.stat().st_size == 0:
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(path)
+    except pd.errors.EmptyDataError:
+        return pd.DataFrame()
 
 
 def _read_json(path: Path):
@@ -522,6 +537,17 @@ def stage_assess(conf: dict, out: Path, *, quiet: bool = False) -> dict:
             summary.get("missing_vet"), dict) else None
         summary["verdict_after_vet"] = scr.combine_verdicts(vet["verdict_deficit_after_vet"], mv)
         verdict = summary["verdict_after_vet"]
+        # Post-patch final verdict: vet + patch folded together per candidate.
+        vetted_p, patches_p = out / "vetted_candidates.csv", out / "patches.csv"
+        if vetted_p.exists() and patches_p.exists():
+            vetted = _read_csv_or_empty(vetted_p)
+            patches = _read_csv_or_empty(patches_p)
+            table, frep = fin.final_verdicts(vetted, patches, conf)
+            table.to_csv(out / "final_candidates.csv", index=False)
+            frep["verdict_deficit_final"] = fin.final_deficit_verdict(frep)
+            summary["final"] = frep
+            summary["verdict_final"] = scr.combine_verdicts(frep["verdict_deficit_final"], mv)
+            verdict = summary["verdict_final"]
     summary["verdict"] = verdict
     summary["files"] = sorted(p.name for p in out.iterdir()
                               if p.is_file() and p.suffix in (".json", ".csv"))

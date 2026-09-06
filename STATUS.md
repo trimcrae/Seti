@@ -75,6 +75,43 @@ cloaked in Dyson spheres) and Kipping & Teachey are the only concealment
 observables in the record, both for the *concealer's own* light. The novelty
 position of §5 in `docs/baffle.md` stands as written.
 
+**BRIGHT TIER, two runs (34048837928 at 13:30 ET → `NO_DATA_REACHED`;
+34050635320 at 14:05 ET, 24 min → `NO_BRIGHT_MIDIR_DEFICIT_SURVIVOR`).** The
+first run reached Gaia and 2MASS and nothing else: TAPVizieR serves
+TAP_SCHEMA column names already double-quoted, the SELECT re-quoted them
+into an empty identifier and every AKARI, IRAS and Hipparcos slab died on
+`Encountered ""`; and the CDS X-Match route names its flags `Qfl/Rfl/X`,
+which the quality gate read as missing and rejected every 2MASS row. Both
+fixed (quote once, absent flag = unknown), both pinned by tests. The second
+run is the real one: 36,735 targets (36,663 Gaia G < 7.5 + 72 Hipparcos-only
+supplements, so the brightest 300 *are* covered), 30,742 with a 2MASS
+anchor (29,904 of them in the Read-1 regime), 34,721 with AKARI, 22,290 with
+IRAS, **29,080 with both an anchor and mid-IR photometry** — 132 of the 169
+ETZ targets and 1,996 of the 2,495 stars within 50 pc. The empirical
+K_s − [9] locus has a scatter of 0.09 mag on 28,247 stars (0.17 at 18 µm,
+0.14 at 12 µm, 0.20 at 25 µm). The tails behave as the physics says they
+must: at +5σ the excess side holds 777 (9 µm), 687 (18), 606 (12), 698 (25)
+stars — the debris-disk / AGB / Be population — and the deficit side 83, 11,
+3 and 36 *before* quality cuts; after them only **three** stars sit below
+−5σ at 9 µm, all single-band (no 18/12/25 µm measurement), all blue
+(BP−RP ≈ −0.1), all with AKARI 9-µm fluxes of 0.04–0.19 Jy, i.e. within a
+factor of a few of the 50 mJy limit, where the catalogue's own flux bias is
+lopsided. Two stars cross the 0.7-mag primary threshold; both are
+`single_band_only`. **Zero candidates**, in the ETZ, nearby, or anywhere.
+Injected-deficit completeness (two bands, two instruments): 0.5 % at
+0.5 mag, 19 % at 0.7, 54 % at 1.0, 93 % at 2.0 — the Read-1 K_s errors
+(0.2–0.3 mag) set this, and a near-opaque screen is the ≥ 1 mag case. The
+fully-opaque limit: 13 stars whose predicted 9-µm flux exceeds ten times
+the AKARI limit have **no AKARI and no IRAS source**. One is Antares
+(K_s = −4.1; saturated and handled by neither catalogue as a point source).
+The other twelve are K_s 4.9–5.2 stars, eleven at δ < 0° and six within 5°
+of the ecliptic — the geometry of the AKARI/IRC Moon-avoidance gaps and the
+IRAS unobserved strips, not of a screened population; one (Gaia DR3
+6243032008973309440, 38 pc, |β| = 0.2°, an ETZ star) is worth the ten-second
+check that decides it: WISE W3/W4 are unsaturated at K_s ≈ 5, so an AllWISE
+cone at those twelve positions either shows a normal 12/22 µm photosphere
+(coverage gap, closed) or does not. That check is queued as the bright vet.
+
 ### Three new questions, 2026-09-06: METRONOME, LANTERN, FALLOUT
 
 The charter ranks novelty first, and after 35 channels the taxonomy in

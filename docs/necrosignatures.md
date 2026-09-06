@@ -305,6 +305,34 @@ Organised by *what the residue physically is*, not by wavelength.
   (star-lifting residue). **S37 Vacuum-decay boundary** — listed for
   completeness; effectively unobservable until arrival.
 
+### IX. Concealment residue — the warden's fence
+*Added 2026-09-06. Not a residue of extinction but of its opposite: a
+civilisation that persists and hides — us, or others — under the zoo
+hypothesis. Kept in this taxonomy because the observables are of the same
+kind (a deficit where the photosphere demands flux) and the machinery is
+shared. Full physics in `baffle.md`.*
+* **S38 Reciprocal shadow of a band-selective baffle.** A passive screen on
+  the Sun→observer line that absorbs our technosignature bands (3–50 µm for a
+  swarm; radio for leakage) and passes the rest must, by Lorentz reciprocity,
+  absorb the same bands from the observer's star toward us. Observable: a star
+  whose W1 *and* W2 (and W3/W4 where measured) sit ≥ 0.3 mag below the
+  photospheric locus with normal J/H/K_s and Gaia photometry — the *inverse*
+  of every IR-excess search, and a colour dependence no dust can make
+  (extinction is transparent in the IR, not opaque); or a hole in deep radio
+  source counts at a nearby star. Geometry decides: a sharp-edged arcminute
+  patch of deficit around the star (ρ = R/d: 3.4′ for 1 AU at 1 000 AU),
+  annual parallax modulation of the patch edge with the phase fixed by the
+  ecliptic, and a flat constant deficit on the star itself (our-end screen);
+  an isolated constant deficit with no patch (their-end screen). → **BAFFLE**
+* **S39 The grey baffle's own waste heat.** A fully absorbing 1-AU screen at
+  d is a 10.5 K (1 000 AU) to 3.3 K (10⁴ AU) blackbody disk of 3.4′ to 21″
+  radius moving on an annual ellipse of 206 265″/d: tens of kJy at Planck
+  857/545 GHz inside 3 000 AU (excluded by the existence of the Planck
+  compact-source catalogues), a few Jy at the CMB temperature at 10⁴ AU —
+  listed, **not searchable with catalogue-level products** (Planck's catalogues
+  are built from co-added full-mission maps in which a source moving 40″
+  between surveys is neither a point source nor an entry).
+
 ---
 
 ## 3. CENOTAPH — the flagship design

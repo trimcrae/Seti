@@ -15,7 +15,7 @@ exist but no run has committed results. Every CLI command is
 cron is noted. All channels are unit-tested offline under `tests/` (the suite
 is network-guarded: see `tests/conftest.py`).
 
-Index compiled 2026-09-01 from the files on `main`; re-verify a verdict
+Index compiled 2026-09-01 from the files on `main` (rows for METRONOME, LANTERN and FALLOUT added 2026-09-06); re-verify a verdict
 against the result file before quoting it elsewhere.
 
 ## Waste heat and energy budget
@@ -43,6 +43,7 @@ against the result file before quoting it elsewhere.
 | **TOCSIN-ZTF** (`tocsin.ztf_live`) | The same S30 signature on the LIVE ZTF public alert stream (measured live 2026-09-05) while Rubin is dark | ALeRCE ZTF API (numerator), IRSA `ztf_current_meta_sci` quadrant table (denominator) | `tocsin-ztf-probe`, `tocsin-ztf-targets`, `tocsin-ztf-screen`, `tocsin-ztf-assess` | `tocsin-ztf.yml` (nightly) | `tocsin-ztf.md` | Live since 2026-09-05, twice daily: six nights from 2026-07-14 folded (163,768 star-nights, 32 events, one star at `interest`); backfilling toward the stream |
 | **TOCSIN alt-feeds** (`tocsin.altfeeds`) | The same signature on non-Rubin feeds while Rubin is off sky | ASAS-SN Sky Patrol v2, ATLAS forced photometry | `tocsin-altfeeds-probe`, `tocsin-altfeeds-census`, `tocsin-altfeeds` | `tocsin-altfeeds.yml` | `tocsin-altfeeds.md`, `substitute-surveys.md` | `results/tocsin_altfeeds/census.json`: `OK` (139,706 targets); `probe.json`: `PARTIAL` (ATLAS and ZTF usable, ASAS-SN down). Walk rebuilt 2026-09-05 with a job deadline, concurrent ATLAS tasks and a per-star walk state (`tocsin-altfeeds.md` §12); ledgers restart from that run |
 | **SHROUD** (`shroud`) | Enshrouded, not destroyed (S33): POSS-I sources absent from the modern optical but present in the infrared | SVO `vanish-neowise` / `vanish-possi` (Solano+2022 by-product), CDS X-Match, Gaia DR3 | `shroud --stage {acquire,photometry,analyze}` | `shroud.yml` | `shroud.md` | **Pending**: `results/shroud/` holds only a fetched HTML page; no `summary.json` committed |
+| **METRONOME** (`metronome`) | Strict clocks in catalogued flare *timing* (S28): a star whose brief brightenings recur with jitter far below rotational quasi-periodicity | Kepler and TESS flare catalogues (Yang & Liu 2019, Pietras+2022, Günther+2020) and rotation / periodic-variable catalogues, all VizieR | `metronome --stage {probe,acquire,screen,assess}` (or `python -m seti.metronome.run`) | `metronome.yml` | `metronome.md` | **Pending**: built and offline-tested 2026-09-06; first runner dispatch pending |
 
 ## Spectroscopy and chemistry
 
@@ -51,6 +52,8 @@ against the result file before quoting it elsewhere.
 | **Narrow lines** (`spectra`, with `absorb`) | A single unresolved narrow emission line (CW laser) and its absorption-mode analogue | SDSS-DR17 and DESI-DR1 via SPARCL; SIMBAD | `spectra-run --mode {emission,absorption}`, `spectra-triage`, `spectra-confirm` | `spectra.yml`, `spectra-confirm.yml` | none | `results/spectra_triage/summary.json`: 167 survive (112 emission + 55 absorption) after duplicate / known-line / recurrent-wavelength / galaxy cuts. Next: per-exposure persistence |
 | **TAILINGS** (`tailings`) | The sparse chemical anomaly: one element extreme, the other 20–30 quiet, in cool dwarfs where the convective envelope forbids it naturally (S12/S15/S22) | GALAH DR4, APOGEE DR17 via TAP with runtime schema discovery | `tailings`, `tailings-validate` (offline Griffith+2021 Na-star injection) | `tailings.yml`, `tailingslit.yml` | `tailings.md` | `results/tailings/summary.json`: `DEGRADED_SOURCE (...)` + `SPARSE_CANDIDATES_PENDING_REMEASUREMENT`: 1,809 catalogue-level survivors, none a detection until re-measured from the raw spectrum |
 | **MIDDEN** (`midden`) | Whitmire & Wright 1980 nuclear-waste signature: Tc / Pm / actinide lines in photospheres that are not AGB or S-type | ESO HARPS/FEROS via ObsCore TAP; VizieR; NIST ASD | `midden --stage {verify-lines,targets,acquire,score,all}`, `midden-deep` | `midden.yml`, `midden-deepdive.yml` | `midden.md` | `results/midden/REPORT.md`: no population-level Tc excess (178 spectra, 99 stars); the one flag, HD 217522, is roAp rare-earth blending and is not claimed |
+| **LANTERN** (`lantern`) | A narrow emission line that is present out of secondary eclipse and *vanishes* while the planet is occulted (S28a): a planet-side monochromatic source, across every public JWST exoplanet time series | MAST JWST `x1dints` (NIRSpec, NIRCam, NIRISS, MIRI) × NASA Exoplanet Archive ephemerides | `lantern {probe,inventory,screen,assess,selftest}` (or `python -m seti.lantern.run`) | `lantern.yml` | `lantern.md` | **Pending**: built and offline-tested 2026-09-06; first runner dispatch pending |
+| **FALLOUT** (`fallout`) | The stable *residue* of fission (S14): the two-humped fission-yield abundance vector ([Nd/Ba] ≫ 0, [Eu/Nd] < 0, [Mo/Zr] > 0) in cool dwarfs, against the best natural s + r mixture in a Teff-matched peer frame | GALAH DR4 allstar (Data Central cloud FITS, the route that worked for TAILINGS); APOGEE DR17 optional | `fallout --stage {probe,acquire,screen,assess,all}` (or `python -m seti.fallout.run`) | `fallout.yml` | `fallout.md` | **Pending**: built and offline-tested 2026-09-06; first runner dispatch pending |
 
 ## Kinematics and geometry
 
@@ -119,6 +122,7 @@ were run for:
 | `necrolit` | Novelty check for the necrosignature taxonomy in `necrosignatures.md` (S-numbered signatures cited by RUST, KNELL, VIGIL, EMBER, SHROUD, CENOTAPH, TOCSIN) | `necrolit.yml` |
 | `farir_docs`, `farir_stats`, `catrecon` | AKARI-FIS / IRAS far-IR instrument documentation, measured crossmatch systematics and catalogue metadata (CENOTAPH leg 3, EMBER) | `farir-params.yml`, `catrecon.yml` |
 | `survey_recon` | Live probe of what can feed TOCSIN and LOOM while Rubin is dark (`substitute-surveys.md`) | `survey-recon.yml` |
+| `metronomelit`, `lanternlit`, `falloutlit` | Prior-art sweeps for METRONOME, LANTERN and FALLOUT (`scripts/<name>_fetch.py`; run as the `lit` job of each channel's workflow) | `metronome.yml`, `lantern.yml`, `fallout.yml` |
 
 ## Gaps this index exposed
 

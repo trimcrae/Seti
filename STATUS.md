@@ -112,6 +112,29 @@ check that decides it: WISE W3/W4 are unsaturated at K_s ≈ 5, so an AllWISE
 cone at those twelve positions either shows a normal 12/22 µm photosphere
 (coverage gap, closed) or does not. That check is queued as the bright vet.
 
+**Bright vet, run 34052513594 (14:41 ET, 87 s): `VET_COMPLETE`, nothing
+escalated.** AllWISE (VizieR `II/328`, 100 cones, 0 failures) at the 12
+no-detection stars, the 27 IRAS-upper-limit stars and 60 photospheric
+controls (K_s 4.5–5.5, |resid₉| < 0.05) drawn in the same run; the control
+locus is K_s − W3 = −0.045 + 0.118 (J − K_s) with 0.024 mag scatter and
+K_s − W4 = 0.019 + 0.120 (J − K_s) with 0.021. Of the twelve K_s ≈ 5 stars
+with no AKARI/IRAS source, **nine have a normal 12 and 22 µm photosphere**
+(`PHOTOSPHERE_PRESENT_AT_12_22_UM`) — the absence was survey coverage, as
+the ecliptic/southern geometry said — and three are `INCONCLUSIVE` by the
+letter of a 0.024-mag locus: the ETZ star Gaia DR3 6243032008973309440 sits
+at K_s − W3 = −0.16 (−5.1σ) with W4 normal (−0.05) under `cc_flags = HHH0`
+(halo of a bright neighbour in W1–W3), a second at −0.11/−0.08 under `0h00`,
+a third at +0.09/+0.18. A screen opaque at 12 µm would take ≥ 1 mag, and a
+3–50 µm screen cannot leave W4 untouched, so these are halo-flagged
+photometry at the tenth-of-a-magnitude level, not candidates. The 27
+IRAS-limit stars are `PHOTOSPHERE_PRESENT` (11), `INCONCLUSIVE` because W3
+is saturated brighter than 3.8 mag (14), and one `NO_WISE_SOURCE`: a
+K_s = 2.3 star whose nearest AllWISE entry is 20″ away flagged `ddHd` — the
+diffraction-spike fragments AllWISE makes of very bright stars. Antares was
+not queried. **The bright tier is closed: 29,080 of the sky's brightest
+stars carry a photosphere, not a shadow, at 9–25 µm, and the 13 that
+carried no mid-IR catalogue entry carry one in WISE.**
+
 ### Three new questions, 2026-09-06: METRONOME, LANTERN, FALLOUT
 
 The charter ranks novelty first, and after 35 channels the taxonomy in

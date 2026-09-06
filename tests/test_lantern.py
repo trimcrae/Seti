@@ -471,6 +471,57 @@ def test_register_adds_lantern_parser():
     assert args.command == "lantern" and args.stage == "assess" and callable(args.func)
 
 
+def test_read_x1dints_synthetic_fits(tmp_path):
+    """The real FITS reader on an x1dints-shaped file: one EXTRACT1D per
+    integration, INT_TIMES with MJD-based BJD_TDB mid-times, a descending
+    wavelength grid (NIRISS-like), and segment concatenation."""
+    from astropy.io import fits
+
+    from seti.lantern.acquire import concatenate_segments, exposure_key, read_x1dints
+
+    wl = np.linspace(2.8, 0.9, 50)                         # descending on purpose
+    def make(path, n_int, t0):
+        hdus = [fits.PrimaryHDU()]
+        hdus[0].header.update({"INSTRUME": "NIRISS", "FILTER": "CLEAR", "PUPIL": "GR700XD",
+                               "NINTS": n_int, "EXPSTART": t0, "EXPEND": t0 + 0.01 * n_int})
+        for i in range(n_int):
+            cols = [fits.Column(name="WAVELENGTH", format="D", array=wl),
+                    fits.Column(name="FLUX", format="D", array=np.full(50, 100.0 + i)),
+                    fits.Column(name="FLUX_ERROR", format="D", array=np.full(50, 1.0))]
+            hdus.append(fits.BinTableHDU.from_columns(cols, name="EXTRACT1D"))
+        it = fits.BinTableHDU.from_columns(
+            [fits.Column(name="integration_number", format="J", array=np.arange(1, n_int + 1)),
+             fits.Column(name="int_mid_BJD_TDB", format="D",
+                         array=t0 + 0.01 * np.arange(n_int) + 0.005)], name="INT_TIMES")
+        hdus.append(it)
+        fits.HDUList(hdus).writeto(path, overwrite=True)
+
+    p1, p2 = tmp_path / "jw01-seg001_nis_x1dints.fits", tmp_path / "jw01-seg002_nis_x1dints.fits"
+    make(p1, 5, 60000.0)
+    make(p2, 4, 60000.05)
+    s1, s2 = read_x1dints(p1), read_x1dints(p2)
+    assert s1["flux"].shape == (5, 50) and s1["flux_err"].shape == (5, 50)
+    assert s1["time_source"] == "int_times_bjd_tdb"
+    assert abs(s1["times"][0] - 2460000.505) < 1e-6              # MJD-based -> JD
+    assert s1["wavelength"][0] < s1["wavelength"][-1]             # made ascending
+    assert s1["flux"][0, 0] == 100.0 and s1["meta"]["INSTRUME"] == "NIRISS"
+    assert exposure_key(p1.name) == exposure_key(p2.name) == "jw01_nis"
+    cat = concatenate_segments([s2, s1])
+    assert cat["flux"].shape == (9, 50) and cat["n_segments"] == 2
+    assert np.all(np.diff(cat["times"]) > 0)
+    prof = R.instrument_profile(_CONF, s1["meta"]["INSTRUME"], None, s1["meta"]["FILTER"],
+                                s1["meta"]["PUPIL"])
+    assert prof["mode"] == "SOSS" and prof["R"] == 700
+    # A file without INT_TIMES falls back to the header, flagged.
+    p3 = tmp_path / "noint_x1dints.fits"
+    make(p3, 3, 60001.0)
+    with fits.open(p3) as h:
+        h2 = fits.HDUList([x for x in h if x.name != "INT_TIMES"])
+        h2.writeto(p3, overwrite=True)
+    s3 = read_x1dints(p3)
+    assert s3["time_source"] == "header_linear" and s3["times"][0] > 2.4e6
+
+
 def test_ephemeris_dataclass_roundtrip():
     e = Ephemeris(name="b", period=1.0, t0=0.0, duration=0.1)
     d = R._json_safe(e)

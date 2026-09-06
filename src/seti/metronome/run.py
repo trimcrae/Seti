@@ -183,6 +183,33 @@ def stage_probe(conf: dict, out: Path, *, catalogues=None, query_fn=None,
 # ---------------------------------------------------------------------------
 # acquire
 # ---------------------------------------------------------------------------
+MISSION_TIME_OFFSET = {"kepler": ("BKJD", 2454833.0), "tess": ("BTJD", 2457000.0)}
+
+
+def normalise_time_system(df: pd.DataFrame, guess: str, mission: str
+                          ) -> tuple[pd.DataFrame, str]:
+    """Bring ``t_peak / t_start / t_end`` to the mission-native offset system.
+
+    The data-driven windows work in any consistent system, but the published
+    Kepler quarter fallback is in BKJD, and a BJD catalogue would otherwise
+    miss every quarter silently.  Only the guessed BJD / MJD cases are shifted;
+    the guess and the resulting system are both recorded in ``acquire.json``.
+    """
+    native, off = MISSION_TIME_OFFSET.get(mission.lower(), (guess, 0.0))
+    shift = 0.0
+    if guess == "BJD":
+        shift = -off
+    elif guess == "MJD":
+        shift = 2400000.5 - off
+    else:
+        return df, guess
+    out = df.copy()
+    for c in ("t_peak", "t_start", "t_end"):
+        if c in out.columns:
+            out[c] = pd.to_numeric(out[c], errors="coerce") + shift
+    return out, native
+
+
 def stage_acquire(conf: dict, out: Path, *, catalogues=None, query_fn=None,
                   max_rows: int | None = None, log=None) -> dict:
     from .acquire import (
@@ -222,12 +249,13 @@ def stage_acquire(conf: dict, out: Path, *, catalogues=None, query_fn=None,
             continue
         df["mission"] = spec.get("mission")
         df["catalogue"] = name
+        guess = guess_time_system(df["t_peak"].to_numpy(), spec.get("mission", ""))
+        df, native = normalise_time_system(df, guess, str(spec.get("mission", "")))
         path = data / f"{name}_events.parquet"
         df.to_parquet(path, index=False)
         rec.update({"status": "OK", "n_events": int(len(df)),
                     "n_stars": int(df["star_id"].nunique()), "path": str(path),
-                    "time_system_guess": guess_time_system(df["t_peak"].to_numpy(),
-                                                           spec.get("mission", "")),
+                    "time_system_guess": guess, "time_system_native": native,
                     "t_peak_source": str(df["t_peak_source"].iloc[0])
                     if "t_peak_source" in df else "t_peak"})
         per_cat[name] = rec
@@ -439,13 +467,14 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
     statuses = {str(v.get("status")) for v in acq_cats.values()}
     n_scanned = sum(1 for r in records if r.get("status") == "scanned")
     if n_scanned == 0:
-        if not acq_cats or "OK" not in statuses and "QUERY_FAILED" in statuses \
-                or not acq_cats and not records:
-            verdict = VERDICT_NO_DATA
-        elif statuses <= {"QUERY_RETURNED_ZERO_ROWS"}:
-            verdict = VERDICT_ZERO
-        elif "OK" in statuses:
+        # Three different facts, kept apart: nothing answered (an archive-access
+        # statement); everything answered with nothing (a statement about the
+        # catalogues); events arrived but no star had n_min of them (a statement
+        # about the sample).  None is a statement about clocks.
+        if "OK" in statuses:
             verdict = "NO_STAR_REACHED_N_MIN"
+        elif acq_cats and statuses <= {"QUERY_RETURNED_ZERO_ROWS"}:
+            verdict = VERDICT_ZERO
         else:
             verdict = VERDICT_NO_DATA
         summary = {"verdict": verdict, "generated_utc": _now(),
@@ -475,7 +504,8 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
     prelim = assign_tiers(records, {}, vconf)
     shortlist = [r for r in prelim if r.get("fdr_watch")]
     vari: dict = {}
-    reached: dict = {}
+    reached_by_star: dict = {}
+    vari_sources = set(conf.get("variability_catalogues") or {})
     if shortlist and not offline:
         from .acquire import fetch_positions_by_id, fetch_variable_context, tap_query
         query_fn = query_fn or tap_query
@@ -490,17 +520,19 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
                                             radius_arcsec=float(conf.get("cone_radius_arcsec", 3.0)))
             for sid, lst in v.items():
                 vari.setdefault(f"{mission}:{sid}", []).extend(lst)
-            for k, ok in rch.items():
-                reached[k] = reached.get(k, True) and bool(ok)
-    n_vari = len(conf.get("variability_catalogues") or {})
-    all_reached = bool(n_vari) and bool(reached) and all(reached.get(k, False)
-                                                        for k in (conf.get("variability_catalogues") or {}))
+            for sid, srcs in rch.items():
+                reached_by_star.setdefault(f"{mission}:{sid}", set()).update(srcs)
+    short_keys = {r.get("star_key") for r in shortlist}
+    # Per-source fraction of the shortlist whose cone answered, for the summary.
+    reached = {k: (float(np.mean([k in reached_by_star.get(s, set()) for s in short_keys]))
+                   if short_keys else float("nan")) for k in sorted(vari_sources)}
     for r in records:
         key = r.get("star_key")
         prot, src = _prot_for(r, rot_by_mission.get(str(r.get("mission")), pd.DataFrame()))
         contexts[key] = {"mission": r.get("mission"), "prot": prot, "prot_source": src,
                          "catalogued_periods": vari.get(key, []),
-                         "variability_catalogues_reached": all_reached}
+                         "variability_catalogues_reached": bool(vari_sources) and
+                         vari_sources <= reached_by_star.get(key, set())}
     vetted = assign_tiers(records, contexts, vconf)
     counters = rejection_counters(vetted)
     calib = calibrate_jitter(vetted, vconf)
@@ -517,9 +549,11 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
     for k, v in acq_cats.items():
         if v.get("status") != "OK":
             degraded.append(f"{k}:{v.get('status')}")
-    if not offline and shortlist and not all_reached:
-        degraded.append("variability_catalogues:" + ",".join(
-            k for k in (conf.get("variability_catalogues") or {}) if not reached.get(k, False)))
+    if not offline and shortlist:
+        unreached = [k for k in sorted(vari_sources)
+                     if not (np.isfinite(reached.get(k, np.nan)) and reached[k] >= 1.0)]
+        if unreached:
+            degraded.append("variability_catalogues:" + ",".join(unreached))
     for m, rdf in rot_by_mission.items():
         if not len(rdf):
             degraded.append(f"rotation_{m}:none")

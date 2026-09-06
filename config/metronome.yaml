@@ -134,6 +134,14 @@ null:
   screen_p_max: 0.5
   n_shuffle: 100
   shuffle_min_gaps: 4
+  # A star whose Q / jitter already fail the WATCH thresholds (vet: below)
+  # can never rank above tier `none`, whatever its p, so its null is capped at
+  # n_max_not_clock trials.  Exact restatement of the tier condition, not a
+  # heuristic; it keeps a catalogue of rotation-modulated stars from spending
+  # the whole budget on p-values that cannot change a tier.
+  n_max_not_clock: 200
+  Q_watch: 0.6
+  jitter_watch: 0.12
 
 vet:
   rotation_ratios: [1.0, 0.5, 0.33333, 0.25, 2.0, 3.0]

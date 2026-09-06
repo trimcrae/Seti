@@ -215,8 +215,10 @@ config/lantern.yaml           thresholds, phase windows, per-instrument artefact
 tests/test_lantern.py         offline battery (CI gate)
 .github/workflows/lantern.yml inventory -> sharded screen -> assess (+ lit)
 scripts/lanternlit_fetch.py   prior-art sweep -> results/lanternlit/
-results/lantern/              summary.json, candidates.json, inventory.json,
-                              probe.json, selftest.json, obs/<host>/<exposure>.json
+results/lantern/              summary.json, candidates.json, exposures.json,
+                              inventory.json, probe.json, selftest.json (committed);
+                              obs/<host>/<exposure>.json checkpoints (run artifact
+                              only -- re-assessable with reduce_only_run_id)
 ```
 
 Entry point: `python -m seti.lantern.run {probe|inventory|screen|assess|selftest}`,

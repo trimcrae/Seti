@@ -82,6 +82,12 @@ DEFAULT_NULL = {
     "h_stop": 10, "n_max": 2000, "n_min_trials": 20, "budget_s": 300.0,
     "screen_rate": 0.3, "screen_p_max": 0.5, "n_shuffle": 100,
     "shuffle_min_gaps": 4,
+    # A star whose phase concentration already fails the loose (watch) clock
+    # thresholds can never rank above tier `none`, whatever its p; its null is
+    # capped here so a strongly rotation-modulated star does not spend the
+    # full budget establishing a p-value that cannot change its tier.  The p
+    # is still a valid Besag-Clifford p, only coarser.
+    "n_max_not_clock": 200, "Q_watch": 0.6, "jitter_watch": 0.12,
 }
 
 
@@ -598,7 +604,12 @@ def analyze_star(times, windows: Windows, energies=None, scan_conf: dict | None 
         rec.update({"null_computed": False, "p_window": rec["p_screen_upper"],
                     "p_window_source": "bonferroni_screen", "p_shuffle": float("nan")})
     else:
-        wn = window_null(t, windows, r.h_max, sc, nc, rng)
+        not_clock = not (np.isfinite(r.Q) and r.Q >= float(nc["Q_watch"])
+                         and np.isfinite(r.jitter) and r.jitter <= float(nc["jitter_watch"]))
+        nc_run = dict(nc, n_max=min(int(nc["n_max"]), int(nc["n_max_not_clock"]))) \
+            if not_clock else nc
+        rec["null_budget_mode"] = "not_clock_reduced" if not_clock else "full"
+        wn = window_null(t, windows, r.h_max, sc, nc_run, rng)
         rec.update({f"wn_{k}": v for k, v in wn.as_dict().items() if k != "kind"})
         rec["null_computed"] = wn.n_trials > 0
         rec["p_window"] = wn.p if wn.n_trials > 0 else rec["p_screen_upper"]

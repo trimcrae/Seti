@@ -577,6 +577,60 @@ def test_run_with_unreachable_archive_is_no_data_reached(tmp_path):
     assert all(v["status"] == "QUERY_FAILED" for v in probe["catalogues"].values())
 
 
+def test_start_time_only_table_uses_start_as_event_time_and_says_so():
+    ev = pd.DataFrame({"KIC": ["1", "1", "2"], "Tstart": [100.0, 103.0, 110.0]})
+    fake = _FakeTAP("ok", ev)
+    d = acq.discover_event_table("k", "J/ApJS/241/29", query_fn=fake)
+    assert "t_peak" not in d.roles and d.roles["t_start"] == "Tstart"
+    df = acq.fetch_events(d, query_fn=fake)
+    assert list(df["t_peak"]) == [100.0, 103.0, 110.0]
+    assert (df["t_peak_source"] == "t_start").all()
+    assert "t_peak_from_start" not in df.columns
+
+
+def test_bjd_and_mjd_catalogues_are_normalised_to_the_mission_system():
+    from seti.metronome.run import normalise_time_system
+
+    df = pd.DataFrame({"t_peak": [2455000.0], "t_start": [2454999.9]})
+    out, native = normalise_time_system(df, "BJD", "kepler")
+    assert native == "BKJD" and np.isclose(out["t_peak"][0], 167.0)
+    assert np.isclose(out["t_start"][0], 166.9)
+    df = pd.DataFrame({"t_peak": [58000.0]})
+    out, native = normalise_time_system(df, "MJD", "tess")
+    assert native == "BTJD" and np.isclose(out["t_peak"][0], 58000.0 + 2400000.5 - 2457000.0)
+    df = pd.DataFrame({"t_peak": [900.0]})
+    out, native = normalise_time_system(df, "BKJD", "kepler")
+    assert native == "BKJD" and out["t_peak"][0] == 900.0
+
+
+def test_rotation_discovery_with_empty_preferred_goes_straight_to_keywords():
+    class TAP(_FakeTAP):
+        def __call__(self, adql):
+            self.calls.append(adql)
+            if "TAP_SCHEMA.tables" in adql:
+                assert "LIKE '%%'" not in adql
+                return pd.DataFrame(columns=["table_name", "description"])
+            raise AssertionError(adql)
+
+    fake = TAP("ok", pd.DataFrame())
+    df, rec = acq.discover_and_fetch_rotation("tess_rot", "", ("rotation", "TESS"), query_fn=fake)
+    assert not len(df) and rec["status"] == "QUERY_RETURNED_ZERO_ROWS"
+    assert len(fake.calls) == 1 and "description LIKE" in fake.calls[0]
+
+
+def test_cone_failure_is_per_star_not_per_catalogue():
+    pos = pd.DataFrame({"star_id": ["a", "b"], "ra": [10.0, 20.0], "dec": [1.0, 2.0]})
+
+    def cone(table, ra, dec, r):
+        if ra == 20.0:
+            raise RuntimeError("timeout")
+        return pd.DataFrame({"Period": [0.5], "Type": ["RRAB"]})
+
+    v, reached = acq.fetch_variable_context(pos, {"vsx": {"table": "B/vsx/vsx"}}, cone_fn=cone)
+    assert reached == {"a": {"vsx"}}
+    assert v["a"] == [("vsx", 0.5, "RRAB")] and "b" not in v
+
+
 def test_run_with_empty_archive_is_zero_rows_not_a_null(tmp_path):
     out = tmp_path / "metronome"
     rep = metronome_run(None, stage="all", out_root=out, query_fn=_FakeTAP("zero"),

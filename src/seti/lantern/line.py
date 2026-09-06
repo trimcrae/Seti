@@ -198,20 +198,91 @@ def _half_max_extent(z, i, max_reach: int):
     return left, right, bounded
 
 
-def _template_fwhm(spec, noise, i, reach: int, fwhm_max: float) -> tuple[float, float]:
+def _width_bounds(spr: float, c: dict) -> tuple[int, int]:
+    """Accepted half-max width range in samples for ``spr`` samples per resel.
+    An unresolved line at Nyquist sampling has FWHM ~2 samples; a single
+    sample above half-peak is sub-resolution (hot pixel / cosmic ray)."""
+    min_w = max(1, int(round(c["min_width_resel"] * spr)))
+    max_w = max(min_w, int(round(c["max_width_resel"] * spr)))
+    min_w = max(min_w, 2) if spr >= 2 else min_w
+    return min_w, max_w
+
+
+def residual_z(spec, spec_err, samples_per_resel: float = 2.0, cfg: dict | None = None) -> dict:
+    """Continuum residual and its significance for a normalised spectrum.
+
+    Iterated notched local-quadratic continuum: each pass masks every
+    >4-sigma excursion (and its wings) so a strong feature -- or a stellar
+    line forest, whose first-pass residual dominates the noise -- cannot bias
+    the continuum of the samples beside it; iterate until the mask converges.
+    Returns ``z``, ``resid``, ``noise``, ``cont`` and the final ``mask``.
+    """
+    c = {**_DEFAULT_LINE_CFG, **(cfg or {})}
+    s = np.asarray(spec, float)
+    n = s.size
+    _, max_w = _width_bounds(max(float(samples_per_resel), 1.0), c)
+    hole = max_w + 1
+    cont = local_poly_continuum(s, c["continuum_window"], hole)
+    resid = s - cont
+    noise = block_noise(resid, c["noise_block"], spec_err)
+    grow = np.zeros(n, bool)
+    for _pass in range(4):
+        with np.errstate(invalid="ignore", divide="ignore"):
+            z0 = resid / noise
+        excur = np.isfinite(z0) & (np.abs(z0) > 4.0)
+        new = excur.copy()
+        for k in (1, 2):                 # the wings of an excursion
+            new[k:] |= excur[:-k]
+            new[:-k] |= excur[k:]
+        new |= grow
+        if not new.any() or np.array_equal(new, grow):
+            break
+        grow = new
+        cont = local_poly_continuum(s, c["continuum_window"], hole, mask=grow)
+        resid = s - cont
+        noise = block_noise(resid, c["noise_block"], spec_err)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        z = resid / noise
+    return {"z": z, "resid": resid, "noise": noise, "cont": cont, "mask": grow}
+
+
+def feature_snr_in_mask(flux, mask, index: int, flux_err=None, samples_per_resel: float = 2.0,
+                        cfg: dict | None = None, halfwidth: int = 1) -> float:
+    """Significance of a feature at ``index`` on the time-averaged spectrum of
+    the integrations in ``mask`` (max z within ``+-halfwidth``), with the same
+    masked-quadratic continuum the search uses.  This is the in-eclipse
+    'consistent with zero' test: a series-based in-eclipse mean inherits any
+    constant bias of the side-window continuum (a neighbouring absorption line
+    offsets it identically in every integration), whereas the spectrum-level
+    residual handles curvature and the forest by construction."""
+    c = {**_DEFAULT_LINE_CFG, **(cfg or {})}
+    avg = time_average_spectrum(flux, mask, flux_err, float(c.get("clip_sigma", 5.0)))
+    if avg["n_used"] < 2:
+        return np.nan
+    z = residual_z(avg["spec"], avg["spec_err"], samples_per_resel, c)["z"]
+    lo, hi = max(0, index - halfwidth), min(z.size, index + halfwidth + 1)
+    seg = z[lo:hi]
+    return float(np.nanmax(seg)) if np.any(np.isfinite(seg)) else np.nan
+
+
+def _template_fwhm(spec, noise, i, reach: int, fwhm_max: float,
+                   exclude=None) -> tuple[float, float]:
     """Best-fitting Gaussian FWHM (samples) of the feature at ``i`` by weighted
-    least squares of ``a * template + b + c * x`` on the RAW spectrum over
-    ``+-reach`` samples, for templates from a single-pixel spike (FWHM 1) to
-    ``fwhm_max``.  Fitting the raw spectrum with its own linear baseline --
-    rather than the hole-continuum residual -- keeps the wings of a broad
-    feature, which the notched continuum would otherwise absorb and make look
-    narrow.  A matched-template width is stable where a moment or a half-max
-    count is not.  Returns ``(fwhm, sub_pixel_centre)``."""
+    least squares of ``a * template + b + c * x`` over ``+-reach`` samples of
+    the (masked-continuum) residual, for templates from a single-pixel spike
+    (FWHM 1) to ``fwhm_max``.  The residual is used because the excursion mask
+    keeps a broad feature's shape (its >4-sigma core and wings are excluded
+    from the continuum fit) while removing the stellar line forest that would
+    otherwise mislead a fit on the raw spectrum.  A matched-template width is
+    stable where a moment or a half-max count is not.  Returns
+    ``(fwhm, sub_pixel_centre)``."""
     n = spec.size
     lo, hi = max(0, i - reach), min(n, i + reach + 1)
     y = spec[lo:hi]
     s = noise[lo:hi]
     ok = np.isfinite(y) & np.isfinite(s) & (s > 0)
+    if exclude is not None:
+        ok &= ~np.asarray(exclude, bool)[lo:hi]
     if ok.sum() < 5:
         return 1.0, float(i)
     x = np.arange(lo, hi, dtype=float)[ok]
@@ -263,31 +334,9 @@ def narrow_feature_search(wavelength, spec, spec_err=None, samples_per_resel: fl
     if n < 2 * c["min_from_edge"] + 3 or not np.any(np.isfinite(s)):
         return out
     spr = max(float(samples_per_resel), 1.0)
-    min_w = max(1, int(round(c["min_width_resel"] * spr)))
-    max_w = max(min_w, int(round(c["max_width_resel"] * spr)))
-    hole = max_w + 1
-    # Two-pass local-quadratic continuum: the second pass masks every >4-sigma
-    # excursion (and its neighbours) so a strong feature cannot bias the
-    # continuum of the samples beside it.
-    cont = local_poly_continuum(s, c["continuum_window"], hole)
-    resid = s - cont
-    noise = block_noise(resid, c["noise_block"], spec_err)
-    with np.errstate(invalid="ignore", divide="ignore"):
-        z0 = resid / noise
-    excur = np.isfinite(z0) & (np.abs(z0) > 4.0)
-    if excur.any():
-        grow = excur.copy()
-        for k in (1, 2):                 # the wings of an excursion
-            grow[k:] |= excur[:-k]
-            grow[:-k] |= excur[k:]
-        cont = local_poly_continuum(s, c["continuum_window"], hole, mask=grow)
-        resid = s - cont
-        noise = block_noise(resid, c["noise_block"], spec_err)
-    with np.errstate(invalid="ignore", divide="ignore"):
-        z = resid / noise
-    # An unresolved line at Nyquist sampling has FWHM ~2 samples; a single
-    # sample above half-peak is sub-resolution (hot pixel / cosmic ray).
-    min_w = max(min_w, 2) if spr >= 2 else min_w
+    min_w, max_w = _width_bounds(spr, c)
+    rz = residual_z(s, spec_err, spr, c)
+    z, resid, noise, cont, grow = rz["z"], rz["resid"], rz["noise"], rz["cont"], rz["mask"]
     lo, hi = c["min_from_edge"], n - c["min_from_edge"]
     dlam = np.abs(np.gradient(wl)) if n > 1 else np.ones(n)
     feats = []
@@ -312,7 +361,10 @@ def narrow_feature_search(wavelength, spec, spec_err=None, samples_per_resel: fl
         # on a pixel has its neighbours at exactly half peak, so a
         # count-above-half-max is unstable there; a template fit is not.  A
         # single-sample spike fits the FWHM~1 template.
-        fwhm, _c0 = _template_fwhm(s, noise, i, 3 * max_w, 3.0 * max_w)
+        # Masked NEGATIVE residuals (absorption lines of the forest) are kept
+        # out of the width fit; masked positive ones are the feature's own wings.
+        fwhm, _c0 = _template_fwhm(resid, noise, i, 3 * max_w, 3.0 * max_w,
+                                   exclude=grow & (resid < 0))
         if fwhm < 0.75 * min_w:
             counters["single_pixel_spike"] += 1
             continue
@@ -652,9 +704,14 @@ def assess_feature(feature: dict, disc: dict | None, transit: dict | None,
     tier = "none"
     if not vetoes:
         vs = disc.get("eclipse_vanish_snr", np.nan)
+        # 'Consistent with zero' is judged on the in-eclipse averaged SPECTRUM
+        # when available (bias-free), else on the series mean.
+        zin = disc.get("in_eclipse_spectrum_snr", np.nan)
+        if not np.isfinite(zin):
+            zin = abs(disc.get("in_eclipse_sigma", np.nan))
         ok_cand = (vs >= c["vanish_snr_candidate"]
                    and disc.get("out_positive_snr", np.nan) >= c["out_positive_snr_min"]
-                   and abs(disc.get("in_eclipse_sigma", np.nan)) <= c["in_eclipse_zero_sigma_max"])
+                   and zin <= c["in_eclipse_zero_sigma_max"])
         tier = "candidate" if ok_cand else "interest"
     elif vetoes == ["insufficient_phase_coverage"]:
         tier = "watch"
@@ -732,7 +789,7 @@ def vanish_pvalue(snr: float) -> float:
 
 
 __all__ = ["VETO_NAMES", "time_average_spectrum", "running_median",
-           "local_poly_continuum", "block_noise",
+           "local_poly_continuum", "block_noise", "residual_z", "feature_snr_in_mask",
            "narrow_feature_search", "line_flux_series", "eclipse_discriminant",
            "transit_consistency", "known_artefact", "cosmic_ray_driven",
            "assess_feature", "recurrent_wavelengths", "is_recurrent", "bh_fdr",

@@ -225,14 +225,18 @@ jobs:
           PY
       - name: Commit results
         run: |
+          # The per-exposure checkpoints (results/lantern/obs/) stay in the run
+          # artifact: they can be hundreds of MB across the archive and are
+          # re-assessable via reduce_only_run_id.  exposures.json is the
+          # committed one-row-per-exposure record.
           scripts/commit_results.sh \
             "lantern: eclipse-vanishing narrow-line screen of JWST exoplanet time series" \
             results/lantern/summary.json \
             results/lantern/candidates.json \
+            results/lantern/exposures.json \
             results/lantern/inventory.json \
             results/lantern/probe.json \
-            results/lantern/selftest.json \
-            results/lantern/obs
+            results/lantern/selftest.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -273,7 +277,7 @@ jobs:
             "lantern: re-assessment of a prior run's checkpoints" \
             results/lantern/summary.json \
             results/lantern/candidates.json \
-            results/lantern/obs
+            results/lantern/exposures.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

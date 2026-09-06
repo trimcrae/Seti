@@ -43,6 +43,7 @@ from .line import (
     bh_fdr,
     cosmic_ray_driven,
     eclipse_discriminant,
+    feature_snr_in_mask,
     is_recurrent,
     known_artefact,
     line_flux_series,
@@ -244,6 +245,9 @@ def analyse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict, target:
         disc = tr = None
         if lab is not None and phase_class in ("eclipse", "both"):
             disc = eclipse_discriminant(ser["line"], ser["line_err"], ser["cont"], lab, times, dcfg)
+            disc["in_eclipse_spectrum_snr"] = feature_snr_in_mask(
+                flux, lab["in_eclipse"], f["index"], err, float(prof.get("samples_per_resel", 2)), lcfg)
+            disc["out_eclipse_spectrum_snr"] = float(f["snr"])
         if lab is not None and phase_class in ("transit", "both"):
             tr = transit_consistency(ser["line"], ser["line_err"], ser["cont"], lab)
         art = known_artefact(f["wavelength"], prof["artefacts"], prof["edge_tolerance_um"])
@@ -257,16 +261,33 @@ def analyse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict, target:
                  "eclipse_tested": a["eclipse_tested"]}
         if disc is not None:
             entry["p_vanish"] = vanish_pvalue(disc.get("eclipse_vanish_snr", np.nan))
-        # Compact window for the record (the spectra themselves are not kept).
-        lo, hi = max(0, f["index"] - 12), min(wl.size, f["index"] + 13)
-        entry["window"] = {"wavelength": [round(float(x), 5) for x in wl[lo:hi]],
-                           "spec_norm": [round(float(x), 6) if np.isfinite(x) else None
-                                         for x in avg["spec"][lo:hi]]}
-        if disc is not None:
-            entry["line_series_binned"] = _bin_series(ser["line"], 25)
-            entry["cont_series_binned"] = _bin_series(ser["cont"], 25)
+        # A compact window and binned series are kept ONLY for features that
+        # matter (a non-'none' tier, or an eclipse test above the interest
+        # threshold): a forest-rich M dwarf yields ~100 stellar pseudo-peaks per
+        # exposure, and carrying detail for all of them makes the checkpoints
+        # hundreds of MB across the archive.
+        keep_detail = a["tier"] != "none" or (
+            disc is not None and np.isfinite(disc.get("eclipse_vanish_snr", np.nan))
+            and disc["eclipse_vanish_snr"] >= float(dcfg.get("vanish_snr_interest", 3.0)))
+        if keep_detail:
+            lo, hi = max(0, f["index"] - 12), min(wl.size, f["index"] + 13)
+            entry["window"] = {"wavelength": [round(float(x), 5) for x in wl[lo:hi]],
+                               "spec_norm": [round(float(x), 6) if np.isfinite(x) else None
+                                             for x in avg["spec"][lo:hi]]}
+            if disc is not None:
+                entry["line_series_binned"] = _bin_series(ser["line"], 25)
+                entry["cont_series_binned"] = _bin_series(ser["cont"], 25)
         rec["features"].append(entry)
     return rec
+
+
+def _f(v) -> float:
+    """None-safe float for max() over JSON-roundtripped values."""
+    try:
+        x = float(v)
+    except (TypeError, ValueError):
+        return -np.inf
+    return x if np.isfinite(x) else -np.inf
 
 
 def _bin_series(y, n_bins: int) -> list:
@@ -401,26 +422,12 @@ def inventory(out_dir: Path, conf: dict, targets: list[str] | None = None,
 
 
 def _list_products_for(obs_df: pd.DataFrame, acq: dict) -> pd.DataFrame:
-    """Product lists need the astropy table; re-query the matched obsids."""
-    from astroquery.mast import Observations
-
+    """``x1dints`` products for the matched observations, by obsid, in batches
+    (``get_product_list`` accepts obsid strings directly)."""
     from . import acquire
     ids = [str(x) for x in obs_df["obsid"].tolist()]
-    frames = []
-    b = int(acq["product_batch"])
-    for s in range(0, len(ids), b):
-        chunk = ids[s:s + b]
-        try:
-            tab = Observations.query_criteria(obsid=chunk)
-        except Exception as exc:  # noqa: BLE001
-            print(f"[lantern] query_criteria(obsid) batch {s} failed: {exc!r}")
-            continue
-        if tab is None or len(tab) == 0:
-            continue
-        p = acquire.list_x1dints(tab, b, acq["retries"], acq["retry_pause_s"])
-        if len(p):
-            frames.append(p)
-    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    return acquire.list_x1dints(ids, int(acq["product_batch"]), acq["retries"],
+                                acq["retry_pause_s"])
 
 
 # --- screen ----------------------------------------------------------------------------------
@@ -581,6 +588,7 @@ def assess(out_dir: Path, conf: dict) -> dict:
                          "eclipse_vanish_snr": (f.get("eclipse") or {}).get("eclipse_vanish_snr"),
                          "out_positive_snr": (f.get("eclipse") or {}).get("out_positive_snr"),
                          "in_eclipse_sigma": (f.get("eclipse") or {}).get("in_eclipse_sigma"),
+                         "in_eclipse_spectrum_snr": (f.get("eclipse") or {}).get("in_eclipse_spectrum_snr"),
                          "ramp_correlation": (f.get("eclipse") or {}).get("ramp_correlation"),
                          "continuum_correlation": (f.get("eclipse") or {}).get("continuum_correlation"),
                          "transit_constancy": (f.get("transit") or {}).get("transit_constancy"),
@@ -674,6 +682,25 @@ def assess(out_dir: Path, conf: dict) -> dict:
     _write_json(out_dir / "summary.json", summary)
     _write_json(out_dir / "candidates.json", {"generated_utc": summary["generated_utc"],
                                               "rows": rows})
+    # One compact row per exposure: the committed record of what was analysed
+    # (the full checkpoints stay in the run artifact for reduce_only_run_id).
+    exposures = [{"target": r.get("target"), "exposure_key": r.get("exposure_key"),
+                  "obs_id": r.get("obs_id"), "status": r.get("status"),
+                  "instrument": r.get("instrument"), "mode": r.get("mode"),
+                  "planet": r.get("planet"), "phase_class": r.get("phase_class"),
+                  "n_integrations": r.get("n_integrations"), "n_products": r.get("n_products"),
+                  "total_bytes": r.get("total_bytes"), "time_source": r.get("time_source"),
+                  "coverage": next((p.get("coverage") for p in r.get("planets", [])
+                                    if p.get("planet") == r.get("planet")), None),
+                  "n_features": len(r.get("features", [])),
+                  "n_features_eclipse_tested": sum(1 for f in r.get("features", [])
+                                                   if f.get("eclipse_tested")),
+                  "best_vanish_snr": max((_f((f.get("eclipse") or {}).get("eclipse_vanish_snr"))
+                                          for f in r.get("features", [])), default=None),
+                  "ew_5sigma_limit_um": r.get("ew_5sigma_limit_um"),
+                  "notes": r.get("notes")} for r in recs]
+    _write_json(out_dir / "exposures.json", {"generated_utc": summary["generated_utc"],
+                                             "rows": exposures})
     print("[lantern] assess:", json.dumps(_json_safe({k: summary[k] for k in
                                                        ("verdict", "funnel", "rejections")})))
     return summary

@@ -175,7 +175,8 @@ def exposure_key(filename: str) -> str:
 
 
 def list_x1dints(obs_table, batch: int = 15, retries: int = 3, pause: float = 5.0) -> pd.DataFrame:
-    """``x1dints`` products for an astropy Observations table, fetched in batches.
+    """``x1dints`` products for an astropy Observations table OR a list of obsid
+    strings, fetched in batches (``get_product_list`` accepts either).
 
     Keeps ``dataURI``, ``productFilename``, ``size``, ``calib_level``,
     ``dataRights``, ``parent_obsid``/``obsID``; adds ``exposure_key``.  A batch

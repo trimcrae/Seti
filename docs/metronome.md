@@ -149,7 +149,14 @@ is what makes the second null interpretable (§4.3).
    to the null's own max-H tail, **flagged `p_extrapolated`**.  Stars whose
    loose Bonferroni bound (`n_freq · e^{−0.3H}`, deliberately heavier-tailed
    than the true `e^{−0.4H}`) already exceeds 0.5 skip the null: they could not
-   have been significant, and `null_computed = False` says so.
+   have been significant, and `null_computed = False` says so.  A star whose
+   Q / jitter already fail the *watch* thresholds can never rank above `none`
+   whatever its p, so its null is capped at 200 trials
+   (`null_budget_mode = not_clock_reduced`) — an exact restatement of the tier
+   condition, and what keeps a catalogue full of rotation-modulated stars from
+   spending the whole budget on p-values that cannot change a tier.  Measured
+   at the science grid (~35,000 frequencies): 0.18 s per scan at N = 50, 5.5 s
+   at N = 1,500; a rotator costs ~3 s, a strict clock runs its full budget.
 2. **Waiting-time shuffle** (`clock.shuffle_null`): the star's own waiting
    times, permuted in observed-time coordinates.  Burstiness is preserved;
    long-range phase order is destroyed.  **A strict clock survives this null**
@@ -257,9 +264,11 @@ reports whether it is.
   threshold, or whose ticks the catalogue's pipeline rejected, is invisible
   here by construction.  Each catalogue's threshold is inherited, not
   re-measured.
-* **Cadence.**  A peak time cannot define a clock finer than ~10 cadences:
-  0.2 d for Kepler long cadence, 0.014 d for TESS 2-min.  Shorter periods are
-  not scanned.
+* **Cadence.**  A peak time cannot define a clock finer than ~10 cadences
+  (0.2 d for Kepler long cadence; 0.014 d for TESS 2-min), and the configured
+  floor `min_period_days: 0.2` binds for both missions — a deliberate choice
+  that keeps the TESS grid the same size as Kepler's; lowering it for TESS is
+  a one-line config change.  Shorter periods are not scanned.
 * **Span.**  Periods longer than a third of the star's event span are not
   scanned (fewer than three cycles is a trend).  Kepler: ≲ 500 d; a single
   TESS sector: ≲ 9 d.

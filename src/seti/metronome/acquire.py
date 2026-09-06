@@ -421,7 +421,9 @@ def discover_and_fetch_rotation(catalogue: str, preferred: str, keywords=(), *,
     rec = {"catalogue": catalogue, "preferred": preferred, "table": None, "roles": {},
            "status": STATUS_FAILED, "scoreboard": []}
     try:
-        tabs = list_tables(preferred, query_fn=query_fn)
+        # An empty preferred id means "discover by keyword"; LIKE '%%' would
+        # otherwise match the first sixty tables in the service.
+        tabs = list_tables(preferred, query_fn=query_fn) if preferred else pd.DataFrame()
         if not len(tabs) and keywords:
             tabs = search_tables(keywords, query_fn=query_fn)
     except Exception as exc:                              # noqa: BLE001
@@ -546,22 +548,27 @@ def fetch_variable_context(positions: pd.DataFrame, catalogues: dict, *, cone_fn
 
     ``catalogues`` maps a name to ``{"table": ..., "period_patterns": [...],
     "type_patterns": [...]}``.  Returns ``({star_id: [(source, period, vtype)]},
-    {source: reached_bool})``; the per-source ``reached`` flag is what turns a
-    missing veto into ``variability_catalogue_unreached`` rather than a pass.
+    {star_id: {source, ...}})`` --- the second map lists, per star, the sources
+    whose cone *answered* (with or without a match).  A star whose cone on some
+    source failed carries ``variability_catalogue_unreached`` for that veto
+    rather than a pass; a star whose cones all answered is fully vetted even
+    if another star's cone timed out.
     """
     cone_fn = cone_fn or _vizier_cone
     out: dict[str, list] = {}
-    reached: dict[str, bool] = {}
+    reached: dict[str, set] = {}
     for name, spec in (catalogues or {}).items():
         table = spec.get("table")
         n_ok = n_fail = n_hits = 0
         for _, r in positions.iterrows():
+            sid = str(r["star_id"])
             ra, dec = float(r.get("ra", np.nan)), float(r.get("dec", np.nan))
             if not (np.isfinite(ra) and np.isfinite(dec)):
                 continue
             try:
                 df = cone_fn(table, ra, dec, radius_arcsec)
                 n_ok += 1
+                reached.setdefault(sid, set()).add(name)
             except Exception as exc:                      # noqa: BLE001
                 n_fail += 1
                 if log and n_fail <= 3:
@@ -579,10 +586,9 @@ def fetch_variable_context(positions: pd.DataFrame, catalogues: dict, *, cone_fn
                 p = pd.to_numeric(row.get(roles.get("period")), errors="coerce") \
                     if roles.get("period") else np.nan
                 vt = str(row.get(roles.get("vtype"), "")) if roles.get("vtype") else ""
-                out.setdefault(str(r["star_id"]), []).append((name, float(p) if pd.notna(p)
-                                                              else float("nan"), vt))
+                out.setdefault(sid, []).append((name, float(p) if pd.notna(p)
+                                                else float("nan"), vt))
                 n_hits += 1
-        reached[name] = n_ok > 0 and n_fail == 0
         if log:
             log.record(f"vari_{name}", f"{n_ok + n_fail} cones on {table} r={radius_arcsec}\"",
                        rows=n_hits if n_ok else None,
